@@ -56,10 +56,10 @@ describe("no-migration control", () => {
     expect(ctl.migrantCount).toBe(0);
   });
 
-  it("refuses presets without migration configured, like the other controls do for what they remove", () => {
+  it("is a no-op (never throws) on presets without tile migration configured -- it may still be meaningful via a metapopulation, which apply() has no visibility into (see specConfig, runner.ts)", () => {
     for (const id of ["spots", "gradient", "soup", "seasons", "large"]) {
       const base = presetConfig(PRESETS.find((p) => p.id === id)!, 1);
-      expect(() => conditionById("no-migration").apply(base)).toThrow();
+      expect(conditionById("no-migration").apply(base)).toEqual({});
     }
   });
 });

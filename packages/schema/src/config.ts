@@ -163,6 +163,83 @@ export interface WorldConfig {
   migrationPeriod?: number;
   /** Cells migrated from each tile to its ring neighbour at each migration event. Must be >= 1 when migrationPeriod > 0. See `migrationPeriod`'s doc on why this is optional rather than defaulted to 0. */
   migrantCount?: number;
+
+  /**
+   * This run's position in a cross-run metapopulation ring (see
+   * packages/schema/src/exchange.ts and Coordinator.Queue's `:metapopulation`
+   * spec), mixed into every founder's and mutation's LIN_LO at birth via
+   * `packLineageLo` so lineage ids stay unique *across* the ring's runs, not
+   * only within one run. Without this, two different seeds' founders (both
+   * `(0, 1)`, `(0, 2)`, ...) or two runs' mutations born at the same absolute
+   * step at the same cell index collide: `applyExchange` copies a foreign
+   * lineage id verbatim, and `validateState`'s "same id -> same genome words"
+   * check (which this must never weaken) correctly rejects the result once
+   * the two same-id, different-genome cells coexist after an exchange.
+   *
+   * Optional and absent by default for the same reason `migrationPeriod`/
+   * `adhesion` are: `stateHash`/`artifactDigest` hash the config's own JSON,
+   * so an always-present `ringNamespace: 0` would change every existing
+   * golden hash whether or not a run belongs to a metapopulation.
+   * `packLineageLo` returns its input completely unchanged when this is
+   * absent, so both the CPU reference and the WGSL kernels mint exactly the
+   * ids they always have unless a namespace is actually configured.
+   *
+   * 0 is reserved for "unnamespaced" bit patterns (never assigned by the
+   * runner, which numbers ring members from 1); values are bounded by
+   * `MAX_RING_NAMESPACE` (`RING_NAMESPACE_BITS` bits), and a namespaced
+   * config's `cellCount` is additionally capped at `2 ** RING_CELL_BITS` (see
+   * `validateConfig`) so the cell-index portion of a packed LIN_LO can never
+   * overflow into the namespace bits.
+   */
+  ringNamespace?: number;
+}
+
+/**
+ * Bit layout for a namespaced LIN_LO (see `WorldConfig.ringNamespace`): the
+ * top `RING_NAMESPACE_BITS` bits hold the ring member's namespace, the rest
+ * hold the founder/mutation-cell index LIN_LO always encoded before
+ * namespacing existed. 10 bits comfortably covers a metapopulation ring (the
+ * coordinator caps `seeds` at 1000 per experiment); the remaining 22 bits
+ * cover any preset in use today (all well under `2 ** 22` cells) and are
+ * enforced as a hard cap on a *namespaced* config's `cellCount` specifically
+ * (see `validateConfig`) — an unnamespaced config keeps the unrelated,
+ * looser `2 ** 24` cap `cellCount(c) > 1 << 24` already checks.
+ */
+export const RING_NAMESPACE_BITS = 10;
+export const RING_CELL_BITS = 32 - RING_NAMESPACE_BITS;
+export const RING_CELL_MASK = (1 << RING_CELL_BITS) - 1;
+export const MAX_RING_NAMESPACE = (1 << RING_NAMESPACE_BITS) - 1;
+
+/**
+ * Packs a founder/mutation's raw LIN_LO (`< 2 ** RING_CELL_BITS` for a
+ * namespaced config — `validateConfig` enforces this via `cellCount`) with
+ * `cfg.ringNamespace`. Returns `raw` completely unchanged when `ringNamespace`
+ * is absent (the default for every config that predates this field), so
+ * every existing checkpoint/golden hash is byte-for-byte unaffected. The CPU
+ * reference (packages/sim-ref) and WGSL kernels
+ * (packages/sim-gpu/src/shaders.ts) both mint LIN_LO through this exact
+ * formula — the GPU side inlines the identical arithmetic in WGSL (which
+ * can't import a TS function), importing `RING_CELL_BITS`/`RING_CELL_MASK`
+ * from here so the bit widths are the one shared source of truth.
+ */
+export function packLineageLo(cfg: { ringNamespace?: number }, raw: number): number {
+  if (cfg.ringNamespace === undefined) return raw >>> 0;
+  return (((cfg.ringNamespace & MAX_RING_NAMESPACE) << RING_CELL_BITS) | (raw & RING_CELL_MASK)) >>> 0;
+}
+
+/**
+ * The largest `raw` value `packLineageLo` can pack without silently
+ * truncating it (`raw & RING_CELL_MASK` wraps modulo `2 ** RING_CELL_BITS`
+ * otherwise, which is exactly how two founders can collide onto the same
+ * lineage id -- review P3). A mutation's own `raw` (a cell index) is already
+ * bounded by this via `validateConfig`'s `cellCount` check, but a founder's
+ * `raw` (`founderIndex + 1`, from `InitSpec.founders.length` -- see
+ * `buildWorld` in world.ts) is a *separate* input `validateConfig` never
+ * sees, so callers that mint a raw id from something other than a cell index
+ * must check it against this themselves before calling `packLineageLo`.
+ */
+export function maxPackableRaw(cfg: { ringNamespace?: number }): number {
+  return cfg.ringNamespace === undefined ? 0xffffffff : RING_CELL_MASK;
 }
 
 /** `kAdhesion` when `adhesion` is enabled but `kAdhesion` itself is not set. */
@@ -334,6 +411,7 @@ export function validateConfig(c: WorldConfig): string[] {
   for (const [key, range] of [
     ["migrationPeriod", MIGRATION_PERIOD_RANGE],
     ["migrantCount", MIGRANT_COUNT_RANGE],
+    ["ringNamespace", [0, MAX_RING_NAMESPACE] as Range],
   ] as const) {
     const v = c[key];
     if (v === undefined) continue;
@@ -348,6 +426,12 @@ export function validateConfig(c: WorldConfig): string[] {
   // probing over the tile's own cells); more slots than cells in a tile could
   // never all be unique.
   if (migrationPeriod > 0 && migrantCount > c.tileW * c.tileH) errs.push("migrantCount must be at most tileW * tileH (offsets must be unique within a tile)");
+  // A namespaced LIN_LO reserves its top RING_NAMESPACE_BITS bits for
+  // ringNamespace, leaving only RING_CELL_BITS for the founder/mutation-cell
+  // index packLineageLo packs in -- every cell index (and founder index) must
+  // fit in that narrower range, or two different cells could pack to the same
+  // LIN_LO (a real, not just cosmetic, collision).
+  if (c.ringNamespace !== undefined && cellCount(c) > 1 << RING_CELL_BITS) errs.push(`a namespaced config (ringNamespace set) must have cellCount at most 2^${RING_CELL_BITS}`);
   return errs;
 }
 

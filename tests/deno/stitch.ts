@@ -44,6 +44,19 @@ check("summary", untimed(m.summary) === untimed(whole.summary), `${untimed(m.sum
 check("spec", JSON.stringify(m.spec) === JSON.stringify(w.spec));
 check("covers the whole history", m.startStep === 0 && m.segments.length === 3);
 
+// Byte compatibility (review P2): an ordinary (non-metapopulation) run's
+// manifest.json, and each of the stitched manifest's own per-segment
+// records, must omit importedStartHash/netExchangeMatter entirely -- not
+// carry them as always-null -- so this run's shape stays pinned to exactly
+// what it was before metapopulation existed (`base` above has no
+// `metapopulation` field at all).
+check("an ordinary run's own manifest.json has no importedStartHash/netExchangeMatter keys at all", !("importedStartHash" in w) && !("netExchangeMatter" in w), JSON.stringify(Object.keys(w)));
+check(
+  "the stitched manifest's per-segment records likewise omit importedStartHash/netExchangeMatter for an ordinary run",
+  m.segments.every((s: object) => !("importedStartHash" in s) && !("netExchangeMatter" in s)),
+  JSON.stringify(m.segments.map(Object.keys)),
+);
+
 const expectThrow = (name: string, f: () => unknown) => {
   try {
     f();
@@ -96,6 +109,161 @@ check("stitchRun concatenates migrations.tsv across segments", migStitched["migr
 expectThrow(
   "stitchRun fails loudly when migrations.tsv is present on some segments but not others, instead of silently dropping it",
   () => stitchRun([migSegs[0], { ...migSegs[1], files: { ...migSegs[1].files, "migrations.tsv": undefined as unknown as string } }], migBase.steps),
+);
+
+// exchanges.tsv (review P2): required whenever the spec has a metapopulation
+// (not merely optional-if-present, like migrations.tsv), and its accounting
+// -- row counts, import/export slot pairing, agreement with the manifest's
+// own netExchangeMatter -- must hold, not just "present on every segment or
+// none". Built from a real two-run ring (mirroring tests/deno/exchange.ts's
+// own fixture) so the "good" case is a real accepted ledger, and "bad" cases
+// are that same ledger minimally tampered with.
+const xRingNamespaceFor = (seed: number) => (seed === 30 ? 1 : 2);
+const xBase = (seed: number, steps: number): RunSpec => ({
+  experiment: "stitch-x",
+  presetId: "spots",
+  condition: "treatment",
+  seed,
+  steps,
+  censusEvery: 100,
+  deepEvery: 2,
+  checkpointEvery: 0,
+  metapopulation: { salt: 99, migrantCount: 4, ringNamespace: xRingNamespaceFor(seed) },
+});
+const xTotalSteps = 200;
+
+const aSink0x = new Mem();
+const a0x = await runExperiment(device, xBase(30, 100), aSink0x, host, () => {}, { keepFinal: true });
+const bSink0x = new Mem();
+const b0x = await runExperiment(device, xBase(40, 100), bSink0x, host, () => {}, { keepFinal: true });
+const aSink1x = new Mem();
+const a1x = await runExperiment(device, xBase(30, 100), aSink1x, host, () => {}, {
+  start: a0x.final,
+  observer: a0x.observer,
+  immigrant: b0x.final,
+  keepFinal: true,
+});
+
+const xSegs: StitchSegment[] = [
+  { index: 0, startStep: 0, steps: 100, digest: a0x.summary.finalHash, files: Object.fromEntries(aSink0x.files) },
+  { index: 1, startStep: 100, steps: 100, digest: a1x.summary.finalHash, files: Object.fromEntries(aSink1x.files) },
+];
+
+let xStitched: Record<string, string> | null = null;
+try {
+  xStitched = stitchRun(xSegs, xTotalSteps);
+  check("stitchRun accepts a consistent exchange ledger (good case)", true);
+} catch (e) {
+  check("stitchRun accepts a consistent exchange ledger (good case)", false, (e as Error).message);
+}
+const xMerged = (xStitched?.["exchanges.tsv"] ?? "").trim().split("\n");
+check("...and merges exchanges.tsv across segments (header + segment 0's none + segment 1's 4 import + 4 export rows)", xMerged.length === 9, `${xMerged.length} lines`);
+
+const tamperExchanges = (transform: (cols: string[]) => string[] | null) =>
+  xSegs[1].files["exchanges.tsv"]
+    .split("\n")
+    .map((line, i) => {
+      if (i === 0 || !line) return line;
+      const out = transform(line.split("\t"));
+      return out ? out.join("\t") : line;
+    })
+    .join("\n");
+const withExchanges = (tsv: string | undefined) => [xSegs[0], { ...xSegs[1], files: { ...xSegs[1].files, "exchanges.tsv": tsv as unknown as string } }];
+
+expectThrow(
+  "stitchRun rejects a metapopulation run missing exchanges.tsv on a segment",
+  () => stitchRun(withExchanges(undefined), xTotalSteps),
+);
+expectThrow(
+  "stitchRun rejects an exchange ledger with a missing slot on one side (a dropped export row)",
+  () =>
+    stitchRun(
+      withExchanges(
+        xSegs[1].files["exchanges.tsv"]
+          .split("\n")
+          .filter((line, i) => !(i > 0 && line && line.split("\t")[1] === "export" && line.split("\t")[2] === "0"))
+          .join("\n"),
+      ),
+      xTotalSteps,
+    ),
+);
+expectThrow(
+  "stitchRun rejects an exchange ledger whose import/export cells for the same slot don't match",
+  () =>
+    stitchRun(
+      withExchanges(tamperExchanges((c) => (c[1] === "import" && c[2] === "0" ? [c[0], c[1], c[2], String(Number(c[3]) + 1), c[4], c[5], c[6]] : null))),
+      xTotalSteps,
+    ),
+);
+expectThrow(
+  "stitchRun rejects an exchange ledger whose totals disagree with the manifest's netExchangeMatter",
+  () =>
+    stitchRun(
+      withExchanges(tamperExchanges((c) => (c[1] === "export" && c[2] === "0" ? [c[0], c[1], c[2], c[3], String(Number(c[4]) + 1000), c[5], c[6]] : null))),
+      xTotalSteps,
+    ),
+);
+expectThrow(
+  "stitchRun rejects exchanges.tsv present on a run without a metapopulation",
+  () => stitchRun([{ ...segs[0], files: { ...segs[0].files, "exchanges.tsv": "step\tdirection\tslot\tcell\tmatter\tlineageHi\tlineageLo\n" } }, segs[1], segs[2]], base.steps),
+);
+
+// review P2 round 2: the previous check derived "did this boundary import"
+// solely from the manifest's own self-reported importedStartHash, which is
+// exactly the field a bad producer could tamper with. Expected import
+// presence must instead come from the (trusted) spec: metapopulation
+// present, condition != "no-migration", index >= 1.
+const withSeg1 = (transform: (files: Record<string, string>) => Record<string, string>) => [xSegs[0], { ...xSegs[1], files: transform(xSegs[1].files) }];
+const seg1HeaderOnlyExchanges = xSegs[1].files["exchanges.tsv"].split("\n")[0] + "\n";
+expectThrow(
+  "stitchRun rejects clearing importedStartHash + emptying the ledger on a boundary the spec says must have imported",
+  () =>
+    stitchRun(
+      withSeg1((files) => ({
+        ...files,
+        "manifest.json": JSON.stringify({ ...JSON.parse(files["manifest.json"]), importedStartHash: null }),
+        "exchanges.tsv": seg1HeaderOnlyExchanges,
+      })),
+      xTotalSteps,
+    ),
+);
+expectThrow(
+  "stitchRun rejects a non-importing boundary (segment #0) whose manifest sets a bogus netExchangeMatter",
+  () =>
+    stitchRun(
+      [
+        { ...xSegs[0], files: { ...xSegs[0].files, "manifest.json": JSON.stringify({ ...JSON.parse(xSegs[0].files["manifest.json"]), netExchangeMatter: 123 }) } },
+        xSegs[1],
+      ],
+      xTotalSteps,
+    ),
+);
+expectThrow(
+  "stitchRun rejects import/export cells that agree with each other but not with the deterministic exchange position (a naive equal-to-each-other check used to accept this)",
+  () => stitchRun(withExchanges(tamperExchanges((c) => [c[0], c[1], c[2], "999999999", c[4], c[5], c[6]])), xTotalSteps),
+);
+expectThrow(
+  "stitchRun rejects a row with an unrecognised direction instead of silently dropping it from both tallies",
+  () => stitchRun(withExchanges(xSegs[1].files["exchanges.tsv"] + "100\tsideways\t0\t5\t10\t0\t1\n"), xTotalSteps),
+);
+
+// review P2/P3 round 3: every row's matter must be a nonnegative integer
+// (balanced corruption keeps the net at 0, so the totals check alone misses
+// it), and an importing segment's importedStartHash must be a real hash.
+for (const bad of ["-10", "0.5", ""]) {
+  expectThrow(`stitchRun rejects balanced exchange rows with matter ${JSON.stringify(bad)}`, () =>
+    stitchRun(
+      withSeg1((files) => ({
+        ...files,
+        "manifest.json": JSON.stringify({ ...JSON.parse(files["manifest.json"]), netExchangeMatter: 0 }),
+        "exchanges.tsv": tamperExchanges((c) => [c[0], c[1], c[2], c[3], bad, c[5], c[6]]),
+      })),
+      xTotalSteps,
+    ),
+  );
+}
+expectThrow("stitchRun rejects an empty importedStartHash on an importing boundary", () =>
+  stitchRun(withSeg1((files) => ({ ...files, "manifest.json": JSON.stringify({ ...JSON.parse(files["manifest.json"]), importedStartHash: "" }) })), xTotalSteps),
 );
 
 Deno.exit(ok ? 0 : 1);

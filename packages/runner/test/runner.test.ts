@@ -16,7 +16,7 @@
 import { describe, expect, it } from "vitest";
 import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, type WorldState } from "@bl/schema";
 import { sameCompletedRun } from "@bl/runner";
-import { runExperiment, specConfig, type RunSpec, type Sink } from "../src/runner.ts";
+import { immigrantError, runExperiment, specConfig, type RunSpec, type Sink } from "../src/runner.ts";
 
 const noopSink: Sink = {
   async writeText() {},
@@ -96,5 +96,69 @@ describe("sameCompletedRun (tools/run.ts reuse check)", () => {
     // only cfg is stale (still seed 1's derived config, not seed 2's).
     const done = { ...baseManifest(), spec: otherSpec };
     expect(sameCompletedRun(done, otherSpec)).toBe(false);
+  });
+});
+
+describe("specConfig: no-migration is only meaningful with tile migration or a metapopulation", () => {
+  const base = (overrides: Partial<RunSpec> = {}): RunSpec => ({
+    experiment: "nomig",
+    presetId: "spots",
+    condition: "no-migration",
+    seed: 1,
+    steps: 20,
+    censusEvery: 20,
+    deepEvery: 1,
+    checkpointEvery: 0,
+    ...overrides,
+  });
+
+  it("throws for a preset without tile migration and no metapopulation (conditions.ts's apply() no longer throws by itself)", () => {
+    expect(() => specConfig(base())).toThrow(/no-migration control needs either tile migration.*or a metapopulation/);
+  });
+
+  it("is valid on a preset with tile migration configured, metapopulation or not", () => {
+    const cfg = specConfig(base({ presetId: "archipelago" }));
+    expect(cfg.migrationPeriod).toBe(0);
+    expect(cfg.migrantCount).toBe(0);
+  });
+
+  it("is valid on a preset without tile migration when the run belongs to a metapopulation", () => {
+    const cfg = specConfig(base({ metapopulation: { salt: 1, migrantCount: 4 } }));
+    // No tile fields to strip (this preset never had any) -- the control still
+    // applies via the metapopulation, which specConfig can see but apply() cannot.
+    expect(cfg.migrationPeriod).toBeUndefined();
+  });
+});
+
+describe("immigrantError: ring members legitimately differ in seed AND ringNamespace (review P1)", () => {
+  // A bug caught while adding end-to-end coverage for the ringNamespace fix:
+  // sameConfigExceptSeed only exempted `seed`, so once two ring members'
+  // configs started legitimately differing in `ringNamespace` too (review
+  // P1's own fix -- each ring position gets a distinct namespace so ids stay
+  // unique), every real cross-run import started failing
+  // `immigrantError`'s config check, even though nothing was actually wrong.
+  const specAt = (seed: number, ringNamespace: number): RunSpec => ({
+    experiment: "ring",
+    presetId: "spots",
+    condition: "treatment",
+    seed,
+    steps: 100,
+    censusEvery: 100,
+    deepEvery: 1,
+    checkpointEvery: 0,
+    metapopulation: { salt: 1, migrantCount: 4, ringNamespace },
+  });
+
+  it("accepts an immigrant from a different ring member (different seed AND ringNamespace)", () => {
+    const mine = specConfig(specAt(10, 1));
+    const theirs = specConfig(specAt(20, 2));
+    const immigrant = { step: 100, cfg: theirs } as unknown as WorldState;
+    expect(immigrantError(specAt(10, 1), 100, immigrant)).toBeNull();
+  });
+
+  it("still rejects a real config mismatch (not just seed/ringNamespace)", () => {
+    const theirs = { ...specConfig(specAt(20, 2)), kernelRadius: specConfig(specAt(20, 2)).kernelRadius + 1 };
+    const immigrant = { step: 100, cfg: theirs } as unknown as WorldState;
+    expect(immigrantError(specAt(10, 1), 100, immigrant)).toMatch(/config differs/);
   });
 });

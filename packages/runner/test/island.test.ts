@@ -94,6 +94,98 @@ describe("island rejects bad predecessor artifacts", () => {
     });
 });
 
+// Coverage gap the review flagged: a defect in the *import* predecessor
+// (a metapopulation's cross-run exchange source -- RunSpec.metapopulation)
+// must reject with `predecessor: "import"`, routed by Coordinator.Queue's
+// `reject/5` to the ring-predecessor's segment, never `"own"` (this run's
+// same-run predecessor, which in every case below is perfectly fine on its
+// own) -- otherwise a bad import would get misfiled as if this run's own
+// history were the problem. Mirrors "island rejects bad predecessor
+// artifacts" above, but for the importFrom branch, and every artifact here
+// round-trips through `encodeCheckpoint`/`decodeArtifact` exactly as the real
+// wire protocol does (not an in-memory WorldState), the "serialized replay"
+// coverage the review also asked for.
+describe("island routes bad import-predecessor artifacts to \"import\", not \"own\" (metapopulation)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const metaSpec: RunSpec = { ...spec, metapopulation: { salt: 1, migrantCount: 4, ringNamespace: 1 } };
+  // This run's own predecessor, under metaSpec's own (namespaced) config --
+  // *not* the file's shared `start`/top-level `spec`, whose cfg has no
+  // ringNamespace at all and would make even the *own*-predecessor check
+  // fail on a config mismatch before the import branch is ever reached.
+  const myCfg = specConfig(metaSpec);
+  const ownState = { ...initWorld(myCfg, PRESETS.find((p) => p.id === "spots")!.init), step: 500 };
+  // A different ring member's own state: different seed *and* ringNamespace
+  // (review P1 -- sameConfigExceptSeed exempts both), at the same absolute
+  // step this segment starts from, as a real cross-run import must be.
+  const theirCfg = specConfig({ ...metaSpec, seed: 99, metapopulation: { salt: 1, migrantCount: 4, ringNamespace: 2 } });
+  const theirState = { ...initWorld(theirCfg, PRESETS.find((p) => p.id === "spots")!.init), step: 500 };
+  const theirBytes = encodeCheckpoint(theirState, good);
+  const corruptImportDigest = theirBytes.slice();
+  corruptImportDigest[4000] ^= 1;
+  // A state that decodes cleanly but belongs to a config this run cannot
+  // possibly share (a different preset entirely) -- immigrantError's own
+  // config check, not the digest check above.
+  const mismatchedCfg = specConfig({ experiment: "t", presetId: "archipelago", condition: "treatment", seed: 99, steps: 500, censusEvery: 100, deepEvery: 5, checkpointEvery: 0 });
+  const mismatchedConfigState = { ...initWorld(mismatchedCfg, PRESETS.find((p) => p.id === "archipelago")!.init), step: 500 };
+  const mismatchedConfigBytes = encodeCheckpoint(mismatchedConfigState, good);
+
+  /** Same fake-coordinator shape as `attempt` above, but the task carries a
+   * good startFrom (this run's own predecessor -- never the thing under
+   * test here) alongside an importFrom whose artifact bytes are the thing
+   * being probed, so a misrouted rejection would show up unambiguously.
+   * `importHash` defaults to the *intended* import's own digest (so a
+   * config-only defect can be isolated from a digest mismatch); pass the
+   * real target's digest explicitly to probe the digest check itself. */
+  async function attemptImport(importBytes: Uint8Array, importHash = stateHash(theirState)): Promise<{ reason: string; predecessor: string }[]> {
+    const rejects: { reason: string; predecessor: string }[] = [];
+    let served = false;
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
+      const path = new URL(url).pathname;
+      const json = (v: unknown) => new Response(JSON.stringify(v), { headers: { "content-type": "application/json" } });
+      if (path === "/api/islands") return json({ id: "isl", token: "tok" });
+      if (path === "/api/next") {
+        if (served) return json({ kind: "idle" });
+        served = true;
+        return json({
+          kind: "run",
+          lease: "L",
+          segment: { id: "seg-1", run: "r", index: 1, startStep: 500, steps: 500 },
+          spec: metaSpec,
+          startFrom: "seg-0",
+          startHash: stateHash(ownState),
+          importFrom: "seg-import-0",
+          importHash,
+        });
+      }
+      if (path === "/api/segments/seg-0/start") return new Response(encodeCheckpoint(ownState, good).slice(), { headers: { "content-type": "application/octet-stream" } });
+      if (path === "/api/segments/seg-import-0/start") return new Response(importBytes.slice(), { headers: { "content-type": "application/octet-stream" } });
+      if (path === "/api/segments/seg-1/reject") {
+        const body = JSON.parse(String(init.body));
+        rejects.push({ reason: body.reason, predecessor: body.predecessor });
+        return json({ ok: true });
+      }
+      throw new Error(`unexpected ${path}`);
+    });
+    const done = await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, maxTasks: 1 });
+    expect(done).toBe(0);
+    return rejects;
+  }
+
+  it("a bad import checkpoint digest is rejected as predecessor \"import\" (own predecessor is fine)", async () => {
+    const r = await attemptImport(corruptImportDigest);
+    expect(r).toHaveLength(1);
+    expect(r[0].predecessor).toBe("import");
+  });
+
+  it("an import whose config cannot match this run's is rejected as predecessor \"import\", not \"own\"", async () => {
+    const r = await attemptImport(mismatchedConfigBytes, stateHash(mismatchedConfigState));
+    expect(r).toHaveLength(1);
+    expect(r[0].predecessor).toBe("import");
+    expect(r[0].reason).toMatch(/config differs/);
+  });
+});
+
 describe("island idle wait", () => {
   afterEach(() => vi.unstubAllGlobals());
 

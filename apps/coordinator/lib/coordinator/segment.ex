@@ -29,11 +29,21 @@ defmodule Coordinator.Segment do
   | done (verify) | complete_verify, mismatch | - | diverged (+ block_descendants) |
   | blocked | admin unblock | (existing admin policy, unchanged) | pending |
 
-  `block_descendants/3` resets and blocks every later segment of the same run
-  — pending, assigned, `done` *and* `verified` alike, cancelling any of their
-  own in-flight or completed verify attempts — matching `Queue.block_descendants/2`
-  before this refactor; narrowing this to only not-yet-done descendants would
-  be a regression (an earlier draft of this plan did that by mistake).
+  `block_descendants/2` blocks every segment *reachable* from a diverged or
+  rejected one — pending, assigned, `done` *and* `verified` alike, cancelling
+  any of their own in-flight or completed verify attempts — matching
+  `Queue.block_descendants/2` before this refactor; narrowing this to only
+  not-yet-done descendants would be a regression (an earlier draft of this
+  plan did that by mistake). "Reachable" is no longer just "later in the same
+  run": a metapopulation segment's `import_from` (the ring-predecessor's
+  segment this one imported a cross-run exchange packet from — see
+  `Coordinator.Queue`'s `:metapopulation` spec and
+  packages/schema/src/exchange.ts) is a second edge kind a divergence
+  propagates across, so `dependents_graph/1` builds the combined graph
+  (same-run successor edges + cross-run `import_from` edges) and `reachable/2`
+  is a plain BFS over it — see their own docs for why they're pure and
+  independently tested against hand-built graphs, not just through
+  `block_descendants`/`unblock_after`.
   """
 
   alias Coordinator.Attempt
@@ -41,9 +51,11 @@ defmodule Coordinator.Segment do
   # The observation files a run bundle carries (see packages/runner/src/stitch.ts's
   # BUNDLE_FILES); manifest.json is excluded on purpose (timestamps/host).
   @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
-  # Optional: only a migration-enabled run writes it (see stitch.ts's
-  # MIGRATIONS_FILE). Compared whenever either side has it.
-  @optional_observation_files ~w(migrations.tsv)
+  # Optional: only a migration-enabled run writes migrations.tsv (see
+  # stitch.ts's MIGRATIONS_FILE), and only a metapopulation run writes
+  # exchanges.tsv (see stitch.ts's EXCHANGES_FILE). Compared whenever either
+  # side has it.
+  @optional_observation_files ~w(migrations.tsv exchanges.tsv)
 
   @type status :: String.t()
   @type t :: %{
@@ -58,8 +70,12 @@ defmodule Coordinator.Segment do
           steps: integer,
           status: status,
           attempts: [Attempt.t()],
-          rejected: integer
+          rejected: integer,
+          import_from: String.t() | nil
         }
+
+  # `import_from` is only actually present in the map when set (see `new/10`)
+  # -- always read it via `Map.get(seg, :import_from)`, never `seg.import_from`.
 
   @spec new(
           String.t(),
@@ -70,10 +86,22 @@ defmodule Coordinator.Segment do
           integer,
           boolean,
           integer,
-          integer
+          integer,
+          String.t() | nil
         ) :: t
-  def new(id, run, experiment, condition, seed, index, last, start_step, steps) do
-    %{
+  def new(
+        id,
+        run,
+        experiment,
+        condition,
+        seed,
+        index,
+        last,
+        start_step,
+        steps,
+        import_from \\ nil
+      ) do
+    base = %{
       id: id,
       run: run,
       experiment: experiment,
@@ -87,6 +115,16 @@ defmodule Coordinator.Segment do
       attempts: [],
       rejected: 0
     }
+
+    # `import_from` is set only when there's an actual cross-run predecessor:
+    # an ordinary (non-metapopulation) segment must stay byte-identical
+    # (persisted `state.bin`, equality checks) to a segment that never had
+    # this key at all, from before metapopulation existed (review P2) --
+    # so it's omitted rather than set to `nil`. Every read goes through
+    # `Map.get(seg, :import_from)`, never `seg.import_from`, so a legacy
+    # segment map loaded from disk without the key at all is handled the
+    # same way (review P1).
+    if import_from, do: Map.put(base, :import_from, import_from), else: base
   end
 
   # ---- queries ----
@@ -452,19 +490,126 @@ defmodule Coordinator.Segment do
 
   # ---- whole-run (cross-segment) events ----
 
-  @doc "A diverged or rejected segment invalidates everything computed from its end state: later segments of the same run are blocked, done and verified ones included."
-  def block_descendants(segments, run, after_index) do
+  @doc """
+  BFS reachable set from `start` over `graph` (`%{node => [neighbor]}`,
+  a missing key treated as no outgoing edges), *including* `start` itself.
+  Pure and deliberately decoupled from `Coordinator.Segment`'s own data shapes
+  (a plain node -> neighbors map in, a `MapSet` out) so taint propagation's
+  graph logic can be exercised directly against small hand-built graphs
+  (chains, rings, diamonds, ...) without a real segments map — see
+  `Coordinator.SegmentTest`. Terminates on a cyclic graph (a ring) by tracking
+  visited nodes instead of recursing per edge.
+  """
+  def reachable(graph, start), do: reachable_acc(graph, [start], MapSet.new())
+
+  defp reachable_acc(_graph, [], seen), do: seen
+
+  defp reachable_acc(graph, [n | rest], seen) do
+    if MapSet.member?(seen, n),
+      do: reachable_acc(graph, rest, seen),
+      else: reachable_acc(graph, Map.get(graph, n, []) ++ rest, MapSet.put(seen, n))
+  end
+
+  @doc """
+  The dependency graph for taint propagation: segment `id` points to every
+  segment whose correctness assumes `id`'s is correct -- the same-run next
+  segment (`index + 1`) and every segment (in any run) whose `import_from` is
+  `id`. Built in a single pass over `segments` (review P2: the previous
+  version re-scanned the *entire* `segments` map once per vertex to find its
+  importers -- O(n^2) -- which measured 5.8s at 10,000 segments inside this
+  GenServer's own call, against a 5s call timeout and a 100k-segment/
+  experiment system limit; this version is O(n)). `Map.get(o, :import_from)`
+  (not `o.import_from`) so a segment map loaded from before `import_from`
+  existed, which omits the key entirely, doesn't crash (review P1). Segments
+  rarely number more than a few thousand per experiment and divergence is the
+  rare, not-hot path, so this is still built fresh rather than incrementally
+  maintained -- just no longer quadratically.
+  """
+  def dependents_graph(segments) do
+    by_run_index = Map.new(segments, fn {id, s} -> {{s.run, s.index}, id} end)
+    empty = Map.new(segments, fn {id, _} -> {id, []} end)
+
+    Enum.reduce(segments, empty, fn {id, s}, graph ->
+      graph =
+        case Map.get(by_run_index, {s.run, s.index - 1}) do
+          nil -> graph
+          pred -> Map.update(graph, pred, [id], &[id | &1])
+        end
+
+      case Map.get(s, :import_from) do
+        nil -> graph
+        pred -> Map.update(graph, pred, [id], &[id | &1])
+      end
+    end)
+  end
+
+  # `segments` restricted to `experiment` -- taint never crosses experiments
+  # (cross-run `import_from` edges only ever point within the same
+  # metapopulation experiment), so scoping down before building
+  # `dependents_graph/1` avoids paying for every OTHER experiment's segments
+  # too when a coordinator is running many at once (review P2).
+  defp scoped_to_experiment(segments, experiment) do
+    for {id, s} <- segments, s.experiment == experiment, into: %{}, do: {id, s}
+  end
+
+  @doc "A diverged or rejected segment invalidates everything reachable from it (`dependents_graph/1` + `reachable/2`; see the moduledoc) — same-run descendants and, transitively, any segment across any run whose cross-run import chain leads back to it. `seg_id` itself is left as-is; only what depends on it is blocked."
+  def block_descendants(segments, seg_id) do
+    scoped = scoped_to_experiment(segments, segments[seg_id].experiment)
+    tainted = scoped |> dependents_graph() |> reachable(seg_id) |> MapSet.delete(seg_id)
+
     Map.new(segments, fn {id, s} ->
-      if s.run == run and s.index > after_index and s.status != "blocked",
-        do: {id, block(s)},
+      if MapSet.member?(tainted, id) and s.status != "blocked", do: {id, block(s)}, else: {id, s}
+    end)
+  end
+
+  @doc """
+  After a requeue, every `\"blocked\"` segment reachable from `seg_id` becomes
+  `\"pending\"` again -- not yet *runnable*: `Coordinator.Queue.pick_task/3`
+  re-checks each segment's own predecessor and `import_from` (if any) fresh
+  against live status every time it looks for work, so a segment reset here
+  before its actual dependencies are redone simply stays un-picked rather than
+  running prematurely (the same reasoning the pre-existing same-run-only
+  version relied on; a diamond -- one segment blocked via two different
+  paths, only one of which has been redone -- is safe for the same reason,
+  not because this function tracks it).
+  """
+  def unblock_after(segments, seg_id) do
+    scoped = scoped_to_experiment(segments, segments[seg_id].experiment)
+    candidates = scoped |> dependents_graph() |> reachable(seg_id) |> MapSet.delete(seg_id)
+
+    Map.new(segments, fn {id, s} ->
+      if MapSet.member?(candidates, id) and s.status == "blocked",
+        do: {id, reset(s)},
         else: {id, s}
     end)
   end
 
-  @doc "After a requeue, blocked descendants become pending again; they run from the new predecessor state once it completes."
-  def unblock_after(segments, run, after_index) do
+  @doc """
+  The full reject-handling taint transition -- block everything reachable
+  from `seg_id`, requeue `seg_id` itself (`requeue/1`), then unblock
+  everything reachable from it again -- in one call. Equivalent to calling
+  `block_descendants/2`, `requeue/1` and `unblock_after/2` in sequence (the
+  same three-step shape `Coordinator.Queue`'s reject handler used to spell
+  out), but builds `dependents_graph/1` exactly once instead of twice (review
+  P2: it was built fresh, from scratch, inside *each* of those two calls,
+  every rejection).
+  """
+  def redo(segments, seg_id) do
+    experiment = segments[seg_id].experiment
+    scoped = scoped_to_experiment(segments, experiment)
+    reachable_set = scoped |> dependents_graph() |> reachable(seg_id) |> MapSet.delete(seg_id)
+
+    segments =
+      Map.new(segments, fn {id, s} ->
+        if MapSet.member?(reachable_set, id) and s.status != "blocked",
+          do: {id, block(s)},
+          else: {id, s}
+      end)
+
+    segments = Map.put(segments, seg_id, requeue(segments[seg_id]))
+
     Map.new(segments, fn {id, s} ->
-      if s.run == run and s.index > after_index and s.status == "blocked",
+      if MapSet.member?(reachable_set, id) and s.status == "blocked",
         do: {id, reset(s)},
         else: {id, s}
     end)

@@ -114,6 +114,32 @@ if (!loaded.length) throw new Error(`no completed runs under ${root}`);
   }
   if (problems.length) throw new Error(`runs under ${root} are not one ensemble:\n  ${problems.slice(0, 40).join("\n  ")}`);
 }
+// ---- metapopulation: ringed seeds are not independent replicates ----
+// A metapopulation's ring exchanges matter and genomes between its seeds at
+// every segment boundary (packages/schema/src/exchange.ts; RunSpec.metapopulation,
+// recorded verbatim in each run's manifest.json) -- those seeds are correlated,
+// not independent draws, so pooling them the way every statistic below does
+// (mean/sd over seeds, Mann-Whitney's per-seed sample sizes) would silently
+// misrepresent one ring as N independent replicates when the *ring* is the
+// actual statistical unit. "no-migration" runs are exempt even within a
+// metapopulation experiment -- Coordinator.Queue never wires import_from for
+// that condition (see its own and conditions.ts's "no-migration" docs), so
+// those seeds genuinely are independent. This tool refuses rather than
+// silently under-counting a ring's degrees of freedom; grouping by ring
+// (treating each ring as one data point) is a reasonable extension but not
+// implemented here. Non-metapopulation ensembles are entirely unaffected.
+{
+  const ringed = loaded.filter((r) => r.manifest.spec?.metapopulation && r.condition !== "no-migration");
+  if (ringed.length) {
+    const conds = [...new Set(ringed.map((r) => r.condition))];
+    throw new Error(
+      `runs under ${root} include a metapopulation ring (condition(s) ${conds.join(", ")}, ${ringed.length} seed(s) total) -- ` +
+        `those seeds exchange matter/genomes with each other and are not independent replicates. This tool does not pool a ring's ` +
+        `seeds as if they were; analyze the ring as a single unit (or extend analyze.ts to group by ring) instead of running ensemble ` +
+        `inference across its seeds.`,
+    );
+  }
+}
 // Pre-registered eligibility: only histories with exact conservation enter inference.
 const invalid = loaded.filter((r) => !r.manifest.summary.conservationOk);
 const runs = loaded.filter((r) => r.manifest.summary.conservationOk);

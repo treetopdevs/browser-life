@@ -8,7 +8,7 @@
 // rejected, which makes the coordinator recompute that predecessor.
 
 import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@bl/schema";
-import { continuationError, decodeArtifact, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
+import { continuationError, decodeArtifact, immigrantError, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
 import { observationDigests } from "./stitch.ts";
 
 export interface Task {
@@ -18,6 +18,9 @@ export interface Task {
   spec?: RunSpec;
   startFrom?: string | null;
   startHash?: string | null;
+  /** The ring-predecessor's segment (same metapopulation, previous boundary) whose accepted end state this segment imports from, if any (see RunSpec.metapopulation). */
+  importFrom?: string | null;
+  importHash?: string | null;
 }
 
 export interface IslandOptions {
@@ -297,12 +300,38 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
         }
         if (bad) {
           log(`  rejecting: ${bad}`);
-          await postJson(`/api/segments/${seg.id}/reject?${q()}`, { lease, reason: bad.slice(0, 500) });
+          await postJson(`/api/segments/${seg.id}/reject?${q()}`, { lease, reason: bad.slice(0, 500), predecessor: "own" });
+          continue;
+        }
+      }
+      let immigrant: WorldState | undefined;
+      if (task.importFrom) {
+        // Same shape as the startFrom block above, but for a metapopulation's
+        // cross-run exchange (see RunSpec.metapopulation): every defect
+        // rejects the *ring-predecessor's* segment (a different run) for
+        // recomputation, disambiguated from a bad own-predecessor rejection
+        // by `predecessor: "import"` (see Coordinator.Queue.reject/5).
+        const bytes = new Uint8Array(await call<ArrayBuffer>(`/api/segments/${task.importFrom}/start?${q()}`));
+        let bad: string | null = null;
+        try {
+          const decoded = decodeArtifact(bytes);
+          const digest = stateHash(decoded.state);
+          if (task.importHash && digest !== task.importHash) bad = `import checkpoint t=${decoded.state.step} digest ${digest}, expected digest ${task.importHash}`;
+          else {
+            bad = immigrantError(task.spec, seg.startStep, decoded.state);
+            if (!bad) immigrant = decoded.state;
+          }
+        } catch (e) {
+          bad = `invalid import predecessor artifact: ${(e as Error).message}`;
+        }
+        if (bad) {
+          log(`  rejecting import: ${bad}`);
+          await postJson(`/api/segments/${seg.id}/reject?${q()}`, { lease, reason: bad.slice(0, 500), predecessor: "import" });
           continue;
         }
       }
       const sink = new MemorySink();
-      const out = await runExperiment(device, task.spec, sink, opt.host, (m) => log(`  ${m}`), { start, observer, keepFinal: task.kind === "run" });
+      const out = await runExperiment(device, task.spec, sink, opt.host, (m) => log(`  ${m}`), { start, observer, immigrant, keepFinal: task.kind === "run" });
       const lq = q(`&lease=${encodeURIComponent(lease)}`);
       if (task.kind === "run") {
         // Encode once, PUT once: the checkpoint and observer state travel as

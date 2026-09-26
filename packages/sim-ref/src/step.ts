@@ -53,6 +53,7 @@ import {
   ROLE_WORDS,
   encodeGenome,
   generalistGenome,
+  packLineageLo,
   type FluxName,
   type KernelTable,
   type WorldConfig,
@@ -514,9 +515,10 @@ export class RefSim {
               const parentHi = genome[G.LIN_HI * n + i];
               const parentLo = genome[G.LIN_LO * n + i];
               mutateInPlace(genome, n, i, c, draw(base, RND.MUT_WHICH), draw(base, RND.MUT_DELTA));
+              const childLo = packLineageLo(c, i);
               genome[G.LIN_HI * n + i] = (step + 1) >>> 0;
-              genome[G.LIN_LO * n + i] = i;
-              events.push({ childHi: step + 1, childLo: i, parentHi, parentLo });
+              genome[G.LIN_LO * n + i] = childLo;
+              events.push({ childHi: step + 1, childLo, parentHi, parentLo });
             }
           }
         }

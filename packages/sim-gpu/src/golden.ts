@@ -170,6 +170,18 @@ export function goldenCases(): GoldenCase[] {
       steps: 40,
       every: 10,
     },
+    {
+      // Metapopulation review P1: WorldConfig.ringNamespace must pack into
+      // LIN_LO identically on GPU and CPU, for both founders (soupWorld's
+      // random-genome founders, id (0, founderIndex+1)) and mutations (a high
+      // mutRate, like "tiled+mutation-heavy", so several are actually born
+      // during the run) -- see packLineageLo (@bl/schema).
+      name: "ring-namespace",
+      cfg: defaultConfig({ tileW: 24, tileH: 24, kernelRadius: 4, seed: 23, mutRate: 60_000_000, ringNamespace: 7 }),
+      init: (c) => soupWorld(c, 8),
+      steps: 120,
+      every: 30,
+    },
   ];
 }
 

@@ -1,4 +1,4 @@
-import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, cellCount, validateConfig, worldW, type WorldConfig } from "./config.ts";
+import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, RING_CELL_MASK, cellCount, maxPackableRaw, packLineageLo, validateConfig, worldW, type WorldConfig } from "./config.ts";
 import { CELL_CHANNELS, CH, FLUX_COUNT, G, GENOME_CHANNELS } from "./layout.ts";
 import { encodeGenome, generalistGenome, randomGenome, type Genome } from "./genome.ts";
 import { draw, lowbias32 } from "./int.ts";
@@ -66,7 +66,18 @@ export function buildWorld(cfg: WorldConfig, spec: InitSpec): WorldState {
   const H = n / W;
   spec.founders.forEach((f, idx) => {
     if (2 * f.radius + 1 > Math.min(cfg.tileW, cfg.tileH)) throw new Error(`founder ${idx} radius ${f.radius} does not fit in a tile`);
-    const words = encodeGenome(f.genome, 0, idx + 1);
+    // A founder's raw lineage id (`idx + 1`) is a separate input from a
+    // mutation's (a cell index, already bounded by `validateConfig`'s
+    // `cellCount` check) -- nothing else bounds `spec.founders.length`
+    // against what `packLineageLo` can pack without truncating, so an
+    // oversized founder array can otherwise wrap around and collide two
+    // founders onto the same lineage id (review P3). Checked here, before
+    // packing, for both the namespaced and unnamespaced case (only the
+    // namespaced one is reachable in practice -- 2**32 founders is not -- but
+    // the check costs nothing either way).
+    const rawId = idx + 1;
+    if (rawId > maxPackableRaw(cfg)) throw new Error(`founder ${idx}: index exceeds the representable lineage-id range (${maxPackableRaw(cfg)})`);
+    const words = encodeGenome(f.genome, 0, packLineageLo(cfg, rawId));
     const base = lowbias32(cfg.seed ^ (idx * 7919 + 17));
     // Founders live in the tile containing their centre and wrap inside it.
     const fx = ((f.x % W) + W) % W;
@@ -117,12 +128,18 @@ export function validateState(s: WorldState): string[] {
   const ok = (v: bigint) => typeof v === "bigint" && v >= 0n && v < LEDGER_MAX;
   if (!ok(s.lightIn) || !ok(s.heatOut) || s.flux.length !== FLUX_COUNT || !s.flux.every(ok)) errs.push(`ledger values must be in 0..2^63`);
   // Transport relies on genome words being identical for every cell of a lineage.
+  const namespaced = s.cfg.ringNamespace !== undefined;
   const seen = new Map<string, number>();
   for (let i = 0; i < n && errs.length === 0; i++) {
     const hi = s.genome[G.LIN_HI * n + i], lo = s.genome[G.LIN_LO * n + i];
     if ((hi | lo) === 0) continue;
-    // Mutation ids are (birth step + 1, cell); an id from the future could be minted again.
-    if (hi > s.step || lo >= n) {
+    // Mutation ids are (birth step + 1, cell); an id from the future could be
+    // minted again. `lo`'s cell-index portion is the low RING_CELL_BITS when
+    // namespaced (see packLineageLo) -- masking is a no-op (lo itself) when
+    // not, so this is exactly the original `lo >= n` for every config that
+    // predates ringNamespace.
+    const cellPart = namespaced ? lo & RING_CELL_MASK : lo;
+    if (hi > s.step || cellPart >= n) {
       errs.push(`lineage ${hi}:${lo} at cell ${i} is not from this state's past`);
       break;
     }

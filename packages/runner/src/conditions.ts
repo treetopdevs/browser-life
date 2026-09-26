@@ -76,11 +76,15 @@ export const CONDITIONS: Condition[] = [
   {
     id: "no-migration",
     label: "No migration",
-    removes: "gene flow between islands",
-    apply: (c) => {
-      if (!c.migrationPeriod) throw new Error("no-migration control needs a preset with migration enabled");
-      return { migrationPeriod: 0, migrantCount: 0 };
-    },
+    removes: "gene flow between islands (tile migration and/or a metapopulation's cross-run exchange)",
+    // Only strips tile-migration fields when this preset actually has them
+    // (never throws): a run's cross-run exchange, if any, is a property of
+    // the *experiment* (RunSpec.metapopulation), which this function never
+    // sees -- it is given only the WorldConfig. Whether the control is
+    // *meaningful* at all (tile migration configured, or a metapopulation
+    // present) is checked once, with both pieces of context available, in
+    // specConfig (runner.ts) -- not here.
+    apply: (c) => (c.migrationPeriod ? { migrationPeriod: 0, migrantCount: 0 } : {}),
   },
 ];
 

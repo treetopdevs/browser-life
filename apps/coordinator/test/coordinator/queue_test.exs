@@ -53,6 +53,15 @@ defmodule Coordinator.QueueTest do
     assert {:error, _} = Queue.create_experiment("nope")
   end
 
+  test "an ordinary (non-metapopulation) experiment's task payload has no metapopulation/importFrom/importHash keys at all (review P2)" do
+    {:ok, 3} = Queue.create_experiment(@spec_ok)
+    {:ok, %{id: island}} = Queue.join(%{"adapter" => "A"})
+    {:ok, task} = Queue.next_task(island)
+    refute Map.has_key?(task.spec, :metapopulation)
+    refute Map.has_key?(task, :importFrom)
+    refute Map.has_key?(task, :importHash)
+  end
+
   test "segments run in order, are verified elsewhere, and divergence blocks the run", %{dir: dir} do
     {:ok, 3} = Queue.create_experiment(@spec_ok)
     {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
@@ -510,6 +519,73 @@ defmodule Coordinator.QueueTest do
     assert {:error, _} = Queue.start_link(data_dir: dir, name: :incompatible_state_test)
   end
 
+  test "loads a state.bin persisted before import_from existed (the parent, pre-metapopulation shape) and schedules without crashing (review P1)",
+       %{dir: dir} do
+    # `dir`'s already-running Queue (from `setup`) hasn't persisted anything
+    # yet -- stop it, drop a hand-crafted v3 state.bin whose segment map is
+    # exactly the parent commit's shape (no `import_from` key at all, not
+    # even `nil`: `Segment.new/10` before this feature existed never had the
+    # field), then restart against the same dir and confirm `/api/next`
+    # (`next_task/1`) schedules it instead of raising `KeyError` on
+    # `seg.import_from`.
+    :ok = stop_supervised(Queue)
+
+    legacy_segment = %{
+      id: "seg-legacy-0",
+      run: "legacy/spots/treatment/seed-1",
+      experiment: "legacy",
+      condition: "treatment",
+      seed: 1,
+      index: 0,
+      last: true,
+      start_step: 0,
+      steps: 500,
+      status: "pending",
+      attempts: [],
+      rejected: 0
+    }
+
+    legacy_state = %{
+      version: 3,
+      experiments: %{
+        "legacy" => %{
+          spec: %{
+            "experiment" => "legacy",
+            "presetId" => "spots",
+            "conditions" => ["treatment"],
+            "seeds" => [1],
+            "steps" => 500,
+            "segmentSteps" => 500,
+            "censusEvery" => 100
+          },
+          created_at: 0
+        }
+      },
+      segments: %{"seg-legacy-0" => legacy_segment},
+      islands: %{},
+      next_seg: 1
+    }
+
+    File.write!(Path.join(dir, "state.bin"), :erlang.term_to_binary(legacy_state))
+    start_supervised!({Queue, data_dir: dir})
+
+    {:ok, %{id: island}} = Queue.join(%{"adapter" => "restart-test"})
+    assert {:ok, task} = Queue.next_task(island)
+    assert task.segment.id == "seg-legacy-0"
+    # An ordinary run's task payload stays exactly its pre-metapopulation
+    # shape: no importFrom/importHash/metapopulation keys at all (review P2).
+    refute Map.has_key?(task, :importFrom)
+    refute Map.has_key?(task, :importHash)
+    refute Map.has_key?(task.spec, :metapopulation)
+
+    # The reject path (which reads import_from for the "import" predecessor)
+    # must likewise tolerate the missing key instead of raising KeyError --
+    # segment 0 has no "own" predecessor either, so the *expected* outcome is
+    # the ordinary "no such predecessor" error, not a crash.
+    assert {:error, "segment not assigned to this island/lease, or no such predecessor"} =
+             Queue.reject(task.segment.id, island, task.lease, "legacy state sanity", "import")
+  end
+
   test "observer mismatch (a different artifact digest) on replay is a divergence, and the final segment is always verified",
        %{
          dir: dir
@@ -666,5 +742,229 @@ defmodule Coordinator.QueueTest do
     {:ok, _} = Queue.next_task(a)
     {us, {:ok, _}} = :timer.tc(fn -> Queue.next_task(a) end)
     assert us < 2_000_000
+  end
+
+  describe "metapopulation" do
+    @metapop_spec Map.merge(@spec_ok, %{
+                    "seeds" => [1, 2],
+                    "steps" => 200,
+                    "segmentSteps" => 100,
+                    "censusEvery" => 100,
+                    "metapopulation" => %{"topology" => "ring", "migrantCount" => 4}
+                  })
+
+    test "wires import_from to the ring-predecessor seed's same-index segment; segment 0 never imports" do
+      {:ok, 4} = Queue.create_experiment(%{@metapop_spec | "experiment" => "m1"})
+      seg1 = Queue.segment("seg-1")
+      seg2 = Queue.segment("seg-2")
+      seg3 = Queue.segment("seg-3")
+      seg4 = Queue.segment("seg-4")
+
+      assert seg1.seed == 1 and seg1.index == 0
+      assert seg3.seed == 2 and seg3.index == 0
+      assert Map.get(seg1, :import_from) == nil
+      assert Map.get(seg3, :import_from) == nil
+      # A 2-seed ring: each seed's predecessor is the other.
+      assert Map.get(seg2, :import_from) == seg3.id
+      assert Map.get(seg4, :import_from) == seg1.id
+    end
+
+    test "resolves and stores a salt (deterministically, absent an explicit one) in the experiment record" do
+      {:ok, 4} = Queue.create_experiment(%{@metapop_spec | "experiment" => "m2"})
+      %{spec: spec} = Queue.experiment("m2")
+      assert is_integer(spec["metapopulation"]["salt"])
+
+      assert spec["metapopulation"]["salt"] >= 0 and
+               spec["metapopulation"]["salt"] <= 4_294_967_295
+
+      assert spec["metapopulation"]["topology"] == "ring"
+      assert spec["metapopulation"]["migrantCount"] == 4
+      # Deterministic given the experiment's own identity (its name), not
+      # wall-clock or process state: recomputing it the same way Queue does
+      # (a hash of the experiment name) gives the same stored value, so a
+      # replay never depends on when/where it was first resolved.
+      assert spec["metapopulation"]["salt"] == :erlang.phash2("m2", 4_294_967_296)
+    end
+
+    test "an explicit salt is kept as given, not overridden" do
+      spec = %{
+        @metapop_spec
+        | "experiment" => "m3",
+          "metapopulation" => %{"topology" => "ring", "migrantCount" => 4, "salt" => 777}
+      }
+
+      {:ok, 4} = Queue.create_experiment(spec)
+      %{spec: stored} = Queue.experiment("m3")
+      assert stored["metapopulation"]["salt"] == 777
+    end
+
+    test "requires at least 2 seeds" do
+      assert {:error, "metapopulation requires at least 2 seeds" <> _} =
+               Queue.create_experiment(%{@metapop_spec | "experiment" => "m4", "seeds" => [1]})
+    end
+
+    test "rejects a bad topology or migrantCount" do
+      assert {:error, "metapopulation.topology" <> _} =
+               Queue.create_experiment(%{
+                 @metapop_spec
+                 | "experiment" => "m5",
+                   "metapopulation" => %{"topology" => "star", "migrantCount" => 4}
+               })
+
+      assert {:error, "metapopulation.migrantCount" <> _} =
+               Queue.create_experiment(%{
+                 @metapop_spec
+                 | "experiment" => "m6",
+                   "metapopulation" => %{"topology" => "ring", "migrantCount" => 0}
+               })
+    end
+
+    test "\"no-migration\" runs get no import_from wiring even within a metapopulation experiment (the metapopulation-level control)" do
+      spec = %{
+        @metapop_spec
+        | "experiment" => "m7",
+          "conditions" => ["treatment", "no-migration"]
+      }
+
+      {:ok, 8} = Queue.create_experiment(spec)
+
+      # Fetch every segment via the experiment listing instead of guessing ids.
+      %{segments: segs} = Queue.experiment("m7")
+      no_migration_segs = Enum.filter(segs, &(&1.condition == "no-migration"))
+      treatment_segs = Enum.filter(segs, &(&1.condition == "treatment"))
+      assert length(no_migration_segs) == 4
+      assert length(treatment_segs) == 4
+
+      for s <- no_migration_segs, s.index > 0 do
+        seg = Queue.segment(s.id)
+        assert Map.get(seg, :import_from) == nil
+      end
+
+      assert Enum.any?(treatment_segs, fn s ->
+               s.index > 0 && Map.get(Queue.segment(s.id), :import_from) != nil
+             end)
+    end
+
+    test "the barrier: a run's segment 1 isn't offered until its ring-predecessor's segment 0 is done, even though its own chain is ready first",
+         %{dir: dir} do
+      {:ok, 4} = Queue.create_experiment(%{@metapop_spec | "experiment" => "m8"})
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+
+      {:ok, t1} = Queue.next_task(a)
+      assert t1.segment.id == "seg-1"
+      upload(dir, t1, a, "h1")
+      {:ok, "done"} = done(t1, a, "h1")
+
+      # seg-2 (seed 1, index 1)'s own predecessor (seg-1) is done, but its
+      # cross-run predecessor (seg-3, seed 2's segment 0) is still pending --
+      # the barrier must skip it and offer seg-3 instead.
+      {:ok, t3} = Queue.next_task(a)
+      assert t3.segment.id == "seg-3"
+      upload(dir, t3, a, "h3")
+      {:ok, "done"} = done(t3, a, "h3")
+
+      # Now both of seg-2's dependencies are done: the barrier clears.
+      {:ok, t2} = Queue.next_task(a)
+      assert t2.segment.id == "seg-2"
+      assert t2.importFrom == "seg-3"
+      assert is_binary(t2.importHash)
+    end
+
+    test "rejecting with predecessor \"import\" requeues the cross-run predecessor, not the own-run one",
+         %{dir: dir} do
+      {:ok, 4} = Queue.create_experiment(%{@metapop_spec | "experiment" => "m9"})
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+
+      {:ok, t1} = Queue.next_task(a)
+      upload(dir, t1, a, "h1")
+      {:ok, "done"} = done(t1, a, "h1")
+      {:ok, t3} = Queue.next_task(a)
+      upload(dir, t3, a, "h3")
+      {:ok, "done"} = done(t3, a, "h3")
+      {:ok, t2} = Queue.next_task(a)
+      assert t2.importFrom == "seg-3"
+
+      assert :ok = Queue.reject(t2.segment.id, a, t2.lease, "bad import", "import")
+      # seg-3 (the import source) is the one invalidated and requeued.
+      assert %{status: "pending", rejected: 1} = Queue.segment("seg-3")
+      # seg-1 (t2's own-run predecessor) is untouched.
+      assert %{status: "done"} = Queue.segment("seg-1")
+      # seg-2 itself is reachable from seg-3 (via import_from) and so was
+      # blocked then immediately unblocked back to pending, ready to be
+      # reassigned once seg-3 is redone.
+      assert %{status: "pending"} = Queue.segment("seg-2")
+    end
+
+    test "a source redo with a changed digest: the ring successor's next task carries the NEW digest, never the stale one (coverage: source redo)",
+         %{dir: dir} do
+      # Coverage the review asked for (a two-island concurrent-GPU scenario
+      # was judged too large/heavy for this suite -- see the mix-test-level
+      # coverage note in the handoff): the redo/stale-digest transition
+      # itself, exercised here through Coordinator.Queue's own API, the same
+      # way "rejecting with predecessor \"import\" requeues..." above does,
+      # just carried one step further through the actual redo.
+      {:ok, 4} = Queue.create_experiment(%{@metapop_spec | "experiment" => "m11"})
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+
+      {:ok, t1} = Queue.next_task(a)
+      upload(dir, t1, a, "h1")
+      {:ok, "done"} = done(t1, a, "h1")
+      {:ok, t3} = Queue.next_task(a)
+      # importHash is the physics-only state hash (Segment.accepted_state_hash),
+      # not the artifact digest passed to `done` -- upload's own 5th argument.
+      upload(dir, t3, a, "h3-v1", "s3-v1")
+      {:ok, "done"} = done(t3, a, "h3-v1")
+      {:ok, t2} = Queue.next_task(a)
+      assert t2.importFrom == "seg-3"
+      assert t2.importHash == "s3-v1"
+
+      # seg-3 (the import source) is rejected and redone with a DIFFERENT
+      # accepted digest -- as a real recomputation after a genuine defect
+      # (not merely a retry of the same result) would produce.
+      assert :ok = Queue.reject(t2.segment.id, a, t2.lease, "bad import", "import")
+      assert %{status: "pending"} = Queue.segment("seg-3")
+      {:ok, t3v2} = Queue.next_task(a)
+      assert t3v2.segment.id == "seg-3"
+      upload(dir, t3v2, a, "h3-v2", "s3-v2")
+      {:ok, "done"} = done(t3v2, a, "h3-v2")
+
+      # seg-2's next offered task must carry the NEW digest -- Segment.accepted_state_hash
+      # reads the segment's *current* accepted attempt, not whatever an
+      # earlier (now-superseded, now-attemptless after being blocked/reset)
+      # task response happened to say.
+      {:ok, t2v2} = Queue.next_task(a)
+      assert t2v2.segment.id == "seg-2"
+      assert t2v2.importFrom == "seg-3"
+      assert t2v2.importHash == "s3-v2"
+      refute t2v2.importHash == t2.importHash
+    end
+
+    test "a divergence propagates across the ring: the diverged segment's own successor and the run importing from it both block",
+         %{dir: dir} do
+      {:ok, 4} = Queue.create_experiment(%{@metapop_spec | "experiment" => "m10"})
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+
+      {:ok, t1} = Queue.next_task(a)
+      upload(dir, t1, a, "h1")
+      {:ok, "done"} = done(t1, a, "h1")
+      {:ok, t3} = Queue.next_task(a)
+      upload(dir, t3, a, "h3")
+      {:ok, "done"} = done(t3, a, "h3")
+
+      {:ok, v} = Queue.next_task(b)
+      assert v.kind == "verify"
+      assert v.segment.id == "seg-1"
+
+      assert {:ok, "diverged"} =
+               Queue.complete(v.segment.id, b, v.lease, "verify", "wrong-digest", nil)
+
+      # seg-2: seg-1's own-run successor.
+      assert %{status: "blocked"} = Queue.segment("seg-2")
+      # seg-4: seed 2's segment 1, which imports from seg-1.
+      assert %{status: "blocked"} = Queue.segment("seg-4")
+      # seg-3 has no edge from seg-1 (only an edge *into* seg-2), so it's unaffected.
+      assert %{status: "done"} = Queue.segment("seg-3")
+    end
   end
 end

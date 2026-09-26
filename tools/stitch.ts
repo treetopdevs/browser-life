@@ -29,7 +29,13 @@
 // anything new is written.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { METRICS_VERSION } from "@bl/schema";
-import { BUNDLE_FILES, MIGRATIONS_FILE, stitchRun, type StitchSegment } from "@bl/runner";
+import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, stitchRun, type StitchSegment } from "@bl/runner";
+
+// Optional files (not in BUNDLE_FILES): recorded only when the run has the
+// corresponding mechanism configured (tile migration / a metapopulation), so
+// a migration-disabled or non-metapopulation run's bundle never carries them
+// (see MIGRATIONS_FILE/EXCHANGES_FILE's own docs in packages/runner/src/stitch.ts).
+const OPTIONAL_FILES = [MIGRATIONS_FILE, EXCHANGES_FILE] as const;
 
 const a = parseArgs(Deno.args, {
   string: ["experiment", "coordinator", "out", "token"],
@@ -65,7 +71,9 @@ interface Listed {
   /** true/false only when a verify attempt matching the current accepted digest also reported observation-file digests; null otherwise (see `Coordinator.Queue`'s `{:experiment, name}` handler). */
   observationsVerified: boolean | null;
 }
-const exp: { spec: { steps: number; presetId: string }; segments: Listed[] } = await (await get(`/api/experiments/${encodeURIComponent(a.experiment)}`)).json();
+const exp: { spec: { steps: number; presetId: string; metapopulation?: unknown }; segments: Listed[] } = await (
+  await get(`/api/experiments/${encodeURIComponent(a.experiment)}`)
+).json();
 
 const byRun = new Map<string, Listed[]>();
 for (const s of exp.segments) byRun.set(s.run, [...(byRun.get(s.run) ?? []), s]);
@@ -76,6 +84,15 @@ for (const s of exp.segments) byRun.set(s.run, [...(byRun.get(s.run) ?? []), s])
 // digest alone; see packages/runner/src/stitch.ts's `StitchSegment` doc).
 for (const s of exp.segments) if (s.observationsVerified === false) console.warn(`WARNING: ${s.run} #${s.index}: observation files mismatch (producedBy ${s.producedBy}, verifiedBy ${s.verifiedBy})`);
 
+// Whether this *experiment* has a metapopulation at all -- the source of
+// truth for whether exchanges.tsv is expected on every segment, rather than
+// inferring it from whether any segment happens to have the file recorded
+// (review P2: if every segment of a metapopulation run were missing it due
+// to a bug, file-presence inference would silently read that as "not
+// configured" instead of catching the gap). `spec["metapopulation"]` is
+// experiment-wide (Coordinator.Queue's `put_metapopulation/2`), so this is
+// the same for every run in `exp`, including its "no-migration" control.
+const metapopConfigured = Boolean(exp.spec.metapopulation);
 // Why a run cannot be exported (yet), or null.
 function ineligible(segs: Listed[]): string | null {
   const unfinished = segs.filter((s) => s.status !== "done" && s.status !== "verified");
@@ -85,18 +102,25 @@ function ineligible(segs: Listed[]): string | null {
     return "not every segment's observations were verified as matching (pass without --require-observations-verified to stitch anyway)";
   const unbound = segs.filter((s) => BUNDLE_FILES.some((f) => !s.files?.[f]));
   if (unbound.length) return `${unbound.length} segment(s) lack a complete, digest-recorded bundle (uploaded before the coordinator recorded file digests?)`;
-  // migrations.tsv is recorded (like every other bundle file) whenever a segment's
-  // run had migration configured (see runner.ts) -- not in BUNDLE_FILES, since a
-  // migration-disabled run never has it, but once *any* segment of this run does,
-  // the config didn't change mid-run, so every segment must: a run whose segments
-  // disagree indicates a partial/corrupted record, not a legitimately
-  // migration-disabled one. Checked here (against the coordinator's recorded file
-  // digests) so a missing one is caught before `download` ever runs -- `download`
-  // and `stitchRun` enforce the same thing again, defensively.
-  const migrating = segs.some((s) => s.files?.[MIGRATIONS_FILE]);
-  if (migrating) {
-    const missing = segs.filter((s) => !s.files?.[MIGRATIONS_FILE]);
-    if (missing.length) return `migration is configured for this run but ${missing.length} segment(s) have no recorded ${MIGRATIONS_FILE}`;
+  // An optional file is recorded (like every other bundle file) whenever a
+  // segment's run has the corresponding mechanism configured (see
+  // OPTIONAL_FILES's doc) -- not in BUNDLE_FILES, since a run without that
+  // mechanism never has it, but once *any* segment of this run does, the
+  // config didn't change mid-run, so every segment must: a run whose segments
+  // disagree indicates a partial/corrupted record. Checked here (against the
+  // coordinator's recorded file digests) so a missing one is caught before
+  // `download` ever runs -- `download` and `stitchRun` enforce the same thing
+  // again, defensively.
+  for (const f of OPTIONAL_FILES) {
+    // exchanges.tsv's "is this configured" comes from the experiment's own
+    // spec (see metapopConfigured's doc), not file presence; migrations.tsv
+    // has no equivalent experiment-wide flag exposed here, so it keeps the
+    // file-presence inference (unchanged, and not what review P2 flagged).
+    const configured = f === EXCHANGES_FILE ? metapopConfigured : segs.some((s) => s.files?.[f]);
+    if (configured) {
+      const missing = segs.filter((s) => !s.files?.[f]);
+      if (missing.length) return `${f} is configured for this run but ${missing.length} segment(s) have no recorded ${f}`;
+    }
   }
   return null;
 }
@@ -134,8 +158,8 @@ async function existing(dir: string, segs: Listed[]): Promise<string | null> {
     return "incomplete";
   }
   for (const f of BUNDLE_FILES) if (!(await Deno.stat(`${dir}/${f}`).catch(() => null))) return "incomplete";
-  // migrations.tsv isn't in BUNDLE_FILES (see MIGRATIONS_FILE's doc: a
-  // migration-disabled run never has one), but once the coordinator's own
+  // An optional file isn't in BUNDLE_FILES (see OPTIONAL_FILES's doc: a run
+  // without that mechanism never has one), but once the coordinator's own
   // recorded file digests for this run's segments show it does (the same
   // signal `ineligible` uses above), a local export missing it on disk is
   // incomplete. An older exporter that only ever fetched BUNDLE_FILES
@@ -143,7 +167,10 @@ async function existing(dir: string, segs: Listed[]): Promise<string | null> {
   // that's silently missing this file -- its fingerprint would still match
   // (fingerprint covers accepted digests, not which files ended up on disk),
   // and it would never get rebuilt.
-  if (segs.some((s) => s.files?.[MIGRATIONS_FILE]) && !(await Deno.stat(`${dir}/${MIGRATIONS_FILE}`).catch(() => null))) return "incomplete";
+  for (const f of OPTIONAL_FILES) {
+    const configured = f === EXCHANGES_FILE ? metapopConfigured : segs.some((s) => s.files?.[f]);
+    if (configured && !(await Deno.stat(`${dir}/${f}`).catch(() => null))) return "incomplete";
+  }
   if ((manifest.metricsVersion ?? 1) !== METRICS_VERSION) return "stale-metrics-version";
   return fingerprint(manifest.segments ?? []);
 }
@@ -170,13 +197,15 @@ async function download(s: Listed): Promise<StitchSegment> {
     if (got !== s.files![f]) throw new Error(`${s.run} #${s.index}: ${f} has SHA-256 ${got}, the accepted attempt recorded ${s.files![f]}`);
     files[f] = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   }
-  // Optional, unlike the files above: only present when this run had migration
-  // configured (`ineligible` already required it on every segment or none).
-  if (s.files?.[MIGRATIONS_FILE]) {
-    const bytes = new Uint8Array(await (await get(`/api/segments/${s.id}/files/${MIGRATIONS_FILE}`)).arrayBuffer());
+  // Optional, unlike the files above: only present when this run has the
+  // corresponding mechanism configured (`ineligible` already required each on
+  // every segment or none).
+  for (const f of OPTIONAL_FILES) {
+    if (!s.files?.[f]) continue;
+    const bytes = new Uint8Array(await (await get(`/api/segments/${s.id}/files/${f}`)).arrayBuffer());
     const got = await sha256(bytes);
-    if (got !== s.files[MIGRATIONS_FILE]) throw new Error(`${s.run} #${s.index}: ${MIGRATIONS_FILE} has SHA-256 ${got}, the accepted attempt recorded ${s.files[MIGRATIONS_FILE]}`);
-    files[MIGRATIONS_FILE] = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    if (got !== s.files[f]) throw new Error(`${s.run} #${s.index}: ${f} has SHA-256 ${got}, the accepted attempt recorded ${s.files[f]}`);
+    files[f] = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   }
   return { ...s, digest: s.digest!, fileDigests: s.files, files };
 }

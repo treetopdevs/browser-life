@@ -8,7 +8,7 @@
 // concatenation of its segments' (tests/deno/stitch.ts checks this against a
 // continuous run byte for byte). The manifest is the last segment's, widened
 // to cover the whole history.
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
+import { MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, exchangePositions } from "@bl/schema";
 import { runId, sameConfig, type RunSummary } from "./runner.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
@@ -27,6 +27,13 @@ const STEPPED_TSV = new Set(["lineages.tsv", "heredity.tsv"]);
  * (see its own doc below) instead of only ever fetching `BUNDLE_FILES`.
  */
 export const MIGRATIONS_FILE = "migrations.tsv";
+/**
+ * Cross-run exchange events (see packages/schema/src/exchange.ts), written
+ * only for a metapopulation run — same "not in BUNDLE_FILES, all-or-nothing,
+ * exported for tools/stitch.ts to fetch and require" discipline as
+ * `MIGRATIONS_FILE`.
+ */
+export const EXCHANGES_FILE = "exchanges.tsv";
 
 /**
  * `BUNDLE_FILES` minus `manifest.json` — the files a verify attempt's own
@@ -39,12 +46,14 @@ export const OBSERVATION_FILES = BUNDLE_FILES.filter((f): f is Exclude<(typeof B
 
 /**
  * Every file a verify attempt reports a digest for when it has it:
- * `OBSERVATION_FILES` plus the optional `MIGRATIONS_FILE` (present only for a
- * migration-enabled run). The coordinator's `@verified_files` must match.
- * Without the migration log here, a migrating run could be marked
- * `observationsVerified` while its migrations.tsv was never compared.
+ * `OBSERVATION_FILES` plus the optional `MIGRATIONS_FILE` and `EXCHANGES_FILE`
+ * (present only for, respectively, a migration-enabled run and a
+ * metapopulation run). The coordinator's `@verified_files` must match.
+ * Without the migration/exchange logs here, a migrating or metapopulation run
+ * could be marked `observationsVerified` while its migrations.tsv/
+ * exchanges.tsv was never compared.
  */
-export const VERIFIED_FILES: readonly string[] = [...OBSERVATION_FILES, MIGRATIONS_FILE];
+export const VERIFIED_FILES: readonly string[] = [...OBSERVATION_FILES, MIGRATIONS_FILE, EXCHANGES_FILE];
 
 /**
  * SHA-256 (lowercase hex) of each `VERIFIED_FILES` entry present in
@@ -157,6 +166,103 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
         const step = Number(row.split("\t", 1)[0]);
         if (!(step > s.startStep && step <= end)) throw new Error(`${id}: ${MIGRATIONS_FILE} has a row at step ${step}, outside (${s.startStep}, ${end}]`);
       }
+    // exchanges.tsv: required (not merely permitted) whenever the spec has a
+    // metapopulation -- review P2 found the previous version let every
+    // segment silently omit it even when manifests declare imports, which
+    // would hide exactly the kind of exporter bug review 1 already found for
+    // migrations.tsv (an exporter that only ever fetched BUNDLE_FILES). Rows
+    // land exactly at this segment's own start step (a metapopulation
+    // boundary happens once, before any physics steps).
+    if (refSpec.metapopulation) {
+      if (typeof s.files[EXCHANGES_FILE] !== "string") throw new Error(`${id}: metapopulation run but missing ${EXCHANGES_FILE}`);
+      const rows = lines(s.files[EXCHANGES_FILE]).slice(1);
+      const cols = (r: string) => r.split("\t");
+      for (const row of rows) {
+        const c = cols(row);
+        const step = Number(c[0]);
+        if (step !== s.startStep) throw new Error(`${id}: ${EXCHANGES_FILE} has a row at step ${step}, expected exactly ${s.startStep}`);
+        // review P2 round 2: a row with any other direction used to be
+        // silently excluded from *both* the import and export tallies below
+        // (Array.filter just skips it), instead of being caught as bad data.
+        if (c[1] !== "import" && c[1] !== "export") throw new Error(`${id}: ${EXCHANGES_FILE} has a row with an unrecognised direction ${JSON.stringify(c[1])}`);
+      }
+
+      // Whether this boundary is expected to have imported comes from the
+      // (trusted) spec -- metapopulation present (this branch), condition
+      // other than "no-migration" (Coordinator.Queue never wires import_from
+      // for that condition), and index >= 1 (segment #0 never has a
+      // cross-run predecessor) -- never from the manifest's own self-reported
+      // importedStartHash/netExchangeMatter, which review P2 round 2 found a
+      // bad producer could clear or fabricate independently of what actually
+      // happened (clearing importedStartHash on a segment that really did
+      // import, or setting a bogus netExchangeMatter on one that didn't,
+      // both used to pass).
+      const expectImport = refSpec.condition !== "no-migration" && s.index >= 1;
+      if (expectImport !== (m.importedStartHash != null))
+        throw new Error(
+          `${id}: importedStartHash is ${m.importedStartHash != null ? "set" : "absent"}, but this boundary ${expectImport ? "is" : "is not"} expected to have imported (metapopulation, condition ${JSON.stringify(refSpec.condition)}, index ${s.index})`,
+        );
+      if (expectImport && !(typeof m.importedStartHash === "string" && /^[0-9a-f]{16}$/.test(m.importedStartHash)))
+        throw new Error(`${id}: importedStartHash ${JSON.stringify(m.importedStartHash)} is not a state hash (16 lowercase hex digits)`);
+      if (expectImport !== (m.netExchangeMatter != null))
+        throw new Error(`${id}: netExchangeMatter is ${m.netExchangeMatter != null ? "set" : "absent"}, but this boundary ${expectImport ? "is" : "is not"} expected to have imported`);
+
+      if (expectImport) {
+        // Accounting: an importing segment's boundary has exactly
+        // `migrantCount` import rows and `migrantCount` export rows, one pair
+        // per slot, each side's cell equal to the *deterministic* exchange
+        // position for that slot -- not merely equal to each other (review P2
+        // round 2: replacing every import/export cell with the same wrong
+        // value, e.g. 999999999, used to pass the old equal-to-each-other
+        // check). Comparing against the canonical `exchangePositions` output
+        // also gives bounds and per-boundary uniqueness for free, since that
+        // function never returns an out-of-range or repeated cell -- a
+        // duplicated or out-of-range slot value here can only ever match at
+        // most one of the `migrantCount` canonical slots, so some other slot
+        // is left uncovered and caught by the "missing slot" check below.
+        // Totals must agree with the manifest's own netExchangeMatter.
+        const migrantCount: number = refSpec.metapopulation.migrantCount;
+        const positions = exchangePositions(m.cfg, refSpec.metapopulation.salt, s.startStep, migrantCount);
+        const imports = rows.filter((r) => cols(r)[1] === "import");
+        const exports = rows.filter((r) => cols(r)[1] === "export");
+        if (imports.length !== migrantCount) throw new Error(`${id}: ${EXCHANGES_FILE} has ${imports.length} import row(s), expected migrantCount ${migrantCount}`);
+        if (exports.length !== migrantCount) throw new Error(`${id}: ${EXCHANGES_FILE} has ${exports.length} export row(s), expected migrantCount ${migrantCount}`);
+        const bySlot = (rs: string[]) => new Map(rs.map((r) => [Number(cols(r)[2]), cols(r)]));
+        const importBySlot = bySlot(imports);
+        const exportBySlot = bySlot(exports);
+        for (let slot = 0; slot < migrantCount; slot++) {
+          const im = importBySlot.get(slot);
+          const ex = exportBySlot.get(slot);
+          if (!im || !ex) throw new Error(`${id}: ${EXCHANGES_FILE} missing slot ${slot} on the import or export side`);
+          const expectedCell = positions[slot];
+          if (Number(im[3]) !== expectedCell) throw new Error(`${id}: ${EXCHANGES_FILE} slot ${slot} import cell ${im[3]} does not match the deterministic exchange position ${expectedCell}`);
+          if (Number(ex[3]) !== expectedCell) throw new Error(`${id}: ${EXCHANGES_FILE} slot ${slot} export cell ${ex[3]} does not match the deterministic exchange position ${expectedCell}`);
+        }
+        // Each row's matter must be a real per-cell amount (a nonnegative
+        // integer within the world bound), not just balance in aggregate.
+        for (const r of [...imports, ...exports]) {
+          const v = cols(r)[4];
+          if (!/^\d+$/.test(v ?? "") || Number(v) > MATTER_MAX) throw new Error(`${id}: ${EXCHANGES_FILE} has an invalid matter value ${JSON.stringify(v)}`);
+        }
+        const sumMatter = (rs: string[]) => rs.reduce((a, r) => a + Number(cols(r)[4]), 0);
+        const net = sumMatter(imports) - sumMatter(exports);
+        if (net !== m.netExchangeMatter) throw new Error(`${id}: ${EXCHANGES_FILE} totals (imports - exports = ${net}) disagree with manifest netExchangeMatter ${m.netExchangeMatter}`);
+      } else if (rows.length) {
+        throw new Error(`${id}: ${EXCHANGES_FILE} has ${rows.length} row(s) but this boundary is not expected to have imported`);
+      }
+    } else if (typeof s.files[EXCHANGES_FILE] === "string") {
+      throw new Error(`${id}: ${EXCHANGES_FILE} present on a run without a metapopulation`);
+    }
+    // Continuity: `importedStartHash` (non-null only when this segment applied
+    // an import — see runner.ts) legitimately makes this segment's physics
+    // start differ from its own predecessor's end state (`startHash`, enforced
+    // by the coordinator at schedule time, not checked again here). A jump is
+    // only ever legitimate when *recorded* this way; segment #0 never has a
+    // cross-run predecessor (see Coordinator.Queue's ring wiring), so it can
+    // never legitimately carry one -- enforced above, as part of
+    // `expectImport` (index 0 is never expected to import), for every
+    // metapopulation run; a non-metapopulation run never sets the field at
+    // all (see runner.ts), so there is nothing left to check here.
     at = end;
   });
   if (at !== totalSteps) throw new Error(`segments cover ${at} of ${totalSteps} steps`);
@@ -197,6 +303,15 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     const header = lines(segs[0].files[MIGRATIONS_FILE])[0];
     for (const s of segs) if (lines(s.files[MIGRATIONS_FILE])[0] !== header) throw new Error(`segment #${s.index}: ${MIGRATIONS_FILE} header differs`);
     out[MIGRATIONS_FILE] = header + "\n" + segs.map((s) => s.files[MIGRATIONS_FILE].slice(s.files[MIGRATIONS_FILE].indexOf("\n") + 1)).join("");
+  }
+  // Required from the spec, not inferred from presence (review P2): the
+  // per-segment loop above already threw if any segment of a metapopulation
+  // run were missing EXCHANGES_FILE, or if a non-metapopulation run had one,
+  // so every segment is guaranteed to agree by the time we get here.
+  if (refSpec.metapopulation) {
+    const header = lines(segs[0].files[EXCHANGES_FILE])[0];
+    for (const s of segs) if (lines(s.files[EXCHANGES_FILE])[0] !== header) throw new Error(`segment #${s.index}: ${EXCHANGES_FILE} header differs`);
+    out[EXCHANGES_FILE] = header + "\n" + segs.map((s) => s.files[EXCHANGES_FILE].slice(s.files[EXCHANGES_FILE].indexOf("\n") + 1)).join("");
   }
 
   const wall = manifests.reduce((a, m) => a + m.summary.wallSeconds, 0);
@@ -245,6 +360,21 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
         producedBy: s.producedBy ?? null,
         verifiedBy: s.verifiedBy ?? null,
         observationsVerified: s.observationsVerified ?? null,
+        // Present (non-null only when this segment applied a metapopulation
+        // import -- see runner.ts) *only* when the run itself has a
+        // metapopulation: an ordinary run's stitched segment record omits
+        // both keys entirely rather than carrying them as always-null, so it
+        // stays byte-identical to its pre-metapopulation shape (review P2).
+        // When present: the recorded jump from the coordinator's own
+        // startHash to this segment's actual physics start, and the net
+        // matter the boundary moved -- for an external archipelago checker,
+        // not used by stitching itself.
+        ...(refSpec.metapopulation
+          ? {
+              importedStartHash: manifests[k].importedStartHash ?? null,
+              netExchangeMatter: manifests[k].netExchangeMatter ?? null,
+            }
+          : {}),
       })),
     },
     null,

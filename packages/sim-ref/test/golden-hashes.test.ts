@@ -32,6 +32,7 @@ const PINNED: Record<number, Record<string, string>> = {
     "adhesion-extremes": "00c9ffa767290ed9",
     "adhesion-default-gain": "16b879ff174bb74c",
     "mutation-boundary": "0966e96ab1306e8f",
+    "ring-namespace": "e277953f6ebc2ea2",
   },
 };
 

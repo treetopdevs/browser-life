@@ -23,6 +23,8 @@ import {
   W2_OFF,
   POOL_MAX,
   DEFAULT_K_ADHESION,
+  RING_CELL_BITS,
+  RING_CELL_MASK,
   FLUX_COUNT,
   FLUX_NAMES,
   encodeGenome,
@@ -131,6 +133,16 @@ export function prelude(c: WorldConfig): string {
   consts.MOTILITY = c.motility === false ? "false" : "true";
   consts.ADHESION = c.adhesion === true ? "true" : "false";
   consts.K_ADHESION = i(c.kAdhesion ?? DEFAULT_K_ADHESION);
+  // See WorldConfig.ringNamespace / packLineageLo (@bl/schema): a mutation's
+  // childLo packs the ring namespace into the top RING_NAMESPACE_BITS bits
+  // when configured, unchanged (just the cell index) otherwise -- the
+  // `select` at the mutation site below picks the unnamespaced branch
+  // whenever HAS_RING_NAMESPACE is false, so an unnamespaced config mints
+  // exactly the id it always has.
+  consts.HAS_RING_NAMESPACE = c.ringNamespace !== undefined ? "true" : "false";
+  consts.RING_NAMESPACE = u(c.ringNamespace ?? 0);
+  consts.RING_CELL_SHIFT = u(RING_CELL_BITS);
+  consts.RING_CELL_MASK = u(RING_CELL_MASK);
   consts.L_FLUX = u(LEDGER.FLUX);
   consts.FLUX_N = u(FLUX_COUNT);
   FLUX_NAMES.forEach((name, k) => (consts[`FX_${name.toUpperCase()}`] = u(k)));
@@ -675,15 +687,17 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
           let parentHi = genome[G_LIN_HI + i];
           let parentLo = genome[G_LIN_LO + i];
           mutate(i, draw(base, RND_MUT_WHICH), draw(base, RND_MUT_DELTA));
+          // See WorldConfig.ringNamespace / packLineageLo (@bl/schema).
+          let childLo = select(i, (RING_NAMESPACE << RING_CELL_SHIFT) | (i & RING_CELL_MASK), HAS_RING_NAMESPACE);
           genome[G_LIN_HI + i] = step + 1u;
-          genome[G_LIN_LO + i] = i;
+          genome[G_LIN_LO + i] = childLo;
           // Counters saturate (sticky flag) instead of wrapping: at most one
           // increment per cell per dispatch, so checking at 2^31 cannot overshoot 2^32.
           if (atomicLoad(&ledger[L_EVENTS]) < 0x80000000u) {
             let slot = atomicAdd(&ledger[L_EVENTS], 1u);
             if (slot < EVENT_CAP) {
               events[slot * EVENT_WORDS] = step + 1u;
-              events[slot * EVENT_WORDS + 1u] = i;
+              events[slot * EVENT_WORDS + 1u] = childLo;
               events[slot * EVENT_WORDS + 2u] = parentHi;
               events[slot * EVENT_WORDS + 3u] = parentLo;
             } else if (atomicLoad(&ledger[L_DROPPED]) < 0x80000000u) {

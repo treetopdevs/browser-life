@@ -49,11 +49,14 @@ config :coordinator,
   # value stays pinned to it, so a deploy that bumps this mid-run does not
   # strand its in-flight islands; new experiments pick up the new value.
   metrics_version: 2,
-  # condition => presets it cannot be applied to (packages/runner/src/conditions.ts)
+  # condition => presets it cannot be applied to (packages/runner/src/conditions.ts).
+  # "no-migration" is not listed here: it is meaningful whenever *either*
+  # mechanism it could remove is present (tile migration, via :migration_period
+  # below, or a per-experiment :metapopulation), so Queue.incompatible/3 checks
+  # it dynamically against the spec instead of this static preset list.
   incompatible: %{
     "uniform-light" => ~w(spots soup),
-    "fixed-env" => ~w(spots gradient soup large archipelago),
-    "no-migration" => ~w(spots gradient soup seasons large)
+    "fixed-env" => ~w(spots gradient soup large archipelago)
   },
   # preset => its migrationPeriod (packages/schema/src/presets.ts's "archipelago"
   # preset; 0/absent for every preset without migration configured). Used only to

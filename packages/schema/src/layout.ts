@@ -96,3 +96,16 @@ export const RND = {
  * stream, rather than relying on a `draw` purpose index to tell them apart.
  */
 export const MIGRATION_SEED_SALT = 0x4d494752; // ASCII "MIGR", arbitrary but fixed
+
+/**
+ * Domain-separation salt for packages/schema/src/exchange.ts's cross-run
+ * (metapopulation) migration draws, distinct from `MIGRATION_SEED_SALT`
+ * (same-run tile migration) and from the physics RNG stream, for the same
+ * reason `MIGRATION_SEED_SALT` exists: exchange.ts keys its draws on the
+ * metapopulation's own salt (never an individual run's seed, since a ring's
+ * runs each have a *different* seed by definition — the position a boundary
+ * exchanges must be the same across every run in the ring), XORed with this
+ * constant, so it never coincides with a tile-migration or physics draw that
+ * happens to use the same salt-free value.
+ */
+export const CROSS_MIGRATION_SEED_SALT = 0x584d4947; // ASCII "XMIG", arbitrary but fixed, distinct from MIGRATION_SEED_SALT

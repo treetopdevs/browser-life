@@ -45,6 +45,18 @@ defmodule Coordinator.Queue do
       the experiment's required version — no file I/O, no JSON parsing —
       and only after confirming the attempt uploaded its checkpoint at all.
 
+  A `spec["metapopulation"]` groups one preset/condition's seeds into a ring
+  (see `build_segments/2`): segment `k + 1` of run *i* additionally imports a
+  small cross-run exchange packet from run *i*'s ring-predecessor's segment
+  `k` (`Coordinator.Segment.t`'s `import_from`, packages/schema/src/exchange.ts),
+  and is only offered once that predecessor segment is itself done or verified
+  (the barrier — see `pick_task/3`'s `import_ready?`). `"no-migration"` runs
+  within a metapopulation experiment get no `import_from` wiring at all: that
+  condition is the metapopulation-level control (same seeds, scheduled with no
+  barrier, exactly as if there were no metapopulation). A divergence or reject
+  propagates across both same-run and cross-run edges (`Coordinator.Segment`'s
+  `dependents_graph/1` + `reachable/2`), not just along one run's own chain.
+
   Islands authenticate with a private token issued at join; every assignment
   carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
   heartbeats and completion. The end checkpoint of every accepted run attempt
@@ -105,8 +117,9 @@ defmodule Coordinator.Queue do
         {:complete, seg_id, island, lease, kind, end_hash, summary, observation_digests}
       )
 
-  def reject(seg_id, island, lease, reason),
-    do: GenServer.call(__MODULE__, {:reject, seg_id, island, lease, reason})
+  @doc "`predecessor` is \"own\" (the same run's prior segment — the default) or \"import\" (this segment's cross-run `import_from` source, for a metapopulation) — which one this island found inconsistent."
+  def reject(seg_id, island, lease, reason, predecessor \\ "own"),
+    do: GenServer.call(__MODULE__, {:reject, seg_id, island, lease, reason, predecessor})
 
   @doc "Publishes a validated checkpoint into the content-addressed store, if `lease` is still the segment's current run attempt."
   def publish_checkpoint(seg_id, island, lease, staged, digest, state_hash),
@@ -385,7 +398,7 @@ defmodule Coordinator.Queue do
               "segment #{seg.id} (#{seg.run}##{seg.index}) diverged: #{Segment.accepted_digest(seg)} (#{Segment.accepted_island(seg)}) vs #{end_hash} (#{island_id})"
             )
 
-            %{s | segments: Segment.block_descendants(s.segments, seg.run, seg.index)}
+            %{s | segments: Segment.block_descendants(s.segments, seg.id)}
           else
             s
           end
@@ -394,12 +407,15 @@ defmodule Coordinator.Queue do
     end
   end
 
-  # The island assigned `seg_id` (to run it or to verify it) found its start
-  # checkpoint inconsistent with the predecessor's report: invalidate the
-  # predecessor, requeue it, and reset everything after it. `seg_id` itself is
-  # left as-is (its own lease simply runs out and is reclaimed in due course);
-  # only the predecessor is acted on here.
-  def handle_call({:reject, seg_id, island_id, lease, reason}, _from, s) do
+  # The island assigned `seg_id` (to run it or to verify it) found one of its
+  # two possible predecessors inconsistent with what was reported: invalidate
+  # that predecessor, requeue it, and reset everything reachable from it.
+  # `predecessor` picks which one -- "own" (the same run's prior segment,
+  # `prev_seg/2`) or "import" (this segment's cross-run `import_from` source,
+  # a different run's segment at the same index — see the moduledoc). `seg_id`
+  # itself is left as-is (its own lease simply runs out and is reclaimed in
+  # due course); only the predecessor is acted on here.
+  def handle_call({:reject, seg_id, island_id, lease, reason, predecessor}, _from, s) do
     seg = s.segments[seg_id]
 
     assigned? =
@@ -407,21 +423,33 @@ defmodule Coordinator.Queue do
         (Attempt.active?(current_run(seg), island_id, lease) ||
            Attempt.active?(current_verify(seg), island_id, lease))
 
+    target =
+      case predecessor do
+        "import" -> seg && Map.get(seg, :import_from) && s.segments[Map.get(seg, :import_from)]
+        _ -> seg && prev_seg(s, seg)
+      end
+
     with true <- assigned?,
-         prev when not is_nil(prev) <- prev_seg(s, seg) do
-      Logger.error("segment #{prev.id} rejected by #{island_id}: #{clip(reason)}")
+         prev when not is_nil(prev) <- target do
+      Logger.error(
+        "segment #{prev.id} rejected by #{island_id} (#{predecessor}): #{clip(reason)}"
+      )
 
       # Nothing to clean up: the rejected attempt's checkpoint and bundle
       # files are content-addressed (and possibly shared), and files are only
       # ever served through a segment's accepted attempt's own record.
-      s =
-        %{s | segments: Segment.block_descendants(s.segments, prev.run, prev.index)}
-        |> put_in([:segments, prev.id], Segment.requeue(prev))
-        |> then(&%{&1 | segments: Segment.unblock_after(&1.segments, prev.run, prev.index)})
+      #
+      # `Segment.redo/2` does the block-requeue-unblock transition in one
+      # call, building `dependents_graph/1` once and scoped to `prev`'s own
+      # experiment rather than the whole coordinator's segments (review P2 --
+      # the previous block_descendants/requeue/unblock_after chain built it
+      # twice, unscoped).
+      s = %{s | segments: Segment.redo(s.segments, prev.id)}
 
       {:reply, :ok, persist(s)}
     else
-      _ -> {:reply, {:error, "segment not assigned to this island/lease"}, s}
+      _ ->
+        {:reply, {:error, "segment not assigned to this island/lease, or no such predecessor"}, s}
     end
   end
 
@@ -585,7 +613,7 @@ defmodule Coordinator.Queue do
       not unique_list?(spec["conditions"], 16, &(&1 in conditions)) ->
         {:error, "conditions must be 1..16 unique values from #{Enum.join(conditions, ", ")}"}
 
-      (bad = incompatible(spec["presetId"], spec["conditions"])) != nil ->
+      (bad = incompatible(spec["presetId"], spec["conditions"], spec)) != nil ->
         {:error, "condition #{bad} does not apply to preset #{spec["presetId"]}"}
 
       not unique_list?(spec["seeds"], 1000, &int_in?.(&1, 0, 4_294_967_295)) ->
@@ -624,6 +652,9 @@ defmodule Coordinator.Queue do
           nil ->
         {:error, bad}
 
+      (bad = invalid_metapopulation(spec)) != nil ->
+        {:error, bad}
+
       not int_in?.(Map.get(spec, "deepEvery", 10), 1, 1000) ->
         {:error, "deepEvery must be an integer in 1..1000"}
 
@@ -642,15 +673,17 @@ defmodule Coordinator.Queue do
         # coordinator's own required version at creation time (like
         # `:rule_version`), never client-supplied — `Map.take/2` above drops
         # any value the client tried to set, and the default below always wins.
-        {:ok,
-         Map.merge(
-           %{
-             "deepEvery" => 10,
-             "verifyFraction" => 0.1,
-             "metricsVersion" => Application.get_env(:coordinator, :metrics_version, 1)
-           },
-           Map.take(spec, keep)
-         )}
+        base =
+          Map.merge(
+            %{
+              "deepEvery" => 10,
+              "verifyFraction" => 0.1,
+              "metricsVersion" => Application.get_env(:coordinator, :metrics_version, 1)
+            },
+            Map.take(spec, keep)
+          )
+
+        {:ok, put_metapopulation(base, spec)}
     end
   end
 
@@ -658,9 +691,22 @@ defmodule Coordinator.Queue do
 
   # Conditions that remove something the preset does not have (see
   # packages/runner/src/conditions.ts) would fail on every island.
-  defp incompatible(preset, conditions) do
+  # "no-migration" is not looked up in the static `:incompatible` table (unlike
+  # every other condition): it is meaningful whenever *either* mechanism it
+  # could remove is present -- tile migration configured for this preset
+  # (`:migration_period`), or this spec has a `:metapopulation` -- so its
+  # compatibility depends on the *spec*, not just the preset.
+  defp incompatible(preset, conditions, spec) do
     table = Application.get_env(:coordinator, :incompatible, %{})
-    Enum.find(conditions, fn c -> preset in Map.get(table, c, []) end)
+    has_metapop = is_map(spec["metapopulation"])
+
+    Enum.find(conditions, fn
+      "no-migration" ->
+        effective_migration_period(preset, "treatment") == 0 and not has_metapop
+
+      c ->
+        preset in Map.get(table, c, [])
+    end)
   end
 
   # The migrationPeriod one (preset, condition) run will actually run with: 0
@@ -707,26 +753,124 @@ defmodule Coordinator.Queue do
       length(Enum.uniq(v)) == length(v)
   end
 
+  @max_migrant_count 4096
+
+  # Shape of `spec["metapopulation"]`, if given: `nil` is valid (no
+  # metapopulation at all). At least 2 seeds -- a 1-seed "ring" would import
+  # from itself, which is meaningless -- and `migrantCount` bounded the same
+  # way packages/schema/src/config.ts bounds tile migration's own
+  # `migrantCount` (a positive count, capped well under a world's cell count).
+  # `salt`, if the caller supplies one, must be a valid u32 (it becomes the
+  # metapopulation's seed for cross-run position selection -- see
+  # packages/schema/src/exchange.ts); left absent, `put_metapopulation/2`
+  # resolves and stores one deterministically.
+  defp invalid_metapopulation(%{"metapopulation" => m} = spec) when is_map(m) do
+    cond do
+      m["topology"] != "ring" ->
+        "metapopulation.topology must be \"ring\""
+
+      not (is_integer(m["migrantCount"]) and m["migrantCount"] >= 1 and
+               m["migrantCount"] <= @max_migrant_count) ->
+        "metapopulation.migrantCount must be an integer in 1..#{@max_migrant_count}"
+
+      not (m["salt"] == nil or
+               (is_integer(m["salt"]) and m["salt"] >= 0 and m["salt"] <= 4_294_967_295)) ->
+        "metapopulation.salt must be a u32 integer"
+
+      not (is_list(spec["seeds"]) and length(spec["seeds"]) >= 2) ->
+        "metapopulation requires at least 2 seeds (a 1-seed ring would import from itself)"
+
+      true ->
+        nil
+    end
+  end
+
+  defp invalid_metapopulation(%{"metapopulation" => nil}), do: nil
+  defp invalid_metapopulation(%{"metapopulation" => _}), do: "metapopulation must be an object"
+  defp invalid_metapopulation(_spec), do: nil
+
+  # Resolves and stores the metapopulation's salt (deterministically, from the
+  # experiment's own name, if the caller didn't supply one) into the
+  # persisted spec, so a later replay/verify never depends on recomputing it
+  # -- every segment's task carries the resolved value directly (see task/4).
+  defp put_metapopulation(base, %{"metapopulation" => m}) when is_map(m) do
+    salt = m["salt"] || :erlang.phash2(base["experiment"], 4_294_967_296)
+
+    Map.put(base, "metapopulation", %{
+      "topology" => "ring",
+      "migrantCount" => m["migrantCount"],
+      "salt" => salt
+    })
+  end
+
+  defp put_metapopulation(base, _spec), do: base
+
   # ---- segments ----
 
   defp build_segments(spec, next) do
     per = spec["segmentSteps"]
     count = div(spec["steps"] + per - 1, per)
 
-    for cond <- spec["conditions"],
-        seed <- spec["seeds"],
-        k <- 0..(count - 1),
-        reduce: {%{}, next} do
-      {acc, n} ->
-        id = "seg-#{n}"
-        run = "#{spec["experiment"]}/#{spec["presetId"]}/#{cond}/seed-#{seed}"
-        steps = min(per, spec["steps"] - k * per)
+    {segments, next} =
+      for cond <- spec["conditions"],
+          seed <- spec["seeds"],
+          k <- 0..(count - 1),
+          reduce: {%{}, next} do
+        {acc, n} ->
+          id = "seg-#{n}"
+          run = "#{spec["experiment"]}/#{spec["presetId"]}/#{cond}/seed-#{seed}"
+          steps = min(per, spec["steps"] - k * per)
 
-        seg =
-          Segment.new(id, run, spec["experiment"], cond, seed, k, k == count - 1, k * per, steps)
+          seg =
+            Segment.new(
+              id,
+              run,
+              spec["experiment"],
+              cond,
+              seed,
+              k,
+              k == count - 1,
+              k * per,
+              steps
+            )
 
-        {Map.put(acc, id, seg), n + 1}
+          {Map.put(acc, id, seg), n + 1}
+      end
+
+    segments = if spec["metapopulation"], do: wire_imports(segments, spec), else: segments
+    {segments, next}
+  end
+
+  # Segment k of (condition, seed) imports from the ring-predecessor seed's
+  # segment k - 1 (same condition), for k >= 1 -- segment 0 never imports (see
+  # the moduledoc): the ring is `spec["seeds"]`'s own order, wrapping, shared
+  # by every condition except "no-migration" (that condition's runs are the
+  # metapopulation-level control -- see conditions.ts's own "no-migration").
+  defp wire_imports(segments, spec) do
+    seeds = spec["seeds"]
+    by_run_index = Map.new(segments, fn {id, s} -> {{s.run, s.index}, id} end)
+
+    ring_predecessor = fn seed ->
+      i = Enum.find_index(seeds, &(&1 == seed))
+      Enum.at(seeds, rem(i - 1 + length(seeds), length(seeds)))
     end
+
+    Map.new(segments, fn {id, s} ->
+      import_from =
+        if s.index > 0 and s.condition != "no-migration" and length(seeds) > 1 do
+          partner_run =
+            "#{spec["experiment"]}/#{spec["presetId"]}/#{s.condition}/seed-#{ring_predecessor.(s.seed)}"
+
+          Map.get(by_run_index, {partner_run, s.index - 1})
+        end
+
+      # Only set the key when there's an actual predecessor: an ordinary run
+      # (or a "no-migration" run's segments) must stay byte-identical to a
+      # segment that never had `import_from` at all (review P2) -- `%{s |
+      # import_from: ...}` update syntax would raise since `Segment.new`
+      # itself now omits the key when absent (see its own doc).
+      {id, if(import_from, do: Map.put(s, :import_from, import_from), else: s)}
+    end)
   end
 
   # {run, index} -> segment id, so predecessor lookups are O(1).
@@ -749,7 +893,7 @@ defmodule Coordinator.Queue do
     runnable =
       Enum.find(segs, fn seg ->
         seg.status == "pending" and (seg.index == 0 or prev_done?(s, seg)) and
-          metrics_version_compatible?(s, seg, island)
+          metrics_version_compatible?(s, seg, island) and import_ready?(s, seg)
       end)
 
     lease = rand(12)
@@ -782,9 +926,53 @@ defmodule Coordinator.Queue do
     end
   end
 
+  # The barrier: a segment with a cross-run `import_from` is runnable only
+  # once that predecessor (a different run's same-index segment) is itself
+  # done or verified. No `import_from` (a plain run, or a "no-migration"
+  # run within a metapopulation experiment) is trivially ready. This doesn't
+  # need any island-liveness handling of its own: if the predecessor's
+  # producing island vanishes, the existing stale-lease reclaim
+  # (`Segment.reclaim_stale/3`, already run at the top of `{:next, ...}`)
+  # requeues its segment like any other, and any island can pick it up --
+  # once redone, this barrier clears on the next `pick_task/3` call.
+  defp import_ready?(s, seg) do
+    case Map.get(seg, :import_from) do
+      nil -> true
+      id -> (imp = s.segments[id]) && imp.status in ["done", "verified"]
+    end
+  end
+
   defp task(kind, seg, lease, s) do
     spec = s.experiments[seg.experiment].spec
     prev = if seg.index == 0, do: nil, else: prev_seg(s, seg)
+    import_from = Map.get(seg, :import_from)
+    import_seg = import_from && s.segments[import_from]
+
+    # Whether *this experiment* has a metapopulation, not whether this
+    # particular segment gets an import: a "no-migration" run's segments
+    # never get `import_from` wiring, but RunSpec.metapopulation still
+    # needs to be present for them (see runner.ts's specConfig), which
+    # checks metapopulation presence, not import_from, to accept
+    # "no-migration" as *meaningful* -- the control is exempted from the
+    # exchange itself, not from belonging to the metapopulation.
+    #
+    # For an ordinary (non-metapopulation) experiment, `metapopulation`,
+    # `importFrom` and `importHash` are omitted entirely rather than set to
+    # `nil` -- so an ordinary run's task payload is byte-identical to its
+    # shape before metapopulation existed (review P2 -- see runner.ts's
+    # manifest and stitch.ts's stitched segments for the same discipline).
+    spec_map =
+      %{
+        experiment: spec["experiment"],
+        presetId: spec["presetId"],
+        condition: seg.condition,
+        seed: seg.seed,
+        steps: seg.steps,
+        censusEvery: spec["censusEvery"],
+        deepEvery: spec["deepEvery"],
+        checkpointEvery: 0
+      }
+      |> maybe_put(:metapopulation, task_metapopulation(spec, seg))
 
     %{
       kind: kind,
@@ -796,19 +984,34 @@ defmodule Coordinator.Queue do
         startStep: seg.start_step,
         steps: seg.steps
       },
-      spec: %{
-        experiment: spec["experiment"],
-        presetId: spec["presetId"],
-        condition: seg.condition,
-        seed: seg.seed,
-        steps: seg.steps,
-        censusEvery: spec["censusEvery"],
-        deepEvery: spec["deepEvery"],
-        checkpointEvery: 0
-      },
+      spec: spec_map,
       startFrom: prev && prev.id,
       startHash: prev && Segment.accepted_state_hash(prev)
     }
+    |> maybe_put(:importFrom, import_from)
+    |> maybe_put(:importHash, import_seg && Segment.accepted_state_hash(import_seg))
+  end
+
+  # Sets `key` only when `value` is present -- an absent (opt-in) field must
+  # be omitted from the payload entirely, not set to `nil`, so ordinary
+  # (non-metapopulation) task payloads stay byte-identical to their
+  # pre-metapopulation shape (review P2).
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
+
+  # `spec["metapopulation"]` (topology/migrantCount/salt, shared by the whole
+  # experiment) widened with this *segment's own* `ringNamespace`: its 1-based
+  # position in the ring's `seeds` list (review P1 -- WorldConfig.ringNamespace,
+  # mixed into every founder/mutation id at birth so ids stay unique across the
+  # ring's runs; see runner.ts's specConfig). Every run in a metapopulation
+  # experiment gets one, including "no-migration" runs (uniformity; see
+  # RunSpec.metapopulation's own doc on why that's fine even though such a
+  # run's ids never actually get exchanged).
+  defp task_metapopulation(spec, seg) do
+    case spec["metapopulation"] do
+      nil -> nil
+      m -> Map.put(m, "ringNamespace", Enum.find_index(spec["seeds"], &(&1 == seg.seed)) + 1)
+    end
   end
 
   # A deterministic fraction of segments is replayed, and the final segment of

@@ -248,6 +248,45 @@ defmodule Coordinator.SegmentTest do
     assert obs.(verify.(obs_digests(), obs_digests())) == "match"
   end
 
+  test "complete_verify compares the optional exchanges.tsv the same way, whenever either side has it" do
+    xchg = fn fill -> Map.put(obs_digests(), "exchanges.tsv", String.duplicate(fill, 64)) end
+    obs = fn s -> Enum.find(s.attempts, &(&1.kind == "verify")).observations end
+
+    verify = fn accepted, reported ->
+      s = done_run_with_files(accepted)
+      {:ok, s} = Segment.assign_verify(s, "b", "vlease", 100)
+      {:ok, s} = Segment.complete_verify(s, "b", "vlease", "digest1", reported)
+      s
+    end
+
+    assert obs.(verify.(xchg.("c"), xchg.("c"))) == "match"
+    assert obs.(verify.(xchg.("c"), xchg.("d"))) == "mismatch"
+    assert is_nil(obs.(verify.(xchg.("c"), obs_digests())))
+    assert is_nil(obs.(verify.(obs_digests(), xchg.("c"))))
+    assert obs.(verify.(obs_digests(), obs_digests())) == "match"
+  end
+
+  test "complete_verify compares migrations.tsv and exchanges.tsv independently -- one mismatching does not mask the other matching" do
+    both = fn migFill, xchgFill ->
+      obs_digests()
+      |> Map.put("migrations.tsv", String.duplicate(migFill, 64))
+      |> Map.put("exchanges.tsv", String.duplicate(xchgFill, 64))
+    end
+
+    obs = fn s -> Enum.find(s.attempts, &(&1.kind == "verify")).observations end
+
+    verify = fn accepted, reported ->
+      s = done_run_with_files(accepted)
+      {:ok, s} = Segment.assign_verify(s, "b", "vlease", 100)
+      {:ok, s} = Segment.complete_verify(s, "b", "vlease", "digest1", reported)
+      s
+    end
+
+    assert obs.(verify.(both.("m", "x"), both.("m", "x"))) == "match"
+    assert obs.(verify.(both.("m", "x"), both.("m", "y"))) == "mismatch"
+    assert obs.(verify.(both.("m", "x"), both.("n", "x"))) == "mismatch"
+  end
+
   # Review finding: `last_verify_attempt/1` (and hence a raw `.observations`
   # read) doesn't know a completed verify attempt's comparison target was
   # ever superseded. `requeue/1` keeps that attempt's record untouched even
@@ -375,7 +414,8 @@ defmodule Coordinator.SegmentTest do
              Segment.complete_verify(assigned, "a", "lease1", "digest1")
   end
 
-  test "block_descendants resets and blocks every later segment of the run, including done and verified ones, and nothing from another run" do
+  test "block_descendants blocks every same-run segment after the given one, including done and verified ones, and nothing from another unconnected run" do
+    origin = seg(0)
     pending = seg(1)
     done = done_run() |> Map.merge(%{id: "seg-2", index: 2})
     {:ok, verified} = Segment.assign_verify(done_run(), "b", "v", 0)
@@ -383,9 +423,17 @@ defmodule Coordinator.SegmentTest do
     verified = Map.merge(verified, %{id: "seg-3", index: 3})
     other_run = Segment.new("seg-9", "other/p/c/seed-2", "e", "c", 2, 5, false, 500, 100)
 
-    segments = %{"seg-1" => pending, "seg-2" => done, "seg-3" => verified, "seg-9" => other_run}
-    blocked = Segment.block_descendants(segments, "r/p/c/seed-1", 0)
+    segments = %{
+      "seg-0" => origin,
+      "seg-1" => pending,
+      "seg-2" => done,
+      "seg-3" => verified,
+      "seg-9" => other_run
+    }
 
+    blocked = Segment.block_descendants(segments, "seg-0")
+
+    assert blocked["seg-0"].status == origin.status
     assert blocked["seg-1"].status == "blocked"
     assert blocked["seg-2"].status == "blocked"
     assert blocked["seg-2"].attempts == []
@@ -393,11 +441,34 @@ defmodule Coordinator.SegmentTest do
     assert blocked["seg-9"].status == "pending"
   end
 
-  test "unblock_after resets blocked descendants of a run back to pending, and nothing else" do
+  test "block_descendants also blocks a segment reachable only via a cross-run import_from edge, and transitively its own successors" do
+    origin = seg(0)
+    # A different run's segment 1 imports from "seg-0"; its own segment 2 is
+    # not reachable via import_from, only via that run's own successor edge.
+    importer = Segment.new("seg-b1", "other/p/c/seed-2", "e", "c", 2, 1, false, 100, 100, "seg-0")
+    importer_next = Segment.new("seg-b2", "other/p/c/seed-2", "e", "c", 2, 2, false, 200, 100)
+    unrelated = Segment.new("seg-c0", "third/p/c/seed-3", "e", "c", 3, 0, false, 0, 100)
+
+    segments = %{
+      "seg-0" => origin,
+      "seg-b1" => importer,
+      "seg-b2" => importer_next,
+      "seg-c0" => unrelated
+    }
+
+    blocked = Segment.block_descendants(segments, "seg-0")
+    assert blocked["seg-b1"].status == "blocked"
+    assert blocked["seg-b2"].status == "blocked"
+    assert blocked["seg-c0"].status == "pending"
+  end
+
+  test "unblock_after resets every blocked segment reachable from the given one back to pending, and nothing else" do
+    origin = Segment.block(seg(0))
     blocked = Segment.block(seg(1))
     still_pending = seg(2)
-    segments = %{"seg-1" => blocked, "seg-2" => still_pending}
-    unblocked = Segment.unblock_after(segments, "r/p/c/seed-1", 0)
+    segments = %{"seg-0" => origin, "seg-1" => blocked, "seg-2" => still_pending}
+    unblocked = Segment.unblock_after(segments, "seg-0")
+    assert unblocked["seg-0"].status == "blocked"
     assert unblocked["seg-1"].status == "pending"
     assert unblocked["seg-2"].status == "pending"
   end
@@ -409,5 +480,121 @@ defmodule Coordinator.SegmentTest do
     reclaimed = Segment.reclaim_stale(segments, 100_000, 1000)
     assert reclaimed["seg-0"].status == "pending"
     assert reclaimed["seg-1"].status == "pending"
+  end
+
+  # `reachable/2` is a pure BFS over an arbitrary `%{node => [neighbor]}`
+  # graph, decoupled from segments entirely -- see its own doc for why:
+  # taint propagation's graph logic (same-run successor edges plus cross-run
+  # import_from edges) can be exercised directly against small hand-built
+  # graphs, independent of block_descendants/unblock_after's own tests above
+  # (which check the *wiring* from real segments into this function).
+  describe "reachable/2 (pure graph reachability)" do
+    test "a simple chain" do
+      graph = %{"a" => ["b"], "b" => ["c"], "c" => []}
+      assert Segment.reachable(graph, "a") == MapSet.new(["a", "b", "c"])
+      assert Segment.reachable(graph, "b") == MapSet.new(["b", "c"])
+      assert Segment.reachable(graph, "c") == MapSet.new(["c"])
+    end
+
+    test "a ring terminates instead of looping forever, and reaches every node" do
+      graph = %{"a" => ["b"], "b" => ["c"], "c" => ["a"]}
+      assert Segment.reachable(graph, "a") == MapSet.new(["a", "b", "c"])
+    end
+
+    test "two rings connected by a single cross edge: reaching into one ring reaches the other too" do
+      graph = %{
+        "a" => ["b"],
+        "b" => ["c"],
+        "c" => ["a", "x"],
+        "x" => ["y"],
+        "y" => ["z"],
+        "z" => ["x"]
+      }
+
+      assert Segment.reachable(graph, "a") == MapSet.new(["a", "b", "c", "x", "y", "z"])
+      # The cross edge is one-directional: the second ring can't reach the first.
+      assert Segment.reachable(graph, "x") == MapSet.new(["x", "y", "z"])
+    end
+
+    test "a diamond: a node reachable via two different paths appears exactly once" do
+      graph = %{"a" => ["b", "c"], "b" => ["d"], "c" => ["d"], "d" => []}
+      assert Segment.reachable(graph, "a") == MapSet.new(["a", "b", "c", "d"])
+    end
+
+    test "a node reachable both via a same-run-style edge and an import-style edge" do
+      # "d" has two incoming edges from "a": one direct (as if a same-run
+      # successor two steps down an unrelated path) and one via "c" (as if a
+      # different run's import_from chain) -- both must land on exactly "d".
+      graph = %{"a" => ["b", "c"], "b" => [], "c" => ["d"], "d" => []}
+      # Re-point "b" at "d" too, so "d" is reached by both of "a"'s branches.
+      graph = %{graph | "b" => ["d"]}
+      assert Segment.reachable(graph, "a") == MapSet.new(["a", "b", "c", "d"])
+    end
+
+    test "an empty/absent start node has no neighbors but is still in the result" do
+      assert Segment.reachable(%{}, "lonely") == MapSet.new(["lonely"])
+    end
+
+    test "unreachable nodes are excluded" do
+      graph = %{"a" => ["b"], "b" => [], "unrelated" => ["also-unrelated"]}
+      assert Segment.reachable(graph, "a") == MapSet.new(["a", "b"])
+    end
+  end
+
+  describe "dependents_graph/1 (real segments -> graph)" do
+    test "same-run successor and cross-run import_from edges, combined" do
+      a0 = seg(0)
+      a1 = seg(1)
+      # b0 imports from a0; b1 is only b0's own-run successor.
+      b0 = Segment.new("seg-b0", "other/p/c/seed-2", "e", "c", 2, 0, false, 0, 100, "seg-0")
+      b1 = Segment.new("seg-b1", "other/p/c/seed-2", "e", "c", 2, 1, false, 100, 100)
+
+      segments = %{"seg-0" => a0, "seg-1" => a1, "seg-b0" => b0, "seg-b1" => b1}
+      graph = Segment.dependents_graph(segments)
+
+      assert graph["seg-0"] |> Enum.sort() == ["seg-1", "seg-b0"]
+      assert graph["seg-1"] == []
+      assert graph["seg-b0"] == ["seg-b1"]
+      assert graph["seg-b1"] == []
+    end
+
+    # Review P2: the previous `dependents_graph/1` re-scanned the *entire*
+    # segments map once per vertex to find its importers -- O(n^2) -- which
+    # measured 5.8s at 10,000 segments inside `Coordinator.Queue`'s own
+    # GenServer call (a 5s call timeout, and the system's own
+    # 100k-segments/experiment limit). This pins that it now stays well
+    # under a second at that limit.
+    test "stays well under a second at 100,000 segments (was O(n^2): 5.8s at 10,000)" do
+      segments =
+        for run <- 0..999, index <- 0..99, into: %{} do
+          id = "seg-r#{run}-s#{index}"
+          import_from = if run > 0 and index == 0, do: "seg-r#{run - 1}-s99"
+
+          seg =
+            Segment.new(
+              id,
+              "run-#{run}",
+              "perf",
+              "c",
+              run,
+              index,
+              index == 99,
+              index * 100,
+              100,
+              import_from
+            )
+
+          {id, seg}
+        end
+
+      assert map_size(segments) == 100_000
+
+      {graph_us, graph} = :timer.tc(fn -> Segment.dependents_graph(segments) end)
+      assert map_size(graph) == 100_000
+      assert graph_us < 1_000_000, "dependents_graph/1 took #{graph_us}us for 100,000 segments"
+
+      {block_us, _blocked} = :timer.tc(fn -> Segment.block_descendants(segments, "seg-r0-s0") end)
+      assert block_us < 1_000_000, "block_descendants/2 took #{block_us}us for 100,000 segments"
+    end
   end
 end

@@ -12,9 +12,9 @@ defmodule CoordinatorWeb.ApiController do
   # cheap regardless of what an island uploads.
   @max_manifest 1024 * 1024
   # Must match packages/runner/src/stitch.ts's VERIFIED_FILES (BUNDLE_FILES
-  # minus manifest.json, plus the optional migrations.tsv) and
-  # Coordinator.Segment's @observation_files ++ @optional_observation_files.
-  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json migrations.tsv)
+  # minus manifest.json, plus the optional migrations.tsv and exchanges.tsv)
+  # and Coordinator.Segment's @observation_files ++ @optional_observation_files.
+  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json migrations.tsv exchanges.tsv)
 
   plug :require_island
        when action in [
@@ -104,7 +104,9 @@ defmodule CoordinatorWeb.ApiController do
     do: bad(conn, "expected kind (run|verify), endHash and lease")
 
   def reject(conn, %{"id" => id, "lease" => lease} = p) when is_binary(lease) do
-    case Queue.reject(id, conn.assigns.island, lease, to_string(p["reason"] || "")) do
+    predecessor = if p["predecessor"] == "import", do: "import", else: "own"
+
+    case Queue.reject(id, conn.assigns.island, lease, to_string(p["reason"] || ""), predecessor) do
       :ok -> json(conn, %{ok: true})
       {:error, why} -> conn |> put_status(409) |> json(%{error: why})
     end

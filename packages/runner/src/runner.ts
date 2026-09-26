@@ -11,7 +11,10 @@
 
 import {
   PRESETS,
+  applyExchange,
   cellCount,
+  exchangeMatterTotal,
+  exchangePositions,
   RULE_VERSION,
   SCHEMA_VERSION,
   METRICS_VERSION,
@@ -63,6 +66,26 @@ export interface RunSpec {
   activityThreshold?: number;
   /** Optional world overrides applied after the condition. */
   overrides?: Partial<WorldConfig>;
+  /**
+   * This run's metapopulation, if it belongs to one (see
+   * Coordinator.Queue's `:metapopulation` experiment spec) — a ring of runs
+   * (same experiment/preset/condition, different seeds) exchanging small
+   * cell packets at every segment boundary (packages/schema/src/exchange.ts).
+   * `salt` is resolved and stored once by the coordinator at experiment
+   * creation (never independently derived here), so every run in the ring —
+   * and any verifier — picks the same boundary positions. `ringNamespace` is
+   * this run's own 1-based position in the ring's `seeds` list (also
+   * coordinator-assigned): `specConfig` mixes it into `WorldConfig.ringNamespace`
+   * so this run's founders/mutations never collide with another ring
+   * member's after an exchange (see WorldConfig.ringNamespace's doc). Present
+   * (with a real `ringNamespace`) even for a "no-migration" condition's runs
+   * within a metapopulation experiment: that condition is the metapopulation
+   * *scheduling* control (no `import_from` wiring, no barrier -- see
+   * Coordinator.Queue), not an exemption from needing a distinct namespace,
+   * since a "no-migration" run's own founders could otherwise still collide
+   * with another ring member's namespace-less ids.
+   */
+  metapopulation?: { salt: number; migrantCount: number; ringNamespace: number };
 }
 
 export interface Sink {
@@ -127,6 +150,13 @@ export interface RunOptions {
   observer?: ObserverState;
   /** Return the final state (islands upload it as the next segment's start). */
   keepFinal?: boolean;
+  /**
+   * The ring-predecessor's own accepted end-of-segment state (see
+   * `RunSpec.metapopulation`), if this segment has one — the same one
+   * `spec.metapopulation` must also be set for. Applied once, before any
+   * physics steps, via `packages/schema/src/exchange.ts`.
+   */
+  immigrant?: WorldState;
 }
 
 export interface RunResult {
@@ -156,13 +186,49 @@ export function sameConfig(a: WorldConfig, b: WorldConfig): boolean {
   return keys.length === Object.keys(b).length && keys.every((k) => a[k as keyof WorldConfig] === b[k as keyof WorldConfig]);
 }
 
+/** Like `sameConfig`, but ignoring `seed` and `ringNamespace`: a metapopulation's runs share preset/condition/config by definition, but each has its own seed and (review P1) its own ring namespace -- two ring members legitimately differ in exactly those two fields, never any other. Used to check an immigrant state's config against this run's, not a same-run predecessor's (which must match on `seed`/`ringNamespace` too, via `sameConfig`). */
+function sameConfigExceptSeed(a: WorldConfig, b: WorldConfig): boolean {
+  const keys = Object.keys(a).sort();
+  const exempt = (k: string) => k === "seed" || k === "ringNamespace";
+  return keys.length === Object.keys(b).length && keys.every((k) => exempt(k) || a[k as keyof WorldConfig] === b[k as keyof WorldConfig]);
+}
+
 export function specConfig(spec: RunSpec): WorldConfig {
   const preset = PRESETS.find((p) => p.id === spec.presetId);
   if (!preset) throw new Error(`unknown preset ${spec.presetId}`);
   const base = presetConfig(preset, spec.seed);
+  // "no-migration" (conditions.ts) never throws by itself any more -- it has
+  // no visibility into whether a metapopulation makes it meaningful, only the
+  // WorldConfig. Checked here, once, with both pieces of context: the control
+  // must remove *something* -- tile migration configured for this preset, or
+  // this run belonging to a metapopulation (RunSpec.metapopulation) -- or it
+  // is a no-op control, which is rejected the same way uniform-light/fixed-env
+  // already reject a preset that has nothing for them to remove.
+  if (spec.condition === "no-migration" && !base.migrationPeriod && !spec.metapopulation)
+    throw new Error("no-migration control needs either tile migration (this preset) or a metapopulation (this experiment)");
   const cond = conditionById(spec.condition);
   // spec.overrides wins last, so e.g. { adhesion: true } re-enables adhesion even under no-signal-motility.
-  return { ...base, ...cond.apply(base), ...(spec.overrides ?? {}) };
+  const cfg = { ...base, ...cond.apply(base), ...(spec.overrides ?? {}) };
+  if (spec.metapopulation) {
+    const { migrantCount, salt } = spec.metapopulation;
+    // The coordinator already bounds migrantCount to a conservative fixed
+    // cap (Coordinator.Queue's @max_migrant_count) at experiment-creation
+    // time, without knowing this preset's actual cell count -- checked again
+    // here, against the *real* cellCount(cfg), because exchangePositions's
+    // reprobe loop (packages/schema/src/exchange.ts) never terminates once
+    // migrantCount exceeds the number of cells there are to choose from
+    // (review P2: a 64-cell preset with migrantCount 65 hangs). Caught here,
+    // before that loop ever runs, with a clear error instead.
+    if (!Number.isInteger(migrantCount) || migrantCount < 1) throw new Error("metapopulation.migrantCount must be a positive integer");
+    if (migrantCount > cellCount(cfg)) throw new Error(`metapopulation.migrantCount (${migrantCount}) exceeds this preset's cell count (${cellCount(cfg)})`);
+    if (!Number.isInteger(salt) || salt < 0 || salt > 0xffffffff) throw new Error("metapopulation.salt must be a u32 integer");
+  }
+  // Coordinator-controlled, applied after overrides: a metapopulation run's
+  // ring position determines its namespace (see WorldConfig.ringNamespace),
+  // which every founder/mutation id must be mixed with to stay unique across
+  // the ring's runs -- a correctness requirement, not a tunable, so it always
+  // wins regardless of what spec.overrides asked for.
+  return spec.metapopulation ? { ...cfg, ringNamespace: spec.metapopulation.ringNamespace } : cfg;
 }
 
 /**
@@ -229,6 +295,26 @@ export function continuationError(spec: RunSpec, start: WorldState, observer: Ob
   if (!observer || typeof observer !== "object") return "continuing from a checkpoint requires the matching observer state";
   if (observer.step !== start.step) return `observer state does not belong to the start checkpoint (t=${observer.step})`;
   if (!sameSettings(observer.settings, observerSettings(spec))) return "observer settings differ from the run spec";
+  return null;
+}
+
+/**
+ * Why an immigrant state (see `RunOptions.immigrant`) cannot be applied to
+ * this segment, or null when it can. Same idea as `continuationError`, but
+ * comparing configs with `sameConfigExceptSeed` rather than `sameConfig` (a
+ * metapopulation's runs share preset/condition/config by definition, but each
+ * has its own seed), and checking the immigrant's own step against `myStart`
+ * rather than the observer's: a ring's runs share one `segmentSteps`, so a
+ * boundary always lands at the same absolute step in every run, and the
+ * immigrant (the predecessor's own end-of-this-boundary state) must be at
+ * exactly that step, no more no less. Called both by island.ts, right after
+ * decoding bytes fetched via `importFrom`, and internally by
+ * `runExperiment` (defense in depth, matching `continuationError`'s own
+ * double-checking).
+ */
+export function immigrantError(spec: RunSpec, myStart: number, immigrant: WorldState): string | null {
+  if (!sameConfigExceptSeed(immigrant.cfg, specConfig(spec))) return "immigrant state's config differs from this run's (besides seed)";
+  if (immigrant.step !== myStart) return `immigrant state is at t=${immigrant.step}, expected this segment's own start t=${myStart}`;
   return null;
 }
 
@@ -328,11 +414,32 @@ export async function runExperiment(
     const bad = continuationError(spec, opts.start, opts.observer);
     if (bad) throw new Error(bad);
   }
-  const t0tot = totalsOf(cfg, init.cells);
+  if (opts.immigrant && !spec.metapopulation) throw new Error("an immigrant state requires spec.metapopulation");
+  if (opts.immigrant) {
+    const bad = immigrantError(spec, startStep, opts.immigrant);
+    if (bad) throw new Error(bad);
+  }
+  // Applied once, before any physics steps: the segment's *actual* starting
+  // point. `startHash` (the coordinator-validated digest of `opts.start`,
+  // above) stays the pre-import predecessor digest -- `manifest.json` records
+  // this adjusted state's own hash separately (`importedStartHash`) so
+  // stitch/analyze can tell a recorded import apart from a real discontinuity
+  // (see exchange.ts's doc and packages/runner/src/stitch.ts).
+  const exchange = opts.immigrant
+    ? applyExchange(init, opts.immigrant, exchangePositions(cfg, spec.metapopulation!.salt, startStep, spec.metapopulation!.migrantCount), startStep)
+    : null;
+  const actualInit = exchange?.state ?? init;
+  const t0tot = totalsOf(cfg, actualInit.cells);
   // Ledger baseline: content + exported heat - absorbed light is invariant.
-  const baseline = t0tot.energy + init.heatOut - init.lightIn;
+  // Computed from `actualInit` (post-import when there is one), so this
+  // segment's physics-conservation check (`conservationOk` below) verifies
+  // conservation *from the segment's real starting point forward* -- the
+  // exchange itself is accounted for explicitly, once, here, rather than
+  // silently weakening the check by comparing against a pre-import baseline
+  // an import was never going to match.
+  const baseline = t0tot.energy + actualInit.heatOut - actualInit.lightIn;
   const startMatter = t0tot.matter;
-  const sim = await GpuSim.create(device, init);
+  const sim = await GpuSim.create(device, actualInit);
   const obs = restoreObservers(opts.observer, settings);
   const { tracker, activity } = obs;
   const manifest = {
@@ -345,6 +452,23 @@ export async function runExperiment(
     metricsVersion: METRICS_VERSION,
     host,
     startStep,
+    // Present (non-null only when this segment applied an import) *only* for
+    // a metapopulation run -- an ordinary run's manifest omits both keys
+    // entirely rather than carrying them as always-null, so it stays
+    // byte-identical to its shape from before metapopulation existed (review
+    // P2; same discipline as migrations.tsv/exchanges.tsv not appearing in
+    // BUNDLE_FILES). When present: the hash of the state physics actually
+    // started from, which legitimately differs from the coordinator's own
+    // startHash (the pre-import predecessor's digest), and the net matter
+    // this boundary moved (imports - exports; not zero in general -- see
+    // exchange.ts), for a standalone archipelago checker to reconcile
+    // against `exchanges.tsv` without recomputing it.
+    ...(spec.metapopulation
+      ? {
+          importedStartHash: exchange ? stateHash(actualInit) : null,
+          netExchangeMatter: exchange ? exchangeMatterTotal(exchange.imports) - exchangeMatterTotal(exchange.exports) : null,
+        }
+      : {}),
     startedAt: new Date().toISOString(),
     checkpoints: [] as { step: number; file: string; hash: string }[],
     summary: null as RunSummary | null,
@@ -358,9 +482,19 @@ export async function runExperiment(
   // Only written when migration is configured, so a migration-disabled run's bundle is
   // byte-for-byte what it was before this file existed (no empty header appears either).
   if (migrationPeriod > 0) await sink.writeText("migrations.tsv", "step\tslot\tfromTile\ttoTile\tfromCell\ttoCell\tmatter\tlineageHi\tlineageLo\n");
+  // Only written for a metapopulation run, same discipline. Both directions
+  // this run exchanged at this boundary go in one file (a `direction` column)
+  // rather than an "imports.tsv" that would only tell half the story of this
+  // run's own per-run ledger (see exchange.ts's doc on why the "export" rows
+  // are logged here, by the *importing* run, not by the predecessor).
+  if (spec.metapopulation) await sink.writeText("exchanges.tsv", "step\tdirection\tslot\tcell\tmatter\tlineageHi\tlineageLo\n");
+  if (exchange) {
+    const rows = (dir: "import" | "export", es: typeof exchange.imports) => es.map((e) => `${e.step}\t${dir}\t${e.slot}\t${e.cell}\t${e.matter}\t${e.lineageHi}\t${e.lineageLo}`);
+    await sink.appendText("exchanges.tsv", [...rows("import", exchange.imports), ...rows("export", exchange.exports)].join("\n") + "\n");
+  }
 
   const t0 = performance.now();
-  let prevFlux = init.flux.slice();
+  let prevFlux = actualInit.flux.slice();
   let conservationOk = true;
   let lastCensus = { individuals: 0, lineages: 0 };
 
