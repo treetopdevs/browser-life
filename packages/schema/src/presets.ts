@@ -57,6 +57,14 @@ export const PRESETS: Preset[] = [
     cfg: { ...SPOT_REGIME, tileW: 512, tileH: 512, lightMode: "gradient", lightBase: 30, lightAmp: 200 },
     init: { kind: "generalist", founders: 16, nutrient: 32, biomass: 64 },
   },
+  {
+    id: "archipelago",
+    name: "Archipelago (2×2 islands)",
+    description:
+      "Four tile-islands (see WorldConfig's tileW/tileH/tilesX/tilesY: one tile is an independent torus) under a light gradient, exchanging migrant packets every migrationPeriod steps — the M6 gate's migration mechanism. The \"no-migration\" control disables the exchange.",
+    cfg: { ...SPOT_REGIME, tileW: 64, tileH: 64, tilesX: 2, tilesY: 2, lightMode: "gradient", lightBase: 20, lightAmp: 220, migrationPeriod: 200, migrantCount: 4 },
+    init: { kind: "generalist", founders: 16, nutrient: 32, biomass: 64 },
+  },
 ];
 
 export function presetConfig(p: Preset, seed: number, extra: Partial<WorldConfig> = {}): WorldConfig {

@@ -6,4 +6,5 @@ export * from "./genome.ts";
 export * from "./world.ts";
 export * from "./accounting.ts";
 export * from "./checkpoint.ts";
+export * from "./migration.ts";
 export * from "./presets.ts";

@@ -126,6 +126,32 @@ export interface WorldConfig {
   adhesion?: boolean;
   /** Adhesion gain: F += kAdhesion * grad(P) / massDiv, only when `adhesion` is true. */
   kAdhesion?: number;
+
+  /**
+   * Migration between tiles ("islands" of one archipelago run — see
+   * docs/plan.md §7 and this file's tileW/tileH/tilesX/tilesY doc, "One tile
+   * is an independent torus"): every `migrationPeriod` steps (an *absolute*
+   * step count, so segmented and continuous runs trigger it identically —
+   * see packages/schema/src/migration.ts), `migrantCount` cell-sized packets
+   * rotate one tile position around a ring. Absent or 0 disables migration
+   * (the default, and the "no-migration" control —
+   * packages/runner/src/conditions.ts).
+   *
+   * Genuinely *optional* (not just zero-valued) so that a config with no
+   * migration configured — every preset but "archipelago" — serialises to
+   * exactly the same bytes `canonicalConfig`/`stateHash` hashed before this
+   * feature existed: `stateHash` and `artifactDigest` hash the config's own
+   * JSON, so an always-present `migrationPeriod: 0` field would still change
+   * every existing golden hash and checkpoint digest, migration-disabled or
+   * not. `defaultConfig` never sets these two keys itself — only an
+   * `overrides`/preset `cfg` that mentions them does — and `validateConfig`
+   * checks them explicitly rather than through the generic per-key loop
+   * below, which walks `Object.keys(defaultConfig())` and so never sees a key
+   * `defaultConfig` doesn't set.
+   */
+  migrationPeriod?: number;
+  /** Cells migrated from each tile to its ring neighbour at each migration event. Must be >= 1 when migrationPeriod > 0. See `migrationPeriod`'s doc on why this is optional rather than defaulted to 0. */
+  migrantCount?: number;
 }
 
 /** `kAdhesion` when `adhesion` is enabled but `kAdhesion` itself is not set. */
@@ -178,6 +204,7 @@ export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig
     eventCap: 1 << 16,
     neutral: false,
     motility: true,
+    // migrationPeriod/migrantCount deliberately absent here — see their doc on WorldConfig.
     ...overrides,
   };
 }
@@ -255,6 +282,9 @@ const RANGES: Partial<Record<keyof WorldConfig, Range>> = {
   seasonAmp: [0, 255],
   eventCap: [1, 1 << 22],
 };
+/** Bounds for migrationPeriod/migrantCount, checked explicitly in `validateConfig` (see WorldConfig's doc on why they're not in `RANGES`/the generic per-key loop). */
+const MIGRATION_PERIOD_RANGE: Range = [0, 8_000_000];
+const MIGRANT_COUNT_RANGE: Range = [0, 4096];
 
 export function validateConfig(c: WorldConfig): string[] {
   const errs: string[] = [];
@@ -288,6 +318,25 @@ export function validateConfig(c: WorldConfig): string[] {
   if (!(c.eB > c.eC && c.eC >= c.eA && c.eP > c.eB)) errs.push("energy ladder must satisfy eP > eB > eC >= eA");
   if ((c.massUnit & (c.massUnit - 1)) !== 0) errs.push("massUnit must be a power of two");
   if (c.lightBase + c.lightAmp + c.seasonAmp > 255) errs.push("light must stay within 0..255");
+  // Optional fields, so checked explicitly rather than through the generic loop above
+  // (see WorldConfig's doc on migrationPeriod for why they're not in `defaultConfig`/`RANGES`).
+  for (const [key, range] of [
+    ["migrationPeriod", MIGRATION_PERIOD_RANGE],
+    ["migrantCount", MIGRANT_COUNT_RANGE],
+  ] as const) {
+    const v = c[key];
+    if (v === undefined) continue;
+    if (!Number.isInteger(v) || v < range[0] || v > range[1]) errs.push(`${key} must be an integer in ${range[0]}..${range[1]}`);
+  }
+  if (errs.length) return errs;
+  const migrationPeriod = c.migrationPeriod ?? 0;
+  const migrantCount = c.migrantCount ?? 0;
+  if (migrationPeriod > 0 && c.tilesX * c.tilesY < 2) errs.push("migrationPeriod > 0 requires at least 2 tiles (tilesX * tilesY > 1)");
+  if (migrationPeriod > 0 && migrantCount < 1) errs.push("migrationPeriod > 0 requires migrantCount >= 1");
+  // migration.ts assigns each migrant slot a unique within-tile offset (linear
+  // probing over the tile's own cells); more slots than cells in a tile could
+  // never all be unique.
+  if (migrationPeriod > 0 && migrantCount > c.tileW * c.tileH) errs.push("migrantCount must be at most tileW * tileH (offsets must be unique within a tile)");
   return errs;
 }
 

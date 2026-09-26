@@ -45,3 +45,21 @@ describe('no-signal-motility removes adhesion too (plan\'s "no adhesion/signal a
     expect(ctl.adhesion).toBeUndefined();
   });
 });
+
+describe("no-migration control", () => {
+  it("disables migration on the archipelago preset (which has it configured)", () => {
+    const base = presetConfig(PRESETS.find((p) => p.id === "archipelago")!, 1);
+    expect(base.migrationPeriod).toBeGreaterThan(0);
+    expect(base.migrantCount).toBeGreaterThan(0);
+    const ctl = { ...base, ...conditionById("no-migration").apply(base) };
+    expect(ctl.migrationPeriod).toBe(0);
+    expect(ctl.migrantCount).toBe(0);
+  });
+
+  it("refuses presets without migration configured, like the other controls do for what they remove", () => {
+    for (const id of ["spots", "gradient", "soup", "seasons", "large"]) {
+      const base = presetConfig(PRESETS.find((p) => p.id === id)!, 1);
+      expect(() => conditionById("no-migration").apply(base)).toThrow();
+    }
+  });
+});

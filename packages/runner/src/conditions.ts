@@ -73,6 +73,15 @@ export const CONDITIONS: Condition[] = [
     // re-enables it even under this control -- overrides always win.
     apply: (c) => ({ kEmit: 0, motility: false, ...(c.adhesion !== undefined ? { adhesion: false } : {}) }),
   },
+  {
+    id: "no-migration",
+    label: "No migration",
+    removes: "gene flow between islands",
+    apply: (c) => {
+      if (!c.migrationPeriod) throw new Error("no-migration control needs a preset with migration enabled");
+      return { migrationPeriod: 0, migrantCount: 0 };
+    },
+  },
 ];
 
 export function conditionById(id: string): Condition {

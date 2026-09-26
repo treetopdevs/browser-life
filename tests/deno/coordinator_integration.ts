@@ -246,6 +246,52 @@ try {
     diverged.success && stdout(diverged).includes("0 written") && !(await Deno.stat(stale).catch(() => null)),
     stdout(diverged).slice(-200),
   );
+
+  // Review 4: an existing export missing migrations.tsv (exactly what an
+  // older exporter that only ever fetched BUNDLE_FILES -- review 1's bug --
+  // would leave behind) must be detected as incomplete and rebuilt, not kept
+  // because its fingerprint (accepted digests only, not which files ended up
+  // on disk) still matches. "archipelago" is the only preset with migration
+  // configured; one segment (steps == segmentSteps) keeps this cheap.
+  const migSpec = {
+    experiment: "it-migration",
+    presetId: "archipelago",
+    conditions: ["treatment"],
+    seeds: [1],
+    steps: 200,
+    segmentSteps: 200,
+    censusEvery: 20,
+    verifyFraction: 1.0,
+  };
+  const createdMig = await call<{ segments: number }>("/api/experiments", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(migSpec),
+  });
+  check("creates the single-segment archipelago experiment", createdMig.segments === 1, JSON.stringify(createdMig));
+  const producedByE = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200 });
+  check("island e produces the archipelago run's only segment", producedByE === 1, String(producedByE));
+  const verifiedByF = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200 });
+  check("island f verifies it (a different island than produced it)", verifiedByF === 1, String(verifiedByF));
+
+  const migRunDir = `${outDir}/it-migration/archipelago/treatment/seed-1`;
+  const migStitch = await stitchCli("it-migration");
+  check(
+    "stitch.ts exports the archipelago run, migrations.tsv included",
+    migStitch.success && !!(await Deno.stat(`${migRunDir}/migrations.tsv`).catch(() => null)),
+    stdout(migStitch).slice(-200),
+  );
+
+  // Simulate an export an older, review-1-buggy exporter left behind: every
+  // BUNDLE_FILES file present (so the old, narrower `existing()` check would
+  // have called it complete) but migrations.tsv missing.
+  await Deno.remove(`${migRunDir}/migrations.tsv`);
+  const migRepaired = await stitchCli("it-migration");
+  check(
+    "an export missing migrations.tsv is rebuilt, even though every BUNDLE_FILES file is present and its fingerprint still matches",
+    migRepaired.success && stdout(migRepaired).includes("1 written") && !!(await Deno.stat(`${migRunDir}/migrations.tsv`).catch(() => null)),
+    stdout(migRepaired).slice(-200),
+  );
 } finally {
   try {
     server.kill("SIGTERM");

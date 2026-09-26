@@ -83,3 +83,16 @@ export const RND = {
   MUT_WHICH: 35,
   MUT_DELTA: 36,
 } as const;
+
+/**
+ * Domain-separation salt for packages/schema/src/migration.ts's own
+ * `cellBase`/`draw` calls. Migration keys its per-slot draw on
+ * `cellBase(seed, step, slot)` with `slot` in `0..migrantCount-1` — small
+ * integers that also happen to be valid *cell* indices, i.e. exactly the
+ * `cellBase(seed, step, cell)` the physics kernels (`RND.*` above) use for
+ * cell `slot` at the same step. XORing this salt into the seed first gives
+ * migration a hash chain that never coincides with any physics draw,
+ * independent of (not merely differently-labelled within) the physics RNG
+ * stream, rather than relying on a `draw` purpose index to tell them apart.
+ */
+export const MIGRATION_SEED_SALT = 0x4d494752; // ASCII "MIGR", arbitrary but fixed

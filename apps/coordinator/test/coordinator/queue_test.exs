@@ -324,6 +324,94 @@ defmodule Coordinator.QueueTest do
              })
   end
 
+  # The "no-migration" control (packages/runner/src/conditions.ts) only makes
+  # sense on a preset that has migration configured in the first place (see
+  # packages/schema/src/presets.ts's "archipelago" preset) -- same shape as
+  # the uniform-light/fixed-env checks above, via the same `incompatible`
+  # table (config/config.exs).
+  test "the no-migration control is refused on presets without migration configured" do
+    assert {:error, "condition no-migration" <> _} =
+             Queue.create_experiment(%{@spec_ok | "conditions" => ["no-migration"]})
+
+    assert {:ok, _} =
+             Queue.create_experiment(%{
+               @spec_ok
+               | "presetId" => "archipelago",
+                 "conditions" => ["no-migration"]
+             })
+  end
+
+  # Cadence the runner will reject at runtime (packages/runner/src/runner.ts
+  # requires migrationPeriod % censusEvery == 0) must be caught at experiment
+  # creation instead of assigned to islands that can only fail (review 6).
+  describe "migration cadence" do
+    test "censusEvery must divide the preset's migrationPeriod" do
+      assert {:error, "migrationPeriod 200" <> _} =
+               Queue.create_experiment(%{
+                 @spec_ok
+                 | "presetId" => "archipelago",
+                   "censusEvery" => 300,
+                   "segmentSteps" => 600
+               })
+    end
+
+    test "segmentSteps must be a multiple of the preset's migrationPeriod" do
+      assert {:error, "segmentSteps must be a multiple" <> _} =
+               Queue.create_experiment(%{
+                 @spec_ok
+                 | "presetId" => "archipelago",
+                   "censusEvery" => 100,
+                   "segmentSteps" => 300
+               })
+    end
+
+    test "a compatible cadence is accepted" do
+      assert {:ok, _} =
+               Queue.create_experiment(%{
+                 @spec_ok
+                 | "presetId" => "archipelago",
+                   "censusEvery" => 100,
+                   "segmentSteps" => 400
+               })
+    end
+
+    test "the no-migration control exempts its own run from the cadence checks" do
+      assert {:ok, _} =
+               Queue.create_experiment(%{
+                 @spec_ok
+                 | "presetId" => "archipelago",
+                   "conditions" => ["no-migration"],
+                   "censusEvery" => 300,
+                   "segmentSteps" => 600
+               })
+    end
+
+    # Review: conditions each become their own separate run (build_segments/2)
+    # against the same censusEvery/segmentSteps, so "no-migration" among a
+    # spec's conditions must exempt only *its own* run, not the whole spec --
+    # otherwise this would wrongly accept an experiment whose "treatment" runs
+    # (which still migrate at the preset's own cadence) fail on every island.
+    test "no-migration exempts only its own run, not sibling conditions that still migrate" do
+      assert {:error, "migrationPeriod 200 (condition treatment)" <> _} =
+               Queue.create_experiment(%{
+                 @spec_ok
+                 | "presetId" => "archipelago",
+                   "conditions" => ["treatment", "no-migration"],
+                   "censusEvery" => 300,
+                   "segmentSteps" => 600
+               })
+    end
+
+    test "a preset without migration configured is never subject to the cadence checks" do
+      assert {:ok, _} =
+               Queue.create_experiment(%{
+                 @spec_ok
+                 | "censusEvery" => 300,
+                   "segmentSteps" => 900
+               })
+    end
+  end
+
   test "large experiments stay responsive" do
     {:ok, 20_000} =
       Queue.create_experiment(%{

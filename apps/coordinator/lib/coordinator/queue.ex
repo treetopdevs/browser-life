@@ -479,6 +479,29 @@ defmodule Coordinator.Queue do
           rem(spec["segmentSteps"], spec["censusEvery"]) != 0 ->
         {:error, "segmentSteps must be a multiple of censusEvery, at most 1e7"}
 
+      # Cadence the runner will actually reject at runtime (packages/runner/src/runner.ts
+      # requires migrationPeriod to be a multiple of censusEvery), checked here so a whole
+      # experiment's islands don't get assigned segments they can only fail. Checked per
+      # *condition*, not once for the whole spec: each condition in `spec["conditions"]`
+      # becomes its own separate run (build_segments/2 below), and only "no-migration"
+      # (packages/runner/src/conditions.ts) disables migration for the run it produces --
+      # every other condition (including "treatment") runs the preset's migrationPeriod
+      # unchanged. Exempting the whole spec because *any* of its conditions was
+      # "no-migration" would silently let an incompatible cadence through for the
+      # *other* conditions' runs, which still migrate. This can't read packages/schema
+      # itself (a separate app), so `:migration_period` in config.exs is a duplicated
+      # fact that must be kept in sync with the preset it names -- like `:presets`/
+      # `:conditions`/`:incompatible` above already are.
+      (bad =
+         incompatible_cadence(
+           spec["presetId"],
+           spec["conditions"],
+           spec["censusEvery"],
+           spec["segmentSteps"]
+         )) !=
+          nil ->
+        {:error, bad}
+
       not int_in?.(Map.get(spec, "deepEvery", 10), 1, 1000) ->
         {:error, "deepEvery must be an integer in 1..1000"}
 
@@ -504,6 +527,45 @@ defmodule Coordinator.Queue do
   defp incompatible(preset, conditions) do
     table = Application.get_env(:coordinator, :incompatible, %{})
     Enum.find(conditions, fn c -> preset in Map.get(table, c, []) end)
+  end
+
+  # The migrationPeriod one (preset, condition) run will actually run with: 0
+  # if the preset has none configured, or if `condition` is "no-migration" --
+  # every other condition (packages/runner/src/conditions.ts) leaves
+  # migrationPeriod/migrantCount untouched, since only "no-migration" itself
+  # overrides them. See config.exs's `:migration_period` doc.
+  defp effective_migration_period(_preset, "no-migration"), do: 0
+
+  defp effective_migration_period(preset, _condition),
+    do: Map.get(Application.get_env(:coordinator, :migration_period, %{}), preset, 0)
+
+  # The first cadence error among `conditions`' own runs (each condition is a
+  # separate run against `preset`, at the same censusEvery/segmentSteps -- see
+  # build_segments/2), or nil if every one of them is compatible. Defensive
+  # against a malformed `conditions` (not yet known to be a list at every call
+  # site: this is also used by the `cond` clause that establishes that), so it
+  # never raises on bad input -- it just reports no incompatibility, and an
+  # earlier/later clause rejects the spec on its own terms.
+  defp incompatible_cadence(preset, conditions, census_every, segment_steps) do
+    if is_list(conditions) do
+      Enum.find_value(conditions, fn condition ->
+        period = effective_migration_period(preset, condition)
+
+        cond do
+          period == 0 ->
+            nil
+
+          rem(period, census_every) != 0 ->
+            "migrationPeriod #{period} (condition #{condition}) must be a multiple of censusEvery"
+
+          rem(segment_steps, period) != 0 ->
+            "segmentSteps must be a multiple of migrationPeriod #{period} (condition #{condition})"
+
+          true ->
+            nil
+        end
+      end)
+    end
   end
 
   defp unique_list?(v, max, ok?) do

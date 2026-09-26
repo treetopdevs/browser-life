@@ -18,7 +18,7 @@
 // exportable, or whose accepted history has changed, is moved aside to
 // seed-<n>.stale-<time> (outside analyze.ts's input) before anything new is written.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { BUNDLE_FILES, stitchRun, type StitchSegment } from "@bl/runner";
+import { BUNDLE_FILES, MIGRATIONS_FILE, stitchRun, type StitchSegment } from "@bl/runner";
 
 const a = parseArgs(Deno.args, {
   string: ["experiment", "coordinator", "out", "token"],
@@ -64,6 +64,19 @@ function ineligible(segs: Listed[]): string | null {
   if (!a["allow-unverified"] && segs.find((s) => s.last)?.status !== "verified") return "final segment not yet verified (pass --allow-unverified to stitch anyway)";
   const unbound = segs.filter((s) => BUNDLE_FILES.some((f) => !s.files?.[f]));
   if (unbound.length) return `${unbound.length} segment(s) lack a complete, digest-recorded bundle (uploaded before the coordinator recorded file digests?)`;
+  // migrations.tsv is recorded (like every other bundle file) whenever a segment's
+  // run had migration configured (see runner.ts) -- not in BUNDLE_FILES, since a
+  // migration-disabled run never has it, but once *any* segment of this run does,
+  // the config didn't change mid-run, so every segment must: a run whose segments
+  // disagree indicates a partial/corrupted record, not a legitimately
+  // migration-disabled one. Checked here (against the coordinator's recorded file
+  // digests) so a missing one is caught before `download` ever runs -- `download`
+  // and `stitchRun` enforce the same thing again, defensively.
+  const migrating = segs.some((s) => s.files?.[MIGRATIONS_FILE]);
+  if (migrating) {
+    const missing = segs.filter((s) => !s.files?.[MIGRATIONS_FILE]);
+    if (missing.length) return `migration is configured for this run but ${missing.length} segment(s) have no recorded ${MIGRATIONS_FILE}`;
+  }
   return null;
 }
 
@@ -72,7 +85,10 @@ const fingerprint = (segs: { digest: string | null; files: Record<string, string
   JSON.stringify(segs.map((s) => [s.digest, Object.entries(s.files ?? {}).sort(([x], [y]) => x.localeCompare(y))]));
 
 // The fingerprint of an existing export, "incomplete" if files are missing, null if there is none.
-async function existing(dir: string): Promise<string | null> {
+// `segs` is the coordinator's *current* listing for this run (the same one `ineligible`
+// checked), used only to tell whether migration is configured for it -- not trusted for
+// anything else here, since the export being inspected might predate it.
+async function existing(dir: string, segs: Listed[]): Promise<string | null> {
   let manifest;
   try {
     manifest = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
@@ -88,6 +104,16 @@ async function existing(dir: string): Promise<string | null> {
     return "incomplete";
   }
   for (const f of BUNDLE_FILES) if (!(await Deno.stat(`${dir}/${f}`).catch(() => null))) return "incomplete";
+  // migrations.tsv isn't in BUNDLE_FILES (see MIGRATIONS_FILE's doc: a
+  // migration-disabled run never has one), but once the coordinator's own
+  // recorded file digests for this run's segments show it does (the same
+  // signal `ineligible` uses above), a local export missing it on disk is
+  // incomplete. An older exporter that only ever fetched BUNDLE_FILES
+  // (review 1) could otherwise produce a structurally "complete" export
+  // that's silently missing this file -- its fingerprint would still match
+  // (fingerprint covers accepted digests, not which files ended up on disk),
+  // and it would never get rebuilt.
+  if (segs.some((s) => s.files?.[MIGRATIONS_FILE]) && !(await Deno.stat(`${dir}/${MIGRATIONS_FILE}`).catch(() => null))) return "incomplete";
   return fingerprint(manifest.segments ?? []);
 }
 
@@ -113,6 +139,14 @@ async function download(s: Listed): Promise<StitchSegment> {
     if (got !== s.files![f]) throw new Error(`${s.run} #${s.index}: ${f} has SHA-256 ${got}, the accepted attempt recorded ${s.files![f]}`);
     files[f] = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   }
+  // Optional, unlike the files above: only present when this run had migration
+  // configured (`ineligible` already required it on every segment or none).
+  if (s.files?.[MIGRATIONS_FILE]) {
+    const bytes = new Uint8Array(await (await get(`/api/segments/${s.id}/files/${MIGRATIONS_FILE}`)).arrayBuffer());
+    const got = await sha256(bytes);
+    if (got !== s.files[MIGRATIONS_FILE]) throw new Error(`${s.run} #${s.index}: ${MIGRATIONS_FILE} has SHA-256 ${got}, the accepted attempt recorded ${s.files[MIGRATIONS_FILE]}`);
+    files[MIGRATIONS_FILE] = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  }
   return { ...s, digest: s.digest!, fileDigests: s.files, files };
 }
 
@@ -120,7 +154,7 @@ let written = 0, kept = 0;
 const skipped: string[] = [];
 for (const [run, segs] of byRun) {
   const dir = `${a.out}/${run}`;
-  const have = await existing(dir);
+  const have = await existing(dir, segs);
   const why = ineligible(segs);
   if (why) {
     skipped.push(`${run}: ${why}`);
@@ -146,7 +180,7 @@ for (const [run, segs] of byRun) {
     await Deno.rename(tmp, dir);
   } catch (e) {
     await Deno.remove(tmp, { recursive: true }).catch(() => {});
-    if ((await existing(dir)) !== want) throw e;
+    if ((await existing(dir, segs)) !== want) throw e;
     kept++; // a concurrent exporter published the same history first
     continue;
   }

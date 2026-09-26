@@ -70,3 +70,19 @@ console.log(JSON.stringify(unicode.info));
 const adhesion = build(12, { step: 12, adhesion: true }, { adhesion: true, kAdhesion: 300 });
 await Deno.writeFile("apps/coordinator/test/fixtures/adhesion.blck", adhesion.bytes);
 console.log(JSON.stringify(adhesion.info));
+
+// migration.blck: a config with tilesX/tilesY > 1 *and* the optional
+// migrationPeriod/migrantCount fields set (packages/schema/src/config.ts,
+// packages/schema/src/presets.ts's "archipelago" preset shape) -- neither
+// exercised by small/stress/unicode.blck above (all single-tile, no
+// migration). Confirms Coordinator.Checkpoint's multi-tile `geometry/1` check
+// and its canonical-JSON port agree with the TypeScript side once the config
+// object carries these extra keys, not just the fixed set every other config
+// in this codebase has always had.
+const migration = build(
+  20,
+  { step: 20, settings: { censusEvery: 10, deepEvery: 5, activityThreshold: null } },
+  { tilesX: 2, tilesY: 2, migrationPeriod: 20, migrantCount: 3 },
+);
+await Deno.writeFile("apps/coordinator/test/fixtures/migration.blck", migration.bytes);
+console.log(JSON.stringify(migration.info));

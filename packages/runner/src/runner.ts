@@ -25,6 +25,7 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
+import { migrateAtBoundary } from "./migrate.ts";
 import {
   ActivityTracker,
   Tracker,
@@ -276,7 +277,30 @@ export async function runExperiment(
   if (errs.length) throw new Error(`invalid run spec: ${errs.join("; ")}`);
   const preset = PRESETS.find((p) => p.id === spec.presetId)!;
   const cfg = specConfig(spec);
+  // Migration fires on multiples of the *absolute* step (see migration.ts), checked once
+  // per census chunk: requiring it to land on a census boundary keeps a segmented run's
+  // migration events at the same absolute steps as a continuous run's (the stitching
+  // invariant tests/deno/stitch.ts checks), exactly like checkpointEvery's own rule below.
+  const migrationPeriod = cfg.migrationPeriod ?? 0;
+  if (migrationPeriod > 0 && migrationPeriod % spec.censusEvery !== 0) throw new Error("migrationPeriod must be a multiple of censusEvery");
   const init = opts.start ?? initWorld(cfg, preset.init);
+  const startStep = init.step;
+  // The step loop below re-chunks in `censusEvery`-sized steps *relative to
+  // this call's own start* (unchanged from before migration existed, so a
+  // migration-disabled continuation from any step -- aligned or not -- keeps
+  // behaving exactly as it always has). That only lands on the same absolute
+  // steps a continuous run would when `startStep` is itself already a
+  // multiple of `censusEvery`, so a migration-enabled run requires it: a
+  // fresh run starts at step 0, and the coordinator only ever hands out
+  // segments whose segmentSteps -- and hence every startStep -- is a
+  // multiple of censusEvery (Coordinator.Queue.validate/1's cadence checks),
+  // so this loses nothing any real caller produces, only an off-grid start no
+  // legitimate one does. (migrationPeriod is already required to be a
+  // multiple of censusEvery, above, so this one condition is also enough to
+  // guarantee migration itself lands on the right absolute steps -- no
+  // separate "multiple of migrationPeriod" check is needed.)
+  if (migrationPeriod > 0 && startStep % spec.censusEvery !== 0)
+    throw new Error(`migration-enabled runs must start on a multiple of censusEvery (start step ${startStep}, censusEvery ${spec.censusEvery})`);
   const settings = observerSettings(spec);
   if (opts.start) {
     const bad = continuationError(spec, opts.start, opts.observer);
@@ -286,7 +310,6 @@ export async function runExperiment(
   // Ledger baseline: content + exported heat - absorbed light is invariant.
   const baseline = t0tot.energy + init.heatOut - init.lightIn;
   const startMatter = t0tot.matter;
-  const startStep = init.step;
   const sim = await GpuSim.create(device, init);
   const obs = restoreObservers(opts.observer, settings);
   const { tracker, activity } = obs;
@@ -309,6 +332,9 @@ export async function runExperiment(
   await sink.writeText("heredity.tsv", "step\tmuA\tmuB\tsigmaA\tsigmaB\tmassA\tmassB\n");
   await sink.writeText("series.jsonl", "");
   await sink.writeText("life.jsonl", "");
+  // Only written when migration is configured, so a migration-disabled run's bundle is
+  // byte-for-byte what it was before this file existed (no empty header appears either).
+  if (migrationPeriod > 0) await sink.writeText("migrations.tsv", "step\tslot\tfromTile\ttoTile\tfromCell\ttoCell\tmatter\tlineageHi\tlineageLo\n");
 
   const t0 = performance.now();
   let prevFlux = init.flux.slice();
@@ -392,6 +418,18 @@ export async function runExperiment(
       lastCensus = { individuals: ind.length, lineages: c.lineages.length };
       // Observation continues through extinction (segments end at their boundary).
       if (o.becameExtinct) onProgress(`extinct at step ${c.step}`);
+      // Scheduled through the same helper the lab worker uses (migrate.ts), so
+      // both agree bit for bit on when and how migration applies. Keyed on the
+      // absolute step (not this call's own start), so a segmented run fires it
+      // at the same steps a continuous run would. Applied after this step's
+      // census/observation, before any checkpoint at the same step, so a
+      // checkpoint always carries the post-migration state forward.
+      const mevents = await migrateAtBoundary(sim, c.step);
+      if (mevents.length)
+        await sink.appendText(
+          "migrations.tsv",
+          mevents.map((e) => `${e.step}\t${e.slot}\t${e.fromTile}\t${e.toTile}\t${e.fromCell}\t${e.toCell}\t${e.matter}\t${e.lineageHi}\t${e.lineageLo}`).join("\n") + "\n",
+        );
       if (spec.checkpointEvery > 0 && (sim.step - startStep) % spec.checkpointEvery === 0) {
         const st = await sim.readState();
         const file = `checkpoints/t${String(st.step).padStart(9, "0")}.blck`;

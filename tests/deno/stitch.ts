@@ -73,4 +73,29 @@ check(
   "a conservation failure is carried into later segments' rows and the summary",
   rows.slice(4).every((r) => r.conservationOk === false) && JSON.parse(sticky["manifest.json"]).summary.conservationOk === false,
 );
+
+// migrations.tsv (review 1): a segment's bundle carries it only when its run
+// has migration configured (the "archipelago" preset), and stitchRun must
+// concatenate it across segments the same way it does mutations.tsv/etc --
+// tools/stitch.ts's `download` used to only ever fetch BUNDLE_FILES, so a
+// coordinator export silently lost this file even though every segment had it.
+const migBase: RunSpec = { experiment: "stitch-mig", presetId: "archipelago", condition: "treatment", seed: 11, steps: 400, censusEvery: 100, deepEvery: 2, checkpointEvery: 0 };
+const migSegs: StitchSegment[] = [];
+let migPrev: Awaited<ReturnType<typeof runExperiment>> | null = null;
+for (const [index, [startStep, steps]] of [[0, 200], [200, 200]].entries()) {
+  const sink = new Mem();
+  const r = await runExperiment(device, { ...migBase, steps }, sink, host, () => {}, { keepFinal: true, start: migPrev?.final, observer: migPrev?.observer });
+  migSegs.push({ index, startStep, steps, digest: r.summary.finalHash, files: Object.fromEntries(sink.files) });
+  migPrev = r;
+}
+check("both migration-enabled segments recorded migrations.tsv (sanity check on the fixture)", migSegs.every((s) => typeof s.files["migrations.tsv"] === "string" && s.files["migrations.tsv"].trim().split("\n").length > 1));
+const migStitched = stitchRun(migSegs, migBase.steps);
+const migConcatenated = migSegs[0].files["migrations.tsv"] + migSegs[1].files["migrations.tsv"].slice(migSegs[1].files["migrations.tsv"].indexOf("\n") + 1);
+check("stitchRun concatenates migrations.tsv across segments", migStitched["migrations.tsv"] === migConcatenated, `${migStitched["migrations.tsv"]?.length} vs ${migConcatenated.length} bytes`);
+
+expectThrow(
+  "stitchRun fails loudly when migrations.tsv is present on some segments but not others, instead of silently dropping it",
+  () => stitchRun([migSegs[0], { ...migSegs[1], files: { ...migSegs[1].files, "migrations.tsv": undefined as unknown as string } }], migBase.steps),
+);
+
 Deno.exit(ok ? 0 : 1);

@@ -21,11 +21,12 @@ import {
   stateHash,
   totalsOf,
   worldW,
+  type WorldConfig,
   type WorldState,
 } from "@bl/schema";
 import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import { census, individuals, lineageRGB } from "@bl/metrics";
-import { decodeArtifact, observeCensus, restoreObservers, serializeObservers, type ObserverSettings, type ObserverState, type Observers } from "@bl/runner";
+import { decodeArtifact, migrateAtBoundary, observeCensus, restoreObservers, serializeObservers, type ObserverSettings, type ObserverState, type Observers } from "@bl/runner";
 import type { CensusMsg, FromWorker, RunManifest, ToWorker } from "./protocol.ts";
 import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
 
@@ -132,12 +133,29 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
 }
 
 /**
+ * migrationPeriod must be a multiple of this world's own censusEvery: the lab
+ * only ever observes (and, per `boundaryAfter` below, only ever migrates) at
+ * census boundaries, so an incompatible period would silently fire at the
+ * wrong cadence -- or never as intended -- instead of every `migrationPeriod`
+ * steps (e.g. period 20 with the lab's fixed censusEvery of 100 would only
+ * ever migrate every 100 steps). Checked once, in `adopt`, the single place
+ * every load/restore/import path funnels through.
+ */
+function migrationCadenceError(cfg: WorldConfig, censusEvery: number): string | null {
+  const period = cfg.migrationPeriod ?? 0;
+  if (period > 0 && period % censusEvery !== 0) return `migrationPeriod ${period} is not a multiple of this world's censusEvery (${censusEvery}); migration would fire at the wrong cadence in the lab`;
+  return null;
+}
+
+/**
  * Builds the replacement first; the current world survives if that fails.
  * `observer` rehydrates the tracker/activity/counters from a restored or
  * imported checkpoint; omitted for a fresh `load()`, which starts clean.
  */
 async function adopt(state: WorldState, manifest: RunManifest, observer?: ObserverState) {
   if (!device || !ctx) throw new Error("GPU not initialised");
+  const cadenceErr = migrationCadenceError(state.cfg, manifest.settings.censusEvery);
+  if (cadenceErr) throw new Error(cadenceErr);
   const sim = await GpuSim.create(device, state);
   let renderer: Renderer;
   try {
@@ -281,7 +299,26 @@ async function sendStats(w: World) {
   }
 }
 
-const nextBoundary = (w: World) => w.observedStep + w.manifest.settings.censusEvery;
+/**
+ * The next census boundary after `observedStep`. Migration-disabled worlds
+ * (`migrationPeriod` 0) get exactly `observedStep + censusEvery` -- unchanged
+ * from before migration existed, whatever `observedStep`'s own alignment.
+ * Migration-enabled worlds realign the very first boundary to an absolute
+ * multiple of `censusEvery`: an imported/restored checkpoint's `observedStep`
+ * isn't necessarily one (e.g. importing at step 150 with censusEvery 100
+ * would otherwise schedule boundaries at 250, 350, ... which never land on an
+ * absolute multiple of a migrationPeriod like 200, so migration would never
+ * fire). Once aligned, every following boundary is `+ censusEvery` from an
+ * already-aligned point, so this reduces to the same formula as the
+ * migration-disabled case from then on.
+ */
+function boundaryAfter(observedStep: number, censusEvery: number, migrationPeriod: number): number {
+  if (migrationPeriod === 0) return observedStep + censusEvery;
+  const rem = observedStep % censusEvery;
+  return observedStep + (rem === 0 ? censusEvery : censusEvery - rem);
+}
+
+const nextBoundary = (w: World) => boundaryAfter(w.observedStep, w.manifest.settings.censusEvery, w.sim.cfg.migrationPeriod ?? 0);
 
 /**
  * The persisted observation at a census boundary (`sim.step` must equal
@@ -300,7 +337,15 @@ async function observeBoundary(w: World): Promise<void> {
     if (ledger.dropped > 0) post({ type: "notice", message: `${ledger.dropped} mutation events dropped (event buffer full); lineage history is incomplete` });
     const o = observeCensus(w.obs, w.sim.cfg, snap, ledger.events.length + ledger.dropped);
     w.observedStep = snap.step;
-    // The observation is committed; a failing UI refresh must not mark it lost.
+    // Same helper (packages/runner/src/migrate.ts) and the same point relative
+    // to the census as runExperiment: right after this boundary's observation,
+    // before anything a checkpoint would capture (save()/exportRun() always
+    // settle() to a boundary first). Without this, an archipelago-preset world
+    // stepped, continued, imported or same-device replay-checked here would
+    // silently diverge from the same history run through the headless runner.
+    await migrateAtBoundary(w.sim, snap.step);
+    if (!current(w)) return;
+    // The observation (and any migration) is committed; a failing UI refresh must not mark it lost.
     const now = performance.now();
     if (now - lastCensusAt > 500) {
       lastCensusAt = now;
@@ -498,16 +543,54 @@ async function exportRun() {
   post({ type: "exported", bytes: bytes.buffer as ArrayBuffer, name: `${w.manifest.runId}-t${state.step}.blck` }, [bytes.buffer as ArrayBuffer]);
 }
 
+/**
+ * Like `advanceTo`, but for an unobserved twin: steps to `target`, applying
+ * `migrateAtBoundary` (not a full census observation) at every boundary
+ * `boundaryAfter` would cross for a world with this `censusEvery`/
+ * `migrationPeriod`. `fromObserved` is the live world's own `observedStep`
+ * captured *before* `advanceTo` runs (which mutates it), so both walk the
+ * identical boundary sequence from the same starting point. Without this, a
+ * migration landing inside the checked step range would only ever apply to
+ * the live world (stepped via `advanceTo`/`observeBoundary`), and `verify`
+ * would report a false replay failure.
+ */
+async function advanceTwin(sim: GpuSim, fromObserved: number, target: number, censusEvery: number, migrationPeriod: number): Promise<void> {
+  let observed = fromObserved;
+  for (;;) {
+    const b = boundaryAfter(observed, censusEvery, migrationPeriod);
+    if (sim.step === b) {
+      await migrateAtBoundary(sim, b);
+      observed = b;
+      continue;
+    }
+    if (sim.step >= target) return;
+    let n = Math.min(target, b) - sim.step;
+    while (n > 0) {
+      const k = Math.min(n, 64);
+      sim.run(k);
+      n -= k;
+    }
+    await device!.queue.onSubmittedWorkDone();
+  }
+}
+
 /** Same-device replay check: snapshot, run N steps live and in a fresh instance, compare hashes. */
 async function verify(steps: number) {
   const w = world;
   if (!w || !device) return;
   const s0 = await w.sim.readState();
+  // Captured before advanceTo mutates w.observedStep, so the twin's own
+  // boundary sequence (advanceTwin) starts from the same point the live
+  // world's did.
+  const fromObserved = w.observedStep;
+  const censusEvery = w.manifest.settings.censusEvery;
+  const migrationPeriod = w.sim.cfg.migrationPeriod ?? 0;
   const twin = await GpuSim.create(device, cloneState(s0));
   try {
-    // The live world observes its census boundaries on the way; the twin only steps.
+    // The live world observes (and migrates) at its census boundaries on the
+    // way; the twin crosses the identical boundaries via advanceTwin.
     await advanceTo(w, s0.step + steps);
-    for (let k = 0; k < steps; k += 64) twin.run(Math.min(64, steps - k));
+    await advanceTwin(twin, fromObserved, s0.step + steps, censusEvery, migrationPeriod);
     await device.queue.onSubmittedWorkDone();
     const [a, b] = await Promise.all([w.sim.readState(), twin.readState()]);
     const ha = stateHash(a), hb = stateHash(b);

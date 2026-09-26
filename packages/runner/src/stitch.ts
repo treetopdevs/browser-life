@@ -16,6 +16,17 @@ export const BUNDLE_FILES = ["manifest.json", "series.jsonl", "lineages.tsv", "m
 const TSV_FILES = ["lineages.tsv", "mutations.tsv", "heredity.tsv"] as const;
 /** TSV files whose first column is the census step. */
 const STEPPED_TSV = new Set(["lineages.tsv", "heredity.tsv"]);
+/**
+ * Migration events (see packages/schema/src/migration.ts), written only when
+ * a run has migration configured — deliberately *not* in `BUNDLE_FILES`:
+ * requiring it on every segment would put a "migrations.tsv" (even an
+ * empty one) into every non-migration run's bundle too, which is exactly the
+ * kind of bundle-shape change from before this feature existed that the
+ * archipelago's other controls are careful to avoid. Exported so
+ * tools/stitch.ts can download and require it the same way this module does
+ * (see its own doc below) instead of only ever fetching `BUNDLE_FILES`.
+ */
+export const MIGRATIONS_FILE = "migrations.tsv";
 
 export interface StitchSegment {
   index: number;
@@ -94,6 +105,14 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
         const step = Number(row.split("\t", 1)[0]);
         if (!(step > s.startStep && step <= end)) throw new Error(`${id}: ${f} has a row at step ${step}, outside (${s.startStep}, ${end}]`);
       }
+    // migrations.tsv is optional (only written when a run has migration configured —
+    // see runner.ts): checked when present, but its absence from every segment (the
+    // common, migration-disabled case) isn't an error, unlike the always-written files above.
+    if (typeof s.files[MIGRATIONS_FILE] === "string")
+      for (const row of lines(s.files[MIGRATIONS_FILE]).slice(1)) {
+        const step = Number(row.split("\t", 1)[0]);
+        if (!(step > s.startStep && step <= end)) throw new Error(`${id}: ${MIGRATIONS_FILE} has a row at step ${step}, outside (${s.startStep}, ${end}]`);
+      }
     at = end;
   });
   if (at !== totalSteps) throw new Error(`segments cover ${at} of ${totalSteps} steps`);
@@ -119,6 +138,22 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     out[f] = header + "\n" + segs.map((s) => s.files[f].slice(s.files[f].indexOf("\n") + 1)).join("");
   }
   out["activity-final.json"] = segs[segs.length - 1].files["activity-final.json"];
+  // Migration configuration doesn't change mid-run, so this is all-or-nothing:
+  // every segment carries migrations.tsv, or none do. Some-but-not-all means a
+  // caller silently failed to fetch it for part of the run (the bug this
+  // guards -- tools/stitch.ts's `download` used to only ever request
+  // `BUNDLE_FILES`) rather than a legitimately migration-disabled run, so this
+  // fails loudly instead of quietly exporting a truncated migration log.
+  const migratingSegs = segs.filter((s) => typeof s.files[MIGRATIONS_FILE] === "string");
+  if (migratingSegs.length > 0 && migratingSegs.length < segs.length) {
+    const missing = segs.filter((s) => typeof s.files[MIGRATIONS_FILE] !== "string").map((s) => s.index);
+    throw new Error(`${MIGRATIONS_FILE} is missing on segment(s) ${missing.join(", ")} but present on others; migration is configured for the whole run or not at all`);
+  }
+  if (migratingSegs.length === segs.length) {
+    const header = lines(segs[0].files[MIGRATIONS_FILE])[0];
+    for (const s of segs) if (lines(s.files[MIGRATIONS_FILE])[0] !== header) throw new Error(`segment #${s.index}: ${MIGRATIONS_FILE} header differs`);
+    out[MIGRATIONS_FILE] = header + "\n" + segs.map((s) => s.files[MIGRATIONS_FILE].slice(s.files[MIGRATIONS_FILE].indexOf("\n") + 1)).join("");
+  }
 
   const wall = manifests.reduce((a, m) => a + m.summary.wallSeconds, 0);
   const summary: RunSummary = {
