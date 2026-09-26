@@ -1,6 +1,6 @@
 defmodule CoordinatorWeb.ApiController do
   use CoordinatorWeb, :controller
-  alias Coordinator.{Checkpoint, Queue}
+  alias Coordinator.{Checkpoint, Queue, Segment, Store}
 
   @max_checkpoint 256 * 1024 * 1024
   @max_file 64 * 1024 * 1024
@@ -49,31 +49,25 @@ defmodule CoordinatorWeb.ApiController do
 
   def complete(
         conn,
-        %{
-          "id" => id,
-          "kind" => kind,
-          "endHash" => hash,
-          "observerHash" => ohash,
-          "lease" => lease
-        } = p
+        %{"id" => id, "kind" => kind, "endHash" => hash, "lease" => lease} = p
       )
-      when kind in ["run", "verify"] and is_binary(hash) and is_binary(ohash) and is_binary(lease) do
+      when kind in ["run", "verify"] and is_binary(hash) and is_binary(lease) do
     summary = if is_map(p["summary"]), do: p["summary"], else: nil
 
     cond do
-      not (hex16?(hash) and hex16?(ohash)) ->
-        bad(conn, "endHash and observerHash must be 16 hex digits")
+      not hex16?(hash) ->
+        bad(conn, "endHash must be 16 hex digits")
 
       summary && byte_size(Jason.encode!(summary)) > 16_384 ->
         bad(conn, "summary too large")
 
       true ->
-        reply(conn, Queue.complete(id, conn.assigns.island, lease, kind, hash, ohash, summary))
+        reply(conn, Queue.complete(id, conn.assigns.island, lease, kind, hash, summary))
     end
   end
 
   def complete(conn, _),
-    do: bad(conn, "expected kind (run|verify), endHash, observerHash and lease")
+    do: bad(conn, "expected kind (run|verify), endHash and lease")
 
   def reject(conn, %{"id" => id, "lease" => lease} = p) when is_binary(lease) do
     case Queue.reject(id, conn.assigns.island, lease, to_string(p["reason"] || "")) do
@@ -84,9 +78,13 @@ defmodule CoordinatorWeb.ApiController do
 
   def reject(conn, _), do: bad(conn, "expected lease")
 
-  # End checkpoint of a run task. The body is staged, validated (structure,
-  # versions, checksum, end step, seed), digested, and published only if the
-  # lease is still current; the digest binds the later completion.
+  # End checkpoint (physics + observer, one artifact) of a run task. The body
+  # is staged, validated (structure, versions, checksum, end step, seed) and
+  # digested twice — the physics-only `state_digest` (for the *next*
+  # segment's `startHash` continuity) and the whole-artifact `artifact_digest`
+  # (what this attempt's own `complete`/verification are bound to) — then
+  # published into the content-addressed store only if the lease is still
+  # current.
   def put_checkpoint(conn, %{"id" => id, "lease" => lease}) when is_binary(lease) do
     case Queue.segment(id) do
       nil ->
@@ -96,15 +94,16 @@ defmodule CoordinatorWeb.ApiController do
         with_staged(conn, @max_checkpoint, fn staged ->
           with {:ok, info} <-
                  Checkpoint.validate(File.read!(staged), seg.start_step + seg.steps, seg.seed),
-               digest = Checkpoint.state_digest(info),
+               digest = Checkpoint.artifact_digest(info),
+               state_hash = Checkpoint.state_digest(info),
                :ok <-
-                 Queue.publish(
+                 Queue.publish_checkpoint(
                    id,
                    conn.assigns.island,
                    lease,
                    staged,
-                   &Queue.checkpoint_path(&1, id),
-                   %{checkpoint_hash: digest}
+                   digest,
+                   state_hash
                  ) do
             {:ok, %{ok: true, digest: digest}}
           else
@@ -116,6 +115,10 @@ defmodule CoordinatorWeb.ApiController do
 
   def put_checkpoint(conn, _), do: bad(conn, "expected lease")
 
+  # Bundle files (series.jsonl and friends) are not content-addressed: named
+  # by the caller, kept per segment. No file gets special-cased for a digest
+  # any more — that was only ever `observer.json`, which no longer exists as
+  # a separate upload (see `put_checkpoint/2`).
   def put_file(conn, %{"id" => id, "name" => name, "lease" => lease}) when is_binary(lease) do
     cond do
       not Regex.match?(~r/^[a-z0-9_-]{1,64}\.(jsonl|tsv|json)$/, name) ->
@@ -126,20 +129,14 @@ defmodule CoordinatorWeb.ApiController do
 
       true ->
         with_staged(conn, @max_file, fn staged ->
-          meta =
-            if name == "observer.json",
-              do: %{observer_hash: Checkpoint.bytes_digest(File.read!(staged))},
-              else: %{}
-
-          case Queue.publish(
+          case Queue.publish_file(
                  id,
                  conn.assigns.island,
                  lease,
                  staged,
-                 &Path.join(Queue.files_dir(&1, id), name),
-                 meta
+                 &Path.join(Queue.files_dir(&1, id), name)
                ) do
-            :ok -> {:ok, Map.put(meta, :ok, true)}
+            :ok -> {:ok, %{ok: true}}
             e -> e
           end
         end)
@@ -148,13 +145,19 @@ defmodule CoordinatorWeb.ApiController do
 
   def put_file(conn, _), do: bad(conn, "expected lease")
 
-  # Start state of a segment = end checkpoint of its predecessor.
+  # Start state of a segment = the accepted end artifact of its predecessor,
+  # fetched from the content-addressed store by that artifact's own digest.
   def get_checkpoint(conn, %{"id" => id}) do
-    path = Queue.checkpoint_path(Queue.data_dir(), safe_id!(id))
+    with seg when not is_nil(seg) <- Queue.segment(safe_id!(id)),
+         digest when not is_nil(digest) <- Segment.accepted_digest(seg) do
+      path = Store.path(Queue.data_dir(), digest)
 
-    if File.exists?(path),
-      do: conn |> put_resp_content_type("application/octet-stream") |> send_file(200, path),
-      else: not_found(conn)
+      if File.exists?(path),
+        do: conn |> put_resp_content_type("application/octet-stream") |> send_file(200, path),
+        else: not_found(conn)
+    else
+      _ -> not_found(conn)
+    end
   end
 
   def get_file(conn, %{"id" => id, "name" => name}) do

@@ -8,14 +8,28 @@ const MAGIC = 0x4b434c42; // "BLCK" little-endian
 const lo = (x: bigint) => Number(x & 0xffffffffn);
 const hi = (x: bigint) => Number((x >> 32n) & 0xffffffffn);
 
-/** Versioned, checksummed binary snapshot. */
-export function encodeCheckpoint(s: WorldState): Uint8Array {
+/**
+ * A checkpoint is one artifact with two sections: the physics state (cells +
+ * genome, byte-for-byte the same layout as schema v2) and an observer
+ * section — the tracker/activity/counters/settings a run's observers need to
+ * continue exactly, carried alongside the state instead of as a second,
+ * separately-uploaded file. The observer section is opaque to this module:
+ * it is whatever JSON-serialisable value the caller passes, length-prefixed
+ * and word-padded the same way the config section already is. This keeps the
+ * wire format simple enough to port to Elixir (`Jason.decode/1`) without this
+ * module needing to know the observer's actual shape — semantic validation of
+ * that shape (tracker referential integrity, settings, counters, ...) is the
+ * caller's job (see `decodeArtifact` in `@bl/runner`), not this codec's.
+ */
+export function encodeCheckpoint(s: WorldState, observer: unknown = {}): Uint8Array {
   const errs = validateState(s);
   if (errs.length) throw new Error(`checkpoint: refusing to encode invalid state: ${errs.join("; ")}`);
   const cfgBytes = new TextEncoder().encode(JSON.stringify(s.cfg));
   const cfgWords = Math.ceil(cfgBytes.length / 4);
+  const obsBytes = new TextEncoder().encode(JSON.stringify(observer));
+  const obsWords = Math.ceil(obsBytes.length / 4);
   const headerWords = 10 + 2 * FLUX_COUNT;
-  const total = headerWords + cfgWords + 1 + s.cells.length + 1 + s.genome.length + 2;
+  const total = headerWords + cfgWords + 1 + s.cells.length + 1 + s.genome.length + 1 + obsWords + 2;
   const out = new Uint32Array(total);
   let p = 0;
   out[p++] = MAGIC;
@@ -40,13 +54,25 @@ export function encodeCheckpoint(s: WorldState): Uint8Array {
   out[p++] = s.genome.length;
   out.set(canonicalGenome(s.genome), p);
   p += s.genome.length;
+  out[p++] = obsBytes.length;
+  new Uint8Array(out.buffer, p * 4, obsBytes.length).set(obsBytes);
+  p += obsWords;
   const [a, b] = digestWords(out.subarray(0, p));
   out[p++] = a;
   out[p++] = b;
   return new Uint8Array(out.buffer);
 }
 
-export function decodeCheckpoint(bytes: Uint8Array): WorldState {
+/**
+ * The wire-format decode: every check that depends only on the bytes
+ * (magic, schema/rule version, section bounds, checksum, trailing data, JSON
+ * syntax) or on the physics state alone (`validateState`, which includes the
+ * ledger's `< 2^63` headroom check). The observer section is returned
+ * unvalidated JSON — callers that need a fully-validated `ObserverState`
+ * (tracker referential integrity, settings shape, counter types, ...) use
+ * `decodeArtifact` from `@bl/runner`, the single loader for that.
+ */
+export function decodeCheckpoint(bytes: Uint8Array): { state: WorldState; observer: unknown } {
   if (bytes.byteLength % 4 !== 0) throw new Error("checkpoint: bad length");
   const buf = bytes.byteOffset % 4 === 0 ? bytes : bytes.slice();
   const w = new Uint32Array(buf.buffer, buf.byteOffset, buf.byteLength / 4);
@@ -92,9 +118,17 @@ export function decodeCheckpoint(bytes: Uint8Array): WorldState {
   const genomeLen = word();
   if (genomeLen !== n * GENOME_CHANNELS) throw new Error("checkpoint: genome size mismatch");
   const genome = w.slice(take(genomeLen), p);
+  const obsLen = word();
+  const obsAt = take(Math.ceil(obsLen / 4));
+  let observer: unknown;
+  try {
+    observer = JSON.parse(new TextDecoder().decode(new Uint8Array(w.buffer, w.byteOffset + obsAt * 4, obsLen)));
+  } catch {
+    throw new Error("checkpoint: observer section is not valid JSON");
+  }
   if (p !== end) throw new Error("checkpoint: trailing data");
   const state = { cfg, step, cells, genome, lightIn, heatOut, flux };
   const serr = validateState(state);
   if (serr.length) throw new Error(`checkpoint: ${serr.join("; ")}`);
-  return state;
+  return { state, observer };
 }

@@ -324,6 +324,10 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       break;
     case "loaded":
       cfg = m.manifest.cfg;
+      // The worker always pauses a freshly loaded/restored world; keep our
+      // own `playing` flag and the Pause/Play button in sync with that
+      // (harmless no-op message if we were already paused).
+      setPlaying(false);
       spInd.clear();
       spBio.clear();
       spLin.clear();

@@ -8,7 +8,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:gpu": "deno run --allow-read --allow-env tests/deno/gpu_golden.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "gen:prereg": "deno run -A tools/gen-prereg.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

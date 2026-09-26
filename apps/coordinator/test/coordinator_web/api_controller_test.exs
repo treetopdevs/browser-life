@@ -102,9 +102,45 @@ defmodule CoordinatorWeb.ApiControllerTest do
              |> post("/api/segments/#{seg}/complete?island=#{id}", %{
                "kind" => "run",
                "endHash" => "0123456789abcdef",
-               "observerHash" => "0123456789abcdef",
                "lease" => task["lease"]
              })
              |> json_response(409)
+  end
+
+  test "a run's checkpoint is content-addressed and its predecessor is fetched by that digest", %{
+    conn: conn
+  } do
+    conn |> post("/api/experiments", @spec_ok) |> json_response(200)
+    {id, token} = join(conn)
+
+    put = fn path, body ->
+      build_conn()
+      |> authed(token)
+      |> put_req_header("content-type", "application/octet-stream")
+      |> put(path, body)
+    end
+
+    t1 = build_conn() |> authed(token) |> post("/api/next?island=#{id}") |> json_response(200)
+    seg1 = t1["segment"]["id"]
+    bin1 = Coordinator.CheckpointTest.build(500, seed: 1)
+
+    assert %{"digest" => digest1} =
+             put.("/api/segments/#{seg1}/checkpoint?island=#{id}&lease=#{t1["lease"]}", bin1)
+             |> json_response(200)
+
+    assert build_conn()
+           |> authed(token)
+           |> post("/api/segments/#{seg1}/complete?island=#{id}", %{
+             "kind" => "run",
+             "endHash" => digest1,
+             "lease" => t1["lease"]
+           })
+           |> json_response(200) == %{"status" => "done"}
+
+    t2 = build_conn() |> authed(token) |> post("/api/next?island=#{id}") |> json_response(200)
+    assert t2["startFrom"] == seg1
+
+    start = build_conn() |> authed(token) |> get("/api/segments/#{seg1}/start?island=#{id}")
+    assert response(start, 200) == bin1
   end
 end

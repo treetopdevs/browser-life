@@ -8,6 +8,10 @@ if config_env() == :prod and System.get_env("BL_ADMIN_TOKEN") in [nil, ""],
 if origins = System.get_env("BL_CORS_ORIGINS"),
   do: config(:coordinator, cors_origins: String.split(origins, ",", trim: true))
 
+# Lets a test harness (see tests/deno/coordinator_integration.ts) point a real
+# server at a scratch directory instead of the default `data/`.
+if dir = System.get_env("BL_DATA_DIR"), do: config(:coordinator, data_dir: dir)
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration

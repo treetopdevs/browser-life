@@ -14,7 +14,8 @@ import {
   cellCount,
   RULE_VERSION,
   SCHEMA_VERSION,
-  digestWords,
+  artifactDigest,
+  decodeCheckpoint,
   encodeCheckpoint,
   initWorld,
   presetConfig,
@@ -80,6 +81,7 @@ export interface RunSummary {
   steps: number;
   wallSeconds: number;
   stepsPerSecond: number;
+  /** `artifactDigest(final, observer)` — physics and observer together. */
   finalHash: string;
   mutations: number;
   fissions: number;
@@ -92,13 +94,24 @@ export interface RunSummary {
   conservationOk: boolean;
 }
 
-/** Everything the observers carry between segments of one run. */
+/** Observation settings; continuing with different settings is an error. */
+export interface ObserverSettings {
+  censusEvery: number;
+  deepEvery: number;
+  activityThreshold: number | null;
+}
+
+/**
+ * Everything the observers carry between segments of one run. Lives in the
+ * same artifact as the physics state it observes (see `@bl/schema`'s
+ * `encodeCheckpoint`/`decodeCheckpoint`), so there is no separate digest for
+ * "does this observer belong to this state" — `step` is kept only as a cheap
+ * intrinsic self-consistency check (see `decodeArtifact`), not a second
+ * cross-artifact identity.
+ */
 export interface ObserverState {
   step: number;
-  /** Canonical digest of the physics state this observer belongs to. */
-  stateDigest: string;
-  /** Observation settings; continuing with different settings is an error. */
-  settings: { censusEvery: number; deepEvery: number; activityThreshold: number | null };
+  settings: ObserverSettings;
   tracker: TrackerState;
   activity: ActivityState;
   mutations: number;
@@ -158,28 +171,76 @@ function observerSettings(spec: RunSpec) {
 
 /**
  * Why a start state and observer state cannot continue `spec`, or null when
- * they can. A continuation must carry the observers of the exact state it
- * resumes, under the same observation settings, in a restorable form.
+ * they can. Only checks run-context compatibility — that this artifact,
+ * however it decoded, is the *right* one for this run: same config, same
+ * observation settings. Everything artifact-intrinsic (tracker referential
+ * integrity, settings/counter shape, label count, `prevSym` decodability) is
+ * `decodeArtifact`'s job, not this function's — an artifact that decodes
+ * cleanly can still be the wrong artifact for this run, which is what this
+ * checks. Called both after `decodeArtifact` (island.ts, on bytes from the
+ * network) and directly on an in-memory `RunOptions.start`/`observer` pair
+ * (this function, continuing a run without ever touching bytes) — in the
+ * latter case the observer came straight from a previous `runExperiment`
+ * call's own return value, so it is already well-formed by construction.
  */
 export function continuationError(spec: RunSpec, start: WorldState, observer: ObserverState | undefined): string | null {
   if (!sameConfig(start.cfg, specConfig(spec))) return "start state config differs from the run spec";
   if (start.step === 0) return null;
-  const o = observer as Partial<ObserverState> | undefined;
-  if (!o || typeof o !== "object") return "continuing from a checkpoint requires the matching observer state";
-  if (o.step !== start.step || o.stateDigest !== stateHash(start)) return `observer state does not belong to the start checkpoint (t=${o.step})`;
-  if (JSON.stringify(o.settings) !== JSON.stringify(observerSettings(spec))) return "observer settings differ from the run spec";
-  if (!Number.isSafeInteger(o.mutations) || !Number.isSafeInteger(o.buddings) || !Number.isSafeInteger(o.censusIdx) || typeof o.extinct !== "boolean")
-    return "observer counters are malformed";
-  if (o.prevSym != null && typeof o.prevSym !== "string") return "observer prevSym is malformed";
-  try {
-    const t = Tracker.fromJSON(o.tracker!);
-    if (o.tracker!.prevLabels !== null && t.labelCount() !== cellCount(start.cfg)) return "observer component labels do not cover the world";
-    ActivityTracker.fromJSON(o.activity!);
-    if (o.prevSym) unb64(o.prevSym);
-  } catch (e) {
-    return `observer state cannot be restored: ${(e as Error).message}`;
-  }
+  if (!observer || typeof observer !== "object") return "continuing from a checkpoint requires the matching observer state";
+  if (observer.step !== start.step) return `observer state does not belong to the start checkpoint (t=${observer.step})`;
+  if (JSON.stringify(observer.settings) !== JSON.stringify(observerSettings(spec))) return "observer settings differ from the run spec";
   return null;
+}
+
+const posIntOrThrow = (v: unknown, what: string) => {
+  if (!posInt(v)) throw new Error(`checkpoint: observer ${what} is malformed`);
+  return v as number;
+};
+const safeIntGe0 = (v: unknown) => Number.isSafeInteger(v) && (v as number) >= 0;
+
+/** Structural validation of a decoded observer section's shape, nothing domain-specific yet. */
+function validateObserverShape(raw: unknown): ObserverState {
+  if (!raw || typeof raw !== "object") throw new Error("checkpoint: observer section is not an object");
+  const o = raw as Partial<ObserverState> & Record<string, unknown>;
+  if (!safeIntGe0(o.step)) throw new Error("checkpoint: observer step is malformed");
+  const s = o.settings as Partial<ObserverSettings> | undefined;
+  if (!s || typeof s !== "object") throw new Error("checkpoint: observer settings is malformed");
+  posIntOrThrow(s.censusEvery, "settings.censusEvery");
+  posIntOrThrow(s.deepEvery, "settings.deepEvery");
+  if (!(s.activityThreshold === null || typeof s.activityThreshold === "number")) throw new Error("checkpoint: observer settings.activityThreshold is malformed");
+  if (!safeIntGe0(o.mutations) || !safeIntGe0(o.buddings) || !safeIntGe0(o.censusIdx)) throw new Error("checkpoint: observer counters are malformed");
+  if (typeof o.extinct !== "boolean") throw new Error("checkpoint: observer extinct flag is malformed");
+  if (o.prevSym != null && typeof o.prevSym !== "string") throw new Error("checkpoint: observer prevSym is malformed");
+  return o as ObserverState;
+}
+
+/**
+ * The single "parse, don't validate" loader for a checkpoint artifact.
+ * Decodes the wire bytes (`@bl/schema`'s `decodeCheckpoint`: bytes-intrinsic
+ * checks only) and then performs every check that depends on the observer's
+ * domain types: settings/counter shape, tracker referential integrity
+ * (`Tracker.fromJSON`, which already does this — not reimplemented here),
+ * activity shape (`ActivityTracker.fromJSON`), component-label count against
+ * the decoded state's cell count, `prevSym` decodability, and the artifact's
+ * own step self-consistency (`observer.step === state.step` — always true
+ * for an artifact this codebase wrote; checked anyway since nothing else
+ * guarantees it for bytes from elsewhere). Every caller gets back a fully
+ * validated `{state, observer}` or an exception naming the defect; no call
+ * site outside this function parses raw JSON or bytes from an artifact.
+ */
+export function decodeArtifact(bytes: Uint8Array): { state: WorldState; observer: ObserverState } {
+  const { state, observer: raw } = decodeCheckpoint(bytes);
+  const observer = validateObserverShape(raw);
+  if (observer.step !== state.step) throw new Error(`checkpoint: observer step ${observer.step} does not match state step ${state.step}`);
+  try {
+    const t = Tracker.fromJSON(observer.tracker);
+    if (observer.tracker.prevLabels !== null && t.labelCount() !== cellCount(state.cfg)) throw new Error("observer component labels do not cover the world");
+    ActivityTracker.fromJSON(observer.activity);
+    if (observer.prevSym != null) unb64(observer.prevSym);
+  } catch (e) {
+    throw new Error(`checkpoint: observer state cannot be restored: ${(e as Error).message}`);
+  }
+  return { state, observer };
 }
 
 export function runId(spec: RunSpec): string {
@@ -358,7 +419,18 @@ export async function runExperiment(
       if (spec.checkpointEvery > 0 && (sim.step - startStep) % spec.checkpointEvery === 0) {
         const st = await sim.readState();
         const file = `checkpoints/t${String(st.step).padStart(9, "0")}.blck`;
-        await sink.writeBytes(file, encodeCheckpoint(st));
+        const midObserver: ObserverState = {
+          step: st.step,
+          settings,
+          tracker: tracker.toJSON(),
+          activity: activity.toJSON(),
+          mutations,
+          buddings,
+          censusIdx,
+          extinct,
+          prevSym: prevSym ? b64(prevSym) : null,
+        };
+        await sink.writeBytes(file, encodeCheckpoint(st, midObserver));
         manifest.checkpoints.push({ step: st.step, file, hash: stateHash(st) });
       }
       if (censusIdx % 20 === 0) {
@@ -368,11 +440,25 @@ export async function runExperiment(
     }
     const final = await sim.readState();
     const wall = (performance.now() - t0) / 1000;
+    const observer: ObserverState = {
+      step: final.step,
+      settings,
+      tracker: tracker.toJSON(),
+      activity: activity.toJSON(),
+      mutations,
+      buddings,
+      censusIdx,
+      extinct,
+      prevSym: prevSym ? b64(prevSym) : null,
+    };
     const summary: RunSummary = {
       steps: final.step,
       wallSeconds: wall,
       stepsPerSecond: (final.step - startStep) / wall,
-      finalHash: stateHash(final),
+      // The one digest used for run completion, replay verification and the
+      // predecessor-start check: physics *and* observer together (a verifier
+      // must reproduce the observations too, not just the physics).
+      finalHash: artifactDigest(final, observer),
       mutations,
       fissions: tracker.fissions,
       fusions: tracker.fusions,
@@ -386,33 +472,8 @@ export async function runExperiment(
     manifest.summary = summary;
     await sink.writeText("manifest.json", JSON.stringify({ ...manifest, finishedAt: new Date().toISOString() }, null, 2));
     await sink.writeText("activity-final.json", JSON.stringify({ all: activity.allActivities(), top: activity.top(50) }));
-    const observer: ObserverState = {
-      step: final.step,
-      stateDigest: summary.finalHash,
-      settings,
-      tracker: tracker.toJSON(),
-      activity: activity.toJSON(),
-      mutations,
-      buddings,
-      censusIdx,
-      extinct,
-      prevSym: prevSym ? b64(prevSym) : null,
-    };
     return { summary, final: opts.keepFinal ? final : undefined, observer };
   } finally {
     sim.destroy();
   }
-}
-
-/**
- * Digest of an uploaded artifact's exact bytes: digestWords over
- * [byte length, bytes zero-padded to whole words]. Mirrored by the
- * coordinator (Coordinator.Checkpoint.bytes_digest).
- */
-export function bytesDigest(bytes: Uint8Array): string {
-  const words = new Uint32Array(1 + Math.ceil(bytes.length / 4));
-  words[0] = bytes.length;
-  new Uint8Array(words.buffer, 4).set(bytes);
-  const [a, b] = digestWords(words);
-  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
 }

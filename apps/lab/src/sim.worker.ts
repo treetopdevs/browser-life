@@ -14,7 +14,6 @@ import {
   RULE_VERSION,
   cellCount,
   cloneState,
-  decodeCheckpoint,
   decodeGenome,
   encodeCheckpoint,
   initWorld,
@@ -25,9 +24,22 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
-import { Tracker, census, individuals, lineageRGB } from "@bl/metrics";
+import { ActivityTracker, Tracker, census, individuals, lineageRGB, tileDistance2 } from "@bl/metrics";
+import { decodeArtifact, type ObserverSettings, type ObserverState } from "@bl/runner";
 import type { CensusMsg, FromWorker, RunManifest, ToWorker } from "./protocol.ts";
 import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
+
+/**
+ * The interactive lab's own observation settings: fixed, not user-configured
+ * (there is no per-experiment spec here, just a live world to watch). Stored
+ * on the manifest so a save/restore round-trip carries them, even though
+ * `deepEvery` and `censusEvery` have no effect on the live census today (it
+ * runs on the same wall-clock cadence it always has — see `sendCensus`);
+ * only `activityThreshold` is live-meaningful, and `null` (Infinity) is
+ * correct here since the lab has no neutral-run calibration to draw one
+ * from.
+ */
+const DEFAULT_SETTINGS: ObserverSettings = { censusEvery: 100, deepEvery: 5, activityThreshold: null };
 
 const post = (m: FromWorker, transfer: Transferable[] = []) => (self as DedicatedWorkerGlobalScope).postMessage(m, transfer);
 
@@ -40,7 +52,11 @@ interface World {
   baseline: bigint;
   startMatter: bigint;
   tracker: Tracker;
+  activity: ActivityTracker;
   mutations: number;
+  buddings: number;
+  censusIdx: number;
+  extinct: boolean;
 }
 
 let device: GPUDevice | null = null;
@@ -110,8 +126,12 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
   raf(frame);
 }
 
-/** Builds the replacement first; the current world survives if that fails. */
-async function adopt(state: WorldState, manifest: RunManifest) {
+/**
+ * Builds the replacement first; the current world survives if that fails.
+ * `observer` rehydrates the tracker/activity/counters from a restored or
+ * imported checkpoint; omitted for a fresh `load()`, which starts clean.
+ */
+async function adopt(state: WorldState, manifest: RunManifest, observer?: ObserverState) {
   if (!device || !ctx) throw new Error("GPU not initialised");
   const sim = await GpuSim.create(device, state);
   let renderer: Renderer;
@@ -130,8 +150,12 @@ async function adopt(state: WorldState, manifest: RunManifest) {
     manifest,
     baseline: t.energy + state.heatOut - state.lightIn,
     startMatter: t.matter,
-    tracker: new Tracker(),
-    mutations: 0,
+    tracker: observer ? Tracker.fromJSON(observer.tracker) : new Tracker(),
+    activity: observer ? ActivityTracker.fromJSON(observer.activity) : new ActivityTracker(manifest.settings.activityThreshold ?? Infinity),
+    mutations: observer?.mutations ?? 0,
+    buddings: observer?.buddings ?? 0,
+    censusIdx: observer?.censusIdx ?? 0,
+    extinct: observer?.extinct ?? false,
   };
   old?.renderer.destroy();
   old?.sim.destroy();
@@ -144,7 +168,7 @@ async function adopt(state: WorldState, manifest: RunManifest) {
   post({ type: "loaded", manifest, step: sim.step });
 }
 
-function newManifest(presetId: string, seed: number, state: WorldState, init: RunManifest["init"]): RunManifest {
+function newManifest(presetId: string, seed: number, state: WorldState, init: RunManifest["init"], settings: ObserverSettings): RunManifest {
   return {
     runId: `${presetId}-s${seed}-${Date.now().toString(36)}`,
     presetId,
@@ -157,6 +181,7 @@ function newManifest(presetId: string, seed: number, state: WorldState, init: Ru
     userAgent: navigator.userAgent,
     interventions: [],
     checkpoints: [],
+    settings,
   };
 }
 
@@ -164,7 +189,7 @@ async function load(presetId: string, seed: number, overrides = {}) {
   const preset = PRESETS.find((p) => p.id === presetId) ?? PRESETS[0];
   const cfg = presetConfig(preset, seed, overrides);
   const state = initWorld(cfg, preset.init);
-  await adopt(state, newManifest(preset.id, seed, state, preset.init));
+  await adopt(state, newManifest(preset.id, seed, state, preset.init, DEFAULT_SETTINGS));
 }
 
 function frame() {
@@ -242,45 +267,100 @@ async function sendStats(w: World) {
   }
 }
 
+/**
+ * One observation: census, tracker/activity update, budding attribution and
+ * counters — the same shape `runExperiment`'s headless loop uses, so a saved
+ * checkpoint's observer state means the same thing here as it does there.
+ * `sendUi` gates only the live `census` postMessage; the tracker/activity
+ * update itself always happens, so save/restore never lose observer state.
+ */
+async function observeStep(w: World, sendUi: boolean): Promise<void> {
+  const ledger = await w.sim.drainLedger();
+  // The world may have been replaced (and destroyed) while we awaited.
+  if (!current(w)) return;
+  // Cells, genome head and step are copied in one submission (consistent step).
+  const snap = await w.sim.readSnapshot(false);
+  if (!current(w)) return;
+  w.mutations += ledger.events.length + ledger.dropped;
+  if (ledger.dropped > 0) post({ type: "notice", message: `${ledger.dropped} mutation events dropped (event buffer full); lineage history is incomplete` });
+  const c = census({ cfg: w.sim.cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead });
+  const events = w.tracker.update(c);
+  // Condensation from leaked biomass: attribute to the nearest living
+  // individual of the same lineage (budding) when one is close, matching
+  // runExperiment's classification so a restored run's counts line up.
+  for (const e of events) {
+    if (e.kind !== "birth") continue;
+    const b = w.tracker.alive.get(e.id);
+    let parent: number | null = null;
+    let best = 24 * 24;
+    if (b && b.lineage)
+      for (const o of w.tracker.alive.values()) {
+        if (o.id === b.id || o.lineage !== b.lineage || o.born === c.step) continue;
+        const d = tileDistance2(o, b, w.sim.cfg.tileW, w.sim.cfg.tileH);
+        if (d < best) [best, parent] = [d, o.id];
+      }
+    if (parent !== null) {
+      w.buddings++;
+      if (b) {
+        b.parent = parent;
+        b.generation = (w.tracker.alive.get(parent)?.generation ?? 0) + 1;
+      }
+    }
+  }
+  const abundance = c.lineages.map((l) => [l.key, l.cells] as [string, number]);
+  w.activity.update(c.step, abundance);
+  w.censusIdx++;
+  if (c.livingCells === 0) w.extinct = true;
+  if (!sendUi) return;
+  const ind = individuals(c);
+  const total = c.lineages.reduce((a, l) => a + l.mass, 0) || 1;
+  const count = (k: string) => w.tracker.history.filter((e) => e.kind === k).length;
+  const msg: CensusMsg = {
+    type: "census",
+    step: c.step,
+    individuals: ind.length,
+    meanMass: ind.reduce((a, k) => a + k.mass, 0) / Math.max(1, ind.length),
+    lineageCount: c.lineages.length,
+    top: c.lineages.slice(0, 6).map((l) => {
+      const [hi, lo] = l.key.split(":").map(Number);
+      return { key: l.key, share: l.mass / total, color: lineageRGB(hi, lo) };
+    }),
+    fissions: w.tracker.fissions,
+    fusions: w.tracker.fusions,
+    births: count("birth"),
+    deaths: count("death"),
+    maxGen: w.tracker.maxGeneration(),
+    mutations: w.mutations,
+  };
+  post(msg);
+}
+
 async function sendCensus(w: World) {
   censusBusy = true;
   try {
-    const ledger = await w.sim.drainLedger();
-    // The world may have been replaced (and destroyed) while we awaited.
-    if (!current(w)) return;
-    // Cells, genome head and step are copied in one submission (consistent step).
-    const snap = await w.sim.readSnapshot(false);
-    if (!current(w)) return;
-    w.mutations += ledger.events.length + ledger.dropped;
-    if (ledger.dropped > 0) post({ type: "notice", message: `${ledger.dropped} mutation events dropped (event buffer full); lineage history is incomplete` });
-    const c = census({ cfg: w.sim.cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead });
-    w.tracker.update(c);
-    const ind = individuals(c);
-    const total = c.lineages.reduce((a, l) => a + l.mass, 0) || 1;
-    const count = (k: string) => w.tracker.history.filter((e) => e.kind === k).length;
-    const msg: CensusMsg = {
-      type: "census",
-      step: c.step,
-      individuals: ind.length,
-      meanMass: ind.reduce((a, k) => a + k.mass, 0) / Math.max(1, ind.length),
-      lineageCount: c.lineages.length,
-      top: c.lineages.slice(0, 6).map((l) => {
-        const [hi, lo] = l.key.split(":").map(Number);
-        return { key: l.key, share: l.mass / total, color: lineageRGB(hi, lo) };
-      }),
-      fissions: w.tracker.fissions,
-      fusions: w.tracker.fusions,
-      births: count("birth"),
-      deaths: count("death"),
-      maxGen: w.tracker.maxGeneration(),
-      mutations: w.mutations,
-    };
-    post(msg);
+    await observeStep(w, true);
   } catch (e) {
     if (current(w)) post({ type: "error", message: `census: ${e instanceof Error ? e.message : e}` });
   } finally {
     censusBusy = false;
   }
+}
+
+/** The observer section for a checkpoint taken right now, at `step`. */
+function snapshotObserver(w: World, step: number): ObserverState {
+  return {
+    step,
+    settings: w.manifest.settings,
+    tracker: w.tracker.toJSON(),
+    activity: w.activity.toJSON(),
+    mutations: w.mutations,
+    buddings: w.buddings,
+    censusIdx: w.censusIdx,
+    extinct: w.extinct,
+    // The interactive lab doesn't track pattern-entropy state (no UI use for
+    // it); a null prevSym is a fully valid, if unused, observer field.
+    prevSym: null,
+  };
 }
 
 async function probe(x: number, y: number) {
@@ -314,9 +394,13 @@ async function probe(x: number, y: number) {
 async function save() {
   const w = world;
   if (!w) return;
+  // Catch the observer up to the exact step we're about to snapshot (the
+  // live census is wall-clock-throttled, so it usually lags a few steps
+  // behind); nothing else can run `sim.run()` while we're inside `exclusive`.
+  await observeStep(w, false);
   const m = w.manifest;
   const state = await w.sim.readState();
-  const bytes = encodeCheckpoint(state);
+  const bytes = encodeCheckpoint(state, snapshotObserver(w, state.step));
   // Unique even after a restore trims the manifest's checkpoint list.
   const file = `${m.runId}-t${state.step}-${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}.blck`;
   await writeFile(file, bytes);
@@ -327,34 +411,51 @@ async function save() {
   post({ type: "checkpoints", list: await listCheckpoints() });
 }
 
+/** A branch's id: derived from the original so it stays traceable, but never collides with it. */
+function forkRunId(runId: string): string {
+  return `${runId}-b${Date.now().toString(36)}`;
+}
+
 async function restore(file: string) {
   const meta = (await listCheckpoints()).find((c) => c.file === file);
   if (!meta) throw new Error(`unknown checkpoint ${file}`);
-  const state = decodeCheckpoint(await readFile(file));
+  const { state, observer } = decodeArtifact(await readFile(file));
   let m: RunManifest;
   try {
-    m = JSON.parse(new TextDecoder().decode(await readFile(`${meta.runId}.run.json`)));
-    const ck = m.checkpoints.find((c) => c.file === file);
+    const saved: RunManifest = JSON.parse(new TextDecoder().decode(await readFile(`${meta.runId}.run.json`)));
+    const ck = saved.checkpoints.find((c) => c.file === file);
     if (!ck) throw new Error("checkpoint missing from manifest");
-    // Keep exactly the interventions the checkpoint already contains.
-    m.interventions = m.interventions.slice(0, ck.interventions);
-    m.checkpoints = m.checkpoints.slice(0, m.checkpoints.indexOf(ck) + 1);
+    // Continuing exactly where the run left off keeps its id; restoring to
+    // an earlier point forks, so a later save never overwrites this
+    // manifest's later checkpoints (and their provenance) again.
+    const last = saved.checkpoints[saved.checkpoints.length - 1] === ck;
+    m = {
+      ...saved,
+      runId: last ? saved.runId : forkRunId(saved.runId),
+      // Keep exactly the interventions the checkpoint already contains.
+      interventions: saved.interventions.slice(0, ck.interventions),
+      checkpoints: saved.checkpoints.slice(0, saved.checkpoints.indexOf(ck) + 1),
+    };
   } catch {
-    m = importedManifest(state, meta.runId);
+    // No confirmed, intact prior manifest to safely continue: always fork,
+    // never reuse the old run's id (a missing/corrupt manifest is not "the
+    // same run, resumed", it's a fresh branch from this checkpoint).
+    m = importedManifest(state, forkRunId(meta.runId), observer.settings);
   }
-  await adopt(state, m);
+  await adopt(state, m, observer);
   post({ type: "notice", message: `Restored ${file} at step ${state.step}` });
 }
 
-function importedManifest(state: WorldState, runId: string): RunManifest {
-  return { ...newManifest("imported", state.cfg.seed, state, { kind: "generalist", founders: 0, nutrient: 0, biomass: 0 }), runId };
+function importedManifest(state: WorldState, runId: string, settings: ObserverSettings): RunManifest {
+  return { ...newManifest("imported", state.cfg.seed, state, { kind: "generalist", founders: 0, nutrient: 0, biomass: 0 }, settings), runId };
 }
 
 async function exportRun() {
   const w = world;
   if (!w) return;
+  await observeStep(w, false);
   const state = await w.sim.readState();
-  const bytes = encodeCheckpoint(state);
+  const bytes = encodeCheckpoint(state, snapshotObserver(w, state.step));
   post({ type: "exported", bytes: bytes.buffer as ArrayBuffer, name: `${w.manifest.runId}-t${state.step}.blck` }, [bytes.buffer as ArrayBuffer]);
 }
 
@@ -439,8 +540,8 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       case "export":
         return exportRun();
       case "import": {
-        const state = decodeCheckpoint(new Uint8Array(m.bytes));
-        await adopt(state, importedManifest(state, m.name.replace(/\.blck$/, "")));
+        const { state, observer } = decodeArtifact(new Uint8Array(m.bytes));
+        await adopt(state, importedManifest(state, m.name.replace(/\.blck$/, ""), observer.settings), observer);
         return post({ type: "notice", message: `Imported ${m.name} at step ${state.step}` });
       }
       case "verify":

@@ -7,8 +7,8 @@
 // start checkpoint whose digest differs from the predecessor's report is
 // rejected, which makes the coordinator recompute that predecessor.
 
-import { decodeCheckpoint, encodeCheckpoint, stateHash, type WorldState } from "@bl/schema";
-import { bytesDigest, continuationError, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
+import { encodeCheckpoint, stateHash, type WorldState } from "@bl/schema";
+import { continuationError, decodeArtifact, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
 
 export interface Task {
   kind: "run" | "verify" | "idle";
@@ -79,15 +79,18 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
     const task = await call<Task>(`/api/next?${q()}`, { method: "POST" });
     if (task.kind === "idle" || !task.segment || !task.spec || !task.lease) {
       if (opt.maxTasks) break;
-      await new Promise<void>((r) => {
-        const t = setTimeout(wake, opt.idleMs ?? 10_000);
-        function wake() {
-          clearTimeout(t);
-          opt.signal?.removeEventListener("abort", wake);
-          r();
-        }
-        opt.signal?.addEventListener("abort", wake);
-      });
+      // Stop may have aborted while `/next` was in flight; don't run a full
+      // idle wait just to discover that on the next loop check.
+      if (!opt.signal?.aborted)
+        await new Promise<void>((r) => {
+          const t = setTimeout(wake, opt.idleMs ?? 10_000);
+          function wake() {
+            clearTimeout(t);
+            opt.signal?.removeEventListener("abort", wake);
+            r();
+          }
+          opt.signal?.addEventListener("abort", wake);
+        });
       continue;
     }
     const seg = task.segment;
@@ -100,27 +103,24 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       let start: WorldState | undefined;
       let observer: ObserverState | undefined;
       if (task.startFrom) {
-        // Every defect of the predecessor's artifacts (undecodable or invalid
-        // state, wrong step or digest, missing, malformed or mismatched
-        // observers) rejects the predecessor for recomputation instead of
-        // failing this island; only transport errors propagate.
+        // Every defect of the predecessor's artifact (undecodable or invalid
+        // state, wrong step or digest, malformed or mismatched observer)
+        // rejects the predecessor for recomputation instead of failing this
+        // island; only transport errors propagate. One artifact, one fetch:
+        // the checkpoint and observer sections decode together.
         const bytes = new Uint8Array(await call<ArrayBuffer>(`/api/segments/${task.startFrom}/start?${q()}`));
-        let raw: ArrayBuffer | null = null;
-        try {
-          raw = await call<ArrayBuffer>(`/api/segments/${task.startFrom}/files/observer.json?${q()}`, {}, true);
-        } catch (e) {
-          if (!(e instanceof HttpError && e.status === 404)) throw e;
-        }
         let bad: string | null = null;
         try {
-          start = decodeCheckpoint(bytes);
-          const digest = stateHash(start);
-          if (start.step !== seg.startStep || (task.startHash && digest !== task.startHash))
-            bad = `start checkpoint t=${start.step} digest ${digest}, expected t=${seg.startStep} digest ${task.startHash}`;
-          else if (raw === null) bad = "predecessor uploaded no observer state";
+          const decoded = decodeArtifact(bytes);
+          const digest = stateHash(decoded.state);
+          if (decoded.state.step !== seg.startStep || (task.startHash && digest !== task.startHash))
+            bad = `start checkpoint t=${decoded.state.step} digest ${digest}, expected t=${seg.startStep} digest ${task.startHash}`;
           else {
-            observer = JSON.parse(new TextDecoder().decode(raw)) as ObserverState;
-            bad = continuationError(task.spec, start, observer);
+            bad = continuationError(task.spec, decoded.state, decoded.observer);
+            if (!bad) {
+              start = decoded.state;
+              observer = decoded.observer;
+            }
           }
         } catch (e) {
           bad = `invalid predecessor artifact: ${(e as Error).message}`;
@@ -134,12 +134,12 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       const sink = new MemorySink();
       const out = await runExperiment(device, task.spec, sink, opt.host, (m) => log(`  ${m}`), { start, observer, keepFinal: task.kind === "run" });
       const lq = q(`&lease=${encodeURIComponent(lease)}`);
-      const observerBytes = new TextEncoder().encode(JSON.stringify(out.observer));
-      const observerHash = bytesDigest(observerBytes);
       if (task.kind === "run") {
+        // Encode once, PUT once: the checkpoint and observer state travel as
+        // one artifact. Verify attempts upload nothing — they replay locally
+        // and report the digest they computed for the coordinator to compare.
         const octet = { "content-type": "application/octet-stream" };
-        await call(`/api/segments/${seg.id}/checkpoint?${lq}`, { method: "PUT", headers: octet, body: encodeCheckpoint(out.final!) as BodyInit });
-        await call(`/api/segments/${seg.id}/files/observer.json?${lq}`, { method: "PUT", headers: octet, body: observerBytes as BodyInit });
+        await call(`/api/segments/${seg.id}/checkpoint?${lq}`, { method: "PUT", headers: octet, body: encodeCheckpoint(out.final!, out.observer) as BodyInit });
         for (const [name, text] of sink.files) {
           const safe = name.replace(/[^a-z0-9_.-]/gi, "-").toLowerCase();
           await call(`/api/segments/${seg.id}/files/${safe}?${lq}`, { method: "PUT", headers: octet, body: text });
@@ -148,8 +148,9 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       const r = await postJson<{ status: string }>(`/api/segments/${seg.id}/complete?${q()}`, {
         kind: task.kind,
         lease,
+        // Physics and observer together (see `artifactDigest`), replacing the
+        // old separate endHash/observerHash pair with one end-to-end digest.
         endHash: out.summary.finalHash,
-        observerHash,
         summary: out.summary,
       });
       log(`  ${task.kind} complete: ${out.summary.finalHash} → ${r.status}`);

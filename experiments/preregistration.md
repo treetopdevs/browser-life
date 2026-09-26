@@ -33,9 +33,17 @@ In a world that is closed in matter and open in energy, with individuality, repr
 
 ## Primary endpoints
 
+*The list below is generated from `experiments/endpoints.ts` by `tools/gen-prereg.ts`
+(`deno task gen-prereg` / `pnpm gen:prereg`); `tests/deno/prereg-sync.ts` and
+`experiments/test/prereg-sync.test.ts` fail if this section falls out of sync with that
+module. Do not hand-edit the text between the markers.*
+
+<!-- GENERATED:endpoints:start -->
 1. **Adaptive activity.** Cumulative new evolutionary activity (Bedau–Packard) with the threshold fixed at the 95th percentile of lineage activity pooled over the neutral runs. Hypothesis: treatment > neutral and treatment > no-mutation (one-sided Mann–Whitney, α = 0.01 after Holm correction across the two comparisons).
 2. **Unbounded-looking growth.** Within treatment runs, the cumulative new-activity curve is classified (`growthVsSaturation` in `packages/metrics/src/stats.ts`): "flat" if its linear change over the window is below 5% of its mean; otherwise "growing" if the linear model is preferred by ΔAIC ≥ 2 (ΔAIC = AIC_sat − AIC_lin) or the fitted saturation time constant lies beyond half the window; "saturating" if ΔAIC ≤ −2 with the time constant within half the window; otherwise "indeterminate". Hypothesis: a majority of treatment runs are "growing" while at most a minority of neutral runs are. A lineage counts as adaptively significant only when its activity is strictly above the neutral threshold.
-3. **Ecological closure.** Biotic share of waste recycling (decomposition / (decomposition + abiotic)) and the number of trophic roles holding ≥5% of living cells. Hypothesis: treatment > replenished on biotic recycling; ≥2 roles coexisting for ≥10⁵ steps in a majority of treatment runs (≥3 roles is the M5 gate).
+3. **Ecological closure — recycling.** Biotic share of waste recycling (decomposition / (decomposition + abiotic)). Hypothesis: treatment > replenished (one-sided Mann–Whitney, α = 0.01).
+4. **Ecological closure — coexistence.** Continuous coexistence of ≥2 trophic roles (each holding ≥5% of living cells) for ≥ 10⁵ steps, computed from the scheduled role observations in `series.jsonl`. `rolesPresent` is recorded only on deep censuses (every `deepEvery` censuses); the duration is measured across consecutive *deep* censuses only — a non-deep census carries no role information and neither continues nor breaks a coexistence run. Hypothesis: a majority of treatment runs reach a qualifying duration (≥3 roles sustained the same way is the M5 gate, reported alongside; it is not required for this endpoint).
+<!-- GENERATED:endpoints:end -->
 
 ## Held-out observables (never used by any search, selection or environment generator)
 

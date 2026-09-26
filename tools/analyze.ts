@@ -8,9 +8,11 @@
 // 2. Per run: activity statistics recomputed with that threshold, time-averaged
 //    ecology and held-out complexity observables, and a growth-vs-saturation
 //    test on cumulative new activity.
-// 3. Pre-registered primary endpoints (experiments/preregistration.md):
-//    one-sided Mann–Whitney tests with Holm correction, growth verdict counts,
-//    ecological closure.
+// 3. Pre-registered primary endpoints, executed from the typed spec in
+//    experiments/endpoints.ts (also the source of experiments/preregistration.md's
+//    generated "## Primary endpoints" section, via tools/gen-prereg.ts): one-sided
+//    Mann–Whitney tests with Holm correction, growth verdict counts, ecological
+//    closure (biotic recycling and role-coexistence duration).
 // 4. Exploratory: two-sided comparison of every statistic with the treatment.
 //
 // Runs are pooled only if they form one ensemble: same rules, preset, horizon
@@ -18,8 +20,9 @@
 // exactly by their condition.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
-import { ActivityTracker, growthVsSaturation, holm, mannWhitney, mean, quantile, sd } from "@bl/metrics";
+import { ActivityTracker, growthVsSaturation, mannWhitney, mean, quantile, sd } from "@bl/metrics";
 import { sameConfig, specConfig } from "@bl/runner";
+import { evaluateEndpoint, PRIMARY_ENDPOINTS, type EndpointResult, type RunView } from "../experiments/endpoints.ts";
 
 const a = parseArgs(Deno.args, { string: ["out", "q"], default: { q: "0.95" } });
 const root = String(a._[0] ?? "");
@@ -181,45 +184,46 @@ for (const k of keys) {
     })
     .join(" | ")} |\n`;
 }
-// ---- pre-registered primary endpoints ----
-const ALPHA = 0.01;
-md += `\n## Primary endpoints (pre-registered)\n\n`;
-const oneSided = (k: string, a: Stats[], b: Stats[]) => {
-  const x = a.map((s) => s[k]).filter(Number.isFinite);
-  const y = b.map((s) => s[k]).filter(Number.isFinite);
-  return x.length >= 2 && y.length >= 2 ? mannWhitney(x, y) : null;
-};
-{
-  md += `**1. Adaptive activity** — cumulative new activity, treatment > control, one-sided Mann–Whitney, Holm across the two comparisons, α = ${ALPHA}.\n\n`;
-  const ctl = ["neutral", "no-mutation"];
-  const tests = ctl.map((c) => (calibrated ? oneSided("cumulativeNewActivity", treat, byCond(c)) : null));
-  const avail = tests.filter((t): t is NonNullable<typeof t> => t !== null);
-  const adj = holm(avail.map((t) => t.pGreater));
-  md += `| comparison | n (treatment, control) | effect P(T > C) | one-sided p | Holm-adjusted p | supported |\n|---|---|---|---|---|---|\n`;
-  let j = 0;
-  ctl.forEach((c, i) => {
-    const t = tests[i];
-    if (!t) {
-      md += `| treatment > ${c} | ${treat.length}, ${byCond(c).length} | — | — | — | unavailable${calibrated ? " (need ≥2 runs each)" : " (uncalibrated)"} |\n`;
-      return;
+// ---- pre-registered primary endpoints (experiments/endpoints.ts) ----
+// One entry per PRIMARY_ENDPOINTS item, executed by evaluateEndpoint and
+// rendered below -- this replaces the endpoint tests that used to be
+// hard-coded here; the doc's "## Primary endpoints" section is generated
+// from the same PRIMARY_ENDPOINTS by tools/gen-prereg.ts, so the two cannot
+// silently drift apart.
+const views: RunView[] = runs.map((r) => ({
+  condition: r.condition,
+  seed: r.seed,
+  stats: perRun.get(r)!,
+  trend: calibrated ? (trends.get(r) as RunView["trend"]) : undefined,
+  series: r.series.map((x) => ({ step: x.step, rolesPresent: x.rolesPresent })),
+}));
+const results: EndpointResult[] = PRIMARY_ENDPOINTS.map((e) => evaluateEndpoint(e, views));
+
+function renderEndpoint(n: number, r: EndpointResult): string {
+  // `description` already leads with its own bold title (matching
+  // preregistration.md's generated numbered list) -- don't re-wrap it.
+  let out = `${n}. ${r.description}\n\n`;
+  if (r.kind === "test") {
+    out += `| comparison | n (a, b) | effect P(a > b) | one-sided p | Holm-adjusted p | supported |\n|---|---|---|---|---|---|\n`;
+    for (const row of r.rows) {
+      out += row.available
+        ? `| ${row.a} > ${row.b} | ${row.nA}, ${row.nB} | ${row.effect.toFixed(2)} | ${row.p.toFixed(4)} | ${row.pAdj.toFixed(4)} | ${row.supported ? "yes" : "no"} |\n`
+        : `| ${row.a} > ${row.b} | ${row.nA}, ${row.nB} | — | — | — | unavailable (need ≥2 runs each) |\n`;
     }
-    const p = adj[j++];
-    md += `| treatment > ${c} | ${treat.length}, ${byCond(c).length} | ${t.effect.toFixed(2)} | ${t.pGreater.toFixed(4)} | ${p.toFixed(4)} | ${p < ALPHA ? "yes" : "no"} |\n`;
-  });
-  if (avail.length < ctl.length) md += `\nThe Holm family is incomplete; the endpoint cannot be established from this ensemble.\n`;
-
-  const verdicts = (c: string) => runs.filter((r) => r.condition === c).map((r) => trends.get(r));
-  const tv = verdicts("treatment"), nv = verdicts("neutral");
-  const growing = (v: (string | undefined)[]) => v.filter((x) => x === "growing").length;
-  md += `\n**2. Unbounded-looking growth** — treatment growing in ${growing(tv)}/${tv.length} runs, neutral in ${growing(nv)}/${nv.length}. `;
-  md += calibrated && tv.length && nv.length
-    ? `Supported: ${growing(tv) * 2 > tv.length && growing(nv) * 2 < nv.length ? "yes" : "no"} (majority of treatment and a minority of neutral runs growing).\n`
-    : `Unavailable (needs calibrated treatment and neutral runs).\n`;
-
-  const rec = oneSided("bioticRecycling", treat, byCond("replenished"));
-  md += `\n**3. Ecological closure** — biotic recycling, treatment > replenished: ${rec ? `effect ${rec.effect.toFixed(2)}, one-sided p = ${rec.pGreater.toFixed(4)}` : "unavailable"}. `;
-  md += `Roles: see \`rolesPresent\`; coexistence duration is read from series.jsonl.\n`;
+    if (!r.complete) out += `\nThe Holm family is incomplete; the endpoint cannot be established from this ensemble.\n`;
+  } else if (r.kind === "threshold") {
+    out += r.rows.map((row) => `${row.condition}: ${row.qualifying}/${row.total} qualifying (need ${row.relation})`).join("; ") + ". ";
+    out += r.available ? `Supported: ${r.supported ? "yes" : "no"}.\n` : `Unavailable (need runs in every group).\n`;
+  } else {
+    out += `${r.condition}: ${r.qualifying}/${r.total} runs reach a continuous ≥${r.minRoles}-role coexistence duration of ≥${r.minSteps.toLocaleString()} steps. `;
+    out += r.total > 0 ? `Supported: ${r.supported ? "yes" : "no"} (majority).\n` : `Unavailable (no ${r.condition} runs).\n`;
+    if (r.gate) out += `M5 gate (≥${r.gate.minRoles} roles, same duration): ${r.gate.qualifying}/${r.gate.total}, supported: ${r.gate.supported ? "yes" : "no"}.\n`;
+  }
+  return out;
 }
+
+md += `\n## Primary endpoints (pre-registered)\n\n`;
+results.forEach((r, i) => (md += `\n${renderEndpoint(i + 1, r)}`));
 
 if (treat.length) {
   md += `\n## Exploratory: treatment vs controls (Mann–Whitney, two-sided, unadjusted; effect = P(treatment > control))\n\n`;

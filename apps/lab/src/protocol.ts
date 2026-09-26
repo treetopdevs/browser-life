@@ -1,5 +1,6 @@
 import type { Intervention, WorldConfig, InitParams } from "@bl/schema";
 import type { GpuViewMode, ViewRect } from "@bl/sim-gpu";
+import type { ObserverSettings } from "@bl/runner";
 
 export interface RunManifest {
   runId: string;
@@ -13,6 +14,8 @@ export interface RunManifest {
   userAgent: string;
   interventions: Intervention[];
   checkpoints: { step: number; file: string; hash: string; interventions: number }[];
+  /** Observation settings for this run's tracker/activity state (see `@bl/runner`'s `ObserverState`). */
+  settings: ObserverSettings;
 }
 
 export interface CheckpointMeta {

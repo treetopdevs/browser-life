@@ -1,32 +1,40 @@
 defmodule Coordinator.Checkpoint do
   @moduledoc """
   Server-side checks of uploaded artifacts (format of
-  packages/schema/src/checkpoint.ts):
+  packages/schema/src/checkpoint.ts, v3: one artifact, two sections after the
+  header — physics (cells + genome, unchanged since schema v2) and a new
+  observer section):
 
     * structure: magic, schema and rule versions, end step, section sizes
       consistent with the embedded config, trailing checksum, ledger headroom;
     * config sanity (tile geometry, seed of the assigned run);
-    * `state_digest/1`: the canonical state digest (`stateHash` in
-      packages/schema/src/accounting.ts) computed from the checkpoint itself,
-      so a completion can be bound to the artifact actually uploaded;
-    * `bytes_digest/1`: digest of an artifact's exact bytes (`bytesDigest` in
-      packages/runner/src/runner.ts), used for observer state.
-
-  Semantic validity of the state (pools, lineages) is checked by the next
-  island's decoder, which rejects the predecessor on any defect, and by replay
-  verification, which is mandatory for the final segment of every run.
+    * the observer section's own bounds and JSON-syntax checks — bytes-intrinsic
+      only, mirroring `decodeCheckpoint` in `packages/schema/src/checkpoint.ts`,
+      never the domain-specific referential-integrity checks
+      `decodeArtifact` (`packages/runner/src/runner.ts`) performs; those are
+      the next island's job (it rejects the predecessor on any defect) and
+      replay verification's, which is mandatory for the final segment of
+      every run;
+    * `state_digest/1`: the canonical *physics-only* digest (`stateHash` in
+      packages/schema/src/accounting.ts), used for the next segment's
+      `startHash`/`startFrom` continuity check — unaffected by this refactor;
+    * `artifact_digest/1`: `state_digest`'s digest words chained with the
+      observer section's canonical (recursively key-sorted) JSON bytes
+      (`artifactDigest` in packages/schema/src/accounting.ts) — the digest a
+      run's completion and a verify's replay are bound to end-to-end,
+      replacing the old, separate `checkpoint_hash`/`observer_hash` pair.
   """
   import Bitwise
 
   @magic 0x4B434C42
-  @schema 2
+  @schema 3
   @flux_count 10
   @cell_channels 7
   @genome_channels 44
   @header 10 + 2 * @flux_count
   @m32 0xFFFFFFFF
 
-  @doc "Validates structure and returns `{:ok, info}` with the parsed config and section offsets."
+  @doc "Validates structure and returns `{:ok, info}` with the parsed config, section offsets and decoded observer."
   def validate(bin, expected_step, expected_seed \\ nil) when is_binary(bin) do
     words = div(byte_size(bin), 4)
     rule = Application.get_env(:coordinator, :rule_version, 1)
@@ -67,19 +75,34 @@ defmodule Coordinator.Checkpoint do
          genome_at = cells_at + 1 + cells_len,
          true <- genome_at + 1 <= total || {:error, "truncated"},
          true <- word(body, genome_at) == n * @genome_channels || {:error, "genome size mismatch"},
-         true <- genome_at + 1 + n * @genome_channels == total || {:error, "trailing data"} do
+         genome_len = n * @genome_channels,
+         obs_at = genome_at + 1 + genome_len,
+         true <- obs_at + 1 <= total || {:error, "truncated"},
+         obs_len = word(body, obs_at),
+         obs_words = div(obs_len + 3, 4),
+         true <- obs_at + 1 + obs_words == total || {:error, "trailing data"},
+         {:ok, observer} <- decode_observer(binary_part(body, (obs_at + 1) * 4, obs_len)) do
       {:ok,
        %{
          cfg: cfg,
          cells_at: cells_at + 1,
          cells_len: cells_len,
          genome_at: genome_at + 1,
-         genome_len: n * @genome_channels,
+         genome_len: genome_len,
+         observer: observer,
          body: body
        }}
     else
       {:error, _} = e -> e
       _ -> {:error, "bad config"}
+    end
+  end
+
+  defp decode_observer(bin) do
+    case Jason.decode(bin) do
+      {:ok, v} when is_map(v) -> {:ok, v}
+      {:ok, _} -> {:error, "observer section is not an object"}
+      {:error, _} -> {:error, "observer section is not valid JSON"}
     end
   end
 
@@ -96,39 +119,139 @@ defmodule Coordinator.Checkpoint do
 
   defp geometry(_), do: {:error, "bad tile geometry"}
 
+  @doc "Canonical physics-only digest of a validated artifact, identical to `stateHash`. Used for `startHash`/`startFrom` continuity, unaffected by the observer section."
+  def state_digest(info), do: info |> state_digest_words() |> hex_pair()
+
   @doc """
-  Canonical state digest of a validated checkpoint, identical to `stateHash`:
-  digest(cfg length + canonical config JSON) then (step, light, heat, fluxes),
-  cells and the (already canonical) genome, each chained with a fresh index.
+  Canonical digest of the whole artifact (physics + observer), identical to
+  `artifactDigest`: `state_digest`'s digest words chained with the observer
+  section's canonical JSON bytes (length-prefixed and word-padded the same
+  way the config section is). This is the digest a run's `complete` and a
+  verify's replay are compared against — never `state_digest` alone.
   """
-  def state_digest(%{cfg: cfg, body: body} = info) do
+  def artifact_digest(%{observer: observer} = info) do
+    acc = state_digest_words(info)
+    obs = canonical_json(observer)
+    pad = rem(4 - rem(byte_size(obs), 4), 4)
+    words = <<byte_size(obs)::little-32>> <> obs <> :binary.copy(<<0>>, pad)
+    words |> digest_from(acc) |> hex_pair()
+  end
+
+  defp state_digest_words(%{cfg: cfg, body: body} = info) do
     json = canonical_json(cfg)
     pad = rem(4 - rem(byte_size(json), 4), 4)
     cfg_words = <<byte_size(json)::little-32>> <> json <> :binary.copy(<<0>>, pad)
     acc = digest(cfg_words)
     acc = digest_from(binary_part(body, 3 * 4, (@header - 3 - 2) * 4), acc)
     acc = digest_from(binary_part(body, info.cells_at * 4, info.cells_len * 4), acc)
-    {h1, h2} = digest_from(binary_part(body, info.genome_at * 4, info.genome_len * 4), acc)
-    hex(h1) <> hex(h2)
+    digest_from(binary_part(body, info.genome_at * 4, info.genome_len * 4), acc)
   end
 
-  @doc "Digest of exact bytes: [byte length, bytes zero-padded to words]."
-  def bytes_digest(bin) do
-    pad = rem(4 - rem(byte_size(bin), 4), 4)
-    {h1, h2} = digest(<<byte_size(bin)::little-32>> <> bin <> :binary.copy(<<0>>, pad))
-    hex(h1) <> hex(h2)
-  end
+  defp hex_pair({h1, h2}), do: hex(h1) <> hex(h2)
 
-  # JSON.stringify of an object with sorted keys; config values are integers,
-  # booleans and plain strings, which Jason encodes identically.
-  defp canonical_json(cfg) do
+  # JSON.stringify of a value the way `canonicalConfig`/`canonicalObserverJSON`
+  # (packages/schema/src/accounting.ts) produce it. Two ECMAScript quirks
+  # that a naive "just sort the keys" port misses, both confirmed by a
+  # codex-astra review against the actual TS behavior:
+  #
+  # 1. Key order: `Object.keys(o).sort()` sorts *every* key lexicographically
+  #    (mixing array-index-like keys like "2"/"10" in with the rest) before
+  #    `Object.fromEntries` builds the object — but a JS object's own
+  #    enumerable string keys that are canonical non-negative-integer
+  #    strings ("array index" keys) are *always* iterated in ascending
+  #    numeric order first, regardless of insertion order, with every other
+  #    key following in whatever order it was inserted. So the *final*
+  #    order `JSON.stringify` actually emits is: array-index keys ascending
+  #    numerically, then the rest in the lexicographic order `.sort()` gave
+  #    them — not a single global lexicographic sort. `array_index_key?/1`
+  #    below is the same "canonical non-negative integer, no leading zero
+  #    except \"0\" itself, ≤ 2^32-2" definition ECMA-262 uses.
+  # 2. Number formatting: `JSON.stringify` renders a JS number via
+  #    `Number::toString`, whose *choice of digits* matches Erlang's own
+  #    shortest round-tripping float format (`float_to_binary(f, [:short])`)
+  #    — that shortest decimal is unique — but its *formatting thresholds*
+  #    for scientific notation and decimal-point placement differ from
+  #    Erlang's (e.g. `(0.00001).toString()` is `"0.00001"`; Erlang's short
+  #    format already switches to `"1.0e-5"`). `js_number/1` reuses Erlang's
+  #    digits and re-applies ECMA-262's own Number::toString formatting.
+  #
+  # Config values and observer payloads alike are caller-constructed (not
+  # arbitrary/hostile JSON), so integers/booleans/strings/null go through
+  # plain `Jason.encode!`, which already agrees with `JSON.stringify` for
+  # every value this codebase actually writes.
+  defp canonical_json(v) when is_map(v) do
+    keys = v |> Map.keys() |> Enum.sort()
+    {index_keys, other_keys} = Enum.split_with(keys, &array_index_key?/1)
+    ordered = Enum.sort_by(index_keys, &String.to_integer/1) ++ other_keys
+
     inner =
-      cfg
-      |> Map.keys()
-      |> Enum.sort()
-      |> Enum.map_join(",", fn k -> Jason.encode!(k) <> ":" <> Jason.encode!(cfg[k]) end)
+      Enum.map_join(ordered, ",", fn k ->
+        Jason.encode!(k) <> ":" <> canonical_json(Map.get(v, k))
+      end)
 
     "{" <> inner <> "}"
+  end
+
+  defp canonical_json(v) when is_list(v),
+    do: "[" <> Enum.map_join(v, ",", &canonical_json/1) <> "]"
+
+  defp canonical_json(v) when is_float(v), do: js_number(v)
+  defp canonical_json(v), do: Jason.encode!(v)
+
+  @max_array_index 4_294_967_294
+  defp array_index_key?(k),
+    do: Regex.match?(~r/^(0|[1-9][0-9]*)$/, k) and String.to_integer(k) <= @max_array_index
+
+  # ECMA-262 Number::toString for a finite, non-zero float, given Erlang's
+  # own shortest round-tripping decimal (see the moduledoc note on
+  # `canonical_json/1` above for why only the *formatting* needs a port).
+  defp js_number(f) when is_float(f) do
+    cond do
+      f == 0.0 -> "0"
+      f < 0 -> "-" <> js_number(-f)
+      true -> js_format(f)
+    end
+  end
+
+  defp js_format(f) do
+    {mantissa, exp_e} =
+      case String.split(:erlang.float_to_binary(f, [:short]), "e") do
+        [m, e] -> {m, String.to_integer(e)}
+        [m] -> {m, 0}
+      end
+
+    [int_part, frac_part] = String.split(mantissa, ".")
+    combined = int_part <> frac_part
+    frac_len = String.length(frac_part)
+    lead_stripped = String.trim_leading(combined, "0")
+    digits = String.trim_trailing(lead_stripped, "0")
+    digits = if digits == "", do: "0", else: digits
+    trailing_zeros = String.length(lead_stripped) - String.length(digits)
+    k = String.length(digits)
+    n = k + trailing_zeros + exp_e - frac_len
+
+    cond do
+      k <= n and n <= 21 ->
+        digits <> String.duplicate("0", n - k)
+
+      0 < n and n <= 21 ->
+        {a, b} = String.split_at(digits, n)
+        a <> "." <> b
+
+      -6 < n and n <= 0 ->
+        "0." <> String.duplicate("0", -n) <> digits
+
+      true ->
+        exp = n - 1
+
+        mant =
+          if k > 1,
+            do: String.slice(digits, 0, 1) <> "." <> String.slice(digits, 1, k - 1),
+            else: digits
+
+        sign = if exp >= 0, do: "+", else: "-"
+        mant <> "e" <> sign <> Integer.to_string(abs(exp))
+    end
   end
 
   defp hex(v), do: v |> Integer.to_string(16) |> String.downcase() |> String.pad_leading(8, "0")

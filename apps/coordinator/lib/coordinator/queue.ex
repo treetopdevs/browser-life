@@ -3,34 +3,45 @@ defmodule Coordinator.Queue do
   Experiment queue for the archipelago.
 
   Each run (experiment/preset/condition/seed) is split into segments of a
-  fixed number of steps. Segment *k* starts from the end checkpoint and
-  observer state of segment *k - 1* (segment 0 starts from the deterministic
-  initial world), so any island can continue any run.
+  fixed number of steps. Segment *k* starts from the end checkpoint (and
+  embedded observer state, one artifact — see `Coordinator.Checkpoint`) of
+  segment *k - 1* (segment 0 starts from the deterministic initial world), so
+  any island can continue any run.
 
   Integrity:
 
-    * A run completion is bound to the uploaded artifacts: the reported end
-      hash must equal the canonical state digest the coordinator computed from
-      the checkpoint, and the reported observer hash must equal the digest of
-      the uploaded observer state.
-    * A deterministic fraction of segments, and the final segment of every run,
-      is replayed by a *different* island; physics and observations must both
-      match. A mismatch marks the segment `diverged` and blocks the rest of the run.
-    * An island (running or verifying) that finds its start checkpoint or
-      observer inconsistent rejects it, which invalidates and requeues the
-      producing segment.
+    * A run completion is bound to the artifact uploaded under *that*
+      island's own attempt: `Coordinator.Segment.complete_run/5` requires the
+      reported end hash to equal the digest that same attempt itself
+      published (`Coordinator.Checkpoint.artifact_digest/1`), never a digest
+      left over from a different attempt.
+    * A deterministic fraction of segments, and the final segment of every
+      run, is replayed by a *different* island (a `:verify` attempt on the
+      already-`"done"` segment); physics and observations must both match. A
+      mismatch marks the segment `"diverged"` and blocks every later segment
+      of the run, `"done"`/`"verified"` ones included.
+    * An island (running or verifying) that finds its start checkpoint
+      inconsistent rejects it, which invalidates and requeues the producing
+      segment (see `handle_call({:reject, ...})`).
 
   Islands authenticate with a private token issued at join; every assignment
-  carries a lease that must accompany uploads, heartbeats and completion.
-  Artifacts are stored under server-generated segment ids only. State is
-  persisted to `data_dir/state.bin` after every change.
+  carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
+  heartbeats and completion. The end checkpoint of every accepted run attempt
+  is kept once, content-addressed by its own digest, under
+  `data_dir/objects/` (see `Coordinator.Store`) — segment ids never key
+  storage themselves. State is persisted to `data_dir/state.bin` after every
+  change; see `init/1` for the version tag that refuses to load
+  incompatible (pre-v3) data.
   """
   use GenServer
   require Logger
+  alias Coordinator.{Attempt, Segment, Store}
 
   # Leases expire after this long without a heartbeat (configurable for tests).
   defp lease_ms, do: Application.get_env(:coordinator, :lease_ms, 10 * 60 * 1000)
   @max_segments 100_000
+  # Bumped whenever `state.bin`'s shape changes incompatibly (see `init/1`).
+  @state_version 3
 
   # ---- client API ----
 
@@ -45,31 +56,30 @@ defmodule Coordinator.Queue do
   def heartbeat(seg_id, island, lease),
     do: GenServer.call(__MODULE__, {:heartbeat, seg_id, island, lease})
 
-  def complete(seg_id, island, lease, kind, end_hash, observer_hash, summary),
-    do:
-      GenServer.call(
-        __MODULE__,
-        {:complete, seg_id, island, lease, kind, end_hash, observer_hash, summary}
-      )
+  @doc "kind is \"run\" or \"verify\"; `end_hash` is `artifactDigest` (physics + observer), the same digest a run attempt's checkpoint was published under."
+  def complete(seg_id, island, lease, kind, end_hash, summary),
+    do: GenServer.call(__MODULE__, {:complete, seg_id, island, lease, kind, end_hash, summary})
 
   def reject(seg_id, island, lease, reason),
     do: GenServer.call(__MODULE__, {:reject, seg_id, island, lease, reason})
 
-  @doc """
-  Atomically publish a staged upload if `lease` is still the current run
-  lease of `seg_id`, recording `meta` (artifact digests) on the segment.
-  """
-  def publish(seg_id, island, lease, staged, dest_fun, meta \\ %{}),
-    do: GenServer.call(__MODULE__, {:publish, seg_id, island, lease, staged, dest_fun, meta})
+  @doc "Publishes a validated checkpoint into the content-addressed store, if `lease` is still the segment's current run attempt."
+  def publish_checkpoint(seg_id, island, lease, staged, digest, state_hash),
+    do:
+      GenServer.call(
+        __MODULE__,
+        {:publish_checkpoint, seg_id, island, lease, staged, digest, state_hash}
+      )
+
+  @doc "Publishes a bundle file (not content-addressed) to `dest_fun`'s path, if `lease` is still current for `seg_id`."
+  def publish_file(seg_id, island, lease, staged, dest_fun),
+    do: GenServer.call(__MODULE__, {:publish_file, seg_id, island, lease, staged, dest_fun})
 
   def status, do: GenServer.call(__MODULE__, :status)
   def segment(seg_id), do: GenServer.call(__MODULE__, {:segment, seg_id})
   def data_dir, do: GenServer.call(__MODULE__, :data_dir)
 
-  @doc "End checkpoint written by a segment's run task (server-generated id only)."
-  def checkpoint_path(dir, seg_id), do: Path.join([dir, "checkpoints", "#{seg_id}.blck"])
-
-  @doc "Directory for a segment's bundle files (server-generated id only)."
+  @doc "Directory for a segment's bundle files (server-generated id only; not content-addressed)."
   def files_dir(dir, seg_id), do: Path.join([dir, "segments", seg_id])
 
   # ---- server ----
@@ -79,10 +89,37 @@ defmodule Coordinator.Queue do
     dir = Path.expand(Keyword.fetch!(opts, :data_dir))
     File.mkdir_p!(dir)
 
+    # `:erlang.binary_to_term(_, [:safe])` refuses to create atoms it hasn't
+    # already seen — safe only for atoms some *already-loaded* module's own
+    # compiled code happens to mention. `Coordinator.Queue` (this module) is
+    # trivially loaded already (its own `init/1` is what's running), so its
+    # own literal atoms (`:version`, `:experiments`, `:segments`, ...) are
+    # fine either way; `Attempt`/`Segment`'s atoms (`:uploaded_digest`,
+    # `:heartbeat_at`, ...) live only in *their* modules, which nothing has
+    # forced the code server to load yet on a cold boot — ensure they are,
+    # before the decode below, or a fresh process (unlike a warm `mix test`
+    # VM where some earlier test already touched these modules) refuses to
+    # load a state.bin containing any in-flight attempt.
+    Code.ensure_loaded!(Coordinator.Attempt)
+    Code.ensure_loaded!(Coordinator.Segment)
+
     state =
       case File.read(Path.join(dir, "state.bin")) do
-        {:ok, bin} -> :erlang.binary_to_term(bin, [:safe])
-        _ -> %{experiments: %{}, segments: %{}, islands: %{}, next_seg: 1}
+        {:ok, bin} ->
+          case :erlang.binary_to_term(bin, [:safe]) do
+            %{version: @state_version} = s ->
+              s
+
+            _ ->
+              raise """
+              coordinator: #{Path.join(dir, "state.bin")} is not v#{@state_version} state.
+              This is pre-launch infrastructure with no production data to migrate: \
+              delete #{dir} to start fresh against this branch.
+              """
+          end
+
+        _ ->
+          %{version: @state_version, experiments: %{}, segments: %{}, islands: %{}, next_seg: 1}
       end
 
     {:ok, state |> Map.put(:dir, dir) |> reindex()}
@@ -140,91 +177,144 @@ defmodule Coordinator.Queue do
 
   def handle_call({:next, island_id}, _from, s) do
     now = now()
-    s = s |> reclaim_stale(now) |> put_in([:islands, island_id, :last_seen], now)
+
+    s =
+      %{s | segments: Segment.reclaim_stale(s.segments, now, lease_ms())}
+      |> put_in([:islands, island_id, :last_seen], now)
+
     {task, s} = pick_task(s, island_id, now)
     {:reply, {:ok, task}, persist(s)}
   end
 
   def handle_call({:heartbeat, seg_id, island, lease}, _from, s) do
-    case s.segments[seg_id] do
-      %{status: "assigned", island: ^island, lease: ^lease} = seg ->
-        {:reply, :ok, persist(put_in(s, [:segments, seg_id], %{seg | assigned_at: now()}))}
-
-      %{status: "done", verify: %{status: "assigned", island: ^island, lease: ^lease} = v} = seg ->
-        {:reply, :ok,
-         persist(put_in(s, [:segments, seg_id], %{seg | verify: %{v | assigned_at: now()}}))}
-
-      _ ->
-        {:reply, {:error, "lease lost"}, s}
+    with seg when not is_nil(seg) <- s.segments[seg_id],
+         kind = if(seg.status == "done", do: "verify", else: "run"),
+         {:ok, seg} <- Segment.heartbeat(seg, kind, island, lease, now()) do
+      {:reply, :ok, persist(put_in(s, [:segments, seg_id], seg))}
+    else
+      nil -> {:reply, {:error, "unknown segment"}, s}
+      {:error, why} -> {:reply, {:error, why}, s}
     end
   end
 
-  def handle_call({:publish, seg_id, island, lease, staged, dest_fun, meta}, _from, s) do
-    case s.segments[seg_id] do
-      %{status: "assigned", island: ^island, lease: ^lease} = seg ->
+  def handle_call(
+        {:publish_checkpoint, seg_id, island, lease, staged, digest, state_hash},
+        _from,
+        s
+      ) do
+    with seg when not is_nil(seg) <- s.segments[seg_id],
+         {:ok, seg} <- Segment.publish(seg, island, lease, digest, state_hash) do
+      :ok = Store.put(s.dir, digest, staged)
+      {:reply, :ok, persist(put_in(s, [:segments, seg_id], seg))}
+    else
+      nil ->
+        File.rm(staged)
+        {:reply, {:error, "unknown segment"}, s}
+
+      {:error, why} ->
+        File.rm(staged)
+        {:reply, {:error, why}, s}
+    end
+  end
+
+  # Only a `:run` attempt ever uploads anything — a bundle file included: a
+  # verify attempt replays and reports a digest, nothing else (see
+  # `Coordinator.Attempt`'s moduledoc). Authorizing a verify attempt's lease
+  # here too would let a verifier silently rewrite the accepted producer's
+  # `series.jsonl`/`manifest.json`/etc. while still reporting a matching
+  # digest and leaving the segment `"verified"`.
+  def handle_call({:publish_file, seg_id, island, lease, staged, dest_fun}, _from, s) do
+    seg = s.segments[seg_id]
+    active? = seg && Attempt.active?(current_run(seg), island, lease)
+
+    cond do
+      is_nil(seg) ->
+        File.rm(staged)
+        {:reply, {:error, "unknown segment"}, s}
+
+      not active? ->
+        File.rm(staged)
+        {:reply, {:error, "lease lost"}, s}
+
+      true ->
         dest = dest_fun.(s.dir)
 
         if contained?(s.dir, dest) do
           File.mkdir_p!(Path.dirname(dest))
           File.rename!(staged, dest)
-          {:reply, :ok, persist(put_in(s, [:segments, seg_id], Map.merge(seg, meta)))}
+          {:reply, :ok, s}
         else
           File.rm(staged)
           {:reply, {:error, "bad destination"}, s}
         end
-
-      _ ->
-        File.rm(staged)
-        {:reply, {:error, "lease lost"}, s}
     end
   end
 
-  def handle_call(
-        {:complete, seg_id, island_id, lease, kind, end_hash, observer_hash, summary},
-        _from,
-        s
-      ) do
+  def handle_call({:complete, seg_id, island_id, lease, kind, end_hash, summary}, _from, s) do
     seg = s.segments[seg_id]
 
-    cond do
-      is_nil(seg) ->
-        {:reply, {:error, "unknown segment"}, s}
+    result =
+      case {seg, kind} do
+        {nil, _} -> {:error, "unknown segment"}
+        {seg, "run"} -> Segment.complete_run(seg, island_id, lease, end_hash, summary)
+        {seg, "verify"} -> Segment.complete_verify(seg, island_id, lease, end_hash)
+      end
 
-      kind == "run" and seg.status == "assigned" and seg.island == island_id and
-          seg.lease == lease ->
-        complete_run(s, seg, island_id, end_hash, observer_hash, summary)
+    case result do
+      {:error, why} ->
+        {:reply, {:error, why}, s}
 
-      kind == "verify" and seg.status == "done" and
-          match?(%{status: "assigned", island: ^island_id, lease: ^lease}, seg.verify) ->
-        complete_verify(s, seg, island_id, end_hash, observer_hash)
+      {:ok, seg} ->
+        s = put_in(s, [:segments, seg_id], seg)
 
-      true ->
-        {:reply, {:error, "segment not assigned to this island/lease"}, s}
+        s =
+          case {kind, seg.status} do
+            {"run", "done"} ->
+              update_in(s, [:islands, island_id, :runs], &(&1 + 1))
+
+            {"verify", status} when status in ["verified", "diverged"] ->
+              update_in(s, [:islands, island_id, :verifies], &(&1 + 1))
+
+            _ ->
+              s
+          end
+
+        s =
+          if kind == "verify" and seg.status == "diverged" do
+            Logger.error(
+              "segment #{seg.id} (#{seg.run}##{seg.index}) diverged: #{Segment.accepted_digest(seg)} (#{Segment.accepted_island(seg)}) vs #{end_hash} (#{island_id})"
+            )
+
+            %{s | segments: Segment.block_descendants(s.segments, seg.run, seg.index)}
+          else
+            s
+          end
+
+        {:reply, {:ok, seg.status}, persist(s)}
     end
   end
 
   # The island assigned `seg_id` (to run it or to verify it) found its start
-  # checkpoint or observer state inconsistent with the predecessor's report:
-  # invalidate the predecessor, requeue it, and reset everything after it.
+  # checkpoint inconsistent with the predecessor's report: invalidate the
+  # predecessor, requeue it, and reset everything after it. `seg_id` itself is
+  # left as-is (its own lease simply runs out and is reclaimed in due course);
+  # only the predecessor is acted on here.
   def handle_call({:reject, seg_id, island_id, lease, reason}, _from, s) do
     seg = s.segments[seg_id]
 
     assigned? =
-      match?(%{status: "assigned", island: ^island_id, lease: ^lease}, seg) or
-        (match?(%{status: "done"}, seg) and
-           match?(%{status: "assigned", island: ^island_id, lease: ^lease}, seg.verify))
+      seg &&
+        (Attempt.active?(current_run(seg), island_id, lease) ||
+           Attempt.active?(current_verify(seg), island_id, lease))
 
     with true <- assigned?,
          prev when not is_nil(prev) <- prev_seg(s, seg) do
       Logger.error("segment #{prev.id} rejected by #{island_id}: #{clip(reason)}")
-      File.rm(checkpoint_path(s.dir, prev.id))
-      File.rm_rf(files_dir(s.dir, prev.id))
 
       s =
-        s
-        |> block_descendants(prev)
-        |> put_in([:segments, prev.id], reset(prev) |> Map.put(:rejected, prev.rejected + 1))
-        |> unblock_after(prev)
+        %{s | segments: Segment.block_descendants(s.segments, prev.run, prev.index)}
+        |> put_in([:segments, prev.id], Segment.requeue(prev))
+        |> then(&%{&1 | segments: Segment.unblock_after(&1.segments, prev.run, prev.index)})
 
       {:reply, :ok, persist(s)}
     else
@@ -254,14 +344,16 @@ defmodule Coordinator.Queue do
 
     divergences =
       for seg <- Map.values(s.segments), seg.status == "diverged" do
+        verify = Segment.last_verify_attempt(seg)
+
         %{
           segment: seg.id,
           run: seg.run,
           index: seg.index,
-          a: host(s, seg.island),
-          b: host(s, seg.verify.island),
-          hash_a: seg.end_hash,
-          hash_b: seg.verify.hash
+          a: host(s, Segment.accepted_island(seg)),
+          b: host(s, verify && verify.island),
+          hash_a: Segment.accepted_digest(seg),
+          hash_b: verify && verify.reported_digest
         }
       end
 
@@ -284,69 +376,6 @@ defmodule Coordinator.Queue do
 
   def handle_call({:segment, id}, _from, s), do: {:reply, s.segments[id], s}
   def handle_call(:data_dir, _from, s), do: {:reply, s.dir, s}
-
-  # ---- completion ----
-
-  defp complete_run(s, seg, island_id, end_hash, observer_hash, summary) do
-    cond do
-      seg.checkpoint_hash == nil or seg.observer_hash == nil ->
-        {:reply, {:error, "upload the end checkpoint and observer state before completing a run"},
-         s}
-
-      seg.checkpoint_hash != end_hash ->
-        {:reply,
-         {:error,
-          "endHash #{end_hash} does not match the uploaded checkpoint (#{seg.checkpoint_hash})"},
-         s}
-
-      seg.observer_hash != observer_hash ->
-        {:reply, {:error, "observerHash does not match the uploaded observer state"}, s}
-
-      true ->
-        seg = %{
-          seg
-          | status: "done",
-            end_hash: end_hash,
-            summary: summary,
-            finished_at: now(),
-            lease: nil
-        }
-
-        seg = maybe_verify(seg, s)
-
-        s =
-          s
-          |> put_in([:segments, seg.id], seg)
-          |> update_in([:islands, island_id, :runs], &(&1 + 1))
-
-        {:reply, {:ok, seg.status}, persist(s)}
-    end
-  end
-
-  # Replay must reproduce both the physics and the observations.
-  defp complete_verify(s, seg, island_id, end_hash, observer_hash) do
-    match = end_hash == seg.end_hash and observer_hash == seg.observer_hash
-    verify = %{seg.verify | status: "done", hash: end_hash, match: match, lease: nil}
-    seg = %{seg | verify: verify, status: if(match, do: "verified", else: "diverged")}
-
-    s =
-      s
-      |> put_in([:segments, seg.id], seg)
-      |> update_in([:islands, island_id, :verifies], &(&1 + 1))
-
-    s =
-      if match do
-        s
-      else
-        Logger.error(
-          "segment #{seg.id} (#{seg.run}##{seg.index}) diverged: #{seg.end_hash} (#{seg.island}) vs #{end_hash} (#{island_id})"
-        )
-
-        block_descendants(s, seg)
-      end
-
-    {:reply, {:ok, seg.status}, persist(s)}
-  end
 
   # ---- validation ----
 
@@ -427,29 +456,11 @@ defmodule Coordinator.Queue do
         reduce: {%{}, next} do
       {acc, n} ->
         id = "seg-#{n}"
+        run = "#{spec["experiment"]}/#{spec["presetId"]}/#{cond}/seed-#{seed}"
+        steps = min(per, spec["steps"] - k * per)
 
-        seg = %{
-          id: id,
-          run: "#{spec["experiment"]}/#{spec["presetId"]}/#{cond}/seed-#{seed}",
-          experiment: spec["experiment"],
-          condition: cond,
-          seed: seed,
-          index: k,
-          last: k == count - 1,
-          start_step: k * per,
-          steps: min(per, spec["steps"] - k * per),
-          status: "pending",
-          island: nil,
-          lease: nil,
-          assigned_at: nil,
-          finished_at: nil,
-          end_hash: nil,
-          checkpoint_hash: nil,
-          observer_hash: nil,
-          summary: nil,
-          verify: nil,
-          rejected: 0
-        }
+        seg =
+          Segment.new(id, run, spec["experiment"], cond, seed, k, k == count - 1, k * per, steps)
 
         {Map.put(acc, id, seg), n + 1}
     end
@@ -459,39 +470,6 @@ defmodule Coordinator.Queue do
   defp reindex(s),
     do: Map.put(s, :index, Map.new(s.segments, fn {id, seg} -> {{seg.run, seg.index}, id} end))
 
-  defp reclaim_stale(s, now) do
-    segments =
-      Map.new(s.segments, fn {id, seg} ->
-        seg =
-          cond do
-            # Artifacts published under the expired lease are not the next
-            # assignee's; it must upload its own before completing.
-            seg.status == "assigned" and now - seg.assigned_at > lease_ms() ->
-              reset(seg)
-
-            match?(%{status: "assigned"}, seg.verify) and
-                now - seg.verify.assigned_at > lease_ms() ->
-              %{
-                seg
-                | verify: %{
-                    seg.verify
-                    | status: "pending",
-                      island: nil,
-                      lease: nil,
-                      assigned_at: nil
-                  }
-              }
-
-            true ->
-              seg
-          end
-
-        {id, seg}
-      end)
-
-    %{s | segments: segments}
-  end
-
   # Verification first (by a different island), then runnable segments in run
   # order; segment k is runnable once k - 1 is done or verified.
   defp pick_task(s, island, now) do
@@ -499,7 +477,9 @@ defmodule Coordinator.Queue do
 
     verify =
       Enum.find(segs, fn seg ->
-        seg.status == "done" and match?(%{status: "pending"}, seg.verify) and seg.island != island
+        seg.status == "done" and maybe_verify?(seg, s) and
+          not Segment.pending_or_assigned_verify?(seg) and
+          Segment.accepted_island(seg) != island
       end)
 
     runnable =
@@ -511,28 +491,11 @@ defmodule Coordinator.Queue do
 
     cond do
       verify ->
-        seg = %{
-          verify
-          | verify: %{
-              verify.verify
-              | status: "assigned",
-                island: island,
-                lease: lease,
-                assigned_at: now
-            }
-        }
-
+        {:ok, seg} = Segment.assign_verify(verify, island, lease, now)
         {task("verify", seg, lease, s), put_in(s, [:segments, seg.id], seg)}
 
       runnable ->
-        seg = %{
-          reset(runnable)
-          | status: "assigned",
-            island: island,
-            lease: lease,
-            assigned_at: now
-        }
-
+        {:ok, seg} = Segment.assign_run(runnable, island, lease, now)
         {task("run", seg, lease, s), put_in(s, [:segments, seg.id], seg)}
 
       true ->
@@ -579,77 +542,28 @@ defmodule Coordinator.Queue do
         checkpointEvery: 0
       },
       startFrom: prev && prev.id,
-      startHash: prev && prev.end_hash
-    }
-  end
-
-  # A diverged or rejected segment invalidates everything computed from its end
-  # state: later segments of the run are blocked (including completed ones) and
-  # their pending or running verifications are cancelled.
-  defp block_descendants(s, seg) do
-    segments =
-      Map.new(s.segments, fn {id, p} ->
-        if p.run == seg.run and p.index > seg.index and p.status != "blocked",
-          do: {id, %{reset(p) | status: "blocked"}},
-          else: {id, p}
-      end)
-
-    %{s | segments: segments}
-  end
-
-  # After a requeue, blocked descendants become pending again; they run from the
-  # new predecessor state once it completes.
-  defp unblock_after(s, seg) do
-    segments =
-      Map.new(s.segments, fn {id, p} ->
-        if p.run == seg.run and p.index > seg.index and p.status == "blocked",
-          do: {id, reset(p)},
-          else: {id, p}
-      end)
-
-    %{s | segments: segments}
-  end
-
-  # Clears assignment, results and artifact digests of a segment.
-  defp reset(seg) do
-    %{
-      seg
-      | status: "pending",
-        island: nil,
-        lease: nil,
-        assigned_at: nil,
-        end_hash: nil,
-        checkpoint_hash: nil,
-        observer_hash: nil,
-        summary: nil,
-        verify: nil
+      startHash: prev && Segment.accepted_state_hash(prev)
     }
   end
 
   # A deterministic fraction of segments is replayed, and the final segment of
-  # every run always is (nothing downstream would ever check it).
-  defp maybe_verify(seg, s) do
+  # every run always is. Purely a function of the segment id (hashed) and the
+  # run's `verifyFraction`, so it is safe to recompute on every `pick_task/3`
+  # call instead of deciding it once at completion time and storing the
+  # answer — same result either way, one fewer thing to persist.
+  defp maybe_verify?(seg, s) do
     frac = s.experiments[seg.experiment].spec["verifyFraction"]
     <<h::32, _::binary>> = :crypto.hash(:sha256, seg.id)
-
-    if seg.last or h / 4_294_967_296 < frac do
-      %{
-        seg
-        | verify: %{
-            status: "pending",
-            island: nil,
-            lease: nil,
-            assigned_at: nil,
-            hash: nil,
-            match: nil
-          }
-      }
-    else
-      seg
-    end
+    seg.last or h / 4_294_967_296 < frac
   end
 
+  defp current_run(seg), do: Enum.find(seg.attempts, &(&1.kind == "run" and Attempt.pending?(&1)))
+
+  defp current_verify(seg),
+    do: Enum.find(seg.attempts, &(&1.kind == "verify" and Attempt.pending?(&1)))
+
   defp contained?(dir, path), do: String.starts_with?(Path.expand(path), Path.expand(dir) <> "/")
+  defp host(_s, nil), do: "?"
   defp host(s, id), do: (s.islands[id] || %{adapter: "?"}).adapter
   defp now, do: System.system_time(:millisecond)
   defp rand(n), do: Base.url_encode64(:crypto.strong_rand_bytes(n), padding: false)

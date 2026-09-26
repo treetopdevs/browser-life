@@ -20,28 +20,19 @@ defmodule Coordinator.QueueTest do
     "verifyFraction" => 1.0
   }
 
-  # Publishes stand-in artifacts under the task's lease with the given digests.
-  defp upload(dir, task, island, hash, ohash \\ "0000000000000000") do
-    seg = task.segment.id
+  # Publishes a stand-in artifact under the task's run lease, into the
+  # content-addressed store, with the given digest (and physics-only digest,
+  # for the next segment's startHash).
+  defp upload(dir, task, island, digest, state_hash \\ "0000000000000000") do
+    staged = Path.join(dir, "cp-#{System.unique_integer([:positive])}")
+    File.write!(staged, "x")
 
-    for {name, meta} <- [{"cp", %{checkpoint_hash: hash}}, {"ob", %{observer_hash: ohash}}] do
-      staged = Path.join(dir, "#{name}-#{System.unique_integer([:positive])}")
-      File.write!(staged, "x")
-
-      :ok =
-        Queue.publish(
-          seg,
-          island,
-          task.lease,
-          staged,
-          &Path.join(Queue.files_dir(&1, seg), name),
-          meta
-        )
-    end
+    :ok =
+      Queue.publish_checkpoint(task.segment.id, island, task.lease, staged, digest, state_hash)
   end
 
-  defp done(t, island, hash, ohash \\ "0000000000000000"),
-    do: Queue.complete(t.segment.id, island, t.lease, "run", hash, ohash, %{})
+  defp done(t, island, digest),
+    do: Queue.complete(t.segment.id, island, t.lease, "run", digest, %{})
 
   test "validates specs before any arithmetic or allocation" do
     assert {:ok, 3} = Queue.create_experiment(@spec_ok)
@@ -73,16 +64,16 @@ defmodule Coordinator.QueueTest do
     assert {:error, _} = done(t1, a, "h0")
     upload(dir, t1, a, "h0")
     assert {:error, "endHash" <> _} = done(t1, a, "other")
-    assert {:error, "observerHash" <> _} = done(t1, a, "h0", "1111111111111111")
     assert {:ok, "done"} = done(t1, a, "h0")
 
     {:ok, v} = Queue.next_task(b)
     assert v.kind == "verify" and v.segment.id == t1.segment.id
     {:ok, t2} = Queue.next_task(a)
-    assert t2.kind == "run" and t2.startFrom == t1.segment.id and t2.startHash == "h0"
 
-    {:ok, "verified"} =
-      Queue.complete(v.segment.id, b, v.lease, "verify", "h0", "0000000000000000", %{})
+    assert t2.kind == "run" and t2.startFrom == t1.segment.id and
+             t2.startHash == "0000000000000000"
+
+    {:ok, "verified"} = Queue.complete(v.segment.id, b, v.lease, "verify", "h0", %{})
 
     upload(dir, t2, a, "h1")
     {:ok, "done"} = done(t2, a, "h1")
@@ -91,8 +82,7 @@ defmodule Coordinator.QueueTest do
     {:ok, t3} = Queue.next_task(a)
     assert t3.segment.index == 2
 
-    {:ok, "diverged"} =
-      Queue.complete(v2.segment.id, b, v2.lease, "verify", "other", "0000000000000000", %{})
+    {:ok, "diverged"} = Queue.complete(v2.segment.id, b, v2.lease, "verify", "other", %{})
 
     # The running descendant was blocked: its lease is dead and nothing else can run.
     assert {:error, _} = Queue.heartbeat(t3.segment.id, a, t3.lease)
@@ -107,23 +97,15 @@ defmodule Coordinator.QueueTest do
     {:ok, %{id: a}} = Queue.join(%{})
     {:ok, %{id: b}} = Queue.join(%{})
     {:ok, t} = Queue.next_task(a)
-    upload(dir, t, a, "x")
-    assert {:error, _} = done(%{t | lease: t.lease}, b, "x")
-
-    assert {:error, _} =
-             Queue.complete(t.segment.id, a, "wrong", "run", "x", "0000000000000000", %{})
+    upload(dir, t, a, "xx")
+    assert {:error, _} = Queue.complete(t.segment.id, b, t.lease, "run", "xx", %{})
+    assert {:error, _} = Queue.complete(t.segment.id, a, "wrong", "run", "xx", %{})
 
     staged = Path.join(dir, "staged")
     File.write!(staged, "data")
 
     assert {:error, "lease lost"} =
-             Queue.publish(
-               t.segment.id,
-               a,
-               "wrong",
-               staged,
-               &Queue.checkpoint_path(&1, t.segment.id)
-             )
+             Queue.publish_checkpoint(t.segment.id, a, "wrong", staged, "y", "y")
 
     refute File.exists?(staged)
     assert :ok = Queue.heartbeat(t.segment.id, a, t.lease)
@@ -176,27 +158,45 @@ defmodule Coordinator.QueueTest do
     refute Enum.any?(Queue.status().islands, &Map.has_key?(&1, :token_hash))
   end
 
-  test "observer mismatch on replay is a divergence, and the final segment is always verified", %{
-    dir: dir
-  } do
+  test "a state.bin from an incompatible schema version refuses to load" do
+    dir =
+      Path.join(System.tmp_dir!(), "bl-queue-incompatible-#{System.unique_integer([:positive])}")
+
+    File.mkdir_p!(dir)
+    on_exit(fn -> File.rm_rf!(dir) end)
+
+    File.write!(
+      Path.join(dir, "state.bin"),
+      :erlang.term_to_binary(%{experiments: %{}, segments: %{}, islands: %{}, next_seg: 1})
+    )
+
+    Process.flag(:trap_exit, true)
+    assert {:error, _} = Queue.start_link(data_dir: dir, name: :incompatible_state_test)
+  end
+
+  test "observer mismatch (a different artifact digest) on replay is a divergence, and the final segment is always verified",
+       %{
+         dir: dir
+       } do
     {:ok, 1} = Queue.create_experiment(%{@spec_ok | "steps" => 500, "verifyFraction" => 0.0})
     {:ok, %{id: a}} = Queue.join(%{})
     {:ok, %{id: b}} = Queue.join(%{})
     {:ok, t} = Queue.next_task(a)
-    upload(dir, t, a, "h0", "aaaaaaaaaaaaaaaa")
-    {:ok, "done"} = done(t, a, "h0", "aaaaaaaaaaaaaaaa")
+    upload(dir, t, a, "h0")
+    {:ok, "done"} = done(t, a, "h0")
     {:ok, v} = Queue.next_task(b)
     assert v.kind == "verify"
 
     assert {:ok, "diverged"} =
-             Queue.complete(v.segment.id, b, v.lease, "verify", "h0", "bbbbbbbbbbbbbbbb", %{})
+             Queue.complete(v.segment.id, b, v.lease, "verify", "different-hash", %{})
   end
 
-  test "a verifier can reject an inconsistent predecessor", %{dir: dir} do
+  test "a verifier can reject an inconsistent predecessor" do
     {:ok, _} = Queue.create_experiment(%{@spec_ok | "verifyFraction" => 1.0})
     {:ok, %{id: a}} = Queue.join(%{})
     {:ok, %{id: b}} = Queue.join(%{})
     {:ok, t1} = Queue.next_task(a)
+    dir = Queue.data_dir()
     upload(dir, t1, a, "h0")
     {:ok, "done"} = done(t1, a, "h0")
     {:ok, t2} = Queue.next_task(a)
@@ -205,14 +205,13 @@ defmodule Coordinator.QueueTest do
     # b verifies segment 0 first, then segment 1 whose start (segment 0) it finds bad.
     {:ok, v1} = Queue.next_task(b)
 
-    {:ok, "verified"} =
-      Queue.complete(v1.segment.id, b, v1.lease, "verify", "h0", "0000000000000000", %{})
+    {:ok, "verified"} = Queue.complete(v1.segment.id, b, v1.lease, "verify", "h0", %{})
 
     {:ok, v2} = Queue.next_task(b)
     assert v2.segment.id == t2.segment.id
     assert :ok = Queue.reject(v2.segment.id, b, v2.lease, "bad start")
     assert %{status: "pending", rejected: 1} = Queue.segment(t1.segment.id)
-    assert %{status: "pending", verify: nil} = Queue.segment(t2.segment.id)
+    assert %{status: "pending"} = Queue.segment(t2.segment.id)
   end
 
   test "incompatible preset/condition combinations are refused" do

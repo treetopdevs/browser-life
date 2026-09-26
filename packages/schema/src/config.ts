@@ -2,7 +2,7 @@
 // and the WGSL kernels agree exactly. Fractions are numerators over the
 // power of two named in the comment.
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export const RULE_VERSION = 1;
 
 export type LightMode = "uniform" | "gradient" | "patches";

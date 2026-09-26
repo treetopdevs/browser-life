@@ -48,7 +48,7 @@ describe("reference rules", () => {
   it("round-trips checkpoints and resumes bit-exact", () => {
     const a = new RefSim(soupWorld(small, 4));
     a.run(10);
-    const snap = decodeCheckpoint(encodeCheckpoint(a.state));
+    const { state: snap } = decodeCheckpoint(encodeCheckpoint(a.state));
     expect(stateHash(snap)).toBe(stateHash(a.state));
     expect(snap.lightIn).toBe(a.state.lightIn);
     const b = new RefSim(cloneState(snap));

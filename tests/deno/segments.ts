@@ -1,5 +1,7 @@
-// A run split into segments (checkpoint + observer state) must equal the
-// continuous run: same physics digest and same observations.
+// A run split into segments (one checkpoint artifact carrying physics and
+// observer state together) must equal the continuous run: same physics
+// digest, same artifact digest (physics + observer), same observations.
+import { stateHash } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { runExperiment, specConfig, type RunSpec, type Sink } from "@bl/runner";
 
@@ -17,7 +19,8 @@ const a = await runExperiment(device, { ...base, steps: 500 }, new Mem(), host, 
 const b = await runExperiment(device, { ...base, steps: 500 }, new Mem(), host, () => {}, { keepFinal: true, start: a.final, observer: a.observer });
 const strip = (o: object) => JSON.stringify({ ...o, step: 0 });
 const checks: [string, unknown, unknown][] = [
-  ["physics digest", whole.summary.finalHash, b.summary.finalHash],
+  ["physics digest", stateHash(whole.final!), stateHash(b.final!)],
+  ["artifact digest (physics + observer)", whole.summary.finalHash, b.summary.finalHash],
   ["activity", JSON.stringify(whole.observer.activity), JSON.stringify(b.observer.activity)],
   ["tracker", JSON.stringify(whole.observer.tracker), JSON.stringify(b.observer.tracker)],
   ["counters", strip({ ...whole.observer, tracker: 0, activity: 0 }), strip({ ...b.observer, tracker: 0, activity: 0 })],

@@ -43,15 +43,81 @@ describe("integer helpers", () => {
 
 describe("checkpoints", () => {
   const cfg = defaultConfig({ tileW: 32, tileH: 32, kernelRadius: 4 });
+
+  // Recomputes the checksum after truncating/mutating a payload, the same
+  // way a real corrupted upload's checksum still covers whatever bytes made
+  // it through — so these exercise the *structural* checks past the
+  // checksum, not the checksum check itself.
+  const recheck = (w: Uint32Array): Uint8Array => {
+    const [a, b] = digestWords(w.subarray(0, w.length - 2));
+    w[w.length - 2] = a;
+    w[w.length - 1] = b;
+    return new Uint8Array(w.buffer);
+  };
+
+  it("round-trips physics and an opaque observer payload through one artifact", () => {
+    const s = soupWorld(cfg, 2, 32, 64);
+    const observer = { tag: "hello", n: 3, nested: { z: 1, a: 2 } };
+    const { state, observer: back } = decodeCheckpoint(encodeCheckpoint(s, observer));
+    expect(state.step).toBe(s.step);
+    expect(back).toEqual(observer);
+  });
+
+  it("defaults the observer section to {} when omitted", () => {
+    const { observer } = decodeCheckpoint(encodeCheckpoint(soupWorld(cfg, 2, 32, 64)));
+    expect(observer).toEqual({});
+  });
+
   it("rejects a truncated payload even with a recomputed checksum", () => {
     const bytes = encodeCheckpoint(soupWorld(cfg, 2, 32, 64));
     const w = new Uint32Array(bytes.buffer.slice(0));
     const cut = new Uint32Array(w.length - 100);
     cut.set(w.subarray(0, cut.length - 2));
-    const [a, b] = digestWords(cut.subarray(0, cut.length - 2));
-    cut[cut.length - 2] = a;
-    cut[cut.length - 1] = b;
-    expect(() => decodeCheckpoint(new Uint8Array(cut.buffer))).toThrow(/truncated|mismatch/);
+    expect(() => decodeCheckpoint(recheck(cut))).toThrow(/truncated|mismatch/);
+  });
+
+  it("rejects bad magic", () => {
+    const bytes = encodeCheckpoint(soupWorld(cfg, 2, 32, 64));
+    const w = new Uint32Array(bytes.buffer.slice(0));
+    w[0] ^= 0xff;
+    expect(() => decodeCheckpoint(recheck(w))).toThrow(/magic/);
+  });
+
+  it("rejects a schema version other than the current one", () => {
+    const bytes = encodeCheckpoint(soupWorld(cfg, 2, 32, 64));
+    const w = new Uint32Array(bytes.buffer.slice(0));
+    w[1] = 2;
+    expect(() => decodeCheckpoint(recheck(w))).toThrow(/schema/);
+  });
+
+  it("rejects a checksum mismatch", () => {
+    const bytes = encodeCheckpoint(soupWorld(cfg, 2, 32, 64));
+    const w = new Uint32Array(bytes.buffer.slice(0));
+    w[10] ^= 1; // inside the cfg section; checksum is not recomputed
+    expect(() => decodeCheckpoint(new Uint8Array(w.buffer))).toThrow(/mismatch/);
+  });
+
+  it("rejects an observer section that is not valid JSON", () => {
+    const bytes = encodeCheckpoint(soupWorld(cfg, 2, 32, 64), { ok: true });
+    const w = new Uint32Array(bytes.buffer.slice(0));
+    // The observer section is the last thing before the two checksum words;
+    // corrupt one of its bytes (still ASCII, so length/JSON.parse both see
+    // it) without changing its declared byte length.
+    const asBytes = new Uint8Array(w.buffer);
+    const obsLenWordIdx = w.length - 3 - Math.ceil(JSON.stringify({ ok: true }).length / 4);
+    const obsByteOffset = (obsLenWordIdx + 1) * 4;
+    asBytes[obsByteOffset] ^= 0xff; // corrupt the observer JSON's opening brace
+    expect(() => decodeCheckpoint(recheck(w))).toThrow(/observer section is not valid JSON/);
+  });
+
+  it("rejects a payload truncated inside the observer section", () => {
+    const bytes = encodeCheckpoint(soupWorld(cfg, 2, 32, 64), { ok: true });
+    const w = new Uint32Array(bytes.buffer.slice(0));
+    // Same trick as the physics-truncation test, but the word removed here
+    // is the observer section's own last word, not the physics payload's.
+    const cut = new Uint32Array(w.length - 1);
+    cut.set(w.subarray(0, cut.length - 2));
+    expect(() => decodeCheckpoint(recheck(cut))).toThrow(/truncated/);
   });
 });
 

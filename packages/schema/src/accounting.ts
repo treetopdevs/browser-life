@@ -87,12 +87,7 @@ export function canonicalConfig(c: WorldState["cfg"]): string {
 
 const u64Words = (v: bigint) => [Number(v & 0xffffffffn), Number((v >> 32n) & 0xffffffffn)];
 
-/**
- * Canonical 64-bit digest of every persistent field: config, step, cells,
- * canonical genome and the full ledger (light, heat, fluxes). Used for pinned
- * hashes, checkpoint manifests, segment start checks and replay verification.
- */
-export function stateHash(s: WorldState): string {
+function stateHashWords(s: WorldState): [number, number] {
   const cfg = new TextEncoder().encode(canonicalConfig(s.cfg));
   const cfgWords = new Uint32Array(Math.ceil(cfg.length / 4));
   new Uint8Array(cfgWords.buffer).set(cfg);
@@ -100,5 +95,58 @@ export function stateHash(s: WorldState): string {
   [a, b] = digestWords(Uint32Array.of(s.step, ...u64Words(s.lightIn), ...u64Words(s.heatOut), ...s.flux.flatMap(u64Words)), a, b);
   [a, b] = digestWords(s.cells, a, b);
   [a, b] = digestWords(canonicalGenome(s.genome), a, b);
-  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+  return [a, b];
+}
+
+const hex = (a: number, b: number) => a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+
+/**
+ * Canonical 64-bit digest of every persistent field: config, step, cells,
+ * canonical genome and the full ledger (light, heat, fluxes). Physics-only —
+ * used for pinned hashes, segment `startHash`/`startFrom` continuity checks
+ * and same-device replay verification. Does not cover observer state; see
+ * `artifactDigest` for the digest that does.
+ */
+export function stateHash(s: WorldState): string {
+  const [a, b] = stateHashWords(s);
+  return hex(a, b);
+}
+
+/**
+ * Deterministic JSON for digesting: object keys sorted recursively (arrays
+ * keep their order, since it's meaningful there). The observer payload is
+ * caller-constructed, not arbitrary user JSON, so this only needs to be
+ * stable across the field-insertion-order variance between callers, not
+ * hostile input.
+ */
+function canonicalize(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(canonicalize);
+  if (v && typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return Object.fromEntries(Object.keys(o).sort().map((k) => [k, canonicalize(o[k])]));
+  }
+  return v;
+}
+
+/** Canonical JSON text of an observer payload, keys sorted recursively. */
+export function canonicalObserverJSON(observer: unknown): string {
+  return JSON.stringify(canonicalize(observer));
+}
+
+/**
+ * Digest of a checkpoint artifact: `stateHash`'s digest words, chained with
+ * the observer's canonical JSON bytes (same length-prefix + word-padding
+ * pattern the config section uses). This is the digest checkpoint upload,
+ * replay verification and the predecessor-start check all compare — it
+ * replaces the old, separate physics `endHash` and `observer_hash` pair with
+ * one value that covers the whole artifact. `startHash`/`startFrom`
+ * continuity keeps using physics-only `stateHash`, unchanged.
+ */
+export function artifactDigest(s: WorldState, observer: unknown): string {
+  let [a, b] = stateHashWords(s);
+  const bytes = new TextEncoder().encode(canonicalObserverJSON(observer));
+  const words = new Uint32Array(Math.ceil(bytes.length / 4));
+  new Uint8Array(words.buffer).set(bytes);
+  [a, b] = digestWords(Uint32Array.of(bytes.length, ...words), a, b);
+  return hex(a, b);
 }
