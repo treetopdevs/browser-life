@@ -7,7 +7,7 @@
 // satisfied deliberately rather than incidentally.
 import { describe, expect, it } from "vitest";
 import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
-import { runId, specConfig, stitchRun, type RunSpec, type StitchSegment } from "@bl/runner";
+import { observationDigests, runId, specConfig, stitchRun, type RunSpec, type StitchSegment } from "@bl/runner";
 
 const baseSpec: RunSpec = { experiment: "fx", presetId: "spots", condition: "treatment", seed: 1, steps: 0, censusEvery: 10, deepEvery: 1000, checkpointEvery: 0 };
 const cfg = specConfig(baseSpec);
@@ -112,5 +112,15 @@ describe("stitchRun refuses a segment computed under a different metrics version
   it("refuses when only a later segment's metrics version is outdated", () => {
     const segs = [segment(0, 0, 10, { metricsVersion: METRICS_VERSION }), segment(1, 10, 10, { metricsVersion: METRICS_VERSION - 1 })];
     expect(() => stitchRun(segs, 20)).toThrow(/segment #1.*metrics version/);
+  });
+});
+
+describe("observationDigests covers the optional migration log", () => {
+  it("reports migrations.tsv when present, and omits it (and manifest.json) otherwise", async () => {
+    const base = { "series.jsonl": "a", "manifest.json": "{}" };
+    expect(Object.keys(await observationDigests(base))).toEqual(["series.jsonl"]);
+    const withMig = await observationDigests({ ...base, "migrations.tsv": "step\n" });
+    expect(Object.keys(withMig).sort()).toEqual(["migrations.tsv", "series.jsonl"]);
+    expect(withMig["migrations.tsv"]).toMatch(/^[0-9a-f]{64}$/);
   });
 });

@@ -38,7 +38,16 @@ export const MIGRATIONS_FILE = "migrations.tsv";
 export const OBSERVATION_FILES = BUNDLE_FILES.filter((f): f is Exclude<(typeof BUNDLE_FILES)[number], "manifest.json"> => f !== "manifest.json");
 
 /**
- * SHA-256 (lowercase hex) of each `OBSERVATION_FILES` entry present in
+ * Every file a verify attempt reports a digest for when it has it:
+ * `OBSERVATION_FILES` plus the optional `MIGRATIONS_FILE` (present only for a
+ * migration-enabled run). The coordinator's `@verified_files` must match.
+ * Without the migration log here, a migrating run could be marked
+ * `observationsVerified` while its migrations.tsv was never compared.
+ */
+export const VERIFIED_FILES: readonly string[] = [...OBSERVATION_FILES, MIGRATIONS_FILE];
+
+/**
+ * SHA-256 (lowercase hex) of each `VERIFIED_FILES` entry present in
  * `files`, exactly as its bytes would be uploaded (UTF-8 of the text) — what
  * a verify attempt reports for the coordinator to compare against the
  * accepted run attempt's own recorded file digests. `crypto.subtle` rather
@@ -47,7 +56,7 @@ export const OBSERVATION_FILES = BUNDLE_FILES.filter((f): f is Exclude<(typeof B
 export async function observationDigests(files: Map<string, string> | Record<string, string>): Promise<Record<string, string>> {
   const get = (name: string) => (files instanceof Map ? files.get(name) : files[name]);
   const out: Record<string, string> = {};
-  for (const name of OBSERVATION_FILES) {
+  for (const name of VERIFIED_FILES) {
     const text = get(name);
     if (text === undefined) continue;
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text) as BufferSource);

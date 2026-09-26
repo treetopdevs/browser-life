@@ -227,6 +227,27 @@ defmodule Coordinator.SegmentTest do
     assert is_nil(Enum.find(verified3.attempts, &(&1.kind == "verify")).observations)
   end
 
+  test "complete_verify compares the optional migrations.tsv whenever either side has it" do
+    mig = fn fill -> Map.put(obs_digests(), "migrations.tsv", String.duplicate(fill, 64)) end
+    obs = fn s -> Enum.find(s.attempts, &(&1.kind == "verify")).observations end
+
+    verify = fn accepted, reported ->
+      s = done_run_with_files(accepted)
+      {:ok, s} = Segment.assign_verify(s, "b", "vlease", 100)
+      {:ok, s} = Segment.complete_verify(s, "b", "vlease", "digest1", reported)
+      s
+    end
+
+    assert obs.(verify.(mig.("c"), mig.("c"))) == "match"
+    # The six agree but the migration log differs: a mismatch, not a match.
+    assert obs.(verify.(mig.("c"), mig.("d"))) == "mismatch"
+    # Present on only one side: missing coverage, never "match".
+    assert is_nil(obs.(verify.(mig.("c"), obs_digests())))
+    assert is_nil(obs.(verify.(obs_digests(), mig.("c"))))
+    # Absent on both (a migration-disabled run): the six alone decide.
+    assert obs.(verify.(obs_digests(), obs_digests())) == "match"
+  end
+
   # Review finding: `last_verify_attempt/1` (and hence a raw `.observations`
   # read) doesn't know a completed verify attempt's comparison target was
   # ever superseded. `requeue/1` keeps that attempt's record untouched even

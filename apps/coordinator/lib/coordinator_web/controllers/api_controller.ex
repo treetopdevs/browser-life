@@ -11,9 +11,10 @@ defmodule CoordinatorWeb.ApiController do
   # `manifest_metrics_version/2`'s parse (the only file we ever decode here)
   # cheap regardless of what an island uploads.
   @max_manifest 1024 * 1024
-  # Must match packages/runner/src/stitch.ts's OBSERVATION_FILES (BUNDLE_FILES
-  # minus manifest.json) and Coordinator.Segment's @observation_files.
-  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
+  # Must match packages/runner/src/stitch.ts's VERIFIED_FILES (BUNDLE_FILES
+  # minus manifest.json, plus the optional migrations.tsv) and
+  # Coordinator.Segment's @observation_files ++ @optional_observation_files.
+  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json migrations.tsv)
 
   plug :require_island
        when action in [

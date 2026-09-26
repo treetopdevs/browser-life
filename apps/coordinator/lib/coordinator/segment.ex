@@ -41,6 +41,9 @@ defmodule Coordinator.Segment do
   # The observation files a run bundle carries (see packages/runner/src/stitch.ts's
   # BUNDLE_FILES); manifest.json is excluded on purpose (timestamps/host).
   @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
+  # Optional: only a migration-enabled run writes it (see stitch.ts's
+  # MIGRATIONS_FILE). Compared whenever either side has it.
+  @optional_observation_files ~w(migrations.tsv)
 
   @type status :: String.t()
   @type t :: %{
@@ -349,18 +352,26 @@ defmodule Coordinator.Segment do
     do: {:error, "segment not done"}
 
   # `nil` (rather than "mismatch") whenever either side is missing any of the
-  # six names: an accepted run attempt uploaded before file digests were
+  # six names (or an optional one the other side has): an accepted run attempt uploaded before file digests were
   # recorded, or a verify attempt from an island that doesn't report them yet
   # — absence of evidence, not evidence of a mismatch.
   defp compare_observations(accepted_files, reported) do
     accepted_files = accepted_files || %{}
     reported = reported || %{}
 
-    if Enum.all?(
-         @observation_files,
-         &(Map.has_key?(accepted_files, &1) and Map.has_key?(reported, &1))
-       ) do
-      if Enum.all?(@observation_files, &(Map.get(accepted_files, &1) == Map.get(reported, &1))),
+    # An optional file present on either side must be compared, so it joins
+    # the required set for this comparison; present on only one side, the
+    # result is nil (missing coverage), never "match".
+    optional =
+      Enum.filter(
+        @optional_observation_files,
+        &(Map.has_key?(accepted_files, &1) or Map.has_key?(reported, &1))
+      )
+
+    names = @observation_files ++ optional
+
+    if Enum.all?(names, &(Map.has_key?(accepted_files, &1) and Map.has_key?(reported, &1))) do
+      if Enum.all?(names, &(Map.get(accepted_files, &1) == Map.get(reported, &1))),
         do: "match",
         else: "mismatch"
     end
