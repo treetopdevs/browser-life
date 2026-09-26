@@ -13,6 +13,7 @@
 // the races (and the hang) can be reproduced deterministically instead of
 // depending on real timing in a browser.
 import { describe, expect, it } from "vitest";
+import { METRICS_VERSION } from "@bl/schema";
 import { createIslandPage, type IdentityStorage } from "../src/index.ts";
 
 function deferred<T>() {
@@ -54,7 +55,7 @@ describe("createIslandPage", () => {
     await done.promise;
 
     expect(runCalls).toEqual(["http://coord-a"]);
-    expect(saved).toEqual([{ coordinator: "http://coord-a", id: "isl-a", token: "tok-a" }]);
+    expect(saved).toEqual([{ coordinator: "http://coord-a", id: "isl-a", token: "tok-a", metricsVersion: METRICS_VERSION }]);
   });
 
   // Note: since "probing" is now itself cancellable (see the cancel tests
@@ -66,7 +67,7 @@ describe("createIslandPage", () => {
   it("does not let a manual click start a second run once a decided operation is already starting", async () => {
     const runCalls: string[] = [];
     const storage: IdentityStorage = {
-      load: () => ({ coordinator: "http://remembered", id: "isl-r", token: "tok-r" }),
+      load: () => ({ coordinator: "http://remembered", id: "isl-r", token: "tok-r", metricsVersion: METRICS_VERSION }),
       save: () => {},
     };
     const runStarted = deferred<void>();
@@ -147,7 +148,7 @@ describe("createIslandPage", () => {
     const runCalls: string[] = [];
     const saved: unknown[] = [];
     const storage: IdentityStorage = {
-      load: () => ({ coordinator: "http://remembered", id: "isl-r", token: "tok-r" }),
+      load: () => ({ coordinator: "http://remembered", id: "isl-r", token: "tok-r", metricsVersion: METRICS_VERSION }),
       save: (v) => saved.push(v),
     };
     let probeStatus = 503; // first round: the coordinator is persistently unreachable
@@ -197,7 +198,7 @@ describe("createIslandPage", () => {
     const saved: unknown[] = [];
     const probe = deferred<number | null>();
     const storage: IdentityStorage = {
-      load: () => ({ coordinator: "http://remembered", id: "isl-r", token: "tok-r" }),
+      load: () => ({ coordinator: "http://remembered", id: "isl-r", token: "tok-r", metricsVersion: METRICS_VERSION }),
       save: (v) => saved.push(v),
     };
 
@@ -234,7 +235,7 @@ describe("createIslandPage", () => {
     const sleepStarted = deferred<void>();
     const heldOpenSleep = deferred<void>();
     const storage: IdentityStorage = {
-      load: () => ({ coordinator: "http://remembered", id: "isl-r", token: "tok-r" }),
+      load: () => ({ coordinator: "http://remembered", id: "isl-r", token: "tok-r", metricsVersion: METRICS_VERSION }),
       save: (v) => saved.push(v),
     };
 
@@ -268,5 +269,31 @@ describe("createIslandPage", () => {
     await rejoining;
 
     expect(runCalls).toEqual([]);
+  });
+  // Reusing an identity skips the join, which is where an island declares its
+  // metrics version; the coordinator only offers an experiment's work to
+  // islands whose declared version matches. An identity remembered by older
+  // code (a deploy reloads the page) must therefore not be reused.
+  it("joins afresh instead of reusing an identity saved under a different metrics version", async () => {
+    for (const metricsVersion of [undefined, METRICS_VERSION - 1]) {
+      const probes: string[] = [];
+      const runs: { coordinator: string; identity?: unknown }[] = [];
+      const done = deferred<void>();
+      const page = createIslandPage({
+        getUrl: () => "http://typed",
+        setUrl: () => {},
+        say: (m) => (m === "island stopped" ? done.resolve() : undefined),
+        setState: () => {},
+        storage: { load: () => ({ coordinator: "http://remembered", id: "isl-old", token: "tok-old", metricsVersion }), save: () => {} },
+        probe: async (c) => (probes.push(c), 200),
+        runAttempt: async (opts) => {
+          runs.push({ coordinator: opts.coordinator, identity: opts.identity });
+        },
+      });
+      await page.autoRejoin();
+      await done.promise;
+      expect(probes).toEqual([]);
+      expect(runs).toEqual([{ coordinator: "http://remembered", identity: undefined }]);
+    }
   });
 });

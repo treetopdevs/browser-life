@@ -4,6 +4,16 @@ defmodule CoordinatorWeb.ApiController do
 
   @max_checkpoint 256 * 1024 * 1024
   @max_file 64 * 1024 * 1024
+  # manifest.json is a small, fixed-shape object (spec/config/summary; a real
+  # one is a few KB even for a long run — coordinator-driven segments always
+  # write `checkpoints: []`, see `Coordinator.Queue`'s `task/4`) — nowhere
+  # near `@max_file`. Bounding it separately, and well below that, keeps
+  # `manifest_metrics_version/2`'s parse (the only file we ever decode here)
+  # cheap regardless of what an island uploads.
+  @max_manifest 1024 * 1024
+  # Must match packages/runner/src/stitch.ts's OBSERVATION_FILES (BUNDLE_FILES
+  # minus manifest.json) and Coordinator.Segment's @observation_files.
+  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
 
   plug :require_island
        when action in [
@@ -69,6 +79,7 @@ defmodule CoordinatorWeb.ApiController do
       )
       when kind in ["run", "verify"] and is_binary(hash) and is_binary(lease) do
     summary = if is_map(p["summary"]), do: p["summary"], else: nil
+    observations = p["observationDigests"]
 
     cond do
       not hex16?(hash) ->
@@ -77,8 +88,14 @@ defmodule CoordinatorWeb.ApiController do
       summary && byte_size(Jason.encode!(summary)) > 16_384 ->
         bad(conn, "summary too large")
 
+      not valid_observation_digests?(observations) ->
+        bad(conn, "observationDigests must map known file names to 64-hex-digit SHA-256 values")
+
       true ->
-        reply(conn, Queue.complete(id, conn.assigns.island, lease, kind, hash, summary))
+        reply(
+          conn,
+          Queue.complete(id, conn.assigns.island, lease, kind, hash, summary, observations)
+        )
     end
   end
 
@@ -134,7 +151,11 @@ defmodule CoordinatorWeb.ApiController do
   # Bundle files (series.jsonl and friends) are not content-addressed: named
   # by the caller, kept per segment. No file gets special-cased for a digest
   # any more — that was only ever `observer.json`, which no longer exists as
-  # a separate upload (see `put_checkpoint/2`).
+  # a separate upload (see `put_checkpoint/2`). `manifest.json` alone also
+  # gets a stricter size cap and a JSON parse, here — a plain per-request
+  # process, not `Coordinator.Queue`'s shared singleton GenServer (see its
+  # moduledoc) — so its `metricsVersion` can be recorded on the run attempt
+  # ahead of time and compared cheaply, in-memory, at completion.
   def put_file(conn, %{"id" => id, "name" => name, "lease" => lease}) when is_binary(lease) do
     cond do
       not Regex.match?(~r/^[a-z0-9_-]{1,64}\.(jsonl|tsv|json)$/, name) ->
@@ -144,23 +165,54 @@ defmodule CoordinatorWeb.ApiController do
         conn |> put_status(404) |> json(%{error: "unknown segment"})
 
       true ->
-        with_staged(conn, @max_file, fn staged ->
-          case Queue.publish_file(
-                 id,
-                 conn.assigns.island,
-                 lease,
-                 staged,
-                 name,
-                 Store.sha256_file(staged)
-               ) do
-            :ok -> {:ok, %{ok: true}}
-            e -> e
+        max = if name == "manifest.json", do: @max_manifest, else: @max_file
+
+        with_staged(conn, max, fn staged ->
+          with {:ok, metrics_version} <- manifest_metrics_version(name, staged) do
+            case Queue.publish_file(
+                   id,
+                   conn.assigns.island,
+                   lease,
+                   staged,
+                   name,
+                   Store.sha256_file(staged),
+                   metrics_version
+                 ) do
+              :ok -> {:ok, %{ok: true}}
+              e -> e
+            end
           end
         end)
     end
   end
 
   def put_file(conn, _), do: bad(conn, "expected lease")
+
+  # `nil` for every file except `manifest.json` — nothing to extract, and
+  # `Coordinator.Segment.publish_file/6` leaves `manifest_metrics_version`
+  # untouched on `nil` (never clobbers a previously recorded value with
+  # "unknown" just because some other file was uploaded afterward). For
+  # `manifest.json` itself: a parse failure (refused at upload, staying below
+  # `@max_manifest` bytes, so this decode is always cheap) is an error, not a
+  # silent version-1 fallback — only a *valid* manifest that merely lacks or
+  # malforms the field itself falls back to version 1, same convention as
+  # everywhere else in this feature.
+  defp manifest_metrics_version("manifest.json", staged) do
+    case File.read(staged) do
+      {:ok, bin} ->
+        case Jason.decode(bin) do
+          {:ok, %{"metricsVersion" => v}} when is_integer(v) and v > 0 -> {:ok, v}
+          {:ok, m} when is_map(m) -> {:ok, 1}
+          {:ok, _} -> {:error, "manifest.json must decode to a JSON object"}
+          {:error, _} -> {:error, "manifest.json is not valid JSON"}
+        end
+
+      {:error, reason} ->
+        {:error, "could not read staged manifest.json: #{inspect(reason)}"}
+    end
+  end
+
+  defp manifest_metrics_version(_name, _staged), do: {:ok, nil}
 
   # Start state of a segment = the accepted end artifact of its predecessor,
   # fetched from the content-addressed store by that artifact's own digest.
@@ -258,6 +310,21 @@ defmodule CoordinatorWeb.ApiController do
   end
 
   defp hex16?(v), do: Regex.match?(~r/^[0-9a-f]{16}$/, v)
+  defp hex64?(v), do: is_binary(v) and Regex.match?(~r/^[0-9a-f]{64}$/, v)
+
+  # Tolerant of absence (a run attempt, or an older island, sends none):
+  # nil is always valid. When present, every key must be one of the known
+  # observation file names and every value a 64-hex-digit SHA-256 — which,
+  # together with there being at most that many keys, bounds the whole
+  # payload's size without a separate byte-size check.
+  defp valid_observation_digests?(nil), do: true
+
+  defp valid_observation_digests?(m) when is_map(m) do
+    map_size(m) <= length(@observation_files) and
+      Enum.all?(m, fn {k, v} -> k in @observation_files and hex64?(v) end)
+  end
+
+  defp valid_observation_digests?(_), do: false
 
   # Streams the request body to a temporary file (at most `max` bytes), runs
   # `fun` on it, and always removes the temporary file afterwards (publishing

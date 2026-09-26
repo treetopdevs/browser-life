@@ -5,7 +5,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PRESETS, encodeCheckpoint, initWorld, stateHash } from "@bl/schema";
 import { ActivityTracker, Tracker, b64 } from "@bl/metrics";
-import { continuationError, decideRejoin, probeIslandIdentity, resolveRejoin, runIsland, specConfig, timeoutSignal, type ObserverState, type RunSpec } from "../src/index.ts";
+import { METRICS_VERSION } from "@bl/schema";
+import { continuationError, decideRejoin, probeIslandIdentity, resolveRejoin, runIsland, specConfig, STALE_REGISTRATION, timeoutSignal, type ObserverState, type RunSpec } from "../src/index.ts";
 
 const spec: RunSpec = { experiment: "t", presetId: "spots", condition: "treatment", seed: 3, steps: 500, censusEvery: 100, deepEvery: 5, checkpointEvery: 0, activityThreshold: 7 };
 const start = { ...initWorld(specConfig(spec), PRESETS.find((p) => p.id === "spots")!.init), step: 500 };
@@ -134,6 +135,10 @@ describe("decideRejoin", () => {
   it("falls back to a fresh join only on 401 (the coordinator no longer knows the island)", () => {
     expect(decideRejoin(401)).toBe("fresh");
   });
+  it("also joins afresh when the identity was registered under another metrics version", () => {
+    expect(decideRejoin(STALE_REGISTRATION)).toBe("fresh");
+  });
+
   // Review: 404 (an older coordinator without this route), 5xx (e.g. mid
   // hot-reload) and a failed request don't establish anything about the
   // identity either way -- retrying beats guessing "reuse" or "fresh".
@@ -312,5 +317,32 @@ describe("uncalibrated threshold (refactor review 2)", () => {
     expect(observer.settings.activityThreshold).toBeNull();
     const { state, observer: back } = decodeArtifact(encodeCheckpoint(start, observer));
     expect(continuationError(inf, state, back)).toBeNull();
+  });
+});
+
+// Review: the page saves its own metrics version when it joins, but a page
+// that joined an older coordinator (which ignored the declared version) holds
+// a v1 registration under a locally v2 identity; after the coordinator is
+// upgraded, reusing it would idle on current work. The probe must check the
+// version the coordinator actually recorded.
+describe("probeIslandIdentity checks the registered metrics version", () => {
+  const probeWith = async (status: number, body: unknown) => {
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async () => new Response(JSON.stringify(body), { status })) as typeof fetch;
+    try {
+      return await probeIslandIdentity("http://coord", "isl-1", "tok", new AbortController().signal, 5000);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  };
+  it("reuses a registration made under the current version", async () => {
+    expect(await probeWith(200, { id: "isl-1", metrics_version: METRICS_VERSION })).toBe(200);
+  });
+  it("reports a registration without a version (joined before versions existed) or with another version as stale", async () => {
+    expect(await probeWith(200, { id: "isl-1" })).toBe(STALE_REGISTRATION);
+    expect(await probeWith(200, { id: "isl-1", metrics_version: METRICS_VERSION + 1 })).toBe(STALE_REGISTRATION);
+  });
+  it("passes other statuses through unchanged", async () => {
+    expect(await probeWith(401, { error: "x" })).toBe(401);
   });
 });

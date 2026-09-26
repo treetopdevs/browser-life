@@ -195,6 +195,148 @@ defmodule Coordinator.QueueTest do
     assert Queue.experiment("nope") == nil
   end
 
+  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
+
+  # Uploads all six observation files under `task`'s run lease, each file's
+  # content its own name (deterministic, so the same publish reproduces the
+  # same SHA-256), and returns {name => sha}.
+  defp publish_observation_files(dir, task, island),
+    do: Map.new(@observation_files, &{&1, publish_file(dir, task, island, &1, &1)})
+
+  test "observationsVerified reflects a verify attempt's reported file digests, independent of physics verification, and mismatches surface in /api/status",
+       %{
+         dir: dir
+       } do
+    {:ok, _} = Queue.create_experiment(%{@spec_ok | "verifyFraction" => 1.0})
+    {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+    {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+
+    {:ok, t1} = Queue.next_task(a)
+    upload(dir, t1, a, "h0")
+    digests1 = publish_observation_files(dir, t1, a)
+    {:ok, "done"} = done(t1, a, "h0")
+    {:ok, v1} = Queue.next_task(b)
+
+    assert {:ok, "verified"} =
+             Queue.complete(v1.segment.id, b, v1.lease, "verify", "h0", %{}, digests1)
+
+    segs = Queue.experiment("t1").segments
+    seg0 = Enum.find(segs, &(&1.index == 0))
+    assert %{status: "verified", observationsVerified: true} = seg0
+    assert Queue.status().observationMismatches == []
+
+    {:ok, t2} = Queue.next_task(a)
+    upload(dir, t2, a, "h1")
+    publish_observation_files(dir, t2, a)
+    {:ok, "done"} = done(t2, a, "h1")
+    {:ok, v2} = Queue.next_task(b)
+    # The physics digest still matches (the segment verifies) even though the
+    # reported observation files do not: the two checks are independent, and
+    # only the second surfaces here.
+    bad_digests = Map.new(@observation_files, &{&1, String.duplicate("f", 64)})
+
+    assert {:ok, "verified"} =
+             Queue.complete(v2.segment.id, b, v2.lease, "verify", "h1", %{}, bad_digests)
+
+    segs_after = Queue.experiment("t1").segments
+    seg0_after = Enum.find(segs_after, &(&1.index == 0))
+    seg1_after = Enum.find(segs_after, &(&1.index == 1))
+    assert %{status: "verified", observationsVerified: true} = seg0_after
+    assert %{status: "verified", observationsVerified: false} = seg1_after
+
+    assert [mismatch] = Queue.status().observationMismatches
+    assert mismatch.segment == seg1_after.id and mismatch.index == 1
+    assert mismatch.producer == "A" and mismatch.verifier == "B"
+  end
+
+  # Review finding: after a requeue-and-redo, a completed verify attempt's
+  # comparison must not be attributed to the new accepted attempt just
+  # because it happens to still be `last_verify_attempt/1` and the redo kept
+  # the *same* accepted digest (bundle files aren't part of that digest, so
+  # this is a real, not merely hypothetical, case).
+  test "a stale observation mismatch is not attributed to a redo's producer, even at the same accepted digest, and a fresh verify re-establishes it correctly",
+       %{dir: dir} do
+    {:ok, _} = Queue.create_experiment(%{@spec_ok | "verifyFraction" => 1.0})
+    {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+    {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+    {:ok, %{id: c}} = Queue.join(%{"adapter" => "C"})
+
+    {:ok, t1} = Queue.next_task(a)
+    upload(dir, t1, a, "h0")
+    publish_observation_files(dir, t1, a)
+    {:ok, "done"} = done(t1, a, "h0")
+
+    {:ok, v1} = Queue.next_task(b)
+    bad_digests = Map.new(@observation_files, &{&1, String.duplicate("z", 64)})
+
+    assert {:ok, "verified"} =
+             Queue.complete(v1.segment.id, b, v1.lease, "verify", "h0", %{}, bad_digests)
+
+    segs = Queue.experiment("t1").segments
+    seg0 = Enum.find(segs, &(&1.index == 0))
+    assert %{status: "verified", observationsVerified: false} = seg0
+    assert [mismatch] = Queue.status().observationMismatches
+    assert mismatch.segment == seg0.id and mismatch.producer == "A" and mismatch.verifier == "B"
+
+    # Island A itself finds segment 0's checkpoint (its own predecessor,
+    # started from directly) inconsistent while trying segment 1 -- requeues
+    # segment 0 -- and then redoes it, uploading the *same* accepted digest
+    # ("h0") but different, unreported observation-file content.
+    {:ok, t2} = Queue.next_task(a)
+    assert t2.startFrom == seg0.id
+    assert :ok = Queue.reject(t2.segment.id, a, t2.lease, "bad start")
+    assert %{status: "pending", rejected: 1} = Queue.segment(seg0.id)
+
+    {:ok, redo} = Queue.next_task(a)
+    assert redo.segment.id == seg0.id
+    upload(dir, redo, a, "h0")
+
+    redo_digests =
+      Map.new(@observation_files, &{&1, publish_file(dir, redo, a, &1, &1 <> "-redo")})
+
+    {:ok, "done"} = done(redo, a, "h0")
+
+    # The stale mismatch (B, against A's original files) must not survive the
+    # redo -- neither attributed to it in /api/status nor in the listing,
+    # even though nothing has re-verified the redo yet.
+    assert Queue.status().observationMismatches == []
+    segs_after_redo = Queue.experiment("t1").segments
+    seg0_after_redo = Enum.find(segs_after_redo, &(&1.index == 0))
+    assert %{status: "done", observationsVerified: nil} = seg0_after_redo
+
+    # A fresh verify against the redo's *actual* files is attributed
+    # correctly, proving this isn't merely "nothing shows up because nobody
+    # asked": the machinery still works once there is something real to bind to.
+    {:ok, v2} = Queue.next_task(c)
+    assert v2.kind == "verify" and v2.segment.id == seg0.id
+
+    assert {:ok, "verified"} =
+             Queue.complete(v2.segment.id, c, v2.lease, "verify", "h0", %{}, redo_digests)
+
+    segs_final = Queue.experiment("t1").segments
+    seg0_final = Enum.find(segs_final, &(&1.index == 0))
+    assert %{status: "verified", observationsVerified: true} = seg0_final
+    assert Queue.status().observationMismatches == []
+  end
+
+  test "observationsVerified is nil when the verify attempt reports no file digests (an older island), and Queue.complete/6 (no observation digests) still works",
+       %{
+         dir: dir
+       } do
+    {:ok, _} = Queue.create_experiment(%{@spec_ok | "verifyFraction" => 1.0, "steps" => 500})
+    {:ok, %{id: a}} = Queue.join(%{})
+    {:ok, %{id: b}} = Queue.join(%{})
+    {:ok, t1} = Queue.next_task(a)
+    upload(dir, t1, a, "h0")
+    publish_observation_files(dir, t1, a)
+    {:ok, "done"} = done(t1, a, "h0")
+    {:ok, v1} = Queue.next_task(b)
+    assert {:ok, "verified"} = Queue.complete(v1.segment.id, b, v1.lease, "verify", "h0", %{})
+
+    [s0] = Queue.experiment("t1").segments
+    assert %{status: "verified", observationsVerified: nil} = s0
+  end
+
   test "island tokens authenticate and state survives a restart", %{dir: dir} do
     {:ok, %{id: a, token: tok}} = Queue.join(%{})
     assert Queue.authenticate(a, tok)
@@ -251,6 +393,105 @@ defmodule Coordinator.QueueTest do
     :sys.replace_state(Queue, &put_in(&1, [:islands, a, :last_seen], 0))
     assert :ok = Queue.heartbeat(t.segment.id, a, t.lease)
     refute Enum.find(Queue.status().islands, &(&1.id == a)).stale
+  end
+
+  test "an island's join-time metrics version gates task assignment: mismatched islands idle for that experiment, a matching one is offered it" do
+    Application.put_env(:coordinator, :metrics_version, 2)
+    on_exit(fn -> Application.put_env(:coordinator, :metrics_version, 1) end)
+    {:ok, _} = Queue.create_experiment(@spec_ok)
+
+    {:ok, %{id: old}} = Queue.join(%{"adapter" => "old"})
+    {:ok, %{id: wrong}} = Queue.join(%{"adapter" => "wrong", "metricsVersion" => 1})
+    {:ok, %{id: current}} = Queue.join(%{"adapter" => "current", "metricsVersion" => 2})
+
+    # An island that never declares one defaults to version 1, same as an
+    # island that explicitly (and wrongly) declares 1.
+    assert {:ok, %{kind: "idle"}} = Queue.next_task(old)
+    assert {:ok, %{kind: "idle"}} = Queue.next_task(wrong)
+    assert {:ok, %{kind: "run", segment: %{index: 0}}} = Queue.next_task(current)
+  end
+
+  test "a version-mismatched island is idle only for that experiment, not globally: it still gets a different, matching-version experiment's work" do
+    Application.put_env(:coordinator, :metrics_version, 1)
+    {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "v1exp"})
+    Application.put_env(:coordinator, :metrics_version, 2)
+    on_exit(fn -> Application.put_env(:coordinator, :metrics_version, 1) end)
+    {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "v2exp"})
+
+    {:ok, %{id: old}} = Queue.join(%{})
+    assert {:ok, %{kind: "run", segment: %{run: run}}} = Queue.next_task(old)
+    assert String.starts_with?(run, "v1exp/")
+  end
+
+  test "complete_run refuses a completion whose uploaded manifest's metrics version differs from the experiment's required one, even though the island was assigned the task",
+       %{dir: dir} do
+    Application.put_env(:coordinator, :metrics_version, 2)
+    on_exit(fn -> Application.put_env(:coordinator, :metrics_version, 1) end)
+    {:ok, _} = Queue.create_experiment(@spec_ok)
+    {:ok, %{id: a}} = Queue.join(%{"metricsVersion" => 2})
+    {:ok, t} = Queue.next_task(a)
+    upload(dir, t, a, "h0")
+    put_manifest(dir, t, a, %{"metricsVersion" => 1})
+
+    assert {:error, "uploaded manifest's metrics version 1" <> _} =
+             Queue.complete(t.segment.id, a, t.lease, "run", "h0", %{})
+
+    # Refused, not merely delayed: the segment is still assigned to the same
+    # attempt, which may retry (e.g. re-upload a corrected manifest).
+    assert %{status: "assigned"} = Queue.segment(t.segment.id)
+  end
+
+  test "complete_run accepts a completion whose uploaded manifest's metrics version matches the experiment's required one",
+       %{dir: dir} do
+    Application.put_env(:coordinator, :metrics_version, 2)
+    on_exit(fn -> Application.put_env(:coordinator, :metrics_version, 1) end)
+    {:ok, _} = Queue.create_experiment(@spec_ok)
+    {:ok, %{id: a}} = Queue.join(%{"metricsVersion" => 2})
+    {:ok, t} = Queue.next_task(a)
+    upload(dir, t, a, "h0")
+    put_manifest(dir, t, a, %{"metricsVersion" => 2})
+
+    assert {:ok, "done"} = Queue.complete(t.segment.id, a, t.lease, "run", "h0", %{})
+  end
+
+  test "complete_run treats an uploaded manifest with no metricsVersion field as version 1", %{
+    dir: dir
+  } do
+    Application.put_env(:coordinator, :metrics_version, 1)
+    {:ok, _} = Queue.create_experiment(@spec_ok)
+    {:ok, %{id: a}} = Queue.join(%{})
+    {:ok, t} = Queue.next_task(a)
+    upload(dir, t, a, "h0")
+    put_manifest(dir, t, a, %{})
+
+    assert {:ok, "done"} = Queue.complete(t.segment.id, a, t.lease, "run", "h0", %{})
+  end
+
+  # Mimics what CoordinatorWeb.ApiController.put_file/2 does for
+  # "manifest.json" (parse it, extract+validate metricsVersion, pass the
+  # result to Queue.publish_file/7) -- these tests call Queue directly,
+  # bypassing the controller, so they must do that extraction themselves.
+  defp put_manifest(dir, task, island, manifest) do
+    staged = Path.join(dir, "manifest-#{System.unique_integer([:positive])}")
+    File.write!(staged, Jason.encode!(manifest))
+    sha = Coordinator.Store.sha256_file(staged)
+
+    metrics_version =
+      case manifest do
+        %{"metricsVersion" => v} when is_integer(v) and v > 0 -> v
+        _ -> 1
+      end
+
+    :ok =
+      Queue.publish_file(
+        task.segment.id,
+        island,
+        task.lease,
+        staged,
+        "manifest.json",
+        sha,
+        metrics_version
+      )
   end
 
   test "a state.bin from an incompatible schema version refuses to load" do

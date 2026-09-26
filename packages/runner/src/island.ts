@@ -7,8 +7,9 @@
 // start checkpoint whose digest differs from the predecessor's report is
 // rejected, which makes the coordinator recompute that predecessor.
 
-import { encodeCheckpoint, stateHash, type WorldState } from "@bl/schema";
+import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@bl/schema";
 import { continuationError, decodeArtifact, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
+import { observationDigests } from "./stitch.ts";
 
 export interface Task {
   kind: "run" | "verify" | "idle";
@@ -85,16 +86,29 @@ export async function probeIslandIdentity(coordinator: string, id: string, token
       headers: { authorization: `Bearer ${token}` },
       signal: timeoutSignal(signal, timeoutMs),
     });
-    return res.status;
+    if (res.status !== 200) return res.status;
+    // The coordinator assigns work by the metrics version recorded at join
+    // (absent: joined before versions existed, i.e. 1). A registration made
+    // under another version -- e.g. by this page before the coordinator was
+    // upgraded -- would idle on current work, so report it as unusable.
+    const info = (await res.json()) as { metrics_version?: unknown };
+    const registered = typeof info?.metrics_version === "number" ? info.metrics_version : 1;
+    return registered === METRICS_VERSION ? 200 : STALE_REGISTRATION;
   } catch {
     return null;
   }
 }
 
+/** Synthetic probe status (HTTP 426 Upgrade Required): the identity
+ * authenticates but was registered under a different metrics version. */
+export const STALE_REGISTRATION = 426;
+
 /** What one probe of `GET /api/islands/me` establishes about a remembered
- * identity: `"reuse"` (200, still authenticates), `"fresh"` (401, the
- * coordinator no longer recognizes it -- unknown id, or a restarted
- * coordinator with a fresh data dir), or `"retry"` for everything else
+ * identity: `"reuse"` (200, still authenticates under the current metrics
+ * version), `"fresh"` (401, the coordinator no longer recognizes it --
+ * unknown id, or a restarted coordinator with a fresh data dir -- or
+ * `STALE_REGISTRATION`, registered under another metrics version), or
+ * `"retry"` for everything else
  * (network failure, a 404 from a coordinator too old to have this route, a
  * 5xx e.g. mid hot-reload) -- none of those say anything about whether the
  * identity itself is valid, so they're worth another attempt rather than a
@@ -107,7 +121,7 @@ export type ProbeDecision = "reuse" | "fresh" | "retry";
  * the request itself failed (offline, DNS, ...). */
 export function decideRejoin(probeStatus: number | null): ProbeDecision {
   if (probeStatus === 200) return "reuse";
-  if (probeStatus === 401) return "fresh";
+  if (probeStatus === 401 || probeStatus === STALE_REGISTRATION) return "fresh";
   return "retry";
 }
 
@@ -210,7 +224,11 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
     const joined = await fetch(`${base}/api/islands`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ adapter: opt.host.adapter, userAgent: opt.host.host }),
+      // The coordinator only offers a segment to an island whose declared
+      // metrics version matches the segment's experiment (and checks the
+      // uploaded manifest's version again at completion -- see
+      // Coordinator.Queue's moduledoc).
+      body: JSON.stringify({ adapter: opt.host.adapter, userAgent: opt.host.host, metricsVersion: METRICS_VERSION }),
     });
     if (!joined.ok) throw new Error(`join: ${joined.status} ${await joined.text()}`);
     ({ id, token } = (await joined.json()) as { id: string; token: string });
@@ -304,6 +322,11 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
         // old separate endHash/observerHash pair with one end-to-end digest.
         endHash: out.summary.finalHash,
         summary: out.summary,
+        // Only a verify attempt's regenerated files are worth reporting: a
+        // run attempt's uploads are already digested server-side from the
+        // bytes it PUT, so there is nothing this would add for them (see
+        // `Coordinator.Segment.complete_verify/5`).
+        ...(task.kind === "verify" ? { observationDigests: await observationDigests(sink.files) } : {}),
       });
       log(`  ${task.kind} complete: ${out.summary.finalHash} → ${r.status}`);
       done++;

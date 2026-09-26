@@ -43,12 +43,15 @@
 //      cancel clears the remembered identity too -- same contract as Stop,
 //      since cancelling an auto-resume is a decision not to come back to it
 //      automatically next time either.
+import { METRICS_VERSION } from "@bl/schema";
 import { resolveRejoin, type ResolveRejoinOptions } from "./island.ts";
 
 export interface Remembered {
   coordinator: string;
   id: string;
   token: string;
+  /** The metrics version this identity declared when it joined (absent: saved by older code). */
+  metricsVersion?: number;
 }
 
 export interface IdentityStorage {
@@ -126,7 +129,7 @@ export function createIslandPage(deps: IslandPageDeps): IslandPage {
         signal: mine.signal,
         onRunning: () => setState("running"),
         onJoined: (id) => {
-          if (!mine.signal.aborted) deps.storage.save({ coordinator, id: id.id, token: id.token });
+          if (!mine.signal.aborted) deps.storage.save({ coordinator, id: id.id, token: id.token, metricsVersion: METRICS_VERSION });
         },
       });
       deps.say("island stopped");
@@ -153,6 +156,15 @@ export function createIslandPage(deps: IslandPageDeps): IslandPage {
     setState("probing");
     deps.setUrl(remembered.coordinator);
     const coordinator = remembered.coordinator; // captured once; deps.getUrl() is never consulted again this operation
+    // The coordinator assigns work by the metrics version an island declared
+    // at join, and reusing an identity skips the join: an identity saved by
+    // code with a different metrics version (e.g. before a deploy reloaded
+    // this page) would be offered no current work, so join afresh instead.
+    if (remembered.metricsVersion !== METRICS_VERSION) {
+      deps.say(`island code changed (metrics version ${remembered.metricsVersion ?? 1} -> ${METRICS_VERSION}); joining afresh`);
+      await runOperation(coordinator);
+      return;
+    }
     const mine = new AbortController();
     ctrl = mine;
 

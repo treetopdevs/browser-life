@@ -6,8 +6,7 @@
 // Each (condition, seed) history writes a bundle to <out>/<experiment>/<preset>/<condition>/seed-<n>/.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { requestDevice } from "@bl/sim-gpu";
-import { RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
-import { runExperiment, runId, sameConfig, specConfig, validateSpec, type RunSpec, type Sink } from "@bl/runner";
+import { runExperiment, runId, sameCompletedRun, specConfig, validateSpec, type RunSpec, type Sink } from "@bl/runner";
 
 const a = parseArgs(Deno.args, {
   string: ["experiment", "preset", "conditions", "seeds", "out", "steps", "census", "deep", "checkpoint", "threshold"],
@@ -69,7 +68,7 @@ for (const spec of specs) {
   const dir = `${a.out}/${runId(spec)}`;
   try {
     const done = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
-    const same = JSON.stringify(done.spec) === JSON.stringify(spec) && done.ruleVersion === RULE_VERSION && done.schemaVersion === SCHEMA_VERSION && sameConfig(done.cfg, specConfig(spec));
+    const same = sameCompletedRun(done, spec);
     if (!same) {
       console.error(`refusing to reuse ${dir}: it holds a run with a different spec, config or rule version; choose a new --experiment name`);
       Deno.exit(2);

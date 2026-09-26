@@ -4,6 +4,17 @@
 
 export const SCHEMA_VERSION = 3;
 export const RULE_VERSION = 1;
+/**
+ * Bumped whenever a metric's *definition* changes (e.g. `compressionRatio`'s
+ * compressor) in a way that makes its values incomparable to earlier runs,
+ * so those runs are never pooled together. Lives here rather than in
+ * `@bl/metrics` because every one of its callers (`runExperiment`,
+ * `stitchRun`, `analyze.ts`) already imports `SCHEMA_VERSION`/`RULE_VERSION`
+ * from `@bl/schema` alongside it — one "versions this manifest records" home,
+ * no new inter-package import. A manifest without this field predates the
+ * constant and is treated as version 1.
+ */
+export const METRICS_VERSION = 2;
 
 export type LightMode = "uniform" | "gradient" | "patches";
 

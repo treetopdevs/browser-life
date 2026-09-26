@@ -41,6 +41,14 @@ config :coordinator,
   admin_token: nil,
   allow_local_admin: false,
   rule_version: 1,
+  # Every experiment created from now on requires this metrics version (see
+  # Coordinator.Queue's moduledoc); must match packages/schema/src/config.ts's
+  # METRICS_VERSION. Bump it there and here together. Deliberately not bumped
+  # retroactively on already-persisted experiments (their spec keeps whatever
+  # it was created with) — a long-running experiment created under an older
+  # value stays pinned to it, so a deploy that bumps this mid-run does not
+  # strand its in-flight islands; new experiments pick up the new value.
+  metrics_version: 2,
   # condition => presets it cannot be applied to (packages/runner/src/conditions.ts)
   incompatible: %{
     "uniform-light" => ~w(spots soup),

@@ -36,8 +36,8 @@ async function tick() {
   const s = await (await fetch("/api/status")).json();
   const c = document.getElementById("counts"); c.replaceChildren();
   const staleIslands = s.islands.filter(i => i.stale).length;
-  const cards = [["pending", s.counts.pending || 0], ["running", s.counts.assigned || 0], ["done", s.counts.done || 0], ["verified", s.counts.verified || 0], ["diverged", s.counts.diverged || 0], ["device types", s.devices.length], ["stale islands", staleIslands]];
-  for (const [k, v] of cards) { const d = el("div", "", "card"); d.append(el("div", v, "num" + ((k === "diverged" || k === "stale islands") && v ? " bad" : "")), el("div", k, "lbl")); c.append(d); }
+  const cards = [["pending", s.counts.pending || 0], ["running", s.counts.assigned || 0], ["done", s.counts.done || 0], ["verified", s.counts.verified || 0], ["diverged", s.counts.diverged || 0], ["obs mismatches", (s.observationMismatches || []).length], ["device types", s.devices.length], ["stale islands", staleIslands]];
+  for (const [k, v] of cards) { const d = el("div", "", "card"); d.append(el("div", v, "num" + ((k === "diverged" || k === "obs mismatches" || k === "stale islands") && v ? " bad" : "")), el("div", k, "lbl")); c.append(d); }
   table("runs", ["run", "segments", "done", "verified", "diverged"], s.runs.map(r => [[r.run, "mono"], [r.segments], [r.done], [r.verified, r.verified ? "ok" : ""], [r.diverged, r.diverged ? "bad" : ""]]));
   table("islands", ["island", "adapter", "runs", "verifies", "last seen", "status"], s.islands.map(i => [[i.id, "mono"], [i.adapter], [i.runs], [i.verifies], [new Date(i.last_seen).toLocaleTimeString()], [i.stale ? "stale" : "live", i.stale ? "bad" : "ok"]]));
   table("div", ["run", "segment", "host A", "host B", "hash A", "hash B"], s.divergences.map(d => [[d.run, "mono"], [d.index], [d.a], [d.b], [d.hash_a, "mono"], [d.hash_b, "mono"]]));

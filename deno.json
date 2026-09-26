@@ -5,7 +5,8 @@
     "@bl/sim-gpu": "./packages/sim-gpu/src/index.ts",
     "@bl/metrics": "./packages/metrics/src/index.ts",
     "@bl/runner": "./packages/runner/src/index.ts",
-    "@bl/search": "./packages/search/src/index.ts"
+    "@bl/search": "./packages/search/src/index.ts",
+    "fflate": "npm:fflate@0.8.3"
   },
   "compilerOptions": { "lib": ["deno.window", "deno.unstable"] },
   "tasks": {

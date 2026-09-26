@@ -223,4 +223,221 @@ defmodule CoordinatorWeb.ApiControllerTest do
            |> get("/api/segments/#{seg1}/files/life.jsonl")
            |> json_response(404)
   end
+
+  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
+
+  test "a verify completion's observationDigests must be well-formed, and valid ones surface as observationsVerified",
+       %{conn: conn} do
+    conn
+    |> post(
+      "/api/experiments",
+      Map.merge(@spec_ok, %{"experiment" => "obs", "verifyFraction" => 0.0, "steps" => 500})
+    )
+    |> json_response(200)
+
+    {a, token_a} = join(conn)
+    {b, token_b} = join(build_conn())
+
+    put = fn token, path, body ->
+      build_conn()
+      |> authed(token)
+      |> put_req_header("content-type", "application/octet-stream")
+      |> put(path, body)
+    end
+
+    t1 = build_conn() |> authed(token_a) |> post("/api/next?island=#{a}") |> json_response(200)
+    seg1 = t1["segment"]["id"]
+    bin1 = Coordinator.CheckpointTest.build(500, seed: 1)
+
+    assert %{"digest" => digest1} =
+             put.(
+               token_a,
+               "/api/segments/#{seg1}/checkpoint?island=#{a}&lease=#{t1["lease"]}",
+               bin1
+             )
+             |> json_response(200)
+
+    for name <- @observation_files do
+      assert %{"ok" => true} =
+               put.(
+                 token_a,
+                 "/api/segments/#{seg1}/files/#{name}?island=#{a}&lease=#{t1["lease"]}",
+                 name
+               )
+               |> json_response(200)
+    end
+
+    assert build_conn()
+           |> authed(token_a)
+           |> post("/api/segments/#{seg1}/complete?island=#{a}", %{
+             "kind" => "run",
+             "endHash" => digest1,
+             "lease" => t1["lease"]
+           })
+           |> json_response(200) == %{"status" => "done"}
+
+    t2 = build_conn() |> authed(token_b) |> post("/api/next?island=#{b}") |> json_response(200)
+    assert t2["kind"] == "verify" and t2["segment"]["id"] == seg1
+
+    complete_verify = fn body ->
+      build_conn()
+      |> authed(token_b)
+      |> post(
+        "/api/segments/#{seg1}/complete?island=#{b}",
+        Map.merge(%{"kind" => "verify", "endHash" => digest1, "lease" => t2["lease"]}, body)
+      )
+    end
+
+    # Each file's content is its own name (see the PUT loop above): the
+    # accepted SHA-256 is just that string's hash.
+    sha = fn s -> :crypto.hash(:sha256, s) |> Base.encode16(case: :lower) end
+    good = Map.new(@observation_files, &{&1, sha.(&1)})
+
+    assert %{"error" => "observationDigests" <> _} =
+             complete_verify.(%{
+               "observationDigests" => Map.put(good, "manifest.json", sha.("x"))
+             })
+             |> json_response(422)
+
+    assert %{"error" => "observationDigests" <> _} =
+             complete_verify.(%{"observationDigests" => %{"series.jsonl" => "not-64-hex"}})
+             |> json_response(422)
+
+    assert %{"error" => "observationDigests" <> _} =
+             complete_verify.(%{"observationDigests" => "nope"}) |> json_response(422)
+
+    # Absent is fine (an older island): the verify still completes, just
+    # without an observations comparison (see `Coordinator.Segment`).
+    assert complete_verify.(%{}) |> json_response(200) == %{"status" => "verified"}
+  end
+
+  # `manifest.json`'s metricsVersion is extracted and size-bounded in this
+  # controller, outside Coordinator.Queue's shared GenServer (see its
+  # moduledoc and Coordinator.Attempt's `manifest_metrics_version`) -- these
+  # tests exercise that extraction over the real HTTP upload path, not
+  # Coordinator.Queue directly (see queue_test.exs's "put_manifest" helper
+  # for the Queue-level equivalent).
+  describe "manifest.json's metrics version (upload-time extraction)" do
+    setup do
+      Application.put_env(:coordinator, :metrics_version, 2)
+      on_exit(fn -> Application.put_env(:coordinator, :metrics_version, 1) end)
+      :ok
+    end
+
+    # A minimal end-to-end setup shared by the tests below: creates a v2
+    # experiment, joins one island, gets its (only) segment's run task and
+    # uploads a valid checkpoint -- everything short of manifest.json and
+    # completion, which each test provides itself.
+    defp gated_task(conn) do
+      conn
+      |> post(
+        "/api/experiments",
+        %{
+          @spec_ok
+          | "experiment" => "gated-#{System.unique_integer([:positive])}",
+            "steps" => 500,
+            "segmentSteps" => 500
+        }
+      )
+      |> json_response(200)
+
+      # Declares the matching metrics version (2, this describe block's
+      # config) at join, or pick_task would never offer it this experiment's
+      # segment at all (see Coordinator.Queue's moduledoc) -- these tests are
+      # about the *completion*-time check, not the assignment-time gate.
+      body =
+        build_conn()
+        |> post("/api/islands", %{"adapter" => "test", "metricsVersion" => 2})
+        |> json_response(200)
+
+      {id, token} = {body["id"], body["token"]}
+      t = build_conn() |> authed(token) |> post("/api/next?island=#{id}") |> json_response(200)
+      seg = t["segment"]["id"]
+      bin = Coordinator.CheckpointTest.build(500, seed: 1)
+
+      assert %{"digest" => digest} =
+               build_conn()
+               |> authed(token)
+               |> put_req_header("content-type", "application/octet-stream")
+               |> put("/api/segments/#{seg}/checkpoint?island=#{id}&lease=#{t["lease"]}", bin)
+               |> json_response(200)
+
+      %{id: id, token: token, seg: seg, lease: t["lease"], digest: digest}
+    end
+
+    defp put_manifest(t, name \\ "manifest.json", body) do
+      build_conn()
+      |> authed(t.token)
+      |> put_req_header("content-type", "application/octet-stream")
+      |> put("/api/segments/#{t.seg}/files/#{name}?island=#{t.id}&lease=#{t.lease}", body)
+    end
+
+    defp complete(t) do
+      build_conn()
+      |> authed(t.token)
+      |> post("/api/segments/#{t.seg}/complete?island=#{t.id}", %{
+        "kind" => "run",
+        "endHash" => t.digest,
+        "lease" => t.lease
+      })
+    end
+
+    test "an oversized manifest.json is refused at upload, before any parsing", %{conn: conn} do
+      t = gated_task(conn)
+
+      oversized =
+        Jason.encode!(%{
+          "metricsVersion" => 2,
+          "padding" => String.duplicate("x", 2 * 1024 * 1024)
+        })
+
+      assert %{"error" => "body too large"} = put_manifest(t, oversized) |> json_response(409)
+    end
+
+    test "a manifest.json that isn't valid JSON is refused at upload", %{conn: conn} do
+      t = gated_task(conn)
+
+      assert %{"error" => "manifest.json is not valid JSON"} =
+               put_manifest(t, "not json") |> json_response(409)
+    end
+
+    test "a manifest.json that decodes but isn't a JSON object is refused at upload", %{
+      conn: conn
+    } do
+      t = gated_task(conn)
+
+      assert %{"error" => "manifest.json must decode to a JSON object"} =
+               put_manifest(t, "[1,2,3]") |> json_response(409)
+    end
+
+    test "a run completion with no recorded metrics version (manifest.json never uploaded) is refused on a v2 experiment",
+         %{conn: conn} do
+      t = gated_task(conn)
+      # Every other bundle file is uploaded; manifest.json specifically is not.
+      assert %{"ok" => true} = put_manifest(t, "series.jsonl", "row\n") |> json_response(200)
+
+      assert %{"error" => "uploaded manifest's metrics version 1" <> _} =
+               complete(t) |> json_response(409)
+
+      # Refused, not consumed: the same attempt can still complete once fixed.
+      assert %{"ok" => true} = put_manifest(t, "{\"metricsVersion\":2}") |> json_response(200)
+      assert complete(t) |> json_response(200) == %{"status" => "done"}
+    end
+
+    test "happy path: a manifest.json whose metricsVersion matches the experiment's required one completes normally",
+         %{conn: conn} do
+      t = gated_task(conn)
+      assert %{"ok" => true} = put_manifest(t, "{\"metricsVersion\":2}") |> json_response(200)
+      assert complete(t) |> json_response(200) == %{"status" => "done"}
+    end
+
+    test "a manifest.json whose metricsVersion mismatches the experiment's required one is refused at completion",
+         %{conn: conn} do
+      t = gated_task(conn)
+      assert %{"ok" => true} = put_manifest(t, "{\"metricsVersion\":1}") |> json_response(200)
+
+      assert %{"error" => "uploaded manifest's metrics version 1" <> _} =
+               complete(t) |> json_response(409)
+    end
+  end
 end

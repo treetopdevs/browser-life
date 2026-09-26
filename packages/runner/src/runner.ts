@@ -14,6 +14,7 @@ import {
   cellCount,
   RULE_VERSION,
   SCHEMA_VERSION,
+  METRICS_VERSION,
   artifactDigest,
   decodeCheckpoint,
   encodeCheckpoint,
@@ -162,6 +163,27 @@ export function specConfig(spec: RunSpec): WorldConfig {
   const cond = conditionById(spec.condition);
   // spec.overrides wins last, so e.g. { adhesion: true } re-enables adhesion even under no-signal-motility.
   return { ...base, ...cond.apply(base), ...(spec.overrides ?? {}) };
+}
+
+/**
+ * Whether a previously written `manifest.json` (`done`, parsed JSON — its
+ * shape is otherwise untyped in this codebase, hence `Record<string,
+ * unknown>`) already covers `spec` under the same rule/schema/metrics
+ * versions and config: tools/run.ts's "resume/reuse" convenience check
+ * (skip re-running a directory that already holds an identical, complete
+ * history). A missing `metricsVersion` field predates the constant and is
+ * version 1 — a bundle computed under a different metrics definition (e.g.
+ * `compressionRatio`'s compressor) must never be treated as reusable, even
+ * though its spec/config/rule/schema otherwise match exactly.
+ */
+export function sameCompletedRun(done: Record<string, unknown>, spec: RunSpec): boolean {
+  return (
+    JSON.stringify(done.spec) === JSON.stringify(spec) &&
+    done.ruleVersion === RULE_VERSION &&
+    done.schemaVersion === SCHEMA_VERSION &&
+    ((done.metricsVersion as number | undefined) ?? 1) === METRICS_VERSION &&
+    sameConfig(done.cfg as WorldConfig, specConfig(spec))
+  );
 }
 
 /** Observation settings as stored in artifacts: an infinite (uncalibrated) threshold is `null`, as in JSON. */
@@ -320,6 +342,7 @@ export async function runExperiment(
     init: preset.init,
     schemaVersion: SCHEMA_VERSION,
     ruleVersion: RULE_VERSION,
+    metricsVersion: METRICS_VERSION,
     host,
     startStep,
     startedAt: new Date().toISOString(),
@@ -410,8 +433,8 @@ export async function runExperiment(
         const rs = roleSummary(profiles);
         rec.roles = rs.share;
         rec.rolesPresent = rs.present;
-        rec.lineageCompression = await compressionRatio(lineageBytes(cfg, genomeHead));
-        rec.patternCompression = await compressionRatio(sym);
+        rec.lineageCompression = compressionRatio(lineageBytes(cfg, genomeHead));
+        rec.patternCompression = compressionRatio(sym);
         rec.morphology = morphology(cfg, cells, c, DEFAULT_CENSUS.minMass);
       }
       await sink.appendText("series.jsonl", JSON.stringify(rec) + "\n");

@@ -19,7 +19,7 @@
 // and observation schedule, with configurations differing from the treatment
 // exactly by their condition.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
+import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
 import { ActivityTracker, growthVsSaturation, mannWhitney, mean, quantile, sd } from "@bl/metrics";
 import { sameConfig, specConfig } from "@bl/runner";
 import { evaluateEndpoint, PRIMARY_ENDPOINTS, type EndpointResult, type RunView } from "../experiments/endpoints.ts";
@@ -79,6 +79,10 @@ if (!loaded.length) throw new Error(`no completed runs under ${root}`);
     const id = `${r.condition}/seed-${r.seed}`;
     if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION)
       problems.push(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, analysis expects ${RULE_VERSION}/${SCHEMA_VERSION}`);
+    // A missing field predates METRICS_VERSION and is version 1 — never pool
+    // runs whose held-out metrics (e.g. compressionRatio) were computed under
+    // different definitions.
+    if ((m.metricsVersion ?? 1) !== METRICS_VERSION) problems.push(`${id}: metrics version ${m.metricsVersion ?? 1}, analysis expects ${METRICS_VERSION}`);
     if (m.spec.condition !== r.condition || m.spec.seed !== r.seed) problems.push(`${id}: manifest says ${m.spec.condition}/seed-${m.spec.seed}`);
     for (const k of shared) if ((m.spec[k] ?? null) !== (ref[k] ?? null)) problems.push(`${id}: ${k} ${m.spec[k]} differs from ${ref[k]}`);
     if (m.spec.overrides && Object.keys(m.spec.overrides).length) problems.push(`${id}: config overrides ${JSON.stringify(m.spec.overrides)}`);

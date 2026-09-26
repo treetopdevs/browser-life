@@ -1,6 +1,6 @@
 // Stitches a coordinator experiment's segments into run bundles for tools/analyze.ts.
 //
-//   deno run -A tools/stitch.ts --experiment <name> [--coordinator http://localhost:4000] [--out runs] [--allow-unverified]
+//   deno run -A tools/stitch.ts --experiment <name> [--coordinator http://localhost:4000] [--out runs] [--allow-unverified] [--require-observations-verified]
 //
 // Export is administrative: pass the coordinator's admin token with --token
 // (or BL_ADMIN_TOKEN); without one only a loopback coordinator that allows
@@ -11,22 +11,33 @@
 // done and (unless --allow-unverified) its final segment has been verified by
 // another island; other runs are listed and skipped. Every downloaded file must
 // match the SHA-256 the coordinator recorded for the accepted attempt (which
-// proves it is that attempt's upload; verifiers replay the physics+observer
-// artifact, not these observation files, so their content rests on the
-// producing island). The
+// proves it is that attempt's upload). A verify attempt may separately have
+// reported its own regenerated observation files' digests, compared
+// server-side against the accepted upload's (`observationsVerified`, carried
+// into the stitched manifest); segments where they disagree are printed as a
+// warning, and --require-observations-verified additionally skips a run
+// unless EVERY included segment's observations were verified as matching —
+// checking only the final segment would still export earlier segments whose
+// own observation files were never confirmed against the accepted upload
+// (replaying the final segment alone doesn't touch them). Off by default,
+// since this is a secondary signal, not what run correctness rests on (that's
+// the physics+observer digest alone). The
 // coordinator is authoritative: an existing export whose run is no longer
-// exportable, or whose accepted history has changed, is moved aside to
-// seed-<n>.stale-<time> (outside analyze.ts's input) before anything new is written.
+// exportable, or whose accepted history has changed (including its
+// verification metadata, or a metrics-version bump since it was written), is
+// moved aside to seed-<n>.stale-<time> (outside analyze.ts's input) before
+// anything new is written.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
+import { METRICS_VERSION } from "@bl/schema";
 import { BUNDLE_FILES, MIGRATIONS_FILE, stitchRun, type StitchSegment } from "@bl/runner";
 
 const a = parseArgs(Deno.args, {
   string: ["experiment", "coordinator", "out", "token"],
-  boolean: ["allow-unverified"],
+  boolean: ["allow-unverified", "require-observations-verified"],
   default: { coordinator: "http://localhost:4000", out: "runs" },
 });
 if (!a.experiment) {
-  console.error("usage: stitch.ts --experiment <name> [--coordinator URL] [--token T] [--out runs] [--allow-unverified]");
+  console.error("usage: stitch.ts --experiment <name> [--coordinator URL] [--token T] [--out runs] [--allow-unverified] [--require-observations-verified]");
   Deno.exit(2);
 }
 const base = a.coordinator.replace(/\/$/, "");
@@ -51,17 +62,27 @@ interface Listed {
   files: Record<string, string> | null;
   producedBy: string | null;
   verifiedBy: string | null;
+  /** true/false only when a verify attempt matching the current accepted digest also reported observation-file digests; null otherwise (see `Coordinator.Queue`'s `{:experiment, name}` handler). */
+  observationsVerified: boolean | null;
 }
 const exp: { spec: { steps: number; presetId: string }; segments: Listed[] } = await (await get(`/api/experiments/${encodeURIComponent(a.experiment)}`)).json();
 
 const byRun = new Map<string, Listed[]>();
 for (const s of exp.segments) byRun.set(s.run, [...(byRun.get(s.run) ?? []), s]);
 
+// Segments whose verify attempt's regenerated observation files disagree with
+// the accepted upload's — printed regardless of a run's export eligibility,
+// since this is informational (run correctness rests on the physics+observer
+// digest alone; see packages/runner/src/stitch.ts's `StitchSegment` doc).
+for (const s of exp.segments) if (s.observationsVerified === false) console.warn(`WARNING: ${s.run} #${s.index}: observation files mismatch (producedBy ${s.producedBy}, verifiedBy ${s.verifiedBy})`);
+
 // Why a run cannot be exported (yet), or null.
 function ineligible(segs: Listed[]): string | null {
   const unfinished = segs.filter((s) => s.status !== "done" && s.status !== "verified");
   if (unfinished.length) return `${unfinished.length} segment(s) not done (${[...new Set(unfinished.map((s) => s.status))].join(", ")})`;
   if (!a["allow-unverified"] && segs.find((s) => s.last)?.status !== "verified") return "final segment not yet verified (pass --allow-unverified to stitch anyway)";
+  if (a["require-observations-verified"] && segs.some((s) => s.observationsVerified !== true))
+    return "not every segment's observations were verified as matching (pass without --require-observations-verified to stitch anyway)";
   const unbound = segs.filter((s) => BUNDLE_FILES.some((f) => !s.files?.[f]));
   if (unbound.length) return `${unbound.length} segment(s) lack a complete, digest-recorded bundle (uploaded before the coordinator recorded file digests?)`;
   // migrations.tsv is recorded (like every other bundle file) whenever a segment's
@@ -80,11 +101,20 @@ function ineligible(segs: Listed[]): string | null {
   return null;
 }
 
-// The accepted history an export was made from: each segment's artifact digest and file digests.
-const fingerprint = (segs: { digest: string | null; files: Record<string, string> | null }[]) =>
-  JSON.stringify(segs.map((s) => [s.digest, Object.entries(s.files ?? {}).sort(([x], [y]) => x.localeCompare(y))]));
+// The accepted history an export was made from: each segment's artifact
+// digest and file digests, plus its verification metadata — a segment that
+// gets verified (or whose observation comparison changes) after an earlier,
+// --allow-unverified export must trigger a re-export so the stitched
+// manifest's own verifiedBy/observationsVerified aren't left stale, even
+// though the underlying bytes (digest/files) didn't change.
+const fingerprint = (segs: { digest: string | null; files: Record<string, string> | null; verifiedBy: string | null; observationsVerified: boolean | null }[]) =>
+  JSON.stringify(segs.map((s) => [s.digest, Object.entries(s.files ?? {}).sort(([x], [y]) => x.localeCompare(y)), s.verifiedBy, s.observationsVerified]));
 
-// The fingerprint of an existing export, "incomplete" if files are missing, null if there is none.
+// The fingerprint of an existing export, "incomplete" if files are missing,
+// "stale-metrics-version" if it predates the current METRICS_VERSION (which
+// would otherwise never be caught: stitchRun's own version check only runs
+// on a fresh re-stitch, and an unchanged fingerprint would keep this export
+// forever without one), null if there is none.
 // `segs` is the coordinator's *current* listing for this run (the same one `ineligible`
 // checked), used only to tell whether migration is configured for it -- not trusted for
 // anything else here, since the export being inspected might predate it.
@@ -114,6 +144,7 @@ async function existing(dir: string, segs: Listed[]): Promise<string | null> {
   // (fingerprint covers accepted digests, not which files ended up on disk),
   // and it would never get rebuilt.
   if (segs.some((s) => s.files?.[MIGRATIONS_FILE]) && !(await Deno.stat(`${dir}/${MIGRATIONS_FILE}`).catch(() => null))) return "incomplete";
+  if ((manifest.metricsVersion ?? 1) !== METRICS_VERSION) return "stale-metrics-version";
   return fingerprint(manifest.segments ?? []);
 }
 
@@ -166,7 +197,15 @@ for (const [run, segs] of byRun) {
     kept++;
     continue;
   }
-  if (have !== null) await quarantine(dir, have === "incomplete" ? "incomplete bundle" : "history differs from the coordinator's accepted one");
+  if (have !== null)
+    await quarantine(
+      dir,
+      have === "incomplete"
+        ? "incomplete bundle"
+        : have === "stale-metrics-version"
+          ? "export predates the current metrics version"
+          : "history differs from the coordinator's accepted one",
+    );
 
   const stitched = stitchRun(await Promise.all(segs.map(download)), exp.spec.steps);
   // Staged in a directory private to this invocation beside the destination

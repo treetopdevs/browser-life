@@ -22,3 +22,12 @@ config :coordinator, start_queue: false
 
 # Tokenless experiment creation from loopback clients (never in production).
 config :coordinator, allow_local_admin: true
+
+# Pinned independently of config.exs's production default (which mirrors
+# packages/schema's current METRICS_VERSION and will keep changing): most
+# tests neither declare a join-time metrics version nor care about the
+# concept at all, so both an island (undeclared ⇒ 1) and an experiment
+# (this config's value) must default to the *same* number, or every one of
+# them would suddenly go idle instead of being offered work. Tests that
+# specifically exercise version gating override this with `Application.put_env/3`.
+config :coordinator, metrics_version: 1

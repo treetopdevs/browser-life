@@ -23,6 +23,27 @@ defmodule Coordinator.Queue do
     * An island (running or verifying) that finds its start checkpoint
       inconsistent rejects it, which invalidates and requeues the producing
       segment (see `handle_call({:reject, ...})`).
+    * Metrics-version compatibility (`packages/schema`'s `METRICS_VERSION`,
+      e.g. `compressionRatio`'s compressor definition): an island declares
+      its own at `join/1` (`:metricsVersion`, missing ⇒ version 1 — an old
+      island that predates the field); an experiment records its *required*
+      version at creation (`:metrics_version` config, default current);
+      `pick_task/3` only offers an experiment's segments (run or verify) to
+      an island whose declared version matches (others go idle *for that
+      experiment*, not necessarily idle overall). That alone cannot stop an
+      island lying about — or simply predating — the concept, so a run
+      attempt's completion is bound to the *actual* version of the
+      `manifest.json` it uploaded (ground truth: what the runner code that
+      produced it actually computed), extracted and size-bounded once,
+      *outside* this GenServer, when that file is `PUT`
+      (`CoordinatorWeb.ApiController.put_file/2`) — parsing an
+      island-controlled upload inside the single serialized queue process
+      that every island's joins, heartbeats and assignments share would let
+      one slow or oversized manifest stall all of them; see
+      `Coordinator.Attempt`'s `manifest_metrics_version` field. A `"run"`
+      completion then only compares that already-recorded integer against
+      the experiment's required version — no file I/O, no JSON parsing —
+      and only after confirming the attempt uploaded its checkpoint at all.
 
   Islands authenticate with a private token issued at join; every assignment
   carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
@@ -70,9 +91,19 @@ defmodule Coordinator.Queue do
   def heartbeat(seg_id, island, lease),
     do: GenServer.call(__MODULE__, {:heartbeat, seg_id, island, lease})
 
-  @doc "kind is \"run\" or \"verify\"; `end_hash` is `artifactDigest` (physics + observer), the same digest a run attempt's checkpoint was published under."
-  def complete(seg_id, island, lease, kind, end_hash, summary),
-    do: GenServer.call(__MODULE__, {:complete, seg_id, island, lease, kind, end_hash, summary})
+  @doc """
+  kind is "run" or "verify"; `end_hash` is `artifactDigest` (physics +
+  observer), the same digest a run attempt's checkpoint was published under.
+  `observation_digests` (optional; only meaningful for a `"verify"`
+  completion) is the `{name => SHA-256}` of the observation files the
+  verifying island regenerated — see `Coordinator.Segment.complete_verify/5`.
+  """
+  def complete(seg_id, island, lease, kind, end_hash, summary, observation_digests \\ nil),
+    do:
+      GenServer.call(
+        __MODULE__,
+        {:complete, seg_id, island, lease, kind, end_hash, summary, observation_digests}
+      )
 
   def reject(seg_id, island, lease, reason),
     do: GenServer.call(__MODULE__, {:reject, seg_id, island, lease, reason})
@@ -85,9 +116,21 @@ defmodule Coordinator.Queue do
         {:publish_checkpoint, seg_id, island, lease, staged, digest, state_hash}
       )
 
-  @doc "Publishes a bundle file (content-addressed by `sha`, its SHA-256) and records it on `seg_id`'s run attempt, if `lease` is still current."
-  def publish_file(seg_id, island, lease, staged, name, sha),
-    do: GenServer.call(__MODULE__, {:publish_file, seg_id, island, lease, staged, name, sha})
+  @doc """
+  Publishes a bundle file (content-addressed by `sha`, its SHA-256) and
+  records it on `seg_id`'s run attempt, if `lease` is still current.
+  `metrics_version` (optional; meaningful only for `name == "manifest.json"`)
+  is that manifest's own already-extracted, already-validated
+  `metricsVersion` field — the caller (`CoordinatorWeb.ApiController.put_file/2`)
+  parses it outside this GenServer under a manifest-specific size limit, so
+  this call never itself reads or decodes the upload.
+  """
+  def publish_file(seg_id, island, lease, staged, name, sha, metrics_version \\ nil),
+    do:
+      GenServer.call(
+        __MODULE__,
+        {:publish_file, seg_id, island, lease, staged, name, sha, metrics_version}
+      )
 
   def status, do: GenServer.call(__MODULE__, :status)
 
@@ -152,6 +195,9 @@ defmodule Coordinator.Queue do
       token_hash: :crypto.hash(:sha256, token),
       adapter: clip(info["adapter"]),
       user_agent: clip(info["userAgent"]),
+      # The metrics version this island's runner code computes (see the
+      # moduledoc); an island that doesn't declare one predates the concept.
+      metrics_version: metrics_version_of(info),
       joined_at: now,
       last_seen: now,
       runs: 0,
@@ -254,9 +300,13 @@ defmodule Coordinator.Queue do
   # here too would let a verifier silently rewrite the accepted producer's
   # `series.jsonl`/`manifest.json`/etc. while still reporting a matching
   # digest and leaving the segment `"verified"`.
-  def handle_call({:publish_file, seg_id, island, lease, staged, name, sha}, _from, s) do
+  def handle_call(
+        {:publish_file, seg_id, island, lease, staged, name, sha, metrics_version},
+        _from,
+        s
+      ) do
     with seg when not is_nil(seg) <- s.segments[seg_id],
-         {:ok, seg} <- Segment.publish_file(seg, island, lease, name, sha) do
+         {:ok, seg} <- Segment.publish_file(seg, island, lease, name, sha, metrics_version) do
       :ok = Store.put_blob(s.dir, sha, staged)
       {:reply, :ok, persist(put_in(s, [:segments, seg_id], seg))}
     else
@@ -270,14 +320,44 @@ defmodule Coordinator.Queue do
     end
   end
 
-  def handle_call({:complete, seg_id, island_id, lease, kind, end_hash, summary}, _from, s) do
+  def handle_call(
+        {:complete, seg_id, island_id, lease, kind, end_hash, summary, observation_digests},
+        _from,
+        s
+      ) do
     seg = s.segments[seg_id]
 
     result =
       case {seg, kind} do
-        {nil, _} -> {:error, "unknown segment"}
-        {seg, "run"} -> Segment.complete_run(seg, island_id, lease, end_hash, summary)
-        {seg, "verify"} -> Segment.complete_verify(seg, island_id, lease, end_hash)
+        {nil, _} ->
+          {:error, "unknown segment"}
+
+        {seg, "run"} ->
+          # Checkpoint-uploaded is checked first (by deferring to
+          # `Segment.complete_run/5` for its own "upload the end checkpoint"
+          # error whenever there's no active, checkpoint-bearing attempt to
+          # compare a metrics version against) — cheaper, and the more
+          # fundamental defect, ahead of a metrics-version mismatch. Both
+          # checks read only in-memory attempt state: no file I/O or JSON
+          # parsing happens in this GenServer (see the moduledoc).
+          case current_run_attempt(seg, island_id, lease) do
+            %{uploaded_digest: digest} = attempt when not is_nil(digest) ->
+              required = experiment_metrics_version(s, seg.experiment)
+              got = Map.get(attempt, :manifest_metrics_version) || 1
+
+              if got == required do
+                Segment.complete_run(seg, island_id, lease, end_hash, summary)
+              else
+                {:error,
+                 "uploaded manifest's metrics version #{got} does not match this experiment's required #{required}"}
+              end
+
+            _ ->
+              Segment.complete_run(seg, island_id, lease, end_hash, summary)
+          end
+
+        {seg, "verify"} ->
+          Segment.complete_verify(seg, island_id, lease, end_hash, observation_digests)
       end
 
     case result do
@@ -387,6 +467,28 @@ defmodule Coordinator.Queue do
         i |> Map.drop([:token_hash]) |> Map.put(:stale, stale?(i.last_seen, now))
       end
 
+    # A segment whose verify attempt's regenerated observation files disagree
+    # with the accepted run attempt's — independent of `divergences` above,
+    # which is about the physics+observer digest: a segment can be "verified"
+    # (matching digest) and still show up here (mismatching observations), or
+    # vice versa. Purely informational (see `Coordinator.Segment.complete_verify/5`).
+    # `current_observations/1` (not raw `Map.get(verify, :observations)`)
+    # so a requeue-and-redo can't attribute a stale comparison, made against
+    # a since-superseded run attempt, to whichever attempt is accepted now.
+    observation_mismatches =
+      for seg <- Map.values(s.segments),
+          Segment.current_observations(seg) == "mismatch" do
+        verify = Segment.last_verify_attempt(seg)
+
+        %{
+          segment: seg.id,
+          run: seg.run,
+          index: seg.index,
+          producer: host(s, Segment.accepted_island(seg)),
+          verifier: host(s, verify.island)
+        }
+      end
+
     {:reply,
      %{
        experiments: Map.new(s.experiments, fn {k, v} -> {k, v.spec} end),
@@ -394,6 +496,7 @@ defmodule Coordinator.Queue do
        runs: runs,
        islands: islands,
        divergences: divergences,
+       observationMismatches: observation_mismatches,
        devices:
          islands
          |> Enum.filter(&(&1.runs + &1.verifies > 0))
@@ -420,6 +523,24 @@ defmodule Coordinator.Queue do
               seg.status == "verified" and verify != nil and verify.outcome == "done" and
                 verify.reported_digest == digest
 
+            # true only when the segment is verified (above) AND that same
+            # verifying attempt's regenerated observation files also matched
+            # *the segment's currently accepted run attempt* — nil (not
+            # false) when verified but the observation comparison was never
+            # made (old attempt or island, see `Coordinator.Attempt`) or was
+            # made against a run attempt since superseded by a redo
+            # (`Segment.current_observations/1` catches that; a same-content
+            # redo can keep the same accepted digest, so `verified` above
+            # alone would not).
+            observationsVerified =
+              if verified do
+                case Segment.current_observations(seg) do
+                  "match" -> true
+                  "mismatch" -> false
+                  nil -> nil
+                end
+              end
+
             %{
               id: seg.id,
               run: seg.run,
@@ -433,7 +554,8 @@ defmodule Coordinator.Queue do
               digest: digest,
               files: Segment.accepted_files(seg),
               producedBy: if(a = Segment.accepted_island(seg), do: host(s, a)),
-              verifiedBy: if(verified, do: host(s, verify.island))
+              verifiedBy: if(verified, do: host(s, verify.island)),
+              observationsVerified: observationsVerified
             }
           end
 
@@ -516,7 +638,19 @@ defmodule Coordinator.Queue do
         keep =
           ~w(experiment presetId conditions seeds steps segmentSteps censusEvery deepEvery verifyFraction)
 
-        {:ok, Map.merge(%{"deepEvery" => 10, "verifyFraction" => 0.1}, Map.take(spec, keep))}
+        # "metricsVersion" is deliberately not in `keep`: it is the
+        # coordinator's own required version at creation time (like
+        # `:rule_version`), never client-supplied — `Map.take/2` above drops
+        # any value the client tried to set, and the default below always wins.
+        {:ok,
+         Map.merge(
+           %{
+             "deepEvery" => 10,
+             "verifyFraction" => 0.1,
+             "metricsVersion" => Application.get_env(:coordinator, :metrics_version, 1)
+           },
+           Map.take(spec, keep)
+         )}
     end
   end
 
@@ -608,12 +742,14 @@ defmodule Coordinator.Queue do
       Enum.find(segs, fn seg ->
         seg.status == "done" and maybe_verify?(seg, s) and
           not Segment.pending_or_assigned_verify?(seg) and
-          Segment.accepted_island(seg) != island
+          Segment.accepted_island(seg) != island and
+          metrics_version_compatible?(s, seg, island)
       end)
 
     runnable =
       Enum.find(segs, fn seg ->
-        seg.status == "pending" and (seg.index == 0 or prev_done?(s, seg))
+        seg.status == "pending" and (seg.index == 0 or prev_done?(s, seg)) and
+          metrics_version_compatible?(s, seg, island)
       end)
 
     lease = rand(12)
@@ -690,6 +826,41 @@ defmodule Coordinator.Queue do
 
   defp current_verify(seg),
     do: Enum.find(seg.attempts, &(&1.kind == "verify" and Attempt.pending?(&1)))
+
+  # ---- metrics-version gating (see moduledoc) ----
+
+  # A join's self-declared metrics version; missing/malformed ⇒ 1 (an island
+  # that predates the field can only ever have computed version 1's metrics).
+  defp metrics_version_of(info) do
+    case info["metricsVersion"] do
+      v when is_integer(v) and v > 0 -> v
+      _ -> 1
+    end
+  end
+
+  # An already-registered island's declared version; absent (registered by
+  # server code before this field existed) ⇒ 1, same fallback as `metrics_version_of/1`.
+  defp island_metrics_version(s, island_id),
+    do: Map.get(s.islands[island_id] || %{}, :metrics_version, 1)
+
+  # An experiment's required version, as recorded on its spec at creation
+  # (`validate/1`); an experiment created before this field existed ⇒ 1.
+  defp experiment_metrics_version(s, experiment) do
+    case s.experiments[experiment] do
+      nil -> Application.get_env(:coordinator, :metrics_version, 1)
+      exp -> exp.spec["metricsVersion"] || 1
+    end
+  end
+
+  defp metrics_version_compatible?(s, seg, island_id),
+    do: island_metrics_version(s, island_id) == experiment_metrics_version(s, seg.experiment)
+
+  # The active run attempt this island/lease currently owns, if any — no
+  # file I/O, just the in-memory attempt record (which, for `manifest.json`,
+  # already carries whatever `metrics_version` `publish_file/7` was given —
+  # see `Coordinator.Attempt`'s moduledoc for where that comes from).
+  defp current_run_attempt(seg, island_id, lease),
+    do: Enum.find(seg.attempts, &(&1.kind == "run" and Attempt.active?(&1, island_id, lease)))
 
   defp host(_s, nil), do: "?"
   defp host(s, id), do: (s.islands[id] || %{adapter: "?"}).adapter

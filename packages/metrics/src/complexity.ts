@@ -2,6 +2,7 @@
 // selection mechanism; they are only measured. Report them side by side:
 // compressibility and predictability together distinguish structure from noise.
 
+import { deflateSync } from "fflate";
 import { CH, G, cellCount, worldW, type WorldConfig } from "@bl/schema";
 import type { Census } from "./census.ts";
 
@@ -52,13 +53,19 @@ export function temporalMI(a: Uint8Array, b: Uint8Array, k = 16): number {
   return mi;
 }
 
-/** Deflate compression ratio (compressed/raw) using the platform stream. */
-export async function compressionRatio(bytes: Uint8Array): Promise<number> {
+/**
+ * Deflate compression ratio (compressed/raw) using a bundled, deterministic
+ * raw-deflate implementation (`fflate`'s synchronous compressor, zlib level
+ * 6 — its default) rather than the platform `CompressionStream`: Chrome's and
+ * Deno's deflate implementations produce different output sizes for the same
+ * input and level, which used to make this metric depend on which engine ran
+ * the segment. Pin `fflate`'s version everywhere it's imported (root
+ * `deno.json`, this package's `package.json`) — its output bytes can change
+ * between versions even at the same level.
+ */
+export function compressionRatio(bytes: Uint8Array): number {
   if (!bytes.length) return 0;
-  const cs = new CompressionStream("deflate-raw");
-  const res = new Response(new Blob([bytes as BlobPart]).stream().pipeThrough(cs));
-  const out = await res.arrayBuffer();
-  return out.byteLength / bytes.length;
+  return deflateSync(bytes, { level: 6 }).length / bytes.length;
 }
 
 /** Lineage map quantised to one byte per cell (hash of lineage id; 0 = empty). */

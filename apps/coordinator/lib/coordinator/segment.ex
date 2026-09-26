@@ -38,6 +38,10 @@ defmodule Coordinator.Segment do
 
   alias Coordinator.Attempt
 
+  # The observation files a run bundle carries (see packages/runner/src/stitch.ts's
+  # BUNDLE_FILES); manifest.json is excluded on purpose (timestamps/host).
+  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
+
   @type status :: String.t()
   @type t :: %{
           id: String.t(),
@@ -102,6 +106,30 @@ defmodule Coordinator.Segment do
 
   @doc "The most recent verify attempt (for status/divergence reporting), if any was ever assigned."
   def last_verify_attempt(seg), do: find_last(seg, &(&1.kind == "verify"))
+
+  @doc """
+  The last verify attempt's observation comparison (`\"match\" | \"mismatch\" |
+  nil`), but only if it was made against the segment's *currently* accepted
+  run attempt — `requeue/1` keeps a completed verify attempt's record as-is
+  even after the run attempt it compared against is superseded (marked
+  `\"rejected\"` and replaced by a redo), so a stale comparison must not be
+  attributed to whichever attempt now happens to be accepted. A same-content
+  redo can even keep the *same* `accepted_digest` (physics+observer only —
+  bundle files aren't part of it), so binding on `accepted_digest` would not
+  catch this; binding on the accepted run attempt's own identity (`id`, i.e.
+  its lease) does. `nil` whenever there is no verify attempt, no accepted run
+  attempt, or the verify's own recorded target (`observations_for`, absent on
+  attempts persisted before this field existed) doesn't match the current one.
+  """
+  def current_observations(seg) do
+    with verify when not is_nil(verify) <- last_verify_attempt(seg),
+         accepted when not is_nil(accepted) <- accepted_run_attempt(seg),
+         true <- Map.get(verify, :observations_for) == accepted.id do
+      Map.get(verify, :observations)
+    else
+      _ -> nil
+    end
+  end
 
   def pending_or_assigned_verify?(seg),
     do: Enum.any?(seg.attempts, &(&1.kind == "verify" and Attempt.pending?(&1)))
@@ -175,8 +203,46 @@ defmodule Coordinator.Segment do
     end
   end
 
-  @doc "Records a just-published bundle file (name and SHA-256) on the run attempt that owns this lease."
-  def publish_file(seg, island, lease, name, sha) do
+  @doc """
+  Records a just-published bundle file (name and SHA-256) on the run attempt
+  that owns this lease. `metrics_version` is only ever meaningful for
+  `name == "manifest.json"` (only ever computed outside this module — see
+  `Coordinator.Attempt`'s moduledoc) and every other file name ignores it,
+  leaving whatever `manifest_metrics_version` was recorded before untouched
+  (publishing an unrelated file must never clobber it).
+
+  For `"manifest.json"` itself, a valid `metrics_version` (a positive
+  integer) is *required*: that clause below always overwrites
+  `manifest_metrics_version` in the very same update as the file's digest,
+  so the two can never drift apart — a caller (in practice only
+  `CoordinatorWeb.ApiController.put_file/2`) that publishes a new manifest
+  without a validated version is refused outright rather than silently
+  leaving the *previous* manifest's version paired with the *new* manifest's
+  digest.
+  """
+  def publish_file(seg, island, lease, name, sha, metrics_version \\ nil)
+
+  def publish_file(seg, island, lease, "manifest.json" = name, sha, metrics_version)
+      when is_integer(metrics_version) and metrics_version > 0 do
+    case find_attempt(seg, "run", island, lease) do
+      nil ->
+        {:error, "lease lost"}
+
+      a ->
+        record = fn attempt ->
+          attempt
+          |> Map.put(:files, Map.put(Map.get(attempt, :files, %{}), name, sha))
+          |> Map.put(:manifest_metrics_version, metrics_version)
+        end
+
+        {:ok, %{seg | attempts: replace_attempt(seg.attempts, a.id, record)}}
+    end
+  end
+
+  def publish_file(_seg, _island, _lease, "manifest.json", _sha, _metrics_version),
+    do: {:error, "manifest.json requires a valid (positive integer) metrics version"}
+
+  def publish_file(seg, island, lease, name, sha, _metrics_version) do
     case find_attempt(seg, "run", island, lease) do
       nil ->
         {:error, "lease lost"}
@@ -219,6 +285,19 @@ defmodule Coordinator.Segment do
   match, `\"diverged\"` on a mismatch (the caller must then call
   `block_descendants/3`).
 
+  `reported_observations` (optional; `nil` from an island that doesn't send
+  it) is the verify attempt's own `{name => SHA-256}` of its regenerated
+  observation files (`series.jsonl` and friends — never `manifest.json`,
+  which carries timestamps/host and can never match). It is compared against
+  the segment's `accepted_files/1` and the result recorded on the attempt as
+  `observations` (`\"match\" | \"mismatch\" | nil` — `nil` when either side is
+  missing any of the six names, e.g. an older upload or island). This is
+  purely informational: unlike the physics+observer digest above, it never
+  changes the segment's status or blocks descendants — run correctness is
+  established by the digest alone; this only tells humans whether the
+  *observation* files an island would regenerate also match, now that
+  `compressionRatio` is deterministic across engines (see `@bl/metrics`).
+
   Requires the segment to still be `\"done\"` (the same guard `assign_verify/4`
   applies): a verify attempt whose predecessor-producing run got rejected and
   requeued out from under it (see `requeue/1`, which abandons any in-flight
@@ -229,26 +308,63 @@ defmodule Coordinator.Segment do
   segment into `\"diverged\"` (and blocking every descendant) instead of
   leaving it reassignable.
   """
-  def complete_verify(%{status: "done"} = seg, island, lease, reported_digest) do
+  def complete_verify(seg, island, lease, reported_digest, reported_observations \\ nil)
+
+  def complete_verify(
+        %{status: "done"} = seg,
+        island,
+        lease,
+        reported_digest,
+        reported_observations
+      ) do
     case find_attempt(seg, "verify", island, lease) do
       nil ->
         {:error, "segment not assigned to this island/lease"}
 
       a ->
         match = reported_digest == accepted_digest(seg)
+        accepted = accepted_run_attempt(seg)
 
-        done = %{
-          a
-          | outcome: if(match, do: "done", else: "diverged"),
-            reported_digest: reported_digest
-        }
+        observations =
+          compare_observations(accepted && Map.get(accepted, :files, %{}), reported_observations)
+
+        done =
+          %{
+            a
+            | outcome: if(match, do: "done", else: "diverged"),
+              reported_digest: reported_digest
+          }
+          |> Map.put(:observations, observations)
+          # Which run attempt this comparison was made against — read back by
+          # `current_observations/1`, never trust `observations` alone once a
+          # requeue may have replaced the accepted run attempt since.
+          |> Map.put(:observations_for, accepted && accepted.id)
 
         seg = %{seg | attempts: replace_attempt(seg.attempts, a.id, fn _ -> done end)}
         {:ok, %{seg | status: if(match, do: "verified", else: "diverged")}}
     end
   end
 
-  def complete_verify(_seg, _island, _lease, _reported_digest), do: {:error, "segment not done"}
+  def complete_verify(_seg, _island, _lease, _reported_digest, _reported_observations),
+    do: {:error, "segment not done"}
+
+  # `nil` (rather than "mismatch") whenever either side is missing any of the
+  # six names: an accepted run attempt uploaded before file digests were
+  # recorded, or a verify attempt from an island that doesn't report them yet
+  # — absence of evidence, not evidence of a mismatch.
+  defp compare_observations(accepted_files, reported) do
+    accepted_files = accepted_files || %{}
+    reported = reported || %{}
+
+    if Enum.all?(
+         @observation_files,
+         &(Map.has_key?(accepted_files, &1) and Map.has_key?(reported, &1))
+       ) do
+      if Enum.all?(@observation_files, &(Map.get(accepted_files, &1) == Map.get(reported, &1))),
+        do: "match",
+        else: "mismatch"
+    end
+  end
 
   @doc """
   Marks the accepted run attempt's outcome `\"rejected\"` (in place — its

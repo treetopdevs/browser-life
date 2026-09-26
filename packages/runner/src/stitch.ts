@@ -8,7 +8,7 @@
 // concatenation of its segments' (tests/deno/stitch.ts checks this against a
 // continuous run byte for byte). The manifest is the last segment's, widened
 // to cover the whole history.
-import { RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
+import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
 import { runId, sameConfig, type RunSummary } from "./runner.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
@@ -28,6 +28,34 @@ const STEPPED_TSV = new Set(["lineages.tsv", "heredity.tsv"]);
  */
 export const MIGRATIONS_FILE = "migrations.tsv";
 
+/**
+ * `BUNDLE_FILES` minus `manifest.json` — the files a verify attempt's own
+ * digests (see `observationDigests` below) are compared against on the
+ * coordinator (`Coordinator.Segment.complete_verify/5`'s `@observation_files`,
+ * which this must match). `manifest.json` carries timestamps and host info
+ * that a verifying island's own replay can never reproduce, so it's excluded.
+ */
+export const OBSERVATION_FILES = BUNDLE_FILES.filter((f): f is Exclude<(typeof BUNDLE_FILES)[number], "manifest.json"> => f !== "manifest.json");
+
+/**
+ * SHA-256 (lowercase hex) of each `OBSERVATION_FILES` entry present in
+ * `files`, exactly as its bytes would be uploaded (UTF-8 of the text) — what
+ * a verify attempt reports for the coordinator to compare against the
+ * accepted run attempt's own recorded file digests. `crypto.subtle` rather
+ * than a platform stream: works the same in browsers and Deno.
+ */
+export async function observationDigests(files: Map<string, string> | Record<string, string>): Promise<Record<string, string>> {
+  const get = (name: string) => (files instanceof Map ? files.get(name) : files[name]);
+  const out: Record<string, string> = {};
+  for (const name of OBSERVATION_FILES) {
+    const text = get(name);
+    if (text === undefined) continue;
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text) as BufferSource);
+    out[name] = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  return out;
+}
+
 export interface StitchSegment {
   index: number;
   startStep: number;
@@ -38,6 +66,8 @@ export interface StitchSegment {
   fileDigests?: Record<string, string> | null;
   producedBy?: string | null;
   verifiedBy?: string | null;
+  /** The coordinator's `observationsVerified` for this segment (see `Coordinator.Queue`'s `{:experiment, name}` handler): `true`/`false` only when a verify attempt matching the current accepted digest also reported its own observation-file digests; `null`/absent otherwise (not verified, or verified by an older island that never reports them). */
+  observationsVerified?: boolean | null;
   files: Record<string, string>;
 }
 
@@ -49,10 +79,12 @@ export interface StitchSegment {
  *
  * Trust: that the files are the accepted attempt's own uploads is established
  * by the caller (tools/stitch.ts checks each download's SHA-256 against the
- * coordinator's record for that attempt). Their *content* rests on the
- * producing island alone: verifiers replay the segment and compare the
- * physics+observer artifact digest, but never compare their own observation
- * files with the accepted uploads.
+ * coordinator's record for that attempt). Their *content* still rests on the
+ * producing island alone in the sense that stitching itself never re-derives
+ * it — but a verify attempt may separately have reported its own regenerated
+ * observation-file digests, compared server-side against the accepted
+ * upload's (`observationsVerified` above, carried into each segment's record
+ * and summarised in the manifest's own `observationsVerified` below).
  * The checks here only catch files inconsistent with their own manifest.
  */
 export function stitchRun(segments: StitchSegment[], totalSteps: number): Record<string, string> {
@@ -75,6 +107,9 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     if (s.startStep !== at) throw new Error(`${id}: starts at ${s.startStep}, previous segment ended at ${at}`);
     if (!m.summary) throw new Error(`${id}: manifest has no summary (run did not finish)`);
     if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION) throw new Error(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, expected ${RULE_VERSION}/${SCHEMA_VERSION}`);
+    // A missing field predates METRICS_VERSION and is version 1 — differing
+    // metric definitions (e.g. compressionRatio's compressor) must never pool.
+    if ((m.metricsVersion ?? 1) !== METRICS_VERSION) throw new Error(`${id}: metrics version ${m.metricsVersion ?? 1}, expected ${METRICS_VERSION}`);
     if (m.startStep !== s.startStep || m.spec.steps !== s.steps || m.summary.steps !== s.startStep + s.steps)
       throw new Error(`${id}: manifest covers ${m.startStep}+${m.spec.steps} (ending ${m.summary.steps}), coordinator says ${s.startStep}+${s.steps}`);
     // A consistency check, not an authentication: the manifest must describe
@@ -166,6 +201,19 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     conservationOk: manifests.every((m) => m.summary.conservationOk === true),
   };
   const adapters = [...new Set(manifests.map((m) => m.host?.adapter).filter(Boolean))];
+  // false if ANY segment mismatched (regardless of how many others were never
+  // checked — a single known-bad segment is enough to distrust the whole
+  // export), true only if EVERY segment was checked and matched, null
+  // otherwise (some checked and matched, but not all — e.g. an ordinary
+  // sampled-verification run — or none checked at all). `[null, true]` must
+  // not read as `true`: that would overstate coverage a caller might rely on
+  // to skip re-checking observation files by hand.
+  const observationResults = segs.map((s) => s.observationsVerified ?? null);
+  const observationsVerified = observationResults.some((v) => v === false) ? false : observationResults.every((v) => v === true) ? true : null;
+  // Coverage, exposed explicitly rather than folded into the tri-state above:
+  // how many of the run's segments actually had an observation comparison
+  // made (true or false), out of how many total.
+  const observationsChecked = { checked: observationResults.filter((v) => v !== null).length, total: observationResults.length };
   out["manifest.json"] = JSON.stringify(
     {
       ...last,
@@ -176,6 +224,8 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
       finishedAt: last.finishedAt,
       checkpoints: [],
       summary,
+      observationsVerified,
+      observationsChecked,
       segments: segs.map((s, k) => ({
         index: s.index,
         startStep: s.startStep,
@@ -185,6 +235,7 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
         adapter: manifests[k].host?.adapter ?? null,
         producedBy: s.producedBy ?? null,
         verifiedBy: s.verifiedBy ?? null,
+        observationsVerified: s.observationsVerified ?? null,
       })),
     },
     null,

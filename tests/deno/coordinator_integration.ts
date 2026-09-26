@@ -13,6 +13,7 @@
 //
 // Run from the repo root: deno run -A tests/deno/coordinator_integration.ts < /dev/null
 import { requestDevice } from "@bl/sim-gpu";
+import { METRICS_VERSION } from "@bl/schema";
 import { BUNDLE_FILES, runExperiment, runIsland, type RunSpec, type Sink } from "@bl/runner";
 
 const root = Deno.cwd();
@@ -99,25 +100,60 @@ try {
   const run = mid.runs[0];
   check("segments 0 and 1 are verified before the corruption", run?.verified === 2, JSON.stringify(run));
 
+  // runIsland (packages/runner/src/island.ts) reports each observation file's
+  // SHA-256 for a verify attempt; the coordinator compares them against the
+  // accepted run attempt's own recorded digests (Coordinator.Segment.
+  // complete_verify/5) and exposes the result per segment.
+  const expIt = await call<{ segments: { index: number; observationsVerified: boolean | null }[] }>("/api/experiments/it");
+  const obsSeg0 = expIt.segments.find((s) => s.index === 0);
+  const obsSeg1 = expIt.segments.find((s) => s.index === 1);
+  check(
+    "an honest verify attempt's reported observation digests match the accepted upload's, and the listing shows observationsVerified true",
+    obsSeg0?.observationsVerified === true && obsSeg1?.observationsVerified === true,
+    JSON.stringify({ obsSeg0, obsSeg1 }),
+  );
+
   // Manufacture a diverged verify by hand (a real, honest replay can never
   // disagree with itself; the coordinator's own reject/divergence path is
-  // otherwise untestable from outside a corrupted or buggy island).
+  // otherwise untestable from outside a corrupted or buggy island). The same
+  // fabricated completion also reports observation digests that don't match
+  // the accepted upload's, standing in for a tampered upload being detected
+  // (a real tampered upload would fail the same way: whatever the accepted
+  // attempt actually recorded for these six names, a verifier's honestly
+  // recomputed digests for the *real* file content would differ from a
+  // *tampered* one, exactly as these fabricated ones differ from the real
+  // recorded digests here).
   const joined = await call<{ id: string; token: string }>("/api/islands", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ adapter: "corrupt" }),
+    // Declares the current metrics version like a real (non-corrupt)
+    // island would, so metrics-version gating doesn't stand in for the
+    // digest corruption this island is here to test.
+    body: JSON.stringify({ adapter: "corrupt", metricsVersion: METRICS_VERSION }),
   });
   const q = (extra = "") => `island=${encodeURIComponent(joined.id)}${extra}`;
   const authed = (init: RequestInit = {}): RequestInit => ({ ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${joined.token}` } });
   const task = await call<{ kind: string; lease: string; segment: { id: string; index: number } }>(`/api/next?${q()}`, authed({ method: "POST" }));
   check("the corrupt island is offered segment 2's verify task", task.kind === "verify" && task.segment.index === 2, JSON.stringify(task));
 
+  const fakeDigest = (b: string) => b.repeat(64);
+  const tamperedObservations = Object.fromEntries(
+    ["series.jsonl", "lineages.tsv", "mutations.tsv", "heredity.tsv", "life.jsonl", "activity-final.json"].map((f, i) => [f, fakeDigest(String(i))]),
+  );
   const completed = await call<{ status: string }>(`/api/segments/${task.segment.id}/complete?${q()}`, authed({
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ kind: "verify", lease: task.lease, endHash: "0000000000000000" }),
+    body: JSON.stringify({ kind: "verify", lease: task.lease, endHash: "0000000000000000", observationDigests: tamperedObservations }),
   }));
   check("the corrupted report diverges", completed.status === "diverged", JSON.stringify(completed));
+
+  const statusAfterCorruption = await call<{ observationMismatches: { segment: string; run: string; index: number; producer: string; verifier: string }[] }>("/api/status");
+  const obsMismatch = statusAfterCorruption.observationMismatches.find((m) => m.index === 2);
+  check(
+    "a tampered/fabricated observation report is exposed as an observation mismatch in /api/status",
+    obsMismatch !== undefined && obsMismatch.segment === task.segment.id,
+    JSON.stringify(statusAfterCorruption.observationMismatches),
+  );
 
   const final = await call<{ runs: { done: number; verified: number; diverged: number; blocked: number }[] }>("/api/status");
   const finalRun = final.runs[0];
@@ -292,6 +328,36 @@ try {
     migRepaired.success && stdout(migRepaired).includes("1 written") && !!(await Deno.stat(`${migRunDir}/migrations.tsv`).catch(() => null)),
     stdout(migRepaired).slice(-200),
   );
+
+  // Metrics-version gating (Coordinator.Queue's moduledoc): a fresh
+  // experiment requires this build's current metrics version by default. An
+  // island that never declares one at join (mimicking code from before the
+  // concept existed) must be idle for it, while a real `runIsland` (which
+  // declares the current METRICS_VERSION) is offered and completes it
+  // normally -- exercised over the real HTTP wire, not just Coordinator.Queue
+  // directly (see the ExUnit coverage in queue_test.exs for the rest: idling
+  // only for the mismatched experiment and not globally, and complete_run
+  // rejecting/accepting based on the *uploaded manifest's* metrics version).
+  const gatedSpec = { ...spec, experiment: "it-metrics-gate", steps: 5, segmentSteps: 5 };
+  const createdGated = await call<{ segments: number }>("/api/experiments", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(gatedSpec),
+  });
+  check("creates the metrics-version-gated experiment", createdGated.segments === 1, JSON.stringify(createdGated));
+
+  const oldIsland = await call<{ id: string; token: string }>("/api/islands", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ adapter: "old-no-metrics-version" }),
+  });
+  const oldQ = (extra = "") => `island=${encodeURIComponent(oldIsland.id)}${extra}`;
+  const oldAuthed = (init: RequestInit = {}): RequestInit => ({ ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${oldIsland.token}` } });
+  const oldTask = await call<{ kind: string }>(`/api/next?${oldQ()}`, oldAuthed({ method: "POST" }));
+  check("an island that never declares a metrics version is idle for the fresh, current-version experiment", oldTask.kind === "idle", JSON.stringify(oldTask));
+
+  const producedGated = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200 });
+  check("a current-version island (real runIsland) is offered and completes the gated experiment's one segment", producedGated === 1, String(producedGated));
 } finally {
   try {
     server.kill("SIGTERM");

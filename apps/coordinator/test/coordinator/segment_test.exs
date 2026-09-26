@@ -25,6 +25,60 @@ defmodule Coordinator.SegmentTest do
     assert {:error, "lease lost"} = Segment.publish(s, "a", "wrong", "digest2", "state2")
   end
 
+  # Review finding: publish_file/6 must not let manifest.json's digest and
+  # its manifest_metrics_version drift apart. A caller that omits (or
+  # botches) the version for a manifest.json (re)upload is refused outright,
+  # rather than silently recording the *new* file's SHA-256 paired with
+  # whatever version an *earlier* upload happened to leave behind.
+  test "publish_file requires a valid metrics version for manifest.json, and always overwrites it together with the digest" do
+    {:ok, s} = Segment.assign_run(seg(), "a", "lease1", 0)
+
+    # No version at all (the 5-arg call, i.e. the controller's own path
+    # skipped): refused, not recorded with a stale/missing version.
+    assert {:error, "manifest.json requires a valid" <> _} =
+             Segment.publish_file(s, "a", "lease1", "manifest.json", "sha-v2")
+
+    # An explicit but invalid version (zero, negative, non-integer): also refused.
+    assert {:error, "manifest.json requires a valid" <> _} =
+             Segment.publish_file(s, "a", "lease1", "manifest.json", "sha-v2", 0)
+
+    assert {:error, "manifest.json requires a valid" <> _} =
+             Segment.publish_file(s, "a", "lease1", "manifest.json", "sha-v2", -1)
+
+    assert {:error, "manifest.json requires a valid" <> _} =
+             Segment.publish_file(s, "a", "lease1", "manifest.json", "sha-v2", "2")
+
+    # A valid publish succeeds and pairs the digest with its version.
+    assert {:ok, s} = Segment.publish_file(s, "a", "lease1", "manifest.json", "sha-v2", 2)
+    attempt = Enum.find(s.attempts, &(&1.kind == "run"))
+    assert attempt.files["manifest.json"] == "sha-v2"
+    assert attempt.manifest_metrics_version == 2
+
+    # A later, different upload overwrites BOTH together -- the digest can
+    # never end up paired with a stale version (the exact scenario the
+    # review reproduced by calling this function directly).
+    assert {:ok, s} = Segment.publish_file(s, "a", "lease1", "manifest.json", "sha-v1", 1)
+    attempt = Enum.find(s.attempts, &(&1.kind == "run"))
+    assert attempt.files["manifest.json"] == "sha-v1"
+    assert attempt.manifest_metrics_version == 1
+
+    # An invalid re-upload attempt (still no version) leaves the previously
+    # recorded, valid pairing untouched rather than corrupting it.
+    assert {:error, "manifest.json requires a valid" <> _} =
+             Segment.publish_file(s, "a", "lease1", "manifest.json", "sha-v3")
+
+    attempt = Enum.find(s.attempts, &(&1.kind == "run"))
+    assert attempt.files["manifest.json"] == "sha-v1"
+    assert attempt.manifest_metrics_version == 1
+
+    # Every other file name ignores metrics_version entirely and never
+    # touches manifest_metrics_version, whether given one or not.
+    assert {:ok, s} = Segment.publish_file(s, "a", "lease1", "series.jsonl", "sha-series")
+    attempt = Enum.find(s.attempts, &(&1.kind == "run"))
+    assert attempt.files["series.jsonl"] == "sha-series"
+    assert attempt.manifest_metrics_version == 1
+  end
+
   test "complete_run requires an upload from the same attempt, and the reported digest to match it" do
     {:ok, s} = Segment.assign_run(seg(), "a", "lease1", 0)
 
@@ -98,6 +152,135 @@ defmodule Coordinator.SegmentTest do
     assert {:ok, diverged} = Segment.complete_verify(s2, "b", "vlease", "other-digest")
     assert diverged.status == "diverged"
     assert Enum.find(diverged.attempts, &(&1.kind == "verify")).outcome == "diverged"
+  end
+
+  @obs_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
+  defp obs_digests(fill \\ "a"), do: Map.new(@obs_files, &{&1, String.duplicate(fill, 64)})
+
+  defp done_run_with_files(files \\ obs_digests()) do
+    {:ok, s} = Segment.assign_run(seg(), "a", "lease1", 0)
+    {:ok, s} = Segment.publish(s, "a", "lease1", "digest1", "state1")
+
+    s =
+      Enum.reduce(files, s, fn {name, sha}, s ->
+        {:ok, s} = Segment.publish_file(s, "a", "lease1", name, sha)
+        s
+      end)
+
+    {:ok, s} = Segment.complete_run(s, "a", "lease1", "digest1", %{})
+    s
+  end
+
+  test "complete_verify's observations field is independent of the physics digest match: it compares reported file hashes against the accepted run attempt's, and never changes segment status or blocking" do
+    accepted = obs_digests("a")
+    s = done_run_with_files(accepted)
+    {:ok, s} = Segment.assign_verify(s, "b", "vlease", 100)
+
+    assert {:ok, matched} = Segment.complete_verify(s, "b", "vlease", "digest1", accepted)
+    assert matched.status == "verified"
+    assert Enum.find(matched.attempts, &(&1.kind == "verify")).observations == "match"
+
+    s2 = done_run_with_files(accepted)
+    {:ok, s2} = Segment.assign_verify(s2, "b", "vlease", 100)
+    mismatched = obs_digests("b")
+    # Physics digest still matches (segment verifies) even though the
+    # observation files reported differ: the two comparisons are independent.
+    assert {:ok, verified_but_mismatched} =
+             Segment.complete_verify(s2, "b", "vlease", "digest1", mismatched)
+
+    assert verified_but_mismatched.status == "verified"
+
+    assert Enum.find(verified_but_mismatched.attempts, &(&1.kind == "verify")).observations ==
+             "mismatch"
+
+    s3 = done_run_with_files(accepted)
+    {:ok, s3} = Segment.assign_verify(s3, "b", "vlease", 100)
+    # Physics diverges while observations happen to match: still independent,
+    # and the segment still diverges (observations never gate status).
+    assert {:ok, diverged_but_matched} =
+             Segment.complete_verify(s3, "b", "vlease", "other-digest", accepted)
+
+    assert diverged_but_matched.status == "diverged"
+
+    assert Enum.find(diverged_but_matched.attempts, &(&1.kind == "verify")).observations ==
+             "match"
+  end
+
+  test "complete_verify's observations is nil (not \"mismatch\") when either side lacks any of the six file digests" do
+    # No file digests recorded on the accepted run attempt at all.
+    s = done_run()
+    {:ok, s} = Segment.assign_verify(s, "b", "vlease", 100)
+    assert {:ok, verified} = Segment.complete_verify(s, "b", "vlease", "digest1", obs_digests())
+    assert is_nil(Enum.find(verified.attempts, &(&1.kind == "verify")).observations)
+
+    # Accepted files complete, but the verify attempt reports none (older island).
+    s2 = done_run_with_files()
+    {:ok, s2} = Segment.assign_verify(s2, "b", "vlease", 100)
+    assert {:ok, verified2} = Segment.complete_verify(s2, "b", "vlease", "digest1")
+    assert is_nil(Enum.find(verified2.attempts, &(&1.kind == "verify")).observations)
+
+    # Accepted files complete, verify attempt reports a partial set.
+    s3 = done_run_with_files()
+    {:ok, s3} = Segment.assign_verify(s3, "b", "vlease", 100)
+    partial = Map.take(obs_digests(), Enum.take(@obs_files, 3))
+    assert {:ok, verified3} = Segment.complete_verify(s3, "b", "vlease", "digest1", partial)
+    assert is_nil(Enum.find(verified3.attempts, &(&1.kind == "verify")).observations)
+  end
+
+  # Review finding: `last_verify_attempt/1` (and hence a raw `.observations`
+  # read) doesn't know a completed verify attempt's comparison target was
+  # ever superseded. `requeue/1` keeps that attempt's record untouched even
+  # after the run attempt it compared against is marked "rejected" and
+  # replaced by a redo -- including a redo that happens to keep the *same*
+  # accepted digest (physics+observer only; bundle files aren't part of it),
+  # which is exactly the case a naive `verify.reported_digest == accepted_digest(seg)`
+  # guard would fail to catch. `current_observations/1` must return `nil`
+  # once the accepted run attempt has changed, never attribute B's old
+  # comparison (against A's files) to the new producer C.
+  test "current_observations forgets a verify's comparison once the run attempt it targeted is superseded by a redo, even at the same accepted digest" do
+    accepted_a = obs_digests("a")
+    s = done_run_with_files(accepted_a)
+    a_attempt_id = Segment.accepted_run_attempt(s).id
+
+    {:ok, s} = Segment.assign_verify(s, "b", "vlease", 100)
+    mismatched = obs_digests("b")
+    {:ok, s} = Segment.complete_verify(s, "b", "vlease", "digest1", mismatched)
+    assert s.status == "verified"
+    assert Segment.current_observations(s) == "mismatch"
+
+    # Producer A is invalidated and the segment redone by producer C, at the
+    # *same* accepted digest but different (unreported) file content.
+    requeued = Segment.requeue(s)
+    assert requeued.status == "pending"
+    {:ok, redone} = Segment.assign_run(requeued, "c", "lease-c", 200)
+    {:ok, redone} = Segment.publish(redone, "c", "lease-c", "digest1", "state-c")
+
+    redone =
+      Enum.reduce(obs_digests("c"), redone, fn {name, sha}, seg ->
+        {:ok, seg} = Segment.publish_file(seg, "c", "lease-c", name, sha)
+        seg
+      end)
+
+    {:ok, redone} = Segment.complete_run(redone, "c", "lease-c", "digest1", %{})
+    assert redone.status == "done"
+    c_attempt_id = Segment.accepted_run_attempt(redone).id
+    assert c_attempt_id != a_attempt_id
+    assert Segment.accepted_digest(redone) == "digest1"
+
+    # B's verify attempt is still `last_verify_attempt/1` (no new verify has
+    # happened yet) -- proving this exercises the binding, not just staleness
+    # by absence -- but its comparison must no longer count.
+    assert Segment.last_verify_attempt(redone).id == "vlease"
+    assert Enum.find(redone.attempts, &(&1.kind == "verify")).observations == "mismatch"
+    assert is_nil(Segment.current_observations(redone))
+
+    # A fresh verify against the *new* accepted files is attributed correctly.
+    {:ok, reverified_seg} = Segment.assign_verify(redone, "d", "vlease2", 300)
+
+    {:ok, reverified_seg} =
+      Segment.complete_verify(reverified_seg, "d", "vlease2", "digest1", obs_digests("c"))
+
+    assert Segment.current_observations(reverified_seg) == "match"
   end
 
   test "a stale run attempt's lease expiring returns the segment to pending, marking (not discarding) its own attempt abandoned" do

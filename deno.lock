@@ -9,6 +9,9 @@
     }
   },
   "workspace": {
+    "dependencies": [
+      "npm:fflate@0.8.3"
+    ],
     "packageJson": {
       "dependencies": [
         "npm:@playwright/test@^1.63.0",
