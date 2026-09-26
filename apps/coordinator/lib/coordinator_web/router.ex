@@ -12,6 +12,7 @@ defmodule CoordinatorWeb.Router do
   scope "/api", CoordinatorWeb do
     pipe_through :api
     get "/status", ApiController, :status
+    get "/experiments/:name", ApiController, :experiment
     post "/islands", ApiController, :join
     post "/experiments", ApiController, :create_experiment
     post "/next", ApiController, :next

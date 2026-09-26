@@ -13,7 +13,7 @@ packages/runner     experiment conditions, run bundles, island client
 packages/search     M3 bootstrap: batch evaluation + MAP-Elites
 apps/lab            interactive lab (Vite), self-test page, island page
 apps/coordinator    Phoenix coordinator for the archipelago (segments + replay verification)
-tools/              headless CLIs on Deno's native WebGPU (run, analyze, island, bootstrap)
+tools/              headless CLIs on Deno's native WebGPU (run, analyze, island, stitch, bootstrap)
 experiments/        pre-registration (draft)
 ```
 
@@ -74,3 +74,13 @@ curl -X POST localhost:4000/api/experiments -H 'content-type: application/json' 
 ```
 
 Then open `/island.html` in any WebGPU browser, or run `deno run -A tools/island.ts`. The status page is http://localhost:4000/index.html.
+
+Once runs finish, stitch their segments into run bundles and analyze them as above. Only runs whose final segment has been verified are exported. Every downloaded file must match the SHA-256 the coordinator recorded for the accepted upload. Verification replays the physics and observer state, not the observation files, so their content is only as trustworthy as the island that produced them. Pass `--token` when the coordinator has an admin token.
+
+```bash
+deno run -A tools/stitch.ts --experiment a1
+```
+
+```bash
+deno run -A tools/analyze.ts runs/a1/gradient
+```

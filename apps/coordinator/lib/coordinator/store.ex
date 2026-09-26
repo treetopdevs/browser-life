@@ -8,10 +8,12 @@ defmodule Coordinator.Store do
   has that digest); a stored object damaged out of band is replaced by the
   fresh, validated upload, so an honest recomputation always heals it.
 
-  Bundle files (`series.jsonl` and friends) are *not* content-addressed —
-  they are per-attempt, appended to, and named by the caller, so they keep
-  their existing segment/attempt-scoped path (`Queue.files_dir/2`); only the
-  single physics+observer checkpoint artifact lives here.
+  Bundle files (`series.jsonl` and friends) are content-addressed too, by
+  their SHA-256 — `data_dir/files/<sha[0..1]>/<sha>` — and the run attempt
+  that uploaded each one records its name and digest
+  (`Coordinator.Segment.publish_file/5`). A segment's files are served only
+  through its accepted attempt's record, so an abandoned or rejected
+  attempt's uploads can never be mistaken for the accepted history's.
   """
 
   @doc "Where an artifact with this digest is (or would be) stored."
@@ -49,4 +51,30 @@ defmodule Coordinator.Store do
   end
 
   def exists?(dir, digest), do: File.exists?(path(dir, digest))
+
+  @doc "Where a bundle file with this SHA-256 (lowercase hex) is (or would be) stored."
+  def blob_path(dir, sha), do: Path.join([dir, "files", binary_part(sha, 0, 2), sha])
+
+  @doc "Publishes `staged` as the bundle file whose SHA-256 is `sha` (see `sha256_file/1`)."
+  def put_blob(dir, sha, staged) do
+    dest = blob_path(dir, sha)
+
+    if File.exists?(dest) and sha256_file(dest) == sha do
+      File.rm(staged)
+    else
+      File.mkdir_p!(Path.dirname(dest))
+      File.rename!(staged, dest)
+    end
+
+    :ok
+  end
+
+  @doc "Lowercase hex SHA-256 of a file's contents."
+  def sha256_file(path) do
+    path
+    |> File.stream!(65_536)
+    |> Enum.reduce(:crypto.hash_init(:sha256), &:crypto.hash_update(&2, &1))
+    |> :crypto.hash_final()
+    |> Base.encode16(case: :lower)
+  end
 end

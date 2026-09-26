@@ -71,16 +71,18 @@ defmodule Coordinator.Queue do
         {:publish_checkpoint, seg_id, island, lease, staged, digest, state_hash}
       )
 
-  @doc "Publishes a bundle file (not content-addressed) to `dest_fun`'s path, if `lease` is still current for `seg_id`."
-  def publish_file(seg_id, island, lease, staged, dest_fun),
-    do: GenServer.call(__MODULE__, {:publish_file, seg_id, island, lease, staged, dest_fun})
+  @doc "Publishes a bundle file (content-addressed by `sha`, its SHA-256) and records it on `seg_id`'s run attempt, if `lease` is still current."
+  def publish_file(seg_id, island, lease, staged, name, sha),
+    do: GenServer.call(__MODULE__, {:publish_file, seg_id, island, lease, staged, name, sha})
 
   def status, do: GenServer.call(__MODULE__, :status)
+
+  @doc "An experiment's spec and every segment in run order, with its accepted digest and producing/verifying hosts (`nil` if unknown)."
+  def experiment(name), do: GenServer.call(__MODULE__, {:experiment, name})
   def segment(seg_id), do: GenServer.call(__MODULE__, {:segment, seg_id})
   def data_dir, do: GenServer.call(__MODULE__, :data_dir)
 
   @doc "Directory for a segment's bundle files (server-generated id only; not content-addressed)."
-  def files_dir(dir, seg_id), do: Path.join([dir, "segments", seg_id])
 
   # ---- server ----
 
@@ -223,30 +225,19 @@ defmodule Coordinator.Queue do
   # here too would let a verifier silently rewrite the accepted producer's
   # `series.jsonl`/`manifest.json`/etc. while still reporting a matching
   # digest and leaving the segment `"verified"`.
-  def handle_call({:publish_file, seg_id, island, lease, staged, dest_fun}, _from, s) do
-    seg = s.segments[seg_id]
-    active? = seg && Attempt.active?(current_run(seg), island, lease)
-
-    cond do
-      is_nil(seg) ->
+  def handle_call({:publish_file, seg_id, island, lease, staged, name, sha}, _from, s) do
+    with seg when not is_nil(seg) <- s.segments[seg_id],
+         {:ok, seg} <- Segment.publish_file(seg, island, lease, name, sha) do
+      :ok = Store.put_blob(s.dir, sha, staged)
+      {:reply, :ok, persist(put_in(s, [:segments, seg_id], seg))}
+    else
+      nil ->
         File.rm(staged)
         {:reply, {:error, "unknown segment"}, s}
 
-      not active? ->
+      {:error, why} ->
         File.rm(staged)
-        {:reply, {:error, "lease lost"}, s}
-
-      true ->
-        dest = dest_fun.(s.dir)
-
-        if contained?(s.dir, dest) do
-          File.mkdir_p!(Path.dirname(dest))
-          File.rename!(staged, dest)
-          {:reply, :ok, s}
-        else
-          File.rm(staged)
-          {:reply, {:error, "bad destination"}, s}
-        end
+        {:reply, {:error, why}, s}
     end
   end
 
@@ -311,16 +302,9 @@ defmodule Coordinator.Queue do
          prev when not is_nil(prev) <- prev_seg(s, seg) do
       Logger.error("segment #{prev.id} rejected by #{island_id}: #{clip(reason)}")
 
-      # The rejected attempt's checkpoint needs no cleanup (content-addressed
-      # by its own digest under data_dir/objects/, immutable and possibly
-      # shared, unlike the old segment-id-keyed path) but its bundle files
-      # (series.jsonl and friends) are still segment-scoped, mutable, and not
-      # digested at all — left in place, they would keep serving a rejected
-      # run's stale/invalid data over `/api/segments/:id/files/:name` for as
-      # long as the predecessor takes to be redone (or forever, for any file
-      # the redo doesn't happen to rewrite).
-      File.rm_rf(files_dir(s.dir, prev.id))
-
+      # Nothing to clean up: the rejected attempt's checkpoint and bundle
+      # files are content-addressed (and possibly shared), and files are only
+      # ever served through a segment's accepted attempt's own record.
       s =
         %{s | segments: Segment.block_descendants(s.segments, prev.run, prev.index)}
         |> put_in([:segments, prev.id], Segment.requeue(prev))
@@ -382,6 +366,45 @@ defmodule Coordinator.Queue do
          |> Enum.map(& &1.adapter)
          |> Enum.uniq()
      }, s}
+  end
+
+  def handle_call({:experiment, name}, _from, s) do
+    case s.experiments[name] do
+      nil ->
+        {:reply, nil, s}
+
+      exp ->
+        segments =
+          for seg <- Map.values(s.segments),
+              seg.experiment == name do
+            digest = Segment.accepted_digest(seg)
+            verify = Segment.last_verify_attempt(seg)
+
+            # Requeueing keeps old verify attempts: only a match against the
+            # *current* accepted digest vouches for it.
+            verified =
+              seg.status == "verified" and verify != nil and verify.outcome == "done" and
+                verify.reported_digest == digest
+
+            %{
+              id: seg.id,
+              run: seg.run,
+              condition: seg.condition,
+              seed: seg.seed,
+              index: seg.index,
+              last: seg.last,
+              startStep: seg.start_step,
+              steps: seg.steps,
+              status: seg.status,
+              digest: digest,
+              files: Segment.accepted_files(seg),
+              producedBy: if(a = Segment.accepted_island(seg), do: host(s, a)),
+              verifiedBy: if(verified, do: host(s, verify.island))
+            }
+          end
+
+        {:reply, %{spec: exp.spec, segments: Enum.sort_by(segments, &{&1.run, &1.index})}, s}
+    end
   end
 
   def handle_call({:segment, id}, _from, s), do: {:reply, s.segments[id], s}
@@ -572,7 +595,6 @@ defmodule Coordinator.Queue do
   defp current_verify(seg),
     do: Enum.find(seg.attempts, &(&1.kind == "verify" and Attempt.pending?(&1)))
 
-  defp contained?(dir, path), do: String.starts_with?(Path.expand(path), Path.expand(dir) <> "/")
   defp host(_s, nil), do: "?"
   defp host(s, id), do: (s.islands[id] || %{adapter: "?"}).adapter
   defp now, do: System.system_time(:millisecond)

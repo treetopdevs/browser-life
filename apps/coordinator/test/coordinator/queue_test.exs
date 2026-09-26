@@ -144,42 +144,55 @@ defmodule Coordinator.QueueTest do
     assert again.segment.id == t1.segment.id
   end
 
-  # Review 1 finding #5: rejecting a predecessor used to leave its bundle
-  # files (series.jsonl and friends -- not content-addressed, unlike the
-  # checkpoint) sitting at their segment-scoped path, still servable over
-  # `/api/segments/:id/files/:name`, for as long as the redo took (or forever,
-  # for any filename the redo doesn't happen to rewrite). Rejection must
-  # clean those up the same way the pre-refactor `handle_call({:reject, ...})`
-  # did, alongside requeuing the segment itself.
-  test "rejecting a predecessor removes its stale bundle files, not just its checkpoint", %{
-    dir: dir
-  } do
-    {:ok, _} = Queue.create_experiment(%{@spec_ok | "verifyFraction" => 0.0})
-    {:ok, %{id: a}} = Queue.join(%{})
-    {:ok, %{id: b}} = Queue.join(%{})
+  defp publish_file(dir, task, island, name, content) do
+    staged = Path.join(dir, "bundle-#{System.unique_integer([:positive])}")
+    File.write!(staged, content)
+    sha = Coordinator.Store.sha256_file(staged)
+    :ok = Queue.publish_file(task.segment.id, island, task.lease, staged, name, sha)
+    sha
+  end
+
+  # Bundle files are content-addressed and recorded per attempt: after a
+  # rejected segment is redone, only the redo's uploads are its files (the
+  # rejected attempt's upload -- including a name the redo never rewrites --
+  # is unreachable), and a verification of the rejected result no longer
+  # vouches for the segment.
+  test "a redone segment exposes only the redo's files and no stale verification", %{dir: dir} do
+    {:ok, _} = Queue.create_experiment(%{@spec_ok | "verifyFraction" => 1.0})
+    {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+    {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
     {:ok, t1} = Queue.next_task(a)
     upload(dir, t1, a, "h0")
-
-    staged = Path.join(dir, "bundle-#{System.unique_integer([:positive])}")
-    File.write!(staged, "step,pop\n1,2\n")
-
-    :ok =
-      Queue.publish_file(
-        t1.segment.id,
-        a,
-        t1.lease,
-        staged,
-        &Path.join(Queue.files_dir(&1, t1.segment.id), "series.jsonl")
-      )
-
-    bundle_path = Path.join(Queue.files_dir(dir, t1.segment.id), "series.jsonl")
-    assert File.exists?(bundle_path)
-
+    old = publish_file(dir, t1, a, "series.jsonl", "old\n")
+    publish_file(dir, t1, a, "life.jsonl", "only in the rejected attempt\n")
+    assert {:error, "lease lost"} = Queue.publish_file(t1.segment.id, b, t1.lease, "x", "n", old)
     {:ok, "done"} = done(t1, a, "h0")
-    {:ok, t2} = Queue.next_task(b)
-    assert :ok = Queue.reject(t2.segment.id, b, t2.lease, "digest mismatch")
+    {:ok, v1} = Queue.next_task(b)
+    {:ok, "verified"} = Queue.complete(v1.segment.id, b, v1.lease, "verify", "h0", %{})
 
-    refute File.exists?(bundle_path)
+    [s0 | _] = Queue.experiment("t1").segments
+
+    assert %{digest: "h0", files: %{"series.jsonl" => ^old}, producedBy: "A", verifiedBy: "B"} =
+             s0
+
+    assert File.read!(Coordinator.Store.blob_path(dir, old)) == "old\n"
+
+    {:ok, t2} = Queue.next_task(a)
+    upload(dir, t2, a, "h1")
+    {:ok, "done"} = done(t2, a, "h1")
+    {:ok, v2} = Queue.next_task(b)
+    :ok = Queue.reject(v2.segment.id, b, v2.lease, "bad start")
+
+    {:ok, redo} = Queue.next_task(a)
+    assert redo.segment.id == t1.segment.id
+    upload(dir, redo, a, "h0b")
+    new = publish_file(dir, redo, a, "series.jsonl", "new\n")
+    {:ok, "done"} = done(redo, a, "h0b")
+
+    [s0 | _] = Queue.experiment("t1").segments
+    assert %{status: "done", digest: "h0b", files: files, verifiedBy: nil} = s0
+    assert files == %{"series.jsonl" => new}
+    assert Queue.experiment("nope") == nil
   end
 
   test "island tokens authenticate and state survives a restart", %{dir: dir} do

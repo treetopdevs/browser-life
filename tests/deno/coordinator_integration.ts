@@ -13,7 +13,7 @@
 //
 // Run from the repo root: deno run -A tests/deno/coordinator_integration.ts < /dev/null
 import { requestDevice } from "@bl/sim-gpu";
-import { runIsland } from "@bl/runner";
+import { BUNDLE_FILES, runExperiment, runIsland, type RunSpec, type Sink } from "@bl/runner";
 
 const root = Deno.cwd();
 const coordinatorDir = `${root}/apps/coordinator`;
@@ -194,6 +194,57 @@ try {
     "only the last segment is verified; the run has no divergence or blocking",
     finalOnlyRun?.segments === 4 && finalOnlyRun?.verified === 1 && finalOnlyRun?.diverged === 0 && finalOnlyRun?.blocked === 0,
     JSON.stringify(finalOnlyRun),
+  );
+
+  // tools/stitch.ts over the real HTTP export must rebuild exactly the bundle
+  // a continuous run of the same spec writes.
+  const outDir = `${dataDir}/stitched`;
+  const stitchCli = (experiment: string) =>
+    new Deno.Command(Deno.execPath(), {
+      args: ["run", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", experiment, "--out", outDir],
+      stdin: "null",
+    }).output();
+  const stitch = await stitchCli("it-final-only");
+  const runDir = `${outDir}/it-final-only/spots/treatment/seed-1`;
+  check("stitch.ts exports the verified run", stitch.success, new TextDecoder().decode(stitch.stderr).slice(0, 300));
+  const stitchedManifest = JSON.parse(await Deno.readTextFile(`${runDir}/manifest.json`));
+  const mem = new Map<string, string>();
+  const sink: Sink = {
+    async writeText(f, t) { mem.set(f, t); },
+    async appendText(f, t) { mem.set(f, (mem.get(f) ?? "") + t); },
+    async writeBytes() {},
+  };
+  await runExperiment(device, stitchedManifest.spec as RunSpec, sink, host, () => {});
+  const differing: string[] = [];
+  for (const f of BUNDLE_FILES) if (f !== "manifest.json" && (await Deno.readTextFile(`${runDir}/${f}`)) !== mem.get(f)) differing.push(f);
+  check(
+    "the stitched bundle equals a continuous run's",
+    differing.length === 0 && stitchedManifest.summary.finalHash === JSON.parse(mem.get("manifest.json")!).summary.finalHash,
+    differing.join(", "),
+  );
+
+  const stdout = (o: Deno.CommandOutput) => new TextDecoder().decode(o.stdout);
+  const again = await stitchCli("it-final-only");
+  check("re-exporting an unchanged history keeps the bundle", again.success && stdout(again).includes("0 written, 1 already present"), stdout(again).slice(-200));
+  await Deno.remove(`${runDir}/life.jsonl`);
+  const repaired = await stitchCli("it-final-only");
+  const aside = [...Deno.readDirSync(`${outDir}/it-final-only/spots/treatment`)].map((e) => e.name).sort();
+  check(
+    "an incomplete bundle is moved aside and re-exported",
+    repaired.success && stdout(repaired).includes("1 written") && aside.length === 2 && aside[0] === "seed-1" && aside[1].startsWith("seed-1.stale-"),
+    aside.join(", "),
+  );
+  // The diverged run ("it") is not exportable: a bundle already sitting in
+  // its place (say, from an earlier --allow-unverified export) is moved out
+  // of analyze.ts's input layout.
+  const stale = `${outDir}/it/spots/treatment/seed-1`;
+  await Deno.mkdir(stale, { recursive: true });
+  await Deno.writeTextFile(`${stale}/manifest.json`, "{}");
+  const diverged = await stitchCli("it");
+  check(
+    "a no-longer-exportable run's old bundle is moved aside",
+    diverged.success && stdout(diverged).includes("0 written") && !(await Deno.stat(stale).catch(() => null)),
+    stdout(diverged).slice(-200),
   );
 } finally {
   try {

@@ -97,6 +97,9 @@ defmodule Coordinator.Segment do
   @doc "The island whose run attempt produced this segment's accepted result (verifiers must differ from it)."
   def accepted_island(seg), do: (a = accepted_run_attempt(seg)) && a.island
 
+  @doc "Bundle file name -> SHA-256 uploaded by the accepted run attempt (`nil` without one; attempts persisted before files were recorded have none)."
+  def accepted_files(seg), do: (a = accepted_run_attempt(seg)) && Map.get(a, :files, %{})
+
   @doc "The most recent verify attempt (for status/divergence reporting), if any was ever assigned."
   def last_verify_attempt(seg), do: find_last(seg, &(&1.kind == "verify"))
 
@@ -169,6 +172,18 @@ defmodule Coordinator.Segment do
                  &%{&1 | uploaded_digest: digest, state_hash: state_hash}
                )
          }}
+    end
+  end
+
+  @doc "Records a just-published bundle file (name and SHA-256) on the run attempt that owns this lease."
+  def publish_file(seg, island, lease, name, sha) do
+    case find_attempt(seg, "run", island, lease) do
+      nil ->
+        {:error, "lease lost"}
+
+      a ->
+        record = &Map.put(&1, :files, Map.put(Map.get(&1, :files, %{}), name, sha))
+        {:ok, %{seg | attempts: replace_attempt(seg.attempts, a.id, record)}}
     end
   end
 

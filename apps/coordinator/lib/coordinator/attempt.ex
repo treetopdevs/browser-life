@@ -28,6 +28,7 @@ defmodule Coordinator.Attempt do
           uploaded_digest: String.t() | nil,
           state_hash: String.t() | nil,
           reported_digest: String.t() | nil,
+          files: %{String.t() => String.t()},
           outcome: outcome,
           summary: map | nil
         }
@@ -44,6 +45,7 @@ defmodule Coordinator.Attempt do
       uploaded_digest: nil,
       state_hash: nil,
       reported_digest: nil,
+      files: %{},
       outcome: "pending",
       summary: nil
     }

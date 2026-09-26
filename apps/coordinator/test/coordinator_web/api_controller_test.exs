@@ -128,6 +128,13 @@ defmodule CoordinatorWeb.ApiControllerTest do
              put.("/api/segments/#{seg1}/checkpoint?island=#{id}&lease=#{t1["lease"]}", bin1)
              |> json_response(200)
 
+    assert %{"ok" => true} =
+             put.(
+               "/api/segments/#{seg1}/files/series.jsonl?island=#{id}&lease=#{t1["lease"]}",
+               "row\n"
+             )
+             |> json_response(200)
+
     assert build_conn()
            |> authed(token)
            |> post("/api/segments/#{seg1}/complete?island=#{id}", %{
@@ -142,5 +149,41 @@ defmodule CoordinatorWeb.ApiControllerTest do
 
     start = build_conn() |> authed(token) |> get("/api/segments/#{seg1}/start?island=#{id}")
     assert response(start, 200) == bin1
+
+    assert %{"spec" => %{"steps" => 1000}, "segments" => [s1, s2]} =
+             build_conn() |> get("/api/experiments/api") |> json_response(200)
+
+    assert %{"id" => ^seg1, "index" => 0, "startStep" => 0, "steps" => 500, "status" => "done"} =
+             s1
+
+    assert %{"digest" => ^digest1, "producedBy" => "test", "verifiedBy" => nil, "last" => false} =
+             s1
+
+    assert %{
+             "index" => 1,
+             "startStep" => 500,
+             "status" => "assigned",
+             "digest" => nil,
+             "last" => true
+           } = s2
+
+    assert build_conn() |> get("/api/experiments/nope") |> json_response(404)
+
+    # Export (tools/stitch.ts) is administrative: listing and bundle files.
+    Application.put_env(:coordinator, :admin_token, "s3cret")
+    on_exit(fn -> Application.put_env(:coordinator, :admin_token, nil) end)
+    assert build_conn() |> get("/api/experiments/api") |> json_response(401)
+    assert build_conn() |> authed("s3cret") |> get("/api/experiments/api") |> json_response(200)
+    assert build_conn() |> get("/api/segments/#{seg1}/files/series.jsonl") |> json_response(401)
+
+    assert build_conn()
+           |> authed("s3cret")
+           |> get("/api/segments/#{seg1}/files/series.jsonl")
+           |> response(200) == "row\n"
+
+    assert build_conn()
+           |> authed("s3cret")
+           |> get("/api/segments/#{seg1}/files/life.jsonl")
+           |> json_response(404)
   end
 end

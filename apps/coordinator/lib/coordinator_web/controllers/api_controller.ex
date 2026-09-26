@@ -13,13 +13,21 @@ defmodule CoordinatorWeb.ApiController do
               :reject,
               :put_checkpoint,
               :put_file,
-              :get_checkpoint,
-              :get_file
+              :get_checkpoint
             ]
 
-  plug :require_admin when action in [:create_experiment]
+  plug :require_admin when action in [:create_experiment, :experiment]
+  # Islands read files to continue runs; administrators to export them (tools/stitch.ts).
+  plug :require_island_or_admin when action in [:get_file]
 
   def status(conn, _), do: json(conn, Queue.status())
+
+  def experiment(conn, %{"name" => name}) do
+    case Queue.experiment(name) do
+      nil -> not_found(conn)
+      exp -> json(conn, exp)
+    end
+  end
 
   def join(conn, params) do
     {:ok, cred} = Queue.join(params)
@@ -134,7 +142,8 @@ defmodule CoordinatorWeb.ApiController do
                  conn.assigns.island,
                  lease,
                  staged,
-                 &Path.join(Queue.files_dir(&1, id), name)
+                 name,
+                 Store.sha256_file(staged)
                ) do
             :ok -> {:ok, %{ok: true}}
             e -> e
@@ -160,20 +169,20 @@ defmodule CoordinatorWeb.ApiController do
     end
   end
 
+  # Only the accepted run attempt's own uploads are served (see `Coordinator.Store`).
   def get_file(conn, %{"id" => id, "name" => name}) do
-    if Regex.match?(~r/^[a-z0-9_-]{1,64}\.(jsonl|tsv|json)$/, name) do
-      path = Path.join(Queue.files_dir(Queue.data_dir(), safe_id!(id)), name)
-
+    with seg when not is_nil(seg) <- Queue.segment(safe_id!(id)),
+         sha when is_binary(sha) <- (Segment.accepted_files(seg) || %{})[name],
+         path = Store.blob_path(Queue.data_dir(), sha),
+         true <- File.exists?(path) do
       type =
         if String.ends_with?(name, ".tsv"),
           do: "text/tab-separated-values",
           else: "application/json"
 
-      if File.exists?(path),
-        do: conn |> put_resp_content_type(type) |> send_file(200, path),
-        else: not_found(conn)
+      conn |> put_resp_content_type(type) |> send_file(200, path)
     else
-      not_found(conn)
+      _ -> not_found(conn)
     end
   end
 
@@ -191,26 +200,31 @@ defmodule CoordinatorWeb.ApiController do
   end
 
   # A configured admin token is always required. Without one, experiment
-  # creation is refused unless tokenless local administration is explicitly
-  # enabled (dev and test only; behind a reverse proxy every peer is loopback).
+  # creation and export are refused unless tokenless local administration is
+  # explicitly enabled (dev and test only; behind a reverse proxy every peer is
+  # loopback).
   defp require_admin(conn, _) do
-    admin = Application.get_env(:coordinator, :admin_token)
-
-    allowed =
-      cond do
-        is_binary(admin) and admin != "" ->
-          is_binary(bearer(conn)) and Plug.Crypto.secure_compare(bearer(conn), admin)
-
-        Application.get_env(:coordinator, :allow_local_admin, false) ->
-          loopback?(conn.remote_ip)
-
-        true ->
-          false
-      end
-
-    if allowed,
+    if admin?(conn),
       do: conn,
       else: conn |> put_status(401) |> json(%{error: "admin authentication required"}) |> halt()
+  end
+
+  defp require_island_or_admin(conn, opts),
+    do: if(admin?(conn), do: conn, else: require_island(conn, opts))
+
+  defp admin?(conn) do
+    admin = Application.get_env(:coordinator, :admin_token)
+
+    cond do
+      is_binary(admin) and admin != "" ->
+        is_binary(bearer(conn)) and Plug.Crypto.secure_compare(bearer(conn), admin)
+
+      Application.get_env(:coordinator, :allow_local_admin, false) ->
+        loopback?(conn.remote_ip)
+
+      true ->
+        false
+    end
   end
 
   defp bearer(conn) do
