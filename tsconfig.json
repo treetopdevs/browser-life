@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "WebWorker"],
+    "types": ["@webgpu/types", "vite/client"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@bl/schema": ["./packages/schema/src/index.ts"],
+      "@bl/sim-ref": ["./packages/sim-ref/src/index.ts"],
+      "@bl/sim-gpu": ["./packages/sim-gpu/src/index.ts"],
+      "@bl/metrics": ["./packages/metrics/src/index.ts"],
+      "@bl/runner": ["./packages/runner/src/index.ts"],
+      "@bl/search": ["./packages/search/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src", "apps/lab/src", "tests"],
+  "exclude": ["tests/deno"]
+}

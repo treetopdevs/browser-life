@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "@bl/schema": "./packages/schema/src/index.ts",
+    "@bl/sim-ref": "./packages/sim-ref/src/index.ts",
+    "@bl/sim-gpu": "./packages/sim-gpu/src/index.ts",
+    "@bl/metrics": "./packages/metrics/src/index.ts",
+    "@bl/runner": "./packages/runner/src/index.ts",
+    "@bl/search": "./packages/search/src/index.ts"
+  },
+  "compilerOptions": { "lib": ["deno.window", "deno.unstable"] }
+}

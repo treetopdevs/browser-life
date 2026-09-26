@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Golden Self-Test</title>
+    <style>
+      body { font: 14px/1.5 ui-monospace, Menlo, monospace; margin: 16px; background: #0d1117; color: #e6edf3; }
+      .PASS { color: #3fb950; } .FAIL { color: #f85149; }
+    </style>
+  </head>
+  <body>
+    <h1>Golden self-test</h1>
+    <p>Runs the CPU reference and the WebGPU kernels side by side and requires bit-identical state.</p>
+    <pre id="out">running…</pre>
+    <script type="module" src="/src/selftest.ts"></script>
+  </body>
+</html>

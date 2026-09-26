@@ -1,0 +1,28 @@
+import { describe, expect, it } from "vitest";
+import { PRESETS, presetConfig } from "@bl/schema";
+import { RefSim } from "@bl/sim-ref";
+import { conditionById } from "../src/conditions.ts";
+
+// Mean light over one tile and (for seasons) one full cycle, from the reference light function.
+function meanLight(cfg: ReturnType<typeof presetConfig>): number {
+  const sim = Object.create(RefSim.prototype) as RefSim;
+  (sim as unknown as { cfg: typeof cfg }).cfg = cfg;
+  const period = Math.max(1, cfg.seasonPeriod);
+  let sum = 0;
+  for (let t = 0; t < period; t += 7) for (let y = 0; y < cfg.tileH; y += 3) for (let x = 0; x < cfg.tileW; x += 3) sum += sim.light(x, y, t);
+  const count = Math.ceil(period / 7) * Math.ceil(cfg.tileH / 3) * Math.ceil(cfg.tileW / 3);
+  return sum / count;
+}
+
+describe("controls preserve mean illumination (review 4)", () => {
+  for (const [preset, cond] of [
+    ["seasons", "fixed-env"],
+    ["gradient", "uniform-light"],
+  ] as const) {
+    it(`${cond} on ${preset}`, () => {
+      const base = presetConfig(PRESETS.find((p) => p.id === preset)!, 1);
+      const ctl = { ...base, ...conditionById(cond).apply(base) };
+      expect(Math.abs(meanLight(ctl) - meanLight(base))).toBeLessThan(1);
+    });
+  }
+});

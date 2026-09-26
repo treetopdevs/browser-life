@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Archipelago Island</title>
+    <meta name="description" content="Contribute this browser's GPU to an archipelago of independent evolutionary runs." />
+    <style>
+      :root { --bg:#0b0e12; --card:#161b22; --line:#242b35; --text:#e6edf3; --muted:#8b96a5; --accent:#3ddc97; color-scheme: dark; }
+      @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#eef1f4; --card:#fff; --line:#d8dee4; --text:#1f2328; --muted:#59636e; --accent:#1a7f55; color-scheme: light; } }
+      body { margin:0; padding:16px; background:var(--bg); color:var(--text); font:14px/1.5 system-ui, sans-serif; max-width:760px; }
+      h1 { font-size:18px; margin:0 0 4px; } p { color:var(--muted); }
+      .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
+      input { flex:1; min-width:0; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:7px; padding:7px 9px; font:inherit; }
+      button { background:var(--accent); color:#062016; border:0; border-radius:7px; padding:8px 14px; font:inherit; font-weight:600; cursor:pointer; min-height:34px; }
+      button.stop { background:#ffb454; }
+      pre { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; white-space:pre-wrap; font:12px/1.5 ui-monospace, Menlo, monospace; max-height:60vh; overflow:auto; }
+    </style>
+  </head>
+  <body>
+    <h1>Archipelago island</h1>
+    <p>This tab runs simulation segments assigned by a coordinator on your GPU and uploads the results. Some segments are replayed by other islands, and the results must match bit for bit. Close the tab to stop.</p>
+    <div class="row">
+      <input id="url" value="http://localhost:4000" aria-label="Coordinator URL" />
+      <button id="go">Join</button>
+    </div>
+    <pre id="log">idle</pre>
+    <script type="module" src="/src/island.ts"></script>
+  </body>
+</html>

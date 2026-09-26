@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Archipelago Coordinator</title>
+<style>
+  :root { --bg:#0b0e12; --card:#161b22; --line:#242b35; --text:#e6edf3; --muted:#8b96a5; --ok:#3ddc97; --bad:#ff6b6b; color-scheme: dark; }
+  @media (prefers-color-scheme: light) { :root { --bg:#eef1f4; --card:#fff; --line:#d8dee4; --text:#1f2328; --muted:#59636e; --ok:#1a7f55; color-scheme: light; } }
+  body { margin:0; padding:16px; background:var(--bg); color:var(--text); font:14px/1.45 system-ui, sans-serif; }
+  h1 { font-size:18px; margin:0 0 4px; } p.sub { color:var(--muted); margin:0 0 16px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; overflow-x:auto; }
+  .num { font: 600 22px ui-monospace, Menlo, monospace; } .lbl { color:var(--muted); font-size:12px; }
+  table { border-collapse: collapse; width:100%; font-size:13px; } td, th { text-align:left; padding:4px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:500; } .ok { color:var(--ok); } .bad { color:var(--bad); }
+  .mono { font-family: ui-monospace, Menlo, monospace; }
+</style>
+</head>
+<body>
+<h1>Archipelago coordinator</h1>
+<p class="sub">Runs are split into segments; a fraction is replayed on a different island and must match bit for bit.</p>
+<div class="grid" id="counts"></div>
+<div class="card"><h2 class="lbl">Runs</h2><table id="runs"></table></div>
+<div class="card" style="margin-top:10px"><h2 class="lbl">Islands</h2><table id="islands"></table></div>
+<div class="card" style="margin-top:10px"><h2 class="lbl">Divergences</h2><table id="div"></table></div>
+<script>
+const el = (tag, text, cls) => { const e = document.createElement(tag); e.textContent = text; if (cls) e.className = cls; return e; };
+function table(id, head, rows) {
+  const t = document.getElementById(id); t.replaceChildren();
+  const tr = document.createElement("tr"); head.forEach(h => tr.append(el("th", h))); t.append(tr);
+  rows.forEach(r => { const row = document.createElement("tr"); r.forEach(([v, cls]) => row.append(el("td", String(v), cls))); t.append(row); });
+  if (!rows.length) { const row = document.createElement("tr"); row.append(el("td", "none")); t.append(row); }
+}
+async function tick() {
+  const s = await (await fetch("/api/status")).json();
+  const c = document.getElementById("counts"); c.replaceChildren();
+  const cards = [["pending", s.counts.pending || 0], ["running", s.counts.assigned || 0], ["done", s.counts.done || 0], ["verified", s.counts.verified || 0], ["diverged", s.counts.diverged || 0], ["device types", s.devices.length]];
+  for (const [k, v] of cards) { const d = el("div", "", "card"); d.append(el("div", v, "num" + (k === "diverged" && v ? " bad" : "")), el("div", k, "lbl")); c.append(d); }
+  table("runs", ["run", "segments", "done", "verified", "diverged"], s.runs.map(r => [[r.run, "mono"], [r.segments], [r.done], [r.verified, r.verified ? "ok" : ""], [r.diverged, r.diverged ? "bad" : ""]]));
+  table("islands", ["island", "adapter", "runs", "verifies", "last seen"], s.islands.map(i => [[i.id, "mono"], [i.adapter], [i.runs], [i.verifies], [new Date(i.last_seen).toLocaleTimeString()]]));
+  table("div", ["run", "segment", "host A", "host B", "hash A", "hash B"], s.divergences.map(d => [[d.run, "mono"], [d.index], [d.a], [d.b], [d.hash_a, "mono"], [d.hash_b, "mono"]]));
+}
+tick(); setInterval(tick, 3000);
+</script>
+</body>
+</html>
