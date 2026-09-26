@@ -37,6 +37,43 @@ defmodule CoordinatorWeb.ApiControllerTest do
     refute Enum.any?(Queue.status().islands, &Map.has_key?(&1, :token))
   end
 
+  # `/api/islands/me` is the probe an auto-rejoining island uses to check a
+  # remembered identity before reusing it -- it must be a plain read (same
+  # 401-on-bad-auth behavior as every other island route), never leak the
+  # token/token_hash, and -- unlike `/api/next` -- never claim a task or
+  # touch the island's `last_seen`, since it's meant to be safe to call
+  # speculatively (possibly repeatedly, with retries) without consequence.
+  # Work exists *before* probing so a bug that claims it would be caught.
+  test "GET /api/islands/me is a side-effect-free identity check", %{conn: conn} do
+    {:ok, _} = Queue.create_experiment(@spec_ok)
+    {id, token} = join(conn)
+    :sys.replace_state(Queue, &put_in(&1, [:islands, id, :last_seen], 0))
+
+    assert build_conn() |> get("/api/islands/me?island=#{id}") |> json_response(401)
+
+    assert build_conn()
+           |> authed("wrong")
+           |> get("/api/islands/me?island=#{id}")
+           |> json_response(401)
+
+    me =
+      build_conn() |> authed(token) |> get("/api/islands/me?island=#{id}") |> json_response(200)
+
+    assert me["id"] == id
+    assert me["adapter"] == "test"
+    refute Map.has_key?(me, "token")
+    refute Map.has_key?(me, "token_hash")
+
+    # last_seen is untouched by any of the calls above (all four, including
+    # the two 401s) ...
+    assert Queue.island_info(id).last_seen == 0
+
+    # ... and the pending segment created above is still there for /api/next
+    # to hand out -- the probe did not claim it.
+    assert %{"kind" => "run"} =
+             build_conn() |> authed(token) |> post("/api/next?island=#{id}") |> json_response(200)
+  end
+
   test "without a token, local administration must be explicitly enabled", %{conn: conn} do
     Application.put_env(:coordinator, :allow_local_admin, false)
     on_exit(fn -> Application.put_env(:coordinator, :allow_local_admin, true) end)

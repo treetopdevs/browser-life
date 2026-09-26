@@ -209,6 +209,50 @@ defmodule Coordinator.QueueTest do
     refute Enum.any?(Queue.status().islands, &Map.has_key?(&1, :token_hash))
   end
 
+  # A silent island (e.g. a browser tab that reloaded and dropped back to the
+  # Join screen) should be visible on the status page instead of just quietly
+  # not showing up in `next` calls -- see `Coordinator.Queue`'s `@stale_ms`.
+  # Checked at the actual boundary (just under vs just over), not with an
+  # arbitrarily ancient timestamp, so this would catch an off-by-one in the
+  # comparison itself.
+  test "status flags an island stale right at the threshold, not before" do
+    {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+    threshold = Queue.stale_ms()
+    now = System.system_time(:millisecond)
+
+    :sys.replace_state(Queue, &put_in(&1, [:islands, a, :last_seen], now - threshold + 1_000))
+    refute Enum.find(Queue.status().islands, &(&1.id == a)).stale
+
+    :sys.replace_state(Queue, &put_in(&1, [:islands, a, :last_seen], now - threshold - 1_000))
+    assert Enum.find(Queue.status().islands, &(&1.id == a)).stale
+  end
+
+  # `stale?/2` takes both timestamps as arguments (instead of reading the
+  # clock itself) precisely so the exact boundary can be pinned down without
+  # a wall-clock race between setting a fixture and `status/0` reading
+  # `System.system_time/1` moments later. Elapsed exactly equal to the
+  # threshold must not be stale -- the comparison is `>`, not `>=`.
+  test "stale?/2 treats the threshold itself as exclusive" do
+    threshold = Queue.stale_ms()
+    refute Queue.stale?(0, threshold)
+    refute Queue.stale?(0, threshold - 1)
+    assert Queue.stale?(0, threshold + 1)
+  end
+
+  # Heartbeats keep a long-running task's segment alive but, before this
+  # fix, never touched the island's own `last_seen` -- so a healthy island
+  # busy between `/next` calls (a task can run far longer than `@stale_ms`)
+  # looked stale on the status page the whole time.
+  test "a lease-current heartbeat also refreshes the island's last_seen" do
+    {:ok, _} = Queue.create_experiment(@spec_ok)
+    {:ok, %{id: a}} = Queue.join(%{})
+    {:ok, t} = Queue.next_task(a)
+
+    :sys.replace_state(Queue, &put_in(&1, [:islands, a, :last_seen], 0))
+    assert :ok = Queue.heartbeat(t.segment.id, a, t.lease)
+    refute Enum.find(Queue.status().islands, &(&1.id == a)).stale
+  end
+
   test "a state.bin from an incompatible schema version refuses to load" do
     dir =
       Path.join(System.tmp_dir!(), "bl-queue-incompatible-#{System.unique_integer([:positive])}")

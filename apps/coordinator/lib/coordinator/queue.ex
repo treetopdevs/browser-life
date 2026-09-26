@@ -40,6 +40,17 @@ defmodule Coordinator.Queue do
   # Leases expire after this long without a heartbeat (configurable for tests).
   defp lease_ms, do: Application.get_env(:coordinator, :lease_ms, 10 * 60 * 1000)
   @max_segments 100_000
+  # An island that hasn't called `/api/next` or sent a valid heartbeat in
+  # this long is flagged `stale` in `status/0` -- e.g. a browser tab whose
+  # page reloaded and dropped back to the Join screen without anyone
+  # noticing (see the auto-rejoin in apps/lab). Purely a status-page hint: it
+  # doesn't affect scheduling. Public so tests can assert against the actual
+  # threshold instead of a copy of the literal.
+  @stale_ms 2 * 60 * 1000
+  def stale_ms, do: @stale_ms
+
+  @doc "Whether `last_seen` (ms since epoch) is stale as of `now` (defaults to the real clock). A pure function of both timestamps (rather than reading the clock internally) so tests can pin the exact threshold -- exclusive, `>` not `>=` -- without a wall-clock race."
+  def stale?(last_seen, now \\ now()), do: now - last_seen > @stale_ms
   # Bumped whenever `state.bin`'s shape changes incompatibly (see `init/1`).
   @state_version 3
 
@@ -50,6 +61,9 @@ defmodule Coordinator.Queue do
 
   def join(info), do: GenServer.call(__MODULE__, {:join, info})
   def authenticate(island, token), do: GenServer.call(__MODULE__, {:auth, island, token})
+
+  @doc "Public info for an already-authenticated island (never the token/token_hash); a read, not a claim -- see ApiController.me/2. Doesn't touch last_seen: authenticate/2 doesn't either, and this shouldn't add state a bare probe wouldn't otherwise have."
+  def island_info(id), do: GenServer.call(__MODULE__, {:island_info, id})
   def create_experiment(spec), do: GenServer.call(__MODULE__, {:create, spec})
   def next_task(island), do: GenServer.call(__MODULE__, {:next, island})
 
@@ -161,6 +175,11 @@ defmodule Coordinator.Queue do
     {:reply, ok, s}
   end
 
+  def handle_call({:island_info, id}, _from, s) do
+    info = s.islands[id] && Map.drop(s.islands[id], [:token_hash])
+    {:reply, info, s}
+  end
+
   def handle_call({:create, spec}, _from, s) do
     with {:ok, spec} <- validate(spec),
          :ok <-
@@ -189,10 +208,20 @@ defmodule Coordinator.Queue do
   end
 
   def handle_call({:heartbeat, seg_id, island, lease}, _from, s) do
+    now = now()
+
     with seg when not is_nil(seg) <- s.segments[seg_id],
          kind = if(seg.status == "done", do: "verify", else: "run"),
-         {:ok, seg} <- Segment.heartbeat(seg, kind, island, lease, now()) do
-      {:reply, :ok, persist(put_in(s, [:segments, seg_id], seg))}
+         {:ok, seg} <- Segment.heartbeat(seg, kind, island, lease, now) do
+      # A valid (lease-current) heartbeat is as much evidence the island is
+      # alive as `/api/next` -- a long-running task's island otherwise looks
+      # `stale` in `status/0` the whole time it's busy, between `/next` calls.
+      s =
+        s
+        |> put_in([:segments, seg_id], seg)
+        |> put_in([:islands, island, :last_seen], now)
+
+      {:reply, :ok, persist(s)}
     else
       nil -> {:reply, {:error, "unknown segment"}, s}
       {:error, why} -> {:reply, {:error, why}, s}
@@ -351,7 +380,12 @@ defmodule Coordinator.Queue do
         }
       end
 
-    islands = for i <- Map.values(s.islands), do: Map.drop(i, [:token_hash])
+    now = now()
+
+    islands =
+      for i <- Map.values(s.islands) do
+        i |> Map.drop([:token_hash]) |> Map.put(:stale, stale?(i.last_seen, now))
+      end
 
     {:reply,
      %{

@@ -14,6 +14,7 @@ defmodule CoordinatorWeb.Router do
     get "/status", ApiController, :status
     get "/experiments/:name", ApiController, :experiment
     post "/islands", ApiController, :join
+    get "/islands/me", ApiController, :me
     post "/experiments", ApiController, :create_experiment
     post "/next", ApiController, :next
     post "/segments/:id/heartbeat", ApiController, :heartbeat

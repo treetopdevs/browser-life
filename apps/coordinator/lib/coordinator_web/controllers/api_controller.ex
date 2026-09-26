@@ -7,6 +7,7 @@ defmodule CoordinatorWeb.ApiController do
 
   plug :require_island
        when action in [
+              :me,
               :next,
               :complete,
               :heartbeat,
@@ -33,6 +34,13 @@ defmodule CoordinatorWeb.ApiController do
     {:ok, cred} = Queue.join(params)
     json(conn, cred)
   end
+
+  # Side-effect-free identity check for a rejoin after e.g. a page reload:
+  # same authentication as every other island call (401 for an unknown or
+  # invalid token), but reads state instead of claiming a task, so probing it
+  # never strands a task assignment the caller is about to drop. Never
+  # includes the token/token_hash.
+  def me(conn, _), do: json(conn, Queue.island_info(conn.assigns.island))
 
   def create_experiment(conn, params) do
     case Queue.create_experiment(params) do

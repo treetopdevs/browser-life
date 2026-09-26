@@ -28,6 +28,152 @@ export interface IslandOptions {
   idleMs?: number;
   heartbeatMs?: number;
   signal?: AbortSignal;
+  /** Reuse an already-joined island (id + bearer token) instead of calling
+   * `/api/islands` again. The caller is responsible for having confirmed the
+   * coordinator still accepts it (see `decideRejoin`); an invalid identity
+   * fails the same way any other authentication error would. */
+  identity?: { id: string; token: string };
+  /** Called once this island's id/token are known, whether from a fresh join
+   * or from `identity` above -- lets the caller remember them for a rejoin
+   * after e.g. a page reload. */
+  onJoined?: (identity: { id: string; token: string }) => void;
+}
+
+/** Combines `signal` with a `timeoutMs` bound, using `AbortSignal.any`/
+ * `AbortSignal.timeout` where both exist. Review: Chrome shipped WebGPU in
+ * 113, three versions before `AbortSignal.any` (116) -- calling it
+ * unconditionally throws a `TypeError` *before* `fetch` is ever invoked on
+ * such an engine, which an outer `catch { return null; }` (see
+ * `probeIslandIdentity`) then indistinguishably reports as a network
+ * failure: no request is made, ever, and a remembered identity can never be
+ * reconfirmed. The fallback reimplements the combination by hand with a
+ * plain `AbortController` + `setTimeout`, cleaning up (clearing the timer,
+ * dropping the listener) as soon as either side settles so neither lingers
+ * past that point. */
+export function timeoutSignal(signal: AbortSignal, timeoutMs: number): AbortSignal {
+  if (typeof AbortSignal.any === "function" && typeof AbortSignal.timeout === "function") {
+    return AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]);
+  }
+  const ctrl = new AbortController();
+  const onSignalAbort = () => ctrl.abort();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  ctrl.signal.addEventListener(
+    "abort",
+    () => {
+      clearTimeout(timer);
+      signal.removeEventListener("abort", onSignalAbort);
+    },
+    { once: true },
+  );
+  if (signal.aborted) ctrl.abort();
+  else signal.addEventListener("abort", onSignalAbort, { once: true });
+  return ctrl.signal;
+}
+
+/** One authenticated `GET /api/islands/me` attempt: the probe an
+ * auto-rejoining island uses to check a remembered identity before reusing
+ * it (see `decideRejoin`/`resolveRejoin`). Bounded by `timeoutMs` (a few
+ * seconds) combined with the caller's own cancellation `signal` via
+ * `timeoutSignal`. Resolves to the HTTP status, or `null` on any failure --
+ * a timeout, a cancel, or a genuine network error are all equally
+ * inconclusive to `decideRejoin`, which is exactly why they're folded
+ * together here instead of being told apart. */
+export async function probeIslandIdentity(coordinator: string, id: string, token: string, signal: AbortSignal, timeoutMs = 5000): Promise<number | null> {
+  try {
+    const base = coordinator.replace(/\/$/, "");
+    const res = await fetch(`${base}/api/islands/me?island=${encodeURIComponent(id)}`, {
+      headers: { authorization: `Bearer ${token}` },
+      signal: timeoutSignal(signal, timeoutMs),
+    });
+    return res.status;
+  } catch {
+    return null;
+  }
+}
+
+/** What one probe of `GET /api/islands/me` establishes about a remembered
+ * identity: `"reuse"` (200, still authenticates), `"fresh"` (401, the
+ * coordinator no longer recognizes it -- unknown id, or a restarted
+ * coordinator with a fresh data dir), or `"retry"` for everything else
+ * (network failure, a 404 from a coordinator too old to have this route, a
+ * 5xx e.g. mid hot-reload) -- none of those say anything about whether the
+ * identity itself is valid, so they're worth another attempt rather than a
+ * guess in either direction. */
+export type ProbeDecision = "reuse" | "fresh" | "retry";
+
+/** That endpoint is a plain read (unlike `/api/next`, which claims a task),
+ * so a probe -- retried or abandoned -- never strands a task assignment
+ * behind a 10-minute lease. `probeStatus` is the HTTP status, or `null` if
+ * the request itself failed (offline, DNS, ...). */
+export function decideRejoin(probeStatus: number | null): ProbeDecision {
+  if (probeStatus === 200) return "reuse";
+  if (probeStatus === 401) return "fresh";
+  return "retry";
+}
+
+export type RejoinResult = "reuse" | "fresh" | "wait" | "cancelled";
+
+export interface ResolveRejoinOptions {
+  /** Makes one probe attempt; returns the HTTP status, or `null` on failure
+   * (including the probe's own timeout, if any -- see `decideRejoin`, which
+   * treats that the same as any other inconclusive result). */
+  probe(): Promise<number | null>;
+  /** Attempts beyond the first before giving up (default 3, so 4 tries total). */
+  retries?: number;
+  /** Delay before retry number `attempt` (0-based); default exponential from 500ms. */
+  backoffMs?(attempt: number): number;
+  sleep?(ms: number): Promise<void>;
+  /** Review: a probe with no bound on its own duration (no timeout/abort on
+   * the underlying fetch) can hang forever, trapping the page in a disabled
+   * "starting" state with no way out. Aborting `signal` cancels the whole
+   * resume attempt -- no further probes, and a backoff wait already in
+   * progress resolves immediately rather than running out its delay --
+   * without ever reaching a `"reuse"`/`"fresh"` decision that would let the
+   * caller proceed into the runner. The caller is responsible for also
+   * threading `signal` into `probe` itself (e.g. via `AbortSignal.any`), so
+   * an in-flight fetch is actually aborted, not just ignored once it
+   * eventually settles. */
+  signal?: AbortSignal;
+}
+
+/** Resolves when `sleep(ms)` does, or as soon as `signal` aborts, whichever
+ * is first -- without waiting out the rest of a long backoff delay just
+ * because it's already started. Never rejects; the caller checks
+ * `signal.aborted` afterwards to tell which one happened. */
+function abortableWait(sleep: (ms: number) => Promise<void>, ms: number, signal?: AbortSignal): Promise<void> {
+  if (!signal) return sleep(ms);
+  if (signal.aborted) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    const onAbort = () => resolve();
+    signal.addEventListener("abort", onAbort, { once: true });
+    void sleep(ms).then(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    });
+  });
+}
+
+/** Turns a single, possibly-inconclusive probe into a final decision: keeps
+ * probing (with backoff) while `decideRejoin` says `"retry"`, gives up as
+ * `"wait"` once out of attempts (so a flaky network or an old/reloading
+ * coordinator doesn't get treated as either a confirmed reuse or a reason to
+ * mint a second island for the same tab), and reports `"cancelled"` the
+ * moment `opts.signal` aborts, at whichever point that happens to fall. */
+export async function resolveRejoin(opts: ResolveRejoinOptions): Promise<RejoinResult> {
+  const retries = opts.retries ?? 3;
+  const backoffMs = opts.backoffMs ?? ((attempt: number) => 500 * 2 ** attempt);
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const { signal } = opts;
+
+  for (let attempt = 0; ; attempt++) {
+    if (signal?.aborted) return "cancelled";
+    const decision = decideRejoin(await opts.probe());
+    if (signal?.aborted) return "cancelled";
+    if (decision !== "retry") return decision;
+    if (attempt >= retries) return "wait";
+    await abortableWait(sleep, backoffMs(attempt), signal);
+    if (signal?.aborted) return "cancelled";
+  }
 }
 
 /** Collects bundle files in memory for upload after the segment finishes. */
@@ -57,13 +203,19 @@ class HttpError extends Error {
 export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<number> {
   const log = opt.log ?? (() => {});
   const base = opt.coordinator.replace(/\/$/, "");
-  const joined = await fetch(`${base}/api/islands`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ adapter: opt.host.adapter, userAgent: opt.host.host }),
-  });
-  if (!joined.ok) throw new Error(`join: ${joined.status} ${await joined.text()}`);
-  const { id, token } = (await joined.json()) as { id: string; token: string };
+  let id: string, token: string;
+  if (opt.identity) {
+    ({ id, token } = opt.identity);
+  } else {
+    const joined = await fetch(`${base}/api/islands`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ adapter: opt.host.adapter, userAgent: opt.host.host }),
+    });
+    if (!joined.ok) throw new Error(`join: ${joined.status} ${await joined.text()}`);
+    ({ id, token } = (await joined.json()) as { id: string; token: string });
+  }
+  opt.onJoined?.({ id, token });
   const q = (extra = "") => `island=${encodeURIComponent(id)}${extra}`;
   const call = async <T>(path: string, init: RequestInit = {}, raw = false): Promise<T> => {
     const res = await fetch(`${base}${path}`, { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}` } });
@@ -73,7 +225,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
   };
   const postJson = <T>(path: string, body: unknown) => call<T>(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
-  log(`joined as ${id}`);
+  log(opt.identity ? `resumed as ${id}` : `joined as ${id}`);
   let done = 0;
   while (!opt.signal?.aborted && (!opt.maxTasks || done < opt.maxTasks)) {
     const task = await call<Task>(`/api/next?${q()}`, { method: "POST" });
