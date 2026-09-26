@@ -13,16 +13,32 @@
 //    generated "## Primary endpoints" section, via tools/gen-prereg.ts): one-sided
 //    Mann–Whitney tests with Holm correction, growth verdict counts, ecological
 //    closure (biotic recycling and role-coexistence duration).
-// 4. Exploratory: two-sided comparison of every statistic with the treatment.
+// 4. Held-out observables (experiments/endpoints.ts: HELD_OUT_SPECS,
+//    2026-09-26 amendment): also confirmatory, not exploratory -- an
+//    absolute one-sample test (treatment's own trend > 0) plus a relative
+//    one (treatment > every preset-declared control), Holm-corrected as one
+//    shared family across the four directional observables. Pattern entropy
+//    and lineage-map compression ratio are reported descriptively only.
+// 5. Exploratory: two-sided comparison of every statistic with the treatment
+//    -- the only section of this report that is not part of the
+//    pre-registered inference.
 //
 // Runs are pooled only if they form one ensemble: same rules, preset, horizon
 // and observation schedule, with configurations differing from the treatment
 // exactly by their condition.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
-import { ActivityTracker, growthVsSaturation, mannWhitney, mean, quantile, sd } from "@bl/metrics";
+import { ActivityTracker, EXACT_MAX, growthVsSaturation, mannWhitney, mean, quantile, scheduledTrend, sd } from "@bl/metrics";
 import { sameConfig, specConfig } from "@bl/runner";
-import { evaluateEndpoint, PRIMARY_ENDPOINTS, type EndpointResult, type RunView } from "../experiments/endpoints.ts";
+import {
+  evaluateEndpoint,
+  evaluateHeldOut,
+  HELD_OUT_SPECS,
+  PRIMARY_ENDPOINTS,
+  type EndpointResult,
+  type HeldOutObservableResult,
+  type RunView,
+} from "../experiments/endpoints.ts";
 
 const a = parseArgs(Deno.args, { string: ["out", "q"], default: { q: "0.95" } });
 const root = String(a._[0] ?? "");
@@ -129,6 +145,42 @@ const timeAvg = (r: Run, f: (x: Record<string, any>) => number | undefined) => {
   const tail = v.slice(Math.floor(v.length / 2)); // second half: post-transient
   return tail.length ? mean(tail) : NaN;
 };
+// Held-out observables' trend statistic and fit window (experiments/
+// endpoints.ts: HELD_OUT_SPECS): a thin, stateful wrapper over
+// `scheduledTrend` (packages/metrics/src/stats.ts -- the pure, unit-tested
+// windowing/exclusion helper), which supplies `steps`/`values` from a
+// loaded run's `series.jsonl` and tallies the returned status across the
+// ensemble.
+//
+// MIN_TREND_POINTS is a short-run guard only, not a statistical
+// requirement: a straight-line fit needs >= 3 points to have any residual
+// degrees of freedom, so 4 gives a minimal safety margin against a single
+// noisy point dominating the fit. It essentially never binds at the
+// registered schedule -- 1e6 steps / censusEvery=100 / deepEvery=10 gives
+// ~500 points in a deep-only second-half window alone. Because the window
+// keeps `ceil(n/2)` scheduled positions (`n` = the number of scheduled
+// positions before halving), "short" means fewer than MIN_TREND_POINTS
+// positions survive that halving -- not a fixed count of total scheduled
+// censuses (round-2 review finding #5: an earlier version of this comment
+// said "8 scheduled censuses", which was off by the halving's rounding).
+const MIN_TREND_POINTS = 4;
+
+/** Runs (pooled across the whole ensemble) excluded or too short per held-out observable, for the rendered report. */
+const trendDiagnostics = new Map<string, { ok: number; excluded: number; short: number }>();
+const trend = (r: Run, key: string, f: (x: Record<string, any>) => number | undefined, deepOnly: boolean) => {
+  const steps = r.series.map((x) => x.step);
+  const values = r.series.map(f);
+  const out = scheduledTrend(steps, values, r.manifest.spec.deepEvery, deepOnly, MIN_TREND_POINTS);
+  const d = trendDiagnostics.get(key) ?? { ok: 0, excluded: 0, short: 0 };
+  d[out.status]++;
+  trendDiagnostics.set(key, d);
+  // Scaled x1e5 (change per 1e5 steps), matching growthSlope's existing
+  // display convention below -- Mann-Whitney/Wilcoxon are invariant under a
+  // positive rescaling, so this changes no test result, only makes the
+  // printed numbers readable (review finding #6: raw per-step slopes like
+  // 2e-6 printed as "0.0000" under the existing 4-decimal formatter).
+  return out.slope * 1e5;
+};
 for (const r of runs) {
   const { snaps } = activities(r, threshold);
   const last = snaps[snaps.length - 1];
@@ -150,6 +202,15 @@ for (const r of runs) {
     lineageCompression: timeAvg(r, (x) => x.lineageCompression),
     differentiation: timeAvg(r, (x) => x.morphology?.differentiation),
     compartmentalised: timeAvg(r, (x) => x.morphology?.compartmentalised),
+    // Held-out trend statistics (experiments/endpoints.ts: HELD_OUT_SPECS),
+    // scaled per 1e5 steps. temporalMI/patternEntropy are scheduled every
+    // census; the rest only on deep censuses.
+    temporalMITrend: trend(r, "temporalMI", (x) => x.temporalMI, false),
+    patternEntropyTrend: trend(r, "patternEntropy", (x) => x.patternEntropy, false),
+    lineageCompressionTrend: trend(r, "lineageCompression", (x) => x.lineageCompression, true),
+    differentiationTrend: trend(r, "differentiation", (x) => x.morphology?.differentiation, true),
+    compartmentalisedTrend: trend(r, "compartmentalised", (x) => x.morphology?.compartmentalised, true),
+    rolesPresentTrend: trend(r, "rolesPresent", (x) => x.rolesPresent?.length, true),
     fissionsPer1e4: ((r.manifest.summary.fissions + 0) / Math.max(1, r.manifest.summary.steps)) * 1e4,
     buddingsPer1e4: ((r.manifest.summary.buddings ?? 0) / Math.max(1, r.manifest.summary.steps)) * 1e4,
     maxGeneration: r.manifest.summary.maxGeneration,
@@ -159,7 +220,20 @@ for (const r of runs) {
 
 // ---- comparisons ----
 const keys = Object.keys(perRun.values().next().value!);
-const HELD_OUT = new Set(["temporalMI", "patternEntropy", "lineageCompression", "differentiation", "compartmentalised", "rolesPresent"]);
+const HELD_OUT = new Set([
+  "temporalMI",
+  "patternEntropy",
+  "lineageCompression",
+  "differentiation",
+  "compartmentalised",
+  "rolesPresent",
+  "temporalMITrend",
+  "patternEntropyTrend",
+  "lineageCompressionTrend",
+  "differentiationTrend",
+  "compartmentalisedTrend",
+  "rolesPresentTrend",
+]);
 const byCond = (c: string) => runs.filter((r) => r.condition === c).map((r) => perRun.get(r)!);
 const treat = byCond("treatment");
 const fmt = (v: number) => (Number.isFinite(v) ? (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(2) : v.toFixed(4)) : "—");
@@ -178,7 +252,8 @@ for (const c of conditions) {
   md += `| ${c} | ${rs.length} | ${rs[0].manifest.summary.steps} | ${rs.filter((r) => r.manifest.summary.conservationOk).length}/${rs.length} | ${rs.filter((r) => r.manifest.summary.extinct).length} | growing ${count("growing")}, saturating ${count("saturating")}, flat ${count("flat")}, indeterminate ${count("indeterminate")} |\n`;
 }
 md += `\n## Statistics (mean ± sd over seeds; second half of each run)\n\n`;
-md += `Held-out observables are marked †; none is used by any search or selection mechanism.\n\n`;
+md += `Held-out observables are marked †; none is used by any search or selection mechanism. \`*Trend\` fields ` +
+  `are OLS slopes scaled ×1e5 (change per 1e5 steps); the scaling doesn't affect any test below, only readability.\n\n`;
 md += `| statistic | ${conditions.join(" | ")} |\n|---|${conditions.map(() => "---").join("|")}|\n`;
 for (const k of keys) {
   md += `| ${k}${HELD_OUT.has(k) ? " †" : ""} | ${conditions
@@ -233,6 +308,89 @@ function renderEndpoint(n: number, r: EndpointResult): string {
 
 md += `\n## Primary endpoints (pre-registered)\n\n`;
 results.forEach((r, i) => (md += `\n${renderEndpoint(i + 1, r)}`));
+
+// ---- held-out observables (experiments/endpoints.ts: HELD_OUT_SPECS) ----
+// Confirmatory, not exploratory (2026-09-26 amendment) -- kept in its own
+// section, clearly separate from "## Primary endpoints" above and
+// "## Exploratory" below. Each directional observable needs BOTH an
+// absolute test (treatment's own trend > 0) and a relative one (treatment >
+// every preset-declared control), with every directional observable's tests
+// pooled into one shared Holm family (see experiments/endpoints.ts for the
+// full rationale). Pattern entropy and lineage-map compression ratio are
+// descriptive only and never counted.
+const presetId = runs[0].manifest.spec.presetId;
+const heldOut = evaluateHeldOut(views, presetId);
+/** HELD_OUT_SPECS's id -> the base statistic key `trendDiagnostics` is keyed by (strips the "Trend" suffix). */
+const heldOutBaseKey = new Map(HELD_OUT_SPECS.map((s) => [s.id, s.statistic.replace(/Trend$/, "")]));
+
+function renderHeldOut(n: number, r: HeldOutObservableResult): string {
+  let out = `${n}. ${r.description}\n\n`;
+  if (!r.directional) {
+    out += `_Descriptive only -- never counted toward the "at least ${heldOut.summary.minSupported} of ${heldOut.summary.total}" claim._\n\n`;
+  } else if (r.absolute) {
+    out += r.absolute.available
+      ? `Absolute (treatment's own trend slopes > 0, Wilcoxon signed-rank, method: ${r.absolute.method}): n=${r.absolute.n}, ` +
+        `W+=${r.absolute.W.toFixed(1)}, one-sided p=${r.absolute.p.toFixed(4)}, Holm-adjusted p=` +
+        `${Number.isFinite(r.absolute.pAdj) ? r.absolute.pAdj.toFixed(4) : "—"}, supported: ${r.absolute.supported ? "yes" : "no"}.\n\n`
+      : `Absolute: unavailable (need >= 2 and <= ${EXACT_MAX} finite treatment trend values -- this endpoint refuses the exact Wilcoxon test rather than silently approximating it above ${EXACT_MAX}).\n\n`;
+  }
+  out += `| comparison | n (a, b) | effect P(a > b) | one-sided p | Holm-adjusted p | supported |\n|---|---|---|---|---|---|\n`;
+  for (const row of r.relative.rows) {
+    const pAdjCell = Number.isFinite(row.pAdj) ? row.pAdj.toFixed(4) : r.directional ? "— (unavailable)" : "— (descriptive)";
+    out += row.available
+      ? `| ${row.a} > ${row.b} | ${row.nA}, ${row.nB} | ${row.effect.toFixed(2)} | ${row.p.toFixed(4)} | ${pAdjCell} | ${row.supported ? "yes" : "no"} |\n`
+      : `| ${row.a} > ${row.b} | ${row.nA}, ${row.nB} | — | — | — | unavailable (need ≥2 runs each) |\n`;
+  }
+  if (!r.relative.complete)
+    out += `\nA declared control is missing or has < 2 runs; this endpoint is unavailable -- never a silently smaller family.\n`;
+  const diag = trendDiagnostics.get(heldOutBaseKey.get(r.id) ?? "");
+  if (diag && (diag.excluded > 0 || diag.short > 0))
+    out +=
+      `\nFit window: ${diag.ok} runs ok, ${diag.excluded} excluded (a scheduled observation was missing), ` +
+      `${diag.short} too short for the window (fewer than ${MIN_TREND_POINTS} scheduled observations retained ` +
+      `after keeping the second half).\n`;
+  if (r.directional) out += `\nSupported: ${r.available ? (r.supported ? "yes" : "no") : "unavailable"}.\n`;
+  if (r.id === "held-out-lineage-compression")
+    out +=
+      "\n**Note:** since metrics version 2, `compressionRatio` uses a bundled deterministic deflate (fflate) " +
+      "instead of the runtime's `CompressionStream`, whose output size differed between Chrome and Deno; " +
+      "this analysis pools only runs with the current metrics version, and earlier data is not comparable. " +
+      "See docs/refactor-v3-workflow.md.\n";
+  return out;
+}
+
+md += `\n## Held-out observables (pre-registered, confirmatory -- 2026-09-26 amendment)\n\n`;
+if (!heldOut.summary.presetDeclared) md += `**No declared held-out control set for preset "${presetId}"** -- every observable below is unavailable.\n\n`;
+heldOut.results.forEach((r, i) => (md += `\n${renderHeldOut(i + 1, r)}`));
+// Three-valued outcome (round-2/3 fix): "supported" once >= minSupported are
+// established; "not-supported" only when even the OPTIMISTIC bound
+// (`optimisticCount`: every missing slot in the shared family recomputed at
+// p=0, not just the currently-unavailable observables credited as a flat
+// pass) could not reach minSupported -- some directional observables may
+// still be individually unavailable even in this case, since completing
+// their data isn't what the bound assumes; otherwise "unavailable" --
+// missing evidence, not a negative.
+const outcomeText = !heldOut.summary.presetDeclared
+  ? `unavailable (preset "${presetId}" has no declared control set at all, so not even an optimistic bound can be computed -- this is not a report of 0 established observables)`
+  : heldOut.summary.outcome === "supported"
+  ? "supported"
+  : heldOut.summary.outcome === "not-supported"
+  ? `not supported (a fully-evaluated negative: even crediting every missing test in the shared family with the best possible p-value reaches only ${heldOut.summary.optimisticCount}/${heldOut.summary.total}, short of the ${heldOut.summary.minSupported} required)`
+  : `unavailable (${heldOut.summary.optimisticCount}/${heldOut.summary.total} could still be established once missing data arrives, which meets the ${heldOut.summary.minSupported} required -- not enough evidence yet to decide the question either way)`;
+md +=
+  `\n${heldOut.summary.establishedCount}/${heldOut.summary.total} directional observables established ` +
+  `(${heldOut.summary.refutedCount} refuted, ${heldOut.summary.unavailableCount} unavailable; need ` +
+  `${heldOut.summary.minSupported} established). Held-out hypothesis: ${outcomeText}. ` +
+  `Declared controls for preset "${presetId}": ${heldOut.summary.controls.join(", ") || "none declared"}. Shared Holm family size: ${heldOut.summary.familySize}.\n`;
+if (heldOut.summary.outcome === "not-supported")
+  md +=
+    "\n**What this does and does not guarantee:** holding every currently available raw p-value fixed, " +
+    "no assignment of p-values to currently unavailable test slots could establish 2 directional " +
+    "observables. This does not cover additional seeds beyond what this ensemble currently has, " +
+    "recovered or excluded measurements, or any other change that would recompute an already-available " +
+    "raw p-value (an available test can still be missing registered seeds -- availability requires only " +
+    "2 finite runs, not the full registered sample). This is a failure to meet the registered criterion " +
+    "on this ensemble, not a biological refutation.\n";
 
 if (treat.length) {
   md += `\n## Exploratory: treatment vs controls (Mann–Whitney, two-sided, unadjusted; effect = P(treatment > control))\n\n`;

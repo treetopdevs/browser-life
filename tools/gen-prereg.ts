@@ -1,42 +1,63 @@
-// Generates the "## Primary endpoints" section of experiments/preregistration.md
-// from experiments/endpoints.ts, between GENERATED markers, so the doc cannot
-// silently drift from the endpoint spec `tools/analyze.ts` actually executes.
+// Generates the "## Primary endpoints" and "## Held-out observables" sections
+// of experiments/preregistration.md from experiments/endpoints.ts, between
+// GENERATED markers, so the doc cannot silently drift from the endpoint spec
+// `tools/analyze.ts` actually executes.
 //
 //   deno run -A tools/gen-prereg.ts        # or: deno task gen-prereg / pnpm gen:prereg
 //
-// The pure `renderEndpointsSection`/`applyGeneratedSection` functions below
-// have no Deno (or Node) dependency -- they are reused as-is by
-// tests/deno/prereg-sync.ts and experiments/test/prereg-sync.test.ts (under
-// vitest/Node) to check the committed doc for staleness. Only the
-// `import.meta.main` CLI block below touches the filesystem.
-import { PRIMARY_ENDPOINTS, type Endpoint } from "../experiments/endpoints.ts";
+// The pure render/apply functions below have no Deno (or Node) dependency --
+// they are reused as-is by tests/deno/prereg-sync.ts and
+// experiments/test/prereg-sync.test.ts (under vitest/Node) to check the
+// committed doc for staleness. Only the `import.meta.main` CLI block below
+// touches the filesystem.
+import { HELD_OUT_SPECS, HELD_OUT_SUMMARY, PRIMARY_ENDPOINTS, type Endpoint, type HeldOutSpec } from "../experiments/endpoints.ts";
 
 export const MARK_START = "<!-- GENERATED:endpoints:start -->";
 export const MARK_END = "<!-- GENERATED:endpoints:end -->";
+export const HELD_OUT_MARK_START = "<!-- GENERATED:held-out:start -->";
+export const HELD_OUT_MARK_END = "<!-- GENERATED:held-out:end -->";
 
 /** Renders the numbered endpoint list, markers included, from `description` fields. */
-export function renderEndpointsSection(endpoints: Endpoint[]): string {
+export function renderEndpointsSection(endpoints: { description: string }[]): string {
   const items = endpoints.map((e, i) => `${i + 1}. ${e.description}`);
   return `${MARK_START}\n${items.join("\n")}\n${MARK_END}`;
 }
 
 /**
- * Replaces the text between the markers in `doc` with a freshly rendered
- * section. Throws if the markers are missing, duplicated in the wrong order,
- * or absent -- a doc without markers cannot be generated into, by design (it
- * must be added once, by hand, alongside the first `deno task gen-prereg`).
+ * Renders the held-out observables' numbered list plus the top-level
+ * "at least N of them" decision rule (`summary`), markers included. A
+ * separate section from `renderEndpointsSection`'s "## Primary endpoints" --
+ * these observables are never used by any search, selection or environment
+ * generator (see the surrounding hand-written prose in preregistration.md).
  */
-export function applyGeneratedSection(doc: string, endpoints: Endpoint[]): string {
-  const startIdx = doc.indexOf(MARK_START);
-  const endIdx = doc.indexOf(MARK_END);
+export function renderHeldOutSection(endpoints: { description: string }[], summary: string): string {
+  const items = endpoints.map((e, i) => `${i + 1}. ${e.description}`);
+  return `${HELD_OUT_MARK_START}\n${items.join("\n")}\n\n${summary}\n${HELD_OUT_MARK_END}`;
+}
+
+/**
+ * Replaces the text between `startMark`/`endMark` in `doc` with `section`.
+ * Throws if the markers are missing or out of order -- a doc without markers
+ * cannot be generated into, by design (each pair must be added once, by
+ * hand, alongside the first `deno task gen-prereg`).
+ */
+function replaceBetween(doc: string, startMark: string, endMark: string, section: string): string {
+  const startIdx = doc.indexOf(startMark);
+  const endIdx = doc.indexOf(endMark);
   if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
-    throw new Error(
-      `experiments/preregistration.md is missing the ${MARK_START} / ${MARK_END} markers around its endpoint list`,
-    );
+    throw new Error(`experiments/preregistration.md is missing the ${startMark} / ${endMark} markers`);
   }
-  const before = doc.slice(0, startIdx);
-  const after = doc.slice(endIdx + MARK_END.length);
-  return `${before}${renderEndpointsSection(endpoints)}${after}`;
+  return `${doc.slice(0, startIdx)}${section}${doc.slice(endIdx + endMark.length)}`;
+}
+
+/** Replaces the "## Primary endpoints" generated section. */
+export function applyGeneratedSection(doc: string, endpoints: Endpoint[]): string {
+  return replaceBetween(doc, MARK_START, MARK_END, renderEndpointsSection(endpoints));
+}
+
+/** Replaces the "## Held-out observables" generated section. */
+export function applyHeldOutSection(doc: string, endpoints: HeldOutSpec[], summary: string): string {
+  return replaceBetween(doc, HELD_OUT_MARK_START, HELD_OUT_MARK_END, renderHeldOutSection(endpoints, summary));
 }
 
 export type GenPlan =
@@ -63,8 +84,13 @@ export type GenPlan =
  * hash -- unless there is nothing to change (`next === doc`), which is
  * always safe to report as a no-op.
  */
-export function planGeneration(doc: string, endpoints: Endpoint[], frozenHashes: string[]): GenPlan {
-  const next = applyGeneratedSection(doc, endpoints);
+export function planGeneration(
+  doc: string,
+  endpoints: Endpoint[],
+  frozenHashes: string[],
+  heldOut: { endpoints: HeldOutSpec[]; summary: string } = { endpoints: HELD_OUT_SPECS, summary: HELD_OUT_SUMMARY },
+): GenPlan {
+  const next = applyHeldOutSection(applyGeneratedSection(doc, endpoints), heldOut.endpoints, heldOut.summary);
   if (next === doc) return { action: "noop" };
   if (frozenHashes.length > 0) {
     return {

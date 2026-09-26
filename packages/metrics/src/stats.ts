@@ -72,6 +72,87 @@ export function saturatingFit(t: number[], y: number[]): SaturatingFit {
   return best;
 }
 
+/**
+ * OLS slope of `y` against `t` (`linearFit`), sorted by `t` first for
+ * safety. Returns NaN when fewer than `minPoints` points are given.
+ *
+ * Deliberately does *not* pick a "second half" window itself (an earlier
+ * version did, over whichever points happened to carry a finite value --
+ * review finding: filtering to finite values *before* windowing lets a
+ * missing late observation quietly move the fitted window earlier, instead
+ * of being reported as a missing measurement). The window is now
+ * `scheduledTrend`'s job below (windowing by *scheduled* census position and
+ * only afterwards checking for a missing value); this function just fits
+ * whatever points it is given.
+ */
+export function trendSlope(t: number[], y: number[], minPoints = 4): number {
+  const n = Math.min(t.length, y.length);
+  if (n < minPoints) return NaN;
+  const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => t[a] - t[b]);
+  return linearFit(order.map((i) => t[i]), order.map((i) => y[i])).slope;
+}
+
+export type TrendStatus = "ok" | "excluded" | "short";
+export interface TrendWindowResult {
+  slope: number;
+  /**
+   * "ok": the fit window's scheduled positions all carried a value.
+   * "excluded": the window was long enough, but at least one position that
+   * should have carried a value (scheduled, and -- if `deepOnly` -- a deep
+   * census) didn't; the run is excluded from this observable, not silently
+   * shrunk to fewer points.
+   * "short": fewer than `minPoints` scheduled positions fall in the second
+   * half at all, independent of whether any value is present.
+   */
+  status: TrendStatus;
+}
+
+/**
+ * Held-out observables' trend statistic and fit window (experiments/
+ * endpoints.ts: HELD_OUT_SPECS). Pure and testable in isolation from a run
+ * bundle -- tools/analyze.ts's `trendFor` is a thin wrapper that supplies
+ * `steps`/`values` from a loaded run's `series.jsonl` and tallies the
+ * returned `status` across an ensemble.
+ *
+ * The window is defined by *scheduled* census position -- position i
+ * (0-indexed) is exactly the observer's `censusIdx` at that census (see
+ * packages/runner/src/observe.ts / runner.ts: `censusIdx` starts at 0,
+ * increments once per census, and is restored across checkpoints/segments,
+ * so it never resets mid-run), so "deep" is exactly `i % deepEvery === 0` --
+ * never inferred from which censuses happen to carry a finite value. The
+ * second half of *those* scheduled positions is selected first; only then
+ * are the values at those positions read out and checked for
+ * finiteness -- so a missing scheduled observation excludes the run
+ * (`"excluded"`), rather than quietly sliding the window earlier.
+ *
+ * `minPoints` is a short-run guard only, not a statistical requirement (see
+ * `trendSlope`'s own note) -- at the registered schedule (1e6 steps,
+ * censusEvery=100, deepEvery=10) a deep-only window alone retains ~500
+ * points, far above any reasonable floor.
+ */
+export function scheduledTrend(
+  steps: number[],
+  values: (number | undefined)[],
+  deepEvery: number,
+  deepOnly: boolean,
+  minPoints = 4,
+): TrendWindowResult {
+  const n = Math.min(steps.length, values.length);
+  const positions = Array.from({ length: n }, (_, i) => i).filter((i) => !deepOnly || i % deepEvery === 0);
+  const half = positions.slice(Math.floor(positions.length / 2));
+  if (half.length < minPoints) return { slope: NaN, status: "short" };
+  const t: number[] = [], y: number[] = [];
+  for (const i of half) {
+    const v = values[i];
+    if (typeof v === "number" && Number.isFinite(v)) {
+      t.push(steps[i]);
+      y.push(v);
+    }
+  }
+  if (t.length !== half.length) return { slope: NaN, status: "excluded" };
+  return { slope: trendSlope(t, y, minPoints), status: "ok" };
+}
+
 export type GrowthVerdict = "growing" | "saturating" | "flat" | "indeterminate";
 
 /**
@@ -156,6 +237,81 @@ export function mannWhitney(
   if (!(variance > 0)) return { U, p: 1, pGreater: 1, effect, exact: false };
   const z = (U - mu) / Math.sqrt(variance);
   return { U, p: Math.min(1, 2 * (1 - normCdf(Math.abs(z)))), pGreater: 1 - normCdf(z), effect, exact: false };
+}
+
+/**
+ * Wilcoxon signed-rank test, one-sample: is the median of `x` greater than
+ * zero? Chosen over the exact sign test for the held-out observables'
+ * absolute-trend claim (experiments/endpoints.ts's "amendment", 2026-09-26)
+ * because it weighs *how far* a slope is from zero, not just its sign -- the
+ * sign test would call a run with slope +1e-9 exactly as much evidence as
+ * one with slope +5, discarding the magnitude information a trend already
+ * carries. Values of exactly zero are dropped first (the standard Wilcoxon
+ * convention; there is no "zero rank" to assign), so `n` in the result may
+ * be less than `x.length`.
+ *
+ * With at most EXACT_MAX values the p-values are exact: `pGreater` is the
+ * exact fraction of the 2^n sign assignments (a value's rank keeps its
+ * observed sign or flips, each with probability 1/2 under the null of a
+ * symmetric distribution centered at zero) whose signed-rank sum W+ is at
+ * least the one observed, computed by the same doubled-integer subset-sum
+ * `mannWhitney` uses for its own exact tail (ties give midranks; doubling
+ * keeps the accumulator integral). Larger samples fall back to the
+ * tie-corrected normal approximation.
+ */
+export function wilcoxonSignedRank(
+  x: number[],
+  method: "auto" | "exact" | "normal" = "auto",
+): { n: number; W: number; p: number; pGreater: number; exact: boolean } {
+  const nz = x.filter((v) => v !== 0);
+  const n = nz.length;
+  if (n === 0) return { n: 0, W: 0, p: 1, pGreater: 1, exact: true };
+  const abs = nz.map((v) => Math.abs(v));
+  const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => abs[a] - abs[b]);
+  const ranks = new Array<number>(n);
+  let tieTerm = 0; // sum over tie groups of (t^3 - t)
+  for (let i = 0; i < n; ) {
+    let j = i;
+    while (j + 1 < n && abs[order[j + 1]] === abs[order[i]]) j++;
+    const r = (i + j) / 2 + 1;
+    for (let k = i; k <= j; k++) ranks[order[k]] = r;
+    const t = j - i + 1;
+    tieTerm += t * t * t - t;
+    i = j + 1;
+  }
+  let Wplus = 0;
+  for (let i = 0; i < n; i++) if (nz[i] > 0) Wplus += ranks[i];
+  if (method === "exact" || (method === "auto" && n <= EXACT_MAX)) {
+    // Doubled midranks are integers; a sign assignment either contributes 0
+    // (negative) or its doubled rank (positive) to the doubled sum -- the
+    // same subset-sum-by-convolution `mannWhitney` uses for its exact tail.
+    const r2 = ranks.map((r) => Math.round(2 * r));
+    const maxS = r2.reduce((s, r) => s + r, 0);
+    let dist = new Float64Array(maxS + 1);
+    dist[0] = 1;
+    for (const r of r2) {
+      const next = new Float64Array(maxS + 1);
+      for (let s = 0; s + r <= maxS; s++) if (dist[s]) {
+        next[s] += dist[s]; // this value's sign flips negative: contributes 0
+        next[s + r] += dist[s]; // keeps its observed positive contribution
+      }
+      dist = next;
+    }
+    const obs = Math.round(2 * Wplus);
+    let total = 0, ge = 0, le = 0;
+    for (let s = 0; s <= maxS; s++) {
+      total += dist[s];
+      if (s >= obs) ge += dist[s];
+      if (s <= obs) le += dist[s];
+    }
+    const pGreater = ge / total;
+    return { n, W: Wplus, p: Math.min(1, 2 * Math.min(pGreater, le / total)), pGreater, exact: true };
+  }
+  const mu = (n * (n + 1)) / 4;
+  const variance = (n * (n + 1) * (2 * n + 1)) / 24 - tieTerm / 48;
+  if (!(variance > 0)) return { n, W: Wplus, p: 1, pGreater: 1, exact: false };
+  const z = (Wplus - mu) / Math.sqrt(variance);
+  return { n, W: Wplus, p: Math.min(1, 2 * (1 - normCdf(Math.abs(z)))), pGreater: 1 - normCdf(z), exact: false };
 }
 
 /** Holm step-down adjusted p-values (same order as the input). */

@@ -538,6 +538,176 @@ addressed in place above rather than left as a caveat:
 - **Canonical JSON parity.** `Coordinator.Checkpoint` sorts keys by UTF-16 code units and escapes strings exactly as `JSON.stringify` does (fixture `unicode.blck`).
 - **Store healing.** `Coordinator.Store.put/3` replaces a stored object that no longer validates or no longer has its digest.
 
+## Held-out observables: made executable (resolves the "Deferred" item below)
+
+The item below ("Held-out observables are not yet executable") is resolved: `experiments/endpoints.ts`
+now has a `HELD_OUT_SPECS` array (one entry per observable) alongside `PRIMARY_ENDPOINTS`,
+`tools/gen-prereg.ts` renders both into `experiments/preregistration.md` (a second
+`<!-- GENERATED:held-out:start/end -->` block, next to the existing primary one), and
+`tools/analyze.ts` executes `HELD_OUT_SPECS` via a new `evaluateHeldOut` and renders it in its own
+"## Held-out observables" section, clearly separate from "## Primary endpoints (pre-registered)". The
+pre-registration is still unfrozen (no `experiments/FROZEN`), so this landed without tripping the
+freeze ratchet.
+
+This first landed as a version this section originally described, which was then reviewed (findings
+below) and revised per explicit user decisions -- see "Amendment, 2026-09-26" further down for exactly
+what changed and why. What follows describes the *current* (post-amendment) design; the amendment
+subsection is the record of what it replaced.
+
+**Trend statistic.** Per run, the OLS slope (`trendSlope` in `packages/metrics/src/stats.ts` -- fits
+exactly the points it's given, no internal windowing) of the observable against step. The fit window
+itself is `scheduledTrend` (packages/metrics/src/stats.ts, pure and unit-tested in isolation): the
+second half of the run's *scheduled* census positions (0-indexed row position in `series.jsonl` is
+exactly the observer's `censusIdx`; deep-only fields are scheduled at `position % deepEvery === 0`) --
+not the second half of whichever censuses happen to carry a finite value (a round-1 review finding:
+filtering to finite values before windowing let a missing late observation quietly move the window
+earlier instead of being reported). `tools/analyze.ts`'s `trendFor`/`trend` are a thin, stateful wrapper
+that supplies `scheduledTrend` with a run's `steps`/`values` and tallies its returned status
+(`"ok"`/`"excluded"`/`"short"`) across the ensemble into `trendDiagnostics`, rendered per observable. A
+scheduled observation that is unexpectedly missing excludes that run from that observable's trend,
+rather than silently shrinking the window. Slopes are scaled ×1e5 (change per 1e5 steps, matching
+`growthSlope`'s existing convention) purely for readable output -- Mann–Whitney/Wilcoxon are invariant
+under a positive rescaling, so this changes no test result. `MIN_TREND_POINTS = 4` is a short-run guard
+only (>=3 points for any residual degrees of freedom, +1 margin), not a statistical requirement -- it
+essentially never binds at the registered schedule, which gives ~500 points in a deep-only second-half
+window alone. Because the window keeps `ceil(n/2)` of the `n` scheduled positions before halving, "too
+short" means fewer than `MIN_TREND_POINTS` positions survive that halving (7 scheduled positions retain
+4; 6 retain only 3 and is short) -- a round-2 review finding caught an earlier version of this
+paragraph and the rendered diagnostic stating a wrong, off-by-one total ("8 scheduled censuses
+required"); both now state the retained-count requirement directly instead of a derived total.
+
+**Absolute + relative, controls declared per preset, restricted direction, one shared FIXED-size Holm
+family.** See the pre-registration's own "Amendment, 2026-09-26" note (`experiments/preregistration.md`)
+for the four decisions themselves -- they're pre-registration content, recorded there as the source of
+truth. In code: `HELD_OUT_PRESET_CONTROLS` declares each registered preset's control set;
+`HeldOutSpec.directional` marks which 4 of the 6 observables count; `evaluateHeldOut(views, presetId)`
+computes each directional observable's one-sample `wilcoxonSignedRank` (absolute, forced to the exact
+method) and its Mann-Whitney rows against every declared control (relative). The shared Holm family is
+**fixed to the declared size** -- every test of every directional observable always occupies a slot (24
+for gradient, 20 for spots), whether or not that slot has data; an empty slot contributes the most
+conservative possible value, `p = 1`, for *that test alone* (an observable missing only one declared
+control still uses its real p for every other test it has data for). A round-1 version of this pooled
+only *fully decidable* observables, which shrank the family whenever any observable lacked data -- a
+round-2 review reproduced this manufacturing support purely by losing a control's runs (family 20 -> 15
+flipped an unrelated observable's outcome with no change to its own numbers). Fixing the family size is
+the correction; per-observable/per-row `available`/`supported` are still reported separately from
+whether a slot merely occupies space in the family.
+
+Fixing the family's *size* was not sufficient on its own: because real data replacing a `p = 1`
+placeholder changes that slot's rank, it can shift every *other* slot's Holm multiplier too, so
+`establishedCount + unavailableCount` is not a valid upper bound on how many observables could
+eventually be established (a round-3 review reproduced an already-available observable's own adjusted p
+improving purely because a third, unrelated observable's missing data was completed). `evaluateHeldOut`
+now computes a second, purely-optimistic recomputation of the whole family (`poolAndAdjust(0)`,
+substituting the most favorable value, `p = 0`, for every missing slot instead of the real `p = 1`) and
+counts how many directional observables would pass under it (`summary.optimisticCount`) -- that count,
+not the conservative sum, is what "not-supported" checks against.
+
+**Review findings and their resolutions:**
+
+| # | Round | Finding | Resolution |
+|---|---|---|---|
+| P1 | 1 | Relative superiority (treatment beats controls) does not establish "treatment increases"; a declining-slower-than-controls run passed | Amendment point 1: added the absolute one-sample test |
+| P1 | 1 | Neither registered preset can ever satisfy "require every present control" as coded (each preset always lacks some ablation) | Amendment point 2: controls declared per preset in code, not inferred from what's present |
+| P2 | 1 | Uniform "up is more organised" is not justified for compression ratio or pattern entropy | Amendment point 3: only 4 of 6 observables are directional; the other 2 are descriptive-only |
+| P2 | 1 | Per-observable Holm does not bound the error rate of the resulting "at least 2 of N" count | Amendment point 4: one shared Holm family across every directional observable's tests |
+| P2 | 1 | Filtering to finite values before windowing let a missing observation silently move the window | Fixed (no sign-off needed): window is now defined by scheduled census position; a missing scheduled value excludes and is reported, never silently absorbed |
+| P2 | 1 | Markdown's 4-decimal formatter hid small slopes as "0.0000" | Fixed (no sign-off needed): slopes scaled ×1e5 for display, matching `growthSlope` |
+| — | 1 | `minPoints = 6` borrowed from `growthVsSaturation` without independent justification | Re-justified (not removed): `MIN_TREND_POINTS = 4`, justified directly (residual degrees of freedom for a line fit), not by analogy |
+| P1 | 2 | Excluding an undecidable observable shrank the Holm family and could manufacture support (family 20 -> 15 flipped an unrelated observable's outcome) | Fixed: the family is now a FIXED size per preset (24/20); an unavailable slot contributes p=1, never shrinking the family |
+| P2 | 2 | An entire missing declared control made every observable unavailable, but the summary still returned a plain `supported: false` | Partially fixed: `HeldOutSummary.outcome` became three-valued (`"supported"` / `"not-supported"` / `"unavailable"`), with "not-supported" only when crediting every unavailable *observable* as a hypothetical pass couldn't reach the threshold -- round 3 found this per-observable crediting itself unsound (see below) |
+| P2 | 2 | The endpoint's Wilcoxon call used `"auto"`, which silently falls back to the normal approximation above `EXACT_MAX`, contradicting decision 1's "exact" requirement | Fixed: forced to `"exact"`; refuses (marks unavailable) rather than approximate above `EXACT_MAX`; reports which method ran |
+| P2 | 2 | `docs/refactor-v3-workflow.md` and `preregistration.md` misdescribed already-decided choices as open, and the amendment's intro overstated that the original "where controls do not" wording was unchanged | Fixed: both docs corrected (see below) |
+| P3 | 2 | The short-window diagnostic said "8 scheduled censuses required"; the actual guard (`half.length < minPoints`) needs 7 | Fixed: wording now states the retained-observation count directly (`>= 4 retained`), not a derived total |
+| P1 | 3 | `establishedCount + unavailableCount` is not a valid upper bound on eventual support: completing one observable's missing data can improve *another*, already-available observable's own Holm-adjusted p (reproduced at both spots/10-seed and gradient/10-seed sample sizes) | Fixed: `outcome` now checks an explicit optimistic recomputation of the whole family (`summary.optimisticCount`, missing slots at `p = 0`) instead of the conservative established+unavailable sum |
+| — | 3 | `tools/analyze.ts`'s rendered "not-supported" text claimed every directional observable was decidable, which isn't required by the (corrected) definition | Fixed: text now cites `optimisticCount` directly instead of describing decidability |
+| — | 3 | `preregistration.md` implied a partially-available observable's *entire* slot set gets `p = 1`, and stated the pre-round-3 "not-supported" rule | Fixed: both corrected (see the amendment text below) |
+| — | 3 | `experiments/endpoints.ts`'s own top comment still listed Wilcoxon-exact and α=0.01 as awaiting sign-off, contradicting the "Choices that remain flagged" paragraph just below | Fixed: comment now matches -- only OLS-vs-Theil–Sen remains open |
+
+**Choices that remain flagged for sign-off:** only OLS (`linearFit`) over Theil–Sen for the trend slope
+itself -- the amendment doesn't touch how the slope is computed, only how it's tested. Wilcoxon
+signed-rank (exact) and α = 0.01 as the shared family's alpha are **not** open: the user explicitly
+decided both (decisions 1 and 4 of the amendment) -- Wilcoxon signed-rank, forced to its exact method
+(round-2 review finding: the endpoint used to default to `"auto"`, which silently falls back to the
+normal approximation above `EXACT_MAX` nonzero slopes; it now passes `"exact"` explicitly and marks the
+absolute test unavailable, rather than approximating, for any sample size the exact method can't
+handle), and one shared Holm family at α = 0.01 across every test of every directional observable.
+
+**`lineageCompression` determinism.** The main session confirmed on the archipelago that
+`lineageCompression`/`patternCompression` are not engine-deterministic: identical physics/observer
+digests across 16 runs, but the two backends' `CompressionStream`
+(`packages/metrics/src/complexity.ts`) differ by a few percent on byte-identical input wherever a
+segment was produced by Chrome vs. Deno (e.g. 0.18846 vs. 0.18228 at the same step). The separate metrics-version-2 change
+has since landed: `compressionRatio` uses a bundled deterministic deflate (fflate 0.8.3, same raw-deflate
+format and level), run manifests record `metricsVersion`, and `tools/analyze.ts`, `stitchRun` and the
+coordinator refuse to mix versions. Pre-switch data is not comparable to post-switch data. The
+observable is descriptive-only regardless (amendment point 3), so this doesn't affect the ">= 2 of 4"
+claim. The earlier open question (whether to gate freezing on that check) is
+therefore resolved: it has landed and is enforced.
+
+**Tests.** `packages/metrics/test/stats.test.ts` covers `trendSlope` (exact slope recovery, no internal
+windowing, the `minPoints` floor, sort-before-fit, sparse/uneven points), `wilcoxonSignedRank` (exact
+monotonic and tied cases hand-checked against the doubled-rank subset-sum distribution, zero-dropping,
+the all-zero edge case, normal-approximation sanity), and `scheduledTrend` (the pure windowing/exclusion
+helper: the off-by-one short-window boundary the round-2 review probed directly, deep-only position
+selection, a missing scheduled observation excluding the run, a missing *non-deep* position not
+excluding it). `experiments/test/endpoints.test.ts` covers `HELD_OUT_SPECS`/`HELD_OUT_PRESET_CONTROLS`'s
+shape (including the declared family sizes, 24/20); `evaluateHeldOut`'s preset-declared-controls
+enforcement (unavailable, not partially evaluated, on an undeclared preset or a missing/too-small
+declared control); the reviewer's own round-1 counterexamples (declining-slower-than-controls,
+flat-while-controls-decline, both correctly unsupported); NaN/excluded-run handling; a descriptive
+observable never counting regardless of separation; forcing the exact Wilcoxon method and refusing
+above `EXACT_MAX`; a dedicated check that the Holm-adjusted p-values exactly match `holm()` applied
+once to the FIXED-size pooled family (not once per observable, and not only over decidable
+observables); the reviewer's round-2 shrinkage repro directly (losing one control's data for one
+observable must not shrink the family or flip an unrelated observable's established status); the
+three-valued outcome (`"supported"`/`"not-supported"`/`"unavailable"`, including a fully-evaluated
+all-refuted negative distinct from missing evidence); and the reviewer's round-3 repro directly, for
+both `spots` (10 seeds) and `gradient` (10 seeds -- gradient's larger 5-control family needs its own
+worked example, not the reviewer's original 20-seed one, to land in the same borderline zone):
+completing one observable's missing data must not be
+required to avoid a premature "not-supported" while it's still genuinely possible for two other
+observables to be established once that data arrives (`optimisticCount` reaching >= 2 keeps the outcome
+"unavailable" instead). `experiments/test/prereg-sync.test.ts` and
+`tests/deno/prereg-sync.ts` both check the held-out generated section for staleness, the same way they
+already checked the primary one, plus a held-out-only freeze-ratchet regression case.
+
+### Amendment, 2026-09-26
+
+Codex-astra reviewed the first cut of the above (git history: the version that shipped before this
+amendment) and raised four findings the user then decided on directly (not left to this session's
+judgement, since they narrow what the pre-registration commits to): absolute-plus-relative testing,
+per-preset declared controls, restricting directional claims to 4 of the 6 observables, and one shared
+Holm family across every directional test. Those four decisions are pre-registration content and are
+recorded as the dated amendment in `experiments/preregistration.md` itself (see its "## Held-out
+observables" section) -- this entry exists so the workflow history shows *why* the design above differs
+from what this section described a revision ago, without duplicating the decisions' own wording.
+Three further findings from the same review (missing-scheduled-observation handling, slope-magnitude
+formatting, and the unjustified `minPoints` borrowing) needed no sign-off and are folded into the
+"Review findings and their resolutions" table above as ordinary engineering fixes.
+
+A second review round found the implementation of those same four decisions still incomplete: the Holm
+family shrank instead of staying fixed (contradicting decision 4's "every test of every directional
+observable"), the overall outcome collapsed missing evidence into a plain "no" instead of a distinct
+unavailable state, and the Wilcoxon call could silently approximate instead of honoring decision 1's
+"exact" requirement. None of these are new decisions -- they're the round-1 implementation not yet
+matching what was already decided -- so they're fixed directly (see the table above, rows marked round
+2) rather than added as a second dated amendment to the pre-registration; the pre-registration's own
+text needed only a factual correction (`preregistration.md`'s intro no longer claims the original
+wording is unchanged) rather than a new decision record.
+
+A third review round found the round-2 fix to the overall outcome incomplete in turn: fixing the
+family's *size* stopped it from shrinking, but the "not-supported" check still summed the conservative,
+per-observable established/unavailable counts, which is not a valid upper bound once a fixed-size
+family is involved -- completing one observable's missing data shifts every slot's rank, which can
+improve an unrelated, already-available observable's own adjusted p. Also not a new decision (decision
+4 already said "every test... Holm-corrected together as one family"; round 3 is the implementation
+finally computing what that family-wide interaction actually implies for the three-valued outcome), so
+it's fixed directly (table rows marked round 3) rather than a further dated amendment. The same round
+also caught three lingering documentation inaccuracies (this file's and `preregistration.md`'s
+description of which slots get `p = 1`, and `endpoints.ts`'s own comment still listing Wilcoxon/α as
+open) -- all fixed alongside.
+
 ## Deferred
 
-- **Held-out observables are not yet executable.** `experiments/endpoints.ts` covers the primary endpoints only. The held-out hypothesis ("a positive trend in at least two of six observables") is still prose in `experiments/preregistration.md`, outside the generated section, and `tools/analyze.ts` does not evaluate it. The trend statistic per observable has to be chosen and pre-registered first. Until then, the pre-registration must not be frozen.
+(Nothing outstanding from this list; the held-out observables item above is resolved.)
