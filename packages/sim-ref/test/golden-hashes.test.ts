@@ -11,6 +11,14 @@ import { stateHash } from "@bl/schema";
 // Version 1 is pre-release: the mutation saturation boundary (newB > mutCap)
 // was corrected on 2026-09-26 before the first commit, without changing any
 // earlier pin; "mutation-boundary" pins the corrected rule.
+//
+// WorldConfig's `adhesion`/`kAdhesion` (the adhesion actuator) are optional
+// and deliberately absent from defaultConfig()'s own defaults (see
+// WorldConfig in packages/schema/src/config.ts): the digest hashes the whole
+// config object, so a config that never sets either key must serialise --
+// and hash -- exactly as it did before this actuator existed. Only the
+// "adhesion"/"adhesion-extremes"/"adhesion-default-gain" cases (which do set
+// at least `adhesion`) get new pins below; the 8 original pins are untouched.
 const PINNED: Record<number, Record<string, string>> = {
   1: {
     soup: "b3d47d070e6c6cea",
@@ -20,6 +28,9 @@ const PINNED: Record<number, Record<string, string>> = {
     "blocked-affinity": "5305b74b343ada3a",
     extremes: "4ab5f8cae369f055",
     "neutral-shadow": "be5cf2be45d6a153",
+    adhesion: "50eddcb6828ecddd",
+    "adhesion-extremes": "00c9ffa767290ed9",
+    "adhesion-default-gain": "16b879ff174bb74c",
     "mutation-boundary": "0966e96ab1306e8f",
   },
 };

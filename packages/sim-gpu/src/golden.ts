@@ -39,6 +39,28 @@ export interface GoldenResult {
   events: number;
 }
 
+/**
+ * An irregular, strongly polymer-heavy field: crosses the 16383 `poly()` cap
+ * in most cells and produces both positive and negative, mostly
+ * non-power-of-two-divisible Sobel gradients, so the adhesion term's actual
+ * gain materially changes transport (confirmed by a scratch check: with this
+ * field, zero gain diverges from both explicit 64 and omitted gain from step 1;
+ * a natural, lightly-built-up P field like `generalistWorld`'s does not move
+ * the needle enough to tell them apart over a whole run).
+ */
+function irregularPolymerField(c: WorldConfig): WorldState {
+  const s = buildWorld(c, { nutrient: 0, founders: [] });
+  const n = c.tileW * c.tileH;
+  for (let y = 0; y < c.tileH; y++)
+    for (let x = 0; x < c.tileW; x++) {
+      const i = y * c.tileW + x;
+      s.cells[CH.P * n + i] = (37 * x * x + 91 * y + 12345) % 40000;
+      s.cells[CH.B * n + i] = (17 * x + 5 * y * y) % 500;
+      s.cells[CH.E * n + i] = (23 * x * y) % 2000;
+    }
+  return s;
+}
+
 export function goldenCases(): GoldenCase[] {
   const base = { tileW: 40, tileH: 40, kernelRadius: 5 };
   return [
@@ -98,6 +120,43 @@ export function goldenCases(): GoldenCase[] {
       name: "neutral-shadow",
       cfg: defaultConfig({ ...base, seed: 21, neutral: true, mutRate: 20_000_000, defaultMu: 60, defaultSigma: 20 }),
       init: (c) => soupWorld(c, 6, 32, 64),
+      steps: 90,
+      every: 30,
+    },
+    {
+      // Adhesion actuator (docs/plan.md decision 4, WorldConfig.adhesion): the
+      // flow kernel's extra polymer-gradient term must match GPU/CPU exactly.
+      name: "adhesion",
+      cfg: defaultConfig({ ...base, seed: 31, adhesion: true, kAdhesion: 256, defaultMu: 60, defaultSigma: 20 }),
+      init: (c) => generalistWorld(c, 5, 32, 64),
+      steps: 90,
+      every: 30,
+    },
+    {
+      // Adhesion at the arithmetic boundary: P crosses the 16383 poly() cap
+      // in most cells, kAdhesion is at its RANGES max (1024) together with
+      // dtQ at its max (1024) and massUnit at its min (16, so massDiv = 128,
+      // the smallest divisor the adhesion term ever sees) and an irregular
+      // per-cell P field that produces both positive and negative, mostly
+      // non-power-of-two-divisible Sobel gradients across the grid.
+      name: "adhesion-extremes",
+      cfg: defaultConfig({ tileW: 16, tileH: 16, kernelRadius: 3, seed: 41, adhesion: true, kAdhesion: 1024, dtQ: 1024, massUnit: 16 }),
+      init: irregularPolymerField,
+      steps: 20,
+      every: 5,
+    },
+    {
+      // Adhesion with kAdhesion omitted: GPU and CPU must bake in the same
+      // DEFAULT_K_ADHESION fallback (see WorldConfig.adhesion), not just
+      // agree when the config spells the gain out. Uses the same
+      // polymer-heavy field as "adhesion-extremes" (see
+      // irregularPolymerField), not a natural/generalist one: a scratch
+      // check confirmed the fallback (64) vs kAdhesion:0 on a natural P
+      // field are bit-identical over the whole run -- the field has to
+      // actually make the gain matter for this case to test anything.
+      name: "adhesion-default-gain",
+      cfg: defaultConfig({ ...base, seed: 43, adhesion: true, defaultMu: 60, defaultSigma: 20 }),
+      init: irregularPolymerField,
       steps: 90,
       every: 30,
     },

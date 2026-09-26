@@ -22,7 +22,9 @@ In a world that is closed in matter and open in energy, with individuality, repr
 | uniform-light | spatial energy gradient (gradient preset only); light is set to the tile-mean intensity, rounded to the nearest integer |
 | fixed-env | seasonal change (seasons preset only); the cycle-mean seasonal light, rounded to the nearest integer, is added to the base light |
 | replenished | closure pressure (abiotic waste recycling at a high rate) |
-| no-signal-motility | signalling and active motility |
+| no-signal-motility | adhesion, signalling and active motility |
+
+Caveat on `no-signal-motility`: the adhesion actuator it removes is a tested single-step attraction toward local polymer, but its effect on cohesion — holding a moving, growing colony together — is not demonstrated, even at its maximum gain (see `WorldConfig.adhesion` in `packages/schema/src/config.ts`).
 
 ## Ensemble
 

@@ -23,7 +23,7 @@ Potential energies `eA ≤ eC < eB < eP` make every reaction balance: matter is 
 ## One step
 
 1. **Affinity.** `U = G(K ∗ (B+P); μ, σ)` with a ring kernel `K` of radius R (integer table built with BigInt) and a polynomial Lenia growth function, all in integers. μ, σ come from the cell's genome (defaults for empty cells or in neutral runs).
-2. **Flow.** Displacement `dt((1−α)∇U − α∇M)` (Sobel gradients, `α = min(1, (M/θ)²)`), plus the controller's motility × gain. All signed divisions truncate toward zero, so the rules are mirror-symmetric.
+2. **Flow.** Displacement `dt((1−α)∇U − α∇M + kAdhesion·∇P)` (Sobel gradients, `α = min(1, (M/θ)²)`; the `∇P` term only when `adhesion` is on, the same Sobel shape over structural polymer `P` alone, pulling a cell toward denser nearby polymer, and scaled by `dt` like the other two terms), plus the controller's motility × gain, which is *not* scaled by `dt`. Adhesion is a tested single-step attraction (see `packages/sim-ref/test/adhesion.test.ts`); its effect on holding a moving colony together is not demonstrated — see `WorldConfig.adhesion` for what an exploratory multistep test did and did not show. All signed divisions truncate toward zero, so the rules are mirror-symmetric.
 3. **Transport.** Each source spreads its B, P and E over the cells covered by a box of half-width `32 + spread` (in 1/64 cell) centred on its displacement. Shares are `floor(q·w/D²)`; the source keeps the remainder, so conservation is exact. The target's genome is chosen by a lottery weighted by incoming bound mass (counter-based PRNG keyed on seed, step and cell). Genomes are immutable per lineage id, so a destination that already holds the winner's lineage is not rewritten. A, C and S diffuse with quarter-portion stochastic rounding. A and C are gated by `gateK / (gateK + P_s + P_t)`.
 4. **React.** The controller reads local chemistry, light, signal gradient and affinity. Catalysis runs in a fixed order: photosynthesis (A + light → B), respiration (B → C + E), decomposition (C → A + E), growth (A + E → B), polymer building (B + E → P) and signal emission (E → S). All catalysis uses the effective catalyst `B²/(B+K)`, an Allee effect. Then the work and maintenance costs are paid, with starvation when E runs short. Passive decays and light-driven abiotic recycling follow. Mutation happens per newly synthesised quantum and mints a new lineage id `(step+1, cell)`.
 
@@ -40,10 +40,11 @@ The rules assume the following, enforced by `validateConfig` and `validateState`
 - products with rates use `mulShr(a, b, s) = (a >> s)·b + ((a & mask)·b >> s)`, exact when `(a >> s)·b < 2^32`. For `a ≤ 2^26`: rate ×127 (s=7), light ×255 (s=8), and the summed rates ×762 (s=7) all fit;
 - `cat(B) = B − (K − ⌈K²/(B+K)⌉)` avoids the `B·K` product (K ≤ 65535);
 - per-cell heat is accumulated as a 64-bit (lo, hi) pair on the GPU and as an exact JavaScript number on the CPU. Workgroup sums of light, heat, fluxes and statistics use carry-aware (lo, hi) accumulators;
-- `step ≤ MAX_STEP = 0xFFFFFFF0`, so lineage ids `step + 1` never wrap.
+- `step ≤ MAX_STEP = 0xFFFFFFF0`, so lineage ids `step + 1` never wrap;
+- the adhesion term's `kAdhesion · ∇P` is bounded by `kAdhesion ≤ 1024` and `|∇P| ≤ 4·16383 = 65532` (P capped the same way M already is for `∇M`), so the product stays under `2^26`, the same safety margin as the existing `α · ∇M` term.
 
 The `extremes` golden case runs a world at these limits (total matter at `MATTER_MAX`, E and S at `POOL_MAX`, maximal leak and decay) on every WebGPU backend.
 
 ## Controls
 
-`neutral` expresses one reference phenotype everywhere while lineages and mutations still propagate. `motility: false` disables active movement. Conditions in `packages/runner/src/conditions.ts` map these flags and parameters to the pre-registered controls.
+`neutral` expresses one reference phenotype everywhere while lineages and mutations still propagate. `motility: false` disables active movement. `adhesion: false` (the default) disables the polymer-gradient attraction term in flow, so a disabled world steps bit-identically to a build without the flag. There is no free controller output or genome slot for a dedicated adhesion signal without changing genome layout, so adhesion is derived from the existing "deposition of structural polymer" actuator (BUILD/P, see docs/plan.md decision 4) instead of adding one. Conditions in `packages/runner/src/conditions.ts` map these flags and parameters to the pre-registered controls.

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   artifactDigest,
   buildWorld,
+  canonicalConfig,
   clampLesionRadius,
   decodeCheckpoint,
   defaultConfig,
@@ -32,6 +33,49 @@ describe("config validation", () => {
   it("rejects worlds whose total matter exceeds MATTER_MAX", () => {
     const cfg = defaultConfig({ tileW: 64, tileH: 64 });
     expect(() => buildWorld(cfg, { nutrient: Math.ceil(MATTER_MAX / 4096) + 1, founders: [] })).toThrow(/matter/);
+  });
+});
+
+// `adhesion`/`kAdhesion` are optional and absent from defaultConfig()'s own
+// defaults (see WorldConfig in config.ts) so that a config which never
+// touches adhesion serialises -- and hashes -- byte-for-byte as it did before
+// this actuator existed. stateHash/the coordinator's checkpoint digest hash
+// the *whole* config object, so this is load-bearing for continuity of every
+// existing checkpoint, run bundle and replay verification.
+describe("adhesion config is opt-in", () => {
+  it("defaultConfig() carries neither key, so its canonical digest is unaffected by the actuator existing", () => {
+    const cfg = defaultConfig();
+    expect("adhesion" in cfg).toBe(false);
+    expect("kAdhesion" in cfg).toBe(false);
+    const json = canonicalConfig(cfg);
+    expect(json).not.toMatch(/adhesion/i);
+  });
+
+  it("validates adhesion/kAdhesion only when present", () => {
+    expect(validateConfig(defaultConfig())).toEqual([]);
+    expect(validateConfig(defaultConfig({ adhesion: true }))).toEqual([]);
+    expect(validateConfig(defaultConfig({ adhesion: true, kAdhesion: 200 }))).toEqual([]);
+    expect(validateConfig({ ...defaultConfig(), adhesion: 1 as never })).not.toEqual([]);
+    expect(validateConfig({ ...defaultConfig(), kAdhesion: -1 })).not.toEqual([]);
+    expect(validateConfig({ ...defaultConfig(), kAdhesion: 1025 })).not.toEqual([]);
+    expect(validateConfig({ ...defaultConfig(), kAdhesion: 3.5 })).not.toEqual([]);
+  });
+
+  it("round-trips an adhesion-enabled config through the checkpoint codec artifacts use", () => {
+    const cfg = defaultConfig({ tileW: 32, tileH: 32, kernelRadius: 4, adhesion: true, kAdhesion: 300 });
+    const s = soupWorld(cfg, 2, 32, 64);
+    const { state } = decodeCheckpoint(encodeCheckpoint(s));
+    expect(state.cfg.adhesion).toBe(true);
+    expect(state.cfg.kAdhesion).toBe(300);
+    expect(stateHash(state)).toBe(stateHash(s));
+  });
+
+  it("a checkpoint from before this actuator (no adhesion keys) decodes with adhesion left unset, not defaulted", () => {
+    const cfg = defaultConfig({ tileW: 32, tileH: 32, kernelRadius: 4 });
+    const s = soupWorld(cfg, 2, 32, 64);
+    const { state } = decodeCheckpoint(encodeCheckpoint(s));
+    expect(state.cfg.adhesion).toBeUndefined();
+    expect(state.cfg.kAdhesion).toBeUndefined();
   });
 });
 

@@ -22,6 +22,7 @@ import {
   W1_OFF,
   W2_OFF,
   POOL_MAX,
+  DEFAULT_K_ADHESION,
   FLUX_COUNT,
   FLUX_NAMES,
   encodeGenome,
@@ -128,6 +129,8 @@ export function prelude(c: WorldConfig): string {
   };
   consts.NEUTRAL = c.neutral ? "true" : "false";
   consts.MOTILITY = c.motility === false ? "false" : "true";
+  consts.ADHESION = c.adhesion === true ? "true" : "false";
+  consts.K_ADHESION = i(c.kAdhesion ?? DEFAULT_K_ADHESION);
   consts.L_FLUX = u(LEDGER.FLUX);
   consts.FLUX_N = u(FLUX_COUNT);
   FLUX_NAMES.forEach((name, k) => (consts[`FX_${name.toUpperCase()}`] = u(k)));
@@ -299,6 +302,7 @@ export function flowShader(c: WorldConfig): string {
 @group(0) @binding(3) var<storage, read_write> disp: array<u32>;
 
 fn m(j: u32) -> i32 { return i32(min(cells[CH_B + j] + cells[CH_P + j], 16383u)); }
+fn poly(j: u32) -> i32 { return i32(min(cells[CH_P + j], 16383u)); }
 
 @compute @workgroup_size(${WG}, ${WG})
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
@@ -318,8 +322,19 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   let Mi = u32(m(i));
   var alpha = 256;
   if (Mi < THETA) { alpha = i32((Mi * Mi * 256u) / (THETA * THETA)); }
-  let Fx = ((256 - alpha) * gUx) / 2048 - (alpha * gMx) / MASS_DIV;
-  let Fy = ((256 - alpha) * gUy) / 2048 - (alpha * gMy) / MASS_DIV;
+  var Fx = ((256 - alpha) * gUx) / 2048 - (alpha * gMx) / MASS_DIV;
+  var Fy = ((256 - alpha) * gUy) / 2048 - (alpha * gMy) / MASS_DIV;
+  // Adhesion (off by default): climb the local polymer gradient, same Sobel
+  // shape as gU/gM but over P alone (and, like them, scaled by DT_Q below),
+  // pulling a cell toward denser nearby P. Its effect on holding a moving
+  // colony together is not demonstrated (see WorldConfig.adhesion in
+  // packages/schema/src/config.ts).
+  if (ADHESION) {
+    let gPx = poly(ne) + 2 * poly(e) + poly(se) - (poly(nw) + 2 * poly(w) + poly(sw));
+    let gPy = poly(sw) + 2 * poly(s) + poly(se) - (poly(nw) + 2 * poly(nn) + poly(ne));
+    Fx += (K_ADHESION * gPx) / MASS_DIV;
+    Fy += (K_ADHESION * gPy) / MASS_DIV;
+  }
   var dx = (DT_Q * Fx) / 1024;
   var dy = (DT_Q * Fy) / 1024;
   if (MOTILITY && (genome[G_LIN_HI + i] | genome[G_LIN_LO + i]) != 0u) {

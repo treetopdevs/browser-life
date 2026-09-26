@@ -159,6 +159,7 @@ export function specConfig(spec: RunSpec): WorldConfig {
   if (!preset) throw new Error(`unknown preset ${spec.presetId}`);
   const base = presetConfig(preset, spec.seed);
   const cond = conditionById(spec.condition);
+  // spec.overrides wins last, so e.g. { adhesion: true } re-enables adhesion even under no-signal-motility.
   return { ...base, ...cond.apply(base), ...(spec.overrides ?? {}) };
 }
 

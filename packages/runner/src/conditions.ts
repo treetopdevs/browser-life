@@ -58,9 +58,20 @@ export const CONDITIONS: Condition[] = [
   },
   {
     id: "no-signal-motility",
-    label: "No signal/motility",
-    removes: "signal emission and active motility (blocks coordination)",
-    apply: () => ({ kEmit: 0, motility: false }),
+    label: "No adhesion/signal/motility",
+    // The plan's "no adhesion/signal actuators (blocks transitions)" control;
+    // motility is included too since without it neither adhesion nor signal
+    // can produce coordinated multicellular behaviour on their own.
+    removes: "adhesion (when present), signal emission and active motility (blocks coordination and major transitions)",
+    // Only overrides `adhesion` when the input config actually set it: adding
+    // the key to a config that never had it would change that config's
+    // canonical-JSON digest (see WorldConfig.adhesion), corrupting the
+    // checkpoint/replay continuity of every existing no-signal-motility run
+    // that predates the adhesion actuator.
+    // Note: specConfig (packages/runner/src/runner.ts) applies spec.overrides
+    // after this condition, so an explicit `{ adhesion: true }` run override
+    // re-enables it even under this control -- overrides always win.
+    apply: (c) => ({ kEmit: 0, motility: false, ...(c.adhesion !== undefined ? { adhesion: false } : {}) }),
   },
 ];
 

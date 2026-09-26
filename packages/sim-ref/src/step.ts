@@ -3,7 +3,11 @@
 //
 // One step = affinity -> flow -> transport -> react.
 //   affinity : U = G(K * (B+P); mu, sigma)            (Lenia growth field)
-//   flow     : displacement = dt((1-a)grad U - a grad M) + motility   (Flow-Lenia)
+//   flow     : displacement = dt((1-a)grad U - a grad M + kAdhesion*grad P) + motility   (Flow-Lenia)
+//              (adhesion is scaled by dt like the other two terms, unlike
+//              motility; an attraction toward local polymer density, off by
+//              default -- see WorldConfig.adhesion for what is and is not
+//              demonstrated about its effect on cohesion)
 //   transport: B, P, E and the genome move by exact integer reintegration;
 //              A, C (membrane-gated) and S diffuse.
 //   react    : controller + metabolism + decays + mutation; energy ledger.
@@ -40,6 +44,7 @@ import {
   LEDGER_MAX,
   MAX_STEP,
   POOL_MAX,
+  DEFAULT_K_ADHESION,
   clampLesionRadius,
   mulShr,
   validateState,
@@ -156,6 +161,12 @@ export class RefSim {
     return m > MCAP ? MCAP : m;
   }
 
+  /** Capped structural-polymer amount (see `mass`), the adhesion field's substrate. */
+  private poly(cells: Uint32Array, i: number): number {
+    const p = cells[CH.P * this.n + i];
+    return p > MCAP ? MCAP : p;
+  }
+
   private living(genome: Uint32Array, i: number): boolean {
     return (genome[G.LIN_HI * this.n + i] | genome[G.LIN_LO * this.n + i]) !== 0;
   }
@@ -208,8 +219,23 @@ export class RefSim {
         const gMy = m(sw) + 2 * m(s) + m(se) - (m(nw) + 2 * m(nn) + m(ne));
         const Mi = m(i);
         const alpha = Mi >= c.thetaMass ? 256 : divu(mulu(mulu(Mi, Mi), 256), mulu(c.thetaMass, c.thetaMass));
-        const Fx = divi((256 - alpha) * gUx, 2048) - divi(alpha * gMx, this.massDiv);
-        const Fy = divi((256 - alpha) * gUy, 2048) - divi(alpha * gMy, this.massDiv);
+        let Fx = divi((256 - alpha) * gUx, 2048) - divi(alpha * gMx, this.massDiv);
+        let Fy = divi((256 - alpha) * gUy, 2048) - divi(alpha * gMy, this.massDiv);
+        // Adhesion (off by default, see WorldConfig.adhesion): climb the
+        // local polymer gradient, the same Sobel shape as gU/gM above but
+        // over P alone (and, like them, scaled by dtQ below), pulling a
+        // cell toward denser nearby P. Its effect on holding a moving
+        // colony together is not demonstrated (see WorldConfig.adhesion);
+        // this only steers displacement, and transport (below) conserves
+        // matter regardless of disp, so adhesion cannot break conservation
+        // either way.
+        if (c.adhesion === true) {
+          const gain = c.kAdhesion ?? DEFAULT_K_ADHESION;
+          const p = (j: number) => this.poly(cells, j);
+          const [gPx, gPy] = sobelGrad(p(ne), p(e), p(se), p(nw), p(w), p(sw), p(nn), p(s));
+          Fx += divi(gain * gPx, this.massDiv);
+          Fy += divi(gain * gPy, this.massDiv);
+        }
         let dx = divi(c.dtQ * Fx, 1024);
         let dy = divi(c.dtQ * Fy, 1024);
         if (c.motility && this.living(genome, i)) {
@@ -566,6 +592,17 @@ export function growth(u: number, mu: number, sigma: number): number {
   const y = mulu(xx, xx) >>> 8;
   const z = mulu(y, y) >>> 8;
   return 2 * z - 256;
+}
+
+/**
+ * The Sobel-kernel gradient shape flow() uses for gU and gM, factored out so
+ * adhesion's ∇P term (the only caller) is unit-testable on its own. Neighbour
+ * order matches flow()'s ne, e, se, nw, w, sw, n, s.
+ */
+export function sobelGrad(ne: number, e: number, se: number, nw: number, w: number, sw: number, n: number, s: number): [number, number] {
+  const gx = ne + 2 * e + se - (nw + 2 * w + sw);
+  const gy = sw + 2 * s + se - (nw + 2 * n + ne);
+  return [gx, gy];
 }
 
 /**

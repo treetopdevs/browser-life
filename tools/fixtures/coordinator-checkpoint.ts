@@ -3,11 +3,11 @@
 // the physics state; both fixtures' observers are small synthetic values
 // (not a real ObserverState from packages/runner) chosen to exercise
 // Coordinator.Checkpoint's canonicalization of the observer section.
-import { defaultConfig, soupWorld, encodeCheckpoint, stateHash, artifactDigest } from "@bl/schema";
+import { defaultConfig, soupWorld, encodeCheckpoint, stateHash, artifactDigest, type WorldConfig } from "@bl/schema";
 import { RefSim } from "@bl/sim-ref";
 
-function build(steps: number, observer: unknown) {
-  const cfg = defaultConfig({ tileW: 24, tileH: 24, kernelRadius: 3, seed: 7 });
+function build(steps: number, observer: unknown, cfgOverrides: Partial<WorldConfig> = {}) {
+  const cfg = defaultConfig({ tileW: 24, tileH: 24, kernelRadius: 3, seed: 7, ...cfgOverrides });
   const sim = new RefSim(soupWorld(cfg, 2, 32, 64));
   sim.run(steps);
   return {
@@ -60,3 +60,13 @@ const unicode = build(3, {
 });
 await Deno.writeFile("apps/coordinator/test/fixtures/unicode.blck", unicode.bytes);
 console.log(JSON.stringify(unicode.info));
+
+// adhesion.blck: an adhesion-enabled config (WorldConfig.adhesion, both keys
+// optional and normally absent -- see packages/schema/src/config.ts). Proves
+// Coordinator.Checkpoint's generic canonical_json handles the two extra
+// config keys identically to canonicalConfig/stateHash on the TS side, so a
+// run that used the adhesion actuator digests and replay-verifies the same
+// on the coordinator as it does in the browser/Deno runner.
+const adhesion = build(12, { step: 12, adhesion: true }, { adhesion: true, kAdhesion: 300 });
+await Deno.writeFile("apps/coordinator/test/fixtures/adhesion.blck", adhesion.bytes);
+console.log(JSON.stringify(adhesion.info));

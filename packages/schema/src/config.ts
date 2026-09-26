@@ -86,7 +86,50 @@ export interface WorldConfig {
   neutral: boolean;
   /** Active motility enabled (controller outputs move biomass). Off in the no-coordination control. */
   motility: boolean;
+  /**
+   * Adhesion actuator: an attraction term toward local structural-polymer
+   * density (gradient climbing on P, the membrane matter the BUILD output
+   * already deposits — see docs/plan.md decision 4). A cell is pulled toward
+   * denser nearby P; this is a measured, tested effect (see
+   * packages/sim-ref/test/adhesion.test.ts) on the single-step, motility-off
+   * displacement of a cell next to a strong polymer source.
+   *
+   * Whether this is *enough* to hold a moving, growing colony together
+   * against its own members' independent motility -- "coherent group
+   * movement", the M7 collective-tracker property -- is a hypothesis. Its
+   * effect on cohesion is **not demonstrated**: an exploratory multistep test
+   * (motility on, a colony with chemistry-driven per-cell motility, growing
+   * over 300 steps) showed no measurable reduction in dispersion at the
+   * default gain, and only about 1% even at the maximum `kAdhesion`.
+   * Evaluating and, if needed, strengthening cohesion (larger gain, an
+   * evolvable per-lineage multiplier, or a different mechanism entirely) is
+   * left to M7 rather than asserted here.
+   *
+   * There is no free NN output or genome slot to spend on a dedicated
+   * adhesion signal without changing genome layout (all 8 controller
+   * outputs and all 3 extra mutation slots are already spoken for), so
+   * adhesion is derived from the existing "deposition of structural
+   * polymer" actuator (BUILD/P) instead of adding one: a lineage that
+   * builds more membrane is pulled more strongly toward it.
+   *
+   * Both fields are **optional and omitted from `defaultConfig()`'s own
+   * defaults** rather than defaulting to `false`/a number: `stateHash` and
+   * the coordinator's checkpoint digest hash the whole config object
+   * (canonical JSON, sorted keys), so every existing checkpoint, run bundle
+   * and replay-verification digest was computed without these keys. Adding
+   * them to the defaults would silently change those digests for every
+   * config, adhesion-enabled or not. Treat `adhesion` as on only when it is
+   * exactly `true`; treat a missing `kAdhesion` as `DEFAULT_K_ADHESION`. A
+   * config that never sets either key round-trips (encode, decode, hash)
+   * byte-for-byte as if this actuator did not exist.
+   */
+  adhesion?: boolean;
+  /** Adhesion gain: F += kAdhesion * grad(P) / massDiv, only when `adhesion` is true. */
+  kAdhesion?: number;
 }
+
+/** `kAdhesion` when `adhesion` is enabled but `kAdhesion` itself is not set. */
+export const DEFAULT_K_ADHESION = 64;
 
 export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig {
   return {
@@ -200,6 +243,10 @@ const RANGES: Partial<Record<keyof WorldConfig, Range>> = {
   kELeak: [0, 65535],
   kSDecay: [0, 65535],
   kAbio: [0, 65535],
+  // Bounded so kAdhesion * gradP (|gradP| <= 4*16383 = 65532, see poly() in
+  // packages/sim-ref/src/step.ts) stays far under 2^31, matching the same
+  // margin as the existing alpha * gradM term in flow().
+  kAdhesion: [0, 1024],
   mutRate: [0, 0xffffffff],
   mutStep: [1, 127],
   lightBase: [0, 255],
@@ -222,6 +269,15 @@ export function validateConfig(c: WorldConfig): string[] {
     }
     const r = RANGES[k];
     if (r && (!Number.isInteger(v) || (v as number) < r[0] || (v as number) > r[1])) errs.push(`${k} must be an integer in ${r[0]}..${r[1]}`);
+  }
+  // adhesion/kAdhesion are optional (see WorldConfig) and so are not in
+  // defaultConfig()'s keys above; validate them only when present, since a
+  // missing key is a valid, meaningful value (off / DEFAULT_K_ADHESION).
+  if (c.adhesion !== undefined && typeof c.adhesion !== "boolean") errs.push("adhesion must be a boolean");
+  if (c.kAdhesion !== undefined) {
+    const r = RANGES.kAdhesion!;
+    if (typeof c.kAdhesion !== "number" || !Number.isInteger(c.kAdhesion) || c.kAdhesion < r[0] || c.kAdhesion > r[1])
+      errs.push(`kAdhesion must be an integer in ${r[0]}..${r[1]}`);
   }
   if (errs.length) return errs;
   if (c.ruleVersion !== RULE_VERSION) errs.push(`ruleVersion ${c.ruleVersion} != ${RULE_VERSION}`);

@@ -26,3 +26,22 @@ describe("controls preserve mean illumination (review 4)", () => {
     });
   }
 });
+
+describe('no-signal-motility removes adhesion too (plan\'s "no adhesion/signal actuators" control)', () => {
+  it("turns adhesion off when the input config set it", () => {
+    const base = presetConfig(PRESETS.find((p) => p.id === "gradient")!, 1, { adhesion: true, kAdhesion: 512 });
+    const patch = conditionById("no-signal-motility").apply(base);
+    expect(patch.adhesion).toBe(false);
+    expect(patch.kEmit).toBe(0);
+    expect(patch.motility).toBe(false);
+  });
+
+  it("does not add an adhesion key when the input config never had one (would change its digest)", () => {
+    const base = presetConfig(PRESETS.find((p) => p.id === "gradient")!, 1);
+    expect(base.adhesion).toBeUndefined();
+    const patch = conditionById("no-signal-motility").apply(base);
+    expect("adhesion" in patch).toBe(false);
+    const ctl = { ...base, ...patch };
+    expect(ctl.adhesion).toBeUndefined();
+  });
+});
