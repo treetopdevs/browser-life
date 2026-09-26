@@ -3,6 +3,12 @@
 //
 //   deno run -A tools/bootstrap.ts --batches 20 [--out runs/bootstrap] [--seed 1]
 //     [--confirm-reps 16] [--confirm-seed 1000001] [--confirm-only]
+//     [--select lineages|cells] [--pass-bias 0.5] [--random 0.25]
+//
+// Parents are chosen by genetic lineage (Archive.pickParent) so that one
+// lineage holding many behaviour cells does not crowd out other founders;
+// --select cells restores uniform choice over cell elites. --random is the
+// fraction of fresh candidates (random genomes and generalist mutants).
 //
 // Writes archive.json (elites with genomes and evaluations) and gate.json
 // (screening passers: elites that recovered from a 30% lesion with p > 0.8 and
@@ -15,14 +21,16 @@ import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { generalistGenome, randomGenome, type Genome } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { binomialLowerBound } from "@bl/metrics";
-import { Archive, CONFIRM_REPS, DEFAULT_EVAL, evaluateBatch, geneticClusters, confirmsGate, m3Gate, mutateGenome, pick, quality, type Evaluation } from "@bl/search";
+import { Archive, CONFIRM_REPS, DEFAULT_EVAL, evaluateBatch, geneticClusters, confirmsGate, m3Gate, mutateGenome, parseProbability, pick, quality, type Evaluation } from "@bl/search";
 
 const a = parseArgs(Deno.args, {
-  string: ["batches", "out", "seed", "random", "confirm-reps", "confirm-seed"],
+  string: ["batches", "out", "seed", "random", "confirm-reps", "confirm-seed", "select", "pass-bias"],
   boolean: ["confirm-only"],
-  default: { batches: "10", out: "runs/bootstrap", seed: "1", random: "0.25", "confirm-reps": String(CONFIRM_REPS), "confirm-seed": "1000001" },
+  default: { batches: "10", out: "runs/bootstrap", seed: "1", random: "0.25", "confirm-reps": String(CONFIRM_REPS), "confirm-seed": "1000001", select: "lineages", "pass-bias": "0.5" },
 });
 const ec = { ...DEFAULT_EVAL, seed: Number(a.seed) };
+if (a.select !== "lineages" && a.select !== "cells") throw new Error(`--select must be lineages or cells, not ${a.select}`);
+const search = { select: a.select, passBias: parseProbability("--pass-bias", a["pass-bias"]), random: parseProbability("--random", a.random) };
 const perBatch = Math.floor((ec.side * ec.side) / ec.reps);
 const device = await requestDevice(navigator.gpu);
 const archive = new Archive();
@@ -40,19 +48,20 @@ if (!a["confirm-only"]) {
       rng++;
       const el = archive.elites();
       if (b === 0 && k === 0) cands.push(generalistGenome(mu, sigma));
-      else if (!el.length || (rng * 2654435761 >>> 0) / 2 ** 32 < Number(a.random)) cands.push(k % 2 ? randomGenome(rng, mu, sigma) : mutateGenome(generalistGenome(mu, sigma), rng, 6));
-      else cands.push(mutateGenome(pick(el, rng).genome, rng, 1 + (rng % 4)));
+      else if (!el.length || (rng * 2654435761 >>> 0) / 2 ** 32 < search.random) cands.push(k % 2 ? randomGenome(rng, mu, sigma) : mutateGenome(generalistGenome(mu, sigma), rng, 6));
+      else cands.push(mutateGenome(search.select === "cells" ? pick(el, rng).genome : archive.pickParent(rng, search.passBias)!.genome, rng, 1 + (rng % 4)));
     }
     const t0 = performance.now();
     const evals = await evaluateBatch(device, cands, { ...ec, seed: ec.seed + b });
     let inserted = 0;
     cands.forEach((g, k) => archive.offer(g, evals[k], b) && inserted++);
     const best = archive.elites().reduce((m, e) => Math.max(m, e.quality), 0);
+    const lineages = archive.lineages();
     console.log(
-      `batch ${b}: ${inserted}/${cands.length} inserted, coverage ${(archive.coverage() * 100).toFixed(0)}%, best q ${best.toFixed(3)}, gate-passing ${archive.gatePassing().length} (${((performance.now() - t0) / 1000).toFixed(1)}s)`,
+      `batch ${b}: ${inserted}/${cands.length} inserted, coverage ${(archive.coverage() * 100).toFixed(0)}%, best q ${best.toFixed(3)}, gate-passing ${archive.gatePassing().length}, lineages ${lineages.length} (${lineages.filter((l) => l.passers > 0).length} with passers) (${((performance.now() - t0) / 1000).toFixed(1)}s)`,
     );
     const dump = archive.elites().map((e) => ({ cell: e.cell, quality: e.quality, born: e.born, eval: e.eval, genome: enc(e.genome) }));
-    await Deno.writeTextFile(`${a.out}/archive.json`, JSON.stringify({ evaluated: archive.evaluated, eval: ec, searchSeeds: [ec.seed, ec.seed + b], elites: dump }, null, 1));
+    await Deno.writeTextFile(`${a.out}/archive.json`, JSON.stringify({ evaluated: archive.evaluated, eval: ec, search, searchSeeds: [ec.seed, ec.seed + b], lineages: lineages.map((l) => ({ size: l.size, passers: l.passers, best: l.best.length, bestCell: l.best[0].cell, bestQuality: l.best[0].quality })), elites: dump }, null, 1));
     await Deno.writeTextFile(`${a.out}/gate.json`, JSON.stringify(archive.gatePassing().map((e) => ({ cell: e.cell, quality: quality(e.eval), eval: e.eval, genome: enc(e.genome) })), null, 1));
   }
 }

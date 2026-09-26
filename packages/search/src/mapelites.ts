@@ -22,6 +22,14 @@ export interface ArchiveSpec {
   speedRange: [number, number];
 }
 
+export interface Lineage {
+  /** Members tied at the highest quality (several once quality saturates at 1). */
+  best: Elite[];
+  size: number;
+  /** Members that passed screening (passesGate). */
+  passers: number;
+}
+
 export const DEFAULT_ARCHIVE: ArchiveSpec = { bins: 8, massRange: [7, 13], speedRange: [0, 4] };
 
 export class Archive {
@@ -29,6 +37,10 @@ export class Archive {
   /** Every distinct genome that passed the M3 gate, kept even if displaced from its cell. */
   readonly passers = new Map<string, Elite>();
   evaluated = 0;
+  /** Every viable genome offered (quality > 0); `link` joins them into lineages (union-find). */
+  private readonly viable: Elite[] = [];
+  private readonly link: number[] = [];
+  private lineageCache?: Lineage[];
 
   constructor(readonly spec: ArchiveSpec = DEFAULT_ARCHIVE) {}
 
@@ -43,6 +55,14 @@ export class Archive {
     const q = quality(e);
     if (q <= 0) return false;
     const cell = this.cellOf(e);
+    const idx = this.viable.length;
+    this.viable.push({ genome, eval: e, quality: q, cell, born });
+    this.link.push(idx);
+    this.lineageCache = undefined;
+    for (let j = 0; j < idx; j++) {
+      const rj = this.root(j), ri = this.root(idx);
+      if (rj !== ri && genomeDistance(genome, this.viable[j].genome, CLUSTER_DISTANCE) <= CLUSTER_DISTANCE) this.link[rj] = ri;
+    }
     if (passesGate(e)) {
       const key = genomeKey(genome);
       if (!this.passers.has(key)) this.passers.set(key, { genome, eval: e, quality: q, cell, born });
@@ -58,6 +78,46 @@ export class Archive {
     return [...this.cells.values()];
   }
 
+  private root(i: number): number {
+    while (this.link[i] !== i) i = this.link[i] = this.link[this.link[i]];
+    return i;
+  }
+
+  /**
+   * Genetic lineages: single-linkage clusters (CLUSTER_DISTANCE) over every
+   * viable genome offered, the relation the M3 gate counts, including members
+   * since displaced from their cells.
+   */
+  lineages(): Lineage[] {
+    if (this.lineageCache) return this.lineageCache;
+    const by = new Map<number, Lineage>();
+    this.viable.forEach((el, i) => {
+      const r = this.root(i);
+      const l = by.get(r) ?? { best: [], size: 0, passers: 0 };
+      if (!l.best.length || el.quality > l.best[0].quality) l.best = [el];
+      else if (el.quality === l.best[0].quality) l.best.push(el);
+      l.size++;
+      if (passesGate(el.eval)) l.passers++;
+      by.set(r, l);
+    });
+    return (this.lineageCache = [...by.values()]);
+  }
+
+  /**
+   * A parent chosen by lineage rather than by cell, so that one lineage
+   * holding many cells does not crowd out the others: with probability
+   * `passBias` a lineage with a screening passer (if any), otherwise any
+   * lineage, uniformly; then one of that lineage's best members, uniformly,
+   * so that equally good descendants keep carrying the lineage forward.
+   */
+  pickParent(seed: number, passBias = 0.5): Elite | undefined {
+    const ls = this.lineages();
+    if (!ls.length) return undefined;
+    const withPass = ls.filter((l) => l.passers > 0);
+    const u = lowbias32(seed ^ 0x5bd1e995) / 2 ** 32;
+    return pick(pick(withPass.length && u < passBias ? withPass : ls, seed).best, seed ^ 0x27d4eb2f);
+  }
+
   /**
    * Distinct genomes that passed the M3 gate (see passesGate): an individual
    * regenerates from a 30% lesion with p > 0.8 across replicates, and the form
@@ -71,6 +131,13 @@ export class Archive {
   coverage(): number {
     return this.cells.size / (this.spec.bins * this.spec.bins);
   }
+}
+
+/** Parses a CLI probability such as --pass-bias, refusing blank, non-numeric and out-of-range values. */
+export function parseProbability(flag: string, raw: string | undefined): number {
+  const v = raw !== undefined && /^\s*[0-9.eE+-]+\s*$/.test(raw) ? Number(raw) : NaN;
+  if (!(v >= 0 && v <= 1)) throw new Error(`${flag} must be a probability in [0, 1], not ${JSON.stringify(raw ?? null)}`);
+  return v;
 }
 
 export function passesGate(e: Evaluation, minRecovery = 0.8): boolean {
@@ -89,10 +156,10 @@ export const M3_MIN_CLUSTERS = 20;
  */
 export const CLUSTER_DISTANCE = 10;
 
-/** Number of genome slots (weights, mu, sigma, motGain) that differ. */
-export function genomeDistance(a: Genome, b: Genome): number {
+/** Number of genome slots (weights, mu, sigma, motGain) that differ; stops counting once past `limit`. */
+export function genomeDistance(a: Genome, b: Genome, limit = Infinity): number {
   let d = Number(a.mu !== b.mu) + Number(a.sigma !== b.sigma) + Number(a.motGain !== b.motGain);
-  for (let i = 0; i < a.weights.length; i++) if (a.weights[i] !== b.weights[i]) d++;
+  for (let i = 0; i < a.weights.length && d <= limit; i++) if (a.weights[i] !== b.weights[i]) d++;
   return d;
 }
 
@@ -110,7 +177,7 @@ export function geneticClusters(genomes: Genome[], maxDistance = CLUSTER_DISTANC
   };
   for (let i = 0; i < genomes.length; i++) {
     for (let j = i + 1; j < genomes.length; j++) {
-      if (genomeDistance(genomes[i], genomes[j]) <= maxDistance) parent[root(i)] = root(j);
+      if (genomeDistance(genomes[i], genomes[j], maxDistance) <= maxDistance) parent[root(i)] = root(j);
     }
   }
   const ids = new Map<number, number>();
