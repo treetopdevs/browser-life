@@ -2,10 +2,14 @@
 // and segments.ts (in-process runner calls, no HTTP), this drives a *real*
 // Coordinator.Queue over a *real* HTTP server (a `mix phx.server` subprocess
 // against a scratch --data-dir) through packages/runner/src/island.ts's
-// actual wire protocol: /next -> checkpoint PUT -> /complete, including a
-// mandatory final-segment verification and, deliberately, a corrupted
-// verify report — checking the content-addressed store's on-disk layout and
-// the diverged/blocked cascade this produces.
+// actual wire protocol: /next -> checkpoint PUT -> /complete, across two
+// experiments -- one with verifyFraction 1.0, deliberately fed a corrupted
+// verify report to check the content-addressed store's on-disk layout and
+// the diverged/blocked cascade this produces; the other with verifyFraction
+// 0 to isolate and confirm mandatory final-segment verification on its own
+// (the first experiment's fractional verification alone can't tell a broken
+// "only verify the sampled fraction, never the last segment on its own"
+// implementation from a correct one).
 //
 // Run from the repo root: deno run -A tests/deno/coordinator_integration.ts < /dev/null
 import { requestDevice } from "@bl/sim-gpu";
@@ -150,6 +154,47 @@ try {
     for await (const file of Deno.readDir(`${dataDir}/objects/${fanout.name}`)) objects.push(file.name);
   }
   check("the content-addressed store holds exactly the 3 run attempts' artifacts", objects.length === 3, objects.join(", "));
+
+  // Review 1 finding #11: the scenario above sets `verifyFraction: 1.0`, so
+  // *every* segment is verify-eligible -- it never actually exercises
+  // "mandatory final-segment verification" specifically, since a broken
+  // implementation of that rule (e.g. one that only ever verified a sampled
+  // fraction, never the last segment on its own) would still pass. A
+  // second, `verifyFraction: 0` experiment isolates that rule: no segment
+  // should ever offer a verify task except the run's actual last one.
+  const created2 = await call<{ segments: number }>("/api/experiments", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ ...spec, experiment: "it-final-only", verifyFraction: 0 }),
+  });
+  check("creates the second, verifyFraction:0 experiment", created2.segments === 4, JSON.stringify(created2));
+
+  // One island runs every segment of this experiment back to back; with
+  // verifyFraction 0, none of the first 3 (non-last) segments should ever be
+  // offered as a verify task to interrupt that sequence.
+  const producedByC = await runIsland(device, { coordinator: base, host, maxTasks: 4, idleMs: 200 });
+  check("a single island completes all 4 run tasks uninterrupted (no fractional verify offered)", producedByC === 4, String(producedByC));
+
+  // A different island's very next task must be the final segment's verify
+  // -- not idle, and not a run task (there is nothing left to run).
+  const logD: string[] = [];
+  const verifiedByD = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200, log: (m) => logD.push(m) });
+  const dTask = logD.find((m) => /^(run|verify) /.test(m)) ?? "";
+  check(
+    "a second island is given exactly the final segment's verify task",
+    verifiedByD === 1 && /^verify it-final-only\/\S+ #3 /.test(dTask),
+    `${verifiedByD}: ${dTask}`,
+  );
+  const afterD = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200 });
+  check("no further verification is offered for the run", afterD === 0, String(afterD));
+
+  const afterFinal = await call<{ runs: { run: string; segments: number; verified: number; diverged: number; blocked: number }[] }>("/api/status");
+  const finalOnlyRun = afterFinal.runs.find((r) => r.run.startsWith("it-final-only/"));
+  check(
+    "only the last segment is verified; the run has no divergence or blocking",
+    finalOnlyRun?.segments === 4 && finalOnlyRun?.verified === 1 && finalOnlyRun?.diverged === 0 && finalOnlyRun?.blocked === 0,
+    JSON.stringify(finalOnlyRun),
+  );
 } finally {
   try {
     server.kill("SIGTERM");

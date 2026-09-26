@@ -311,6 +311,16 @@ defmodule Coordinator.Queue do
          prev when not is_nil(prev) <- prev_seg(s, seg) do
       Logger.error("segment #{prev.id} rejected by #{island_id}: #{clip(reason)}")
 
+      # The rejected attempt's checkpoint needs no cleanup (content-addressed
+      # by its own digest under data_dir/objects/, immutable and possibly
+      # shared, unlike the old segment-id-keyed path) but its bundle files
+      # (series.jsonl and friends) are still segment-scoped, mutable, and not
+      # digested at all — left in place, they would keep serving a rejected
+      # run's stale/invalid data over `/api/segments/:id/files/:name` for as
+      # long as the predecessor takes to be redone (or forever, for any file
+      # the redo doesn't happen to rewrite).
+      File.rm_rf(files_dir(s.dir, prev.id))
+
       s =
         %{s | segments: Segment.block_descendants(s.segments, prev.run, prev.index)}
         |> put_in([:segments, prev.id], Segment.requeue(prev))

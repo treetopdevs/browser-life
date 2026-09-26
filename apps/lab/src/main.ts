@@ -379,6 +379,8 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       $("verify-out").textContent = `${m.ok ? "✓ identical" : "✗ DIVERGED"} — ${m.detail}`;
       break;
     case "error":
+      // The worker pauses itself on stepping and census failures; stay in sync.
+      if (playing) setPlaying(false);
       toast(m.message, true);
       console.error(m.message);
       break;

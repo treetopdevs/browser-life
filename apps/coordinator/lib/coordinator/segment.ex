@@ -203,8 +203,18 @@ defmodule Coordinator.Segment do
   uploads nothing of its own to compare against. Segment -> `\"verified\"` on a
   match, `\"diverged\"` on a mismatch (the caller must then call
   `block_descendants/3`).
+
+  Requires the segment to still be `\"done\"` (the same guard `assign_verify/4`
+  applies): a verify attempt whose predecessor-producing run got rejected and
+  requeued out from under it (see `requeue/1`, which abandons any in-flight
+  verify attempt precisely to avoid this) must not be able to complete
+  against a segment that is back to `\"pending\"` — its accepted run attempt no
+  longer has outcome `\"done\"`, so `accepted_digest/1` would return `nil` and
+  every reported digest would "mismatch" it, corrupting a merely-requeued
+  segment into `\"diverged\"` (and blocking every descendant) instead of
+  leaving it reassignable.
   """
-  def complete_verify(seg, island, lease, reported_digest) do
+  def complete_verify(%{status: "done"} = seg, island, lease, reported_digest) do
     case find_attempt(seg, "verify", island, lease) do
       nil ->
         {:error, "segment not assigned to this island/lease"}
@@ -223,18 +233,37 @@ defmodule Coordinator.Segment do
     end
   end
 
+  def complete_verify(_seg, _island, _lease, _reported_digest), do: {:error, "segment not done"}
+
   @doc """
   Marks the accepted run attempt's outcome `\"rejected\"` (in place — its
   record, lease and digests are kept, not discarded, same as an `:abandoned`
   attempt) and returns the segment to `\"pending\"`, bumping the reject
   counter. Used on the *predecessor* a run or verify attempt found
   inconsistent.
+
+  Also abandons any verify attempt still pending against this segment: it was
+  assigned to check the run result this call just invalidated, so letting it
+  complete later would either find no accepted run attempt to compare against
+  (`accepted_digest/1` returns `nil` once the run attempt above is no longer
+  `\"done\"`, so *every* reported digest "mismatches" it) or, worse, block a
+  legitimate future verify assignment once the segment is redone and `\"done\"`
+  again (`assign_verify/4` refuses while any verify attempt is still
+  `\"pending\"`). `complete_verify/4` also guards on `status == \"done\"` as a
+  second line of defense, but there is no reason to leave a moot attempt
+  sitting there pending either way.
   """
   def requeue(seg) do
     attempts =
       case accepted_run_attempt(seg) do
         nil -> seg.attempts
         a -> replace_attempt(seg.attempts, a.id, &%{&1 | outcome: "rejected"})
+      end
+
+    attempts =
+      case Enum.reverse(attempts) |> Enum.find(&(&1.kind == "verify" and Attempt.pending?(&1))) do
+        nil -> attempts
+        v -> replace_attempt(attempts, v.id, &%{&1 | outcome: "abandoned"})
       end
 
     %{seg | status: "pending", attempts: attempts, rejected: seg.rejected + 1}

@@ -212,8 +212,13 @@ function renderEndpoint(n: number, r: EndpointResult): string {
     }
     if (!r.complete) out += `\nThe Holm family is incomplete; the endpoint cannot be established from this ensemble.\n`;
   } else if (r.kind === "threshold") {
-    out += r.rows.map((row) => `${row.condition}: ${row.qualifying}/${row.total} qualifying (need ${row.relation})`).join("; ") + ". ";
-    out += r.available ? `Supported: ${r.supported ? "yes" : "no"}.\n` : `Unavailable (need runs in every group).\n`;
+    out +=
+      r.rows
+        .map((row) => `${row.condition}: ${row.qualifying}/${row.total} qualifying (need ${row.relation}, ${row.classified}/${row.total} classified)`)
+        .join("; ") + ". ";
+    out += r.available
+      ? `Supported: ${r.supported ? "yes" : "no"}.\n`
+      : `Unavailable (need runs, all growth-classified, in every group).\n`;
   } else {
     out += `${r.condition}: ${r.qualifying}/${r.total} runs reach a continuous ≥${r.minRoles}-role coexistence duration of ≥${r.minSteps.toLocaleString()} steps. `;
     out += r.total > 0 ? `Supported: ${r.supported ? "yes" : "no"} (majority).\n` : `Unavailable (no ${r.condition} runs).\n`;

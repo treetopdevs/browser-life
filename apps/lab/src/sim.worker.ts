@@ -24,20 +24,18 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
-import { ActivityTracker, Tracker, census, individuals, lineageRGB, tileDistance2 } from "@bl/metrics";
-import { decodeArtifact, type ObserverSettings, type ObserverState } from "@bl/runner";
+import { census, individuals, lineageRGB } from "@bl/metrics";
+import { decodeArtifact, observeCensus, restoreObservers, serializeObservers, type ObserverSettings, type ObserverState, type Observers } from "@bl/runner";
 import type { CensusMsg, FromWorker, RunManifest, ToWorker } from "./protocol.ts";
 import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
 
 /**
- * The interactive lab's own observation settings: fixed, not user-configured
- * (there is no per-experiment spec here, just a live world to watch). Stored
- * on the manifest so a save/restore round-trip carries them, even though
- * `deepEvery` and `censusEvery` have no effect on the live census today (it
- * runs on the same wall-clock cadence it always has — see `sendCensus`);
- * only `activityThreshold` is live-meaningful, and `null` (Infinity) is
- * correct here since the lab has no neutral-run calibration to draw one
- * from.
+ * The interactive lab's observation settings (fixed; there is no per-run
+ * spec here). Persisted observations happen exactly every `censusEvery`
+ * simulation steps from the world's start, like the headless runner, so
+ * identical physics yields identical observer state however the lab was
+ * played, paused or saved. `deepEvery` only affects runner series records.
+ * The threshold is uncalibrated (`null` = Infinity) in the lab.
  */
 const DEFAULT_SETTINGS: ObserverSettings = { censusEvery: 100, deepEvery: 5, activityThreshold: null };
 
@@ -51,12 +49,19 @@ interface World {
   /** Ledger baseline: content + heat - light, invariant under exact rules. */
   baseline: bigint;
   startMatter: bigint;
-  tracker: Tracker;
-  activity: ActivityTracker;
-  mutations: number;
-  buddings: number;
-  censusIdx: number;
-  extinct: boolean;
+  /** Persisted observers, advanced only by `observeBoundary`. */
+  obs: Observers;
+  /** Step of the latest persisted observation (the world's start step before the first). */
+  observedStep: number;
+  /** An observation is in flight; the frame loop must not step past it. */
+  observing: boolean;
+  /**
+   * Why the observer history is no longer exact (a failed observation may
+   * have drained mutation events or half-updated the observers). Such a
+   * world can still be watched but not stepped or saved; restore a
+   * checkpoint to continue.
+   */
+  observerLost: string | null;
 }
 
 let device: GPUDevice | null = null;
@@ -150,12 +155,12 @@ async function adopt(state: WorldState, manifest: RunManifest, observer?: Observ
     manifest,
     baseline: t.energy + state.heatOut - state.lightIn,
     startMatter: t.matter,
-    tracker: observer ? Tracker.fromJSON(observer.tracker) : new Tracker(),
-    activity: observer ? ActivityTracker.fromJSON(observer.activity) : new ActivityTracker(manifest.settings.activityThreshold ?? Infinity),
-    mutations: observer?.mutations ?? 0,
-    buddings: observer?.buddings ?? 0,
-    censusIdx: observer?.censusIdx ?? 0,
-    extinct: observer?.extinct ?? false,
+    obs: restoreObservers(observer, manifest.settings),
+    // A restored or imported observer describes exactly `state.step`
+    // (decodeArtifact enforces it); a fresh world starts unobserved there.
+    observedStep: state.step,
+    observing: false,
+    observerLost: null,
   };
   old?.renderer.destroy();
   old?.sim.destroy();
@@ -195,14 +200,23 @@ async function load(presetId: string, seed: number, overrides = {}) {
 function frame() {
   frames++;
   const w = world;
-  if (w && !busy && !inflight) {
-    let n = pendingSteps + (playing ? stepsPerFrame : 0);
-    pendingSteps = 0;
+  if (w && !busy && !inflight && !w.observing) {
+    // A world whose observer history is lost is still drawn but never stepped.
+    const want = w.observerLost ? 0 : pendingSteps + (playing ? stepsPerFrame : 0);
+    // Never step past the next census boundary: it is observed before
+    // stepping resumes. Requested single steps beyond it carry over.
+    let n = Math.min(want, nextBoundary(w) - w.sim.step);
+    pendingSteps = Math.max(0, pendingSteps - n);
     try {
       while (n > 0) {
         const k = Math.min(n, 64);
         w.sim.run(k);
         n -= k;
+      }
+      if (!w.observerLost && w.sim.step === nextBoundary(w)) {
+        w.observing = true;
+        // Failures are reported by observeBoundary itself.
+        void exclusive(() => observeBoundary(w)).catch(() => {});
       }
       w.renderer.draw(mode, rect, canvas!.width, canvas!.height);
     } catch (e) {
@@ -267,54 +281,87 @@ async function sendStats(w: World) {
   }
 }
 
+const nextBoundary = (w: World) => w.observedStep + w.manifest.settings.censusEvery;
+
 /**
- * One observation: census, tracker/activity update, budding attribution and
- * counters — the same shape `runExperiment`'s headless loop uses, so a saved
- * checkpoint's observer state means the same thing here as it does there.
- * `sendUi` gates only the live `census` postMessage; the tracker/activity
- * update itself always happens, so save/restore never lose observer state.
+ * The persisted observation at a census boundary (`sim.step` must equal
+ * `nextBoundary(w)`): drains every mutation event since the previous one
+ * and advances the observers through `observeCensus`, exactly as
+ * `runExperiment` does, then refreshes the UI.
  */
-async function observeStep(w: World, sendUi: boolean): Promise<void> {
-  const ledger = await w.sim.drainLedger();
-  // The world may have been replaced (and destroyed) while we awaited.
-  if (!current(w)) return;
-  // Cells, genome head and step are copied in one submission (consistent step).
-  const snap = await w.sim.readSnapshot(false);
-  if (!current(w)) return;
-  w.mutations += ledger.events.length + ledger.dropped;
-  if (ledger.dropped > 0) post({ type: "notice", message: `${ledger.dropped} mutation events dropped (event buffer full); lineage history is incomplete` });
-  const c = census({ cfg: w.sim.cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead });
-  const events = w.tracker.update(c);
-  // Condensation from leaked biomass: attribute to the nearest living
-  // individual of the same lineage (budding) when one is close, matching
-  // runExperiment's classification so a restored run's counts line up.
-  for (const e of events) {
-    if (e.kind !== "birth") continue;
-    const b = w.tracker.alive.get(e.id);
-    let parent: number | null = null;
-    let best = 24 * 24;
-    if (b && b.lineage)
-      for (const o of w.tracker.alive.values()) {
-        if (o.id === b.id || o.lineage !== b.lineage || o.born === c.step) continue;
-        const d = tileDistance2(o, b, w.sim.cfg.tileW, w.sim.cfg.tileH);
-        if (d < best) [best, parent] = [d, o.id];
-      }
-    if (parent !== null) {
-      w.buddings++;
-      if (b) {
-        b.parent = parent;
-        b.generation = (w.tracker.alive.get(parent)?.generation ?? 0) + 1;
+async function observeBoundary(w: World): Promise<void> {
+  try {
+    if (w.observerLost) throw new Error(w.observerLost);
+    const ledger = await w.sim.drainLedger();
+    if (!current(w)) return;
+    const snap = await w.sim.readSnapshot(false);
+    if (!current(w)) return;
+    if (snap.step !== nextBoundary(w)) throw new Error(`observation at t=${snap.step}, expected the census boundary t=${nextBoundary(w)}`);
+    if (ledger.dropped > 0) post({ type: "notice", message: `${ledger.dropped} mutation events dropped (event buffer full); lineage history is incomplete` });
+    const o = observeCensus(w.obs, w.sim.cfg, snap, ledger.events.length + ledger.dropped);
+    w.observedStep = snap.step;
+    // The observation is committed; a failing UI refresh must not mark it lost.
+    const now = performance.now();
+    if (now - lastCensusAt > 500) {
+      lastCensusAt = now;
+      try {
+        postCensus(w, o.census);
+      } catch (e) {
+        post({ type: "error", message: `census display: ${e instanceof Error ? e.message : e}` });
       }
     }
+  } catch (e) {
+    // The drain is destructive and observeCensus mutates the observers as
+    // it goes, so a failure cannot be retried exactly: stop instead.
+    if (current(w) && !w.observerLost) {
+      w.observerLost = `census at t=${w.sim.step} failed (${e instanceof Error ? e.message : e}); observer history is incomplete. Restore a checkpoint or reload to continue.`;
+      playing = false;
+      pendingSteps = 0;
+      post({ type: "error", message: w.observerLost });
+    }
+    throw e;
+  } finally {
+    w.observing = false;
   }
-  const abundance = c.lineages.map((l) => [l.key, l.cells] as [string, number]);
-  w.activity.update(c.step, abundance);
-  w.censusIdx++;
-  if (c.livingCells === 0) w.extinct = true;
-  if (!sendUi) return;
+}
+
+/**
+ * Steps `w` to `target` (inside `exclusive`), observing every census
+ * boundary on the way. An observation failure propagates (and stops the world).
+ */
+async function advanceTo(w: World, target: number): Promise<void> {
+  while (current(w)) {
+    if (w.observerLost) throw new Error(w.observerLost);
+    if (w.sim.step === nextBoundary(w)) {
+      w.observing = true;
+      await observeBoundary(w);
+      continue;
+    }
+    if (w.sim.step >= target) return;
+    let n = Math.min(target, nextBoundary(w)) - w.sim.step;
+    while (n > 0) {
+      const k = Math.min(n, 64);
+      w.sim.run(k);
+      n -= k;
+    }
+    await device!.queue.onSubmittedWorkDone();
+  }
+}
+
+/** Brings the world to a step whose observer state is complete, so it can be saved. */
+async function settle(w: World): Promise<void> {
+  if (w.sim.step === w.observedStep) return;
+  const from = w.sim.step;
+  await advanceTo(w, nextBoundary(w));
+  post({ type: "notice", message: `Advanced ${w.sim.step - from} steps to the census at t=${w.sim.step}` });
+}
+
+function postCensus(w: World, c: ReturnType<typeof census>) {
+  const t = w.obs.tracker;
   const ind = individuals(c);
   const total = c.lineages.reduce((a, l) => a + l.mass, 0) || 1;
-  const count = (k: string) => w.tracker.history.filter((e) => e.kind === k).length;
+  // Totals include events carried over from restored segments.
+  const counts = t.eventCounts();
   const msg: CensusMsg = {
     type: "census",
     step: c.step,
@@ -325,20 +372,23 @@ async function observeStep(w: World, sendUi: boolean): Promise<void> {
       const [hi, lo] = l.key.split(":").map(Number);
       return { key: l.key, share: l.mass / total, color: lineageRGB(hi, lo) };
     }),
-    fissions: w.tracker.fissions,
-    fusions: w.tracker.fusions,
-    births: count("birth"),
-    deaths: count("death"),
-    maxGen: w.tracker.maxGeneration(),
-    mutations: w.mutations,
+    fissions: t.fissions,
+    fusions: t.fusions,
+    births: counts.birth,
+    deaths: counts.death,
+    maxGen: t.maxGeneration(),
+    mutations: w.obs.mutations,
   };
   post(msg);
 }
 
+/** Display-only census of the current step (while paused or between boundaries); observers are untouched. */
 async function sendCensus(w: World) {
   censusBusy = true;
   try {
-    await observeStep(w, true);
+    const snap = await w.sim.readSnapshot(false);
+    if (!current(w)) return;
+    postCensus(w, census({ cfg: w.sim.cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead }));
   } catch (e) {
     if (current(w)) post({ type: "error", message: `census: ${e instanceof Error ? e.message : e}` });
   } finally {
@@ -346,21 +396,11 @@ async function sendCensus(w: World) {
   }
 }
 
-/** The observer section for a checkpoint taken right now, at `step`. */
+/** The observer section for a checkpoint of the current, settled step. */
 function snapshotObserver(w: World, step: number): ObserverState {
-  return {
-    step,
-    settings: w.manifest.settings,
-    tracker: w.tracker.toJSON(),
-    activity: w.activity.toJSON(),
-    mutations: w.mutations,
-    buddings: w.buddings,
-    censusIdx: w.censusIdx,
-    extinct: w.extinct,
-    // The interactive lab doesn't track pattern-entropy state (no UI use for
-    // it); a null prevSym is a fully valid, if unused, observer field.
-    prevSym: null,
-  };
+  if (w.observerLost) throw new Error(w.observerLost);
+  if (step !== w.observedStep) throw new Error(`observer state is at t=${w.observedStep}, not t=${step}`);
+  return serializeObservers(w.obs, step, w.manifest.settings);
 }
 
 async function probe(x: number, y: number) {
@@ -394,10 +434,9 @@ async function probe(x: number, y: number) {
 async function save() {
   const w = world;
   if (!w) return;
-  // Catch the observer up to the exact step we're about to snapshot (the
-  // live census is wall-clock-throttled, so it usually lags a few steps
-  // behind); nothing else can run `sim.run()` while we're inside `exclusive`.
-  await observeStep(w, false);
+  // Observer state is complete only at a census boundary; nothing else can
+  // step the world while we are inside `exclusive`.
+  await settle(w);
   const m = w.manifest;
   const state = await w.sim.readState();
   const bytes = encodeCheckpoint(state, snapshotObserver(w, state.step));
@@ -453,7 +492,7 @@ function importedManifest(state: WorldState, runId: string, settings: ObserverSe
 async function exportRun() {
   const w = world;
   if (!w) return;
-  await observeStep(w, false);
+  await settle(w);
   const state = await w.sim.readState();
   const bytes = encodeCheckpoint(state, snapshotObserver(w, state.step));
   post({ type: "exported", bytes: bytes.buffer as ArrayBuffer, name: `${w.manifest.runId}-t${state.step}.blck` }, [bytes.buffer as ArrayBuffer]);
@@ -466,11 +505,10 @@ async function verify(steps: number) {
   const s0 = await w.sim.readState();
   const twin = await GpuSim.create(device, cloneState(s0));
   try {
-    for (let k = 0; k < steps; k += 64) {
-      w.sim.run(Math.min(64, steps - k));
-      twin.run(Math.min(64, steps - k));
-      await device.queue.onSubmittedWorkDone();
-    }
+    // The live world observes its census boundaries on the way; the twin only steps.
+    await advanceTo(w, s0.step + steps);
+    for (let k = 0; k < steps; k += 64) twin.run(Math.min(64, steps - k));
+    await device.queue.onSubmittedWorkDone();
     const [a, b] = await Promise.all([w.sim.readState(), twin.readState()]);
     const ha = stateHash(a), hb = stateHash(b);
     post({ type: "verify", ok: ha === hb, detail: `${steps} steps from t=${s0.step}: ${ha}${ha === hb ? " = " : " ≠ "}${hb}` });

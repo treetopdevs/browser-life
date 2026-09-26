@@ -129,6 +129,48 @@ defmodule Coordinator.SegmentTest do
     assert Segment.requeue(requeued).rejected == 2
   end
 
+  # Review 1 finding #2: a verify attempt assigned against a run result that
+  # a *later* segment's island then rejects (invalidating the run attempt the
+  # verify was checking) used to stay "pending" through `requeue/1`. If its
+  # `complete_verify` call landed after that, it would find the segment back
+  # to "pending" but its `accepted_digest` now `nil` (the run attempt was
+  # flipped to "rejected"), so *any* reported digest "mismatched" it --
+  # corrupting a merely-requeued, about-to-be-redone segment into
+  # "diverged" and blocking every descendant.
+  test "requeue abandons an in-flight verify attempt instead of leaving it able to corrupt the segment later" do
+    s = done_run()
+    {:ok, s} = Segment.assign_verify(s, "b", "vlease", 100)
+    assert [_run, %{kind: "verify", outcome: "pending", id: "vlease"}] = s.attempts
+
+    requeued = Segment.requeue(s)
+    assert requeued.status == "pending"
+
+    assert [%{outcome: "rejected"}, %{kind: "verify", outcome: "abandoned", id: "vlease"}] =
+             requeued.attempts
+
+    # The stale verify lease can no longer complete against the requeued
+    # segment: `complete_verify/4` now refuses outright since the segment
+    # isn't "done", instead of "succeeding" into a corrupt "diverged" status.
+    assert {:error, "segment not done"} =
+             Segment.complete_verify(requeued, "b", "vlease", "digest1")
+
+    # And once the predecessor is redone (a fresh run attempt completes),
+    # a new verify can be assigned immediately -- the old, abandoned attempt
+    # no longer counts as "pending" and blocking `assign_verify/4`.
+    {:ok, reassigned} = Segment.assign_run(requeued, "c", "lease2", 200)
+    {:ok, republished} = Segment.publish(reassigned, "c", "lease2", "digest2", "state2")
+    {:ok, redone} = Segment.complete_run(republished, "c", "lease2", "digest2", %{})
+    refute Segment.pending_or_assigned_verify?(redone)
+    assert {:ok, _} = Segment.assign_verify(redone, "d", "vlease2", 300)
+  end
+
+  test "complete_verify refuses a segment that is not (or no longer) \"done\", even with an otherwise-active lease" do
+    {:ok, assigned} = Segment.assign_run(seg(), "a", "lease1", 0)
+
+    assert {:error, "segment not done"} =
+             Segment.complete_verify(assigned, "a", "lease1", "digest1")
+  end
+
   test "block_descendants resets and blocks every later segment of the run, including done and verified ones, and nothing from another run" do
     pending = seg(1)
     done = done_run() |> Map.merge(%{id: "seg-2", index: 2})

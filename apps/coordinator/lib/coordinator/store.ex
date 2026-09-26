@@ -3,9 +3,10 @@ defmodule Coordinator.Store do
   Content-addressed artifact storage: an uploaded checkpoint is kept once,
   under its own digest — `data_dir/objects/<digest[0..1]>/<digest>.blck`, a
   two-level fan-out (standard git-style, keeps any one directory small) —
-  written once via rename-from-tmp and never overwritten. A second write of
-  an already-known digest is a no-op, not an error: the content is already
-  known-identical, since the digest is derived from it.
+  written once via rename-from-tmp. A second write of an already-known digest
+  is a no-op while the stored object is intact (it still parses and still
+  has that digest); a stored object damaged out of band is replaced by the
+  fresh, validated upload, so an honest recomputation always heals it.
 
   Bundle files (`series.jsonl` and friends) are *not* content-addressed —
   they are per-attempt, appended to, and named by the caller, so they keep
@@ -19,13 +20,14 @@ defmodule Coordinator.Store do
 
   @doc """
   Publishes `staged` (a path to bytes already validated against `digest`)
-  into the store. If an object already exists at that digest, `staged` is
-  discarded instead of overwriting it; otherwise it is moved into place.
+  into the store. If an intact object already exists at that digest,
+  `staged` is discarded; otherwise it is moved into place (atomically
+  replacing a damaged object).
   """
   def put(dir, digest, staged) do
     dest = path(dir, digest)
 
-    if File.exists?(dest) do
+    if intact?(dest, digest) do
       File.rm(staged)
     else
       File.mkdir_p!(Path.dirname(dest))
@@ -33,6 +35,17 @@ defmodule Coordinator.Store do
     end
 
     :ok
+  end
+
+  # The stored bytes still validate and still carry the digest they are filed under.
+  defp intact?(dest, digest) do
+    with {:ok, bin} <- File.read(dest),
+         <<_::binary-size(12), step::little-32, _::binary>> <- bin,
+         {:ok, info} <- Coordinator.Checkpoint.validate(bin, step) do
+      Coordinator.Checkpoint.artifact_digest(info) == digest
+    else
+      _ -> false
+    end
   end
 
   def exists?(dir, digest), do: File.exists?(path(dir, digest))

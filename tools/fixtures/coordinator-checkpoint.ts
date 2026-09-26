@@ -47,3 +47,16 @@ const stress = build(5, {
 });
 await Deno.writeFile("apps/coordinator/test/fixtures/stress.blck", stress.bytes);
 console.log(JSON.stringify(stress.info));
+
+// unicode.blck: non-ASCII keys, where JS sorts by UTF-16 code units
+// ("\u{10000}" is a surrogate pair and sorts before "", unlike UTF-8
+// byte order), plus strings needing JSON escapes.
+const unicode = build(3, {
+  "\u{10000}": 1,
+  "": 2,
+  "é": 3,
+  a: { "\u{1F600}": "x", "￿": "y" },
+  s: "tab\tnl\nctl\u0001quote\"back\\   é \u{1F600}",
+});
+await Deno.writeFile("apps/coordinator/test/fixtures/unicode.blck", unicode.bytes);
+console.log(JSON.stringify(unicode.info));

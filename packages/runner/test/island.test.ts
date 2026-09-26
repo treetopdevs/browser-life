@@ -54,6 +54,22 @@ describe("island rejects bad predecessor artifacts", () => {
     expect(continuationError(spec, start, good)).toBeNull();
   });
 
+  // Review 1 finding #3: `artifactDigest` canonicalizes (sorts) the observer's
+  // keys before digesting, so two artifacts with reordered-but-equal
+  // `settings` fields share one digest in the content-addressed coordinator
+  // store -- which keeps only the first upload for a digest and discards any
+  // later "duplicate", correct or not. `continuationError` must therefore
+  // compare `settings` by value, not by serialized key order, or a
+  // differently-ordered decode can never be un-rejected by recomputing (same
+  // content, same digest, always discarded).
+  it("accepts settings whose keys decoded in a different order than observerSettings builds them", () => {
+    const reordered: ObserverState = {
+      ...good,
+      settings: { activityThreshold: good.settings.activityThreshold, deepEvery: good.settings.deepEvery, censusEvery: good.settings.censusEvery },
+    };
+    expect(continuationError(spec, start, reordered)).toBeNull();
+  });
+
   const goodBytes = encodeCheckpoint(start, good);
   const corrupt = goodBytes.slice();
   corrupt[4000] ^= 1;
@@ -100,5 +116,17 @@ describe("island idle wait", () => {
     const done = await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, idleMs: 10_000, signal: controller.signal });
     expect(performance.now() - t0).toBeLessThan(1000);
     expect(done).toBe(0);
+  });
+});
+
+import { decodeArtifact, observerSettings } from "../src/index.ts";
+
+describe("uncalibrated threshold (refactor review 2)", () => {
+  it("an explicit Infinity activity threshold survives a checkpoint round trip", () => {
+    const inf = { ...spec, activityThreshold: Infinity };
+    const observer = { ...good, settings: observerSettings(inf), activity: new ActivityTracker(Infinity).toJSON() };
+    expect(observer.settings.activityThreshold).toBeNull();
+    const { state, observer: back } = decodeArtifact(encodeCheckpoint(start, observer));
+    expect(continuationError(inf, state, back)).toBeNull();
   });
 });

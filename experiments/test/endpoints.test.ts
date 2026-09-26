@@ -132,6 +132,32 @@ describe("evaluateEndpoint: test (Mann-Whitney + Holm)", () => {
     const result = evaluateEndpoint(endpoint, [...treat, ...repl]) as TestResult;
     expect(result.rows[0].supported).toBe(true);
   });
+
+  // Review 1 finding #9: `pLess` used to be computed as `1 - pGreater`, which
+  // is not the true lower-tail probability -- the exact method's two tails
+  // are each *inclusive* of the observed statistic and so share probability
+  // mass with each other, they don't sum to 1. No shipped endpoint currently
+  // uses "pLess" (this is a synthetic one), but the module's contract must
+  // still be correct.
+  it("computes a true lower-tail p, not 1 - pGreater (identical samples: p should be 1, not 0)", () => {
+    const pLessEndpoint: Endpoint = {
+      id: "synthetic-pless",
+      kind: "test",
+      statistic: "x",
+      comparisons: [{ a: "a", b: "b", relation: "pLess" }],
+      alpha: 0.01,
+      description: "synthetic",
+    };
+    const identical = [
+      ...[0, 0, 0, 0].map((x, i) => ({ condition: "a", seed: i, stats: { x }, series: [] })),
+      ...[0, 0, 0, 0].map((x, i) => ({ condition: "b", seed: i, stats: { x }, series: [] })),
+    ];
+    const result = evaluateEndpoint(pLessEndpoint, identical) as TestResult;
+    // `1 - pGreater` would give exactly 0 here (pGreater is 1 for identical
+    // samples); the true lower-tail p-value for two identical samples is 1.
+    expect(result.rows[0].p).toBeCloseTo(1, 12);
+    expect(result.rows[0].supported).toBe(false);
+  });
 });
 
 describe("evaluateEndpoint: threshold (growth verdict majority/minority)", () => {
@@ -159,6 +185,27 @@ describe("evaluateEndpoint: threshold (growth verdict majority/minority)", () =>
   it("is unavailable with no runs in one of the groups", () => {
     const views: RunView[] = [{ condition: "treatment", seed: 0, stats: {}, trend: "growing", series: [] }];
     const result = evaluateEndpoint(endpoint, views) as ThresholdResult;
+    expect(result.available).toBe(false);
+  });
+
+  // Review 1 finding #8: a run with no computed `trend` (uncalibrated
+  // ensemble, or the classifier not yet run) used to count toward a group's
+  // `total` without ever counting toward `qualifying`, so it was
+  // indistinguishable from a run that *was* classified and simply found
+  // non-growing -- silently reporting "Supported: no" for data that was
+  // never actually measured, instead of "unavailable".
+  it("is unavailable, not merely unsupported, when a run has no growth classification yet", () => {
+    const views: RunView[] = [
+      { condition: "treatment", seed: 0, stats: {}, trend: "growing", series: [] },
+      { condition: "treatment", seed: 1, stats: {}, trend: undefined, series: [] }, // uncalibrated/uncomputed
+      { condition: "treatment", seed: 2, stats: {}, trend: "growing", series: [] },
+      { condition: "neutral", seed: 0, stats: {}, trend: "flat", series: [] },
+    ];
+    const result = evaluateEndpoint(endpoint, views) as ThresholdResult;
+    expect(result.rows[0]).toMatchObject({ total: 3, classified: 2, qualifying: 2 });
+    // Would otherwise report `holds: true` (2 of 3 is already a majority) and
+    // `available: true` (every group non-empty) -- i.e. "Supported: yes" --
+    // even though one treatment run was never actually classified.
     expect(result.available).toBe(false);
   });
 });

@@ -215,6 +215,8 @@ export interface ThresholdRow {
   relation: "majority" | "minority";
   qualifying: number;
   total: number;
+  /** Runs with a computed `trend`; `total - classified` have none yet (uncalibrated or not yet run). */
+  classified: number;
   holds: boolean;
 }
 export interface ThresholdResult {
@@ -251,7 +253,15 @@ export function evaluateEndpoint(e: Endpoint, views: RunView[]): EndpointResult 
       const ys = byCond(c.b).map((v) => v.stats[e.statistic]).filter(Number.isFinite);
       const available = xs.length >= 2 && ys.length >= 2;
       const mw = available ? mannWhitney(xs, ys) : null;
-      const p = mw ? (c.relation === "pGreater" ? mw.pGreater : 1 - mw.pGreater) : 1;
+      // A one-sided lower-tail p-value ("a tends to be less than b") is not
+      // `1 - pGreater`: the exact method's tails are each *inclusive* of the
+      // observed statistic, so they share that probability mass and the two
+      // don't sum to 1 -- for two identical samples this formula gives
+      // p=0 where the true lower-tail probability is 1. Swapping the
+      // samples and reading `pGreater` again computes the true lower tail
+      // directly (no endpoint currently uses "pLess", but the module's
+      // contract must still be correct for the day one does).
+      const p = !available ? 1 : c.relation === "pGreater" ? mw!.pGreater : mannWhitney(ys, xs).pGreater;
       return { a: c.a, b: c.b, relation: c.relation, nA: xs.length, nB: ys.length, effect: mw?.effect ?? NaN, p, pAdj: NaN, available, supported: false };
     });
     const adj = holm(rows.filter((r) => r.available).map((r) => r.p));
@@ -268,11 +278,19 @@ export function evaluateEndpoint(e: Endpoint, views: RunView[]): EndpointResult 
     const rows: ThresholdRow[] = e.groups.map((g) => {
       const rs = byCond(g.condition);
       const total = rs.length;
+      const classified = rs.filter((v) => v.trend !== undefined).length;
       const qualifying = rs.filter((v) => v.trend === e.qualifyingVerdict).length;
       const holds = total > 0 && (g.relation === "majority" ? qualifying * 2 > total : qualifying * 2 < total);
-      return { condition: g.condition, relation: g.relation, qualifying, total, holds };
+      return { condition: g.condition, relation: g.relation, qualifying, total, classified, holds };
     });
-    const available = rows.every((r) => r.total > 0);
+    // Review 1 finding #8: a run with no computed `trend` (uncalibrated
+    // ensemble, or the classifier not yet run) used to count toward `total`
+    // without ever counting toward `qualifying` -- indistinguishable from a
+    // run that *was* classified and simply wasn't "growing". That silently
+    // reported "Supported: no" for data that was never actually measured.
+    // Available now requires every run in every group to carry a real
+    // classification, not just to exist.
+    const available = rows.every((r) => r.total > 0 && r.classified === r.total);
     return { kind: "threshold", id: e.id, description: e.description, rows, available, supported: available && rows.every((r) => r.holds) };
   }
 

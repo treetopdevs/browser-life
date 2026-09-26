@@ -174,19 +174,21 @@ defmodule Coordinator.Checkpoint do
   #    Erlang's (e.g. `(0.00001).toString()` is `"0.00001"`; Erlang's short
   #    format already switches to `"1.0e-5"`). `js_number/1` reuses Erlang's
   #    digits and re-applies ECMA-262's own Number::toString formatting.
+  # 3. Key order: `.sort()` compares UTF-16 code units, not code points or
+  #    UTF-8 bytes (a supplementary character sorts before U+E000..U+FFFF);
+  #    comparing big-endian UTF-16 encodings bytewise is the same order.
+  # 4. Strings are escaped exactly as `JSON.stringify` does (`js_string/1`).
   #
-  # Config values and observer payloads alike are caller-constructed (not
-  # arbitrary/hostile JSON), so integers/booleans/strings/null go through
-  # plain `Jason.encode!`, which already agrees with `JSON.stringify` for
-  # every value this codebase actually writes.
+  # Integers, booleans and null go through `Jason.encode!`, which agrees
+  # with `JSON.stringify` for them.
   defp canonical_json(v) when is_map(v) do
-    keys = v |> Map.keys() |> Enum.sort()
+    keys = v |> Map.keys() |> Enum.sort_by(&:unicode.characters_to_binary(&1, :utf8, :utf16))
     {index_keys, other_keys} = Enum.split_with(keys, &array_index_key?/1)
     ordered = Enum.sort_by(index_keys, &String.to_integer/1) ++ other_keys
 
     inner =
       Enum.map_join(ordered, ",", fn k ->
-        Jason.encode!(k) <> ":" <> canonical_json(Map.get(v, k))
+        js_string(k) <> ":" <> canonical_json(Map.get(v, k))
       end)
 
     "{" <> inner <> "}"
@@ -196,7 +198,47 @@ defmodule Coordinator.Checkpoint do
     do: "[" <> Enum.map_join(v, ",", &canonical_json/1) <> "]"
 
   defp canonical_json(v) when is_float(v), do: js_number(v)
+  defp canonical_json(v) when is_binary(v), do: js_string(v)
   defp canonical_json(v), do: Jason.encode!(v)
+
+  # JSON.stringify's string escaping (QuoteJSONString): the two-character
+  # escapes for \b \t \n \f \r " and \\, lowercase \u00xx for other
+  # controls, and every other code point (U+2028 included) verbatim.
+  defp js_string(s) do
+    body =
+      for <<c::utf8 <- s>>, into: "" do
+        case c do
+          0x08 ->
+            "\\b"
+
+          0x09 ->
+            "\\t"
+
+          0x0A ->
+            "\\n"
+
+          0x0C ->
+            "\\f"
+
+          0x0D ->
+            "\\r"
+
+          0x22 ->
+            "\\\""
+
+          0x5C ->
+            "\\\\"
+
+          c when c < 0x20 ->
+            "\\u00" <> String.downcase(Integer.to_string(c, 16) |> String.pad_leading(2, "0"))
+
+          c ->
+            <<c::utf8>>
+        end
+      end
+
+    "\"" <> body <> "\""
+  end
 
   @max_array_index 4_294_967_294
   defp array_index_key?(k),

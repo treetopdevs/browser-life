@@ -147,6 +147,14 @@ export function artifactDigest(s: WorldState, observer: unknown): string {
   const bytes = new TextEncoder().encode(canonicalObserverJSON(observer));
   const words = new Uint32Array(Math.ceil(bytes.length / 4));
   new Uint8Array(words.buffer).set(bytes);
-  [a, b] = digestWords(Uint32Array.of(bytes.length, ...words), a, b);
+  // Framed as [length, ...words] via `.set()`, not `Uint32Array.of(len,
+  // ...words)`: spreading `words` into call arguments blows the engine's
+  // argument-count limit once an observer gets large (a populated tracker on
+  // the 512x512 "large" preset is well past it), throwing "Maximum call
+  // stack size exceeded" instead of ever producing a digest.
+  const framed = new Uint32Array(1 + words.length);
+  framed[0] = bytes.length;
+  framed.set(words, 1);
+  [a, b] = digestWords(framed, a, b);
   return hex(a, b);
 }

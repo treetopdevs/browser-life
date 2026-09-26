@@ -530,3 +530,14 @@ addressed in place above rather than left as a caveat:
     generated section is unrestricted only pre-freeze, and after a freeze recorded in
     `experiments/FROZEN` the generator must refuse to overwrite it in place and point at a dated
     amendment instead, matching `preregistration.md`'s actual note.
+
+## Post-review changes (refactor review round 2)
+
+- **One observation path.** `packages/runner/src/observe.ts` (`observeCensus`, `restoreObservers`, `serializeObservers`) is the only code that advances persisted observers. `runExperiment` and the lab worker both call it at census boundaries: every `censusEvery` steps after the last observation, from the world's start step. The lab's frame loop never steps past a boundary until it has been observed. Save and export first advance to the next boundary (with a notice to the user); verify observes every boundary it crosses and may end between boundaries. A failed observation cannot be retried exactly (the ledger drain is destructive and observers update in place), so it marks the world's observer history as lost: stepping stops, pending steps are dropped, and save and export refuse until a checkpoint is restored or the lab is reloaded. Wall-clock UI censuses are display-only and never drain the mutation ledger. So identical physics and settings give identical observer state, whatever the playback timing.
+- **Uncalibrated thresholds.** `observerSettings` stores an infinite activity threshold as `null` (its JSON form), so explicit `Infinity` specs resume from checkpoints.
+- **Canonical JSON parity.** `Coordinator.Checkpoint` sorts keys by UTF-16 code units and escapes strings exactly as `JSON.stringify` does (fixture `unicode.blck`).
+- **Store healing.** `Coordinator.Store.put/3` replaces a stored object that no longer validates or no longer has its digest.
+
+## Deferred
+
+- **Held-out observables are not yet executable.** `experiments/endpoints.ts` covers the primary endpoints only. The held-out hypothesis ("a positive trend in at least two of six observables") is still prose in `experiments/preregistration.md`, outside the generated section, and `tools/analyze.ts` does not evaluate it. The trend statistic per observable has to be chosen and pre-registered first. Until then, the pre-registration must not be frozen.

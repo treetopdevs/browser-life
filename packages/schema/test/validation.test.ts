@@ -1,6 +1,7 @@
 // Regressions for review findings on validation, checkpoints and arithmetic helpers.
 import { describe, expect, it } from "vitest";
 import {
+  artifactDigest,
   buildWorld,
   clampLesionRadius,
   decodeCheckpoint,
@@ -66,6 +67,22 @@ describe("checkpoints", () => {
   it("defaults the observer section to {} when omitted", () => {
     const { observer } = decodeCheckpoint(encodeCheckpoint(soupWorld(cfg, 2, 32, 64)));
     expect(observer).toEqual({});
+  });
+
+  // Review 1 finding #1: `artifactDigest` used to build its final word array
+  // via `Uint32Array.of(len, ...words)`, which spreads `words` into call
+  // arguments and throws "Maximum call stack size exceeded" once an observer
+  // is large enough -- a populated tracker on the 512x512 "large" preset
+  // (prevLabels alone is one Int32Array per cell) comfortably exceeds it.
+  it("digests an observer far larger than the JS spread-argument limit", () => {
+    const s = soupWorld(cfg, 2, 32, 64);
+    // A base64 string this long stands in for a real large-world tracker's
+    // `prevLabels` field without paying for a full 512x512 census here.
+    const bigObserver = { prevLabels: "A".repeat(2_000_000) };
+    expect(() => artifactDigest(s, bigObserver)).not.toThrow();
+    const bytes = encodeCheckpoint(s, bigObserver);
+    const { observer } = decodeCheckpoint(bytes);
+    expect(artifactDigest(s, observer)).toBe(artifactDigest(s, bigObserver));
   });
 
   it("rejects a truncated payload even with a recomputed checksum", () => {

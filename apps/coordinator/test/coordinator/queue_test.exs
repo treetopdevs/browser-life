@@ -144,6 +144,44 @@ defmodule Coordinator.QueueTest do
     assert again.segment.id == t1.segment.id
   end
 
+  # Review 1 finding #5: rejecting a predecessor used to leave its bundle
+  # files (series.jsonl and friends -- not content-addressed, unlike the
+  # checkpoint) sitting at their segment-scoped path, still servable over
+  # `/api/segments/:id/files/:name`, for as long as the redo took (or forever,
+  # for any filename the redo doesn't happen to rewrite). Rejection must
+  # clean those up the same way the pre-refactor `handle_call({:reject, ...})`
+  # did, alongside requeuing the segment itself.
+  test "rejecting a predecessor removes its stale bundle files, not just its checkpoint", %{
+    dir: dir
+  } do
+    {:ok, _} = Queue.create_experiment(%{@spec_ok | "verifyFraction" => 0.0})
+    {:ok, %{id: a}} = Queue.join(%{})
+    {:ok, %{id: b}} = Queue.join(%{})
+    {:ok, t1} = Queue.next_task(a)
+    upload(dir, t1, a, "h0")
+
+    staged = Path.join(dir, "bundle-#{System.unique_integer([:positive])}")
+    File.write!(staged, "step,pop\n1,2\n")
+
+    :ok =
+      Queue.publish_file(
+        t1.segment.id,
+        a,
+        t1.lease,
+        staged,
+        &Path.join(Queue.files_dir(&1, t1.segment.id), "series.jsonl")
+      )
+
+    bundle_path = Path.join(Queue.files_dir(dir, t1.segment.id), "series.jsonl")
+    assert File.exists?(bundle_path)
+
+    {:ok, "done"} = done(t1, a, "h0")
+    {:ok, t2} = Queue.next_task(b)
+    assert :ok = Queue.reject(t2.segment.id, b, t2.lease, "digest mismatch")
+
+    refute File.exists?(bundle_path)
+  end
+
   test "island tokens authenticate and state survives a restart", %{dir: dir} do
     {:ok, %{id: a, token: tok}} = Queue.join(%{})
     assert Queue.authenticate(a, tok)

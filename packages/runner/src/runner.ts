@@ -29,8 +29,6 @@ import {
   ActivityTracker,
   Tracker,
   bioticRecycling,
-  blockSymbols,
-  census,
   compressionRatio,
   entropy,
   fluxRates,
@@ -41,13 +39,12 @@ import {
   roleSummary,
   temporalMI,
   DEFAULT_CENSUS,
-  tileDistance2,
-  b64,
   unb64,
   type ActivityState,
   type TrackerState,
 } from "@bl/metrics";
 import { conditionById } from "./conditions.ts";
+import { observeCensus, restoreObservers, serializeObservers } from "./observe.ts";
 
 export interface RunSpec {
   experiment: string;
@@ -165,8 +162,27 @@ export function specConfig(spec: RunSpec): WorldConfig {
   return { ...base, ...cond.apply(base), ...(spec.overrides ?? {}) };
 }
 
-function observerSettings(spec: RunSpec) {
-  return { censusEvery: spec.censusEvery, deepEvery: spec.deepEvery, activityThreshold: spec.activityThreshold ?? null };
+/** Observation settings as stored in artifacts: an infinite (uncalibrated) threshold is `null`, as in JSON. */
+export function observerSettings(spec: RunSpec): ObserverSettings {
+  const t = spec.activityThreshold;
+  return { censusEvery: spec.censusEvery, deepEvery: spec.deepEvery, activityThreshold: t !== undefined && Number.isFinite(t) ? t : null };
+}
+
+/**
+ * Field-by-field, not `JSON.stringify` comparison: `artifactDigest`/
+ * `canonicalObserverJSON` (`@bl/schema`) already sort observer keys
+ * recursively before digesting, so two artifacts the content-addressed
+ * coordinator store treats as identical (same digest) can still decode to
+ * `settings` objects with different key insertion order (whatever order the
+ * writer's `JSON.stringify(observer)` happened to produce). Comparing that
+ * raw serialization here would reject a perfectly valid continuation — and
+ * since the store keeps only the first upload for a given digest, a
+ * differently-ordered "bad" copy landing first can never be replaced by a
+ * "good" recompute (same content, same digest, discarded by
+ * `Coordinator.Store.put/3`), making the rejection permanent.
+ */
+function sameSettings(a: ObserverSettings, b: ObserverSettings): boolean {
+  return a.censusEvery === b.censusEvery && a.deepEvery === b.deepEvery && a.activityThreshold === b.activityThreshold;
 }
 
 /**
@@ -188,7 +204,7 @@ export function continuationError(spec: RunSpec, start: WorldState, observer: Ob
   if (start.step === 0) return null;
   if (!observer || typeof observer !== "object") return "continuing from a checkpoint requires the matching observer state";
   if (observer.step !== start.step) return `observer state does not belong to the start checkpoint (t=${observer.step})`;
-  if (JSON.stringify(observer.settings) !== JSON.stringify(observerSettings(spec))) return "observer settings differ from the run spec";
+  if (!sameSettings(observer.settings, observerSettings(spec))) return "observer settings differ from the run spec";
   return null;
 }
 
@@ -271,9 +287,8 @@ export async function runExperiment(
   const startMatter = t0tot.matter;
   const startStep = init.step;
   const sim = await GpuSim.create(device, init);
-  const obs = opts.observer;
-  const tracker = obs ? Tracker.fromJSON(obs.tracker) : new Tracker();
-  const activity = obs ? ActivityTracker.fromJSON(obs.activity) : new ActivityTracker(spec.activityThreshold ?? Infinity);
+  const obs = restoreObservers(opts.observer, settings);
+  const { tracker, activity } = obs;
   const manifest = {
     runId: runId(spec),
     spec,
@@ -295,26 +310,20 @@ export async function runExperiment(
   await sink.writeText("life.jsonl", "");
 
   const t0 = performance.now();
-  let mutations = obs?.mutations ?? 0;
-  let buddings = obs?.buddings ?? 0;
   let prevFlux = init.flux.slice();
-  let prevSym: Uint8Array | null = obs?.prevSym ? unb64(obs.prevSym) : null;
-  let censusIdx = obs?.censusIdx ?? 0;
   let conservationOk = true;
-  let extinct = obs?.extinct ?? false;
   let lastCensus = { individuals: 0, lineages: 0 };
 
   try {
     for (let s = 0; s < spec.steps; ) {
       const chunk = Math.min(spec.censusEvery, spec.steps - s);
-      const deep = censusIdx % spec.deepEvery === 0;
+      const deep = obs.censusIdx % spec.deepEvery === 0;
       for (let k = 0; k < chunk; k += 64) sim.run(Math.min(64, chunk - k));
       s += chunk;
       await device.queue.onSubmittedWorkDone();
 
       const ledger = await sim.drainLedger();
       if (ledger.dropped > 0) throw new Error(`event buffer overflow (${ledger.dropped} dropped); lower censusEvery`);
-      mutations += ledger.events.length;
       if (ledger.events.length)
         await sink.appendText("mutations.tsv", ledger.events.map((e) => `${e.childHi}\t${e.childLo}\t${e.parentHi}\t${e.parentLo}`).join("\n") + "\n");
 
@@ -327,43 +336,17 @@ export async function runExperiment(
       const residual = energy + stats.heatOut - stats.lightIn - baseline;
       if (matter !== startMatter || residual !== 0n) conservationOk = false;
 
-      const c = census({ cfg, step: snap.step, cells, genomeHead });
-      const events = tracker.update(c);
-      const life: object[] = [];
-      for (const e of events) {
-        if (e.kind === "fission") {
-          const a = tracker.alive.get(e.parent);
-          for (const id of e.children) {
-            const b = tracker.alive.get(id);
-            if (a && b) await sink.appendText("heredity.tsv", `${c.step}\t${a.mu}\t${b.mu}\t${a.sigma}\t${b.sigma}\t${a.mass}\t${b.mass}\n`);
-          }
-          life.push(e);
-        } else if (e.kind === "birth") {
-          // Condensation from leaked biomass: attribute to the nearest living
-          // individual of the same lineage (budding) when one is close.
-          const b = tracker.alive.get(e.id);
-          let parent: number | null = null;
-          let best = 24 * 24;
-          if (b && b.lineage)
-            for (const o of tracker.alive.values()) {
-              if (o.id === b.id || o.lineage !== b.lineage || o.born === c.step) continue;
-              const d = tileDistance2(o, b, cfg.tileW, cfg.tileH);
-              if (d < best) [best, parent] = [d, o.id];
-            }
-          if (parent !== null) {
-            buddings++;
-            if (b) {
-              b.parent = parent;
-              b.generation = (tracker.alive.get(parent)?.generation ?? 0) + 1;
-            }
-            life.push({ step: e.step, kind: "budding", parent, child: e.id });
-          } else life.push(e);
-        } else life.push(e);
+      const o = observeCensus(obs, cfg, snap, ledger.events.length);
+      const { census: c, activity: act, sym } = o;
+      for (const e of o.events) {
+        if (e.kind !== "fission") continue;
+        const a = obs.tracker.alive.get(e.parent);
+        for (const id of e.children) {
+          const b = obs.tracker.alive.get(id);
+          if (a && b) await sink.appendText("heredity.tsv", `${c.step}\t${a.mu}\t${b.mu}\t${a.sigma}\t${b.sigma}\t${a.mass}\t${b.mass}\n`);
+        }
       }
-      if (life.length) await sink.appendText("life.jsonl", life.map((x) => JSON.stringify(x)).join("\n") + "\n");
-
-      const abundance = c.lineages.map((l) => [l.key, l.cells] as [string, number]);
-      const act = activity.update(c.step, abundance);
+      if (o.life.length) await sink.appendText("life.jsonl", o.life.map((x) => JSON.stringify(x)).join("\n") + "\n");
       await sink.appendText("lineages.tsv", c.lineages.map((l) => `${c.step}\t${l.key}\t${l.cells}`).join("\n") + (c.lineages.length ? "\n" : ""));
 
       const rates = fluxRates(prevFlux, stats.flux, chunk);
@@ -386,16 +369,14 @@ export async function runExperiment(
         activity: act,
         fissions: tracker.fissions,
         fusions: tracker.fusions,
-        buddings,
+        buddings: obs.buddings,
         maxGeneration: tracker.maxGeneration(),
-        mutations,
+        mutations: obs.mutations,
         conservationOk,
       };
 
-      const sym = blockSymbols(cfg, cells);
       rec.patternEntropy = entropy(sym);
-      if (prevSym) rec.temporalMI = temporalMI(prevSym, sym);
-      prevSym = sym;
+      if (o.prevSym) rec.temporalMI = temporalMI(o.prevSym, sym);
 
       if (deep && snap.roles) {
         const profiles = lineageProfiles(cfg, snap.roles, genomeHead);
@@ -408,49 +389,22 @@ export async function runExperiment(
       }
       await sink.appendText("series.jsonl", JSON.stringify(rec) + "\n");
       lastCensus = { individuals: ind.length, lineages: c.lineages.length };
-      censusIdx++;
-
-      // Keep observing through extinction: segments must end at their scheduled
-      // boundary and the observation window must not be truncated.
-      if (c.livingCells === 0 && !extinct) {
-        extinct = true;
-        onProgress(`extinct at step ${c.step}`);
-      }
+      // Observation continues through extinction (segments end at their boundary).
+      if (o.becameExtinct) onProgress(`extinct at step ${c.step}`);
       if (spec.checkpointEvery > 0 && (sim.step - startStep) % spec.checkpointEvery === 0) {
         const st = await sim.readState();
         const file = `checkpoints/t${String(st.step).padStart(9, "0")}.blck`;
-        const midObserver: ObserverState = {
-          step: st.step,
-          settings,
-          tracker: tracker.toJSON(),
-          activity: activity.toJSON(),
-          mutations,
-          buddings,
-          censusIdx,
-          extinct,
-          prevSym: prevSym ? b64(prevSym) : null,
-        };
-        await sink.writeBytes(file, encodeCheckpoint(st, midObserver));
+        await sink.writeBytes(file, encodeCheckpoint(st, serializeObservers(obs, st.step, settings)));
         manifest.checkpoints.push({ step: st.step, file, hash: stateHash(st) });
       }
-      if (censusIdx % 20 === 0) {
+      if (obs.censusIdx % 20 === 0) {
         const el = (performance.now() - t0) / 1000;
-        onProgress(`t=${c.step} ind=${ind.length} lin=${c.lineages.length} fis=${tracker.fissions} bud=${buddings} mut=${mutations} act.sig=${act.significant} ${((sim.step - startStep) / el).toFixed(0)} st/s`);
+        onProgress(`t=${c.step} ind=${ind.length} lin=${c.lineages.length} fis=${tracker.fissions} bud=${obs.buddings} mut=${obs.mutations} act.sig=${act.significant} ${((sim.step - startStep) / el).toFixed(0)} st/s`);
       }
     }
     const final = await sim.readState();
     const wall = (performance.now() - t0) / 1000;
-    const observer: ObserverState = {
-      step: final.step,
-      settings,
-      tracker: tracker.toJSON(),
-      activity: activity.toJSON(),
-      mutations,
-      buddings,
-      censusIdx,
-      extinct,
-      prevSym: prevSym ? b64(prevSym) : null,
-    };
+    const observer = serializeObservers(obs, final.step, settings);
     const summary: RunSummary = {
       steps: final.step,
       wallSeconds: wall,
@@ -459,14 +413,14 @@ export async function runExperiment(
       // predecessor-start check: physics *and* observer together (a verifier
       // must reproduce the observations too, not just the physics).
       finalHash: artifactDigest(final, observer),
-      mutations,
+      mutations: obs.mutations,
       fissions: tracker.fissions,
       fusions: tracker.fusions,
-      buddings,
+      buddings: obs.buddings,
       maxGeneration: tracker.maxGeneration(),
       finalIndividuals: lastCensus.individuals,
       finalLineages: lastCensus.lineages,
-      extinct,
+      extinct: obs.extinct,
       conservationOk,
     };
     manifest.summary = summary;

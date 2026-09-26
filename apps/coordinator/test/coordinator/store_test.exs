@@ -23,13 +23,28 @@ defmodule Coordinator.StoreTest do
     assert File.read!(Store.path(dir, digest)) == "hello"
   end
 
-  test "a second write of an already-known digest is a no-op, not an overwrite", %{dir: dir} do
-    digest = "abcdefabcdefabcd"
-    assert :ok = Store.put(dir, digest, staged(dir, "first"))
+  defp fixture do
+    bin = File.read!(Path.join(__DIR__, "../fixtures/small.blck"))
+    {:ok, info} = Coordinator.Checkpoint.validate(bin, 12)
+    {bin, Coordinator.Checkpoint.artifact_digest(info)}
+  end
+
+  test "a second write of an intact known digest is a no-op, not an overwrite", %{dir: dir} do
+    {bin, digest} = fixture()
+    assert :ok = Store.put(dir, digest, staged(dir, bin))
     second = staged(dir, "second (should be discarded)")
     assert :ok = Store.put(dir, digest, second)
     refute File.exists?(second)
-    assert File.read!(Store.path(dir, digest)) == "first"
+    assert File.read!(Store.path(dir, digest)) == bin
+  end
+
+  test "a stored object damaged out of band is replaced by a fresh upload", %{dir: dir} do
+    {bin, digest} = fixture()
+    assert :ok = Store.put(dir, digest, staged(dir, bin))
+    <<head::binary-size(400), b, rest::binary>> = bin
+    File.write!(Store.path(dir, digest), head <> <<Bitwise.bxor(b, 1)>> <> rest)
+    assert :ok = Store.put(dir, digest, staged(dir, bin))
+    assert File.read!(Store.path(dir, digest)) == bin
   end
 
   test "different digests never collide", %{dir: dir} do

@@ -39,9 +39,44 @@ export function applyGeneratedSection(doc: string, endpoints: Endpoint[]): strin
   return `${before}${renderEndpointsSection(endpoints)}${after}`;
 }
 
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+export type GenPlan =
+  | { action: "noop" }
+  | { action: "write"; next: string }
+  | { action: "refuse"; reason: string };
+
+/**
+ * Pure decision of what `gen-prereg` should do, given the doc, the endpoint
+ * spec and the (possibly empty) list of hashes ever recorded in
+ * `experiments/FROZEN` -- factored out so the freeze-permanence policy is
+ * unit-testable without touching the filesystem.
+ *
+ * Freeze policy: experiments/preregistration.md's own note freezes *this
+ * file*, generated section included, once its whole-file SHA-256 is recorded
+ * in `FROZEN`. Freezing is a one-way ratchet: it must survive every later
+ * dated amendment, which by design changes the whole-file hash (the
+ * amendment's own text is appended to the frozen original). Checking "is the
+ * *current* hash in FROZEN" would only catch the exact moment of freezing --
+ * the very next amendment changes the hash, drops out of FROZEN, and
+ * silently un-freezes the generator against the doc's own stated policy. So
+ * once `frozenHashes` has *ever* recorded a hash, this refuses to change the
+ * generated section in place forever after, regardless of the doc's current
+ * hash -- unless there is nothing to change (`next === doc`), which is
+ * always safe to report as a no-op.
+ */
+export function planGeneration(doc: string, endpoints: Endpoint[], frozenHashes: string[]): GenPlan {
+  const next = applyGeneratedSection(doc, endpoints);
+  if (next === doc) return { action: "noop" };
+  if (frozenHashes.length > 0) {
+    return {
+      action: "refuse",
+      reason:
+        "experiments/preregistration.md was frozen (experiments/FROZEN records " +
+        `${frozenHashes.length} hash(es), most recently ${frozenHashes[frozenHashes.length - 1]}): freezing is ` +
+        "permanent, even across later dated amendments, so the generator refuses to change the " +
+        "generated section in place. Add a dated amendment section instead, per the doc's own freeze note.",
+    };
+  }
+  return { action: "write", next };
 }
 
 if (import.meta.main) {
@@ -49,32 +84,21 @@ if (import.meta.main) {
   const frozenUrl = new URL("../experiments/FROZEN", import.meta.url);
   const doc = await Deno.readTextFile(docUrl);
 
-  // Freeze policy: experiments/preregistration.md's own note freezes *this
-  // file*, generated section included, once its whole-file SHA-256 is
-  // recorded in experiments/FROZEN. Post-freeze, the generator must refuse
-  // to overwrite in place and point at a dated amendment instead -- same as
-  // any other change to a frozen pre-registration would require.
-  const digest = await sha256Hex(doc);
   let frozen: string[] = [];
   try {
     frozen = (await Deno.readTextFile(frozenUrl)).split("\n").map((l) => l.trim()).filter(Boolean);
   } catch {
     // No experiments/FROZEN yet: nothing has been frozen (pre-registration is still a draft).
   }
-  if (frozen.includes(digest)) {
-    console.error(
-      "experiments/preregistration.md's current text is recorded in experiments/FROZEN " +
-        `(sha256 ${digest}): the generated section may not be overwritten in place. ` +
-        "Add a dated amendment section instead, per the doc's own freeze note.",
-    );
-    Deno.exit(1);
-  }
 
-  const next = applyGeneratedSection(doc, PRIMARY_ENDPOINTS);
-  if (next === doc) {
+  const plan = planGeneration(doc, PRIMARY_ENDPOINTS, frozen);
+  if (plan.action === "noop") {
     console.log("experiments/preregistration.md's generated section is already up to date.");
+  } else if (plan.action === "refuse") {
+    console.error(plan.reason);
+    Deno.exit(1);
   } else {
-    await Deno.writeTextFile(docUrl, next);
+    await Deno.writeTextFile(docUrl, plan.next);
     console.log("wrote experiments/preregistration.md");
   }
 }
