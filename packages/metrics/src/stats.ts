@@ -170,6 +170,27 @@ export function holm(ps: number[]): number[] {
   return out;
 }
 
+/** One-sided Clopper–Pearson lower confidence bound on a binomial proportion (k successes in n). */
+export function binomialLowerBound(k: number, n: number, alpha = 0.05): number {
+  if (k <= 0) return 0;
+  // P(X >= k | p), increasing in p.
+  const tail = (p: number) => {
+    let s = 0, c = 1;
+    for (let i = 0; i <= n; i++) {
+      if (i >= k) s += c * p ** i * (1 - p) ** (n - i);
+      c = (c * (n - i)) / (i + 1);
+    }
+    return s;
+  };
+  let lo = 0, hi = 1;
+  for (let it = 0; it < 60; it++) {
+    const m = (lo + hi) / 2;
+    if (tail(m) < alpha) lo = m;
+    else hi = m;
+  }
+  return lo;
+}
+
 function normCdf(z: number): number {
   // Abramowitz–Stegun 7.1.26 for erf(|x|); erf is odd.
   const x = Math.abs(z) / Math.SQRT2;

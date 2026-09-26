@@ -77,6 +77,79 @@ export function passesGate(e: Evaluation, minRecovery = 0.8): boolean {
   return e.survived > 0 && e.regenerated / e.reps > minRecovery && e.lightDependent === e.reps;
 }
 
+/** Replicates per genome when confirming screening passers on fresh seeds. */
+export const CONFIRM_REPS = 16;
+/** Distinct genetic clusters of confirmed passers the M3 gate requires. */
+export const M3_MIN_CLUSTERS = 20;
+/**
+ * Genomes at most this many slots apart belong to one cluster. mutateGenome
+ * changes 1-4 slots per child, so this links a founder with its descendants
+ * over several generations, while unrelated genomes differ in nearly all
+ * NN_BYTES + 3 slots.
+ */
+export const CLUSTER_DISTANCE = 10;
+
+/** Number of genome slots (weights, mu, sigma, motGain) that differ. */
+export function genomeDistance(a: Genome, b: Genome): number {
+  let d = Number(a.mu !== b.mu) + Number(a.sigma !== b.sigma) + Number(a.motGain !== b.motGain);
+  for (let i = 0; i < a.weights.length; i++) if (a.weights[i] !== b.weights[i]) d++;
+  return d;
+}
+
+/**
+ * Single-linkage clusters: a genome within `maxDistance` slots of any member
+ * joins its cluster. Returns a cluster index per genome, numbered from 0 in
+ * order of first appearance.
+ */
+export function geneticClusters(genomes: Genome[], maxDistance = CLUSTER_DISTANCE): number[] {
+  const parent = genomes.map((_, i) => i);
+  // Iterative with path halving: unions are unranked, so chains can be long.
+  const root = (i: number): number => {
+    while (parent[i] !== i) i = parent[i] = parent[parent[i]];
+    return i;
+  };
+  for (let i = 0; i < genomes.length; i++) {
+    for (let j = i + 1; j < genomes.length; j++) {
+      if (genomeDistance(genomes[i], genomes[j]) <= maxDistance) parent[root(i)] = root(j);
+    }
+  }
+  const ids = new Map<number, number>();
+  return genomes.map((_, i) => {
+    const r = root(i);
+    if (!ids.has(r)) ids.set(r, ids.size);
+    return ids.get(r)!;
+  });
+}
+
+export interface M3Gate {
+  /** Screening passers re-evaluated. */
+  screened: number;
+  /** Of those, how many pass again on fresh seeds (confirmsGate). */
+  confirmed: number;
+  /** Genetic clusters among the confirmed passers (what the gate counts). */
+  clusters: number;
+  met: boolean;
+}
+
+/** A fresh-seed confirmation that counts toward the M3 gate: passesGate over at least `minReps` replicates. */
+export function confirmsGate(e: Evaluation, minReps = CONFIRM_REPS): boolean {
+  return e.reps >= minReps && passesGate(e);
+}
+
+/**
+ * The M3 gate over fresh-seed confirmations of the screening passers: at
+ * least M3_MIN_CLUSTERS genetically distinct clusters whose members still
+ * regenerate with p > 0.8 and die without light over at least CONFIRM_REPS
+ * replicates. Screening passes alone do not
+ * count: with few replicates per candidate, many of thousands screened pass by
+ * chance.
+ */
+export function m3Gate(confirmations: { genome: Genome; eval: Evaluation }[], minClusters = M3_MIN_CLUSTERS, minReps = CONFIRM_REPS): M3Gate {
+  const ok = confirmations.filter((c) => confirmsGate(c.eval, minReps));
+  const clusters = new Set(geneticClusters(ok.map((c) => c.genome))).size;
+  return { screened: confirmations.length, confirmed: ok.length, clusters, met: clusters >= minClusters };
+}
+
 /** Identity of a genome by its parameters and weights. */
 export function genomeKey(g: Genome): string {
   return `${g.mu}:${g.sigma}:${g.motGain}:${Array.from(g.weights).join(",")}`;

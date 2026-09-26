@@ -79,3 +79,15 @@ describe("review 4", () => {
     expect(() => ActivityTracker.fromJSON({ threshold: null, comps: [["x", {}]], cumulativeNew: 0, extinct: [] } as any)).toThrow();
   });
 });
+
+import { binomialLowerBound } from "@bl/metrics";
+
+describe("Clopper–Pearson lower bound", () => {
+  it("matches closed forms and known values", () => {
+    // k = n: the bound solves p^n = alpha.
+    expect(binomialLowerBound(16, 16)).toBeCloseTo(0.05 ** (1 / 16), 6);
+    expect(binomialLowerBound(0, 16)).toBe(0);
+    // 15/16 at one-sided 95% (Beta(15, 2) 5th percentile).
+    expect(binomialLowerBound(15, 16)).toBeCloseTo(0.7358, 3);
+  });
+});
