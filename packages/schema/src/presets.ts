@@ -1,5 +1,6 @@
+import { canonicalConfig, digestWords } from "./accounting.ts";
 import { defaultConfig, type WorldConfig } from "./config.ts";
-import { M3_FOUNDERS } from "./founders.ts";
+import { M3_FOUNDER_SET, M3_FOUNDERS } from "./founders.ts";
 import { generalistWorld, m3World, soupWorld, type WorldState } from "./world.ts";
 
 export type InitKind = "generalist" | "soup" | "m3";
@@ -86,6 +87,35 @@ export const PRESETS: Preset[] = [
 
 export function presetConfig(p: Preset, seed: number, extra: Partial<WorldConfig> = {}): WorldConfig {
   return defaultConfig({ ...p.cfg, seed, ...extra });
+}
+
+/**
+ * Content identity of a preset's distribution: everything that determines
+ * what world a run of this preset draws from -- its own config (with `seed`
+ * excluded, since that varies per run and is never part of "which
+ * distribution") and init params, plus (only for an M3-founder preset) the
+ * exact founder set `M3_FOUNDER_SET` resolves to. Two presets with the same
+ * identity are, run-for-run, physically identical; a code change to a
+ * preset's `cfg`/`init`, or to which founder set `M3_FOUNDER_SET` names,
+ * changes this digest.
+ *
+ * Used to detect when a frozen value (e.g. experiments/endpoints.ts's
+ * ACTIVITY_THRESHOLDS, calibrated by tools/calibrate.ts from a pilot) was
+ * computed against a preset definition that has since changed underneath
+ * it -- `seed`, deliberately excluded here, and `condition` (not a preset
+ * property at all -- see packages/runner/src/conditions.ts) are expected to
+ * differ between the pilot and any ensemble that reuses this identity, so
+ * neither affects this digest.
+ */
+export function presetIdentity(p: Preset): string {
+  const { seed: _seed, ...cfgWithoutSeed } = presetConfig(p, 0);
+  const canonical = canonicalConfig(cfgWithoutSeed as WorldConfig);
+  const founderSetId = p.init.kind === "m3" ? M3_FOUNDER_SET : null;
+  const bytes = new TextEncoder().encode(JSON.stringify({ cfg: canonical, init: p.init, founderSetId }));
+  const words = new Uint32Array(Math.ceil(bytes.length / 4));
+  new Uint8Array(words.buffer).set(bytes);
+  const [a, b] = digestWords(Uint32Array.of(bytes.length, ...words));
+  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
 }
 
 export function initWorld(cfg: WorldConfig, init: InitParams): WorldState {

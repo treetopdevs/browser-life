@@ -24,6 +24,7 @@ import {
   initWorld,
   presetConfig,
   stateHash,
+  presetIdentity,
   totalsOf,
   type WorldConfig,
   type WorldState,
@@ -447,6 +448,14 @@ export async function runExperiment(
     spec,
     cfg,
     init: preset.init,
+    // Provenance of the starting distribution: the preset's identity (config,
+    // init and founder set; presetIdentity) and, for a run built from the
+    // preset rather than continued from a checkpoint, the initial state's hash,
+    // so analysis can verify which founders a bundle actually started from.
+    // This is the preset-built world, which analysis can rebuild and compare;
+    // a step-zero import is recorded separately as importedStartHash below.
+    presetIdentity: presetIdentity(preset),
+    ...(opts.start ? {} : { initHash: stateHash(init) }),
     schemaVersion: SCHEMA_VERSION,
     ruleVersion: RULE_VERSION,
     metricsVersion: METRICS_VERSION,

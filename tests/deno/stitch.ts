@@ -44,6 +44,21 @@ check("summary", untimed(m.summary) === untimed(whole.summary), `${untimed(m.sum
 check("spec", JSON.stringify(m.spec) === JSON.stringify(w.spec));
 check("covers the whole history", m.startStep === 0 && m.segments.length === 3);
 
+// Starting-distribution provenance: a fresh run records its preset identity and
+// initial-state hash, a continuation only the identity, and the stitched
+// manifest carries segment #0's (the whole run's) values.
+const seg1 = JSON.parse(segs[1].files["manifest.json"]);
+check("a fresh run records presetIdentity and initHash", typeof w.presetIdentity === "string" && typeof w.initHash === "string", JSON.stringify([w.presetIdentity, w.initHash]));
+check("a continuation records presetIdentity but no initHash", seg1.presetIdentity === w.presetIdentity && !("initHash" in seg1), JSON.stringify(Object.keys(seg1)));
+check("the stitched manifest keeps the run's presetIdentity and initHash", m.presetIdentity === w.presetIdentity && m.initHash === w.initHash, JSON.stringify([m.presetIdentity, m.initHash]));
+const reManifest = (seg: StitchSegment, f: (m: Record<string, unknown>) => void): StitchSegment => {
+  const mm = JSON.parse(seg.files["manifest.json"]);
+  f(mm);
+  return { ...seg, files: { ...seg.files, "manifest.json": JSON.stringify(mm) } };
+};
+const unverified = JSON.parse(stitchRun([segs[0], reManifest(segs[1], (x) => delete x.presetIdentity), segs[2]], base.steps)["manifest.json"]);
+check("a segment without presetIdentity leaves the stitched identity unrecorded", !("presetIdentity" in unverified) && unverified.initHash === w.initHash, JSON.stringify(Object.keys(unverified)));
+
 // Byte compatibility (review P2): an ordinary (non-metapopulation) run's
 // manifest.json, and each of the stitched manifest's own per-segment
 // records, must omit importedStartHash/netExchangeMatter entirely -- not
@@ -68,6 +83,9 @@ const expectThrow = (name: string, f: () => unknown) => {
 expectThrow("rejects a missing segment", () => stitchRun([segs[0], segs[2]], base.steps));
 expectThrow("rejects a digest other than the accepted one", () => stitchRun([segs[0], { ...segs[1], digest: "0000000000000000" }, segs[2]], base.steps));
 expectThrow("rejects a short history", () => stitchRun(segs.slice(0, 2), base.steps));
+expectThrow("rejects conflicting preset identities even when segment #0 recorded none", () =>
+  stitchRun([reManifest(segs[0], (x) => delete x.presetIdentity), segs[1], reManifest(segs[2], (x) => (x.presetIdentity = "0000000000000000"))], base.steps));
+expectThrow("rejects a segment whose preset identity differs from segment #0's", () => stitchRun([segs[0], { ...segs[1], files: { ...segs[1].files, "manifest.json": JSON.stringify({ ...JSON.parse(segs[1].files["manifest.json"]), presetIdentity: "0000000000000000" }) } }, segs[2]], base.steps));
 const retail = (seg: StitchSegment, f: (row: Record<string, unknown>) => void): StitchSegment => {
   const rows = seg.files["series.jsonl"].trim().split("\n").map((l) => JSON.parse(l));
   f(rows[rows.length - 1]);

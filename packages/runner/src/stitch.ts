@@ -116,6 +116,8 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
   const last = manifests[manifests.length - 1];
   const { steps: _, ...refSpec } = first.spec;
   const censusEvery: number = first.spec.censusEvery;
+  // Every segment that records a preset identity must record the same one.
+  const refIdentity: string | undefined = manifests.find((m) => m.presetIdentity !== undefined)?.presetIdentity;
 
   let at = 0;
   segs.forEach((s, k) => {
@@ -136,6 +138,8 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     const { steps: __, ...spec } = m.spec;
     if (JSON.stringify(spec) !== JSON.stringify(refSpec) || runId(m.spec) !== runId(first.spec)) throw new Error(`${id}: spec differs from segment #0's`);
     if (!sameConfig(m.cfg, first.cfg)) throw new Error(`${id}: config differs from segment #0's`);
+    if (m.presetIdentity !== undefined && m.presetIdentity !== refIdentity)
+      throw new Error(`${id}: preset identity ${m.presetIdentity} differs from the run's ${refIdentity}`);
     if (m.checkpoints?.length) throw new Error(`${id}: carries intermediate checkpoints, which stitching does not support`);
 
     // Census grid: every censusEvery steps from the segment start, ending at its end.
@@ -338,9 +342,18 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
   // how many of the run's segments actually had an observation comparison
   // made (true or false), out of how many total.
   const observationsChecked = { checked: observationResults.filter((v) => v !== null).length, total: observationResults.length };
+  // Starting-distribution provenance comes from segment #0 (continuations
+  // carry no initHash). The preset identity is kept only when every segment
+  // recorded it: segments from older workers without it leave it unverified.
+  const { initHash: _initHash, presetIdentity: _presetIdentity, ...lastRest } = last;
+  const provenance = {
+    ...(manifests.every((m) => m.presetIdentity !== undefined) ? { presetIdentity: first.presetIdentity } : {}),
+    ...(first.initHash !== undefined ? { initHash: first.initHash } : {}),
+  };
   out["manifest.json"] = JSON.stringify(
     {
-      ...last,
+      ...lastRest,
+      ...provenance,
       spec: { ...last.spec, steps: totalSteps },
       host: { host: "archipelago", adapter: adapters.join(", ") },
       startStep: 0,
