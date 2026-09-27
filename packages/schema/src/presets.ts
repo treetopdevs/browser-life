@@ -121,6 +121,35 @@ export function presetIdentity(p: Preset): string {
   return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
 }
 
+/**
+ * Digest combining a preset's identity with one specific, already
+ * seed-stripped `WorldConfig` -- typically a condition-transformed config
+ * (e.g. `specConfig` for condition "neutral"), not the preset's own raw
+ * `cfg` (Astra review, 2026-09-27, item 2): `presetIdentity` alone doesn't
+ * capture a *condition*'s own transform (packages/runner/src/conditions.ts
+ * -- e.g. "neutral"'s `apply`), so changing what a condition does would
+ * otherwise leave `presetIdentity` unchanged while silently changing the
+ * distribution a calibration pilot's runs (all one condition) actually draw
+ * from.
+ *
+ * Takes explicit inputs -- a presetIdentity string, a condition id and a
+ * config -- rather than a `Preset`/presetId, so this same function produces
+ * identical digests whether called with values freshly computed from
+ * current code (tools/analyze.ts, experiments/endpoints.ts) or with values
+ * read back out of an already-verified run manifest (tools/calibrate.ts,
+ * which must derive this from the pilot's own data, not from current code
+ * alone) -- the two call sites are cross-checked precisely because they can
+ * only agree if the underlying data actually does.
+ */
+export function distributionIdentity(presetIdentityValue: string, condition: string, cfgWithoutSeed: WorldConfig): string {
+  const canonical = canonicalConfig(cfgWithoutSeed);
+  const bytes = new TextEncoder().encode(JSON.stringify({ presetIdentity: presetIdentityValue, condition, cfg: canonical }));
+  const words = new Uint32Array(Math.ceil(bytes.length / 4));
+  new Uint8Array(words.buffer).set(bytes);
+  const [a, b] = digestWords(Uint32Array.of(bytes.length, ...words));
+  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+}
+
 export function initWorld(cfg: WorldConfig, init: InitParams): WorldState {
   switch (init.kind) {
     case "soup":

@@ -2,9 +2,15 @@
 //
 //   deno run -A tools/analyze.ts runs/<experiment>/<preset> [--out report]
 //
-// 1. Neutral threshold: the 95th percentile of lineage activity in the neutral
-//    shadow runs (Bedau & Packard). Components above it count as adaptively
-//    significant.
+// 1. Activity threshold (Bedau & Packard): for a preset registered in
+//    experiments/endpoints.ts's ACTIVITY_THRESHOLDS (gradient-m3, spots-m3),
+//    the value FROZEN by a separate neutral-only calibration pilot
+//    (tools/calibrate.ts) -- independent of this ensemble's own neutral
+//    seeds. Otherwise (an unregistered preset), the 95th percentile of this
+//    ensemble's own neutral-run lineage activity, as before (labelled
+//    exploratory). Either way, the in-sample neutral 95th percentile is also
+//    always reported as a labelled diagnostic when neutral runs exist.
+//    Components above the threshold in use count as adaptively significant.
 // 2. Per run: activity statistics recomputed with that threshold, time-averaged
 //    ecology and held-out complexity observables, and a growth-vs-saturation
 //    test on cumulative new activity.
@@ -27,10 +33,21 @@
 // and observation schedule, with configurations differing from the treatment
 // exactly by their condition.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
-import { ActivityTracker, EXACT_MAX, growthVsSaturation, mannWhitney, mean, quantile, scheduledTrend, sd } from "@bl/metrics";
-import { sameConfig, specConfig } from "@bl/runner";
+import { EXACT_MAX, growthVsSaturation, mannWhitney, mean, quantile, scheduledTrend, sd } from "@bl/metrics";
+import { distributionIdentity, PRESETS, presetIdentity, type WorldConfig } from "@bl/schema";
+import { specConfig, type RunSpec } from "@bl/runner";
 import {
+  activities,
+  ensembleProblems,
+  loadRunsUnder,
+  metapopulationRingProblems,
+  partitionByConservation,
+  provenanceProblems,
+  type Run,
+} from "./lib/bundle.ts";
+import { decideActivityThreshold } from "./lib/threshold.ts";
+import {
+  ACTIVITY_THRESHOLDS,
   evaluateEndpoint,
   evaluateHeldOut,
   HELD_OUT_SPECS,
@@ -45,73 +62,11 @@ const root = String(a._[0] ?? "");
 if (!root) throw new Error("usage: analyze.ts runs/<experiment>/<preset>");
 const outDir = a.out ?? `${root}/report`;
 
-interface Run {
-  condition: string;
-  seed: number;
-  dir: string;
-  series: Record<string, any>[];
-  lineages: Map<number, [string, number][]>;
-  manifest: any;
-}
-
-async function loadRun(dir: string, condition: string, seed: number): Promise<Run | null> {
-  try {
-    const manifest = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
-    if (!manifest.summary) return null;
-    const series = (await Deno.readTextFile(`${dir}/series.jsonl`)).trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
-    const lineages = new Map<number, [string, number][]>();
-    const lines = (await Deno.readTextFile(`${dir}/lineages.tsv`)).trim().split("\n").slice(1);
-    for (const l of lines) {
-      const [s, k, c] = l.split("\t");
-      const step = Number(s);
-      let arr = lineages.get(step);
-      if (!arr) lineages.set(step, (arr = []));
-      arr.push([k, Number(c)]);
-    }
-    return { condition, seed, dir, series, lineages, manifest };
-  } catch {
-    return null;
-  }
-}
-
-const loaded: Run[] = [];
-for await (const cond of Deno.readDir(root)) {
-  if (!cond.isDirectory || cond.name === "report") continue;
-  for await (const sd of Deno.readDir(`${root}/${cond.name}`)) {
-    const m = /^seed-(\d+)$/.exec(sd.name);
-    if (!m) continue;
-    const r = await loadRun(`${root}/${cond.name}/${sd.name}`, cond.name, Number(m[1]));
-    if (r) loaded.push(r);
-  }
-}
+// ---- load + ensemble eligibility (tools/lib/bundle.ts, shared with tools/calibrate.ts) ----
+const loaded = await loadRunsUnder(root);
 if (!loaded.length) throw new Error(`no completed runs under ${root}`);
-// ---- ensemble compatibility ----
 {
-  const problems: string[] = [];
-  const ref = loaded[0].manifest.spec;
-  const shared = ["experiment", "presetId", "steps", "censusEvery", "deepEvery", "activityThreshold"] as const;
-  for (const r of loaded) {
-    const m = r.manifest;
-    const id = `${r.condition}/seed-${r.seed}`;
-    if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION)
-      problems.push(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, analysis expects ${RULE_VERSION}/${SCHEMA_VERSION}`);
-    // A missing field predates METRICS_VERSION and is version 1 — never pool
-    // runs whose held-out metrics (e.g. compressionRatio) were computed under
-    // different definitions.
-    if ((m.metricsVersion ?? 1) !== METRICS_VERSION) problems.push(`${id}: metrics version ${m.metricsVersion ?? 1}, analysis expects ${METRICS_VERSION}`);
-    if (m.spec.condition !== r.condition || m.spec.seed !== r.seed) problems.push(`${id}: manifest says ${m.spec.condition}/seed-${m.spec.seed}`);
-    for (const k of shared) if ((m.spec[k] ?? null) !== (ref[k] ?? null)) problems.push(`${id}: ${k} ${m.spec[k]} differs from ${ref[k]}`);
-    if (m.spec.overrides && Object.keys(m.spec.overrides).length) problems.push(`${id}: config overrides ${JSON.stringify(m.spec.overrides)}`);
-    else {
-      try {
-        if (!sameConfig(m.cfg, specConfig(m.spec))) problems.push(`${id}: config differs from ${m.spec.presetId} under ${m.spec.condition}`);
-      } catch (e) {
-        problems.push(`${id}: ${(e as Error).message}`);
-      }
-    }
-    if ((m.startStep ?? 0) !== 0 || m.summary.steps !== m.spec.steps) problems.push(`${id}: covers ${m.startStep ?? 0}+${m.summary.steps} of ${m.spec.steps} steps`);
-    if (r.series.length !== Math.ceil(m.spec.steps / m.spec.censusEvery) || r.series.some((x, i) => x.step !== Math.min((i + 1) * m.spec.censusEvery, m.spec.steps))) problems.push(`${id}: census steps do not follow censusEvery=${m.spec.censusEvery}`);
-  }
+  const problems = ensembleProblems(loaded);
   if (problems.length) throw new Error(`runs under ${root} are not one ensemble:\n  ${problems.slice(0, 40).join("\n  ")}`);
 }
 // ---- metapopulation: ringed seeds are not independent replicates ----
@@ -129,11 +84,10 @@ if (!loaded.length) throw new Error(`no completed runs under ${root}`);
 // (treating each ring as one data point) is a reasonable extension but not
 // implemented here. Non-metapopulation ensembles are entirely unaffected.
 {
-  const ringed = loaded.filter((r) => r.manifest.spec?.metapopulation && r.condition !== "no-migration");
-  if (ringed.length) {
-    const conds = [...new Set(ringed.map((r) => r.condition))];
+  const ring = metapopulationRingProblems(loaded);
+  if (ring) {
     throw new Error(
-      `runs under ${root} include a metapopulation ring (condition(s) ${conds.join(", ")}, ${ringed.length} seed(s) total) -- ` +
+      `runs under ${root} include a metapopulation ring (condition(s) ${ring.conditions.join(", ")}, ${ring.count} seed(s) total) -- ` +
         `those seeds exchange matter/genomes with each other and are not independent replicates. This tool does not pool a ring's ` +
         `seeds as if they were; analyze the ring as a single unit (or extend analyze.ts to group by ring) instead of running ensemble ` +
         `inference across its seeds.`,
@@ -141,26 +95,97 @@ if (!loaded.length) throw new Error(`no completed runs under ${root}`);
   }
 }
 // Pre-registered eligibility: only histories with exact conservation enter inference.
-const invalid = loaded.filter((r) => !r.manifest.summary.conservationOk);
-const runs = loaded.filter((r) => r.manifest.summary.conservationOk);
+const { eligible: runs, invalid } = partitionByConservation(loaded);
 if (!runs.length) throw new Error("no run passed the conservation check");
 const conditions = [...new Set(runs.map((r) => r.condition))].sort((x, y) => (x === "treatment" ? -1 : y === "treatment" ? 1 : x.localeCompare(y)));
 
-// ---- neutral threshold ----
-// Replays every census (from series.jsonl), including empty ones after an
-// extinction, so extinct lineages leave the present set at the right time.
-function activities(r: Run, threshold = Infinity): { tracker: ActivityTracker; snaps: ReturnType<ActivityTracker["update"]>[] } {
-  const t = new ActivityTracker(threshold);
-  const snaps = r.series.map((x) => t.update(x.step, r.lineages.get(x.step) ?? []));
-  return { tracker: t, snaps };
+// ---- activity threshold ----
+// Two distinct numbers, never confused:
+//  - `threshold` is what this analysis actually feeds into every
+//    activity-based statistic below. For a preset registered in
+//    experiments/endpoints.ts's ACTIVITY_THRESHOLDS (gradient-m3, spots-m3)
+//    that is the FROZEN value from a dedicated neutral-only calibration
+//    pilot (tools/calibrate.ts), independent of which neutral seeds this
+//    ensemble happens to include. A preset absent from ACTIVITY_THRESHOLDS
+//    keeps the original in-sample behavior (this ensemble's own neutral
+//    runs), labelled exploratory.
+//  - the in-sample neutral quantile, computed from this ensemble's own
+//    neutral runs the same way it always was, is ALWAYS also reported (when
+//    neutral runs exist) as a labelled diagnostic -- informative, but never
+//    fed into any endpoint once a preset has a frozen threshold.
+const presetId = runs[0].manifest.spec.presetId;
+const frozen = ACTIVITY_THRESHOLDS[presetId];
+
+// ---- provenance (Astra review, 2026-09-27, item 1) ----
+// A registered preset's frozen threshold depends on the calibration pilot's
+// runs actually having the founders/config current code expects -- not just
+// on their spec.presetId *label* matching. ensembleProblems above only ever
+// compares WorldConfig fields (never founder content), so a run recorded
+// under a mismatched founder set could pass ensemble validation outright
+// and still be pooled into every activity statistic. Checked here, before
+// anything else in this ensemble is trusted for a registered preset; an
+// exploratory (unregistered) preset never needs this and keeps working
+// without it, including against bundles from before this provenance was
+// recorded at all.
+if (frozen) {
+  const problems = provenanceProblems(runs, presetId);
+  if (problems.length)
+    throw new Error(
+      `runs under ${root} cannot use preset "${presetId}"'s registered activity threshold -- provenance check failed:\n  ${problems.slice(0, 40).join("\n  ")}`,
+    );
 }
+
 const neutralRuns = runs.filter((r) => r.condition === "neutral");
 const neutralActs = neutralRuns.flatMap((r) => activities(r).tracker.allActivities());
-const q = Number(a.q);
-// Without neutral runs the threshold is uncalibrated: activity endpoints are
-// reported as unavailable rather than as zeros.
-const calibrated = neutralActs.length > 0;
-const threshold = calibrated ? quantile(neutralActs, q) : Infinity;
+const inSampleNeutralQuantile = neutralActs.length > 0 ? quantile(neutralActs, 0.95) : null;
+
+/** A minimal, valid RunSpec for a `specConfig` call that only cares about presetId/condition/seed -- the other fields are irrelevant to config computation and never touch the filesystem here. Mirrors experiments/endpoints.ts's own `neutralSpecFor`. */
+function neutralSpecFor(id: string): RunSpec {
+  return { experiment: "identity", presetId: id, condition: "neutral", seed: 0, steps: 1, censusEvery: 1, deepEvery: 1, checkpointEvery: 0 };
+}
+
+// This ensemble's own rule/schema/metrics versions (guaranteed identical
+// across every loaded run by ensembleProblems above, so any one run's
+// manifest speaks for the whole ensemble) and its preset's CURRENT identity
+// (packages/schema/src/presets.ts's presetIdentity, recomputed fresh from
+// the code actually running right now -- never trusted from any stored
+// value) -- compared against a registered preset's recorded pilot metadata
+// by decideActivityThreshold (Astra review, 2026-09-27, P1/item 2).
+const currentPreset = PRESETS.find((p) => p.id === presetId);
+// A preset id absent from @bl/schema's PRESETS can still reach here (an
+// ensemble from an older/renamed preset) -- decideActivityThreshold only
+// ever compares these against a *registered* threshold's recorded identity,
+// and a preset unknown to the current code can never match a real digest,
+// so this correctly refuses rather than throwing here.
+const currentPresetIdentity = currentPreset ? presetIdentity(currentPreset) : "";
+const currentCalibrationDistributionIdentity = currentPreset
+  ? (() => {
+      const { seed: _seed, ...neutralCfgWithoutSeed } = specConfig(neutralSpecFor(presetId));
+      return distributionIdentity(currentPresetIdentity, "neutral", neutralCfgWithoutSeed as WorldConfig);
+    })()
+  : "";
+const ensembleIdentity = {
+  ruleVersion: runs[0].manifest.ruleVersion,
+  schemaVersion: runs[0].manifest.schemaVersion,
+  metricsVersion: runs[0].manifest.metricsVersion,
+  presetIdentity: currentPresetIdentity,
+  calibrationDistributionIdentity: currentCalibrationDistributionIdentity,
+};
+// Every seed present under this ensemble root, any condition -- reused
+// against a registered preset's reserved calibration-pilot seed range
+// (Astra review, P2). Uses `loaded` (not just the conservation-eligible
+// `runs`) since a seed still occupies its slot in the experimental design
+// even if that particular history failed conservation.
+const ensembleSeeds = loaded.map((r) => r.seed);
+
+// tools/lib/threshold.ts's decideActivityThreshold is pure (host-agnostic)
+// and unit-tested directly (tests/deno/analyze.ts) -- it covers the
+// registered/frozen, not-yet-calibrated, schedule-mismatch, version/identity,
+// calibration-distribution-identity mismatch, seed-reuse and exploratory
+// branches without needing a synthetic run bundle for each.
+const outcome = decideActivityThreshold(presetId, ACTIVITY_THRESHOLDS, runs[0].manifest.spec, Number(a.q), neutralActs, ensembleIdentity, ensembleSeeds);
+if (outcome.kind === "refuse") throw new Error(outcome.reason);
+const { mode: thresholdMode, q, calibrated, threshold, unavailableReason } = outcome.decision;
 
 // ---- per-run statistics ----
 type Stats = Record<string, number>;
@@ -267,9 +292,22 @@ const fmt = (v: number) => (Number.isFinite(v) ? (Math.abs(v) >= 100 ? v.toFixed
 let md = `# Ensemble report: ${root}\n\n`;
 md += `Generated ${new Date().toISOString()} from ${runs.length} eligible runs.\n\n`;
 if (invalid.length) md += `**Excluded (conservation failed):** ${invalid.map((r) => `${r.condition}/seed-${r.seed}`).join(", ")}\n\n`;
-md += calibrated
-  ? `Neutral activity threshold (q=${q} of ${neutralActs.length} neutral lineage activities): **${fmt(threshold)}** cell-censuses.\n\n`
-  : `**Activity endpoints unavailable:** no eligible neutral-shadow runs to calibrate the threshold (run the \`neutral\` condition).\n\n`;
+if (thresholdMode === "frozen") {
+  md += calibrated
+    ? `Activity threshold: **${fmt(threshold)}** cell-censuses -- frozen for preset "${presetId}" at q=${q} from the ` +
+      `"${frozen!.pilot.experiment}" pilot (${frozen!.pilot.runs} neutral runs, seeds ${frozen!.pilot.seeds[0]}–${frozen!.pilot.seeds[1]}), ` +
+      `not from this ensemble's own neutral runs.\n\n`
+    : `**Activity endpoints unavailable:** ${unavailableReason}\n\n`;
+  md += inSampleNeutralQuantile !== null
+    ? `Diagnostic only (never used for inference): this ensemble's own in-sample neutral 95th percentile (q=0.95 of ` +
+      `${neutralActs.length} neutral lineage activities) is **${fmt(inSampleNeutralQuantile)}**.\n\n`
+    : `Diagnostic only: no eligible neutral-shadow runs in this ensemble to compute an in-sample neutral percentile.\n\n`;
+} else {
+  md += calibrated
+    ? `Neutral activity threshold (q=${q} of ${neutralActs.length} neutral lineage activities, exploratory -- preset ` +
+      `"${presetId}" has no registered, frozen threshold): **${fmt(threshold)}** cell-censuses.\n\n`
+    : `**Activity endpoints unavailable:** no eligible neutral-shadow runs to calibrate the threshold (run the \`neutral\` condition).\n\n`;
+}
 md += `## Conditions\n\n| condition | runs | steps | conservation exact | extinct | trend of cumulative new activity |\n|---|---|---|---|---|---|\n`;
 for (const c of conditions) {
   const rs = runs.filter((r) => r.condition === c);
@@ -332,8 +370,24 @@ function renderEndpoint(n: number, r: EndpointResult): string {
   return out;
 }
 
+// Endpoint 1's `description` text (experiments/endpoints.ts) is generated
+// once, shared verbatim with preregistration.md, and always describes the
+// REGISTERED/frozen-threshold framing. When this ensemble's own preset is
+// exploratory instead, that shared text doesn't describe what this report
+// actually did (Astra review, 2026-09-27, P3) -- qualified here, per report,
+// rather than making the shared description mode-aware.
+const adaptiveActivityNote: string | null =
+  thresholdMode === "exploratory"
+    ? `preset "${presetId}" is not registered in ACTIVITY_THRESHOLDS, so the "frozen threshold" text in endpoint 1's ` +
+      `description does not describe this ensemble. Its activity endpoints instead use the EXPLORATORY in-sample ` +
+      `threshold reported above (q=${q} of this ensemble's own neutral runs), not a frozen value.`
+    : null;
+
 md += `\n## Primary endpoints (pre-registered)\n\n`;
-results.forEach((r, i) => (md += `\n${renderEndpoint(i + 1, r)}`));
+results.forEach((r, i) => {
+  md += `\n${renderEndpoint(i + 1, r)}`;
+  if (PRIMARY_ENDPOINTS[i].id === "adaptive-activity" && adaptiveActivityNote) md += `\n**Note for this report:** ${adaptiveActivityNote}\n`;
+});
 
 // ---- held-out observables (experiments/endpoints.ts: HELD_OUT_SPECS) ----
 // Confirmatory, not exploratory (2026-09-26 amendment) -- kept in its own
@@ -344,7 +398,6 @@ results.forEach((r, i) => (md += `\n${renderEndpoint(i + 1, r)}`));
 // pooled into one shared Holm family (see experiments/endpoints.ts for the
 // full rationale). Pattern entropy and lineage-map compression ratio are
 // descriptive only and never counted.
-const presetId = runs[0].manifest.spec.presetId;
 const heldOut = evaluateHeldOut(views, presetId);
 /** HELD_OUT_SPECS's id -> the base statistic key `trendDiagnostics` is keyed by (strips the "Trend" suffix). */
 const heldOutBaseKey = new Map(HELD_OUT_SPECS.map((s) => [s.id, s.statistic.replace(/Trend$/, "")]));
@@ -481,7 +534,22 @@ md += chart("Bound mass (B+P)", (x) => x.pools.B + x.pools.P, "biomass.svg");
 await Deno.writeTextFile(`${outDir}/report.md`, md);
 await Deno.writeTextFile(
   `${outDir}/report.json`,
-  JSON.stringify({ threshold, runs: runs.map((r) => ({ condition: r.condition, seed: r.seed, trend: trends.get(r), stats: perRun.get(r) })) }, null, 2),
+  JSON.stringify(
+    {
+      presetId,
+      thresholdMode,
+      calibrated,
+      threshold,
+      q,
+      unavailableReason,
+      inSampleNeutralQuantile,
+      adaptiveActivityNote,
+      ensembleIdentity,
+      runs: runs.map((r) => ({ condition: r.condition, seed: r.seed, trend: trends.get(r), stats: perRun.get(r) })),
+    },
+    null,
+    2,
+  ),
 );
 console.log(md.split("## Time series")[0]);
 console.log(`wrote ${outDir}/report.md`);

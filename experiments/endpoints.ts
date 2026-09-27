@@ -14,6 +14,8 @@
 // no Deno- or Node-specific APIs in this file, pure data and pure functions
 // only.
 import { EXACT_MAX, holm, mannWhitney, wilcoxonSignedRank, type GrowthVerdict } from "@bl/metrics";
+import { distributionIdentity, METRICS_VERSION, PRESETS, presetIdentity, RULE_VERSION, SCHEMA_VERSION, type WorldConfig } from "@bl/schema";
+import { specConfig, type RunSpec } from "@bl/runner";
 
 /** One-sided alternative for a Mann–Whitney comparison. */
 export type Alt = "pGreater" | "pLess";
@@ -68,6 +70,124 @@ export type Endpoint = TestEndpoint | ThresholdEndpoint | CoexistenceEndpoint;
 
 export const ALPHA = 0.01;
 
+// ---- activity threshold (Bedau–Packard), frozen per preset from a pilot ----
+//
+// The pre-registration's primary endpoint 1 originally computed its
+// threshold in-sample, from the same ensemble's own neutral runs
+// (tools/analyze.ts's now-diagnostic-only in-sample quantile). Decided
+// (user, 2026-09-27): freeze it instead from a SEPARATE calibration pilot --
+// 20 neutral-only runs per registered preset, seeds disjoint from any
+// ensemble's own seeds, run once with tools/run.ts and reduced by
+// tools/calibrate.ts -- so the threshold used for inference never depends on
+// which neutral seeds happen to be in the ensemble being tested. Analysis
+// still reports the in-sample neutral 95th percentile (tools/analyze.ts), but
+// only as a labelled diagnostic, never fed into any endpoint.
+//
+// `value` starts null for both registered presets: the pilot ("calib-neutral",
+// seeds 1001-1020) has not finished and been reduced yet. tools/calibrate.ts
+// prints the exact object literal to paste in here once it has.
+//
+// `ruleVersion`/`schemaVersion`/`metricsVersion`/`presetIdentity` (Astra
+// review, 2026-09-27, P1): a frozen threshold carries no record of what code
+// produced it, so a later rule/schema/metrics bump or a preset definition
+// change (packages/schema/src/presets.ts) could silently be compared against
+// an ensemble it no longer describes. Recorded here from the CURRENT code
+// (filled in now, even while `value` is still null, so tools/analyze.ts's
+// check is active from the start) and re-emitted verbatim by
+// tools/calibrate.ts from the pilot's own manifests/preset when the real
+// pilot is reduced -- tools/analyze.ts refuses a frozen threshold when an
+// ensemble's own rule/schema/metrics versions or its preset's current
+// identity differ from what's recorded here (seed and condition differences
+// are expected and never checked this way).
+export interface ActivityThresholdPilot {
+  /** tools/run.ts --experiment name the pilot's bundles were written under. */
+  experiment: string;
+  /** [first, last] seed, inclusive -- disjoint from any registered ensemble's own seeds. */
+  seeds: [number, number];
+  /** Eligible neutral runs pooled to compute the frozen value. */
+  runs: number;
+  steps: number;
+  censusEvery: number;
+  deepEvery: number;
+  /** RULE_VERSION/SCHEMA_VERSION/METRICS_VERSION (packages/schema/src/config.ts) at calibration time. */
+  ruleVersion: number;
+  schemaVersion: number;
+  metricsVersion: number;
+  /** `presetIdentity(preset)` (packages/schema/src/presets.ts) for this preset at calibration time. */
+  presetIdentity: string;
+  /**
+   * `distributionIdentity(presetIdentity, "neutral", <seed-stripped neutral
+   * WorldConfig>)` (packages/schema/src/presets.ts) at calibration time
+   * (Astra review, 2026-09-27, item 2): `presetIdentity` alone doesn't cover
+   * a *condition*'s own transform (packages/runner/src/conditions.ts) --
+   * e.g. changing "neutral"'s `apply` to additionally zero `mutRate` would
+   * leave `presetIdentity` unchanged while silently changing what the
+   * calibration pilot's neutral runs (all condition "neutral") actually
+   * drew from. This is the identity of THAT distribution specifically.
+   */
+  calibrationDistributionIdentity: string;
+}
+
+export interface ActivityThresholdEntry {
+  /** The frozen threshold (cell-censuses), or null before the pilot has been run and reduced. */
+  value: number | null;
+  quantile: 0.95;
+  pilot: ActivityThresholdPilot;
+}
+
+/** Fields every registered preset's pilot shares -- everything except `presetIdentity`, which is per-preset. */
+const CALIB_NEUTRAL_PILOT_BASE = {
+  experiment: "calib-neutral",
+  seeds: [1001, 1020] as [number, number],
+  runs: 20,
+  steps: 1e6,
+  censusEvery: 100,
+  deepEvery: 10,
+  ruleVersion: RULE_VERSION,
+  schemaVersion: SCHEMA_VERSION,
+  metricsVersion: METRICS_VERSION,
+};
+
+/** A minimal, valid RunSpec for a `specConfig` call that only cares about presetId/condition/seed -- the other fields are irrelevant to config computation and never touch the filesystem here. */
+function neutralSpecFor(presetId: string): RunSpec {
+  return { experiment: "identity", presetId, condition: "neutral", seed: 0, steps: 1, censusEvery: 1, deepEvery: 1, checkpointEvery: 0 };
+}
+
+function pilotFor(presetId: string): ActivityThresholdPilot {
+  const preset = PRESETS.find((p) => p.id === presetId);
+  if (!preset) throw new Error(`ACTIVITY_THRESHOLDS: no such preset "${presetId}" in @bl/schema's PRESETS`);
+  const identity = presetIdentity(preset);
+  const { seed: _seed, ...neutralCfgWithoutSeed } = specConfig(neutralSpecFor(presetId));
+  return {
+    ...CALIB_NEUTRAL_PILOT_BASE,
+    presetIdentity: identity,
+    calibrationDistributionIdentity: distributionIdentity(identity, "neutral", neutralCfgWithoutSeed as WorldConfig),
+  };
+}
+
+export const ACTIVITY_THRESHOLDS: Record<string, ActivityThresholdEntry> = {
+  "gradient-m3": { value: null, quantile: 0.95, pilot: pilotFor("gradient-m3") },
+  "spots-m3": { value: null, quantile: 0.95, pilot: pilotFor("spots-m3") },
+};
+
+function fmtThresholdValue(v: number | null): string {
+  return v === null ? "to be fixed before freezing" : String(v);
+}
+
+/** Rendered into endpoint 1's description below -- kept as a function (not a constant) so it always reflects ACTIVITY_THRESHOLDS's current values when this module is evaluated. */
+function activityThresholdClause(): string {
+  const ids = Object.keys(ACTIVITY_THRESHOLDS);
+  const p = ACTIVITY_THRESHOLDS[ids[0]].pilot;
+  const perPreset = ids.map((id) => `${id}: ${fmtThresholdValue(ACTIVITY_THRESHOLDS[id].value)}`).join("; ");
+  return (
+    `threshold frozen per preset from a dedicated neutral-only calibration pilot ("${p.experiment}", ` +
+    `${p.runs} runs per preset, seeds ${p.seeds[0]}–${p.seeds[1]}, ${p.steps.toLocaleString()} steps, ` +
+    `census every ${p.censusEvery}, deep every ${p.deepEvery}), at the 95th percentile of pooled lineage ` +
+    `activity (\`tools/calibrate.ts\`): ${perPreset}. The analysed ensemble's own in-sample neutral 95th ` +
+    "percentile is still reported by `tools/analyze.ts`, but only as a labelled diagnostic, never used for inference."
+  );
+}
+
 export const PRIMARY_ENDPOINTS: Endpoint[] = [
   {
     id: "adaptive-activity",
@@ -80,7 +200,7 @@ export const PRIMARY_ENDPOINTS: Endpoint[] = [
     alpha: ALPHA,
     description:
       "**Adaptive activity.** Cumulative new evolutionary activity (Bedau–Packard) with the " +
-      "threshold fixed at the 95th percentile of lineage activity pooled over the neutral runs. " +
+      `${activityThresholdClause()} ` +
       `Hypothesis: treatment > neutral and treatment > no-mutation (one-sided Mann–Whitney, ` +
       `α = ${ALPHA} after Holm correction across the two comparisons).`,
   },
@@ -100,7 +220,8 @@ export const PRIMARY_ENDPOINTS: Endpoint[] = [
       "time constant lies beyond half the window; \"saturating\" if ΔAIC ≤ −2 with the " +
       "time constant within half the window; otherwise \"indeterminate\". Hypothesis: a majority of " +
       "treatment runs are \"growing\" while at most a minority of neutral runs are. A lineage counts " +
-      "as adaptively significant only when its activity is strictly above the neutral threshold.",
+      "as adaptively significant only when its activity is strictly above the frozen per-preset " +
+      "neutral threshold (see endpoint 1).",
   },
   {
     id: "ecological-closure-recycling",
