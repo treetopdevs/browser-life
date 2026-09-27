@@ -8,3 +8,4 @@ export * from "./stats.ts";
 export * from "./collectives.ts";
 export * from "./calibration.ts";
 export * from "./biogeography.ts";
+export * from "./individuality.ts";
