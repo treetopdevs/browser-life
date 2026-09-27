@@ -191,3 +191,23 @@ describe("probability flags", () => {
     }
   });
 });
+
+describe("archive replay (bootstrap --resume)", () => {
+  it("rebuilds cells, passers, lineages and parent picks exactly from the viable log", () => {
+    const a = new Archive();
+    const evs = [ev(16), ev(10), ev(14, 15), ev(16)];
+    let g = genome(3);
+    for (let s = 1; s <= 60; s++) {
+      g = s % 7 === 0 ? genome(s) : mutateGenome(g, s, 2);
+      const e = { ...evs[s % evs.length], meanMass: 128 << (s % 5), speed: s % 4, survived: s % 11 === 0 ? 0 : 16 };
+      a.offer(g, e, s);
+    }
+    const b = Archive.replay(a.viableLog(), a.evaluated);
+    expect(b.evaluated).toBe(a.evaluated);
+    expect(b.viableLog().length).toBe(a.viableLog().length);
+    expect(b.elites()).toEqual(a.elites());
+    expect(b.gatePassing()).toEqual(a.gatePassing());
+    expect(b.lineages()).toEqual(a.lineages());
+    for (let s = 0; s < 50; s++) expect(b.pickParent(s)).toEqual(a.pickParent(s));
+  });
+});

@@ -131,6 +131,24 @@ export class Archive {
   coverage(): number {
     return this.cells.size / (this.spec.bins * this.spec.bins);
   }
+
+  /** Viable offers in order, from index `from`; `Archive.replay` of the whole log rebuilds this archive exactly. */
+  viableLog(from = 0): Elite[] {
+    return this.viable.slice(from);
+  }
+
+  /**
+   * Rebuilds an archive from a viable-offer log (see viableLog) and the total
+   * number of candidates evaluated. Non-viable offers change nothing but the
+   * count, so replaying the viable ones in order reproduces cells, passers and
+   * lineages exactly.
+   */
+  static replay(log: { genome: Genome; eval: Evaluation; born: number }[], evaluated: number, spec = DEFAULT_ARCHIVE): Archive {
+    const a = new Archive(spec);
+    for (const r of log) a.offer(r.genome, r.eval, r.born);
+    a.evaluated = evaluated;
+    return a;
+  }
 }
 
 /** Parses a CLI probability such as --pass-bias, refusing blank, non-numeric and out-of-range values. */
