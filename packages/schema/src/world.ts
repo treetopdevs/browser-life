@@ -238,6 +238,100 @@ export function m3World(cfg: WorldConfig, count = 13, nutrient = 256, biomass = 
   return buildWorld(cfg, { nutrient, founders });
 }
 
+/**
+ * Grid layout `archipelagoWorld` uses to pack `count` founders into one
+ * tileW x tileH tile without overlap: ceil(sqrt(count)) columns/rows, founder
+ * radius derived from the resulting cell spacing (not fixed), so the same
+ * genome list packs at any tile size a caller validates with this first.
+ * Throws if `count` genomes cannot fit with radius >= 1 (e.g. a tile too
+ * small for this many founders) -- callers (tools/biogeo-sweep.ts) call this
+ * once per AREA level before spending a run on it, so a bad sweep level fails
+ * fast with a clear message instead of buildWorld's per-founder "does not fit
+ * in a tile" deep inside the run.
+ */
+export function archipelagoFounderLayout(tileW: number, tileH: number, count: number): { cols: number; rows: number; stepX: number; stepY: number; radius: number } {
+  const cols = Math.ceil(Math.sqrt(count));
+  const rows = Math.ceil(count / cols);
+  const stepX = Math.floor(tileW / cols);
+  const stepY = Math.floor(tileH / rows);
+  const radius = Math.floor(Math.min(stepX, stepY) / 2) - 1;
+  if (radius < 1) throw new Error(`archipelagoFounderLayout: ${count} founders do not fit in a ${tileW}x${tileH} tile without overlap (grid ${cols}x${rows}, radius would be ${radius})`);
+  return { cols, rows, stepX, stepY, radius };
+}
+
+/**
+ * Every tile stocked with one founder per genome in `genomes`, arranged on
+ * the `archipelagoFounderLayout` grid inside each tile, so every island
+ * starts with an *identical* founder-species pool regardless of tile size or
+ * position -- the initial condition the island-biogeography sweep
+ * (experiments/biogeography-island.md) holds fixed while varying tileW/tileH
+ * (AREA) and migrationPeriod/migrantCount (ISOLATION).
+ *
+ * Grid-slot assignment is **counterbalanced per seed**: putting genomes[k] at
+ * the same grid slot (gx,gy) in every tile of every seed would, under
+ * lightMode:"gradient" (RefSim.light -- ly = y % tileH), confound a
+ * founder's *identity* with its *light exposure* for the whole sweep -- a
+ * founder that always lands in a low-light row would look competitively
+ * excluded when it's really just an artifact of grid position. Fix: permute
+ * `genomes` with a seeded shuffle keyed on `cfg.seed` before laying them onto
+ * the grid, so which anchor gets which slot varies by seed (paired the same
+ * way across the treatment/no-migration conditions of *that* seed, since
+ * both read the same `cfg.seed`) while staying fully reproducible. Distinct
+ * from `tiledWorld` (one founder per *tile*, cycling) and `m3World` (`count`
+ * founders at world-global hash positions, not tile-aware): neither seeds
+ * every tile with the same multi-species pool, which this experiment needs.
+ *
+ * Founder biomass/energy still get buildWorld's own per-founder seed noise
+ * (draw(cfg.seed ^ ...)), so replicate seeds differ in initial condition
+ * exactly as every other init function's founders do; the genome
+ * identity-to-slot mapping is seed-varied too, not fixed per slot.
+ *
+ * **Known, documented confound (not fixed here, called out instead)**:
+ * `archipelagoFounderLayout`'s radius grows with tile size (2 at tileW=24,
+ * 15 at tileW=128 for `M3_FOUNDERS.length` founders, currently 12) while `biomass`/`energy` per founder are
+ * fixed, so occupied fraction and initial population size both scale with
+ * area. This function does NOT attempt to hold initial density constant
+ * across AREA levels -- doing so (e.g. capping radius and leaving the rest
+ * of the tile as bare substrate) changes what "island area" means physically
+ * (empty buffer vs. genuinely larger habitat) and is a design decision
+ * beyond this task's scope. tools/biogeo-analyze.ts recomputes each AREA
+ * level's occupied-fraction and initial-founder-cell-count directly from
+ * `archipelagoFounderLayout` instead, so the confound is measured, not
+ * hidden, without any sidecar file recording it.
+ */
+export function archipelagoWorld(cfg: WorldConfig, genomes: Genome[], nutrient = 32, biomass = 64, energy = 128): WorldState {
+  const { cols, stepX, stepY, radius } = archipelagoFounderLayout(cfg.tileW, cfg.tileH, genomes.length);
+  const order = shuffledIndices(genomes.length, cfg.seed); // seeded permutation -- see doc comment above
+  const founders: Founder[] = [];
+  for (let ty = 0; ty < cfg.tilesY; ty++)
+    for (let tx = 0; tx < cfg.tilesX; tx++)
+      order.forEach((genomeIdx, k) => {
+        const gx = k % cols, gy = Math.floor(k / cols);
+        founders.push({
+          x: tx * cfg.tileW + gx * stepX + (stepX >> 1),
+          y: ty * cfg.tileH + gy * stepY + (stepY >> 1),
+          radius,
+          genome: genomes[genomeIdx],
+          biomass,
+          energy,
+        });
+      });
+  return buildWorld(cfg, { nutrient, founders });
+}
+
+/** Deterministic Fisher-Yates over `[0, n)`, keyed on `seed` (this file's own
+ * lowbias32/draw, no Math.random -- same PRNG convention as everywhere else
+ * in this file). */
+function shuffledIndices(n: number, seed: number): number[] {
+  const idx = Array.from({ length: n }, (_, i) => i);
+  const base = lowbias32(seed ^ 0x9e3779b1);
+  for (let i = n - 1; i > 0; i--) {
+    const j = draw(base, i) % (i + 1);
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return idx;
+}
+
 export function cloneState(s: WorldState): WorldState {
   return { ...s, cells: s.cells.slice(), genome: s.genome.slice(), flux: s.flux.slice() };
 }

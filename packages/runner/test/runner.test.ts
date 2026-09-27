@@ -162,3 +162,25 @@ describe("immigrantError: ring members legitimately differ in seed AND ringNames
     expect(immigrantError(specAt(10, 1), 100, immigrant)).toMatch(/config differs/);
   });
 });
+
+describe("RunSpec.speciesCensus is optional (?:), never present when unset", () => {
+  it("JSON.stringify of a spec without speciesCensus never mentions the field", () => {
+    expect(JSON.stringify(reuseSpec)).not.toMatch(/speciesCensus/);
+  });
+
+  it("an explicit speciesCensus: undefined also never appears (JSON.stringify drops undefined values)", () => {
+    const spec: RunSpec = { ...reuseSpec, speciesCensus: undefined };
+    expect(JSON.stringify(spec)).not.toMatch(/speciesCensus/);
+    // sameCompletedRun/specConfig's pure behavior is otherwise unaffected by the field's mere presence-as-undefined.
+    expect(sameCompletedRun(baseManifest(), spec)).toBe(true);
+  });
+
+  it("an explicit speciesCensus: false normalizes the same as omitted (unlike undefined, JSON.stringify would otherwise keep it)", () => {
+    const spec: RunSpec = { ...reuseSpec, speciesCensus: false };
+    expect(JSON.stringify(spec)).toMatch(/speciesCensus/); // the raw spec really does carry the key...
+    // ...but sameCompletedRun (and runExperiment's own manifest.spec, exercised end to end in
+    // tests/deno/species-census.ts) must still treat it as identical to a manifest that never
+    // mentioned the field, the same guarantee explicit-undefined and omitted already have.
+    expect(sameCompletedRun(baseManifest(), spec)).toBe(true);
+  });
+});

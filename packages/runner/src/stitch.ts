@@ -34,6 +34,14 @@ export const MIGRATIONS_FILE = "migrations.tsv";
  * `MIGRATIONS_FILE`.
  */
 export const EXCHANGES_FILE = "exchanges.tsv";
+/**
+ * Per-tile species census (see packages/metrics/src/biogeography.ts's
+ * `tileSpeciesCensus`), written only when a run opts into
+ * `RunSpec.speciesCensus` — same "not in `BUNDLE_FILES`, all-or-nothing,
+ * exported for tools/stitch.ts to fetch and require" discipline as
+ * `MIGRATIONS_FILE`.
+ */
+export const SPECIES_FILE = "species.tsv";
 
 /**
  * `BUNDLE_FILES` minus `manifest.json` — the files a verify attempt's own
@@ -46,14 +54,14 @@ export const OBSERVATION_FILES = BUNDLE_FILES.filter((f): f is Exclude<(typeof B
 
 /**
  * Every file a verify attempt reports a digest for when it has it:
- * `OBSERVATION_FILES` plus the optional `MIGRATIONS_FILE` and `EXCHANGES_FILE`
- * (present only for, respectively, a migration-enabled run and a
- * metapopulation run). The coordinator's `@verified_files` must match.
- * Without the migration/exchange logs here, a migrating or metapopulation run
- * could be marked `observationsVerified` while its migrations.tsv/
- * exchanges.tsv was never compared.
+ * `OBSERVATION_FILES` plus the optional `MIGRATIONS_FILE`, `EXCHANGES_FILE`
+ * and `SPECIES_FILE` (present only for, respectively, a migration-enabled
+ * run, a metapopulation run, and a run with `speciesCensus` on). The
+ * coordinator's `@verified_files` must match. Without these optional logs
+ * here, a migrating, metapopulation or census-enabled run could be marked
+ * `observationsVerified` while one of them was never compared.
  */
-export const VERIFIED_FILES: readonly string[] = [...OBSERVATION_FILES, MIGRATIONS_FILE, EXCHANGES_FILE];
+export const VERIFIED_FILES: readonly string[] = [...OBSERVATION_FILES, MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE];
 
 /**
  * SHA-256 (lowercase hex) of each `VERIFIED_FILES` entry present in
@@ -169,6 +177,17 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
       for (const row of lines(s.files[MIGRATIONS_FILE]).slice(1)) {
         const step = Number(row.split("\t", 1)[0]);
         if (!(step > s.startStep && step <= end)) throw new Error(`${id}: ${MIGRATIONS_FILE} has a row at step ${step}, outside (${s.startStep}, ${end}]`);
+      }
+    // species.tsv is optional (only written when a run has speciesCensus configured —
+    // see runner.ts): checked when present, absent from every segment otherwise. Unlike
+    // migrations.tsv, every segment (not just #0) writes its own baseline row at exactly its
+    // own startStep (runner.ts writes one before its step loop, from whatever state it
+    // actually started from) — the bound is [startStep, end], not (startStep, end], and the
+    // merge below drops the boundary duplicate this produces.
+    if (typeof s.files[SPECIES_FILE] === "string")
+      for (const row of lines(s.files[SPECIES_FILE]).slice(1)) {
+        const step = Number(row.split("\t", 1)[0]);
+        if (!(step >= s.startStep && step <= end)) throw new Error(`${id}: ${SPECIES_FILE} has a row at step ${step}, outside [${s.startStep}, ${end}]`);
       }
     // exchanges.tsv: required (not merely permitted) whenever the spec has a
     // metapopulation -- review P2 found the previous version let every
@@ -307,6 +326,24 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     const header = lines(segs[0].files[MIGRATIONS_FILE])[0];
     for (const s of segs) if (lines(s.files[MIGRATIONS_FILE])[0] !== header) throw new Error(`segment #${s.index}: ${MIGRATIONS_FILE} header differs`);
     out[MIGRATIONS_FILE] = header + "\n" + segs.map((s) => s.files[MIGRATIONS_FILE].slice(s.files[MIGRATIONS_FILE].indexOf("\n") + 1)).join("");
+  }
+  // species.tsv: same all-or-nothing discipline as migrations.tsv above. Every segment after
+  // the first repeats its own boundary as a fresh baseline row (written unconditionally at
+  // actualInit.step by runner.ts) — the same step segment k-1's own final census row already
+  // covers, so it's dropped here rather than duplicated in the stitched file.
+  const speciesSegs = segs.filter((s) => typeof s.files[SPECIES_FILE] === "string");
+  if (speciesSegs.length > 0 && speciesSegs.length < segs.length) {
+    const missing = segs.filter((s) => typeof s.files[SPECIES_FILE] !== "string").map((s) => s.index);
+    throw new Error(`${SPECIES_FILE} is missing on segment(s) ${missing.join(", ")} but present on others; the species census is configured for the whole run or not at all`);
+  }
+  if (speciesSegs.length === segs.length) {
+    const header = lines(segs[0].files[SPECIES_FILE])[0];
+    for (const s of segs) if (lines(s.files[SPECIES_FILE])[0] !== header) throw new Error(`segment #${s.index}: ${SPECIES_FILE} header differs`);
+    const rows = segs.flatMap((s, k) => {
+      const dataRows = lines(s.files[SPECIES_FILE]).slice(1);
+      return k === 0 ? dataRows : dataRows.filter((row) => Number(row.split("\t", 1)[0]) !== s.startStep);
+    });
+    out[SPECIES_FILE] = header + "\n" + rows.map((row) => row + "\n").join("");
   }
   // Required from the spec, not inferred from presence (review P2): the
   // per-segment loop above already threw if any segment of a metapopulation

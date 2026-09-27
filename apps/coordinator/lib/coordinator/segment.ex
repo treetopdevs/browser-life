@@ -52,10 +52,11 @@ defmodule Coordinator.Segment do
   # BUNDLE_FILES); manifest.json is excluded on purpose (timestamps/host).
   @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
   # Optional: only a migration-enabled run writes migrations.tsv (see
-  # stitch.ts's MIGRATIONS_FILE), and only a metapopulation run writes
-  # exchanges.tsv (see stitch.ts's EXCHANGES_FILE). Compared whenever either
-  # side has it.
-  @optional_observation_files ~w(migrations.tsv exchanges.tsv)
+  # stitch.ts's MIGRATIONS_FILE), only a metapopulation run writes
+  # exchanges.tsv (see stitch.ts's EXCHANGES_FILE), and only a run with
+  # RunSpec.speciesCensus writes species.tsv (see stitch.ts's SPECIES_FILE).
+  # Compared whenever either side has it.
+  @optional_observation_files ~w(migrations.tsv exchanges.tsv species.tsv)
 
   @type status :: String.t()
   @type t :: %{

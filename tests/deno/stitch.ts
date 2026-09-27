@@ -129,6 +129,33 @@ expectThrow(
   () => stitchRun([migSegs[0], { ...migSegs[1], files: { ...migSegs[1].files, "migrations.tsv": undefined as unknown as string } }], migBase.steps),
 );
 
+// species.tsv: same all-or-nothing optional-file discipline as migrations.tsv above, but unlike
+// migrations.tsv every segment (not just #0) writes its own baseline row at its own startStep
+// (runner.ts, from whatever state it actually started from) -- this checks the merge drops that
+// duplicate rather than doubling the boundary row.
+const specBase: RunSpec = { ...migBase, experiment: "stitch-species", speciesCensus: true };
+const specSegs: StitchSegment[] = [];
+let specPrev: Awaited<ReturnType<typeof runExperiment>> | null = null;
+for (const [index, [startStep, steps]] of [[0, 200], [200, 200]].entries()) {
+  const sink = new Mem();
+  const r = await runExperiment(device, { ...specBase, steps }, sink, host, () => {}, { keepFinal: true, start: specPrev?.final, observer: specPrev?.observer });
+  specSegs.push({ index, startStep, steps, digest: r.summary.finalHash, files: Object.fromEntries(sink.files) });
+  specPrev = r;
+}
+check("both segments recorded species.tsv (sanity check on the fixture)", specSegs.every((s) => typeof s.files["species.tsv"] === "string"));
+const specStitched = stitchRun(specSegs, specBase.steps);
+const specRowsAtBoundary = specStitched["species.tsv"].trim().split("\n").slice(1).filter((r) => Number(r.split("\t")[0]) === 200);
+const tilesAtBoundary = specSegs[0].files["species.tsv"].trim().split("\n").slice(1).filter((r) => Number(r.split("\t")[0]) === 200).length;
+check(
+  "stitchRun drops segment #1's duplicate baseline row at the boundary step instead of doubling it",
+  specRowsAtBoundary.length === tilesAtBoundary,
+  `${specRowsAtBoundary.length} rows at step 200, expected ${tilesAtBoundary} (one set, not two)`,
+);
+expectThrow(
+  "stitchRun fails loudly when species.tsv is present on some segments but not others, instead of silently dropping it",
+  () => stitchRun([specSegs[0], { ...specSegs[1], files: { ...specSegs[1].files, "species.tsv": undefined as unknown as string } }], specBase.steps),
+);
+
 // exchanges.tsv (review P2): required whenever the spec has a metapopulation
 // (not merely optional-if-present, like migrations.tsv), and its accounting
 // -- row counts, import/export slot pairing, agreement with the manifest's

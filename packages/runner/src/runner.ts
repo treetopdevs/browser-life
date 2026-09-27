@@ -21,7 +21,9 @@ import {
   artifactDigest,
   decodeCheckpoint,
   encodeCheckpoint,
+  founderGenome,
   initWorld,
+  M3_FOUNDERS,
   presetConfig,
   stateHash,
   presetIdentity,
@@ -44,11 +46,28 @@ import {
   morphology,
   roleSummary,
   temporalMI,
+  tileSpeciesCensus,
   DEFAULT_CENSUS,
   unb64,
   type ActivityState,
   type TrackerState,
+  type TileSpeciesRow,
 } from "@bl/metrics";
+
+/**
+ * Fixed anchor set for `RunSpec.speciesCensus`'s per-tile species census --
+ * the same M3 founder set every archipelago tile is seeded with
+ * (tools/biogeo-sweep.ts's `archipelagoWorld`). Hardcoded here (not threaded
+ * through `RunSpec`) because `RunSpec` is embedded verbatim in manifest.json
+ * and diffed by `JSON.stringify` (`sameCompletedRun`) -- a `Genome[]` anchor
+ * list would serialize each founder's `Int8Array` weights as a numeric-key
+ * object, bloating every manifest for no benefit.
+ */
+const SPECIES_ANCHORS = M3_FOUNDERS.map(founderGenome);
+
+function speciesTsvRows(step: number, rows: TileSpeciesRow[]): string {
+  return rows.map((r) => `${step}\t${r.tile}\t${r.geneticRichness}\t${r.livingCells}\t${r.founderPresenceMask}\n`).join("");
+}
 import { conditionById } from "./conditions.ts";
 import { observeCensus, restoreObservers, serializeObservers } from "./observe.ts";
 
@@ -87,6 +106,24 @@ export interface RunSpec {
    * with another ring member's namespace-less ids.
    */
   metapopulation?: { salt: number; migrantCount: number; ringNamespace: number };
+  /**
+   * Per-tile species census (packages/metrics/src/biogeography.ts's
+   * `tileSpeciesCensus`), appended to `species.tsv` at every census step,
+   * against the fixed M3 founder set (`@bl/schema`'s `M3_FOUNDERS`). Omitted:
+   * no `species.tsv`, no extra readback, output byte-identical to before
+   * this field existed (see packages/runner/test's parity test and
+   * tests/deno/species-census.ts).
+   */
+  speciesCensus?: boolean;
+  /**
+   * Overrides `runId`'s default `experiment/presetId/condition/seed-N` path-style identity with
+   * this exact string -- for a caller (tools/biogeo-sweep.ts) whose own manifest already assigns
+   * each run a canonical, content-hashed id (a short hash of config+seed+steps+cadences) and wants
+   * that same id carried into manifest.json and used for resume/analysis identity, rather than a
+   * second, coarser identity derived from condition+seed alone. Omitted: `runId` behaves exactly as
+   * it always has (this field costs nothing to a run that doesn't opt in).
+   */
+  runId?: string;
 }
 
 export interface Sink {
@@ -182,6 +219,18 @@ export function validateSpec(spec: RunSpec): string[] {
   return errs;
 }
 
+/**
+ * `spec` with `speciesCensus` dropped unless it is exactly `true` -- so a caller that explicitly
+ * writes `speciesCensus: false` serializes (in `manifest.json`, and for `sameCompletedRun`'s
+ * comparison below) byte-identically to one that never mentioned the field at all. `JSON.stringify`
+ * already drops an `undefined` value on its own; only the explicit-`false` case needs this.
+ */
+function normalizedSpec(spec: RunSpec): RunSpec {
+  if (spec.speciesCensus !== false) return spec;
+  const { speciesCensus: _drop, ...rest } = spec;
+  return rest;
+}
+
 export function sameConfig(a: WorldConfig, b: WorldConfig): boolean {
   const keys = Object.keys(a).sort();
   return keys.length === Object.keys(b).length && keys.every((k) => a[k as keyof WorldConfig] === b[k as keyof WorldConfig]);
@@ -245,7 +294,7 @@ export function specConfig(spec: RunSpec): WorldConfig {
  */
 export function sameCompletedRun(done: Record<string, unknown>, spec: RunSpec): boolean {
   return (
-    JSON.stringify(done.spec) === JSON.stringify(spec) &&
+    JSON.stringify(done.spec) === JSON.stringify(normalizedSpec(spec)) &&
     done.ruleVersion === RULE_VERSION &&
     done.schemaVersion === SCHEMA_VERSION &&
     ((done.metricsVersion as number | undefined) ?? 1) === METRICS_VERSION &&
@@ -371,7 +420,7 @@ export function decodeArtifact(bytes: Uint8Array): { state: WorldState; observer
 }
 
 export function runId(spec: RunSpec): string {
-  return `${spec.experiment}/${spec.presetId}/${spec.condition}/seed-${spec.seed}`;
+  return spec.runId ?? `${spec.experiment}/${spec.presetId}/${spec.condition}/seed-${spec.seed}`;
 }
 
 export async function runExperiment(
@@ -445,7 +494,7 @@ export async function runExperiment(
   const { tracker, activity } = obs;
   const manifest = {
     runId: runId(spec),
-    spec,
+    spec: normalizedSpec(spec),
     cfg,
     init: preset.init,
     // Provenance of the starting distribution: the preset's identity (config,
@@ -500,6 +549,14 @@ export async function runExperiment(
   if (exchange) {
     const rows = (dir: "import" | "export", es: typeof exchange.imports) => es.map((e) => `${e.step}\t${dir}\t${e.slot}\t${e.cell}\t${e.matter}\t${e.lineageHi}\t${e.lineageLo}`);
     await sink.appendText("exchanges.tsv", [...rows("import", exchange.imports), ...rows("export", exchange.exports)].join("\n") + "\n");
+  }
+  // Only written when opted into, same discipline as migrations.tsv/exchanges.tsv: a run without
+  // speciesCensus has no species.tsv at all, and every other file stays byte-identical to before
+  // this field existed. actualInit's {cfg, genome} are already in memory, so the step-0 baseline
+  // row needs no readback.
+  if (spec.speciesCensus) {
+    await sink.writeText("species.tsv", "step\ttile\tgeneticRichness\tlivingCells\tfounderPresenceMask\n");
+    await sink.appendText("species.tsv", speciesTsvRows(actualInit.step, tileSpeciesCensus({ step: actualInit.step, cfg, genome: actualInit.genome }, SPECIES_ANCHORS)));
   }
 
   const t0 = performance.now();
@@ -596,11 +653,18 @@ export async function runExperiment(
           "migrations.tsv",
           mevents.map((e) => `${e.step}\t${e.slot}\t${e.fromTile}\t${e.toTile}\t${e.fromCell}\t${e.toCell}\t${e.matter}\t${e.lineageHi}\t${e.lineageLo}`).join("\n") + "\n",
         );
-      if (spec.checkpointEvery > 0 && (sim.step - startStep) % spec.checkpointEvery === 0) {
+      // One readState() when either a checkpoint or a species census is due -- never two: both
+      // need the full genome buffer (species census needs every GENOME_CHANNELS word per cell,
+      // not the 4-word genomeHead readSnapshot already read above), so they share this readback.
+      const dueForCheckpoint = spec.checkpointEvery > 0 && (sim.step - startStep) % spec.checkpointEvery === 0;
+      if (dueForCheckpoint || spec.speciesCensus) {
         const st = await sim.readState();
-        const file = `checkpoints/t${String(st.step).padStart(9, "0")}.blck`;
-        await sink.writeBytes(file, encodeCheckpoint(st, serializeObservers(obs, st.step, settings)));
-        manifest.checkpoints.push({ step: st.step, file, hash: stateHash(st) });
+        if (dueForCheckpoint) {
+          const file = `checkpoints/t${String(st.step).padStart(9, "0")}.blck`;
+          await sink.writeBytes(file, encodeCheckpoint(st, serializeObservers(obs, st.step, settings)));
+          manifest.checkpoints.push({ step: st.step, file, hash: stateHash(st) });
+        }
+        if (spec.speciesCensus) await sink.appendText("species.tsv", speciesTsvRows(st.step, tileSpeciesCensus({ step: st.step, cfg, genome: st.genome }, SPECIES_ANCHORS)));
       }
       if (obs.censusIdx % 20 === 0) {
         const el = (performance.now() - t0) / 1000;

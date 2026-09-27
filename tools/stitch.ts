@@ -29,13 +29,14 @@
 // anything new is written.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { METRICS_VERSION } from "@bl/schema";
-import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, stitchRun, type StitchSegment } from "@bl/runner";
+import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, SPECIES_FILE, stitchRun, type StitchSegment } from "@bl/runner";
 
 // Optional files (not in BUNDLE_FILES): recorded only when the run has the
-// corresponding mechanism configured (tile migration / a metapopulation), so
-// a migration-disabled or non-metapopulation run's bundle never carries them
-// (see MIGRATIONS_FILE/EXCHANGES_FILE's own docs in packages/runner/src/stitch.ts).
-const OPTIONAL_FILES = [MIGRATIONS_FILE, EXCHANGES_FILE] as const;
+// corresponding mechanism configured (tile migration / a metapopulation /
+// RunSpec.speciesCensus), so a run without that mechanism never carries them
+// (see MIGRATIONS_FILE/EXCHANGES_FILE/SPECIES_FILE's own docs in
+// packages/runner/src/stitch.ts).
+const OPTIONAL_FILES = [MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE] as const;
 
 const a = parseArgs(Deno.args, {
   string: ["experiment", "coordinator", "out", "token"],
@@ -114,8 +115,8 @@ function ineligible(segs: Listed[]): string | null {
   for (const f of OPTIONAL_FILES) {
     // exchanges.tsv's "is this configured" comes from the experiment's own
     // spec (see metapopConfigured's doc), not file presence; migrations.tsv
-    // has no equivalent experiment-wide flag exposed here, so it keeps the
-    // file-presence inference (unchanged, and not what review P2 flagged).
+    // and species.tsv have no equivalent experiment-wide flag exposed here,
+    // so they keep the file-presence inference.
     const configured = f === EXCHANGES_FILE ? metapopConfigured : segs.some((s) => s.files?.[f]);
     if (configured) {
       const missing = segs.filter((s) => !s.files?.[f]);
