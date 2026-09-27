@@ -19,6 +19,7 @@
     "packageJson": {
       "dependencies": [
         "npm:@playwright/test@^1.63.0",
+        "npm:@types/node@22",
         "npm:@webgpu/types@~0.1.74",
         "npm:typescript@^7.0.2",
         "npm:vite@^8.3.1",

@@ -17,13 +17,18 @@
 import { METRICS_VERSION, PRESETS, presetIdentity, RULE_VERSION, SCHEMA_VERSION, initWorld, stateHash, type Preset } from "@bl/schema";
 import { ActivityTracker } from "@bl/metrics";
 import { sameConfig, specConfig } from "@bl/runner";
-import { TextLineStream } from "jsr:@std/streams@1/text-line-stream";
 
 export interface Run {
   condition: string;
   seed: number;
   dir: string;
   series: Record<string, any>[];
+  /**
+   * In-memory lineage table (census step -> [lineage, cells]) for synthetic
+   * runs built without a bundle on disk (tools/nullcal.ts). Real bundles
+   * leave it unset and `activities` streams their lineages.tsv instead.
+   */
+  lineages?: Map<number, [string, number][]>;
   manifest: any;
   /** Set by a `loadRunsUnder` reducer that replays activities as each run loads (see calibrate.ts). */
   activities?: number[];
@@ -77,12 +82,27 @@ export async function loadRunsUnder(root: string, reduce: (r: Run) => Run | Prom
  * that order across segments), so only the current census is held.
  */
 export async function* lineageCensuses(dir: string): AsyncGenerator<[number, [string, number][]]> {
-  const file = await Deno.open(`${dir}/lineages.tsv`);
-  const lines = file.readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream());
+  // Split lines by hand rather than with jsr:@std/streams, so that importing
+  // this module (via tools/analyze.ts) needs no jsr: resolution under vitest.
+  async function* lines(): AsyncGenerator<string> {
+    const file = await Deno.open(`${dir}/lineages.tsv`);
+    let buf = "";
+    for await (const chunk of file.readable.pipeThrough(new TextDecoderStream())) {
+      buf += chunk;
+      let start = 0;
+      let nl: number;
+      while ((nl = buf.indexOf("\n", start)) >= 0) {
+        yield buf.slice(start, nl).replace(/\r$/, "");
+        start = nl + 1;
+      }
+      buf = buf.slice(start);
+    }
+    if (buf) yield buf.replace(/\r$/, "");
+  }
   let header = true;
   let step = -Infinity;
   let rows: [string, number][] = [];
-  for await (const l of lines) {
+  for await (const l of lines()) {
     if (header || !l) {
       header = false;
       continue;
@@ -115,7 +135,12 @@ export async function activities(r: Run, threshold = Infinity): Promise<{ tracke
   const emptyBefore = (step: number) => {
     while (i < r.series.length && r.series[i].step < step) snaps.push(t.update(r.series[i++].step, []));
   };
-  for await (const [step, rows] of lineageCensuses(r.dir)) {
+  const censuses = r.lineages
+    ? (async function* () {
+      yield* [...r.lineages!.entries()].sort((a, b) => a[0] - b[0]);
+    })()
+    : lineageCensuses(r.dir);
+  for await (const [step, rows] of censuses) {
     emptyBefore(step);
     if (i < r.series.length && r.series[i].step === step) snaps.push(t.update(r.series[i++].step, rows));
   }
