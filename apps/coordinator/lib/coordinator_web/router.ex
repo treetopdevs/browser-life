@@ -9,6 +9,12 @@ defmodule CoordinatorWeb.Router do
   pipeline :raw do
   end
 
+  # The status dashboard is the static priv/static/index.html; the bare
+  # origin (where a browser lands by default) redirects to it.
+  scope "/", CoordinatorWeb do
+    get "/", PageController, :index
+  end
+
   scope "/api", CoordinatorWeb do
     pipe_through :api
     get "/status", ApiController, :status
