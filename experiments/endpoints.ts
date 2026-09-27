@@ -154,8 +154,8 @@ export const PRIMARY_ENDPOINTS: Endpoint[] = [
 //      declining-slower-than-its-controls run used to pass as "supported".
 //   2. Controls are declared per preset in this module (fixed at
 //      registration time), not "whatever condition happens to have runs in
-//      this ensemble": every registered preset (gradient, spots) permanently
-//      lacks some ablation (spots has no light gradient to flatten;
+//      this ensemble": every registered preset (gradient-m3, spots-m3) permanently
+//      lacks some ablation (spots-m3 has no light gradient to flatten;
 //      `fixed-env` belongs to the unregistered seasons preset), so "require
 //      every present control" used to be vacuous or under-constrained
 //      depending on how the check was phrased. A missing declared control,
@@ -201,16 +201,16 @@ export const HELD_OUT_ALPHA = ALPHA;
 /**
  * Declared held-out control conditions per registered preset (amendment
  * point 2). `fixed-env` is the seasons-preset-only control and is declared
- * for neither `gradient` nor `spots` -- the two presets this pre-registration
+ * for neither `gradient-m3` nor `spots-m3` -- the two presets this pre-registration
  * actually runs (see preregistration.md's "System under test").
  */
 export const HELD_OUT_PRESET_CONTROLS: Record<string, string[]> = {
-  gradient: ["neutral", "no-mutation", "uniform-light", "replenished", "no-signal-motility"],
-  spots: ["neutral", "no-mutation", "replenished", "no-signal-motility"],
+  "gradient-m3": ["neutral", "no-mutation", "uniform-light", "replenished", "no-signal-motility"],
+  "spots-m3": ["neutral", "no-mutation", "replenished", "no-signal-motility"],
 };
 
 const DECLARED_CONTROLS_TEXT =
-  "gradient — neutral, no-mutation, uniform-light, replenished, no-signal-motility; spots — neutral, " +
+  "gradient-m3 — neutral, no-mutation, uniform-light, replenished, no-signal-motility; spots-m3 — neutral, " +
   "no-mutation, replenished, no-signal-motility (`fixed-env` is the seasons-preset-only control, " +
   "declared for neither registered preset)";
 
@@ -223,7 +223,7 @@ const DIRECTIONAL_HYPOTHESIS =
   `Mann–Whitney per control; declared controls: ${DECLARED_CONTROLS_TEXT}). A missing declared control, or ` +
   "fewer than 2 runs for one, makes this endpoint unavailable, never a silently smaller family. Every " +
   "test -- (a) plus one (b) per declared control -- of every directional held-out observable occupies a " +
-  "fixed slot (24 tests for gradient, 20 for spots) in ONE shared Holm family at " +
+  "fixed slot (24 tests for gradient-m3, 20 for spots-m3) in ONE shared Holm family at " +
   `α = ${ALPHA}, whether or not that slot has data (an unavailable slot contributes p = 1, the most ` +
   "conservative value, so it can never itself pass and never loosens correction for the rest, but it also " +
   "never shrinks the family the way dropping it would). This observable counts toward the \"at least 2 of " +
@@ -420,7 +420,7 @@ export interface HeldOutSummary {
   /**
    * Fixed size of the shared Holm family (amendment point 4, round-2 fix):
    * #directional * (1 + #declared controls) whenever the preset is
-   * declared -- 24 for gradient, 20 for spots -- regardless of how many of
+   * declared -- 24 for gradient-m3, 20 for spots-m3 -- regardless of how many of
    * those tests actually have data. 0 when the preset has no declared
    * control set at all.
    */
@@ -475,8 +475,8 @@ export function evaluateHeldOut(views: RunView[], presetId: string): { results: 
   // family dropping from 20 to 15 tests (one observable's control losing
   // its second run) and an unrelated observable's Holm-adjusted p flipping
   // from "no" to "yes" with no change to its own numbers. Fixed family
-  // sizes, matching the two registered presets: 24 for gradient (4
-  // directional * (1 absolute + 5 declared controls)), 20 for spots
+  // sizes, matching the two registered presets: 24 for gradient-m3 (4
+  // directional * (1 absolute + 5 declared controls)), 20 for spots-m3
   // (4 * (1 + 4)).
   //
   // Review finding (round 3): fixing the family size is necessary but not

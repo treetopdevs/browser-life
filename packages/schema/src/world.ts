@@ -1,6 +1,7 @@
 import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, RING_CELL_MASK, cellCount, maxPackableRaw, packLineageLo, validateConfig, worldW, type WorldConfig } from "./config.ts";
 import { CELL_CHANNELS, CH, FLUX_COUNT, G, GENOME_CHANNELS } from "./layout.ts";
 import { encodeGenome, generalistGenome, randomGenome, type Genome } from "./genome.ts";
+import { founderGenome, M3_FOUNDERS } from "./founders.ts";
 import { draw, lowbias32 } from "./int.ts";
 
 /** Complete simulation state. Channel-major: arr[ch * N + cell]. */
@@ -205,6 +206,31 @@ export function soupWorld(cfg: WorldConfig, count = 24, nutrient = 256, biomass 
       y: (h >>> 12) % H,
       radius: 10,
       genome: randomGenome(h, cfg.defaultMu, cfg.defaultSigma),
+      biomass,
+      energy: 2 * biomass,
+    });
+  }
+  return buildWorld(cfg, { nutrient, founders });
+}
+
+/**
+ * Founders drawn from the M3-confirmed ensemble (packages/schema/src/founders.ts)
+ * instead of the hand-built generalist genome. Same placement/radius/biomass/energy
+ * scheme as generalistWorld, but with a distinct hash salt (197, vs. 31 for
+ * generalist and 131 for soup) so a m3-preset run never lands on the same founder
+ * layout as a generalist or soup run with the same seed.
+ */
+export function m3World(cfg: WorldConfig, count = 13, nutrient = 256, biomass = 256): WorldState {
+  const W = worldW(cfg);
+  const H = cellCount(cfg) / W;
+  const founders: Founder[] = [];
+  for (let i = 0; i < count; i++) {
+    const h = lowbias32(cfg.seed * 197 + i);
+    founders.push({
+      x: h % W,
+      y: (h >>> 12) % H,
+      radius: 12,
+      genome: founderGenome(M3_FOUNDERS[i % M3_FOUNDERS.length]),
       biomass,
       energy: 2 * biomass,
     });

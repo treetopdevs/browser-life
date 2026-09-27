@@ -34,7 +34,7 @@ config :phoenix, :json_library, Jason
 # token required to create experiments (unset: loopback clients only).
 config :coordinator,
   data_dir: "data",
-  presets: ~w(spots gradient soup seasons large archipelago),
+  presets: ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago),
   conditions:
     ~w(treatment no-mutation neutral uniform-light fixed-env replenished no-signal-motility no-migration),
   cors_origins: ["http://localhost:5173"],
@@ -55,8 +55,8 @@ config :coordinator,
   # below, or a per-experiment :metapopulation), so Queue.incompatible/3 checks
   # it dynamically against the spec instead of this static preset list.
   incompatible: %{
-    "uniform-light" => ~w(spots soup),
-    "fixed-env" => ~w(spots gradient soup large archipelago)
+    "uniform-light" => ~w(spots spots-m3 soup),
+    "fixed-env" => ~w(spots gradient spots-m3 gradient-m3 soup large archipelago)
   },
   # preset => its migrationPeriod (packages/schema/src/presets.ts's "archipelago"
   # preset; 0/absent for every preset without migration configured). Used only to

@@ -275,7 +275,7 @@ const DIRECTIONAL_IDS = HELD_OUT_SPECS.filter((s) => s.directional).map((s) => s
 const DESCRIPTIVE_IDS = HELD_OUT_SPECS.filter((s) => !s.directional).map((s) => s.id);
 
 /** The declared family size for a preset: #directional * (1 absolute + #declared controls). */
-const familySizeFor = (preset: "gradient" | "spots") => DIRECTIONAL_IDS.length * (1 + HELD_OUT_PRESET_CONTROLS[preset].length);
+const familySizeFor = (preset: "gradient-m3" | "spots-m3") => DIRECTIONAL_IDS.length * (1 + HELD_OUT_PRESET_CONTROLS[preset].length);
 
 /**
  * `n` seeds/condition, treatment strictly above every declared `preset`
@@ -287,18 +287,18 @@ const familySizeFor = (preset: "gradient" | "spots") => DIRECTIONAL_IDS.length *
  * space in it -- this file's "is supported" tests verify the margin isn't
  * accidental even when only one or two observables actually have data).
  */
-function fullySeparated(statistic: string, preset: "gradient" | "spots", n = 15): RunView[] {
+function fullySeparated(statistic: string, preset: "gradient-m3" | "spots-m3", n = 15): RunView[] {
   const treat = Array.from({ length: n }, (_, i) => run("treatment", i, 10 + i, statistic));
   const controls = HELD_OUT_PRESET_CONTROLS[preset].flatMap((c) => Array.from({ length: n }, (_, i) => run(c, i, i, statistic)));
   return [...treat, ...controls];
 }
 
 describe("HELD_OUT_PRESET_CONTROLS / HELD_OUT_SPECS shape", () => {
-  it("declares gradient and spots' control sets per the amendment (fixed-env in neither)", () => {
-    expect(HELD_OUT_PRESET_CONTROLS.gradient).toEqual(["neutral", "no-mutation", "uniform-light", "replenished", "no-signal-motility"]);
-    expect(HELD_OUT_PRESET_CONTROLS.spots).toEqual(["neutral", "no-mutation", "replenished", "no-signal-motility"]);
-    expect(HELD_OUT_PRESET_CONTROLS.gradient).not.toContain("fixed-env");
-    expect(HELD_OUT_PRESET_CONTROLS.spots).not.toContain("fixed-env");
+  it("declares gradient-m3 and spots-m3's control sets per the amendment (fixed-env in neither)", () => {
+    expect(HELD_OUT_PRESET_CONTROLS["gradient-m3"]).toEqual(["neutral", "no-mutation", "uniform-light", "replenished", "no-signal-motility"]);
+    expect(HELD_OUT_PRESET_CONTROLS["spots-m3"]).toEqual(["neutral", "no-mutation", "replenished", "no-signal-motility"]);
+    expect(HELD_OUT_PRESET_CONTROLS["gradient-m3"]).not.toContain("fixed-env");
+    expect(HELD_OUT_PRESET_CONTROLS["spots-m3"]).not.toContain("fixed-env");
   });
 
   it("has 6 observables, unique ids, exactly 4 directional (amends '>= 2 of 6' to '>= 2 of 4')", () => {
@@ -308,15 +308,15 @@ describe("HELD_OUT_PRESET_CONTROLS / HELD_OUT_SPECS shape", () => {
     expect(DESCRIPTIVE_IDS).toEqual(["held-out-pattern-entropy", "held-out-lineage-compression"]);
   });
 
-  it("the declared family sizes match the amendment's stated numbers: 24 for gradient, 20 for spots", () => {
-    expect(familySizeFor("gradient")).toBe(24);
-    expect(familySizeFor("spots")).toBe(20);
+  it("the declared family sizes match the amendment's stated numbers: 24 for gradient-m3, 20 for spots-m3", () => {
+    expect(familySizeFor("gradient-m3")).toBe(24);
+    expect(familySizeFor("spots-m3")).toBe(20);
   });
 });
 
 describe("evaluateHeldOut: preset-declared controls (amendment point 2)", () => {
   it("every observable is unavailable for an undeclared preset, not silently evaluated", () => {
-    const views = fullySeparated(HELD_OUT_SPECS[0].statistic, "spots");
+    const views = fullySeparated(HELD_OUT_SPECS[0].statistic, "spots-m3");
     const { results, summary } = evaluateHeldOut(views, "seasons"); // not (yet) a registered preset
     expect(summary.presetDeclared).toBe(false);
     expect(summary.controls).toEqual([]);
@@ -327,32 +327,32 @@ describe("evaluateHeldOut: preset-declared controls (amendment point 2)", () => 
 
   it("is unavailable (not merely unsupported) when a declared control has no runs at all -- never a smaller family", () => {
     const spec = HELD_OUT_SPECS.find((s) => s.directional)!;
-    const views = fullySeparated(spec.statistic, "spots").filter((v) => v.condition !== "replenished"); // one declared spots control missing
-    const { results, summary } = evaluateHeldOut(views, "spots");
+    const views = fullySeparated(spec.statistic, "spots-m3").filter((v) => v.condition !== "replenished"); // one declared spots-m3 control missing
+    const { results, summary } = evaluateHeldOut(views, "spots-m3");
     const r = results.find((x) => x.id === spec.id)!;
     expect(r.relative.complete).toBe(false);
     expect(r.available).toBe(false);
     expect(r.supported).toBe(false); // even though the other 3 controls are fully beaten
-    expect(summary.familySize).toBe(familySizeFor("spots")); // round-2 fix: still the full fixed size, not shrunk
+    expect(summary.familySize).toBe(familySizeFor("spots-m3")); // round-2 fix: still the full fixed size, not shrunk
   });
 
   it("is unavailable when a declared control has fewer than 2 runs, not a partially-evaluated family", () => {
     const spec = HELD_OUT_SPECS.find((s) => s.directional)!;
-    const views = fullySeparated(spec.statistic, "spots").filter((v) => !(v.condition === "no-mutation" && v.seed > 0)); // 1 run left
-    const { results, summary } = evaluateHeldOut(views, "spots");
+    const views = fullySeparated(spec.statistic, "spots-m3").filter((v) => !(v.condition === "no-mutation" && v.seed > 0)); // 1 run left
+    const { results, summary } = evaluateHeldOut(views, "spots-m3");
     const r = results.find((x) => x.id === spec.id)!;
     expect(r.relative.rows.find((row) => row.b === "no-mutation")!.available).toBe(false);
     expect(r.relative.complete).toBe(false);
     expect(r.available).toBe(false);
-    expect(summary.familySize).toBe(familySizeFor("spots"));
+    expect(summary.familySize).toBe(familySizeFor("spots-m3"));
   });
 });
 
 describe("evaluateHeldOut: absolute + relative, both required (amendment point 1)", () => {
   it("is supported when treatment clearly increases and clearly beats every declared control", () => {
     const spec = HELD_OUT_SPECS.find((s) => s.directional)!;
-    const views = fullySeparated(spec.statistic, "spots");
-    const { results } = evaluateHeldOut(views, "spots");
+    const views = fullySeparated(spec.statistic, "spots-m3");
+    const { results } = evaluateHeldOut(views, "spots-m3");
     const r = results.find((x) => x.id === spec.id)!;
     expect(r.available).toBe(true);
     expect(r.absolute!.method).toBe("exact");
@@ -369,8 +369,8 @@ describe("evaluateHeldOut: absolute + relative, both required (amendment point 1
     const spec = HELD_OUT_SPECS.find((s) => s.directional)!;
     const n = 9;
     const treat = Array.from({ length: n }, (_, i) => run("treatment", i, -1 - i, spec.statistic)); // -1..-9
-    const controls = HELD_OUT_PRESET_CONTROLS.spots.flatMap((c) => Array.from({ length: n }, (_, i) => run(c, i, -20 - i, spec.statistic))); // -20..-28
-    const { results } = evaluateHeldOut([...treat, ...controls], "spots");
+    const controls = HELD_OUT_PRESET_CONTROLS["spots-m3"].flatMap((c) => Array.from({ length: n }, (_, i) => run(c, i, -20 - i, spec.statistic))); // -20..-28
+    const { results } = evaluateHeldOut([...treat, ...controls], "spots-m3");
     const r = results.find((x) => x.id === spec.id)!;
     expect(r.relative.rows.every((row) => row.supported)).toBe(true); // (b) alone would have passed
     expect(r.absolute!.supported).toBe(false); // (a) correctly fails: treatment's own slopes are negative
@@ -381,8 +381,8 @@ describe("evaluateHeldOut: absolute + relative, both required (amendment point 1
   it("is NOT supported when treatment is flat (slopes balanced around zero), even if controls decline", () => {
     const spec = HELD_OUT_SPECS.find((s) => s.directional)!;
     const treat = [0.4, -0.4, 0.3, -0.3, 0.5, -0.5, 0.2, -0.2, 0.1].map((x, i) => run("treatment", i, x, spec.statistic));
-    const controls = HELD_OUT_PRESET_CONTROLS.spots.flatMap((c) => Array.from({ length: 9 }, (_, i) => run(c, i, -10 - i, spec.statistic)));
-    const { results } = evaluateHeldOut([...treat, ...controls], "spots");
+    const controls = HELD_OUT_PRESET_CONTROLS["spots-m3"].flatMap((c) => Array.from({ length: 9 }, (_, i) => run(c, i, -10 - i, spec.statistic)));
+    const { results } = evaluateHeldOut([...treat, ...controls], "spots-m3");
     const r = results.find((x) => x.id === spec.id)!;
     expect(r.absolute!.p).toBeGreaterThan(0.1); // no evidence treatment's own slope is positive
     expect(r.absolute!.supported).toBe(false);
@@ -391,14 +391,14 @@ describe("evaluateHeldOut: absolute + relative, both required (amendment point 1
 
   it("drops non-finite (NaN/excluded) runs from both the absolute and relative sample sizes, without throwing", () => {
     const spec = HELD_OUT_SPECS.find((s) => s.directional)!;
-    const views = fullySeparated(spec.statistic, "spots");
+    const views = fullySeparated(spec.statistic, "spots-m3");
     const withNaNs = [
       ...views,
       run("treatment", 100, NaN, spec.statistic),
       run("treatment", 101, NaN, spec.statistic),
       run("no-mutation", 100, NaN, spec.statistic),
     ];
-    const { results } = evaluateHeldOut(withNaNs, "spots");
+    const { results } = evaluateHeldOut(withNaNs, "spots-m3");
     const r = results.find((x) => x.id === spec.id)!;
     expect(r.absolute!.n).toBe(15); // the 2 NaN treatment runs are excluded, not counted
     expect(r.relative.rows.find((row) => row.b === "no-mutation")!.nB).toBe(15); // the 1 NaN control run is excluded
@@ -407,8 +407,8 @@ describe("evaluateHeldOut: absolute + relative, both required (amendment point 1
 
   it("a non-directional (descriptive) observable is never supported, however extreme its separation", () => {
     const spec = HELD_OUT_SPECS.find((s) => !s.directional)!;
-    const views = fullySeparated(spec.statistic, "spots");
-    const { results } = evaluateHeldOut(views, "spots");
+    const views = fullySeparated(spec.statistic, "spots-m3");
+    const { results } = evaluateHeldOut(views, "spots-m3");
     const r = results.find((x) => x.id === spec.id)!;
     expect(r.absolute).toBeNull();
     expect(r.relative.rows.length).toBeGreaterThan(0); // still reported, descriptively
@@ -422,8 +422,8 @@ describe("evaluateHeldOut: absolute + relative, both required (amendment point 1
     const spec = HELD_OUT_SPECS.find((s) => s.directional)!;
     const n = 61; // one past EXACT_MAX=60
     const treat = Array.from({ length: n }, (_, i) => run("treatment", i, 1 + i, spec.statistic));
-    const controls = HELD_OUT_PRESET_CONTROLS.spots.flatMap((c) => Array.from({ length: 2 }, (_, i) => run(c, i, 0, spec.statistic)));
-    const { results } = evaluateHeldOut([...treat, ...controls], "spots");
+    const controls = HELD_OUT_PRESET_CONTROLS["spots-m3"].flatMap((c) => Array.from({ length: 2 }, (_, i) => run(c, i, 0, spec.statistic)));
+    const { results } = evaluateHeldOut([...treat, ...controls], "spots-m3");
     const r = results.find((x) => x.id === spec.id)!;
     expect(r.absolute!.available).toBe(false);
     expect(r.absolute!.method).toBeNull();
@@ -439,17 +439,17 @@ describe("evaluateHeldOut: one shared, FIXED-size Holm family across every direc
     // include a slot for every test of every directional observable.
     const [a, b, c, d] = DIRECTIONAL_IDS.map((id) => HELD_OUT_SPECS.find((s) => s.id === id)!);
     const views = [
-      ...fullySeparated(a.statistic, "spots"),
+      ...fullySeparated(a.statistic, "spots-m3"),
       ...Array.from({ length: 15 }, (_, i) => run("treatment", i, 1 + i * 0.1, b.statistic)),
-      ...HELD_OUT_PRESET_CONTROLS.spots.flatMap((cnd) => Array.from({ length: 15 }, (_, i) => run(cnd, i, i * 0.1, b.statistic))),
+      ...HELD_OUT_PRESET_CONTROLS["spots-m3"].flatMap((cnd) => Array.from({ length: 15 }, (_, i) => run(cnd, i, i * 0.1, b.statistic))),
       ...Array.from({ length: 15 }, (_, i) => run("treatment", i, -1 - i, c.statistic)),
-      ...HELD_OUT_PRESET_CONTROLS.spots.flatMap((cnd) => Array.from({ length: 15 }, (_, i) => run(cnd, i, -2 - i, c.statistic))),
+      ...HELD_OUT_PRESET_CONTROLS["spots-m3"].flatMap((cnd) => Array.from({ length: 15 }, (_, i) => run(cnd, i, -2 - i, c.statistic))),
       ...Array.from({ length: 2 }, (_, i) => run("treatment", i, 1 + i, d.statistic)), // too few runs: unavailable, but STILL occupies its 5 slots at p=1
     ];
-    const { results, summary } = evaluateHeldOut(views, "spots");
+    const { results, summary } = evaluateHeldOut(views, "spots-m3");
     const directional = results.filter((r) => r.directional);
     expect(directional.find((r) => r.id === d.id)!.available).toBe(false);
-    expect(summary.familySize).toBe(familySizeFor("spots")); // 20, always -- not shrunk by d's unavailability
+    expect(summary.familySize).toBe(familySizeFor("spots-m3")); // 20, always -- not shrunk by d's unavailability
 
     // Reconstruct the expected pool independently, in the SAME fixed shape
     // the endpoint must produce: every directional observable contributes
@@ -466,7 +466,7 @@ describe("evaluateHeldOut: one shared, FIXED-size Holm family across every direc
       actualAdj.push(r.absolute!.pAdj);
       for (const row of r.relative.rows) actualAdj.push(row.pAdj);
     }
-    expect(rawPool.length).toBe(familySizeFor("spots"));
+    expect(rawPool.length).toBe(familySizeFor("spots-m3"));
     expect(actualAdj).toEqual(expectedAdj);
   });
 
@@ -475,9 +475,9 @@ describe("evaluateHeldOut: one shared, FIXED-size Holm family across every direc
   // an unrelated observable's established/unavailable status.
   it("losing one declared control's data for one observable does not shrink the family or change other observables' availability", () => {
     const [a, b, c] = DIRECTIONAL_IDS.map((id) => HELD_OUT_SPECS.find((s) => s.id === id)!);
-    const full = [...fullySeparated(a.statistic, "spots"), ...fullySeparated(b.statistic, "spots"), ...fullySeparated(c.statistic, "spots")];
-    const { results: fullResults, summary: fullSummary } = evaluateHeldOut(full, "spots");
-    expect(fullSummary.familySize).toBe(familySizeFor("spots"));
+    const full = [...fullySeparated(a.statistic, "spots-m3"), ...fullySeparated(b.statistic, "spots-m3"), ...fullySeparated(c.statistic, "spots-m3")];
+    const { results: fullResults, summary: fullSummary } = evaluateHeldOut(full, "spots-m3");
+    expect(fullSummary.familySize).toBe(familySizeFor("spots-m3"));
     const aBefore = fullResults.find((r) => r.id === a.id)!;
     const bBefore = fullResults.find((r) => r.id === b.id)!;
     expect(aBefore.available).toBe(true);
@@ -487,8 +487,8 @@ describe("evaluateHeldOut: one shared, FIXED-size Holm family across every direc
     // reviewer's exact repro shape) -- everything about a and b is
     // untouched.
     const damaged = full.filter((v) => !(v.condition === "no-mutation" && v.seed > 0 && v.stats[c.statistic] !== undefined));
-    const { results: damagedResults, summary: damagedSummary } = evaluateHeldOut(damaged, "spots");
-    expect(damagedSummary.familySize).toBe(familySizeFor("spots")); // still 20, not 15 -- the round-2 fix
+    const { results: damagedResults, summary: damagedSummary } = evaluateHeldOut(damaged, "spots-m3");
+    expect(damagedSummary.familySize).toBe(familySizeFor("spots-m3")); // still 20, not 15 -- the round-2 fix
     const aAfter = damagedResults.find((r) => r.id === a.id)!;
     const bAfter = damagedResults.find((r) => r.id === b.id)!;
     const cAfter = damagedResults.find((r) => r.id === c.id)!;
@@ -513,8 +513,8 @@ describe("evaluateHeldOut: the three-valued outcome (round-2 fix, amendment poin
     // unavailable (no runs). Established count is at most 1 (< 2), but
     // 1 established + 3 unavailable = 4 >= 2, so the true answer could
     // still go either way once the missing runs exist.
-    const views = fullySeparated(DIRECTIONAL_IDS.length ? HELD_OUT_SPECS.find((s) => s.id === DIRECTIONAL_IDS[0])!.statistic : "", "spots");
-    const { results, summary } = evaluateHeldOut(views, "spots");
+    const views = fullySeparated(DIRECTIONAL_IDS.length ? HELD_OUT_SPECS.find((s) => s.id === DIRECTIONAL_IDS[0])!.statistic : "", "spots-m3");
+    const { results, summary } = evaluateHeldOut(views, "spots-m3");
     expect(results).toHaveLength(6);
     expect(summary.total).toBe(4);
     expect(summary.minSupported).toBe(HELD_OUT_MIN_SUPPORTED);
@@ -526,8 +526,8 @@ describe("evaluateHeldOut: the three-valued outcome (round-2 fix, amendment poin
 
   it("is 'supported' once at least 2 (of the 4 directional) observables are established -- never combined into one score, just counted", () => {
     const [a, b] = DIRECTIONAL_IDS.map((id) => HELD_OUT_SPECS.find((s) => s.id === id)!);
-    const views = [...fullySeparated(a.statistic, "spots"), ...fullySeparated(b.statistic, "spots")];
-    const { summary } = evaluateHeldOut(views, "spots");
+    const views = [...fullySeparated(a.statistic, "spots-m3"), ...fullySeparated(b.statistic, "spots-m3")];
+    const { summary } = evaluateHeldOut(views, "spots-m3");
     expect(summary.establishedCount).toBe(2);
     expect(summary.outcome).toBe("supported");
     expect(summary.supported).toBe(true);
@@ -539,9 +539,9 @@ describe("evaluateHeldOut: the three-valued outcome (round-2 fix, amendment poin
     // all -- a fully-informative negative, not missing evidence.
     const flatViews = HELD_OUT_SPECS.filter((s) => s.directional).flatMap((spec) => [
       ...[0.1, -0.1, 0.2, -0.2, 0.05, -0.05, 0.15, -0.15, 0.0].map((x, i) => run("treatment", i, x, spec.statistic)),
-      ...HELD_OUT_PRESET_CONTROLS.spots.flatMap((c) => [0.1, -0.1, 0.2, -0.2, 0.05, -0.05, 0.15, -0.15, 0.0].map((x, i) => run(c, i, x, spec.statistic))),
+      ...HELD_OUT_PRESET_CONTROLS["spots-m3"].flatMap((c) => [0.1, -0.1, 0.2, -0.2, 0.05, -0.05, 0.15, -0.15, 0.0].map((x, i) => run(c, i, x, spec.statistic))),
     ]);
-    const { results, summary } = evaluateHeldOut(flatViews, "spots");
+    const { results, summary } = evaluateHeldOut(flatViews, "spots-m3");
     const directional = results.filter((r) => r.directional);
     expect(directional.every((r) => r.available)).toBe(true); // fully evaluated, not missing data
     expect(directional.every((r) => !r.supported)).toBe(true); // and none of it clears alpha
@@ -552,7 +552,7 @@ describe("evaluateHeldOut: the three-valued outcome (round-2 fix, amendment poin
   });
 
   it("with no data at all, every observable is unavailable and the outcome is 'unavailable' (not a plain no)", () => {
-    const { results, summary } = evaluateHeldOut([], "spots");
+    const { results, summary } = evaluateHeldOut([], "spots-m3");
     expect(results.every((r) => !r.available)).toBe(true);
     expect(summary.establishedCount).toBe(0);
     expect(summary.unavailableCount).toBe(4);
@@ -581,7 +581,7 @@ describe("evaluateHeldOut: optimistic upper bound for 'not-supported' (round-3 f
    * (C's controls are untouched), matching "remove only C's treatment
    * measurements" from the review exactly.
    */
-  function reproViews(preset: "gradient" | "spots", n: number, cIncludesTreatment: boolean) {
+  function reproViews(preset: "gradient-m3" | "spots-m3", n: number, cIncludesTreatment: boolean) {
     const [A, B, C, D] = DIRECTIONAL_IDS.map((id) => HELD_OUT_SPECS.find((s) => s.id === id)!);
     const strong = (spec: HeldOutSpec, includeTreatment: boolean) => [
       ...(includeTreatment ? Array.from({ length: n }, (_, i) => run("treatment", i, 10 + i, spec.statistic)) : []),
@@ -594,7 +594,7 @@ describe("evaluateHeldOut: optimistic upper bound for 'not-supported' (round-3 f
     return [...strong(A, true), ...strong(B, true), ...strong(C, cIncludesTreatment), ...nullObservable(D)];
   }
 
-  function expectNoPrematureNegative(preset: "gradient" | "spots", n: number) {
+  function expectNoPrematureNegative(preset: "gradient-m3" | "spots-m3", n: number) {
     const missing = evaluateHeldOut(reproViews(preset, n, false), preset).summary;
     // Matches the reviewer's own reproduction: under the conservative
     // (p=1-for-missing) family, fewer than minSupported are established --
@@ -610,17 +610,17 @@ describe("evaluateHeldOut: optimistic upper bound for 'not-supported' (round-3 f
     expect(restored.outcome).toBe("supported");
   }
 
-  it("spots, 10 seeds (the reviewer's own sample size): stays 'unavailable', not a premature 'not-supported'", () => {
-    expectNoPrematureNegative("spots", 10);
+  it("spots-m3, 10 seeds (the reviewer's own sample size): stays 'unavailable', not a premature 'not-supported'", () => {
+    expectNoPrematureNegative("spots-m3", 10);
   });
 
-  it("gradient, 10 seeds/condition (gradient's larger 5-control family still shows the same effect): same fix holds at the other registered preset", () => {
+  it("gradient-m3, 10 seeds/condition (gradient-m3's larger 5-control family still shows the same effect): same fix holds at the other registered preset", () => {
     // Gradient's declared family is bigger (24 tests, 5 controls, vs.
-    // spots' 20/4), so it takes a different n to land in the same
+    // spots-m3's 20/4), so it takes a different n to land in the same
     // "borderline" zone the reviewer demonstrated; 10 seeds/condition here
     // reproduces the same qualitative shape (fewer than minSupported
     // established while C is missing, still not a valid "not-supported").
-    expectNoPrematureNegative("gradient", 10);
+    expectNoPrematureNegative("gradient-m3", 10);
   });
 
   it("an undeclared preset is always 'unavailable', never 'not-supported', even though optimisticCount defaults to 0 there", () => {
@@ -628,7 +628,7 @@ describe("evaluateHeldOut: optimistic upper bound for 'not-supported' (round-3 f
     // control set there is no family to even bound optimistically, so this
     // must not fall through to "not-supported" just because optimisticCount
     // is trivially 0 for want of any pool at all.
-    const { summary } = evaluateHeldOut(reproViews("spots", 10, true), "seasons");
+    const { summary } = evaluateHeldOut(reproViews("spots-m3", 10, true), "seasons");
     expect(summary.presetDeclared).toBe(false);
     expect(summary.optimisticCount).toBe(0);
     expect(summary.outcome).toBe("unavailable");

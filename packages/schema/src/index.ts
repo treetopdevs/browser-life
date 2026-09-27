@@ -3,6 +3,7 @@ export * from "./config.ts";
 export * from "./layout.ts";
 export * from "./kernel.ts";
 export * from "./genome.ts";
+export * from "./founders.ts";
 export * from "./world.ts";
 export * from "./accounting.ts";
 export * from "./checkpoint.ts";

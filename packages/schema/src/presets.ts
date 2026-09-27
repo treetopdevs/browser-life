@@ -1,7 +1,8 @@
 import { defaultConfig, type WorldConfig } from "./config.ts";
-import { generalistWorld, soupWorld, type WorldState } from "./world.ts";
+import { M3_FOUNDERS } from "./founders.ts";
+import { generalistWorld, m3World, soupWorld, type WorldState } from "./world.ts";
 
-export type InitKind = "generalist" | "soup";
+export type InitKind = "generalist" | "soup" | "m3";
 
 export interface InitParams {
   kind: InitKind;
@@ -35,6 +36,22 @@ export const PRESETS: Preset[] = [
     description: "Light rises from top to bottom, so lineages face a spatial niche axis.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
     init: { kind: "generalist", founders: 8, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "spots-m3",
+    name: "Spot ecology (M3 founders)",
+    description:
+      "Spot ecology under uniform light, founded from the 13 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "uniform", lightBase: 40, lightAmp: 160 },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "gradient-m3",
+    name: "Light gradient (M3 founders)",
+    description:
+      "Light gradient niche axis, founded from the 13 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
   },
   {
     id: "soup",
@@ -72,7 +89,12 @@ export function presetConfig(p: Preset, seed: number, extra: Partial<WorldConfig
 }
 
 export function initWorld(cfg: WorldConfig, init: InitParams): WorldState {
-  return init.kind === "soup"
-    ? soupWorld(cfg, init.founders, init.nutrient, init.biomass)
-    : generalistWorld(cfg, init.founders, init.nutrient, init.biomass);
+  switch (init.kind) {
+    case "soup":
+      return soupWorld(cfg, init.founders, init.nutrient, init.biomass);
+    case "m3":
+      return m3World(cfg, init.founders, init.nutrient, init.biomass);
+    default:
+      return generalistWorld(cfg, init.founders, init.nutrient, init.biomass);
+  }
 }
