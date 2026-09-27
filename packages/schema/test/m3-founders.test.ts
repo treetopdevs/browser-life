@@ -16,6 +16,7 @@ import {
   initWorld,
   m3World,
   presetConfig,
+  presetIdentity,
   validateState,
   type WorldState,
 } from "@bl/schema";
@@ -122,6 +123,17 @@ describe("gradient-m3 / spots-m3 presets", () => {
     }
   });
 
+  it("presetIdentity is pinned for the 12-founder set and ignores init property order", () => {
+    // The calibration pilot's manifests record these values (runs/calib-neutral).
+    const gradientM3 = PRESETS.find((p) => p.id === "gradient-m3")!;
+    const spotsM3 = PRESETS.find((p) => p.id === "spots-m3")!;
+    expect(presetIdentity(gradientM3)).toBe("e1c93a9384b5d921");
+    expect(presetIdentity(spotsM3)).toBe("a9f93070127a0c05");
+    const { kind, founders, nutrient, biomass } = spotsM3.init;
+    expect(presetIdentity({ ...spotsM3, init: { biomass, nutrient, founders, kind } })).toBe("a9f93070127a0c05");
+    expect(presetIdentity({ ...spotsM3, init: { ...spotsM3.init, founders: founders - 1 } })).not.toBe("a9f93070127a0c05");
+  });
+
   it("existing spots/gradient presets are unchanged (still generalist-founded)", () => {
     const spots = PRESETS.find((p) => p.id === "spots")!;
     const gradient = PRESETS.find((p) => p.id === "gradient")!;
@@ -131,13 +143,16 @@ describe("gradient-m3 / spots-m3 presets", () => {
 });
 
 describe("M3_FOUNDERS data", () => {
-  it("has 13 entries, each decoding to NN_BYTES weights and recording counts >= 30/32", () => {
-    expect(M3_FOUNDERS.length).toBe(13);
+  it("has 12 entries, each decoding to NN_BYTES weights, passing its 32-replicate retest and pooling retest + replication", () => {
+    expect(M3_FOUNDERS.length).toBe(12);
     for (const f of M3_FOUNDERS) {
-      expect(f.reps).toBe(32);
-      expect(f.survived).toBeGreaterThanOrEqual(30);
-      expect(f.regenerated).toBeGreaterThanOrEqual(30);
-      expect(f.lightDependent).toBeGreaterThanOrEqual(30);
+      expect(f.retest.reps).toBe(32);
+      expect(f.replication.reps).toBe(32);
+      for (const k of ["survived", "regenerated", "lightDependent"] as const) {
+        expect(f.retest[k]).toBeGreaterThanOrEqual(30);
+        expect(f[k]).toBe(f.retest[k] + f.replication[k]);
+      }
+      expect(f.reps).toBe(64);
       const g = founderGenome(f);
       expect(g.weights.length).toBe(NN_BYTES);
       expect(g.mu).toBe(f.mu);

@@ -42,7 +42,7 @@ export const PRESETS: Preset[] = [
     id: "spots-m3",
     name: "Spot ecology (M3 founders)",
     description:
-      "Spot ecology under uniform light, founded from the 13 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
+      "Spot ecology under uniform light, founded from the 12 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "uniform", lightBase: 40, lightAmp: 160 },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
   },
@@ -50,7 +50,7 @@ export const PRESETS: Preset[] = [
     id: "gradient-m3",
     name: "Light gradient (M3 founders)",
     description:
-      "Light gradient niche axis, founded from the 13 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
+      "Light gradient niche axis, founded from the 12 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
   },
@@ -111,7 +111,10 @@ export function presetIdentity(p: Preset): string {
   const { seed: _seed, ...cfgWithoutSeed } = presetConfig(p, 0);
   const canonical = canonicalConfig(cfgWithoutSeed as WorldConfig);
   const founderSetId = p.init.kind === "m3" ? M3_FOUNDER_SET : null;
-  const bytes = new TextEncoder().encode(JSON.stringify({ cfg: canonical, init: p.init, founderSetId }));
+  // Fields in a fixed order, so the digest does not depend on how the preset's
+  // init object happens to be written.
+  const { kind, founders, nutrient, biomass } = p.init;
+  const bytes = new TextEncoder().encode(JSON.stringify({ cfg: canonical, init: { kind, founders, nutrient, biomass }, founderSetId }));
   const words = new Uint32Array(Math.ceil(bytes.length / 4));
   new Uint8Array(words.buffer).set(bytes);
   const [a, b] = digestWords(Uint32Array.of(bytes.length, ...words));

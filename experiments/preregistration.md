@@ -9,7 +9,7 @@ In a world that is closed in matter and open in energy, with individuality, repr
 ## System under test
 
 - Rules: `RULE_VERSION` in `packages/schema/src/config.ts`, pinned by `packages/sim-ref/test/golden-hashes.test.ts`. The GPU kernels must pass the CPU golden test on every contributing device (`/selftest.html`, `deno task`/`tests/deno/gpu_golden.ts`).
-- Presets: `spots-m3` (uniform light) and `gradient-m3` (light gradient). The bootstrap search is **off** for all ensemble runs; founders are the M3 founder set `M3_FOUNDER_SET` from `packages/schema/src/founders.ts` — the best genome of each M3 genetic cluster passing the 32-replicate lower-bound test (see `docs/plan.md`, "Gate results"). The hand-built generalist genome is no longer used as a founder because it does not regenerate after a lesion (0/32 in the M3 retest).
+- Presets: `spots-m3` (uniform light) and `gradient-m3` (light gradient). The bootstrap search is **off** for all ensemble runs; founders are the M3 founder set `M3_FOUNDER_SET` from `packages/schema/src/founders.ts` — 12 genomes: the best of each M3 genetic cluster passing the 32-replicate lower-bound test, kept only if it still passes pooled with an independent 32-replicate replication (see `docs/plan.md`, "Gate results"). The hand-built generalist genome is no longer used as a founder because it does not regenerate after a lesion (0/32 in the M3 retest).
 - Runner: `tools/run.ts` (headless) or the browser worker, writing run bundles as documented in `packages/runner/src/runner.ts`.
 
 ## Conditions (randomised over seeds)

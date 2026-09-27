@@ -5,22 +5,27 @@
 //
 //   deno run -A tools/retest.ts --confirm runs/bootstrap/confirm.json --out runs/retest
 //     [--per-strong 4] [--seed 2000001]
-//   deno run -A tools/retest.ts --from runs/retest/retest.json --founders packages/schema/src/founders.ts
+//   deno run -A tools/retest.ts --from runs/retest/retest.json --replicate runs/replicate --seed 5000001
+//   deno run -A tools/retest.ts --from runs/retest/retest.json --replication runs/replicate/replicate.json \
+//     --founders packages/schema/src/founders.ts
 //
 // The first form evaluates every member of each cluster with no 16-replicate
 // strict passer, up to --per-strong strict members of every other cluster, and
-// generalistGenome(60, 20), and writes retest.json. The second reclassifies an
-// existing retest.json under the rule (no GPU) and, with --founders, writes the
-// ensemble founder set (selectFounders in packages/search/src/retest.ts). Both
-// refuse a retest whose seeds are not recorded as disjoint from the search and
-// confirmation seeds it retests.
+// generalistGenome(60, 20), and writes retest.json. The others reclassify an
+// existing retest.json under the rule (no GPU) and pick each cluster's best
+// passer (selectFounders in packages/search/src/retest.ts). --replicate
+// evaluates those candidates again on fresh seeds and writes replicate.json,
+// because picking the best of a cluster favours lucky batches. --founders
+// keeps the candidates whose retest pooled with their replication still passes
+// (replicatedFounders) and writes the ensemble founder set. Every stage refuses
+// seeds not recorded as disjoint from all seeds used before it.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { generalistGenome, type Genome } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { binomialLowerBound, PROBABILITY_GATE } from "@bl/metrics";
-import { checkFresh, usedSeeds, DEFAULT_EVAL, evaluateBatch, founderSetId, geneticClusters, passesStrictM3, selectFounders, type EncGenome, type Evaluation, type RetestProvenance, type RetestRow } from "@bl/search";
+import { checkFresh, usedSeeds, DEFAULT_EVAL, evaluateBatch, founderSetId, geneticClusters, passesStrictM3, replicatedFounders, selectFounders, type EncGenome, type Evaluation, type ReplicateRow, type RetestProvenance, type RetestRow } from "@bl/search";
 
-const a = parseArgs(Deno.args, { string: ["confirm", "out", "per-strong", "seed", "from", "founders"], default: { "per-strong": "4", seed: "2000001" } });
+const a = parseArgs(Deno.args, { string: ["confirm", "out", "per-strong", "seed", "from", "founders", "replicate", "replication"], default: { "per-strong": "4", seed: "2000001" } });
 type Row = RetestRow;
 const dec = (g: EncGenome): Genome => ({ ...g, weights: Int8Array.from(g.weights) });
 const enc = (g: Genome): EncGenome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Array.from(g.weights) });
@@ -83,31 +88,68 @@ console.log(
     `${passers.length} passers in ${best.length} of ${ids.length} clusters (${new Set(geneticClusters(passers.map((r) => dec(r.genome)))).size} after reclustering)`,
 );
 
+const ec32 = { ...DEFAULT_EVAL, reps: PROBABILITY_GATE.reps };
+const per32 = Math.floor((ec32.side * ec32.side) / ec32.reps);
+// Everything a replication must not reuse: the retest's own seeds and all seeds before it.
+const priorToReplication: [number, number][] = [...provenance.used, provenance.seeds];
+
+if (a.replicate) {
+  const seed0 = Number(a.seed);
+  if (!Number.isSafeInteger(seed0) || seed0 < 0) throw new Error("--seed must be a nonnegative integer");
+  const repProv: RetestProvenance = { seeds: [seed0, seed0 + Math.ceil(best.length / per32) - 1], used: priorToReplication };
+  checkFresh(repProv);
+  console.log(`replicating ${best.length} founder candidates, ${ec32.reps} replicates, seeds ${repProv.seeds[0]}..${repProv.seeds[1]}`);
+  const device = await requestDevice(navigator.gpu);
+  const repRows: ReplicateRow[] = [];
+  for (let i = 0; i < best.length; i += per32) {
+    const chunk = best.slice(i, i + per32);
+    const evals = await evaluateBatch(device, chunk.map((x) => dec(x.genome)), { ...ec32, seed: seed0 + i / per32 });
+    chunk.forEach((x, k) => repRows.push({ label: x.label, cluster: x.cluster!, genome: x.genome, eval: evals[k] }));
+  }
+  for (const r of repRows) console.log(`replication cluster ${r.cluster}: survived ${r.eval.survived}, regenerated ${r.eval.regenerated}, died without light ${r.eval.lightDependent} of ${r.eval.reps}`);
+  await Deno.mkdir(a.replicate, { recursive: true });
+  await Deno.writeTextFile(`${a.replicate}/replicate.json`, JSON.stringify({ reps: ec32.reps, seeds: repProv.seeds, provenance: repProv, rows: repRows }, null, 1));
+}
+
 if (a.founders) {
+  if (!a.replication) throw new Error("--founders needs --replication: founders are the candidates that hold up on a fresh-seed replication");
+  const rec: { seeds?: [number, number]; provenance?: RetestProvenance; rows: ReplicateRow[] } = JSON.parse(await Deno.readTextFile(a.replication));
+  if (!rec.provenance) throw new Error(`${a.replication} records no seed provenance`);
+  if (JSON.stringify(rec.seeds) !== JSON.stringify(rec.provenance.seeds)) throw new Error(`${a.replication}: seeds disagree with provenance seeds`);
+  checkFresh(rec.provenance);
+  const has = (r: [number, number]) => rec.provenance!.used.some((u) => u[0] === r[0] && u[1] === r[1]);
+  for (const r of priorToReplication) if (!has(r)) throw new Error(`${a.replication} does not record seeds ${r[0]}..${r[1]} as used, so its independence from ${a.from ?? "the retest"} is not shown`);
+  const kept = replicatedFounders(best, rec.rows);
+  const dropped = best.filter((b) => !kept.some((k) => k.row === b));
+  console.log(`replication (seeds ${rec.provenance.seeds[0]}..${rec.provenance.seeds[1]}): ${kept.length} of ${best.length} candidates pass pooled; dropped clusters ${dropped.map((d) => d.cluster).join(", ") || "none"}`);
+  const counts = (e: Evaluation) => `{ survived: ${e.survived}, regenerated: ${e.regenerated}, lightDependent: ${e.lightDependent}, reps: ${e.reps} }`;
   const hex = (w: number[]) => w.map((b) => (b & 0xff).toString(16).padStart(2, "0")).join("");
   const src = `// Generated by tools/retest.ts --founders from ${a.from ?? `${a.out}/retest.json`}; do not edit.
 //
 // The ensemble founder set: the best genome of each M3 genetic cluster that
 // passes the M3 test under the later-gate rule (docs/plan.md, "Probability
-// gates"): ${PROBABILITY_GATE.reps} fresh-seed replicates (seeds ${provenance.seeds[0]}..${provenance.seeds[1]}) with survival,
-// regeneration after a 30% lesion and death without light each at a one-sided
-// 95% lower bound above 0.8.
+// gates") — survival, regeneration after a 30% lesion and death without light
+// each at a one-sided 95% lower bound above 0.8 — on ${PROBABILITY_GATE.reps} fresh-seed replicates
+// (seeds ${provenance.seeds[0]}..${provenance.seeds[1]}), and still passes with those pooled with an
+// independent replication (seeds ${rec.provenance.seeds[0]}..${rec.provenance.seeds[1]}, ${a.replication}).
 //
 // M3_FOUNDER_SET is the content digest of the set (founderSetId in
 // packages/search/src/retest.ts). Presets bind to one set by id: a different
 // set needs new preset ids, so runs from different sets are never pooled.
 import type { Genome } from "./genome.ts";
 
-export const M3_FOUNDER_SET = "${founderSetId(best.map((r) => r.genome))}";
+export const M3_FOUNDER_SET = "${founderSetId(kept.map((k) => k.row.genome))}";
 
 export interface M3Founder {
   /** Genetic cluster in the M3 confirmation (runs/bootstrap-200/confirm.json). */
   cluster: number;
-  /** Retest counts out of \`reps\`. */
+  /** Retest and replication counts pooled, out of \`reps\`. */
   survived: number;
   regenerated: number;
   lightDependent: number;
   reps: number;
+  retest: { survived: number; regenerated: number; lightDependent: number; reps: number };
+  replication: { survived: number; regenerated: number; lightDependent: number; reps: number };
   mu: number;
   sigma: number;
   motGain: number;
@@ -116,7 +158,7 @@ export interface M3Founder {
 }
 
 export const M3_FOUNDERS: readonly M3Founder[] = [
-${best.map((r) => `  { cluster: ${r.cluster}, survived: ${r.eval.survived}, regenerated: ${r.eval.regenerated}, lightDependent: ${r.eval.lightDependent}, reps: ${r.eval.reps}, mu: ${r.genome.mu}, sigma: ${r.genome.sigma}, motGain: ${r.genome.motGain}, weights: "${hex(r.genome.weights)}" },`).join("\n")}
+${kept.map(({ row: r, replication: p, pooled: q }) => `  { cluster: ${r.cluster}, survived: ${q.survived}, regenerated: ${q.regenerated}, lightDependent: ${q.lightDependent}, reps: ${q.reps}, retest: ${counts(r.eval)}, replication: ${counts(p.eval)}, mu: ${r.genome.mu}, sigma: ${r.genome.sigma}, motGain: ${r.genome.motGain}, weights: "${hex(r.genome.weights)}" },`).join("\n")}
 ];
 
 export function founderGenome(f: M3Founder): Genome {
@@ -126,5 +168,5 @@ export function founderGenome(f: M3Founder): Genome {
 }
 `;
   await Deno.writeTextFile(a.founders, src);
-  console.log(`wrote ${best.length} founders to ${a.founders}`);
+  console.log(`wrote ${kept.length} founders to ${a.founders}`);
 }

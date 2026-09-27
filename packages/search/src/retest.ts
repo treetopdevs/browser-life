@@ -90,3 +90,32 @@ export function founderSetId(genomes: EncGenome[]): string {
   const [a, b] = digestWords(Uint32Array.from(words));
   return `m3-${a.toString(16).padStart(8, "0")}${b.toString(16).padStart(8, "0")}`;
 }
+
+/** One founder candidate retested again on fresh seeds (tools/retest.ts --replicate). */
+export interface ReplicateRow {
+  label: string;
+  cluster: number;
+  genome: EncGenome;
+  eval: Evaluation;
+}
+
+/** Counts of two independent evaluations of one genome, added (only the counts the strict test reads). */
+export function poolCounts(a: Evaluation, b: Evaluation): Evaluation {
+  return { ...a, survived: a.survived + b.survived, regenerated: a.regenerated + b.regenerated, lightDependent: a.lightDependent + b.lightDependent, reps: a.reps + b.reps };
+}
+
+/**
+ * The founders that hold up on replication: each selected genome's retest
+ * pooled with its independent replication must still pass the strict test.
+ * A selected genome without a replication row is an error, not a pass.
+ */
+export function replicatedFounders(selected: RetestRow[], replication: ReplicateRow[]): { row: RetestRow; replication: ReplicateRow; pooled: Evaluation }[] {
+  const key = (g: EncGenome) => JSON.stringify([g.mu, g.sigma, g.motGain, g.weights]);
+  const by = new Map(replication.map((r) => [key(r.genome), r]));
+  return selected.flatMap((row) => {
+    const rep = by.get(key(row.genome));
+    if (!rep) throw new Error(`founder candidate ${row.label} (cluster ${row.cluster}) has no replication`);
+    const pooled = poolCounts(row.eval, rep.eval);
+    return passesStrictM3(pooled) ? [{ row, replication: rep, pooled }] : [];
+  });
+}
