@@ -163,6 +163,10 @@ Fission, budding (condensation within 24 cells of a living individual of the sam
 - A finite window cannot establish open-endedness; results are "practical open-endedness over the observation window" at most.
 - Moral status: nothing in this system is claimed to be sentient; the question is revisited if M7 succeeds.
 
+## Per-seed probability thresholds
+
+Any threshold on a per-seed probability (for example "recovers from a 30% lesion with p > 0.8") is tested on 32 replicates on fresh seeds and passes when the one-sided 95% Clopper–Pearson lower bound exceeds the threshold; for p > 0.8, at least 30 of 32 (`passesProbabilityGate` in `packages/metrics/src/stats.ts`). Decided 2026-09-27 before freezing. The M3 bootstrap gate predates this rule and used the observed rate over 16 replicates; its result and the stricter robustness figure are recorded in `docs/plan.md`.
+
 ## Analysis code
 
 `tools/analyze.ts` at the frozen commit. It pools only runs forming one ensemble (same rule and schema versions, preset, horizon and observation schedule; configurations differing from the treatment exactly by their condition) and refuses anything else. Its "Primary endpoints" section implements the tests above; its "Held-out observables" section implements the held-out hypothesis above (confirmatory, not exploratory, per the 2026-09-26 amendment); every comparison outside those two sections is labelled exploratory.

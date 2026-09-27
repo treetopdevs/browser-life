@@ -354,3 +354,15 @@ function normCdf(z: number): number {
   const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
   return 0.5 * (1 + (z < 0 ? -y : y));
 }
+
+/** Replicates and confidence level for per-seed probability gates after M3 (docs/plan.md, "Probability gates"). */
+export const PROBABILITY_GATE = { reps: 32, alpha: 0.05 } as const;
+
+/**
+ * Whether k successes in n replicates establish a per-seed probability above
+ * `p`: at least PROBABILITY_GATE.reps replicates and a one-sided Clopper–Pearson
+ * lower bound above `p`. For p = 0.8 over 32 replicates that is 30 or more.
+ */
+export function passesProbabilityGate(k: number, n: number, p: number, minReps: number = PROBABILITY_GATE.reps, alpha: number = PROBABILITY_GATE.alpha): boolean {
+  return n >= minReps && binomialLowerBound(k, n, alpha) > p;
+}

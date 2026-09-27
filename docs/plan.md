@@ -69,6 +69,8 @@ Freeze `experiments/preregistration.md` and commit its hash **before** any M4+ e
 - *Ecology:* trophic-role clustering from each lineage's reaction-flux profile, interaction network (who consumes whose output), coexistence time.
 - *Multilevel:* collective-level heritability (parent/offspring collective composition correlation), bottleneck size, and fitness decoupling between levels.
 
+**Probability gates** (decided 2026-09-27, before the freeze; applies to every gate after M3): a per-seed probability threshold such as "recovers with p > 0.8" is tested on **32 fresh-seed replicates** and passes when the **one-sided 95% Clopper–Pearson lower bound** exceeds the threshold. For p > 0.8 that is 30 or more of 32, so a couple of failures are tolerated while chance passes stay rare (`passesProbabilityGate` in `packages/metrics`). An observed rate over 16 replicates admits chance passes; a lower bound over 16 demands a perfect score.
+
 **Held out:** at least one-third of these, including ecology, multilevel and predictive information, are never used by the bootstrap search or the environment generator.
 
 **Controls** (same seed protocol, randomized assignment):
@@ -97,7 +99,8 @@ Each gate is a pass/fail check. The **pivot** column is what we do instead of pu
 
 ### Gate results
 
-- **M3 met (2026-09-27).** 24 genetic clusters of confirmed passers (20 required): 839 screening passers from 300 batches of `tools/bootstrap.ts` (seed 1, lineage selection, `--random 0.25`; 200 batches, then `--resume` to 300), 580 confirmed on fresh seeds 1000001–1000210 with 16 replicates each. 21 of the 24 clusters sit about 160 slots from `generalistGenome`, consistent with separate random founders; the cluster count grew roughly linearly with search budget (10 at 80 batches, 18 at 200). Under the stricter reading that each seed's regeneration rate needs a 95% lower bound above 0.8, 244 passers form 12 clusters; the gate as written uses the observed rate.
+- **M3 met (2026-09-27), under the gate as specified:** each counted seed regenerated after a 30% lesion in more than 80% of 16 fresh-seed replicates (13 or more of 16, observed rate) and died without light in all 16. 580 of 839 screening passers qualified, forming 24 genetic clusters (20 required). Search: 300 batches of `tools/bootstrap.ts` (seed 1, lineage selection, `--random 0.25`; 200 batches, then `--resume` to 300); confirmation seeds 1000001–1000210. 21 of the 24 clusters sit about 160 slots from `generalistGenome`, consistent with separate random founders; the cluster count grew roughly linearly with search budget (10 at 80 batches, 18 at 200).
+  *Robustness:* requiring a one-sided 95% Clopper–Pearson lower bound above 0.8 instead, which at 16 replicates only 16 of 16 meets, leaves 244 passers in **12 clusters**. Later probability gates use the "Probability gates" rule above rather than either of these.
 
 Rough timeline for one person working part-time: M0–M3 in about 4 months, M4–M6 in about 4 more, and M7 open-ended. Throughput is unknown until it is measured in M0. For planning, assume 1024² at 1–3k steps/s on an M-series GPU, which puts a 10⁷-step history at about 1–3 hours.
 

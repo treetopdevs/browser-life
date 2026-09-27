@@ -244,3 +244,19 @@ describe("Clopper–Pearson lower bound", () => {
     expect(binomialLowerBound(15, 16)).toBeCloseTo(0.7358, 3);
   });
 });
+
+import { passesProbabilityGate } from "@bl/metrics";
+
+describe("probability gates after M3 (32 replicates, lower bound)", () => {
+  it("tolerates two failures in 32 at p > 0.8 but not three", () => {
+    expect(passesProbabilityGate(32, 32, 0.8)).toBe(true);
+    expect(passesProbabilityGate(30, 32, 0.8)).toBe(true);
+    expect(passesProbabilityGate(29, 32, 0.8)).toBe(false);
+  });
+
+  it("needs the full replicate count: a perfect 16 of 16 is not enough", () => {
+    expect(passesProbabilityGate(16, 16, 0.8)).toBe(false);
+    expect(passesProbabilityGate(16, 16, 0.8, 16)).toBe(true);
+    expect(passesProbabilityGate(15, 16, 0.8, 16)).toBe(false);
+  });
+});

@@ -251,6 +251,7 @@ if (reps > 0) {
   const gate = m3Gate(rows);
   const passing = rows.filter((r) => confirmsGate(r.eval));
   const cluster = geneticClusters(passing.map((r) => r.genome));
+  const strict = passing.filter((r) => binomialLowerBound(r.eval.regenerated, r.eval.reps) > 0.8);
   const confirmSeeds = [...prevRanges, ...(confirmBatches ? [newRange] : [])];
   const detail = {
     ...gate,
@@ -260,7 +261,9 @@ if (reps > 0) {
     batchSize: confirmPer,
     searchSeeds: searchSeedsOf(arch),
     /** Confirmed passers whose regeneration rate has a 95% lower bound above 0.8 (informational). */
-    lowerBoundAbove08: passing.filter((r) => binomialLowerBound(r.eval.regenerated, r.eval.reps) > 0.8).length,
+    lowerBoundAbove08: strict.length,
+    /** Robustness figure: genetic clusters among those passers. */
+    lowerBoundClusters: new Set(geneticClusters(strict.map((r) => r.genome))).size,
     distinctCells: new Set(passing.map((r) => r.cell.join(","))).size,
   };
   console.log(`M3 gate ${gate.met ? "MET" : "NOT MET"}: ${JSON.stringify(detail)}`);
