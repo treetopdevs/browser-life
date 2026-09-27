@@ -25,6 +25,8 @@ export interface Run {
   series: Record<string, any>[];
   lineages: Map<number, [string, number][]>;
   manifest: any;
+  /** Set by a `loadRunsUnder` reducer that replays activities and drops `lineages` (see calibrate.ts). */
+  activities?: number[];
 }
 
 /**
@@ -58,8 +60,10 @@ export async function loadRun(dir: string, condition: string, seed: number): Pro
  * Loads every seed-N run bundle under every condition subdirectory of
  * `root` (a "report" subdirectory, e.g. analyze.ts's own output, is
  * skipped). Incomplete bundles are silently omitted (see `loadRun`).
+ * `reduce`, applied to each run as it loads, lets a caller keep only what it
+ * needs: a 1e6-step run's lineage table alone is about 160 MB in memory.
  */
-export async function loadRunsUnder(root: string): Promise<Run[]> {
+export async function loadRunsUnder(root: string, reduce: (r: Run) => Run = (r) => r): Promise<Run[]> {
   const loaded: Run[] = [];
   for await (const cond of Deno.readDir(root)) {
     if (!cond.isDirectory || cond.name === "report") continue;
@@ -67,7 +71,7 @@ export async function loadRunsUnder(root: string): Promise<Run[]> {
       const m = /^seed-(\d+)$/.exec(sd.name);
       if (!m) continue;
       const r = await loadRun(`${root}/${cond.name}/${sd.name}`, cond.name, Number(m[1]));
-      if (r) loaded.push(r);
+      if (r) loaded.push(reduce(r));
     }
   }
   return loaded;

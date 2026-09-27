@@ -362,11 +362,9 @@ const baseSpec = (seed: number, condition: string, ringNamespace?: number): RunS
 }
 
 // ---- end-to-end against the real ACTIVITY_THRESHOLDS (experiments/endpoints.ts) ----
-// Both registered presets currently have value: null (the calib-neutral
-// pilot hasn't been run and reduced yet) -- these two checks exercise
-// analyze.ts's actual wiring for the branches that are reachable with today's
-// real data; "frozen value used" is covered above only as a unit test since
-// no preset has a non-null value yet.
+// Exercises analyze.ts's actual wiring against the declared entry: a null
+// value (before the calib-neutral pilot was reduced) gives an uncalibrated
+// report; a frozen value must be used exactly.
 {
   const gradientM3 = ACTIVITY_THRESHOLDS["gradient-m3"];
   if (!gradientM3) {
@@ -404,7 +402,23 @@ const baseSpec = (seed: number, condition: string, ringNamespace?: number): RunS
         check("...report.json: threshold is null (Infinity is not valid JSON, serialized as null)", reportJson.threshold === null);
       }
     } else {
-      console.log(`  (skipping "null frozen value" end-to-end check: ACTIVITY_THRESHOLDS["gradient-m3"].value is no longer null -- ${gradientM3.value})`);
+      // --- matching schedule, frozen value -> report uses exactly the frozen value ---
+      await writeRun("e4", "gradient-m3", matchingSpec(10), true);
+      await writeRun("e4", "gradient-m3", matchingSpec(20), true);
+      const outDir = `${root}/e4-report`;
+      const { code, stderr } = await runAnalyze(`${root}/e4/gradient-m3`, outDir);
+      check("frozen value, matching schedule: analyze.ts succeeds", code === 0, `exit ${code}: ${stderr}`);
+      let reportJson: any = null;
+      try {
+        reportJson = JSON.parse(await Deno.readTextFile(`${outDir}/report.json`));
+      } catch (e) {
+        check("...report.json is written and parses", false, String(e));
+      }
+      if (reportJson) {
+        check("...report.json: thresholdMode is 'frozen'", reportJson.thresholdMode === "frozen", JSON.stringify(reportJson.thresholdMode));
+        check("...report.json: calibrated is true", reportJson.calibrated === true);
+        check("...report.json: threshold is the frozen value", reportJson.threshold === gradientM3.value, JSON.stringify(reportJson.threshold));
+      }
     }
 
     // --- mismatched schedule -> refused, regardless of whether the value is null ---

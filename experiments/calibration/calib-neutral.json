@@ -1,0 +1,176 @@
+{
+  "generated": "2026-09-27T20:49:33.505Z",
+  "pilotRoot": "../browser-life/runs/calib-neutral",
+  "presets": [
+    {
+      "presetId": "gradient-m3",
+      "status": "ok",
+      "eligibleRuns": 20,
+      "excludedRuns": 0,
+      "eligibleSeeds": [
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007,
+        1008,
+        1009,
+        1010,
+        1011,
+        1012,
+        1013,
+        1014,
+        1015,
+        1016,
+        1017,
+        1018,
+        1019,
+        1020
+      ],
+      "seeds": [
+        1001,
+        1020
+      ],
+      "schedule": {
+        "steps": 1000000,
+        "censusEvery": 100,
+        "deepEvery": 10
+      },
+      "quantile": 0.95,
+      "value": 10008,
+      "bootstrap": {
+        "draws": 2000,
+        "alpha": 0.1,
+        "seed": 1,
+        "lower": 9919.475,
+        "upper": 10119
+      },
+      "splitHalf": {
+        "odd": {
+          "n": 10,
+          "value": 9990.049999999988
+        },
+        "even": {
+          "n": 10,
+          "value": 10031
+        }
+      },
+      "perRunSpread": {
+        "mean": 10010.677499999987,
+        "sd": 262.1860626364264,
+        "min": 9511.999999999956,
+        "max": 10684
+      },
+      "identity": {
+        "ruleVersion": 1,
+        "schemaVersion": 3,
+        "metricsVersion": 2,
+        "presetIdentity": "e1c93a9384b5d921",
+        "calibrationDistributionIdentity": "91a77c31dfc52a43"
+      },
+      "declaredPilot": {
+        "experiment": "calib-neutral",
+        "seeds": [
+          1001,
+          1020
+        ],
+        "runs": 20,
+        "steps": 1000000,
+        "censusEvery": 100,
+        "deepEvery": 10,
+        "ruleVersion": 1,
+        "schemaVersion": 3,
+        "metricsVersion": 2,
+        "presetIdentity": "e1c93a9384b5d921",
+        "calibrationDistributionIdentity": "91a77c31dfc52a43"
+      }
+    },
+    {
+      "presetId": "spots-m3",
+      "status": "ok",
+      "eligibleRuns": 20,
+      "excludedRuns": 0,
+      "eligibleSeeds": [
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007,
+        1008,
+        1009,
+        1010,
+        1011,
+        1012,
+        1013,
+        1014,
+        1015,
+        1016,
+        1017,
+        1018,
+        1019,
+        1020
+      ],
+      "seeds": [
+        1001,
+        1020
+      ],
+      "schedule": {
+        "steps": 1000000,
+        "censusEvery": 100,
+        "deepEvery": 10
+      },
+      "quantile": 0.95,
+      "value": 14613,
+      "bootstrap": {
+        "draws": 2000,
+        "alpha": 0.1,
+        "seed": 1,
+        "lower": 14375.664999999955,
+        "upper": 14832.05
+      },
+      "splitHalf": {
+        "odd": {
+          "n": 10,
+          "value": 14717
+        },
+        "even": {
+          "n": 10,
+          "value": 14500.5
+        }
+      },
+      "perRunSpread": {
+        "mean": 14618.559999999992,
+        "sd": 634.9642384459613,
+        "min": 13683.949999999997,
+        "max": 15505
+      },
+      "identity": {
+        "ruleVersion": 1,
+        "schemaVersion": 3,
+        "metricsVersion": 2,
+        "presetIdentity": "a9f93070127a0c05",
+        "calibrationDistributionIdentity": "1b0ffeec276d2125"
+      },
+      "declaredPilot": {
+        "experiment": "calib-neutral",
+        "seeds": [
+          1001,
+          1020
+        ],
+        "runs": 20,
+        "steps": 1000000,
+        "censusEvery": 100,
+        "deepEvery": 10,
+        "ruleVersion": 1,
+        "schemaVersion": 3,
+        "metricsVersion": 2,
+        "presetIdentity": "a9f93070127a0c05",
+        "calibrationDistributionIdentity": "1b0ffeec276d2125"
+      }
+    }
+  ]
+}

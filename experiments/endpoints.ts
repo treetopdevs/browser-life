@@ -14,8 +14,6 @@
 // no Deno- or Node-specific APIs in this file, pure data and pure functions
 // only.
 import { EXACT_MAX, holm, mannWhitney, wilcoxonSignedRank, type GrowthVerdict } from "@bl/metrics";
-import { distributionIdentity, METRICS_VERSION, PRESETS, presetIdentity, RULE_VERSION, SCHEMA_VERSION, type WorldConfig } from "@bl/schema";
-import { specConfig, type RunSpec } from "@bl/runner";
 
 /** One-sided alternative for a Mann–Whitney comparison. */
 export type Alt = "pGreater" | "pLess";
@@ -83,19 +81,15 @@ export const ALPHA = 0.01;
 // still reports the in-sample neutral 95th percentile (tools/analyze.ts), but
 // only as a labelled diagnostic, never fed into any endpoint.
 //
-// `value` starts null for both registered presets: the pilot ("calib-neutral",
-// seeds 1001-1020) has not finished and been reduced yet. tools/calibrate.ts
-// prints the exact object literal to paste in here once it has.
+// Each entry is the object literal tools/calibrate.ts printed for the
+// reduced pilot, pasted verbatim (a null `value` means not yet calibrated).
 //
 // `ruleVersion`/`schemaVersion`/`metricsVersion`/`presetIdentity` (Astra
 // review, 2026-09-27, P1): a frozen threshold carries no record of what code
 // produced it, so a later rule/schema/metrics bump or a preset definition
 // change (packages/schema/src/presets.ts) could silently be compared against
-// an ensemble it no longer describes. Recorded here from the CURRENT code
-// (filled in now, even while `value` is still null, so tools/analyze.ts's
-// check is active from the start) and re-emitted verbatim by
-// tools/calibrate.ts from the pilot's own manifests/preset when the real
-// pilot is reduced -- tools/analyze.ts refuses a frozen threshold when an
+// an ensemble it no longer describes. Recorded as tools/calibrate.ts
+// emitted them from the pilot's own verified manifests -- tools/analyze.ts refuses a frozen threshold when an
 // ensemble's own rule/schema/metrics versions or its preset's current
 // identity differ from what's recorded here (seed and condition differences
 // are expected and never checked this way).
@@ -135,39 +129,35 @@ export interface ActivityThresholdEntry {
   pilot: ActivityThresholdPilot;
 }
 
-/** Fields every registered preset's pilot shares -- everything except `presetIdentity`, which is per-preset. */
-const CALIB_NEUTRAL_PILOT_BASE = {
-  experiment: "calib-neutral",
-  seeds: [1001, 1020] as [number, number],
-  runs: 20,
-  steps: 1e6,
-  censusEvery: 100,
-  deepEvery: 10,
-  ruleVersion: RULE_VERSION,
-  schemaVersion: SCHEMA_VERSION,
-  metricsVersion: METRICS_VERSION,
-};
-
-/** A minimal, valid RunSpec for a `specConfig` call that only cares about presetId/condition/seed -- the other fields are irrelevant to config computation and never touch the filesystem here. */
-function neutralSpecFor(presetId: string): RunSpec {
-  return { experiment: "identity", presetId, condition: "neutral", seed: 0, steps: 1, censusEvery: 1, deepEvery: 1, checkpointEvery: 0 };
-}
-
-function pilotFor(presetId: string): ActivityThresholdPilot {
-  const preset = PRESETS.find((p) => p.id === presetId);
-  if (!preset) throw new Error(`ACTIVITY_THRESHOLDS: no such preset "${presetId}" in @bl/schema's PRESETS`);
-  const identity = presetIdentity(preset);
-  const { seed: _seed, ...neutralCfgWithoutSeed } = specConfig(neutralSpecFor(presetId));
-  return {
-    ...CALIB_NEUTRAL_PILOT_BASE,
-    presetIdentity: identity,
-    calibrationDistributionIdentity: distributionIdentity(identity, "neutral", neutralCfgWithoutSeed as WorldConfig),
-  };
-}
-
+// Frozen 2026-09-27 from the calib-neutral pilot (12-founder set
+// m3-50886563ec90fb39) by tools/calibrate.ts; its full report, with the
+// bootstrap interval, split-half and per-run spread, is
+// experiments/calibration/calib-neutral.json. Both presets were stable:
+// gradient-m3 90% bootstrap interval 9919–10119, split halves 9990 / 10031;
+// spots-m3 14376–14832, split halves 14717 / 14501.
 export const ACTIVITY_THRESHOLDS: Record<string, ActivityThresholdEntry> = {
-  "gradient-m3": { value: null, quantile: 0.95, pilot: pilotFor("gradient-m3") },
-  "spots-m3": { value: null, quantile: 0.95, pilot: pilotFor("spots-m3") },
+  "gradient-m3": {
+    value: 10008,
+    quantile: 0.95,
+    pilot: {
+      experiment: "calib-neutral", seeds: [1001, 1020], runs: 20,
+      steps: 1000000, censusEvery: 100, deepEvery: 10,
+      ruleVersion: 1, schemaVersion: 3, metricsVersion: 2,
+      presetIdentity: "e1c93a9384b5d921",
+      calibrationDistributionIdentity: "91a77c31dfc52a43",
+    },
+  },
+  "spots-m3": {
+    value: 14613,
+    quantile: 0.95,
+    pilot: {
+      experiment: "calib-neutral", seeds: [1001, 1020], runs: 20,
+      steps: 1000000, censusEvery: 100, deepEvery: 10,
+      ruleVersion: 1, schemaVersion: 3, metricsVersion: 2,
+      presetIdentity: "a9f93070127a0c05",
+      calibrationDistributionIdentity: "1b0ffeec276d2125",
+    },
+  },
 };
 
 function fmtThresholdValue(v: number | null): string {

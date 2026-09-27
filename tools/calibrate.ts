@@ -125,7 +125,9 @@ for (const presetId of presets) {
   const presetRoot = `${pilotRoot}/${presetId}`;
   let loaded: Run[];
   try {
-    loaded = await loadRunsUnder(presetRoot);
+    // Each run's activities are replayed as it loads and its lineage table
+    // dropped: holding 20 full 1e6-step tables exceeds the V8 heap.
+    loaded = await loadRunsUnder(presetRoot, (r) => ({ ...r, activities: activities(r).tracker.allActivities(), lineages: new Map() }));
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
       console.log(`  unavailable: no directory at ${presetRoot}`);
@@ -184,7 +186,7 @@ for (const presetId of presets) {
   // on filesystem/Deno.readDir iteration order, which is not guaranteed.
   const eligible = [...eligibleUnsorted].sort((a, b) => a.seed - b.seed);
 
-  const runActivities: RunActivities[] = eligible.map((r) => ({ seed: r.seed, activities: activities(r).tracker.allActivities() }));
+  const runActivities: RunActivities[] = eligible.map((r) => ({ seed: r.seed, activities: r.activities! }));
   const pooled = runActivities.flatMap((r) => r.activities);
   const value = quantile(pooled, q);
   // Empty/invalid distribution (Astra review, P2): quantile([]) is Infinity
