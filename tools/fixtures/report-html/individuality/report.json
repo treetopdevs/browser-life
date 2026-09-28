@@ -1,0 +1,706 @@
+{
+  "config": {
+    "windowStart": 600,
+    "windowSteps": 150,
+    "worlds": 12,
+    "calibrationWorlds": 4,
+    "bootstrapDraws": 2000,
+    "tile": 64,
+    "founders": 6,
+    "seed": 1,
+    "ringWidth": 6
+  },
+  "calibrationSeeds": [
+    900000002,
+    900000003,
+    900000004,
+    900000005
+  ],
+  "minCalibratedWorlds": 8,
+  "profiles": {
+    "default": {
+      "sSize": 12,
+      "eSize": 6
+    },
+    "coarse": {
+      "sSize": 8,
+      "eSize": 4
+    }
+  },
+  "founderGeneticClusters": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "holmFamilySize": 54,
+  "rows": [
+    {
+      "kind": "genetic-cluster",
+      "id": "0",
+      "founders": [
+        0
+      ],
+      "worlds": 12,
+      "excludedWorlds": 0,
+      "profiles": {
+        "default": {
+          "worlds": 12,
+          "excludedWorlds": 0,
+          "autonomyStar": {
+            "point": 0.482002664726251,
+            "lower": 0.29679971626141544,
+            "upper": 0.6750955271812203,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "ci"
+          },
+          "nonClosure": {
+            "ci": {
+              "point": 0.02931922571487681,
+              "lower": 0.00859273784949053,
+              "upper": 0.05401335641085054,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "ci"
+            },
+            "nullTest": {
+              "observed": 0.02931922571487681,
+              "perWorld": [
+                -0.0062658068299574765,
+                0.1466110061676824,
+                -0.0053299629731058396,
+                -0.005095828981101169,
+                0.003768755438903426,
+                0,
+                0.06897667182196976,
+                0.11388219884419115,
+                0,
+                0,
+                0.01852630682395695,
+                0.01675736826598251
+              ],
+              "nullMeans": [
+                0.03362332047086455,
+                0.028924510684104694,
+                0.024020262209345944,
+                0.025466745368228128,
+                0.040169691019897334
+              ],
+              "exact": false,
+              "p": 0.5337331334332833,
+              "worlds": 12
+            }
+          },
+          "windowLength": 149,
+          "occupancy": {
+            "sTable": 1.0347222222222223,
+            "jointTable": 0.1724537037037037
+          },
+          "jointMI": {
+            "point": 0.5113218904411277,
+            "lower": 0.31808965406504197,
+            "upper": 0.7116123396760969,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "ci"
+          },
+          "environmentMI": {
+            "point": 0.1631953447974878,
+            "lower": 0.057211037478708954,
+            "upper": 0.2845998116148762,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "ci"
+          },
+          "autonomyGivenE": {
+            "point": 0.34812654564364,
+            "lower": 0.21084339708902836,
+            "upper": 0.4816006410740557,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "ci"
+          },
+          "ntic": {
+            "point": 0.133876119082611,
+            "lower": 0.035631301955581625,
+            "upper": 0.25219045013092284,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "ci"
+          },
+          "pid": {
+            "redundancy": {
+              "point": 0.17127276138950429,
+              "lower": 0.06585910566869418,
+              "upper": 0.2897051891126774,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "ci"
+            },
+            "uniqueS": {
+              "point": 0.33090181386371764,
+              "lower": 0.20217250422508443,
+              "upper": 0.4612864909694825,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "ci"
+            },
+            "uniqueE": {
+              "ci": {
+                "point": 0.0032188533030872973,
+                "lower": 0.0006767544925353591,
+                "upper": 0.006516058868823064,
+                "draws": 2000,
+                "alpha": 0.1,
+                "status": "ci"
+              },
+              "nullTest": {
+                "observed": 0.0032188533030872973,
+                "perWorld": [
+                  0.003219,
+                  0.004219,
+                  0.005219,
+                  0.006219,
+                  0.007219,
+                  0.008219,
+                  0.009219,
+                  0.010219,
+                  0.011219,
+                  0.012219,
+                  0.013219,
+                  0.014219
+                ],
+                "nullMeans": [
+                  0.0,
+                  0.000219,
+                  0.002219,
+                  0.004219,
+                  0.006219
+                ],
+                "exact": false,
+                "p": 0.649,
+                "worlds": 12
+              }
+            }
+          }
+        }
+      },
+      "nullTestsHolm": {
+        "default": {
+          "nonClosure": 1.0
+        }
+      },
+      "binSource": {
+        "default": {
+          "source": "anchor",
+          "calibrationWorlds": 4
+        }
+      }
+    },
+    {
+      "kind": "genetic-cluster",
+      "id": "1",
+      "founders": [
+        1
+      ],
+      "worlds": 3,
+      "excludedWorlds": 9,
+      "profiles": {
+        "default": {
+          "worlds": 3,
+          "excludedWorlds": 9,
+          "autonomyStar": {
+            "point": 0.0,
+            "lower": 0.0,
+            "upper": 0.0,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "uncalibrated"
+          },
+          "nonClosure": {
+            "ci": {
+              "point": 0.0,
+              "lower": 0.0,
+              "upper": 0.0,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "uncalibrated"
+            },
+            "nullTest": {
+              "observed": 0.0,
+              "perWorld": [
+                0.0,
+                0.001,
+                0.002
+              ],
+              "nullMeans": [
+                0.0,
+                0.0,
+                0.001
+              ],
+              "exact": true,
+              "p": 1.0,
+              "worlds": 3
+            }
+          }
+        }
+      },
+      "nullTestsHolm": {
+        "default": {
+          "nonClosure": 1.0
+        }
+      },
+      "binSource": {
+        "default": {
+          "source": "anchor",
+          "calibrationWorlds": 4
+        }
+      }
+    },
+    {
+      "kind": "genetic-cluster",
+      "id": "2",
+      "founders": [
+        2
+      ],
+      "worlds": 12,
+      "excludedWorlds": 0,
+      "profiles": {
+        "default": {
+          "worlds": 12,
+          "excludedWorlds": 0,
+          "autonomyStar": {
+            "point": 0.261,
+            "lower": 0.139,
+            "upper": 0.404,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "ci"
+          },
+          "nonClosure": {
+            "ci": {
+              "point": 0.025,
+              "lower": 0.01,
+              "upper": 0.045,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "ci"
+            },
+            "nullTest": {
+              "observed": 0.025,
+              "perWorld": [
+                0.025,
+                0.026,
+                0.027,
+                0.028,
+                0.029,
+                0.03,
+                0.031,
+                0.032,
+                0.033,
+                0.034,
+                0.035,
+                0.036
+              ],
+              "nullMeans": [
+                0.02,
+                0.022,
+                0.024,
+                0.026,
+                0.028
+              ],
+              "exact": false,
+              "p": 0.296,
+              "worlds": 12
+            }
+          }
+        }
+      },
+      "nullTestsHolm": {
+        "default": {
+          "nonClosure": 1.0
+        }
+      },
+      "binSource": {
+        "default": {
+          "source": "anchor",
+          "calibrationWorlds": 4
+        }
+      }
+    },
+    {
+      "kind": "genetic-cluster",
+      "id": "3",
+      "founders": [
+        3
+      ],
+      "worlds": 2,
+      "excludedWorlds": 10,
+      "profiles": {
+        "default": {
+          "worlds": 2,
+          "excludedWorlds": 10,
+          "autonomyStar": {
+            "point": 0.0,
+            "lower": 0.0,
+            "upper": 0.0,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "uncalibrated"
+          },
+          "nonClosure": {
+            "ci": {
+              "point": 0.0,
+              "lower": 0.0,
+              "upper": 0.0,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "uncalibrated"
+            },
+            "nullTest": {
+              "observed": 0.0,
+              "perWorld": [
+                0.0,
+                0.001
+              ],
+              "nullMeans": [
+                0.0,
+                0.0
+              ],
+              "exact": true,
+              "p": 1.0,
+              "worlds": 2
+            }
+          }
+        }
+      },
+      "nullTestsHolm": {
+        "default": {
+          "nonClosure": 1.0
+        }
+      },
+      "binSource": {
+        "default": {
+          "source": "anchor",
+          "calibrationWorlds": 4
+        }
+      }
+    },
+    {
+      "kind": "genetic-cluster",
+      "id": "4",
+      "founders": [
+        4
+      ],
+      "worlds": 12,
+      "excludedWorlds": 0,
+      "profiles": {
+        "default": {
+          "worlds": 12,
+          "excludedWorlds": 0,
+          "autonomyStar": {
+            "point": 0.655,
+            "lower": 0.417,
+            "upper": 0.913,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "ci"
+          },
+          "nonClosure": {
+            "ci": {
+              "point": 0.038,
+              "lower": 0.016,
+              "upper": 0.066,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "ci"
+            },
+            "nullTest": {
+              "observed": 0.038,
+              "perWorld": [
+                0.038,
+                0.039,
+                0.04,
+                0.041,
+                0.042,
+                0.043,
+                0.044,
+                0.045,
+                0.046,
+                0.047,
+                0.048,
+                0.049
+              ],
+              "nullMeans": [
+                0.033,
+                0.035,
+                0.037,
+                0.039,
+                0.041
+              ],
+              "exact": false,
+              "p": 0.004,
+              "worlds": 12
+            }
+          }
+        }
+      },
+      "nullTestsHolm": {
+        "default": {
+          "nonClosure": 0.238
+        }
+      },
+      "binSource": {
+        "default": {
+          "source": "anchor",
+          "calibrationWorlds": 4
+        }
+      }
+    },
+    {
+      "kind": "genetic-cluster",
+      "id": "5",
+      "founders": [
+        5
+      ],
+      "worlds": 12,
+      "excludedWorlds": 0,
+      "profiles": {
+        "default": {
+          "worlds": 12,
+          "excludedWorlds": 0,
+          "autonomyStar": {
+            "point": 0.744,
+            "lower": 0.43,
+            "upper": 1.054,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "ci"
+          },
+          "nonClosure": {
+            "ci": {
+              "point": 0.077,
+              "lower": 0.049,
+              "upper": 0.106,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "ci"
+            },
+            "nullTest": {
+              "observed": 0.077,
+              "perWorld": [
+                0.077,
+                0.078,
+                0.079,
+                0.08,
+                0.081,
+                0.082,
+                0.083,
+                0.084,
+                0.085,
+                0.086,
+                0.087,
+                0.088
+              ],
+              "nullMeans": [
+                0.072,
+                0.074,
+                0.076,
+                0.078,
+                0.08
+              ],
+              "exact": false,
+              "p": 0.145,
+              "worlds": 12
+            }
+          }
+        }
+      },
+      "nullTestsHolm": {
+        "default": {
+          "nonClosure": 1.0
+        }
+      },
+      "binSource": {
+        "default": {
+          "source": "anchor",
+          "calibrationWorlds": 4
+        }
+      }
+    },
+    {
+      "kind": "component",
+      "id": "0",
+      "founders": [
+        0,
+        1
+      ],
+      "worlds": 0,
+      "excludedWorlds": 12,
+      "profiles": {},
+      "nullTestsHolm": {
+        "default": {}
+      },
+      "binSource": {}
+    },
+    {
+      "kind": "component",
+      "id": "4",
+      "founders": [
+        4,
+        5
+      ],
+      "worlds": 7,
+      "excludedWorlds": 5,
+      "profiles": {
+        "default": {
+          "worlds": 7,
+          "excludedWorlds": 5,
+          "autonomyStar": {
+            "point": 0.953,
+            "lower": 0.537,
+            "upper": 1.338,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "uncalibrated"
+          },
+          "nonClosure": {
+            "ci": {
+              "point": 0.042,
+              "lower": 0.015,
+              "upper": 0.073,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "uncalibrated"
+            },
+            "nullTest": {
+              "observed": 0.042,
+              "perWorld": [
+                0.042,
+                0.043,
+                0.044,
+                0.045,
+                0.046,
+                0.047,
+                0.048
+              ],
+              "nullMeans": [
+                0.035,
+                0.037,
+                0.039,
+                0.041,
+                0.043,
+                0.045,
+                0.047
+              ],
+              "exact": true,
+              "p": 0.071,
+              "worlds": 7
+            }
+          }
+        }
+      },
+      "nullTestsHolm": {
+        "default": {
+          "nonClosure": 1.0
+        }
+      },
+      "binSource": {
+        "default": {
+          "source": "anchor",
+          "calibrationWorlds": 4
+        }
+      }
+    },
+    {
+      "kind": "colony",
+      "id": "0,2,4,5",
+      "founders": [
+        0,
+        2,
+        4,
+        5
+      ],
+      "worlds": 4,
+      "excludedWorlds": 8,
+      "profiles": {
+        "default": {
+          "worlds": 4,
+          "excludedWorlds": 8,
+          "autonomyStar": {
+            "point": 0.374,
+            "lower": 0.0,
+            "upper": 1.03,
+            "draws": 2000,
+            "alpha": 0.1,
+            "status": "uncalibrated"
+          },
+          "nonClosure": {
+            "ci": {
+              "point": 0.005,
+              "lower": 0.0,
+              "upper": 0.008,
+              "draws": 2000,
+              "alpha": 0.1,
+              "status": "uncalibrated"
+            },
+            "nullTest": {
+              "observed": 0.005,
+              "perWorld": [
+                0.005,
+                0.006,
+                0.007,
+                0.008
+              ],
+              "nullMeans": [
+                0.001,
+                0.003,
+                0.005,
+                0.007
+              ],
+              "exact": true,
+              "p": 0.375,
+              "worlds": 4
+            }
+          }
+        }
+      },
+      "nullTestsHolm": {
+        "default": {
+          "nonClosure": 1.0
+        }
+      },
+      "binSource": {
+        "default": {
+          "source": "anchor",
+          "calibrationWorlds": 4
+        }
+      }
+    },
+    {
+      "kind": "colony",
+      "id": "0,2,3,4,5",
+      "founders": [
+        0,
+        2,
+        3,
+        4,
+        5
+      ],
+      "worlds": 1,
+      "excludedWorlds": 11,
+      "profiles": {},
+      "nullTestsHolm": {
+        "default": {}
+      },
+      "binSource": {}
+    }
+  ],
+  "disagreements": [],
+  "disagreementSkipped": [
+    "founder 1: genetic-cluster (3 eligible) and colony 0,1,2,4,5 (6 eligible) share only 1 world(s)"
+  ]
+}

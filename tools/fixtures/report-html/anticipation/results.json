@@ -1,0 +1,117 @@
+{
+  "seeds": [
+    {
+      "seed": 1,
+      "collapsedPhaseA": false,
+      "branches": {
+        "shorter": {
+          "costEvolved": 0.010,
+          "costFounder": 0.020,
+          "index": -0.010,
+          "continueLightMean": 94.51,
+          "switchLightMean": 94.52,
+          "lightMeanDelta": 0.01,
+          "energyCostEvolved": 0.011,
+          "energyCostFounder": 0.021
+        },
+        "longer": {
+          "costEvolved": -0.010,
+          "costFounder": 0.010,
+          "index": -0.020,
+          "continueLightMean": 94.51,
+          "switchLightMean": 94.505,
+          "lightMeanDelta": -0.005,
+          "energyCostEvolved": -0.009,
+          "energyCostFounder": 0.009
+        }
+      }
+    },
+    {
+      "seed": 2,
+      "collapsedPhaseA": true,
+      "branches": {}
+    },
+    {
+      "seed": 3,
+      "collapsedPhaseA": false,
+      "branches": {
+        "shorter": {
+          "costEvolved": 0.035,
+          "costFounder": 0.030,
+          "index": 0.005,
+          "continueLightMean": 94.51,
+          "switchLightMean": 94.52,
+          "lightMeanDelta": 0.01,
+          "energyCostEvolved": 0.034,
+          "energyCostFounder": 0.029
+        },
+        "longer": {
+          "costEvolved": null,
+          "costFounder": 0.012,
+          "index": null,
+          "continueLightMean": 94.51,
+          "switchLightMean": 94.505,
+          "lightMeanDelta": -0.005,
+          "energyCostEvolved": null,
+          "energyCostFounder": 0.011
+        }
+      }
+    },
+    {
+      "seed": 4,
+      "collapsedPhaseA": false,
+      "branches": {
+        "shorter": {
+          "costEvolved": 0.020,
+          "costFounder": 0.025,
+          "index": -0.005,
+          "continueLightMean": 94.51,
+          "switchLightMean": 94.52,
+          "lightMeanDelta": 0.01,
+          "energyCostEvolved": 0.019,
+          "energyCostFounder": 0.024
+        },
+        "longer": {
+          "costEvolved": 0.010,
+          "costFounder": -0.005,
+          "index": 0.015,
+          "continueLightMean": 94.51,
+          "switchLightMean": 94.505,
+          "lightMeanDelta": -0.005,
+          "energyCostEvolved": 0.009,
+          "energyCostFounder": -0.006
+        }
+      }
+    }
+  ],
+  "family": {
+    "shorter": {
+      "n": 3,
+      "collapsed": 0,
+      "phaseACollapsed": 1,
+      "meanIndex": -0.003333333333333334,
+      "medianIndex": -0.005,
+      "wilcoxonP": 0.75,
+      "ci": {
+        "lo": -0.02,
+        "hi": 0.01,
+        "status": "ok"
+      },
+      "holmP": 1
+    },
+    "longer": {
+      "n": 2,
+      "collapsed": 1,
+      "phaseACollapsed": 1,
+      "meanIndex": -0.0025,
+      "medianIndex": -0.0025,
+      "wilcoxonP": 0.5,
+      "ci": {
+        "lo": null,
+        "hi": null,
+        "status": "insufficient-reps"
+      },
+      "holmP": 1
+    }
+  }
+}

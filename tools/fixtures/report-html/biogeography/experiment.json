@@ -1,0 +1,29 @@
+{
+  "experiment": "biogeo-smoke-real",
+  "generatedAt": "2026-01-01T00:00:00.000Z",
+  "presetId": "archipelago",
+  "founderSetId": "m3-founders-v1",
+  "steps": 120,
+  "censusEvery": 20,
+  "checkpointEvery": 0,
+  "deepEvery": 10,
+  "migrationPeriod": 40,
+  "areas": [24, 32, 40],
+  "isoTile": 24,
+  "isoRates": [2],
+  "seeds": [1, 2],
+  "runs": [
+    { "runId": "a576-treatment-s1", "arms": ["area", "isolation"], "condition": "treatment", "seed": 1, "area": 576, "migrationRate": 2 },
+    { "runId": "a576-treatment-s2", "arms": ["area", "isolation"], "condition": "treatment", "seed": 2, "area": 576, "migrationRate": 2 },
+    { "runId": "a576-no-migration-s1", "arms": ["area", "isolation"], "condition": "no-migration", "seed": 1, "area": 576, "migrationRate": 0 },
+    { "runId": "a576-no-migration-s2", "arms": ["area", "isolation"], "condition": "no-migration", "seed": 2, "area": 576, "migrationRate": 0 },
+    { "runId": "a1024-treatment-s1", "arms": ["area"], "condition": "treatment", "seed": 1, "area": 1024, "migrationRate": 2 },
+    { "runId": "a1024-treatment-s2", "arms": ["area"], "condition": "treatment", "seed": 2, "area": 1024, "migrationRate": 2 },
+    { "runId": "a1024-no-migration-s1", "arms": ["area"], "condition": "no-migration", "seed": 1, "area": 1024, "migrationRate": 0 },
+    { "runId": "a1024-no-migration-s2", "arms": ["area"], "condition": "no-migration", "seed": 2, "area": 1024, "migrationRate": 0 },
+    { "runId": "a1600-treatment-s1", "arms": ["area"], "condition": "treatment", "seed": 1, "area": 1600, "migrationRate": 2 },
+    { "runId": "a1600-treatment-s2", "arms": ["area"], "condition": "treatment", "seed": 2, "area": 1600, "migrationRate": 2 },
+    { "runId": "a1600-no-migration-s1", "arms": ["area"], "condition": "no-migration", "seed": 1, "area": 1600, "migrationRate": 0 },
+    { "runId": "a1600-no-migration-s2", "arms": ["area"], "condition": "no-migration", "seed": 2, "area": 1600, "migrationRate": 0 }
+  ]
+}

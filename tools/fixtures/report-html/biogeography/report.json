@@ -1,0 +1,85 @@
+{
+  "root": "runs/biogeo-smoke-real",
+  "experiment": "biogeo-smoke-real",
+  "eligibleRuns": 12,
+  "rejectedRuns": [],
+  "areaFits": {
+    "treatment": {
+      "z": 0.5378884093084627,
+      "logC": -1.7174888715765475,
+      "ci": [0.5000000000000004, 0.575776818616925],
+      "r2": 0.9070899584829328,
+      "n": 6,
+      "excludedZeros": 0,
+      "zs": [0.5000000000000004, 0.5000000000000004, 0.5378884093084626, 0.5378884093084627, 0.575776818616925]
+    },
+    "no-migration": {
+      "z": 0.676866700475946,
+      "logC": -3.199051535744327,
+      "ci": [0.676866700475946, 0.908529746255644],
+      "r2": 0.9285883344358845,
+      "n": 5,
+      "excludedZeros": 1,
+      "zs": [0.676866700475946, 0.676866700475946, 0.676866700475946, 0.688336656652179, 0.908529746255644]
+    }
+  },
+  "isolation": {
+    "meanByRate": [
+      { "rate": 0, "mean": 1.5, "sd": 2.1213203435596424, "n": 2 },
+      { "rate": 0.05, "mean": 5.5, "sd": 0.7071067811865476, "n": 2 }
+    ],
+    "trendCorrelation": 0.9701425001453318,
+    "trendN": 4,
+    "trendCI": [0.9701425001453318, 1],
+    "bestRateVsNoMigration": {
+      "n": 2,
+      "W": 3,
+      "p": 0.5,
+      "pGreater": 0.25,
+      "exact": true,
+      "rate": 0.05,
+      "exploratory": true,
+      "holmAdjustedP": 0.5,
+      "effect": 1
+    }
+  },
+  "turnoverSummary": [
+    { "run": "a576-treatment-s1", "tile": 0, "crossingStep": 20, "equilibriumRichness": 5 },
+    { "run": "a576-treatment-s1", "tile": 1, "crossingStep": null, "equilibriumRichness": null },
+    { "run": "a1024-treatment-s1", "tile": 0, "crossingStep": 40, "equilibriumRichness": 7 },
+    { "run": "a1600-no-migration-s2", "tile": 0, "crossingStep": null, "equilibriumRichness": null },
+    { "run": "a1600-treatment-s2", "tile": 0, "crossingStep": 60, "equilibriumRichness": 9 }
+  ],
+  "diagnostics": {
+    "perAreaExtinction": [
+      { "condition": "treatment", "area": 576, "n": 2, "extinct": 0, "extinctionRate": 0 },
+      { "condition": "treatment", "area": 1024, "n": 2, "extinct": 0, "extinctionRate": 0 },
+      { "condition": "treatment", "area": 1600, "n": 2, "extinct": 0, "extinctionRate": 0 },
+      { "condition": "no-migration", "area": 576, "n": 2, "extinct": 1, "extinctionRate": 0.5 },
+      { "condition": "no-migration", "area": 1024, "n": 2, "extinct": 0, "extinctionRate": 0 },
+      { "condition": "no-migration", "area": 1600, "n": 2, "extinct": 0, "extinctionRate": 0 }
+    ],
+    "foundingDensityByArea": [
+      { "area": 576, "occupiedFraction": 0.2617993877991494, "founderCellsPerTileEstimate": 150.79644737231007 },
+      { "area": 1024, "occupiedFraction": 0.3313398501832985, "founderCellsPerTileEstimate": 339.29200658769764 },
+      { "area": 1600, "occupiedFraction": 0.37699111843077515, "founderCellsPerTileEstimate": 603.1857894892403 }
+    ],
+    "livingTransferByRate": [
+      { "rate": 0.05, "n": 2, "meanLivingTransferFraction": 0.7133 }
+    ]
+  },
+  "perRunHistories": [
+    { "runId": "a576-treatment-s1", "arms": ["area", "isolation"], "condition": "treatment", "seed": 1, "area": 576, "richness": 6, "turnover": [] },
+    { "runId": "a576-treatment-s2", "arms": ["area", "isolation"], "condition": "treatment", "seed": 2, "area": 576, "richness": 5, "turnover": [] },
+    { "runId": "a576-no-migration-s1", "arms": ["area", "isolation"], "condition": "no-migration", "seed": 1, "area": 576, "richness": 3, "turnover": [] },
+    { "runId": "a576-no-migration-s2", "arms": ["area", "isolation"], "condition": "no-migration", "seed": 2, "area": 576, "richness": 0, "turnover": [] },
+    { "runId": "a1024-treatment-s1", "arms": ["area"], "condition": "treatment", "seed": 1, "area": 1024, "richness": 8, "turnover": [] },
+    { "runId": "a1024-treatment-s2", "arms": ["area"], "condition": "treatment", "seed": 2, "area": 1024, "richness": 7, "turnover": [] },
+    { "runId": "a1024-no-migration-s1", "arms": ["area"], "condition": "no-migration", "seed": 1, "area": 1024, "richness": 5, "turnover": [] },
+    { "runId": "a1024-no-migration-s2", "arms": ["area"], "condition": "no-migration", "seed": 2, "area": 1024, "richness": 4, "turnover": [] },
+    { "runId": "a1600-treatment-s1", "arms": ["area"], "condition": "treatment", "seed": 1, "area": 1600, "richness": 10, "turnover": [] },
+    { "runId": "a1600-treatment-s2", "arms": ["area"], "condition": "treatment", "seed": 2, "area": 1600, "richness": 9, "turnover": [] },
+    { "runId": "a1600-no-migration-s1", "arms": ["area"], "condition": "no-migration", "seed": 1, "area": 1600, "richness": 6, "turnover": [] },
+    { "runId": "a1600-no-migration-s2", "arms": ["area"], "condition": "no-migration", "seed": 2, "area": 1600, "richness": 6, "turnover": [] }
+  ]
+}

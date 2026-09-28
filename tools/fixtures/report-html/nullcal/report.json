@@ -1,0 +1,556 @@
+{
+  "config": {
+    "nulls": [
+      "longPeriodLoop",
+      "saturatingProcess"
+    ],
+    "windows": [
+      100000,
+      1000000
+    ],
+    "replicates": 32,
+    "seedsPerCondition": 20,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "masterSeed": 1,
+    "experiment": "nullcal",
+    "runBounded": true
+  },
+  "codeIdentity": {
+    "commitId": "7c08815e460c6d887cea47480d03e43451bf2fb7",
+    "ruleVersion": 1,
+    "schemaVersion": 3,
+    "metricsVersion": 2
+  },
+  "wall": {
+    "totalSeconds": 2870.896597709,
+    "meanTrialSeconds": 8.971550463118746
+  },
+  "tallies": {
+    "longPeriodLoop@100000::adaptive-activity": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@100000::unbounded-growth": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@100000::ecological-closure-recycling": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@100000::ecological-closure-coexistence": {
+      "k": 0,
+      "n": 0,
+      "unavailable": 32,
+      "ci": null
+    },
+    "longPeriodLoop@100000::ecological-closure-coexistence.gate": {
+      "k": 0,
+      "n": 0,
+      "unavailable": 32,
+      "ci": null
+    },
+    "longPeriodLoop@100000::held-out-temporal-mi": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@100000::held-out-differentiation": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@100000::held-out-compartmentalised": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@100000::held-out-role-count": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@100000::held-out-summary": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@1000000::adaptive-activity": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@1000000::unbounded-growth": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@1000000::ecological-closure-recycling": {
+      "k": 1,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.0007908685979525557,
+        "upper": 0.1621709941815116
+      }
+    },
+    "longPeriodLoop@1000000::ecological-closure-coexistence": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "longPeriodLoop@1000000::ecological-closure-coexistence.gate": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "longPeriodLoop@1000000::held-out-temporal-mi": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@1000000::held-out-differentiation": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@1000000::held-out-compartmentalised": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@1000000::held-out-role-count": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "longPeriodLoop@1000000::held-out-summary": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@100000::adaptive-activity": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@100000::unbounded-growth": {
+      "k": 3,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.01976718017328486,
+        "upper": 0.25022695068379475
+      }
+    },
+    "saturatingProcess@100000::ecological-closure-recycling": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@100000::ecological-closure-coexistence": {
+      "k": 0,
+      "n": 0,
+      "unavailable": 32,
+      "ci": null
+    },
+    "saturatingProcess@100000::ecological-closure-coexistence.gate": {
+      "k": 0,
+      "n": 0,
+      "unavailable": 32,
+      "ci": null
+    },
+    "saturatingProcess@100000::held-out-temporal-mi": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@100000::held-out-differentiation": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@100000::held-out-compartmentalised": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@100000::held-out-role-count": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@100000::held-out-summary": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@1000000::adaptive-activity": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@1000000::unbounded-growth": {
+      "k": 3,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.01976718017328486,
+        "upper": 0.25022695068379475
+      }
+    },
+    "saturatingProcess@1000000::ecological-closure-recycling": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@1000000::ecological-closure-coexistence": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "saturatingProcess@1000000::ecological-closure-coexistence.gate": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "saturatingProcess@1000000::held-out-temporal-mi": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@1000000::held-out-differentiation": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@1000000::held-out-compartmentalised": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@1000000::held-out-role-count": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "saturatingProcess@1000000::held-out-summary": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    }
+  },
+  "boundedTreatmentVsFlat": {
+    "boundedTreatmentVsFlat@100000::adaptive-activity": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@100000::unbounded-growth": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "boundedTreatmentVsFlat@100000::ecological-closure-recycling": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@100000::ecological-closure-coexistence": {
+      "k": 0,
+      "n": 0,
+      "unavailable": 32,
+      "ci": null
+    },
+    "boundedTreatmentVsFlat@100000::ecological-closure-coexistence.gate": {
+      "k": 0,
+      "n": 0,
+      "unavailable": 32,
+      "ci": null
+    },
+    "boundedTreatmentVsFlat@100000::held-out-temporal-mi": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@100000::held-out-differentiation": {
+      "k": 23,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.5325289003570653,
+        "upper": 0.8625430967044982
+      }
+    },
+    "boundedTreatmentVsFlat@100000::held-out-compartmentalised": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@100000::held-out-role-count": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "boundedTreatmentVsFlat@100000::held-out-summary": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::adaptive-activity": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::unbounded-growth": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::ecological-closure-recycling": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::ecological-closure-coexistence": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::ecological-closure-coexistence.gate": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::held-out-temporal-mi": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::held-out-differentiation": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::held-out-compartmentalised": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::held-out-role-count": {
+      "k": 0,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0,
+        "upper": 0.10888116067935294
+      }
+    },
+    "boundedTreatmentVsFlat@1000000::held-out-summary": {
+      "k": 32,
+      "n": 32,
+      "unavailable": 0,
+      "ci": {
+        "lower": 0.8911188393206471,
+        "upper": 1
+      }
+    }
+  },
+  "trials": []
+}

@@ -1,0 +1,26 @@
+{
+  "args": {
+    "seeds": [1, 2, 3, 4],
+    "period": 200,
+    "periodsA": 6,
+    "switchShorter": 100,
+    "switchLonger": 400,
+    "k": 2,
+    "tile": 48,
+    "founders": 5,
+    "kernelRadius": 5,
+    "controlLevelShift": false,
+    "reps": 2000,
+    "bootSeed": 1,
+    "out": "runs/anticip/fixture-check"
+  },
+  "ruleVersion": 1,
+  "schemaVersion": 3,
+  "preset": "spots-m3",
+  "baseOverride": {
+    "lightAmp": 0,
+    "lightBase": 20,
+    "seasonAmp": 150
+  },
+  "startedAt": "2026-01-01T00:00:00.000Z"
+}

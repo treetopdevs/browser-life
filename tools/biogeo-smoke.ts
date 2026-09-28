@@ -18,6 +18,17 @@
 // dir and complete almost instantly.
 //
 // Completes in well under a minute.
+//
+// `--keep <dir>`: preserves Part B's real output instead of discarding it.
+// Copies `${tmp}/${experiment}` (containing `experiment.json`, written by
+// resolveExperimentDir/buildExperimentManifest) and `${tmp}/report`
+// (containing `report.json`/`report.md`, written by tools/biogeo-analyze.ts)
+// into `<dir>/experiment.json` and `<dir>/report.json`+`<dir>/report.md`
+// right before Part B's final `Deno.remove`, and skips that removal. No new
+// statistics -- this only preserves the numbers Part B already computed, for
+// use as real (SMOKE-status) input to tools/report-html.ts's biogeography
+// renderer. Deno.args has no other flags today, so this is a minimal manual
+// scan rather than pulling in parseArgs for one option.
 import { RefSim } from "@bl/sim-ref";
 import { requestDevice } from "@bl/sim-gpu";
 import { runExperiment, specConfig, type RunSpec } from "@bl/runner";
@@ -162,7 +173,7 @@ async function runAnalyze(root: string, outDir: string): Promise<{ code: number;
   return { code: out.code, stdout: new TextDecoder().decode(out.stdout), stderr: new TextDecoder().decode(out.stderr) };
 }
 
-async function partB() {
+async function partB(keepDir: string | null) {
   const tmp = await Deno.makeTempDir({ prefix: "biogeo-smoke-real-" });
   const experiment = "biogeo-smoke-real";
   // 3 distinct areas (speciesAreaFit's own minimum to identify a slope). isoTile=24 with the
@@ -225,9 +236,25 @@ async function partB() {
       `species-area z(treatment)=${report.areaFits.treatment.z.toFixed(3)} z(no-migration)=${report.areaFits["no-migration"].z.toFixed(3)}, ` +
       `isolation rates seen [${ratesSeen}] (NOTE: these numbers are real but NOT ecologically meaningful at this fixture's tiny scale -- a few hundred cells, ${steps} steps, 2 seeds)`,
   );
+
+  if (keepDir !== null) {
+    await Deno.mkdir(keepDir, { recursive: true });
+    await Deno.copyFile(`${dir}/experiment.json`, `${keepDir}/experiment.json`);
+    await Deno.copyFile(`${tmp}/report/report.json`, `${keepDir}/report.json`);
+    await Deno.copyFile(`${tmp}/report/report.md`, `${keepDir}/report.md`);
+    console.log(`--keep: wrote experiment.json, report.json, report.md to ${keepDir}`);
+  }
   await Deno.remove(tmp, { recursive: true });
+}
+
+function parseKeepArg(): string | null {
+  const i = Deno.args.indexOf("--keep");
+  if (i === -1) return null;
+  const dir = Deno.args[i + 1];
+  if (!dir) throw new Error("--keep requires a directory argument");
+  return dir;
 }
 
 await partA();
 await partResolveExperimentDir();
-await partB();
+await partB(parseKeepArg());
