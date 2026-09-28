@@ -32,6 +32,7 @@ Caveat on `no-signal-motility`: the adhesion actuator it removes is a tested sin
 - Horizon: 10⁶ steps per history at 256² (≈15–20 min on an M1 Max; longer on mobile).
 - Census every 100 steps; deep metrics every 10 censuses.
 - A run counts if it completes with exact conservation (matter Δ = 0 and energy residual = 0 at every census). Extinct runs are kept and reported, not dropped.
+- Every run is independent: no metapopulation migration (rings exchange cells between runs and are excluded from this ensemble), and `WorldConfig.adhesion` is off.
 
 ## Primary endpoints
 
@@ -150,6 +151,13 @@ amendment): `lineageCompression`'s former `CompressionStream`-based ratio was no
 (Chrome vs. Deno differed by a few percent on byte-identical input); it now uses a bundled
 deterministic deflate, and analysis refuses to pool runs with different metrics versions. See the
 "Lineage-map compression ratio" entry above and `docs/refactor-v3-workflow.md`.
+
+## Secondary analyses (registered, not confirmatory)
+
+Decided 2026-09-27, before freezing, after seeing only the neutral calibration pilot.
+
+- **Long-window extension (10⁷ steps).** `gradient-m3`, conditions treatment, neutral and no-mutation, 5 seeds each (seeds 101–105), 10⁷ steps with the same observation schedule (census every 100, deep every 10). Its activity threshold is frozen by the same rule (95th percentile of pooled lineage activity) from its own neutral-only pilot, 10 runs on seeds 1101–1110, before any extension run is analysed. The frozen analysis code keys thresholds by preset and refuses any other schedule, so the extension needs schedule-aware threshold selection; that code, with its pilot values, is committed and its hash recorded before any extension run is analysed, and it may not change the primary analysis. Endpoints 1 and 2 are reported with effect sizes and labelled secondary; with 5 seeds per condition they are descriptive, and they neither confirm nor overturn the primary result.
+- **Migration and M7.** Metapopulation rings and adhesion-enabled runs (M7) are outside this registration. Each will be registered separately before its runs; a ring analysis treats the whole ring as one unit.
 
 ## Reproduction and heredity (descriptive)
 

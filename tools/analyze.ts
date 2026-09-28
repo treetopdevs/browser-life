@@ -489,6 +489,24 @@ if (treat.length) {
   }
 }
 
+// Descriptive only (docs/plan.md, M4): the fraction of treatment runs whose
+// cumulative new activity exceeds the neutral runs' 95th percentile. M4 is
+// decided by endpoints 1 and 2; this number never enters a gate.
+const m4Treat = treat.map((s) => s.cumulativeNewActivity).filter(Number.isFinite);
+const m4Neutral = byCond("neutral").map((s) => s.cumulativeNewActivity).filter(Number.isFinite);
+const m4Descriptive = calibrated && m4Treat.length && m4Neutral.length >= 2
+  ? (() => {
+    const neutralQ95 = quantile(m4Neutral, 0.95);
+    const above = m4Treat.filter((x) => x > neutralQ95).length;
+    return { above, runs: m4Treat.length, fraction: above / m4Treat.length, neutralQ95 };
+  })()
+  : null;
+if (m4Descriptive) {
+  md += `\n## Descriptive: treatment runs above the neutral 95th percentile (M4, not a test)\n\n`;
+  md += `${m4Descriptive.above} of ${m4Descriptive.runs} treatment runs (${(100 * m4Descriptive.fraction).toFixed(0)}%) have cumulative new activity above ` +
+    `the neutral runs' 95th percentile (${fmt(m4Descriptive.neutralQ95)}). M4 is decided by endpoints 1 and 2, not by this fraction.\n`;
+}
+
 // ---- charts (SVG, one line per run) ----
 function chart(title: string, f: (x: Record<string, any>) => number | undefined, file: string) {
   const W = 720, H = 260, P = 40;
@@ -545,6 +563,7 @@ await Deno.writeTextFile(
       inSampleNeutralQuantile,
       adaptiveActivityNote,
       ensembleIdentity,
+      m4Descriptive,
       runs: runs.map((r) => ({ condition: r.condition, seed: r.seed, trend: trends.get(r), stats: perRun.get(r) })),
     },
     null,

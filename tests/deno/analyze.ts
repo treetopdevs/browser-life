@@ -405,6 +405,8 @@ const baseSpec = (seed: number, condition: string, ringNamespace?: number): RunS
       // --- matching schedule, frozen value -> report uses exactly the frozen value ---
       await writeRun("e4", "gradient-m3", matchingSpec(10), true);
       await writeRun("e4", "gradient-m3", matchingSpec(20), true);
+      await writeRun("e4", "gradient-m3", { ...matchingSpec(30), condition: "neutral" }, true);
+      await writeRun("e4", "gradient-m3", { ...matchingSpec(40), condition: "neutral" }, true);
       const outDir = `${root}/e4-report`;
       const { code, stderr } = await runAnalyze(`${root}/e4/gradient-m3`, outDir);
       check("frozen value, matching schedule: analyze.ts succeeds", code === 0, `exit ${code}: ${stderr}`);
@@ -418,6 +420,8 @@ const baseSpec = (seed: number, condition: string, ringNamespace?: number): RunS
         check("...report.json: thresholdMode is 'frozen'", reportJson.thresholdMode === "frozen", JSON.stringify(reportJson.thresholdMode));
         check("...report.json: calibrated is true", reportJson.calibrated === true);
         check("...report.json: threshold is the frozen value", reportJson.threshold === gradientM3.value, JSON.stringify(reportJson.threshold));
+        // No lineages in these synthetic bundles, so every cumulative new activity is 0: none above the neutral 95th percentile.
+        check("...report.json: descriptive M4 fraction counts treatment runs above the neutral 95th percentile", JSON.stringify(reportJson.m4Descriptive) === JSON.stringify({ above: 0, runs: 2, fraction: 0, neutralQ95: 0 }), JSON.stringify(reportJson.m4Descriptive));
       }
     }
 
