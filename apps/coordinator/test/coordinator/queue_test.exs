@@ -99,6 +99,10 @@ defmodule Coordinator.QueueTest do
     assert {:ok, %{kind: "idle"}} = Queue.next_task(a)
     st = Queue.status()
     assert st.counts["verified"] == 1 and st.counts["diverged"] == 1 and st.counts["blocked"] == 1
+    public = Queue.public_status()
+    assert public.counts == st.counts
+    assert public.activeIslands == 2
+    assert public.deviceTypes == 2
   end
 
   test "leases gate completion and publication", %{dir: dir} do
@@ -373,9 +377,11 @@ defmodule Coordinator.QueueTest do
 
     :sys.replace_state(Queue, &put_in(&1, [:islands, a, :last_seen], now - threshold + 1_000))
     refute Enum.find(Queue.status().islands, &(&1.id == a)).stale
+    assert Queue.public_status().activeIslands == 1
 
     :sys.replace_state(Queue, &put_in(&1, [:islands, a, :last_seen], now - threshold - 1_000))
     assert Enum.find(Queue.status().islands, &(&1.id == a)).stale
+    assert Queue.public_status().activeIslands == 0
   end
 
   # `stale?/2` takes both timestamps as arguments (instead of reading the

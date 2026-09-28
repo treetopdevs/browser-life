@@ -147,6 +147,9 @@ defmodule Coordinator.Queue do
 
   def status, do: GenServer.call(__MODULE__, :status)
 
+  @doc "Aggregate counts for the public status page without building detailed run or island records."
+  def public_status, do: GenServer.call(__MODULE__, :public_status)
+
   @doc "An experiment's spec and every segment in run order, with its accepted digest and producing/verifying hosts (`nil` if unknown)."
   def experiment(name), do: GenServer.call(__MODULE__, {:experiment, name})
   def segment(seg_id), do: GenServer.call(__MODULE__, {:segment, seg_id})
@@ -451,6 +454,30 @@ defmodule Coordinator.Queue do
       _ ->
         {:reply, {:error, "segment not assigned to this island/lease, or no such predecessor"}, s}
     end
+  end
+
+  def handle_call(:public_status, _from, s) do
+    counts =
+      Enum.reduce(s.segments, %{}, fn {_, seg}, acc ->
+        Map.update(acc, seg.status, 1, &(&1 + 1))
+      end)
+
+    now = now()
+
+    {active_islands, devices} =
+      Enum.reduce(s.islands, {0, MapSet.new()}, fn {_, island}, {active, adapters} ->
+        active = if stale?(island.last_seen, now), do: active, else: active + 1
+
+        adapters =
+          if island.runs + island.verifies > 0,
+            do: MapSet.put(adapters, island.adapter),
+            else: adapters
+
+        {active, adapters}
+      end)
+
+    {:reply, %{counts: counts, activeIslands: active_islands, deviceTypes: MapSet.size(devices)},
+     s}
   end
 
   def handle_call(:status, _from, s) do

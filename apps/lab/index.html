@@ -3,138 +3,72 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Browser Life Lab</title>
-    <meta name="description" content="An open-ended artificial-life ecology running on WebGPU with exact integer physics." />
-    <link rel="stylesheet" href="/src/style.css" />
+    <meta name="theme-color" content="#0b1110" />
+    <meta name="description"
+      content="Explore Browser Life, an open artificial-life experiment with exact integer physics running in your browser." />
+    <title>Explore an artificial-life world · Browser Life</title>
+    <link rel="canonical" href="https://cadence.garden/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
   </head>
   <body>
-    <header class="top">
-      <div class="brand">
-        <span class="mark" aria-hidden="true"></span>
-        <div>
-          <h1>Browser Life</h1>
-          <p>closed matter · open energy · exact integer physics</p>
-        </div>
-      </div>
-      <div class="chips">
-        <span class="chip" id="chip-gpu" title="WebGPU adapter">GPU …</span>
-        <span class="chip mono" id="chip-step">t = 0</span>
-        <span class="chip mono" id="chip-rate">0 steps/s</span>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Browser Life home"><span class="brand-mark" aria-hidden="true"></span><span>Browser<span class="brand-light"> Life</span></span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/" aria-current="page">Overview</a><a href="/lab/">Lab</a><a href="/how-it-works/">How it works</a><a href="/research/">Research</a><a href="/participate/">Participate</a><a href="/status/">Status</a></nav>
       </div>
     </header>
-
-    <main class="layout">
-      <section class="stage" aria-label="Simulation view">
-        <div class="stage-bar">
-          <div class="seg" id="views" role="tablist" aria-label="View mode"></div>
-          <button class="ghost" id="btn-fit" title="Reset zoom (double-click the canvas)">Fit</button>
+    <main id="main">
+      <section class="hero shell">
+        <div class="hero-copy">
+          <p
+            class="eyebrow"><span class="signal-dot"></span> OPEN RESEARCH EXPERIMENT</p>
+          <h1>What can grow from <em>simple rules?</em></h1>
+          <p
+            class="lede">Browser Life is a world of cells, energy, matter and inheritance. Run it on your GPU, disturb it, and see which patterns persist.</p>
+          <div
+            class="actions"><a class="button primary" href="/lab/">Open the lab <span aria-hidden="true">↗</span></a><a class="button quiet" href="/how-it-works/">How it works <span aria-hidden="true">→</span></a></div>
+          <p
+            class="fine">The lab needs a browser with WebGPU. These pages remain readable without it.</p>
         </div>
-        <div class="canvas-wrap" id="canvas-wrap">
-          <canvas id="world"></canvas>
-          <div class="readout mono" id="hover"></div>
-          <div class="toast" id="toast" role="status" aria-live="polite"></div>
+        <div class="hero-art" role="img"
+          aria-label="Abstract green, blue and amber cells clustering in a dark simulated world">
+          <div
+            class="art-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div
+            class="art-caption"><span>FIELD VIEW / ILLUSTRATION</span><span>01 — 06</span></div>
         </div>
-        <div class="legend" id="legend"></div>
       </section>
-
-      <aside class="panel">
-        <section class="card">
-          <h2>World</h2>
-          <label class="field">
-            <span>Preset</span>
-            <select id="preset"></select>
-          </label>
-          <p class="hint" id="preset-desc"></p>
-          <div class="row">
-            <label class="field grow"><span>Seed</span><input id="seed" type="number" min="0" step="1" value="1" /></label>
-            <button id="btn-new" class="primary">New world</button>
-          </div>
-        </section>
-
-        <section class="card">
-          <h2>Playback</h2>
-          <div class="row">
-            <button id="btn-play" class="primary wide" aria-pressed="false">Play</button>
-            <button id="btn-step" title="One step (.)">Step</button>
-            <button id="btn-step100" title="100 steps">+100</button>
-          </div>
-          <label class="field">
-            <span>Steps per frame <b class="mono" id="speed-val">4</b></span>
-            <input id="speed" type="range" min="0" max="9" step="1" value="2" />
-          </label>
-        </section>
-
-        <section class="card">
-          <h2>Tool</h2>
-          <div class="seg" id="tools">
-            <button data-tool="inspect" class="on">Inspect</button>
-            <button data-tool="lesion">Lesion</button>
-            <button data-tool="pan">Pan</button>
-          </div>
-          <label class="field">
-            <span>Lesion radius <b class="mono" id="radius-val">10</b></span>
-            <input id="radius" type="range" min="2" max="40" step="1" value="10" />
-          </label>
-        </section>
-
-        <section class="card">
-          <h2>Ledger <span class="badge" id="ledger-badge">—</span></h2>
-          <dl class="kv mono">
-            <dt>matter Δ</dt><dd id="k-matter">—</dd>
-            <dt>energy residual</dt><dd id="k-resid">—</dd>
-            <dt>light absorbed</dt><dd id="k-light">—</dd>
-            <dt>heat exported</dt><dd id="k-heat">—</dd>
-          </dl>
-          <div class="bars" id="pools"></div>
-        </section>
-
-        <section class="card">
-          <h2>Population</h2>
-          <dl class="kv mono">
-            <dt>individuals</dt><dd id="k-ind">—</dd>
-            <dt>mean mass</dt><dd id="k-mass">—</dd>
-            <dt>lineages</dt><dd id="k-lin">—</dd>
-            <dt>mutations</dt><dd id="k-mut">—</dd>
-            <dt>fissions / fusions</dt><dd id="k-fis">—</dd>
-            <dt>births / deaths</dt><dd id="k-bd">—</dd>
-            <dt>max generation</dt><dd id="k-gen">—</dd>
-          </dl>
-          <div class="spark"><span>individuals</span><canvas id="sp-ind"></canvas></div>
-          <div class="spark"><span>biomass</span><canvas id="sp-bio"></canvas></div>
-          <div class="spark"><span>lineages</span><canvas id="sp-lin"></canvas></div>
-          <div class="lineages" id="top-lin"></div>
-        </section>
-
-        <section class="card" id="probe-card">
-          <h2>Cell</h2>
-          <p class="hint" id="probe-empty">Click the world with the Inspect tool.</p>
-          <div id="probe" hidden>
-            <dl class="kv mono" id="probe-kv"></dl>
-            <canvas id="probe-weights" title="Controller weights (red negative, blue positive)"></canvas>
-          </div>
-        </section>
-
-        <section class="card">
-          <h2>Checkpoints</h2>
-          <div class="row">
-            <button id="btn-save">Save</button>
-            <button id="btn-export">Export</button>
-            <label class="button">Import<input id="import" type="file" accept=".blck" hidden /></label>
-          </div>
-          <ul class="list" id="ckpts"></ul>
-        </section>
-
-        <section class="card">
-          <h2>Determinism</h2>
-          <p class="hint">Replays a segment in a second GPU instance and compares state hashes bit for bit.</p>
-          <div class="row">
-            <button id="btn-verify">Verify 200 steps</button>
-            <a class="button" href="/selftest.html" target="_blank" rel="noopener">CPU ⇄ GPU self-test</a>
-          </div>
-          <p class="mono small" id="verify-out"></p>
-        </section>
-      </aside>
+      <section class="band">
+        <div class="shell three">
+          <div><span class="index">01 / EXPLORE</span><h2>Run a world</h2><p>Choose a starting world, watch its population change, and inspect individual cells and lineages.</p><a class="text-link" href="/lab/">Enter the lab →</a></div>
+          <div><span class="index">02 / TEST</span><h2>Challenge a pattern</h2><p>Remove a patch, replay the same seed, or compare conditions. The lab shows energy and matter accounting as it runs.</p><a class="text-link" href="/how-it-works/">Read the rules →</a></div>
+          <div><span class="index">03 / LEARN</span><h2>Follow the evidence</h2><p>See what has passed a documented test, what remains a hypothesis, and how those tests are defined.</p><a class="text-link" href="/research/">Research status →</a></div>
+        </div>
+      </section>
+      <section class="shell feature">
+        <div>
+          <p class="eyebrow">THE IDEA</p>
+          <h2>Life-like behavior is a question, not a setting.</h2>
+        </div>
+        <div>
+          <p>Cells obey local rules for movement, resources and inheritance. The project measures whether organized, evolving behavior appears across many runs and controls. A vivid world is a starting observation; evidence comes from repeated tests.</p>
+          <p
+            class="fine">The current work has found regenerating founder candidates. Long-run claims about open-ended evolution remain under test.</p>
+        </div>
+      </section>
+      <section
+        class="shell invitation"><div><p class="eyebrow">A NETWORK OF WORLDS</p><h2>Want to lend your GPU?</h2><p>Participation is optional and starts only when you press Join. See exactly what the browser does and sends first.</p></div><a class="button light" href="/participate/">How to participate →</a></section>
     </main>
-    <script type="module" src="/src/main.ts"></script>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Browser Life</strong><br />An open research experiment in a browser.</p>
+        <nav
+          aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
+      </div>
+    </footer>
   </body>
 </html>

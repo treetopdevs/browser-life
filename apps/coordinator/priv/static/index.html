@@ -19,7 +19,11 @@
 </head>
 <body>
 <h1>Archipelago coordinator</h1>
-<p class="sub">Runs are split into segments; a fraction is replayed on a different island and must match bit for bit.</p>
+<p class="sub">Runs are split into segments; a fraction is replayed on a different island and must match bit for bit. This detailed operations view requires an administrator token in production.</p>
+<label for="admin-token">Admin token</label>
+<input id="admin-token" type="password" autocomplete="off" aria-label="Administrator token" />
+<button id="connect" type="button">Connect</button>
+<p id="connection" role="status" aria-live="polite"></p>
 <div class="grid" id="counts"></div>
 <div class="card"><h2 class="lbl">Runs</h2><table id="runs"></table></div>
 <div class="card" style="margin-top:10px"><h2 class="lbl">Islands</h2><table id="islands"></table></div>
@@ -32,8 +36,36 @@ function table(id, head, rows) {
   rows.forEach(r => { const row = document.createElement("tr"); r.forEach(([v, cls]) => row.append(el("td", String(v), cls))); t.append(row); });
   if (!rows.length) { const row = document.createElement("tr"); row.append(el("td", "none")); t.append(row); }
 }
+let adminToken = "";
+let requestId = 0;
+function clearStatus() {
+  for (const id of ["counts", "runs", "islands", "div"]) document.getElementById(id).replaceChildren();
+}
+document.getElementById("connect").onclick = () => {
+  adminToken = document.getElementById("admin-token").value;
+  document.getElementById("admin-token").value = "";
+  void tick();
+};
 async function tick() {
-  const s = await (await fetch("/api/status")).json();
+  const currentRequest = ++requestId;
+  let response;
+  let s;
+  try {
+    response = await fetch("/api/status", { headers: adminToken ? { authorization: `Bearer ${adminToken}` } : {} });
+    if (response.ok) s = await response.json();
+  } catch {
+    if (currentRequest !== requestId) return;
+    clearStatus();
+    document.getElementById("connection").textContent = "Coordinator unavailable.";
+    return;
+  }
+  if (currentRequest !== requestId) return;
+  if (!response.ok) {
+    clearStatus();
+    document.getElementById("connection").textContent = response.status === 401 ? "Enter an administrator token to view operations." : `Status unavailable (${response.status}).`;
+    return;
+  }
+  document.getElementById("connection").textContent = "Connected.";
   const c = document.getElementById("counts"); c.replaceChildren();
   const staleIslands = s.islands.filter(i => i.stale).length;
   const cards = [["pending", s.counts.pending || 0], ["running", s.counts.assigned || 0], ["done", s.counts.done || 0], ["verified", s.counts.verified || 0], ["diverged", s.counts.diverged || 0], ["obs mismatches", (s.observationMismatches || []).length], ["device types", s.devices.length], ["stale islands", staleIslands]];

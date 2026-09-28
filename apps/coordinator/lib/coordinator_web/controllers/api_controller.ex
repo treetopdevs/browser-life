@@ -29,11 +29,22 @@ defmodule CoordinatorWeb.ApiController do
               :get_checkpoint
             ]
 
-  plug :require_admin when action in [:create_experiment, :experiment]
+  plug :require_admin when action in [:create_experiment, :experiment, :status]
   # Islands read files to continue runs; administrators to export them (tools/stitch.ts).
   plug :require_island_or_admin when action in [:get_file]
 
-  def status(conn, _), do: json(conn, Queue.status())
+  def status(conn, _),
+    do: conn |> put_resp_header("cache-control", "no-store") |> json(Queue.status())
+
+  # Queue.public_status/0 returns only aggregate progress; detailed status
+  # contains island IDs, adapter descriptions, and experiment definitions.
+  def public_status(conn, _) do
+    conn
+    |> put_resp_header("cache-control", "no-store")
+    |> json(
+      Map.put(Queue.public_status(), :updatedAt, DateTime.utc_now() |> DateTime.to_iso8601())
+    )
+  end
 
   def experiment(conn, %{"name" => name}) do
     case Queue.experiment(name) do

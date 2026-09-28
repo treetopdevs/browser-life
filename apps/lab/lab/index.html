@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Interactive lab · Browser Life</title>
+    <link rel="canonical" href="https://cadence.garden/lab/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="description" content="An open-ended artificial-life ecology running on WebGPU with exact integer physics." />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to controls</a>
+    <header class="top">
+      <a class="lab-home" href="/" aria-label="Browser Life home">← Overview</a>
+      <div class="brand">
+        <span class="mark" aria-hidden="true"></span>
+        <div>
+          <h1>Browser Life</h1>
+          <p>closed matter · open energy · exact integer physics</p>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip" id="chip-gpu" title="WebGPU adapter">GPU …</span>
+        <span class="chip mono" id="chip-step">t = 0</span>
+        <span class="chip mono" id="chip-rate">0 steps/s</span>
+      </div>
+    </header>
+
+    <main class="layout" id="main">
+      <section class="stage" aria-label="Simulation view">
+        <div class="stage-bar">
+          <div class="seg" id="views" role="tablist" aria-label="View mode"></div>
+          <button class="ghost" id="btn-fit" title="Reset zoom (double-click the canvas)">Fit</button>
+        </div>
+        <div class="canvas-wrap" id="canvas-wrap">
+          <canvas id="world"></canvas>
+          <div class="readout mono" id="hover"></div>
+          <div class="toast" id="toast" role="status" aria-live="polite"></div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </section>
+
+      <aside class="panel">
+        <section class="card">
+          <h2>World</h2>
+          <label class="field">
+            <span>Preset</span>
+            <select id="preset"></select>
+          </label>
+          <p class="hint" id="preset-desc"></p>
+          <div class="row">
+            <label class="field grow"><span>Seed</span><input id="seed" type="number" min="0" step="1" value="1" /></label>
+            <button id="btn-new" class="primary">New world</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Playback</h2>
+          <div class="row">
+            <button id="btn-play" class="primary wide" aria-pressed="false">Play</button>
+            <button id="btn-step" title="One step (.)">Step</button>
+            <button id="btn-step100" title="100 steps">+100</button>
+          </div>
+          <label class="field">
+            <span>Steps per frame <b class="mono" id="speed-val">4</b></span>
+            <input id="speed" type="range" min="0" max="9" step="1" value="2" />
+          </label>
+        </section>
+
+        <section class="card">
+          <h2>Tool</h2>
+          <div class="seg" id="tools">
+            <button data-tool="inspect" class="on">Inspect</button>
+            <button data-tool="lesion">Lesion</button>
+            <button data-tool="pan">Pan</button>
+          </div>
+          <label class="field">
+            <span>Lesion radius <b class="mono" id="radius-val">10</b></span>
+            <input id="radius" type="range" min="2" max="40" step="1" value="10" />
+          </label>
+        </section>
+
+        <section class="card">
+          <h2>Ledger <span class="badge" id="ledger-badge">—</span></h2>
+          <dl class="kv mono">
+            <dt>matter Δ</dt><dd id="k-matter">—</dd>
+            <dt>energy residual</dt><dd id="k-resid">—</dd>
+            <dt>light absorbed</dt><dd id="k-light">—</dd>
+            <dt>heat exported</dt><dd id="k-heat">—</dd>
+          </dl>
+          <div class="bars" id="pools"></div>
+        </section>
+
+        <section class="card">
+          <h2>Population</h2>
+          <dl class="kv mono">
+            <dt>individuals</dt><dd id="k-ind">—</dd>
+            <dt>mean mass</dt><dd id="k-mass">—</dd>
+            <dt>lineages</dt><dd id="k-lin">—</dd>
+            <dt>mutations</dt><dd id="k-mut">—</dd>
+            <dt>fissions / fusions</dt><dd id="k-fis">—</dd>
+            <dt>births / deaths</dt><dd id="k-bd">—</dd>
+            <dt>max generation</dt><dd id="k-gen">—</dd>
+          </dl>
+          <div class="spark"><span>individuals</span><canvas id="sp-ind"></canvas></div>
+          <div class="spark"><span>biomass</span><canvas id="sp-bio"></canvas></div>
+          <div class="spark"><span>lineages</span><canvas id="sp-lin"></canvas></div>
+          <div class="lineages" id="top-lin"></div>
+        </section>
+
+        <section class="card" id="probe-card">
+          <h2>Cell</h2>
+          <p class="hint" id="probe-empty">Click the world with the Inspect tool.</p>
+          <div id="probe" hidden>
+            <dl class="kv mono" id="probe-kv"></dl>
+            <canvas id="probe-weights" title="Controller weights (red negative, blue positive)"></canvas>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Checkpoints</h2>
+          <div class="row">
+            <button id="btn-save">Save</button>
+            <button id="btn-export">Export</button>
+            <label class="button">Import<input id="import" class="visually-hidden" type="file" accept=".blck" /></label>
+          </div>
+          <ul class="list" id="ckpts"></ul>
+        </section>
+
+        <section class="card">
+          <h2>Determinism</h2>
+          <p class="hint">Replays a segment in a second GPU instance and compares state hashes bit for bit.</p>
+          <div class="row">
+            <button id="btn-verify">Verify 200 steps</button>
+            <a class="button" href="/selftest.html" target="_blank" rel="noopener">CPU ⇄ GPU self-test</a>
+          </div>
+          <p class="mono small" id="verify-out"></p>
+        </section>
+      </aside>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

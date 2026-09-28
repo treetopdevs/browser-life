@@ -67,6 +67,7 @@ import {
   metapopulationRingProblems,
   partitionByConservation,
   provenanceProblems,
+  RunReplayError,
   type Run,
 } from "./lib/bundle.ts";
 import { evaluateFreezeability, type CohortRunInfo } from "./lib/calibration-decision.ts";
@@ -131,6 +132,11 @@ for (const presetId of presets) {
     if (e instanceof Deno.errors.NotFound) {
       console.log(`  unavailable: no directory at ${presetRoot}`);
       results.push({ presetId, status: "unavailable", reason: `no directory at ${presetRoot}` });
+      continue;
+    }
+    if (e instanceof RunReplayError) {
+      console.log(`  unavailable: ${e.message}`);
+      results.push({ presetId, status: "unavailable", reason: e.message });
       continue;
     }
     throw e;

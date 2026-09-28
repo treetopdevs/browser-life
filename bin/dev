@@ -63,7 +63,8 @@ pnpm --filter @bl/lab dev --port "$lab_port" &
 lab_pid=$!
 
 echo "Coordinator: http://localhost:$coordinator_port/index.html"
-echo "Lab:         http://localhost:$lab_port"
+echo "Site:        http://localhost:$lab_port/"
+echo "Lab:         http://localhost:$lab_port/lab/"
 echo "Island:      http://localhost:$lab_port/island.html"
 echo "Press Ctrl-C to stop both development servers."
 

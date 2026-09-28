@@ -26,6 +26,45 @@ defmodule CoordinatorWeb.ApiControllerTest do
 
   defp authed(conn, token), do: put_req_header(conn, "authorization", "Bearer " <> token)
 
+  test "public status exposes only aggregates and detailed status requires admin", %{conn: conn} do
+    previous = Application.get_env(:coordinator, :admin_token)
+    Application.put_env(:coordinator, :admin_token, "test-admin")
+
+    on_exit(fn ->
+      if previous,
+        do: Application.put_env(:coordinator, :admin_token, previous),
+        else: Application.delete_env(:coordinator, :admin_token)
+    end)
+
+    assert {:ok, 2} = Queue.create_experiment(@spec_ok)
+    {id, _token} = join(conn)
+    assert is_binary(id)
+
+    public_conn = build_conn() |> get("/api/public/status")
+    assert get_resp_header(public_conn, "cache-control") == ["no-store"]
+    public = json_response(public_conn, 200)
+
+    assert Map.keys(public) |> Enum.sort() == [
+             "activeIslands",
+             "counts",
+             "deviceTypes",
+             "updatedAt"
+           ]
+
+    assert public["activeIslands"] == 1
+    assert public["counts"]["pending"] == 2
+    assert public["deviceTypes"] == 0
+    refute Map.has_key?(public, "islands")
+    refute Map.has_key?(public, "experiments")
+    assert build_conn() |> get("/api/status") |> json_response(401)
+
+    detail_conn = build_conn() |> authed("test-admin") |> get("/api/status")
+    assert get_resp_header(detail_conn, "cache-control") == ["no-store"]
+    detail = json_response(detail_conn, 200)
+    assert length(detail["islands"]) == 1
+    assert public["counts"] == detail["counts"]
+  end
+
   test "island routes require the private token", %{conn: conn} do
     {id, token} = join(conn)
     assert %{"error" => _} = build_conn() |> post("/api/next?island=#{id}") |> json_response(401)

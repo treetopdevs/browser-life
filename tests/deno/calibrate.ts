@@ -207,6 +207,23 @@ async function runCalibrate(args: string[]): Promise<{ code: number; stdout: str
   check("...no 'value' field printed as a success", !("value" in (preset ?? {})) || preset.value === undefined);
 }
 
+// --- corrupt replay -> unavailable report instead of aborting calibration ---
+{
+  const pilotRoot = `${root}/corrupt-lineages`;
+  const spec = (seed: number): RunSpec => ({ experiment: "calib-neutral", presetId: "gradient-m3", condition: "neutral", seed, steps: 200, censusEvery: 100, deepEvery: 2, checkpointEvery: 0 });
+  await writeNeutralRun(pilotRoot, "gradient-m3", spec(1));
+  await writeNeutralRun(pilotRoot, "gradient-m3", spec(2));
+  const badDir = `${pilotRoot}/gradient-m3/neutral/seed-2`;
+  await Deno.writeTextFile(`${badDir}/lineages.tsv`, "step\tlineage\tcells\n200\taaaa\t2\n100\tbbbb\t2\n");
+  const outPath = `${pilotRoot}/out.json`;
+  const { code } = await runCalibrate([pilotRoot, "--presets", "gradient-m3", "--out", outPath]);
+  check("corrupt lineage replay: report is written with non-zero exit", code !== 0);
+  const report = JSON.parse(await Deno.readTextFile(outPath));
+  const preset = report.presets.find((p: any) => p.presetId === "gradient-m3");
+  check("...preset is unavailable", preset?.status === "unavailable", JSON.stringify(preset));
+  check("...reason names the corrupt run", /seed-2.*ascending census order/.test(preset?.reason ?? ""), JSON.stringify(preset));
+}
+
 // --- legacy pilot (no provenance) -> unavailable, never silently trusted (Astra review, item 1) ---
 {
   const pilotRoot = `${root}/legacy-provenance`;

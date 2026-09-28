@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1110" />
+    <meta name="description"
+      content="A small public summary of Browser Life coordinator progress and verification." />
+    <title>Network status · Browser Life</title>
+    <link rel="canonical" href="https://cadence.garden/status/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Browser Life home"><span class="brand-mark" aria-hidden="true"></span><span>Browser<span class="brand-light"> Life</span></span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/">Overview</a><a href="/lab/">Lab</a><a href="/how-it-works/">How it works</a><a href="/research/">Research</a><a href="/participate/">Participate</a><a href="/status/" aria-current="page">Status</a></nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-intro shell">
+        <p class="eyebrow">NETWORK / PUBLIC SUMMARY</p>
+        <h1>Worlds in progress</h1>
+        <p
+          class="lede">Aggregate progress from the coordinator. Counts describe completed and verified segments, not scientific conclusions.</p>
+      </section>
+      <section class="shell status-section">
+        <p class="status-message" id="status-message" role="status"
+          aria-live="polite">Checking the coordinator…</p>
+        <div class="status-grid" id="status-grid" hidden>
+          <div><span class="status-value" id="count-pending">—</span><span class="status-label">Pending segments</span></div>
+          <div><span class="status-value" id="count-running">—</span><span class="status-label">Running segments</span></div>
+          <div><span class="status-value" id="count-done">—</span><span class="status-label">Done segments</span></div>
+          <div><span class="status-value" id="count-verified">—</span><span class="status-label">Verified segments</span></div>
+          <div><span class="status-value" id="count-islands">—</span><span class="status-label">Active islands</span></div>
+          <div><span class="status-value" id="count-devices">—</span><span class="status-label">Device types used</span></div>
+        </div>
+        <p class="fine" id="status-updated"></p>
+      </section>
+      <section class="shell prose-grid">
+        <div class="aside-label">READING THE NUMBERS</div>
+        <div
+          class="prose"><h2>Verification is a technical check</h2><p>Some segments are replayed independently and compared bit for bit. A matching replay helps establish that the same rules produced the same state. It does not, by itself, show that a biological or evolutionary hypothesis is true.</p><a class="text-link" href="/research/">See research results →</a></div>
+      </section>
+      <script type="module" src="/src/public-status.ts"></script>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Browser Life</strong><br />An open research experiment in a browser.</p>
+        <nav
+          aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
+      </div>
+    </footer>
+  </body>
+</html>

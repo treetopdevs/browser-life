@@ -36,6 +36,12 @@ export interface Run {
   activities?: number[];
 }
 
+export class RunReplayError extends Error {
+  constructor(readonly runDir: string, cause: unknown) {
+    super(`${runDir}: activity replay failed: ${cause instanceof Error ? cause.message : String(cause)}`, { cause });
+  }
+}
+
 /**
  * Loads one run bundle from `dir`. Returns null for a directory that isn't a
  * complete run bundle -- most commonly a run still in progress (`tools/run.ts`
@@ -72,7 +78,13 @@ export async function loadRunsUnder(root: string, reduce: (r: Run) => Run | Prom
       const m = /^seed-(\d+)$/.exec(sd.name);
       if (!m) continue;
       const r = await loadRun(`${root}/${cond.name}/${sd.name}`, cond.name, Number(m[1]));
-      if (r) loaded.push(await reduce(r));
+      if (r) {
+        try {
+          loaded.push(await reduce(r));
+        } catch (e) {
+          throw new RunReplayError(r.dir, e);
+        }
+      }
     }
   }
   return loaded;

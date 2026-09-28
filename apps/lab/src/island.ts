@@ -4,6 +4,8 @@ import { createIslandPage, probeIslandIdentity, runIsland, type IdentityStorage,
 const log = document.getElementById("log")!;
 const go = document.getElementById("go") as HTMLButtonElement;
 const url = document.getElementById("url") as HTMLInputElement;
+// Both the deployed site and Vite's local proxy forward /api to the coordinator.
+url.value = location.origin;
 const say = (m: string) => {
   log.textContent = `${new Date().toLocaleTimeString()} ${m}\n${log.textContent}`.slice(0, 20_000);
 };

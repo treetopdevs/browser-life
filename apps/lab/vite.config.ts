@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
+const coordinatorUrl = `http://localhost:${process.env.PORT ?? "4000"}`;
 
 export default defineConfig({
   resolve: {
@@ -14,10 +15,22 @@ export default defineConfig({
       "@bl/search": r("../../packages/search/src/index.ts"),
     },
   },
-  server: { port: 5173, strictPort: true },
+  server: { port: 5173, strictPort: true, proxy: { "/api": coordinatorUrl } },
+  preview: { proxy: { "/api": coordinatorUrl } },
   worker: { format: "es" },
   build: {
     target: "es2023",
-    rollupOptions: { input: { main: r("./index.html"), selftest: r("./selftest.html"), island: r("./island.html") } },
+    rollupOptions: { input: {
+      home: r("./index.html"),
+      lab: r("./lab/index.html"),
+      howItWorks: r("./how-it-works/index.html"),
+      research: r("./research/index.html"),
+      about: r("./about/index.html"),
+      privacy: r("./privacy/index.html"),
+      participate: r("./participate/index.html"),
+      status: r("./status/index.html"),
+      selftest: r("./selftest.html"),
+      island: r("./island.html"),
+    } },
   },
 });
