@@ -1,0 +1,82 @@
+#!/bin/sh
+
+# Starts the coordinator (Phoenix) and the lab (Vite) together; Ctrl-C stops
+# both. If either exits, the other is stopped too.
+
+set -eu
+
+cd "$(dirname "$0")/.."
+
+coordinator_port=${PORT:-4000}
+lab_port=${LAB_PORT:-5173}
+
+for command in mix pnpm; do
+  if ! command -v "$command" >/dev/null 2>&1; then
+    echo "bin/dev: required command not found: $command" >&2
+    exit 1
+  fi
+done
+
+if [ ! -d apps/coordinator/deps ]; then
+  echo "bin/dev: coordinator dependencies are missing; run '(cd apps/coordinator && mix deps.get)' first" >&2
+  exit 1
+fi
+
+if [ ! -d node_modules ]; then
+  echo "bin/dev: node dependencies are missing; run 'pnpm install' first" >&2
+  exit 1
+fi
+
+coordinator_pid=""
+lab_pid=""
+
+# Invoked indirectly by cleanup to terminate a process and its descendants;
+# pnpm/mix wrap a further child (vite/beam) that a plain `kill` would miss.
+# shellcheck disable=SC2329
+kill_tree() {
+  for child in $(pgrep -P "$1" 2>/dev/null); do
+    kill_tree "$child"
+  done
+  kill "$1" 2>/dev/null || true
+}
+
+# Invoked indirectly by the exit trap.
+# shellcheck disable=SC2329
+cleanup() {
+  trap - 0 2 15
+
+  [ -z "$coordinator_pid" ] || kill_tree "$coordinator_pid"
+  [ -z "$lab_pid" ] || kill_tree "$lab_pid"
+
+  [ -z "$coordinator_pid" ] || wait "$coordinator_pid" 2>/dev/null || true
+  [ -z "$lab_pid" ] || wait "$lab_pid" 2>/dev/null || true
+}
+
+trap cleanup 0
+trap 'exit 130' 2
+trap 'exit 143' 15
+
+(cd apps/coordinator && PORT=$coordinator_port exec mix phx.server) &
+coordinator_pid=$!
+
+pnpm --filter @bl/lab dev --port "$lab_port" &
+lab_pid=$!
+
+echo "Coordinator: http://localhost:$coordinator_port/index.html"
+echo "Lab:         http://localhost:$lab_port"
+echo "Island:      http://localhost:$lab_port/island.html"
+echo "Press Ctrl-C to stop both development servers."
+
+while kill -0 "$coordinator_pid" 2>/dev/null && kill -0 "$lab_pid" 2>/dev/null; do
+  sleep 1
+done
+
+status=0
+
+if ! kill -0 "$coordinator_pid" 2>/dev/null; then
+  wait "$coordinator_pid" || status=$?
+else
+  wait "$lab_pid" || status=$?
+fi
+
+exit "$status"

@@ -29,6 +29,8 @@ pnpm dev
 
 The lab opens at http://localhost:5173. `/selftest.html` checks the CPU reference against this browser's GPU bit for bit. `/island.html` contributes the GPU to a coordinator.
 
+To run the lab and the coordinator together, use `bin/dev`. Ctrl-C stops both. `PORT` and `LAB_PORT` override the default ports, 4000 and 5173.
+
 ## Test
 
 ```bash
