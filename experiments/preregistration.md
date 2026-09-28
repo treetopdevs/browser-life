@@ -1,6 +1,6 @@
-# Pre-registration (DRAFT — not yet frozen)
+# Pre-registration (frozen 2026-09-27)
 
-*Status: draft. Freeze before any M4+ ensemble by committing this file and recording its SHA-256 in `experiments/FROZEN`. After freezing, changes require a dated amendment section; the original text stays.*
+*Status: frozen 2026-09-27, before any M4+ ensemble run. This file's SHA-256 is recorded in `experiments/FROZEN`; the analysis code is `tools/analyze.ts` at the commit that records it. Any later change requires a dated amendment section; the original text stays.*
 
 ## Question
 
