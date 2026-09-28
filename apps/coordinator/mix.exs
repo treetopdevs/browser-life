@@ -10,7 +10,16 @@ defmodule Coordinator.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      usage_rules: usage_rules()
+    ]
+  end
+
+  # `mix usage_rules.sync` inlines every dependency's usage rules into AGENTS.md.
+  defp usage_rules do
+    [
+      file: "AGENTS.md",
+      usage_rules: :all
     ]
   end
 
@@ -44,7 +53,8 @@ defmodule Coordinator.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:usage_rules, "~> 1.2", only: [:dev]}
     ]
   end
 
