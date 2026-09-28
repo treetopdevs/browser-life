@@ -1,0 +1,11 @@
+FROM node:22-alpine AS build
+
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+COPY . .
+RUN pnpm install --frozen-lockfile && pnpm build
+
+FROM caddy:2.10-alpine
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/apps/lab/dist /srv
+EXPOSE 80

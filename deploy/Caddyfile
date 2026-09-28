@@ -1,0 +1,19 @@
+:80 {
+  encode zstd gzip
+
+  @api path /api/*
+  reverse_proxy @api coordinator:4000 {
+    header_up X-Forwarded-Proto https
+  }
+
+  handle /healthz {
+    rewrite * /api/public/status
+    reverse_proxy coordinator:4000 {
+      header_up X-Forwarded-Proto https
+    }
+  }
+
+  root * /srv
+  try_files {path} {path}/index.html
+  file_server
+}

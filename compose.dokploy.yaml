@@ -1,0 +1,31 @@
+services:
+  site:
+    image: browser-life-site:${BL_IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.site
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - coordinator
+
+  coordinator:
+    image: browser-life-coordinator:${BL_IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.coordinator
+    restart: unless-stopped
+    stop_grace_period: 75s
+    environment:
+      PHX_SERVER: "true"
+      PHX_HOST: cadence.garden
+      PORT: "4000"
+      BL_DATA_DIR: /data
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in Dokploy}
+      BL_ADMIN_TOKEN: ${BL_ADMIN_TOKEN:?Set BL_ADMIN_TOKEN in Dokploy}
+    volumes:
+      - coordinator_data:/data
+
+volumes:
+  coordinator_data:

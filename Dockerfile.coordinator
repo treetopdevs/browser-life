@@ -1,0 +1,21 @@
+FROM elixir:1.18.4-otp-27 AS build
+
+ENV MIX_ENV=prod
+WORKDIR /app
+RUN mix local.hex --force && mix local.rebar --force
+COPY apps/coordinator/mix.exs apps/coordinator/mix.lock ./
+COPY apps/coordinator/config ./config
+RUN mix deps.get --only prod && mix deps.compile
+COPY apps/coordinator/lib ./lib
+COPY apps/coordinator/priv ./priv
+RUN mix compile && mix release
+
+FROM elixir:1.18.4-otp-27-slim
+WORKDIR /app
+RUN groupadd --system coordinator && useradd --system --gid coordinator coordinator \
+    && mkdir /data && chown coordinator:coordinator /data
+COPY --from=build --chown=coordinator:coordinator /app/_build/prod/rel/coordinator /app
+USER coordinator
+ENV HOME=/app PHX_SERVER=true PORT=4000 BL_DATA_DIR=/data
+EXPOSE 4000
+CMD ["/app/bin/coordinator", "start"]

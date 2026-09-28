@@ -1,0 +1,33 @@
+services:
+  site:
+    networks:
+      - default
+      - dokploy-network
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: dokploy-network
+      traefik.http.services.browser-life.loadbalancer.server.port: "80"
+      traefik.http.routers.browser-life-http.rule: "Host(`cadence.garden`)"
+      traefik.http.routers.browser-life-http.entrypoints: web
+      traefik.http.routers.browser-life-http.middlewares: redirect-to-https@file
+      traefik.http.routers.browser-life-http.service: browser-life
+      traefik.http.routers.browser-life.rule: "Host(`cadence.garden`)"
+      traefik.http.routers.browser-life.entrypoints: websecure
+      traefik.http.routers.browser-life.tls.certresolver: letsencrypt
+      traefik.http.routers.browser-life.service: browser-life
+      traefik.http.middlewares.browser-life-www.redirectregex.regex: '^https?://www\.cadence\.garden/(.*)'
+      traefik.http.middlewares.browser-life-www.redirectregex.replacement: 'https://cadence.garden/$${1}'
+      traefik.http.middlewares.browser-life-www.redirectregex.permanent: "true"
+      traefik.http.routers.browser-life-www-http.rule: "Host(`www.cadence.garden`)"
+      traefik.http.routers.browser-life-www-http.entrypoints: web
+      traefik.http.routers.browser-life-www-http.middlewares: browser-life-www
+      traefik.http.routers.browser-life-www-http.service: browser-life
+      traefik.http.routers.browser-life-www.rule: "Host(`www.cadence.garden`)"
+      traefik.http.routers.browser-life-www.entrypoints: websecure
+      traefik.http.routers.browser-life-www.tls.certresolver: letsencrypt
+      traefik.http.routers.browser-life-www.middlewares: browser-life-www
+      traefik.http.routers.browser-life-www.service: browser-life
+
+networks:
+  dokploy-network:
+    external: true

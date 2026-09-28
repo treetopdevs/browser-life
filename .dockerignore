@@ -1,0 +1,11 @@
+.git
+.jj
+.worktrees
+**/node_modules
+**/dist
+**/_build
+**/deps
+**/data
+**/.DS_Store
+playwright-report
+test-results

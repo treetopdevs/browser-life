@@ -9,7 +9,7 @@
 - The island runner never starts from the homepage or the participation page. A visitor must open `/island.html` and press Join. The runner uses the current origin, with `/api/*` forwarded by the local or deployed proxy.
 - The research page describes documented results at their actual scope. A passing M3 gate and a frozen calibration threshold do not assert that open-ended evolution has been demonstrated. Unfinished ensemble results are labelled pending.
 - Privacy copy describes implemented storage and transmission. No analytics or email collection is added. No Terms page is invented without a legal owner or product terms to state. The diagnostic and runner pages carry `noindex`; informational pages are crawlable.
-- Because no domain, hosting target, or deploy credentials are configured in this repository, deployment, DNS, certificates, and live-origin checks are a separate release step. Do not call the local build a live launch.
+- `cadence.garden` is the public origin. The existing DigitalOcean droplet hosts Dokploy's Traefik; `compose.dokploy.yaml` and `deploy/compose.traefik.yaml` describe the two-service deployment and HTTPS routing. Credentials remain outside this repository. See `deploy/README.md` for release and rollback steps.
 
 ## Implementation
 
@@ -26,4 +26,4 @@
 - Configure production secrets, durable coordinator data storage, a trusted proxy, and a narrow CORS allowlist if origins differ. Do not expose `/index.html` as an unauthenticated operations dashboard.
 - Test public join load limits and abuse controls against the chosen host before promoting volunteer participation broadly.
 - Audit what the public status response exposes, and verify the detailed status endpoint rejects unauthenticated requests from the public network.
-- Check every public route, metadata, mobile/keyboard access, missing-GPU behavior, 404s, and the live status API. Add canonical URLs and a sitemap when the actual domain is known.
+- Check every public route, metadata, mobile/keyboard access, missing-GPU behavior, 404s, and the live status API. Confirm the canonical URLs and sitemap resolve at the live domain.
