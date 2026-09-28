@@ -22,7 +22,7 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
-/** One eligible run's pooled lineage activities (tools/lib/bundle.ts's `activities().tracker.allActivities()`), keyed by seed for split-half grouping. */
+/** One eligible run's pooled lineage activities (tools/lib/bundle.ts's `(await activities(r)).tracker.allActivities()`), keyed by seed for split-half grouping. */
 export interface RunActivities {
   seed: number;
   activities: number[];

@@ -17,15 +17,15 @@
 import { METRICS_VERSION, PRESETS, presetIdentity, RULE_VERSION, SCHEMA_VERSION, initWorld, stateHash, type Preset } from "@bl/schema";
 import { ActivityTracker } from "@bl/metrics";
 import { sameConfig, specConfig } from "@bl/runner";
+import { TextLineStream } from "jsr:@std/streams@1/text-line-stream";
 
 export interface Run {
   condition: string;
   seed: number;
   dir: string;
   series: Record<string, any>[];
-  lineages: Map<number, [string, number][]>;
   manifest: any;
-  /** Set by a `loadRunsUnder` reducer that replays activities and drops `lineages` (see calibrate.ts). */
+  /** Set by a `loadRunsUnder` reducer that replays activities as each run loads (see calibrate.ts). */
   activities?: number[];
 }
 
@@ -41,16 +41,10 @@ export async function loadRun(dir: string, condition: string, seed: number): Pro
     const manifest = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
     if (!manifest.summary) return null;
     const series = (await Deno.readTextFile(`${dir}/series.jsonl`)).trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
-    const lineages = new Map<number, [string, number][]>();
-    const lines = (await Deno.readTextFile(`${dir}/lineages.tsv`)).trim().split("\n").slice(1);
-    for (const l of lines) {
-      const [s, k, c] = l.split("\t");
-      const step = Number(s);
-      let arr = lineages.get(step);
-      if (!arr) lineages.set(step, (arr = []));
-      arr.push([k, Number(c)]);
-    }
-    return { condition, seed, dir, series, lineages, manifest };
+    // lineages.tsv is streamed per census by `activities`, never loaded
+    // whole: a 1e6-step run's table is hundreds of MB.
+    if (!(await Deno.stat(`${dir}/lineages.tsv`)).isFile) return null;
+    return { condition, seed, dir, series, manifest };
   } catch {
     return null;
   }
@@ -60,10 +54,10 @@ export async function loadRun(dir: string, condition: string, seed: number): Pro
  * Loads every seed-N run bundle under every condition subdirectory of
  * `root` (a "report" subdirectory, e.g. analyze.ts's own output, is
  * skipped). Incomplete bundles are silently omitted (see `loadRun`).
- * `reduce`, applied to each run as it loads, lets a caller keep only what it
- * needs: a 1e6-step run's lineage table alone is about 160 MB in memory.
+ * `reduce`, applied to each run as it loads, lets a caller derive what it
+ * needs up front (e.g. calibrate.ts's activity distribution).
  */
-export async function loadRunsUnder(root: string, reduce: (r: Run) => Run = (r) => r): Promise<Run[]> {
+export async function loadRunsUnder(root: string, reduce: (r: Run) => Run | Promise<Run> = (r) => r): Promise<Run[]> {
   const loaded: Run[] = [];
   for await (const cond of Deno.readDir(root)) {
     if (!cond.isDirectory || cond.name === "report") continue;
@@ -71,22 +65,61 @@ export async function loadRunsUnder(root: string, reduce: (r: Run) => Run = (r) 
       const m = /^seed-(\d+)$/.exec(sd.name);
       if (!m) continue;
       const r = await loadRun(`${root}/${cond.name}/${sd.name}`, cond.name, Number(m[1]));
-      if (r) loaded.push(reduce(r));
+      if (r) loaded.push(await reduce(r));
     }
   }
   return loaded;
 }
 
 /**
+ * Streams a run's lineages.tsv one census at a time. Rows come grouped by
+ * ascending step (runner.ts appends one block per census; stitch.ts keeps
+ * that order across segments), so only the current census is held.
+ */
+export async function* lineageCensuses(dir: string): AsyncGenerator<[number, [string, number][]]> {
+  const file = await Deno.open(`${dir}/lineages.tsv`);
+  const lines = file.readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream());
+  let header = true;
+  let step = -Infinity;
+  let rows: [string, number][] = [];
+  for await (const l of lines) {
+    if (header || !l) {
+      header = false;
+      continue;
+    }
+    const [s, k, c] = l.split("\t");
+    const n = Number(s);
+    if (n !== step) {
+      if (!(n > step)) throw new Error(`${dir}/lineages.tsv: step ${s} follows ${step}; rows must be in ascending census order`);
+      if (rows.length) yield [step, rows];
+      step = n;
+      rows = [];
+    }
+    rows.push([k, Number(c)]);
+  }
+  if (rows.length) yield [step, rows];
+}
+
+/**
  * Replays a run's activity history (from `series.jsonl` census steps and
- * `lineages.tsv` per-census abundance), including empty censuses after an
- * extinction so extinct lineages leave the present set at the right time.
+ * `lineages.tsv` per-census abundance, streamed), including empty censuses
+ * after an extinction so extinct lineages leave the present set at the
+ * right time. Lineage rows at a step with no census are ignored.
  * `threshold` is Infinity by default -- collect the activity distribution
  * without classifying anything as adaptively significant yet.
  */
-export function activities(r: Run, threshold = Infinity): { tracker: ActivityTracker; snaps: ReturnType<ActivityTracker["update"]>[] } {
+export async function activities(r: Run, threshold = Infinity): Promise<{ tracker: ActivityTracker; snaps: ReturnType<ActivityTracker["update"]>[] }> {
   const t = new ActivityTracker(threshold);
-  const snaps = r.series.map((x) => t.update(x.step, r.lineages.get(x.step) ?? []));
+  const snaps: ReturnType<ActivityTracker["update"]>[] = [];
+  let i = 0;
+  const emptyBefore = (step: number) => {
+    while (i < r.series.length && r.series[i].step < step) snaps.push(t.update(r.series[i++].step, []));
+  };
+  for await (const [step, rows] of lineageCensuses(r.dir)) {
+    emptyBefore(step);
+    if (i < r.series.length && r.series[i].step === step) snaps.push(t.update(r.series[i++].step, rows));
+  }
+  emptyBefore(Infinity);
   return { tracker: t, snaps };
 }
 

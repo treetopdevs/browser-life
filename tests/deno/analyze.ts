@@ -316,7 +316,7 @@ const baseSpec = (seed: number, condition: string, ringNamespace?: number): RunS
     init: preset.init,
     initHash: stateHash(initWorld(cfg, preset.init)),
   };
-  const makeRun = (manifest: any): Run => ({ condition: "neutral", seed: 1001, dir: "", series: [], lineages: new Map(), manifest });
+  const makeRun = (manifest: any): Run => ({ condition: "neutral", seed: 1001, dir: "", series: [], manifest });
 
   // Happy path: a correctly-provenanced run has no problems.
   {

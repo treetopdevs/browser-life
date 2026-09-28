@@ -1,11 +1,15 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@std/cli@1": "1.0.32"
+    "jsr:@std/cli@1": "1.0.32",
+    "jsr:@std/streams@1": "1.2.0"
   },
   "jsr": {
     "@std/cli@1.0.32": {
       "integrity": "188b3a100d6202d64e3f5bd3d799c7fa4f6d77f92cc65eb7f641c1fa0aa92a66"
+    },
+    "@std/streams@1.2.0": {
+      "integrity": "256b934254778f2bf45f5713b934209ff29e9b4b7fd4ec095219966813758c5f"
     }
   },
   "workspace": {
