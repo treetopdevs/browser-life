@@ -38,11 +38,7 @@ import { distributionIdentity, PRESETS, presetIdentity, type WorldConfig } from 
 import { specConfig, type RunSpec } from "@bl/runner";
 import {
   activities,
-  ensembleProblems,
-  loadRunsUnder,
-  metapopulationRingProblems,
-  partitionByConservation,
-  provenanceProblems,
+  prepareCohort,
   type Run,
 } from "./lib/bundle.ts";
 import { decideActivityThreshold } from "./lib/threshold.ts";
@@ -62,82 +58,31 @@ const root = String(a._[0] ?? "");
 if (!root) throw new Error("usage: analyze.ts runs/<experiment>/<preset>");
 const outDir = a.out ?? `${root}/report`;
 
-// ---- load + ensemble eligibility (tools/lib/bundle.ts, shared with tools/calibrate.ts) ----
-const loaded = await loadRunsUnder(root);
-if (!loaded.length) throw new Error(`no completed runs under ${root}`);
-{
-  const problems = ensembleProblems(loaded);
-  if (problems.length) throw new Error(`runs under ${root} are not one ensemble:\n  ${problems.slice(0, 40).join("\n  ")}`);
-}
-// ---- metapopulation: ringed seeds are not independent replicates ----
-// A metapopulation's ring exchanges matter and genomes between its seeds at
-// every segment boundary (packages/schema/src/exchange.ts; RunSpec.metapopulation,
-// recorded verbatim in each run's manifest.json) -- those seeds are correlated,
-// not independent draws, so pooling them the way every statistic below does
-// (mean/sd over seeds, Mann-Whitney's per-seed sample sizes) would silently
-// misrepresent one ring as N independent replicates when the *ring* is the
-// actual statistical unit. "no-migration" runs are exempt even within a
-// metapopulation experiment -- Coordinator.Queue never wires import_from for
-// that condition (see its own and conditions.ts's "no-migration" docs), so
-// those seeds genuinely are independent. This tool refuses rather than
-// silently under-counting a ring's degrees of freedom; grouping by ring
-// (treating each ring as one data point) is a reasonable extension but not
-// implemented here. Non-metapopulation ensembles are entirely unaffected.
-{
-  const ring = metapopulationRingProblems(loaded);
-  if (ring) {
-    throw new Error(
-      `runs under ${root} include a metapopulation ring (condition(s) ${ring.conditions.join(", ")}, ${ring.count} seed(s) total) -- ` +
-        `those seeds exchange matter/genomes with each other and are not independent replicates. This tool does not pool a ring's ` +
-        `seeds as if they were; analyze the ring as a single unit (or extend analyze.ts to group by ring) instead of running ensemble ` +
-        `inference across its seeds.`,
+// The bundle module owns selection, eligibility and neutral replay ordering.
+const cohort = await prepareCohort(root, { kind: "analysis", registeredPresets: Object.keys(ACTIVITY_THRESHOLDS) });
+if (!cohort.ok) {
+  const issue = cohort.issue;
+  switch (issue.kind) {
+    case "empty": throw new Error(`no completed runs under ${root}`);
+    case "ensemble": throw new Error(`runs under ${root} are not one ensemble:\n  ${issue.problems.slice(0, 40).join("\n  ")}`);
+    case "ring": throw new Error(
+      `runs under ${root} include a metapopulation ring (condition(s) ${issue.conditions.join(", ")}, ${issue.count} seed(s) total) -- ` +
+      `those seeds exchange matter/genomes with each other and are not independent replicates. This tool does not pool a ring's ` +
+      `seeds as if they were; analyze the ring as a single unit (or extend analyze.ts to group by ring) instead of running ensemble ` +
+      `inference across its seeds.`,
     );
+    case "conservation": throw new Error("no run passed the conservation check");
+    case "provenance": throw new Error(
+      `runs under ${root} cannot use preset "${issue.presetId}"'s registered activity threshold -- provenance check failed:\n  ${issue.problems.slice(0, 40).join("\n  ")}`,
+    );
+    case "insufficient": throw new Error(`only ${issue.count} eligible neutral runs`);
   }
 }
-// Pre-registered eligibility: only histories with exact conservation enter inference.
-const { eligible: runs, invalid } = partitionByConservation(loaded);
-if (!runs.length) throw new Error("no run passed the conservation check");
+const { loaded, runs, invalid, presetId } = cohort;
 const conditions = [...new Set(runs.map((r) => r.condition))].sort((x, y) => (x === "treatment" ? -1 : y === "treatment" ? 1 : x.localeCompare(y)));
-
-// ---- activity threshold ----
-// Two distinct numbers, never confused:
-//  - `threshold` is what this analysis actually feeds into every
-//    activity-based statistic below. For a preset registered in
-//    experiments/endpoints.ts's ACTIVITY_THRESHOLDS (gradient-m3, spots-m3)
-//    that is the FROZEN value from a dedicated neutral-only calibration
-//    pilot (tools/calibrate.ts), independent of which neutral seeds this
-//    ensemble happens to include. A preset absent from ACTIVITY_THRESHOLDS
-//    keeps the original in-sample behavior (this ensemble's own neutral
-//    runs), labelled exploratory.
-//  - the in-sample neutral quantile, computed from this ensemble's own
-//    neutral runs the same way it always was, is ALWAYS also reported (when
-//    neutral runs exist) as a labelled diagnostic -- informative, but never
-//    fed into any endpoint once a preset has a frozen threshold.
-const presetId = runs[0].manifest.spec.presetId;
 const frozen = ACTIVITY_THRESHOLDS[presetId];
-
-// ---- provenance (Astra review, 2026-09-27, item 1) ----
-// A registered preset's frozen threshold depends on the calibration pilot's
-// runs actually having the founders/config current code expects -- not just
-// on their spec.presetId *label* matching. ensembleProblems above only ever
-// compares WorldConfig fields (never founder content), so a run recorded
-// under a mismatched founder set could pass ensemble validation outright
-// and still be pooled into every activity statistic. Checked here, before
-// anything else in this ensemble is trusted for a registered preset; an
-// exploratory (unregistered) preset never needs this and keeps working
-// without it, including against bundles from before this provenance was
-// recorded at all.
-if (frozen) {
-  const problems = provenanceProblems(runs, presetId);
-  if (problems.length)
-    throw new Error(
-      `runs under ${root} cannot use preset "${presetId}"'s registered activity threshold -- provenance check failed:\n  ${problems.slice(0, 40).join("\n  ")}`,
-    );
-}
-
-const neutralRuns = runs.filter((r) => r.condition === "neutral");
-const neutralActs: number[] = [];
-for (const r of neutralRuns) for (const x of (await activities(r)).tracker.allActivities()) neutralActs.push(x);
+// This diagnostic never replaces a registered preset's independently frozen threshold.
+const neutralActs = cohort.neutralActivities;
 const inSampleNeutralQuantile = neutralActs.length > 0 ? quantile(neutralActs, 0.95) : null;
 
 /** A minimal, valid RunSpec for a `specConfig` call that only cares about presetId/condition/seed -- the other fields are irrelevant to config computation and never touch the filesystem here. Mirrors experiments/endpoints.ts's own `neutralSpecFor`. */
