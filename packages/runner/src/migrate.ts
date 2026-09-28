@@ -23,8 +23,8 @@ import type { GpuSim } from "@bl/sim-gpu";
  * own start to already be a multiple of censusEvery (its step loop chunks
  * relative to that start, unchanged from before migration existed), which is
  * what actually guarantees every call lands on the same absolute steps here;
- * the lab worker gets the same guarantee from `boundaryAfter`'s realignment
- * instead (apps/lab/src/sim.worker.ts), since it can't refuse an
+ * the lab worker gets the same guarantee from the execution module's realignment
+ * instead (apps/lab/src/execution.ts), since it can't refuse an
  * already-loaded world's start step the way a fresh runExperiment call can.
  *
  * Callers must call this at a *census* boundary — the same one
@@ -33,7 +33,7 @@ import type { GpuSim } from "@bl/sim-gpu";
  * carries the post-migration state forward. Both runner.ts and the lab
  * worker do so right after recording/persisting that boundary's census.
  */
-export async function migrateAtBoundary(sim: GpuSim, step: number): Promise<MigrationEvent[]> {
+export async function migrateAtBoundary(sim: Pick<GpuSim, "cfg" | "readState" | "upload">, step: number): Promise<MigrationEvent[]> {
   const migrationPeriod = sim.cfg.migrationPeriod ?? 0;
   if (migrationPeriod === 0 || step % migrationPeriod !== 0) return [];
   const full = await sim.readState();

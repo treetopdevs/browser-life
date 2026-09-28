@@ -22,6 +22,6 @@
       "@bl/search": ["./packages/search/src/index.ts"]
     }
   },
-  "include": ["packages/*/src", "apps/lab/src", "tests"],
+  "include": ["packages/*/src", "apps/lab/src", "apps/lab/test", "tests"],
   "exclude": ["tests/deno"]
 }

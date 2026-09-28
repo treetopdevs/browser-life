@@ -13,7 +13,6 @@ import {
   PRESETS,
   RULE_VERSION,
   cellCount,
-  cloneState,
   decodeGenome,
   encodeCheckpoint,
   initWorld,
@@ -21,12 +20,12 @@ import {
   stateHash,
   totalsOf,
   worldW,
-  type WorldConfig,
   type WorldState,
 } from "@bl/schema";
 import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import { census, individuals, lineageRGB } from "@bl/metrics";
-import { decodeArtifact, migrateAtBoundary, observeCensus, restoreObservers, serializeObservers, type ObserverSettings, type ObserverState, type Observers } from "@bl/runner";
+import { decodeArtifact, type ObserverSettings, type ObserverState } from "@bl/runner";
+import { LabExecution } from "./execution.ts";
 import type { CensusMsg, FromWorker, RunManifest, ToWorker } from "./protocol.ts";
 import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
 
@@ -50,19 +49,7 @@ interface World {
   /** Ledger baseline: content + heat - light, invariant under exact rules. */
   baseline: bigint;
   startMatter: bigint;
-  /** Persisted observers, advanced only by `observeBoundary`. */
-  obs: Observers;
-  /** Step of the latest persisted observation (the world's start step before the first). */
-  observedStep: number;
-  /** An observation is in flight; the frame loop must not step past it. */
-  observing: boolean;
-  /**
-   * Why the observer history is no longer exact (a failed observation may
-   * have drained mutation events or half-updated the observers). Such a
-   * world can still be watched but not stepped or saved; restore a
-   * checkpoint to continue.
-   */
-  observerLost: string | null;
+  execution: LabExecution;
 }
 
 let device: GPUDevice | null = null;
@@ -133,32 +120,30 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
 }
 
 /**
- * migrationPeriod must be a multiple of this world's own censusEvery: the lab
- * only ever observes (and, per `boundaryAfter` below, only ever migrates) at
- * census boundaries, so an incompatible period would silently fire at the
- * wrong cadence -- or never as intended -- instead of every `migrationPeriod`
- * steps (e.g. period 20 with the lab's fixed censusEvery of 100 would only
- * ever migrate every 100 steps). Checked once, in `adopt`, the single place
- * every load/restore/import path funnels through.
- */
-function migrationCadenceError(cfg: WorldConfig, censusEvery: number): string | null {
-  const period = cfg.migrationPeriod ?? 0;
-  if (period > 0 && period % censusEvery !== 0) return `migrationPeriod ${period} is not a multiple of this world's censusEvery (${censusEvery}); migration would fire at the wrong cadence in the lab`;
-  return null;
-}
-
-/**
  * Builds the replacement first; the current world survives if that fails.
  * `observer` rehydrates the tracker/activity/counters from a restored or
  * imported checkpoint; omitted for a fresh `load()`, which starts clean.
  */
 async function adopt(state: WorldState, manifest: RunManifest, observer?: ObserverState) {
   if (!device || !ctx) throw new Error("GPU not initialised");
-  const cadenceErr = migrationCadenceError(state.cfg, manifest.settings.censusEvery);
-  if (cadenceErr) throw new Error(cadenceErr);
   const sim = await GpuSim.create(device, state);
   let renderer: Renderer;
+  let execution: LabExecution;
   try {
+    execution = new LabExecution(sim, manifest.settings, {
+      observer,
+      waitForIdle: () => device!.queue.onSubmittedWorkDone(),
+      isCurrent: () => world?.execution === execution,
+      onObservation: (c, dropped) => {
+        if (dropped > 0) post({ type: "notice", message: `${dropped} mutation events dropped (event buffer full); lineage history is incomplete` });
+        const now = performance.now();
+        if (now - lastCensusAt > 500) {
+          lastCensusAt = now;
+          postCensus(world!, c);
+        }
+      },
+      onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
+    });
     renderer = new Renderer(device, ctx, format, sim);
   } catch (e) {
     sim.destroy();
@@ -173,12 +158,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer?: Observ
     manifest,
     baseline: t.energy + state.heatOut - state.lightIn,
     startMatter: t.matter,
-    obs: restoreObservers(observer, manifest.settings),
-    // A restored or imported observer describes exactly `state.step`
-    // (decodeArtifact enforces it); a fresh world starts unobserved there.
-    observedStep: state.step,
-    observing: false,
-    observerLost: null,
+    execution,
   };
   old?.renderer.destroy();
   old?.sim.destroy();
@@ -218,48 +198,49 @@ async function load(presetId: string, seed: number, overrides = {}) {
 function frame() {
   frames++;
   const w = world;
-  if (w && !busy && !inflight && !w.observing) {
-    // A world whose observer history is lost is still drawn but never stepped.
-    const want = w.observerLost ? 0 : pendingSteps + (playing ? stepsPerFrame : 0);
-    // Never step past the next census boundary: it is observed before
-    // stepping resumes. Requested single steps beyond it carry over.
-    let n = Math.min(want, nextBoundary(w) - w.sim.step);
-    pendingSteps = Math.max(0, pendingSteps - n);
-    try {
-      while (n > 0) {
-        const k = Math.min(n, 64);
-        w.sim.run(k);
-        n -= k;
-      }
-      if (!w.observerLost && w.sim.step === nextBoundary(w)) {
-        w.observing = true;
-        // Failures are reported by observeBoundary itself.
-        void exclusive(() => observeBoundary(w)).catch(() => {});
-      }
-      w.renderer.draw(mode, rect, canvas!.width, canvas!.height);
-    } catch (e) {
-      playing = false;
-      post({ type: "error", message: e instanceof Error ? e.message : String(e) });
-    }
-    inflight = device!.queue.onSubmittedWorkDone().then(() => (inflight = null));
-    const now = performance.now();
-    if (now - rateAt > 1000) {
-      stepsPerSec = ((w.sim.step - rateStep) * 1000) / (now - rateAt);
-      fps = (frames * 1000) / (now - rateAt);
-      rateStep = w.sim.step;
-      rateAt = now;
-      frames = 0;
-    }
-    if (now - lastStatsAt > 400 && !statsBusy) {
-      lastStatsAt = now;
-      void sendStats(w);
-    }
-    if (now - lastCensusAt > (playing ? 1200 : 600) && !censusBusy) {
-      lastCensusAt = now;
-      void sendCensus(w);
-    }
+  if (w && !busy && !inflight) {
+    // The same in-flight promise guards both frame advancement and rendering;
+    // exclusive operations wait for its census/migration before touching state.
+    inflight = drawFrame(w).finally(() => (inflight = null));
   }
   raf(frame);
+}
+
+async function drawFrame(w: World) {
+  const requestedPending = pendingSteps;
+  let settled = false;
+  try {
+    if (!w.execution.failure) {
+      const consumed = await w.execution.advanceFrame(requestedPending + (playing ? stepsPerFrame : 0));
+      // Step requests arriving during readback belong to the next frame.
+      pendingSteps -= Math.min(requestedPending, consumed);
+    }
+    settled = true;
+    w.renderer.draw(mode, rect, canvas!.width, canvas!.height);
+    await device!.queue.onSubmittedWorkDone();
+  } catch (e) {
+    playing = false;
+    if (w.execution.failure) pendingSteps = 0;
+    // A rejected request (e.g. past the step limit) is dropped rather than retried every frame.
+    else if (!settled) pendingSteps = Math.max(0, pendingSteps - requestedPending);
+    post({ type: "error", message: w.execution.failure ?? (e instanceof Error ? e.message : String(e)) });
+  }
+  const now = performance.now();
+  if (now - rateAt > 1000) {
+    stepsPerSec = ((w.sim.step - rateStep) * 1000) / (now - rateAt);
+    fps = (frames * 1000) / (now - rateAt);
+    rateStep = w.sim.step;
+    rateAt = now;
+    frames = 0;
+  }
+  if (now - lastStatsAt > 400 && !statsBusy) {
+    lastStatsAt = now;
+    void sendStats(w);
+  }
+  if (now - lastCensusAt > (playing ? 1200 : 600) && !censusBusy) {
+    lastCensusAt = now;
+    void sendCensus(w);
+  }
 }
 
 const current = (w: World) => world === w && w.gen === generation;
@@ -299,114 +280,10 @@ async function sendStats(w: World) {
   }
 }
 
-/**
- * The next census boundary after `observedStep`. Migration-disabled worlds
- * (`migrationPeriod` 0) get exactly `observedStep + censusEvery` -- unchanged
- * from before migration existed, whatever `observedStep`'s own alignment.
- * Migration-enabled worlds realign the very first boundary to an absolute
- * multiple of `censusEvery`: an imported/restored checkpoint's `observedStep`
- * isn't necessarily one (e.g. importing at step 150 with censusEvery 100
- * would otherwise schedule boundaries at 250, 350, ... which never land on an
- * absolute multiple of a migrationPeriod like 200, so migration would never
- * fire). Once aligned, every following boundary is `+ censusEvery` from an
- * already-aligned point, so this reduces to the same formula as the
- * migration-disabled case from then on.
- */
-function boundaryAfter(observedStep: number, censusEvery: number, migrationPeriod: number): number {
-  if (migrationPeriod === 0) return observedStep + censusEvery;
-  const rem = observedStep % censusEvery;
-  return observedStep + (rem === 0 ? censusEvery : censusEvery - rem);
-}
-
-const nextBoundary = (w: World) => boundaryAfter(w.observedStep, w.manifest.settings.censusEvery, w.sim.cfg.migrationPeriod ?? 0);
-
-/**
- * The persisted observation at a census boundary (`sim.step` must equal
- * `nextBoundary(w)`): drains every mutation event since the previous one
- * and advances the observers through `observeCensus`, exactly as
- * `runExperiment` does, then refreshes the UI.
- */
-async function observeBoundary(w: World): Promise<void> {
-  try {
-    if (w.observerLost) throw new Error(w.observerLost);
-    const ledger = await w.sim.drainLedger();
-    if (!current(w)) return;
-    const snap = await w.sim.readSnapshot(false);
-    if (!current(w)) return;
-    if (snap.step !== nextBoundary(w)) throw new Error(`observation at t=${snap.step}, expected the census boundary t=${nextBoundary(w)}`);
-    if (ledger.dropped > 0) post({ type: "notice", message: `${ledger.dropped} mutation events dropped (event buffer full); lineage history is incomplete` });
-    const o = observeCensus(w.obs, w.sim.cfg, snap, ledger.events.length + ledger.dropped);
-    w.observedStep = snap.step;
-    // Same helper (packages/runner/src/migrate.ts) and the same point relative
-    // to the census as runExperiment: right after this boundary's observation,
-    // before anything a checkpoint would capture (save()/exportRun() always
-    // settle() to a boundary first). Without this, an archipelago-preset world
-    // stepped, continued, imported or same-device replay-checked here would
-    // silently diverge from the same history run through the headless runner.
-    await migrateAtBoundary(w.sim, snap.step);
-    if (!current(w)) return;
-    // The observation (and any migration) is committed; a failing UI refresh must not mark it lost.
-    const now = performance.now();
-    if (now - lastCensusAt > 500) {
-      lastCensusAt = now;
-      try {
-        postCensus(w, o.census);
-      } catch (e) {
-        post({ type: "error", message: `census display: ${e instanceof Error ? e.message : e}` });
-      }
-    }
-  } catch (e) {
-    // The drain is destructive and observeCensus mutates the observers as
-    // it goes, so a failure cannot be retried exactly: stop instead.
-    if (current(w) && !w.observerLost) {
-      w.observerLost = `census at t=${w.sim.step} failed (${e instanceof Error ? e.message : e}); observer history is incomplete. Restore a checkpoint or reload to continue.`;
-      playing = false;
-      pendingSteps = 0;
-      post({ type: "error", message: w.observerLost });
-    }
-    throw e;
-  } finally {
-    w.observing = false;
-  }
-}
-
-/**
- * Steps `w` to `target` (inside `exclusive`), observing every census
- * boundary on the way. An observation failure propagates (and stops the world).
- */
-async function advanceTo(w: World, target: number): Promise<void> {
-  while (current(w)) {
-    if (w.observerLost) throw new Error(w.observerLost);
-    if (w.sim.step === nextBoundary(w)) {
-      w.observing = true;
-      await observeBoundary(w);
-      continue;
-    }
-    if (w.sim.step >= target) return;
-    let n = Math.min(target, nextBoundary(w)) - w.sim.step;
-    while (n > 0) {
-      const k = Math.min(n, 64);
-      w.sim.run(k);
-      n -= k;
-    }
-    await device!.queue.onSubmittedWorkDone();
-  }
-}
-
-/** Brings the world to a step whose observer state is complete, so it can be saved. */
-async function settle(w: World): Promise<void> {
-  if (w.sim.step === w.observedStep) return;
-  const from = w.sim.step;
-  await advanceTo(w, nextBoundary(w));
-  post({ type: "notice", message: `Advanced ${w.sim.step - from} steps to the census at t=${w.sim.step}` });
-}
-
 function postCensus(w: World, c: ReturnType<typeof census>) {
-  const t = w.obs.tracker;
   const ind = individuals(c);
   const total = c.lineages.reduce((a, l) => a + l.mass, 0) || 1;
   // Totals include events carried over from restored segments.
-  const counts = t.eventCounts();
   const msg: CensusMsg = {
     type: "census",
     step: c.step,
@@ -417,12 +294,7 @@ function postCensus(w: World, c: ReturnType<typeof census>) {
       const [hi, lo] = l.key.split(":").map(Number);
       return { key: l.key, share: l.mass / total, color: lineageRGB(hi, lo) };
     }),
-    fissions: t.fissions,
-    fusions: t.fusions,
-    births: counts.birth,
-    deaths: counts.death,
-    maxGen: t.maxGeneration(),
-    mutations: w.obs.mutations,
+    ...w.execution.counts(),
   };
   post(msg);
 }
@@ -439,13 +311,6 @@ async function sendCensus(w: World) {
   } finally {
     censusBusy = false;
   }
-}
-
-/** The observer section for a checkpoint of the current, settled step. */
-function snapshotObserver(w: World, step: number): ObserverState {
-  if (w.observerLost) throw new Error(w.observerLost);
-  if (step !== w.observedStep) throw new Error(`observer state is at t=${w.observedStep}, not t=${step}`);
-  return serializeObservers(w.obs, step, w.manifest.settings);
 }
 
 async function probe(x: number, y: number) {
@@ -479,12 +344,10 @@ async function probe(x: number, y: number) {
 async function save() {
   const w = world;
   if (!w) return;
-  // Observer state is complete only at a census boundary; nothing else can
-  // step the world while we are inside `exclusive`.
-  await settle(w);
+  const { state, observer, advanced } = await w.execution.checkpoint();
+  if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
   const m = w.manifest;
-  const state = await w.sim.readState();
-  const bytes = encodeCheckpoint(state, snapshotObserver(w, state.step));
+  const bytes = encodeCheckpoint(state, observer);
   // Unique even after a restore trims the manifest's checkpoint list.
   const file = `${m.runId}-t${state.step}-${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}.blck`;
   await writeFile(file, bytes);
@@ -537,67 +400,18 @@ function importedManifest(state: WorldState, runId: string, settings: ObserverSe
 async function exportRun() {
   const w = world;
   if (!w) return;
-  await settle(w);
-  const state = await w.sim.readState();
-  const bytes = encodeCheckpoint(state, snapshotObserver(w, state.step));
+  const { state, observer, advanced } = await w.execution.checkpoint();
+  if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
+  const bytes = encodeCheckpoint(state, observer);
   post({ type: "exported", bytes: bytes.buffer as ArrayBuffer, name: `${w.manifest.runId}-t${state.step}.blck` }, [bytes.buffer as ArrayBuffer]);
 }
 
-/**
- * Like `advanceTo`, but for an unobserved twin: steps to `target`, applying
- * `migrateAtBoundary` (not a full census observation) at every boundary
- * `boundaryAfter` would cross for a world with this `censusEvery`/
- * `migrationPeriod`. `fromObserved` is the live world's own `observedStep`
- * captured *before* `advanceTo` runs (which mutates it), so both walk the
- * identical boundary sequence from the same starting point. Without this, a
- * migration landing inside the checked step range would only ever apply to
- * the live world (stepped via `advanceTo`/`observeBoundary`), and `verify`
- * would report a false replay failure.
- */
-async function advanceTwin(sim: GpuSim, fromObserved: number, target: number, censusEvery: number, migrationPeriod: number): Promise<void> {
-  let observed = fromObserved;
-  for (;;) {
-    const b = boundaryAfter(observed, censusEvery, migrationPeriod);
-    if (sim.step === b) {
-      await migrateAtBoundary(sim, b);
-      observed = b;
-      continue;
-    }
-    if (sim.step >= target) return;
-    let n = Math.min(target, b) - sim.step;
-    while (n > 0) {
-      const k = Math.min(n, 64);
-      sim.run(k);
-      n -= k;
-    }
-    await device!.queue.onSubmittedWorkDone();
-  }
-}
-
-/** Same-device replay check: snapshot, run N steps live and in a fresh instance, compare hashes. */
+/** Same-device replay check; execution owns the twin's cadence and cleanup. */
 async function verify(steps: number) {
   const w = world;
   if (!w || !device) return;
-  const s0 = await w.sim.readState();
-  // Captured before advanceTo mutates w.observedStep, so the twin's own
-  // boundary sequence (advanceTwin) starts from the same point the live
-  // world's did.
-  const fromObserved = w.observedStep;
-  const censusEvery = w.manifest.settings.censusEvery;
-  const migrationPeriod = w.sim.cfg.migrationPeriod ?? 0;
-  const twin = await GpuSim.create(device, cloneState(s0));
-  try {
-    // The live world observes (and migrates) at its census boundaries on the
-    // way; the twin crosses the identical boundaries via advanceTwin.
-    await advanceTo(w, s0.step + steps);
-    await advanceTwin(twin, fromObserved, s0.step + steps, censusEvery, migrationPeriod);
-    await device.queue.onSubmittedWorkDone();
-    const [a, b] = await Promise.all([w.sim.readState(), twin.readState()]);
-    const ha = stateHash(a), hb = stateHash(b);
-    post({ type: "verify", ok: ha === hb, detail: `${steps} steps from t=${s0.step}: ${ha}${ha === hb ? " = " : " ≠ "}${hb}` });
-  } finally {
-    twin.destroy();
-  }
+  const { from, liveHash: a, twinHash: b } = await w.execution.verify(steps, (state) => GpuSim.create(device!, state));
+  post({ type: "verify", ok: a === b, detail: `${steps} steps from t=${from}: ${a}${a === b ? " = " : " ≠ "}${b}` });
 }
 
 async function lesion(x: number, y: number, r: number) {
@@ -614,7 +428,10 @@ async function lesion(x: number, y: number, r: number) {
 
 self.onmessage = (ev: MessageEvent<ToWorker>) => {
   const m = ev.data;
-  const fail = (e: unknown) => post({ type: "error", message: e instanceof Error ? e.message : String(e) });
+  const fail = (e: unknown) => {
+    if (world?.execution.failure) { playing = false; pendingSteps = 0; }
+    post({ type: "error", message: world?.execution.failure ?? (e instanceof Error ? e.message : String(e)) });
+  };
   switch (m.type) {
     // Immediate, non-exclusive controls.
     case "play":

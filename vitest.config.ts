@@ -15,7 +15,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["packages/*/test/**/*.test.ts", "experiments/test/**/*.test.ts", "tools/test/**/*.test.ts"],
+    include: ["apps/lab/test/**/*.test.ts", "packages/*/test/**/*.test.ts", "experiments/test/**/*.test.ts", "tools/test/**/*.test.ts"],
     testTimeout: 60_000,
   },
 });
