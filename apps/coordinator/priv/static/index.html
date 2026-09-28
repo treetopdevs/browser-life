@@ -37,25 +37,35 @@ function table(id, head, rows) {
   if (!rows.length) { const row = document.createElement("tr"); row.append(el("td", "none")); t.append(row); }
 }
 let adminToken = "";
+let requestId = 0;
+function clearStatus() {
+  for (const id of ["counts", "runs", "islands", "div"]) document.getElementById(id).replaceChildren();
+}
 document.getElementById("connect").onclick = () => {
   adminToken = document.getElementById("admin-token").value;
   document.getElementById("admin-token").value = "";
   void tick();
 };
 async function tick() {
+  const currentRequest = ++requestId;
   let response;
+  let s;
   try {
     response = await fetch("/api/status", { headers: adminToken ? { authorization: `Bearer ${adminToken}` } : {} });
+    if (response.ok) s = await response.json();
   } catch {
+    if (currentRequest !== requestId) return;
+    clearStatus();
     document.getElementById("connection").textContent = "Coordinator unavailable.";
     return;
   }
+  if (currentRequest !== requestId) return;
   if (!response.ok) {
+    clearStatus();
     document.getElementById("connection").textContent = response.status === 401 ? "Enter an administrator token to view operations." : `Status unavailable (${response.status}).`;
     return;
   }
   document.getElementById("connection").textContent = "Connected.";
-  const s = await response.json();
   const c = document.getElementById("counts"); c.replaceChildren();
   const staleIslands = s.islands.filter(i => i.stale).length;
   const cards = [["pending", s.counts.pending || 0], ["running", s.counts.assigned || 0], ["done", s.counts.done || 0], ["verified", s.counts.verified || 0], ["diverged", s.counts.diverged || 0], ["obs mismatches", (s.observationMismatches || []).length], ["device types", s.devices.length], ["stale islands", staleIslands]];

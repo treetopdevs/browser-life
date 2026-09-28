@@ -36,6 +36,7 @@ defmodule CoordinatorWeb.ApiControllerTest do
         else: Application.delete_env(:coordinator, :admin_token)
     end)
 
+    assert {:ok, 2} = Queue.create_experiment(@spec_ok)
     {id, _token} = join(conn)
     assert is_binary(id)
 
@@ -51,6 +52,8 @@ defmodule CoordinatorWeb.ApiControllerTest do
            ]
 
     assert public["activeIslands"] == 1
+    assert public["counts"]["pending"] == 2
+    assert public["deviceTypes"] == 0
     refute Map.has_key?(public, "islands")
     refute Map.has_key?(public, "experiments")
     assert build_conn() |> get("/api/status") |> json_response(401)
@@ -59,6 +62,7 @@ defmodule CoordinatorWeb.ApiControllerTest do
     assert get_resp_header(detail_conn, "cache-control") == ["no-store"]
     detail = json_response(detail_conn, 200)
     assert length(detail["islands"]) == 1
+    assert public["counts"] == detail["counts"]
   end
 
   test "island routes require the private token", %{conn: conn} do

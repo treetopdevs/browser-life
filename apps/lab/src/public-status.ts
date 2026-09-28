@@ -9,8 +9,11 @@ const byId = (id: string) => document.getElementById(id)!;
 const message = byId("status-message");
 const grid = byId("status-grid");
 const updated = byId("status-updated");
+let refreshing = false;
 
 async function refresh(): Promise<void> {
+  if (refreshing) return;
+  refreshing = true;
   try {
     const response = await fetch("/api/public/status", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -31,6 +34,8 @@ async function refresh(): Promise<void> {
     message.textContent = "Live status is unavailable right now. The lab and research notes are still available.";
     updated.textContent = "";
     grid.hidden = true;
+  } finally {
+    refreshing = false;
   }
 }
 

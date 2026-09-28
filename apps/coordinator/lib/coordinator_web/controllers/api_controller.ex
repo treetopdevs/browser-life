@@ -36,19 +36,14 @@ defmodule CoordinatorWeb.ApiController do
   def status(conn, _),
     do: conn |> put_resp_header("cache-control", "no-store") |> json(Queue.status())
 
-  # Whitelist only aggregate progress. Queue.status/0 contains island IDs,
-  # user-agent strings, adapter descriptions, and experiment definitions.
+  # Queue.public_status/0 returns only aggregate progress; detailed status
+  # contains island IDs, adapter descriptions, and experiment definitions.
   def public_status(conn, _) do
-    status = Queue.status()
-
     conn
     |> put_resp_header("cache-control", "no-store")
-    |> json(%{
-      counts: status.counts,
-      activeIslands: Enum.count(status.islands, &(not &1.stale)),
-      deviceTypes: length(status.devices),
-      updatedAt: DateTime.utc_now() |> DateTime.to_iso8601()
-    })
+    |> json(
+      Map.put(Queue.public_status(), :updatedAt, DateTime.utc_now() |> DateTime.to_iso8601())
+    )
   end
 
   def experiment(conn, %{"name" => name}) do
