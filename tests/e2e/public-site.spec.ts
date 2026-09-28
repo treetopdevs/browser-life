@@ -58,6 +58,16 @@ test("public status shows aggregates and handles an unavailable coordinator", as
   await expect(page.locator("#status-message")).toContainText("unavailable");
 });
 
+test("public status explains why a joined island may wait", async ({ page }) => {
+  await page.route("**/api/public/status", (route) => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({ counts: {}, activeIslands: 1, deviceTypes: 0, updatedAt: "2026-09-28T22:00:00Z" }),
+  }));
+  await page.goto("/status/");
+  await expect(page.locator("#status-message")).toContainText("No experiments are queued yet");
+  await expect(page.locator("#count-islands")).toHaveText("1");
+});
+
 test("public status skips polling while a request is pending", async ({ page }) => {
   await page.clock.install();
   let requests = 0;

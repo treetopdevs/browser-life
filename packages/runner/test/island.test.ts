@@ -189,6 +189,30 @@ describe("island routes bad import-predecessor artifacts to \"import\", not \"ow
 describe("island idle wait", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  it("explains an empty assignment once while continuing to poll", async () => {
+    const controller = new AbortController();
+    const messages: string[] = [];
+    let polls = 0;
+    vi.stubGlobal("fetch", async (url: string) => {
+      const path = new URL(url).pathname;
+      const json = (v: unknown) => new Response(JSON.stringify(v), { headers: { "content-type": "application/json" } });
+      if (path === "/api/islands") return json({ id: "isl", token: "tok" });
+      if (path === "/api/next") {
+        if (++polls === 2) controller.abort();
+        return json({ kind: "idle" });
+      }
+      throw new Error(`unexpected ${path}`);
+    });
+
+    await runIsland({} as GPUDevice, {
+      coordinator: "http://coord", host: { host: "t", adapter: "t" },
+      idleMs: 1, signal: controller.signal, log: (message) => messages.push(message),
+    });
+
+    expect(polls).toBe(2);
+    expect(messages.filter((message) => message.includes("waiting for work"))).toHaveLength(1);
+  });
+
   // Review 5: Stop can abort while `/next` is in flight and it comes back
   // idle; the wait must notice `signal.aborted` before it starts rather than
   // running the full `idleMs` regardless.
