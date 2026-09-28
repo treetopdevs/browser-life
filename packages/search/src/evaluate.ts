@@ -18,6 +18,7 @@ import {
 } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
 import { Tracker, census, individuals, type Census } from "@bl/metrics";
+import { behaviorSamples, type BehaviorSample, type MovementInterval } from "./foundation-behavior.ts";
 
 export interface EvalConfig {
   /** Tile side (multiple of 16 enables blocked affinity). */
@@ -83,6 +84,11 @@ export interface Evaluation {
   reproduction: number;
 }
 
+export interface EvaluationOptions {
+  /** Optional growth-census trace. The ordinary Evaluation and quality remain unchanged. */
+  onBehaviorSample?: (candidateIndex: number, replicateTile: number, sample: BehaviorSample) => void;
+}
+
 export function quality(e: Evaluation): number {
   if (e.survived === 0) return 0;
   const regen = e.regenerated / e.reps;
@@ -102,20 +108,31 @@ function tileMass(cfg: WorldConfig, cells: Uint32Array): Float64Array {
   return out;
 }
 
-async function runChunked(device: GPUDevice, sim: GpuSim, steps: number, every: number, onCensus?: (c: Census) => void) {
+async function runChunked(device: GPUDevice, sim: GpuSim, steps: number, every: number,
+  onCensus?: (c: Census) => void,
+  onSnapshot?: (c: Census, cells: Uint32Array, genomeHead: Uint32Array, roles: Uint32Array) => void) {
   for (let s = 0; s < steps; s += every) {
     const k = Math.min(every, steps - s);
     for (let j = 0; j < k; j += 64) sim.run(Math.min(64, k - j));
     await device.queue.onSubmittedWorkDone();
-    if (onCensus) {
-      const [cells, genomeHead] = await Promise.all([sim.readCells(), sim.readGenomeChannels(0, 4)]);
-      onCensus(census({ cfg: sim.cfg, step: sim.step, cells, genomeHead }));
+    if (onCensus || onSnapshot) {
+      if (onSnapshot) {
+        const snap = await sim.readSnapshot(true);
+        if (!snap.roles) throw new Error("role readback missing from requested snapshot");
+        const c = census({ cfg: sim.cfg, step: snap.step, cells: snap.cells, genomeHead: snap.genomeHead });
+        onCensus?.(c);
+        onSnapshot(c, snap.cells, snap.genomeHead, snap.roles);
+      } else {
+        const [cells, genomeHead] = await Promise.all([sim.readCells(), sim.readGenomeChannels(0, 4)]);
+        onCensus?.(census({ cfg: sim.cfg, step: sim.step, cells, genomeHead }));
+      }
     }
   }
 }
 
 /** Evaluates up to side²/reps genomes in one batch world. */
-export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: EvalConfig = DEFAULT_EVAL): Promise<Evaluation[]> {
+export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: EvalConfig = DEFAULT_EVAL,
+  options: EvaluationOptions = {}): Promise<Evaluation[]> {
   const tiles = ec.side * ec.side;
   const perBatch = Math.floor(tiles / ec.reps);
   if (genomes.length > perBatch) throw new Error(`batch holds ${perBatch} genomes`);
@@ -143,10 +160,15 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
   const dist = new Float64Array(tiles);
   const obs = new Float64Array(tiles);
   const last = new Map<number, [number, number]>();
+  let priorTraceStep = 0;
+  let movement: MovementInterval[] = [];
   const tileOf = (x: number, y: number) => Math.floor(y / ec.tile) * ec.side + Math.floor(x / ec.tile);
   let grown: WorldState;
   try {
     await runChunked(device, sim, ec.growSteps, ec.censusEvery, (c) => {
+      if (options.onBehaviorSample) movement = Array.from({ length: tiles }, () => ({
+        distanceCells: 0, observedIntervals: 0, intervalSteps: c.step - priorTraceStep,
+      }));
       for (const e of tracker.update(c)) {
         if (e.kind === "fission" || e.kind === "birth") {
           const id = e.kind === "fission" ? e.parent : e.id;
@@ -160,12 +182,21 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
           const dx = Math.min(Math.abs(ind.cx - p[0]), ec.tile - Math.abs(ind.cx - p[0]));
           const dy = Math.min(Math.abs(ind.cy - p[1]), ec.tile - Math.abs(ind.cy - p[1]));
           const t = tileOf(ind.cx, ind.cy);
-          dist[t] += Math.hypot(dx, dy) * (100 / ec.censusEvery);
+          const d = Math.hypot(dx, dy);
+          dist[t] += d * (100 / ec.censusEvery);
           obs[t]++;
+          if (options.onBehaviorSample) {
+            movement[t].distanceCells += d;
+            movement[t].observedIntervals++;
+          }
         }
         last.set(ind.id, [ind.cx, ind.cy]);
       }
-    });
+      if (options.onBehaviorSample) priorTraceStep = c.step;
+    }, options.onBehaviorSample ? (c, cells, genomeHead, roles) => {
+      const samples = behaviorSamples(cfg, c.step, cells, genomeHead, roles, movement);
+      for (let t = 0; t < tiles; t++) if (owner[t] >= 0) options.onBehaviorSample!(owner[t], t, samples[t]);
+    } : undefined);
     grown = await sim.readState();
   } finally {
     sim.destroy();

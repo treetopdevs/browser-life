@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/opt/homebrew/bin/deno",
+    "run",
+    "--allow-read",
+    "tools/reset-material-bounds-feasibility-v1.ts"
+  ],
+  "startedUtc": "2026-09-30T01:24:11.235672+00:00",
+  "finishedUtc": "2026-09-30T01:24:16.963481+00:00",
+  "elapsedSeconds": 5.727116415975615,
+  "exitCode": 0,
+  "comparison": "byte-identical to active-result-v5.json",
+  "resultSha256": "39de09b5c914b1a263daed7308d5c8f90b2eaf3a0c97d4360c1a0fbc63ec2061",
+  "sourceReceiptSha256": "2d5ca4394e4bedea5193fb0647f7cb8e4cfcd36cb5a9fc5ac746e4d374db947a",
+  "priorPreflight": "receipt-v4 source drift rejected before running a simulation"
+}

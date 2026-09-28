@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "seed": 29092026,
+  "tileW": 8,
+  "tileH": 8,
+  "kernelRadius": 2,
+  "selectedSites": [27, 28],
+  "contactSteps": 100,
+  "recoverySteps": 1000,
+  "initialB": [[27, 400], [28, 400], [29, 400], [36, 400]],
+  "initialP": [[27, 100], [28, 100], [29, 100], [36, 100]],
+  "nutrientPerSite": 256
+}

@@ -1,0 +1,108 @@
+{
+  "status": "development-input-catalog-not-executed",
+  "createdAt": "2026-09-30T01:10:26.429600+00:00",
+  "selectionRule": "first raw flag in each of histories 1 and 2; no persistence or biological outcome filter",
+  "developmentCandidates": [
+    {
+      "history": 1,
+      "step": 100029,
+      "flagIndex": 0,
+      "priorComponent": 66,
+      "branches": [
+        {
+          "currentComponent": 66,
+          "currentMass": 32414,
+          "copiedSitesFromPrior": 457,
+          "preexistingOtherBoundSites": 0,
+          "preexistingOtherBoundCarrierMass": 0
+        },
+        {
+          "currentComponent": 89,
+          "currentMass": 2985,
+          "copiedSitesFromPrior": 31,
+          "preexistingOtherBoundSites": 0,
+          "preexistingOtherBoundCarrierMass": 0
+        }
+      ],
+      "trackerIntervalCooccurrence": "budding"
+    },
+    {
+      "history": 2,
+      "step": 170024,
+      "flagIndex": 0,
+      "priorComponent": 0,
+      "branches": [
+        {
+          "currentComponent": 0,
+          "currentMass": 1746604,
+          "copiedSitesFromPrior": 36496,
+          "preexistingOtherBoundSites": 0,
+          "preexistingOtherBoundCarrierMass": 0
+        },
+        {
+          "currentComponent": 137,
+          "currentMass": 4718,
+          "copiedSitesFromPrior": 61,
+          "preexistingOtherBoundSites": 0,
+          "preexistingOtherBoundCarrierMass": 0
+        }
+      ],
+      "trackerIntervalCooccurrence": "budding"
+    }
+  ],
+  "rawFlags": 592,
+  "sourceHistories": 10,
+  "sources": [
+    {
+      "history": 1,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-1-attempt-1/result.json",
+      "sha256": "97fa1d83729f50b2cbca4c0e2da80fe03578796c7ebffa544b461829432deb0a"
+    },
+    {
+      "history": 2,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-2-attempt-2/result.json",
+      "sha256": "8e027a4ea3c285e5790b1a192705d24d4a780e3bb6a9c9777c58915285e3b1f8"
+    },
+    {
+      "history": 3,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-3-attempt-1/result.json",
+      "sha256": "eaa94b8b5d25d834c191a67c3030c87be5c8bc91dc9fea596395d217a0cdfed4"
+    },
+    {
+      "history": 4,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-4-attempt-1/result.json",
+      "sha256": "9f91d23f8c6b5dc5148c3bbd0ca6be342481aa9ca8b98979b1c60456161c999a"
+    },
+    {
+      "history": 5,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-5-attempt-1/result.json",
+      "sha256": "c2191142d72297c3c36b6345af171be373b8561e1b7951d8b592588e1184106d"
+    },
+    {
+      "history": 6,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-6-attempt-1/result.json",
+      "sha256": "1d0ba39a5443c4dfa11bc0ccbe6427e55ad75bae3482c42a6fa7ad40d78083b3"
+    },
+    {
+      "history": 7,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-7-attempt-2/result.json",
+      "sha256": "1239a72b0f5bca80d8bb6b0cce973385e4980bbc13d801c0e199ccba644cdac5"
+    },
+    {
+      "history": 8,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-8-attempt-1/result.json",
+      "sha256": "93358f2cfe73cbce4f3b6a51a625ee93aef9f87ebfbbdc4ed571aa9952f78d8c"
+    },
+    {
+      "history": 9,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-9-attempt-1/result.json",
+      "sha256": "375abe68e0f33577cca8a879133e9990ad78eb1878ade0b57aea078d3b6e21c7"
+    },
+    {
+      "history": 10,
+      "path": "runs/foundational-reset/probe-a-run-v1/history-10-attempt-1/result.json",
+      "sha256": "f561b31739f627d6d62c798aabfe48574cf8b6b1a2f61482fe1e9d3324d2a1a9"
+    }
+  ],
+  "interpretation": "Raw flags can overlap and are not unique births. All fixed-window flags are historical/development evidence. No fresh evaluation case selected or run. Replay and physical support extraction remain conditional on Gate O; component indices are frame-local."
+}

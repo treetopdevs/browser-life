@@ -1,0 +1,237 @@
+{
+  "createdAt": "2026-09-30T01:27:59.269986+00:00",
+  "status": "final-measurement-stop",
+  "files": [
+    {
+      "path": "experiments/foundations/followup-v1/design-freeze.json",
+      "bytes": 1454,
+      "sha256": "adc433577fdabff07965eccbe61e13ce1ac6698ebe0fef9f8d1d4f20b2034175"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/generated-ref-step.instrumented.ts",
+      "bytes": 27515,
+      "sha256": "b142490a94f355cfc89102e42ee888bd52686578051cdd742e6f374cc49d6fef"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/tools/fixtures/reset-material-bounds-active-v1.json",
+      "bytes": 336,
+      "sha256": "14e04c4555c24e39fbfcd7bfab5f53b4f1bad2971cb01f34a99ce6f3025dd43b"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/tools/fixtures/reset-material-bounds-mutation-v1.json",
+      "bytes": 384,
+      "sha256": "5a6fef3e33e9b8f56495d68278318a9dea9cee81696e8b35ce5360c3fe7edd6e"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/tools/fixtures/reset-material-bounds-stress-v1.json",
+      "bytes": 310,
+      "sha256": "552a17f3189034c29da5e0a0a8c4da9d9674255c9a358345d54a5442bc9a438e"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/tools/lib/reset-material-bounds-v1.ts",
+      "bytes": 11274,
+      "sha256": "39c3b3f9b40dca95d4bf6edefbbcbf1b836160cfb7a0f42c5b11dec52962dff5"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/tools/lib/reset-material-token-oracle-v1.ts",
+      "bytes": 3875,
+      "sha256": "36127cffb6b329f1b37e8df294e79095e5c49529a4173300269cbae9d3d522ef"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/tools/reset-material-bounds-feasibility-v1.ts",
+      "bytes": 7984,
+      "sha256": "7d2fe98b2cab4fa6e6a6d243c5d1a2348b2b2aed48f776014782f25aa9cedc9e"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/tools/reset-material-bounds-instrument-v1.ts",
+      "bytes": 2444,
+      "sha256": "95b5b0aaae7322badd300b172b7d8d43734ef8e243ecb74b97fa1f5088fdeae9"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution/tools/test/reset-material-bounds-v1.test.ts",
+      "bytes": 8719,
+      "sha256": "6690fd55d11fd6bbb45ef6e54474137a10e93b86f1c1377b7fdbf667c6446e79"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/execution-source-manifest.json",
+      "bytes": 3006,
+      "sha256": "1c4b4e301cd0b42dd6f6e9e98d775b7ddba389128c3bcae47a482dfcf9d1161f"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/input-manifest.json",
+      "bytes": 2187,
+      "sha256": "af3040061ff6bc9753e3d639d25afa0ff5a3d77b841598e67411de30b5b2323e"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/main-fd.json",
+      "bytes": 150925,
+      "sha256": "d97d7723e18529c7e47191b3e49762cca005d0d6547e818c5c3175cae8851876"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/main-plan-final.md",
+      "bytes": 82985,
+      "sha256": "466c602311dbaf4c86ffd5ce9d0e9422eedfc811a954e6fb3bb256b9739ea714"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/main-plan.md",
+      "bytes": 79708,
+      "sha256": "945c9465bd770fcf26f2f2756caf96079449ed1138d2062645f959f741ec7f20"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/main-t4x.json",
+      "bytes": 22247,
+      "sha256": "523e606de9f71202e5bea132070d2637dd980957a48b1075f300d308765d1508"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/natural-development-candidates.json",
+      "bytes": 3862,
+      "sha256": "76a864b897bd58b04770265dfb027b01aca9505e9da5c0fa98cb12b17e0c55d1"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/reset-reset-decision-handoff.md",
+      "bytes": 3651,
+      "sha256": "5d477fd254b74f292bfb1c509dee6f570fd2ed44a7194bc78dda7c0018b4dd6f"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/reset-reset-entity-contract.md",
+      "bytes": 6511,
+      "sha256": "1fdadc3acba6ebe764026ed2ffee40fe6dbcb87d3fd470165b6f8dd135580fe4"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/reset-reset-evidence-index-v2.json",
+      "bytes": 167258,
+      "sha256": "596de7a89a8f5714170f80945349649c3b6671df49802e7518e0849475e0736e"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/reset-reset-phase2-report.md",
+      "bytes": 11448,
+      "sha256": "2d94ba4ccd7ddcef5c7b719696be6d7b2375eec324e6fb81679c20a8af7cd83f"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/resource-and-integrity.json",
+      "bytes": 1796,
+      "sha256": "d3df75502291b8071832e80f1293aa03c1773e875aa071ca9d8ba344b2c47d24"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/active-result-v2.json",
+      "bytes": 4111,
+      "sha256": "9d82c47ec5fcf6d9ce07df5b6a09bfde9e0e4ed5565f2751a0645c3c244027b0"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/active-result-v3.json",
+      "bytes": 4408,
+      "sha256": "39de09b5c914b1a263daed7308d5c8f90b2eaf3a0c97d4360c1a0fbc63ec2061"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/active-result-v4.json",
+      "bytes": 4408,
+      "sha256": "39de09b5c914b1a263daed7308d5c8f90b2eaf3a0c97d4360c1a0fbc63ec2061"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/active-result-v5.json",
+      "bytes": 4408,
+      "sha256": "39de09b5c914b1a263daed7308d5c8f90b2eaf3a0c97d4360c1a0fbc63ec2061"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/active-result.json",
+      "bytes": 3534,
+      "sha256": "ecb1e167c6ed115f1549557c2c0a35e3efdf54c2d8ef660afa94448dccaac104"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/mutation-result-v2.json",
+      "bytes": 3410,
+      "sha256": "4831f16b0d1618f7e4b61e110e213f6db2cbdc6bbecbb691c0a44d7e61ac464f"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/mutation-result-v3.json",
+      "bytes": 3650,
+      "sha256": "cfcc1db347abb66684bdea6bb29292dd47169659872cbc949b70839af06a23e4"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/mutation-result-v4.json",
+      "bytes": 3650,
+      "sha256": "cfcc1db347abb66684bdea6bb29292dd47169659872cbc949b70839af06a23e4"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/mutation-result-v5.json",
+      "bytes": 3650,
+      "sha256": "cfcc1db347abb66684bdea6bb29292dd47169659872cbc949b70839af06a23e4"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/mutation-result.json",
+      "bytes": 2943,
+      "sha256": "f76dc78c50827b038b0e693f83e03c7ed637c8d52134d0e4c19fb0dfdf30b1b5"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/passive-result-v2.json",
+      "bytes": 4072,
+      "sha256": "3db10ec8c394932588160f191073590f7c37d3288f05f3ae19ebd56cf57e2550"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/passive-result-v3.json",
+      "bytes": 4371,
+      "sha256": "ec2da4732508f4088218349a8eb237a5d41e752dd6934d2d84a6cfda48f8379d"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/passive-result-v4.json",
+      "bytes": 4371,
+      "sha256": "ec2da4732508f4088218349a8eb237a5d41e752dd6934d2d84a6cfda48f8379d"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/passive-result-v5.json",
+      "bytes": 4371,
+      "sha256": "ec2da4732508f4088218349a8eb237a5d41e752dd6934d2d84a6cfda48f8379d"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/passive-result.json",
+      "bytes": 3490,
+      "sha256": "c3af2c1a06de4f788ce4f94236470340f1701dd6428e11155abefb2434c8eaf3"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v1.json",
+      "bytes": 2202,
+      "sha256": "8fb6b6579d24d71869d0ae1521fd81af920a130599669f4b3f4c118cf33f9ff2"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v2.json",
+      "bytes": 2553,
+      "sha256": "df4e2e3331eb9bc7823cd76a3e04ca23de30ed61db463095139446c59a05c38d"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v3.json",
+      "bytes": 2553,
+      "sha256": "739eabb4c4ac8808dc533767277a05d1ed496ee8be4d39561f34ad150dcf99d1"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v4.json",
+      "bytes": 4010,
+      "sha256": "fb1744e4fe61688bc28cf291435ecea354c876bb045f71d368eddbe13841a221"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v5.json",
+      "bytes": 4009,
+      "sha256": "2d5ca4394e4bedea5193fb0647f7cb8e4cfcd36cb5a9fc5ac746e4d374db947a"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/root-verification.json",
+      "bytes": 619,
+      "sha256": "d0355694a05122e850d20de1723e9f6208ddf35c281c8bbe9fe4a6275b4f4f6e"
+    },
+    {
+      "path": "docs/reset-followup-plan-v1.md",
+      "bytes": 8978,
+      "sha256": "7cf40e06fd170ab0347c6e3eec57999533fc844ee3620fee01c5739aaa72b6a7"
+    },
+    {
+      "path": "docs/reset-followup-results-v1.md",
+      "bytes": 10131,
+      "sha256": "10cc38685040ee955046e222a4d89035a74c63a19efcd1b63fde5d80ddbceb75"
+    }
+  ],
+  "interpretation": "Tracked archive for this follow-up only. Original reset run bundles remain separately preserved; no workspace cleanup authorized."
+}

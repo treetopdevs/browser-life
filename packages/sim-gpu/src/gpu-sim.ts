@@ -372,6 +372,11 @@ export class GpuSim {
     return this.genome[this.gcur];
   }
 
+  /** Read-only diagnostic access to the flow displacement written by the unchanged step. */
+  get displacement(): GPUBuffer {
+    return this.disp;
+  }
+
   private async readBuffers(srcs: { buf: GPUBuffer; size: number }[], after?: (enc: GPUCommandEncoder) => void): Promise<Uint32Array[]> {
     const enc = this.device.createCommandEncoder();
     const stages = srcs.map(({ buf, size }) => {

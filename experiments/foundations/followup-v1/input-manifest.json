@@ -1,0 +1,48 @@
+{
+  "capturedAt": "2026-09-30T01:07:59.453260+00:00",
+  "mainRevision": "a25920ce71483aa15863c28939b7046ca7c33d38",
+  "inputs": [
+    {
+      "source": "/Users/nicholas/develop/browser-life/docs/plan.md",
+      "snapshot": "experiments/foundations/followup-v1/main-plan.md",
+      "bytes": 79708,
+      "sha256": "945c9465bd770fcf26f2f2756caf96079449ed1138d2062645f959f741ec7f20"
+    },
+    {
+      "source": "/Users/nicholas/develop/browser-life/experiments/foundations/fd.json",
+      "snapshot": "experiments/foundations/followup-v1/main-fd.json",
+      "bytes": 150925,
+      "sha256": "d97d7723e18529c7e47191b3e49762cca005d0d6547e818c5c3175cae8851876"
+    },
+    {
+      "source": "/Users/nicholas/develop/browser-life/experiments/foundations/t4x.json",
+      "snapshot": "experiments/foundations/followup-v1/main-t4x.json",
+      "bytes": 22247,
+      "sha256": "523e606de9f71202e5bea132070d2637dd980957a48b1075f300d308765d1508"
+    },
+    {
+      "source": "/Users/nicholas/develop/browser-life-foundations/docs/reset-phase2-report.md",
+      "snapshot": "experiments/foundations/followup-v1/reset-reset-phase2-report.md",
+      "bytes": 11448,
+      "sha256": "2d94ba4ccd7ddcef5c7b719696be6d7b2375eec324e6fb81679c20a8af7cd83f"
+    },
+    {
+      "source": "/Users/nicholas/develop/browser-life-foundations/docs/reset-decision-handoff.md",
+      "snapshot": "experiments/foundations/followup-v1/reset-reset-decision-handoff.md",
+      "bytes": 3651,
+      "sha256": "5d477fd254b74f292bfb1c509dee6f570fd2ed44a7194bc78dda7c0018b4dd6f"
+    },
+    {
+      "source": "/Users/nicholas/develop/browser-life-foundations/docs/reset-entity-contract.md",
+      "snapshot": "experiments/foundations/followup-v1/reset-reset-entity-contract.md",
+      "bytes": 6511,
+      "sha256": "1fdadc3acba6ebe764026ed2ffee40fe6dbcb87d3fd470165b6f8dd135580fe4"
+    },
+    {
+      "source": "/Users/nicholas/develop/browser-life-foundations/experiments/foundations/reset-evidence-index-v2.json",
+      "snapshot": "experiments/foundations/followup-v1/reset-reset-evidence-index-v2.json",
+      "bytes": 167258,
+      "sha256": "596de7a89a8f5714170f80945349649c3b6671df49802e7518e0849475e0736e"
+    }
+  ]
+}

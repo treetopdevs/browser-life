@@ -1,0 +1,57 @@
+{
+  "format": 1,
+  "sourceAndFixtureSha256": {
+    "packages/sim-ref/src/step.ts": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85",
+    "tools/reset-material-bounds-instrument-v1.ts": "95b5b0aaae7322badd300b172b7d8d43734ef8e243ecb74b97fa1f5088fdeae9",
+    "runs/foundational-reset/material-bounds-feasibility-v1/ref-step.instrumented.ts": "b142490a94f355cfc89102e42ee888bd52686578051cdd742e6f374cc49d6fef",
+    "tools/fixtures/reset-material-bounds-active-v1.json": "14e04c4555c24e39fbfcd7bfab5f53b4f1bad2971cb01f34a99ce6f3025dd43b",
+    "tools/fixtures/reset-material-bounds-stress-v1.json": "552a17f3189034c29da5e0a0a8c4da9d9674255c9a358345d54a5442bc9a438e",
+    "tools/fixtures/reset-material-bounds-mutation-v1.json": "5a6fef3e33e9b8f56495d68278318a9dea9cee81696e8b35ce5360c3fe7edd6e"
+  },
+  "runs": [
+    {
+      "name": "active",
+      "command": [
+        "deno",
+        "run",
+        "--allow-read",
+        "tools/reset-material-bounds-feasibility-v1.ts"
+      ],
+      "startedUtc": "2026-09-30T01:17:28.087821+00:00",
+      "finishedUtc": "2026-09-30T01:17:33.438701+00:00",
+      "elapsedSeconds": 5.3506264589959756,
+      "exitCode": 0,
+      "resultSha256": "ecb1e167c6ed115f1549557c2c0a35e3efdf54c2d8ef660afa94448dccaac104"
+    },
+    {
+      "name": "passive",
+      "command": [
+        "deno",
+        "run",
+        "--allow-read",
+        "tools/reset-material-bounds-feasibility-v1.ts",
+        "passive"
+      ],
+      "startedUtc": "2026-09-30T01:17:33.443789+00:00",
+      "finishedUtc": "2026-09-30T01:17:37.741882+00:00",
+      "elapsedSeconds": 4.2980425000423566,
+      "exitCode": 0,
+      "resultSha256": "c3af2c1a06de4f788ce4f94236470340f1701dd6428e11155abefb2434c8eaf3"
+    },
+    {
+      "name": "mutation",
+      "command": [
+        "deno",
+        "run",
+        "--allow-read",
+        "tools/reset-material-bounds-feasibility-v1.ts",
+        "mutation"
+      ],
+      "startedUtc": "2026-09-30T01:17:37.742476+00:00",
+      "finishedUtc": "2026-09-30T01:17:37.873640+00:00",
+      "elapsedSeconds": 0.13113462494220585,
+      "exitCode": 0,
+      "resultSha256": "f76dc78c50827b038b0e693f83e03c7ed637c8d52134d0e4c19fb0dfdf30b1b5"
+    }
+  ]
+}

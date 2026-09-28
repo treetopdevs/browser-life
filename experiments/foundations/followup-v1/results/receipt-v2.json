@@ -1,0 +1,60 @@
+{
+  "format": 2,
+  "sourceAndFixtureSha256": {
+    "packages/sim-ref/src/step.ts": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85",
+    "tools/lib/reset-material-bounds-v1.ts": "6b16b9928884cffd60bf2539600f71cc3b021b456fdd12312daef4225ba619cb",
+    "tools/lib/reset-material-token-oracle-v1.ts": "6f292ef346c832c7f2f1a3dd6bf1be2d6d6a0edd0544b48486572d694f23b994",
+    "tools/reset-material-bounds-instrument-v1.ts": "95b5b0aaae7322badd300b172b7d8d43734ef8e243ecb74b97fa1f5088fdeae9",
+    "tools/reset-material-bounds-feasibility-v1.ts": "18e334ef47fdbac21a8b619ff1f47a1c08f7022f67edbbbca56f3dede33f2107",
+    "runs/foundational-reset/material-bounds-feasibility-v1/ref-step.instrumented.ts": "b142490a94f355cfc89102e42ee888bd52686578051cdd742e6f374cc49d6fef",
+    "tools/fixtures/reset-material-bounds-active-v1.json": "14e04c4555c24e39fbfcd7bfab5f53b4f1bad2971cb01f34a99ce6f3025dd43b",
+    "tools/fixtures/reset-material-bounds-stress-v1.json": "552a17f3189034c29da5e0a0a8c4da9d9674255c9a358345d54a5442bc9a438e",
+    "tools/fixtures/reset-material-bounds-mutation-v1.json": "5a6fef3e33e9b8f56495d68278318a9dea9cee81696e8b35ce5360c3fe7edd6e"
+  },
+  "runs": [
+    {
+      "name": "active",
+      "command": [
+        "deno",
+        "run",
+        "--allow-read",
+        "tools/reset-material-bounds-feasibility-v1.ts"
+      ],
+      "startedUtc": "2026-09-30T01:19:14.080543+00:00",
+      "finishedUtc": "2026-09-30T01:19:19.221377+00:00",
+      "elapsedSeconds": 5.140369291999377,
+      "exitCode": 0,
+      "resultSha256": "9d82c47ec5fcf6d9ce07df5b6a09bfde9e0e4ed5565f2751a0645c3c244027b0"
+    },
+    {
+      "name": "passive",
+      "command": [
+        "deno",
+        "run",
+        "--allow-read",
+        "tools/reset-material-bounds-feasibility-v1.ts",
+        "passive"
+      ],
+      "startedUtc": "2026-09-30T01:19:19.222019+00:00",
+      "finishedUtc": "2026-09-30T01:19:23.999607+00:00",
+      "elapsedSeconds": 4.777544000069611,
+      "exitCode": 0,
+      "resultSha256": "3db10ec8c394932588160f191073590f7c37d3288f05f3ae19ebd56cf57e2550"
+    },
+    {
+      "name": "mutation",
+      "command": [
+        "deno",
+        "run",
+        "--allow-read",
+        "tools/reset-material-bounds-feasibility-v1.ts",
+        "mutation"
+      ],
+      "startedUtc": "2026-09-30T01:19:24.000102+00:00",
+      "finishedUtc": "2026-09-30T01:19:24.155065+00:00",
+      "elapsedSeconds": 0.15495033306069672,
+      "exitCode": 0,
+      "resultSha256": "4831f16b0d1618f7e4b61e110e213f6db2cbdc6bbecbb691c0a44d7e61ac464f"
+    }
+  ]
+}

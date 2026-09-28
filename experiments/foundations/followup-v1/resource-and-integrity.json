@@ -1,0 +1,39 @@
+{
+  "date": "2026-09-29",
+  "recordedCommandWallSeconds": 64.33246916905046,
+  "recordedIncludes": "all timestamped v1-v5 receipt fixture runs and final checks, plus root independent rerun",
+  "additionalReportedWork": "Eight exploratory fixture commands (~20s reported tool wall; charged 30s), earlier tests/checks/instrument generation (~10s reported), independent reviewer tests (<2s), source preflights and archive verification. Exact UTC unavailable for these exploratory commands.",
+  "conservativeTotalCommandWallChargeSeconds": 180,
+  "localControlCeilingSeconds": 600,
+  "chargeIsMeasuredCpuCoreTime": false,
+  "gpuSeconds": 0,
+  "cloudSpendUsd": 0,
+  "newBiologicalTrials": 0,
+  "freshEvaluationCases": 0,
+  "gate": "O-not-passed-for-proposed-1100-step-use",
+  "originalFrozenFilesChecked": 172,
+  "originalFrozenMismatches": [],
+  "runtimeStopReason": "measurement adequacy, not budget exhaustion",
+  "receipts": [
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v1.json",
+      "sha256": "8fb6b6579d24d71869d0ae1521fd81af920a130599669f4b3f4c118cf33f9ff2"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v2.json",
+      "sha256": "df4e2e3331eb9bc7823cd76a3e04ca23de30ed61db463095139446c59a05c38d"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v3.json",
+      "sha256": "739eabb4c4ac8808dc533767277a05d1ed496ee8be4d39561f34ad150dcf99d1"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v4.json",
+      "sha256": "fb1744e4fe61688bc28cf291435ecea354c876bb045f71d368eddbe13841a221"
+    },
+    {
+      "path": "experiments/foundations/followup-v1/results/receipt-v5.json",
+      "sha256": "2d5ca4394e4bedea5193fb0647f7cb8e4cfcd36cb5a9fc5ac746e4d374db947a"
+    }
+  ]
+}

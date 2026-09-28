@@ -1,0 +1,65 @@
+{
+  "authoritativeReceipt": "results/receipt-v5.json",
+  "files": [
+    {
+      "path": "packages/sim-ref/src/step.ts",
+      "snapshot": "experiments/foundations/followup-v1/execution/packages/sim-ref/src/step.ts",
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85",
+      "bytes": 26802
+    },
+    {
+      "path": "tools/lib/reset-material-bounds-v1.ts",
+      "snapshot": "experiments/foundations/followup-v1/execution/tools/lib/reset-material-bounds-v1.ts",
+      "sha256": "39c3b3f9b40dca95d4bf6edefbbcbf1b836160cfb7a0f42c5b11dec52962dff5",
+      "bytes": 11274
+    },
+    {
+      "path": "tools/lib/reset-material-token-oracle-v1.ts",
+      "snapshot": "experiments/foundations/followup-v1/execution/tools/lib/reset-material-token-oracle-v1.ts",
+      "sha256": "36127cffb6b329f1b37e8df294e79095e5c49529a4173300269cbae9d3d522ef",
+      "bytes": 3875
+    },
+    {
+      "path": "tools/reset-material-bounds-instrument-v1.ts",
+      "snapshot": "experiments/foundations/followup-v1/execution/tools/reset-material-bounds-instrument-v1.ts",
+      "sha256": "95b5b0aaae7322badd300b172b7d8d43734ef8e243ecb74b97fa1f5088fdeae9",
+      "bytes": 2444
+    },
+    {
+      "path": "tools/reset-material-bounds-feasibility-v1.ts",
+      "snapshot": "experiments/foundations/followup-v1/execution/tools/reset-material-bounds-feasibility-v1.ts",
+      "sha256": "7d2fe98b2cab4fa6e6a6d243c5d1a2348b2b2aed48f776014782f25aa9cedc9e",
+      "bytes": 7984
+    },
+    {
+      "path": "tools/test/reset-material-bounds-v1.test.ts",
+      "snapshot": "experiments/foundations/followup-v1/execution/tools/test/reset-material-bounds-v1.test.ts",
+      "sha256": "6690fd55d11fd6bbb45ef6e54474137a10e93b86f1c1377b7fdbf667c6446e79",
+      "bytes": 8719
+    },
+    {
+      "path": "runs/foundational-reset/material-bounds-feasibility-v1/ref-step.instrumented.ts",
+      "snapshot": "experiments/foundations/followup-v1/execution/generated-ref-step.instrumented.ts",
+      "sha256": "b142490a94f355cfc89102e42ee888bd52686578051cdd742e6f374cc49d6fef",
+      "bytes": 27515
+    },
+    {
+      "path": "tools/fixtures/reset-material-bounds-active-v1.json",
+      "snapshot": "experiments/foundations/followup-v1/execution/tools/fixtures/reset-material-bounds-active-v1.json",
+      "sha256": "14e04c4555c24e39fbfcd7bfab5f53b4f1bad2971cb01f34a99ce6f3025dd43b",
+      "bytes": 336
+    },
+    {
+      "path": "tools/fixtures/reset-material-bounds-stress-v1.json",
+      "snapshot": "experiments/foundations/followup-v1/execution/tools/fixtures/reset-material-bounds-stress-v1.json",
+      "sha256": "552a17f3189034c29da5e0a0a8c4da9d9674255c9a358345d54a5442bc9a438e",
+      "bytes": 310
+    },
+    {
+      "path": "tools/fixtures/reset-material-bounds-mutation-v1.json",
+      "snapshot": "experiments/foundations/followup-v1/execution/tools/fixtures/reset-material-bounds-mutation-v1.json",
+      "sha256": "5a6fef3e33e9b8f56495d68278318a9dea9cee81696e8b35ce5360c3fe7edd6e",
+      "bytes": 384
+    }
+  ]
+}

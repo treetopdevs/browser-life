@@ -1,0 +1,3757 @@
+{
+  "format": "reset-evidence-index-v1",
+  "createdAt": "2026-09-29T21:14:55.622135+00:00",
+  "scope": "Local preserved evidence and report snapshot; does not archive ignored runs. Excludes this index and append-only execution log. Final closure revisions require a new index version.",
+  "files": [
+    {
+      "path": "docs/foundational-reset-expanded-plan-2026-09-29.md",
+      "bytes": 32193,
+      "sha256": "72e72fa4ac3370c2f5d53e258d76af2fb7648f3dfd5e789d799ec200d7f8b3b9"
+    },
+    {
+      "path": "docs/foundational-reset-plan.md",
+      "bytes": 22928,
+      "sha256": "c67590d6c079d77ec07c7420d42f89c0928a1a52c92df9b6365bcfb5d7a5eb2c"
+    },
+    {
+      "path": "docs/reset-claim-code-map.md",
+      "bytes": 3363,
+      "sha256": "74dfe8a4eae14134c4bc0172cd0029c76c6d02125eddd471ad98a1ec969eb6ee"
+    },
+    {
+      "path": "docs/reset-completion-audit.md",
+      "bytes": 4439,
+      "sha256": "53663ffb7de65edc9072b8a208b31863bd0b253861d6e919df3dd6e5fbe064cc"
+    },
+    {
+      "path": "docs/reset-decision-handoff.md",
+      "bytes": 3397,
+      "sha256": "ea55b36ab9c48a5210e12137c9287cb2697de70f11c9fd0534245a6a7399e2fd"
+    },
+    {
+      "path": "docs/reset-entity-contract.md",
+      "bytes": 6511,
+      "sha256": "1fdadc3acba6ebe764026ed2ffee40fe6dbcb87d3fd470165b6f8dd135580fe4"
+    },
+    {
+      "path": "docs/reset-literature-note.md",
+      "bytes": 2376,
+      "sha256": "c5c3dfb3059a557e721674252ac7059aafe6f56b19f7241ac7ee0bf0bc5dc953"
+    },
+    {
+      "path": "docs/reset-phase2-report.md",
+      "bytes": 11203,
+      "sha256": "6835965278239c7e4ddfc5b808ed29dd06f2ba571b3302b2d730b8573ec43383"
+    },
+    {
+      "path": "docs/reset-probe-a-protocol.md",
+      "bytes": 9475,
+      "sha256": "cc0591a3c77b66c8a878cbce0097a9de0a6df01b411de731b5182d3551cf4f0c"
+    },
+    {
+      "path": "docs/reset-review-record.md",
+      "bytes": 3378,
+      "sha256": "5f2fd52a6bdd99775c38da627d505af23783402d394842910229475215fb86ef"
+    },
+    {
+      "path": "experiments/foundations/reset-resource-ledger-v1.json",
+      "bytes": 13583,
+      "sha256": "951a0d697c1e2b55142a05c8a87933721aefa0395f3728dfaa741cffefffd842"
+    },
+    {
+      "path": "runs/foundational-reset/cpu-window-load-1790699289166.json",
+      "bytes": 496,
+      "sha256": "538c10a6bbae3a35a2d01b8165531bde53df790f1de48296106c6bf82fa89ce8"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/docs/foundational-reset-plan.md",
+      "bytes": 21375,
+      "sha256": "54c2e1bed4fae9e740722b86a4a868b3aeb51de5ec9edb90ee4508774bdde89a"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/docs/foundations-next-results.md",
+      "bytes": 16973,
+      "sha256": "d1bbf4b2e1264ecf032341fce9c65e98bb07b2a265ff3c490b15ec84afc9b106"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/docs/reset-entity-contract.md",
+      "bytes": 6511,
+      "sha256": "1fdadc3acba6ebe764026ed2ffee40fe6dbcb87d3fd470165b6f8dd135580fe4"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/experiments/FROZEN",
+      "bytes": 65,
+      "sha256": "10c22e94bcf1fca20d501e9c067c7c82f2555549a87813c311c6973fd2381975"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/runner/src/runner.ts",
+      "bytes": 37712,
+      "sha256": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/genome.ts",
+      "bytes": 3055,
+      "sha256": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/schema/src/world.ts",
+      "bytes": 14874,
+      "sha256": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19115,
+      "sha256": "3186bb493ebbbfb1aad218b9e7c29314e9e0a08f40e4ff4b51623d18f5e12145"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/foundations/tsconfig.json",
+      "bytes": 923,
+      "sha256": "0e143fbedc4f4f528a7063027a7dea308ec08e3dc1da60109dd157647f742caf"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/docs/plan.md",
+      "bytes": 71905,
+      "sha256": "83dc19eb05e5944dbb19e6d7b58a26a3c1ccc8e6546d9925391a7c837d34a2af"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/FROZEN",
+      "bytes": 65,
+      "sha256": "10c22e94bcf1fca20d501e9c067c7c82f2555549a87813c311c6973fd2381975"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/gate.json",
+      "bytes": 1795,
+      "sha256": "dc4412fb6ee4784e2e201f70ce16de8b19a1a5348935ff817fb472a34925a4e7"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/t1.json",
+      "bytes": 71152,
+      "sha256": "c004274949b2b3815e903a5efe86c1f35619f0f32eb8b091cbeacd8640519215"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/t2.json",
+      "bytes": 213007,
+      "sha256": "ca6e271e721d4fefd42e52ede2680b06fa1aebd89d9bdcac1604e1ccf95e41f3"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/t3-gradient.json",
+      "bytes": 34057,
+      "sha256": "1622503bb0ece5afb5634bb1ad57787b5f76a38548c128b8c8e759eff04bec35"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/t3.json",
+      "bytes": 33994,
+      "sha256": "c44a4757147d797628e6748d3ac7500458195ddc0920cbd189847ff3eabc1e42"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/t4.json",
+      "bytes": 12912,
+      "sha256": "b4f2d1e04772e33c8857a6da99cfa5dcee41d2df957bf288874849d176ce21ed"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/t4b.json",
+      "bytes": 12845,
+      "sha256": "84fd063e6a069b542cdc68a54955bcb55da1fa8e14d5b5b04974bf597d227eae"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/t5.json",
+      "bytes": 10288,
+      "sha256": "5b532cd12809a9e154722cb1f7a817d7cada04b370818dd3220ad0da09087cbb"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/t6.json",
+      "bytes": 35231,
+      "sha256": "48e650e00433853c850a8c7ed978dec68c393cf0ed6c003f9365d2be8ac3f7a0"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/experiments/foundations/validate.json",
+      "bytes": 11425,
+      "sha256": "de5fafedd37897e96470b6de03382f72335ab39ebd4af1abf1535a829d69ccd2"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/runner/src/runner.ts",
+      "bytes": 44732,
+      "sha256": "38ac185c0e6e6e96f8b461c3b907204abf513cad87e8ef40fabdeb5f2a5322bd"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/genome.ts",
+      "bytes": 3849,
+      "sha256": "77a1a3cc32bd4bd3bc638ba9e0fec5e7a552fd815631b02f63f3ac566d63cdd9"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/schema/src/world.ts",
+      "bytes": 15089,
+      "sha256": "2ecce7760984d378a7e0781984bcfaa65527e2e8225d3d5f3c9fb0ab21f8006a"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19115,
+      "sha256": "3186bb493ebbbfb1aad218b9e7c29314e9e0a08f40e4ff4b51623d18f5e12145"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/tools/foundations.ts",
+      "bytes": 73780,
+      "sha256": "3c6efdff3ce09a0b0523a09c4f343f3a54fb50b1d773f831d13536e245daed8c"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/baseline/main/tsconfig.json",
+      "bytes": 923,
+      "sha256": "0e143fbedc4f4f528a7063027a7dea308ec08e3dc1da60109dd157647f742caf"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/0-main-manifest-reconciliation-v1.json",
+      "bytes": 137515,
+      "sha256": "7532b62cae0132f6e9a1fb3cfff2c95370025c04c985498d179dbc2f896baae1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/1-probe-a-inputs.json",
+      "bytes": 66550,
+      "sha256": "6387b397a178f2e684bd1360cbc36031602b3b34339ea44027e1a640b90f8910"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/10-gpu-original-100k-1790699102958.json",
+      "bytes": 5481,
+      "sha256": "2cacbaa1abd2ddd7b60a7424a4ddc541dc8cd42d57a88e3d1b9b2c1b869ce14a"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/11-gpu-integrated-window-1790700100365.json",
+      "bytes": 4901,
+      "sha256": "8ddf4e95d8bb45c94f4f3af87073fd97a9fe6bf30d992a2aa439e6d9d7d30f9d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/12-gpu-passive-control-1790697977544.json",
+      "bytes": 1713,
+      "sha256": "87f066c87f567e57ec1ba1c41276ea610ec8f2100ff44fac2870cd4951eebc66"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/13-gpu-stream-prefix-1790700556542.json",
+      "bytes": 3215,
+      "sha256": "ec1708cbfb3346978da297d96fd4e93ab1c1b9b3adb47499e162b4e22520cec4"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/2-inputs-v2.json",
+      "bytes": 71214,
+      "sha256": "9e23de81bee51057baadc6ed765c8d3c9eafc0696051f788fd5b93846ec23dec"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/3-input-preflight-v3.json",
+      "bytes": 98661,
+      "sha256": "d551df0db0e2e3c8a5ef78cc19bfcaa088224dc41a3d95722aa97cee68aaeffa"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/4-original-replay-reconciliation-v1.json",
+      "bytes": 10258,
+      "sha256": "abfeb199806088e2d07b29955ef4915aa9e8d2728095aa427f9a84bdb2812a1f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/5-manifest.json",
+      "bytes": 47209,
+      "sha256": "270d42c9b9f623586de5a78f8f87486d211f67d9f75877f3b7e862af99dfbbb1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/6-reset-seed-status-v1.json",
+      "bytes": 2041,
+      "sha256": "ac12b83a5be3afc3c7dc359369235aec085df1388de5188c5259f55340068226"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/7-probe-a-design-v1.json",
+      "bytes": 70535,
+      "sha256": "a80b875618988ef99edf65382a2cb1ccfc1b15b397d297f46356cc9ff0000e53"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/8-probe-a-design-v2.json",
+      "bytes": 72522,
+      "sha256": "2b91a2d3c318fb44b78f4c057c1adbdd60a5643b3883dc19f282ac4580dba163"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/evidence/9-initial-state-preflight-v1.json",
+      "bytes": 4487,
+      "sha256": "0355fc126acaa1a0be19f963a2a29132ac8980a04c9adde577695a2e93952fe1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/manifest.json",
+      "bytes": 183924,
+      "sha256": "7ca8f2b3cca99095117e139de03aa229770d3a074d2b489982a339502d619ddd"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/deno.lock",
+      "bytes": 694,
+      "sha256": "8630fa4d89086681cfed42c0f5977e2e34e720d1b32580300df124f83cf872bd"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/docs/foundational-reset-plan.md",
+      "bytes": 22928,
+      "sha256": "c67590d6c079d77ec07c7420d42f89c0928a1a52c92df9b6365bcfb5d7a5eb2c"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/docs/reset-claim-code-map.md",
+      "bytes": 3363,
+      "sha256": "74dfe8a4eae14134c4bc0172cd0029c76c6d02125eddd471ad98a1ec969eb6ee"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/docs/reset-entity-contract.md",
+      "bytes": 6511,
+      "sha256": "1fdadc3acba6ebe764026ed2ffee40fe6dbcb87d3fd470165b6f8dd135580fe4"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/docs/reset-probe-a-protocol.md",
+      "bytes": 9475,
+      "sha256": "cc0591a3c77b66c8a878cbce0097a9de0a6df01b411de731b5182d3551cf4f0c"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/package.json",
+      "bytes": 602,
+      "sha256": "d5316dfad0d4882e3707b40761f24016551674270708c05189c170da2762bff4"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/test/biogeography.test.ts",
+      "bytes": 29527,
+      "sha256": "5e4042eddb50422a205d10c2b33bf8042d6d4f9546a2ca6e74660c9d015960c8"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/test/calibration.test.ts",
+      "bytes": 13311,
+      "sha256": "6cce9b6074ecfbfe353f3a95be35e12408adb7814e8851ee5021902a988e96c2"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/test/collectives.test.ts",
+      "bytes": 1869,
+      "sha256": "66b280b05da9b26e27cdaf952f405d41f34bb4e87ee6f8e7f64581b2e24c1e8e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/test/complexity.test.ts",
+      "bytes": 1662,
+      "sha256": "2a4b1eca65a49d9871c15da3236e512ec4e944de0f9e10b7a8aeaaf93bae7297"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/test/individuality.test.ts",
+      "bytes": 25568,
+      "sha256": "bde25c7990306c97c0c0e3db2154e5e630b201b09f1898c1b6a93718558e0875"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/metrics/test/stats.test.ts",
+      "bytes": 12494,
+      "sha256": "962d9d44ee20c7919ccb532fc5fa379a4991a2088b0bd0c896415b9e628addee"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/src/runner.ts",
+      "bytes": 37712,
+      "sha256": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/test/conditions.test.ts",
+      "bytes": 3053,
+      "sha256": "bb49ad921a62f4a1bf1e72171f999c3b0be04980c8aa681178227fe6601b9fa5"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/test/island-page.test.ts",
+      "bytes": 12798,
+      "sha256": "a1da7e94b050b40e0221b55b22c382914a84f87ad7e607bc22d1a4c2855c526e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/test/island.test.ts",
+      "bytes": 23220,
+      "sha256": "bbc0cfea8680f6ebf25e388777b2420b020a67ce63a1085a7c1db52887520393"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/test/runner.test.ts",
+      "bytes": 10061,
+      "sha256": "0678b62e9458cacee7d22cc0bc5191a5e77e6b4b9f222c8cdc8a54a97719c23f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/runner/test/stitch.test.ts",
+      "bytes": 6128,
+      "sha256": "13b5dc2eb56f8a3045a19850c89391523898adc49934ddda4b7399f4339948ae"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/genome.ts",
+      "bytes": 3055,
+      "sha256": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/src/world.ts",
+      "bytes": 14874,
+      "sha256": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/test/archipelago-world.test.ts",
+      "bytes": 5560,
+      "sha256": "753d7a479c00f559cdae902bde32dd07106e2d12aea9d2c366f37f6c23ec9a02"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/test/exchange.test.ts",
+      "bytes": 16601,
+      "sha256": "62187120f125fab53eb1cf0c0894ece23a087cd30ce814273f6ada7fe40ac715"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/test/genetics.test.ts",
+      "bytes": 2186,
+      "sha256": "0f3292f68fcdae35e7b6ec1d27d1a0cd45e8691d951648a08bf0acc1ce09e90d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/test/m3-founders.test.ts",
+      "bytes": 7320,
+      "sha256": "778fbb590bd3bb9cc8c1f065b8e893b1c3bdfc1fc62791f817db03f9e0839110"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/test/migration.test.ts",
+      "bytes": 13166,
+      "sha256": "ddbb1e2564da234574d7a267951204882cf32d8cb62dbc472593ee71931873f2"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/test/presets.test.ts",
+      "bytes": 3660,
+      "sha256": "fc43e70f64f7fd1cf6732192e75265524ac0d721328c79d15ed7697a27b0a439"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/schema/test/validation.test.ts",
+      "bytes": 10558,
+      "sha256": "6cffabba426bda329bc863ddfb2bd1fd06e7da3e3e5e6bca3d7780f075acc374"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/src/evaluate.ts",
+      "bytes": 13915,
+      "sha256": "c8b3a7ff858778013f629b0a0a47a25fa2811eca813e44ac0a7123ef94e1fd66"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/src/foundation-behavior.ts",
+      "bytes": 7174,
+      "sha256": "18863d1fb018685998f1a1e46862b8805c62d595fde2de84cb1299e25f6c58dd"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/src/index.ts",
+      "bytes": 92,
+      "sha256": "cc7060fff3a3425219acb80370218cb9e8d1ceffa85c25d04064af4501f079fa"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/src/mapelites.ts",
+      "bytes": 9605,
+      "sha256": "bc2b4402c58342b847411b95d249847fa451924e692b9a39bae35590b32b1d08"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/src/mutation-neighborhood.ts",
+      "bytes": 6300,
+      "sha256": "2f558ca29f5504c352e33185831e35b94d3f875c7d4f43af41d1a7f8f360861b"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/src/retest.ts",
+      "bytes": 6367,
+      "sha256": "80ea2e3a723af000d4ab94740c139765b4b114203478851ce5fc2d00c69bdfb9"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/test/foundation-behavior.test.ts",
+      "bytes": 3510,
+      "sha256": "4fd9891b5990353bf6a0223e8e3f5b5b4efb23aee6780f35cee3a7e43d1d6fc0"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/test/gate.test.ts",
+      "bytes": 9271,
+      "sha256": "6dd891f15164c5a5d735001902b3ee1481e542f135641b69910bccfcb9fb4627"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/test/mutation-neighborhood.test.ts",
+      "bytes": 2664,
+      "sha256": "960973c34d4e98bc976cc973b379ce5a018ab8f8a4845faeaf1f23fd97c66b30"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/search/test/retest.test.ts",
+      "bytes": 6240,
+      "sha256": "dbbcf361b87e7ccfb823f4cc58854b78f5304a839149095509944a05c315017a"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19269,
+      "sha256": "f6d119d89147752ee1c3fd2ab136eb545cbb4ba696adaa4eac795dfb740d506e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-ref/test/adhesion.test.ts",
+      "bytes": 4958,
+      "sha256": "53939ebf0e43538620cbf5ad277fb2ba796576443a7f90d4c6be13e6e4e46dfe"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-ref/test/golden-hashes.test.ts",
+      "bytes": 2298,
+      "sha256": "a89adcb35314dd65fae118bf6363a2fab8080752421f0a1c5453dbfb4fbb4004"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/packages/sim-ref/test/ref.test.ts",
+      "bytes": 3044,
+      "sha256": "3261427b3d81ee22d226bb5e727fd78faa178e23c2774d8650aed47a732c54fc"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/anticip-stats.ts",
+      "bytes": 8533,
+      "sha256": "2b37362cfc5cc31c17c8a1d696445a1dca29e01710a11ea8290df367544e8aea"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/bundle.ts",
+      "bytes": 15853,
+      "sha256": "59f5d8f69bbe32925e65f351d4d90180e77b63b787552bdad41aae38ac4fd175"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/calibration-decision.ts",
+      "bytes": 5312,
+      "sha256": "d79c96e50cf5b29d0746c511ea6bc3c5a7dab62d4e82df51179332e857673d21"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-a1-organization.ts",
+      "bytes": 5966,
+      "sha256": "9ca9a22c8ef7b49288a65798d92cd1a04f76f73416560dc64b7bd1fac5c1e632"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-ancestry.ts",
+      "bytes": 14146,
+      "sha256": "c17f3938e4c8abed1746f56c7228db2e3ed024184caa563dec79af29f07131c7"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-assays.ts",
+      "bytes": 18194,
+      "sha256": "4a7663a703c704911e09c764b24ffa1326c24a8856b07a3f635750c88118dabc"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-audit.ts",
+      "bytes": 7465,
+      "sha256": "f0e4cb7de3a01e52a13dcd2f473255a32bb91b3539688e960c35592a1fb62843"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-competition-analysis.ts",
+      "bytes": 21205,
+      "sha256": "6f139b4ac0488b9bb2931cc8449de3c40a3ac1d4e11d87e72df89329f0ca74dd"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-competition.ts",
+      "bytes": 13412,
+      "sha256": "a4dfee697a18ad5c58612e9f0b60e7c08406635a6f912dcccd7064c52c3c04f1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-component-material.ts",
+      "bytes": 5516,
+      "sha256": "2d11508acdeb07d6ea4623c4d339738ff757da022c377260e13d97863680673b"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-controls.ts",
+      "bytes": 13068,
+      "sha256": "e30b1892e57490fd48f151befedf9ba7c461e91a6963ebb0a229798ea3e921c6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-copy-ancestry.ts",
+      "bytes": 15314,
+      "sha256": "1accbc030e939536c8f3b8dafb48ca91544c02af68479b08241858d45d676111"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-extract.ts",
+      "bytes": 15695,
+      "sha256": "8d7218adb6a2188460a2c8818c1ea0d3ff52b7cb659f7f543fd6c41ecc34426f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-garden-life.ts",
+      "bytes": 5709,
+      "sha256": "46ca4740ae1874201ba2150723fa498078300e8a1df8afb2e80fc35743632e67"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-life.ts",
+      "bytes": 10086,
+      "sha256": "799669543a21fb17955c7e9893a92c58a3d79861df19cee3ec1e6f0b0fed865a"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-lifecycle.ts",
+      "bytes": 22733,
+      "sha256": "fa97ed374ccb1eac433e67848c34820dddd3e0199ebed74a540919e09b7facf1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-local-flow.ts",
+      "bytes": 4581,
+      "sha256": "0633d4ed878636b5921d1b891dd042f1aa969abe4d8aecd379a67782a1374a56"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-material-flow.ts",
+      "bytes": 6889,
+      "sha256": "91bbe86ef843acccb698b19d05cdaa13475b3c103968987d907d8ef1ab6aa38e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-replay.ts",
+      "bytes": 16008,
+      "sha256": "196f2384361d575362c91dae8ad7514fef81dc28e1f719a47ac296f1dcda9c52"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-role-cohort-reconcile.ts",
+      "bytes": 4949,
+      "sha256": "9f0c67d43de12448f90612080dfeb4368538a6c471e9029aedd472291b72d5f0"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-role-cohort.ts",
+      "bytes": 24399,
+      "sha256": "c7269138eba4db65b112e89a65ff75c2d746d1bd81063c76e8b6304ae51c9012"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-screen-analysis.ts",
+      "bytes": 10524,
+      "sha256": "03c33fd504153ad70ce104f1388d93c8c3c85deed4b473c492fcad740be5bcb2"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-screen.ts",
+      "bytes": 17324,
+      "sha256": "9e760f5481ce1c77a32a7ed1c078351c9fb1b62f519e8da0bafa96bd9f970f32"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-sensitivity.ts",
+      "bytes": 9891,
+      "sha256": "3e3b4989eb2c9ef3d0be5ac600cc0e8fa8d89ae20e3ed65b75372f573e2dad76"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-capture.ts",
+      "bytes": 22828,
+      "sha256": "15e03a58d9f3d5f533dbce896b57f65593dabc4f03c778b3ef366d911da0fa99"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-transfer.ts",
+      "bytes": 8648,
+      "sha256": "eeb815272579d60332ee589e9c52c0900657d8a89d6d4498c65ef587cf5110c0"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-v2-frame.ts",
+      "bytes": 5720,
+      "sha256": "135df451d97df421042b6db0253ebda40bd3f2e938cdc491006be356b97d0a70"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-v2-gpu-guard.ts",
+      "bytes": 1754,
+      "sha256": "8ffde7750dd9d67b1cd6352afdbd4d97d02bf6d34c71e070b6592d64da7f71a2"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-v2-observe.ts",
+      "bytes": 6695,
+      "sha256": "80536f7d2217a35d88a3befbc01f9ce73925f3038fb59d5aafae4a512d4b8324"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-v2-parity.ts",
+      "bytes": 1713,
+      "sha256": "9430e166a5a42e4903fd66b437b7b06aab3044ddb6bdd5c6cd3488ae95b8e8e5"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-v2-receipt.ts",
+      "bytes": 4948,
+      "sha256": "cba4dadfe22b5834029d4364f86db409c89cbe1651c0db577a43beb42e81dd78"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-v2-run.ts",
+      "bytes": 12514,
+      "sha256": "38d89badd4355aa82f02f517570fc3e8a6650644c12160a8bf033999c0741653"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-v2-selection.ts",
+      "bytes": 7998,
+      "sha256": "94a252011fe6e0ad83e3f8d538ab283840a1ffc751e6a1c11484909223024084"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-serial-v2.ts",
+      "bytes": 9568,
+      "sha256": "c84bdb86a43ab109a1897c11b9df98d98ecd7dd1ef69d9cad74328635558fb47"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-transplant.ts",
+      "bytes": 16492,
+      "sha256": "e55d0ffa0bda7607c4b9bd62adfc560bfd6e0716bb377aa6682118363dc74f46"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/foundation-validation.ts",
+      "bytes": 24237,
+      "sha256": "0764303520e489678cf0387cb22d3896957861993d493738c1ec053167456709"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/founder-identity.ts",
+      "bytes": 4738,
+      "sha256": "89437b5ea89dd753a013723699a2dcea45754f82d4fa37604aa5bdc794cad509"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/idhash.ts",
+      "bytes": 2209,
+      "sha256": "641158d70ceb5621a4a8dae354399dc533251cdb599d1f61e5c2ed9999bda992"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/light.ts",
+      "bytes": 1443,
+      "sha256": "2ab303af44a93aa8d1236bec7d3517b1fd60bcfa4b420e74426f3c6d4d21816d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/m4-calibration-checkpoint.ts",
+      "bytes": 2344,
+      "sha256": "7095934a505eecf7fb299668f589f913ed174cd4128fef5e9e1fba0e190807e3"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/m4-growth-generators.ts",
+      "bytes": 3202,
+      "sha256": "d94b73a80dffd0514eb3a480149a23fdaabf241538412ef69ea2aa7518f1c21d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/m4-growth-runs.ts",
+      "bytes": 5379,
+      "sha256": "a707cd32197c81a54cb51043b1c5407940ae9860b12d9e7a556009ad2f1926a4"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/m4-growth.ts",
+      "bytes": 6217,
+      "sha256": "c2b56e411f759e82124a56fd7aafbb8f60a425a280c16c9560a56c5ef63a975d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/m4-pipeline.ts",
+      "bytes": 6284,
+      "sha256": "d2af25ab09dff11e19fde7a1a3dad74570e0ed2b39d5598fb47b3e2bd3f9e887"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/nullgen.ts",
+      "bytes": 35086,
+      "sha256": "de48b9cb83802bb37d96fccb3779c714849ee155565c0843b12ebccafff33da8"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/report-html/anticipation.ts",
+      "bytes": 19278,
+      "sha256": "960c77a515dab378c2e977987554c9cb08c46333dc2c7607356b69ee5ece7c82"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/report-html/biogeography.ts",
+      "bytes": 41054,
+      "sha256": "7225960beb19520449e9d3d882eb7056e482321f12dc8edb644d2175a779b0f3"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/report-html/individuality.ts",
+      "bytes": 23694,
+      "sha256": "80b259ff56ac33d218a7569f5b92e2c3a9f0e11ad66255aa10d6fbbba7b41fac"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/report-html/nullcal.ts",
+      "bytes": 18174,
+      "sha256": "9383b98a6332790d432e5e8198d12ba1b35a55b71250df506ea4938d6c3901f8"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/report-html/page.ts",
+      "bytes": 16951,
+      "sha256": "505ad8a0a5ce6df653bc21ff43e21cb5bba5675e3cf937a303eb402c7d0126ff"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/report-html/svg.ts",
+      "bytes": 26726,
+      "sha256": "d5471d22a4d8a0249a3182482486297f14fed00e3e9129f5fbf380235fe09498"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/report-html/write-all.ts",
+      "bytes": 1098,
+      "sha256": "49ec4d79a6aa5c9a10137e2d171559d57097a7df9e88f87f084ff533e78f5a16"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-copy-extraction.ts",
+      "bytes": 7407,
+      "sha256": "1e664bb0208ea22d5f9f6321ed2e50ca042e0233c36c76104def7fea156d76a6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-copy-ledger.ts",
+      "bytes": 11349,
+      "sha256": "302913647beb67af5279cf0f1eb99b156093d3040f1aff1bd58f370ad9e76744"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-followup.ts",
+      "bytes": 8503,
+      "sha256": "5d6d6dfd5ef9ba7a1cb423f65458bc992b0654120800dc74cdd9a300c744bee6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-gpu-copy-audit.ts",
+      "bytes": 14019,
+      "sha256": "696ce3615329fe0b8bff1ff26fbe889407475c5afefaae7e32d52c1f795f5d75"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-gpu-event-join.ts",
+      "bytes": 3080,
+      "sha256": "0cd8c58a01521262955a48004d4c7915de034ff308841ea171c90be3e5b6f3e5"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-probe-a-analysis.ts",
+      "bytes": 7813,
+      "sha256": "acde196da41faf1d7410764fdb2aa160664b74e9c8e068f942236a720956d771"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-probe-a-auth.ts",
+      "bytes": 7727,
+      "sha256": "17c7667be8fb0ae1492c246c5109505f444cebbf87516c021bdef98dbb42c5e6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-probe-a-guard.ts",
+      "bytes": 2766,
+      "sha256": "658725135d67504434cbd443a85ef229a46ebb86f796bbcf2294f6ed36864306"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-probe-a-observer.ts",
+      "bytes": 7663,
+      "sha256": "e3509fdc6f31030280dce0ea587ef0ec3703c0d8ba512057a0334cbd25a9c64c"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-probe-a-plan.ts",
+      "bytes": 5674,
+      "sha256": "ccebccf7faa65e18fbc4fed9b090fd1cd136388837155b221b3d0481256c3e3e"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-probe-a-runtime.ts",
+      "bytes": 15242,
+      "sha256": "82398f8a9e6d21a5f9d3edee6b4107c67add4f3e4c75b459e1c3ce76f45df95d"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-topology.ts",
+      "bytes": 6095,
+      "sha256": "9b65ffd8f3210727432b4bd79e79c35d8f2b08199206ed7d6bc4fa13e8b07831"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-window-persistence.ts",
+      "bytes": 6663,
+      "sha256": "c76fe6955ab3383f04309d798f1e685433ebeaca73ee8392d3951b1bcc770b60"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/reset-window.ts",
+      "bytes": 3241,
+      "sha256": "fe3a4de90a38e3aabfda6fa83730ebdbe98ca8ce5efa5b07edd307d95817b21f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/lib/threshold.ts",
+      "bytes": 9974,
+      "sha256": "2f354897bc57bf41d69f862add75eed88307612d00b2fa7d9a9b9200bb2c4084"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/reset-freeze.ts",
+      "bytes": 8481,
+      "sha256": "80bfba763e9148428d58abbfeff0df4768efd6c3c81fd2a49bc62b1224eaa67f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/reset-input-preflight.ts",
+      "bytes": 5458,
+      "sha256": "741611f732ee781f70e9af73c5de94567e5b5325f343ad6754b7680d31f47621"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/reset-probe-a.ts",
+      "bytes": 15827,
+      "sha256": "5a9ca1c4828e6932d6d6395b7721f5b47557d012577ef9eab937b05f5a1cf635"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/reset-reconcile-inputs.ts",
+      "bytes": 4578,
+      "sha256": "98da2411d78167648bf620406286de8fa726ed8403721aa759ce33982daec233"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/reset-summarize.ts",
+      "bytes": 16399,
+      "sha256": "03f57aefeb01ee863610827f42641d0e6600e45563f0d5180ca9c747874751f1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-copy-extraction.test.ts",
+      "bytes": 5357,
+      "sha256": "7f78b27c400bee261869d07fd2f65fc75bdf4e348725338577fec1e6c07733a6"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-copy-ledger.test.ts",
+      "bytes": 11498,
+      "sha256": "7be5f2066fa14d382f8a4782b04654bc036731bd4c6986ae7d0afc5ed93fab70"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-followup.test.ts",
+      "bytes": 7468,
+      "sha256": "1f74be454636fc51bdd7df4ce682703a9c2d322207613673cc2e54f334245749"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-gpu-benchmark.deno.ts",
+      "bytes": 5612,
+      "sha256": "3bd1c1aabcb76c3cf44584581b377e825b5d0d56bfbcd5c41271b64d08878e12"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-gpu-cadence-benchmark.deno.ts",
+      "bytes": 6572,
+      "sha256": "cc7c610b21b5ce41a5e9f228316f759f249c44154b7cf1ca8c4afc0f148e853c"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-gpu-copy-audit.deno.ts",
+      "bytes": 11753,
+      "sha256": "b332c84a3003cc716fc3253419d884552801feca42e21c0b5cbf03b7553f1578"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-gpu-event-join.test.ts",
+      "bytes": 2099,
+      "sha256": "36b13f5541004f2d1056ddb18a69369508e68a659740c20ee7dcd6c0870c4e35"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-gpu-integrated-window-benchmark.deno.ts",
+      "bytes": 7520,
+      "sha256": "114cc20053161254d65caf9848e4cc6e68b90b5c18a1d2e095716237e68de3fb"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-gpu-observer-benchmark.deno.ts",
+      "bytes": 6472,
+      "sha256": "a6d8116b9160731104694794d553a7e246999d1da53dd36ea8cc6bcc44f42be1"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-gpu-original-100k.deno.ts",
+      "bytes": 7367,
+      "sha256": "63a8568b21606d1ff16b8b42f67089db78843123cae76a5701647c50e5d33cfd"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-gpu-stream-prefix.deno.ts",
+      "bytes": 6999,
+      "sha256": "12b873ba9f1f3f73ab2f1882fa278b830f01661e320cb449334d4557df87b54b"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-gpu-window-benchmark.deno.ts",
+      "bytes": 6964,
+      "sha256": "23e13c734a6d9d9ae2864ab85bc47cc3dff3c9c887c3ad111e95f0f5d9c4c5ec"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-probe-a-analysis.test.ts",
+      "bytes": 5051,
+      "sha256": "901601b1b51f096b86d0221c3ff4202741aa21797df41e27974625fe6532500c"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-probe-a-observer.test.ts",
+      "bytes": 4014,
+      "sha256": "487ab4bed7b1d302d1fbb40cabede49603d7c29786b3b9788e878934ece7e1bf"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-probe-a-plan.test.ts",
+      "bytes": 5347,
+      "sha256": "271c0326ae4dcdc3f5879f344e61c3b40ae1e50c3257d0e34ee3675f9c62600f"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-summary.test.ts",
+      "bytes": 6377,
+      "sha256": "950f0c2cfe473c2634927cef364098c4bb02decd25a5a83c44e8c506e41deae2"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-topology.test.ts",
+      "bytes": 4525,
+      "sha256": "00cc5fb6dbd90ca56f5b751bec7870e646b1895ecbb0fbf985eb18bc699fff01"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-window-load-benchmark.deno.ts",
+      "bytes": 3004,
+      "sha256": "3c611420964dc966b2218ae083c74020c72c3c37ef3a97e3880986287b4f6f69"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-window-persistence.test.ts",
+      "bytes": 4155,
+      "sha256": "f93e0c5c7fa6cc7e8b4678344b6e1d1b0bc4fdcbdd59862fb0771efea04871a7"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tools/test/reset-window.test.ts",
+      "bytes": 2827,
+      "sha256": "66334c573ec09a6be35dc2e27f2744024f8174b5190acc7486261bffa1b89153"
+    },
+    {
+      "path": "runs/foundational-reset/execution-source-v1/source/tsconfig.json",
+      "bytes": 923,
+      "sha256": "0e143fbedc4f4f528a7063027a7dea308ec08e3dc1da60109dd157647f742caf"
+    },
+    {
+      "path": "runs/foundational-reset/final-integrity-v1.json",
+      "bytes": 243662,
+      "sha256": "981ccf29b6da07b516b9308c370d0d621369fac4694ff0890d08c7090714dbab"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-integrated-window-1790700100365.json",
+      "bytes": 4901,
+      "sha256": "8ddf4e95d8bb45c94f4f3af87073fd97a9fe6bf30d992a2aa439e6d9d7d30f9d"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-observer-benchmark-1790697562933.json",
+      "bytes": 4271,
+      "sha256": "f595bd060f9078f707cd378986eda322d3d80e34ed14cd7de6fe66c7c36c47ca"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-observer-benchmark-1790697751375.json",
+      "bytes": 4269,
+      "sha256": "25110cec1d2f3ec268323e40438bd901dbcb2ec0b030c3b88a2ab35b80492f6c"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-original-100k-1790699102958.json",
+      "bytes": 5481,
+      "sha256": "2cacbaa1abd2ddd7b60a7424a4ddc541dc8cd42d57a88e3d1b9b2c1b869ce14a"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-passive-benchmark-1790696621891.json",
+      "bytes": 3025,
+      "sha256": "fc4fa4d15c36b521e6ec2ce489f7ddc59654016abc5007df1f0bd06213bdd8f4"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-passive-cadence-benchmark-1790696845662.json",
+      "bytes": 3751,
+      "sha256": "832e7d262e0ea23e5951248671cd5e6ee31127c8f608d341eed2b0aaa807e5be"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-passive-control-1790696510694.json",
+      "bytes": 1366,
+      "sha256": "6b5e6da444387d5222aefb97004e97a975edcfa58dae3ee5e2f0a0b4db2d6fe9"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-passive-control-1790696685416.json",
+      "bytes": 1421,
+      "sha256": "fce277b80f1d1bb07b735acbc9a3cd065013485acc68e68123622aa5d985ded8"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-passive-control-1790696974066.json",
+      "bytes": 1454,
+      "sha256": "38f9c833dc2157c4d1281b77fe85b45e995eb7523f87515f71e0ca51fe128f5d"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-passive-control-1790697038185.json",
+      "bytes": 1686,
+      "sha256": "2dcb7819a83e1dde90a279de0c2eb3aa7c4514c8f7641fb72c69ef61c86baba4"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-passive-control-1790697737477.json",
+      "bytes": 1685,
+      "sha256": "2e1c8779c7d981791ac732ab8d4279aa071e79e9f17c6cc44d90789c2a634182"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-passive-control-1790697977544.json",
+      "bytes": 1713,
+      "sha256": "87f066c87f567e57ec1ba1c41276ea610ec8f2100ff44fac2870cd4951eebc66"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-stream-prefix-1790700556542.json",
+      "bytes": 3215,
+      "sha256": "ec1708cbfb3346978da297d96fd4e93ab1c1b9b3adb47499e162b4e22520cec4"
+    },
+    {
+      "path": "runs/foundational-reset/gpu-window-benchmark-1790698538871.json",
+      "bytes": 4549,
+      "sha256": "e5c82a22209c554a1b69a3dd9d100c44479704849782e7d3ae0e4dbbcfc558f2"
+    },
+    {
+      "path": "runs/foundational-reset/initial-state-preflight-v1.json",
+      "bytes": 4487,
+      "sha256": "0355fc126acaa1a0be19f963a2a29132ac8980a04c9adde577695a2e93952fe1"
+    },
+    {
+      "path": "runs/foundational-reset/input-preflight-v1.json",
+      "bytes": 577,
+      "sha256": "5c6764f890153ba3ca40010b819813bb576940cd34ab4c3ad30b0e957b941c92"
+    },
+    {
+      "path": "runs/foundational-reset/input-preflight-v2.json",
+      "bytes": 607,
+      "sha256": "a540ef925fff4062c71da1956d0186e1b5dbd6b4b0e77c7fb0b1a76c7cef589b"
+    },
+    {
+      "path": "runs/foundational-reset/input-preflight-v3.json",
+      "bytes": 98661,
+      "sha256": "d551df0db0e2e3c8a5ef78cc19bfcaa088224dc41a3d95722aa97cee68aaeffa"
+    },
+    {
+      "path": "runs/foundational-reset/inputs-v1.json",
+      "bytes": 70537,
+      "sha256": "1aed396f53f714f0d32db45bdf4bea2552c0cf55473011bde6df02a8b61ba67e"
+    },
+    {
+      "path": "runs/foundational-reset/inputs-v2.json",
+      "bytes": 71214,
+      "sha256": "9e23de81bee51057baadc6ed765c8d3c9eafc0696051f788fd5b93846ec23dec"
+    },
+    {
+      "path": "runs/foundational-reset/main-context-2026-09-29-v1/extension-gradient-m3.json",
+      "bytes": 20218,
+      "sha256": "052849b82a61acca228d4059e1375c4f0a1a5021c191b1ad78497addc73f5d6b"
+    },
+    {
+      "path": "runs/foundational-reset/main-context-2026-09-29-v1/main-plan.md",
+      "bytes": 73775,
+      "sha256": "86a67ca4c0066d07cd0330baf1f255266b0df975a88a2bd93e4f30cebf85cd49"
+    },
+    {
+      "path": "runs/foundational-reset/main-context-2026-09-29-v1/manifest.json",
+      "bytes": 826,
+      "sha256": "7b46cc03bfb141cabeec93f1b5004f0764eb482f05b1a0a28eeace6f849d3c4e"
+    },
+    {
+      "path": "runs/foundational-reset/main-manifest-reconciliation-v1.json",
+      "bytes": 137515,
+      "sha256": "7532b62cae0132f6e9a1fb3cfff2c95370025c04c985498d179dbc2f896baae1"
+    },
+    {
+      "path": "runs/foundational-reset/original-replay-reconciliation-v1.json",
+      "bytes": 10258,
+      "sha256": "abfeb199806088e2d07b29955ef4915aa9e8d2728095aa427f9a84bdb2812a1f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/docs/foundational-reset-plan.md",
+      "bytes": 21375,
+      "sha256": "54c2e1bed4fae9e740722b86a4a868b3aeb51de5ec9edb90ee4508774bdde89a"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/docs/foundations-next-results.md",
+      "bytes": 16973,
+      "sha256": "d1bbf4b2e1264ecf032341fce9c65e98bb07b2a265ff3c490b15ec84afc9b106"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/docs/reset-entity-contract.md",
+      "bytes": 6511,
+      "sha256": "1fdadc3acba6ebe764026ed2ffee40fe6dbcb87d3fd470165b6f8dd135580fe4"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/experiments/FROZEN",
+      "bytes": 65,
+      "sha256": "10c22e94bcf1fca20d501e9c067c7c82f2555549a87813c311c6973fd2381975"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/runner/src/runner.ts",
+      "bytes": 37712,
+      "sha256": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/genome.ts",
+      "bytes": 3055,
+      "sha256": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/schema/src/world.ts",
+      "bytes": 14874,
+      "sha256": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19115,
+      "sha256": "3186bb493ebbbfb1aad218b9e7c29314e9e0a08f40e4ff4b51623d18f5e12145"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/foundations/tsconfig.json",
+      "bytes": 923,
+      "sha256": "0e143fbedc4f4f528a7063027a7dea308ec08e3dc1da60109dd157647f742caf"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/docs/plan.md",
+      "bytes": 71905,
+      "sha256": "83dc19eb05e5944dbb19e6d7b58a26a3c1ccc8e6546d9925391a7c837d34a2af"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/FROZEN",
+      "bytes": 65,
+      "sha256": "10c22e94bcf1fca20d501e9c067c7c82f2555549a87813c311c6973fd2381975"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/gate.json",
+      "bytes": 1795,
+      "sha256": "dc4412fb6ee4784e2e201f70ce16de8b19a1a5348935ff817fb472a34925a4e7"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/t1.json",
+      "bytes": 71152,
+      "sha256": "c004274949b2b3815e903a5efe86c1f35619f0f32eb8b091cbeacd8640519215"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/t2.json",
+      "bytes": 213007,
+      "sha256": "ca6e271e721d4fefd42e52ede2680b06fa1aebd89d9bdcac1604e1ccf95e41f3"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/t3-gradient.json",
+      "bytes": 34057,
+      "sha256": "1622503bb0ece5afb5634bb1ad57787b5f76a38548c128b8c8e759eff04bec35"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/t3.json",
+      "bytes": 33994,
+      "sha256": "c44a4757147d797628e6748d3ac7500458195ddc0920cbd189847ff3eabc1e42"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/t4.json",
+      "bytes": 12912,
+      "sha256": "b4f2d1e04772e33c8857a6da99cfa5dcee41d2df957bf288874849d176ce21ed"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/t4b.json",
+      "bytes": 12845,
+      "sha256": "84fd063e6a069b542cdc68a54955bcb55da1fa8e14d5b5b04974bf597d227eae"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/t5.json",
+      "bytes": 10288,
+      "sha256": "5b532cd12809a9e154722cb1f7a817d7cada04b370818dd3220ad0da09087cbb"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/t6.json",
+      "bytes": 35231,
+      "sha256": "48e650e00433853c850a8c7ed978dec68c393cf0ed6c003f9365d2be8ac3f7a0"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/experiments/foundations/validate.json",
+      "bytes": 11425,
+      "sha256": "de5fafedd37897e96470b6de03382f72335ab39ebd4af1abf1535a829d69ccd2"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/runner/src/runner.ts",
+      "bytes": 44732,
+      "sha256": "38ac185c0e6e6e96f8b461c3b907204abf513cad87e8ef40fabdeb5f2a5322bd"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/genome.ts",
+      "bytes": 3849,
+      "sha256": "77a1a3cc32bd4bd3bc638ba9e0fec5e7a552fd815631b02f63f3ac566d63cdd9"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/schema/src/world.ts",
+      "bytes": 15089,
+      "sha256": "2ecce7760984d378a7e0781984bcfaa65527e2e8225d3d5f3c9fb0ab21f8006a"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19115,
+      "sha256": "3186bb493ebbbfb1aad218b9e7c29314e9e0a08f40e4ff4b51623d18f5e12145"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/tools/foundations.ts",
+      "bytes": 73780,
+      "sha256": "3c6efdff3ce09a0b0523a09c4f343f3a54fb50b1d773f831d13536e245daed8c"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/main/tsconfig.json",
+      "bytes": 923,
+      "sha256": "0e143fbedc4f4f528a7063027a7dea308ec08e3dc1da60109dd157647f742caf"
+    },
+    {
+      "path": "runs/foundational-reset/pinned-source-v1/manifest.json",
+      "bytes": 47209,
+      "sha256": "270d42c9b9f623586de5a78f8f87486d211f67d9f75877f3b7e862af99dfbbb1"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-design-v1.json",
+      "bytes": 70535,
+      "sha256": "a80b875618988ef99edf65382a2cb1ccfc1b15b397d297f46356cc9ff0000e53"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-design-v2.json",
+      "bytes": 72522,
+      "sha256": "2b91a2d3c318fb44b78f4c057c1adbdd60a5643b3883dc19f282ac4580dba163"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/describe-coverage-v1.py",
+      "bytes": 3838,
+      "sha256": "3e7f1592a451e1c87592d87872cde4859e37f3b1c51394afce5ad05f5e6135fa"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/descriptive-coverage-v1.json",
+      "bytes": 21663,
+      "sha256": "ce69409d8130660ef5dc4516b89b9ff4d757447fea7c048192a108bcd67942f7"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/g1-approval.json",
+      "bytes": 1673,
+      "sha256": "1a54c65ef7e33fa62d40d0077f2c8aa95294b96e0ed354a7c637f9d1bde5b41f"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-1-attempt-1/completion.json",
+      "bytes": 507,
+      "sha256": "8b131a9dda2af7b5f06d437d3a1e8a0b5a6d71ed3e8bec9a99e260939009bae7"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-1-attempt-1/reservation.json",
+      "bytes": 380,
+      "sha256": "463cb38bea4a0aba7350368f34e1c8530fc9d2bcafd273e6e3d12406c284b27e"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-1-attempt-1/result.json",
+      "bytes": 2311533,
+      "sha256": "97fa1d83729f50b2cbca4c0e2da80fe03578796c7ebffa544b461829432deb0a"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-10-attempt-1/completion.json",
+      "bytes": 508,
+      "sha256": "f1994fe59942d0a9fa2fad89f167f6eba23192b900f6358e046c92c1df2c9a3f"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-10-attempt-1/reservation.json",
+      "bytes": 381,
+      "sha256": "4b98b9bf915e017a3ab0b8ebabf3ae35e8121ac0082c814f45ba4b70f5a35665"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-10-attempt-1/result.json",
+      "bytes": 2425001,
+      "sha256": "f561b31739f627d6d62c798aabfe48574cf8b6b1a2f61482fe1e9d3324d2a1a9"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-2-attempt-1/completion.json",
+      "bytes": 523,
+      "sha256": "146f388b6fd5c9ac770228aa6f84409fa03629aa026c806c1f2a3617d0578cc1"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-2-attempt-1/reservation.json",
+      "bytes": 380,
+      "sha256": "b2850209ef7c706b75cc9e866ec54d5f59ede8d08fa18368f5e20cae56362591"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-2-attempt-1/result.json",
+      "bytes": 1380814,
+      "sha256": "ff662d04d3b95e03688d40ed3c2f0bd6e54f725f94bbfedffe4247c989e93829"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-2-attempt-2/completion.json",
+      "bytes": 511,
+      "sha256": "cfc1fd3db3b5ee474cca9e12dc82ebde57a035970e9c68c2dcfd4bb06e8e187f"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-2-attempt-2/reservation.json",
+      "bytes": 380,
+      "sha256": "7fe905fa7711863ac9edba7085d7531bf211028cac84915097a993f0dccca6f7"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-2-attempt-2/result.json",
+      "bytes": 1793130,
+      "sha256": "8e027a4ea3c285e5790b1a192705d24d4a780e3bb6a9c9777c58915285e3b1f8"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-3-attempt-1/completion.json",
+      "bytes": 511,
+      "sha256": "9f4256a71fa0116fb0e7a44b6445b3ac2c1b8add157f53e01685eba2ba7d0a61"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-3-attempt-1/reservation.json",
+      "bytes": 380,
+      "sha256": "50b7b18dea44ddc1ae98ebfe2f7a7a822a7c14fba3c82255edf1d6ba02f48117"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-3-attempt-1/result.json",
+      "bytes": 3016024,
+      "sha256": "eaa94b8b5d25d834c191a67c3030c87be5c8bc91dc9fea596395d217a0cdfed4"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-4-attempt-1/completion.json",
+      "bytes": 511,
+      "sha256": "c9e678dc8adbfc3a5ff6c5fc9ae99d99d0c622d6f0f9fcfbde9a683add120682"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-4-attempt-1/reservation.json",
+      "bytes": 380,
+      "sha256": "28512bc9deba79f0b0b161713d4a80b288f4d3c18506ad8335af3a527ab6183d"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-4-attempt-1/result.json",
+      "bytes": 2263841,
+      "sha256": "9f91d23f8c6b5dc5148c3bbd0ca6be342481aa9ca8b98979b1c60456161c999a"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-5-attempt-1/completion.json",
+      "bytes": 507,
+      "sha256": "f66e3a21d345cbb068a4ccc64ec3dadbaabddcf97c9f5ba8a2c896ef1f5318c8"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-5-attempt-1/reservation.json",
+      "bytes": 380,
+      "sha256": "382ff4d3cc76bdb2c753b4eeef57a4926bb20e427175d93919541f2a09f8f412"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-5-attempt-1/result.json",
+      "bytes": 1518738,
+      "sha256": "c2191142d72297c3c36b6345af171be373b8561e1b7951d8b592588e1184106d"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-6-attempt-1/completion.json",
+      "bytes": 507,
+      "sha256": "cf2346e55228fa756a4f4097470a9fbe3c0110ea270a2aee437ec9f728d47303"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-6-attempt-1/reservation.json",
+      "bytes": 380,
+      "sha256": "851625d62b50ce5c59fa259776cb2aa5bb29211abdb4edf1bf88ba25dba0f617"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-6-attempt-1/result.json",
+      "bytes": 1562762,
+      "sha256": "1d0ba39a5443c4dfa11bc0ccbe6427e55ad75bae3482c42a6fa7ad40d78083b3"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-7-attempt-1/completion.json",
+      "bytes": 527,
+      "sha256": "73f71c53611e4b70b7f0f4e67b07fd8a5ca86652e9c59564e703e69ae5861d5a"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-7-attempt-1/reservation.json",
+      "bytes": 380,
+      "sha256": "c48406818af8fa497db546a3697fcb49281cdc9dcdc377bbbe7a9539c9e744eb"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-7-attempt-1/result.json",
+      "bytes": 1613677,
+      "sha256": "acc3080f41ddd962ca57e06958da571acc00cd4d52ecfb181976220b17a29d3d"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-7-attempt-2/completion.json",
+      "bytes": 507,
+      "sha256": "0c24b4a025217588364f0ec4f0e712e57fb5b7a37375bf673a6e140222fdc700"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-7-attempt-2/reservation.json",
+      "bytes": 380,
+      "sha256": "8a289a665d3da85a8ac4a9d0e3c98bc54c1cccbe2ba10196ecba63f09aa88ae1"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-7-attempt-2/result.json",
+      "bytes": 2133532,
+      "sha256": "1239a72b0f5bca80d8bb6b0cce973385e4980bbc13d801c0e199ccba644cdac5"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-8-attempt-1/completion.json",
+      "bytes": 507,
+      "sha256": "c31faa7aa95b5a0812297dacba06588d0894f2ea330253fe1e35d34d54d19690"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-8-attempt-1/reservation.json",
+      "bytes": 380,
+      "sha256": "eb3b219327f43198e74ea5c4a8f2039b9da8f5f1a7b0dec0f82fa4ccb47c03ea"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-8-attempt-1/result.json",
+      "bytes": 5937518,
+      "sha256": "93358f2cfe73cbce4f3b6a51a625ee93aef9f87ebfbbdc4ed571aa9952f78d8c"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-9-attempt-1/completion.json",
+      "bytes": 507,
+      "sha256": "35a33d0faba5efd676e71965d21bf7487561c4fe693aa2dd7fa7570032bbe3c3"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-9-attempt-1/reservation.json",
+      "bytes": 380,
+      "sha256": "672725413e6b876641f4021f6fdff0466834312ab3bf3bf9bdd7f34fcbb0eb24"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/history-9-attempt-1/result.json",
+      "bytes": 3207689,
+      "sha256": "375abe68e0f33577cca8a879133e9990ad78eb1878ade0b57aea078d3b6e21c7"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/links-200-v1.csv",
+      "bytes": 27659,
+      "sha256": "aafabe591e5f11a5087c13cfebb294011290d58152ba4b5d817dfaa7da5f19e1"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/plan.json",
+      "bytes": 27210,
+      "sha256": "69b7d19355bb069beff41685ad74db0d1819bb745aee1ab1ba8fd82f26e0c140"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/retry-history2-then-remaining.sh",
+      "bytes": 702,
+      "sha256": "d45c37b87f01eb3b663141f97f60c68ba978622202597a617f8582ca1f1bb947"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/retry-history7-then-remaining.sh",
+      "bytes": 692,
+      "sha256": "bc6a16900210e690d4bed3ac9750e1b738a91af74c34178f7f55d4f7ecca0a39"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/run-remaining.sh",
+      "bytes": 395,
+      "sha256": "57e2a17668eb38364f28fa7e646afe6046c83dffce9cfeae9354d6d7c5b34351"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/summary-after-history-1.json",
+      "bytes": 718000,
+      "sha256": "bd8e3674402f26d180b7ec672a8a9d324fe869414f6e13e35d8b6da0b3e95b99"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/summary-after-history-2-stop.json",
+      "bytes": 720448,
+      "sha256": "ad7b2272579a4b1802e33a922bdd086dc733ac1d15695eb1e76d060952ebc036"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/summary-after-history-2.json",
+      "bytes": 1673372,
+      "sha256": "2ea0baba522a5fea08407d879932b973a1fe2564fad498fd620331b4a166df05"
+    },
+    {
+      "path": "runs/foundational-reset/probe-a-run-v1/summary-final-v1.json",
+      "bytes": 7520602,
+      "sha256": "7b8aa48a0f2b07de590c510651fb2b8f033ab44729aa7c562b38cb774c6af3bb"
+    },
+    {
+      "path": "runs/foundational-reset/reset-seed-status-v1.json",
+      "bytes": 2041,
+      "sha256": "ac12b83a5be3afc3c7dc359369235aec085df1388de5188c5259f55340068226"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/docs/foundational-reset-plan.md",
+      "bytes": 21375,
+      "sha256": "54c2e1bed4fae9e740722b86a4a868b3aeb51de5ec9edb90ee4508774bdde89a"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/docs/foundations-next-results.md",
+      "bytes": 16973,
+      "sha256": "d1bbf4b2e1264ecf032341fce9c65e98bb07b2a265ff3c490b15ec84afc9b106"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/docs/reset-entity-contract.md",
+      "bytes": 6511,
+      "sha256": "1fdadc3acba6ebe764026ed2ffee40fe6dbcb87d3fd470165b6f8dd135580fe4"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/experiments/FROZEN",
+      "bytes": 65,
+      "sha256": "10c22e94bcf1fca20d501e9c067c7c82f2555549a87813c311c6973fd2381975"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/runner/src/runner.ts",
+      "bytes": 37712,
+      "sha256": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/genome.ts",
+      "bytes": 3055,
+      "sha256": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/schema/src/world.ts",
+      "bytes": 14874,
+      "sha256": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19115,
+      "sha256": "3186bb493ebbbfb1aad218b9e7c29314e9e0a08f40e4ff4b51623d18f5e12145"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/foundations/tsconfig.json",
+      "bytes": 923,
+      "sha256": "0e143fbedc4f4f528a7063027a7dea308ec08e3dc1da60109dd157647f742caf"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/docs/plan.md",
+      "bytes": 71905,
+      "sha256": "83dc19eb05e5944dbb19e6d7b58a26a3c1ccc8e6546d9925391a7c837d34a2af"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/FROZEN",
+      "bytes": 65,
+      "sha256": "10c22e94bcf1fca20d501e9c067c7c82f2555549a87813c311c6973fd2381975"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/gate.json",
+      "bytes": 1795,
+      "sha256": "dc4412fb6ee4784e2e201f70ce16de8b19a1a5348935ff817fb472a34925a4e7"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/t1.json",
+      "bytes": 71152,
+      "sha256": "c004274949b2b3815e903a5efe86c1f35619f0f32eb8b091cbeacd8640519215"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/t2.json",
+      "bytes": 213007,
+      "sha256": "ca6e271e721d4fefd42e52ede2680b06fa1aebd89d9bdcac1604e1ccf95e41f3"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/t3-gradient.json",
+      "bytes": 34057,
+      "sha256": "1622503bb0ece5afb5634bb1ad57787b5f76a38548c128b8c8e759eff04bec35"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/t3.json",
+      "bytes": 33994,
+      "sha256": "c44a4757147d797628e6748d3ac7500458195ddc0920cbd189847ff3eabc1e42"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/t4.json",
+      "bytes": 12912,
+      "sha256": "b4f2d1e04772e33c8857a6da99cfa5dcee41d2df957bf288874849d176ce21ed"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/t4b.json",
+      "bytes": 12845,
+      "sha256": "84fd063e6a069b542cdc68a54955bcb55da1fa8e14d5b5b04974bf597d227eae"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/t5.json",
+      "bytes": 10288,
+      "sha256": "5b532cd12809a9e154722cb1f7a817d7cada04b370818dd3220ad0da09087cbb"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/t6.json",
+      "bytes": 35231,
+      "sha256": "48e650e00433853c850a8c7ed978dec68c393cf0ed6c003f9365d2be8ac3f7a0"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/experiments/foundations/validate.json",
+      "bytes": 11425,
+      "sha256": "de5fafedd37897e96470b6de03382f72335ab39ebd4af1abf1535a829d69ccd2"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/runner/src/runner.ts",
+      "bytes": 44732,
+      "sha256": "38ac185c0e6e6e96f8b461c3b907204abf513cad87e8ef40fabdeb5f2a5322bd"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/genome.ts",
+      "bytes": 3849,
+      "sha256": "77a1a3cc32bd4bd3bc638ba9e0fec5e7a552fd815631b02f63f3ac566d63cdd9"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/schema/src/world.ts",
+      "bytes": 15089,
+      "sha256": "2ecce7760984d378a7e0781984bcfaa65527e2e8225d3d5f3c9fb0ab21f8006a"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19115,
+      "sha256": "3186bb493ebbbfb1aad218b9e7c29314e9e0a08f40e4ff4b51623d18f5e12145"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/tools/foundations.ts",
+      "bytes": 73780,
+      "sha256": "3c6efdff3ce09a0b0523a09c4f343f3a54fb50b1d773f831d13536e245daed8c"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/baseline/main/tsconfig.json",
+      "bytes": 923,
+      "sha256": "0e143fbedc4f4f528a7063027a7dea308ec08e3dc1da60109dd157647f742caf"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/evidence/0-main-manifest-reconciliation-v1.json",
+      "bytes": 137515,
+      "sha256": "7532b62cae0132f6e9a1fb3cfff2c95370025c04c985498d179dbc2f896baae1"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/evidence/1-probe-a-inputs.json",
+      "bytes": 66550,
+      "sha256": "6387b397a178f2e684bd1360cbc36031602b3b34339ea44027e1a640b90f8910"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/evidence/2-inputs-v2.json",
+      "bytes": 71214,
+      "sha256": "9e23de81bee51057baadc6ed765c8d3c9eafc0696051f788fd5b93846ec23dec"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/evidence/3-input-preflight-v3.json",
+      "bytes": 98661,
+      "sha256": "d551df0db0e2e3c8a5ef78cc19bfcaa088224dc41a3d95722aa97cee68aaeffa"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/evidence/4-original-replay-reconciliation-v1.json",
+      "bytes": 10258,
+      "sha256": "abfeb199806088e2d07b29955ef4915aa9e8d2728095aa427f9a84bdb2812a1f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/evidence/5-manifest.json",
+      "bytes": 47209,
+      "sha256": "270d42c9b9f623586de5a78f8f87486d211f67d9f75877f3b7e862af99dfbbb1"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/evidence/6-reset-seed-status-v1.json",
+      "bytes": 2041,
+      "sha256": "ac12b83a5be3afc3c7dc359369235aec085df1388de5188c5259f55340068226"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/evidence/7-probe-a-design-v1.json",
+      "bytes": 70535,
+      "sha256": "a80b875618988ef99edf65382a2cb1ccfc1b15b397d297f46356cc9ff0000e53"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/manifest.json",
+      "bytes": 178478,
+      "sha256": "a9124d1302d62af6acc719e6f3d3414c91fddcde5abb8155f0ba1b5158d79bd8"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/deno.lock",
+      "bytes": 694,
+      "sha256": "8630fa4d89086681cfed42c0f5977e2e34e720d1b32580300df124f83cf872bd"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/docs/foundational-reset-plan.md",
+      "bytes": 22026,
+      "sha256": "3e5f1694fae0ef800167bee194c5a181715509da85ffb8aea9a86eac20183d26"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/docs/reset-claim-code-map.md",
+      "bytes": 3363,
+      "sha256": "74dfe8a4eae14134c4bc0172cd0029c76c6d02125eddd471ad98a1ec969eb6ee"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/docs/reset-entity-contract.md",
+      "bytes": 6511,
+      "sha256": "1fdadc3acba6ebe764026ed2ffee40fe6dbcb87d3fd470165b6f8dd135580fe4"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/docs/reset-probe-a-protocol.md",
+      "bytes": 8624,
+      "sha256": "34f8bae1f0ca2c5a6040a4e590abd693f86df1e87fdf712af655599d4827d652"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/package.json",
+      "bytes": 602,
+      "sha256": "d5316dfad0d4882e3707b40761f24016551674270708c05189c170da2762bff4"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/test/biogeography.test.ts",
+      "bytes": 29527,
+      "sha256": "5e4042eddb50422a205d10c2b33bf8042d6d4f9546a2ca6e74660c9d015960c8"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/test/calibration.test.ts",
+      "bytes": 13311,
+      "sha256": "6cce9b6074ecfbfe353f3a95be35e12408adb7814e8851ee5021902a988e96c2"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/test/collectives.test.ts",
+      "bytes": 1869,
+      "sha256": "66b280b05da9b26e27cdaf952f405d41f34bb4e87ee6f8e7f64581b2e24c1e8e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/test/complexity.test.ts",
+      "bytes": 1662,
+      "sha256": "2a4b1eca65a49d9871c15da3236e512ec4e944de0f9e10b7a8aeaaf93bae7297"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/test/individuality.test.ts",
+      "bytes": 25568,
+      "sha256": "bde25c7990306c97c0c0e3db2154e5e630b201b09f1898c1b6a93718558e0875"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/metrics/test/stats.test.ts",
+      "bytes": 12494,
+      "sha256": "962d9d44ee20c7919ccb532fc5fa379a4991a2088b0bd0c896415b9e628addee"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/src/runner.ts",
+      "bytes": 37712,
+      "sha256": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/test/conditions.test.ts",
+      "bytes": 3053,
+      "sha256": "bb49ad921a62f4a1bf1e72171f999c3b0be04980c8aa681178227fe6601b9fa5"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/test/island-page.test.ts",
+      "bytes": 12798,
+      "sha256": "a1da7e94b050b40e0221b55b22c382914a84f87ad7e607bc22d1a4c2855c526e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/test/island.test.ts",
+      "bytes": 23220,
+      "sha256": "bbc0cfea8680f6ebf25e388777b2420b020a67ce63a1085a7c1db52887520393"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/test/runner.test.ts",
+      "bytes": 10061,
+      "sha256": "0678b62e9458cacee7d22cc0bc5191a5e77e6b4b9f222c8cdc8a54a97719c23f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/runner/test/stitch.test.ts",
+      "bytes": 6128,
+      "sha256": "13b5dc2eb56f8a3045a19850c89391523898adc49934ddda4b7399f4339948ae"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/genome.ts",
+      "bytes": 3055,
+      "sha256": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/src/world.ts",
+      "bytes": 14874,
+      "sha256": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/test/archipelago-world.test.ts",
+      "bytes": 5560,
+      "sha256": "753d7a479c00f559cdae902bde32dd07106e2d12aea9d2c366f37f6c23ec9a02"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/test/exchange.test.ts",
+      "bytes": 16601,
+      "sha256": "62187120f125fab53eb1cf0c0894ece23a087cd30ce814273f6ada7fe40ac715"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/test/genetics.test.ts",
+      "bytes": 2186,
+      "sha256": "0f3292f68fcdae35e7b6ec1d27d1a0cd45e8691d951648a08bf0acc1ce09e90d"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/test/m3-founders.test.ts",
+      "bytes": 7320,
+      "sha256": "778fbb590bd3bb9cc8c1f065b8e893b1c3bdfc1fc62791f817db03f9e0839110"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/test/migration.test.ts",
+      "bytes": 13166,
+      "sha256": "ddbb1e2564da234574d7a267951204882cf32d8cb62dbc472593ee71931873f2"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/test/presets.test.ts",
+      "bytes": 3660,
+      "sha256": "fc43e70f64f7fd1cf6732192e75265524ac0d721328c79d15ed7697a27b0a439"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/schema/test/validation.test.ts",
+      "bytes": 10558,
+      "sha256": "6cffabba426bda329bc863ddfb2bd1fd06e7da3e3e5e6bca3d7780f075acc374"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/src/evaluate.ts",
+      "bytes": 13915,
+      "sha256": "c8b3a7ff858778013f629b0a0a47a25fa2811eca813e44ac0a7123ef94e1fd66"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/src/foundation-behavior.ts",
+      "bytes": 7174,
+      "sha256": "18863d1fb018685998f1a1e46862b8805c62d595fde2de84cb1299e25f6c58dd"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/src/index.ts",
+      "bytes": 92,
+      "sha256": "cc7060fff3a3425219acb80370218cb9e8d1ceffa85c25d04064af4501f079fa"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/src/mapelites.ts",
+      "bytes": 9605,
+      "sha256": "bc2b4402c58342b847411b95d249847fa451924e692b9a39bae35590b32b1d08"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/src/mutation-neighborhood.ts",
+      "bytes": 6300,
+      "sha256": "2f558ca29f5504c352e33185831e35b94d3f875c7d4f43af41d1a7f8f360861b"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/src/retest.ts",
+      "bytes": 6367,
+      "sha256": "80ea2e3a723af000d4ab94740c139765b4b114203478851ce5fc2d00c69bdfb9"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/test/foundation-behavior.test.ts",
+      "bytes": 3510,
+      "sha256": "4fd9891b5990353bf6a0223e8e3f5b5b4efb23aee6780f35cee3a7e43d1d6fc0"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/test/gate.test.ts",
+      "bytes": 9271,
+      "sha256": "6dd891f15164c5a5d735001902b3ee1481e542f135641b69910bccfcb9fb4627"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/test/mutation-neighborhood.test.ts",
+      "bytes": 2664,
+      "sha256": "960973c34d4e98bc976cc973b379ce5a018ab8f8a4845faeaf1f23fd97c66b30"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/search/test/retest.test.ts",
+      "bytes": 6240,
+      "sha256": "dbbcf361b87e7ccfb823f4cc58854b78f5304a839149095509944a05c315017a"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19269,
+      "sha256": "f6d119d89147752ee1c3fd2ab136eb545cbb4ba696adaa4eac795dfb740d506e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-ref/test/adhesion.test.ts",
+      "bytes": 4958,
+      "sha256": "53939ebf0e43538620cbf5ad277fb2ba796576443a7f90d4c6be13e6e4e46dfe"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-ref/test/golden-hashes.test.ts",
+      "bytes": 2298,
+      "sha256": "a89adcb35314dd65fae118bf6363a2fab8080752421f0a1c5453dbfb4fbb4004"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/packages/sim-ref/test/ref.test.ts",
+      "bytes": 3044,
+      "sha256": "3261427b3d81ee22d226bb5e727fd78faa178e23c2774d8650aed47a732c54fc"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/anticip-stats.ts",
+      "bytes": 8533,
+      "sha256": "2b37362cfc5cc31c17c8a1d696445a1dca29e01710a11ea8290df367544e8aea"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/bundle.ts",
+      "bytes": 15853,
+      "sha256": "59f5d8f69bbe32925e65f351d4d90180e77b63b787552bdad41aae38ac4fd175"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/calibration-decision.ts",
+      "bytes": 5312,
+      "sha256": "d79c96e50cf5b29d0746c511ea6bc3c5a7dab62d4e82df51179332e857673d21"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-a1-organization.ts",
+      "bytes": 5966,
+      "sha256": "9ca9a22c8ef7b49288a65798d92cd1a04f76f73416560dc64b7bd1fac5c1e632"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-ancestry.ts",
+      "bytes": 14146,
+      "sha256": "c17f3938e4c8abed1746f56c7228db2e3ed024184caa563dec79af29f07131c7"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-assays.ts",
+      "bytes": 18194,
+      "sha256": "4a7663a703c704911e09c764b24ffa1326c24a8856b07a3f635750c88118dabc"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-audit.ts",
+      "bytes": 7465,
+      "sha256": "f0e4cb7de3a01e52a13dcd2f473255a32bb91b3539688e960c35592a1fb62843"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-competition-analysis.ts",
+      "bytes": 21205,
+      "sha256": "6f139b4ac0488b9bb2931cc8449de3c40a3ac1d4e11d87e72df89329f0ca74dd"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-competition.ts",
+      "bytes": 13412,
+      "sha256": "a4dfee697a18ad5c58612e9f0b60e7c08406635a6f912dcccd7064c52c3c04f1"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-component-material.ts",
+      "bytes": 5516,
+      "sha256": "2d11508acdeb07d6ea4623c4d339738ff757da022c377260e13d97863680673b"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-controls.ts",
+      "bytes": 13068,
+      "sha256": "e30b1892e57490fd48f151befedf9ba7c461e91a6963ebb0a229798ea3e921c6"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-copy-ancestry.ts",
+      "bytes": 15314,
+      "sha256": "1accbc030e939536c8f3b8dafb48ca91544c02af68479b08241858d45d676111"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-extract.ts",
+      "bytes": 15695,
+      "sha256": "8d7218adb6a2188460a2c8818c1ea0d3ff52b7cb659f7f543fd6c41ecc34426f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-garden-life.ts",
+      "bytes": 5709,
+      "sha256": "46ca4740ae1874201ba2150723fa498078300e8a1df8afb2e80fc35743632e67"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-life.ts",
+      "bytes": 10086,
+      "sha256": "799669543a21fb17955c7e9893a92c58a3d79861df19cee3ec1e6f0b0fed865a"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-lifecycle.ts",
+      "bytes": 22733,
+      "sha256": "fa97ed374ccb1eac433e67848c34820dddd3e0199ebed74a540919e09b7facf1"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-local-flow.ts",
+      "bytes": 4581,
+      "sha256": "0633d4ed878636b5921d1b891dd042f1aa969abe4d8aecd379a67782a1374a56"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-material-flow.ts",
+      "bytes": 6889,
+      "sha256": "91bbe86ef843acccb698b19d05cdaa13475b3c103968987d907d8ef1ab6aa38e"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-replay.ts",
+      "bytes": 16008,
+      "sha256": "196f2384361d575362c91dae8ad7514fef81dc28e1f719a47ac296f1dcda9c52"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-role-cohort-reconcile.ts",
+      "bytes": 4949,
+      "sha256": "9f0c67d43de12448f90612080dfeb4368538a6c471e9029aedd472291b72d5f0"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-role-cohort.ts",
+      "bytes": 24399,
+      "sha256": "c7269138eba4db65b112e89a65ff75c2d746d1bd81063c76e8b6304ae51c9012"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-screen-analysis.ts",
+      "bytes": 10524,
+      "sha256": "03c33fd504153ad70ce104f1388d93c8c3c85deed4b473c492fcad740be5bcb2"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-screen.ts",
+      "bytes": 17324,
+      "sha256": "9e760f5481ce1c77a32a7ed1c078351c9fb1b62f519e8da0bafa96bd9f970f32"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-sensitivity.ts",
+      "bytes": 9891,
+      "sha256": "3e3b4989eb2c9ef3d0be5ac600cc0e8fa8d89ae20e3ed65b75372f573e2dad76"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-capture.ts",
+      "bytes": 22828,
+      "sha256": "15e03a58d9f3d5f533dbce896b57f65593dabc4f03c778b3ef366d911da0fa99"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-transfer.ts",
+      "bytes": 8648,
+      "sha256": "eeb815272579d60332ee589e9c52c0900657d8a89d6d4498c65ef587cf5110c0"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-v2-frame.ts",
+      "bytes": 5720,
+      "sha256": "135df451d97df421042b6db0253ebda40bd3f2e938cdc491006be356b97d0a70"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-v2-gpu-guard.ts",
+      "bytes": 1754,
+      "sha256": "8ffde7750dd9d67b1cd6352afdbd4d97d02bf6d34c71e070b6592d64da7f71a2"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-v2-observe.ts",
+      "bytes": 6695,
+      "sha256": "80536f7d2217a35d88a3befbc01f9ce73925f3038fb59d5aafae4a512d4b8324"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-v2-parity.ts",
+      "bytes": 1713,
+      "sha256": "9430e166a5a42e4903fd66b437b7b06aab3044ddb6bdd5c6cd3488ae95b8e8e5"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-v2-receipt.ts",
+      "bytes": 4948,
+      "sha256": "cba4dadfe22b5834029d4364f86db409c89cbe1651c0db577a43beb42e81dd78"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-v2-run.ts",
+      "bytes": 12514,
+      "sha256": "38d89badd4355aa82f02f517570fc3e8a6650644c12160a8bf033999c0741653"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-v2-selection.ts",
+      "bytes": 7998,
+      "sha256": "94a252011fe6e0ad83e3f8d538ab283840a1ffc751e6a1c11484909223024084"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-serial-v2.ts",
+      "bytes": 9568,
+      "sha256": "c84bdb86a43ab109a1897c11b9df98d98ecd7dd1ef69d9cad74328635558fb47"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-transplant.ts",
+      "bytes": 16492,
+      "sha256": "e55d0ffa0bda7607c4b9bd62adfc560bfd6e0716bb377aa6682118363dc74f46"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/foundation-validation.ts",
+      "bytes": 24237,
+      "sha256": "0764303520e489678cf0387cb22d3896957861993d493738c1ec053167456709"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/founder-identity.ts",
+      "bytes": 4738,
+      "sha256": "89437b5ea89dd753a013723699a2dcea45754f82d4fa37604aa5bdc794cad509"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/idhash.ts",
+      "bytes": 2209,
+      "sha256": "641158d70ceb5621a4a8dae354399dc533251cdb599d1f61e5c2ed9999bda992"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/light.ts",
+      "bytes": 1443,
+      "sha256": "2ab303af44a93aa8d1236bec7d3517b1fd60bcfa4b420e74426f3c6d4d21816d"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/m4-calibration-checkpoint.ts",
+      "bytes": 2344,
+      "sha256": "7095934a505eecf7fb299668f589f913ed174cd4128fef5e9e1fba0e190807e3"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/m4-growth-generators.ts",
+      "bytes": 3202,
+      "sha256": "d94b73a80dffd0514eb3a480149a23fdaabf241538412ef69ea2aa7518f1c21d"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/m4-growth-runs.ts",
+      "bytes": 5379,
+      "sha256": "a707cd32197c81a54cb51043b1c5407940ae9860b12d9e7a556009ad2f1926a4"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/m4-growth.ts",
+      "bytes": 6217,
+      "sha256": "c2b56e411f759e82124a56fd7aafbb8f60a425a280c16c9560a56c5ef63a975d"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/m4-pipeline.ts",
+      "bytes": 6284,
+      "sha256": "d2af25ab09dff11e19fde7a1a3dad74570e0ed2b39d5598fb47b3e2bd3f9e887"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/nullgen.ts",
+      "bytes": 35086,
+      "sha256": "de48b9cb83802bb37d96fccb3779c714849ee155565c0843b12ebccafff33da8"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/report-html/anticipation.ts",
+      "bytes": 19278,
+      "sha256": "960c77a515dab378c2e977987554c9cb08c46333dc2c7607356b69ee5ece7c82"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/report-html/biogeography.ts",
+      "bytes": 41054,
+      "sha256": "7225960beb19520449e9d3d882eb7056e482321f12dc8edb644d2175a779b0f3"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/report-html/individuality.ts",
+      "bytes": 23694,
+      "sha256": "80b259ff56ac33d218a7569f5b92e2c3a9f0e11ad66255aa10d6fbbba7b41fac"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/report-html/nullcal.ts",
+      "bytes": 18174,
+      "sha256": "9383b98a6332790d432e5e8198d12ba1b35a55b71250df506ea4938d6c3901f8"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/report-html/page.ts",
+      "bytes": 16951,
+      "sha256": "505ad8a0a5ce6df653bc21ff43e21cb5bba5675e3cf937a303eb402c7d0126ff"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/report-html/svg.ts",
+      "bytes": 26726,
+      "sha256": "d5471d22a4d8a0249a3182482486297f14fed00e3e9129f5fbf380235fe09498"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/report-html/write-all.ts",
+      "bytes": 1098,
+      "sha256": "49ec4d79a6aa5c9a10137e2d171559d57097a7df9e88f87f084ff533e78f5a16"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/reset-copy-extraction.ts",
+      "bytes": 6651,
+      "sha256": "cc0a6c5bd4b14daa7204b1bd5b90eeb758d9bf76c32d904a1c4b92cc3772ea84"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/reset-copy-ledger.ts",
+      "bytes": 11349,
+      "sha256": "302913647beb67af5279cf0f1eb99b156093d3040f1aff1bd58f370ad9e76744"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/reset-followup.ts",
+      "bytes": 8503,
+      "sha256": "5d6d6dfd5ef9ba7a1cb423f65458bc992b0654120800dc74cdd9a300c744bee6"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/reset-gpu-copy-audit.ts",
+      "bytes": 14019,
+      "sha256": "696ce3615329fe0b8bff1ff26fbe889407475c5afefaae7e32d52c1f795f5d75"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/reset-gpu-event-join.ts",
+      "bytes": 3080,
+      "sha256": "0cd8c58a01521262955a48004d4c7915de034ff308841ea171c90be3e5b6f3e5"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/reset-probe-a-observer.ts",
+      "bytes": 7663,
+      "sha256": "e3509fdc6f31030280dce0ea587ef0ec3703c0d8ba512057a0334cbd25a9c64c"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/reset-topology.ts",
+      "bytes": 6095,
+      "sha256": "9b65ffd8f3210727432b4bd79e79c35d8f2b08199206ed7d6bc4fa13e8b07831"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/reset-window.ts",
+      "bytes": 3122,
+      "sha256": "b63a63e3ee545caee45a920b092a806576d8f6d67dae8e604e7576ee52945d1f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/lib/threshold.ts",
+      "bytes": 9974,
+      "sha256": "2f354897bc57bf41d69f862add75eed88307612d00b2fa7d9a9b9200bb2c4084"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/reset-freeze.ts",
+      "bytes": 7911,
+      "sha256": "bf57760c6cc816459609e6ab11ff50a595ced7d27b017bbd8f3805e2207fbcc6"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/reset-input-preflight.ts",
+      "bytes": 5458,
+      "sha256": "741611f732ee781f70e9af73c5de94567e5b5325f343ad6754b7680d31f47621"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/reset-reconcile-inputs.ts",
+      "bytes": 4578,
+      "sha256": "98da2411d78167648bf620406286de8fa726ed8403721aa759ce33982daec233"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-copy-extraction.test.ts",
+      "bytes": 5033,
+      "sha256": "d71725be86f8a79c1dcf091fc4cb24c01bcf64803ecdaa9409eff67d8a8b740f"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-copy-ledger.test.ts",
+      "bytes": 11498,
+      "sha256": "7be5f2066fa14d382f8a4782b04654bc036731bd4c6986ae7d0afc5ed93fab70"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-followup.test.ts",
+      "bytes": 7468,
+      "sha256": "1f74be454636fc51bdd7df4ce682703a9c2d322207613673cc2e54f334245749"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-gpu-benchmark.deno.ts",
+      "bytes": 5612,
+      "sha256": "3bd1c1aabcb76c3cf44584581b377e825b5d0d56bfbcd5c41271b64d08878e12"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-gpu-cadence-benchmark.deno.ts",
+      "bytes": 6572,
+      "sha256": "cc7c610b21b5ce41a5e9f228316f759f249c44154b7cf1ca8c4afc0f148e853c"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-gpu-copy-audit.deno.ts",
+      "bytes": 11753,
+      "sha256": "b332c84a3003cc716fc3253419d884552801feca42e21c0b5cbf03b7553f1578"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-gpu-event-join.test.ts",
+      "bytes": 2099,
+      "sha256": "36b13f5541004f2d1056ddb18a69369508e68a659740c20ee7dcd6c0870c4e35"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-gpu-observer-benchmark.deno.ts",
+      "bytes": 6472,
+      "sha256": "a6d8116b9160731104694794d553a7e246999d1da53dd36ea8cc6bcc44f42be1"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-probe-a-observer.test.ts",
+      "bytes": 4014,
+      "sha256": "487ab4bed7b1d302d1fbb40cabede49603d7c29786b3b9788e878934ece7e1bf"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-topology.test.ts",
+      "bytes": 4525,
+      "sha256": "00cc5fb6dbd90ca56f5b751bec7870e646b1895ecbb0fbf985eb18bc699fff01"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tools/test/reset-window.test.ts",
+      "bytes": 2665,
+      "sha256": "c7f377bbcf349fbd1498673c66d41463932aec8007570fb0b48ba4badb86fbac"
+    },
+    {
+      "path": "runs/foundational-reset/source-freeze-tool-validation-v1/source/tsconfig.json",
+      "bytes": 923,
+      "sha256": "0e143fbedc4f4f528a7063027a7dea308ec08e3dc1da60109dd157647f742caf"
+    }
+  ]
+}

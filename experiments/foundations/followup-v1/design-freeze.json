@@ -1,0 +1,28 @@
+{
+  "createdAt": "2026-09-30T01:16:51.884303+00:00",
+  "status": "design-hashes-captured-before-root-outcome-inspection-not-before-all-execution",
+  "files": [
+    {
+      "path": "docs/reset-followup-plan-v1.md",
+      "bytes": 8978,
+      "sha256": "7cf40e06fd170ab0347c6e3eec57999533fc844ee3620fee01c5739aaa72b6a7"
+    },
+    {
+      "path": "tools/fixtures/reset-material-bounds-active-v1.json",
+      "bytes": 336,
+      "sha256": "14e04c4555c24e39fbfcd7bfab5f53b4f1bad2971cb01f34a99ce6f3025dd43b"
+    },
+    {
+      "path": "tools/fixtures/reset-material-bounds-mutation-v1.json",
+      "bytes": 384,
+      "sha256": "5a6fef3e33e9b8f56495d68278318a9dea9cee81696e8b35ce5360c3fe7edd6e"
+    },
+    {
+      "path": "tools/fixtures/reset-material-bounds-stress-v1.json",
+      "bytes": 310,
+      "sha256": "552a17f3189034c29da5e0a0a8c4da9d9674255c9a358345d54a5442bc9a438e"
+    }
+  ],
+  "scope": "Feasibility controls only; no contact experiment or fresh biological evaluation authorized until Gate O passes. Implementation repairs are logged separately, never disguised as prospective design changes.",
+  "provenance": "Plan was written before implementation, and implementer communicated fixture hashes before physical controls. This manifest was captured before root received results but may postdate implementer execution. Exact times in receipt-v1 apply to repeated runs; this is not a retrospective claim of a timestamped pre-execution freeze."
+}

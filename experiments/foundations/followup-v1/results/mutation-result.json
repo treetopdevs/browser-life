@@ -1,0 +1,133 @@
+{
+  "fixture": "reset-material-bounds-mutation-v1",
+  "rows": [
+    {
+      "step": 1,
+      "global": {
+        "lo": 993,
+        "hi": 1000
+      },
+      "selectedRegion": {
+        "lo": 680,
+        "hi": 684
+      },
+      "possibleTokenTotals": {
+        "oldFirst": 993,
+        "freshFirst": 999
+      },
+      "possibleSelectedTokens": {
+        "oldFirst": 681,
+        "freshFirst": 683
+      },
+      "totalBoundNow": 2000,
+      "selectedBoundNow": 685,
+      "initialTaggedBound": 1000,
+      "globalSurvivalFraction": {
+        "lo": 0.993,
+        "hi": 1
+      },
+      "selectedRetainedFraction": {
+        "lo": 0.9927007299270073,
+        "hi": 0.9985401459854014
+      },
+      "localWitness": "exact-local-flux"
+    },
+    {
+      "step": 5,
+      "global": {
+        "lo": 973,
+        "hi": 999
+      },
+      "selectedRegion": {
+        "lo": 55,
+        "hi": 365
+      },
+      "possibleTokenTotals": {
+        "oldFirst": 978,
+        "freshFirst": 998
+      },
+      "possibleSelectedTokens": {
+        "oldFirst": 337,
+        "freshFirst": 313
+      },
+      "totalBoundNow": 2008,
+      "selectedBoundNow": 367,
+      "initialTaggedBound": 1000,
+      "globalSurvivalFraction": {
+        "lo": 0.973,
+        "hi": 0.999
+      },
+      "selectedRetainedFraction": {
+        "lo": 0.14986376021798364,
+        "hi": 0.9945504087193461
+      },
+      "localWitness": "exact-local-flux"
+    },
+    {
+      "step": 10,
+      "global": {
+        "lo": 949,
+        "hi": 999
+      },
+      "selectedRegion": {
+        "lo": 0,
+        "hi": 201
+      },
+      "possibleTokenTotals": {
+        "oldFirst": 964,
+        "freshFirst": 997
+      },
+      "possibleSelectedTokens": {
+        "oldFirst": 185,
+        "freshFirst": 170
+      },
+      "totalBoundNow": 2006,
+      "selectedBoundNow": 201,
+      "initialTaggedBound": 1000,
+      "globalSurvivalFraction": {
+        "lo": 0.949,
+        "hi": 0.999
+      },
+      "selectedRetainedFraction": {
+        "lo": 0,
+        "hi": 1
+      },
+      "localWitness": "exact-local-flux"
+    },
+    {
+      "step": 20,
+      "global": {
+        "lo": 916,
+        "hi": 999
+      },
+      "selectedRegion": {
+        "lo": 0,
+        "hi": 88
+      },
+      "possibleTokenTotals": {
+        "oldFirst": 942,
+        "freshFirst": 988
+      },
+      "possibleSelectedTokens": {
+        "oldFirst": 81,
+        "freshFirst": 75
+      },
+      "totalBoundNow": 2009,
+      "selectedBoundNow": 88,
+      "initialTaggedBound": 1000,
+      "globalSurvivalFraction": {
+        "lo": 0.916,
+        "hi": 0.999
+      },
+      "selectedRetainedFraction": {
+        "lo": 0,
+        "hi": 1
+      },
+      "localWitness": "exact-local-flux"
+    }
+  ],
+  "physicalParity": "exact-every-step-including-events",
+  "reactionExtentAvailability": "diagnostic-reference-copy",
+  "mutationEvents": 77,
+  "interpretation": "continuously-bound-material-only; organization-unmeasured"
+}

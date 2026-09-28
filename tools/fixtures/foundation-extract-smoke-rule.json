@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "selectionSeed": "foundation-extract-smoke-2026-09-28",
+  "perStratumPerTime": 3,
+  "strata": [
+    { "id": "rare", "minCells": 1, "maxCells": 9 },
+    { "id": "intermediate", "minCells": 10, "maxCells": 99 },
+    { "id": "abundant", "minCells": 100, "maxCells": null }
+  ],
+  "censusThreshold": 48,
+  "minComponentMass": 256
+}
