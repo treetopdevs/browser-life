@@ -5,7 +5,7 @@ test("a visitor can enter the lab from the public root and return", async ({ pag
   await expect(page.getByRole("heading", { name: /What can grow from simple rules/ })).toBeVisible();
   await page.getByRole("link", { name: /Open the lab/ }).click();
   await expect(page).toHaveURL(/\/lab\/$/);
-  await expect(page.getByRole("heading", { name: "World" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Simulation field" })).toBeVisible();
   await page.getByRole("link", { name: "Browser Life home" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/island.html");
@@ -14,15 +14,15 @@ test("a visitor can enter the lab from the public root and return", async ({ pag
 
 test("checkpoint Import is focusable and shows focus", async ({ page }) => {
   await page.goto("/lab/");
-  const input = page.locator("#import");
-  await input.focus();
-  await expect(input).toBeFocused();
-  await expect(input.locator("..")).toHaveCSS("outline-style", "solid");
+  const button = page.getByRole("button", { name: "Import" });
+  await button.focus();
+  await expect(button).toBeFocused();
+  await expect(button).toHaveCSS("outline-style", "solid");
 });
 
 test("public information pages have readable content at narrow widths", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const path of ["/how-it-works/", "/research/", "/about/", "/privacy/", "/participate/"]) {
+  for (const path of ["/how-it-works/", "/research/", "/about/", "/privacy/", "/participate/", "/status/"]) {
     const response = await page.goto(path);
     expect(response?.status()).toBe(200);
     await expect(page.locator("main h1")).toBeVisible();

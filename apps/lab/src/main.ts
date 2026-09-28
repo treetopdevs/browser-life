@@ -2,6 +2,7 @@ import { PRESETS, worldH, worldW, NN_I, NN_H, NN_O, NN_BYTES, type WorldConfig }
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import type { CensusMsg, FromWorker, ProbeMsg, StatsMsg, ToWorker } from "./protocol.ts";
 import { Series } from "./sparkline.ts";
+import "./theme.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const fmt = (v: number) =>
@@ -18,6 +19,20 @@ let mode: GpuViewMode = "composite";
 let tool: "inspect" | "lesion" | "pan" = "inspect";
 let playing = false;
 let lastStep = 0;
+let worldReady = false;
+let verifying = false;
+
+function setStatus(message: string, state: "ready" | "running" | "error" | "loading" = "ready") {
+  $("simulation-status").textContent = message;
+  $("simulation-dot").className = `status-dot ${state}`;
+}
+
+function setWorldControls(enabled: boolean) {
+  worldReady = enabled;
+  for (const id of ["btn-play", "btn-step", "btn-step100", "btn-save", "btn-export", "btn-verify"])
+    $<HTMLButtonElement>(id).disabled = !enabled;
+}
+setWorldControls(false);
 
 const VIEW_LABELS: Record<GpuViewMode, [string, string]> = {
   composite: ["Composite", "green biomass · white membrane · blue nutrient · brown waste"],
@@ -33,15 +48,21 @@ const VIEW_LABELS: Record<GpuViewMode, [string, string]> = {
 const views = $("views");
 VIEW_MODES.forEach((m, k) => {
   const b = document.createElement("button");
+  b.type = "button";
   b.textContent = VIEW_LABELS[m][0];
   b.title = `${VIEW_LABELS[m][1]} (${k + 1})`;
   b.dataset.mode = m;
+  b.setAttribute("aria-pressed", "false");
   b.onclick = () => setMode(m);
   views.appendChild(b);
 });
 function setMode(m: GpuViewMode) {
   mode = m;
-  for (const b of views.querySelectorAll("button")) b.classList.toggle("on", b.dataset.mode === m);
+  for (const b of views.querySelectorAll("button")) {
+    const selected = b.dataset.mode === m;
+    b.classList.toggle("on", selected);
+    b.setAttribute("aria-pressed", String(selected));
+  }
   $("legend").textContent = VIEW_LABELS[m][1];
   pushView();
 }
@@ -52,7 +73,11 @@ for (const p of PRESETS) presetSel.add(new Option(p.name, p.id));
 const showPresetDesc = () => ($("preset-desc").textContent = PRESETS.find((p) => p.id === presetSel.value)?.description ?? "");
 presetSel.onchange = showPresetDesc;
 showPresetDesc();
-$("btn-new").onclick = () => send({ type: "load", presetId: presetSel.value, seed: Number($<HTMLInputElement>("seed").value) || 0 });
+$("btn-new").onclick = () => {
+  setStatus("Loading world", "loading");
+  $<HTMLButtonElement>("btn-new").disabled = true;
+  send({ type: "load", presetId: presetSel.value, seed: Number($<HTMLInputElement>("seed").value) || 0 });
+};
 
 // ---------- playback ----------
 const SPEEDS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512];
@@ -67,6 +92,7 @@ function setPlaying(p: boolean) {
   const b = $("btn-play");
   b.textContent = p ? "Pause" : "Play";
   b.setAttribute("aria-pressed", String(p));
+  if (worldReady) setStatus(p ? "Running" : "Paused", p ? "running" : "ready");
   send({ type: "play", playing: p });
 }
 $("btn-play").onclick = () => setPlaying(!playing);
@@ -78,12 +104,19 @@ const tools = $("tools");
 for (const b of tools.querySelectorAll<HTMLButtonElement>("button"))
   b.onclick = () => {
     tool = b.dataset.tool as typeof tool;
-    for (const o of tools.querySelectorAll("button")) o.classList.toggle("on", o === b);
+    for (const o of tools.querySelectorAll("button")) {
+      const selected = o === b;
+      o.classList.toggle("on", selected);
+      o.setAttribute("aria-pressed", String(selected));
+    }
     wrap.dataset.tool = tool;
+    radius.disabled = tool !== "lesion";
   };
 wrap.dataset.tool = tool;
 const radius = $<HTMLInputElement>("radius");
 radius.oninput = () => ($("radius-val").textContent = radius.value);
+radius.disabled = true;
+tools.querySelector(".on")?.setAttribute("aria-pressed", "true");
 
 // ---------- canvas geometry, zoom and pan ----------
 function resize() {
@@ -135,6 +168,47 @@ canvas.addEventListener(
 );
 let drag: { x: number; y: number; rx: number; ry: number } | null = null;
 let lesionDrag = false;
+let focusX = 0.5, focusY = 0.5;
+const focusCursor = document.createElement("span");
+focusCursor.className = "focus-cursor";
+focusCursor.setAttribute("aria-hidden", "true");
+wrap.append(focusCursor);
+function placeFocusCursor() {
+  focusCursor.style.left = `${focusX * 100}%`;
+  focusCursor.style.top = `${focusY * 100}%`;
+  if (cfg) {
+    const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
+    $("hover").textContent = `x ${Math.floor(x)}  y ${Math.floor(y)} · Enter to ${tool === "pan" ? "center" : tool}`;
+  }
+}
+canvas.addEventListener("focus", () => { wrap.classList.add("keyboard-focus"); placeFocusCursor(); });
+canvas.addEventListener("blur", () => { wrap.classList.remove("keyboard-focus"); $("hover").textContent = ""; });
+canvas.addEventListener("keydown", (ev) => {
+  const moves: Record<string, [number, number]> = {
+    ArrowLeft: [-0.03, 0], ArrowRight: [0.03, 0], ArrowUp: [0, -0.03], ArrowDown: [0, 0.03],
+  };
+  if (ev.key in moves) {
+    ev.preventDefault();
+    const [dx, dy] = moves[ev.key];
+    focusX = Math.min(1, Math.max(0, focusX + dx));
+    focusY = Math.min(1, Math.max(0, focusY + dy));
+    placeFocusCursor();
+  } else if (ev.key === "Enter" && cfg) {
+    ev.preventDefault();
+    const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
+    if (tool === "inspect") send({ type: "probe", x, y });
+    else if (tool === "lesion") send({ type: "lesion", x, y, r: Number(radius.value) });
+    else { rect.x = x - rect.w / 2; rect.y = y - rect.h / 2; pushView(); }
+  } else if ((ev.key === "+" || ev.key === "-") && cfg) {
+    ev.preventDefault();
+    const factor = ev.key === "+" ? 0.8 : 1.25;
+    const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
+    const w = Math.min(Math.max(rect.w * factor, 8), worldW(cfg) * 4);
+    const h = rect.h * w / rect.w;
+    rect = { x: x - focusX * w, y: y - focusY * h, w, h };
+    pushView();
+  }
+});
 canvas.onpointerdown = (ev) => {
   canvas.setPointerCapture(ev.pointerId);
   if (tool === "pan" || ev.button === 1 || ev.button === 2) {
@@ -177,32 +251,56 @@ function lesionAt(ev: PointerEvent) {
 
 // ---------- keyboard ----------
 window.addEventListener("keydown", (e) => {
-  if ((e.target as HTMLElement).matches("input, select, textarea")) return;
+  // Leave focused controls and links to their native keyboard behavior.
+  if (e.target !== document.body && e.target !== canvas) return;
   if (e.key === " ") {
+    if (!worldReady) return;
     e.preventDefault();
     setPlaying(!playing);
-  } else if (e.key === ".") send({ type: "step", count: 1 });
+  } else if (e.key === "." && worldReady) send({ type: "step", count: 1 });
   else if (/^[1-7]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
 });
 
 // ---------- checkpoints ----------
 $("btn-save").onclick = () => send({ type: "save" });
 $("btn-export").onclick = () => send({ type: "export" });
+$("btn-import").onclick = () => $<HTMLInputElement>("import").click();
 $<HTMLInputElement>("import").onchange = async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
   if (!f) return;
   const bytes = await f.arrayBuffer();
   send({ type: "import", bytes, name: f.name }, [bytes]);
+  (e.target as HTMLInputElement).value = "";
 };
 $("btn-verify").onclick = () => {
-  $("verify-out").textContent = "replaying…";
+  verifying = true;
+  $<HTMLButtonElement>("btn-verify").disabled = true;
+  $("verification-status").textContent = "Checking";
+  $("verification-status").className = "badge busy";
+  $("verify-out").textContent = "Replaying 200 steps…";
   send({ type: "verify", steps: 200 });
 };
 
 // ---------- stats rendering ----------
-const spInd = new Series($<HTMLCanvasElement>("sp-ind"), "#3ddc97");
-const spBio = new Series($<HTMLCanvasElement>("sp-bio"), "#7fd1ff");
-const spLin = new Series($<HTMLCanvasElement>("sp-lin"), "#ffb454");
+const spInd = new Series($<HTMLCanvasElement>("sp-ind"), "oklch(75% 0.13 155)");
+const spBio = new Series($<HTMLCanvasElement>("sp-bio"), "oklch(66% 0.13 252)");
+const spLin = new Series($<HTMLCanvasElement>("sp-lin"), "oklch(69% 0.10 65)");
+
+function resetEvidence() {
+  for (const id of ["k-matter", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen"])
+    $(id).textContent = "—";
+  $("ledger-badge").textContent = "waiting";
+  $("ledger-badge").className = "badge";
+  $("verification-status").textContent = "Not run";
+  $("verification-status").className = "badge";
+  $("verify-out").textContent = "";
+  $("probe-empty").hidden = false;
+  $("probe").hidden = true;
+  $("top-lin").replaceChildren();
+  $("pools").replaceChildren();
+  spInd.clear(); spBio.clear(); spLin.clear();
+  verifying = false;
+}
 
 function onStats(s: StatsMsg) {
   lastStep = s.step;
@@ -217,10 +315,10 @@ function onStats(s: StatsMsg) {
   badge.textContent = ok ? "exact" : "violation";
   badge.className = `badge ${ok ? "ok" : "bad"}`;
   const pools: [string, number, string][] = [
-    ["A nutrient", s.A, "#4f8cff"],
-    ["B biomass", s.B, "#3ddc97"],
-    ["P membrane", s.P, "#d8dee9"],
-    ["C waste", s.C, "#c9853a"],
+    ["A nutrient", s.A, "var(--nutrient)"],
+    ["B biomass", s.B, "var(--biomass)"],
+    ["P membrane", s.P, "var(--membrane)"],
+    ["C waste", s.C, "var(--waste)"],
   ];
   const bars = $("pools");
   bars.replaceChildren(
@@ -266,6 +364,7 @@ function onCensus(c: CensusMsg) {
       return row;
     }),
   );
+  if (c.top.length === 0) $("top-lin").textContent = "No lineages detected at this census.";
 }
 
 function onProbe(p: ProbeMsg) {
@@ -319,18 +418,20 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
     case "ready":
       $("chip-gpu").textContent = m.adapter;
       $("chip-gpu").title = m.adapter;
+      setStatus("Loading world", "loading");
       send({ type: "load", presetId: presetSel.value, seed: Number($<HTMLInputElement>("seed").value) || 0 });
       send({ type: "listCheckpoints" });
       break;
     case "loaded":
       cfg = m.manifest.cfg;
+      setWorldControls(true);
+      $<HTMLButtonElement>("btn-new").disabled = false;
+      $("run-label").textContent = `${m.manifest.presetId} · seed ${m.manifest.seed}`;
       // The worker always pauses a freshly loaded/restored world; keep our
       // own `playing` flag and the Pause/Play button in sync with that
       // (harmless no-op message if we were already paused).
       setPlaying(false);
-      spInd.clear();
-      spBio.clear();
-      spLin.clear();
+      resetEvidence();
       fit(true);
       toast(`Loaded ${m.manifest.runId}`);
       break;
@@ -344,6 +445,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       onProbe(m);
       break;
     case "checkpoints":
+      $("checkpoint-empty").hidden = m.list.length > 0;
       $("ckpts").replaceChildren(
         ...m.list
           .sort((a, b) => b.savedAt.localeCompare(a.savedAt))
@@ -376,11 +478,24 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       toast(m.message);
       break;
     case "verify":
-      $("verify-out").textContent = `${m.ok ? "✓ identical" : "✗ DIVERGED"} — ${m.detail}`;
+      verifying = false;
+      $<HTMLButtonElement>("btn-verify").disabled = !worldReady;
+      $("verification-status").textContent = m.ok ? "Identical" : "Diverged";
+      $("verification-status").className = `badge ${m.ok ? "ok" : "bad"}`;
+      $("verify-out").textContent = `${m.ok ? "Identical state" : "State divergence"}: ${m.detail}`;
       break;
     case "error":
       // The worker pauses itself on stepping and census failures; stay in sync.
       if (playing) setPlaying(false);
+      if (verifying) {
+        verifying = false;
+        $<HTMLButtonElement>("btn-verify").disabled = !worldReady;
+        $("verification-status").textContent = "Could not verify";
+        $("verification-status").className = "badge bad";
+        $("verify-out").textContent = m.message;
+      }
+      $<HTMLButtonElement>("btn-new").disabled = false;
+      setStatus("Attention needed", "error");
       toast(m.message, true);
       console.error(m.message);
       break;
