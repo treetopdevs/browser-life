@@ -3,7 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Archipelago Island</title>
+    <meta name="robots" content="noindex" />
+    <title>Volunteer island · Browser Life</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="description" content="Contribute this browser's GPU to an archipelago of independent evolutionary runs." />
     <style>
       :root { --bg:#0b0e12; --card:#161b22; --line:#242b35; --text:#e6edf3; --muted:#8b96a5; --accent:#3ddc97; color-scheme: dark; }
@@ -18,10 +20,11 @@
     </style>
   </head>
   <body>
+    <a href="/participate/">← Participation guide</a>
     <h1>Archipelago island</h1>
-    <p>This tab runs simulation segments assigned by a coordinator on your GPU and uploads the results. Some segments are replayed by other islands, and the results must match bit for bit. Close the tab to stop.</p>
+    <p>Press Join to run simulation segments on your GPU and upload the results. This can use significant power. Some work is replayed elsewhere for comparison. Press Stop or close the tab to stop new work. <a href="/privacy/">What data is sent?</a></p>
     <div class="row">
-      <input id="url" value="http://localhost:4000" aria-label="Coordinator URL" />
+      <input id="url" value="" aria-label="Coordinator URL" />
       <button id="go">Join</button>
     </div>
     <pre id="log">idle</pre>

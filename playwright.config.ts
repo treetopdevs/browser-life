@@ -8,7 +8,7 @@ export default defineConfig({
   timeout: 180_000,
   reporter: "list",
   webServer: {
-    command: "pnpm --filter @bl/lab exec vite --port 5174 --strictPort",
+    command: "node node_modules/vite/bin/vite.js apps/lab --port 5174 --strictPort",
     url: "http://localhost:5174/selftest.html",
     reuseExistingServer: false,
     timeout: 60_000,

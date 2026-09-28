@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1110" />
+    <meta name="description"
+      content="Learn the rules, measurements, and limits of the Browser Life simulation." />
+    <title>How it works · Browser Life</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Browser Life home"><span class="brand-mark" aria-hidden="true"></span><span>Browser<span class="brand-light"> Life</span></span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/">Overview</a><a href="/lab/">Lab</a><a href="/how-it-works/" aria-current="page">How it works</a><a href="/research/">Research</a><a href="/participate/">Participate</a><a href="/status/">Status</a></nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-intro shell">
+        <p class="eyebrow">FIELD GUIDE / 01</p>
+        <h1>How the world works</h1>
+        <p
+          class="lede">A browser simulation with local rules, a fixed energy source, and no predeclared organisms.</p>
+      </section>
+      <section class="shell prose-grid">
+        <div class="aside-label">THE SUBSTRATE</div>
+        <div class="prose">
+          <h2>Cells and resources</h2>
+          <p>Each cell occupies a position in a grid and carries material, energy, and a set of inherited numeric weights. Light supplies energy. Matter moves and changes form within the world. A ledger checks that the accounting balances as the simulation advances.</p>
+          <p>The rules use integer arithmetic so identical starting states can be checked against a CPU reference and replayed bit for bit on supported GPUs.</p>
+        </div>
+      </section>
+      <section class="shell prose-grid">
+        <div class="aside-label">WHAT WE OBSERVE</div>
+        <div class="prose">
+          <h2>Individuals are measured</h2>
+          <p>The program does not place a ready-made species into the world. It tracks connected structures, lineages, splitting, merging, mutations, resource roles, and recovery after a lesion. Those labels are measurements of patterns produced by the rules.</p>
+          <p>One attractive image is not evidence of evolution. The research compares repeated runs with controls that remove heredity, mutation, or environmental features.</p>
+        </div>
+      </section>
+      <section class="shell prose-grid">
+        <div class="aside-label">TRY IT</div>
+        <div class="prose">
+          <h2>A useful first experiment</h2>
+          <ol>
+            <li>Open the lab and choose a preset and seed.</li>
+            <li>Press Play and watch the population and matter ledger.</li>
+            <li>Switch to Inspect and click a cell; then try a lesion.</li>
+            <li>Create the same world again to compare its trajectory.</li>
+          </ol>
+          <div
+            class="actions"><a class="button primary" href="/lab/">Open the lab →</a><a class="button quiet" href="https://github.com/treetopdevs/browser-life/blob/main/docs/rules.md">Read the detailed rules ↗</a></div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Browser Life</strong><br />An open research experiment in a browser.</p>
+        <nav
+          aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
+      </div>
+    </footer>
+  </body>
+</html>

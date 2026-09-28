@@ -162,3 +162,10 @@ button:disabled { opacity: 0.5; cursor: default; }
   .panel { border-left: 0; border-top: 1px solid var(--line); overflow: visible; padding: 12px 16px; }
   .top { padding: 10px 16px; flex-wrap: wrap; }
 }
+
+/* The lab keeps its compact working layout while providing a route home. */
+.skip { position: absolute; top: -100px; left: 12px; z-index: 30; background: var(--accent); color: var(--accent-ink); padding: 8px 12px; }
+.skip:focus { top: 8px; }
+.lab-home { color: var(--accent); text-decoration: none; font-size: 12px; white-space: nowrap; }
+.lab-home:hover { text-decoration: underline; }
+.lab-home:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

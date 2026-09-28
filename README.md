@@ -27,7 +27,9 @@ pnpm install
 pnpm dev
 ```
 
-The lab opens at http://localhost:5173. `/selftest.html` checks the CPU reference against this browser's GPU bit for bit. `/island.html` contributes the GPU to a coordinator.
+The public introduction opens at http://localhost:5173/. The interactive lab is at `/lab/`; `/how-it-works/`, `/research/`, `/about/`, `/privacy/`, `/participate/`, and `/status/` are supporting pages. `/selftest.html` checks the CPU reference against this browser's GPU bit for bit. `/island.html` is the opt-in GPU volunteer runner.
+
+The Vite development and preview servers forward `/api/*` to the local coordinator at `PORT` (4000 by default). A public deployment should serve the built `apps/lab/dist` at the HTTPS domain root and forward `/api/*` to the Phoenix coordinator on the same origin. See [`docs/public-site-plan.md`](docs/public-site-plan.md) for route decisions, privacy boundaries, and the release checks. A build is not a deployment.
 
 To run the lab and the coordinator together, use `bin/dev`. Ctrl-C stops both. `PORT` and `LAB_PORT` override the default ports, 4000 and 5173.
 
@@ -75,7 +77,7 @@ cd apps/coordinator && mix phx.server
 curl -X POST localhost:4000/api/experiments -H 'content-type: application/json' -d '{"experiment":"a1","presetId":"gradient","conditions":["treatment","neutral"],"seeds":[1,2,3],"steps":100000,"segmentSteps":5000,"censusEvery":100,"verifyFraction":0.1}'
 ```
 
-Then open `/island.html` in any WebGPU browser, or run `deno run -A tools/island.ts`. The status page is http://localhost:4000/index.html.
+Then open `/island.html` in any WebGPU browser, or run `deno run -A tools/island.ts`. The detailed operations dashboard is http://localhost:4000/index.html. In production it needs an administrator token to load detailed status; the public aggregate status is `/api/public/status`.
 
 Once runs finish, stitch their segments into run bundles and analyze them as above. Only runs whose final segment has been verified are exported. Every downloaded file must match the SHA-256 the coordinator recorded for the accepted upload. Verification replays the physics and observer state, not the observation files, so their content is only as trustworthy as the island that produced them. Pass `--token` when the coordinator has an admin token.
 

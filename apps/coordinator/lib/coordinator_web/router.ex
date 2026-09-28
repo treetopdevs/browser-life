@@ -18,6 +18,7 @@ defmodule CoordinatorWeb.Router do
   scope "/api", CoordinatorWeb do
     pipe_through :api
     get "/status", ApiController, :status
+    get "/public/status", ApiController, :public_status
     get "/experiments/:name", ApiController, :experiment
     post "/islands", ApiController, :join
     get "/islands/me", ApiController, :me

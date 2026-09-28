@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1110" />
+    <meta name="description"
+      content="Learn what volunteering your GPU does before you join a Browser Life simulation island." />
+    <title>Participate · Browser Life</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Browser Life home"><span class="brand-mark" aria-hidden="true"></span><span>Browser<span class="brand-light"> Life</span></span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/">Overview</a><a href="/lab/">Lab</a><a href="/how-it-works/">How it works</a><a href="/research/">Research</a><a href="/participate/" aria-current="page">Participate</a><a href="/status/">Status</a></nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-intro shell">
+        <p class="eyebrow">PARTICIPATE / OPT IN</p>
+        <h1>Lend a little compute</h1>
+        <p
+          class="lede">An island is a browser tab that runs assigned simulation segments and uploads their results for comparison.</p>
+      </section>
+      <section class="shell steps">
+        <article><span class="step-no">01</span><h2>Check your browser</h2><p>You need WebGPU and a secure site. A GPU self-test checks this browser against the CPU reference before its work counts.</p></article>
+        <article><span class="step-no">02</span><h2>Choose Join</h2><p>Opening this page does not start compute. On the island page, pressing Join requests work from the coordinator. The tab may use significant GPU time and power while running.</p></article>
+        <article><span class="step-no">03</span><h2>Stop whenever you like</h2><p>Press Stop or close the tab. Completed work and uploaded results remain with the coordinator. See the privacy page for the details sent.</p></article>
+      </section>
+      <section
+        class="shell invitation participation-action"><div><p class="eyebrow">READY WHEN YOU ARE</p><h2>Open the island runner</h2><p>The runner shows its connection and current activity. You make the final Join choice there.</p></div><a class="button light" href="/island.html">Open island page →</a></section>
+      <section class="shell fine-note">
+        <p>Availability depends on a configured coordinator. If it is offline, joining will fail without starting a simulation. <a href="/privacy/">Read the privacy details</a> before joining.</p>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Browser Life</strong><br />An open research experiment in a browser.</p>
+        <nav
+          aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
+      </div>
+    </footer>
+  </body>
+</html>
