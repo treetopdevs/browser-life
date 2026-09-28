@@ -37,12 +37,13 @@
 // a pure `analyzeEnsemble` function with no filesystem access -- tools/nullcal.ts
 // builds `Run[]` in memory and calls `analyzeEnsemble` directly, exercising
 // exactly the same analysis code this CLI runs against real bundles.
-import { EXACT_MAX, growthVsSaturation, mannWhitney, mean, quantile, scheduledTrend, sd } from "@bl/metrics";
+import { EXACT_MAX, growthVsSaturation, mannWhitney, mean, quantile, ROLES, scheduledTrend, sd } from "@bl/metrics";
 import { distributionIdentity, PRESETS, presetIdentity, type WorldConfig } from "@bl/schema";
 import { specConfig, type RunSpec } from "@bl/runner";
 import {
   activities,
   ensembleProblems,
+  heredityPairs,
   loadRunsUnder,
   metapopulationRingProblems,
   partitionByConservation,
@@ -100,6 +101,10 @@ export interface AnalyzeResult {
     ensembleIdentity: EnsembleIdentity;
     /** Descriptive M4 fraction (docs/plan.md); null unless calibrated with treatment and at least 2 neutral runs. */
     m4Descriptive: { above: number; runs: number; fraction: number; neutralQ95: number } | null;
+    /** Endpoint 4, held-out role count and held-out summary at role cuts 2.5% and 10% (registered: 5%), or why it is withheld. */
+    roleCutSensitivity: { cut: number; coexistence: EndpointResult[]; heldOutRoleCount: { available: boolean; supported: boolean } | null; heldOutOutcome: string }[] | { unavailable: string };
+    /** Descriptive sibling correlations of mu and sigma at fission, per condition with heredity data. */
+    heredity: { condition: string; runs: number; fissions: number; muPooled: number; sigmaPooled: number; muMedianRun: number; sigmaMedianRun: number }[];
     runs: unknown[];
   };
   /** Machine-readable endpoint decisions the CLI's own report.json does not carry -- exposed here for an in-memory caller (tools/nullcal.ts) that consumes them directly instead of parsing rendered Markdown. */
@@ -179,6 +184,14 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
   //    neutral runs exist) as a labelled diagnostic -- informative, but never
   //    fed into any endpoint once a preset has a frozen threshold.
   const presetId = runs[0].manifest.spec.presetId;
+  // The opt-out exists only for synthetic ensembles (tools/nullcal.ts): a real
+  // bundle must never escape its registered threshold's provenance, schedule,
+  // seed and quantile checks. Synthetic manifests carry a `nullcal` record and
+  // no founder provenance; anything else is refused.
+  if (options.ignoreFrozenThreshold) {
+    const real = runs.find((r) => !r.manifest.nullcal || r.manifest.presetIdentity !== undefined || r.manifest.initHash !== undefined);
+    if (real) throw new Error(`ignoreFrozenThreshold is only for synthetic (nullcal) ensembles; ${real.condition} seed ${real.seed} under ${label} is not one`);
+  }
   const activityThresholds: Record<string, ActivityThresholdEntry> = options.ignoreFrozenThreshold ? {} : ACTIVITY_THRESHOLDS;
   const frozen = activityThresholds[presetId];
 
@@ -538,6 +551,108 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
       "2 finite runs, not the full registered sample). This is a failure to meet the registered criterion " +
       "on this ensemble, not a biological refutation.\n";
 
+  // ---- sensitivity: role-share cut x0.5 / x2 (pre-registration, "Known limitations") ----
+  // Roles hold at least ROLE_CUT of living cells (roleSummary's minShare).
+  // series.jsonl records every role's share on deep censuses, so the cut is
+  // re-applied after the fact and every result that depends on it (endpoint 4
+  // and its M5 gate row, the held-out role count and the held-out summary) is
+  // re-evaluated unchanged. Re-applying the registered 5% cut must reproduce
+  // the recorded rolesPresent exactly, or the sensitivity is withheld.
+  const ROLE_CUT = 0.05;
+  const recut = (series: Record<string, any>[], cut: number) =>
+    series.map((x) => (x.roles && Array.isArray(x.rolesPresent) ? { ...x, rolesPresent: ROLES.filter((k) => (x.roles[k] ?? 0) >= cut) } : x));
+  const recutMismatch = runs.find((r) =>
+    r.series.some((x) => x.roles && Array.isArray(x.rolesPresent) && JSON.stringify(ROLES.filter((k) => (x.roles[k] ?? 0) >= ROLE_CUT)) !== JSON.stringify(x.rolesPresent))
+  );
+  const coexistenceEndpoints = PRIMARY_ENDPOINTS.filter((e) => e.kind === "coexistence");
+  const roleCutSensitivity = recutMismatch
+    ? { unavailable: `recorded role shares of ${recutMismatch.condition} seed ${recutMismatch.seed} do not reproduce its rolesPresent at the ${ROLE_CUT} cut` }
+    : [ROLE_CUT / 2, ROLE_CUT * 2].map((cut) => {
+      const altViews: RunView[] = runs.map((r, i) => {
+        const series = recut(r.series, cut);
+        const alt = { ...r, series };
+        const trendOut = scheduledTrend(series.map((x) => x.step), series.map((x) => x.rolesPresent?.length), r.manifest.spec.deepEvery, true, MIN_TREND_POINTS);
+        return {
+          ...views[i],
+          stats: { ...views[i].stats, rolesPresent: timeAvg(alt, (x) => x.rolesPresent?.length), rolesPresentTrend: trendOut.slope * 1e5 },
+          series: series.map((x) => ({ step: x.step, rolesPresent: x.rolesPresent })),
+        };
+      });
+      const alt = evaluateHeldOut(altViews, presetId);
+      const roleCount = alt.results.find((x) => x.id === "held-out-role-count");
+      return {
+        cut,
+        coexistence: coexistenceEndpoints.map((e) => evaluateEndpoint(e, altViews)),
+        heldOutRoleCount: roleCount ? { available: roleCount.available, supported: roleCount.supported } : null,
+        heldOutOutcome: alt.summary.outcome,
+      };
+    });
+  md += `\n## Sensitivity: role-share cut (×0.5, ×2; pre-registered)\n\n`;
+  if ("unavailable" in roleCutSensitivity) md += `Unavailable: ${roleCutSensitivity.unavailable}.\n`;
+  else {
+    const coexRow = (r: EndpointResult) =>
+      r.kind === "coexistence"
+        ? `${r.qualifying}/${r.total}${r.total ? (r.supported ? " (supported)" : " (not supported)") : ""}` +
+          (r.gate ? `; M5 gate ≥${r.gate.minRoles} roles ${r.gate.qualifying}/${r.gate.total}${r.gate.supported ? " (supported)" : " (not supported)"}` : "")
+        : "—";
+    const registeredRoleCount = heldOut.results.find((x) => x.id === "held-out-role-count");
+    const rows = [
+      { cut: ROLE_CUT, coexistence: results.filter((r) => r.kind === "coexistence"), heldOutRoleCount: registeredRoleCount ? { available: registeredRoleCount.available, supported: registeredRoleCount.supported } : null, heldOutOutcome: heldOut.summary.outcome },
+      ...roleCutSensitivity,
+    ].sort((a, b) => a.cut - b.cut);
+    md += `Endpoint 4, the held-out role count and the held-out summary re-evaluated with roles needing at least the given share of living cells (registered cut ${100 * ROLE_CUT}%).\n\n`;
+    md += `| role cut | endpoint 4: treatment runs qualifying | held-out role count | held-out summary |\n|---|---|---|---|\n`;
+    for (const row of rows) {
+      const rc = row.heldOutRoleCount ? (row.heldOutRoleCount.available ? (row.heldOutRoleCount.supported ? "supported" : "not supported") : "unavailable") : "—";
+      md += `| ${(100 * row.cut).toFixed(1)}%${row.cut === ROLE_CUT ? " (registered)" : ""} | ${row.coexistence.map(coexRow).join("; ")} | ${rc} | ${row.heldOutOutcome} |\n`;
+    }
+  }
+  md += `\nIndividual-threshold sensitivity (B+P ≥ 48, ≥ 256 quanta) is not performed: those thresholds are applied by the tracker during the run (pre-registration, "Known limitations").\n`;
+
+  // ---- heredity (descriptive; pre-registration, "Reproduction and heredity") ----
+  // Sibling correlation of Lenia growth parameters at fission: the two pieces
+  // are unordered, so each pair enters both ways (double-entry, i.e.
+  // intraclass) Pearson correlation. Pooled over a condition's fissions, and
+  // the median of per-run correlations, which between-run differences cannot
+  // inflate.
+  const siblingCorrelation = (pairs: [number, number][]): number => {
+    if (pairs.length < 3) return NaN;
+    const all = pairs.flatMap(([a, b]) => [a, b]);
+    const m = mean(all);
+    let num = 0, den = 0;
+    for (const [a, b] of pairs) {
+      num += 2 * (a - m) * (b - m);
+      den += (a - m) ** 2 + (b - m) ** 2;
+    }
+    return den > 0 ? num / den : NaN;
+  };
+  const heredityByRun = new Map<Run, [number, number, number, number][]>();
+  for (const r of runs) {
+    const pairs = await heredityPairs(r);
+    if (pairs) heredityByRun.set(r, pairs);
+  }
+  const median = (xs: number[]) => (xs.length ? quantile(xs, 0.5) : NaN);
+  const heredity = conditions.map((c) => {
+    const rs = runs.filter((r) => r.condition === c && heredityByRun.has(r));
+    const pairs = rs.flatMap((r) => heredityByRun.get(r)!);
+    const perRun = (k: 0 | 2) => rs.map((r) => siblingCorrelation(heredityByRun.get(r)!.map((p) => [p[k], p[k + 1]]))).filter(Number.isFinite);
+    return {
+      condition: c,
+      runs: rs.length,
+      fissions: pairs.length,
+      muPooled: siblingCorrelation(pairs.map((p) => [p[0], p[1]])),
+      sigmaPooled: siblingCorrelation(pairs.map((p) => [p[2], p[3]])),
+      muMedianRun: median(perRun(0)),
+      sigmaMedianRun: median(perRun(2)),
+    };
+  }).filter((h) => h.runs > 0);
+  if (heredity.length) {
+    md += `\n## Heredity (descriptive; pre-registered)\n\n`;
+    md += `Sibling correlation (double-entry Pearson) of the Lenia growth parameters μ and σ between the two pieces of each fission (\`heredity.tsv\`): pooled over the condition's fissions, and the median of per-run correlations.\n\n`;
+    md += `| condition | runs | fissions | μ pooled | σ pooled | μ median per run | σ median per run |\n|---|---|---|---|---|---|---|\n`;
+    for (const h of heredity) md += `| ${h.condition} | ${h.runs} | ${h.fissions} | ${fmt(h.muPooled)} | ${fmt(h.sigmaPooled)} | ${fmt(h.muMedianRun)} | ${fmt(h.sigmaMedianRun)} |\n`;
+  }
+
   if (treat.length) {
     md += `\n## Exploratory: treatment vs controls (Mann–Whitney, two-sided, unadjusted; effect = P(treatment > control))\n\n`;
     md += `Not part of the pre-registered inference; with few seeds these p-values are indicative only.\n\n`;
@@ -627,6 +742,8 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
     adaptiveActivityNote,
     ensembleIdentity,
     m4Descriptive,
+    roleCutSensitivity,
+    heredity,
     runs: runs.map((r) => ({ condition: r.condition, seed: r.seed, trend: trends.get(r), stats: perRun.get(r) })),
   };
   return { markdown: md, json, results, heldOut, charts };

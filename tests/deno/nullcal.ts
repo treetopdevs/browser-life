@@ -197,10 +197,10 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
   // (e.g. leaking the `results`/`heldOut` endpoint decisions nullcal consumes
   // in-process into the CLI's own file). Since the activity threshold was
   // frozen (2026-09-27), report.json's top-level shape has been exactly
-  // these keys (m4Descriptive added with the pre-freeze M4 amendment) (tests/deno/analyze.ts pins the CLI's own end-to-end
+  // these keys (m4Descriptive, roleCutSensitivity and heredity added before the pre-registration freeze) (tests/deno/analyze.ts pins the CLI's own end-to-end
   // behavior against real ACTIVITY_THRESHOLDS entries); pin that shape
   // directly here too.
-  const expectedKeys = "adaptiveActivityNote,calibrated,ensembleIdentity,inSampleNeutralQuantile,m4Descriptive,presetId,q,runs,threshold,thresholdMode,unavailableReason";
+  const expectedKeys = "adaptiveActivityNote,calibrated,ensembleIdentity,heredity,inSampleNeutralQuantile,m4Descriptive,presetId,q,roleCutSensitivity,runs,threshold,thresholdMode,unavailableReason";
   check(
     "split check: the CLI's report.json has exactly the current top-level shape, no extra or missing keys",
     Object.keys(cliReport).sort().join(",") === expectedKeys,

@@ -4,7 +4,7 @@
 // subprocess, and exercising the same analysis code the real CLI runs.
 import { describe, expect, it } from "vitest";
 import { ActivityTracker, mannWhitney, mean } from "@bl/metrics";
-import { HELD_OUT_SPECS, PRIMARY_ENDPOINTS } from "../endpoints.ts";
+import { HELD_OUT_SPECS, PRIMARY_ENDPOINTS, type EndpointResult } from "../endpoints.ts";
 import { analyzeEnsemble, type Run } from "../../tools/analyze.ts";
 import {
   boundedTreatmentVsFlat,
@@ -256,7 +256,8 @@ async function buildEnsemble(
   windowSteps: number,
   seedsPerCondition: number,
   masterSeed = 1,
-): Promise<Pick<Awaited<ReturnType<typeof analyzeEnsemble>>, "results" | "heldOut">> {
+  mutate: (runs: Run[]) => void = () => {},
+): Promise<Awaited<ReturnType<typeof analyzeEnsemble>>> {
   const runs: Run[] = [];
   for (const conditionId of NULLCAL_CONDITIONS) {
     for (let seedIndex = 0; seedIndex < seedsPerCondition; seedIndex++) {
@@ -277,9 +278,56 @@ async function buildEnsemble(
   // registered "gradient-m3" preset id purely for its endpoint/control
   // wiring, with no founder provenance and a non-pilot schedule, so this
   // always exercises analyzeEnsemble's exploratory (in-sample) threshold path.
-  const { results, heldOut } = await analyzeEnsemble(runs, "nullgen-test", { ignoreFrozenThreshold: true });
-  return { results, heldOut };
+  mutate(runs);
+  return await analyzeEnsemble(runs, "nullgen-test", { ignoreFrozenThreshold: true });
 }
+
+describe("role-cut sensitivity and heredity (pre-registered, analyzeEnsemble)", () => {
+  // Every deep census holds shares 0.5 / 0.07 / 0.4 / 0.03: three roles at the
+  // registered 5% cut, four at 2.5%, two at 10%.
+  const shares = { phototroph: 0.5, chemotroph: 0.07, decomposer: 0.4, mixed: 0.03 };
+  const withShares = (runs: Run[]) => {
+    for (const r of runs) for (const x of r.series) if (Array.isArray(x.rolesPresent)) {
+      x.roles = { ...shares };
+      x.rolesPresent = ["phototroph", "chemotroph", "decomposer"];
+    }
+  };
+
+  it("re-evaluates endpoint 4 and its M5 gate at 2.5% and 10%", async () => {
+    const { json } = await buildEnsemble((id, s) => constantSanity(id, s), 200_000, 3, 1, withShares);
+    expect(Array.isArray(json.roleCutSensitivity)).toBe(true);
+    if (!Array.isArray(json.roleCutSensitivity)) return;
+    const [low, high] = json.roleCutSensitivity;
+    expect([low.cut, high.cut]).toEqual([0.025, 0.1]);
+    const gate = (r: EndpointResult) => (r.kind === "coexistence" ? r.gate : undefined);
+    // 2.5%: four roles, so both the >=2-role endpoint and the >=3-role gate hold everywhere.
+    expect(low.coexistence[0].kind === "coexistence" && low.coexistence[0].qualifying === low.coexistence[0].total).toBe(true);
+    expect(gate(low.coexistence[0])?.qualifying).toBe(gate(low.coexistence[0])?.total);
+    // 10%: two roles, so the endpoint still holds but the M5 gate never does.
+    expect(high.coexistence[0].kind === "coexistence" && high.coexistence[0].qualifying === high.coexistence[0].total).toBe(true);
+    expect(gate(high.coexistence[0])?.qualifying).toBe(0);
+  });
+
+  it("is withheld when the recorded shares do not reproduce rolesPresent at 5%", async () => {
+    const { json } = await buildEnsemble((id, s) => constantSanity(id, s), 200_000, 3, 1, (runs) => {
+      withShares(runs);
+      const x = runs[0].series.find((p) => Array.isArray(p.rolesPresent))!;
+      x.rolesPresent = ["phototroph"];
+    });
+    expect(json.roleCutSensitivity).toHaveProperty("unavailable");
+  });
+
+  it("reports sibling correlations: 1 for identical siblings, per condition", async () => {
+    const { json } = await buildEnsemble((id, s) => constantSanity(id, s), 5000, 3, 1, (runs) => {
+      for (const r of runs) r.heredity = Array.from({ length: 10 }, (_, k) => [40 + k, 40 + k, 10 + (k % 3), 10 + (k % 3)] as [number, number, number, number]);
+    });
+    const t = json.heredity.find((h) => h.condition === "treatment")!;
+    expect(t.runs).toBe(3);
+    expect(t.fissions).toBe(30);
+    expect(t.muPooled).toBeCloseTo(1, 12);
+    expect(t.sigmaMedianRun).toBeCloseTo(1, 12);
+  });
+});
 
 describe("sanity null: constantSanity must give exactly 0", () => {
   it("0/20 across 20 seeded variants for every PRIMARY_ENDPOINTS entry and every held-out directional observable", async () => {

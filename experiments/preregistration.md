@@ -161,13 +161,13 @@ Decided 2026-09-27, before freezing, after seeing only the neutral calibration p
 
 ## Reproduction and heredity (descriptive)
 
-Fission, budding (condensation within 24 cells of a living individual of the same lineage), fusion, births and deaths inferred by overlap tracking of connected bound-mass components (B+P ≥ 48, individuals ≥ 256 quanta). Heredity is estimated as the correlation of Lenia growth parameters between sibling pieces at fission.
+Fission, budding (condensation within 24 cells of a living individual of the same lineage), fusion, births and deaths inferred by overlap tracking of connected bound-mass components (B+P ≥ 48, individuals ≥ 256 quanta). Heredity is estimated as the correlation of Lenia growth parameters (μ, σ) between sibling pieces at fission (`heredity.tsv`): a double-entry (intraclass) Pearson correlation per condition, pooled over its fissions and as the median of per-run correlations (`tools/analyze.ts`, descriptive).
 
 ## Known limitations declared in advance
 
 - "Energy" is abstract resource accounting, not calibrated thermodynamics; entropy language refers to information or resource accounting only.
 - Under matter closure Finn's cycling index is trivially 1; the biotic recycling share replaces it.
-- Individuals and roles depend on the thresholds above; sensitivity analysis (×0.5, ×2) is reported for every endpoint.
+- Individuals and roles depend on the thresholds above. Role-threshold sensitivity is reported: roles need at least 5% of living cells, and endpoint 4 (with its M5 gate row), the held-out role count and the held-out summary are re-evaluated at 2.5% and 10%, recomputed from the role shares `series.jsonl` records (`tools/analyze.ts`). Individual-threshold sensitivity (B+P ≥ 48, individuals ≥ 256 quanta, ×0.5 and ×2) is not performed: the tracker applies those thresholds while a run executes, so it would require re-observing every run. They affect the individual and reproduction counts and the held-out pattern and morphology observables (the B+P ≥ 48 occupancy cut also defines the 2×2 patterns behind temporal mutual information and pattern entropy; internal differentiation and compartmentalised individuals are measured on individuals). They do not affect endpoints 1–4: lineage abundance and role shares count every cell carrying a lineage, and recycling comes from the chemistry fluxes. A re-observation analysis may be registered later as a separate secondary analysis.
 - A finite window cannot establish open-endedness; results are "practical open-endedness over the observation window" at most.
 - Moral status: nothing in this system is claimed to be sentient; the question is revisited if M7 succeeds.
 

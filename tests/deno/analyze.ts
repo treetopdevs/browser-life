@@ -98,8 +98,8 @@ async function tamperManifest(dir: string, patch: (m: any) => void) {
   await Deno.writeTextFile(`${dir}/manifest.json`, JSON.stringify(m));
 }
 
-async function runAnalyze(runRoot: string, outDir?: string): Promise<{ code: number; stdout: string; stderr: string }> {
-  const args = ["run", "-A", "tools/analyze.ts", runRoot];
+async function runAnalyze(runRoot: string, outDir?: string, extra: string[] = []): Promise<{ code: number; stdout: string; stderr: string }> {
+  const args = ["run", "-A", "tools/analyze.ts", runRoot, ...extra];
   if (outDir) args.push("--out", outDir);
   const cmd = new Deno.Command(Deno.execPath(), { args, stdout: "piped", stderr: "piped" });
   const { code, stdout, stderr } = await cmd.output();
@@ -410,6 +410,8 @@ const baseSpec = (seed: number, condition: string, ringNamespace?: number): RunS
       const outDir = `${root}/e4-report`;
       const { code, stderr } = await runAnalyze(`${root}/e4/gradient-m3`, outDir);
       check("frozen value, matching schedule: analyze.ts succeeds", code === 0, `exit ${code}: ${stderr}`);
+      const bypass = await runAnalyze(`${root}/e4/gradient-m3`, `${root}/e4-bypass`, ["--ignore-frozen-threshold"]);
+      check("--ignore-frozen-threshold on real bundles is refused (synthetic nullcal ensembles only)", bypass.code !== 0 && /only for synthetic/.test(bypass.stderr), `exit ${bypass.code}: ${bypass.stderr}`);
       let reportJson: any = null;
       try {
         reportJson = JSON.parse(await Deno.readTextFile(`${outDir}/report.json`));

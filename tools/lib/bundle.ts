@@ -29,6 +29,8 @@ export interface Run {
    * leave it unset and `activities` streams their lineages.tsv instead.
    */
   lineages?: Map<number, [string, number][]>;
+  /** In-memory sibling pairs at fission ([muA, muB, sigmaA, sigmaB]) for a synthetic run; see `heredityPairs`. */
+  heredity?: [number, number, number, number][];
   manifest: any;
   /** Set by a `loadRunsUnder` reducer that replays activities as each run loads (see calibrate.ts). */
   activities?: number[];
@@ -86,18 +88,22 @@ export async function* lineageCensuses(dir: string): AsyncGenerator<[number, [st
   // this module (via tools/analyze.ts) needs no jsr: resolution under vitest.
   async function* lines(): AsyncGenerator<string> {
     const file = await Deno.open(`${dir}/lineages.tsv`);
-    let buf = "";
+    // Each chunk is scanned once; an unfinished line's fragments are kept
+    // until its newline arrives, so the cost is linear in the file size.
+    let pending: string[] = [];
     for await (const chunk of file.readable.pipeThrough(new TextDecoderStream())) {
-      buf += chunk;
       let start = 0;
       let nl: number;
-      while ((nl = buf.indexOf("\n", start)) >= 0) {
-        yield buf.slice(start, nl).replace(/\r$/, "");
+      while ((nl = chunk.indexOf("\n", start)) >= 0) {
+        const line = pending.length ? pending.join("") + chunk.slice(start, nl) : chunk.slice(start, nl);
+        pending = [];
+        yield line.endsWith("\r") ? line.slice(0, -1) : line;
         start = nl + 1;
       }
-      buf = buf.slice(start);
+      if (start < chunk.length) pending.push(chunk.slice(start));
     }
-    if (buf) yield buf.replace(/\r$/, "");
+    const last = pending.join("");
+    if (last) yield last.endsWith("\r") ? last.slice(0, -1) : last;
   }
   let header = true;
   let step = -Infinity;
@@ -269,4 +275,34 @@ export function provenanceProblems(runs: Run[], presetId: string): string[] {
       problems.push(`${id}: initHash ${m.initHash} does not match the recomputed founder-state hash ${expectedInitHash} for this run's config -- founder content differs from what the current preset produces`);
   }
   return problems;
+}
+
+/**
+ * Sibling growth-parameter pairs at fission from a run's heredity.tsv
+ * (columns step, muA, muB, sigmaA, sigmaB, massA, massB): `Run.heredity` for
+ * an in-memory run, the file for a real bundle, or null when a synthetic run
+ * carries none or a bundle has no such file.
+ */
+export async function heredityPairs(r: Run): Promise<[number, number, number, number][] | null> {
+  if (r.heredity) return r.heredity;
+  if (r.lineages) return null;
+  let text: string;
+  try {
+    text = await Deno.readTextFile(`${r.dir}/heredity.tsv`);
+  } catch (e) {
+    if (e instanceof Deno.errors.NotFound) return null;
+    throw e;
+  }
+  const [head, ...rows] = text.trim().split("\n");
+  const cols = head.split("\t");
+  const at = (name: string) => {
+    const i = cols.indexOf(name);
+    if (i < 0) throw new Error(`${r.dir}/heredity.tsv lacks column ${name}`);
+    return i;
+  };
+  const [ma, mb, sa, sb] = [at("muA"), at("muB"), at("sigmaA"), at("sigmaB")];
+  return rows.filter(Boolean).map((l) => {
+    const f = l.split("\t").map(Number);
+    return [f[ma], f[mb], f[sa], f[sb]];
+  });
 }
