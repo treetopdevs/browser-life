@@ -8,3 +8,4 @@ runs/
 apps/coordinator/_build/
 apps/coordinator/deps/
 apps/coordinator/data/
+.playwright-mcp/
