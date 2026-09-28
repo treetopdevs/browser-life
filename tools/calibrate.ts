@@ -32,7 +32,7 @@
 //      "17/20 seeds done so far"), but never a status this tool calls "ok",
 //      and the process exits non-zero.
 //   3. Pools eligible runs' lineage activities (tools/lib/bundle.ts's
-//      `activities().tracker.allActivities()`, runs sorted by seed first so
+//      `(await activities(r)).tracker.allActivities()`, runs sorted by seed first so
 //      the bootstrap below doesn't depend on filesystem iteration order)
 //      and computes the q=0.95 quantile (@bl/metrics's `quantile`) -- the
 //      same function tools/analyze.ts uses for its in-sample diagnostic. A
@@ -125,9 +125,8 @@ for (const presetId of presets) {
   const presetRoot = `${pilotRoot}/${presetId}`;
   let loaded: Run[];
   try {
-    // Each run's activities are replayed as it loads and its lineage table
-    // dropped: holding 20 full 1e6-step tables exceeds the V8 heap.
-    loaded = await loadRunsUnder(presetRoot, (r) => ({ ...r, activities: activities(r).tracker.allActivities(), lineages: new Map() }));
+    // Each run's activities are replayed (lineages.tsv streamed) as it loads.
+    loaded = await loadRunsUnder(presetRoot, async (r) => ({ ...r, activities: (await activities(r)).tracker.allActivities() }));
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
       console.log(`  unavailable: no directory at ${presetRoot}`);

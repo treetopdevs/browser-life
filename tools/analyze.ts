@@ -136,7 +136,8 @@ if (frozen) {
 }
 
 const neutralRuns = runs.filter((r) => r.condition === "neutral");
-const neutralActs = neutralRuns.flatMap((r) => activities(r).tracker.allActivities());
+const neutralActs: number[] = [];
+for (const r of neutralRuns) for (const x of (await activities(r)).tracker.allActivities()) neutralActs.push(x);
 const inSampleNeutralQuantile = neutralActs.length > 0 ? quantile(neutralActs, 0.95) : null;
 
 /** A minimal, valid RunSpec for a `specConfig` call that only cares about presetId/condition/seed -- the other fields are irrelevant to config computation and never touch the filesystem here. Mirrors experiments/endpoints.ts's own `neutralSpecFor`. */
@@ -233,7 +234,7 @@ const trend = (r: Run, key: string, f: (x: Record<string, any>) => number | unde
   return out.slope * 1e5;
 };
 for (const r of runs) {
-  const { snaps } = activities(r, threshold);
+  const { snaps } = await activities(r, threshold);
   const last = snaps[snaps.length - 1];
   const t = snaps.map((s) => s.step);
   const cum = snaps.map((s) => s.cumulativeNew);
