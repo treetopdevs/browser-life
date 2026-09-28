@@ -20,6 +20,19 @@ test("checkpoint Import is focusable and shows focus", async ({ page }) => {
   await expect(button).toHaveCSS("outline-style", "solid");
 });
 
+test("lab status and history remain reachable on small screens", async ({ page }) => {
+  await page.setViewportSize({ width: 1365, height: 500 });
+  await page.goto("/lab/");
+  const stage = page.locator(".stage");
+  await expect(stage).toHaveCSS("overflow-y", "auto");
+  await stage.evaluate((el) => { el.scrollTop = el.scrollHeight; });
+  await expect(page.getByRole("heading", { name: "Population history" })).toBeInViewport();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator("#simulation-status")).toBeVisible();
+  await expect(page.locator("#simulation-status")).not.toBeEmpty();
+});
+
 test("public information pages have readable content at narrow widths", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const path of ["/how-it-works/", "/research/", "/about/", "/privacy/", "/participate/", "/status/"]) {

@@ -13,6 +13,7 @@ function applyTheme() {
     button.textContent = current === "dark" ? "Light mode" : "Dark mode";
     button.setAttribute("aria-label", `Switch to ${current === "dark" ? "light" : "dark"} mode`);
   }
+  window.dispatchEvent(new Event("browser-life-theme-change"));
 }
 
 // Public pages share a header but do not need a different template for the switch.

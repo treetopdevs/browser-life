@@ -52,6 +52,7 @@ button { font: inherit; cursor: pointer; }
 }
 .site-nav { display: flex; align-self: stretch; align-items: stretch; gap: 1px; flex-wrap: wrap; margin-left: auto; }
 .site-nav a { display: inline-flex; align-items: center; padding: 0 10px; border-bottom: 2px solid transparent; text-decoration: none; color: var(--muted); font-size: .75rem; font-weight: 600; }
+.site-nav a:focus-visible { outline-offset: -2px; color: var(--text); }
 .site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--text); }
 .site-nav a[aria-current="page"] { border-bottom-color: var(--accent); }
 .theme-toggle { flex: none; border: 1px solid var(--line); border-radius: 5px; background: transparent; color: var(--text); min-height: 32px; padding: 5px 9px; font-size: .6875rem; font-weight: 600; }

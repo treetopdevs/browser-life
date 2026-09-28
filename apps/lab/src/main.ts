@@ -21,6 +21,7 @@ let playing = false;
 let lastStep = 0;
 let worldReady = false;
 let verifying = false;
+let loadingWorld = false;
 
 function setStatus(message: string, state: "ready" | "running" | "error" | "loading" = "ready") {
   $("simulation-status").textContent = message;
@@ -74,6 +75,10 @@ const showPresetDesc = () => ($("preset-desc").textContent = PRESETS.find((p) =>
 presetSel.onchange = showPresetDesc;
 showPresetDesc();
 $("btn-new").onclick = () => {
+  setPlaying(false);
+  setWorldControls(false);
+  cfg = null;
+  loadingWorld = true;
   setStatus("Loading world", "loading");
   $<HTMLButtonElement>("btn-new").disabled = true;
   send({ type: "load", presetId: presetSel.value, seed: Number($<HTMLInputElement>("seed").value) || 0 });
@@ -179,10 +184,11 @@ function placeFocusCursor() {
   if (cfg) {
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
     $("hover").textContent = `x ${Math.floor(x)}  y ${Math.floor(y)} · Enter to ${tool === "pan" ? "center" : tool}`;
+    $("keyboard-position").textContent = `Column ${Math.floor(x)}, row ${Math.floor(y)}. Enter to ${tool === "pan" ? "center" : tool}.`;
   }
 }
 canvas.addEventListener("focus", () => { wrap.classList.add("keyboard-focus"); placeFocusCursor(); });
-canvas.addEventListener("blur", () => { wrap.classList.remove("keyboard-focus"); $("hover").textContent = ""; });
+canvas.addEventListener("blur", () => { wrap.classList.remove("keyboard-focus"); $("hover").textContent = ""; $("keyboard-position").textContent = ""; });
 canvas.addEventListener("keydown", (ev) => {
   const moves: Record<string, [number, number]> = {
     ArrowLeft: [-0.03, 0], ArrowRight: [0.03, 0], ArrowUp: [0, -0.03], ArrowDown: [0, 0.03],
@@ -193,7 +199,7 @@ canvas.addEventListener("keydown", (ev) => {
     focusX = Math.min(1, Math.max(0, focusX + dx));
     focusY = Math.min(1, Math.max(0, focusY + dy));
     placeFocusCursor();
-  } else if (ev.key === "Enter" && cfg) {
+  } else if (ev.key === "Enter" && worldReady && cfg) {
     ev.preventDefault();
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
     if (tool === "inspect") send({ type: "probe", x, y });
@@ -210,6 +216,7 @@ canvas.addEventListener("keydown", (ev) => {
   }
 });
 canvas.onpointerdown = (ev) => {
+  if (!worldReady) return;
   canvas.setPointerCapture(ev.pointerId);
   if (tool === "pan" || ev.button === 1 || ev.button === 2) {
     drag = { x: ev.clientX, y: ev.clientY, rx: rect.x, ry: rect.y };
@@ -242,6 +249,7 @@ canvas.onpointerleave = () => ($("hover").textContent = "");
 canvas.oncontextmenu = (e) => e.preventDefault();
 let lastLesion = 0;
 function lesionAt(ev: PointerEvent) {
+  if (!worldReady) return;
   const now = performance.now();
   if (now - lastLesion < 60) return;
   lastLesion = now;
@@ -282,9 +290,11 @@ $("btn-verify").onclick = () => {
 };
 
 // ---------- stats rendering ----------
-const spInd = new Series($<HTMLCanvasElement>("sp-ind"), "oklch(75% 0.13 155)");
-const spBio = new Series($<HTMLCanvasElement>("sp-bio"), "oklch(66% 0.13 252)");
-const spLin = new Series($<HTMLCanvasElement>("sp-lin"), "oklch(69% 0.10 65)");
+const chartColor = (name: string) => () => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const spInd = new Series($<HTMLCanvasElement>("sp-ind"), chartColor("--biomass"));
+const spBio = new Series($<HTMLCanvasElement>("sp-bio"), chartColor("--nutrient"));
+const spLin = new Series($<HTMLCanvasElement>("sp-lin"), chartColor("--waste"));
+window.addEventListener("browser-life-theme-change", () => { spInd.redraw(); spBio.redraw(); spLin.redraw(); });
 
 function resetEvidence() {
   for (const id of ["k-matter", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen"])
@@ -418,11 +428,14 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
     case "ready":
       $("chip-gpu").textContent = m.adapter;
       $("chip-gpu").title = m.adapter;
+      loadingWorld = true;
+      $<HTMLButtonElement>("btn-new").disabled = true;
       setStatus("Loading world", "loading");
       send({ type: "load", presetId: presetSel.value, seed: Number($<HTMLInputElement>("seed").value) || 0 });
       send({ type: "listCheckpoints" });
       break;
     case "loaded":
+      loadingWorld = false;
       cfg = m.manifest.cfg;
       setWorldControls(true);
       $<HTMLButtonElement>("btn-new").disabled = false;
@@ -487,6 +500,11 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
     case "error":
       // The worker pauses itself on stepping and census failures; stay in sync.
       if (playing) setPlaying(false);
+      if (loadingWorld) {
+        loadingWorld = false;
+        setWorldControls(false);
+        cfg = null;
+      }
       if (verifying) {
         verifying = false;
         $<HTMLButtonElement>("btn-verify").disabled = !worldReady;
