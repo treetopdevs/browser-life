@@ -28,7 +28,10 @@ async function refresh(): Promise<void> {
     ];
     for (const [id, value] of entries) byId(id).textContent = Number.isFinite(value) ? value.toLocaleString() : "—";
     updated.textContent = `Last checked ${new Date(status.updatedAt).toLocaleString()}. Refreshes every 30 seconds.`;
-    message.textContent = "Coordinator connected.";
+    const hasSegments = Object.values(status.counts).some((count) => count > 0);
+    message.textContent = hasSegments
+      ? "Coordinator connected."
+      : "Coordinator connected. No experiments are queued yet; joined islands will wait for work.";
     grid.hidden = false;
   } catch {
     message.textContent = "Live status is unavailable right now. The lab and research notes are still available.";

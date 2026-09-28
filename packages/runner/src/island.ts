@@ -248,10 +248,15 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
 
   log(opt.identity ? `resumed as ${id}` : `joined as ${id}`);
   let done = 0;
+  let waiting = false;
   while (!opt.signal?.aborted && (!opt.maxTasks || done < opt.maxTasks)) {
     const task = await call<Task>(`/api/next?${q()}`, { method: "POST" });
     if (task.kind === "idle" || !task.segment || !task.spec || !task.lease) {
       if (opt.maxTasks) break;
+      if (!opt.signal?.aborted && !waiting) {
+        log("connected; waiting for work. No experiment segment is available right now; checking again shortly");
+        waiting = true;
+      }
       // Stop may have aborted while `/next` was in flight; don't run a full
       // idle wait just to discover that on the next loop check.
       if (!opt.signal?.aborted)
@@ -266,6 +271,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
         });
       continue;
     }
+    waiting = false;
     const seg = task.segment;
     const lease = task.lease;
     log(`${task.kind} ${seg.run} #${seg.index} (${seg.steps} steps from t=${seg.startStep})`);

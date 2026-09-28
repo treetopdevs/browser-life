@@ -23,11 +23,12 @@
     <a href="/participate/">← Participation guide</a>
     <h1>Archipelago island</h1>
     <p>Press Join to run simulation segments on your GPU and upload the results. This can use significant power. Some work is replayed elsewhere for comparison. Press Stop or close the tab to stop new work. <a href="/privacy/">What data is sent?</a></p>
+    <p>Joining makes your GPU available. Work starts when a researcher queues an experiment; the island may wait between segments. <a href="/status/">View queue status</a>.</p>
     <div class="row">
       <input id="url" value="" aria-label="Coordinator URL" />
       <button id="go">Join</button>
     </div>
-    <pre id="log">idle</pre>
+    <pre id="log">Not joined yet</pre>
     <script type="module" src="/src/island.ts"></script>
   </body>
 </html>
