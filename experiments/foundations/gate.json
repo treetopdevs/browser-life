@@ -1,0 +1,82 @@
+{
+ "row": "Variation",
+ "decided": true,
+ "candidateRow": "Variation",
+ "notes": [],
+ "t1": {
+  "complete": true,
+  "slopes": {
+   "reproMass": {
+    "n": 200,
+    "slope": 0.8530023047780536,
+    "ci95": [
+     0.6940468095768708,
+     1.0017136895047958
+    ],
+    "validBoots": 2000
+   },
+   "membrane": {
+    "n": 164,
+    "slope": 0.9634175065732564,
+    "ci95": [
+     0.936999473016342,
+     1.023365687184601
+    ],
+    "validBoots": 2000
+   },
+   "reproRate": {
+    "n": 200,
+    "slope": 0.9014949920921675,
+    "ci95": [
+     0.5972390529078963,
+     0.9601735941749178
+    ],
+    "validBoots": 2000
+   }
+  },
+  "historiesWithViableChain": 10,
+  "substrateCondition": false,
+  "noSlopeAbove02": false
+ },
+ "t2": {
+  "step24Mutants": 2400,
+  "candidates": 665,
+  "confirmed": 665,
+  "viableChanged": 310,
+  "viableChangedShare": 0.12916666666666668,
+  "foundersWithViableRoleChanging": 1,
+  "literal": {
+   "viableChanged": 298,
+   "viableChangedShare": 0.12416666666666666,
+   "foundersWithViableRoleChanging": 1
+  },
+  "complete": true,
+  "fails": true,
+  "failsLiteral": true
+ },
+ "t3": {
+  "complete": true,
+  "candidates": 75,
+  "originating": 10,
+  "outcomes": {
+   "different role": 10,
+   "same role": 63,
+   "descendant inactive": 2,
+   "founder inactive": 0
+  },
+  "foundersCounting": 1,
+  "fails": true
+ },
+ "t4": {
+  "histories": 10,
+  "controlHistories": 5,
+  "complete": true,
+  "lateBeatsEarly": 0,
+  "controlLateBeatsEarly": 0,
+  "confounded": false,
+  "residualOk": false,
+  "margin": 0.09531017980432493,
+  "row": "Inconclusive"
+ },
+ "t4b": null
+}

@@ -5,8 +5,8 @@
 //   deno run -A tools/assay.ts mutants   --out DIR [--founders 0-11] [--scales 24,8,4] [--per 200]   (test 2 screen)
 //   deno run -A tools/assay.ts confirm   --out DIR --candidates FILE                                  (test 2 confirmation)
 //   deno run -A tools/assay.ts timeshift --out DIR [--root runs/replay-m4/gradient-m3/treatment] [--histories 1-10] (test 4)
-//   deno run -A tools/assay.ts garden    --out DIR --plan FILE                                        (tests 1 and 3)
-//   deno run -A tools/assay.ts retest    --out DIR --plan FILE                                        (test 5)
+//   deno run -A tools/assay.ts garden    --out DIR --plan FILE                                        (tests 1 and 3, founder diagnostic)
+//   deno run -A tools/assay.ts retest    --out DIR --plan FILE                                        (test 5, founder diagnostic)
 //
 // Seeds come from the review's reserved ranges (4,000,001-4,599,999), as the definitions fix them.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
@@ -27,6 +27,7 @@ import {
   draw,
   encodeGenome,
   founderGenome,
+  genomeFromHex,
   worldW,
   type Founder,
   type Genome,
@@ -83,12 +84,6 @@ async function forUnits<T>(units: T[], name: (u: T) => string, work: (u: T) => P
 }
 
 export const hexWords = (w: Uint32Array) => Array.from(w.subarray(G.PARAM0), (x) => x.toString(16).padStart(8, "0")).join("");
-/** A genome from `genomes.tsv`'s words column (PARAM0 onwards, 8 hex digits each). */
-export function genomeFromHex(hex: string): Genome {
-  const w = new Uint32Array(GENOME_CHANNELS);
-  for (let g = G.PARAM0; g < GENOME_CHANNELS; g++) w[g] = parseInt(hex.slice((g - G.PARAM0) * 8, (g - G.PARAM0 + 1) * 8), 16) >>> 0;
-  return decodeGenome(w);
-}
 
 /** Test 2's mutant m of founder f at step size s, drawn by the rule's own mutation operator. */
 export function mutant(f: number, s: number, m: number) {
@@ -118,6 +113,12 @@ interface GardenPlan {
   growSteps: number;
   /** Each planting fills `reps` tiles; one genome is a monoculture, two are co-cultured side by side. */
   plantings: { id: string; hex: string[] }[];
+  /**
+   * Founder diagnostic (docs/plan.md): a light gradient down each tile instead of the evaluator's
+   * uniform light, with every disc of replicate r centred on row rows[r % rows.length], so both
+   * discs of a co-culture start at the same light. Omitted: the garden of tests 1 and 3.
+   */
+  gradient?: { lightBase: number; lightAmp: number; rows: number[] };
 }
 
 async function garden() {
@@ -130,7 +131,8 @@ async function garden() {
 
 async function gardenBatch(ps: GardenPlan["plantings"], plan: GardenPlan, seed: number) {
   const T = DEFAULT_EVAL.tile, side = DEFAULT_EVAL.side;
-  const cfg = defaultConfig({ ...DEFAULT_EVAL.world, tileW: T, tileH: T, tilesX: side, tilesY: side, seed, mutRate: 0 });
+  const light = plan.gradient ? { lightMode: "gradient" as const, lightBase: plan.gradient.lightBase, lightAmp: plan.gradient.lightAmp } : {};
+  const cfg = defaultConfig({ ...DEFAULT_EVAL.world, ...light, tileW: T, tileH: T, tilesX: side, tilesY: side, seed, mutRate: 0 });
   const n = cellCount(cfg), W = worldW(cfg);
   const founders: Founder[] = [];
   const owner: { planting: number; slot: number; tile: number }[] = []; // by founder index (lineage lo - 1)
@@ -139,7 +141,8 @@ async function gardenBatch(ps: GardenPlan["plantings"], plan: GardenPlan, seed: 
       const t = k * plan.reps + r;
       p.hex.forEach((h, slot) => {
         const x = p.hex.length === 1 ? T / 2 : Math.round(((slot + 1) * T) / 3);
-        founders.push({ x: (t % side) * T + x, y: Math.floor(t / side) * T + T / 2, radius: Math.floor(T / 6), genome: genomeFromHex(h), biomass: DEFAULT_EVAL.biomass, energy: 2 * DEFAULT_EVAL.biomass });
+        const y = plan.gradient ? plan.gradient.rows[r % plan.gradient.rows.length] : T / 2;
+        founders.push({ x: (t % side) * T + x, y: Math.floor(t / side) * T + y, radius: Math.floor(T / 6), genome: genomeFromHex(h), biomass: DEFAULT_EVAL.biomass, energy: 2 * DEFAULT_EVAL.biomass });
         owner.push({ planting: k, slot, tile: t });
       });
     }
@@ -443,12 +446,14 @@ if (cmd === "mutants") {
     return { j, seed, candidates: cs.map((c, k) => ({ ...c, eval: mev[k], parent: pev[k] })) };
   });
 } else if (cmd === "retest") {
-  // Plan: {seed0, genomes: [{label, hex}]}; 2 genomes per batch at 32 replicates (the M3 retest).
-  const plan: { seed0: number; genomes: { label: string; hex: string }[] } = JSON.parse(await Deno.readTextFile(a.plan!));
-  const units = Array.from({ length: Math.ceil(plan.genomes.length / 2) }, (_, j) => ({ j, gs: plan.genomes.slice(2 * j, 2 * j + 2) }));
+  // Plan: {seed0, reps?, genomes: [{label, hex}]}; 64 / reps genomes per batch, at 32 replicates (the
+  // M3 retest) unless the plan says otherwise.
+  const plan: { seed0: number; reps?: number; genomes: { label: string; hex: string }[] } = JSON.parse(await Deno.readTextFile(a.plan!));
+  const reps = plan.reps ?? 32, per = Math.floor((DEFAULT_EVAL.side * DEFAULT_EVAL.side) / reps);
+  const units = Array.from({ length: Math.ceil(plan.genomes.length / per) }, (_, j) => ({ j, gs: plan.genomes.slice(per * j, per * j + per) }));
   await forUnits(units, (u) => `r${u.j}`, async ({ j, gs }) => {
     const seed = plan.seed0 + j;
-    const ev = await evaluateBatch(device, gs.map((g) => genomeFromHex(g.hex)), { ...ec, reps: 32, seed });
+    const ev = await evaluateBatch(device, gs.map((g) => genomeFromHex(g.hex)), { ...ec, reps, seed });
     return { j, seed, genomes: gs.map((g, k) => ({ ...g, eval: ev[k] })) };
   });
 } else if (cmd === "garden") {

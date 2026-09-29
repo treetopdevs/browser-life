@@ -218,10 +218,10 @@ export function soupWorld(cfg: WorldConfig, count = 24, nutrient = 256, biomass 
  * instead of the hand-built generalist genome. Same placement/radius/biomass/energy
  * scheme as generalistWorld, but with a distinct hash salt (197, vs. 31 for
  * generalist and 131 for soup) so a m3-preset run never lands on the same founder
- * layout as a generalist or soup run with the same seed. `only` (an index into M3_FOUNDERS) gives
- * every disc that one founder's genome, for single-founder starts; placement and amounts are unchanged.
+ * layout as a generalist or soup run with the same seed. `only` (an index into M3_FOUNDERS, or a genome)
+ * gives every disc that one genome, for single-founder starts; placement and amounts are unchanged.
  */
-export function m3World(cfg: WorldConfig, count = 13, nutrient = 256, biomass = 256, only?: number): WorldState {
+export function m3World(cfg: WorldConfig, count = 13, nutrient = 256, biomass = 256, only?: number | Genome): WorldState {
   const W = worldW(cfg);
   const H = cellCount(cfg) / W;
   const founders: Founder[] = [];
@@ -231,7 +231,7 @@ export function m3World(cfg: WorldConfig, count = 13, nutrient = 256, biomass = 
       x: h % W,
       y: (h >>> 12) % H,
       radius: 12,
-      genome: founderGenome(M3_FOUNDERS[only ?? i % M3_FOUNDERS.length]),
+      genome: typeof only === "object" ? only : founderGenome(M3_FOUNDERS[only ?? i % M3_FOUNDERS.length]),
       biomass,
       energy: 2 * biomass,
     });

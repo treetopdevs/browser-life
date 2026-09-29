@@ -22,6 +22,7 @@ import {
   decodeCheckpoint,
   encodeCheckpoint,
   founderGenome,
+  genomeFromHex,
   initWorld,
   G,
   GENOME_CHANNELS,
@@ -141,6 +142,11 @@ export interface RunSpec {
    * (same count, positions and amounts), for single-founder starts. Omitted: the preset's own world.
    */
   soloFounder?: number;
+  /**
+   * A genome as hex words from PARAM0 onwards (`genomeHex`, the `genomes.tsv` column): like
+   * `soloFounder`, but every founder disc carries this genome. Omitted: the preset's own world.
+   */
+  soloGenome?: string;
 }
 
 export interface Sink {
@@ -236,6 +242,15 @@ export function validateSpec(spec: RunSpec): string[] {
   if (spec.soloFounder !== undefined) {
     if (!Number.isInteger(spec.soloFounder) || spec.soloFounder < 0 || spec.soloFounder >= M3_FOUNDERS.length) errs.push(`soloFounder must be an index into the ${M3_FOUNDERS.length} M3 founders`);
     else if (PRESETS.find((p) => p.id === spec.presetId)?.init.kind !== "m3") errs.push("soloFounder needs a preset founded from the M3 founder set");
+  }
+  if (spec.soloGenome !== undefined) {
+    try {
+      genomeFromHex(spec.soloGenome);
+      if (spec.soloFounder !== undefined) errs.push("soloGenome and soloFounder are exclusive");
+      else if (PRESETS.find((p) => p.id === spec.presetId)?.init.kind !== "m3") errs.push("soloGenome needs a preset founded from the M3 founder set");
+    } catch (e) {
+      errs.push(`soloGenome: ${(e as Error).message}`);
+    }
   }
   return errs;
 }
@@ -524,7 +539,9 @@ export async function runExperiment(
   if (migrationPeriod > 0 && migrationPeriod % spec.censusEvery !== 0) throw new Error("migrationPeriod must be a multiple of censusEvery");
   const init =
     opts.start ??
-    (spec.soloFounder !== undefined ? m3World(cfg, preset.init.founders, preset.init.nutrient, preset.init.biomass, spec.soloFounder) : initWorld(cfg, preset.init));
+    (spec.soloFounder !== undefined || spec.soloGenome !== undefined
+      ? m3World(cfg, preset.init.founders, preset.init.nutrient, preset.init.biomass, spec.soloGenome !== undefined ? genomeFromHex(spec.soloGenome) : spec.soloFounder)
+      : initWorld(cfg, preset.init));
   const startStep = init.step;
   // The step loop below re-chunks in `censusEvery`-sized steps *relative to
   // this call's own start* (unchanged from before migration existed, so a

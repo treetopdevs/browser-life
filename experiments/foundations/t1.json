@@ -1,0 +1,3531 @@
+{
+ "result": {
+  "complete": true,
+  "slopes": {
+   "reproMass": {
+    "n": 200,
+    "slope": 0.8530023047780536,
+    "ci95": [
+     0.6940468095768708,
+     1.0017136895047958
+    ],
+    "validBoots": 2000
+   },
+   "membrane": {
+    "n": 164,
+    "slope": 0.9634175065732564,
+    "ci95": [
+     0.936999473016342,
+     1.023365687184601
+    ],
+    "validBoots": 2000
+   },
+   "reproRate": {
+    "n": 200,
+    "slope": 0.9014949920921675,
+    "ci95": [
+     0.5972390529078963,
+     0.9601735941749178
+    ],
+    "validBoots": 2000
+   }
+  },
+  "historiesWithViableChain": 10,
+  "substrateCondition": false,
+  "noSlopeAbove02": false
+ },
+ "chains": [
+  {
+   "h": 1,
+   "links": 413332,
+   "clonalShare": 0.6267286346084987,
+   "g3Individuals": 247324,
+   "viableG3": 2780,
+   "holds": true,
+   "meanParentPurity": 0.839467988687217
+  },
+  {
+   "h": 2,
+   "links": 50841,
+   "clonalShare": 0.7763025904289845,
+   "g3Individuals": 43899,
+   "viableG3": 2678,
+   "holds": true,
+   "meanParentPurity": 0.8386514112625548
+  },
+  {
+   "h": 3,
+   "links": 94102,
+   "clonalShare": 0.7287836602835222,
+   "g3Individuals": 76758,
+   "viableG3": 2599,
+   "holds": true,
+   "meanParentPurity": 0.8002809153896832
+  },
+  {
+   "h": 4,
+   "links": 31931,
+   "clonalShare": 0.825404779054837,
+   "g3Individuals": 15094,
+   "viableG3": 2581,
+   "holds": true,
+   "meanParentPurity": 0.8947373304938787
+  },
+  {
+   "h": 5,
+   "links": 121491,
+   "clonalShare": 0.9073840860639882,
+   "g3Individuals": 73385,
+   "viableG3": 2873,
+   "holds": true,
+   "meanParentPurity": 0.9504776905285494
+  },
+  {
+   "h": 6,
+   "links": 155913,
+   "clonalShare": 0.7210367320236286,
+   "g3Individuals": 106545,
+   "viableG3": 4356,
+   "holds": true,
+   "meanParentPurity": 0.7904206127776845
+  },
+  {
+   "h": 7,
+   "links": 100480,
+   "clonalShare": 0.737062101910828,
+   "g3Individuals": 89328,
+   "viableG3": 7506,
+   "holds": true,
+   "meanParentPurity": 0.8030274651672175
+  },
+  {
+   "h": 8,
+   "links": 42269,
+   "clonalShare": 0.8779956942440086,
+   "g3Individuals": 23973,
+   "viableG3": 2881,
+   "holds": true,
+   "meanParentPurity": 0.9320101303555882
+  },
+  {
+   "h": 9,
+   "links": 74204,
+   "clonalShare": 0.7179666864319982,
+   "g3Individuals": 60950,
+   "viableG3": 4678,
+   "holds": true,
+   "meanParentPurity": 0.790984979246403
+  },
+  {
+   "h": 10,
+   "links": 51465,
+   "clonalShare": 0.8547945205479452,
+   "g3Individuals": 38681,
+   "viableG3": 2962,
+   "holds": true,
+   "meanParentPurity": 0.8977512367628575
+  }
+ ],
+ "rows": [
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.5625,
+   "parent": {
+    "reproMass": 2689.021204240848,
+    "membrane": 0,
+    "reproRate": 13.257133764718363
+   },
+   "child": {
+    "reproMass": 2986.8394623856634,
+    "membrane": 0,
+    "reproRate": 16.155980457204898
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.6357,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2301.1197916666665,
+    "membrane": 0,
+    "reproRate": 0.4999088707787643
+   },
+   "child": {
+    "reproMass": 2356.068783068783,
+    "membrane": 0,
+    "reproRate": 0.49440847557386697
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.7143,
+   "parent": {
+    "reproMass": 3622.1240105540896,
+    "membrane": null,
+    "reproRate": 21.185019564002236
+   },
+   "child": {
+    "reproMass": 3423.290556900726,
+    "membrane": null,
+    "reproRate": 21.082184788157225
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 0.85,
+   "parent": {
+    "reproMass": 1730.2045454545455,
+    "membrane": 0,
+    "reproRate": 0.9097675957323629
+   },
+   "child": {
+    "reproMass": 3839.6944444444443,
+    "membrane": null,
+    "reproRate": 20.496894409937887
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 0.6667,
+   "parent": {
+    "reproMass": 1761.062828395752,
+    "membrane": 0,
+    "reproRate": 20.570784656425353
+   },
+   "child": {
+    "reproMass": 3594.322789115646,
+    "membrane": 0,
+    "reproRate": 16.394813885403597
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1415.419776119403,
+    "membrane": 0,
+    "reproRate": 0.8066215199398044
+   },
+   "child": {
+    "reproMass": 1481.3609958506224,
+    "membrane": 0,
+    "reproRate": 0.7261989061817306
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 0.9545,
+   "childPurity": 0.7857,
+   "parent": {
+    "reproMass": 2053.7466751108295,
+    "membrane": 0,
+    "reproRate": 21.781713844286266
+   },
+   "child": {
+    "reproMass": 1591.9476863460222,
+    "membrane": 0,
+    "reproRate": 23.040361335048974
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.7627,
+   "childPurity": 0.9375,
+   "parent": {
+    "reproMass": 1924.644145737531,
+    "membrane": 0,
+    "reproRate": 24.43740095087163
+   },
+   "child": {
+    "reproMass": 1587.86484354457,
+    "membrane": 0,
+    "reproRate": 28.26738683382473
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3492.4181286549706,
+    "membrane": null,
+    "reproRate": 19.52054794520548
+   },
+   "child": {
+    "reproMass": 3410.3366336633662,
+    "membrane": null,
+    "reproRate": 20.476431829700964
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3877.995670995671,
+    "membrane": null,
+    "reproRate": 21.488372093023255
+   },
+   "child": {
+    "reproMass": 3656.5409573402762,
+    "membrane": 0,
+    "reproRate": 15.276587932933545
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 0.7143,
+   "childPurity": 0.5714,
+   "parent": {
+    "reproMass": 2404.87181738367,
+    "membrane": 0,
+    "reproRate": 3.389578311460286
+   },
+   "child": {
+    "reproMass": 3147.8943089430895,
+    "membrane": null,
+    "reproRate": 19.606801275239107
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 0.5455,
+   "childPurity": 0.5385,
+   "parent": {
+    "reproMass": 3246.659949622166,
+    "membrane": 0,
+    "reproRate": 8.591214022938757
+   },
+   "child": {
+    "reproMass": 4508.230061349694,
+    "membrane": null,
+    "reproRate": 19.532654284002398
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.5238,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3780.2363243761997,
+    "membrane": 0,
+    "reproRate": 13.30864039849288
+   },
+   "child": {
+    "reproMass": 1913.8623423116264,
+    "membrane": 0,
+    "reproRate": 25.37746052346961
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.6429,
+   "parent": {
+    "reproMass": 2219.003098373354,
+    "membrane": 0,
+    "reproRate": 18.683518656986422
+   },
+   "child": {
+    "reproMass": 2672.3440101870897,
+    "membrane": 0,
+    "reproRate": 22.370006792733967
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1436.0600095102234,
+    "membrane": 0,
+    "reproRate": 27.178970223325063
+   },
+   "child": {
+    "reproMass": 1636.0286576168928,
+    "membrane": 0,
+    "reproRate": 25.913283652092346
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 0.6,
+   "parent": {
+    "reproMass": 2127.9888541666664,
+    "membrane": 0,
+    "reproRate": 25.055461307581886
+   },
+   "child": {
+    "reproMass": 4152.88829787234,
+    "membrane": null,
+    "reproRate": 21.671469740634006
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2021.332312404288,
+    "membrane": 0,
+    "reproRate": 3.2230997038499507
+   },
+   "child": {
+    "reproMass": 2063.600616016427,
+    "membrane": 0,
+    "reproRate": 3.2778058219754334
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.6202,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2690.058230169647,
+    "membrane": 0,
+    "reproRate": 18.763442401995928
+   },
+   "child": {
+    "reproMass": 3107.4059664770107,
+    "membrane": 0,
+    "reproRate": 18.024335486016795
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 0.9375,
+   "parent": {
+    "reproMass": 3355.0471698113206,
+    "membrane": null,
+    "reproRate": 20.938271604938272
+   },
+   "child": {
+    "reproMass": 2307.63215590743,
+    "membrane": 0,
+    "reproRate": 15.929375242530075
+   }
+  },
+  {
+   "h": 1,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2132.6975717439295,
+    "membrane": 0,
+    "reproRate": 0.5810001410817119
+   },
+   "child": {
+    "reproMass": 2055.9241706161138,
+    "membrane": 0,
+    "reproRate": 0.5651533413686889
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.6369,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 8842.463087248321,
+    "membrane": 0,
+    "reproRate": 1.486699527049949
+   },
+   "child": {
+    "reproMass": 8541.974777448071,
+    "membrane": 0,
+    "reproRate": 1.316740578662551
+   }
+  },
+  {
+   "h": 2,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 0.5556,
+   "parent": {
+    "reproMass": 2735.2171970209884,
+    "membrane": 0,
+    "reproRate": 22.964736612973443
+   },
+   "child": {
+    "reproMass": 2734.4800967519004,
+    "membrane": 0,
+    "reproRate": 21.659731161871687
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3094.1574220813523,
+    "membrane": 0.0010042991534766242,
+    "reproRate": 5.218326166060205
+   },
+   "child": {
+    "reproMass": 3219.2175048987588,
+    "membrane": 0.0009501889217204287,
+    "reproRate": 4.253132205461566
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3994.419551934827,
+    "membrane": 0,
+    "reproRate": 0.7931123602765394
+   },
+   "child": {
+    "reproMass": 4295.075664621677,
+    "membrane": 0,
+    "reproRate": 0.8062122860817094
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.6667,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2731.6883561643835,
+    "membrane": 0,
+    "reproRate": 0.44128092366746763
+   },
+   "child": {
+    "reproMass": 2764.754385964912,
+    "membrane": 0,
+    "reproRate": 0.4397401675641481
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 7457.23,
+    "membrane": 0,
+    "reproRate": 1.1096521240591075
+   },
+   "child": {
+    "reproMass": 8054.178481012658,
+    "membrane": 0,
+    "reproRate": 1.6310519252606586
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.4355,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 8682.8927943761,
+    "membrane": 0,
+    "reproRate": 1.0888076694923363
+   },
+   "child": {
+    "reproMass": 7179.23440860215,
+    "membrane": 0,
+    "reproRate": 0.8247898116286495
+   }
+  },
+  {
+   "h": 2,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.9167,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3277.302663438257,
+    "membrane": 0,
+    "reproRate": 0.6243008737188983
+   },
+   "child": {
+    "reproMass": 3355.6504347826085,
+    "membrane": 0,
+    "reproRate": 0.8814692175619327
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.6319,
+   "childPurity": 0.8947,
+   "parent": {
+    "reproMass": 10178.714646464647,
+    "membrane": 0,
+    "reproRate": 1.6953506293347034
+   },
+   "child": {
+    "reproMass": 9707.243478260869,
+    "membrane": 0,
+    "reproRate": 1.4734774066797642
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.0693,
+   "childPurity": 0.8182,
+   "parent": {
+    "reproMass": 2526.880154639175,
+    "membrane": 0,
+    "reproRate": 3.5326787963398534
+   },
+   "child": {
+    "reproMass": 2917.3384146341464,
+    "membrane": 0,
+    "reproRate": 0.495198985445981
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.8848,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 7643.86231884058,
+    "membrane": 0,
+    "reproRate": 1.0074831173571819
+   },
+   "child": {
+    "reproMass": 8974.575875486382,
+    "membrane": 0,
+    "reproRate": 1.5471675395822047
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3550.89592760181,
+    "membrane": 0,
+    "reproRate": 0.3242323322721204
+   },
+   "child": {
+    "reproMass": 3215.2329317269077,
+    "membrane": 0,
+    "reproRate": 0.36836499201136164
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.766,
+   "childPurity": 0.6744,
+   "parent": {
+    "reproMass": 8653.210852713179,
+    "membrane": 0,
+    "reproRate": 1.1639657848197207
+   },
+   "child": {
+    "reproMass": 5779.737209302326,
+    "membrane": 0,
+    "reproRate": 0.7113316790736146
+   }
+  },
+  {
+   "h": 2,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1865.0734978540772,
+    "membrane": 0.006144705107891776,
+    "reproRate": 5.845459106874059
+   },
+   "child": {
+    "reproMass": 1851.998746867168,
+    "membrane": 0.004146601219470969,
+    "reproRate": 5.061043285238624
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.5,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 12381.975841874086,
+    "membrane": 0,
+    "reproRate": 4.875611236035264
+   },
+   "child": {
+    "reproMass": 2734.912927756654,
+    "membrane": 0,
+    "reproRate": 26.370824500085945
+   }
+  },
+  {
+   "h": 2,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3107.413994169096,
+    "membrane": 0,
+    "reproRate": 0.5343761197750323
+   },
+   "child": {
+    "reproMass": 2974.2278820375336,
+    "membrane": 0,
+    "reproRate": 0.5866901552448213
+   }
+  },
+  {
+   "h": 2,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.5,
+   "parent": {
+    "reproMass": 2853.767741935484,
+    "membrane": 0,
+    "reproRate": 0.45088941573458613
+   },
+   "child": {
+    "reproMass": 3003.4289693593314,
+    "membrane": 0,
+    "reproRate": 0.5395656421432329
+   }
+  },
+  {
+   "h": 2,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.8333,
+   "parent": {
+    "reproMass": 2206.4810185185183,
+    "membrane": 0.005418587304921358,
+    "reproRate": 3.4967865179453144
+   },
+   "child": {
+    "reproMass": 2076.2068676716917,
+    "membrane": 0.005329099993375518,
+    "reproRate": 3.816220535357571
+   }
+  },
+  {
+   "h": 2,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2735.00325732899,
+    "membrane": 0,
+    "reproRate": 0.4872397155916709
+   },
+   "child": {
+    "reproMass": 2817.349570200573,
+    "membrane": 0,
+    "reproRate": 0.5441391998503228
+   }
+  },
+  {
+   "h": 2,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.3922,
+   "childPurity": 0.8333,
+   "parent": {
+    "reproMass": 12958.563197026022,
+    "membrane": 0,
+    "reproRate": 3.7696188340807173
+   },
+   "child": {
+    "reproMass": 9626.86711409396,
+    "membrane": 0,
+    "reproRate": 1.655224510653425
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.7,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 6827.432071269488,
+    "membrane": 0.001626342303436691,
+    "reproRate": 0.7162683852853907
+   },
+   "child": {
+    "reproMass": 6409.894009216589,
+    "membrane": 0.0013504682952397596,
+    "reproRate": 0.6965397701739745
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.7778,
+   "childPurity": 0.875,
+   "parent": {
+    "reproMass": 2238.1882129277565,
+    "membrane": 0.19475310377960192,
+    "reproRate": 0.74505304607714
+   },
+   "child": {
+    "reproMass": 2187.9709897610924,
+    "membrane": 0.1976425286070278,
+    "reproRate": 0.8638226362805507
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 8895.78626799557,
+    "membrane": 0,
+    "reproRate": 1.830232275325307
+   },
+   "child": {
+    "reproMass": 8804.022360248448,
+    "membrane": 0,
+    "reproRate": 1.5522860062862762
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.6364,
+   "childPurity": 0.8333,
+   "parent": {
+    "reproMass": 1553.800505050505,
+    "membrane": null,
+    "reproRate": 13.473970738346376
+   },
+   "child": {
+    "reproMass": 1406.0234192037472,
+    "membrane": 0,
+    "reproRate": 2.106769291493981
+   }
+  },
+  {
+   "h": 3,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.77,
+   "childPurity": 0.5556,
+   "parent": {
+    "reproMass": 7189.354771784232,
+    "membrane": 0,
+    "reproRate": 0.8045670027375309
+   },
+   "child": {
+    "reproMass": 7022.028340080971,
+    "membrane": 0,
+    "reproRate": 0.810580204778157
+   }
+  },
+  {
+   "h": 3,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.4568,
+   "childPurity": 0.6333,
+   "parent": {
+    "reproMass": 6881.670710571923,
+    "membrane": 0,
+    "reproRate": 0.9449412072975009
+   },
+   "child": {
+    "reproMass": 7229.1439688715955,
+    "membrane": 0,
+    "reproRate": 0.8391425726086885
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1758.891826923077,
+    "membrane": null,
+    "reproRate": 20.096618357487923
+   },
+   "child": {
+    "reproMass": 1747.119191919192,
+    "membrane": 0,
+    "reproRate": 4.169123220752969
+   }
+  },
+  {
+   "h": 3,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.7818,
+   "childPurity": 0.5652,
+   "parent": {
+    "reproMass": 6613.744394618834,
+    "membrane": 0,
+    "reproRate": 0.7243552264016111
+   },
+   "child": {
+    "reproMass": 6650.560728744939,
+    "membrane": 0,
+    "reproRate": 0.7984612649307408
+   }
+  },
+  {
+   "h": 3,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2563.021766965429,
+    "membrane": 0,
+    "reproRate": 1.4054598787093524
+   },
+   "child": {
+    "reproMass": 2683.727636849132,
+    "membrane": 0,
+    "reproRate": 1.3231345392877332
+   }
+  },
+  {
+   "h": 3,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.9877,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 6514.2444444444445,
+    "membrane": 0,
+    "reproRate": 0.8236821086261981
+   },
+   "child": {
+    "reproMass": 6799.780991735537,
+    "membrane": 0,
+    "reproRate": 0.7922218221101909
+   }
+  },
+  {
+   "h": 3,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.552,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 7407.235934664247,
+    "membrane": 0,
+    "reproRate": 0.9396797244060917
+   },
+   "child": {
+    "reproMass": 9076.281297516472,
+    "membrane": 0,
+    "reproRate": 4.932746637331866
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 8766.4200968523,
+    "membrane": 0,
+    "reproRate": 1.6197348811671504
+   },
+   "child": {
+    "reproMass": 9777.365023474178,
+    "membrane": 0,
+    "reproRate": 1.7348808796579107
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.8333,
+   "childPurity": 0.9231,
+   "parent": {
+    "reproMass": 3172.9767741935484,
+    "membrane": 0,
+    "reproRate": 4.004754030591154
+   },
+   "child": {
+    "reproMass": 3037.5950310559006,
+    "membrane": 0,
+    "reproRate": 4.170120182345628
+   }
+  },
+  {
+   "h": 3,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.4783,
+   "childPurity": 0.6667,
+   "parent": {
+    "reproMass": 2755.4795539033457,
+    "membrane": 0,
+    "reproRate": 0.8675460379914213
+   },
+   "child": {
+    "reproMass": 3392.9589665653493,
+    "membrane": 0,
+    "reproRate": 1.105009488303357
+   }
+  },
+  {
+   "h": 3,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.8974,
+   "childPurity": 0.619,
+   "parent": {
+    "reproMass": 9108.36447368421,
+    "membrane": 0,
+    "reproRate": 1.4601064340742733
+   },
+   "child": {
+    "reproMass": 7150.114398422091,
+    "membrane": 0,
+    "reproRate": 0.8482232483437061
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1430.9845679012346,
+    "membrane": null,
+    "reproRate": 10.553745928338762
+   },
+   "child": {
+    "reproMass": 1513.3078651685394,
+    "membrane": null,
+    "reproRate": 12.02052944354403
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.9,
+   "childPurity": 0.8333,
+   "parent": {
+    "reproMass": 1824.0568475452196,
+    "membrane": null,
+    "reproRate": 10.292553191489361
+   },
+   "child": {
+    "reproMass": 1835.7333333333333,
+    "membrane": null,
+    "reproRate": 11.92368839427663
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 6430.99154334038,
+    "membrane": 0.0015251043974371862,
+    "reproRate": 0.75134224989675
+   },
+   "child": {
+    "reproMass": 6508.509049773756,
+    "membrane": 0.0014554227488838504,
+    "reproRate": 0.7025798350050071
+   }
+  },
+  {
+   "h": 3,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.6667,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 6627.085585585585,
+    "membrane": 0,
+    "reproRate": 0.7239051749437506
+   },
+   "child": {
+    "reproMass": 7671.779914529914,
+    "membrane": 0,
+    "reproRate": 0.7985803016858918
+   }
+  },
+  {
+   "h": 3,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2198.353982300885,
+    "membrane": 0.19420984770640035,
+    "reproRate": 0.8007823572764896
+   },
+   "child": {
+    "reproMass": 2160.0181219110377,
+    "membrane": 0.19563615776991822,
+    "reproRate": 0.878475187055878
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 0.4545,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1388.8825995807128,
+    "membrane": 0,
+    "reproRate": 2.362087748836288
+   },
+   "child": {
+    "reproMass": 1430.2425068119892,
+    "membrane": null,
+    "reproRate": 11.661900222434063
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 0.7857,
+   "childPurity": 0.8571,
+   "parent": {
+    "reproMass": 1624.117936117936,
+    "membrane": null,
+    "reproRate": 15.69005397070162
+   },
+   "child": {
+    "reproMass": 1486.8585209003215,
+    "membrane": 0.000369902125658702,
+    "reproRate": 0.6943049137141964
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.6429,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1468.6022727272727,
+    "membrane": null,
+    "reproRate": 13.766132186155652
+   },
+   "child": {
+    "reproMass": 1477.0114613180515,
+    "membrane": null,
+    "reproRate": 12.892500923531585
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1447.4815864022662,
+    "membrane": null,
+    "reproRate": 6.980423175795926
+   },
+   "child": {
+    "reproMass": 1397.7029411764706,
+    "membrane": null,
+    "reproRate": 11.38265818547037
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.875,
+   "parent": {
+    "reproMass": 2101.517142857143,
+    "membrane": 0.0008117732912878518,
+    "reproRate": 0.722170638605179
+   },
+   "child": {
+    "reproMass": 2616.7654723127034,
+    "membrane": 0.0017959100929343414,
+    "reproRate": 0.6589962649723092
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1429.6169154228855,
+    "membrane": 0,
+    "reproRate": 3.1583909490886235
+   },
+   "child": {
+    "reproMass": 1470.5801749271136,
+    "membrane": null,
+    "reproRate": 12.468193384223918
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.6667,
+   "parent": {
+    "reproMass": 2365.903536977492,
+    "membrane": 0.0008314931946214506,
+    "reproRate": 0.6194972311860085
+   },
+   "child": {
+    "reproMass": 2528.2214983713357,
+    "membrane": 0.0009553693472008725,
+    "reproRate": 0.6279145872535384
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 0.9375,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1940.5334773218142,
+    "membrane": 0.0028795488705958025,
+    "reproRate": 0.7573527006248568
+   },
+   "child": {
+    "reproMass": 2222.5819070904645,
+    "membrane": 0.06308850477565685,
+    "reproRate": 0.6591989684906117
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 0.5,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1495.0947075208915,
+    "membrane": null,
+    "reproRate": 11.225766103814884
+   },
+   "child": {
+    "reproMass": 1482.5717884130981,
+    "membrane": 0.0001949824032102141,
+    "reproRate": 3.149793716280546
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1482.6129032258063,
+    "membrane": null,
+    "reproRate": 11.856745479833101
+   },
+   "child": {
+    "reproMass": 1464.2062350119904,
+    "membrane": null,
+    "reproRate": 13.18785578747628
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.6667,
+   "parent": {
+    "reproMass": 2574.181592039801,
+    "membrane": 8.846731703083519e-7,
+    "reproRate": 0.5100293076542458
+   },
+   "child": {
+    "reproMass": 2379.9862385321103,
+    "membrane": 0.000014898834542143331,
+    "reproRate": 0.5536789170243568
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1603.0541727672035,
+    "membrane": 0,
+    "reproRate": 1.2057977155164805
+   },
+   "child": {
+    "reproMass": 1560.3522727272727,
+    "membrane": 0,
+    "reproRate": 1.048028990931827
+   }
+  },
+  {
+   "h": 4,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2052.8167770419427,
+    "membrane": 0,
+    "reproRate": 0.8706682811508966
+   },
+   "child": {
+    "reproMass": 2058.9752066115702,
+    "membrane": 0,
+    "reproRate": 0.8981924804216308
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.9091,
+   "parent": {
+    "reproMass": 1720.734065934066,
+    "membrane": 0.018813688146540684,
+    "reproRate": 0.7804459691252144
+   },
+   "child": {
+    "reproMass": 1805.9129511677281,
+    "membrane": 0.00575519997914793,
+    "reproRate": 0.7061681009925335
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 0.4667,
+   "childPurity": 0.6429,
+   "parent": {
+    "reproMass": 1710.1049504950495,
+    "membrane": 0.061164569715642374,
+    "reproRate": 1.00607630242056
+   },
+   "child": {
+    "reproMass": 1961.9205298013244,
+    "membrane": 0.009266543398946827,
+    "reproRate": 0.9565235752444097
+   }
+  },
+  {
+   "h": 4,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.3548,
+   "childPurity": 0.5,
+   "parent": {
+    "reproMass": 2126.6521739130435,
+    "membrane": 0.17849418319874832,
+    "reproRate": 0.5661886885346791
+   },
+   "child": {
+    "reproMass": 1971.7368421052631,
+    "membrane": 0.17882645679147313,
+    "reproRate": 0.664117114894317
+   }
+  },
+  {
+   "h": 4,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.4479,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1652.2451923076924,
+    "membrane": 0.001225129999531138,
+    "reproRate": 0.9607094469762286
+   },
+   "child": {
+    "reproMass": 2099.2168674698796,
+    "membrane": 0,
+    "reproRate": 0.7315869266297641
+   }
+  },
+  {
+   "h": 4,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.3853,
+   "childPurity": 0.75,
+   "parent": {
+    "reproMass": 1799.6287487073423,
+    "membrane": 0,
+    "reproRate": 1.6522288858133853
+   },
+   "child": {
+    "reproMass": 1843.096852300242,
+    "membrane": 0,
+    "reproRate": 1.4981137550783516
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.9286,
+   "childPurity": 0.6667,
+   "parent": {
+    "reproMass": 1395.6969696969697,
+    "membrane": 0.06728379332484762,
+    "reproRate": 0.9650905060953084
+   },
+   "child": {
+    "reproMass": 1563.1394148020654,
+    "membrane": 0.06164936218838599,
+    "reproRate": 0.888134764132196
+   }
+  },
+  {
+   "h": 4,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1394.7100456621004,
+    "membrane": 0,
+    "reproRate": 0.8077306089329842
+   },
+   "child": {
+    "reproMass": 1384.0960698689955,
+    "membrane": 0.00014313751902097813,
+    "reproRate": 1.2300585486383413
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1584.3342776203965,
+    "membrane": null,
+    "reproRate": 19.55678670360111
+   },
+   "child": {
+    "reproMass": 1524.5254237288136,
+    "membrane": null,
+    "reproRate": 19.798657718120804
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.8333,
+   "parent": {
+    "reproMass": 2402.485193621868,
+    "membrane": null,
+    "reproRate": 20.776147657359203
+   },
+   "child": {
+    "reproMass": 2378.0554323725055,
+    "membrane": null,
+    "reproRate": 20.5
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2623.39293598234,
+    "membrane": null,
+    "reproRate": 20.124389160373166
+   },
+   "child": {
+    "reproMass": 2533.7184684684685,
+    "membrane": null,
+    "reproRate": 20.23701002734731
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1669.2810650887575,
+    "membrane": null,
+    "reproRate": 18.819599109131403
+   },
+   "child": {
+    "reproMass": 1558.7319884726226,
+    "membrane": null,
+    "reproRate": 19.25638179800222
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2479.341796875,
+    "membrane": null,
+    "reproRate": 20.374054914444887
+   },
+   "child": {
+    "reproMass": 2563.7118997912316,
+    "membrane": null,
+    "reproRate": 18.494208494208493
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2057.920849420849,
+    "membrane": null,
+    "reproRate": 19.591527987897127
+   },
+   "child": {
+    "reproMass": 2068.8633776091083,
+    "membrane": null,
+    "reproRate": 20.292645360030804
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1558.6845637583892,
+    "membrane": 0,
+    "reproRate": 1.1826335423446306
+   },
+   "child": {
+    "reproMass": 1591.5409836065573,
+    "membrane": 0,
+    "reproRate": 1.1570561456752655
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2533.8571428571427,
+    "membrane": 0,
+    "reproRate": 0.9428214091011128
+   },
+   "child": {
+    "reproMass": 2512.813531353135,
+    "membrane": 0,
+    "reproRate": 0.9826017868435134
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1378.5017182130584,
+    "membrane": null,
+    "reproRate": 17.09753231492362
+   },
+   "child": {
+    "reproMass": 1266.445993031359,
+    "membrane": null,
+    "reproRate": 16.58001155401502
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1536.48730964467,
+    "membrane": null,
+    "reproRate": 21.48309705561614
+   },
+   "child": {
+    "reproMass": 1696.7583333333334,
+    "membrane": null,
+    "reproRate": 20.156774916013436
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 5064.923076923077,
+    "membrane": null,
+    "reproRate": 9.285714285714286
+   },
+   "child": {
+    "reproMass": 5199.333333333333,
+    "membrane": null,
+    "reproRate": 8.823529411764707
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2507.9500924214417,
+    "membrane": 0,
+    "reproRate": 0.9970696105715181
+   },
+   "child": {
+    "reproMass": 2673.927756653992,
+    "membrane": 0,
+    "reproRate": 0.9843735379432956
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1638.5625,
+    "membrane": null,
+    "reproRate": 20.091324200913242
+   },
+   "child": {
+    "reproMass": 1637.3401162790697,
+    "membrane": null,
+    "reproRate": 19.61231470923603
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1402.861111111111,
+    "membrane": null,
+    "reproRate": 13.837283792440743
+   },
+   "child": {
+    "reproMass": 1243.1850393700788,
+    "membrane": null,
+    "reproRate": 15.35671100362757
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1773.944537815126,
+    "membrane": null,
+    "reproRate": 22.143654633420173
+   },
+   "child": {
+    "reproMass": 1667.339892665474,
+    "membrane": 0,
+    "reproRate": 20.65779748706578
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2064.0369718309857,
+    "membrane": null,
+    "reproRate": 22.65656162744316
+   },
+   "child": {
+    "reproMass": 1902.652329749104,
+    "membrane": null,
+    "reproRate": 22.17806041335453
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 0.9167,
+   "parent": {
+    "reproMass": 1993.4423407917384,
+    "membrane": null,
+    "reproRate": 20.559094125973107
+   },
+   "child": {
+    "reproMass": 2398.6191369606004,
+    "membrane": null,
+    "reproRate": 19.424198250728864
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1218.3777777777777,
+    "membrane": null,
+    "reproRate": 14.276649746192893
+   },
+   "child": {
+    "reproMass": 1143.34765625,
+    "membrane": null,
+    "reproRate": 15.338526063511084
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 0.8,
+   "parent": {
+    "reproMass": 1649.5906432748538,
+    "membrane": null,
+    "reproRate": 19.148936170212767
+   },
+   "child": {
+    "reproMass": 1664.594249201278,
+    "membrane": null,
+    "reproRate": 18.347010550996483
+   }
+  },
+  {
+   "h": 5,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2045.3055555555557,
+    "membrane": null,
+    "reproRate": 23.175965665236053
+   },
+   "child": {
+    "reproMass": 2050.142589118199,
+    "membrane": null,
+    "reproRate": 22.594319626960576
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.7,
+   "parent": {
+    "reproMass": 3113.568888888889,
+    "membrane": 0,
+    "reproRate": 2.4091225440334063
+   },
+   "child": {
+    "reproMass": 3072.2003968253966,
+    "membrane": 0,
+    "reproRate": 2.7624006577144424
+   }
+  },
+  {
+   "h": 6,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.1469,
+   "childPurity": 0.625,
+   "parent": {
+    "reproMass": 2356.668806161746,
+    "membrane": 0,
+    "reproRate": 1.332512273139358
+   },
+   "child": {
+    "reproMass": 2369.1027777777776,
+    "membrane": 0,
+    "reproRate": 1.2018829499549293
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2274.745247148289,
+    "membrane": 0,
+    "reproRate": 1.3004779957145212
+   },
+   "child": {
+    "reproMass": 2348.9428918590525,
+    "membrane": 0,
+    "reproRate": 1.3895454852434659
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.7778,
+   "childPurity": 0.7778,
+   "parent": {
+    "reproMass": 2496.6156387665196,
+    "membrane": 0,
+    "reproRate": 1.6209654384461583
+   },
+   "child": {
+    "reproMass": 2322.671785028791,
+    "membrane": 0,
+    "reproRate": 1.8325712275765036
+   }
+  },
+  {
+   "h": 6,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.3039,
+   "childPurity": 0.7143,
+   "parent": {
+    "reproMass": 2311.4280487804876,
+    "membrane": 0,
+    "reproRate": 1.3165711349806528
+   },
+   "child": {
+    "reproMass": 2415.451351351351,
+    "membrane": 0,
+    "reproRate": 1.2664076805914466
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.875,
+   "childPurity": 0.7778,
+   "parent": {
+    "reproMass": 2289.2492639842985,
+    "membrane": 0,
+    "reproRate": 1.6844367303082899
+   },
+   "child": {
+    "reproMass": 2331.0325534079348,
+    "membrane": 0,
+    "reproRate": 1.6070494376144389
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2322.0649106302917,
+    "membrane": 0,
+    "reproRate": 1.8360508497996408
+   },
+   "child": {
+    "reproMass": 2219.9206963249517,
+    "membrane": 0,
+    "reproRate": 1.781253768368103
+   }
+  },
+  {
+   "h": 6,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.95,
+   "childPurity": 0.5714,
+   "parent": {
+    "reproMass": 2353.8342245989306,
+    "membrane": 0,
+    "reproRate": 1.426256077795786
+   },
+   "child": {
+    "reproMass": 2319.532281205165,
+    "membrane": 0,
+    "reproRate": 1.3330528248479516
+   }
+  },
+  {
+   "h": 6,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.1747,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2475.0280504908837,
+    "membrane": 0,
+    "reproRate": 1.1341944515143803
+   },
+   "child": {
+    "reproMass": 2262.845323741007,
+    "membrane": 0,
+    "reproRate": 1.2921017568865616
+   }
+  },
+  {
+   "h": 6,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.3125,
+   "childPurity": 0.5417,
+   "parent": {
+    "reproMass": 2351.8060344827586,
+    "membrane": 0,
+    "reproRate": 1.5314289486278199
+   },
+   "child": {
+    "reproMass": 2268.3883248730963,
+    "membrane": 0,
+    "reproRate": 1.2756382238194681
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2496.9408695652173,
+    "membrane": 0,
+    "reproRate": 0.804398310064072
+   },
+   "child": {
+    "reproMass": 2485.0975609756097,
+    "membrane": 0,
+    "reproRate": 0.8121453938339205
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.6667,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2562.068181818182,
+    "membrane": 0,
+    "reproRate": 1.015295358649789
+   },
+   "child": {
+    "reproMass": 2331.398328690808,
+    "membrane": 0,
+    "reproRate": 1.1802416372154187
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2437.4929906542056,
+    "membrane": 0,
+    "reproRate": 1.4744130768038308
+   },
+   "child": {
+    "reproMass": 2389.569115815691,
+    "membrane": 0,
+    "reproRate": 1.3751177326825927
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2529.022988505747,
+    "membrane": 0,
+    "reproRate": 1.1914340003766026
+   },
+   "child": {
+    "reproMass": 2394.916445623342,
+    "membrane": 0,
+    "reproRate": 1.315009243433674
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2334.195652173913,
+    "membrane": 0,
+    "reproRate": 1.3604968771203396
+   },
+   "child": {
+    "reproMass": 2337.661224489796,
+    "membrane": 0,
+    "reproRate": 1.2664116613253387
+   }
+  },
+  {
+   "h": 6,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.3407,
+   "childPurity": 0.36,
+   "parent": {
+    "reproMass": 2266.155303030303,
+    "membrane": 0,
+    "reproRate": 1.3632373444411932
+   },
+   "child": {
+    "reproMass": 2345.7426210153485,
+    "membrane": 0,
+    "reproRate": 1.4288365188346632
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.6667,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2481.477115117892,
+    "membrane": 0,
+    "reproRate": 1.233511830422063
+   },
+   "child": {
+    "reproMass": 2301.9044502617803,
+    "membrane": 0,
+    "reproRate": 1.2987896096831226
+   }
+  },
+  {
+   "h": 6,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.2344,
+   "childPurity": 0.7143,
+   "parent": {
+    "reproMass": 2367.6659090909093,
+    "membrane": 0,
+    "reproRate": 1.4541608830722454
+   },
+   "child": {
+    "reproMass": 2132.8487394957983,
+    "membrane": 0,
+    "reproRate": 1.5931987816715198
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2346.314814814815,
+    "membrane": 0,
+    "reproRate": 0.9573902251639974
+   },
+   "child": {
+    "reproMass": 2499.4311926605506,
+    "membrane": 0,
+    "reproRate": 0.7894088848332103
+   }
+  },
+  {
+   "h": 6,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2230.9813084112147,
+    "membrane": 0.10192090176852832,
+    "reproRate": 0.5918796327027326
+   },
+   "child": {
+    "reproMass": 2202.4988764044942,
+    "membrane": 0.10155284982688763,
+    "reproRate": 0.6058873185741905
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 8256.269749518304,
+    "membrane": 0,
+    "reproRate": 3.08164275111331
+   },
+   "child": {
+    "reproMass": 8089.974884674526,
+    "membrane": 0,
+    "reproRate": 4.072303742511846
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.2966,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 5679.874767051808,
+    "membrane": 0,
+    "reproRate": 4.794924492896077
+   },
+   "child": {
+    "reproMass": 4307.179601990049,
+    "membrane": 0,
+    "reproRate": 7.3584594827112815
+   }
+  },
+  {
+   "h": 7,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.5833,
+   "parent": {
+    "reproMass": 2575.829704510109,
+    "membrane": 0.00035148804889458755,
+    "reproRate": 3.8808582551226727
+   },
+   "child": {
+    "reproMass": 3089.664050235479,
+    "membrane": 0.0003683963167716679,
+    "reproRate": 4.09962672158579
+   }
+  },
+  {
+   "h": 7,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2678.7309991460293,
+    "membrane": 0.0003532816295054864,
+    "reproRate": 3.768666323377961
+   },
+   "child": {
+    "reproMass": 2907.0042887776985,
+    "membrane": 0.00036019550345434777,
+    "reproRate": 4.461666028830208
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.4393,
+   "childPurity": 0.8182,
+   "parent": {
+    "reproMass": 8379.654330125833,
+    "membrane": 0,
+    "reproRate": 3.4002818886539816
+   },
+   "child": {
+    "reproMass": 7930.202564102564,
+    "membrane": 0,
+    "reproRate": 3.8263428991905815
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.5806,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2735.163608562691,
+    "membrane": 0,
+    "reproRate": 4.077179639038683
+   },
+   "child": {
+    "reproMass": 2655.3753694581283,
+    "membrane": 0.00005427541101324139,
+    "reproRate": 3.77829064919595
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.5652,
+   "childPurity": 0.9512,
+   "parent": {
+    "reproMass": 9604.380503144654,
+    "membrane": 0.006799065511422238,
+    "reproRate": 2.2665716322166785
+   },
+   "child": {
+    "reproMass": 9377.919886899152,
+    "membrane": 0.01239942185186807,
+    "reproRate": 2.1186525290041733
+   }
+  },
+  {
+   "h": 7,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.9355,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 8123.301487862177,
+    "membrane": 0,
+    "reproRate": 3.2777207392197125
+   },
+   "child": {
+    "reproMass": 8910.691922005572,
+    "membrane": 0,
+    "reproRate": 4.060810352238536
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 9056.962529274004,
+    "membrane": 0,
+    "reproRate": 2.6876757165037137
+   },
+   "child": {
+    "reproMass": 9744.947450980391,
+    "membrane": 0,
+    "reproRate": 3.2071437555024525
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.2606,
+   "childPurity": 0.6667,
+   "parent": {
+    "reproMass": 8751.076671035387,
+    "membrane": 0,
+    "reproRate": 3.671181466066832
+   },
+   "child": {
+    "reproMass": 8293.203432930706,
+    "membrane": 0,
+    "reproRate": 3.8815545959284394
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.5761,
+   "childPurity": 0.5714,
+   "parent": {
+    "reproMass": 3013.566091954023,
+    "membrane": 0,
+    "reproRate": 1.09017433391288
+   },
+   "child": {
+    "reproMass": 3227.6042031523643,
+    "membrane": 0,
+    "reproRate": 0.8831080454081475
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.4286,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 6014.183695265219,
+    "membrane": 0.030378622190510355,
+    "reproRate": 6.214739264143012
+   },
+   "child": {
+    "reproMass": 5806.0792367399745,
+    "membrane": 0.028992356805193003,
+    "reproRate": 6.61843400830515
+   }
+  },
+  {
+   "h": 7,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.7273,
+   "parent": {
+    "reproMass": 2531.150507848569,
+    "membrane": 0.0003428981630840783,
+    "reproRate": 3.2361202414390724
+   },
+   "child": {
+    "reproMass": 2728.4952531645567,
+    "membrane": 0.0003495919673524018,
+    "reproRate": 3.93916728995263
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.9063,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3462.897473997028,
+    "membrane": 0.00030407700369115175,
+    "reproRate": 1.0855539067036584
+   },
+   "child": {
+    "reproMass": 2871.5277382645804,
+    "membrane": 0.00029529641404723884,
+    "reproRate": 1.1303886414432958
+   }
+  },
+  {
+   "h": 7,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.6667,
+   "parent": {
+    "reproMass": 2018.0502183406113,
+    "membrane": 0.006098083676484314,
+    "reproRate": 2.527826326924846
+   },
+   "child": {
+    "reproMass": 2290.6535174227483,
+    "membrane": 0.007246030837398414,
+    "reproRate": 2.7977044476327118
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.809,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 8302.49537037037,
+    "membrane": 0,
+    "reproRate": 3.5884656461374154
+   },
+   "child": {
+    "reproMass": 9426.46409574468,
+    "membrane": 0,
+    "reproRate": 3.507953538274945
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.6232,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 17159.07034795764,
+    "membrane": 0,
+    "reproRate": 3.094859069201236
+   },
+   "child": {
+    "reproMass": 13753.876095118898,
+    "membrane": 0,
+    "reproRate": 3.0746733881053623
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.8125,
+   "childPurity": 0.8333,
+   "parent": {
+    "reproMass": 3887.204769736842,
+    "membrane": 0.028031034982366095,
+    "reproRate": 2.1748850852247323
+   },
+   "child": {
+    "reproMass": 8075.754437869822,
+    "membrane": 0,
+    "reproRate": 2.1800825593395254
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.5,
+   "parent": {
+    "reproMass": 8004.158163265306,
+    "membrane": 0,
+    "reproRate": 1.0515209499454568
+   },
+   "child": {
+    "reproMass": 8602.235395189004,
+    "membrane": 0,
+    "reproRate": 1.0170913285100136
+   }
+  },
+  {
+   "h": 7,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.3248,
+   "childPurity": 0.5652,
+   "parent": {
+    "reproMass": 2837.240560949299,
+    "membrane": 0.011791590046668509,
+    "reproRate": 3.7904033692474393
+   },
+   "child": {
+    "reproMass": 10903.722436391674,
+    "membrane": 0,
+    "reproRate": 2.4152700186219738
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2599.351966873706,
+    "membrane": 0.19478838839273194,
+    "reproRate": 0.7259991883238889
+   },
+   "child": {
+    "reproMass": 2569.407158836689,
+    "membrane": 0.19478611338197102,
+    "reproRate": 0.6685111792417557
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2324.6316568047337,
+    "membrane": 0.38533349215165175,
+    "reproRate": 3.5780447784893874
+   },
+   "child": {
+    "reproMass": 2251.686807653575,
+    "membrane": 0.36837416552273544,
+    "reproRate": 3.835457705677868
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.9,
+   "parent": {
+    "reproMass": 2730.5242494226327,
+    "membrane": 0.12482150284465514,
+    "reproRate": 0.6007297548523148
+   },
+   "child": {
+    "reproMass": 2961.345108695652,
+    "membrane": 0.12245543193882073,
+    "reproRate": 0.5032340995801824
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2191.3577777777778,
+    "membrane": 0.29324660319005275,
+    "reproRate": 0.6903852349611083
+   },
+   "child": {
+    "reproMass": 2280.8464491362765,
+    "membrane": 0.29338226825107283,
+    "reproRate": 0.80960964694182
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2813.3243902439026,
+    "membrane": 0.2001119691882009,
+    "reproRate": 0.6483443499161896
+   },
+   "child": {
+    "reproMass": 2632.633257403189,
+    "membrane": 0.19836329375636189,
+    "reproRate": 0.6831727851351561
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.9091,
+   "parent": {
+    "reproMass": 2959.518413597734,
+    "membrane": 0.12317104635344799,
+    "reproRate": 0.49472341737558334
+   },
+   "child": {
+    "reproMass": 2862.3373786407765,
+    "membrane": 0.12572744039497039,
+    "reproRate": 0.580535163240288
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.9,
+   "parent": {
+    "reproMass": 2501.644549763033,
+    "membrane": 0.1930277711580493,
+    "reproRate": 0.6030552895951526
+   },
+   "child": {
+    "reproMass": 2311.0853174603176,
+    "membrane": 0.19741428889385015,
+    "reproRate": 0.7318135617830696
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.8,
+   "parent": {
+    "reproMass": 2358.348514851485,
+    "membrane": 0.18601185125890699,
+    "reproRate": 0.7056423441298941
+   },
+   "child": {
+    "reproMass": 2294.1300970873785,
+    "membrane": 0.1872020318028421,
+    "reproRate": 0.7398893757632354
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 0.6,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2195.7330827067667,
+    "membrane": 0.19987260924048417,
+    "reproRate": 0.8307048499422254
+   },
+   "child": {
+    "reproMass": 2324.303934871099,
+    "membrane": 0.20566791214314672,
+    "reproRate": 1.109806047464161
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2398.4954545454543,
+    "membrane": 0.1964152545655086,
+    "reproRate": 0.6758105887231788
+   },
+   "child": {
+    "reproMass": 2777.4289940828403,
+    "membrane": 0.1967644238544602,
+    "reproRate": 0.5220883534136547
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.625,
+   "parent": {
+    "reproMass": 2891.4015037593986,
+    "membrane": 0.015226586249320481,
+    "reproRate": 1.0941999177293296
+   },
+   "child": {
+    "reproMass": 2814.605723370429,
+    "membrane": 0.018409403065991765,
+    "reproRate": 1.0705836297720968
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2990.4696569920843,
+    "membrane": 0.12534163685946675,
+    "reproRate": 0.600671991885381
+   },
+   "child": {
+    "reproMass": 2744.4168564920274,
+    "membrane": 0.12336534356344876,
+    "reproRate": 0.6021039349343721
+   }
+  },
+  {
+   "h": 8,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.8537,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2312.035087719298,
+    "membrane": 0.19717953359245743,
+    "reproRate": 0.6947406910841611
+   },
+   "child": {
+    "reproMass": 2185.4927234927236,
+    "membrane": 0.1938041383082842,
+    "reproRate": 0.7095337139148264
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2248.008888888889,
+    "membrane": 0.19686900982555802,
+    "reproRate": 0.6849106572098261
+   },
+   "child": {
+    "reproMass": 2491.7935323383085,
+    "membrane": 0.19675174583129676,
+    "reproRate": 0.6247474590495136
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2591.0674698795183,
+    "membrane": 0.1579034314928868,
+    "reproRate": 0.5812080724899514
+   },
+   "child": {
+    "reproMass": 3469.595588235294,
+    "membrane": 0,
+    "reproRate": 0.4034590681875491
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2250.380038387716,
+    "membrane": 0.18728295210202847,
+    "reproRate": 0.7417954011532711
+   },
+   "child": {
+    "reproMass": 2206.1787072243346,
+    "membrane": 0.18663444017249875,
+    "reproRate": 0.7452008217043281
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.875,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2957.5662431941923,
+    "membrane": 0,
+    "reproRate": 0.7894548320080235
+   },
+   "child": {
+    "reproMass": 3063.7169459962756,
+    "membrane": 0,
+    "reproRate": 0.7669456425490588
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.8333,
+   "parent": {
+    "reproMass": 2536.6260869565217,
+    "membrane": 0,
+    "reproRate": 0.7463291960736594
+   },
+   "child": {
+    "reproMass": 2532.6729411764704,
+    "membrane": 0,
+    "reproRate": 0.6963446004620452
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.75,
+   "childPurity": 0.8889,
+   "parent": {
+    "reproMass": 2659.431818181818,
+    "membrane": 0.1972104790243825,
+    "reproRate": 0.6060420556456797
+   },
+   "child": {
+    "reproMass": 2297.6,
+    "membrane": 0.19572149779900325,
+    "reproRate": 0.6912927173815034
+   }
+  },
+  {
+   "h": 8,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2244.8985507246375,
+    "membrane": 0.18895924883394938,
+    "reproRate": 0.8794165545563973
+   },
+   "child": {
+    "reproMass": 2362.0233918128656,
+    "membrane": 0.18774743368481447,
+    "reproRate": 0.7273913166775373
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.5529,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 5938.389447236181,
+    "membrane": 0,
+    "reproRate": 0.6041378891604305
+   },
+   "child": {
+    "reproMass": 5560.164556962025,
+    "membrane": 0.0005479892679197849,
+    "reproRate": 0.9747671046949226
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.7021,
+   "childPurity": 0.8571,
+   "parent": {
+    "reproMass": 6768.573324022346,
+    "membrane": 0.00002044589224122829,
+    "reproRate": 2.483351831298557
+   },
+   "child": {
+    "reproMass": 7001.031128404669,
+    "membrane": 0.00006960494272210903,
+    "reproRate": 2.2589434824646215
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.5484,
+   "childPurity": 0.9231,
+   "parent": {
+    "reproMass": 6953.7400881057265,
+    "membrane": 0.0000699136320752079,
+    "reproRate": 1.8621210132563328
+   },
+   "child": {
+    "reproMass": 7037.900304414003,
+    "membrane": 0.000033961311813569325,
+    "reproRate": 2.496627462902092
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.875,
+   "childPurity": 0.5385,
+   "parent": {
+    "reproMass": 5835.49173553719,
+    "membrane": 0.00010450935484221498,
+    "reproRate": 1.5685257802119454
+   },
+   "child": {
+    "reproMass": 6936.288308740068,
+    "membrane": 0.00022349752118302807,
+    "reproRate": 1.4741315842313099
+   }
+  },
+  {
+   "h": 9,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2193.121031746032,
+    "membrane": 0.0012098620468813815,
+    "reproRate": 0.7721652801397252
+   },
+   "child": {
+    "reproMass": 2409.966490299824,
+    "membrane": 0.0012085958099729943,
+    "reproRate": 0.9016171863819231
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.9429,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2503.1956043956043,
+    "membrane": 0,
+    "reproRate": 1.4344262295081966
+   },
+   "child": {
+    "reproMass": 2721.7642857142855,
+    "membrane": 0,
+    "reproRate": 1.3600816048962938
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.7,
+   "parent": {
+    "reproMass": 2623.859960552268,
+    "membrane": 0,
+    "reproRate": 0.7555886736214605
+   },
+   "child": {
+    "reproMass": 3104.35960591133,
+    "membrane": 0,
+    "reproRate": 0.920301024571584
+   }
+  },
+  {
+   "h": 9,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 0.5,
+   "parent": {
+    "reproMass": 3208.582123758594,
+    "membrane": 0,
+    "reproRate": 2.265764284354283
+   },
+   "child": {
+    "reproMass": 2835.394703656999,
+    "membrane": 0,
+    "reproRate": 2.806831253871339
+   }
+  },
+  {
+   "h": 9,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 5082.154642989271,
+    "membrane": 0.0003698242452053137,
+    "reproRate": 4.7753652633252655
+   },
+   "child": {
+    "reproMass": 4731.189695550352,
+    "membrane": 0.0003294639166583547,
+    "reproRate": 5.2412849828154595
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.4615,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 6050.908227848101,
+    "membrane": 0.002876855320223025,
+    "reproRate": 0.9998259796554397
+   },
+   "child": {
+    "reproMass": 6327.57781201849,
+    "membrane": 0.003157290335903642,
+    "reproRate": 1.029505076142132
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.7143,
+   "childPurity": 0.8,
+   "parent": {
+    "reproMass": 3272.3122807017544,
+    "membrane": 0,
+    "reproRate": 0.8931789335130138
+   },
+   "child": {
+    "reproMass": 3059.0791139240505,
+    "membrane": 0,
+    "reproRate": 1.0034453741485798
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2929.9400397189124,
+    "membrane": 0,
+    "reproRate": 20.619271112231075
+   },
+   "child": {
+    "reproMass": 2904.1620710784314,
+    "membrane": 0,
+    "reproRate": 14.389419544452608
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.8333,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 10958.593192195933,
+    "membrane": 0.00015404729123640105,
+    "reproRate": 7.270258035310095
+   },
+   "child": {
+    "reproMass": 11381.603859250852,
+    "membrane": 0.00018928275232383375,
+    "reproRate": 7.655765721403123
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.9245,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 5117.309250764526,
+    "membrane": 0.0001870605161564613,
+    "reproRate": 4.541666666666667
+   },
+   "child": {
+    "reproMass": 5345.066720582288,
+    "membrane": 0.00018601407551713473,
+    "reproRate": 4.323728932093154
+   }
+  },
+  {
+   "h": 9,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.5313,
+   "childPurity": 0.8889,
+   "parent": {
+    "reproMass": 3057.639901173564,
+    "membrane": 0,
+    "reproRate": 3.4691122586727805
+   },
+   "child": {
+    "reproMass": 2907.0336622170635,
+    "membrane": 0,
+    "reproRate": 3.707130255174491
+   }
+  },
+  {
+   "h": 9,
+   "kind": "budding",
+   "clonal": false,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3038.2111307420496,
+    "membrane": 0,
+    "reproRate": 1.8203161432453727
+   },
+   "child": {
+    "reproMass": 2862.6840538441625,
+    "membrane": 0,
+    "reproRate": 11.198399814471243
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 6694.344322344323,
+    "membrane": 0,
+    "reproRate": 0.8426966292134831
+   },
+   "child": {
+    "reproMass": 6491.137867647059,
+    "membrane": 0,
+    "reproRate": 0.8200551728296426
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.5493,
+   "childPurity": 0.5714,
+   "parent": {
+    "reproMass": 7463.962453066333,
+    "membrane": 0.00003549312143655579,
+    "reproRate": 3.3417679165185388
+   },
+   "child": {
+    "reproMass": 7052.718263718264,
+    "membrane": 0.00006893092106689092,
+    "reproRate": 2.1636660051034875
+   }
+  },
+  {
+   "h": 9,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.6,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3095.6346153846152,
+    "membrane": 0,
+    "reproRate": 0.8095653256943579
+   },
+   "child": {
+    "reproMass": 2797.4727272727273,
+    "membrane": 0,
+    "reproRate": 0.7531151581541832
+   }
+  },
+  {
+   "h": 9,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.8,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 6986.669745958429,
+    "membrane": 0.000027377841365264916,
+    "reproRate": 2.4573417577844197
+   },
+   "child": {
+    "reproMass": 6613.674698795181,
+    "membrane": 0.002814380350539459,
+    "reproRate": 0.38730148854427526
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.5789,
+   "childPurity": 0.5,
+   "parent": {
+    "reproMass": 3843.935933147632,
+    "membrane": 0,
+    "reproRate": 0.5555641529581083
+   },
+   "child": {
+    "reproMass": 3938.497448979592,
+    "membrane": 0,
+    "reproRate": 0.6070836753341283
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.8,
+   "parent": {
+    "reproMass": 3004.109131403118,
+    "membrane": 0,
+    "reproRate": 2.240071841947715
+   },
+   "child": {
+    "reproMass": 2859.897290485192,
+    "membrane": 0,
+    "reproRate": 2.7857255700468677
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3836.6965699208445,
+    "membrane": 0.00040388451786407484,
+    "reproRate": 0.6007481612985037
+   },
+   "child": {
+    "reproMass": 3867.842391304348,
+    "membrane": 0.0004918364443561492,
+    "reproRate": 0.5762334998355856
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.7143,
+   "parent": {
+    "reproMass": 2207.411300121507,
+    "membrane": 0.08005104988480173,
+    "reproRate": 2.9103382428346625
+   },
+   "child": {
+    "reproMass": 2065.515616438356,
+    "membrane": 0.09232453292976961,
+    "reproRate": 3.326164613253627
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3404.6077586206898,
+    "membrane": 0,
+    "reproRate": 0.3605956044639249
+   },
+   "child": {
+    "reproMass": 3484.3723849372386,
+    "membrane": 0,
+    "reproRate": 0.37228574098881584
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.881,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3467.7178423236514,
+    "membrane": 0,
+    "reproRate": 0.36632263752299016
+   },
+   "child": {
+    "reproMass": 3327.7330827067667,
+    "membrane": 0,
+    "reproRate": 0.4051913234218864
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 1313.6468446601941,
+    "membrane": 0,
+    "reproRate": 6.862091938707528
+   },
+   "child": {
+    "reproMass": 1360.7503302509908,
+    "membrane": 0,
+    "reproRate": 6.528113142462918
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.292,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2119.084790673026,
+    "membrane": 0,
+    "reproRate": 4.162438787664887
+   },
+   "child": {
+    "reproMass": 2246.5966796875,
+    "membrane": 0,
+    "reproRate": 4.348472301845129
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.6667,
+   "childPurity": 0.5714,
+   "parent": {
+    "reproMass": 1781.1648537587623,
+    "membrane": 0,
+    "reproRate": 8.677139920716488
+   },
+   "child": {
+    "reproMass": 1742.0102405334603,
+    "membrane": 0,
+    "reproRate": 8.62518743709303
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": false,
+   "parentPurity": 0.3585,
+   "childPurity": 0.8,
+   "parent": {
+    "reproMass": 1496.8897674418604,
+    "membrane": 0,
+    "reproRate": 8.434018515612742
+   },
+   "child": {
+    "reproMass": 1738.42659137577,
+    "membrane": 0,
+    "reproRate": 8.14279145592108
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.7742,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2632.7507598784196,
+    "membrane": 0.06907232930645775,
+    "reproRate": 2.729214624940376
+   },
+   "child": {
+    "reproMass": 2319.17048346056,
+    "membrane": 0.07487832752854359,
+    "reproRate": 3.352169740910545
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 0.9412,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2842.704811443433,
+    "membrane": 0,
+    "reproRate": 1.1721310226042954
+   },
+   "child": {
+    "reproMass": 2599.3417322834644,
+    "membrane": 0,
+    "reproRate": 0.9442660004758506
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 3810.5837320574165,
+    "membrane": 0.0005058778814006045,
+    "reproRate": 0.658008658008658
+   },
+   "child": {
+    "reproMass": 3824.75,
+    "membrane": 0.0004347154246190129,
+    "reproRate": 0.6876504235301473
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2160.9559014267184,
+    "membrane": 0.0011206703209651135,
+    "reproRate": 2.6536336884131546
+   },
+   "child": {
+    "reproMass": 2049.190285714286,
+    "membrane": 0.001839769275924977,
+    "reproRate": 3.0100276922547686
+   }
+  },
+  {
+   "h": 10,
+   "kind": "fission",
+   "clonal": true,
+   "parentPurity": 0.7541,
+   "childPurity": 0.8125,
+   "parent": {
+    "reproMass": 2139.5625766871167,
+    "membrane": 0.08593519711552008,
+    "reproRate": 2.921722920288946
+   },
+   "child": {
+    "reproMass": 2169.832946635731,
+    "membrane": 0.09347282067545938,
+    "reproRate": 4.1209316556392706
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.875,
+   "parent": {
+    "reproMass": 3713.1792717086837,
+    "membrane": 0.00040800702441695213,
+    "reproRate": 0.5639543149613763
+   },
+   "child": {
+    "reproMass": 3748.955263157895,
+    "membrane": 0.0004973628709677855,
+    "reproRate": 0.5843726452089132
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2926.449297188755,
+    "membrane": 0.00014752499827119694,
+    "reproRate": 8.914613043737694
+   },
+   "child": {
+    "reproMass": 2886.3074412532637,
+    "membrane": 0.00019305178444178702,
+    "reproRate": 9.090504517066947
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 1,
+   "parent": {
+    "reproMass": 2790.2989323843417,
+    "membrane": 0,
+    "reproRate": 0.3782830526500007
+   },
+   "child": {
+    "reproMass": 2821.6436781609195,
+    "membrane": 0,
+    "reproRate": 0.35276467487531593
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.8462,
+   "parent": {
+    "reproMass": 2004.697247706422,
+    "membrane": 0,
+    "reproRate": 2.800184966346401
+   },
+   "child": {
+    "reproMass": 2114.9725457570717,
+    "membrane": 0,
+    "reproRate": 3.034663839026484
+   }
+  },
+  {
+   "h": 10,
+   "kind": "budding",
+   "clonal": true,
+   "parentPurity": 1,
+   "childPurity": 0.6923,
+   "parent": {
+    "reproMass": 2153.0177289995777,
+    "membrane": 0.12273620289021563,
+    "reproRate": 3.9809104505200894
+   },
+   "child": {
+    "reproMass": 2590.493346980553,
+    "membrane": 0.1223630858240051,
+    "reproRate": 3.47984043311013
+   }
+  }
+ ]
+}

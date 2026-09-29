@@ -9,10 +9,13 @@
 //   deno run -A tools/foundations.ts t1-plan | t1        test 1 garden plan, then slopes
 //   deno run -A tools/foundations.ts t3-plan | t3        test 3 descendant co-culture plan, then origination
 //   deno run -A tools/foundations.ts t5-plan | t5        test 5 genomes from the 9e5 checkpoints, then results
+//   deno run -A tools/foundations.ts t3-gradient-plan    test 3's plantings in the gradient garden (founder diagnostic)
+//   deno run -A tools/foundations.ts t3 --dir D --tag T  test 3 read from another garden's results
+//   deno run -A tools/foundations.ts fd-pool | fd-select | fd-plan | fd   founder diagnostic, in order
 //   deno run -A tools/foundations.ts t6                  test 6 measures
 //   deno run -A tools/foundations.ts gate                the decision gate from the saved results
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { G, GENOME_CHANNELS, M3_FOUNDERS, cellCount, decodeCheckpoint, encodeGenome, founderGenome } from "@bl/schema";
+import { CLUSTER_DISTANCE, G, genomeDistance, GENOME_CHANNELS, M3_FOUNDERS, cellCount, decodeCheckpoint, encodeGenome, founderGenome, geneticClusters, genomeHex as hexOf, type Genome } from "@bl/schema";
 import { CH, allocState, defaultConfig } from "@bl/schema";
 import { DEFAULT_CENSUS, census, classify, mannWhitney, morphology, passesProbabilityGate, binomialLowerBound, type Role } from "@bl/metrics";
 import { ACTIVITY_THRESHOLDS } from "../experiments/endpoints.ts";
@@ -580,47 +583,80 @@ function qualifying(dc: DeepCensus[], role: Role): [number, number][] {
   }
   return out;
 }
-const soloRuns = async () => {
-  const runs: { dir: string; founder: number; seed: number; mutation: boolean }[] = [];
+const soloRuns = async (base = "runs/solo/gradient-m3") => {
+  const runs: { dir: string; founder: number; genome: string | undefined; seed: number; mutation: boolean; steps: number; extinct: boolean }[] = [];
   for (const cond of ["treatment", "no-mutation"]) {
-    const root = `runs/solo/gradient-m3/${cond}`;
+    const root = `${base}/${cond}`;
     if (!(await exists(root))) continue;
     for await (const e of Deno.readDir(root)) {
       const m = JSON.parse(await Deno.readTextFile(`${root}/${e.name}/manifest.json`));
-      if (m.summary) runs.push({ dir: `${root}/${e.name}`, founder: m.spec.soloFounder, seed: m.spec.seed, mutation: cond === "treatment" });
+      if (m.summary) runs.push({ dir: `${root}/${e.name}`, founder: m.spec.soloFounder, genome: m.spec.soloGenome, seed: m.spec.seed, mutation: cond === "treatment", steps: m.summary.steps, extinct: m.summary.extinct });
     }
   }
-  return runs.sort((x, y) => x.founder - y.founder || x.seed - y.seed);
+  return runs.sort((x, y) => (x.founder ?? 0) - (y.founder ?? 0) || x.seed - y.seed);
 };
-
-async function t3Plan() {
-  const runs = await soloRuns();
-  const founderHex = (k: number) => Array.from(encodeGenome(founderGenome(M3_FOUNDERS[k]), 0, 0).subarray(G.PARAM0), (x) => x.toString(16).padStart(8, "0")).join("");
+/**
+ * Test 3's candidates from single-founder runs keyed by `subject`: each role that qualifies in a
+ * mutation run but in none of the subject's runs without mutation, with its descendant genome.
+ */
+async function originationCandidates(runs: { dir: string; subject: number; seed: number; mutation: boolean; extinct?: boolean }[]) {
   const qual: any[] = [];
   const nmRoles = new Map<number, Set<Role>>();
   for (const r of runs.filter((r) => !r.mutation)) {
     const dc = await deepCensuses(r.dir);
-    const set = nmRoles.get(r.founder) ?? new Set<Role>();
+    const set = nmRoles.get(r.subject) ?? new Set<Role>();
     for (const role of ROLES4) if (qualifying(dc, role).length) set.add(role);
-    nmRoles.set(r.founder, set);
+    nmRoles.set(r.subject, set);
   }
   const candidates: any[] = [];
   for (const r of runs.filter((r) => r.mutation)) {
     const dc = await deepCensuses(r.dir);
     const g = await genomeHex(r.dir);
     const roles = ROLES4.filter((role) => qualifying(dc, role).length);
-    qual.push({ founder: r.founder, seed: r.seed, mutation: true, roles });
+    qual.push({ subject: r.subject, seed: r.seed, mutation: true, roles });
     for (const role of roles) {
-      if (nmRoles.get(r.founder)?.has(role)) continue;
+      if (nmRoles.get(r.subject)?.has(role)) continue;
       const [i, j] = qualifying(dc, role)[0];
       const mid = (dc[i].step + dc[j].step) / 2;
       const at = dc.slice(i, j + 1).reduce((b, c) => (Math.abs(c.step - mid) < Math.abs(b.step - mid) ? c : b));
       const top = at.top[role]!;
-      candidates.push({ founder: r.founder, seed: r.seed, role, window: [dc[i].step, dc[j].step], descendant: top.key, atStep: at.step, hex: g.get(top.key) ?? null });
+      candidates.push({ subject: r.subject, seed: r.seed, role, window: [dc[i].step, dc[j].step], descendant: top.key, atStep: at.step, hex: g.get(top.key) ?? null });
     }
   }
-  for (const [f, set] of nmRoles) qual.push({ founder: f, mutation: false, roles: [...set] });
+  for (const [f, set] of nmRoles) qual.push({ subject: f, mutation: false, roles: [...set] });
   if (candidates.some((c) => !c.hex)) throw new Error("a descendant lineage has no genome in genomes.tsv");
+  return { qual, candidates };
+}
+/**
+ * A candidate's garden outcome (test 3's rule): roles are compared only between active lineages; a
+ * founder inactive beside its descendant is represented by its monoculture `mono`.
+ */
+function gardenOutcome(p: any, mono: any) {
+  const fluxOf = (q: any, slot: number) => q.tiles.reduce((s: number[], t: any) => {
+    const l = t.lineages[slot];
+    return [s[0] + l.photo, s[1] + l.grow, s[2] + l.decomp, s[3] + l.cellCensuses];
+  }, [0, 0, 0, 0]);
+  const roleOf = (f: number[]) => (f[3] > 0 && f[0] + f[1] + f[2] > 0 ? classify(f[0], f[1], f[2]) : null);
+  const descRole = roleOf(fluxOf(p, 0));
+  let founderRole = roleOf(fluxOf(p, 1)), founderFrom = "co-culture";
+  if (!founderRole) {
+    founderRole = mono ? roleOf(fluxOf(mono, 0)) : null;
+    founderFrom = "monoculture";
+  }
+  const outcome = !descRole ? "descendant inactive" : !founderRole ? "founder inactive" : descRole !== founderRole ? "different role" : "same role";
+  return { descendantGardenRole: descRole, founderGardenRole: founderRole, founderFrom, outcome, originates: outcome === "different role" };
+}
+const OUTCOMES = ["different role", "same role", "descendant inactive", "founder inactive"];
+/** The founder diagnostic's gradient garden (docs/plan.md): gradient-m3's light range down each 64-row tile. */
+const GRADIENT_GARDEN = { lightBase: 20, lightAmp: 220, rows: [12, 26, 38, 52] };
+
+const founderHex = (k: number) => hexOf(founderGenome(M3_FOUNDERS[k]));
+
+async function t3Plan() {
+  const runs = await soloRuns();
+  const found = await originationCandidates(runs.map((r) => ({ ...r, subject: r.founder })));
+  const qual = found.qual.map(({ subject, ...q }) => ({ founder: subject, ...q }));
+  const candidates = found.candidates.map(({ subject, ...c }) => ({ founder: subject, ...c }));
   const plantings = [
     ...candidates.map((c, i) => ({ id: `c${i}`, hex: [c.hex, founderHex(c.founder)] })),
     // Each founder alone: its role when it is inactive beside a descendant.
@@ -636,23 +672,10 @@ async function t3() {
   const res = new Map<string, any>();
   for (const u of await jsonFiles(a.dir ?? "runs/found-t3")) for (const p of u.plantings) res.set(p.id, p);
   // A lineage is active in the garden when it is present and catalyses; roles are only compared between active lineages.
-  const fluxOf = (p: any, slot: number) => p.tiles.reduce((s: number[], t: any) => {
-    const l = t.lineages[slot];
-    return [s[0] + l.photo, s[1] + l.grow, s[2] + l.decomp, s[3] + l.cellCensuses];
-  }, [0, 0, 0, 0]);
-  const roleOf = (f: number[]) => (f[3] > 0 && f[0] + f[1] + f[2] > 0 ? classify(f[0], f[1], f[2]) : null);
   const rows = candidates.map((c: any, i: number) => {
     const p = res.get(`c${i}`);
     if (!p) return { ...c, hex: undefined, missing: true };
-    const descRole = roleOf(fluxOf(p, 0));
-    let founderRole = roleOf(fluxOf(p, 1)), founderFrom = "co-culture";
-    if (!founderRole) {
-      const m = res.get(`f${c.founder}`);
-      founderRole = m ? roleOf(fluxOf(m, 0)) : null;
-      founderFrom = "monoculture";
-    }
-    const outcome = !descRole ? "descendant inactive" : !founderRole ? "founder inactive" : descRole !== founderRole ? "different role" : "same role";
-    return { ...c, hex: undefined, descendantGardenRole: descRole, founderGardenRole: founderRole, founderFrom, outcome, originates: outcome === "different role" };
+    return { ...c, hex: undefined, ...gardenOutcome(p, res.get(`f${c.founder}`)) };
   });
   const perFounder = M3_FOUNDERS.map((_, f) => {
     const seeds = new Set(rows.filter((r: any) => r.founder === f && r.originates).map((r: any) => r.seed));
@@ -661,9 +684,175 @@ async function t3() {
   const founders = perFounder.filter((p) => p.counts).length;
   // Incomplete inputs decide nothing: all 96 single-founder runs and every garden result.
   const complete = soloRuns === 96 && rows.every((r: any) => !r.missing) && M3_FOUNDERS.every((_, k) => res.has(`f${k}`));
-  const result = { complete, candidates: rows.length, originating: rows.filter((r: any) => r.originates).length, outcomes: Object.fromEntries(["different role", "same role", "descendant inactive", "founder inactive"].map((o) => [o, rows.filter((r: any) => r.outcome === o).length])), foundersCounting: founders, fails: complete ? founders < 3 : null };
-  await save("t3.json", { result, perFounder, rows, qualifying: qual });
+  const result = { complete, candidates: rows.length, originating: rows.filter((r: any) => r.originates).length, outcomes: Object.fromEntries(OUTCOMES.map((o) => [o, rows.filter((r: any) => r.outcome === o).length])), foundersCounting: founders, fails: complete ? founders < 3 : null };
+  // --tag: the same reading from another garden (the founder diagnostic's gradient garden); only
+  // the default t3.json feeds the gate.
+  await save(`${a.tag ?? "t3"}.json`, { result, perFounder, rows, qualifying: qual, ...(a.tag ? { garden: a.dir } : {}) });
   console.log(JSON.stringify(result, null, 1));
+}
+
+// ---------------------------------------------------------------------------------------------
+// Founder diagnostic (docs/plan.md, "Founder diagnostic", exploratory, after the gate): test 3's
+// harness on 24 other genomes, and test 3's own candidates re-read in a gradient garden.
+
+/** Test 3's plantings in the gradient garden (seeds from 4,260,001). */
+async function t3GradientPlan() {
+  const plan = JSON.parse(await Deno.readTextFile(`${OUT}/t3-plan.json`));
+  await save("t3-gradient-plan.json", { ...plan, seed0: 4_260_001, gradient: GRADIENT_GARDEN });
+}
+
+const confirmPath = "runs/bootstrap-200/confirm.json";
+/**
+ * The archive pool: M3 confirmations that survived and died without light in at least 13 of 16
+ * replicates, whatever their regeneration, less the founders' own genomes; clustered afresh at the
+ * M3 cluster distance. Writes the role-screen plan (evaluator with roles, 4 replicates).
+ */
+async function fdPool() {
+  const rows: any[] = JSON.parse(await Deno.readTextFile(confirmPath)).rows;
+  const founders = new Set(M3_FOUNDERS.map((_, k) => founderHex(k)));
+  const toGenome = (g: any): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(Array.isArray(g.weights) ? g.weights : Object.values(g.weights)) });
+  const seen = new Set<string>();
+  const pool: { i: number; hex: string; genome: Genome; m3pass: boolean; regenerated: number }[] = [];
+  rows.forEach((r, i) => {
+    if (r.eval.survived < 13 || r.eval.lightDependent < 13) return;
+    const genome = toGenome(r.genome), hex = hexOf(genome);
+    if (founders.has(hex) || seen.has(hex)) return;
+    seen.add(hex);
+    pool.push({ i, hex, genome, m3pass: r.pass, regenerated: r.eval.regenerated });
+  });
+  const cluster = geneticClusters(pool.map((p) => p.genome), CLUSTER_DISTANCE);
+  // A pool cluster holds a founder when a founder genome lies within the cluster distance of a member.
+  const fg = M3_FOUNDERS.map((f) => founderGenome(f));
+  const nearFounder = pool.map((p) => fg.findIndex((g) => genomeDistance(g, p.genome, CLUSTER_DISTANCE) <= CLUSTER_DISTANCE));
+  const founderClusters = new Map<number, number>();
+  pool.forEach((p, k) => nearFounder[k] >= 0 && founderClusters.set(cluster[k], nearFounder[k]));
+  const out = pool.map((p, k) => ({ label: `a${p.i}`, row: p.i, hex: p.hex, m3pass: p.m3pass, regenerated: p.regenerated, cluster: cluster[k], founderCluster: founderClusters.get(cluster[k]) ?? null }));
+  await save("fd-pool.json", { source: confirmPath, rule: "survived >= 13 and lightDependent >= 13 of 16; founders' genomes and duplicates dropped", clusters: new Set(cluster).size, pool: out });
+  await save("fd-roles-plan.json", { seed0: 4_205_001, reps: 4, genomes: out.map(({ label, hex }) => ({ label, hex })) });
+  console.log(`pool ${out.length} genomes in ${new Set(cluster).size} clusters (${out.filter((p) => p.founderCluster !== null).length} in a founder's cluster)`);
+}
+
+/** Random order (Fisher–Yates, mulberry32). */
+function shuffled<T>(xs: T[], r: () => number): T[] {
+  const out = xs.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+/** `n` picks in random order, one per group (beyond those in `used`) while such groups remain, then any. */
+function spreadPick<T>(xs: T[], n: number, group: (x: T) => string | number, r: () => number, used = new Set<string | number>()): T[] {
+  const order = shuffled(xs, r), picked: T[] = [];
+  for (const x of order) if (picked.length < n && !used.has(group(x))) (picked.push(x), used.add(group(x)));
+  for (const x of order) if (picked.length < n && !picked.includes(x)) picked.push(x);
+  return picked;
+}
+/**
+ * The 24 subjects: 16 from the archive pool (8 whose screened role is not phototroph, 8 phototrophs;
+ * one per cluster within each group while clusters last) and 8 of test 5's evolved lineages that
+ * survived and died without light in at least 26 of 32 (4 not phototroph, 4 phototroph; one per
+ * history within each group while histories last). A short group is filled from the other.
+ * Writes the single-founder run lines: seeds 4,210,001 + 10c + j, j = 0-4 with mutation, 5-7 without.
+ */
+async function fdSelect() {
+  const pool: any[] = JSON.parse(await Deno.readTextFile(`${OUT}/fd-pool.json`)).pool;
+  const role = new Map<string, string>();
+  for (const u of await jsonFiles(a.dir ?? "runs/found-fd-roles")) for (const g of u.genomes) role.set(g.label, g.eval.role);
+  const missing = pool.filter((p) => !role.has(p.label)).length;
+  if (missing) throw new Error(`${missing} pool genomes have no role screen`);
+  const r = rng(4_210_000);
+  const pick = <T>(xs: T[], isPhoto: (x: T) => boolean, n: number, group: (x: T) => string | number) => {
+    const nonUsed = new Set<string | number>();
+    const non = spreadPick(xs.filter((x) => !isPhoto(x)), n / 2, group, r, nonUsed);
+    const pho = spreadPick(xs.filter(isPhoto), n - non.length, group, r);
+    // A short phototroph group is filled from the other group, still one per group while groups last.
+    return [...non, ...spreadPick(xs.filter((x) => !isPhoto(x) && !non.includes(x)), n - non.length - pho.length, group, r, nonUsed), ...pho];
+  };
+  const archive = pick(pool, (p) => role.get(p.label) === "phototroph", 16, (p) => p.cluster).map((p) => ({ source: "archive", label: p.label, hex: p.hex, role: role.get(p.label)!, cluster: p.cluster, founderCluster: p.founderCluster, m3pass: p.m3pass, regenerated: p.regenerated }));
+  const t5rows: any[] = JSON.parse(await Deno.readTextFile(`${OUT}/t5.json`)).rows;
+  const t5hex = new Map<string, string>(JSON.parse(await Deno.readTextFile(`${OUT}/t5-plan.json`)).genomes.map((g: any) => [g.label, g.hex]));
+  const eligible = t5rows.filter((x) => x.survived >= 26 && x.lightDependent >= 26);
+  const evolved = pick(eligible, (x) => x.role === "phototroph", 8, (x) => x.label.split("-")[0]).map((x) => ({ source: "evolved", label: x.label, hex: t5hex.get(x.label)!, role: x.role, history: x.label.split("-")[0] }));
+  const subjects = [...archive, ...evolved].map((s, c) => ({ subject: c, ...s }));
+  if (subjects.length !== 24 || new Set(subjects.map((s) => s.hex)).size !== 24) throw new Error("expected 24 distinct subjects");
+  const runs = subjects.flatMap((s) => [0, 1, 2, 3, 4, 5, 6, 7].map((j) => ({ subject: s.subject, seed: 4_210_001 + 10 * s.subject + j, condition: j < 5 ? "treatment" : "no-mutation", hex: s.hex })));
+  await save("fd-subjects.json", { subjects, poolRoles: Object.fromEntries(["phototroph", "chemotroph", "decomposer", "mixed"].map((k) => [k, pool.filter((p) => role.get(p.label) === k).length])), evolvedEligible: eligible.length });
+  await Deno.writeTextFile(`${OUT}/fd-runs.txt`, runs.map((x) => `founders-diag ${x.condition} ${x.seed} gradient-m3 1000000 0 --lineage-obs --solo-genome ${x.hex}`).join("\n") + "\n");
+  console.log(subjects.map((s) => `${s.subject} ${s.source} ${s.label} ${s.role}`).join("\n"));
+}
+
+const fdRuns = async () => {
+  const { subjects } = JSON.parse(await Deno.readTextFile(`${OUT}/fd-subjects.json`));
+  const byHex = new Map<string, number>(subjects.map((s: any) => [s.hex, s.subject]));
+  const runs = (await soloRuns("runs/founders-diag/gradient-m3")).map((r) => ({ ...r, subject: byHex.get(r.genome!) ?? -1 }));
+  if (runs.some((r) => r.subject < 0)) throw new Error("a founders-diag run has an unknown genome");
+  // Complete: exactly the prescribed matrix, every run finished at 10^6 steps.
+  const want = subjects.flatMap((s: any) => [0, 1, 2, 3, 4, 5, 6, 7].map((j) => `${s.subject}:${4_210_001 + 10 * s.subject + j}:${j < 5}`));
+  const have = new Set(runs.filter((r) => r.steps === 1_000_000).map((r) => `${r.subject}:${r.seed}:${r.mutation}`));
+  const complete = runs.length === want.length && want.every((k: string) => have.has(k));
+  return { subjects, complete, runs: runs.sort((x, y) => x.subject - y.subject || x.seed - y.seed) };
+};
+
+/** Candidate roles from the 192 runs, and their garden plans: uniform (4,270,001) and gradient (4,280,001). */
+async function fdPlan() {
+  const { subjects, runs, complete } = await fdRuns();
+  if (!complete) throw new Error(`the founder diagnostic's 192 runs are not all complete (${runs.length} finished)`);
+  const { qual, candidates } = await originationCandidates(runs);
+  for (const q of qual) if (q.mutation) q.extinct = runs.find((r) => r.subject === q.subject && r.seed === q.seed)!.extinct;
+  const plantings = [
+    ...candidates.map((c, i) => ({ id: `c${i}`, hex: [c.hex, subjects[c.subject].hex] })),
+    ...subjects.map((s: any) => ({ id: `m${s.subject}`, hex: [s.hex] })),
+  ];
+  await save("fd-candidates.json", { qualifying: qual, candidates, runs: runs.length, complete, extinct: runs.filter((r) => r.extinct).map((r) => ({ subject: r.subject, seed: r.seed, mutation: r.mutation })) });
+  await save("fd-plan-uniform.json", { seed0: 4_270_001, reps: 16, growSteps: 20_000, plantings });
+  await save("fd-plan-gradient.json", { seed0: 4_280_001, reps: 16, growSteps: 20_000, plantings, gradient: GRADIENT_GARDEN });
+  console.log(`founder diagnostic: ${runs.length} runs, ${candidates.length} candidate roles, ${plantings.length} plantings per garden`);
+}
+
+/** The diagnostic's reading in each garden (registered in docs/plan.md before any run). */
+async function fd() {
+  const { subjects } = JSON.parse(await Deno.readTextFile(`${OUT}/fd-subjects.json`));
+  const { candidates, qualifying: qual, complete: runsComplete, extinct } = JSON.parse(await Deno.readTextFile(`${OUT}/fd-candidates.json`));
+  // The gradient garden is read against the founders' rate there (Part A, t3-gradient.json).
+  const partA = (await exists(`${OUT}/t3-gradient.json`)) ? JSON.parse(await Deno.readTextFile(`${OUT}/t3-gradient.json`)).result : null;
+  const baseline = { uniform: { foundersCounting: 1, of: 12, complete: true }, gradient: partA ? { foundersCounting: partA.foundersCounting, of: 12, complete: partA.complete } : { foundersCounting: null, of: 12, complete: false } };
+  const read = async (dir: string, base: { complete: boolean }) => {
+    const res = new Map<string, any>();
+    if (await exists(dir)) for (const u of await jsonFiles(dir)) for (const p of u.plantings) res.set(p.id, p);
+    const rows = candidates.map((c: any, i: number) => {
+      const p = res.get(`c${i}`);
+      return p ? { ...c, hex: undefined, ...gardenOutcome(p, res.get(`m${c.subject}`)) } : { ...c, hex: undefined, missing: true };
+    });
+    const per = subjects.map((s: any) => {
+      const seeds = new Set(rows.filter((r: any) => r.subject === s.subject && r.originates).map((r: any) => r.seed));
+      const died = extinct.filter((x: any) => x.subject === s.subject && x.mutation).length;
+      return { subject: s.subject, source: s.source, role: s.role, runsOriginating: seeds.size, counts: seeds.size >= 3, mutationRunsExtinct: died };
+    });
+    // A planting counts only with all 16 replicate tiles, each holding every one of its lineage slots.
+    const whole = (id: string, slots: number) => {
+      const p = res.get(id);
+      return !!p && new Set(p.tiles.map((t: any) => t.tile)).size === 16 && p.tiles.every((t: any) => t.lineages.length === slots);
+    };
+    const complete = runsComplete === true && base.complete && candidates.every((_: any, i: number) => whole(`c${i}`, 2)) && subjects.every((s: any) => whole(`m${s.subject}`, 1));
+    const k = per.filter((p: any) => p.counts).length;
+    const stratum = (src: string, photo: boolean) => per.filter((p: any) => p.source === src && (p.role === "phototroph") === photo && p.counts).length;
+    return {
+      result: {
+        complete,
+        subjectsCounting: k,
+        reading: !complete ? "incomplete" : k >= 6 ? "founder selection is a major bottleneck" : k <= 3 ? "the mechanism is the bottleneck" : "ambiguous",
+        byStratum: { archiveNonPhototroph: stratum("archive", false), archivePhototroph: stratum("archive", true), evolvedNonPhototroph: stratum("evolved", false), evolvedPhototroph: stratum("evolved", true) },
+        candidates: rows.length,
+        outcomes: Object.fromEntries(OUTCOMES.map((o) => [o, rows.filter((r: any) => r.outcome === o).length])),
+      },
+      perSubject: per,
+      rows,
+    };
+  };
+  const uniform = await read("runs/found-fd-uniform", baseline.uniform), gradient = await read("runs/found-fd-gradient", baseline.gradient);
+  await save("fd.json", { note: "exploratory; primary reading in the uniform garden", baseline, uniform, gradient, extinctRuns: extinct, qualifying: qual });
+  console.log(JSON.stringify({ baseline, uniform: uniform.result, gradient: gradient.result, extinctRuns: extinct.length }, null, 1));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1025,6 +1214,21 @@ switch (cmd) {
     break;
   case "t3":
     await t3();
+    break;
+  case "t3-gradient-plan":
+    await t3GradientPlan();
+    break;
+  case "fd-pool":
+    await fdPool();
+    break;
+  case "fd-select":
+    await fdSelect();
+    break;
+  case "fd-plan":
+    await fdPlan();
+    break;
+  case "fd":
+    await fd();
     break;
   case "t6":
     await t6();

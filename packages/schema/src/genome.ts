@@ -44,6 +44,19 @@ export function decodeGenome(words: ArrayLike<number>): Genome {
   };
 }
 
+/** Genome words from PARAM0 onwards as hex, 8 digits each (the runner's `genomes.tsv` column). */
+export function genomeHex(g: Genome): string {
+  return Array.from(encodeGenome(g, 0, 0).subarray(G.PARAM0), (x) => x.toString(16).padStart(8, "0")).join("");
+}
+
+/** Inverse of `genomeHex`; throws unless `hex` holds exactly the words from PARAM0 onwards. */
+export function genomeFromHex(hex: string): Genome {
+  if (!new RegExp(`^[0-9a-f]{${8 * (GENOME_CHANNELS - G.PARAM0)}}$`).test(hex)) throw new Error(`genome hex must be ${8 * (GENOME_CHANNELS - G.PARAM0)} lowercase hex digits`);
+  const w = new Uint32Array(GENOME_CHANNELS);
+  for (let g = G.PARAM0; g < GENOME_CHANNELS; g++) w[g] = parseInt(hex.slice((g - G.PARAM0) * 8, (g - G.PARAM0 + 1) * 8), 16) >>> 0;
+  return decodeGenome(w);
+}
+
 /**
  * Hand-built generalist: photosynthesises in light, respires when its energy
  * per biomass is low, grows when it is high, decomposes a little and builds

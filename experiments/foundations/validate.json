@@ -1,0 +1,98 @@
+[
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-1",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-2",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-3",
+  "status": "incomplete"
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-4",
+  "status": "incomplete"
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-5",
+  "status": "incomplete"
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/no-mutation/seed-1",
+  "status": "incomplete"
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/no-mutation/seed-2",
+  "status": "incomplete"
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/no-mutation/seed-3",
+  "status": "incomplete"
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-1",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-10",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-2",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-3",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-4",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-5",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-6",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-7",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-8",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-9",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ }
+]

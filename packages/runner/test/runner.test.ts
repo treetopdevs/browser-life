@@ -14,7 +14,7 @@
 // would otherwise refuse the pooled ensemble later (tools/analyze.ts), but
 // only after the reuse had already skipped a run that should have redone.
 import { describe, expect, it } from "vitest";
-import { G, GENOME_CHANNELS, M3_FOUNDERS, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, cellCount, encodeGenome, founderGenome, m3World, type WorldState } from "@bl/schema";
+import { G, GENOME_CHANNELS, M3_FOUNDERS, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, cellCount, encodeGenome, founderGenome, genomeFromHex, genomeHex, m3World, type WorldState } from "@bl/schema";
 import { sameCompletedRun } from "@bl/runner";
 import { immigrantError, runExperiment, specConfig, validateSpec, type RunSpec, type Sink } from "../src/runner.ts";
 
@@ -222,5 +222,18 @@ describe("foundations-review run options", () => {
       for (let g = G.PARAM0; g < GENOME_CHANNELS; g++) expect(solo.genome[g * n + i]).toBe(want[g]);
     }
     expect(living).toBeGreaterThan(0);
+  });
+
+  it("a soloGenome world equals the soloFounder world of the same genome, and bad hex is refused", () => {
+    const m3: RunSpec = { ...reuseSpec, presetId: "gradient-m3" };
+    const hex = genomeHex(founderGenome(M3_FOUNDERS[3]));
+    expect(validateSpec({ ...m3, soloGenome: hex })).toEqual([]);
+    expect(validateSpec({ ...m3, soloGenome: hex.slice(1) }).join()).toMatch(/soloGenome/);
+    expect(validateSpec({ ...m3, soloGenome: hex, soloFounder: 3 }).join()).toMatch(/exclusive/);
+    expect(validateSpec({ ...reuseSpec, soloGenome: hex }).join()).toMatch(/M3 founder set/);
+    const cfg = specConfig(m3);
+    const [byGenome, byIndex] = [m3World(cfg, 13, 32, 64, genomeFromHex(hex)), m3World(cfg, 13, 32, 64, 3)];
+    expect(Array.from(byGenome.cells)).toEqual(Array.from(byIndex.cells));
+    expect(Array.from(byGenome.genome)).toEqual(Array.from(byIndex.genome));
   });
 });
