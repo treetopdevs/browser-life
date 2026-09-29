@@ -23,6 +23,9 @@ import {
   encodeCheckpoint,
   founderGenome,
   initWorld,
+  G,
+  GENOME_CHANNELS,
+  m3World,
   M3_FOUNDERS,
   presetConfig,
   stateHash,
@@ -52,6 +55,7 @@ import {
   type ActivityState,
   type TrackerState,
   type TileSpeciesRow,
+  type Census,
 } from "@bl/metrics";
 
 /**
@@ -124,6 +128,19 @@ export interface RunSpec {
    * it always has (this field costs nothing to a run that doesn't opt in).
    */
   runId?: string;
+  /**
+   * Foundations-review observers (docs/plan.md, "M4 pivot: foundations review"), for replays and
+   * assays: `profiles.tsv` (each lineage's catalytic profile, role and Lenia parameters at every deep
+   * census), `genomes.tsv` (the genome of every lineage when first seen at a census) and `births.tsv`
+   * (the traits of parent and offspring individuals at each fission and budding). Observation only:
+   * the physics and every other file are unchanged. Omitted: none of these files, as before.
+   */
+  lineageObs?: boolean;
+  /**
+   * Index into `M3_FOUNDERS`: an m3 preset's founder discs all carry this one founder's genome
+   * (same count, positions and amounts), for single-founder starts. Omitted: the preset's own world.
+   */
+  soloFounder?: number;
 }
 
 export interface Sink {
@@ -216,6 +233,10 @@ export function validateSpec(spec: RunSpec): string[] {
   if (!Number.isInteger(spec.checkpointEvery) || spec.checkpointEvery < 0) errs.push("checkpointEvery must be a non-negative integer");
   else if (spec.checkpointEvery > 0 && spec.checkpointEvery % spec.censusEvery !== 0) errs.push("checkpointEvery must be a multiple of censusEvery");
   if (spec.activityThreshold !== undefined && !(spec.activityThreshold > 0)) errs.push("activityThreshold must be positive");
+  if (spec.soloFounder !== undefined) {
+    if (!Number.isInteger(spec.soloFounder) || spec.soloFounder < 0 || spec.soloFounder >= M3_FOUNDERS.length) errs.push(`soloFounder must be an index into the ${M3_FOUNDERS.length} M3 founders`);
+    else if (PRESETS.find((p) => p.id === spec.presetId)?.init.kind !== "m3") errs.push("soloFounder needs a preset founded from the M3 founder set");
+  }
   return errs;
 }
 
@@ -226,9 +247,16 @@ export function validateSpec(spec: RunSpec): string[] {
  * already drops an `undefined` value on its own; only the explicit-`false` case needs this.
  */
 function normalizedSpec(spec: RunSpec): RunSpec {
-  if (spec.speciesCensus !== false) return spec;
-  const { speciesCensus: _drop, ...rest } = spec;
-  return rest;
+  let out = spec;
+  if (out.speciesCensus === false) {
+    const { speciesCensus: _drop, ...rest } = out;
+    out = rest;
+  }
+  if (out.lineageObs === false) {
+    const { lineageObs: _drop, ...rest } = out;
+    out = rest;
+  }
+  return out;
 }
 
 export function sameConfig(a: WorldConfig, b: WorldConfig): boolean {
@@ -419,6 +447,59 @@ export function decodeArtifact(bytes: Uint8Array): { state: WorldState; observer
   return { state, observer };
 }
 
+interface IndStats {
+  lineage: string;
+  mass: number;
+  biomass: number;
+  cells: number;
+  purity: number;
+}
+
+/** Each tracked individual's component at this census, keyed by individual id. */
+function indStats(c: Census, tracker: Tracker): Map<number, IndStats> {
+  const out = new Map<number, IndStats>();
+  for (const k of c.components) {
+    const id = tracker.idOf(k.idx);
+    if (id !== undefined) out.set(id, { lineage: k.lineage, mass: k.mass, biomass: k.biomass, cells: k.cells, purity: +k.purity.toFixed(4) });
+  }
+  return out;
+}
+
+/** `genomes.tsv` rows: genome words PARAM0.. (hex, 8 digits each) of each lineage in `keys`, read from its first cell. */
+function genomeRows(cfg: WorldConfig, step: number, keys: Set<string>, genome: Uint32Array): string {
+  const n = cellCount(cfg);
+  const rows: string[] = [];
+  for (let i = 0; i < n && keys.size; i++) {
+    const hi = genome[G.LIN_HI * n + i], lo = genome[G.LIN_LO * n + i];
+    if ((hi | lo) === 0) continue;
+    const key = `${hi}:${lo}`;
+    if (!keys.delete(key)) continue;
+    let words = "";
+    for (let g = G.PARAM0; g < GENOME_CHANNELS; g++) words += genome[g * n + i].toString(16).padStart(8, "0");
+    rows.push(`${key}\t${step}\t${words}\n`);
+  }
+  return rows.join("");
+}
+
+/** `profiles.tsv` rows: each lineage's summed catalytic profile, role and Lenia parameters. */
+function profileRows(cfg: WorldConfig, c: Census, profiles: ReturnType<typeof lineageProfiles>, genomeHead: Uint32Array): string {
+  const n = cellCount(cfg);
+  const params = new Map<string, [number, number]>();
+  for (let i = 0; i < n; i++) {
+    const hi = genomeHead[G.LIN_HI * n + i], lo = genomeHead[G.LIN_LO * n + i];
+    if ((hi | lo) === 0) continue;
+    const key = `${hi}:${lo}`;
+    if (!params.has(key)) params.set(key, [genomeHead[G.PARAM0 * n + i], genomeHead[G.PARAM1 * n + i]]);
+  }
+  const mass = new Map(c.lineages.map((l) => [l.key, l.mass]));
+  return profiles
+    .map((p) => {
+      const [p0, p1] = params.get(p.key) ?? [0, 0];
+      return `${c.step}\t${p.key}\t${p.cells}\t${mass.get(p.key) ?? 0}\t${p.photo}\t${p.grow}\t${p.decomp}\t${p.resp}\t${p.role}\t${p0 & 0xffff}\t${p0 >>> 16}\t${p1 & 0xff}\n`;
+    })
+    .join("");
+}
+
 export function runId(spec: RunSpec): string {
   return spec.runId ?? `${spec.experiment}/${spec.presetId}/${spec.condition}/seed-${spec.seed}`;
 }
@@ -441,7 +522,9 @@ export async function runExperiment(
   // invariant tests/deno/stitch.ts checks), exactly like checkpointEvery's own rule below.
   const migrationPeriod = cfg.migrationPeriod ?? 0;
   if (migrationPeriod > 0 && migrationPeriod % spec.censusEvery !== 0) throw new Error("migrationPeriod must be a multiple of censusEvery");
-  const init = opts.start ?? initWorld(cfg, preset.init);
+  const init =
+    opts.start ??
+    (spec.soloFounder !== undefined ? m3World(cfg, preset.init.founders, preset.init.nutrient, preset.init.biomass, spec.soloFounder) : initWorld(cfg, preset.init));
   const startStep = init.step;
   // The step loop below re-chunks in `censusEvery`-sized steps *relative to
   // this call's own start* (unchanged from before migration existed, so a
@@ -460,6 +543,9 @@ export async function runExperiment(
   if (migrationPeriod > 0 && startStep % spec.censusEvery !== 0)
     throw new Error(`migration-enabled runs must start on a multiple of censusEvery (start step ${startStep}, censusEvery ${spec.censusEvery})`);
   const settings = observerSettings(spec);
+  // The lineageObs bookkeeping (lineages already seen, the previous census's individuals) is not part of
+  // the checkpointed observer state, so those files are only exact for a run observed from its start.
+  if (spec.lineageObs && opts.start && opts.start.step > 0) throw new Error("lineageObs needs a run observed from step 0; it cannot continue a checkpoint");
   if (opts.start) {
     const bad = continuationError(spec, opts.start, opts.observer);
     if (bad) throw new Error(bad);
@@ -559,6 +645,17 @@ export async function runExperiment(
     await sink.appendText("species.tsv", speciesTsvRows(actualInit.step, tileSpeciesCensus({ step: actualInit.step, cfg, genome: actualInit.genome }, SPECIES_ANCHORS)));
   }
 
+  // Foundations-review observers (RunSpec.lineageObs): written only when opted into, same
+  // discipline as species.tsv, so every other file stays byte-identical.
+  if (spec.lineageObs) {
+    await sink.writeText("profiles.tsv", "step\tlineage\tcells\tmass\tphoto\tgrow\tdecomp\tresp\trole\tmu\tsigma\tmotGain\n");
+    await sink.writeText("genomes.tsv", "lineage\tfirstStep\twords\n");
+    await sink.writeText("births.tsv", "step\tkind\tparent\tchild\tchildGeneration\tparentLineage\tchildLineage\tparentMass\tparentBiomass\tparentCells\tparentPurity\tchildMass\tchildBiomass\tchildCells\tchildPurity\n");
+  }
+  const seenLineages = new Set<string>();
+  // Individual id -> its component at the previous census (a parent's traits just before a fission).
+  let prevIndStats = new Map<number, IndStats>();
+
   const t0 = performance.now();
   let prevFlux = actualInit.flux.slice();
   let conservationOk = true;
@@ -598,6 +695,25 @@ export async function runExperiment(
       }
       if (o.life.length) await sink.appendText("life.jsonl", o.life.map((x) => JSON.stringify(x)).join("\n") + "\n");
       await sink.appendText("lineages.tsv", c.lineages.map((l) => `${c.step}\t${l.key}\t${l.cells}`).join("\n") + (c.lineages.length ? "\n" : ""));
+      if (spec.lineageObs) {
+        const fresh = c.lineages.filter((l) => !seenLineages.has(l.key));
+        if (fresh.length) {
+          for (const l of fresh) seenLineages.add(l.key);
+          await sink.appendText("genomes.tsv", genomeRows(cfg, c.step, new Set(fresh.map((l) => l.key)), await sim.readGenomeChannels(0, GENOME_CHANNELS)));
+        }
+        const cur = indStats(c, obs.tracker);
+        const rows: string[] = [];
+        const row = (kind: string, parent: number, child: number) => {
+          const p = prevIndStats.get(parent), k = cur.get(child);
+          if (!p || !k) return;
+          const gen = obs.tracker.alive.get(child)?.generation ?? 0;
+          rows.push(`${c.step}\t${kind}\t${parent}\t${child}\t${gen}\t${p.lineage}\t${k.lineage}\t${p.mass}\t${p.biomass}\t${p.cells}\t${p.purity}\t${k.mass}\t${k.biomass}\t${k.cells}\t${k.purity}`);
+        };
+        for (const e of o.events) if (e.kind === "fission") for (const id of e.children) row("fission", e.parent, id);
+        for (const x of o.life as { kind: string; parent?: number; child?: number }[]) if (x.kind === "budding") row("budding", x.parent!, x.child!);
+        if (rows.length) await sink.appendText("births.tsv", rows.join("\n") + "\n");
+        prevIndStats = cur;
+      }
 
       const rates = fluxRates(prevFlux, stats.flux, chunk);
       prevFlux = stats.flux;
@@ -636,6 +752,7 @@ export async function runExperiment(
         rec.lineageCompression = compressionRatio(lineageBytes(cfg, genomeHead));
         rec.patternCompression = compressionRatio(sym);
         rec.morphology = morphology(cfg, cells, c, DEFAULT_CENSUS.minMass);
+        if (spec.lineageObs) await sink.appendText("profiles.tsv", profileRows(cfg, c, profiles, genomeHead));
       }
       await sink.appendText("series.jsonl", JSON.stringify(rec) + "\n");
       lastCensus = { individuals: ind.length, lineages: c.lineages.length };

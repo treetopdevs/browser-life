@@ -196,6 +196,67 @@ The replayed source histories are fixed now, before any assay result: M4 gradien
      - It passes its null checks. A per-run criterion (for example, excess over the shadow, or a growth shape) is applied to every neutral run available, the calibration pilots' 40 and M4's 30. It qualifies when the one-sided 95% Clopper–Pearson upper bound on its flag rate is below 10%, which means at most 2 of the 70 runs flagged. A between-condition comparison is run on 1,000 random 10/10 splits of each preset's pilot and must reject in no more than 2α of them. That is a sanity check only, since splits of the same runs aren't independent trials.
    - A reproducing collective can't be built yet, so that case is a known gap.
 
+**Operational definitions (fixed 2026-09-28, before any assay result).** These fill in what the tests above leave open. The replays and single-founder runs were already running, but nothing below had been computed.
+- *Tools and observers.*
+  - Replays and single-founder runs use `tools/run.ts --lineage-obs`. This writes `profiles.tsv`, `genomes.tsv` and `births.tsv`:
+    - `profiles.tsv`: each lineage's catalytic profile, role and genome μ, σ and motility gain, at every deep census;
+    - `genomes.tsv`: each lineage's genome when first seen;
+    - `births.tsv`: parent and child traits at each fission and budding.
+  - Single-founder runs use `--solo-founder k`: all 13 founder discs of `gradient-m3` carry founder k (the index into `M3_FOUNDERS`), with placement and amounts unchanged.
+  - The evaluator's optional observers are `EvalConfig.roles` (catalytic fluxes summed per tile over the censuses of the last 1,000 growth steps) and `perRep`. With both off, M3 evaluations are unchanged.
+  - A replay is accepted when its `series.jsonl` and `lineages.tsv` equal the original's line for line.
+- *Common garden* (tests 1 and 3): the M3 evaluator's world (`DEFAULT_EVAL`: 64² tiles, uniform light, nutrient 32, mutation off) grown for 20,000 steps, with a census every 100 and the tracker at B + P ≥ 48 and mass ≥ 128.
+  - *Reproduction* is a tracker fission, or a budding: a birth within 24 cells of a living individual of the same lineage in the same tile, the runner's own attribution. A parent reproducing at a census counts as one reproduction event, however many offspring it has.
+  - *Changed 2026-09-28, before any garden result:* the garden first ran 6,000 steps and counted fissions only. A smoke test with founder 0 gave 0–2 fissions per tile in 6,000 steps, while buddings outnumber fissions about 20 to 1 in the replays.
+- *Test 1.*
+  - A *link* is a fission or budding row of `births.tsv`. A *chain* is three links in series (g0 → g1 → g2 → g3). g3 is *viable* if it lives at least 10⁴ steps. The earlier "or reproduces" was dropped before any result: the garden smoke test showed bursts of short-lived buds, which would make it trivial.
+  - Pairs: from each treatment replay, 20 links drawn uniformly (sampling seed 4,000,001), among those whose parent and child lineages both appear in `genomes.tsv`.
+  - Parent and child genomes are grown in separate tiles, 8 each, seeds from 4,000,101. Measured per genome:
+    - mass at reproduction (the plan's "mass at fission"): the parent's mass at the census before each reproduction;
+    - membrane fraction: P / (B + P) summed over individuals, across the censuses of the last 3,000 steps;
+    - time to next reproduction, as its survival-aware inverse, the reproduction rate: reproduction events per 10⁴ individual-steps at risk, each tracked individual counting 100 steps per census, pooled over the genome's tiles. This handles individuals that die or never reproduce, which averaging censored intervals would not.
+  - Slope: the OLS slope of the child genome's mean on the parent genome's mean. Its 95% interval comes from 2,000 bootstrap resamples of histories (percentile).
+- *Test 2.*
+  - *Mutants.* Mutant m of founder f at step size s: `mutateInPlace` on a copy of the founder. It is fed `draw(base, RND.MUT_WHICH)` and `draw(base, RND.MUT_DELTA)`, with base = `cellBase(4,100,000, s, 200f + m)`.
+  - *Screen.* `evaluateBatch` with 4 replicates, 16 genomes per batch, and roles and per-replicate values on.
+    - Batch b of founder f at step-size index i has seed 4,100,001 + 13(3f + i) + b. Each has a parent batch of 16 founder copies at the same seed.
+    - The parent's rates, its central 95% range of 4-replicate means, and its dominant role come from all its parent batches (39 seeds per founder).
+    - The six traits for *changed* are recovery, bound mass, mean individual mass, individuals, speed and reproduction. Each is estimated throughout (parent ranges, screen and confirmation) as the unweighted mean of per-tile values, with a dead tile counting 0.
+    - *Viable*: survival and death without light each at no less than the parent's pooled rate minus 0.10.
+  - *Confirmation* (step size 24 only; 8 and 4 are reported from the screen). Every screen candidate, viable and changed or viable and role-changing, is run on 32 fresh replicates (seeds from 4,150,001), beside its parent at the same seeds and positions.
+    - Viable: survival and death without light each have a one-sided 95% Clopper–Pearson lower bound above min(parent rate − 0.10, 0.8).
+    - *This amends test 2's viability margin for the confirmation step (2026-09-28, before any result).* The founders' rates are near 1, so the literal parent − 0.10 needs a bound above 0.9, which takes 32 of 32 replicates. That would reject mutants as reliable as the founders themselves were when selected (at least 30 of 32, bound above 0.8). The screen keeps parent − 0.10. The literal 0.9 version is reported beside it, and any change it would make to the Variation row is recorded.
+    - Changed: each trait flagged in the screen falls, on the same side, outside the central 99% of 2,000 bootstrap 32-replicate means of the parent's screen tiles.
+    - Role-changing: the mutant's dominant role over the 32 differs from the parent's at the same seeds.
+- *Test 3.*
+  - Founder k runs on seeds 4,200,001 + 10k + j: j = 0–4 with mutation, j = 5–7 without.
+  - A role's share is its lineages' share of the living cells in `profiles.tsv`. A role *qualifies* when that share is at least 5% at every deep census across a window of at least 10⁵ steps.
+  - Its *descendant* is the lineage with the most cells in that role at the midpoint of the first qualifying window. It is co-cultured with the founder, one disc each at a third and two thirds of the tile's width, over 16 tiles (seeds from 4,250,001). Each lineage's dominant role comes from its own summed fluxes in those tiles.
+  - Roles are compared only between *active* lineages, meaning present and catalysing. A descendant inactive beside its founder does not originate a role. A founder inactive beside its descendant is represented by its own monoculture, grown in the same batches.
+- *Test 4.*
+  - The implant positions are the torus cells (64, 64), (192, 64), (64, 192) and (192, 192).
+  - *Changed 2026-09-28, before any assay ran.* Individuals are far smaller than 64 cells: in replayed states at 2 × 10⁴ and 2 × 10⁵ steps the median is 16–17 cells and the largest 29–36. So "fewer than 64 cells in one individual" would skip every lineage.
+  - A lineage's *largest individual* is instead the individual (census component of mass ≥ 256) of greatest mass whose dominant lineage it is. The implant is the lineage's 64 cells nearest that individual's centroid on the torus, whether or not they belong to it, ties broken by cell index. A lineage is skipped when it has no such individual or fewer than 64 cells.
+  - All channels are copied, relative offsets are kept, and the implant is centred on the position, overwriting what was there.
+  - Assay IDs are (1, lo) with lo counting down from 65,535, skipping any present in either state.
+  - The assay uses the source config with `mutRate` 0 and seed 4,300,001 + 80h + 40o + 20e + 4r + p. Here h is the history (the replay's seed minus 1), o the origin, e the environment, r the rank and p the position. Logs are natural.
+  - Implant cells are ranked by torus distance to the exact centroid. Offsets are taken from the centroid rounded to a cell, and that cell is placed on the position.
+  - *Opportunity* also needs its residual condition: every history where late does not beat early shows home advantage, or has neither late-over-early edge clearing the margin. Otherwise the result is Inconclusive.
+  - *Neutral control, added 2026-09-28 before any assay result.* The added rule follows the practice of testing simple baselines before crediting the dynamics. The same assay runs on `neutral` replays 1–5, seeds 4,300,801 + 80h + 40o + 20e + 4r + p. There every cell expresses the same phenotype, so a late-over-early difference can only come from the assay itself (implant contents, state density). If the control clears test 4's margin in both states in at least 3 of its 5 histories, test 4's verdict is recorded as Inconclusive (assay confounded), whatever the treatment count. The rule can only move a verdict to Inconclusive.
+- *Incomplete inputs decide nothing.* A test whose expected runs, controls or assay results are missing reports "incomplete" and fills no gate row.
+- *Test 5.* The ten lineages with the most cells at the 9 × 10⁵ checkpoint of treatment replays 1–5 get `evaluateBatch` with 32 replicates, 2 genomes per batch, seeds from 4,400,001. They are reported against the founders' retest counts.
+- *Test 6.*
+  - *Shadow excess.* Each run's cumulative new activity (the preset's frozen threshold) minus the median of 20 shadows. A shadow keeps the run's living cells at each census and its lineage births, each entering at its first-census cell count, and redraws the remaining cells multinomially from its own previous abundances. A run is flagged when it exceeds all 20 shadows.
+  - *Phenotype-bin novelty.* Bins are μ / 8, σ / 4 and role, using genome μ and σ (so drift counts in `neutral`, where every cell expresses the reference phenotype). Only lineages with at least 1% of living cells at a deep census count. Novelty is the number of bins first occupied after step 10⁵, and a run is flagged when it is above zero.
+    - Also, in the style of ANNECS (added 2026-09-28, before computing), *persistent novelty* counts only those new bins that some lineage in the bin later holds at 1% or more across 10⁵ steps of consecutive deep censuses.
+  - *Uncapped roles.* Catalytic-profile clusters among lineages with at least 5% of living cells: shares of (photo, grow, decomp, resp), single linkage at L1 distance below 0.2, averaged over the second half's deep censuses.
+  - *Compartment detector.* Checked on a hand-built individual with and without a membrane rim.
+  - *Expected directions, written before computing* (a > b):
+    - treatment > no-mutation replays for shadow excess and novelty;
+    - no-mutation replays > single-founder no-mutation runs for uncapped roles (the specialisation pair, counted only if test 3 shows fewer roles there);
+    - no-mutation replays and single-founder no-mutation runs near zero for novelty.
+    - The null checks run over the 70 neutral runs, replayed with the observers.
+
 **Decision gate.** Checked in this order; the first row whose condition holds decides. The margins are prioritisation choices fixed before any result, not biological constants.
 
 | Row | Condition | Next move |

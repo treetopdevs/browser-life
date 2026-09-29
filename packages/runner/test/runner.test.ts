@@ -14,9 +14,9 @@
 // would otherwise refuse the pooled ensemble later (tools/analyze.ts), but
 // only after the reuse had already skipped a run that should have redone.
 import { describe, expect, it } from "vitest";
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, type WorldState } from "@bl/schema";
+import { G, GENOME_CHANNELS, M3_FOUNDERS, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, cellCount, encodeGenome, founderGenome, m3World, type WorldState } from "@bl/schema";
 import { sameCompletedRun } from "@bl/runner";
-import { immigrantError, runExperiment, specConfig, type RunSpec, type Sink } from "../src/runner.ts";
+import { immigrantError, runExperiment, specConfig, validateSpec, type RunSpec, type Sink } from "../src/runner.ts";
 
 const noopSink: Sink = {
   async writeText() {},
@@ -182,5 +182,45 @@ describe("RunSpec.speciesCensus is optional (?:), never present when unset", () 
     // tests/deno/species-census.ts) must still treat it as identical to a manifest that never
     // mentioned the field, the same guarantee explicit-undefined and omitted already have.
     expect(sameCompletedRun(baseManifest(), spec)).toBe(true);
+  });
+});
+
+// Foundations-review options (RunSpec.lineageObs, RunSpec.soloFounder): absent or explicitly off,
+// they must leave a run's identity as it was; soloFounder is checked before any GPU work.
+describe("foundations-review run options", () => {
+  it("an explicit lineageObs: false is the same completed run as one without the field", () => {
+    expect(sameCompletedRun(baseManifest(), { ...reuseSpec, lineageObs: false })).toBe(true);
+    expect(sameCompletedRun(baseManifest(), { ...reuseSpec, lineageObs: true })).toBe(false);
+  });
+
+  it("validateSpec accepts a founder index into an m3 preset and refuses anything else", () => {
+    const m3: RunSpec = { ...reuseSpec, presetId: "gradient-m3" };
+    expect(validateSpec({ ...m3, soloFounder: 0 })).toEqual([]);
+    expect(validateSpec({ ...m3, soloFounder: M3_FOUNDERS.length - 1 })).toEqual([]);
+    expect(validateSpec({ ...m3, soloFounder: M3_FOUNDERS.length }).join()).toMatch(/soloFounder/);
+    expect(validateSpec({ ...m3, soloFounder: 1.5 }).join()).toMatch(/soloFounder/);
+    expect(validateSpec({ ...reuseSpec, soloFounder: 0 }).join()).toMatch(/M3 founder set/);
+  });
+
+  it("lineageObs refuses to continue a checkpoint (its bookkeeping is not checkpointed)", async () => {
+    const spec: RunSpec = { ...reuseSpec, lineageObs: true };
+    const fakeStart = { step: 100, cfg: specConfig(spec) } as unknown as WorldState;
+    await expect(runExperiment({} as GPUDevice, spec, noopSink, host, () => {}, { start: fakeStart })).rejects.toThrow(/lineageObs/);
+  });
+
+  it("a single-founder world gives every founder disc that founder's genome, at the preset's positions", () => {
+    const cfg = specConfig({ ...reuseSpec, presetId: "gradient-m3" });
+    const [solo, full] = [m3World(cfg, 13, 32, 64, 3), m3World(cfg, 13, 32, 64)];
+    const n = cellCount(cfg);
+    const want = encodeGenome(founderGenome(M3_FOUNDERS[3]), 0, 0);
+    let living = 0;
+    for (let i = 0; i < n; i++) {
+      const alive = solo.genome[G.LIN_LO * n + i] !== 0;
+      expect(alive).toBe(full.genome[G.LIN_LO * n + i] !== 0);
+      if (!alive) continue;
+      living++;
+      for (let g = G.PARAM0; g < GENOME_CHANNELS; g++) expect(solo.genome[g * n + i]).toBe(want[g]);
+    }
+    expect(living).toBeGreaterThan(0);
   });
 });

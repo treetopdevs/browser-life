@@ -5,6 +5,7 @@
 
 import {
   CH,
+  ROLE_WORDS,
   buildWorld,
   cellCount,
   clampLesionRadius,
@@ -17,7 +18,7 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
-import { Tracker, census, individuals, type Census } from "@bl/metrics";
+import { Tracker, census, classify, individuals, type Census, type Role } from "@bl/metrics";
 
 export interface EvalConfig {
   /** Tile side (multiple of 16 enables blocked affinity). */
@@ -36,6 +37,13 @@ export interface EvalConfig {
   nutrient: number;
   biomass: number;
   seed: number;
+  /**
+   * Foundations-review observers, off by default (M3 evaluations are unchanged): `roles` sums each
+   * tile's per-cell catalytic fluxes over the censuses of the last 1,000 growth steps and reports
+   * each genome's dominant role; `perRep` also returns every replicate tile's own values.
+   */
+  roles?: boolean;
+  perRep?: boolean;
 }
 
 export const DEFAULT_EVAL: EvalConfig = {
@@ -81,6 +89,32 @@ export interface Evaluation {
   regenerated: number;
   /** Fission + budding events per tile during growth. */
   reproduction: number;
+  /** With `EvalConfig.roles`: catalytic fluxes summed over the genome's tiles, and their role. */
+  roleSums?: RoleSums;
+  role?: Role;
+  /** With `EvalConfig.perRep`: each replicate tile's values (a dead tile has zero traits). */
+  perRep?: RepEval[];
+}
+
+export interface RoleSums {
+  photo: number;
+  grow: number;
+  decomp: number;
+  resp: number;
+}
+
+export interface RepEval {
+  alive: boolean;
+  recovery: number;
+  recovered: boolean;
+  regenerated: boolean;
+  lightDependent: boolean;
+  individuals: number;
+  meanMass: number;
+  speed: number;
+  mass: number;
+  reproduction: number;
+  roleSums?: RoleSums;
 }
 
 export function quality(e: Evaluation): number {
@@ -102,7 +136,7 @@ function tileMass(cfg: WorldConfig, cells: Uint32Array): Float64Array {
   return out;
 }
 
-async function runChunked(device: GPUDevice, sim: GpuSim, steps: number, every: number, onCensus?: (c: Census) => void) {
+async function runChunked(device: GPUDevice, sim: GpuSim, steps: number, every: number, onCensus?: (c: Census) => void, onRoles?: (done: number, roles: () => Promise<Uint32Array>) => Promise<void>) {
   for (let s = 0; s < steps; s += every) {
     const k = Math.min(every, steps - s);
     for (let j = 0; j < k; j += 64) sim.run(Math.min(64, k - j));
@@ -111,6 +145,24 @@ async function runChunked(device: GPUDevice, sim: GpuSim, steps: number, every: 
       const [cells, genomeHead] = await Promise.all([sim.readCells(), sim.readGenomeChannels(0, 4)]);
       onCensus(census({ cfg: sim.cfg, step: sim.step, cells, genomeHead }));
     }
+    if (onRoles) await onRoles(s + k, () => sim.readRoles());
+  }
+}
+
+/** Adds one role-buffer readback (last step's per-cell fluxes) into per-tile sums. */
+export function addTileRoles(cfg: WorldConfig, roles: Uint32Array, into: RoleSums[]): void {
+  const n = cellCount(cfg);
+  const W = worldW(cfg);
+  for (let i = 0; i < n; i++) {
+    const a = roles[i * ROLE_WORDS], b = roles[i * ROLE_WORDS + 1];
+    if ((a | b) === 0) continue;
+    const x = i % W;
+    const t = Math.floor((i - x) / W / cfg.tileH) * cfg.tilesX + Math.floor(x / cfg.tileW);
+    const r = into[t];
+    r.photo += a & 0xffff;
+    r.grow += a >>> 16;
+    r.decomp += b & 0xffff;
+    r.resp += b >>> 16;
   }
 }
 
@@ -144,6 +196,12 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
   const obs = new Float64Array(tiles);
   const last = new Map<number, [number, number]>();
   const tileOf = (x: number, y: number) => Math.floor(y / ec.tile) * ec.side + Math.floor(x / ec.tile);
+  const tileRoles: RoleSums[] = Array.from({ length: tiles }, () => ({ photo: 0, grow: 0, decomp: 0, resp: 0 }));
+  const onRoles = ec.roles
+    ? async (done: number, read: () => Promise<Uint32Array>) => {
+        if (done > ec.growSteps - 1000) addTileRoles(cfg, await read(), tileRoles);
+      }
+    : undefined;
   let grown: WorldState;
   try {
     await runChunked(device, sim, ec.growSteps, ec.censusEvery, (c) => {
@@ -165,7 +223,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
         }
         last.set(ind.id, [ind.cx, ind.cy]);
       }
-    });
+    }, onRoles);
     grown = await sim.readState();
   } finally {
     sim.destroy();
@@ -282,6 +340,30 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
 
   return genomes.map((_, k) => {
     const ts = [...owner.keys()].filter((t) => owner[t] === k);
+    const extra: Partial<Evaluation> = {};
+    if (ec.roles) {
+      const sums = ts.reduce((a, t) => ({ photo: a.photo + tileRoles[t].photo, grow: a.grow + tileRoles[t].grow, decomp: a.decomp + tileRoles[t].decomp, resp: a.resp + tileRoles[t].resp }), { photo: 0, grow: 0, decomp: 0, resp: 0 });
+      extra.roleSums = sums;
+      extra.role = classify(sums.photo, sums.grow, sums.decomp);
+    }
+    if (ec.perRep)
+      extra.perRep = ts.map((t) => {
+        const alive = before[t] > 0 && indCount[t] > 0;
+        const frac = before[t] > 0 ? Math.min(1, afterLesion[t] / before[t]) : 0;
+        return {
+          alive,
+          recovery: alive ? frac : 0,
+          recovered: alive && frac >= 0.9,
+          regenerated: alive && regen[t] === 1,
+          lightDependent: alive && afterDark[t] < 0.1 * before[t] && afterLight[t] >= 0.5 * before[t],
+          individuals: indCount[t],
+          meanMass: indCount[t] > 0 ? indMass[t] / indCount[t] : 0,
+          speed: obs[t] > 0 ? dist[t] / obs[t] : 0,
+          mass: before[t],
+          reproduction: repro[t],
+          ...(ec.roles ? { roleSums: tileRoles[t] } : {}),
+        };
+      });
     let survived = 0, recovered = 0, lightDep = 0, recovery = 0, inds = 0, mm = 0, sp = 0, spN = 0, mass = 0, rep = 0, reg = 0;
     for (const t of ts) {
       const alive = before[t] > 0 && indCount[t] > 0;
@@ -310,6 +392,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
       recovery: survived > 0 ? recovery / survived : 0,
       reproduction: rep / ts.length,
       regenerated: reg,
+      ...extra,
     };
   });
 }
