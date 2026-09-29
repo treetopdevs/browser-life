@@ -6,6 +6,7 @@
 //   deno run -A tools/foundations.ts t2-screen           test 2 screen -> confirmation candidates
 //   deno run -A tools/foundations.ts t2                  test 2 with confirmations
 //   deno run -A tools/foundations.ts t4                  test 4 time-shift fitness and gate counts
+//   deno run -A tools/foundations.ts t4x                 the extension time-shift (descriptive)
 //   deno run -A tools/foundations.ts t1-plan | t1        test 1 garden plan, then slopes
 //   deno run -A tools/foundations.ts t3-plan | t3        test 3 descendant co-culture plan, then origination
 //   deno run -A tools/foundations.ts t5-plan | t5        test 5 genomes from the 9e5 checkpoints, then results
@@ -353,6 +354,53 @@ async function t4() {
   console.log(JSON.stringify(result));
   for (const [name, ps] of [["treatment", per], ["neutral", ctl]] as const)
     for (const p of ps) console.log(`  ${name} h${p.h}: late-early ${p.lateMinusEarly.inEarly.toFixed(3)} (early state), ${p.lateMinusEarly.inLate.toFixed(3)} (late state); extinct ${JSON.stringify(p.extinct)}`);
+}
+
+// ---------------------------------------------------------------------------------------------
+// The extension time-shift (docs/plan.md, fixed 2026-09-29; descriptive, outside the gate): test 4b's
+// assay on the 10^7 extension's states at 10^6, 3 x 10^6 and 10^7 steps, every origin in every state.
+
+async function t4x() {
+  const load = async (d: string) => ((await exists(d)) ? (await jsonFiles(d)).filter((r) => !r.missing) : []);
+  const margin = Math.log(1.1);
+  const T = [1_000_000, 3_000_000, 10_000_000];
+  const PAIRS: [number, number, string][] = [[0, 1, "3e6 over 1e6"], [1, 2, "1e7 over 3e6"], [0, 2, "1e7 over 1e6"]];
+  const read = (rows: any[]) => {
+    const hs = [...new Set(rows.map((r) => r.h))].sort((x, y) => x - y);
+    const per = hs.map((h) => {
+      const cell = (o: number, e: number) => rows.filter((r) => r.h === h && r.o === T[o] && r.e === T[e]);
+      const grid = (f: (xs: any[]) => number) => T.map((_, o) => T.map((_, e) => f(cell(o, e))));
+      const W = grid((xs) => median(xs.map((r) => r.fitness)));
+      const ext = grid((xs) => xs.filter((r) => r.nEnd === 0).length / Math.max(1, xs.length));
+      const survival = grid((xs) => xs.filter((r) => r.nEnd > 0).length / Math.max(1, xs.length));
+      const meanF = grid((xs) => xs.reduce((s, r) => s + r.fitness, 0) / Math.max(1, xs.length));
+      // Implants per cell: exactly one result for each of the 5 ranks at each of the 4 positions.
+      const n = grid((xs) => (xs.length === 20 && new Set(xs.map((r) => `${r.rank}:${r.position}`)).size === 20 ? 20 : -xs.length));
+      // As in test 4, for each pair of times: the later origin beats the earlier by the margin in both of
+      // the pair's own states. A state at the floor (both groups at least half extinct) cannot show it.
+      const pairs = PAIRS.map(([i, j, name]) => {
+        const d = [i, j].map((e) => W[j][e] - W[i][e]);
+        const floored = [i, j].filter((e) => ext[i][e] >= 0.5 && ext[j][e] >= 0.5).map((e) => T[e]);
+        const beats = d.every((x) => x >= margin);
+        return { pair: name, laterMinusEarlier: { inEarlierState: d[0], inLaterState: d[1] }, beats, blockedByFloor: !beats && floored.length > 0, floored, meanFitnessLaterMinusEarlier: T.map((_, e) => meanF[j][e] - meanF[i][e]) };
+      });
+      return { h, W, extinct: ext, survival, meanFitness: meanF, n, pairs, monotoneMeanFitness: T.map((_, e) => meanF[0][e] <= meanF[1][e] && meanF[1][e] <= meanF[2][e]) };
+    });
+    const count = (k: number, f: string) => per.filter((p) => (p.pairs[k] as any)[f]).length;
+    return { per, beats: Object.fromEntries(PAIRS.map(([, , name], k) => [name, count(k, "beats")])), blockedByFloor: Object.fromEntries(PAIRS.map(([, , name], k) => [name, count(k, "blockedByFloor")])) };
+  };
+  const tr = read(await load(a.dir ?? "runs/found-t4x")), ctl = read(await load(a.control ?? "runs/found-t4x-neutral"));
+  const full = (r: any) => r.per.map((p: any) => p.h).join() === "101,102,103,104,105" && r.per.every((p: any) => p.n.flat().every((x: number) => x === 20));
+  const complete = full(tr) && full(ctl);
+  const b = tr.beats, f = tr.blockedByFloor;
+  // The reading fixed with the design: accumulating when 10^7 beats 3 x 10^6 in at least 3 of 5 histories;
+  // levelled off when it does in at most 1 with at most 1 blocked by the floor, while 3 x 10^6 beats 10^6
+  // in at least 3; a pair the neutral control also shows in 3 or more of its histories reads nothing.
+  const confounded = Object.keys(b).filter((k) => ctl.beats[k] >= 3);
+  const reading = !complete ? "incomplete" : confounded.includes("1e7 over 3e6") ? "unclear (neutral control)" : b["1e7 over 3e6"] >= 3 ? "still accumulating at 1e7" : b["1e7 over 3e6"] <= 1 && f["1e7 over 3e6"] <= 1 && b["3e6 over 1e6"] >= 3 && !confounded.includes("3e6 over 1e6") ? "levelled off by 1e7" : "unclear";
+  const result = { note: "descriptive, outside the gate", complete, histories: tr.per.length, beats: b, blockedByFloor: f, control: { beats: ctl.beats, blockedByFloor: ctl.blockedByFloor }, confounded, margin, reading };
+  await save("t4x.json", { result, per: tr.per, control: ctl.per });
+  console.log(JSON.stringify(result, null, 1));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1202,6 +1250,9 @@ switch (cmd) {
     break;
   case "t4":
     await t4();
+    break;
+  case "t4x":
+    await t4x();
     break;
   case "t5-plan":
     await t5Plan();

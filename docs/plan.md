@@ -178,6 +178,13 @@ Repairing endpoint 2 answers a narrow question. The question that decides M4–M
 - *Allocation.* At M4 throughput the tests come to about $22–25, including the conditional search in the Substrate row. The extension comes to about $20 (about 19 instance-hours). Each budget's remainder covers its storage, transfer, reruns and overruns, and each stops at $50.
 - *Instance.* The M4 ensemble's g5.xlarge (NVIDIA A10G, about $1 an hour on demand in us-east-1) ran 6 concurrent lanes at about 730 steps/s each. That was 130 runs of 10⁶ steps at 256² in about 8.5 hours, roughly $0.07 per run.
 - *Operation.* The same pattern repeats here: a supervisor starts the lanes, copies results back and terminates the instance when its queue is empty. Each instance passes `tests/deno/gpu_golden.ts` before contributing. Throughput is measured before each job, and the projected cost is checked against what remains of its budget, leaving room for storage, transfer and the jobs still to come.
+- *Added 2026-09-29, after the gate:* a further **$200**, on top of the two budgets above, for follow-ups. Planned split:
+  - about $10 for the extension time-shift below;
+  - about $60 for a RULE_VERSION 2 go/no-go: test 3's screen on old and new founders, each under both rule versions (a 2×2), which also settles an ambiguous founder diagnostic;
+  - about $10 of margin on the tests' budget;
+  - about $120 held for the next registered cohort. Its horizon (10⁶ with a 10⁷ extension, or 10⁷ as primary) is decided after the extension time-shift, and after test 6's measurement problem is fixed.
+
+  Doubling the founder diagnostic to 48 genomes was considered before any of its results and not taken up. The pool has 21 clusters, with non-phototrophs in only 4, so more picks would mostly repeat near-clones; and at a true rate of 0.15–0.2 the ambiguous band is about as likely with 48 genomes as with 24.
 
 The replayed source histories are fixed now, before any assay result: M4 gradient-m3 seeds 1–10 in treatment and seeds 1–5 in neutral and no-mutation. A replay takes about 23 minutes per 10⁶ steps on one lane (1,383 s for treatment seed 1 on the M1 Max; A10G lanes run about 730 steps/s). It is accepted only if its census rows match the original `series.jsonl` up to each state it saves; the M1 Max and A10G were byte-identical in M4. Observer additions (per-lineage role and Lenia parameters) are recorded during replay and change no physics.
 
@@ -305,6 +312,17 @@ If only one of tests 2 and 3 fails, the failure is recorded and the gate moves o
   - 4 or 5: ambiguous.
   - The gradient garden is read the same way, against the founders' rate there from Part A, and only once Part A is complete. Incomplete runs or gardens decide nothing: the runs must be exactly the prescribed 192, each finished at 10⁶ steps. Counts are also reported by stratum (archive or evolved, phototroph or not), with the runs in which the genome died out (the manifest's extinction flag). The phototroph strata show whether producer founders can originate roles at all, which an all-producer RULE_VERSION 2 cohort would need.
 - *Cost.* About $16 of the tests' budget, mostly the 192 runs of 10⁶ steps; the tests' total comes to about $37 of $50.
+
+**Extension time-shift (descriptive, outside the gate; fixed 2026-09-29, before any of its assays).** Do the competitive gains of test 4b keep accumulating, or level off? It answers the question endpoint 2 was meant to, and it informs the next cohort's horizon.
+- *States.* The 10⁷ extension's saved states at 10⁶, 3 × 10⁶ and 10⁷ steps, treatment seeds 101–105, so no replays are needed. The replays' 5 × 10⁵ middle state stays cancelled.
+- *Assay.* Test 4b's, unchanged: 256-cell implants of the five most abundant lineages, the same 4 positions, mutation off, 5 × 10⁴ steps, fitness log((N_end + 1) / (N_start + 1)), W the median, margin log 1.1. Every origin is implanted in every state (9 pairs). Seeds 4,305,001 + 200(h − 101) + 60o + 20e + 4r + p, with o and e indexing the three times. The neutral control is the same assay on the extension's neutral seeds 101–105, seeds 4,306,001 + ….
+- *Per pair of times,* as in test 4: the later origin *beats* the earlier when it wins by the margin in both of the pair's own states. A history whose pair fails with one of those states at the floor (both groups at least half extinct) is counted as *blocked by the floor*. Mean fitness, survival shares and whether mean fitness rises monotonically over the three origins are reported in every state.
+- *Reading.*
+  - *Still accumulating* when 10⁷ beats 3 × 10⁶ in at least 3 of 5 histories.
+  - *Levelled off* when it does in at most 1, with at most 1 blocked by the floor, while 3 × 10⁶ beats 10⁶ in at least 3.
+  - Otherwise *unclear*.
+  - A pair that the neutral control also shows in 3 or more of its 5 histories reads nothing.
+- *Cost.* About 1,800 assays, about $5, run on the tests' instances after the founder diagnostic's gardens.
 
 **Also.**
 - *The registered 10⁷ extension* runs on AWS alongside the review, from its own $50 budget.

@@ -5,6 +5,7 @@
 //   deno run -A tools/assay.ts mutants   --out DIR [--founders 0-11] [--scales 24,8,4] [--per 200]   (test 2 screen)
 //   deno run -A tools/assay.ts confirm   --out DIR --candidates FILE                                  (test 2 confirmation)
 //   deno run -A tools/assay.ts timeshift --out DIR [--root runs/replay-m4/gradient-m3/treatment] [--histories 1-10] (test 4)
+//     [--times T1,T2,T3 --h0 H]   three times: every origin/environment pair (the extension time-shift)
 //   deno run -A tools/assay.ts garden    --out DIR --plan FILE                                        (tests 1 and 3, founder diagnostic)
 //   deno run -A tools/assay.ts retest    --out DIR --plan FILE                                        (test 5, founder diagnostic)
 //
@@ -40,8 +41,8 @@ import { DEFAULT_CENSUS, Tracker, census, classify, tileDistance2 } from "@bl/me
 import { DEFAULT_EVAL, evaluateBatch, type EvalConfig } from "@bl/search";
 
 const a = parseArgs(Deno.args, {
-  string: ["out", "part", "founders", "scales", "per", "candidates", "root", "histories", "plan", "steps", "times", "seed0", "mid", "cells"],
-  default: { part: "0/1", founders: "0-11", scales: "24,8,4", per: "200", root: "runs/replay-m4/gradient-m3/treatment", histories: "1-10", steps: "50000", times: "100000,900000", seed0: "4300001", cells: "64" },
+  string: ["out", "part", "founders", "scales", "per", "candidates", "root", "histories", "plan", "steps", "times", "seed0", "mid", "cells", "h0"],
+  default: { part: "0/1", founders: "0-11", scales: "24,8,4", per: "200", root: "runs/replay-m4/gradient-m3/treatment", histories: "1-10", steps: "50000", times: "100000,900000", seed0: "4300001", cells: "64", h0: "1" },
 });
 const cmd = String(a._[0] ?? "");
 if (!a.out) throw new Error("--out is required");
@@ -361,6 +362,7 @@ export function implanted(st: WorldState, imp: Implant, px: number, py: number, 
 async function timeshift() {
   const steps = Number(a.steps);
   const hs = range(a.histories);
+  if (hs.some((h) => h < Number(a.h0))) throw new Error("--h0 must not exceed any history");
   // --mid T: the plan's descriptive middle state. Only the five origin/environment combinations that
   // involve T run: T into early, T and late, and early and late into T; seeds 4,302,001 +
   // 100(h - 1) + 20c + 4r + p for combination c.
@@ -382,8 +384,11 @@ async function timeshift() {
     cache.set(h, v);
     return v;
   };
-  // Indices into `times`: 0 early, 1 late, 2 middle.
-  const combos: [number, number][] = mid === null ? [[0, 0], [0, 1], [1, 0], [1, 1]] : [[2, 0], [2, 2], [2, 1], [0, 2], [1, 2]];
+  // Indices into `times`: 0 early, 1 late, 2 middle. With three --times (the extension time-shift,
+  // docs/plan.md), every origin/environment pair of the three.
+  const three = mid === null && times.length === 3;
+  if (mid === null && times.length !== 2 && !three) throw new Error("--times takes two or three steps");
+  const combos: [number, number][] = three ? [0, 1, 2].flatMap((o) => [0, 1, 2].map((e): [number, number] => [o, e])) : mid === null ? [[0, 0], [0, 1], [1, 0], [1, 1]] : [[2, 0], [2, 2], [2, 1], [0, 2], [1, 2]];
   const units = hs.flatMap((h) => combos.flatMap(([o, e], c) => [0, 1, 2, 3, 4].flatMap((r) => [0, 1, 2, 3].map((p) => ({ h, o, e, c, r, p })))));
   const name = (u: (typeof units)[number]) => (mid === null ? `h${u.h}-o${u.o}-e${u.e}-r${u.r}-p${u.p}` : `h${u.h}-m${u.c}-r${u.r}-p${u.p}`);
   await forUnits(units, name, async ({ h, o, e, c, r, p }) => {
@@ -391,7 +396,8 @@ async function timeshift() {
     const imp = implants[o][r];
     // History index = the replay's seed minus 1, whatever --histories selects. Treatment: seed0
     // 4,300,001; the neutral control: 4,300,801 (--root .../neutral --histories 1-5).
-    const seed = mid === null ? Number(a.seed0) + 80 * (h - 1) + 40 * o + 20 * e + 4 * r + p : 4_302_001 + 100 * (h - 1) + 20 * c + 4 * r + p;
+    // Three times: seed0 + 200(h - h0) + 60o + 20e + 4r + p, with h0 the first history's seed.
+    const seed = three ? Number(a.seed0) + 200 * (h - Number(a.h0)) + 60 * o + 20 * e + 4 * r + p : mid === null ? Number(a.seed0) + 80 * (h - 1) + 40 * o + 20 * e + 4 * r + p : 4_302_001 + 100 * (h - 1) + 20 * c + 4 * r + p;
     const base = { h, o: times[o], e: times[e], rank: r, position: POSITIONS[p], seed };
     if (!imp) return { ...base, missing: true };
     const cfg: WorldConfig = { ...states[e].cfg, mutRate: 0, seed };
