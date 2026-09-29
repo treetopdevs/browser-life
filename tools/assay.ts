@@ -39,8 +39,8 @@ import { DEFAULT_CENSUS, Tracker, census, classify, tileDistance2 } from "@bl/me
 import { DEFAULT_EVAL, evaluateBatch, type EvalConfig } from "@bl/search";
 
 const a = parseArgs(Deno.args, {
-  string: ["out", "part", "founders", "scales", "per", "candidates", "root", "histories", "plan", "steps", "times", "seed0"],
-  default: { part: "0/1", founders: "0-11", scales: "24,8,4", per: "200", root: "runs/replay-m4/gradient-m3/treatment", histories: "1-10", steps: "50000", times: "100000,900000", seed0: "4300001" },
+  string: ["out", "part", "founders", "scales", "per", "candidates", "root", "histories", "plan", "steps", "times", "seed0", "mid", "cells"],
+  default: { part: "0/1", founders: "0-11", scales: "24,8,4", per: "200", root: "runs/replay-m4/gradient-m3/treatment", histories: "1-10", steps: "50000", times: "100000,900000", seed0: "4300001", cells: "64" },
 });
 const cmd = String(a._[0] ?? "");
 if (!a.out) throw new Error("--out is required");
@@ -291,7 +291,7 @@ interface Implant {
  * of mass >= 256 whose dominant lineage it is), whether or not they belong to it. Individuals are about
  * 16-36 cells, so an implant takes in the individual and the lineage's cells around it.
  */
-export function implantsOf(st: WorldState): Implant[] {
+export function implantsOf(st: WorldState, size = 64): Implant[] {
   const cfg = st.cfg, n = cellCount(cfg), W = worldW(cfg), H = n / W;
   if (cfg.tilesX !== 1 || cfg.tilesY !== 1) throw new Error("time-shift assays expect a single-tile world");
   const c = census({ cfg, step: st.step, cells: st.cells, genomeHead: st.genome.subarray(0, 4 * n) }, DEFAULT_CENSUS);
@@ -315,7 +315,7 @@ export function implantsOf(st: WorldState): Implant[] {
     if (out.length === 5) break;
     const comp = heaviest.get(lin.key);
     const own = cellsOf.get(lin.key) ?? [];
-    if (!comp || own.length < 64) continue;
+    if (!comp || own.length < size) continue;
     // Cells are ranked by torus distance to the exact centroid; offsets are taken from the centroid
     // rounded to a cell, which is the anchor placed on the implant position.
     const d = (i: number) => {
@@ -323,7 +323,7 @@ export function implantsOf(st: WorldState): Implant[] {
       return Math.min(dx, W - dx) ** 2 + Math.min(dy, H - dy) ** 2;
     };
     const cx = Math.round(comp.cx) % W, cy = Math.round(comp.cy) % H;
-    const chosen = own.slice().sort((p, q) => d(p) - d(q) || p - q).slice(0, 64);
+    const chosen = own.slice().sort((p, q) => d(p) - d(q) || p - q).slice(0, size);
     const wrap = (v: number, s: number) => ((v % s) + s + s / 2) % s - s / 2;
     out.push({
       lineage: lin.key,
@@ -358,11 +358,16 @@ export function implanted(st: WorldState, imp: Implant, px: number, py: number, 
 async function timeshift() {
   const steps = Number(a.steps);
   const hs = range(a.histories);
+  // --mid T: the plan's descriptive middle state. Only the five origin/environment combinations that
+  // involve T run: T into early, T and late, and early and late into T; seeds 4,302,001 +
+  // 100(h - 1) + 20c + 4r + p for combination c.
+  const mid = a.mid ? Number(a.mid) : null;
+  const times = mid === null ? TIMES : [...TIMES, mid];
   const cache = new Map<number, { states: WorldState[]; implants: Implant[][]; lo: number }>();
   const load = async (h: number) => {
     let v = cache.get(h);
     if (v) return v;
-    const states = await Promise.all(TIMES.map(async (t) => decodeCheckpoint(await Deno.readFile(`${a.root}/seed-${h}/checkpoints/t${String(t).padStart(9, "0")}.blck`)).state));
+    const states = await Promise.all(times.map(async (t) => decodeCheckpoint(await Deno.readFile(`${a.root}/seed-${h}/checkpoints/t${String(t).padStart(9, "0")}.blck`)).state));
     const present = new Set<string>();
     for (const st of states) {
       const n = cellCount(st.cfg);
@@ -370,18 +375,21 @@ async function timeshift() {
     }
     let lo = 65535;
     while (present.has(`1:${lo}`)) lo--;
-    v = { states, implants: states.map(implantsOf), lo };
+    v = { states, implants: states.map((st) => implantsOf(st, Number(a.cells))), lo };
     cache.set(h, v);
     return v;
   };
-  const units = hs.flatMap((h) => [0, 1].flatMap((o) => [0, 1].flatMap((e) => [0, 1, 2, 3, 4].flatMap((r) => [0, 1, 2, 3].map((p) => ({ h, o, e, r, p }))))));
-  await forUnits(units, (u) => `h${u.h}-o${u.o}-e${u.e}-r${u.r}-p${u.p}`, async ({ h, o, e, r, p }) => {
+  // Indices into `times`: 0 early, 1 late, 2 middle.
+  const combos: [number, number][] = mid === null ? [[0, 0], [0, 1], [1, 0], [1, 1]] : [[2, 0], [2, 2], [2, 1], [0, 2], [1, 2]];
+  const units = hs.flatMap((h) => combos.flatMap(([o, e], c) => [0, 1, 2, 3, 4].flatMap((r) => [0, 1, 2, 3].map((p) => ({ h, o, e, c, r, p })))));
+  const name = (u: (typeof units)[number]) => (mid === null ? `h${u.h}-o${u.o}-e${u.e}-r${u.r}-p${u.p}` : `h${u.h}-m${u.c}-r${u.r}-p${u.p}`);
+  await forUnits(units, name, async ({ h, o, e, c, r, p }) => {
     const { states, implants, lo } = await load(h);
     const imp = implants[o][r];
     // History index = the replay's seed minus 1, whatever --histories selects. Treatment: seed0
     // 4,300,001; the neutral control: 4,300,801 (--root .../neutral --histories 1-5).
-    const seed = Number(a.seed0) + 80 * (h - 1) + 40 * o + 20 * e + 4 * r + p;
-    const base = { h, o: TIMES[o], e: TIMES[e], rank: r, position: POSITIONS[p], seed };
+    const seed = mid === null ? Number(a.seed0) + 80 * (h - 1) + 40 * o + 20 * e + 4 * r + p : 4_302_001 + 100 * (h - 1) + 20 * c + 4 * r + p;
+    const base = { h, o: times[o], e: times[e], rank: r, position: POSITIONS[p], seed };
     if (!imp) return { ...base, missing: true };
     const cfg: WorldConfig = { ...states[e].cfg, mutRate: 0, seed };
     const st = implanted(states[e], imp, POSITIONS[p][0], POSITIONS[p][1], 1, lo, cfg);

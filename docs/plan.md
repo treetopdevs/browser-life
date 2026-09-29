@@ -244,6 +244,16 @@ The replayed source histories are fixed now, before any assay result: M4 gradien
   - *Opportunity* also needs its residual condition: every history where late does not beat early shows home advantage, or has neither late-over-early edge clearing the margin. Otherwise the result is Inconclusive.
   - *Neutral control, added 2026-09-28 before any assay result.* The added rule follows the practice of testing simple baselines before crediting the dynamics. The same assay runs on `neutral` replays 1–5, seeds 4,300,801 + 80h + 40o + 20e + 4r + p. There every cell expresses the same phenotype, so a late-over-early difference can only come from the assay itself (implant contents, state density). If the control clears test 4's margin in both states in at least 3 of its 5 histories, test 4's verdict is recorded as Inconclusive (assay confounded), whatever the treatment count. The rule can only move a verdict to Inconclusive.
 - *Incomplete inputs decide nothing.* A test whose expected runs, controls or assay results are missing reports "incomplete" and fills no gate row.
+- *Test 4b, fixed 2026-09-29 after test 4's result and before any 4b assay ran.* Test 4 as defined came out Inconclusive (`runs/foundations/results/t4.json`):
+  - Late lineages beat early ones by far more than the margin in the early state, in 7 of 10 histories.
+  - In the late state, at least half of each group's implants went extinct in 9 of 10 histories, so both medians sit at the extinction floor, log(1/65). Neither edge can clear the margin there, and the residual condition fails.
+  - The neutral control cleared the margin in 0 of 5 histories.
+
+  The gate's Inconclusive row asks for the cheapest test that would decide the question. With the time box and the tests' budget still open, it runs as test 4b:
+  - *Changed:* implants of 256 cells instead of 64 (the lineage's 256 cells nearest its heaviest individual's centroid; a lineage with fewer is skipped). Seeds 4,303,001 + 80h + 40o + 20e + 4r + p, and 4,304,001 + … for the neutral control.
+  - *Unchanged:* the positions, 5 × 10⁴ steps, fitness, W, margin, gate rule and neutral-control rule.
+  - Test 4b decides test 4's gate row, and test 4 is reported beside it.
+  - *Floor guard, for both tests.* A state is at the floor in a history when at least half of both groups' implants in it went extinct. Such a history can still count toward "late beats early", but it cannot count as "neither edge clears the margin". A floor can hide a difference, never show its absence. So floors that leave the rule undecided give Inconclusive, with the survival shares reported.
 - *Test 5.* The ten lineages with the most cells at the 9 × 10⁵ checkpoint of treatment replays 1–5 get `evaluateBatch` with 32 replicates, 2 genomes per batch, seeds from 4,400,001. They are reported against the founders' retest counts.
 - *Test 6.*
   - *Shadow excess.* Each run's cumulative new activity (the preset's frozen threshold) minus the median of 20 shadows. A shadow keeps the run's living cells at each census and its lineage births, each entering at its first-census cell count, and redraws the remaining cells multinomially from its own previous abundances. A run is flagged when it exceeds all 20 shadows.

@@ -20,7 +20,7 @@ import { lineageCensuses } from "./lib/bundle.ts";
 import type { Evaluation, RepEval } from "@bl/search";
 
 const a = parseArgs(Deno.args, {
-  string: ["out", "dir", "confirm", "replay", "orig", "histories", "preset", "per"],
+  string: ["out", "dir", "confirm", "replay", "orig", "histories", "preset", "per", "control", "tag"],
   default: { out: "runs/foundations/results", per: "200" },
 });
 const cmd = String(a._[0] ?? "");
@@ -306,26 +306,47 @@ function timeshiftHistories(rows: any[]) {
     const dEarly = W["late@early"] - W["early@early"], dLate = W["late@late"] - W["early@late"];
     const homeAdvantage = W["early@early"] > W["late@early"] && W["late@late"] > W["early@late"];
     const lateBeatsEarly = dEarly >= margin && dLate >= margin;
+    // A state is at the extinction floor when at least half of both groups' implants in it went extinct:
+    // both medians sit at log(1/(N_start+1)), which can hide a difference but never show one.
+    const floored = ["early", "late"].filter((e) => ext[`early@${e}`] >= 0.5 && ext[`late@${e}`] >= 0.5);
     // The Opportunity row's residual condition: each other history shows home advantage, or neither
-    // late-over-early edge clears the margin.
-    const residualOk = lateBeatsEarly || homeAdvantage || (dEarly < margin && dLate < margin);
-    return { h, W, extinct: ext, n, lateMinusEarly: { inEarly: dEarly, inLate: dLate }, lateBeatsEarly, homeAdvantage, residualOk };
+    // late-over-early edge clears the margin in states that are not at the floor.
+    const residualOk = lateBeatsEarly || homeAdvantage || (dEarly < margin && dLate < margin && floored.length === 0);
+    return { h, W, extinct: ext, n, lateMinusEarly: { inEarly: dEarly, inLate: dLate }, lateBeatsEarly, homeAdvantage, floored, residualOk };
   });
 }
 
 async function t4() {
   const load = async (d: string) => ((await exists(d)) ? (await jsonFiles(d)).filter((r) => !r.missing) : []);
   const per = timeshiftHistories(await load(a.dir ?? "runs/found-t4"));
-  const ctl = timeshiftHistories(await load("runs/found-t4-neutral"));
+  const ctl = timeshiftHistories(await load(a.control ?? "runs/found-t4-neutral"));
   const full = (ps: any[], k: number) => ps.length === k && ps.every((p) => Object.values(p.n).every((x) => x === 20));
   const k = per.filter((p) => p.lateBeatsEarly).length, kc = ctl.filter((p) => p.lateBeatsEarly).length;
   const complete = full(per, 10) && full(ctl, 5);
   // Neutral control (dated note): clearing the margin in >= 3 of its 5 histories makes the verdict Inconclusive.
   const confounded = kc >= 3;
   const residualOk = per.every((p) => p.residualOk);
+  // Descriptive only, added after the first assays showed most implants going extinct (so medians can
+  // sit at the extinction floor): per history, late minus early in mean fitness and in survival share.
+  const descriptive = (rows: any[]) =>
+    [...new Set(rows.map((r) => r.h))].sort((x, y) => x - y).map((h) => {
+      const at = (o: number, e: number) => rows.filter((r) => r.h === h && r.o === o && r.e === e);
+      const [early, late] = [...new Set(rows.map((r) => r.o))].sort((x, y) => x - y);
+      const meanF = (xs: any[]) => xs.reduce((s, r) => s + r.fitness, 0) / Math.max(1, xs.length);
+      const surv = (xs: any[]) => xs.filter((r) => r.nEnd > 0).length / Math.max(1, xs.length);
+      return {
+        h,
+        meanFitnessLateMinusEarly: { inEarly: meanF(at(late, early)) - meanF(at(early, early)), inLate: meanF(at(late, late)) - meanF(at(early, late)) },
+        survivalLateMinusEarly: { inEarly: surv(at(late, early)) - surv(at(early, early)), inLate: surv(at(late, late)) - surv(at(early, late)) },
+        medianAtFloor: [early, late].flatMap((o) => [early, late].map((e) => surv(at(o, e)) < 0.5)).filter(Boolean).length,
+      };
+    });
   const row = !complete ? "incomplete" : confounded ? "Inconclusive" : k <= 4 ? (residualOk ? "Opportunity" : "Inconclusive") : k >= 8 ? "Measurement" : "Inconclusive";
   const result = { histories: per.length, controlHistories: ctl.length, complete, lateBeatsEarly: k, controlLateBeatsEarly: kc, confounded, residualOk, margin: Math.log(1.1), row };
-  await save("t4.json", { result, per, control: ctl });
+  const post = { note: "descriptive, post hoc; not part of the gate", treatment: descriptive(await load(a.dir ?? "runs/found-t4")), control: descriptive(await load(a.control ?? "runs/found-t4-neutral")) };
+  await save(`${a.tag ?? "t4"}.json`, { result, per, control: ctl, descriptive: post });
+  for (const [name, xs] of [["treatment", post.treatment], ["neutral", post.control]] as const)
+    for (const x of xs) console.log(`  ${name} h${x.h} (descriptive): mean fitness late-early ${x.meanFitnessLateMinusEarly.inEarly.toFixed(2)} / ${x.meanFitnessLateMinusEarly.inLate.toFixed(2)}; survival late-early ${x.survivalLateMinusEarly.inEarly.toFixed(2)} / ${x.survivalLateMinusEarly.inLate.toFixed(2)}; W cells at the extinction floor ${x.medianAtFloor}/4`);
   console.log(JSON.stringify(result));
   for (const [name, ps] of [["treatment", per], ["neutral", ctl]] as const)
     for (const p of ps) console.log(`  ${name} h${p.h}: late-early ${p.lateMinusEarly.inEarly.toFixed(3)} (early state), ${p.lateMinusEarly.inLate.toFixed(3)} (late state); extinct ${JSON.stringify(p.extinct)}`);
@@ -607,7 +628,7 @@ async function t3Plan() {
   ];
   await save("t3-candidates.json", { qualifying: qual, candidates, soloRuns: runs.length });
   await save("t3-plan.json", { seed0: 4_250_001, reps: 16, growSteps: 20_000, plantings });
-  console.log(`test 3: ${runs.length} runs, ${candidates.length} candidate roles (${plantings.length} with genomes)`);
+  console.log(`test 3: ${runs.length} runs, ${candidates.length} candidate roles, ${plantings.length} garden plantings (with the ${M3_FOUNDERS.length} founder monocultures)`);
 }
 
 async function t3() {
@@ -746,6 +767,7 @@ async function profileMeasures(dir: string) {
   const streak = new Map<string, number>(); // lineage|bin -> first step of its current >= 1% streak
   let lastStep = -1;
   const clusters: number[] = [];
+  const rolesPresent: number[] = [];
   let rowsAt: { key: string; cells: number; mu: number; sigma: number; role: string; v: number[] }[] = [];
   const flush = (step: number) => {
     if (step < 0) return;
@@ -762,6 +784,9 @@ async function profileMeasures(dir: string) {
     }
     for (const sk of [...streak.keys()]) if (!live.has(sk)) streak.delete(sk);
     if (step > 500_000) {
+      const share = new Map<string, number>();
+      for (const x of rowsAt) share.set(x.role, (share.get(x.role) ?? 0) + x.cells / total);
+      rolesPresent.push([...share.values()].filter((v) => v >= 0.05).length);
       const big = rowsAt.filter((x) => x.cells / total >= 0.05).map((x) => x.v);
       const parent = big.map((_, i) => i);
       const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i])));
@@ -782,7 +807,8 @@ async function profileMeasures(dir: string) {
   }
   flush(lastStep);
   const novel = [...firstSeen].filter(([, s]) => s > 100_000).map(([b]) => b);
-  return { novelty: novel.length, persistentNovelty: novel.filter((b) => persistent.has(b)).length, roleClusters: clusters.length ? clusters.reduce((s, x) => s + x, 0) / clusters.length : null };
+  const avg = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null);
+  return { novelty: novel.length, persistentNovelty: novel.filter((b) => persistent.has(b)).length, roleClusters: avg(clusters), rolesPresent: avg(rolesPresent) };
 }
 
 /** The compartment detector on hand-built discs: a membrane rim around a biomass core, and none. */
@@ -827,6 +853,8 @@ async function t6() {
   const cacheFile = `${OUT}/t6-runs.json`;
   const cache: Record<string, any> = (await exists(cacheFile)) ? JSON.parse(await Deno.readTextFile(cacheFile)) : {};
   const measure = async (dir: string, preset: string, withProfiles: boolean) => {
+    // Recompute entries from an older version of these measures (no rolesPresent while profiles exist).
+    if (cache[dir] && withProfiles && cache[dir].rolesPresent === undefined && (await exists(`${dir}/profiles.tsv`))) delete cache[dir];
     if (!cache[dir]) {
       const t0 = performance.now();
       cache[dir] = { preset, ...(await shadowExcess(dir, ACTIVITY_THRESHOLDS[preset].value!)), ...(withProfiles && (await exists(`${dir}/profiles.tsv`)) ? await profileMeasures(dir) : {}) };
@@ -906,7 +934,26 @@ async function t6() {
     },
     compartment: compartmentCheck(),
   };
-  await save("t6.json", { measures, runs: { treatment: T, noMutation: NM, soloNoMutation: soloNM, neutral } });
+  // Eligibility for a future registration (test 6): each expected pair separated with effect >= 0.8,
+  // the per-run null check passed, and the pilot splits rejecting in at most 2 alpha = 0.10.
+  const splitsOk = (x: Record<string, number>) => Object.keys(x).length === 2 && Object.values(x).every((v) => v <= 0.1);
+  const big = (e: number | null) => e !== null && e >= 0.8;
+  const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / Math.max(1, xs.length);
+  // The specialisation pair counts only if single-founder runs without mutation hold fewer roles.
+  const fewerRoles = mean(vals(soloNM, "rolesPresent")) < mean(vals(NM, "rolesPresent"));
+  const complete = T.length === 10 && NM.length === 5 && soloNM.length === 36 && neutral.length === 70;
+  const eligible = {
+    complete,
+    specialisationPairCounts: fewerRoles,
+    rolesPresent: { noMutation: mean(vals(NM, "rolesPresent")), soloNoMutation: mean(vals(soloNM, "rolesPresent")) },
+    shadowExcess: big(measures.shadowExcess.treatmentVsNoMutation) && measures.shadowExcess.null.passes && splitsOk(measures.shadowExcess.splits),
+    novelty: big(measures.novelty.treatmentVsNoMutation) && measures.novelty.null.passes && splitsOk(measures.novelty.splits),
+    persistentNovelty: big(measures.persistentNovelty.treatmentVsNoMutation) && measures.persistentNovelty.null.passes && splitsOk(measures.persistentNovelty.splits),
+    roleClusters: fewerRoles ? big(measures.roleClusters.noMutationVsSoloNoMutation) && splitsOk(measures.roleClusters.splits) : null,
+    compartmentDetector: measures.compartment.every((c: any) => c.compartmentalised === (c.rim && c.individuals > 0 ? 1 : 0)),
+  };
+  await save("t6.json", { eligible, measures, runs: { treatment: T, noMutation: NM, soloNoMutation: soloNM, neutral } });
+  console.log(JSON.stringify(eligible, null, 1));
   console.log(JSON.stringify({ ...measures, compartment: measures.compartment.map((c: any) => `${c.radius}${c.rim ? "rim" : ""}@${c.at}:${c.compartmentalised}/${c.individuals}`).join(" ") }, null, 1));
 }
 
@@ -914,9 +961,13 @@ async function t6() {
 // The decision gate (docs/plan.md): rows checked in order, the first whose condition holds decides.
 
 async function gate() {
-  const load = async (f: string) => ((await exists(`${OUT}/${f}`)) ? JSON.parse(await Deno.readTextFile(`${OUT}/${f}`)).result : null);
-  const [t1r, t2r, t3r, t4r] = [await load("t1.json"), await load("t2.json"), await load("t3.json"), await load("t4.json")];
   const notes: string[] = [];
+  const load = async (f: string) => ((await exists(`${OUT}/${f}`)) ? JSON.parse(await Deno.readTextFile(`${OUT}/${f}`)).result : null);
+  // Test 4b (dated note) decides test 4's row once it has run; test 4 is reported beside it.
+  const t4first = await load("t4.json");
+  const t4b = await load("t4b.json");
+  const [t1r, t2r, t3r] = [await load("t1.json"), await load("t2.json"), await load("t3.json")];
+  const t4r = t4first && t4first.row === "Inconclusive" ? t4b : t4first;
   let row: string | null = null;
   // Substrate: test 1's condition, and then a life-cycle MAP-Elites search that also finds none.
   if (!t1r || t1r.substrateCondition === null) notes.push("test 1 incomplete");
@@ -935,14 +986,15 @@ async function gate() {
   }
   // Opportunity, Measurement or Inconclusive: test 4's row (already Inconclusive when its neutral control is confounded).
   if (!row) {
-    if (!t4r || t4r.row === "incomplete") notes.push("test 4 incomplete");
+    if (t4first?.row === "Inconclusive" && (!t4b || t4b.row === "incomplete")) notes.push("test 4 Inconclusive; test 4b (256-cell implants) incomplete");
+    else if (!t4r || t4r.row === "incomplete") notes.push("test 4 incomplete");
     else row = t4r.row;
   }
   // Anything undecided within the time box and budget is Inconclusive; an earlier incomplete test
   // cannot be skipped over, since it could have decided first.
   const blocking = notes.filter((n) => n.includes("incomplete") || n.includes("has not run to completion"));
   const decided = blocking.length === 0 && row !== null;
-  const result = { row: decided ? row : "Inconclusive", decided, candidateRow: row, notes, t1: t1r, t2: t2r, t3: t3r, t4: t4r };
+  const result = { row: decided ? row : "Inconclusive", decided, candidateRow: row, notes, t1: t1r, t2: t2r, t3: t3r, t4: t4first, t4b };
   await save("gate.json", result);
   console.log(JSON.stringify({ row: result.row, decided, candidateRow: row, notes }, null, 1));
 }
@@ -979,6 +1031,9 @@ switch (cmd) {
     break;
   case "gate":
     await gate();
+    break;
+  case "compartment":
+    for (const c of compartmentCheck()) console.log(JSON.stringify(c));
     break;
   case "shadow-one":
     console.log(JSON.stringify(await shadowExcess(a.dir!, ACTIVITY_THRESHOLDS[a.preset ?? "gradient-m3"].value!)));
