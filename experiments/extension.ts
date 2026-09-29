@@ -12,7 +12,7 @@ import type { ActivityThresholdEntry } from "./endpoints.ts";
 
 export const EXTENSION_ACTIVITY_THRESHOLDS: Record<string, ActivityThresholdEntry> = {
   "gradient-m3": {
-    value: null,
+    value: 9848,
     quantile: 0.95,
     pilot: {
       experiment: "calib-ext", seeds: [1101, 1110], runs: 10,
