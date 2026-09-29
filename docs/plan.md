@@ -147,6 +147,13 @@ Each gate is a pass/fail check. The **pivot** column is what we do instead of pu
     - Other results point to selection acting on genomes rather than organisms. Evolved lineages lose regeneration (test 5), and no compartmentalised individual was detected in any M4 treatment run. Competitive gains still accumulate, descriptively (test 4b).
     - If entities do not reproduce, that would argue for aiming RULE_VERSION 2 at inheritance (for example, compartmentalised genome transport) rather than variation. Any change of target is a separate dated decision, recorded here after the check.
     - The check runs in the `evolution-foundations` workspace, trimmed to its entity definition, observation and current-rule phases, and its outcome is recorded here. The founder diagnostic, the extension's analysis and the extension time-shift finish as registered, and they feed into it. Nothing else starts on this line meanwhile.
+  - *Candidate target: predation, added 2026-09-29.*
+    - *What prompted it.* In informal lab runs, `large` appears to settle into a static lattice of similar-looking producers, and to return there after a crash in bound mass. The user also tried the `seasons` and `soup` presets and reports that they break that attractor. None of this is measured.
+    - *A likely reason, untested.* Organisms only compete for nutrient, light and space, and feed on waste. The transport lottery lets moving mass take over neighbouring cells passively and at no cost, resisted only by mass. Polymer gates diffusion and adds lottery weight, but nothing gives a boundary a dedicated defence against takeover.
+    - *The hypothesis.* A costly, resistible way to consume another genome's living biomass would bring consumer–resource dynamics and select for boundaries and bodies.
+    - *Handed to the reset* as the specific ecological incentive in its decision table, beside variation and inheritance. Forcing (`seasons`, available now under RULE_VERSION 1) is the comparison it must beat.
+    - *Cost.* It changes the genome layout, since all 8 controller outputs are in use.
+    - Choosing it would be a separate dated decision. Nothing is built on this line meanwhile.
 
 ### M4 pivot: foundations review (decided 2026-09-28)
 
