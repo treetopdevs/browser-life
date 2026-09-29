@@ -911,6 +911,43 @@ async function t6() {
 }
 
 // ---------------------------------------------------------------------------------------------
+// The decision gate (docs/plan.md): rows checked in order, the first whose condition holds decides.
+
+async function gate() {
+  const load = async (f: string) => ((await exists(`${OUT}/${f}`)) ? JSON.parse(await Deno.readTextFile(`${OUT}/${f}`)).result : null);
+  const [t1r, t2r, t3r, t4r] = [await load("t1.json"), await load("t2.json"), await load("t3.json"), await load("t4.json")];
+  const notes: string[] = [];
+  let row: string | null = null;
+  // Substrate: test 1's condition, and then a life-cycle MAP-Elites search that also finds none.
+  if (!t1r || t1r.substrateCondition === null) notes.push("test 1 incomplete");
+  else if (t1r.substrateCondition) {
+    const me = await load("mapelites.json");
+    if (!me || me.complete !== true || typeof me.found !== "boolean") notes.push("test 1 meets the Substrate condition; the life-cycle MAP-Elites search has not run to completion");
+    else if (me.found === false) row = "Substrate";
+    else notes.push("test 1 meets the Substrate condition, but the MAP-Elites search found a heritable life cycle");
+  }
+  // Variation: tests 2 and 3 both fail.
+  if (!row) {
+    if (!t2r || t2r.fails === null) notes.push("test 2 incomplete");
+    if (!t3r || t3r.fails === null) notes.push("test 3 incomplete");
+    if (t2r?.fails === true && t3r?.fails === true) row = "Variation";
+    else if (t2r?.fails === true || t3r?.fails === true) notes.push(`only test ${t2r?.fails === true ? 2 : 3} fails; recorded, and the gate moves on to test 4`);
+  }
+  // Opportunity, Measurement or Inconclusive: test 4's row (already Inconclusive when its neutral control is confounded).
+  if (!row) {
+    if (!t4r || t4r.row === "incomplete") notes.push("test 4 incomplete");
+    else row = t4r.row;
+  }
+  // Anything undecided within the time box and budget is Inconclusive; an earlier incomplete test
+  // cannot be skipped over, since it could have decided first.
+  const blocking = notes.filter((n) => n.includes("incomplete") || n.includes("has not run to completion"));
+  const decided = blocking.length === 0 && row !== null;
+  const result = { row: decided ? row : "Inconclusive", decided, candidateRow: row, notes, t1: t1r, t2: t2r, t3: t3r, t4: t4r };
+  await save("gate.json", result);
+  console.log(JSON.stringify({ row: result.row, decided, candidateRow: row, notes }, null, 1));
+}
+
+// ---------------------------------------------------------------------------------------------
 
 switch (cmd) {
   case "validate":
@@ -939,6 +976,9 @@ switch (cmd) {
     break;
   case "t6":
     await t6();
+    break;
+  case "gate":
+    await gate();
     break;
   case "shadow-one":
     console.log(JSON.stringify(await shadowExcess(a.dir!, ACTIVITY_THRESHOLDS[a.preset ?? "gradient-m3"].value!)));

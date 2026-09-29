@@ -8,6 +8,7 @@
 //
 //   deno run -A tools/calibrate.ts runs/calib-neutral [--presets gradient-m3,spots-m3]
 //     [--q 0.95] [--draws 2000] [--alpha 0.10] [--seed 1] [--out runs/calib-neutral/calibration.json]
+//   deno run -A tools/calibrate.ts runs/calib-ext --registry extension   (the registered 10^7 extension's pilot)
 //
 // Expects `<pilotRoot>/<presetId>/neutral/seed-<n>/` bundles (tools/run.ts's
 // own layout: `<out>/<experiment>/<presetId>/<condition>/seed-<n>/`, so
@@ -71,12 +72,18 @@ import {
   type Run,
 } from "./lib/bundle.ts";
 import { evaluateFreezeability, type CohortRunInfo } from "./lib/calibration-decision.ts";
-import { ACTIVITY_THRESHOLDS } from "../experiments/endpoints.ts";
+import { ACTIVITY_THRESHOLDS as FROZEN_THRESHOLDS } from "../experiments/endpoints.ts";
+import { EXTENSION_ACTIVITY_THRESHOLDS } from "../experiments/extension.ts";
 
 const a = parseArgs(Deno.args, {
-  string: ["presets", "q", "draws", "alpha", "seed", "out"],
+  string: ["presets", "q", "draws", "alpha", "seed", "out", "registry"],
   default: { q: "0.95", draws: "2000", alpha: "0.10", seed: "1" },
 });
+// --registry extension: the registered 10^7 extension's own pilot (experiments/extension.ts), declared
+// separately so calibrating it can never touch the primary analysis's frozen values.
+if (a.registry !== undefined && a.registry !== "extension") throw new Error(`--registry must be "extension"; got ${a.registry}`);
+const ACTIVITY_THRESHOLDS = a.registry === "extension" ? EXTENSION_ACTIVITY_THRESHOLDS : FROZEN_THRESHOLDS;
+const registryFile = a.registry === "extension" ? "experiments/extension.ts's EXTENSION_ACTIVITY_THRESHOLDS" : "experiments/endpoints.ts's ACTIVITY_THRESHOLDS";
 const pilotRoot = String(a._[0] ?? "");
 if (!pilotRoot) throw new Error("usage: calibrate.ts <pilotRoot> [--presets gradient-m3,spots-m3] [--q 0.95] [--draws 2000] [--alpha 0.10] [--seed 1] [--out path]");
 const presets = (a.presets ? a.presets.split(",") : Object.keys(ACTIVITY_THRESHOLDS)).filter(Boolean);
@@ -281,7 +288,7 @@ for (const presetId of presets) {
         schedule,
         q,
       )
-    : { freezeable: false as const, reasons: [`preset "${presetId}" is not registered in experiments/endpoints.ts's ACTIVITY_THRESHOLDS`] };
+    : { freezeable: false as const, reasons: [`preset "${presetId}" is not registered in ${registryFile}`] };
 
   const status: PresetCalibration["status"] = freezeability.freezeable ? "ok" : "provisional";
   if (!freezeability.freezeable) {
@@ -303,10 +310,10 @@ for (const presetId of presets) {
     `  },`;
 
   if (status === "ok") {
-    console.log(`\n  paste into experiments/endpoints.ts's ACTIVITY_THRESHOLDS["${presetId}"]:`);
+    console.log(`\n  paste into ${registryFile}["${presetId}"]:`);
     console.log(entryText);
   } else {
-    console.log(`\n  PROVISIONAL entry (do NOT paste into experiments/endpoints.ts yet -- not freezeable, see reasons above):`);
+    console.log(`\n  PROVISIONAL entry (do NOT paste into ${registryFile} yet -- not freezeable, see reasons above):`);
     console.log(entryText);
   }
 
