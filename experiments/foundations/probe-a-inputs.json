@@ -1,0 +1,1888 @@
+{
+ "purpose": "Pinned inputs for Probe A of the foundational reset (re-examining test 1's 200 links); written by the main session.",
+ "created": "2026-09-29T11:24:38-04:00",
+ "mainCommit": "40f0d6c79580b72b5dd7a3c90a98760aab948044",
+ "versions": {
+  "rule": 1,
+  "schema": 3,
+  "metrics": 2
+ },
+ "notes": [
+  "Links: runs/foundations/results/t1-pairs.json, 20 per treatment replay (h = replay seed, 1-10), sampling seed 4,000,001 (docs/plan.md, Operational definitions, Test 1).",
+  "Replays: tools/run.ts --lineage-obs, census 100, deep 10, checkpoint every 1e5; each accepted as byte-identical (series.jsonl, lineages.tsv) to the original M4 run below (validate.json).",
+  "Test 1's links are tracker attributions from births.tsv (packages/runner/src/observe.ts); 148 of 200 are clonal.",
+  "runs/ is not under version control: pin these hashes, not only mainCommit.",
+  "mainCommit is the main checkout at pinning time (the audit baseline), not the revision that produced the replays or originals; each replay's own rule, schema and metrics versions and final state hash are in replaySpecs."
+ ],
+ "replaySpecs": {
+  "runs/replay-m4/gradient-m3/treatment/seed-1": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 1,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "8ecf6564a99ae04d",
+   "validate": "accepted"
+  },
+  "runs/replay-m4/gradient-m3/treatment/seed-2": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 2,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "725c4027f6f0ca1a",
+   "validate": "accepted"
+  },
+  "runs/replay-m4/gradient-m3/treatment/seed-3": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 3,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "78d40c6e6d2dd94c",
+   "validate": "accepted"
+  },
+  "runs/replay-m4/gradient-m3/treatment/seed-4": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 4,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "1bc33ab33cb103d5",
+   "validate": "accepted"
+  },
+  "runs/replay-m4/gradient-m3/treatment/seed-5": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 5,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "d79ee8b58344cdce",
+   "validate": "accepted"
+  },
+  "runs/replay-m4/gradient-m3/treatment/seed-6": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 6,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "1984716a64b96fd8",
+   "validate": "accepted"
+  },
+  "runs/replay-m4/gradient-m3/treatment/seed-7": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 7,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "ddc4cbe899616273",
+   "validate": "accepted"
+  },
+  "runs/replay-m4/gradient-m3/treatment/seed-8": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 8,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "9f1976f9f83dde04",
+   "validate": "accepted"
+  },
+  "runs/replay-m4/gradient-m3/treatment/seed-9": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 9,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "186070c5269ab128",
+   "validate": "accepted"
+  },
+  "runs/replay-m4/gradient-m3/treatment/seed-10": {
+   "spec": {
+    "experiment": "replay-m4",
+    "presetId": "gradient-m3",
+    "condition": "treatment",
+    "seed": 10,
+    "steps": 1000000,
+    "censusEvery": 100,
+    "deepEvery": 10,
+    "checkpointEvery": 100000,
+    "lineageObs": true
+   },
+   "ruleVersion": 1,
+   "schemaVersion": 3,
+   "metricsVersion": 2,
+   "finalHash": "3bec52e6fa86b564",
+   "validate": "accepted"
+  }
+ },
+ "groups": {
+  "audit": [
+   {
+    "path": "runs/foundations/results/t1-pairs.json",
+    "bytes": 41091,
+    "sha256": "bed342e3ff1dbe8116273fbd5cf0e312968a161070efadc40c455cbc308e74ed"
+   },
+   {
+    "path": "runs/foundations/results/t1-plan.json",
+    "bytes": 156853,
+    "sha256": "568c8bbe6471cb7c7f54693ac4cf7763af971a4ad96d41de1fa7252461ff4a91"
+   },
+   {
+    "path": "runs/foundations/results/t1.json",
+    "bytes": 71152,
+    "sha256": "c004274949b2b3815e903a5efe86c1f35619f0f32eb8b091cbeacd8640519215"
+   },
+   {
+    "path": "runs/foundations/results/validate.json",
+    "bytes": 11425,
+    "sha256": "de5fafedd37897e96470b6de03382f72335ab39ebd4af1abf1535a829d69ccd2"
+   },
+   {
+    "path": "experiments/foundations/t1.json",
+    "bytes": 71152,
+    "sha256": "c004274949b2b3815e903a5efe86c1f35619f0f32eb8b091cbeacd8640519215"
+   },
+   {
+    "path": "experiments/foundations/validate.json",
+    "bytes": 11425,
+    "sha256": "de5fafedd37897e96470b6de03382f72335ab39ebd4af1abf1535a829d69ccd2"
+   }
+  ],
+  "t1Garden": [
+   {
+    "path": "runs/found-t1/g0.json",
+    "bytes": 138430,
+    "sha256": "094ad2ceba70c898d560d029df72a0cfa89bba5c9949a57906dd13e032dc95b1"
+   },
+   {
+    "path": "runs/found-t1/g1.json",
+    "bytes": 475548,
+    "sha256": "05e2beb0e6675ead9967308cc67aef3377a229667e3fb3d82a9af63a96906bc0"
+   },
+   {
+    "path": "runs/found-t1/g10.json",
+    "bytes": 70973,
+    "sha256": "271f2e38ab9409ebe77394aee0f2fca42f53a862b68a6f0f59c3d693d90e0325"
+   },
+   {
+    "path": "runs/found-t1/g11.json",
+    "bytes": 65228,
+    "sha256": "3e3770f512f77a0da421d9cedfe1e8e8fa734655dbe03db9a882d70f647c6908"
+   },
+   {
+    "path": "runs/found-t1/g12.json",
+    "bytes": 92724,
+    "sha256": "d5c6e278adf271516cbf0e689940ca0f0cc9d9cad6b02d77fecf2b2e3b5d0541"
+   },
+   {
+    "path": "runs/found-t1/g13.json",
+    "bytes": 87415,
+    "sha256": "a89226ecaa91ec07fd2d82565f7a193b4b27a9ac53ac5d3b462ba0905133d728"
+   },
+   {
+    "path": "runs/found-t1/g14.json",
+    "bytes": 63669,
+    "sha256": "4026f8fdfd8396477ecc20dee13e86edb03ce243677f116d8d54f4684a4ea924"
+   },
+   {
+    "path": "runs/found-t1/g15.json",
+    "bytes": 43789,
+    "sha256": "38dc5175c47a1a40c2428291cad962782a60e4c54e09200132656df417972876"
+   },
+   {
+    "path": "runs/found-t1/g16.json",
+    "bytes": 53182,
+    "sha256": "844bdd62ddd27c6eb7c4c71bc27565b6b223b9a18bf12271bd3fe3e3b3b67ff0"
+   },
+   {
+    "path": "runs/found-t1/g17.json",
+    "bytes": 56920,
+    "sha256": "35b62fdaa723d2413909a4007ff6ed9635b2da624b3312efdf9948c20d433bad"
+   },
+   {
+    "path": "runs/found-t1/g18.json",
+    "bytes": 60715,
+    "sha256": "4764c9b678a451289a60fbba7a47644cdcb0bf7f691c4903bfc0b5b84a726aaf"
+   },
+   {
+    "path": "runs/found-t1/g19.json",
+    "bytes": 74306,
+    "sha256": "530904193208a9b4a601dc7f13fe5aee803145c6864dfc1fbef75c81ef7aa584"
+   },
+   {
+    "path": "runs/found-t1/g2.json",
+    "bytes": 92573,
+    "sha256": "42c8b18c1daf8310091709b56db90e981354145c365dcb5412204e4c8cc34823"
+   },
+   {
+    "path": "runs/found-t1/g20.json",
+    "bytes": 44960,
+    "sha256": "824f3d4d581590a10be3ea5737b926f17319054b0380ecd86e17768c5a9ec622"
+   },
+   {
+    "path": "runs/found-t1/g21.json",
+    "bytes": 59610,
+    "sha256": "2f6048734931ba2375d935fc975317318cbbb2b8a823aaa714ecd1e03978e8f7"
+   },
+   {
+    "path": "runs/found-t1/g22.json",
+    "bytes": 41183,
+    "sha256": "2e85704b5f9e71d8ee310d7468007172306bfc93038edd9992fa70961fc407f8"
+   },
+   {
+    "path": "runs/found-t1/g23.json",
+    "bytes": 46802,
+    "sha256": "9124ab08c688bffb9a48edfc7c2cb593abcd4188f50bf09fe329e6796684eeda"
+   },
+   {
+    "path": "runs/found-t1/g24.json",
+    "bytes": 45936,
+    "sha256": "2ff21285f05bf4d8b54c0d5b31bfb0f16994bcc54d0b1f5bc0fc3df8fb77708b"
+   },
+   {
+    "path": "runs/found-t1/g25.json",
+    "bytes": 81440,
+    "sha256": "aca75c5f53a00d556c4ab519ce91771c7176beed6ec39ed37fc8f42722b729b6"
+   },
+   {
+    "path": "runs/found-t1/g26.json",
+    "bytes": 93393,
+    "sha256": "a6ab7ea9589dc9e1534d419dddcd493f483b3dcfd37732b0c5c5fe688d4ecd5d"
+   },
+   {
+    "path": "runs/found-t1/g27.json",
+    "bytes": 82970,
+    "sha256": "2d618fec25576f288a78dd41facdb6fe2ea30caebd76b847b4f881a2cc067641"
+   },
+   {
+    "path": "runs/found-t1/g28.json",
+    "bytes": 86036,
+    "sha256": "3abe86922e3b1de2afcc7234d50bb5ae39b3a9db5dc7ee06c8046af14b4ae14e"
+   },
+   {
+    "path": "runs/found-t1/g29.json",
+    "bytes": 80451,
+    "sha256": "baf6c45dd957a68aeda819639f043acfee88c71a57ee4ef2dd49ba64b6928669"
+   },
+   {
+    "path": "runs/found-t1/g3.json",
+    "bytes": 576310,
+    "sha256": "d343a4bcd50787daaa457793ec236815ab67e7f891b4988c84f055f3fe4b7c3d"
+   },
+   {
+    "path": "runs/found-t1/g30.json",
+    "bytes": 167411,
+    "sha256": "88d64ce4c19626469efaf1d01560d81748505f415675decbb3a2ed422ee4ef0c"
+   },
+   {
+    "path": "runs/found-t1/g31.json",
+    "bytes": 131843,
+    "sha256": "ecef11fba0fe22841d321a772db10aa1499ecf50e33d9dc8ff5b22bc68417989"
+   },
+   {
+    "path": "runs/found-t1/g32.json",
+    "bytes": 146553,
+    "sha256": "7d5e67a33819959bf47d239597864e874b99480ce4fd4868959c6bf16a3cfd06"
+   },
+   {
+    "path": "runs/found-t1/g33.json",
+    "bytes": 116218,
+    "sha256": "854a592a4fea2f95d44ae5bac3f7e906f07e911591b8b41d3e16588865c3ab9e"
+   },
+   {
+    "path": "runs/found-t1/g34.json",
+    "bytes": 118077,
+    "sha256": "4a31e35a6672cad7f011af76d7ade6603d03e62d7045dce1f197da5de943a41e"
+   },
+   {
+    "path": "runs/found-t1/g35.json",
+    "bytes": 70623,
+    "sha256": "8cbba6110b8ba7073cf918b61e1588fe24f32255be7558687bfb0b1ca0764046"
+   },
+   {
+    "path": "runs/found-t1/g36.json",
+    "bytes": 66468,
+    "sha256": "ab4ff46c090f5ee440fb554f070d0b65a8a6d443be6343e78476c0f802b6229d"
+   },
+   {
+    "path": "runs/found-t1/g37.json",
+    "bytes": 70629,
+    "sha256": "1f4a194a2d6d6215fabc108d00658699318fb070c95e75d0405066f77021df49"
+   },
+   {
+    "path": "runs/found-t1/g38.json",
+    "bytes": 65881,
+    "sha256": "eaece850dd5b3136083b2e11e64869ae86fc1a885d5c32b5cdf657e9b8cf8e2d"
+   },
+   {
+    "path": "runs/found-t1/g39.json",
+    "bytes": 69158,
+    "sha256": "ce79df3678b5676c7fc33f3be1229a708c21e9cd23f48711e2243e723f7919b8"
+   },
+   {
+    "path": "runs/found-t1/g4.json",
+    "bytes": 193046,
+    "sha256": "beb991983686c11f32bf593c8988ffb490862d51b8a72df79d188598e4f1b878"
+   },
+   {
+    "path": "runs/found-t1/g40.json",
+    "bytes": 108786,
+    "sha256": "e6d77b694e2696940d7dfe37991e67a33bd7d9deb2d0d710f4f44e21ca4af890"
+   },
+   {
+    "path": "runs/found-t1/g41.json",
+    "bytes": 93902,
+    "sha256": "7a4fd80c3ff882a2165c04f6fbc97959101bbdf0c47e83a0716e22dd1355d943"
+   },
+   {
+    "path": "runs/found-t1/g42.json",
+    "bytes": 313220,
+    "sha256": "7b8c3354546b276face935094db872700a02ddb04206c0eb4f68b820079e292a"
+   },
+   {
+    "path": "runs/found-t1/g43.json",
+    "bytes": 234137,
+    "sha256": "39f2b52befb930879db68a61b9080fe9a14473071c4ebcc936ec2d6edcd6f545"
+   },
+   {
+    "path": "runs/found-t1/g44.json",
+    "bytes": 92602,
+    "sha256": "d7024d86361b26d7980e3cc22ce0e42df503d9a9081160cd84471d650f3166b1"
+   },
+   {
+    "path": "runs/found-t1/g45.json",
+    "bytes": 102698,
+    "sha256": "30449bc9535c884c8f6d63e26ff3837995a4636a2328a7e3d8ec9a8b56b86533"
+   },
+   {
+    "path": "runs/found-t1/g46.json",
+    "bytes": 85133,
+    "sha256": "69816efcd29416b7d0fd2f4753ffad37c185f7cfafb6d358bd05a0bcfca2b366"
+   },
+   {
+    "path": "runs/found-t1/g47.json",
+    "bytes": 208200,
+    "sha256": "4caf1c28860e11137d5f1cf3238b2c604901bbbb1cefed01e1fee02d49e2c3d3"
+   },
+   {
+    "path": "runs/found-t1/g48.json",
+    "bytes": 108650,
+    "sha256": "2a599beb97ad8c3bde5361b6ce434383a478d0c13fd369f383cc7cd0af870166"
+   },
+   {
+    "path": "runs/found-t1/g49.json",
+    "bytes": 203775,
+    "sha256": "b970d243457852ae3b0cbd189c3f9f0f8ef3711ae8802e38e0f00333c64c6332"
+   },
+   {
+    "path": "runs/found-t1/g5.json",
+    "bytes": 344322,
+    "sha256": "37af0851479cd3e7ffc175b987482ad21b7eabb53a7e572fb6a673491fc17c1d"
+   },
+   {
+    "path": "runs/found-t1/g6.json",
+    "bytes": 68846,
+    "sha256": "ed30bf3cc23d24ddd7b5a08411a992bad3dfb46ac4d6e6d94736315b4f95fc87"
+   },
+   {
+    "path": "runs/found-t1/g7.json",
+    "bytes": 86525,
+    "sha256": "839496eacf3aecc97920064662f20b4b629854d6a7b84acb356f68969954c80c"
+   },
+   {
+    "path": "runs/found-t1/g8.json",
+    "bytes": 254421,
+    "sha256": "b9b9616979a21462031816bd22f155b45ce345ca850bf08c4bc63e25b11a0bc3"
+   },
+   {
+    "path": "runs/found-t1/g9.json",
+    "bytes": 101670,
+    "sha256": "aacc9a7abcc632c79d821788df5493d44719d0515b3db4d0763b6c38f1d53d11"
+   }
+  ],
+  "replays": [
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/activity-final.json",
+    "bytes": 309941,
+    "sha256": "62734ea665debe248fadc51ae6fc29673c5548b366af24070a54b764a60091f7"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/births.tsv",
+    "bytes": 36872114,
+    "sha256": "6582baf756b8f2fe00e661256539919e3187e8a1a6471d5ab32481c4301b3f0f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/genomes.tsv",
+    "bytes": 36050841,
+    "sha256": "a3ed3e0aedeaaf25a4e7a06ee5fa290901440d3bcc0c975a84fa1eca1a5652e3"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/heredity.tsv",
+    "bytes": 1643531,
+    "sha256": "81073849d0a8f4b3518b8e2b11cf983c9d6091f79b8fd502f42b478a798e086f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/life.jsonl",
+    "bytes": 55084585,
+    "sha256": "60388b993c5c00c51ecf03953024f63947d23b9b73f3313410eb5cbc18524497"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/lineages.tsv",
+    "bytes": 76619660,
+    "sha256": "d68f9978c8f21afc1e73b45d7126141c0ebc0e3f7fb5897432b24b7b094c6f24"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/manifest.json",
+    "bytes": 3134,
+    "sha256": "19614c8ef7564d0b91cad1c8be5ba097268ebe51d21051aff733515ca9b6f413"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/mutations.tsv",
+    "bytes": 11953094,
+    "sha256": "8a95739d26a53212b3d85e2764807e41be3bc1977337e0f4fae63c55c606956a"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/profiles.tsv",
+    "bytes": 18258639,
+    "sha256": "b7fa05ede82c1bde7d8845f9caddc815286646a08fca25850c4b7ff430f0ed8f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/series.jsonl",
+    "bytes": 7687271,
+    "sha256": "d6c8dba3544a90d98dc72b762e03e692af3a8f7d3190f1095e9db2bfd45a90b2"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t000100000.blck",
+    "bytes": 13927140,
+    "sha256": "47d55b2b35851a27c23c74caf7c2a67d26727f4163c69af1ea4573f23ad8d2a3"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t000200000.blck",
+    "bytes": 13959036,
+    "sha256": "ff3d17a798d2f132ddbd28e786884307febac6742869503302bb589a46d56b92"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t000300000.blck",
+    "bytes": 13923044,
+    "sha256": "e118607239b966a625778302ab04ed415e4ff6deb613950539a0e9d5e570b55c"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t000400000.blck",
+    "bytes": 13956584,
+    "sha256": "f668460bd06170b0b96587611b47faa67974d1890cd5b6cadf678030b7970e0a"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t000500000.blck",
+    "bytes": 13987336,
+    "sha256": "ff260f779cdfbf3d921a994a2904388e9bac20714ff271c439119181d97af7f9"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t000600000.blck",
+    "bytes": 14037508,
+    "sha256": "7c9dd42cc6b0a2a4e89736e24ece44df831bf85ad9b2362934bace720126d7ae"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t000700000.blck",
+    "bytes": 14092896,
+    "sha256": "388077d9539859e05804e426a113799aab97fdba466074661b439fef08580b41"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t000800000.blck",
+    "bytes": 14116336,
+    "sha256": "3742f5d94c3d2f4077b08567233c6571572327b0039224a7b4e44bff4b5d8f21"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t000900000.blck",
+    "bytes": 14158248,
+    "sha256": "9923d4ffe260f7d4d0abc8e87620b6efc85b15a75a9fbba905838fecda7139fa"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-1/checkpoints/t001000000.blck",
+    "bytes": 14198316,
+    "sha256": "84ca947c5444de59e0242f3acb6cf2ad3bfb28bdaf301fa5129173daf03237b7"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/activity-final.json",
+    "bytes": 611063,
+    "sha256": "cbb21733f38427ec0e71da79985d4a4a7baebefa234ae95c236b3b434850e3d2"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/births.tsv",
+    "bytes": 4405838,
+    "sha256": "d96b6c9f6b0da6cc3373bfb5efa3bc0b012f5323abc0fd7acc4ed35fb5312783"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/genomes.tsv",
+    "bytes": 73377324,
+    "sha256": "426426ca0232cc7ca40a7fde8e50957f45c32c1ddbd540e8909a280aa89eeebe"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/heredity.tsv",
+    "bytes": 1256953,
+    "sha256": "6cb3b27503fd3291066de0b3d5389a1c71b6639b9920d089eafb57b9cbc61b36"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/life.jsonl",
+    "bytes": 6071495,
+    "sha256": "a2d9d04fa7a187344778b32289a2744c1be7264115131d5cb55c8f9ce09bb9fb"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/lineages.tsv",
+    "bytes": 110903610,
+    "sha256": "99cba9c61de2f67eb86f2e1b11800449a40443f5c72fa41eea6df83fb2b718b3"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/manifest.json",
+    "bytes": 3137,
+    "sha256": "7335472700e7038e4449ae7217e4234246337a4e39ab11154c8ae7e5758dce40"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/mutations.tsv",
+    "bytes": 23768594,
+    "sha256": "602a6374c4ef21e70fe6aafd6d9fd7fdb014b6a13f7fb2ffd483c86dc30a6c6c"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/profiles.tsv",
+    "bytes": 26567834,
+    "sha256": "693dcd4c515e4bb090e52593bac7666c8d2431a020dcc2f095c85706b29b894a"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/series.jsonl",
+    "bytes": 7719418,
+    "sha256": "40419fbca8f9f41fa92ec41c67ddbf4c26b8c755c579d8ee7b619424f9135d1e"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t000100000.blck",
+    "bytes": 13899696,
+    "sha256": "b0a6e0fd20747dfcb29c3e83948fc147f6a3a707a48ce3d106e042fe5bc532ed"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t000200000.blck",
+    "bytes": 13979536,
+    "sha256": "77255f624a5e727b4379bb0a026711c0d0194b8199fe06161996759333875e70"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t000300000.blck",
+    "bytes": 14059536,
+    "sha256": "ced1a2468f581780946a2fcdaa4cac858b2181f5a483d07e04d6856bf602f429"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t000400000.blck",
+    "bytes": 14137916,
+    "sha256": "a4161d1930623ff50787587c29585e6fab5e04bed1998dfcd55fde1c41482ff7"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t000500000.blck",
+    "bytes": 14208736,
+    "sha256": "f1799054809b0d4c64c11ed4553b0fc397fc4ff9f3f984b83eb41881e0fccbcf"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t000600000.blck",
+    "bytes": 14269420,
+    "sha256": "5fdf972df18c865c3f7e9bd560bd85f95a6c07f407cc5c3b00d46d010d8058b7"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t000700000.blck",
+    "bytes": 14330452,
+    "sha256": "e5bcccd17e064cfee334f7e159ca8520786f8176cf97be15a2f0c56ff1c51e76"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t000800000.blck",
+    "bytes": 14397008,
+    "sha256": "36ebca892b3a6ae6d8f0dc13fe391ec8ce83bdec7b2a99c6e0726d7706cdca33"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t000900000.blck",
+    "bytes": 14448256,
+    "sha256": "9b7cc4265debbb806850cc4ec12311776bee382cdc35f14b053c3380399731d8"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-2/checkpoints/t001000000.blck",
+    "bytes": 14497364,
+    "sha256": "d12c82dd9797cfa15b95a6c61bf647eb1bd8454e95fae8b59aaf339f219073fa"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/activity-final.json",
+    "bytes": 439230,
+    "sha256": "4f4785cc84d3ca247889d73e849443310d829c1de28f9662ee61fe9be38c3703"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/births.tsv",
+    "bytes": 8342349,
+    "sha256": "3432ddd2ae0ce275346c8f40ede9a59d014401c5cbcf46b7599bb2fb6a8c65ec"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/genomes.tsv",
+    "bytes": 52829211,
+    "sha256": "931c4ee89c0f2d589af14a3f802eabfead60fed5007e77c5d1a993632cbf0d7a"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/heredity.tsv",
+    "bytes": 1947308,
+    "sha256": "56ea668a331a9a43f99972e8427c74fd535245fff41362b2eecc4458fd06b849"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/life.jsonl",
+    "bytes": 11496300,
+    "sha256": "1f837043dfe6b58dec5e07f0f3bcc27f10f2c6ab71a5801bbe68036949d72f27"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/lineages.tsv",
+    "bytes": 94585343,
+    "sha256": "b1f709af4c7bc0c0a1bf559274b35f05b7d7bca62616d6e295492cc641bececc"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/manifest.json",
+    "bytes": 3134,
+    "sha256": "a853b31e5f0eb1d886b9b2407ebb10c9b9bf2de632bcf1c80e5ea724fd30178f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/mutations.tsv",
+    "bytes": 18134606,
+    "sha256": "a42d226e035a8ac6727e14a2f8267d8a119860a35cac560d187b3c3c12ea764f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/profiles.tsv",
+    "bytes": 22702067,
+    "sha256": "33b4f7c1cf73bae739b75ad595e64f19eacc875895781d16bd865d3b9f93683f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/series.jsonl",
+    "bytes": 7749203,
+    "sha256": "77aaa9d129a60b45a69ef8b522ade3982b8c73f905d32d979bfdd4bcc9852073"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t000100000.blck",
+    "bytes": 13918740,
+    "sha256": "561de354a130d4617fbf227b239557133966887af4a589150e5925f6b3cf3516"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t000200000.blck",
+    "bytes": 13967916,
+    "sha256": "7edfc58d0d9168bca41be96656108b58e6eb0d9f03180cb55354791745d8ac65"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t000300000.blck",
+    "bytes": 14018868,
+    "sha256": "81a42e6159c56081947f8ec8ce8ed346bfbd6c680934c125bc53c9db20ab11ca"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t000400000.blck",
+    "bytes": 14053992,
+    "sha256": "55bcf3084a14d1726b58f6b7ef13fa39b8711360ec9efd08f6cb1c964b7a4f7b"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t000500000.blck",
+    "bytes": 14087612,
+    "sha256": "b799b20df6f64fd552429be527015862a40c4b8b8e5a706e595b2ed851871d0e"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t000600000.blck",
+    "bytes": 14128620,
+    "sha256": "58a405c84908bb1b09083fdfe85e6b3f81795e6d45af058454d46659bd43741d"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t000700000.blck",
+    "bytes": 14169192,
+    "sha256": "002d897413d60dee42b8c7ba35f67a9b2947d1c5fb56b73381bee781bd5b8e89"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t000800000.blck",
+    "bytes": 14222800,
+    "sha256": "0cb9a7be619c5824c79dbba5f335e20fa7246e247cb34e78c176d4a0598af0b8"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t000900000.blck",
+    "bytes": 14263120,
+    "sha256": "6f88655cb1a8cbf9ce6dff0c3c4242bfba6b12dcc802364ba4046bdf69d2b365"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-3/checkpoints/t001000000.blck",
+    "bytes": 14301900,
+    "sha256": "f28805ac8a6e3f8f0e1d97b083754d9edb92ace1291bc10973a905b3ea62fefc"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/activity-final.json",
+    "bytes": 327585,
+    "sha256": "4147894472f22e000ee31014bf993ff5ecdaf42eb5a10e8485322734d0d42fbc"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/births.tsv",
+    "bytes": 2652822,
+    "sha256": "bbba019161d10ae20942b28b490f85aad4f1af473a5314a3a79f2fe8002d1b99"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/genomes.tsv",
+    "bytes": 36906701,
+    "sha256": "cbb65ff6bbdff2188c4ee95bf8b43381499f219bd7dde8e62c91189a33f56107"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/heredity.tsv",
+    "bytes": 136810,
+    "sha256": "ecd16273bb5e4a1381a4093938eb0c7535320f730a26a939455a44a6c65b7037"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/life.jsonl",
+    "bytes": 4369970,
+    "sha256": "43ec5e88cd14181b602051216304e6193abd73680d5e90180e8948289bc0c3f0"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/lineages.tsv",
+    "bytes": 127106982,
+    "sha256": "eaf68b5874a7905efdf54852dd8f731bc71e14805103c71e2367079b91bcbcd0"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/manifest.json",
+    "bytes": 3130,
+    "sha256": "0c3d453341692afd0bb5f97694ccff71e8a0d21d4a324b692a3db8b01ce5b9a9"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/mutations.tsv",
+    "bytes": 12538426,
+    "sha256": "9b875649a8b8bca0ede5cb4373db70532f8fc17dd4cf5f1a157c81c33e85f624"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/profiles.tsv",
+    "bytes": 30175483,
+    "sha256": "662de3edc7b490772bd6e9d23909441b66e0f3f963fbcfb4e41b72ef6cddae29"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/series.jsonl",
+    "bytes": 7698576,
+    "sha256": "d57a3fb8baf96e6bc7c1f0b823ae1a0abad0f2b23bac00dc35d61432e5e87c6e"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t000100000.blck",
+    "bytes": 13946568,
+    "sha256": "77de3401e0327d22854786515db1b4f299f96d1aa16f9be33eadf891b3f4417c"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t000200000.blck",
+    "bytes": 13971172,
+    "sha256": "a50e368205ffdb1b182fc6e2dcf7a86546eff3cbd5a046d373861fa1afe34c8c"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t000300000.blck",
+    "bytes": 13991216,
+    "sha256": "740fba62aea2b602404450d9f815a9a8d49896136555dec2ececcf3ba633ef5e"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t000400000.blck",
+    "bytes": 14017496,
+    "sha256": "aadd18179ec05abc6877c3f2672773c2926f07322cd33253241f4993c5ed241e"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t000500000.blck",
+    "bytes": 14049900,
+    "sha256": "0d28ecc727783467a2bf0c837ee4893616dd1267cb1a99befe036d9196521278"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t000600000.blck",
+    "bytes": 14082784,
+    "sha256": "a0b55a15171e0ab4a50fe274a51af1ed363207549a437f526b6c20927b371298"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t000700000.blck",
+    "bytes": 14117952,
+    "sha256": "f28c1dc59cdcb8c6d315faeb3836ca36bd049904b5845c3cd4acff8293d0bac3"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t000800000.blck",
+    "bytes": 14156188,
+    "sha256": "f6178e2e1f4881eb4e2d48a2f14e47286c7f07fcf6779609284ee1edbf28a183"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t000900000.blck",
+    "bytes": 14182364,
+    "sha256": "a6e37c374f54bd9371f0b68c90e431af35973d932004e61a8d7db531450744b2"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-4/checkpoints/t001000000.blck",
+    "bytes": 14211940,
+    "sha256": "ea85081f309aab37828452783ca5d7eeae28de2b8caeba8272d815de50eb72dd"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/activity-final.json",
+    "bytes": 209702,
+    "sha256": "b3ee9878116ce8ef01ba5085a329a56e9e34ce0bbf3cc882a4dcd87a55bc2e02"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/births.tsv",
+    "bytes": 10163751,
+    "sha256": "a88534d0d1e47f6a825bad298fe4bcefc3d7faebfb8989a07bc083f8c277debd"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/genomes.tsv",
+    "bytes": 24509033,
+    "sha256": "df252c08cb04d72c9b03a8fecb43649230167fd23ec51a5d9261ae7ffa9080e0"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/heredity.tsv",
+    "bytes": 95465,
+    "sha256": "d218561a1d2d5ef22c9c84effcf93098a50392d4fb14daf5a212b622b6fe959b"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/life.jsonl",
+    "bytes": 15777335,
+    "sha256": "5f9650c4d963f4fd3f4fabbb97ba4c6e4ba8e133f2d62cac62c6982d48e9c12e"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/lineages.tsv",
+    "bytes": 53319209,
+    "sha256": "41fb91a55b14ca17b16a085d8d04edd572f6d7399980a2df67cc843cf8a160a5"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/manifest.json",
+    "bytes": 3132,
+    "sha256": "d24b944130c7b31f2c36a37ecc84586cc338fa15c937ca5e0bd72dcafab3d4fa"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/mutations.tsv",
+    "bytes": 8825959,
+    "sha256": "4111786405ed0819f13a48c32f134d0bc44802d2711c9aba23306e168c3e7e0b"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/profiles.tsv",
+    "bytes": 12786396,
+    "sha256": "9a2af6cdcafe8b47ebeb4644800a4a4294de41d16c24092043787dd653fc032a"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/series.jsonl",
+    "bytes": 7527399,
+    "sha256": "6272d864dec48ce8d821a89f872b72b72447bae7f5a17c0e78650b697df07487"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t000100000.blck",
+    "bytes": 13774884,
+    "sha256": "eafab7db8e326e971ab3291cc1c312f0e6747d9fe094c76a12825441b02b9aa0"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t000200000.blck",
+    "bytes": 13803684,
+    "sha256": "ab64439a501e5952627ea678cb305218ad927ce9027f90e06e8fd7b070ebfcb4"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t000300000.blck",
+    "bytes": 13849452,
+    "sha256": "5d65b2cdd37c6878fdf67ca936e5949b08b8fdbbfaa4fb87e2e31176e35a0afb"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t000400000.blck",
+    "bytes": 13847648,
+    "sha256": "10cd89eebc932d605bae5f44a5d193cb7beacd154d961b2ad9657e8f9632ed1c"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t000500000.blck",
+    "bytes": 13892400,
+    "sha256": "786f9594dcb640314d81123268d775d6dfa736f78cf6153118c41c5cfaaa2042"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t000600000.blck",
+    "bytes": 13997988,
+    "sha256": "33b8d47e785f3eb4d92bfa27de0e1c57e609a23bba6a795e6d0cdc6e313ce219"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t000700000.blck",
+    "bytes": 14036404,
+    "sha256": "396ec42d42ce2dbf6008117e5e89a9824e0a5ff95ce232e53b0b2377520a42a8"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t000800000.blck",
+    "bytes": 14062424,
+    "sha256": "d49bfa993924a01e5a39d918111fe62bbef8e0b3982b4092764978158ee341bf"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t000900000.blck",
+    "bytes": 14064436,
+    "sha256": "fa4c312950075411ceea4f2aea3628e90cc7481a45652b68bd504774a846f003"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-5/checkpoints/t001000000.blck",
+    "bytes": 14096112,
+    "sha256": "f8df64feea04e59e27c0e1dae37bd2fa778d8291753dcd01bee5be7746c36e55"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/activity-final.json",
+    "bytes": 238392,
+    "sha256": "91ba52e1dfb230477af85c9c3fa85b6adbeb177e31719a3cd086ed8891919e64"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/births.tsv",
+    "bytes": 13729878,
+    "sha256": "f928a94aca36a44758cb397f0f1ee5370feef2f67b35f56f7780fee2950d7178"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/genomes.tsv",
+    "bytes": 27981086,
+    "sha256": "ffe366bc98aaad19d06e17bf8c152c49eb40e783cb1ef16e87ddfd46e8085890"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/heredity.tsv",
+    "bytes": 2045209,
+    "sha256": "79541917a68977be154464ee4f9f301ef52735d76d4dcc028c736e872ec119a0"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/life.jsonl",
+    "bytes": 18030646,
+    "sha256": "275705b40f5842aae1aa9ab60e3db3b740c1a0eb1cc3bc985b64988a770a1928"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/lineages.tsv",
+    "bytes": 52472077,
+    "sha256": "2dd2bff832226bd1956424f0772aa667afe02409a3e2a2b54feb601f1a481a0f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/manifest.json",
+    "bytes": 3134,
+    "sha256": "b9b876ac8bcf97a8ed82399b60fabc47fd922ccd9115bab5a88eace3fff327be"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/mutations.tsv",
+    "bytes": 9608862,
+    "sha256": "7a7c2ac66b481a0cd86eedd0d10e09cea7a4f408b3554575bf738ea857ada797"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/profiles.tsv",
+    "bytes": 12454629,
+    "sha256": "99ea5a2344011a45b265ef1509d7ea0b2f8d93c0bef30c53d87d740cec36851c"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/series.jsonl",
+    "bytes": 7679229,
+    "sha256": "4096080609fa9320682cc289ffa2f37669998d5138b231be141a5992f86b9e08"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t000100000.blck",
+    "bytes": 13803368,
+    "sha256": "114290aa2c84dd5ca79a01b4007772064f674be31e79f2eef841a17cbaa0ec1c"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t000200000.blck",
+    "bytes": 13861796,
+    "sha256": "626a46ecdfc4d9387e690a439b58971e1915d00255605b418d0c27cc994b4c98"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t000300000.blck",
+    "bytes": 13922104,
+    "sha256": "af1d28429fa797c71cfdf0b42c0797f5b99063b97f4fd37e2c0952a490f7ce08"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t000400000.blck",
+    "bytes": 13952812,
+    "sha256": "a6229127696c78d9f458dace24214f3a960d198009e61e1f69a2052705c6f2bf"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t000500000.blck",
+    "bytes": 13976156,
+    "sha256": "3a00458f2ac526d903843ef170008d0c07c46e14897030dabac05000854baebd"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t000600000.blck",
+    "bytes": 14011148,
+    "sha256": "0db227205f4b2e7932aa6c7cda78ef58bc79217710970375fe226b8e4ba7ef80"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t000700000.blck",
+    "bytes": 13999776,
+    "sha256": "6fa438c04727de72c5398372d2a6ee1793489ce66dd1a8501fef53a27e0cd5bb"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t000800000.blck",
+    "bytes": 14051104,
+    "sha256": "ee8ef48e735e262cbdbea5b28fe8f7d5a19d849d302922d365722a7e240e3080"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t000900000.blck",
+    "bytes": 14081788,
+    "sha256": "f3da1f01507c9cdc5b57db4a63cd955630f360831c01be2773531242ed8aca08"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-6/checkpoints/t001000000.blck",
+    "bytes": 14117692,
+    "sha256": "0607d2cc6fd111a9ec605390d4ff8c669ef912ca8496e2a507cb3af732f3446b"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/activity-final.json",
+    "bytes": 511470,
+    "sha256": "661ec71a89ae1a5abc82736eb34f2396b7cb5e1d34c90cb6214ba90993b6892b"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/births.tsv",
+    "bytes": 8826781,
+    "sha256": "ee44eee966eecfbd8cabc1c04ba6e11a406c2599cbf362d0a88969eac5ca984f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/genomes.tsv",
+    "bytes": 61363084,
+    "sha256": "ef43cfefeb3d49a69b4dd0f07daefaac948abc0e566326e66b5f8dc2c5cd6db9"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/heredity.tsv",
+    "bytes": 2303911,
+    "sha256": "17501a369ecf0e6b648aa97cac426aa67ff64ec1c3c22d2e4f1fd36ac435126f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/life.jsonl",
+    "bytes": 11837614,
+    "sha256": "3ac4c4ae46fd156db7cf39dd89b786b5b298a0eedc0c586b27588466fdc6add1"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/lineages.tsv",
+    "bytes": 97475573,
+    "sha256": "812ba7d80b9c61b77f0de4edb762b57d34a0158b2083760bdf339edf08b589d7"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/manifest.json",
+    "bytes": 3131,
+    "sha256": "169e5d6bb0b1f2cf41a7200626f30b4bb0664e8a779a5cb98ec5108e953d24b8"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/mutations.tsv",
+    "bytes": 19453109,
+    "sha256": "67778c2380f38f49cb894a4db955415c0bb59ee7abc09540f59aae72938e5a4f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/profiles.tsv",
+    "bytes": 23663723,
+    "sha256": "54c419981afc8d388c2fef74dcc27d8bcc5a55dc7c72080f9e48be99572e6148"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/series.jsonl",
+    "bytes": 7752001,
+    "sha256": "ac08eebfe289c30e28a679c49b24c65695ebf6d6291dd540f581244ee1df4a5d"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t000100000.blck",
+    "bytes": 13899900,
+    "sha256": "5f05405bfa2b32ee422694be898288c5c9888ee8c584a04d8bea448b7ef19c1d"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t000200000.blck",
+    "bytes": 13987672,
+    "sha256": "96045245894b057a12177ea34f9cd24e28eae1d973993534d34e792d7fb4cbfd"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t000300000.blck",
+    "bytes": 14054520,
+    "sha256": "e9c444fb35adcdccdf39fa682104e4d0850dae9b3f3e39fdb5762078eae613df"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t000400000.blck",
+    "bytes": 14113212,
+    "sha256": "4ed1021b6c2ceeb191e7e303feb4f753417a32d798083becd7abf1cb97ea71fa"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t000500000.blck",
+    "bytes": 14181152,
+    "sha256": "c5f3764943a249639bffd9de56abf3fc79d3f3f89676bff87b9b02e839ef3ed4"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t000600000.blck",
+    "bytes": 14217824,
+    "sha256": "5b4badadb95072f3b5f1d8143fcdfd43dd4e18099f85ef507fae39b9cbbe2e99"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t000700000.blck",
+    "bytes": 14271984,
+    "sha256": "7aa0d72891c56dad5e4abfb7437b6200fc3225a5a5c9668f243d5b8743802f14"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t000800000.blck",
+    "bytes": 14310756,
+    "sha256": "d0e0c28ede73277c89ea44519a52c9e21b59ebbe708087b9d316c006447b07af"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t000900000.blck",
+    "bytes": 14366152,
+    "sha256": "6e0c42ae787daec4390804e28180aae06cc12894650738faf833437366bcf3ed"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-7/checkpoints/t001000000.blck",
+    "bytes": 14413352,
+    "sha256": "02acfa212494359dc94aa96e66159434487bb7f65e1206d5938147c312cd7664"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/activity-final.json",
+    "bytes": 281847,
+    "sha256": "9ca8c77a355a5587fb2eb27e533dc88a0115ff8967dd8593e93d637a47e0e3a8"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/births.tsv",
+    "bytes": 3512249,
+    "sha256": "e1f4f3d1162d0e74a0f0fd75f31a59047996a23691a11082443df9fea6c4e061"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/genomes.tsv",
+    "bytes": 32365991,
+    "sha256": "26c4ae2e817fc3c3db7e66982525770370d375f9ab01be1c337ce9949f1e6d3e"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/heredity.tsv",
+    "bytes": 136784,
+    "sha256": "b46a00b3a0266f02dec142bd10ff13cac2d289636aaa1a9008f447e5722756e5"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/life.jsonl",
+    "bytes": 5592872,
+    "sha256": "fa8558e21cd43dbd4835b9721529e4cc1f8203fce2872ca9666f4bd27cfca606"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/lineages.tsv",
+    "bytes": 92434762,
+    "sha256": "29601ef49f42d1100d2d2c67724742e605e22c1a2ef0e5a3864f815cfc6c2f65"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/manifest.json",
+    "bytes": 3131,
+    "sha256": "ae9c29473c492664e4ff04fea233420f79f8fbd23668547ed02cb7ae757d5c89"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/mutations.tsv",
+    "bytes": 10709415,
+    "sha256": "d074be6240412d9dc727ce2c9f58468219d6265596eff87e78c2bf36897b4282"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/profiles.tsv",
+    "bytes": 21709248,
+    "sha256": "20cef76b1d0cf2065f87833abb1c84d7d00abb4c4c23210a4d86ab0dbf992b26"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/series.jsonl",
+    "bytes": 7733359,
+    "sha256": "0286981748e630b6d999c23bdfd45c1c03996c0e9789d6fa5cd0bfa91fe391e5"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t000100000.blck",
+    "bytes": 13865936,
+    "sha256": "61fb99eb7145491ba2ff01e5b084d2b23909fd765f1a3d05de7f81b19c0280e3"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t000200000.blck",
+    "bytes": 13913036,
+    "sha256": "7809f2e23ca092b273b36bd4e82441b679e23733a155359b013f089427219d8d"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t000300000.blck",
+    "bytes": 13954476,
+    "sha256": "5b3eefd74e030f87fadc76fb545d1c1a377f6dbc47d9cd8f7911de8f47b2031d"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t000400000.blck",
+    "bytes": 13980668,
+    "sha256": "fbdc6fa698f5255bbe069002dcb889a302c57a9003573c4487ab357aad324a4d"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t000500000.blck",
+    "bytes": 14021704,
+    "sha256": "5db9869dbec011cbf81ec15c2de8077ca1a587c9eb960be2b2d7f63e50ac045f"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t000600000.blck",
+    "bytes": 14047692,
+    "sha256": "dbe024a8928cb55593afd2c9e805584a24ae50fbc94a8032f0f3dc4ab7e6aa74"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t000700000.blck",
+    "bytes": 14070916,
+    "sha256": "18170d16925a754e915fee4415ad1c3337fd1e268f8e587b3c47dcf6a4380ac5"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t000800000.blck",
+    "bytes": 14101760,
+    "sha256": "0784aad6b40260a74a9eee2c74f73d5f4136ffae066559389fb3b58656b652dd"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t000900000.blck",
+    "bytes": 14129152,
+    "sha256": "d9ea442e9c4d46459a178c277e9cea12d97ba0b80da292a8ea7cde5b54405f60"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-8/checkpoints/t001000000.blck",
+    "bytes": 14163276,
+    "sha256": "e04cab28301c844082075149521c57230963b1103dc7c6cf637caf6641f3d617"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/activity-final.json",
+    "bytes": 533004,
+    "sha256": "a33f328f02435cb20672df6e13dc1deca43a7440ad29a968e5e48e9304a09a18"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/births.tsv",
+    "bytes": 6542978,
+    "sha256": "b7cb1b09d199bde2b082d7cc6e332f908dbd51330b334e2b27bab334b0ce8898"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/genomes.tsv",
+    "bytes": 64110104,
+    "sha256": "43544821baa1a20f0f6f88c1a43e8c5957026ffe7865f1a733844a280977dff7"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/heredity.tsv",
+    "bytes": 1515253,
+    "sha256": "df138ce1daa7582949ea5d4f8e9542ac9c1bf5e597cb9fd4fdce8a19864944f0"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/life.jsonl",
+    "bytes": 8949138,
+    "sha256": "6a1800e2a64113e9e61874a85f9f3936d20a521bd920eda653c3ed67ccb3995c"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/lineages.tsv",
+    "bytes": 101755182,
+    "sha256": "2b02d436451bb0dc927f078cfd2fae7973a599eb534d013c7c6f02c4eb823b3a"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/manifest.json",
+    "bytes": 3134,
+    "sha256": "0ac4024106ba757f0d4c7c6481468684ccd45e4903d263bde9fef0d9cb8f1b90"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/mutations.tsv",
+    "bytes": 20423479,
+    "sha256": "507ac6ca8239b6e7017615f4941d707be748a68a8c0b3b6eb8dfcfce3ac69ce8"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/profiles.tsv",
+    "bytes": 24175189,
+    "sha256": "4996cc6aa40cf241be57f6ad8c72e581b9fdc63b8d8c00d09105e7d179e15c82"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/series.jsonl",
+    "bytes": 7737189,
+    "sha256": "bc074f9b669edb4326c69fdd392b644de1e6f17df341347ffee33902dec9b663"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t000100000.blck",
+    "bytes": 13916536,
+    "sha256": "accf65a4a0ca11fc66ee2b703de520638492a7ffbab20f575726bd23a2bbcfd6"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t000200000.blck",
+    "bytes": 13996448,
+    "sha256": "e0e1f829ce3f467efe7a2f6013fcb7921e50373abf7fba0c8b3a633031e93678"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t000300000.blck",
+    "bytes": 14041972,
+    "sha256": "bc5a6a077ce8d6be221e09beb7aab5cdacdbc70d2c59159265bfabc962e7ac68"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t000400000.blck",
+    "bytes": 14128352,
+    "sha256": "d636149bc28566df54052780de4879db41c4169a48b3eece7bfc8c0cd363c62d"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t000500000.blck",
+    "bytes": 14190004,
+    "sha256": "249b3f7c01486645e2f6654c7ee6fd8b30702307209a699e5991d6dcfb3b9e57"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t000600000.blck",
+    "bytes": 14240684,
+    "sha256": "c4ac0faa4f94338c70f084c40f7eaff51055c3a3aa29e4b33d690e33de4a9f75"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t000700000.blck",
+    "bytes": 14291036,
+    "sha256": "b5d33dcb890e9a5b51b34d4094daf092ba2e082e2bbcf99fdb5d1db14f24a9d5"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t000800000.blck",
+    "bytes": 14351472,
+    "sha256": "82de04c4a0667433dc7698f71f48122477dbcf824e421c31720c5f78219a6705"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t000900000.blck",
+    "bytes": 14384472,
+    "sha256": "b1312431e530400420e8c1f42b12cbeec329757ebc34705a7ffec5357af68231"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-9/checkpoints/t001000000.blck",
+    "bytes": 14421748,
+    "sha256": "19c1a5b67c046d802372a035ecb4c14a3cbc0b04301191b60527e805703b61e0"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/activity-final.json",
+    "bytes": 610724,
+    "sha256": "e8bce193eb077642abb25ea7f4373e580b075de111fd12a8d0232bde0b1d7b87"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/births.tsv",
+    "bytes": 4354120,
+    "sha256": "dd42369fa20be38fdaa28ce52ae8cce6a1d962f19acbdf211974e93055859baf"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/genomes.tsv",
+    "bytes": 72748810,
+    "sha256": "5133157093567ac0ab8e6fdd82df74414d661353a4b1b6e12bf40d6cb7425036"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/heredity.tsv",
+    "bytes": 852262,
+    "sha256": "2b41376e8869937b41784a8885ccc9f8bcb3cf59189ccd8061da7db8ca37e176"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/life.jsonl",
+    "bytes": 6532811,
+    "sha256": "dc7ddf38ad6b93ca20cc10d2b4aeff174434344d1155bf31b46c6ff38a5386d3"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/lineages.tsv",
+    "bytes": 127026642,
+    "sha256": "52330d39d100be4ad55b02fb6acc0b336bc91aa8996009a5c76bcfe71335d6a3"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/manifest.json",
+    "bytes": 3140,
+    "sha256": "19faf033fcd245e7f279bff52f9f91fd1c97918a69acd36af72a2f34584e33a6"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/mutations.tsv",
+    "bytes": 23573084,
+    "sha256": "dea2ed8448179e0eb66404b26cf9e7aabe4509d7f1dce5cd64161411b09a7aa2"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/profiles.tsv",
+    "bytes": 30182636,
+    "sha256": "7127cc4d813050453a75a95c7b36b20f4e8b9f15267e8f1465abf942b98532cc"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/series.jsonl",
+    "bytes": 7762644,
+    "sha256": "cf7b05e6aa304a0e8955ba2fcb177288f00ff9b3dcba33e6c0ee7a08e9a0808b"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t000100000.blck",
+    "bytes": 13902848,
+    "sha256": "4683a895c2bc6628547bb6c136c6b2960145a356a0fe2b1ea9cb331449fde52d"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t000200000.blck",
+    "bytes": 14004748,
+    "sha256": "d0e1604cad4e4b4783606d747bcc1475c5390617eb48a1aa8de4e005af545632"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t000300000.blck",
+    "bytes": 14089760,
+    "sha256": "edffb34cc27cbf789da45751619a81538fae442d34a2892e07a69b675c11e5f9"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t000400000.blck",
+    "bytes": 14164848,
+    "sha256": "0382fd59321b5d5fc79ba46f305f5de6e1e0190e9e2525ddd15989d2a9cd6374"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t000500000.blck",
+    "bytes": 14229396,
+    "sha256": "be8e15e44e99c3fa73041cd79a405c27fda9439d8317f4b69e117fd7fa7e87b5"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t000600000.blck",
+    "bytes": 14299104,
+    "sha256": "aba41b85ece1278e2cb53553f3c3c47c7b0f08a6406ed0e6a3cd64dba7dad15e"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t000700000.blck",
+    "bytes": 14351404,
+    "sha256": "a411edc9a1870a9925198a17d62df9e37ce725bcc4b741b19614b5c4932ed146"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t000800000.blck",
+    "bytes": 14403836,
+    "sha256": "db008c1f6fd9d5ccfdd53fb9faeb4fd4ac2b19636f2380380e9bf45ade179ef8"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t000900000.blck",
+    "bytes": 14455200,
+    "sha256": "d5f1d930bb97cd6d55684356dfa472d841712a18156508cfd15895f45a8f6b97"
+   },
+   {
+    "path": "runs/replay-m4/gradient-m3/treatment/seed-10/checkpoints/t001000000.blck",
+    "bytes": 14501604,
+    "sha256": "6b87a1d4a0757f1308837dbbd26831c6391a0cf4835db823e645074ebeb5f2b2"
+   }
+  ],
+  "originals": [
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-1/activity-final.json",
+    "bytes": 309941,
+    "sha256": "62734ea665debe248fadc51ae6fc29673c5548b366af24070a54b764a60091f7"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-1/heredity.tsv",
+    "bytes": 1643531,
+    "sha256": "81073849d0a8f4b3518b8e2b11cf983c9d6091f79b8fd502f42b478a798e086f"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-1/life.jsonl",
+    "bytes": 55084585,
+    "sha256": "60388b993c5c00c51ecf03953024f63947d23b9b73f3313410eb5cbc18524497"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-1/lineages.tsv",
+    "bytes": 76619660,
+    "sha256": "d68f9978c8f21afc1e73b45d7126141c0ebc0e3f7fb5897432b24b7b094c6f24"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-1/manifest.json",
+    "bytes": 1961,
+    "sha256": "c38accab01ef8cc77ece8658285eed1169a822dd88465ba7d0a14760420403a4"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-1/mutations.tsv",
+    "bytes": 11953094,
+    "sha256": "8a95739d26a53212b3d85e2764807e41be3bc1977337e0f4fae63c55c606956a"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-1/series.jsonl",
+    "bytes": 7687271,
+    "sha256": "d6c8dba3544a90d98dc72b762e03e692af3a8f7d3190f1095e9db2bfd45a90b2"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-2/activity-final.json",
+    "bytes": 611063,
+    "sha256": "cbb21733f38427ec0e71da79985d4a4a7baebefa234ae95c236b3b434850e3d2"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-2/heredity.tsv",
+    "bytes": 1256953,
+    "sha256": "6cb3b27503fd3291066de0b3d5389a1c71b6639b9920d089eafb57b9cbc61b36"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-2/life.jsonl",
+    "bytes": 6071495,
+    "sha256": "a2d9d04fa7a187344778b32289a2744c1be7264115131d5cb55c8f9ce09bb9fb"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-2/lineages.tsv",
+    "bytes": 110903610,
+    "sha256": "99cba9c61de2f67eb86f2e1b11800449a40443f5c72fa41eea6df83fb2b718b3"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-2/manifest.json",
+    "bytes": 1954,
+    "sha256": "9eab817f5a7453f441d0e2e1766d5921be5b50fcb69f923035cd4636275f7f6e"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-2/mutations.tsv",
+    "bytes": 23768594,
+    "sha256": "602a6374c4ef21e70fe6aafd6d9fd7fdb014b6a13f7fb2ffd483c86dc30a6c6c"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-2/series.jsonl",
+    "bytes": 7719418,
+    "sha256": "40419fbca8f9f41fa92ec41c67ddbf4c26b8c755c579d8ee7b619424f9135d1e"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-3/activity-final.json",
+    "bytes": 439230,
+    "sha256": "4f4785cc84d3ca247889d73e849443310d829c1de28f9662ee61fe9be38c3703"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-3/heredity.tsv",
+    "bytes": 1947308,
+    "sha256": "56ea668a331a9a43f99972e8427c74fd535245fff41362b2eecc4458fd06b849"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-3/life.jsonl",
+    "bytes": 11496300,
+    "sha256": "1f837043dfe6b58dec5e07f0f3bcc27f10f2c6ab71a5801bbe68036949d72f27"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-3/lineages.tsv",
+    "bytes": 94585343,
+    "sha256": "b1f709af4c7bc0c0a1bf559274b35f05b7d7bca62616d6e295492cc641bececc"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-3/manifest.json",
+    "bytes": 1958,
+    "sha256": "a6975772af7f7d5fdcb18942fa8d88504f425150e15e10336e0ac17f03bc5f9c"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-3/mutations.tsv",
+    "bytes": 18134606,
+    "sha256": "a42d226e035a8ac6727e14a2f8267d8a119860a35cac560d187b3c3c12ea764f"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-3/series.jsonl",
+    "bytes": 7749203,
+    "sha256": "77aaa9d129a60b45a69ef8b522ade3982b8c73f905d32d979bfdd4bcc9852073"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-4/activity-final.json",
+    "bytes": 327585,
+    "sha256": "4147894472f22e000ee31014bf993ff5ecdaf42eb5a10e8485322734d0d42fbc"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-4/heredity.tsv",
+    "bytes": 136810,
+    "sha256": "ecd16273bb5e4a1381a4093938eb0c7535320f730a26a939455a44a6c65b7037"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-4/life.jsonl",
+    "bytes": 4369970,
+    "sha256": "43ec5e88cd14181b602051216304e6193abd73680d5e90180e8948289bc0c3f0"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-4/lineages.tsv",
+    "bytes": 127106982,
+    "sha256": "eaf68b5874a7905efdf54852dd8f731bc71e14805103c71e2367079b91bcbcd0"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-4/manifest.json",
+    "bytes": 1955,
+    "sha256": "2645c9025c3ecefff5ee4e174b55e9e04039fd0d98bdc61d166aefdf1897eda5"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-4/mutations.tsv",
+    "bytes": 12538426,
+    "sha256": "9b875649a8b8bca0ede5cb4373db70532f8fc17dd4cf5f1a157c81c33e85f624"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-4/series.jsonl",
+    "bytes": 7698576,
+    "sha256": "d57a3fb8baf96e6bc7c1f0b823ae1a0abad0f2b23bac00dc35d61432e5e87c6e"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-5/activity-final.json",
+    "bytes": 209702,
+    "sha256": "b3ee9878116ce8ef01ba5085a329a56e9e34ce0bbf3cc882a4dcd87a55bc2e02"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-5/heredity.tsv",
+    "bytes": 95465,
+    "sha256": "d218561a1d2d5ef22c9c84effcf93098a50392d4fb14daf5a212b622b6fe959b"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-5/life.jsonl",
+    "bytes": 15777335,
+    "sha256": "5f9650c4d963f4fd3f4fabbb97ba4c6e4ba8e133f2d62cac62c6982d48e9c12e"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-5/lineages.tsv",
+    "bytes": 53319209,
+    "sha256": "41fb91a55b14ca17b16a085d8d04edd572f6d7399980a2df67cc843cf8a160a5"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-5/manifest.json",
+    "bytes": 1956,
+    "sha256": "6e5b06391f191ec6476d87a8af52d7225ab708027dab90e84207ecf01a815ed1"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-5/mutations.tsv",
+    "bytes": 8825959,
+    "sha256": "4111786405ed0819f13a48c32f134d0bc44802d2711c9aba23306e168c3e7e0b"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-5/series.jsonl",
+    "bytes": 7527399,
+    "sha256": "6272d864dec48ce8d821a89f872b72b72447bae7f5a17c0e78650b697df07487"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-6/activity-final.json",
+    "bytes": 238392,
+    "sha256": "91ba52e1dfb230477af85c9c3fa85b6adbeb177e31719a3cd086ed8891919e64"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-6/heredity.tsv",
+    "bytes": 2045209,
+    "sha256": "79541917a68977be154464ee4f9f301ef52735d76d4dcc028c736e872ec119a0"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-6/life.jsonl",
+    "bytes": 18030646,
+    "sha256": "275705b40f5842aae1aa9ab60e3db3b740c1a0eb1cc3bc985b64988a770a1928"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-6/lineages.tsv",
+    "bytes": 52472077,
+    "sha256": "2dd2bff832226bd1956424f0772aa667afe02409a3e2a2b54feb601f1a481a0f"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-6/manifest.json",
+    "bytes": 1962,
+    "sha256": "91b4bb9813e2d315e650692df6758ae85007ce70d83457555e967a2e340b2569"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-6/mutations.tsv",
+    "bytes": 9608862,
+    "sha256": "7a7c2ac66b481a0cd86eedd0d10e09cea7a4f408b3554575bf738ea857ada797"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-6/series.jsonl",
+    "bytes": 7679229,
+    "sha256": "4096080609fa9320682cc289ffa2f37669998d5138b231be141a5992f86b9e08"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-7/activity-final.json",
+    "bytes": 511470,
+    "sha256": "661ec71a89ae1a5abc82736eb34f2396b7cb5e1d34c90cb6214ba90993b6892b"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-7/heredity.tsv",
+    "bytes": 2303911,
+    "sha256": "17501a369ecf0e6b648aa97cac426aa67ff64ec1c3c22d2e4f1fd36ac435126f"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-7/life.jsonl",
+    "bytes": 11837614,
+    "sha256": "3ac4c4ae46fd156db7cf39dd89b786b5b298a0eedc0c586b27588466fdc6add1"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-7/lineages.tsv",
+    "bytes": 97475573,
+    "sha256": "812ba7d80b9c61b77f0de4edb762b57d34a0158b2083760bdf339edf08b589d7"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-7/manifest.json",
+    "bytes": 1960,
+    "sha256": "0372c4f401e85e9c9eb13a70cac3b452a999aa0d3cb6d6aa1fef8432ada0c612"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-7/mutations.tsv",
+    "bytes": 19453109,
+    "sha256": "67778c2380f38f49cb894a4db955415c0bb59ee7abc09540f59aae72938e5a4f"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-7/series.jsonl",
+    "bytes": 7752001,
+    "sha256": "ac08eebfe289c30e28a679c49b24c65695ebf6d6291dd540f581244ee1df4a5d"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-8/activity-final.json",
+    "bytes": 281847,
+    "sha256": "9ca8c77a355a5587fb2eb27e533dc88a0115ff8967dd8593e93d637a47e0e3a8"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-8/heredity.tsv",
+    "bytes": 136784,
+    "sha256": "b46a00b3a0266f02dec142bd10ff13cac2d289636aaa1a9008f447e5722756e5"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-8/life.jsonl",
+    "bytes": 5592872,
+    "sha256": "fa8558e21cd43dbd4835b9721529e4cc1f8203fce2872ca9666f4bd27cfca606"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-8/lineages.tsv",
+    "bytes": 92434762,
+    "sha256": "29601ef49f42d1100d2d2c67724742e605e22c1a2ef0e5a3864f815cfc6c2f65"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-8/manifest.json",
+    "bytes": 1959,
+    "sha256": "604e898d43105c789fcaec5dfe6fb958cef84a74cd8f6b455174611bb7a0682c"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-8/mutations.tsv",
+    "bytes": 10709415,
+    "sha256": "d074be6240412d9dc727ce2c9f58468219d6265596eff87e78c2bf36897b4282"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-8/series.jsonl",
+    "bytes": 7733359,
+    "sha256": "0286981748e630b6d999c23bdfd45c1c03996c0e9789d6fa5cd0bfa91fe391e5"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-9/activity-final.json",
+    "bytes": 533004,
+    "sha256": "a33f328f02435cb20672df6e13dc1deca43a7440ad29a968e5e48e9304a09a18"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-9/heredity.tsv",
+    "bytes": 1515253,
+    "sha256": "df138ce1daa7582949ea5d4f8e9542ac9c1bf5e597cb9fd4fdce8a19864944f0"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-9/life.jsonl",
+    "bytes": 8949138,
+    "sha256": "6a1800e2a64113e9e61874a85f9f3936d20a521bd920eda653c3ed67ccb3995c"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-9/lineages.tsv",
+    "bytes": 101755182,
+    "sha256": "2b02d436451bb0dc927f078cfd2fae7973a599eb534d013c7c6f02c4eb823b3a"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-9/manifest.json",
+    "bytes": 1962,
+    "sha256": "838a42e2cb1c88be734978a26c9f7c3450c6217292dddfe7806f3ffc515ffbe1"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-9/mutations.tsv",
+    "bytes": 20423479,
+    "sha256": "507ac6ca8239b6e7017615f4941d707be748a68a8c0b3b6eb8dfcfce3ac69ce8"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-9/series.jsonl",
+    "bytes": 7737189,
+    "sha256": "bc074f9b669edb4326c69fdd392b644de1e6f17df341347ffee33902dec9b663"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-10/activity-final.json",
+    "bytes": 610724,
+    "sha256": "e8bce193eb077642abb25ea7f4373e580b075de111fd12a8d0232bde0b1d7b87"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-10/heredity.tsv",
+    "bytes": 852262,
+    "sha256": "2b41376e8869937b41784a8885ccc9f8bcb3cf59189ccd8061da7db8ca37e176"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-10/life.jsonl",
+    "bytes": 6532811,
+    "sha256": "dc7ddf38ad6b93ca20cc10d2b4aeff174434344d1155bf31b46c6ff38a5386d3"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-10/lineages.tsv",
+    "bytes": 127026642,
+    "sha256": "52330d39d100be4ad55b02fb6acc0b336bc91aa8996009a5c76bcfe71335d6a3"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-10/manifest.json",
+    "bytes": 1963,
+    "sha256": "34284091b68a83a72fabf5d0bd2eb1f08cb207c9366c03c68ca4345b824bae72"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-10/mutations.tsv",
+    "bytes": 23573084,
+    "sha256": "dea2ed8448179e0eb66404b26cf9e7aabe4509d7f1dce5cd64161411b09a7aa2"
+   },
+   {
+    "path": "runs/m4/gradient-m3/treatment/seed-10/series.jsonl",
+    "bytes": 7762644,
+    "sha256": "cf7b05e6aa304a0e8955ba2fcb177288f00ff9b3dcba33e6c0ee7a08e9a0808b"
+   }
+  ],
+  "source": [
+   {
+    "path": "packages/runner/src/observe.ts",
+    "bytes": 4209,
+    "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+   },
+   {
+    "path": "packages/runner/src/runner.ts",
+    "bytes": 44732,
+    "sha256": "38ac185c0e6e6e96f8b461c3b907204abf513cad87e8ef40fabdeb5f2a5322bd"
+   },
+   {
+    "path": "tools/foundations.ts",
+    "bytes": 73780,
+    "sha256": "3c6efdff3ce09a0b0523a09c4f343f3a54fb50b1d773f831d13536e245daed8c"
+   },
+   {
+    "path": "tools/assay.ts",
+    "bytes": 23966,
+    "sha256": "c944856e7bdc5a39901bfe5405f1878a0ab05d3e20cec3c1c3557702867f7c5b"
+   },
+   {
+    "path": "tools/run.ts",
+    "bytes": 4311,
+    "sha256": "086dc7a2dc1e4cb79657a15705dcbe6cbe6588eb1889dd6e6e099bbf4c9ed38c"
+   }
+  ]
+ },
+ "counts": {
+  "audit": {
+   "files": 6,
+   "bytes": 363098
+  },
+  "t1Garden": {
+   "files": 50,
+   "bytes": 6237357
+  },
+  "replays": {
+   "files": 200,
+   "bytes": 3543913905
+  },
+  "originals": {
+   "files": 70,
+   "bytes": 1329502757
+  },
+  "source": {
+   "files": 5,
+   "bytes": 150998
+  }
+ }
+}
