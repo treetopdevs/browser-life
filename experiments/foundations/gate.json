@@ -78,5 +78,15 @@
   "margin": 0.09531017980432493,
   "row": "Inconclusive"
  },
- "t4b": null
+ "t4b": {
+  "histories": 10,
+  "controlHistories": 5,
+  "complete": true,
+  "lateBeatsEarly": 5,
+  "controlLateBeatsEarly": 0,
+  "confounded": false,
+  "residualOk": false,
+  "margin": 0.09531017980432493,
+  "row": "Inconclusive"
+ }
 }
