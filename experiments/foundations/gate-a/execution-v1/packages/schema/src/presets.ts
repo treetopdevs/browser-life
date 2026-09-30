@@ -1,0 +1,162 @@
+import { canonicalConfig, digestWords } from "./accounting.ts";
+import { defaultConfig, type WorldConfig } from "./config.ts";
+import { M3_FOUNDER_SET, M3_FOUNDERS } from "./founders.ts";
+import { generalistWorld, m3World, soupWorld, type WorldState } from "./world.ts";
+
+export type InitKind = "generalist" | "soup" | "m3";
+
+export interface InitParams {
+  kind: InitKind;
+  founders: number;
+  nutrient: number;
+  biomass: number;
+}
+
+export interface Preset {
+  id: string;
+  name: string;
+  description: string;
+  cfg: Partial<WorldConfig>;
+  init: InitParams;
+}
+
+/** Physics shared by all presets: the spot-forming Flow-Lenia regime found in the M3 sweeps. */
+const SPOT_REGIME: Partial<WorldConfig> = { defaultMu: 60, defaultSigma: 20, kernelRadius: 9 };
+
+export const PRESETS: Preset[] = [
+  {
+    id: "spots",
+    name: "Spot ecology",
+    description: "Six generalist founders under uniform light. Biomass condenses into spots that grow and divide.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "uniform", lightBase: 40, lightAmp: 160 },
+    init: { kind: "generalist", founders: 6, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "gradient",
+    name: "Light gradient",
+    description: "Light rises from top to bottom, so lineages face a spatial niche axis.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
+    init: { kind: "generalist", founders: 8, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "spots-m3",
+    name: "Spot ecology (M3 founders)",
+    description:
+      "Spot ecology under uniform light, founded from the 12 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "uniform", lightBase: 40, lightAmp: 160 },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "gradient-m3",
+    name: "Light gradient (M3 founders)",
+    description:
+      "Light gradient niche axis, founded from the 12 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "soup",
+    name: "Random soup",
+    description: "Twenty-four founders with random controllers. Most die; survivors seed the world.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "uniform", lightBase: 40, lightAmp: 160 },
+    init: { kind: "soup", founders: 24, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "seasons",
+    name: "Patches & seasons",
+    description: "Checkerboard light patches with a 4,000-step seasonal cycle.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "patches", lightBase: 20, lightAmp: 160, seasonPeriod: 4000, seasonAmp: 60 },
+    init: { kind: "generalist", founders: 8, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "large",
+    name: "Large world (512²)",
+    description: "The spot ecology at 512 × 512 for longer evolutionary runs.",
+    cfg: { ...SPOT_REGIME, tileW: 512, tileH: 512, lightMode: "gradient", lightBase: 30, lightAmp: 200 },
+    init: { kind: "generalist", founders: 16, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "archipelago",
+    name: "Archipelago (2×2 islands)",
+    description:
+      "Four tile-islands (see WorldConfig's tileW/tileH/tilesX/tilesY: one tile is an independent torus) under a light gradient, exchanging migrant packets every migrationPeriod steps — the M6 gate's migration mechanism. The \"no-migration\" control disables the exchange.",
+    cfg: { ...SPOT_REGIME, tileW: 64, tileH: 64, tilesX: 2, tilesY: 2, lightMode: "gradient", lightBase: 20, lightAmp: 220, migrationPeriod: 200, migrantCount: 4 },
+    init: { kind: "generalist", founders: 16, nutrient: 32, biomass: 64 },
+  },
+];
+
+export function presetConfig(p: Preset, seed: number, extra: Partial<WorldConfig> = {}): WorldConfig {
+  return defaultConfig({ ...p.cfg, seed, ...extra });
+}
+
+/**
+ * Content identity of a preset's distribution: everything that determines
+ * what world a run of this preset draws from -- its own config (with `seed`
+ * excluded, since that varies per run and is never part of "which
+ * distribution") and init params, plus (only for an M3-founder preset) the
+ * exact founder set `M3_FOUNDER_SET` resolves to. Two presets with the same
+ * identity are, run-for-run, physically identical; a code change to a
+ * preset's `cfg`/`init`, or to which founder set `M3_FOUNDER_SET` names,
+ * changes this digest.
+ *
+ * Used to detect when a frozen value (e.g. experiments/endpoints.ts's
+ * ACTIVITY_THRESHOLDS, calibrated by tools/calibrate.ts from a pilot) was
+ * computed against a preset definition that has since changed underneath
+ * it -- `seed`, deliberately excluded here, and `condition` (not a preset
+ * property at all -- see packages/runner/src/conditions.ts) are expected to
+ * differ between the pilot and any ensemble that reuses this identity, so
+ * neither affects this digest.
+ */
+export function presetIdentity(p: Preset): string {
+  const { seed: _seed, ...cfgWithoutSeed } = presetConfig(p, 0);
+  const canonical = canonicalConfig(cfgWithoutSeed as WorldConfig);
+  const founderSetId = p.init.kind === "m3" ? M3_FOUNDER_SET : null;
+  // Fields in a fixed order, so the digest does not depend on how the preset's
+  // init object happens to be written.
+  const { kind, founders, nutrient, biomass } = p.init;
+  const bytes = new TextEncoder().encode(JSON.stringify({ cfg: canonical, init: { kind, founders, nutrient, biomass }, founderSetId }));
+  const words = new Uint32Array(Math.ceil(bytes.length / 4));
+  new Uint8Array(words.buffer).set(bytes);
+  const [a, b] = digestWords(Uint32Array.of(bytes.length, ...words));
+  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+}
+
+/**
+ * Digest combining a preset's identity with one specific, already
+ * seed-stripped `WorldConfig` -- typically a condition-transformed config
+ * (e.g. `specConfig` for condition "neutral"), not the preset's own raw
+ * `cfg` (Astra review, 2026-09-27, item 2): `presetIdentity` alone doesn't
+ * capture a *condition*'s own transform (packages/runner/src/conditions.ts
+ * -- e.g. "neutral"'s `apply`), so changing what a condition does would
+ * otherwise leave `presetIdentity` unchanged while silently changing the
+ * distribution a calibration pilot's runs (all one condition) actually draw
+ * from.
+ *
+ * Takes explicit inputs -- a presetIdentity string, a condition id and a
+ * config -- rather than a `Preset`/presetId, so this same function produces
+ * identical digests whether called with values freshly computed from
+ * current code (tools/analyze.ts, experiments/endpoints.ts) or with values
+ * read back out of an already-verified run manifest (tools/calibrate.ts,
+ * which must derive this from the pilot's own data, not from current code
+ * alone) -- the two call sites are cross-checked precisely because they can
+ * only agree if the underlying data actually does.
+ */
+export function distributionIdentity(presetIdentityValue: string, condition: string, cfgWithoutSeed: WorldConfig): string {
+  const canonical = canonicalConfig(cfgWithoutSeed);
+  const bytes = new TextEncoder().encode(JSON.stringify({ presetIdentity: presetIdentityValue, condition, cfg: canonical }));
+  const words = new Uint32Array(Math.ceil(bytes.length / 4));
+  new Uint8Array(words.buffer).set(bytes);
+  const [a, b] = digestWords(Uint32Array.of(bytes.length, ...words));
+  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+}
+
+export function initWorld(cfg: WorldConfig, init: InitParams): WorldState {
+  switch (init.kind) {
+    case "soup":
+      return soupWorld(cfg, init.founders, init.nutrient, init.biomass);
+    case "m3":
+      return m3World(cfg, init.founders, init.nutrient, init.biomass);
+    default:
+      return generalistWorld(cfg, init.founders, init.nutrient, init.biomass);
+  }
+}

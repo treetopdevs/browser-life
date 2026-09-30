@@ -1,0 +1,12 @@
+{
+  "tests": {
+    "command": "deno test --no-lock --allow-read tools/test/gate-a-evaluation-v1.test.ts",
+    "independentReviewerPassed": 11,
+    "failed": 0,
+    "wallSeconds": 0.531846292,
+    "actualMutationTwinRequired": true
+  },
+  "typeChecks": "implementer passed standalone evaluator and runner checks",
+  "review": "final-review.md",
+  "sourceFreeze": "freeze-manifest-v1.json"
+}

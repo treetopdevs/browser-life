@@ -1,0 +1,15 @@
+{
+  "physicalExecutionSeconds": 146.743,
+  "implementerPreflightConservativeSeconds": 15,
+  "independentTestSeconds": 0.531846292,
+  "failedPreExecutionCommandSeconds": 0.103358583,
+  "conservativeSubstantiveCommandChargeSeconds": 180,
+  "limitSeconds": 600,
+  "note": "180-second charge includes bounded command/verification overhead beyond measured execution; document drafting and read-only review time are not simulator/test runtime. No further execution authorized by this receipt.",
+  "gpuSeconds": 0,
+  "cloudSpend": 0,
+  "previousResetFilesVerified": 751,
+  "previousSelectionAuditFilesVerified": 66,
+  "previousEvidenceMismatches": [],
+  "sourceAndOutputHashesVerified": true
+}

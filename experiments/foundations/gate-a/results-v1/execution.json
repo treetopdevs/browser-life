@@ -1,0 +1,276 @@
+{
+  "format": "gate-a-execution/v1",
+  "startedAt": "2026-09-30T02:22:30.255Z",
+  "status": "complete",
+  "protocolSha256": "dec7efd7b1f38f6607be0d955c6d972950d280a568990b9e7e2fbdb6a7cc2618",
+  "freezeSha256": "e3778c169361e870fcc9c3eba0c6c54b819834b4483bffa8250f773911ddc415",
+  "cfgSha256": "3ebd11a08632eaba78d9cb6edf8bbb025af88b8ae11cc456cffb58f3ef91d07b",
+  "cfg": {
+    "ruleVersion": 1,
+    "seed": 6100001,
+    "tileW": 64,
+    "tileH": 64,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 9,
+    "thetaMass": 512,
+    "dtQ": 51,
+    "spread": 8,
+    "defaultMu": 60,
+    "defaultSigma": 20,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 64,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 66,
+    "kBDecay": 20,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 400,
+    "mutRate": 429497,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 40,
+    "lightAmp": 160,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": true
+  },
+  "founder": {
+    "index": 2,
+    "historicalCluster": 2,
+    "founderSetId": "m3-50886563ec90fb39",
+    "genomeHex": "001a005000000000d0fdd0d0fdc0c309fc35da0522d307c738ef352aca2adf0728e83205ff100136cd1d0d29d719f93316fbcd39112b403dffdcce262dfe2835fc22130013e6d8fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01c53fc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82537ce37e623dd2323e1143f13f7d6ffc7df0ad501d61e011416220936213fc029c9dd1c3e2537e3fc21f1e1f1"
+  },
+  "mutationRate": 429497,
+  "preparation": {
+    "completedSteps": 3000,
+    "mutationEvents": 46,
+    "candidate": {
+      "index": 12,
+      "minSite": 2780,
+      "mass": 5040,
+      "sites": 23
+    },
+    "allComponents": [
+      {
+        "index": 0,
+        "minSite": 534,
+        "mass": 1503,
+        "sites": 29
+      },
+      {
+        "index": 1,
+        "minSite": 680,
+        "mass": 2233,
+        "sites": 39
+      },
+      {
+        "index": 2,
+        "minSite": 930,
+        "mass": 5011,
+        "sites": 24
+      },
+      {
+        "index": 3,
+        "minSite": 1366,
+        "mass": 5019,
+        "sites": 23
+      },
+      {
+        "index": 4,
+        "minSite": 1485,
+        "mass": 1262,
+        "sites": 24
+      },
+      {
+        "index": 5,
+        "minSite": 1580,
+        "mass": 5032,
+        "sites": 24
+      },
+      {
+        "index": 6,
+        "minSite": 1632,
+        "mass": 4084,
+        "sites": 18
+      },
+      {
+        "index": 7,
+        "minSite": 1845,
+        "mass": 1437,
+        "sites": 28
+      },
+      {
+        "index": 8,
+        "minSite": 2010,
+        "mass": 3685,
+        "sites": 17
+      },
+      {
+        "index": 9,
+        "minSite": 2256,
+        "mass": 4887,
+        "sites": 21
+      },
+      {
+        "index": 10,
+        "minSite": 2274,
+        "mass": 3444,
+        "sites": 15
+      },
+      {
+        "index": 11,
+        "minSite": 2476,
+        "mass": 5026,
+        "sites": 24
+      },
+      {
+        "index": 12,
+        "minSite": 2780,
+        "mass": 5040,
+        "sites": 23
+      },
+      {
+        "index": 13,
+        "minSite": 2829,
+        "mass": 1901,
+        "sites": 34
+      },
+      {
+        "index": 14,
+        "minSite": 2900,
+        "mass": 496,
+        "sites": 8
+      },
+      {
+        "index": 15,
+        "minSite": 3046,
+        "mass": 527,
+        "sites": 8
+      },
+      {
+        "index": 16,
+        "minSite": 3181,
+        "mass": 1518,
+        "sites": 27
+      }
+    ]
+  },
+  "isolation": {
+    "removedBoundMass": 75989,
+    "removedEnergy": 3285,
+    "removedSites": 2269,
+    "initialMass": 5040
+  },
+  "lesion": {
+    "removedBoundMass": 1602,
+    "removedEnergy": 9,
+    "fraction": 0.31785714285714284,
+    "residualMass": 3438,
+    "valid": true
+  },
+  "arms": {
+    "sham": {
+      "status": "complete",
+      "calibration": {
+        "primary": {
+          "status": "supported",
+          "reasons": []
+        },
+        "sensitivity": {
+          "status": "unavailable",
+          "reasons": [
+            "focal identity unresolved"
+          ]
+        },
+        "overall": {
+          "status": "unavailable",
+          "reasons": [
+            "segmentation-dependent threshold disagreement"
+          ]
+        }
+      },
+      "samples": 21,
+      "mutationEvents": 4
+    },
+    "lesion": {
+      "status": "complete",
+      "calibration": {
+        "primary": {
+          "status": "refuted",
+          "reasons": [
+            "final mass below 90% initial"
+          ]
+        },
+        "sensitivity": {
+          "status": "supported",
+          "reasons": []
+        },
+        "overall": {
+          "status": "unavailable",
+          "reasons": [
+            "segmentation-dependent threshold disagreement"
+          ]
+        }
+      },
+      "samples": 21,
+      "mutationEvents": 4
+    },
+    "quenched": {
+      "status": "complete",
+      "calibration": {
+        "primary": {
+          "status": "unavailable",
+          "reasons": [
+            "focal identity unresolved"
+          ]
+        },
+        "sensitivity": {
+          "status": "supported",
+          "reasons": []
+        },
+        "overall": {
+          "status": "unavailable",
+          "reasons": [
+            "segmentation-dependent threshold disagreement"
+          ]
+        }
+      },
+      "samples": 21,
+      "mutationEvents": 0
+    }
+  },
+  "production": {
+    "status": "unavailable",
+    "reason": "independent causal production and functioning descendants not established"
+  },
+  "organization": {
+    "status": "unavailable",
+    "reason": "descriptive nonmass metrics are not a validated functional organization endpoint"
+  },
+  "roleInterpretation": "activity presence and saturated label totals are lower bounds; whole-world totals never substitute for focal activity",
+  "limitations": [
+    "material-retention unavailable",
+    "production unavailable without independent causal evidence and independently functioning descendants"
+  ],
+  "elapsedSeconds": 146.743,
+  "finishedAt": "2026-09-30T02:24:57.000Z",
+  "endSourceHashesVerified": true
+}

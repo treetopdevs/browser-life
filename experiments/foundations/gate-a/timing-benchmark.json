@@ -1,0 +1,18 @@
+{
+  "kind": "timing-only",
+  "founderIndex": 2,
+  "setup": "one 64x64 tile; DEFAULT_EVAL world kernel9, seed1, nutrient32, biomass64, radius10, energy128; default mutation enabled",
+  "cfgSha256": "06713a2798d35394eefc4816dc5ed54580be074bdee84efaa07f6a62b19e03d6",
+  "sourceHashes": {
+    "packages/sim-ref/src/step.ts": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85",
+    "packages/schema/src/world.ts": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6",
+    "packages/schema/src/config.ts": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601",
+    "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+    "packages/search/src/evaluate.ts": "c8b3a7ff858778013f629b0a0a47a25fa2811eca813e44ac0a7123ef94e1fd66"
+  },
+  "completedSteps": 10,
+  "firstStepMs": 57,
+  "elapsedMs": 242,
+  "estimated9000StepHours": 0.06,
+  "provisionalLinearEstimate": true
+}

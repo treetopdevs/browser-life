@@ -1,0 +1,369 @@
+{
+  "date": "2026-09-29",
+  "parentJjCommit": "31e3ad73",
+  "authoritativeResults": "results-v1",
+  "gateA": "unpassed: segmentation-dependent calibration; organization/production unavailable",
+  "laterGates": "not launched",
+  "files": [
+    {
+      "path": "docs/gate-a-protocol-v1.md",
+      "bytes": 8741,
+      "sha256": "dec7efd7b1f38f6607be0d955c6d972950d280a568990b9e7e2fbdb6a7cc2618"
+    },
+    {
+      "path": "docs/gate-a-results-v1.md",
+      "bytes": 8129,
+      "sha256": "03ffe6a352e2e61389f77f50d8d6a8235006286e04e7d0491bda2e0ddd4f561f"
+    },
+    {
+      "path": "experiments/foundations/gate-a/decision-note.md",
+      "bytes": 2132,
+      "sha256": "2f8fd9064a3e99c659a2b4f42142e1fa5bac92e43e9cfd8d01f49240ae4ebb07"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-source-manifest-v1.json",
+      "bytes": 12078,
+      "sha256": "5b872f03714b251a63641407ab914b0b685033a648a426f23a03fb1867419a9e"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/deno.lock",
+      "bytes": 694,
+      "sha256": "8630fa4d89086681cfed42c0f5977e2e34e720d1b32580300df124f83cf872bd"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/docs/gate-a-protocol-v1.md",
+      "bytes": 8741,
+      "sha256": "dec7efd7b1f38f6607be0d955c6d972950d280a568990b9e7e2fbdb6a7cc2618"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/runner/src/runner.ts",
+      "bytes": 37712,
+      "sha256": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/genome.ts",
+      "bytes": 3055,
+      "sha256": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/schema/src/world.ts",
+      "bytes": 14874,
+      "sha256": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19269,
+      "sha256": "f6d119d89147752ee1c3fd2ab136eb545cbb4ba696adaa4eac795dfb740d506e"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/tools/fixtures/reset-material-bounds-mutation-v1.json",
+      "bytes": 384,
+      "sha256": "5a6fef3e33e9b8f56495d68278318a9dea9cee81696e8b35ce5360c3fe7edd6e"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/tools/gate-a-controls-v1.ts",
+      "bytes": 17789,
+      "sha256": "bdc4606cd0fbafea44d849b0a1f7c7735a427d6bfe680c51c344858a256e4619"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/tools/lib/gate-a-evaluation-v1.ts",
+      "bytes": 12587,
+      "sha256": "f118de389519ca24736585e202e881dfcce681872a3c34f9f112acd9c54bae9f"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/tools/lib/reset-copy-extraction.ts",
+      "bytes": 7407,
+      "sha256": "1e664bb0208ea22d5f9f6321ed2e50ca042e0233c36c76104def7fea156d76a6"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/tools/lib/reset-gpu-copy-audit.ts",
+      "bytes": 14019,
+      "sha256": "696ce3615329fe0b8bff1ff26fbe889407475c5afefaae7e32d52c1f795f5d75"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/tools/lib/reset-probe-a-observer.ts",
+      "bytes": 7663,
+      "sha256": "e3509fdc6f31030280dce0ea587ef0ec3703c0d8ba512057a0334cbd25a9c64c"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/tools/lib/reset-topology.ts",
+      "bytes": 6095,
+      "sha256": "9b65ffd8f3210727432b4bd79e79c35d8f2b08199206ed7d6bc4fa13e8b07831"
+    },
+    {
+      "path": "experiments/foundations/gate-a/execution-v1/tools/test/gate-a-evaluation-v1.test.ts",
+      "bytes": 8565,
+      "sha256": "02ef8542ac772ac248996a1c0909c2ce714b57a007e000bdbe63333593ae54ce"
+    },
+    {
+      "path": "experiments/foundations/gate-a/final-review.md",
+      "bytes": 1480,
+      "sha256": "1384b6cb3ed189eeb40f4795e535212c22e896ef8be8f3f733919403f8e56ade"
+    },
+    {
+      "path": "experiments/foundations/gate-a/freeze-manifest-v1.json",
+      "bytes": 5813,
+      "sha256": "e3778c169361e870fcc9c3eba0c6c54b819834b4483bffa8250f773911ddc415"
+    },
+    {
+      "path": "experiments/foundations/gate-a/main-plan-append-receipt.json",
+      "bytes": 299,
+      "sha256": "68413d684c1d1e5ef3bf1ccc50c777165b7294c3ebb3fd6f92233982f0f6faf5"
+    },
+    {
+      "path": "experiments/foundations/gate-a/main-plan-before-gate-a-note.md",
+      "bytes": 85368,
+      "sha256": "e4f4afac0b977591e7262334d305c7cb1304ca094a9b1eff9476c574551add87"
+    },
+    {
+      "path": "experiments/foundations/gate-a/pre-execution-review.md",
+      "bytes": 1269,
+      "sha256": "7805256cb5c7f53392e2de8a04e96d641325deba076e5ec51f8c392316344319"
+    },
+    {
+      "path": "experiments/foundations/gate-a/resource-and-preservation-receipt.json",
+      "bytes": 687,
+      "sha256": "47b484b3c4bb0220ee4d7b230c0f69b8d1176efa3cfecf43347ddc426e62899a"
+    },
+    {
+      "path": "experiments/foundations/gate-a/results-v1/execution.json",
+      "bytes": 6301,
+      "sha256": "581a29fa9afb4ccf630acf1c922e693d16294b1ad5c013f2c89482089033c17c"
+    },
+    {
+      "path": "experiments/foundations/gate-a/results-v1/lesion.json",
+      "bytes": 1007816,
+      "sha256": "9edb320536cdc06932ecf92913c7f1a22e95e9dcaedff0b0aac52a2b0cd7db9c"
+    },
+    {
+      "path": "experiments/foundations/gate-a/results-v1/quenched.json",
+      "bytes": 974490,
+      "sha256": "03cf0177f3890e819a53bd8b31dc7cb6f780e7c360a5b3284940c328d474a80c"
+    },
+    {
+      "path": "experiments/foundations/gate-a/results-v1/receipt.json",
+      "bytes": 6198,
+      "sha256": "d19c52ee123a438b2a4e63e5ce2ea5b4ff64b19f1dd3d0065fd726ccd87c725a"
+    },
+    {
+      "path": "experiments/foundations/gate-a/results-v1/sham.json",
+      "bytes": 1350368,
+      "sha256": "af336c0b76e1a7ff2f80b61da922e7fea008ac30bd10bcce82c66ef9697a8b3c"
+    },
+    {
+      "path": "experiments/foundations/gate-a/timing-benchmark.json",
+      "bytes": 953,
+      "sha256": "c4572ccb358f81ddad80ad8440d7ffd15cef0d34df2486f51ae2edce03ace917"
+    },
+    {
+      "path": "experiments/foundations/gate-a/validation-receipt.json",
+      "bytes": 390,
+      "sha256": "605326b842ae59ff2b0b635453e4a5e5aa6dd1a2ae4db76032950724e69917f5"
+    },
+    {
+      "path": "tools/gate-a-controls-v1.ts",
+      "bytes": 17789,
+      "sha256": "bdc4606cd0fbafea44d849b0a1f7c7735a427d6bfe680c51c344858a256e4619"
+    },
+    {
+      "path": "tools/lib/gate-a-evaluation-v1.ts",
+      "bytes": 12587,
+      "sha256": "f118de389519ca24736585e202e881dfcce681872a3c34f9f112acd9c54bae9f"
+    },
+    {
+      "path": "tools/test/gate-a-evaluation-v1.test.ts",
+      "bytes": 8565,
+      "sha256": "02ef8542ac772ac248996a1c0909c2ce714b57a007e000bdbe63333593ae54ce"
+    }
+  ]
+}
