@@ -36,6 +36,7 @@ import {
   PONDS_HEADER,
   VERIFIED_FILES,
   applyBoundary,
+  checkPondsFile,
   conditionById,
   continuationError,
   decodeArtifact,
@@ -452,6 +453,19 @@ describe("stitchRun's ponds.tsv rules", () => {
     // The order of recipients within a boundary is free; only the set is checked.
     const shuffled = cycleRows(1, 1000).split("\n").slice(0, 4).reverse().join("\n") + "\n";
     expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, PONDS_HEADER + shuffled)], 1000)).not.toThrow();
+  });
+
+  it("checkPondsFile applies the same rules to a whole export over (0, steps], as a cached export is checked", () => {
+    const good = PONDS_HEADER + cycleRows(1, 1000) + cycleRows(2, 2000);
+    expect(() => checkPondsFile("export", good, 1000, 4, 0, 2000)).not.toThrow();
+    // Lines: the header, then cycle 1's four rows, then cycle 2's. Cycle 2's recipient 3 becomes a copy of recipient 0.
+    const dup = good.split("\n");
+    dup[8] = dup[5];
+    expect(() => checkPondsFile("export", dup.join("\n"), 1000, 4, 0, 2000)).toThrow(/^export: ponds.tsv has recipients \[0,1,2,0\] for the boundary at t=2000/);
+    // An export cut short, and one with no recipient column.
+    expect(() => checkPondsFile("export", PONDS_HEADER + cycleRows(1, 1000), 1000, 4, 0, 2000)).toThrow(/0 rows for the boundary at t=2000/);
+    expect(() => checkPondsFile("export", "cycle\tstep\n", 1000, 4, 0, 2000)).toThrow(/no recipient column/);
+    expect(() => checkPondsFile("export", good, undefined, 4, 0, 2000)).toThrow(/pondPeriod undefined is not a positive integer/);
   });
 
   it("is required in every segment of a pond run and refused in any other run", () => {

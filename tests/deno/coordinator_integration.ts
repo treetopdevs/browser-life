@@ -492,6 +492,36 @@ try {
       `differing [${differing.join(", ")}], missing [${missing.join(", ")}], ${pondRows} ponds.tsv rows, finalHash ${stitchedHash} vs ${singleHash}`,
     );
   }
+
+  // A cached export is re-checked against the stitch rules, because its fingerprint covers accepted digests and not
+  // them: an exported ponds.tsv whose second row repeats the first row's recipient (same row count) is moved aside
+  // and the run re-exported, instead of being kept as "already present".
+  {
+    const condition = pondSpec.conditions[0];
+    const cachedDir = `${outDir}/it-ponds/ponds-small/${condition}/seed-1`;
+    const good = await Deno.readTextFile(`${cachedDir}/${PONDS_FILE}`);
+    const lines = good.split("\n");
+    const recipientCol = lines[0].split("\t").indexOf("recipient");
+    const first = lines[1].split("\t");
+    const second = lines[2].split("\t");
+    second[recipientCol] = first[recipientCol];
+    lines[2] = second.join("\t");
+    await Deno.writeTextFile(`${cachedDir}/${PONDS_FILE}`, lines.join("\n"));
+    const unchanged = await stitchCli("it-ponds");
+    const asides = [...Deno.readDirSync(`${outDir}/it-ponds/ponds-small/${condition}`)].map((e) => e.name).filter((n) => n.startsWith("seed-1.stale-"));
+    check(
+      "a cached pond export whose ponds.tsv repeats a recipient is moved aside and rewritten, not kept",
+      unchanged.success && asides.length === 1 && new TextDecoder().decode(unchanged.stderr).includes("export fails the ponds.tsv check") && (await Deno.readTextFile(`${cachedDir}/${PONDS_FILE}`)) === good,
+      `${asides.join(",")} | ${new TextDecoder().decode(unchanged.stderr).slice(0, 300)}`,
+    );
+    const kept = await stitchCli("it-ponds");
+    const asidesAfter = [...Deno.readDirSync(`${outDir}/it-ponds/ponds-small/${condition}`)].filter((e) => e.name.startsWith("seed-1.stale-")).length;
+    check(
+      "the rewritten export is then kept as present: nothing written, nothing skipped, no further bundle moved aside",
+      kept.success && stdout(kept).includes("0 written, 2 already present, 0 skipped") && asidesAfter === 1 && (await Deno.readTextFile(`${cachedDir}/${PONDS_FILE}`)) === good,
+      stdout(kept).slice(-200),
+    );
+  }
 } finally {
   try {
     server.kill("SIGTERM");

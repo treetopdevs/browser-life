@@ -28,8 +28,8 @@
 // moved aside to seed-<n>.stale-<time> (outside analyze.ts's input) before
 // anything new is written.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { METRICS_VERSION, PRESETS } from "@bl/schema";
-import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, PONDS_FILE, SPECIES_FILE, stitchRun, type StitchSegment } from "@bl/runner";
+import { METRICS_VERSION, PRESETS, defaultConfig } from "@bl/schema";
+import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, PONDS_FILE, SPECIES_FILE, checkPondsFile, stitchRun, type StitchSegment } from "@bl/runner";
 
 // Optional files (not in BUNDLE_FILES): recorded only when the run has the
 // corresponding mechanism configured (tile migration / a metapopulation /
@@ -98,7 +98,8 @@ const metapopConfigured = Boolean(exp.spec.metapopulation);
 // (a coordinator spec carries no config overrides, and the pond conditions
 // only change the arm), so a pond preset expects it on every segment even
 // if none recorded one.
-const pondsConfigured = PRESETS.find((p) => p.id === exp.spec.presetId)?.cfg.pondPeriod !== undefined;
+const pondCfg = PRESETS.find((p) => p.id === exp.spec.presetId)?.cfg;
+const pondsConfigured = pondCfg?.pondPeriod !== undefined;
 // Whether optional file `f` is configured for a run whose segments are `segs`.
 const configuredFor = (f: (typeof OPTIONAL_FILES)[number], segs: Listed[]) =>
   f === EXCHANGES_FILE ? metapopConfigured : (f === PONDS_FILE && pondsConfigured) || segs.some((s) => s.files?.[f]);
@@ -145,6 +146,7 @@ const fingerprint = (segs: { digest: string | null; files: Record<string, string
   JSON.stringify(segs.map((s) => [s.digest, Object.entries(s.files ?? {}).sort(([x], [y]) => x.localeCompare(y)), s.verifiedBy, s.observationsVerified]));
 
 // The fingerprint of an existing export, "incomplete" if files are missing,
+// "invalid-ponds: <why>" if a pond run's ponds.tsv fails the stitch rules,
 // "stale-metrics-version" if it predates the current METRICS_VERSION (which
 // would otherwise never be caught: stitchRun's own version check only runs
 // on a fresh re-stitch, and an unchanged fingerprint would keep this export
@@ -181,6 +183,20 @@ async function existing(dir: string, segs: Listed[]): Promise<string | null> {
     if (configuredFor(f, segs) && !(await Deno.stat(`${dir}/${f}`).catch(() => null))) return "incomplete";
   }
   if ((manifest.metricsVersion ?? 1) !== METRICS_VERSION) return "stale-metrics-version";
+  // A pond run's ponds.tsv is re-checked against the stitch rules, whole, because the fingerprint covers accepted
+  // digests and not these rules: an export written by a stitcher that did not yet check each recipient, or edited
+  // since, would otherwise be kept for as long as the coordinator's record is unchanged.
+  if (pondsConfigured && pondCfg) {
+    // Read outside the try: a file that cannot be read is an operational error to surface, not evidence the export is invalid
+    // (which would move a possibly good bundle aside before its replacement is downloaded).
+    const text = await Deno.readTextFile(`${dir}/${PONDS_FILE}`);
+    const cfg = { ...defaultConfig(), ...pondCfg };
+    try {
+      checkPondsFile(dir, text, cfg.pondPeriod, cfg.tilesX * cfg.tilesY, 0, exp.spec.steps);
+    } catch (e) {
+      return `invalid-ponds: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }
   return fingerprint(manifest.segments ?? []);
 }
 
@@ -242,7 +258,9 @@ for (const [run, segs] of byRun) {
         ? "incomplete bundle"
         : have === "stale-metrics-version"
           ? "export predates the current metrics version"
-          : "history differs from the coordinator's accepted one",
+          : have.startsWith("invalid-ponds: ")
+            ? `export fails the ponds.tsv check (${have.slice("invalid-ponds: ".length)})`
+            : "history differs from the coordinator's accepted one",
     );
 
   const stitched = stitchRun(await Promise.all(segs.map(download)), exp.spec.steps);
