@@ -1,0 +1,20 @@
+{
+  "command": "deno run --allow-read --allow-write tools/selection-funnel-audit.ts --manifest PATH --out DIR",
+  "manifestPath": "/Users/nicholas/develop/browser-life-foundations/experiments/foundations/selection-audit-v1/input-manifest.json",
+  "out": "/Users/nicholas/develop/browser-life-foundations/experiments/foundations/selection-audit-v1/results",
+  "elapsedMs": 320,
+  "executionSourceSha256": {
+    "tools/selection-funnel-audit.ts": "8aed47c640d82941b49387ce1420795aa3f71fc09ede04ac098886226ca0dc68",
+    "tools/lib/selection-funnel-audit.ts": "0765cc2e7e2426206c482a799cab258ec4a03211a8488268f68a2baf4b206d93"
+  },
+  "outputs": {
+    "input-manifest.json": "79c0b26e028f88ddf6f05b93f4d0f94cee681786fcee2afd4b0e3e0576a36e96",
+    "observation-ledger.json": "ad8b33ad0ceb5e3bc7f21345d342c4eb0dcd3e89dc5a83833d9ff03b078a4592",
+    "histories.json": "a4024b05c273a3a936e96e6662725a4a38edc7dc1e2914570a2d3129967a6667",
+    "seven-summary.json": "4d9556c03040cb6e07c08e7c0365a9213272238c0ea136e446d53eae3e441314",
+    "seven-summary.csv": "b4bfa4d4bb48c83285f87bfe3b13887a89c2bce71f51a777c1ed7f1c5527df7d",
+    "reconciliation.json": "6c3e339c9e2024ba12e13f54cf14bf499737a9b922c7ab65791bd0c830717013",
+    "findings.json": "270c670b16d96840366923e506c14fb1fe1250acf8c656c340bead8a9b35fdef",
+    "audit-report.md": "9c91459c4086c4ae5e547da3e87de5d7b302df32feb68ef03f2d3ba07bb39aae"
+  }
+}

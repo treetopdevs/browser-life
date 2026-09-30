@@ -1,0 +1,22 @@
+[
+  {
+    "severity": "limitation",
+    "code": "screen-confirm-order",
+    "detail": "screening and confirmation row order differs; indexed observations retained separately"
+  },
+  {
+    "severity": "limitation",
+    "code": "legacy-inexact-resume",
+    "detail": "[{\"from\":200,\"exact\":false}]"
+  },
+  {
+    "severity": "limitation",
+    "code": "quality-zero-unrecorded",
+    "detail": "Only viable offers are logged; quality-zero search evaluations have no genome-level record."
+  },
+  {
+    "severity": "limitation",
+    "code": "historical-code-provenance",
+    "detail": "Pinned selection code may reconstruct records but is not proven to be the exact historical execution version."
+  }
+]

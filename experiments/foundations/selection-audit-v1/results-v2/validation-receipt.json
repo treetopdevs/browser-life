@@ -1,0 +1,12 @@
+{
+  "command": "deno test --no-lock --allow-read --allow-write tools/test/selection-funnel-audit.test.ts",
+  "passed": 13,
+  "failed": 0,
+  "latestMeasuredWallSeconds": 1.94,
+  "typeCheckCommand": "deno check --no-lock tools/selection-funnel-audit.ts",
+  "typeCheckPassed": true,
+  "latestTypeCheckWallSeconds": 0.56,
+  "testSourceSha256": "0a549cf533839341f7a047150193fc97ddce854ca3791510b981f328f4e62489",
+  "cumulativeMeasuredAuditTestCheckWallSecondsUpperBound": 20,
+  "note": "Includes bounded prior development/diagnostic test and audit attempts; no simulation, GPU or cloud command was run."
+}

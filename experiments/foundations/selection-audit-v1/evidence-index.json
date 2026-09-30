@@ -1,0 +1,347 @@
+{
+  "format": 1,
+  "date": "2026-09-29",
+  "authoritativeResults": "results-v3",
+  "supersededResults": [
+    "results",
+    "results-v2"
+  ],
+  "parentJjCommit": "68be3d1a2d58d163a3289e7ec4a0a914a0556c9f",
+  "frozenResetFilesVerified": 751,
+  "inputSourceDrift": [],
+  "substantiveCommandRuntimeUpperBoundSeconds": 40,
+  "runtimeLimitSeconds": 600,
+  "noSimulationGpuOrCloud": true,
+  "files": [
+    {
+      "path": "docs/selection-mismatch-audit-plan-v1.md",
+      "bytes": 5874,
+      "sha256": "4131b27f6bb2e71a2ae5a8134d56476a86ff8516a1f8d92cb4f60ce40661772b"
+    },
+    {
+      "path": "docs/selection-mismatch-audit-results-v1.md",
+      "bytes": 7615,
+      "sha256": "2106442e644999521fc65df39411497349a8942749fa72af57d2ab977a58f886"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/decision-note.md",
+      "bytes": 2381,
+      "sha256": "0c47c3c968284a7d235ef1150be4743bc05343e12b6f6597e3d22ad19a94dd99"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/execution/tools/lib/selection-funnel-audit.ts",
+      "bytes": 25238,
+      "sha256": "8375e967a0421b965b71d4d96383a804382fe30744047af2c723efc334a12821"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/execution/tools/selection-funnel-audit.ts",
+      "bytes": 4178,
+      "sha256": "ceba9e63fcafc08266632b6aed60c0f1eba365547786a3d30f87b87f2d9e8d5a"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/execution/tools/test/selection-funnel-audit.test.ts",
+      "bytes": 9059,
+      "sha256": "37c77f87fe4a6616dfbea8da1108b6453a91d5a9f2263afe217ca85668dcc4ea"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/execution-source-manifest.json",
+      "bytes": 776,
+      "sha256": "d687603253039b49b1e580c805d49ad42c83c3aca1d867e0a6c3354557543281"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/independent-review.md",
+      "bytes": 2232,
+      "sha256": "d5d2a26724f11e03977a037765b87a6c8fda8660682cc35350de5aa75e31e677"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/input-manifest.json",
+      "bytes": 5141,
+      "sha256": "79c0b26e028f88ddf6f05b93f4d0f94cee681786fcee2afd4b0e3e0576a36e96"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/archive.json",
+      "bytes": 99708,
+      "sha256": "9504ecb73592c396e9fd73d7af424099a423353ce6edbda5ff9210dd5a882fc6"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/codeBootstrap.ts",
+      "bytes": 18454,
+      "sha256": "2b98289a9bb32f1ea9eedaf9f2e8b6deb6851046cfac8073b4f81ae2454240dd"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/codeEvaluate.ts",
+      "bytes": 15515,
+      "sha256": "a8d6cc30cd41c752da7907ee66e10dc947209df9b8497ea0160a66cc306a8cc0"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/codeFoundations.ts",
+      "bytes": 73780,
+      "sha256": "3c6efdff3ce09a0b0523a09c4f343f3a54fb50b1d773f831d13536e245daed8c"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/codeGenetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/codeGenome.ts",
+      "bytes": 3849,
+      "sha256": "77a1a3cc32bd4bd3bc638ba9e0fec5e7a552fd815631b02f63f3ac566d63cdd9"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/codeMapelites.ts",
+      "bytes": 9605,
+      "sha256": "bc2b4402c58342b847411b95d249847fa451924e692b9a39bae35590b32b1d08"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/codeProbability.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/codeRetest.ts",
+      "bytes": 6367,
+      "sha256": "80ea2e3a723af000d4ab94740c139765b4b114203478851ce5fc2d00c69bdfb9"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/codeRetestTool.ts",
+      "bytes": 11905,
+      "sha256": "69723b499890de7277fa5a5dc1ebc298e1cf2f3239106fa9acda02a02eee7f31"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/confirm.json",
+      "bytes": 1707193,
+      "sha256": "44ac88b232e44017ac6c651dde8b88a36948494687443d2030a42c819a5d7389"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/fdPool.json",
+      "bytes": 393353,
+      "sha256": "2d96aa3c99e475dd27374f6f7f549f102a434b1b3231e964870852ad0a7785d1"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/fdResults.json",
+      "bytes": 150925,
+      "sha256": "d97d7723e18529c7e47191b3e49762cca005d0d6547e818c5c3175cae8851876"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/fdSubjects.json",
+      "bytes": 12381,
+      "sha256": "a31f93bbabbcefd5f11272d9479c2a374ba5a99d7e6e3bf73c0b3ea67461265c"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/gate.json",
+      "bytes": 1463731,
+      "sha256": "f28b30c01e743de3780e5231cecdcb8eb6bdb2415ad4d90359b5e9118fb795a1"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/replicate.json",
+      "bytes": 10793,
+      "sha256": "56fafd86e505c4737bc1623b35720389219a7a624ded8eda14887d609e47f6db"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/retest.json",
+      "bytes": 86016,
+      "sha256": "44f3bda3c3145f6b96b2dbfc06dde0c513e1c9a1fde01953bc159fb58caad475"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+      "bytes": 1567348,
+      "sha256": "e6eaebf84ada1410a0591d7383a32eeb1eea4da97d212b1e63eea2c8d7032645"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/inventory.json",
+      "bytes": 4544,
+      "sha256": "a0373cdeaece3b129c4421110adcbd2c6640e75fa1190785bd6fb7c562d55999"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/main-plan-append-receipt.json",
+      "bytes": 299,
+      "sha256": "f1fd66ad5f761ca1ab3b0c52d6dd4b3c9e1df128e63cd61e3640057f1e4b11f7"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/main-plan-before-decision.md",
+      "bytes": 82985,
+      "sha256": "466c602311dbaf4c86ffd5ce9d0e9422eedfc811a954e6fb3bb256b9739ea714"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/audit-report.md",
+      "bytes": 18686,
+      "sha256": "9c91459c4086c4ae5e547da3e87de5d7b302df32feb68ef03f2d3ba07bb39aae"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/findings.json",
+      "bytes": 699,
+      "sha256": "270c670b16d96840366923e506c14fb1fe1250acf8c656c340bead8a9b35fdef"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/histories.json",
+      "bytes": 125321,
+      "sha256": "a4024b05c273a3a936e96e6662725a4a38edc7dc1e2914570a2d3129967a6667"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/input-manifest.json",
+      "bytes": 5141,
+      "sha256": "79c0b26e028f88ddf6f05b93f4d0f94cee681786fcee2afd4b0e3e0576a36e96"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/observation-ledger.json",
+      "bytes": 5807072,
+      "sha256": "ad8b33ad0ceb5e3bc7f21345d342c4eb0dcd3e89dc5a83833d9ff03b078a4592"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/reconciliation.json",
+      "bytes": 16022,
+      "sha256": "6c3e339c9e2024ba12e13f54cf14bf499737a9b922c7ab65791bd0c830717013"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/run-receipt.json",
+      "bytes": 1394,
+      "sha256": "241ca06302e7348616cbe8bf3492c0cbbf7603f7c4d5ab2c7f36707b4e251bc3"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/seven-summary.csv",
+      "bytes": 1997,
+      "sha256": "b4bfa4d4bb48c83285f87bfe3b13887a89c2bce71f51a777c1ed7f1c5527df7d"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/seven-summary.json",
+      "bytes": 53877,
+      "sha256": "4d9556c03040cb6e07c08e7c0365a9213272238c0ea136e446d53eae3e441314"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results/validation-receipt.json",
+      "bytes": 496,
+      "sha256": "cb83525749e94afb7502e827dbdb7e6b331f2660eaf66436de2c030b1bdbd574"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/audit-report.md",
+      "bytes": 18888,
+      "sha256": "1fa2dc315c24337779a954d16d0a5746841690a45faafcb0a15e646b566ebc59"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/findings.json",
+      "bytes": 699,
+      "sha256": "270c670b16d96840366923e506c14fb1fe1250acf8c656c340bead8a9b35fdef"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/histories.json",
+      "bytes": 126149,
+      "sha256": "9648ae7615828be5f54c2555987ca1033458d0452816fdc76e11ea1eed7befda"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/input-provenance.json",
+      "bytes": 5706,
+      "sha256": "7e512025db437395cfdf51354b887e021c1e7a7feedff938eb393cb5d678776e"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/observation-ledger.json",
+      "bytes": 5807072,
+      "sha256": "ad8b33ad0ceb5e3bc7f21345d342c4eb0dcd3e89dc5a83833d9ff03b078a4592"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/reconciliation.json",
+      "bytes": 16061,
+      "sha256": "b2bc3889a4e08b42eb474d41a0adf84ae450cfe14ae99e998f39060c0bbc9f64"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/run-receipt.json",
+      "bytes": 1399,
+      "sha256": "6056b6323f497add5fdcfefa6542be95bf26a7017e25c784053b236e51cfb9dd"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/seven-summary.csv",
+      "bytes": 2138,
+      "sha256": "aca8a8c35241655e1b01ac9e786120c9a4ce3d721552f1b22ca0ea6fd081120f"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/seven-summary.json",
+      "bytes": 54206,
+      "sha256": "5cbc1a71919523746fb054725b57ff5641c094af8859578c2320c6b3ea054259"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v2/validation-receipt.json",
+      "bytes": 601,
+      "sha256": "a5bc74c0e159e957ad7040d548f04525dc1013f298f587a3b3105c98234b456c"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/audit-report.md",
+      "bytes": 18888,
+      "sha256": "1fa2dc315c24337779a954d16d0a5746841690a45faafcb0a15e646b566ebc59"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/findings.json",
+      "bytes": 699,
+      "sha256": "270c670b16d96840366923e506c14fb1fe1250acf8c656c340bead8a9b35fdef"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/histories.json",
+      "bytes": 126149,
+      "sha256": "9648ae7615828be5f54c2555987ca1033458d0452816fdc76e11ea1eed7befda"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/input-provenance.json",
+      "bytes": 5706,
+      "sha256": "7e512025db437395cfdf51354b887e021c1e7a7feedff938eb393cb5d678776e"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/observation-ledger.json",
+      "bytes": 5807072,
+      "sha256": "ad8b33ad0ceb5e3bc7f21345d342c4eb0dcd3e89dc5a83833d9ff03b078a4592"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/reconciliation.json",
+      "bytes": 16061,
+      "sha256": "b2bc3889a4e08b42eb474d41a0adf84ae450cfe14ae99e998f39060c0bbc9f64"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/run-receipt.json",
+      "bytes": 1399,
+      "sha256": "f20d3b56096adb9315ccf02428f12db782a2782e5f0a5d49b41d6d7862157261"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/seven-summary.csv",
+      "bytes": 2138,
+      "sha256": "aca8a8c35241655e1b01ac9e786120c9a4ce3d721552f1b22ca0ea6fd081120f"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/seven-summary.json",
+      "bytes": 54206,
+      "sha256": "5cbc1a71919523746fb054725b57ff5641c094af8859578c2320c6b3ea054259"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/results-v3/validation-receipt.json",
+      "bytes": 612,
+      "sha256": "2588e7f781d87b334246127032d60d9342dee4d8e7639c69ace1ef6e15a8b467"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/root-determinism-final-receipt.json",
+      "bytes": 440,
+      "sha256": "b2e6ffa895302d9efa7569e3b8ad16c87615ed9432085db3632082531c6d75fa"
+    },
+    {
+      "path": "experiments/foundations/selection-audit-v1/root-determinism-receipt.json",
+      "bytes": 401,
+      "sha256": "adb5f3bcdd5f7c88193131875436f7c47b9a22feae4e89e538f730a9a907b2f2"
+    },
+    {
+      "path": "tools/lib/selection-funnel-audit.ts",
+      "bytes": 25238,
+      "sha256": "8375e967a0421b965b71d4d96383a804382fe30744047af2c723efc334a12821"
+    },
+    {
+      "path": "tools/selection-funnel-audit.ts",
+      "bytes": 4178,
+      "sha256": "ceba9e63fcafc08266632b6aed60c0f1eba365547786a3d30f87b87f2d9e8d5a"
+    },
+    {
+      "path": "tools/test/selection-funnel-audit.test.ts",
+      "bytes": 9059,
+      "sha256": "37c77f87fe4a6616dfbea8da1108b6453a91d5a9f2263afe217ca85668dcc4ea"
+    }
+  ]
+}

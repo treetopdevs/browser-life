@@ -1,0 +1,251 @@
+{
+ "subjects": [
+  {
+   "subject": 0,
+   "source": "archive",
+   "label": "a543",
+   "hex": "001a005000000000d0fdd0d0f9c0c3090935da0522e707c738e0352aca2adf0728fc3205ff100136cd1d0d29d719f9331607cd39112b403dffdcce262dfe2835fc22130013e6e3fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc4dc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82322ce22e723dd2323e1143f13f7d300c7f70ad50bd61e011416320925213fc029c9dd1c3e2349f7fc21f1e1f1",
+   "role": "chemotroph",
+   "cluster": 3,
+   "founderCluster": 2,
+   "m3pass": true,
+   "regenerated": 14
+  },
+  {
+   "subject": 1,
+   "source": "archive",
+   "label": "a452",
+   "hex": "001a003b00000000231ff10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8eadecb1a243d17c8082e1de0003619313d030e0a12c3c807c93a4ecbdaed3c0c40c0403a1f21df16d7e90ffcc2e1c320263b20c839db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0dd06c919d00d300a0d16c108272d2ad01611c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec621",
+   "role": "mixed",
+   "cluster": 6,
+   "founderCluster": null,
+   "m3pass": false,
+   "regenerated": 10
+  },
+  {
+   "subject": 2,
+   "source": "archive",
+   "label": "a465",
+   "hex": "0019002600000000fce9152e14c827d4c134c5faee351c060a3cde2c23e013fe11d9c741302bde3ecc2603dc12c4342fc8400ed9fb0425c5071512e1f5d006fd23e6c635c6c7f6d0f02c18e92f351fe2f6241c35c4ea11d9d0dbcdecdcf3d605f0fc23eae33a1208d9fb1ed5031bdad03f27051ff524c7e33bf6c3c5c61aff38282eca143ae107e82fe8e8d9c0cbdafc28e437041e3a0e101dcb3bc9c4f22b1d1ed42d1930f2d8cb",
+   "role": "mixed",
+   "cluster": 11,
+   "founderCluster": 8,
+   "m3pass": false,
+   "regenerated": 15
+  },
+  {
+   "subject": 3,
+   "source": "archive",
+   "label": "a718",
+   "hex": "000c003f00000000c0fd25d5d036e2da40fcf939eece35d9cf3bbfce2cf0fbddd6fdcf222303c4de14dfdecd1dca1b02cdc308cae9ed1331c5d8e6dc1a24351ad1c7223b3e3616fc3ddbdb3bd315f11cee023afc2119ea3a34c8371b091b3c0b3acdfbd8eb38ea2add332740eb08270edb0921d42af931d506eb2205eac5f51fe83cccd7381340c830f5242901c017e0c0ea2cef25df10ff3f02d01411c215f339101e393037ffdb",
+   "role": "chemotroph",
+   "cluster": 13,
+   "founderCluster": null,
+   "m3pass": false,
+   "regenerated": 10
+  },
+  {
+   "subject": 4,
+   "source": "archive",
+   "label": "a414",
+   "hex": "001a005000000000d0fdd0d0f9c0c3090935da0522e707c738e0352aca2adf0728fc3205ff100136cd1d0d29d719f9331607cd39112b403dffdcce262dfe2835fc222a0013e6e3fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc4dc825f8c1d5253702fb15233af53f241613203e2bfe26fcc7fce5c82522ce22e723dd2323e1143f13f7d300c7f70ad50bd61e011816320936213fc029c9dd1c3e2349f7fc21f1e1f1",
+   "role": "chemotroph",
+   "cluster": 3,
+   "founderCluster": 2,
+   "m3pass": true,
+   "regenerated": 16
+  },
+  {
+   "subject": 5,
+   "source": "archive",
+   "label": "a118",
+   "hex": "001a005000000000d0fdd0d0fdc0c3090935da0522d307c738e0352aca2adf0728fc3205ff100136cd1d0d29d719f93316fbcd39112b403dffdcce262dfe2835fc22130013e6e3fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc3fc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82537ce22e723dd2323e1143f13f7d300c7f70ad50bd61e011416220936213fc029c9dd1c3e2549f7fc21f1e1f1",
+   "role": "chemotroph",
+   "cluster": 3,
+   "founderCluster": 2,
+   "m3pass": true,
+   "regenerated": 16
+  },
+  {
+   "subject": 6,
+   "source": "archive",
+   "label": "a73",
+   "hex": "001a005000000000d0fdd0d0fdc0c309fc35da0522d307c738ef352aca2adf0728e83205ff100136cd1d0d29d719f93316fbde39112b403dffdcce262dfe2835fc22130013e6d8fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc3fc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82537ce22e723dd2323e1143f13f7d6ffc7df0ad501d61e011416220936213fc029c9dd1c3e2549e3fc21f1e1f1",
+   "role": "mixed",
+   "cluster": 3,
+   "founderCluster": 2,
+   "m3pass": true,
+   "regenerated": 16
+  },
+  {
+   "subject": 7,
+   "source": "archive",
+   "label": "a374",
+   "hex": "001a005000000000d0fdd0d0f9c0c3090935da0522e707c738e0352aca2adf0728fc3205ff100136cd1d0d29d719f9331607cd391117403dffdcce262dfe2835fc22130013e6e3fb00c6d83037390f0dce313bcdf7e5ce0f2818cb24da01c43fc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82537ce22e723dd2323e1143f13f7d300b0f70ad50bd61e011416320936213fc029c9dd1c3e2349f7fc21f1e1f1",
+   "role": "chemotroph",
+   "cluster": 3,
+   "founderCluster": 2,
+   "m3pass": true,
+   "regenerated": 16
+  },
+  {
+   "subject": 8,
+   "source": "archive",
+   "label": "a560",
+   "hex": "000f0058000000000edc21d1051124c331fcfe1e2df501102b403af5ee19e5dacd120ae339d8d73b112c0201eefecbf138101de3dedee20c05cde1e9d80c2a11ccff04dc3bdf091d02403ef5fcde02fc1123fc1ae30bca1f270d2b13ee371fc4d21fdb17070f3ff117103822fd23d4cee2fb38da3b2019d2f90bd735fd250017d316d4e0d10927d4d6d3f5c634e2223732dd0e1c0dc7dcf5073dce12e2f3cf1efa3ec834093de101",
+   "role": "phototroph",
+   "cluster": 12,
+   "founderCluster": null,
+   "m3pass": false,
+   "regenerated": 10
+  },
+  {
+   "subject": 9,
+   "source": "archive",
+   "label": "a235",
+   "hex": "0011003b00000000d617dff63cfc3c072ce70ac4f1d3f9081cebd2382537c9e63ad2f1ece6131844fd2ee204f3d90a1a2940f7cdfec80e26c0c03b063a3aeeda40cf0ecc20dbc41019322a390e2abcfa0815393a1a212cf100d3fe1f2d1921d21a05c8000de30a02020ac3f5d40bc0ca0a3bc903e6d635dbfec2f9e6e7302af8d5ea1adb2725e2e32c472521051cf91aea1c213f3b1200f8e229d4230c090c1ed0e4f00e31ffe4fc",
+   "role": "phototroph",
+   "cluster": 0,
+   "founderCluster": 0,
+   "m3pass": false,
+   "regenerated": 12
+  },
+  {
+   "subject": 10,
+   "source": "archive",
+   "label": "a771",
+   "hex": "0019002600000000fce9152e14c827d4c134c5faee351c060a43de2c23e013fe11d9c736332bde3ecc2619dc12c4342fc8400ed9fb0414c5071512e103db06fd23e6c635c6c7f6d0f02c18e92f351fe2f63a1c35c4ea11d9d0ebcdecdcecd605f0fc23eae33a12f3d9fb26d5031bdad0360f051ffc24cee33bf8c3c5c61aff38282eca143ada07e52fe8e8d9c0cbdafc28e437041e3a0c1011cb3bc9c4f22b1d1ed42d2f30f2d8cb",
+   "role": "phototroph",
+   "cluster": 11,
+   "founderCluster": 8,
+   "m3pass": true,
+   "regenerated": 16
+  },
+  {
+   "subject": 11,
+   "source": "archive",
+   "label": "a636",
+   "hex": "000c002500000000c5f0f6f82a112312c6d0d5011dd50728c221c7290e2930353efdd3260f353f161fce3dd127d5fc290bca3d203906fb1cc5d3eac908dbd938c1c51a0c32e605d916ef40caf8e123e739fbd7efc5333100c03cdd262bc403ef2d0735282efac82dd914de23eff006f4ded72f2dc02306e7e414c52fce35d9210b2215401aeb06381e1625f10e3a07e603c9eff708ebef38eecd2b250fc723d80fe2fb0701d6f8fc",
+   "role": "phototroph",
+   "cluster": 10,
+   "founderCluster": 7,
+   "m3pass": true,
+   "regenerated": 15
+  },
+  {
+   "subject": 12,
+   "source": "archive",
+   "label": "a274",
+   "hex": "0012002a0000000ce5f2e3fcca122324e13530fcf123192fef1c110a2a31c3bacfe80d3834d912e732f9333cc73bfae8fbf719daf4c44016c9ec3034cb1d20dd0adc26f10ee0d515cb2b16cb0ddad0f7411ed5c1f1ca10fac92611fd362111d4eb350ed50fcef104e337ef0adee9fd29c5cdf63e3f2624ccdbd21dd2f2f80325cedb2de5ddf6402ed7e12d2708f42af01bfcf20fe4c7093bdcebf90f36132bcd1305da29d62f2dc6",
+   "role": "phototroph",
+   "cluster": 7,
+   "founderCluster": 4,
+   "m3pass": true,
+   "regenerated": 16
+  },
+  {
+   "subject": 13,
+   "source": "archive",
+   "label": "a758",
+   "hex": "0018001c00000000261de005372ae016c4e6382a2b2a27df1321cb2017e7eb16e9f3eef03bc7e1e60ce1eeeac8f921053928c2e8e5e73b26e1223dd7f7f5e529fe1c041bc41ce51e19c602ff211ed6d5bc32402125e23835ec21fa20d304263137e225f7081231f40c27db2824fbf4df1c1f222fd1f2d529151c0dd612c02e06f0152ad1dae005010bde002a261f0313e22ed30e0edaeff717f9ee0c0be3f226dacbed3f3d2d35da",
+   "role": "phototroph",
+   "cluster": 1,
+   "founderCluster": 1,
+   "m3pass": true,
+   "regenerated": 14
+  },
+  {
+   "subject": 14,
+   "source": "archive",
+   "label": "a141",
+   "hex": "000f0041000000001515010201dcc7cae82fda253104d6c0ec042122f0e511d3e0c3c0f4e7d3e0f52b3b111c19390be8dd3ef0dff40efacd1602d020ecc4fdff38f6e8dee0dd1715df2ac7ea27c6fb21383fee2bf91b140cc819c917230bf3402edd0cc219151af026c7373f02e6132f1b3e2f1c1eca03e0f9f3cbcaf9b537f81616f712001323080d36d4ffeadfccf236f910cb3b07e3dcc917c6f3f73307c31912c03cd5280e00",
+   "role": "phototroph",
+   "cluster": 8,
+   "founderCluster": null,
+   "m3pass": false,
+   "regenerated": 10
+  },
+  {
+   "subject": 15,
+   "source": "archive",
+   "label": "a275",
+   "hex": "001a0038000000003be030ddc131f43dcacdc627f5132c3d03fa0ede3b0c17ede7f638bee9fd200d09da303830efe8e4e0ef25deff0e3ad5d8d8e8d1f7cd3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700021810d436dffb211b1efadcd8cef7d11fdee0f237f2e0f90212f6340527e91a1731cecc3ada",
+   "role": "phototroph",
+   "cluster": 9,
+   "founderCluster": 5,
+   "m3pass": true,
+   "regenerated": 13
+  },
+  {
+   "subject": 16,
+   "source": "evolved",
+   "label": "h3-r1-749280:64432",
+   "hex": "001a006000000000bcf3d0d0fdc0c309fc35da052ee307c738ef353aca2af40728e846050d100136cd1d0d29cd19f93316fbd539112b403dfad4c42641fe2835fc22130013e6d8fb00b4e8303739190db7313bb6f7cfce0f2818cb27da01c53fc836fad7e4253502fb15234af53f24ff13203e2bfe260ecefce5c82525ce37e623dd2330f7143f13f7d6ffc7df0adf01cd18011416220936213fc029c9d71c291b5dd41f21f1e1e7",
+   "role": "mixed",
+   "history": "h3"
+  },
+  {
+   "subject": 17,
+   "source": "evolved",
+   "label": "h2-r5-884964:27525",
+   "hex": "0014005000000000d4fdc4d0fdbec3090135da0f26cd07c725ef482aca2aed0711ec32fdff18011eea1d0d29ce19f93321fbcd3a112b403dffdcce2f2efb28350722180d13e6d3ee00c6e83f34440f0dce313bc6f7fdce0d280ecb24d00fc33fc81dfad7d52537f8fb1e233ae13520202625522bf13ae9c70ee5c83e20e437e923f42323e1143ffff7d6ffc7df0ad401ea1e011b19220936263fc029c9dd1c3e2543e32219f1e1e1",
+   "role": "mixed",
+   "history": "h2"
+  },
+  {
+   "subject": 18,
+   "source": "evolved",
+   "label": "h3-r2-859552:64559",
+   "hex": "001a006000000000bcf3d0d0fdc0c309fc35da052ee307c738ef353aca2adf0728e830f50d100136cd1d0d29cd19f93316fbd539112b403dfad4c42641022835fc22130013e6d8fb00b0e8303739190db7313bb6f7cfce0f2818cb27da01c53fc836fad7e4253502fb152350f54224ff13203e2bfe260ecefce5c82525ce37fa23f32330f7143f13f7d4ffc7df0adf01d318011416220936213fc029c9d71c291b5dd41f21f1e9e7",
+   "role": "mixed",
+   "history": "h3"
+  },
+  {
+   "subject": 19,
+   "source": "evolved",
+   "label": "h3-r0-794137:62535",
+   "hex": "001a006000000000bcf3d0d0fdc0c309fc35da052ee307c738ef353aca2adf0728e830050d100136cd1d0d29cd19f93316fbd539112b403dfad4c42641022835fc22130013e6d8fb00b0e8303739190db7313bb6f7cfce0f2818cb27da01c53fc836fad7e4253502fb15234af54224ff13203e2bfe260ecefce5c82525ce37fa23f32330f7143f13f7d4ffc7df0adf01d318011416220936213fc029c9d71c291b5dd41f21f1e9e7",
+   "role": "mixed",
+   "history": "h3"
+  },
+  {
+   "subject": 20,
+   "source": "evolved",
+   "label": "h1-r9-862425:60205",
+   "hex": "001b0048000000062f1bfefbd51634e5fa09c2fa132c2e27d403cd3b2e1d0d11cef10cff1e010be323fdfb1916c43a0af63b2b40273dd814bcc53c2de13dd8e026d4cac6d11241f1c6deca09dc1bcf1824c11f1cf035e6ae13c64fedf0e3dc44c04d3300d3c2c82c23e8e4292e3af7d533f3ccd21a30f6d7c00d332e2bc60a0d1134f0f6c1192c19241cf803ed2504501efc1b28fbc62234fcf81bfbf1ee23d9ed1df146281709dc",
+   "role": "phototroph",
+   "history": "h1"
+  },
+  {
+   "subject": 21,
+   "source": "evolved",
+   "label": "h5-r9-800736:51530",
+   "hex": "001d0039000000004ef230d9c12df43dd8e5c627f513385003fa0ede350c17f6e7f638cde9fd200d09cc302e30efdbe4e0ef25f4ff0e2cd0b1d8e8d1f7de3b40cf3ed4d3d1defb0f16eb151fde2603df39f4340f300cd410e738d3f5d2fee02d0de807f007123bfdfdcaea0b2d2ac2fdd1f5172ed5f1f3d2c214f1303ef2f434070002130fd436dffb211b1efadcd8b6f7d11fe3e0f23ff2e0f90204f6450527e9320231cecc3ada",
+   "role": "phototroph",
+   "history": "h5"
+  },
+  {
+   "subject": 22,
+   "source": "evolved",
+   "label": "h2-r9-894395:50359",
+   "hex": "0015007000000000e1fdd0d0fdbfc309fc35da051bbc07c725fd352aca2adf0711e832051118011edf410d29e519023322fbcd46112b5547ffe1ce2f2dfb282af322170d13e6d3fb00c6e83f37390f0dce263bd1f7f0cef82918cb24d60fc33fc825fad7c60f22f8fb1e233af535201625253e2bfe3af1c7fde5c83b37ce37e923ed2323e1143f13fcd6ffc7f30ad401ef1e011216220936213fc029c9df1c3e3054e32221f1e1e1",
+   "role": "phototroph",
+   "history": "h2"
+  },
+  {
+   "subject": 23,
+   "source": "evolved",
+   "label": "h4-r2-792919:42549",
+   "hex": "001b003d00000000281bf6fbd5163ae5eff5c2fa232c2827d403be3b291d0d11ce050cff1e0122ea23fdf31f16c435040e3b174f333dd814bcc53b2be03dd8e026d4cac6d11623ecc6deca09dc1bcff524c11f1c0335e6ae1ac134faf0e3dc34c0362000f2c2d8392300c6292e47f7c223e9ccd2083bfadfc006330f22c10a240b2e0308c12d2c19241ce019f925043e25fc2428fbd62634fcf10efb09d623d9f328f132291b25e3",
+   "role": "phototroph",
+   "history": "h4"
+  }
+ ],
+ "poolRoles": {
+  "phototroph": 586,
+  "chemotroph": 131,
+  "decomposer": 0,
+  "mixed": 109
+ },
+ "evolvedEligible": 47
+}

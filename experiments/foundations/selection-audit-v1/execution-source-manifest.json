@@ -1,0 +1,23 @@
+{
+  "authoritativeResults": "results-v3",
+  "files": [
+    {
+      "path": "tools/selection-funnel-audit.ts",
+      "snapshot": "execution/tools/selection-funnel-audit.ts",
+      "bytes": 4178,
+      "sha256": "ceba9e63fcafc08266632b6aed60c0f1eba365547786a3d30f87b87f2d9e8d5a"
+    },
+    {
+      "path": "tools/lib/selection-funnel-audit.ts",
+      "snapshot": "execution/tools/lib/selection-funnel-audit.ts",
+      "bytes": 25238,
+      "sha256": "8375e967a0421b965b71d4d96383a804382fe30744047af2c723efc334a12821"
+    },
+    {
+      "path": "tools/test/selection-funnel-audit.test.ts",
+      "snapshot": "execution/tools/test/selection-funnel-audit.test.ts",
+      "bytes": 9059,
+      "sha256": "37c77f87fe4a6616dfbea8da1108b6453a91d5a9f2263afe217ca85668dcc4ea"
+    }
+  ]
+}

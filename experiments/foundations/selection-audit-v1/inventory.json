@@ -1,0 +1,232 @@
+{
+  "format": 1,
+  "sourceRoot": "/Users/nicholas/develop/browser-life",
+  "counts": {
+    "archive": {
+      "evaluated": 4800,
+      "viableCount": 1990,
+      "batches": 300,
+      "searchSeeds": [
+        1,
+        300
+      ],
+      "resumeRecords": [
+        {
+          "from": 200,
+          "exact": false
+        }
+      ],
+      "elites": 47,
+      "lineages": 62
+    },
+    "viable": {
+      "physicalLines": 1990,
+      "committedPrefix": 1990,
+      "prefixBornMin": 5,
+      "prefixBornMax": 299
+    },
+    "gate": {
+      "rows": 839
+    },
+    "confirm": {
+      "rows": 839,
+      "passed": 580,
+      "failed": 259,
+      "gateMetadata": {
+        "screened": 839,
+        "confirmed": 580,
+        "clusters": 24,
+        "met": true,
+        "reps": 16,
+        "confirmSeed": 1000001,
+        "confirmSeeds": [
+          [
+            1000001,
+            1000140
+          ],
+          [
+            1000141,
+            1000210
+          ]
+        ],
+        "batchSize": 4,
+        "searchSeeds": [
+          1,
+          300
+        ],
+        "lowerBoundAbove08": 244,
+        "distinctCells": 10
+      },
+      "eval": {
+        "tile": 64,
+        "side": 8,
+        "reps": 16,
+        "growSteps": 3000,
+        "recoverSteps": 2000,
+        "darkSteps": 2000,
+        "censusEvery": 100,
+        "lesionFrac": 0.31,
+        "world": {
+          "defaultMu": 60,
+          "defaultSigma": 20,
+          "kernelRadius": 9,
+          "lightMode": "uniform",
+          "lightBase": 40,
+          "lightAmp": 160
+        },
+        "nutrient": 32,
+        "biomass": 64,
+        "seed": 1000141
+      }
+    },
+    "retest": {
+      "rows": 99,
+      "reps": 32,
+      "seeds": [
+        2000001,
+        2000050
+      ],
+      "provenance": {
+        "seeds": [
+          2000001,
+          2000050
+        ],
+        "used": [
+          [
+            1,
+            300
+          ],
+          [
+            1000001,
+            1000140
+          ],
+          [
+            1000141,
+            1000210
+          ]
+        ]
+      },
+      "perStrongFieldPresent": false
+    },
+    "replicate": {
+      "rows": 13,
+      "reps": 32,
+      "seeds": [
+        5000001,
+        5000007
+      ],
+      "provenance": {
+        "seeds": [
+          5000001,
+          5000007
+        ],
+        "used": [
+          [
+            1,
+            300
+          ],
+          [
+            1000001,
+            1000140
+          ],
+          [
+            1000141,
+            1000210
+          ],
+          [
+            2000001,
+            2000050
+          ]
+        ]
+      }
+    },
+    "founders": {
+      "bytes": 8951
+    },
+    "fdSubjects": {
+      "subjects": 24,
+      "poolRoles": {
+        "phototroph": 586,
+        "chemotroph": 131,
+        "decomposer": 0,
+        "mixed": 109
+      },
+      "evolvedEligible": 47
+    },
+    "fdPool": {
+      "pool": 826,
+      "source": "runs/bootstrap-200/confirm.json",
+      "rule": "survived >= 13 and lightDependent >= 13 of 16; founders' genomes and duplicates dropped",
+      "clusters": 21
+    },
+    "fdResults": {
+      "qualifying": 144,
+      "extinctRuns": 2,
+      "uniformRows": 177,
+      "gradientRows": 177,
+      "note": "exploratory; primary reading in the uniform garden"
+    }
+  },
+  "sourceConfiguration": {
+    "archiveEval": {
+      "tile": 64,
+      "side": 8,
+      "reps": 4,
+      "growSteps": 3000,
+      "recoverSteps": 2000,
+      "darkSteps": 2000,
+      "censusEvery": 100,
+      "lesionFrac": 0.31,
+      "world": {
+        "defaultMu": 60,
+        "defaultSigma": 20,
+        "kernelRadius": 9,
+        "lightMode": "uniform",
+        "lightBase": 40,
+        "lightAmp": 160
+      },
+      "nutrient": 32,
+      "biomass": 64,
+      "seed": 1
+    },
+    "search": {
+      "select": "lineages",
+      "passBias": 0.5,
+      "random": 0.25
+    },
+    "confirmEval": {
+      "tile": 64,
+      "side": 8,
+      "reps": 16,
+      "growSteps": 3000,
+      "recoverSteps": 2000,
+      "darkSteps": 2000,
+      "censusEvery": 100,
+      "lesionFrac": 0.31,
+      "world": {
+        "defaultMu": 60,
+        "defaultSigma": 20,
+        "kernelRadius": 9,
+        "lightMode": "uniform",
+        "lightBase": 40,
+        "lightAmp": 160
+      },
+      "nutrient": 32,
+      "biomass": 64,
+      "seed": 1000141
+    },
+    "retestTopLevelKeys": [
+      "reps",
+      "seeds",
+      "provenance",
+      "rows"
+    ],
+    "replicateTopLevelKeys": [
+      "reps",
+      "seeds",
+      "provenance",
+      "rows"
+    ]
+  },
+  "interpretation": null
+}

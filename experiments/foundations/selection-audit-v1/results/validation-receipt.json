@@ -1,0 +1,8 @@
+{
+  "command": "deno test --allow-read --allow-write tools/test/selection-funnel-audit.test.ts",
+  "passed": 10,
+  "failed": 0,
+  "latestMeasuredWallSeconds": 1.1,
+  "testSourceSha256": "8c4f1e3c238ba883d0ae5926862319bdb3af1ed71e4df75950947e5f808f5a26",
+  "note": "Earlier bounded audit/test attempts, including diagnostics and two failures corrected before final passing run, used approximately 9 additional wall seconds; cumulative CPU command wall time is far below the 600-second ceiling."
+}

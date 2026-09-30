@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "wallSeconds": 0.5988150830380619,
+  "comparedOutputs": 8,
+  "mismatches": [],
+  "temporaryOutput": "/var/folders/23/g72t27fx1wxgd8d5xlynnv940000gn/T/selection-audit-replay-z2d_s448/outputs",
+  "command": "deno run --no-lock --allow-read --allow-write tools/selection-funnel-audit.ts --manifest experiments/foundations/selection-audit-v1/input-manifest.json --out TEMP/outputs"
+}

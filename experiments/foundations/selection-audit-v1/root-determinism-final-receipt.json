@@ -1,0 +1,9 @@
+{
+  "authoritativeResults": "results-v3",
+  "exitCode": 0,
+  "wallSeconds": 0.6285877079935744,
+  "comparedOutputs": 8,
+  "mismatches": [],
+  "temporaryOutput": "/var/folders/23/g72t27fx1wxgd8d5xlynnv940000gn/T/selection-audit-final-2h0jj6ja/outputs",
+  "command": "deno run --no-lock --allow-read --allow-write tools/selection-funnel-audit.ts --manifest experiments/foundations/selection-audit-v1/input-manifest.json --out TEMP/outputs"
+}
