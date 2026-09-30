@@ -1,0 +1,10 @@
+{
+  "verifiedAt": "2026-09-30T19:51:54.104768+00:00",
+  "host": "work-mac",
+  "root": "/Users/180471/bl-founder-discovery",
+  "architecture": "arm64",
+  "deno": "deno 2.9.7 (stable, release, aarch64-apple-darwin)\nv8 15.0.245.2-rusty\ntypescript 6.0.3\n",
+  "transportManifestSha256": "981f5534a8ec895e474b12e3fb848027d3b635e176da35f8b2040f995b3d98c7",
+  "verifiedFiles": 780,
+  "mismatches": []
+}

@@ -1,0 +1,330 @@
+{
+  "format": "discovery-improvement-supervision/v1",
+  "started": "2026-09-30T16:25:30.422873+00:00",
+  "supervisorSha256": "8a235a7c08d1fd03e67efecb6f3922291b36ce2a830bbdd8f52be647a6b57565",
+  "manifestSha256": "4d7d8bd03e7842d1af2476a8b06ea33892d029d84bdb5a2d2e15e3c1e257dda5",
+  "releaseSha256": "4b7e00d8848330923e2d9dbc4033598ac27ed8362c15e8228785ee57fe40b148",
+  "paidUSD": 0,
+  "commands": [
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T16:25:30.424313+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0000.log",
+      "pid": 45550,
+      "exitCode": 0,
+      "finished": "2026-09-30T16:53:39.974873+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 1,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T16:53:39.982447+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0001.log",
+      "pid": 99650,
+      "exitCode": 0,
+      "finished": "2026-09-30T17:04:18.590756+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 4,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T17:04:18.593116+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0002.log",
+      "pid": 19742,
+      "exitCode": 0,
+      "finished": "2026-09-30T17:15:37.819782+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 3,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T17:15:37.825933+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0003.log",
+      "pid": 39089,
+      "exitCode": 0,
+      "finished": "2026-09-30T17:25:47.651358+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 4,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T17:25:47.660136+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0004.log",
+      "pid": 58183,
+      "exitCode": 0,
+      "finished": "2026-09-30T17:39:49.811055+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 5,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T17:39:49.820296+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0005.log",
+      "pid": 92333,
+      "exitCode": 0,
+      "finished": "2026-09-30T18:22:48.288425+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 2,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T18:22:48.296063+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0006.log",
+      "pid": 91705,
+      "exitCode": 0,
+      "finished": "2026-09-30T18:38:09.541566+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 1,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T18:38:09.544674+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0007.log",
+      "pid": 25999,
+      "exitCode": 0,
+      "finished": "2026-09-30T18:49:40.958351+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 7,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T18:49:40.962329+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0008.log",
+      "pid": 51928,
+      "exitCode": 0,
+      "finished": "2026-09-30T19:02:26.259310+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 1,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T19:02:26.266971+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0009.log",
+      "pid": 76959,
+      "exitCode": 0,
+      "finished": "2026-09-30T19:16:41.258735+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 1,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T19:16:41.260747+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0010.log",
+      "pid": 6597,
+      "exitCode": 0,
+      "finished": "2026-09-30T19:28:30.341307+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 6,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T19:28:30.343722+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0011.log",
+      "pid": 29385,
+      "exitCode": 0,
+      "finished": "2026-09-30T19:39:50.281215+00:00",
+      "result": {
+        "status": "time-limit",
+        "newCheckpoints": 6,
+        "newAssays": 0
+      }
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "--no-lock",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_improvement.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+        "600"
+      ],
+      "started": "2026-09-30T19:39:50.283702+00:00",
+      "log": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/continuation-v2-logs/run-0012.log",
+      "pid": 52052
+    }
+  ],
+  "status": "running",
+  "priorInvocations": 16
+}

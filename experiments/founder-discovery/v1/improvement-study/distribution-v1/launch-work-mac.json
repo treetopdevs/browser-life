@@ -1,0 +1,15 @@
+{
+  "host": "work-mac",
+  "pid": 84148,
+  "startedAt": "2026-09-30T20:01:55.783240+00:00",
+  "command": [
+    "python3",
+    "-u",
+    "tools/discovery_improvement_shard_continue.py",
+    "experiments/founder-discovery/v1/improvement-study/manifest.json",
+    "experiments/founder-discovery/v1/improvement-study/distribution-v1/allocation.json",
+    "work-mac",
+    "runs/founder-discovery-improvement-v1"
+  ],
+  "allocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f"
+}

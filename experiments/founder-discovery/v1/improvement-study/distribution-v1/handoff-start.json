@@ -1,0 +1,10 @@
+{
+  "time": "2026-09-30T19:49:56.124759+00:00",
+  "action": "SIGSTOP supervisor only; let current worker finish its tranche",
+  "supervisorPid": 45537,
+  "workerPid": 52052,
+  "supervisorCommand": "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python -u tools/discovery_improvement_continue.py experiments/founder-discovery/v1/improvement-study continuation-v2",
+  "workerCommand": "45537 deno run --no-lock -A --unstable-webgpu tools/discovery_improvement.ts run /Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/manifest.json /Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/release.json /Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1 600",
+  "reason": "User authorized workload distribution; prevent overlapping scheduling during handoff",
+  "manifestSha256": "4d7d8bd03e7842d1af2476a8b06ea33892d029d84bdb5a2d2e15e3c1e257dda5"
+}

@@ -1,0 +1,12 @@
+{
+  "format": "discovery-distribution-handoff/v1",
+  "finishedAt": "2026-09-30T19:51:04.293258+00:00",
+  "status": "old-supervisor-retired-at-clean-tranche-boundary",
+  "supervisorPid": 45537,
+  "workerPid": 52052,
+  "workerInvocation": "runs/founder-discovery-improvement-v1/invocation-1790797803869-52052.json",
+  "workerInvocationSha256": "f37d0b2b4c8fe7a4c5fd1b0410bb0ce28a2355a4f0331f355b15169ae20cea4a",
+  "priorInvocations": 29,
+  "priorElapsedSeconds": 24479.946090875,
+  "note": "Original supervision record remains unchanged and says running because supervisor was deliberately stopped after child completed. This handoff supersedes its liveness status. No simulation interruption or missing invocation receipt."
+}

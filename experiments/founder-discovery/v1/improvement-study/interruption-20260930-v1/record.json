@@ -1,0 +1,12 @@
+{
+  "format": "discovery-improvement-interruption/v1",
+  "observedAt": "2026-09-30T16:25:22.913450+00:00",
+  "cause": "Unknown process termination; worker and supervisor absent; original tool session unavailable. No terminal receipt or logged error.",
+  "supervisionRecordSha256": "8cb1dbd7d1d54ac6f987c984baa4043e625ca5e84c8580650af4bf0f85dd1f64",
+  "verifiedSourceCount": 54,
+  "verifiedInputCount": 2,
+  "hashVerifiedCheckpointReceipts": 78,
+  "conservativeChargedSeconds": 812.221712,
+  "accountingMethod": "Entire wall interval from recorded worker launch to confirmed-dead recovery; upper bound, not measured execution time.",
+  "recovery": "Preserve stale locks and original supervision record; resume same frozen roster from receipt-committed checkpoints. No rule, threshold, seed or budget changes."
+}

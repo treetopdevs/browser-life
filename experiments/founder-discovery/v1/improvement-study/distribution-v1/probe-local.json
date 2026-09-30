@@ -1,0 +1,27 @@
+{
+  "format": "engineering-frozen-study-probe/v1",
+  "manifestHash": "0ebd3092056170b776f63c323ac3a0f3a3f553b3e0ac1c03f8c0e82ff96c2429",
+  "sourceManifestHash": "dc4eefd867c52666962114500a42bb511b462b29ebfce32867c1e5daad00eb8e",
+  "results": [
+    {
+      "unitId": "discovery-cluster-33-6410001-normal",
+      "mode": "normal",
+      "steps": 10000,
+      "initialStateHash": "dd0a2e12a15d5656",
+      "finalStateHash": "8e4177eae250b480",
+      "checkpointSha256": "99c553862b6fcbedff5f9c907b4e1a2a4193f9ae0e0c18536b087fce2c62f8a6",
+      "sortedLedgerHash": "500e53eaeab9be038d14ae5591345ade8cdc0b270a153008a6c8d8a9c295f6cd",
+      "eventCount": 140
+    },
+    {
+      "unitId": "discovery-cluster-33-6410001-off",
+      "mode": "off",
+      "steps": 10000,
+      "initialStateHash": "b7aec2bd61f6abdd",
+      "finalStateHash": "18843cf62d743d8d",
+      "checkpointSha256": "41b017dba7fb52c4d8c3ddebe0e9ff95a77cfabe0e16a4674ce20feda27381ab",
+      "sortedLedgerHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "eventCount": 0
+    }
+  ]
+}

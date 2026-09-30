@@ -1,0 +1,28 @@
+{
+  "format": "discovery-distribution-release-review/v1",
+  "reviewedAt": "2026-09-30T20:01:25.032713+00:00",
+  "reviewer": "independent strong-model subagent /root/distribution_review",
+  "status": "approved-histories-only",
+  "executionSources": {
+    "tools/discovery_improvement_shard.ts": "0ff0c202cc84d333b7087c61a8ae988b71c261c52167d9b60cee4f64adbb49c2",
+    "tools/discovery_improvement_shard_continue.py": "08835afe6818413a62bc4cd0d8f74d7a83869e8a22a6917b3cd770ab71d4953e"
+  },
+  "allocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+  "probeComparisonSha256": "2029101798692c51ce59117974fde764af295c0251ed82def3aa5684cf7de0de",
+  "checks": [
+    "3 TypeScript tests independently passed",
+    "2 committed Python supervisor tests independently passed",
+    "Additional reviewer fake-worker tests: success, nonzero exit, unresolved-reservation rejection, resource rejection, legacy-lock rejection, SIGTERM child cleanup",
+    "54 frozen scientific source hashes unchanged",
+    "29 prior invocation receipts reconcile to 24479.946090875 seconds",
+    "64 fixed histories partitioned30/34 with mutation pairs together and every founder on both hosts",
+    "Mapped frozen source, input and pilot closure verification passed on both hosts",
+    "10000-step normal/off cross-host reports byte-identical, including140 normal mutation events, zero off events, state and checkpoint hashes"
+  ],
+  "gates": [
+    "No competition execution until globally reconciled history roster and separately budgeted release",
+    "Remote import implementation requires review before import",
+    "No biological claim from engineering replay"
+  ],
+  "paidUSD": 0
+}

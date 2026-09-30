@@ -1,0 +1,243 @@
+{
+  "format": "discovery-distribution-routing/v1",
+  "createdAt": "2026-09-30T19:52:38.572917+00:00",
+  "reason": "User authorized second owned Mac; pair-preserving allocation spreads every founder across both hosts and retains existing local work",
+  "manifestSha256": "4d7d8bd03e7842d1af2476a8b06ea33892d029d84bdb5a2d2e15e3c1e257dda5",
+  "manifestHash": "0ebd3092056170b776f63c323ac3a0f3a3f553b3e0ac1c03f8c0e82ff96c2429",
+  "sourceManifestHash": "dc4eefd867c52666962114500a42bb511b462b29ebfce32867c1e5daad00eb8e",
+  "releaseSha256": "4b7e00d8848330923e2d9dbc4033598ac27ed8362c15e8228785ee57fe40b148",
+  "hosts": {
+    "local": {
+      "root": "/Users/nicholas/develop/browser-life-founder-policy",
+      "unitIds": [
+        "discovery-cluster-33-6410001-normal",
+        "discovery-cluster-33-6410001-off",
+        "discovery-cluster-33-6410002-normal",
+        "discovery-cluster-33-6410002-off",
+        "discovery-cluster-33-6410003-normal",
+        "discovery-cluster-33-6410003-off",
+        "discovery-cluster-33-6410004-normal",
+        "discovery-cluster-33-6410004-off",
+        "discovery-cluster-33-6410005-normal",
+        "discovery-cluster-33-6410005-off",
+        "discovery-cluster-33-6410006-normal",
+        "discovery-cluster-33-6410006-off",
+        "discovery-cluster-4-6410001-normal",
+        "discovery-cluster-4-6410001-off",
+        "discovery-cluster-4-6410002-normal",
+        "discovery-cluster-4-6410002-off",
+        "discovery-cluster-4-6410003-normal",
+        "discovery-cluster-4-6410003-off",
+        "discovery-cluster-16-6410001-normal",
+        "discovery-cluster-16-6410001-off",
+        "discovery-cluster-16-6410002-normal",
+        "discovery-cluster-16-6410002-off",
+        "discovery-cluster-16-6410003-normal",
+        "discovery-cluster-16-6410003-off",
+        "discovery-cluster-139-6410001-normal",
+        "discovery-cluster-139-6410001-off",
+        "discovery-cluster-139-6410002-normal",
+        "discovery-cluster-139-6410002-off",
+        "discovery-cluster-139-6410003-normal",
+        "discovery-cluster-139-6410003-off"
+      ],
+      "proposedCapSeconds": 100000,
+      "proposedMaxInvocations": 170
+    },
+    "work-mac": {
+      "root": "/Users/180471/bl-founder-discovery",
+      "unitIds": [
+        "discovery-cluster-33-6410007-normal",
+        "discovery-cluster-33-6410007-off",
+        "discovery-cluster-33-6410008-normal",
+        "discovery-cluster-33-6410008-off",
+        "discovery-cluster-4-6410004-normal",
+        "discovery-cluster-4-6410004-off",
+        "discovery-cluster-4-6410005-normal",
+        "discovery-cluster-4-6410005-off",
+        "discovery-cluster-4-6410006-normal",
+        "discovery-cluster-4-6410006-off",
+        "discovery-cluster-4-6410007-normal",
+        "discovery-cluster-4-6410007-off",
+        "discovery-cluster-4-6410008-normal",
+        "discovery-cluster-4-6410008-off",
+        "discovery-cluster-16-6410004-normal",
+        "discovery-cluster-16-6410004-off",
+        "discovery-cluster-16-6410005-normal",
+        "discovery-cluster-16-6410005-off",
+        "discovery-cluster-16-6410006-normal",
+        "discovery-cluster-16-6410006-off",
+        "discovery-cluster-16-6410007-normal",
+        "discovery-cluster-16-6410007-off",
+        "discovery-cluster-16-6410008-normal",
+        "discovery-cluster-16-6410008-off",
+        "discovery-cluster-139-6410004-normal",
+        "discovery-cluster-139-6410004-off",
+        "discovery-cluster-139-6410005-normal",
+        "discovery-cluster-139-6410005-off",
+        "discovery-cluster-139-6410006-normal",
+        "discovery-cluster-139-6410006-off",
+        "discovery-cluster-139-6410007-normal",
+        "discovery-cluster-139-6410007-off",
+        "discovery-cluster-139-6410008-normal",
+        "discovery-cluster-139-6410008-off"
+      ],
+      "proposedCapSeconds": 130000,
+      "proposedMaxInvocations": 220
+    }
+  },
+  "priorInvocations": [
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790773994515-57665.json",
+      "sha256": "959c41710371879fa85d1eb331cfe2a68c886fec17ada171d6b459106123986b",
+      "elapsedSeconds": 730.957080041
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790774792233-86235.json",
+      "sha256": "859f271414fe15c7daec14e4763cbc43297590b519e944739f487352e4babf7d",
+      "elapsedSeconds": 755.316774458
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790775437850-12494.json",
+      "sha256": "d98daed0afe0051b493b1b673c275e1b586382af1229ac8ae2c7a128b89a10e8",
+      "elapsedSeconds": 645.3977730839999
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790776064233-33093.json",
+      "sha256": "2a4d01b524100b337e7bcf2b84f795211eacb3821812447e95a886b2e2e3c5e4",
+      "elapsedSeconds": 626.0912233749999
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790776780336-52482.json",
+      "sha256": "36f1a71d5cc2627e229189bfd17526d7f83e08f9034f4ac684455ea10f1f77da",
+      "elapsedSeconds": 715.7926603340001
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790777523192-74758.json",
+      "sha256": "6e2e3ffe149c84fd8dd85b4eaeb75e0dccc792a7d3ef2bc34b3292fb63551e00",
+      "elapsedSeconds": 742.5984198330001
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790778150455-97024.json",
+      "sha256": "c119c4368564bad16ed424db5039dd2d86ec0d3db22b1906ee880d018f1d0f9a",
+      "elapsedSeconds": 627.0465424170001
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790778862299-16433.json",
+      "sha256": "914431f6d3a7632f7e003cba52429648519aa2fcc73c0ff84d839fcadd3796c2",
+      "elapsedSeconds": 711.6494233330001
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790779480084-40822.json",
+      "sha256": "c8c9fcf2238f30938fdcd264e986ef2ac3dc0b51fd1281b4d9ad7b722e7a86cd",
+      "elapsedSeconds": 617.493309875
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790780113900-61396.json",
+      "sha256": "a4ba781cf87d0322a9b94f8eb8922aac053b0067eb0d4992dd6a7a3ca6dbccf1",
+      "elapsedSeconds": 633.611445083
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790780743571-82354.json",
+      "sha256": "f7512dca397096c0b341153a61d3eb6ec9293ab301122f88d40971613ba5082b",
+      "elapsedSeconds": 629.4861228330001
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790782558118-3812.json",
+      "sha256": "6bcace5b2f52aa43c8be80aba78fb05393bff943b534028ddf577e16b3d7da41",
+      "elapsedSeconds": 1814.3101186669999
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790783307349-57485.json",
+      "sha256": "71a5aed857bdcef690157ce4b1094a04fa83182018a67354e216adb72aaa3727",
+      "elapsedSeconds": 748.868770625
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790784001997-82462.json",
+      "sha256": "75f7f9767eb8940cb84fcf31ded645d3d45d558b2bd2215908b67254757ab187",
+      "elapsedSeconds": 694.4375610000001
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790784710630-1160.json",
+      "sha256": "ab971b975c11ee58004d950010da05eab01f4fb5f0233864a66564a161664453",
+      "elapsedSeconds": 708.430592916
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790785522913-20493.json",
+      "sha256": "d92b9bcef4012b43da695685578b8a6749f06a1b8fd5a556669ce66cdacf04e3",
+      "elapsedSeconds": 812.221712
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790787219930-45550.json",
+      "sha256": "c46b9fb918868dc542a9a23102385e2df5e6b26e58d44c37b2ec37103b7a16b9",
+      "elapsedSeconds": 1688.2577805
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790787858517-99650.json",
+      "sha256": "244fb1dcf4d18112c0b27713f235e19721b19b2258545f4b05f61b9b3bb19db2",
+      "elapsedSeconds": 638.4108587090001
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790788537774-19742.json",
+      "sha256": "f1ce1c567feceea5fa4054f7990bd50d5b12b5c4709f69e77ecf73ffa5f98a46",
+      "elapsedSeconds": 679.068513042
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790789147583-39089.json",
+      "sha256": "d8cbab4b5f6aa35a2909a1aa9dd6803b5e10443f2154c1fc0aa11403377e6f30",
+      "elapsedSeconds": 609.614446
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790789989731-58183.json",
+      "sha256": "ee47c35d1fbe5294c39a2dd344bd245b04ef34f4c582c2d365005a6cf0d26180",
+      "elapsedSeconds": 841.886613042
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790792565866-92333.json",
+      "sha256": "e5c2c9eec3a0191abb8362ac5b99a67e454a76d97bf4937181f442092e1d8e8a",
+      "elapsedSeconds": 2575.8335078329997
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790793489479-91705.json",
+      "sha256": "4ecc04016429f1632793c4c964e760353571d782ab88aa5c4d4b5b7cc643b52b",
+      "elapsedSeconds": 920.7571732499999
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790794180857-25999.json",
+      "sha256": "9c9f8bf39f0e9d7cfacd27d7f798622f03a51958872c9310ed773db3fd327dbf",
+      "elapsedSeconds": 691.074533875
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790794945985-51928.json",
+      "sha256": "6cce7b4abcf43ebe75fd9b6831073370fa87c19b6807c5d5d48e17256bb26916",
+      "elapsedSeconds": 764.8562570419999
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790795801207-76959.json",
+      "sha256": "04003ce90dbab68d1c9d26011e6d6722b3b51fa664b149a32e24eb83232c94db",
+      "elapsedSeconds": 854.478823416
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790796510281-6597.json",
+      "sha256": "004951cf81990e79702dea275e261b37840d8180a385d4c8c2b37aadb53126ec",
+      "elapsedSeconds": 708.846164625
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790797190200-29385.json",
+      "sha256": "848e84561cad74538210cf9e3154039aff6b5609f9266ef65bc8f48e5c3e4ae6",
+      "elapsedSeconds": 679.732273834
+    },
+    {
+      "path": "runs/founder-discovery-improvement-v1/invocation-1790797803869-52052.json",
+      "sha256": "f37d0b2b4c8fe7a4c5fd1b0410bb0ce28a2355a4f0331f355b15169ae20cea4a",
+      "elapsedSeconds": 613.419615833
+    }
+  ],
+  "priorChargedSeconds": 24479.946090875,
+  "engineeringReserveSeconds": 1000,
+  "totalCapSeconds": 345600,
+  "remainingUnallocatedSeconds": 90120.05390912498,
+  "totalInvocationLimit": 576,
+  "remainingUnallocatedInvocations": 157,
+  "status": "routing fixed; new runner release pending controls and review; no assay authorization"
+}
