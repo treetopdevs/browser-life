@@ -29,7 +29,6 @@ const a = parseArgs(Deno.args, {
 });
 const cmd = String(a._[0] ?? "");
 const OUT = a.out;
-await Deno.mkdir(OUT, { recursive: true });
 
 // ---------------------------------------------------------------------------------------------
 // Helpers.
@@ -631,7 +630,7 @@ function qualifying(dc: DeepCensus[], role: Role): [number, number][] {
   }
   return out;
 }
-const soloRuns = async (base = "runs/solo/gradient-m3") => {
+export const soloRuns = async (base = "runs/solo/gradient-m3") => {
   const runs: { dir: string; founder: number; genome: string | undefined; seed: number; mutation: boolean; steps: number; extinct: boolean }[] = [];
   for (const cond of ["treatment", "no-mutation"]) {
     const root = `${base}/${cond}`;
@@ -647,7 +646,7 @@ const soloRuns = async (base = "runs/solo/gradient-m3") => {
  * Test 3's candidates from single-founder runs keyed by `subject`: each role that qualifies in a
  * mutation run but in none of the subject's runs without mutation, with its descendant genome.
  */
-async function originationCandidates(runs: { dir: string; subject: number; seed: number; mutation: boolean; extinct?: boolean }[]) {
+export async function originationCandidates(runs: { dir: string; subject: number; seed: number; mutation: boolean; extinct?: boolean }[]) {
   const qual: any[] = [];
   const nmRoles = new Map<number, Set<Role>>();
   for (const r of runs.filter((r) => !r.mutation)) {
@@ -679,7 +678,7 @@ async function originationCandidates(runs: { dir: string; subject: number; seed:
  * A candidate's garden outcome (test 3's rule): roles are compared only between active lineages; a
  * founder inactive beside its descendant is represented by its monoculture `mono`.
  */
-function gardenOutcome(p: any, mono: any) {
+export function gardenOutcome(p: any, mono: any) {
   const fluxOf = (q: any, slot: number) => q.tiles.reduce((s: number[], t: any) => {
     const l = t.lineages[slot];
     return [s[0] + l.photo, s[1] + l.grow, s[2] + l.decomp, s[3] + l.cellCensuses];
@@ -696,11 +695,11 @@ function gardenOutcome(p: any, mono: any) {
 }
 const OUTCOMES = ["different role", "same role", "descendant inactive", "founder inactive"];
 /** The founder diagnostic's gradient garden (docs/plan.md): gradient-m3's light range down each 64-row tile. */
-const GRADIENT_GARDEN = { lightBase: 20, lightAmp: 220, rows: [12, 26, 38, 52] };
+export const GRADIENT_GARDEN = { lightBase: 20, lightAmp: 220, rows: [12, 26, 38, 52] };
 
 const founderHex = (k: number) => hexOf(founderGenome(M3_FOUNDERS[k]));
 
-async function t3Plan() {
+export async function t3Plan() {
   const runs = await soloRuns();
   const found = await originationCandidates(runs.map((r) => ({ ...r, subject: r.founder })));
   const qual = found.qual.map(({ subject, ...q }) => ({ founder: subject, ...q }));
@@ -744,7 +743,7 @@ async function t3() {
 // harness on 24 other genomes, and test 3's own candidates re-read in a gradient garden.
 
 /** Test 3's plantings in the gradient garden (seeds from 4,260,001). */
-async function t3GradientPlan() {
+export async function t3GradientPlan() {
   const plan = JSON.parse(await Deno.readTextFile(`${OUT}/t3-plan.json`));
   await save("t3-gradient-plan.json", { ...plan, seed0: 4_260_001, gradient: GRADIENT_GARDEN });
 }
@@ -843,7 +842,7 @@ const fdRuns = async () => {
 };
 
 /** Candidate roles from the 192 runs, and their garden plans: uniform (4,270,001) and gradient (4,280,001). */
-async function fdPlan() {
+export async function fdPlan() {
   const { subjects, runs, complete } = await fdRuns();
   if (!complete) throw new Error(`the founder diagnostic's 192 runs are not all complete (${runs.length} finished)`);
   const { qual, candidates } = await originationCandidates(runs);
@@ -1238,7 +1237,9 @@ async function gate() {
 
 // ---------------------------------------------------------------------------------------------
 
-switch (cmd) {
+if (import.meta.main) {
+  await Deno.mkdir(OUT, { recursive: true });
+  switch (cmd) {
   case "validate":
     await validate();
     break;
@@ -1301,4 +1302,5 @@ switch (cmd) {
     break;
   default:
     throw new Error(`unknown subcommand '${cmd}'`);
+  }
 }

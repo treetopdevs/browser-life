@@ -42,6 +42,8 @@ export interface Lineage {
 
 export const DEFAULT_ARCHIVE: ArchiveSpec = { bins: 8, massRange: [7, 13], speedRange: [0, 4] };
 
+export type ScoreFn = (e: Evaluation) => number;
+
 export class Archive {
   readonly cells = new Map<string, Elite>();
   /** Every distinct genome that passed the M3 gate, kept even if displaced from its cell. */
@@ -52,7 +54,11 @@ export class Archive {
   private readonly link: number[] = [];
   private lineageCache?: Lineage[];
 
-  constructor(readonly spec: ArchiveSpec = DEFAULT_ARCHIVE) {}
+  constructor(
+    readonly spec: ArchiveSpec = DEFAULT_ARCHIVE,
+    /** Archive insertion score; defaults to `quality`. `--score maintenance` passes `qualityMaintenance`. */
+    readonly score: ScoreFn = quality,
+  ) {}
 
   cellOf(e: Evaluation): [number, number] {
     const bin = (v: number, [lo, hi]: [number, number]) => Math.max(0, Math.min(this.spec.bins - 1, Math.floor(((v - lo) / (hi - lo)) * this.spec.bins)));
@@ -62,7 +68,7 @@ export class Archive {
   /** Inserts if the cell is empty or the candidate is better. Returns true when inserted. */
   offer(genome: Genome, e: Evaluation, born: number): boolean {
     this.evaluated++;
-    const q = quality(e);
+    const q = this.score(e);
     if (q <= 0) return false;
     const cell = this.cellOf(e);
     const idx = this.viable.length;
@@ -153,8 +159,8 @@ export class Archive {
    * count, so replaying the viable ones in order reproduces cells, passers and
    * lineages exactly.
    */
-  static replay(log: { genome: Genome; eval: Evaluation; born: number }[], evaluated: number, spec = DEFAULT_ARCHIVE): Archive {
-    const a = new Archive(spec);
+  static replay(log: { genome: Genome; eval: Evaluation; born: number }[], evaluated: number, spec = DEFAULT_ARCHIVE, score: ScoreFn = quality): Archive {
+    const a = new Archive(spec, score);
     for (const r of log) a.offer(r.genome, r.eval, r.born);
     a.evaluated = evaluated;
     return a;

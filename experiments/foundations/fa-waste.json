@@ -1,0 +1,120 @@
+{
+ "note": "exploratory A waste medium readout 2026-09-30; roles not recorded (EvalConfig.roles off); no GPU in this analysis",
+ "date": "2026-09-30",
+ "medium": "waste:8:24",
+ "score": "maintenance",
+ "out": "runs/bootstrap-medium-waste",
+ "search": {
+  "batches": 200,
+  "evaluated": 3200,
+  "viable": 2677,
+  "searchSeeds": [
+   4700001,
+   4700200
+  ],
+  "elites": 35,
+  "elitesRegenZero": 20,
+  "elitesRegenGateLike": 1
+ },
+ "viable": {
+  "n": 2677,
+  "regenZero": 1213,
+  "regenFull4of4": 232,
+  "regenHistogramReps4": {
+   "0": 1213,
+   "1": 522,
+   "2": 388,
+   "3": 322,
+   "4": 232
+  },
+  "motGainPositive": 298
+ },
+ "gatePassing": {
+  "n": 232,
+  "note": "screening passers with regenerated/reps > 0.8 and lightDependent==reps; equals viable regenHistogram 4",
+  "motGainPositive": 5
+ },
+ "confirm": {
+  "screened": 232,
+  "confirmed": 148,
+  "geneticClusters": 14,
+  "geneticClustersVerified": true,
+  "m3GateMet": false,
+  "m3MinClusters": 20,
+  "lowerBoundAbove08": 35,
+  "lowerBoundClusters": 9,
+  "confirmSeed": 4710001,
+  "regenHistogramReps16": {
+   "13": 25,
+   "14": 36,
+   "15": 52,
+   "16": 35
+  },
+  "regenMean": 14.655405405405405,
+  "regenZero": 0,
+  "regenFull16of16": 35,
+  "motGainPositive": 2,
+  "clusterSizes": {
+   "0": 1,
+   "1": 117,
+   "2": 3,
+   "3": 1,
+   "4": 2,
+   "5": 2,
+   "6": 2,
+   "7": 12,
+   "8": 1,
+   "9": 1,
+   "10": 2,
+   "11": 2,
+   "12": 1,
+   "13": 1
+  }
+ },
+ "roles": {
+  "recorded": false,
+  "note": "bootstrap medium screen does not set EvalConfig.roles; compare only after a separate role screen like fd-roles",
+  "m3PoolReference": {
+   "phototroph": 586,
+   "chemotroph": 131,
+   "mixed": 109,
+   "decomposer": 0,
+   "source": "runs/foundations/results/fd-subjects.json poolRoles"
+  }
+ },
+ "dependence": {
+  "obligate": 0,
+  "ofConfirmed": 148,
+  "survivedHistogram": {
+   "16": 147,
+   "15": 1
+  },
+  "obligateClusters": 0,
+  "methodSuccessAtLeastOneObligateCluster": false
+ },
+ "maintenanceVsRegen": {
+  "pilotGatePassingIn5Batches": 0,
+  "pilotNote": "regen 0 on elites under maintenance",
+  "fullRunElitesRegenZero": 20,
+  "fullRunElites": 35,
+  "firstGatePasserAroundBatch": 10,
+  "implication": "qualityMaintenance does not score regeneration; archive elites stay mostly non-regenerating, while passesGate still requires regenerated/reps>0.8 so gate-passers (232) all regenerate in screen and confirm (13\u201316 of 16)"
+ },
+ "backgroundDependenceProjection": {
+  "note": "running job untouched; snapshot from runs/ops/a-background.log",
+  "confirmed": 1476,
+  "dependenceDone": 68,
+  "obligateSoFar": 0,
+  "clustersReportedAtConfirm": 33,
+  "avgChunkSecondsRecent": 54.8,
+  "genomesPerChunk": 4,
+  "etaHoursRemaining": 5.36,
+  "etaHoursAt48sPerChunk": 4.69,
+  "clusterSampleEtaMinutes": 7.5,
+  "sampledRescreenWouldDecideSame": {
+   "waste": true,
+   "wasteReason": "0/148 obligate so any 14 cluster representatives also yield 0 obligate clusters",
+   "background": "likely for the binary any-obligate-cluster question if the early 0/68 pattern holds, but a best-per-cluster sample could miss rare obligates inside facultative clusters; running full re-screen left unchanged"
+  }
+ }
+}

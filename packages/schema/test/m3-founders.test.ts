@@ -96,6 +96,29 @@ describe("m3World", () => {
     }
     expect([...seenIds].sort((a, b) => a - b)).toEqual([1, 2, 3, 4]);
   });
+
+  it("cycles an array `only` across discs (disc i gets only[i % length])", () => {
+    const bigCfg = defaultConfig({ tileW: 256, tileH: 256, kernelRadius: 9 });
+    const n = cellCount(bigCfg);
+    const set = [founderGenome(M3_FOUNDERS[0]), founderGenome(M3_FOUNDERS[3]), founderGenome(M3_FOUNDERS[5])];
+    const count = 7;
+    const s = m3World(bigCfg, count, 32, 64, set);
+    for (let i = 0; i < count; i++) {
+      let found = -1;
+      for (let c = 0; c < n; c++) {
+        if (s.genome[G.LIN_HI * n + c] === 0 && s.genome[G.LIN_LO * n + c] === i + 1) {
+          found = c;
+          break;
+        }
+      }
+      expect(found).toBeGreaterThanOrEqual(0);
+      const words = genomeWordsAt(s, found);
+      const want = set[i % set.length];
+      expect(words[G.PARAM0] & 0xffff).toBe(want.mu);
+      expect(words[G.PARAM0] >>> 16).toBe(want.sigma);
+      expect(words[G.PARAM1] & 0xff).toBe(want.motGain);
+    }
+  });
 });
 
 describe("gradient-m3 / spots-m3 presets", () => {

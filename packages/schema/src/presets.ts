@@ -1,7 +1,8 @@
 import { canonicalConfig, digestWords } from "./accounting.ts";
-import { defaultConfig, type WorldConfig } from "./config.ts";
+import { cellCount, defaultConfig, type WorldConfig } from "./config.ts";
 import { M3_FOUNDER_SET, M3_FOUNDERS } from "./founders.ts";
-import { generalistWorld, m3World, soupWorld, type WorldState } from "./world.ts";
+import { CH } from "./layout.ts";
+import { generalistWorld, m3World, soupWorld, validateState, type WorldState } from "./world.ts";
 
 export type InitKind = "generalist" | "soup" | "m3";
 
@@ -10,6 +11,8 @@ export interface InitParams {
   founders: number;
   nutrient: number;
   biomass: number;
+  /** Dissolved waste (channel C) per cell; optional, absent from existing presets. */
+  waste?: number;
 }
 
 export interface Preset {
@@ -53,6 +56,14 @@ export const PRESETS: Preset[] = [
       "Light gradient niche axis, founded from the 12 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "gradient-m3-waste",
+    name: "Light gradient (M3 founders, waste medium)",
+    description:
+      "gradient-m3 with dissolved nutrient split into A=8 / C=24 waste — empty-niche set S4's conditioned substrate. Same founders and light; total dissolved matter matches gradient-m3.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 8, biomass: 64, waste: 24 },
   },
   {
     id: "soup",
@@ -112,9 +123,11 @@ export function presetIdentity(p: Preset): string {
   const canonical = canonicalConfig(cfgWithoutSeed as WorldConfig);
   const founderSetId = p.init.kind === "m3" ? M3_FOUNDER_SET : null;
   // Fields in a fixed order, so the digest does not depend on how the preset's
-  // init object happens to be written.
-  const { kind, founders, nutrient, biomass } = p.init;
-  const bytes = new TextEncoder().encode(JSON.stringify({ cfg: canonical, init: { kind, founders, nutrient, biomass }, founderSetId }));
+  // init object happens to be written. `waste` is included only when present so
+  // existing presets keep their pinned identities.
+  const { kind, founders, nutrient, biomass, waste } = p.init;
+  const init = waste !== undefined ? { kind, founders, nutrient, biomass, waste } : { kind, founders, nutrient, biomass };
+  const bytes = new TextEncoder().encode(JSON.stringify({ cfg: canonical, init, founderSetId }));
   const words = new Uint32Array(Math.ceil(bytes.length / 4));
   new Uint8Array(words.buffer).set(bytes);
   const [a, b] = digestWords(Uint32Array.of(bytes.length, ...words));
@@ -151,12 +164,19 @@ export function distributionIdentity(presetIdentityValue: string, condition: str
 }
 
 export function initWorld(cfg: WorldConfig, init: InitParams): WorldState {
-  switch (init.kind) {
-    case "soup":
-      return soupWorld(cfg, init.founders, init.nutrient, init.biomass);
-    case "m3":
-      return m3World(cfg, init.founders, init.nutrient, init.biomass);
-    default:
-      return generalistWorld(cfg, init.founders, init.nutrient, init.biomass);
+  const s =
+    init.kind === "soup"
+      ? soupWorld(cfg, init.founders, init.nutrient, init.biomass)
+      : init.kind === "m3"
+        ? m3World(cfg, init.founders, init.nutrient, init.biomass)
+        : generalistWorld(cfg, init.founders, init.nutrient, init.biomass);
+  // Waste is applied here rather than through m3World/soupWorld/generalistWorld
+  // so those helpers' signatures stay free for other callers (e.g. Genome[] only).
+  if (init.waste) {
+    const n = cellCount(cfg);
+    s.cells.fill(init.waste, CH.C * n, (CH.C + 1) * n);
+    const errs = validateState(s);
+    if (errs.length) throw new Error(`invalid initial world: ${errs.join("; ")}`);
   }
+  return s;
 }
