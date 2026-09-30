@@ -341,6 +341,16 @@ If only one of tests 2 and 3 fails, the failure is recorded and the gate moves o
   - Otherwise *unclear*.
   - A pair that the neutral control also shows in 3 or more of its 5 histories reads nothing.
 - *Cost.* About 1,800 assays, about $5, run on the tests' instances after the founder diagnostic's gardens.
+- *Result (2026-09-29): incomplete, so no reading.* All 1,800 scheduled units were processed: 828 treatment assays and 900 neutral, plus 72 treatment units with no implant to run. Results are in `experiments/foundations/t4x.json`.
+  - *Why incomplete.* The completeness check fixed with the design wants one implant per rank and position in every cell. An eligible lineage needs at least 256 cells and a heavy component (mass ≥ 256) of its own. Three states hold fewer than five eligible lineages: history 103 at 3 × 10⁶ steps (2), and history 105 at 10⁶ (4) and 3 × 10⁶ (3). The missing ranks lack an implant in every state and position, so a rerun cannot fill them. The neutral control is complete.
+  - *Descriptive only.* The numbers below are not the reading. A rule that used the ranks present was not fixed in advance.
+    - 10⁷ beats 3 × 10⁶ in 4 of 5 histories, 2 of them on partial cells. In the three complete histories it does in 2 of 3; history 101 misses in the 3 × 10⁶ state (a difference of 0.04).
+    - 3 × 10⁶ beats 10⁶ in 5 of 5, and 10⁷ beats 10⁶ in 5 of 5. None is blocked by the floor.
+    - Mean fitness rises monotonically over the three origins in the 10⁶ and 3 × 10⁶ states in all 5 histories, and in the 10⁷ state in 3 of 5. Later origins beat 10⁶ origins on mean fitness in 29 of 30 origin–state comparisons.
+    - Every origin does worse in the 10⁷ state than in the 10⁶ state, in all 15 origin–history combinations: the later worlds are harder for everyone.
+    - 10⁶ lineages survive in only 20–70% of implants even in their own state.
+  - *Neutral control.* 75–100% of implants die out in every cell, so every pair is at the floor in all 5 histories. It shows no pair, so it confounds nothing, but it cannot show one either.
+  - *For the next cohort's horizon,* read descriptively: competitive gains look likely to keep accumulating past 3 × 10⁶ steps in most histories, but this assay does not establish it.
 
 **Also.**
 - *The registered 10⁷ extension* runs on AWS alongside the review, from its own $50 budget.
