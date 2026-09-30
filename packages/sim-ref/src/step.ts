@@ -37,6 +37,7 @@ import {
   draw,
   lightModeId,
   mulFrac,
+  muli,
   mulu,
   subu,
   worldW,
@@ -130,7 +131,23 @@ export class RefSim {
     const mode = lightModeId(c.lightMode);
     if (mode === 0) L += c.lightAmp;
     else if (mode === 1) L += divu(mulu(c.lightAmp, ly), c.tileH - 1);
-    else if ((((lx >> 5) + (ly >> 5)) & 1) === 0) L += c.lightAmp;
+    else if (mode === 2) {
+      if ((((lx >> 5) + (ly >> 5)) & 1) === 0) L += c.lightAmp;
+    } else {
+      // Rotating planet: a tent of light centred on the sun's meridian.
+      const P = c.dayPeriod ?? 0;
+      let sun = P > 0 ? divu(mulu(step % P, c.tileW), P) : 0;
+      const WP = c.wanderPeriod ?? 0;
+      if (WP > 0) {
+        const ph = divu(mulu(step % WP, 512), WP);
+        const tri = 256 - Math.abs(ph - 256);
+        sun = (sun + (((c.wanderAmp ?? 0) * tri) >> 8)) % c.tileW;
+      }
+      const half = c.tileW >> 1;
+      const d0 = (lx + c.tileW - sun) % c.tileW;
+      const d = Math.min(d0, c.tileW - d0);
+      L += divu(mulu(c.lightAmp, half - d), half);
+    }
     if (c.seasonPeriod > 0) {
       const ph = divu(mulu(step % c.seasonPeriod, 512), c.seasonPeriod);
       const tri = Math.abs(ph - 256);
@@ -435,8 +452,9 @@ export class RefSim {
           x[4] = sat(divu(mulu(cap24(E), 16), addu(B, 1)));
           x[5] = L >>> 1;
           x[6] = sat(S >>> 2);
-          x[7] = clampi(divi(Se - Sw, 4), -127, 127);
-          x[8] = clampi(divi(Ss - Sn, 4), -127, 127);
+          const sg = c.signalGain ?? 1;
+          x[7] = clampi(divi(muli(Se - Sw, sg), 4), -127, 127);
+          x[8] = clampi(divi(muli(Ss - Sn, sg), 4), -127, 127);
           x[9] = clampi(divi(this.U[i], 2), -127, 127);
           for (let j = 0; j < NN_H; j++) {
             let acc = wb[B1_OFF + j] * 128;

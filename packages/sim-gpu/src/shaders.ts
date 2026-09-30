@@ -93,6 +93,10 @@ export function prelude(c: WorldConfig): string {
     LIGHT_AMP: u(c.lightAmp),
     SEASON_PERIOD: u(c.seasonPeriod),
     SEASON_AMP: i(c.seasonAmp),
+    DAY_PERIOD: u(c.dayPeriod ?? 0),
+    SIGNAL_GAIN: i(c.signalGain ?? 1),
+    WANDER_PERIOD: u(c.wanderPeriod ?? 0),
+    WANDER_AMP: u(c.wanderAmp ?? 0),
     EVENT_CAP: u(c.eventCap),
     KN: u(k.count),
     KSUM: u(k.sum),
@@ -200,8 +204,27 @@ fn light_at(x: u32, y: u32, step: u32) -> u32 {
     L += i32(LIGHT_AMP);
   } else if (LIGHT_MODE == 1u) {
     L += i32((LIGHT_AMP * ly) / (TILE_H - 1u));
-  } else if ((((lx >> 5u) + (ly >> 5u)) & 1u) == 0u) {
-    L += i32(LIGHT_AMP);
+  } else if (LIGHT_MODE == 2u) {
+    if ((((lx >> 5u) + (ly >> 5u)) & 1u) == 0u) {
+      L += i32(LIGHT_AMP);
+    }
+  } else {
+    // Rotating planet: a tent of light centred on the sun's meridian.
+    var sun = 0u;
+    if (DAY_PERIOD > 0u) {
+      let dp = max(DAY_PERIOD, 1u); // avoid const-eval x/0 when disabled
+      sun = ((step % dp) * TILE_W) / dp;
+    }
+    if (WANDER_PERIOD > 0u) {
+      let wp = max(WANDER_PERIOD, 1u); // avoid const-eval x/0 when disabled
+      let ph = ((step % wp) * 512u) / wp;
+      let tri = u32(256 - abs(i32(ph) - 256));
+      sun = (sun + ((WANDER_AMP * tri) >> 8u)) % TILE_W;
+    }
+    let half = TILE_W >> 1u;
+    let d0 = (lx + TILE_W - sun) % TILE_W;
+    let d = min(d0, TILE_W - d0);
+    L += i32((LIGHT_AMP * (half - d)) / half);
   }
   if (SEASON_PERIOD > 0u) {
     let period = max(SEASON_PERIOD, 1u); // avoid const-eval x/0 when disabled
@@ -615,8 +638,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
       xin[4] = sat((cap24(E) * 16u) / (B + 1u));
       xin[5] = i32(L >> 1u);
       xin[6] = sat(S >> 2u);
-      xin[7] = clamp((Se - Sw) / 4, -127, 127);
-      xin[8] = clamp((Ss - Sn) / 4, -127, 127);
+      xin[7] = clamp(((Se - Sw) * SIGNAL_GAIN) / 4, -127, 127);
+      xin[8] = clamp(((Ss - Sn) * SIGNAL_GAIN) / 4, -127, 127);
       xin[9] = clamp(U[i] / 2, -127, 127);
       var h: array<i32, ${NN_H}>;
       for (var j = 0u; j < NN_H; j++) {

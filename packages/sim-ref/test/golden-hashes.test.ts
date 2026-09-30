@@ -33,6 +33,13 @@ const PINNED: Record<number, Record<string, string>> = {
     "adhesion-default-gain": "16b879ff174bb74c",
     "mutation-boundary": "0966e96ab1306e8f",
     "ring-namespace": "e277953f6ebc2ea2",
+    // Sandbox "sweep" light mode (optional dayPeriod, absent elsewhere): a new
+    // case with its own pin; every pin above is untouched.
+    sweep: "e69b229777d809cf",
+    // Sandbox optional signalGain (absent elsewhere): its own new pin.
+    "signal-gain": "950301275043e2fa",
+    // Sandbox optional wanderPeriod/wanderAmp (absent elsewhere): its own new pin.
+    "sweep-wander": "dcfbb10ffe638f13",
   },
 };
 

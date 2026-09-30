@@ -16,7 +16,7 @@ export const RULE_VERSION = 1;
  */
 export const METRICS_VERSION = 2;
 
-export type LightMode = "uniform" | "gradient" | "patches";
+export type LightMode = "uniform" | "gradient" | "patches" | "sweep";
 
 export interface WorldConfig {
   ruleVersion: number;
@@ -80,7 +80,7 @@ export interface WorldConfig {
   lightMode: LightMode;
   /** 0..255 */
   lightBase: number;
-  /** Added across the tile (gradient) or inside patches. */
+  /** Added across the tile (gradient), inside patches, or at the sun's meridian (sweep). */
   lightAmp: number;
   /** Steps per seasonal cycle; 0 disables seasons. */
   seasonPeriod: number;
@@ -192,6 +192,43 @@ export interface WorldConfig {
    * overflow into the namespace bits.
    */
   ringNamespace?: number;
+
+  /**
+   * lightMode "sweep" (a rotating planet): the sun's meridian crosses each
+   * tile along x once every `dayPeriod` steps, and light falls off linearly
+   * with circular x-distance from it, from lightBase + lightAmp at the
+   * meridian to lightBase at the antipode. The spatial mean is about the
+   * gradient mode's, so the two differ mainly in that the light moves. Absent
+   * or 0: the sun stands still at x = 0 (the matched static control).
+   *
+   * Optional and absent by default for the same reason `migrationPeriod` is:
+   * a config without it hashes exactly as before this feature existed.
+   * `validateConfig` requires dayPeriod * tileW < 2^32 so the sun's position
+   * `(step % dayPeriod) * tileW / dayPeriod` fits in u32 on both backends.
+   */
+  dayPeriod?: number;
+
+  /**
+   * Sandbox: multiplies the sensed signal gradient (SGX, SGY) before the
+   * existing /4 and the clamp to +-127. At the default settings a neighbour
+   * difference below 8 reads as nothing to the int8 controller. Absent means 1,
+   * which is the original sensor exactly. Bounded by 127 so
+   * (Se - Sw) * signalGain stays below 2^31 with Se, Sw capped at 2^24 - 1.
+   * Optional and absent by default for the same reason `migrationPeriod` is.
+   */
+  signalGain?: number;
+
+  /**
+   * lightMode "sweep" only (sandbox): a wandering sun. The meridian is offset
+   * by wanderAmp * tri(step / wanderPeriod) cells, where tri rises 0 -> 1 over
+   * the first half of each period and falls back over the second, quantised
+   * to 1/256. On top of the dayPeriod rotation (or alone, with dayPeriod 0)
+   * the sun's velocity alternates each half-period, e.g. reverses. Absent or
+   * 0: no wander. Optional and absent by default like `migrationPeriod`.
+   */
+  wanderPeriod?: number;
+  /** Wander amplitude in cells (see `wanderPeriod`). */
+  wanderAmp?: number;
 }
 
 /**
@@ -303,7 +340,7 @@ export const cellCount = (c: WorldConfig) => worldW(c) * worldH(c);
 
 /** Numeric view of the config used for WGSL constants and validation. */
 export function lightModeId(m: LightMode): number {
-  return m === "uniform" ? 0 : m === "gradient" ? 1 : 2;
+  return m === "uniform" ? 0 : m === "gradient" ? 1 : m === "patches" ? 2 : 3;
 }
 
 /**
@@ -373,6 +410,7 @@ const RANGES: Partial<Record<keyof WorldConfig, Range>> = {
 /** Bounds for migrationPeriod/migrantCount, checked explicitly in `validateConfig` (see WorldConfig's doc on why they're not in `RANGES`/the generic per-key loop). */
 const MIGRATION_PERIOD_RANGE: Range = [0, 8_000_000];
 const MIGRANT_COUNT_RANGE: Range = [0, 4096];
+const DAY_PERIOD_RANGE: Range = [0, 8_000_000];
 
 export function validateConfig(c: WorldConfig): string[] {
   const errs: string[] = [];
@@ -399,7 +437,7 @@ export function validateConfig(c: WorldConfig): string[] {
   }
   if (errs.length) return errs;
   if (c.ruleVersion !== RULE_VERSION) errs.push(`ruleVersion ${c.ruleVersion} != ${RULE_VERSION}`);
-  if (!["uniform", "gradient", "patches"].includes(c.lightMode)) errs.push("lightMode must be uniform, gradient or patches");
+  if (!["uniform", "gradient", "patches", "sweep"].includes(c.lightMode)) errs.push("lightMode must be uniform, gradient, patches or sweep");
   if (c.tileW % 8 !== 0 || c.tileH % 8 !== 0) errs.push("tile dimensions must be multiples of 8");
   if (c.kernelRadius * 2 + 1 > Math.min(c.tileW, c.tileH)) errs.push("kernel larger than tile");
   if (cellCount(c) > 1 << 24) errs.push("world larger than 2^24 cells");
@@ -412,6 +450,10 @@ export function validateConfig(c: WorldConfig): string[] {
     ["migrationPeriod", MIGRATION_PERIOD_RANGE],
     ["migrantCount", MIGRANT_COUNT_RANGE],
     ["ringNamespace", [0, MAX_RING_NAMESPACE] as Range],
+    ["dayPeriod", DAY_PERIOD_RANGE],
+    ["signalGain", [1, 127] as Range],
+    ["wanderPeriod", [0, 8_000_000] as Range],
+    ["wanderAmp", [0, 4096] as Range],
   ] as const) {
     const v = c[key];
     if (v === undefined) continue;
@@ -431,6 +473,7 @@ export function validateConfig(c: WorldConfig): string[] {
   // index packLineageLo packs in -- every cell index (and founder index) must
   // fit in that narrower range, or two different cells could pack to the same
   // LIN_LO (a real, not just cosmetic, collision).
+  if ((c.dayPeriod ?? 0) * c.tileW > 0xffffffff) errs.push("dayPeriod * tileW must be below 2^32");
   if (c.ringNamespace !== undefined && cellCount(c) > 1 << RING_CELL_BITS) errs.push(`a namespaced config (ringNamespace set) must have cellCount at most 2^${RING_CELL_BITS}`);
   return errs;
 }
