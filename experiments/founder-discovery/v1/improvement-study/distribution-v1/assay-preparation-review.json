@@ -1,0 +1,25 @@
+{
+  "format": "discovery-distributed-assay-preparation-review/v1",
+  "reviewedAt": "2026-09-30T20:51:18.286896+00:00",
+  "status": "prepared-code-approved; not execution authorization",
+  "reviewer": "/root/distribution_review",
+  "sources": {
+    "tools/discovery_improvement_assay.ts": "c727509fb039a42021b02b59daae2129959641a82209759b32b629c477561dde",
+    "tools/discovery_improvement_assay_continue.py": "511a1ec41ffcb1c417bb050b6f55651241600aa74b306b3923073d20c8883703",
+    "tools/test/discovery-improvement-assay.test.ts": "06093a276db16198a7e8b7191ade5edb02c5be490dbfe741e4e8f4889c5e5923",
+    "tools/test/discovery_improvement_assay_supervisor_test.py": "562c788bfa224da8c46eda03c375e8b7c9c26e96656bea018b4f71abd87ad6f2"
+  },
+  "checks": [
+    "Four focused TypeScript tests and two fake-parent tests passed independently by root and reviewer",
+    "Reviewer separately verified PREPARED rejection before output, reservation or child creation",
+    "All 54 frozen scientific source hashes unchanged",
+    "Pinned complete reconciliation authority with exact 384 draws and 6144 request references, including unavailable observations and duplicates",
+    "Original executeAssay and original scientific result validator preserved; host provenance separate",
+    "Sorted unique-key disjoint host allocation, canonical cache validation and source drift checks",
+    "Conservative shared budget and parent reservation, watchdog and failure recovery guards"
+  ],
+  "candidateGenerated": false,
+  "releaseGenerated": false,
+  "assaysLaunched": false,
+  "budget": "Candidate defaults reserve 43000 seconds and 75 invocations per host, within the original aggregate ceiling using full history-cap reservations. This record allocates no runtime. Final complete-history reconciliation and explicit root-reviewed release remain mandatory."
+}
