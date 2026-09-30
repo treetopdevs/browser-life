@@ -1,0 +1,22 @@
+{
+  "format": "discovery-assay-import-preparation-review/v1",
+  "reviewedAt": "2026-09-30T22:57:51.248763+00:00",
+  "status": "prepared-code-approved; not execution authorization",
+  "reviewer": "/root/distribution_review",
+  "sources": {
+    "tools/discovery_improvement_assay_import.ts": "fcecf0bd20db741007299b262ad9dbab37268ae0590dc78f24c2da3caf256a65",
+    "tools/test/discovery-improvement-assay-import.test.ts": "93d6f2c88dacaddd544cb8445ecbd7e04ebac3ca53d9c616894b376d34eff868"
+  },
+  "checks": [
+    "Root reran two focused CPU-only tests: 2 passed, 0 failed, eight seconds; implementer independently passed same suite",
+    "Independent final code review clear after closure preservation, full identity validation, exact closure roster and receipt preflight repairs",
+    "All 54 frozen scientific source hashes unchanged",
+    "Canonical scientific result bytes preserved, including both-extinct results; requested duplicate and unavailable observations remain in frozen roster",
+    "Full terminal host ownership, root OS closure attestation and original ledger/log evidence preserved and revalidated for both host commit markers",
+    "Complete collection requires exact global key coverage and both committed host closures",
+    "Partial publication remains incomplete; identical retry preserves existing bytes; conflicting and unexpected evidence rejected"
+  ],
+  "productionImportRun": false,
+  "assaysLaunched": false,
+  "budget": "No runtime allocation or increase. Eventual production collection requires a bounded reservation within the shared original execution ceiling."
+}
