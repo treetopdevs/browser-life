@@ -1,0 +1,743 @@
+{
+  "stage": "r4",
+  "verdict": null,
+  "rows": [
+    {
+      "arm": "scaf",
+      "history": 0,
+      "tag": "scaf-i0",
+      "source": "runs/scaffold/main/scaf/i0/ckpt/b100-pre.blck.gz",
+      "dominant": "896178:25559",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 40,
+      "meanMass": 3393.525,
+      "speed": 0.25867714842413664,
+      "mass": 148147.25,
+      "recovery": 0.9997829995295178,
+      "reproduction": 37.5,
+      "regenerated": 0,
+      "quality": 0.4999348998588553
+    },
+    {
+      "arm": "scaf",
+      "history": 1,
+      "tag": "scaf-i1",
+      "source": "runs/scaffold/main/scaf/i1/ckpt/b100-pre.blck.gz",
+      "dominant": "968147:20276",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 40.5,
+      "meanMass": 3349.2654320987654,
+      "speed": 0.28988587400367344,
+      "mass": 148877.75,
+      "recovery": 1,
+      "reproduction": 42.75,
+      "regenerated": 1,
+      "quality": 0.625
+    },
+    {
+      "arm": "scaf",
+      "history": 2,
+      "tag": "scaf-i2",
+      "source": "runs/scaffold/main/scaf/i2/ckpt/b100-pre.blck.gz",
+      "dominant": "900165:210846",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 42,
+      "meanMass": 3230.9940476190477,
+      "speed": 0.33578858171980636,
+      "mass": 149478.5,
+      "recovery": 0.9999749475568858,
+      "reproduction": 34.75,
+      "regenerated": 0,
+      "quality": 0.4999924842670657
+    },
+    {
+      "arm": "scaf",
+      "history": 3,
+      "tag": "scaf-i3",
+      "source": "runs/scaffold/main/scaf/i3/ckpt/b100-pre.blck.gz",
+      "dominant": "963130:236053",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 47.5,
+      "meanMass": 2959.2105263157896,
+      "speed": 0.2921117630451688,
+      "mass": 149356.75,
+      "recovery": 0.9999345518986662,
+      "reproduction": 85.5,
+      "regenerated": 2,
+      "quality": 0.7499803655695998
+    },
+    {
+      "arm": "scaf",
+      "history": 4,
+      "tag": "scaf-i4",
+      "source": "runs/scaffold/main/scaf/i4/ckpt/b100-pre.blck.gz",
+      "dominant": "966505:159606",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 41.75,
+      "meanMass": 3282.8622754491016,
+      "speed": 0.26221836273663396,
+      "mass": 149028.75,
+      "recovery": 0.9998994287553302,
+      "reproduction": 38.75,
+      "regenerated": 0,
+      "quality": 0.49996982862659906
+    },
+    {
+      "arm": "scaf",
+      "history": 5,
+      "tag": "scaf-i5",
+      "source": "runs/scaffold/main/scaf/i5/ckpt/b100-pre.blck.gz",
+      "dominant": "938949:212421",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 41.75,
+      "meanMass": 3249.6646706586826,
+      "speed": 0.28226937121017787,
+      "mass": 148375,
+      "recovery": 0.9999247244916394,
+      "reproduction": 45.75,
+      "regenerated": 0,
+      "quality": 0.4999774173474918
+    },
+    {
+      "arm": "rand",
+      "history": 0,
+      "tag": "rand-i0",
+      "source": "runs/scaffold/main/rand/i0/ckpt/b100-pre.blck.gz",
+      "dominant": "973394:49032",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 24.5,
+      "meanMass": 4202.938775510204,
+      "speed": 3.2297237706820976,
+      "mass": 132960,
+      "recovery": 0.9930154853787834,
+      "reproduction": 263.25,
+      "regenerated": 0,
+      "quality": 0.497904645613635
+    },
+    {
+      "arm": "rand",
+      "history": 1,
+      "tag": "rand-i1",
+      "source": "runs/scaffold/main/rand/i1/ckpt/b100-pre.blck.gz",
+      "dominant": "984002:22114",
+      "evaluated": true,
+      "survived": 1,
+      "recovered": 1,
+      "lightDependent": 1,
+      "reps": 4,
+      "individuals": 0.25,
+      "meanMass": 4404,
+      "speed": 0.8438658377737022,
+      "mass": 1521.75,
+      "recovery": 1,
+      "reproduction": 2.25,
+      "regenerated": 0,
+      "quality": 0.0546875
+    },
+    {
+      "arm": "rand",
+      "history": 2,
+      "tag": "rand-i2",
+      "source": "runs/scaffold/main/rand/i2/ckpt/b100-pre.blck.gz",
+      "dominant": "984718:177092",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 0,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 20.25,
+      "meanMass": 2229.135802469136,
+      "speed": 0.8541916365102071,
+      "mass": 78196.5,
+      "recovery": 0.6578423214465179,
+      "reproduction": 53.5,
+      "regenerated": 3,
+      "quality": 0.5723526964339554
+    },
+    {
+      "arm": "rand",
+      "history": 3,
+      "tag": "rand-i3",
+      "source": "runs/scaffold/main/rand/i3/ckpt/b100-pre.blck.gz",
+      "dominant": "987866:259579",
+      "evaluated": true,
+      "survived": 2,
+      "recovered": 2,
+      "lightDependent": 2,
+      "reps": 4,
+      "individuals": 0.5,
+      "meanMass": 5592.5,
+      "speed": 3.627133627365936,
+      "mass": 5758.25,
+      "recovery": 0.9921899098066675,
+      "reproduction": 20,
+      "regenerated": 0,
+      "quality": 0.14912136485325012
+    },
+    {
+      "arm": "rand",
+      "history": 4,
+      "tag": "rand-i4",
+      "source": "runs/scaffold/main/rand/i4/ckpt/b100-pre.blck.gz",
+      "dominant": "969483:125815",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 40.75,
+      "meanMass": 2964.472392638037,
+      "speed": 0.27900999940266813,
+      "mass": 144224.75,
+      "recovery": 0.9991755132646898,
+      "reproduction": 79.75,
+      "regenerated": 1,
+      "quality": 0.6247526539794069
+    },
+    {
+      "arm": "rand",
+      "history": 5,
+      "tag": "rand-i5",
+      "source": "runs/scaffold/main/rand/i5/ckpt/b100-pre.blck.gz",
+      "dominant": "976330:13816",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 31,
+      "meanMass": 3388.548387096774,
+      "speed": 0.8486230672527364,
+      "mass": 137124.5,
+      "recovery": 1,
+      "reproduction": 66.5,
+      "regenerated": 4,
+      "quality": 1
+    },
+    {
+      "arm": "cont",
+      "history": 0,
+      "tag": "cont-i0",
+      "source": "runs/scaffold/main/cont/i0/ckpt/b100-pre.blck.gz",
+      "dominant": "971224:156131",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 33.75,
+      "meanMass": 3503.562962962963,
+      "speed": 2.623118001812749,
+      "mass": 148554,
+      "recovery": 0.9997947666325926,
+      "reproduction": 74,
+      "regenerated": 0,
+      "quality": 0.4999384299897778
+    },
+    {
+      "arm": "cont",
+      "history": 1,
+      "tag": "cont-i1",
+      "source": "runs/scaffold/main/cont/i1/ckpt/b100-pre.blck.gz",
+      "dominant": "959372:176893",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 11.75,
+      "meanMass": 10809.446808510638,
+      "speed": 1.3862996953934084,
+      "mass": 148473.75,
+      "recovery": 1,
+      "reproduction": 32.75,
+      "regenerated": 0,
+      "quality": 0.5
+    },
+    {
+      "arm": "cont",
+      "history": 2,
+      "tag": "cont-i2",
+      "source": "runs/scaffold/main/cont/i2/ckpt/b100-pre.blck.gz",
+      "dominant": "961878:77797",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 10.25,
+      "meanMass": 12458.707317073171,
+      "speed": 1.488692780060526,
+      "mass": 148091.75,
+      "recovery": 0.9997257572800506,
+      "reproduction": 29.75,
+      "regenerated": 0,
+      "quality": 0.49991772718401517
+    },
+    {
+      "arm": "cont",
+      "history": 3,
+      "tag": "cont-i3",
+      "source": "runs/scaffold/main/cont/i3/ckpt/b100-pre.blck.gz",
+      "dominant": "979825:163101",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 44.25,
+      "meanMass": 2698.853107344633,
+      "speed": 3.1162078917726443,
+      "mass": 147754,
+      "recovery": 0.9998675821701273,
+      "reproduction": 170.5,
+      "regenerated": 0,
+      "quality": 0.4999602746510382
+    },
+    {
+      "arm": "cont",
+      "history": 4,
+      "tag": "cont-i4",
+      "source": "runs/scaffold/main/cont/i4/ckpt/b100-pre.blck.gz",
+      "dominant": "936309:43382",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 3,
+      "reps": 4,
+      "individuals": 14.5,
+      "meanMass": 8848.068965517241,
+      "speed": 1.560377334092572,
+      "mass": 148950.75,
+      "recovery": 0.9998502238228266,
+      "reproduction": 45.75,
+      "regenerated": 1,
+      "quality": 0.546835683753492
+    },
+    {
+      "arm": "cont",
+      "history": 5,
+      "tag": "cont-i5",
+      "source": "runs/scaffold/main/cont/i5/ckpt/b100-pre.blck.gz",
+      "dominant": "987727:25873",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 4,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 8,
+      "meanMass": 15642.375,
+      "speed": 2.0181925085079286,
+      "mass": 147537,
+      "recovery": 0.9999678225702653,
+      "reproduction": 43.75,
+      "regenerated": 1,
+      "quality": 0.6249903467710796
+    },
+    {
+      "arm": "ancestor",
+      "tag": "ancestor",
+      "source": "runs/scaffold/calib/source/ckpt/b1-pre.blck.gz",
+      "dominant": "0:41",
+      "evaluated": true,
+      "survived": 4,
+      "recovered": 0,
+      "lightDependent": 4,
+      "reps": 4,
+      "individuals": 20.5,
+      "meanMass": 2474.170731707317,
+      "speed": 0.9671198634597328,
+      "mass": 79581,
+      "recovery": 0.2778326859158838,
+      "reproduction": 40.25,
+      "regenerated": 4,
+      "quality": 0.5833498057747651
+    }
+  ],
+  "arms": {
+    "scaf": {
+      "n": 6,
+      "measures": {
+        "individuals": {
+          "n": 6,
+          "mean": 42.25,
+          "median": 41.75,
+          "min": 40,
+          "max": 47.5
+        },
+        "lightDependent": {
+          "n": 6,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        },
+        "mass": {
+          "n": 6,
+          "mean": 148877.33333333334,
+          "median": 148953.25,
+          "min": 148147.25,
+          "max": 149478.5
+        },
+        "meanMass": {
+          "n": 6,
+          "mean": 3244.2536586902315,
+          "median": 3266.263473053892,
+          "min": 2959.2105263157896,
+          "max": 3393.525
+        },
+        "quality": {
+          "n": 6,
+          "mean": 0.562475832611602,
+          "median": 0.4999849508072788,
+          "min": 0.4999348998588553,
+          "max": 0.7499803655695998
+        },
+        "recovered": {
+          "n": 6,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        },
+        "recovery": {
+          "n": 6,
+          "mean": 0.9999194420386731,
+          "median": 0.9999296381951528,
+          "min": 0.9997829995295178,
+          "max": 1
+        },
+        "regenerated": {
+          "n": 6,
+          "mean": 0.5,
+          "median": 0,
+          "min": 0,
+          "max": 2
+        },
+        "reproduction": {
+          "n": 6,
+          "mean": 47.5,
+          "median": 40.75,
+          "min": 34.75,
+          "max": 85.5
+        },
+        "reps": {
+          "n": 6,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        },
+        "speed": {
+          "n": 6,
+          "mean": 0.2868251835232662,
+          "median": 0.28607762260692565,
+          "min": 0.25867714842413664,
+          "max": 0.33578858171980636
+        },
+        "survived": {
+          "n": 6,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        }
+      }
+    },
+    "rand": {
+      "n": 6,
+      "measures": {
+        "individuals": {
+          "n": 6,
+          "mean": 19.541666666666668,
+          "median": 22.375,
+          "min": 0.25,
+          "max": 40.75
+        },
+        "lightDependent": {
+          "n": 6,
+          "mean": 3.1666666666666665,
+          "median": 4,
+          "min": 1,
+          "max": 4
+        },
+        "mass": {
+          "n": 6,
+          "mean": 83297.625,
+          "median": 105578.25,
+          "min": 1521.75,
+          "max": 144224.75
+        },
+        "meanMass": {
+          "n": 6,
+          "mean": 3796.9325596190247,
+          "median": 3795.743581303489,
+          "min": 2229.135802469136,
+          "max": 5592.5
+        },
+        "quality": {
+          "n": 6,
+          "mean": 0.48313647681337457,
+          "median": 0.5351286710237952,
+          "min": 0.0546875,
+          "max": 1
+        },
+        "recovered": {
+          "n": 6,
+          "mean": 2.5,
+          "median": 3,
+          "min": 0,
+          "max": 4
+        },
+        "recovery": {
+          "n": 6,
+          "mean": 0.9403705383161097,
+          "median": 0.9960954993217366,
+          "min": 0.6578423214465179,
+          "max": 1
+        },
+        "regenerated": {
+          "n": 6,
+          "mean": 1.3333333333333333,
+          "median": 0.5,
+          "min": 0,
+          "max": 4
+        },
+        "reproduction": {
+          "n": 6,
+          "mean": 80.875,
+          "median": 60,
+          "min": 2.25,
+          "max": 263.25
+        },
+        "reps": {
+          "n": 6,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        },
+        "speed": {
+          "n": 6,
+          "mean": 1.6137579898312244,
+          "median": 0.8514073518814718,
+          "min": 0.27900999940266813,
+          "max": 3.627133627365936
+        },
+        "survived": {
+          "n": 6,
+          "mean": 3.1666666666666665,
+          "median": 4,
+          "min": 1,
+          "max": 4
+        }
+      }
+    },
+    "cont": {
+      "n": 6,
+      "measures": {
+        "individuals": {
+          "n": 6,
+          "mean": 20.416666666666668,
+          "median": 13.125,
+          "min": 8,
+          "max": 44.25
+        },
+        "lightDependent": {
+          "n": 6,
+          "mean": 3.8333333333333335,
+          "median": 4,
+          "min": 3,
+          "max": 4
+        },
+        "mass": {
+          "n": 6,
+          "mean": 148226.875,
+          "median": 148282.75,
+          "min": 147537,
+          "max": 148950.75
+        },
+        "meanMass": {
+          "n": 6,
+          "mean": 8993.502360234774,
+          "median": 9828.75788701394,
+          "min": 2698.853107344633,
+          "max": 15642.375
+        },
+        "quality": {
+          "n": 6,
+          "mean": 0.5286070770582337,
+          "median": 0.4999801373255191,
+          "min": 0.49991772718401517,
+          "max": 0.6249903467710796
+        },
+        "recovered": {
+          "n": 6,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        },
+        "recovery": {
+          "n": 6,
+          "mean": 0.9998676920793104,
+          "median": 0.999858902996477,
+          "min": 0.9997257572800506,
+          "max": 1
+        },
+        "regenerated": {
+          "n": 6,
+          "mean": 0.3333333333333333,
+          "median": 0,
+          "min": 0,
+          "max": 1
+        },
+        "reproduction": {
+          "n": 6,
+          "mean": 66.08333333333333,
+          "median": 44.75,
+          "min": 29.75,
+          "max": 170.5
+        },
+        "reps": {
+          "n": 6,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        },
+        "speed": {
+          "n": 6,
+          "mean": 2.0321480352733046,
+          "median": 1.7892849213002502,
+          "min": 1.3862996953934084,
+          "max": 3.1162078917726443
+        },
+        "survived": {
+          "n": 6,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        }
+      }
+    },
+    "ancestor": {
+      "n": 1,
+      "measures": {
+        "individuals": {
+          "n": 1,
+          "mean": 20.5,
+          "median": 20.5,
+          "min": 20.5,
+          "max": 20.5
+        },
+        "lightDependent": {
+          "n": 1,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        },
+        "mass": {
+          "n": 1,
+          "mean": 79581,
+          "median": 79581,
+          "min": 79581,
+          "max": 79581
+        },
+        "meanMass": {
+          "n": 1,
+          "mean": 2474.170731707317,
+          "median": 2474.170731707317,
+          "min": 2474.170731707317,
+          "max": 2474.170731707317
+        },
+        "quality": {
+          "n": 1,
+          "mean": 0.5833498057747651,
+          "median": 0.5833498057747651,
+          "min": 0.5833498057747651,
+          "max": 0.5833498057747651
+        },
+        "recovered": {
+          "n": 1,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0
+        },
+        "recovery": {
+          "n": 1,
+          "mean": 0.2778326859158838,
+          "median": 0.2778326859158838,
+          "min": 0.2778326859158838,
+          "max": 0.2778326859158838
+        },
+        "regenerated": {
+          "n": 1,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        },
+        "reproduction": {
+          "n": 1,
+          "mean": 40.25,
+          "median": 40.25,
+          "min": 40.25,
+          "max": 40.25
+        },
+        "reps": {
+          "n": 1,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        },
+        "speed": {
+          "n": 1,
+          "mean": 0.9671198634597328,
+          "median": 0.9671198634597328,
+          "min": 0.9671198634597328,
+          "max": 0.9671198634597328
+        },
+        "survived": {
+          "n": 1,
+          "mean": 4,
+          "median": 4,
+          "min": 4,
+          "max": 4
+        }
+      }
+    }
+  }
+}

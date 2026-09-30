@@ -1,0 +1,312 @@
+{
+  "stage": "r2",
+  "verdict": true,
+  "skipped": 0,
+  "rejected": [],
+  "regime": {
+    "k": 8,
+    "period": 10000
+  },
+  "histories": [
+    {
+      "arm": "scaf",
+      "history": 0,
+      "standardised": {
+        "t0": 102482.8046875,
+        "tC": 137503.3125,
+        "gain": 35020.5078125
+      },
+      "raw": {
+        "t0": 2115.515625,
+        "tC": 134725.0859375,
+        "gain": 132609.5703125
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 1,
+      "standardised": {
+        "t0": 101872.2421875,
+        "tC": 138645.453125,
+        "gain": 36773.2109375
+      },
+      "raw": {
+        "t0": 1897.3359375,
+        "tC": 140022.5,
+        "gain": 138125.1640625
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 2,
+      "standardised": {
+        "t0": 101806.4140625,
+        "tC": 138401.578125,
+        "gain": 36595.1640625
+      },
+      "raw": {
+        "t0": 2167.9453125,
+        "tC": 135247.6171875,
+        "gain": 133079.671875
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 3,
+      "standardised": {
+        "t0": 101804.1484375,
+        "tC": 139351.34375,
+        "gain": 37547.1953125
+      },
+      "raw": {
+        "t0": 2131.34375,
+        "tC": 132691.1171875,
+        "gain": 130559.7734375
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 4,
+      "standardised": {
+        "t0": 103270.4921875,
+        "tC": 138855.84375,
+        "gain": 35585.3515625
+      },
+      "raw": {
+        "t0": 2026.3125,
+        "tC": 133867.5859375,
+        "gain": 131841.2734375
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 5,
+      "standardised": {
+        "t0": 101615.46875,
+        "tC": 138589.0390625,
+        "gain": 36973.5703125
+      },
+      "raw": {
+        "t0": 1989.3125,
+        "tC": 136079.71875,
+        "gain": 134090.40625
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 0,
+      "standardised": {
+        "t0": 102069.9375,
+        "tC": 51785.90625,
+        "gain": -50284.03125
+      },
+      "raw": {
+        "t0": 1961.3671875,
+        "tC": 46744.4140625,
+        "gain": 44783.046875
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 1,
+      "standardised": {
+        "t0": 101766.3671875,
+        "tC": 8888.0078125,
+        "gain": -92878.359375
+      },
+      "raw": {
+        "t0": 2031.9765625,
+        "tC": 4502.703125,
+        "gain": 2470.7265625
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 2,
+      "standardised": {
+        "t0": 102832.9453125,
+        "tC": 29465,
+        "gain": -73367.9453125
+      },
+      "raw": {
+        "t0": 2124.265625,
+        "tC": 12534.9921875,
+        "gain": 10410.7265625
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 3,
+      "standardised": {
+        "t0": 101409.6640625,
+        "tC": 1375.796875,
+        "gain": -100033.8671875
+      },
+      "raw": {
+        "t0": 2120.9921875,
+        "tC": 4939.6796875,
+        "gain": 2818.6875
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 4,
+      "standardised": {
+        "t0": 102309.4765625,
+        "tC": 110458.6015625,
+        "gain": 8149.125
+      },
+      "raw": {
+        "t0": 2020.21875,
+        "tC": 118673.09375,
+        "gain": 116652.875
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 5,
+      "standardised": {
+        "t0": 102592.8125,
+        "tC": 121138.609375,
+        "gain": 18545.796875
+      },
+      "raw": {
+        "t0": 1854.4140625,
+        "tC": 98611.359375,
+        "gain": 96756.9453125
+      }
+    }
+  ],
+  "medianGain": {
+    "scaf": 36684.1875,
+    "rand": -61825.98828125
+  },
+  "scafPositive": 6,
+  "shown": true,
+  "truncation": {
+    "flagged": [],
+    "known": true,
+    "evolutionKnown": true,
+    "evolutionMissing": [],
+    "evolutionFlagged": [],
+    "verdict": true,
+    "without": true,
+    "sensitive": false,
+    "inconclusive": false
+  },
+  "evolution": {
+    "loaded": true,
+    "histories": [
+      {
+        "arm": "rand",
+        "history": 0,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/rand/i0"
+      },
+      {
+        "arm": "rand",
+        "history": 1,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/rand/i1"
+      },
+      {
+        "arm": "rand",
+        "history": 2,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/rand/i2"
+      },
+      {
+        "arm": "rand",
+        "history": 3,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/rand/i3"
+      },
+      {
+        "arm": "rand",
+        "history": 4,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/rand/i4"
+      },
+      {
+        "arm": "rand",
+        "history": 5,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/rand/i5"
+      },
+      {
+        "arm": "scaf",
+        "history": 0,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/scaf/i0"
+      },
+      {
+        "arm": "scaf",
+        "history": 1,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/scaf/i1"
+      },
+      {
+        "arm": "scaf",
+        "history": 2,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/scaf/i2"
+      },
+      {
+        "arm": "scaf",
+        "history": 3,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/scaf/i3"
+      },
+      {
+        "arm": "scaf",
+        "history": 4,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/scaf/i4"
+      },
+      {
+        "arm": "scaf",
+        "history": 5,
+        "truncated": 0,
+        "rows": 6400,
+        "fraction": 0,
+        "flagged": false,
+        "dir": "runs/scaffold/main/scaf/i5"
+      }
+    ],
+    "skipped": [],
+    "notRead": []
+  }
+}

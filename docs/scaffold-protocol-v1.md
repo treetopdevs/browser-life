@@ -258,3 +258,53 @@ This amendment was written after P1, the R3 calibration and P2, and before any m
   - arms `scaf`, `rand` and `cont`, 6 histories each, seeds 4,810,001 + 100·arm + i.
 - **R3's ancestor source.** For timing (a) it is the calibration source world above (seed 4,802,001). For timing (b), that world is continued 2×10⁵ steps with no cycle and mutation on, at seed `assaySeed(0, 18, 1, 0, 0)`.
 - **Where it runs.** The main run and the readout assays run on one AWS g5.xlarge with six lanes, under the dated draw note in `docs/plan.md`. The tools, seeds and outputs are the same as on the Mac.
+
+## Results (2026-09-30)
+
+The main run (seeds 4,810,001 + 100·arm + i) and the R1–R4 assays ran to the frozen configuration on AWS, with the tools at commit 319f8794.
+- All 18 histories completed 100 cycles.
+- Conservation was exact, and no truncation occurred anywhere.
+- All 172 queued commands finished, and none failed.
+
+The readouts and the decision table were applied as written. The outputs are in `experiments/scaffold/readouts/`: `r1.json` to `r4.json`, `decide.json` and `trajectories.json`. Every readout was re-derived independently from the raw files, by separate scripts, and no number was disputed.
+
+**Matched row: 3, "R1 not demonstrated in `scaf`."** P1 and the calibration passed, and P2 passed in both seeds, so the first matching row is R1's. The disposition is the one for P2 failing:
+- stop, with no integration;
+- a heredity rule variant (genome retention in bodies) is recommended as a separate dated decision.
+
+That decision is not taken here.
+
+**The numbers each rule used.**
+- **R1: not demonstrated.** The rule needs ICC > 0 with p < 0.05 at time C in at least 4 of 6 `scaf` histories.
+  - `scaf` met it in 0 of 6. ICC ranged from −0.028 to 0.076, and the smallest p was 0.054 (i5).
+  - Only 3 of 6 ICCs were positive at all.
+- **R2: shown.** `scaf` standardised gain was positive in 6 of 6, from +35,021 to +37,547 (the rule needs at least 4). The median `scaf` gain, +36,684, beat the median `rand` gain, −61,826.
+- **R3: decisive by its rule, but at the threshold.**
+  - Advantage over `rand`, `cont` and the ancestor at both timings held in 5 of 6 histories. The failure was i4 against `rand`.
+  - The swap criterion held in exactly 4 of 6, with margins of −3.5 to +3.5 fragments out of 128.
+  - The quenched control was 0.000 in 12 of 12 sets.
+  - `scaf` competence at timing (a) was 0.945–0.992, against `cont` 0.555–0.688 and the ancestor 0.820.
+- **R4 (descriptive).** Mean regeneration out of 4: `scaf` 0.5, `rand` 1.33, `cont` 0.33, the ancestor 4. The side hypothesis, that the scaffold keeps capability that evolution without it loses, is not supported.
+
+**Descriptive (not decision inputs).**
+- Median mean pond trait from boundary 1 to 100:
+  - `scaf` 102,589 → 136,940;
+  - `rand` 102,465 → 30,977;
+  - `cont` 102,689 → 130,104.
+- Median extinct ponds at boundary 100: `scaf` 1.5, `rand` 4.5, `cont` 0.
+- `rand` met R1's criterion at time C in 6 of 6 histories (ICC 0.164–0.936). At time 0, 1 of 12 sets passed, about chance.
+
+**Post hoc (written after the result; not a decision input and not a change to the rule).** One plausible explanation of R1's non-result in `scaf` is a ceiling.
+- At time C, 92.2–100% of `scaf` fragments ended at 80% or more of the assay budget, and donor-family means were compressed to 104,882–142,006. That may have left little between-donor variance for the covariate-adjusted ICC.
+- The same assay found strong between-pond heritable variation in `rand` (6 of 6).
+- P2, R2 and R3 each responded to selection among ponds.
+
+These observations do not establish that selection depleted heritable variance, or that R1 missed heredity that exists. The result stays "not demonstrated", not "absent". Whether to follow the table's recommendation, or to test heredity with a design that avoids this possible confound, is a separate dated decision.
+
+**Limitations.**
+- A sandbox line: not registered, and not an entity result.
+- One regime and 6 histories per arm.
+- The ancestor sits near the competence ceiling.
+- The assay regime is the same as the cycle regime.
+- R3's swap pass sits on the threshold.
+- R4 evaluates one genome per history.

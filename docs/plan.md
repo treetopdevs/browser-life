@@ -455,3 +455,37 @@ This decision opens one exploratory ecology intervention under RULE_VERSION 1. G
   - **Amendment by the user's decision (2026-09-30).** This draw may take what it spends beyond that remainder out of the cohort reserve. The reserve is reduced by that amount, up to this draw's $20 hard stop, and the reduced figure is recorded here when this draw closes. The $60 RULE_VERSION 2 go/no-go stays untouched.
 - **Infrastructure:** a separate key pair and security group (`bl-scaf`), and a separate supervisor. They share nothing with the running `bl-found` supervisor or its jobs. Everything is torn down when the queue is done, or at the cap.
 - **Results:** they are pulled into `runs/scaffold/` in the scaffold workspace, and the cost is recorded here when the work closes.
+
+## Ecological scaffolding result (2026-09-30)
+
+The frozen main run (18 histories × 100 cycles, k 8, period 10,000, 64 ponds) and readouts R1–R4 are complete. Numbers, rules and caveats are in `docs/scaffold-protocol-v1.md` under "Results (2026-09-30)"; the machine-readable readouts are in `experiments/scaffold/readouts/`. Each readout was re-derived independently, and no number was disputed. The line is exploratory and not registered. It does not answer the reset line's entity question and does not count toward M6.
+
+**Matched row: 3, "R1 not demonstrated in `scaf`."** P1 and P2 passed. The standardised heredity assay did not show pond-level heritability in `scaf`: it met the rule in 0 of 6 histories. The table's disposition applies:
+- the line stops here, with no runner or lab integration and no confirmatory ensemble;
+- a heredity rule variant is recommended as a separate dated decision, which is not taken here.
+
+R2 showed genome-level adaptation in `scaf` (6 of 6, median gain +36,684 against `rand`'s −61,826). R3 was decisive by its rule, but only at the threshold. Neither is decision-relevant once row 3 matches. R4 found that the scaffold did not preserve regeneration.
+
+**Post hoc, not a decision input.** A plausible explanation of the R1 non-result, not an established one:
+- At time C, 92–100% of `scaf` fragments ended at 80% or more of the assay budget, and donor-family means were compressed to 104,882–142,006. That may have left little between-donor variance for R1's covariate-adjusted ICC to detect.
+- The same assay found strong pond-level heritability in `rand` (6 of 6), and P2, R2 and R3 each responded to selection among ponds.
+
+The data do not establish that selection depleted heritable variance, or that R1 missed heredity that exists. "Not demonstrated" stays "not demonstrated", not "absent".
+- Descriptive: with random donors, pond productivity collapsed (median 102,465 → 30,977); with truncation, it rose (102,589 → 136,940). This is consistent with a conflict between selection within ponds and selection among them, but the mechanism was not established.
+
+The next step is the user's dated decision: either follow the table (a heredity rule variant), or amend with a heredity test that is not confounded by depleted variance (for example, R1 at an early cycle, or across pooled donors from several histories).
+
+**Cost (closes the 2026-09-30 draw).**
+- AWS spent **$4.87** of the $20 hard stop: one g5.xlarge, about 4.7 h.
+- The key pair, security group and instance are gone, and the supervisor is unloaded.
+- Ledger of the follow-up $200:
+
+| Item | Amount |
+|---|---|
+| Extension time-shift | about $5 |
+| Ecology-first B and C | $8.02 |
+| Ecology-first `fx2` | $0.99 |
+| This line | $4.87 |
+| **Total drawn** | **about $18.88** |
+
+- The unearmarked remainder before this draw was about $5.99, so this draw took **$0 from the cohort reserve**. The $120 cohort reserve and the $60 RULE_VERSION 2 go/no-go are intact, and about $1.12 of margin remains.
