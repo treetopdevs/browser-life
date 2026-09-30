@@ -1,0 +1,84 @@
+{
+  "started": "2026-09-30T10:57:45.604860+00:00",
+  "finished": "2026-09-30T11:25:22.409937+00:00",
+  "commands": [
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_capability.ts",
+        "run",
+        "experiments/founder-discovery/v1",
+        "600"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_capability.ts",
+        "run",
+        "experiments/founder-discovery/v1",
+        "600"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_capability.ts",
+        "run",
+        "experiments/founder-discovery/v1",
+        "600"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_capability_replay.ts",
+        "experiments/founder-discovery/v1",
+        "waste-3-gradient-6300001",
+        "experiments/founder-discovery/v1/replay-waste-3-gradient-6300001.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_capability_replay.ts",
+        "experiments/founder-discovery/v1",
+        "no-candidate-gradient-6300001",
+        "experiments/founder-discovery/v1/replay-no-candidate-gradient-6300001.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "tools/discovery_capability_analyze.ts",
+        "experiments/founder-discovery/v1",
+        "experiments/founder-discovery/v1/capability-final.json"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "paidUSD": 0,
+  "completeReportExists": true
+}

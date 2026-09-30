@@ -1,0 +1,94 @@
+{
+  "status": "shortlisted-awaiting-fresh-assay-confirmation",
+  "namespace": "founder-discovery-improvement-v1-selection-2026-09-30",
+  "poolUnique": 5521,
+  "poolClusters": 141,
+  "eligibleGenomes": 6,
+  "eligibleClusters": 6,
+  "eligible": [
+    {
+      "hex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "cluster": 16,
+      "subjects": [
+        "waste-3"
+      ]
+    },
+    {
+      "hex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "cluster": 4,
+      "subjects": [
+        "waste-4"
+      ]
+    },
+    {
+      "hex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "cluster": 33,
+      "subjects": [
+        "waste-10"
+      ]
+    },
+    {
+      "hex": "001a003d00000000c820c7c337fccdda2740dd1c39c727f0cee7d5c02b320a38c8ccd90b2f24d52de2220c2bc4c9f81dd3cc17063510c804d1e72f2916cb0b22d41d2a03ddfb09320dfd362afdecffeac9c015c33ce0e92311c01f1418e6392306f2e7fc0d3fff16f518e4c6f3e2e9e22413f7d5c93ece37c12eeacc0f0910cdfbc30f1f2b3637ed203de733c2cef90dc1e8dfe92de7d4ea3b3d163f221e32d9dd250c3ccffbfdc1",
+      "cluster": 31,
+      "subjects": [
+        "waste-11"
+      ]
+    },
+    {
+      "hex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "cluster": 139,
+      "subjects": [
+        "background-3"
+      ]
+    },
+    {
+      "hex": "001100400000000001d00dd73df1d2faf50e0bda102c042dd4c5e3e12d15dc01e3c81025ede5e92820f832c1132b0bcc0d1aee0f27dc08ddded5e41edbdf1dc2ed22ee13d2d62bcd03ff3ef3dbcdd7d9dcf2263f1a07c0de1cf0f5e52de2c8fa25cfce240c251f16e6e3263b01f9ea22fc32c2cef9caef2912151b33f9cdc712fe2926f51f0acac0de25d6f1e7fcccf0e4d80cf1371324223d16ce3df821c4c011faea3133ea08d0",
+      "cluster": 109,
+      "subjects": [
+        "background-4"
+      ]
+    }
+  ],
+  "selected": [
+    {
+      "hex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "cluster": 33,
+      "subjects": [
+        "waste-10"
+      ],
+      "id": "discovery-cluster-33"
+    },
+    {
+      "hex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "cluster": 4,
+      "subjects": [
+        "waste-4"
+      ],
+      "id": "discovery-cluster-4"
+    },
+    {
+      "hex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "cluster": 16,
+      "subjects": [
+        "waste-3"
+      ],
+      "id": "discovery-cluster-16"
+    },
+    {
+      "hex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "cluster": 139,
+      "subjects": [
+        "background-3"
+      ],
+      "id": "discovery-cluster-139"
+    }
+  ],
+  "selection": "At most four hash-ranked distinct clusters, then one hash-ranked eligible genome per cluster. Distance-10 single linkage reconstructed over the full union of both committed surviving pools. No growth/regeneration ranking. This is an exploratory shortlist, not confirmed founders or an evolution result.",
+  "inputHashes": {
+    "activity": "63730154c19aa3b0e96a04abaef4b5cba1f81f5818b912c857653cb653338fd8",
+    "strictValidation": "2faaeeb861db555192935ae0173f940764d46306a84be0e46492ef6c83428d12",
+    "inventory": "40c0006c82a8b2984425817a35822d64c0e669846b9066d5745103cf48e69bb9",
+    "design": "6d228e69218d2334f252d0f0d5e604aa879a2f6b53ed0157793a1cf8c0f26387"
+  },
+  "selectorSha256": "c33d6b2849fbc1c025af04eddd39ec4497ce845063cd91bf6c2ae6024f9b6ace"
+}

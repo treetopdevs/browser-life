@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-30",
+  "designHash": "65911b76da307c0e25ab9956a37ebcb85e505997ef1ac9290859c2bbfcb9f5b0",
+  "codeHashes": {
+    "tools/discovery_competition_pilot.ts": "bb894bb6ceeae875e4034ddf426948758077044b4209fb26a2e981cbd22976b3",
+    "tools/test/discovery-competition-pilot.test.ts": "ea6a93d4b792cd56040fa4d8a4f7a7f6bd9e12906204d5fa782d307018eb9aee",
+    "tools/lib/discovery-competition.ts": "d3890942edbe3cf2f1f341d6026ff68c9d86cd47b26e591a134f43e9f9d504b1"
+  },
+  "review": "Independent strong-model read-only review approved corrected availability, linked-label attribution, replay ownership/cleanup, unexpected-evidence handling and reconstructed manifest validation before execution.",
+  "rootVerification": "Eight focused tests and type checking passed before plan. Existing27focused tests also passed.",
+  "correctionsBeforeFreeze": [
+    "Both-extinct clone observations are unavailable rather than technically complete biological passes.",
+    "Identical physical-state clone groups must have exactly label-mapped masses.",
+    "Replay acquires the same exclusive lock and releases resources on error.",
+    "Unexpected or malformed evidence cannot coexist with eligible status.",
+    "Every stage reconstructs the design to enforce exact protocol inputs, configuration and unit roster."
+  ],
+  "units": 128,
+  "seeds": [
+    6440001,
+    6440002,
+    6440003,
+    6440004
+  ],
+  "paidUSD": 0,
+  "evolutionReleased": false
+}

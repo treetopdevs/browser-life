@@ -1,0 +1,1270 @@
+{
+  "designHash": "6d228e69218d2334f252d0f0d5e604aa879a2f6b53ed0157793a1cf8c0f26387",
+  "status": "incomplete",
+  "valid": 94,
+  "missing": 158,
+  "invalid": 0,
+  "units": [
+    {
+      "id": "waste-0-waste-6300001",
+      "status": "valid",
+      "sha256": "aa8901ae22fe7bdff96f782b6c2fbfaa7f31a322ba421e73eb2eb110319eddb9"
+    },
+    {
+      "id": "waste-0-waste-6300002",
+      "status": "valid",
+      "sha256": "4e47b75ab490f6e33cd799c265d3b91625653019cdf476cb0bec98cd371f6e1b"
+    },
+    {
+      "id": "waste-0-waste-6300003",
+      "status": "valid",
+      "sha256": "c14718d8cbd316f4e4916e3b4266edcf3d60095f7c16e44405bca708ceb41d66"
+    },
+    {
+      "id": "waste-0-waste-6300004",
+      "status": "valid",
+      "sha256": "f88648faf5191fff3177021e7b941fd987535132d070794b35d13ce8ddf71fa8"
+    },
+    {
+      "id": "waste-0-gradient-6300001",
+      "status": "valid",
+      "sha256": "7084287988c40d44a4c6173ac9dc2ac6b99803380900646da139348bd23fd33b"
+    },
+    {
+      "id": "waste-0-gradient-6300002",
+      "status": "valid",
+      "sha256": "b49463e1a54834f0eebe8e2937ab63d060e25134f2777db1ccf5eec7d68678cb"
+    },
+    {
+      "id": "waste-0-gradient-6300003",
+      "status": "valid",
+      "sha256": "c272ff3dad743c0e5bab651409550677e19f21880ba211f9878bc82d250ff217"
+    },
+    {
+      "id": "waste-0-gradient-6300004",
+      "status": "valid",
+      "sha256": "9b62827c74c3e0c7896b8b7dbc69158cd4b57005bf650f549601f55f125e9289"
+    },
+    {
+      "id": "waste-1-waste-6300001",
+      "status": "valid",
+      "sha256": "70f4cf3eed0d07dc0338cbf60feb456986765e3a49018015151d841af13f291f"
+    },
+    {
+      "id": "waste-1-waste-6300002",
+      "status": "valid",
+      "sha256": "d236c718c2d9848095801b892614758cc0a63581432791a08c28b1e6ea719ddb"
+    },
+    {
+      "id": "waste-1-waste-6300003",
+      "status": "valid",
+      "sha256": "40048ebca6e707ad8171c2addaf544f017c55f3af57a0d3d98158b59757538b7"
+    },
+    {
+      "id": "waste-1-waste-6300004",
+      "status": "valid",
+      "sha256": "dc5ac339f1d804546a5bca6d91c85b46d97554f319afb2d5896793a7f9ad9377"
+    },
+    {
+      "id": "waste-1-gradient-6300001",
+      "status": "valid",
+      "sha256": "8b3c5c4486ce0c071bb192907fbce0756ab879dae82f1e738c7430ad56d91035"
+    },
+    {
+      "id": "waste-1-gradient-6300002",
+      "status": "valid",
+      "sha256": "1d5268c45e93aa47b2430fb99664f233c81eee70bddf91065ac8530824050598"
+    },
+    {
+      "id": "waste-1-gradient-6300003",
+      "status": "valid",
+      "sha256": "bf189b387b395f905fb3a95bcd16fa3d2edffb97cb5602831a42b86051941413"
+    },
+    {
+      "id": "waste-1-gradient-6300004",
+      "status": "valid",
+      "sha256": "7cf490146e8919cd8a048edfaca011ffc39769e3290146e45446c6eef461b45a"
+    },
+    {
+      "id": "waste-2-waste-6300001",
+      "status": "valid",
+      "sha256": "45abad8620b3a7b8adae00bc73822937a731e6efabaaac5fd67a7f6dc44b6d2c"
+    },
+    {
+      "id": "waste-2-waste-6300002",
+      "status": "valid",
+      "sha256": "e29680a60ae95c876db8725b1fb28d21c1cb99471ff35d634ce6b58294d2b397"
+    },
+    {
+      "id": "waste-2-waste-6300003",
+      "status": "valid",
+      "sha256": "5e1f8ae74b5fccdf544373637e3a28f35567d14903afb6ac6b0410abe0f78d06"
+    },
+    {
+      "id": "waste-2-waste-6300004",
+      "status": "valid",
+      "sha256": "588dc1cfc634b0f9a5195a6839cf456a9f9a30c0221c731e76f014ad110d037f"
+    },
+    {
+      "id": "waste-2-gradient-6300001",
+      "status": "valid",
+      "sha256": "89584e830a5674f258c706fe3d2155db409125c32841c17cd8194154d5f93f8d"
+    },
+    {
+      "id": "waste-2-gradient-6300002",
+      "status": "valid",
+      "sha256": "37eb19c145d2bc55559ad30db115e69f5dcc538ce45bc2a7eed83e547f6b9aae"
+    },
+    {
+      "id": "waste-2-gradient-6300003",
+      "status": "valid",
+      "sha256": "db61a0b1b8dc102c3edc69cb07beab9103612cdb9c9fdfdd77a2a498f9e7e995"
+    },
+    {
+      "id": "waste-2-gradient-6300004",
+      "status": "valid",
+      "sha256": "5d8b8034f51b4a9f78548dbdd352b77c913df1e8b819f3feec212cef28d12fa7"
+    },
+    {
+      "id": "waste-3-waste-6300001",
+      "status": "valid",
+      "sha256": "434c7c56209df6f7f5ad26b26d0b0bcf28eae5a25f8a9759a6a21029476d1942"
+    },
+    {
+      "id": "waste-3-waste-6300002",
+      "status": "valid",
+      "sha256": "b91ec5fe384c26265ab9c26b0c4b128ac8bbbb767abdcea56fd3332a6a7f9005"
+    },
+    {
+      "id": "waste-3-waste-6300003",
+      "status": "valid",
+      "sha256": "2cb530eada3b6fe152631c9a8fe9b33938c1f9f2dd7209a1706f26167f700b7a"
+    },
+    {
+      "id": "waste-3-waste-6300004",
+      "status": "valid",
+      "sha256": "144bc4e9ef35b334030c42c391677cdc65e47fef6a8283462f9aefde22980c91"
+    },
+    {
+      "id": "waste-3-gradient-6300001",
+      "status": "valid",
+      "sha256": "08c92212fc944553e06c1d58f08d6fbe57032f90d947b08f8ceacbd689832692"
+    },
+    {
+      "id": "waste-3-gradient-6300002",
+      "status": "valid",
+      "sha256": "87a40b8454e6b2b63540530363df66a52a00dd57ee32c90473339e25e3361c31"
+    },
+    {
+      "id": "waste-3-gradient-6300003",
+      "status": "valid",
+      "sha256": "72be433072dbd074e687cde97c08bd53c91346479825bec7fbeffbf6d6db8ed6"
+    },
+    {
+      "id": "waste-3-gradient-6300004",
+      "status": "valid",
+      "sha256": "529ed25971186116900812fd5b4dbb8d4262345ec752d2e7c401027f8097bc8b"
+    },
+    {
+      "id": "waste-4-waste-6300001",
+      "status": "valid",
+      "sha256": "8cc7f08b3db14b46f4e9c55ad405a380643499f8cb1a91db78e04e9e84dfc4cf"
+    },
+    {
+      "id": "waste-4-waste-6300002",
+      "status": "valid",
+      "sha256": "c19a26e48e67ccc4c17c880993a61ba82724c7c7fc9ec14b32fe894e8dba03a2"
+    },
+    {
+      "id": "waste-4-waste-6300003",
+      "status": "valid",
+      "sha256": "6efe6976c8ba4240146eb6b4a9b5fba2d296af5784e1531dcaf774376ee49306"
+    },
+    {
+      "id": "waste-4-waste-6300004",
+      "status": "valid",
+      "sha256": "d41b0c23359fb089d95d4f4e43b6f39d1123929b7469f59e9a81d108a0cad77c"
+    },
+    {
+      "id": "waste-4-gradient-6300001",
+      "status": "valid",
+      "sha256": "333896744709c701b954947067957c48dd2a1e38a45c2ebd92ca9e5d5e15aba5"
+    },
+    {
+      "id": "waste-4-gradient-6300002",
+      "status": "valid",
+      "sha256": "0566defc99102254c99b2a71d24f601ced33f8a2aea7937b67068e137802bd21"
+    },
+    {
+      "id": "waste-4-gradient-6300003",
+      "status": "valid",
+      "sha256": "c7aadaf90379dd64581dc39831ea11671b9035dd50cafb5889e0254a9da7dedd"
+    },
+    {
+      "id": "waste-4-gradient-6300004",
+      "status": "valid",
+      "sha256": "a36b884b0d7e97b86de4d244992fbaf1c50129300121bad217e5ef680030b032"
+    },
+    {
+      "id": "waste-5-waste-6300001",
+      "status": "valid",
+      "sha256": "f1093e6d1a24c268928f4fac8dbefb1452c2299e6fc29a28f57b06044ade2603"
+    },
+    {
+      "id": "waste-5-waste-6300002",
+      "status": "valid",
+      "sha256": "d6cf839448f6737e7dd8c40f199ab7144465313b8869795dfae4e9b3f7e84b82"
+    },
+    {
+      "id": "waste-5-waste-6300003",
+      "status": "valid",
+      "sha256": "4e1b4a9c18fd37e72337630cb4d7cf7e2aa8b22748a3f1f179145a2dd5f6e1c6"
+    },
+    {
+      "id": "waste-5-waste-6300004",
+      "status": "valid",
+      "sha256": "171401f5a2aec78d97e31b3369ad0130794a7bae3cf062d78f3784557cb8c37c"
+    },
+    {
+      "id": "waste-5-gradient-6300001",
+      "status": "valid",
+      "sha256": "8946d9baedb01189170a403e24220699fdbc117ac5c731958c5f6fb843f35e78"
+    },
+    {
+      "id": "waste-5-gradient-6300002",
+      "status": "valid",
+      "sha256": "3661495af76b94545f14aef078b08a32e059fa1b20072cd069f6c4bbc307feb5"
+    },
+    {
+      "id": "waste-5-gradient-6300003",
+      "status": "valid",
+      "sha256": "38fa2dd2e032862871f99a8af1e1ba85438dc6bcc37a8aabbe0d38983a5dae74"
+    },
+    {
+      "id": "waste-5-gradient-6300004",
+      "status": "valid",
+      "sha256": "0b47566a9346b4a39c770ad328d3510c95c96f4b442d2b8811a5d8afe3b9e407"
+    },
+    {
+      "id": "waste-6-waste-6300001",
+      "status": "valid",
+      "sha256": "db5be76f7003da021d966bf7c3263e3f4f449181b0d00515e049330244eb15cb"
+    },
+    {
+      "id": "waste-6-waste-6300002",
+      "status": "valid",
+      "sha256": "4875acbd0beaa640efacecf0e14e339db91bfd1f2571958e9712930aeb2f54b0"
+    },
+    {
+      "id": "waste-6-waste-6300003",
+      "status": "valid",
+      "sha256": "928967d3c9df16fcbb0859dac21f54ac88959ad87709187bfb2be2bf081540c1"
+    },
+    {
+      "id": "waste-6-waste-6300004",
+      "status": "valid",
+      "sha256": "5a77f27aae3200834acf0565f3675236bf77bc67fcab939ee343a51ff931ce6b"
+    },
+    {
+      "id": "waste-6-gradient-6300001",
+      "status": "valid",
+      "sha256": "68e88f1976c5960a9cd4794dec707ebcb58e0e1cd3afcb67fa60e6ee343af688"
+    },
+    {
+      "id": "waste-6-gradient-6300002",
+      "status": "valid",
+      "sha256": "b3496d6cc2992bbb179e893d72952ecaeea8d4240835edef83d567c16e6ab95f"
+    },
+    {
+      "id": "waste-6-gradient-6300003",
+      "status": "valid",
+      "sha256": "6ea2e5fe1a48b4eb283aa1c3a0ef6a42f9d2dd299d4417fc9943c618a95aabea"
+    },
+    {
+      "id": "waste-6-gradient-6300004",
+      "status": "valid",
+      "sha256": "89370a06f007feb7e3c2b3e465f15c8571f62e1f832e533a8869dac5bff35b50"
+    },
+    {
+      "id": "waste-7-waste-6300001",
+      "status": "valid",
+      "sha256": "6f45c09c789b16a3f92673e21aa32e3e451e7b7202e4a7042a58fee7276ff265"
+    },
+    {
+      "id": "waste-7-waste-6300002",
+      "status": "valid",
+      "sha256": "88c6f57f54e4dba41a8fa083c7cdaf4382ce5b910cc0963d676a918a7833a99d"
+    },
+    {
+      "id": "waste-7-waste-6300003",
+      "status": "valid",
+      "sha256": "310f2bf9c2656888b60d18a8e0b8376cf8e1437e5441ae27ba1ba4467bf9bc2d"
+    },
+    {
+      "id": "waste-7-waste-6300004",
+      "status": "valid",
+      "sha256": "eb74e3348a714ce770c0fe54766d9689a9a86abeac325a0214f0576f0216d5ed"
+    },
+    {
+      "id": "waste-7-gradient-6300001",
+      "status": "valid",
+      "sha256": "ed7b0df458f9d49be3eb4023fab350a054a0ad854c566ec39367133a3e47cfd4"
+    },
+    {
+      "id": "waste-7-gradient-6300002",
+      "status": "valid",
+      "sha256": "6cbb75d212dca647830e1d339f12168bc8c1f83640cb9e6649305fb7831b380a"
+    },
+    {
+      "id": "waste-7-gradient-6300003",
+      "status": "valid",
+      "sha256": "5c3918e9bf14893543073d582f49c73dc50ed9b09af93d9c0058b597fb8ecdb1"
+    },
+    {
+      "id": "waste-7-gradient-6300004",
+      "status": "valid",
+      "sha256": "ce3d8c4790aaf2f137950ffeb0ee99dee4205e14bc34cbda7017831f3d286165"
+    },
+    {
+      "id": "waste-8-waste-6300001",
+      "status": "valid",
+      "sha256": "89b9d3bb6129dff186865c2d909cb92e1e3bd2e7360867431f24b36e4beec018"
+    },
+    {
+      "id": "waste-8-waste-6300002",
+      "status": "valid",
+      "sha256": "4927233dac8bae17418081eeebfa57f5a9e490b8616050a9e8d4c28988f10e33"
+    },
+    {
+      "id": "waste-8-waste-6300003",
+      "status": "valid",
+      "sha256": "250ee331643f279a6f660cf20c5152feca9597699f378325a9ec2e3478f63772"
+    },
+    {
+      "id": "waste-8-waste-6300004",
+      "status": "valid",
+      "sha256": "040e3257f862fc95ab59a6e4ce167b69fcfca91af72012c1458c20292e9823d7"
+    },
+    {
+      "id": "waste-8-gradient-6300001",
+      "status": "valid",
+      "sha256": "67dd032f9d3c8a90cafa05997d05b4abb13b4f593748642fb4c00245d11d6076"
+    },
+    {
+      "id": "waste-8-gradient-6300002",
+      "status": "valid",
+      "sha256": "370e8e7ea7e082ed21e3b526eee38c8a339b14250ee6fa5f0c722abf71d8943c"
+    },
+    {
+      "id": "waste-8-gradient-6300003",
+      "status": "valid",
+      "sha256": "8ee872753ec36bccf459cdd765e354690a57bfc2a55c2e1c5ca75b956f870517"
+    },
+    {
+      "id": "waste-8-gradient-6300004",
+      "status": "valid",
+      "sha256": "40e04604d3083f496329eb46c214716b7aba93a8ffedbf1ea4acfcb65772093b"
+    },
+    {
+      "id": "waste-9-waste-6300001",
+      "status": "valid",
+      "sha256": "c84c448566d9967b9e396eaa0fd4f4128fd9f5ad69f5e0247d51679afcff17a8"
+    },
+    {
+      "id": "waste-9-waste-6300002",
+      "status": "valid",
+      "sha256": "9cfaf0ad0151e98fd6596e1f57876e89ce346d8738d92a97e98d14d30c6cbd8f"
+    },
+    {
+      "id": "waste-9-waste-6300003",
+      "status": "valid",
+      "sha256": "8ebc9660937db887c9aa2912bc91acc584f4f5194392b71240c9eacdda037634"
+    },
+    {
+      "id": "waste-9-waste-6300004",
+      "status": "valid",
+      "sha256": "90d9b9808f9fc5632927f8688fc06d7e246c0797b26d8ff68b98e686a229748d"
+    },
+    {
+      "id": "waste-9-gradient-6300001",
+      "status": "valid",
+      "sha256": "61519530e16607b60ed195cab2bf61cfd476206d96d47a377afed8c03744ce0e"
+    },
+    {
+      "id": "waste-9-gradient-6300002",
+      "status": "valid",
+      "sha256": "b17267c13e352b2d72b26d3f6e6812dac781fa67cc5fc0293f6f07acfe1a6535"
+    },
+    {
+      "id": "waste-9-gradient-6300003",
+      "status": "valid",
+      "sha256": "119e422a2a5e4e474352985beb84e8728fd0f7511d8c77fe31cdbf20351ef348"
+    },
+    {
+      "id": "waste-9-gradient-6300004",
+      "status": "valid",
+      "sha256": "524b20533df1f25aa645e6d4220c1dd3b08e089d06df36641925aba74ac3dc62"
+    },
+    {
+      "id": "waste-10-waste-6300001",
+      "status": "valid",
+      "sha256": "46e8afedbbfed9b4b49fd58e19f1d54dc7c0cdd51e326d55c6bcc5b01f5fcd66"
+    },
+    {
+      "id": "waste-10-waste-6300002",
+      "status": "valid",
+      "sha256": "9c25929b31dd01e06ad6720b09a3314304620c457383d1d1ec6f0319a78b144a"
+    },
+    {
+      "id": "waste-10-waste-6300003",
+      "status": "valid",
+      "sha256": "b192ae933c418afaf02aaf27f7191a6e2b6e8f6f7f481990b267530c72c8f540"
+    },
+    {
+      "id": "waste-10-waste-6300004",
+      "status": "valid",
+      "sha256": "43d5ee54f94537a659954ca11e1a7927d346e5d1384d6c4778b245b1e6667cc2"
+    },
+    {
+      "id": "waste-10-gradient-6300001",
+      "status": "valid",
+      "sha256": "855f1ccd24d86ddc00c6b578dd58087962c6fc86376d10fdffbfbbdb64adc616"
+    },
+    {
+      "id": "waste-10-gradient-6300002",
+      "status": "valid",
+      "sha256": "d5a7c612db9ebc0efcde1a11a13072646e732dab39c2ee890cb1a6673307e12c"
+    },
+    {
+      "id": "waste-10-gradient-6300003",
+      "status": "valid",
+      "sha256": "c8adf09a74e4a9b1b1b86704ed5d1c8d6a58071f74baa211077515248b46b309"
+    },
+    {
+      "id": "waste-10-gradient-6300004",
+      "status": "valid",
+      "sha256": "8aee2ae18343d85ee2d6d6c2f5fc475f3caf08ce3b980c0b926d6d8f8d3a1347"
+    },
+    {
+      "id": "waste-11-waste-6300001",
+      "status": "valid",
+      "sha256": "ab46996eb49b52daf61fed2f0ad655972a2a342b39ea4cb377f026e279e0dd32"
+    },
+    {
+      "id": "waste-11-waste-6300002",
+      "status": "valid",
+      "sha256": "d8fcf3863dd3e2d7ee786d3f3ed913cc434a5065eeeafdebb4b506458a9a9a70"
+    },
+    {
+      "id": "waste-11-waste-6300003",
+      "status": "valid",
+      "sha256": "05d6e2c2408e1278a147da9b0af1a5c5b7ece81e979f5fb893c9ef1e627964f3"
+    },
+    {
+      "id": "waste-11-waste-6300004",
+      "status": "valid",
+      "sha256": "3adbfb5882619bdb85ab1ccb40042ad6b3566131405534a6943db860cdc718d3"
+    },
+    {
+      "id": "waste-11-gradient-6300001",
+      "status": "valid",
+      "sha256": "a6c4c8b72ac4a4646a0f419ec3e0332d3950ed9603d878bcb9e96d5a42f28804"
+    },
+    {
+      "id": "waste-11-gradient-6300002",
+      "status": "valid",
+      "sha256": "7dafc2d7f447d47aa3811af8275bbdac508bda764bff687183d8c7e96915d11e"
+    },
+    {
+      "id": "waste-11-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/waste-11-gradient-6300003.json'"
+    },
+    {
+      "id": "waste-11-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/waste-11-gradient-6300004.json'"
+    },
+    {
+      "id": "background-0-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-0-background-6300001.json'"
+    },
+    {
+      "id": "background-0-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-0-background-6300002.json'"
+    },
+    {
+      "id": "background-0-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-0-background-6300003.json'"
+    },
+    {
+      "id": "background-0-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-0-background-6300004.json'"
+    },
+    {
+      "id": "background-0-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-0-gradient-6300001.json'"
+    },
+    {
+      "id": "background-0-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-0-gradient-6300002.json'"
+    },
+    {
+      "id": "background-0-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-0-gradient-6300003.json'"
+    },
+    {
+      "id": "background-0-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-0-gradient-6300004.json'"
+    },
+    {
+      "id": "background-1-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-1-background-6300001.json'"
+    },
+    {
+      "id": "background-1-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-1-background-6300002.json'"
+    },
+    {
+      "id": "background-1-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-1-background-6300003.json'"
+    },
+    {
+      "id": "background-1-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-1-background-6300004.json'"
+    },
+    {
+      "id": "background-1-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-1-gradient-6300001.json'"
+    },
+    {
+      "id": "background-1-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-1-gradient-6300002.json'"
+    },
+    {
+      "id": "background-1-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-1-gradient-6300003.json'"
+    },
+    {
+      "id": "background-1-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-1-gradient-6300004.json'"
+    },
+    {
+      "id": "background-2-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-2-background-6300001.json'"
+    },
+    {
+      "id": "background-2-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-2-background-6300002.json'"
+    },
+    {
+      "id": "background-2-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-2-background-6300003.json'"
+    },
+    {
+      "id": "background-2-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-2-background-6300004.json'"
+    },
+    {
+      "id": "background-2-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-2-gradient-6300001.json'"
+    },
+    {
+      "id": "background-2-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-2-gradient-6300002.json'"
+    },
+    {
+      "id": "background-2-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-2-gradient-6300003.json'"
+    },
+    {
+      "id": "background-2-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-2-gradient-6300004.json'"
+    },
+    {
+      "id": "background-3-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-3-background-6300001.json'"
+    },
+    {
+      "id": "background-3-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-3-background-6300002.json'"
+    },
+    {
+      "id": "background-3-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-3-background-6300003.json'"
+    },
+    {
+      "id": "background-3-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-3-background-6300004.json'"
+    },
+    {
+      "id": "background-3-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-3-gradient-6300001.json'"
+    },
+    {
+      "id": "background-3-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-3-gradient-6300002.json'"
+    },
+    {
+      "id": "background-3-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-3-gradient-6300003.json'"
+    },
+    {
+      "id": "background-3-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-3-gradient-6300004.json'"
+    },
+    {
+      "id": "background-4-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-4-background-6300001.json'"
+    },
+    {
+      "id": "background-4-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-4-background-6300002.json'"
+    },
+    {
+      "id": "background-4-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-4-background-6300003.json'"
+    },
+    {
+      "id": "background-4-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-4-background-6300004.json'"
+    },
+    {
+      "id": "background-4-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-4-gradient-6300001.json'"
+    },
+    {
+      "id": "background-4-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-4-gradient-6300002.json'"
+    },
+    {
+      "id": "background-4-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-4-gradient-6300003.json'"
+    },
+    {
+      "id": "background-4-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-4-gradient-6300004.json'"
+    },
+    {
+      "id": "background-5-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-5-background-6300001.json'"
+    },
+    {
+      "id": "background-5-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-5-background-6300002.json'"
+    },
+    {
+      "id": "background-5-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-5-background-6300003.json'"
+    },
+    {
+      "id": "background-5-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-5-background-6300004.json'"
+    },
+    {
+      "id": "background-5-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-5-gradient-6300001.json'"
+    },
+    {
+      "id": "background-5-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-5-gradient-6300002.json'"
+    },
+    {
+      "id": "background-5-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-5-gradient-6300003.json'"
+    },
+    {
+      "id": "background-5-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-5-gradient-6300004.json'"
+    },
+    {
+      "id": "background-6-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-6-background-6300001.json'"
+    },
+    {
+      "id": "background-6-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-6-background-6300002.json'"
+    },
+    {
+      "id": "background-6-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-6-background-6300003.json'"
+    },
+    {
+      "id": "background-6-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-6-background-6300004.json'"
+    },
+    {
+      "id": "background-6-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-6-gradient-6300001.json'"
+    },
+    {
+      "id": "background-6-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-6-gradient-6300002.json'"
+    },
+    {
+      "id": "background-6-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-6-gradient-6300003.json'"
+    },
+    {
+      "id": "background-6-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-6-gradient-6300004.json'"
+    },
+    {
+      "id": "background-7-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-7-background-6300001.json'"
+    },
+    {
+      "id": "background-7-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-7-background-6300002.json'"
+    },
+    {
+      "id": "background-7-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-7-background-6300003.json'"
+    },
+    {
+      "id": "background-7-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-7-background-6300004.json'"
+    },
+    {
+      "id": "background-7-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-7-gradient-6300001.json'"
+    },
+    {
+      "id": "background-7-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-7-gradient-6300002.json'"
+    },
+    {
+      "id": "background-7-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-7-gradient-6300003.json'"
+    },
+    {
+      "id": "background-7-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-7-gradient-6300004.json'"
+    },
+    {
+      "id": "background-8-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-8-background-6300001.json'"
+    },
+    {
+      "id": "background-8-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-8-background-6300002.json'"
+    },
+    {
+      "id": "background-8-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-8-background-6300003.json'"
+    },
+    {
+      "id": "background-8-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-8-background-6300004.json'"
+    },
+    {
+      "id": "background-8-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-8-gradient-6300001.json'"
+    },
+    {
+      "id": "background-8-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-8-gradient-6300002.json'"
+    },
+    {
+      "id": "background-8-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-8-gradient-6300003.json'"
+    },
+    {
+      "id": "background-8-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-8-gradient-6300004.json'"
+    },
+    {
+      "id": "background-9-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-9-background-6300001.json'"
+    },
+    {
+      "id": "background-9-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-9-background-6300002.json'"
+    },
+    {
+      "id": "background-9-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-9-background-6300003.json'"
+    },
+    {
+      "id": "background-9-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-9-background-6300004.json'"
+    },
+    {
+      "id": "background-9-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-9-gradient-6300001.json'"
+    },
+    {
+      "id": "background-9-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-9-gradient-6300002.json'"
+    },
+    {
+      "id": "background-9-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-9-gradient-6300003.json'"
+    },
+    {
+      "id": "background-9-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-9-gradient-6300004.json'"
+    },
+    {
+      "id": "background-10-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-10-background-6300001.json'"
+    },
+    {
+      "id": "background-10-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-10-background-6300002.json'"
+    },
+    {
+      "id": "background-10-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-10-background-6300003.json'"
+    },
+    {
+      "id": "background-10-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-10-background-6300004.json'"
+    },
+    {
+      "id": "background-10-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-10-gradient-6300001.json'"
+    },
+    {
+      "id": "background-10-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-10-gradient-6300002.json'"
+    },
+    {
+      "id": "background-10-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-10-gradient-6300003.json'"
+    },
+    {
+      "id": "background-10-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-10-gradient-6300004.json'"
+    },
+    {
+      "id": "background-11-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-11-background-6300001.json'"
+    },
+    {
+      "id": "background-11-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-11-background-6300002.json'"
+    },
+    {
+      "id": "background-11-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-11-background-6300003.json'"
+    },
+    {
+      "id": "background-11-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-11-background-6300004.json'"
+    },
+    {
+      "id": "background-11-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-11-gradient-6300001.json'"
+    },
+    {
+      "id": "background-11-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-11-gradient-6300002.json'"
+    },
+    {
+      "id": "background-11-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-11-gradient-6300003.json'"
+    },
+    {
+      "id": "background-11-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/background-11-gradient-6300004.json'"
+    },
+    {
+      "id": "historical-0-waste-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-waste-6300001.json'"
+    },
+    {
+      "id": "historical-0-waste-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-waste-6300002.json'"
+    },
+    {
+      "id": "historical-0-waste-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-waste-6300003.json'"
+    },
+    {
+      "id": "historical-0-waste-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-waste-6300004.json'"
+    },
+    {
+      "id": "historical-0-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-background-6300001.json'"
+    },
+    {
+      "id": "historical-0-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-background-6300002.json'"
+    },
+    {
+      "id": "historical-0-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-background-6300003.json'"
+    },
+    {
+      "id": "historical-0-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-background-6300004.json'"
+    },
+    {
+      "id": "historical-0-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-gradient-6300001.json'"
+    },
+    {
+      "id": "historical-0-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-gradient-6300002.json'"
+    },
+    {
+      "id": "historical-0-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-gradient-6300003.json'"
+    },
+    {
+      "id": "historical-0-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-0-gradient-6300004.json'"
+    },
+    {
+      "id": "historical-2-waste-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-waste-6300001.json'"
+    },
+    {
+      "id": "historical-2-waste-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-waste-6300002.json'"
+    },
+    {
+      "id": "historical-2-waste-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-waste-6300003.json'"
+    },
+    {
+      "id": "historical-2-waste-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-waste-6300004.json'"
+    },
+    {
+      "id": "historical-2-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-background-6300001.json'"
+    },
+    {
+      "id": "historical-2-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-background-6300002.json'"
+    },
+    {
+      "id": "historical-2-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-background-6300003.json'"
+    },
+    {
+      "id": "historical-2-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-background-6300004.json'"
+    },
+    {
+      "id": "historical-2-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-gradient-6300001.json'"
+    },
+    {
+      "id": "historical-2-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-gradient-6300002.json'"
+    },
+    {
+      "id": "historical-2-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-gradient-6300003.json'"
+    },
+    {
+      "id": "historical-2-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-2-gradient-6300004.json'"
+    },
+    {
+      "id": "historical-5-waste-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-waste-6300001.json'"
+    },
+    {
+      "id": "historical-5-waste-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-waste-6300002.json'"
+    },
+    {
+      "id": "historical-5-waste-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-waste-6300003.json'"
+    },
+    {
+      "id": "historical-5-waste-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-waste-6300004.json'"
+    },
+    {
+      "id": "historical-5-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-background-6300001.json'"
+    },
+    {
+      "id": "historical-5-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-background-6300002.json'"
+    },
+    {
+      "id": "historical-5-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-background-6300003.json'"
+    },
+    {
+      "id": "historical-5-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-background-6300004.json'"
+    },
+    {
+      "id": "historical-5-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-gradient-6300001.json'"
+    },
+    {
+      "id": "historical-5-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-gradient-6300002.json'"
+    },
+    {
+      "id": "historical-5-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-gradient-6300003.json'"
+    },
+    {
+      "id": "historical-5-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-5-gradient-6300004.json'"
+    },
+    {
+      "id": "historical-9-waste-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-waste-6300001.json'"
+    },
+    {
+      "id": "historical-9-waste-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-waste-6300002.json'"
+    },
+    {
+      "id": "historical-9-waste-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-waste-6300003.json'"
+    },
+    {
+      "id": "historical-9-waste-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-waste-6300004.json'"
+    },
+    {
+      "id": "historical-9-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-background-6300001.json'"
+    },
+    {
+      "id": "historical-9-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-background-6300002.json'"
+    },
+    {
+      "id": "historical-9-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-background-6300003.json'"
+    },
+    {
+      "id": "historical-9-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-background-6300004.json'"
+    },
+    {
+      "id": "historical-9-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-gradient-6300001.json'"
+    },
+    {
+      "id": "historical-9-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-gradient-6300002.json'"
+    },
+    {
+      "id": "historical-9-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-gradient-6300003.json'"
+    },
+    {
+      "id": "historical-9-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/historical-9-gradient-6300004.json'"
+    },
+    {
+      "id": "no-candidate-waste-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-waste-6300001.json'"
+    },
+    {
+      "id": "no-candidate-waste-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-waste-6300002.json'"
+    },
+    {
+      "id": "no-candidate-waste-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-waste-6300003.json'"
+    },
+    {
+      "id": "no-candidate-waste-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-waste-6300004.json'"
+    },
+    {
+      "id": "no-candidate-background-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-background-6300001.json'"
+    },
+    {
+      "id": "no-candidate-background-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-background-6300002.json'"
+    },
+    {
+      "id": "no-candidate-background-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-background-6300003.json'"
+    },
+    {
+      "id": "no-candidate-background-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-background-6300004.json'"
+    },
+    {
+      "id": "no-candidate-gradient-6300001",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-gradient-6300001.json'"
+    },
+    {
+      "id": "no-candidate-gradient-6300002",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-gradient-6300002.json'"
+    },
+    {
+      "id": "no-candidate-gradient-6300003",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-gradient-6300003.json'"
+    },
+    {
+      "id": "no-candidate-gradient-6300004",
+      "status": "missing",
+      "error": "NotFound: No such file or directory (os error 2): readfile 'experiments/founder-discovery/v1/capability-results/no-candidate-gradient-6300004.json'"
+    }
+  ],
+  "validatorSha256": "897f84e07fbeae0470243931f9727068c18829774269e4c0f3ca6abee05c80ae"
+}

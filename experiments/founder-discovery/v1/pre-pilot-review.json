@@ -1,0 +1,43 @@
+{
+  "date": "2026-09-30",
+  "status": "reviewed-preparation-not-evolution-release",
+  "capability": {
+    "expected": 252,
+    "valid": 252,
+    "missing": 0,
+    "invalid": 0,
+    "replaysPassed": 2
+  },
+  "selection": {
+    "poolUnique": 5521,
+    "globalClusters": 141,
+    "eligibleGenomes": 6,
+    "eligibleClusters": 6,
+    "selectedClusters": [
+      33,
+      4,
+      16,
+      139
+    ],
+    "independentRawRecordReview": "passed",
+    "independentSelectorRerun": "byte-identical"
+  },
+  "verification": {
+    "focusedCpuTestsPassed": 27,
+    "focusedCpuTestsFailed": 0
+  },
+  "capabilityGradientWallSeconds": {
+    "n": 116,
+    "median": 9.720591583000001,
+    "maximum": 14.19855804100001,
+    "note": "10,000-step capability runs; not a benchmark of mutation-ledger evolution or 20,000-step competition."
+  },
+  "paidUSD": 0,
+  "hashes": {
+    "experiments/founder-discovery/v1/shortlist.json": "8f41154310ffca4647ead972e426d7707b548aefe17ad1cf06d64c38942b687d",
+    "experiments/founder-discovery/v1/activity-final.json": "63730154c19aa3b0e96a04abaef4b5cba1f81f5818b912c857653cb653338fd8",
+    "experiments/founder-discovery/v1/strict-validation-final.json": "2faaeeb861db555192935ae0173f940764d46306a84be0e46492ef6c83428d12",
+    "experiments/founder-discovery/v1/improvement-pilot-protocol.md": "c51696f2108462a2360bb107860d57ca1a3d54db72d7191c6990057a23fb27ec",
+    "experiments/founder-discovery/v1/improvement-next-design.md": "f9b3a1b729b859e24a34e3285d3532d098fa9715ef6be4ae60a236f70769b852"
+  }
+}

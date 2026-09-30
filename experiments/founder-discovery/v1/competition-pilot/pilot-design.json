@@ -1,0 +1,3769 @@
+{
+  "format": "discovery-competition-pilot/v1",
+  "ruleVersion": 1,
+  "sourceRoot": "/Users/nicholas/develop/browser-life-founder-policy",
+  "root": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1",
+  "protocolPath": "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-pilot-protocol.md",
+  "inputs": {
+    "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/activity-final.json": "63730154c19aa3b0e96a04abaef4b5cba1f81f5818b912c857653cb653338fd8",
+    "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/capability-design.json": "6d228e69218d2334f252d0f0d5e604aa879a2f6b53ed0157793a1cf8c0f26387",
+    "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/initial-inventory/inventory.json": "40c0006c82a8b2984425817a35822d64c0e669846b9066d5745103cf48e69bb9",
+    "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/shortlist.json": "8f41154310ffca4647ead972e426d7707b548aefe17ad1cf06d64c38942b687d",
+    "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/strict-validation-final.json": "2faaeeb861db555192935ae0173f940764d46306a84be0e46492ef6c83428d12"
+  },
+  "sources": {
+    "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-pilot-protocol.md": "c51696f2108462a2360bb107860d57ca1a3d54db72d7191c6990057a23fb27ec",
+    "deno.json": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0",
+    "deno.lock": "8630fa4d89086681cfed42c0f5977e2e34e720d1b32580300df124f83cf872bd",
+    "packages/metrics/src/activity.ts": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e",
+    "packages/metrics/src/biogeography.ts": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93",
+    "packages/metrics/src/calibration.ts": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1",
+    "packages/metrics/src/census.ts": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695",
+    "packages/metrics/src/collectives.ts": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8",
+    "packages/metrics/src/complexity.ts": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c",
+    "packages/metrics/src/ecology.ts": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e",
+    "packages/metrics/src/index.ts": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e",
+    "packages/metrics/src/individuality.ts": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18",
+    "packages/metrics/src/render.ts": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f",
+    "packages/metrics/src/stats.ts": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854",
+    "packages/metrics/src/tracker.ts": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9",
+    "packages/runner/src/conditions.ts": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3",
+    "packages/runner/src/index.ts": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6",
+    "packages/runner/src/island-page.ts": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898",
+    "packages/runner/src/island.ts": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461",
+    "packages/runner/src/migrate.ts": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f",
+    "packages/runner/src/observe.ts": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d",
+    "packages/runner/src/runner.ts": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab",
+    "packages/runner/src/stitch.ts": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef",
+    "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+    "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+    "packages/schema/src/config.ts": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601",
+    "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+    "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+    "packages/schema/src/genetics.ts": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93",
+    "packages/schema/src/genome.ts": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d",
+    "packages/schema/src/index.ts": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b",
+    "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+    "packages/schema/src/kernel.ts": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978",
+    "packages/schema/src/layout.ts": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f",
+    "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+    "packages/schema/src/presets.ts": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e",
+    "packages/schema/src/world.ts": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6",
+    "packages/sim-gpu/src/golden.ts": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf",
+    "packages/sim-gpu/src/gpu-sim.ts": "f6d119d89147752ee1c3fd2ab136eb545cbb4ba696adaa4eac795dfb740d506e",
+    "packages/sim-gpu/src/index.ts": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150",
+    "packages/sim-gpu/src/renderer.ts": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10",
+    "packages/sim-gpu/src/shaders.ts": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773",
+    "packages/sim-ref/src/index.ts": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f",
+    "packages/sim-ref/src/step.ts": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85",
+    "tools/discovery_competition_pilot.ts": "bb894bb6ceeae875e4034ddf426948758077044b4209fb26a2e981cbd22976b3",
+    "tools/lib/discovery-competition.ts": "d3890942edbe3cf2f1f341d6026ff68c9d86cd47b26e591a134f43e9f9d504b1",
+    "tools/lib/founder-policy.ts": "361411ed7f2ab48907986f78d5faaac41144980104eaecd6acca782701219265",
+    "tools/lib/selection-funnel-audit.ts": "8375e967a0421b965b71d4d96383a804382fe30744047af2c723efc334a12821",
+    "tools/test/discovery-competition-pilot.test.ts": "ea6a93d4b792cd56040fa4d8a4f7a7f6bd9e12906204d5fa782d307018eb9aee"
+  },
+  "sourceManifestHash": "de02b84fa9f343f9778cdfacffd672691921ffbf4328d0cd1be0167d86026474",
+  "founders": [
+    {
+      "id": "discovery-cluster-33",
+      "cluster": 33,
+      "hex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "subjects": [
+        "waste-10"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4",
+      "cluster": 4,
+      "hex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "subjects": [
+        "waste-4"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16",
+      "cluster": 16,
+      "hex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "subjects": [
+        "waste-3"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139",
+      "cluster": 139,
+      "hex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "subjects": [
+        "background-3"
+      ]
+    }
+  ],
+  "seeds": [
+    6440001,
+    6440002,
+    6440003,
+    6440004
+  ],
+  "times": [
+    0,
+    10000,
+    20000
+  ],
+  "configs": {
+    "6440001": {
+      "ruleVersion": 1,
+      "seed": 6440001,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6440002": {
+      "ruleVersion": 1,
+      "seed": 6440002,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6440003": {
+      "ruleVersion": 1,
+      "seed": 6440003,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6440004": {
+      "ruleVersion": 1,
+      "seed": 6440004,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    }
+  },
+  "units": [
+    {
+      "id": "discovery-cluster-33-clone-6440001-a0",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 0,
+      "initialStateHash": "86fd1a962210f926",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440001-a1",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 1,
+      "initialStateHash": "b7539e3679600699",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440001-a2",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 2,
+      "initialStateHash": "b7539e3679600699",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440001-a3",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 3,
+      "initialStateHash": "86fd1a962210f926",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440002-a0",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 0,
+      "initialStateHash": "8e67ce51f0bc64b0",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440002-a1",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 1,
+      "initialStateHash": "3a4a90b66fca04dd",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440002-a2",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 2,
+      "initialStateHash": "3a4a90b66fca04dd",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440002-a3",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 3,
+      "initialStateHash": "8e67ce51f0bc64b0",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440003-a0",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 0,
+      "initialStateHash": "302ff78b99ed2fb0",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440003-a1",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 1,
+      "initialStateHash": "02e6f9c185f849e2",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440003-a2",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 2,
+      "initialStateHash": "02e6f9c185f849e2",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440003-a3",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 3,
+      "initialStateHash": "302ff78b99ed2fb0",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440004-a0",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 0,
+      "initialStateHash": "9e5f2449f49afd74",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440004-a1",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 1,
+      "initialStateHash": "c3bb821543405dc6",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440004-a2",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 2,
+      "initialStateHash": "c3bb821543405dc6",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-clone-6440004-a3",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 3,
+      "initialStateHash": "9e5f2449f49afd74",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440001-a0",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 0,
+      "initialStateHash": "80e2e4fcda7443d0",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440001-a1",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 1,
+      "initialStateHash": "c9f72c27808122f5",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440001-a2",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 2,
+      "initialStateHash": "11e1014553a89dee",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440001-a3",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 3,
+      "initialStateHash": "9c26d3fc913848ba",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440002-a0",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 0,
+      "initialStateHash": "62a32774b35d4b53",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440002-a1",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 1,
+      "initialStateHash": "af6aa7c335d060be",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440002-a2",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 2,
+      "initialStateHash": "3c1b93ebab3c3f46",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440002-a3",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 3,
+      "initialStateHash": "845a2bc226fc0417",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440003-a0",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 0,
+      "initialStateHash": "a6bf25bc2c21b5c5",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440003-a1",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 1,
+      "initialStateHash": "32646bb9be1355bb",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440003-a2",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 2,
+      "initialStateHash": "07d52672d97d11c3",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440003-a3",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 3,
+      "initialStateHash": "96230739c2c3eb19",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440004-a0",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 0,
+      "initialStateHash": "37e2f651a3632616",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440004-a1",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 1,
+      "initialStateHash": "50653141e43cd5bd",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440004-a2",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 2,
+      "initialStateHash": "ab890b3987ef1520",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-empty-6440004-a3",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 3,
+      "initialStateHash": "04989e43f6056bd8",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440001-a0",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 0,
+      "initialStateHash": "e08f67eae081dc7b",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440001-a1",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 1,
+      "initialStateHash": "149fe08c47dbd816",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440001-a2",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 2,
+      "initialStateHash": "149fe08c47dbd816",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440001-a3",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 3,
+      "initialStateHash": "e08f67eae081dc7b",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440002-a0",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 0,
+      "initialStateHash": "a84b707e64214083",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440002-a1",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 1,
+      "initialStateHash": "aa3aa742510e068e",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440002-a2",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 2,
+      "initialStateHash": "aa3aa742510e068e",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440002-a3",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 3,
+      "initialStateHash": "a84b707e64214083",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440003-a0",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 0,
+      "initialStateHash": "954b283e3c7755e0",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440003-a1",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 1,
+      "initialStateHash": "949862ba65bc992c",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440003-a2",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 2,
+      "initialStateHash": "949862ba65bc992c",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440003-a3",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 3,
+      "initialStateHash": "954b283e3c7755e0",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440004-a0",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 0,
+      "initialStateHash": "a7f8ccbe429dfae2",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440004-a1",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 1,
+      "initialStateHash": "d20707ffb22a4f20",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440004-a2",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 2,
+      "initialStateHash": "d20707ffb22a4f20",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-clone-6440004-a3",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 3,
+      "initialStateHash": "a7f8ccbe429dfae2",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440001-a0",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 0,
+      "initialStateHash": "4e1eefdf2207dde4",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440001-a1",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 1,
+      "initialStateHash": "eec6b366854d9dd1",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440001-a2",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 2,
+      "initialStateHash": "f543d16abfcf771d",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440001-a3",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 3,
+      "initialStateHash": "3cd5e40e473142e9",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440002-a0",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 0,
+      "initialStateHash": "094d321c17ee3649",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440002-a1",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 1,
+      "initialStateHash": "61448eb0dc2877cf",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440002-a2",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 2,
+      "initialStateHash": "a6bb6ddc8a943e32",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440002-a3",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 3,
+      "initialStateHash": "663f573ef87e5635",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440003-a0",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 0,
+      "initialStateHash": "aee44c8a68745258",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440003-a1",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 1,
+      "initialStateHash": "7af2e77c0a9522a1",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440003-a2",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 2,
+      "initialStateHash": "8661f2e6df9d8470",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440003-a3",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 3,
+      "initialStateHash": "223e8eb89d2a917a",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440004-a0",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 0,
+      "initialStateHash": "cf60fec2c296b31a",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440004-a1",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 1,
+      "initialStateHash": "4a4f75b190bf170c",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440004-a2",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 2,
+      "initialStateHash": "6ae8722bb7a311fb",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-empty-6440004-a3",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 3,
+      "initialStateHash": "f64b7df7b468053f",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440001-a0",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 0,
+      "initialStateHash": "6d1ec023d2d61821",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440001-a1",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 1,
+      "initialStateHash": "7b12c773cbaf379c",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440001-a2",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 2,
+      "initialStateHash": "7b12c773cbaf379c",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440001-a3",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 3,
+      "initialStateHash": "6d1ec023d2d61821",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440002-a0",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 0,
+      "initialStateHash": "152fa96bce202e3c",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440002-a1",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 1,
+      "initialStateHash": "a77a10eadfd98968",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440002-a2",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 2,
+      "initialStateHash": "a77a10eadfd98968",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440002-a3",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 3,
+      "initialStateHash": "152fa96bce202e3c",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440003-a0",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 0,
+      "initialStateHash": "9a65d73e4de10ad7",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440003-a1",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 1,
+      "initialStateHash": "c8c4d8d6dc1136d0",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440003-a2",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 2,
+      "initialStateHash": "c8c4d8d6dc1136d0",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440003-a3",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 3,
+      "initialStateHash": "9a65d73e4de10ad7",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440004-a0",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 0,
+      "initialStateHash": "2ff827b59aaea33e",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440004-a1",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 1,
+      "initialStateHash": "a84fe969582b11ae",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440004-a2",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 2,
+      "initialStateHash": "a84fe969582b11ae",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-clone-6440004-a3",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 3,
+      "initialStateHash": "2ff827b59aaea33e",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440001-a0",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 0,
+      "initialStateHash": "541eaf5dbc7dd1e9",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440001-a1",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 1,
+      "initialStateHash": "3ecc0bcb19cd1ad0",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440001-a2",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 2,
+      "initialStateHash": "1e03696edfaed2a9",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440001-a3",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 3,
+      "initialStateHash": "c9d28ded453645c3",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440002-a0",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 0,
+      "initialStateHash": "c28bfcf251b22aea",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440002-a1",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 1,
+      "initialStateHash": "75331cad984a7bc6",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440002-a2",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 2,
+      "initialStateHash": "1dfae361913be9be",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440002-a3",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 3,
+      "initialStateHash": "4ebc536f2fe73939",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440003-a0",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 0,
+      "initialStateHash": "d3f4df514385e2e5",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440003-a1",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 1,
+      "initialStateHash": "c63361dbfe08a0f5",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440003-a2",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 2,
+      "initialStateHash": "f0a5e13cb19bbdd2",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440003-a3",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 3,
+      "initialStateHash": "a599603878761e4d",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440004-a0",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 0,
+      "initialStateHash": "ce5df9754bc6cad8",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440004-a1",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 1,
+      "initialStateHash": "040a13386b2350b3",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440004-a2",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 2,
+      "initialStateHash": "a952c0d1f67ad3ae",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-empty-6440004-a3",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 3,
+      "initialStateHash": "f15d5fb0d1a8807e",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440001-a0",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 0,
+      "initialStateHash": "efcfdad271374907",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440001-a1",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 1,
+      "initialStateHash": "871b14b1d4eb33c3",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440001-a2",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 2,
+      "initialStateHash": "871b14b1d4eb33c3",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440001-a3",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440001,
+      "assignment": 3,
+      "initialStateHash": "efcfdad271374907",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440002-a0",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 0,
+      "initialStateHash": "0871aaee2b543805",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440002-a1",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 1,
+      "initialStateHash": "c17778221cb6a3ac",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440002-a2",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 2,
+      "initialStateHash": "c17778221cb6a3ac",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440002-a3",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440002,
+      "assignment": 3,
+      "initialStateHash": "0871aaee2b543805",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 27868,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440003-a0",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 0,
+      "initialStateHash": "0e151174c87db640",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440003-a1",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 1,
+      "initialStateHash": "23ab90acc09326a5",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440003-a2",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 2,
+      "initialStateHash": "23ab90acc09326a5",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440003-a3",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440003,
+      "assignment": 3,
+      "initialStateHash": "0e151174c87db640",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 29392,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440004-a0",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 0,
+      "initialStateHash": "f61bf529046a0780",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440004-a1",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 1,
+      "initialStateHash": "97eb1ae53b38bf09",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440004-a2",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 2,
+      "initialStateHash": "97eb1ae53b38bf09",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-clone-6440004-a3",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "clone",
+      "seed": 6440004,
+      "assignment": 3,
+      "initialStateHash": "f61bf529046a0780",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 28263,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440001-a0",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 0,
+      "initialStateHash": "1219ab89c60e8154",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440001-a1",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 1,
+      "initialStateHash": "402311d1dbf61526",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440001-a2",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 2,
+      "initialStateHash": "7953ea8ef2024a9c",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440001-a3",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440001,
+      "assignment": 3,
+      "initialStateHash": "5b247121eca47a83",
+      "initialMass": {
+        "descendant": 29278,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440002-a0",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 0,
+      "initialStateHash": "e84cd3607fdb6b23",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440002-a1",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 1,
+      "initialStateHash": "6614b9b8be774bcf",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440002-a2",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 2,
+      "initialStateHash": "b9d006a5ea621ae0",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440002-a3",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440002,
+      "assignment": 3,
+      "initialStateHash": "871c420b629a1ebb",
+      "initialMass": {
+        "descendant": 27868,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440003-a0",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 0,
+      "initialStateHash": "5643055e3d3e1dbb",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440003-a1",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 1,
+      "initialStateHash": "898b3173ef2e65dc",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440003-a2",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 2,
+      "initialStateHash": "f92d440bb1fcc0d6",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440003-a3",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440003,
+      "assignment": 3,
+      "initialStateHash": "c9f0b77877071248",
+      "initialMass": {
+        "descendant": 29392,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440004-a0",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 0,
+      "initialStateHash": "22df6e9a004a7334",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440004-a1",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 1,
+      "initialStateHash": "25d67b9ea0b5f692",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440004-a2",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 2,
+      "initialStateHash": "485bf1a936522d54",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-empty-6440004-a3",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "mode": "empty",
+      "seed": 6440004,
+      "assignment": 3,
+      "initialStateHash": "f90cbe88ec21b42a",
+      "initialMass": {
+        "descendant": 28263,
+        "ancestor": 0,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "initialFlux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    }
+  ],
+  "requiredReplayUnitIds": [
+    "discovery-cluster-33-clone-6440001-a0",
+    "discovery-cluster-33-empty-6440001-a0"
+  ],
+  "thresholds": {
+    "overallUniqueAvailability": 0.9,
+    "founderUniqueAvailability": 0.75,
+    "founderUniqueActivity": 0.75
+  },
+  "designHash": "65911b76da307c0e25ab9956a37ebcb85e505997ef1ac9290859c2bbfcb9f5b0"
+}

@@ -1,0 +1,113 @@
+{
+  "source_root": "/Users/nicholas/develop/browser-life",
+  "files": {
+    "bootstrap-medium-waste/archive.json": {
+      "sha256": "1cec03f94e80c9e3597593c4212933233317d256589397dda86014d8017a03c8",
+      "bytes": 74872
+    },
+    "bootstrap-medium-waste/viable.jsonl": {
+      "sha256": "ab8dd92b45a348f8098c0ef0bb636b3c7a82ae52034361a78497d6d529ae7ec7",
+      "bytes": 2022802
+    },
+    "bootstrap-medium-waste/gate.json": {
+      "sha256": "3f221b36f37d7dd27c8083cb3c5a4e5b40778c0ab3f6a97e4a7d20177ea98abb",
+      "bytes": 401703
+    },
+    "bootstrap-medium-waste/confirm.json": {
+      "sha256": "fb31aa76dc6ef9125083d38f5bbf2a261a6902e51a8c6f8fae3c3e2f69f8d009",
+      "bytes": 783497
+    },
+    "bootstrap-medium-background/archive.json": {
+      "sha256": "bc0b94e15ffdebeea18c3770054cb039efe33ec283d82c8d24c7f32c69eecdcb",
+      "bytes": 83399
+    },
+    "bootstrap-medium-background/viable.jsonl": {
+      "sha256": "ea00cbf4ca5e2d2a1ec6664f6ad770bc0c62b12b2b593d304395008fea8b7f5d",
+      "bytes": 2199824
+    },
+    "bootstrap-medium-background/gate.json": {
+      "sha256": "bc3983012f3f98fa9a63347d25e53af49c757630531e612aac14d87b7bc31a84",
+      "bytes": 2754803
+    },
+    "source/tools/bootstrap.ts": {
+      "sha256": "6cf1c0cb0a2d73f65b375d191c9e3fe8ae70a5d6059ab70e411a77a070e41e0b",
+      "bytes": 23438
+    },
+    "source/packages/search/src/evaluate.ts": {
+      "sha256": "f318119e34587438cf47aae13fea731b843f38f41af8da1e60d3cae3cad455eb",
+      "bytes": 18568
+    },
+    "source/packages/search/src/mapelites.ts": {
+      "sha256": "b7a3caac6e338cd80a58a8abc65774d89c32320ca56bcc381e96555dffd9ee8b",
+      "bytes": 9849
+    }
+  },
+  "studies": {
+    "bootstrap-medium-waste": {
+      "evaluated": 3200,
+      "committed_observations": 2677,
+      "unique_genomes": 2672,
+      "unique_recorded_survivors": 2672,
+      "observation_outcomes_mutually_exclusive": {
+        "passes_old_gate": 232,
+        "regeneration": 2242,
+        "regeneration+light_dependence": 203
+      },
+      "unique_ever_old_gate_eligible": 232,
+      "unique_survivors_never_old_gate_eligible": 2440,
+      "recorded_gate_genomes": 232,
+      "gate_missing_eligible": 0,
+      "gate_not_supported_by_prefix": 0,
+      "confirmation_present": true,
+      "unique_admitted_to_confirmation": 232,
+      "confirmed_outside_gate": 0,
+      "search_settings": {
+        "select": "lineages",
+        "passBias": 0.5,
+        "random": 0.25,
+        "score": "maintenance"
+      },
+      "resumes": [],
+      "limitations": [
+        "A surviving screen is not evidence of adaptation or organism reproduction.",
+        "Only logged offers are counted; the archive is selected by its search score.",
+        "Absence of confirmation file is pending or unavailable, not a failed evaluation.",
+        "Snapshot may be from an active program; do not overwrite its source records.",
+        "Counts do not establish the causal effect of changing a selection criterion."
+      ]
+    },
+    "bootstrap-medium-background": {
+      "evaluated": 3200,
+      "committed_observations": 2854,
+      "unique_genomes": 2850,
+      "unique_recorded_survivors": 2850,
+      "observation_outcomes_mutually_exclusive": {
+        "passes_old_gate": 1636,
+        "regeneration": 822,
+        "regeneration+light_dependence": 396
+      },
+      "unique_ever_old_gate_eligible": 1633,
+      "unique_survivors_never_old_gate_eligible": 1217,
+      "recorded_gate_genomes": 1633,
+      "gate_missing_eligible": 0,
+      "gate_not_supported_by_prefix": 0,
+      "confirmation_present": false,
+      "unique_admitted_to_confirmation": null,
+      "confirmed_outside_gate": null,
+      "search_settings": {
+        "select": "lineages",
+        "passBias": 0.5,
+        "random": 0.25,
+        "score": "maintenance"
+      },
+      "resumes": [],
+      "limitations": [
+        "A surviving screen is not evidence of adaptation or organism reproduction.",
+        "Only logged offers are counted; the archive is selected by its search score.",
+        "Absence of confirmation file is pending or unavailable, not a failed evaluation.",
+        "Snapshot may be from an active program; do not overwrite its source records.",
+        "Counts do not establish the causal effect of changing a selection criterion."
+      ]
+    }
+  }
+}

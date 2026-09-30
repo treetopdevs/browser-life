@@ -1,0 +1,96 @@
+{
+  "id": "no-candidate-gradient-6300001",
+  "designHash": "6d228e69218d2334f252d0f0d5e604aa879a2f6b53ed0157793a1cf8c0f26387",
+  "pass": true,
+  "samples": [
+    {
+      "step": 0,
+      "mass": {
+        "candidate": 0,
+        "background": 0,
+        "unassociated": 0,
+        "unknown": 0
+      },
+      "flux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "stateHash": "f5022e8f0af5f127"
+    },
+    {
+      "step": 1000,
+      "mass": {
+        "candidate": 0,
+        "background": 0,
+        "unassociated": 0,
+        "unknown": 0
+      },
+      "flux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "stateHash": "96f82d5aca8fd3cb"
+    },
+    {
+      "step": 3000,
+      "mass": {
+        "candidate": 0,
+        "background": 0,
+        "unassociated": 0,
+        "unknown": 0
+      },
+      "flux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "stateHash": "47ec380c516e12bf"
+    },
+    {
+      "step": 10000,
+      "mass": {
+        "candidate": 0,
+        "background": 0,
+        "unassociated": 0,
+        "unknown": 0
+      },
+      "flux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "stateHash": "10e08e5b92669a82"
+    }
+  ],
+  "replaySourceSha256": "c92ff03112ed16cdbbf28b2f2507cc2ba528db882476b4687a41c55c597e262b"
+}

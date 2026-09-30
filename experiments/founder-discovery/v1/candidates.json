@@ -1,0 +1,550 @@
+{
+  "namespace": "founder-discovery-v1-survival-only-2026-09-30",
+  "inventorySha256": "40c0006c82a8b2984425817a35822d64c0e669846b9066d5745103cf48e69bb9",
+  "selection": "Hash-ranked 12 distinct distance-10 single-linkage clusters, then one genome within each. Eligibility: recorded survival > 0 in any screening observation. Regeneration and light dependence not ranked. Cluster IDs local to each snapshot pool.",
+  "status": "Frozen exploratory candidate roster; no follow-up outcomes or evolution claim.",
+  "studies": [
+    {
+      "name": "bootstrap-medium-waste",
+      "uniqueEligible": 2672,
+      "clusters": 53,
+      "selected": [
+        {
+          "cluster": 9,
+          "hex": "00110026000000001aea19e3df2f341510e7fb1b4030dada0e08dbc601dd132c32e0e2c8dedfce1ccc2e1d21251b1f271b3af2f506d2cd19013acad9d2e23d0d36ec0edcf3e21ecaf1f810caf2efd5f5e90ae3deddf4d8d9011d131fe6c1d3cb39e22ee9c3cc133a17c121c209c717c6f5d11cf10aefc6d7d52e0340f2e4c8c91fd816e6fffe3439c7c3c1ea2e09cad0eb1add1327c3c71824f3c024e5401a08d9dafd2ed8f5fce0",
+          "observations": [
+            {
+              "line": 657,
+              "eval": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4,
+                "meanMass": 2970.5625,
+                "speed": 0.45297620778669767,
+                "mass": 17909.75,
+                "recovery": 0.003545833428648458,
+                "reproduction": 10,
+                "regenerated": 1
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 30,
+          "hex": "001000460000000037d01215040ae1f92d314024f9d01517da0d15f506eaf8dc2fd22a1f3ae4e30002ff1d21f320fd0de9cd352a37d6d020df29d82a1c181e0f20c23ef5e02800bbf7c9d32adb0d39fb2a0afa23171fd204e9231c35c6efdf1d0d15fde91ccfedebfa13fd30d3f8d319d9083a3c381afef6293ae6d0dac611ff0d14cfeb1aee2a0a05d331e9cfda073f0dc903c807031e20de30d614213b110c07d23410153b13e0",
+          "observations": [
+            {
+              "line": 1811,
+              "eval": {
+                "survived": 1,
+                "recovered": 1,
+                "lightDependent": 1,
+                "reps": 4,
+                "individuals": 0.5,
+                "meanMass": 2464,
+                "speed": 1.9047417986509239,
+                "mass": 2195.5,
+                "recovery": 1,
+                "reproduction": 23.5,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 47,
+          "hex": "0019005300000000ee1a15cde5cd2f0af333d00dcbf130ee2ff91a34de230ad704cd1dea33d8e112cdc90ec3e3c8d6200ff0333ece3402ddf3fed4c531d9193df4d534d2faf83323de0a24e9e2eaf7dcf4d8c02d2c25212ed7cff2371805cc1d3a1e3f16e7cbe5ebeacd0ddc282a0df115c93d3c17070fde17d701f60ed022cbe80ec13e18dafdf7ced9e11ed3c1f8d4e7e02ce7c23deaf23de0d016dfc61ee72326fb1119140732",
+          "observations": [
+            {
+              "line": 2663,
+              "eval": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 6.5,
+                "meanMass": 3717.4615384615386,
+                "speed": 0.6395362003016241,
+                "mass": 31560.25,
+                "recovery": 0.042280640327499425,
+                "reproduction": 11,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 16,
+          "hex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+          "observations": [
+            {
+              "line": 2213,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 46,
+                "meanMass": 2911.9347826086955,
+                "speed": 0.24878731406793506,
+                "mass": 147949.25,
+                "recovery": 0.9994009356795076,
+                "reproduction": 52.25,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 4,
+          "hex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+          "observations": [
+            {
+              "line": 1736,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 27.75,
+                "meanMass": 2731.3783783783783,
+                "speed": 0.6050339629188071,
+                "mass": 98476.75,
+                "recovery": 0.9967320211125683,
+                "reproduction": 122.25,
+                "regenerated": 2
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 24,
+          "hex": "001b003b0000000013031731223cef2fdfcdeb0b2808cde620212626feeecc2e251e10101212193a3337c13e12c6241c3a1ed517082c37e02a0fe80d23db30c3d213f32fee1de6072421c227d12a0b380b29eb30ce06ce12da00231ae9291dc63a03ca3dcf3d211d1937f1d2e33e1a0ee62d34eff806ff13c007322be0c2cc1df3d80c1fe1cafdcb0accc8f30527dbeae431d73200dfc8de0c2127f605da1fd4e11cd104fbc8f21f",
+          "observations": [
+            {
+              "line": 1528,
+              "eval": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 3,
+                "meanMass": 2622.5833333333335,
+                "speed": 0.5530663970438652,
+                "mass": 21746.75,
+                "recovery": 0.0032283014118273533,
+                "reproduction": 14.25,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 41,
+          "hex": "000f005700000000c2e3dccbc6d2d2c8243ecec00e133cead3e236cc25cd29ecf9e6cd2e1ad717d3df0d1aed0d29e123220effcddddd29cb3fd8f519ff3de1f5db37363238eacce72219f6fa3c06e1402615033ffb20f714e3d62209c3cff5dbc3381de53be9e6f126fa34eb0e27cc252e2c29c827212aecf0f02ad3d238c8e51c33dec12c0b18c5f5051ef413c3162536371619e935372540100b3121ccead0e00ac53dcadb12fa",
+          "observations": [
+            {
+              "line": 2168,
+              "eval": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 5.25,
+                "meanMass": 4042.7619047619046,
+                "speed": 0.9846697594170678,
+                "mass": 30769.75,
+                "recovery": 0.000016241094177764375,
+                "reproduction": 12.75,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 29,
+          "hex": "001a004400000000d7daf8203b2f2fe60aec3b0f24e6ec16342aec1dc1c0130b14d9c72be639223021fae43123c71f172440e304ffc6c72b0532082fc2ea0dc1ef0c1ef2d3e7272011183b27ece132d73102d3e32d3d3b39cdf70416223bee3c1b3d2b11cbc8cafa0bb414ed08190305c4f83505d4c30c06da2cfe2f3235dbc0c7ec0714d9fe28c4dd103b0d2005d2c4ec10172eeafd01ddcb3b1b3bc9e819fffbf4051204eec326",
+          "observations": [
+            {
+              "line": 2612,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 32.25,
+                "meanMass": 1958.2248062015503,
+                "speed": 0.3627569570190924,
+                "mass": 97069.5,
+                "recovery": 0.9996550055096135,
+                "reproduction": 50.5,
+                "regenerated": 3
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 13,
+          "hex": "0012004c000000001ee0c3f719eef20f16e82fc9c6f3e8381cfcc9f5d5dbd736f0361629ffc7d32ff4d4052200c6cc15fa402a40d7c2d7e9d013e5e4d700052aebe6e00dc51cc5e3fdefeff01ee507d7e5c232e7c7dbe702c203f31739d835c3f71cea3309c00e1015eccecfef0a141100f3e0ee191f01d939fe0d0cc3cef206d8cb2817c422f3ff3d2fd2e1c0f7d72cf0d42b0f271feed51bdad30419f7f1c6131b1540f337d13c",
+          "observations": [
+            {
+              "line": 891,
+              "eval": {
+                "survived": 1,
+                "recovered": 0,
+                "lightDependent": 1,
+                "reps": 4,
+                "individuals": 0.25,
+                "meanMass": 4687,
+                "speed": 1.474370968913237,
+                "mass": 4291.5,
+                "recovery": 0.8349398787637882,
+                "reproduction": 20,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 44,
+          "hex": "0019005100000000d706e506f7ec1fe2d21e301312f1001c3dc7d03224f6c0e43f280ffcb4c638d3f7db32eb2f0512083c0bee38c014fdd2c0d9e4d7e116fcc937f203ce160a3bec0ad0edf1100bd304da2cd90d3e181ed32d1d3137271c3320da251f16fdfa0de31e2d312aea09e5d6d6d7c1db30ebc33dedd937fecac6f1403bec2b233622fb0a12dbd83d0ef5ea1a09c9d11cce1529cac130011ee70625c7f924fbff01202c1c",
+          "observations": [
+            {
+              "line": 2501,
+              "eval": {
+                "survived": 1,
+                "recovered": 0,
+                "lightDependent": 0,
+                "reps": 4,
+                "individuals": 0.25,
+                "meanMass": 5549,
+                "speed": 0.8933724551689022,
+                "mass": 3281.75,
+                "recovery": 0.0045588235294117645,
+                "reproduction": 4.5,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 33,
+          "hex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+          "observations": [
+            {
+              "line": 2166,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 21.25,
+                "meanMass": 1568.0588235294117,
+                "speed": 2.637365650904691,
+                "mass": 72975,
+                "recovery": 1,
+                "reproduction": 136.75,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 31,
+          "hex": "001a003d00000000c820c7c337fccdda2740dd1c39c727f0cee7d5c02b320a38c8ccd90b2f24d52de2220c2bc4c9f81dd3cc17063510c804d1e72f2916cb0b22d41d2a03ddfb09320dfd362afdecffeac9c015c33ce0e92311c01f1418e6392306f2e7fc0d3fff16f518e4c6f3e2e9e22413f7d5c93ece37c12eeacc0f0910cdfbc30f1f2b3637ed203de733c2cef90dc1e8dfe92de7d4ea3b3d163f221e32d9dd250c3ccffbfdc1",
+          "observations": [
+            {
+              "line": 1768,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 40,
+                "meanMass": 3254.975,
+                "speed": 0.2304092791661394,
+                "mass": 149039.5,
+                "recovery": 1,
+                "reproduction": 58.5,
+                "regenerated": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bootstrap-medium-background",
+      "uniqueEligible": 2850,
+      "clusters": 89,
+      "selected": [
+        {
+          "cluster": 46,
+          "hex": "0013005700000000fee53aecd4ed1c2628e206dd3bfdd3e3c7341c05cadec72d072dfd03ec40db1c09e6f01220de1c0325fb1cd43ffec020f4fe37c61ed424c4e6093c192cd8e3301dee0a3dee08d938f9ca0ce918c4ec3bfb1ff4dce1f93f1de1e8e2e42709d33cfdccfeffc6fe33162e28f02c1428c5d1ebe32811d91cc218ccd93a1dece1fbfd272c10cf2ec40ecb23093b27dccdd6ef0d403327f81cd7d60323fd12ebc4ee01",
+          "observations": [
+            {
+              "line": 2255,
+              "eval": {
+                "survived": 4,
+                "recovered": 3,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 1,
+                "meanMass": 233795.5,
+                "speed": 1.1731175374758958,
+                "mass": 206519.5,
+                "recovery": 0.9679043326627939,
+                "reproduction": 31.75,
+                "regenerated": 2
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 10,
+          "hex": "000d001600000000e9e6e10bfe03ddc715f033d823d6d110f02215e512e2c00240d9cdd917de12f5ced3eacdf20ff0dee4ced9ffe33b12381634f4f0fad2c834d2f32709df3fe3e716053cda11fe3ef335c72a0207d6f7f1d11eff25dbe2f83ecdcbc23acb27040c2c34e01c1ee0261121293928fd06203302dadcd418e4f1dae4d230360a2a0eef2f3416d9311d38e705f9d93d23c63cc8eef3091d33300106c923f9e11f12edeb",
+          "observations": [
+            {
+              "line": 984,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 27.5,
+                "meanMass": 563.0090909090909,
+                "speed": 1.7330992215302108,
+                "mass": 130832.75,
+                "recovery": 1,
+                "reproduction": 192,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 69,
+          "hex": "00160046000000002909f7140519d439ddfbdbeee7d028e5fbda16172317ce19de040f23290de81bc91026e3f53bc4eeca3be415e2cffe08f5caed20e227ee1fccfbfedc2f0524130fc8edefd00cecf8ea09ef23f1d911d41ae5f61807c829cd34e3e41b1be90c30213e040a0ce0252d3135182023ebc5d6fc360ac9322ff7fe010232e728d0edd31ffaec2ee2182cc0cf1f31ed1c39e93ae40b3f1f28391be2d221e515dfcdf1e4",
+          "observations": [
+            {
+              "line": 2818,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 6.75,
+                "meanMass": 25251.25925925926,
+                "speed": 1.890263552996198,
+                "mass": 209765.75,
+                "recovery": 1,
+                "reproduction": 71,
+                "regenerated": 2
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 87,
+          "hex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+          "observations": [
+            {
+              "line": 2835,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 1,
+                "meanMass": 237969,
+                "speed": 3.7252380405815657,
+                "mass": 237992.5,
+                "recovery": 0.999931673762521,
+                "reproduction": 21.75,
+                "regenerated": 4
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 57,
+          "hex": "001100400000000001d00dd73df1d2faf50e0bda102c042dd4c5e3e12d15dc01e3c81025ede5e92820f832c1132b0bcc0d1aee0f27dc08ddded5e41edbdf1dc2ed22ee13d2d62bcd03ff3ef3dbcdd7d9dcf2263f1a07c0de1cf0f5e52de2c8fa25cfce240c251f16e6e3263b01f9ea22fc32c2cef9caef2912151b33f9cdc712fe2926f51f0acac0de25d6f1e7fcccf0e4d80cf1371324223d16ce3df821c4c011faea3133ea08d0",
+          "observations": [
+            {
+              "line": 2051,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 3.5,
+                "meanMass": 58124.28571428572,
+                "speed": 1.7121766489627674,
+                "mass": 225183.5,
+                "recovery": 1,
+                "reproduction": 60,
+                "regenerated": 4
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 52,
+          "hex": "0011005700000000c3cf15e8f53af5e9331bdc2ffb34da09c50a0a04e23a3b2d1b3733f7c30d27232721e639ecdef5363c32223fd93135fc31cdcfd504f1ea13f92d14f02302d728f002e11ee22dcd243137d1f81f0e31fddf24343b27433302f8d92425d4da0903ee3bf50be33e182a3dd8e2e929f113040017e3c7cefac4d606fdc03ecfc6e6f10e1cf0f5f420143ec4ddd4eb0d1ed3ce34ccc7e0d4fbcac326c73d2e39c907ed",
+          "observations": [
+            {
+              "line": 2799,
+              "eval": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 7.5,
+                "meanMass": 4506.533333333334,
+                "speed": 0.5319308624539539,
+                "mass": 43818.75,
+                "recovery": 0.6225543363580324,
+                "reproduction": 37,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 72,
+          "hex": "0015003b00000000f6e5f8e72001e7e80d0a1ada2d1be53ef4401d1b35f72df52ed9e5e0f5342ce70ec90ff42a05cc01231410d613123a0a3400190d1eebf123e8f424f5c427fa0af70b40fbe91bd0ded7da312705fdec0d402bec08c707fc1508331f162fed21c53f1dff1d2b1d0b393ad22518df2fc82c20210c2d16d1e503cade0a1bd5d503093bfde90a1ec4c3c1f8d6d2c728dccd311cc707cc2bf63210da3d17f1c3d505c0",
+          "observations": [
+            {
+              "line": 2481,
+              "eval": {
+                "survived": 2,
+                "recovered": 0,
+                "lightDependent": 0,
+                "reps": 4,
+                "individuals": 10,
+                "meanMass": 1550.7,
+                "speed": 0.5293410632225763,
+                "mass": 34700,
+                "recovery": 0.007991344602968369,
+                "reproduction": 31.75,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 25,
+          "hex": "0012001e0000000022d10b05f8c4100a082601eecceb3ec4dbd5f1c4fb23d2040d022809d62b12d8fb30d12cc9e514352922020ac627022fc121f239fc3013cff828f8110814cc15e2f6fc1a11cbc0f806e9dbf8dd0f03ecc8f0dde701240eebeeea15cac427ed093220c21f0bc9d537263beb1e373c3efceae6fbe5dc2a3120e923102d28f3c9d926db07b0d530da380bd003fdebc0e8ed29121600cf1b09261b3a2e2af625f503",
+          "observations": [
+            {
+              "line": 1132,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 1,
+                "meanMass": 216616,
+                "speed": 2.2376481786189313,
+                "mass": 195636.5,
+                "recovery": 1,
+                "reproduction": 8.75,
+                "regenerated": 4
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 38,
+          "hex": "0018002d00000000e61637d11c10373c33fcecf60fcddbd23d3b1a3f38d5fb09d1d71807082732ceec39eff118e8e71a1dfe30e31720fdc1100b341e1ad6e522dc0bf2ecf0c029f31a13c63b253efc38d90c3e26d7cae2d73d0adb33c425c3e5eb38053f0fd7caf136cf2e011f0c3d32d1e1153aea0404d631e4cf31f5361edb00ca2fead3c610d9ddcee1f3c3e719d0c91e1c0ddad7d7c9ef1ec52640ec11f623c8c83fc3153efd",
+          "observations": [
+            {
+              "line": 1696,
+              "eval": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 34.75,
+                "meanMass": 2286.8489208633096,
+                "speed": 0.23848438289560378,
+                "mass": 86654,
+                "recovery": 0.8501515042482346,
+                "reproduction": 37.75,
+                "regenerated": 2
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 58,
+          "hex": "001c005000000000fdfa0ae9f8c735c3ea1326f11d0d31c0c9f62b3700cec3d1d431c42719eafffde014e7f82bd82811e72719c9303135f31826c82ee12dde3cdf07d8f73cf1262bc2eddb08d9eaee2efe15dae217f827f2c62ed8ed1a3dfbe6c00dec2c2a132cf51bcb001f3914f8dac8fa3431eee6cc1aff3af8f3c8d607eeded204d5d725f1fb36290fd73434df18cb00013fc2ead72ac4292d2b2edc36392b34cd39d9dddf0c",
+          "observations": [
+            {
+              "line": 2366,
+              "eval": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 2,
+                "meanMass": 102524.5,
+                "speed": 1.652216333156262,
+                "mass": 220972.25,
+                "recovery": 0.9976220368159969,
+                "reproduction": 83.75,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 20,
+          "hex": "0018004300000000e81b16e3e6eb1830ee0220291be0e7e7ed163e2c28271b1ae8eb23041c2c3f1bcdfd17ea0ddad631c1ede612f8cdf02234fa3427e332df05c4dad1074020daf4d3f016c2fbc23b17121614e7d735de0be3da230225c3feeb12d9fd30d1c4cedbc809e9dd39061d2f29f61e29efcdf5c538ccc6380202113102c1f516d32201a3d8c517c2d3c5d52e043bee1e05c003df28d90713dcd1c4d1ca08ed3e2211cc08",
+          "observations": [
+            {
+              "line": 937,
+              "eval": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 27.5,
+                "meanMass": 2827.1545454545453,
+                "speed": 0.26727874085219383,
+                "mass": 85662,
+                "recovery": 0.6212423921505963,
+                "reproduction": 30.75,
+                "regenerated": 0
+              }
+            }
+          ]
+        },
+        {
+          "cluster": 65,
+          "hex": "001e002300000000c11829fad4c84c02c30e061e12e208e01e25cce60a0f1613c00d2c2a38140d1507d9c804d9c0120f3234343cdce425f040de170be2e711fcdc03d6c7e0063eee31caf01c0638c9ce3cf440301e17f91033c51229c2dd1a3d1f190ef5cdfb03cacbe7c4293d303f0dcbe3e21ff8d435cdee3b3523f2f0cc1b25c5c12ed320c7d43f31f2f1ff22402c23e9e1cd1217c7f718f03bd4dbd20bfff518ffc8f8cf12e5",
+          "observations": [
+            {
+              "line": 2468,
+              "eval": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 3,
+                "reps": 4,
+                "individuals": 3.5,
+                "meanMass": 2890.785714285714,
+                "speed": 0.40706572414833275,
+                "mass": 11057.25,
+                "recovery": 0.2096965031422226,
+                "reproduction": 11.25,
+                "regenerated": 3
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

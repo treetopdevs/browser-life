@@ -1,0 +1,96 @@
+{
+  "id": "waste-3-gradient-6300001",
+  "designHash": "6d228e69218d2334f252d0f0d5e604aa879a2f6b53ed0157793a1cf8c0f26387",
+  "pass": true,
+  "samples": [
+    {
+      "step": 0,
+      "mass": {
+        "candidate": 28360,
+        "background": 0,
+        "unassociated": 0,
+        "unknown": 0
+      },
+      "flux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "stateHash": "f3c13e3abdb03813"
+    },
+    {
+      "step": 1000,
+      "mass": {
+        "candidate": 166422,
+        "background": 0,
+        "unassociated": 0,
+        "unknown": 0
+      },
+      "flux": [
+        "280857",
+        "0",
+        "126634",
+        "0",
+        "0",
+        "18836",
+        "112701",
+        "0",
+        "30094",
+        "10059"
+      ],
+      "stateHash": "3da4fe564d56b957"
+    },
+    {
+      "step": 3000,
+      "mass": {
+        "candidate": 616482,
+        "background": 0,
+        "unassociated": 0,
+        "unknown": 0
+      },
+      "flux": [
+        "1816458",
+        "0",
+        "1142035",
+        "0",
+        "0",
+        "80417",
+        "977907",
+        "0",
+        "250429",
+        "72383"
+      ],
+      "stateHash": "877e9d920720edac"
+    },
+    {
+      "step": 10000,
+      "mass": {
+        "candidate": 1887817,
+        "background": 0,
+        "unassociated": 0,
+        "unknown": 0
+      },
+      "flux": [
+        "18887096",
+        "0",
+        "16179334",
+        "0",
+        "0",
+        "1719280",
+        "13577354",
+        "0",
+        "3450285",
+        "798859"
+      ],
+      "stateHash": "2869d9eb50b7342f"
+    }
+  ],
+  "replaySourceSha256": "c92ff03112ed16cdbbf28b2f2507cc2ba528db882476b4687a41c55c597e262b"
+}

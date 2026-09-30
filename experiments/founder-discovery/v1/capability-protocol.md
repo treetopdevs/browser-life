@@ -1,0 +1,25 @@
+# Fresh-seed capability screen — 2026-09-30
+
+This is an exploratory continuation of founder discovery, under unchanged RULE_VERSION 1. The executed roster and all inputs/source hashes were written in `capability-design.json` before the first simulation. No outcome from the failed competition pilot selects candidates, controls, thresholds or environments here.
+
+The roster has 252 units: 24 fixed candidates × their source environment and a gradient environment × four seeds; four historical references (indices 0, 2, 5, 9) × all three environments × four seeds; and a no-candidate control × all three environments × four seeds. Seeds are 6300001–6300004; exact reservations were checked against both local documentation trees. These differ from the earlier 630000101-series transplant seeds.
+
+Each unit is an independent world. Source worlds are 64×64 under the source screen's uniform-light and physical settings, with radius-10 candidate discs. Waste medium has nutrient 8 and waste 24 per cell. Supported medium has nutrient 32, the original producer genome in a radius-21 disc followed by the candidate disc, reproducing the source evaluator's additive material/overwritten central genome initialization. All candidate discs have mean biomass 64 and energy 128. Source settings preserve the screening environment, but a fresh single tile is not a replay of an original batched tile.
+
+Gradient worlds use the unchanged 256×256 gradient-m3 physical configuration and nutrient 32; one candidate is planted centrally at (128,128), radius 12, biomass 64, energy 128. This preserves the intended gradient's physical parameters and dimensions, not the historical 12-founder community. All capability tests disable mutation to measure the supplied genomes. Future evolution experiments will restore the frozen normal mutation rate with matched disabled controls.
+
+Record exact states at 0, 1000, 3000 and 10000 steps. Save their state hashes, candidate-associated B/P, producer-associated B/P, unassociated B/P, unexpected-lineage B/P, and cumulative whole-world reaction flux. Unexpected lineage mass is a technical error. No body segmentation, component threshold or material-ancestry observer is used.
+
+For solitary worlds, an operational continuation pass requires positive starting candidate mass, candidate-associated B/P at both 3000 and 10000 at least its starting amount, and positive additional whole-world biomass-synthesis flux from 3000 to 10000. A genotype/environment is a candidate for further work with passes on at least three of four seeds. This arbitrary but outcome-independent engineering screen is not a definition of life or a validated evolvability surrogate. It favors maintenance/growth in these environments and may omit other valuable strategies.
+
+Producer-supported results report candidate mass separately. Whole-world synthesis is not attributed to the candidate, so these units do not receive a standalone capability pass. The no-candidate supported world retains its producer; its candidate-associated mass must remain zero. Historical references are descriptive references, not assumed positive controls. No requirement makes all references pass, and no post-hoc threshold repair is permitted for biological failures.
+
+Report every planned unit. A missing or malformed technical receipt is incomplete, not biological absence. Classifications require all four replicates. Preserve all failures. Regeneration, light dependence and morphology are not scored or measured for admission in this follow-up. Results cannot establish organism reproduction, adaptation, policy superiority, or evolutionary capacity beyond the selected archive.
+
+Execution is local only, in resumable tranches of at most 600 seconds between units. The first source-world benchmark completed in 5.69 seconds of simulation execution (6.77 seconds including startup); this does not forecast larger gradient worlds. Unit execution may finish after a tranche boundary. Source/input hashes are verified at launch; completed receipts must match the design and exact-time roster before being reused. An exclusive lock prevents concurrent writers to this run. The existing ecology jobs are not modified; a brief benchmark and subsequent work share local GPU capacity.
+
+Next decision: identify reproducibly continuing starting genomes and their supported/unsupported limitations, then freeze a direct mutation-on/off improvement experiment. Do not count passing this screen as demonstrating improvement. If only supported populations function, evaluate those communities explicitly rather than discarding them through a solitary-only interpretation.
+
+## Review clarification (after execution began)
+
+The frozen criterion above counts `grow` only, the energy-funded synthesis pathway. Photosynthesis also makes B. The phrase “biomass-synthesis flux” must therefore be read narrowly for the original classifier. Original classifications remain preserved; see `review-and-interpretation.md` for the separately labeled interpretation correction and mandatory stricter validation.

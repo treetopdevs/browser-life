@@ -1,0 +1,23 @@
+{
+  "status": "preliminary-only-not-execution-release",
+  "histories": 64,
+  "evolutionSteps": 64000000,
+  "requestedTechnicalAssays": 6144,
+  "upperDistinctAssaysAssumingVerifiedMutationOffIdentity": 2112,
+  "distinctAssayDerivation": "4 founders * 8 evolution seeds * 2 nonzero times * 2 normal-mutation draws * 16 technical assays, plus 4 founders * 16 identical-genome assays shared across time-zero and verified mutation-off observations. Biological missingness does not remove requested observations. Exact cache keys must include genomes, config, assay seeds and assignment.",
+  "stateCheckpointBytesMeasuredAtInitialization": 13370080,
+  "checkpointsAt100kIntervalsIncludingInitialization": 704,
+  "physicalCheckpointBytesBeforeMutationMetadata": 9412536320,
+  "capabilityBasedRawStepForecastHours": {
+    "median": 28.686545827164444,
+    "maximumObserved": 41.901522396551144
+  },
+  "limits": [
+    "Uses 10,000-step capability throughput, not measured mutation-ledger or 20,000-step assay throughput.",
+    "Does not include ancestry metadata, readback, checkpoint I/O, analysis, thermal contention or interrupted units.",
+    "Both-extinct and absent samples remain unavailable observations; never discard them to improve estimates.",
+    "Requires pilot acceptance and a complete executable study/resource freeze before launch."
+  ],
+  "paidUSD": 0,
+  "cloudAuthorized": false
+}

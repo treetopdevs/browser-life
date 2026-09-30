@@ -1,0 +1,14 @@
+{
+  "date": "2026-09-30",
+  "completedBenchmarkUnits": 2,
+  "seconds": [
+    21.175202166,
+    21.1680105
+  ],
+  "full128SimulationHoursAtObservedMean": 0.7527682251733333,
+  "remainingActions": "Complete fixed128controls, two frozen replays, complete analysis. No evolution release.",
+  "supervisorSha256": "bf529d01e2127c1c322c2d060bf59aaf966ef4c23bef069a1fe429c10b448c2c",
+  "maxTranches": 8,
+  "secondsPerTranche": 600,
+  "paidUSD": 0
+}

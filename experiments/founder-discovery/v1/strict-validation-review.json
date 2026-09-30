@@ -1,0 +1,15 @@
+{
+  "status": "focused independent recheck passed",
+  "tests": 8,
+  "currentPrefix": {
+    "valid": 94,
+    "missing": 158,
+    "invalid": 0
+  },
+  "finalCompleteValidationRequired": true,
+  "sourceHashes": {
+    "tools/lib/discovery-receipt-validation.ts": "897f84e07fbeae0470243931f9727068c18829774269e4c0f3ca6abee05c80ae",
+    "tools/discovery_validate.ts": "545f3fe1924b9621e24bb8a140a8e08e2fcd09f904a12bf1cc360584b95641e3",
+    "tools/test/discovery-receipt-validation.test.ts": "3c9923a5168e5a5a4d2b73139cdff231bfc79b86fc77e30f322c01365eebea36"
+  }
+}

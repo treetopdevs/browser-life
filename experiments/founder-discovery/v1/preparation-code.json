@@ -1,0 +1,8 @@
+{
+  "tools/discovery_inventory.py": "857b002089302236bc0056b95bdbc54a9f6c756518ebeb5cbab128ea7e3e558d",
+  "tools/discovery_roster.ts": "696669e086861a1689f396697dba2da02b06b9ee08664475117bf6698be82c80",
+  "tools/test/discovery_inventory_test.py": "bed1c77e70c3b1b63d8850c0c3872f30f987518eccf5f9324976ec05e5d366b6",
+  "tools/lib/selection-funnel-audit.ts": "8375e967a0421b965b71d4d96383a804382fe30744047af2c723efc334a12821",
+  "packages/schema/src/genetics.ts": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93",
+  "packages/schema/src/genome.ts": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d"
+}
