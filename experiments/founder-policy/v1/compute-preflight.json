@@ -1,0 +1,29 @@
+{
+  "queriedAt": "2026-09-30T03:01:17.812814+00:00",
+  "region": "us-east-1",
+  "onDemand": [
+    {
+      "sku": "79BRGEEZC6TARVWJ",
+      "effectiveDate": "2026-09-01T00:00:00Z",
+      "unit": "Hrs",
+      "USD": "1.0060000000",
+      "description": "$1.006 per On Demand Linux g5.xlarge Instance Hour"
+    }
+  ],
+  "spotObservation": {
+    "AvailabilityZone": "us-east-1d",
+    "AvailabilityZoneId": "use1-az6",
+    "InstanceType": "g5.xlarge",
+    "ProductDescription": "Linux/UNIX",
+    "SpotPrice": "0.398600",
+    "Timestamp": "2026-09-30T03:00:00+00:00"
+  },
+  "decision": "No resources provisioned. Prefer local native GPU for pilot; use observed cloud throughput and explicit full-roster forecast before any comparison provisioning. Spot price is not a guaranteed future rate.",
+  "globalPaidCapUSD": 50,
+  "phaseCapsUSD": {
+    "pilotAndRepair": 10,
+    "comparison": 35,
+    "closeout": 5
+  },
+  "spentUSD": 0
+}

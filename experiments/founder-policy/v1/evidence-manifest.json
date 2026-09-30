@@ -1,0 +1,1747 @@
+{
+  "format": "founder-policy-evidence/v1",
+  "createdAt": "2026-09-30T03:53:29.671941+00:00",
+  "entries": [
+    {
+      "path": "README.md",
+      "bytes": 2290,
+      "sha256": "979f1661594869c38bbecb0930ec039be5bc6d6078c3057a92c2bd39bd2d5b2d"
+    },
+    {
+      "path": "cohort-recorded-traits.json",
+      "bytes": 123118,
+      "sha256": "1100662cdc94ef641977389e8182203672d37a1e02caf4685d08c153838f658e"
+    },
+    {
+      "path": "compute-preflight.json",
+      "bytes": 923,
+      "sha256": "dc7ed022470d20c20e22acf577af7444ead9bcab97a908540c18c2fe17f5274b"
+    },
+    {
+      "path": "design-preflight-v2.json",
+      "bytes": 1729674,
+      "sha256": "d197573ebbe35d5ff2134ae8e16a84f54aea6a9c4595db64f5618aed8395c05f"
+    },
+    {
+      "path": "design-preflight.json",
+      "bytes": 1705066,
+      "sha256": "d91d58c017ff4c6283f08b470dd855add0911d62a22d3a0bf7675c4fea7cfede"
+    },
+    {
+      "path": "frozen-design-check.json",
+      "bytes": 320,
+      "sha256": "444449a7b9a02dea2d6b1b41cc82c20bc12f382085e1a4b20c1039fb2be59214"
+    },
+    {
+      "path": "implementation-review.json",
+      "bytes": 1535,
+      "sha256": "6f534948da8493b173ee7ec2bac78cbabac6a0999de7aa4dd848f08d108d1338"
+    },
+    {
+      "path": "input-inventory.json",
+      "bytes": 10195,
+      "sha256": "106b61a64d6596b7fa9e802c1a9789882e986f9caa6f2e783d592369aa6fe35f"
+    },
+    {
+      "path": "input-inventory.md",
+      "bytes": 4253,
+      "sha256": "4e730b4ff6d4c09e5398d25dee5c5d4e2136143b9d6dcd84a92529cfd3e2814b"
+    },
+    {
+      "path": "local-pilot-benchmark.json",
+      "bytes": 512,
+      "sha256": "9c2f0339de991e5486be32c4b952e2fa1bd72b48f57aaedf7489066402fb5b8c"
+    },
+    {
+      "path": "pilot-findings.md",
+      "bytes": 5991,
+      "sha256": "de9821ee12c72afa6c1c572c2d024cf9c3364441ea5323b7fc3645573f05f34a"
+    },
+    {
+      "path": "pilot-freeze/deno.json",
+      "bytes": 510,
+      "sha256": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0"
+    },
+    {
+      "path": "pilot-freeze/deno.lock",
+      "bytes": 694,
+      "sha256": "8630fa4d89086681cfed42c0f5977e2e34e720d1b32580300df124f83cf872bd"
+    },
+    {
+      "path": "pilot-freeze/docs/founder-policy-protocol-v1.md",
+      "bytes": 12475,
+      "sha256": "0c3c1de801384a724c3b23758950e0db0c34ebf0ff46ceb09f8005b0f9e520d6"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/input-manifest.json",
+      "bytes": 5141,
+      "sha256": "79c0b26e028f88ddf6f05b93f4d0f94cee681786fcee2afd4b0e3e0576a36e96"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/archive.json",
+      "bytes": 99708,
+      "sha256": "9504ecb73592c396e9fd73d7af424099a423353ce6edbda5ff9210dd5a882fc6"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/codeBootstrap.ts",
+      "bytes": 18454,
+      "sha256": "2b98289a9bb32f1ea9eedaf9f2e8b6deb6851046cfac8073b4f81ae2454240dd"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/codeEvaluate.ts",
+      "bytes": 15515,
+      "sha256": "a8d6cc30cd41c752da7907ee66e10dc947209df9b8497ea0160a66cc306a8cc0"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/codeFoundations.ts",
+      "bytes": 73780,
+      "sha256": "3c6efdff3ce09a0b0523a09c4f343f3a54fb50b1d773f831d13536e245daed8c"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/codeGenetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/codeGenome.ts",
+      "bytes": 3849,
+      "sha256": "77a1a3cc32bd4bd3bc638ba9e0fec5e7a552fd815631b02f63f3ac566d63cdd9"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/codeMapelites.ts",
+      "bytes": 9605,
+      "sha256": "bc2b4402c58342b847411b95d249847fa451924e692b9a39bae35590b32b1d08"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/codeProbability.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/codeRetest.ts",
+      "bytes": 6367,
+      "sha256": "80ea2e3a723af000d4ab94740c139765b4b114203478851ce5fc2d00c69bdfb9"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/codeRetestTool.ts",
+      "bytes": 11905,
+      "sha256": "69723b499890de7277fa5a5dc1ebc298e1cf2f3239106fa9acda02a02eee7f31"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/confirm.json",
+      "bytes": 1707193,
+      "sha256": "44ac88b232e44017ac6c651dde8b88a36948494687443d2030a42c819a5d7389"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/fdPool.json",
+      "bytes": 393353,
+      "sha256": "2d96aa3c99e475dd27374f6f7f549f102a434b1b3231e964870852ad0a7785d1"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/fdResults.json",
+      "bytes": 150925,
+      "sha256": "d97d7723e18529c7e47191b3e49762cca005d0d6547e818c5c3175cae8851876"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/fdSubjects.json",
+      "bytes": 12381,
+      "sha256": "a31f93bbabbcefd5f11272d9479c2a374ba5a99d7e6e3bf73c0b3ea67461265c"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/gate.json",
+      "bytes": 1463731,
+      "sha256": "f28b30c01e743de3780e5231cecdcb8eb6bdb2415ad4d90359b5e9118fb795a1"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/replicate.json",
+      "bytes": 10793,
+      "sha256": "56fafd86e505c4737bc1623b35720389219a7a624ded8eda14887d609e47f6db"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/retest.json",
+      "bytes": 86016,
+      "sha256": "44f3bda3c3145f6b96b2dbfc06dde0c513e1c9a1fde01953bc159fb58caad475"
+    },
+    {
+      "path": "pilot-freeze/experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+      "bytes": 1567348,
+      "sha256": "e6eaebf84ada1410a0591d7383a32eeb1eea4da97d212b1e63eea2c8d7032645"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-design.json",
+      "bytes": 1729674,
+      "sha256": "d197573ebbe35d5ff2134ae8e16a84f54aea6a9c4595db64f5618aed8395c05f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220101-a0.json",
+      "bytes": 2199,
+      "sha256": "ef0cda58e4d1ff1cad5623a9b0f6da58e10b3a8524e9b2f6f4824e03c699e2ae"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220101-a1.json",
+      "bytes": 2199,
+      "sha256": "a369fb2768e58c052c6efc665fdbf4f0bdd8e2540e591488a197c0c09a9e373a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220101-a2.json",
+      "bytes": 2199,
+      "sha256": "0df913da844e953adb80778fccfdf86e8d44ffb52d488fc0a8563d8223e33267"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220101-a3.json",
+      "bytes": 2199,
+      "sha256": "974775eb502be54eeccd393b303ad59eccecd903533107cd68f0a90f7934bfdd"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220102-a0.json",
+      "bytes": 2198,
+      "sha256": "9ac59a19fa96a0c6a87bdb8a86b471fd4e4ac6d13e9ab61758c4a6f4e52aac22"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220102-a1.json",
+      "bytes": 2199,
+      "sha256": "c140ceda3e1a5b4daf75a31c61529a18c054b18e38c78785ff4901a8528e0a2c"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220102-a2.json",
+      "bytes": 2198,
+      "sha256": "0b7f2d9357e36b32b35a10ee21ae8a4e4e568ea0b2fee276e39dd89abdda9081"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220102-a3.json",
+      "bytes": 2199,
+      "sha256": "d771c0fc50408ebee0d7b28d3ce00bb1fa5bb388a2cb26d575524da6808e8a1d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220103-a0.json",
+      "bytes": 2199,
+      "sha256": "43d267f6259f057977e574a136e97f53d7070ff7748ceeb80a64d5bd04e4384d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220103-a1.json",
+      "bytes": 2199,
+      "sha256": "bb7ad6a111248df180bc44d355a37e8383ba3dd30c7dcf3ae0cddd4768a9ddec"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220103-a2.json",
+      "bytes": 2199,
+      "sha256": "e7175b1fe8a929996917fe6d68f1275211fd827ffa06b0c92145596f1cfa5bb1"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220103-a3.json",
+      "bytes": 2199,
+      "sha256": "249a1cba0857d45ee2d3bcc93eab4c3069cd7ef0acdb4402418ec4edaca8a88f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220104-a0.json",
+      "bytes": 2199,
+      "sha256": "6e89b803a65a7977a2b6d21e4c842cbd1f469842353484e2e14e83d409279146"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220104-a1.json",
+      "bytes": 2199,
+      "sha256": "824ce1980073d8bf642970cb6fc4c6474cef8c86932e7cf663adedfb71a98e2b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220104-a2.json",
+      "bytes": 2199,
+      "sha256": "8308c04bfda46d35fdba438179e03b314233f48be14ca15ee47bf6ac478ccf94"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-disabled-s6220104-a3.json",
+      "bytes": 2199,
+      "sha256": "6f794811f7e2de2147ec4b0422626e68ed01993e456049f0859061b4775ae1fc"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220101-a0.json",
+      "bytes": 2195,
+      "sha256": "bacff967b2bc35233665b7052aff3650353d8fea4e234c72f28f1e2e2cb25c12"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220101-a1.json",
+      "bytes": 2201,
+      "sha256": "508cfbb0d92bb2013f459bd1df20e8993fd9d3d6a21c4f4ccdce2bdd18b1ecaf"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220101-a2.json",
+      "bytes": 2202,
+      "sha256": "bfd9b95b836694de4cf096de336def9433393eee3dc24a783e5db1835df326b3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220101-a3.json",
+      "bytes": 2201,
+      "sha256": "4f373dbd4dd07aaad7a5ab5096986805b2a0ef5a9e2c9895a8a6556bf42bae2b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220102-a0.json",
+      "bytes": 2201,
+      "sha256": "4b1bcd9e691c03de4795afed20eddfb069c2bc80bdf17330d929597dceff5f29"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220102-a1.json",
+      "bytes": 2201,
+      "sha256": "c599b7414774e2d8d672529f2de604751d2609c956c1f063394ed5a34d133fcb"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220102-a2.json",
+      "bytes": 2201,
+      "sha256": "37d9180bc2fd9f9fbf74f46a2319ec81566ef45170cc195a61d9d756bdfc676e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220102-a3.json",
+      "bytes": 2201,
+      "sha256": "807c6b2a10954999614ed9e2c1aff9fabbe885100024db6912fa189facc47144"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220103-a0.json",
+      "bytes": 2202,
+      "sha256": "c2b19d53fe8ea688c878a8ddaf619879101046336a268410d6beddc0a94e7391"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220103-a1.json",
+      "bytes": 2201,
+      "sha256": "239b7ed0b9c0c99d77b4bfc6a552e631ae0200cbe9b91fa4dd4403063e25eecf"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220103-a2.json",
+      "bytes": 2201,
+      "sha256": "339f9b6042bd15439dcc7fc95b8c95a09f8a2911e1c89b41151ac0b301248a0b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220103-a3.json",
+      "bytes": 2201,
+      "sha256": "3ef807b7d53d6544dc8f86294c562eb5727543236a7d31d7fc3ee33d5d40174b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220104-a0.json",
+      "bytes": 2201,
+      "sha256": "31494405ea9344d630904b7a3af0a34830ac9a97aed201a776cd5975e8fce530"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220104-a1.json",
+      "bytes": 2201,
+      "sha256": "245512c08ddf5301691c85e8ed0afa2338e5a7498b603b48ece76aa1d30edce9"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220104-a2.json",
+      "bytes": 2201,
+      "sha256": "7546c60a785f3351326b8ae7399441f1a937e271838f7e9bd4bd08588a226618"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g0-identical-s6220104-a3.json",
+      "bytes": 2201,
+      "sha256": "874506f2e4e90fe09054810a0d3195a8b51f9cd4f505d5f7854a41a18a24bc83"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220101-a0.json",
+      "bytes": 2195,
+      "sha256": "fc777b09a558b5d05c8aa7f9327582a7aa9c06262713c44475fe78a722161408"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220101-a1.json",
+      "bytes": 2195,
+      "sha256": "7e423f5fd38508a47584178f4b1948b271a0b10f34ed8675e5d81b0c75d00e91"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220101-a2.json",
+      "bytes": 2194,
+      "sha256": "1b5eab37a65111fab5a082de4d9eaa402ec3d3ff54f7153fc91f1692606c92c3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220101-a3.json",
+      "bytes": 2195,
+      "sha256": "47485d1847a3f2bec96fbaa63abf553cdb049eb47212acd1b0197457b1814510"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220102-a0.json",
+      "bytes": 2194,
+      "sha256": "ac25a7392517d98b5a1bd0409ee7576f03fa3c074076bfbe5f235a1aac3b7ba7"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220102-a1.json",
+      "bytes": 2194,
+      "sha256": "9687f18f601924c12410212c0aff11c8f54af0a27f776546a72ecd311001e8c6"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220102-a2.json",
+      "bytes": 2194,
+      "sha256": "6525f9d555e9353d84846ab3c1f047060904def6682e613131e645c56a140552"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220102-a3.json",
+      "bytes": 2195,
+      "sha256": "ec14ec6202c592afe83c6b243f426e930b982c6abddcfb04c3ebcd371567e6e4"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220103-a0.json",
+      "bytes": 2195,
+      "sha256": "76a3356116113f21e8a62f465a04c90e657fcf71aa32f72e41672dae238351b3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220103-a1.json",
+      "bytes": 2195,
+      "sha256": "3c173f77aa722afb58389a4e4ffbb5b905f646a58b4b97115970848a197c3076"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220103-a2.json",
+      "bytes": 2195,
+      "sha256": "64506d128e7cf5753b082ae806e2df01c45dbdc2344a181f5f8ba6bdce4222e3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220103-a3.json",
+      "bytes": 2195,
+      "sha256": "078acf13fda8f5c5cd90e92cc327609834c6e8745504f4a0a1147f5e0237ac1b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220104-a0.json",
+      "bytes": 2195,
+      "sha256": "56fc02c8b6f7fd631d5619629ad336c3e0cffdca065931ce21dc92a50b10fd9f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220104-a1.json",
+      "bytes": 2195,
+      "sha256": "c9fe47027a4b208611ca207e92f6ff44c79bd4408ed22064b91253c15ef2e4f4"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220104-a2.json",
+      "bytes": 2195,
+      "sha256": "06dcd1cbc39bd1890f4683359cd51d6de7124fa3896798d1d3b1de690fa7e1f7"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-disabled-s6220104-a3.json",
+      "bytes": 2196,
+      "sha256": "fcd8428588096bb9812e7c9b2dee21aa6faaf306a86d8d279ff593b2c02134c4"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220101-a0.json",
+      "bytes": 2221,
+      "sha256": "f62371e6a90f12f80975a1dbbe1bf28a7ac7a60991be0985e794e6d590abd1df"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220101-a1.json",
+      "bytes": 2222,
+      "sha256": "33945695b1e865467567ea56ef289d4086b100a868256463aa8f98220976ca00"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220101-a2.json",
+      "bytes": 2220,
+      "sha256": "960537471138340014da53e879a8c1c167affc9dbc8f88c6bf419878cc76b8e1"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220101-a3.json",
+      "bytes": 2222,
+      "sha256": "bc6f9ad11dda045807150b9c674586951f570b3c70df185a5a866ec089233b2d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220102-a0.json",
+      "bytes": 2217,
+      "sha256": "63e8d1c795e456035c1b2a40510d20256b1ade410ac727a40f6b1a818a0a578e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220102-a1.json",
+      "bytes": 2218,
+      "sha256": "9cce74797288a4eb620686d52e3d6032d162788373a2895943ed532f4f9c5d2a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220102-a2.json",
+      "bytes": 2217,
+      "sha256": "f9d1bb0abf0b7c566ca32547ef0b917984b7ca47aa3e64b4e72801ac9c6bf45e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220102-a3.json",
+      "bytes": 2218,
+      "sha256": "bfc64a8f7c1692c9299943035c51e90884bd59c64288613c02616e11b68d684e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220103-a0.json",
+      "bytes": 2221,
+      "sha256": "5c0f229136395bd6dfc9a52a4c41303c7583fe7dd4da3146dc23b0be5b7606e6"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220103-a1.json",
+      "bytes": 2220,
+      "sha256": "78e3340a5836b14ea8b5abbf049bacf3b0dfd8cd504271af73fc87c1ccae1fdf"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220103-a2.json",
+      "bytes": 2221,
+      "sha256": "d391cea3d12ef41fa8dfeb785eddbbcbaf84197d59d0076d6a1251636498eedc"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220103-a3.json",
+      "bytes": 2220,
+      "sha256": "cae428b279438d6db8f883355f0858432fed42527a9bf1ca4f7826b526a28478"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220104-a0.json",
+      "bytes": 2219,
+      "sha256": "d43724ea1fac4bda404c0e876735a0ba031de600a83d58c80439239a1ca155f3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220104-a1.json",
+      "bytes": 2218,
+      "sha256": "5559ed7106dbf0bbeed04c6bc6a53fc8ef8e546bdf1c03160f65af57d9f6b587"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220104-a2.json",
+      "bytes": 2219,
+      "sha256": "24c412f045c2c72e71f61d49ad9c5879b514d588ce59f1173fb1c29202521669"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g1-identical-s6220104-a3.json",
+      "bytes": 2218,
+      "sha256": "36c6e85bd3c815736aee30313629dd16bc5b7d4cfcde985978097461bb272406"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220101-a0.json",
+      "bytes": 2199,
+      "sha256": "fdbf085d653be20f81376bcbea069eb8ce4bc4fc37cf8dcf2e59603e36882e34"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220101-a1.json",
+      "bytes": 2198,
+      "sha256": "67c006300756bb912e39845bf628e2cb514ba79cea21c703bcf14d643a8e100c"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220101-a2.json",
+      "bytes": 2200,
+      "sha256": "9faee29a838358a03004da8c06285584b5aa7174ba7dbf2f506f249e324ba5cd"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220101-a3.json",
+      "bytes": 2199,
+      "sha256": "0732cbf1c8cd33d9b257ea5a0beb5197ffc2c237c9b8d3a5ea1b5bcfeba4faab"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220102-a0.json",
+      "bytes": 2200,
+      "sha256": "855fce332dd3a8c990da6d7b9c3a79db9882e37b46ccef23ccf4453b0dd4994a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220102-a1.json",
+      "bytes": 2199,
+      "sha256": "b690f7f83131ebdb78d110ee148a67315edaac83f29da1690fb9173b8efa45b0"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220102-a2.json",
+      "bytes": 2190,
+      "sha256": "fe5b229eaa442abd67e107be31b01e8005207e5c7273395c1c97dd637ffee81f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220102-a3.json",
+      "bytes": 2199,
+      "sha256": "6503eb79487df3a970e93345553cd7707e17966b611056b00d2091914b59d630"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220103-a0.json",
+      "bytes": 2199,
+      "sha256": "f35852b3c67f7defc369c4eb0672d3678b0f3ec21133c1413c9bc1ce4b5fd2e5"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220103-a1.json",
+      "bytes": 2199,
+      "sha256": "b99fe3b74a9ae1c83ccd19320ce6f5e0479932297908d21b7551a8fdcff40425"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220103-a2.json",
+      "bytes": 2199,
+      "sha256": "d2382349785e21d94298640d6a607c9146c11d4eea8acccc6383606d181cd377"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220103-a3.json",
+      "bytes": 2200,
+      "sha256": "f88075ddb64f68d0daaad8b9523a5d363cb2adf70439d870dd2da09ae12aaf7e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220104-a0.json",
+      "bytes": 2199,
+      "sha256": "e2023cb3d945cad2c002d96ea16b6efb035738e89484f48c391c8d93eb2d6359"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220104-a1.json",
+      "bytes": 2199,
+      "sha256": "492a3eb371859c2dacf3422fbff293f572bc53e60ebb4bb8c16f8e6d0b08c1db"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220104-a2.json",
+      "bytes": 2199,
+      "sha256": "3b04ac2be6d742ca3d25623e88c90451f330a65c3eef8c9e74e7fa187e71de07"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-disabled-s6220104-a3.json",
+      "bytes": 2193,
+      "sha256": "d7264a081df44b833a2132f2dba858d182021f8c16a9b3e4849b38de42e38319"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220101-a0.json",
+      "bytes": 2201,
+      "sha256": "9ad4e0be26e452830250c5e1d2af986bb39cb1576707fa2122f1ea83ac402fba"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220101-a1.json",
+      "bytes": 2201,
+      "sha256": "7cf44bd2cdd088274561dda1bf60226bf05282fb1421df49b68917bb9a8eb545"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220101-a2.json",
+      "bytes": 2201,
+      "sha256": "2f133774269ca371356067985d29687844263fabee379055e94970dade1f771c"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220101-a3.json",
+      "bytes": 2201,
+      "sha256": "00d90d3fee6151ff37da7009a3fee288e7504c0eecaff3fe2648b04ac2c1dd7d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220102-a0.json",
+      "bytes": 2201,
+      "sha256": "0cfc975354088318e8c21cf33e7fd4e07df64eb1031bbf06f9e623c42a90d848"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220102-a1.json",
+      "bytes": 2201,
+      "sha256": "ac551ce7e7442e02f649cbc6cd4518bfce3c390faf7acd7d9bb7524572050653"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220102-a2.json",
+      "bytes": 2201,
+      "sha256": "923ee880241c054045784ef3bd6c1f73ce43add2f670075845181eae6edf9863"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220102-a3.json",
+      "bytes": 2201,
+      "sha256": "3676db6b924dfd94625226f516fa14b9e60e0df880f83a7d5e9fd893b3a5d4c1"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220103-a0.json",
+      "bytes": 2195,
+      "sha256": "284557c6d5b25d9f2d78dfdd6b30b507074874c9e0b960d9febfbb8fc2122c27"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220103-a1.json",
+      "bytes": 2196,
+      "sha256": "3e58d537aca4df4c74db923e6350db86e8005450d43ae8feb2bbb1d098fbe7f2"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220103-a2.json",
+      "bytes": 2195,
+      "sha256": "8b22ee8551869f4b26a7238f6aef1b630cb925a93a62c338bd34fdeceb347a72"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220103-a3.json",
+      "bytes": 2197,
+      "sha256": "4a25ef90053a83c4dfba5ff5b040192e587e46f759df2b3ec98f179f7baac10d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220104-a0.json",
+      "bytes": 2201,
+      "sha256": "0afbabdec077e14dc7dc98a0c2559758ff0e2b8551252ab6a9e87f1a814cb39a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220104-a1.json",
+      "bytes": 2201,
+      "sha256": "7e4606f1a295990755c1697a57a43b7ea535e6fb34f642c402a65b5ced56af8a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220104-a2.json",
+      "bytes": 2202,
+      "sha256": "d70f8a08aa93c0089bbe24cd16da2b50868410eff6139e1e39e075f84411db01"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g2-identical-s6220104-a3.json",
+      "bytes": 2202,
+      "sha256": "2aa160b895ff33b76c3656638494f07728e71075741d126d1118a1547b024b3d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220101-a0.json",
+      "bytes": 2193,
+      "sha256": "9fdbc68b9765274daa9595db29b26d300fe1ca384f4e369ca29cde4d4f445188"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220101-a1.json",
+      "bytes": 2199,
+      "sha256": "8661bf2e59b1cac88c65a7710fe5980bb25353faf17c6526b6d8133452d8091f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220101-a2.json",
+      "bytes": 2194,
+      "sha256": "6232c55ee0af99a69a8855c1a86987f8b003c041ebc000957359746181ab755f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220101-a3.json",
+      "bytes": 2199,
+      "sha256": "97dfa66ec51ad54f7d3161861d6f6b4fc156c6f5670732247a645b5e327d0b3e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220102-a0.json",
+      "bytes": 2193,
+      "sha256": "4856c5db90e936850f1e8d398ca5dceb592036185865a0847fbcae47b18e698d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220102-a1.json",
+      "bytes": 2194,
+      "sha256": "0e41e11844425f803a368a715fd937565d59a088fb66cbe4ad5e8d2189dd2514"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220102-a2.json",
+      "bytes": 2186,
+      "sha256": "93f09e99cce39b075340f300c0432b61c06c8ea01b309513be21748e45eb0a13"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220102-a3.json",
+      "bytes": 2193,
+      "sha256": "171c4cb0bb210bb5c4cc047c20c5600b58a8b03d26c4991609f95b8b3be45094"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220103-a0.json",
+      "bytes": 2199,
+      "sha256": "fc7e7657969dec89d8f3eefb19573778e24c22bb7e78492ada923b68ee01cca8"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220103-a1.json",
+      "bytes": 2199,
+      "sha256": "4f522eff444b465a97d50da4aec484740d3e267a72ac29b421b988b5bc7a46ec"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220103-a2.json",
+      "bytes": 2198,
+      "sha256": "996987038a2e2de63460e89f651d24823a1de450b795bcd2656bed239ec3d87b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220103-a3.json",
+      "bytes": 2199,
+      "sha256": "6b7dfb016fea5b59cd8261a496e7278302ed415cef10c6a2213d5baec604a161"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220104-a0.json",
+      "bytes": 2194,
+      "sha256": "51762545c9a3e3825320ad8d7ff508c98cd9bdfbf765b040f1605a1e36014334"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220104-a1.json",
+      "bytes": 2199,
+      "sha256": "53c011403e45d3fac5390d573e6b10e0580a1cafdaa897ef6e27f82e44269f2a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220104-a2.json",
+      "bytes": 2193,
+      "sha256": "2c8447696abff8d9658ac540d91704f91d14f82f0efb3d6ffd6b4a5eb061c437"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-disabled-s6220104-a3.json",
+      "bytes": 2200,
+      "sha256": "5e67b8b131ce25e428244696d4c7d89bbf3aed8628053b08b352509d5477e272"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220101-a0.json",
+      "bytes": 2195,
+      "sha256": "29a836a2438a52bf719f5664c8e155a0c47fb84b5f8aff520a12793081cf6a5f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220101-a1.json",
+      "bytes": 2196,
+      "sha256": "d7b42bd8cb3f61d7cf48e2638ce4fd0d9f89b4730687c372900f4a588d8206f7"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220101-a2.json",
+      "bytes": 2195,
+      "sha256": "4ff8c421722ffc91c3da323d6eeb73184b5b911115f755d40a889ab30755628d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220101-a3.json",
+      "bytes": 2197,
+      "sha256": "362ec2dd4143e0678c65bc193803a21bfff49c19d2eb8610af8f9f37be3cfa41"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220102-a0.json",
+      "bytes": 2218,
+      "sha256": "06fafa63ae77c19daf5845a36beac987bd8d417781c4df1b5142bb3dfbd5cd6e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220102-a1.json",
+      "bytes": 2218,
+      "sha256": "8923526160cd955dfc681f882dc3967582ff58c4dbd8030703d059fbe23d7f94"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220102-a2.json",
+      "bytes": 2218,
+      "sha256": "e7ac7c23fc9db62f516c649f26884ef7356c3cd5b5aecac650cb62ee49c2651f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220102-a3.json",
+      "bytes": 2218,
+      "sha256": "a137c46144416f10198ded6e0ea0b8ef9544737cdb2e49c0b8005ec1fdc63b67"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220103-a0.json",
+      "bytes": 2201,
+      "sha256": "1c1486dc9b6abdf77285160b241d16100539f111ddb2e4ecb905d018084a76dd"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220103-a1.json",
+      "bytes": 2201,
+      "sha256": "76dd2244a92f4dd6f885ba7a61f842591ce8d38ef6e6a321cca6b3c1abbc3378"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220103-a2.json",
+      "bytes": 2202,
+      "sha256": "462093f863573d5ace16e4241535bc0431969480dd04847fa3a511c4cb3f0154"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220103-a3.json",
+      "bytes": 2201,
+      "sha256": "8fedb5d54e137bf6048055470b551bd17c70bceba5be51e4241c07307cddb5f5"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220104-a0.json",
+      "bytes": 2194,
+      "sha256": "deef5c2814626ad5e2b4389c80454fc2ffbbf58de5296971a1954c009971760b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220104-a1.json",
+      "bytes": 2196,
+      "sha256": "74446f7d4f578fffc2f5bc0e4d7a99bace6dc01f88d4215498de0eff866e75d1"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220104-a2.json",
+      "bytes": 2195,
+      "sha256": "d33f0fc240a17460e8a33208130bfa41a6df8efe53b8b422225c698c0feecab3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g3-identical-s6220104-a3.json",
+      "bytes": 2196,
+      "sha256": "9aed6cc1c99e83ad67f9ed4bd771abbdb8a165406e577bcf19dea93bacb1f507"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220101-a0.json",
+      "bytes": 2199,
+      "sha256": "4fac8f76d099b7779ff624af35e5eaa89f2107450736cec72ee4814b845d37b4"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220101-a1.json",
+      "bytes": 2199,
+      "sha256": "d023a08870274850e68800419f05421e55651b773a6e116f8a857cbb25e9e75b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220101-a2.json",
+      "bytes": 2200,
+      "sha256": "2d95366b6064cd27e57ae3bb24b9605a68023ec9608b20f65bb7e43e91017129"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220101-a3.json",
+      "bytes": 2200,
+      "sha256": "d1897ef29407edae7250414b1bca941e595ba6547ab1e444bea874f183ae741e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220102-a0.json",
+      "bytes": 2199,
+      "sha256": "d6813b6b0c5e845d331dc94c7f02e051968f199ceb7eed61836ea444ae9ee0a3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220102-a1.json",
+      "bytes": 2200,
+      "sha256": "638b51026259fa40e58274b052e55f048eeed03b85f07712160d71fa9a7a6903"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220102-a2.json",
+      "bytes": 2199,
+      "sha256": "e56cef0cce8fe7e2e85019c5b70c0537d1b33b470b8863bb4fec66058b17c1a3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220102-a3.json",
+      "bytes": 2199,
+      "sha256": "d452b98e11a8a86a1bce9fe3b03207e2b9a724b8aa502dbd8207d45639d686bc"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220103-a0.json",
+      "bytes": 2200,
+      "sha256": "6b59d18bdfe505ad84695570f1477375dc44785092851af09e818362fae79bd6"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220103-a1.json",
+      "bytes": 2198,
+      "sha256": "0070aeaecf57564fa2f00af004e3196b876227a260418129ab135ff684a97d76"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220103-a2.json",
+      "bytes": 2200,
+      "sha256": "0c8ed98ce5ebfd6742d9e173b804d2bfa787971f4e9627d4b21dc5bbbf526e94"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220103-a3.json",
+      "bytes": 2200,
+      "sha256": "4cdc5aba9fec3181fe08d210722ca1789af4ccbcd03c2913bf8f6291c005474e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220104-a0.json",
+      "bytes": 2199,
+      "sha256": "4763208002d987e3be058eaf5a0c52516aac3d0c8ac44add1d9891ce6468e8c9"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220104-a1.json",
+      "bytes": 2199,
+      "sha256": "7d28a3df4df73fafb275a5fd3cfd487e657d6651494be3ba616280d2181c0035"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220104-a2.json",
+      "bytes": 2199,
+      "sha256": "cd2eb7455b8aee7d5ed4a28d1ace89c6476a248f7e6696b0d6974e48e1204b89"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-disabled-s6220104-a3.json",
+      "bytes": 2199,
+      "sha256": "96735e9263b3e9941f2b69d0bbeaa78790f709ca6de8854f98bf16102fd121c1"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220101-a0.json",
+      "bytes": 2202,
+      "sha256": "0ebdd15b7a69c8bf7235bb43aca7abc7c49e87563d8d5cadd83d4e41cb2f795e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220101-a1.json",
+      "bytes": 2201,
+      "sha256": "623c13b74154cc78e995b9503dfdeeb5849217a95908cf3d934d0454258d44c4"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220101-a2.json",
+      "bytes": 2200,
+      "sha256": "6d23ffe1756e15f15344b07c993a4a5d6ee2d4caf6ec01abb95e2f890fad60cd"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220101-a3.json",
+      "bytes": 2194,
+      "sha256": "f187ffad06032122b6a83500b7925df30e1bc8aeaf2e114b88c918da4919b781"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220102-a0.json",
+      "bytes": 2201,
+      "sha256": "c71c731c569100d52d45a512ab90e3cbffb62c32a0e769862dd6551a6f115663"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220102-a1.json",
+      "bytes": 2201,
+      "sha256": "40e2efe6a8735f32cfc100d94a981ae23d3ae2ff159444e413977052934cf2e9"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220102-a2.json",
+      "bytes": 2201,
+      "sha256": "35290617bb595f89f49cb334b440d2dc4ac4eecaa0983877f33f89f718196213"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220102-a3.json",
+      "bytes": 2200,
+      "sha256": "9c8d9b99c23adefe93c0781414b6184946eddc7af0cb76ec441b4398eba935ff"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220103-a0.json",
+      "bytes": 2201,
+      "sha256": "7530e9d85f82e6cbe63d3b8af649b6ec04828bae7de831e93853d6e90b4b5a08"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220103-a1.json",
+      "bytes": 2201,
+      "sha256": "428d0d8ed0c363f1556af1baae4ae75180924713977422a49b7c511a6fbe41b5"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220103-a2.json",
+      "bytes": 2202,
+      "sha256": "6e80ab24085e89d26b50b7a37147304e8209573fb29111cfee1abf8e54e4cf56"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220103-a3.json",
+      "bytes": 2200,
+      "sha256": "b7c8d5f7516727d30f699af3b65938013bb5ea512ce89b7cc9b25aaef199855a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220104-a0.json",
+      "bytes": 2201,
+      "sha256": "1cd653d05df9ffab93b1ed214a78e9349058793a527520153f1af91a7e371868"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220104-a1.json",
+      "bytes": 2202,
+      "sha256": "447a775fb439fd0d2a01648110dd2f0305765f999299901733f287d11b46b6f5"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220104-a2.json",
+      "bytes": 2201,
+      "sha256": "16e2439913e617f6b6c6f0d9805880a529b9d91546ac89469a9004cff94d3a37"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g4-identical-s6220104-a3.json",
+      "bytes": 2201,
+      "sha256": "10a82282cd4a9c5bcc97afd3fdfe8d2ac8b7139cdc9a524b3a9498dd67e59dd0"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220101-a0.json",
+      "bytes": 2200,
+      "sha256": "e270db513bd901a31a5b48e5b129fea6365ecbb8217a538e62f84296fd87b942"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220101-a1.json",
+      "bytes": 2199,
+      "sha256": "d7ca92e932c8bec26f600ffd3a655376256b73bdbbfe5bd6d89db3fbac48e128"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220101-a2.json",
+      "bytes": 2199,
+      "sha256": "2c9be1adb5d38930cccb15ef509418a2f23df0d11b47bfee3540995a6600b167"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220101-a3.json",
+      "bytes": 2199,
+      "sha256": "e6e5a5c80b3a283e94c6f8fc8ea7485fdad440f0aeb543e5902717810b619591"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220102-a0.json",
+      "bytes": 2199,
+      "sha256": "d4f72c2e1dabf3073d8a8656d7bb9ca3514cb1d1bddbf9ba335187fe79dd4179"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220102-a1.json",
+      "bytes": 2199,
+      "sha256": "f6e00b4810cba596a153344b94f5e5339c7b49ad7d53fa41ce4b2bc647406e3a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220102-a2.json",
+      "bytes": 2199,
+      "sha256": "a3989e73f38dbb690dc4b56694a71218f80ce71961b0a935ba3130a5d4fbfd5f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220102-a3.json",
+      "bytes": 2198,
+      "sha256": "cf6d06ea9f1473547ebe17f0604a8687b07eeef3a3c8ecabc385a4d9ba90049b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220103-a0.json",
+      "bytes": 2199,
+      "sha256": "d2f1e8ebb48c84504cbc8b71225acc864c9966ccc8f94734de621de1967807a9"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220103-a1.json",
+      "bytes": 2198,
+      "sha256": "d9b37e599be5225171f1e81fa59cba2cfab79c96b686827bbc8fe3edad2a3896"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220103-a2.json",
+      "bytes": 2199,
+      "sha256": "b064c695768e049c0cdcaad7c70dcc1bbc322b6a3d3e36814f48d6813dbe4f92"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220103-a3.json",
+      "bytes": 2199,
+      "sha256": "6ebb008d9dea209324b56eaa51827928abafa7a72d1178c0d3ccd0f9697932b9"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220104-a0.json",
+      "bytes": 2199,
+      "sha256": "6185483c96c1e8666c1c7648cec99cfaa92e7f4d5f3e72cdafcb87965eebe723"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220104-a1.json",
+      "bytes": 2199,
+      "sha256": "abc13885affa93d66fada63edc59e3c090ecd61d0e69029904a5d5612b605d48"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220104-a2.json",
+      "bytes": 2199,
+      "sha256": "b82667e9effbbc2bcacf57e1870e4042fdc28477c7806ef61cbd967cf082e6c3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-disabled-s6220104-a3.json",
+      "bytes": 2199,
+      "sha256": "d392a157bb1335bb38099cae030590d0fc722d14745c55c8aab1b17bb8d6f190"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220101-a0.json",
+      "bytes": 2201,
+      "sha256": "3af9910efae50998ec34b2e1ea7be157e623f592e07ec1c45b3a5b12520d98c5"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220101-a1.json",
+      "bytes": 2201,
+      "sha256": "1083594e4f9788026a5cae58d275d088ced5802eec143aba07f5421ad2977a0b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220101-a2.json",
+      "bytes": 2201,
+      "sha256": "b0ae2a7d84a40b8fca9617856ad169787d10ca59f5d530b9269e17fa7b5b8fe0"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220101-a3.json",
+      "bytes": 2201,
+      "sha256": "12f2c83279fb6a8f14c3bb276a2c634bced1ff9b87e8d6a5a5e22b193637af3c"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220102-a0.json",
+      "bytes": 2201,
+      "sha256": "06e872e2e67c22d3462dfa44eeff9989ea0b3b54f454d36fbc744d1acdd9693d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220102-a1.json",
+      "bytes": 2201,
+      "sha256": "5b5c57657efb7da54a28ba030043523c9dcbc8afd90d7872e393676f8a0d3e71"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220102-a2.json",
+      "bytes": 2200,
+      "sha256": "87fb17b19dc24f2b9350438cc61b7770058b3bd91cb5732371069a97761064cd"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220102-a3.json",
+      "bytes": 2200,
+      "sha256": "01705c903a3bc7546ddf4e1e69a5c78b5ec2775a33b7c7977de7cb4e016562a1"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220103-a0.json",
+      "bytes": 2201,
+      "sha256": "3e93d5fd67bd766c8534310fb5e7d6048f44f8c63e351315cbada5c99e7d3990"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220103-a1.json",
+      "bytes": 2201,
+      "sha256": "d1a8e3fd51e1c3901872faf1ae11d967ed79eef275e3cc74ea78dacf830028a0"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220103-a2.json",
+      "bytes": 2201,
+      "sha256": "36d7d28142927a92a97ceb26ccac7d76de30b9edd268444960bf9ae33f09be18"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220103-a3.json",
+      "bytes": 2201,
+      "sha256": "c538966e9e50cb200aeb502238b6407f3c646aa4e9d07b42c2dc27bb78c6a399"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220104-a0.json",
+      "bytes": 2194,
+      "sha256": "be16c9640d634f067e83f497bfc1f78c6e655e04b0a422dd1ce78da675f52826"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220104-a1.json",
+      "bytes": 2200,
+      "sha256": "5ced750dd9d656f75814bb6e354a3aaa8cb55264fd4ef7174333cc03cb45684f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220104-a2.json",
+      "bytes": 2201,
+      "sha256": "2718ba672508f6ccc8c5d8581e2f222510a4ceffde1fbee9705f629dc3f57bb5"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g5-identical-s6220104-a3.json",
+      "bytes": 2200,
+      "sha256": "cfa4ffcf2186f66227e87487f1c6a699c6a9282e506f1c92d64c7be13b7ec2a0"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220101-a0.json",
+      "bytes": 2195,
+      "sha256": "82ef0f26a48d0c9cd7e39312164fcee8a14212a492abf65a0947e79fab957d69"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220101-a1.json",
+      "bytes": 2194,
+      "sha256": "c2d87ab058765d6bed61b9ec9375913b8b8d55445f4bcd964cef4346a5bca97d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220101-a2.json",
+      "bytes": 2195,
+      "sha256": "99f907dcbdbf8d14985deba61b2487db054af0d8afd301857a51785382a9bd27"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220101-a3.json",
+      "bytes": 2194,
+      "sha256": "1ed210d36a8c3849d77f4c14a1420b101bdc9c71c58fc2058f6b93bdf9bf8ea0"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220102-a0.json",
+      "bytes": 2193,
+      "sha256": "195c2942b65d521e62bcb6e2067025c905a158a22f1c0c435eb659d00571b9c7"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220102-a1.json",
+      "bytes": 2193,
+      "sha256": "060d4ae2a5c7659f612d89a82ff81c54574a6426de00069623279ba03affdf80"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220102-a2.json",
+      "bytes": 2194,
+      "sha256": "6f0d84dc1c1fe3b3c9d77ffe7104427336a2d0e8f23f976fefa46719d6a7d610"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220102-a3.json",
+      "bytes": 2193,
+      "sha256": "96fe9a8d6f4e9172ef2e813d1aad7941918d0c8b02719ad4b7bfcb043426f7bb"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220103-a0.json",
+      "bytes": 2195,
+      "sha256": "d60d35cd3a8f545984d4e2544be2cd33f0f025c084286dd7f9ed918270c3a5f8"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220103-a1.json",
+      "bytes": 2194,
+      "sha256": "751c2be71ba1c28092284d56b2b80413211774c11f0da2a2202a930fe93db3be"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220103-a2.json",
+      "bytes": 2195,
+      "sha256": "5a4f2dd77e16685061c6d953e28fb9e12bef29c7e504bfb2cc852894122feb4a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220103-a3.json",
+      "bytes": 2194,
+      "sha256": "c6291b55790597454804fd703e23033883e72e6ffc5aa81848f3fcf2323c7a31"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220104-a0.json",
+      "bytes": 2195,
+      "sha256": "0c4419e327100a5d8a0a7e06607ac4cc7d354928554d31d448571bbde72f892c"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220104-a1.json",
+      "bytes": 2193,
+      "sha256": "fa539999866d3cd111a5488ab4f917cfe3a9ce77758f762ab8e41954726e6631"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220104-a2.json",
+      "bytes": 2195,
+      "sha256": "dc413cc4c0995135615ac421d192fe79f1afaac7b974425f2d9d24d814848750"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-disabled-s6220104-a3.json",
+      "bytes": 2193,
+      "sha256": "e7b4be52d2ed55e3edd6b8faf12f1ac5bdefd11cb33f8bd046f46a6739931ee9"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220101-a0.json",
+      "bytes": 2197,
+      "sha256": "d93d4ef1b73bd131e50276a2cdeb0bad47ad12c6fa2085ff70c2855fe57ad0b5"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220101-a1.json",
+      "bytes": 2198,
+      "sha256": "35c916d5b677a92a82c18175095857a9fe8bf86333ee2eea89c154f2d0a57815"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220101-a2.json",
+      "bytes": 2197,
+      "sha256": "4f37d9ed64fdbb5428057ad9f9a8dc9324681f02f001fbb79a8796233c1bc31b"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220101-a3.json",
+      "bytes": 2198,
+      "sha256": "39739a1ff4ff9c0651ed0542965c865ce9f6ef7fb0c064d5cb4332b946895d95"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220102-a0.json",
+      "bytes": 2215,
+      "sha256": "bc4e7f0452d07cf872d3b47b3c2d21ddfd609ad840ad94b9fbe22660fa1f429c"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220102-a1.json",
+      "bytes": 2217,
+      "sha256": "8232c764184cc85255431d35406f4f5644a348386e75818bddbd8c4edeb69300"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220102-a2.json",
+      "bytes": 2215,
+      "sha256": "18b24e233a77826bea366e9fca7b4c884b52ad301569c511d0d9f4435f5d8a39"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220102-a3.json",
+      "bytes": 2216,
+      "sha256": "982b3d341e7731d991bac164f423910c99907437186e4edeeb5c454345dacbe5"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220103-a0.json",
+      "bytes": 2214,
+      "sha256": "404e38e9267ace650ac076ed4eecb8ba2bee4592f8124642aa710afe7c68cc21"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220103-a1.json",
+      "bytes": 2215,
+      "sha256": "35f3b640bc4e66e194b69d498e5c77e3f94a59678df5dcb5b75b2dd30fb38851"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220103-a2.json",
+      "bytes": 2213,
+      "sha256": "e2923afa47ac7b596ad5eacca3103d1b9666686d2ab3c4333a1d2ea3c924861d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220103-a3.json",
+      "bytes": 2215,
+      "sha256": "11d59eb20882f0cc66bbefe1f92ce5656accddfbb6f94200dde72758cdbf6dc1"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220104-a0.json",
+      "bytes": 2197,
+      "sha256": "43bf162d7efeeddb2692d770890bfccb8d6122cddf4d2ccfc7609eb6dcbf5cf2"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220104-a1.json",
+      "bytes": 2198,
+      "sha256": "48585c983b67ca8c79f44b042ef431ef319ddde43b298c5adbfd101aa0ecaf5c"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220104-a2.json",
+      "bytes": 2197,
+      "sha256": "7afa221efff871d837841a3a84d28a390e4409f74fc7332d643f41f2c3b02fdf"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g6-identical-s6220104-a3.json",
+      "bytes": 2199,
+      "sha256": "f34a470a52a2160bcb1fbf2eeb8a825acf7646d567755cff6756e312edb69c0d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220101-a0.json",
+      "bytes": 2200,
+      "sha256": "cad76aaa21dfd37298a2fbe5fe375426831825302329b0cdb4270a8e797c17ac"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220101-a1.json",
+      "bytes": 2199,
+      "sha256": "dd0cf2beed543392e83527ef5a9ef9554f4ed2cbb7ddad16cec07234e61ae6d8"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220101-a2.json",
+      "bytes": 2199,
+      "sha256": "2d2b3ec07cfc8c93d24a9e99a7961a338cb311592778adfe17ed9725971e49f6"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220101-a3.json",
+      "bytes": 2200,
+      "sha256": "73d4e022ccb621bd1a7475be9f18957815851cae53da70fb27b5b18ce54ff33c"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220102-a0.json",
+      "bytes": 2198,
+      "sha256": "8e399c7545726fe7016813863777c0345b7ebe93a9c3ec623d95e784e1347f52"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220102-a1.json",
+      "bytes": 2199,
+      "sha256": "e0785dfca5005d131a220b51f33f0ce263f0baecead28bd833cfa77ee0d9a60e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220102-a2.json",
+      "bytes": 2198,
+      "sha256": "cd531e14e74b2a3547543f96cd1de88a06010ee33f60b80af9f1fd7ab96e719d"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220102-a3.json",
+      "bytes": 2199,
+      "sha256": "7dbf3674d3e9ceec15908a84a62f0ce7ab63f496715c61f644ee9ce65d3430b3"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220103-a0.json",
+      "bytes": 2199,
+      "sha256": "61992ba4e97a8bb204f30b925622be392c31e05a8682ac1d83a08840886e2adc"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220103-a1.json",
+      "bytes": 2199,
+      "sha256": "c70b0bbdb26689724f3d7f0be092dd658eead065bb0f4dce4b43019d74309afc"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220103-a2.json",
+      "bytes": 2199,
+      "sha256": "e2f2788bbe214594ad7e80407e922d1d8ea96823641a8766c86f2efe141f7c16"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220103-a3.json",
+      "bytes": 2199,
+      "sha256": "c072fa4a8bd7821cead79951268ee31c0b8b593ae094ec66f39ddad44b1b95fc"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220104-a0.json",
+      "bytes": 2199,
+      "sha256": "52902656aa891227747d47acce0e2c9b68384a56f404517aba80987046ea028c"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220104-a1.json",
+      "bytes": 2199,
+      "sha256": "7b31e777b6d0f612e7b53995a494b39650bb430972291ea0ec728095c410a199"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220104-a2.json",
+      "bytes": 2200,
+      "sha256": "cc872a980393cb317dee51a12381295d7f414443e77cf55d5491d1127078b244"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-disabled-s6220104-a3.json",
+      "bytes": 2199,
+      "sha256": "584f24e75ff727b8f006d6689d9f5177429675ebcaa118d9b7d598c7d37d2a41"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220101-a0.json",
+      "bytes": 2200,
+      "sha256": "384e550d0daadfdbf330e1957d8c5545acc6980c3fb5484cbaf83fcd605f422a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220101-a1.json",
+      "bytes": 2201,
+      "sha256": "351fe5bff30317d63b42677eb4c0f05766d44692fba89244e0b246eecf5f1a5f"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220101-a2.json",
+      "bytes": 2201,
+      "sha256": "fa778b766cba2cc568e52bff196da8f8b75341fbb1ed37a1c216d88099db172e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220101-a3.json",
+      "bytes": 2201,
+      "sha256": "170dea1745404733bc34456ebfcea8f6c966a8751fcd30c3910adf99cc3b567e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220102-a0.json",
+      "bytes": 2201,
+      "sha256": "2d87af8a3978ff70661db3f1e78c255641d59c0fec537ef99d7a5eda2af59ba7"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220102-a1.json",
+      "bytes": 2202,
+      "sha256": "27367420856c33b91e3c28ddcfd84056299820518bd5506d8baab9f12efae456"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220102-a2.json",
+      "bytes": 2201,
+      "sha256": "82d8331ddc48bb2dfadfaaed6ede7d5c9bf3f70619d9270a4cbd82997765bd93"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220102-a3.json",
+      "bytes": 2201,
+      "sha256": "1c61637a551e6f14413bfe9b58c6d7653445c93ed6ee6d52cc1c0d4a7c1f5891"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220103-a0.json",
+      "bytes": 2201,
+      "sha256": "220552c477b273483e0cc9a9f90f75c82797a495bf96348f930cdb4c5ed5e1a2"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220103-a1.json",
+      "bytes": 2201,
+      "sha256": "46dfdd781dd357d48fd979853ed369617262ce83b6ea21a4b2f66a73ddb3f41e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220103-a2.json",
+      "bytes": 2201,
+      "sha256": "f0fe34bb1d64ca41497fcc6a52b11ed8ec16e5127580eaca6bff5a1917af0ada"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220103-a3.json",
+      "bytes": 2201,
+      "sha256": "9ac3e37f1b58fffe925be1b510b8deb3fa12a90770c6bdb57e9ce5df3af4f225"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220104-a0.json",
+      "bytes": 2202,
+      "sha256": "e33a1b6a1c93fb7b1b60869f9bb8817d42dcd47ec8693bd1b5722f47326f91dc"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220104-a1.json",
+      "bytes": 2201,
+      "sha256": "f4413c1c196f4786144b93c086cac2d06a22140db2ef8d92cad319bae7770bde"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220104-a2.json",
+      "bytes": 2200,
+      "sha256": "ab7fac2423cf7998dc5f9557955adb35d2c0a1368750ba6bea286ed0237a5fbc"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/g7-identical-s6220104-a3.json",
+      "bytes": 2202,
+      "sha256": "d9c82f32fa5b6f583516d39c5694e8385acdb024a3f286efd210d2247803b32e"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/gate.json",
+      "bytes": 892,
+      "sha256": "042ad0f8ee235eb5bc5a473bb00d0a8254a35de825a8048bf65b29f931c3ca9a"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/invocation-20260930031956755.json",
+      "bytes": 332,
+      "sha256": "b7954a3fef5f6bf809b48414826a6069c953093cfe9d95390dbc50d672e003e1"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/invocation-20260930033008049.json",
+      "bytes": 336,
+      "sha256": "c0ed4d50395187f77b3a2133cebb7aa7b3e307aa31c7aa9fbc79a4de8f5c0fa4"
+    },
+    {
+      "path": "pilot-freeze/experiments/founder-policy/v1/pilot-results/replay.json",
+      "bytes": 373,
+      "sha256": "d32123e6719418f064e4bb09f452d6f5d3ed233ffa5aa97a06da96d482b139fd"
+    },
+    {
+      "path": "pilot-freeze/package.json",
+      "bytes": 602,
+      "sha256": "d5316dfad0d4882e3707b40761f24016551674270708c05189c170da2762bff4"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/activity.ts",
+      "bytes": 4877,
+      "sha256": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/biogeography.ts",
+      "bytes": 35332,
+      "sha256": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/calibration.ts",
+      "bytes": 5542,
+      "sha256": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/census.ts",
+      "bytes": 5016,
+      "sha256": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/collectives.ts",
+      "bytes": 10016,
+      "sha256": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/complexity.ts",
+      "bytes": 6189,
+      "sha256": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/ecology.ts",
+      "bytes": 3250,
+      "sha256": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/index.ts",
+      "bytes": 349,
+      "sha256": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/individuality.ts",
+      "bytes": 39695,
+      "sha256": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/render.ts",
+      "bytes": 2296,
+      "sha256": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/stats.ts",
+      "bytes": 15580,
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854"
+    },
+    {
+      "path": "pilot-freeze/packages/metrics/src/tracker.ts",
+      "bytes": 11044,
+      "sha256": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9"
+    },
+    {
+      "path": "pilot-freeze/packages/runner/src/conditions.ts",
+      "bytes": 4669,
+      "sha256": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3"
+    },
+    {
+      "path": "pilot-freeze/packages/runner/src/index.ts",
+      "bytes": 214,
+      "sha256": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6"
+    },
+    {
+      "path": "pilot-freeze/packages/runner/src/island-page.ts",
+      "bytes": 10536,
+      "sha256": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898"
+    },
+    {
+      "path": "pilot-freeze/packages/runner/src/island.ts",
+      "bytes": 18627,
+      "sha256": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461"
+    },
+    {
+      "path": "pilot-freeze/packages/runner/src/migrate.ts",
+      "bytes": 2687,
+      "sha256": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f"
+    },
+    {
+      "path": "pilot-freeze/packages/runner/src/observe.ts",
+      "bytes": 4209,
+      "sha256": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d"
+    },
+    {
+      "path": "pilot-freeze/packages/runner/src/runner.ts",
+      "bytes": 37712,
+      "sha256": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab"
+    },
+    {
+      "path": "pilot-freeze/packages/runner/src/stitch.ts",
+      "bytes": 28056,
+      "sha256": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/accounting.ts",
+      "bytes": 6336,
+      "sha256": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/checkpoint.ts",
+      "bytes": 6105,
+      "sha256": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/config.ts",
+      "bytes": 19816,
+      "sha256": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/exchange.ts",
+      "bytes": 8142,
+      "sha256": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/founders.ts",
+      "bytes": 8951,
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/genetics.ts",
+      "bytes": 2457,
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/genome.ts",
+      "bytes": 3055,
+      "sha256": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/index.ts",
+      "bytes": 391,
+      "sha256": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/int.ts",
+      "bytes": 2397,
+      "sha256": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/kernel.ts",
+      "bytes": 1293,
+      "sha256": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/layout.ts",
+      "bytes": 4296,
+      "sha256": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/migration.ts",
+      "bytes": 7375,
+      "sha256": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/presets.ts",
+      "bytes": 8083,
+      "sha256": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e"
+    },
+    {
+      "path": "pilot-freeze/packages/schema/src/world.ts",
+      "bytes": 14874,
+      "sha256": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6"
+    },
+    {
+      "path": "pilot-freeze/packages/sim-gpu/src/golden.ts",
+      "bytes": 10970,
+      "sha256": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf"
+    },
+    {
+      "path": "pilot-freeze/packages/sim-gpu/src/gpu-sim.ts",
+      "bytes": 19269,
+      "sha256": "f6d119d89147752ee1c3fd2ab136eb545cbb4ba696adaa4eac795dfb740d506e"
+    },
+    {
+      "path": "pilot-freeze/packages/sim-gpu/src/index.ts",
+      "bytes": 120,
+      "sha256": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150"
+    },
+    {
+      "path": "pilot-freeze/packages/sim-gpu/src/renderer.ts",
+      "bytes": 5798,
+      "sha256": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10"
+    },
+    {
+      "path": "pilot-freeze/packages/sim-gpu/src/shaders.ts",
+      "bytes": 29265,
+      "sha256": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773"
+    },
+    {
+      "path": "pilot-freeze/packages/sim-ref/src/index.ts",
+      "bytes": 27,
+      "sha256": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f"
+    },
+    {
+      "path": "pilot-freeze/packages/sim-ref/src/step.ts",
+      "bytes": 26802,
+      "sha256": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85"
+    },
+    {
+      "path": "pilot-freeze/tools/founder-policy.ts",
+      "bytes": 13250,
+      "sha256": "3966c6e1286a29683aca80883b84e04d5884134b6e04ca3df58d48c4ae161f47"
+    },
+    {
+      "path": "pilot-freeze/tools/lib/founder-policy-pilot.ts",
+      "bytes": 6371,
+      "sha256": "9fad775a0057d168807bcdc729c962ec400021cede09569178fbf86c76c3c768"
+    },
+    {
+      "path": "pilot-freeze/tools/lib/founder-policy-runtime.ts",
+      "bytes": 10080,
+      "sha256": "b53660013c1620cfd3104e1b3359c95867e9b731be2e1ccaa29a96c141dd1fdb"
+    },
+    {
+      "path": "pilot-freeze/tools/lib/founder-policy.ts",
+      "bytes": 18045,
+      "sha256": "361411ed7f2ab48907986f78d5faaac41144980104eaecd6acca782701219265"
+    },
+    {
+      "path": "pilot-freeze/tools/lib/selection-funnel-audit.ts",
+      "bytes": 25238,
+      "sha256": "8375e967a0421b965b71d4d96383a804382fe30744047af2c723efc334a12821"
+    },
+    {
+      "path": "pilot-freeze/tools/test/founder-policy.test.ts",
+      "bytes": 8820,
+      "sha256": "4535f49c9461dc6d91e75355b1988cd165d06c4a7201141034325eda25e2f3bc"
+    },
+    {
+      "path": "pilot-independent-calculation.json",
+      "bytes": 2564,
+      "sha256": "50195540a8c7f3abb535a0e9f6ac43a9335a7de1c881f68d31578dbb676e1f76"
+    },
+    {
+      "path": "pilot-release.json",
+      "bytes": 5949,
+      "sha256": "cfc058fb1059d07c3e0c8acff09591e3daea96f87a8cef59bde622de5d627d46"
+    },
+    {
+      "path": "pilot-result-review.json",
+      "bytes": 831,
+      "sha256": "9de7176d76c6750709dc83fbcf8f76fb8e9a8167a9a84aea42a0b8a51c93d64a"
+    },
+    {
+      "path": "protocol-review.md",
+      "bytes": 2384,
+      "sha256": "ac7575dfd31c76d20820c89691138a52e1b440d3dc5f4c7b1eae497aacb05e8a"
+    },
+    {
+      "path": "spend.json",
+      "bytes": 593,
+      "sha256": "65c2667e955be39fb71f28b325c9f75fcd49b5547b8766a7ad23c0b2b03c7554"
+    }
+  ],
+  "scope": "All artifacts under this version directory except this manifest itself; source code and results are preserved. Full-study implementation is additionally pinned by implementation-review.json and the jj commit."
+}

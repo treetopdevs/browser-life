@@ -1,0 +1,91 @@
+{
+  "checkedAt": "2026-09-30T03:50:16.561343+00:00",
+  "manifestSha256": "d197573ebbe35d5ff2134ae8e16a84f54aea6a9c4595db64f5618aed8395c05f",
+  "units": 256,
+  "rosterComplete": true,
+  "replayPassed": true,
+  "frozenSourcesVerified": 51,
+  "bothExtinct": 168,
+  "bothExtinctByKind": {
+    "identical": 80,
+    "disabled": 88
+  },
+  "perGenotype": [
+    {
+      "genotypeIndex": 0,
+      "source": "historical index 0",
+      "identicalBothPositive": 0,
+      "identicalBothExtinct": 16,
+      "identicalMeanAbsolute": null,
+      "disabledBothExtinct": 16,
+      "competentMinusDisabledMean": null
+    },
+    {
+      "genotypeIndex": 1,
+      "source": "historical index 2",
+      "identicalBothPositive": 16,
+      "identicalBothExtinct": 0,
+      "identicalMeanAbsolute": 0.3651041161830237,
+      "disabledBothExtinct": 0,
+      "competentMinusDisabledMean": 1
+    },
+    {
+      "genotypeIndex": 2,
+      "source": "historical index 5",
+      "identicalBothPositive": 0,
+      "identicalBothExtinct": 12,
+      "identicalMeanAbsolute": null,
+      "disabledBothExtinct": 16,
+      "competentMinusDisabledMean": null
+    },
+    {
+      "genotypeIndex": 3,
+      "source": "historical index 9",
+      "identicalBothPositive": 4,
+      "identicalBothExtinct": 4,
+      "identicalMeanAbsolute": null,
+      "disabledBothExtinct": 8,
+      "competentMinusDisabledMean": null
+    },
+    {
+      "genotypeIndex": 4,
+      "source": "archive viable line 1919",
+      "identicalBothPositive": 0,
+      "identicalBothExtinct": 16,
+      "identicalMeanAbsolute": null,
+      "disabledBothExtinct": 16,
+      "competentMinusDisabledMean": null
+    },
+    {
+      "genotypeIndex": 5,
+      "source": "archive viable line 1010",
+      "identicalBothPositive": 0,
+      "identicalBothExtinct": 16,
+      "identicalMeanAbsolute": null,
+      "disabledBothExtinct": 16,
+      "competentMinusDisabledMean": null
+    },
+    {
+      "genotypeIndex": 6,
+      "source": "archive viable line 1422",
+      "identicalBothPositive": 8,
+      "identicalBothExtinct": 0,
+      "identicalMeanAbsolute": 0.8363819654753849,
+      "disabledBothExtinct": 0,
+      "competentMinusDisabledMean": 1
+    },
+    {
+      "genotypeIndex": 7,
+      "source": "archive viable line 1873",
+      "identicalBothPositive": 0,
+      "identicalBothExtinct": 16,
+      "identicalMeanAbsolute": null,
+      "disabledBothExtinct": 16,
+      "competentMinusDisabledMean": null
+    }
+  ],
+  "paidUSD": 0,
+  "decision": "stop-assay-blocker",
+  "technicalDefectIdentified": false,
+  "comparisonHistoriesRun": 0
+}

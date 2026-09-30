@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-09-30T03:52:59.718698+00:00",
+  "reviewer": "independent strong-model subagent",
+  "verdict": "PASS: report supports required assay-specific stop",
+  "unitsVerified": 256,
+  "initialStatesReconstructedWithoutSimulation": 256,
+  "initialStateHashesMatched": 256,
+  "sourceHashesVerified": 51,
+  "inputSnapshotsVerified": 19,
+  "bothExtinct": 168,
+  "identicalBothExtinct": 80,
+  "disabledBothExtinct": 88,
+  "bothPositiveGenotypes": 1,
+  "completeDisabledContrastsAboveMargin": 2,
+  "replayPassed": true,
+  "reportSha256": "de9821ee12c72afa6c1c572c2d024cf9c3364441ea5323b7fc3645573f05f34a",
+  "technicalDefectIdentified": false,
+  "repairJustified": false,
+  "comparisonAuthorized": false,
+  "limits": "Repeatability of one both-extinct case; no founder-policy or general evolutionary-capacity inference."
+}

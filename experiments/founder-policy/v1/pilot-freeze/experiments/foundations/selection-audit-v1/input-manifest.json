@@ -1,0 +1,158 @@
+{
+  "format": 1,
+  "sourceRoot": "/Users/nicholas/develop/browser-life",
+  "entries": [
+    {
+      "id": "archive",
+      "sourcePath": "runs/bootstrap-200/archive.json",
+      "snapshotPath": "inputs/archive.json",
+      "sha256": "9504ecb73592c396e9fd73d7af424099a423353ce6edbda5ff9210dd5a882fc6",
+      "bytes": 99708,
+      "kind": "data"
+    },
+    {
+      "id": "viable",
+      "sourcePath": "runs/bootstrap-200/viable.jsonl",
+      "snapshotPath": "inputs/viable.jsonl",
+      "sha256": "e6eaebf84ada1410a0591d7383a32eeb1eea4da97d212b1e63eea2c8d7032645",
+      "bytes": 1567348,
+      "kind": "data"
+    },
+    {
+      "id": "gate",
+      "sourcePath": "runs/bootstrap-200/gate.json",
+      "snapshotPath": "inputs/gate.json",
+      "sha256": "f28b30c01e743de3780e5231cecdcb8eb6bdb2415ad4d90359b5e9118fb795a1",
+      "bytes": 1463731,
+      "kind": "data"
+    },
+    {
+      "id": "confirm",
+      "sourcePath": "runs/bootstrap-200/confirm.json",
+      "snapshotPath": "inputs/confirm.json",
+      "sha256": "44ac88b232e44017ac6c651dde8b88a36948494687443d2030a42c819a5d7389",
+      "bytes": 1707193,
+      "kind": "data"
+    },
+    {
+      "id": "retest",
+      "sourcePath": "experiments/m3/retest.json",
+      "snapshotPath": "inputs/retest.json",
+      "sha256": "44f3bda3c3145f6b96b2dbfc06dde0c513e1c9a1fde01953bc159fb58caad475",
+      "bytes": 86016,
+      "kind": "data"
+    },
+    {
+      "id": "replicate",
+      "sourcePath": "experiments/m3/replicate.json",
+      "snapshotPath": "inputs/replicate.json",
+      "sha256": "56fafd86e505c4737bc1623b35720389219a7a624ded8eda14887d609e47f6db",
+      "bytes": 10793,
+      "kind": "data"
+    },
+    {
+      "id": "founders",
+      "sourcePath": "packages/schema/src/founders.ts",
+      "snapshotPath": "inputs/founders.ts",
+      "sha256": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+      "bytes": 8951,
+      "kind": "code"
+    },
+    {
+      "id": "fdSubjects",
+      "sourcePath": "runs/foundations/results/fd-subjects.json",
+      "snapshotPath": "inputs/fdSubjects.json",
+      "sha256": "a31f93bbabbcefd5f11272d9479c2a374ba5a99d7e6e3bf73c0b3ea67461265c",
+      "bytes": 12381,
+      "kind": "data"
+    },
+    {
+      "id": "fdPool",
+      "sourcePath": "runs/foundations/results/fd-pool.json",
+      "snapshotPath": "inputs/fdPool.json",
+      "sha256": "2d96aa3c99e475dd27374f6f7f549f102a434b1b3231e964870852ad0a7785d1",
+      "bytes": 393353,
+      "kind": "data"
+    },
+    {
+      "id": "fdResults",
+      "sourcePath": "experiments/foundations/fd.json",
+      "snapshotPath": "inputs/fdResults.json",
+      "sha256": "d97d7723e18529c7e47191b3e49762cca005d0d6547e818c5c3175cae8851876",
+      "bytes": 150925,
+      "kind": "data"
+    },
+    {
+      "id": "codeEvaluate",
+      "sourcePath": "packages/search/src/evaluate.ts",
+      "snapshotPath": "inputs/codeEvaluate.ts",
+      "sha256": "a8d6cc30cd41c752da7907ee66e10dc947209df9b8497ea0160a66cc306a8cc0",
+      "bytes": 15515,
+      "kind": "code"
+    },
+    {
+      "id": "codeMapelites",
+      "sourcePath": "packages/search/src/mapelites.ts",
+      "snapshotPath": "inputs/codeMapelites.ts",
+      "sha256": "bc2b4402c58342b847411b95d249847fa451924e692b9a39bae35590b32b1d08",
+      "bytes": 9605,
+      "kind": "code"
+    },
+    {
+      "id": "codeRetest",
+      "sourcePath": "packages/search/src/retest.ts",
+      "snapshotPath": "inputs/codeRetest.ts",
+      "sha256": "80ea2e3a723af000d4ab94740c139765b4b114203478851ce5fc2d00c69bdfb9",
+      "bytes": 6367,
+      "kind": "code"
+    },
+    {
+      "id": "codeGenome",
+      "sourcePath": "packages/schema/src/genome.ts",
+      "snapshotPath": "inputs/codeGenome.ts",
+      "sha256": "77a1a3cc32bd4bd3bc638ba9e0fec5e7a552fd815631b02f63f3ac566d63cdd9",
+      "bytes": 3849,
+      "kind": "code"
+    },
+    {
+      "id": "codeGenetics",
+      "sourcePath": "packages/schema/src/genetics.ts",
+      "snapshotPath": "inputs/codeGenetics.ts",
+      "sha256": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93",
+      "bytes": 2457,
+      "kind": "code"
+    },
+    {
+      "id": "codeProbability",
+      "sourcePath": "packages/metrics/src/stats.ts",
+      "snapshotPath": "inputs/codeProbability.ts",
+      "sha256": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854",
+      "bytes": 15580,
+      "kind": "code"
+    },
+    {
+      "id": "codeBootstrap",
+      "sourcePath": "tools/bootstrap.ts",
+      "snapshotPath": "inputs/codeBootstrap.ts",
+      "sha256": "2b98289a9bb32f1ea9eedaf9f2e8b6deb6851046cfac8073b4f81ae2454240dd",
+      "bytes": 18454,
+      "kind": "code"
+    },
+    {
+      "id": "codeRetestTool",
+      "sourcePath": "tools/retest.ts",
+      "snapshotPath": "inputs/codeRetestTool.ts",
+      "sha256": "69723b499890de7277fa5a5dc1ebc298e1cf2f3239106fa9acda02a02eee7f31",
+      "bytes": 11905,
+      "kind": "code"
+    },
+    {
+      "id": "codeFoundations",
+      "sourcePath": "tools/foundations.ts",
+      "snapshotPath": "inputs/codeFoundations.ts",
+      "sha256": "3c6efdff3ce09a0b0523a09c4f343f3a54fb50b1d773f831d13536e245daed8c",
+      "bytes": 73780,
+      "kind": "code"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "closedAt": "2026-09-30T03:52:59.719455+00:00",
+  "device": "Apple M1 Max",
+  "runtime": "Deno 2.9.7 native WebGPU",
+  "completedUnits": 256,
+  "meanUnitSeconds": 6.729404254710941,
+  "maxUnitSeconds": 8.852784957999946,
+  "recordedInvocationSeconds": 1729.4099999999999,
+  "invocations": 2,
+  "deterministicReplayUnits": 1,
+  "assaySteps": 20000,
+  "paidUSD": 0,
+  "note": "Local pilot throughput only. Full comparison not released after failed controls; no A10G throughput or cloud feasibility claimed."
+}

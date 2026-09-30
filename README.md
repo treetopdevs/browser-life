@@ -67,6 +67,24 @@ deno run -A tools/analyze.ts runs/pilot/gradient
 deno run -A tools/bootstrap.ts --batches 50 --out runs/bootstrap
 ```
 
+### Founder-policy comparison
+
+The staged founder-policy study is specified in [`docs/founder-policy-protocol-v1.md`](docs/founder-policy-protocol-v1.md). The `plan` stage checks the pinned selection-audit snapshots and writes the exact cohorts, seeds, configurations, thresholds, and source hashes. It does not run a simulation:
+
+```bash
+deno run --no-lock -A tools/founder-policy.ts plan --out experiments/founder-policy/v1/design.json
+```
+
+Run `pilot` only from an archived, hash-verified source freeze. It writes one receipt per control assay, resumes an incomplete roster, and emits `gate.json` only after all 256 requests and deterministic replay are checked. The full `run` stage additionally requires a passing pilot gate and a separate, current comparison-release JSON with the complete-roster cost forecast. A failed gate or missing release blocks the comparison. `analyze` writes a JSON ledger and a readable Markdown report, preserving missing data and full-slot bounds.
+
+```bash
+deno run --no-lock --unstable-webgpu -A tools/founder-policy.ts pilot --manifest PATH/TO/frozen-design.json --out PATH/TO/pilot-results --max-seconds 600
+deno run --no-lock --unstable-webgpu -A tools/founder-policy.ts run --manifest PATH/TO/frozen-design.json --pilot-gate PATH/TO/gate.json --release PATH/TO/comparison-release.json --out PATH/TO/comparison-results --max-seconds 600
+deno run --no-lock -A tools/founder-policy.ts analyze --manifest PATH/TO/frozen-design.json --out PATH/TO/comparison-results --report PATH/TO/analysis.json
+```
+
+These stages must use the same frozen source tree as the manifest. `run` is a long GPU experiment and needs an explicit cost and runtime release after pilot review; the examples above are command shapes, not a release to execute it.
+
 ### Archipelago
 
 ```bash

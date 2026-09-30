@@ -1,0 +1,12 @@
+{
+  "stage": "pilot",
+  "manifestSha256": "d197573ebbe35d5ff2134ae8e16a84f54aea6a9c4595db64f5618aed8395c05f",
+  "invocationStartedAt": "2026-09-30T03:19:56.755Z",
+  "invocationFinishedAt": "2026-09-30T03:29:56.771Z",
+  "maxSeconds": 600,
+  "attempted": 86,
+  "observed": 86,
+  "expected": 256,
+  "timedOut": true,
+  "error": null
+}

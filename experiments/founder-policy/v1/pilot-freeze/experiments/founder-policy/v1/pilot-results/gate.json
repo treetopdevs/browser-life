@@ -1,0 +1,37 @@
+{
+  "manifestSha256": "d197573ebbe35d5ff2134ae8e16a84f54aea6a9c4595db64f5618aed8395c05f",
+  "complete": true,
+  "pass": false,
+  "reasons": [
+    "both-extinct control replicate",
+    "identical both-positive genotypes 1/8 < 7/8",
+    "genotype 1 mean absolute identical score 0.36510411618302374 > 0.15",
+    "genotype 6 mean absolute identical score 0.8363819654753848 > 0.15",
+    "competent-minus-disabled >0.20 in fewer than 7/8 genotypes"
+  ],
+  "identicalBothPositiveGenotypes": 1,
+  "overallIdenticalMean": null,
+  "perGenotypeMeanAbsoluteIdentical": [
+    null,
+    0.36510411618302374,
+    null,
+    null,
+    null,
+    null,
+    0.8363819654753848,
+    null
+  ],
+  "perGenotypeCompetentMinusDisabled": [
+    null,
+    1,
+    null,
+    null,
+    null,
+    null,
+    1,
+    null
+  ],
+  "expectedRequests": 256,
+  "observedRequests": 256,
+  "finishedAt": "2026-09-30T03:48:57.442Z"
+}

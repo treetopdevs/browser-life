@@ -1,0 +1,30 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@std/cli@1": "1.0.32",
+    "jsr:@std/streams@1": "1.2.0"
+  },
+  "jsr": {
+    "@std/cli@1.0.32": {
+      "integrity": "188b3a100d6202d64e3f5bd3d799c7fa4f6d77f92cc65eb7f641c1fa0aa92a66"
+    },
+    "@std/streams@1.2.0": {
+      "integrity": "256b934254778f2bf45f5713b934209ff29e9b4b7fd4ec095219966813758c5f"
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:fflate@0.8.3"
+    ],
+    "packageJson": {
+      "dependencies": [
+        "npm:@playwright/test@^1.63.0",
+        "npm:@types/node@22",
+        "npm:@webgpu/types@~0.1.74",
+        "npm:typescript@^7.0.2",
+        "npm:vite@^8.3.1",
+        "npm:vitest@^5.0.2"
+      ]
+    }
+  }
+}

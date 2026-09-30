@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-09-30T03:20:47.200091+00:00",
+  "passed": [
+    "72 matched histories",
+    "12 positions and roots",
+    "8 cluster-balanced cohorts of 12",
+    "5184 unique sample seeds",
+    "82944 technical observations",
+    "normal/off config differs only mutation rate"
+  ],
+  "outcomesInspected": false
+}

@@ -1,0 +1,26 @@
+{
+  "reviewedAt": "2026-09-30T03:43:27.189065+00:00",
+  "reviewer": "independent strong-model subagent",
+  "verdict": "implementation-pass-execution-gated",
+  "rootVerification": {
+    "testsPassed": 20,
+    "testsFailed": 0,
+    "durationSeconds": 20,
+    "allMissing82944ObservationAnalysisSeconds": 17
+  },
+  "sourceHashes": {
+    "tools/founder-policy.ts": "b580a8f964cf7cee636e9c1e582507dca3d6718290825bcb4320afbe05f126f0",
+    "tools/lib/founder-policy.ts": "361411ed7f2ab48907986f78d5faaac41144980104eaecd6acca782701219265",
+    "tools/lib/founder-policy-runtime.ts": "ae83b22fbcb370b193281517243a5ba4db1b6b798c14a40455ac94002db050b0",
+    "tools/lib/founder-policy-analysis.ts": "e017a67eac5e38e8618716aa2e1c6c800c716d0a4ec807d7e5fd5cd7724ed26f",
+    "tools/lib/founder-policy-release.ts": "f2e8b0346067b59d22d9039adc2300ec7b83a06661a1c6e6b9ce4c6f4ab2e09f",
+    "tools/test/founder-policy.test.ts": "ef85f57d3e7fe2ef4bbd73e7e32f04d878fa04997d9d5661c601206f10bed972"
+  },
+  "scope": "Reviewed estimator, missingness, retention, exact-state resume, mutation-off invariants, exclusive lock and cumulative cost ledger. No full-study execution release.",
+  "remainingExecutionGates": [
+    "complete passing pilot",
+    "independent measured throughput and complete-roster cost release",
+    "second code/protocol freeze before comparison"
+  ],
+  "finalDelta": "Human-readable report renderer separately reviewed after syntax correction; independent type check passed. Estimator/runtime unchanged from 20-test reviewed revision."
+}

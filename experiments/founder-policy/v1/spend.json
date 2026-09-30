@@ -1,0 +1,24 @@
+{
+  "format": "founder-policy-spend/v1",
+  "authorizedCeilingUSD": 50,
+  "phaseCeilingsUSD": {
+    "pilotAndRepair": 10,
+    "comparison": 35,
+    "completionAndTeardown": 5
+  },
+  "entries": [
+    {
+      "phase": "pilot",
+      "environment": "local Apple M1 Max",
+      "paidUSD": 0,
+      "resourcesProvisioned": []
+    }
+  ],
+  "paidTotalUSD": 0,
+  "comparisonReleased": false,
+  "cloudTeardownRequired": false,
+  "status": "closed: complete pilot failed; comparison not launched",
+  "closedAt": "2026-09-30T03:51:14.773869+00:00",
+  "unusedAuthorizationUSD": 50,
+  "repairAttempts": 0
+}

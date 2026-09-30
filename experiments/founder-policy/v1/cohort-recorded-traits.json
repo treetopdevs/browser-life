@@ -1,0 +1,2876 @@
+{
+  "note": "Recorded screening traits only; regeneration is not an eligibility or ranking criterion. These are historical observations, not new simulations. Cluster identifiers are recalculated founder-policy identifiers.",
+  "cohorts": [
+    {
+      "cohort": "historical",
+      "source": "historical",
+      "founders": [
+        {
+          "slot": 0,
+          "genomeHex": "0011003b00000000d617dff63cfc3c072ce70ac4f1d3f9121cebd2383c37c9e63ad2f1ece6131844fd2ee204f3d90a1a2940f7cdfeb50e26c0c03b063a3aeeda40cf0ecc20c9c41019213b390e2abcfa0815393a1a222cf100d3fe1f2b1921d21a05c8000de30a02020ac3f5d40bc0ca0a3bc903e6d635dbfec2f9e6e7302af8d5ea0adb2725e2e32c472521051cf91aea18213f3b1200f8db29d4230c090c1ed0e4f00e31ffe4fc",
+          "cluster": 0,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 65,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4,
+                "meanMass": 3743.75,
+                "speed": 0.7975822955160236,
+                "mass": 22680.25,
+                "recovery": 0.9944228475504705,
+                "reproduction": 8,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 1,
+          "genomeHex": "0018001c00000000261de005372ae016c4e6382a2b2a27df1321cb2017e7eb0be9f3eef03bc7e1e60cd5eeeac8f921052128c0e8e5e73b26e1223dd7f7f5fc29fe1c041bc41cf61e19c602ff291ed6d5c1323c2125e23835ec21fe20d304263137e225f7081231f40c27f32824fbf4df1c1f223fd1f2d529151c0dd612c02e06f0152ad1dadc05010bde112a261f0313e22ed30e0edaeff717f9ee090be3f226dacbed3f3d2d35da",
+          "cluster": 9,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 109,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 8.25,
+                "meanMass": 1750.3636363636363,
+                "speed": 0.16098974749641434,
+                "mass": 32595.25,
+                "recovery": 0.2815310275852021,
+                "reproduction": 15.25,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 2,
+          "genomeHex": "001a005000000000d0fdd0d0fdc0c309fc35da0522d307c738ef352aca2adf0728e83205ff100136cd1d0d29d719f93316fbcd39112b403dffdcce262dfe2835fc22130013e6d8fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01c53fc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82537ce37e623dd2323e1143f13f7d6ffc7df0ad501d61e011416220936213fc029c9dd1c3e2537e3fc21f1e1f1",
+          "cluster": 2,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 74,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 21.25,
+                "meanMass": 2354.9411764705883,
+                "speed": 1.013574165681343,
+                "mass": 80209.75,
+                "recovery": 0.3251023138779715,
+                "reproduction": 42.25,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 3,
+          "genomeHex": "0014003c000000000000000000000000000000000000ec00000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007ff18100000000000000186e0000000000000000000000f2000000000000000000000001000000000000000000e9000000000000000000000000000000000000e82846000000000c",
+          "cluster": 1,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 118,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 12.75,
+                "meanMass": 3186.176470588235,
+                "speed": 0.17732367623488465,
+                "mass": 78899.25,
+                "recovery": 0.5958072609135565,
+                "reproduction": 30.25,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 4,
+          "genomeHex": "0012002a00000000e5f2e3edca122324e13530fcf123192fef1c11132a31c3e0cfe80d3836d812da32f9333cc73bfae8fbf719daf4c440ffc9ec383ecb1235dd0adc26f10ee0c915cb2b16cb0ddad6f73b1ed5c1daca10fac92611fd362111d4eb2f0ed50fcef104e337ef0adee9fd25c5cbe93e3f2624ccdbd21dd2f2f80325cedb2dddd4f6402edee12d2708f42af01bfcf20fe4c7093bdce6f90f36172bc22b05da29d62f32c6",
+          "cluster": 6,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 139,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 9.75,
+                "meanMass": 3591.6666666666665,
+                "speed": 0.1709406892982349,
+                "mass": 37777.5,
+                "recovery": 3.667661010318353e-05,
+                "reproduction": 14.25,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 5,
+          "genomeHex": "001a0020000000003be030ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17ede7f638cde9fd200d09da304730efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700022910d436dffb211b17fadcd8cef7d11fdee0f241f2e0f90212f6340527e91a1731cecc3ada",
+          "cluster": 11,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 729,
+              "born": 209,
+              "screening": {
+                "survived": 4,
+                "recovered": 3,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 18.75,
+                "meanMass": 3265.7066666666665,
+                "speed": 0.3363691481796961,
+                "mass": 70165,
+                "recovery": 0.9291195385333675,
+                "reproduction": 60.25,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 6,
+          "genomeHex": "0014003c0000000000000000000000000000000000000000000000000000000000000000f4fd0000fc00007f0800000000007fe80000000000fd00000000000000000000000000000000000000010000000000000000000000400000000000007f008100000000000000006e000000000000000000000000000000000000000000000000000000000000000000000000000000130000000000f9000000000018e81346000000000c",
+          "cluster": 1,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 293,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 12.75,
+                "meanMass": 2159.2549019607845,
+                "speed": 0.2874924384714802,
+                "mass": 58901.75,
+                "recovery": 0.31283048361432625,
+                "reproduction": 47.25,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 7,
+          "genomeHex": "000c002500000000c5f0f6f82a112312c6d0d5011dd50728c221c7290e2930353efdd3260f353f161fce3dd127d5fc290bca3d202506fb1cc5d3eac908dbd938c1c51a0c32e605d916ef40caf8e123e739ead7efc5333100d73cdd262bc403ef2d0735282efac82dd914de23eff006f4ded72f2dc03906e7fc14c52fce35d9210b2215401aeb06381e1625f10e3a07e603c9eff708ebef38eecd2b250fc723d80fe2fb0701d6f8fc",
+          "cluster": 26,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 560,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 8.75,
+                "meanMass": 2533.714285714286,
+                "speed": 0.3052928152757519,
+                "mass": 28721.5,
+                "recovery": 0.039291687598752525,
+                "reproduction": 26.75,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 8,
+          "genomeHex": "0019002600000000fce9152e14c827d4c134c5faee351c060a3cde2c23e013fe11d9c736302bde3ecc2603dc27c4342fc8400ed9fb0425c5071512e1f5db06fd23e6c635c6c7f6d0f02c18e92f351fe2f63a1c35c4ea11d9d0ebcdecdcecd605f0fc23eae33a1208d9fb26d5031bdad03f27051ffc24c7e33bfec3c5c61aff38282eca143ada07e52fe8e8d9c0cbdafc28e437041e3a0e1011cb3bc9c4f22b1d1ed42d1930f2d8cb",
+          "cluster": 27,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 316,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4,
+                "meanMass": 3408,
+                "speed": 0.09548526432180125,
+                "mass": 14493.75,
+                "recovery": 0,
+                "reproduction": 4.75,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 9,
+          "genomeHex": "001b0026000000002f1bfefbd5163ae5faf5c2fa232c2e27d403c33b2e1d0d11cef10cff1e010be323fdf31916c43a140e3b1740273dd814bcc53b2de03dd8e026d4cac6d11f3cecc6deca09dc1bcff524c11f1c0335e6ae13c134edf0e3dc34c0363300dac2df2c23e8e4292e3af7d523e9ccd21a30f6dfc00d330f2bc10a0d111ff0f6c1192c19241ce003f925043e1efc2428fbc62634fcf81bfb09d623d9f31df11b281725e3",
+          "cluster": 31,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1890,
+              "born": 292,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 20.25,
+                "meanMass": 3007.777777777778,
+                "speed": 0.17615331408640342,
+                "mass": 83446.25,
+                "recovery": 0.5254232756738624,
+                "reproduction": 21,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 10,
+          "genomeHex": "0019002600000000fce9152e14c827d4c134c5faee351c060a3cde2c23e013fe11d9c741302bde4ecc2603dc12c4342fdd400ed9fb0425c5071512e1f5d006fd23e6c635c6c7f6d0f02c18e92f351fe2f6241c35c4f111d9d0dbcdecdcf3d605edfc23eae33a1208d9fb1ed5031bdad03f27051ff524c7e33bf6c3c5c61aff38282eca143ae107e82fe8e8d9c0cbdafc28e437041e3a0e101dcb3bc9c4f22b1d1ed42d1930f2d8cb",
+          "cluster": 27,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 569,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 2.5,
+                "meanMass": 3626.6,
+                "speed": 0.1010815933500997,
+                "mass": 9483.5,
+                "recovery": 0,
+                "reproduction": 4,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 11,
+          "genomeHex": "00160020000000003bf230ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17f6e7f638cde9fd200d09da303830efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0b16ebfe1fde2603df39f4340f32fdd4fbcf24d3f5d2fee02d0de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303ef2fc340700021810d436dffb211b17fadcd8b6f7d11fdee0f237f2e0f90212f6450527e91a1731cecc3ada",
+          "cluster": 11,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1454,
+              "born": 261,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 26.5,
+                "meanMass": 2662.9528301886794,
+                "speed": 0.35310828041884335,
+                "mass": 84640.75,
+                "recovery": 1,
+                "reproduction": 89,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        }
+      ],
+      "distinctRecalculatedClusters": 9
+    },
+    {
+      "cohort": "random-1",
+      "source": "random",
+      "founders": [
+        {
+          "slot": 0,
+          "genomeHex": "000f005800000000d001ec10ccf502fe0a00200e000fe6de02e8ee012a3204d422f91aed0aff1b2a26cdd83ce20d32d0f2fe38e71329da3512d732df35e8efeed12a21d5352023ead2c4de1a320c35d5e7f11205fe3123f1e122ef1b0df700dad9f3da07e03633263cde30f900dbc8deedec0c0d2a380a3a1319c3edda1bd4060639270d08ed17d13600f823cfc019d01620fc390ad201111f10cdc93feafa28092ff30df530f5f8",
+          "cluster": 45,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1556,
+              "born": 268,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 2,
+                "reps": 4,
+                "individuals": 3,
+                "meanMass": 3182.1666666666665,
+                "speed": 0.8832355068897184,
+                "mass": 14031.75,
+                "recovery": 0.09879206743738433,
+                "reproduction": 9,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 1,
+          "genomeHex": "000d004600000000251fe8d20ade00c1eff2f836ea29e90133380ed2c2fb09130ed8edc1d308c3cc3c1e103f34cce7d1132eedc7cef310dcfdcee5edf0c508e7c0c83e0eff34e8daca352bfae03603eac414e73f19ff25ebe9d41ffb16fb343e1000eaf1cb39d4fd0bfad20dd1dfc3da233f241bdd3718f617defa1ec3f12418361240e3d4f526f4151b24fbec1ec8d10e0fc2e1d1e7053209c9da3c0ac62a19d60a323d27f92a16",
+          "cluster": 58,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1822,
+              "born": 287,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 5.25,
+                "meanMass": 1908.4285714285713,
+                "speed": 0.9337938967556336,
+                "mass": 18552.25,
+                "recovery": 0.206386849939948,
+                "reproduction": 16,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 2,
+          "genomeHex": "0017005d00000000e904e8c70813e72feed5c1e3c1ffe5eb0309d1fde933161dc6d4dcef143c11d1073d28c03803291fcec0f51716e320fc2fefd41ed8d7e62614d735092c09db1aecd433ece825e0dec826d213e520f50fec00e4cf1e00f33cf131ebd139fc0e3e2b3d1c2628c407e4e41afc0fcac41afc07fc40fb0ef828e90f29001234cd3a0afdfc2406d7ebefd640063d38343911090aea29de0e1c2cd437db213218270f01",
+          "cluster": 56,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1550,
+              "born": 268,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 28.25,
+                "meanMass": 817.6283185840708,
+                "speed": 2.3113753228524314,
+                "mass": 89506.5,
+                "recovery": 0.9914972461236506,
+                "reproduction": 112.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 3,
+          "genomeHex": "000c003e00000000c0fd25d5d036e2da40fcf939eece35d9cf3bbfce2cf0fbddd613cf222303c4de14dfdecd1dca1b02cdbb08dde9ed1331c5d8e6dc1a24351ad1c7223b3e2c16fc3ddbdb3bd315f11cee023afc2119ea3a34c8371b091b3c0b3acdfbd8eb38ea40dd332740eb08270edb0921d42af931d506eb2205eac5f51fe83cccd7381340c830f5242901c00be0c0ea2cef25df10ff3f02d01411c215f339101e393037ffda",
+          "cluster": 29,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1674,
+              "born": 277,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 42.75,
+                "meanMass": 2126.0409356725145,
+                "speed": 0.21862722690315484,
+                "mass": 112018.75,
+                "recovery": 0.9968715821867821,
+                "reproduction": 56.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 4,
+          "genomeHex": "0013006300000000c717caeeea072929ce2b1f0b1ef9ff23063ae7f211eaea0f3eeb39ddea01e0ecf73522ca200036d01b10113f07f31fdcec0d2d32e4e4f0d234fc19c4e2ec3a17f2bf2ac61be008c93109c4e1241c26ca19290b0d37e4f3000c33d535d7fec3c8ea2f020726cffc21ccc6162f0e1b0cd018ee060422efc027dcbec7cfdd1defe5e2c3f914c829dc113233c829d017c216dcdf1efe373032e2122ef8f5d83cfd1c",
+          "cluster": 21,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1669,
+              "born": 276,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 9,
+                "meanMass": 6962.638888888889,
+                "speed": 1.92802287292794,
+                "mass": 96494.5,
+                "recovery": 1,
+                "reproduction": 32,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 5,
+          "genomeHex": "001c0041000000000a1835d8011a05173e022dec1c2310141d03e819c4f8c4f727e601ddf125e130e71fd417392d0437e60bfdf020efde27fdf0f7dd1d0bef2ee1f03df1cb0ad220c33b243c024603f327c70ae4f3ffdefe1f351318f40020f32a37250ddac4e5ded9ce3639ebfb00321ae6e6cae9ce05c7c334fb40e21fc2c11329ce0fd3f716011912d00bf51dc11f3125c9c02b20ca0f0508ed0c21ede53a0515100fd327ea03",
+          "cluster": 30,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 547,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 1,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 20.75,
+                "meanMass": 2795.722891566265,
+                "speed": 0.7086866633520528,
+                "mass": 98825.25,
+                "recovery": 0.7117653344374123,
+                "reproduction": 51.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 6,
+          "genomeHex": "0010005a00000000ca0be6402535ed171325103cdfe2ede9ce1018e72ad7fa1938030535eed1c121121631e83c1718db351e02d61c0fe5c730e7d83e03f6cfeb00331826eae21ff21639df27c803e22de109c8fed9d3143e3e340e3f370c3437d802b7002b2d3e30feedef1f0840d41ed8fc14ddedf13d2024403231d00ddcfe17fe1927fad10bc801f6283bfa1032f52ed2cfd5c505d1c814ca06f2e811e4ce0313e913030ccfe0",
+          "cluster": 15,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1174,
+              "born": 241,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 39.25,
+                "meanMass": 1738.7770700636943,
+                "speed": 1.723329978623688,
+                "mass": 118159.25,
+                "recovery": 0.9392028121881764,
+                "reproduction": 103.5,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 7,
+          "genomeHex": "000c0038000000001c3f3d2b11063efa1b28e0e3ef0029e603fcc8fbe3273d3b3efbd33d28f5351f0ac8c1db3aedc330f029c618343b2629041c3e273300df12d938281afe01e522f619d3c527d4eb0af80ac3ef11c430ce27c907e635e2373b03fd14da1ff7d4edc934dbe6c332160edbf9131c20d31c33df1de73cf92d021ac913d1fe14d3ca0933ce1ff825e8c0eae62cfe401c2dcdc8cb1a2002c43a17102409d33dd3db0513",
+          "cluster": 51,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1559,
+              "born": 268,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 25.75,
+                "meanMass": 1829.388349514563,
+                "speed": 0.8073128362035612,
+                "mass": 120350.25,
+                "recovery": 1,
+                "reproduction": 177,
+                "regenerated": 3
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 8,
+          "genomeHex": "0019004f00000000120fdbcec600db400e493fcb00e035f01b3ffc3acdf0ec3acd16ec3704c3213410ce1c0a1cdd07d7e63a180b31400a23ccdec93e3116d3fdc615fd38d90120def5f2dec4cac0d80b1cdbcc0414e9e606fa3ad131d0e3e0372a093ff5303d28c8d0f7ffc3c7e2db3e15edfb08d3c008c302130bd4210f1240d124ca2009d1ebccc8263c202bf928eb24dde3d0141d11f30f2f29eef0f8001c09402b40e6c02d19",
+          "cluster": 23,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1054,
+              "born": 233,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 39.5,
+                "meanMass": 2992.3291139240505,
+                "speed": 0.47164116515880533,
+                "mass": 139268,
+                "recovery": 0.9968074994624045,
+                "reproduction": 67.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 9,
+          "genomeHex": "00170045000000000ff1da2fd4273fdbf5dde3cadbf422f4cfe4d4d50608d2f927400ee4daf7ce31d3ebf9fcc0eec8310a38d1ebf32fe0dadf022129313bf6d9ee101bf8042629d83f26e6f8203ff20b34ffc724ecf22420fcfccff6d221e4160619cccafb16c7012c1ee7dcfc1826c8ed14d8d73915f4f12bfaf109d02afe13121437ffefcdcaf7d3131dc1cc3301eee430d6061d24f4ce0919f7e6dc28401b3848043e21dceef6",
+          "cluster": 54,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1598,
+              "born": 271,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 36,
+                "meanMass": 3214.6736111111113,
+                "speed": 0.42596624608678985,
+                "mass": 142806.75,
+                "recovery": 1,
+                "reproduction": 109.75,
+                "regenerated": 3
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 10,
+          "genomeHex": "0012002a0000000ce5f2e3fcca272324e1353104f123192fef1c110a2a31c3babbe70d2b34d812e732f9333cc73bfae8fbf719daf4c44016c9ec303ecb1d20dd0adc26f10ee0d515cb2b16cb0ddad0f7411ed5c1f1ca10fac92611fd362111d4eb350ed50fcef104e337ef0adee9fd29c5cdf63e3f2624ccdbd21dd2daf80325cedb2dd9ddf6402ed7f62d2708f42af01bfcf20ff0c7093bdcfff90f36172bcd1305da29d62f2dc6",
+          "cluster": 6,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 497,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 9.75,
+                "meanMass": 3494.076923076923,
+                "speed": 2.5210954328393376,
+                "mass": 44657.25,
+                "recovery": 0.9859892416017124,
+                "reproduction": 241.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 11,
+          "genomeHex": "000f0041000000001515010201dcc7cae82fda253104d6c0ec042122f0e511d3e0c3c1f4e7d3e0f52b3b111c19390be8dd3ef0dff40efacd1602d020ecc4fdff38f6e8dee0dd1715df2ac7ea27c6fb21383fee2bf91b140cc819c917230bf3402edd0cc219151af026c7373f02e6132f1b3e301c16ca03e0f9f3cbcaf9b537f81616f712001923080d36d4ffeadfcc0336f910cb3b07e3dcc917c6f3f73307c31912c03cd5280e00",
+          "cluster": 25,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 806,
+              "born": 215,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 44.25,
+                "meanMass": 2642.6497175141244,
+                "speed": 0.5823063504434081,
+                "mass": 145174.25,
+                "recovery": 0.9988814947201723,
+                "reproduction": 148.5,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        }
+      ],
+      "distinctRecalculatedClusters": 12
+    },
+    {
+      "cohort": "random-2",
+      "source": "random",
+      "founders": [
+        {
+          "slot": 0,
+          "genomeHex": "001a005000000000d4fdc8d0f9c0c3090935c20522e707c738e0352aca2adf0728fc3205ff100136cd1d0d29d719f9331607cd39112b403dffdcce262dfe2835fc22130013e6e3fb00c6e83037390f0dce313bcdf7e5ce0f2818cb25da01cc3fc825fad7d5253702fb152334f53f241613203e2bf926fcc7fce5c82537ce22e723dd2323e1143f13f7d304c7f70ad50bc11e011416320f36213fc029c9dd1c3e2349f7fc21f1e1f1",
+          "cluster": 2,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 388,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 26.5,
+                "meanMass": 3200.6509433962265,
+                "speed": 0.7940873431696166,
+                "mass": 128637.25,
+                "recovery": 0.9993944820948159,
+                "reproduction": 57.75,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 1,
+          "genomeHex": "001b0026000000002f1bfefbd5163ae511f5c2f1232c2e27d403c33b2e1d0d11cef10cff1e010be323fdf31916c43a140e3b1740273dd814bcc53b2de03dd8e026d4cac6d11f3cecc6deca09dc1bcff524c11f180335e6ae13c134edf0e3dc34c0363300dac2df2c23e8e4292e3af7d523e9ccd21a30f6dfc00d330f2bc10a0d111ff0f6c1192c19241ce003f925043e1efc242efbc62634fcf81bfb09d613d9f31df11b281723e3",
+          "cluster": 31,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1510,
+              "born": 265,
+              "screening": {
+                "survived": 4,
+                "recovered": 2,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 21.5,
+                "meanMass": 3045.813953488372,
+                "speed": 0.14979736511065686,
+                "mass": 87048.25,
+                "recovery": 0.7775966896069408,
+                "reproduction": 21.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 2,
+          "genomeHex": "000d006400000000dc230d30dce5e2e8cef9282c0a3c01dac10f24cdf93235e3ef3cdbc3d23b0e002c3502c9ddfc3a27ded713082909d6d8ca2af6c1e2f903d2f1f2f4d002ce1fecd620d60dc93df6ebed3037d6d1eb1c05233c18381ce3f81631d1f61f2af3fa1ef82ad8c8cc3e0528c627f7ddfeeb36f3e2fecb3d103edc0ae535242228fe37e73435160c13f3c1c80dc9f60acf3adad4dbffd42ee5c3deffc5382a3032f215c2",
+          "cluster": 14,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1522,
+              "born": 266,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 17.75,
+                "meanMass": 4462.154929577465,
+                "speed": 0.918887139764312,
+                "mass": 110411.75,
+                "recovery": 0.3915142770091903,
+                "reproduction": 27.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 3,
+          "genomeHex": "0012004c00000000f11105e6c83e02f230f0fa401bcfc3e4343424cf321e1fd0c53ef7231f0219213b3c391f20021026f5fb181bd43307072602c509fa01063c1818c8281909d21f3c1ac5dbfae7f137d02f2c22f73201d7e70520c0cef8ed25f8c40905231de20132401c3f0b1a3201efeb062f3de41b2b0f19e40e20decc28f4c3d4daddf6323901e32ecd0b2fe409f2fd152b3fd6f3c22821d5d3de00162d3adbf839f716e627",
+          "cluster": 41,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1322,
+              "born": 252,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 43.25,
+                "meanMass": 2180.393063583815,
+                "speed": 0.3331748906802741,
+                "mass": 111252,
+                "recovery": 0.9988076244784131,
+                "reproduction": 54.5,
+                "regenerated": 2
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 4,
+          "genomeHex": "001c001e00000000c01b0d3e0ac4363d2f0417cc35ee05ee19edec0be9df2ecedfe1d23df9c2d60ec203e53adbd9c70cc4c0f8df082540dc20d0c1ee103ed0d71134f5d808f70ff51c3b2cc6003bd9143afb23efd8d6352bc32219e6d7151c003e233ae6ca2df918c32403fe1f38c440cb3fcf17d90308e6032bf8c1e3f9c6dd0a06d5111d19192836fde423fe06fdc6083529ffebcbeb342c3e19eacbc2d6c1ef2b060cf1fbe8f4",
+          "cluster": 57,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1727,
+              "born": 281,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 6,
+                "meanMass": 1575.9166666666667,
+                "speed": 0.5588401610534196,
+                "mass": 30215.25,
+                "recovery": 0.00016345191209767615,
+                "reproduction": 28,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 5,
+          "genomeHex": "000f004100000000d0c603de1f3aea3b2fc8d40f09f20218091e0f0722efd636cf2dec1837dad6ddf5ce27322dd71702312b03f018132026c5cb06c3130d1de74bccdc26ea261ede09fe0507ea0f2239c7f32e3b3f36f3d62633ffc9e1cdf63cc0ef0319d4f1d2c4f53af7043cf7f7d414c32e13c4021a21fadcd0ce170130171c350033c529fbed2b323827c9c427c731e62beeeac5e7d014d91f0d33ddec093a0fe92901051a04",
+          "cluster": 10,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 674,
+              "born": 206,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4,
+                "meanMass": 4077.9375,
+                "speed": 0.9939200854090251,
+                "mass": 21919,
+                "recovery": 0.4728319879675778,
+                "reproduction": 14,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 6,
+          "genomeHex": "00160035000000000cd5fcfb082bd1e7141ce3f9c42bb32cf31cc93dcbd4c9c4f93ce2ea19cd31f8dd15da220f223bd43a232d3123df231207e0cf271811120b0e3ecde32f213315f0340e042e12dc27ca0d002206342540d4ad18102c3ee2c7c0f10e23d4e4c9fa3135cc09c10f002c0bdb09ff1adb2837c7390229013cc528ed3e11dc10dbe225f12a2dea393a2f021904c3cbfa2c16e5c929e026ebecd73e31f51b28e827d6c4",
+          "cluster": 19,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1367,
+              "born": 255,
+              "screening": {
+                "survived": 3,
+                "recovered": 3,
+                "lightDependent": 3,
+                "reps": 4,
+                "individuals": 1.5,
+                "meanMass": 290.3333333333333,
+                "speed": 1.0605365924224968,
+                "mass": 145372.25,
+                "recovery": 1,
+                "reproduction": 89.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 7,
+          "genomeHex": "00130042000000003c0d31eb15de0ed22421feffd00800dc1efc202f3b061bd021d0f9db1b12c9f522dd3c33cf252115e717c306ffdad828332ee6d72b2424fb32cd0e3704f5c71905c5170de216cddd1132f92e300b2a1b02df13f51a18e70fd325363dc8dedd3c2aed1105c8ca37323ec40b351118003801f51efbcb200a01f41ec015cd30d3c8c330f4081534e7f434d227e92c220fcce5e2fceacf0fc32beb152519df18d9db",
+          "cluster": 53,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1460,
+              "born": 262,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 20,
+                "meanMass": 1441.7625,
+                "speed": 0.7702660477133354,
+                "mass": 56069.5,
+                "recovery": 0.5712947367645702,
+                "reproduction": 70.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 8,
+          "genomeHex": "001a005b00000000d70f1809e7212bcbcaf6e2decb40c5d211d4f8d730ce2011f3ee09d5cff3d413c922cfca31ebd5233b092bc4d8e905f1d7f93728f7dfcbc50ae7323ce133d8fac101f6c5dbdec20fdb0b2c013336e7d91435cdd30cd018fbeadf123d28d51625f1edd2fac3c70a2339daf339fac10ad80b16f82d013ee130d0da36d6300bc53df6d5e4001bf716180ff2e8fdf02dc00b39e5c0280621f630fedd21f7e3fec8d8",
+          "cluster": 48,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1484,
+              "born": 263,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4.75,
+                "meanMass": 3421.2631578947367,
+                "speed": 1.1624542353180958,
+                "mass": 23121,
+                "recovery": 0.61084666332941,
+                "reproduction": 17,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 9,
+          "genomeHex": "000f001400000000302728e6d82a14c7f201dd07dabed5341a3ef0dc1c05e23e25dc0c0b17f0c21de4f014e4ebeb16273222f8db2427fccffcd5d6e5f6ea192d1134dc21f2fbd4402b01e0f4e7c40e0404cf1d19c2e5c71ee3f33aede824e52cebe93ec3e5cd2fd8c7ffff18c31fc8152dc7e6f5f7c0361ed8c8c2f42ce41722c93cc33de4d2ffe809f204c8d23fe1c5201a1338f62efbec272e0cec1a032f35fd36e51fc3e22803",
+          "cluster": 12,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 16,
+              "born": 88,
+              "screening": {
+                "survived": 2,
+                "recovered": 2,
+                "lightDependent": 2,
+                "reps": 4,
+                "individuals": 0.75,
+                "meanMass": 466,
+                "speed": 0.8976307728832775,
+                "mass": 3091.5,
+                "recovery": 1,
+                "reproduction": 12.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 10,
+          "genomeHex": "0011003b00000000e519010b3436eddcfbcac409ea1bfa1715d9cb29f1e6f8e1d0edeacde9d0c7d6360e30c0ce1cfccfc00bc608d7212c39cfe1c8e2fed6c2f136f8cde236102bde232437e1092e3c1edb07db19c31b3edf24e709110302dde3e4c1d940fb3f28e9f9e0fec2e2e1e11cd615ccef003bc2d3eb2bca3d090833cfd2ff17db1e09fdcdc82e122e1111fb2fdc3bc838ddd728e1e53b3dd5f4f8d40dfb402aee1bcd30d7",
+          "cluster": 32,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1611,
+              "born": 272,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 11.5,
+                "meanMass": 1378.3478260869565,
+                "speed": 0.6024249198781899,
+                "mass": 34018.5,
+                "recovery": 4.2487296298578604e-05,
+                "reproduction": 52.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 11,
+          "genomeHex": "001900610000000010f73b26db2ee2ffdf24053e2b0de2d1efe62302c1e6110911caf003142237ed370425ff001c32fa260523c6ecf3291f261232fb3922152dd72031fdd9d8dd01d72ad61c3f2bfef31de31cd515d01f30300f35f3fa0c2feafbcf21e2a9e61225361def17ef37c720da1c1d3dc23724fe0cc2ec00fedbd02e3cdbc93304cd13c4c2d3033a061ee4d80600c7cf1f08343832c6150802f2d239e232c13a1933ba3a",
+          "cluster": 3,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 728,
+              "born": 209,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 13.5,
+                "meanMass": 1949.4259259259259,
+                "speed": 2.187522463527626,
+                "mass": 74153.75,
+                "recovery": 0.9953983545714458,
+                "reproduction": 83,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        }
+      ],
+      "distinctRecalculatedClusters": 12
+    },
+    {
+      "cohort": "random-3",
+      "source": "random",
+      "founders": [
+        {
+          "slot": 0,
+          "genomeHex": "000d0055000000003407d4190601d8c3e0cd1ffaf9050efde235c418cee5e203d1f1e9c63800d81720ee03efc820192503f60dde3131eec2d920dc1a2740e51be90efbd91531f6cad41fe8fdfa3dd5050a110ac3ef04f51dc31ecef8d6e9d014dbfe28052c3a05c0232417cf07c5f0d0c31aca31353c132d2a00120216160810e500ffdecc1540c9c3d429fc3c1a3136d6f426c4e0313dc427ee193f1421182b1ed5293bc8ddc102",
+          "cluster": 17,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1063,
+              "born": 233,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 34,
+                "meanMass": 1252.264705882353,
+                "speed": 2.783705608352897,
+                "mass": 92701.75,
+                "recovery": 1,
+                "reproduction": 101,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 1,
+          "genomeHex": "000f00520000000028c4073c3efd2fc9fc072621e9c4e62febe51def3f1efc03e8d3dc21f7011ddd12dde3ed1cda24dce530dc23be092214e0d8d3d235010024f3efe8c432301fef26e4c0e2e7edf1d73d3827f904191ff8c5f8d22bf3c43fccc7e12a07e90aedd004ecef12d439cb3404330ef216daee3712e6f01c18f4e339c30a3c0d242f38fbe009391d3cea0ff0f0282bdc3119f43010d3e5d8facd222f01c1e53c1c2113f2",
+          "cluster": 22,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 914,
+              "born": 222,
+              "screening": {
+                "survived": 2,
+                "recovered": 2,
+                "lightDependent": 2,
+                "reps": 4,
+                "individuals": 5.25,
+                "meanMass": 259.23809523809524,
+                "speed": 2.2658570545187127,
+                "mass": 89570.25,
+                "recovery": 1,
+                "reproduction": 81,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 2,
+          "genomeHex": "0019004f00000000120fdbcec600db400e3e3fcb00e035f01b3ffc3acdf0ec3acd0eec3704c3213410ce1c0a1cdd07d7e63a180b31400a23ccdec93e3116d3fdc615fd38d90120def5f2dec4cac0d80b1cdbcc0414e9e606fa3ad131d0e3e0372a093ff5303d28c8d0f7ffc3c7e2db3e15ddfc08d3c008c302130bd4210f1240d124ca2009d1ebccc8263c202bf928eb24dde3d0141d11f30f2f29ee08f8001c09402b40e6c02d19",
+          "cluster": 23,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 679,
+              "born": 206,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 41.75,
+                "meanMass": 2797.8323353293413,
+                "speed": 0.4093853924647463,
+                "mass": 132836,
+                "recovery": 0.9999530170566877,
+                "reproduction": 60.25,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 3,
+          "genomeHex": "000e001d00000000f0353223d418f5e0ccecfa2704f92c381b04ccdc0bde14db2a3e3fe5dbd33d00dd36340bfe181fe4cc2d01f4eefb2d4e2500e4c33910cb2a231bc639c32a140907d2f9d2cff8fee4fa18eace0ce9013804de20343f35283f32c4d83928dcf4ead9defdf3ee1328402129182b3832d8d52a1d1c1ae8c5f83cd3d8fd21e1eaf3e8d9c0ed27e33540d9cb3d07dd0c18fdc6ea16dd3012f009c4040f3d13df1def40",
+          "cluster": 24,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1512,
+              "born": 265,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 42.25,
+                "meanMass": 1798.4970414201184,
+                "speed": 0.23206981894666978,
+                "mass": 86130.75,
+                "recovery": 0.9123281086775559,
+                "reproduction": 56.5,
+                "regenerated": 2
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 4,
+          "genomeHex": "0011004500000000d22b32cc0be8d610cfc4051e002718c22f3101132003cb34ce02cfc8f825ddc640e91cdeeb1a15de0538edf013ecc41c19e41dc4cd31ecdc20cfe1dbc303e413023c31fc2b3f0dc21fe0dbd525decd3c32ceda0702fcf4400104c6f726e2f0c0e0ecdb04223d3d3827123237232f3c23c91dfe2417cdea16daedf7edcce2f4cde6122d1339ede4d618e9321bd502361a11e9ff2b2ad420eae53bf335c8d4e4df",
+          "cluster": 47,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1486,
+              "born": 263,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 43,
+                "meanMass": 2957.75,
+                "speed": 0.3146951096489067,
+                "mass": 147208.75,
+                "recovery": 0.995405674205879,
+                "reproduction": 83.75,
+                "regenerated": 2
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 5,
+          "genomeHex": "001c001e00000000c01b0d3e0ac4363d2f0417cc35ee05ee19edec0be9df2ecedfe1d23df9c2d60ec203e53adbd9c70cc4c0f8df082540dc20d0c1ee103ed0d71134f5d808f70ff51c3b2cc6003bd9143afb23efd8d6352bc32219e6d7151c003e233ae6ca2df918c32403fe1f38c440cb3fcf17d90308e6032bf8c1e3f9c6dd0a06d5111d19192836fde423fe06fdc6083529ffebcbeb342c3e19eacbc2d6c1ef2b060cf1fbe8f4",
+          "cluster": 57,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1727,
+              "born": 281,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 6,
+                "meanMass": 1575.9166666666667,
+                "speed": 0.5588401610534196,
+                "mass": 30215.25,
+                "recovery": 0.00016345191209767615,
+                "reproduction": 28,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 6,
+          "genomeHex": "0014003300000000382ec6eae8dee01b1526311ade25e30b0f370f01f8de231efe0ed9f6d6c7dee81a003d08d01c3adf1718f827c92afce7f0c1ce2df20f0624f91c133bd43df5f2e2e9f9e84bd0c3d920f13919111a023d05c5f935c80a23ce1efefb3ae839d7cef4d8472e143930d421ee12d2dd1fe31fe2f711f312171714f6ec3ed309ef3a24fada352423f3ed382efcca10c7f704cec3dd2531c92b1713d603150d0cdd051e",
+          "cluster": 16,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 775,
+              "born": 213,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 47.75,
+                "meanMass": 993,
+                "speed": 0.33211857335518463,
+                "mass": 78247.25,
+                "recovery": 0.9994946091644205,
+                "reproduction": 73.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 7,
+          "genomeHex": "000d004600000000251fe8d20ade00c1eff2f836ea29e90133380ed2c2fb09130ec0edc1d308c3cc3c1e103f34cce7d1132eedc7cef310dcfdcee5edf0c508e7c0c83e0eff34e8daca352bfae03603eac418e73719ff25ebe9d41ffb16fb343e1000eaf2cb39d4fd0bfad20dd1dfc3da233f241bdd3718f617defa1ec3f12418361240e3d4f526f5151b24fbec1ec8d10e0fc2e1d1e7053209c9da3c0ac62a19d60a323d27f92a16",
+          "cluster": 58,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1907,
+              "born": 294,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 5,
+                "meanMass": 1390.05,
+                "speed": 1.0037602606497438,
+                "mass": 14608.75,
+                "recovery": 0.1140899173687578,
+                "reproduction": 14.25,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 8,
+          "genomeHex": "0011005300000000f5e31ddbd62afafb0b0dc5eadeeadf2a22b5133d08f4d305353033c4df0eeb0520381ad72de5e5420bf3e7303024c1ef2f3b1e2f041d291d27cb0b233eed2fed0a102925dedf072904372b0ac6c6ee29fc33173d31d8cde7c61ce5340f163014281aeeee3a26d8e32e232d0907fc03c6e1f91306cd0b25d7e81ec5ecd01af71e2f1a0ad03716dccacc08fdefdc38c6c9ccc00ae11ceefa2422240c0ae1df24dc",
+          "cluster": 36,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1273,
+              "born": 248,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 40.75,
+                "meanMass": 2934.159509202454,
+                "speed": 0.9702394071755045,
+                "mass": 145224.5,
+                "recovery": 0.9997300680159827,
+                "reproduction": 67.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 9,
+          "genomeHex": "00120040000000002a2ee5d4dad53f2bfd0b15c0f4edc6c6e1ea3ff4cd40212d023fe7faf81cc104f1d6d2e92fd21620d2db0c16003909d3dac2fadc22eae016c3eccd34d8f410d70f2513c5ec1620db25f5d20a18cf28c423231bfac9e736cbc2d801dd0acad73505c2ecfc2201d01d1f390c2ef334c3302e08133deadd0d20fe340af2160d3cf7070ccc1ffa23260bf82326c33a2cefcb3ff420d6f7f419e73414c53122e50e0a",
+          "cluster": 59,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1903,
+              "born": 293,
+              "screening": {
+                "survived": 2,
+                "recovered": 0,
+                "lightDependent": 2,
+                "reps": 4,
+                "individuals": 2,
+                "meanMass": 726.125,
+                "speed": 0.8901717222129616,
+                "mass": 7934,
+                "recovery": 0,
+                "reproduction": 36.75,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 10,
+          "genomeHex": "001c005d00000000e21be240f90733150bd90715ecd2faf5340fc02e07dccc14c40ced193bda13dd3b2ec3f633cc05e809dc0cf937ec37f3dffd34d11e33e5e7ecd2f30eefcbcf3e3a12f40af6c2051ef837491906d1cec6f600160ed90427f7e8ee0609be1bc13936f7f3403313cac92936c30e16c4eec21fe81322fb04cf0816c603cee5012afc1e09ff25fa00c9133accc412f628c3c20cfd31dacc1539023206c63bd5d5c51a",
+          "cluster": 35,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1165,
+              "born": 240,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 8.75,
+                "meanMass": 924.5428571428571,
+                "speed": 1.9948999197266624,
+                "mass": 74465.75,
+                "recovery": 0.9956430494538999,
+                "reproduction": 65.5,
+                "regenerated": 2
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 11,
+          "genomeHex": "001c0041000000000a1835d8011a05173e0223ec1c2310141d03e819c4f898f73ee601ddf125db30e71fd417392d0437e60bfdf020efde27fdf0f7d61d0bef2ee1f03df1cb0acc20c33b243c024603f33ac70acef3ffdefe1f2b1318f40020f32a37250ddac4e5ded9ce3639ebfb00321af6e6cae9ce05c7c334fb40e212c2c11329ce0fd3f716011912d00bf51dc11f3125c9c03720ca0f0508ed1321ede53a0515100fd327ea03",
+          "cluster": 30,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1655,
+              "born": 275,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 28.5,
+                "meanMass": 3831.9298245614036,
+                "speed": 0.38777951606446814,
+                "mass": 138837.25,
+                "recovery": 1,
+                "reproduction": 51.75,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        }
+      ],
+      "distinctRecalculatedClusters": 12
+    },
+    {
+      "cohort": "random-4",
+      "source": "random",
+      "founders": [
+        {
+          "slot": 0,
+          "genomeHex": "000d0055000000003407d4190601d8bae0cd1ffaf9050e11e235c418cee5e203d1f1e9c63800d817150103efbe201f2503f60dde3131eec2d908dc1a274ae51bdf20fbd91531f6cad41fe8fdfa41d5070a110ac3ef04051dc31ecef8d6e9d014dbfe28052c3a05c0232417cf07c5f0d0c31aca31353c132d2a0028021616f810e500ffdecc1540c9c3d429183c1a3136d5f426c4e0313dc427ee193f1421182b1ed5293bc8ddad02",
+          "cluster": 17,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1843,
+              "born": 289,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 30.25,
+                "meanMass": 1412.2314049586778,
+                "speed": 2.834430794259837,
+                "mass": 93419.5,
+                "recovery": 1,
+                "reproduction": 91.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 1,
+          "genomeHex": "00160055000000002f2de7d500e63b12ead72effc1d3bfece5fb26c616c90f36f539e432efbd22dc34f0dd0f370235e31f2d1f32d2f60c3a37cecc153c1f022f170ef5e431fd362be9e01123d5000ce1f7d527c60fc9fa28dd3bd70825c024fc32303930ed23dbe540d70f202dc7320734373b3504e928363cf3cf2ecaef241ee7ed0a08e3fd2140250ee0260036f3c4ddfbc4c7ecdce3fa07e9dcead1d0113d24cc0e0cf6f90e05",
+          "cluster": 39,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1802,
+              "born": 286,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 2.75,
+                "meanMass": 4865.636363636364,
+                "speed": 0.5956854757605524,
+                "mass": 16598.25,
+                "recovery": 0.0007136650596350841,
+                "reproduction": 9.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 2,
+          "genomeHex": "000c001c00000000e13cf7ca0eeaf015ff22e0d33cd031f2153d2f3cece91005d6f3003a02cd13c22a34312233d4f0163c25e3dbd314202424dfdbe306c0f6f6f000ffe13c2ac1d7df2938f1eedbf3dc3a2d37d5c03702c20d300d09d2ce3fcbc227d5f0e533fdd3c10ff21817e73e21253ec43d3301cff3030d2ef6241e12d83cca181337dc10c305323203eedecfde0ef20fe20dfd370e0a2803fd0702d00e2d310c061cdffdde",
+          "cluster": 44,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1089,
+              "born": 235,
+              "screening": {
+                "survived": 1,
+                "recovered": 1,
+                "lightDependent": 1,
+                "reps": 4,
+                "individuals": 1.25,
+                "meanMass": 1122.2,
+                "speed": 1.0753788240173943,
+                "mass": 8920.5,
+                "recovery": 1,
+                "reproduction": 87,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 3,
+          "genomeHex": "000c006300000000e7311ae71a0436dcd8092f3ec20b26f63bdd3e343cd00528c7d5e627f13fdc16c630e6f0f00617202cf3db0c24cad1dd3f143b1f1fe526013edcdae83a1df9caf50df6314025d90820dc193a30e22339e51a40ca36c30929d715efc50ed6e731f9c902cd2506d6dc3f03dbca3df71de03debe431d7e240f638233409061c110b35e303efd6ff3e17dcd53010120e2bd8f3dd3419c51605f50edaf527f9eb13db",
+          "cluster": 40,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 855,
+              "born": 218,
+              "screening": {
+                "survived": 4,
+                "recovered": 2,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 10,
+                "meanMass": 3893.8,
+                "speed": 2.2455085842019584,
+                "mass": 65990.75,
+                "recovery": 0.9098165760038569,
+                "reproduction": 52,
+                "regenerated": 3
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 4,
+          "genomeHex": "001b005400000000e7f2f5c12c3f05e8cfd1db09e7c0fb17142e0339c5d3e2fe0b14c9c6f83b2dc6fe013f17ce3909cee6111207d924e9f10fda0d18d119dcead233132f0ddfc8f20824ca02fd02c6093e3e082108e3f2050a360318c9dddde60ff90dcc3be6eae8f2f8ebd53112f426ca0e2b3ac0f7e8041f1127fc06dfe42cc429c31ee308cffedffd1a36cb031d17fdf9fe07cbe739123afec32e06c1ff0230c1c227ff0b0ffe",
+          "cluster": 42,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 876,
+              "born": 220,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 3.25,
+                "meanMass": 5558.384615384615,
+                "speed": 0.6531754451154356,
+                "mass": 20552,
+                "recovery": 1.0433185877639596e-05,
+                "reproduction": 13,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 5,
+          "genomeHex": "0016006400000012f4d606ca142f22120eddc02f26fc0e1f1924d63f11200400dc38e3e70bfa3731c4e3f52717f430ec3afdce33e3390d3824f4021a37f0f53b15d2c02cd52c3039fbe5360afb2cdb37de360046c2c207d7eed1ecf20beac3d61fcff4183d2ef722131316d015e30c233000e521fdd505e2dc17e6362b181d0b0b190c2bd22f0bc221c827d4171bd2fde710e3d7e107023f0b19f2df180dc2223606ef38cfd1c703",
+          "cluster": 7,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 965,
+              "born": 226,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 5.5,
+                "meanMass": 4276.045454545455,
+                "speed": 2.2147143292153424,
+                "mass": 44199,
+                "recovery": 0.9998169676531925,
+                "reproduction": 20,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 6,
+          "genomeHex": "000f004100000000d0c603de1f3aea3b2fc8d40f09f20218091e0f0722efd636cf2dec1837dad6ddf5ce27322dd71702312203f007132026c5cb06c3130d1de74bccdc13f0261ede09fe0507ea0f2239c7f32e3b3f36f3d62633ffc9e1cdf63cc0ef0319d4f1d2c4f53af7043cf7f7d414c32e13c4021a21fadcd0ce170130171c350033c529fbed2b32382dc9c427c73ae62beeeac5e7d014d91f0d33ddec093a0fe92901051a04",
+          "cluster": 10,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1162,
+              "born": 240,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 6.75,
+                "meanMass": 2467.4814814814813,
+                "speed": 1.3788988754559648,
+                "mass": 25972,
+                "recovery": 0.9751432589269001,
+                "reproduction": 24.5,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 7,
+          "genomeHex": "001c001e00000000c01b0d3e0ac4363d2f0417cc35ee05ee19edec0be9df2ecedfe1d23df9c2d60ed603e53adbd9c70cc4c0f8df082540dc20d8c1ee103ed0d71134f5d808df0ff51c3b2cc6003bd9143afb23efd8d6352bc32208e6d7151c003e233ae6ca2df918c32403fe1f38c440cb3fcf17d90308e6032bf8c1e3f9c6dd0a06d5111d19192836fde423fe06fdc6083529ffebcbeb342c3e19eacbc2d6c1ef2b060cf1fbe8f4",
+          "cluster": 57,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1965,
+              "born": 298,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 7.75,
+                "meanMass": 1409.0967741935483,
+                "speed": 0.5355600441223204,
+                "mass": 29451,
+                "recovery": 0.00038827150533287595,
+                "reproduction": 31.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 8,
+          "genomeHex": "00170045000000000ff1da2fd4273fdbf5dde3cadbf422f4cfe4d4d50608d2f927400ee4daf7ce31d3ebf9fcc0eec8310a38d1ebf32fe0dadf022129313bf6d9ee101bf8042629d83f26e6f8203ff20b34ffc724ecf22420fcfccff6d221e4160619b7cafb16c7012c1ee7dcfc1826c8ed14d8d73915f4f12bfaf109d02afe13121437ffefcdcaf7d3131ec1cc3301eee430d6061d24f4ce0919f7e6dc28401b3848043e21dceef6",
+          "cluster": 54,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1705,
+              "born": 279,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 43.25,
+                "meanMass": 2978.127167630058,
+                "speed": 0.45562288055915756,
+                "mass": 147426.25,
+                "recovery": 0.9960169324510038,
+                "reproduction": 129.25,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 9,
+          "genomeHex": "0010002d000000003d2b38371ffc2404c7d9fcff07f9ff29112aef40f310f004ecfd3df515ec131fdd302fc6d00431fed43b1ec707edc6fd1606fbe7f2e2ed29040cffd51209c7f90506392cc23826d328c821fbe6f0eef11817f339d9e3332209eefa40dce1063d03ef3d26f5ca221e1c3922311718fafd3430f6d93eed190002fa3d1828052a07e60d1ecde026d10e1fe831d3f0f1c5c23f27fde9e11dee05e1dffe37cada15c9",
+          "cluster": 61,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1985,
+              "born": 299,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 9.75,
+                "meanMass": 1717.6923076923076,
+                "speed": 0.2639731419078779,
+                "mass": 40157,
+                "recovery": 0.36834834033650876,
+                "reproduction": 14.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 10,
+          "genomeHex": "000f005800000000d001ec10ccf502fe0a00200e000fe6de02e8ee012a3204d422f91aedfbff1b2a26cdd83ce20d32d0f2fe38e71329da3512d732df35e8efeed12a21d5352023ead2c4de1a320c35d5e7f11205fe3123f1e122ef1b0df700dad9f3da07e03633263cde30f900dbc8deedec0c0d2a380a3a1319c3fdda1bd4060639270d08ed17d13600f838cfc019d016200c390ad201111f10cdc93feafa28092ff30df518f5f8",
+          "cluster": 45,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1813,
+              "born": 287,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 3,
+                "reps": 4,
+                "individuals": 2.5,
+                "meanMass": 3351.7,
+                "speed": 1.2205765153349368,
+                "mass": 13773.5,
+                "recovery": 0.19387290590623935,
+                "reproduction": 10.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 11,
+          "genomeHex": "000e001d00000000f0353223d418f5e0ccdcfa2704f92c381b04ccdc0bde14db2a3e3fe5dbd33d00dd36340bfe181fe4cc2d01f4eefb2d4e2500e4c33910cb2a231bc639c32a140907d2f9d2cff8fee4fa18eace0ce9013804de20343f35283f32c4d83928dcf4ead9defdf3ee13284021293b2b3832d8d52a1d1c1ae8c5f83cd3d8fd21e1eaf3e8d9c0ed30e33540d4cb3d07dd0c18fdc6ea16dd3012f009c4040f3d13df1def40",
+          "cluster": 24,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 328,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 2,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 43.75,
+                "meanMass": 1490.2285714285715,
+                "speed": 0.24109761062136312,
+                "mass": 77689,
+                "recovery": 0.8969798605606507,
+                "reproduction": 57.75,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        }
+      ],
+      "distinctRecalculatedClusters": 12
+    },
+    {
+      "cohort": "random-5",
+      "source": "random",
+      "founders": [
+        {
+          "slot": 0,
+          "genomeHex": "0010005a00000000ca0be6402535ed171325103cdfe2ede9ce1018e72ad7fa1938030535eed1c121121631e83c1718db351e02d61c0fe5c730e7d83e03f6cfeb00331826eae21ff21639df27c803e22de109c8fed9d3143e3e340e31370c3437d802b7002b2d3e30feedef1f0840d41ed8fc14ddedf13d2024403231d00ddcfe17fe1927fad10bc801f6283bfa1032f52ed2cfd5c505d1c814ca06f2e811e4ce0313e913030ccfe0",
+          "cluster": 15,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1718,
+              "born": 280,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 25,
+                "meanMass": 1859.87,
+                "speed": 2.0100088792147424,
+                "mass": 96799.75,
+                "recovery": 0.936099671820857,
+                "reproduction": 56,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 1,
+          "genomeHex": "001600520000000007c92c22ea3ff0fcf9f611d6d038003c06c7090a3dce36c0dff8e0c42420ff2e13fafed9d4f9c7cc2bfa0b0ef4e93bffcc3af23ce71c36ead6baffe6e2c108e7d135cb14c02e0d261215fdff06093910cc2ac8343bcfdf1733c2f4eae32b2710ffd2e71b39c821efce03370a32253ddae93e2f1f17c226c800032bcc091604cb39f3c53c3e08180af1f70ac1f72331cece1e2f27c1c111ef17c4f7281e3dcd16",
+          "cluster": 13,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 452,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 14.5,
+                "meanMass": 2833.448275862069,
+                "speed": 0.7442636433616853,
+                "mass": 61412.25,
+                "recovery": 0.3544376043281393,
+                "reproduction": 22.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 2,
+          "genomeHex": "0011003b00000000e519010b3436eddcfbcac409ea1bfa1715d9cb29f1e6f8e1d0edeacde9d0c7d6360e30c0ce1cfccfc00bc608d7212c39cfe1dfe2fed6c2f136f8cde236102bde232437e1092e3c1edb07db19c31b3edf24e709110302c5e3e4c1d940fb3f28e9f9e0fec2e2e1e11cd615ccef003bc2d3eb2bca3d090833cfd2ff17db1e09fdcdc82e122e1111fb23dc3bc838ddd728e1e53b3dd5f4f8d402fb402aee1bcd30d7",
+          "cluster": 32,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 784,
+              "born": 213,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4,
+                "meanMass": 2101,
+                "speed": 0.5022229157381045,
+                "mass": 17254.25,
+                "recovery": 0,
+                "reproduction": 24.75,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 3,
+          "genomeHex": "0014003c0000000000000000000000000000000000000000000000000000000000000000000000000000167f000b000000007f00000000000000000000000000000000000000000000000000000000000000000000000000002a0000000000007f008100000000000000006e00000000000000000000000000f90000000013000000180000000000000000000000000000000000000000000000000000000000e82846000000000c",
+          "cluster": 1,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 616,
+              "born": 201,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 48,
+                "meanMass": 2534.40625,
+                "speed": 0.22946724869983817,
+                "mass": 136843.75,
+                "recovery": 0.9785623537998105,
+                "reproduction": 86.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 4,
+          "genomeHex": "001b005400000000e7f2f5bb2c5405e8cfd1db09e7c0fb10222e0339c5d3e2fe0b14b5cff83b2dc6fe013f17ce3909cee6111207d924e9f10fda0d18d119dcead233132f0ddfb4f20824ca02fd02c6093e3e082108e3f2050a360318c9dddde60ff80dcc3be6eae8f2f8ebd53112f426ca0e2b3ac0f7e8041f1127fc06dfe42cc429c31ee308cffedffd1a36cb031d17fdf9fe07cbe739123afec32e06c1ff0230bdc236ff0b0ffe",
+          "cluster": 42,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1950,
+              "born": 297,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 7.5,
+                "meanMass": 2785.366666666667,
+                "speed": 1.2032203765683747,
+                "mass": 29508.25,
+                "recovery": 5.005089684868783e-05,
+                "reproduction": 19.75,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 5,
+          "genomeHex": "001a003b00000000231ff10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8ead0cb1a243d17c8082e1de0003619313d030e0a12c3c807c93a4ecbdaed3c0c40c040301f21df16d7e90ffcc2e1c320263b20c839db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5304d26c4f4d0dd06c919d00d300a0d16c108272d2ad01611c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec621",
+          "cluster": 4,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 492,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 36.5,
+                "meanMass": 2970.376712328767,
+                "speed": 0.618555768155313,
+                "mass": 131499,
+                "recovery": 0.9938489353722482,
+                "reproduction": 72.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 6,
+          "genomeHex": "000e004000000000e9f405fd2e1d280bf6c0d1de1a2819d903d02f1d36d8d6d4f4dc1bc2400cc933fef01639de0c1f0ffe0e1717e6f52df736250bfc223e3ac70cdf3e14e4de382139c022e03ecadb2eefd9201d04df33f9d6def2c929c9dd0ec734da23281622da0f10f22430f1ecf6251bd5c93ecae80b04faefffe607e62600061503dbc7c3302711c5cb0f27c0d52dd9df240ccb220311ee13dac41419fff90e0b2f1cce19d6",
+          "cluster": 52,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1686,
+              "born": 278,
+              "screening": {
+                "survived": 2,
+                "recovered": 2,
+                "lightDependent": 2,
+                "reps": 4,
+                "individuals": 1,
+                "meanMass": 2277,
+                "speed": 2.019462807084156,
+                "mass": 3693.75,
+                "recovery": 1,
+                "reproduction": 26.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 7,
+          "genomeHex": "001c001e00000000c01b0d3e0ac4363d2f0417cc35ee05ee19edec0be9df2ecedfe1d23df9c2d60ec203e53adbd9c70cc4c0f8df082540dc20d0c1ee103ed0d71134f5d808f70ff51c3b2cc6003bd9143afb23efd8d6352bc32219e6d7151c003e233ae6ca2df918c32403fe1f38c440cb3fcf17d90308e6032bf8c1e3f9c6dd0a06d5111d19192836fde423fe06fdc6083529ffebcbeb342c3e19eacbc2d6c1ef2b060cf1fbe8f4",
+          "cluster": 57,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1727,
+              "born": 281,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 6,
+                "meanMass": 1575.9166666666667,
+                "speed": 0.5588401610534196,
+                "mass": 30215.25,
+                "recovery": 0.00016345191209767615,
+                "reproduction": 28,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 8,
+          "genomeHex": "000d0055000000003407d4190601d8c3e0cd1ffaf9050efde235c418cee5e203d1f1e9c63800d81715ee03efc820192503f60dde3131eec2d920dc1a2740e51bdf0efbd91531f6cad41fe8fdfa3dd5050a110ac3ef04051dc31ecef8d6e9d014dbfe28052c3a05c0232417cf07c5f0d0c31aca31353c132d2a0012021616f810e500ffdecc1540c9c3d429fc3c1a3136d6f426c4e0313dc427ee193f1421182b1ed5293bc8ddc102",
+          "cluster": 17,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 28,
+              "born": 139,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 30,
+                "meanMass": 1264.2166666666667,
+                "speed": 2.9759456413031335,
+                "mass": 91579.75,
+                "recovery": 1,
+                "reproduction": 94.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 9,
+          "genomeHex": "000f005800000000d001ec10ccf502fe0a00200e000fe6de02e8ee012a3204d422f91aedfbff1b2a26cdd83ce20d32d0f2fe38e71329da3512d732df35e8efeed12a21d5352023ead2c4de1a320c35d5e7f11205fe3123f1e122ef1b0df700dad9f3da07e03633263cde30f900dbc8deedec0c0d2a380a3a1319c3fdda1bd4060639270d08ed17d13600f838cfc019d016200c390ad201111f10cdc93feafa28092ff30df518f5f8",
+          "cluster": 45,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1813,
+              "born": 287,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 3,
+                "reps": 4,
+                "individuals": 2.5,
+                "meanMass": 3351.7,
+                "speed": 1.2205765153349368,
+                "mass": 13773.5,
+                "recovery": 0.19387290590623935,
+                "reproduction": 10.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 10,
+          "genomeHex": "000d004600000000251fe8d20ade00c1eff2f836ea29e90133380ed2c2fb09130ec0edc1d308c3cc3c1e103f34cce7d1132eedc7cef310dcfdcee5edf0c508e7c0c83e0eff34e8daca352bfae03603eac418e73f19ff25ebe9d41ffb16fb343e1000eaf2cb39d4fd0bfad20dd1dfc3da233f241bdd3718f617defa1ec3f12418361240e3d4f526f4151b24fbec1ec8d10e0fc2e1d1e7053209c9da3c0ac62a19d60a323d27f92a16",
+          "cluster": 58,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1870,
+              "born": 291,
+              "screening": {
+                "survived": 4,
+                "recovered": 1,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4.25,
+                "meanMass": 1785.235294117647,
+                "speed": 1.1113286008017216,
+                "mass": 16753.75,
+                "recovery": 0.4597531752480623,
+                "reproduction": 15.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 11,
+          "genomeHex": "0014003300000000382ec6eae8dee01b1526311ade25e30b0f370f01f8de231efe0ed9f6d6c7dee81a003d08d01c3adf1718f827c92afce7f0c1ce2df70f0624f91c133bd43df5f2e2e9f9e84bd0c3d920f13919111a023d05c5f935c80923ce1efefb3ae839d7cef4d8472e143930d4210612d2dd1fe31fe2f711ee12171714f6ec3ed309ef3a24fada352423f3ed382efcca10c7f704cec3dd2531c92b1713d603150d0cdd051e",
+          "cluster": 16,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 892,
+              "born": 221,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 46.75,
+                "meanMass": 996.7058823529412,
+                "speed": 0.32953369136360794,
+                "mass": 77999.75,
+                "recovery": 0.999817331111396,
+                "reproduction": 68.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        }
+      ],
+      "distinctRecalculatedClusters": 12
+    },
+    {
+      "cohort": "random-6",
+      "source": "random",
+      "founders": [
+        {
+          "slot": 0,
+          "genomeHex": "000c002500000000cdf0f6f82a112312c6d0d5011dd50728c221c7290e2930353efdd3260f353f161fce3dd127d5fc290bca3d203906fb1cc5c5eac908dbd938c1c51a0c32e605d916ef40caf8e123e739fbd7efd6333100c03cdd262bc403ef2d0735282efac82dd914de23f1f006f4ded72f2dc03906e7fc14c52fce35d9210b1c15401aeb06381e1625f10e3a07e603c9eff708ebef38eecd2b250fc723d80fe2fb0701d6f8fc",
+          "cluster": 26,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 302,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 9.5,
+                "meanMass": 2261,
+                "speed": 0.23075429066333292,
+                "mass": 27460,
+                "recovery": 6.394394230509153e-05,
+                "reproduction": 16.75,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 1,
+          "genomeHex": "000d00510000000031fecc15e8d3d7e31dcfd1cfc0e71cd2c73707ecde31fa16c61c0c0dc6f1e0e603ec2618e5f7c5291bf511da1e102cee1b0c0dec26d103e5cf3bfe3038e0f9222bf8ead018f8fec03dfa10330e280bf51834e8d03f1e2207d60ff3f62acdf602c7fa01f90ec43b1d3a1cce35f2c71221e3103b152c160bf2e628dfc103c9f32ed0caec0ce306f3dfc5d517f419eccde8d7f105f6c93f3f13d325f023013616fa",
+          "cluster": 34,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1144,
+              "born": 239,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 11.75,
+                "meanMass": 7428.723404255319,
+                "speed": 2.156481954140347,
+                "mass": 110506.75,
+                "recovery": 0.9999276810008949,
+                "reproduction": 63.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 2,
+          "genomeHex": "001a005000000000d0fdd0d0f9c0c3090935da0522e707c738e0352aca2adf0728fc3205ff100136cd1d0d29d719f9331607cd39112b403dffdcce262dfe2835fc22130013e6e3fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc3fc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82537ce22e723dd2323e1143f13f7d300c7f70ad50bd61e011416320936213fc029c9dd1c3e2349f7fc21f1e1f1",
+          "cluster": 2,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 189,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 26.25,
+                "meanMass": 3114.638095238095,
+                "speed": 0.7515536126368978,
+                "mass": 128087.25,
+                "recovery": 1,
+                "reproduction": 55.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 3,
+          "genomeHex": "0010005a00000000ca0be6402535ed171325103cdfe2ede9ce1018e72ad7fa1938030535eed1c121121631e83c1718db351e02d61c0fe5c721e7d83e03f6cfeb00331826eae21ff21623df27c803e22de109c8fed9d3143e3e340e3f370c3437d802b7002b2d3e30feedef1f0840d41ed8fc14ddedf13d2024403231d00ddcfe17fe192706d10bc801f6283bfa1032f52ed2cfd5c505d1c814ca06f2e811e4ce0313e913030ccfe0",
+          "cluster": 15,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 21,
+              "born": 113,
+              "screening": {
+                "survived": 4,
+                "recovered": 3,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 40.25,
+                "meanMass": 1617.670807453416,
+                "speed": 1.4630440747649793,
+                "mass": 122692.25,
+                "recovery": 0.9091798922404885,
+                "reproduction": 108,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 4,
+          "genomeHex": "000f0041000000001515010201dcc7cae82fda253106d6c0ec042122f0e511d3e0c3c0f4e7d3e0f52b3b111c19390be8dd3ef0dff40efacd1602d020ecc4fdff38f6e8dee0dd1715df2ac7ea27c6fb21383fee2bf91b140cc819c917230bf3402edd0cc219151af026c7373f02e6132f1b3e301c16ca03e0f9f3cbcaf9b537f81601f712001323080d36d4ffeadfccf236f910cb3b07e3dcc917c6f3f73307c31912c03cd5280e00",
+          "cluster": 25,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1781,
+              "born": 285,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 40.5,
+                "meanMass": 2836.8333333333335,
+                "speed": 0.5792749450213387,
+                "mass": 143737,
+                "recovery": 0.9979060067497687,
+                "reproduction": 142.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 5,
+          "genomeHex": "0014003300000000382ec6eae8dee01b1526311ade25e30b0f370f01f8de231efe0ed9f6d6dcdee81a003d08d01a3adf1718f827c92afce7f0c1ce2df70f0624f91c133bd43df5f2e2e9f9e84bd0c3d920f13919111a023d05c5f935c80923ce1efefb3ae839d7cef4d8472e143930d4210612d2dd1fe31fe2f711ee12171714f6ec3ed309ef3a24fada352423f3ed382efcca10c7f704cec3dd2531c92b1713d603150d0cdd051e",
+          "cluster": 16,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1121,
+              "born": 237,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 47.75,
+                "meanMass": 965.979057591623,
+                "speed": 0.3598311554586034,
+                "mass": 77845.75,
+                "recovery": 0.9990338798348336,
+                "reproduction": 69.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 6,
+          "genomeHex": "0019004f00000000120fdbcec600db400e3e3fcb00e035f01b3ffc3acdf0ec3acd0eec3704c3213410ce1c0a1cdd07d7e63a180b31400a23ccdec93e3116d3fdc615fd38d90120def5f2dec4cac0d80b1cdbcc0414e9e606fa3ad131d0e3e0372a093ff5303d28c8d0f7ffc3c7e2db3e15ddfc08d3c008c302130bd4210f1240d124ca2009d1ebccc8263c202bf928eb24dde3d0141d11f30f2f29ee08f8001c09402b40e6c02d19",
+          "cluster": 23,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 679,
+              "born": 206,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 41.75,
+                "meanMass": 2797.8323353293413,
+                "speed": 0.4093853924647463,
+                "mass": 132836,
+                "recovery": 0.9999530170566877,
+                "reproduction": 60.25,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 7,
+          "genomeHex": "0019003b00000000d1182e392f37e604e5d3e9c739f33f3d0e00f2070cc3d3253d3c19cf3b362e1cdb230e3529d8f2f7f9363d22d9cd280c0ed812283d2ee6d8c311c7df1321d8e4d1c90724d2cd041a1a04ca303d0840cae12220dcd8f305ddcd2837f8f42ecbd414382dcc31e6c207d138f0efeb0913c604f4e7d8ef121ff6f40ec624f320ccfe270ce8362bec03c211d1d0c9173f293ce9f713cff418c6cffd3d0826cae8c103",
+          "cluster": 38,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1301,
+              "born": 250,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 38.75,
+                "meanMass": 2898.6709677419353,
+                "speed": 0.6138550669860567,
+                "mass": 139062.25,
+                "recovery": 0.9955827860995465,
+                "reproduction": 75.5,
+                "regenerated": 2
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 8,
+          "genomeHex": "0013005a000000003cefdfca1dca3b1bcfc208c2b703e2c4ced80d0c32fdc2d2f706d31ed0ea3e223b2ae5e3cc1a363218eb29c8c800d201c7ef2ef5091edeccd11d2415f71d12fa29c20df740d13f05edee37e11ef6f5d4bbdd3dc6e8c9383ff3033fe41430012f0be81c362ee5e724d3c0e22133c516c8ede310c8e02711d6010ce4ab0aebfc29c5d4c1d7f1f03e1314d2cb24c412051824d82c38c4ddfe2adbddf73f012ac70c",
+          "cluster": 5,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 30,
+              "born": 146,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 17.5,
+                "meanMass": 1415.7571428571428,
+                "speed": 2.0151774497489376,
+                "mass": 79565,
+                "recovery": 1,
+                "reproduction": 89.75,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 9,
+          "genomeHex": "0016005a00000000fc003ef0e7ceeefed20d2617e5c31019df213324fa1d0dd5c71c320aeb31d4ca31e33920ddc8e1e50d1de42afdd6c9cdc0121cc8cad002093e33d4f9c23aebeec0ca1ec6e33af13c2c0e0f3833c03c21c52ce7d7c32d06f71a03dc37c9393bc81ce52b352732dbeb2a1b3c061b19301922ed18d41738371403eb0a1904032b202715c50f081b13f1ea00d1d714d1c93ef001edcc00d30e3afac70311e70d23f3",
+          "cluster": 46,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1788,
+              "born": 285,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4.25,
+                "meanMass": 3065.8823529411766,
+                "speed": 0.903196789241103,
+                "mass": 20205.75,
+                "recovery": 0.5271472071714591,
+                "reproduction": 10,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 10,
+          "genomeHex": "001900610000000010f73b26db2ee2ffdf24053e2b0de2d1efe62302c1e6110911caf003142237ed370425ff001c32fa260523c6ecf3291f261232fb3922152dd72031fdd9d8dd01d72ad61c3f2bfef31de31cd515d01f30300f35f3fa0c2feafbcf21e2c0e61225361def17ef37c720da1c1d3dc23724fe0cc2ec00fedbd02e3cdbc93304cd13c4c2d3033a061ee4d80600c7cf1f08343832c6150802f2d239e232c13a1933ca3a",
+          "cluster": 3,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 4,
+              "born": 23,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 11.25,
+                "meanMass": 2240.8444444444444,
+                "speed": 1.873018902654266,
+                "mass": 74079.25,
+                "recovery": 1,
+                "reproduction": 68,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 11,
+          "genomeHex": "000f004100000000d0c603de1f3aea3b2fc8d40f09f20218091e0f0722efd636cf2dec1837dad6ddf5ce27322dd71702312203f018132026c5cb06c3130d1de74bccdc13ea261ede09fe0507ea0f2239c7f32e3b3f36f3d62633ffc9e1cdf63cc0ef0319d4f1d2c4f53bf7043cf7f7d414c32e13c4021a21fadcd0ce170130171c350033c529fbed2b323827c9c427c731e62beeeac5e7d014d91f0d2fddec093a0fe92901051a04",
+          "cluster": 10,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1374,
+              "born": 255,
+              "screening": {
+                "survived": 4,
+                "recovered": 3,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4,
+                "meanMass": 4053.4375,
+                "speed": 1.2313349473611477,
+                "mass": 24120.75,
+                "recovery": 0.9593744275902738,
+                "reproduction": 10.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        }
+      ],
+      "distinctRecalculatedClusters": 12
+    },
+    {
+      "cohort": "random-7",
+      "source": "random",
+      "founders": [
+        {
+          "slot": 0,
+          "genomeHex": "0012002a0000000ce5f2e3fcca122324e1353104f123192fef1c110a2a31c3babbe80d2b34d812e732f9333cc73bfae8fbf719daf4c44016c9ec303ecb1620dd0adc26f10ee0d515cb2b16cb0ddad0f7411ed5c1f1ca10fac92611fd362111d4eb350ed50fcef104e337ef0adee9fd29c5cdf63e3f2624ccdbd21dd2daf80325cedb2dd9ddf6402ed7f62d2708f42af01bfcf20ff0c7093bdcfff90f36172bcd1305da29d62f2dc6",
+          "cluster": 6,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 369,
+              "born": 199,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 8.5,
+                "meanMass": 3589,
+                "speed": 2.360975495522944,
+                "mass": 42597,
+                "recovery": 0.9955844114773025,
+                "reproduction": 213.75,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 1,
+          "genomeHex": "0010005a00000000ca0be6402535ed171325103cdfe2edd4ce1018e72ad7fa1938030535eed1c121121631e83c1718db351e02d61c0fe5c721e7d83e03f6cfeb00331d26eae21ff21649df27c803e22de109c8fed9d3143e3e340e3f370c3437d802b7002b2d3e30feedef1f0840d41ed8fc14ddedf13d2024403231d00ddcfe17fe192706d10bc801f6283bfa1032f52ed2cfd5c505d1c814ca06f2e811e4ce0313e913030ccfe0",
+          "cluster": 15,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1090,
+              "born": 235,
+              "screening": {
+                "survived": 4,
+                "recovered": 3,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 33.75,
+                "meanMass": 1936.2296296296297,
+                "speed": 1.610671064470897,
+                "mass": 119301,
+                "recovery": 0.9228913477154359,
+                "reproduction": 96.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 2,
+          "genomeHex": "000d00510000000031fecc15e8d3d7e31dcfd1cfc0e71cd2c73707ecde31fa16c61c0c0dc6f1e0e603ec2618e5f7c5291bf511da1e102cee1b0c0dec26d103e5cf3bfe3038e0f9222bf8ead018f8fec03dfa10330e280bf51834e8d03f1e2207d60ff3f62acdf602c7fa01f90ec43b1d3a1cce35f2c71221e3103b152c160bf2e628dfc103c9f32ed0caec0ce306f3dfc5d517f419eccde8d7f105f6c93f3f13d325f023013616fa",
+          "cluster": 34,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1144,
+              "born": 239,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 11.75,
+                "meanMass": 7428.723404255319,
+                "speed": 2.156481954140347,
+                "mass": 110506.75,
+                "recovery": 0.9999276810008949,
+                "reproduction": 63.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 3,
+          "genomeHex": "000f0041000000001515010201dcc7cae82fda253106d6c0ec042122f0e511d3e0c3c0f4e7d3e0f52b3b111c19390be8dd3ef0dff40efacd1602d020ecc4fdff38f6e8dee0dd1715df2ac7ea27c6fb21383fee2bf91b140cc819c917230bf3402edd0cc219151af026c7373f02e6132f1b3e301c16ca03e0f9f3cbcaf9b537f81601f712001323080d36d4ffeadfccf236f910cb3b07e3dcc917c6f3f73307c31912c03cd5280e00",
+          "cluster": 25,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1781,
+              "born": 285,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 40.5,
+                "meanMass": 2836.8333333333335,
+                "speed": 0.5792749450213387,
+                "mass": 143737,
+                "recovery": 0.9979060067497687,
+                "reproduction": 142.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 4,
+          "genomeHex": "000f006400000000f1230d30dce5e2e8cef9262c0a3c01dac10f24cdf93235e3ef3cdbc3d23b0e002c3502c9ddfc3a27ded713082909d6d8ca2af2c1e2f903d2f1f2f4d002ce1fecd620d61bc93df6ebed3037d6d1eb1c05233c18380ae30d1631d1f61f2af3fa1ef82ad8c8cc3e0527c627f7fcfeeb36f6e2fecb3d103edc0ae535242228fe37e73435160c13f3c1c80dc9f60acf3adad4dbffd42ee5c3deffc5382a3032f215c2",
+          "cluster": 14,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 711,
+              "born": 208,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 15.25,
+                "meanMass": 4876.426229508197,
+                "speed": 0.8257351573503195,
+                "mass": 107192,
+                "recovery": 0.39932158747728047,
+                "reproduction": 22,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 5,
+          "genomeHex": "001c0041000000000a1835d8011a05173e022dec1c2310141d03e819c4f8b0f73ee601ddf125e130e71fd417392d0437e60bfdf020efde27fdf0f7d61d0bef1de1f03df1cb0ad220c33b243c0246f1f327c70acef3ffdefe1f351318eb0020f33437250ddac4e5ded9ce3639ebfb00321afde6d5e9ce05c7c334fb40e21fc2c11329ce0fd3f716011912d00bf51dc11f3125c9c03720ca0c0508ed0c21ede53a0515100fd327ea03",
+          "cluster": 30,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1573,
+              "born": 270,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 20.75,
+                "meanMass": 3793.240963855422,
+                "speed": 0.6755614444454622,
+                "mass": 113074.25,
+                "recovery": 1,
+                "reproduction": 53.25,
+                "regenerated": 2
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 6,
+          "genomeHex": "000f005800000000d001ec10ccf502fe0a00200e000fe6de02e8ee012a3204d422f91aed02ff1b2a26cdd83ce20d32d0f2fe38e71329da3512d732df35e8efeed12a21d5352023ead2c4de1a320c35d5e7f11205fe3123f1e122ef1b0df700dad9f3da07e03633263cde30f900dbc8deedec0c0d2a380a3a1319c3fdda1bd4060639270d08ed17d13600f838cfc019d01620fc390ad201111f10cdc93feafa28092ff30df518f5f8",
+          "cluster": 45,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1456,
+              "born": 261,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 3,
+                "reps": 4,
+                "individuals": 3.25,
+                "meanMass": 2419.6153846153848,
+                "speed": 1.104028814073538,
+                "mass": 13203.25,
+                "recovery": 0.2173596702915967,
+                "reproduction": 11.25,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 7,
+          "genomeHex": "000f001400000000302728e6d82a14c7f201dd07dabed5341a3ef0dc1c05e23e25dc0c0b17f0c21de4f014e4ebeb16273222f8db2427fccffcd5d6e5f6ea192d1134dc21f2fbd4402b01e0f4e7c40e0404cf1d19c2e5c71ee3f33aede824e52cebe93ec3e5cd2fd8c7ffff18c31fc8152dc7e6f5f7c0361ed8c8c2f42ce41722c93cc33de4d2ffe809f204c8d23fe1c5201a1338f62efbec272e0cec1a032f35fd36e51fc3e22803",
+          "cluster": 12,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 16,
+              "born": 88,
+              "screening": {
+                "survived": 2,
+                "recovered": 2,
+                "lightDependent": 2,
+                "reps": 4,
+                "individuals": 0.75,
+                "meanMass": 466,
+                "speed": 0.8976307728832775,
+                "mass": 3091.5,
+                "recovery": 1,
+                "reproduction": 12.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 8,
+          "genomeHex": "0013005a000000003cefdfca1dca3b1bcfc208c2b703e2c4ced80d0c32fdc2d2f706d31ed0ea3e223b2ae5e3cc1a363218eb29c8c800d201c7ef2ef5091edeccd11d2415f71d12fa29c20df740d13f05edee37e11ef6f5d4bbdd3dc6e8c9273ff3033fe42b30012f0be81c362ee5e724d3c0e22133c516c8ede310c8e02711d6010ce4ab0aebfc29c5d4c1d7f1f03e1314d2cb24c412051824d82c38c4ddfe2adbddf73f012ac70c",
+          "cluster": 5,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 750,
+              "born": 211,
+              "screening": {
+                "survived": 4,
+                "recovered": 1,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 13.5,
+                "meanMass": 2809.3333333333335,
+                "speed": 2.3244293200162316,
+                "mass": 86551.75,
+                "recovery": 0.914074392870025,
+                "reproduction": 86,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 9,
+          "genomeHex": "000e004000000000e9f405fd2e1d280bf6c0d1de1a2819d903d02f1d36d8d6d4f4dc1bc2400cc933fef01639de0c1f0ffe0e1717e6f52df736250bfc223e3ac70cdf3e14e4de382139c022e03ecadb2eefd9201d04df33f9d6def2c929c9dd0ec734da23281622da0f10f22430f1ecf6251bd5c93ecae80b04faefffe607e62600061503dbc7c3302711c5cb0f27c0d52dd9df240ccb220311ee13dac41419fff90e0b2f1cce19d6",
+          "cluster": 52,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1686,
+              "born": 278,
+              "screening": {
+                "survived": 2,
+                "recovered": 2,
+                "lightDependent": 2,
+                "reps": 4,
+                "individuals": 1,
+                "meanMass": 2277,
+                "speed": 2.019462807084156,
+                "mass": 3693.75,
+                "recovery": 1,
+                "reproduction": 26.5,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 10,
+          "genomeHex": "0011003b00000000e519010b3436eddcfbcac409ea1bfa1715d9cb29f1e6f8e1d0edeacde9d0c7d6360e30c0ce1cfccfc00bc620d7212c39cfe1dfe2fed6c2f136f8cde236102bde232437e1092e3c1edb07db19c31b3ed124e709110302c5e3e4c1d940fb3f28e9f9e0fec2e2e1e11cd615ccef003bc2d3eb2bca3d090833cfd2ff17db2409fdcdc82e122e1111fb23dc3bc838ddd728e1e53b3dd5f4f8d402fb402aee1bcd30d7",
+          "cluster": 32,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 788,
+              "born": 214,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 13,
+                "meanMass": 1371.7307692307693,
+                "speed": 0.7133789311500369,
+                "mass": 43771,
+                "recovery": 0.0002987131502721979,
+                "reproduction": 80.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 11,
+          "genomeHex": "0014003c0000000000000000000000000300000000000000000000000000000000000000000000000000007f00000000eb007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007f0081f6000000000000006e00000000000000000000000000000000000000000000000000000000000000ee0000000000000000000000000000000000000000e828560000e9000c",
+          "cluster": 1,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 996,
+              "born": 228,
+              "screening": {
+                "survived": 4,
+                "recovered": 2,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 22.25,
+                "meanMass": 3173.224719101124,
+                "speed": 0.31784133615491517,
+                "mass": 99302.75,
+                "recovery": 0.84611670542893,
+                "reproduction": 66,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        }
+      ],
+      "distinctRecalculatedClusters": 12
+    },
+    {
+      "cohort": "random-8",
+      "source": "random",
+      "founders": [
+        {
+          "slot": 0,
+          "genomeHex": "001c00610000000010f74e26e62ee2ffdf24053e2b0de2d1efe62302c1e6110911caf003142237ed370425ff001c32fa260523c6ecf3291f261232fb3922152dd72031fdd9d8dd01d72ad61c3f2bfef31df51cd515d01f30300f35f3fa0c2feafbcf21e2c0e61225361def17ef37c720da1c1d3dc23724fe0cc2ec00fedbd02e3cdbc93304cd13c4c2d3033a061ee4d80600c7cf1f08343832c6150802f2d239e232c13a1933ba3a",
+          "cluster": 3,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1654,
+              "born": 275,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 11.5,
+                "meanMass": 1811.0652173913043,
+                "speed": 1.6613523812560598,
+                "mass": 74384.75,
+                "recovery": 0.9992274620448743,
+                "reproduction": 76.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 1,
+          "genomeHex": "001b005400000000e7f2f5c12c3f05e8cfd1db09e7c0fb10222e0339c5d3e2fe0b14b5cff83b2dc6fe013f17ce3909cee6111207d924e9f10fda0d18d119dcead233132f0ddfb4f20824ca02fd02c6093e3e082108e3f2050a360318c9dddde60ff80dcc3be6eae8f2f8ebd53112f426ca0e2b3ac0f7e8041f1127fc06dfe42cc429c31ee308cffedffd1a36cb031d17fdf9fe07cbe739123afec32e06c1ff0230bdc227ff0b0ffe",
+          "cluster": 42,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1277,
+              "born": 248,
+              "screening": {
+                "survived": 4,
+                "recovered": 2,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 3,
+                "meanMass": 3795.6666666666665,
+                "speed": 1.271595047912433,
+                "mass": 14144.5,
+                "recovery": 0.7173508259048225,
+                "reproduction": 24.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 2,
+          "genomeHex": "001c00150000000a2cdad9f8e325df32fef1242e2c302bddc91d2c0826f8ea340bd9013c29e2ee2119e4c5123a102407380b0114081112e7c7ef01c62dc21fc21ed3e7f1cb2c2adcd329d20b27df3100cb14380d3f210cc1ccef37e2c20936371914ff3efb0b34c7e2feee3d3e132a3c36341c2609d43ed9093be0e8f9ddedf8cae6e2eee5ee32f13bda1a14c3c2cc1cda10363bd2dbd902c63728d5db2dc923c6e5ea36dac5c4ca",
+          "cluster": 8,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1425,
+              "born": 259,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 1,
+                "meanMass": 311,
+                "speed": 5.889545046254985,
+                "mass": 1936.75,
+                "recovery": 0.003346113604733791,
+                "reproduction": 20.75,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 3,
+          "genomeHex": "00120040000000002a2ee5d4dad53f2bfd0b15c0f4edc6c6e1ea3ff4cd40212d023fe7faf81cc104f1d6d2e92fd21620d2db0c16003909d3dac2fadc22eae016c3eccd34d8f410d70f2513c5ec1620db25f5d20a18cf28c423231bfac9e736cbc2d801dd0acad73505c2ecfc2201d01d1f390c2ef334c3302e08133deadd0d20fe340af2160d3cf7070ccc1ffa23260bf82326c33a2cefcb3ff420d6f7f419e73414c53122e50e0a",
+          "cluster": 59,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1903,
+              "born": 293,
+              "screening": {
+                "survived": 2,
+                "recovered": 0,
+                "lightDependent": 2,
+                "reps": 4,
+                "individuals": 2,
+                "meanMass": 726.125,
+                "speed": 0.8901717222129616,
+                "mass": 7934,
+                "recovery": 0,
+                "reproduction": 36.75,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 4,
+          "genomeHex": "001900620000000019e1ddd43cdbcd2034e30d21e2070c0024feda111afbf30923cef014e126d000400002edc2d125f429e6c8e1c720f70701eccdc9d50131cc0e02c7141a05f105333a40180a32f102caf23df6393a1c1e2fe1d2063f3eff1916dc28130dfa01e013190832f20af60032f71a0127ebccdf0ae6f60a26063feef6d83c1d2742101a0b153ddc203c072326c1e73a393e3ee9300ce9dbd10dc82b3f31f723cf25cbf5",
+          "cluster": 20,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1183,
+              "born": 242,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 8.5,
+                "meanMass": 4122.470588235294,
+                "speed": 3.8729291084817214,
+                "mass": 67445,
+                "recovery": 0.9620671418974147,
+                "reproduction": 42,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 5,
+          "genomeHex": "0013006300000000c717caeeea072929ce2b1f0b1e0aff23063ae7f211eaea0f3eeb39ddea01e0ecf73522ca200036d01b100f3f07f31fdcec0d2d32e4e4f0d234fc19c4e2ec3a17f2bf2ac61be008c93109c4e1241c26ca19290b0d37e4f3000c33d535d7fec3c8ea2f020726cffc21ccc6162f0e1b0cd018ee060422efc027dcbec7cfdd1defe5e2c3f914c829dc023233c829d017c201dcdf1efe373032e2122ef8f5d83cfd1c",
+          "cluster": 21,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1163,
+              "born": 240,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 8.25,
+                "meanMass": 7751.69696969697,
+                "speed": 1.9162572352266263,
+                "mass": 96512.75,
+                "recovery": 1,
+                "reproduction": 29.25,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 6,
+          "genomeHex": "0015004a00000000d42f3538f3cf1a37d2e440dfcfd52f3c0dc221ee27d9ef382f02242423c639121531c3f1cfffcfdaff34000f35fc0ff2c5d20726ed0429e20e00dbc80f211e382a1c261ad03dd1dc1b39d6cac61332c30fea29c6d0103a2cf23f0cdc0823c1d4d2f81bc32b0de31c2cffd10b3c113b1ec13f010efd23fa05cc17fef9ff30203a0911d310c5f010173714e01131fdd7ccc3e73ae8d61b210dda0a233cde02cc02",
+          "cluster": 49,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1949,
+              "born": 297,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 11,
+                "meanMass": 2397.909090909091,
+                "speed": 0.856466333987256,
+                "mass": 55845,
+                "recovery": 0.5552087089941831,
+                "reproduction": 53,
+                "regenerated": 2
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 7,
+          "genomeHex": "001600640000000003d606ca142f22120eddc02f2602f71f192bd63f11200400dc38e3e70bfa3731c4e3f52717f430ec3afdce33e3390d3824f4021a37f0f53b15d2c02cd52c3026fbe53602fb2cdb37de360035c2c207d7eed1ecf20beac3d624cf07183d2ef722131316d015e30c233000e521fdd505e2dc17e6362b181d0b0b190c2bd247fdc221c827d4171bd2fde710e3d7e1071a3f0b19f2df180dc2223606ef38cfd1d003",
+          "cluster": 7,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1411,
+              "born": 258,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 4.75,
+                "meanMass": 5644.210526315789,
+                "speed": 1.482047205100716,
+                "mass": 46768,
+                "recovery": 0.6240536789205605,
+                "reproduction": 17.25,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 8,
+          "genomeHex": "001c001e00000000c01b0d3e0ac4363d2f0417cc35ee05ee19edec0be9df2ecedfe1d23df9c2d60ec203e53adbd9c70cc4c0f8df082540dc20d0c1ee103ed0d71134f5d808f70ff51c3b2cc6003bd9143afb23efd8d6352bc32219e6d7151c003e233ae6ca2df918c32403fe1f38c440cb3fcf17d90308e6032bf8c1e3f9c6dd0a06d5111d19192836fde423fe06fdc6083529ffebcbeb342c3e19eacbc2d6c1ef2b060cf1fbe8f4",
+          "cluster": 57,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1727,
+              "born": 281,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 6,
+                "meanMass": 1575.9166666666667,
+                "speed": 0.5588401610534196,
+                "mass": 30215.25,
+                "recovery": 0.00016345191209767615,
+                "reproduction": 28,
+                "regenerated": 1
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 9,
+          "genomeHex": "000c003e00000000c0fd25d5d036e2da40fcf939eece35d9cf3bbfce2cf0fbddd6fdcf222303c4de14dfdecd1dca1b02cdc308dde9ed1331c5d8e6dc1a24351ad1c7223b3e3616fc3ddbdb3bd315f11cee023afc1419ea3a34c8371b091b3c0b3acdfbd8eb38ea40dd332740eb08270edb0921d42af931d506eb2205eac5f51fe83cccd7381340c830f5292901c017e0c0ea2cef25df10ff3f02d01411c2150139101e393029ffda",
+          "cluster": 29,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 951,
+              "born": 225,
+              "screening": {
+                "survived": 4,
+                "recovered": 4,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 43.5,
+                "meanMass": 1998.7988505747126,
+                "speed": 0.22473398672417355,
+                "mass": 108403.75,
+                "recovery": 0.9983045100033909,
+                "reproduction": 69.5,
+                "regenerated": 4
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 10,
+          "genomeHex": "000e004000000000e9f405fd2e1d280bf6c0d1de1a3a19d903d02f1d36d8d6d4f4dc1bc2400cc933fef01639de0c1f0ffe0e1717e6f52df736250bfc223e3ac70cdf3e14e4de382139c022e03ecadb2eefd9201df7df33f9d6def2c929c9dd0ec734da23281622da0f10f22430f1ecf6251bd5c93ecae80b04faefffe607e62600061503d6c7c3302711c5cb0f27c0d52dd9df240ccb220311ee13dac41419fff90e0b2f1cce19d6",
+          "cluster": 52,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 1873,
+              "born": 291,
+              "screening": {
+                "survived": 4,
+                "recovered": 0,
+                "lightDependent": 4,
+                "reps": 4,
+                "individuals": 2.75,
+                "meanMass": 2737.818181818182,
+                "speed": 1.4709223000497254,
+                "mass": 12374.25,
+                "recovery": 0.1282666225603705,
+                "reproduction": 45.25,
+                "regenerated": 2
+              }
+            }
+          ],
+          "status": "recorded"
+        },
+        {
+          "slot": 11,
+          "genomeHex": "00160035000000000cd5fcfb082bd1e7141ce3f9c42bcb43f31cc93dcbd4c9c4f93ce2ea19cd31f8dd25da220f223bd437232d3123df231207e0cf271811120b0e3ecde32f213315f0340e042e12cc2fca0d002206342540d4ad18102c3ee2c7c0f10e23d4e4c9fa3135cc09c10f002c0bdb09fe1adb2837c7390229013cc52aed3e11dc14dbe225f12a2dea393a2f0e1904c3cbfa2c16dbc929e026ebecd73e31f51b28e827d6c4",
+          "cluster": 19,
+          "recordedScreening": [
+            {
+              "source": "experiments/foundations/selection-audit-v1/inputs/viable.jsonl",
+              "line": 752,
+              "born": 211,
+              "screening": {
+                "survived": 3,
+                "recovered": 3,
+                "lightDependent": 3,
+                "reps": 4,
+                "individuals": 5.75,
+                "meanMass": 2055.3478260869565,
+                "speed": 0.9523149939042401,
+                "mass": 145244.25,
+                "recovery": 1,
+                "reproduction": 91,
+                "regenerated": 0
+              }
+            }
+          ],
+          "status": "recorded"
+        }
+      ],
+      "distinctRecalculatedClusters": 12
+    }
+  ]
+}

@@ -163,3 +163,14 @@ Per-cell state at 1024² comes to about 64 × 32-bit channels (species ×5, ener
 3. Add a golden test: 64², 1,000 steps, same seed, comparing GPU and CPU state hashes, run headlessly in Chrome via Playwright.
 4. Add a conservation assertion (sum of quanta, via GPU reduction) checked every step in debug builds.
 5. Draft `packages/schema` v0 and the checkpoint format (header, checksum, schema version, rule version).
+
+
+## Founder-policy assay decision — 2026-09-30 UTC
+
+The genome-level founder-policy protocol supersedes the requirement to wait for organism Gate A or a validated evolvability surrogate. RULE_VERSION 1 and historical presets remain fixed. The separate ecology-first program is untouched. The historical Variation verdict is preserved; it does not select a mechanism.
+
+The complete local pilot (256 competitions plus deterministic replay) failed its frozen survival and identical-competitor balance criteria: only 1/8 genotype controls retained both competitors in all 16 replicates; 168/256 competitions were both-extinct (80 identical, 88 disabled-control); the two fully scored identical controls had mean absolute scores 0.365 and 0.836, above 0.15. Only two original-versus-zero-controller contrasts were fully informative, both scoring +1. The other six are unavailable, not measured evidence of equal performance.
+
+**Decision: stop at this specific assay limitation.** No technical defect justifying the one permitted repair was identified. Do not change controls, thresholds, the environment or horizon to force a pass. No comparison histories, new founder policy, physics changes or general foundations review are launched. The comparison code passed independent review and 20 CPU tests, but the planned 72 histories remain unexecuted. Organism reproduction and evolutionary capacity are not resolved by this pilot.
+
+[Full findings and reviewed evidence](../experiments/founder-policy/v1/pilot-findings.md). Paid spending **$0 of $50**; no cloud resources were created, and no cloud teardown is required.

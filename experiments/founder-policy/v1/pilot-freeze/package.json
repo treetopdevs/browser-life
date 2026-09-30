@@ -1,0 +1,22 @@
+{
+  "name": "browser-life",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @bl/lab dev",
+    "build": "pnpm --filter @bl/lab build",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:gpu": "deno run --allow-read --allow-env tests/deno/gpu_golden.ts",
+    "test:e2e": "playwright test",
+    "gen:prereg": "deno run -A tools/gen-prereg.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.0.0",
+    "@webgpu/types": "^0.1.74",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  }
+}
