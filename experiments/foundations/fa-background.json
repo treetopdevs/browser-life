@@ -1,0 +1,218 @@
+{
+ "note": "exploratory A background medium readout 2026-09-30; roles not recorded (EvalConfig.roles off); derived from runs/bootstrap-medium-background/{archive,viable,confirm}.json, no GPU in this analysis",
+ "date": "2026-09-30",
+ "medium": "background:<founder-0 hex> (mu 59, sigma 17, darkSteps 4000)",
+ "score": "maintenance",
+ "out": "runs/bootstrap-medium-background",
+ "search": {
+  "batches": 200,
+  "evaluated": 3200,
+  "viable": 2854,
+  "viableLogRows": 2854,
+  "searchSeeds": [
+   4705001,
+   4705200
+  ],
+  "elites": 36,
+  "elitesRegenZero": 23
+ },
+ "viable": {
+  "n": 2854,
+  "regenHistogramReps4": {
+   "0": 602,
+   "1": 168,
+   "2": 184,
+   "3": 264,
+   "4": 1636
+  }
+ },
+ "gatePassing": {
+  "n": 1633,
+  "note": "screening passers with regenerated/reps > 0.8 and lightDependent==reps"
+ },
+ "confirm": {
+  "screened": 1633,
+  "confirmed": 1476,
+  "geneticClusters": 33,
+  "m3GateMet": true,
+  "m3MinClusters": 20,
+  "lowerBoundAbove08": 1301,
+  "lowerBoundClusters": 33,
+  "confirmSeed": 4715001,
+  "confirmSeeds": [
+   [
+    4715001,
+    4715409
+   ]
+  ],
+  "regenHistogramReps16": {
+   "13": 29,
+   "14": 44,
+   "15": 102,
+   "16": 1301
+  },
+  "regenMean": 15.812330623306233,
+  "clusterSizes": {
+   "0": 445,
+   "1": 145,
+   "2": 98,
+   "3": 145,
+   "4": 110,
+   "5": 90,
+   "6": 15,
+   "7": 68,
+   "8": 7,
+   "9": 10,
+   "10": 1,
+   "11": 40,
+   "12": 41,
+   "13": 26,
+   "14": 1,
+   "15": 1,
+   "16": 22,
+   "17": 27,
+   "18": 27,
+   "19": 34,
+   "20": 1,
+   "21": 21,
+   "22": 25,
+   "23": 20,
+   "24": 14,
+   "25": 2,
+   "26": 12,
+   "27": 1,
+   "28": 9,
+   "29": 5,
+   "30": 11,
+   "31": 1,
+   "32": 1
+  },
+  "distinctCells": 14
+ },
+ "roles": {
+  "recorded": false,
+  "note": "bootstrap medium screen does not set EvalConfig.roles; compare only after a separate role screen like fd-roles"
+ },
+ "dependence": {
+  "seeds": [
+   4715410,
+   4715778
+  ],
+  "obligate": 209,
+  "ofConfirmed": 1476,
+  "survivedHistogram": {
+   "0": 209,
+   "1": 4,
+   "2": 4,
+   "3": 5,
+   "4": 7,
+   "5": 7,
+   "6": 15,
+   "7": 13,
+   "8": 10,
+   "9": 11,
+   "10": 14,
+   "11": 8,
+   "12": 14,
+   "13": 5,
+   "14": 26,
+   "15": 44,
+   "16": 1080
+  },
+  "obligateClusters": 12,
+  "clustersTotal": 33,
+  "obligateClustersMajority": [
+   3,
+   19,
+   31,
+   32
+  ],
+  "methodSuccessAtLeastOneObligateCluster": true,
+  "perCluster": {
+   "0": {
+    "obligate": 3,
+    "total": 445,
+    "meanSurvivedDefault": 15.87
+   },
+   "1": {
+    "obligate": 3,
+    "total": 145,
+    "meanSurvivedDefault": 15.03
+   },
+   "3": {
+    "obligate": 144,
+    "total": 145,
+    "meanSurvivedDefault": 0.11
+   },
+   "4": {
+    "obligate": 12,
+    "total": 110,
+    "meanSurvivedDefault": 13.15
+   },
+   "5": {
+    "obligate": 1,
+    "total": 90,
+    "meanSurvivedDefault": 15.23
+   },
+   "7": {
+    "obligate": 2,
+    "total": 68,
+    "meanSurvivedDefault": 8.79
+   },
+   "9": {
+    "obligate": 5,
+    "total": 10,
+    "meanSurvivedDefault": 3.7
+   },
+   "11": {
+    "obligate": 14,
+    "total": 40,
+    "meanSurvivedDefault": 7.92
+   },
+   "17": {
+    "obligate": 3,
+    "total": 27,
+    "meanSurvivedDefault": 9.41
+   },
+   "19": {
+    "obligate": 20,
+    "total": 34,
+    "meanSurvivedDefault": 6.35
+   },
+   "31": {
+    "obligate": 1,
+    "total": 1,
+    "meanSurvivedDefault": 0.0
+   },
+   "32": {
+    "obligate": 1,
+    "total": 1,
+    "meanSurvivedDefault": 0.0
+   }
+  },
+  "clustersWithNoObligate": [
+   2,
+   6,
+   8,
+   10,
+   12,
+   13,
+   14,
+   15,
+   16,
+   18,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30
+  ],
+  "derivation": "dependence.rows[].genome matched to confirm.rows[].cluster by exact genome (mu, sigma, motGain, weights); all 1476 matched"
+ }
+}
