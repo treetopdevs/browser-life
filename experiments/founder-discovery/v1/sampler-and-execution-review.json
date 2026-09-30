@@ -1,0 +1,23 @@
+{
+  "date": "2026-09-30",
+  "reviewedScope": "Single-founder genome preparation, exact-state sampling, mutation-parent integrity, and fixed-roster execution protocol.",
+  "status": "no-remaining-blocker-after-integrity-corrections",
+  "rootFocusedTests": {
+    "passed": 9,
+    "failed": 0
+  },
+  "helperSha256": "e28ae735a2ee894b2ed7a59152d90a3be423a262a85d2d8bedf627c080110265",
+  "correctedBeforeEvolution": [
+    "Carried initial-founder lineage must retain the supplied original genome in both mutation modes.",
+    "Mutation-parent timestamps and packed cell indices must match the causal simulator lineage convention and sampled time."
+  ],
+  "definitionResolution": "Reviewer withdrew suggested unassociated-material blocker after checking operational genome-associated B/P definition. Lineage0:0 material is separately reported and supplies no carried genome. Absent genome ancestry is not organism or material extinction.",
+  "resourceProtocolReviewed": {
+    "histories": 64,
+    "draws": 384,
+    "requestedAssays": 6144,
+    "maxDistinctAssays": 2112,
+    "physicalCheckpoints": 704
+  },
+  "executionStatus": "Pilot running; no evolution release."
+}

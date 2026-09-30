@@ -1,0 +1,81 @@
+{
+  "format": "discovery-competition-replay/v1",
+  "unitId": "discovery-cluster-33-clone-6440001-a0",
+  "designHash": "65911b76da307c0e25ab9956a37ebcb85e505997ef1ac9290859c2bbfcb9f5b0",
+  "sourceManifestHash": "de02b84fa9f343f9778cdfacffd672691921ffbf4328d0cd1be0167d86026474",
+  "receiptSha256": "1c5da57ab1d426211e05d437726849d64a62cb59d912304edf823594214139e2",
+  "replaySourceSha256": "bb894bb6ceeae875e4034ddf426948758077044b4209fb26a2e981cbd22976b3",
+  "pass": true,
+  "samples": [
+    {
+      "step": 0,
+      "mass": {
+        "descendant": 29278,
+        "ancestor": 29278,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "score": 0,
+      "flux": [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "stateHash": "86fd1a962210f926"
+    },
+    {
+      "step": 10000,
+      "mass": {
+        "descendant": 164469,
+        "ancestor": 42628,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "score": 0.5883281747200587,
+      "flux": [
+        "3197189",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "2781594",
+        "0",
+        "267054",
+        "2881513"
+      ],
+      "stateHash": "749e93e09e2c2875"
+    },
+    {
+      "step": 20000,
+      "mass": {
+        "descendant": 409256,
+        "ancestor": 177287,
+        "unassociated": 0,
+        "unexpected": 0
+      },
+      "score": 0.3954850710007621,
+      "flux": [
+        "20563664",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "18299392",
+        "0",
+        "1736285",
+        "19520061"
+      ],
+      "stateHash": "6576517b310f44ff"
+    }
+  ],
+  "elapsedSeconds": 22.493451792
+}

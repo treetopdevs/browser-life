@@ -174,3 +174,12 @@ The complete local pilot (256 competitions plus deterministic replay) failed its
 **Decision: stop at this specific assay limitation.** No technical defect justifying the one permitted repair was identified. Do not change controls, thresholds, the environment or horizon to force a pass. No comparison histories, new founder policy, physics changes or general foundations review are launched. The comparison code passed independent review and 20 CPU tests, but the planned 72 histories remain unexecuted. Organism reproduction and evolutionary capacity are not resolved by this pilot.
 
 [Full findings and reviewed evidence](../experiments/founder-policy/v1/pilot-findings.md). Paid spending **$0 of $50**; no cloud resources were created, and no cloud teardown is required.
+
+
+## 2026-09-30 — Fixed-founder genome-level improvement study released
+
+The fresh competition pilot passed its frozen engineering criteria: 128 valid controls, 32/32 unique clone states available and activity-positive, and two passing replay checks. Independent analysis matched byte-for-byte. This establishes assay availability/accounting for four deliberately prepared founders; it does not establish genetic sensitivity, adaptation or organism reproduction. The old failed founder-policy pilot and historical Variation verdict remain unchanged.
+
+The reviewed study freezes four founders, eight matched evolution seeds and normal/off mutation pairs: 64 histories under RULE_VERSION 1, with the one-million-step endpoint primary. It is a fixed-founder adaptation experiment, not the previously proposed randomized archive founder-policy comparison. Manifest and release are in `experiments/founder-discovery/v1/improvement-study/`.
+
+Decision: launch the complete local roster in bounded tranches. Measured engineering workloads support a 72-hour forecast with a 96-hour cumulative execution ceiling, 64 GiB estimated storage and a 20 GiB free-space floor. Paid compute remains $0. These are projections with headroom, not worst-case guarantees; a resource interruption is an incomplete study, never permission to reduce replication or buy more compute. No ecology/physics change or organism-reproduction claim is released.

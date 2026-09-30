@@ -1,0 +1,31 @@
+{
+  "format": "discovery-improvement-runner-review/v1",
+  "date": "2026-09-30T12:33:21.739929+00:00",
+  "reviewer": "funnel_plan_inventory (independent strong model)",
+  "status": "10 focused CPU tests pass; no blocking findings in reviewed state; final writer handoff and pilot/resource gates pending",
+  "command": "deno test --no-lock -A tools/test/discovery-improvement-runtime.test.ts",
+  "testsPassed": 10,
+  "sourceHashes": {
+    "tools/discovery_improvement.ts": "e624618e93a3eee0411df30708704fe6365c2e342bfce5250a8febef64450e87",
+    "tools/lib/discovery-improvement-runtime.ts": "767e8d6a85540022e385393494e2238febf6e8ad777d70954b6b5964848ddae7",
+    "tools/test/discovery-improvement-runtime.test.ts": "4cd4e16be60ff588c8d5e28a487cec05b27efac46e7ce157b3f0ae8a13d0f932",
+    "tools/discovery_resume_benchmark.ts": "75e5ae4fcdd09b023f84e57ea251929cbef271924d01c874c33af5b052827cd2",
+    "tools/discovery_runtime_benchmark.ts": "10f4dbc272f72d876b0a539f2c63c26031611c4f7bf19440dd0675e16682e0ff",
+    "experiments/founder-discovery/v1/improvement-execution-protocol.md": "6eb326b9ca5ffcff66e52ce5e05da7d90d4ac49942c654dc0bd58f9878add3d2"
+  },
+  "reviewed": [
+    "fixed roster and sample ordering",
+    "contiguous checkpoint and mutation delta evidence",
+    "hash-verified completed-chain cache and independent final recomputation",
+    "cache corruption rejection",
+    "unknown retention and completion bounds",
+    "scored and both-extinct competition slots",
+    "resource count accounting",
+    "benchmark source closure and synthetic fixture labels"
+  ],
+  "limitations": [
+    "No improvement histories launched",
+    "Pilot acceptance pending",
+    "GPU engineering forecast not yet measured"
+  ]
+}

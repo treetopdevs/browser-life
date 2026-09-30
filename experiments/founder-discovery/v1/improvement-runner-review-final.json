@@ -1,0 +1,29 @@
+{
+  "format": "discovery-improvement-runner-review/v1",
+  "date": "2026-09-30T12:42:48.304551+00:00",
+  "reviewer": "funnel_plan_inventory (independent strong model)",
+  "status": "No remaining blocking findings; pilot acceptance and measured resource release pending",
+  "tests": {
+    "implementerFinalFullSuite": "10/10 passed",
+    "independentFullSuiteBeforeFinalCapFix": "10/10 passed",
+    "independentFinalCapFix": "1 passed, 9 filtered; --filter release requires"
+  },
+  "sourceHashes": {
+    "tools/discovery_improvement.ts": "5c03c1fdcba2a60cb237bfa4d930c09f43ae222d76cbb2c19c4219e27c230831",
+    "tools/lib/discovery-improvement-runtime.ts": "ca59855cea52e6fa495ccee8d41463583e12c11eed3f4a3036662670340a7274",
+    "tools/test/discovery-improvement-runtime.test.ts": "f12c1b267fdef16f3066fe5d77de5a2bc8d28074955d2663dce9d113d603f14b",
+    "tools/discovery_resume_benchmark.ts": "ac24d71bc7dbc6a6acd03e830a814378387bf916455ffbe8d93ef608747e720b",
+    "tools/discovery_runtime_benchmark.ts": "10f4dbc272f72d876b0a539f2c63c26031611c4f7bf19440dd0675e16682e0ff",
+    "experiments/founder-discovery/v1/improvement-execution-protocol.md": "6eb326b9ca5ffcff66e52ce5e05da7d90d4ac49942c654dc0bd58f9878add3d2"
+  },
+  "closedFindings": [
+    "Unknown ancestry remains unknown retention",
+    "Complete requested observations and descriptive times preserved",
+    "Cache byte drift and final independent sample recomputation verified",
+    "Checkpoint inventory rejects stray/partial artifacts",
+    "Release hash bound across invocation",
+    "Measured assay time reserved before starting near cumulative cap"
+  ],
+  "noSimulationLaunched": true,
+  "resumeBenchmarkMatchesRuntime": true
+}

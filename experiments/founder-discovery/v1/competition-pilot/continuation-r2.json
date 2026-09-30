@@ -1,0 +1,117 @@
+{
+  "started": "2026-09-30T12:07:17.411088+00:00",
+  "pilotManifestSha256": "024190424f7cb940b0c08a200925a993ed7417841fc8040aa166ca964471c8ef",
+  "supervisorSha256": "e8bd94bec0aebac06b4f3b928499a83a0109dafb189bc527d987723192c8f852",
+  "commands": [
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_competition_pilot.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot",
+        "600"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_competition_pilot.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot",
+        "600"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_competition_pilot.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot",
+        "600"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_competition_pilot.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot",
+        "600"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_competition_pilot.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot",
+        "600"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_competition_pilot.ts",
+        "replay",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot",
+        "discovery-cluster-33-clone-6440001-a0",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot/replays/discovery-cluster-33-clone-6440001-a0.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_competition_pilot.ts",
+        "replay",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot",
+        "discovery-cluster-33-empty-6440001-a0",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot/replays/discovery-cluster-33-empty-6440001-a0.json"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "tools/discovery_competition_pilot.ts",
+        "analyze",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot/final-analysis.json"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "paidUSD": 0,
+  "status": "eligible",
+  "maxTranches": 7,
+  "finalAnalysisSha256": "221b6462e1cde779d66aa148123d1c7e8874b0b74b1db094feb310f1de56de0a",
+  "finished": "2026-09-30T12:51:53.684526+00:00"
+}

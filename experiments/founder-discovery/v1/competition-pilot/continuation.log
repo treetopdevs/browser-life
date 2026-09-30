@@ -1,0 +1,46 @@
+{"id":"discovery-cluster-33-clone-6440001-a2","score":0.3954850710007621,"totalMass":586543,"elapsedSeconds":21.110945083}
+{"id":"discovery-cluster-33-clone-6440001-a3","score":-0.3954850710007621,"totalMass":586543,"elapsedSeconds":21.021513332999998}
+{"id":"discovery-cluster-33-clone-6440002-a0","score":-0.15042048180242043,"totalMass":586589,"elapsedSeconds":21.900602750000004}
+{"id":"discovery-cluster-33-clone-6440002-a1","score":0.15042048180242043,"totalMass":586589,"elapsedSeconds":21.574638250000003}
+{"id":"discovery-cluster-33-clone-6440002-a2","score":-0.15042048180242043,"totalMass":586589,"elapsedSeconds":21.207299375}
+{"id":"discovery-cluster-33-clone-6440002-a3","score":0.15042048180242043,"totalMass":586589,"elapsedSeconds":21.069127499999986}
+{"id":"discovery-cluster-33-clone-6440003-a0","score":0.03452602599185517,"totalMass":541939,"elapsedSeconds":21.410625667000016}
+{"id":"discovery-cluster-33-clone-6440003-a1","score":-0.03452602599185517,"totalMass":541939,"elapsedSeconds":21.055959167000022}
+{"id":"discovery-cluster-33-clone-6440003-a2","score":0.03452602599185517,"totalMass":541939,"elapsedSeconds":21.067123500000015}
+{"id":"discovery-cluster-33-clone-6440003-a3","score":-0.03452602599185517,"totalMass":541939,"elapsedSeconds":21.000709375000007}
+{"id":"discovery-cluster-33-clone-6440004-a0","score":0.9401715148662573,"totalMass":550273,"elapsedSeconds":20.817363415999978}
+{"id":"discovery-cluster-33-clone-6440004-a1","score":-0.9401715148662573,"totalMass":550273,"elapsedSeconds":21.056878375}
+{"id":"discovery-cluster-33-clone-6440004-a2","score":0.9401715148662573,"totalMass":550273,"elapsedSeconds":20.780650124999987}
+{"id":"discovery-cluster-33-clone-6440004-a3","score":-0.9401715148662573,"totalMass":550273,"elapsedSeconds":20.458692999999972}
+{"id":"discovery-cluster-33-empty-6440001-a0","score":1,"totalMass":549672,"elapsedSeconds":20.257645958000037}
+{"id":"discovery-cluster-33-empty-6440001-a1","score":1,"totalMass":530362,"elapsedSeconds":20.563475167000025}
+{"id":"discovery-cluster-33-empty-6440001-a2","score":1,"totalMass":549672,"elapsedSeconds":20.365901416999986}
+{"id":"discovery-cluster-33-empty-6440001-a3","score":1,"totalMass":530362,"elapsedSeconds":19.87308799999999}
+{"id":"discovery-cluster-33-empty-6440002-a0","score":1,"totalMass":512552,"elapsedSeconds":19.597717082999996}
+{"id":"discovery-cluster-33-empty-6440002-a1","score":1,"totalMass":571224,"elapsedSeconds":21.121609667000012}
+{"id":"discovery-cluster-33-empty-6440002-a2","score":1,"totalMass":512552,"elapsedSeconds":19.402817875000007}
+{"id":"discovery-cluster-33-empty-6440002-a3","score":1,"totalMass":571224,"elapsedSeconds":20.756625541999995}
+{"id":"discovery-cluster-33-empty-6440003-a0","score":1,"totalMass":504200,"elapsedSeconds":19.582465958999993}
+{"id":"discovery-cluster-33-empty-6440003-a1","score":1,"totalMass":461023,"elapsedSeconds":19.791150332999997}
+{"id":"discovery-cluster-33-empty-6440003-a2","score":1,"totalMass":504200,"elapsedSeconds":19.94630912499997}
+{"id":"discovery-cluster-33-empty-6440003-a3","score":1,"totalMass":461023,"elapsedSeconds":19.373396791999983}
+{"id":"discovery-cluster-33-empty-6440004-a0","score":1,"totalMass":497930,"elapsedSeconds":19.904124124999974}
+{"id":"discovery-cluster-33-empty-6440004-a1","score":1,"totalMass":527499,"elapsedSeconds":20.790360624999973}
+{"id":"discovery-cluster-33-empty-6440004-a2","score":1,"totalMass":497930,"elapsedSeconds":20.264588332999963}
+error: Uncaught (in promise) Error: frozen source closure drift
+  ) throw Error("frozen source closure drift");
+          ^
+    at verifyFrozenPilot (file:///Users/nicholas/develop/browser-life-founder-policy/tools/discovery_competition_pilot.ts:859:11)
+    at async run (file:///Users/nicholas/develop/browser-life-founder-policy/tools/discovery_competition_pilot.ts:1016:5)
+    at async file:///Users/nicholas/develop/browser-life-founder-policy/tools/discovery_competition_pilot.ts:1226:5
+{"status": "incomplete", "commands": 1}
+Traceback (most recent call last):
+  File "/Users/nicholas/develop/browser-life-founder-policy/tools/discovery_pilot_continue.py", line 64, in <module>
+    main()
+    ~~~~^^
+  File "/Users/nicholas/develop/browser-life-founder-policy/tools/discovery_pilot_continue.py", line 37, in main
+    run(["deno", "run", "-A", "--unstable-webgpu", "tools/discovery_competition_pilot.ts", "run", str(root), "600"])
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nicholas/develop/browser-life-founder-policy/tools/discovery_pilot_continue.py", line 31, in run
+    raise RuntimeError(f"Pilot command failed with exit {completed.returncode}")
+RuntimeError: Pilot command failed with exit 1

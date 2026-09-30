@@ -1,0 +1,12 @@
+{
+  "format": "discovery-pilot-final-review/v1",
+  "date": "2026-09-30T12:54:29.734305+00:00",
+  "reviewer": "funnel_plan_inventory (independent strong model)",
+  "analysisSha256": "221b6462e1cde779d66aa148123d1c7e8874b0b74b1db094feb310f1de56de0a",
+  "independentOutput": "runs/pilot-independent-verification/report.json",
+  "independentOutputSha256": "221b6462e1cde779d66aa148123d1c7e8874b0b74b1db094feb310f1de56de0a",
+  "result": "Byte-identical independent CPU analysis; engineering pilot passes.",
+  "released": "Engineering throughput measurement and study preparation only",
+  "notReleased": "64 evolution histories; requires measured resource envelope and final frozen manifest",
+  "paidUSD": 0
+}

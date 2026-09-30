@@ -1,0 +1,2401 @@
+{
+  "format": "discovery-improvement-manifest/v1",
+  "ruleVersion": 1,
+  "sourceRoot": "/Users/nicholas/develop/browser-life-founder-policy",
+  "pilotDesignSha256": "024190424f7cb940b0c08a200925a993ed7417841fc8040aa166ca964471c8ef",
+  "pilotAnalysisSha256": "221b6462e1cde779d66aa148123d1c7e8874b0b74b1db094feb310f1de56de0a",
+  "inputs": {
+    "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot/pilot-design.json": "024190424f7cb940b0c08a200925a993ed7417841fc8040aa166ca964471c8ef",
+    "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot/final-analysis.json": "221b6462e1cde779d66aa148123d1c7e8874b0b74b1db094feb310f1de56de0a"
+  },
+  "sources": {
+    "deno.json": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0",
+    "deno.lock": "8630fa4d89086681cfed42c0f5977e2e34e720d1b32580300df124f83cf872bd",
+    "experiments/founder-discovery/v1/improvement-execution-protocol.md": "c4bdce18a97b7a1bf705de75c703d28de16d5ccc83855effb60b32ec872b39b8",
+    "experiments/founder-discovery/v1/improvement-next-design.md": "df1fcead838369bd4f8ca123c999670ec7182326ad9b04d190ae051981479956",
+    "packages/metrics/src/activity.ts": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e",
+    "packages/metrics/src/biogeography.ts": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93",
+    "packages/metrics/src/calibration.ts": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1",
+    "packages/metrics/src/census.ts": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695",
+    "packages/metrics/src/collectives.ts": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8",
+    "packages/metrics/src/complexity.ts": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c",
+    "packages/metrics/src/ecology.ts": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e",
+    "packages/metrics/src/index.ts": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e",
+    "packages/metrics/src/individuality.ts": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18",
+    "packages/metrics/src/render.ts": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f",
+    "packages/metrics/src/stats.ts": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854",
+    "packages/metrics/src/tracker.ts": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9",
+    "packages/runner/src/conditions.ts": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3",
+    "packages/runner/src/index.ts": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6",
+    "packages/runner/src/island-page.ts": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898",
+    "packages/runner/src/island.ts": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461",
+    "packages/runner/src/migrate.ts": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f",
+    "packages/runner/src/observe.ts": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d",
+    "packages/runner/src/runner.ts": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab",
+    "packages/runner/src/stitch.ts": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef",
+    "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+    "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+    "packages/schema/src/config.ts": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601",
+    "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+    "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+    "packages/schema/src/genetics.ts": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93",
+    "packages/schema/src/genome.ts": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d",
+    "packages/schema/src/index.ts": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b",
+    "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+    "packages/schema/src/kernel.ts": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978",
+    "packages/schema/src/layout.ts": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f",
+    "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+    "packages/schema/src/presets.ts": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e",
+    "packages/schema/src/world.ts": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6",
+    "packages/sim-gpu/src/golden.ts": "c1716f54fb0210c6cff95d3d04e262c5f0ec2150a10e3a57e634bdf3b9aed2cf",
+    "packages/sim-gpu/src/gpu-sim.ts": "f6d119d89147752ee1c3fd2ab136eb545cbb4ba696adaa4eac795dfb740d506e",
+    "packages/sim-gpu/src/index.ts": "bcdfe918a79c832065ea7976b64c16adec24f24ba8c97d39576408ba998cc150",
+    "packages/sim-gpu/src/renderer.ts": "e7c7418ca7e884ff3aaf392bee97677ab839a785baf65d1154946c88a14c2a10",
+    "packages/sim-gpu/src/shaders.ts": "42cbdb4f750969fe07a8ff727d9dd8c9739df794bf62933cb5276831cdb8e773",
+    "packages/sim-ref/src/index.ts": "b3ba6c5e7fc44bbb705c8bdba0f5d7d1f9a539a639aa98276e712ac0003e673f",
+    "packages/sim-ref/src/step.ts": "1a7e4acd0a286dd1644e98a0c0293bdd731b46d8fb3b9c3c7222954ebb751f85",
+    "tools/discovery_competition_pilot.ts": "bb894bb6ceeae875e4034ddf426948758077044b4209fb26a2e981cbd22976b3",
+    "tools/discovery_improvement.ts": "33ebec938c2dbd2722773b6dc7e8525e3ae2df6726c29948dfe2b1e11f52e268",
+    "tools/lib/discovery-competition.ts": "d3890942edbe3cf2f1f341d6026ff68c9d86cd47b26e591a134f43e9f9d504b1",
+    "tools/lib/discovery-evolution.ts": "e28ae735a2ee894b2ed7a59152d90a3be423a262a85d2d8bedf627c080110265",
+    "tools/lib/discovery-improvement-runtime.ts": "ca59855cea52e6fa495ccee8d41463583e12c11eed3f4a3036662670340a7274",
+    "tools/lib/discovery-improvement-summary.ts": "2cca97403a367cec1957c4eca0f9c1cdde882720986b36c84bf8a6af41e4fdeb",
+    "tools/lib/founder-policy.ts": "361411ed7f2ab48907986f78d5faaac41144980104eaecd6acca782701219265",
+    "tools/lib/selection-funnel-audit.ts": "8375e967a0421b965b71d4d96383a804382fe30744047af2c723efc334a12821",
+    "tools/test/discovery-improvement-runtime.test.ts": "61a21ad3406d632bbaf0a0e8959d126d11713e84788483f29786a0c79cc08bbb"
+  },
+  "sourceManifestHash": "dc4eefd867c52666962114500a42bb511b462b29ebfce32867c1e5daad00eb8e",
+  "founders": [
+    {
+      "id": "discovery-cluster-33",
+      "hex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "cluster": 33
+    },
+    {
+      "id": "discovery-cluster-4",
+      "hex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "cluster": 4
+    },
+    {
+      "id": "discovery-cluster-16",
+      "hex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "cluster": 16
+    },
+    {
+      "id": "discovery-cluster-139",
+      "hex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "cluster": 139
+    }
+  ],
+  "units": [
+    {
+      "id": "discovery-cluster-33-6410001-normal",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410001,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420001,
+          6420002
+        ],
+        [
+          6420003,
+          6420004
+        ],
+        [
+          6420005,
+          6420006
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410001-off",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410001,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420007,
+          6420008
+        ],
+        [
+          6420009,
+          6420010
+        ],
+        [
+          6420011,
+          6420012
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410002-normal",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410002,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420013,
+          6420014
+        ],
+        [
+          6420015,
+          6420016
+        ],
+        [
+          6420017,
+          6420018
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410002-off",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410002,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420019,
+          6420020
+        ],
+        [
+          6420021,
+          6420022
+        ],
+        [
+          6420023,
+          6420024
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410003-normal",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410003,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420025,
+          6420026
+        ],
+        [
+          6420027,
+          6420028
+        ],
+        [
+          6420029,
+          6420030
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410003-off",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410003,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420031,
+          6420032
+        ],
+        [
+          6420033,
+          6420034
+        ],
+        [
+          6420035,
+          6420036
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410004-normal",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410004,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420037,
+          6420038
+        ],
+        [
+          6420039,
+          6420040
+        ],
+        [
+          6420041,
+          6420042
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410004-off",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410004,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420043,
+          6420044
+        ],
+        [
+          6420045,
+          6420046
+        ],
+        [
+          6420047,
+          6420048
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410005-normal",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410005,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420049,
+          6420050
+        ],
+        [
+          6420051,
+          6420052
+        ],
+        [
+          6420053,
+          6420054
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410005-off",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410005,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420055,
+          6420056
+        ],
+        [
+          6420057,
+          6420058
+        ],
+        [
+          6420059,
+          6420060
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410006-normal",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410006,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420061,
+          6420062
+        ],
+        [
+          6420063,
+          6420064
+        ],
+        [
+          6420065,
+          6420066
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410006-off",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410006,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420067,
+          6420068
+        ],
+        [
+          6420069,
+          6420070
+        ],
+        [
+          6420071,
+          6420072
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410007-normal",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410007,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420073,
+          6420074
+        ],
+        [
+          6420075,
+          6420076
+        ],
+        [
+          6420077,
+          6420078
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410007-off",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410007,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420079,
+          6420080
+        ],
+        [
+          6420081,
+          6420082
+        ],
+        [
+          6420083,
+          6420084
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410008-normal",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410008,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420085,
+          6420086
+        ],
+        [
+          6420087,
+          6420088
+        ],
+        [
+          6420089,
+          6420090
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-33-6410008-off",
+      "founderId": "discovery-cluster-33",
+      "founderHex": "000d005800000000d0e411051e04cbe9e04000caf0ebebe1d11726023ede2040c6ff3dc4d5e3f6dae8163805fdd7e4fdf53120f9cbd3cbff3e0ce1e70801dd262ed0c52f0cdcde1c1a29ca16e4d11c1bf3e2efc829e7fb10331ff21f35d5c20d1acfda24f325f2d824382bcaf433d7ddc8c2df051bf32236d621f8f9f1cad0e9fbfbe1211dc9343012fedff1e3cde0dd02feedc02824083415f42e2603cde114e9eae23ed437e2db",
+      "seed": 6410008,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420091,
+          6420092
+        ],
+        [
+          6420093,
+          6420094
+        ],
+        [
+          6420095,
+          6420096
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410001-normal",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410001,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420097,
+          6420098
+        ],
+        [
+          6420099,
+          6420100
+        ],
+        [
+          6420101,
+          6420102
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410001-off",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410001,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420103,
+          6420104
+        ],
+        [
+          6420105,
+          6420106
+        ],
+        [
+          6420107,
+          6420108
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410002-normal",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410002,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420109,
+          6420110
+        ],
+        [
+          6420111,
+          6420112
+        ],
+        [
+          6420113,
+          6420114
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410002-off",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410002,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420115,
+          6420116
+        ],
+        [
+          6420117,
+          6420118
+        ],
+        [
+          6420119,
+          6420120
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410003-normal",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410003,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420121,
+          6420122
+        ],
+        [
+          6420123,
+          6420124
+        ],
+        [
+          6420125,
+          6420126
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410003-off",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410003,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420127,
+          6420128
+        ],
+        [
+          6420129,
+          6420130
+        ],
+        [
+          6420131,
+          6420132
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410004-normal",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410004,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420133,
+          6420134
+        ],
+        [
+          6420135,
+          6420136
+        ],
+        [
+          6420137,
+          6420138
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410004-off",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410004,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420139,
+          6420140
+        ],
+        [
+          6420141,
+          6420142
+        ],
+        [
+          6420143,
+          6420144
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410005-normal",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410005,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420145,
+          6420146
+        ],
+        [
+          6420147,
+          6420148
+        ],
+        [
+          6420149,
+          6420150
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410005-off",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410005,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420151,
+          6420152
+        ],
+        [
+          6420153,
+          6420154
+        ],
+        [
+          6420155,
+          6420156
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410006-normal",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410006,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420157,
+          6420158
+        ],
+        [
+          6420159,
+          6420160
+        ],
+        [
+          6420161,
+          6420162
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410006-off",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410006,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420163,
+          6420164
+        ],
+        [
+          6420165,
+          6420166
+        ],
+        [
+          6420167,
+          6420168
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410007-normal",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410007,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420169,
+          6420170
+        ],
+        [
+          6420171,
+          6420172
+        ],
+        [
+          6420173,
+          6420174
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410007-off",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410007,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420175,
+          6420176
+        ],
+        [
+          6420177,
+          6420178
+        ],
+        [
+          6420179,
+          6420180
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410008-normal",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410008,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420181,
+          6420182
+        ],
+        [
+          6420183,
+          6420184
+        ],
+        [
+          6420185,
+          6420186
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-4-6410008-off",
+      "founderId": "discovery-cluster-4",
+      "founderHex": "0011004400000000cdd5c60cc32421d80ed33bf616fb1e0f2a09d53de027200cebcc2331fcffe637d8c2d7caf1c03835c0e9eb1612030cf70a20c5ddfdd11bcfc4130009c5d0e41616e1392ee3ff010807cb40f4e51410d6cfd82ad9c7faed1f3820d73523c414203ee32d2d0df44004c7dfe8dd1123fc3532c8dbddc81d2ced24f8e3fcfccb0fc6d2eb3bc020f61ffb03362fc631c92ce4ef34f3f21421f50c36e40e4e00c9d41c",
+      "seed": 6410008,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420187,
+          6420188
+        ],
+        [
+          6420189,
+          6420190
+        ],
+        [
+          6420191,
+          6420192
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410001-normal",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410001,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420193,
+          6420194
+        ],
+        [
+          6420195,
+          6420196
+        ],
+        [
+          6420197,
+          6420198
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410001-off",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410001,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420199,
+          6420200
+        ],
+        [
+          6420201,
+          6420202
+        ],
+        [
+          6420203,
+          6420204
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410002-normal",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410002,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420205,
+          6420206
+        ],
+        [
+          6420207,
+          6420208
+        ],
+        [
+          6420209,
+          6420210
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410002-off",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410002,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420211,
+          6420212
+        ],
+        [
+          6420213,
+          6420214
+        ],
+        [
+          6420215,
+          6420216
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410003-normal",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410003,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420217,
+          6420218
+        ],
+        [
+          6420219,
+          6420220
+        ],
+        [
+          6420221,
+          6420222
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410003-off",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410003,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420223,
+          6420224
+        ],
+        [
+          6420225,
+          6420226
+        ],
+        [
+          6420227,
+          6420228
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410004-normal",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410004,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420229,
+          6420230
+        ],
+        [
+          6420231,
+          6420232
+        ],
+        [
+          6420233,
+          6420234
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410004-off",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410004,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420235,
+          6420236
+        ],
+        [
+          6420237,
+          6420238
+        ],
+        [
+          6420239,
+          6420240
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410005-normal",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410005,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420241,
+          6420242
+        ],
+        [
+          6420243,
+          6420244
+        ],
+        [
+          6420245,
+          6420246
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410005-off",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410005,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420247,
+          6420248
+        ],
+        [
+          6420249,
+          6420250
+        ],
+        [
+          6420251,
+          6420252
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410006-normal",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410006,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420253,
+          6420254
+        ],
+        [
+          6420255,
+          6420256
+        ],
+        [
+          6420257,
+          6420258
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410006-off",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410006,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420259,
+          6420260
+        ],
+        [
+          6420261,
+          6420262
+        ],
+        [
+          6420263,
+          6420264
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410007-normal",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410007,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420265,
+          6420266
+        ],
+        [
+          6420267,
+          6420268
+        ],
+        [
+          6420269,
+          6420270
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410007-off",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410007,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420271,
+          6420272
+        ],
+        [
+          6420273,
+          6420274
+        ],
+        [
+          6420275,
+          6420276
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410008-normal",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410008,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420277,
+          6420278
+        ],
+        [
+          6420279,
+          6420280
+        ],
+        [
+          6420281,
+          6420282
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-16-6410008-off",
+      "founderId": "discovery-cluster-16",
+      "founderHex": "00170047000000002ec035e6fedb15ca33c0cb2aca2ffc300a39fd2809d8323124f3fe201fc23726c511233e2d231ee3053cf7373924e9d3390dc4de3c30e8e327efdd162af0c7382bed28de2c20ce3221c93c10d7c9ff2cf8331640253e283ac03bec3add1e40d41ee7e1d0f436faf7dd150af705c016d014c5e1e70110ec0ac201c524c125d2e3d6cd2722262ef0f8c8f20f33dd07f02217cded060c0b310df13dd93a2e23d1c8",
+      "seed": 6410008,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420283,
+          6420284
+        ],
+        [
+          6420285,
+          6420286
+        ],
+        [
+          6420287,
+          6420288
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410001-normal",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410001,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420289,
+          6420290
+        ],
+        [
+          6420291,
+          6420292
+        ],
+        [
+          6420293,
+          6420294
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410001-off",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410001,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420295,
+          6420296
+        ],
+        [
+          6420297,
+          6420298
+        ],
+        [
+          6420299,
+          6420300
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410002-normal",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410002,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420301,
+          6420302
+        ],
+        [
+          6420303,
+          6420304
+        ],
+        [
+          6420305,
+          6420306
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410002-off",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410002,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420307,
+          6420308
+        ],
+        [
+          6420309,
+          6420310
+        ],
+        [
+          6420311,
+          6420312
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410003-normal",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410003,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420313,
+          6420314
+        ],
+        [
+          6420315,
+          6420316
+        ],
+        [
+          6420317,
+          6420318
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410003-off",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410003,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420319,
+          6420320
+        ],
+        [
+          6420321,
+          6420322
+        ],
+        [
+          6420323,
+          6420324
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410004-normal",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410004,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420325,
+          6420326
+        ],
+        [
+          6420327,
+          6420328
+        ],
+        [
+          6420329,
+          6420330
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410004-off",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410004,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420331,
+          6420332
+        ],
+        [
+          6420333,
+          6420334
+        ],
+        [
+          6420335,
+          6420336
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410005-normal",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410005,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420337,
+          6420338
+        ],
+        [
+          6420339,
+          6420340
+        ],
+        [
+          6420341,
+          6420342
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410005-off",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410005,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420343,
+          6420344
+        ],
+        [
+          6420345,
+          6420346
+        ],
+        [
+          6420347,
+          6420348
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410006-normal",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410006,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420349,
+          6420350
+        ],
+        [
+          6420351,
+          6420352
+        ],
+        [
+          6420353,
+          6420354
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410006-off",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410006,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420355,
+          6420356
+        ],
+        [
+          6420357,
+          6420358
+        ],
+        [
+          6420359,
+          6420360
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410007-normal",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410007,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420361,
+          6420362
+        ],
+        [
+          6420363,
+          6420364
+        ],
+        [
+          6420365,
+          6420366
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410007-off",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410007,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420367,
+          6420368
+        ],
+        [
+          6420369,
+          6420370
+        ],
+        [
+          6420371,
+          6420372
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410008-normal",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410008,
+      "mode": "normal",
+      "drawSeeds": [
+        [
+          6420373,
+          6420374
+        ],
+        [
+          6420375,
+          6420376
+        ],
+        [
+          6420377,
+          6420378
+        ]
+      ]
+    },
+    {
+      "id": "discovery-cluster-139-6410008-off",
+      "founderId": "discovery-cluster-139",
+      "founderHex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6",
+      "seed": 6410008,
+      "mode": "off",
+      "drawSeeds": [
+        [
+          6420379,
+          6420380
+        ],
+        [
+          6420381,
+          6420382
+        ],
+        [
+          6420383,
+          6420384
+        ]
+      ]
+    }
+  ],
+  "evolutionConfigs": {
+    "6410001-normal": {
+      "ruleVersion": 1,
+      "seed": 6410001,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 429497,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410001-off": {
+      "ruleVersion": 1,
+      "seed": 6410001,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410002-normal": {
+      "ruleVersion": 1,
+      "seed": 6410002,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 429497,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410002-off": {
+      "ruleVersion": 1,
+      "seed": 6410002,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410003-normal": {
+      "ruleVersion": 1,
+      "seed": 6410003,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 429497,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410003-off": {
+      "ruleVersion": 1,
+      "seed": 6410003,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410004-normal": {
+      "ruleVersion": 1,
+      "seed": 6410004,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 429497,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410004-off": {
+      "ruleVersion": 1,
+      "seed": 6410004,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410005-normal": {
+      "ruleVersion": 1,
+      "seed": 6410005,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 429497,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410005-off": {
+      "ruleVersion": 1,
+      "seed": 6410005,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410006-normal": {
+      "ruleVersion": 1,
+      "seed": 6410006,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 429497,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410006-off": {
+      "ruleVersion": 1,
+      "seed": 6410006,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410007-normal": {
+      "ruleVersion": 1,
+      "seed": 6410007,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 429497,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410007-off": {
+      "ruleVersion": 1,
+      "seed": 6410007,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410008-normal": {
+      "ruleVersion": 1,
+      "seed": 6410008,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 429497,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6410008-off": {
+      "ruleVersion": 1,
+      "seed": 6410008,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    }
+  },
+  "assayConfigs": {
+    "6430001": {
+      "ruleVersion": 1,
+      "seed": 6430001,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6430002": {
+      "ruleVersion": 1,
+      "seed": 6430002,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6430003": {
+      "ruleVersion": 1,
+      "seed": 6430003,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    },
+    "6430004": {
+      "ruleVersion": 1,
+      "seed": 6430004,
+      "tileW": 256,
+      "tileH": 256,
+      "tilesX": 1,
+      "tilesY": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12,
+      "massUnit": 256,
+      "kernelRadius": 9,
+      "thetaMass": 512,
+      "dtQ": 51,
+      "spread": 8,
+      "defaultMu": 60,
+      "defaultSigma": 20,
+      "diffA": 200,
+      "diffC": 200,
+      "diffS": 150,
+      "gateK": 64,
+      "kCatHalf": 128,
+      "kPhoto": 160,
+      "kResp": 128,
+      "kDecomp": 96,
+      "kGrow": 128,
+      "kBuild": 64,
+      "kEmit": 64,
+      "kCost": 64,
+      "kMaint": 200,
+      "kPDecay": 66,
+      "kBDecay": 20,
+      "kELeak": 330,
+      "kSDecay": 1300,
+      "kAbio": 400,
+      "mutRate": 0,
+      "mutStep": 24,
+      "lightMode": "gradient",
+      "lightBase": 20,
+      "lightAmp": 220,
+      "seasonPeriod": 0,
+      "seasonAmp": 0,
+      "eventCap": 65536,
+      "neutral": false,
+      "motility": true
+    }
+  },
+  "times": [
+    0,
+    100000,
+    1000000
+  ],
+  "checkpointSteps": [
+    0,
+    100000,
+    200000,
+    300000,
+    400000,
+    500000,
+    600000,
+    700000,
+    800000,
+    900000,
+    1000000
+  ],
+  "assaySteps": 20000,
+  "bootstrapSeed": 6450001,
+  "manifestHash": "0ebd3092056170b776f63c323ac3a0f3a3f553b3e0ac1c03f8c0e82ff96c2429"
+}

@@ -1,0 +1,215 @@
+import {
+  buildWorld,
+  cellCount,
+  CH,
+  decodeGenome,
+  encodeGenome,
+  G,
+  GENOME_CHANNELS,
+  lineageKey,
+  packLineageLo,
+  presetConfig,
+  PRESETS,
+  stateHash,
+  type WorldConfig,
+  type WorldState,
+} from "@bl/schema";
+import {
+  ancestryResolver,
+  asSimGenome,
+  type MutationEdge,
+  rootMasses,
+  sampleRoot,
+  simHex,
+} from "./founder-policy.ts";
+import { fromHex, normalizeGenome, toHex } from "./selection-funnel-audit.ts";
+
+export type EvolutionMode = "normal" | "off";
+export const DISCOVERY_EVOLUTION_TIMES = [0, 100_000, 1_000_000] as const;
+
+export function discoveryEvolutionConfig(
+  seed: number,
+  mode: EvolutionMode,
+): WorldConfig {
+  if (!Number.isSafeInteger(seed) || seed < 0 || seed > 0xffff_ffff) {
+    throw Error("seed must be u32");
+  }
+  if (mode !== "normal" && mode !== "off") {
+    throw Error("invalid evolution mode");
+  }
+  const preset = PRESETS.find((p) => p.id === "gradient-m3");
+  if (!preset) throw Error("gradient-m3 preset is missing");
+  const cfg = presetConfig(preset, seed, {
+    tileW: 256,
+    tileH: 256,
+    tilesX: 1,
+    tilesY: 1,
+  });
+  if (
+    cfg.lightMode !== "gradient" || cfg.tileW !== 256 || cfg.tileH !== 256 ||
+    cfg.tilesX !== 1 || cfg.tilesY !== 1
+  ) {
+    throw Error("gradient-m3 full-256 config drift");
+  }
+  return {
+    ...cfg,
+    mutRate: mode === "normal" ? presetConfig(preset, seed).mutRate : 0,
+  };
+}
+
+function canonicalHex(hex: string): ReturnType<typeof normalizeGenome> {
+  const genome = fromHex(hex);
+  if (toHex(genome) !== hex) throw Error("founder genome hex is not canonical");
+  return genome;
+}
+
+export function discoveryEvolutionWorld(
+  seed: number,
+  mode: EvolutionMode,
+  founderHex: string,
+): {
+  state: WorldState;
+  founderRoots: Record<string, number>;
+  founderHex: string;
+} {
+  const genome = canonicalHex(founderHex);
+  const cfg = discoveryEvolutionConfig(seed, mode);
+  const state = buildWorld(cfg, {
+    nutrient: 32,
+    founders: [{
+      x: 128,
+      y: 128,
+      radius: 12,
+      genome: asSimGenome(genome),
+      biomass: 64,
+      energy: 128,
+    }],
+  });
+  return {
+    state,
+    founderRoots: { [lineageKey(0, packLineageLo(cfg, 1))]: 0 },
+    founderHex,
+  };
+}
+
+export interface DiscoveryEvolutionSample {
+  time: number;
+  stateHash: string;
+  rootMass: number;
+  byGenomeAbundance: { hex: string; mass: number }[];
+  draws: {
+    status: "present" | "absent" | "unresolved";
+    genomes: string[];
+    unresolvedMass: number;
+  };
+  unknownAncestryMass: number;
+  unassociatedMass: number;
+}
+
+function validateEdges(
+  edges: MutationEdge[],
+  founderRoots: Record<string, number>,
+): void {
+  if (!Array.isArray(edges)) throw Error("mutation edges must be an array");
+  const idPattern = /^(0|[1-9][0-9]*):(0|[1-9][0-9]*)$/;
+  for (const edge of edges) {
+    if (
+      !edge || typeof edge.child !== "string" ||
+      typeof edge.parent !== "string" ||
+      !idPattern.test(edge.child) || !idPattern.test(edge.parent)
+    ) throw Error("malformed mutation edge");
+    for (const id of [edge.child, edge.parent]) {
+      const [hi, lo] = id.split(":").map(Number);
+      if (
+        !Number.isSafeInteger(hi) || hi > 0xffff_ffff ||
+        !Number.isSafeInteger(lo) || lo > 0xffff_ffff ||
+        lineageKey(hi, lo) !== id
+      ) {
+        throw Error("malformed mutation lineage id");
+      }
+    }
+  }
+  const resolve = ancestryResolver(founderRoots, edges);
+  for (const edge of edges) resolve(edge.child); // Validate conflicts/cycles even off the observed lineage.
+}
+
+export function sampleDiscoveryEvolution(
+  state: WorldState,
+  founderHex: string,
+  edges: MutationEdge[],
+  drawSeeds: [number, number],
+): DiscoveryEvolutionSample {
+  if (!(DISCOVERY_EVOLUTION_TIMES as readonly number[]).includes(state.step)) {
+    throw Error(`unplanned sample step ${state.step}`);
+  }
+  if (
+    !Array.isArray(drawSeeds) || drawSeeds.length !== 2 ||
+    drawSeeds.some((s) => !Number.isSafeInteger(s) || s < 0 || s > 0xffff_ffff)
+  ) {
+    throw Error("sampling seeds must be two u32 values");
+  }
+  const expectedHex = toHex(canonicalHex(founderHex));
+  const founderRoots = { [lineageKey(0, packLineageLo(state.cfg, 1))]: 0 };
+  validateEdges(edges, founderRoots);
+  const resolve = ancestryResolver(founderRoots, edges);
+
+  // Check every observed genome's packed representation before helper decoding.
+  const n = cellCount(state.cfg);
+  if (
+    state.cells.length !== n * 7 || state.genome.length !== n * GENOME_CHANNELS
+  ) throw Error("malformed state buffer");
+  for (let i = 0; i < n; i++) {
+    if (!(state.cells[CH.B * n + i] + state.cells[CH.P * n + i])) continue;
+    const words = Array.from(
+      { length: GENOME_CHANNELS },
+      (_, g) => state.genome[g * n + i],
+    );
+    if ((words[G.PARAM1] >>> 8) !== 0) {
+      throw Error("malformed genome parameter padding");
+    }
+    const genome = decodeGenome(words);
+    const encoded = encodeGenome(genome, words[G.LIN_HI], words[G.LIN_LO]);
+    if (encoded.some((word, j) => word !== words[j])) {
+      throw Error("non-canonical genome words");
+    }
+    const hex = simHex(genome);
+    if (toHex(fromHex(hex)) !== hex) throw Error("malformed observed genome");
+  }
+  const masses = rootMasses(state, resolve);
+  for (const root of masses.roots.slice(1)) {
+    if (root.totalMass !== 0 || root.byGenome.length) {
+      throw Error(`unexpected nonempty founder root ${root.root}`);
+    }
+  }
+  if (state.cfg.mutRate === 0) {
+    if (edges.length !== 0) {
+      throw Error("mutation-off state must have no mutation edges");
+    }
+    if (masses.unknownAncestryMass !== 0) {
+      throw Error("mutation-off state has unknown ancestry");
+    }
+    for (const genome of masses.roots[0].byGenome) {
+      if (genome.hex !== expectedHex) {
+        throw Error("mutation-off state has changed genome");
+      }
+    }
+  }
+  const picked = sampleRoot(
+    masses.roots[0],
+    drawSeeds,
+    masses.unknownAncestryMass,
+  );
+  return {
+    time: state.step,
+    stateHash: stateHash(state),
+    rootMass: masses.roots[0].totalMass,
+    byGenomeAbundance: masses.roots[0].byGenome,
+    draws: {
+      status: picked.status,
+      genomes: picked.draws,
+      unresolvedMass: picked.unresolvedMass,
+    },
+    unknownAncestryMass: masses.unknownAncestryMass,
+    unassociatedMass: masses.unassociatedMass,
+  };
+}

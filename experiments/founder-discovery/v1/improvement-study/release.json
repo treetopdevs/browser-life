@@ -1,0 +1,30 @@
+{
+  "format": "discovery-improvement-release/v1",
+  "manifestSha256": "4d7d8bd03e7842d1af2476a8b06ea33892d029d84bdb5a2d2e15e3c1e257dda5",
+  "manifestHash": "0ebd3092056170b776f63c323ac3a0f3a3f553b3e0ac1c03f8c0e82ff96c2429",
+  "pilotAnalysisSha256": "221b6462e1cde779d66aa148123d1c7e8874b0b74b1db094feb310f1de56de0a",
+  "outputDir": "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+  "localOnly": true,
+  "paidUSD": 0,
+  "forecast": {
+    "histories": 64,
+    "evolutionSteps": 64000000,
+    "requestedAssays": 6144,
+    "maximumDistinctAssays": 2112,
+    "physicalCheckpoints": 704,
+    "plannedInvocations": 576,
+    "measuredEvolutionWithLedgerStepSeconds": 0.0017250378667,
+    "measuredCheckpointReadSeconds": 0.027746250000000146,
+    "measuredCheckpointSemanticSeconds": 0.4606754579999979,
+    "measuredSampleSeconds": 4.040383958,
+    "measuredAssaySeconds": 33.927106542000026,
+    "measuredCheckpointWriteSeconds": 0.07899029200000222,
+    "estimatedResumeVerificationSecondsPerInvocation": 60,
+    "estimatedStorageBytes": 68719476736,
+    "availableStorageBytes": 142556729344,
+    "estimatedTotalWallSeconds": 259200,
+    "cumulativeExecutionCapSeconds": 345600,
+    "minimumFreeBytes": 21474836480
+  },
+  "forecastEvidenceSha256": "2f4dc031f28ddb49c5f8239c56b0713fe7415e69ad145e2d04fda7895d409fd6"
+}

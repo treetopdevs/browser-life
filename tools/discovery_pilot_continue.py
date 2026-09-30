@@ -3,6 +3,7 @@ import datetime
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -10,6 +11,12 @@ import sys
 
 def main():
     root = Path(sys.argv[1]).resolve()
+    label = sys.argv[2] if len(sys.argv) > 2 else "continuation"
+    if not re.fullmatch(r"[a-z0-9-]+", label):
+        raise ValueError("Receipt label must contain lowercase letters, digits or hyphens")
+    max_tranches = int(sys.argv[3]) if len(sys.argv) > 3 else 8
+    if not 1 <= max_tranches <= 8:
+        raise ValueError("Tranche count must be between one and eight")
     design_path = root / "pilot-design.json"
     raw = design_path.read_bytes()
     design = json.loads(raw)
@@ -20,7 +27,7 @@ def main():
         "started": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "pilotManifestSha256": hashlib.sha256(raw).hexdigest(),
         "supervisorSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        "commands": [], "paidUSD": 0, "status": "incomplete",
+        "commands": [], "paidUSD": 0, "status": "incomplete", "maxTranches": max_tranches,
     }
     def run(args):
         if design_path.read_bytes() != raw:
@@ -30,13 +37,13 @@ def main():
         if completed.returncode:
             raise RuntimeError(f"Pilot command failed with exit {completed.returncode}")
     try:
-        for _ in range(8):
+        for _ in range(max_tranches):
             present = sum((root / "receipts" / f"{u['id']}.json").exists() for u in design["units"])
             if present == len(design["units"]):
                 break
             run(["deno", "run", "-A", "--unstable-webgpu", "tools/discovery_competition_pilot.ts", "run", str(root), "600"])
         if not all((root / "receipts" / f"{u['id']}.json").exists() for u in design["units"]):
-            raise RuntimeError("Eight-tranche local runtime cap reached; diagnose before extending")
+            raise RuntimeError("Local runtime tranche cap reached; diagnose before extending")
         for unit_id in design["requiredReplayUnitIds"]:
             out = root / "replays" / f"{unit_id}.json"
             if not out.exists():
@@ -53,7 +60,7 @@ def main():
         raise
     finally:
         result["finished"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        with (root / "continuation.json").open("x") as out:
+        with (root / f"{label}.json").open("x") as out:
             json.dump(result, out, indent=2)
             out.write("\n")
         lock.unlink()

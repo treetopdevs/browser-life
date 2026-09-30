@@ -1,0 +1,24 @@
+{
+  "format": "discovery-engineering-benchmark-review/v1",
+  "date": "2026-09-30T12:24:26.947176+00:00",
+  "file": "tools/discovery_runtime_benchmark.ts",
+  "sha256": "33483375db89b1a4abea5f320c5d9046cd48ea8700a99db4dfd278e1b2139d6a",
+  "typecheck": "deno check --no-lock tools/discovery_runtime_benchmark.ts passed",
+  "independentReviewer": "funnel_plan_inventory",
+  "result": "No blocker in benchmark scope. Resource release remains pending.",
+  "reviewed": [
+    "pilot design and complete analysis reconstructed",
+    "fixed engineering seed and unchanged normal evolution",
+    "runner-matching 100-step ledger drain synchronization",
+    "sorted mutation edges",
+    "new ignored runs artifacts with synced writes and hash/decode roundtrip",
+    "actual 10k checkpoint biology validation timed separately using runner helper"
+  ],
+  "limitations": [
+    "No GPU engineering benchmark has run.",
+    "Scheduled sampling timing and resume verification overhead required before release; checkpoint semantics included in benchmark.",
+    "Resume overhead must be measured.",
+    "10k edge counts do not bound million-step ancestry growth."
+  ],
+  "supersedesSha256": "0509cdb1d9ab4b55834edcf65a6f1989ecbe13cacd0a6ddc687f2cb1b8675112"
+}

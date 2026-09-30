@@ -1,0 +1,22 @@
+{
+  "format": "discovery-improvement-release-review/v1",
+  "date": "2026-09-30T13:00:50.804514+00:00",
+  "reviewer": "funnel_plan_inventory (independent strong model)",
+  "rootDecision": "Release complete fixed local study under unchanged RULE_VERSION 1; start with a 600-second tranche.",
+  "hashes": {
+    "manifest.json": "4d7d8bd03e7842d1af2476a8b06ea33892d029d84bdb5a2d2e15e3c1e257dda5",
+    "release.json": "4b7e00d8848330923e2d9dbc4033598ac27ed8362c15e8228785ee57fe40b148",
+    "resource-forecast.json": "2f4dc031f28ddb49c5f8239c56b0713fe7415e69ad145e2d04fda7895d409fd6"
+  },
+  "sourceHashesMatched": 54,
+  "inputHashesMatched": 2,
+  "measurementHashesMatched": 4,
+  "validateRelease": "Passed with exact manifest/release, canonical output, zero prior execution and 600-second tranche",
+  "forecastHours": 72,
+  "executionCapHours": 96,
+  "estimatedStorageGiB": 64,
+  "minimumFreeGiB": 20,
+  "localOnly": true,
+  "paidUSD": 0,
+  "limitations": "Projections beyond measured engineering workloads remain uncertain; resource stops retain the roster and yield incomplete evidence, without automatic expansion."
+}

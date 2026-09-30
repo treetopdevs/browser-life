@@ -1,0 +1,16 @@
+{
+  "format": "discovery-cpu-sampling-benchmark/v1",
+  "interpretation": "Constructed all-cell founder-associated biomass. CPU analysis only; not a simulation outcome or a measured GPU/mutation-ledger throughput estimate. One-lineage case does not bound ancestry-graph costs.",
+  "shortlistSha256": "8f41154310ffca4647ead972e426d7707b548aefe17ad1cf06d64c38942b687d",
+  "sourceHashes": {
+    "tools/discovery_sampling_benchmark.ts": "b9a2ff6bd61cd58acfac656f0fb32c8ca02f5f11a605e2800b28aabd9425cb1c",
+    "tools/lib/discovery-evolution.ts": "e28ae735a2ee894b2ed7a59152d90a3be423a262a85d2d8bedf627c080110265",
+    "tools/lib/founder-policy.ts": "361411ed7f2ab48907986f78d5faaac41144980104eaecd6acca782701219265"
+  },
+  "cells": 65536,
+  "seconds": 4.040383958,
+  "rootMass": 4194304,
+  "associatedGenomeCount": 1,
+  "sampleStateHash": "20b989833d00e8da",
+  "paidUSD": 0
+}

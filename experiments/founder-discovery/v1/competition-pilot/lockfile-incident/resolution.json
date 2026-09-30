@@ -1,0 +1,14 @@
+{
+  "date": "2026-09-30",
+  "confirmedTrigger": "New discovery-evolution CPU test initially imported jsr:@std/assert@1; normal dependency resolution added test packages to deno.lock.",
+  "correction": "Test converted to built-in node:assert. Frozen lock restored and hash verified. Subsequent checks use --no-lock.",
+  "postInterruptionValidation": {
+    "available": 31,
+    "invalid": 0,
+    "missing": 97,
+    "requiredReplaysMissing": 2
+  },
+  "resumeLabel": "continuation-r2",
+  "remainingTrancheCap": 7,
+  "pilotCriteriaOrRosterChanged": false
+}

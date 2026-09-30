@@ -1,0 +1,55 @@
+{
+  "format": "discovery-resource-forecast/v1",
+  "date": "2026-09-30T12:58:00.322506+00:00",
+  "paidUSD": 0,
+  "localOnly": true,
+  "forecast": {
+    "histories": 64,
+    "evolutionSteps": 64000000,
+    "requestedAssays": 6144,
+    "maximumDistinctAssays": 2112,
+    "physicalCheckpoints": 704,
+    "plannedInvocations": 576,
+    "measuredEvolutionWithLedgerStepSeconds": 0.0017250378667,
+    "measuredCheckpointReadSeconds": 0.027746250000000146,
+    "measuredCheckpointSemanticSeconds": 0.4606754579999979,
+    "measuredSampleSeconds": 4.040383958,
+    "measuredAssaySeconds": 33.927106542000026,
+    "measuredCheckpointWriteSeconds": 0.07899029200000222,
+    "estimatedResumeVerificationSecondsPerInvocation": 60,
+    "estimatedStorageBytes": 68719476736,
+    "availableStorageBytes": 142556729344,
+    "estimatedTotalWallSeconds": 259200,
+    "cumulativeExecutionCapSeconds": 345600,
+    "minimumFreeBytes": 21474836480
+  },
+  "measurementFiles": {
+    "experiments/founder-discovery/v1/engineering-throughput.json": "0d1e7eefa584b511634e8af1ff489fa11d9e9464dced7f615d297b7d916872df",
+    "experiments/founder-discovery/v1/cpu-sampling-benchmark-v2.json": "ef5bb723089639ceb2398dc6f79f4ba3e2854fd6f58966b81264cb74e02c34ee",
+    "experiments/founder-discovery/v1/resume-engineering-benchmark-v2.json": "fdf9cce426b7163bb79fde2f954c15de9d1f9274d157357af5c4498a5e097fac",
+    "experiments/founder-discovery/v1/competition-pilot/final-analysis.json": "221b6462e1cde779d66aa148123d1c7e8874b0b74b1db094feb310f1de56de0a"
+  },
+  "derivation": {
+    "countedBaselineHours": 60.497196803733345,
+    "forecastHeadroomHours": 11.502803196266655,
+    "checkpointPayloadBytes": 9412572928,
+    "linearDenseLedgerBytesAcrossAll64Histories": 1661766400,
+    "twoCopiesOfMaximalAbundanceRowsAt1KiBEach": 25769803776,
+    "observedCacheSecondsPerHistory": [
+      0.13624274999999988,
+      0.13960450000000013,
+      0.13635520799999995
+    ],
+    "projectedWarm64HistorySeconds": 8.934688000000008,
+    "resumeAllowanceSecondsPerInvocation": 60,
+    "invocationsReserved": 576
+  },
+  "limitations": [
+    "10k engineering workloads do not bound million-step ancestry graphs.",
+    "One-lineage CPU benchmark excludes large ancestry graph costs.",
+    "Cache measurement used a warm synthetic history; full-history cost is projected.",
+    "Timing variability, GPU initialization, final full analysis and growing lineage graph costs use forecast headroom.",
+    "The execution cap is checked between atomic operations using measured allowances; unexpected timing overruns are recorded, not guaranteed impossible.",
+    "A resource stop preserves the complete roster and declares incomplete evidence; no automatic extra compute or reduced replication."
+  ]
+}

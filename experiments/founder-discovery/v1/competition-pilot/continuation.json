@@ -1,0 +1,24 @@
+{
+  "started": "2026-09-30T11:51:09.942772+00:00",
+  "pilotManifestSha256": "024190424f7cb940b0c08a200925a993ed7417841fc8040aa166ca964471c8ef",
+  "supervisorSha256": "bf529d01e2127c1c322c2d060bf59aaf966ef4c23bef069a1fe429c10b448c2c",
+  "commands": [
+    {
+      "command": [
+        "deno",
+        "run",
+        "-A",
+        "--unstable-webgpu",
+        "tools/discovery_competition_pilot.ts",
+        "run",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/competition-pilot",
+        "600"
+      ],
+      "exitCode": 1
+    }
+  ],
+  "paidUSD": 0,
+  "status": "incomplete",
+  "error": "Pilot command failed with exit 1",
+  "finished": "2026-09-30T12:01:14.698763+00:00"
+}

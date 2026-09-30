@@ -1,0 +1,46 @@
+{
+  "format": "discovery-improvement-provenance-review/v1",
+  "date": "2026-09-30T12:24:53.906334+00:00",
+  "reviewer": "discovery_provenance (Luna)",
+  "status": "allocation inventory verified; final code freeze pending",
+  "counts": {
+    "histories": 64,
+    "draws": 384,
+    "requestedAssays": 6144,
+    "physicalCheckpoints": 704
+  },
+  "seeds": {
+    "evolution": [
+      6410001,
+      6410008
+    ],
+    "draws": [
+      6420001,
+      6420384
+    ],
+    "assay": [
+      6430001,
+      6430004
+    ],
+    "pilot": [
+      6440001,
+      6440004
+    ],
+    "bootstrap": [
+      6450001,
+      6450001
+    ],
+    "engineering": [
+      6460001,
+      6460001
+    ]
+  },
+  "collisionSearch": "No earlier reservation collision found in searched experiment records and main docs; transplant630000101+ is distinct.",
+  "documentedOverlap": "Constructed CPU sampling benchmark uses6410001/6420001/6420002 without simulation; no study outcomes produced.",
+  "evidence": [
+    "tools/lib/discovery-improvement-runtime.ts",
+    "experiments/founder-discovery/v1/improvement-execution-protocol.md",
+    "tools/discovery_sampling_benchmark.ts",
+    "docs/foundations-transplant-pilot.md"
+  ]
+}

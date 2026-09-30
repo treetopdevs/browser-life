@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-30T12:06:11.334280+00:00",
+  "changedFiles": {
+    "deno.lock": "f629ded3cedf124ab6371163ae1ccbb6fee0fcd82d314d7aeb173026e05fdb6e"
+  },
+  "frozenLockSha256": "8630fa4d89086681cfed42c0f5977e2e34e720d1b32580300df124f83cf872bd",
+  "observedLockSha256": "f629ded3cedf124ab6371163ae1ccbb6fee0fcd82d314d7aeb173026e05fdb6e",
+  "verifiedTerminalSession": 82622,
+  "preservedControls": 31,
+  "cause": "Lock metadata gained test-only @std/assert and @std/internal dependency entries during concurrent CPU development/review. No simulator, schema, runner or protocol source changed.",
+  "decision": "Preserve stopped invocation and all receipts; restore exact frozen lock bytes, validate all existing evidence, then resume same units. Use --no-lock for concurrent development/review commands. Complete the two original replays before pilot interpretation."
+}
