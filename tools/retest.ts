@@ -4,16 +4,20 @@
 // one-sided 95% Clopper–Pearson lower bound above 0.8 (30 or more of 32).
 //
 //   deno run -A tools/retest.ts --confirm runs/bootstrap/confirm.json --out runs/retest
-//     [--per-strong 4] [--seed 2000001]
+//     [--per-strong 4] [--rank row-order|seeded --rank-seed N] [--seed 2000001]
 //   deno run -A tools/retest.ts --from runs/retest/retest.json --replicate runs/replicate --seed 5000001
 //   deno run -A tools/retest.ts --from runs/retest/retest.json --replication runs/replicate/replicate.json \
 //     --founders packages/schema/src/founders.ts
 //
 // The first form evaluates every member of each cluster with no 16-replicate
 // strict passer, up to --per-strong strict members of every other cluster, and
-// generalistGenome(60, 20), and writes retest.json. The others reclassify an
-// existing retest.json under the rule (no GPU) and pick each cluster's best
-// passer (selectFounders in packages/search/src/retest.ts). --replicate
+// generalistGenome(60, 20), and writes retest.json. "First" --per-strong members
+// means confirm.json row order (--rank row-order, the default and the historical
+// rule) or a seeded shuffle of each cluster's strong members (--rank seeded
+// --rank-seed N; the shuffle seed is N plus the cluster id). The cap, rank, seed
+// and confirm path are written to retest.json's provenance.selection. The others
+// reclassify an existing retest.json under the rule (no GPU) and pick each
+// cluster's best passer (selectFounders in packages/search/src/retest.ts). --replicate
 // evaluates those candidates again on fresh seeds and writes replicate.json,
 // because picking the best of a cluster favours lucky batches. --founders
 // keeps the candidates whose retest pooled with their replication still passes
@@ -23,9 +27,9 @@ import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { generalistGenome, type Genome } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { binomialLowerBound, PROBABILITY_GATE } from "@bl/metrics";
-import { checkFresh, usedSeeds, DEFAULT_EVAL, evaluateBatch, founderSetId, geneticClusters, passesStrictM3, replicatedFounders, selectFounders, type EncGenome, type Evaluation, type ReplicateRow, type RetestProvenance, type RetestRow } from "@bl/search";
+import { checkFresh, usedSeeds, DEFAULT_EVAL, evaluateBatch, founderSetId, geneticClusters, passesStrictM3, replicatedFounders, selectFounders, selectRetestItems, type EncGenome, type Evaluation, type ReplicateRow, type RetestProvenance, type RetestRow, type RetestSelection } from "@bl/search";
 
-const a = parseArgs(Deno.args, { string: ["confirm", "out", "per-strong", "seed", "from", "founders", "replicate", "replication"], default: { "per-strong": "4", seed: "2000001" } });
+const a = parseArgs(Deno.args, { string: ["confirm", "out", "per-strong", "seed", "from", "founders", "replicate", "replication", "rank", "rank-seed"], default: { "per-strong": "4", seed: "2000001", rank: "row-order" } });
 type Row = RetestRow;
 const dec = (g: EncGenome): Genome => ({ ...g, weights: Int8Array.from(g.weights) });
 const enc = (g: Genome): EncGenome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Array.from(g.weights) });
@@ -45,19 +49,16 @@ if (a.from) {
   if (!Number.isSafeInteger(seed0) || !Number.isSafeInteger(perStrong) || perStrong < 0) throw new Error("--seed and --per-strong must be nonnegative integers");
   const c = JSON.parse(await Deno.readTextFile(a.confirm));
   // Clusters as the M3 gate counted them; weak = no member with a 16-replicate lower bound above 0.8.
-  const by = new Map<number, { regenLowerBound: number; eval: Evaluation; genome: EncGenome }[]>();
-  for (const r of c.rows.filter((r: { pass: boolean }) => r.pass)) by.set(r.cluster, [...(by.get(r.cluster) ?? []), r]);
-  const items: Omit<Row, "eval">[] = [{ label: "generalistGenome(60,20)", cluster: null, weak: null, prior: null, genome: enc(generalistGenome(60, 20)) }];
-  for (const [id, rs] of by) {
-    const weak = !rs.some((r) => r.regenLowerBound > 0.8);
-    (weak ? rs : rs.filter((r) => r.regenLowerBound > 0.8).slice(0, perStrong)).forEach((r, i) =>
-      items.push({ label: `c${id}.${i}`, cluster: id, weak, prior: `${r.eval.regenerated}/${r.eval.reps}`, genome: r.genome })
-    );
-  }
+  const rank = String(a.rank);
+  if (rank !== "row-order" && rank !== "seeded") throw new Error(`--rank must be row-order or seeded, got "${a.rank}"`);
+  if (rank === "seeded" && (a["rank-seed"] === undefined || !Number.isSafeInteger(Number(a["rank-seed"])))) throw new Error("--rank seeded needs an integer --rank-seed");
+  if (rank === "row-order" && a["rank-seed"] !== undefined) throw new Error("--rank-seed only applies to --rank seeded");
+  const selection: RetestSelection = { perStrong, rank, seed: rank === "seeded" ? Number(a["rank-seed"]) : null, confirm: a.confirm };
+  const items = selectRetestItems(c.rows, selection, enc(generalistGenome(60, 20)));
   const ec = { ...DEFAULT_EVAL, reps: PROBABILITY_GATE.reps };
   const per = Math.floor((ec.side * ec.side) / ec.reps);
   const last = seed0 + Math.ceil(items.length / per) - 1;
-  provenance = { seeds: [seed0, last], used: usedSeeds(c.gate ?? {}, c.rows.length) as [number, number][] };
+  provenance = { seeds: [seed0, last], used: usedSeeds(c.gate ?? {}, c.rows.length) as [number, number][], selection };
   checkFresh(provenance);
   console.log(`${items.length} genomes (${items.filter((i) => i.weak).length} from weak clusters), ${ec.reps} replicates, seeds ${seed0}..${last}`);
   const device = await requestDevice(navigator.gpu);

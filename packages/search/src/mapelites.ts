@@ -36,13 +36,22 @@ export interface Lineage {
   /** Members tied at the highest quality (several once quality saturates at 1). */
   best: Elite[];
   size: number;
-  /** Members that passed screening (passesGate). */
+  /** Members that passed screening (the archive's gate; `passesGate` by default). */
   passers: number;
 }
 
 export const DEFAULT_ARCHIVE: ArchiveSpec = { bins: 8, massRange: [7, 13], speedRange: [0, 4] };
 
 export type ScoreFn = (e: Evaluation) => number;
+export type GateFn = (e: Evaluation) => boolean;
+
+export type GateName = "m3" | "maintenance";
+/** "maintenance": alive and light-dependent in every replicate; regeneration is reported, not required. */
+export function passesMaintenanceGate(e: Evaluation): boolean {
+  return e.survived > 0 && e.lightDependent === e.reps;
+}
+/** The screening gates a search can use (`--gate`). "m3" is `passesGate`, the historical rule and the default everywhere. */
+export const GATES: Record<GateName, GateFn> = { m3: (e) => passesGate(e), maintenance: passesMaintenanceGate };
 
 export class Archive {
   readonly cells = new Map<string, Elite>();
@@ -58,6 +67,8 @@ export class Archive {
     readonly spec: ArchiveSpec = DEFAULT_ARCHIVE,
     /** Archive insertion score; defaults to `quality`. `--score maintenance` passes `qualityMaintenance`. */
     readonly score: ScoreFn = quality,
+    /** Screening gate: which offers are kept as passers and counted in `lineages()`; defaults to `passesGate`. */
+    readonly gate: GateFn = passesGate,
   ) {}
 
   cellOf(e: Evaluation): [number, number] {
@@ -79,7 +90,7 @@ export class Archive {
       const rj = this.root(j), ri = this.root(idx);
       if (rj !== ri && genomeDistance(genome, this.viable[j].genome, CLUSTER_DISTANCE) <= CLUSTER_DISTANCE) this.link[rj] = ri;
     }
-    if (passesGate(e)) {
+    if (this.gate(e)) {
       const key = genomeKey(genome);
       if (!this.passers.has(key)) this.passers.set(key, { genome, eval: e, quality: q, cell, born });
     }
@@ -113,7 +124,7 @@ export class Archive {
       if (!l.best.length || el.quality > l.best[0].quality) l.best = [el];
       else if (el.quality === l.best[0].quality) l.best.push(el);
       l.size++;
-      if (passesGate(el.eval)) l.passers++;
+      if (this.gate(el.eval)) l.passers++;
       by.set(r, l);
     });
     return (this.lineageCache = [...by.values()]);
@@ -159,8 +170,8 @@ export class Archive {
    * count, so replaying the viable ones in order reproduces cells, passers and
    * lineages exactly.
    */
-  static replay(log: { genome: Genome; eval: Evaluation; born: number }[], evaluated: number, spec = DEFAULT_ARCHIVE, score: ScoreFn = quality): Archive {
-    const a = new Archive(spec, score);
+  static replay(log: { genome: Genome; eval: Evaluation; born: number }[], evaluated: number, spec = DEFAULT_ARCHIVE, score: ScoreFn = quality, gate: GateFn = passesGate): Archive {
+    const a = new Archive(spec, score, gate);
     for (const r of log) a.offer(r.genome, r.eval, r.born);
     a.evaluated = evaluated;
     return a;
@@ -194,8 +205,8 @@ export interface M3Gate {
 }
 
 /** A fresh-seed confirmation that counts toward the M3 gate: passesGate over at least `minReps` replicates. */
-export function confirmsGate(e: Evaluation, minReps = CONFIRM_REPS): boolean {
-  return e.reps >= minReps && passesGate(e);
+export function confirmsGate(e: Evaluation, minReps = CONFIRM_REPS, gate: GateFn = passesGate): boolean {
+  return e.reps >= minReps && gate(e);
 }
 
 /**
@@ -206,8 +217,8 @@ export function confirmsGate(e: Evaluation, minReps = CONFIRM_REPS): boolean {
  * count: with few replicates per candidate, many of thousands screened pass by
  * chance.
  */
-export function m3Gate(confirmations: { genome: Genome; eval: Evaluation }[], minClusters = M3_MIN_CLUSTERS, minReps = CONFIRM_REPS): M3Gate {
-  const ok = confirmations.filter((c) => confirmsGate(c.eval, minReps));
+export function m3Gate(confirmations: { genome: Genome; eval: Evaluation }[], minClusters = M3_MIN_CLUSTERS, minReps = CONFIRM_REPS, gate: GateFn = passesGate): M3Gate {
+  const ok = confirmations.filter((c) => confirmsGate(c.eval, minReps, gate));
   const clusters = new Set(geneticClusters(ok.map((c) => c.genome))).size;
   return { screened: confirmations.length, confirmed: ok.length, clusters, met: clusters >= minClusters };
 }

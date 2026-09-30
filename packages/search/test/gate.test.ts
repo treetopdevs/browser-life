@@ -179,6 +179,59 @@ describe("lineage-aware archive", () => {
 
 });
 
+import { DEFAULT_ARCHIVE, GATES, confirmsGate, passesGate, passesMaintenanceGate, quality } from "@bl/search";
+
+describe("explicit screening gate (maintenance)", () => {
+  // Alive and light-dependent in all 4 replicates, but regenerated in none.
+  const noRegen = ev(0, 4, 4);
+
+  it("is not a passer under the default gate but is under the maintenance gate", () => {
+    expect(passesGate(noRegen)).toBe(false);
+    expect(passesMaintenanceGate(noRegen)).toBe(true);
+    const def = new Archive();
+    const maint = new Archive(DEFAULT_ARCHIVE, quality, passesMaintenanceGate);
+    for (const a of [def, maint]) a.offer(genome(7), noRegen, 0);
+    expect(def.gatePassing().length).toBe(0);
+    expect(maint.gatePassing().length).toBe(1);
+    expect(def.lineages()[0].passers).toBe(0);
+    expect(maint.lineages()[0].passers).toBe(1);
+    expect(GATES.m3(noRegen)).toBe(false);
+    expect(GATES.maintenance(noRegen)).toBe(true);
+  });
+
+  it("still requires survival and light dependence in every replicate", () => {
+    expect(passesMaintenanceGate({ ...noRegen, survived: 0 })).toBe(false);
+    expect(passesMaintenanceGate({ ...noRegen, lightDependent: 3 })).toBe(false);
+  });
+
+  it("steers parent picks toward its passers, not toward regenerators", () => {
+    const maint = new Archive(DEFAULT_ARCHIVE, quality, passesMaintenanceGate);
+    const regen = genome(10), steady = genome(-10);
+    maint.offer(regen, { ...ev(4, 3, 4), meanMass: 256 }, 0); // regenerates but is not light-dependent in every replicate
+    maint.offer(steady, { ...noRegen, meanMass: 1024 }, 0);
+    for (let s = 0; s < 200; s++) expect(maint.pickParent(s, 1)!.genome).toBe(steady);
+  });
+
+  it("replays with its gate", () => {
+    const a = new Archive(DEFAULT_ARCHIVE, quality, passesMaintenanceGate);
+    a.offer(genome(7), noRegen, 0);
+    const b = Archive.replay(a.viableLog(), a.evaluated, DEFAULT_ARCHIVE, quality, passesMaintenanceGate);
+    expect(b.gatePassing()).toEqual(a.gatePassing());
+    expect(Archive.replay(a.viableLog(), a.evaluated).gatePassing().length).toBe(0);
+  });
+
+  it("m3Gate and confirmsGate count such genomes as confirmed only under the maintenance gate", () => {
+    const founders = Array.from({ length: 20 }, (_, i) => genome(i * 6 - 60));
+    const conf = founders.map((g) => ({ genome: g, eval: ev(0, 16, 16) }));
+    expect(confirmsGate(conf[0].eval)).toBe(false);
+    expect(confirmsGate(conf[0].eval, undefined, passesMaintenanceGate)).toBe(true);
+    expect(m3Gate(conf)).toEqual({ screened: 20, confirmed: 0, clusters: 0, met: false });
+    expect(m3Gate(conf, undefined, undefined, passesMaintenanceGate)).toEqual({ screened: 20, confirmed: 20, clusters: 20, met: true });
+    // The replicate floor still applies under the maintenance gate.
+    expect(m3Gate(founders.map((g) => ({ genome: g, eval: ev(0, 15, 15) })), undefined, undefined, passesMaintenanceGate)).toMatchObject({ confirmed: 0, met: false });
+  });
+});
+
 import { parseProbability } from "@bl/search";
 
 describe("probability flags", () => {
