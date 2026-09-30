@@ -223,3 +223,38 @@ No readout selects on, or is replaced by, a held-out measure, a role or `compart
 ## Budget and compute
 
 $0: Mac only through R4. An AWS draw needs a dated note in `docs/plan.md` after the pilots. It would come from the $200's margin, quantified against the earmarked $60 and $120, under the existing cost and stop rules.
+
+## Amendment 1 — 2026-09-30: pilot results and the frozen main configuration
+
+This amendment was written after P1, the R3 calibration and P2, and before any main run. Results are in `experiments/scaffold/p1.json`, `calibrate.json` and `p2.json`. The tools are at commit 319f8794.
+
+- **P1: one regime passes.** k = 8 with period 10,000 passes in both seeds:
+  - success fraction: 0.594 (s = 0) and 0.821 (s = 1);
+  - mean ineligible fraction: 0.134 and 0.071;
+  - mean CV: 0.84 and 0.47;
+  - conservation exact.
+
+  ref(10,000) = 103,058. The other eight regimes fail:
+  - k = 3 goes extinct by cycle 2 at every period;
+  - k = 5 at 10,000 fails because seed 0's mean ineligible fraction is 0.549, above 0.5 (seed 1 passes); at 1,000 and 3,000 it fails on regrowth;
+  - k = 8 at 1,000 and 3,000 steps fails on regrowth.
+
+  The fallback grid was not needed.
+- **R3 calibration at k = 8, period 10,000.**
+  - Ancestor competence is 0.859 and quenched competence is 0.000, on identical fragments (both pass).
+  - The source world is the ancestor clone grown one period (seed 4,802,001).
+  - **Correction to P1's calibration seeds.** The quenched set uses the ancestor set's streams (4,802,011 + s), not 4,802,021 + s. That is what the common-random-numbers rule under "Readouts (assay seeds)" requires. An earlier quenched set seeded 4,802,021 + s (also 0.000) was run before this was noticed. It is kept in `runs/`, but it is not a matched control and not a decision input.
+  - **Headroom.** The ancestor's competence of 0.859 leaves at most 0.141 of headroom for R3's advantage over the ancestor.
+- **P2 passes in both seeds.**
+  - In `scaf`, the high-set share rose by +0.211 and +0.203. In `rand` it changed by −0.802 and −0.021.
+  - Mean trait at boundary 20: `scaf` 83,125 and 83,293; `rand` 3,148 and 14,953.
+  - High set: founders 2, 3, 5, 6, 9 and 11.
+  - The ranking runs used the P1 period (one period of 10,000 steps).
+  - **Descriptive only:** the `rand` arm drifted toward low-trait founders, and its productivity collapsed in one seed.
+- **Frozen main configuration:** `experiments/scaffold/main-config-v1.json`. Its SHA-256 is recorded in `docs/plan.md`'s dated scaffolding draw note.
+  - 64 ponds, the ancestor `M3_FOUNDERS[2]`;
+  - k = 8, period 10,000, D = 16, C = 100 cycles (10⁶ steps), census every 100 steps;
+  - default mutation rate;
+  - arms `scaf`, `rand` and `cont`, 6 histories each, seeds 4,810,001 + 100·arm + i.
+- **R3's ancestor source.** For timing (a) it is the calibration source world above (seed 4,802,001). For timing (b), that world is continued 2×10⁵ steps with no cycle and mutation on, at seed `assaySeed(0, 18, 1, 0, 0)`.
+- **Where it runs.** The main run and the readout assays run on one AWS g5.xlarge with six lanes, under the dated draw note in `docs/plan.md`. The tools, seeds and outputs are the same as on the Mac.

@@ -1,0 +1,133 @@
+{
+  "stage": "p2",
+  "regime": {
+    "k": 8,
+    "period": 10000
+  },
+  "highSet": [
+    2,
+    3,
+    5,
+    6,
+    9,
+    11
+  ],
+  "founderScores": [
+    {
+      "founder": 0,
+      "n": 12,
+      "sum": 205548,
+      "mean": 17129
+    },
+    {
+      "founder": 1,
+      "n": 12,
+      "sum": 210828,
+      "mean": 17569
+    },
+    {
+      "founder": 2,
+      "n": 12,
+      "sum": 1212999,
+      "mean": 101083.25
+    },
+    {
+      "founder": 3,
+      "n": 12,
+      "sum": 883797,
+      "mean": 73649.75
+    },
+    {
+      "founder": 4,
+      "n": 10,
+      "sum": 355067,
+      "mean": 35506.7
+    },
+    {
+      "founder": 5,
+      "n": 10,
+      "sum": 706068,
+      "mean": 70606.8
+    },
+    {
+      "founder": 6,
+      "n": 10,
+      "sum": 554020,
+      "mean": 55402
+    },
+    {
+      "founder": 7,
+      "n": 10,
+      "sum": 240343,
+      "mean": 24034.3
+    },
+    {
+      "founder": 8,
+      "n": 10,
+      "sum": 144562,
+      "mean": 14456.2
+    },
+    {
+      "founder": 9,
+      "n": 10,
+      "sum": 695846,
+      "mean": 69584.6
+    },
+    {
+      "founder": 10,
+      "n": 10,
+      "sum": 123139,
+      "mean": 12313.9
+    },
+    {
+      "founder": 11,
+      "n": 10,
+      "sum": 825110,
+      "mean": 82511
+    }
+  ],
+  "notRead": [],
+  "skipped": [],
+  "seeds": [
+    {
+      "s": 0,
+      "present": true,
+      "deltaScaf": 0.21087108723766101,
+      "deltaRand": -0.8018545332376761,
+      "deltaScafExact": "3480232539632/16504076425184",
+      "deltaRandExact": "-518327305101/646410643846",
+      "meanTraitScaf": 83124.625,
+      "meanTraitRand": 3147.765625,
+      "criteria": {
+        "deltaAtLeast": true,
+        "deltaBeatsRand": true,
+        "traitHigher": true
+      },
+      "pass": true
+    },
+    {
+      "s": 1,
+      "present": true,
+      "deltaScaf": 0.20321650876411015,
+      "deltaRand": -0.021294036532377134,
+      "deltaScafExact": "3344268898539/16456679227872",
+      "deltaRandExact": "-59401492713/2789583488442",
+      "meanTraitScaf": 83292.609375,
+      "meanTraitRand": 14953.21875,
+      "criteria": {
+        "deltaAtLeast": true,
+        "deltaBeatsRand": true,
+        "traitHigher": true
+      },
+      "pass": true
+    }
+  ],
+  "pass": true,
+  "verdict": true,
+  "truncation": {
+    "flagged": [],
+    "verdict": true,
+    "without": true,
+    "sensitive": false
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "protocol": "docs/scaffold-protocol-v1.md",
+  "protocolSha256": "fa5b85bc3b62ca32504fb3c2c5a72ed5b5e3a2683da89491ed9665e6d3361010",
+  "toolCommit": "319f8794561e",
+  "world": {
+    "tilesX": 8,
+    "tilesY": 8,
+    "tileW": 64,
+    "tileH": 64,
+    "lightMode": "uniform",
+    "lightBase": 40,
+    "lightAmp": 160,
+    "defaultMu": 60,
+    "defaultSigma": 20,
+    "kernelRadius": 9,
+    "mutRate": 429497,
+    "nutrient": 32,
+    "disc": {
+      "radius": 10,
+      "biomass": 64,
+      "energy": 128
+    }
+  },
+  "ancestor": {
+    "m3FounderIndex": 2,
+    "cluster": 2,
+    "mu": 80,
+    "sigma": 26,
+    "motGain": 0,
+    "weights": "d0d0fdd009c3c0fd05da35fcc707d3222a35ef3807df2aca0532e828360110ff290d1dcd33f919d739cdfb163d402b1126cedcff3528fe2d001322fcfbd8e61330e8c6000d0f3937cd3b31ce0fcee5f724cb18283fc501dad7fa25c8023725d53a2315fb16243ff52b3e2013c7fc26fe25c8e5fce637ce372323dd23133f14e1c7ffd6f701d50adf14011ed63609221629c03f213e1cddc9fce33725f1e1f121"
+  },
+  "regime": {
+    "k": 8,
+    "period": 10000,
+    "donors": 16,
+    "ponds": 64,
+    "cycles": 100,
+    "censusEvery": 100
+  },
+  "arms": [
+    "scaf",
+    "rand",
+    "cont"
+  ],
+  "histories": 6,
+  "seeds": {
+    "main": "4810001 + 100*arm + i (arm 0 scaf, 1 rand, 2 cont; i 0-5)",
+    "assays": "assaySeed(r,h,t,v,s) = 4820001 + 5000r + 250h + 100t + 20v + s"
+  },
+  "ref": 103058,
+  "assayBudget": 151552,
+  "r3AncestorSource": {
+    "a": "runs/scaffold/calib/source/ckpt/b1-pre.blck.gz (seed 4802001)",
+    "b": "continue 200000 steps, seed assaySeed(0,18,1,0,0)"
+  }
+}

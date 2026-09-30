@@ -445,4 +445,13 @@ This decision opens one exploratory ecology intervention under RULE_VERSION 1. G
 
 **Seeds.** 4,800,001–4,849,999: P1 4,800,001+, P2 4,805,001+, main 4,810,001+, assays 4,820,001+. The range 4,000,001–4,799,999 is taken by the review and by ecology-first discovery.
 
-**Budget.** $0: Mac only through the readouts. Any AWS draw needs its own dated note after the pilots, drawn from the $200's margin. The $60 RULE_VERSION 2 go/no-go and the $120 cohort reserve are untouched.
+**Budget.** $0: Mac only through the readouts. Any AWS draw needs its own dated note after the pilots, drawn from the $200's margin. The $60 RULE_VERSION 2 go/no-go and the $120 cohort reserve are untouched. *(Superseded for the AWS draw below: by the user's decision of 2026-09-30, that draw may reduce the cohort reserve.)*
+
+**Pilots and freeze (2026-09-30).** P1 chose k = 8 with period 10,000. The R3 calibration passed: ancestor competence 0.859, quenched 0.000, on paired fragments. P2, the positive control, passed in both seeds. Details are in the protocol's Amendment 1. The frozen main configuration is `experiments/scaffold/main-config-v1.json`, SHA-256 `8d5dd3b93a7150119d79cf8be840fde8949310be39cd65ebb134f9bf45d74fc6`. It records the protocol SHA-256 `fa5b85bc…` and the tool commit `319f8794`.
+
+**AWS draw (2026-09-30, before paid runs; approved by the user).** The main run (18 histories × 10⁶ steps at 512²) and the readout assays go to one g5.xlarge with six lanes: about 25 million 512² steps, estimated at about 7 h. The Mac GPU is shared with other lines' jobs, and this would take it about 1.5–2 days.
+- **Budget:** estimate about $12, with a hard stop at $20, drawn from the follow-up $200.
+  - **Ledger before this draw.** The $200 has these draws recorded so far: about $5 for the extension time-shift, and the ecology-first draw (authorised about $20, hard stop $25). That draw has spent $8.02 on B and C; its `fx2` job is still running under its own cap. With the $60 go/no-go and the $120 cohort reserve earmarked, the unearmarked remainder is at most about $7, and less once `fx2` closes.
+  - **Amendment by the user's decision (2026-09-30).** This draw may take what it spends beyond that remainder out of the cohort reserve. The reserve is reduced by that amount, up to this draw's $20 hard stop, and the reduced figure is recorded here when this draw closes. The $60 RULE_VERSION 2 go/no-go stays untouched.
+- **Infrastructure:** a separate key pair and security group (`bl-scaf`), and a separate supervisor. They share nothing with the running `bl-found` supervisor or its jobs. Everything is torn down when the queue is done, or at the cap.
+- **Results:** they are pulled into `runs/scaffold/` in the scaffold workspace, and the cost is recorded here when the work closes.

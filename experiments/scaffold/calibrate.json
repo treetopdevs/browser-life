@@ -1,0 +1,47 @@
+{
+  "stage": "calibrate",
+  "skipped": 0,
+  "rejected": [
+    {
+      "dir": "runs/scaffold/calib/quenched",
+      "reasons": [
+        "calibration 2 seed 4802021 is a legacy separately seeded quenched control: its fragments differ from the ancestor's, so it is not a matched control and not a decision input (re-run with seed 4802011)"
+      ]
+    }
+  ],
+  "p1": {
+    "primaryComplete": true,
+    "fallbackComplete": false,
+    "passing": [
+      {
+        "k": 8,
+        "period": 10000
+      }
+    ],
+    "stage": "primary",
+    "chosen": {
+      "k": 8,
+      "period": 10000
+    },
+    "candidate": {
+      "k": 8,
+      "period": 10000
+    },
+    "verdict": true
+  },
+  "verdict": true,
+  "chosen": {
+    "k": 8,
+    "period": 10000
+  },
+  "regimes": [
+    {
+      "k": 8,
+      "period": 10000,
+      "ancestor": 0.859375,
+      "quenched": 0,
+      "paired": true,
+      "pass": true
+    }
+  ]
+}
