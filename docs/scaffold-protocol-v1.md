@@ -1,0 +1,225 @@
+# Ecological scaffolding: protocol v1 (sandbox, not registered)
+
+*2026-09-30. Opened by the dated decision "Ecological scaffolding (sandbox) — 2026-09-30" in `docs/plan.md`. This line is exploratory under RULE_VERSION 1. It does not answer the reset line's entity question and does not count toward M6. Its readouts are never confirmatory. Once the main run starts, any change to this document goes in a dated amendment at the end.*
+
+## Question
+
+The north star's hardest item is a collective that reproduces as a unit through a bottleneck. Experimental evolution has produced such collectives by imposing a group life cycle through the environment (Ratcliff et al. 2012; Hammerschmidt et al. 2014; Black, Bourrat & Rainey 2020, "ecological scaffolding"). This protocol imposes one on RULE_VERSION 1 worlds. Tiles are ponds. Each cycle, every pond is ground back to nutrient and reseeded by a small packet taken from a donor pond.
+
+The questions, in order:
+
+1. **Can the machinery see selection among ponds?** A positive control on standing variation, mutation off (P2).
+2. **Does the scaffold take?**
+   - Is pond-level heredity demonstrable (R1)?
+   - With mutation, do ponds under selection improve beyond what the bottleneck alone gives (R2)?
+3. **Does the evolved group-level trait survive removal of the scaffold (R3)?**
+
+A descriptive side question (R4) asks whether evolution without the scaffold loses capability that evolution with it keeps. Test 5 measured lower regeneration in evolved lineages (0.168 against 0.979 for founders). That the loss happens because nothing pays for organisation is a hypothesis, not an established cause.
+
+## World
+
+- **Physics: RULE_VERSION 1, unchanged.** The per-step CPU and WGSL rules are not touched, no `WorldConfig` key is added, and no golden pin moves. The pond cycle is a host-side transform between steps: `GpuSim.readState()`, transform, check, `GpuSim.upload()`. `upload()` runs `validateState`.
+- **Configuration: the M3 evaluator's.**
+  - `defaultConfig({ ...DEFAULT_EVAL.world, tileW: 64, tileH: 64, tilesX: s, tilesY: s, seed })`. `DEFAULT_EVAL.world` is μ 60, σ 20, kernel radius 9, uniform light 40/160.
+  - Mutation rate: the default, `mutRate` 429,497, as in the M4 treatment runs. The mutation-off arms set `mutRate: 0`.
+  - s = 4 (16 ponds, 256²) in P1; s = 8 (64 ponds, 512²) everywhere else.
+- **Initial state: the evaluator's seeding** (`evaluate.ts:181`). Every pond gets one disc at its centre (32, 32): radius 10, biomass 64, energy 128, in nutrient 32.
+  - The ancestor is `M3_FOUNDERS[2]` (cluster 2) in every pond: one clone per history.
+  - P2 plants the 12 M3 founders round-robin: pond t gets founder t mod 12.
+  - `buildWorld` numbers lineage ids by planting index (`world.ts:79`). The tool therefore records the map from planting index to founder index in `meta.json`.
+
+## Pond cycle
+
+**When.** A cycle runs at every boundary step b·`period`, for b = 1, 2, …. Boundary b falls after the census at that step and after the mutation ledger has been drained. That order matters because `upload()` resets the EVENTS, DROPPED and FLAGS words. The transform at boundary b is called **cycle b**. Every quantity below is read from the **pre-cycle snapshot** at that boundary.
+
+1. **Trait.** A pond's trait is its bound mass B+P, summed over its cells with B+P ≥ 48. That is the census support threshold, so scattered dust does not count. A pond is **eligible** (surviving) if its trait is above 0.
+2. **Donors.** R is the number of ponds (64). Let D = R/4, and let D′ = min(D, number of eligible ponds).
+   - `scaf`: the D′ eligible ponds with the highest trait. Ties are broken by ascending random key.
+   - `rand`: D′ eligible ponds drawn without replacement, by taking the D′ smallest random keys among eligible ponds.
+   - Both arms allocate recipients the same way. All R ponds, donors included, are ordered by ascending random key. The recipient at position p gets donor number p mod D′, where donors are numbered in selection order.
+   - Every donor therefore seeds ⌊R/D′⌋ or ⌈R/D′⌉ recipients. Families are identified by the actual donor pond.
+   - If no pond is eligible, the history has ended. The cycle still clears every pond, writes its rows and stops the run.
+   - `cont` has no cycle. It writes the same pond-summary rows at the same boundaries.
+3. **Packet.** For each recipient, one k×k window is taken from its donor.
+   - **Centre:** an eligible cell of the donor (B+P ≥ 48), drawn with probability proportional to its B+P.
+   - **Window:** offsets −⌊k/2⌋ … k−1−⌊k/2⌋ on each axis around the centre, wrapping **inside the donor tile**. k ≤ 64.
+   - **Landing:** window cell (i, j) lands at recipient-local (32 − ⌊k/2⌋ + i, 32 − ⌊k/2⌋ + j). That fits in the tile for every k ≤ 64, so landing never wraps.
+4. **Random keys.** Every key is `draw(cellBase((seed ^ POND_SALT) >>> 0, b, slot), purpose)`, with `POND_SALT` = 0x504F4E44 ("POND"). Slot is the pond index. Where the text says "ascending random key", the order is by (key, pond index) ascending. Purposes:
+   - 0: tie-break key;
+   - 1: `rand` selection key;
+   - 2: recipient order key;
+   - 3 and 4: the recipient's packet-centre draw, high and low words.
+
+   A weighted draw computes `(hi · 2^21 + (lo >>> 11)) mod total` in safe-integer arithmetic, then walks the pond's cells in raster order (y, then x, tile-local), accumulating weights. The first cell whose cumulative weight exceeds the drawn value is chosen.
+5. **Reset and copy.** Packets are copied from the snapshot, so they can repeat.
+   - **Clear:** every cell of every pond is cleared first. A = B = C = P = E = S = 0, MOT = `MOT_ZERO`, and all 44 genome words are 0.
+   - **Place packets:** each recipient's landing cells get the packet cells' B, P, E and MOT and all 44 genome words.
+   - **Refill A:** the pond's A is set so its total matter equals M_r, the pond's matter A+B+C+P in the initial state. It is spread uniformly: ⌊(M_r − m_r)/4096⌋ per cell, plus one quantum per cell in raster order for the remainder. Here m_r is the landed B+P.
+   - **Truncation:** if m_r > M_r, landing cells are dropped in reverse raster order until m_r ≤ M_r. Dropped cells stay cleared, and the row records requested and retained B+P and E, with `truncated` = 1. If more than 1% of recipient rows in a history are truncated, the history is flagged. Decisions use every history. A sensitivity result that leaves flagged histories out is reported beside them. If it would change a decision, the result is reported as sensitive to truncation.
+   - **Matter:** M_r is constant over the whole history. Transport and diffusion never cross a tile edge, and the cycle restores M_r. The tool asserts, before every upload, that every pond's matter equals M_r.
+6. **Energy ledger.** Two gross bookings, never netted:
+   - `heatOut +=` Σ over every cell of the pre-cycle world of (eB−eA)·B + (eP−eA)·P + (eC−eA)·C + E + S;
+   - `lightIn +=` Σ over every **retained** landing cell of (eB−eA)·B + (eP−eA)·P + E.
+
+   Both are non-negative bigints, so the invariant Σe·X + E + S + heatOut − lightIn is unchanged. The tool checks, before each upload, that the post-transform state's ledger residual against the run's baseline is 0. It also checks matter and the residual at every census, as `runner.ts:698–701` does for world totals. Any violation stops the run.
+7. **Records.**
+   - **`ponds.tsv`:** one row per recipient per cycle. The columns are fixed in `tools/lib/ponds.ts` (`POND_COLUMNS`) and include:
+     - cycle and step;
+     - recipient and donor;
+     - packet centre (x, y);
+     - cells landed;
+     - requested and retained B+P and E;
+     - `truncated`;
+     - distinct lineage ids in the packet, plus the dominant lineage and its share;
+     - donor trait and recipient trait (pre-cycle), and the recipient's pre-cycle census individuals and distinct lineages;
+     - heat and light booked for the recipient.
+   - **Checkpoints:** full `encodeCheckpoint` states, gzipped, with the configuration and this protocol's SHA-256 in `meta.json`. They are taken at the initial state; post-cycle at cycles ⌊C/3⌋, ⌊2C/3⌋ and C; every 50 cycles, for resuming; and pre-cycle at the final boundary. A resumed run continues exactly from a full checkpoint.
+   - **`packets/`:** per-cycle landed packets, for analysis only. They are not a continuation format.
+   - **`frames/`:** optional pre-cycle PNG images.
+8. **Observers.** The census right after each cycle is flagged. Tracker overlap links across a clearing are meaningless, and no analysis uses tracker parenthood.
+
+## Pilots (Mac)
+
+### P1: regime (seeds 4,800,001 + 100·g + s, g = 0–14)
+
+- **Setup:** 16 ponds, ancestor clone, arm `rand` (so D = 4), mutation on, 15 cycles, s ∈ {0, 1}.
+- **Grid:** g indexes k ∈ {3, 5, 8} × period ∈ {1,000, 3,000, 10,000} in row-major order, g = 0–8.
+- **Reference.** ref(period) is the median of the boundary-1 trait, the pre-cycle trait at boundary 1, pooled over all ponds of every run with that period (every k and both seeds). Boundary 1 is the ancestor growing for one period from its standard disc, before any cycle, so k does not affect it. If ref = 0, the period fails.
+- **Success rule for a recipient of cycle b:** its trait at boundary b+1 is at least 0.25·ref, and at least 4× its retained landed B+P. The second condition means regrowth rather than persistence.
+- **A regime passes if each seed separately meets all of these,** over the recipients of cycles 1–14 and boundaries 2–15. If a history ends early, its scheduled but uncompleted recipients count as failures, and each missing boundary counts as fully ineligible with CV 0.
+  - (a) the success fraction is between 0.3 and 0.9. At the top this leaves room for improvement; at the bottom it requires viability.
+  - (b) the mean fraction of ineligible ponds per boundary is at most 0.5;
+  - (c) the mean coefficient of variation of the trait across ponds is at least 0.1. A boundary with mean trait 0 counts as CV 0.
+  - (d) matter and the ledger are exact at every census and every transform.
+- **Choice:** the smallest passing k, then the shortest passing period.
+- **Fallback:** if nothing passes, k ∈ {12, 16} × the same periods (g = 9–14), once. If that also fails, the line stops at P1.
+- **Calibration for R3,** at the chosen regime (seeds 4,802,001 + 10·v + s, where v = 0 is the ancestor source world, v = 1 ancestor competence and v = 2 quenched competence):
+  - the ancestor competence (as defined in R3) must be between 0.2 and 0.9;
+  - the quenched control's competence must be at most 0.05.
+  - The quenched control is the same fragments with the 40 controller weight words and E set to 0, relabelled.
+  - Otherwise the next-smallest passing regime is tried.
+- **Throughput:** P1 records steps per second, and the other GPU processes running on the Mac are logged.
+
+### P2: positive control (seeds 4,805,001+)
+
+- **Ranking assay** (seeds 4,805,001 + s):
+  - 64 ponds with founders round-robin, mutation off, no cycle, one period.
+  - A founder's rank score is its mean pond trait at boundary 1, over its ponds and both seeds.
+  - The **high set** is the 6 founders with the highest rank score, ties broken by founder index.
+- **Selection runs** (seeds 4,805,101 + 10·arm + s, where arm 0 is `scaf` and arm 1 is `rand`):
+  - 64 ponds, founders round-robin, mutation off, the P1 regime, 20 cycles.
+  - Founder identity comes from lineage ids through the planting map. With mutation off, lineage ids never change.
+- **High share at boundary b:** the fraction of the world's trait mass (cells with B+P ≥ 48) that belongs to high-set founders.
+- **Passes if both hold, in both seeds:**
+  - Δ = high share at boundary 20 − high share at boundary 1 is at least 0.10 in `scaf`, and exceeds `rand`'s Δ for the same s;
+  - the mean trait at boundary 20 is higher in `scaf` than in `rand`.
+- **If P2 fails, the line stops:** the machinery cannot see selection among ponds.
+
+**Freeze.** The P1 regime, the calibration numbers, P2's result and the frozen main configuration are recorded in a dated amendment, with the configuration's SHA-256, before the main run.
+
+## Main run (seeds 4,810,001 + 100·arm + i)
+
+- 64 ponds, ancestor clone, the frozen regime, mutation on.
+- Arms: 0 = `scaf`, 1 = `rand`, 2 = `cont`. Histories i = 0–5.
+- C = ⌈10⁶ / period⌉ cycles; census every 100 steps.
+
+## Readouts (assay seeds)
+
+`assaySeed(r, h, t, v, s)` = 4,820,001 + 5000·r + 250·h + 100·t + 20·v + s. The fields are:
+- r: 0 = R3's no-cycle continuations, 1–4 = R1–R4;
+- h = 6·arm + i: the history index (0–17), or 18 for the ancestor;
+- t: time or timing (0 = time 0 or R3 timing (a); 1 = time C or timing (b));
+- v: the inoculum variant (0 fragment, 1 disc, 2 `swap-ea`, 3 `swap-ae`, 4 quenched);
+- s: the replicate (0–9). s = 9 is reserved for R1's donor selection.
+
+This mixed-radix formula is collision-free by construction. Every variant of one assay on a given source, time and replicate uses the same σ = `assaySeed(r, h, t, 0, s)` for fragment sampling and for the assay world's physics seed. That is deliberate pairing, with common random numbers: swap and quenched arms get the same physical fragments and the same physics stream as their unmodified arm. The v field only labels the variant, except for R2's disc inoculum, which uses v = 1 as its own seed. Its maximum is 4,844,690, within the reserved range, and the tools assert every field's range. P1's seeds end at 4,801,402 and the calibration uses 4,802,001–4,802,022, so they do not collide.
+
+### Assay world
+
+Every assay plants material into fresh ponds:
+- each pond's total matter is the fixed budget M_assay = 151,552 (= 4096 × 37). That is close to an ancestor pond's initial matter: nutrient 32 × 4096, plus a disc of about 20,000. The planted B+P is taken out of that pond's A, which is spread uniformly with the raster remainder rule. If the planted B+P exceeds M_assay, cells are dropped in reverse raster order, exactly as in the cycle, and requested and retained B+P and E are recorded. Every arm and control uses the same rule;
+- mutation off unless stated;
+- 64 ponds at 512².
+
+Before an assay world is built, every distinct genome in it is relabelled to lineage id (0, k+1), where k is its order of first appearance in raster order. That makes every id valid at any step. The assay world's step is 0.
+
+### Standard fragment
+
+Fragment f (0–63) of a source world, with assay seed σ:
+- **Source pond:** drawn uniformly, with replacement, from the source's eligible ponds. It uses the weighted draw with equal weights and keys from `draw(cellBase((σ ^ POND_SALT) >>> 0, 0, f), 5 and 6)`.
+- **Window:** a k×k window about a centre drawn by the packet rule, with keys `(σ, 0, f)` and purposes 3 and 4.
+- **Landing:** at the fresh pond's centre, keeping its B, P, E and MOT.
+- **No eligible ponds:** every fragment is absent and counts as a failure.
+
+### Competence of a source world
+
+The fraction of 64 standard fragments, one per pond, that meet the P1 success rule after one period. Rule: trait ≥ 0.25·ref and ≥ 4× the retained landed B+P.
+
+### R1: pond-level heredity (standardised transmission)
+
+- **Sample:** at two times, in every `scaf` and `rand` history: time 0 is the initial world, and time C is the pre-cycle world at the final boundary.
+  - Donors are chosen once per history and time, with keys from `assaySeed(1, h, t, 0, 9)`, and reused by both replicates.
+  - If at least 16 ponds are eligible, the donors are the 16 eligible ponds with the smallest purpose-1 key.
+  - If 2–15 are eligible, every one is a donor.
+  - If fewer than 2 are eligible, R1 is not demonstrated for that history.
+- **Plant:** 64 fragments per replicate. Fragment f comes from donor number f mod (number of donors). Its window uses the packet rule within that donor, with keys `(σ, 0, f)`. Two replicates, s = 0–1, each one period.
+- **Statistic:** the one-way ICC(1) of the end trait, with families = donors. Both replicates' fragments are pooled within their donor's family, so a donor is one family, never two.
+  - The ICC is computed on residuals from an OLS of the end trait on log(1 + retained B+P) and log(1 + retained E), fitted over every fragment of that history and time. This reduces the dependence on copied mass and energy. It does not control copied composition, geometry or MOT. A demonstrated R1 therefore means heritable variation among donor ponds, genetic or structural. R2's standardised inoculum is the genome-only check.
+  - **p-value:** from 1,000 permutations of the family labels over the pooled fragments. Fragments are ordered replicate 0's f = 0–63, then replicate 1's. Permutation p (0–999) is a Fisher–Yates shuffle: for i from N−1 down to 1, swap position i with j = `weightedPick(randomKey(σ8, p, i, 8), randomKey(σ8, p, i, 9), i+1)`, where σ8 = `assaySeed(1, h, t, 0, 8)`. p = (1 + #{permuted ICC ≥ observed ICC}) / 1001.
+- **Pond-level heredity is demonstrated in an arm** if the ICC at C is above 0 with p < 0.05 in at least 4 of 6 histories.
+- **Reported descriptively:** in-run donor-family repeatability, the same ICC on in-run recipients grouped by actual donor, with retained packet B+P as a covariate. The covariate is fitted by OLS of the next-boundary trait on log(1 + retained B+P) within each cycle, and the ICC is taken on the residuals. It is confounded by truncation and copied physical state, so it is never a decision input.
+- **A failed R1 means "not demonstrated",** not "absent".
+
+### R2: adaptation (common garden)
+
+- **Inocula**, at times 0 and C for every `scaf` and `rand` history, from the same worlds as R1. The post-cycle checkpoints at ⌊C/3⌋ and ⌊2C/3⌋ are descriptive only.
+  - **raw**: 64 standard fragments;
+  - **standardised**: the dominant genome of each fragment (by B+P), planted as the standard disc (radius 10, biomass 64, energy 128).
+- **Run:** one period, mutation off, s = 0–1.
+- **Gain** of a history = mean end trait from time C's inoculum − mean end trait from time 0's, on the standardised inoculum.
+- **Genome-level adaptation beyond the bottleneck is shown if both hold.** The standardised inoculum measures genomes, not transmission of a mixed collective.
+  - `scaf` gain > 0 in at least 4 of 6 histories;
+  - the median `scaf` gain is above the median `rand` gain.
+- The raw inoculum is reported alongside.
+
+### R3: removal (the result that counts)
+
+- **Source worlds**, per history:
+  - **(a)** the pre-cycle state at the final boundary;
+  - **(b)** that state run 2×10⁵ further steps with no cycle and mutation on, seed `assaySeed(0, h, 1, 0, 0)`.
+- **Ancestor source:** a clone world grown one period from the standard discs for (a), and that world run 2×10⁵ steps with no cycle, mutation on, for (b).
+- **Competence:** of every source world, with s = 0–1, so 128 fragments.
+- **Dominant genome:** the lineage with the largest trait mass (cells with B+P ≥ 48). Ties go to the smallest (hi, lo). A source with no eligible cell has no dominant genome, and that history cannot support R3.
+- **Swap arms**, for each `scaf` history i, with F = standard fragments. These are the matched-inoculum control: the same physical fragments, with only the genome changed.
+  - `Ge-on-Fa`: fragments from the ancestor source with every cell's genome words replaced by G_e, the history's dominant genome by B+P over cells with B+P ≥ 48 in source (a), under one fresh id;
+  - `Ga-on-Fe`: fragments from the history's source (a) with genomes replaced by `M3_FOUNDERS[2]`, under one fresh id.
+- **Advantage:** adv_i(X) = competence(`scaf`_i) − competence(X), where X is `rand`_i, `cont`_i (paired by i) or the ancestor, each at the same timing, (a) or (b).
+- **Decisive if both hold:**
+  - adv_i(X) > 0 for every X at both timings, in at least 4 of 6 histories i;
+  - competence(`Ge-on-Fa`_i) − competence(ancestor) ≥ 0.5 · adv_i(ancestor) at timing (a), in at least 4 of 6 histories i.
+- **Unmatched comparisons:** comparisons of `scaf` against `rand`, `cont` and the ancestor use fragments that differ in mass and E, so their retained B+P and E distributions are reported. The swap criterion is the matched test, which is why decisiveness requires it.
+- **Quenched control:** repeated on `scaf` sources. If it exceeds 0.05, R3 is unreliable and cannot be decisive; the decision table then treats R3 as not decisive.
+
+### R4: capability (descriptive)
+
+- **Genomes:** the dominant genome of each history's source (a).
+- **Evaluation:** `evaluateBatch` with `DEFAULT_EVAL`.
+- **Reported:** quality, recovery and regeneration for `scaf`, `rand`, `cont` and the ancestor.
+- **Limitation:** the ancestor is near the ceiling (regenerated 58 of 64), so R4 can show only a loss.
+
+No readout selects on, or is replaced by, a held-out measure, a role or `compartmentalised`.
+
+## Decision table (exhaustive; first matching row applies)
+
+| Outcome | Disposition |
+|---|---|
+| P1 fails, fallback included | Stop. Report that no workable regime exists. Any new regime space needs a dated amendment. |
+| P2 fails | Stop. The machinery does not see selection among ponds even on standing variation, which points to heredity. Recommend a heredity rule variant (genome retention in bodies) as a separate dated decision. |
+| R1 not demonstrated in `scaf` | Same as P2 failing: pond-level heredity is not demonstrated under RULE_VERSION 1 even with an imposed bottleneck. |
+| R1 demonstrated, R2 not shown | Heredity is present but no pond-level adaptation appeared within C cycles. Possible next step, by dated amendment: a longer run or more ponds. No integration. |
+| R1 and R2 shown, R3 not decisive | **B:** integrate the cycle into the runner and lab (optional config keys, conditions, segment parity). Then a withdrawal ladder, re-testing R3 at each rung: longer periods, partial clearing, dispersal by migration packets only. |
+| R1 and R2 shown, R3 decisive | **C:** integrate, then draft a registration for a confirmatory scaffolding ensemble (an M7 candidate). Any AWS draw is recorded by a dated note before paid runs. |
+
+## Budget and compute
+
+$0: Mac only through R4. An AWS draw needs a dated note in `docs/plan.md` after the pilots. It would come from the $200's margin, quantified against the earmarked $60 and $120, under the existing cost and stop rules.
