@@ -1,0 +1,10 @@
+{
+  "format": "discovery-import-recovery/v1",
+  "recordedAt": "2026-09-30T21:01:09.912092+00:00",
+  "failedOperation": "importer-operations/008-remote-next3.json",
+  "terminalEvidence": "Local operation process exited1 after rsync exited255; SSH reported Cannot assign requested address and Broken pipe.",
+  "sourceState": "Subsequent SSH succeeded; remote supervisor84148 and worker6043 confirmed live. No simulation restarted.",
+  "budgetTreatment": "Retain full600second reservation for operation008; do not reduce charge.",
+  "preservation": "Keep original inventory and partial remote-next3 staging unchanged. No new histories were imported by operation008.",
+  "recoveryDecision": "Authorize a separately bounded CPU transfer-and-import operation against the already pinned inventory, using a new staging directory. Reverify remote inventory bytes and every transferred file before import; no GPU work."
+}
