@@ -1,0 +1,9 @@
+{
+  "operation": "remote-inventory-first-completed-history",
+  "status": "settled",
+  "chargedSeconds": 6.567503041937016,
+  "startedAt": "2026-09-30T20:22:39.861807+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "finishedAt": "2026-09-30T20:22:45.430499+00:00",
+  "inventorySha256": "f34717fa2f859d5b6f489740ca73a619f272daee6c4df70552d3f8e936144d82"
+}

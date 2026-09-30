@@ -1,0 +1,25 @@
+{
+  "format": "discovery-importer-release/v1",
+  "releasedAt": "2026-09-30T20:22:15.871002+00:00",
+  "status": "reviewed-cpu-import-only",
+  "sources": {
+    "tools/discovery_improvement_import.ts": "6855f02b3ef9e9ca52d0e96b02f05b88ec41ea9bfa6848cab856d7d4ce9a26d7",
+    "tools/test/discovery-improvement-import.test.ts": "f086f73e74e8ec7e6a09fa17289a20709f57dcab7d0a306aabc55f684e4309f5"
+  },
+  "allocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+  "reviewer": "/root/distribution_review",
+  "checks": [
+    "Original full11-checkpoint integration fixture independently passed",
+    "Final added destination histories/provenance symlink and foreign-existing-directory tests saved, reviewed and passed in expanded fixture",
+    "Canonical33file preservation and byte-identical retry with separate provenance",
+    "Partial/missing/extra/drift/foreign/active-output/conflicting-destination rejection",
+    "Frozen semantic loader without cached validation",
+    "Initial storage envelope and per-file20GiBfloor guard"
+  ],
+  "scope": "CPU completed-history inventory, transfer and verified consolidation only; no simulations or competitions",
+  "operationsCapSeconds": 3600,
+  "maximumOperationSeconds": 600,
+  "budgetSource": "Reserve from90120.05390912498previously unallocated seconds; original aggregate345600second cap unchanged",
+  "remainingUnallocatedSeconds": 86520.05390912498,
+  "paidUSD": 0
+}

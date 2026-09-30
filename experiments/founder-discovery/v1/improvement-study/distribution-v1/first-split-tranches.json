@@ -1,0 +1,32 @@
+{
+  "format": "discovery-split-first-tranche-verification/v1",
+  "verifiedAt": "2026-09-30T20:15:24.136186+00:00",
+  "allocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+  "hosts": {
+    "local": {
+      "path": "runs/founder-discovery-improvement-v1/parent-invocation-1790798515213218000-92829.json",
+      "sha256": "6b248b53901f95657da30e1b69ff577b18c6ba17fd4b0c4bcb11d9fca744ac21",
+      "receipt": {
+        "allocationHash": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+        "hostId": "local",
+        "chargedSeconds": 628.3648890830809,
+        "status": "settled",
+        "startedAt": 1790798515.2132218,
+        "supervisorPid": 92829
+      }
+    },
+    "work-mac": {
+      "path": "runs/founder-discovery-improvement-v1/parent-invocation-1790798515858983000-84148.json",
+      "sha256": "265f45964bc56868ef1f7c8942724511f1b5ab0b48ac1a7e0ad094e8cb7c3341",
+      "receipt": {
+        "allocationHash": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+        "hostId": "work-mac",
+        "chargedSeconds": 605.5026983329999,
+        "status": "settled",
+        "startedAt": 1790798515.858988,
+        "supervisorPid": 84148
+      }
+    }
+  },
+  "claim": "Both first distributed tranches settled their parent reservations and subsequently launched live next workers; biological study remains incomplete."
+}

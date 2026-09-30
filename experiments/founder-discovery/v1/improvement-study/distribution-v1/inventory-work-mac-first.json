@@ -1,0 +1,51 @@
+{
+  "format": "discovery-improvement-history-inventory/v1",
+  "manifestHash": "0ebd3092056170b776f63c323ac3a0f3a3f553b3e0ac1c03f8c0e82ff96c2429",
+  "manifestSha256": "4d7d8bd03e7842d1af2476a8b06ea33892d029d84bdb5a2d2e15e3c1e257dda5",
+  "sourceManifestHash": "dc4eefd867c52666962114500a42bb511b462b29ebfce32867c1e5daad00eb8e",
+  "allocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+  "hostId": "work-mac",
+  "sourceOutput": "/Users/180471/bl-founder-discovery/runs/founder-discovery-improvement-v1",
+  "observedAt": "2026-09-30T20:22:45.372Z",
+  "units": [
+    {
+      "id": "discovery-cluster-33-6410007-normal",
+      "finalReceiptSha256": "e32c990bdc28d7f226f917a3a44e6ef7f30790c1b57b3e3aefa586a0ceda8d5b",
+      "files": {
+        "checkpoint-0.blck": "3b08abe898e1629fffc825cb3d400207976aea558132910ba53b2f73f17cf2d4",
+        "checkpoint-100000.blck": "0b655d98a7d73eb80ddbca7426892070028bbe14f5cc5daf7d5a8dd2065a39de",
+        "checkpoint-1000000.blck": "d5b6340eedf8565d904ccf0245c54816cbca147bb77090d2aa75cdeb28629382",
+        "checkpoint-200000.blck": "6dcf5c5b429e2f9d09cbe86a1cc3c12b8fe7a093c276336e3842ce1e201c7d5a",
+        "checkpoint-300000.blck": "28f04a110aff207f5e31784e7306cfc226b96e7f43176a20c30ff23f7b9a6eb0",
+        "checkpoint-400000.blck": "8c65825586e012701d8a87239cca28622f22da231fcd34a26f6bd2c3047ac9af",
+        "checkpoint-500000.blck": "8dce0c83b6d4169edc98118123f211370e36d6c47942d28cee8b39b0948d6340",
+        "checkpoint-600000.blck": "ea78a940abec74bcc5c59a44e19cd8e127cdf0e983eb6ab06a4a547af725d3a2",
+        "checkpoint-700000.blck": "17d19a374f4f8c9f9d89a446079aabf816ff486a789fba268a7488d0ae42d63b",
+        "checkpoint-800000.blck": "e513e45e7abd1a577a61c4d882ccf6716cca2f4f0056770ef51e067b4f1853cb",
+        "checkpoint-900000.blck": "6107a839b6c0590c01726370c4f6f445bd421ce529ab56d6ca39c23a79c115cd",
+        "edges-0.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "edges-100000.json": "153158c80b107d1a55f8c7086a5a30487da96720ccedb21927e255709d12cedc",
+        "edges-1000000.json": "8b3068a053b96d560ccd537c7435857aa480498715df18a035c4142468bb75e6",
+        "edges-200000.json": "0b59e89c960aba69073db485f2cfe77d08458ad7f29af18f35eda691f9ed1d0d",
+        "edges-300000.json": "d95ec5e182e6bf4fe6553c4ac64e0c88663dedc8fa95cbb52c39a34932a79d79",
+        "edges-400000.json": "5fd82b7eeca5deaf421ed0d478bf12e19501f82334b671d82c7ff4b1c6c4c51f",
+        "edges-500000.json": "bad320cf0272199277854db8bfd8e32c3b008017e7bbc8d1fec7d8dd80700aa5",
+        "edges-600000.json": "c7b6e3a1b0ddafedbacd2db9235dc0cf4f4682908476fa93bb35aa825ae74233",
+        "edges-700000.json": "de1d0d3cae185f7f2f03559ead285c245674884310c0cd6b4d7c9b362fe249e5",
+        "edges-800000.json": "e1b4a3661d3ae43f13f5c13ee749ed9a2f3fd67e4733885d791f809695609fae",
+        "edges-900000.json": "14cf1628ae2f3ef0777e7009a6b794b2147556c68b844afaebe2896c356aa47e",
+        "receipt-0.json": "e7e6e982d5fb4f04bb9241aaa5bc5952b780566fe3b354dbdeb9db6cf8278d36",
+        "receipt-100000.json": "72652d5a4537e9f45ea9bd72aef9f0058ce9eee04ae5f2e50e191371532e3312",
+        "receipt-1000000.json": "e32c990bdc28d7f226f917a3a44e6ef7f30790c1b57b3e3aefa586a0ceda8d5b",
+        "receipt-200000.json": "ec6cecb1ffc586a60a85d21100447570a447cd40c54c2a5017c3cd6eb1beb847",
+        "receipt-300000.json": "1d4d8e947f9a61ac6b0df51d61f66f98e30ab8eb3786f9cea1a699bc763058ab",
+        "receipt-400000.json": "d95c0be869f22104649e0428ca728b15887f5bb8ae5cc04c1f803a67eced2c61",
+        "receipt-500000.json": "78fc41b8b52d6064116e0d3fa0a994f868734ab3d43c4e24ac7c5b4682b65f5a",
+        "receipt-600000.json": "0cb27524cee284739ae06fe79d24b54bae4ad90f362036eaedd5b61d4ccb7eec",
+        "receipt-700000.json": "4981ad24be0f8e96069c68de8322b7cd5aef807d1cc93b1c0fbd1bfd8912d742",
+        "receipt-800000.json": "09e4982ff1a6eefa42f4366c641187508dcb84998c55de4592b1024a6969d8fe",
+        "receipt-900000.json": "a0c836690d87fdcc7aa07cacc402d7694817aa7807917db3264c2d3194afaf5b"
+      }
+    }
+  ]
+}
