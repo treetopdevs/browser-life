@@ -1,0 +1,15 @@
+{
+  "operation": "inventory-first-four-completed-local-histories",
+  "status": "settled",
+  "chargedSeconds": 24.831660915981047,
+  "startedAt": "2026-09-30T20:29:59.648302+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "finishedAt": "2026-09-30T20:30:23.481248+00:00",
+  "inventorySha256": "5c888e919b7a8b3d206bd0a40195087ffef1d550b3c7e6b0bbd45fcdc35fa92d",
+  "units": [
+    "discovery-cluster-33-6410001-normal",
+    "discovery-cluster-33-6410001-off",
+    "discovery-cluster-33-6410002-normal",
+    "discovery-cluster-33-6410002-off"
+  ]
+}

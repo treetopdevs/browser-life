@@ -1,0 +1,23 @@
+{
+  "format": "discovery-reconciliation-review/v1",
+  "reviewedAt": "2026-09-30T20:35:42.531804+00:00",
+  "status": "prepared-code-approved; production64history gate not satisfied",
+  "reviewer": "/root/distribution_review",
+  "sources": {
+    "tools/discovery_improvement_reconcile.ts": "99b8bb09dab4eebb6890454f58038b81213ab99106cae6ab3ed11753498d6874",
+    "tools/test/discovery-improvement-reconcile.test.ts": "074c80208039887abcb87b345bd342e1331377f86cb788bb749f910cbf70e33f",
+    "tools/discovery_improvement_import.ts": "6855f02b3ef9e9ca52d0e96b02f05b88ec41ea9bfa6848cab856d7d4ce9a26d7"
+  },
+  "allocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+  "checks": [
+    "4 focused tests passed independently by root and reviewer",
+    "Exact64slot physical/provenance readiness gate",
+    "Whole nonempty originalinventory and provenanceagreement, owner and identity checks",
+    "Sequential nocache frozenchain validation retaining samplesonly",
+    "Exact original384draw6144request rosterbytes preserving unavailablebiology and duplicateobservations",
+    "Atomic create-new output publication preserves existing files"
+  ],
+  "productionReconciliationRun": false,
+  "assaysLaunched": false,
+  "executionBudget": "Future CPU reconciliation remains bounded within the existing3600second auxiliary reserve; this record releases no additional runtime or money."
+}
