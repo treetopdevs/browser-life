@@ -108,6 +108,8 @@ const ec: EvalConfig = { ...DEFAULT_EVAL, roles: true, perRep: true };
 // tracker's life history per tile and each lineage's catalytic fluxes over the last 1,000 steps.
 
 interface GardenPlan {
+  /** Plan identity; written into every unit so readers can refuse outputs from another plan. */
+  id?: string;
   seed0: number;
   /** Replicate tiles per planting. */
   reps: number;
@@ -127,7 +129,13 @@ async function garden() {
   const tilesPer = DEFAULT_EVAL.side * DEFAULT_EVAL.side;
   const perBatch = Math.floor(tilesPer / plan.reps);
   const units = Array.from({ length: Math.ceil(plan.plantings.length / perBatch) }, (_, j) => ({ j, ps: plan.plantings.slice(j * perBatch, (j + 1) * perBatch) }));
-  await forUnits(units, (u) => `g${u.j}`, async ({ j, ps }) => gardenBatch(ps, plan, plan.seed0 + j));
+  // Units already in OUT must come from this plan (OUT exists: created at startup).
+  for await (const e of Deno.readDir(OUT)) {
+    if (!/^g\d+\.json$/.test(e.name)) continue;
+    const prev = JSON.parse(await Deno.readTextFile(`${OUT}/${e.name}`));
+    if ((prev.planId ?? null) !== (plan.id ?? null)) throw new Error(`${OUT}/${e.name} was written by plan ${prev.planId ?? "(none)"}, not ${plan.id ?? "(none)"}; use another --out`);
+  }
+  await forUnits(units, (u) => `g${u.j}`, async ({ j, ps }) => ({ ...(await gardenBatch(ps, plan, plan.seed0 + j)), ...(plan.id ? { planId: plan.id } : {}) }));
 }
 
 async function gardenBatch(ps: GardenPlan["plantings"], plan: GardenPlan, seed: number) {

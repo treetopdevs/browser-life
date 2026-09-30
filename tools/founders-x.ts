@@ -8,15 +8,26 @@
 //       Run lists for B (clouds × 8 seeds from 4,720,001) and C (sets S1/S2/S4/S5 × 8 from 4,740,001).
 //   deno run -A tools/founders-x.ts read [--dir runs/founders-x]
 //       Test-3 origination rules on completed B/C runs; garden plans from 4,760,001.
+//       Superseded by read-root (plan 002).
+//   deno run -A tools/founders-x.ts read-root --garden-seed N --garden-seed-gradient M [--dir runs]
+//       The same candidates, each gardened beside its own clade root (mutations.tsv walk, genome
+//       from genomes.tsv) instead of founderSet[0]. Needs all 128 B/C runs finished at 1e6 steps.
+//       Writes fxr-candidates.json, fxr-plan-uniform.json, fxr-plan-gradient.json (plan ids are
+//       stamped into the garden outputs by tools/assay.ts) and refuses to overwrite different content.
+//   deno run -A tools/founders-x.ts summary-root [--uniform-dir D] [--gradient-dir D]
+//       Counts per cloud/set from the finished gardens -> experiments/foundations/fx-root.json.
 //
 // Plans and readouts go under --out (default runs/foundations/results), matching tools/foundations.ts.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { M3_FOUNDERS, founderGenome, genomeHex } from "@bl/schema";
-import { GRADIENT_GARDEN, originationCandidates, tsv } from "./foundations.ts";
+import { GRADIENT_GARDEN, gardenOutcome, lines, originationCandidates, tsv } from "./foundations.ts";
+import { parentMap, rootWalker } from "./lib/clade.ts";
+import { RUNS_PER_SUBJECT, SUBJECT_IDS, countSubjects, subjectIndex, wholePlanting } from "./lib/fx-root.ts";
+import { groupOf } from "./lib/recurrence.ts";
 
 const a = parseArgs(Deno.args, {
-  string: ["out", "run", "step", "dir"],
-  default: { out: "runs/foundations/results", step: "100000", dir: "runs/founders-x" },
+  string: ["out", "run", "step", "dir", "garden-seed", "garden-seed-gradient", "uniform-dir", "gradient-dir"],
+  default: { out: "runs/foundations/results", step: "100000", "uniform-dir": "runs/found-fxr-uniform", "gradient-dir": "runs/found-fxr-gradient" },
 });
 const cmd = String(a._[0] ?? "");
 const OUT = a.out;
@@ -292,9 +303,10 @@ async function fxRuns(base: string) {
     .sort((x, y) => x.subject - y.subject || x.seed - y.seed);
 }
 
+// Superseded by read-root (plan 002): read compares every candidate with founderSet[0], and its fx-plan-*.json no longer match runs/found-fx-* outputs.
 async function readCmd() {
   await Deno.mkdir(OUT, { recursive: true });
-  const runs = await fxRuns(a.dir);
+  const runs = await fxRuns(a.dir ?? "runs/founders-x");
   if (!runs.length) {
     await save("fx-read.json", { complete: false, runs: 0, note: "no completed founders-x bundles under --dir" });
     console.log("read: no completed runs");
@@ -317,6 +329,239 @@ async function readCmd() {
   console.log(`read: ${runs.length} runs, ${candidates.length} candidate roles, ${plantings.length} garden plantings`);
 }
 
+// ---------------------------------------------------------------------------------------------
+// Plan 002: each candidate gardened beside its own clade root.
+
+/** Plantings per garden unit: assay.ts garden fits floor(64 tiles / 16 replicates) plantings in one batch. */
+const GARDEN_PER_UNIT = 4;
+const FX_ROOT_SUMMARY = "experiments/foundations/fx-root.json";
+
+type RootRun = { dir: string; subjectId: string; subject: number; seed: number; mutation: boolean; extinct: boolean; steps: number | undefined; founderSet: string[] | undefined };
+
+/** Every B/C bundle under `base`, with a fixed subject id from the seed layout (not from sorted keys). */
+async function rootRuns(base: string): Promise<RootRun[]> {
+  const runs: RootRun[] = [];
+  const layouts = [["founders-x-b", "gradient-m3"], ["founders-x-c", "gradient-m3"], ["founders-x-c", "gradient-m3-waste"]];
+  for (const [experiment, preset] of layouts) {
+    for (const cond of ["treatment", "no-mutation"]) {
+      const root = `${base}/${experiment}/${preset}/${cond}`;
+      if (!(await exists(root))) continue;
+      for await (const e of Deno.readDir(root)) {
+        if (!e.isDirectory) continue;
+        const dir = `${root}/${e.name}`;
+        const m = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
+        if (m.spec.experiment !== experiment) throw new Error(`${dir}: manifest experiment ${m.spec.experiment} does not match its directory ${experiment}`);
+        const g = groupOf({ experiment: m.spec.experiment, seed: m.spec.seed });
+        if (!g) throw new Error(`${dir}: seed ${m.spec.seed} is outside the ${experiment} seed layout`);
+        if (g.mutation !== (cond === "treatment")) throw new Error(`${dir}: the seed layout says mutation=${g.mutation} but the run sits under ${cond}`);
+        runs.push({ dir, subjectId: g.group, subject: subjectIndex(g.group), seed: m.spec.seed, mutation: g.mutation, extinct: !!m.summary?.extinct, steps: m.summary?.steps, founderSet: m.spec.founderSet });
+      }
+    }
+  }
+  return runs.sort((x, y) => x.subject - y.subject || x.seed - y.seed);
+}
+
+/** What is missing from the 16 subjects x (5 mutation + 3 no-mutation) runs, each finished at 1e6 steps. */
+function rootRunProblems(runs: RootRun[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<number>();
+  for (const r of runs) {
+    if (seen.has(r.seed)) out.push(`seed ${r.seed} appears twice`);
+    seen.add(r.seed);
+  }
+  for (const id of SUBJECT_IDS) {
+    const mine = runs.filter((r) => r.subjectId === id);
+    const nm = mine.filter((r) => r.mutation).length;
+    if (nm !== RUNS_PER_SUBJECT.mutation) out.push(`${id}: ${nm} mutation runs (want ${RUNS_PER_SUBJECT.mutation})`);
+    if (mine.length - nm !== RUNS_PER_SUBJECT.noMutation) out.push(`${id}: ${mine.length - nm} no-mutation runs (want ${RUNS_PER_SUBJECT.noMutation})`);
+    for (const r of mine) if (r.steps !== 1_000_000) out.push(`${id} seed ${r.seed}: ${r.steps === undefined ? "no summary" : `${r.steps} steps`} (want 1000000)`);
+  }
+  return out;
+}
+
+/** Writes each file only when it is absent or already byte-identical; otherwise says so and writes nothing. */
+async function saveNew(files: [string, unknown][]): Promise<boolean> {
+  await Deno.mkdir(OUT, { recursive: true });
+  const texts = files.map(([name, v]) => [name, JSON.stringify(v, null, 1)] as const);
+  for (const [name, text] of texts) {
+    const p = `${OUT}/${name}`;
+    if ((await exists(p)) && (await Deno.readTextFile(p)) !== text) {
+      console.log(`read-root: ${p} already exists with different content; not overwriting anything. Move it aside or use another --out.`);
+      Deno.exitCode = 1;
+      return false;
+    }
+  }
+  for (const [name, text] of texts) {
+    await Deno.writeTextFile(`${OUT}/${name}`, text);
+    console.log(`wrote ${OUT}/${name}`);
+  }
+  return true;
+}
+
+/** First 16 hex characters of the SHA-256 of the plan's JSON (without its own id). */
+async function planIdOf(plan: unknown): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(plan)));
+  return Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+}
+
+async function readRootCmd() {
+  const seedU = a["garden-seed"], seedG = a["garden-seed-gradient"];
+  if (!/^\d+$/.test(seedU ?? "") || !/^\d+$/.test(seedG ?? "")) throw new Error("read-root needs integer --garden-seed and --garden-seed-gradient");
+  const seed0U = Number(seedU), seed0G = Number(seedG);
+  const runs = await rootRuns(a.dir ?? "runs");
+  const problems = rootRunProblems(runs);
+  if (runs.length !== SUBJECT_IDS.length * (RUNS_PER_SUBJECT.mutation + RUNS_PER_SUBJECT.noMutation)) problems.unshift(`${runs.length} runs found (want 128)`);
+  if (problems.length) {
+    const res = { complete: false, runs: runs.length, missing: problems };
+    console.log(JSON.stringify(res, null, 1));
+    await saveNew([["fxr-read.json", res]]);
+    return;
+  }
+
+  const { qual, candidates } = await originationCandidates(runs);
+  for (const q of qual) if (q.mutation) q.extinct = runs.find((r) => r.subject === q.subject && r.seed === q.seed)?.extinct;
+
+  // Each candidate's clade root: walk mutations.tsv child -> parent to the lineage that is nobody's child.
+  const bySeed = new Map<number, number[]>();
+  candidates.forEach((c: any, i: number) => bySeed.set(c.seed, [...(bySeed.get(c.seed) ?? []), i]));
+  for (const [seed, idx] of bySeed) {
+    const run = runs.find((r) => r.seed === seed)!;
+    const walk = rootWalker(await parentMap(lines(`${run.dir}/mutations.tsv`)));
+    const roots = idx.map((i) => walk(candidates[i].descendant));
+    const need = new Set(roots);
+    const hexByRoot = new Map<string, string>();
+    for await (const r of tsv(`${run.dir}/genomes.tsv`)) if (need.has(r.lineage) && !hexByRoot.has(r.lineage)) hexByRoot.set(r.lineage, r.words);
+    idx.forEach((i, k) => {
+      const c = candidates[i];
+      const rootHex = hexByRoot.get(roots[k]);
+      if (!rootHex) throw new Error(`${run.dir}: root genome missing for lineage ${roots[k]} (candidate descendant ${c.descendant})`);
+      Object.assign(c, {
+        subjectId: SUBJECT_IDS[c.subject],
+        rootKey: roots[k],
+        rootHex,
+        oldComparatorHex: run.founderSet?.[0] ?? null,
+        sameAsOldComparator: rootHex === run.founderSet?.[0],
+        windowAtFounding: c.window[0] === 100,
+      });
+    });
+  }
+
+  // Plantings: c<i> = candidate beside its root; r<k> = each distinct root alone (its role if inactive beside a descendant).
+  const rootMonocultures: Record<string, string> = {};
+  for (const c of candidates) if (!(c.rootHex in rootMonocultures)) rootMonocultures[c.rootHex] = `r${Object.keys(rootMonocultures).length}`;
+  const plantings = [
+    ...candidates.map((c: any, i: number) => ({ id: `c${i}`, hex: [c.hex, c.rootHex] })),
+    ...Object.entries(rootMonocultures).map(([hex, id]) => ({ id, hex: [hex] })),
+  ];
+  const uniform0 = { seed0: seed0U, reps: 16, growSteps: 20_000, plantings };
+  const gradient0 = { seed0: seed0G, reps: 16, growSteps: 20_000, plantings, gradient: GRADIENT_GARDEN };
+  const planUniform = { id: await planIdOf(uniform0), ...uniform0 };
+  const planGradient = { id: await planIdOf(gradient0), ...gradient0 };
+  const ok = await saveNew([
+    ["fxr-candidates.json", { complete: true, runs: runs.length, qualifying: qual, candidates, rootMonocultures }],
+    ["fxr-plan-uniform.json", planUniform],
+    ["fxr-plan-gradient.json", planGradient],
+  ]);
+  if (!ok) return;
+
+  const distinctRootRuns = new Set(candidates.map((c: any) => `${c.seed}:${c.rootKey}`)).size;
+  const units = Math.ceil(plantings.length / GARDEN_PER_UNIT);
+  console.log(
+    `read-root: ${runs.length} runs, ${candidates.length} candidate roles, ${Object.keys(rootMonocultures).length} distinct root genomes (${distinctRootRuns} distinct run+root), ` +
+      `${candidates.filter((c: any) => !c.sameAsOldComparator).length} with a different comparator from founderSet[0], ` +
+      `${candidates.filter((c: any) => c.windowAtFounding).length} with a window starting at step 100; ` +
+      `${plantings.length} plantings = ${units} garden units per plan (plan ids ${planUniform.id}, ${planGradient.id})`,
+  );
+  const oldPath = `${OUT}/fx-candidates.json`;
+  if (await exists(oldPath)) {
+    const old = JSON.parse(await Deno.readTextFile(oldPath)).candidates as { seed: number; role: string; descendant: string }[];
+    const key = (c: { seed: number; role: string; descendant: string }) => `${c.seed}|${c.role}|${c.descendant}`;
+    const oldKeys = new Set(old.map(key)), newKeys = new Set(candidates.map(key));
+    console.log(`read-root: old fx-candidates.json has ${old.length} candidates; ${[...oldKeys].filter((k) => !newKeys.has(k)).length} only in old, ${[...newKeys].filter((k) => !oldKeys.has(k)).length} only in new`);
+  }
+}
+
+const OUTCOME_NAMES = ["different role", "same role", "descendant inactive", "founder inactive"] as const;
+
+/** Units of one garden directory; a missing directory is no units. Throws on a unit from another plan. */
+async function readRootGarden(dir: string, plan: { id: string }) {
+  const planting = new Map<string, any>();
+  let units = 0;
+  if (await exists(dir)) {
+    for await (const e of Deno.readDir(dir)) {
+      if (!/^g\d+\.json$/.test(e.name)) continue;
+      const u = JSON.parse(await Deno.readTextFile(`${dir}/${e.name}`));
+      if (u.planId !== plan.id) throw new Error(`${dir}/${e.name} has planId ${u.planId ?? "(none)"}, not ${plan.id}`);
+      units++;
+      for (const p of u.plantings) planting.set(p.id, p);
+    }
+  }
+  return { planting, units };
+}
+
+async function summaryRootCmd() {
+  const cand = JSON.parse(await Deno.readTextFile(`${OUT}/fxr-candidates.json`));
+  if (!cand.complete) throw new Error(`${OUT}/fxr-candidates.json is not complete`);
+  const candidates = cand.candidates as any[];
+  const rootMono = cand.rootMonocultures as Record<string, string>;
+  const old = JSON.parse(await Deno.readTextFile("experiments/foundations/fx.json"));
+  const planU = JSON.parse(await Deno.readTextFile(`${OUT}/fxr-plan-uniform.json`));
+  const planG = JSON.parse(await Deno.readTextFile(`${OUT}/fxr-plan-gradient.json`));
+
+  type OldPer = { id: string; runsOriginating: number; counts: boolean };
+  const summarise = async (dir: string, plan: any, oldPer: OldPer[]) => {
+    const { planting, units } = await readRootGarden(dir, plan);
+    const expectedUnits = Math.ceil(plan.plantings.length / GARDEN_PER_UNIT);
+    const incomplete: string[] = [];
+    for (let i = 0; i < candidates.length; i++) if (!wholePlanting(planting.get(`c${i}`), 2)) incomplete.push(`c${i}`);
+    for (const id of Object.values(rootMono)) if (!wholePlanting(planting.get(id), 1)) incomplete.push(id);
+    if (units !== expectedUnits || incomplete.length) {
+      return { complete: false as const, units, expectedUnits, incompletePlantings: incomplete.length, firstIncomplete: incomplete.slice(0, 10) };
+    }
+    const rows = candidates.map((c, i) => ({
+      candidate: i,
+      subjectId: c.subjectId as string,
+      seed: c.seed as number,
+      role: c.role,
+      window: c.window,
+      windowAtFounding: c.windowAtFounding,
+      sameAsOldComparator: c.sameAsOldComparator,
+      ...gardenOutcome(planting.get(`c${i}`), planting.get(rootMono[c.rootHex])),
+    }));
+    const outcomes = Object.fromEntries(OUTCOME_NAMES.map((o) => [o, rows.filter((r) => r.outcome === o).length]));
+    const perSubject = countSubjects(rows).map((c) => {
+      const o = oldPer.find((x) => x.id === c.id);
+      return { ...c, old: o ? { runsOriginating: o.runsOriginating, counts: o.counts } : null };
+    });
+    const changed = perSubject.filter((c) => !c.old || c.old.counts !== c.counts).map((c) => c.id);
+    return { complete: true as const, units, expectedUnits, perSubject, outcomes, rows, changed };
+  };
+
+  const uniform = await summarise(a["uniform-dir"], planU, old.uniform.perCloudOrSet);
+  const gradient = await summarise(a["gradient-dir"], planG, old.gradient.perCloudOrSet);
+  const { changed: chU, ...uniformOut } = uniform as typeof uniform & { changed?: string[] };
+  const { changed: chG, ...gradientOut } = gradient as typeof gradient & { changed?: string[] };
+  const out = {
+    note: "exploratory; plan 002: each candidate gardened beside its own clade root (mutations.tsv walk, genome from genomes.tsv) instead of founderSet[0]; test 3's rules otherwise unchanged; uniform garden primary",
+    seeds: { uniform: planU.seed0, gradient: planG.seed0 },
+    planIds: { uniform: planU.id, gradient: planG.id },
+    runs: cand.runs,
+    candidates: candidates.length,
+    candidatesWithNewComparator: candidates.filter((c) => !c.sameAsOldComparator).length,
+    candidatesWindowAtFounding: candidates.filter((c) => c.windowAtFounding).length,
+    uniform: uniformOut,
+    gradient: gradientOut,
+    changed: { uniform: chU ?? [], gradient: chG ?? [] },
+  };
+  await Deno.mkdir("experiments/foundations", { recursive: true });
+  await Deno.writeTextFile(FX_ROOT_SUMMARY, JSON.stringify(out, null, 1));
+  console.log(`wrote ${FX_ROOT_SUMMARY}`);
+  for (const [name, g] of [["uniform", uniform], ["gradient", gradient]] as const) {
+    if (!g.complete) console.log(`${name}: incomplete (${g.units}/${g.expectedUnits} units, ${g.incompletePlantings} plantings not whole)`);
+    else console.log(`${name}: ${g.perSubject.filter((c) => c.runsOriginating > 0).map((c) => `${c.id} ${c.runsOriginating}/5${c.counts ? "*" : ""}`).join(", ")}; changed: ${g.changed.join(", ") || "none"}`);
+  }
+}
+
 if (import.meta.main) {
   switch (cmd) {
     case "cloud":
@@ -328,7 +573,13 @@ if (import.meta.main) {
     case "read":
       await readCmd();
       break;
+    case "read-root":
+      await readRootCmd();
+      break;
+    case "summary-root":
+      await summaryRootCmd();
+      break;
     default:
-      throw new Error(`unknown subcommand '${cmd}' (want cloud | plan | read)`);
+      throw new Error(`unknown subcommand '${cmd}' (want cloud | plan | read | read-root | summary-root)`);
   }
 }
