@@ -5,12 +5,14 @@
 
 import {
   CH,
+  G,
   ROLE_WORDS,
   buildWorld,
   cellCount,
   clampLesionRadius,
   cloneState,
   defaultConfig,
+  packLineageLo,
   worldW,
   type Founder,
   type Genome,
@@ -44,6 +46,13 @@ export interface EvalConfig {
    */
   roles?: boolean;
   perRep?: boolean;
+  /**
+   * Conditioned medium for consumer/decomposer screens. Absent from DEFAULT_EVAL so existing
+   * evaluations stay byte-identical. `waste` fills channel C; `background` seeds a producer
+   * ring (large disc) under the candidate disc in every tile — measures then use the candidate
+   * lineage only (see lineageMass).
+   */
+  medium?: { waste?: number; background?: Genome; backgroundBiomass?: number };
 }
 
 export const DEFAULT_EVAL: EvalConfig = {
@@ -123,11 +132,33 @@ export function quality(e: Evaluation): number {
   return (e.survived / e.reps) * (0.3 * e.recovery + 0.2 * (e.recovered / e.reps) + 0.5 * regen) * (0.5 + 0.5 * (e.lightDependent / e.reps));
 }
 
+/** Archive score for conditioned-medium screens: survival × recovery × light dependence; regeneration is reported, not scored. */
+export function qualityMaintenance(e: Evaluation): number {
+  if (e.survived === 0) return 0;
+  return (e.survived / e.reps) * (0.5 * e.recovery + 0.5 * (e.recovered / e.reps)) * (0.5 + 0.5 * (e.lightDependent / e.reps));
+}
+
 function tileMass(cfg: WorldConfig, cells: Uint32Array): Float64Array {
   const n = cellCount(cfg);
   const W = worldW(cfg);
   const out = new Float64Array(cfg.tilesX * cfg.tilesY);
   for (let i = 0; i < n; i++) {
+    const x = i % W;
+    const y = (i - x) / W;
+    const t = Math.floor(y / cfg.tileH) * cfg.tilesX + Math.floor(x / cfg.tileW);
+    out[t] += cells[CH.B * n + i] + cells[CH.P * n + i];
+  }
+  return out;
+}
+
+/** Bound mass (B+P) per tile for cells whose founder lineage id is `rawId` (LIN_HI 0, LIN_LO = packLineageLo(cfg, rawId)). */
+export function lineageMass(cfg: WorldConfig, cells: Uint32Array, genomeHead: Uint32Array, rawId: number): Float64Array {
+  const n = cellCount(cfg);
+  const W = worldW(cfg);
+  const wantLo = packLineageLo(cfg, rawId);
+  const out = new Float64Array(cfg.tilesX * cfg.tilesY);
+  for (let i = 0; i < n; i++) {
+    if (genomeHead[G.LIN_HI * n + i] !== 0 || genomeHead[G.LIN_LO * n + i] !== wantLo) continue;
     const x = i % W;
     const y = (i - x) / W;
     const t = Math.floor(y / cfg.tileH) * cfg.tilesX + Math.floor(x / cfg.tileW);
@@ -173,22 +204,40 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
   if (genomes.length > perBatch) throw new Error(`batch holds ${perBatch} genomes`);
   const cfg = defaultConfig({ ...ec.world, tileW: ec.tile, tileH: ec.tile, tilesX: ec.side, tilesY: ec.side, seed: ec.seed, mutRate: 0 });
   const owner = new Int32Array(tiles).fill(-1);
+  const candidateRawId = new Int32Array(tiles);
   const founders: Founder[] = [];
+  const bg = ec.medium?.background;
+  const bgBiomass = ec.medium?.backgroundBiomass ?? ec.biomass;
+  const candRadius = Math.floor(ec.tile / 6);
+  const bgRadius = Math.floor(ec.tile / 3);
   genomes.forEach((g, k) => {
     for (let r = 0; r < ec.reps; r++) {
       const t = k * ec.reps + r;
       owner[t] = k;
+      const x = (t % ec.side) * ec.tile + ec.tile / 2;
+      const y = Math.floor(t / ec.side) * ec.tile + ec.tile / 2;
+      // Background first as a larger disc; the candidate overwrites the centre → a producer ring.
+      if (bg)
+        founders.push({
+          x,
+          y,
+          radius: bgRadius,
+          genome: bg,
+          biomass: bgBiomass,
+          energy: 2 * bgBiomass,
+        });
       founders.push({
-        x: (t % ec.side) * ec.tile + ec.tile / 2,
-        y: Math.floor(t / ec.side) * ec.tile + ec.tile / 2,
-        radius: Math.floor(ec.tile / 6),
+        x,
+        y,
+        radius: candRadius,
         genome: g,
         biomass: ec.biomass,
         energy: 2 * ec.biomass,
       });
+      candidateRawId[t] = founders.length; // raw lineage id = founder index + 1
     }
   });
-  const init = buildWorld(cfg, { nutrient: ec.nutrient, founders });
+  const init = buildWorld(cfg, { nutrient: ec.nutrient, waste: ec.medium?.waste, founders });
   const sim = await GpuSim.create(device, init);
   const tracker = new Tracker({ threshold: 48, minMass: 128 });
   const repro = new Float64Array(tiles);
@@ -202,6 +251,8 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
         if (done > ec.growSteps - 1000) addTileRoles(cfg, await read(), tileRoles);
       }
     : undefined;
+  const candLineage = (t: number) => `0:${packLineageLo(cfg, candidateRawId[t])}`;
+  const isCand = (t: number, lineage: string) => !bg || lineage === candLineage(t);
   let grown: WorldState;
   try {
     await runChunked(device, sim, ec.growSteps, ec.censusEvery, (c) => {
@@ -209,10 +260,11 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
         if (e.kind === "fission" || e.kind === "birth") {
           const id = e.kind === "fission" ? e.parent : e.id;
           const ind = tracker.alive.get(id);
-          if (ind) repro[tileOf(ind.cx, ind.cy)]++;
+          if (ind && isCand(tileOf(ind.cx, ind.cy), ind.lineage)) repro[tileOf(ind.cx, ind.cy)]++;
         }
       }
       for (const ind of tracker.alive.values()) {
+        if (!isCand(ind.tile, ind.lineage)) continue;
         const p = last.get(ind.id);
         if (p) {
           const dx = Math.min(Math.abs(ind.cx - p[0]), ec.tile - Math.abs(ind.cx - p[0]));
@@ -228,9 +280,18 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
   } finally {
     sim.destroy();
   }
-  const before = tileMass(cfg, grown.cells);
+  const massFrom = (cells: Uint32Array, genomeHead: Uint32Array) => {
+    if (!bg) return tileMass(cfg, cells);
+    const out = new Float64Array(tiles);
+    for (let t = 0; t < tiles; t++) {
+      if (owner[t] < 0) continue;
+      out[t] = lineageMass(cfg, cells, genomeHead, candidateRawId[t])[t];
+    }
+    return out;
+  };
+  const before = massFrom(grown.cells, grown.genome);
   const c0 = census({ cfg, step: grown.step, cells: grown.cells, genomeHead: grown.genome.subarray(0, cellCount(cfg) * 4) });
-  const ind0 = individuals(c0, { threshold: 48, minMass: 128 });
+  const ind0 = individuals(c0, { threshold: 48, minMass: 128 }).filter((k) => isCand(k.tile, k.lineage));
   const indCount = new Float64Array(tiles);
   const indMass = new Float64Array(tiles);
   for (const k of ind0) {
@@ -245,7 +306,9 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
     const r = Math.floor(ec.tile * ec.lesionFrac);
     for (let t = 0; t < tiles; t++) lesioned.lesion((t % ec.side) * ec.tile + ec.tile / 2, Math.floor(t / ec.side) * ec.tile + ec.tile / 2, r);
     await runChunked(device, lesioned, ec.recoverSteps, 500);
-    afterLesion = tileMass(cfg, await lesioned.readCells());
+    afterLesion = bg
+      ? massFrom(...(await Promise.all([lesioned.readCells(), lesioned.readGenomeChannels(0, 4)])))
+      : tileMass(cfg, await lesioned.readCells());
   } finally {
     lesioned.destroy();
   }
@@ -330,7 +393,8 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
     const armSim = await GpuSim.create(device, st);
     try {
       await runChunked(device, armSim, ec.darkSteps, 500);
-      return tileMass(cfg, await armSim.readCells());
+      if (!bg) return tileMass(cfg, await armSim.readCells());
+      return massFrom(...(await Promise.all([armSim.readCells(), armSim.readGenomeChannels(0, 4)])));
     } finally {
       armSim.destroy();
     }

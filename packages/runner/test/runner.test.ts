@@ -236,4 +236,17 @@ describe("foundations-review run options", () => {
     expect(Array.from(byGenome.cells)).toEqual(Array.from(byIndex.cells));
     expect(Array.from(byGenome.genome)).toEqual(Array.from(byIndex.genome));
   });
+
+  it("validateSpec accepts founderSet on an m3 preset and refuses bad or conflicting specs", () => {
+    const m3: RunSpec = { ...reuseSpec, presetId: "gradient-m3" };
+    const hexA = genomeHex(founderGenome(M3_FOUNDERS[0]));
+    const hexB = genomeHex(founderGenome(M3_FOUNDERS[1]));
+    expect(validateSpec({ ...m3, founderSet: [hexA, hexB] })).toEqual([]);
+    expect(validateSpec({ ...m3, founderSet: [] }).join()).toMatch(/founderSet/);
+    expect(validateSpec({ ...m3, founderSet: [hexA.slice(1)] }).join()).toMatch(/founderSet/);
+    expect(validateSpec({ ...m3, founderSet: [hexA], soloGenome: hexA }).join()).toMatch(/exclusive/);
+    expect(validateSpec({ ...m3, founderSet: [hexA], soloFounder: 0 }).join()).toMatch(/exclusive/);
+    expect(validateSpec({ ...reuseSpec, founderSet: [hexA] }).join()).toMatch(/M3 founder set/);
+    expect(sameCompletedRun(baseManifest(), { ...reuseSpec, founderSet: [hexA] })).toBe(false);
+  });
 });

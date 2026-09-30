@@ -1,0 +1,7677 @@
+{
+ "note": "exploratory; primary reading in the uniform garden; compare to t3 1/12 and fd 11/24",
+ "aws": {
+  "costFx": 8.0244,
+  "authorised": 20,
+  "from": 200,
+  "instanceTerminated": true,
+  "securityGroupDeleted": true,
+  "costFx2": 0.9855,
+  "authorisedS5": 2,
+  "hardStopS5": 5,
+  "s5InstanceTerminated": true,
+  "s5SecurityGroupDeleted": true,
+  "note": "S5 control on cost-fx2; prior B+C on cost-fx"
+ },
+ "completeness": {
+  "bPlanned": 96,
+  "cPlanned": 32,
+  "present": 120,
+  "all1e6": true,
+  "gaps": [],
+  "s5Planned": 8,
+  "s5Present": 8,
+  "s5All1e6": true,
+  "s5Gaps": []
+ },
+ "baselines": {
+  "t3": {
+   "foundersCounting": 1,
+   "of": 12,
+   "note": "point-founder; experiments/foundations/t3.json"
+  },
+  "fd": {
+   "subjectsCounting": 11,
+   "of": 24,
+   "note": "diagnostic; primary uniform garden; experiments/foundations/fd.json"
+  }
+ },
+ "controls": {
+  "note": "Several clouds/sets already show multiple roles in no-mutation runs (standing variation / pre-filled niches); those roles are not counted as originating.",
+  "subjectsWithNmRolesGt1": [
+   {
+    "id": "founder-2",
+    "nmRoles": [
+     "mixed",
+     "chemotroph"
+    ]
+   },
+   {
+    "id": "S2",
+    "nmRoles": [
+     "phototroph",
+     "mixed"
+    ]
+   },
+   {
+    "id": "S1",
+    "nmRoles": [
+     "chemotroph",
+     "mixed"
+    ]
+   },
+   {
+    "id": "S5",
+    "nmRoles": [
+     "chemotroph",
+     "mixed"
+    ]
+   }
+  ]
+ },
+ "uniform": {
+  "result": {
+   "complete": true,
+   "B_counting": 1,
+   "B_of": 12,
+   "C_counting": 2,
+   "C_of": 4,
+   "candidates": 92,
+   "outcomes": {
+    "different role": 18,
+    "same role": 70,
+    "descendant inactive": 2,
+    "founder inactive": 2
+   }
+  },
+  "perCloudOrSet": [
+   {
+    "id": "founder-7",
+    "subject": 0,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "mixed",
+     "chemotroph"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [
+     {
+      "seed": 4720073,
+      "mutation": true
+     },
+     {
+      "seed": 4720074,
+      "mutation": true
+     }
+    ],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720071,
+      "step": 6100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720072,
+      "step": 34100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720075,
+      "step": 144100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.12
+   },
+   {
+    "id": "founder-0",
+    "subject": 1,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [
+     {
+      "seed": 4720002,
+      "mutation": true
+     }
+    ],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720001,
+      "step": 133100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720003,
+      "step": 89100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720004,
+      "step": 199100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720005,
+      "step": 543100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.08
+   },
+   {
+    "id": "founder-4",
+    "subject": 2,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "mixed",
+     "decomposer"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720041,
+      "step": 299100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720043,
+      "step": 764100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720045,
+      "step": 545100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.06000000000000001
+   },
+   {
+    "id": "founder-6",
+    "subject": 3,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [
+     "chemotroph"
+    ],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720061,
+      "step": 365100,
+      "roles": [
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720062,
+      "step": 96100,
+      "roles": [
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720063,
+      "step": 89100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720064,
+      "step": 146100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720065,
+      "step": 70100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.4
+     }
+    ],
+    "meanWindowsPer1e5": 0.26
+   },
+   {
+    "id": "founder-3",
+    "subject": 4,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed",
+     "chemotroph"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720031,
+      "step": 7100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720032,
+      "step": 100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720033,
+      "step": 3100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720034,
+      "step": 100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.4
+     },
+     {
+      "seed": 4720035,
+      "step": 100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     }
+    ],
+    "meanWindowsPer1e5": 0.31999999999999995
+   },
+   {
+    "id": "founder-11",
+    "subject": 5,
+    "kind": "B-cloud",
+    "runsOriginating": 1,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720111,
+      "step": 216100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720112,
+      "step": 230100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720113,
+      "step": 628100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720114,
+      "step": 485100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720115,
+      "step": 184100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.1
+   },
+   {
+    "id": "founder-1",
+    "subject": 6,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720013,
+      "step": 15100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720014,
+      "step": 35100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.04
+   },
+   {
+    "id": "founder-8",
+    "subject": 7,
+    "kind": "B-cloud",
+    "runsOriginating": 2,
+    "counts": false,
+    "nmRoles": [
+     "mixed"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "chemotroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [
+     "phototroph"
+    ],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720081,
+      "step": 613100,
+      "roles": [
+       "phototroph"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720083,
+      "step": 39100,
+      "roles": [
+       "phototroph",
+       "chemotroph"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720084,
+      "step": 144100,
+      "roles": [
+       "phototroph",
+       "chemotroph"
+      ],
+      "windowsPer1e5": 0.5
+     },
+     {
+      "seed": 4720085,
+      "step": 703100,
+      "roles": [
+       "phototroph"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.2
+   },
+   {
+    "id": "founder-10",
+    "subject": 8,
+    "kind": "B-cloud",
+    "runsOriginating": 1,
+    "counts": false,
+    "nmRoles": [
+     "mixed"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "chemotroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [
+     "phototroph"
+    ],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720104,
+      "step": 183100,
+      "roles": [
+       "phototroph",
+       "chemotroph"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720105,
+      "step": 103100,
+      "roles": [
+       "chemotroph"
+      ],
+      "windowsPer1e5": 0.4
+     }
+    ],
+    "meanWindowsPer1e5": 0.13999999999999999
+   },
+   {
+    "id": "founder-5",
+    "subject": 9,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720051,
+      "step": 64100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720052,
+      "step": 65100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720053,
+      "step": 184100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720054,
+      "step": 113100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720055,
+      "step": 226100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.13999999999999999
+   },
+   {
+    "id": "founder-2",
+    "subject": 10,
+    "kind": "B-cloud",
+    "runsOriginating": 4,
+    "counts": true,
+    "nmRoles": [
+     "mixed",
+     "chemotroph"
+    ],
+    "nmRoleCount": 2,
+    "rolesAt100": [
+     "phototroph",
+     "chemotroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720021,
+      "step": 3100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720022,
+      "step": 100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720023,
+      "step": 100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720024,
+      "step": 3100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720025,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     }
+    ],
+    "meanWindowsPer1e5": 0.21999999999999997
+   },
+   {
+    "id": "founder-9",
+    "subject": 11,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "chemotroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720091,
+      "step": 4100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720092,
+      "step": 100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720093,
+      "step": 100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720094,
+      "step": 4100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720095,
+      "step": 4100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.1
+   },
+   {
+    "id": "S2",
+    "subject": 12,
+    "kind": "C-set",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph",
+     "mixed"
+    ],
+    "nmRoleCount": 2,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "chemotroph"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4740011,
+      "step": 595100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740012,
+      "step": 11100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740013,
+      "step": 28100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740014,
+      "step": 673100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740015,
+      "step": 58100,
+      "roles": [
+       "chemotroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.4
+     }
+    ],
+    "meanWindowsPer1e5": 0.16
+   },
+   {
+    "id": "S1",
+    "subject": 13,
+    "kind": "C-set",
+    "runsOriginating": 3,
+    "counts": true,
+    "nmRoles": [
+     "chemotroph",
+     "mixed"
+    ],
+    "nmRoleCount": 2,
+    "rolesAt100": [
+     "phototroph",
+     "chemotroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4740001,
+      "step": 100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740002,
+      "step": 100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740003,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740004,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740005,
+      "step": 6100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     }
+    ],
+    "meanWindowsPer1e5": 0.2
+   },
+   {
+    "id": "S4",
+    "subject": 14,
+    "kind": "C-set",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "chemotroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4740022,
+      "step": 19100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740023,
+      "step": 206100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740024,
+      "step": 81100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740025,
+      "step": 32100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.08
+   },
+   {
+    "id": "S5",
+    "subject": 14,
+    "kind": "C-set",
+    "runsOriginating": 5,
+    "counts": true,
+    "nmRoles": [
+     "chemotroph",
+     "mixed"
+    ],
+    "nmRoleCount": 2,
+    "rolesAt100": [
+     "phototroph",
+     "chemotroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4740031,
+      "step": 9100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740032,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740033,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4740034,
+      "step": 6100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740035,
+      "step": 7100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     }
+    ],
+    "meanWindowsPer1e5": 0.22000000000000003,
+    "ordering": [
+     {
+      "disc": 0,
+      "source": "S1",
+      "index": 0,
+      "hex": "001a005000000000d0fdd0d0f9c0c3090935da0522e707c738e0352aca2adf0728fc3205ff100136cd1d0d29d719f9331607cd39112b403dffdcce262dfe2835fc22130013e6e3fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc4dc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82322ce22e723dd2323e1143f13f7d300c7f70ad50bd61e011416320925213fc029c9dd1c3e2349f7fc21f1e1f1"
+     },
+     {
+      "disc": 1,
+      "source": "S2",
+      "index": 0,
+      "hex": "0011003b00000000d617dff63cfc3c072ce70ac4f1d3f9121cebd2383c37c9e63ad2f1ece6131844fd2ee204f3d90a1a2940f7cdfeb50e26c0c03b063a3aeeda40cf0ecc20c9c41019213b390e2abcfa0815393a1a222cf100d3fe1f2b1921d21a05c8000de30a02020ac3f5d40bc0ca0a3bc903e6d635dbfec2f9e6e7302af8d5ea0adb2725e2e32c472521051cf91aea18213f3b1200f8db29d4230c090c1ed0e4f00e31ffe4fc"
+     },
+     {
+      "disc": 2,
+      "source": "S1",
+      "index": 3,
+      "hex": "000c003f00000000c0fd25d5d036e2da40fcf939eece35d9cf3bbfce2cf0fbddd6fdcf222303c4de14dfdecd1dca1b02cdc308cae9ed1331c5d8e6dc1a24351ad1c7223b3e3616fc3ddbdb3bd315f11cee023afc2119ea3a34c8371b091b3c0b3acdfbd8eb38ea2add332740eb08270edb0921d42af931d506eb2205eac5f51fe83cccd7381340c830f5242901c017e0c0ea2cef25df10ff3f02d01411c215f339101e393037ffdb"
+     },
+     {
+      "disc": 3,
+      "source": "S2",
+      "index": 1,
+      "hex": "0018001c00000000261de005372ae016c4e6382a2b2a27df1321cb2017e7eb0be9f3eef03bc7e1e60cd5eeeac8f921052128c0e8e5e73b26e1223dd7f7f5fc29fe1c041bc41cf61e19c602ff291ed6d5c1323c2125e23835ec21fe20d304263137e225f7081231f40c27f32824fbf4df1c1f223fd1f2d529151c0dd612c02e06f0152ad1dadc05010bde112a261f0313e22ed30e0edaeff717f9ee090be3f226dacbed3f3d2d35da"
+     },
+     {
+      "disc": 4,
+      "source": "S1",
+      "index": 1,
+      "hex": "001a003b00000000231ff10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8eadecb1a243d17c8082e1de0003619313d030e0a12c3c807c93a4ecbdaed3c0c40c0403a1f21df16d7e90ffcc2e1c320263b20c839db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0dd06c919d00d300a0d16c108272d2ad01611c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec621"
+     },
+     {
+      "disc": 5,
+      "source": "S2",
+      "index": 3,
+      "hex": "0014003c000000000000000000000000000000000000ec00000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007ff18100000000000000186e0000000000000000000000f2000000000000000000000001000000000000000000e9000000000000000000000000000000000000e82846000000000c"
+     },
+     {
+      "disc": 6,
+      "source": "S1",
+      "index": 6,
+      "hex": "001a005000000000d0fdd0d0fdc0c309fc35da0522d307c738ef352aca2adf0728e83205ff100136cd1d0d29d719f93316fbde39112b403dffdcce262dfe2835fc22130013e6d8fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc3fc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82537ce22e723dd2323e1143f13f7d6ffc7df0ad501d61e011416220936213fc029c9dd1c3e2549e3fc21f1e1f1"
+     },
+     {
+      "disc": 7,
+      "source": "S2",
+      "index": 4,
+      "hex": "0012002a00000000e5f2e3edca122324e13530fcf123192fef1c11132a31c3e0cfe80d3836d812da32f9333cc73bfae8fbf719daf4c440ffc9ec383ecb1235dd0adc26f10ee0c915cb2b16cb0ddad6f73b1ed5c1daca10fac92611fd362111d4eb2f0ed50fcef104e337ef0adee9fd25c5cbe93e3f2624ccdbd21dd2f2f80325cedb2dddd4f6402edee12d2708f42af01bfcf20fe4c7093bdce6f90f36172bc22b05da29d62f32c6"
+     },
+     {
+      "disc": 8,
+      "source": "S2",
+      "index": 5,
+      "hex": "001a0020000000003be030ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17ede7f638cde9fd200d09da304730efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700022910d436dffb211b17fadcd8cef7d11fdee0f241f2e0f90212f6340527e91a1731cecc3ada"
+     },
+     {
+      "disc": 9,
+      "source": "S2",
+      "index": 6,
+      "hex": "0014003c0000000000000000000000000000000000000000000000000000000000000000f4fd0000fc00007f0800000000007fe80000000000fd00000000000000000000000000000000000000010000000000000000000000400000000000007f008100000000000000006e000000000000000000000000000000000000000000000000000000000000000000000000000000130000000000f9000000000018e81346000000000c"
+     },
+     {
+      "disc": 10,
+      "source": "S2",
+      "index": 7,
+      "hex": "000c002500000000c5f0f6f82a112312c6d0d5011dd50728c221c7290e2930353efdd3260f353f161fce3dd127d5fc290bca3d202506fb1cc5d3eac908dbd938c1c51a0c32e605d916ef40caf8e123e739ead7efc5333100d73cdd262bc403ef2d0735282efac82dd914de23eff006f4ded72f2dc03906e7fc14c52fce35d9210b2215401aeb06381e1625f10e3a07e603c9eff708ebef38eecd2b250fc723d80fe2fb0701d6f8fc"
+     },
+     {
+      "disc": 11,
+      "source": "S2",
+      "index": 9,
+      "hex": "001b0026000000002f1bfefbd5163ae5faf5c2fa232c2e27d403c33b2e1d0d11cef10cff1e010be323fdf31916c43a140e3b1740273dd814bcc53b2de03dd8e026d4cac6d11f3cecc6deca09dc1bcff524c11f1c0335e6ae13c134edf0e3dc34c0363300dac2df2c23e8e4292e3af7d523e9ccd21a30f6dfc00d330f2bc10a0d111ff0f6c1192c19241ce003f925043e1efc2428fbc62634fcf81bfb09d623d9f31df11b281725e3"
+     },
+     {
+      "disc": 12,
+      "source": "S2",
+      "index": 11,
+      "hex": "00160020000000003bf230ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17f6e7f638cde9fd200d09da303830efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0b16ebfe1fde2603df39f4340f32fdd4fbcf24d3f5d2fee02d0de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303ef2fc340700021810d436dffb211b17fadcd8b6f7d11fdee0f237f2e0f90212f6450527e91a1731cecc3ada"
+     }
+    ],
+    "setIndex": 3,
+    "seeds": [
+     4740031,
+     4740032,
+     4740033,
+     4740034,
+     4740035,
+     4740036,
+     4740037,
+     4740038
+    ],
+    "preset": "gradient-m3"
+   }
+  ],
+  "rows": [
+   {
+    "subject": 0,
+    "seed": 4720071,
+    "role": "mixed",
+    "window": [
+     6100,
+     339100
+    ],
+    "descendant": "143469:61055",
+    "atStep": 172100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 0,
+    "seed": 4720072,
+    "role": "mixed",
+    "window": [
+     34100,
+     147100
+    ],
+    "descendant": "67824:38909",
+    "atStep": 90100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 0,
+    "seed": 4720075,
+    "role": "mixed",
+    "window": [
+     144100,
+     348100
+    ],
+    "descendant": "224410:26140",
+    "atStep": 246100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 1,
+    "seed": 4720001,
+    "role": "decomposer",
+    "window": [
+     133100,
+     999100
+    ],
+    "descendant": "540626:14279",
+    "atStep": 566100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 1,
+    "seed": 4720003,
+    "role": "decomposer",
+    "window": [
+     89100,
+     999100
+    ],
+    "descendant": "477866:61378",
+    "atStep": 544100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 1,
+    "seed": 4720004,
+    "role": "decomposer",
+    "window": [
+     199100,
+     999100
+    ],
+    "descendant": "574940:48619",
+    "atStep": 599100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 1,
+    "seed": 4720005,
+    "role": "decomposer",
+    "window": [
+     543100,
+     999100
+    ],
+    "descendant": "737587:46392",
+    "atStep": 771100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 2,
+    "seed": 4720041,
+    "role": "decomposer",
+    "window": [
+     299100,
+     999100
+    ],
+    "descendant": "621975:20632",
+    "atStep": 649100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 2,
+    "seed": 4720043,
+    "role": "decomposer",
+    "window": [
+     764100,
+     999100
+    ],
+    "descendant": "856698:18942",
+    "atStep": 881100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 2,
+    "seed": 4720045,
+    "role": "decomposer",
+    "window": [
+     545100,
+     999100
+    ],
+    "descendant": "725405:27727",
+    "atStep": 772100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720061,
+    "role": "decomposer",
+    "window": [
+     365100,
+     999100
+    ],
+    "descendant": "623677:57270",
+    "atStep": 682100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720061,
+    "role": "mixed",
+    "window": [
+     382100,
+     999100
+    ],
+    "descendant": "623716:57339",
+    "atStep": 690100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720062,
+    "role": "decomposer",
+    "window": [
+     96100,
+     999100
+    ],
+    "descendant": "463084:23739",
+    "atStep": 547100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720062,
+    "role": "mixed",
+    "window": [
+     217100,
+     606100
+    ],
+    "descendant": "349096:25114",
+    "atStep": 411100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720063,
+    "role": "chemotroph",
+    "window": [
+     720100,
+     980100
+    ],
+    "descendant": "785303:23914",
+    "atStep": 850100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720063,
+    "role": "decomposer",
+    "window": [
+     89100,
+     999100
+    ],
+    "descendant": "514821:8215",
+    "atStep": 544100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720063,
+    "role": "mixed",
+    "window": [
+     225100,
+     999100
+    ],
+    "descendant": "572624:26164",
+    "atStep": 612100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720064,
+    "role": "decomposer",
+    "window": [
+     146100,
+     999100
+    ],
+    "descendant": "456976:29100",
+    "atStep": 572100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720065,
+    "role": "chemotroph",
+    "window": [
+     91100,
+     516100
+    ],
+    "descendant": "289868:59856",
+    "atStep": 303100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720065,
+    "role": "decomposer",
+    "window": [
+     85100,
+     999100
+    ],
+    "descendant": "526043:63657",
+    "atStep": 542100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720065,
+    "role": "mixed",
+    "window": [
+     70100,
+     999100
+    ],
+    "descendant": "471961:53986",
+    "atStep": 534100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720031,
+    "role": "chemotroph",
+    "window": [
+     465100,
+     999100
+    ],
+    "descendant": "688598:21233",
+    "atStep": 732100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720031,
+    "role": "decomposer",
+    "window": [
+     7100,
+     999100
+    ],
+    "descendant": "495771:47554",
+    "atStep": 503100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720031,
+    "role": "mixed",
+    "window": [
+     338100,
+     999100
+    ],
+    "descendant": "628521:3830",
+    "atStep": 668100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720032,
+    "role": "chemotroph",
+    "window": [
+     66100,
+     999100
+    ],
+    "descendant": "518147:9959",
+    "atStep": 532100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720032,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "403947:59979",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720032,
+    "role": "mixed",
+    "window": [
+     269100,
+     999100
+    ],
+    "descendant": "614631:23207",
+    "atStep": 634100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720033,
+    "role": "chemotroph",
+    "window": [
+     21100,
+     999100
+    ],
+    "descendant": "493017:15296",
+    "atStep": 510100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720033,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "descendant": "487691:12865",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720033,
+    "role": "mixed",
+    "window": [
+     163100,
+     999100
+    ],
+    "descendant": "575224:7690",
+    "atStep": 581100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720034,
+    "role": "chemotroph",
+    "window": [
+     26100,
+     999100
+    ],
+    "descendant": "502557:13509",
+    "atStep": 512100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720034,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "463687:58783",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720034,
+    "role": "mixed",
+    "window": [
+     505100,
+     626100
+    ],
+    "descendant": "526130:25983",
+    "atStep": 565100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720035,
+    "role": "chemotroph",
+    "window": [
+     72100,
+     999100
+    ],
+    "descendant": "486035:64737",
+    "atStep": 535100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720035,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "492511:63408",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720035,
+    "role": "mixed",
+    "window": [
+     310100,
+     999100
+    ],
+    "descendant": "642449:43188",
+    "atStep": 654100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 5,
+    "seed": 4720111,
+    "role": "decomposer",
+    "window": [
+     216100,
+     999100
+    ],
+    "descendant": "554226:55073",
+    "atStep": 607100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 5,
+    "seed": 4720112,
+    "role": "decomposer",
+    "window": [
+     230100,
+     999100
+    ],
+    "descendant": "608009:61249",
+    "atStep": 614100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 5,
+    "seed": 4720113,
+    "role": "decomposer",
+    "window": [
+     628100,
+     999100
+    ],
+    "descendant": "795801:23568",
+    "atStep": 813100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 5,
+    "seed": 4720114,
+    "role": "decomposer",
+    "window": [
+     485100,
+     999100
+    ],
+    "descendant": "622873:51013",
+    "atStep": 742100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 5,
+    "seed": 4720115,
+    "role": "decomposer",
+    "window": [
+     184100,
+     999100
+    ],
+    "descendant": "561369:55792",
+    "atStep": 591100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 6,
+    "seed": 4720013,
+    "role": "mixed",
+    "window": [
+     15100,
+     183100
+    ],
+    "descendant": "75940:51300",
+    "atStep": 99100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": null,
+    "founderFrom": "monoculture",
+    "outcome": "founder inactive",
+    "originates": false
+   },
+   {
+    "subject": 6,
+    "seed": 4720014,
+    "role": "mixed",
+    "window": [
+     35100,
+     224100
+    ],
+    "descendant": "116040:62696",
+    "atStep": 129100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": null,
+    "founderFrom": "monoculture",
+    "outcome": "founder inactive",
+    "originates": false
+   },
+   {
+    "subject": 7,
+    "seed": 4720081,
+    "role": "phototroph",
+    "window": [
+     613100,
+     999100
+    ],
+    "descendant": "787547:60840",
+    "atStep": 806100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 7,
+    "seed": 4720083,
+    "role": "phototroph",
+    "window": [
+     368100,
+     999100
+    ],
+    "descendant": "678878:58807",
+    "atStep": 683100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 7,
+    "seed": 4720083,
+    "role": "chemotroph",
+    "window": [
+     39100,
+     163100
+    ],
+    "descendant": "91223:60460",
+    "atStep": 101100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 7,
+    "seed": 4720084,
+    "role": "phototroph",
+    "window": [
+     144100,
+     999100
+    ],
+    "descendant": "569297:54741",
+    "atStep": 571100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 7,
+    "seed": 4720084,
+    "role": "chemotroph",
+    "window": [
+     269100,
+     404100
+    ],
+    "descendant": "335356:33164",
+    "atStep": 336100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 7,
+    "seed": 4720085,
+    "role": "phototroph",
+    "window": [
+     703100,
+     815100
+    ],
+    "descendant": "755249:46899",
+    "atStep": 759100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 8,
+    "seed": 4720104,
+    "role": "phototroph",
+    "window": [
+     183100,
+     999100
+    ],
+    "descendant": "551784:57208",
+    "atStep": 591100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 8,
+    "seed": 4720104,
+    "role": "chemotroph",
+    "window": [
+     500100,
+     743100
+    ],
+    "descendant": "600927:52786",
+    "atStep": 621100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 8,
+    "seed": 4720105,
+    "role": "chemotroph",
+    "window": [
+     103100,
+     258100
+    ],
+    "descendant": "145260:48412",
+    "atStep": 180100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720051,
+    "role": "decomposer",
+    "window": [
+     64100,
+     999100
+    ],
+    "descendant": "483215:21469",
+    "atStep": 531100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720052,
+    "role": "decomposer",
+    "window": [
+     65100,
+     200100
+    ],
+    "descendant": "101869:36485",
+    "atStep": 132100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720053,
+    "role": "decomposer",
+    "window": [
+     184100,
+     999100
+    ],
+    "descendant": "558654:60369",
+    "atStep": 591100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720054,
+    "role": "decomposer",
+    "window": [
+     113100,
+     999100
+    ],
+    "descendant": "510797:17930",
+    "atStep": 556100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720055,
+    "role": "decomposer",
+    "window": [
+     226100,
+     999100
+    ],
+    "descendant": "600898:58545",
+    "atStep": 612100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 10,
+    "seed": 4720021,
+    "role": "phototroph",
+    "window": [
+     28100,
+     999100
+    ],
+    "descendant": "387603:50240",
+    "atStep": 513100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720021,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "descendant": "387603:50240",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720022,
+    "role": "phototroph",
+    "window": [
+     111100,
+     228100
+    ],
+    "descendant": "163243:63972",
+    "atStep": 169100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 10,
+    "seed": 4720022,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "480989:6375",
+    "atStep": 499100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 10,
+    "seed": 4720023,
+    "role": "phototroph",
+    "window": [
+     109100,
+     999100
+    ],
+    "descendant": "532512:63120",
+    "atStep": 554100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720023,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "490443:61742",
+    "atStep": 499100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 10,
+    "seed": 4720024,
+    "role": "phototroph",
+    "window": [
+     48100,
+     999100
+    ],
+    "descendant": "461098:55994",
+    "atStep": 523100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720024,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "descendant": "489165:38819",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720025,
+    "role": "phototroph",
+    "window": [
+     45100,
+     999100
+    ],
+    "descendant": "475340:53523",
+    "atStep": 522100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720025,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "483713:29457",
+    "atStep": 501100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 11,
+    "seed": 4720091,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "488166:59617",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 11,
+    "seed": 4720092,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "489192:62509",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 11,
+    "seed": 4720093,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "465858:14755",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 11,
+    "seed": 4720094,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "485784:64246",
+    "atStep": 501100,
+    "descendantGardenRole": null,
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "descendant inactive",
+    "originates": false
+   },
+   {
+    "subject": 11,
+    "seed": 4720095,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "476124:21445",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740011,
+    "role": "decomposer",
+    "window": [
+     595100,
+     999100
+    ],
+    "descendant": "764045:58388",
+    "atStep": 797100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740012,
+    "role": "decomposer",
+    "window": [
+     11100,
+     999100
+    ],
+    "descendant": "420323:14246",
+    "atStep": 505100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740013,
+    "role": "decomposer",
+    "window": [
+     28100,
+     999100
+    ],
+    "descendant": "484349:56566",
+    "atStep": 513100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740014,
+    "role": "decomposer",
+    "window": [
+     673100,
+     999100
+    ],
+    "descendant": "776591:52872",
+    "atStep": 836100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740015,
+    "role": "chemotroph",
+    "window": [
+     476100,
+     666100
+    ],
+    "descendant": "569070:18018",
+    "atStep": 571100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740015,
+    "role": "decomposer",
+    "window": [
+     58100,
+     999100
+    ],
+    "descendant": "492797:58196",
+    "atStep": 528100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 13,
+    "seed": 4740001,
+    "role": "phototroph",
+    "window": [
+     238100,
+     999100
+    ],
+    "descendant": "537554:57845",
+    "atStep": 618100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740001,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "398118:65373",
+    "atStep": 499100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740002,
+    "role": "phototroph",
+    "window": [
+     181100,
+     999100
+    ],
+    "descendant": "581839:59569",
+    "atStep": 590100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740002,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "491702:61975",
+    "atStep": 499100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740003,
+    "role": "phototroph",
+    "window": [
+     283100,
+     999100
+    ],
+    "descendant": "621986:63000",
+    "atStep": 641100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 13,
+    "seed": 4740003,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "478006:57063",
+    "atStep": 501100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 13,
+    "seed": 4740004,
+    "role": "phototroph",
+    "window": [
+     323100,
+     999100
+    ],
+    "descendant": "612730:18153",
+    "atStep": 661100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740004,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "487891:20592",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740005,
+    "role": "phototroph",
+    "window": [
+     318100,
+     999100
+    ],
+    "descendant": "629356:57933",
+    "atStep": 658100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 13,
+    "seed": 4740005,
+    "role": "decomposer",
+    "window": [
+     6100,
+     999100
+    ],
+    "descendant": "437728:53239",
+    "atStep": 502100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 14,
+    "seed": 4740022,
+    "role": "decomposer",
+    "window": [
+     19100,
+     999100
+    ],
+    "descendant": "460250:55771",
+    "atStep": 509100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 14,
+    "seed": 4740023,
+    "role": "decomposer",
+    "window": [
+     206100,
+     999100
+    ],
+    "descendant": "592909:42301",
+    "atStep": 602100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 14,
+    "seed": 4740024,
+    "role": "decomposer",
+    "window": [
+     81100,
+     999100
+    ],
+    "descendant": "527537:55998",
+    "atStep": 540100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 14,
+    "seed": 4740025,
+    "role": "decomposer",
+    "window": [
+     32100,
+     999100
+    ],
+    "descendant": "511162:59065",
+    "atStep": 515100,
+    "descendantGardenRole": null,
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "descendant inactive",
+    "originates": false
+   }
+  ],
+  "s5": {
+   "counts": true,
+   "runsOriginating": 5,
+   "of": 5,
+   "outcomes": {
+    "different role": 9,
+    "same role": 1,
+    "descendant inactive": 0,
+    "founder inactive": 0
+   },
+   "reading": "counts_like_S1_genomes_matter"
+  }
+ },
+ "gradient": {
+  "result": {
+   "complete": true,
+   "B_counting": 3,
+   "B_of": 12,
+   "C_counting": 2,
+   "C_of": 4,
+   "candidates": 92,
+   "outcomes": {
+    "different role": 30,
+    "same role": 61,
+    "descendant inactive": 1,
+    "founder inactive": 0
+   }
+  },
+  "perCloudOrSet": [
+   {
+    "id": "founder-7",
+    "subject": 0,
+    "kind": "B-cloud",
+    "runsOriginating": 1,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "mixed",
+     "chemotroph"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [
+     {
+      "seed": 4720073,
+      "mutation": true
+     },
+     {
+      "seed": 4720074,
+      "mutation": true
+     }
+    ],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720071,
+      "step": 6100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720072,
+      "step": 34100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720075,
+      "step": 144100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.12
+   },
+   {
+    "id": "founder-0",
+    "subject": 1,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [
+     {
+      "seed": 4720002,
+      "mutation": true
+     }
+    ],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720001,
+      "step": 133100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720003,
+      "step": 89100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720004,
+      "step": 199100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720005,
+      "step": 543100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.08
+   },
+   {
+    "id": "founder-4",
+    "subject": 2,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "mixed",
+     "decomposer"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720041,
+      "step": 299100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720043,
+      "step": 764100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720045,
+      "step": 545100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.06000000000000001
+   },
+   {
+    "id": "founder-6",
+    "subject": 3,
+    "kind": "B-cloud",
+    "runsOriginating": 2,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [
+     "chemotroph"
+    ],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720061,
+      "step": 365100,
+      "roles": [
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720062,
+      "step": 96100,
+      "roles": [
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720063,
+      "step": 89100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720064,
+      "step": 146100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720065,
+      "step": 70100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.4
+     }
+    ],
+    "meanWindowsPer1e5": 0.26
+   },
+   {
+    "id": "founder-3",
+    "subject": 4,
+    "kind": "B-cloud",
+    "runsOriginating": 3,
+    "counts": true,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed",
+     "chemotroph"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720031,
+      "step": 7100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720032,
+      "step": 100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720033,
+      "step": 3100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720034,
+      "step": 100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.4
+     },
+     {
+      "seed": 4720035,
+      "step": 100,
+      "roles": [
+       "chemotroph",
+       "decomposer",
+       "mixed"
+      ],
+      "windowsPer1e5": 0.3
+     }
+    ],
+    "meanWindowsPer1e5": 0.31999999999999995
+   },
+   {
+    "id": "founder-11",
+    "subject": 5,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720111,
+      "step": 216100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720112,
+      "step": 230100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720113,
+      "step": 628100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720114,
+      "step": 485100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720115,
+      "step": 184100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.1
+   },
+   {
+    "id": "founder-1",
+    "subject": 6,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720013,
+      "step": 15100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720014,
+      "step": 35100,
+      "roles": [
+       "mixed"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.04
+   },
+   {
+    "id": "founder-8",
+    "subject": 7,
+    "kind": "B-cloud",
+    "runsOriginating": 1,
+    "counts": false,
+    "nmRoles": [
+     "mixed"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "chemotroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [
+     "phototroph"
+    ],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720081,
+      "step": 613100,
+      "roles": [
+       "phototroph"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720083,
+      "step": 39100,
+      "roles": [
+       "phototroph",
+       "chemotroph"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720084,
+      "step": 144100,
+      "roles": [
+       "phototroph",
+       "chemotroph"
+      ],
+      "windowsPer1e5": 0.5
+     },
+     {
+      "seed": 4720085,
+      "step": 703100,
+      "roles": [
+       "phototroph"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.2
+   },
+   {
+    "id": "founder-10",
+    "subject": 8,
+    "kind": "B-cloud",
+    "runsOriginating": 1,
+    "counts": false,
+    "nmRoles": [
+     "mixed"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "chemotroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [
+     "phototroph"
+    ],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720104,
+      "step": 183100,
+      "roles": [
+       "phototroph",
+       "chemotroph"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720105,
+      "step": 103100,
+      "roles": [
+       "chemotroph"
+      ],
+      "windowsPer1e5": 0.4
+     }
+    ],
+    "meanWindowsPer1e5": 0.13999999999999999
+   },
+   {
+    "id": "founder-5",
+    "subject": 9,
+    "kind": "B-cloud",
+    "runsOriginating": 0,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720051,
+      "step": 64100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720052,
+      "step": 65100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720053,
+      "step": 184100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720054,
+      "step": 113100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720055,
+      "step": 226100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.13999999999999999
+   },
+   {
+    "id": "founder-2",
+    "subject": 10,
+    "kind": "B-cloud",
+    "runsOriginating": 4,
+    "counts": true,
+    "nmRoles": [
+     "mixed",
+     "chemotroph"
+    ],
+    "nmRoleCount": 2,
+    "rolesAt100": [
+     "phototroph",
+     "chemotroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720021,
+      "step": 3100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720022,
+      "step": 100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4720023,
+      "step": 100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720024,
+      "step": 3100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4720025,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     }
+    ],
+    "meanWindowsPer1e5": 0.21999999999999997
+   },
+   {
+    "id": "founder-9",
+    "subject": 11,
+    "kind": "B-cloud",
+    "runsOriginating": 3,
+    "counts": true,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "chemotroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4720091,
+      "step": 4100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720092,
+      "step": 100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720093,
+      "step": 100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720094,
+      "step": 4100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4720095,
+      "step": 4100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.1
+   },
+   {
+    "id": "S2",
+    "subject": 12,
+    "kind": "C-set",
+    "runsOriginating": 1,
+    "counts": false,
+    "nmRoles": [
+     "phototroph",
+     "mixed"
+    ],
+    "nmRoleCount": 2,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "chemotroph"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4740011,
+      "step": 595100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740012,
+      "step": 11100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740013,
+      "step": 28100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740014,
+      "step": 673100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740015,
+      "step": 58100,
+      "roles": [
+       "chemotroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.4
+     }
+    ],
+    "meanWindowsPer1e5": 0.16
+   },
+   {
+    "id": "S1",
+    "subject": 13,
+    "kind": "C-set",
+    "runsOriginating": 3,
+    "counts": true,
+    "nmRoles": [
+     "chemotroph",
+     "mixed"
+    ],
+    "nmRoleCount": 2,
+    "rolesAt100": [
+     "phototroph",
+     "chemotroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4740001,
+      "step": 100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740002,
+      "step": 100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740003,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740004,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740005,
+      "step": 6100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     }
+    ],
+    "meanWindowsPer1e5": 0.2
+   },
+   {
+    "id": "S4",
+    "subject": 14,
+    "kind": "C-set",
+    "runsOriginating": 1,
+    "counts": false,
+    "nmRoles": [
+     "phototroph"
+    ],
+    "nmRoleCount": 1,
+    "rolesAt100": [
+     "phototroph",
+     "decomposer",
+     "chemotroph",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4740022,
+      "step": 19100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740023,
+      "step": 206100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740024,
+      "step": 81100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     },
+     {
+      "seed": 4740025,
+      "step": 32100,
+      "roles": [
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.1
+     }
+    ],
+    "meanWindowsPer1e5": 0.08
+   },
+   {
+    "id": "S5",
+    "subject": 14,
+    "kind": "C-set",
+    "nmRoles": [
+     "chemotroph",
+     "mixed"
+    ],
+    "nmRoleCount": 2,
+    "rolesAt100": [
+     "phototroph",
+     "chemotroph",
+     "decomposer",
+     "mixed"
+    ],
+    "rolesQualifyLaterNotAtStart": [],
+    "extinctRuns": [],
+    "firstQualifyingSteps": [
+     {
+      "seed": 4740031,
+      "step": 9100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740032,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740033,
+      "step": 4100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.3
+     },
+     {
+      "seed": 4740034,
+      "step": 6100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     },
+     {
+      "seed": 4740035,
+      "step": 7100,
+      "roles": [
+       "phototroph",
+       "decomposer"
+      ],
+      "windowsPer1e5": 0.2
+     }
+    ],
+    "meanWindowsPer1e5": 0.22000000000000003,
+    "ordering": [
+     {
+      "disc": 0,
+      "source": "S1",
+      "index": 0,
+      "hex": "001a005000000000d0fdd0d0f9c0c3090935da0522e707c738e0352aca2adf0728fc3205ff100136cd1d0d29d719f9331607cd39112b403dffdcce262dfe2835fc22130013e6e3fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc4dc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82322ce22e723dd2323e1143f13f7d300c7f70ad50bd61e011416320925213fc029c9dd1c3e2349f7fc21f1e1f1"
+     },
+     {
+      "disc": 1,
+      "source": "S2",
+      "index": 0,
+      "hex": "0011003b00000000d617dff63cfc3c072ce70ac4f1d3f9121cebd2383c37c9e63ad2f1ece6131844fd2ee204f3d90a1a2940f7cdfeb50e26c0c03b063a3aeeda40cf0ecc20c9c41019213b390e2abcfa0815393a1a222cf100d3fe1f2b1921d21a05c8000de30a02020ac3f5d40bc0ca0a3bc903e6d635dbfec2f9e6e7302af8d5ea0adb2725e2e32c472521051cf91aea18213f3b1200f8db29d4230c090c1ed0e4f00e31ffe4fc"
+     },
+     {
+      "disc": 2,
+      "source": "S1",
+      "index": 3,
+      "hex": "000c003f00000000c0fd25d5d036e2da40fcf939eece35d9cf3bbfce2cf0fbddd6fdcf222303c4de14dfdecd1dca1b02cdc308cae9ed1331c5d8e6dc1a24351ad1c7223b3e3616fc3ddbdb3bd315f11cee023afc2119ea3a34c8371b091b3c0b3acdfbd8eb38ea2add332740eb08270edb0921d42af931d506eb2205eac5f51fe83cccd7381340c830f5242901c017e0c0ea2cef25df10ff3f02d01411c215f339101e393037ffdb"
+     },
+     {
+      "disc": 3,
+      "source": "S2",
+      "index": 1,
+      "hex": "0018001c00000000261de005372ae016c4e6382a2b2a27df1321cb2017e7eb0be9f3eef03bc7e1e60cd5eeeac8f921052128c0e8e5e73b26e1223dd7f7f5fc29fe1c041bc41cf61e19c602ff291ed6d5c1323c2125e23835ec21fe20d304263137e225f7081231f40c27f32824fbf4df1c1f223fd1f2d529151c0dd612c02e06f0152ad1dadc05010bde112a261f0313e22ed30e0edaeff717f9ee090be3f226dacbed3f3d2d35da"
+     },
+     {
+      "disc": 4,
+      "source": "S1",
+      "index": 1,
+      "hex": "001a003b00000000231ff10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8eadecb1a243d17c8082e1de0003619313d030e0a12c3c807c93a4ecbdaed3c0c40c0403a1f21df16d7e90ffcc2e1c320263b20c839db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0dd06c919d00d300a0d16c108272d2ad01611c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec621"
+     },
+     {
+      "disc": 5,
+      "source": "S2",
+      "index": 3,
+      "hex": "0014003c000000000000000000000000000000000000ec00000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007ff18100000000000000186e0000000000000000000000f2000000000000000000000001000000000000000000e9000000000000000000000000000000000000e82846000000000c"
+     },
+     {
+      "disc": 6,
+      "source": "S1",
+      "index": 6,
+      "hex": "001a005000000000d0fdd0d0fdc0c309fc35da0522d307c738ef352aca2adf0728e83205ff100136cd1d0d29d719f93316fbde39112b403dffdcce262dfe2835fc22130013e6d8fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc3fc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82537ce22e723dd2323e1143f13f7d6ffc7df0ad501d61e011416220936213fc029c9dd1c3e2549e3fc21f1e1f1"
+     },
+     {
+      "disc": 7,
+      "source": "S2",
+      "index": 4,
+      "hex": "0012002a00000000e5f2e3edca122324e13530fcf123192fef1c11132a31c3e0cfe80d3836d812da32f9333cc73bfae8fbf719daf4c440ffc9ec383ecb1235dd0adc26f10ee0c915cb2b16cb0ddad6f73b1ed5c1daca10fac92611fd362111d4eb2f0ed50fcef104e337ef0adee9fd25c5cbe93e3f2624ccdbd21dd2f2f80325cedb2dddd4f6402edee12d2708f42af01bfcf20fe4c7093bdce6f90f36172bc22b05da29d62f32c6"
+     },
+     {
+      "disc": 8,
+      "source": "S2",
+      "index": 5,
+      "hex": "001a0020000000003be030ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17ede7f638cde9fd200d09da304730efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700022910d436dffb211b17fadcd8cef7d11fdee0f241f2e0f90212f6340527e91a1731cecc3ada"
+     },
+     {
+      "disc": 9,
+      "source": "S2",
+      "index": 6,
+      "hex": "0014003c0000000000000000000000000000000000000000000000000000000000000000f4fd0000fc00007f0800000000007fe80000000000fd00000000000000000000000000000000000000010000000000000000000000400000000000007f008100000000000000006e000000000000000000000000000000000000000000000000000000000000000000000000000000130000000000f9000000000018e81346000000000c"
+     },
+     {
+      "disc": 10,
+      "source": "S2",
+      "index": 7,
+      "hex": "000c002500000000c5f0f6f82a112312c6d0d5011dd50728c221c7290e2930353efdd3260f353f161fce3dd127d5fc290bca3d202506fb1cc5d3eac908dbd938c1c51a0c32e605d916ef40caf8e123e739ead7efc5333100d73cdd262bc403ef2d0735282efac82dd914de23eff006f4ded72f2dc03906e7fc14c52fce35d9210b2215401aeb06381e1625f10e3a07e603c9eff708ebef38eecd2b250fc723d80fe2fb0701d6f8fc"
+     },
+     {
+      "disc": 11,
+      "source": "S2",
+      "index": 9,
+      "hex": "001b0026000000002f1bfefbd5163ae5faf5c2fa232c2e27d403c33b2e1d0d11cef10cff1e010be323fdf31916c43a140e3b1740273dd814bcc53b2de03dd8e026d4cac6d11f3cecc6deca09dc1bcff524c11f1c0335e6ae13c134edf0e3dc34c0363300dac2df2c23e8e4292e3af7d523e9ccd21a30f6dfc00d330f2bc10a0d111ff0f6c1192c19241ce003f925043e1efc2428fbc62634fcf81bfb09d623d9f31df11b281725e3"
+     },
+     {
+      "disc": 12,
+      "source": "S2",
+      "index": 11,
+      "hex": "00160020000000003bf230ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17f6e7f638cde9fd200d09da303830efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0b16ebfe1fde2603df39f4340f32fdd4fbcf24d3f5d2fee02d0de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303ef2fc340700021810d436dffb211b17fadcd8b6f7d11fdee0f237f2e0f90212f6450527e91a1731cecc3ada"
+     }
+    ],
+    "setIndex": 3,
+    "seeds": [
+     4740031,
+     4740032,
+     4740033,
+     4740034,
+     4740035,
+     4740036,
+     4740037,
+     4740038
+    ],
+    "preset": "gradient-m3",
+    "runsOriginating": 5,
+    "counts": true
+   }
+  ],
+  "rows": [
+   {
+    "subject": 0,
+    "seed": 4720071,
+    "role": "mixed",
+    "window": [
+     6100,
+     339100
+    ],
+    "descendant": "143469:61055",
+    "atStep": 172100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 0,
+    "seed": 4720072,
+    "role": "mixed",
+    "window": [
+     34100,
+     147100
+    ],
+    "descendant": "67824:38909",
+    "atStep": 90100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 0,
+    "seed": 4720075,
+    "role": "mixed",
+    "window": [
+     144100,
+     348100
+    ],
+    "descendant": "224410:26140",
+    "atStep": 246100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 1,
+    "seed": 4720001,
+    "role": "decomposer",
+    "window": [
+     133100,
+     999100
+    ],
+    "descendant": "540626:14279",
+    "atStep": 566100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 1,
+    "seed": 4720003,
+    "role": "decomposer",
+    "window": [
+     89100,
+     999100
+    ],
+    "descendant": "477866:61378",
+    "atStep": 544100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 1,
+    "seed": 4720004,
+    "role": "decomposer",
+    "window": [
+     199100,
+     999100
+    ],
+    "descendant": "574940:48619",
+    "atStep": 599100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 1,
+    "seed": 4720005,
+    "role": "decomposer",
+    "window": [
+     543100,
+     999100
+    ],
+    "descendant": "737587:46392",
+    "atStep": 771100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 2,
+    "seed": 4720041,
+    "role": "decomposer",
+    "window": [
+     299100,
+     999100
+    ],
+    "descendant": "621975:20632",
+    "atStep": 649100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 2,
+    "seed": 4720043,
+    "role": "decomposer",
+    "window": [
+     764100,
+     999100
+    ],
+    "descendant": "856698:18942",
+    "atStep": 881100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 2,
+    "seed": 4720045,
+    "role": "decomposer",
+    "window": [
+     545100,
+     999100
+    ],
+    "descendant": "725405:27727",
+    "atStep": 772100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720061,
+    "role": "decomposer",
+    "window": [
+     365100,
+     999100
+    ],
+    "descendant": "623677:57270",
+    "atStep": 682100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 3,
+    "seed": 4720061,
+    "role": "mixed",
+    "window": [
+     382100,
+     999100
+    ],
+    "descendant": "623716:57339",
+    "atStep": 690100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 3,
+    "seed": 4720062,
+    "role": "decomposer",
+    "window": [
+     96100,
+     999100
+    ],
+    "descendant": "463084:23739",
+    "atStep": 547100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720062,
+    "role": "mixed",
+    "window": [
+     217100,
+     606100
+    ],
+    "descendant": "349096:25114",
+    "atStep": 411100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720063,
+    "role": "chemotroph",
+    "window": [
+     720100,
+     980100
+    ],
+    "descendant": "785303:23914",
+    "atStep": 850100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720063,
+    "role": "decomposer",
+    "window": [
+     89100,
+     999100
+    ],
+    "descendant": "514821:8215",
+    "atStep": 544100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720063,
+    "role": "mixed",
+    "window": [
+     225100,
+     999100
+    ],
+    "descendant": "572624:26164",
+    "atStep": 612100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720064,
+    "role": "decomposer",
+    "window": [
+     146100,
+     999100
+    ],
+    "descendant": "456976:29100",
+    "atStep": 572100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 3,
+    "seed": 4720065,
+    "role": "chemotroph",
+    "window": [
+     91100,
+     516100
+    ],
+    "descendant": "289868:59856",
+    "atStep": 303100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 3,
+    "seed": 4720065,
+    "role": "decomposer",
+    "window": [
+     85100,
+     999100
+    ],
+    "descendant": "526043:63657",
+    "atStep": 542100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 3,
+    "seed": 4720065,
+    "role": "mixed",
+    "window": [
+     70100,
+     999100
+    ],
+    "descendant": "471961:53986",
+    "atStep": 534100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720031,
+    "role": "chemotroph",
+    "window": [
+     465100,
+     999100
+    ],
+    "descendant": "688598:21233",
+    "atStep": 732100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 4,
+    "seed": 4720031,
+    "role": "decomposer",
+    "window": [
+     7100,
+     999100
+    ],
+    "descendant": "495771:47554",
+    "atStep": 503100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720031,
+    "role": "mixed",
+    "window": [
+     338100,
+     999100
+    ],
+    "descendant": "628521:3830",
+    "atStep": 668100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 4,
+    "seed": 4720032,
+    "role": "chemotroph",
+    "window": [
+     66100,
+     999100
+    ],
+    "descendant": "518147:9959",
+    "atStep": 532100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720032,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "403947:59979",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720032,
+    "role": "mixed",
+    "window": [
+     269100,
+     999100
+    ],
+    "descendant": "614631:23207",
+    "atStep": 634100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720033,
+    "role": "chemotroph",
+    "window": [
+     21100,
+     999100
+    ],
+    "descendant": "493017:15296",
+    "atStep": 510100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720033,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "descendant": "487691:12865",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720033,
+    "role": "mixed",
+    "window": [
+     163100,
+     999100
+    ],
+    "descendant": "575224:7690",
+    "atStep": 581100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720034,
+    "role": "chemotroph",
+    "window": [
+     26100,
+     999100
+    ],
+    "descendant": "502557:13509",
+    "atStep": 512100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 4,
+    "seed": 4720034,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "463687:58783",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720034,
+    "role": "mixed",
+    "window": [
+     505100,
+     626100
+    ],
+    "descendant": "526130:25983",
+    "atStep": 565100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 4,
+    "seed": 4720035,
+    "role": "chemotroph",
+    "window": [
+     72100,
+     999100
+    ],
+    "descendant": "486035:64737",
+    "atStep": 535100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 4,
+    "seed": 4720035,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "492511:63408",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 4,
+    "seed": 4720035,
+    "role": "mixed",
+    "window": [
+     310100,
+     999100
+    ],
+    "descendant": "642449:43188",
+    "atStep": 654100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 5,
+    "seed": 4720111,
+    "role": "decomposer",
+    "window": [
+     216100,
+     999100
+    ],
+    "descendant": "554226:55073",
+    "atStep": 607100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 5,
+    "seed": 4720112,
+    "role": "decomposer",
+    "window": [
+     230100,
+     999100
+    ],
+    "descendant": "608009:61249",
+    "atStep": 614100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 5,
+    "seed": 4720113,
+    "role": "decomposer",
+    "window": [
+     628100,
+     999100
+    ],
+    "descendant": "795801:23568",
+    "atStep": 813100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 5,
+    "seed": 4720114,
+    "role": "decomposer",
+    "window": [
+     485100,
+     999100
+    ],
+    "descendant": "622873:51013",
+    "atStep": 742100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 5,
+    "seed": 4720115,
+    "role": "decomposer",
+    "window": [
+     184100,
+     999100
+    ],
+    "descendant": "561369:55792",
+    "atStep": 591100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 6,
+    "seed": 4720013,
+    "role": "mixed",
+    "window": [
+     15100,
+     183100
+    ],
+    "descendant": "75940:51300",
+    "atStep": 99100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 6,
+    "seed": 4720014,
+    "role": "mixed",
+    "window": [
+     35100,
+     224100
+    ],
+    "descendant": "116040:62696",
+    "atStep": 129100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 7,
+    "seed": 4720081,
+    "role": "phototroph",
+    "window": [
+     613100,
+     999100
+    ],
+    "descendant": "787547:60840",
+    "atStep": 806100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 7,
+    "seed": 4720083,
+    "role": "phototroph",
+    "window": [
+     368100,
+     999100
+    ],
+    "descendant": "678878:58807",
+    "atStep": 683100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 7,
+    "seed": 4720083,
+    "role": "chemotroph",
+    "window": [
+     39100,
+     163100
+    ],
+    "descendant": "91223:60460",
+    "atStep": 101100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 7,
+    "seed": 4720084,
+    "role": "phototroph",
+    "window": [
+     144100,
+     999100
+    ],
+    "descendant": "569297:54741",
+    "atStep": 571100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 7,
+    "seed": 4720084,
+    "role": "chemotroph",
+    "window": [
+     269100,
+     404100
+    ],
+    "descendant": "335356:33164",
+    "atStep": 336100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 7,
+    "seed": 4720085,
+    "role": "phototroph",
+    "window": [
+     703100,
+     815100
+    ],
+    "descendant": "755249:46899",
+    "atStep": 759100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 8,
+    "seed": 4720104,
+    "role": "phototroph",
+    "window": [
+     183100,
+     999100
+    ],
+    "descendant": "551784:57208",
+    "atStep": 591100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 8,
+    "seed": 4720104,
+    "role": "chemotroph",
+    "window": [
+     500100,
+     743100
+    ],
+    "descendant": "600927:52786",
+    "atStep": 621100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 8,
+    "seed": 4720105,
+    "role": "chemotroph",
+    "window": [
+     103100,
+     258100
+    ],
+    "descendant": "145260:48412",
+    "atStep": 180100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720051,
+    "role": "decomposer",
+    "window": [
+     64100,
+     999100
+    ],
+    "descendant": "483215:21469",
+    "atStep": 531100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720052,
+    "role": "decomposer",
+    "window": [
+     65100,
+     200100
+    ],
+    "descendant": "101869:36485",
+    "atStep": 132100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720053,
+    "role": "decomposer",
+    "window": [
+     184100,
+     999100
+    ],
+    "descendant": "558654:60369",
+    "atStep": 591100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720054,
+    "role": "decomposer",
+    "window": [
+     113100,
+     999100
+    ],
+    "descendant": "510797:17930",
+    "atStep": 556100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 9,
+    "seed": 4720055,
+    "role": "decomposer",
+    "window": [
+     226100,
+     999100
+    ],
+    "descendant": "600898:58545",
+    "atStep": 612100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 10,
+    "seed": 4720021,
+    "role": "phototroph",
+    "window": [
+     28100,
+     999100
+    ],
+    "descendant": "387603:50240",
+    "atStep": 513100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720021,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "descendant": "387603:50240",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720022,
+    "role": "phototroph",
+    "window": [
+     111100,
+     228100
+    ],
+    "descendant": "163243:63972",
+    "atStep": 169100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 10,
+    "seed": 4720022,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "480989:6375",
+    "atStep": 499100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 10,
+    "seed": 4720023,
+    "role": "phototroph",
+    "window": [
+     109100,
+     999100
+    ],
+    "descendant": "532512:63120",
+    "atStep": 554100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720023,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "490443:61742",
+    "atStep": 499100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 10,
+    "seed": 4720024,
+    "role": "phototroph",
+    "window": [
+     48100,
+     999100
+    ],
+    "descendant": "461098:55994",
+    "atStep": 523100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720024,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "descendant": "489165:38819",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720025,
+    "role": "phototroph",
+    "window": [
+     45100,
+     999100
+    ],
+    "descendant": "475340:53523",
+    "atStep": 522100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 10,
+    "seed": 4720025,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "483713:29457",
+    "atStep": 501100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 11,
+    "seed": 4720091,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "488166:59617",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 11,
+    "seed": 4720092,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "489192:62509",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 11,
+    "seed": 4720093,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "465858:14755",
+    "atStep": 499100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 11,
+    "seed": 4720094,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "485784:64246",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 11,
+    "seed": 4720095,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "476124:21445",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740011,
+    "role": "decomposer",
+    "window": [
+     595100,
+     999100
+    ],
+    "descendant": "764045:58388",
+    "atStep": 797100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740012,
+    "role": "decomposer",
+    "window": [
+     11100,
+     999100
+    ],
+    "descendant": "420323:14246",
+    "atStep": 505100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740013,
+    "role": "decomposer",
+    "window": [
+     28100,
+     999100
+    ],
+    "descendant": "484349:56566",
+    "atStep": 513100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740014,
+    "role": "decomposer",
+    "window": [
+     673100,
+     999100
+    ],
+    "descendant": "776591:52872",
+    "atStep": 836100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740015,
+    "role": "chemotroph",
+    "window": [
+     476100,
+     666100
+    ],
+    "descendant": "569070:18018",
+    "atStep": 571100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 12,
+    "seed": 4740015,
+    "role": "decomposer",
+    "window": [
+     58100,
+     999100
+    ],
+    "descendant": "492797:58196",
+    "atStep": 528100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740001,
+    "role": "phototroph",
+    "window": [
+     238100,
+     999100
+    ],
+    "descendant": "537554:57845",
+    "atStep": 618100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740001,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "398118:65373",
+    "atStep": 499100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740002,
+    "role": "phototroph",
+    "window": [
+     181100,
+     999100
+    ],
+    "descendant": "581839:59569",
+    "atStep": 590100,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740002,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "descendant": "491702:61975",
+    "atStep": 499100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740003,
+    "role": "phototroph",
+    "window": [
+     283100,
+     999100
+    ],
+    "descendant": "621986:63000",
+    "atStep": 641100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 13,
+    "seed": 4740003,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "478006:57063",
+    "atStep": 501100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 13,
+    "seed": 4740004,
+    "role": "phototroph",
+    "window": [
+     323100,
+     999100
+    ],
+    "descendant": "612730:18153",
+    "atStep": 661100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740004,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "descendant": "487891:20592",
+    "atStep": 501100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 13,
+    "seed": 4740005,
+    "role": "phototroph",
+    "window": [
+     318100,
+     999100
+    ],
+    "descendant": "629356:57933",
+    "atStep": 658100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 13,
+    "seed": 4740005,
+    "role": "decomposer",
+    "window": [
+     6100,
+     999100
+    ],
+    "descendant": "437728:53239",
+    "atStep": 502100,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 14,
+    "seed": 4740022,
+    "role": "decomposer",
+    "window": [
+     19100,
+     999100
+    ],
+    "descendant": "460250:55771",
+    "atStep": 509100,
+    "descendantGardenRole": null,
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "descendant inactive",
+    "originates": false
+   },
+   {
+    "subject": 14,
+    "seed": 4740023,
+    "role": "decomposer",
+    "window": [
+     206100,
+     999100
+    ],
+    "descendant": "592909:42301",
+    "atStep": 602100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "subject": 14,
+    "seed": 4740024,
+    "role": "decomposer",
+    "window": [
+     81100,
+     999100
+    ],
+    "descendant": "527537:55998",
+    "atStep": 540100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "subject": 14,
+    "seed": 4740025,
+    "role": "decomposer",
+    "window": [
+     32100,
+     999100
+    ],
+    "descendant": "511162:59065",
+    "atStep": 515100,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   }
+  ],
+  "s5": {
+   "counts": true,
+   "runsOriginating": 5,
+   "of": 5,
+   "outcomes": {
+    "different role": 7,
+    "same role": 3,
+    "descendant inactive": 0,
+    "founder inactive": 0
+   }
+  }
+ },
+ "perCloudOrSetRaw": [
+  {
+   "id": "founder-7",
+   "subject": 0,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [
+    {
+     "seed": 4720073,
+     "mutation": true
+    },
+    {
+     "seed": 4720074,
+     "mutation": true
+    }
+   ],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "mixed",
+    "chemotroph"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4720071,
+     "extinct": false,
+     "originatingRoles": [
+      "mixed"
+     ],
+     "firstQualifyingStep": 6100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "mixed"
+     ],
+     "allWindows": 3
+    },
+    {
+     "seed": 4720072,
+     "extinct": false,
+     "originatingRoles": [
+      "mixed"
+     ],
+     "firstQualifyingStep": 34100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4720073,
+     "extinct": true,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [],
+     "allWindows": 0
+    },
+    {
+     "seed": 4720074,
+     "extinct": true,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [],
+     "allWindows": 0
+    },
+    {
+     "seed": 4720075,
+     "extinct": false,
+     "originatingRoles": [
+      "mixed"
+     ],
+     "firstQualifyingStep": 144100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "mixed"
+     ],
+     "allWindows": 2
+    }
+   ],
+   "runsOriginatingRaw": 3,
+   "countsRaw": true
+  },
+  {
+   "id": "founder-0",
+   "subject": 1,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [
+    {
+     "seed": 4720002,
+     "mutation": true
+    }
+   ],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "decomposer",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4720001,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 133100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720002,
+     "extinct": true,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "phototroph"
+     ],
+     "allWindows": 1
+    },
+    {
+     "seed": 4720003,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 89100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720004,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 199100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720005,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 543100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 3
+    }
+   ],
+   "runsOriginatingRaw": 4,
+   "countsRaw": true
+  },
+  {
+   "id": "founder-4",
+   "subject": 2,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "mixed",
+    "decomposer"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4720041,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 299100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720042,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "phototroph"
+     ],
+     "allWindows": 1
+    },
+    {
+     "seed": 4720043,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 764100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720044,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "phototroph"
+     ],
+     "allWindows": 1
+    },
+    {
+     "seed": 4720045,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 545100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    }
+   ],
+   "runsOriginatingRaw": 3,
+   "countsRaw": true
+  },
+  {
+   "id": "founder-6",
+   "subject": 3,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "decomposer",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [
+    "chemotroph"
+   ],
+   "mutation": [
+    {
+     "seed": 4720061,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer",
+      "mixed"
+     ],
+     "firstQualifyingStep": 365100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 3
+    },
+    {
+     "seed": 4720062,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer",
+      "mixed"
+     ],
+     "firstQualifyingStep": 96100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4720063,
+     "extinct": false,
+     "originatingRoles": [
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "firstQualifyingStep": 89100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4720064,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 146100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720065,
+     "extinct": false,
+     "originatingRoles": [
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "firstQualifyingStep": 70100,
+     "originatingWindows": 4,
+     "windowsPer1e5": 0.4,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 5
+    }
+   ],
+   "runsOriginatingRaw": 5,
+   "countsRaw": true
+  },
+  {
+   "id": "founder-3",
+   "subject": 4,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "decomposer",
+    "mixed",
+    "chemotroph"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4720031,
+     "extinct": false,
+     "originatingRoles": [
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "firstQualifyingStep": 7100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4720032,
+     "extinct": false,
+     "originatingRoles": [
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "firstQualifyingStep": 100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4720033,
+     "extinct": false,
+     "originatingRoles": [
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "firstQualifyingStep": 3100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 6
+    },
+    {
+     "seed": 4720034,
+     "extinct": false,
+     "originatingRoles": [
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "firstQualifyingStep": 100,
+     "originatingWindows": 4,
+     "windowsPer1e5": 0.4,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 5
+    },
+    {
+     "seed": 4720035,
+     "extinct": false,
+     "originatingRoles": [
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "firstQualifyingStep": 100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    }
+   ],
+   "runsOriginatingRaw": 5,
+   "countsRaw": true
+  },
+  {
+   "id": "founder-11",
+   "subject": 5,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "decomposer",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4720111,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 216100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720112,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 230100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720113,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 628100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720114,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 485100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720115,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 184100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    }
+   ],
+   "runsOriginatingRaw": 5,
+   "countsRaw": true
+  },
+  {
+   "id": "founder-1",
+   "subject": 6,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4720011,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "phototroph"
+     ],
+     "allWindows": 1
+    },
+    {
+     "seed": 4720012,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "phototroph"
+     ],
+     "allWindows": 1
+    },
+    {
+     "seed": 4720013,
+     "extinct": false,
+     "originatingRoles": [
+      "mixed"
+     ],
+     "firstQualifyingStep": 15100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "mixed"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720014,
+     "extinct": false,
+     "originatingRoles": [
+      "mixed"
+     ],
+     "firstQualifyingStep": 35100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "mixed"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720015,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "phototroph"
+     ],
+     "allWindows": 1
+    }
+   ],
+   "runsOriginatingRaw": 2,
+   "countsRaw": false
+  },
+  {
+   "id": "founder-8",
+   "subject": 7,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "mixed"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "chemotroph",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [
+    "phototroph"
+   ],
+   "mutation": [
+    {
+     "seed": 4720081,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph"
+     ],
+     "firstQualifyingStep": 613100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "mixed"
+     ],
+     "allWindows": 3
+    },
+    {
+     "seed": 4720082,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "mixed"
+     ],
+     "allWindows": 1
+    },
+    {
+     "seed": 4720083,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "chemotroph"
+     ],
+     "firstQualifyingStep": 39100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "mixed"
+     ],
+     "allWindows": 5
+    },
+    {
+     "seed": 4720084,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "chemotroph"
+     ],
+     "firstQualifyingStep": 144100,
+     "originatingWindows": 5,
+     "windowsPer1e5": 0.5,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "mixed"
+     ],
+     "allWindows": 6
+    },
+    {
+     "seed": 4720085,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph"
+     ],
+     "firstQualifyingStep": 703100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "mixed"
+     ],
+     "allWindows": 2
+    }
+   ],
+   "runsOriginatingRaw": 4,
+   "countsRaw": true
+  },
+  {
+   "id": "founder-10",
+   "subject": 8,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "mixed"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "chemotroph",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [
+    "phototroph"
+   ],
+   "mutation": [
+    {
+     "seed": 4720101,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "mixed"
+     ],
+     "allWindows": 1
+    },
+    {
+     "seed": 4720102,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "mixed"
+     ],
+     "allWindows": 3
+    },
+    {
+     "seed": 4720103,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "mixed"
+     ],
+     "allWindows": 3
+    },
+    {
+     "seed": 4720104,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "chemotroph"
+     ],
+     "firstQualifyingStep": 183100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "mixed"
+     ],
+     "allWindows": 5
+    },
+    {
+     "seed": 4720105,
+     "extinct": false,
+     "originatingRoles": [
+      "chemotroph"
+     ],
+     "firstQualifyingStep": 103100,
+     "originatingWindows": 4,
+     "windowsPer1e5": 0.4,
+     "allQualifyingRoles": [
+      "chemotroph",
+      "mixed"
+     ],
+     "allWindows": 5
+    }
+   ],
+   "runsOriginatingRaw": 2,
+   "countsRaw": false
+  },
+  {
+   "id": "founder-5",
+   "subject": 9,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "decomposer",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4720051,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 64100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720052,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 65100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4720053,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 184100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720054,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 113100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720055,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 226100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    }
+   ],
+   "runsOriginatingRaw": 5,
+   "countsRaw": true
+  },
+  {
+   "id": "founder-2",
+   "subject": 10,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "mixed",
+    "chemotroph"
+   ],
+   "nmRoleCount": 2,
+   "rolesAt100": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4720021,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 3100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 5
+    },
+    {
+     "seed": 4720022,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 5
+    },
+    {
+     "seed": 4720023,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 5
+    },
+    {
+     "seed": 4720024,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 3100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4720025,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 4100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 5
+    }
+   ],
+   "runsOriginatingRaw": 5,
+   "countsRaw": true
+  },
+  {
+   "id": "founder-9",
+   "subject": 11,
+   "kind": "B-cloud",
+   "experiment": "founders-x-b",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "decomposer",
+    "chemotroph",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4720091,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 4100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720092,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720093,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720094,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 4100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4720095,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 4100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    }
+   ],
+   "runsOriginatingRaw": 5,
+   "countsRaw": true
+  },
+  {
+   "id": "S2",
+   "subject": 12,
+   "kind": "C-set",
+   "experiment": "founders-x-c",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "phototroph",
+    "mixed"
+   ],
+   "nmRoleCount": 2,
+   "rolesAt100": [
+    "phototroph",
+    "decomposer",
+    "chemotroph"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4740011,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 595100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4740012,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 11100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4740013,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 28100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4740014,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 673100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4740015,
+     "extinct": false,
+     "originatingRoles": [
+      "chemotroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 58100,
+     "originatingWindows": 4,
+     "windowsPer1e5": 0.4,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 6
+    }
+   ],
+   "runsOriginatingRaw": 5,
+   "countsRaw": true
+  },
+  {
+   "id": "S1",
+   "subject": 13,
+   "kind": "C-set",
+   "experiment": "founders-x-c",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "chemotroph",
+    "mixed"
+   ],
+   "nmRoleCount": 2,
+   "rolesAt100": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4740001,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4740002,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4740003,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 4100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4740004,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 4100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4740005,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 6100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    }
+   ],
+   "runsOriginatingRaw": 5,
+   "countsRaw": true
+  },
+  {
+   "id": "S4",
+   "subject": 14,
+   "kind": "C-set",
+   "experiment": "founders-x-c",
+   "preset": "gradient-m3-waste",
+   "extinctRuns": [],
+   "nmRoles": [
+    "phototroph"
+   ],
+   "nmRoleCount": 1,
+   "rolesAt100": [
+    "phototroph",
+    "decomposer",
+    "chemotroph",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4740021,
+     "extinct": false,
+     "originatingRoles": [],
+     "firstQualifyingStep": null,
+     "originatingWindows": 0,
+     "windowsPer1e5": 0,
+     "allQualifyingRoles": [
+      "phototroph"
+     ],
+     "allWindows": 1
+    },
+    {
+     "seed": 4740022,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 19100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4740023,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 206100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4740024,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 81100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    },
+    {
+     "seed": 4740025,
+     "extinct": false,
+     "originatingRoles": [
+      "decomposer"
+     ],
+     "firstQualifyingStep": 32100,
+     "originatingWindows": 1,
+     "windowsPer1e5": 0.1,
+     "allQualifyingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "allWindows": 2
+    }
+   ],
+   "runsOriginatingRaw": 4,
+   "countsRaw": true
+  },
+  {
+   "id": "S5",
+   "subject": 14,
+   "kind": "C-set",
+   "experiment": "founders-x-c",
+   "preset": "gradient-m3",
+   "extinctRuns": [],
+   "nmRoles": [
+    "chemotroph",
+    "mixed"
+   ],
+   "nmRoleCount": 2,
+   "rolesAt100": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ],
+   "rolesQualifyLaterNotAtStart": [],
+   "mutation": [
+    {
+     "seed": 4740031,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 9100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4740032,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 4100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4740033,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 4100,
+     "originatingWindows": 3,
+     "windowsPer1e5": 0.3,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 5
+    },
+    {
+     "seed": 4740034,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 6100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 4
+    },
+    {
+     "seed": 4740035,
+     "extinct": false,
+     "originatingRoles": [
+      "phototroph",
+      "decomposer"
+     ],
+     "firstQualifyingStep": 7100,
+     "originatingWindows": 2,
+     "windowsPer1e5": 0.2,
+     "allQualifyingRoles": [
+      "phototroph",
+      "chemotroph",
+      "decomposer",
+      "mixed"
+     ],
+     "allWindows": 5
+    }
+   ],
+   "runsOriginatingRaw": 5,
+   "countsRaw": true
+  }
+ ],
+ "extinctRuns": [
+  {
+   "id": "founder-7",
+   "seed": 4720073,
+   "mutation": true
+  },
+  {
+   "id": "founder-7",
+   "seed": 4720074,
+   "mutation": true
+  },
+  {
+   "id": "founder-0",
+   "seed": 4720002,
+   "mutation": true
+  }
+ ],
+ "qualifying": [
+  {
+   "subject": 0,
+   "seed": 4720071,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 0,
+   "seed": 4720072,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 0,
+   "seed": 4720073,
+   "mutation": true,
+   "roles": []
+  },
+  {
+   "subject": 0,
+   "seed": 4720074,
+   "mutation": true,
+   "roles": []
+  },
+  {
+   "subject": 0,
+   "seed": 4720075,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 1,
+   "seed": 4720001,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 1,
+   "seed": 4720002,
+   "mutation": true,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 1,
+   "seed": 4720003,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 1,
+   "seed": 4720004,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 1,
+   "seed": 4720005,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 2,
+   "seed": 4720041,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 2,
+   "seed": 4720042,
+   "mutation": true,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 2,
+   "seed": 4720043,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 2,
+   "seed": 4720044,
+   "mutation": true,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 2,
+   "seed": 4720045,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 3,
+   "seed": 4720061,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 3,
+   "seed": 4720062,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 3,
+   "seed": 4720063,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 3,
+   "seed": 4720064,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 3,
+   "seed": 4720065,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 4,
+   "seed": 4720031,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 4,
+   "seed": 4720032,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 4,
+   "seed": 4720033,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 4,
+   "seed": 4720034,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 4,
+   "seed": 4720035,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 5,
+   "seed": 4720111,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 5,
+   "seed": 4720112,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 5,
+   "seed": 4720113,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 5,
+   "seed": 4720114,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 5,
+   "seed": 4720115,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 6,
+   "seed": 4720011,
+   "mutation": true,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 6,
+   "seed": 4720012,
+   "mutation": true,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 6,
+   "seed": 4720013,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 6,
+   "seed": 4720014,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 6,
+   "seed": 4720015,
+   "mutation": true,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 7,
+   "seed": 4720081,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 7,
+   "seed": 4720082,
+   "mutation": true,
+   "roles": [
+    "mixed"
+   ]
+  },
+  {
+   "subject": 7,
+   "seed": 4720083,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 7,
+   "seed": 4720084,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 7,
+   "seed": 4720085,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 8,
+   "seed": 4720101,
+   "mutation": true,
+   "roles": [
+    "mixed"
+   ]
+  },
+  {
+   "subject": 8,
+   "seed": 4720102,
+   "mutation": true,
+   "roles": [
+    "mixed"
+   ]
+  },
+  {
+   "subject": 8,
+   "seed": 4720103,
+   "mutation": true,
+   "roles": [
+    "mixed"
+   ]
+  },
+  {
+   "subject": 8,
+   "seed": 4720104,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 8,
+   "seed": 4720105,
+   "mutation": true,
+   "roles": [
+    "chemotroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 9,
+   "seed": 4720051,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 9,
+   "seed": 4720052,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 9,
+   "seed": 4720053,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 9,
+   "seed": 4720054,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 9,
+   "seed": 4720055,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 10,
+   "seed": 4720021,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 10,
+   "seed": 4720022,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 10,
+   "seed": 4720023,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 10,
+   "seed": 4720024,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 10,
+   "seed": 4720025,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 11,
+   "seed": 4720091,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 11,
+   "seed": 4720092,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 11,
+   "seed": 4720093,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 11,
+   "seed": 4720094,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 11,
+   "seed": 4720095,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 12,
+   "seed": 4740011,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 12,
+   "seed": 4740012,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 12,
+   "seed": 4740013,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 12,
+   "seed": 4740014,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 12,
+   "seed": 4740015,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 13,
+   "seed": 4740001,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 13,
+   "seed": 4740002,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 13,
+   "seed": 4740003,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 13,
+   "seed": 4740004,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 13,
+   "seed": 4740005,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "chemotroph",
+    "decomposer",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 14,
+   "seed": 4740021,
+   "mutation": true,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 14,
+   "seed": 4740022,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 14,
+   "seed": 4740023,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 14,
+   "seed": 4740024,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 14,
+   "seed": 4740025,
+   "mutation": true,
+   "roles": [
+    "phototroph",
+    "decomposer"
+   ]
+  },
+  {
+   "subject": 0,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 1,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 2,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 3,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 4,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 5,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 6,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 7,
+   "mutation": false,
+   "roles": [
+    "mixed"
+   ]
+  },
+  {
+   "subject": 8,
+   "mutation": false,
+   "roles": [
+    "mixed"
+   ]
+  },
+  {
+   "subject": 9,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 10,
+   "mutation": false,
+   "roles": [
+    "mixed",
+    "chemotroph"
+   ]
+  },
+  {
+   "subject": 11,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  },
+  {
+   "subject": 12,
+   "mutation": false,
+   "roles": [
+    "phototroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 13,
+   "mutation": false,
+   "roles": [
+    "chemotroph",
+    "mixed"
+   ]
+  },
+  {
+   "subject": 14,
+   "mutation": false,
+   "roles": [
+    "phototroph"
+   ]
+  }
+ ],
+ "s5": {
+  "question": "does S1 origination vanish with producers present (hole matters) or persist (genomes matter)?",
+  "uniformPrimary": {
+   "runsOriginating": 5,
+   "of": 5,
+   "counts": true
+  },
+  "gradient": {
+   "runsOriginating": 5,
+   "of": 5,
+   "counts": true
+  },
+  "reading": "S5 counts like S1 (>=3/5 on uniform) => non-producer genomes matter",
+  "caveat": "no-mutation already shows chemotroph+mixed (same multi-role control caveat as S1); one set of 5 runs, exploratory; cannot separate small effects",
+  "ordering": [
+   {
+    "disc": 0,
+    "source": "S1",
+    "index": 0,
+    "hex": "001a005000000000d0fdd0d0f9c0c3090935da0522e707c738e0352aca2adf0728fc3205ff100136cd1d0d29d719f9331607cd39112b403dffdcce262dfe2835fc22130013e6e3fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc4dc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82322ce22e723dd2323e1143f13f7d300c7f70ad50bd61e011416320925213fc029c9dd1c3e2349f7fc21f1e1f1"
+   },
+   {
+    "disc": 1,
+    "source": "S2",
+    "index": 0,
+    "hex": "0011003b00000000d617dff63cfc3c072ce70ac4f1d3f9121cebd2383c37c9e63ad2f1ece6131844fd2ee204f3d90a1a2940f7cdfeb50e26c0c03b063a3aeeda40cf0ecc20c9c41019213b390e2abcfa0815393a1a222cf100d3fe1f2b1921d21a05c8000de30a02020ac3f5d40bc0ca0a3bc903e6d635dbfec2f9e6e7302af8d5ea0adb2725e2e32c472521051cf91aea18213f3b1200f8db29d4230c090c1ed0e4f00e31ffe4fc"
+   },
+   {
+    "disc": 2,
+    "source": "S1",
+    "index": 3,
+    "hex": "000c003f00000000c0fd25d5d036e2da40fcf939eece35d9cf3bbfce2cf0fbddd6fdcf222303c4de14dfdecd1dca1b02cdc308cae9ed1331c5d8e6dc1a24351ad1c7223b3e3616fc3ddbdb3bd315f11cee023afc2119ea3a34c8371b091b3c0b3acdfbd8eb38ea2add332740eb08270edb0921d42af931d506eb2205eac5f51fe83cccd7381340c830f5242901c017e0c0ea2cef25df10ff3f02d01411c215f339101e393037ffdb"
+   },
+   {
+    "disc": 3,
+    "source": "S2",
+    "index": 1,
+    "hex": "0018001c00000000261de005372ae016c4e6382a2b2a27df1321cb2017e7eb0be9f3eef03bc7e1e60cd5eeeac8f921052128c0e8e5e73b26e1223dd7f7f5fc29fe1c041bc41cf61e19c602ff291ed6d5c1323c2125e23835ec21fe20d304263137e225f7081231f40c27f32824fbf4df1c1f223fd1f2d529151c0dd612c02e06f0152ad1dadc05010bde112a261f0313e22ed30e0edaeff717f9ee090be3f226dacbed3f3d2d35da"
+   },
+   {
+    "disc": 4,
+    "source": "S1",
+    "index": 1,
+    "hex": "001a003b00000000231ff10feeeae7cd0c0dd7e71d11ec3d08c009ffc4d828c8eadecb1a243d17c8082e1de0003619313d030e0a12c3c807c93a4ecbdaed3c0c40c0403a1f21df16d7e90ffcc2e1c320263b20c839db1f2718d8da0c1cdecc25db3a23e7db3b22c9d8d1efc43acbd5303726c4f4d0dd06c919d00d300a0d16c108272d2ad01611c7c7043930f7243e1429faf9d0db332a1615263acfcbe5ce0f1b1bcd1b03dec621"
+   },
+   {
+    "disc": 5,
+    "source": "S2",
+    "index": 3,
+    "hex": "0014003c000000000000000000000000000000000000ec00000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007ff18100000000000000186e0000000000000000000000f2000000000000000000000001000000000000000000e9000000000000000000000000000000000000e82846000000000c"
+   },
+   {
+    "disc": 6,
+    "source": "S1",
+    "index": 6,
+    "hex": "001a005000000000d0fdd0d0fdc0c309fc35da0522d307c738ef352aca2adf0728e83205ff100136cd1d0d29d719f93316fbde39112b403dffdcce262dfe2835fc22130013e6d8fb00c6e83037390f0dce313bcdf7e5ce0f2818cb24da01cc3fc825fad7d5253702fb15233af53f241613203e2bfe26fcc7fce5c82537ce22e723dd2323e1143f13f7d6ffc7df0ad501d61e011416220936213fc029c9dd1c3e2549e3fc21f1e1f1"
+   },
+   {
+    "disc": 7,
+    "source": "S2",
+    "index": 4,
+    "hex": "0012002a00000000e5f2e3edca122324e13530fcf123192fef1c11132a31c3e0cfe80d3836d812da32f9333cc73bfae8fbf719daf4c440ffc9ec383ecb1235dd0adc26f10ee0c915cb2b16cb0ddad6f73b1ed5c1daca10fac92611fd362111d4eb2f0ed50fcef104e337ef0adee9fd25c5cbe93e3f2624ccdbd21dd2f2f80325cedb2dddd4f6402edee12d2708f42af01bfcf20fe4c7093bdce6f90f36172bc22b05da29d62f32c6"
+   },
+   {
+    "disc": 8,
+    "source": "S2",
+    "index": 5,
+    "hex": "001a0020000000003be030ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17ede7f638cde9fd200d09da304730efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700022910d436dffb211b17fadcd8cef7d11fdee0f241f2e0f90212f6340527e91a1731cecc3ada"
+   },
+   {
+    "disc": 9,
+    "source": "S2",
+    "index": 6,
+    "hex": "0014003c0000000000000000000000000000000000000000000000000000000000000000f4fd0000fc00007f0800000000007fe80000000000fd00000000000000000000000000000000000000010000000000000000000000400000000000007f008100000000000000006e000000000000000000000000000000000000000000000000000000000000000000000000000000130000000000f9000000000018e81346000000000c"
+   },
+   {
+    "disc": 10,
+    "source": "S2",
+    "index": 7,
+    "hex": "000c002500000000c5f0f6f82a112312c6d0d5011dd50728c221c7290e2930353efdd3260f353f161fce3dd127d5fc290bca3d202506fb1cc5d3eac908dbd938c1c51a0c32e605d916ef40caf8e123e739ead7efc5333100d73cdd262bc403ef2d0735282efac82dd914de23eff006f4ded72f2dc03906e7fc14c52fce35d9210b2215401aeb06381e1625f10e3a07e603c9eff708ebef38eecd2b250fc723d80fe2fb0701d6f8fc"
+   },
+   {
+    "disc": 11,
+    "source": "S2",
+    "index": 9,
+    "hex": "001b0026000000002f1bfefbd5163ae5faf5c2fa232c2e27d403c33b2e1d0d11cef10cff1e010be323fdf31916c43a140e3b1740273dd814bcc53b2de03dd8e026d4cac6d11f3cecc6deca09dc1bcff524c11f1c0335e6ae13c134edf0e3dc34c0363300dac2df2c23e8e4292e3af7d523e9ccd21a30f6dfc00d330f2bc10a0d111ff0f6c1192c19241ce003f925043e1efc2428fbc62634fcf81bfb09d623d9f31df11b281725e3"
+   },
+   {
+    "disc": 12,
+    "source": "S2",
+    "index": 11,
+    "hex": "00160020000000003bf230ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17f6e7f638cde9fd200d09da303830efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0b16ebfe1fde2603df39f4340f32fdd4fbcf24d3f5d2fee02d0de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303ef2fc340700021810d436dffb211b17fadcd8b6f7d11fdee0f237f2e0f90212f6450527e91a1731cecc3ada"
+   }
+  ],
+  "costFx2": 0.9855
+ }
+}

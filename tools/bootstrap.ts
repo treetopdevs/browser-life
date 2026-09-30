@@ -4,11 +4,19 @@
 //   deno run -A tools/bootstrap.ts --batches 20 [--out runs/bootstrap] [--seed 1]
 //     [--confirm-reps 16] [--confirm-seed 1000001] [--confirm-only]
 //     [--select lineages|cells] [--pass-bias 0.5] [--random 0.25] [--resume]
+//     [--medium waste:A:C | background:HEX[:biomass]] [--score quality|maintenance]
 //
 // Parents are chosen by genetic lineage (Archive.pickParent) so that one
 // lineage holding many behaviour cells does not crowd out other founders;
 // --select cells restores uniform choice over cell elites. --random is the
 // fraction of fresh candidates (random genomes and generalist mutants).
+//
+// --medium runs a conditioned-medium screen (waste nutrient split, or a fixed
+// producer background under every candidate). --score maintenance selects
+// qualityMaintenance for the archive (regen reported, not scored). After
+// confirmation, every confirmed passer is re-evaluated under DEFAULT_EVAL; a
+// passer that dies there is an obligate consumer/decomposer (dependence
+// re-screen, only when --medium was set).
 //
 // Writes archive.json (elites with genomes and evaluations) and gate.json
 // (screening passers: elites that recovered from a 30% lesion with p > 0.8 and
@@ -27,15 +35,33 @@
 // Checkpoints are replaced atomically and archive.json is written last, so a
 // run stopped at any point resumes from its last completed batch.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { generalistGenome, randomGenome, type Genome } from "@bl/schema";
+import { genomeFromHex, generalistGenome, randomGenome, type Genome } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { binomialLowerBound } from "@bl/metrics";
-import { Archive, CONFIRM_REPS, DEFAULT_EVAL, evaluateBatch, geneticClusters, confirmsGate, genomeKey, m3Gate, mutateGenome, parseProbability, pick, quality, type Evaluation } from "@bl/search";
+import {
+  Archive,
+  CONFIRM_REPS,
+  DEFAULT_ARCHIVE,
+  DEFAULT_EVAL,
+  evaluateBatch,
+  geneticClusters,
+  confirmsGate,
+  genomeKey,
+  m3Gate,
+  mutateGenome,
+  parseProbability,
+  pick,
+  quality,
+  qualityMaintenance,
+  type Evaluation,
+  type EvalConfig,
+  type ScoreFn,
+} from "@bl/search";
 
 const a = parseArgs(Deno.args, {
-  string: ["batches", "out", "seed", "random", "confirm-reps", "confirm-seed", "select", "pass-bias"],
+  string: ["batches", "out", "seed", "random", "confirm-reps", "confirm-seed", "select", "pass-bias", "medium", "score"],
   boolean: ["confirm-only", "resume"],
-  default: { batches: "10", out: "runs/bootstrap", seed: "1", random: "0.25", "confirm-reps": String(CONFIRM_REPS), "confirm-seed": "1000001", select: "lineages", "pass-bias": "0.5" },
+  default: { batches: "10", out: "runs/bootstrap", seed: "1", random: "0.25", "confirm-reps": String(CONFIRM_REPS), "confirm-seed": "1000001", select: "lineages", "pass-bias": "0.5", score: "quality" },
 });
 const int = (flag: "batches" | "seed" | "confirm-reps" | "confirm-seed") => {
   const raw = a[flag];
@@ -44,9 +70,46 @@ const int = (flag: "batches" | "seed" | "confirm-reps" | "confirm-seed") => {
   return v;
 };
 const batches = int("batches"), reps = int("confirm-reps"), confirmSeedFlag = int("confirm-seed");
-const ec = { ...DEFAULT_EVAL, seed: int("seed") };
+
+function parseMedium(raw: string): Pick<EvalConfig, "nutrient" | "medium" | "darkSteps"> {
+  if (raw.startsWith("waste:")) {
+    const parts = raw.slice("waste:".length).split(":");
+    if (parts.length !== 2) throw new Error(`--medium waste:A:C needs two integers, not ${JSON.stringify(raw)}`);
+    const nutrient = Number(parts[0]), waste = Number(parts[1]);
+    if (![nutrient, waste].every((n) => Number.isSafeInteger(n) && n >= 0)) throw new Error(`--medium waste:A:C needs nonnegative integers, not ${JSON.stringify(raw)}`);
+    return { nutrient, medium: { waste } };
+  }
+  if (raw.startsWith("background:")) {
+    const rest = raw.slice("background:".length);
+    const colon = rest.indexOf(":");
+    const hex = colon < 0 ? rest : rest.slice(0, colon);
+    const bioRaw = colon < 0 ? undefined : rest.slice(colon + 1);
+    const background = genomeFromHex(hex);
+    const medium: NonNullable<EvalConfig["medium"]> = { background };
+    if (bioRaw !== undefined) {
+      const backgroundBiomass = /^\s*\d+\s*$/.test(bioRaw) ? Number(bioRaw) : NaN;
+      if (!Number.isSafeInteger(backgroundBiomass) || backgroundBiomass < 1) throw new Error(`--medium background biomass must be a positive integer, not ${JSON.stringify(bioRaw)}`);
+      medium.backgroundBiomass = backgroundBiomass;
+    }
+    // Producer must die before a light-dependent consumer reads as dark-dead; pilot can override by editing archive eval.
+    return { medium, darkSteps: 4000 };
+  }
+  throw new Error(`--medium must be waste:A:C or background:HEX[:biomass], not ${JSON.stringify(raw)}`);
+}
+
+const scoreName = a.score ?? "quality";
+if (scoreName !== "quality" && scoreName !== "maintenance") throw new Error(`--score must be quality or maintenance, not ${JSON.stringify(scoreName)}`);
+const scoreFn: ScoreFn = scoreName === "maintenance" ? qualityMaintenance : quality;
+const mediumPatch = a.medium ? parseMedium(a.medium) : {};
+const ec: EvalConfig = { ...DEFAULT_EVAL, ...mediumPatch, seed: int("seed") };
 if (a.select !== "lineages" && a.select !== "cells") throw new Error(`--select must be lineages or cells, not ${a.select}`);
-const search = { select: a.select, passBias: parseProbability("--pass-bias", a["pass-bias"]), random: parseProbability("--random", a.random) };
+// `score` is recorded only when non-default so resumes of pre-score archives still match.
+const search = {
+  select: a.select,
+  passBias: parseProbability("--pass-bias", a["pass-bias"]),
+  random: parseProbability("--random", a.random),
+  ...(scoreName !== "quality" ? { score: scoreName as "maintenance" } : {}),
+};
 const perBatch = Math.floor((ec.side * ec.side) / ec.reps);
 type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[] };
 const enc = (g: Genome): EncGenome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Array.from(g.weights) });
@@ -89,7 +152,7 @@ async function writeAtomic(path: string, text: string) {
   await Deno.rename(`${path}.tmp`, path);
 }
 const logLines = (es: { born: number; eval: Evaluation; genome: Genome }[]) => es.map((e) => JSON.stringify({ born: e.born, eval: e.eval, genome: enc(e.genome) }) + "\n").join("");
-const gateJson = (arch: Archive) => JSON.stringify(arch.gatePassing().map((e) => ({ cell: e.cell, quality: quality(e.eval), eval: e.eval, genome: enc(e.genome) })), null, 1);
+const gateJson = (arch: Archive) => JSON.stringify(arch.gatePassing().map((e) => ({ cell: e.cell, quality: scoreFn(e.eval), eval: e.eval, genome: enc(e.genome) })), null, 1);
 const archiveJson = (arch: Archive, batchesDone: number, resumes: { from: number; exact: boolean }[]) => {
   const lineages = arch.lineages();
   const elites = arch.elites().map((e) => ({ cell: e.cell, quality: e.quality, born: e.born, eval: e.eval, genome: enc(e.genome) }));
@@ -111,7 +174,7 @@ if (!a.resume && !a["confirm-only"]) {
   if (batches < 1) throw new Error(`--batches must be at least 1 for a new search`);
   if (await readJson(archivePath)) throw new Error(`${archivePath} exists: pass --resume to continue that search, or another --out`);
 }
-let archive = new Archive();
+let archive = new Archive(DEFAULT_ARCHIVE, scoreFn);
 let done = 0;
 let resumes: { from: number; exact: boolean }[] = [];
 // --confirm-only restores a logged archive too, so it confirms only committed
@@ -150,7 +213,9 @@ if (restore) {
       })
       .sort((x, y) => x.born - y.born);
   }
-  archive = Archive.replay(log, prev.evaluated);
+  // Prefer the score recorded in the archive's search block when confirming-only.
+  const resumeScore: ScoreFn = prev.search?.score === "maintenance" ? qualityMaintenance : scoreFn;
+  archive = Archive.replay(log, prev.evaluated, DEFAULT_ARCHIVE, a["confirm-only"] ? resumeScore : scoreFn);
   resumes = [...(prev.resumes ?? []), { from: done, exact }];
   if (!a["confirm-only"] && (tail || !exact)) await writeAtomic(logPath, logLines(archive.viableLog()));
   // gate.json may lag the committed archive if a run stopped between the two writes.
@@ -267,9 +332,31 @@ if (reps > 0) {
     distinctCells: new Set(passing.map((r) => r.cell.join(","))).size,
   };
   console.log(`M3 gate ${gate.met ? "MET" : "NOT MET"}: ${JSON.stringify(detail)}`);
+
+  // Dependence re-screen: confirmed passers under the medium that die on DEFAULT_EVAL are obligate.
+  let dependence: { seed: number; seeds: [number, number]; obligate: number; rows: { genome: EncGenome; survived: number; obligate: boolean; eval: Evaluation }[] } | undefined;
+  if (evalRef.medium && passing.length) {
+    const depPer = Math.floor((DEFAULT_EVAL.side * DEFAULT_EVAL.side) / reps);
+    if (depPer < 1) throw new Error(`--confirm-reps ${reps} exceeds the ${DEFAULT_EVAL.side * DEFAULT_EVAL.side} tiles of a DEFAULT_EVAL batch`);
+    const depSeed = (confirmSeeds.length ? confirmSeeds[confirmSeeds.length - 1][1] : confirmSeed) + 1;
+    const depBatches = Math.ceil(passing.length / depPer);
+    const depRange: [number, number] = [depSeed, depSeed + depBatches - 1];
+    if (overlapsSearch(depRange)) throw new Error(`dependence seeds ${depRange[0]}..${depRange[1]} overlap search seeds ${s0}..${s1}; pass another --confirm-seed`);
+    const depRows: { genome: EncGenome; survived: number; obligate: boolean; eval: Evaluation }[] = [];
+    for (let i = 0; i < passing.length; i += depPer) {
+      const chunk = passing.slice(i, i + depPer);
+      const t0 = performance.now();
+      const evals = await evaluateBatch(await gpu(), chunk.map((r) => r.genome), { ...DEFAULT_EVAL, reps, seed: depSeed + i / depPer });
+      chunk.forEach((r, k) => depRows.push({ genome: enc(r.genome), survived: evals[k].survived, obligate: evals[k].survived === 0, eval: evals[k] }));
+      console.log(`dependence ${depRows.length}/${passing.length}: ${depRows.filter((d) => d.obligate).length} obligate (${((performance.now() - t0) / 1000).toFixed(1)}s)`);
+    }
+    dependence = { seed: depSeed, seeds: depRange, obligate: depRows.filter((d) => d.obligate).length, rows: depRows };
+    console.log(`dependence re-screen: ${dependence.obligate}/${passing.length} obligate under DEFAULT_EVAL`);
+  }
+
   const out = rows.map((r) => {
     const p = passing.indexOf(r);
     return { screenCell: r.screenCell, cell: r.cell, pass: p >= 0, cluster: p >= 0 ? cluster[p] : null, regenLowerBound: binomialLowerBound(r.eval.regenerated, r.eval.reps), eval: r.eval, genome: enc(r.genome) };
   });
-  await writeAtomic(confirmPath, JSON.stringify({ gate: detail, eval: cec, rows: out }, null, 1));
+  await writeAtomic(confirmPath, JSON.stringify({ gate: detail, eval: cec, ...(dependence ? { dependence } : {}), rows: out }, null, 1));
 }

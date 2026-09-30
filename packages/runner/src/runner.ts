@@ -147,6 +147,12 @@ export interface RunSpec {
    * `soloFounder`, but every founder disc carries this genome. Omitted: the preset's own world.
    */
   soloGenome?: string;
+  /**
+   * Genome hex words (`genomeHex`) founding an m3 preset as a set: disc `i` carries
+   * `founderSet[i % founderSet.length]`. Exclusive with `soloFounder` / `soloGenome`. Omitted: the
+   * preset's own world. Absent from the manifest of any run that does not set it.
+   */
+  founderSet?: string[];
 }
 
 export interface Sink {
@@ -250,6 +256,20 @@ export function validateSpec(spec: RunSpec): string[] {
       else if (PRESETS.find((p) => p.id === spec.presetId)?.init.kind !== "m3") errs.push("soloGenome needs a preset founded from the M3 founder set");
     } catch (e) {
       errs.push(`soloGenome: ${(e as Error).message}`);
+    }
+  }
+  if (spec.founderSet !== undefined) {
+    if (!Array.isArray(spec.founderSet) || spec.founderSet.length === 0) errs.push("founderSet must be a non-empty array of genome hex strings");
+    else {
+      for (let i = 0; i < spec.founderSet.length; i++) {
+        try {
+          genomeFromHex(spec.founderSet[i]);
+        } catch (e) {
+          errs.push(`founderSet[${i}]: ${(e as Error).message}`);
+        }
+      }
+      if (spec.soloFounder !== undefined || spec.soloGenome !== undefined) errs.push("founderSet is exclusive with soloFounder and soloGenome");
+      else if (PRESETS.find((p) => p.id === spec.presetId)?.init.kind !== "m3") errs.push("founderSet needs a preset founded from the M3 founder set");
     }
   }
   return errs;
@@ -539,8 +559,18 @@ export async function runExperiment(
   if (migrationPeriod > 0 && migrationPeriod % spec.censusEvery !== 0) throw new Error("migrationPeriod must be a multiple of censusEvery");
   const init =
     opts.start ??
-    (spec.soloFounder !== undefined || spec.soloGenome !== undefined
-      ? m3World(cfg, preset.init.founders, preset.init.nutrient, preset.init.biomass, spec.soloGenome !== undefined ? genomeFromHex(spec.soloGenome) : spec.soloFounder)
+    (spec.soloFounder !== undefined || spec.soloGenome !== undefined || spec.founderSet !== undefined
+      ? m3World(
+          cfg,
+          preset.init.founders,
+          preset.init.nutrient,
+          preset.init.biomass,
+          spec.founderSet !== undefined
+            ? spec.founderSet.map(genomeFromHex)
+            : spec.soloGenome !== undefined
+              ? genomeFromHex(spec.soloGenome)
+              : spec.soloFounder,
+        )
       : initWorld(cfg, preset.init));
   const startStep = init.step;
   // The step loop below re-chunks in `censusEvery`-sized steps *relative to
