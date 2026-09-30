@@ -1,0 +1,27 @@
+{
+  "format": "discovery-improvement-start/v1",
+  "date": "2026-09-30T13:14:44.552159+00:00",
+  "frozenPreparationCommit": "2bfb4416",
+  "firstInvocationPath": "runs/founder-discovery-improvement-v1/invocation-1790773994515-57665.json",
+  "firstInvocationSha256": "959c41710371879fa85d1eb331cfe2a68c886fec17ada171d6b459106123986b",
+  "firstInvocation": {
+    "manifestHash": "0ebd3092056170b776f63c323ac3a0f3a3f553b3e0ac1c03f8c0e82ff96c2429",
+    "releaseSha256": "4b7e00d8848330923e2d9dbc4033598ac27ed8362c15e8228785ee57fe40b148",
+    "startedAt": "2026-09-30T13:01:03.553Z",
+    "finishedAt": "2026-09-30T13:13:14.515Z",
+    "elapsedSeconds": 730.957080041,
+    "trancheSeconds": 600,
+    "newCheckpoints": 5,
+    "newAssays": 0,
+    "status": "time-limit",
+    "error": null
+  },
+  "firstSampleTechnicalCheck": {
+    "step": 100000,
+    "drawsRecorded": 2,
+    "unknownAncestryMass": 0
+  },
+  "continuation": "Reviewed supervisor continuation-v1 started only after first worker exited successfully; same manifest/release and saved checkpoint chain.",
+  "studyComplete": false,
+  "paidUSD": 0
+}

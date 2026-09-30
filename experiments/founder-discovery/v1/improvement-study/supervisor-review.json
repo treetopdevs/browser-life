@@ -1,0 +1,16 @@
+{
+  "format": "discovery-improvement-supervisor-review/v1",
+  "date": "2026-09-30T13:06:50.184918+00:00",
+  "source": "tools/discovery_improvement_continue.py",
+  "sha256": "8a235a7c08d1fd03e67efecb6f3922291b36ce2a830bbdd8f52be647a6b57565",
+  "staticReviewer": "funnel_plan_inventory",
+  "mechanicalReviewer": "discovery_provenance (Luna)",
+  "staticResult": "No blocker: pinned inputs, local-only CLI, planned invocation bound, exclusive locks, no failed-job retry, watchdog preserves child evidence, explicit separate analysis.",
+  "fakeRunnerChecks": [
+    "Two successful tranches end at assay-roster-complete",
+    "Nonzero child stops after one launch and preserves log/record; corrected supervisor exit1 verified",
+    "Release drift prevents next child",
+    "Existing run lock prevents any child"
+  ],
+  "realGpuUsedForChecks": false
+}
