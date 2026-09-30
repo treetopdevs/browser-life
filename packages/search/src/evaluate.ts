@@ -48,6 +48,13 @@ export interface EvalConfig {
   roles?: boolean;
   perRep?: boolean;
   /**
+   * With `roles` and a `medium.background`: `"lineage"` attributes each role flux to the cell's
+   * lineage instead of the whole tile, so `roleSums`/`role` describe the candidate lineage alone,
+   * and the rest of the tile (the producer) is reported as `roleSumsOther` with its pre-lesion
+   * bound mass as `otherMass`. Default `"tile"` (and any non-background medium) is unchanged.
+   */
+  roleScope?: "tile" | "lineage";
+  /**
    * Conditioned medium for consumer/decomposer screens. Absent from DEFAULT_EVAL so existing
    * evaluations stay byte-identical. `waste` fills channel C; `background` seeds a producer
    * ring (large disc) under the candidate disc in every tile — measures then use the candidate
@@ -138,6 +145,9 @@ export interface Evaluation {
   /** With `EvalConfig.roles`: catalytic fluxes summed over the genome's tiles, and their role. */
   roleSums?: RoleSums;
   role?: Role;
+  /** With `roleScope: "lineage"` on a background medium: fluxes of every non-candidate lineage in the genome's tiles, and their mean bound mass per tile. */
+  roleSumsOther?: RoleSums;
+  otherMass?: number;
   /** With `EvalConfig.perRep`: each replicate tile's values (a dead tile has zero traits). */
   perRep?: RepEval[];
 }
@@ -161,6 +171,8 @@ export interface RepEval {
   mass: number;
   reproduction: number;
   roleSums?: RoleSums;
+  roleSumsOther?: RoleSums;
+  otherMass?: number;
 }
 
 export function quality(e: Evaluation): number {
@@ -234,6 +246,26 @@ export function addTileRoles(cfg: WorldConfig, roles: Uint32Array, into: RoleSum
   }
 }
 
+/**
+ * Like `addTileRoles`, but splits each cell's fluxes by lineage: cells whose founder lineage is the
+ * candidate's for their tile (`candLo[tile]`, LIN_HI 0) go to `cand`, every other cell to `other`.
+ */
+export function addLineageRoles(cfg: WorldConfig, roles: Uint32Array, genomeHead: Uint32Array, candLo: ArrayLike<number>, cand: RoleSums[], other: RoleSums[]): void {
+  const n = cellCount(cfg);
+  const W = worldW(cfg);
+  for (let i = 0; i < n; i++) {
+    const a = roles[i * ROLE_WORDS], b = roles[i * ROLE_WORDS + 1];
+    if ((a | b) === 0) continue;
+    const x = i % W;
+    const t = Math.floor((i - x) / W / cfg.tileH) * cfg.tilesX + Math.floor(x / cfg.tileW);
+    const r = (genomeHead[G.LIN_HI * n + i] === 0 && genomeHead[G.LIN_LO * n + i] === candLo[t] ? cand : other)[t];
+    r.photo += a & 0xffff;
+    r.grow += a >>> 16;
+    r.decomp += b & 0xffff;
+    r.resp += b >>> 16;
+  }
+}
+
 /** Evaluates up to side²/reps genomes in one batch world. */
 export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: EvalConfig = DEFAULT_EVAL): Promise<Evaluation[]> {
   const tiles = ec.side * ec.side;
@@ -285,11 +317,18 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
   const last = new Map<number, [number, number]>();
   const tileOf = (x: number, y: number) => Math.floor(y / ec.tile) * ec.side + Math.floor(x / ec.tile);
   const tileRoles: RoleSums[] = Array.from({ length: tiles }, () => ({ photo: 0, grow: 0, decomp: 0, resp: 0 }));
+  const byLineage = !!ec.roles && ec.roleScope === "lineage" && !!bg;
+  const otherRoles: RoleSums[] = Array.from({ length: tiles }, () => ({ photo: 0, grow: 0, decomp: 0, resp: 0 }));
+  const candLo = new Uint32Array(tiles);
   const onRoles = ec.roles
     ? async (done: number, read: () => Promise<Uint32Array>) => {
-        if (done > ec.growSteps - 1000) addTileRoles(cfg, await read(), tileRoles);
+        if (done <= ec.growSteps - 1000) return;
+        if (!byLineage) return addTileRoles(cfg, await read(), tileRoles);
+        const [roles, head] = await Promise.all([read(), sim.readGenomeChannels(0, 4)]);
+        addLineageRoles(cfg, roles, head, candLo, tileRoles, otherRoles);
       }
     : undefined;
+  for (let t = 0; t < tiles; t++) candLo[t] = owner[t] < 0 ? 0 : packLineageLo(cfg, candidateRawId[t]);
   const candLineage = (t: number) => `0:${packLineageLo(cfg, candidateRawId[t])}`;
   const isCand = (t: number, lineage: string) => !bg || lineage === candLineage(t);
   let grown: WorldState;
@@ -329,6 +368,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
     return out;
   };
   const before = massFrom(grown.cells, grown.genome);
+  const otherMass = byLineage ? tileMass(cfg, grown.cells).map((m, t) => m - before[t]) : undefined;
   const c0 = census({ cfg, step: grown.step, cells: grown.cells, genomeHead: grown.genome.subarray(0, cellCount(cfg) * 4) });
   const ind0 = individuals(c0, { threshold: 48, minMass: 128 }).filter((k) => isCand(k.tile, k.lineage));
   const indCount = new Float64Array(tiles);
@@ -448,6 +488,10 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
       const sums = ts.reduce((a, t) => ({ photo: a.photo + tileRoles[t].photo, grow: a.grow + tileRoles[t].grow, decomp: a.decomp + tileRoles[t].decomp, resp: a.resp + tileRoles[t].resp }), { photo: 0, grow: 0, decomp: 0, resp: 0 });
       extra.roleSums = sums;
       extra.role = classify(sums.photo, sums.grow, sums.decomp);
+      if (byLineage) {
+        extra.roleSumsOther = ts.reduce((a, t) => ({ photo: a.photo + otherRoles[t].photo, grow: a.grow + otherRoles[t].grow, decomp: a.decomp + otherRoles[t].decomp, resp: a.resp + otherRoles[t].resp }), { photo: 0, grow: 0, decomp: 0, resp: 0 });
+        extra.otherMass = ts.reduce((a, t) => a + otherMass![t], 0) / ts.length;
+      }
     }
     if (ec.perRep)
       extra.perRep = ts.map((t) => {
@@ -465,6 +509,7 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
           mass: before[t],
           reproduction: repro[t],
           ...(ec.roles ? { roleSums: tileRoles[t] } : {}),
+          ...(byLineage ? { roleSumsOther: otherRoles[t], otherMass: otherMass![t] } : {}),
         };
       });
     let survived = 0, recovered = 0, lightDep = 0, recovery = 0, inds = 0, mm = 0, sp = 0, spN = 0, mass = 0, rep = 0, reg = 0;
