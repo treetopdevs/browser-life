@@ -197,6 +197,10 @@ Repairing endpoint 2 answers a narrow question. The question that decides M4–M
   - about $120 held for the next registered cohort. Its horizon (10⁶ with a 10⁷ extension, or 10⁷ as primary) is decided after the extension time-shift, and after test 6's measurement problem is fixed.
 
   Doubling the founder diagnostic to 48 genomes was considered before any of its results and not taken up. The pool has 21 clusters, with non-phototrophs in only 4, so more picks would mostly repeat near-clones; and at a true rate of 0.15–0.2 the ambiguous band is about as likely with 48 genomes as with 24.
+- *Closed 2026-09-29 20:51.* Every instance is terminated and the security group deleted. Totals from the supervisor's ledgers (`runs/foundations/ops/cost-*`):
+  - the extension's instance, $15.77 of its $50;
+  - the tests' two instances, $41.50. About $5 of that is the extension time-shift, which comes from the $200. That charges about $36.50 against the tests' $50, leaving about $13.50.
+  - Nothing else has been drawn from the $200. Any draw by the foundational reset is recorded here before its paid runs.
 
 The replayed source histories are fixed now, before any assay result: M4 gradient-m3 seeds 1–10 in treatment and seeds 1–5 in neutral and no-mutation. A replay takes about 23 minutes per 10⁶ steps on one lane (1,383 s for treatment seed 1 on the M1 Max; A10G lanes run about 730 steps/s). It is accepted only if its census rows match the original `series.jsonl` up to each state it saves; the M1 Max and A10G were byte-identical in M4. Observer additions (per-lineage role and Lenia parameters) are recorded during replay and change no physics.
 
