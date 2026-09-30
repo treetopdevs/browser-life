@@ -1,0 +1,26 @@
+{
+  "format": "discovery-import-interruption/v1",
+  "recordedAt": "2026-09-30T22:01:12.190033+00:00",
+  "operation": "importer-operations/012-remote-next4-recovery.json",
+  "terminalEvidence": "Recovery process exited1 after rsync255: SSH server not responding. Local rsync19951 confirmed absent.",
+  "budgetTreatment": "Keep entire600second reservation, along with operation011600 and operation008600; no charges reclaimed.",
+  "auxiliaryChargedSeconds": 2423.7510626247386,
+  "auxiliaryRemainingSeconds": 1176.2489373752614,
+  "staging": "Preserve both remote-next4 and remote-next4-recovery directories and pinned inventory. No four-history import or provenance was published.",
+  "decision": "No further transfer retries now. Recheck remote process liveness separately; do not restart simulations because SSH transfer failed. Full reconciliation and competition release remain gated.",
+  "subsequentWorkerCheck": {
+    "local": {
+      "supervisorPid": 92829,
+      "workerPid": 19965,
+      "complete": 18,
+      "activeStep": 800000
+    },
+    "workMac": {
+      "supervisorPid": 84148,
+      "workerPid": 21465,
+      "complete": 8,
+      "activeStep": 900000
+    },
+    "evidence": "Both actual OS process handles returned live after the transfer failure; no workers restarted."
+  }
+}

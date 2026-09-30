@@ -1,0 +1,9 @@
+{
+  "format": "discovery-import-recovery/v1",
+  "recordedAt": "2026-09-30T21:58:38.845407+00:00",
+  "failedOperation": "importer-operations/011-remote-next4.json",
+  "terminalEvidence": "Bounded operation exited1 with TimeoutExpired during rsync; local rsync15899 and ssh15900 confirmed absent afterward.",
+  "budgetTreatment": "Preserve full600second reservation; no charge reduction.",
+  "preservation": "Keep original remote-next4 partial staging and original inventory unchanged; no histories imported by operation011.",
+  "recoveryDecision": "Separately bounded recovery into new staging; reuse only partial files whose SHA256 already matches pinned inventory, reverify remote inventory bytes, use supported rsync compression for missing files, then hash all files and run original semantic importer. No simulation restart or protocol change."
+}
