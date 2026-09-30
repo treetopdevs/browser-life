@@ -182,12 +182,12 @@
    "31": {
     "obligate": 1,
     "total": 1,
-    "meanSurvivedDefault": 0.0
+    "meanSurvivedDefault": 0
    },
    "32": {
     "obligate": 1,
     "total": 1,
-    "meanSurvivedDefault": 0.0
+    "meanSurvivedDefault": 0
    }
   },
   "clustersWithNoObligate": [
@@ -214,5 +214,1950 @@
    30
   ],
   "derivation": "dependence.rows[].genome matched to confirm.rows[].cluster by exact genome (mu, sigma, motGain, weights); all 1476 matched"
+ },
+ "deepDive": {
+  "note": "exploratory; read-only CPU analysis of confirm.json (no GPU, no simulation). Evaluator roles were not recorded for this search; probe* fields are a weights-only proxy, not roles.",
+  "script": "tools/fa-background.ts",
+  "clusterDistance": 10,
+  "confirmed": {
+   "n": 1476,
+   "distinctGenomes": 1476,
+   "clusters": 33,
+   "clustersMatchStored": true,
+   "dependenceRowsAllMatched": true,
+   "clusterSizesDesc": [
+    445,
+    145,
+    145,
+    110,
+    98,
+    90,
+    68,
+    41,
+    40,
+    34,
+    27,
+    27,
+    26,
+    25,
+    22,
+    21,
+    20,
+    15,
+    14,
+    12,
+    11,
+    10,
+    9,
+    7,
+    5,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "singletonClusters": 7,
+   "referenceDistances": {
+    "toBackgroundGenome": {
+     "n": 1476,
+     "mean": 160.2493,
+     "min": 157,
+     "p25": 159,
+     "median": 160,
+     "p75": 161,
+     "max": 163
+    },
+    "toGeneralist": {
+     "n": 1476,
+     "mean": 114.5102,
+     "min": 0,
+     "p25": 8,
+     "median": 161,
+     "p75": 161,
+     "max": 163
+    }
+   },
+   "backgroundGenomeIsFounder0": true,
+   "motGain": {
+    "n": 1476,
+    "zero": 1460,
+    "positive": 16,
+    "bins": {
+     "0": 1460,
+     "1-25": 16
+    },
+    "summary": {
+     "n": 1476,
+     "mean": 0.1558,
+     "min": 0,
+     "p25": 0,
+     "median": 0,
+     "p75": 0,
+     "max": 24
+    }
+   }
+  },
+  "obligate": {
+   "n": 209,
+   "distinctGenomes": 209,
+   "clustersInConfirmedPartition": 12,
+   "byConfirmedCluster": {
+    "0": 3,
+    "1": 3,
+    "3": 144,
+    "4": 12,
+    "5": 1,
+    "7": 2,
+    "9": 5,
+    "11": 14,
+    "17": 3,
+    "19": 20,
+    "31": 1,
+    "32": 1
+   },
+   "clusteringAmongObligatesAlone": [
+    {
+     "distance": 0,
+     "clusters": 209,
+     "sizesDesc": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "singletons": 209
+    },
+    {
+     "distance": 1,
+     "clusters": 167,
+     "sizesDesc": [
+      15,
+      5,
+      4,
+      4,
+      4,
+      3,
+      3,
+      3,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "singletons": 150
+    },
+    {
+     "distance": 2,
+     "clusters": 119,
+     "sizesDesc": [
+      43,
+      13,
+      10,
+      9,
+      6,
+      5,
+      3,
+      3,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+     ],
+     "singletons": 105
+    },
+    {
+     "distance": 5,
+     "clusters": 23,
+     "sizesDesc": [
+      144,
+      20,
+      13,
+      4,
+      4,
+      3,
+      3,
+      2,
+      2,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "singletons": 14
+    },
+    {
+     "distance": 10,
+     "clusters": 17,
+     "sizesDesc": [
+      144,
+      20,
+      14,
+      6,
+      5,
+      3,
+      3,
+      3,
+      2,
+      2,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "singletons": 7
+    },
+    {
+     "distance": 20,
+     "clusters": 13,
+     "sizesDesc": [
+      144,
+      20,
+      14,
+      12,
+      5,
+      3,
+      3,
+      2,
+      2,
+      1,
+      1,
+      1,
+      1
+     ],
+     "singletons": 4
+    },
+    {
+     "distance": 40,
+     "clusters": 12,
+     "sizesDesc": [
+      144,
+      20,
+      14,
+      12,
+      5,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ],
+     "singletons": 3
+    },
+    {
+     "distance": 80,
+     "clusters": 12,
+     "sizesDesc": [
+      144,
+      20,
+      14,
+      12,
+      5,
+      3,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+     ],
+     "singletons": 3
+    }
+   ],
+   "effectiveClusters": {
+    "obligateInverseSimpson": 2.03,
+    "confirmedInverseSimpson": 7.67
+   },
+   "dominantCluster": 3,
+   "dominantClusterShare": 0.689,
+   "obligatesOutsideDominantCluster": 65,
+   "structureAll": {
+    "n": 209,
+    "distinctGenomes": 209,
+    "medoidRowIndex": 194,
+    "distanceToMedoid": {
+     "n": 209,
+     "mean": 54.1435,
+     "min": 0,
+     "p25": 4,
+     "median": 7,
+     "p75": 160,
+     "max": 163
+    },
+    "withinDistance": {
+     "<=2": 22,
+     "<=5": 86,
+     "<=10": 128,
+     "<=20": 144
+    },
+    "nearestNeighbour": {
+     "n": 209,
+     "mean": 5.0957,
+     "min": 1,
+     "p25": 1,
+     "median": 3,
+     "p75": 4,
+     "max": 160
+    },
+    "pairwise": {
+     "n": 21736,
+     "mean": 87.2069,
+     "min": 1,
+     "p25": 9,
+     "median": 159,
+     "p75": 162,
+     "max": 163
+    }
+   },
+   "structureDominantCluster": {
+    "n": 144,
+    "distinctGenomes": 144,
+    "medoidRowIndex": 194,
+    "distanceToMedoid": {
+     "n": 144,
+     "mean": 5.7292,
+     "min": 0,
+     "p25": 3,
+     "median": 5,
+     "p75": 7,
+     "max": 20
+    },
+    "withinDistance": {
+     "<=2": 22,
+     "<=5": 86,
+     "<=10": 128,
+     "<=20": 144
+    },
+    "nearestNeighbour": {
+     "n": 144,
+     "mean": 2.3264,
+     "min": 1,
+     "p25": 1,
+     "median": 2,
+     "p75": 3,
+     "max": 4
+    },
+    "pairwise": {
+     "n": 10296,
+     "mean": 10.2502,
+     "min": 1,
+     "p25": 7,
+     "median": 9,
+     "p75": 13,
+     "max": 31
+    }
+   },
+   "structureOutsideDominant": {
+    "n": 65,
+    "distinctGenomes": 65,
+    "medoidRowIndex": 903,
+    "distanceToMedoid": {
+     "n": 65,
+     "mean": 112.9538,
+     "min": 0,
+     "p25": 9,
+     "median": 160,
+     "p75": 162,
+     "max": 162
+    },
+    "withinDistance": {
+     "<=2": 6,
+     "<=5": 10,
+     "<=10": 20,
+     "<=20": 20
+    },
+    "nearestNeighbour": {
+     "n": 65,
+     "mean": 11.2769,
+     "min": 1,
+     "p25": 2,
+     "median": 3,
+     "p75": 5,
+     "max": 160
+    },
+    "pairwise": {
+     "n": 2080,
+     "mean": 134.1558,
+     "min": 1,
+     "p25": 160,
+     "median": 161,
+     "p75": 162,
+     "max": 163
+    }
+   },
+   "referenceDistances": {
+    "toBackgroundGenome": {
+     "n": 209,
+     "mean": 161.0622,
+     "min": 159,
+     "p25": 161,
+     "median": 161,
+     "p75": 161,
+     "max": 163
+    },
+    "toGeneralist": {
+     "n": 209,
+     "mean": 158.866,
+     "min": 5,
+     "p25": 161,
+     "median": 161,
+     "p75": 161,
+     "max": 163
+    }
+   },
+   "referenceDistancesOutsideDominant": {
+    "toBackgroundGenome": {
+     "n": 65,
+     "mean": 161.0154,
+     "min": 159,
+     "p25": 160,
+     "median": 161,
+     "p75": 162,
+     "max": 163
+    },
+    "toGeneralist": {
+     "n": 65,
+     "mean": 154.1385,
+     "min": 5,
+     "p25": 161,
+     "median": 161,
+     "p75": 162,
+     "max": 163
+    }
+   },
+   "motGain": {
+    "n": 209,
+    "zero": 204,
+    "positive": 5,
+    "bins": {
+     "0": 204,
+     "1-25": 5
+    },
+    "summary": {
+     "n": 209,
+     "mean": 0.4498,
+     "min": 0,
+     "p25": 0,
+     "median": 0,
+     "p75": 0,
+     "max": 23
+    }
+   },
+   "motGainOutsideDominant": {
+    "n": 65,
+    "zero": 60,
+    "positive": 5,
+    "bins": {
+     "0": 60,
+     "1-25": 5
+    },
+    "summary": {
+     "n": 65,
+     "mean": 1.4462,
+     "min": 0,
+     "p25": 0,
+     "median": 0,
+     "p75": 0,
+     "max": 23
+    }
+   },
+   "lenia": {
+    "mu": {
+     "n": 209,
+     "mean": 51.4833,
+     "min": 25,
+     "p25": 56,
+     "median": 56,
+     "p75": 56,
+     "max": 75
+    },
+    "sigma": {
+     "n": 209,
+     "mean": 15.0813,
+     "min": 12,
+     "p25": 12,
+     "median": 12,
+     "p75": 18,
+     "max": 28
+    }
+   },
+   "leniaFacultative": {
+    "mu": {
+     "n": 1267,
+     "mean": 62.7964,
+     "min": 27,
+     "p25": 48,
+     "median": 60,
+     "p75": 75,
+     "max": 106
+    },
+    "sigma": {
+     "n": 1267,
+     "mean": 21.7822,
+     "min": 12,
+     "p25": 20,
+     "median": 20,
+     "p75": 25,
+     "max": 30
+    }
+   }
+  },
+  "facultative": {
+   "n": 1267,
+   "motGain": {
+    "n": 1267,
+    "zero": 1256,
+    "positive": 11,
+    "bins": {
+     "0": 1256,
+     "1-25": 11
+    },
+    "summary": {
+     "n": 1267,
+     "mean": 0.1073,
+     "min": 0,
+     "p25": 0,
+     "median": 0,
+     "p75": 0,
+     "max": 24
+    }
+   }
+  },
+  "motGainAllClusters": {
+   "clustersWithAnyMotGainPositive": 8
+  },
+  "evaluationsInBackgroundMedium": {
+   "obligate": {
+    "n": 209,
+    "survived": 16,
+    "recovered": 15.923,
+    "regenerated": 15.947,
+    "lightDependent": 16,
+    "recovery": 0.996,
+    "individuals": 1.925,
+    "meanMass": 210942.967,
+    "mass": 231536.292,
+    "speed": 2.574,
+    "reproduction": 42.3,
+    "regenLowerBoundMean": 0.825,
+    "regenLowerBoundAbove08": 201
+   },
+   "facultative": {
+    "n": 1267,
+    "survived": 16,
+    "recovered": 15.934,
+    "regenerated": 15.79,
+    "lightDependent": 16,
+    "recovery": 0.997,
+    "individuals": 10.099,
+    "meanMass": 118318.104,
+    "mass": 216432.854,
+    "speed": 1.795,
+    "reproduction": 64.014,
+    "regenLowerBoundMean": 0.811,
+    "regenLowerBoundAbove08": 1100
+   },
+   "obligateOutsideDominantCluster": {
+    "n": 65,
+    "survived": 16,
+    "recovered": 15.769,
+    "regenerated": 15.831,
+    "lightDependent": 16,
+    "recovery": 0.988,
+    "individuals": 3.975,
+    "meanMass": 153103.082,
+    "mass": 222702.497,
+    "speed": 2.053,
+    "reproduction": 45.909,
+    "regenLowerBoundMean": 0.814,
+    "regenLowerBoundAbove08": 57
+   },
+   "facultativeOutsideDominantCluster": {
+    "n": 1266,
+    "survived": 16,
+    "recovered": 15.934,
+    "regenerated": 15.79,
+    "lightDependent": 16,
+    "recovery": 0.997,
+    "individuals": 10.106,
+    "meanMass": 118224.743,
+    "mass": 216417.259,
+    "speed": 1.794,
+    "reproduction": 64.042,
+    "regenLowerBoundMean": 0.811,
+    "regenLowerBoundAbove08": 1099
+   },
+   "dominantClusterOnly": {
+    "n": 145,
+    "survived": 16,
+    "recovered": 15.993,
+    "regenerated": 16,
+    "lightDependent": 16,
+    "recovery": 1,
+    "individuals": 1,
+    "meanMass": 237047.54,
+    "mass": 235528.269,
+    "speed": 2.814,
+    "reproduction": 40.589,
+    "regenLowerBoundMean": 0.829,
+    "regenLowerBoundAbove08": 145
+   },
+   "regeneratedHistogram": {
+    "obligate": {
+     "14": 3,
+     "15": 5,
+     "16": 201
+    },
+    "facultative": {
+     "13": 29,
+     "14": 41,
+     "15": 97,
+     "16": 1100
+    }
+   },
+   "lightDependentHistogram": {
+    "obligate": {
+     "16": 209
+    },
+    "facultative": {
+     "16": 1267
+    }
+   },
+   "survivedHistogram": {
+    "obligate": {
+     "16": 209
+    },
+    "facultative": {
+     "16": 1267
+    }
+   },
+   "underDefaultEval": {
+    "obligateSurvivedAll0": true,
+    "facultativeSurvivedHistogram": {
+     "1": 4,
+     "2": 4,
+     "3": 5,
+     "4": 7,
+     "5": 7,
+     "6": 15,
+     "7": 13,
+     "8": 10,
+     "9": 11,
+     "10": 14,
+     "11": 8,
+     "12": 14,
+     "13": 5,
+     "14": 26,
+     "15": 44,
+     "16": 1080
+    }
+   }
+  },
+  "perCluster": [
+   {
+    "cluster": 0,
+    "n": 445,
+    "obligate": 3,
+    "meanSurvivedDefault": 15.8674,
+    "distinctGenomes": 445,
+    "motGainPositive": 5,
+    "motGainMax": 24,
+    "nearestToBackground": 158,
+    "nearestToGeneralist": 0,
+    "meanRegen": 15.8,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 1,
+    "n": 145,
+    "obligate": 3,
+    "meanSurvivedDefault": 15.0345,
+    "distinctGenomes": 145,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 159,
+    "nearestToGeneralist": 160,
+    "meanRegen": 15.9862,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 2,
+    "n": 98,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 98,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 160,
+    "nearestToGeneralist": 160,
+    "meanRegen": 14.8367,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 3,
+    "n": 145,
+    "obligate": 144,
+    "meanSurvivedDefault": 0.1103,
+    "distinctGenomes": 145,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 160,
+    "nearestToGeneralist": 161,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 4,
+    "n": 110,
+    "obligate": 12,
+    "meanSurvivedDefault": 13.1455,
+    "distinctGenomes": 110,
+    "motGainPositive": 3,
+    "motGainMax": 22,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 159,
+    "meanRegen": 15.9545,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 5,
+    "n": 90,
+    "obligate": 1,
+    "meanSurvivedDefault": 15.2333,
+    "distinctGenomes": 90,
+    "motGainPositive": 1,
+    "motGainMax": 23,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 161,
+    "meanRegen": 15.9333,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 6,
+    "n": 15,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 15,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 160,
+    "meanRegen": 13.7333,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 7,
+    "n": 68,
+    "obligate": 2,
+    "meanSurvivedDefault": 8.7941,
+    "distinctGenomes": 68,
+    "motGainPositive": 3,
+    "motGainMax": 8,
+    "nearestToBackground": 162,
+    "nearestToGeneralist": 161,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 8,
+    "n": 7,
+    "obligate": 0,
+    "meanSurvivedDefault": 14.4286,
+    "distinctGenomes": 7,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 157,
+    "nearestToGeneralist": 161,
+    "meanRegen": 15.1429,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 9,
+    "n": 10,
+    "obligate": 5,
+    "meanSurvivedDefault": 3.7,
+    "distinctGenomes": 10,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 162,
+    "nearestToGeneralist": 162,
+    "meanRegen": 15.4,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 10,
+    "n": 1,
+    "obligate": 0,
+    "meanSurvivedDefault": 7,
+    "distinctGenomes": 1,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 162,
+    "nearestToGeneralist": 162,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 11,
+    "n": 40,
+    "obligate": 14,
+    "meanSurvivedDefault": 7.925,
+    "distinctGenomes": 40,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 158,
+    "nearestToGeneralist": 160,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 12,
+    "n": 41,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 41,
+    "motGainPositive": 1,
+    "motGainMax": 22,
+    "nearestToBackground": 160,
+    "nearestToGeneralist": 160,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 13,
+    "n": 26,
+    "obligate": 0,
+    "meanSurvivedDefault": 15.9231,
+    "distinctGenomes": 26,
+    "motGainPositive": 1,
+    "motGainMax": 3,
+    "nearestToBackground": 160,
+    "nearestToGeneralist": 161,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 14,
+    "n": 1,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 1,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 157,
+    "nearestToGeneralist": 161,
+    "meanRegen": 15,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 15,
+    "n": 1,
+    "obligate": 0,
+    "meanSurvivedDefault": 14,
+    "distinctGenomes": 1,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 157,
+    "nearestToGeneralist": 161,
+    "meanRegen": 14,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 16,
+    "n": 22,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 22,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 160,
+    "nearestToGeneralist": 159,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 17,
+    "n": 27,
+    "obligate": 3,
+    "meanSurvivedDefault": 9.4074,
+    "distinctGenomes": 27,
+    "motGainPositive": 1,
+    "motGainMax": 5,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 161,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 18,
+    "n": 27,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 27,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 159,
+    "nearestToGeneralist": 160,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 19,
+    "n": 34,
+    "obligate": 20,
+    "meanSurvivedDefault": 6.3529,
+    "distinctGenomes": 34,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 162,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 20,
+    "n": 1,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 1,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 160,
+    "meanRegen": 13,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 21,
+    "n": 21,
+    "obligate": 0,
+    "meanSurvivedDefault": 15.9048,
+    "distinctGenomes": 21,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 162,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 22,
+    "n": 25,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 25,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 162,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 23,
+    "n": 20,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 20,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 160,
+    "nearestToGeneralist": 162,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 24,
+    "n": 14,
+    "obligate": 0,
+    "meanSurvivedDefault": 15.2143,
+    "distinctGenomes": 14,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 158,
+    "nearestToGeneralist": 160,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 25,
+    "n": 2,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 2,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 162,
+    "meanRegen": 14,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 26,
+    "n": 12,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 12,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 162,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 27,
+    "n": 1,
+    "obligate": 0,
+    "meanSurvivedDefault": 12,
+    "distinctGenomes": 1,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 159,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 28,
+    "n": 9,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 9,
+    "motGainPositive": 1,
+    "motGainMax": 6,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 161,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 29,
+    "n": 5,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 5,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 161,
+    "meanRegen": 15.2,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 30,
+    "n": 11,
+    "obligate": 0,
+    "meanSurvivedDefault": 16,
+    "distinctGenomes": 11,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 162,
+    "nearestToGeneralist": 159,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 31,
+    "n": 1,
+    "obligate": 1,
+    "meanSurvivedDefault": 0,
+    "distinctGenomes": 1,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 161,
+    "nearestToGeneralist": 161,
+    "meanRegen": 15,
+    "meanLightDependent": 16
+   },
+   {
+    "cluster": 32,
+    "n": 1,
+    "obligate": 1,
+    "meanSurvivedDefault": 0,
+    "distinctGenomes": 1,
+    "motGainPositive": 0,
+    "motGainMax": 0,
+    "nearestToBackground": 160,
+    "nearestToGeneralist": 159,
+    "meanRegen": 16,
+    "meanLightDependent": 16
+   }
+  ],
+  "controllerProbe": {
+   "note": "2000 synthetic input vectors (seed 20260930), uniform over input ranges, half lit; forward pass of the integer controller, no simulation. Classes: no-photo = PHOTO output never positive in any lit probe; photo-capable = positive in >=25% of lit probes; photo-rare otherwise. A weights-only proxy: real inputs are correlated and it ignores dynamics.",
+   "validationOnFounderDiagnosticSubjects": {
+    "table": {
+     "chemotroph / photo-capable": 5,
+     "mixed / photo-capable": 7,
+     "phototroph / photo-capable": 12
+    },
+    "byRole": {
+     "chemotroph": {
+      "n": 5,
+      "growShare": {
+       "n": 5,
+       "mean": 0.8892,
+       "min": 0.854,
+       "p25": 0.859,
+       "median": 0.859,
+       "p75": 0.875,
+       "max": 0.999
+      },
+      "decompWithWaste": {
+       "n": 5,
+       "mean": 0.9802,
+       "min": 0.901,
+       "p25": 1,
+       "median": 1,
+       "p75": 1,
+       "max": 1
+      },
+      "maxPhotoLit": {
+       "n": 5,
+       "mean": 80.2,
+       "min": 66,
+       "p25": 67,
+       "median": 69,
+       "p75": 72,
+       "max": 127
+      }
+     },
+     "mixed": {
+      "n": 7,
+      "growShare": {
+       "n": 7,
+       "mean": 0.8393,
+       "min": 0.656,
+       "p25": 0.663,
+       "median": 0.881,
+       "p75": 1,
+       "max": 1
+      },
+      "decompWithWaste": {
+       "n": 7,
+       "mean": 0.8474,
+       "min": 0,
+       "p25": 0.932,
+       "median": 1,
+       "p75": 1,
+       "max": 1
+      },
+      "maxPhotoLit": {
+       "n": 7,
+       "mean": 93.8571,
+       "min": 43,
+       "p25": 69,
+       "median": 111,
+       "p75": 117,
+       "max": 118
+      }
+     },
+     "phototroph": {
+      "n": 12,
+      "growShare": {
+       "n": 12,
+       "mean": 0.4556,
+       "min": 0,
+       "p25": 0.007,
+       "median": 0.304,
+       "p75": 0.999,
+       "max": 1
+      },
+      "decompWithWaste": {
+       "n": 12,
+       "mean": 0.6685,
+       "min": 0,
+       "p25": 0.596,
+       "median": 0.977,
+       "p75": 1,
+       "max": 1
+      },
+      "maxPhotoLit": {
+       "n": 12,
+       "mean": 106.75,
+       "min": 72,
+       "p25": 97,
+       "median": 114,
+       "p75": 127,
+       "max": 127
+      }
+     }
+    },
+    "rows": [
+     {
+      "subject": 0,
+      "evaluatorRole": "chemotroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 72,
+      "growShare": 0.859,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 1,
+      "evaluatorRole": "mixed",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 84,
+      "growShare": 1,
+      "decompWithWaste": 0.932
+     },
+     {
+      "subject": 2,
+      "evaluatorRole": "mixed",
+      "probeClass": "photo-capable",
+      "photoLit": 0.94,
+      "maxPhotoLit": 43,
+      "growShare": 1,
+      "decompWithWaste": 0
+     },
+     {
+      "subject": 3,
+      "evaluatorRole": "chemotroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 127,
+      "growShare": 0.999,
+      "decompWithWaste": 0.901
+     },
+     {
+      "subject": 4,
+      "evaluatorRole": "chemotroph",
+      "probeClass": "photo-capable",
+      "photoLit": 0.854,
+      "maxPhotoLit": 66,
+      "growShare": 0.859,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 5,
+      "evaluatorRole": "chemotroph",
+      "probeClass": "photo-capable",
+      "photoLit": 0.994,
+      "maxPhotoLit": 67,
+      "growShare": 0.875,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 6,
+      "evaluatorRole": "mixed",
+      "probeClass": "photo-capable",
+      "photoLit": 0.99,
+      "maxPhotoLit": 69,
+      "growShare": 0.881,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 7,
+      "evaluatorRole": "chemotroph",
+      "probeClass": "photo-capable",
+      "photoLit": 0.999,
+      "maxPhotoLit": 69,
+      "growShare": 0.854,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 8,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 127,
+      "growShare": 0.798,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 9,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 0.996,
+      "maxPhotoLit": 105,
+      "growShare": 0,
+      "decompWithWaste": 0.596
+     },
+     {
+      "subject": 10,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 0.999,
+      "maxPhotoLit": 73,
+      "growShare": 1,
+      "decompWithWaste": 0
+     },
+     {
+      "subject": 11,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 127,
+      "growShare": 0.988,
+      "decompWithWaste": 0
+     },
+     {
+      "subject": 12,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 127,
+      "growShare": 0.007,
+      "decompWithWaste": 0.648
+     },
+     {
+      "subject": 13,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 117,
+      "growShare": 0.253,
+      "decompWithWaste": 0.005
+     },
+     {
+      "subject": 14,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 0.994,
+      "maxPhotoLit": 72,
+      "growShare": 0.999,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 15,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 89,
+      "growShare": 0,
+      "decompWithWaste": 0.796
+     },
+     {
+      "subject": 16,
+      "evaluatorRole": "mixed",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 117,
+      "growShare": 0.656,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 17,
+      "evaluatorRole": "mixed",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 118,
+      "growShare": 0.999,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 18,
+      "evaluatorRole": "mixed",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 115,
+      "growShare": 0.676,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 19,
+      "evaluatorRole": "mixed",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 111,
+      "growShare": 0.663,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 20,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 127,
+      "growShare": 0.304,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 21,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 97,
+      "growShare": 0,
+      "decompWithWaste": 0.977
+     },
+     {
+      "subject": 22,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 106,
+      "growShare": 1,
+      "decompWithWaste": 1
+     },
+     {
+      "subject": 23,
+      "evaluatorRole": "phototroph",
+      "probeClass": "photo-capable",
+      "photoLit": 1,
+      "maxPhotoLit": 114,
+      "growShare": 0.118,
+      "decompWithWaste": 1
+     }
+    ]
+   },
+   "obligate": {
+    "n": 209,
+    "classes": {
+     "photo-capable": 209
+    },
+    "photoLit": {
+     "n": 209,
+     "mean": 0.986,
+     "min": 0.686,
+     "p25": 1,
+     "median": 1,
+     "p75": 1,
+     "max": 1
+    },
+    "decompWithWaste": {
+     "n": 209,
+     "mean": 0.9965,
+     "min": 0.94,
+     "p25": 1,
+     "median": 1,
+     "p75": 1,
+     "max": 1
+    },
+    "growShare": {
+     "n": 209,
+     "mean": 0.2062,
+     "min": 0,
+     "p25": 0,
+     "median": 0,
+     "p75": 0.026,
+     "max": 1
+    }
+   },
+   "facultative": {
+    "n": 1267,
+    "classes": {
+     "photo-capable": 1267
+    },
+    "photoLit": {
+     "n": 1267,
+     "mean": 0.9974,
+     "min": 0.654,
+     "p25": 1,
+     "median": 1,
+     "p75": 1,
+     "max": 1
+    },
+    "decompWithWaste": {
+     "n": 1267,
+     "mean": 0.9472,
+     "min": 0.034,
+     "p25": 0.972,
+     "median": 1,
+     "p75": 1,
+     "max": 1
+    },
+    "growShare": {
+     "n": 1267,
+     "mean": 0.7094,
+     "min": 0,
+     "p25": 0.657,
+     "median": 0.787,
+     "p75": 1,
+     "max": 1
+    }
+   },
+   "obligateOutsideDominantCluster": {
+    "n": 65,
+    "classes": {
+     "photo-capable": 65
+    },
+    "photoLit": {
+     "n": 65,
+     "mean": 0.9551,
+     "min": 0.686,
+     "p25": 1,
+     "median": 1,
+     "p75": 1,
+     "max": 1
+    },
+    "decompWithWaste": {
+     "n": 65,
+     "mean": 0.9889,
+     "min": 0.94,
+     "p25": 0.976,
+     "median": 1,
+     "p75": 1,
+     "max": 1
+    },
+    "growShare": {
+     "n": 65,
+     "mean": 0.6623,
+     "min": 0,
+     "p25": 0.183,
+     "median": 1,
+     "p75": 1,
+     "max": 1
+    }
+   },
+   "dominantCluster": {
+    "n": 145,
+    "classes": {
+     "photo-capable": 145
+    },
+    "photoLit": {
+     "n": 145,
+     "mean": 1,
+     "min": 1,
+     "p25": 1,
+     "median": 1,
+     "p75": 1,
+     "max": 1
+    },
+    "decompWithWaste": {
+     "n": 145,
+     "mean": 1,
+     "min": 1,
+     "p25": 1,
+     "median": 1,
+     "p75": 1,
+     "max": 1
+    },
+    "growShare": {
+     "n": 145,
+     "mean": 0.0004,
+     "min": 0,
+     "p25": 0,
+     "median": 0,
+     "p75": 0,
+     "max": 0.026
+    }
+   },
+   "perClusterObligate": {
+    "0": {
+     "n": 3,
+     "classes": {
+      "photo-capable": 3
+     },
+     "photoLit": {
+      "n": 3,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 3,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "growShare": {
+      "n": 3,
+      "mean": 0.821,
+      "min": 0.787,
+      "p25": 0.787,
+      "median": 0.838,
+      "p75": 0.838,
+      "max": 0.838
+     }
+    },
+    "1": {
+     "n": 3,
+     "classes": {
+      "photo-capable": 3
+     },
+     "photoLit": {
+      "n": 3,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 3,
+      "mean": 0.9837,
+      "min": 0.955,
+      "p25": 0.955,
+      "median": 0.996,
+      "p75": 1,
+      "max": 1
+     },
+     "growShare": {
+      "n": 3,
+      "mean": 0.7063,
+      "min": 0.555,
+      "p25": 0.555,
+      "median": 0.675,
+      "p75": 0.889,
+      "max": 0.889
+     }
+    },
+    "3": {
+     "n": 144,
+     "classes": {
+      "photo-capable": 144
+     },
+     "photoLit": {
+      "n": 144,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 144,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "growShare": {
+      "n": 144,
+      "mean": 0.0004,
+      "min": 0,
+      "p25": 0,
+      "median": 0,
+      "p75": 0,
+      "max": 0.026
+     }
+    },
+    "4": {
+     "n": 12,
+     "classes": {
+      "photo-capable": 12
+     },
+     "photoLit": {
+      "n": 12,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 12,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "growShare": {
+      "n": 12,
+      "mean": 0.0003,
+      "min": 0,
+      "p25": 0,
+      "median": 0,
+      "p75": 0,
+      "max": 0.003
+     }
+    },
+    "5": {
+     "n": 1,
+     "classes": {
+      "photo-capable": 1
+     },
+     "photoLit": {
+      "n": 1,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 1,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "growShare": {
+      "n": 1,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     }
+    },
+    "7": {
+     "n": 2,
+     "classes": {
+      "photo-capable": 2
+     },
+     "photoLit": {
+      "n": 2,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 2,
+      "mean": 0.9405,
+      "min": 0.94,
+      "p25": 0.94,
+      "median": 0.941,
+      "p75": 0.941,
+      "max": 0.941
+     },
+     "growShare": {
+      "n": 2,
+      "mean": 0.5265,
+      "min": 0.525,
+      "p25": 0.525,
+      "median": 0.528,
+      "p75": 0.528,
+      "max": 0.528
+     }
+    },
+    "9": {
+     "n": 5,
+     "classes": {
+      "photo-capable": 5
+     },
+     "photoLit": {
+      "n": 5,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 5,
+      "mean": 0.9766,
+      "min": 0.97,
+      "p25": 0.971,
+      "median": 0.973,
+      "p75": 0.975,
+      "max": 0.994
+     },
+     "growShare": {
+      "n": 5,
+      "mean": 0.2248,
+      "min": 0.183,
+      "p25": 0.203,
+      "median": 0.206,
+      "p75": 0.229,
+      "max": 0.303
+     }
+    },
+    "11": {
+     "n": 14,
+     "classes": {
+      "photo-capable": 14
+     },
+     "photoLit": {
+      "n": 14,
+      "mean": 0.7921,
+      "min": 0.686,
+      "p25": 0.775,
+      "median": 0.804,
+      "p75": 0.804,
+      "max": 0.857
+     },
+     "decompWithWaste": {
+      "n": 14,
+      "mean": 0.9999,
+      "min": 0.999,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "growShare": {
+      "n": 14,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     }
+    },
+    "17": {
+     "n": 3,
+     "classes": {
+      "photo-capable": 3
+     },
+     "photoLit": {
+      "n": 3,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 3,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "growShare": {
+      "n": 3,
+      "mean": 0.1093,
+      "min": 0.085,
+      "p25": 0.085,
+      "median": 0.112,
+      "p75": 0.131,
+      "max": 0.131
+     }
+    },
+    "19": {
+     "n": 20,
+     "classes": {
+      "photo-capable": 20
+     },
+     "photoLit": {
+      "n": 20,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 20,
+      "mean": 0.9782,
+      "min": 0.962,
+      "p25": 0.976,
+      "median": 0.978,
+      "p75": 0.986,
+      "max": 0.992
+     },
+     "growShare": {
+      "n": 20,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     }
+    },
+    "31": {
+     "n": 1,
+     "classes": {
+      "photo-capable": 1
+     },
+     "photoLit": {
+      "n": 1,
+      "mean": 0.993,
+      "min": 0.993,
+      "p25": 0.993,
+      "median": 0.993,
+      "p75": 0.993,
+      "max": 0.993
+     },
+     "decompWithWaste": {
+      "n": 1,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "growShare": {
+      "n": 1,
+      "mean": 0.96,
+      "min": 0.96,
+      "p25": 0.96,
+      "median": 0.96,
+      "p75": 0.96,
+      "max": 0.96
+     }
+    },
+    "32": {
+     "n": 1,
+     "classes": {
+      "photo-capable": 1
+     },
+     "photoLit": {
+      "n": 1,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "decompWithWaste": {
+      "n": 1,
+      "mean": 1,
+      "min": 1,
+      "p25": 1,
+      "median": 1,
+      "p75": 1,
+      "max": 1
+     },
+     "growShare": {
+      "n": 1,
+      "mean": 0,
+      "min": 0,
+      "p25": 0,
+      "median": 0,
+      "p75": 0,
+      "max": 0
+     }
+    }
+   }
+  }
  }
 }

@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Founder program summary, 2026-09-30 — browser-life</title>
+<meta name="color-scheme" content="light dark">
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --fg: #1d1f24;
+    --muted: #5d636e;
+    --rule: #dcd9d0;
+    --panel: #f2f0ea;
+    --accent: #1f5f8b;
+    --accent-soft: #c9dcea;
+    --warn: #8a4b08;
+    --warn-soft: #f3e3cc;
+    --ok: #2c6b3f;
+    --bar-bg: #e6e3da;
+    --code-bg: #ecebe4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c;
+      --fg: #e6e4de;
+      --muted: #9aa0aa;
+      --rule: #33363d;
+      --panel: #1e2126;
+      --accent: #6fb0dc;
+      --accent-soft: #2a4358;
+      --warn: #e0a865;
+      --warn-soft: #3a2f20;
+      --ok: #7fc092;
+      --bar-bg: #2a2d34;
+      --code-bg: #23262c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 17px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  main { max-width: 56rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  h1 { font-size: 1.75rem; line-height: 1.2; margin: 0 0 .35rem; letter-spacing: -.01em; }
+  h2 { font-size: 1.3rem; margin: 2.6rem 0 .6rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); line-height: 1.25; }
+  h3 { font-size: 1.05rem; margin: 1.6rem 0 .4rem; }
+  p { margin: .6rem 0; }
+  ul, ol { padding-left: 1.25rem; margin: .5rem 0; }
+  li { margin: .25rem 0; }
+  a { color: var(--accent); }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .86em; background: var(--code-bg); padding: .05em .3em; border-radius: 3px; }
+  .sub { color: var(--muted); margin: 0 0 1.4rem; }
+  .status { display: inline-block; font-size: .8rem; padding: .1rem .55rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--muted); margin-right: .35rem; }
+  .bottom { background: var(--panel); border-left: 4px solid var(--accent); padding: .9rem 1.1rem; border-radius: 0 6px 6px 0; }
+  .bottom p { margin: .5rem 0; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: .6rem; margin: 1.1rem 0 0; }
+  .fact { border: 1px solid var(--rule); border-radius: 6px; padding: .55rem .7rem; background: var(--bg); }
+  .fact b { display: block; font-size: 1.25rem; line-height: 1.2; }
+  .fact span { font-size: .8rem; color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .9rem; }
+  th, td { text-align: left; vertical-align: top; padding: .4rem .55rem; border-bottom: 1px solid var(--rule); }
+  th { font-weight: 600; font-size: .82rem; color: var(--muted); border-bottom: 1px solid var(--fg); }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.total td { font-weight: 600; border-top: 1px solid var(--fg); }
+  .tablewrap { overflow-x: auto; }
+  caption { text-align: left; font-weight: 600; padding: 0 0 .3rem; font-size: .92rem; }
+  .bar { display: block; height: .7rem; background: var(--bar-bg); border-radius: 2px; min-width: 6rem; position: relative; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 2px; width: var(--w); }
+  .bar.warn i { background: var(--warn); }
+  .lab { display: grid; grid-template-columns: 13rem 1fr 5.5rem; gap: .6rem; align-items: center; margin: .28rem 0; font-size: .88rem; }
+  .lab .v { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .lab.group { margin-top: .9rem; font-weight: 600; color: var(--muted); font-size: .8rem; display: block; }
+  .chart { margin: .8rem 0 1rem; }
+  .chart figcaption, figcaption { font-size: .82rem; color: var(--muted); margin-top: .5rem; }
+  .caution { background: var(--warn-soft); border-left: 4px solid var(--warn); padding: .55rem .9rem; border-radius: 0 6px 6px 0; margin: .9rem 0; font-size: .92rem; }
+  details { border: 1px solid var(--rule); border-radius: 6px; padding: .1rem .8rem; margin: .8rem 0; background: var(--bg); }
+  details > summary { cursor: pointer; padding: .45rem 0; font-weight: 600; font-size: .95rem; }
+  details[open] > summary { border-bottom: 1px solid var(--rule); margin-bottom: .5rem; }
+  .step { border: 1px solid var(--rule); border-radius: 8px; padding: .3rem 1rem .6rem; margin: 1rem 0; background: var(--bg); }
+  .step h3 { margin: .7rem 0 .25rem; }
+  .step .rank { display: inline-block; min-width: 1.7rem; height: 1.7rem; line-height: 1.7rem; text-align: center; border-radius: 50%; background: var(--accent); color: var(--bg); font-size: .9rem; margin-right: .5rem; font-weight: 700; }
+  dl.k { display: grid; grid-template-columns: 6.3rem 1fr; gap: .25rem .8rem; margin: .4rem 0 0; font-size: .92rem; }
+  dl.k dt { color: var(--muted); font-weight: 600; }
+  dl.k dd { margin: 0; }
+  .doFirst { background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; padding: .7rem 1rem; margin: 1rem 0; }
+  .tag { font-size: .75rem; padding: 0 .4rem; border: 1px solid var(--rule); border-radius: 3px; color: var(--muted); margin-left: .3rem; white-space: nowrap; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: .85rem; }
+  @media (max-width: 40rem) {
+    .lab { grid-template-columns: 1fr; gap: .15rem; }
+    .lab .v { text-align: left; }
+    dl.k { grid-template-columns: 1fr; }
+  }
+  @media print {
+    html { font-size: 11pt; }
+    body { background: #fff; color: #000; }
+    main { max-width: none; padding: 0; }
+    h2 { break-after: avoid; }
+    table, .step, .chart, .caution, figure { break-inside: avoid; }
+    details { border-color: #bbb; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <p><span class="status">Exploratory</span><span class="status">Nothing registered</span><span class="status">RULE_VERSION 1 unchanged</span></p>
+  <h1>Founder program summary</h1>
+  <p class="sub">browser-life, 2026-09-30. Covers M3, M4, the foundations review, and the ecology-first founder discovery (angles A, B, C, S5), with ranked next steps. All work behind it has finished: no GPU jobs are running and AWS is torn down.</p>
+</header>
+
+<!-- ============================================================ 1 -->
+<h2 id="bottom">1. Bottom line</h2>
+<div class="bottom">
+  <p>M3 is met; M4 is not. The foundations review found that mutation makes viable variants but role change was rare from the M3 founders (1 of 12), and a diagnostic showed that this depends heavily on <em>which genomes found the world</em> (11 of 24 other genomes count). The ecology-first program tried to fix founders through ecology. Drifted clouds did not help (1 of 12, same as point founders). A producer-background search produced a large, diverse pool (1,476 confirmed genomes, 33 clusters) including <strong>209 that cannot live alone in the standard medium</strong>, against 0 of 148 in the waste medium. But those 209 are effectively two independent groups (one cluster holds 144, all within 20 genome slots of one genome), and what they do is unknown. Founder sets with non-producers originate roles (S1 3 of 5, S5 5 of 5), but the same genomes do so alone, and most of what originates is non-producers gaining photosynthesis: one-shot niche filling, not evidence of open-ended radiation.</p>
+  <p>The entity and measurement questions (tracker parenthood unsupported; no eligible activity, novelty or role measure) still limit every claim. <strong>Most promising next step:</strong> find out what the obligates need and do, then test producer-plus-obligate worlds for consumer-resource dynamics, while a zero-cost recurrence readout on existing runs sets the bar.</p>
+</div>
+
+<div class="facts">
+  <div class="fact"><b>M3 met · M4 not</b><span>24 clusters vs 20 needed; endpoint 2 fails (neutral runs grow too)</span></div>
+  <div class="fact"><b>11 of 24 vs 1 of 12</b><span>other genomes vs M3 founders originating a role</span></div>
+  <div class="fact"><b>209 of 1,476</b><span>background-medium genomes that die alone (waste: 0 of 148)</span></div>
+  <div class="fact"><b>≈ 2 lineages</b><span>effective independent groups among those 209</span></div>
+  <div class="fact"><b>$66.28 of AWS</b><span>in the ledgers; ≈ $186 of the $200 follow-up left</span></div>
+</div>
+
+<!-- ============================================================ 2 -->
+<h2 id="state">2. State of the project</h2>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Stage</th><th>Result</th><th>Reading</th></tr></thead>
+  <tbody>
+    <tr><td>M3 bootstrap</td><td>Met, 2026-09-27. 580 of 839 screening passers confirmed, 24 genetic clusters (20 required).</td><td>Met as specified. Under the later stricter rule (32 replicates, lower bound above 0.8) a retest finds passers in 13 of the 24 clusters. 12 founders survive pooled replication.</td></tr>
+    <tr><td>M4 ensemble</td><td>Not met, 2026-09-28. 170 runs of 10⁶ steps. Endpoint 1 holds on <code>gradient-m3</code> (effect 1.00), fails versus neutral on <code>spots-m3</code> (p = 0.0116). Endpoint 2 fails on both: treatment grows 20 of 20 and 8 of 10, but neutral grows 20 of 20 and 10 of 10.</td><td>Endpoint 2's neutral-minority condition is hard to satisfy by construction (95th-percentile threshold). Endpoints 3 and 4 hold; the held-out hypothesis is 0 of 4. The 10⁷ extension (15 runs) repeats the pattern.</td></tr>
+    <tr><td>Foundations review</td><td>Gate row: <strong>Variation</strong>. Test 2: 310 of 2,400 mutants (12.9%) viable and changed, but viable role change for 1 founder of 12. Test 3: 1 founder of 12 originates a role.</td><td>Tests 4 and 4b (competition over time) are Inconclusive; test 1's slopes (0.85, 0.96, 0.90) are mostly whole-genome fidelity (148 of 200 links clonal).</td></tr>
+    <tr><td>Founder diagnostic</td><td><strong>11 of 24</strong> genomes count against 1 of 12 founders (both gardens).</td><td>By stratum: archive non-phototroph 7 of 8, archive phototroph 0 of 8, evolved non-phototroph 3 of 4, evolved phototroph 1 of 4. Most role change is non-phototrophs turning phototroph or mixed (82 of 107). Six of 24 subjects already show several roles without mutation.</td></tr>
+    <tr><td>Extension time-shift</td><td>Incomplete, so no reading. Three states lacked five eligible lineages.</td><td>Descriptive only: later origins beat earlier ones (10⁷ over 3×10⁶ in 4 of 5 histories; 3×10⁶ over 10⁶ in 5 of 5), yet every origin does worse in the later worlds (15 of 15). The neutral control sat at the extinction floor.</td></tr>
+    <tr><td>Reset and Gate A</td><td>Reset: 135 of 200 sampled parent links show zero immediate copy contribution (118 of 127 buddings, 17 of 73 fissions). Follow-up feasibility gate not passed. Gate A not passed (segmentation-dependent).</td><td><strong>Measurement limitation</strong>, not a negative result.</td></tr>
+    <tr><td>Predation</td><td>Candidate only. Motivated by informal lab runs; untested.</td><td>On hold until the entity question, since it changes the genome layout and re-pins every golden hash.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>What was actually established, and what was not</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th style="width:50%">Established (under RULE_VERSION 1)</th><th>Not established: measurement limits</th></tr></thead>
+  <tbody><tr>
+    <td>
+      <ul>
+        <li>M3's gate is met as specified, with conservation exact in every run.</li>
+        <li>Mutation produces viable, changed variants at about 13% per mutant.</li>
+        <li>Which genomes found a world changes how often roles originate: 10 of 12 non-phototroph genomes count, 1 of 12 phototrophs.</li>
+        <li>Competitive gains over time look like they keep accumulating (descriptive, both 10⁶ and 10⁷ horizons).</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><strong>Reproducing entities.</strong> The tracker's parent links are not causal evidence; the local observer feasibility test did not pass. Every role-origination readout uses tracker births, so founder results inherit that doubt.</li>
+        <li><strong>Measures.</strong> Test 6 found none of the four activity, novelty and role measures eligible (null checks flag 30 of 70 neutral runs for shadow excess; 40 of 70 for phenotype-bin novelty). Part of endpoint 1's margin is demographic.</li>
+        <li><strong>Time-shift.</strong> The 10⁷ result is incomplete and its neutral control uninformative.</li>
+        <li><strong>Why M4 fails.</strong> Unexplained: <code>compartmentalised</code> is 0 everywhere, and the detector was only checked on hand-built fixtures.</li>
+      </ul>
+    </td>
+  </tr></tbody>
+</table>
+</div>
+
+<!-- ============================================================ 3 -->
+<h2 id="findings">3. Findings of the ecology-first program</h2>
+<p>Three angles, opened beside the entity line under RULE_VERSION 1: <strong>A</strong> screen in a conditioned medium (waste, or a producer background), <strong>B</strong> found from drifted genome clouds instead of clonal points, <strong>C</strong> found with assembled sets that leave a niche empty. Roles are a readout, never a selection score. Seeds 4,700,001–4,799,999.</p>
+
+<figure class="chart">
+  <div class="lab group">Share of subjects that originate a role (uniform garden, primary reading). Units differ by row, so compare within a group only.</div>
+
+  <div class="lab group">Point founders and diagnostic</div>
+  <div class="lab"><span>M3 founders (test 3)</span><span class="bar warn"><i style="--w:8.3%"></i></span><span class="v">1 of 12</span></div>
+  <div class="lab"><span>Other genomes, all (diagnostic)</span><span class="bar"><i style="--w:45.8%"></i></span><span class="v">11 of 24</span></div>
+  <div class="lab"><span>… archive non-phototroph</span><span class="bar"><i style="--w:87.5%"></i></span><span class="v">7 of 8</span></div>
+  <div class="lab"><span>… archive phototroph</span><span class="bar warn"><i style="--w:0%"></i></span><span class="v">0 of 8</span></div>
+  <div class="lab"><span>… evolved non-phototroph</span><span class="bar"><i style="--w:75%"></i></span><span class="v">3 of 4</span></div>
+  <div class="lab"><span>… evolved phototroph</span><span class="bar warn"><i style="--w:25%"></i></span><span class="v">1 of 4</span></div>
+
+  <div class="lab group">B. Drifted clouds (one cloud per founder)</div>
+  <div class="lab"><span>Clouds that count</span><span class="bar warn"><i style="--w:8.3%"></i></span><span class="v">1 of 12</span></div>
+
+  <div class="lab group">C. Founder sets (5 mutation runs each)</div>
+  <div class="lab"><span>S1 non-producers</span><span class="bar"><i style="--w:60%"></i></span><span class="v">3 of 5</span></div>
+  <div class="lab"><span>S2 phototrophs only</span><span class="bar warn"><i style="--w:0%"></i></span><span class="v">0 of 5</span></div>
+  <div class="lab"><span>S4 S2 on waste-fed world</span><span class="bar warn"><i style="--w:0%"></i></span><span class="v">0 of 5</span></div>
+  <div class="lab"><span>S5 S1 + S2 interleaved</span><span class="bar"><i style="--w:100%"></i></span><span class="v">5 of 5</span></div>
+  <figcaption>A subject counts when it originates a role (test 3's definition, against its own no-mutation runs) in at least 3 of its 5 mutation runs. Orange bars are at or below the point-founder rate.</figcaption>
+</figure>
+
+<h3>A. Conditioned-medium screens (Mac, $0)</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Medium</th><th class="n">Evaluated</th><th class="n">Viable</th><th class="n">Gate-passing</th><th class="n">Confirmed (16 reps)</th><th class="n">Clusters</th><th class="n">Obligate</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Waste</strong> <code>waste:8:24</code></td><td class="n">3,200</td><td class="n">2,677</td><td class="n">232</td><td class="n">148</td><td class="n">14 (gate needs 20: not met)</td><td class="n"><strong>0 of 148</strong></td></tr>
+    <tr><td><strong>Background</strong> producer ring (founder 0)</td><td class="n">3,200</td><td class="n">2,854</td><td class="n">1,633</td><td class="n">1,476</td><td class="n">33 (gate met)</td><td class="n"><strong>209 of 1,476</strong> (14.2%)</td></tr>
+  </tbody>
+</table>
+</div>
+<ul>
+  <li><strong>n and controls.</strong> Each search is 200 batches of 16 (<code>--score maintenance</code>); confirmation on fresh seeds; the dependence re-screen evaluates every confirmed genome under the standard medium (<code>DEFAULT_EVAL</code>, 16 replicates, fresh seeds) and calls it obligate if it survives in 0 of 16. The standard medium is the control.</li>
+  <li><strong>Waste.</strong> One cluster holds 117 of the 148. Only 2 confirmed genomes have positive <code>motGain</code>. At the cluster level, 0 of 14 obligate against 12 of 33 on background (one-sided Fisher p ≈ 0.007, exploratory).</li>
+  <li><strong>Background: dependence is graded.</strong> 209 survive alone in 0 of 16, 187 in 1–15 of 16, and 1,080 in all 16.</li>
+  <li><strong>Caveats.</strong> Evaluator roles were not recorded in either search. The background is one producer (founder 0), so this shows dependence on a <em>producer-conditioned medium</em>, not on any named resource. Cluster labels are local to each pool.</li>
+</ul>
+
+<h3>Background medium: the 209 obligates, analysed</h3>
+<p>Read-only, no GPU (<code>tools/fa-background.ts</code>; numbers in <code>experiments/foundations/fa-background.json</code>, key <code>deepDive</code>). Clusters use <code>geneticClusters</code> at the standard distance of 10 slots; the recomputed 33 clusters match the stored labels.</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+  <tbody>
+    <tr><td>Clusters among the 1,476 confirmed</td><td>33, sizes 445, 145, 145, 110, 98, 90, 68 … down to 7 singletons. Effective number (inverse Simpson) 7.7. Cluster 0 (445 genomes) contains the hand-built generalist genome itself, (distance 0; it is the search's first archive entry).</td></tr>
+    <tr><td>Clusters among the 209 obligates</td><td><strong>12</strong> of the 33. Clustering the obligates alone gives 17 groups at distance 10, 13 at 20, and a stable 12 from distance 40 up. Effective number is <strong>2.0</strong>: cluster 3 holds 144 of 209 (69%).</td></tr>
+    <tr><td>Clonal near-duplicates?</td><td><strong>Largely yes, for cluster 3.</strong> All 144 obligates there are distinct genomes, but each lies within 20 slots of one medoid (median 5), nearest neighbours are 1–4 slots apart, and the widest pair differs at 31 of 163 slots. That is the footprint of one genotype plus its mutant cloud from the archive, not 144 independent discoveries. The other 65 obligates sit in 11 clusters of mostly unrelated founders (median pairwise distance 161).</td></tr>
+    <tr><td><code>motGain</code></td><td>204 of 209 are 0 (97.6%); the 5 positive are all outside cluster 3, maximum 23. Among all 1,476 confirmed, 16 are positive (1.1%), maximum 24. Obligates are not a motile group.</td></tr>
+    <tr><td>Evaluations (16 replicates, background)</td><td>Indistinguishable on the screen's own measures: all survive and are light-dependent in 16 of 16, regenerate 15.95 vs 15.79 of 16, recovery 0.996 vs 0.997. The one measure that separates them is the standard-medium survival that defines them.</td></tr>
+    <tr><td>Other differences (descriptive)</td><td>Fewer, larger individuals: 1.9 per tile vs 10.1, mean mass 210,943 vs 118,318, speed 2.6 vs 1.8, fission plus budding 42 vs 64 per tile. Mostly cluster 3 (1.0 individual per tile, mass 237,048). Outside it: 4.0 individuals, mass 153,103. Lenia μ and σ run lower (medians 56 and 12, against 60 and 20).</td></tr>
+    <tr><td>What do they do?</td><td><strong>Unknown.</strong> A weights-only controller probe (2,000 synthetic inputs, integer forward pass) calls all 1,476 "photosynthesis-capable", and it also calls all 24 founder-diagnostic genomes capable, 12 of which the evaluator labels non-phototroph, so it fails validation and supports no role claim. One descriptive fact only: cluster 3's growth output is positive in 0.04% of probes (non-obligate genomes: median 79%); a quarter of the diagnostic phototrophs are also low, so this is weak.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<figure class="chart">
+  <div class="lab group">Obligate share of each cluster that contains any (bar = obligate / cluster size)</div>
+  <div class="lab"><span>Cluster 3</span><span class="bar"><i style="--w:99.3%"></i></span><span class="v">144 / 145</span></div>
+  <div class="lab"><span>Cluster 19</span><span class="bar"><i style="--w:58.8%"></i></span><span class="v">20 / 34</span></div>
+  <div class="lab"><span>Cluster 11</span><span class="bar"><i style="--w:35%"></i></span><span class="v">14 / 40</span></div>
+  <div class="lab"><span>Cluster 4</span><span class="bar"><i style="--w:10.9%"></i></span><span class="v">12 / 110</span></div>
+  <div class="lab"><span>Cluster 9</span><span class="bar"><i style="--w:50%"></i></span><span class="v">5 / 10</span></div>
+  <div class="lab"><span>Cluster 17</span><span class="bar"><i style="--w:11.1%"></i></span><span class="v">3 / 27</span></div>
+  <div class="lab"><span>Cluster 0 (generalist)</span><span class="bar"><i style="--w:0.7%"></i></span><span class="v">3 / 445</span></div>
+  <div class="lab"><span>Cluster 1</span><span class="bar"><i style="--w:2.1%"></i></span><span class="v">3 / 145</span></div>
+  <div class="lab"><span>Cluster 7</span><span class="bar"><i style="--w:2.9%"></i></span><span class="v">2 / 68</span></div>
+  <div class="lab"><span>Cluster 5</span><span class="bar"><i style="--w:1.1%"></i></span><span class="v">1 / 90</span></div>
+  <div class="lab"><span>Clusters 31 and 32</span><span class="bar"><i style="--w:100%"></i></span><span class="v">1 / 1 each</span></div>
+  <figcaption>The other 21 clusters contain no obligate genome. Only clusters 3, 19, 31 and 32 are majority-obligate (cluster 9 is exactly half).</figcaption>
+</figure>
+
+<details>
+<summary>Obligate versus rest, full comparison</summary>
+<div class="tablewrap">
+<table>
+  <thead><tr><th></th><th class="n">Obligate (209)</th><th class="n">Cluster 3 only (145)</th><th class="n">Obligate outside 3 (65)</th><th class="n">Not obligate (1,267)</th></tr></thead>
+  <tbody>
+    <tr><td>Survived alone in standard medium (of 16)</td><td class="n">0</td><td class="n">0.11 mean</td><td class="n">0</td><td class="n">1–16 (1,080 at 16)</td></tr>
+    <tr><td>Survived in background (of 16)</td><td class="n">16</td><td class="n">16</td><td class="n">16</td><td class="n">16</td></tr>
+    <tr><td>Regenerated (of 16, mean)</td><td class="n">15.95</td><td class="n">16.00</td><td class="n">15.83</td><td class="n">15.79</td></tr>
+    <tr><td>Regeneration lower bound above 0.8</td><td class="n">201</td><td class="n">145</td><td class="n">57</td><td class="n">1,100</td></tr>
+    <tr><td>Recovery</td><td class="n">0.996</td><td class="n">1.000</td><td class="n">0.988</td><td class="n">0.997</td></tr>
+    <tr><td>Individuals per tile</td><td class="n">1.9</td><td class="n">1.0</td><td class="n">4.0</td><td class="n">10.1</td></tr>
+    <tr><td>Mean individual mass</td><td class="n">210,943</td><td class="n">237,048</td><td class="n">153,103</td><td class="n">118,318</td></tr>
+    <tr><td>Speed</td><td class="n">2.57</td><td class="n">2.81</td><td class="n">2.05</td><td class="n">1.80</td></tr>
+    <tr><td>Fission + budding per tile</td><td class="n">42.3</td><td class="n">40.6</td><td class="n">45.9</td><td class="n">64.0</td></tr>
+    <tr><td>Positive <code>motGain</code></td><td class="n">5</td><td class="n">0</td><td class="n">5</td><td class="n">11</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Cluster 3 is 69% of the obligates, so obligate-versus-rest mostly compares cluster 3 with the rest. The cluster 3 column counts all 145 members, one of which is not obligate.</p>
+</details>
+
+<h3>B. Drifted clouds</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Subjects</th><th class="n">Runs</th><th>Result</th><th>Controls and caveats</th></tr></thead>
+  <tbody><tr>
+    <td>12 clouds, one per M3 founder (the 13 most abundant lineages of that founder's test-3 run at step 100,100)</td>
+    <td class="n">96 (5 mutation + 3 none per cloud)</td>
+    <td><strong>1 of 12 count</strong> (founder 2's cloud, 4 of 5 runs). Point founders: 1 of 12 (test 3), 11 of 24 (diagnostic). Gradient garden: 3 of 12 (founders 2, 3, 9).</td>
+    <td>Raw role windows against each cloud's own no-mutation runs would pass for 10 of 12, but 70 of 92 uniform-garden outcomes keep the same role beside the standing lineage. Clouds already hold several roles at step 100. Three mutation runs went extinct (founders 0 and 7). The one counting cloud is the one founder that counted as a point.</td>
+  </tr></tbody>
+</table>
+</div>
+
+<h3>C. Assembled sets</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Set</th><th>Composition</th><th class="n">Uniform</th><th class="n">Gradient</th><th>Roles without mutation</th><th>Roles at step 100</th></tr></thead>
+  <tbody>
+    <tr><td>S1</td><td>4 non-producer genomes (diagnostic subjects 0, 3, 1, 6); two of them 19 slots apart</td><td class="n"><strong>3 / 5</strong></td><td class="n">3 / 5</td><td>chemotroph, mixed</td><td>all four</td></tr>
+    <tr><td>S2</td><td>9 phototroph M3 founders, no hole (control)</td><td class="n">0 / 5</td><td class="n">1 / 5</td><td>phototroph, mixed</td><td>three</td></tr>
+    <tr><td>S4</td><td>S2 genomes on <code>gradient-m3-waste</code></td><td class="n">0 / 5</td><td class="n">1 / 5</td><td>phototroph</td><td>all four</td></tr>
+    <tr><td>S5</td><td>S1 and S2 interleaved across the 13 discs (control added 2026-09-30)</td><td class="n"><strong>5 / 5</strong></td><td class="n">5 / 5</td><td>chemotroph, mixed</td><td>all four</td></tr>
+  </tbody>
+</table>
+</div>
+<ul>
+  <li><strong>n.</strong> Each set is 8 runs of 10⁶ steps (5 mutation, 3 without), 32 runs in total for S1, S2, S4, S5. No run went extinct. S5's originating roles are phototroph and decomposer.</li>
+  <li><strong>Reading.</strong> S5 counts like S1 even with producers present, so an empty niche is not required. It points at the non-producer genomes. But see the next section: those genomes count on their own.</li>
+  <li>No set adds a role that qualifies later and was absent at step 100. Across clouds only 3 of 12 do (chemotroph on founder 6; phototroph on founders 8 and 10).</li>
+</ul>
+
+<!-- ============================================================ 4 -->
+<h2 id="cautions">4. Honest cautions</h2>
+<div class="caution"><strong>Correction.</strong> A mid-run reading of "zero obligates" in the background medium was wrong. It was taken after 68 of 1,476 genomes had been re-screened (recorded in the plan's waste entry and in <code>fa-waste.json</code> as a projection). Obligates appeared late in the list: the first turned up at genome 92, there were 17 by 164, 48 by 324 and 209 at the end. An early zero said nothing, and the "a sample would decide the same" projection was a guess. That file still carries the stale note and was left untouched.</div>
+<ul>
+  <li><strong>Exploratory and small.</strong> Five mutation runs per set or cloud, no registration. At that size a true rate of 0.5 and one of 0.2 are hard to tell apart, and the ecology readings were written up after the fact, although S5's reading rule was fixed before its runs.</li>
+  <li><strong>The no-mutation controls already show several roles.</strong> Six of 24 diagnostic subjects, and the founder-2 cloud, S1, S2 and S5 sets do. Part of any "origination" is sorting of standing diversity. Leaving the six subjects out, 8 of 18 still count.</li>
+  <li><strong>S1 and S5 do not add to the diagnostic.</strong> Their four genomes come from the non-phototroph archive stratum that was already counted, and each originates a role in 5 of 5 runs <em>as a monoculture</em> (subjects 0, 1, 3, 6). The sets' 3 of 5 and 5 of 5 therefore show that the genome class matters, not that the community does. S1 is effectively three lineages.</li>
+  <li><strong>Most origination is one-shot niche filling.</strong> In the diagnostic, 82 of 107 different-role descendants are non-phototrophs gaining photosynthesis. Clouds and sets show the same: no set adds a role after step 100, and qualifying windows stay near 0.04–0.32 per 10⁵ steps. Nothing here shows recurring radiation.</li>
+  <li><strong>The 209 obligates are about two lineages,</strong> and the dependence could be density (an Allee threshold), tile geometry, or the specific producer rather than anything a consumer would need. Roles are unknown.</li>
+  <li><strong>Everything rests on the tracker.</strong> Role origination, first-window timing and windows per 10⁵ all use tracker lineages; the reset found tracker parenthood unsupported as causal evidence.</li>
+  <li><strong>Separation rule.</strong> Role strata (phototroph or not, obligate or not) are a readout. They must never become a selection criterion for a future cohort, or M5 would be selected for. Any adopted screen is re-run under its own registered rule and seeds.</li>
+</ul>
+
+<!-- ============================================================ 5 -->
+<h2 id="costs">5. Costs</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Item (AWS g5.xlarge, all instances terminated)</th><th class="n">Actual</th><th>Budget it drew on</th></tr></thead>
+  <tbody>
+    <tr><td>10⁷ extension</td><td class="n">$15.77</td><td>its own $50</td></tr>
+    <tr><td>Foundations tests (two instances: $18.21 + $23.29), including the founder diagnostic</td><td class="n">$41.50</td><td>tests' $50: about $36.50; about $5 (the time-shift) from the $200</td></tr>
+    <tr><td>Ecology B and C (96 + 24 runs)</td><td class="n">$8.02</td><td>$200 follow-up (about $20 authorised, hard stop $25)</td></tr>
+    <tr><td>Ecology S5 (8 runs + gardens)</td><td class="n">$0.99</td><td>$200 follow-up (about $2 authorised, hard stop $5)</td></tr>
+    <tr class="total"><td>Total in the ledgers (<code>runs/foundations/ops/cost-*</code>)</td><td class="n">$66.28</td><td></td></tr>
+    <tr><td>Drawn from the $200 follow-up</td><td class="n">≈ $14.01</td><td>$5 (plan's figure; the ledger does not itemise it) + $8.02 + $0.99</td></tr>
+    <tr class="total"><td>Remaining of the $200</td><td class="n">≈ $185.99</td><td>untouched: about $60 for a RULE_VERSION 2 go/no-go and about $120 for the next registered cohort</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Angle A ran on the Mac at $0, as did every pilot. A separate scaffold sandbox finished at $4.87 (its own ledger, in the scaffold workspace, not in the list above). If that also counts against the $200, about $181.12 remains. Throughput for planning: about 22 minutes per 10⁶-step run on the Mac, about $0.07 per run on AWS.</p>
+
+<!-- ============================================================ 6 -->
+<h2 id="next">6. Most promising next steps, ranked</h2>
+<p>Success and kill thresholds below are proposals for discussion, not registered. Costs are estimates from the ledgers above.</p>
+
+<div class="doFirst"><strong>Do first:</strong> evaluate one representative per obligate cluster on the Mac with roles recorded, in five media (standard, waste, the founder-0 background, a second producer's background, and standard at four times the seeding biomass). About an hour, $0, and it says what the obligates need before anything is built around them.</div>
+
+<div class="step">
+  <h3><span class="rank">1</span>Follow the obligates: characterise, then found producer-plus-consumer worlds <span class="tag">candidate a</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd><strong>Stage 1</strong> (Mac GPU): the evaluation above for the 12 cluster representatives plus cluster 3's medoid and a few neighbours. <strong>Stage 2</strong>: set S6, founder 0 (the producer the obligates were screened on) plus one obligate representative per cluster, cluster 3 capped at one or two, on <code>gradient-m3</code>; 5 mutation and 3 no-mutation runs to 10⁶, with producer-only and obligate-only controls. Read consumer-resource dynamics (abundance lag and cycles) and whether new roles or lineages appear after the first fill.</dd>
+    <dt>Why</dt><dd>The only finding that yields genomes which need another lineage (209 of 1,476 against 0 of 148), and the nearest thing here to real interdependence, which M5 needs. It is also the program's natural answer to "one-shot filling".</dd>
+    <dt>Cost, time</dt><dd>Stage 1: about 1 hour, $0. Stage 2: about $2–4 on AWS (24 runs plus gardens) or about 9 hours on the Mac.</dd>
+    <dt>Success</dt><dd>Stage 1: a cluster-3 representative keeps its dependence on a second producer's background or on waste, and four times the biomass does not rescue it (under 8 of 16 survive alone). Stage 2: an obligate lineage holds at least 5% of living cells for at least 10⁵ steps in at least 3 of 5 mutation runs with the producer, and dies out in obligate-only runs.</dd>
+    <dt>Kill</dt><dd>Density alone rescues them (an Allee threshold, not interdependence), or they are extinct within 2×10⁵ steps in at least 4 of 5 runs (the dependence was an artefact of the 64-cell tile).</dd>
+    <dt>Risk</dt><dd>Effective n is about 2. Roles stay tracker-based. A positive result could still be a single fill with no recurrence.</dd>
+  </dl>
+  <p><strong>Stage 1 result (added 2026-09-30, after the run).</strong> It ran on the Mac, in a form fixed in <code>docs/plan.md</code> beforehand (48 genomes, five media, 16 replicates; <code>tools/obligates-x.ts</code>, <code>experiments/foundations/fo.json</code>). All 12 cluster representatives reproduce their dependence on fresh seeds (at most 1 of 16 alive in the standard medium, 0 of 16 in waste, 16 of 16 on both producers' backgrounds), but the kill rule fired: at four times the seeding biomass, 11 of 12 survive 16 of 16 alone, including all three cluster-3 representatives. The dependence is a founding-density threshold, not shown to be interdependence, and the obligates are as photosynthetic as the others (10 of 12 phototroph) and displace the producer rather than eat its products. Stage 2 as written is not supported; cluster 9's representative (1 of 16 even at four times biomass) is the one candidate left.</p>
+</div>
+
+<div class="step">
+  <h3><span class="rank">2</span>Recurrence readout on the existing runs <span class="tag">candidate b</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd>Re-analyse the 128 existing B, C and S5 runs (plus the diagnostic's monocultures and M4 treatment for a baseline): origination windows per 10⁵ steps, time to first origination, and second-generation originations (a descendant of an originated lineage originating a further role), in S1 and S5 against S2, S4 and no-mutation. Streaming, zero GPU.</dd>
+    <dt>Why</dt><dd>The data already hint at one-shot filling (windows 0.04–0.32 per 10⁵, no late roles in any set). This turns the hint into the bar that step 1 must clear, and it is free.</dd>
+    <dt>Cost, time</dt><dd>$0, one to two days.</dd>
+    <dt>Success</dt><dd>A clear answer: second-generation originations in at least 3 of 5 S1 or S5 mutation runs and absent in no-mutation would be recurrence.</dd>
+    <dt>Kill</dt><dd>None in any set means recurrence is unsupported from these starts, and step 1 is judged against that.</dd>
+    <dt>Risk</dt><dd>Depends on tracker lineage roles and on test 3's origination rule; small n.</dd>
+  </dl>
+  <p><strong>Addendum, done 2026-09-30</strong> (zero GPU, all 416 runs on disk: the 128 B/C runs, test 3's 96 solo runs, the diagnostic's 192; <code>tools/recurrence-x.ts</code>, <code>experiments/foundations/fr.json</code>, definitions fixed in <code>docs/plan.md</code> before counting). It uses a simpler event than the second-generation originations named above: a later role window that follows at least 10⁵ steps below 5%, or is held by a new founder clade, starting after step 2×10⁵. By that count S1 and S5 show <strong>none in any of 16 runs</strong> (so the "3 of 5 S1 or S5 runs" success test is not met, and the pre-stated reading is one-shot). The other families are mixed at low rates: B clouds 0.28 events per run [0.17, 0.40] against 0.06 without mutation, solo founders 0.18 against 0.00, but the diagnostic's subjects 0.06 against 0.17, so nothing here shows recurrence as a general property. What does occur is late first fills of new roles (0.3–0.65 per mutation run against 0–0.17 without mutation), not repeats of filled ones. The bar for step 1: an S6 world needs at least 3 of 5 mutation runs with an event, a mean above the B clouds' 0.28 per run, a difference from its own no-mutation runs whose 90% interval excludes zero, and fewer events in its producer-only and obligate-only controls.</p>
+</div>
+
+<div class="step">
+  <h3><span class="rank">3</span>Seasons forcing <span class="tag">candidate g</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd>Run S1, S5, S2 and the 12 M3 founders under the <code>seasons</code> preset (RULE_VERSION 1), 10⁶ steps, same readouts. Needs founder-set support in that preset, a small code change.</dd>
+    <dt>Why</dt><dd>Informal lab observation that <code>seasons</code> and <code>soup</code> break the static-lattice attractor; M4's per-window data show turnover falling in uniform-light runs, hinting that patchiness helps. The plan names forcing as the comparison predation must beat.</dd>
+    <dt>Cost, time</dt><dd>Four sets × 8 runs, about $2–3 plus gardens.</dd>
+    <dt>Success</dt><dd>Qualifying windows per 10⁵ in the second half at least match the first half, or roles absent at step 100 qualify later, in clearly more runs than under <code>gradient-m3</code> with the same founders.</dd>
+    <dt>Kill</dt><dd>No difference from <code>gradient-m3</code>, or higher extinction.</dd>
+    <dt>Risk</dt><dd>The informal evidence is unmeasured; a light regime also shifts role labels.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <h3><span class="rank">4</span>Measurement replacement <span class="tag">candidate j</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd>Design activity, novelty and role measures calibrated against the neutral runs, so every neutral run passes on both presets and they separate worlds known to differ. Rehearse on existing M4 and extension data.</dd>
+    <dt>Why</dt><dd>Test 6 found no eligible measure. Any registered cohort, and any claim from steps 1–3, needs one. It competes with nothing for the GPU.</dd>
+    <dt>Cost, time</dt><dd>$0 compute beyond existing data; days of work.</dd>
+    <dt>Success</dt><dd>Passes test 6's checks (null upper bound at most 0.10; separates the known-different pairs).</dd>
+    <dt>Kill</dt><dd>No measure passes: activity-style endpoints are dropped and the project needs a different kind of claim.</dd>
+    <dt>Risk</dt><dd>Births are still tracker-based until the entity question moves.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <h3><span class="rank">5</span>Diversify the obligate pool <span class="tag">added, conditional on 1</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd>Repeat angle A with roles recorded and two or three other producer backgrounds; screen dependence on the best few members per cluster to avoid a 5-hour full re-screen.</dd>
+    <dt>Why</dt><dd>Two effective lineages is too few to generalise from, and the first run did not record roles.</dd>
+    <dt>Cost, time</dt><dd>Mac, $0, roughly 8–12 hours per background (search about 2.5 hours plus confirmation).</dd>
+    <dt>Success</dt><dd>At least 5 effectively independent obligate clusters, with roles.</dd>
+    <dt>Kill</dt><dd>Only cluster-3-like mutant clouds recur, or step 1 shows density explains dependence.</dd>
+    <dt>Risk</dt><dd>Sampling by cluster can miss rare obligates inside facultative clusters.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <h3><span class="rank">6</span>The entity and measurement question of the reset <span class="tag">candidate i</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd>Redesign the contact-versus-separated recovery assay around organizational continuity and functional reproduction as operational criteria, with matched controls and thresholds fixed in advance.</dd>
+    <dt>Why</dt><dd>It gates mechanism choice (inheritance, predation) and every non-scaffold claim. Its first feasibility gate did not pass.</dd>
+    <dt>Cost, time</dt><dd>Mac CPU; weeks. No cloud.</dd>
+    <dt>Success</dt><dd>A criterion that passes known-history controls and is not segmentation-dependent.</dd>
+    <dt>Kill</dt><dd>It stays segmentation-dependent: treat entities as unmeasurable here and move to imposed units or drop entity-level claims.</dd>
+    <dt>Risk</dt><dd>Long and may not resolve; Gate A already failed once.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <h3><span class="rank">7</span>Controls and replication for S1 and S5 <span class="tag">candidates c and d</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd>16 runs of S1 and S5; matched producer-heavy sets from <em>non-archive</em> genomes (evolved phototrophs); S1 with non-archive non-producers.</dd>
+    <dt>Why</dt><dd>S5 replicates the diagnostic, not a community effect. The untested contrast is genome class versus community with non-archive genomes.</dd>
+    <dt>Cost, time</dt><dd>About $3–6.</dd>
+    <dt>Success</dt><dd>Evolved phototroph sets at 0–1 of 5 and evolved non-producer sets at 3 or more of 5 would support a genome-class effect.</dd>
+    <dt>Kill</dt><dd>Phototroph sets count as often: the class claim falls.</dd>
+    <dt>Risk</dt><dd>Low information for the mechanism question; only worth it if class-versus-community becomes decision-relevant. More seeds of the same sets add little.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <h3><span class="rank">8</span>Analytic evolvability score <span class="tag">candidate e</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd>A weights-only score for ranking genomes before any run, validated first against the 24 diagnostic outcomes and test 2's 2,400 mutants.</dd>
+    <dt>Why</dt><dd>Zero GPU. But the probe above failed its own validation for roles, and n is tiny.</dd>
+    <dt>Cost, time</dt><dd>$0, days.</dd>
+    <dt>Success</dt><dd>Predicts the diagnostic's counts better than the phototroph stratum alone (10 of 12 versus 1 of 12).</dd>
+    <dt>Kill</dt><dd>It does not.</dd>
+    <dt>Risk</dt><dd>A score used for selection invites the mismatch the selection audit found, and must stay disjoint from every held-out measure.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <h3><span class="rank">9</span>Red Queen diagnosis on the extension states <span class="tag">candidate f</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd>Rerun the time-shift with a rank rule fixed for short states, to test whether later worlds are harder for everyone (15 of 15 origin-history pairs).</dd>
+    <dt>Why</dt><dd>It would show whether accumulation is competitive arms race or drift, and informs the next horizon.</dd>
+    <dt>Cost, time</dt><dd>About $5–10.</dd>
+    <dt>Success / kill</dt><dd>A complete reading of the pre-fixed rule, either way.</dd>
+    <dt>Risk</dt><dd>Neutral control sits at the extinction floor, so it may stay uninformative. Does not move toward a mechanism.</dd>
+  </dl>
+</div>
+
+<div class="step">
+  <h3><span class="rank">10</span>RULE_VERSION 2 predation <span class="tag">candidate h</span></h3>
+  <dl class="k">
+    <dt>What</dt><dd>A costly, resistible way to consume another genome's living biomass.</dd>
+    <dt>Why</dt><dd>Could bring consumer-resource dynamics and select for boundaries. Evidence is one informal observation.</dd>
+    <dt>Cost, time</dt><dd>Genome-layout change, re-pinned golden hashes, a new cohort; the $60 go/no-go draw is reserved for it.</dd>
+    <dt>Success / kill</dt><dd>Only after steps 3 and 6: it must beat <code>seasons</code> forcing, and only once the entity question is answered.</dd>
+    <dt>Risk</dt><dd>Largest build and the least evidence.</dd>
+  </dl>
+</div>
+
+<h3>Recommended order</h3>
+<ol>
+  <li><strong>Now, in parallel:</strong> step 1, stage 1 (Mac, an hour) and step 2 (analysis only). Neither needs the cloud. Together they tell us what the obligates are and what bar "recurrence" has to clear.</li>
+  <li><strong>Then one AWS session (about $5–8):</strong> step 1, stage 2 and step 3 (seasons), sharing a g5 instance.</li>
+  <li><strong>Alongside, no GPU:</strong> step 4 (measurement), since a registered cohort cannot start without it. Step 5 follows only if stage 1 holds.</li>
+  <li><strong>Slow track:</strong> step 6 (entity). Steps 7–9 only if a decision needs them; step 10 last, after 3 and 6.</li>
+</ol>
+
+<h2 id="open">Open questions for you</h2>
+<ol>
+  <li>Is the target a registered M4-style cohort (which makes measurement replacement urgent) or an exploratory existence proof of interdependence and recurring radiation?</li>
+  <li>Should dependence stay binary (0 of 16 alone) or be graded? 187 more genomes survive alone in only 1–15 of 16.</li>
+  <li>Can about $5–8 of the $200 go to the S6 and seasons session, and should the scaffold sandbox's $4.87 count against the same $200?</li>
+  <li>Is the Mac GPU free for the stage-1 evaluations, given other lines share it?</li>
+  <li>Should the stale "0 obligate so far" note in <code>fa-waste.json</code> be corrected, or left as a record?</li>
+</ol>
+
+<details>
+<summary>Sources and method</summary>
+<ul>
+  <li>Plan and results: <code>docs/plan.md</code> (M3, M4, foundations review, founder diagnostic, time-shift, reset, "Ecology-first founder discovery"), <code>docs/reassessment-2026-09-30.md</code>.</li>
+  <li>Numbers checked against <code>experiments/foundations/</code> (<code>gate.json</code>, <code>fd.json</code>, <code>t3.json</code>, <code>t4b.json</code>, <code>t4x.json</code>, <code>fx.json</code>, <code>fa-waste.json</code>, <code>fa-background.json</code>), <code>runs/bootstrap-medium-{waste,background}/</code>, <code>runs/ops/a-background.log</code>, and the cost ledgers in <code>runs/foundations/ops/</code>.</li>
+  <li>New analysis: <code>tools/fa-background.ts</code> (CPU, read-only). It recomputes clusters with <code>geneticClusters</code>, matches each dependence row to its confirmed genome by exact genome, and adds a <code>deepDive</code> block to <code>fa-background.json</code>; existing keys are unchanged. <code>confirm.json</code> lists all 1,633 screening passers; 1,476 are confirmed and have dependence rows.</li>
+  <li>Not verified here: what the obligates do; the founder-policy and scaffold results; the $5 time-shift share (taken from the plan).</li>
+</ul>
+</details>
+
+<footer>Generated 2026-09-30. Self-contained: inline CSS and markup only, no external assets. Nothing was committed or run to produce it.</footer>
+
+</main>
+<script>
+  // Print with every collapsible section expanded.
+  (function () {
+    var opened = [];
+    window.addEventListener("beforeprint", function () {
+      opened = [];
+      document.querySelectorAll("details").forEach(function (d) { if (!d.open) { d.open = true; opened.push(d); } });
+    });
+    window.addEventListener("afterprint", function () { opened.forEach(function (d) { d.open = false; }); });
+  })();
+</script>
+</body>
+</html>

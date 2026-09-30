@@ -1,0 +1,6708 @@
+{
+ "note": "exploratory; subjects, media, measures and readings fixed in docs/plan.md before any result. Roles are read out, never scored.",
+ "complete": true,
+ "plan": {
+  "date": "2026-09-30",
+  "script": "tools/obligates-x.ts",
+  "reps": 16,
+  "seeds": {
+   "base": 4790001,
+   "rule": "seed + 20 * mediumIndex + batchIndex",
+   "media": [
+    "standard",
+    "waste",
+    "bg0",
+    "bg2",
+    "x4"
+   ]
+  },
+  "media": {
+   "standard": "standard (DEFAULT_EVAL)",
+   "waste": "waste 8/24 (nutrient 8, waste 24)",
+   "bg0": "background: M3 founder 0 (the screen's producer), darkSteps 4000",
+   "bg2": "background: M3 founder 5 (farthest from founder 0 in genome slots), darkSteps 4000",
+   "x4": "standard at 4x seeding biomass (256, energy 512)"
+  },
+  "producer2": {
+   "founderIndex": 5,
+   "distanceToProducer0": 162,
+   "rule": "M3 founder (1..11) farthest from founder 0 in genome slots; ties to the lowest index"
+  },
+  "subjects": [
+   {
+    "id": "obligate:c0",
+    "group": "obligate",
+    "cluster": 0,
+    "hex": "001400280000000000000000000000000000000000000000000000000000100000000018000000100000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000027f008117000000000000006e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e82846000000000c"
+   },
+   {
+    "id": "obligate-extra:c3:farthest",
+    "group": "obligate-extra",
+    "cluster": 3,
+    "hex": "000c0038000000001e3d22f10120ee291f35fb3c3a34cac3fbd5de0103c42030feedd1e9c62503d6ef050e0a222840d0222cfb0eda1d35d8ddd035373ac5e5c7020f0238082bc22329090ad121f63dd7cabdd10024031825213c3305cdf202e8c214374826f925dbc3222e14e8fafec0db2d06231c20e5143d2d07fa3c2324ef0e372f3b0d07f0fee80218e3ec363cc8332c290fc103e5dc1302fee7230128f0f52bcd323d2b1018"
+   },
+   {
+    "id": "nonobligate-cluster:c2",
+    "group": "nonobligate-cluster",
+    "cluster": 2,
+    "hex": "00190061000000003c032ec12f24cb26e9ce2f0c192e02da140fe9fef01e10f1ec18302acffadc0eebfcdd3feed9d6ce0d3f3040da1122ffe51905c129c00dfa1afaf4d3332ef6eb093a1ed6e4c4f1c3042614f535fb2d07f0e9d53cd93725edffe53e250405f0cbcf2f0f02eddd3ec0e239d639320bef0912ed0740b33d1aff03d11910e4c73b20153b08e400351fe537c9ce07252e0426de371e09fdc5f10c203ddc2811200fe7"
+   },
+   {
+    "id": "facultative-sibling:c0",
+    "group": "facultative-sibling",
+    "cluster": 0,
+    "hex": "0014003c0000000000000000000000000000000000000000000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007f008100000000000000006e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e82846000000000c"
+   },
+   {
+    "id": "producer0",
+    "group": "producer0",
+    "cluster": null,
+    "hex": "0011003b00000000d617dff63cfc3c072ce70ac4f1d3f9121cebd2383c37c9e63ad2f1ece6131844fd2ee204f3d90a1a2940f7cdfeb50e26c0c03b063a3aeeda40cf0ecc20c9c41019213b390e2abcfa0815393a1a222cf100d3fe1f2b1921d21a05c8000de30a02020ac3f5d40bc0ca0a3bc903e6d635dbfec2f9e6e7302af8d5ea0adb2725e2e32c472521051cf91aea18213f3b1200f8db29d4230c090c1ed0e4f00e31ffe4fc"
+   },
+   {
+    "id": "producer2:founder5",
+    "group": "producer2",
+    "cluster": null,
+    "hex": "001a0020000000003be030ddc131f43dd8cdc627f5132c3d03fa0ede3b0c17ede7f638cde9fd200d09da304730efdbe4e0ef25deff0e3ad5d8d8e8d1f7de3b40cf3ed9d3d1defb0a16ebfe1fde2df5df39f4340f32fdd4fbc324d3f5d2fee0260de807f007123bfdfdcaea0b2d2ac2fdd1f51d2ed5f1f3d2c204f1303cf2fc340700022910d436dffb211b17fadcd8cef7d11fdee0f241f2e0f90212f6340527e91a1731cecc3ada"
+   },
+   {
+    "id": "null",
+    "group": "null",
+    "cluster": null,
+    "hex": "0014003c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+   },
+   {
+    "id": "obligate:c1",
+    "group": "obligate",
+    "cluster": 1,
+    "hex": "0019001900000000cc37152bfc12d90cc7d51e2e2bd7e0c7062c0edd11d72f231623200dd3f5dee5d73c15d9dc05c11fccf9c420e4c2eef917cedde334cb100ff740c7c70e3bc41a0fef381912cb23140d131639c1313432d9ffd30b0610c21228fdde1dfd19cb211630ecd5cd13d2eae3d9230fd20605fbe1c211d2030b353f233c0ded0d17d81233c6de1f2634e9d4da1a184036153cee25d4d6faf4dfcccafc37d62e0008cefa"
+   },
+   {
+    "id": "obligate-extra:c3:median",
+    "group": "obligate-extra",
+    "cluster": 3,
+    "hex": "000c0038000000001e3d10f10120ee291f35fb3c3a34cac3fbe0de1703c42030f8edd1e9c62503d6ef050e0a212840d0222cfb0eda1d35d8ddd035373ac5fac7020f023a082bc2233a09f7d11af63dd7c7bdd10024031d25213c3305cdf214e8d314374826f925f2c3221814e806fec0db2d06231c20e5143d2d07fa3c3624ef0e372f3b0d07f0fee80218e3ec383cc8332c330fc103eedc1302fee7230128f0f52bcd323d2b1018"
+   },
+   {
+    "id": "nonobligate-cluster:c6",
+    "group": "nonobligate-cluster",
+    "cluster": 6,
+    "hex": "001c004a0000000033123c17cf3df20b071725f5cd1c3dfdd2c724cb0c3e1939ceee0dddcd3af710061102c42b15001f07c5c701eae2172ac629f3d7d10c3ee0efe6e2172516353805d5133c2f33d518d3ed001ae4c809f4033927fc04e640183834d73fd1f6170cdadfe8f933172dda1839e701dcc013e2ff13c8de362f0c1101d7250d3436c3e0f50836270706fe052410c4c8c6401c04cbc120302506241ec31def2a27140f14"
+   },
+   {
+    "id": "facultative-sibling:c1",
+    "group": "facultative-sibling",
+    "cluster": 1,
+    "hex": "0019002d00000000cc37152bfc12d90cc7d51e2e2bd7e0c71c2c0edd11d72f231623200dd3f5dee5d73c15d9dc05c11fccf9c420e4c2eef917cedde334cb100ff740c7c70e3bc41a0fef381912cb25140d131639c1313332d9ffd30b0610c21228fdde1dfd19cb211630ecd5cd13d2eae3d9230fd20605fbe1c211d2030b353f233c0ded0d14d81233c6de1f2634e9d4da1a184036153cee25d4d6faf4dfcccafc37d62e0008cefa"
+   },
+   {
+    "id": "obligate:c3",
+    "group": "obligate",
+    "cluster": 3,
+    "hex": "000c0038000000001e3d10f10120ee291f40fb3c3a34cac3fbd5de0103c42030f8edd1e9c62503d6ef050e0a212840d0222cfb0eda1d35d8ddd035373ac5fac7020f023a0820c2232909f7d11af63dd7c7bdd10024031d25213c3305cdf214e8d314374826f925f2c3221814e806fec0db2d06231c20e5143d2d07fa3c3624ef0e372f3b0d07f0fee80218e3ec383cc8332c330fc103eedc1302fee7230128f0f52bcd323d2b1018"
+   },
+   {
+    "id": "nonobligate-cluster:c8",
+    "group": "nonobligate-cluster",
+    "cluster": 8,
+    "hex": "0010003b000000002a3818ed2d1837eb2c3dee14e501fee0fbf9efd2d30d05c9df3c143f1a08f0d83534c525f10e181b04e6d702d80e210cf0e3f0cd2512d43ae4f8272d29f4d1e3d3d7cc02133703112ad3de0cf7dbf2fdc6d4fee6f6cef6f2d0fc3529d0fa1b153febe3073804d0dd343c190732c920301e143400272429d01b1cfa12fd2f18d2f747fe0129c6172d1f221edae1dcdaf82a23f6f503cffad32b05dd3cd320e6d3"
+   },
+   {
+    "id": "facultative-sibling:c3",
+    "group": "facultative-sibling",
+    "cluster": 3,
+    "hex": "000c004c000000001e3d22f10120ee291f35fb3c3a34cac3fbd5de0103c42030f8edd1e9c62503d6ef050e0a222840d0222cfb0eda1d35d8ddd035373ac5fac7020f023a082bcb232909f7d11af63dd7c7bdd10024031d25213c3305cdf214e8d314374826f925f2c3221814e806fec0db2d06231c20e5143d2d07fa3c3624ef0e372f3b0d07f0fee80218e3ec383cc8332c330fc103e5dc1302fee7230128f0f52bcd323d2b1018"
+   },
+   {
+    "id": "obligate:c4",
+    "group": "obligate",
+    "cluster": 4,
+    "hex": "0015004b00000000c1d6cce4ed03f4c215273a120404c937eb0d3fc0e4f33b22c92adc03ec3bd2da131fd509d74007ef3a23e2c930c1e1ea22c52cfe2a31d2f12c2f2309da16f207f52ce211c50c250140390c323b050704f50ac2cb16fec23ede2e1913cfdfedd818ee20070e181932301431ddf500eed2e51cc628322ce81ade30c420c50413e0c0efd6e51f04001fc20e0501111bd21122313e03fef5333cc935213724352e1c"
+   },
+   {
+    "id": "nonobligate-cluster:c10",
+    "group": "nonobligate-cluster",
+    "cluster": 10,
+    "hex": "001e002b00000000d8e6142501221c28f4f310e83b0103df3a401536c240e810c1313604cee13f05c5cf14c9e709e4cd01200728e6ff0be5ff03d912303b21c9d1c6cb29e7c20712fee5c2dadbc1e22415d135dad0c7ded1dd3fe23a30d2d2fa3ffae10fdadb1acd090b1ee7c5e0ed15ea42fd40cf2e0b100a1630c93a2a0f3133dcd0c02040f40ed83a08efd40d101df6d71c2ed8f0ff2d10d4f9060d50d4eccf161d2af4c1f63f"
+   },
+   {
+    "id": "facultative-sibling:c4",
+    "group": "facultative-sibling",
+    "cluster": 4,
+    "hex": "0015004b00000000c1d6cce4ed03f4c215273a120404c937eb0d3fc0e4f33b22c92adc03ec3bd2da131fd509d74007ef3a23e2c030c1f1ea22c52cfe2a31d2f12c2f2309da16f207f52ce211c50c250140390c323b0507040b0ac2cb16fec23ede2e1913cfdfede12cee20070e181932301431ddf500eed2e51cc628322ce81ade30c420c50413e0c0efd6e51f04001fc20e0501111bd21122313e03fef5333cc935213724352e1c"
+   },
+   {
+    "id": "obligate:c5",
+    "group": "obligate",
+    "cluster": 5,
+    "hex": "001b002e00000017e70924e50c191ac1ea36c30e19f7d6c0372a13cb19db1e1bf21c2b3bd0fbc734f8ea0bdf162dcf21c61832f909d922d12d36113bddd5033a380d18ecd5d7dd36d91d03d2cec1f23816e12ae0fddb35de262d1ae31dffde17dece1f1139dbf1cefcf9e635fdd8121a36270b33e50739d201c41cead1c4f7e2304732fbd902d8d70dfdecef2e073115c8fe2122e0ce2eed4009f731fdeb29f92e20faf502d740f7"
+   },
+   {
+    "id": "nonobligate-cluster:c12",
+    "group": "nonobligate-cluster",
+    "cluster": 12,
+    "hex": "001c00560000000007343a0dc2e2fb25d6c33733e1f305d2c8d0fd40eb1313d7c82b14c3140726f90c1cf0220bf33029cc0b3fd8dd2fe137d7c737c93a2c1de0e41ad2d5dfeee207c636c5fefb1d40283137e9cd3df6de27001822f8ece52cdcd0d9d23eefe1f5090633001efa30f903d53cd33cc1dccbf0c13d23252de6131536c303f1c2f80d34fdd5e520ef3338d4ec2ddfd2392b2d13c22b1d02201a1d2f2909f2270819e501"
+   },
+   {
+    "id": "facultative-sibling:c5",
+    "group": "facultative-sibling",
+    "cluster": 5,
+    "hex": "001b002e00000000e70924e50c191ac1ea36c30e19f7d6c0372a13cb18db1e1bf21c2b3bd0fbc7390dea1bdf162dcf21c61832f909d922d12d36113bddd5033a380d18ecd5d7dd36d91d03d2cec1f43806e12ae0fddb35de262d1ae31dffde17dee31f1139dbf1cefcf9e635f3d8121a36270b33e50739d201c41cead1c4f7e2303c32fbd902d8d70dfdecef2e073115c8fe2122e0ce1bed4009f731fdeb29f92e20faf502d740f7"
+   },
+   {
+    "id": "obligate:c7",
+    "group": "obligate",
+    "cluster": 7,
+    "hex": "0017002100000000e704c3c01df61af8e2e3e3031aca40c0dc39d52a24cfe5402ffd2aefbd3135ca0223def1db390d40cb0dd329c3d4c4fdf22d1fdbc440301f21e5f2d92c2bdad3d3c0d1e0e72bd52fdf09fe07f32a04fcd334f5db191ec0002d1a29fae71810c4ee0b4913fbe5174006d0e93416dd403cfa3709040fc50b112111deefde12ce1ad92cf30aeada2726c5d2d1352420193525180c1eebc30425fc39eb31d726c6c9"
+   },
+   {
+    "id": "nonobligate-cluster:c13",
+    "group": "nonobligate-cluster",
+    "cluster": 13,
+    "hex": "0013003000000000ce18062dea19cffdc61cdb13d2c4f822c3e73fd809edcb13f201eeeaf70415c53c0412102720f0d228c1c11e09f5c53f2d0c2cdd06342f1b13e0f6c4fa352b3b2bf1191bcbd10f140e19e1c9d7d21a3cfa3213c8e3eafed3e532f523ccf33c40d41bd5ecc90e39ff0a0838ea361ae515e31a3823c613e6f7f609cffdd52c35f00f06f820eefee3e91a1ae5d1fd0d443dfef73bfad2120bf21214cb3c261032ea"
+   },
+   {
+    "id": "facultative-sibling:c7",
+    "group": "facultative-sibling",
+    "cluster": 7,
+    "hex": "0017003000000000e704c3c01df61af8e2e3e3031aca40c0dc39d52a24cfe5402ffd2aefbd3135ca0223def1db390d40cf0dd329c3d4c4fdf22d1fdbc431301f21e5f2d92c2bdad3d3c0d1e0e72bd52fdf09fe07f32a04fcd334f5db191ec0002d1a29fae71810c4ee0b4913fbe5174006d0e93416dd403cfa3709040fc50b112111deefde12ce1ad92cf30aeada2726c5d2d1352420193525180c1eebc30425fc39eb31d726c6c9"
+   },
+   {
+    "id": "obligate:c9",
+    "group": "obligate",
+    "cluster": 9,
+    "hex": "0019002b00000000d8e6142501221c2808f310f03b0103df3a403036c240e810c1313604cee13f05c5cf14c9e711e4cd01200728e6010be5fff1d912303b32c9d1c6cb29e7c20712fee5d1dacdc1e22415d135dad0c7ded1dd3fe23a30d2d2fa3ffae10fdadb20cd090b1ee7c5e0ed15ea2ffd40cf2e0b100a1630c93a2a0f3133dcd0c02040f40ed83a08efd40d101df6d7062ed8f0ff2d24d4f9060d39d4eccf161d40f4c1f63f"
+   },
+   {
+    "id": "nonobligate-cluster:c14",
+    "group": "nonobligate-cluster",
+    "cluster": 14,
+    "hex": "0010003b000000001c3818ed2d1837eb2c3de514e501fee0fbf9efd2d30d05c9df3c143f1a08f0d83534c525f1fa181b02e6d702d80e210cf0e3e1cd2512d433e4f8162d290ad1e3d3d7c302133703062ad3de0cf7dbf2fdc6d4fee6f6cef6f2d0fc3529d0fa1b153febe3073804d0dd343c190739c921301e143400272429d01b1cfa12fd2f18d2f347fe0129c6172d1f221edacfdccbf82a23f6f503cffad31805dd3cd31ae6d3"
+   },
+   {
+    "id": "facultative-sibling:c9",
+    "group": "facultative-sibling",
+    "cluster": 9,
+    "hex": "0019002b00000000d8e614250122162808f310e83b0103df3a402736c240e810c1313604cee13ff5c5cf14c9e711e4cd01200728e6010be5ff03d912303b21c9d1c6cb29e7c20712fee5d1dacdc1e22415d135dad0c7ded1dd3fe23a30d2d2fa3ffae10fdadb20cd090b1ee7c5e0ed15ea2ffd40cf2e0bf80a1630c93a2a0f312adcd0c02040f40ed83af6efd40d101df6d7062ed8f0ff2d24d4f9060d39d4eccf161d40f4c1f63f"
+   },
+   {
+    "id": "obligate:c11",
+    "group": "obligate",
+    "cluster": 11,
+    "hex": "0012001e0000000022d10b05f8c4100a082601eecceb3ec4dbd5f1c4f023d2040d022809d62b12d8fb30d12cd4e514352922020ac627022fc121f239fc3013cff828f8110814cc15e2f6fc1a11cbc0f806e9dbf8dd0ffdecc8f0dde701240eebeeea15cac427ed093220c21f0bc9d537263beb1e373c3efceae6fbe5dc2a3120e923102d28f3c9d926db07b0d530da380bd003fdebc0e8ed29121600cf1b09261b3a2e2af625f503"
+   },
+   {
+    "id": "nonobligate-cluster:c15",
+    "group": "nonobligate-cluster",
+    "cluster": 15,
+    "hex": "0010003b000000001c3818ed2d1837eb2c3dee03e501fee0fb06efd2d30d05c9df3c143f1a08f0d83534c525f1fa181b02e6d702d80e210cf0e3e1c32512d43ae4f8272d290ad1e3d3d7c302133703112ad3de0cf7dbf2fdc6d4fee6f6cef6f2d0fc3529d0fa1b153febe3073804d0dd343c190739c921301e143400272429d01b1cfa12fd2f18d2f747fe0129c6172d1f221edacfdcdaf82a23f6f503cffad32b05ce3cd320e6d3"
+   },
+   {
+    "id": "facultative-sibling:c11",
+    "group": "facultative-sibling",
+    "cluster": 11,
+    "hex": "0012001e0000000022d10b05f8c4100a082601eecceb3ec4dbd5f1c4f023d2040d022809d62b12d8fb30d12cd4e514352922020ac627022fc121f239fc3013cff828f8110814cc15e2f6fc1a11cbc0f806e9dbf8dd0ffdecc8f0dde701240eebeeea15cac427ed093220c21f0bc9d537263beb1e373c3efceae6fbe5dc2a3120e923102d28f3c9d926db07c4d530da380bd003fdebc0e8ed29121600cf0909261b3a2e2af625f503"
+   },
+   {
+    "id": "obligate:c17",
+    "group": "obligate",
+    "cluster": 17,
+    "hex": "000d003d0000000007ce2ccfda17e61ee42f1ff4c7f2e0f205263ee1ddfcf214cc2e11fbe43b210cd8d932210bccc639281bd7fd2b3828313ec5d2f4df2e18c138f4f6132c0cf4c52304d406cee9e722c4f7fa1329d8e5c2f22bf7de20322a0f01da06ea08e52416c716e23f35021ce33318121dc417c23d10fdc3fccffa18dac520f41ed6d131eb1ff6f222ffec371d2a29c527cf351fd4ff172ec7fa222fc5ed24ce20efd90be3"
+   },
+   {
+    "id": "nonobligate-cluster:c16",
+    "group": "nonobligate-cluster",
+    "cluster": 16,
+    "hex": "0010006400000000f8c3ddc109c3cb2320051912f3c200c9403d3604dc292517d3d1d240ef3e0c37cb2d23c2ddecff0ae50015cdf3153bc3c1daf008dad3fad8d8e633d10fe52ac7eeca28edc8fccdd6eee0f721cad4ca18332ad8d9ecfdd5d236e7c41ee72716ee0525f3fe1ae5260901d1e52cd538f9270c17363a2b3ac21303e80ee1d4da1fc4fd3df2cbd3c913e51323073e24cfd50eebf82a0ff6fbe11b240cc0301d3cc9e2"
+   },
+   {
+    "id": "facultative-sibling:c17",
+    "group": "facultative-sibling",
+    "cluster": 17,
+    "hex": "000d003d0000000007ce2ccfda17e61ee42f1ff4c7f2e0f205263ee1ddfcf214cc2e11fbe43b210cd8d932210bccc639281be2fd2b3828313ec5d2f4df2e18c138f4f6132c0cf4c52304d406cee9e722c4f7fa1329d8e5c2f22bf7de33322a0f01da06ea08e52416c716e23f35021ce33318121dc417c23d10fdc3fccffa18dac520f41ed6d131eb1ff6f222ffec371d2a29c527cf351fd4ff172ec7fa222fc5ed24ce20efd90be3"
+   },
+   {
+    "id": "obligate:c19",
+    "group": "obligate",
+    "cluster": 19,
+    "hex": "0018001b0000000024ca0e0717d9ebc3dcdd1bf0191fdc18ebef14fa351829d51d04333838ed1dd4cdffeb400cfdc2c9140e36c30309e31615fe2001d4e72e12d0c00913c6cb382d08ea1bdefecf25f3c12f06e10d18f3eb3efe1c0d2b2ccb2832e7dbceda2520cb2acb2b1d21c106f8c53709093a24093c3c2a3d3bcff4c72620fbeaf91638f8f43ee810e21acfc42bc6ced84040d0dadf161de9383ee223c21632e211d521f9e5"
+   },
+   {
+    "id": "nonobligate-cluster:c18",
+    "group": "nonobligate-cluster",
+    "cluster": 18,
+    "hex": "0017006300000000d601c72bc3e2e336c8042f2123070dc1cff42cc1d126c2f1fedcddc504e9e92fc51ed6e5f12f3228dcfbe939f23ffbf4f3c6fe1c40040028f13916210a27f0f6dbcc16e61e2ef0e32fda2b23d60014cb06ddede4f5210fde0b2f07190a1c3bf7f51c19faf0d9f3cdfeddd0e3dcca0d36ce3ce42ddedc2640e7f2ccec25c1fcc31ad7ced31f05291a3c1c3b393bc0ef3d34f8cc3c01eec6f9c115cb0dcbc6d4d7"
+   },
+   {
+    "id": "facultative-sibling:c19",
+    "group": "facultative-sibling",
+    "cluster": 19,
+    "hex": "0018001b0000000024ca0e0717d9ebc3dcdd1bf0191fdc18ebef14fa351829d51d04333838ed1dd4cdffeb400cfdc2c9140e36c30309e31615fe2001d4e72e12d0c00913c6cb382d08ea1bdeedcf25f3c12f06e10d18f3eb3efe2a0d2b2ccb2832e7dbceda2520cb2acb2b1d21c106f8c53709093a24093c3c2a3d3bbef4c72620fbeaf91638f8f43ee810e21acfc42bc6cfd84040d0dadf161de9383ee223c21632e211d521f9e5"
+   },
+   {
+    "id": "obligate:c31",
+    "group": "obligate",
+    "cluster": 31,
+    "hex": "001100400000000002c6f43bb9c1100ed2d63e030117e906e539d1fbc3e4dcf1ccdec3e1e2e5e2d12109cb3d1ad0093ddddb0800d9c91bcc0709c22314e7c5c8333dcc2ff505fbe63309f1e50a44e1dcd9e13f2032e10b1e01e1f0d83a243ec0e504d3ea31ccd747df3925cec5efd1d8ff262729c625c1e33ef6341f0e3609253bc2e11ce3c1ea120a25312bcecde41e33db0e323d390cd60c1f0df83e40c6160c33cd09f10601cf"
+   },
+   {
+    "id": "nonobligate-cluster:c20",
+    "group": "nonobligate-cluster",
+    "cluster": 20,
+    "hex": "000d00370000000036c10d24cd13283befaeccd125313d0832dec8fe1fd8db29d7c8d21cd7d1fb3b21f21becfd25c6fbd136f5c61708162009d81f07d1f3f2133cfdc2160a1cdffcf030333800292c22f629c4d7caead5f8efdd2437352a07180b0cd1d719cfcac9e431d44012cbff1c37fb392f2513f939e7cc03f2212e391fd22bdf3af20bf93cc8c6efc616e427f8eaf00e3a2415faf328c3f8cdcfe32f093f27df17e03200cd"
+   },
+   {
+    "id": "obligate:c32",
+    "group": "obligate",
+    "cluster": 32,
+    "hex": "001400210000000027eae828fcfe2b081bd41d100b22e8c629eb05d3120f19e3f531c13efbd8341f0cc92525272e09cf31ef082840d4dbd00ac8de3c3c1c03c7c230200dfc270e37300d3b102bf5caeaecf6c0f303d533f91538120e2526d1deda260fccfad8c1c8d41e183bfad6ec34f5cf17190fc730ea0fe1fd281b2fd2d5300ccf2cc108e0d0002f1d1d170ae515edcb263ac9d009c31c371600e1e1e919d137c33b0604c5f6"
+   },
+   {
+    "id": "nonobligate-cluster:c21",
+    "group": "nonobligate-cluster",
+    "cluster": 21,
+    "hex": "00120031000000003c162ecb06ede3fe1125dae32af6e70d0a30ce40281e39ec14db173cd4f9f9f7c5c44010daf4d51cfce5280be9ff1bd022ffecc91cc7d5f8dadf17cb04cdce37e0f2daf72239c20e111d33d73bd317e8f5c92de72532dbca0ff71e3ecac83912110a2c1ae9333226f6c8231bd32cc4ee17363feac91621f7d0f2d0fd211513c1e539dae93d2f28ce2c110218fdc2f5ca16d7e4253f3ade242c1b012deffaeae1"
+   },
+   {
+    "id": "nonobligate-cluster:c22",
+    "group": "nonobligate-cluster",
+    "cluster": 22,
+    "hex": "00120056000000003238e9ea1ce33ed0ffc119e03ac13ddd2b10e3e41cc127f70f0fd92eda0be43dd0feea2ac1c0022be5c001fe0bd42233c2e301c5edfcc8c911eede29231202efda3dc2c0f0280d2df7f3c7fedbccfc2a2cd0f70228d1190119ff26c33d1d241a2aead6e221fa3fff13cb351310f2e1e50e09de04f7dd103434192d321f0610d22cfbd3191ef8301205cec8c8083f1eeac311e61dfef5e730252fec310234dcee"
+   },
+   {
+    "id": "nonobligate-cluster:c23",
+    "group": "nonobligate-cluster",
+    "cluster": 23,
+    "hex": "001100400000000001d00dd73df1d2faf50e0bd7102c042dd4c5e3e12d15dc01e3c81025ede5e92820f832c1132b0bcc0d1aee0f27dc08ddded5e41edbdf1dc2ed22ee13d2d62bcd03ff3ef3dbcdd7d9dcf2263f1a07c0de1cf0f5e52de2c8fa25cfce240c251f16e6e3263b01f9ea22fc32c2cef9caef2912151b33f9cdc712fe2926f51f0acac0de25d6f1e7fcccf0e4d80cf1371324223d16ce3df821c4c011faea3133ea08d0"
+   },
+   {
+    "id": "nonobligate-cluster:c24",
+    "group": "nonobligate-cluster",
+    "cluster": 24,
+    "hex": "0016002500000000c3cdf33a24e1ea360ae9d9d32c0630eac7e0e023df0dde1602cfe8cdd32f14ef26c3c61f173dcd03001e0a10d91fcd09351aeeeec3ff1f2ac311decfe5ff1d3fe6d70121f20be2e3e22e3134fbcdd4261ccede152b13c2193ec7dee0e2e0f8fff90420e81f2d031cd33c02d0d6222afcee092c0de239e0cdf5ecef00c9eecc01e33ed6c7f1dff9313436d3161ffeeec5ee3bd7d5c6063ee6f4063d3c28efe4c8"
+   },
+   {
+    "id": "nonobligate-cluster:c25",
+    "group": "nonobligate-cluster",
+    "cluster": 25,
+    "hex": "001c005900000000302336c4da0fdec41f360939c11ad0012e0c3d36103f10f920cadbc0f605d7e8d631fbead103d0e2ee29fecd183ae11a3fc4f8c803de201f100838fef4cbe803200a1924f9d4c4ca20d22cfb042e452b26d4c518fcc71bd4ddf03fc6c7db25c5333521f4dfe338e1f93106f6dccfc61d183efa0cea13db1c04fc07d101d3100330dfca0fe11ee3c6f0f5e0101c263801043a0ce3edd44ce9d817ee22c7ccfac3"
+   },
+   {
+    "id": "nonobligate-cluster:c26",
+    "group": "nonobligate-cluster",
+    "cluster": 26,
+    "hex": "00160046000000002909f7140519d439ddfbdbeee7d028e5fbda16172317ce19de040f23290de80dc91026e3f53bc4eeca3be415e2cffe08f5caed20e227ee1fccfbfedc2f0524130fc8edefd00cecf8ea09ef23f1d911d41ae5f61807c829cd34e3e41b1be90c30213e040a0ce0252d3135181c23ebc5d6fc360ac9322ff7fe010232e728d0edd31ffaec3be2182cc0cf1f31ed3239e93ae40b3f1f28391be2d221e515dfcdf1e4"
+   },
+   {
+    "id": "nonobligate-cluster:c27",
+    "group": "nonobligate-cluster",
+    "cluster": 27,
+    "hex": "000d004100000000c719dd08f4142d0518002bdc11c0e226db2433d3e1f7d22ed320ea00d5e9c128f522fc3fed3a14c3c1053f20f700d6df292d1a0a3ad804e40631cb0fedc6c9e62ac9293724f301c026ced9c6d435cbd3221ee833edefe1eacb2b38501eda3c0c35cf092bffdcebd2dd12d02206e4d6d911f72ec43fec39220efade081ace2326d51d30f60339de03141be9c1dddf39f33fc81ce2d8f840e2d116d3cbd7d4e3f0"
+   },
+   {
+    "id": "nonobligate-cluster:c28",
+    "group": "nonobligate-cluster",
+    "cluster": 28,
+    "hex": "0018005c00000000fde11b08c9d2ca20dff6040c2921ce3506c6c329e52af804ce0ed8f936261cebfad6c704d9c5d9d9e61ecad7c704f3e12ad42e1be4fd05f432d4d2eefbe40d21cacc0217f03d2132c32ff21c1d2a303fe1f0d8c205ca3723c50305eec1ffc4d13612d4d0e0e42f233309c4e2e22520f212e9d4cff704201632fd371ef83e3a0bc92aee02e0062223f0d4f92431e8f7252dcb36fff622ced1cf35fd29f2fce5e4"
+   },
+   {
+    "id": "nonobligate-cluster:c29",
+    "group": "nonobligate-cluster",
+    "cluster": 29,
+    "hex": "0012003e0000000030ca39ee22c5c2ed17172539e3cc3c111f1d26ff0fc52e18d5f901222a0b3fe105ea181c312b16081a18fdc3eecaebfc37e8e4e5faf432fac0c9222f24da06deedc63e33efd1043dd7f207ccc8032d0a0d30fef6e5f52bf62b08351ce521f7203c27fe0a26fe2fdf16ee2a080c3c1124271fdc24f93cff3808ec35c5ecee08cd0b23d92cd93626ea0e1320c740162ac31a3e3cd738dadb320019d82b29e22bd7"
+   },
+   {
+    "id": "nonobligate-cluster:c30",
+    "group": "nonobligate-cluster",
+    "cluster": 30,
+    "hex": "0014005000000000fa16273e0ede09eee0c50518cac1f0fad0173d0fc7c40802fa04cd33d1fe2e00dc03db2b23d32fdef511ffce33d43225fdd22bc537d309defae31b1c0eec23c4f823f7343a3023ccecf4cbd7edfff8c93eca36f7ca3bdc3af3edf60fdc32ea0b09290109e913fa29020b1bf326e3ecda000decef0ae21725ec0a3a2f14f6dbd0051417282429381be93bc70de8d21f270714d52913f23c282d2de60ce5d905f8"
+   }
+  ],
+  "counts": {
+   "obligate": 12,
+   "obligate-extra": 2,
+   "nonobligate-cluster": 21,
+   "facultative-sibling": 10,
+   "producer0": 1,
+   "producer2": 1,
+   "null": 1
+  },
+  "batches": [
+   [
+    "obligate:c0",
+    "obligate-extra:c3:farthest",
+    "nonobligate-cluster:c2",
+    "facultative-sibling:c0"
+   ],
+   [
+    "producer0",
+    "producer2:founder5",
+    "null",
+    "obligate:c1"
+   ],
+   [
+    "obligate-extra:c3:median",
+    "nonobligate-cluster:c6",
+    "facultative-sibling:c1",
+    "obligate:c3"
+   ],
+   [
+    "nonobligate-cluster:c8",
+    "facultative-sibling:c3",
+    "obligate:c4",
+    "nonobligate-cluster:c10"
+   ],
+   [
+    "facultative-sibling:c4",
+    "obligate:c5",
+    "nonobligate-cluster:c12",
+    "facultative-sibling:c5"
+   ],
+   [
+    "obligate:c7",
+    "nonobligate-cluster:c13",
+    "facultative-sibling:c7",
+    "obligate:c9"
+   ],
+   [
+    "nonobligate-cluster:c14",
+    "facultative-sibling:c9",
+    "obligate:c11",
+    "nonobligate-cluster:c15"
+   ],
+   [
+    "facultative-sibling:c11",
+    "obligate:c17",
+    "nonobligate-cluster:c16",
+    "facultative-sibling:c17"
+   ],
+   [
+    "obligate:c19",
+    "nonobligate-cluster:c18",
+    "facultative-sibling:c19",
+    "obligate:c31"
+   ],
+   [
+    "nonobligate-cluster:c20",
+    "obligate:c32",
+    "nonobligate-cluster:c21",
+    "nonobligate-cluster:c22"
+   ],
+   [
+    "nonobligate-cluster:c23",
+    "nonobligate-cluster:c24",
+    "nonobligate-cluster:c25",
+    "nonobligate-cluster:c26"
+   ],
+   [
+    "nonobligate-cluster:c27",
+    "nonobligate-cluster:c28",
+    "nonobligate-cluster:c29",
+    "nonobligate-cluster:c30"
+   ]
+  ]
+ },
+ "cells": {
+  "obligate:c0": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.839777552474013,
+    "mass": 130599.8125,
+    "reproduction": 59.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 37123,
+     "grow": 1,
+     "decomp": 22866,
+     "resp": 30070
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.7776291479071024,
+    "mass": 130807.5,
+    "reproduction": 63.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 37040,
+     "grow": 1,
+     "decomp": 22361,
+     "resp": 29725
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9954037359188548,
+    "individuals": 11.25,
+    "meanMass": 13972.122222222222,
+    "speed": 1.8012822728880657,
+    "mass": 171451.3125,
+    "reproduction": 65.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 56906,
+     "grow": 2592,
+     "decomp": 40085,
+     "resp": 45831
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 40758.5
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9990765654280455,
+    "individuals": 9.9375,
+    "meanMass": 16801.553459119496,
+    "speed": 1.6891267074013718,
+    "mass": 202288.75,
+    "reproduction": 61.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 57137,
+     "grow": 5562,
+     "decomp": 46649,
+     "resp": 47065
+    },
+    "roleSumsOther": {
+     "photo": 5871,
+     "grow": 0,
+     "decomp": 4721,
+     "resp": 7741
+    },
+    "otherMass": 13488.25
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.9991228148716234,
+    "individuals": 6.4375,
+    "meanMass": 14663.932038834952,
+    "speed": 0.873657371107024,
+    "mass": 193668.0625,
+    "reproduction": 52.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55541,
+     "grow": 3468,
+     "decomp": 45974,
+     "resp": 46970
+    }
+   }
+  },
+  "obligate-extra:c3:farthest": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.997052992879976,
+    "mass": 148212.9375,
+    "reproduction": 111.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 36723,
+     "grow": 0,
+     "decomp": 35420,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.0121847064764262,
+    "mass": 148663.875,
+    "reproduction": 95.8125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 36543,
+     "grow": 0,
+     "decomp": 35531,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1,
+    "meanMass": 237869.125,
+    "speed": 3.639491074405611,
+    "mass": 219658.5625,
+    "reproduction": 13.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 36380,
+     "grow": 0,
+     "decomp": 35979,
+     "resp": 23368
+    },
+    "roleSumsOther": {
+     "photo": 10,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 18458.625
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1,
+    "meanMass": 237857.25,
+    "speed": 2.980396594928759,
+    "mass": 235958,
+    "reproduction": 22.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 45918,
+     "grow": 0,
+     "decomp": 45569,
+     "resp": 32711
+    },
+    "roleSumsOther": {
+     "photo": 972,
+     "grow": 0,
+     "decomp": 718,
+     "resp": 2271
+    },
+    "otherMass": 1916.875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999927926542732,
+    "individuals": 2.3125,
+    "meanMass": 83180.35135135135,
+    "speed": 2.248754643327503,
+    "mass": 210957.75,
+    "reproduction": 94.3125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 34001,
+     "grow": 0,
+     "decomp": 33899,
+     "resp": 22555
+    }
+   }
+  },
+  "nonobligate-cluster:c2": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 3,
+    "recovery": 0.9998820484459247,
+    "individuals": 36.8125,
+    "meanMass": 3622.2495755517825,
+    "speed": 0.40182317513729454,
+    "mass": 147567.6875,
+    "reproduction": 23,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 43834,
+     "grow": 218,
+     "decomp": 42390,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 1,
+    "recovery": 0.9999338954960943,
+    "individuals": 28.4375,
+    "meanMass": 4586.962637362637,
+    "speed": 0.5904437785118398,
+    "mass": 147761.9375,
+    "reproduction": 36.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 44002,
+     "grow": 237,
+     "decomp": 42616,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9994730410430475,
+    "individuals": 43.6875,
+    "meanMass": 4308.577968526466,
+    "speed": 0.34884548888365724,
+    "mass": 224566.375,
+    "reproduction": 58.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 78049,
+     "grow": 707,
+     "decomp": 73324,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1018,
+     "grow": 0,
+     "decomp": 638,
+     "resp": 0
+    },
+    "otherMass": 3741
+   },
+   "bg2": {
+    "survived": 12,
+    "reps": 16,
+    "recovered": 12,
+    "lightDependent": 12,
+    "regenerated": 5,
+    "recovery": 0.9996776093623954,
+    "individuals": 17.125,
+    "meanMass": 3726.1131386861316,
+    "speed": 0.9335516424567256,
+    "mass": 174053,
+    "reproduction": 86.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 68107,
+     "grow": 1086,
+     "decomp": 27998,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1852,
+     "grow": 0,
+     "decomp": 1098,
+     "resp": 2131
+    },
+    "otherMass": 4198.0625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 15,
+    "recovery": 0.9989947577007228,
+    "individuals": 44.6875,
+    "meanMass": 4061.034965034965,
+    "speed": 0.20632454276913773,
+    "mass": 204650.125,
+    "reproduction": 34,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 67008,
+     "grow": 477,
+     "decomp": 63247,
+     "resp": 0
+    }
+   }
+  },
+  "facultative-sibling:c0": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.970761984910022,
+    "individuals": 46.4375,
+    "meanMass": 2609.0740242261104,
+    "speed": 0.2488391793053072,
+    "mass": 136501.375,
+    "reproduction": 96.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 40284,
+     "grow": 12502,
+     "decomp": 44044,
+     "resp": 40450
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.9687515066391038,
+    "individuals": 45.25,
+    "meanMass": 2658.306629834254,
+    "speed": 0.2689940616589753,
+    "mass": 136264.9375,
+    "reproduction": 94.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 39949,
+     "grow": 12848,
+     "decomp": 44042,
+     "resp": 40909
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 15,
+    "recovery": 0.9994992052708489,
+    "individuals": 13.5625,
+    "meanMass": 11169.764976958526,
+    "speed": 1.5277175859682972,
+    "mass": 168011.25,
+    "reproduction": 79.3125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 56697,
+     "grow": 2680,
+     "decomp": 39871,
+     "resp": 45758
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 42019.9375
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9987653718708354,
+    "individuals": 11.375,
+    "meanMass": 14352.857142857143,
+    "speed": 1.538298492611489,
+    "mass": 192835,
+    "reproduction": 71.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55464,
+     "grow": 5765,
+     "decomp": 44751,
+     "resp": 45446
+    },
+    "roleSumsOther": {
+     "photo": 7547,
+     "grow": 0,
+     "decomp": 5503,
+     "resp": 8894
+    },
+    "otherMass": 21110.625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 1,
+    "recovery": 0.999592940614056,
+    "individuals": 25.5,
+    "meanMass": 3009.5710784313724,
+    "speed": 0.7980171642353104,
+    "mass": 191535.1875,
+    "reproduction": 190.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55092,
+     "grow": 3450,
+     "decomp": 45277,
+     "resp": 46648
+    }
+   }
+  },
+  "producer0": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 14,
+    "recovery": 0.9990516832622096,
+    "individuals": 4,
+    "meanMass": 3882.21875,
+    "speed": 0.8103504528847595,
+    "mass": 23062.5,
+    "reproduction": 7.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 10676,
+     "grow": 0,
+     "decomp": 1220,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 13,
+    "recovery": 0.9907283658200312,
+    "individuals": 4,
+    "meanMass": 3876.5625,
+    "speed": 0.8106654575163696,
+    "mass": 23164,
+    "reproduction": 8.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 10733,
+     "grow": 0,
+     "decomp": 1286,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 9,
+    "recovery": 0.5531378242708702,
+    "individuals": 12.375,
+    "meanMass": 3829.621212121212,
+    "speed": 0.3048133468988862,
+    "mass": 55834.9375,
+    "reproduction": 15.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 23549,
+     "grow": 0,
+     "decomp": 3695,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 35358,
+     "grow": 0,
+     "decomp": 5582,
+     "resp": 0
+    },
+    "otherMass": 82554.5
+   },
+   "bg2": {
+    "survived": 10,
+    "reps": 16,
+    "recovered": 3,
+    "lightDependent": 4,
+    "regenerated": 0,
+    "recovery": 0.4369247391654598,
+    "individuals": 2.5,
+    "meanMass": 358.825,
+    "speed": 1.1669274516005648,
+    "mass": 18820.875,
+    "reproduction": 12.6875,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 70801,
+     "grow": 0,
+     "decomp": 38042,
+     "resp": 61040
+    },
+    "otherMass": 171308.5
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 4,
+    "recovery": 0.7078176103830633,
+    "individuals": 15,
+    "meanMass": 4153.245833333333,
+    "speed": 0.5712035727103806,
+    "mass": 83812.875,
+    "reproduction": 37.3125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 39086,
+     "grow": 0,
+     "decomp": 3667,
+     "resp": 0
+    }
+   }
+  },
+  "producer2:founder5": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 14,
+    "lightDependent": 16,
+    "regenerated": 15,
+    "recovery": 0.9217398599661313,
+    "individuals": 19.75,
+    "meanMass": 3096.8512658227846,
+    "speed": 0.3399594921443921,
+    "mass": 72703.4375,
+    "reproduction": 67,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 38154,
+     "grow": 0,
+     "decomp": 11264,
+     "resp": 32116
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 14,
+    "lightDependent": 16,
+    "regenerated": 15,
+    "recovery": 0.9313173846292291,
+    "individuals": 18.5,
+    "meanMass": 3158.652027027027,
+    "speed": 0.3508118541297464,
+    "mass": 70334.0625,
+    "reproduction": 63,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 37116,
+     "grow": 0,
+     "decomp": 11079,
+     "resp": 31412
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 1,
+    "recovery": 0.9973899428765465,
+    "individuals": 30.0625,
+    "meanMass": 2985.931392931393,
+    "speed": 1.6815258918820244,
+    "mass": 147621.625,
+    "reproduction": 73.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 63116,
+     "grow": 0,
+     "decomp": 31303,
+     "resp": 51789
+    },
+    "roleSumsOther": {
+     "photo": 495,
+     "grow": 0,
+     "decomp": 146,
+     "resp": 0
+    },
+    "otherMass": 40597.125
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 9,
+    "lightDependent": 10,
+    "regenerated": 0,
+    "recovery": 0.7332607384241037,
+    "individuals": 20.8125,
+    "meanMass": 710.6906906906906,
+    "speed": 1.764520890609631,
+    "mass": 45898.625,
+    "reproduction": 60.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 19070,
+     "grow": 0,
+     "decomp": 10779,
+     "resp": 16987
+    },
+    "roleSumsOther": {
+     "photo": 57929,
+     "grow": 0,
+     "decomp": 32740,
+     "resp": 51429
+    },
+    "otherMass": 143820.875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.9991787837366783,
+    "individuals": 20.8125,
+    "meanMass": 242.73273273273273,
+    "speed": 1.404335352424794,
+    "mass": 169838.4375,
+    "reproduction": 210.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 62999,
+     "grow": 0,
+     "decomp": 34648,
+     "resp": 54415
+    }
+   }
+  },
+  "null": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.57271711385983,
+    "mass": 2.125,
+    "reproduction": 3,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.335854390256236,
+    "mass": 2.6875,
+    "reproduction": 2.875,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.0114547106383425,
+    "mass": 2.75,
+    "reproduction": 10.4375,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 21074,
+     "grow": 0,
+     "decomp": 2683,
+     "resp": 0
+    },
+    "otherMass": 47475.125
+   },
+   "bg2": {
+    "survived": 7,
+    "reps": 16,
+    "recovered": 1,
+    "lightDependent": 1,
+    "regenerated": 0,
+    "recovery": 0.17288257524726514,
+    "individuals": 0.875,
+    "meanMass": 322.2857142857143,
+    "speed": 1.0543692364742674,
+    "mass": 7380.0625,
+    "reproduction": 8.25,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 73753,
+     "grow": 0,
+     "decomp": 40912,
+     "resp": 64379
+    },
+    "otherMass": 182040.375
+   },
+   "x4": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.2569316304111212,
+    "mass": 8.5,
+    "reproduction": 9.375,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    }
+   }
+  },
+  "obligate:c1": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.5657906711160675,
+    "mass": 1123.6875,
+    "reproduction": 33.1875,
+    "role": "decomposer",
+    "roleSums": {
+     "photo": 5,
+     "grow": 0,
+     "decomp": 28,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.5964078868473618,
+    "mass": 1371.1875,
+    "reproduction": 37.8125,
+    "role": "decomposer",
+    "roleSums": {
+     "photo": 11,
+     "grow": 0,
+     "decomp": 49,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1.4375,
+    "meanMass": 121768.08695652174,
+    "speed": 1.041443937607658,
+    "mass": 203383.25,
+    "reproduction": 12.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 46442,
+     "grow": 258,
+     "decomp": 37281,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 3605,
+     "grow": 0,
+     "decomp": 775,
+     "resp": 0
+    },
+    "otherMass": 8706.75
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9966741252969962,
+    "individuals": 1,
+    "meanMass": 232502.125,
+    "speed": 3.4228484612313257,
+    "mass": 227129.875,
+    "reproduction": 15.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 40084,
+     "grow": 1140,
+     "decomp": 39835,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 3436,
+     "grow": 0,
+     "decomp": 2638,
+     "resp": 5973
+    },
+    "otherMass": 5586
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 5,
+    "recovery": 0.015142615163738899,
+    "individuals": 2.25,
+    "meanMass": 44671.833333333336,
+    "speed": 0.7516647773726856,
+    "mass": 165139.375,
+    "reproduction": 53.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 38966,
+     "grow": 202,
+     "decomp": 29837,
+     "resp": 0
+    }
+   }
+  },
+  "obligate-extra:c3:median": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.0704850495542386,
+    "mass": 147895.4375,
+    "reproduction": 111.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 37275,
+     "grow": 0,
+     "decomp": 36351,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.053158441067837,
+    "mass": 147834.375,
+    "reproduction": 99.3125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 37490,
+     "grow": 0,
+     "decomp": 36096,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999570743782686,
+    "individuals": 1,
+    "meanMass": 237901.5,
+    "speed": 3.6476705068726734,
+    "mass": 237808.9375,
+    "reproduction": 18.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 64292,
+     "grow": 0,
+     "decomp": 63751,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 107.25
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9997487227626803,
+    "individuals": 1,
+    "meanMass": 236940,
+    "speed": 2.839671502277379,
+    "mass": 236766.4375,
+    "reproduction": 23.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 62443,
+     "grow": 0,
+     "decomp": 61541,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 373,
+     "grow": 0,
+     "decomp": 299,
+     "resp": 937
+    },
+    "otherMass": 202.875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999710132258572,
+    "individuals": 3.25,
+    "meanMass": 57687.53846153846,
+    "speed": 2.3311705090380035,
+    "mass": 210135.75,
+    "reproduction": 98.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55831,
+     "grow": 0,
+     "decomp": 54963,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c6": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 1,
+    "individuals": 30.4375,
+    "meanMass": 2308.640657084189,
+    "speed": 0.3464318078259317,
+    "mass": 102628.4375,
+    "reproduction": 60.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 41064,
+     "grow": 0,
+     "decomp": 8678,
+     "resp": 34725
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 14,
+    "recovery": 1,
+    "individuals": 31.75,
+    "meanMass": 2196.6377952755906,
+    "speed": 0.3278077761620632,
+    "mass": 102605.375,
+    "reproduction": 60.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 41013,
+     "grow": 0,
+     "decomp": 8944,
+     "resp": 34615
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 14,
+    "recovery": 0.9568731675537147,
+    "individuals": 36.875,
+    "meanMass": 2177.806779661017,
+    "speed": 0.2586010126045322,
+    "mass": 92551.9375,
+    "reproduction": 39.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 64592,
+     "grow": 0,
+     "decomp": 14774,
+     "resp": 58572
+    },
+    "roleSumsOther": {
+     "photo": 18096,
+     "grow": 0,
+     "decomp": 3813,
+     "resp": 0
+    },
+    "otherMass": 46737.5
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.6548053426621663,
+    "individuals": 1.5,
+    "meanMass": 149824.70833333334,
+    "speed": 2.1841157815682757,
+    "mass": 225530.5,
+    "reproduction": 33.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 41446,
+     "grow": 0,
+     "decomp": 36885,
+     "resp": 720
+    },
+    "roleSumsOther": {
+     "photo": 2615,
+     "grow": 0,
+     "decomp": 2349,
+     "resp": 5014
+    },
+    "otherMass": 4222.4375
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 14,
+    "recovery": 0.9873858136829866,
+    "individuals": 51.8125,
+    "meanMass": 2015.329312424608,
+    "speed": 0.20873247418340038,
+    "mass": 122881,
+    "reproduction": 73.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 78013,
+     "grow": 0,
+     "decomp": 17461,
+     "resp": 71205
+    }
+   }
+  },
+  "facultative-sibling:c1": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 2,
+    "lightDependent": 10,
+    "regenerated": 5,
+    "recovery": 0.3556134906566539,
+    "individuals": 24.25,
+    "meanMass": 2315.479381443299,
+    "speed": 0.609045151604362,
+    "mass": 94900.1875,
+    "reproduction": 63.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 26025,
+     "grow": 108,
+     "decomp": 16756,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 3,
+    "lightDependent": 8,
+    "regenerated": 4,
+    "recovery": 0.4189110612358797,
+    "individuals": 29.3125,
+    "meanMass": 1799.3475479744136,
+    "speed": 0.5921318047571511,
+    "mass": 104051.9375,
+    "reproduction": 83.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 28465,
+     "grow": 131,
+     "decomp": 18667,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998947876961918,
+    "individuals": 1.1875,
+    "meanMass": 183535.31578947368,
+    "speed": 1.288728906957044,
+    "mass": 228782.9375,
+    "reproduction": 20.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 50564,
+     "grow": 166,
+     "decomp": 43870,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 327,
+     "grow": 0,
+     "decomp": 66,
+     "resp": 0
+    },
+    "otherMass": 1624.6875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9995704138549237,
+    "individuals": 1,
+    "meanMass": 232817.5625,
+    "speed": 3.249288103400183,
+    "mass": 229783.6875,
+    "reproduction": 18,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 43613,
+     "grow": 754,
+     "decomp": 42456,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 2146,
+     "grow": 0,
+     "decomp": 1583,
+     "resp": 3633
+    },
+    "otherMass": 3107.1875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1.625,
+    "meanMass": 98266.92307692308,
+    "speed": 1.176850975188278,
+    "mass": 201123.125,
+    "reproduction": 60.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 44129,
+     "grow": 140,
+     "decomp": 38184,
+     "resp": 0
+    }
+   }
+  },
+  "obligate:c3": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.0589018332636377,
+    "mass": 148007.5625,
+    "reproduction": 112.8125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 37291,
+     "grow": 0,
+     "decomp": 36295,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.0323225160155047,
+    "mass": 147800.8125,
+    "reproduction": 99.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 37336,
+     "grow": 0,
+     "decomp": 36153,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998630078055166,
+    "individuals": 1,
+    "meanMass": 236519.375,
+    "speed": 3.476400157524203,
+    "mass": 236226,
+    "reproduction": 19.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 63967,
+     "grow": 0,
+     "decomp": 62633,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 319.75
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998613097591403,
+    "individuals": 1,
+    "meanMass": 236941.5625,
+    "speed": 3.0147111390026944,
+    "mass": 236145.75,
+    "reproduction": 21.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 62022,
+     "grow": 0,
+     "decomp": 61072,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 520,
+     "grow": 0,
+     "decomp": 435,
+     "resp": 1307
+    },
+    "otherMass": 822.25
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999730275461387,
+    "individuals": 3.5625,
+    "meanMass": 50999.19298245614,
+    "speed": 2.2350613743650802,
+    "mass": 208385.5,
+    "reproduction": 100.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55075,
+     "grow": 0,
+     "decomp": 54152,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c8": {
+   "standard": {
+    "survived": 12,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 12,
+    "regenerated": 5,
+    "recovery": 0,
+    "individuals": 3.3125,
+    "meanMass": 694.7169811320755,
+    "speed": 0.6657051322239106,
+    "mass": 8277.9375,
+    "reproduction": 39.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 3837,
+     "grow": 6,
+     "decomp": 414,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 6,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 6,
+    "regenerated": 5,
+    "recovery": 0,
+    "individuals": 1.625,
+    "meanMass": 688.1153846153846,
+    "speed": 0.7680236642997104,
+    "mass": 4283.75,
+    "reproduction": 26.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 2077,
+     "grow": 0,
+     "decomp": 251,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 11,
+    "recovery": 1,
+    "individuals": 8.5625,
+    "meanMass": 9899.890510948906,
+    "speed": 0.8623379874356295,
+    "mass": 170212.4375,
+    "reproduction": 56.8125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 59280,
+     "grow": 76,
+     "decomp": 19981,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1922,
+     "grow": 0,
+     "decomp": 394,
+     "resp": 0
+    },
+    "otherMass": 4096.8125
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 7,
+    "recovery": 0.9849017535392527,
+    "individuals": 4.6875,
+    "meanMass": 25828.773333333334,
+    "speed": 3.309061334912765,
+    "mass": 191870.25,
+    "reproduction": 42.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55399,
+     "grow": 924,
+     "decomp": 28585,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1044,
+     "grow": 0,
+     "decomp": 965,
+     "resp": 1815
+    },
+    "otherMass": 1554.1875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 14,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.9552301266478038,
+    "individuals": 38.4375,
+    "meanMass": 2561.6178861788617,
+    "speed": 0.7106480438164717,
+    "mass": 144458.0625,
+    "reproduction": 111.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55888,
+     "grow": 60,
+     "decomp": 14259,
+     "resp": 0
+    }
+   }
+  },
+  "facultative-sibling:c3": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 0.9990282042044526,
+    "individuals": 46.375,
+    "meanMass": 2395.5687331536387,
+    "speed": 0.3519272678929795,
+    "mass": 146653.3125,
+    "reproduction": 65.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 42471,
+     "grow": 0,
+     "decomp": 40769,
+     "resp": 1805
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 14,
+    "recovery": 0.999455904807061,
+    "individuals": 44.125,
+    "meanMass": 2542.712464589235,
+    "speed": 0.2827523804039756,
+    "mass": 146561.875,
+    "reproduction": 50.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 43063,
+     "grow": 0,
+     "decomp": 41820,
+     "resp": 1357
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999032665240731,
+    "individuals": 1,
+    "meanMass": 237212.125,
+    "speed": 3.128833670659276,
+    "mass": 237107.8125,
+    "reproduction": 16.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 64013,
+     "grow": 0,
+     "decomp": 63437,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 2,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 110.1875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998154501635864,
+    "individuals": 1,
+    "meanMass": 237030.875,
+    "speed": 3.641718637811092,
+    "mass": 236266,
+    "reproduction": 23.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 62346,
+     "grow": 0,
+     "decomp": 61872,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 439,
+     "grow": 0,
+     "decomp": 303,
+     "resp": 1096
+    },
+    "otherMass": 794.25
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.999911519236304,
+    "individuals": 1.3125,
+    "meanMass": 151929.85714285713,
+    "speed": 1.8544683785584688,
+    "mass": 210047.4375,
+    "reproduction": 199.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 56243,
+     "grow": 0,
+     "decomp": 54841,
+     "resp": 0
+    }
+   }
+  },
+  "obligate:c4": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.473718047683756,
+    "mass": 1111.875,
+    "reproduction": 12.6875,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.5371481986831832,
+    "mass": 1181.9375,
+    "reproduction": 13.5625,
+    "role": "decomposer",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 1,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1.25,
+    "meanMass": 183867.45,
+    "speed": 1.7921933771591159,
+    "mass": 225265.75,
+    "reproduction": 20.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 38942,
+     "grow": 0,
+     "decomp": 37079,
+     "resp": 14454
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 9124.875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1.0625,
+    "meanMass": 216909.88235294117,
+    "speed": 2.5034615525442527,
+    "mass": 220386.25,
+    "reproduction": 31.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 37382,
+     "grow": 0,
+     "decomp": 36512,
+     "resp": 13587
+    },
+    "roleSumsOther": {
+     "photo": 3912,
+     "grow": 0,
+     "decomp": 2668,
+     "resp": 5767
+    },
+    "otherMass": 13634.375
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0.04339900654332218,
+    "individuals": 31,
+    "meanMass": 1399.7217741935483,
+    "speed": 0.7434862638405261,
+    "mass": 104755.0625,
+    "reproduction": 121.125,
+    "role": "decomposer",
+    "roleSums": {
+     "photo": 29807,
+     "grow": 0,
+     "decomp": 31143,
+     "resp": 19228
+    }
+   }
+  },
+  "nonobligate-cluster:c10": {
+   "standard": {
+    "survived": 6,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0.03142861304537525,
+    "individuals": 0.9375,
+    "meanMass": 2281.0666666666666,
+    "speed": 0.5193630768761218,
+    "mass": 12088.8125,
+    "reproduction": 34.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 990,
+     "grow": 0,
+     "decomp": 598,
+     "resp": 414
+    }
+   },
+   "waste": {
+    "survived": 4,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0.03063136001089883,
+    "individuals": 0.6875,
+    "meanMass": 2348.3636363636365,
+    "speed": 0.49567873030675696,
+    "mass": 11529.25,
+    "reproduction": 33.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 838,
+     "grow": 0,
+     "decomp": 591,
+     "resp": 311
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998390954000574,
+    "individuals": 1.1875,
+    "meanMass": 194039.57894736843,
+    "speed": 2.805750026335608,
+    "mass": 232239.75,
+    "reproduction": 29.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 50099,
+     "grow": 0,
+     "decomp": 45761,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 800
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999122236173895,
+    "individuals": 1,
+    "meanMass": 231351.3125,
+    "speed": 2.3581265980633384,
+    "mass": 232242.9375,
+    "reproduction": 27.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 47475,
+     "grow": 0,
+     "decomp": 42696,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 367,
+     "grow": 0,
+     "decomp": 480,
+     "resp": 1088
+    },
+    "otherMass": 473.5
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9997832005657026,
+    "individuals": 23.75,
+    "meanMass": 6806.513157894737,
+    "speed": 1.6757396757492795,
+    "mass": 205948.3125,
+    "reproduction": 229.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 44995,
+     "grow": 0,
+     "decomp": 39337,
+     "resp": 0
+    }
+   }
+  },
+  "facultative-sibling:c4": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 9,
+    "regenerated": 2,
+    "recovery": 0.07355934566899544,
+    "individuals": 16.0625,
+    "meanMass": 1707.8754863813228,
+    "speed": 1.2539177971489956,
+    "mass": 58194.1875,
+    "reproduction": 60.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 17532,
+     "grow": 0,
+     "decomp": 15200,
+     "resp": 10637
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 9,
+    "regenerated": 1,
+    "recovery": 0.020440552079952157,
+    "individuals": 16.625,
+    "meanMass": 1665.251879699248,
+    "speed": 1.3628967109080419,
+    "mass": 56242.875,
+    "reproduction": 62.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 16703,
+     "grow": 0,
+     "decomp": 14496,
+     "resp": 10066
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9948113549307273,
+    "individuals": 1.125,
+    "meanMass": 206459.16666666666,
+    "speed": 2.1964169326435794,
+    "mass": 230872.25,
+    "reproduction": 21.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 39310,
+     "grow": 0,
+     "decomp": 37611,
+     "resp": 14989
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 4507.5625
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1.1875,
+    "meanMass": 194643.47368421053,
+    "speed": 2.699940748448389,
+    "mass": 221054.625,
+    "reproduction": 27.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 37618,
+     "grow": 0,
+     "decomp": 36121,
+     "resp": 13576
+    },
+    "roleSumsOther": {
+     "photo": 4619,
+     "grow": 0,
+     "decomp": 2944,
+     "resp": 6618
+    },
+    "otherMass": 13729.8125
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 1,
+    "individuals": 3.625,
+    "meanMass": 48672.10344827586,
+    "speed": 1.9088420519127136,
+    "mass": 205358.0625,
+    "reproduction": 142.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 47030,
+     "grow": 0,
+     "decomp": 44011,
+     "resp": 1855
+    }
+   }
+  },
+  "obligate:c5": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 11.499072402396704,
+    "mass": 0.0625,
+    "reproduction": 0.5625,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 11.375756162860394,
+    "mass": 0.0625,
+    "reproduction": 0.9375,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 15,
+    "lightDependent": 16,
+    "regenerated": 15,
+    "recovery": 0.9717756694908026,
+    "individuals": 1.375,
+    "meanMass": 157864.86363636365,
+    "speed": 5.400779050462423,
+    "mass": 225338.8125,
+    "reproduction": 73.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 82589,
+     "grow": 114,
+     "decomp": 79558,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 110,
+     "grow": 0,
+     "decomp": 16,
+     "resp": 0
+    },
+    "otherMass": 565.9375
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998432914755163,
+    "individuals": 1,
+    "meanMass": 230857.8125,
+    "speed": 6.242765490956622,
+    "mass": 230767.5625,
+    "reproduction": 38.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 83565,
+     "grow": 711,
+     "decomp": 81755,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 628,
+     "grow": 0,
+     "decomp": 475,
+     "resp": 1125
+    },
+    "otherMass": 675.4375
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 0.999634529670407,
+    "individuals": 9.25,
+    "meanMass": 16870.486486486487,
+    "speed": 5.415064503251825,
+    "mass": 200652.9375,
+    "reproduction": 85.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 72325,
+     "grow": 83,
+     "decomp": 69514,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c12": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 3,
+    "recovery": 0.9982354302813891,
+    "individuals": 35.1875,
+    "meanMass": 3742.8028419182947,
+    "speed": 0.36658956081401395,
+    "mass": 147743.5625,
+    "reproduction": 41.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 32946,
+     "grow": 155,
+     "decomp": 31210,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 3,
+    "recovery": 0.9977787550015174,
+    "individuals": 34.625,
+    "meanMass": 3747.9819494584835,
+    "speed": 0.39656239099625545,
+    "mass": 147337.375,
+    "reproduction": 47.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 33310,
+     "grow": 176,
+     "decomp": 31287,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999139047251945,
+    "individuals": 1,
+    "meanMass": 233271.0625,
+    "speed": 2.1299014447563733,
+    "mass": 233300.4375,
+    "reproduction": 25.8125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 51899,
+     "grow": 357,
+     "decomp": 48523,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 0
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999224281891512,
+    "individuals": 1,
+    "meanMass": 233313,
+    "speed": 2.913641196143772,
+    "mass": 232692.625,
+    "reproduction": 30.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 51015,
+     "grow": 582,
+     "decomp": 48509,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 176,
+     "grow": 0,
+     "decomp": 193,
+     "resp": 529
+    },
+    "otherMass": 652.625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 6,
+    "recovery": 0.9951633732257144,
+    "individuals": 44.9375,
+    "meanMass": 4206.47983310153,
+    "speed": 0.214331998844263,
+    "mass": 206999.8125,
+    "reproduction": 37.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 47201,
+     "grow": 181,
+     "decomp": 45120,
+     "resp": 0
+    }
+   }
+  },
+  "facultative-sibling:c5": {
+   "standard": {
+    "survived": 15,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 15,
+    "regenerated": 2,
+    "recovery": 0,
+    "individuals": 0.9375,
+    "meanMass": 3487.5333333333333,
+    "speed": 0.13336994393714843,
+    "mass": 8788.4375,
+    "reproduction": 3.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 4284,
+     "grow": 3,
+     "decomp": 2405,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 9,
+    "recovery": 0,
+    "individuals": 1,
+    "meanMass": 2741.1875,
+    "speed": 0.13459770335679766,
+    "mass": 9092,
+    "reproduction": 3.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 4317,
+     "grow": 3,
+     "decomp": 2502,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999791800959554,
+    "individuals": 1.625,
+    "meanMass": 136005.88461538462,
+    "speed": 1.9069576687814127,
+    "mass": 229513,
+    "reproduction": 31.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 84634,
+     "grow": 184,
+     "decomp": 80508,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 85,
+     "grow": 0,
+     "decomp": 11,
+     "resp": 0
+    },
+    "otherMass": 545.9375
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9991486192693726,
+    "individuals": 1,
+    "meanMass": 230034.5625,
+    "speed": 2.6739322777819132,
+    "mass": 229527,
+    "reproduction": 42.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 81803,
+     "grow": 1040,
+     "decomp": 80954,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1156,
+     "grow": 0,
+     "decomp": 725,
+     "resp": 1622
+    },
+    "otherMass": 844.4375
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 14,
+    "recovery": 0.9983078973756234,
+    "individuals": 28.0625,
+    "meanMass": 4763.817371937639,
+    "speed": 1.814769675383359,
+    "mass": 199850.9375,
+    "reproduction": 145.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 72079,
+     "grow": 209,
+     "decomp": 68805,
+     "resp": 0
+    }
+   }
+  },
+  "obligate:c7": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.0492250877552465,
+    "mass": 138662.625,
+    "reproduction": 86.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 33558,
+     "grow": 0,
+     "decomp": 25553,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.0397753659490923,
+    "mass": 138283.6875,
+    "reproduction": 82.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 33337,
+     "grow": 0,
+     "decomp": 25390,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9996594388057595,
+    "individuals": 1,
+    "meanMass": 234221.5,
+    "speed": 2.996331396133295,
+    "mass": 234232.9375,
+    "reproduction": 8.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 50069,
+     "grow": 0,
+     "decomp": 46774,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 111.9375
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998397335556861,
+    "individuals": 1,
+    "meanMass": 234909.5625,
+    "speed": 3.5699595858995203,
+    "mass": 233253.3125,
+    "reproduction": 15.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 47126,
+     "grow": 0,
+     "decomp": 44370,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 671,
+     "grow": 0,
+     "decomp": 619,
+     "resp": 1541
+    },
+    "otherMass": 1726.625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 3.5625,
+    "meanMass": 47695.21052631579,
+    "speed": 2.019870396747881,
+    "mass": 205852.75,
+    "reproduction": 52.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 44469,
+     "grow": 0,
+     "decomp": 40733,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c13": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 11,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.8371636417002165,
+    "individuals": 25.625,
+    "meanMass": 2213.080487804878,
+    "speed": 0.8117686956805324,
+    "mass": 82117.375,
+    "reproduction": 77.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 34130,
+     "grow": 6,
+     "decomp": 15526,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 12,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.8867461875447435,
+    "individuals": 24.375,
+    "meanMass": 2502.5666666666666,
+    "speed": 0.8203775041319281,
+    "mass": 92576.25,
+    "reproduction": 80.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 36304,
+     "grow": 8,
+     "decomp": 17590,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9983207898531749,
+    "individuals": 4.75,
+    "meanMass": 30287.315789473683,
+    "speed": 1.4006498441571016,
+    "mass": 195512.625,
+    "reproduction": 43.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 68441,
+     "grow": 35,
+     "decomp": 41541,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1186,
+     "grow": 0,
+     "decomp": 286,
+     "resp": 0
+    },
+    "otherMass": 2225.1875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9873379637990757,
+    "individuals": 2.75,
+    "meanMass": 66027.84090909091,
+    "speed": 4.596585879810814,
+    "mass": 207506.5625,
+    "reproduction": 43.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 66666,
+     "grow": 285,
+     "decomp": 48562,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 837,
+     "grow": 0,
+     "decomp": 729,
+     "resp": 1395
+    },
+    "otherMass": 1392.875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.9982862820833502,
+    "individuals": 8.875,
+    "meanMass": 6901.401408450704,
+    "speed": 1.123200600960732,
+    "mass": 168865.3125,
+    "reproduction": 68.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 60971,
+     "grow": 21,
+     "decomp": 32533,
+     "resp": 0
+    }
+   }
+  },
+  "facultative-sibling:c7": {
+   "standard": {
+    "survived": 6,
+    "reps": 16,
+    "recovered": 6,
+    "lightDependent": 6,
+    "regenerated": 2,
+    "recovery": 0.9402719842280792,
+    "individuals": 16.375,
+    "meanMass": 3097.0152671755727,
+    "speed": 0.4749084076860205,
+    "mass": 140922.9375,
+    "reproduction": 77.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 32993,
+     "grow": 0,
+     "decomp": 27292,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 15,
+    "reps": 16,
+    "recovered": 15,
+    "lightDependent": 15,
+    "regenerated": 8,
+    "recovery": 0.9503380660363534,
+    "individuals": 42,
+    "meanMass": 3030.3318452380954,
+    "speed": 0.2827430830927829,
+    "mass": 146657.75,
+    "reproduction": 79.8125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 31943,
+     "grow": 0,
+     "decomp": 29384,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998799552793789,
+    "individuals": 1,
+    "meanMass": 233506.3125,
+    "speed": 2.9509694611164203,
+    "mass": 232870.25,
+    "reproduction": 11.8125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 49202,
+     "grow": 0,
+     "decomp": 46678,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 904.5625
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9997301656886483,
+    "individuals": 1,
+    "meanMass": 234224.9375,
+    "speed": 3.490112822439153,
+    "mass": 233509.5625,
+    "reproduction": 19.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 46656,
+     "grow": 0,
+     "decomp": 44237,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 629,
+     "grow": 0,
+     "decomp": 638,
+     "resp": 1597
+    },
+    "otherMass": 779.8125
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999096219202435,
+    "individuals": 3.25,
+    "meanMass": 54232.61538461538,
+    "speed": 2.0769431379682146,
+    "mass": 206189.5,
+    "reproduction": 90.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 44686,
+     "grow": 0,
+     "decomp": 40579,
+     "resp": 0
+    }
+   }
+  },
+  "obligate:c9": {
+   "standard": {
+    "survived": 1,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0.05961218836565097,
+    "individuals": 0.0625,
+    "meanMass": 785,
+    "speed": 0.5531340323327802,
+    "mass": 9995.625,
+    "reproduction": 45,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 300,
+     "grow": 0,
+     "decomp": 82,
+     "resp": 52
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.5468793713369037,
+    "mass": 8810.5625,
+    "reproduction": 39.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 204,
+     "grow": 2,
+     "decomp": 32,
+     "resp": 11
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 11,
+    "recovery": 1,
+    "individuals": 15.25,
+    "meanMass": 4293.75,
+    "speed": 1.0000054026866625,
+    "mass": 187818.9375,
+    "reproduction": 86.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 64445,
+     "grow": 9,
+     "decomp": 23065,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 27.6875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 8,
+    "recovery": 1,
+    "individuals": 23.3125,
+    "meanMass": 2161.2091152815015,
+    "speed": 1.885827886377926,
+    "mass": 180987.3125,
+    "reproduction": 143.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 54483,
+     "grow": 342,
+     "decomp": 20394,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1260,
+     "grow": 0,
+     "decomp": 1194,
+     "resp": 2361
+    },
+    "otherMass": 3825.4375
+   },
+   "x4": {
+    "survived": 1,
+    "reps": 16,
+    "recovered": 1,
+    "lightDependent": 1,
+    "regenerated": 0,
+    "recovery": 0.9837008206271531,
+    "individuals": 0.125,
+    "meanMass": 241,
+    "speed": 0.9553645187646701,
+    "mass": 154408.8125,
+    "reproduction": 83,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55175,
+     "grow": 1,
+     "decomp": 15663,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c14": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 0,
+    "individuals": 5.5,
+    "meanMass": 544.0113636363636,
+    "speed": 0.5396381344014094,
+    "mass": 11167.375,
+    "reproduction": 49.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 5183,
+     "grow": 3,
+     "decomp": 603,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 14,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 14,
+    "regenerated": 6,
+    "recovery": 0,
+    "individuals": 2.75,
+    "meanMass": 901.4318181818181,
+    "speed": 0.5154244621919114,
+    "mass": 9346.875,
+    "reproduction": 44.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 4594,
+     "grow": 5,
+     "decomp": 539,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 11,
+    "recovery": 1,
+    "individuals": 7.1875,
+    "meanMass": 13818.921739130436,
+    "speed": 0.9475136857822982,
+    "mass": 178983.375,
+    "reproduction": 56.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 60663,
+     "grow": 75,
+     "decomp": 21910,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1167,
+     "grow": 0,
+     "decomp": 274,
+     "resp": 0
+    },
+    "otherMass": 2498.6875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 8,
+    "recovery": 0.9716326190013248,
+    "individuals": 6.125,
+    "meanMass": 23782.35714285714,
+    "speed": 4.229784477560068,
+    "mass": 200445.25,
+    "reproduction": 40.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 52059,
+     "grow": 804,
+     "decomp": 31184,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1207,
+     "grow": 0,
+     "decomp": 1175,
+     "resp": 2128
+    },
+    "otherMass": 1119.1875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 1,
+    "recovery": 0.9780530199523011,
+    "individuals": 37.125,
+    "meanMass": 2568.6734006734005,
+    "speed": 0.7479137434645533,
+    "mass": 144550.5625,
+    "reproduction": 112.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 54638,
+     "grow": 59,
+     "decomp": 14389,
+     "resp": 0
+    }
+   }
+  },
+  "facultative-sibling:c9": {
+   "standard": {
+    "survived": 6,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0.06348391385096397,
+    "individuals": 1.75,
+    "meanMass": 2310.3928571428573,
+    "speed": 0.48577367822920375,
+    "mass": 41282.9375,
+    "reproduction": 57.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 9488,
+     "grow": 2,
+     "decomp": 3341,
+     "resp": 2336
+    }
+   },
+   "waste": {
+    "survived": 2,
+    "reps": 16,
+    "recovered": 1,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0.4880842140861162,
+    "individuals": 3.0625,
+    "meanMass": 2466.5102040816328,
+    "speed": 0.4848959285157098,
+    "mass": 31754.3125,
+    "reproduction": 56,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 6654,
+     "grow": 4,
+     "decomp": 2545,
+     "resp": 1664
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 2.0625,
+    "meanMass": 102247.60606060606,
+    "speed": 1.9197199708203632,
+    "mass": 227829.75,
+    "reproduction": 33.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 54748,
+     "grow": 124,
+     "decomp": 44883,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 170.625
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 2.625,
+    "meanMass": 81793.26190476191,
+    "speed": 3.3645978567235555,
+    "mass": 227675.3125,
+    "reproduction": 41.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 52697,
+     "grow": 174,
+     "decomp": 44664,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 96,
+     "grow": 0,
+     "decomp": 165,
+     "resp": 361
+    },
+    "otherMass": 25.25
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 7,
+    "recovery": 0.9966847231453919,
+    "individuals": 3.1875,
+    "meanMass": 23058.92156862745,
+    "speed": 1.1653655609001607,
+    "mass": 178738,
+    "reproduction": 62.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 53378,
+     "grow": 65,
+     "decomp": 28165,
+     "resp": 0
+    }
+   }
+  },
+  "obligate:c11": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.27685776080574476,
+    "mass": 48.3125,
+    "reproduction": 8.4375,
+    "role": "chemotroph",
+    "roleSums": {
+     "photo": 0,
+     "grow": 1,
+     "decomp": 0,
+     "resp": 1
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.31110351609972614,
+    "mass": 19.4375,
+    "reproduction": 7.875,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1.375,
+    "meanMass": 131580.27272727274,
+    "speed": 1.759173058109006,
+    "mass": 177466.625,
+    "reproduction": 7.75,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 43913,
+     "grow": 51919,
+     "decomp": 83748,
+     "resp": 81165
+    },
+    "roleSumsOther": {
+     "photo": 3265,
+     "grow": 0,
+     "decomp": 666,
+     "resp": 0
+    },
+    "otherMass": 33731.6875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 15,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9721355361529991,
+    "individuals": 1.75,
+    "meanMass": 120408.53571428571,
+    "speed": 4.635544363638656,
+    "mass": 184367.125,
+    "reproduction": 31.9375,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 46838,
+     "grow": 55521,
+     "decomp": 96359,
+     "resp": 88819
+    },
+    "roleSumsOther": {
+     "photo": 18320,
+     "grow": 0,
+     "decomp": 12270,
+     "resp": 19531
+    },
+    "otherMass": 38212.375
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 6.375,
+    "meanMass": 21823.098039215685,
+    "speed": 1.0420146861872779,
+    "mass": 196066.25,
+    "reproduction": 54.8125,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 45570,
+     "grow": 54659,
+     "decomp": 88295,
+     "resp": 85909
+    }
+   }
+  },
+  "nonobligate-cluster:c15": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 7,
+    "recovery": 0,
+    "individuals": 4.25,
+    "meanMass": 706.6029411764706,
+    "speed": 0.5799360585043662,
+    "mass": 11104.1875,
+    "reproduction": 48.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 5022,
+     "grow": 3,
+     "decomp": 571,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 5,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 5,
+    "regenerated": 3,
+    "recovery": 0,
+    "individuals": 1.0625,
+    "meanMass": 1468.3529411764705,
+    "speed": 0.7485841718432373,
+    "mass": 4048.875,
+    "reproduction": 24.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 1895,
+     "grow": 4,
+     "decomp": 222,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 7,
+    "recovery": 1,
+    "individuals": 10.5,
+    "meanMass": 7662.886904761905,
+    "speed": 0.8933124191149101,
+    "mass": 164591.5625,
+    "reproduction": 60.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 58936,
+     "grow": 81,
+     "decomp": 18813,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 2890,
+     "grow": 0,
+     "decomp": 666,
+     "resp": 0
+    },
+    "otherMass": 8582.75
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 4,
+    "recovery": 0.9806491220059044,
+    "individuals": 6.8125,
+    "meanMass": 19107.357798165136,
+    "speed": 4.265413800613679,
+    "mass": 193178.625,
+    "reproduction": 48.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 53797,
+     "grow": 1319,
+     "decomp": 29485,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1442,
+     "grow": 0,
+     "decomp": 1422,
+     "resp": 2723
+    },
+    "otherMass": 3446.625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 14,
+    "lightDependent": 16,
+    "regenerated": 1,
+    "recovery": 0.958596552734563,
+    "individuals": 40,
+    "meanMass": 2716.21875,
+    "speed": 0.6838950481469389,
+    "mass": 149330.5625,
+    "reproduction": 110.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 57185,
+     "grow": 51,
+     "decomp": 15167,
+     "resp": 0
+    }
+   }
+  },
+  "facultative-sibling:c11": {
+   "standard": {
+    "survived": 11,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 3,
+    "regenerated": 2,
+    "recovery": 0.00008174261265780574,
+    "individuals": 2.75,
+    "meanMass": 3663.5227272727275,
+    "speed": 0.1853641079477198,
+    "mass": 11848.6875,
+    "reproduction": 11.3125,
+    "role": "chemotroph",
+    "roleSums": {
+     "photo": 3438,
+     "grow": 6007,
+     "decomp": 2988,
+     "resp": 7882
+    }
+   },
+   "waste": {
+    "survived": 8,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0.0002779798558217943,
+    "individuals": 1,
+    "meanMass": 3178.125,
+    "speed": 0.2124142567170345,
+    "mass": 5972.5625,
+    "reproduction": 9.6875,
+    "role": "chemotroph",
+    "roleSums": {
+     "photo": 1725,
+     "grow": 2866,
+     "decomp": 1445,
+     "resp": 3730
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9987381491121577,
+    "individuals": 1.625,
+    "meanMass": 132384.92307692306,
+    "speed": 2.7147648594086475,
+    "mass": 204780.8125,
+    "reproduction": 12.625,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 55948,
+     "grow": 59039,
+     "decomp": 104492,
+     "resp": 101061
+    },
+    "roleSumsOther": {
+     "photo": 357,
+     "grow": 0,
+     "decomp": 54,
+     "resp": 0
+    },
+    "otherMass": 20570
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 15,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9932784774596666,
+    "individuals": 1.25,
+    "meanMass": 170938.5,
+    "speed": 4.379932636762502,
+    "mass": 192913.375,
+    "reproduction": 35.3125,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 52701,
+     "grow": 55486,
+     "decomp": 102831,
+     "resp": 94616
+    },
+    "roleSumsOther": {
+     "photo": 14443,
+     "grow": 0,
+     "decomp": 10121,
+     "resp": 16440
+    },
+    "otherMass": 31160.25
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 7.5,
+    "meanMass": 17977,
+    "speed": 1.2307762681221246,
+    "mass": 199410.5625,
+    "reproduction": 59.8125,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 49387,
+     "grow": 52603,
+     "decomp": 93434,
+     "resp": 89793
+    }
+   }
+  },
+  "obligate:c17": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.6284382278903946,
+    "mass": 147515.25,
+    "reproduction": 139.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 49726,
+     "grow": 49,
+     "decomp": 45573,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.4494726431907097,
+    "mass": 147647.8125,
+    "reproduction": 144.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 49330,
+     "grow": 43,
+     "decomp": 45938,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998713105663802,
+    "individuals": 1,
+    "meanMass": 236618.6875,
+    "speed": 3.468673451959568,
+    "mass": 235628.375,
+    "reproduction": 26.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 85275,
+     "grow": 87,
+     "decomp": 84343,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 1010.875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998826263895677,
+    "individuals": 1,
+    "meanMass": 236181.4375,
+    "speed": 2.976208929080857,
+    "mass": 235937.6875,
+    "reproduction": 31.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 84285,
+     "grow": 207,
+     "decomp": 83142,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 161,
+     "grow": 0,
+     "decomp": 160,
+     "resp": 532
+    },
+    "otherMass": 267.1875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998963065796743,
+    "individuals": 3.5,
+    "meanMass": 53739.392857142855,
+    "speed": 2.057343283423612,
+    "mass": 209789.75,
+    "reproduction": 158.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 73429,
+     "grow": 62,
+     "decomp": 72208,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c16": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.9744791149002681,
+    "individuals": 9.375,
+    "meanMass": 5144.833333333333,
+    "speed": 3.801482640393442,
+    "mass": 80075.75,
+    "reproduction": 72.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 39407,
+     "grow": 0,
+     "decomp": 3381,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.9785383048503863,
+    "individuals": 12.625,
+    "meanMass": 3764.7227722772277,
+    "speed": 3.7920073567702417,
+    "mass": 80232.4375,
+    "reproduction": 65.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 39999,
+     "grow": 3,
+     "decomp": 3419,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9996964237011043,
+    "individuals": 1,
+    "meanMass": 233321.5,
+    "speed": 1.6586887947400855,
+    "mass": 233380.125,
+    "reproduction": 29.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 53394,
+     "grow": 439,
+     "decomp": 49392,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 0
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998827306322279,
+    "individuals": 1,
+    "meanMass": 232769.125,
+    "speed": 2.998834825750961,
+    "mass": 232845.1875,
+    "reproduction": 32.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 52507,
+     "grow": 620,
+     "decomp": 48634,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 205,
+     "grow": 0,
+     "decomp": 257,
+     "resp": 571
+    },
+    "otherMass": 0
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 2,
+    "recovery": 0.9909901623813278,
+    "individuals": 36.3125,
+    "meanMass": 3202.1790017211706,
+    "speed": 0.5973162529330829,
+    "mass": 161404,
+    "reproduction": 69.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55315,
+     "grow": 225,
+     "decomp": 22962,
+     "resp": 0
+    }
+   }
+  },
+  "facultative-sibling:c17": {
+   "standard": {
+    "survived": 10,
+    "reps": 16,
+    "recovered": 10,
+    "lightDependent": 10,
+    "regenerated": 0,
+    "recovery": 0.9996203373107742,
+    "individuals": 1.75,
+    "meanMass": 395.17857142857144,
+    "speed": 1.666414287390756,
+    "mass": 147639.625,
+    "reproduction": 145.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 51212,
+     "grow": 47,
+     "decomp": 40221,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 1,
+    "reps": 16,
+    "recovered": 1,
+    "lightDependent": 1,
+    "regenerated": 0,
+    "recovery": 0.9988130115885747,
+    "individuals": 0.1875,
+    "meanMass": 195.33333333333334,
+    "speed": 1.654211773093619,
+    "mass": 147683.5,
+    "reproduction": 151.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 51982,
+     "grow": 58,
+     "decomp": 42164,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9997933794868945,
+    "individuals": 1,
+    "meanMass": 236820.5,
+    "speed": 3.4750359308743786,
+    "mass": 236368.75,
+    "reproduction": 22.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 87070,
+     "grow": 95,
+     "decomp": 85928,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 478.1875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.999950777071583,
+    "individuals": 1,
+    "meanMass": 235797.75,
+    "speed": 2.6098680801395577,
+    "mass": 235233,
+    "reproduction": 29.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 85634,
+     "grow": 183,
+     "decomp": 84268,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 222,
+     "grow": 0,
+     "decomp": 208,
+     "resp": 664
+    },
+    "otherMass": 617.5625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9997666848081328,
+    "individuals": 3.8125,
+    "meanMass": 48162.08196721312,
+    "speed": 2.0536383781516347,
+    "mass": 208668.625,
+    "reproduction": 157.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 74333,
+     "grow": 65,
+     "decomp": 73093,
+     "resp": 0
+    }
+   }
+  },
+  "obligate:c19": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.8868229636850823,
+    "mass": 147492.1875,
+    "reproduction": 55,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 19660,
+     "grow": 11365,
+     "decomp": 28851,
+     "resp": 20371
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 0.9149534754209394,
+    "mass": 148002.4375,
+    "reproduction": 56.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 19928,
+     "grow": 11155,
+     "decomp": 28915,
+     "resp": 20384
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998377268799035,
+    "individuals": 1,
+    "meanMass": 234935.875,
+    "speed": 2.9300210655220242,
+    "mass": 229417.0625,
+    "reproduction": 23.3125,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 28930,
+     "grow": 36788,
+     "decomp": 63231,
+     "resp": 51991
+    },
+    "roleSumsOther": {
+     "photo": 3,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 5524.6875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9995089744946444,
+    "individuals": 1,
+    "meanMass": 236386.3125,
+    "speed": 2.781523474085061,
+    "mass": 235517.75,
+    "reproduction": 19,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 28753,
+     "grow": 39159,
+     "decomp": 65043,
+     "resp": 54430
+    },
+    "roleSumsOther": {
+     "photo": 226,
+     "grow": 0,
+     "decomp": 320,
+     "resp": 719
+    },
+    "otherMass": 892.0625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999859237536657,
+    "individuals": 3.125,
+    "meanMass": 58593.22,
+    "speed": 2.52542950484198,
+    "mass": 209539,
+    "reproduction": 52.8125,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 25289,
+     "grow": 29943,
+     "decomp": 53354,
+     "resp": 43382
+    }
+   }
+  },
+  "nonobligate-cluster:c18": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 4,
+    "recovery": 0.9998751947819012,
+    "individuals": 27.1875,
+    "meanMass": 4755.0505747126435,
+    "speed": 0.7963738950878977,
+    "mass": 147374.0625,
+    "reproduction": 36.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 30957,
+     "grow": 0,
+     "decomp": 29638,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 3,
+    "recovery": 0.9997763987634938,
+    "individuals": 28.25,
+    "meanMass": 4540.993362831859,
+    "speed": 0.7278017046629142,
+    "mass": 147414.4375,
+    "reproduction": 38.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 31338,
+     "grow": 0,
+     "decomp": 29296,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9996726546360738,
+    "individuals": 1,
+    "meanMass": 233742.5625,
+    "speed": 2.0354962000235206,
+    "mass": 233291.9375,
+    "reproduction": 28.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 48772,
+     "grow": 0,
+     "decomp": 46333,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 474.125
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9997101132485074,
+    "individuals": 1,
+    "meanMass": 234166.1875,
+    "speed": 2.69002467848607,
+    "mass": 233568.5,
+    "reproduction": 28.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 46215,
+     "grow": 0,
+     "decomp": 43614,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 815,
+     "grow": 0,
+     "decomp": 766,
+     "resp": 1663
+    },
+    "otherMass": 653.4375
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9987874360378116,
+    "individuals": 45,
+    "meanMass": 3956.998611111111,
+    "speed": 0.1761324479255597,
+    "mass": 206367.3125,
+    "reproduction": 30.8125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 43998,
+     "grow": 0,
+     "decomp": 41011,
+     "resp": 0
+    }
+   }
+  },
+  "facultative-sibling:c19": {
+   "standard": {
+    "survived": 15,
+    "reps": 16,
+    "recovered": 14,
+    "lightDependent": 15,
+    "regenerated": 9,
+    "recovery": 0.9299483543683785,
+    "individuals": 37.6875,
+    "meanMass": 1956.9734660033168,
+    "speed": 0.33998503058393614,
+    "mass": 112577,
+    "reproduction": 64.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 38341,
+     "grow": 2701,
+     "decomp": 16589,
+     "resp": 4266
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 13,
+    "lightDependent": 16,
+    "regenerated": 13,
+    "recovery": 0.9215386706804441,
+    "individuals": 42.125,
+    "meanMass": 1983.086053412463,
+    "speed": 0.3428453358996119,
+    "mass": 108378.5,
+    "reproduction": 70.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 40389,
+     "grow": 1423,
+     "decomp": 14424,
+     "resp": 2307
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9975927239720761,
+    "individuals": 1.0625,
+    "meanMass": 219142.82352941178,
+    "speed": 3.1330090377486877,
+    "mass": 220373.4375,
+    "reproduction": 19,
+    "role": "chemotroph",
+    "roleSums": {
+     "photo": 29665,
+     "grow": 50583,
+     "decomp": 75858,
+     "resp": 67982
+    },
+    "roleSumsOther": {
+     "photo": 1,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 13255.8125
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998407703225265,
+    "individuals": 1,
+    "meanMass": 233192.625,
+    "speed": 3.249137658434102,
+    "mass": 232944.3125,
+    "reproduction": 22.0625,
+    "role": "chemotroph",
+    "roleSums": {
+     "photo": 29779,
+     "grow": 54333,
+     "decomp": 79906,
+     "resp": 72102
+    },
+    "roleSumsOther": {
+     "photo": 166,
+     "grow": 0,
+     "decomp": 298,
+     "resp": 497
+    },
+    "otherMass": 298.25
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.999523938487674,
+    "individuals": 4.0625,
+    "meanMass": 42997.661538461536,
+    "speed": 2.5071934682336705,
+    "mass": 207253.3125,
+    "reproduction": 57.875,
+    "role": "chemotroph",
+    "roleSums": {
+     "photo": 26784,
+     "grow": 43014,
+     "decomp": 66305,
+     "resp": 59402
+    }
+   }
+  },
+  "obligate:c31": {
+   "standard": {
+    "survived": 1,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 1,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0.0625,
+    "meanMass": 4208,
+    "speed": 1.2120584330068862,
+    "mass": 403.625,
+    "reproduction": 12.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 73,
+     "grow": 14,
+     "decomp": 66,
+     "resp": 23
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.0939703345980025,
+    "mass": 70.9375,
+    "reproduction": 19.0625,
+    "role": "decomposer",
+    "roleSums": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 25,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998520578922975,
+    "individuals": 1.0625,
+    "meanMass": 218382.35294117648,
+    "speed": 1.6016352384417143,
+    "mass": 232679.0625,
+    "reproduction": 16.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 51389,
+     "grow": 463,
+     "decomp": 48917,
+     "resp": 11
+    },
+    "roleSumsOther": {
+     "photo": 49,
+     "grow": 0,
+     "decomp": 6,
+     "resp": 0
+    },
+    "otherMass": 1657.125
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9997730934536688,
+    "individuals": 1,
+    "meanMass": 234331.8125,
+    "speed": 2.9809200117231134,
+    "mass": 233076.0625,
+    "reproduction": 19.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 47033,
+     "grow": 1511,
+     "decomp": 47576,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1328,
+     "grow": 0,
+     "decomp": 956,
+     "resp": 2613
+    },
+    "otherMass": 1311.4375
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 15,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 0.9742121383248233,
+    "individuals": 9.375,
+    "meanMass": 15152.446666666667,
+    "speed": 0.7499459592809788,
+    "mass": 184636.3125,
+    "reproduction": 103.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 40830,
+     "grow": 2898,
+     "decomp": 33331,
+     "resp": 3916
+    }
+   }
+  },
+  "nonobligate-cluster:c20": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.13801775790267592,
+    "individuals": 7.1875,
+    "meanMass": 1986.5739130434783,
+    "speed": 0.6692826391788068,
+    "mass": 25164.25,
+    "reproduction": 50.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 10586,
+     "grow": 39,
+     "decomp": 2449,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 13,
+    "recovery": 0.3863933097431922,
+    "individuals": 6,
+    "meanMass": 2407.6145833333335,
+    "speed": 0.7129648674872018,
+    "mass": 26365.625,
+    "reproduction": 41.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 11514,
+     "grow": 27,
+     "decomp": 2453,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 2,
+    "lightDependent": 16,
+    "regenerated": 13,
+    "recovery": 0.7621999824193265,
+    "individuals": 16.75,
+    "meanMass": 3004.4328358208954,
+    "speed": 0.44026854427041856,
+    "mass": 69803.625,
+    "reproduction": 38.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 29226,
+     "grow": 138,
+     "decomp": 7525,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 30163,
+     "grow": 0,
+     "decomp": 4197,
+     "resp": 0
+    },
+    "otherMass": 70056.875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 10,
+    "lightDependent": 16,
+    "regenerated": 5,
+    "recovery": 0.8972818284395184,
+    "individuals": 6.0625,
+    "meanMass": 9097.525773195875,
+    "speed": 3.495238499324329,
+    "mass": 98725.6875,
+    "reproduction": 60.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 11815,
+     "grow": 6939,
+     "decomp": 747,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 29933,
+     "grow": 0,
+     "decomp": 15114,
+     "resp": 27536
+    },
+    "otherMass": 66166.6875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 4,
+    "recovery": 0.17896061860993298,
+    "individuals": 18.125,
+    "meanMass": 1459.0206896551724,
+    "speed": 0.5324816333567035,
+    "mass": 63023.75,
+    "reproduction": 137.3125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 22597,
+     "grow": 198,
+     "decomp": 6702,
+     "resp": 0
+    }
+   }
+  },
+  "obligate:c32": {
+   "standard": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.3744370160746857,
+    "mass": 147659.375,
+    "reproduction": 52.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 32913,
+     "grow": 0,
+     "decomp": 30854,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 0,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0,
+    "individuals": 0,
+    "meanMass": 0,
+    "speed": 1.3230953008459132,
+    "mass": 147235.625,
+    "reproduction": 51.8125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 33075,
+     "grow": 0,
+     "decomp": 30573,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999436447318945,
+    "individuals": 1,
+    "meanMass": 237552.0625,
+    "speed": 3.4699304988780852,
+    "mass": 237175,
+    "reproduction": 18.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 51744,
+     "grow": 0,
+     "decomp": 50824,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 394.6875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999208704071034,
+    "individuals": 1,
+    "meanMass": 237781.1875,
+    "speed": 2.9087280643324926,
+    "mass": 237801.75,
+    "reproduction": 19.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 51071,
+     "grow": 0,
+     "decomp": 49808,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 138,
+     "grow": 0,
+     "decomp": 147,
+     "resp": 492
+    },
+    "otherMass": 0
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998312385256418,
+    "individuals": 2.75,
+    "meanMass": 66787.18181818182,
+    "speed": 2.6528768021035334,
+    "mass": 209817.4375,
+    "reproduction": 54.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 46166,
+     "grow": 0,
+     "decomp": 44413,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c21": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 3,
+    "recovery": 0.14093529390133952,
+    "individuals": 22.4375,
+    "meanMass": 3644.08635097493,
+    "speed": 0.251290658428686,
+    "mass": 97448.4375,
+    "reproduction": 35.5625,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 21129,
+     "grow": 17282,
+     "decomp": 16763,
+     "resp": 24298
+    }
+   },
+   "waste": {
+    "survived": 15,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 12,
+    "regenerated": 4,
+    "recovery": 0.21567728168327277,
+    "individuals": 15.1875,
+    "meanMass": 3435.2345679012346,
+    "speed": 0.29511856859106916,
+    "mass": 77149.6875,
+    "reproduction": 31.375,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 17864,
+     "grow": 12380,
+     "decomp": 12159,
+     "resp": 17243
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999395746297081,
+    "individuals": 1,
+    "meanMass": 234921.3125,
+    "speed": 2.396776461783383,
+    "mass": 232425.4375,
+    "reproduction": 13.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 31109,
+     "grow": 19257,
+     "decomp": 47008,
+     "resp": 30756
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 2504.6875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998641621521152,
+    "individuals": 1,
+    "meanMass": 234325.8125,
+    "speed": 2.4898178833038007,
+    "mass": 234043.125,
+    "reproduction": 19.6875,
+    "role": "mixed",
+    "roleSums": {
+     "photo": 29813,
+     "grow": 20087,
+     "decomp": 47290,
+     "resp": 31564
+    },
+    "roleSumsOther": {
+     "photo": 389,
+     "grow": 0,
+     "decomp": 453,
+     "resp": 1064
+    },
+    "otherMass": 323.6875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.999996092434954,
+    "individuals": 3.3125,
+    "meanMass": 56694.83018867925,
+    "speed": 1.2221812123378393,
+    "mass": 207927.625,
+    "reproduction": 155.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 28269,
+     "grow": 13292,
+     "decomp": 38321,
+     "resp": 23062
+    }
+   }
+  },
+  "nonobligate-cluster:c22": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 1,
+    "recovery": 0.999874512335053,
+    "individuals": 43.9375,
+    "meanMass": 3015.4992887624467,
+    "speed": 0.30847093994901625,
+    "mass": 147769.4375,
+    "reproduction": 48,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 33973,
+     "grow": 284,
+     "decomp": 32428,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 6,
+    "recovery": 0.9996399290016766,
+    "individuals": 41.125,
+    "meanMass": 3224.405775075988,
+    "speed": 0.3429782925164713,
+    "mass": 147496.125,
+    "reproduction": 46.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 33992,
+     "grow": 248,
+     "decomp": 32439,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9983730333216759,
+    "individuals": 1,
+    "meanMass": 225709.8125,
+    "speed": 2.337930203427828,
+    "mass": 226076.5,
+    "reproduction": 31.5,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 49976,
+     "grow": 241,
+     "decomp": 43502,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 259.9375
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999622291045854,
+    "individuals": 1,
+    "meanMass": 225709.875,
+    "speed": 2.9271544512756282,
+    "mass": 219391.125,
+    "reproduction": 47.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 44476,
+     "grow": 1193,
+     "decomp": 39931,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1947,
+     "grow": 0,
+     "decomp": 1538,
+     "resp": 2871
+    },
+    "otherMass": 7233.5625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.9994862896009898,
+    "individuals": 3.5,
+    "meanMass": 44943.75,
+    "speed": 1.7413875396609084,
+    "mass": 200237.0625,
+    "reproduction": 104.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 44601,
+     "grow": 213,
+     "decomp": 38391,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c23": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 9,
+    "lightDependent": 16,
+    "regenerated": 4,
+    "recovery": 0.8796980325707738,
+    "individuals": 14.125,
+    "meanMass": 2222.933628318584,
+    "speed": 0.7652184240016978,
+    "mass": 84845.125,
+    "reproduction": 146.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 42479,
+     "grow": 52,
+     "decomp": 5125,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 6,
+    "lightDependent": 16,
+    "regenerated": 8,
+    "recovery": 0.813328146784532,
+    "individuals": 18.875,
+    "meanMass": 1490.0198675496688,
+    "speed": 0.7950617557615212,
+    "mass": 83546.6875,
+    "reproduction": 148,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 42737,
+     "grow": 41,
+     "decomp": 4386,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 2.5,
+    "meanMass": 81292.325,
+    "speed": 1.8966604232487845,
+    "mass": 225638.875,
+    "reproduction": 39.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 55617,
+     "grow": 388,
+     "decomp": 44432,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 92.6875
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.999971558281145,
+    "individuals": 2.9375,
+    "meanMass": 73160.46808510639,
+    "speed": 3.4261247832119905,
+    "mass": 227628,
+    "reproduction": 60.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 54106,
+     "grow": 565,
+     "decomp": 45996,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 134,
+     "grow": 0,
+     "decomp": 184,
+     "resp": 366
+    },
+    "otherMass": 60.5
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 4,
+    "recovery": 0.9872030877711379,
+    "individuals": 46.1875,
+    "meanMass": 2564.983761840325,
+    "speed": 0.2822207649147216,
+    "mass": 155152.875,
+    "reproduction": 95.25,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 59517,
+     "grow": 308,
+     "decomp": 21540,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c24": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 1,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.8415009367200734,
+    "individuals": 41.5625,
+    "meanMass": 1576.8586466165414,
+    "speed": 0.5884446815270364,
+    "mass": 96379.875,
+    "reproduction": 101.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 30271,
+     "grow": 8809,
+     "decomp": 9655,
+     "resp": 33556
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.8474270371046392,
+    "individuals": 42.375,
+    "meanMass": 1622.6799410029498,
+    "speed": 0.6036763275713306,
+    "mass": 92510.8125,
+    "reproduction": 102.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 29798,
+     "grow": 9019,
+     "decomp": 7776,
+     "resp": 33243
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9997374631569493,
+    "individuals": 1,
+    "meanMass": 232674.9375,
+    "speed": 2.9845586637836505,
+    "mass": 194204.0625,
+    "reproduction": 9.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 71406,
+     "grow": 17479,
+     "decomp": 85612,
+     "resp": 77842
+    },
+    "roleSumsOther": {
+     "photo": 1,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 38647.375
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1,
+    "meanMass": 232315.625,
+    "speed": 3.70699607967289,
+    "mass": 209824.5,
+    "reproduction": 19.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 74751,
+     "grow": 18950,
+     "decomp": 92275,
+     "resp": 79553
+    },
+    "roleSumsOther": {
+     "photo": 9388,
+     "grow": 0,
+     "decomp": 7273,
+     "resp": 12451
+    },
+    "otherMass": 23016.875
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9996021489711543,
+    "individuals": 4.125,
+    "meanMass": 41443.27272727273,
+    "speed": 2.09171729664671,
+    "mass": 205884.5625,
+    "reproduction": 74.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 66971,
+     "grow": 16770,
+     "decomp": 80811,
+     "resp": 73845
+    }
+   }
+  },
+  "nonobligate-cluster:c25": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 9,
+    "lightDependent": 16,
+    "regenerated": 14,
+    "recovery": 0.8758329556489032,
+    "individuals": 29.6875,
+    "meanMass": 3025.3368421052633,
+    "speed": 1.0569533290280244,
+    "mass": 123549.375,
+    "reproduction": 41.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 29706,
+     "grow": 0,
+     "decomp": 20568,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 7,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 0.8971860568281074,
+    "individuals": 27.9375,
+    "meanMass": 3107.020134228188,
+    "speed": 0.9831852927341849,
+    "mass": 123295.1875,
+    "reproduction": 37.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 29663,
+     "grow": 0,
+     "decomp": 21034,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 14,
+    "recovery": 0.9999299329533209,
+    "individuals": 1.125,
+    "meanMass": 199425.44444444444,
+    "speed": 1.9429587415424305,
+    "mass": 228058.5625,
+    "reproduction": 59.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 47946,
+     "grow": 0,
+     "decomp": 43597,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 2,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 1040.375
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 1,
+    "individuals": 1,
+    "meanMass": 232089.6875,
+    "speed": 3.246771390440049,
+    "mass": 217602.9375,
+    "reproduction": 31.625,
+    "role": "decomposer",
+    "roleSums": {
+     "photo": 31995,
+     "grow": 0,
+     "decomp": 32604,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 8989,
+     "grow": 0,
+     "decomp": 5763,
+     "resp": 12463
+    },
+    "otherMass": 14958.25
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 5,
+    "recovery": 0.9894693713390657,
+    "individuals": 36.3125,
+    "meanMass": 5136.87091222031,
+    "speed": 0.5573584247273788,
+    "mass": 206051.9375,
+    "reproduction": 62.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 42900,
+     "grow": 0,
+     "decomp": 40487,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c26": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 8,
+    "recovery": 0.9978893058034224,
+    "individuals": 32.75,
+    "meanMass": 3245.656488549618,
+    "speed": 0.574239279526356,
+    "mass": 135540.9375,
+    "reproduction": 132.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 33750,
+     "grow": 39,
+     "decomp": 25814,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 0.9955589994973217,
+    "individuals": 31.25,
+    "meanMass": 3158.502,
+    "speed": 0.5793882535020954,
+    "mass": 131802.0625,
+    "reproduction": 123.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 33962,
+     "grow": 44,
+     "decomp": 24232,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 15,
+    "recovery": 1,
+    "individuals": 2,
+    "meanMass": 101724.15625,
+    "speed": 1.8109324647082825,
+    "mass": 224102.1875,
+    "reproduction": 51.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 48674,
+     "grow": 4,
+     "decomp": 42438,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 8,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 740.375
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 1,
+    "individuals": 1,
+    "meanMass": 231816.1875,
+    "speed": 3.1610574399900573,
+    "mass": 216524.5,
+    "reproduction": 20.875,
+    "role": "decomposer",
+    "roleSums": {
+     "photo": 32295,
+     "grow": 0,
+     "decomp": 32339,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 8948,
+     "grow": 0,
+     "decomp": 6143,
+     "resp": 12108
+    },
+    "otherMass": 15892.0625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 5,
+    "recovery": 0.9711799046755045,
+    "individuals": 6.8125,
+    "meanMass": 20356.65137614679,
+    "speed": 2.4694635053896854,
+    "mass": 197540.9375,
+    "reproduction": 107.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 43173,
+     "grow": 11,
+     "decomp": 37321,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c27": {
+   "standard": {
+    "survived": 9,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 0,
+    "regenerated": 0,
+    "recovery": 0.00002109579837787091,
+    "individuals": 4.4375,
+    "meanMass": 816.5492957746479,
+    "speed": 1.8522557653420062,
+    "mass": 12463.5,
+    "reproduction": 48.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 2921,
+     "grow": 0,
+     "decomp": 2800,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 15,
+    "reps": 16,
+    "recovered": 0,
+    "lightDependent": 1,
+    "regenerated": 0,
+    "recovery": 0.000023292116230473925,
+    "individuals": 8.4375,
+    "meanMass": 1132.5703703703705,
+    "speed": 1.9504655385533871,
+    "mass": 25956.8125,
+    "reproduction": 49.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 6551,
+     "grow": 0,
+     "decomp": 5031,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999798799017925,
+    "individuals": 1,
+    "meanMass": 233853.5625,
+    "speed": 2.0658000564885555,
+    "mass": 233579,
+    "reproduction": 9.0625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 49443,
+     "grow": 0,
+     "decomp": 46909,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 353.75
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999577953452423,
+    "individuals": 1,
+    "meanMass": 234838,
+    "speed": 3.180672678515742,
+    "mass": 233133.3125,
+    "reproduction": 18.1875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 43782,
+     "grow": 0,
+     "decomp": 42138,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1332,
+     "grow": 0,
+     "decomp": 1246,
+     "resp": 2889
+    },
+    "otherMass": 1810.0625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9997317077163845,
+    "individuals": 7.125,
+    "meanMass": 23322.71052631579,
+    "speed": 1.6397477454480682,
+    "mass": 205454.625,
+    "reproduction": 74.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 47160,
+     "grow": 0,
+     "decomp": 38012,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c28": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 5,
+    "recovery": 0.9992630990493916,
+    "individuals": 28.1875,
+    "meanMass": 3836.6252771618624,
+    "speed": 0.9254666494746626,
+    "mass": 145648,
+    "reproduction": 48.875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 38283,
+     "grow": 0,
+     "decomp": 35406,
+     "resp": 14071
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 3,
+    "recovery": 1,
+    "individuals": 27,
+    "meanMass": 3775.277777777778,
+    "speed": 0.9191991310442765,
+    "mass": 145026.4375,
+    "reproduction": 52.625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 40183,
+     "grow": 0,
+     "decomp": 37281,
+     "resp": 17679
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9996186528221273,
+    "individuals": 1,
+    "meanMass": 233860.9375,
+    "speed": 2.163105470534283,
+    "mass": 233298,
+    "reproduction": 28.4375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 48039,
+     "grow": 0,
+     "decomp": 46410,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 577.5625
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998711625462184,
+    "individuals": 1,
+    "meanMass": 233623.0625,
+    "speed": 2.892661891059695,
+    "mass": 226230.8125,
+    "reproduction": 27.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 40262,
+     "grow": 0,
+     "decomp": 39697,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 3272,
+     "grow": 0,
+     "decomp": 2194,
+     "resp": 5437
+    },
+    "otherMass": 7567.625
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 2,
+    "recovery": 0.9954953253399891,
+    "individuals": 12.625,
+    "meanMass": 14830.742574257425,
+    "speed": 0.6142651601948709,
+    "mass": 205912.8125,
+    "reproduction": 44.5625,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 43888,
+     "grow": 0,
+     "decomp": 41818,
+     "resp": 7853
+    }
+   }
+  },
+  "nonobligate-cluster:c29": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 11,
+    "recovery": 0.9869521605148734,
+    "individuals": 40.9375,
+    "meanMass": 2886.8885496183207,
+    "speed": 0.466027261661343,
+    "mass": 140602.625,
+    "reproduction": 149,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 58921,
+     "grow": 9,
+     "decomp": 50629,
+     "resp": 0
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 10,
+    "recovery": 0.9872093947151591,
+    "individuals": 39.8125,
+    "meanMass": 2996.667189952904,
+    "speed": 0.46652986346576497,
+    "mass": 140961.5,
+    "reproduction": 148.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 59817,
+     "grow": 7,
+     "decomp": 51557,
+     "resp": 0
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 12,
+    "recovery": 1,
+    "individuals": 1.6875,
+    "meanMass": 77074.5925925926,
+    "speed": 1.0540511997226638,
+    "mass": 208729.125,
+    "reproduction": 21.375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 63162,
+     "grow": 126,
+     "decomp": 43568,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 0,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 900.5
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 9,
+    "recovery": 1,
+    "individuals": 16.5,
+    "meanMass": 7601.75,
+    "speed": 1.2790832593105645,
+    "mass": 203005.25,
+    "reproduction": 62.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 56864,
+     "grow": 896,
+     "decomp": 39962,
+     "resp": 0
+    },
+    "roleSumsOther": {
+     "photo": 1462,
+     "grow": 0,
+     "decomp": 1118,
+     "resp": 2116
+    },
+    "otherMass": 4973.75
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 0,
+    "recovery": 0.9982597282907457,
+    "individuals": 8.625,
+    "meanMass": 1830.9855072463768,
+    "speed": 1.2044773560553113,
+    "mass": 174744.875,
+    "reproduction": 151.6875,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 56298,
+     "grow": 50,
+     "decomp": 32432,
+     "resp": 0
+    }
+   }
+  },
+  "nonobligate-cluster:c30": {
+   "standard": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 3,
+    "lightDependent": 16,
+    "regenerated": 5,
+    "recovery": 0.609245472185351,
+    "individuals": 26.375,
+    "meanMass": 2917.4763033175354,
+    "speed": 1.4210426682639914,
+    "mass": 111135.625,
+    "reproduction": 52.75,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 24595,
+     "grow": 2937,
+     "decomp": 20475,
+     "resp": 3874
+    }
+   },
+   "waste": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 14,
+    "lightDependent": 16,
+    "regenerated": 10,
+    "recovery": 0.9650188300905772,
+    "individuals": 28.5,
+    "meanMass": 3074.1688596491226,
+    "speed": 1.1989738910779513,
+    "mass": 121408.375,
+    "reproduction": 63.9375,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 27350,
+     "grow": 3540,
+     "decomp": 23559,
+     "resp": 4447
+    }
+   },
+   "bg0": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9999312620720816,
+    "individuals": 1,
+    "meanMass": 237200.25,
+    "speed": 1.9954258442049972,
+    "mass": 223563.75,
+    "reproduction": 12.125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 30835,
+     "grow": 13987,
+     "decomp": 44264,
+     "resp": 31777
+    },
+    "roleSumsOther": {
+     "photo": 11,
+     "grow": 0,
+     "decomp": 0,
+     "resp": 0
+    },
+    "otherMass": 13654.0625
+   },
+   "bg2": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998037840477694,
+    "individuals": 1,
+    "meanMass": 237092.625,
+    "speed": 3.129562053790812,
+    "mass": 234996.4375,
+    "reproduction": 22.8125,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 33380,
+     "grow": 17103,
+     "decomp": 49893,
+     "resp": 37301
+    },
+    "roleSumsOther": {
+     "photo": 1632,
+     "grow": 0,
+     "decomp": 1191,
+     "resp": 3148
+    },
+    "otherMass": 2099.125
+   },
+   "x4": {
+    "survived": 16,
+    "reps": 16,
+    "recovered": 16,
+    "lightDependent": 16,
+    "regenerated": 16,
+    "recovery": 0.9998796806603423,
+    "individuals": 1,
+    "meanMass": 206704.6875,
+    "speed": 1.9599039133190699,
+    "mass": 209717.375,
+    "reproduction": 56,
+    "role": "phototroph",
+    "roleSums": {
+     "photo": 24806,
+     "grow": 9576,
+     "decomp": 33709,
+     "resp": 22547
+    }
+   }
+  }
+ },
+ "deadRingNote": "The background-medium confirmation (confirm.json) ran beside a ring with founder 0's mu/sigma/motGain and all controller weights zero (JSON round-trip bug fixed later); these counts are that dead-ring condition, not a live producer.",
+ "deadRingConfirmation": {
+  "obligate:c0": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate-extra:c3:farthest": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c2": {
+   "survived": 16,
+   "regenerated": 15,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c0": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "producer0": null,
+  "producer2:founder5": null,
+  "null": null,
+  "obligate:c1": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate-extra:c3:median": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c6": {
+   "survived": 16,
+   "regenerated": 14,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c1": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c3": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c8": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c3": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c4": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c10": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c4": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c5": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c12": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c5": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c7": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c13": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c7": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c9": {
+   "survived": 16,
+   "regenerated": 14,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c14": {
+   "survived": 16,
+   "regenerated": 15,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c9": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c11": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c15": {
+   "survived": 16,
+   "regenerated": 14,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c11": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c17": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c16": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c17": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c19": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c18": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "facultative-sibling:c19": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c31": {
+   "survived": 16,
+   "regenerated": 15,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c20": {
+   "survived": 16,
+   "regenerated": 13,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "obligate:c32": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c21": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c22": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c23": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c24": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c25": {
+   "survived": 16,
+   "regenerated": 15,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c26": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c27": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c28": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c29": {
+   "survived": 16,
+   "regenerated": 13,
+   "lightDependent": 16,
+   "reps": 16
+  },
+  "nonobligate-cluster:c30": {
+   "survived": 16,
+   "regenerated": 16,
+   "lightDependent": 16,
+   "reps": 16
+  }
+ },
+ "reading": {
+  "thresholds": {
+   "VIABLE": 0.75,
+   "DEAD": 0.125,
+   "RESCUE": 0.5,
+   "DECOMP_SHARE": 0.25,
+   "PRODUCER_DOWN": 0.7,
+   "PRODUCER_UP": 1.3
+  },
+  "replication": {
+   "confirmed": 12,
+   "of": 12,
+   "verdict": "reproduces",
+   "perCluster": [
+    {
+     "cluster": 0,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 1,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 3,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 4,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 5,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 7,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 9,
+     "standard": 1,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 11,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 17,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 19,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 31,
+     "standard": 1,
+     "bg0": 16,
+     "confirmed": true
+    },
+    {
+     "cluster": 32,
+     "standard": 0,
+     "bg0": 16,
+     "confirmed": true
+    }
+   ]
+  },
+  "dominantCluster": {
+   "cluster": 3,
+   "members": [
+    {
+     "id": "obligate:c3",
+     "confirmed": true,
+     "bg2": 16,
+     "waste": 0,
+     "x4": 16,
+     "standard": 0
+    },
+    {
+     "id": "obligate-extra:c3:farthest",
+     "confirmed": true,
+     "bg2": 16,
+     "waste": 0,
+     "x4": 16,
+     "standard": 0
+    },
+    {
+     "id": "obligate-extra:c3:median",
+     "confirmed": true,
+     "bg2": 16,
+     "waste": 0,
+     "x4": 16,
+     "standard": 0
+    }
+   ],
+   "verdict": "density-rescues (kill)"
+  },
+  "dependence": [
+   {
+    "cluster": 0,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 1,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 3,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 4,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 5,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 7,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 9,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 1,
+    "cls": "producer-general",
+    "densityRescued": false
+   },
+   {
+    "cluster": 11,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 17,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 19,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 31,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   },
+   {
+    "cluster": 32,
+    "confirmed": true,
+    "bg0": "viable",
+    "bg2": "viable",
+    "waste": "dead",
+    "standard": "dead",
+    "x4Survived": 16,
+    "cls": "producer-general",
+    "densityRescued": true
+   }
+  ],
+  "dependenceCounts": {
+   "producer-general": 12
+  },
+  "bg2OnlyUnconfirmed": [],
+  "trophic": {
+   "obligateConfirmed": {
+    "n": 12,
+    "roles": {
+     "phototroph": 10,
+     "mixed": 2
+    },
+    "nonPhototroph": 2,
+    "medianShares": {
+     "photo": 0.5094784741088376,
+     "grow": 0.0006076130471963682,
+     "decomp": 0.48659189817687054
+    }
+   },
+   "nonObligateClusters": {
+    "n": 21,
+    "roles": {
+     "phototroph": 21
+    },
+    "nonPhototroph": 0,
+    "medianShares": {
+     "photo": 0.5237538643042068,
+     "grow": 0.0010407297957085956,
+     "decomp": 0.4762461356957932
+    }
+   },
+   "fisherTwoSidedNonPhototroph": 0.1250000000000002,
+   "verdict": "not-distinguishable-at-this-n"
+  },
+  "consumption": [
+   {
+    "cluster": 0,
+    "role": "phototroph",
+    "decompShare": 0.4025285440285993,
+    "decomposerType": true,
+    "roleInWaste": "phototroph",
+    "producerMassRatio": {
+     "bg0": 0.858523279296263,
+     "bg2": 0.07409482649110122
+    },
+    "producerEffect": "neutral",
+    "consumes": "unknown"
+   },
+   {
+    "cluster": 1,
+    "role": "phototroph",
+    "decompShare": 0.44392183946368824,
+    "decomposerType": true,
+    "roleInWaste": "decomposer",
+    "producerMassRatio": {
+     "bg0": 0.18339604161126485,
+     "bg2": 0.030685500400666612
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   },
+   {
+    "cluster": 3,
+    "role": "phototroph",
+    "decompShare": 0.49473143759873617,
+    "decomposerType": true,
+    "roleInWaste": "phototroph",
+    "producerMassRatio": {
+     "bg0": 0.006735106016045244,
+     "bg2": 0.004516855120739012
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   },
+   {
+    "cluster": 4,
+    "role": "phototroph",
+    "decompShare": 0.4877468068033833,
+    "decomposerType": true,
+    "roleInWaste": "decomposer",
+    "producerMassRatio": {
+     "bg0": 0.19220328540472512,
+     "bg2": 0.0748975330335372
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   },
+   {
+    "cluster": 5,
+    "role": "phototroph",
+    "decompShare": 0.49030882343878074,
+    "decomposerType": true,
+    "roleInWaste": "mixed",
+    "producerMassRatio": {
+     "bg0": 0.011920716375154357,
+     "bg2": 0.0037103719435866906
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   },
+   {
+    "cluster": 7,
+    "role": "phototroph",
+    "decompShare": 0.48298792891587417,
+    "decomposerType": true,
+    "roleInWaste": "phototroph",
+    "producerMassRatio": {
+     "bg0": 0.0023578136971729932,
+     "bg2": 0.009484846424865911
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   },
+   {
+    "cluster": 9,
+    "role": "phototroph",
+    "decompShare": 0.26354277356916783,
+    "decomposerType": true,
+    "roleInWaste": "phototroph",
+    "producerMassRatio": {
+     "bg0": 0.0005832001495520023,
+     "bg2": 0.021014225552985155
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   },
+   {
+    "cluster": 11,
+    "role": "mixed",
+    "decompShare": 0.46635482793184097,
+    "decomposerType": true,
+    "roleInWaste": "mixed",
+    "producerMassRatio": {
+     "bg0": 0.7105128738470936,
+     "bg2": 0.20991153748172625
+    },
+    "producerEffect": "neutral",
+    "consumes": "unknown"
+   },
+   {
+    "cluster": 17,
+    "role": "phototroph",
+    "decompShare": 0.4969977313573554,
+    "decomposerType": true,
+    "roleInWaste": "phototroph",
+    "producerMassRatio": {
+     "bg0": 0.021292729613666104,
+     "bg2": 0.0014677375829400482
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   },
+   {
+    "cluster": 19,
+    "role": "mixed",
+    "decompShare": 0.4903566526301096,
+    "decomposerType": true,
+    "roleInWaste": "phototroph",
+    "producerMassRatio": {
+     "bg0": 0.1163701517373572,
+     "bg2": 0.004900355209661593
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   },
+   {
+    "cluster": 31,
+    "role": "phototroph",
+    "decompShare": 0.48543698955035774,
+    "decomposerType": true,
+    "roleInWaste": "decomposer",
+    "producerMassRatio": {
+     "bg0": 0.03490512136618914,
+     "bg2": 0.007204102386627142
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   },
+   {
+    "cluster": 32,
+    "role": "phototroph",
+    "decompShare": 0.4955151704235239,
+    "decomposerType": true,
+    "roleInWaste": "phototroph",
+    "producerMassRatio": {
+     "bg0": 0.008313564208625043,
+     "bg2": 0
+    },
+    "producerEffect": "draws-down",
+    "consumes": "yes"
+   }
+  ],
+  "consumptionSummary": {
+   "nullControlValid": true,
+   "decomposerType": 12,
+   "of": 12,
+   "producerEffect": {
+    "neutral": 2,
+    "draws-down": 10
+   },
+   "consumes": {
+    "unknown": 2,
+    "yes": 10
+   }
+  }
+ }
+}

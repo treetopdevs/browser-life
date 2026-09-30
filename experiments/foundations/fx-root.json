@@ -1,0 +1,3809 @@
+{
+ "note": "exploratory; plan 002: each candidate gardened beside its own clade root (mutations.tsv walk, genome from genomes.tsv) instead of founderSet[0]; test 3's rules otherwise unchanged; uniform garden primary",
+ "seeds": {
+  "uniform": 4761001,
+  "gradient": 4771001
+ },
+ "planIds": {
+  "uniform": "40d1219d8188c7b8",
+  "gradient": "e36f37362a8b49cc"
+ },
+ "runs": 128,
+ "candidates": 102,
+ "candidatesWithNewComparator": 82,
+ "candidatesWindowAtFounding": 9,
+ "uniform": {
+  "complete": true,
+  "units": 37,
+  "expectedUnits": 37,
+  "perSubject": [
+   {
+    "id": "founder-0",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-1",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-2",
+    "runsOriginating": 4,
+    "counts": true,
+    "old": {
+     "runsOriginating": 4,
+     "counts": true
+    }
+   },
+   {
+    "id": "founder-3",
+    "runsOriginating": 5,
+    "counts": true,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-4",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-5",
+    "runsOriginating": 2,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-6",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-7",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-8",
+    "runsOriginating": 2,
+    "counts": false,
+    "old": {
+     "runsOriginating": 2,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-9",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-10",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 1,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-11",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 1,
+     "counts": false
+    }
+   },
+   {
+    "id": "S1",
+    "runsOriginating": 4,
+    "counts": true,
+    "old": {
+     "runsOriginating": 3,
+     "counts": true
+    }
+   },
+   {
+    "id": "S2",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "S4",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "S5",
+    "runsOriginating": 5,
+    "counts": true,
+    "old": {
+     "runsOriginating": 5,
+     "counts": true
+    }
+   }
+  ],
+  "outcomes": {
+   "different role": 38,
+   "same role": 62,
+   "descendant inactive": 2,
+   "founder inactive": 0
+  },
+  "rows": [
+   {
+    "candidate": 0,
+    "subjectId": "founder-0",
+    "seed": 4720001,
+    "role": "decomposer",
+    "window": [
+     133100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 1,
+    "subjectId": "founder-0",
+    "seed": 4720003,
+    "role": "decomposer",
+    "window": [
+     89100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 2,
+    "subjectId": "founder-0",
+    "seed": 4720004,
+    "role": "decomposer",
+    "window": [
+     199100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 3,
+    "subjectId": "founder-0",
+    "seed": 4720005,
+    "role": "decomposer",
+    "window": [
+     543100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 4,
+    "subjectId": "founder-1",
+    "seed": 4720013,
+    "role": "mixed",
+    "window": [
+     15100,
+     183100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 5,
+    "subjectId": "founder-1",
+    "seed": 4720014,
+    "role": "mixed",
+    "window": [
+     35100,
+     224100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 6,
+    "subjectId": "founder-2",
+    "seed": 4720021,
+    "role": "phototroph",
+    "window": [
+     28100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 7,
+    "subjectId": "founder-2",
+    "seed": 4720021,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 8,
+    "subjectId": "founder-2",
+    "seed": 4720022,
+    "role": "phototroph",
+    "window": [
+     111100,
+     228100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 9,
+    "subjectId": "founder-2",
+    "seed": 4720022,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 10,
+    "subjectId": "founder-2",
+    "seed": 4720023,
+    "role": "phototroph",
+    "window": [
+     109100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 11,
+    "subjectId": "founder-2",
+    "seed": 4720023,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 12,
+    "subjectId": "founder-2",
+    "seed": 4720024,
+    "role": "phototroph",
+    "window": [
+     48100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 13,
+    "subjectId": "founder-2",
+    "seed": 4720024,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 14,
+    "subjectId": "founder-2",
+    "seed": 4720025,
+    "role": "phototroph",
+    "window": [
+     45100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 15,
+    "subjectId": "founder-2",
+    "seed": 4720025,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 16,
+    "subjectId": "founder-3",
+    "seed": 4720031,
+    "role": "chemotroph",
+    "window": [
+     465100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 17,
+    "subjectId": "founder-3",
+    "seed": 4720031,
+    "role": "decomposer",
+    "window": [
+     7100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 18,
+    "subjectId": "founder-3",
+    "seed": 4720031,
+    "role": "mixed",
+    "window": [
+     338100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 19,
+    "subjectId": "founder-3",
+    "seed": 4720032,
+    "role": "chemotroph",
+    "window": [
+     66100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 20,
+    "subjectId": "founder-3",
+    "seed": 4720032,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 21,
+    "subjectId": "founder-3",
+    "seed": 4720032,
+    "role": "mixed",
+    "window": [
+     269100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 22,
+    "subjectId": "founder-3",
+    "seed": 4720033,
+    "role": "chemotroph",
+    "window": [
+     21100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 23,
+    "subjectId": "founder-3",
+    "seed": 4720033,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 24,
+    "subjectId": "founder-3",
+    "seed": 4720033,
+    "role": "mixed",
+    "window": [
+     163100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 25,
+    "subjectId": "founder-3",
+    "seed": 4720034,
+    "role": "chemotroph",
+    "window": [
+     26100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 26,
+    "subjectId": "founder-3",
+    "seed": 4720034,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 27,
+    "subjectId": "founder-3",
+    "seed": 4720034,
+    "role": "mixed",
+    "window": [
+     505100,
+     626100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 28,
+    "subjectId": "founder-3",
+    "seed": 4720035,
+    "role": "chemotroph",
+    "window": [
+     72100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 29,
+    "subjectId": "founder-3",
+    "seed": 4720035,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 30,
+    "subjectId": "founder-3",
+    "seed": 4720035,
+    "role": "mixed",
+    "window": [
+     310100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 31,
+    "subjectId": "founder-4",
+    "seed": 4720041,
+    "role": "decomposer",
+    "window": [
+     299100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 32,
+    "subjectId": "founder-4",
+    "seed": 4720043,
+    "role": "decomposer",
+    "window": [
+     764100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 33,
+    "subjectId": "founder-4",
+    "seed": 4720045,
+    "role": "decomposer",
+    "window": [
+     545100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 34,
+    "subjectId": "founder-5",
+    "seed": 4720051,
+    "role": "decomposer",
+    "window": [
+     64100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 35,
+    "subjectId": "founder-5",
+    "seed": 4720052,
+    "role": "decomposer",
+    "window": [
+     65100,
+     200100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 36,
+    "subjectId": "founder-5",
+    "seed": 4720053,
+    "role": "decomposer",
+    "window": [
+     184100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 37,
+    "subjectId": "founder-5",
+    "seed": 4720054,
+    "role": "decomposer",
+    "window": [
+     113100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "decomposer",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 38,
+    "subjectId": "founder-5",
+    "seed": 4720055,
+    "role": "decomposer",
+    "window": [
+     226100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 39,
+    "subjectId": "founder-6",
+    "seed": 4720061,
+    "role": "decomposer",
+    "window": [
+     365100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 40,
+    "subjectId": "founder-6",
+    "seed": 4720061,
+    "role": "mixed",
+    "window": [
+     382100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 41,
+    "subjectId": "founder-6",
+    "seed": 4720062,
+    "role": "decomposer",
+    "window": [
+     96100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 42,
+    "subjectId": "founder-6",
+    "seed": 4720062,
+    "role": "mixed",
+    "window": [
+     217100,
+     606100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 43,
+    "subjectId": "founder-6",
+    "seed": 4720063,
+    "role": "chemotroph",
+    "window": [
+     720100,
+     980100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 44,
+    "subjectId": "founder-6",
+    "seed": 4720063,
+    "role": "decomposer",
+    "window": [
+     89100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 45,
+    "subjectId": "founder-6",
+    "seed": 4720063,
+    "role": "mixed",
+    "window": [
+     225100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 46,
+    "subjectId": "founder-6",
+    "seed": 4720064,
+    "role": "decomposer",
+    "window": [
+     146100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 47,
+    "subjectId": "founder-6",
+    "seed": 4720065,
+    "role": "chemotroph",
+    "window": [
+     91100,
+     516100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 48,
+    "subjectId": "founder-6",
+    "seed": 4720065,
+    "role": "decomposer",
+    "window": [
+     85100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 49,
+    "subjectId": "founder-6",
+    "seed": 4720065,
+    "role": "mixed",
+    "window": [
+     70100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 50,
+    "subjectId": "founder-7",
+    "seed": 4720071,
+    "role": "mixed",
+    "window": [
+     6100,
+     339100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 51,
+    "subjectId": "founder-7",
+    "seed": 4720072,
+    "role": "mixed",
+    "window": [
+     34100,
+     147100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 52,
+    "subjectId": "founder-7",
+    "seed": 4720075,
+    "role": "mixed",
+    "window": [
+     144100,
+     348100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 53,
+    "subjectId": "founder-8",
+    "seed": 4720081,
+    "role": "phototroph",
+    "window": [
+     613100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 54,
+    "subjectId": "founder-8",
+    "seed": 4720083,
+    "role": "phototroph",
+    "window": [
+     368100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 55,
+    "subjectId": "founder-8",
+    "seed": 4720083,
+    "role": "chemotroph",
+    "window": [
+     39100,
+     163100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 56,
+    "subjectId": "founder-8",
+    "seed": 4720084,
+    "role": "phototroph",
+    "window": [
+     144100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 57,
+    "subjectId": "founder-8",
+    "seed": 4720084,
+    "role": "chemotroph",
+    "window": [
+     269100,
+     404100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 58,
+    "subjectId": "founder-8",
+    "seed": 4720085,
+    "role": "phototroph",
+    "window": [
+     703100,
+     815100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 59,
+    "subjectId": "founder-9",
+    "seed": 4720091,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 60,
+    "subjectId": "founder-9",
+    "seed": 4720092,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 61,
+    "subjectId": "founder-9",
+    "seed": 4720093,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 62,
+    "subjectId": "founder-9",
+    "seed": 4720094,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 63,
+    "subjectId": "founder-9",
+    "seed": 4720095,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 64,
+    "subjectId": "founder-10",
+    "seed": 4720104,
+    "role": "phototroph",
+    "window": [
+     183100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 65,
+    "subjectId": "founder-10",
+    "seed": 4720104,
+    "role": "chemotroph",
+    "window": [
+     500100,
+     743100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 66,
+    "subjectId": "founder-10",
+    "seed": 4720105,
+    "role": "chemotroph",
+    "window": [
+     103100,
+     258100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 67,
+    "subjectId": "founder-11",
+    "seed": 4720111,
+    "role": "decomposer",
+    "window": [
+     216100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 68,
+    "subjectId": "founder-11",
+    "seed": 4720112,
+    "role": "decomposer",
+    "window": [
+     230100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 69,
+    "subjectId": "founder-11",
+    "seed": 4720113,
+    "role": "decomposer",
+    "window": [
+     628100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 70,
+    "subjectId": "founder-11",
+    "seed": 4720114,
+    "role": "decomposer",
+    "window": [
+     485100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 71,
+    "subjectId": "founder-11",
+    "seed": 4720115,
+    "role": "decomposer",
+    "window": [
+     184100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 72,
+    "subjectId": "S1",
+    "seed": 4740001,
+    "role": "phototroph",
+    "window": [
+     238100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 73,
+    "subjectId": "S1",
+    "seed": 4740001,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 74,
+    "subjectId": "S1",
+    "seed": 4740002,
+    "role": "phototroph",
+    "window": [
+     181100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 75,
+    "subjectId": "S1",
+    "seed": 4740002,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 76,
+    "subjectId": "S1",
+    "seed": 4740003,
+    "role": "phototroph",
+    "window": [
+     283100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 77,
+    "subjectId": "S1",
+    "seed": 4740003,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 78,
+    "subjectId": "S1",
+    "seed": 4740004,
+    "role": "phototroph",
+    "window": [
+     323100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 79,
+    "subjectId": "S1",
+    "seed": 4740004,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 80,
+    "subjectId": "S1",
+    "seed": 4740005,
+    "role": "phototroph",
+    "window": [
+     318100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 81,
+    "subjectId": "S1",
+    "seed": 4740005,
+    "role": "decomposer",
+    "window": [
+     6100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 82,
+    "subjectId": "S2",
+    "seed": 4740011,
+    "role": "decomposer",
+    "window": [
+     595100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 83,
+    "subjectId": "S2",
+    "seed": 4740012,
+    "role": "decomposer",
+    "window": [
+     11100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 84,
+    "subjectId": "S2",
+    "seed": 4740013,
+    "role": "decomposer",
+    "window": [
+     28100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "decomposer",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 85,
+    "subjectId": "S2",
+    "seed": 4740014,
+    "role": "decomposer",
+    "window": [
+     673100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 86,
+    "subjectId": "S2",
+    "seed": 4740015,
+    "role": "chemotroph",
+    "window": [
+     476100,
+     666100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 87,
+    "subjectId": "S2",
+    "seed": 4740015,
+    "role": "decomposer",
+    "window": [
+     58100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 88,
+    "subjectId": "S4",
+    "seed": 4740022,
+    "role": "decomposer",
+    "window": [
+     19100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": null,
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "descendant inactive",
+    "originates": false
+   },
+   {
+    "candidate": 89,
+    "subjectId": "S4",
+    "seed": 4740023,
+    "role": "decomposer",
+    "window": [
+     206100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 90,
+    "subjectId": "S4",
+    "seed": 4740024,
+    "role": "decomposer",
+    "window": [
+     81100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 91,
+    "subjectId": "S4",
+    "seed": 4740025,
+    "role": "decomposer",
+    "window": [
+     32100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": null,
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "descendant inactive",
+    "originates": false
+   },
+   {
+    "candidate": 92,
+    "subjectId": "S5",
+    "seed": 4740031,
+    "role": "phototroph",
+    "window": [
+     694100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 93,
+    "subjectId": "S5",
+    "seed": 4740031,
+    "role": "decomposer",
+    "window": [
+     9100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 94,
+    "subjectId": "S5",
+    "seed": 4740032,
+    "role": "phototroph",
+    "window": [
+     370100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 95,
+    "subjectId": "S5",
+    "seed": 4740032,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 96,
+    "subjectId": "S5",
+    "seed": 4740033,
+    "role": "phototroph",
+    "window": [
+     607100,
+     736100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 97,
+    "subjectId": "S5",
+    "seed": 4740033,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 98,
+    "subjectId": "S5",
+    "seed": 4740034,
+    "role": "phototroph",
+    "window": [
+     367100,
+     628100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 99,
+    "subjectId": "S5",
+    "seed": 4740034,
+    "role": "decomposer",
+    "window": [
+     6100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 100,
+    "subjectId": "S5",
+    "seed": 4740035,
+    "role": "phototroph",
+    "window": [
+     317100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 101,
+    "subjectId": "S5",
+    "seed": 4740035,
+    "role": "decomposer",
+    "window": [
+     7100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   }
+  ]
+ },
+ "gradient": {
+  "complete": true,
+  "units": 37,
+  "expectedUnits": 37,
+  "perSubject": [
+   {
+    "id": "founder-0",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-1",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-2",
+    "runsOriginating": 4,
+    "counts": true,
+    "old": {
+     "runsOriginating": 4,
+     "counts": true
+    }
+   },
+   {
+    "id": "founder-3",
+    "runsOriginating": 5,
+    "counts": true,
+    "old": {
+     "runsOriginating": 3,
+     "counts": true
+    }
+   },
+   {
+    "id": "founder-4",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-5",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-6",
+    "runsOriginating": 2,
+    "counts": false,
+    "old": {
+     "runsOriginating": 2,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-7",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 1,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-8",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 1,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-9",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 3,
+     "counts": true
+    }
+   },
+   {
+    "id": "founder-10",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 1,
+     "counts": false
+    }
+   },
+   {
+    "id": "founder-11",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 0,
+     "counts": false
+    }
+   },
+   {
+    "id": "S1",
+    "runsOriginating": 3,
+    "counts": true,
+    "old": {
+     "runsOriginating": 3,
+     "counts": true
+    }
+   },
+   {
+    "id": "S2",
+    "runsOriginating": 1,
+    "counts": false,
+    "old": {
+     "runsOriginating": 1,
+     "counts": false
+    }
+   },
+   {
+    "id": "S4",
+    "runsOriginating": 0,
+    "counts": false,
+    "old": {
+     "runsOriginating": 1,
+     "counts": false
+    }
+   },
+   {
+    "id": "S5",
+    "runsOriginating": 5,
+    "counts": true,
+    "old": {
+     "runsOriginating": 5,
+     "counts": true
+    }
+   }
+  ],
+  "outcomes": {
+   "different role": 39,
+   "same role": 62,
+   "descendant inactive": 1,
+   "founder inactive": 0
+  },
+  "rows": [
+   {
+    "candidate": 0,
+    "subjectId": "founder-0",
+    "seed": 4720001,
+    "role": "decomposer",
+    "window": [
+     133100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 1,
+    "subjectId": "founder-0",
+    "seed": 4720003,
+    "role": "decomposer",
+    "window": [
+     89100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 2,
+    "subjectId": "founder-0",
+    "seed": 4720004,
+    "role": "decomposer",
+    "window": [
+     199100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 3,
+    "subjectId": "founder-0",
+    "seed": 4720005,
+    "role": "decomposer",
+    "window": [
+     543100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 4,
+    "subjectId": "founder-1",
+    "seed": 4720013,
+    "role": "mixed",
+    "window": [
+     15100,
+     183100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 5,
+    "subjectId": "founder-1",
+    "seed": 4720014,
+    "role": "mixed",
+    "window": [
+     35100,
+     224100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": null,
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "descendant inactive",
+    "originates": false
+   },
+   {
+    "candidate": 6,
+    "subjectId": "founder-2",
+    "seed": 4720021,
+    "role": "phototroph",
+    "window": [
+     28100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 7,
+    "subjectId": "founder-2",
+    "seed": 4720021,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 8,
+    "subjectId": "founder-2",
+    "seed": 4720022,
+    "role": "phototroph",
+    "window": [
+     111100,
+     228100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 9,
+    "subjectId": "founder-2",
+    "seed": 4720022,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 10,
+    "subjectId": "founder-2",
+    "seed": 4720023,
+    "role": "phototroph",
+    "window": [
+     109100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 11,
+    "subjectId": "founder-2",
+    "seed": 4720023,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 12,
+    "subjectId": "founder-2",
+    "seed": 4720024,
+    "role": "phototroph",
+    "window": [
+     48100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 13,
+    "subjectId": "founder-2",
+    "seed": 4720024,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 14,
+    "subjectId": "founder-2",
+    "seed": 4720025,
+    "role": "phototroph",
+    "window": [
+     45100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 15,
+    "subjectId": "founder-2",
+    "seed": 4720025,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 16,
+    "subjectId": "founder-3",
+    "seed": 4720031,
+    "role": "chemotroph",
+    "window": [
+     465100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 17,
+    "subjectId": "founder-3",
+    "seed": 4720031,
+    "role": "decomposer",
+    "window": [
+     7100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 18,
+    "subjectId": "founder-3",
+    "seed": 4720031,
+    "role": "mixed",
+    "window": [
+     338100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 19,
+    "subjectId": "founder-3",
+    "seed": 4720032,
+    "role": "chemotroph",
+    "window": [
+     66100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 20,
+    "subjectId": "founder-3",
+    "seed": 4720032,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 21,
+    "subjectId": "founder-3",
+    "seed": 4720032,
+    "role": "mixed",
+    "window": [
+     269100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 22,
+    "subjectId": "founder-3",
+    "seed": 4720033,
+    "role": "chemotroph",
+    "window": [
+     21100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 23,
+    "subjectId": "founder-3",
+    "seed": 4720033,
+    "role": "decomposer",
+    "window": [
+     3100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 24,
+    "subjectId": "founder-3",
+    "seed": 4720033,
+    "role": "mixed",
+    "window": [
+     163100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 25,
+    "subjectId": "founder-3",
+    "seed": 4720034,
+    "role": "chemotroph",
+    "window": [
+     26100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 26,
+    "subjectId": "founder-3",
+    "seed": 4720034,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 27,
+    "subjectId": "founder-3",
+    "seed": 4720034,
+    "role": "mixed",
+    "window": [
+     505100,
+     626100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 28,
+    "subjectId": "founder-3",
+    "seed": 4720035,
+    "role": "chemotroph",
+    "window": [
+     72100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 29,
+    "subjectId": "founder-3",
+    "seed": 4720035,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 30,
+    "subjectId": "founder-3",
+    "seed": 4720035,
+    "role": "mixed",
+    "window": [
+     310100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 31,
+    "subjectId": "founder-4",
+    "seed": 4720041,
+    "role": "decomposer",
+    "window": [
+     299100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 32,
+    "subjectId": "founder-4",
+    "seed": 4720043,
+    "role": "decomposer",
+    "window": [
+     764100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 33,
+    "subjectId": "founder-4",
+    "seed": 4720045,
+    "role": "decomposer",
+    "window": [
+     545100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 34,
+    "subjectId": "founder-5",
+    "seed": 4720051,
+    "role": "decomposer",
+    "window": [
+     64100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 35,
+    "subjectId": "founder-5",
+    "seed": 4720052,
+    "role": "decomposer",
+    "window": [
+     65100,
+     200100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 36,
+    "subjectId": "founder-5",
+    "seed": 4720053,
+    "role": "decomposer",
+    "window": [
+     184100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 37,
+    "subjectId": "founder-5",
+    "seed": 4720054,
+    "role": "decomposer",
+    "window": [
+     113100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "decomposer",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 38,
+    "subjectId": "founder-5",
+    "seed": 4720055,
+    "role": "decomposer",
+    "window": [
+     226100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 39,
+    "subjectId": "founder-6",
+    "seed": 4720061,
+    "role": "decomposer",
+    "window": [
+     365100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 40,
+    "subjectId": "founder-6",
+    "seed": 4720061,
+    "role": "mixed",
+    "window": [
+     382100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 41,
+    "subjectId": "founder-6",
+    "seed": 4720062,
+    "role": "decomposer",
+    "window": [
+     96100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 42,
+    "subjectId": "founder-6",
+    "seed": 4720062,
+    "role": "mixed",
+    "window": [
+     217100,
+     606100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 43,
+    "subjectId": "founder-6",
+    "seed": 4720063,
+    "role": "chemotroph",
+    "window": [
+     720100,
+     980100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 44,
+    "subjectId": "founder-6",
+    "seed": 4720063,
+    "role": "decomposer",
+    "window": [
+     89100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 45,
+    "subjectId": "founder-6",
+    "seed": 4720063,
+    "role": "mixed",
+    "window": [
+     225100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 46,
+    "subjectId": "founder-6",
+    "seed": 4720064,
+    "role": "decomposer",
+    "window": [
+     146100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 47,
+    "subjectId": "founder-6",
+    "seed": 4720065,
+    "role": "chemotroph",
+    "window": [
+     91100,
+     516100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 48,
+    "subjectId": "founder-6",
+    "seed": 4720065,
+    "role": "decomposer",
+    "window": [
+     85100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 49,
+    "subjectId": "founder-6",
+    "seed": 4720065,
+    "role": "mixed",
+    "window": [
+     70100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 50,
+    "subjectId": "founder-7",
+    "seed": 4720071,
+    "role": "mixed",
+    "window": [
+     6100,
+     339100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 51,
+    "subjectId": "founder-7",
+    "seed": 4720072,
+    "role": "mixed",
+    "window": [
+     34100,
+     147100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 52,
+    "subjectId": "founder-7",
+    "seed": 4720075,
+    "role": "mixed",
+    "window": [
+     144100,
+     348100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 53,
+    "subjectId": "founder-8",
+    "seed": 4720081,
+    "role": "phototroph",
+    "window": [
+     613100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 54,
+    "subjectId": "founder-8",
+    "seed": 4720083,
+    "role": "phototroph",
+    "window": [
+     368100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 55,
+    "subjectId": "founder-8",
+    "seed": 4720083,
+    "role": "chemotroph",
+    "window": [
+     39100,
+     163100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 56,
+    "subjectId": "founder-8",
+    "seed": 4720084,
+    "role": "phototroph",
+    "window": [
+     144100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 57,
+    "subjectId": "founder-8",
+    "seed": 4720084,
+    "role": "chemotroph",
+    "window": [
+     269100,
+     404100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 58,
+    "subjectId": "founder-8",
+    "seed": 4720085,
+    "role": "phototroph",
+    "window": [
+     703100,
+     815100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 59,
+    "subjectId": "founder-9",
+    "seed": 4720091,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 60,
+    "subjectId": "founder-9",
+    "seed": 4720092,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 61,
+    "subjectId": "founder-9",
+    "seed": 4720093,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 62,
+    "subjectId": "founder-9",
+    "seed": 4720094,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 63,
+    "subjectId": "founder-9",
+    "seed": 4720095,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 64,
+    "subjectId": "founder-10",
+    "seed": 4720104,
+    "role": "phototroph",
+    "window": [
+     183100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 65,
+    "subjectId": "founder-10",
+    "seed": 4720104,
+    "role": "chemotroph",
+    "window": [
+     500100,
+     743100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 66,
+    "subjectId": "founder-10",
+    "seed": 4720105,
+    "role": "chemotroph",
+    "window": [
+     103100,
+     258100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 67,
+    "subjectId": "founder-11",
+    "seed": 4720111,
+    "role": "decomposer",
+    "window": [
+     216100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 68,
+    "subjectId": "founder-11",
+    "seed": 4720112,
+    "role": "decomposer",
+    "window": [
+     230100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 69,
+    "subjectId": "founder-11",
+    "seed": 4720113,
+    "role": "decomposer",
+    "window": [
+     628100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "decomposer",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 70,
+    "subjectId": "founder-11",
+    "seed": 4720114,
+    "role": "decomposer",
+    "window": [
+     485100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 71,
+    "subjectId": "founder-11",
+    "seed": 4720115,
+    "role": "decomposer",
+    "window": [
+     184100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 72,
+    "subjectId": "S1",
+    "seed": 4740001,
+    "role": "phototroph",
+    "window": [
+     238100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 73,
+    "subjectId": "S1",
+    "seed": 4740001,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 74,
+    "subjectId": "S1",
+    "seed": 4740002,
+    "role": "phototroph",
+    "window": [
+     181100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 75,
+    "subjectId": "S1",
+    "seed": 4740002,
+    "role": "decomposer",
+    "window": [
+     100,
+     999100
+    ],
+    "windowAtFounding": true,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 76,
+    "subjectId": "S1",
+    "seed": 4740003,
+    "role": "phototroph",
+    "window": [
+     283100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 77,
+    "subjectId": "S1",
+    "seed": 4740003,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 78,
+    "subjectId": "S1",
+    "seed": 4740004,
+    "role": "phototroph",
+    "window": [
+     323100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "mixed",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 79,
+    "subjectId": "S1",
+    "seed": 4740004,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 80,
+    "subjectId": "S1",
+    "seed": 4740005,
+    "role": "phototroph",
+    "window": [
+     318100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 81,
+    "subjectId": "S1",
+    "seed": 4740005,
+    "role": "decomposer",
+    "window": [
+     6100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 82,
+    "subjectId": "S2",
+    "seed": 4740011,
+    "role": "decomposer",
+    "window": [
+     595100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 83,
+    "subjectId": "S2",
+    "seed": 4740012,
+    "role": "decomposer",
+    "window": [
+     11100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 84,
+    "subjectId": "S2",
+    "seed": 4740013,
+    "role": "decomposer",
+    "window": [
+     28100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 85,
+    "subjectId": "S2",
+    "seed": 4740014,
+    "role": "decomposer",
+    "window": [
+     673100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 86,
+    "subjectId": "S2",
+    "seed": 4740015,
+    "role": "chemotroph",
+    "window": [
+     476100,
+     666100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 87,
+    "subjectId": "S2",
+    "seed": 4740015,
+    "role": "decomposer",
+    "window": [
+     58100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 88,
+    "subjectId": "S4",
+    "seed": 4740022,
+    "role": "decomposer",
+    "window": [
+     19100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 89,
+    "subjectId": "S4",
+    "seed": 4740023,
+    "role": "decomposer",
+    "window": [
+     206100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 90,
+    "subjectId": "S4",
+    "seed": 4740024,
+    "role": "decomposer",
+    "window": [
+     81100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 91,
+    "subjectId": "S4",
+    "seed": 4740025,
+    "role": "decomposer",
+    "window": [
+     32100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "phototroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 92,
+    "subjectId": "S5",
+    "seed": 4740031,
+    "role": "phototroph",
+    "window": [
+     694100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 93,
+    "subjectId": "S5",
+    "seed": 4740031,
+    "role": "decomposer",
+    "window": [
+     9100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 94,
+    "subjectId": "S5",
+    "seed": 4740032,
+    "role": "phototroph",
+    "window": [
+     370100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 95,
+    "subjectId": "S5",
+    "seed": 4740032,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 96,
+    "subjectId": "S5",
+    "seed": 4740033,
+    "role": "phototroph",
+    "window": [
+     607100,
+     736100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 97,
+    "subjectId": "S5",
+    "seed": 4740033,
+    "role": "decomposer",
+    "window": [
+     4100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "mixed",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 98,
+    "subjectId": "S5",
+    "seed": 4740034,
+    "role": "phototroph",
+    "window": [
+     367100,
+     628100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 99,
+    "subjectId": "S5",
+    "seed": 4740034,
+    "role": "decomposer",
+    "window": [
+     6100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": false,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "same role",
+    "originates": false
+   },
+   {
+    "candidate": 100,
+    "subjectId": "S5",
+    "seed": 4740035,
+    "role": "phototroph",
+    "window": [
+     317100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "phototroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "co-culture",
+    "outcome": "different role",
+    "originates": true
+   },
+   {
+    "candidate": 101,
+    "subjectId": "S5",
+    "seed": 4740035,
+    "role": "decomposer",
+    "window": [
+     7100,
+     999100
+    ],
+    "windowAtFounding": false,
+    "sameAsOldComparator": true,
+    "descendantGardenRole": "chemotroph",
+    "founderGardenRole": "chemotroph",
+    "founderFrom": "monoculture",
+    "outcome": "same role",
+    "originates": false
+   }
+  ]
+ },
+ "changed": {
+  "uniform": [
+   "founder-3"
+  ],
+  "gradient": [
+   "founder-9"
+  ]
+ }
+}
