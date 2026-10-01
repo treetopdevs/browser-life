@@ -86,6 +86,26 @@ export const CONDITIONS: Condition[] = [
     // specConfig (runner.ts) -- not here.
     apply: (c) => (c.migrationPeriod ? { migrationPeriod: 0, migrantCount: 0 } : {}),
   },
+  {
+    id: "pond-rand",
+    label: "Random pond donors",
+    removes: "selection among ponds (donors drawn at random from the surviving ponds)",
+    // Protocol v1's rand arm (docs/scaffold-protocol-v1.md): the same cycle, with donors drawn at random.
+    apply: (c) => {
+      if (c.pondPeriod === undefined) throw new Error("pond-rand control needs a preset with the pond cycle");
+      return { pondArm: "rand" };
+    },
+  },
+  {
+    id: "pond-cont",
+    label: "No pond cycle",
+    removes: "the pond cycle (each boundary is only measured, one row per pond)",
+    // Protocol v1's cont arm: no transform, so the physics is that of the same config without pond keys.
+    apply: (c) => {
+      if (c.pondPeriod === undefined) throw new Error("pond-cont control needs a preset with the pond cycle");
+      return { pondArm: "cont" };
+    },
+  },
 ];
 
 export function conditionById(id: string): Condition {

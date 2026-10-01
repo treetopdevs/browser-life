@@ -17,9 +17,16 @@ export interface Observers {
   censusIdx: number;
   extinct: boolean;
   prevSym: Uint8Array | null;
+  /** Pond runs only: see `ObserverState.ponds`. */
+  ponds?: { lastCycle: number };
 }
 
-export function restoreObservers(o: ObserverState | undefined, settings: ObserverSettings): Observers {
+/**
+ * `cfg`, when given, is the history's config: a pond run (`cfg.pondPeriod`
+ * set) without a saved `ponds` field starts it at cycle 0, which is right for
+ * the only such start `pondContinuationError` (runner.ts) accepts, step 0.
+ */
+export function restoreObservers(o: ObserverState | undefined, settings: ObserverSettings, cfg?: WorldConfig): Observers {
   return {
     tracker: o ? Tracker.fromJSON(o.tracker) : new Tracker(),
     activity: o ? ActivityTracker.fromJSON(o.activity) : new ActivityTracker(settings.activityThreshold ?? Infinity),
@@ -28,6 +35,7 @@ export function restoreObservers(o: ObserverState | undefined, settings: Observe
     censusIdx: o?.censusIdx ?? 0,
     extinct: o?.extinct ?? false,
     prevSym: o?.prevSym ? unb64(o.prevSym) : null,
+    ...(o?.ponds ? { ponds: { lastCycle: o.ponds.lastCycle } } : cfg?.pondPeriod !== undefined ? { ponds: { lastCycle: 0 } } : {}),
   };
 }
 
@@ -42,6 +50,8 @@ export function serializeObservers(obs: Observers, step: number, settings: Obser
     censusIdx: obs.censusIdx,
     extinct: obs.extinct,
     prevSym: obs.prevSym ? b64(obs.prevSym) : null,
+    // Only in pond runs, so every other observer (and its digest) is unchanged.
+    ...(obs.ponds ? { ponds: { lastCycle: obs.ponds.lastCycle } } : {}),
   };
 }
 

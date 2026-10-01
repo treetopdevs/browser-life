@@ -10,4 +10,5 @@ export * from "./accounting.ts";
 export * from "./checkpoint.ts";
 export * from "./migration.ts";
 export * from "./exchange.ts";
+export * from "./ponds.ts";
 export * from "./presets.ts";

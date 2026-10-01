@@ -42,6 +42,15 @@ export const EXCHANGES_FILE = "exchanges.tsv";
  * `MIGRATIONS_FILE`.
  */
 export const SPECIES_FILE = "species.tsv";
+/**
+ * Pond-cycle rows (see packages/schema/src/ponds.ts and
+ * `WorldConfig.pondPeriod`), written in every pond run -- header only when a
+ * segment crosses no boundary -- and never otherwise: not in `BUNDLE_FILES`,
+ * for the reason `MIGRATIONS_FILE` is not. Whether a run must carry it comes
+ * from its config (the pond keys), not from which segments happen to have it,
+ * as `EXCHANGES_FILE`'s does from the spec.
+ */
+export const PONDS_FILE = "ponds.tsv";
 
 /**
  * `BUNDLE_FILES` minus `manifest.json` — the files a verify attempt's own
@@ -54,14 +63,15 @@ export const OBSERVATION_FILES = BUNDLE_FILES.filter((f): f is Exclude<(typeof B
 
 /**
  * Every file a verify attempt reports a digest for when it has it:
- * `OBSERVATION_FILES` plus the optional `MIGRATIONS_FILE`, `EXCHANGES_FILE`
- * and `SPECIES_FILE` (present only for, respectively, a migration-enabled
- * run, a metapopulation run, and a run with `speciesCensus` on). The
- * coordinator's `@verified_files` must match. Without these optional logs
- * here, a migrating, metapopulation or census-enabled run could be marked
- * `observationsVerified` while one of them was never compared.
+ * `OBSERVATION_FILES` plus the optional `MIGRATIONS_FILE`, `EXCHANGES_FILE`,
+ * `SPECIES_FILE` and `PONDS_FILE` (present only for, respectively, a
+ * migration-enabled run, a metapopulation run, a run with `speciesCensus` on
+ * and a pond run). The coordinator's `@verified_files` must match. Without
+ * these optional logs here, a migrating, metapopulation, census-enabled or
+ * pond run could be marked `observationsVerified` while one of them was never
+ * compared.
  */
-export const VERIFIED_FILES: readonly string[] = [...OBSERVATION_FILES, MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE];
+export const VERIFIED_FILES: readonly string[] = [...OBSERVATION_FILES, MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE, PONDS_FILE];
 
 /**
  * SHA-256 (lowercase hex) of each `VERIFIED_FILES` entry present in
@@ -126,6 +136,8 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
   const censusEvery: number = first.spec.censusEvery;
   // Every segment that records a preset identity must record the same one.
   const refIdentity: string | undefined = manifests.find((m) => m.presetIdentity !== undefined)?.presetIdentity;
+  // Every segment's config equals segment #0's (checked below), so this holds for the whole run.
+  const pondRun = first.cfg?.pondPeriod !== undefined;
 
   let at = 0;
   segs.forEach((s, k) => {
@@ -189,6 +201,37 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
         const step = Number(row.split("\t", 1)[0]);
         if (!(step >= s.startStep && step <= end)) throw new Error(`${id}: ${SPECIES_FILE} has a row at step ${step}, outside [${s.startStep}, ${end}]`);
       }
+    // ponds.tsv: required (a header-only file included) in every segment of a
+    // pond run, from its config, and refused in any other run. Rows fall in
+    // (startStep, end] like migrations.tsv's (a segment never cycles at its own
+    // start step), but the step is read from the `step` column by header: the
+    // first column is the cycle index. Every boundary in that range has
+    // exactly one row per pond (every arm, the no-donor path included), with
+    // cycle = step / pondPeriod, like series.jsonl's census grid.
+    if (pondRun) {
+      if (typeof s.files[PONDS_FILE] !== "string") throw new Error(`${id}: pond run but missing ${PONDS_FILE}`);
+      const [header, ...rows] = lines(s.files[PONDS_FILE]);
+      const names = (header ?? "").split("\t");
+      const col = names.indexOf("step");
+      const cycleCol = names.indexOf("cycle");
+      if (col < 0 || cycleCol < 0) throw new Error(`${id}: ${PONDS_FILE} has no ${col < 0 ? "step" : "cycle"} column in its header`);
+      const period = first.cfg.pondPeriod;
+      if (!Number.isSafeInteger(period) || period <= 0) throw new Error(`${id}: pondPeriod ${period} is not a positive integer`);
+      const perBoundary = new Map<number, number>();
+      for (const row of rows) {
+        const cells = row.split("\t");
+        const step = Number(cells[col]);
+        if (!(step > s.startStep && step <= end)) throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step}, outside (${s.startStep}, ${end}]`);
+        if (step % period !== 0 || Number(cells[cycleCol]) !== step / period)
+          throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with cycle ${cells[cycleCol]}, not on the pond boundaries (every ${period})`);
+        perBoundary.set(step, (perBoundary.get(step) ?? 0) + 1);
+      }
+      const ponds = first.cfg.tilesX * first.cfg.tilesY;
+      for (let b = (Math.floor(s.startStep / period) + 1) * period; b <= end; b += period)
+        if ((perBoundary.get(b) ?? 0) !== ponds) throw new Error(`${id}: ${PONDS_FILE} has ${perBoundary.get(b) ?? 0} rows for the boundary at t=${b}, expected ${ponds} (one per pond)`);
+    } else if (typeof s.files[PONDS_FILE] === "string") {
+      throw new Error(`${id}: ${PONDS_FILE} present on a run without the pond cycle`);
+    }
     // exchanges.tsv: required (not merely permitted) whenever the spec has a
     // metapopulation -- review P2 found the previous version let every
     // segment silently omit it even when manifests declare imports, which
@@ -344,6 +387,14 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
       return k === 0 ? dataRows : dataRows.filter((row) => Number(row.split("\t", 1)[0]) !== s.startStep);
     });
     out[SPECIES_FILE] = header + "\n" + rows.map((row) => row + "\n").join("");
+  }
+  // Required from the config, not inferred from presence: the per-segment loop
+  // above already threw if any segment of a pond run were missing it, or if a
+  // run without the pond cycle had one.
+  if (pondRun) {
+    const header = lines(segs[0].files[PONDS_FILE])[0];
+    for (const s of segs) if (lines(s.files[PONDS_FILE])[0] !== header) throw new Error(`segment #${s.index}: ${PONDS_FILE} header differs`);
+    out[PONDS_FILE] = header + "\n" + segs.map((s) => s.files[PONDS_FILE].slice(s.files[PONDS_FILE].indexOf("\n") + 1)).join("");
   }
   // Required from the spec, not inferred from presence (review P2): the
   // per-segment loop above already threw if any segment of a metapopulation

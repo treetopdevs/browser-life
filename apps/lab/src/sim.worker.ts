@@ -24,7 +24,7 @@ import {
 } from "@bl/schema";
 import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import { census, individuals, lineageRGB } from "@bl/metrics";
-import { decodeArtifact, type ObserverSettings, type ObserverState } from "@bl/runner";
+import { decodeArtifact, pondContinuationError, type ObserverSettings, type ObserverState } from "@bl/runner";
 import { LabExecution } from "./execution.ts";
 import type { CensusMsg, FromWorker, RunManifest, ToWorker } from "./protocol.ts";
 import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
@@ -126,12 +126,18 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
  */
 async function adopt(state: WorldState, manifest: RunManifest, observer?: ObserverState) {
   if (!device || !ctx) throw new Error("GPU not initialised");
+  // The runner's continuation guard: a pond world's observer must say its
+  // last cycle is floor(step / pondPeriod). A pre-cycle state at a boundary
+  // would otherwise skip that cycle, since a history never cycles at its start.
+  const pondError = pondContinuationError(state.cfg, observer, state.step);
+  if (pondError) throw new Error(pondError);
   const sim = await GpuSim.create(device, state);
   let renderer: Renderer;
   let execution: LabExecution;
   try {
     execution = new LabExecution(sim, manifest.settings, {
       observer,
+      start: state,
       waitForIdle: () => device!.queue.onSubmittedWorkDone(),
       isCurrent: () => world?.execution === execution,
       onObservation: (c, dropped) => {
@@ -142,6 +148,8 @@ async function adopt(state: WorldState, manifest: RunManifest, observer?: Observ
           postCensus(world!, c);
         }
       },
+      // Every cycle, unthrottled: one per pondPeriod steps.
+      onPondCycle: (cycle, step) => post({ type: "ponds", step, cycle: cycle.b, arm: sim.cfg.pondArm!, donors: cycle.donors }),
       onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
     });
     renderer = new Renderer(device, ctx, format, sim);
@@ -189,7 +197,8 @@ function newManifest(presetId: string, seed: number, state: WorldState, init: Ru
 }
 
 async function load(presetId: string, seed: number, overrides = {}) {
-  const preset = PRESETS.find((p) => p.id === presetId) ?? PRESETS[0];
+  const preset = PRESETS.find((p) => p.id === presetId);
+  if (!preset) throw new Error(`unknown preset "${presetId}"`);
   const cfg = presetConfig(preset, seed, overrides);
   const state = initWorld(cfg, preset.init);
   await adopt(state, newManifest(preset.id, seed, state, preset.init, DEFAULT_SETTINGS));
