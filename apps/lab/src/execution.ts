@@ -3,15 +3,31 @@
 import { cloneState, MAX_STEP, stateHash, type WorldState } from "@bl/schema";
 import type { GpuSim } from "@bl/sim-gpu";
 import type { Census } from "@bl/metrics";
-import { migrateAtBoundary, observeCensus, restoreObservers, serializeObservers, type ObserverSettings, type ObserverState } from "@bl/runner";
+import {
+  applyBoundary,
+  observeCensus,
+  pondContext,
+  pondContinuationError,
+  restoreObservers,
+  serializeObservers,
+  type BoundaryResult,
+  type ObserverSettings,
+  type ObserverState,
+  type PondContext,
+  type PondCycle,
+} from "@bl/runner";
 
 /** Real GPU simulation in the worker; reference physics with injectable readbacks in tests. */
 export type LabSimulation = Pick<GpuSim, "cfg" | "step" | "run" | "drainLedger" | "readSnapshot" | "readState" | "upload" | "destroy">;
 interface ExecutionOptions {
   observer?: ObserverState;
+  /** The state the simulation was built from; required for a pond world, whose cycles check against it. */
+  start?: WorldState;
   waitForIdle: () => Promise<unknown>;
   isCurrent: () => boolean;
   onObservation?: (census: Census, dropped: number) => void;
+  /** Display only, after a pond boundary's cycle (or, for arm cont, its record) has been applied at `step`. */
+  onPondCycle?: (cycle: PondCycle, step: number) => void;
   onDisplayError?: (message: string) => void;
 }
 const message = (e: unknown) => e instanceof Error ? e.message : String(e);
@@ -21,6 +37,7 @@ class StepLimitError extends Error {}
 export class LabExecution {
   private readonly obs;
   private readonly cursor: { observed: number };
+  private readonly ponds: PondContext | null;
   private lost: string | null = null;
 
   constructor(private readonly sim: LabSimulation, private readonly settings: ObserverSettings, private readonly options: ExecutionOptions) {
@@ -29,8 +46,21 @@ export class LabExecution {
     if (period > 0 && period % settings.censusEvery !== 0) {
       throw new Error(`migrationPeriod ${period} is not a multiple of this world's censusEvery (${settings.censusEvery}); migration would fire at the wrong cadence in the lab`);
     }
+    // The pond cycle is keyed on the absolute step like migration, so it takes the same cadence check.
+    const pondPeriod = sim.cfg.pondPeriod;
+    if (pondPeriod !== undefined && pondPeriod % settings.censusEvery !== 0) {
+      throw new Error(`pondPeriod ${pondPeriod} is not a multiple of this world's censusEvery (${settings.censusEvery}); the pond cycle would fire at the wrong cadence in the lab`);
+    }
     if (options.observer && options.observer.step !== sim.step) throw new Error("observer and simulation steps differ");
-    this.obs = restoreObservers(options.observer, settings);
+    const pondError = pondContinuationError(sim.cfg, options.observer, sim.step);
+    if (pondError) throw new Error(pondError);
+    if (options.start && options.start.step !== sim.step) throw new Error("start state and simulation steps differ");
+    // M_r and the conservation baseline of every cycle, from this history's own
+    // start (the runner's PondContext); the replay twin checks against the same.
+    // Lesions turn B+P into C in place and book the heat, so neither changes.
+    this.ponds = options.start ? pondContext(options.start) : null;
+    if (pondPeriod !== undefined && !this.ponds) throw new Error("a pond world needs its start state for the pond cycle's conservation checks");
+    this.obs = restoreObservers(options.observer, settings, sim.cfg);
     this.cursor = { observed: sim.step };
   }
 
@@ -52,7 +82,7 @@ export class LabExecution {
     return this.sim.step - from;
   }
 
-  /** A checkpoint always includes the observation and migration at its settled step. */
+  /** A checkpoint always includes the observation, migration and pond cycle at its settled step. */
   async checkpoint() {
     this.check();
     const from = this.sim.step;
@@ -63,7 +93,7 @@ export class LabExecution {
     return { state, observer: serializeObservers(this.obs, state.step, this.settings), advanced: state.step - from };
   }
 
-  /** Own the replay cursor and twin lifetime so verification cannot omit a migration. */
+  /** Own the replay cursor and twin lifetime so verification cannot omit a migration or pond cycle. */
   async verify(steps: number, createTwin: (state: WorldState) => Promise<LabSimulation>) {
     this.check();
     this.checkSteps(steps);
@@ -75,7 +105,7 @@ export class LabExecution {
       this.check();
       await this.advanceLive(start.step + steps);
       await this.walk(twin, twinCursor, start.step + steps, async (step) => {
-        await this.migrate(twin, step);
+        await this.boundaryAt(twin, step);
         this.check();
       });
       const [a, b] = await Promise.all([this.sim.readState(), twin.readState()]);
@@ -97,9 +127,11 @@ export class LabExecution {
 
   private boundary(cursor: { observed: number }): number {
     const every = this.settings.censusEvery;
-    // Imported migration-enabled worlds realign to the absolute census grid.
-    // Without migration, retain the history's original relative cadence.
-    const rem = (this.sim.cfg.migrationPeriod ?? 0) === 0 ? 0 : cursor.observed % every;
+    // Imported migration-enabled and pond worlds realign to the absolute census
+    // grid, where their transforms fire. Otherwise retain the history's
+    // original relative cadence.
+    const absolute = (this.sim.cfg.migrationPeriod ?? 0) > 0 || this.sim.cfg.pondPeriod !== undefined;
+    const rem = absolute ? cursor.observed % every : 0;
     return cursor.observed + (rem === 0 ? every : every - rem);
   }
 
@@ -113,19 +145,18 @@ export class LabExecution {
         this.check();
         if (snap.step !== step) throw new Error(`observation at t=${snap.step}, expected the census boundary t=${step}`);
         const observed = observeCensus(this.obs, this.sim.cfg, snap, ledger.events.length + ledger.dropped);
-        await this.migrate(this.sim, step);
+        const { ponds } = await this.boundaryAt(this.sim, step);
+        // As the runner records it: the last boundary whose cycle is applied (or recorded, for cont).
+        if (ponds) this.obs.ponds = { lastCycle: ponds.b };
         this.check();
-        // Presentation failure must not invalidate a successfully committed census.
-        try {
-          this.options.onObservation?.(observed.census, ledger.dropped);
-        } catch (e) {
-          try { this.options.onDisplayError?.(message(e)); } catch { /* Display is best effort. */ }
-        }
+        this.display(() => this.options.onObservation?.(observed.census, ledger.dropped));
+        if (ponds) this.display(() => this.options.onPondCycle?.(ponds, step));
       });
     } catch (e) {
       if (e instanceof StepLimitError) throw e;
       // Draining is destructive, observations mutate in place, and a failed
-      // submission/migration may have partially changed physics. Never retry.
+      // submission, migration or pond cycle may have partially changed physics.
+      // Never retry.
       if (this.options.isCurrent() && !this.lost) {
         this.lost = `census at t=${this.sim.step} failed (${message(e)}); observer history is incomplete. Restore a checkpoint or reload to continue.`;
       }
@@ -133,8 +164,18 @@ export class LabExecution {
     }
   }
 
-  private async migrate(sim: LabSimulation, step: number) {
-    await migrateAtBoundary({
+  /** Presentation failure must not invalidate a successfully committed census or cycle. */
+  private display(show: () => void) {
+    try {
+      show();
+    } catch (e) {
+      try { this.options.onDisplayError?.(message(e)); } catch { /* Display is best effort. */ }
+    }
+  }
+
+  /** The runner's boundary helper: migration, then the pond cycle with this history's context. */
+  private boundaryAt(sim: LabSimulation, step: number): Promise<BoundaryResult> {
+    return applyBoundary({
       cfg: sim.cfg,
       readState: async () => {
         const state = await sim.readState();
@@ -142,7 +183,7 @@ export class LabExecution {
         return state;
       },
       upload: (state) => sim.upload(state),
-    }, step);
+    }, step, this.ponds);
   }
 
   /** The single traversal for live worlds and physics-only replay twins. */

@@ -1,4 +1,4 @@
-import type { Intervention, WorldConfig, InitParams } from "@bl/schema";
+import type { Intervention, WorldConfig, InitParams, PondArm } from "@bl/schema";
 import type { GpuViewMode, ViewRect } from "@bl/sim-gpu";
 import type { ObserverSettings } from "@bl/runner";
 
@@ -75,6 +75,17 @@ export interface ProbeMsg {
   weights: number[];
 }
 
+/** Display only: the pond cycle just applied (or, for arm cont, recorded) at `step`. */
+export interface PondsMsg {
+  type: "ponds";
+  step: number;
+  /** Cycle index b = step / pondPeriod. */
+  cycle: number;
+  arm: PondArm;
+  /** Donor ponds in selection order; empty for cont and for a cycle with no eligible pond. */
+  donors: number[];
+}
+
 export type ToWorker =
   | { type: "init"; canvas: OffscreenCanvas; width: number; height: number }
   | { type: "load"; presetId: string; seed: number; overrides?: Partial<WorldConfig> }
@@ -100,6 +111,7 @@ export type FromWorker =
   | StatsMsg
   | CensusMsg
   | ProbeMsg
+  | PondsMsg
   | { type: "checkpoints"; list: CheckpointMeta[] }
   | { type: "exported"; bytes: ArrayBuffer; name: string }
   | { type: "notice"; message: string }

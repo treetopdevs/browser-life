@@ -172,8 +172,7 @@ describe("applyBoundary: the pond cycle at a census boundary", () => {
 
 describe("migrateAtBoundary refuses pond configs", () => {
   it("throws for a pond config at any step, before reading or uploading anything", async () => {
-    // The lab (apps/lab/src/execution.ts) only calls migrateAtBoundary until I2; a pond world there
-    // must fail at its first census rather than step on without its cycles.
+    // A caller that only migrates must fail on a pond world rather than step on without its cycles.
     for (const arm of ["scaf", "rand", "cont"] as const) {
       for (const step of [500, 1000]) {
         const sim = new CpuSim(at(startWorld({ pondArm: arm }), step));

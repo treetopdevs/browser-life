@@ -53,11 +53,10 @@ type BoundarySim = Pick<GpuSim, "cfg" | "readState" | "upload">;
  * A config with the pond cycle (`pondPeriod`) throws, at any step: a caller
  * that only migrates would step such a world without its cycles and silently
  * diverge from the runner's history of it. Pond worlds go through
- * `applyBoundary`; until the lab calls it (docs/scaffold-integration-v1.md,
- * step I2), the lab marks a pond world lost at its first census instead.
+ * `applyBoundary`, as runner.ts and the lab (apps/lab/src/execution.ts) do.
  */
 export async function migrateAtBoundary(sim: BoundarySim, step: number): Promise<MigrationEvent[]> {
-  if (sim.cfg.pondPeriod !== undefined) throw new Error("a pond config needs applyBoundary (the lab gains the pond cycle in I2)");
+  if (sim.cfg.pondPeriod !== undefined) throw new Error("a pond config needs applyBoundary, which runs its pond cycle");
   return migrate(sim, step);
 }
 
