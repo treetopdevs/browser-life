@@ -495,3 +495,12 @@ The next step is the user's dated decision: either follow the table (a heredity 
 - **trait:** the pond trait at τ, an observation time within the assay period, calibrated on the ancestor only and meant to reduce ceiling effects.
 
 The amendment follows R1's result, so R1′ is exploratory. A positive R1′ only replaces row 3's recommendation with "replicate on fresh histories with R1′ as the primary". It cannot reach integration or registration by itself. A negative R1′ leaves row 3 standing. It runs on the Mac at $0, with seeds 4,845,001–4,847,960 and 4,849,001–4,849,002.
+
+**R1′ result (2026-09-30, exploratory).** R1′ was not demonstrated in `scaf`.
+- **Numbers:** 3 of 6 histories at boundary 34, with τ = 4,100 steps fixed on the ancestor; the rule needs 4. Every reconstruction verified, and every number was reproduced independently.
+- **Disposition:** row 3 and its recommendation (a heredity rule variant, as a separate dated decision) stand.
+- **Caveats:**
+  - Evolved `scaf` fragments were mostly saturated at τ: 0.95–1.00 of surviving fragments in 5 of 6 histories. So both designs ran at high saturation, and "not demonstrated" is not "absent".
+  - A τ sweep would pass at some earlier census times, between 600 and 3,100 steps. That is post hoc and is not used.
+- **Settling it:** pond-level heredity under the scaffold is unresolved, not refuted. Settling it needs a fresh design fixed in advance, on fresh histories, with a measure that does not saturate.
+- **Cost:** $0, on the Mac. Details are under "R1′ result" in the protocol.

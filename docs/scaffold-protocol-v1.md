@@ -364,3 +364,38 @@ The rule is applied to `scaf` and reported for both `scaf` and `rand`.
 - **Fewer than 4 `scaf` histories valid at boundary 34.** R1′ is reported as uninformative, and row 3 stands.
 
 **Compute.** About 1.2 × 10⁶ 512² steps: 24 one-period replays, 36 transmission assays of two periods each, and the τ calibration. It runs on the Mac at $0.
+
+## R1′ result (2026-09-30; Amendment 2, exploratory)
+
+All inputs reproduced independently, and no number was disputed. Outputs are in `experiments/scaffold/readouts/`: `tau.json`, `r1prime.json` and `replay-check.json`.
+
+- **Reconstruction.**
+  - Both mechanism checks match the saved `b66-post` states by `stateHash`; the decompressed states are byte-identical.
+  - All 24 replays (boundaries 34 and 67, 12 histories) reproduce the original `ponds.tsv` byte for byte, up to and including the replayed cycle.
+  - The frozen workspace stayed unmodified.
+- **τ = 4,100 steps.** It is the first census at which the ancestor's median fragment trait reaches 25,764.5 (it is 26,026 there). τ was recorded at 21:08, before any R1′ assay ran.
+- **The rule, at boundary 34 and τ.** `scaf` met it in 3 of 6 histories:
+
+  | History | ICC | p | Passes |
+  |---|---|---|---|
+  | i0 | 0.100 | 0.031 | yes |
+  | i1 | 0.174 | 0.005 | yes |
+  | i2 | 0.002 | 0.441 | no |
+  | i3 | 0.502 | 0.001 | yes |
+  | i4 | 0.001 | 0.455 | no |
+  | i5 | 0.043 | 0.175 | no |
+
+  The rule needs at least 4. **R1′ is not demonstrated in `scaf`.** All 6 histories were valid, so the result is not uninformative. It is not on a threshold edge: the nearest failing history has p = 0.175, and τ − 100 and τ + 100 give the same three passes.
+- **Disposition (Amendment 2).** Row 3 and its recommendation stand: a heredity rule variant, as a separate dated decision.
+
+**Descriptive (not decision inputs).**
+- `rand` met the criterion at boundary 34 in 4 of 6 histories, and in 6 of 6 at boundaries 67 and 100. The boundary-34 figure is fragile: it rests on i5, whose p is 0.027 at τ and 0.063 at τ + 100.
+- `scaf` met it in 2 of 6 at both boundary 67 and boundary 100.
+- **Saturation at τ in `scaf` at boundary 34.** The shares of fragments at 80% or more of the assay budget were 0.83, 0.84, 0.88, 0.38, 0.88 and 0.87. The mean is 0.78 and the median 0.86. Among fragments still alive at τ, the shares were 0.95–1.00 in five histories and 0.56 in i3 (48 of 85).
+
+**Post hoc (written after the result; not a decision input).**
+- **Saturation remained high.** τ was calibrated on the ancestor, and evolved `scaf` fragments grow much faster, so in 5 of 6 histories most surviving fragments were already at the ceiling at τ.
+- **Survival contributed, but does not explain everything.** Fragment deaths clustered within donor families contribute to the ICCs. But some variation among survivors remains: on survivors only, i3's ICC is 0.378 (p 0.001) and i1's is 0.198 (p 0.008). So these data neither establish nor rule out that the ceiling caused the non-result.
+- **Row 3 rests on two designs** that both operated at high saturation. "Not demonstrated" must not be read as "absent".
+- **τ sensitivity.** A τ sweep shows `scaf` would reach 4 or more of 6 at some earlier census times: 600–1,100, 1,400–1,600 and 2,100–3,100 steps. That is reported only. It is the kind of choice made after seeing the data that Amendment 2 was written to rule out, and it is not used.
+- **What would settle the question.** It would take a fresh design fixed in advance, on fresh histories, with a measure that does not saturate for fast-growing evolved fragments. For example, a larger assay budget, or a trait such as time to a fixed mass.

@@ -1,0 +1,41 @@
+{
+  "mechanismCheck": {
+    "passed": true,
+    "scaf-i0": {
+      "replay": "6904c7348d4cc434",
+      "saved": "6904c7348d4cc434"
+    },
+    "rand-i0": {
+      "replay": "3e64defa5434921e",
+      "saved": "3e64defa5434921e"
+    }
+  },
+  "valid": [
+    "scaf-i0-t0",
+    "scaf-i1-t0",
+    "scaf-i2-t0",
+    "scaf-i3-t0",
+    "scaf-i4-t0",
+    "scaf-i5-t0",
+    "rand-i0-t0",
+    "rand-i1-t0",
+    "rand-i2-t0",
+    "rand-i3-t0",
+    "rand-i4-t0",
+    "rand-i5-t0",
+    "scaf-i0-t1",
+    "scaf-i1-t1",
+    "scaf-i2-t1",
+    "scaf-i3-t1",
+    "scaf-i4-t1",
+    "scaf-i5-t1",
+    "rand-i0-t1",
+    "rand-i1-t1",
+    "rand-i2-t1",
+    "rand-i3-t1",
+    "rand-i4-t1",
+    "rand-i5-t1"
+  ],
+  "failed": [],
+  "source": "browser-life-scaffold-frozen at d198ceb4; runs/scaffold/replay/replay.log"
+}
