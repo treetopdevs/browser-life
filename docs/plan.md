@@ -515,3 +515,11 @@ The amendment follows R1's result, so R1′ is exploratory. A positive R1′ onl
   - **not demonstrated:** row 3 stands, now on a measure that avoids the end-mass ceiling;
   - **uninformative:** a control gate fails, or fewer than 4 `scaf` histories are valid. Report it and stop.
 - **Cost:** $0, on the Mac. Seeds: worlds 4,811,001–4,811,106 and 4,811,201–4,811,204; assays 4,812,001–4,816,260.
+
+**Scaffold heredity replication result (2026-10-01).** R1″ is demonstrated in `scaf` in 6 of 6 fresh histories (ICC 0.09–0.59, p 0.001–0.036). Both control gates passed: positive controls ICC 0.94 and 0.75; 0 of 4 null worlds significant. The full record is in `docs/scaffold-heredity-replication-v1.md`, "Results (2026-10-01)", and every number was re-derived independently.
+- **Disposition:** protocol v1's row 3 is superseded, and the heredity-rule-variant recommendation is withdrawn. Pond-level heredity, genetic or structural, is demonstrable under the scaffold with a design fixed in advance.
+- **Caveats:**
+  - Heredity is present under the scaffold, but these data do not establish that the scaffold causes or increases it: `rand` shows it as strongly.
+  - It is fragile without covariates (3 of 6), and in three histories it rests on a few donor families.
+- **Next step:** a separate dated decision between integration (B) and an R3 replication on these fresh histories. The R3 replication comes before any registration.
+- **Cost:** $0, on the Mac.

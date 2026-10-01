@@ -1,0 +1,1459 @@
+{
+  "stage": "r1dprime",
+  "verdict": true,
+  "regime": {
+    "k": 8,
+    "period": 10000
+  },
+  "skipped": 0,
+  "rejected": [],
+  "runs": {
+    "loaded": true,
+    "histories": [
+      {
+        "arm": "rand",
+        "history": 0,
+        "dir": "runs/scaffold/rep/main/rand/i0",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "rand",
+        "history": 1,
+        "dir": "runs/scaffold/rep/main/rand/i1",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "rand",
+        "history": 2,
+        "dir": "runs/scaffold/rep/main/rand/i2",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "rand",
+        "history": 3,
+        "dir": "runs/scaffold/rep/main/rand/i3",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "rand",
+        "history": 4,
+        "dir": "runs/scaffold/rep/main/rand/i4",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "rand",
+        "history": 5,
+        "dir": "runs/scaffold/rep/main/rand/i5",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "scaf",
+        "history": 0,
+        "dir": "runs/scaffold/rep/main/scaf/i0",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "scaf",
+        "history": 1,
+        "dir": "runs/scaffold/rep/main/scaf/i1",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "scaf",
+        "history": 2,
+        "dir": "runs/scaffold/rep/main/scaf/i2",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "scaf",
+        "history": 3,
+        "dir": "runs/scaffold/rep/main/scaf/i3",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "scaf",
+        "history": 4,
+        "dir": "runs/scaffold/rep/main/scaf/i4",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      },
+      {
+        "arm": "scaf",
+        "history": 5,
+        "dir": "runs/scaffold/rep/main/scaf/i5",
+        "status": "finished",
+        "ended": false,
+        "endedAt": null
+      }
+    ],
+    "skipped": []
+  },
+  "controls": {
+    "positive": [
+      {
+        "h": 12,
+        "id": "pos-s0",
+        "outcome": "analysed",
+        "why": null,
+        "n": 128,
+        "families": 16,
+        "icc": 0.9385325917081822,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "degenerate": null,
+        "world": 0,
+        "tested": true,
+        "significant": true
+      },
+      {
+        "h": 13,
+        "id": "pos-s1",
+        "outcome": "analysed",
+        "why": null,
+        "n": 128,
+        "families": 16,
+        "icc": 0.7544128854561537,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "degenerate": null,
+        "world": 1,
+        "tested": true,
+        "significant": true
+      }
+    ],
+    "negative": [
+      {
+        "h": 14,
+        "id": "neg-j0",
+        "outcome": "analysed",
+        "why": null,
+        "n": 128,
+        "families": 16,
+        "icc": -0.04892599662942555,
+        "p": 0.8531468531468531,
+        "demonstrated": false,
+        "degenerate": null,
+        "world": 0,
+        "tested": true,
+        "significant": false
+      },
+      {
+        "h": 15,
+        "id": "neg-j1",
+        "outcome": "analysed",
+        "why": null,
+        "n": 128,
+        "families": 16,
+        "icc": -0.027376638172452547,
+        "p": 0.6913086913086913,
+        "demonstrated": false,
+        "degenerate": null,
+        "world": 1,
+        "tested": true,
+        "significant": false
+      },
+      {
+        "h": 16,
+        "id": "neg-j2",
+        "outcome": "analysed",
+        "why": null,
+        "n": 128,
+        "families": 16,
+        "icc": 0.07772595683989957,
+        "p": 0.07592407592407592,
+        "demonstrated": false,
+        "degenerate": null,
+        "world": 2,
+        "tested": true,
+        "significant": false
+      },
+      {
+        "h": 17,
+        "id": "neg-j3",
+        "outcome": "analysed",
+        "why": null,
+        "n": 128,
+        "families": 16,
+        "icc": -0.03240531700625942,
+        "p": 0.7382617382617382,
+        "demonstrated": false,
+        "degenerate": null,
+        "world": 3,
+        "tested": true,
+        "significant": false
+      }
+    ],
+    "nullGatePassed": true,
+    "positivePassed": true
+  },
+  "arms": {
+    "scaf": {
+      "verdict": true,
+      "valid": 6,
+      "demonstrated": 6,
+      "ended": 0,
+      "donors": 0,
+      "unavailable": 0
+    },
+    "rand": {
+      "verdict": true,
+      "valid": 6,
+      "demonstrated": 6,
+      "ended": 0,
+      "donors": 0,
+      "unavailable": 0
+    }
+  },
+  "histories": [
+    {
+      "h": 0,
+      "id": "scaf-i0",
+      "arm": "scaf",
+      "control": null,
+      "history": 0,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.09310586632121583,
+      "p": 0.03596403596403597,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 1,
+      "id": "scaf-i1",
+      "arm": "scaf",
+      "control": null,
+      "history": 1,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.21348452969375137,
+      "p": 0.002997002997002997,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 2,
+      "id": "scaf-i2",
+      "arm": "scaf",
+      "control": null,
+      "history": 2,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.16108851034384541,
+      "p": 0.002997002997002997,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 3,
+      "id": "scaf-i3",
+      "arm": "scaf",
+      "control": null,
+      "history": 3,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.21554523347947344,
+      "p": 0.000999000999000999,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 4,
+      "id": "scaf-i4",
+      "arm": "scaf",
+      "control": null,
+      "history": 4,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.39675025810632025,
+      "p": 0.000999000999000999,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 5,
+      "id": "scaf-i5",
+      "arm": "scaf",
+      "control": null,
+      "history": 5,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.5850725687575995,
+      "p": 0.000999000999000999,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 6,
+      "id": "rand-i0",
+      "arm": "rand",
+      "control": null,
+      "history": 0,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.5319664476787818,
+      "p": 0.000999000999000999,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 7,
+      "id": "rand-i1",
+      "arm": "rand",
+      "control": null,
+      "history": 1,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.3595015522792983,
+      "p": 0.000999000999000999,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 8,
+      "id": "rand-i2",
+      "arm": "rand",
+      "control": null,
+      "history": 2,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.4957991286635981,
+      "p": 0.000999000999000999,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 9,
+      "id": "rand-i3",
+      "arm": "rand",
+      "control": null,
+      "history": 3,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.3208493830273479,
+      "p": 0.000999000999000999,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 10,
+      "id": "rand-i4",
+      "arm": "rand",
+      "control": null,
+      "history": 4,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.7819221373015013,
+      "p": 0.000999000999000999,
+      "demonstrated": true,
+      "degenerate": null
+    },
+    {
+      "h": 11,
+      "id": "rand-i5",
+      "arm": "rand",
+      "control": null,
+      "history": 5,
+      "outcome": "analysed",
+      "valid": true,
+      "why": null,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "icc": 0.26444434920218246,
+      "p": 0.000999000999000999,
+      "demonstrated": true,
+      "degenerate": null
+    }
+  ],
+  "sources": [
+    {
+      "h": 0,
+      "dir": "runs/scaffold/assays/r1dprime/scaf-i0",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/scaf/i0/ckpt/b34-pre.blck.gz",
+        "stateHash": "8958b19c35d90de5",
+        "seed": 4811001,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 930,
+        "phase": {
+          "totalC": 123327,
+          "totalS": 750509,
+          "carrying": 92907,
+          "outsideWindow": 91413,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 1,
+      "dir": "runs/scaffold/assays/r1dprime/scaf-i1",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/scaf/i1/ckpt/b34-pre.blck.gz",
+        "stateHash": "e57c00e8ad4ebaac",
+        "seed": 4811002,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 1057,
+        "phase": {
+          "totalC": 129632,
+          "totalS": 1046046,
+          "carrying": 97994,
+          "outsideWindow": 96461,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 2,
+      "dir": "runs/scaffold/assays/r1dprime/scaf-i2",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/scaf/i2/ckpt/b34-pre.blck.gz",
+        "stateHash": "e5247cf1266c6565",
+        "seed": 4811003,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 1031,
+        "phase": {
+          "totalC": 128299,
+          "totalS": 936166,
+          "carrying": 89427,
+          "outsideWindow": 87877,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 3,
+      "dir": "runs/scaffold/assays/r1dprime/scaf-i3",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/scaf/i3/ckpt/b34-pre.blck.gz",
+        "stateHash": "ceb85858dc36adc7",
+        "seed": 4811004,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 779,
+        "phase": {
+          "totalC": 146169,
+          "totalS": 891422,
+          "carrying": 81746,
+          "outsideWindow": 80266,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 4,
+      "dir": "runs/scaffold/assays/r1dprime/scaf-i4",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/scaf/i4/ckpt/b34-pre.blck.gz",
+        "stateHash": "f65b0c8d13736cc7",
+        "seed": 4811005,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 791,
+        "phase": {
+          "totalC": 95380,
+          "totalS": 624328,
+          "carrying": 93835,
+          "outsideWindow": 92301,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 5,
+      "dir": "runs/scaffold/assays/r1dprime/scaf-i5",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/scaf/i5/ckpt/b34-pre.blck.gz",
+        "stateHash": "e57125105a05f9d3",
+        "seed": 4811006,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 1246,
+        "phase": {
+          "totalC": 149042,
+          "totalS": 1058228,
+          "carrying": 101231,
+          "outsideWindow": 99322,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 6,
+      "dir": "runs/scaffold/assays/r1dprime/rand-i0",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/rand/i0/ckpt/b34-pre.blck.gz",
+        "stateHash": "42e226c1e10cd85c",
+        "seed": 4811101,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 747,
+        "phase": {
+          "totalC": 407487,
+          "totalS": 639643,
+          "carrying": 143993,
+          "outsideWindow": 140685,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 7,
+      "dir": "runs/scaffold/assays/r1dprime/rand-i1",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/rand/i1/ckpt/b34-pre.blck.gz",
+        "stateHash": "43534ec3ef3ef63a",
+        "seed": 4811102,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 917,
+        "phase": {
+          "totalC": 269279,
+          "totalS": 708507,
+          "carrying": 121380,
+          "outsideWindow": 119040,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 8,
+      "dir": "runs/scaffold/assays/r1dprime/rand-i2",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/rand/i2/ckpt/b34-pre.blck.gz",
+        "stateHash": "d1dfdd033b2a3ec3",
+        "seed": 4811103,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 927,
+        "phase": {
+          "totalC": 317318,
+          "totalS": 578664,
+          "carrying": 176183,
+          "outsideWindow": 172980,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 9,
+      "dir": "runs/scaffold/assays/r1dprime/rand-i3",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/rand/i3/ckpt/b34-pre.blck.gz",
+        "stateHash": "c91d9d15a0a5328d",
+        "seed": 4811104,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 1124,
+        "phase": {
+          "totalC": 453762,
+          "totalS": 557162,
+          "carrying": 179038,
+          "outsideWindow": 175735,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 10,
+      "dir": "runs/scaffold/assays/r1dprime/rand-i4",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/rand/i4/ckpt/b34-pre.blck.gz",
+        "stateHash": "2d28d35472884773",
+        "seed": 4811105,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 120,
+        "phase": {
+          "totalC": 61874,
+          "totalS": 65901,
+          "carrying": 21727,
+          "outsideWindow": 20574,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 11,
+      "dir": "runs/scaffold/assays/r1dprime/rand-i5",
+      "provenance": {
+        "source": "runs/scaffold/rep/main/rand/i5/ckpt/b34-pre.blck.gz",
+        "stateHash": "7faafc496a7ce124",
+        "seed": 4811106,
+        "mutRate": 429497,
+        "step": 340000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 1115,
+        "phase": {
+          "totalC": 404933,
+          "totalS": 1077872,
+          "carrying": 223786,
+          "outsideWindow": 220251,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 12,
+      "dir": "runs/scaffold/assays/r1dprime/pos-s0",
+      "provenance": {
+        "source": "runs/scaffold/p2/rank/s0/ckpt/b1-pre.blck.gz",
+        "stateHash": "a236c8a83279c81b",
+        "seed": 4805001,
+        "mutRate": 0,
+        "step": 10000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 12,
+        "phase": {
+          "totalC": 1587157,
+          "totalS": 378789,
+          "carrying": 75291,
+          "outsideWindow": 73618,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 13,
+      "dir": "runs/scaffold/assays/r1dprime/pos-s1",
+      "provenance": {
+        "source": "runs/scaffold/p2/rank/s1/ckpt/b1-pre.blck.gz",
+        "stateHash": "d3da3510f64e2749",
+        "seed": 4805002,
+        "mutRate": 0,
+        "step": 10000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 12,
+        "phase": {
+          "totalC": 1572207,
+          "totalS": 369250,
+          "carrying": 71461,
+          "outsideWindow": 69603,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 14,
+      "dir": "runs/scaffold/assays/r1dprime/neg-j0",
+      "provenance": {
+        "source": "runs/scaffold/rep/neg/j0/ckpt/b1-pre.blck.gz",
+        "stateHash": "11b9c30dfcba8d30",
+        "seed": 4811201,
+        "mutRate": 0,
+        "step": 10000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 1,
+        "phase": {
+          "totalC": 462380,
+          "totalS": 864659,
+          "carrying": 194040,
+          "outsideWindow": 190125,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 15,
+      "dir": "runs/scaffold/assays/r1dprime/neg-j1",
+      "provenance": {
+        "source": "runs/scaffold/rep/neg/j1/ckpt/b1-pre.blck.gz",
+        "stateHash": "92b756f9dc6989ae",
+        "seed": 4811202,
+        "mutRate": 0,
+        "step": 10000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 1,
+        "phase": {
+          "totalC": 457352,
+          "totalS": 877206,
+          "carrying": 194223,
+          "outsideWindow": 190296,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 16,
+      "dir": "runs/scaffold/assays/r1dprime/neg-j2",
+      "provenance": {
+        "source": "runs/scaffold/rep/neg/j2/ckpt/b1-pre.blck.gz",
+        "stateHash": "24ade6b8ea728048",
+        "seed": 4811203,
+        "mutRate": 0,
+        "step": 10000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 1,
+        "phase": {
+          "totalC": 456862,
+          "totalS": 871609,
+          "carrying": 192756,
+          "outsideWindow": 188876,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    },
+    {
+      "h": 17,
+      "dir": "runs/scaffold/assays/r1dprime/neg-j3",
+      "provenance": {
+        "source": "runs/scaffold/rep/neg/j3/ckpt/b1-pre.blck.gz",
+        "stateHash": "7946d374ac70f3c3",
+        "seed": 4811204,
+        "mutRate": 0,
+        "step": 10000,
+        "tilesX": 8,
+        "tilesY": 8,
+        "distinctGenomes": 1,
+        "phase": {
+          "totalC": 452256,
+          "totalS": 875131,
+          "carrying": 191081,
+          "outsideWindow": 187189,
+          "postCycle": false
+        }
+      },
+      "protocolSha256R1dp": "8d983716c65fdb574ce9b62f01dda1ff4ce6ce99e3921eef65f6ed76abf78a06"
+    }
+  ],
+  "descriptive": {
+    "note": "per set: fractionAt100 and fractionCensored are the fractions of fragments at T = 100 (their pond reached m* = 25,764.5 by the first census) and at T = 10,100 (never did); atEnd and atTau are R1's statistic on the end trait and the trait at tau = 4,100 (R1' as reported); varianceComponent is the one-way ANOVA between-donor component (MS_between - MS_within) / n0 on the OLS-adjusted log T (negative kept), rawFamilyMeanVariance the sample variance of the raw donor means of log T; extinctFragments counts fragments with no trait at the end; `degenerate` marks scores that cannot carry the test (every value equal, or residuals at roundoff level: ICC 0, p 1); extinction counts, per arm, the histories whose run ended before boundary 34 (needs --runs) and those with fewer than 2 donors; no decision reads any of it. The verdict applies the controls first, then availability, then the rule; arms.<arm>.verdict is the availability and the rule for that arm alone (rand is reported, never decided)",
+    "sets": [
+      {
+        "h": 0,
+        "id": "scaf-i0",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.125,
+        "atEnd": {
+          "icc": -0.03455652914866572,
+          "p": 0.7552447552447552,
+          "demonstrated": false,
+          "varianceComponent": -41894711.31523593,
+          "rawFamilyMeanVariance": 118317486.67265625,
+          "meanTrait": 119936.734375,
+          "saturation": 0.8671875,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": -0.0031697536419484553,
+          "p": 0.4985014985014985,
+          "demonstrated": false,
+          "varianceComponent": -4954252.595709115,
+          "rawFamilyMeanVariance": 214143042.5622396,
+          "meanTrait": 114630.390625,
+          "saturation": 0.84375,
+          "degenerate": null
+        },
+        "varianceComponent": 0.013357687924066067,
+        "rawFamilyMeanVariance": 0.031685264308543654,
+        "meanLogT": 7.971038188268551,
+        "extinctFragments": 16
+      },
+      {
+        "h": 1,
+        "id": "scaf-i1",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.1328125,
+        "atEnd": {
+          "icc": -0.011299712009942092,
+          "p": 0.5734265734265734,
+          "demonstrated": false,
+          "varianceComponent": -11623867.243532345,
+          "rawFamilyMeanVariance": 218377752.30670574,
+          "meanTrait": 118882.3515625,
+          "saturation": 0.859375,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": -0.008532875036381112,
+          "p": 0.5474525474525475,
+          "demonstrated": false,
+          "varianceComponent": -8563068.645579696,
+          "rawFamilyMeanVariance": 216815037.25598958,
+          "meanTrait": 117853.265625,
+          "saturation": 0.8671875,
+          "degenerate": null
+        },
+        "varianceComponent": 0.04330852146766749,
+        "rawFamilyMeanVariance": 0.10220441013539391,
+        "meanLogT": 7.6172391364270755,
+        "extinctFragments": 17
+      },
+      {
+        "h": 2,
+        "id": "scaf-i2",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.1796875,
+        "atEnd": {
+          "icc": 0.05205509389699626,
+          "p": 0.14385614385614387,
+          "demonstrated": false,
+          "varianceComponent": 64133075.77731937,
+          "rawFamilyMeanVariance": 155120651.49270833,
+          "meanTrait": 111939.21875,
+          "saturation": 0.8203125,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.05368855215986525,
+          "p": 0.13786213786213786,
+          "demonstrated": false,
+          "varianceComponent": 65273683.27724385,
+          "rawFamilyMeanVariance": 153508102.45305988,
+          "meanTrait": 111141.5078125,
+          "saturation": 0.8203125,
+          "degenerate": null
+        },
+        "varianceComponent": 0.025067621074808113,
+        "rawFamilyMeanVariance": 0.038691582242670476,
+        "meanLogT": 7.94238027187723,
+        "extinctFragments": 23
+      },
+      {
+        "h": 3,
+        "id": "scaf-i3",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.1953125,
+        "atEnd": {
+          "icc": -0.03418197698114861,
+          "p": 0.7502497502497503,
+          "demonstrated": false,
+          "varianceComponent": -37530144.184403315,
+          "rawFamilyMeanVariance": 152945221.87265626,
+          "meanTrait": 109960.578125,
+          "saturation": 0.8046875,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": -0.013411440569290669,
+          "p": 0.5484515484515484,
+          "demonstrated": false,
+          "varianceComponent": -16762787.94879955,
+          "rawFamilyMeanVariance": 239072109.07597655,
+          "meanTrait": 105695.1328125,
+          "saturation": 0.765625,
+          "degenerate": null
+        },
+        "varianceComponent": 0.02908957868033092,
+        "rawFamilyMeanVariance": 0.062118554637638046,
+        "meanLogT": 8.100565162330172,
+        "extinctFragments": 25
+      },
+      {
+        "h": 4,
+        "id": "scaf-i4",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.1953125,
+        "atEnd": {
+          "icc": 0.013632060464418437,
+          "p": 0.34865134865134867,
+          "demonstrated": false,
+          "varianceComponent": 15781313.223751366,
+          "rawFamilyMeanVariance": 388199346.4863932,
+          "meanTrait": 109729.6171875,
+          "saturation": 0.796875,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.29469453929763695,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 653850374.6783245,
+          "rawFamilyMeanVariance": 1374355952.1260417,
+          "meanTrait": 96332.15625,
+          "saturation": 0.6796875,
+          "degenerate": null
+        },
+        "varianceComponent": 0.07219914698033372,
+        "rawFamilyMeanVariance": 0.16987260513507912,
+        "meanLogT": 8.097696519843224,
+        "extinctFragments": 25
+      },
+      {
+        "h": 5,
+        "id": "scaf-i5",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.0390625,
+        "atEnd": {
+          "icc": -0.024835427738468988,
+          "p": 0.6533466533466533,
+          "demonstrated": false,
+          "varianceComponent": -15211757.578176416,
+          "rawFamilyMeanVariance": 68015644.840625,
+          "meanTrait": 131864.65625,
+          "saturation": 0.9609375,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": -0.024483253935268515,
+          "p": 0.6533466533466533,
+          "demonstrated": false,
+          "varianceComponent": -14552784.511909872,
+          "rawFamilyMeanVariance": 65932950.20104167,
+          "meanTrait": 129941.96875,
+          "saturation": 0.9609375,
+          "degenerate": null
+        },
+        "varianceComponent": 0.15746295165049526,
+        "rawFamilyMeanVariance": 0.19719490358518674,
+        "meanLogT": 7.225960672216556,
+        "extinctFragments": 5
+      },
+      {
+        "h": 6,
+        "id": "rand-i0",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.359375,
+        "atEnd": {
+          "icc": 0.5531094490847904,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 800347663.8768756,
+          "rawFamilyMeanVariance": 906727943.0455729,
+          "meanTrait": 57874.546875,
+          "saturation": 0.0546875,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.5485208474957348,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 255915098.13138896,
+          "rawFamilyMeanVariance": 277183353.0780599,
+          "meanTrait": 21979.3828125,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": 0.11299649701827433,
+        "rawFamilyMeanVariance": 0.13175044338666714,
+        "meanLogT": 8.658008470794151,
+        "extinctFragments": 19
+      },
+      {
+        "h": 7,
+        "id": "rand-i1",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.2890625,
+        "atEnd": {
+          "icc": 0.5171114995732203,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 1135776130.726517,
+          "rawFamilyMeanVariance": 1038320557.9738933,
+          "meanTrait": 77565.1328125,
+          "saturation": 0.265625,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.5551217342258564,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 1214164576.9240873,
+          "rawFamilyMeanVariance": 1281096252.5895183,
+          "meanTrait": 41648.6796875,
+          "saturation": 0.171875,
+          "degenerate": null
+        },
+        "varianceComponent": 0.07831226005484809,
+        "rawFamilyMeanVariance": 0.08197313356769112,
+        "meanLogT": 8.515777916360221,
+        "extinctFragments": 26
+      },
+      {
+        "h": 8,
+        "id": "rand-i2",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.296875,
+        "atEnd": {
+          "icc": 0.4935223781554419,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 658251328.198434,
+          "rawFamilyMeanVariance": 1218107349.9351563,
+          "meanTrait": 73532.390625,
+          "saturation": 0.0078125,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.5756409876624722,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 787882329.0797865,
+          "rawFamilyMeanVariance": 1595949135.273893,
+          "meanTrait": 53911.0078125,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": 0.26195554836888313,
+        "rawFamilyMeanVariance": 0.601293442574604,
+        "meanLogT": 8.077588105077723,
+        "extinctFragments": 23
+      },
+      {
+        "h": 9,
+        "id": "rand-i3",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.15625,
+        "atEnd": {
+          "icc": 0.16373616752176712,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 136913941.45694882,
+          "rawFamilyMeanVariance": 411626335.34270835,
+          "meanTrait": 85006.34375,
+          "saturation": 0.0234375,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.45113740897409854,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 449765567.881843,
+          "rawFamilyMeanVariance": 633496354.0458333,
+          "meanTrait": 55611.1875,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": 0.07135799426300404,
+        "rawFamilyMeanVariance": 0.13611914882816373,
+        "meanLogT": 8.14706100064865,
+        "extinctFragments": 12
+      },
+      {
+        "h": 10,
+        "id": "rand-i4",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.9453125,
+        "atEnd": {
+          "icc": 0.7816332476098851,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 359140446.06860983,
+          "rawFamilyMeanVariance": 420171948.79895836,
+          "meanTrait": 10238.28125,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.7415471665887533,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 107356925.65355048,
+          "rawFamilyMeanVariance": 125929564.6030599,
+          "meanTrait": 7928.7421875,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": 0.06036942643395064,
+        "rawFamilyMeanVariance": 0.0712517726086655,
+        "meanLogT": 9.153558133659267,
+        "extinctFragments": 7
+      },
+      {
+        "h": 11,
+        "id": "rand-i5",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.015625,
+        "atEnd": {
+          "icc": 0.02342070942082189,
+          "p": 0.24875124875124874,
+          "demonstrated": false,
+          "varianceComponent": 3977976.100058101,
+          "rawFamilyMeanVariance": 49808619.87180989,
+          "meanTrait": 110461.9921875,
+          "saturation": 0.0703125,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.12092233435003881,
+          "p": 0.00999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 19987979.650414653,
+          "rawFamilyMeanVariance": 51417238.90826823,
+          "meanTrait": 100232.4453125,
+          "saturation": 0.0078125,
+          "degenerate": null
+        },
+        "varianceComponent": 0.017891100722301406,
+        "rawFamilyMeanVariance": 0.026486088326929263,
+        "meanLogT": 7.417099338354783,
+        "extinctFragments": 1
+      },
+      {
+        "h": 12,
+        "id": "pos-s0",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.8046875,
+        "atEnd": {
+          "icc": 0.9594841086201475,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 1176989018.3964612,
+          "rawFamilyMeanVariance": 1261856526.72806,
+          "meanTrait": 19385.0078125,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.8072410391070227,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 285563646.8244307,
+          "rawFamilyMeanVariance": 310914997.32890624,
+          "meanTrait": 10722.671875,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": 0.19598426635699587,
+        "rawFamilyMeanVariance": 0.21326456297331178,
+        "meanLogT": 8.994257397916439,
+        "extinctFragments": 39
+      },
+      {
+        "h": 13,
+        "id": "pos-s1",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.7421875,
+        "atEnd": {
+          "icc": 0.7876220758870904,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 1149009854.1492546,
+          "rawFamilyMeanVariance": 1109921969.4728515,
+          "meanTrait": 24187.5703125,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.6704622709265335,
+          "p": 0.000999000999000999,
+          "demonstrated": true,
+          "varianceComponent": 241829371.01543206,
+          "rawFamilyMeanVariance": 252331674.91764322,
+          "meanTrait": 11280.4921875,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": 0.17233777555797808,
+        "rawFamilyMeanVariance": 0.1719314017726052,
+        "meanLogT": 8.951250663986592,
+        "extinctFragments": 45
+      },
+      {
+        "h": 14,
+        "id": "neg-j0",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.0859375,
+        "atEnd": {
+          "icc": -0.015077040072721974,
+          "p": 0.5894105894105894,
+          "demonstrated": false,
+          "varianceComponent": -3109749.6227952093,
+          "rawFamilyMeanVariance": 88269585.21139322,
+          "meanTrait": 78198.2578125,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": -0.062288875592285804,
+          "p": 0.9300699300699301,
+          "demonstrated": false,
+          "varianceComponent": -5888815.859739672,
+          "rawFamilyMeanVariance": 11645141.067643229,
+          "meanTrait": 21243.5078125,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": -0.0023791025533905505,
+        "rawFamilyMeanVariance": 0.009758682798865622,
+        "meanLogT": 8.464193249244229,
+        "extinctFragments": 10
+      },
+      {
+        "h": 15,
+        "id": "neg-j1",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.046875,
+        "atEnd": {
+          "icc": -0.04796488686301188,
+          "p": 0.8491508491508492,
+          "demonstrated": false,
+          "varianceComponent": -7626852.748612352,
+          "rawFamilyMeanVariance": 35603832.98125,
+          "meanTrait": 80330.125,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": -0.04356214349839831,
+          "p": 0.8071928071928072,
+          "demonstrated": false,
+          "varianceComponent": -4140486.434169232,
+          "rawFamilyMeanVariance": 14353387.895572918,
+          "meanTrait": 22301.015625,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": -0.0011542533560566157,
+        "rawFamilyMeanVariance": 0.008404914653530706,
+        "meanLogT": 8.430305816509652,
+        "extinctFragments": 5
+      },
+      {
+        "h": 16,
+        "id": "neg-j2",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.0859375,
+        "atEnd": {
+          "icc": 0.07807504743075735,
+          "p": 0.06593406593406594,
+          "demonstrated": false,
+          "varianceComponent": 17494684.7549067,
+          "rawFamilyMeanVariance": 127911834.80722657,
+          "meanTrait": 76141.4921875,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.06296075180062813,
+          "p": 0.10589410589410589,
+          "demonstrated": false,
+          "varianceComponent": 6687520.120658876,
+          "rawFamilyMeanVariance": 25337106.162239585,
+          "meanTrait": 19694.109375,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": 0.0045512558623816484,
+        "rawFamilyMeanVariance": 0.018505415621909126,
+        "meanLogT": 8.506686096583271,
+        "extinctFragments": 9
+      },
+      {
+        "h": 17,
+        "id": "neg-j3",
+        "n": 128,
+        "fractionAt100": 0,
+        "fractionCensored": 0.046875,
+        "atEnd": {
+          "icc": -0.05797136021336488,
+          "p": 0.8941058941058941,
+          "demonstrated": false,
+          "varianceComponent": -8823335.51532369,
+          "rawFamilyMeanVariance": 30489561.592122395,
+          "meanTrait": 81226.8515625,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "atTau": {
+          "icc": 0.0049512939870655056,
+          "p": 0.4205794205794206,
+          "demonstrated": false,
+          "varianceComponent": 476606.52343458496,
+          "rawFamilyMeanVariance": 12239159.157747395,
+          "meanTrait": 22205.5859375,
+          "saturation": 0,
+          "degenerate": null
+        },
+        "varianceComponent": -0.0016244486745374377,
+        "rawFamilyMeanVariance": 0.006001796574651616,
+        "meanLogT": 8.434737371296553,
+        "extinctFragments": 5
+      }
+    ],
+    "extinction": {
+      "scaf": {
+        "histories": 6,
+        "ended": 0,
+        "donors": 0,
+        "fragments": 768,
+        "extinctFragments": 111
+      },
+      "rand": {
+        "histories": 6,
+        "ended": 0,
+        "donors": 0,
+        "fragments": 768,
+        "extinctFragments": 88
+      }
+    }
+  }
+}

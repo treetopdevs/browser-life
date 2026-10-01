@@ -104,3 +104,55 @@ Applied in this order:
   - 4 negative-control worlds × 10,000 steps;
   - 18 assays × 20,000 steps.
 - No AWS.
+
+## Results (2026-10-01)
+
+**Run and provenance.**
+- All 12 fresh histories completed 34 cycles with exact conservation, and none ended early.
+- All 18 assays (6 controls and 12 histories) completed on their first attempt.
+- Order of events: the protocol was committed (ce13b0cb) before any world started, and the code was committed (90577bad) before any assay.
+- Every number was re-derived independently from the raw files, with the protocol's permutation stream, and no number was disputed. Provenance checks (seeds, donor selection, source step and phase, mutation rates, genome counts) all pass.
+- Readout: `experiments/scaffold/readouts/r1dprime.json`.
+
+**Controls (gate 1): both pass.**
+- Positive (founder worlds): ICC 0.939 and 0.754, both p = 0.001.
+- Null gate: 0 of 4 mutation-off clone worlds were significant (p 0.853, 0.691, 0.076, 0.738). The gate allows 1.
+
+**Availability (gate 2).** 6 of 6 `scaf` histories are valid.
+
+**Rule: R1″ is demonstrated in `scaf`, in 6 of 6 histories** (the rule needs 4). Each history's ICC with its p:
+
+| History | ICC | p |
+|---|---|---|
+| i0 | 0.093 | 0.036 |
+| i1 | 0.213 | 0.003 |
+| i2 | 0.161 | 0.003 |
+| i3 | 0.216 | 0.001 |
+| i4 | 0.397 | 0.001 |
+| i5 | 0.585 | 0.001 |
+
+**Disposition.** Pond-level heredity under the scaffold is demonstrated on fresh histories, by a design fixed in advance, as heritable genetic or structural variation among donor ponds.
+- Protocol v1's row 3 is superseded, and its recommendation (a heredity rule variant) is withdrawn.
+- The next step is a separate dated decision between integration (B) and an R3 replication on these fresh histories. The R3 replication would come before any registration (C).
+- R1's and R1′'s results stay recorded as they are.
+
+**Descriptive (not decision inputs).**
+- `rand` was demonstrated in 6 of 6 too, with ICC 0.26–0.78.
+- Fractions at T = 100 were 0 in every set.
+- Censored fractions (T = 10,100):
+  - `scaf` 3.9–19.5%;
+  - `rand` 1.6–94.5%;
+  - positive controls 74–81%;
+  - negative controls 4.7–8.6%.
+- On the same assays, the end trait detects heredity in 0 of 6 `scaf` histories, and the trait at τ = 4,100 in 1 of 6.
+
+**Caveats, from the independent re-derivation.**
+- **Survives:** the result holds on survivors only, with T replaced by its rank, with cubic covariates, with thresholds of 0.15, 0.35 and 0.5 × ref, and with any one history dropped. None of these raised false positives in the negative controls beyond 1 of 4.
+- **Fragile:**
+  - Without the OLS covariates, 3 of 6 pass; the censored mass point dominates the raw variance.
+  - Each replicate alone gives 3 of 6 and 5 of 6.
+  - In i0, i2 and i3 the signal rests on a few donor families: the worst leave-one-family-out gives 3 of 6. The influential family deviates in the same direction in both independent replicates.
+  - i0 is borderline: p = 0.036, and 0.0395 at 50,000 permutations.
+- **Scope:**
+  - This shows that heredity is present under the scaffold. It does not show that the scaffold causes or increases it: `rand` has equal or larger ICCs.
+  - The negative controls have gentler covariate slopes and larger packets than the evolved `scaf` sets, so the null calibration does not cover that regime fully.
