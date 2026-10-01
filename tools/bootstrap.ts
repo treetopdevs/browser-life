@@ -39,16 +39,18 @@
 // every screening passer on fresh seeds with --confirm-reps replicates and
 // writes confirm.json with the M3 gate (m3Gate: genetic clusters of confirmed
 // passers). --confirm-only skips the search and confirms an existing gate.json
-// in --out; --confirm-reps 0 skips confirmation. --confirm-only refuses to
-// overwrite an existing confirm.json (pass --resume to add to it, or use
-// another --out).
+// in --out under the score and gate the archive was searched with (warning
+// about a --score or --gate that differs); --confirm-reps 0 skips
+// confirmation. --confirm-only refuses to overwrite an existing confirm.json
+// (pass --resume to add to it, or use another --out).
 //
 // --resume continues the search in --out up to --batches in total, then
-// confirms only screening passers not already in confirm.json, on the next
-// fresh confirmation seeds, and gates the merged confirmations. viable.jsonl
-// logs every viable offer, so a resumed search continues exactly as one long
-// run would; archives from before the log existed are reseeded from their
-// elites and passers instead (lineages approximate, recorded as exact: false).
+// confirms only screening passers not already in confirm.json, on fresh seeds
+// above every seed confirm.json records (its dependence re-screens' included),
+// and gates the merged confirmations. viable.jsonl logs every viable offer, so
+// a resumed search continues exactly as one long run would; archives from
+// before the log existed are reseeded from their elites and passers instead
+// (lineages approximate, recorded as exact: false).
 // Checkpoints are replaced atomically and archive.json is written last, so a
 // run stopped at any point resumes from its last completed batch.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
@@ -70,16 +72,17 @@ import {
   mutateGenome,
   parseProbability,
   pick,
-  quality,
-  qualityMaintenance,
   shuffledOrder,
   BACKGROUND_ENCODING,
   checkConfirmResumable,
   reviveEvalConfig,
+  SCORES,
+  nextConfirmSeed,
+  recordedSeeds,
+  searchedWith,
   type Evaluation,
   type EvalConfig,
   type GateName,
-  type ScoreFn,
 } from "@bl/search";
 
 const a = parseArgs(Deno.args, {
@@ -123,7 +126,6 @@ function parseMedium(raw: string): Pick<EvalConfig, "nutrient" | "medium" | "dar
 
 const scoreName = a.score ?? "quality";
 if (scoreName !== "quality" && scoreName !== "maintenance") throw new Error(`--score must be quality or maintenance, not ${JSON.stringify(scoreName)}`);
-const scoreFn: ScoreFn = scoreName === "maintenance" ? qualityMaintenance : quality;
 const gateFlag = a.gate ?? "m3";
 if (gateFlag !== "m3" && gateFlag !== "maintenance") throw new Error(`--gate must be m3 or maintenance, not ${JSON.stringify(gateFlag)}`);
 const gateName: GateName = gateFlag;
@@ -217,10 +219,15 @@ if (!a.resume && !a["confirm-only"]) {
 // --confirm-only without --resume would write a fresh confirm.json over an existing one, dropping its
 // confirmations and dependence screen (with --resume it adds to them).
 if (a["confirm-only"] && !a.resume && reps > 0 && (await readJson(confirmPath))) throw new Error(`${confirmPath} exists: pass --resume to add confirmations, or use another --out`);
-// The settings of record: --confirm-only takes the gate (as it does the score) from the archive it confirms,
-// whatever the flags say; a resumed search is checked against them below.
-const effGate: GateName = a["confirm-only"] ? (saved!.search?.gate ?? "m3") : gateName;
-const effScore = a["confirm-only"] ? (saved!.search?.score ?? scoreName) : scoreName;
+// The settings of record: --confirm-only takes the score and the gate from the archive it confirms (one
+// without them was searched with quality and m3), whatever the flags say, and warns about a flag passed
+// against them; a resumed search is checked against them below.
+const passed = (flag: string) => Deno.args.some((x) => x === `--${flag}` || x.startsWith(`--${flag}=`));
+const recorded = a["confirm-only"] ? searchedWith(saved!.search, { ...(passed("score") ? { score: scoreName } : {}), ...(passed("gate") ? { gate: gateName } : {}) }) : undefined;
+if (recorded?.ignored.length) console.warn(`--confirm-only confirms under the settings ${archivePath} was searched with, ignoring ${recorded.ignored.join(", ")}`);
+const effGate: GateName = recorded?.gate ?? gateName;
+const effScore = recorded?.score ?? scoreName;
+const scoreFn = SCORES[effScore];
 const gateFn = GATES[effGate];
 const evalRef = a["confirm-only"] ? reviveEvalConfig(saved!.eval) : ec;
 const searchOfRecord = a["confirm-only"] ? saved!.search : search;
@@ -284,9 +291,7 @@ if (restore) {
       })
       .sort((x, y) => x.born - y.born);
   }
-  // Prefer the score recorded in the archive's search block when confirming-only.
-  const resumeScore: ScoreFn = prev.search?.score === "maintenance" ? qualityMaintenance : scoreFn;
-  archive = Archive.replay(log, prev.evaluated, DEFAULT_ARCHIVE, a["confirm-only"] ? resumeScore : scoreFn, gateFn);
+  archive = Archive.replay(log, prev.evaluated, DEFAULT_ARCHIVE, scoreFn, gateFn);
   resumes = [...(prev.resumes ?? []), { from: done, exact }];
   if (!a["confirm-only"] && (tail || !exact)) await writeAtomic(logPath, logLines(archive.viableLog()));
   // gate.json may lag the committed archive if a run stopped between the two writes.
@@ -304,12 +309,13 @@ const prevConfirm = a.resume ? await readJson<SavedConfirm>(confirmPath) : undef
 checkConfirmResumable(prevConfirm, confirmPath);
 const confirmPer = reps > 0 ? Math.floor((evalRef.side * evalRef.side) / reps) : 0;
 if (reps > 0 && confirmPer < 1) throw new Error(`--confirm-reps ${reps} exceeds the ${evalRef.side * evalRef.side} tiles of a batch`);
-const prevRanges: [number, number][] = (prevConfirm
-  ? (prevConfirm.gate.confirmSeeds ?? [[prevConfirm.gate.confirmSeed, prevConfirm.gate.confirmSeed + Math.ceil(prevConfirm.rows.length / prevConfirm.gate.batchSize) - 1]])
-  : []).filter(([c0, c1]) => c1 >= c0);
+const prevSeeds = recordedSeeds(prevConfirm, confirmPath);
+const prevRanges = prevSeeds.confirm;
 const overlapsSearch = ([c0, c1]: [number, number]) => c1 >= c0 && s1 >= s0 && c0 <= s1 && c1 >= s0;
 for (const r of prevRanges) if (overlapsSearch(r)) throw new Error(`earlier confirmation seeds ${r[0]}..${r[1]} in ${confirmPath} overlap search seeds ${s0}..${s1}`);
-const confirmSeed = prevRanges.length ? Math.max(...prevRanges.map((r) => r[1])) + 1 : confirmSeedFlag;
+for (const r of prevSeeds.dependence) if (overlapsSearch(r)) throw new Error(`earlier dependence seeds ${r[0]}..${r[1]} in ${confirmPath} overlap search seeds ${s0}..${s1}`);
+// Above every seed the earlier confirmation spent, its dependence re-screens' included.
+const confirmSeed = nextConfirmSeed(prevSeeds, confirmSeedFlag);
 if (reps > 0) {
   if (prevConfirm) {
     if (JSON.stringify({ ...prevConfirm.eval, seed: 0 }) !== JSON.stringify({ ...evalRef, reps, seed: 0 })) throw new Error(`--resume: ${confirmPath} used another evaluation config or --confirm-reps`);
@@ -414,7 +420,9 @@ if (reps > 0) {
   if (evalRef.medium && passing.length) {
     const depPer = Math.floor((DEFAULT_EVAL.side * DEFAULT_EVAL.side) / reps);
     if (depPer < 1) throw new Error(`--confirm-reps ${reps} exceeds the ${DEFAULT_EVAL.side * DEFAULT_EVAL.side} tiles of a DEFAULT_EVAL batch`);
-    const depSeed = (confirmSeeds.length ? confirmSeeds[confirmSeeds.length - 1][1] : confirmSeed) + 1;
+    // Right after this run's confirmation batches, so above every recorded seed too: a re-screen run again with
+    // no new passers does not repeat its predecessor's seeds.
+    const depSeed = confirmSeed + confirmBatches;
     const depBatches = Math.ceil(passing.length / depPer);
     const depRange: [number, number] = [depSeed, depSeed + depBatches - 1];
     if (overlapsSearch(depRange)) throw new Error(`dependence seeds ${depRange[0]}..${depRange[1]} overlap search seeds ${s0}..${s1}; pass another --confirm-seed`);
@@ -439,7 +447,9 @@ if (reps > 0) {
     return { screenCell: r.screenCell, cell: r.cell, pass: p >= 0, cluster: p >= 0 ? cluster[p] : null, regenLowerBound: binomialLowerBound(r.eval.regenerated, r.eval.reps), eval: r.eval, genome: enc(r.genome) };
   });
   // Every dependence re-screen's seeds (this one's and its predecessors'), for usedSeeds in packages/search/src/retest.ts.
-  const dependenceSeeds = [...depHistory.map((h) => h.seeds), ...(dependence ? [dependence.seeds] : [])];
+  // A range the earlier record lists only in dependenceSeeds is kept ahead of them, so no later run reuses it.
+  const screens = [...depHistory.map((h) => h.seeds), ...(dependence ? [dependence.seeds] : [])];
+  const dependenceSeeds = [...prevSeeds.dependence.filter(([d0, d1]) => !screens.some(([e0, e1]) => d0 === e0 && d1 === e1)), ...screens];
   await writeAtomic(
     confirmPath,
     JSON.stringify(

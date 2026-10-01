@@ -3,8 +3,9 @@
 // (archive, gate.json, viable.jsonl), and the resumed confirmation must keep
 // the earlier rows, confirm only the new screening passers on the next seeds,
 // and end up with the same set of confirmed genomes. Recovery from a run
-// stopped between checkpoint writes, legacy archives and preflight refusals
-// are checked first on synthetic checkpoints.
+// stopped between checkpoint writes, legacy archives, preflight refusals,
+// seeds above an earlier dependence re-screen and --confirm-only's score of
+// record are checked first on synthetic checkpoints.
 //
 // Real GPU, 16 default-size search batches plus confirmations (about 8 minutes):
 // seed 1 first screens passers in batches 4-7, so both halves confirm some.
@@ -118,11 +119,54 @@ for (const [i, [label, confirm, args]] of ([
   ["a search that would grow into earlier confirmation seeds", confirmFile([[2, 2]]), ["--batches", "3"]],
   ["the same with confirmation disabled", confirmFile([[2, 2]]), ["--batches", "3", "--confirm-reps", "0"]],
   ["an earlier confirmation with another replicate count", confirmFile([[500, 500]], 8), ["--batches", "3"]],
+  // A dependence block from before dependenceSeeds was recorded still counts.
+  ["a search that would grow into earlier dependence seeds", { ...confirmFile([[500, 500]]), dependence: { seed: 2, seeds: [2, 2], obligate: 0, rows: [] } }, ["--batches", "3"]],
 ] as const).entries()) {
   const dir = await mkdir(`preflight-${i}`, { "archive.json": exactArchive(1, 0), "viable.jsonl": "", "gate.json": [], "confirm.json": confirm });
   const msg = await fails(dir, "--resume", ...args);
   const after = JSON.parse(await read(dir, "archive.json"));
   check(`refuses ${label} before searching`, msg !== "" && after.batches === 1 && !msg.includes("batch 1:"), msg.split("\n").find((l) => l.includes("Error")) ?? msg.slice(0, 200));
+}
+// A resumed confirmation starts above every recorded seed, the dependence re-screen's included.
+{
+  const dir = await mkdir("confirm-above-dependence", {
+    "archive.json": exactArchive(1, 0),
+    "viable.jsonl": "",
+    "gate.json": [],
+    "confirm.json": { ...confirmFile([[500, 502]]), dependence: { seed: 503, seeds: [503, 504], obligate: 0, rows: [] } },
+  });
+  const log = await run(dir, "--resume", "--batches", "1");
+  const confirm = JSON.parse(await read(dir, "confirm.json"));
+  check("resumed confirmation starts above the earlier dependence seeds", log.includes("new screening passers from seed 505"), log.slice(0, 300));
+  check("resumed confirmation keeps the earlier dependence seeds on record", JSON.stringify(confirm.gate.dependenceSeeds) === "[[503,504]]" && JSON.stringify(confirm.gate.confirmSeeds) === "[[500,502]]", JSON.stringify(confirm.gate));
+  // A range recorded only in dependenceSeeds survives the rewrite, so a second resume stays above it too.
+  const confirmGateOnly = confirmFile([[500, 502]]);
+  const dir2 = await mkdir("confirm-above-gate-only-dependence", {
+    "archive.json": exactArchive(1, 0),
+    "viable.jsonl": "",
+    "gate.json": [],
+    "confirm.json": { ...confirmGateOnly, gate: { ...confirmGateOnly.gate, dependenceSeeds: [[503, 504]] } },
+  });
+  const logs = [await run(dir2, "--resume", "--batches", "1"), await run(dir2, "--resume", "--batches", "1")];
+  check("a second resume stays above dependence seeds recorded only in dependenceSeeds", logs.every((l) => l.includes("new screening passers from seed 505")) && JSON.stringify(JSON.parse(await read(dir2, "confirm.json")).gate.dependenceSeeds) === "[[503,504]]", logs.map((l) => l.slice(0, 200)).join(" | "));
+}
+// --confirm-only confirms under the score the archive was searched with: one without a recorded score was
+// searched with quality, whatever --score says.
+{
+  // An m3 passer that never recovers: viable under quality, not under qualityMaintenance.
+  const unrecovered = { ...ev(4), recovered: 0, recovery: 0 };
+  const dir = await mkdir("confirm-only-score", {
+    "archive.json": exactArchive(1, 1),
+    "viable.jsonl": JSON.stringify({ born: 0, eval: unrecovered, genome: genome(4) }) + "\n",
+    "gate.json": [],
+  });
+  const log = await run(dir, "--confirm-only", "--score", "maintenance", "--confirm-reps", "0");
+  const gate = JSON.parse(await read(dir, "gate.json"));
+  check("--confirm-only replays a score-less archive under quality despite --score maintenance", gate.length === 1 && gate[0].quality === 0.5, JSON.stringify(gate.map((g: { quality: number }) => g.quality)));
+  check("--confirm-only warns that it ignores a --score the archive was not searched with", log.includes("ignoring --score maintenance (searched with quality)"), log.slice(0, 300));
+  const dir2 = await mkdir("confirm-only-score-provenance", { "archive.json": exactArchive(1, 0), "viable.jsonl": "", "gate.json": [] });
+  await run(dir2, "--confirm-only", "--score", "maintenance");
+  check("--confirm-only records the archive's score, not the flag's", JSON.parse(await read(dir2, "confirm.json")).provenance.score === "quality");
 }
 check("rejects a non-integer --batches", (await fails(`${root}/bad-flag`, "--batches", "3.5")).includes("--batches must be a nonnegative integer"));
 
