@@ -55,6 +55,9 @@ function isFile(path: string): boolean {
 async function bundle(dir: string): Promise<BundleSource> {
   const manifest = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
   if (!manifest.summary) throw new Error(`${dir}: manifest has no summary (run unfinished?)`);
+  // Pond-cycle runs (docs/scaffold-integration-v1.md) are not supported yet: their tracker births
+  // link across each cycle's grind and reseeding, which the dossier would read as real births.
+  if (manifest.cfg?.pondPeriod !== undefined) throw new Error(`${dir}: a pond-cycle run bundle (cfg.pondPeriod); genotype dossiers do not support pond runs yet`);
   return { dir, manifest, open: (f) => (isFile(`${dir}/${f}`) ? fileLines(`${dir}/${f}`) : null) };
 }
 
@@ -102,6 +105,9 @@ async function genotypeMain(args: string[]) {
 
 async function pondHistory(dir: string): Promise<PondHistory> {
   if (!isFile(`${dir}/ponds.tsv`)) throw new Error(`${dir}: ponds.tsv is missing (not a scaffold history?)`);
+  // A runner bundle (manifest.json) of a pond run records its arm in cfg and keeps cycling after its
+  // history ends; pond dossiers read only tools/scaffold.ts histories (meta.json) for now.
+  if (!isFile(`${dir}/meta.json`) && isFile(`${dir}/manifest.json`)) throw new Error(`${dir}: a runner bundle, not a tools/scaffold.ts history; pond dossiers do not support runner bundles yet`);
   const arm = isFile(`${dir}/meta.json`) ? (JSON.parse(await Deno.readTextFile(`${dir}/meta.json`)).arm as PondArm | undefined) : undefined;
   return buildPondHistory(await readPondRows(fileLines(`${dir}/ponds.tsv`)), { arm });
 }
