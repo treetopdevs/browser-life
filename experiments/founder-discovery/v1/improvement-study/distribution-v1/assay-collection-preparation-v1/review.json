@@ -1,0 +1,28 @@
+{
+  "format": "discovery-assay-collection-wrapper-review/v1",
+  "reviewedAt": "2026-10-01T22:09:13.997856+00:00",
+  "status": "prepared-reviewed-not-execution-authority",
+  "reviewer": "Root and independent distribution_review",
+  "helperSha256": "2dfd2cb56ac73d4e078f0df66ade7926a9cb3cbe8ea5c0d0dcd291de6593ec84",
+  "unchangedImporterSha256": "fcecf0bd20db741007299b262ad9dbab37268ae0590dc78f24c2da3caf256a65",
+  "checks": [
+    "Exact source manifest and canonical bytes preserved; original importer used.",
+    "Safe portable regular-file archive extraction with full roster and hash verification.",
+    "Whole-operation570second deadline,10second cleanup,600second reservation; failed full charge retained.",
+    "Pending operation alarm canceled before TERM-to-KILL child cleanup; pre-spawn remaining-time guards.",
+    "Contiguous pinned CPU prefix; finite nonnegative charges; only exact historical008/011/012 reserved bytes accepted from reviewed snapshot.",
+    "Python optimization rejected before any operation."
+  ],
+  "rootTargetedTest": {
+    "passed": true,
+    "case": "Child ignores SIGTERM; pending50ms SIGALRM must not interrupt cleanup; child killed and reaped after10second grace",
+    "elapsedSeconds": 10.005270374938846,
+    "returnCode": -9
+  },
+  "productionExecuted": false,
+  "prerequisites": [
+    "Actual terminal host observations: original supervisor and worker absent, no locks, final log complete, settled current parent receipts.",
+    "Root approval pins exact source inventory, host, release, helper and current CPU prefix.",
+    "One bounded operation per host; no retry or extra budget automatically authorized."
+  ]
+}
