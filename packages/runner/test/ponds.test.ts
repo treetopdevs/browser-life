@@ -431,6 +431,27 @@ describe("stitchRun's ponds.tsv rules", () => {
     expect(() => stitchRun([segment(pondSpec, 0, 0, 2000, PONDS_HEADER + cycleRows(1, 1000) + cycleRows(1, 1500))], 2000)).toThrow(/row at step 1500 with cycle 1, not on the pond boundaries/);
     expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, PONDS_HEADER + cycleRows(2, 1000))], 1000)).toThrow(/row at step 1000 with cycle 2/);
     expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, "step\trecipient\n")], 1000)).toThrow(/no cycle column/);
+    expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, "cycle\tstep\n")], 1000)).toThrow(/no recipient column/);
+  });
+
+  it("holds each recipient once per boundary: the right row count with a duplicated recipient is refused", () => {
+    // Recipient 3's row replaced by a copy of recipient 0's: four rows, three ponds.
+    const dup = cycleRows(1, 1000).split("\n");
+    dup[3] = dup[0];
+    expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, PONDS_HEADER + dup.join("\n"))], 1000)).toThrow(
+      /segment #0: ponds.tsv has recipients \[0,1,2,0\] for the boundary at t=1000, expected each pond 0..3 exactly once/,
+    );
+    // Recipients outside the pond range, or not integers.
+    const bad = (r: string, of = "3") => cycleRows(1, 1000).replace(new RegExp(`^(\\d+\\t1000\\t)${of}\\t`, "m"), `$1${r}\t`);
+    expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, PONDS_HEADER + bad("4"))], 1000)).toThrow(/with recipient "4", not a pond index in \[0, 4\)/);
+    expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, PONDS_HEADER + bad("-1"))], 1000)).toThrow(/with recipient "-1", not a pond index/);
+    expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, PONDS_HEADER + bad("x"))], 1000)).toThrow(/with recipient "x", not a pond index/);
+    // A blank cell is not pond 0, even where pond 0's own row is the blanked one (Number("") is 0).
+    expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, PONDS_HEADER + bad("", "0"))], 1000)).toThrow(/with recipient "", not a pond index/);
+    expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, PONDS_HEADER + bad(" ", "0"))], 1000)).toThrow(/with recipient " ", not a pond index/);
+    // The order of recipients within a boundary is free; only the set is checked.
+    const shuffled = cycleRows(1, 1000).split("\n").slice(0, 4).reverse().join("\n") + "\n";
+    expect(() => stitchRun([segment(pondSpec, 0, 0, 1000, PONDS_HEADER + shuffled)], 1000)).not.toThrow();
   });
 
   it("is required in every segment of a pond run and refused in any other run", () => {

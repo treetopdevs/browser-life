@@ -206,29 +206,42 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     // (startStep, end] like migrations.tsv's (a segment never cycles at its own
     // start step), but the step is read from the `step` column by header: the
     // first column is the cycle index. Every boundary in that range has
-    // exactly one row per pond (every arm, the no-donor path included), with
-    // cycle = step / pondPeriod, like series.jsonl's census grid.
+    // exactly one row per pond (every arm, the no-donor path included), each
+    // recipient index 0..ponds-1 once, with cycle = step / pondPeriod, like
+    // series.jsonl's census grid.
     if (pondRun) {
       if (typeof s.files[PONDS_FILE] !== "string") throw new Error(`${id}: pond run but missing ${PONDS_FILE}`);
       const [header, ...rows] = lines(s.files[PONDS_FILE]);
       const names = (header ?? "").split("\t");
       const col = names.indexOf("step");
       const cycleCol = names.indexOf("cycle");
-      if (col < 0 || cycleCol < 0) throw new Error(`${id}: ${PONDS_FILE} has no ${col < 0 ? "step" : "cycle"} column in its header`);
+      const recipientCol = names.indexOf("recipient");
+      if (col < 0 || cycleCol < 0 || recipientCol < 0)
+        throw new Error(`${id}: ${PONDS_FILE} has no ${col < 0 ? "step" : cycleCol < 0 ? "cycle" : "recipient"} column in its header`);
       const period = first.cfg.pondPeriod;
       if (!Number.isSafeInteger(period) || period <= 0) throw new Error(`${id}: pondPeriod ${period} is not a positive integer`);
-      const perBoundary = new Map<number, number>();
+      const ponds = first.cfg.tilesX * first.cfg.tilesY;
+      const perBoundary = new Map<number, number[]>();
       for (const row of rows) {
         const cells = row.split("\t");
         const step = Number(cells[col]);
         if (!(step > s.startStep && step <= end)) throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step}, outside (${s.startStep}, ${end}]`);
         if (step % period !== 0 || Number(cells[cycleCol]) !== step / period)
           throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with cycle ${cells[cycleCol]}, not on the pond boundaries (every ${period})`);
-        perBoundary.set(step, (perBoundary.get(step) ?? 0) + 1);
+        // Digits only: Number("") and Number(" ") are 0, which would read a blank cell as pond 0.
+        const recipientCell = cells[recipientCol] ?? "";
+        const recipient = /^-?\d+$/.test(recipientCell) ? Number(recipientCell) : NaN;
+        if (!Number.isInteger(recipient) || recipient < 0 || recipient >= ponds)
+          throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with recipient "${recipientCell}", not a pond index in [0, ${ponds})`);
+        (perBoundary.get(step) ?? perBoundary.set(step, []).get(step)!).push(recipient);
       }
-      const ponds = first.cfg.tilesX * first.cfg.tilesY;
-      for (let b = (Math.floor(s.startStep / period) + 1) * period; b <= end; b += period)
-        if ((perBoundary.get(b) ?? 0) !== ponds) throw new Error(`${id}: ${PONDS_FILE} has ${perBoundary.get(b) ?? 0} rows for the boundary at t=${b}, expected ${ponds} (one per pond)`);
+      for (let b = (Math.floor(s.startStep / period) + 1) * period; b <= end; b += period) {
+        const recipients = perBoundary.get(b) ?? [];
+        if (recipients.length !== ponds) throw new Error(`${id}: ${PONDS_FILE} has ${recipients.length} rows for the boundary at t=${b}, expected ${ponds} (one per pond)`);
+        // The right count is not enough: a duplicated recipient hides a missing pond.
+        if (new Set(recipients).size !== ponds)
+          throw new Error(`${id}: ${PONDS_FILE} has recipients [${recipients.join(",")}] for the boundary at t=${b}, expected each pond 0..${ponds - 1} exactly once`);
+      }
     } else if (typeof s.files[PONDS_FILE] === "string") {
       throw new Error(`${id}: ${PONDS_FILE} present on a run without the pond cycle`);
     }
