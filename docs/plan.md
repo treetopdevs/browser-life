@@ -573,7 +573,21 @@ Integration is engineering at $0, on the Mac. It does not count toward M6, and i
 - Segmented, lab and coordinator runs equal continuous ones byte for byte.
 - Non-pond bundles, preset identities and golden pins are unchanged.
 
-Step 2, the registration draft, has not started.
+**Registration draft (2026-10-01, the user's go).** Step 2 is drafted in `docs/scaffold-registration-v1.md`. It is not frozen and binds nothing until the user approves it.
+- **Primary hypotheses** (Holm at α = 0.01):
+  - H1: `scaf` competence ranks above `rand`, `cont` and the ancestor at both timings. Six exact Mann–Whitney tests, all required.
+  - H2: for each `scaf` history, its evolved genome founds more ponds than the relabelled ancestor genome on the same ancestral fragments. Each history has its own ancestor world and fragment draw. Tested by an exact sign test across histories.
+- **Secondary:** v1's "at least half the advantage" swap criterion, R2, and R1″, all on the fresh histories.
+- **Pilot finding (Mac, exploratory).** The new matched control (`Ga-on-Fa`) founds 5–6 more fragments of 128 than the unmodified ancestor set used by v1's and the replication's swap tests. Against it, the evolved genomes still gain in all 12 histories, but only 1–8 fragments, under half the advantage in every one. So those swap passes rested mostly on the control's mutants. A post hoc note in `docs/scaffold-r3-replication-v1.md` records this; its readout still reproduces.
+- **Size:** 24 histories per arm (the user's choice), with 4 replicates per set and 8 for the swap pair.
+  - The bootstrapped probability of confirming both is 0.99–1.00 (`tools/scaffold-power.ts`, with the pilot's control).
+  - It is 0.96 if 10% of evolved genomes carried no gain, against 0.75 with 16 histories.
+- **Data rules:**
+  - Sources are the runner's opt-in pre-cycle checkpoints, a small runner feature to build.
+  - Unresolved failures are never dropped: they count against the sign tests, and a rank comparison they enter is uninformative.
+  - There is no interim analysis.
+- **Cost:** about $28 estimated (hard stop $40) on three instances, from the cohort reserve, and only by a dated draw note approved before any paid run.
+- **Waiting on the user:** the remaining design choices and how a confirmed result relates to M7.
 
 
 ## Ecology-first founder discovery — 2026-09-29

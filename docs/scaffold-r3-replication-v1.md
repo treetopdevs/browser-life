@@ -173,3 +173,16 @@ Competences (out of 128 fragments; ancestor (a) 0.875, (b) 0.672):
   - `cont` → 129,541–131,180.
 - **Extinct ponds at boundary 100:** `scaf` 0–4, `rand` 1–13, `cont` 0.
 - **Cost:** $3.94 on one g5.xlarge, about 4 h.
+
+## Post hoc note (2026-10-01): the swap control was not genome-only
+
+*Written after the result, for the registration draft (`docs/scaffold-registration-v1.md`). It is not a decision input and changes no recorded number or rule.*
+
+- **The comparison as run.** The swap criterion compared `Ge-on-Fa` with the unmodified ancestor set.
+- **Why that is not genome-only.** The ancestor source world carries mutants after its period, and lineage ids enter the physics. So that comparison also removes the mutants, not only the evolved genome.
+- **The pilot.** A Mac pilot ran the matched control `Ga-on-Fa` (`M3_FOUNDERS[2]` relabelled onto the same fragments, with the same seeds) on this replication's ancestor set and on protocol v1's. Outputs are in `runs/scaffold/reg-pilot/`.
+- **Results.**
+  - It founds 117 of 128 here, against the ancestor set's 112, and 111 against 105 in v1.
+  - Against it, each evolved genome gains 2–4 fragments of 128 here, and 1–8 in v1.
+  - No fragment goes the other way.
+- **Reading.** The direction of the genome effect holds in all 12 histories. Its size does not reach half the advantage over the ancestor in any of them. The swap criterion's passes rested mostly on the control's mutants.
