@@ -1,0 +1,318 @@
+{
+  "format": "discovery-history-host-closure/v1",
+  "hostId": "work-mac",
+  "observedAt": "2026-10-01T20:53:01.717209+00:00",
+  "originalRoot": "/Users/180471/bl-founder-discovery/runs/founder-discovery-improvement-v1",
+  "allocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+  "terminalHistorySteps": {
+    "discovery-cluster-16-6410006-normal": 1000000,
+    "discovery-cluster-16-6410008-normal": 1000000,
+    "discovery-cluster-139-6410006-off": 1000000,
+    "discovery-cluster-16-6410004-normal": 1000000,
+    "discovery-cluster-33-6410007-normal": 1000000,
+    "discovery-cluster-139-6410007-off": 1000000,
+    "discovery-cluster-4-6410008-off": 1000000,
+    "discovery-cluster-139-6410005-off": 1000000,
+    "discovery-cluster-139-6410004-off": 1000000,
+    "discovery-cluster-33-6410008-off": 1000000,
+    "discovery-cluster-4-6410004-normal": 1000000,
+    "discovery-cluster-139-6410006-normal": 1000000,
+    "discovery-cluster-4-6410008-normal": 1000000,
+    "discovery-cluster-16-6410006-off": 1000000,
+    "discovery-cluster-16-6410007-off": 1000000,
+    "discovery-cluster-139-6410004-normal": 1000000,
+    "discovery-cluster-139-6410008-normal": 1000000,
+    "discovery-cluster-4-6410006-normal": 1000000,
+    "discovery-cluster-16-6410005-off": 1000000,
+    "discovery-cluster-16-6410004-off": 1000000,
+    "discovery-cluster-16-6410008-off": 1000000,
+    "discovery-cluster-16-6410007-normal": 1000000,
+    "discovery-cluster-33-6410008-normal": 1000000,
+    "discovery-cluster-33-6410007-off": 1000000,
+    "discovery-cluster-16-6410005-normal": 1000000,
+    "discovery-cluster-4-6410005-normal": 1000000,
+    "discovery-cluster-4-6410004-off": 1000000,
+    "discovery-cluster-139-6410007-normal": 1000000,
+    "discovery-cluster-139-6410008-off": 1000000,
+    "discovery-cluster-4-6410005-off": 1000000,
+    "discovery-cluster-4-6410007-off": 1000000,
+    "discovery-cluster-4-6410006-off": 1000000,
+    "discovery-cluster-139-6410005-normal": 1000000,
+    "discovery-cluster-4-6410007-normal": 1000000
+  },
+  "processEvidence": {
+    "locks": {
+      "SHARD_RUNNING": false,
+      "SHARD_SUPERVISOR": false
+    },
+    "matchingProcesses": []
+  },
+  "parentReceiptCount": 50,
+  "chargedSeconds": 31704.214947501012,
+  "assignedRuntimeCapSeconds": 130000,
+  "terminalLog": {
+    "hostId": "work-mac",
+    "newCheckpoints": 1,
+    "elapsedSeconds": 268.126183209,
+    "complete": true
+  },
+  "files": [
+    {
+      "path": "parent-invocation-1790798515858983000-84148.json",
+      "sha256": "265f45964bc56868ef1f7c8942724511f1b5ab0b48ac1a7e0ad094e8cb7c3341",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790799120364495000-84148.json",
+      "sha256": "e3d4298dfa9d981ac177a5d54e58771f9217795199e34ce259313d16e800beca",
+      "bytes": 218
+    },
+    {
+      "path": "parent-invocation-1790799722116342000-84148.json",
+      "sha256": "2ae58b13cb963535df3e36a32f6d05a8d264a6f44db7850ed122578bc0fe150f",
+      "bytes": 223
+    },
+    {
+      "path": "parent-invocation-1790800323539434000-84148.json",
+      "sha256": "d53a855fad1f3376fcf6d9c893d4cb0da4e1d03743bcee1aab332ec6ab7e1c23",
+      "bytes": 223
+    },
+    {
+      "path": "parent-invocation-1790800964682956000-84148.json",
+      "sha256": "2ce1b2b5bf7c7627fbd85799f679fa1bc99bd81a21af3dfb7db0a0c89e7cea57",
+      "bytes": 218
+    },
+    {
+      "path": "parent-invocation-1790801589545857000-84148.json",
+      "sha256": "ba848ac86249a7d9e1b08e62534845113d9b446bf9999aed6889996a3d5126e6",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790802227377439000-84148.json",
+      "sha256": "0030d69fd0d8a10cdfc68d072cfce19f7b06057b12de18dd848ba9eb622b7835",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790802873465220000-84148.json",
+      "sha256": "c65131ee662299b50261bd6d8db504a443a8f531b82140032e762eb4fc43a54c",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790803524932687000-84148.json",
+      "sha256": "237eaf2a1a075d17be55fb6561638225a8bdfe1f6dbd2b385d78029b79a10750",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790804181948789000-84148.json",
+      "sha256": "84b90df7ac95c255b331f76c0741582281c8a4775e06ce62b6c99e0a090439a4",
+      "bytes": 223
+    },
+    {
+      "path": "parent-invocation-1790804836150342000-84148.json",
+      "sha256": "837b40636310d242aecc87bfb21b11a4f7ed7361ca3372c9b68f2b06fc45d3f1",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790805498607618000-84148.json",
+      "sha256": "9ea0d590b5063fac04a8cf579a64db20ea4d8defe1730798a312fddacd98e6c8",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790806125584502000-84148.json",
+      "sha256": "e3cd8e61b635d2988f3f4f882092a6558f77d1d97434b6c89e8cda19e712433a",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790806782983549000-84148.json",
+      "sha256": "dfa329c89a358dba15b2002f20ada1a7b3b3a4efae93872b225e1921cae49630",
+      "bytes": 221
+    },
+    {
+      "path": "parent-invocation-1790807455312143000-84148.json",
+      "sha256": "9027bbb833ea456727c65bd01f6d0d54bc9087897fcaeba1aba34a74d685b0e1",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790808120270563000-84148.json",
+      "sha256": "23aa42eecbc4e43e545022878fe1420efaf3f0f47c58950f44fd5c958608bb91",
+      "bytes": 218
+    },
+    {
+      "path": "parent-invocation-1790808789239976000-84148.json",
+      "sha256": "28f6812a80eab087aa4535cbc658da25cb2af4eb850ac6ed906420d53229a81a",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790809457793574000-84148.json",
+      "sha256": "6dbc29029477ba695988eafa2d39b2a1f57a8d994cb3a00173b6fea4e0effcf7",
+      "bytes": 223
+    },
+    {
+      "path": "parent-invocation-1790810062879350000-84148.json",
+      "sha256": "0fe951d3399ad5d00b77ed6398aeb24cf26972a568cd38c198129b52928736f4",
+      "bytes": 218
+    },
+    {
+      "path": "parent-invocation-1790810704230156000-84148.json",
+      "sha256": "17e48f54c993c003960268963c38977684f7a6e02391b937eb09eab1c4d939a9",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790811327703177000-84148.json",
+      "sha256": "dd11effff8074efddedb045dddb60f14332858d95db7bcde727b9c8634161466",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790811951660840000-84148.json",
+      "sha256": "c01d75fedd9875c8cf4fe5cd13b1d8be10f766d410db0a4927888b8624e19590",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790812566371681000-84148.json",
+      "sha256": "1310995064b3c95afc5a00592837fdc007e07fc99e783e83bd1206c73a0b9aae",
+      "bytes": 223
+    },
+    {
+      "path": "parent-invocation-1790813172464756000-84148.json",
+      "sha256": "4983c17500d63dbf782af6c10d4dc1dd16efae969d90793aba5db095d28f7bff",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790813803307521000-84148.json",
+      "sha256": "df689db45537ebb8773f9fca2aa333f54fc5fb6ae33608f451b994729403112c",
+      "bytes": 221
+    },
+    {
+      "path": "parent-invocation-1790814446567448000-84148.json",
+      "sha256": "b2e82518d52b1b3e6ade47d4cad29101812364ac94d0cbb0a898762ca4fc4ff6",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790815095769788000-84148.json",
+      "sha256": "06007eeec58299e5bdfbd0a56e1a293bc1fdced615e275de26d93a851898fb58",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790815757404590000-84148.json",
+      "sha256": "c1c66130b4dfbd8746a7d74b391003103a5d9b90ce1684252aae0a3bc9df73ef",
+      "bytes": 223
+    },
+    {
+      "path": "parent-invocation-1790816421888421000-84148.json",
+      "sha256": "f42e49fb0aae7006f6a728d086c44956eb3a8ee224370c1e9f0bcb6c832d737b",
+      "bytes": 221
+    },
+    {
+      "path": "parent-invocation-1790817093475726000-84148.json",
+      "sha256": "7572689ec87280a4a44da3dda479ad88d669ce891f8349e9de3ab34dd03b48b1",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790817761531796000-84148.json",
+      "sha256": "92cb0392ec46f005be95d92d02d21c7b16081b5456b3b8e989c86d058e614947",
+      "bytes": 223
+    },
+    {
+      "path": "parent-invocation-1790818368425172000-84148.json",
+      "sha256": "ec112b08889d199360ee1701becad6740f5fefcf5f63bdb81303f916cb613fa4",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790818981897436000-84148.json",
+      "sha256": "791b1d97d47b7c80c9a7a4eb4a2071e1c61ee35040e07cbd1bb873c031c6bd6e",
+      "bytes": 221
+    },
+    {
+      "path": "parent-invocation-1790819591318537000-84148.json",
+      "sha256": "dd3e0eb0c85397d11b0286b9b2d410e74adbf77bfcaa8ad19ccc57502a0f661f",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790820209250034000-84148.json",
+      "sha256": "ed1ed086fcd484a8ff11a138418a6a824a9dbe84236c9567b9f2c3d233acfe64",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790820830490038000-84148.json",
+      "sha256": "e14c15d02755296ccb050a7b26e64d15eaac27db4a00d09f6e700da8e2c213f3",
+      "bytes": 223
+    },
+    {
+      "path": "parent-invocation-1790821475808364000-84148.json",
+      "sha256": "b543270e88d2fdd5d9a627f4fca26ec342693bc2e375d08e3054ba4a749241e3",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790822101306714000-84148.json",
+      "sha256": "4745a8817d5dcc1308f89154b1acda3fc3cfff19ed6824925ae169f0414077d7",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790822740758868000-84148.json",
+      "sha256": "27d4348aa013afdcdeb52c2942d34aeabfefb6b49e5115b7d01ec8e8f32f70af",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790823385183934000-84148.json",
+      "sha256": "5af5325150898ff06c153051d06d0942d7655578537116dd91e315dcd8961c70",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790824036436993000-84148.json",
+      "sha256": "14c163f1d1285a02d15943238721d24997485f8be94847f779d5fad3ec17471a",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790824678557099000-84148.json",
+      "sha256": "04a7d468314cb551f6f8f8e192747e955534f6ad2ecdf45c28433894adc62212",
+      "bytes": 221
+    },
+    {
+      "path": "parent-invocation-1790825332979742000-84148.json",
+      "sha256": "65481894c5d57a765c64fc597dee730d1d86126c326bcb8ba218c5cc6d7a0f15",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790825944328231000-84148.json",
+      "sha256": "6d79ca3d8d4f270274a0dbbc961df2dd3251737cc80951ebd405247d6c991651",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790826618405490000-84148.json",
+      "sha256": "906e0f99856cc8c1028dc7fa76c0bdbda337fd19f63bd4c40956cafe842a2e3c",
+      "bytes": 223
+    },
+    {
+      "path": "parent-invocation-1790827279643960000-84148.json",
+      "sha256": "e83fcac57bb7491c997ddb631fca504c5fd16f0222740b08954882861cb724bc",
+      "bytes": 221
+    },
+    {
+      "path": "parent-invocation-1790827951622968000-84148.json",
+      "sha256": "dd74663cb5a8ab576fcdd5aadb723685ca80429cc3ea4335ea1cb1cfa3a768b5",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790828619771214000-84148.json",
+      "sha256": "5ff95a73e02e84f8a90685846149dc4e6b4d98342dd9ea59b9b24be827735a03",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790829300266259000-84148.json",
+      "sha256": "1ac9384640be3ce2f221b1a13926bc09db3529bfd5e0479326ed8289d6a52d1d",
+      "bytes": 222
+    },
+    {
+      "path": "parent-invocation-1790829902339266000-84148.json",
+      "sha256": "979cf2da7cc1b9463d6276d3e67d02d439e7a90adf8852d525789267b6f5302e",
+      "bytes": 223
+    },
+    {
+      "path": "shard-supervisor.log",
+      "sha256": "565d1e36747e013465696a293c30f87d295c873bcd4e4f8d12b6c560644261f2",
+      "bytes": 4502
+    }
+  ],
+  "limitation": "Terminal histories and settled accounting confirmed; full semantic import/reconciliation still pending. Remote unused allocation is not reallocated.",
+  "paidUSD": 0
+}
