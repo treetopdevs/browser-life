@@ -1,6 +1,7 @@
 // World configuration. Every value is an integer so that the CPU reference
 // and the WGSL kernels agree exactly. Fractions are numerators over the
 // power of two named in the comment.
+import type { PondArm } from "./ponds.ts";
 
 export const SCHEMA_VERSION = 3;
 export const RULE_VERSION = 1;
@@ -192,6 +193,35 @@ export interface WorldConfig {
    * overflow into the namespace bits.
    */
   ringNamespace?: number;
+
+  /**
+   * Pond cycle of the ecological-scaffolding protocol (docs/scaffold-protocol-v1.md,
+   * "Pond cycle"; docs/scaffold-integration-v1.md): tiles are ponds, and at
+   * every step s > 0 with s mod `pondPeriod` = 0 (an *absolute* step, so
+   * segmented and continuous runs cycle at the same steps, as migration does)
+   * every pond is ground back to nutrient and reseeded by a `pondK` x `pondK`
+   * packet from a donor pond chosen by `pondArm` (packages/schema/src/ponds.ts,
+   * a host-side transform between steps). The cycle index is
+   * step / `pondPeriod`. Absent disables the cycle (the default).
+   *
+   * Optional, with `pondK` and `pondArm`, for the reason `migrationPeriod` is:
+   * `stateHash`/`artifactDigest` hash the config's own JSON, so `defaultConfig`
+   * never sets these keys and every config without them hashes exactly as it
+   * did before the pond cycle existed. `validateConfig` checks them
+   * explicitly: all three together, 64 x 64 tiles, at least 4 ponds, and no
+   * tile migration or `ringNamespace` -- both move matter between ponds or
+   * runs, which breaks the per-pond matter invariant the cycle restores.
+   */
+  pondPeriod?: number;
+  /** Packet side k of the pond cycle, 1..64. Set exactly when `pondPeriod` is; see its doc. */
+  pondK?: number;
+  /**
+   * Donor rule of the pond cycle: "scaf" (the ponds with the largest trait
+   * donate), "rand" (random surviving ponds donate) or "cont" (no transform;
+   * each boundary only records one row per pond). Set exactly when
+   * `pondPeriod` is; see its doc.
+   */
+  pondArm?: PondArm;
 }
 
 /**
@@ -292,7 +322,7 @@ export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig
     eventCap: 1 << 16,
     neutral: false,
     motility: true,
-    // migrationPeriod/migrantCount deliberately absent here — see their doc on WorldConfig.
+    // migrationPeriod/migrantCount and pondPeriod/pondK/pondArm deliberately absent here — see their docs on WorldConfig.
     ...overrides,
   };
 }
@@ -373,6 +403,10 @@ const RANGES: Partial<Record<keyof WorldConfig, Range>> = {
 /** Bounds for migrationPeriod/migrantCount, checked explicitly in `validateConfig` (see WorldConfig's doc on why they're not in `RANGES`/the generic per-key loop). */
 const MIGRATION_PERIOD_RANGE: Range = [0, 8_000_000];
 const MIGRANT_COUNT_RANGE: Range = [0, 4096];
+/** Bounds for pondPeriod/pondK, checked explicitly in `validateConfig` like migration's. A pond is a 64 x 64 tile, so k <= 64. */
+const POND_PERIOD_RANGE: Range = [1, MAX_STEP];
+const POND_K_RANGE: Range = [1, 64];
+const POND_ARMS: readonly PondArm[] = ["scaf", "rand", "cont"];
 
 export function validateConfig(c: WorldConfig): string[] {
   const errs: string[] = [];
@@ -412,11 +446,16 @@ export function validateConfig(c: WorldConfig): string[] {
     ["migrationPeriod", MIGRATION_PERIOD_RANGE],
     ["migrantCount", MIGRANT_COUNT_RANGE],
     ["ringNamespace", [0, MAX_RING_NAMESPACE] as Range],
+    ["pondPeriod", POND_PERIOD_RANGE],
+    ["pondK", POND_K_RANGE],
   ] as const) {
     const v = c[key];
     if (v === undefined) continue;
     if (!Number.isInteger(v) || v < range[0] || v > range[1]) errs.push(`${key} must be an integer in ${range[0]}..${range[1]}`);
   }
+  if (c.pondArm !== undefined && !POND_ARMS.includes(c.pondArm)) errs.push("pondArm must be scaf, rand or cont");
+  const pondKeys = [c.pondPeriod, c.pondK, c.pondArm].filter((v) => v !== undefined).length;
+  if (pondKeys !== 0 && pondKeys !== 3) errs.push("pondPeriod, pondK and pondArm must be set together");
   if (errs.length) return errs;
   const migrationPeriod = c.migrationPeriod ?? 0;
   const migrantCount = c.migrantCount ?? 0;
@@ -432,6 +471,16 @@ export function validateConfig(c: WorldConfig): string[] {
   // fit in that narrower range, or two different cells could pack to the same
   // LIN_LO (a real, not just cosmetic, collision).
   if (c.ringNamespace !== undefined && cellCount(c) > 1 << RING_CELL_BITS) errs.push(`a namespaced config (ringNamespace set) must have cellCount at most 2^${RING_CELL_BITS}`);
+  // The pond cycle (see WorldConfig's pondPeriod): ponds are the protocol's
+  // 64 x 64 tiles, D = max(1, floor(R / 4)) donors need R >= 4 ponds, and each
+  // pond's matter must stay its own -- so no tile migration and no
+  // metapopulation ring (the runner rejects an immigrant state as well).
+  if (c.pondPeriod !== undefined) {
+    if (c.tileW !== 64 || c.tileH !== 64) errs.push("a pond config (pondPeriod set) must have 64x64 tiles");
+    if (c.tilesX * c.tilesY < 4) errs.push("a pond config (pondPeriod set) must have at least 4 ponds (tilesX * tilesY >= 4)");
+    if (migrationPeriod > 0) errs.push("a pond config (pondPeriod set) cannot migrate between tiles (migrationPeriod > 0)");
+    if (c.ringNamespace !== undefined) errs.push("a pond config (pondPeriod set) cannot be a metapopulation member (ringNamespace set)");
+  }
   return errs;
 }
 

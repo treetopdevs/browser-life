@@ -174,3 +174,17 @@ The integration is complete only when all of these pass.
 3. **I3, archipelago:** acceptance test 8.
 
 Each step runs the build, audit and gate pattern of the earlier scaffold work, gets an Astra code review, and is committed before the next starts. The Astra design review of this document comes before any code.
+
+## Amendment 1 — 2026-10-01 (before any code)
+
+`ponds-small` uses `pondPeriod` 1,000, not 200. A probe with the standalone tool (2 × 2 ponds, k 8, seed 1) found that at period 200 the history ends at cycle 2, with no eligible pond. At 1,000, `scaf` and `rand` both survive 6 cycles and differ.
+
+The no-donor case of acceptance test 3 uses period 200, through a test config, where the history does end at cycle 2.
+
+## Amendment 2 — 2026-10-01 (I1 build)
+
+- **Acceptance test 6** pins `ponds-small`'s physics, k 8 and seed 1 with `pondPeriod` 20: three cycles, each with real donors. The CPU reference runs about 0.6 s a step under vitest, so 3,000 steps would take about 30 minutes. `tests/deno/ponds.ts` checks that the GPU runner reaches the same pinned states and `ponds.tsv` digest.
+- **`afterCycle`** is set on the first census after every boundary in all three arms, `cont` included, so the arms' series line up.
+- **Step 0.** A pond observer at step 0 may omit `ponds` or carry `lastCycle: 0`; anything else is rejected.
+- **Lab until I2.** `migrateAtBoundary` refuses pond configs, so before I2 the lab marks a pond world lost at its first census instead of running it without the cycle.
+- **Test 2** uses a census every 1,000 steps, not the standalone histories' 100. Neither the physics nor `ponds.tsv` depends on the census cadence.
