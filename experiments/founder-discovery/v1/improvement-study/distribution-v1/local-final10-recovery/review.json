@@ -1,0 +1,18 @@
+{
+  "format": "discovery-local-import-recovery-review/v1",
+  "reviewer": "/root/distribution_review",
+  "verdict": "clear",
+  "reviewedAt": "2026-10-01T02:50:17.793528+00:00",
+  "helperSha256": "32d2606c92406e64f14587ef942d9873bb061e830650e1a0e8612527c71a25c6",
+  "scope": "CPU-only recovery of ten histories from failed014 using five exact two-history batches; original semantic importer unchanged; preserve stale lock and orphan after OS absence; no new simulation",
+  "successorLedgerSha256": "c42017cfaee39d9fe414fbd1d7673f6f6041c57da2d46f193d1f6f845a70285e",
+  "maximumOperationSeconds": 600,
+  "operationDeadlineSeconds": 570,
+  "checks": [
+    "All requested safeguards reviewed",
+    "Full failure charge retained",
+    "Source and inventory hashes pinned",
+    "No-overwrite quarantine with fsynced move journal",
+    "Process group termination and helper identity checks"
+  ]
+}

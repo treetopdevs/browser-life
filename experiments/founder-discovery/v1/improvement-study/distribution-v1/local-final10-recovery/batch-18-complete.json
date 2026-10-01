@@ -1,0 +1,9 @@
+{
+  "operation": 18,
+  "inventorySha256": "b1ee23d775f1044854dc59406fdb2cff462d839d9d1ab5e08a321f879fae0f0d",
+  "units": [
+    "discovery-cluster-16-6410002-normal",
+    "discovery-cluster-16-6410002-off"
+  ],
+  "finishedAt": "2026-10-01T02:56:01.274752+00:00"
+}

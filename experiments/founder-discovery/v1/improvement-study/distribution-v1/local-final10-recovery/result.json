@@ -1,0 +1,43 @@
+{
+  "format": "discovery-local-import-recovery-result/v1",
+  "completedAt": "2026-10-01T02:58:10.174789+00:00",
+  "operations": [
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "allSettled": true,
+  "recoveryChargedSeconds": 476.1889399581123,
+  "cpuTotalChargedSeconds": 3644.4222072919365,
+  "cpuRemainingSeconds": 9955.577792708063,
+  "canonicalFiles": 330,
+  "recoveredHistories": 10,
+  "publishedConsolidatedHistories": 34,
+  "failedOperation014ChargeSeconds": 600,
+  "preservedFiles": {
+    "batch-15-complete.json": "b31ef4189262fd1366980aba95899e1c1965525aa02caf0d28484b07343cbebc",
+    "batch-16-complete.json": "db872bc26903e32ab0e875c30f9b27c61b1dd299b9ea0c3778a86c13cbf2c797",
+    "batch-17-complete.json": "fec3ea66701d4a42d8b75beb039183b55eecb3dd2fa78154d5f936655042e2d8",
+    "batch-18-complete.json": "9e33b6fa4d71113b69b8b79db4766337b755e90d5bcccd069d5cc78c3da26aee",
+    "batch-19-complete.json": "66671dd43a8bac937e303561987bfb1ebd82502a8c7330077fae336694621b12",
+    "inventory-15.json": "8b1adc04c848fd759f3dcfb4f0324b70187e7dda086c001dfc0a22e757b0a81c",
+    "inventory-16.json": "d611c6e42d236e68500fc9f3e93398228c99875126776d5b8ceb219d6946fdcc",
+    "inventory-17.json": "9211b5f6ea5e225d44e46be4ef23108ee1bffac2d98db2b362b4c19e9e4ee871",
+    "inventory-18.json": "b1ee23d775f1044854dc59406fdb2cff462d839d9d1ab5e08a321f879fae0f0d",
+    "inventory-19.json": "f5720afed63aa8d4b89644c8e6a2dd16cfed6aa7d753f713e3f25c753ad7bcf1",
+    "provenance-15.json": "0bac88021da96f848a723885d0e36eb34a738e73469085ff1db69b8dfaa10bf5",
+    "provenance-16.json": "2f18ebc1416b3c3e4d27b9948b3598d85940ddb9c3898eeb91014cd8ece1bde7",
+    "provenance-17.json": "c8f62633645c62630cfa8708003d5fb9a9674228b5fb9206ab3606b6500cfa75",
+    "provenance-18.json": "eaa3a853421506e2eb0334222c244717fc5638d27e07901da8ae0795c87aaccd",
+    "provenance-19.json": "4709747d5c16e8ac472292021429c2532c042bcb951cfa9f0aac9cb0e828bf23",
+    "quarantine-evidence.json": "d6e636281376a2e4e479620ed32b5d8bb5517153745ccf1639bf69e543f85d86",
+    "quarantine-journal.jsonl": "1c991c52ea040500d9c15e06132df32f7ea2d56381b1783fedd09652eff7f483",
+    "recover.py": "32d2606c92406e64f14587ef942d9873bb061e830650e1a0e8612527c71a25c6",
+    "review.json": "d76b760c904f438ba2a574b13158ba41300ede7d11d210e9216cd8b9609287c2",
+    "stale-IMPORT_RUNNING": "47238c8909b0c66779b7fc8f1f823eb407a937c922f2cd03ff99051d0485a81d"
+  },
+  "scope": "Local import recovery only. Remote remaining collection, complete64history reconciliation and competitive assays pending. No scientific conclusion.",
+  "paidUSD": 0
+}

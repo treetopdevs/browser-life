@@ -1,0 +1,16 @@
+{
+  "format": "discovery-local-import-recovery-result-review/v1",
+  "reviewedAt": "2026-10-01T03:01:24.428220+00:00",
+  "reviewer": "/root/distribution_review",
+  "verdict": "clear",
+  "resultSha256": "c2ce366c7346cee957b9bfac38db356b2e06a224c3e319b326440673f3bf5b80",
+  "checks": [
+    "330canonicalfiles agree across raw,oldstage,recoverybatches,consolidation;990distinctphysicalfileshashed",
+    "Allfiveexactsubsetinventories,provenance,completionrecordsandpins agree",
+    "Preservedorphan33filesandstalelockbytes match",
+    "Exactly30assignedlocalplus4assignedremotehistories;noimportlockortemporaryhistorydirs;recoveryprocessesabsent",
+    "Failed014full600chargepreserved;015through019totals476.1889399581123seconds",
+    "All20archivalpinsmatch"
+  ],
+  "scientificInference": "None;remote collection,64history reconciliation andcompetitiveassayspending"
+}
