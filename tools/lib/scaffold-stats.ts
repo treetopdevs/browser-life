@@ -2,7 +2,8 @@
 // P2 positive control, R1 pond-level heredity (ICC(1) + permutation), R2 adaptation gain, R3 removal
 // advantage, R4 table passthrough, the truncation sensitivity rule (assay rows and evolution histories), the
 // in-run donor repeatability and the decision table, and the later R1 variants on census traits: tau and R1'
-// (Amendment 2) and the replication's R1'' (docs/scaffold-heredity-replication-v1.md). Everything except `readTsv` is pure (no Deno
+// (Amendment 2) and the replication's R1'' (docs/scaffold-heredity-replication-v1.md), and the R3 replication's screening, availability
+// and rule (docs/scaffold-r3-replication-v1.md). Everything except `readTsv` is pure (no Deno
 // API), so vitest exercises it directly with synthetic data; tools/scaffold-report.ts is the CLI over it.
 // Large tables (ponds.tsv, lineages.tsv) are streamed row by row, never loaded whole.
 import { createReadStream } from "node:fs";
@@ -13,6 +14,9 @@ import {
   R1DP_REGIME,
   R1DP_SETS,
   R1_PRIME_BOUNDARIES,
+  R3REP_ANCESTOR_SEED,
+  R3REP_CYCLES,
+  R3REP_REGIME,
   TAU_SEED_BASE,
   censusSteps,
   checkAssaySeeds,
@@ -21,6 +25,7 @@ import {
   checkR1PrimeSeeds,
   checkR1dPrimeDonorSeed,
   checkR1dPrimeSeeds,
+  checkR3RepSeeds,
   checkTauSeeds,
   r1PrimeH,
   r1PrimeSeed,
@@ -28,11 +33,24 @@ import {
   r1dPrimeLabelsOf,
   r1dPrimeSeed,
   r1dPrimeSourceProblems,
+  r3RepExpectedSets,
+  r3RepLabelsFromJson,
+  r3RepProvenanceProblems,
+  r3RepRegimeProblems,
+  r3RepSetIdOf,
+  r3RepTreatmentProblems,
+  r3RepUnavailableProblems,
+  r3RepVariantProblems,
+  r3RepWorldSeedOf,
   type AssayLabelSet,
   type AssayName,
   type R1PrimeLabelSet,
   type R1dPrimeLabelSet,
   type R1dPrimeProvenance,
+  type R3RepCheckpoint,
+  type R3RepDominant,
+  type R3RepInoculum,
+  type R3RepLabelSet,
 } from "./pond-assay.ts";
 import { assaySeed, randomKey, weightedPick } from "./ponds.ts";
 
@@ -2739,6 +2757,524 @@ export function assaySensitivity(
   );
   const sensitive = verdict !== null && without !== null ? verdict !== without : verdict === null && without !== null;
   return { flagged, ...base, verdict, without, sensitive, inconclusive: verdict !== null && without === null };
+}
+
+// ---------------------------------------------------------------------------------------------
+// R3 replication (docs/scaffold-r3-replication-v1.md): protocol v1's R3 on fresh histories
+
+/** A margin "in fragments" is out of one set's 128 (2 replicates x 64 ponds), as v1 reported its swap margins. */
+export const R3REP_FRAGMENTS = R3REP_REGIME.replicates * R3REP_REGIME.side * R3REP_REGIME.side;
+/** Each criterion must hold in at least 4 of the 6 comparisons, and the rule needs at least 4 histories available. */
+export const R3REP_NEED = 4;
+/** The boundaries v1's trajectories.json reported per arm: the per-arm medians are given at these, beside every history's full trajectory. */
+export const R3REP_TRAJECTORY_BOUNDARIES = [1, 10, 25, 50, 75, 100] as const;
+
+const isRecord = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null && !Array.isArray(x);
+
+/** An R3-replication directory as read: its path, assay.json and every assay.tsv row. */
+export interface R3RepSetDir {
+  dir: string;
+  json: Record<string, unknown>;
+  rows: AssayRow[];
+}
+
+/**
+ * A checkpoint the report reloaded from a path that a set's provenance records: its record as the assay tool makes it
+ * (`r3RepCheckpointOf`) and its dominant genome (`r3RepDominantRecord`), or why it could not be read. A path the report could not
+ * reach has no entry.
+ */
+export type R3RepReload = { record: R3RepCheckpoint; dominant: R3RepDominant | null } | { error: string };
+
+/** A screened set of the replication: one source world at one timing, one variant. */
+export interface R3RepSet {
+  dir: string;
+  /** `r3RepSetIdOf`: scaf-i0-a, scaf-i0-b-quenched, scaf-i0-a-swap-ea, ancestor-b, ... */
+  id: string;
+  labels: R3RepLabelSet;
+  inoculum: R3RepInoculum;
+  /** A Ge-on-Fa record whose donor has no dominant genome: no rows, biologically unavailable rather than a technical failure. */
+  biological: boolean;
+  /** The set's ref (103,058 in strict mode); null for a biological record, which has no rows to judge. */
+  ref: number | null;
+  rows: AssayRow[];
+  /** The recorded checkpoints (role and path) the report could not reach, so could not re-hash: the set stands on its recorded provenance. */
+  unverifiable: string[];
+}
+
+/** The set an assay.json names (`r3RepSetIdOf`), or null when its labels are not an R3-replication set's or it names no variant. */
+export function r3RepSetIdOfJson(json: Record<string, unknown>): string | null {
+  const lab = r3RepLabelsFromJson(json.labels);
+  return "error" in lab || typeof json.inoculum !== "string" ? null : r3RepSetIdOf(lab.labels, json.inoculum);
+}
+
+/**
+ * The checkpoints an assay.json's provenance records, by role: the assayed checkpoint (`source`), at timing (b) the timing (a) state
+ * it was continued from (`continuation source`), and Ge-on-Fa's genome donor (`donor`). The report reloads those it can reach.
+ */
+export function r3RepRecordedCheckpoints(json: Record<string, unknown>): { role: "source" | "continuation source" | "donor"; record: Record<string, unknown> }[] {
+  const p = json.provenance;
+  if (!isRecord(p)) return [];
+  const out: { role: "source" | "continuation source" | "donor"; record: Record<string, unknown> }[] = [];
+  for (const [role, x] of [["source", p], ["continuation source", p.origin], ["donor", p.donor]] as const) if (isRecord(x) && typeof x.source === "string") out.push({ role, record: x });
+  return out;
+}
+
+/**
+ * What the reloaded checkpoints say against a set's recorded provenance (`r3RepRecordedCheckpoints`): every one the report reached
+ * must still have the recorded state hash, world seed, mutation rate, step and pond grid, and a donor the recorded dominant genome (id
+ * and words; none for a biological record, so a donor that has one makes the record false). The paths `reloaded` has no entry for are
+ * returned as `unverifiable`, with their role.
+ */
+export function r3RepReloadProblems(json: Record<string, unknown>, reloaded: ReadonlyMap<string, R3RepReload>): { why: string[]; unverifiable: string[] } {
+  const why: string[] = [];
+  const unverifiable: string[] = [];
+  for (const { role, record } of r3RepRecordedCheckpoints(json)) {
+    const path = record.source as string;
+    const r = reloaded.get(path);
+    if (r === undefined) {
+      unverifiable.push(`${role} ${path}`);
+      continue;
+    }
+    if ("error" in r) {
+      why.push(`${role} ${path} could not be read: ${r.error}`);
+      continue;
+    }
+    for (const key of ["stateHash", "seed", "mutRate", "step", "tilesX", "tilesY"] as const) {
+      if (record[key] !== r.record[key]) why.push(`${role} ${path} has ${key} ${JSON.stringify(r.record[key])} now, but the assay recorded ${JSON.stringify(record[key])}`);
+    }
+    if (role !== "donor") continue;
+    const was = record.dominant;
+    const now = r.dominant;
+    const same = was === null ? now === null : isRecord(was) && now !== null && was.id === now.id && was.words === now.words;
+    if (same) continue;
+    if (was === null) why.push(`donor ${path} has a dominant genome (${now!.id}), so its Ge-on-Fa set is not biologically unavailable`);
+    else why.push(`donor ${path} has dominant genome ${now === null ? "none (no eligible cell)" : now.id}, but the assay recorded ${isRecord(was) ? was.id : JSON.stringify(was)}`);
+  }
+  return { why, unverifiable };
+}
+
+/**
+ * Screens the replication's directories (competence sets labelled `r3rep`) before the stage reads them. Every problem of a set is
+ * collected and the set rejected with its directory, id (null when its labels or variant cannot name one) and reasons; nothing
+ * throws for one bad set. A set needs labels consistent with their h (`r3RepLabelsFromJson`), a variant its labels allow
+ * (`r3RepVariantProblems`), assay competence and the variant's recorded treatment (`r3RepTreatmentProblems`: quench and swap, Ge-on-Fa's
+ * words its donor's dominant genome). A biologically unavailable Ge-on-Fa record (`biologicallyUnavailable`) must be
+ * consistent (`r3RepUnavailableProblems`) and have no rows; any other set needs a positive ref and an assay.tsv that fills the
+ * (replicate, pond) grid exactly once (2 x 64 in strict mode), every row a competence row of the set's variant with a success flag of
+ * 0 or 1. In strict mode the regime is `R3REP_REGIME` (k 8, period 10,000, ref 103,058, side 8, 2 replicates, census 100), replicate s
+ * is seeded r3RepSeedOf(labels, variant, s) (Ge-on-Fa: the ancestor's h = 18), the recorded protocolSha256R3rep is `sha.r3rep` (the
+ * pinned SHA-256 of the document as frozen, `R3REP_SHA256`: never the document as it is now, which gains dated amendments), and the
+ * recorded provenance is the protocol's for the labels and variant (`r3RepProvenanceProblems`, with protocol v1's pinned SHA-256
+ * `sha.protocol` in the runs' meta.json) and of the assay's own source. In both modes every recorded checkpoint
+ * that `reloaded` holds must still be what was recorded (`r3RepReloadProblems`); the others are listed as unverifiable, except that in
+ * strict mode a biological record with an unreachable checkpoint is rejected (its donor's missing genome must be seen). Two sets that
+ * pass with one id are both rejected (a stage would count both). `allowAnySeed` (smoke runs) waives the regime, seed, hash and
+ * provenance checks and holds the set to the grid assay.json declares.
+ */
+export function r3RepScreen(
+  dirs: readonly R3RepSetDir[],
+  o: { sha: { protocol: string; r3rep: string }; reloaded?: ReadonlyMap<string, R3RepReload>; allowAnySeed?: boolean },
+): { accepted: R3RepSet[]; rejected: { dir: string; id: string | null; reasons: string[] }[] } {
+  const strict = !o.allowAnySeed;
+  const candidates: R3RepSet[] = [];
+  const rejected: { dir: string; id: string | null; reasons: string[] }[] = [];
+  for (const d of dirs) {
+    const { json, rows } = d;
+    const lab = r3RepLabelsFromJson(json.labels);
+    if ("error" in lab) {
+      rejected.push({ dir: d.dir, id: null, reasons: [lab.error] });
+      continue;
+    }
+    const labels = lab.labels;
+    if (typeof json.inoculum !== "string") {
+      rejected.push({ dir: d.dir, id: null, reasons: [`inoculum ${JSON.stringify(json.inoculum)}, want fragment, quenched, swap-ea or swap-ae`] });
+      continue;
+    }
+    const inoculum = json.inoculum;
+    const id = r3RepSetIdOf(labels, inoculum);
+    const why = r3RepVariantProblems(labels, inoculum);
+    if (json.assay !== "competence") why.push(`assay ${JSON.stringify(json.assay)}, want competence`);
+    why.push(...r3RepTreatmentProblems(json));
+    const biological = json.biologicallyUnavailable !== undefined;
+    const ref = typeof json.ref === "number" && json.ref > 0 ? json.ref : null;
+    if (biological) {
+      why.push(...r3RepUnavailableProblems(json));
+      if (rows.length !== 0) why.push(`${rows.length} rows, want 0 (a biologically unavailable record has none)`);
+    } else {
+      if (ref === null) why.push(`ref ${JSON.stringify(json.ref)}: competence needs a positive ref`);
+      const grid = gridFor(json, strict);
+      if (grid === null) why.push("assay.json has no side and replicates");
+      else {
+        if (rows.length !== grid.replicates * grid.ponds) why.push(`${rows.length} rows, want ${grid.replicates * grid.ponds}`);
+        const v = gridViolations(rows, grid);
+        if (v.repeated > 0) why.push(`assay.tsv repeats a (replicate, pond) in ${v.repeated} rows`);
+        if (v.outside > 0) why.push(`assay.tsv has ${v.outside} rows outside the ${grid.replicates} x ${grid.ponds} (replicate, pond) grid`);
+      }
+      const other = rows.filter((r) => r.inoculum !== inoculum).length;
+      if (other > 0) why.push(`${other} assay.tsv rows are not ${inoculum} rows`);
+      const notCompetence = rows.filter((r) => r.assay !== "competence").length;
+      if (notCompetence > 0) why.push(`${notCompetence} assay.tsv rows are not competence rows`);
+      const unflagged = rows.filter((r) => r.success !== 0 && r.success !== 1).length;
+      if (unflagged > 0) why.push(`${unflagged} assay.tsv rows have no success flag (0 or 1)`);
+    }
+    if (strict) {
+      why.push(...r3RepRegimeProblems({ k: json.k, period: json.period, ref: json.ref, side: json.side, replicates: json.replicates, censusEvery: json.censusEvery }));
+      const seeds = json.seeds;
+      if (!Array.isArray(seeds) || seeds.length !== R3REP_REGIME.replicates) why.push(`assay.json has ${Array.isArray(seeds) ? seeds.length : "no"} seeds, want ${R3REP_REGIME.replicates} {physics, fragment}`);
+      else {
+        try {
+          seeds.forEach((sd, s) => {
+            if (typeof sd?.physics !== "number" || typeof sd.fragment !== "number") throw new Error(`assay.json seeds[${s}] is not {physics, fragment}`);
+            checkR3RepSeeds(labels, inoculum, { physics: sd.physics, fragment: sd.fragment }, s);
+          });
+        } catch (e) {
+          why.push((e as Error).message);
+        }
+      }
+      if (json.protocolSha256R3rep !== o.sha.r3rep) why.push(`protocolSha256R3rep ${JSON.stringify(json.protocolSha256R3rep)} is not the pinned SHA-256 of docs/scaffold-r3-replication-v1.md (${o.sha.r3rep})`);
+      why.push(...r3RepProvenanceProblems(labels, inoculum, json.provenance, o.sha));
+      if (isRecord(json.provenance) && json.provenance.source !== json.source) why.push(`provenance.source ${JSON.stringify(json.provenance.source)} is not the assay's source ${JSON.stringify(json.source)}`);
+    }
+    const reload = r3RepReloadProblems(json, o.reloaded ?? new Map());
+    why.push(...reload.why);
+    // A biological record has no rows to stand on: in strict mode its donor must be reachable, so that "no dominant genome" is
+    // verified on the checkpoint itself and never taken from the record alone. Other sets list what could not be re-hashed.
+    if (strict && biological && reload.unverifiable.length > 0) why.push(`a biologically unavailable record needs its checkpoints verified, but these are not reachable from here: ${reload.unverifiable.join("; ")}`);
+    if (why.length > 0) rejected.push({ dir: d.dir, id, reasons: why });
+    else candidates.push({ dir: d.dir, id, labels, inoculum: inoculum as R3RepInoculum, biological, ref: biological ? null : ref, rows, unverifiable: reload.unverifiable });
+  }
+  // Two sets for one (arm, history, timing, variant) are ambiguous: neither is used, and the set is unavailable.
+  const accepted: R3RepSet[] = [];
+  for (const c of candidates) {
+    const same = candidates.filter((x) => x.id === c.id);
+    if (same.length > 1) rejected.push({ dir: c.dir, id: c.id, reasons: [`the same R3-replication set (${c.id}) as ${same.filter((x) => x !== c).map((x) => x.dir).join(", ")}; a stage would count both`] });
+    else accepted.push(c);
+  }
+  return { accepted, rejected };
+}
+
+/** One of the 62 sets as the availability rule sees it. */
+export interface R3RepSetStatus {
+  id: string;
+  arm: R3RepLabelSet["arm"];
+  history: number;
+  timing: "a" | "b";
+  inoculum: R3RepInoculum;
+  /** "available" (screened), "biological" (a validated Ge-on-Fa record: the donor has no dominant genome) or "unavailable" (missing or rejected: technical). */
+  status: "available" | "biological" | "unavailable";
+  why: string | null;
+  dir: string | null;
+}
+
+/**
+ * The margins of comparison i in fragments (out of `R3REP_FRAGMENTS`): adv_i(X) for X = rand_i, cont_i and the ancestor at each timing,
+ * and the swap criterion's (gain - 0.5 adv_i(ancestor)) at (a), gain = competence(Ge-on-Fa_i) - competence(ancestor); null where an
+ * input is missing. Every competence is a count over 128 (a dyadic fraction), so the margins are exact.
+ */
+export interface R3RepMargins {
+  a: { rand: number | null; cont: number | null; ancestor: number | null };
+  b: { rand: number | null; cont: number | null; ancestor: number | null };
+  swap: number | null;
+}
+
+export function r3RepMargins(h: Pick<R3History, "a" | "b" | "swapEa">): R3RepMargins {
+  const f = (x: number | null) => (x === null ? null : x * R3REP_FRAGMENTS);
+  const at = (t: R3Timing) => ({ rand: f(t.advRand), cont: f(t.advCont), ancestor: f(t.advAncestor) });
+  const gain = h.swapEa === null || h.a.ancestor === null ? null : h.swapEa - h.a.ancestor;
+  return { a: at(h.a), b: at(h.b), swap: gain === null || h.a.advAncestor === null ? null : f(gain - 0.5 * h.a.advAncestor) };
+}
+
+/** Comparison i under the rule: its availability, and v1's evaluation of it on the decision's input. */
+export interface R3RepHistory extends Pick<R3History, "history" | "a" | "b" | "advantage" | "quenched" | "swapEa" | "swapAe" | "swapCriterion"> {
+  /** All 10 of its sets are available: scaf, rand and cont at (a) and (b), Ge-on-Fa (or its biological record), Ga-on-Fe and both quenched controls. An unavailable history fails both criteria. */
+  available: boolean;
+  missing: { id: string; why: string }[];
+  /** Its Ge-on-Fa set is the biological record: the history is valid and fails the swap criterion. */
+  biologicalSwapEa: boolean;
+  margins: R3RepMargins;
+}
+
+/** One set's competence, over both replicates and each alone (descriptive). */
+export interface R3RepCompetence {
+  id: string;
+  dir: string;
+  inoculum: R3RepInoculum;
+  status: "available" | "biological";
+  n: number;
+  successes: number;
+  competence: number | null;
+  perReplicate: { replicate: number; n: number; successes: number; competence: number | null }[];
+  truncatedRows: number;
+  unverifiable: string[];
+}
+
+/** v1's AssaySet of a screened set, so v1's `r3Evaluate` reads it unchanged (`assayLabels` takes arm, history and timing from the labels). */
+const r3RepAssaySet = (s: R3RepSet, rows: AssayRow[] = s.rows): AssaySet => ({ labels: assayLabels({ labels: s.labels, ref: s.ref ?? undefined }), rows });
+
+/**
+ * The replication's rule (docs/scaffold-r3-replication-v1.md, "Rule (fixed now)"), on the screened sets, in the protocol's order.
+ * 1. Quenched controls first: any available quenched control above 0.05 makes R3 unreliable, so "does not replicate", whatever else is
+ * missing; otherwise, with any of the 12 unavailable, "uninformative". 2. Both ancestor sets available, else "uninformative". 3. History i
+ * is available when all 10 of its sets are (a biological Ge-on-Fa record counts); fewer than 4 is "uninformative". 4. v1's `r3Evaluate`
+ * over the 6 comparisons, on the available histories' sets and the ancestor's (an unavailable history has no input, so it fails both
+ * criteria; a biological record has no rows, so its history fails the swap criterion with its advantage evaluated): "replicates" when
+ * decisive (advantage and swap criterion each in at least 4 of 6), else "does not replicate" with the failed criteria in `failed`.
+ * A set is unavailable when it is missing or `rejected` names its id (the reasons are carried). The descriptive part never feeds the outcome.
+ */
+export function r3RepEvaluate(
+  sets: readonly R3RepSet[],
+  rejected: readonly { id: string | null; reasons: string[] }[] = [],
+): {
+  outcome: "replicates" | "does not replicate" | "uninformative";
+  reasons: string[];
+  failed: ("quenched" | "advantage" | "swap")[];
+  availability: { sets: R3RepSetStatus[]; expected: number; available: number; biological: number; unavailable: number; ancestor: { a: boolean; b: boolean }; histories: { history: number; available: boolean; missing: string[] }[]; availableHistories: number };
+  quenched: { limit: number; sets: { id: string; history: number; timing: "a" | "b"; available: boolean; n: number; successes: number; competence: number | null }[]; available: number; max: number | null; allAvailable: boolean; unreliable: boolean };
+  histories: R3RepHistory[];
+  counts: { evaluated: boolean; availableHistories: number; advantageHistories: number; swapHistories: number; need: number; decisive: boolean };
+  /** v1's evaluation on the decision's input, for the side-by-side. */
+  evaluation: ReturnType<typeof r3Evaluate>;
+  descriptive: {
+    competences: R3RepCompetence[];
+    histories: (Pick<R3History, "history" | "a" | "b" | "advantage" | "quenched" | "swapEa" | "swapAe" | "swapCriterion"> & { margins: R3RepMargins })[];
+    perReplicate: { replicate: number; advantageHistories: number; swapHistories: number; histories: { history: number; advantage: boolean; swapCriterion: boolean; margins: R3RepMargins }[] }[];
+    unmatched: { id: string; retMass: Dist; retE: Dist }[];
+    truncation: { rows: number; truncatedRows: number; flagged: string[] };
+  };
+} {
+  const byId = new Map(sets.map((s) => [s.id, s]));
+  const statuses: R3RepSetStatus[] = r3RepExpectedSets().map(({ labels, inoculum }) => {
+    const id = r3RepSetIdOf(labels, inoculum);
+    const base = { id, arm: labels.arm, history: labels.history, timing: labels.timing, inoculum };
+    const set = byId.get(id);
+    if (set) return { ...base, status: set.biological ? "biological" : "available", why: set.biological ? "Ge-on-Fa: the donor has no dominant genome (no eligible cell)" : null, dir: set.dir };
+    const rej = rejected.filter((r) => r.id === id);
+    return { ...base, status: "unavailable", why: rej.length ? `set rejected: ${rej.flatMap((r) => r.reasons).join("; ")}` : "no assay set", dir: null };
+  });
+  const unavailable = (x: R3RepSetStatus) => x.status === "unavailable";
+  const comp = (s: R3RepSet, rows: readonly AssayRow[] = s.rows) => competence(rows, s.ref);
+
+  // 1. The quenched controls, read first.
+  const quenchedSets = statuses
+    .filter((x) => x.inoculum === "quenched")
+    .map((x) => {
+      const set = byId.get(x.id);
+      const c = set ? comp(set) : { n: 0, successes: 0, value: null };
+      return { id: x.id, history: x.history, timing: x.timing, available: !unavailable(x), n: c.n, successes: c.successes, competence: c.value };
+    });
+  const qs = quenchedSets.filter((q) => q.competence !== null).map((q) => q.competence!);
+  const loud = quenchedSets.filter((q) => q.competence !== null && q.competence > R3_QUENCH_LIMIT);
+  const quenched = { limit: R3_QUENCH_LIMIT, sets: quenchedSets, available: quenchedSets.filter((q) => q.available).length, max: qs.length ? Math.max(...qs) : null, allAvailable: quenchedSets.every((q) => q.available), unreliable: loud.length > 0 };
+
+  // 2-3. The ancestor and the histories.
+  const ancestor = { a: !statuses.some((x) => x.arm === "ancestor" && x.timing === "a" && unavailable(x)), b: !statuses.some((x) => x.arm === "ancestor" && x.timing === "b" && unavailable(x)) };
+  const historyAvailability = HISTORIES.map((history) => {
+    const missing = statuses.filter((x) => x.arm !== "ancestor" && x.history === history && unavailable(x));
+    return { history, available: missing.length === 0, missing };
+  });
+  const availableHistories = historyAvailability.filter((h) => h.available).length;
+  const isAvailable = (s: R3RepSet) => s.labels.arm === "ancestor" || historyAvailability[s.labels.history].available;
+
+  // 4. v1's evaluation over the 6 comparisons, on the available histories and the ancestor.
+  const input = sets.filter(isAvailable);
+  const evaluation = r3Evaluate(input.map((s) => r3RepAssaySet(s)));
+  const histories: R3RepHistory[] = evaluation.histories.map((h) => {
+    const av = historyAvailability[h.history];
+    const { history, a, b, advantage, quenched: q, swapEa, swapAe, swapCriterion } = h;
+    return { history, available: av.available, missing: av.missing.map((x) => ({ id: x.id, why: x.why! })), biologicalSwapEa: byId.get(r3RepSetIdOf({ arm: "scaf", history, timing: "a" }, "swap-ea"))?.biological === true, a, b, advantage, quenched: q, swapEa, swapAe, swapCriterion, margins: r3RepMargins(h) };
+  });
+
+  const reasons: string[] = [];
+  const failed: ("quenched" | "advantage" | "swap")[] = [];
+  let outcome: "replicates" | "does not replicate" | "uninformative";
+  let evaluated = false;
+  const listUnavailable = (xs: readonly R3RepSetStatus[]) => xs.map((x) => `${x.id} (${x.why})`).join(", ");
+  if (loud.length > 0) {
+    outcome = "does not replicate";
+    failed.push("quenched");
+    reasons.push(`unreliable: ${loud.map((q) => `${q.id} has competence ${q.competence}`).join(", ")}, above ${R3_QUENCH_LIMIT}`);
+  } else if (!quenched.allAvailable) {
+    outcome = "uninformative";
+    reasons.push(`quenched controls unavailable: ${listUnavailable(statuses.filter((x) => x.inoculum === "quenched" && unavailable(x)))}`);
+  } else if (!ancestor.a || !ancestor.b) {
+    outcome = "uninformative";
+    reasons.push(`ancestor sets unavailable: ${listUnavailable(statuses.filter((x) => x.arm === "ancestor" && unavailable(x)))}`);
+  } else if (availableHistories < R3REP_NEED) {
+    outcome = "uninformative";
+    reasons.push(`${availableHistories} of 6 histories available, need ${R3REP_NEED}`);
+  } else {
+    evaluated = true;
+    const unheld = (n: number) => n < R3REP_NEED;
+    if (unheld(evaluation.advantageHistories)) failed.push("advantage");
+    if (unheld(evaluation.swapHistories)) failed.push("swap");
+    // Unreachable after step 1 with 4 or more histories in (all 12 controls at most 0.05), but v1's rule says it, so it is read.
+    if (evaluation.quenched.unreliable) failed.push("quenched");
+    outcome = evaluation.decisive && failed.length === 0 ? "replicates" : "does not replicate";
+    const counts = `advantage over rand, cont and the ancestor at both timings in ${evaluation.advantageHistories} of 6 histories, the swap criterion in ${evaluation.swapHistories} of 6 (each needs ${R3REP_NEED}; ${availableHistories} available)`;
+    reasons.push(outcome === "replicates" ? `decisive: ${counts}; no quenched control above ${R3_QUENCH_LIMIT}` : `not decisive (${failed.join(", ")} failed): ${counts}`);
+  }
+
+  // Descriptive: never a decision input.
+  const competences: R3RepCompetence[] = statuses.flatMap((x) => {
+    const s = byId.get(x.id);
+    if (!s) return [];
+    const c = comp(s);
+    const perReplicate = [...new Set(s.rows.map((r) => r.replicate))].sort((p, q) => p - q).map((replicate) => {
+      const r = comp(s, s.rows.filter((row) => row.replicate === replicate));
+      return { replicate, n: r.n, successes: r.successes, competence: r.value };
+    });
+    return [{ id: s.id, dir: s.dir, inoculum: s.inoculum, status: s.biological ? "biological" : "available", n: c.n, successes: c.successes, competence: c.value, perReplicate, truncatedRows: s.rows.filter((r) => (r.truncated ?? 0) > 0).length, unverifiable: s.unverifiable }];
+  });
+  const all = r3Evaluate(sets.map((s) => r3RepAssaySet(s)));
+  const replicates = [...new Set(input.flatMap((s) => s.rows.map((r) => r.replicate)))].sort((p, q) => p - q);
+  const perReplicate = replicates.map((replicate) => {
+    const r = r3Evaluate(input.map((s) => r3RepAssaySet(s, s.rows.filter((row) => row.replicate === replicate))));
+    return { replicate, advantageHistories: r.advantageHistories, swapHistories: r.swapHistories, histories: r.histories.map((h) => ({ history: h.history, advantage: h.advantage, swapCriterion: h.swapCriterion, margins: r3RepMargins(h) })) };
+  });
+  const sources = statuses.filter((x) => x.inoculum === "fragment" && byId.has(x.id)).map((x) => byId.get(x.id)!);
+  const rows = sets.reduce((n, s) => n + s.rows.length, 0);
+  return {
+    outcome,
+    reasons,
+    failed,
+    availability: {
+      sets: statuses,
+      expected: statuses.length,
+      available: statuses.filter((x) => x.status === "available").length,
+      biological: statuses.filter((x) => x.status === "biological").length,
+      unavailable: statuses.filter(unavailable).length,
+      ancestor,
+      histories: historyAvailability.map((h) => ({ history: h.history, available: h.available, missing: h.missing.map((x) => x.id) })),
+      availableHistories,
+    },
+    quenched,
+    histories,
+    counts: { evaluated, availableHistories, advantageHistories: evaluation.advantageHistories, swapHistories: evaluation.swapHistories, need: R3REP_NEED, decisive: evaluated && outcome === "replicates" },
+    evaluation,
+    descriptive: {
+      competences,
+      histories: all.histories.map(({ history, a, b, advantage, quenched: q, swapEa, swapAe, swapCriterion }) => ({ history, a, b, advantage, quenched: q, swapEa, swapAe, swapCriterion, margins: r3RepMargins({ a, b, swapEa }) })),
+      perReplicate,
+      unmatched: sources.map((s) => ({ id: s.id, retMass: dist(s.rows.map((r) => r.retMass)), retE: dist(s.rows.filter((r) => r.retE !== null).map((r) => r.retE!)) })),
+      truncation: { rows, truncatedRows: competences.reduce((n, c) => n + c.truncatedRows, 0), flagged: competences.filter((c) => truncationOf(c.truncatedRows, c.n).flagged).map((c) => c.id) },
+    },
+  };
+}
+
+/** A replication history's run directory (runs/scaffold/r3rep/main/<arm>/i<i>), as the report reads it for the descriptive trajectories. */
+export interface R3RepRun {
+  arm: "scaf" | "rand" | "cont";
+  history: number;
+  h: number;
+  dir: string;
+  status: RunStatus;
+  /** done.json says the history ended (no eligible pond at a boundary); `endedAt` is that boundary. */
+  ended: boolean;
+  endedAt: number | null;
+  /** Its ponds.tsv, streamed (`r3RepTrajectory`); null unless the run finished. */
+  trajectory: R3RepTrajectory | null;
+}
+
+/**
+ * The (arm, history index, h) of a replication history's run directory from its meta.json, or why it is not one: arm scaf, rand or
+ * cont with the world seed of h = 6 arm + i (`r3RepWorldSeedOf`: 4,811,001 + 100 arm + i, cont 4,811,301 + i), side 8, ancestor clone,
+ * mutation on, period 10,000, k 8 (scaf and rand) and 100 cycles. The ancestor world (seed 4,818,401) is not a history.
+ */
+export function r3RepRunOf(meta: Record<string, unknown>): { key: { arm: "scaf" | "rand" | "cont"; history: number; h: number } | null; why: string[] } {
+  const why: string[] = [];
+  const arm = meta.arm;
+  const armIdx = arm === "scaf" ? 0 : arm === "rand" ? 1 : arm === "cont" ? 2 : -1;
+  const i = armIdx < 0 ? -1 : HISTORIES.findIndex((x) => r3RepWorldSeedOf(6 * armIdx + x) === meta.seed);
+  if (armIdx < 0) why.push(`arm ${JSON.stringify(arm)}, want scaf, rand or cont`);
+  else if (meta.seed === R3REP_ANCESTOR_SEED) why.push(`seed ${R3REP_ANCESTOR_SEED} is the ancestor world, not a history`);
+  else if (i < 0) why.push(`seed ${JSON.stringify(meta.seed)} is not ${r3RepWorldSeedOf(6 * armIdx)} + i, i = 0-5, for arm ${arm}`);
+  if (meta.side !== R3REP_REGIME.side) why.push(`side ${JSON.stringify(meta.side)}, want ${R3REP_REGIME.side}`);
+  if (meta.init !== "clone") why.push(`init ${JSON.stringify(meta.init)}, want "clone"`);
+  if (!(typeof meta.mutRate === "number" && meta.mutRate > 0)) why.push("mutation off");
+  if (meta.period !== R3REP_REGIME.period) why.push(`period ${JSON.stringify(meta.period)}, want ${R3REP_REGIME.period}`);
+  if (arm !== "cont" && meta.k !== R3REP_REGIME.k) why.push(`k ${JSON.stringify(meta.k)}, want ${R3REP_REGIME.k}`);
+  if (meta.cycles !== R3REP_CYCLES) why.push(`cycles ${JSON.stringify(meta.cycles)}, want ${R3REP_CYCLES}`);
+  return { key: why.length === 0 ? { arm: arm as "scaf" | "rand" | "cont", history: i, h: 6 * armIdx + i } : null, why };
+}
+
+/** A history's ponds.tsv, summarised per boundary (descriptive). */
+export interface R3RepTrajectory {
+  /** Per boundary b with rows, ascending: its rows (one per pond), the mean pre-cycle pond trait (recipientTrait; an extinct pond counts 0) and the ponds with trait 0. */
+  boundaries: { boundary: number; n: number; meanTrait: number; extinct: number }[];
+  /** The truncated share of its recipient rows. */
+  truncation: TruncationStat;
+}
+
+/** One streaming pass over a history's ponds.tsv: per boundary only a row count and two sums are held. */
+export async function r3RepTrajectory(rows: AsyncIterable<TsvRow>): Promise<R3RepTrajectory> {
+  const at = new Map<number, { n: number; sum: number; extinct: number }>();
+  let n = 0;
+  let truncated = 0;
+  for await (const r of rows) {
+    n++;
+    if (num(r, "truncated") > 0) truncated++;
+    const trait = num(r, "recipientTrait");
+    const b = num(r, "cycle");
+    let x = at.get(b);
+    if (!x) at.set(b, (x = { n: 0, sum: 0, extinct: 0 }));
+    x.n++;
+    x.sum += trait;
+    if (trait === 0) x.extinct++;
+  }
+  const boundaries = [...at].sort(([p], [q]) => p - q).map(([boundary, x]) => ({ boundary, n: x.n, meanTrait: x.sum / x.n, extinct: x.extinct }));
+  return { boundaries, truncation: truncationOf(truncated, n) };
+}
+
+/**
+ * The runs as the readout reports them (descriptive): per history its status, whether it ended, the extinct ponds at boundary 100
+ * (null when it has no boundary-100 rows: an ended or unfinished run), its truncation and its mean pond trait per boundary; per arm,
+ * the median over its histories of the mean pond trait and of the extinct ponds at `R3REP_TRAJECTORY_BOUNDARIES` (as v1's trajectories.json).
+ */
+export function r3RepRunsSummary(runs: readonly R3RepRun[]) {
+  const histories = [...runs]
+    .sort((x, y) => x.h - y.h)
+    .map((r) => {
+      const b = r.trajectory?.boundaries ?? [];
+      return {
+        id: `${r.arm}-i${r.history}`,
+        arm: r.arm,
+        history: r.history,
+        dir: r.dir,
+        status: r.status,
+        ended: r.ended,
+        endedAt: r.endedAt,
+        extinctAt100: b.find((x) => x.boundary === R3REP_CYCLES)?.extinct ?? null,
+        lastBoundary: b.at(-1)?.boundary ?? null,
+        truncation: r.trajectory?.truncation ?? null,
+        trajectory: b,
+      };
+    });
+  const arm = (a: "scaf" | "rand" | "cont") =>
+    R3REP_TRAJECTORY_BOUNDARIES.map((boundary) => {
+      const at = histories.filter((h) => h.arm === a).flatMap((h) => h.trajectory.filter((x) => x.boundary === boundary));
+      return { boundary, histories: at.length, medianMeanTrait: at.length ? median(at.map((x) => x.meanTrait)) : null, medianExtinct: at.length ? median(at.map((x) => x.extinct)) : null };
+    });
+  return { histories, arms: { scaf: arm("scaf"), rand: arm("rand"), cont: arm("cont") } };
+}
+
+/**
+ * v1's R3 numbers (the r3 stage's output, experiments/scaffold/readouts/r3.json) beside the replication's evaluation: the counts and
+ * the quenched maximum of each, and per comparison i whether each criterion held, scaf's and the ancestor's competence at (a), Ge-on-Fa's
+ * and the margins in fragments. `quenchedMax` is the replication's over its available quenched controls (default: over `rep`'s input).
+ * Descriptive only; throws when `v1` is not an r3 stage output.
+ */
+export function r3RepSideBySide(v1: unknown, rep: ReturnType<typeof r3Evaluate>, quenchedMax: number | null = rep.quenched.max) {
+  if (!isRecord(v1) || v1.stage !== "r3" || !Array.isArray(v1.histories) || !v1.histories.every((h) => isRecord(h) && Number.isInteger(h.history) && isRecord(h.a) && isRecord(h.b))) throw new Error("the v1 readout is not an r3 stage output (stage r3 with histories)");
+  const old = v1.histories as R3History[];
+  const row = (h: R3History | undefined) => (h ? { advantage: h.advantage, swapCriterion: h.swapCriterion, scafA: h.a.scaf, ancestorA: h.a.ancestor, swapEa: h.swapEa, margins: r3RepMargins(h) } : null);
+  const q = (x: unknown) => (isRecord(x) && typeof x.max === "number" ? x.max : null);
+  return {
+    counts: {
+      v1: { advantageHistories: v1.advantageHistories ?? null, swapHistories: v1.swapHistories ?? null, quenchedMax: q(v1.quenched) },
+      replication: { advantageHistories: rep.advantageHistories, swapHistories: rep.swapHistories, quenchedMax },
+    },
+    histories: HISTORIES.map((history) => ({ history, v1: row(old.find((h) => h.history === history)), replication: row(rep.histories.find((h) => h.history === history)) })),
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
