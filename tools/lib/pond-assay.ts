@@ -8,10 +8,13 @@ import {
   CH,
   G,
   GENOME_CHANNELS,
+  M3_FOUNDERS,
   NN_WORDS,
   allocState,
   buildWorld,
   emptyGenome,
+  encodeGenome,
+  founderGenome,
   cellCount,
   stateHash,
   validateState,
@@ -695,6 +698,565 @@ export function r1dPrimeSourceProblems(labels: Pick<R1dPrimeLabelSet, "h">, p: P
   return why;
 }
 
+// ---------------------------------------------------------------------------------------------
+// R3 replication (docs/scaffold-r3-replication-v1.md): protocol v1's R3 on fresh histories
+
+/** The regime every R3-replication competence assay runs at: protocol v1's frozen k and period, ref 103,058 (Amendment 1), the standard side and replicates, a census every 100 steps. */
+export const R3REP_REGIME = { k: 8, period: 10_000, ref: 103_058, side: 8, replicates: 2, censusEvery: 100 } as const;
+
+/** The source worlds by h: 0-17 the histories (h = 6 arm + i; arm 0 scaf, 1 rand, 2 cont), 18 the ancestor. */
+export const R3REP_ANCESTOR_H = 18;
+const R3REP_ARMS = ["scaf", "rand", "cont"] as const;
+
+/** Competence seeds are 4,816,301 + 100 h + 10 t + s (h 0-18, t 0-1, s 0-1), so the block ends at 4,818,112. */
+export const R3REP_SEED_BASE = 4_816_301;
+export const R3REP_SEED_MAX = 4_818_112;
+/** A continuation (timing b) runs 2 x 10^5 steps with seed 4,818,301 + h. */
+export const R3REP_CONTINUE_SEED_BASE = 4_818_301;
+export const R3REP_CONTINUE_STEPS = 200_000;
+/** World seeds: scaf and rand 4,811,001 + 100 arm + i (the R1'' fresh histories), cont 4,811,301 + i, the ancestor world 4,818,401. */
+export const R3REP_HISTORY_SEED_BASE = R1DP_HISTORY_SEED_BASE;
+export const R3REP_CONT_SEED_BASE = 4_811_301;
+export const R3REP_ANCESTOR_SEED = 4_818_401;
+/** A history runs C = 100 cycles; the ancestor world is grown one period (cycles 1). */
+export const R3REP_CYCLES = 100;
+
+/**
+ * The protocol documents the replication runs under, pinned by SHA-256 and length: docs/scaffold-r3-replication-v1.md as committed
+ * before any run, and docs/scaffold-protocol-v1.md as the histories' meta.json records it (the R1'' histories ran under it, and
+ * tools/scaffold.ts --resume requires it of their extension). After the first run any change goes in a dated amendment at the end, so each
+ * document keeps beginning with its pinned bytes. Sets, sidecars and runs are checked against these hashes, never against a document as
+ * it is now, so recording the results (or any amendment) neither stops the runs nor rejects their sets.
+ */
+export const R3REP_PROTOCOLS = {
+  protocol: { doc: "docs/scaffold-protocol-v1.md", sha256: "39fe21f05b1768e9b8ec45059aa37f5e84c0d7b504a6ee7805e76de0daf5cd4a", bytes: 38_254 },
+  r3rep: { doc: "docs/scaffold-r3-replication-v1.md", sha256: "a77bd55e6e1e2e90c03447c5ae5bf988a5d36ab6e49cdca7b9feb582ffae1f1b", bytes: 12_507 },
+} as const;
+/** The pinned hashes in the shape the checks take: protocol v1's (run meta.json `protocolSha256`) and the replication's (`protocolSha256R3rep`). */
+export const R3REP_SHA256 = { protocol: R3REP_PROTOCOLS.protocol.sha256, r3rep: R3REP_PROTOCOLS.r3rep.sha256 } as const;
+
+/** Genome words as hex, 8 digits a word (as assay.json records them), and bytes as hex. */
+const hexWords = (w: ArrayLike<number>): string => Array.from(w, (x) => x.toString(16).padStart(8, "0")).join("");
+const hexBytes = (b: Uint8Array): string => Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+
+/**
+ * What is wrong with `doc` (a pinned document's bytes as they are now) as its pinned text followed by amendments only: its first
+ * `bytes` bytes must hash to the pinned SHA-256 (`R3REP_PROTOCOLS`).
+ */
+export async function r3RepProtocolProblems(which: keyof typeof R3REP_PROTOCOLS, doc: Uint8Array): Promise<string[]> {
+  const pin = R3REP_PROTOCOLS[which];
+  if (doc.length < pin.bytes) return [`${pin.doc} has ${doc.length} bytes, fewer than the ${pin.bytes} it had when pinned`];
+  const sha = hexBytes(new Uint8Array(await crypto.subtle.digest("SHA-256", doc.slice(0, pin.bytes))));
+  if (sha === pin.sha256) return [];
+  return [`${pin.doc} no longer begins with its pinned text (SHA-256 ${pin.sha256}; its first ${pin.bytes} bytes hash to ${sha}): a change after the first run goes in a dated amendment at the end`];
+}
+
+/**
+ * Seed of an R3-replication competence assay: 4,816,301 + 100 h + 10 t + s, with h 0-18 (`R3REP_ANCESTOR_H`), t 0 for timing (a)
+ * and 1 for (b), s the replicate (0-1). Mixed radix (10 t + s < 100), above the R1'' block (which ends at 4,816,260) and below the
+ * continuation seeds and assaySeed's minimum 4,820,001; every field is range-checked.
+ */
+export function r3RepSeed(h: number, t: number, s: number): number {
+  const field = (name: string, x: number, max: number) => {
+    if (!Number.isInteger(x) || x < 0 || x > max) throw new Error(`r3RepSeed: ${name} must be an integer in 0..${max}, got ${x}`);
+  };
+  field("h", h, R3REP_ANCESTOR_H);
+  field("t", t, 1);
+  field("s", s, R3REP_REGIME.replicates - 1);
+  const seed = R3REP_SEED_BASE + 100 * h + 10 * t + s;
+  if (seed > R3REP_SEED_MAX) throw new Error(`r3RepSeed: ${seed} is above ${R3REP_SEED_MAX}`);
+  return seed;
+}
+
+/** Seed of the continuation of source h (0-18) to timing (b): 4,818,301 + h. */
+export function r3RepContinueSeed(h: number): number {
+  if (!Number.isInteger(h) || h < 0 || h > R3REP_ANCESTOR_H) throw new Error(`r3RepContinueSeed: h must be an integer in 0..${R3REP_ANCESTOR_H}, got ${h}`);
+  return R3REP_CONTINUE_SEED_BASE + h;
+}
+
+export type R3RepArm = "scaf" | "rand" | "cont" | "ancestor";
+
+/** A source world of the replication: `arm` with its history index i (0-5; -1 for the ancestor) and h = 6 arm + i (18 for the ancestor). */
+export interface R3RepHistory {
+  arm: R3RepArm;
+  history: number;
+  h: number;
+}
+
+/**
+ * The `labels` of an R3-replication competence set: the source world (`arm`, `history`, `h`) at `timing`. `arm`, `history` and `timing`
+ * are what scaffold-report's `assayLabels` reads into an AssaySet for v1's `r3Evaluate`; `h` keys the seeds. The variant is the set's inoculum.
+ */
+export interface R3RepLabelSet {
+  arm: R3RepArm;
+  history: number;
+  timing: "a" | "b";
+  r3rep: true;
+  h: number;
+}
+
+/** The competence variants: the source's own fragments, the quenched control, Ge-on-Fa (`swap-ea`) and Ga-on-Fe (`swap-ae`). */
+export const R3REP_INOCULA = ["fragment", "quenched", "swap-ea", "swap-ae"] as const;
+export type R3RepInoculum = (typeof R3REP_INOCULA)[number];
+
+/** The source world h names. */
+export function r3RepHistoryOf(h: number): R3RepHistory {
+  if (!Number.isInteger(h) || h < 0 || h > R3REP_ANCESTOR_H) throw new Error(`R3-replication h must be an integer in 0..${R3REP_ANCESTOR_H}, got ${h}`);
+  if (h === R3REP_ANCESTOR_H) return { arm: "ancestor", history: -1, h };
+  return { arm: R3REP_ARMS[Math.floor(h / 6)], history: h % 6, h };
+}
+
+/** The labels of source h at `timing`. */
+export function r3RepLabelsOf(h: number, timing: "a" | "b"): R3RepLabelSet {
+  if (timing !== "a" && timing !== "b") throw new Error(`R3-replication timing must be a or b, got ${JSON.stringify(timing)}`);
+  const { arm, history } = r3RepHistoryOf(h);
+  return { arm, history, timing, r3rep: true, h };
+}
+
+/** A source world's name in a report and on disk: scaf-i0..cont-i5, or ancestor. */
+export const r3RepIdOf = (l: Pick<R3RepHistory, "arm" | "history">): string => (l.arm === "ancestor" ? "ancestor" : `${l.arm}-i${l.history}`);
+
+/** A set's name: the source, the timing and the variant (scaf-i0-a, scaf-i0-b-quenched, scaf-i0-a-swap-ea, ancestor-b, ...). */
+export const r3RepSetIdOf = (l: Pick<R3RepLabelSet, "arm" | "history" | "timing">, inoculum: string): string => `${r3RepIdOf(l)}-${l.timing}${inoculum === "fragment" ? "" : `-${inoculum}`}`;
+
+/**
+ * The 62 sets the replication runs, in the protocol's order: per history i, scaf, rand and cont at (a) and (b), then scaf_i's Ge-on-Fa and
+ * Ga-on-Fe at (a) and its quenched controls at (a) and (b); then the ancestor at (a) and (b).
+ */
+export function r3RepExpectedSets(): { labels: R3RepLabelSet; inoculum: R3RepInoculum }[] {
+  const sets: { labels: R3RepLabelSet; inoculum: R3RepInoculum }[] = [];
+  for (let i = 0; i < 6; i++) {
+    for (let arm = 0; arm < 3; arm++) for (const timing of ["a", "b"] as const) sets.push({ labels: r3RepLabelsOf(6 * arm + i, timing), inoculum: "fragment" });
+    sets.push({ labels: r3RepLabelsOf(i, "a"), inoculum: "swap-ea" }, { labels: r3RepLabelsOf(i, "a"), inoculum: "swap-ae" });
+    sets.push({ labels: r3RepLabelsOf(i, "a"), inoculum: "quenched" }, { labels: r3RepLabelsOf(i, "b"), inoculum: "quenched" });
+  }
+  for (const timing of ["a", "b"] as const) sets.push({ labels: r3RepLabelsOf(R3REP_ANCESTOR_H, timing), inoculum: "fragment" });
+  return sets;
+}
+
+/** The source world of the CLI's --arm and --history; --h is derived (6 arm + i, 18 for the ancestor) and, if given, must agree. */
+function parseR3RepHistory(v: { arm?: string; history?: string; h?: string }): R3RepHistory {
+  const int = (s: string | undefined): number => (s === undefined || s.trim() === "" ? NaN : Number(s));
+  if (v.arm !== "scaf" && v.arm !== "rand" && v.arm !== "cont" && v.arm !== "ancestor") throw new Error(`--arm must be scaf|rand|cont|ancestor for --r3rep, got ${v.arm}`);
+  let h: number = R3REP_ANCESTOR_H;
+  if (v.arm === "ancestor") {
+    if (v.history !== undefined) throw new Error("--history does not apply to the ancestor");
+  } else {
+    const i = int(v.history);
+    if (!Number.isInteger(i) || i < 0 || i > 5) throw new Error(`--history must be 0-5 for arm ${v.arm}, got ${v.history}`);
+    h = 6 * R3REP_ARMS.indexOf(v.arm) + i;
+  }
+  if (v.h !== undefined && int(v.h) !== h) throw new Error(`--h ${v.h} disagrees with --arm ${v.arm}${v.arm === "ancestor" ? "" : ` --history ${v.history}`}: h is derived (6 arm + i, 18 for the ancestor), here ${h}`);
+  return r3RepHistoryOf(h);
+}
+
+/** The labels of an R3-replication competence set from the CLI's --arm, --history, --timing (a|b) and optional --h; R1's --time and --calibration and the R1'' --control do not apply. */
+export function parseR3RepLabels(v: { arm?: string; history?: string; timing?: string; h?: string; time?: string; calibration?: string; control?: string }): R3RepLabelSet {
+  if (v.time !== undefined || v.calibration !== undefined || v.control !== undefined) throw new Error("--r3rep takes --arm, --history and --timing a|b, not --time, --calibration or --control");
+  if (v.timing !== "a" && v.timing !== "b") throw new Error(`--timing must be a or b for --r3rep, got ${v.timing}`);
+  return r3RepLabelsOf(parseR3RepHistory(v).h, v.timing);
+}
+
+/** The source world of `continue --r3rep` from --arm, --history and optional --h; the continuation makes the timing (b) source, so --timing and --time do not apply. */
+export function parseR3RepContinueLabels(v: { arm?: string; history?: string; h?: string; timing?: string; time?: string; calibration?: string; control?: string }): R3RepHistory {
+  if (v.timing !== undefined || v.time !== undefined || v.calibration !== undefined || v.control !== undefined) throw new Error("continue --r3rep takes --arm and --history (it makes the timing (b) source), not --timing, --time, --calibration or --control");
+  return parseR3RepHistory(v);
+}
+
+/** The `labels` of an assay.json as an R3-replication set (consistent with its h), or why they are not one. */
+export function r3RepLabelsFromJson(labels: unknown): { labels: R3RepLabelSet } | { error: string } {
+  const l = (typeof labels === "object" && labels !== null ? labels : {}) as Record<string, unknown>;
+  if (l.r3rep !== true) return { error: "labels.r3rep is not true" };
+  const h = l.h;
+  if (!Number.isInteger(h) || (h as number) < 0 || (h as number) > R3REP_ANCESTOR_H) return { error: `labels.h ${JSON.stringify(h)}, want 0-${R3REP_ANCESTOR_H}` };
+  if (l.timing !== "a" && l.timing !== "b") return { error: `labels.timing ${JSON.stringify(l.timing)}, want a or b` };
+  const want = r3RepLabelsOf(h as number, l.timing);
+  for (const key of ["arm", "history"] as const) if (l[key] !== want[key]) return { error: `labels.${key} ${JSON.stringify(l[key])}, want ${JSON.stringify(want[key])} for h ${h}` };
+  return { labels: want };
+}
+
+/** The world seed of source h: 4,811,001 + 100 arm + i (scaf, rand), 4,811,301 + i (cont), 4,818,401 (the ancestor). */
+export function r3RepWorldSeedOf(h: number): number {
+  const l = r3RepHistoryOf(h);
+  if (l.arm === "ancestor") return R3REP_ANCESTOR_SEED;
+  return l.arm === "cont" ? R3REP_CONT_SEED_BASE + l.history : R3REP_HISTORY_SEED_BASE + 100 * R3REP_ARMS.indexOf(l.arm) + l.history;
+}
+
+/** The h a set's seeds carry: the labelled one, except Ge-on-Fa (`swap-ea`), whose fragments come from the ancestor's (a), so 18. */
+export const r3RepSeedHOf = (labels: Pick<R3RepLabelSet, "h">, inoculum: string): number => (inoculum === "swap-ea" ? R3REP_ANCESTOR_H : labels.h);
+
+/** The seed of replicate s of a set (fragment sampling and physics alike): r3RepSeed(h', t, s), h' from `r3RepSeedHOf`. */
+export const r3RepSeedOf = (labels: Pick<R3RepLabelSet, "h" | "timing">, inoculum: string, s: number): number => r3RepSeed(r3RepSeedHOf(labels, inoculum), labels.timing === "a" ? 0 : 1, s);
+
+/** Throws unless the seeds of replicate `replicate` are `r3RepSeedOf(labels, inoculum, replicate)` (fragment and physics alike). */
+export function checkR3RepSeeds(labels: Pick<R3RepLabelSet, "h" | "timing">, inoculum: string, seeds: { physics: number; fragment: number }, replicate = 0): void {
+  const hs = r3RepSeedHOf(labels, inoculum);
+  const t = labels.timing === "a" ? 0 : 1;
+  const want = r3RepSeed(hs, t, replicate);
+  for (const [name, seed] of [["seed", seeds.physics], ["fragment seed", seeds.fragment]] as const) {
+    if (seed !== want) throw new Error(`${name} ${seed} does not match the R3-replication labels (h ${labels.h}, timing ${labels.timing}, ${inoculum}): want r3RepSeed(${hs}, ${t}, ${replicate}) = ${want}`);
+  }
+}
+
+/** What is wrong with a variant for its labels: Ge-on-Fa and Ga-on-Fe test a scaf history at timing (a), the quenched control a scaf history at either timing. */
+export function r3RepVariantProblems(labels: Pick<R3RepLabelSet, "arm" | "timing">, inoculum: string): string[] {
+  if (!(R3REP_INOCULA as readonly string[]).includes(inoculum)) return [`inoculum ${JSON.stringify(inoculum)}, want one of ${R3REP_INOCULA.join(", ")}`];
+  const why: string[] = [];
+  if (inoculum !== "fragment" && labels.arm !== "scaf") why.push(`${inoculum} labels a scaf history, not ${labels.arm}`);
+  if ((inoculum === "swap-ea" || inoculum === "swap-ae") && labels.timing !== "a") why.push(`${inoculum} runs at timing a only, not ${labels.timing}`);
+  return why;
+}
+
+/** What is wrong with an assay's regime (assay.json's k, period, ref, side, replicates and censusEvery) against `R3REP_REGIME`. */
+export function r3RepRegimeProblems(x: { k: unknown; period: unknown; ref: unknown; side: unknown; replicates: unknown; censusEvery: unknown }): string[] {
+  const why: string[] = [];
+  for (const key of ["k", "period", "ref", "side", "replicates", "censusEvery"] as const) if (x[key] !== R3REP_REGIME[key]) why.push(`${key} ${JSON.stringify(x[key])}, want ${R3REP_REGIME[key]}`);
+  return why;
+}
+
+/** The run directory of source h under runs/scaffold/: r3rep/main/<arm>/i<i>, or r3rep/anc for the ancestor world. */
+export const r3RepRunDirOf = (h: number): string => {
+  const l = r3RepHistoryOf(h);
+  return l.arm === "ancestor" ? "r3rep/anc" : `r3rep/main/${l.arm}/i${l.history}`;
+};
+
+/** Where `continue --r3rep` writes source h's timing (b) state, under runs/scaffold/: r3rep/cont200k/<arm>-i<i>.blck.gz, or ancestor.blck.gz. */
+export const r3RepContinuationPathOf = (h: number): string => `r3rep/cont200k/${r3RepIdOf(r3RepHistoryOf(h))}.blck.gz`;
+
+/** `path` ends in `tail` at a path-component boundary. */
+const endsInPath = (path: string, tail: string): boolean => path === tail || path.endsWith(`/${tail}`);
+
+/**
+ * The boundary N of a timing (a) source path of h, which must end in `<run dir>/ckpt/b<N>-pre.blck.gz` (`r3RepRunDirOf`) with N 1-100
+ * for a history and N = 1 for the ancestor world; null when it does not.
+ */
+export function r3RepBoundaryOf(h: number, path: string): number | null {
+  const m = new RegExp(`(^|/)${r3RepRunDirOf(h)}/ckpt/b([1-9]\\d*)-pre\\.blck\\.gz$`).exec(path);
+  if (!m) return null;
+  const N = Number(m[2]);
+  return N <= (h === R3REP_ANCESTOR_H ? 1 : R3REP_CYCLES) ? N : null;
+}
+
+/** The sidecar of a continuation checkpoint: `<path minus .blck.gz>.json`. */
+export function r3RepSidecarPathOf(ckpt: string): string {
+  if (!ckpt.endsWith(".blck.gz")) throw new Error(`a continuation checkpoint's path ends in .blck.gz, got ${ckpt}`);
+  return `${ckpt.slice(0, -".blck.gz".length)}.json`;
+}
+
+/** A checkpoint as the replication records it: the path, the state hash, the world seed and mutation rate its config carries, its step and pond grid. */
+export interface R3RepCheckpoint {
+  source: string;
+  stateHash: string;
+  seed: number;
+  mutRate: number;
+  step: number;
+  tilesX: number;
+  tilesY: number;
+}
+
+/** The record of `state`, loaded from `path`. */
+export function r3RepCheckpointOf(path: string, state: WorldState): R3RepCheckpoint {
+  const { seed, mutRate, tilesX, tilesY } = state.cfg;
+  return { source: path, stateHash: stateHash(state), seed, mutRate, step: state.step, tilesX, tilesY };
+}
+
+/** The fields of a run directory's meta.json and done.json (tools/scaffold.ts) that a source's validation reads; null for a file that is missing or unreadable. */
+export interface R3RepRunRecord {
+  meta: Record<string, unknown> | null;
+  done: Record<string, unknown> | null;
+}
+
+const RUN_META_KEYS = ["arm", "k", "period", "cycles", "side", "seed", "mutRate", "init", "censusEvery", "protocolSha256"] as const;
+const RUN_DONE_KEYS = ["ok", "conservationOk", "cycles", "ended", "endedAt"] as const;
+
+const isRecord = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null && !Array.isArray(x);
+
+/** The run record of a parsed meta.json and done.json (anything that is not an object reads as missing). */
+export function r3RepRunRecordOf(meta: unknown, done: unknown): R3RepRunRecord {
+  const pick = (x: unknown, keys: readonly string[]) => (isRecord(x) ? Object.fromEntries(keys.filter((k) => x[k] !== undefined).map((k) => [k, x[k]])) : null);
+  return { meta: pick(meta, RUN_META_KEYS), done: pick(done, RUN_DONE_KEYS) };
+}
+
+/** A timing (a) source: its checkpoint and its run directory. */
+export interface R3RepOrigin extends R3RepCheckpoint {
+  run: R3RepRunRecord;
+}
+
+/** A genome donor's dominant genome as recorded: its lineage id (hi:lo, and each half) and its GENOME_CHANNELS words as hex. */
+export interface R3RepDominant {
+  id: string;
+  hi: number;
+  lo: number;
+  words: string;
+}
+
+/** The record of `dominantGenome`'s result (null when the donor has no eligible cell). */
+export function r3RepDominantRecord(dom: { hi: number; lo: number; words: Uint32Array } | null): R3RepDominant | null {
+  return dom && { id: `${dom.hi}:${dom.lo}`, hi: dom.hi, lo: dom.lo, words: hexWords(dom.words) };
+}
+
+/** What `continue --r3rep` writes beside its checkpoint (`r3RepSidecarPathOf`), last: where the timing (b) state came from and what it is. */
+export interface R3RepContinuation {
+  r3rep: true;
+  arm: R3RepArm;
+  history: number;
+  h: number;
+  source: string;
+  sourceStateHash: string;
+  sourceSeed: number;
+  sourceStep: number;
+  seed: number;
+  steps: number;
+  mutRate: number;
+  endStateHash: string;
+  endStep: number;
+  protocolSha256R3rep: string;
+}
+
+/** The sidecar of the continuation of source h from `origin` (its timing (a) checkpoint) to `end` after `steps` steps. */
+export function r3RepContinuationOf(p: { h: number; origin: R3RepCheckpoint; end: R3RepCheckpoint; steps: number; protocolSha256R3rep: string }): R3RepContinuation {
+  const l = r3RepHistoryOf(p.h);
+  return {
+    r3rep: true,
+    arm: l.arm,
+    history: l.history,
+    h: l.h,
+    source: p.origin.source,
+    sourceStateHash: p.origin.stateHash,
+    sourceSeed: p.origin.seed,
+    sourceStep: p.origin.step,
+    seed: p.end.seed,
+    steps: p.steps,
+    mutRate: p.end.mutRate,
+    endStateHash: p.end.stateHash,
+    endStep: p.end.step,
+    protocolSha256R3rep: p.protocolSha256R3rep,
+  };
+}
+
+/**
+ * What an assay's provenance records (assay.json `provenance`): the assayed checkpoint (the fragment source); for timing (a) its run
+ * record, for timing (b) the continuation sidecar and its timing (a) source as read when the assay ran; for Ge-on-Fa also the genome
+ * donor (the scaf history's timing (a) source) with its dominant genome, null when it has none.
+ */
+export interface R3RepProvenance extends R3RepCheckpoint {
+  run?: R3RepRunRecord;
+  continuation?: unknown;
+  origin?: R3RepOrigin | null;
+  donor?: R3RepOrigin & { dominant: R3RepDominant | null };
+}
+
+/** What is wrong with the shape of a recorded checkpoint: a path, a state hash, and integer seed, mutRate, step and pond grid. */
+function checkpointShapeProblems(x: unknown, role: string): string[] {
+  if (!isRecord(x)) return [`no ${role} record`];
+  const why: string[] = [];
+  if (typeof x.source !== "string") why.push(`${role} has no path`);
+  if (typeof x.stateHash !== "string" || x.stateHash === "") why.push(`${role} has no state hash`);
+  for (const k of ["seed", "mutRate", "step", "tilesX", "tilesY"]) if (!Number.isInteger(x[k])) why.push(`${role} ${k} ${JSON.stringify(x[k])} is not an integer`);
+  return why;
+}
+
+/**
+ * What is wrong with `o` as the timing (a) source of h (none: it is the protocol's), every problem listed and prefixed with `role`.
+ * A history's source is `<r3RepRunDirOf(h)>/ckpt/b<N>-pre.blck.gz` in a run directory whose meta.json has the history's world seed, arm, k
+ * (8; 0 for cont), period 10,000, side 8, clone init, the default mutation rate, census every 100 and `protocolSha256` (protocol v1's
+ * SHA-256), and whose done.json is ok with 100 cycles and N = 100 or, scaf and rand only, ended with endedAt = N (the terminal
+ * pre-cycle state of a history that ended at N). The ancestor's is r3rep/anc/ckpt/b1-pre.blck.gz of an arm cont world seeded 4,818,401
+ * and run 1 cycle. The checkpoint's own seed and mutation rate must be the world's, its step N x 10,000 and its grid 8 x 8.
+ */
+export function r3RepOriginProblems(h: number, o: unknown, protocolSha256: string, role = "source"): string[] {
+  const shape = checkpointShapeProblems(o, role);
+  if (shape.length > 0) return shape;
+  const p = o as R3RepOrigin;
+  const l = r3RepHistoryOf(h);
+  const ancestor = l.arm === "ancestor";
+  const seed = r3RepWorldSeedOf(h);
+  const mutRate = pondConfig(R3REP_REGIME.side, 0).mutRate;
+  const why: string[] = [];
+  const want = (name: string, got: unknown, expected: unknown) => {
+    if (got !== expected) why.push(`${role} ${name} ${JSON.stringify(got)}, want ${JSON.stringify(expected)}`);
+  };
+  const N = r3RepBoundaryOf(h, p.source);
+  if (N === null) why.push(`${role} path ${JSON.stringify(p.source)} does not end in ${r3RepRunDirOf(h)}/ckpt/${ancestor ? "b1" : "b<N>"}-pre.blck.gz`);
+  // The checkpoint's own state.
+  want("seed", p.seed, seed);
+  want("mutRate", p.mutRate, mutRate);
+  if (N !== null) want("step", p.step, N * R3REP_REGIME.period);
+  if (p.tilesX !== R3REP_REGIME.side || p.tilesY !== R3REP_REGIME.side) why.push(`${role} has ${p.tilesX} x ${p.tilesY} ponds, want ${R3REP_REGIME.side} x ${R3REP_REGIME.side}`);
+  // Its run directory, as tools/scaffold.ts wrote it.
+  const run: Record<string, unknown> = isRecord(p.run) ? p.run : {};
+  const meta = isRecord(run.meta) ? run.meta : null;
+  const done = isRecord(run.done) ? run.done : null;
+  if (meta === null) why.push(`${role} is not inside a run directory with a readable meta.json`);
+  else {
+    const m = (key: string, expected: unknown) => want(`run meta.json ${key}`, meta[key], expected);
+    m("arm", ancestor ? "cont" : l.arm);
+    m("seed", seed);
+    m("k", l.arm === "scaf" || l.arm === "rand" ? R3REP_REGIME.k : 0);
+    m("period", R3REP_REGIME.period);
+    m("side", R3REP_REGIME.side);
+    m("init", "clone");
+    m("mutRate", mutRate);
+    m("censusEvery", R3REP_REGIME.censusEvery);
+    m("protocolSha256", protocolSha256);
+    if (ancestor) m("cycles", 1);
+  }
+  if (done === null) why.push(`${role} run has no readable done.json (unfinished)`);
+  else if (done.ok !== true) why.push(`${role} run done.json ok ${JSON.stringify(done.ok)}, want true`);
+  else if (ancestor) {
+    if (done.cycles !== 1 || done.ended === true) why.push(`${role} run done.json cycles ${JSON.stringify(done.cycles)}${done.ended === true ? " (ended)" : ""}, want 1 cycle run through`);
+  } else if (done.ended === true) {
+    if (l.arm === "cont") why.push(`${role} run done.json says the history ended, but cont has no cycle and runs to boundary ${R3REP_CYCLES}`);
+    else if (N !== null && done.endedAt !== N) why.push(`${role} run ended at boundary ${JSON.stringify(done.endedAt)}, but the source is b${N}-pre (an ended history's source is its terminal b<e>-pre)`);
+  } else {
+    if (done.cycles !== R3REP_CYCLES) why.push(`${role} run done.json cycles ${JSON.stringify(done.cycles)}, want ${R3REP_CYCLES} (or an ended history)`);
+    if (N !== null && N !== R3REP_CYCLES) why.push(`${role} is b${N}-pre, but the history did not end: its source is b${R3REP_CYCLES}-pre`);
+  }
+  return why;
+}
+
+/**
+ * What is wrong with `c` as the sidecar of source h's continuation, read against `origin` (its timing (a) source as it is now) and `end`
+ * (the checkpoint beside it, as loaded): the labels must be h's, the source, its state hash, seed and step `origin`'s, the seed
+ * 4,818,301 + h, the steps 2 x 10^5, the mutation rate the default one, endStep = sourceStep + steps, the protocol hash
+ * `protocolSha256R3rep`, and the end state hash, seed, mutation rate and step `end`'s.
+ */
+export function r3RepContinuationProblems(h: number, c: unknown, origin: unknown, end: unknown, protocolSha256R3rep: string): string[] {
+  if (!isRecord(c)) return ["no continuation sidecar (the <checkpoint>.json that continue --r3rep writes last)"];
+  const l = r3RepHistoryOf(h);
+  const why: string[] = [];
+  const want = (name: string, got: unknown, expected: unknown) => {
+    if (got !== expected) why.push(`continuation ${name} ${JSON.stringify(got)}, want ${JSON.stringify(expected)}`);
+  };
+  want("r3rep", c.r3rep, true);
+  want("arm", c.arm, l.arm);
+  want("history", c.history, l.history);
+  want("h", c.h, h);
+  want("seed", c.seed, r3RepContinueSeed(h));
+  want("steps", c.steps, R3REP_CONTINUE_STEPS);
+  want("mutRate", c.mutRate, pondConfig(R3REP_REGIME.side, 0).mutRate);
+  want("protocolSha256R3rep", c.protocolSha256R3rep, protocolSha256R3rep);
+  if (!Number.isInteger(c.sourceStep) || !Number.isInteger(c.steps) || c.endStep !== (c.sourceStep as number) + (c.steps as number)) why.push(`continuation endStep ${JSON.stringify(c.endStep)} is not sourceStep ${JSON.stringify(c.sourceStep)} + steps ${JSON.stringify(c.steps)}`);
+  // The timing (a) checkpoint it names, as it is now.
+  if (!isRecord(origin)) why.push("the continuation's source checkpoint was not read");
+  else {
+    want("source", c.source, origin.source);
+    want("sourceStateHash", c.sourceStateHash, origin.stateHash);
+    want("sourceSeed", c.sourceSeed, origin.seed);
+    want("sourceStep", c.sourceStep, origin.step);
+  }
+  // The checkpoint it wrote: the state being assayed.
+  if (!isRecord(end)) why.push("the continued checkpoint was not read");
+  else {
+    for (const [key, field] of [["stateHash", "endStateHash"], ["seed", "seed"], ["mutRate", "mutRate"], ["step", "endStep"]] as const) {
+      if (end[key] !== c[field]) why.push(`the continued checkpoint's ${key} ${JSON.stringify(end[key])} is not the continuation's ${field} ${JSON.stringify(c[field])}`);
+    }
+  }
+  return why;
+}
+
+/** What is wrong with a `continue --r3rep` of source h: its seed (4,818,301 + h), steps (2 x 10^5), census (every 100) and output path (`r3RepContinuationPathOf`). */
+export function r3RepContinueProblems(h: number, x: { seed: number; steps: number; censusEvery: number; out: string }): string[] {
+  const why: string[] = [];
+  if (x.seed !== r3RepContinueSeed(h)) why.push(`seed ${x.seed}, want r3RepContinueSeed(${h}) = ${r3RepContinueSeed(h)}`);
+  if (x.steps !== R3REP_CONTINUE_STEPS) why.push(`steps ${x.steps}, want ${R3REP_CONTINUE_STEPS}`);
+  if (x.censusEvery !== R3REP_REGIME.censusEvery) why.push(`census every ${x.censusEvery}, want ${R3REP_REGIME.censusEvery}`);
+  if (!endsInPath(x.out, r3RepContinuationPathOf(h))) why.push(`output ${JSON.stringify(x.out)} does not end in ${r3RepContinuationPathOf(h)}`);
+  return why;
+}
+
+/**
+ * What is wrong with an assay's recorded `provenance` for its labels and variant (none: it is the protocol's). At timing (a) it is the
+ * fragment source's origin record (`r3RepOriginProblems` for h' = `r3RepSeedHOf`: the ancestor's for Ge-on-Fa); at timing (b) the
+ * continued checkpoint (path `r3RepContinuationPathOf(h)`, 8 x 8 ponds) with its sidecar (`continuation`, `r3RepContinuationProblems`)
+ * and the timing (a) source it names (`origin`). Ge-on-Fa also records its genome `donor`, the labelled scaf history's timing (a)
+ * source, with its dominant genome (`R3RepDominant`, or null when the donor has no eligible cell); no other variant has a donor.
+ * `sha` holds protocol v1's SHA-256 (run meta.json) and this protocol's (the sidecar): `R3REP_SHA256`, the pinned ones.
+ */
+export function r3RepProvenanceProblems(labels: R3RepLabelSet, inoculum: string, p: unknown, sha: { protocol: string; r3rep: string }): string[] {
+  if (!isRecord(p)) return ["assay.json has no provenance of its source (run the assay with --r3rep)"];
+  const why: string[] = [];
+  if (labels.timing === "a") why.push(...r3RepOriginProblems(r3RepSeedHOf(labels, inoculum), p, sha.protocol));
+  else {
+    const shape = checkpointShapeProblems(p, "source");
+    why.push(...shape);
+    if (shape.length === 0) {
+      if (!endsInPath(p.source as string, r3RepContinuationPathOf(labels.h))) why.push(`source path ${JSON.stringify(p.source)} does not end in ${r3RepContinuationPathOf(labels.h)}`);
+      if (p.tilesX !== R3REP_REGIME.side || p.tilesY !== R3REP_REGIME.side) why.push(`source has ${p.tilesX} x ${p.tilesY} ponds, want ${R3REP_REGIME.side} x ${R3REP_REGIME.side}`);
+    }
+    why.push(...r3RepOriginProblems(labels.h, p.origin, sha.protocol, "continuation source"));
+    why.push(...r3RepContinuationProblems(labels.h, p.continuation, p.origin, p, sha.r3rep));
+  }
+  if (inoculum === "swap-ea") {
+    why.push(...r3RepOriginProblems(labels.h, p.donor, sha.protocol, "donor"));
+    const d = isRecord(p.donor) ? p.donor.dominant : undefined;
+    const ok = d === null || (isRecord(d) && Number.isInteger(d.hi) && Number.isInteger(d.lo) && d.id === `${d.hi}:${d.lo}` && typeof d.words === "string" && new RegExp(`^[0-9a-f]{${8 * GENOME_CHANNELS}}$`).test(d.words));
+    if (!ok) why.push(`donor dominant ${JSON.stringify(d)} is not a dominant genome record (id hi:lo, hi, lo and ${GENOME_CHANNELS} hex words) or null`);
+  } else if (p.donor !== undefined) why.push(`provenance names a genome donor, but ${inoculum} has none`);
+  return why;
+}
+
+/** The `biologicallyUnavailable` record of a Ge-on-Fa set whose donor has no dominant genome (no eligible cell). */
+export const r3RepUnavailableOf = (donor: Pick<R3RepCheckpoint, "source" | "stateHash">) => ({ reason: "no dominant genome" as const, donor: donor.source, donorStateHash: donor.stateHash });
+
+/**
+ * What is wrong with an assay.json as a biologically unavailable Ge-on-Fa record: a swap-ea set of a scaf history at timing (a) whose
+ * `biologicallyUnavailable` is `r3RepUnavailableOf` its provenance's donor, whose donor records no dominant genome, and with no rows.
+ * Whether the donor checkpoint really has none is for a reader that can load it (`dominantGenome`).
+ */
+export function r3RepUnavailableProblems(json: Record<string, unknown>): string[] {
+  const why: string[] = [];
+  const lab = r3RepLabelsFromJson(json.labels);
+  if ("error" in lab) why.push(lab.error);
+  else why.push(...r3RepVariantProblems(lab.labels, "swap-ea"));
+  if (json.inoculum !== "swap-ea") why.push(`inoculum ${JSON.stringify(json.inoculum)}: only Ge-on-Fa (swap-ea) can be biologically unavailable`);
+  const donor = isRecord(json.provenance) && isRecord(json.provenance.donor) ? json.provenance.donor : null;
+  if (donor === null) why.push("provenance has no donor");
+  else {
+    if (donor.dominant !== null) why.push(`provenance.donor.dominant ${JSON.stringify(donor.dominant)}, want null (no eligible cell)`);
+    const want = typeof donor.source === "string" && typeof donor.stateHash === "string" ? r3RepUnavailableOf({ source: donor.source, stateHash: donor.stateHash }) : null;
+    if (JSON.stringify(json.biologicallyUnavailable) !== JSON.stringify(want)) why.push(`biologicallyUnavailable ${JSON.stringify(json.biologicallyUnavailable)}, want ${JSON.stringify(want)}`);
+  }
+  const summary = isRecord(json.summary) ? json.summary : {};
+  if (summary.rows !== 0) why.push(`summary.rows ${JSON.stringify(summary.rows)}, want 0`);
+  return why;
+}
+
+/** Ga-on-Fe's planted words as assay.json records them: M3_FOUNDERS[2] (the ancestor) with lineage id 0:1, as --swap-founder 2 plants it. */
+export const R3REP_SWAP_AE_WORDS = hexWords(encodeGenome(founderGenome(M3_FOUNDERS[2]), 0, 1));
+
+/**
+ * What is wrong with the treatment an assay.json records (`quench`, `swap`) for its variant, as competence --r3rep writes it: the
+ * source's fragments and the quenched control plant no swapped genome (`swap` null; `quench` false and true); Ga-on-Fe plants
+ * `R3REP_SWAP_AE_WORDS`; Ge-on-Fa plants its donor's dominant genome, so the donor must have one (provenance.donor.dominant) and the
+ * words must be its words. The biologically unavailable record (`biologicallyUnavailable`, no dominant genome) plants nothing (words null).
+ */
+export function r3RepTreatmentProblems(json: Record<string, unknown>): string[] {
+  const inoculum = json.inoculum;
+  if (!(R3REP_INOCULA as readonly unknown[]).includes(inoculum)) return []; // r3RepVariantProblems says why
+  const why: string[] = [];
+  if (json.quench !== (inoculum === "quenched")) why.push(`quench ${JSON.stringify(json.quench)}, want ${inoculum === "quenched"} for ${inoculum}`);
+  if (inoculum === "fragment" || inoculum === "quenched") {
+    if (json.swap !== null) why.push(`swap ${JSON.stringify(json.swap)}, want null: ${inoculum} plants no swapped genome`);
+    return why;
+  }
+  const swap = isRecord(json.swap) ? json.swap : null;
+  if (swap === null || swap.label !== inoculum) {
+    why.push(`swap ${JSON.stringify(json.swap)}, want the ${inoculum} genome it planted (label ${inoculum}, words)`);
+    return why;
+  }
+  if (inoculum === "swap-ae") {
+    if (swap.words !== R3REP_SWAP_AE_WORDS) why.push("swap words are not M3_FOUNDERS[2]'s: Ga-on-Fe plants the ancestor's genome and nothing else");
+    return why;
+  }
+  const dominant = isRecord(json.provenance) && isRecord(json.provenance.donor) ? json.provenance.donor.dominant : undefined;
+  if (json.biologicallyUnavailable !== undefined) {
+    if (swap.words !== null) why.push("swap words are recorded, but a biologically unavailable record plants no genome (words null)");
+  } else if (!isRecord(dominant)) why.push(`provenance.donor.dominant ${JSON.stringify(dominant)}: a Ge-on-Fa set with rows plants its donor's dominant genome (a donor with none is the biologically unavailable record)`);
+  else if (swap.words !== dominant.words) why.push(`swap words are not the donor's dominant genome ${dominant.id} (provenance.donor.dominant.words)`);
+  return why;
+}
+
 /** Calibration seeds are 4,802,001 + 10 v + s (protocol, P1). */
 export const CALIBRATION_SEED_BASE = 4_802_001;
 /**
@@ -813,7 +1375,7 @@ export function assayJson(p: {
   censusEvery: number;
   inoculum: string;
   seeds: { physics: number; fragment: number }[];
-  labels: AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet;
+  labels: AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet | R3RepLabelSet;
   extra: Record<string, unknown>;
   summary: Record<string, unknown>;
   wallSeconds: number;

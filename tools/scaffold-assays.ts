@@ -22,6 +22,11 @@
 //     --ref REF [--side 8] [--replicates 2] [--tag NAME]
 //   deno run -A tools/scaffold-assays.ts transmission --r1dprime --traits --h H --source CKPT --k K --period P --seed S --out DIR   (R1'')
 //     --arm scaf|rand|control [--history I] [--control positive|negative] [--donor-seed D] [--side 8] [--replicates 2] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts competence --r3rep --source CKPT --k 8 --period 10000 --ref 103058 --seed S --out DIR   (R3 replication)
+//     --arm scaf|rand|cont|ancestor [--history I] --timing a|b [--quench | --swap-from CKPT | --swap-founder 2] [--h H]
+//     [--side 8] [--replicates 2] [--census 100] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts continue --r3rep --source CKPT --steps 200000 --seed S --out CKPT   (R3 replication, timing b)
+//     --arm scaf|rand|cont|ancestor [--history I] [--h H] [--census 100]
 //
 // --replicates is at most 8: s = 8 and s = 9 are reserved for R1's permutation stream and donor selection, so
 // they never seed a fragment or a physics stream. --traits (competence, transmission, garden) also writes
@@ -57,6 +62,32 @@
 // stateHash, world seed, mutRate, step, phase measures) under `provenance` and the SHA-256 of the protocol document as
 // `protocolSha256R1dp`; all of it unless --allow-any-seed (smoke tests only; production runs never use it).
 //
+// docs/scaffold-r3-replication-v1.md (the R3 replication): `competence --r3rep` and `continue --r3rep` name a source world by --arm and
+// --history, h = 6 arm + i (arm 0 scaf, 1 rand, 2 cont) or 18 for --arm ancestor; h is derived, and --h, if given, must agree. They apply to
+// competence and continue only, and not with --r1prime, --r1dprime, --tau-calibration or --calibration. Competence seeds are r3RepSeed(h, t, s)
+// = 4,816,301 + 100 h + 10 t + s (t 0 = timing a, 1 = b; replicates s = 0-1), fragment and physics alike: every variant of a source and timing
+// uses that source's seeds, and Ge-on-Fa (swap-ea: --source the ancestor's (a), --swap-from the scaf history's (a)) uses the ancestor's,
+// h = 18 at t = 0. swap-ea and Ga-on-Fe (swap-ae: --swap-founder 2, M3_FOUNDERS[2]) label a scaf history at timing a; the quenched control
+// (--quench) a scaf history at either timing; --swap-hex and --swap-label do not apply. A timing (a) source is
+// runs/scaffold/r3rep/main/<arm>/i<i>/ckpt/b100-pre.blck.gz (or the terminal b<e>-pre of a scaf or rand history that ended at e, as its
+// done.json says), in a run directory whose meta.json has the history's world seed (4,811,001 + 100 arm + i; cont 4,811,301 + i), arm, k (8;
+// 0 for cont), period 10,000, side 8, clone init, the default mutation rate, census 100 and protocol v1's pinned SHA-256, and whose done.json is ok
+// with 100 cycles; the ancestor's is r3rep/anc/ckpt/b1-pre.blck.gz (arm cont, 1 cycle, seed 4,818,401). The state's seed, mutation rate and
+// step (N x 10,000) must agree. A timing (b) source is r3rep/cont200k/<arm>-i<i>.blck.gz (or ancestor.blck.gz) with the sidecar
+// <path minus .blck.gz>.json that `continue --r3rep` writes last, atomically: its source re-validates as the timing (a) source of the same h
+// and still hashes to the recorded source state hash, its seed is 4,818,301 + h and its steps 200,000, and the loaded state's hash, seed and
+// step are the sidecar's end values. `continue --r3rep` validates its source the same way and needs --seed 4,818,301 + h, --steps 200000,
+// --census 100, no --mut-rate (mutation on at the source's default rate) and --out ending in r3rep/cont200k/<arm>-i<i>.blck.gz; a stale
+// sidecar is removed before the run. swap-ea records the donor's dominant genome (id and words, recomputed from the donor state); a donor with
+// no eligible cell has none, and the assay writes a biologically-unavailable record instead (assay.json with `biologicallyUnavailable`
+// { reason, donor, donorStateHash } and summary.rows 0, assay.tsv with its header only) and exits 0. The regime is --k 8 --period 10000
+// --ref 103058 --side 8 --replicates 2 --census 100. assay.json records `labels` (arm, history, timing, r3rep: true, h), the source's
+// `provenance` (path, stateHash, world seed, mutRate, step and pond grid; the run record at timing a, the sidecar and its source at timing
+// b; swap-ea's donor) and the SHA-256 of the protocol document as `protocolSha256R3rep`. The protocol hashes are pinned (R3REP_SHA256 in
+// tools/lib/pond-assay.ts: the replication's document as committed before any run, and protocol v1's as the histories ran under it), and
+// the document must still begin with its pinned text, amendments only at the end, so a later amendment changes no record. --allow-any-seed
+// waives the seed, regime, source and document checks (smoke tests only; production runs never use it).
+//
 // --arm/--history and --time (0 = time 0) or --timing (a = time 0) label the history the source belongs to;
 // they are written under `labels` in assay.json, which scaffold-report reads. Unless --allow-any-seed, the
 // seeds are decoded (assaySeed's inverse) and must carry the assay's r, the labelled h (6 arm + i, 18 for the
@@ -71,6 +102,7 @@ import { DEFAULT_EVAL, evaluateBatch, quality } from "@bl/search";
 import {
   ASSAY_COLUMNS,
   R1DP_REGIME,
+  R3REP_SHA256,
   TAU_LABELS,
   assayJson,
   assayLine,
@@ -83,15 +115,32 @@ import {
   checkR1PrimeSeeds,
   checkR1dPrimeDonorSeed,
   checkR1dPrimeSeeds,
+  checkR3RepSeeds,
   fragmentDominant,
   parseAssayLabels,
   parseR1PrimeLabels,
   parseR1dPrimeLabels,
+  parseR3RepContinueLabels,
+  parseR3RepLabels,
   quench,
   r1Donors,
   r1dPrimeCheckpointOf,
   r1dPrimeProvenance,
   r1dPrimeSourceProblems,
+  r3RepCheckpointOf,
+  r3RepContinuationOf,
+  r3RepContinueProblems,
+  r3RepDominantRecord,
+  r3RepIdOf,
+  r3RepOriginProblems,
+  r3RepProtocolProblems,
+  r3RepProvenanceProblems,
+  r3RepRegimeProblems,
+  r3RepRunRecordOf,
+  r3RepSetIdOf,
+  r3RepSidecarPathOf,
+  r3RepUnavailableOf,
+  r3RepVariantProblems,
   standardFragment,
   swapGenome,
   traitsTable,
@@ -102,18 +151,26 @@ import {
   type Planted,
   type R1PrimeLabelSet,
   type R1dPrimeLabelSet,
+  type R3RepInoculum,
+  type R3RepLabelSet,
+  type R3RepOrigin,
+  type R3RepProvenance,
 } from "./lib/pond-assay.ts";
 import { loadCheckpoint, runPeriod, saveCheckpoint, type CensusSnapshot } from "./lib/pond-gpu.ts";
 import { dominantGenome, ledgerEnergy, pondConfig, pondTraits } from "./lib/ponds.ts";
 
 const a = parseArgs(Deno.args, {
   string: ["source", "k", "period", "ref", "seed", "frag-seed", "donor-seed", "swap-hex", "swap-from", "swap-founder", "swap-label", "tag", "out", "side", "replicates", "inoculum", "steps", "census", "mut-rate", "arm", "history", "time", "timing", "calibration", "h", "control"],
-  boolean: ["quench", "allow-any-seed", "traits", "r1prime", "tau-calibration", "r1dprime"],
+  boolean: ["quench", "allow-any-seed", "traits", "r1prime", "tau-calibration", "r1dprime", "r3rep"],
   default: { side: "8", replicates: "2", census: "100", inoculum: "fragment" },
 });
 const cmd = String(a._[0] ?? "");
 if ((a.traits || a.r1prime || a["tau-calibration"] || a.r1dprime) && (cmd === "continue" || cmd === "capability")) throw new Error(`--traits, --r1prime, --tau-calibration and --r1dprime do not apply to ${cmd}`);
-if ((a.h !== undefined || a.control !== undefined) && !a.r1dprime) throw new Error("--h and --control belong to --r1dprime");
+if ((a.h !== undefined || a.control !== undefined) && !a.r1dprime && !a.r3rep) throw new Error("--h and --control belong to --r1dprime");
+if (a.r3rep) {
+  if (cmd !== "competence" && cmd !== "continue") throw new Error(`--r3rep applies to competence and continue, not ${cmd}`);
+  if (a.r1prime || a.r1dprime || a["tau-calibration"] || a.calibration !== undefined) throw new Error("--r3rep is its own assay block: not with --r1prime, --r1dprime, --tau-calibration or --calibration");
+}
 
 function need(name: keyof typeof a): string {
   const v = a[name];
@@ -134,6 +191,14 @@ function checkSeed(name: string, v: number): number {
 const sha256File = async (url: URL): Promise<string> =>
   Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(url))), (b) => b.toString(16).padStart(2, "0")).join("");
 const protocolSha256 = await sha256File(new URL("../docs/scaffold-protocol-v1.md", import.meta.url));
+/**
+ * --r3rep records and checks the pinned protocol hashes (`R3REP_SHA256`), not the documents as they are now; the replication's document
+ * must still begin with its pinned text (amendments only at the end) unless --allow-any-seed.
+ */
+async function checkR3RepProtocol(): Promise<void> {
+  const why = await r3RepProtocolProblems("r3rep", await Deno.readFile(new URL("../docs/scaffold-r3-replication-v1.md", import.meta.url)));
+  if (why.length > 0 && !a["allow-any-seed"]) throw new Error(why.join("; "));
+}
 
 const baseName = (p: string) => p.replace(/^.*\//, "").replace(/\.blck(\.gz)?$/, "");
 const words = (g: Uint32Array) => Array.from(g, (x) => x.toString(16).padStart(8, "0")).join("");
@@ -189,7 +254,7 @@ interface AssaySpec {
   fragSeed: number;
   inoculum: string;
   /** The history this source belongs to, written to assay.json for scaffold-report. */
-  labels: AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet;
+  labels: AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet | R3RepLabelSet;
   /** Fragment f of replicate sigma `sigma`; the family label is the donor pond in R1, else -1. */
   plan: (sigma: number, f: number) => Plan;
 }
@@ -219,7 +284,7 @@ async function runAssay(spec: AssaySpec, out: string, extra: Record<string, unkn
   const seeds = Array.from({ length: spec.replicates }, (_, s) => ({ physics: checkSeed("seed", spec.seed + s), fragment: checkSeed("fragment seed", spec.fragSeed + s) }));
   if (!a["allow-any-seed"]) {
     const labels = spec.labels;
-    seeds.forEach((sd, s) => ("r1dprime" in labels ? checkR1dPrimeSeeds(labels, sd, s) : "r1prime" in labels ? checkR1PrimeSeeds(labels, sd, s) : checkAssaySeeds(spec.name as AssayName, labels, spec.inoculum, sd, s)));
+    seeds.forEach((sd, s) => ("r3rep" in labels ? checkR3RepSeeds(labels, spec.inoculum, sd, s) : "r1dprime" in labels ? checkR1dPrimeSeeds(labels, sd, s) : "r1prime" in labels ? checkR1PrimeSeeds(labels, sd, s) : checkAssaySeeds(spec.name as AssayName, labels, spec.inoculum, sd, s)));
   }
   const device = await requestDevice(navigator.gpu, pondConfig(spec.side, seeds[0].physics, 0));
   const lines: string[] = [ASSAY_COLUMNS.join("\t")];
@@ -300,8 +365,12 @@ async function runAssay(spec: AssaySpec, out: string, extra: Record<string, unkn
   console.log(`${spec.name} ${spec.tag}: ${sum.rows} rows${spec.ref === undefined ? "" : sum.rows === 0 ? ", no rows (insufficient or empty source)" : `, competence ${(sum.success / sum.rows).toFixed(3)}`} -> ${out}`);
 }
 
-/** The labels of this assay from the CLI: R1'' (--r1dprime), R1' (--r1prime), the tau calibration (--tau-calibration) or R1-R3's. */
-function labelsFromArgs(name: AssayName): AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet {
+/** The labels of this assay from the CLI: the R3 replication (--r3rep), R1'' (--r1dprime), R1' (--r1prime), the tau calibration (--tau-calibration) or R1-R3's. */
+function labelsFromArgs(name: AssayName): AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet | R3RepLabelSet {
+  if (a.r3rep) {
+    if (name !== "competence") throw new Error("--r3rep applies to competence and continue");
+    return parseR3RepLabels({ arm: a.arm, history: a.history, timing: a.timing, h: a.h, time: a.time, calibration: a.calibration, control: a.control });
+  }
   if (a["r1dprime"]) {
     if (a["r1prime"] || a["tau-calibration"]) throw new Error("--r1dprime, --r1prime and --tau-calibration are separate assays");
     if (name !== "transmission") throw new Error("--r1dprime applies to transmission");
@@ -348,9 +417,97 @@ async function specFromArgs(name: AssayName): Promise<AssaySpec> {
 
 const fragmentItem = (f: Fragment | null): AssayItem => (f === null ? null : { kind: "fragment", fragment: f });
 
+/** A parsed JSON file, or null when it is missing or unreadable. */
+const readJson = (path: string): Promise<unknown> =>
+  Deno.readTextFile(path)
+    .then((t) => JSON.parse(t) as unknown)
+    .catch(() => null);
+
+/**
+ * A timing (a) source of the R3 replication as loaded from `path`: the checkpoint's record and its run directory's meta.json and
+ * done.json (the directory holding ckpt/; null files when the path is not inside one).
+ */
+async function r3RepOriginOf(path: string, state: WorldState): Promise<R3RepOrigin> {
+  const runDir = /(^|\/)ckpt\/[^/]+$/.test(path) ? path.replace(/ckpt\/[^/]+$/, "") || "./" : null;
+  const run = runDir === null ? r3RepRunRecordOf(null, null) : r3RepRunRecordOf(await readJson(`${runDir}meta.json`), await readJson(`${runDir}done.json`));
+  return { ...r3RepCheckpointOf(path, state), run };
+}
+
+/**
+ * The provenance of an R3-replication source at `timing`: at (a) its origin record; at (b) the continued checkpoint's record, its sidecar
+ * and the timing (a) source the sidecar names, loaded and hashed as it is now (null when the sidecar names none).
+ */
+async function r3RepProvenanceOf(path: string, state: WorldState, timing: "a" | "b"): Promise<R3RepProvenance> {
+  if (timing === "a") return await r3RepOriginOf(path, state);
+  const continuation = path.endsWith(".blck.gz") ? await readJson(r3RepSidecarPathOf(path)) : null;
+  const from = (continuation as { source?: unknown } | null)?.source;
+  const load = (p: string) => loadCheckpoint(p).catch((e) => Promise.reject(new Error(`${r3RepSidecarPathOf(path)} names the source ${p}, which does not load: ${(e as Error).message}`)));
+  const origin = typeof from === "string" ? await r3RepOriginOf(from, await load(from)) : null;
+  return { ...r3RepCheckpointOf(path, state), continuation, origin };
+}
+
+/**
+ * competence --r3rep: one set of the R3 replication. The variant comes from --quench, --swap-from (Ge-on-Fa) or --swap-founder 2
+ * (Ga-on-Fe); the regime, the seeds (in runAssay) and the provenance of every checkpoint involved are the protocol's unless
+ * --allow-any-seed. A Ge-on-Fa donor with no eligible cell writes the biologically-unavailable record (no rows) instead of an assay.
+ */
+async function competenceR3Rep(spec: AssaySpec, labels: R3RepLabelSet): Promise<void> {
+  const strict = !a["allow-any-seed"];
+  if (a["swap-hex"] !== undefined || a["swap-label"] !== undefined) throw new Error("--r3rep takes --swap-from (Ge-on-Fa) or --swap-founder 2 (Ga-on-Fe), not --swap-hex or --swap-label");
+  const given = [a.quench ? "--quench" : null, a["swap-from"] !== undefined ? "--swap-from" : null, a["swap-founder"] !== undefined ? "--swap-founder" : null].filter((f) => f !== null);
+  if (given.length > 1) throw new Error(`give at most one of --quench, --swap-from, --swap-founder (got ${given.join(", ")})`);
+  const inoculum: R3RepInoculum = a.quench ? "quenched" : a["swap-from"] !== undefined ? "swap-ea" : a["swap-founder"] !== undefined ? "swap-ae" : "fragment";
+  if (inoculum === "swap-ae" && a["swap-founder"] !== "2") throw new Error(`--swap-founder must be 2 for --r3rep (Ga-on-Fe carries M3_FOUNDERS[2], the ancestor), got ${a["swap-founder"]}`);
+  const variant = r3RepVariantProblems(labels, inoculum);
+  if (variant.length > 0) throw new Error(`${r3RepSetIdOf(labels, inoculum)}: ${variant.join("; ")}`);
+  spec.inoculum = inoculum;
+  if (strict) {
+    const regime = r3RepRegimeProblems({ k: spec.k, period: spec.period, ref: spec.ref ?? null, side: spec.side, replicates: spec.replicates, censusEvery: Number(a.census) });
+    if (regime.length > 0) throw new Error(`--r3rep runs at --k 8 --period 10000 --ref 103058 --side 8 --replicates 2 --census 100: ${regime.join("; ")}`);
+  }
+  // Every checkpoint involved, validated against the labels: the fragment source (the ancestor's (a) for Ge-on-Fa) and Ge-on-Fa's donor.
+  await checkR3RepProtocol();
+  const sha = R3REP_SHA256;
+  const provenance = await r3RepProvenanceOf(spec.sourcePath, spec.source, labels.timing);
+  let donor: WorldState | null = null;
+  if (inoculum === "swap-ea") {
+    donor = await loadCheckpoint(a["swap-from"]!);
+    provenance.donor = { ...(await r3RepOriginOf(a["swap-from"]!, donor)), dominant: r3RepDominantRecord(dominantGenome(donor)) };
+  }
+  const problems = r3RepProvenanceProblems(labels, inoculum, provenance, sha);
+  if (problems.length > 0 && strict) throw new Error(`${spec.sourcePath}${donor ? ` with donor ${a["swap-from"]}` : ""} is not the protocol's source of R3-replication set ${r3RepSetIdOf(labels, inoculum)}: ${problems.join("; ")}`);
+  const extra = { provenance, protocolSha256R3rep: sha.r3rep };
+  const out = need("out");
+  if (donor !== null && provenance.donor!.dominant === null) {
+    // No eligible cell in the donor's (a), so no dominant genome: the set is biologically unavailable, a validated record with no rows.
+    console.log(`${r3RepSetIdOf(labels, inoculum)}: donor ${a["swap-from"]} has no eligible cell, so no dominant genome; writing the biologically-unavailable record`);
+    await runAssay(spec, out, { quench: false, swap: { label: "swap-ea", from: a["swap-from"], words: null }, biologicallyUnavailable: r3RepUnavailableOf(provenance.donor!), ...extra }, () => false);
+    return;
+  }
+  let swap: { words: Uint32Array; label: string; from: string } | null = null;
+  if (donor !== null) {
+    const dom = dominantGenome(donor)!;
+    swap = { words: dom.words, label: "swap-ea", from: `${a["swap-from"]} (dominant ${dom.hi}:${dom.lo})` };
+    // The planted words are the donor's dominant genome under the tie rule: what was recorded, and what the donor state gives again.
+    const recorded = provenance.donor!.dominant!;
+    const again = r3RepDominantRecord(dominantGenome(donor));
+    if (again === null || again.id !== recorded.id || again.words !== recorded.words || words(swap.words) !== recorded.words) throw new Error(`the Ge-on-Fa words are not the donor's dominant genome ${recorded.id}`);
+  } else if (inoculum === "swap-ae") swap = { words: encodeGenome(founderGenome(M3_FOUNDERS[2]), 0, 1), label: "swap-ae", from: "M3_FOUNDERS[2]" };
+  spec.plan = (sigma, f) => {
+    const fr = standardFragment(spec.source, spec.k, sigma, f);
+    const item = fr === null ? null : a.quench ? quench(fr) : swap ? swapGenome(fr, swap.words) : fr;
+    return { item: fragmentItem(item), family: -1 };
+  };
+  await runAssay(spec, out, { quench: !!a.quench, swap: swap && { label: swap.label, from: swap.from, words: words(swap.words) }, ...extra });
+}
+
 switch (cmd) {
   case "competence": {
     const spec = await specFromArgs("competence");
+    if ("r3rep" in spec.labels) {
+      await competenceR3Rep(spec, spec.labels);
+      break;
+    }
     const swap = await swapSpec();
     if (swap) spec.inoculum = swap.label;
     else if (a.quench) spec.inoculum = "quenched";
@@ -372,7 +529,7 @@ switch (cmd) {
     if (!a["allow-any-seed"]) {
       if ("r1dprime" in spec.labels) checkR1dPrimeDonorSeed(spec.labels, donorSeed);
       else if ("r1prime" in spec.labels) checkR1PrimeDonorSeed(spec.labels, donorSeed);
-      else checkDonorSeed(spec.labels, donorSeed);
+      else if (!("r3rep" in spec.labels)) checkDonorSeed(spec.labels, donorSeed); // --r3rep never reaches transmission (refused above)
     }
     // R1'': the regime and the source are the protocol's (production runs), and the assay records where it came from.
     let r1dp: Record<string, unknown> = {};
@@ -419,8 +576,25 @@ switch (cmd) {
     const src = await loadCheckpoint(need("source"));
     const steps = int("steps", 1);
     const seed = checkSeed("seed", int("seed", 0));
+    if (a.r3rep && a["mut-rate"] !== undefined) throw new Error("continue --r3rep runs with mutation on at the source's (default) rate: --mut-rate does not apply");
     const mutRate = a["mut-rate"] === undefined ? src.cfg.mutRate : int("mut-rate", 0);
     if (mutRate === 0) throw new Error("continue runs with mutation on: the source has mutRate 0 (pass --mut-rate)");
+    // R3 replication: the source is the labelled world's timing (a) source, and the sidecar written last says where the timing (b) state came from.
+    let r3rep: { h: number; origin: R3RepOrigin; sidecar: string; sha: string } | null = null;
+    if (a.r3rep) {
+      const world = parseR3RepContinueLabels({ arm: a.arm, history: a.history, h: a.h, timing: a.timing, time: a.time, calibration: a.calibration, control: a.control });
+      const h = world.h;
+      const out = need("out");
+      const origin = await r3RepOriginOf(need("source"), src);
+      const problems = [...r3RepOriginProblems(h, origin, R3REP_SHA256.protocol), ...r3RepContinueProblems(h, { seed, steps, censusEvery: int("census", 1), out })];
+      if (problems.length > 0 && !a["allow-any-seed"]) throw new Error(`continue --r3rep of ${r3RepIdOf(world)} (h ${h}): ${problems.join("; ")}`);
+      await checkR3RepProtocol();
+      r3rep = { h, origin, sidecar: r3RepSidecarPathOf(out), sha: R3REP_SHA256.r3rep };
+      // A sidecar describes the checkpoint beside it: a stale one goes before that checkpoint is rewritten.
+      await Deno.remove(r3rep.sidecar).catch((e) => {
+        if (!(e instanceof Deno.errors.NotFound)) throw e;
+      });
+    }
     const state: WorldState = { ...src, cfg: { ...src.cfg, seed, mutRate } };
     const device = await requestDevice(navigator.gpu, state.cfg);
     const sim = await GpuSim.create(device, state);
@@ -431,6 +605,11 @@ switch (cmd) {
       if (!r.conservationOk) throw new Error("matter or the energy ledger broke during the continuation");
       const end = await sim.readState();
       await saveCheckpoint(need("out"), end);
+      if (r3rep) {
+        const sidecar = r3RepContinuationOf({ h: r3rep.h, origin: r3rep.origin, end: r3RepCheckpointOf(need("out"), end), steps, protocolSha256R3rep: r3rep.sha });
+        await Deno.writeTextFile(`${r3rep.sidecar}.tmp`, JSON.stringify(sidecar, null, 2) + "\n");
+        await Deno.rename(`${r3rep.sidecar}.tmp`, r3rep.sidecar);
+      }
       console.log(`continue ${a.source}: ${steps} steps from step ${src.step} to ${end.step}, ${r.events} mutation events, seed ${seed}, conservation OK, ${((performance.now() - t0) / 1000).toFixed(1)}s -> ${a.out}`);
     } finally {
       sim.destroy();

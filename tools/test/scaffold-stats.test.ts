@@ -1,11 +1,58 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
-import { assaySeed } from "../lib/ponds.ts";
-import { ASSAY_COLUMNS, M_ASSAY, TAU_LABELS, assayJson, assayLine, censusSteps, checkAssaySeeds, checkDonorSeed, decodeAssaySeed, donorSeedOf, parseAssayLabels, parseR1PrimeLabels, r1PrimeH, r1PrimeSeed, r1dPrimeIdOf, r1dPrimeLabelsOf, r1dPrimeSeed, traitsTable, type Planted, type R1dPrimeProvenance } from "../lib/pond-assay.ts";
+import { GENOME_CHANNELS, allocState, encodeCheckpoint, stateHash } from "@bl/schema";
+import { assaySeed, pondConfig } from "../lib/ponds.ts";
+import {
+  ASSAY_COLUMNS,
+  M_ASSAY,
+  R3REP_SHA256,
+  R3REP_SWAP_AE_WORDS,
+  TAU_LABELS,
+  assayJson,
+  assayLine,
+  censusSteps,
+  checkAssaySeeds,
+  checkDonorSeed,
+  decodeAssaySeed,
+  donorSeedOf,
+  parseAssayLabels,
+  parseR1PrimeLabels,
+  r1PrimeH,
+  r1PrimeSeed,
+  r1dPrimeIdOf,
+  r1dPrimeLabelsOf,
+  r1dPrimeSeed,
+  r3RepContinuationOf,
+  r3RepContinuationPathOf,
+  r3RepContinueSeed,
+  r3RepDominantRecord,
+  r3RepExpectedSets,
+  r3RepHistoryOf,
+  r3RepIdOf,
+  r3RepLabelsOf,
+  r3RepRunDirOf,
+  r3RepSeed,
+  r3RepSeedHOf,
+  r3RepSeedOf,
+  r3RepSetIdOf,
+  r3RepUnavailableOf,
+  r3RepWorldSeedOf,
+  traitsTable,
+  type Planted,
+  type R1dPrimeProvenance,
+  type R3RepCheckpoint,
+  type R3RepDominant,
+  type R3RepInoculum,
+  type R3RepLabelSet,
+  type R3RepOrigin,
+  type R3RepProvenance,
+} from "../lib/pond-assay.ts";
 import {
   DECISION_TABLE,
   NO_REPLAY_CHECK,
@@ -66,6 +113,12 @@ import {
   r2Evaluate,
   r2Verdict,
   r3Evaluate,
+  r3RepEvaluate,
+  r3RepRunOf,
+  r3RepRunsSummary,
+  r3RepScreen,
+  r3RepSideBySide,
+  r3RepTrajectory,
   r3Verdict,
   r4RowsOf,
   r4Table,
@@ -95,6 +148,8 @@ import {
   type R1dPrimeFragment,
   type R1dPrimeRun,
   type R1dPrimeSet,
+  type R3RepReload,
+  type R3RepRun,
   type ReplayCheck,
   type TraitSetDir,
 } from "../lib/scaffold-stats.ts";
@@ -3876,5 +3931,806 @@ describe("scaffold-report r1dprime", () => {
     const dp = report("r1dprime", "--assays", root);
     expect(dp.skipped).toBe(11);
     expect(dp.histories.filter((x: { outcome: string }) => x.outcome === "analysed")).toHaveLength(3);
+  });
+});
+
+// ---- the R3 replication (docs/scaffold-r3-replication-v1.md) ---------------------------------------
+
+const RR_V1 = "1".repeat(64); // protocol v1's SHA-256, as a run's meta.json records it
+const RR_SHA = "3".repeat(64); // the replication protocol's
+const RR_SHAS = { protocol: RR_V1, r3rep: RR_SHA };
+/** A root no test machine has, so the CLI cannot reach (or re-hash) the recorded checkpoints. */
+const RR_ROOT = "/nonexistent-r3rep-fixture/runs/scaffold";
+const RR_DOMINANT = r3RepDominantRecord({ hi: 7, lo: 42, words: new Uint32Array(GENOME_CHANNELS).fill(0xab) })!;
+
+/** State hashes by h, for fixtures whose recorded checkpoints are real (`writeCheckpoints`); any other h records a made-up one. */
+type RrHashes = Readonly<Record<number, string>>;
+
+/** A timing (a) source of h as the assay records it: b100-pre (b1-pre for the ancestor), or the terminal b<e>-pre of a history that ended at e. */
+function rrOrigin(h: number, endedAt?: number, root = RR_ROOT, sha = RR_V1, hashes: RrHashes = {}): R3RepOrigin {
+  const l = r3RepHistoryOf(h);
+  const ancestor = l.arm === "ancestor";
+  const N = endedAt ?? (ancestor ? 1 : 100);
+  const seed = r3RepWorldSeedOf(h);
+  return {
+    source: `${root}/${r3RepRunDirOf(h)}/ckpt/b${N}-pre.blck.gz`,
+    stateHash: hashes[h] ?? `a${h}`.padEnd(16, "0"),
+    seed,
+    mutRate: DP_MUT,
+    step: N * 10_000,
+    tilesX: 8,
+    tilesY: 8,
+    run: {
+      meta: { arm: ancestor ? "cont" : l.arm, k: l.arm === "scaf" || l.arm === "rand" ? 8 : 0, period: 10_000, cycles: ancestor ? 1 : 100, side: 8, seed, mutRate: DP_MUT, init: "clone", censusEvery: 100, protocolSha256: sha },
+      done: endedAt === undefined ? { ok: true, conservationOk: true, cycles: ancestor ? 1 : 100, ended: false } : { ok: true, conservationOk: true, cycles: endedAt, ended: true, endedAt },
+    },
+  };
+}
+
+/** The provenance the assay records for a set: the timing (a) origin (the ancestor's for Ge-on-Fa), or the continuation with its sidecar; Ge-on-Fa's donor. */
+function rrProvenance(labels: R3RepLabelSet, inoculum: R3RepInoculum, o: { endedAt?: number; dominant?: R3RepDominant | null; root?: string; sha?: typeof RR_SHAS; hashes?: RrHashes } = {}): R3RepProvenance {
+  const root = o.root ?? RR_ROOT;
+  const sha = o.sha ?? RR_SHAS;
+  let p: R3RepProvenance;
+  if (labels.timing === "a") p = rrOrigin(r3RepSeedHOf(labels, inoculum), inoculum === "swap-ea" ? undefined : o.endedAt, root, sha.protocol, o.hashes);
+  else {
+    const from = rrOrigin(labels.h, o.endedAt, root, sha.protocol, o.hashes);
+    const end = { source: `${root}/${r3RepContinuationPathOf(labels.h)}`, stateHash: `e${labels.h}`.padEnd(16, "0"), seed: r3RepContinueSeed(labels.h), mutRate: DP_MUT, step: from.step + 200_000, tilesX: 8, tilesY: 8 };
+    p = { ...end, continuation: r3RepContinuationOf({ h: labels.h, origin: from, end, steps: 200_000, protocolSha256R3rep: sha.r3rep }), origin: from };
+  }
+  if (inoculum === "swap-ea") p.donor = { ...rrOrigin(labels.h, o.endedAt, root, sha.protocol, o.hashes), dominant: o.dominant === undefined ? RR_DOMINANT : o.dominant };
+  return p;
+}
+
+interface RrFixture {
+  json: Record<string, unknown>;
+  rows: AssayRow[];
+  text: string;
+}
+
+/** Successes out of 128 by default: scaf 0.8, rand and cont 0.3, the ancestor 0.4, Ge-on-Fa 0.6, Ga-on-Fe 0.1, quenched 0 (decisive in every history, swap margin +0.5). */
+const rrDefault = (labels: R3RepLabelSet, inoculum: R3RepInoculum): number =>
+  inoculum === "quenched" ? 0 : inoculum === "swap-ea" ? 77 : inoculum === "swap-ae" ? 13 : labels.arm === "scaf" ? 102 : labels.arm === "ancestor" ? 51 : 38;
+
+/** The `swap` competence --r3rep records for a variant: Ge-on-Fa its donor's dominant genome (words null for the biological record), Ga-on-Fe M3_FOUNDERS[2]. */
+function rrSwap(inoculum: R3RepInoculum, provenance: R3RepProvenance): Record<string, unknown> | null {
+  if (inoculum === "swap-ae") return { label: "swap-ae", from: "M3_FOUNDERS[2]", words: R3REP_SWAP_AE_WORDS };
+  if (inoculum !== "swap-ea") return null;
+  const d = provenance.donor!;
+  return d.dominant === null ? { label: "swap-ea", from: d.source, words: null } : { label: "swap-ea", from: `${d.source} (dominant ${d.dominant.id})`, words: d.dominant.words };
+}
+
+/**
+ * One set as `competence --r3rep` writes it: 128 rows of `inoculum` (replicate 0 then 1, 64 ponds), the first `successes` succeeding
+ * (or `success(j)`), the protocol's regime, seeds, treatment and provenance. `biological` writes Ge-on-Fa's record instead (no rows, donor with no dominant genome).
+ */
+function rrFixture(h: number, timing: "a" | "b", inoculum: R3RepInoculum, o: { successes?: number; success?: (j: number) => number; biological?: boolean; endedAt?: number; root?: string; sha?: typeof RR_SHAS; hashes?: RrHashes; json?: Record<string, unknown> } = {}): RrFixture {
+  const labels = r3RepLabelsOf(h, timing);
+  const sha = o.sha ?? RR_SHAS;
+  const provenance = rrProvenance(labels, inoculum, { endedAt: o.endedAt, dominant: o.biological ? null : undefined, root: o.root, sha, hashes: o.hashes });
+  const successes = o.successes ?? rrDefault(labels, inoculum);
+  const n = o.biological ? 0 : 128;
+  const success = o.success ?? ((j: number) => (j < successes ? 1 : 0));
+  const rows = Array.from({ length: n }, (_, j) => fragRow({ assay: "competence", replicate: j >= 64 ? 1 : 0, pond: j % 64, inoculum, retMass: 90 + (j % 7), retE: 180 + (j % 5), truncated: 0, endTrait: success(j) ? 120_000 : 100, success: success(j) }));
+  const json = JSON.parse(
+    JSON.stringify({
+      ...assayJson({
+        ...BASE_JSON,
+        protocolSha256: sha.protocol,
+        assay: "competence",
+        source: provenance.source,
+        tag: r3RepIdOf(labels),
+        k: 8,
+        period: 10_000,
+        ref: 103_058,
+        side: 8,
+        replicates: 2,
+        inoculum,
+        seeds: [0, 1].map((s) => ({ physics: r3RepSeedOf(labels, inoculum, s), fragment: r3RepSeedOf(labels, inoculum, s) })),
+        labels,
+        extra: { quench: inoculum === "quenched", swap: rrSwap(inoculum, provenance), provenance, protocolSha256R3rep: sha.r3rep, ...(o.biological ? { biologicallyUnavailable: r3RepUnavailableOf(provenance.donor!) } : {}) },
+        summary: { rows: n },
+      }),
+      ...o.json,
+    }),
+  ) as Record<string, unknown>;
+  const planted = (r: AssayRow): Planted => ({ reqMass: r.retMass, retMass: r.retMass, reqE: r.retE ?? 0, retE: r.retE ?? 0, landed: 9, truncated: false });
+  const text = [ASSAY_COLUMNS.join("\t"), ...rows.map((r) => assayLine({ assay: "competence", source: "t", replicate: r.replicate, pond: r.pond, family: -1, inoculum, planted: planted(r), endTrait: r.endTrait, success: r.success }))].join("\n") + "\n";
+  return { json, rows, text };
+}
+
+/** The 62 sets of the replication by id, with `over` changing (or `drop` leaving out) any of them. */
+function rrWorld(o: { over?: Record<string, Parameters<typeof rrFixture>[3]>; drop?: string[]; root?: string; sha?: typeof RR_SHAS; hashes?: RrHashes } = {}): Map<string, RrFixture> {
+  const out = new Map<string, RrFixture>();
+  for (const { labels, inoculum } of r3RepExpectedSets()) {
+    const id = r3RepSetIdOf(labels, inoculum);
+    if (o.drop?.includes(id)) continue;
+    out.set(id, rrFixture(labels.h, labels.timing, inoculum, { root: o.root, sha: o.sha, hashes: o.hashes, ...o.over?.[id] }));
+  }
+  return out;
+}
+
+const rrDir = (id: string, f: RrFixture) => ({ dir: id, json: f.json, rows: f.rows });
+
+/** A recorded checkpoint's record, without its run directory or dominant genome. */
+const rrRecord = (x: R3RepCheckpoint): R3RepCheckpoint => ({ source: x.source, stateHash: x.stateHash, seed: x.seed, mutRate: x.mutRate, step: x.step, tilesX: x.tilesX, tilesY: x.tilesY });
+
+/**
+ * What a reader that reached every checkpoint the sets `fs` record would reload: each as recorded, a donor with its recorded dominant
+ * genome (none for a biological record), so a biological record is verified.
+ */
+function rrReloaded(...fs: RrFixture[]): Map<string, R3RepReload> {
+  const out = new Map<string, R3RepReload>();
+  for (const f of fs) {
+    const p = f.json.provenance as R3RepProvenance;
+    for (const x of [p, p.origin]) if (x && !out.has(x.source)) out.set(x.source, { record: rrRecord(x), dominant: null });
+    if (p.donor) out.set(p.donor.source, { record: rrRecord(p.donor), dominant: p.donor.dominant });
+  }
+  return out;
+}
+
+/** Screens `world` (strict unless said) with the checkpoints `reloaded` holds, and evaluates it, with the rejected sets carried into availability. */
+function rrEvaluate(world: Map<string, RrFixture>, extra: { dir: string; json: Record<string, unknown>; rows: AssayRow[] }[] = [], reloaded?: ReadonlyMap<string, R3RepReload>) {
+  const screened = r3RepScreen([...[...world].map(([id, f]) => rrDir(id, f)), ...extra], { sha: RR_SHAS, reloaded });
+  return { screened, ...r3RepEvaluate(screened.accepted, screened.rejected) };
+}
+
+describe("R3 replication screening", () => {
+  const screenOne = (f: RrFixture, o: Partial<Parameters<typeof r3RepScreen>[1]> = {}) => {
+    const r = r3RepScreen([rrDir("d", f)], { sha: RR_SHAS, ...o });
+    return { ...r, reasons: r.rejected.flatMap((x) => x.reasons).join(" | ") };
+  };
+
+  it("accepts the 62 protocol sets, every variant, with the recorded checkpoints it could not reach listed as unverifiable", () => {
+    const r = r3RepScreen([...rrWorld()].map(([id, f]) => rrDir(id, f)), { sha: RR_SHAS });
+    expect(r.rejected).toEqual([]);
+    expect(r.accepted.map((s) => s.id)).toEqual(r3RepExpectedSets().map(({ labels, inoculum }) => r3RepSetIdOf(labels, inoculum)));
+    const ea = r.accepted.find((s) => s.id === "scaf-i2-a-swap-ea")!;
+    expect(ea).toMatchObject({ labels: { arm: "scaf", history: 2, timing: "a", h: 2 }, inoculum: "swap-ea", biological: false, ref: 103_058 });
+    expect(ea.unverifiable).toEqual([`source ${RR_ROOT}/r3rep/anc/ckpt/b1-pre.blck.gz`, `donor ${RR_ROOT}/r3rep/main/scaf/i2/ckpt/b100-pre.blck.gz`]);
+    expect(r.accepted.find((s) => s.id === "cont-i3-b")!.unverifiable).toEqual([`source ${RR_ROOT}/r3rep/cont200k/cont-i3.blck.gz`, `continuation source ${RR_ROOT}/r3rep/main/cont/i3/ckpt/b100-pre.blck.gz`]);
+    // an ended history's terminal pre-cycle state is its source, at (a) and through its continuation at (b)
+    for (const timing of ["a", "b"] as const) expect(screenOne(rrFixture(4, timing, "fragment", { endedAt: 61 })).rejected).toEqual([]);
+  });
+
+  it("checks the seeds against the formula, with Ge-on-Fa on the ancestor's h = 18", () => {
+    const at = (seed: number) => [0, 1].map((s) => ({ physics: seed + s, fragment: seed + s }));
+    expect(screenOne(rrFixture(3, "a", "swap-ea", { json: { seeds: at(r3RepSeed(3, 0, 0)) } })).reasons).toMatch(/want r3RepSeed\(18, 0, 0\) = 4818101/);
+    expect(screenOne(rrFixture(3, "a", "swap-ea", { json: { seeds: at(r3RepSeed(18, 0, 0)) } })).rejected).toEqual([]);
+    expect(screenOne(rrFixture(3, "a", "swap-ae", { json: { seeds: at(r3RepSeed(18, 0, 0)) } })).reasons).toMatch(/want r3RepSeed\(3, 0, 0\) = 4816601/);
+    expect(screenOne(rrFixture(8, "b", "fragment", { json: { seeds: at(r3RepSeed(8, 0, 0)) } })).reasons).toMatch(/want r3RepSeed\(8, 1, 0\)/);
+    expect(screenOne(rrFixture(8, "b", "fragment", { json: { seeds: [{ physics: r3RepSeed(8, 1, 0), fragment: r3RepSeed(8, 1, 1) }, { physics: r3RepSeed(8, 1, 1), fragment: r3RepSeed(8, 1, 1) }] } })).reasons).toMatch(/fragment seed 4817112/);
+    expect(screenOne(rrFixture(8, "b", "fragment", { json: { seeds: at(r3RepSeed(8, 1, 0)).slice(0, 1) } })).reasons).toMatch(/1 seeds, want 2/);
+    // the quenched control and Ga-on-Fe share their scaf source's seeds (common random numbers)
+    expect(screenOne(rrFixture(0, "b", "quenched", { json: { seeds: at(r3RepSeed(0, 1, 0)) } })).rejected).toEqual([]);
+  });
+
+  it("rejects the wrong regime, protocol hash, labels or variant, with the reasons", () => {
+    const f = (json: Record<string, unknown>, h = 1, timing: "a" | "b" = "a", inoculum: R3RepInoculum = "fragment") => screenOne(rrFixture(h, timing, inoculum, { json }));
+    expect(f({ k: 5 }).reasons).toMatch(/k 5, want 8/);
+    expect(f({ period: 3000 }).reasons).toMatch(/period 3000, want 10000/);
+    expect(f({ ref: 40 }).reasons).toMatch(/ref 40, want 103058/);
+    expect(f({ censusEvery: 50 }).reasons).toMatch(/censusEvery 50, want 100/);
+    expect(f({ side: 4 }).reasons).toMatch(/side 4, want 8/);
+    expect(f({ replicates: 1 }).reasons).toMatch(/replicates 1, want 2/);
+    expect(f({ protocolSha256R3rep: "4".repeat(64) }).reasons).toMatch(/protocolSha256R3rep "4{64}" is not the pinned SHA-256 of docs\/scaffold-r3-replication-v1\.md/);
+    expect(f({ protocolSha256R3rep: undefined }).reasons).toMatch(/protocolSha256R3rep undefined/);
+    expect(f({ assay: "garden" }).reasons).toMatch(/assay "garden", want competence/);
+    // labels that are not this block's: no id to attribute them to
+    const noLabel = f({ labels: { arm: "scaf", history: 1, timing: "a", h: 1 } });
+    expect(noLabel.rejected[0]).toMatchObject({ id: null, reasons: ["labels.r3rep is not true"] });
+    expect(f({ labels: { arm: "rand", history: 1, timing: "a", r3rep: true, h: 1 } }).reasons).toMatch(/labels\.arm "rand", want "scaf" for h 1/);
+    expect(f({ labels: { arm: "scaf", history: 1, timing: "c", r3rep: true, h: 1 } }).reasons).toMatch(/labels\.timing "c"/);
+    // variants the protocol does not have
+    expect(f({}, 7, "a", "quenched").reasons).toMatch(/quenched labels a scaf history, not rand/);
+    expect(f({}, 1, "b", "swap-ae").reasons).toMatch(/swap-ae runs at timing a only/);
+    expect(f({ inoculum: "disc" }).reasons).toMatch(/inoculum "disc"/);
+    // a rejected set keeps its id, so the stage can say why that set is unavailable
+    expect(f({ side: 4 }).rejected[0].id).toBe("scaf-i1-a");
+  });
+
+  it("rejects a source that is not the protocol's: path, seed, step, protocol hash, ended history, continuation", () => {
+    const labels = r3RepLabelsOf(0, "a");
+    const prov = (over: Record<string, unknown>, timing: "a" | "b" = "a", h = 0) => {
+      const p = { ...rrProvenance(r3RepLabelsOf(h, timing), "fragment"), ...over };
+      return screenOne(rrFixture(h, timing, "fragment", { json: { provenance: p, source: p.source } })).reasons;
+    };
+    expect(prov({ seed: 4_811_002 })).toMatch(/source seed 4811002, want 4811001/);
+    expect(prov({ step: 990_000 })).toMatch(/source step 990000, want 1000000/);
+    expect(prov({ mutRate: 0 })).toMatch(/source mutRate 0, want 429497/);
+    expect(prov({ source: `${RR_ROOT}/r3rep/main/scaf/i0/ckpt/b100-post.blck.gz` })).toMatch(/does not end in r3rep\/main\/scaf\/i0\/ckpt\/b<N>-pre\.blck\.gz/);
+    expect(prov({ source: `${RR_ROOT}/rep/main/scaf/i0/ckpt/b100-pre.blck.gz` })).toMatch(/does not end in r3rep\/main\/scaf\/i0/);
+    // b<N>-pre with N < 100 is the source only of a history that ended there
+    expect(prov({ source: `${RR_ROOT}/r3rep/main/scaf/i0/ckpt/b61-pre.blck.gz`, step: 610_000 })).toMatch(/b61-pre, but the history did not end/);
+    const ended = rrOrigin(0, 61);
+    expect(prov({ ...ended, run: { ...ended.run, done: { ...ended.run.done, endedAt: 60 } } })).toMatch(/ended at boundary 60, but the source is b61-pre/);
+    expect(prov({ run: { ...rrOrigin(0).run, meta: { ...rrOrigin(0).run.meta, protocolSha256: "f".repeat(64) } } })).toMatch(/run meta\.json protocolSha256 "f{64}", want "1{64}"/);
+    expect(prov({ run: { meta: null, done: null } })).toMatch(/not inside a run directory with a readable meta\.json/);
+    // the provenance is of the assay's own source
+    const own = rrProvenance(labels, "fragment");
+    expect(screenOne(rrFixture(0, "a", "fragment", { json: { source: "elsewhere.blck.gz", provenance: own } })).reasons).toMatch(/provenance\.source ".*b100-pre\.blck\.gz" is not the assay's source "elsewhere\.blck\.gz"/);
+    expect(screenOne(rrFixture(0, "a", "fragment", { json: { provenance: undefined } })).reasons).toMatch(/no provenance of its source/);
+    // timing (b): the continuation's sidecar must name this history's (a) source, its seed and 2 x 10^5 steps
+    const b = rrProvenance(r3RepLabelsOf(13, "b"), "fragment") as R3RepProvenance & { continuation: Record<string, unknown> };
+    expect(prov({ continuation: { ...b.continuation, seed: 4_818_300 } }, "b", 13)).toMatch(/continuation seed 4818300, want 4818314/);
+    expect(prov({ continuation: { ...b.continuation, steps: 100_000, endStep: b.step - 100_000 } }, "b", 13)).toMatch(/continuation steps 100000, want 200000/);
+    expect(prov({ continuation: undefined }, "b", 13)).toMatch(/no continuation sidecar/);
+    expect(prov({ source: `${RR_ROOT}/r3rep/cont200k/cont-i2.blck.gz` }, "b", 13)).toMatch(/does not end in r3rep\/cont200k\/cont-i1\.blck\.gz/);
+    // Ge-on-Fa names the labelled scaf history as its donor, with a dominant-genome record
+    const ea = rrProvenance(r3RepLabelsOf(2, "a"), "swap-ea");
+    const eaWith = (donor: unknown) => screenOne(rrFixture(2, "a", "swap-ea", { json: { provenance: { ...ea, donor } } })).reasons;
+    expect(eaWith(rrOrigin(3))).toMatch(/donor seed 4811004, want 4811003/);
+    expect(eaWith({ ...ea.donor, dominant: { id: "1:2" } })).toMatch(/is not a dominant genome record/);
+  });
+
+  it("rejects an assay.tsv that does not fill the grid with the variant's rows", () => {
+    const f = rrFixture(0, "a", "fragment");
+    expect(screenOne({ ...f, rows: f.rows.slice(1) }).reasons).toBe("127 rows, want 128");
+    expect(screenOne({ ...f, rows: f.rows.map((r, j) => (j === 5 ? { ...r, pond: 0 } : r)) }).reasons).toBe("assay.tsv repeats a (replicate, pond) in 1 rows");
+    expect(screenOne({ ...f, rows: f.rows.map((r, j) => (j === 5 ? { ...r, replicate: 2 } : r)) }).reasons).toMatch(/1 rows outside the 2 x 64/);
+    expect(screenOne({ ...f, rows: f.rows.map((r, j) => (j < 3 ? { ...r, inoculum: "quenched" } : r)) }).reasons).toBe("3 assay.tsv rows are not fragment rows");
+    expect(screenOne({ ...f, rows: f.rows.map((r, j) => (j < 2 ? { ...r, success: -1 } : r)) }).reasons).toBe("2 assay.tsv rows have no success flag (0 or 1)");
+    expect(screenOne({ ...f, rows: f.rows.map((r, j) => (j < 1 ? { ...r, assay: "garden" } : r)) }).reasons).toBe("1 assay.tsv rows are not competence rows");
+    expect(screenOne({ ...f, json: { ...f.json, ref: null } }).reasons).toMatch(/ref null: competence needs a positive ref/);
+  });
+
+  it("re-hashes every recorded checkpoint it can reach, and lists the others as unverifiable", () => {
+    const f = rrFixture(2, "b", "fragment");
+    const p = f.json.provenance as R3RepProvenance;
+    const record = (x: R3RepCheckpoint): R3RepCheckpoint => ({ source: x.source, stateHash: x.stateHash, seed: x.seed, mutRate: x.mutRate, step: x.step, tilesX: x.tilesX, tilesY: x.tilesY });
+    const both = new Map<string, R3RepReload>([[p.source, { record: record(p), dominant: null }], [p.origin!.source, { record: record(p.origin!), dominant: RR_DOMINANT }]]);
+    const ok = screenOne(f, { reloaded: both });
+    expect(ok.rejected).toEqual([]);
+    expect(ok.accepted[0].unverifiable).toEqual([]);
+    // only the continued checkpoint reachable
+    expect(screenOne(f, { reloaded: new Map([...both].slice(0, 1)) }).accepted[0].unverifiable).toEqual([`continuation source ${p.origin!.source}`]);
+    // a checkpoint that changed since the assay, or that no longer reads
+    const changed = new Map(both).set(p.origin!.source, { record: { ...record(p.origin!), stateHash: "ffffffffffffffff" }, dominant: null });
+    expect(screenOne(f, { reloaded: changed }).reasons).toMatch(/^continuation source .*b100-pre\.blck\.gz has stateHash "ffffffffffffffff" now, but the assay recorded "a2000000/);
+    const moved = new Map(both).set(p.source, { record: { ...record(p), step: 1_000_000 }, dominant: null });
+    expect(screenOne(f, { reloaded: moved }).reasons).toMatch(/^source .*scaf-i2\.blck\.gz has step 1000000 now, but the assay recorded 1200000/);
+    expect(screenOne(f, { reloaded: new Map(both).set(p.source, { error: "incorrect header check" }) }).reasons).toMatch(/source .* could not be read: incorrect header check/);
+    // Ge-on-Fa's donor must still give the recorded dominant genome
+    const ea = rrFixture(2, "a", "swap-ea");
+    const donor = (ea.json.provenance as R3RepProvenance).donor!;
+    const other = r3RepDominantRecord({ hi: 7, lo: 43, words: new Uint32Array(GENOME_CHANNELS) });
+    expect(screenOne(ea, { reloaded: new Map([[donor.source, { record: record(donor), dominant: RR_DOMINANT }]]) }).rejected).toEqual([]);
+    expect(screenOne(ea, { reloaded: new Map([[donor.source, { record: record(donor), dominant: other }]]) }).reasons).toMatch(/donor .* has dominant genome 7:43, but the assay recorded 7:42/);
+    expect(screenOne(ea, { reloaded: new Map([[donor.source, { record: record(donor), dominant: null }]]) }).reasons).toMatch(/has dominant genome none \(no eligible cell\), but the assay recorded 7:42/);
+  });
+
+  it("accepts a biological Ge-on-Fa record only for swap-ea, and only if its checkpoints are reachable and its donor indeed has no dominant genome", () => {
+    const f = rrFixture(1, "a", "swap-ea", { biological: true, endedAt: 37 });
+    const p = f.json.provenance as R3RepProvenance;
+    const donor = p.donor!;
+    const unreachable = "a biologically unavailable record needs its checkpoints verified, but these are not reachable from here: ";
+    // reachable, and the donor with no eligible cell: verified
+    const near = screenOne(f, { reloaded: rrReloaded(f) });
+    expect(near.rejected).toEqual([]);
+    expect(near.accepted[0]).toMatchObject({ id: "scaf-i1-a-swap-ea", biological: true, ref: null, rows: [], unverifiable: [] });
+    // strict mode never takes "no dominant genome" from the record alone: an unreachable donor, or source, rejects it
+    expect(screenOne(f).reasons).toBe(`${unreachable}source ${RR_ROOT}/r3rep/anc/ckpt/b1-pre.blck.gz; donor ${donor.source}`);
+    expect(screenOne(f, { reloaded: new Map([[p.source, { record: rrRecord(p), dominant: null }]]) }).reasons).toBe(`${unreachable}donor ${donor.source}`);
+    expect(screenOne(f, { reloaded: new Map([[donor.source, { record: rrRecord(donor), dominant: null }]]) }).reasons).toBe(`${unreachable}source ${p.source}`);
+    // a smoke run (--allow-any-seed) lets it stand on its record, listed as unverifiable
+    const smoke = screenOne(f, { allowAnySeed: true });
+    expect(smoke.rejected).toEqual([]);
+    expect(smoke.accepted[0]).toMatchObject({ biological: true, unverifiable: [`source ${p.source}`, `donor ${donor.source}`] });
+    // reachable and with a dominant genome: the record is false
+    expect(screenOne(f, { reloaded: rrReloaded(f).set(donor.source, { record: rrRecord(donor), dominant: RR_DOMINANT }) }).reasons).toBe(`donor ${donor.source} has a dominant genome (7:42), so its Ge-on-Fa set is not biologically unavailable`);
+    // only Ge-on-Fa can be biologically unavailable, and it has no rows
+    const q = rrFixture(1, "a", "quenched");
+    expect(screenOne({ ...q, json: { ...q.json, biologicallyUnavailable: f.json.biologicallyUnavailable } }).reasons).toMatch(/only Ge-on-Fa \(swap-ea\) can be biologically unavailable/);
+    expect(screenOne({ ...f, rows: rrFixture(1, "a", "swap-ea").rows }).reasons).toMatch(/128 rows, want 0/);
+    expect(screenOne({ ...f, json: { ...f.json, biologicallyUnavailable: { ...(f.json.biologicallyUnavailable as object), donorStateHash: "x" } } }).reasons).toMatch(/biologicallyUnavailable .* want/);
+  });
+
+  it("checks each variant's recorded treatment: Ge-on-Fa's words are its donor's dominant genome, Ga-on-Fe's M3_FOUNDERS[2]'s", () => {
+    const ea = rrProvenance(r3RepLabelsOf(2, "a"), "swap-ea");
+    const nullDonor = { ...ea, donor: { ...ea.donor!, dominant: null } };
+    const record = (x: R3RepCheckpoint): R3RepCheckpoint => ({ source: x.source, stateHash: x.stateHash, seed: x.seed, mutRate: x.mutRate, step: x.step, tilesX: x.tilesX, tilesY: x.tilesY });
+    // (A) a Ge-on-Fa set with rows whose donor records no dominant genome: not the biological record, and not a swap of anything;
+    // a reachable donor with none agrees with the record, so only the treatment check catches it
+    for (const words of [RR_DOMINANT.words, null]) {
+      const a = rrFixture(2, "a", "swap-ea", { json: { provenance: nullDonor, swap: { label: "swap-ea", from: "x", words } } });
+      expect(screenOne(a).reasons).toMatch(/provenance\.donor\.dominant null: a Ge-on-Fa set with rows plants its donor's dominant genome/);
+      expect(screenOne(a, { reloaded: new Map([[ea.donor!.source, { record: record(ea.donor!), dominant: null }]]) }).accepted).toEqual([]);
+      expect(screenOne(a, { allowAnySeed: true }).accepted).toEqual([]);
+    }
+    // (B) planted words that are not the donor's dominant genome: rejected, so the history is unavailable and fails the swap criterion
+    const other = r3RepDominantRecord({ hi: 7, lo: 42, words: new Uint32Array(GENOME_CHANNELS).fill(0xcd) })!.words;
+    const b = rrFixture(2, "a", "swap-ea", { json: { swap: { label: "swap-ea", from: "x", words: other } } });
+    expect(screenOne(b).reasons).toBe("swap words are not the donor's dominant genome 7:42 (provenance.donor.dominant.words)");
+    const r = rrEvaluate(rrWorld({ over: { "scaf-i2-a-swap-ea": { json: { swap: { label: "swap-ea", from: "x", words: other } } } } }));
+    expect(r.histories[2]).toMatchObject({ available: false, missing: [{ id: "scaf-i2-a-swap-ea", why: "set rejected: swap words are not the donor's dominant genome 7:42 (provenance.donor.dominant.words)" }] });
+    expect(r.counts).toMatchObject({ availableHistories: 5, swapHistories: 5 });
+    // Ga-on-Fe plants the ancestor and nothing else
+    expect(screenOne(rrFixture(0, "a", "swap-ae", { json: { swap: { label: "swap-ae", from: "M3_FOUNDERS[1]", words: other } } })).reasons).toBe("swap words are not M3_FOUNDERS[2]'s: Ga-on-Fe plants the ancestor's genome and nothing else");
+    expect(screenOne(rrFixture(0, "a", "swap-ae", { json: { swap: null } })).reasons).toMatch(/^swap null, want the swap-ae genome it planted/);
+    expect(screenOne(rrFixture(2, "a", "swap-ea", { json: { swap: { label: "swap-ae", from: "M3_FOUNDERS[2]", words: R3REP_SWAP_AE_WORDS } } })).reasons).toMatch(/want the swap-ea genome it planted/);
+    // the quenched control is quenched and unswapped; the source's own fragments neither
+    expect(screenOne(rrFixture(0, "b", "quenched", { json: { quench: false } })).reasons).toBe("quench false, want true for quenched");
+    expect(screenOne(rrFixture(0, "b", "quenched", { json: { swap: { label: "swap-ae", from: "M3_FOUNDERS[2]", words: R3REP_SWAP_AE_WORDS } } })).reasons).toMatch(/^swap .*, want null: quenched plants no swapped genome/);
+    expect(screenOne(rrFixture(7, "a", "fragment", { json: { quench: true } })).reasons).toBe("quench true, want false for fragment");
+    expect(screenOne(rrFixture(7, "a", "fragment", { json: { swap: { label: "swap-ea", from: "x", words: other } } })).reasons).toMatch(/^swap .*, want null: fragment plants no swapped genome/);
+    expect(screenOne(rrFixture(7, "a", "fragment", { json: { quench: undefined } })).reasons).toBe("quench undefined, want false for fragment");
+    // the biological record plants nothing (its checkpoints reached, so that is the only problem)
+    const planted = rrFixture(1, "a", "swap-ea", { biological: true, json: { swap: { label: "swap-ea", from: "x", words: RR_DOMINANT.words } } });
+    expect(screenOne(planted, { reloaded: rrReloaded(planted) }).reasons).toBe("swap words are recorded, but a biologically unavailable record plants no genome (words null)");
+    // as the tool writes them, every variant passes (the 62-set world above), smoke sets included
+    for (const inoculum of ["fragment", "quenched", "swap-ea", "swap-ae"] as const) expect(screenOne(rrFixture(0, "a", inoculum), { allowAnySeed: true }).rejected).toEqual([]);
+  });
+
+  it("(vii) rejects every one of two sets for one (arm, history, timing, variant), without throwing", () => {
+    const a = rrDir("a", rrFixture(0, "a", "quenched"));
+    const b = rrDir("b", rrFixture(0, "a", "quenched"));
+    const c = rrDir("c", rrFixture(0, "b", "quenched"));
+    const r = r3RepScreen([a, b, c], { sha: RR_SHAS });
+    expect(r.accepted.map((x) => x.dir)).toEqual(["c"]);
+    expect(r.rejected.map((x) => [x.dir, x.id])).toEqual([["a", "scaf-i0-a-quenched"], ["b", "scaf-i0-a-quenched"]]);
+    expect(r.rejected[0].reasons[0]).toMatch(/same R3-replication set \(scaf-i0-a-quenched\) as b; a stage would count both/);
+    // a failed attempt beside a sound one is not a duplicate: the sound one stands
+    const failed = rrDir("failed", rrFixture(0, "a", "quenched", { json: { side: 4 } }));
+    expect(r3RepScreen([failed, a], { sha: RR_SHAS }).accepted.map((x) => x.dir)).toEqual(["a"]);
+  });
+
+  it("--allow-any-seed waives the regime, seeds, hash and provenance of a smoke set, not its labels, variant or grid", () => {
+    const f = rrFixture(0, "a", "fragment", { json: { side: 2, replicates: 1, period: 300, seeds: [{ physics: 1, fragment: 1 }], provenance: undefined, protocolSha256R3rep: undefined } });
+    const small = { ...f, rows: f.rows.filter((r) => r.replicate === 0 && r.pond < 4) };
+    expect(screenOne(small).rejected).toHaveLength(1);
+    const ok = screenOne(small, { allowAnySeed: true });
+    expect(ok.reasons).toBe("");
+    expect(ok.accepted[0].rows).toHaveLength(4);
+    expect(screenOne({ ...small, rows: small.rows.slice(1) }, { allowAnySeed: true }).reasons).toBe("3 rows, want 4");
+    expect(screenOne({ ...small, json: { ...small.json, labels: { arm: "scaf" } } }, { allowAnySeed: true }).reasons).toMatch(/labels\.r3rep is not true/);
+    expect(screenOne({ ...small, json: { ...small.json, inoculum: "swap-ea" } }, { allowAnySeed: true }).reasons).toMatch(/3 assay\.tsv rows are not swap-ea rows|4 assay\.tsv rows are not swap-ea rows/);
+  });
+});
+
+describe("R3 replication rule", () => {
+  it("(i) replicates when decisive: advantage and swap criterion in at least 4 of 6, every set available, no quenched control above 0.05", () => {
+    const r = rrEvaluate(rrWorld());
+    expect(r.screened.rejected).toEqual([]);
+    expect(r).toMatchObject({ outcome: "replicates", failed: [] });
+    expect(r.reasons[0]).toMatch(/^decisive: advantage .* in 6 of 6 histories, the swap criterion in 6 of 6/);
+    expect(r.counts).toEqual({ evaluated: true, availableHistories: 6, advantageHistories: 6, swapHistories: 6, need: 4, decisive: true });
+    expect(r.availability).toMatchObject({ expected: 62, available: 62, biological: 0, unavailable: 0, ancestor: { a: true, b: true }, availableHistories: 6 });
+    expect(r.quenched).toMatchObject({ limit: 0.05, available: 12, max: 0, allAvailable: true, unreliable: false });
+    expect(r.histories[0]).toMatchObject({ history: 0, available: true, missing: [], biologicalSwapEa: false, advantage: true, swapCriterion: true, swapEa: 77 / 128, swapAe: 13 / 128, quenched: { a: 0, b: 0 } });
+    // margins in fragments of 128, exact: adv over rand 102 - 38, over the ancestor 102 - 51; swap (77 - 51) - 0.5 (102 - 51)
+    expect(r.histories[0].margins).toEqual({ a: { rand: 64, cont: 64, ancestor: 51 }, b: { rand: 64, cont: 64, ancestor: 51 }, swap: 0.5 });
+    // the 4-of-6 edge: two histories losing to rand at (b) and two others failing the swap criterion still replicate
+    const edge = rrEvaluate(rrWorld({ over: { "rand-i0-b": { successes: 102 }, "rand-i1-b": { successes: 110 }, "scaf-i2-a-swap-ea": { successes: 76 }, "scaf-i3-a-swap-ea": { successes: 60 } } }));
+    expect(edge.counts).toMatchObject({ advantageHistories: 4, swapHistories: 4 });
+    expect(edge.outcome).toBe("replicates");
+    expect(edge.histories[2].margins.swap).toBe(-0.5);
+    expect(edge.histories[0].margins.b.rand).toBe(0); // a tie is not an advantage
+    const three = rrEvaluate(rrWorld({ over: { "rand-i0-b": { successes: 102 }, "rand-i1-b": { successes: 110 }, "cont-i2-a": { successes: 102 } } }));
+    expect(three).toMatchObject({ outcome: "does not replicate", failed: ["advantage"] });
+    expect(three.reasons[0]).toMatch(/^not decisive \(advantage failed\): advantage .* in 3 of 6 histories, the swap criterion in 6 of 6/);
+  });
+
+  it("(ii) the quenched veto comes first and beats any missing set, an ancestor set included", () => {
+    const r = rrEvaluate(rrWorld({ over: { "scaf-i3-b-quenched": { successes: 7 } }, drop: ["ancestor-a", "rand-i2-b", "scaf-i0-a-quenched"] }));
+    expect(r).toMatchObject({ outcome: "does not replicate", failed: ["quenched"], counts: { evaluated: false } });
+    expect(r.quenched).toMatchObject({ unreliable: true, allAvailable: false, available: 11 });
+    expect(r.quenched.max).toBeCloseTo(7 / 128, 12);
+    expect(r.reasons[0]).toMatch(/^unreliable: scaf-i3-b-quenched has competence 0\.0546875, above 0\.05/);
+    expect(r.availability.ancestor).toEqual({ a: false, b: true });
+    // at most 0.05 is clean: 6 of 128 is 0.047
+    expect(rrEvaluate(rrWorld({ over: { "scaf-i3-b-quenched": { successes: 6 } } })).outcome).toBe("replicates");
+    // a rejected quenched set is not available, so its competence cannot veto
+    const rejectedLoud = rrEvaluate(rrWorld({ over: { "scaf-i3-b-quenched": { successes: 30, json: { k: 5 } } } }));
+    expect(rejectedLoud).toMatchObject({ outcome: "uninformative", failed: [] });
+  });
+
+  it("(iii) a missing quenched control with no veto is uninformative, however the rest reads", () => {
+    const r = rrEvaluate(rrWorld({ drop: ["scaf-i5-b-quenched"] }));
+    expect(r).toMatchObject({ outcome: "uninformative", failed: [], counts: { evaluated: false } });
+    expect(r.reasons).toEqual(["quenched controls unavailable: scaf-i5-b-quenched (no assay set)"]);
+    // the reason a rejected one is unavailable is carried
+    const rej = rrEvaluate(rrWorld({ over: { "scaf-i5-b-quenched": { json: { side: 4 } } } }));
+    expect(rej.reasons[0]).toMatch(/^quenched controls unavailable: scaf-i5-b-quenched \(set rejected: side 4, want 8/);
+    expect(rej.availability.sets.find((x) => x.id === "scaf-i5-b-quenched")).toMatchObject({ status: "unavailable", dir: null });
+  });
+
+  it("(ii) the veto reads every available quenched control, one in an otherwise unavailable history included, and comes before the history count", () => {
+    // history 3 lacks rand-i3-a, but its quenched control at (b) is available, and it is the only loud one
+    const r = rrEvaluate(rrWorld({ over: { "scaf-i3-b-quenched": { successes: 7 } }, drop: ["rand-i3-a"] }));
+    expect(r.histories[3]).toMatchObject({ available: false, missing: [{ id: "rand-i3-a", why: "no assay set" }] });
+    expect(r.availability.sets.find((x) => x.id === "scaf-i3-b-quenched")).toMatchObject({ status: "available" });
+    expect(r).toMatchObject({ outcome: "does not replicate", failed: ["quenched"], counts: { evaluated: false, availableHistories: 5 } });
+    expect(r.quenched).toMatchObject({ available: 12, allAvailable: true, unreliable: true });
+    expect(r.reasons).toEqual(["unreliable: scaf-i3-b-quenched has competence 0.0546875, above 0.05"]);
+    // fewer than 4 histories available would be uninformative, but a loud control, in an available history or not, vetoes first
+    for (const loud of ["scaf-i4-a-quenched", "scaf-i0-b-quenched"]) {
+      const few = rrEvaluate(rrWorld({ over: { [loud]: { successes: 7 } }, drop: ["rand-i0-a", "cont-i1-b", "scaf-i2-a-swap-ae"] }));
+      expect(few).toMatchObject({ outcome: "does not replicate", failed: ["quenched"], counts: { evaluated: false, availableHistories: 3 } });
+      expect(few.reasons).toEqual([`unreliable: ${loud} has competence 0.0546875, above 0.05`]);
+    }
+  });
+
+  it("(iv) a biological Ge-on-Fa record keeps its history available, failing the swap criterion with the advantage evaluated", () => {
+    const world = rrWorld({ over: { "scaf-i1-a-swap-ea": { biological: true } } });
+    // strict mode: its source and donor reached, the donor with no eligible cell
+    const one = rrEvaluate(world, [], rrReloaded(world.get("scaf-i1-a-swap-ea")!));
+    expect(one.screened.rejected).toEqual([]);
+    expect(one.histories[1]).toMatchObject({ available: true, biologicalSwapEa: true, advantage: true, swapCriterion: false, swapEa: null });
+    expect(one.histories[1].margins.swap).toBeNull();
+    expect(one.availability).toMatchObject({ available: 61, biological: 1, unavailable: 0, availableHistories: 6 });
+    expect(one.availability.sets.find((x) => x.id === "scaf-i1-a-swap-ea")).toMatchObject({ status: "biological", why: "Ge-on-Fa: the donor has no dominant genome (no eligible cell)" });
+    expect(one).toMatchObject({ outcome: "replicates", counts: { advantageHistories: 6, swapHistories: 5 } });
+    const ids = [0, 2, 4].map((i) => `scaf-i${i}-a-swap-ea`);
+    const threeWorld = rrWorld({ over: Object.fromEntries(ids.map((id) => [id, { biological: true }])) });
+    const three = rrEvaluate(threeWorld, [], rrReloaded(...ids.map((id) => threeWorld.get(id)!)));
+    expect(three).toMatchObject({ outcome: "does not replicate", failed: ["swap"], counts: { availableHistories: 6, advantageHistories: 6, swapHistories: 3 } });
+  });
+
+  it("(iv) in strict mode a biological record whose donor is unreachable is rejected: its history is unavailable and fails both criteria", () => {
+    const world = rrWorld({ over: { "scaf-i1-a-swap-ea": { biological: true } } });
+    const f = world.get("scaf-i1-a-swap-ea")!;
+    const donor = (f.json.provenance as R3RepProvenance).donor!.source;
+    // its source (the ancestor's b1-pre) reached, its donor not
+    const reloaded = rrReloaded(f);
+    reloaded.delete(donor);
+    const r = rrEvaluate(world, [], reloaded);
+    const why = `a biologically unavailable record needs its checkpoints verified, but these are not reachable from here: donor ${donor}`;
+    expect(r.screened.rejected).toEqual([{ dir: "scaf-i1-a-swap-ea", id: "scaf-i1-a-swap-ea", reasons: [why] }]);
+    expect(r.histories[1]).toMatchObject({ available: false, missing: [{ id: "scaf-i1-a-swap-ea", why: `set rejected: ${why}` }], biologicalSwapEa: false, advantage: false, swapCriterion: false });
+    expect(r.availability).toMatchObject({ available: 61, biological: 0, unavailable: 1, availableHistories: 5 });
+    expect(r).toMatchObject({ outcome: "replicates", counts: { availableHistories: 5, advantageHistories: 5, swapHistories: 5 } });
+    // with nothing reachable both checkpoints are named; two more such records leave 3 histories, uninformative
+    expect(rrEvaluate(world).screened.rejected[0].reasons).toEqual([`a biologically unavailable record needs its checkpoints verified, but these are not reachable from here: source ${RR_ROOT}/r3rep/anc/ckpt/b1-pre.blck.gz; donor ${donor}`]);
+    const three = rrEvaluate(rrWorld({ over: Object.fromEntries([1, 3, 5].map((i) => [`scaf-i${i}-a-swap-ea`, { biological: true }])) }));
+    expect(three).toMatchObject({ outcome: "uninformative", reasons: ["3 of 6 histories available, need 4"], counts: { availableHistories: 3 } });
+  });
+
+  it("(v) fewer than 4 available histories is uninformative", () => {
+    const r = rrEvaluate(rrWorld({ drop: ["rand-i0-a", "cont-i1-b", "scaf-i2-a-swap-ae"] }));
+    expect(r).toMatchObject({ outcome: "uninformative", reasons: ["3 of 6 histories available, need 4"], counts: { evaluated: false, availableHistories: 3 } });
+    expect(r.availability.histories.slice(0, 3)).toEqual([
+      { history: 0, available: false, missing: ["rand-i0-a"] },
+      { history: 1, available: false, missing: ["cont-i1-b"] },
+      { history: 2, available: false, missing: ["scaf-i2-a-swap-ae"] },
+    ]);
+    expect(r.histories[2]).toMatchObject({ available: false, missing: [{ id: "scaf-i2-a-swap-ae", why: "no assay set" }] });
+    // 4 available is enough to apply the rule
+    expect(rrEvaluate(rrWorld({ drop: ["rand-i0-a", "cont-i1-b"] })).counts).toMatchObject({ evaluated: true, availableHistories: 4 });
+  });
+
+  it("(vi) a missing ancestor set is uninformative", () => {
+    const r = rrEvaluate(rrWorld({ drop: ["ancestor-b"] }));
+    expect(r).toMatchObject({ outcome: "uninformative", reasons: ["ancestor sets unavailable: ancestor-b (no assay set)"], availability: { ancestor: { a: true, b: false } } });
+    expect(rrEvaluate(rrWorld({ over: { "ancestor-a": { json: { seeds: [{ physics: 1, fragment: 1 }, { physics: 2, fragment: 2 }] } } } })).reasons[0]).toMatch(/^ancestor sets unavailable: ancestor-a \(set rejected: seed 1 does not match/);
+  });
+
+  it("(vii) duplicate sets make that set, and so its history, unavailable", () => {
+    const world = rrWorld();
+    const r = rrEvaluate(world, [rrDir("again", world.get("cont-i4-a")!)]);
+    expect(r.screened.rejected.map((x) => x.dir)).toEqual(["cont-i4-a", "again"]);
+    expect(r.availability.histories[4]).toEqual({ history: 4, available: false, missing: ["cont-i4-a"] });
+    expect(r.availability.sets.find((x) => x.id === "cont-i4-a")!.why).toMatch(/^set rejected: the same R3-replication set \(cont-i4-a\) as again; .*; the same R3-replication set \(cont-i4-a\) as cont-i4-a/);
+    expect(r).toMatchObject({ outcome: "replicates", counts: { availableHistories: 5, advantageHistories: 5, swapHistories: 5 } });
+  });
+
+  it("(viii) an unavailable history counts as failing both criteria, though its remaining sets would pass", () => {
+    // histories 4 and 5 each miss one set; 0-3 pass both criteria: exactly 4 of 6
+    const r = rrEvaluate(rrWorld({ drop: ["cont-i4-b", "rand-i5-a"] }));
+    expect(r.counts).toEqual({ evaluated: true, availableHistories: 4, advantageHistories: 4, swapHistories: 4, need: 4, decisive: true });
+    expect(r.outcome).toBe("replicates");
+    expect(r.histories[4]).toMatchObject({ available: false, advantage: false, swapCriterion: false, swapEa: null, a: { scaf: null } });
+    // the descriptive evaluation still reads its remaining sets: the swap criterion would hold there
+    expect(r.descriptive.histories[4]).toMatchObject({ swapCriterion: true, swapEa: 77 / 128, advantage: false });
+    // one more history failing either criterion makes it not decisive
+    const lost = rrEvaluate(rrWorld({ drop: ["cont-i4-b", "rand-i5-a"], over: { "scaf-i3-a-swap-ea": { successes: 60 } } }));
+    expect(lost).toMatchObject({ outcome: "does not replicate", failed: ["swap"], counts: { advantageHistories: 4, swapHistories: 3 } });
+  });
+
+  it("reports every competence, each replicate alone, the unmatched retained mass and the truncated rows, none of it a decision input", () => {
+    // scaf-i0-a: replicate 0 all succeed, replicate 1 none
+    const r = rrEvaluate(rrWorld({ over: { "scaf-i0-a": { success: (j) => (j < 64 ? 1 : 0) } } }));
+    const c = r.descriptive.competences.find((x) => x.id === "scaf-i0-a")!;
+    expect(c).toMatchObject({ inoculum: "fragment", status: "available", n: 128, successes: 64, competence: 0.5, truncatedRows: 0 });
+    expect(c.perReplicate).toEqual([{ replicate: 0, n: 64, successes: 64, competence: 1 }, { replicate: 1, n: 64, successes: 0, competence: 0 }]);
+    expect(r.descriptive.competences).toHaveLength(62);
+    expect(r.descriptive.perReplicate.map((x) => x.replicate)).toEqual([0, 1]);
+    expect(r.descriptive.perReplicate[1].histories[0]).toMatchObject({ history: 0, advantage: false });
+    expect(r.descriptive.perReplicate[0].histories[0].margins.a.rand).toBe(128 - 2 * 38);
+    // the unmatched comparison: the 38 sources' retained B+P and E
+    expect(r.descriptive.unmatched).toHaveLength(38);
+    expect(r.descriptive.unmatched[0]).toMatchObject({ id: "scaf-i0-a", retMass: { n: 128, min: 90, max: 96 }, retE: { n: 128, min: 180, max: 184 } });
+    expect(r.descriptive.truncation).toEqual({ rows: 62 * 128, truncatedRows: 0, flagged: [] });
+    // more than 1% truncated rows flags a set (2 of 128), and changes nothing else
+    const world = rrWorld();
+    const f = world.get("rand-i3-a")!;
+    world.set("rand-i3-a", { ...f, rows: f.rows.map((row, j) => (j < 2 ? { ...row, truncated: 1 } : row)) });
+    const trunc = rrEvaluate(world);
+    expect(trunc.descriptive.truncation).toEqual({ rows: 62 * 128, truncatedRows: 2, flagged: ["rand-i3-a"] });
+    expect(trunc.descriptive.competences.find((x) => x.id === "rand-i3-a")!.truncatedRows).toBe(2);
+    expect(trunc.outcome).toBe("replicates");
+  });
+});
+
+describe("R3 replication runs and the v1 side-by-side", () => {
+  const meta = (arm: "scaf" | "rand" | "cont", i: number, over: Record<string, unknown> = {}) => ({ tool: "scaffold", arm, k: arm === "cont" ? 0 : 8, period: 10_000, cycles: 100, side: 8, seed: r3RepWorldSeedOf(6 * ["scaf", "rand", "cont"].indexOf(arm) + i), mutRate: DP_MUT, init: "clone", ...over });
+
+  it("knows a replication history's run directory by its meta.json", () => {
+    expect(r3RepRunOf(meta("scaf", 0))).toEqual({ key: { arm: "scaf", history: 0, h: 0 }, why: [] });
+    expect(r3RepRunOf(meta("rand", 5))).toEqual({ key: { arm: "rand", history: 5, h: 11 }, why: [] });
+    expect(r3RepRunOf(meta("cont", 2))).toEqual({ key: { arm: "cont", history: 2, h: 14 }, why: [] });
+    expect(meta("cont", 2).seed).toBe(4_811_303);
+    // the R1'' copies before the extension (34 cycles), v1's main run, the ancestor world, the formula's unused arm-2 seeds
+    expect(r3RepRunOf(meta("scaf", 0, { cycles: 34 })).why).toEqual(["cycles 34, want 100"]);
+    expect(r3RepRunOf(meta("scaf", 0, { seed: 4_810_001 })).why[0]).toMatch(/seed 4810001 is not 4811001 \+ i/);
+    expect(r3RepRunOf(meta("cont", 0, { seed: 4_811_201 })).why[0]).toMatch(/seed 4811201 is not 4811301 \+ i/);
+    expect(r3RepRunOf(meta("cont", 0, { seed: 4_818_401, cycles: 1 })).why).toEqual(["seed 4818401 is the ancestor world, not a history", "cycles 1, want 100"]);
+    expect(r3RepRunOf(meta("scaf", 0, { side: 2, k: 5, period: 300, mutRate: 0, init: "founders" })).why).toEqual(["side 2, want 8", 'init "founders", want "clone"', "mutation off", "period 300, want 10000", "k 5, want 8"]);
+    expect(r3RepRunOf({ ...meta("scaf", 0), arm: "anc" }).why[0]).toMatch(/arm "anc"/);
+  });
+
+  it("streams ponds.tsv into the mean pond trait and the extinct ponds per boundary, and summarises them per arm", async () => {
+    const lines = ["cycle\trecipient\tdonor\tretMass\trecipientTrait\ttruncated", "1\t0\t1\t5\t100\t0", "1\t1\t0\t5\t300\t1", "100\t0\t1\t5\t0\t0", "100\t1\t0\t5\t600\t0", "50\t0\t1\t5\t0\t0", "50\t1\t1\t5\t0\t0"];
+    const t = await r3RepTrajectory(tsvRows(lines));
+    expect(t.boundaries).toEqual([{ boundary: 1, n: 2, meanTrait: 200, extinct: 0 }, { boundary: 50, n: 2, meanTrait: 0, extinct: 2 }, { boundary: 100, n: 2, meanTrait: 300, extinct: 1 }]);
+    expect(t.truncation).toMatchObject({ truncated: 1, rows: 6, flagged: true });
+    const ended = await r3RepTrajectory(tsvRows(lines.slice(0, 3)));
+    const run = (arm: "scaf" | "rand" | "cont", history: number, trajectory: typeof t | null, over: Partial<R3RepRun> = {}): R3RepRun => ({ arm, history, h: 6 * ["scaf", "rand", "cont"].indexOf(arm) + history, dir: `${arm}/i${history}`, status: "finished", ended: false, endedAt: null, trajectory, ...over });
+    const s = r3RepRunsSummary([run("scaf", 1, ended, { ended: true, endedAt: 61 }), run("scaf", 0, t), run("cont", 0, null, { status: "unfinished" })]);
+    expect(s.histories.map((h) => [h.id, h.extinctAt100, h.lastBoundary, h.status])).toEqual([["scaf-i0", 1, 100, "finished"], ["scaf-i1", null, 1, "finished"], ["cont-i0", null, null, "unfinished"]]);
+    expect(s.histories[1]).toMatchObject({ ended: true, endedAt: 61 });
+    expect(s.arms.scaf[0]).toEqual({ boundary: 1, histories: 2, medianMeanTrait: 200, medianExtinct: 0 });
+    expect(s.arms.scaf[5]).toEqual({ boundary: 100, histories: 1, medianMeanTrait: 300, medianExtinct: 1 });
+    expect(s.arms.cont[0]).toEqual({ boundary: 1, histories: 0, medianMeanTrait: null, medianExtinct: null });
+  });
+
+  it("puts v1's R3 numbers beside the replication's", () => {
+    const rep = rrEvaluate(rrWorld({ over: { "scaf-i2-a-swap-ea": { successes: 76 } } }));
+    const v1 = { stage: "r3", advantageHistories: 5, swapHistories: 4, quenched: { n: 12, max: 0 }, histories: r3Evaluate(r3World()).histories };
+    const s = r3RepSideBySide(v1, rep.evaluation, rep.quenched.max);
+    expect(s.counts).toEqual({ v1: { advantageHistories: 5, swapHistories: 4, quenchedMax: 0 }, replication: { advantageHistories: 6, swapHistories: 5, quenchedMax: 0 } });
+    expect(s.histories[2].replication).toMatchObject({ advantage: true, swapCriterion: false, scafA: 102 / 128, ancestorA: 51 / 128, margins: { swap: -0.5 } });
+    expect(s.histories[0].v1).toMatchObject({ advantage: true, swapCriterion: true, scafA: 0.8 });
+    expect(() => r3RepSideBySide({ stage: "r1", histories: [] }, rep.evaluation)).toThrow(/not an r3 stage output/);
+  });
+});
+
+describe("scaffold-report r3rep", () => {
+  const scratch = () => mkdtempSync(join(tmpdir(), "scaffold-r3rep-"));
+  const docSha = (name: string) => createHash("sha256").update(readFileSync(fileURLToPath(new URL(`../../docs/${name}`, import.meta.url)))).digest("hex");
+  /** The pinned SHA-256s the report checks (not the documents as they are now), so the fixtures pass in strict mode. */
+  const shas = () => R3REP_SHA256;
+  const writeSet = (root: string, id: string, f: RrFixture) => {
+    const dir = join(root, id);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "assay.json"), JSON.stringify(f.json));
+    writeFileSync(join(dir, "assay.tsv"), f.text);
+  };
+  const writeWorld = (root: string, o: Parameters<typeof rrWorld>[0] = {}) => {
+    for (const [id, f] of rrWorld({ sha: shas(), ...o })) writeSet(root, id, f);
+  };
+  /**
+   * Real checkpoints, under a scratch root, at the paths the fixtures record: the ancestor's b1-pre and scaf history i's b100-pre for
+   * each i in `scaf`. Each is an empty 8 x 8 pond grid (24 x 24 ponds, the smallest the kernel allows) with the world seed, mutation
+   * rate and step recorded, so it has no dominant genome. Returns the root and their state hashes by h, for the fixtures to record.
+   */
+  const writeCheckpoints = (scaf: number[]): { root: string; hashes: Record<number, string> } => {
+    const root = join(scratch(), "runs", "scaffold");
+    const hashes: Record<number, string> = {};
+    for (const [h, N] of [[18, 1], ...scaf.map((i) => [i, 100])]) {
+      const state = allocState({ ...pondConfig(8, r3RepWorldSeedOf(h)), tileW: 24, tileH: 24 });
+      state.step = N * 10_000;
+      const path = `${root}/${r3RepRunDirOf(h)}/ckpt/b${N}-pre.blck.gz`;
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, gzipSync(encodeCheckpoint(state)));
+      hashes[h] = stateHash(state);
+    }
+    return { root, hashes };
+  };
+
+  it("reads the 62 sets: availability, the rule and the descriptive part, with the unreachable checkpoints unverifiable", () => {
+    const root = scratch();
+    writeWorld(root);
+    // a set of another stage is skipped, and listed
+    writeAssayDir(root, "r1-h0", scafR1(0));
+    const out = report("r3rep", "--assays", root);
+    expect(out).toMatchObject({ stage: "r3rep", outcome: "replicates", failed: [], validated: true, protocolSha256R3rep: shas().r3rep, protocolSha256: shas().protocol, rejected: [] });
+    // the documents as they are now are reported beside the pins, never checked
+    expect(out.protocolNow).toEqual({
+      r3rep: { doc: "docs/scaffold-r3-replication-v1.md", sha256: docSha("scaffold-r3-replication-v1.md"), pinnedTextIntact: true },
+      protocol: { doc: "docs/scaffold-protocol-v1.md", sha256: docSha("scaffold-protocol-v1.md"), pinnedTextIntact: true },
+    });
+    expect(out.skipped).toEqual([{ dir: join(root, "r1-h0"), why: "not an R3-replication set (labels.r3rep is not true)" }]);
+    expect(out.counts).toMatchObject({ evaluated: true, availableHistories: 6, advantageHistories: 6, swapHistories: 6 });
+    expect(out.availability).toMatchObject({ expected: 62, available: 62, unavailable: 0 });
+    expect(out.histories).toHaveLength(6);
+    expect(out.histories[0].margins.swap).toBe(0.5);
+    expect(out.checkpoints).toMatchObject({ reloaded: 0, unreadable: [] });
+    expect(out.checkpoints.unverifiable).toHaveLength(62);
+    expect(out.descriptive.competences).toHaveLength(62);
+    expect(out.descriptive.runs).toEqual({ loaded: false });
+    expect(out.descriptive.v1).toBeNull();
+    expect(out.descriptive.note).toMatch(/never a decision input/);
+  });
+
+  it("still accepts every set after the protocol documents gain a dated amendment (the readout can be regenerated after the results)", () => {
+    // a copy of the report and what it reads, with an amendment at the end of each document, as recording the results would add
+    const repo = fileURLToPath(new URL("../../", import.meta.url));
+    const tree = scratch();
+    for (const path of ["deno.json", "deno.lock", "tools/scaffold-report.ts", "tools/lib", "docs/scaffold-protocol-v1.md", "docs/scaffold-r3-replication-v1.md"]) cpSync(join(repo, path), join(tree, path), { recursive: true });
+    for (const pkg of readdirSync(join(repo, "packages"))) cpSync(join(repo, "packages", pkg, "src"), join(tree, "packages", pkg, "src"), { recursive: true });
+    for (const doc of ["scaffold-protocol-v1.md", "scaffold-r3-replication-v1.md"]) appendFileSync(join(tree, "docs", doc), "\n## Results (2026-10-02)\n\nRecorded after the runs.\n");
+    const root = scratch();
+    writeWorld(root);
+    const out = JSON.parse(execFileSync("deno", ["run", "-A", join(tree, "tools/scaffold-report.ts"), "r3rep", "--assays", root], { cwd: tree, stdio: "pipe", encoding: "utf8" }));
+    expect(out).toMatchObject({ outcome: "replicates", rejected: [], protocolSha256R3rep: R3REP_SHA256.r3rep, protocolSha256: R3REP_SHA256.protocol });
+    expect(out.availability).toMatchObject({ available: 62, unavailable: 0 });
+    expect(out.protocolNow.r3rep).toMatchObject({ pinnedTextIntact: true });
+    expect(out.protocolNow.r3rep.sha256).not.toBe(R3REP_SHA256.r3rep);
+    expect(out.protocolNow.protocol.sha256).not.toBe(R3REP_SHA256.protocol);
+  });
+
+  it("collects unreadable and unsound sets as unavailable while the others continue, and applies the rule in order", () => {
+    const root = scratch();
+    // the biological record's source and donor are real checkpoints, so strict mode can verify it
+    const ckpts = writeCheckpoints([2]);
+    writeWorld(root, { ...ckpts, over: { "scaf-i2-a-swap-ea": { biological: true } } });
+    execFileSync("rm", [join(root, "rand-i0-a", "assay.tsv")]);
+    writeFileSync(join(root, "cont-i1-b", "assay.json"), "{ not json");
+    const out = report("r3rep", "--assays", root);
+    expect(out.rejected.map((r: { id: string | null }) => r.id)).toEqual([null, "rand-i0-a"]);
+    expect(out.rejected[1].reasons[0]).toMatch(/^could not read the set/);
+    expect(out.availability.sets.find((x: { id: string }) => x.id === "rand-i0-a").why).toMatch(/^set rejected: could not read the set/);
+    expect(out.availability.sets.find((x: { id: string }) => x.id === "cont-i1-b").why).toBe("no assay set");
+    expect(out.availability.sets.find((x: { id: string }) => x.id === "scaf-i2-a-swap-ea").status).toBe("biological");
+    expect(out.checkpoints).toMatchObject({ reloaded: 2, unreadable: [] });
+    expect(out.descriptive.competences.find((c: { id: string }) => c.id === "scaf-i2-a-swap-ea")).toMatchObject({ status: "biological", n: 0, unverifiable: [] });
+    // histories 0 and 1 unavailable, 2 valid but failing the swap criterion: 4 advantage, 3 swap
+    expect(out).toMatchObject({ outcome: "does not replicate", failed: ["swap"], counts: { availableHistories: 4, advantageHistories: 4, swapHistories: 3 } });
+    // without its donor checkpoint the record cannot be verified: rejected, so history 2 is unavailable too, and 3 of 6 is uninformative
+    const donor = `${ckpts.root}/r3rep/main/scaf/i2/ckpt/b100-pre.blck.gz`;
+    execFileSync("rm", [donor]);
+    const gone = report("r3rep", "--assays", root);
+    expect(gone.rejected.map((r: { id: string | null }) => r.id)).toEqual([null, "rand-i0-a", "scaf-i2-a-swap-ea"]);
+    expect(gone.rejected[2].reasons).toEqual([`a biologically unavailable record needs its checkpoints verified, but these are not reachable from here: donor ${donor}`]);
+    expect(gone.availability.histories[2]).toEqual({ history: 2, available: false, missing: ["scaf-i2-a-swap-ea"] });
+    expect(gone).toMatchObject({ outcome: "uninformative", reasons: ["3 of 6 histories available, need 4"], counts: { availableHistories: 3 } });
+    // the sets that took the donor's checkpoint as their source stand on their records, unverifiable
+    expect(gone.checkpoints.unverifiable.find((x: { id: string }) => x.id === "scaf-i2-a").checkpoints).toEqual([`source ${donor}`]);
+  });
+
+  it("with --runs adds the trajectories and extinct ponds; --v1 the side-by-side", () => {
+    const root = scratch();
+    const runs = scratch();
+    writeWorld(root);
+    const finished = { ok: true, conservationOk: true, cycles: 100, ended: false };
+    const rows = (traits: number[]): RunRow[] => [1, 100].flatMap((cycle) => traits.map((trait, recipient) => ({ cycle, recipient, trait: cycle === 1 ? 100_000 : trait })));
+    writeRunDir(runs, "scaf-i0", { arm: "scaf", k: 8, period: 10_000, cycles: 100, side: 8, seed: 4_811_001, mutRate: DP_MUT, init: "clone" }, rows([0, 0, 120_000, 140_000]), finished);
+    writeRunDir(runs, "cont-i0", { arm: "cont", k: 0, period: 10_000, cycles: 100, side: 8, seed: 4_811_301, mutRate: DP_MUT, init: "clone" }, rows([90_000, 0, 0, 0]), finished);
+    writeRunDir(runs, "rep-scaf-i0", { arm: "scaf", k: 8, period: 10_000, cycles: 34, side: 8, seed: 4_811_001, mutRate: DP_MUT, init: "clone" }, [], finished);
+    const v1 = join(runs, "r3.json");
+    writeFileSync(v1, readFileSync(fileURLToPath(new URL("../../experiments/scaffold/readouts/r3.json", import.meta.url))));
+    const out = report("r3rep", "--assays", root, "--runs", runs, "--v1", v1);
+    expect(out.outcome).toBe("replicates");
+    const r = out.descriptive.runs;
+    expect(r.loaded).toBe(true);
+    expect(r.skipped.map((x: { dir: string }) => x.dir)).toEqual([join(runs, "rep-scaf-i0")]);
+    expect(r.histories.map((h: { id: string; extinctAt100: number }) => [h.id, h.extinctAt100])).toEqual([["scaf-i0", 2], ["cont-i0", 3]]);
+    expect(r.histories[0].trajectory).toEqual([{ boundary: 1, n: 4, meanTrait: 100_000, extinct: 0 }, { boundary: 100, n: 4, meanTrait: 65_000, extinct: 2 }]);
+    expect(r.arms.cont[5]).toEqual({ boundary: 100, histories: 1, medianMeanTrait: 22_500, medianExtinct: 3 });
+    expect(out.descriptive.v1).toMatchObject({ from: v1, counts: { v1: { advantageHistories: 5, swapHistories: 4, quenchedMax: 0 }, replication: { advantageHistories: 6, swapHistories: 6, quenchedMax: 0 } } });
+    expect(out.descriptive.v1.histories).toHaveLength(6);
+    // two runs of one history: neither is summarised, both are listed under skipped, and the readout stands
+    writeRunDir(runs, "scaf-i0-again", { arm: "scaf", k: 8, period: 10_000, cycles: 100, side: 8, seed: 4_811_001, mutRate: DP_MUT, init: "clone" }, [], finished);
+    const twice = report("r3rep", "--assays", root, "--runs", runs);
+    expect(twice.outcome).toBe("replicates");
+    expect(twice.descriptive.runs.histories.map((h: { id: string }) => h.id)).toEqual(["cont-i0"]);
+    expect(twice.descriptive.runs.arms.scaf[5]).toMatchObject({ boundary: 100, histories: 0 });
+    expect(twice.descriptive.runs.skipped.map((x: { dir: string }) => x.dir).sort()).toEqual([join(runs, "rep-scaf-i0"), join(runs, "scaf-i0"), join(runs, "scaf-i0-again")].sort());
+    const whys = twice.descriptive.runs.skipped.map((x: { why: string }) => x.why);
+    expect(whys).toContain("a second run of history scaf-i0; neither is summarised");
+    expect(whys).toContain("the first run of history scaf-i0, which has a second; neither is summarised");
+  });
+
+  it("with --runs lists a run it cannot read under skipped, and still gives the outcome", () => {
+    const root = scratch();
+    const runs = scratch();
+    writeWorld(root);
+    const finished = { ok: true, conservationOk: true, cycles: 100, ended: false };
+    const meta = (arm: "scaf" | "rand" | "cont", i: number) => ({ arm, k: arm === "cont" ? 0 : 8, period: 10_000, cycles: 100, side: 8, seed: r3RepWorldSeedOf(6 * ["scaf", "rand", "cont"].indexOf(arm) + i), mutRate: DP_MUT, init: "clone" });
+    const rows: RunRow[] = [1, 100].flatMap((cycle) => [0, 1].map((recipient) => ({ cycle, recipient, trait: 100_000 })));
+    for (const [arm, i] of [["scaf", 0], ["rand", 1], ["cont", 2]] as const) writeRunDir(runs, `${arm}-i${i}`, meta(arm, i), rows, finished);
+    writeFileSync(join(runs, "rand-i1", "done.json"), "{ not json");
+    writeFileSync(join(runs, "cont-i2", "meta.json"), "{ not json");
+    const out = report("r3rep", "--assays", root, "--runs", runs);
+    expect(out).toMatchObject({ outcome: "replicates", rejected: [] });
+    const r = out.descriptive.runs;
+    expect(r.loaded).toBe(true);
+    expect(r.histories.map((h: { id: string }) => h.id)).toEqual(["scaf-i0"]);
+    expect(r.skipped.map((x: { dir: string }) => x.dir)).toEqual([join(runs, "cont-i2"), join(runs, "rand-i1")]);
+    for (const x of r.skipped) expect(x.why).toMatch(/^could not be read: .*JSON/);
+    // A missing root and an empty root beside the valid one are listed too; the readout still stands.
+    const empty = scratch();
+    const missing = join(runs, "no-such-dir");
+    const more = report("r3rep", "--assays", root, "--runs", runs, missing, empty);
+    expect(more).toMatchObject({ outcome: "replicates", rejected: [] });
+    expect(more.descriptive.runs.histories.map((h: { id: string }) => h.id)).toEqual(["scaf-i0"]);
+    const whyOf = (d: string) => more.descriptive.runs.skipped.find((x: { dir: string }) => x.dir === d)?.why;
+    expect(whyOf(missing)).toMatch(/^no run directory|^could not be walked/);
+    expect(whyOf(empty)).toBe("no run directory (meta.json) under it");
+    // Only missing or empty roots: no run is summarised, and the outcome is still given.
+    const none = report("r3rep", "--assays", root, "--runs", missing);
+    expect(none).toMatchObject({ outcome: "replicates", rejected: [] });
+    expect(none.descriptive.runs.histories).toEqual([]);
+  });
+
+  it("--allow-any-seed reads a smoke-sized set the strict screen rejects", () => {
+    const root = scratch();
+    const f = rrFixture(18, "a", "fragment", { sha: shas(), json: { side: 2, replicates: 1, period: 300, seeds: [{ physics: 1, fragment: 1 }] } });
+    const rows = f.rows.filter((r) => r.replicate === 0 && r.pond < 4);
+    writeSet(root, "smoke", { ...f, rows, text: [f.text.split("\n")[0], ...f.text.split("\n").slice(1, 5)].join("\n") + "\n" });
+    const strict = report("r3rep", "--assays", root);
+    expect(strict).toMatchObject({ outcome: "uninformative", validated: true });
+    expect(strict.rejected[0].reasons.join(" ")).toMatch(/period 300, want 10000/);
+    const smoke = report("r3rep", "--assays", root, "--allow-any-seed");
+    expect(smoke).toMatchObject({ outcome: "uninformative", validated: false, rejected: [] });
+    expect(smoke.availability.sets.find((x: { id: string }) => x.id === "ancestor-a").status).toBe("available");
+    expect(smoke.descriptive.competences[0]).toMatchObject({ id: "ancestor-a", n: 4 });
+  });
+
+  it("the other stages skip R3-replication directories and read exactly what they read without them", () => {
+    // the same root as the R1'' check: R1, R2 and R3 (regime k 5 / period 3000), calibrate, tau, R1' and R1''
+    const root = scratch();
+    for (const i of [0, 1, 2]) writeAssayDir(root, `r1-h${i}`, scafR1(i));
+    writeAssayDir(root, "r2-frag", assayDirFixture({ assay: "garden", flags: { arm: "scaf", history: "0", time: "0" }, seed: assaySeed(2, 0, 0, 0, 0), dir: "g" }));
+    for (const [n, dir] of [[1, "cal-anc"], [2, "cal-que"]] as const) {
+      writeAssayDir(root, dir, assayDirFixture({ assay: "competence", flags: { arm: "ancestor", timing: "a", calibration: String(n) as "1" | "2" }, inoculum: n === 1 ? "fragment" : "quenched", seed: 4_802_011, k: 5, period: 3000, dir, success: (i) => (i < 64 ? 1 : 0) }));
+    }
+    // a v1 R3 set of history 0, so r3 reads something
+    writeAssayDir(root, "r3-scaf-a", assayDirFixture({ assay: "competence", flags: { arm: "scaf", history: "0", timing: "a" }, seed: assaySeed(3, 0, 0, 0, 0), dir: "r3" }));
+    writeTraitDir(root, "tau-cal", frozenTau());
+    for (const i of [0, 1, 2, 3]) writeTraitDir(root, `prime-${i}`, primeFixture({ i }));
+    writeTraitDir(root, "dp-0", dpFixture({ h: 0, cross: strongCross }));
+    const p1Json = join(root, "p1.json");
+    writeFileSync(p1Json, JSON.stringify({ stage: "p1", verdict: true, choice: { stage: "primary", chosen: { k: 5, period: 3000 }, candidate: { k: 5, period: 3000 }, primaryComplete: true, fallbackComplete: false, verdict: true, passing: [{ k: 5, period: 3000 }] } }));
+    const tau = join(root, "tau.json");
+    const { source, ref, k, period, side, replicates, seeds, labels } = frozenTau().json;
+    writeFileSync(tau, JSON.stringify({ stage: "tau", verdict: null, validated: true, provenance: { source, ref, k, period, side, replicates, seeds, labels }, tau: PRIME_TAU }));
+    const replay = join(root, "replay-check.json");
+    writeFileSync(replay, JSON.stringify({ mechanismCheck: { passed: true }, valid: [0, 1, 2, 3, 4, 5].map((i) => `scaf-i${i}-t0`), failed: [] }));
+    const stages = (): Record<string, any> => ({
+      r1: report("r1", "--assays", root, "--regime", "5", "3000"),
+      r2: report("r2", "--assays", root, "--regime", "5", "3000"),
+      r3: report("r3", "--assays", root, "--regime", "5", "3000"),
+      calibrate: report("calibrate", "--p1", p1Json, "--assays", root),
+      tau: report("tau", "--assays", root, "--regime", "8", "10000"),
+      r1prime: report("r1prime", "--assays", root, "--tau", tau, "--regime", "8", String(PRIME_PERIOD), "--replay", replay),
+      r1dprime: report("r1dprime", "--assays", root),
+    });
+    const before = stages();
+    expect(before.r3.histories[0].a.scaf).toBe(1);
+    expect(before.r1dprime.histories[0]).toMatchObject({ outcome: "analysed" });
+    // R3-replication sets of every kind beside them: sources at both timings, both swaps, quenched, the ancestor, a biological record
+    // (whose source and donor are real checkpoints, so the r3rep stage can verify it)
+    const o = { sha: shas(), ...writeCheckpoints([2]) };
+    const added: [string, RrFixture][] = [
+      ["rr-scaf-i0-a", rrFixture(0, "a", "fragment", o)],
+      ["rr-cont-i0-b", rrFixture(12, "b", "fragment", o)],
+      ["rr-ea", rrFixture(1, "a", "swap-ea", o)],
+      ["rr-ea-bio", rrFixture(2, "a", "swap-ea", { ...o, biological: true })],
+      ["rr-ae", rrFixture(0, "a", "swap-ae", o)],
+      ["rr-q", rrFixture(0, "b", "quenched", o)],
+      ["rr-anc", rrFixture(18, "a", "fragment", o)],
+    ];
+    for (const [id, f] of added) writeSet(root, id, f);
+    const after = stages();
+    for (const stage of Object.keys(before)) expect({ stage, ...after[stage], skipped: 0 }).toEqual({ stage, ...before[stage], skipped: 0 });
+    for (const stage of Object.keys(before)) expect(after[stage].skipped).toBe(before[stage].skipped + added.length);
+    // and the new stage reads only its own: 3 R1 sets, 1 R2, 2 calibrations, 1 R3, the tau calibration, 4 R1' sets and 1 R1'' set
+    const rr = report("r3rep", "--assays", root);
+    expect(rr.skipped).toHaveLength(13);
+    expect(rr.rejected).toEqual([]);
+    expect(rr.checkpoints).toMatchObject({ reloaded: 2, unreadable: [] });
+    const ids = new Set(["scaf-i0-a", "cont-i0-b", "scaf-i1-a-swap-ea", "scaf-i2-a-swap-ea", "scaf-i0-a-swap-ae", "scaf-i0-b-quenched", "ancestor-a"]);
+    expect(rr.descriptive.competences.map((c: { id: string }) => c.id)).toEqual(r3RepExpectedSets().map(({ labels, inoculum }) => r3RepSetIdOf(labels, inoculum)).filter((id) => ids.has(id)));
   });
 });

@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   CH,
@@ -15,7 +18,8 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { MOT_ZERO } from "@bl/sim-ref";
-import { applyPondCycle, assaySeed, cloneWorld, pondConfig, pondMatter, pondTraits, randomKey } from "../lib/ponds.ts";
+import { applyPondCycle, assaySeed, cloneWorld, dominantGenome, pondConfig, pondMatter, pondTraits, randomKey } from "../lib/ponds.ts";
+import { assayLabels } from "../lib/scaffold-stats.ts";
 import {
   ASSAY_COLUMNS,
   M_ASSAY,
@@ -24,6 +28,14 @@ import {
   R1DP_SEED_MAX,
   R1DP_SETS,
   R1_PRIME_SEED_MAX,
+  R3REP_ANCESTOR_H,
+  R3REP_CONTINUE_STEPS,
+  R3REP_PROTOCOLS,
+  R3REP_REGIME,
+  R3REP_SEED_BASE,
+  R3REP_SEED_MAX,
+  R3REP_SHA256,
+  R3REP_SWAP_AE_WORDS,
   TAU_LABELS,
   TAU_SEED_BASE,
   TRAIT_COLUMNS,
@@ -37,11 +49,14 @@ import {
   checkR1PrimeSeeds,
   checkR1dPrimeDonorSeed,
   checkR1dPrimeSeeds,
+  checkR3RepSeeds,
   checkTauSeeds,
   distinctGenomes,
   fragmentDominant,
   parseR1PrimeLabels,
   parseR1dPrimeLabels,
+  parseR3RepContinueLabels,
+  parseR3RepLabels,
   postCycleOf,
   quench,
   r1Donors,
@@ -55,11 +70,42 @@ import {
   r1dPrimeProvenance,
   r1dPrimeSeed,
   r1dPrimeSourceProblems,
+  r3RepBoundaryOf,
+  r3RepCheckpointOf,
+  r3RepContinuationOf,
+  r3RepContinuationPathOf,
+  r3RepContinuationProblems,
+  r3RepContinueProblems,
+  r3RepContinueSeed,
+  r3RepDominantRecord,
+  r3RepExpectedSets,
+  r3RepHistoryOf,
+  r3RepIdOf,
+  r3RepLabelsFromJson,
+  r3RepLabelsOf,
+  r3RepOriginProblems,
+  r3RepProtocolProblems,
+  r3RepProvenanceProblems,
+  r3RepRegimeProblems,
+  r3RepRunDirOf,
+  r3RepRunRecordOf,
+  r3RepSeed,
+  r3RepSeedHOf,
+  r3RepSeedOf,
+  r3RepSetIdOf,
+  r3RepSidecarPathOf,
+  r3RepTreatmentProblems,
+  r3RepUnavailableOf,
+  r3RepUnavailableProblems,
+  r3RepVariantProblems,
+  r3RepWorldSeedOf,
   standardFragment,
   swapGenome,
   traitsTable,
   type AssayItem,
   type Fragment,
+  type R3RepCheckpoint,
+  type R3RepOrigin,
 } from "../lib/pond-assay.ts";
 
 const genomeA = founderGenome(M3_FOUNDERS[2]);
@@ -809,5 +855,402 @@ describe("R1'' seeds, labels and sources (docs/scaffold-heredity-replication-v1.
     expect(fresh.labels).toEqual({ arm: "scaf", history: 2, r1dprime: true, h: 2 });
     expect("provenance" in fresh).toBe(false);
     expect(R1DP_REGIME).toEqual({ k: 8, period: 10_000, side: 8, replicates: 2, censusEvery: 100 });
+  });
+});
+
+describe("R3 replication seeds, labels and sources (docs/scaffold-r3-replication-v1.md)", () => {
+  const mut = pondConfig(8, 0).mutRate;
+  const V1 = "1".repeat(64); // protocol v1's SHA-256, as recorded in a run's meta.json
+  const R3 = "3".repeat(64); // the replication protocol's
+
+  /** A timing (a) source of h as a run would record it: N = 100 (1 for the ancestor), the run's meta.json and done.json. */
+  const origin = (h: number, over: { source?: string; seed?: number; mutRate?: number; step?: number; meta?: Record<string, unknown>; done?: Record<string, unknown> | null; N?: number } = {}): R3RepOrigin => {
+    const l = r3RepHistoryOf(h);
+    const ancestor = l.arm === "ancestor";
+    const N = over.N ?? (ancestor ? 1 : 100);
+    const seed = r3RepWorldSeedOf(h);
+    return {
+      source: over.source ?? `runs/scaffold/${r3RepRunDirOf(h)}/ckpt/b${N}-pre.blck.gz`,
+      stateHash: `a${h}`.padEnd(16, "0"),
+      seed: over.seed ?? seed,
+      mutRate: over.mutRate ?? mut,
+      step: over.step ?? N * 10_000,
+      tilesX: 8,
+      tilesY: 8,
+      run: {
+        meta: { arm: ancestor ? "cont" : l.arm, k: l.arm === "scaf" || l.arm === "rand" ? 8 : 0, period: 10_000, cycles: ancestor ? 1 : 100, side: 8, seed, mutRate: mut, init: "clone", censusEvery: 100, protocolSha256: V1, ...over.meta },
+        done: over.done === null ? null : { ok: true, conservationOk: true, cycles: N, ended: false, ...over.done },
+      },
+    };
+  };
+  /** The continued checkpoint of h, 2 x 10^5 steps past `from`. */
+  const continued = (h: number, from: R3RepCheckpoint, over: Partial<R3RepCheckpoint> = {}): R3RepCheckpoint => ({ source: `runs/scaffold/${r3RepContinuationPathOf(h)}`, stateHash: `e${h}`.padEnd(16, "0"), seed: r3RepContinueSeed(h), mutRate: mut, step: from.step + 200_000, tilesX: 8, tilesY: 8, ...over });
+  const sidecarOf = (h: number, from: R3RepCheckpoint, end: R3RepCheckpoint) => r3RepContinuationOf({ h, origin: from, end, steps: 200_000, protocolSha256R3rep: R3 });
+  const sha = { protocol: V1, r3rep: R3 };
+
+  it("is 4,816,301 + 100 h + 10 t + s, ending at 4,818,112; continuations are 4,818,301 + h", () => {
+    expect(r3RepSeed(0, 0, 0)).toBe(4_816_301);
+    expect(r3RepSeed(1, 0, 0)).toBe(4_816_401);
+    expect(r3RepSeed(0, 1, 0)).toBe(4_816_311);
+    expect(r3RepSeed(0, 0, 1)).toBe(4_816_302);
+    expect(r3RepSeed(18, 0, 0)).toBe(4_818_101);
+    expect(r3RepSeed(18, 1, 1)).toBe(4_818_112);
+    expect(R3REP_SEED_BASE).toBe(4_816_301);
+    expect(R3REP_SEED_MAX).toBe(4_818_112);
+    expect(r3RepContinueSeed(0)).toBe(4_818_301);
+    expect(r3RepContinueSeed(18)).toBe(4_818_319);
+    expect(R3REP_CONTINUE_STEPS).toBe(200_000);
+    expect(R3REP_REGIME).toEqual({ k: 8, period: 10_000, ref: 103_058, side: 8, replicates: 2, censusEvery: 100 });
+  });
+
+  it("range-checks every field", () => {
+    for (const [h, t, s] of [[19, 0, 0], [-1, 0, 0], [0, 2, 0], [0, -1, 0], [0, 0, 2], [0, 0, -1], [0.5, 0, 0], [0, 0.5, 0], [0, 0, NaN], [NaN, 0, 0]] as const) expect(() => r3RepSeed(h, t, s)).toThrow(/r3RepSeed/);
+    for (const h of [19, -1, 1.5, NaN]) expect(() => r3RepContinueSeed(h)).toThrow(/r3RepContinueSeed/);
+  });
+
+  it("cannot collide with assaySeed, R1', R1'', the tau calibration, P1, P2, the calibration, the main run or the worlds", () => {
+    const block = new Set<number>();
+    for (let h = 0; h <= 18; h++) for (let t = 0; t <= 1; t++) for (let s = 0; s <= 1; s++) block.add(r3RepSeed(h, t, s));
+    expect(block.size).toBe(19 * 2 * 2);
+    for (let h = 0; h <= 18; h++) block.add(r3RepContinueSeed(h));
+    const worlds = Array.from({ length: 19 }, (_, h) => r3RepWorldSeedOf(h));
+    expect(new Set(worlds).size).toBe(19);
+    expect(worlds.slice(12, 18)).toEqual([4_811_301, 4_811_302, 4_811_303, 4_811_304, 4_811_305, 4_811_306]);
+    expect(worlds[18]).toBe(4_818_401);
+    for (const x of worlds.slice(12)) block.add(x);
+    expect(block.size).toBe(76 + 19 + 7);
+    for (const x of block) expect(x >= 4_800_001 && x <= 4_849_999).toBe(true);
+    expect(Math.min(...[...block].filter((x) => x >= R3REP_SEED_BASE))).toBe(R3REP_SEED_BASE);
+    expect(R3REP_SEED_BASE).toBeGreaterThan(R1DP_SEED_MAX);
+    const others = new Set<number>();
+    for (let r = 0; r <= 4; r++) for (let h = 0; h <= 18; h++) for (let t = 0; t <= 1; t++) for (let v = 0; v <= 4; v++) for (let s = 0; s <= 9; s++) others.add(assaySeed(r, h, t, v, s));
+    for (let h = 0; h <= 11; h++) for (let t = 0; t <= 2; t++) for (let s = 0; s <= 9; s++) others.add(r1PrimeSeed(h, t, s));
+    for (let h = 0; h < R1DP_SETS; h++) for (let s = 0; s <= 9; s++) others.add(r1dPrimeSeed(h, s));
+    for (let s = 0; s <= 9; s++) others.add(TAU_SEED_BASE + s);
+    for (let g = 0; g <= 14; g++) for (let s = 0; s <= 9; s++) others.add(4_800_001 + 100 * g + s); // P1
+    for (let x = 4_802_001; x <= 4_802_022; x++) others.add(x); // calibration
+    for (const x of [4_805_001, 4_805_002]) others.add(x); // P2 ranking worlds
+    for (let arm = 0; arm <= 1; arm++) for (let s = 0; s <= 1; s++) others.add(4_805_101 + 10 * arm + s); // P2 selection runs
+    for (let arm = 0; arm <= 2; arm++) for (let i = 0; i <= 5; i++) others.add(4_810_001 + 100 * arm + i); // main run
+    for (let j = 0; j <= 3; j++) others.add(4_811_201 + j); // the R1'' negative-control worlds (the formula's arm-2 seeds are not used)
+    for (const x of block) expect(others.has(x)).toBe(false);
+    // the scaf and rand worlds are the R1'' fresh histories, reused
+    expect(worlds.slice(0, 12)).toEqual([0, 1].flatMap((arm) => [0, 1, 2, 3, 4, 5].map((i) => 4_811_001 + 100 * arm + i)));
+  });
+
+  it("gives Ge-on-Fa the ancestor's seeds (h = 18 at t = 0), and every other variant its source's", () => {
+    const l = r3RepLabelsOf(3, "a");
+    expect(r3RepSeedHOf(l, "swap-ea")).toBe(R3REP_ANCESTOR_H);
+    for (const v of ["fragment", "swap-ae", "quenched"]) expect(r3RepSeedHOf(l, v)).toBe(3);
+    for (let s = 0; s <= 1; s++) {
+      expect(r3RepSeedOf(l, "swap-ea", s)).toBe(r3RepSeed(18, 0, s));
+      expect(r3RepSeedOf(l, "swap-ea", s)).toBe(r3RepSeedOf(r3RepLabelsOf(18, "a"), "fragment", s)); // the ancestor's own set at (a)
+      expect(r3RepSeedOf(l, "swap-ae", s)).toBe(r3RepSeed(3, 0, s));
+      expect(r3RepSeedOf(r3RepLabelsOf(3, "b"), "quenched", s)).toBe(r3RepSeed(3, 1, s));
+    }
+    const at = (seed: number) => ({ physics: seed, fragment: seed });
+    expect(() => checkR3RepSeeds(l, "swap-ea", at(r3RepSeed(18, 0, 0)), 0)).not.toThrow();
+    expect(() => checkR3RepSeeds(l, "swap-ea", at(r3RepSeed(18, 0, 1)), 1)).not.toThrow();
+    expect(() => checkR3RepSeeds(l, "swap-ea", at(r3RepSeed(3, 0, 0)), 0)).toThrow(/want r3RepSeed\(18, 0, 0\) = 4818101/); // the history's own
+    expect(() => checkR3RepSeeds(l, "swap-ae", at(r3RepSeed(18, 0, 0)), 0)).toThrow(/want r3RepSeed\(3, 0, 0\) = 4816601/);
+    expect(() => checkR3RepSeeds(l, "fragment", at(r3RepSeed(3, 0, 0)), 0)).not.toThrow();
+    expect(() => checkR3RepSeeds(l, "fragment", at(r3RepSeed(3, 0, 0)), 1)).toThrow(/want r3RepSeed\(3, 0, 1\)/);
+    expect(() => checkR3RepSeeds(l, "fragment", { physics: r3RepSeed(3, 0, 0), fragment: r3RepSeed(3, 0, 1) }, 0)).toThrow(/fragment seed/);
+    expect(() => checkR3RepSeeds(l, "fragment", at(r3RepSeed(3, 1, 0)), 0)).toThrow(/does not match/); // the other timing
+    expect(() => checkR3RepSeeds(l, "fragment", at(assaySeed(3, 3, 0, 0, 0)), 0)).toThrow(/does not match/); // v1's R3 seed of that history
+  });
+
+  it("labels the 19 sources by h, derives h from --arm and --history, and refuses what disagrees", () => {
+    expect(r3RepHistoryOf(0)).toEqual({ arm: "scaf", history: 0, h: 0 });
+    expect(r3RepHistoryOf(11)).toEqual({ arm: "rand", history: 5, h: 11 });
+    expect(r3RepHistoryOf(12)).toEqual({ arm: "cont", history: 0, h: 12 });
+    expect(r3RepHistoryOf(18)).toEqual({ arm: "ancestor", history: -1, h: 18 });
+    for (const bad of [-1, 19, 1.5, NaN]) expect(() => r3RepHistoryOf(bad)).toThrow(/R3-replication h/);
+    expect(r3RepLabelsOf(8, "b")).toEqual({ arm: "rand", history: 2, timing: "b", r3rep: true, h: 8 });
+    expect(Array.from({ length: 19 }, (_, h) => r3RepIdOf(r3RepHistoryOf(h))).join(" ")).toBe(
+      "scaf-i0 scaf-i1 scaf-i2 scaf-i3 scaf-i4 scaf-i5 rand-i0 rand-i1 rand-i2 rand-i3 rand-i4 rand-i5 cont-i0 cont-i1 cont-i2 cont-i3 cont-i4 cont-i5 ancestor",
+    );
+    expect(r3RepSetIdOf(r3RepLabelsOf(0, "a"), "swap-ea")).toBe("scaf-i0-a-swap-ea");
+    expect(r3RepSetIdOf(r3RepLabelsOf(18, "b"), "fragment")).toBe("ancestor-b");
+
+    expect(parseR3RepLabels({ arm: "scaf", history: "3", timing: "a" })).toEqual(r3RepLabelsOf(3, "a"));
+    expect(parseR3RepLabels({ arm: "cont", history: "5", timing: "b" })).toEqual(r3RepLabelsOf(17, "b"));
+    expect(parseR3RepLabels({ arm: "ancestor", timing: "b" })).toEqual(r3RepLabelsOf(18, "b"));
+    // --h is derived: it may be given only when it agrees
+    expect(parseR3RepLabels({ arm: "rand", history: "2", timing: "a", h: "8" })).toEqual(r3RepLabelsOf(8, "a"));
+    expect(parseR3RepLabels({ arm: "ancestor", timing: "a", h: "18" })).toEqual(r3RepLabelsOf(18, "a"));
+    expect(() => parseR3RepLabels({ arm: "rand", history: "2", timing: "a", h: "2" })).toThrow(/--h 2 disagrees with --arm rand --history 2: .* here 8/);
+    expect(() => parseR3RepLabels({ arm: "ancestor", timing: "a", h: "0" })).toThrow(/--h 0 disagrees/);
+    expect(() => parseR3RepLabels({ arm: "scaf", history: "0", timing: "a", h: "" })).toThrow(/--h/);
+    // arm, history and timing
+    expect(() => parseR3RepLabels({ arm: "control", history: "0", timing: "a" })).toThrow(/--arm/);
+    expect(() => parseR3RepLabels({ history: "0", timing: "a" })).toThrow(/--arm/);
+    expect(() => parseR3RepLabels({ arm: "scaf", timing: "a" })).toThrow(/--history/);
+    expect(() => parseR3RepLabels({ arm: "scaf", history: "6", timing: "a" })).toThrow(/--history/);
+    expect(() => parseR3RepLabels({ arm: "ancestor", history: "0", timing: "a" })).toThrow(/--history does not apply to the ancestor/);
+    expect(() => parseR3RepLabels({ arm: "scaf", history: "0" })).toThrow(/--timing/);
+    expect(() => parseR3RepLabels({ arm: "scaf", history: "0", timing: "c" })).toThrow(/--timing/);
+    // the R1 and R1'' flags do not apply
+    expect(() => parseR3RepLabels({ arm: "scaf", history: "0", timing: "a", time: "0" })).toThrow(/--time/);
+    expect(() => parseR3RepLabels({ arm: "ancestor", timing: "a", calibration: "1" })).toThrow(/--calibration/);
+    expect(() => parseR3RepLabels({ arm: "scaf", history: "0", timing: "a", control: "positive" })).toThrow(/--control/);
+    // continue names the source world only
+    expect(parseR3RepContinueLabels({ arm: "cont", history: "1" })).toEqual(r3RepHistoryOf(13));
+    expect(parseR3RepContinueLabels({ arm: "ancestor", h: "18" })).toEqual(r3RepHistoryOf(18));
+    expect(() => parseR3RepContinueLabels({ arm: "cont", history: "1", timing: "b" })).toThrow(/--timing/);
+    expect(() => parseR3RepContinueLabels({ arm: "cont", history: "1", h: "12" })).toThrow(/--h 12 disagrees/);
+  });
+
+  it("reads the labels back from assay.json, for the stage and for v1's AssaySet (arm, history, timing)", () => {
+    expect(r3RepLabelsFromJson(r3RepLabelsOf(4, "b"))).toEqual({ labels: r3RepLabelsOf(4, "b") });
+    expect(r3RepLabelsFromJson({ arm: "scaf", history: 4, timing: "b", h: 4 })).toEqual({ error: "labels.r3rep is not true" });
+    expect(r3RepLabelsFromJson({ ...r3RepLabelsOf(4, "b"), h: 19 })).toMatchObject({ error: expect.stringMatching(/labels.h 19/) });
+    expect(r3RepLabelsFromJson({ ...r3RepLabelsOf(4, "b"), timing: "c" })).toMatchObject({ error: expect.stringMatching(/labels.timing/) });
+    expect(r3RepLabelsFromJson({ ...r3RepLabelsOf(4, "b"), arm: "rand" })).toMatchObject({ error: expect.stringMatching(/labels.arm "rand", want "scaf" for h 4/) });
+    expect(r3RepLabelsFromJson({ ...r3RepLabelsOf(4, "b"), history: 5 })).toMatchObject({ error: expect.stringMatching(/labels.history 5, want 4/) });
+    expect(r3RepLabelsFromJson(undefined)).toEqual({ error: "labels.r3rep is not true" });
+    const base = { protocolSha256: V1, assay: "competence", source: "s", tag: "t", k: 8, period: 10_000, ref: 103_058, side: 8, replicates: 2, censusEvery: 100, inoculum: "quenched", seeds: [], extra: {}, summary: {}, wallSeconds: 1 };
+    for (const [h, timing, arm, history] of [[2, "b", "scaf", 2], [15, "a", "cont", 3], [18, "a", "ancestor", -1]] as const) {
+      const json = JSON.parse(JSON.stringify(assayJson({ ...base, labels: r3RepLabelsOf(h, timing), extra: { provenance: { source: "s" }, protocolSha256R3rep: R3 } })));
+      expect(json.labels).toEqual({ arm, history, timing, r3rep: true, h });
+      expect(json.protocolSha256R3rep).toBe(R3);
+      expect(assayLabels(json)).toMatchObject({ arm, history, timing, ref: 103_058, k: 8, period: 10_000, calibration: null });
+    }
+  });
+
+  it("plans the 62 sets: 38 sources, 12 swaps and 12 quenched controls", () => {
+    const sets = r3RepExpectedSets();
+    expect(sets).toHaveLength(62);
+    expect(new Set(sets.map((s) => r3RepSetIdOf(s.labels, s.inoculum))).size).toBe(62);
+    expect(sets.filter((s) => s.inoculum === "fragment")).toHaveLength(38);
+    expect(sets.filter((s) => s.inoculum.startsWith("swap-"))).toHaveLength(12);
+    expect(sets.filter((s) => s.inoculum === "quenched")).toHaveLength(12);
+    for (const s of sets) expect(r3RepVariantProblems(s.labels, s.inoculum)).toEqual([]);
+  });
+
+  it("allows the swaps on a scaf history at timing a and the quenched control on a scaf history at either timing", () => {
+    expect(r3RepVariantProblems(r3RepLabelsOf(0, "b"), "quenched")).toEqual([]);
+    expect(r3RepVariantProblems(r3RepLabelsOf(0, "b"), "swap-ea").join(" ")).toMatch(/swap-ea runs at timing a only/);
+    expect(r3RepVariantProblems(r3RepLabelsOf(0, "b"), "swap-ae").join(" ")).toMatch(/swap-ae runs at timing a only/);
+    expect(r3RepVariantProblems(r3RepLabelsOf(6, "a"), "quenched").join(" ")).toMatch(/quenched labels a scaf history, not rand/);
+    expect(r3RepVariantProblems(r3RepLabelsOf(18, "a"), "swap-ea").join(" ")).toMatch(/not ancestor/);
+    expect(r3RepVariantProblems(r3RepLabelsOf(12, "b"), "swap-ae")).toHaveLength(2);
+    expect(r3RepVariantProblems(r3RepLabelsOf(0, "a"), "disc").join(" ")).toMatch(/inoculum "disc"/);
+    expect(r3RepRegimeProblems(R3REP_REGIME)).toEqual([]);
+    expect(r3RepRegimeProblems({ ...R3REP_REGIME, k: 5, ref: null })).toEqual(["k 5, want 8", "ref null, want 103058"]);
+    expect(r3RepRegimeProblems({ k: 8, period: 3000, ref: 103_058, side: 2, replicates: 1, censusEvery: 50 })).toHaveLength(4);
+  });
+
+  it("holds a timing (a) source to its history: the run directory's meta.json and done.json, and the state's seed, mutation rate and step", () => {
+    for (const h of [0, 5, 6, 11, 12, 17, 18]) expect(r3RepOriginProblems(h, origin(h), V1)).toEqual([]);
+    expect(r3RepOriginProblems(0, origin(0, { source: "runs/scaffold/r3rep/main/scaf/i0/ckpt/b100-pre.blck.gz" }), V1)).toEqual([]);
+    expect(r3RepOriginProblems(0, origin(0, { source: "r3rep/main/scaf/i0/ckpt/b100-pre.blck.gz" }), V1)).toEqual([]);
+    expect(r3RepOriginProblems(0, origin(0, { source: "/home/u/bl/runs/scaffold/r3rep/main/scaf/i0/ckpt/b100-pre.blck.gz" }), V1)).toEqual([]);
+    // wrong seed: another history's checkpoint, or the run's meta.json says another world
+    expect(r3RepOriginProblems(0, origin(0, { seed: 4_811_002 }), V1).join(" ")).toMatch(/source seed 4811002, want 4811001/);
+    expect(r3RepOriginProblems(6, origin(0), V1).join(" ")).toMatch(/does not end in r3rep\/main\/rand\/i0\/ckpt\/b<N>-pre\.blck\.gz/);
+    expect(r3RepOriginProblems(12, origin(12, { meta: { seed: 4_811_201 } }), V1).join(" ")).toMatch(/run meta.json seed 4811201, want 4811301/); // the formula's arm-2 seed
+    expect(r3RepOriginProblems(0, origin(0, { mutRate: 0 }), V1).join(" ")).toMatch(/source mutRate 0, want 429497/);
+    // wrong step
+    expect(r3RepOriginProblems(0, origin(0, { step: 340_000 }), V1).join(" ")).toMatch(/source step 340000, want 1000000/);
+    expect(r3RepOriginProblems(18, origin(18, { step: 210_000 }), V1).join(" ")).toMatch(/source step 210000, want 10000/);
+    // wrong path: another boundary, the post-cycle state, v1's histories, the R1'' originals, a name that only looks like it
+    const dir = "runs/scaffold/r3rep/main/scaf/i0/ckpt";
+    for (const bad of [`${dir}/b100-post.blck.gz`, `${dir}/init.blck.gz`, `${dir}/b100-pre.blck`, `${dir}/b100-pre.blck.gz.tmp`, `${dir}/xb100-pre.blck.gz`, `${dir}/b0100-pre.blck.gz`, `${dir}/b101-pre.blck.gz`, "runs/scaffold/main/scaf/i0/ckpt/b100-pre.blck.gz", "runs/scaffold/rep/main/scaf/i0/ckpt/b34-pre.blck.gz", "runs/scaffold/xr3rep/main/scaf/i0/ckpt/b100-pre.blck.gz", "runs/scaffold/r3rep/main/scaf/i0/b100-pre.blck.gz"]) {
+      expect(r3RepOriginProblems(0, origin(0, { source: bad }), V1).join(" ")).toMatch(/does not end in r3rep\/main\/scaf\/i0\/ckpt\/b<N>-pre\.blck\.gz/);
+    }
+    expect(r3RepOriginProblems(18, origin(18, { source: "runs/scaffold/r3rep/anc/ckpt/b2-pre.blck.gz" }), V1).join(" ")).toMatch(/does not end in r3rep\/anc\/ckpt\/b1-pre\.blck\.gz/);
+    expect(r3RepOriginProblems(18, origin(18, { source: "runs/scaffold/calib/source/ckpt/b1-pre.blck.gz" }), V1).join(" ")).toMatch(/r3rep\/anc/); // v1's ancestor source
+    // wrong protocol SHA: the run was made under another protocol v1 document
+    expect(r3RepOriginProblems(0, origin(0), "2".repeat(64)).join(" ")).toMatch(/run meta.json protocolSha256 "1{64}", want "2{64}"/);
+    // the rest of meta.json
+    expect(r3RepOriginProblems(0, origin(0, { meta: { k: 5 } }), V1).join(" ")).toMatch(/meta.json k 5, want 8/);
+    expect(r3RepOriginProblems(12, origin(12, { meta: { k: 8 } }), V1).join(" ")).toMatch(/meta.json k 8, want 0/);
+    expect(r3RepOriginProblems(0, origin(0, { meta: { arm: "rand" } }), V1).join(" ")).toMatch(/meta.json arm "rand", want "scaf"/);
+    expect(r3RepOriginProblems(0, origin(0, { meta: { init: "founders" } }), V1).join(" ")).toMatch(/init "founders", want "clone"/);
+    expect(r3RepOriginProblems(0, origin(0, { meta: { censusEvery: 50 } }), V1).join(" ")).toMatch(/censusEvery 50, want 100/);
+    expect(r3RepOriginProblems(0, origin(0, { meta: { mutRate: 0 } }), V1).join(" ")).toMatch(/meta.json mutRate 0, want 429497/);
+    expect(r3RepOriginProblems(18, origin(18, { meta: { cycles: 2 } }), V1).join(" ")).toMatch(/meta.json cycles 2, want 1/);
+    expect(r3RepOriginProblems(18, origin(18, { meta: { arm: "scaf" } }), V1).join(" ")).toMatch(/meta.json arm "scaf", want "cont"/);
+    // not inside a run directory, or the run is unfinished, failed or not extended to 100 cycles
+    expect(r3RepOriginProblems(0, { ...origin(0), run: r3RepRunRecordOf(null, null) }, V1).join(" ")).toMatch(/not inside a run directory.*no readable done.json/);
+    expect(r3RepOriginProblems(0, origin(0, { done: null }), V1).join(" ")).toMatch(/no readable done.json \(unfinished\)/);
+    expect(r3RepOriginProblems(0, origin(0, { done: { ok: false } }), V1).join(" ")).toMatch(/done.json ok false, want true/);
+    expect(r3RepOriginProblems(0, origin(0, { N: 34, done: { cycles: 34 } }), V1).join(" ")).toMatch(/cycles 34, want 100.*b34-pre, but the history did not end/); // the copy before its extension
+    expect(r3RepOriginProblems(18, origin(18, { done: { cycles: 2 } }), V1).join(" ")).toMatch(/want 1 cycle run through/);
+    // every problem is listed, not only the first
+    expect(r3RepOriginProblems(0, origin(0, { source: "x.blck.gz", seed: 1, mutRate: 0, done: null }), V1)).toHaveLength(4);
+    expect(r3RepOriginProblems(0, undefined, V1)).toEqual(["no source record"]);
+    expect(r3RepOriginProblems(0, { source: 3 }, V1, "donor").join(" ")).toMatch(/^donor has no path/);
+  });
+
+  it("takes an ended scaf or rand history's terminal b<e>-pre as its source, as its done.json says", () => {
+    const ended = (h: number, e: number, endedAt = e) => origin(h, { N: e, done: { cycles: endedAt, ended: true, endedAt } });
+    expect(r3RepBoundaryOf(0, "runs/scaffold/r3rep/main/scaf/i0/ckpt/b57-pre.blck.gz")).toBe(57);
+    expect(r3RepOriginProblems(0, ended(0, 57), V1)).toEqual([]);
+    expect(r3RepOriginProblems(7, ended(7, 35), V1)).toEqual([]);
+    expect(r3RepOriginProblems(0, ended(0, 100), V1)).toEqual([]); // ended at the last boundary
+    expect(r3RepOriginProblems(0, { ...ended(0, 57), step: 1_000_000 }, V1).join(" ")).toMatch(/source step 1000000, want 570000/);
+    // the path and done.json must name the same boundary
+    expect(r3RepOriginProblems(0, ended(0, 57, 58), V1).join(" ")).toMatch(/run ended at boundary 58, but the source is b57-pre/);
+    expect(r3RepOriginProblems(0, origin(0, { done: { cycles: 57, ended: true, endedAt: 57 } }), V1).join(" ")).toMatch(/ended at boundary 57, but the source is b100-pre/);
+    // cont has no cycle and never ends; the ancestor world runs its one cycle through
+    expect(r3RepOriginProblems(12, ended(12, 57), V1).join(" ")).toMatch(/cont has no cycle/);
+    expect(r3RepOriginProblems(18, origin(18, { done: { ended: true, endedAt: 1 } }), V1).join(" ")).toMatch(/\(ended\), want 1 cycle/);
+  });
+
+  it("validates a continuation's sidecar against the timing (a) source as it is now and the checkpoint beside it", () => {
+    expect(r3RepSidecarPathOf("runs/scaffold/r3rep/cont200k/scaf-i0.blck.gz")).toBe("runs/scaffold/r3rep/cont200k/scaf-i0.json");
+    expect(() => r3RepSidecarPathOf("runs/scaffold/r3rep/cont200k/scaf-i0.blck")).toThrow(/\.blck\.gz/);
+    expect(r3RepContinuationPathOf(0)).toBe("r3rep/cont200k/scaf-i0.blck.gz");
+    expect(r3RepContinuationPathOf(18)).toBe("r3rep/cont200k/ancestor.blck.gz");
+    for (const h of [0, 9, 16, 18]) {
+      const from = origin(h);
+      const end = continued(h, from);
+      const c = sidecarOf(h, from, end);
+      expect(c).toMatchObject({ r3rep: true, h, source: from.source, sourceStateHash: from.stateHash, sourceSeed: from.seed, sourceStep: from.step, seed: 4_818_301 + h, steps: 200_000, mutRate: mut, endStateHash: end.stateHash, endStep: from.step + 200_000, protocolSha256R3rep: R3 });
+      expect(r3RepContinuationProblems(h, c, from, end, R3)).toEqual([]);
+    }
+    const from = origin(2);
+    const end = continued(2, from);
+    const c = sidecarOf(2, from, end);
+    // the source checkpoint has changed since the continuation read it
+    expect(r3RepContinuationProblems(2, c, { ...from, stateHash: "f".repeat(16) }, end, R3).join(" ")).toMatch(/continuation sourceStateHash "a20{14}", want "f{16}"/);
+    // another source path, seed or step
+    expect(r3RepContinuationProblems(2, { ...c, source: "runs/scaffold/r3rep/main/scaf/i3/ckpt/b100-pre.blck.gz" }, from, end, R3).join(" ")).toMatch(/continuation source/);
+    expect(r3RepContinuationProblems(2, { ...c, sourceStep: 990_000, endStep: 1_190_000 }, from, { ...end, step: 1_190_000 }, R3).join(" ")).toMatch(/continuation sourceStep 990000, want 1000000/);
+    // wrong seed, steps or mutation rate
+    expect(r3RepContinuationProblems(2, sidecarOf(2, from, { ...end, seed: 4_818_302 }), from, { ...end, seed: 4_818_302 }, R3).join(" ")).toMatch(/continuation seed 4818302, want 4818303/);
+    expect(r3RepContinuationProblems(2, { ...c, steps: 100_000, endStep: 1_100_000 }, from, { ...end, step: 1_100_000 }, R3).join(" ")).toMatch(/continuation steps 100000, want 200000/);
+    expect(r3RepContinuationProblems(2, sidecarOf(2, from, { ...end, mutRate: 1 }), from, { ...end, mutRate: 1 }, R3).join(" ")).toMatch(/continuation mutRate 1, want 429497/);
+    expect(r3RepContinuationProblems(2, { ...c, endStep: 1_000_001 }, from, { ...end, step: 1_000_001 }, R3).join(" ")).toMatch(/endStep 1000001 is not sourceStep 1000000 \+ steps 200000/);
+    // the checkpoint beside it is not the one it wrote
+    expect(r3RepContinuationProblems(2, c, from, { ...end, stateHash: "d".repeat(16) }, R3).join(" ")).toMatch(/the continued checkpoint's stateHash "d{16}" is not the continuation's endStateHash/);
+    expect(r3RepContinuationProblems(2, c, from, { ...end, step: 1_000_000 }, R3).join(" ")).toMatch(/the continued checkpoint's step 1000000 is not the continuation's endStep 1200000/);
+    expect(r3RepContinuationProblems(2, c, from, { ...end, seed: 4_811_003 }, R3).join(" ")).toMatch(/the continued checkpoint's seed 4811003/);
+    // another world's sidecar, another protocol document, or none
+    expect(r3RepContinuationProblems(3, c, from, end, R3).join(" ")).toMatch(/continuation history 2, want 3.*continuation h 2, want 3/);
+    expect(r3RepContinuationProblems(2, c, from, end, "4".repeat(64)).join(" ")).toMatch(/protocolSha256R3rep "3{64}", want "4{64}"/);
+    expect(r3RepContinuationProblems(2, { ...c, r3rep: undefined }, from, end, R3).join(" ")).toMatch(/continuation r3rep undefined, want true/);
+    expect(r3RepContinuationProblems(2, null, from, end, R3)).toEqual(["no continuation sidecar (the <checkpoint>.json that continue --r3rep writes last)"]);
+    expect(r3RepContinuationProblems(2, c, null, end, R3).join(" ")).toMatch(/source checkpoint was not read/);
+    // what continue --r3rep itself checks before it runs
+    expect(r3RepContinueProblems(2, { seed: 4_818_303, steps: 200_000, censusEvery: 100, out: "runs/scaffold/r3rep/cont200k/scaf-i2.blck.gz" })).toEqual([]);
+    expect(r3RepContinueProblems(18, { seed: 4_818_319, steps: 200_000, censusEvery: 100, out: "r3rep/cont200k/ancestor.blck.gz" })).toEqual([]);
+    expect(r3RepContinueProblems(2, { seed: assaySeed(0, 2, 1, 0, 0), steps: 20_000, censusEvery: 10, out: "runs/scaffold/cont200k/scaf-i2.blck.gz" })).toEqual([
+      `seed ${assaySeed(0, 2, 1, 0, 0)}, want r3RepContinueSeed(2) = 4818303`,
+      "steps 20000, want 200000",
+      "census every 10, want 100",
+      'output "runs/scaffold/cont200k/scaf-i2.blck.gz" does not end in r3rep/cont200k/scaf-i2.blck.gz',
+    ]);
+  });
+
+  it("checks a set's whole provenance: timing a and b sources, Ge-on-Fa's ancestor fragments and donor, and no donor elsewhere", () => {
+    const dom = r3RepDominantRecord(dominantGenome(blobSource(2)));
+    // timing a: the source itself; Ge-on-Fa's source is the ancestor's (a) and its donor the scaf history's (a)
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "fragment", origin(4), sha)).toEqual([]);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "quenched", origin(4), sha)).toEqual([]);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "swap-ae", origin(4), sha)).toEqual([]);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "swap-ea", { ...origin(18), donor: { ...origin(4), dominant: dom } }, sha)).toEqual([]);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "swap-ea", { ...origin(18), donor: { ...origin(4), dominant: null } }, sha)).toEqual([]); // the biological record
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "swap-ea", { ...origin(4), donor: { ...origin(4), dominant: dom } }, sha).join(" ")).toMatch(/^source path .* does not end in r3rep\/anc\/ckpt\/b1-pre/);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "swap-ea", { ...origin(18), donor: { ...origin(5), dominant: dom } }, sha).join(" ")).toMatch(/donor path .* does not end in r3rep\/main\/scaf\/i4/);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "swap-ea", origin(18), sha).join(" ")).toMatch(/no donor record/);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "swap-ea", { ...origin(18), donor: { ...origin(4), dominant: { ...dom!, id: "9:9" } } }, sha).join(" ")).toMatch(/not a dominant genome record/);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "swap-ea", { ...origin(18), donor: { ...origin(4), dominant: { ...dom!, words: "00" } } }, sha).join(" ")).toMatch(/not a dominant genome record/);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "swap-ae", { ...origin(4), donor: { ...origin(4), dominant: dom } }, sha).join(" ")).toMatch(/names a genome donor, but swap-ae has none/);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "fragment", undefined, sha)).toEqual(["assay.json has no provenance of its source (run the assay with --r3rep)"]);
+    // timing b: the continued checkpoint, its sidecar and the timing (a) source the sidecar names
+    for (const [h, inoculum] of [[4, "fragment"], [4, "quenched"], [10, "fragment"], [18, "fragment"]] as const) {
+      const from = origin(h);
+      const end = continued(h, from);
+      const prov = { ...end, continuation: sidecarOf(h, from, end), origin: from };
+      expect(r3RepProvenanceProblems(r3RepLabelsOf(h, "b"), inoculum, prov, sha)).toEqual([]);
+    }
+    const from = origin(4);
+    const end = continued(4, from);
+    const prov = { ...end, continuation: sidecarOf(4, from, end), origin: from };
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "b"), "fragment", { ...prov, source: "runs/scaffold/cont200k/scaf-i4.blck.gz" }, sha).join(" ")).toMatch(/source path .* does not end in r3rep\/cont200k\/scaf-i4\.blck\.gz/); // v1's continuation
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "b"), "fragment", { ...prov, continuation: null }, sha).join(" ")).toMatch(/no continuation sidecar/);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "b"), "fragment", { ...prov, origin: origin(4, { done: null }) }, sha).join(" ")).toMatch(/continuation source run has no readable done.json/);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "b"), "fragment", { ...prov, stateHash: "d".repeat(16) }, sha).join(" ")).toMatch(/endStateHash/);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "b"), "fragment", prov, { ...sha, r3rep: "4".repeat(64) }).join(" ")).toMatch(/protocolSha256R3rep/);
+    // a timing a set given a timing b source, and the reverse
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "a"), "fragment", prov, sha).length).toBeGreaterThan(0);
+    expect(r3RepProvenanceProblems(r3RepLabelsOf(4, "b"), "fragment", origin(4), sha).length).toBeGreaterThan(0);
+  });
+
+  it("records checkpoints, run records and the dominant genome from their state and files", () => {
+    const s = blobSource(2);
+    expect(r3RepCheckpointOf("p/ckpt/b1-pre.blck.gz", s)).toEqual({ source: "p/ckpt/b1-pre.blck.gz", stateHash: stateHash(s), seed: 7, mutRate: 0, step: 0, tilesX: 2, tilesY: 2 });
+    expect(r3RepRunRecordOf({ arm: "scaf", seed: 1, Mr: [1, 2], config: {} }, { ok: true, cycles: 100, ended: false, wallSeconds: 3 })).toEqual({ meta: { arm: "scaf", seed: 1 }, done: { ok: true, cycles: 100, ended: false } });
+    expect(r3RepRunRecordOf(null, [1])).toEqual({ meta: null, done: null });
+    const dom = dominantGenome(s)!;
+    const rec = r3RepDominantRecord(dom)!;
+    expect(rec).toEqual({ id: `${dom.hi}:${dom.lo}`, hi: dom.hi, lo: dom.lo, words: Array.from(dom.words, (x) => x.toString(16).padStart(8, "0")).join("") });
+    expect(rec.words).toHaveLength(8 * GENOME_CHANNELS);
+    expect(r3RepDominantRecord(dominantGenome(emptyWorld(2)))).toBeNull();
+  });
+
+  it("validates a biologically unavailable Ge-on-Fa record: swap-ea of a scaf history at a, a donor with no dominant genome, no rows", () => {
+    const donor = { ...origin(1), dominant: null };
+    const json = { labels: r3RepLabelsOf(1, "a"), inoculum: "swap-ea", provenance: { ...origin(18), donor }, biologicallyUnavailable: r3RepUnavailableOf(donor), summary: { rows: 0, competence: null } };
+    expect(JSON.parse(JSON.stringify(json.biologicallyUnavailable))).toEqual({ reason: "no dominant genome", donor: donor.source, donorStateHash: donor.stateHash });
+    expect(r3RepUnavailableProblems(JSON.parse(JSON.stringify(json)))).toEqual([]);
+    expect(r3RepUnavailableProblems({ ...json, inoculum: "swap-ae" }).join(" ")).toMatch(/only Ge-on-Fa/);
+    expect(r3RepUnavailableProblems({ ...json, labels: r3RepLabelsOf(7, "a") }).join(" ")).toMatch(/not rand/);
+    expect(r3RepUnavailableProblems({ ...json, summary: { rows: 128 } }).join(" ")).toMatch(/summary.rows 128, want 0/);
+    expect(r3RepUnavailableProblems({ ...json, provenance: { ...origin(18), donor: { ...donor, dominant: r3RepDominantRecord(dominantGenome(blobSource(2))) } } }).join(" ")).toMatch(/dominant .* want null/);
+    expect(r3RepUnavailableProblems({ ...json, biologicallyUnavailable: { ...json.biologicallyUnavailable, donorStateHash: "x" } }).join(" ")).toMatch(/biologicallyUnavailable/);
+    expect(r3RepUnavailableProblems({ ...json, provenance: origin(18) }).join(" ")).toMatch(/no donor/);
+  });
+
+  it("checks each variant's recorded treatment against its provenance: Ge-on-Fa's words its donor's dominant genome, Ga-on-Fe's M3_FOUNDERS[2]'s", () => {
+    const hex = (w: Uint32Array) => Array.from(w, (x) => x.toString(16).padStart(8, "0")).join("");
+    expect(R3REP_SWAP_AE_WORDS).toBe(hex(encodeGenome(founderGenome(M3_FOUNDERS[2]), 0, 1))); // what --swap-founder 2 plants
+    const dom = r3RepDominantRecord(dominantGenome(blobSource(2)))!;
+    const ea = { ...origin(18), donor: { ...origin(4), dominant: dom } };
+    // as competence --r3rep writes each variant
+    const sets: Record<string, unknown>[] = [
+      { inoculum: "fragment", quench: false, swap: null, provenance: origin(4) },
+      { inoculum: "quenched", quench: true, swap: null, provenance: origin(4) },
+      { inoculum: "swap-ae", quench: false, swap: { label: "swap-ae", from: "M3_FOUNDERS[2]", words: R3REP_SWAP_AE_WORDS }, provenance: origin(4) },
+      { inoculum: "swap-ea", quench: false, swap: { label: "swap-ea", from: `x (dominant ${dom.id})`, words: dom.words }, provenance: ea },
+      { inoculum: "swap-ea", quench: false, swap: { label: "swap-ea", from: "x", words: null }, provenance: { ...ea, donor: { ...ea.donor, dominant: null } }, biologicallyUnavailable: r3RepUnavailableOf(ea.donor) },
+    ];
+    for (const json of sets) expect(r3RepTreatmentProblems(json)).toEqual([]);
+    const [fragment, quenched, ae, eaSet, bio] = sets;
+    // (A) Ge-on-Fa with rows and a donor that records no dominant genome
+    expect(r3RepTreatmentProblems({ ...eaSet, provenance: { ...ea, donor: { ...ea.donor, dominant: null } } }).join(" ")).toMatch(/^provenance\.donor\.dominant null: a Ge-on-Fa set with rows plants its donor's dominant genome/);
+    expect(r3RepTreatmentProblems({ ...eaSet, provenance: origin(18) }).join(" ")).toMatch(/^provenance\.donor\.dominant undefined/);
+    // (B) planted words other than the donor's dominant genome
+    expect(r3RepTreatmentProblems({ ...eaSet, swap: { label: "swap-ea", from: "x", words: R3REP_SWAP_AE_WORDS } })).toEqual([`swap words are not the donor's dominant genome ${dom.id} (provenance.donor.dominant.words)`]);
+    expect(r3RepTreatmentProblems({ ...eaSet, swap: { ...(eaSet.swap as object), label: "swap-ae" } }).join(" ")).toMatch(/want the swap-ea genome it planted/);
+    expect(r3RepTreatmentProblems({ ...bio, swap: { label: "swap-ea", from: "x", words: dom.words } })).toEqual(["swap words are recorded, but a biologically unavailable record plants no genome (words null)"]);
+    // Ga-on-Fe, the quenched control and the source's own fragments
+    expect(r3RepTreatmentProblems({ ...ae, swap: { label: "swap-ae", from: "M3_FOUNDERS[1]", words: hex(encodeGenome(founderGenome(M3_FOUNDERS[1]), 0, 1)) } })).toEqual(["swap words are not M3_FOUNDERS[2]'s: Ga-on-Fe plants the ancestor's genome and nothing else"]);
+    expect(r3RepTreatmentProblems({ ...ae, swap: null }).join(" ")).toMatch(/^swap null, want the swap-ae genome it planted/);
+    expect(r3RepTreatmentProblems({ ...ae, quench: true })).toEqual(["quench true, want false for swap-ae"]);
+    expect(r3RepTreatmentProblems({ ...quenched, quench: false })).toEqual(["quench false, want true for quenched"]);
+    expect(r3RepTreatmentProblems({ ...quenched, swap: ae.swap }).join(" ")).toMatch(/want null: quenched plants no swapped genome/);
+    expect(r3RepTreatmentProblems({ ...fragment, quench: true })).toEqual(["quench true, want false for fragment"]);
+    expect(r3RepTreatmentProblems({ ...fragment, swap: undefined }).join(" ")).toMatch(/^swap undefined, want null/);
+    expect(r3RepTreatmentProblems({ ...fragment, inoculum: "disc" })).toEqual([]); // r3RepVariantProblems says why
+  });
+
+  it("pins the protocol documents: each still begins with its pinned text, which an amendment at the end keeps", async () => {
+    expect(R3REP_SHA256).toEqual({ protocol: R3REP_PROTOCOLS.protocol.sha256, r3rep: R3REP_PROTOCOLS.r3rep.sha256 });
+    for (const which of ["r3rep", "protocol"] as const) {
+      const pin = R3REP_PROTOCOLS[which];
+      const doc = new Uint8Array(readFileSync(fileURLToPath(new URL(`../../${pin.doc}`, import.meta.url))));
+      expect(createHash("sha256").update(doc.subarray(0, pin.bytes)).digest("hex")).toBe(pin.sha256);
+      expect(await r3RepProtocolProblems(which, doc)).toEqual([]);
+      const amended = new Uint8Array([...doc, ...new TextEncoder().encode("\n## Amendment 3 (2026-10-02)\n\nA dated amendment at the end.\n")]);
+      expect(await r3RepProtocolProblems(which, amended)).toEqual([]);
+      const edited = doc.slice();
+      edited[200] ^= 1;
+      expect((await r3RepProtocolProblems(which, edited)).join(" ")).toMatch(new RegExp(`^${pin.doc.replace(/[.]/g, "\\.")} no longer begins with its pinned text \\(SHA-256 ${pin.sha256}; its first ${pin.bytes} bytes hash to [0-9a-f]{64}\\)`));
+      expect(await r3RepProtocolProblems(which, doc.subarray(0, 100))).toEqual([`${pin.doc} has 100 bytes, fewer than the ${pin.bytes} it had when pinned`]);
+    }
   });
 });
