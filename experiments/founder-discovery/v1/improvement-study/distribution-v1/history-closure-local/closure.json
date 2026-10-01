@@ -1,0 +1,245 @@
+{
+  "format": "discovery-history-host-closure/v1",
+  "hostId": "local",
+  "observedAt": "2026-10-01T02:24:32.675517+00:00",
+  "originalRoot": "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-v1",
+  "allocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+  "processEvidence": {
+    "checkedPids": [
+      92829,
+      67954
+    ],
+    "psExitCode": 1,
+    "stdout": "",
+    "locksAbsent": true
+  },
+  "terminalLog": {
+    "hostId": "local",
+    "newCheckpoints": 2,
+    "elapsedSeconds": 512.93030975,
+    "complete": true
+  },
+  "parentReceiptCount": 35,
+  "chargedSeconds": 22942.16142741812,
+  "assignedRuntimeCapSeconds": 100000,
+  "unspentAllocationSeconds": 77057.83857258188,
+  "terminalHistorySteps": {
+    "discovery-cluster-4-6410002-normal": 1000000,
+    "discovery-cluster-139-6410001-off": 1000000,
+    "discovery-cluster-33-6410005-normal": 1000000,
+    "discovery-cluster-139-6410003-off": 1000000,
+    "discovery-cluster-139-6410002-off": 1000000,
+    "discovery-cluster-139-6410002-normal": 1000000,
+    "discovery-cluster-16-6410001-off": 1000000,
+    "discovery-cluster-33-6410003-normal": 1000000,
+    "discovery-cluster-16-6410003-off": 1000000,
+    "discovery-cluster-16-6410002-off": 1000000,
+    "discovery-cluster-16-6410002-normal": 1000000,
+    "discovery-cluster-33-6410001-normal": 1000000,
+    "discovery-cluster-33-6410003-off": 1000000,
+    "discovery-cluster-33-6410002-off": 1000000,
+    "discovery-cluster-33-6410004-normal": 1000000,
+    "discovery-cluster-33-6410001-off": 1000000,
+    "discovery-cluster-4-6410003-normal": 1000000,
+    "discovery-cluster-139-6410001-normal": 1000000,
+    "discovery-cluster-33-6410005-off": 1000000,
+    "discovery-cluster-33-6410004-off": 1000000,
+    "discovery-cluster-139-6410003-normal": 1000000,
+    "discovery-cluster-4-6410001-normal": 1000000,
+    "discovery-cluster-33-6410006-off": 1000000,
+    "discovery-cluster-33-6410006-normal": 1000000,
+    "discovery-cluster-33-6410002-normal": 1000000,
+    "discovery-cluster-16-6410001-normal": 1000000,
+    "discovery-cluster-4-6410002-off": 1000000,
+    "discovery-cluster-16-6410003-normal": 1000000,
+    "discovery-cluster-4-6410003-off": 1000000,
+    "discovery-cluster-4-6410001-off": 1000000
+  },
+  "files": [
+    {
+      "path": "parent-invocation-1790798515213218000-92829.json",
+      "bytes": 220,
+      "sha256": "6b248b53901f95657da30e1b69ff577b18c6ba17fd4b0c4bcb11d9fca744ac21"
+    },
+    {
+      "path": "parent-invocation-1790799142585056000-92829.json",
+      "bytes": 219,
+      "sha256": "b32cf672b3b10bc070b40c1d9fa4a84e2e550b9e0b7d1cd1cf6412e781c9fdec"
+    },
+    {
+      "path": "parent-invocation-1790799799049897000-92829.json",
+      "bytes": 219,
+      "sha256": "c4e4403e6d5e63660a1cd2d51b2446cfd443db83b198d5f62a16b08eb4357266"
+    },
+    {
+      "path": "parent-invocation-1790800459322319000-92829.json",
+      "bytes": 219,
+      "sha256": "3210d2bcb9d3fdf0ab953196c27334de9e3063c5e014559bdebf22bcc7ed0936"
+    },
+    {
+      "path": "parent-invocation-1790801121647545000-92829.json",
+      "bytes": 218,
+      "sha256": "af6b4fa7b9e5dd5588eb7521ebd06af8cbeb8ced5a1f0494bd54257a7be755fa"
+    },
+    {
+      "path": "parent-invocation-1790801734155587000-92829.json",
+      "bytes": 219,
+      "sha256": "e8bd65775af7e01fd4c6e2604ffbb8add7fa904feb3fa114aa3b052d477323fb"
+    },
+    {
+      "path": "parent-invocation-1790802354909311000-92829.json",
+      "bytes": 219,
+      "sha256": "28686a0b0c6620d8a83f61c81392c21425f5751b3c6a2ac807580cc71264ccc6"
+    },
+    {
+      "path": "parent-invocation-1790803001770078000-92829.json",
+      "bytes": 219,
+      "sha256": "ce84d8c536cec1a9c0dd981c674976275da3f5c3e582856679cb353d6b2c6ab4"
+    },
+    {
+      "path": "parent-invocation-1790803653443656000-92829.json",
+      "bytes": 220,
+      "sha256": "622a9bfc0bdc6b4cf74ab1e8fbc39e75226a0c075f0b5a14b70fc5df94f3bd77"
+    },
+    {
+      "path": "parent-invocation-1790804261571686000-92829.json",
+      "bytes": 219,
+      "sha256": "d60b28de2906616414a06c8d6660b5a323c948fccb57cd49b7bf06645ec65ec5"
+    },
+    {
+      "path": "parent-invocation-1790804886500771000-92829.json",
+      "bytes": 219,
+      "sha256": "d300600eff1251496dc406875f1ac6b0ebc2dc83c3ae016279a148470745d860"
+    },
+    {
+      "path": "parent-invocation-1790805572372366000-92829.json",
+      "bytes": 218,
+      "sha256": "fc8f74c286902189553ffe08f7e96d071072a33f9180ef066e7e980f59590607"
+    },
+    {
+      "path": "parent-invocation-1790806220672551000-92829.json",
+      "bytes": 219,
+      "sha256": "87d017a86697eeaceeeba7a10cbeca30b428a4363a671d076350c92954391633"
+    },
+    {
+      "path": "parent-invocation-1790806875534499000-92829.json",
+      "bytes": 219,
+      "sha256": "90fe117a2a07fb8f9956df5e386f4d8f1f2721a227165579692754cafe078190"
+    },
+    {
+      "path": "parent-invocation-1790807529736260000-92829.json",
+      "bytes": 219,
+      "sha256": "c76ede77b26b70eb6bb15a550f173fd5c18c169b8a96931dd8f9c8504e81e2cb"
+    },
+    {
+      "path": "parent-invocation-1790808201139622000-92829.json",
+      "bytes": 219,
+      "sha256": "433c51657b3f5624b4499f3273fc3f02f60093dda832ca16e67cfe07a247d311"
+    },
+    {
+      "path": "parent-invocation-1790808872331579000-92829.json",
+      "bytes": 219,
+      "sha256": "d37e5cec38e74a8cc9f4ad5588b58fc800850b04bf92544c446b3e6bdc7c9aa0"
+    },
+    {
+      "path": "parent-invocation-1790809541625443000-92829.json",
+      "bytes": 219,
+      "sha256": "88a815c1b8ee2e6b21a2fa8e1b4cc6c1cd4f38ec12d755b984da007cd7083814"
+    },
+    {
+      "path": "parent-invocation-1790810234765289000-92829.json",
+      "bytes": 219,
+      "sha256": "58a7cf1fa4fbeb339ac3b087bea78604cbdb6189fe7b1b6ee6230a25fdb4bdcf"
+    },
+    {
+      "path": "parent-invocation-1790810918869011000-92829.json",
+      "bytes": 217,
+      "sha256": "801dd0a0045baeca63df914073c6bb18d32c59d4dbbd20f769d24514eed7bf45"
+    },
+    {
+      "path": "parent-invocation-1790811611713499000-92829.json",
+      "bytes": 219,
+      "sha256": "fb31b1a22c0619b4de70a6b73ae913df2b1848b3c96c505377caca0ef8c35de1"
+    },
+    {
+      "path": "parent-invocation-1790812223630684000-92829.json",
+      "bytes": 219,
+      "sha256": "2d4069b938c298f978693c6aee980e25a5fd55505e405e3a82f0721e0bc2ef35"
+    },
+    {
+      "path": "parent-invocation-1790812829821944000-92829.json",
+      "bytes": 219,
+      "sha256": "ca81313b1364b81121bfc2e1afd09dd7779bc4eaabdb63b50e3632341bf9a469"
+    },
+    {
+      "path": "parent-invocation-1790813449205742000-92829.json",
+      "bytes": 218,
+      "sha256": "5196927039dab78231d72796e53ace4359f03004572b65b9b964a3121872af7c"
+    },
+    {
+      "path": "parent-invocation-1790814075636944000-92829.json",
+      "bytes": 219,
+      "sha256": "39f234241afdef1b762a959bd1a414d14c8dbcc99896f49a5683572b299c3c97"
+    },
+    {
+      "path": "parent-invocation-1790814708166738000-92829.json",
+      "bytes": 219,
+      "sha256": "8c52af7eac8901bf956f73a4e75e0d30ad82698def907a599940f78dc47ec86f"
+    },
+    {
+      "path": "parent-invocation-1790815385734682000-92829.json",
+      "bytes": 219,
+      "sha256": "a6b977ad73ab692fbab21b81d0c60466d0ce3b466417f775e58dddc818595dc6"
+    },
+    {
+      "path": "parent-invocation-1790816081710317000-92829.json",
+      "bytes": 219,
+      "sha256": "1735a986ccfc39060900ce5af16ad5bb07906e521478525f8b5e241c40e1409f"
+    },
+    {
+      "path": "parent-invocation-1790816766524985000-92829.json",
+      "bytes": 217,
+      "sha256": "774ad9bc9c2e85d4554dba62b9890816079e0c93a2c65eb182df6e5822d3752d"
+    },
+    {
+      "path": "parent-invocation-1790817431059266000-92829.json",
+      "bytes": 220,
+      "sha256": "6e12b391b9be91d060a5d6158074562ace68d35cfb9390d5cdd2df4a89d06b85"
+    },
+    {
+      "path": "parent-invocation-1790818174363799000-92829.json",
+      "bytes": 219,
+      "sha256": "db19732f2832b54897a3ce00a45c19d26c02134515dbe0ceac61e6b4faf86e56"
+    },
+    {
+      "path": "parent-invocation-1790818895693503000-92829.json",
+      "bytes": 219,
+      "sha256": "250a6f1ac48ba8aa3a0dec16fd6a7e19ec946cf56cdd9ecb7eb16377daac0a3d"
+    },
+    {
+      "path": "parent-invocation-1790819568844499000-92829.json",
+      "bytes": 219,
+      "sha256": "7dcee48d133e7dcb5cde04334afd3b359b207bd993a27f34bb0d1885b4949d12"
+    },
+    {
+      "path": "parent-invocation-1790820249893723000-92829.json",
+      "bytes": 219,
+      "sha256": "35c2e0df1160d34efae287552513c96f98eb7c5b936280fa1364f878a42c294d"
+    },
+    {
+      "path": "parent-invocation-1790820909917227000-92829.json",
+      "bytes": 218,
+      "sha256": "7914567375b4a245f83f6d9fcd69201b06a8af82b1368a34f47ac6d40d94d16e"
+    },
+    {
+      "path": "shard-supervisor.log",
+      "bytes": 3058,
+      "sha256": "f1c50f9b5e12d91ab44c7c60680fec67fc9118826f39d57c0bac72a6c3d0ddfc"
+    }
+  ],
+  "limitations": [
+    "Terminal receipts and process closure only; full semantic reconciliation remains pending.",
+    "Unspent allocation is recorded, not reallocated by this record."
+  ],
+  "paidUSD": 0
+}

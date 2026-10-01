@@ -1,0 +1,14 @@
+{
+  "format": "discovery-history-closure-review/v1",
+  "reviewedAt": "2026-10-01T02:26:08.926497+00:00",
+  "reviewer": "/root/distribution_review",
+  "verdict": "clear",
+  "closureSha256": "4133e3c0dc3212cb707fbc70e29d10a5d3ac8725ee0d1e2eaf0a279f85de710e",
+  "checks": [
+    "All 36 preserved files match original bytes: 35 settled parent receipts and terminal supervisor log.",
+    "All 30 assigned histories have one-million-step terminal receipts.",
+    "Allocation identity, host, root, roster, settled runtime and unspent allocation reconcile.",
+    "Independent OS checks found supervisor and last worker absent, with all legacy and shard locks absent."
+  ],
+  "scope": "Terminal accounting only; semantic reconciliation pending; no runtime reallocation."
+}
