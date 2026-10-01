@@ -1,12 +1,39 @@
 // Statistics of the ecological-scaffolding sandbox (docs/scaffold-protocol-v1.md): P1 regime criteria,
 // P2 positive control, R1 pond-level heredity (ICC(1) + permutation), R2 adaptation gain, R3 removal
 // advantage, R4 table passthrough, the truncation sensitivity rule (assay rows and evolution histories), the
-// in-run donor repeatability and the decision table. Everything except `readTsv` is pure (no Deno
+// in-run donor repeatability and the decision table, and the later R1 variants on census traits: tau and R1'
+// (Amendment 2) and the replication's R1'' (docs/scaffold-heredity-replication-v1.md). Everything except `readTsv` is pure (no Deno
 // API), so vitest exercises it directly with synthetic data; tools/scaffold-report.ts is the CLI over it.
 // Large tables (ponds.tsv, lineages.tsv) are streamed row by row, never loaded whole.
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
-import { M_ASSAY, R1_PRIME_BOUNDARIES, TAU_SEED_BASE, censusSteps, checkAssaySeeds, checkDonorSeed, checkR1PrimeDonorSeed, checkR1PrimeSeeds, checkTauSeeds, r1PrimeH, r1PrimeSeed, type AssayLabelSet, type AssayName, type R1PrimeLabelSet } from "./pond-assay.ts";
+import {
+  M_ASSAY,
+  R1DP_HISTORY_SEED_BASE,
+  R1DP_REGIME,
+  R1DP_SETS,
+  R1_PRIME_BOUNDARIES,
+  TAU_SEED_BASE,
+  censusSteps,
+  checkAssaySeeds,
+  checkDonorSeed,
+  checkR1PrimeDonorSeed,
+  checkR1PrimeSeeds,
+  checkR1dPrimeDonorSeed,
+  checkR1dPrimeSeeds,
+  checkTauSeeds,
+  r1PrimeH,
+  r1PrimeSeed,
+  r1dPrimeIdOf,
+  r1dPrimeLabelsOf,
+  r1dPrimeSeed,
+  r1dPrimeSourceProblems,
+  type AssayLabelSet,
+  type AssayName,
+  type R1PrimeLabelSet,
+  type R1dPrimeLabelSet,
+  type R1dPrimeProvenance,
+} from "./pond-assay.ts";
 import { assaySeed, randomKey, weightedPick } from "./ponds.ts";
 
 // ---------------------------------------------------------------------------------------------
@@ -1870,6 +1897,522 @@ export function r1PrimeEvaluate(
   };
   const arms = { scaf: armResult("scaf"), rand: armResult("rand") };
   return { verdict: arms.scaf.verdict, arms, histories };
+}
+
+// ---------------------------------------------------------------------------------------------
+// R1'' (docs/scaffold-heredity-replication-v1.md): pond-level heredity on the crossing time, on fresh histories
+
+/** m* = 0.25 ref, the threshold that defined tau: 25,764.5 at ref 103,058. A trait reaches it when 4 trait >= ref (exact). */
+export const R1DP_THRESHOLD = TAU_FROZEN.ref / 4;
+export const reachesThreshold = (trait: number): boolean => 4 * trait >= TAU_FROZEN.ref;
+/** The T of a fragment that never reaches m* within the period: one census past the period (10,100). */
+export const R1DP_CENSORED = R1DP_REGIME.period + R1DP_REGIME.censusEvery;
+/** The census step whose trait is reported beside the end trait: R1' tau (4,100). */
+export const R1DP_TAU = 4100;
+/** The boundary the fresh histories are assayed at; a history that ended before it has no pre-cycle state there. */
+export const R1DP_BOUNDARY = 34;
+
+/**
+ * T of one fragment: the first census step at which its trait is at least m* (`reachesThreshold`), whatever order the
+ * (step, trait) pairs come in; `censored` (10,100) when it never is, dead or alive. The R1'' score is log T.
+ */
+export function crossingTime(series: readonly (readonly [step: number, trait: number])[], censored = R1DP_CENSORED): number {
+  let first = Infinity;
+  for (const [step, trait] of series) if (step < first && reachesThreshold(trait)) first = step;
+  return first === Infinity ? censored : first;
+}
+
+/** One fragment of an R1'' set: R1's columns, its crossing time T, the trait at the end of the period and the trait at tau. */
+export interface R1dPrimeFragment {
+  family: number;
+  retMass: number;
+  retE: number;
+  truncated: boolean;
+  T: number;
+  endTrait: number;
+  /** The trait at tau = 4,100; null when 4,100 is not a census step (a smoke run's shorter period). */
+  tauTrait: number | null;
+}
+
+/** A screened R1'' set, by h: fragments in R1's order (replicate 0's f = 0..63, then replicate 1's). */
+export interface R1dPrimeSet {
+  h: number;
+  /** Fewer than 2 eligible donors (a biological outcome: no fragments). */
+  insufficient: boolean;
+  /** The T of a fragment that never reached m*: one census past this set's period. */
+  censored: number;
+  fragments: R1dPrimeFragment[];
+  /** The source provenance and protocol hash the assay recorded (null when it recorded none: a smoke set). */
+  provenance: R1dPrimeProvenance | null;
+  protocolSha256R1dp: string | null;
+}
+
+/** The `labels` of an R1'' directory (consistent with its h), or why it has none. */
+function r1dPrimeLabelsOfJson(json: Record<string, unknown>): { labels: R1dPrimeLabelSet } | { error: string } {
+  const l = (json.labels ?? {}) as Record<string, unknown>;
+  if (l.r1dprime !== true) return { error: "labels.r1dprime is not true" };
+  const h = l.h;
+  if (!Number.isInteger(h) || (h as number) < 0 || (h as number) >= R1DP_SETS) return { error: `labels.h ${JSON.stringify(h)}, want 0-${R1DP_SETS - 1}` };
+  const want = r1dPrimeLabelsOf(h as number);
+  for (const key of ["arm", "history", "control"] as const) {
+    if (l[key] !== want[key]) return { error: `labels.${key} ${JSON.stringify(l[key])}, want ${JSON.stringify(want[key])} for h ${h}` };
+  }
+  return { labels: want };
+}
+
+/** The h an assay.json is labelled with, or null when it is not an R1'' set's. */
+export function r1dPrimeHOf(json: Record<string, unknown>): number | null {
+  const lab = r1dPrimeLabelsOfJson(json);
+  return "error" in lab ? null : lab.labels.h;
+}
+
+const isHex64 = (x: unknown): x is string => typeof x === "string" && /^[0-9a-f]{64}$/.test(x);
+
+/** The provenance an assay.json records, with every field of the right type; null otherwise. */
+function r1dPrimeProvenanceOf(x: unknown): R1dPrimeProvenance | null {
+  if (typeof x !== "object" || x === null) return null;
+  const p = x as Record<string, unknown>;
+  const ints = ["seed", "mutRate", "step", "tilesX", "tilesY", "distinctGenomes"] as const;
+  if (typeof p.source !== "string" || typeof p.stateHash !== "string" || ints.some((k) => !Number.isInteger(p[k]))) return null;
+  // The phase check (pre- or post-cycle) with every measure of the right type.
+  const ph = p.phase as Record<string, unknown> | null | undefined;
+  if (typeof ph !== "object" || ph === null || typeof ph.postCycle !== "boolean" || (["totalC", "totalS", "carrying", "outsideWindow"] as const).some((k) => !Number.isInteger(ph[k]))) return null;
+  return p as unknown as R1dPrimeProvenance;
+}
+
+/**
+ * Screens R1'' directories (transmission sets labelled `r1dprime`) before the stage pools them. A set is rejected, with its
+ * reasons, unless it is 64 ponds x 2 replicates (side 8; no rows when `insufficient`) whose assay.tsv fills the (replicate, pond)
+ * grid exactly once and carries retE, at the frozen regime (k 8, period 10,000, census every 100; and `regimes` when given), with
+ * replicate s seeded r1dPrimeSeed(h, s) for its labels, donors drawn with s = 9, a source provenance that is the protocol's for
+ * its labels (`r1dPrimeSourceProblems`: the pre-cycle checkpoint's name, seed, step, mutation rate, genomes and recorded phase check)
+ * and the protocol's SHA-256 recorded; its traits.tsv must fill the same grid exactly once
+ * at every census step (100..period) and agree with assay.tsv's end trait at the last. Two sets with one h are both rejected (a
+ * stage would count both). Nothing here throws for one bad set: it is rejected with its h, so the stage can mark it unavailable.
+ * `allowAnySeed` (smoke runs) waives the side, replicate, regime, seed, provenance and hash checks and holds the set to the grid
+ * assay.json declares. An accepted set carries its fragments with T, the trait at the end of the period and the trait at tau.
+ */
+export function r1dPrimeScreen(
+  dirs: readonly TraitSetDir[],
+  o: { regimes: readonly AssayRegime[] | null; allowAnySeed?: boolean },
+): { accepted: (R1dPrimeSet & { dir: string })[]; rejected: { dir: string; h: number | null; reasons: string[] }[]; regime: AssayRegime | null } {
+  const strict = !o.allowAnySeed;
+  const candidates: (R1dPrimeSet & { dir: string; k: unknown; period: unknown })[] = [];
+  const rejected: { dir: string; h: number | null; reasons: string[] }[] = [];
+  for (const d of dirs) {
+    const { json, rows, traits } = d;
+    const lab = r1dPrimeLabelsOfJson(json);
+    if ("error" in lab) {
+      rejected.push({ dir: d.dir, h: null, reasons: [lab.error] });
+      continue;
+    }
+    const labels = lab.labels;
+    const h = labels.h;
+    const insufficient = json.insufficient === true;
+    const why: string[] = [];
+    if (json.assay !== "transmission") why.push(`assay ${JSON.stringify(json.assay)}, want transmission`);
+    const grid = gridFor(json, strict);
+    if (insufficient) {
+      if (rows.length !== 0) why.push(`${rows.length} rows, want 0 (fewer than 2 eligible donors)`);
+    } else if (grid === null) why.push("assay.json has no side and replicates");
+    else {
+      if (rows.length !== grid.replicates * grid.ponds) why.push(`${rows.length} rows, want ${grid.replicates * grid.ponds}`);
+      why.push(...rowsProblems(rows, grid));
+    }
+    if (rows.some((r) => r.retE === null)) why.push("assay.tsv has no retE column, so the protocol's covariate is missing; re-run the transmission assay");
+    const provenance = r1dPrimeProvenanceOf(json.provenance);
+    if (strict) {
+      for (const key of ["side", "replicates", "censusEvery", "k", "period"] as const) if (json[key] !== R1DP_REGIME[key]) why.push(`${key} ${JSON.stringify(json[key])}, want ${R1DP_REGIME[key]}`);
+      if (o.regimes !== null && !o.regimes.some((r) => r.k === json.k && r.period === json.period)) why.push(`regime k ${json.k} period ${json.period}, want ${o.regimes.map((r) => `k ${r.k} period ${r.period}`).join(" or ")}`);
+      if (json.inoculum !== undefined && json.inoculum !== "fragment") why.push(`inoculum ${JSON.stringify(json.inoculum)}, want fragment`);
+      const seeds = json.seeds as { physics?: unknown; fragment?: unknown }[] | undefined;
+      if (!Array.isArray(seeds) || seeds.length !== R1DP_REGIME.replicates) why.push(`assay.json has ${Array.isArray(seeds) ? seeds.length : "no"} seeds, want ${R1DP_REGIME.replicates} {physics, fragment}`);
+      else {
+        try {
+          seeds.forEach((sd, s) => {
+            if (typeof sd?.physics !== "number" || typeof sd.fragment !== "number") throw new Error(`assay.json seeds[${s}] is not {physics, fragment}`);
+            checkR1dPrimeSeeds(labels, { physics: sd.physics, fragment: sd.fragment }, s);
+          });
+          if (typeof json.donorSeed !== "number") throw new Error("assay.json has no donorSeed");
+          checkR1dPrimeDonorSeed(labels, json.donorSeed);
+        } catch (e) {
+          why.push((e as Error).message);
+        }
+      }
+      if (provenance === null) why.push("assay.json has no provenance of the source checkpoint with its phase check (run the assay with --r1dprime)");
+      else {
+        why.push(...r1dPrimeSourceProblems(labels, provenance));
+        if (provenance.source !== json.source) why.push(`provenance.source ${JSON.stringify(provenance.source)} is not the assay's source ${JSON.stringify(json.source)}`);
+      }
+      if (!isHex64(json.protocolSha256R1dp)) why.push("assay.json has no protocolSha256R1dp");
+    }
+    why.push(...traitsProblems(json, rows.length, traits));
+    const frag = rows.filter((r) => r.inoculum === "fragment").sort((a, b) => a.replicate - b.replicate || a.pond - b.pond);
+    const fragments: R1dPrimeFragment[] = [];
+    const period = json.period as number;
+    const censored = (Number.isInteger(period) ? period : 0) + (Number.isInteger(json.censusEvery) ? (json.censusEvery as number) : 0);
+    if (why.length === 0 && frag.length > 0) {
+      // Every census step of every fragment, grouped by (replicate, pond): its crossing time and its traits at tau and at the end.
+      const series = new Map<string, [number, number][]>();
+      for (const [step, list] of traits!.rows) {
+        for (const t of list) {
+          const id = `${t.replicate}:${t.pond}`;
+          const s = series.get(id);
+          if (s) s.push([step, t.trait]);
+          else series.set(id, [[step, t.trait]]);
+        }
+      }
+      let off = 0;
+      for (const r of frag) {
+        const s = series.get(`${r.replicate}:${r.pond}`);
+        const end = s?.find(([step]) => step === period);
+        // One row per census step: a fragment short of a step, or whose end trait is not assay.tsv's, is off.
+        if (s === undefined || s.length !== traits!.counts.size || end === undefined || end[1] !== r.endTrait) {
+          off++;
+          continue;
+        }
+        const atTau = s.find(([step]) => step === R1DP_TAU);
+        fragments.push({ family: r.family, retMass: r.retMass, retE: r.retE!, truncated: (r.truncated ?? 0) > 0, T: crossingTime(s, censored), endTrait: r.endTrait, tauTrait: atTau ? atTau[1] : null });
+      }
+      if (off > 0) why.push(`traits.tsv disagrees with assay.tsv for ${off} fragments (a census step missing, or an end trait other than the one at step ${period})`);
+      else if (strict && fragments.some((f) => f.tauTrait === null)) why.push(`tau ${R1DP_TAU} is not a census step of traits.tsv`);
+    }
+    if (why.length > 0) rejected.push({ dir: d.dir, h, reasons: why });
+    else candidates.push({ dir: d.dir, h, insufficient, censored, fragments, provenance, protocolSha256R1dp: isHex64(json.protocolSha256R1dp) ? json.protocolSha256R1dp : null, k: json.k, period: json.period });
+  }
+  // Two sets for one h are ambiguous: neither is used, and the set is unavailable.
+  const accepted: (R1dPrimeSet & { dir: string })[] = [];
+  const regimesSeen: AssayRegime[] = [];
+  for (const c of candidates) {
+    const same = candidates.filter((x) => x.h === c.h);
+    if (same.length > 1) {
+      rejected.push({ dir: c.dir, h: c.h, reasons: [`the same R1'' set (${r1dPrimeIdOf(r1dPrimeLabelsOf(c.h))}) as ${same.filter((x) => x !== c).map((x) => x.dir).join(", ")}; a stage would count both`] });
+      continue;
+    }
+    if (typeof c.k === "number" && typeof c.period === "number") regimesSeen.push({ k: c.k, period: c.period });
+    const { k: _k, period: _period, ...set } = c;
+    accepted.push(set);
+  }
+  let regime: AssayRegime | null = o.regimes?.length === 1 ? o.regimes[0] : null;
+  if (o.regimes === null) {
+    for (const r of regimesSeen) {
+      if (regime === null) regime = r;
+      else if (regime.k !== r.k || regime.period !== r.period) throw new Error(`R1'' sets mix regimes (k ${regime.k} period ${regime.period} and k ${r.k} period ${r.period}); pass --regime K PERIOD`);
+    }
+  }
+  return { accepted, rejected, regime };
+}
+
+/**
+ * Why a set's scores cannot carry R1''s test: "constant score" (every score is the same value, compared exactly) or "negligible
+ * residual variance" (the OLS residuals are at roundoff level: their sum of squares is at most `R1DP_DEGENERATE_RELATIVE` of the
+ * scores' total sum of squares about their mean, or at most `R1DP_DEGENERATE_ABSOLUTE`). The ICC of such residuals is a ratio of
+ * roundoff errors, which can look like heredity (ICC near 1, p = 1/1001) in 128 fragments that all crossed at one T.
+ */
+export type R1dPrimeDegeneracy = "constant score" | "negligible residual variance";
+export const R1DP_DEGENERATE_RELATIVE = 1e-9;
+export const R1DP_DEGENERATE_ABSOLUTE = 1e-12;
+
+/**
+ * Whether the scores `values` (compared exactly, so the integer T of every fragment) with OLS residuals `resid` are degenerate,
+ * and why. `scores` are the values the OLS was fitted to when they are a transform of `values` (log T); the total sum of squares
+ * is theirs, about their mean. null for scores that vary and leave residual variance.
+ */
+export function r1dPrimeDegeneracy(values: readonly number[], resid: readonly number[], scores: readonly number[] = values): R1dPrimeDegeneracy | null {
+  if (values.length > 0 && values.every((v) => v === values[0])) return "constant score";
+  const m = mean(scores);
+  const sst = scores.reduce((a, v) => a + (v - m) * (v - m), 0);
+  const rss = resid.reduce((a, r) => a + r * r, 0);
+  return rss <= R1DP_DEGENERATE_ABSOLUTE || rss <= R1DP_DEGENERATE_RELATIVE * sst ? "negligible residual variance" : null;
+}
+
+/** R1's statistic on a set's log T, with the descriptive between-donor variances. */
+export interface R1dPrimeStat {
+  icc: number | null;
+  p: number | null;
+  /** ICC above 0 with p < 0.05. */
+  demonstrated: boolean;
+  /** Set when the scores are degenerate: the test is not run, and the set has ICC 0, p 1 and is not demonstrated. */
+  degenerate: R1dPrimeDegeneracy | null;
+  /** The one-way ANOVA between-family variance component (MS_between - MS_within) / n0 on the OLS-adjusted log T; negative estimates are kept (0 when degenerate). */
+  varianceComponent: number | null;
+  /** The sample variance of the family means of the raw log T. */
+  rawFamilyMeanVariance: number | null;
+  meanLogT: number;
+}
+
+/**
+ * R1's statistic (`r1Test`, unchanged: OLS residuals on log1p(retMass) and log1p(retE) over all fragments, ICC(1) with families
+ * = donors, `R1_PERMUTATIONS` permutations with the stream `sigma`) on each fragment's log T, except that degenerate scores
+ * (`r1dPrimeDegeneracy`) are not tested: ICC 0, p 1, not demonstrated, with the reason in `degenerate`.
+ */
+export function r1dPrimeStat(fragments: readonly R1dPrimeFragment[], sigma: number): R1dPrimeStat {
+  const y = fragments.map((f) => Math.log(f.T));
+  const families = fragments.map((f) => f.family);
+  const retMass = fragments.map((f) => f.retMass);
+  const retE = fragments.map((f) => f.retE);
+  // The fit r1Test makes, to see whether anything but roundoff is left of the scores before testing it.
+  const degenerate = r1dPrimeDegeneracy(fragments.map((f) => f.T), olsResiduals(y, [retMass.map((m) => Math.log1p(m)), retE.map((e) => Math.log1p(e))]), y);
+  const raw = oneWayAnova(y, families);
+  if (degenerate !== null) return { icc: 0, p: 1, demonstrated: false, degenerate, varianceComponent: 0, rawFamilyMeanVariance: degenerate === "constant score" ? 0 : raw && sampleVariance(raw.means), meanLogT: mean(y) };
+  const t = r1Test(y, retMass, retE, families, sigma);
+  const adjusted = oneWayAnova(t.resid, families);
+  return {
+    icc: t.icc,
+    p: t.p,
+    demonstrated: t.demonstrated,
+    degenerate: null,
+    varianceComponent: adjusted && (adjusted.msb - adjusted.msw) / adjusted.n0,
+    rawFamilyMeanVariance: raw && sampleVariance(raw.means),
+    meanLogT: mean(y),
+  };
+}
+
+/** `r1PrimeStat` with the same guard (`r1dPrimeDegeneracy` on the trait itself): R1''s end-trait and tau-trait columns are not read off roundoff either. */
+export interface R1dPrimeTraitStat extends R1PrimeTraitStat {
+  degenerate: R1dPrimeDegeneracy | null;
+}
+
+function r1dPrimeTraitStat(fragments: readonly R1PrimeFragment[], pick: (f: R1PrimeFragment) => number, sigma: number): R1dPrimeTraitStat {
+  const y = fragments.map(pick);
+  const degenerate = r1dPrimeDegeneracy(y, olsResiduals(y, [fragments.map((f) => Math.log1p(f.retMass)), fragments.map((f) => Math.log1p(f.retE))]));
+  const st = r1PrimeStat(fragments, pick, sigma);
+  return degenerate === null ? { ...st, degenerate } : { ...st, icc: 0, p: 1, demonstrated: false, varianceComponent: 0, degenerate };
+}
+
+/** A fresh history's run directory, as the report reads it for the extinction rule: whether and when its history ended. */
+export interface R1dPrimeRun {
+  arm: "scaf" | "rand";
+  history: number;
+  dir: string;
+  status: RunStatus;
+  /** done.json says the history ended (no pond survived); `endedAt` is that cycle. */
+  ended: boolean;
+  endedAt: number | null;
+}
+
+/**
+ * The (arm, history index) of a fresh-history run directory from its meta.json, or why it is not one: arm scaf or rand, seed
+ * 4,811,001 + 100 arm + i (i = 0-5), side 8, ancestor clone, mutation on, k 8, period 10,000 and 34 cycles.
+ */
+export function r1dPrimeRunOf(meta: Record<string, unknown>): { key: { arm: "scaf" | "rand"; history: number } | null; why: string[] } {
+  const why: string[] = [];
+  const arm = meta.arm;
+  const armIdx = arm === "scaf" ? 0 : arm === "rand" ? 1 : -1;
+  if (armIdx < 0) why.push(`arm ${JSON.stringify(arm)}, want scaf or rand`);
+  const i = typeof meta.seed === "number" ? meta.seed - R1DP_HISTORY_SEED_BASE - 100 * armIdx : NaN;
+  if (armIdx >= 0 && !(Number.isInteger(i) && i >= 0 && i < 6)) why.push(`seed ${JSON.stringify(meta.seed)} is not ${R1DP_HISTORY_SEED_BASE} + 100 arm + i, i = 0-5, for arm ${arm}`);
+  if (meta.side !== R1DP_REGIME.side) why.push(`side ${JSON.stringify(meta.side)}, want ${R1DP_REGIME.side}`);
+  if (meta.init !== "clone") why.push(`init ${JSON.stringify(meta.init)}, want "clone"`);
+  if (!(typeof meta.mutRate === "number" && meta.mutRate > 0)) why.push("mutation off");
+  if (meta.k !== R1DP_REGIME.k) why.push(`k ${JSON.stringify(meta.k)}, want ${R1DP_REGIME.k}`);
+  if (meta.period !== R1DP_REGIME.period) why.push(`period ${JSON.stringify(meta.period)}, want ${R1DP_REGIME.period}`);
+  if (meta.cycles !== R1DP_BOUNDARY) why.push(`cycles ${JSON.stringify(meta.cycles)}, want ${R1DP_BOUNDARY}`);
+  return { key: why.length === 0 ? { arm: arm as "scaf" | "rand", history: i } : null, why };
+}
+
+/**
+ * One of the 18 R1'' sets. `outcome` is "analysed" (a screened set whose statistic completed), "ended" (the run ended before
+ * boundary 34, so no pre-cycle state exists: biological), "donors" (fewer than 2 eligible donors: biological) or "unavailable"
+ * (no set, a rejected or unreadable one, or an analysis that failed: technical). A set is `valid` unless it is unavailable, and
+ * only an analysed one can be demonstrated.
+ */
+export interface R1dPrimeEntry {
+  h: number;
+  id: string;
+  arm: "scaf" | "rand" | "control";
+  control: "positive" | "negative" | null;
+  /** The history index i, or the control world. */
+  history: number;
+  outcome: "analysed" | "ended" | "donors" | "unavailable";
+  valid: boolean;
+  why: string | null;
+  n: number;
+  families: number;
+  truncatedRows: number;
+  covariates: string[];
+  icc: number | null;
+  p: number | null;
+  /** ICC above 0 with p < 0.05. */
+  demonstrated: boolean;
+  /** Scores that cannot carry the test (see `r1dPrimeDegeneracy`): ICC 0, p 1, not demonstrated. */
+  degenerate: R1dPrimeDegeneracy | null;
+}
+
+/** What a control must show: a positive one ICC above 0 with p < 0.05 (`demonstrated`), a negative one p below 0.05 for at most 1 of 4 (`significant`). */
+export interface R1dPrimeControl extends Pick<R1dPrimeEntry, "h" | "id" | "outcome" | "why" | "n" | "families" | "icc" | "p" | "demonstrated" | "degenerate"> {
+  /** The control world: positive s = 0-1, negative j = 0-3. */
+  world: number;
+  /** A test result exists: not a set with fewer than 2 donors, and not one whose scores are degenerate (it could not have shown anything). */
+  tested: boolean;
+  /** p < 0.05. */
+  significant: boolean;
+}
+
+export interface R1dPrimeArm {
+  /** The rule's outcome for the arm alone, availability first (fewer than 4 valid is uninformative); the controls apply to the stage's verdict, not here. */
+  verdict: true | false | "uninformative";
+  valid: number;
+  demonstrated: number;
+  /** Histories whose run ended before boundary 34, those with fewer than 2 donors, and the technically unavailable ones. */
+  ended: number;
+  donors: number;
+  unavailable: number;
+}
+
+/** Descriptive, never a decision input: one set's endpoint fractions, its trait at the end and at tau, and its donor variances. */
+export interface R1dPrimeDescriptive {
+  h: number;
+  id: string;
+  n: number;
+  /** The fractions of fragments at T = 100 (reached m* by the first census) and at T = 10,100 (never did). */
+  fractionAt100: number;
+  fractionCensored: number;
+  /** R1's statistic on the end trait and on the trait at tau = 4,100 (null when 4,100 is not a census step), as R1' reported them. */
+  atEnd: R1dPrimeTraitStat;
+  atTau: R1dPrimeTraitStat | null;
+  varianceComponent: number | null;
+  rawFamilyMeanVariance: number | null;
+  meanLogT: number;
+  /** Fragments whose pond has no trait (B+P over cells with B+P >= 48) at the end of the period. */
+  extinctFragments: number;
+}
+
+/** An entry that is not demonstrated: no statistic, with the outcome and why. */
+const r1dPrimeEntryOf = (e: Pick<R1dPrimeEntry, "h" | "id" | "arm" | "control" | "history">, outcome: R1dPrimeEntry["outcome"], why: string | null): R1dPrimeEntry => ({
+  ...e,
+  outcome,
+  valid: outcome !== "unavailable",
+  why,
+  n: 0,
+  families: 0,
+  truncatedRows: 0,
+  covariates: [],
+  icc: null,
+  p: null,
+  demonstrated: false,
+  degenerate: null,
+});
+
+/** What R1'' computes for one set: R1's statistic on log T, and the descriptive columns (those of `R1dPrimeDescriptive` but its h and id). */
+export interface R1dPrimeAnalysis {
+  stat: R1dPrimeStat;
+  descriptive: Omit<R1dPrimeDescriptive, "h" | "id">;
+}
+
+const analysisOf = new WeakMap<R1dPrimeSet, R1dPrimeAnalysis>();
+
+/**
+ * The analysis of `set` with the permutation stream r1dPrimeSeed(h, 8): `r1dPrimeStat` on log T, and the same statistic on the end
+ * trait and on the trait at tau, as R1' read them. Kept per set object (a screened set is never changed), since three traits' 1,000
+ * permutations are most of the work of the stage.
+ */
+export function r1dPrimeAnalyse(set: R1dPrimeSet): R1dPrimeAnalysis {
+  let a = analysisOf.get(set);
+  if (a) return a;
+  const sigma = r1dPrimeSeed(set.h, 8);
+  const frags = set.fragments;
+  const stat = r1dPrimeStat(frags, sigma);
+  // The end trait and the trait at tau go through R1's statistic as R1' did (R1PrimeFragment carries both).
+  const asPrime = (trait: (f: R1dPrimeFragment) => number): R1PrimeFragment[] => frags.map((f) => ({ family: f.family, retMass: f.retMass, retE: f.retE, truncated: f.truncated, endTrait: f.endTrait, tauTrait: trait(f) }));
+  a = {
+    stat,
+    descriptive: {
+      n: frags.length,
+      fractionAt100: frags.filter((f) => f.T === R1DP_REGIME.censusEvery).length / frags.length,
+      fractionCensored: frags.filter((f) => f.T === set.censored).length / frags.length,
+      atEnd: r1dPrimeTraitStat(asPrime((f) => f.endTrait), (f) => f.endTrait, sigma),
+      atTau: frags.every((f) => f.tauTrait !== null) ? r1dPrimeTraitStat(asPrime((f) => f.tauTrait!), (f) => f.tauTrait, sigma) : null,
+      varianceComponent: stat.varianceComponent,
+      rawFamilyMeanVariance: stat.rawFamilyMeanVariance,
+      meanLogT: stat.meanLogT,
+      extinctFragments: frags.filter((f) => f.endTrait === 0).length,
+    },
+  };
+  analysisOf.set(set, a);
+  return a;
+}
+
+/** The rule on an arm's six fresh histories: availability first (fewer than 4 valid is uninformative), then at least 4 of 6 with ICC > 0 and p < 0.05. */
+export function r1dPrimeVerdict(entries: readonly R1dPrimeEntry[], arm: "scaf" | "rand"): true | false | "uninformative" {
+  const hs = entries.filter((x) => x.arm === arm);
+  if (hs.filter((x) => x.valid).length < 4) return "uninformative";
+  return hs.filter((x) => x.demonstrated).length >= 4;
+}
+
+/**
+ * R1'' over the screened sets, in the protocol's order. 1. Controls: both positive-control worlds (h 12, 13) must show ICC > 0
+ * with p < 0.05, and at most 1 of the 4 negative-control worlds (h 14-17) may have p < 0.05, every one of them tested (a missing
+ * negative, one with fewer than 2 donors, or one with degenerate scores leaves the gate unmet); otherwise the verdict is "uninformative". 2. Availability: a fresh history is
+ * valid if its set was analysed, or if it is a biological outcome (`runs` says it ended before boundary 34, or it has fewer
+ * than 2 donors); a missing, rejected or failed set is unavailable and counts as not demonstrated; fewer than 4 valid scaf
+ * histories is "uninformative". 3. At least 4 of 6 scaf histories demonstrated (a set with degenerate scores, `r1dPrimeDegeneracy`, is analysed but has ICC 0, p 1, and is not). The statistic is `r1dPrimeStat` with the stream
+ * r1dPrimeSeed(h, 8); rand is reported with the same one (`arms.rand`, no decision). `runs` is null without --runs.
+ */
+export function r1dPrimeEvaluate(
+  sets: readonly R1dPrimeSet[],
+  runs: readonly R1dPrimeRun[] | null = null,
+  rejected: readonly { h: number | null; reasons: string[] }[] = [],
+): {
+  verdict: true | false | "uninformative";
+  controls: { positive: R1dPrimeControl[]; negative: R1dPrimeControl[]; nullGatePassed: boolean; positivePassed: boolean };
+  arms: Record<"scaf" | "rand", R1dPrimeArm>;
+  histories: R1dPrimeEntry[];
+  descriptive: { sets: R1dPrimeDescriptive[]; extinction: Record<"scaf" | "rand", { histories: number; ended: number; donors: number; fragments: number; extinctFragments: number }> };
+} {
+  const descriptive: R1dPrimeDescriptive[] = [];
+  const all = Array.from({ length: R1DP_SETS }, (_, h): R1dPrimeEntry => {
+    const l = r1dPrimeLabelsOf(h);
+    const e = { h, id: r1dPrimeIdOf(l), arm: l.arm, control: l.control ?? null, history: l.history };
+    const run = l.arm === "control" ? undefined : runs?.find((r) => r.arm === l.arm && r.history === l.history);
+    if (run?.ended && run.endedAt !== null && run.endedAt < R1DP_BOUNDARY) return r1dPrimeEntryOf(e, "ended", `the run ended at cycle ${run.endedAt}, before boundary ${R1DP_BOUNDARY}: no pre-cycle state to assay`);
+    const set = sets.find((x) => x.h === h);
+    if (!set) {
+      const rej = rejected.filter((r) => r.h === h);
+      return r1dPrimeEntryOf(e, "unavailable", rej.length ? `set rejected: ${rej.flatMap((r) => r.reasons).join("; ")}` : run && run.status !== "finished" ? `no assay set (the run is ${run.status})` : "no assay set");
+    }
+    try {
+      if (set.insufficient || set.fragments.length === 0) return r1dPrimeEntryOf(e, "donors", "fewer than 2 eligible donors");
+      const { stat, descriptive: d } = r1dPrimeAnalyse(set);
+      descriptive.push({ h, id: e.id, ...d });
+      const frags = set.fragments;
+      return { ...r1dPrimeEntryOf(e, "analysed", null), n: frags.length, families: new Set(frags.map((f) => f.family)).size, truncatedRows: frags.filter((f) => f.truncated).length, covariates: [...R1_COVARIATES], icc: stat.icc, p: stat.p, demonstrated: stat.demonstrated, degenerate: stat.degenerate };
+    } catch (err) {
+      return r1dPrimeEntryOf(e, "unavailable", `analysis failed: ${(err as Error).message}`);
+    }
+  });
+  const histories = all.filter((x) => x.arm !== "control");
+  const control = (kind: "positive" | "negative"): R1dPrimeControl[] =>
+    all
+      .filter((x) => x.control === kind)
+      .map(({ h, id, history, outcome, why, n, families, icc, p, demonstrated, degenerate }) => ({ h, id, outcome, why, n, families, icc, p, demonstrated, degenerate, world: history, tested: icc !== null && degenerate === null, significant: p !== null && p < R1_ALPHA }));
+  const positive = control("positive");
+  const negative = control("negative");
+  const positivePassed = positive.every((c) => c.demonstrated);
+  const nullGatePassed = negative.every((c) => c.tested) && negative.filter((c) => c.significant).length <= 1;
+  const armResult = (arm: "scaf" | "rand"): R1dPrimeArm => {
+    const hs = histories.filter((x) => x.arm === arm);
+    return {
+      verdict: r1dPrimeVerdict(histories, arm),
+      valid: hs.filter((x) => x.valid).length,
+      demonstrated: hs.filter((x) => x.demonstrated).length,
+      ended: hs.filter((x) => x.outcome === "ended").length,
+      donors: hs.filter((x) => x.outcome === "donors").length,
+      unavailable: hs.filter((x) => x.outcome === "unavailable").length,
+    };
+  };
+  const arms = { scaf: armResult("scaf"), rand: armResult("rand") };
+  const extinction = (arm: "scaf" | "rand") => {
+    const ds = descriptive.filter((d) => histories.some((x) => x.h === d.h && x.arm === arm));
+    return { histories: 6, ended: arms[arm].ended, donors: arms[arm].donors, fragments: ds.reduce((a, d) => a + d.n, 0), extinctFragments: ds.reduce((a, d) => a + d.extinctFragments, 0) };
+  };
+  return {
+    verdict: positivePassed && nullGatePassed ? arms.scaf.verdict : "uninformative",
+    controls: { positive, negative, nullGatePassed, positivePassed },
+    arms,
+    histories,
+    descriptive: { sets: descriptive.sort((x, y) => x.h - y.h), extinction: { scaf: extinction("scaf"), rand: extinction("rand") } },
+  };
 }
 
 // ---------------------------------------------------------------------------------------------

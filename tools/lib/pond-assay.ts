@@ -13,6 +13,7 @@ import {
   buildWorld,
   emptyGenome,
   cellCount,
+  stateHash,
   validateState,
   worldW,
   type Founder,
@@ -21,7 +22,7 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { MOT_ZERO } from "@bl/sim-ref";
-import { assaySeed, drawPacketCentre, packetWindow, pondTraits, randomKey, weightedPick } from "./ponds.ts";
+import { assaySeed, drawPacketCentre, packetWindow, pondConfig, pondTraits, randomKey, weightedPick } from "./ponds.ts";
 
 /** Fixed matter budget of every assay pond: 4096 x 37, close to an ancestor pond's initial matter. */
 export const M_ASSAY = 151552;
@@ -472,6 +473,228 @@ export function checkTauSeeds(seeds: { physics: number; fragment: number }, repl
   if (seeds.physics !== want || seeds.fragment !== want) throw new Error(`the tau calibration needs seed ${want} for replicate ${replicate}, got ${seeds.physics} (fragment ${seeds.fragment})`);
 }
 
+// ---------------------------------------------------------------------------------------------
+// R1'' (docs/scaffold-heredity-replication-v1.md): the crossing-time replication on fresh histories
+
+/**
+ * The 18 sets R1'' assays, by h: 0-11 the fresh histories (h = 6 arm + i, arm 0 scaf, 1 rand), 12-13 the positive-control
+ * worlds (the P2 ranking worlds s0, s1 at b1-pre), 14-17 the negative-control worlds (mutation-off clone worlds j = 0-3 at b1-pre).
+ */
+export const R1DP_SETS = 18;
+const R1DP_HISTORIES = 12;
+const R1DP_POSITIVE = 12;
+const R1DP_NEGATIVE = 14;
+
+/** R1'' assay seeds are 4,812,001 + 250 h + s (s = 0-1 the replicates, 8 the permutation stream, 9 the donor selection); h runs 0-17, so the block ends at 4,816,260. */
+export const R1DP_SEED_BASE = 4_812_001;
+export const R1DP_SEED_MAX = 4_816_260;
+/** World seeds of what is assayed: the fresh histories' 4,811,001 + 100 arm + i, the P2 ranking worlds' 4,805,001 + s and the negative controls' 4,811,201 + j. */
+export const R1DP_HISTORY_SEED_BASE = 4_811_001;
+export const R1DP_POSITIVE_SEED_BASE = 4_805_001;
+export const R1DP_NEGATIVE_SEED_BASE = 4_811_201;
+/** A fresh history is assayed at boundary 34's pre-cycle state (34 periods in); a control at its b1-pre (one period in). */
+export const R1DP_FRESH_STEP = 340_000;
+export const R1DP_CONTROL_STEP = 10_000;
+/** The regime every R1'' assay runs at: protocol v1's frozen k and period, the standard side and replicates, a census every 100 steps. */
+export const R1DP_REGIME = { k: 8, period: 10_000, side: 8, replicates: 2, censusEvery: 100 } as const;
+
+/**
+ * Seed of an R1'' assay: 4,812,001 + 250 h + s, with h 0-17 (see `R1DP_SETS`) and s the replicate (0-1), 8 the permutation
+ * stream or 9 the donor selection. Mixed radix (s < 250), below assaySeed's minimum 4,820,001 and clear of the world seeds
+ * 4,805,001-4,811,204, so it cannot collide with them or with R1' and the tau calibration above; every field is range-checked.
+ */
+export function r1dPrimeSeed(h: number, s: number): number {
+  const field = (name: string, x: number, max: number) => {
+    if (!Number.isInteger(x) || x < 0 || x > max) throw new Error(`r1dPrimeSeed: ${name} must be an integer in 0..${max}, got ${x}`);
+  };
+  field("h", h, R1DP_SETS - 1);
+  field("s", s, 9);
+  const seed = R1DP_SEED_BASE + 250 * h + s;
+  if (seed > R1DP_SEED_MAX) throw new Error(`r1dPrimeSeed: ${seed} is above ${R1DP_SEED_MAX}`);
+  return seed;
+}
+
+/**
+ * The `labels` of an R1'' transmission set: `arm` scaf or rand with its history index i (0-5) for a fresh history, `arm`
+ * control for a control with `control` positive or negative and `history` the world (positive s = 0-1, negative j = 0-3).
+ * `h` is the one index that keys the seeds.
+ */
+export interface R1dPrimeLabelSet {
+  arm: "scaf" | "rand" | "control";
+  history: number;
+  r1dprime: true;
+  h: number;
+  control?: "positive" | "negative";
+}
+
+/** The labels h names. */
+export function r1dPrimeLabelsOf(h: number): R1dPrimeLabelSet {
+  if (!Number.isInteger(h) || h < 0 || h >= R1DP_SETS) throw new Error(`R1'' h must be an integer in 0..${R1DP_SETS - 1}, got ${h}`);
+  if (h < R1DP_HISTORIES) return { arm: h < 6 ? "scaf" : "rand", history: h % 6, r1dprime: true, h };
+  if (h < R1DP_NEGATIVE) return { arm: "control", history: h - R1DP_POSITIVE, r1dprime: true, h, control: "positive" };
+  return { arm: "control", history: h - R1DP_NEGATIVE, r1dprime: true, h, control: "negative" };
+}
+
+/** The set's name in a report: scaf-i0..rand-i5, pos-s0..pos-s1, neg-j0..neg-j3. */
+export function r1dPrimeIdOf(l: Pick<R1dPrimeLabelSet, "arm" | "history" | "control">): string {
+  return l.arm === "control" ? (l.control === "positive" ? `pos-s${l.history}` : `neg-j${l.history}`) : `${l.arm}-i${l.history}`;
+}
+
+/**
+ * The labels of an R1'' set from the CLI's --h, --arm, --history and --control. --h (0-17) names the set; --arm must be
+ * the one it implies (scaf for 0-5, rand for 6-11, control for 12-17), a fresh history needs --history i = h mod 6, and a control
+ * needs --control positive (12-13) or negative (14-17) and takes --history (the world, 0-1 or 0-3) only if it agrees. R1's
+ * --time, --timing and --calibration do not apply.
+ */
+export function parseR1dPrimeLabels(v: { h?: string; arm?: string; history?: string; control?: string; time?: string; timing?: string; calibration?: string }): R1dPrimeLabelSet {
+  const int = (s: string | undefined): number => (s === undefined || s.trim() === "" ? NaN : Number(s));
+  const h = int(v.h);
+  if (!Number.isInteger(h) || h < 0 || h >= R1DP_SETS) throw new Error(`--h must be 0-${R1DP_SETS - 1} for --r1dprime, got ${v.h}`);
+  if (v.time !== undefined || v.timing !== undefined || v.calibration !== undefined) throw new Error("--r1dprime takes --h, not --time, --timing or --calibration");
+  const want = r1dPrimeLabelsOf(h);
+  if (v.arm !== want.arm) throw new Error(`--arm must be ${want.arm} for --h ${h}, got ${v.arm}`);
+  if (want.arm === "control") {
+    if (v.control !== want.control) throw new Error(`--control must be ${want.control} for --h ${h}, got ${v.control}`);
+    if (v.history !== undefined && int(v.history) !== want.history) throw new Error(`--history must be ${want.history} for --h ${h} (the ${want.control} control world), got ${v.history}`);
+  } else {
+    if (v.control !== undefined) throw new Error(`--control applies to --arm control, not --arm ${want.arm}`);
+    if (int(v.history) !== want.history) throw new Error(`--history must be ${want.history} for --h ${h} (${want.arm}), got ${v.history}`);
+  }
+  return want;
+}
+
+/** Throws unless the seeds of replicate `replicate` are `r1dPrimeSeed(h, replicate)` for the labelled set (fragment and physics alike). */
+export function checkR1dPrimeSeeds(labels: Pick<R1dPrimeLabelSet, "h">, seeds: { physics: number; fragment: number }, replicate = 0): void {
+  const want = r1dPrimeSeed(labels.h, replicate);
+  for (const [name, seed] of [["seed", seeds.physics], ["fragment seed", seeds.fragment]] as const) {
+    if (seed !== want) throw new Error(`${name} ${seed} does not match the R1'' labels (h ${labels.h}): want r1dPrimeSeed(h, ${replicate}) = ${want}`);
+  }
+}
+
+/** R1'' draws its donors with s = 9 (`r1dPrimeSeed(h, 9)`), and permutes with s = 8. */
+export const r1dPrimeDonorSeedOf = (labels: Pick<R1dPrimeLabelSet, "h">): number => r1dPrimeSeed(labels.h, 9);
+
+/** Throws unless `donorSeed` is `r1dPrimeDonorSeedOf(labels)`. */
+export function checkR1dPrimeDonorSeed(labels: Pick<R1dPrimeLabelSet, "h">, donorSeed: number): void {
+  const want = r1dPrimeDonorSeedOf(labels);
+  if (donorSeed !== want) throw new Error(`donor seed ${donorSeed} does not match the R1'' labels (h ${labels.h}): want r1dPrimeSeed(h, 9) = ${want}`);
+}
+
+/**
+ * The checkpoint phase of an R1'' source, measured on its state. The pond cycle (a host-side transform at each boundary) builds a
+ * post-cycle state from scratch: C and S are 0 in every cell, and bound mass and genome words sit only in the k x k landing windows
+ * at the pond centres. A pre-cycle state has grown for a whole period, so it holds C or S and carries mass outside the windows.
+ * `carrying` counts the cells with bound mass (B+P > 0) or a lineage id, `outsideWindow` those of them outside their pond's landing
+ * window (k = 8), `postCycle` is `postCycleOf` of the measures.
+ */
+export interface R1dPrimePhase {
+  totalC: number;
+  totalS: number;
+  carrying: number;
+  outsideWindow: number;
+  postCycle: boolean;
+}
+
+/**
+ * Whether a state looks post-cycle (or is a fresh one: step 0 has C = S = 0 as well): C and S are 0 in every cell, or its bound mass
+ * and lineages are confined to the landing windows (and there are some). Neither holds for a grown pre-cycle state.
+ */
+export const postCycleOf = (m: Pick<R1dPrimePhase, "totalC" | "totalS" | "carrying" | "outsideWindow">): boolean => (m.totalC === 0 && m.totalS === 0) || (m.carrying > 0 && m.outsideWindow === 0);
+
+/** The phase of `state`: its C and S totals and how much of its bound mass lies outside the k x k landing window of each pond. */
+export function r1dPrimePhase(state: WorldState, k = R1DP_REGIME.k): R1dPrimePhase {
+  const cfg = state.cfg;
+  const n = cellCount(cfg);
+  const W = worldW(cfg);
+  const lo = CENTRE - (k >> 1);
+  const hi = lo + k - 1;
+  let totalC = 0, totalS = 0, carrying = 0, outsideWindow = 0;
+  for (let i = 0; i < n; i++) {
+    totalC += state.cells[CH.C * n + i];
+    totalS += state.cells[CH.S * n + i];
+    if (state.cells[CH.B * n + i] + state.cells[CH.P * n + i] === 0 && (state.genome[G.LIN_HI * n + i] | state.genome[G.LIN_LO * n + i]) === 0) continue;
+    carrying++;
+    const x = (i % W) % cfg.tileW;
+    const y = Math.floor(i / W) % cfg.tileH;
+    if (x < lo || x > hi || y < lo || y > hi) outsideWindow++;
+  }
+  return { totalC, totalS, carrying, outsideWindow, postCycle: postCycleOf({ totalC, totalS, carrying, outsideWindow }) };
+}
+
+/**
+ * What an R1'' assay records about its source checkpoint (assay.json `provenance`): the path, the state hash, the world seed and
+ * mutation rate its config carries, the step it was saved at, its pond grid, how many distinct genomes (lineage ids aside) its cells
+ * hold (12 in a founders world, 1 in a clone world with mutation off), and the phase check (`R1dPrimePhase`).
+ */
+export interface R1dPrimeProvenance {
+  source: string;
+  stateHash: string;
+  seed: number;
+  mutRate: number;
+  step: number;
+  tilesX: number;
+  tilesY: number;
+  distinctGenomes: number;
+  phase: R1dPrimePhase;
+}
+
+/** The distinct genomes carried by the cells that have a lineage id, compared on every word but the id's two. */
+export function distinctGenomes(state: WorldState): number {
+  const n = cellCount(state.cfg);
+  const kinds = new Set<string>();
+  for (let i = 0; i < n; i++) {
+    if ((state.genome[G.LIN_HI * n + i] | state.genome[G.LIN_LO * n + i]) === 0) continue;
+    let key = "";
+    for (let w = 0; w < GENOME_CHANNELS; w++) if (w !== G.LIN_HI && w !== G.LIN_LO) key += `${state.genome[w * n + i]},`;
+    kinds.add(key);
+  }
+  return kinds.size;
+}
+
+/** The provenance of `source`, read from its checkpoint (`path` is where it was loaded from). */
+export function r1dPrimeProvenance(path: string, source: WorldState): R1dPrimeProvenance {
+  const { seed, mutRate, tilesX, tilesY } = source.cfg;
+  return { source: path, stateHash: stateHash(source), seed, mutRate, step: source.step, tilesX, tilesY, distinctGenomes: distinctGenomes(source), phase: r1dPrimePhase(source) };
+}
+
+/** The checkpoint an R1'' set is assayed at: boundary 34's pre-cycle state of a fresh history, b1-pre of a control. */
+export const r1dPrimeCheckpointOf = (h: number): "b34-pre" | "b1-pre" => (r1dPrimeLabelsOf(h).arm === "control" ? "b1-pre" : "b34-pre");
+
+/**
+ * What is wrong with an R1'' source against the set it is labelled as (none: it is the protocol's). A fresh history's source is
+ * boundary 34's pre-cycle state: config seed 4,811,001 + 100 arm + i, step 340,000, the default mutation rate. A positive
+ * control's is a founders world (more than one genome), mutation off, seed 4,805,001 + (h - 12), at b1-pre (step 10,000); a negative
+ * control's is a clone world (one genome), mutation off, seed 4,811,201 + (h - 14), at b1-pre. All are 8 x 8 ponds. The path must end
+ * in ckpt/b34-pre.blck.gz (fresh) or ckpt/b1-pre.blck.gz (control), and the state must not look post-cycle (`postCycleOf`): a
+ * b34-post checkpoint has the same seed, mutation rate and step as b34-pre, so the name and the content both say which it is. The
+ * recorded `phase.postCycle` must be the one its own measures give.
+ */
+export function r1dPrimeSourceProblems(labels: Pick<R1dPrimeLabelSet, "h">, p: Pick<R1dPrimeProvenance, "source" | "seed" | "mutRate" | "step" | "tilesX" | "tilesY" | "distinctGenomes" | "phase">): string[] {
+  const l = r1dPrimeLabelsOf(labels.h);
+  const why: string[] = [];
+  const file = r1dPrimeCheckpointOf(labels.h);
+  if (!new RegExp(`(^|/)ckpt/${file}\\.blck\\.gz$`).test(p.source)) why.push(`source path ${JSON.stringify(p.source)} does not end in ckpt/${file}.blck.gz`);
+  const want = (name: string, got: number, expected: number) => {
+    if (got !== expected) why.push(`source ${name} ${got}, want ${expected}`);
+  };
+  if (l.arm === "control") {
+    const positive = l.control === "positive";
+    want("seed", p.seed, (positive ? R1DP_POSITIVE_SEED_BASE : R1DP_NEGATIVE_SEED_BASE) + l.history);
+    want("mutRate", p.mutRate, 0);
+    want("step", p.step, R1DP_CONTROL_STEP);
+    if (positive ? !(p.distinctGenomes > 1) : p.distinctGenomes !== 1) why.push(`source holds ${p.distinctGenomes} distinct genomes, want ${positive ? "more than 1 (a founders world)" : "1 (a clone world)"}`);
+  } else {
+    want("seed", p.seed, R1DP_HISTORY_SEED_BASE + 100 * (l.arm === "scaf" ? 0 : 1) + l.history);
+    want("mutRate", p.mutRate, pondConfig(R1DP_REGIME.side, 0).mutRate);
+    want("step", p.step, R1DP_FRESH_STEP);
+  }
+  if (p.tilesX !== R1DP_REGIME.side || p.tilesY !== R1DP_REGIME.side) why.push(`source has ${p.tilesX} x ${p.tilesY} ponds, want ${R1DP_REGIME.side} x ${R1DP_REGIME.side}`);
+  const post = postCycleOf(p.phase);
+  if (p.phase.postCycle !== post) why.push(`source phase flag postCycle ${p.phase.postCycle} disagrees with its measures (${post})`);
+  if (post) why.push(`source looks post-cycle (C ${p.phase.totalC}, S ${p.phase.totalS}; ${p.phase.outsideWindow} of ${p.phase.carrying} cells with bound mass or a lineage outside the landing window), want the pre-cycle state`);
+  return why;
+}
+
 /** Calibration seeds are 4,802,001 + 10 v + s (protocol, P1). */
 export const CALIBRATION_SEED_BASE = 4_802_001;
 /**
@@ -590,7 +813,7 @@ export function assayJson(p: {
   censusEvery: number;
   inoculum: string;
   seeds: { physics: number; fragment: number }[];
-  labels: AssayLabelSet | R1PrimeLabelSet;
+  labels: AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet;
   extra: Record<string, unknown>;
   summary: Record<string, unknown>;
   wallSeconds: number;

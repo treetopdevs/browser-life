@@ -10,6 +10,7 @@
 //   deno run -A tools/scaffold-report.ts decide --in <json...>    (the outputs of the stages above)
 //   deno run -A tools/scaffold-report.ts tau --assays <dir...> [--regime K PERIOD]    (Amendment 2: the tau calibration)
 //   deno run -A tools/scaffold-report.ts r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <replay-check.json>]    (Amendment 2: R1')
+//   deno run -A tools/scaffold-report.ts r1dprime --assays <dir...> [--regime K PERIOD] [--runs <dir...>]    (docs/scaffold-heredity-replication-v1.md: R1'')
 //
 // A flag takes every argument up to the next flag. A directory that is not itself a run (meta.json) or an
 // assay (assay.json) is searched for them up to four levels down. Every stage reports the truncation rule
@@ -66,6 +67,25 @@
 // outside --regime, has seeds that do not match its labels, or has no trait at tau is rejected and listed; two sets for one
 // history-time are both rejected. --allow-any-seed waives the side, replicate, row, regime and seed checks of both stages
 // (smoke runs; the grid is then the one assay.json declares).
+//
+// R1'' (docs/scaffold-heredity-replication-v1.md) has its own stage over transmission sets that scaffold-assays wrote with
+// --r1dprime --traits (labels.r1dprime, h = 0-17: 0-11 the fresh histories at boundary 34, h = 6 arm + i; 12-13 the positive-control
+// worlds, 14-17 the negative-control worlds; replicate seeds 4,812,001 + 250 h + s). r1, r2, r3 and calibrate skip these directories
+// (counted under `skipped`), and the other stages never read them. `r1dprime` takes each set's complete traits.tsv (2 x 64 at every census
+// step 100..10,000, streamed) and scores each fragment by log T, T the first census step at which its trait reaches m* = 25,764.5
+// (0.25 ref) or 10,100 if it never does; R1's statistic (OLS residuals on log1p retMass and log1p retE over all 128 fragments, ICC(1)
+// by donor, 1,000 permutations on the stream r1dPrimeSeed(h, 8)) is applied to it, except that degenerate scores (every T equal, or OLS
+// residuals at roundoff level) are not tested: ICC 0, p 1, not demonstrated, `degenerate` says why. The verdict follows the protocol's order: 1. the
+// controls (both positive worlds ICC > 0 with p < 0.05; at most 1 of the 4 negative worlds with p < 0.05, all four tested), else
+// "uninformative"; 2. availability (a set that is missing, rejected, unreadable or fails its analysis is unavailable and not
+// demonstrated; --runs names the evolution histories (seeds 4,811,001 + 100 arm + i, 34 cycles), and one whose done.json says it ended
+// before boundary 34, or with fewer than 2 eligible donors, is a valid biological outcome that is not demonstrated; fewer than 4 valid
+// scaf histories is "uninformative"); 3. at least 4 of 6 scaf histories with ICC > 0 and p < 0.05. rand is reported with the same statistic.
+// The endpoint fractions (T = 100, T = 10,100), the end trait and the trait at tau = 4,100, the between-donor variance component and the
+// extinction counts are descriptive. In strict mode each set must be the protocol's (k 8, period 10,000, side 8, 2 replicates, census
+// every 100, seeds r1dPrimeSeed, a recorded source provenance that is the labelled world at its pre-cycle checkpoint (path ending
+// ckpt/b34-pre.blck.gz or ckpt/b1-pre.blck.gz, and a recorded phase check that says it is not a post-cycle state) and its protocol hash);
+// --allow-any-seed waives those checks (smoke runs).
 import {
   DECISION_TABLE,
   NO_REPLAY_CHECK,
@@ -99,6 +119,10 @@ import {
   r1PrimeKeyOf,
   r1PrimeScreen,
   r1Verdict,
+  r1dPrimeEvaluate,
+  r1dPrimeHOf,
+  r1dPrimeRunOf,
+  r1dPrimeScreen,
   r2Evaluate,
   r2Verdict,
   r3Evaluate,
@@ -126,6 +150,7 @@ import {
   type P2Arm,
   type P2Role,
   type R1PrimeKey,
+  type R1dPrimeRun,
   type R4Row,
   type TraitSetDir,
 } from "./lib/scaffold-stats.ts";
@@ -134,7 +159,7 @@ const STAGES = ["p1", "p2", "r1", "r2", "r3"] as const;
 
 function usage(msg?: string): never {
   if (msg) console.error(msg);
-  console.error("usage: scaffold-report.ts p1 --runs <dir...> | calibrate --p1 <json> --assays <dir...> | p2 --rank <dir...> --scaf <dir...> --rand <dir...> (--regime K PERIOD | --p1 <json>) | r1|r2|r3 --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r4 --assays <dir...> | --in <json...> | decide --in <json...> | tau --assays <dir...> [--regime K PERIOD] | r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <json>]");
+  console.error("usage: scaffold-report.ts p1 --runs <dir...> | calibrate --p1 <json> --assays <dir...> | p2 --rank <dir...> --scaf <dir...> --rand <dir...> (--regime K PERIOD | --p1 <json>) | r1|r2|r3 --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r4 --assays <dir...> | --in <json...> | decide --in <json...> | tau --assays <dir...> [--regime K PERIOD] | r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <json>] | r1dprime --assays <dir...> [--regime K PERIOD] [--runs <dir...>]");
   Deno.exit(2);
 }
 
@@ -392,8 +417,8 @@ async function loadAssays(flags: Map<string, string[]>, assay: string, calibrati
   let skipped = 0;
   for (const d of await expandDirs(need(flags, "assays"), "assay.json")) {
     const json = await readJson(`${d}/assay.json`);
-    // Amendment 2's R1' sets and tau calibration belong to the tau and r1prime stages.
-    if (json.labels?.r1prime === true || json.labels?.tauCalibration === true) {
+    // Amendment 2's R1' sets and tau calibration belong to the tau and r1prime stages, and R1'' sets to r1dprime.
+    if (json.labels?.r1prime === true || json.labels?.tauCalibration === true || json.labels?.r1dprime === true) {
       skipped++;
       continue;
     }
@@ -535,6 +560,81 @@ async function r1primeStage(flags: Map<string, string[]>) {
   };
 }
 
+/**
+ * The fresh-history run directories under --runs (meta.json seeds 4,811,001 + 100 arm + i, 34 cycles), or null without the flag:
+ * each one's status and whether its history ended, and at which cycle. Directories that are not such runs are listed and never
+ * read; two runs of one (arm, history) throw.
+ */
+async function r1dprimeRuns(flags: Map<string, string[]>): Promise<{ histories: R1dPrimeRun[]; skipped: { dir: string; why: string }[] } | null> {
+  if (!flags.has("runs")) return null;
+  const histories: R1dPrimeRun[] = [];
+  const skipped: { dir: string; why: string }[] = [];
+  const seen = new Set<string>();
+  for (const dir of await expandDirs(need(flags, "runs"), "meta.json")) {
+    const meta = await readJson(`${dir}/meta.json`);
+    const { key, why } = r1dPrimeRunOf(meta);
+    if (key === null) {
+      skipped.push({ dir, why: why.join("; ") });
+      continue;
+    }
+    const id = `${key.arm}-i${key.history}`;
+    if (seen.has(id)) throw new Error(`two runs are history ${id} (${dir})`);
+    seen.add(id);
+    const done = await readDone(dir);
+    histories.push({ ...key, dir, status: runStatus(done, meta.cycles), ended: done?.ended === true, endedAt: typeof done?.endedAt === "number" ? done.endedAt : null });
+  }
+  histories.sort((a, b) => a.arm.localeCompare(b.arm) || a.history - b.history);
+  return { histories, skipped };
+}
+
+/** R1'' (docs/scaffold-heredity-replication-v1.md): the controls, availability and the rule over the crossing-time sets (see the header). */
+async function r1dprimeStage(flags: Map<string, string[]>) {
+  const strict = !flags.has("allow-any-seed");
+  const dirs: TraitSetDir[] = [];
+  // A set that cannot be read (a missing or malformed table) makes its h unavailable; it does not stop the others.
+  const rejected: { dir: string; h: number | null; reasons: string[] }[] = [];
+  let skipped = 0;
+  for (const d of await expandDirs(need(flags, "assays"), "assay.json")) {
+    let json;
+    try {
+      json = await readJson(`${d}/assay.json`);
+    } catch (e) {
+      rejected.push({ dir: d, h: null, reasons: [`assay.json: ${message(e)}`] });
+      continue;
+    }
+    if (json?.labels?.r1dprime !== true) {
+      skipped++;
+      continue;
+    }
+    try {
+      // Every census step is kept: T is the first of them at which a fragment's trait reaches m*.
+      dirs.push(await loadTraitSet(d, json, () => undefined));
+    } catch (e) {
+      rejected.push({ dir: d, h: r1dPrimeHOf(json), reasons: [`could not read the set: ${message(e)}`] });
+    }
+  }
+  const screened = r1dPrimeScreen(dirs, { regimes: regimeFlag(flags), allowAnySeed: !strict });
+  rejected.push(...screened.rejected);
+  const runs = await r1dprimeRuns(flags);
+  const r = r1dPrimeEvaluate(screened.accepted, runs?.histories ?? null, rejected);
+  return {
+    stage: "r1dprime",
+    verdict: r.verdict,
+    regime: screened.regime,
+    skipped,
+    rejected,
+    runs: runs === null ? { loaded: false } : { loaded: true, ...runs },
+    controls: r.controls,
+    arms: r.arms,
+    histories: r.histories,
+    sources: screened.accepted.map(({ h, dir, provenance, protocolSha256R1dp }) => ({ h, dir, provenance, protocolSha256R1dp })).sort((x, y) => x.h - y.h),
+    descriptive: {
+      note: "per set: fractionAt100 and fractionCensored are the fractions of fragments at T = 100 (their pond reached m* = 25,764.5 by the first census) and at T = 10,100 (never did); atEnd and atTau are R1's statistic on the end trait and the trait at tau = 4,100 (R1' as reported); varianceComponent is the one-way ANOVA between-donor component (MS_between - MS_within) / n0 on the OLS-adjusted log T (negative kept), rawFamilyMeanVariance the sample variance of the raw donor means of log T; extinctFragments counts fragments with no trait at the end; `degenerate` marks scores that cannot carry the test (every value equal, or residuals at roundoff level: ICC 0, p 1); extinction counts, per arm, the histories whose run ended before boundary 34 (needs --runs) and those with fewer than 2 donors; no decision reads any of it. The verdict applies the controls first, then availability, then the rule; arms.<arm>.verdict is the availability and the rule for that arm alone (rand is reported, never decided)",
+      ...r.descriptive,
+    },
+  };
+}
+
 async function decideCmd(flags: Map<string, string[]>) {
   const inputs: DecisionInputs = {};
   let p1: boolean | null | undefined;
@@ -605,6 +705,9 @@ async function main() {
       break;
     case "r1prime":
       out = await r1primeStage(flags);
+      break;
+    case "r1dprime":
+      out = await r1dprimeStage(flags);
       break;
     case "decide":
       out = await decideCmd(flags);

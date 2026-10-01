@@ -5,10 +5,15 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { assaySeed } from "../lib/ponds.ts";
-import { ASSAY_COLUMNS, M_ASSAY, TAU_LABELS, assayJson, assayLine, censusSteps, checkAssaySeeds, checkDonorSeed, decodeAssaySeed, donorSeedOf, parseAssayLabels, parseR1PrimeLabels, r1PrimeH, r1PrimeSeed, traitsTable, type Planted } from "../lib/pond-assay.ts";
+import { ASSAY_COLUMNS, M_ASSAY, TAU_LABELS, assayJson, assayLine, censusSteps, checkAssaySeeds, checkDonorSeed, decodeAssaySeed, donorSeedOf, parseAssayLabels, parseR1PrimeLabels, r1PrimeH, r1PrimeSeed, r1dPrimeIdOf, r1dPrimeLabelsOf, r1dPrimeSeed, traitsTable, type Planted, type R1dPrimeProvenance } from "../lib/pond-assay.ts";
 import {
   DECISION_TABLE,
   NO_REPLAY_CHECK,
+  R1DP_CENSORED,
+  R1DP_DEGENERATE_ABSOLUTE,
+  R1DP_DEGENERATE_RELATIVE,
+  R1DP_TAU,
+  R1DP_THRESHOLD,
   R1_EXPECTED,
   R2_EXPECTED,
   R3_EXPECTED,
@@ -16,6 +21,7 @@ import {
   assayRow,
   assaySensitivity,
   competence,
+  crossingTime,
   decide,
   founderRank,
   gridOfJson,
@@ -43,6 +49,12 @@ import {
   parseReplayCheck,
   permutationP,
   populationCv,
+  r1dPrimeDegeneracy,
+  r1dPrimeEvaluate,
+  r1dPrimeRunOf,
+  r1dPrimeScreen,
+  r1dPrimeStat,
+  r1dPrimeVerdict,
   r1Evaluate,
   r1History,
   r1PrimeEvaluate,
@@ -58,6 +70,7 @@ import {
   r4RowsOf,
   r4Table,
   readTraits,
+  reachesThreshold,
   readTsv,
   runStatus,
   setKey,
@@ -78,6 +91,10 @@ import {
   type P1Run,
   type R1PrimeFragment,
   type R1PrimeSet,
+  type R1dPrimeEntry,
+  type R1dPrimeFragment,
+  type R1dPrimeRun,
+  type R1dPrimeSet,
   type ReplayCheck,
   type TraitSetDir,
 } from "../lib/scaffold-stats.ts";
@@ -2984,5 +3001,880 @@ describe("scaffold-report tau and r1prime", () => {
     const withReplay = report("r1prime", "--assays", root, "--tau", tau, "--allow-any-seed", "--replay", replayFile(root, ids("scaf", 0)));
     expect(withReplay.histories[0]).toMatchObject({ available: true, n: 4 });
     expect(withReplay.verdict).toBe("uninformative");
+  });
+});
+
+// ---- R1'': the crossing-time replication (docs/scaffold-heredity-replication-v1.md) ---------------------
+
+describe("R1'' crossing time", () => {
+  const at = (...pairs: [number, number][]) => pairs;
+
+  it("is the first census step at which the trait reaches m* = 25,764.5, whatever order the steps arrive in", () => {
+    expect(R1DP_THRESHOLD).toBe(25_764.5);
+    expect(R1DP_THRESHOLD).toBe(0.25 * 103_058);
+    const series = at([100, 10], [200, 25_000], [300, 26_000], [400, 30_000]);
+    expect(crossingTime(series)).toBe(300);
+    expect(crossingTime([...series].reverse())).toBe(300);
+    expect(crossingTime([series[3], series[1], series[2], series[0]])).toBe(300);
+  });
+
+  it("is 10,100 when the trait never gets there, dead or alive", () => {
+    expect(R1DP_CENSORED).toBe(10_100);
+    expect(crossingTime(at([100, 10], [200, 20_000], [10_000, 25_764]))).toBe(10_100);
+    expect(crossingTime(at([100, 0], [200, 0], [10_000, 0]))).toBe(10_100); // a pond that died out
+    expect(crossingTime([])).toBe(10_100);
+    expect(crossingTime(at([100, 0]), 300)).toBe(300); // another period's censored value
+  });
+
+  it("is 100 when the first census is already at or above m*", () => {
+    expect(crossingTime(at([100, 40_000], [200, 50_000], [300, 60_000]))).toBe(100);
+    expect(crossingTime(at([100, 25_765]))).toBe(100);
+    expect(crossingTime(at([300, 60_000], [100, 40_000], [200, 50_000]))).toBe(100);
+  });
+
+  it("crosses at m* exactly (the traits are integers: 25,765 reaches 25,764.5, 25,764 does not), and the first crossing counts even if the trait falls back", () => {
+    expect(reachesThreshold(25_765)).toBe(true);
+    expect(reachesThreshold(25_764)).toBe(false);
+    expect(reachesThreshold(0)).toBe(false);
+    expect(crossingTime(at([100, 25_764], [200, 25_765]))).toBe(200);
+    expect(crossingTime(at([100, 1], [200, 30_000], [300, 5], [400, 30_000]))).toBe(200);
+    expect(crossingTime(at([10_000, 30_000]))).toBe(10_000); // crossing at the very last census is a crossing
+  });
+
+  it("reads the trait at tau = 4,100", () => {
+    expect(R1DP_TAU).toBe(4100);
+  });
+});
+
+// ---- fixtures: R1'' sets as scaffold-assays --r1dprime --traits writes them
+
+const DP_PERIOD = 10_000;
+const DP_STEPS = censusSteps(DP_PERIOD, 100);
+const DP_SHA = "ab".repeat(32);
+const DP_MUT = 429_497;
+
+/** What the assay records about its source for set h: the protocol's world (a fresh history at step 340,000, a control at b1-pre). */
+function dpProvenance(h: number): R1dPrimeProvenance {
+  const l = r1dPrimeLabelsOf(h);
+  const world = l.arm === "control" ? { seed: (l.control === "positive" ? 4_805_001 : 4_811_201) + l.history, mutRate: 0, step: 10_000, distinctGenomes: l.control === "positive" ? 12 : 1 } : { seed: 4_811_001 + 100 * (l.arm === "scaf" ? 0 : 1) + l.history, mutRate: DP_MUT, step: 340_000, distinctGenomes: 1019 };
+  // the phase of a grown pre-cycle state: C and S held, bound mass far outside the landing windows
+  const phase = { totalC: 85_566, totalS: 204_772, carrying: 94_592, outsideWindow: 92_766, postCycle: false };
+  return { source: `runs/scaffold/rep/${l.arm}/ckpt/b${l.arm === "control" ? 1 : 34}-pre.blck.gz`, stateHash: "0123456789abcdef", tilesX: 8, tilesY: 8, ...world, phase };
+}
+
+/** A strong donor effect on the crossing step (donors 300 steps apart, a little within), and none (independent of the donor, 100-10,100). */
+const strongCross = (donor: number, u: number) => 500 + 300 * donor + 100 * Math.floor(u * 3);
+const weakCross = (_donor: number, u: number) => 100 * (1 + Math.floor(u * 101));
+
+/**
+ * An R1'' set of 128 fragments (replicate 0 then 1, 64 ponds, donor 0-15): a fragment's trait is 5 per 100 steps (far below m*)
+ * until its crossing step `cross(donor, u, j)` and 30,000 or more from then on (a step above the last census never crosses); `dead`
+ * fragments have trait 0 throughout. `donorCovariates` makes the retained B+P and E depend on the donor (as they do in a real set, since a
+ * donor's fragments are alike), not random.
+ */
+function dpFixture(o: { h: number; cross?: (donor: number, u: number, j: number) => number; insufficient?: boolean; dead?: (j: number) => boolean; donorCovariates?: boolean; json?: Record<string, unknown> }): SetFixture {
+  const labels = r1dPrimeLabelsOf(o.h);
+  const seed = r1dPrimeSeed(o.h, 0);
+  const json = JSON.parse(
+    JSON.stringify({
+      ...assayJson({
+        ...BASE_JSON,
+        source: dpProvenance(o.h).source,
+        assay: "transmission",
+        k: 8,
+        period: DP_PERIOD,
+        side: 8,
+        replicates: 2,
+        inoculum: "fragment",
+        seeds: [0, 1].map((s) => ({ physics: seed + s, fragment: seed + s })),
+        labels,
+        extra: { donorSeed: seed + 9, donors: [], eligible: o.insufficient ? 1 : 64, insufficient: !!o.insufficient, traitsRecorded: true, provenance: dpProvenance(o.h), protocolSha256R1dp: DP_SHA },
+      }),
+      ...o.json,
+    }),
+  ) as Record<string, unknown>;
+  const n = o.insufficient ? 0 : 128;
+  const r = lcg(7000 + 31 * o.h);
+  const series: number[][] = [];
+  const rows = Array.from({ length: n }, (_, j) => {
+    const donor = (j % 64) % 16;
+    const T = (o.cross ?? strongCross)(donor, r(), j);
+    // a dead pond has no trait at any census
+    const trait = DP_STEPS.map((step) => (o.dead?.(j) ? 0 : step >= T ? 30_000 + 10 * ((step / 100) % 7) : (5 * step) / 100));
+    series.push(trait);
+    const [retMass, retE] = o.donorCovariates ? [50 + 17 * donor, 100 + 31 * donor] : [50 + Math.floor(r() * 50), 100 + Math.floor(r() * 100)];
+    return fragRow({ replicate: j >= 64 ? 1 : 0, pond: j % 64, family: 100 + donor, retMass, retE, endTrait: trait[trait.length - 1], truncated: 0 });
+  });
+  return { json, rows, series, ...fixtureText("transmission", rows, series, !!o.insufficient, DP_STEPS) };
+}
+
+const dpDir = async (f: SetFixture, name = "d"): Promise<TraitSetDir> => dirOf(f, name);
+
+/** The screened set of a fixture (strict mode: the protocol's seeds, regime, provenance and grid). */
+async function dpSetOf(o: Parameters<typeof dpFixture>[0]): Promise<R1dPrimeSet> {
+  const r = r1dPrimeScreen([await dpDir(dpFixture(o), `h${o.h}`)], { regimes: [{ k: 8, period: DP_PERIOD }] });
+  expect(r.rejected).toEqual([]);
+  return r.accepted[0];
+}
+
+const dpCache = new Map<string, Promise<R1dPrimeSet>>();
+/** `dpSetOf` for the default strong or weak fixture of h, kept (the sets are never mutated). */
+const dpKind = (h: number, kind: "strong" | "weak"): Promise<R1dPrimeSet> => {
+  const key = `${h}|${kind}`;
+  if (!dpCache.has(key)) dpCache.set(key, dpSetOf({ h, cross: kind === "strong" ? strongCross : weakCross }));
+  return dpCache.get(key)!;
+};
+
+describe("R1'' screening", () => {
+  const screen = async (f: SetFixture, o: Partial<Parameters<typeof r1dPrimeScreen>[1]> = {}) => {
+    const r = r1dPrimeScreen([await dpDir(f)], { regimes: [{ k: 8, period: DP_PERIOD }], ...o });
+    return { ...r, reasons: r.rejected.flatMap((x) => x.reasons).join(" | ") };
+  };
+
+  it("accepts a sound set and carries each fragment's T, its end trait and its trait at tau = 4,100", async () => {
+    // fragment 0 is at m* by the first census, 1 never gets there, 2 crosses at tau, 3 just after it, 4 at the last census
+    const special = [100, 10_100, 4100, 4200, 10_000];
+    const f = dpFixture({ h: 3, cross: (donor, u, j) => (j < special.length ? special[j] : strongCross(donor, u)) });
+    const r = await screen(f);
+    expect(r.rejected).toEqual([]);
+    expect(r.regime).toEqual({ k: 8, period: DP_PERIOD });
+    expect(r.accepted).toHaveLength(1);
+    const set = r.accepted[0];
+    expect(set).toMatchObject({ h: 3, insufficient: false, censored: 10_100, protocolSha256R1dp: DP_SHA, provenance: dpProvenance(3) });
+    expect(set.fragments).toHaveLength(128);
+    expect(set.fragments.slice(0, 5).map((fr) => fr.T)).toEqual(special);
+    // the trait at tau: at m* from 4,100 on for fragment 2, not yet for fragment 3
+    expect(set.fragments.slice(0, 5).map((fr) => fr.tauTrait! >= 25_765)).toEqual([true, false, true, false, false]);
+    // fragments are in R1's order, replicate 0's f = 0..63 then replicate 1's, with R1's columns
+    set.fragments.forEach((fr, j) => {
+      expect(fr).toMatchObject({ family: f.rows[j].family, retMass: f.rows[j].retMass, retE: f.rows[j].retE, endTrait: f.series[j][99], tauTrait: f.series[j][40], truncated: false });
+    });
+    // T is the first of the fragment's own census steps at or above m*, from the whole 2 x 64 x 100 grid
+    set.fragments.forEach((fr, j) => expect(fr.T).toBe(crossingTime(DP_STEPS.map((step, c) => [step, f.series[j][c]] as [number, number]))));
+  });
+
+  it("accepts an insufficient set (no fragments, no traits) as a valid one", async () => {
+    const r = await screen(dpFixture({ h: 4, insufficient: true }));
+    expect(r.rejected).toEqual([]);
+    expect(r.accepted[0]).toMatchObject({ h: 4, insufficient: true, fragments: [] });
+  });
+
+  it("rejects wrong seeds, donor seed, size, regime and labels, with the reasons", async () => {
+    const seed = r1dPrimeSeed(1, 0);
+    const base = dpFixture({ h: 1 });
+    expect((await screen(dpFixture({ h: 1, json: { seeds: [{ physics: seed, fragment: seed }, { physics: seed, fragment: seed + 1 }] } }))).reasons).toMatch(/does not match the R1'' labels \(h 1\).*r1dPrimeSeed\(h, 1\) = /);
+    expect((await screen(dpFixture({ h: 1, json: { seeds: [{ physics: assaySeed(1, 1, 0, 0, 0), fragment: seed }, { physics: seed + 1, fragment: seed + 1 }] } }))).reasons).toMatch(/seed 4825251/);
+    expect((await screen(dpFixture({ h: 1, json: { seeds: [{ physics: seed, fragment: seed }] } }))).reasons).toMatch(/1 seeds, want 2/);
+    expect((await screen(dpFixture({ h: 1, json: { donorSeed: seed + 8 } }))).reasons).toMatch(/donor seed .* want r1dPrimeSeed\(h, 9\)/);
+    expect((await screen(dpFixture({ h: 1, json: { donorSeed: undefined } }))).reasons).toMatch(/no donorSeed/);
+    expect((await screen(dpFixture({ h: 1, json: { side: 2 } }))).reasons).toMatch(/side 2, want 8/);
+    expect((await screen(dpFixture({ h: 1, json: { replicates: 1 } }))).reasons).toMatch(/replicates 1, want 2/);
+    expect((await screen(dpFixture({ h: 1, json: { censusEvery: 50 } }))).reasons).toMatch(/censusEvery 50, want 100/);
+    expect((await screen(dpFixture({ h: 1, json: { k: 5 } }))).reasons).toMatch(/k 5, want 8/);
+    expect((await screen(dpFixture({ h: 1, json: { period: 3000 } }))).reasons).toMatch(/period 3000, want 10000/);
+    expect((await screen(base, { regimes: [{ k: 5, period: DP_PERIOD }] })).reasons).toMatch(/regime k 8 period 10000, want k 5 period 10000/);
+    expect((await screen({ ...base, rows: base.rows.slice(2) })).reasons).toMatch(/126 rows, want 128/);
+    expect((await screen(dpFixture({ h: 1, json: { assay: "garden" } }))).reasons).toMatch(/want transmission/);
+    expect((await screen(dpFixture({ h: 1, json: { inoculum: "disc" } }))).reasons).toMatch(/inoculum "disc"/);
+    // labels that are not an R1'' set's: rejected without an h, and with the reason
+    const noLabel = await screen(dpFixture({ h: 1, json: { labels: { arm: "scaf", history: 1, r1prime: true, timePrime: 0 } } }));
+    expect(noLabel.rejected[0]).toMatchObject({ h: null });
+    expect(noLabel.reasons).toMatch(/labels\.r1dprime is not true/);
+    expect((await screen(dpFixture({ h: 1, json: { labels: { arm: "rand", history: 1, r1dprime: true, h: 1 } } }))).reasons).toMatch(/labels\.arm "rand", want "scaf" for h 1/);
+    expect((await screen(dpFixture({ h: 1, json: { labels: { arm: "scaf", history: 1, r1dprime: true, h: 18 } } }))).reasons).toMatch(/labels\.h 18, want 0-17/);
+    expect((await screen(dpFixture({ h: 12, json: { labels: { arm: "control", history: 0, r1dprime: true, h: 12, control: "negative" } } }))).reasons).toMatch(/labels\.control "negative", want "positive" for h 12/);
+    // a rejected set keeps its h, so the stage can say why that set is unavailable
+    expect((await screen(dpFixture({ h: 1, json: { side: 2 } }))).rejected[0].h).toBe(1);
+  });
+
+  it("rejects a source that is not the protocol's for its labels, or whose provenance or protocol hash was not recorded", async () => {
+    const prov = (h: number, over: Record<string, unknown>) => dpFixture({ h, json: { provenance: { ...dpProvenance(h), ...over } } });
+    expect((await screen(prov(0, { seed: 4_811_002 }))).reasons).toMatch(/source seed 4811002, want 4811001/);
+    expect((await screen(prov(0, { step: 1_000_000 }))).reasons).toMatch(/source step 1000000, want 340000/);
+    expect((await screen(prov(0, { mutRate: 0 }))).reasons).toMatch(/source mutRate 0, want 429497/);
+    expect((await screen(prov(6, { seed: 4_811_001 }))).reasons).toMatch(/source seed 4811001, want 4811101/);
+    expect((await screen(prov(12, { distinctGenomes: 1 }))).reasons).toMatch(/1 distinct genomes, want more than 1/);
+    expect((await screen(prov(13, { seed: 4_805_001 }))).reasons).toMatch(/source seed 4805001, want 4805002/);
+    expect((await screen(prov(14, { mutRate: DP_MUT }))).reasons).toMatch(/source mutRate 429497, want 0/);
+    expect((await screen(prov(15, { distinctGenomes: 12 }))).reasons).toMatch(/12 distinct genomes, want 1 \(a clone world\)/);
+    expect((await screen(prov(17, { seed: 4_811_201 }))).reasons).toMatch(/source seed 4811201, want 4811204/);
+    expect((await screen(dpFixture({ h: 0, json: { provenance: undefined } }))).reasons).toMatch(/no provenance of the source checkpoint/);
+    // the checkpoint phase: b34-post has b34-pre's seed, mutation rate and step, so its path and its content are what say it is not the pre-cycle state
+    const post = { totalC: 0, totalS: 0, carrying: 2014, outsideWindow: 0, postCycle: true };
+    const at = (h: number, source: string, phase = dpProvenance(h).phase) => dpFixture({ h, json: { source, provenance: { ...dpProvenance(h), source, phase } } });
+    expect((await screen(at(0, "runs/scaffold/rep/main/scaf/i0/ckpt/b34-post.blck.gz"))).reasons).toMatch(/does not end in ckpt\/b34-pre\.blck\.gz/);
+    expect((await screen(at(0, "runs/scaffold/rep/main/scaf/i0/ckpt/b34-pre.blck.gz", post))).reasons).toMatch(/source looks post-cycle \(C 0, S 0; 0 of 2014 cells/);
+    expect((await screen(at(0, "runs/scaffold/rep/main/scaf/i0/ckpt/b34-pre.blck.gz", { ...post, postCycle: false }))).reasons).toMatch(/phase flag postCycle false disagrees with its measures \(true\)/);
+    expect((await screen(at(12, "runs/scaffold/p2/rank/s0/ckpt/b34-pre.blck.gz"))).reasons).toMatch(/does not end in ckpt\/b1-pre\.blck\.gz/);
+    expect((await screen(at(14, "runs/scaffold/rep/neg/j0/ckpt/b1-pre.blck.gz", post))).reasons).toMatch(/looks post-cycle/);
+    expect((await screen(at(0, "runs/scaffold/rep/main/scaf/i0/ckpt/b34-pre.blck.gz"))).rejected).toEqual([]);
+    // no phase check recorded (an assay from before it), or one that is not a phase
+    const { phase: _phase, ...noPhase } = dpProvenance(0);
+    expect((await screen(dpFixture({ h: 0, json: { provenance: noPhase } }))).reasons).toMatch(/no provenance of the source checkpoint with its phase check/);
+    expect((await screen(dpFixture({ h: 0, json: { provenance: { ...dpProvenance(0), phase: { ...dpProvenance(0).phase, postCycle: "no" } } } }))).reasons).toMatch(/no provenance/);
+    expect((await screen(dpFixture({ h: 0, json: { provenance: { ...dpProvenance(0), phase: { ...dpProvenance(0).phase, totalC: 1.5 } } } }))).reasons).toMatch(/no provenance/);
+    // the provenance is of the assay's own source
+    expect((await screen(dpFixture({ h: 0, json: { source: "runs/scaffold/rep/main/scaf/i1/ckpt/b34-pre.blck.gz" } }))).reasons).toMatch(/provenance\.source ".*scaf\/ckpt\/b34-pre\.blck\.gz" is not the assay's source ".*i1/);
+    expect((await screen(prov(0, { stateHash: 7 }))).reasons).toMatch(/no provenance/);
+    expect((await screen(dpFixture({ h: 0, json: { protocolSha256R1dp: undefined } }))).reasons).toMatch(/no protocolSha256R1dp/);
+    expect((await screen(dpFixture({ h: 0, json: { protocolSha256R1dp: "abc" } }))).reasons).toMatch(/no protocolSha256R1dp/);
+    // the sound ones pass, every kind of source
+    for (const h of [0, 5, 6, 11, 12, 13, 14, 15, 16, 17]) expect((await screen(dpFixture({ h }))).rejected).toEqual([]);
+  });
+
+  it("rejects missing, incomplete or inconsistent traits, and a table that does not fill the grid", async () => {
+    const f = dpFixture({ h: 0 });
+    const noTraits = r1dPrimeScreen([{ ...(await dpDir(f)), traits: null }], { regimes: null });
+    expect(noTraits.rejected[0].reasons.join(" ")).toMatch(/no traits\.tsv/);
+    expect((await screen({ ...f, json: { ...f.json, traitsRecorded: undefined } })).reasons).toMatch(/traitsRecorded/);
+    // one census step missing: 99 steps, not 100
+    expect((await screen({ ...f, traitsText: f.traitsText.split("\n").filter((l) => !l.includes("\t200\t")).join("\n") })).reasons).toMatch(/99 census steps/);
+    // the end trait of assay.tsv is the last census: a different one is refused
+    expect((await screen({ ...f, rows: f.rows.map((r, j) => (j === 7 ? { ...r, endTrait: r.endTrait + 1 } : r)) })).reasons).toMatch(/disagrees with assay\.tsv for 1 fragments/);
+    // a fragment's row repeated in place of another's at one census step
+    const lines = f.traitsText.trimEnd().split("\n");
+    const first = lines.findIndex((l) => l.startsWith("0\t0\t200\t"));
+    const second = lines.findIndex((l) => l.startsWith("0\t1\t200\t"));
+    const twice = lines.map((l, k) => (k === second ? lines[first] : l)).join("\n") + "\n";
+    expect((await screen({ ...f, traitsText: twice })).reasons).toMatch(/1 census steps with a repeated or out-of-grid \(replicate, pond\) \(step 200: 1 rows\)/);
+    // assay.tsv that does not fill the grid exactly once
+    expect((await screen({ ...f, rows: f.rows.map((r, j) => (j === 5 ? { ...r, replicate: f.rows[0].replicate, pond: f.rows[0].pond } : r)) })).reasons).toBe("assay.tsv repeats a (replicate, pond) in 1 rows");
+    expect((await screen({ ...f, rows: f.rows.map((r) => ({ ...r, retE: null })) })).reasons).toMatch(/no retE column/);
+    const ins = dpFixture({ h: 1, insufficient: true });
+    expect((await screen({ ...ins, rows: f.rows.slice(0, 2) })).reasons).toMatch(/2 rows, want 0/);
+  });
+
+  it("rejects both of two sets with one h without throwing", async () => {
+    const a = await dpDir(dpFixture({ h: 0 }), "a");
+    const b = await dpDir(dpFixture({ h: 0 }), "b");
+    const c = await dpDir(dpFixture({ h: 1 }), "c");
+    const twin = r1dPrimeScreen([a, b, c], { regimes: [{ k: 8, period: DP_PERIOD }] });
+    expect(twin.accepted.map((x) => x.dir)).toEqual(["c"]);
+    expect(twin.rejected.map((x) => [x.dir, x.h])).toEqual([["a", 0], ["b", 0]]);
+    expect(twin.rejected[0].reasons[0]).toMatch(/same R1'' set \(scaf-i0\) as b; a stage would count both/);
+  });
+
+  it("--allow-any-seed waives the size, regime, seed and provenance checks of a smoke set, not the traits or the label", async () => {
+    const f = dpFixture({ h: 12, json: { side: 2, replicates: 1, seeds: [{ physics: 1, fragment: 1 }], donorSeed: 3, provenance: undefined, protocolSha256R1dp: undefined, period: DP_PERIOD } });
+    expect((await screen(f)).accepted).toHaveLength(0);
+    const small = smallOf(f);
+    expect((await screen(small)).accepted).toHaveLength(0);
+    const ok = await screen(small, { allowAnySeed: true, regimes: null });
+    expect(ok.reasons).toBe("");
+    expect(ok.accepted[0].fragments).toHaveLength(4);
+    expect(ok.accepted[0]).toMatchObject({ h: 12, provenance: null, protocolSha256R1dp: null });
+    expect((await screen({ ...small, json: { ...small.json, traitsRecorded: undefined } }, { allowAnySeed: true })).accepted).toHaveLength(0);
+    expect((await screen({ ...small, json: { ...small.json, labels: { arm: "scaf" } } }, { allowAnySeed: true })).reasons).toMatch(/labels\.r1dprime is not true/);
+    // smoke sets of another regime do not mix
+    const other = await dpDir(smallOf(dpFixture({ h: 13, json: { side: 2, replicates: 1, k: 5 } })), "other");
+    const mine = await dpDir(small, "a");
+    expect(() => r1dPrimeScreen([mine, other], { regimes: null, allowAnySeed: true })).toThrow(/mix regimes/);
+  });
+});
+
+describe("R1'' statistic", () => {
+  const mk = (family: number, T: number, over: Partial<R1dPrimeFragment> = {}): R1dPrimeFragment => ({ family, retMass: 100, retE: 200, truncated: false, T, endTrait: 120_000, tauTrait: 0, ...over });
+
+  it("is R1's, unchanged, on log T: the same OLS, ICC and permutation code, with the stream r1dPrimeSeed(h, 8)", async () => {
+    const set = await dpKind(3, "strong");
+    const sigma = r1dPrimeSeed(3, 8);
+    expect(sigma).toBe(4_812_001 + 750 + 8);
+    const st = r1dPrimeStat(set.fragments, sigma);
+    // the same numbers by hand through R1's pieces
+    const y = set.fragments.map((f) => Math.log(f.T));
+    const resid = olsResiduals(y, [set.fragments.map((f) => Math.log1p(f.retMass)), set.fragments.map((f) => Math.log1p(f.retE))]);
+    const ref = permutationP(resid, set.fragments.map((f) => f.family), sigma, 1000)!;
+    expect(st.icc).toBe(ref.icc);
+    expect(st.p).toBe(ref.p);
+    expect(st.p).toBeCloseTo(1 / 1001, 12);
+    expect(st.demonstrated).toBe(true);
+    expect(st.icc!).toBeGreaterThan(0.9);
+    expect(st.meanLogT).toBeCloseTo(y.reduce((a, v) => a + v, 0) / y.length, 12);
+    expect(r1Test(y, set.fragments.map((f) => f.retMass), set.fragments.map((f) => f.retE), set.fragments.map((f) => f.family), sigma)).toMatchObject({ icc: st.icc, p: st.p, demonstrated: true });
+    // R1's own history function gives the same ICC on the same scores (another stream moves only p)
+    const asRows = set.fragments.map((f, j) => fragRow({ replicate: j >= 64 ? 1 : 0, pond: j % 64, family: f.family, retMass: f.retMass, retE: f.retE, endTrait: Math.log(f.T) }));
+    expect(r1History(asRows, 3, 0).icc).toBe(st.icc);
+    expect(r1dPrimeStat(set.fragments, r1dPrimeSeed(3, 9)).icc).toBe(st.icc);
+  });
+
+  it("scores log T: the endpoints T = 100 and T = 10,100 enter as log 100 and log 10,100", () => {
+    const frags = [mk(0, 100), mk(0, 200), mk(1, 400), mk(1, 400), mk(2, 10_100), mk(2, 5000)];
+    const st = r1dPrimeStat(frags, 1);
+    expect(st.meanLogT).toBeCloseTo((Math.log(100) + Math.log(200) + 2 * Math.log(400) + Math.log(10_100) + Math.log(5000)) / 6, 12);
+  });
+
+  it("has the between-donor variance component (negative kept) and the raw family-mean variance, and undefined ICC with one fragment per donor", () => {
+    // 9 fragments, 3 donors; constant covariates drop out of the OLS, so the adjusted score is the centred log T
+    const L = (x: number) => Math.exp(x);
+    const frags = [mk(0, L(5)), mk(0, L(6)), mk(0, L(7)), mk(1, L(8)), mk(1, L(9)), mk(1, L(10)), mk(2, L(11)), mk(2, L(12)), mk(2, L(13))];
+    const st = r1dPrimeStat(frags, 1);
+    expect(st.varianceComponent!).toBeCloseTo(26 / 3, 9); // donor means 6, 9, 12 around 9; msb 27, msw 1, n0 3
+    expect(st.rawFamilyMeanVariance!).toBeCloseTo(9, 9);
+    const flat = [mk(0, L(1)), mk(0, L(3)), mk(1, L(1)), mk(1, L(3)), mk(2, L(1)), mk(2, L(3))];
+    const neg = r1dPrimeStat(flat, 1);
+    expect(neg.varianceComponent!).toBeCloseTo(-1, 9);
+    expect(neg.demonstrated).toBe(false);
+    expect(neg.icc!).toBeLessThan(0);
+    expect(r1dPrimeStat([mk(0, 100), mk(1, 200), mk(2, 300)], 1)).toMatchObject({ icc: null, p: null, demonstrated: false, varianceComponent: null });
+  });
+
+  it("does not test constant scores: 128 fragments all at one T are ICC 0, p 1, not demonstrated, whatever the retained mass and energy do by donor", () => {
+    const donorCovariates = (family: number) => ({ retMass: 50 + 17 * family, retE: 100 + 31 * family });
+    for (const T of [10_100, 100, 4100, 5000]) {
+      const frags = Array.from({ length: 128 }, (_, j) => mk((j % 64) % 16, T, donorCovariates((j % 64) % 16)));
+      // the OLS leaves only roundoff of the constant scores (ICC of that is a ratio of roundoff errors, which can come out near 1)
+      const y = frags.map((f) => Math.log(f.T));
+      const resid = olsResiduals(y, [frags.map((f) => Math.log1p(f.retMass)), frags.map((f) => Math.log1p(f.retE))]);
+      expect(resid.reduce((a, r) => a + r * r, 0)).toBeLessThan(1e-12);
+      const st = r1dPrimeStat(frags, r1dPrimeSeed(0, 8));
+      expect(st).toMatchObject({ icc: 0, p: 1, demonstrated: false, degenerate: "constant score", varianceComponent: 0, rawFamilyMeanVariance: 0 });
+      expect(st.meanLogT).toBeCloseTo(Math.log(T), 12);
+      expect(r1dPrimeDegeneracy(frags.map((f) => f.T), resid, y)).toBe("constant score");
+    }
+  });
+
+  it("still analyses a single non-constant value normally", () => {
+    const donorCovariates = (family: number) => ({ retMass: 50 + 17 * family, retE: 100 + 31 * family });
+    const sigma = r1dPrimeSeed(0, 8);
+    // 127 fragments at 10,100 and one that crossed at the first census, or by 10,000 (the least a score can differ)
+    for (const odd of [100, 10_000]) {
+      const frags = Array.from({ length: 128 }, (_, j) => mk((j % 64) % 16, j === 5 ? odd : 10_100, donorCovariates((j % 64) % 16)));
+      const st = r1dPrimeStat(frags, sigma);
+      expect(st.degenerate).toBeNull();
+      expect(st.icc).toEqual(expect.any(Number));
+      expect(st.p!).toBeGreaterThanOrEqual(1 / 1001);
+      expect(st.p!).toBeLessThanOrEqual(1);
+      expect(st.icc!).toBeLessThan(0.5);
+      // it is R1's statistic, run: the same ICC and p as r1Test's on the same scores
+      const y = frags.map((f) => Math.log(f.T));
+      const t = r1Test(y, frags.map((f) => f.retMass), frags.map((f) => f.retE), frags.map((f) => f.family), sigma);
+      expect(st).toMatchObject({ icc: t.icc, p: t.p, demonstrated: t.demonstrated });
+      expect(st.rawFamilyMeanVariance!).toBeGreaterThan(0);
+    }
+    // a set with an ordinary spread is untouched: degenerate null, and the same numbers as before the guard
+    const spread = Array.from({ length: 128 }, (_, j) => mk((j % 64) % 16, 500 + 300 * ((j % 64) % 16) + 100 * (j % 3)));
+    expect(r1dPrimeStat(spread, sigma)).toMatchObject({ degenerate: null, demonstrated: true });
+  });
+
+  it("treats residuals at roundoff level as degenerate too: at most 1e-9 of the scores' total sum of squares, or at most 1e-12", () => {
+    const values = [1, 2, 3, 4, 5, 6]; // not constant: sst = 17.5
+    expect(R1DP_DEGENERATE_RELATIVE).toBe(1e-9);
+    expect(R1DP_DEGENERATE_ABSOLUTE).toBe(1e-12);
+    const resid = (rss: number) => [Math.sqrt(rss), 0, 0, 0, 0, 0];
+    expect(r1dPrimeDegeneracy(values, resid(1e-13))).toBe("negligible residual variance"); // absolute
+    expect(r1dPrimeDegeneracy(values, resid(1e-12))).toBe("negligible residual variance"); // at the line
+    expect(r1dPrimeDegeneracy(values, resid(1e-8))).toBe("negligible residual variance"); // relative: 1e-9 x 17.5 = 1.75e-8
+    expect(r1dPrimeDegeneracy(values, resid(17.5 * 1e-9))).toBe("negligible residual variance"); // at the line
+    expect(r1dPrimeDegeneracy(values, resid(1e-7))).toBeNull();
+    expect(r1dPrimeDegeneracy(values, resid(1e-3))).toBeNull();
+    // the relative line follows the scores' own scale
+    const big = values.map((v) => v * 1000); // sst = 1.75e7: 1e-9 x sst = 1.75e-2
+    expect(r1dPrimeDegeneracy(big, resid(1e-2))).toBe("negligible residual variance");
+    expect(r1dPrimeDegeneracy(big, resid(1e-1))).toBeNull();
+    // the sum of squares is about the scores' mean, not about 0: a large constant offset does not raise the line
+    const offset = values.map((v) => v + 1e6);
+    expect(r1dPrimeDegeneracy(offset, resid(1e-5))).toBeNull();
+    // constant values win over everything, compared exactly (T values are integers: 10,100 is 10,100)
+    expect(r1dPrimeDegeneracy([10_100, 10_100, 10_100], [5, -5, 0])).toBe("constant score");
+    expect(r1dPrimeDegeneracy([10_100, 10_100, 10_099], [5, -5, 0])).toBeNull();
+    // a score that is a transform of the values: constancy is the values', the sum of squares the scores'
+    expect(r1dPrimeDegeneracy([100, 100], [3, -3], [Math.log(100), Math.log(100)])).toBe("constant score");
+    expect(r1dPrimeDegeneracy([100, 200], [3e-5, -3e-5], [Math.log(100), Math.log(200)])).toBeNull();
+  });
+});
+
+describe("R1'' run directories", () => {
+  const meta = (over: Record<string, unknown> = {}) => ({ tool: "scaffold", arm: "scaf", k: 8, period: 10_000, cycles: 34, side: 8, seed: 4_811_001, mutRate: 429_497, init: "clone", ...over });
+
+  it("reads the arm and history of a fresh-history run, 4,811,001 + 100 arm + i with 34 cycles", () => {
+    expect(r1dPrimeRunOf(meta())).toEqual({ key: { arm: "scaf", history: 0 }, why: [] });
+    expect(r1dPrimeRunOf(meta({ arm: "rand", seed: 4_811_106 })).key).toEqual({ arm: "rand", history: 5 });
+    expect(r1dPrimeRunOf(meta({ seed: 4_811_007 })).key).toBeNull(); // i = 5 is the last
+    expect(r1dPrimeRunOf(meta({ arm: "rand", seed: 4_811_001 })).key).toBeNull(); // the scaf seed under a rand label
+  });
+
+  it("refuses the other runs of the sandbox, with the reasons: the main run, controls, other regimes", () => {
+    const why = (over: Record<string, unknown>) => r1dPrimeRunOf(meta(over)).why.join(" | ");
+    expect(why({ seed: 4_810_001, cycles: 100 })).toMatch(/seed 4810001 is not 4811001 \+ 100 arm \+ i.*cycles 100, want 34/);
+    expect(why({ arm: "cont" })).toMatch(/arm "cont", want scaf or rand/);
+    expect(why({ side: 4 })).toMatch(/side 4, want 8/);
+    expect(why({ init: "founders" })).toMatch(/init "founders"/);
+    expect(why({ mutRate: 0 })).toMatch(/mutation off/);
+    expect(why({ k: 5 })).toMatch(/k 5, want 8/);
+    expect(why({ period: 3000 })).toMatch(/period 3000, want 10000/);
+    // the negative-control worlds: mutation-off clone, arm cont
+    expect(why({ arm: "cont", seed: 4_811_201, mutRate: 0, cycles: 1, k: 0 })).toMatch(/arm "cont".*mutation off.*k 0.*cycles 1/);
+  });
+});
+
+describe("R1'' rule", () => {
+  const run = (arm: "scaf" | "rand", history: number, over: Partial<R1dPrimeRun> = {}): R1dPrimeRun => ({ arm, history, dir: `${arm}/i${history}`, status: "finished", ended: false, endedAt: null, ...over });
+  const strong = (...hs: number[]) => Promise.all(hs.map((h) => dpKind(h, "strong")));
+  const weak = (...hs: number[]) => Promise.all(hs.map((h) => dpKind(h, "weak")));
+  const entry = (r: ReturnType<typeof r1dPrimeEvaluate>, h: number) => r.histories.find((x) => x.h === h)!;
+  /** Controls that pass: both positive worlds strong, the negative worlds with no donor effect. */
+  const controlsOk = async () => [...(await strong(12, 13)), ...(await weak(14, 15, 16, 17))];
+
+  it("lists the 18 sets: scaf and rand histories, then the controls by name", async () => {
+    const r = r1dPrimeEvaluate([...(await controlsOk()), ...(await strong(0))]);
+    expect(r.histories.map((x) => x.id)).toEqual(["scaf-i0", "scaf-i1", "scaf-i2", "scaf-i3", "scaf-i4", "scaf-i5", "rand-i0", "rand-i1", "rand-i2", "rand-i3", "rand-i4", "rand-i5"]);
+    expect(r.controls.positive.map((x) => [x.h, x.id, x.world])).toEqual([[12, "pos-s0", 0], [13, "pos-s1", 1]]);
+    expect(r.controls.negative.map((x) => [x.h, x.id, x.world])).toEqual([[14, "neg-j0", 0], [15, "neg-j1", 1], [16, "neg-j2", 2], [17, "neg-j3", 3]]);
+    expect(entry(r, 0)).toMatchObject({ outcome: "analysed", valid: true, why: null, n: 128, families: 16, demonstrated: true, covariates: ["log1p(retMass)", "log1p(retE)"] });
+    expect(entry(r, 0).icc!).toBeGreaterThan(0.9);
+    expect(entry(r, 0).p!).toBeCloseTo(1 / 1001, 12);
+    expect(entry(r, 1)).toMatchObject({ outcome: "unavailable", valid: false, why: "no assay set", n: 0, icc: null, p: null, demonstrated: false });
+  });
+
+  it("the 4-of-6 edge: true with 4 of 6 scaf histories demonstrated, false with 3", async () => {
+    const ok = await controlsOk();
+    const four = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3)), ...(await weak(4, 5))]);
+    expect(four.arms.scaf).toMatchObject({ verdict: true, valid: 6, demonstrated: 4, ended: 0, donors: 0, unavailable: 0 });
+    expect(four.controls).toMatchObject({ positivePassed: true, nullGatePassed: true });
+    expect(four.verdict).toBe(true);
+    expect(entry(four, 4).demonstrated).toBe(false);
+    expect(entry(four, 4).p!).toBeGreaterThan(0.05);
+    const three = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2)), ...(await weak(3, 4, 5))]);
+    expect(three.arms.scaf).toMatchObject({ verdict: false, valid: 6, demonstrated: 3 });
+    expect(three.verdict).toBe(false);
+    const six = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3, 4, 5))]);
+    expect(six.verdict).toBe(true);
+    expect(six.arms.scaf.demonstrated).toBe(6);
+  });
+
+  it("applies the rule to scaf only, and reports rand with the same statistic", async () => {
+    const ok = await controlsOk();
+    const r = r1dPrimeEvaluate([...ok, ...(await weak(0, 1, 2, 3, 4, 5)), ...(await strong(6, 7, 8, 9, 10, 11))]);
+    expect(r.verdict).toBe(false);
+    expect(r.arms.scaf).toMatchObject({ verdict: false, demonstrated: 0 });
+    expect(r.arms.rand).toMatchObject({ verdict: true, valid: 6, demonstrated: 6 });
+    expect(entry(r, 6)).toMatchObject({ arm: "rand", history: 0, demonstrated: true });
+    // the same histories under the other arm's labels change nothing about the verdict
+    const flip = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3, 4, 5)), ...(await weak(6, 7, 8, 9, 10, 11))]);
+    expect(flip.verdict).toBe(true);
+    expect(flip.arms.rand.verdict).toBe(false);
+  });
+
+  it("controls come first: a positive control that fails makes the verdict uninformative, however many scaf histories are demonstrated", async () => {
+    const six = await strong(0, 1, 2, 3, 4, 5);
+    const weakPositive = r1dPrimeEvaluate([...six, ...(await strong(12)), ...(await weak(13)), ...(await weak(14, 15, 16, 17))]);
+    expect(weakPositive.controls.positivePassed).toBe(false);
+    expect(weakPositive.controls.positive.map((c) => c.demonstrated)).toEqual([true, false]);
+    expect(weakPositive.controls.nullGatePassed).toBe(true);
+    expect(weakPositive.verdict).toBe("uninformative");
+    // the arm's own rule still reads true: only the stage's verdict is held back
+    expect(weakPositive.arms.scaf.verdict).toBe(true);
+    // a positive control that is missing has not passed
+    const missing = r1dPrimeEvaluate([...six, ...(await strong(12)), ...(await weak(14, 15, 16, 17))]);
+    expect(missing.controls.positive[1]).toMatchObject({ h: 13, outcome: "unavailable", demonstrated: false });
+    expect(missing.controls.positivePassed).toBe(false);
+    expect(missing.verdict).toBe("uninformative");
+    // no controls at all
+    expect(r1dPrimeEvaluate(six).verdict).toBe("uninformative");
+    // both pass: the rule is read
+    expect(r1dPrimeEvaluate([...six, ...(await controlsOk())]).verdict).toBe(true);
+  });
+
+  it("the null gate: at most 1 of the 4 negative controls significant; 2 of 4 makes the verdict uninformative", async () => {
+    const six = await strong(0, 1, 2, 3, 4, 5);
+    const pos = await strong(12, 13);
+    const one = r1dPrimeEvaluate([...six, ...pos, ...(await strong(14)), ...(await weak(15, 16, 17))]);
+    expect(one.controls.negative.map((c) => c.significant)).toEqual([true, false, false, false]);
+    expect(one.controls).toMatchObject({ nullGatePassed: true, positivePassed: true });
+    expect(one.verdict).toBe(true);
+    const two = r1dPrimeEvaluate([...six, ...pos, ...(await strong(14, 15)), ...(await weak(16, 17))]);
+    expect(two.controls.negative.map((c) => c.significant)).toEqual([true, true, false, false]);
+    expect(two.controls.nullGatePassed).toBe(false);
+    expect(two.controls.positivePassed).toBe(true);
+    expect(two.verdict).toBe("uninformative");
+    const four = r1dPrimeEvaluate([...six, ...pos, ...(await strong(14, 15, 16, 17))]);
+    expect(four.controls.nullGatePassed).toBe(false);
+    expect(four.verdict).toBe("uninformative");
+    // none significant passes too
+    expect(r1dPrimeEvaluate([...six, ...pos, ...(await weak(14, 15, 16, 17))]).controls.nullGatePassed).toBe(true);
+  });
+
+  it("the null gate needs all four negatives tested: a missing one, or one with fewer than 2 donors, leaves it unmet", async () => {
+    const six = await strong(0, 1, 2, 3, 4, 5);
+    const pos = await strong(12, 13);
+    const three = r1dPrimeEvaluate([...six, ...pos, ...(await weak(14, 15, 16))]);
+    expect(three.controls.negative[3]).toMatchObject({ h: 17, outcome: "unavailable", tested: false, significant: false });
+    expect(three.controls.nullGatePassed).toBe(false);
+    expect(three.verdict).toBe("uninformative");
+    const few = r1dPrimeEvaluate([...six, ...pos, ...(await weak(14, 15, 16)), await dpSetOf({ h: 17, insufficient: true })]);
+    expect(few.controls.negative[3]).toMatchObject({ outcome: "donors", tested: false, icc: null });
+    expect(few.controls.nullGatePassed).toBe(false);
+    expect(few.verdict).toBe("uninformative");
+  });
+
+  it("availability: a missing, rejected or failed set is unavailable and not demonstrated; fewer than 4 valid scaf histories is uninformative", async () => {
+    const ok = await controlsOk();
+    // three valid, all demonstrated: uninformative (availability before the rule)
+    const three = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2))]);
+    expect(three.arms.scaf).toMatchObject({ verdict: "uninformative", valid: 3, demonstrated: 3, unavailable: 3 });
+    expect(three.verdict).toBe("uninformative");
+    expect(r1dPrimeEvaluate([...ok]).arms.scaf).toMatchObject({ verdict: "uninformative", valid: 0, unavailable: 6 });
+    // four valid are enough, and four demonstrated is true
+    const four = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3))]);
+    expect(four.arms.scaf).toMatchObject({ verdict: true, valid: 4, demonstrated: 4, unavailable: 2 });
+    expect(four.verdict).toBe(true);
+    // 3 demonstrated of 4 valid is false, not uninformative
+    expect(r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2)), ...(await weak(3))]).arms.scaf).toMatchObject({ verdict: false, valid: 4, demonstrated: 3 });
+    // rand's sets do not make scaf valid
+    expect(r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 6, 7))]).verdict).toBe("uninformative");
+    // a rejected set carries its reasons; a set no one rejected is "no assay set"
+    const rej = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3))], null, [{ h: 4, reasons: ["side 2, want 8"] }, { h: 5, reasons: ["could not read the set: ENOENT"] }, { h: null, reasons: ["assay.json: not json"] }]);
+    expect(entry(rej, 4)).toMatchObject({ outcome: "unavailable", valid: false, why: "set rejected: side 2, want 8" });
+    expect(entry(rej, 5).why).toBe("set rejected: could not read the set: ENOENT");
+    expect(rej.arms.scaf).toMatchObject({ verdict: true, valid: 4, unavailable: 2 });
+    // an analysis that throws makes that set unavailable instead of stopping the stage
+    const [s0, ...rest] = await strong(0, 1, 2, 3, 4);
+    const boom = { ...s0, get fragments(): R1dPrimeFragment[] { throw new Error("boom"); } };
+    const broken = r1dPrimeEvaluate([...ok, boom, ...rest]);
+    expect(entry(broken, 0)).toMatchObject({ outcome: "unavailable", valid: false, why: "analysis failed: boom" });
+    expect(broken.arms.scaf).toMatchObject({ verdict: true, valid: 4, demonstrated: 4 });
+  });
+
+  it("a history that ended before boundary 34 is a valid biological outcome that is not demonstrated", async () => {
+    const ok = await controlsOk();
+    const runs = [run("scaf", 4, { ended: true, endedAt: 20 }), run("scaf", 5, { ended: true, endedAt: 33 })];
+    // 4 demonstrated, 2 ended: 6 valid, 4 of 6 -> true
+    const r = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3))], runs);
+    expect(entry(r, 4)).toMatchObject({ outcome: "ended", valid: true, demonstrated: false, n: 0, icc: null });
+    expect(entry(r, 4).why).toBe("the run ended at cycle 20, before boundary 34: no pre-cycle state to assay");
+    expect(r.arms.scaf).toMatchObject({ verdict: true, valid: 6, demonstrated: 4, ended: 2, unavailable: 0 });
+    expect(r.verdict).toBe(true);
+    // the same histories without the run records are missing sets: unavailable, 4 valid, still true
+    const without = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3))]);
+    expect(without.arms.scaf).toMatchObject({ verdict: true, valid: 4, ended: 0, unavailable: 2 });
+    // 3 demonstrated + 3 ended: 6 valid, 3 of 6 -> false (valid, not demonstrated), not uninformative
+    const three = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2))], [3, 4, 5].map((i) => run("scaf", i, { ended: true, endedAt: 12 })));
+    expect(three.arms.scaf).toMatchObject({ verdict: false, valid: 6, demonstrated: 3, ended: 3 });
+    expect(three.verdict).toBe(false);
+    // the controls come first all the same
+    expect(r1dPrimeEvaluate([...(await strong(0, 1, 2, 3, 12)), ...(await weak(13, 14, 15, 16, 17))], runs).verdict).toBe("uninformative");
+    // a history that ended at boundary 34 itself has a pre-cycle state: its set is read (a missing one is unavailable)
+    const at34 = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3))], [run("scaf", 4, { ended: true, endedAt: 34 })]);
+    expect(entry(at34, 4)).toMatchObject({ outcome: "unavailable", why: "no assay set" });
+    // a run that is not finished explains a missing set, and an unfinished one that did not end is not extinct
+    const pending = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3))], [run("scaf", 4, { status: "unfinished" })]);
+    expect(entry(pending, 4)).toMatchObject({ outcome: "unavailable", why: "no assay set (the run is unfinished)" });
+    // the rule reads scaf's runs only for scaf: rand's extinction is rand's
+    const randEnded = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3))], [run("rand", 0, { ended: true, endedAt: 3 })]);
+    expect(randEnded.arms.rand).toMatchObject({ ended: 1, valid: 1 });
+    expect(randEnded.arms.scaf).toMatchObject({ ended: 0, valid: 4 });
+  });
+
+  it("fewer than 2 eligible donors is a valid biological outcome that is not demonstrated", async () => {
+    const ok = await controlsOk();
+    const ins = await dpSetOf({ h: 3, insufficient: true });
+    const r = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2)), ins]);
+    expect(entry(r, 3)).toMatchObject({ outcome: "donors", valid: true, why: "fewer than 2 eligible donors", demonstrated: false, n: 0 });
+    // 4 valid (one with too few donors): informative, 3 demonstrated -> false
+    expect(r.arms.scaf).toMatchObject({ verdict: false, valid: 4, demonstrated: 3, donors: 1, unavailable: 2 });
+    expect(r.verdict).toBe(false);
+    const r2 = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 4)), ins]);
+    expect(r2.arms.scaf).toMatchObject({ verdict: true, valid: 5, demonstrated: 4, donors: 1 });
+  });
+
+  it("is deterministic", async () => {
+    const sets = [...(await controlsOk()), ...(await strong(0, 1)), ...(await weak(2))];
+    expect(r1dPrimeEvaluate(sets)).toEqual(r1dPrimeEvaluate(sets));
+  });
+
+  it("takes the rule from the arm's own histories", () => {
+    const e = (arm: "scaf" | "rand", valid: boolean, demonstrated: boolean, history = 0): R1dPrimeEntry => ({ h: 0, id: "x", arm, control: null, history, outcome: valid ? "analysed" : "unavailable", valid, why: null, n: 0, families: 0, truncatedRows: 0, covariates: [], icc: null, p: null, demonstrated, degenerate: null });
+    const four = (arm: "scaf" | "rand") => [0, 1, 2, 3].map((i) => e(arm, true, true, i));
+    expect(r1dPrimeVerdict(four("scaf"), "scaf")).toBe(true);
+    expect(r1dPrimeVerdict(four("scaf"), "rand")).toBe("uninformative");
+    expect(r1dPrimeVerdict([...four("scaf"), e("rand", true, true)], "scaf")).toBe(true);
+    expect(r1dPrimeVerdict([...four("scaf").slice(0, 3), e("scaf", true, false)], "scaf")).toBe(false);
+    expect(r1dPrimeVerdict([...four("scaf").slice(0, 3), e("scaf", false, false)], "scaf")).toBe("uninformative");
+  });
+});
+
+describe("R1'' degenerate sets", () => {
+  /** A set of 128 fragments that all reach m* at the same census (T = 10,100: never), with the retained B+P and E depending on the donor. */
+  const constant = (h: number, T: number) => dpSetOf({ h, cross: () => T, donorCovariates: true });
+  const strong = (...hs: number[]) => Promise.all(hs.map((h) => dpKind(h, "strong")));
+  const weak = (...hs: number[]) => Promise.all(hs.map((h) => dpKind(h, "weak")));
+  const controlsOk = async () => [...(await strong(12, 13)), ...(await weak(14, 15, 16, 17))];
+
+  it("a set whose fragments all have T = 10,100 (or all 100) is analysed as ICC 0, p 1, not demonstrated, flagged degenerate", async () => {
+    for (const T of [10_100, 100]) {
+      const set = await constant(0, T);
+      expect(new Set(set.fragments.map((f) => f.T))).toEqual(new Set([T]));
+      expect(new Set(set.fragments.map((f) => f.retMass)).size).toBe(16); // donor-dependent covariates
+      const r = r1dPrimeEvaluate([...(await controlsOk()), set]);
+      const e = r.histories[0];
+      expect(e).toMatchObject({ outcome: "analysed", valid: true, n: 128, families: 16, icc: 0, p: 1, demonstrated: false, degenerate: "constant score" });
+      expect(r.arms.scaf).toMatchObject({ valid: 1, demonstrated: 0 });
+      const d = r.descriptive.sets.find((x) => x.h === 0)!;
+      expect(d).toMatchObject({ n: 128, fractionAt100: T === 100 ? 1 : 0, fractionCensored: T === 10_100 ? 1 : 0, varianceComponent: 0, rawFamilyMeanVariance: 0 });
+      // the trait columns are read through the same guard: this fixture's end trait and trait at tau are constant too
+      expect(d.atEnd).toMatchObject({ icc: 0, p: 1, demonstrated: false, degenerate: "constant score" });
+      expect(d.atTau).toMatchObject({ icc: 0, p: 1, demonstrated: false, degenerate: "constant score" });
+    }
+  });
+
+  it("is not demonstrated in the rule: constant scaf histories do not count towards the 4 of 6, and are valid", async () => {
+    const ok = await controlsOk();
+    const six = await Promise.all([0, 1, 2, 3, 4, 5].map((h) => constant(h, 10_100)));
+    const none = r1dPrimeEvaluate([...ok, ...six]);
+    expect(none.arms.scaf).toMatchObject({ verdict: false, valid: 6, demonstrated: 0 });
+    expect(none.verdict).toBe(false);
+    expect(none.histories.slice(0, 6).every((x) => x.degenerate === "constant score" && !x.demonstrated)).toBe(true);
+    // 4 strong + 2 constant is still 4 of 6; 3 strong + 3 constant is not
+    expect(r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2, 3)), six[4], six[5]]).verdict).toBe(true);
+    const three = r1dPrimeEvaluate([...ok, ...(await strong(0, 1, 2)), six[3], six[4], six[5]]);
+    expect(three.arms.scaf).toMatchObject({ verdict: false, demonstrated: 3 });
+    expect(three.histories.map((x) => x.degenerate)).toEqual([null, null, null, "constant score", "constant score", "constant score", null, null, null, null, null, null]);
+  });
+
+  it("a constant control can show nothing: a positive one is not demonstrated, a negative one is not tested", async () => {
+    const six = await strong(0, 1, 2, 3, 4, 5);
+    const positive = r1dPrimeEvaluate([...six, ...(await strong(12)), await constant(13, 10_100), ...(await weak(14, 15, 16, 17))]);
+    expect(positive.controls.positive[1]).toMatchObject({ outcome: "analysed", icc: 0, p: 1, demonstrated: false, degenerate: "constant score", tested: false });
+    expect(positive.controls.positivePassed).toBe(false);
+    expect(positive.verdict).toBe("uninformative");
+    const negative = r1dPrimeEvaluate([...six, ...(await strong(12, 13)), ...(await weak(14, 15, 16)), await constant(17, 100)]);
+    expect(negative.controls.negative[3]).toMatchObject({ outcome: "analysed", icc: 0, p: 1, significant: false, degenerate: "constant score", tested: false });
+    expect(negative.controls.nullGatePassed).toBe(false);
+    expect(negative.verdict).toBe("uninformative");
+    // the others of its kind stay tested
+    expect(negative.controls.negative.slice(0, 3).map((c) => [c.tested, c.degenerate])).toEqual([[true, null], [true, null], [true, null]]);
+  });
+});
+
+describe("R1'' descriptive output", () => {
+  it("reports each set's fractions at T = 100 and T = 10,100, its end trait and trait at tau, the donor variance components and the extinct fragments", async () => {
+    // fragments 0-31 cross at the first census, 32-63 are dead ponds (never cross), 64-127 cross by donor
+    const cross = (donor: number, u: number, j: number) => (j < 32 ? 100 : j < 64 ? 10_100 : strongCross(donor, u));
+    const set = await dpSetOf({ h: 0, cross, dead: (j) => j >= 32 && j < 64 });
+    const ok = [...(await Promise.all([12, 13].map((h) => dpKind(h, "strong")))), ...(await Promise.all([14, 15, 16, 17].map((h) => dpKind(h, "weak"))))];
+    const r = r1dPrimeEvaluate([...ok, set]);
+    const d = r.descriptive.sets.find((x) => x.h === 0)!;
+    expect(d).toMatchObject({ id: "scaf-i0", n: 128, fractionAt100: 0.25, fractionCensored: 0.25, extinctFragments: 32 });
+    expect(d.varianceComponent).toEqual(expect.any(Number));
+    expect(d.rawFamilyMeanVariance).toEqual(expect.any(Number));
+    expect(d.meanLogT).toBeCloseTo((32 * Math.log(100) + 32 * Math.log(10_100) + set.fragments.slice(64).reduce((a, fr) => a + Math.log(fr.T), 0)) / 128, 9);
+    // the end trait and the trait at tau go through R1's statistic, the R1' way
+    expect(Object.keys(d.atEnd)).toEqual(["icc", "p", "demonstrated", "varianceComponent", "rawFamilyMeanVariance", "meanTrait", "saturation", "degenerate"]);
+    expect(d.atEnd.degenerate).toBeNull();
+    expect(d.atTau!.degenerate).toBeNull();
+    expect(d.atTau).not.toBeNull();
+    expect(d.atEnd.meanTrait).toBeCloseTo(set.fragments.reduce((a, fr) => a + fr.endTrait, 0) / 128, 9);
+    expect(d.atTau!.meanTrait).toBeCloseTo(set.fragments.reduce((a, fr) => a + fr.tauTrait!, 0) / 128, 9);
+    // only analysed sets have a descriptive row: the controls have theirs
+    expect(r.descriptive.sets.map((x) => x.h)).toEqual([0, 12, 13, 14, 15, 16, 17]);
+    expect(r.descriptive.extinction.scaf).toEqual({ histories: 6, ended: 0, donors: 0, fragments: 128, extinctFragments: 32 });
+    expect(r.descriptive.extinction.rand).toEqual({ histories: 6, ended: 0, donors: 0, fragments: 0, extinctFragments: 0 });
+  });
+
+  it("counts the histories that ended before boundary 34 and those with fewer than 2 donors, per arm", async () => {
+    const ins = await dpSetOf({ h: 7, insufficient: true });
+    const runs: R1dPrimeRun[] = [{ arm: "scaf", history: 2, dir: "x", status: "finished", ended: true, endedAt: 9 }, { arm: "rand", history: 3, dir: "y", status: "finished", ended: true, endedAt: 33 }];
+    const r = r1dPrimeEvaluate([ins], runs);
+    expect(r.descriptive.extinction.scaf).toMatchObject({ ended: 1, donors: 0 });
+    expect(r.descriptive.extinction.rand).toMatchObject({ ended: 1, donors: 1 });
+  });
+});
+
+// ---- the CLI end to end for r1dprime ------------------------------------------------------------------
+
+describe("scaffold-report r1dprime", () => {
+  const scratch = () => mkdtempSync(join(tmpdir(), "scaffold-r1dprime-"));
+  const finished = { ok: true, conservationOk: true, cycles: 34, ended: false, wallSeconds: 1 };
+  const runMeta = (arm: "scaf" | "rand", i: number) => ({ tool: "scaffold", arm, k: 8, period: 10_000, cycles: 34, side: 8, seed: 4_811_001 + 100 * (arm === "scaf" ? 0 : 1) + i, mutRate: DP_MUT, init: "clone" });
+  const names = (h: number): string => r1dPrimeIdOf(r1dPrimeLabelsOf(h));
+  /** Writes sets h = `hs` into `root`: strong for h in `strongs`, otherwise no donor effect. */
+  const writeSets = (root: string, hs: number[], strongs: number[]) => {
+    for (const h of hs) writeTraitDir(root, names(h), dpFixture({ h, cross: strongs.includes(h) ? strongCross : weakCross }));
+  };
+  const writeRuns = (root: string, done: (arm: "scaf" | "rand", i: number) => Record<string, unknown> | null = () => finished) => {
+    for (const arm of ["scaf", "rand"] as const) for (let i = 0; i < 6; i++) writeRunDir(root, `${arm}-i${i}`, runMeta(arm, i), [], done(arm, i));
+  };
+  const all = Array.from({ length: 18 }, (_, h) => h);
+
+  it("reads the 18 sets and the run directories: controls, availability and the rule, with the descriptive columns", () => {
+    const root = scratch();
+    const runs = scratch();
+    writeSets(root, all, [0, 1, 2, 3, 12, 13, 6, 7, 8, 9, 10, 11]);
+    writeRuns(runs);
+    // a set that is not an R1'' set is skipped
+    writeTraitDir(root, "tau", tauFixture([5, 12, 20]));
+    const out = report("r1dprime", "--assays", root, "--runs", runs, ...["--regime", "8", "10000"]);
+    expect(out).toMatchObject({ stage: "r1dprime", verdict: true, regime: { k: 8, period: 10_000 }, skipped: 1, rejected: [] });
+    expect(out.controls).toMatchObject({ positivePassed: true, nullGatePassed: true });
+    expect(out.controls.positive.map((c: { id: string; demonstrated: boolean }) => [c.id, c.demonstrated])).toEqual([["pos-s0", true], ["pos-s1", true]]);
+    expect(out.controls.negative.map((c: { id: string; significant: boolean }) => [c.id, c.significant])).toEqual([["neg-j0", false], ["neg-j1", false], ["neg-j2", false], ["neg-j3", false]]);
+    expect(out.arms.scaf).toMatchObject({ verdict: true, valid: 6, demonstrated: 4 });
+    expect(out.arms.rand).toMatchObject({ verdict: true, valid: 6, demonstrated: 6 });
+    expect(out.histories).toHaveLength(12);
+    expect(out.histories[0]).toMatchObject({ id: "scaf-i0", outcome: "analysed", demonstrated: true });
+    expect(out.runs).toMatchObject({ loaded: true, skipped: [] });
+    expect(out.runs.histories).toHaveLength(12);
+    expect(out.descriptive.sets).toHaveLength(18);
+    expect(out.descriptive.sets[0]).toMatchObject({ id: "scaf-i0", n: 128, fractionAt100: 0, fractionCensored: 0 });
+    expect(out.descriptive.note).toMatch(/fractionAt100/);
+    expect(out.sources).toHaveLength(18);
+    expect(out.sources[0]).toMatchObject({ h: 0, protocolSha256R1dp: DP_SHA, provenance: { seed: 4_811_001, step: 340_000, mutRate: DP_MUT } });
+
+    // a positive control that is missing, and then one that fails: uninformative either way
+    execFileSync("rm", ["-r", join(root, "pos-s1")]);
+    const missing = report("r1dprime", "--assays", root, "--runs", runs);
+    expect(missing).toMatchObject({ verdict: "uninformative", controls: { positivePassed: false, nullGatePassed: true } });
+    expect(missing.controls.positive[1]).toMatchObject({ outcome: "unavailable", why: "no assay set" });
+    writeTraitDir(root, "pos-s1", dpFixture({ h: 13, cross: weakCross }));
+    expect(report("r1dprime", "--assays", root, "--runs", runs)).toMatchObject({ verdict: "uninformative", controls: { positivePassed: false } });
+  });
+
+  it("without --runs a missing set is unavailable; with it, a history that ended before boundary 34 is valid and not demonstrated", () => {
+    const root = scratch();
+    const runs = scratch();
+    // scaf histories 0-3 strong; 4 and 5 ended in their runs (no sets); controls pass
+    writeSets(root, [0, 1, 2, 3, 12, 13, 14, 15, 16, 17], [0, 1, 2, 3, 12, 13]);
+    writeRuns(runs, (arm, i) => (arm === "scaf" && i >= 4 ? { ok: true, conservationOk: true, cycles: 20 + i, ended: true, endedAt: 20 + i } : finished));
+    const without = report("r1dprime", "--assays", root);
+    expect(without.runs).toEqual({ loaded: false });
+    expect(without.arms.scaf).toMatchObject({ verdict: true, valid: 4, ended: 0, unavailable: 2 });
+    const withRuns = report("r1dprime", "--assays", root, "--runs", runs);
+    expect(withRuns.arms.scaf).toMatchObject({ verdict: true, valid: 6, demonstrated: 4, ended: 2, unavailable: 0 });
+    expect(withRuns.histories[4]).toMatchObject({ outcome: "ended", valid: true });
+    expect(withRuns.histories[4].why).toMatch(/ended at cycle 24, before boundary 34/);
+    expect(withRuns.descriptive.extinction.scaf).toMatchObject({ ended: 2, donors: 0 });
+    // runs that are not fresh-history runs are listed and never read; two runs of one history throw
+    writeRunDir(runs, "main-i0", { ...runMeta("scaf", 0), seed: 4_810_001, cycles: 100 }, [], finished);
+    const listed = report("r1dprime", "--assays", root, "--runs", runs).runs.skipped;
+    expect(listed).toHaveLength(1);
+    expect(listed[0].dir).toBe(join(runs, "main-i0"));
+    expect(listed[0].why).toMatch(/seed 4810001 is not 4811001/);
+    writeRunDir(runs, "scaf-i0-again", runMeta("scaf", 0), [], finished);
+    expect(() => report("r1dprime", "--assays", root, "--runs", runs)).toThrow(/two runs are history scaf-i0/);
+  });
+
+  it("reports a set with constant scores as degenerate: ICC 0, p 1, not demonstrated", () => {
+    const root = scratch();
+    writeTraitDir(root, "scaf-i0", dpFixture({ h: 0, cross: () => 10_100, donorCovariates: true }));
+    writeTraitDir(root, "pos-s0", dpFixture({ h: 12, cross: strongCross }));
+    const out = report("r1dprime", "--assays", root);
+    expect(out.rejected).toEqual([]);
+    expect(out.histories[0]).toMatchObject({ id: "scaf-i0", outcome: "analysed", icc: 0, p: 1, demonstrated: false, degenerate: "constant score" });
+    expect(out.controls.positive[0]).toMatchObject({ id: "pos-s0", demonstrated: true, degenerate: null });
+    expect(out.descriptive.sets.find((d: { h: number }) => d.h === 0)).toMatchObject({ fractionCensored: 1, varianceComponent: 0 });
+  });
+
+  it("rejects a b34-post checkpoint (the same seed, mutation rate and step as b34-pre) by its name and by its content", () => {
+    const root = scratch();
+    const at = (name: string, source: string, phase: R1dPrimeProvenance["phase"]) => {
+      const f = dpFixture({ h: 0, cross: strongCross, json: { source, provenance: { ...dpProvenance(0), source, phase } } });
+      writeTraitDir(root, name, f);
+    };
+    at("by-name", "runs/scaffold/rep/main/scaf/i0/ckpt/b34-post.blck.gz", dpProvenance(0).phase);
+    const out = report("r1dprime", "--assays", root);
+    expect(out.rejected).toHaveLength(1);
+    expect(out.rejected[0].reasons.join(" ")).toMatch(/does not end in ckpt\/b34-pre\.blck\.gz/);
+    expect(out.histories[0]).toMatchObject({ outcome: "unavailable", valid: false });
+    const content = scratch();
+    writeTraitDir(content, "by-content", dpFixture({ h: 0, cross: strongCross, json: { provenance: { ...dpProvenance(0), phase: { totalC: 0, totalS: 0, carrying: 2014, outsideWindow: 0, postCycle: true } } } }));
+    const post = report("r1dprime", "--assays", content);
+    expect(post.rejected[0].reasons.join(" ")).toMatch(/looks post-cycle \(C 0, S 0; 0 of 2014 cells/);
+    expect(post.histories[0].why).toMatch(/^set rejected: .*looks post-cycle/);
+    // --allow-any-seed waives it (smoke runs)
+    expect(report("r1dprime", "--assays", content, "--allow-any-seed").rejected).toEqual([]);
+  });
+
+  it("is uninformative when 2 of the 4 negative controls are significant, though every scaf history is demonstrated", () => {
+    const root = scratch();
+    writeSets(root, all, [0, 1, 2, 3, 4, 5, 12, 13, 14, 15]);
+    const out = report("r1dprime", "--assays", root);
+    expect(out.controls.negative.map((c: { significant: boolean }) => c.significant)).toEqual([true, true, false, false]);
+    expect(out).toMatchObject({ verdict: "uninformative", controls: { positivePassed: true, nullGatePassed: false } });
+    expect(out.arms.scaf).toMatchObject({ verdict: true, demonstrated: 6 });
+  });
+
+  it("a missing, malformed or incomplete set becomes unavailable with its reason while the others continue", () => {
+    const root = scratch();
+    writeSets(root, all, [0, 1, 2, 3, 4, 5, 12, 13]);
+    expect(report("r1dprime", "--assays", root)).toMatchObject({ verdict: true, rejected: [] });
+    // scaf-i0: no assay.tsv; scaf-i1: a non-numeric trait; scaf-i2: a smoke-sized set; the other three still give the verdict
+    execFileSync("rm", [join(root, "scaf-i0", "assay.tsv")]);
+    const f1 = dpFixture({ h: 1, cross: strongCross });
+    writeTraitDir(root, "scaf-i1", { ...f1, traitsText: f1.traitsText.replace("0\t0\t100\t", "0\t0\t100\tx") });
+    writeTraitDir(root, "scaf-i2", dpFixture({ h: 2, cross: strongCross, json: { side: 2 } }));
+    const three = report("r1dprime", "--assays", root);
+    expect(three.arms.scaf).toMatchObject({ verdict: "uninformative", valid: 3, demonstrated: 3, unavailable: 3 });
+    expect(three.verdict).toBe("uninformative");
+    expect(three.rejected.map((r: { h: number | null }) => r.h).sort()).toEqual([0, 1, 2]);
+    expect(three.histories[0].why).toMatch(/^set rejected: could not read the set/);
+    expect(three.histories[1].why).toMatch(/^set rejected: could not read the set.*not a number/);
+    expect(three.histories[2].why).toMatch(/^set rejected: .*side 2, want 8/);
+    // an unreadable assay.json is reported too, with no h to attribute it to; a missing traits.tsv is an incomplete set
+    writeFileSync(join(root, "scaf-i3", "assay.json"), "{ not json");
+    execFileSync("rm", [join(root, "scaf-i4", "traits.tsv")]);
+    const more = report("r1dprime", "--assays", root);
+    expect(more.rejected.find((r: { h: number | null }) => r.h === null).reasons[0]).toMatch(/^assay\.json:/);
+    expect(more.histories[4].why).toMatch(/no traits\.tsv/);
+    expect(more.arms.scaf.valid).toBe(1);
+  });
+
+  it("--allow-any-seed reads a smoke-sized set (4 ponds x 1 replicate) without crashing, and the verdict is uninformative", () => {
+    const root = scratch();
+    writeTraitDir(root, "smoke", smallOf(dpFixture({ h: 12, cross: strongCross, json: { side: 2, replicates: 1, seeds: [{ physics: 1, fragment: 1 }], donorSeed: 2, provenance: undefined, protocolSha256R1dp: undefined } })));
+    const strict = report("r1dprime", "--assays", root);
+    expect(strict.rejected).toHaveLength(1);
+    expect(strict.verdict).toBe("uninformative");
+    const smoke = report("r1dprime", "--assays", root, "--allow-any-seed");
+    expect(smoke.rejected).toEqual([]);
+    expect(smoke.verdict).toBe("uninformative");
+    expect(smoke.controls.positive[0]).toMatchObject({ h: 12, outcome: "analysed", n: 4 });
+    expect(smoke.controls.positivePassed).toBe(false);
+    expect(smoke.sources[0]).toMatchObject({ h: 12, provenance: null, protocolSha256R1dp: null });
+  });
+
+  it("the other stages skip R1'' directories and read exactly what they read without them", () => {
+    // R1, R2 and R3 (regime k 5 / period 3000), calibrate, tau and R1' (its own regimes) in one root
+    const root = scratch();
+    for (const i of [0, 1, 2]) writeAssayDir(root, `r1-h${i}`, scafR1(i));
+    writeAssayDir(root, "r2-frag", assayDirFixture({ assay: "garden", flags: { arm: "scaf", history: "0", time: "0" }, seed: assaySeed(2, 0, 0, 0, 0), dir: "g" }));
+    for (const [n, dir] of [[1, "cal-anc"], [2, "cal-que"]] as const) {
+      writeAssayDir(root, dir, assayDirFixture({ assay: "competence", flags: { arm: "ancestor", timing: "a", calibration: String(n) as "1" | "2" }, inoculum: n === 1 ? "fragment" : "quenched", seed: 4_802_011, k: 5, period: 3000, dir, success: (i) => (i < 64 ? 1 : 0) }));
+    }
+    writeTraitDir(root, "tau-cal", frozenTau());
+    for (const i of [0, 1, 2, 3]) writeTraitDir(root, `prime-${i}`, primeFixture({ i }));
+    const p1Json = join(root, "p1.json");
+    writeFileSync(p1Json, JSON.stringify({ stage: "p1", verdict: true, choice: { stage: "primary", chosen: { k: 5, period: 3000 }, candidate: { k: 5, period: 3000 }, primaryComplete: true, fallbackComplete: false, verdict: true, passing: [{ k: 5, period: 3000 }] } }));
+    const tau = join(root, "tau.json");
+    const { source, ref, k, period, side, replicates, seeds, labels } = frozenTau().json;
+    writeFileSync(tau, JSON.stringify({ stage: "tau", verdict: null, validated: true, provenance: { source, ref, k, period, side, replicates, seeds, labels }, tau: PRIME_TAU }));
+    const replay = join(root, "replay-check.json");
+    writeFileSync(replay, JSON.stringify({ mechanismCheck: { passed: true }, valid: [0, 1, 2, 3, 4, 5].map((i) => `scaf-i${i}-t0`), failed: [] }));
+    const stages = (): Record<string, any> => ({
+      r1: report("r1", "--assays", root, "--regime", "5", "3000"),
+      r2: report("r2", "--assays", root, "--regime", "5", "3000"),
+      r3: report("r3", "--assays", root, "--regime", "5", "3000"),
+      calibrate: report("calibrate", "--p1", p1Json, "--assays", root),
+      tau: report("tau", "--assays", root, "--regime", "8", "10000"),
+      r1prime: report("r1prime", "--assays", root, "--tau", tau, "--regime", "8", String(PRIME_PERIOD), "--replay", replay),
+    });
+    const before = stages();
+    // the stages do read something here
+    expect(before.r1.histories).toHaveLength(3);
+    expect(before.tau).toMatchObject({ validated: true, tau: 2600 });
+    expect(before.r1prime.arms.scaf).toMatchObject({ valid: 4 });
+    expect(before.calibrate.regimes.length).toBeGreaterThan(0);
+    // R1'' sets of every kind (fresh histories, controls) beside them
+    const added = [0, 1, 6, 12, 14];
+    writeSets(root, added, [0, 12]);
+    const after = stages();
+    for (const stage of Object.keys(before)) expect({ stage, ...after[stage], skipped: 0 }).toEqual({ stage, ...before[stage], skipped: 0 });
+    for (const stage of ["r1", "r2", "r3", "calibrate"]) expect(after[stage].skipped).toBe(before[stage].skipped + added.length);
+    // tau and r1prime skip anything that is not theirs, so the new sets are counted there too
+    for (const stage of ["tau", "r1prime"]) expect(after[stage].skipped).toBe(before[stage].skipped + added.length);
+    // and the new stage skips theirs
+    // and the new stage skips theirs: 3 R1 sets, 1 R2, 2 calibrations, the tau calibration and 4 R1' sets
+    const dp = report("r1dprime", "--assays", root);
+    expect(dp.skipped).toBe(11);
+    expect(dp.histories.filter((x: { outcome: string }) => x.outcome === "analysed")).toHaveLength(3);
   });
 });

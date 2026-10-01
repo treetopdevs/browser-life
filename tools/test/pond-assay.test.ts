@@ -9,15 +9,20 @@ import {
   cellCount,
   encodeGenome,
   founderGenome,
+  stateHash,
   validateState,
   worldW,
   type WorldState,
 } from "@bl/schema";
 import { MOT_ZERO } from "@bl/sim-ref";
-import { assaySeed, cloneWorld, pondConfig, pondMatter, pondTraits, randomKey } from "../lib/ponds.ts";
+import { applyPondCycle, assaySeed, cloneWorld, pondConfig, pondMatter, pondTraits, randomKey } from "../lib/ponds.ts";
 import {
   ASSAY_COLUMNS,
   M_ASSAY,
+  R1DP_REGIME,
+  R1DP_SEED_BASE,
+  R1DP_SEED_MAX,
+  R1DP_SETS,
   R1_PRIME_SEED_MAX,
   TAU_LABELS,
   TAU_SEED_BASE,
@@ -30,13 +35,26 @@ import {
   checkAssaySeeds,
   checkR1PrimeDonorSeed,
   checkR1PrimeSeeds,
+  checkR1dPrimeDonorSeed,
+  checkR1dPrimeSeeds,
   checkTauSeeds,
+  distinctGenomes,
   fragmentDominant,
   parseR1PrimeLabels,
+  parseR1dPrimeLabels,
+  postCycleOf,
   quench,
   r1Donors,
   r1PrimeDonorSeedOf,
   r1PrimeSeed,
+  r1dPrimeCheckpointOf,
+  r1dPrimeDonorSeedOf,
+  r1dPrimeIdOf,
+  r1dPrimeLabelsOf,
+  r1dPrimePhase,
+  r1dPrimeProvenance,
+  r1dPrimeSeed,
+  r1dPrimeSourceProblems,
   standardFragment,
   swapGenome,
   traitsTable,
@@ -521,5 +539,275 @@ describe("R1' seeds (Amendment 2)", () => {
     expect(tau.labels).toEqual({ arm: "ancestor", time: 0, timing: "a", tauCalibration: true });
     // without --traits the keys are exactly the old ones
     expect("traitsRecorded" in JSON.parse(JSON.stringify(assayJson({ ...base, labels: TAU_LABELS })))).toBe(false);
+  });
+});
+
+describe("R1'' seeds, labels and sources (docs/scaffold-heredity-replication-v1.md)", () => {
+  it("is 4,812,001 + 250 h + s, ending at 4,816,260", () => {
+    expect(r1dPrimeSeed(0, 0)).toBe(4_812_001);
+    expect(r1dPrimeSeed(1, 0)).toBe(4_812_251);
+    expect(r1dPrimeSeed(0, 1)).toBe(4_812_002);
+    expect(r1dPrimeSeed(0, 8)).toBe(4_812_009);
+    expect(r1dPrimeSeed(0, 9)).toBe(4_812_010);
+    expect(r1dPrimeSeed(12, 0)).toBe(4_812_001 + 3000);
+    expect(r1dPrimeSeed(17, 9)).toBe(4_816_260);
+    expect(R1DP_SEED_BASE).toBe(4_812_001);
+    expect(R1DP_SEED_MAX).toBe(4_816_260);
+    expect(R1DP_SETS).toBe(18);
+  });
+
+  it("range-checks every field", () => {
+    for (const [h, s] of [[18, 0], [-1, 0], [0, 10], [0, -1], [0.5, 0], [0, 1.5], [0, NaN], [NaN, 0]] as const) expect(() => r1dPrimeSeed(h, s)).toThrow(/r1dPrimeSeed/);
+  });
+
+  it("cannot collide with assaySeed, R1', the tau calibration, P1, P2, the calibration, the main run or the worlds it assays", () => {
+    const block = new Set<number>();
+    for (let h = 0; h < R1DP_SETS; h++) for (let s = 0; s <= 9; s++) block.add(r1dPrimeSeed(h, s));
+    expect(block.size).toBe(18 * 10);
+    expect(Math.min(...block)).toBe(4_812_001);
+    expect(Math.max(...block)).toBe(4_816_260);
+    // inside the reserved range
+    expect(Math.min(...block)).toBeGreaterThanOrEqual(4_800_001);
+    expect(Math.max(...block)).toBeLessThanOrEqual(4_849_999);
+    const others = new Set<number>();
+    let minAssay = Infinity;
+    for (let r = 0; r <= 4; r++) for (let h = 0; h <= 18; h++) for (let t = 0; t <= 1; t++) for (let v = 0; v <= 4; v++) for (let s = 0; s <= 9; s++) {
+      const x = assaySeed(r, h, t, v, s);
+      others.add(x);
+      minAssay = Math.min(minAssay, x);
+    }
+    expect(minAssay).toBe(4_820_001);
+    expect(Math.max(...block)).toBeLessThan(minAssay);
+    for (let h = 0; h <= 11; h++) for (let t = 0; t <= 2; t++) for (let s = 0; s <= 9; s++) others.add(r1PrimeSeed(h, t, s));
+    expect(Math.max(...block)).toBeLessThan(R1_PRIME_SEED_MAX);
+    for (let s = 0; s <= 9; s++) others.add(TAU_SEED_BASE + s);
+    for (let g = 0; g <= 14; g++) for (let s = 0; s <= 9; s++) others.add(4_800_001 + 100 * g + s); // P1
+    for (let x = 4_802_001; x <= 4_802_022; x++) others.add(x); // calibration
+    for (const x of [4_805_001, 4_805_002]) others.add(x); // P2 ranking worlds
+    for (let arm = 0; arm <= 1; arm++) for (let s = 0; s <= 1; s++) others.add(4_805_101 + 10 * arm + s); // P2 selection runs
+    for (let arm = 0; arm <= 2; arm++) for (let i = 0; i <= 5; i++) others.add(4_810_001 + 100 * arm + i); // main run
+    for (let arm = 0; arm <= 1; arm++) for (let i = 0; i <= 5; i++) others.add(4_811_001 + 100 * arm + i); // fresh histories
+    for (let j = 0; j <= 3; j++) others.add(4_811_201 + j); // negative-control worlds
+    for (const x of block) expect(others.has(x)).toBe(false);
+  });
+
+  it("labels the 18 sets by h: scaf 0-5, rand 6-11, positive controls 12-13, negative controls 14-17", () => {
+    expect(r1dPrimeLabelsOf(0)).toEqual({ arm: "scaf", history: 0, r1dprime: true, h: 0 });
+    expect(r1dPrimeLabelsOf(5)).toEqual({ arm: "scaf", history: 5, r1dprime: true, h: 5 });
+    expect(r1dPrimeLabelsOf(6)).toEqual({ arm: "rand", history: 0, r1dprime: true, h: 6 });
+    expect(r1dPrimeLabelsOf(11)).toEqual({ arm: "rand", history: 5, r1dprime: true, h: 11 });
+    expect(r1dPrimeLabelsOf(12)).toEqual({ arm: "control", history: 0, r1dprime: true, h: 12, control: "positive" });
+    expect(r1dPrimeLabelsOf(13)).toEqual({ arm: "control", history: 1, r1dprime: true, h: 13, control: "positive" });
+    expect(r1dPrimeLabelsOf(14)).toEqual({ arm: "control", history: 0, r1dprime: true, h: 14, control: "negative" });
+    expect(r1dPrimeLabelsOf(17)).toEqual({ arm: "control", history: 3, r1dprime: true, h: 17, control: "negative" });
+    expect(Array.from({ length: 18 }, (_, h) => r1dPrimeIdOf(r1dPrimeLabelsOf(h)))).toEqual([
+      "scaf-i0", "scaf-i1", "scaf-i2", "scaf-i3", "scaf-i4", "scaf-i5", "rand-i0", "rand-i1", "rand-i2", "rand-i3", "rand-i4", "rand-i5", "pos-s0", "pos-s1", "neg-j0", "neg-j1", "neg-j2", "neg-j3",
+    ]);
+    for (const bad of [-1, 18, 1.5, NaN]) expect(() => r1dPrimeLabelsOf(bad)).toThrow(/R1'' h/);
+  });
+
+  it("parses --h with the --arm, --history and --control it implies, and refuses what disagrees", () => {
+    expect(parseR1dPrimeLabels({ h: "3", arm: "scaf", history: "3" })).toEqual(r1dPrimeLabelsOf(3));
+    expect(parseR1dPrimeLabels({ h: "8", arm: "rand", history: "2" })).toEqual(r1dPrimeLabelsOf(8));
+    expect(parseR1dPrimeLabels({ h: "13", arm: "control", control: "positive" })).toEqual(r1dPrimeLabelsOf(13));
+    expect(parseR1dPrimeLabels({ h: "13", arm: "control", control: "positive", history: "1" })).toEqual(r1dPrimeLabelsOf(13));
+    expect(parseR1dPrimeLabels({ h: "17", arm: "control", control: "negative", history: "3" })).toEqual(r1dPrimeLabelsOf(17));
+    // h is required and in range
+    for (const h of [undefined, "", "18", "-1", "1.5", "x"]) expect(() => parseR1dPrimeLabels({ h, arm: "scaf", history: "0" })).toThrow(/--h/);
+    // a fresh history needs the arm and history that h names
+    expect(() => parseR1dPrimeLabels({ h: "3", arm: "rand", history: "3" })).toThrow(/--arm must be scaf for --h 3/);
+    expect(() => parseR1dPrimeLabels({ h: "3", arm: "control", history: "3" })).toThrow(/--arm must be scaf/);
+    expect(() => parseR1dPrimeLabels({ h: "3", arm: "scaf", history: "4" })).toThrow(/--history must be 3 for --h 3/);
+    expect(() => parseR1dPrimeLabels({ h: "3", arm: "scaf" })).toThrow(/--history/);
+    expect(() => parseR1dPrimeLabels({ h: "8", arm: "rand", history: "8" })).toThrow(/--history must be 2/);
+    expect(() => parseR1dPrimeLabels({ h: "3", arm: "scaf", history: "3", control: "positive" })).toThrow(/--control applies to --arm control/);
+    // a control needs --arm control and the matching --control; --history only if it agrees
+    expect(() => parseR1dPrimeLabels({ h: "12", arm: "scaf", control: "positive" })).toThrow(/--arm must be control for --h 12/);
+    expect(() => parseR1dPrimeLabels({ h: "12", arm: "control" })).toThrow(/--control must be positive for --h 12/);
+    expect(() => parseR1dPrimeLabels({ h: "12", arm: "control", control: "negative" })).toThrow(/--control must be positive/);
+    expect(() => parseR1dPrimeLabels({ h: "14", arm: "control", control: "positive" })).toThrow(/--control must be negative for --h 14/);
+    expect(() => parseR1dPrimeLabels({ h: "14", arm: "control", control: "negative", history: "1" })).toThrow(/--history must be 0 for --h 14/);
+    // R1's flags do not apply
+    expect(() => parseR1dPrimeLabels({ h: "0", arm: "scaf", history: "0", time: "0" })).toThrow(/--time/);
+    expect(() => parseR1dPrimeLabels({ h: "0", arm: "scaf", history: "0", timing: "a" })).toThrow(/--timing/);
+    expect(() => parseR1dPrimeLabels({ h: "0", arm: "scaf", history: "0", calibration: "1" })).toThrow(/--calibration/);
+  });
+
+  it("checks each replicate's seeds and the donor seed against the labels", () => {
+    const l = r1dPrimeLabelsOf(8);
+    const at = (h: number, s: number) => ({ physics: r1dPrimeSeed(h, s), fragment: r1dPrimeSeed(h, s) });
+    expect(() => checkR1dPrimeSeeds(l, at(8, 0), 0)).not.toThrow();
+    expect(() => checkR1dPrimeSeeds(l, at(8, 1), 1)).not.toThrow();
+    expect(() => checkR1dPrimeSeeds(l, at(8, 0), 1)).toThrow(/want r1dPrimeSeed\(h, 1\) = 4814002/);
+    expect(() => checkR1dPrimeSeeds(l, { physics: r1dPrimeSeed(8, 0), fragment: r1dPrimeSeed(8, 1) }, 0)).toThrow(/fragment seed/);
+    expect(() => checkR1dPrimeSeeds(l, at(9, 0), 0)).toThrow(/does not match the R1'' labels \(h 8\)/); // another history
+    expect(() => checkR1dPrimeSeeds(l, { physics: assaySeed(1, 8, 0, 0, 0), fragment: assaySeed(1, 8, 0, 0, 0) }, 0)).toThrow(/does not match/); // R1's seed of that history
+    expect(() => checkR1dPrimeSeeds(l, { physics: r1PrimeSeed(8, 0, 0), fragment: r1PrimeSeed(8, 0, 0) }, 0)).toThrow(/does not match/); // R1''s
+    expect(r1dPrimeDonorSeedOf(l)).toBe(r1dPrimeSeed(8, 9));
+    expect(() => checkR1dPrimeDonorSeed(l, r1dPrimeSeed(8, 9))).not.toThrow();
+    expect(() => checkR1dPrimeDonorSeed(l, r1dPrimeSeed(8, 8))).toThrow(/donor seed/); // the permutation stream
+    expect(() => checkR1dPrimeDonorSeed(l, assaySeed(1, 8, 0, 0, 9))).toThrow(/donor seed/); // R1's donor seed
+  });
+
+  it("holds a source to its labels: fresh histories, positive and negative controls", () => {
+    const mut = pondConfig(8, 0).mutRate;
+    expect(mut).toBe(429_497);
+    // a grown pre-cycle state: C and S held, bound mass far outside the landing windows
+    const pre = { totalC: 85_566, totalS: 204_772, carrying: 94_592, outsideWindow: 92_766, postCycle: false };
+    const fresh = (arm: number, i: number) => ({ source: `runs/scaffold/rep/main/${arm ? "rand" : "scaf"}/i${i}/ckpt/b34-pre.blck.gz`, seed: 4_811_001 + 100 * arm + i, mutRate: mut, step: 340_000, tilesX: 8, tilesY: 8, distinctGenomes: 1019, phase: pre });
+    for (const [h, arm, i] of [[0, 0, 0], [5, 0, 5], [6, 1, 0], [11, 1, 5]] as const) expect(r1dPrimeSourceProblems({ h }, fresh(arm, i))).toEqual([]);
+    expect(r1dPrimeSourceProblems({ h: 0 }, fresh(0, 1)).join(" ")).toMatch(/source seed 4811002, want 4811001/);
+    expect(r1dPrimeSourceProblems({ h: 6 }, fresh(0, 0)).join(" ")).toMatch(/source seed 4811001, want 4811101/); // the scaf history's checkpoint under a rand label
+    expect(r1dPrimeSourceProblems({ h: 0 }, { ...fresh(0, 0), step: 1_000_000 }).join(" ")).toMatch(/source step 1000000, want 340000/);
+    expect(r1dPrimeSourceProblems({ h: 0 }, { ...fresh(0, 0), step: 330_000 }).join(" ")).toMatch(/step 330000/);
+    expect(r1dPrimeSourceProblems({ h: 0 }, { ...fresh(0, 0), mutRate: 0 }).join(" ")).toMatch(/mutRate 0, want 429497/);
+    expect(r1dPrimeSourceProblems({ h: 0 }, { ...fresh(0, 0), tilesX: 4, tilesY: 4 }).join(" ")).toMatch(/4 x 4 ponds, want 8 x 8/);
+
+    const positive = (s: number) => ({ source: `runs/scaffold/p2/rank/s${s}/ckpt/b1-pre.blck.gz`, seed: 4_805_001 + s, mutRate: 0, step: 10_000, tilesX: 8, tilesY: 8, distinctGenomes: 12, phase: pre });
+    expect(r1dPrimeSourceProblems({ h: 12 }, positive(0))).toEqual([]);
+    expect(r1dPrimeSourceProblems({ h: 13 }, positive(1))).toEqual([]);
+    expect(r1dPrimeSourceProblems({ h: 13 }, positive(0)).join(" ")).toMatch(/seed 4805001, want 4805002/);
+    expect(r1dPrimeSourceProblems({ h: 12 }, { ...positive(0), mutRate: 429_497 }).join(" ")).toMatch(/mutRate 429497, want 0/);
+    expect(r1dPrimeSourceProblems({ h: 12 }, { ...positive(0), distinctGenomes: 1 }).join(" ")).toMatch(/1 distinct genomes, want more than 1 \(a founders world\)/);
+    expect(r1dPrimeSourceProblems({ h: 12 }, { ...positive(0), step: 340_000 }).join(" ")).toMatch(/step 340000, want 10000/);
+
+    const negative = (j: number) => ({ source: `runs/scaffold/rep/neg/j${j}/ckpt/b1-pre.blck.gz`, seed: 4_811_201 + j, mutRate: 0, step: 10_000, tilesX: 8, tilesY: 8, distinctGenomes: 1, phase: pre });
+    for (let j = 0; j <= 3; j++) expect(r1dPrimeSourceProblems({ h: 14 + j }, negative(j))).toEqual([]);
+    expect(r1dPrimeSourceProblems({ h: 15 }, negative(0)).join(" ")).toMatch(/seed 4811201, want 4811202/);
+    expect(r1dPrimeSourceProblems({ h: 14 }, { ...negative(0), distinctGenomes: 12 }).join(" ")).toMatch(/12 distinct genomes, want 1 \(a clone world\)/);
+    expect(r1dPrimeSourceProblems({ h: 14 }, { ...negative(0), mutRate: 429_497 }).join(" ")).toMatch(/mutRate 429497, want 0/);
+    // a positive control's world is not a negative control's, and the reverse
+    expect(r1dPrimeSourceProblems({ h: 14 }, positive(0)).length).toBeGreaterThan(0);
+    expect(r1dPrimeSourceProblems({ h: 12 }, negative(0)).length).toBeGreaterThan(0);
+    // every problem is listed, not only the first
+    expect(r1dPrimeSourceProblems({ h: 0 }, { source: "x.blck.gz", seed: 1, mutRate: 0, step: 0, tilesX: 2, tilesY: 2, distinctGenomes: 1, phase: pre })).toHaveLength(5);
+  });
+
+  it("holds a source to the pre-cycle checkpoint: its path names it, and its content is not a post-cycle state's", () => {
+    const pre = { totalC: 85_566, totalS: 204_772, carrying: 94_592, outsideWindow: 92_766, postCycle: false };
+    const post = { totalC: 0, totalS: 0, carrying: 2014, outsideWindow: 0, postCycle: true };
+    const fresh = (source: string, phase = pre) => ({ source, seed: 4_811_001, mutRate: 429_497, step: 340_000, tilesX: 8, tilesY: 8, distinctGenomes: 1019, phase });
+    const dir = "runs/scaffold/rep/main/scaf/i0/ckpt";
+    expect(r1dPrimeSourceProblems({ h: 0 }, fresh(`${dir}/b34-pre.blck.gz`))).toEqual([]);
+    expect(r1dPrimeSourceProblems({ h: 0 }, fresh("ckpt/b34-pre.blck.gz"))).toEqual([]); // from inside the run directory
+    // b34-post has the same seed, mutation rate and step: only its name and its content tell it from b34-pre
+    expect(r1dPrimeSourceProblems({ h: 0 }, fresh(`${dir}/b34-post.blck.gz`)).join(" ")).toMatch(/does not end in ckpt\/b34-pre\.blck\.gz/);
+    expect(r1dPrimeSourceProblems({ h: 0 }, fresh(`${dir}/b34-post.blck.gz`, post)).length).toBe(2);
+    expect(r1dPrimeSourceProblems({ h: 0 }, fresh(`${dir}/b34-pre.blck.gz`, post)).join(" ")).toMatch(/looks post-cycle \(C 0, S 0; 0 of 2014 cells.*want the pre-cycle state/);
+    // other names: another boundary's pre-cycle checkpoint, the initial state, a path that only looks like it, a non-ckpt directory
+    for (const bad of [`${dir}/b100-pre.blck.gz`, `${dir}/b33-pre.blck.gz`, `${dir}/init.blck.gz`, `${dir}/b34-pre.blck`, `${dir}/xb34-pre.blck.gz`, "runs/main/b34-pre.blck.gz", `${dir}/b34-pre.blck.gz.tmp`, `${dir}/b34-pre.blck.gz/`]) {
+      expect(r1dPrimeSourceProblems({ h: 0 }, fresh(bad)).join(" ")).toMatch(/does not end in ckpt\/b34-pre\.blck\.gz/);
+    }
+    // controls are b1-pre, and a fresh history's name is not a control's
+    const control = (source: string, phase = pre) => ({ source, seed: 4_805_001, mutRate: 0, step: 10_000, tilesX: 8, tilesY: 8, distinctGenomes: 12, phase });
+    expect(r1dPrimeSourceProblems({ h: 12 }, control("runs/scaffold/p2/rank/s0/ckpt/b1-pre.blck.gz"))).toEqual([]);
+    expect(r1dPrimeSourceProblems({ h: 12 }, control("runs/scaffold/p2/rank/s0/ckpt/b1-post.blck.gz")).join(" ")).toMatch(/does not end in ckpt\/b1-pre\.blck\.gz/);
+    expect(r1dPrimeSourceProblems({ h: 12 }, control("runs/scaffold/p2/rank/s0/ckpt/init.blck.gz")).join(" ")).toMatch(/b1-pre/);
+    expect(r1dPrimeSourceProblems({ h: 12 }, control("runs/scaffold/p2/rank/s0/ckpt/b34-pre.blck.gz")).join(" ")).toMatch(/b1-pre/);
+    expect(r1dPrimeSourceProblems({ h: 12 }, control("runs/scaffold/p2/rank/s0/ckpt/b1-pre.blck.gz", post)).join(" ")).toMatch(/looks post-cycle/);
+    expect(r1dPrimeCheckpointOf(0)).toBe("b34-pre");
+    expect(r1dPrimeCheckpointOf(11)).toBe("b34-pre");
+    expect(r1dPrimeCheckpointOf(12)).toBe("b1-pre");
+    expect(r1dPrimeCheckpointOf(17)).toBe("b1-pre");
+    // the recorded flag must be the one its own measures give
+    expect(r1dPrimeSourceProblems({ h: 0 }, fresh(`${dir}/b34-pre.blck.gz`, { ...post, postCycle: false })).join(" ")).toMatch(/phase flag postCycle false disagrees with its measures \(true\)/);
+    expect(r1dPrimeSourceProblems({ h: 0 }, fresh(`${dir}/b34-pre.blck.gz`, { ...pre, postCycle: true })).join(" ")).toMatch(/phase flag postCycle true disagrees with its measures \(false\)/);
+  });
+
+  it("tells a post-cycle state from a pre-cycle one by its content: C and S, and where its bound mass sits", () => {
+    // postCycleOf: C = S = 0 everywhere, or bound mass and lineages only inside the landing windows
+    expect(postCycleOf({ totalC: 0, totalS: 0, carrying: 0, outsideWindow: 0 })).toBe(true);
+    expect(postCycleOf({ totalC: 0, totalS: 0, carrying: 100, outsideWindow: 50 })).toBe(true);
+    expect(postCycleOf({ totalC: 5, totalS: 0, carrying: 100, outsideWindow: 0 })).toBe(true);
+    expect(postCycleOf({ totalC: 5, totalS: 0, carrying: 100, outsideWindow: 1 })).toBe(false);
+    expect(postCycleOf({ totalC: 0, totalS: 5, carrying: 100, outsideWindow: 1 })).toBe(false);
+    expect(postCycleOf({ totalC: 5, totalS: 5, carrying: 0, outsideWindow: 0 })).toBe(false); // no bound mass: nothing confined (an extinct pre-cycle state)
+
+    // a world with a blob of bound mass inside every pond's 8 x 8 window (28..35): C and S are 0, so it looks post-cycle
+    const confined = blobSource(2);
+    expect(r1dPrimePhase(confined)).toEqual({ totalC: 0, totalS: 0, carrying: 100, outsideWindow: 0, postCycle: true });
+    const n = cellCount(confined.cfg);
+    const grown = (s: WorldState): WorldState => {
+      const g = { ...s, cells: s.cells.slice(), genome: s.genome.slice() };
+      g.cells[CH.C * n + cellIdx(g, 1, 5, 5)] = 40;
+      g.cells[CH.S * n + cellIdx(g, 2, 9, 9)] = 7;
+      return g;
+    };
+    // C and S held, but the mass still confined: the window clause alone says post-cycle
+    expect(r1dPrimePhase(grown(confined))).toMatchObject({ totalC: 40, totalS: 7, carrying: 100, outsideWindow: 0, postCycle: true });
+    // bound mass one cell outside the window, with C and S held: a pre-cycle state; each side of each edge
+    const edge = (x: number, y: number): WorldState => {
+      const g = grown(confined);
+      g.cells[CH.B * n + cellIdx(g, 3, x, y)] = 60;
+      return g;
+    };
+    for (const [x, y] of [[27, 30], [36, 30], [30, 27], [30, 36], [0, 0], [63, 63]] as const) expect(r1dPrimePhase(edge(x, y))).toMatchObject({ outsideWindow: 1, postCycle: false });
+    for (const [x, y] of [[28, 28], [35, 35], [28, 35], [35, 28]] as const) expect(r1dPrimePhase(edge(x, y))).toMatchObject({ outsideWindow: 0, postCycle: true });
+    // a lineage id with no bound mass counts as carrying; nutrient alone does not
+    const lineage = grown(confined);
+    lineage.genome[G.LIN_LO * n + cellIdx(lineage, 0, 3, 3)] = 9;
+    expect(r1dPrimePhase(lineage)).toMatchObject({ carrying: 101, outsideWindow: 1, postCycle: false });
+    expect(r1dPrimePhase(grown(emptyWorld(2)))).toMatchObject({ carrying: 0, outsideWindow: 0, postCycle: false });
+    // C = S = 0 with mass far outside the windows (a fresh state at step 0) is not a pre-cycle state either
+    const spread = emptyWorld(2);
+    spread.cells[CH.B * n + cellIdx(spread, 0, 3, 3)] = 60;
+    expect(r1dPrimePhase(spread)).toMatchObject({ totalC: 0, totalS: 0, outsideWindow: 1, postCycle: true });
+  });
+
+  it("sees the pond cycle's own output as post-cycle and the state it was made from as pre-cycle", () => {
+    // a grown pre-cycle state: blobs, bound mass all over the ponds, and C and S held
+    const pre = blobSource(2);
+    const n = cellCount(pre.cfg);
+    for (let p = 0; p < 4; p++) for (let y = 4; y < 20; y++) for (let x = 4; x < 20; x++) plant(pre, p, x, y, 50, p + 1, 20, p % 2 ? genomeB : genomeA);
+    pre.cells[CH.C * n + cellIdx(pre, 0, 50, 50)] = 33;
+    pre.cells[CH.S * n + cellIdx(pre, 3, 40, 40)] = 21;
+    expect(r1dPrimePhase(pre)).toMatchObject({ totalC: 33, totalS: 21, postCycle: false });
+    expect(r1dPrimePhase(pre).outsideWindow).toBeGreaterThan(1000);
+    for (const arm of ["scaf", "rand"] as const) {
+      const res = applyPondCycle(pre, 1, arm, 8, pondMatter(pre));
+      expect(res.state.step).toBe(pre.step);
+      const post = r1dPrimePhase(res.state);
+      expect(post).toMatchObject({ totalC: 0, totalS: 0, outsideWindow: 0, postCycle: true });
+      expect(post.carrying).toBeGreaterThan(0);
+      // the post-cycle state has the same seed, mutation rate and step as the one it was made from: the content is what differs
+      expect(res.state.cfg.seed).toBe(pre.cfg.seed);
+      expect(res.state.cfg.mutRate).toBe(pre.cfg.mutRate);
+    }
+  });
+
+  it("reads a source's provenance from its checkpoint state: state hash, config seed and mutRate, step, ponds and distinct genomes", () => {
+    const two = blobSource(2); // ponds alternate genome A and genome B
+    expect(distinctGenomes(two)).toBe(2);
+    expect(distinctGenomes(blobSource(2, [0, 2]))).toBe(1); // genome A only, in two lineages
+    expect(distinctGenomes(emptyWorld(2))).toBe(0);
+    expect(r1dPrimeProvenance("runs/x/ckpt/b1-pre.blck.gz", two)).toEqual({
+      source: "runs/x/ckpt/b1-pre.blck.gz",
+      stateHash: stateHash(two),
+      seed: 7,
+      mutRate: 0,
+      step: 0,
+      tilesX: 2,
+      tilesY: 2,
+      distinctGenomes: 2,
+      phase: { totalC: 0, totalS: 0, carrying: 100, outsideWindow: 0, postCycle: true },
+    });
+    // the hash follows the state
+    const other = blobSource(2, [0]);
+    expect(r1dPrimeProvenance("p", other).stateHash).not.toBe(r1dPrimeProvenance("p", two).stateHash);
+  });
+
+  it("writes the R1'' labels, provenance and protocol hash into assay.json, and leaves other keys alone", () => {
+    const base = { protocolSha256: "0".repeat(64), assay: "transmission", source: "ckpt", tag: "t", k: 8, period: 10_000, ref: null, side: 8, replicates: 2, censusEvery: 100, inoculum: "fragment", seeds: [], extra: {}, summary: {}, wallSeconds: 1 };
+    const provenance = r1dPrimeProvenance("ckpt", blobSource(2));
+    const dp = JSON.parse(JSON.stringify(assayJson({ ...base, labels: r1dPrimeLabelsOf(13), extra: { traitsRecorded: true, provenance, protocolSha256R1dp: "1".repeat(64) } })));
+    expect(dp.labels).toEqual({ arm: "control", history: 1, r1dprime: true, h: 13, control: "positive" });
+    expect(dp.provenance).toEqual(provenance);
+    expect(dp.protocolSha256R1dp).toBe("1".repeat(64));
+    expect(dp.protocolSha256).toBe("0".repeat(64));
+    expect(dp.traitsRecorded).toBe(true);
+    const fresh = JSON.parse(JSON.stringify(assayJson({ ...base, labels: r1dPrimeLabelsOf(2) })));
+    expect(fresh.labels).toEqual({ arm: "scaf", history: 2, r1dprime: true, h: 2 });
+    expect("provenance" in fresh).toBe(false);
+    expect(R1DP_REGIME).toEqual({ k: 8, period: 10_000, side: 8, replicates: 2, censusEvery: 100 });
   });
 });

@@ -20,6 +20,8 @@
 //     --arm scaf|rand --history I --time 0|1|2 [--donor-seed D] [--ref REF] [--side 8] [--replicates 2] [--tag NAME]
 //   deno run -A tools/scaffold-assays.ts competence --tau-calibration --traits --source CKPT --k K --period P --seed S --out DIR   (tau)
 //     --ref REF [--side 8] [--replicates 2] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts transmission --r1dprime --traits --h H --source CKPT --k K --period P --seed S --out DIR   (R1'')
+//     --arm scaf|rand|control [--history I] [--control positive|negative] [--donor-seed D] [--side 8] [--replicates 2] [--tag NAME]
 //
 // --replicates is at most 8: s = 8 and s = 9 are reserved for R1's permutation stream and donor selection, so
 // they never seed a fragment or a physics stream. --traits (competence, transmission, garden) also writes
@@ -42,6 +44,19 @@
 // --tau-calibration` is the tau calibration: the ancestor source, seeds 4,849,001 + s (s = 0-1), --ref and --traits
 // required, labelled `tauCalibration: true`. Both validate their seeds unless --allow-any-seed.
 //
+// docs/scaffold-heredity-replication-v1.md (R1''): `transmission --r1dprime --traits --h H` labels one of 18 sets by h and takes its
+// seeds from r1dPrimeSeed(h, s) = 4,812,001 + 250 h + s (replicates s = 0-1, permutations s = 8, donors s = 9). h = 0-11 is a fresh
+// history's pre-cycle state at boundary 34 (h = 6 arm + i; --arm scaf|rand --history i, the source being b34-pre of the history
+// seeded 4,811,001 + 100 arm + i at step 340,000 with the default mutation rate); h = 12-13 the positive-control world s0, s1
+// (--arm control --control positive; a P2 ranking world at b1-pre: founders, mutation off, seed 4,805,001 + s, step 10,000); h = 14-17
+// the negative-control world j = 0-3 (--control negative; a mutation-off clone world at b1-pre, seed 4,811,201 + j, step 10,000). The
+// labels are `r1dprime: true`, `h`, `arm`, `history` and (controls) `control`. It validates the source (a path inside a run directory
+// ending ckpt/b34-pre.blck.gz, or ckpt/b1-pre.blck.gz for a control; its config seed, mutRate and step, its genomes, and its phase: a
+// post-cycle state, which has the same seed, mutRate and step as the pre-cycle one, has C = S = 0 and its mass only in the landing
+// windows) and the regime (--k 8 --period 10000 --side 8 --replicates 2 --census 100), and records the source's provenance (path,
+// stateHash, world seed, mutRate, step, phase measures) under `provenance` and the SHA-256 of the protocol document as
+// `protocolSha256R1dp`; all of it unless --allow-any-seed (smoke tests only; production runs never use it).
+//
 // --arm/--history and --time (0 = time 0) or --timing (a = time 0) label the history the source belongs to;
 // they are written under `labels` in assay.json, which scaffold-report reads. Unless --allow-any-seed, the
 // seeds are decoded (assaySeed's inverse) and must carry the assay's r, the labelled h (6 arm + i, 18 for the
@@ -55,6 +70,7 @@ import { GpuSim, requestDevice } from "@bl/sim-gpu";
 import { DEFAULT_EVAL, evaluateBatch, quality } from "@bl/search";
 import {
   ASSAY_COLUMNS,
+  R1DP_REGIME,
   TAU_LABELS,
   assayJson,
   assayLine,
@@ -65,11 +81,17 @@ import {
   checkDonorSeed,
   checkR1PrimeDonorSeed,
   checkR1PrimeSeeds,
+  checkR1dPrimeDonorSeed,
+  checkR1dPrimeSeeds,
   fragmentDominant,
   parseAssayLabels,
   parseR1PrimeLabels,
+  parseR1dPrimeLabels,
   quench,
   r1Donors,
+  r1dPrimeCheckpointOf,
+  r1dPrimeProvenance,
+  r1dPrimeSourceProblems,
   standardFragment,
   swapGenome,
   traitsTable,
@@ -79,17 +101,19 @@ import {
   type Fragment,
   type Planted,
   type R1PrimeLabelSet,
+  type R1dPrimeLabelSet,
 } from "./lib/pond-assay.ts";
 import { loadCheckpoint, runPeriod, saveCheckpoint, type CensusSnapshot } from "./lib/pond-gpu.ts";
 import { dominantGenome, ledgerEnergy, pondConfig, pondTraits } from "./lib/ponds.ts";
 
 const a = parseArgs(Deno.args, {
-  string: ["source", "k", "period", "ref", "seed", "frag-seed", "donor-seed", "swap-hex", "swap-from", "swap-founder", "swap-label", "tag", "out", "side", "replicates", "inoculum", "steps", "census", "mut-rate", "arm", "history", "time", "timing", "calibration"],
-  boolean: ["quench", "allow-any-seed", "traits", "r1prime", "tau-calibration"],
+  string: ["source", "k", "period", "ref", "seed", "frag-seed", "donor-seed", "swap-hex", "swap-from", "swap-founder", "swap-label", "tag", "out", "side", "replicates", "inoculum", "steps", "census", "mut-rate", "arm", "history", "time", "timing", "calibration", "h", "control"],
+  boolean: ["quench", "allow-any-seed", "traits", "r1prime", "tau-calibration", "r1dprime"],
   default: { side: "8", replicates: "2", census: "100", inoculum: "fragment" },
 });
 const cmd = String(a._[0] ?? "");
-if ((a.traits || a.r1prime || a["tau-calibration"]) && (cmd === "continue" || cmd === "capability")) throw new Error(`--traits, --r1prime and --tau-calibration do not apply to ${cmd}`);
+if ((a.traits || a.r1prime || a["tau-calibration"] || a.r1dprime) && (cmd === "continue" || cmd === "capability")) throw new Error(`--traits, --r1prime, --tau-calibration and --r1dprime do not apply to ${cmd}`);
+if ((a.h !== undefined || a.control !== undefined) && !a.r1dprime) throw new Error("--h and --control belong to --r1dprime");
 
 function need(name: keyof typeof a): string {
   const v = a[name];
@@ -107,10 +131,9 @@ function checkSeed(name: string, v: number): number {
   return v;
 }
 
-const protocolSha256 = Array.from(
-  new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(new URL("../docs/scaffold-protocol-v1.md", import.meta.url)))),
-  (b) => b.toString(16).padStart(2, "0"),
-).join("");
+const sha256File = async (url: URL): Promise<string> =>
+  Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(url))), (b) => b.toString(16).padStart(2, "0")).join("");
+const protocolSha256 = await sha256File(new URL("../docs/scaffold-protocol-v1.md", import.meta.url));
 
 const baseName = (p: string) => p.replace(/^.*\//, "").replace(/\.blck(\.gz)?$/, "");
 const words = (g: Uint32Array) => Array.from(g, (x) => x.toString(16).padStart(8, "0")).join("");
@@ -166,7 +189,7 @@ interface AssaySpec {
   fragSeed: number;
   inoculum: string;
   /** The history this source belongs to, written to assay.json for scaffold-report. */
-  labels: AssayLabelSet | R1PrimeLabelSet;
+  labels: AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet;
   /** Fragment f of replicate sigma `sigma`; the family label is the donor pond in R1, else -1. */
   plan: (sigma: number, f: number) => Plan;
 }
@@ -196,7 +219,7 @@ async function runAssay(spec: AssaySpec, out: string, extra: Record<string, unkn
   const seeds = Array.from({ length: spec.replicates }, (_, s) => ({ physics: checkSeed("seed", spec.seed + s), fragment: checkSeed("fragment seed", spec.fragSeed + s) }));
   if (!a["allow-any-seed"]) {
     const labels = spec.labels;
-    seeds.forEach((sd, s) => ("r1prime" in labels ? checkR1PrimeSeeds(labels, sd, s) : checkAssaySeeds(spec.name as AssayName, labels, spec.inoculum, sd, s)));
+    seeds.forEach((sd, s) => ("r1dprime" in labels ? checkR1dPrimeSeeds(labels, sd, s) : "r1prime" in labels ? checkR1PrimeSeeds(labels, sd, s) : checkAssaySeeds(spec.name as AssayName, labels, spec.inoculum, sd, s)));
   }
   const device = await requestDevice(navigator.gpu, pondConfig(spec.side, seeds[0].physics, 0));
   const lines: string[] = [ASSAY_COLUMNS.join("\t")];
@@ -277,8 +300,14 @@ async function runAssay(spec: AssaySpec, out: string, extra: Record<string, unkn
   console.log(`${spec.name} ${spec.tag}: ${sum.rows} rows${spec.ref === undefined ? "" : sum.rows === 0 ? ", no rows (insufficient or empty source)" : `, competence ${(sum.success / sum.rows).toFixed(3)}`} -> ${out}`);
 }
 
-/** The labels of this assay from the CLI: R1' (--r1prime), the tau calibration (--tau-calibration) or R1-R3's. */
-function labelsFromArgs(name: AssayName): AssayLabelSet | R1PrimeLabelSet {
+/** The labels of this assay from the CLI: R1'' (--r1dprime), R1' (--r1prime), the tau calibration (--tau-calibration) or R1-R3's. */
+function labelsFromArgs(name: AssayName): AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet {
+  if (a["r1dprime"]) {
+    if (a["r1prime"] || a["tau-calibration"]) throw new Error("--r1dprime, --r1prime and --tau-calibration are separate assays");
+    if (name !== "transmission") throw new Error("--r1dprime applies to transmission");
+    if (!a.traits) throw new Error("--r1dprime needs --traits: R1'' reads each fragment's crossing time from traits.tsv");
+    return parseR1dPrimeLabels({ h: a.h, arm: a.arm, history: a.history, control: a.control, time: a.time, timing: a.timing, calibration: a.calibration });
+  }
   if (a["r1prime"] && a["tau-calibration"]) throw new Error("--r1prime and --tau-calibration are separate assays");
   if (a["r1prime"]) {
     if (name !== "transmission") throw new Error("--r1prime applies to transmission");
@@ -341,8 +370,27 @@ switch (cmd) {
     const spec = await specFromArgs("transmission");
     const donorSeed = checkSeed("donor seed", a["donor-seed"] === undefined ? spec.seed + 9 : int("donor-seed", 0));
     if (!a["allow-any-seed"]) {
-      if ("r1prime" in spec.labels) checkR1PrimeDonorSeed(spec.labels, donorSeed);
+      if ("r1dprime" in spec.labels) checkR1dPrimeDonorSeed(spec.labels, donorSeed);
+      else if ("r1prime" in spec.labels) checkR1PrimeDonorSeed(spec.labels, donorSeed);
       else checkDonorSeed(spec.labels, donorSeed);
+    }
+    // R1'': the regime and the source are the protocol's (production runs), and the assay records where it came from.
+    let r1dp: Record<string, unknown> = {};
+    if ("r1dprime" in spec.labels) {
+      if (!a["allow-any-seed"]) {
+        for (const [flag, got, want] of [["k", spec.k, R1DP_REGIME.k], ["period", spec.period, R1DP_REGIME.period], ["side", spec.side, R1DP_REGIME.side], ["replicates", spec.replicates, R1DP_REGIME.replicates], ["census", Number(a.census), R1DP_REGIME.censusEvery]] as const) {
+          if (got !== want) throw new Error(`--${flag} must be ${want} for --r1dprime, got ${got}`);
+        }
+      }
+      const provenance = r1dPrimeProvenance(spec.sourcePath, spec.source);
+      const problems = r1dPrimeSourceProblems(spec.labels, provenance);
+      if (problems.length > 0 && !a["allow-any-seed"]) throw new Error(`${spec.sourcePath} is not the source of R1'' set h ${spec.labels.h}: ${problems.join("; ")}`);
+      // The checkpoint sits in a run directory (ckpt/ beside its meta.json): a copy lifted out of one has lost what says which run it is.
+      if (!a["allow-any-seed"]) {
+        const runDir = spec.sourcePath.slice(0, spec.sourcePath.length - `ckpt/${r1dPrimeCheckpointOf(spec.labels.h)}.blck.gz`.length) || "./";
+        if (!(await Deno.stat(`${runDir}meta.json`).then((st) => st.isFile, () => false))) throw new Error(`${spec.sourcePath} is not inside a run directory (no ${runDir}meta.json)`);
+      }
+      r1dp = { provenance, protocolSha256R1dp: await sha256File(new URL("../docs/scaffold-heredity-replication-v1.md", import.meta.url)) };
     }
     const { donors, eligible, insufficient } = r1Donors(spec.source, donorSeed);
     spec.plan = (sigma, f) => {
@@ -350,7 +398,7 @@ switch (cmd) {
       return { item: fragmentItem(standardFragment(spec.source, spec.k, sigma, f, donor)), family: donor };
     };
     // Fewer than two eligible ponds: R1 is not demonstrated for the history, and no row is written.
-    await runAssay(spec, need("out"), { donorSeed, donors, eligible, insufficient }, () => !insufficient);
+    await runAssay(spec, need("out"), { donorSeed, donors, eligible, insufficient, ...r1dp }, () => !insufficient);
     break;
   }
   case "garden": {
