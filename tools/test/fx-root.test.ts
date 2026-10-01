@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countSubjects, subjectIndex, SUBJECT_IDS, wholePlanting } from "../lib/fx-root.ts";
+import { checkedRootHex, countSubjects, subjectIndex, SUBJECT_IDS, wholePlanting } from "../lib/fx-root.ts";
 
 describe("subjectIndex", () => {
   it("maps ids to fixed positions", () => {
@@ -60,5 +60,24 @@ describe("wholePlanting", () => {
   });
   it("rejects undefined", () => {
     expect(wholePlanting(undefined, 2)).toBe(false);
+  });
+});
+
+describe("checkedRootHex", () => {
+  const c = { descendant: "5001:7", hex: "dd" };
+  it("returns the root genome of a founder-lineage root that differs from the candidate", () => {
+    expect(checkedRootHex(c, "0:12", "ff", "run")).toBe("ff");
+  });
+  it("refuses a parent walk that ends at a non-founder lineage (a missing birth record)", () => {
+    expect(() => checkedRootHex(c, "5001:7", "dd", "run")).toThrow(/run: clade root 5001:7 of candidate descendant 5001:7 is not a founder lineage/);
+    expect(() => checkedRootHex(c, "301:4", "ff", "run")).toThrow(/not a founder lineage/);
+    expect(() => checkedRootHex(c, "0", "ff", "run")).toThrow(/not a founder lineage/);
+  });
+  it("refuses a missing root genome", () => {
+    expect(() => checkedRootHex(c, "0:12", undefined, "run")).toThrow(/root genome missing for lineage 0:12/);
+  });
+  it("refuses a root whose genome equals the candidate's (the garden would compare a genome with itself)", () => {
+    expect(() => checkedRootHex({ descendant: "0:3", hex: "aa" }, "0:3", "aa", "run")).toThrow(/has the genome of its clade root 0:3/);
+    expect(() => checkedRootHex(c, "0:12", "dd", "run")).toThrow(/has the genome of its clade root 0:12/);
   });
 });

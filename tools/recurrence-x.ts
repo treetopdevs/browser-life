@@ -36,6 +36,7 @@ import {
   bootstrapPairedDiffInDiff,
   censusFromSeriesLine,
   censusesFrom,
+  cladeOfRoots,
   completenessProblems,
   eventsByRole,
   extStatement,
@@ -131,8 +132,7 @@ async function analyseRun(dir: string, id: { family: RunRecord["family"]; group:
   for (const c of dc) for (const m of Object.values(c.byRole)) for (const k of m.keys()) roots.add(k);
   const genome = new Map<string, string>();
   for await (const r of tsv(`${dir}/genomes.tsv`)) if (roots.has(r.lineage)) genome.set(r.lineage, label(r.words));
-  const cladeOf = (root: string) => genome.get(root) ?? `root:${root}`;
-  const { windows, ...readout } = readRun(dc, cladeOf);
+  const { windows, ...readout } = readRun(dc, cladeOfRoots(roots, genome, dir));
   return {
     version: RECURRENCE_RECORD_VERSION,
     id: `${id.family}-${manifest.spec.seed}`,
@@ -450,7 +450,7 @@ async function runsM4Cmd() {
       for (const dc of dcs.values()) for (const c of dc) for (const mm of Object.values(c.byRole)) for (const k of mm.keys()) roots.add(k);
       const genome = new Map<string, string>();
       for await (const r of tsv(`${dir}/genomes.tsv`)) if (roots.has(r.lineage)) genome.set(r.lineage, label(r.words));
-      const cladeOf = (root: string) => genome.get(root) ?? `root:${root}`;
+      const cladeOf = cladeOfRoots(roots, genome, dir);
       for (const v of todo) {
         const dc = dcs.get(v)!;
         const { windows, ...readout } = readRun(dc, cladeOf);

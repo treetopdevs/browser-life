@@ -7,6 +7,13 @@ export type Group = "obligate" | "obligate-extra" | "nonobligate-cluster" | "fac
 export type MediumId = "standard" | "waste" | "bg0" | "bg2" | "x4";
 export const MEDIA: readonly MediumId[] = ["standard", "waste", "bg0", "bg2", "x4"];
 
+/** Seeds reserved per medium: batch b of medium k runs at seed + SEED_STRIDE k + b. */
+export const SEED_STRIDE = 20;
+/** Throws when a medium needs more batches than its seed block holds (batch SEED_STRIDE would reuse the next medium's first seed). */
+export function checkSeedCapacity(batches: number, reps: number): void {
+  if (batches > SEED_STRIDE) throw new Error(`--reps ${reps} needs ${batches} batches per medium, but only ${SEED_STRIDE} seeds are reserved per medium; batches would reuse another medium's seeds`);
+}
+
 export interface Subject {
   id: string;
   group: Group;

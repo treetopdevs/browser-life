@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emptyGenome } from "@bl/schema";
-import { fisherTwoSided, interleave, medoid, pickSubjects, readOut, shares, status, type Cell, type Cells, type Subject } from "../lib/obligates-x.ts";
+import { SEED_STRIDE, checkSeedCapacity, fisherTwoSided, interleave, medoid, pickSubjects, readOut, shares, status, type Cell, type Cells, type Subject } from "../lib/obligates-x.ts";
 
 const g = (mu: number, ws: number[] = []) => {
   const x = emptyGenome(mu, 20);
@@ -140,5 +140,21 @@ describe("readOut", () => {
     const r = readOut([...subjects, o3], { ...cells, o3: { standard: cell(0), bg0: cell(2), bg2: cell(16) } } as Cells);
     expect(r.bg2OnlyUnconfirmed).toEqual([9]);
     expect(readOut(subjects, cells).bg2OnlyUnconfirmed).toEqual([]);
+  });
+});
+
+describe("checkSeedCapacity", () => {
+  // 48 subjects on an 8 x 8 tile: --reps 16 packs 4 per batch (12 batches), --reps 32 packs 2 (24 batches).
+  const batchesFor = (reps: number) => Math.ceil(48 / Math.floor(64 / reps));
+  it("accepts the recorded 16-rep run and anything within the 20 seeds reserved per medium", () => {
+    expect(SEED_STRIDE).toBe(20);
+    expect(batchesFor(16)).toBe(12);
+    expect(() => checkSeedCapacity(batchesFor(16), 16)).not.toThrow();
+    expect(() => checkSeedCapacity(SEED_STRIDE, 21)).not.toThrow();
+  });
+  it("refuses a configuration whose batches would reuse the next medium's seeds", () => {
+    expect(batchesFor(32)).toBe(24);
+    expect(() => checkSeedCapacity(batchesFor(32), 32)).toThrow(/--reps 32 needs 24 batches per medium, but only 20 seeds are reserved/);
+    expect(() => checkSeedCapacity(SEED_STRIDE + 1, 22)).toThrow(/reuse another medium's seeds/);
   });
 });

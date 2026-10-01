@@ -100,8 +100,15 @@ export function emptyCensus(step: number): Census {
   return { step, total: 0, byRole: { phototroph: new Map(), chemotroph: new Map(), decomposer: new Map(), mixed: new Map() }, inactiveMixed: 0 };
 }
 
+export interface Spacing {
+  censuses: number;
+  firstStep: number | null;
+  lastStep: number | null;
+  gaps: number;
+}
+
 /** Deep-census cadence check: count, first and last step, and how many consecutive gaps differ from `every`. */
-export function spacing(dc: Census[], every = 1000): { censuses: number; firstStep: number | null; lastStep: number | null; gaps: number } {
+export function spacing(dc: readonly { step: number }[], every = 1000): Spacing {
   let gaps = 0;
   for (let i = 1; i < dc.length; i++) if (dc[i].step - dc[i - 1].step !== every) gaps++;
   return { censuses: dc.length, firstStep: dc[0]?.step ?? null, lastStep: dc.at(-1)?.step ?? null, gaps };
@@ -167,6 +174,20 @@ export function censusFromSeriesLine(o: { step: number; roles?: Record<string, n
   c.total = 1;
   for (const r of ROLES) c.byRole[r].set("all", o.roles[r] ?? 0);
   return c;
+}
+
+/**
+ * Clade label of each root lineage: the label of its founder genome. Throws when a root has no genome: a fallback label per
+ * root would split clones of one founder genome into distinct clades and turn a clone handoff into a replacement.
+ */
+export function cladeOfRoots(roots: Iterable<string>, genomeLabel: ReadonlyMap<string, string>, where: string): (root: string) => string {
+  const missing = [...roots].filter((r) => !genomeLabel.has(r));
+  if (missing.length) throw new Error(`${where}: ${missing.length} root lineage(s) have no genome in genomes.tsv (${missing.slice(0, 5).join(", ")}${missing.length > 5 ? ", ..." : ""})`);
+  return (root) => {
+    const l = genomeLabel.get(root);
+    if (l === undefined) throw new Error(`${where}: root lineage ${root} has no genome in genomes.tsv`);
+    return l;
+  };
 }
 
 /**
@@ -317,25 +338,28 @@ export interface RunId {
   seed: number;
   soloFounder?: number;
 }
+/** First seed of each family's layout: run j of the group at index g (`EXPECTED_GROUPS` order) has seed seed0 + 10 g + j, j < 5 the mutation arm. */
+export const LAYOUT_SEED0: Record<LegacyFamily, number> = { B: 4_720_001, C: 4_740_001, solo: 4_200_001, diag: 4_210_001 };
+
 /** Group id and whether the run is in the mutation arm, from the seed layout of each plan; null if the seed is outside the layout. */
 export function groupOf(r: RunId): { family: LegacyFamily; group: string; mutation: boolean } | null {
   const lay = (seed0: number) => ({ idx: Math.floor((r.seed - seed0) / 10), j: (r.seed - seed0) % 10 });
   if (r.experiment === "founders-x-b") {
-    const { idx, j } = lay(4_720_001);
+    const { idx, j } = lay(LAYOUT_SEED0.B);
     return idx >= 0 && idx < 12 && j >= 0 && j < 8 ? { family: "B", group: `founder-${idx}`, mutation: j < 5 } : null;
   }
   if (r.experiment === "founders-x-c") {
-    const { idx, j } = lay(4_740_001);
+    const { idx, j } = lay(LAYOUT_SEED0.C);
     const name = ["S1", "S2", "S4", "S5"][idx];
     return name && j >= 0 && j < 8 ? { family: "C", group: name, mutation: j < 5 } : null;
   }
   if (r.experiment === "solo") {
-    const { idx, j } = lay(4_200_001);
+    const { idx, j } = lay(LAYOUT_SEED0.solo);
     const k = r.soloFounder ?? idx;
     return k >= 0 && k < 12 && j >= 0 && j < 8 ? { family: "solo", group: `founder-${k}`, mutation: j < 5 } : null;
   }
   if (r.experiment === "founders-diag") {
-    const { idx, j } = lay(4_210_001);
+    const { idx, j } = lay(LAYOUT_SEED0.diag);
     return idx >= 0 && idx < 24 && j >= 0 && j < 8 ? { family: "diag", group: `subject-${idx}`, mutation: j < 5 } : null;
   }
   return null;
@@ -356,7 +380,7 @@ export interface RunRecord {
   seed: number;
   extinct: boolean;
   steps: number;
-  spacing: { censuses: number; firstStep: number | null; lastStep: number | null; gaps: number };
+  spacing: Spacing;
   readout: Omit<RunReadout, "windows">;
   windows: RunReadout["windows"];
   /** M4 readout only (runs-m4). */
@@ -444,34 +468,78 @@ export const EXPECTED_NO_MUTATION_RUNS = 3;
 export const FIRST_DEEP_STEP = 100;
 export const LAST_DEEP_STEP = 999_100;
 
-/** What stops `summary` from issuing a reading: missing, surplus or stale records, or a deep-census series with holes. Empty when complete. */
+/** The seeds the layout assigns to one arm of a group: 5 mutation runs (j = 0..4), then 3 no-mutation runs (j = 5..7). */
+export function expectedSeeds(family: LegacyFamily, group: string, mutation: boolean): number[] {
+  const g = EXPECTED_GROUPS[family].indexOf(group);
+  if (g < 0) throw new Error(`unknown group ${family}:${group}`);
+  const js = mutation ? Array.from({ length: EXPECTED_MUTATION_RUNS }, (_, j) => j) : Array.from({ length: EXPECTED_NO_MUTATION_RUNS }, (_, j) => EXPECTED_MUTATION_RUNS + j);
+  return js.map((j) => LAYOUT_SEED0[family] + 10 * g + j);
+}
+
+/**
+ * Deep-census coverage of one run: no holes, the first census at step 100 and the last at `last`. An extinct run may stop
+ * early only when `extinctMayStop` (profiles.tsv has no rows once nothing lives; series.jsonl keeps writing censuses).
+ */
+export function coverageProblems(id: string, sp: Spacing, last: number, extinct: boolean, extinctMayStop = true): string[] {
+  const out: string[] = [];
+  if (sp.gaps !== 0) out.push(`${id}: ${sp.gaps} deep-census gaps`);
+  if (sp.firstStep !== FIRST_DEEP_STEP) out.push(`${id}: first deep census at step ${sp.firstStep} (want ${FIRST_DEEP_STEP})`);
+  if (sp.lastStep !== last && !(extinct && extinctMayStop)) out.push(`${id}: last deep census at step ${sp.lastStep}${extinctMayStop ? " and not extinct" : ""} (want ${last})`);
+  return out;
+}
+
+/**
+ * Coverage problems of one run's profiles.tsv rows, as `coverageProblems`; a failed read (a missing file, rows out of order)
+ * is reported as a problem rather than thrown, so the caller can record the run as incomplete.
+ */
+export async function profileCoverageProblems(
+  id: string,
+  rows: AsyncIterable<{ step: string; lineage: string; cells: string; role: string }>,
+  last: number,
+  extinct: boolean,
+): Promise<string[]> {
+  let dc: Census[];
+  try {
+    dc = await censusesFrom(rows, () => "");
+  } catch (e) {
+    return [`${id}: profiles.tsv unreadable (${e instanceof Error ? e.message : String(e)})`];
+  }
+  return coverageProblems(id, spacing(dc), last, extinct);
+}
+
+/** Ids carried by more than one record (a copy under another file name). */
+function duplicateIds(recs: RunRecord[]): string[] {
+  const n = new Map<string, number>();
+  for (const r of recs) n.set(r.id, (n.get(r.id) ?? 0) + 1);
+  return [...n].filter(([, k]) => k > 1).map(([id, k]) => `${id}: ${k} records carry this id`);
+}
+
+const sameSeeds = (got: number[], want: number[]) => got.length === want.length && got.every((s, i) => s === want[i]);
+
+/**
+ * What stops `summary` from issuing a reading: missing, surplus, duplicate or stale records, a seed outside its group's arm,
+ * or a deep-census series with holes. Empty when complete.
+ */
 export function completenessProblems(recs: RunRecord[]): string[] {
-  const problems: string[] = [];
-  const count = new Map<string, { mut: number; nm: number }>();
+  const problems = duplicateIds(recs);
+  const seeds = new Map<string, number[]>();
+  const arm = (family: string, group: string, mutation: boolean) => `${family}:${group}:${mutation ? "mutation" : "no-mutation"}`;
   for (const r of recs) {
     const known = EXPECTED_GROUPS[r.family as LegacyFamily]?.includes(r.group);
     if (!known) problems.push(`${r.id}: unexpected group ${r.family}:${r.group}`);
     else {
-      const c = count.get(`${r.family}:${r.group}`) ?? { mut: 0, nm: 0 };
-      if (r.mutation) c.mut++;
-      else c.nm++;
-      count.set(`${r.family}:${r.group}`, c);
+      const k = arm(r.family, r.group, r.mutation);
+      seeds.set(k, [...(seeds.get(k) ?? []), r.seed]);
     }
     if (r.version !== RECURRENCE_RECORD_VERSION) problems.push(`${r.id}: record version ${r.version} (want ${RECURRENCE_RECORD_VERSION})`);
-    const sp = r.spacing;
-    if (!sp) {
-      problems.push(`${r.id}: no spacing`);
-      continue;
-    }
-    if (sp.gaps !== 0) problems.push(`${r.id}: ${sp.gaps} deep-census gaps`);
-    if (sp.firstStep !== FIRST_DEEP_STEP) problems.push(`${r.id}: first deep census at step ${sp.firstStep} (want ${FIRST_DEEP_STEP})`);
-    if (sp.lastStep !== LAST_DEEP_STEP && !r.extinct) problems.push(`${r.id}: last deep census at step ${sp.lastStep} and not extinct (want ${LAST_DEEP_STEP})`);
+    if (!r.spacing) problems.push(`${r.id}: no spacing`);
+    else problems.push(...coverageProblems(r.id, r.spacing, LAST_DEEP_STEP, r.extinct));
   }
-  for (const [family, groups] of Object.entries(EXPECTED_GROUPS)) {
+  for (const [family, groups] of Object.entries(EXPECTED_GROUPS) as [LegacyFamily, string[]][]) {
     for (const g of groups) {
-      const c = count.get(`${family}:${g}`) ?? { mut: 0, nm: 0 };
-      if (c.mut !== EXPECTED_MUTATION_RUNS || c.nm !== EXPECTED_NO_MUTATION_RUNS) {
-        problems.push(`${family}:${g}: ${c.mut} mutation and ${c.nm} no-mutation runs (want ${EXPECTED_MUTATION_RUNS} and ${EXPECTED_NO_MUTATION_RUNS})`);
+      for (const mutation of [true, false]) {
+        const got = (seeds.get(arm(family, g, mutation)) ?? []).slice().sort((p, q) => p - q), want = expectedSeeds(family, g, mutation);
+        if (!sameSeeds(got, want)) problems.push(`${arm(family, g, mutation)}: seeds [${got.join(",")}] (want [${want.join(",")}])`);
       }
     }
   }
@@ -494,7 +562,7 @@ export const EXT_EXPOSURE_1E5 = 98;
 
 /** What stops `summary-m4` from issuing a reading: missing, surplus or stale records, wrong horizons, or deep-census series with holes. Empty when complete. */
 export function m4CompletenessProblems(recs: RunRecord[]): string[] {
-  const problems: string[] = [];
+  const problems = duplicateIds(recs);
   const seen = new Map<string, number[]>();
   for (const r of recs) {
     if (r.family !== "m4r" && r.family !== "ext") {
@@ -515,21 +583,16 @@ export function m4CompletenessProblems(recs: RunRecord[]): string[] {
     if (r.group !== cond || r.mutation !== (cond === "treatment")) problems.push(`${r.id}: group/mutation do not match condition ${cond}`);
     if (r.version !== RECURRENCE_RECORD_VERSION) problems.push(`${r.id}: record version ${r.version} (want ${RECURRENCE_RECORD_VERSION})`);
     if (r.steps !== (ext ? EXT_STEPS : M4_STEPS)) problems.push(`${r.id}: ${r.steps} steps (want ${ext ? EXT_STEPS : M4_STEPS})`);
-    const sp = r.spacing;
-    if (!sp) problems.push(`${r.id}: no spacing`);
-    else {
-      if (sp.gaps !== 0) problems.push(`${r.id}: ${sp.gaps} deep-census gaps`);
-      if (sp.firstStep !== FIRST_DEEP_STEP) problems.push(`${r.id}: first deep census at step ${sp.firstStep} (want ${FIRST_DEEP_STEP})`);
-      const last = ext ? EXT_LAST_DEEP_STEP : M4_LAST_DEEP_STEP;
-      if (sp.lastStep !== last && !r.extinct) problems.push(`${r.id}: last deep census at step ${sp.lastStep} and not extinct (want ${last})`);
-    }
+    // The extension's series.jsonl keeps its censuses through extinction, so its series must reach the horizon regardless.
+    if (!r.spacing) problems.push(`${r.id}: no spacing`);
+    else problems.push(...coverageProblems(r.id, r.spacing, ext ? EXT_LAST_DEEP_STEP : M4_LAST_DEEP_STEP, r.extinct, !ext));
     if (ext && !(r.profile && r.profile.perBlock.length === 10)) problems.push(`${r.id}: no 10-block return profile`);
     const key = `${r.family}:${cond}:${variant}`;
     seen.set(key, [...(seen.get(key) ?? []), r.seed]);
   }
   const want = (key: string, seeds: number[]) => {
     const got = (seen.get(key) ?? []).slice().sort((p, q) => p - q);
-    if (got.length !== seeds.length || got.some((s, i) => s !== seeds[i])) problems.push(`${key}: seeds [${got.join(",")}] (want ${seeds[0]}..${seeds.at(-1)})`);
+    if (!sameSeeds(got, seeds)) problems.push(`${key}: seeds [${got.join(",")}] (want ${seeds[0]}..${seeds.at(-1)})`);
   };
   for (const [cond, n] of Object.entries(M4_RUNS)) {
     for (const v of ROLE_VARIANTS) want(`m4r:${cond}:${v}`, Array.from({ length: n }, (_, i) => i + 1));

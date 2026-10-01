@@ -6,14 +6,19 @@ import {
   bootstrapPairedDiffInDiff,
   censusFromSeriesLine,
   censusesFrom,
+  cladeOfRoots,
   completenessProblems,
+  coverageProblems,
   EXPECTED_GROUPS,
   emptyCensus,
   eventsByRole,
+  expectedSeeds,
   extStatement,
   groupOf,
+  LAYOUT_SEED0,
   m4CompletenessProblems,
   overallReading,
+  profileCoverageProblems,
   readRun,
   reading,
   returnProfile,
@@ -25,6 +30,7 @@ import {
   withoutRoleEvents,
   type PostFillEvent,
   type Census,
+  type LegacyFamily,
   type RunRecord,
   type Role,
   type StratumRow,
@@ -277,13 +283,16 @@ describe("bootstrapPairedDiffInDiff", () => {
 });
 
 describe("completenessProblems", () => {
-  /** The full 416-record set as the plans lay it out. */
+  /** The full 416-record set as the plans lay it out (seed seed0 + 10 g + j, j < 5 mutation). */
   const full = (): RunRecord[] => {
     const out: RunRecord[] = [];
-    for (const [family, groups] of Object.entries(EXPECTED_GROUPS) as [RunRecord["family"], string[]][]) {
-      for (const group of groups) {
-        for (let j = 0; j < 8; j++) out.push({ ...rec(j < 5, 0, out.length), id: `${family}-${out.length}`, family, group });
-      }
+    for (const [family, groups] of Object.entries(EXPECTED_GROUPS) as [LegacyFamily, string[]][]) {
+      groups.forEach((group, g) => {
+        for (let j = 0; j < 8; j++) {
+          const seed = LAYOUT_SEED0[family] + 10 * g + j;
+          out.push({ ...rec(j < 5, 0, seed), id: `${family}-${seed}`, family, group });
+        }
+      });
     }
     return out;
   };
@@ -298,7 +307,7 @@ describe("completenessProblems", () => {
     recs[10] = { ...recs[10], version: 1 };
     recs[20] = { ...recs[20], spacing: { ...recs[20].spacing, gaps: 2 } };
     const problems = completenessProblems(recs);
-    expect(problems.some((p) => p.includes(`${dropped.family}:${dropped.group}`) && p.includes("mutation and"))).toBe(true);
+    expect(problems.some((p) => p.includes(`${dropped.family}:${dropped.group}:mutation: seeds [`))).toBe(true);
     expect(problems.some((p) => p.includes(recs[10].id) && p.includes("version 1"))).toBe(true);
     expect(problems.some((p) => p.includes(recs[20].id) && p.includes("2 deep-census gaps"))).toBe(true);
   });
@@ -310,6 +319,104 @@ describe("completenessProblems", () => {
     expect(completenessProblems(recs)).toEqual([]);
     recs[1] = { ...recs[1], spacing: undefined as unknown as RunRecord["spacing"] };
     expect(completenessProblems(recs)).toEqual([`${recs[1].id}: no spacing`]);
+  });
+  it("a duplicated record under another file name cannot hide a missing run", () => {
+    const recs = full();
+    const b0 = recs.findIndex((r) => r.id === "B-4720002");
+    recs[b0] = { ...recs[b0 - 1] }; // B-4720001 twice, B-4720002 gone: still 5 mutation runs in founder-0
+    expect(recs.filter((r) => r.family === "B" && r.group === "founder-0" && r.mutation)).toHaveLength(5);
+    expect(completenessProblems(recs)).toEqual([
+      "B-4720001: 2 records carry this id",
+      "B:founder-0:mutation: seeds [4720001,4720001,4720003,4720004,4720005] (want [4720001,4720002,4720003,4720004,4720005])",
+    ]);
+  });
+  it("flags a record whose seed belongs to another group or arm, even with the counts right", () => {
+    const swapped = full().map((r) => (r.id === "C-4740001" ? { ...r, seed: 4_740_011 } : r.id === "C-4740011" ? { ...r, seed: 4_740_001 } : r));
+    expect(completenessProblems(swapped)).toEqual([
+      "C:S1:mutation: seeds [4740002,4740003,4740004,4740005,4740011] (want [4740001,4740002,4740003,4740004,4740005])",
+      "C:S2:mutation: seeds [4740001,4740012,4740013,4740014,4740015] (want [4740011,4740012,4740013,4740014,4740015])",
+    ]);
+    const armFlip = full().map((r) => (r.id === "diag-4210006" ? { ...r, mutation: true } : r.id === "diag-4210005" ? { ...r, mutation: false } : r));
+    expect(completenessProblems(armFlip)).toHaveLength(2);
+  });
+});
+
+describe("expectedSeeds", () => {
+  it("agrees with groupOf on every seed of the layout", () => {
+    const experiment: Record<LegacyFamily, string> = { B: "founders-x-b", C: "founders-x-c", solo: "solo", diag: "founders-diag" };
+    for (const [family, groups] of Object.entries(EXPECTED_GROUPS) as [LegacyFamily, string[]][]) {
+      for (const group of groups) {
+        for (const mutation of [true, false]) {
+          const seeds = expectedSeeds(family, group, mutation);
+          expect(seeds).toHaveLength(mutation ? 5 : 3);
+          for (const seed of seeds) {
+            const soloFounder = family === "solo" ? Number(group.split("-")[1]) : undefined;
+            expect(groupOf({ experiment: experiment[family], seed, soloFounder })).toEqual({ family, group, mutation });
+          }
+        }
+      }
+    }
+    expect(expectedSeeds("C", "S5", false)).toEqual([4_740_036, 4_740_037, 4_740_038]);
+    expect(() => expectedSeeds("C", "S3", true)).toThrow(/unknown group C:S3/);
+  });
+});
+
+describe("coverageProblems", () => {
+  const sp = (firstStep: number | null, lastStep: number | null, gaps = 0) => ({ censuses: 0, firstStep, lastStep, gaps });
+  it("is empty for a full series", () => {
+    expect(coverageProblems("r", sp(100, 999_100), 999_100, false)).toEqual([]);
+  });
+  it("flags a header-only profiles.tsv (no censuses) even when the run went extinct", () => {
+    expect(coverageProblems("r", sp(null, null), 999_100, true)).toEqual(["r: first deep census at step null (want 100)"]);
+    expect(coverageProblems("r", sp(null, null), 999_100, false)).toHaveLength(2);
+  });
+  it("flags a truncated series unless the run went extinct, and holes either way", () => {
+    expect(coverageProblems("r", sp(100, 500_100), 999_100, false)).toEqual(["r: last deep census at step 500100 and not extinct (want 999100)"]);
+    expect(coverageProblems("r", sp(100, 500_100), 999_100, true)).toEqual([]);
+    expect(coverageProblems("r", sp(100, 500_100, 3), 999_100, true)).toEqual(["r: 3 deep-census gaps"]);
+  });
+  it("does not waive the horizon for an extinct run when extinction does not stop the series", () => {
+    expect(coverageProblems("r", sp(100, 5_000_100), 9_999_100, true, false)).toEqual(["r: last deep census at step 5000100 (want 9999100)"]);
+  });
+  it("accepts any object with steps through spacing", () => {
+    const steps = Array.from({ length: 1000 }, (_, i) => ({ step: 100 + 1000 * i }));
+    expect(coverageProblems("r", spacing(steps), 999_100, false)).toEqual([]);
+    expect(coverageProblems("r", spacing(steps.slice(0, 600)), 999_100, false)).toHaveLength(1);
+  });
+});
+
+describe("profileCoverageProblems", () => {
+  const row = (step: number) => ({ step: String(step), lineage: "0:1", cells: "10", role: "phototroph" });
+  async function* rows(steps: number[]) {
+    for (const st of steps) yield row(st);
+  }
+  const full = Array.from({ length: 1000 }, (_, i) => 100 + 1000 * i);
+  it("is empty for a complete profiles.tsv", async () => {
+    expect(await profileCoverageProblems("S1 seed 1", rows(full), 999_100, false)).toEqual([]);
+  });
+  it("flags a truncated or header-only file", async () => {
+    expect(await profileCoverageProblems("S1 seed 1", rows(full.slice(0, 400)), 999_100, false)).toEqual(["S1 seed 1: last deep census at step 399100 and not extinct (want 999100)"]);
+    expect(await profileCoverageProblems("S1 seed 1", rows([]), 999_100, true)).toEqual(["S1 seed 1: first deep census at step null (want 100)"]);
+  });
+  it("reports a failed read (missing file, rows out of order) as a problem instead of throwing", async () => {
+    async function* missing(): AsyncGenerator<ReturnType<typeof row>> {
+      throw new Error("No such file or directory (os error 2): open 'x/profiles.tsv'");
+    }
+    expect(await profileCoverageProblems("S1 seed 1", missing(), 999_100, false)).toEqual(["S1 seed 1: profiles.tsv unreadable (No such file or directory (os error 2): open 'x/profiles.tsv')"]);
+    const [p] = await profileCoverageProblems("S1 seed 1", rows([100, 2100, 1100]), 999_100, false);
+    expect(p).toMatch(/^S1 seed 1: profiles.tsv unreadable \(profiles.tsv rows out of order at step 1100/);
+  });
+});
+
+describe("cladeOfRoots", () => {
+  it("labels roots by founder genome, so clones of one genome share a clade", () => {
+    const cladeOf = cladeOfRoots(["0:1", "0:2", "0:3"], new Map([["0:1", "aa"], ["0:2", "aa"], ["0:3", "bb"]]), "run");
+    expect(["0:1", "0:2", "0:3"].map(cladeOf)).toEqual(["aa", "aa", "bb"]);
+  });
+  it("throws instead of giving a root without a genome a label of its own", () => {
+    expect(() => cladeOfRoots(["0:1", "0:2"], new Map([["0:1", "aa"]]), "runs/x/seed-1")).toThrow(/runs\/x\/seed-1: 1 root lineage\(s\) have no genome in genomes.tsv \(0:2\)/);
+    const cladeOf = cladeOfRoots(["0:1"], new Map([["0:1", "aa"]]), "run");
+    expect(() => cladeOf("0:9")).toThrow(/root lineage 0:9 has no genome/);
   });
 });
 
@@ -435,6 +542,20 @@ describe("m4CompletenessProblems and extStatement", () => {
     const short = full();
     short[100].spacing.lastStep = 499_100;
     expect(m4CompletenessProblems(short)[0]).toMatch(/last deep census at step 499100/);
+  });
+  it("requires the extension's series to reach 9,999,100 even when the run went extinct; an extinct replay may stop early", () => {
+    const recs = full();
+    const e = recs.findIndex((r) => r.family === "ext");
+    recs[e] = { ...recs[e], extinct: true, spacing: { ...recs[e].spacing, lastStep: 4_000_100 } };
+    expect(m4CompletenessProblems(recs)).toEqual([`${recs[e].id}: last deep census at step 4000100 (want 9999100)`]);
+    recs[e] = { ...recs[e], spacing: { ...recs[e].spacing, lastStep: 9_999_100 } };
+    recs[0] = { ...recs[0], extinct: true, spacing: { ...recs[0].spacing, lastStep: 400_100 } };
+    expect(m4CompletenessProblems(recs)).toEqual([]);
+  });
+  it("flags a duplicate id", () => {
+    const recs = full();
+    recs.push({ ...recs[0] });
+    expect(m4CompletenessProblems(recs)).toEqual([`${recs[0].id}: 2 records carry this id`, "m4r:treatment:d0.5: seeds [1,1,2,3,4,5,6,7,8,9,10] (want 1..10)"]);
   });
   it("flags a legacy-family record and a stale version", () => {
     const stale = full();

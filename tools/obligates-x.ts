@@ -11,12 +11,13 @@
 //       <work>/batches.jsonl (resumable: batches already present are skipped).
 // read  CPU only: assembles the cells and applies the pre-stated readings (tools/lib/obligates-x.ts).
 //
-// Roles are read out, never scored. Seeds: batch b of medium k uses seed + 20 k + b.
+// Roles are read out, never scored. Seeds: batch b of medium k uses seed + 20 k + b; a --reps that needs more than
+// 20 batches per medium is refused (its batches would reuse the next medium's seeds).
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { M3_FOUNDERS, emptyGenome, founderGenome, genomeDistance, genomeHex, type Genome } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { DEFAULT_EVAL, evaluateBatch, type EvalConfig, type Evaluation } from "@bl/search";
-import { MEDIA, farthest, interleave, pickSubjects, readOut, type Cell, type Cells, type MediumId, type Subject } from "./lib/obligates-x.ts";
+import { MEDIA, SEED_STRIDE, checkSeedCapacity, farthest, interleave, pickSubjects, readOut, type Cell, type Cells, type MediumId, type Subject } from "./lib/obligates-x.ts";
 
 const a = parseArgs(Deno.args, {
   string: ["stage", "reps", "seed", "dir", "work", "out", "media", "batches"],
@@ -55,6 +56,7 @@ const reference: Subject[] = [
 ];
 const subjects = interleave([...pickSubjects(pool), ...reference]);
 const batches = Array.from({ length: Math.ceil(subjects.length / perBatch) }, (_, b) => subjects.slice(b * perBatch, (b + 1) * perBatch));
+checkSeedCapacity(batches.length, reps);
 
 const base: EvalConfig = { ...DEFAULT_EVAL, reps, roles: true, perRep: true };
 const mediaDef: Record<MediumId, { label: string; patch: Partial<EvalConfig> }> = {
@@ -67,13 +69,13 @@ const mediaDef: Record<MediumId, { label: string; patch: Partial<EvalConfig> }> 
 const selected = (a.media ? a.media.split(",") : MEDIA) as MediumId[];
 for (const m of selected) if (!MEDIA.includes(m)) throw new Error(`unknown medium ${m}`);
 const nBatches = a.batches ? Math.min(Number(a.batches), batches.length) : batches.length;
-const seedOf = (m: MediumId, b: number) => seed0 + 20 * MEDIA.indexOf(m) + b;
+const seedOf = (m: MediumId, b: number) => seed0 + SEED_STRIDE * MEDIA.indexOf(m) + b;
 
 const plan = {
   date: "2026-09-30",
   script: "tools/obligates-x.ts",
   reps,
-  seeds: { base: seed0, rule: "seed + 20 * mediumIndex + batchIndex", media: MEDIA },
+  seeds: { base: seed0, rule: `seed + ${SEED_STRIDE} * mediumIndex + batchIndex`, media: MEDIA },
   media: Object.fromEntries(MEDIA.map((m) => [m, mediaDef[m].label])),
   producer2: { founderIndex: p2, distanceToProducer0: genomeDistance(producer0, producer2), rule: "M3 founder (1..11) farthest from founder 0 in genome slots; ties to the lowest index" },
   subjects: subjects.map((s) => ({ id: s.id, group: s.group, cluster: s.cluster, hex: genomeHex(s.genome) })),

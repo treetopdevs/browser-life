@@ -11,7 +11,8 @@
 //       Superseded by read-root (plan 002).
 //   deno run -A tools/founders-x.ts read-root --garden-seed N --garden-seed-gradient M [--dir runs]
 //       The same candidates, each gardened beside its own clade root (mutations.tsv walk, genome
-//       from genomes.tsv) instead of founderSet[0]. Needs all 128 B/C runs finished at 1e6 steps.
+//       from genomes.tsv) instead of founderSet[0]. Needs all 128 B/C runs finished at 1e6 steps, each
+//       profiles.tsv holding every deep census (steps 100..999,100 unless extinct), and every root a founder lineage.
 //       Writes fxr-candidates.json, fxr-plan-uniform.json, fxr-plan-gradient.json (plan ids are
 //       stamped into the garden outputs by tools/assay.ts) and refuses to overwrite different content.
 //   deno run -A tools/founders-x.ts summary-root [--uniform-dir D] [--gradient-dir D]
@@ -22,8 +23,8 @@ import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { M3_FOUNDERS, founderGenome, genomeHex } from "@bl/schema";
 import { GRADIENT_GARDEN, gardenOutcome, lines, originationCandidates, tsv } from "./foundations.ts";
 import { parentMap, rootWalker } from "./lib/clade.ts";
-import { RUNS_PER_SUBJECT, SUBJECT_IDS, countSubjects, subjectIndex, wholePlanting } from "./lib/fx-root.ts";
-import { groupOf } from "./lib/recurrence.ts";
+import { RUNS_PER_SUBJECT, SUBJECT_IDS, checkedRootHex, countSubjects, subjectIndex, wholePlanting } from "./lib/fx-root.ts";
+import { LAST_DEEP_STEP, groupOf, profileCoverageProblems } from "./lib/recurrence.ts";
 
 const a = parseArgs(Deno.args, {
   string: ["out", "run", "step", "dir", "garden-seed", "garden-seed-gradient", "uniform-dir", "gradient-dir"],
@@ -379,6 +380,16 @@ function rootRunProblems(runs: RootRun[]): string[] {
   return out;
 }
 
+/**
+ * Deep-census coverage of every run's profiles.tsv (every 1,000 steps from 100 to 999,100 unless extinct): originationCandidates
+ * reads roles from it, so a truncated or header-only file would hide a control's role or drop a candidate.
+ */
+async function rootCoverageProblems(runs: RootRun[]): Promise<string[]> {
+  const out: string[] = [];
+  for (const r of runs) out.push(...(await profileCoverageProblems(`${r.subjectId} seed ${r.seed}`, tsv(`${r.dir}/profiles.tsv`) as AsyncIterable<any>, LAST_DEEP_STEP, r.extinct)));
+  return out;
+}
+
 /** Writes each file only when it is absent or already byte-identical; otherwise says so and writes nothing. */
 async function saveNew(files: [string, unknown][]): Promise<boolean> {
   await Deno.mkdir(OUT, { recursive: true });
@@ -411,6 +422,7 @@ async function readRootCmd() {
   const runs = await rootRuns(a.dir ?? "runs");
   const problems = rootRunProblems(runs);
   if (runs.length !== SUBJECT_IDS.length * (RUNS_PER_SUBJECT.mutation + RUNS_PER_SUBJECT.noMutation)) problems.unshift(`${runs.length} runs found (want 128)`);
+  if (!problems.length) problems.push(...(await rootCoverageProblems(runs)));
   if (problems.length) {
     const res = { complete: false, runs: runs.length, missing: problems };
     console.log(JSON.stringify(res, null, 1));
@@ -421,7 +433,7 @@ async function readRootCmd() {
   const { qual, candidates } = await originationCandidates(runs);
   for (const q of qual) if (q.mutation) q.extinct = runs.find((r) => r.subject === q.subject && r.seed === q.seed)?.extinct;
 
-  // Each candidate's clade root: walk mutations.tsv child -> parent to the lineage that is nobody's child.
+  // Each candidate's clade root: walk mutations.tsv child -> parent to the lineage that is nobody's child (a founder, else refused).
   const bySeed = new Map<number, number[]>();
   candidates.forEach((c: any, i: number) => bySeed.set(c.seed, [...(bySeed.get(c.seed) ?? []), i]));
   for (const [seed, idx] of bySeed) {
@@ -433,8 +445,7 @@ async function readRootCmd() {
     for await (const r of tsv(`${run.dir}/genomes.tsv`)) if (need.has(r.lineage) && !hexByRoot.has(r.lineage)) hexByRoot.set(r.lineage, r.words);
     idx.forEach((i, k) => {
       const c = candidates[i];
-      const rootHex = hexByRoot.get(roots[k]);
-      if (!rootHex) throw new Error(`${run.dir}: root genome missing for lineage ${roots[k]} (candidate descendant ${c.descendant})`);
+      const rootHex = checkedRootHex(c, roots[k], hexByRoot.get(roots[k]), run.dir);
       Object.assign(c, {
         subjectId: SUBJECT_IDS[c.subject],
         rootKey: roots[k],

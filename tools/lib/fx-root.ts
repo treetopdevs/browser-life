@@ -11,6 +11,18 @@ export const subjectIndex = (id: string) => {
 /** Runs each subject must have: 5 mutation + 3 no-mutation, each finished at 1e6 steps. */
 export const RUNS_PER_SUBJECT = { mutation: 5, noMutation: 3 } as const;
 
+/**
+ * A candidate's clade root, checked before it is gardened beside the candidate; returns the root's genome hex. The parent
+ * walk must end at a founder lineage (key hi = birth step + 1 = 0): any other endpoint means mutations.tsv lacks a birth
+ * record on the path. The root's genome must differ from the candidate's, or the garden compares a genome with itself.
+ */
+export function checkedRootHex(c: { descendant: string; hex: string }, rootKey: string, rootHex: string | undefined, where: string): string {
+  if (!/^0:\d+$/.test(rootKey)) throw new Error(`${where}: clade root ${rootKey} of candidate descendant ${c.descendant} is not a founder lineage (mutations.tsv lacks a birth record on the path)`);
+  if (!rootHex) throw new Error(`${where}: root genome missing for lineage ${rootKey} (candidate descendant ${c.descendant})`);
+  if (rootHex === c.hex) throw new Error(`${where}: candidate descendant ${c.descendant} has the genome of its clade root ${rootKey}; the garden would compare it with itself`);
+  return rootHex;
+}
+
 /** A planting is whole when it has `reps` distinct tiles and every tile holds `slots` lineage slots. */
 export function wholePlanting(p: { tiles: { tile: number; lineages: unknown[] }[] } | undefined, slots: number, reps = 16): boolean {
   return !!p && new Set(p.tiles.map((t) => t.tile)).size === reps && p.tiles.every((t) => t.lineages.length === slots);
