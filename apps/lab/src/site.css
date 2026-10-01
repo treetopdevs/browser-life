@@ -10,6 +10,7 @@
   --accent: oklch(82% 0.115 155);
   --accent-ink: oklch(19% 0.025 160);
   --warning: oklch(81% 0.11 76);
+  --negative: oklch(76% 0.105 32);
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 }
@@ -25,6 +26,7 @@
   --accent: oklch(42% 0.102 155);
   --accent-ink: oklch(98% 0.006 160);
   --warning: oklch(47% 0.10 76);
+  --negative: oklch(50% 0.13 32);
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -98,6 +100,9 @@ button { font: inherit; cursor: pointer; }
 .feature h2 { max-width: 15ch; font-size: clamp(2.25rem, 4vw, 3.8rem); }
 .feature > div:last-child { max-width: 60ch; padding-top: 28px; font-size: 1.0625rem; }
 .feature p { margin: 0 0 18px; }
+.latest { display: grid; grid-template-columns: .9fr 1.1fr; gap: 60px; padding-block: 0 clamp(70px, 8vw, 100px); }
+.latest h2 { margin: 0 0 16px; font-size: clamp(1.75rem, 3vw, 2.4rem); line-height: 1.1; letter-spacing: -.04em; }
+.log strong { color: var(--text); font-weight: 650; }
 .invitation { display: flex; align-items: center; justify-content: space-between; gap: 32px; margin-bottom: 86px; padding: 34px 38px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); }
 .invitation .eyebrow, .invitation p { color: var(--accent-ink); }
 .invitation .eyebrow { opacity: .78; }
@@ -121,9 +126,20 @@ button { font: inherit; cursor: pointer; }
 .evidence-card h2 { margin: 0; }
 .evidence-card p { margin: 0; max-width: 62ch; font-size: .9375rem; }
 .evidence-card .fine { color: var(--soft); }
+.evidence-card > div > p + p { margin-top: 10px; }
 .state { display: inline-flex; justify-self: start; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 99px; font-size: .625rem; }
 .state.measured { color: var(--warning); border-color: var(--warning); }
 .state.pending { color: var(--muted); border-color: var(--muted); }
+.state.negative { color: var(--negative); border-color: var(--negative); }
+.glance { display: grid; grid-template-columns: minmax(145px, 230px) minmax(0, 1fr); gap: 48px; padding-block: 44px; border-bottom: 1px solid var(--line); }
+.glance .status-value { font-size: 1.625rem; }
+.now-list, .log { margin: 0; padding: 0; list-style: none; }
+.now-list li, .log li { margin: 0; padding: 14px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .9375rem; }
+.now-list li:last-child, .log li:last-child { border-bottom: 1px solid var(--line); }
+.now-list strong { color: var(--text); font-weight: 650; }
+.log li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; }
+.log time { padding-top: 3px; color: var(--muted); font: 700 .6875rem/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.log em { font-style: normal; color: var(--text); }
 .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; padding-block: 67px; }
 .steps article { padding-top: 20px; border-top: 1px solid var(--line); }
 .steps h2 { margin-top: 28px; }
@@ -151,6 +167,7 @@ button { font: inherit; cursor: pointer; }
   .feature { gap: 36px; }
   .evidence-card { grid-template-columns: 130px minmax(0, 1fr); }
   .evidence-card .fine { grid-column: 2; }
+  .evidence-card > div { grid-column: 2; }
 }
 @media (max-width: 700px) {
   .shell { width: min(100% - 30px, 1220px); }
@@ -160,7 +177,8 @@ button { font: inherit; cursor: pointer; }
   .site-nav a { flex: none; min-height: 40px; padding-inline: 9px; }
   .hero { padding-block: 58px 65px; }
   .hero h1 { font-size: clamp(2.8rem, 11vw, 4.25rem); }
-  .three, .feature, .steps { grid-template-columns: 1fr; }
+  .three, .feature, .steps, .latest { grid-template-columns: 1fr; }
+  .latest { gap: 20px; padding-bottom: 60px; }
   .three > div { padding: 25px 0; }
   .three > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
   .feature { padding-block: 65px; }
@@ -171,6 +189,8 @@ button { font: inherit; cursor: pointer; }
   .prose-grid { grid-template-columns: 1fr; gap: 12px; padding-block: 38px; }
   .evidence-card { grid-template-columns: 1fr; gap: 10px; }
   .evidence-card .fine { grid-column: 1; }
+  .evidence-card > div { grid-column: 1; }
+  .glance { grid-template-columns: 1fr; gap: 16px; padding-block: 34px; }
   .steps { padding-block: 42px; gap: 16px; }
   .steps h2 { margin-top: 12px; }
   .status-grid { grid-template-columns: repeat(2, 1fr); }
