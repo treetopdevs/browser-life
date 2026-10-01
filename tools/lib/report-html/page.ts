@@ -359,6 +359,29 @@ thead th {
 
 .caveats p { max-width: 65ch; }
 
+/* --- evidence chips (tools/lib/report-html/lineage.ts): the word carries the
+   meaning, the colour only repeats it --- */
+
+.evidence {
+  display: inline-block;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0 0.55em;
+  margin-left: 0.4em;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+  vertical-align: 0.15em;
+  white-space: nowrap;
+}
+
+.evidence-exact { color: var(--pass); border-color: var(--pass); }
+.evidence-inferred { color: var(--accent); border-color: var(--accent); }
+.evidence-context { color: var(--accent2); border-color: var(--accent2); }
+.evidence-missing { color: var(--muted); border-style: dashed; }
+
 @media (max-width: 420px) {
   .report-wrap { padding-inline: 16px; }
   .status-chip { flex-wrap: wrap; }
@@ -418,6 +441,18 @@ ${sourceItems}
 </header>`;
 }
 
+/** How a number is known (docs/lineage-inspector.md, section 3): logged or
+ * reconstructed and checked, attributed by the tracker, realized and
+ * environment-dependent, or absent from the data. */
+export type Evidence = "exact" | "inferred" | "context" | "not recorded";
+
+/** A small chip naming an `Evidence` class. The word is always printed, so
+ * colour never carries the class alone. */
+export function evidenceChip(e: Evidence): string {
+  const cls = e === "not recorded" ? "missing" : e;
+  return `<span class="evidence evidence-${cls}">${escapeHtml(e)}</span>`;
+}
+
 export interface KeyNumberItem {
   /** Static text naming the exact statistic, its scope (profile, window,
    * condition, family, ...), and what it is -- never a data value itself. */
@@ -427,6 +462,8 @@ export interface KeyNumberItem {
    * "unavailable" when the underlying value is null/missing, with no guessed
    * cause attached. */
   value: string;
+  /** When given, an evidence chip follows the value. */
+  evidence?: Evidence;
 }
 
 /** Renders a mechanical "Key numbers" definition list: one {label, value}
@@ -436,7 +473,7 @@ export function keyNumbersList(items: KeyNumberItem[]): string {
   const entries = items
     .map(
       (it) =>
-        `<div class="key-number"><dt>${escapeHtml(it.label)}</dt><dd>${escapeHtml(it.value)}</dd></div>`,
+        `<div class="key-number"><dt>${escapeHtml(it.label)}</dt><dd>${escapeHtml(it.value)}${it.evidence ? evidenceChip(it.evidence) : ""}</dd></div>`,
     )
     .join("\n");
   return `<dl class="key-numbers">\n${entries}\n</dl>`;

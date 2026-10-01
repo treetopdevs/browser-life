@@ -195,7 +195,17 @@ Each phase is observer or analysis only, and each is a separate change.
    - Genotype subjects: subject rules (`--subject`, or `--rule top|random|longest` at `--step`), a neutral twin (`--twin`) and dossier JSON. On the M4 replay of gradient-m3 treatment seed 1 it takes about 7 s and verifies 55 of 55 ancestors against `genomes.tsv`. The original M4 bundle, which has no `genomes.tsv`, gives the identical ancestry.
    - The log is called complete only when its distinct children equal the run's mutation count. A root that is not a founder is reported as ancestry unknown before its minting, even when `genomes.tsv` supplies its genome. Censuses with no living lineage come from `series.jsonl`, so an extinct run is not shown as alive at its last non-empty census.
    - Pond subjects (`tools/lineage.ts pond`, reader in `tools/lib/pond-lineage.ts`). A node is a pond's pre-cycle state at a boundary; its parent is the donor whose packet reseeded it at the previous boundary. The dossier holds ancestry, exact offspring, clade size per cycle, the population trait band and each node's packet-dominant genotype. On scaffold `main` i0, the top pond at cycle 100 descends through 99 transfers and 48 distinct donor ponds. Every pond at cycle 100 shares that line up to cycle 72 in `scaf` (54 in `rand`). Standalone histories have no `mutations.tsv`, so the packet genotypes can't be opened as genotype dossiers until runner bundles exist.
-3. **Static panel** rendered from a dossier. Inline SVG in the style of `tools/lib/report-html` (no libraries, tokens only, no interpretive prose beyond the templates).
+3. **Built 2026-10-01: static panel** rendered from a dossier, as the `lineage` track of `tools/report-html.ts` (renderer `tools/lib/report-html/lineage.ts`). It uses inline SVG on the shared report tokens and page contract, with no libraries and no interpretive prose beyond the templates. Every section and key number carries an evidence chip.
+   - Genotype dossiers get five figures:
+     - ancestry lanes with the mutation table (locus, change, expression class and probe-grid effect per mutation);
+     - population, with the line and clade shares;
+     - light-response curves for root, peak ancestor and subject;
+     - mean outputs along the ancestry;
+     - realized flux per cell, when `profiles.tsv` exists.
+
+     Sections for offspring, tracker births, the neutral twin, what is not recorded, and provenance follow.
+   - Pond dossiers get the subject's ancestry over the population trait band, and descent (descendants of each ancestor, then clade size). A pond twin shows both arms side by side.
+   - On the M4 replay of seed 1 the page is about 315 KB. Series longer than the plot's pixel columns are drawn as per-column minimum-to-maximum bands, so no spike is dropped.
 4. **Lab integration.**
    - `LabExecution` keeps mutation edges. About 16 B per event, roughly 7.5 MB per 10⁶ steps at M4 rates; persist them with the observer state in OPFS.
    - New messages `lineage` and `highlight`, and a renderer highlight mode.

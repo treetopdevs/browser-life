@@ -79,6 +79,12 @@ The same tool takes a scaffold pond as its subject, with exact donor-packet desc
 deno run -A tools/lineage.ts pond --dir runs/scaffold/main/scaf/i0 --twin runs/scaffold/main/rand/i0 --out pond.json
 ```
 
+Either dossier renders as a static panel, an HTML fragment ready to publish as an artifact:
+
+```bash
+deno run -A tools/report-html.ts lineage dossier.json --out dossier.html
+```
+
 ### Archipelago
 
 ```bash
