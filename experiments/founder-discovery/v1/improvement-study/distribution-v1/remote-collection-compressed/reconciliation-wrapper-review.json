@@ -1,0 +1,9 @@
+{
+  "reviewer": "/root/distribution_review",
+  "verdict": "clear-conditional-on-64-histories-and-34-operations",
+  "reviewedAt": "2026-10-01T21:02:57.280585+00:00",
+  "helperSha256": "2523687e8ac2edffbc57cb6b2cc4be33e954466367c9d6eba7d4e66b1ef90a62",
+  "maximumOperationSeconds": 600,
+  "deadlineSeconds": 570,
+  "scope": "Original full64history semantic reconciliation only; preserve timeout as failed600; no assay execution authorized."
+}

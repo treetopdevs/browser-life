@@ -1,0 +1,15 @@
+{
+  "reviewer": "/root/distribution_review",
+  "verdict": "clear",
+  "reviewedAt": "2026-10-01T21:26:27.062581+00:00",
+  "resultSha256": "5acfa2bf60e58623cd82e813fb18a45cba737829fa12f31c1339dcc84ee44949",
+  "checks": [
+    "Remaining924canonicalfilesmatchstagedandconsolidatedbytes;first66previouslyverified",
+    "All15inventoriesprovenancecompletionsplanoperationrostersandpriorpinsagree",
+    "Exact64historydirectoryrosterandnoimportlock",
+    "All54archivalpinsandoriginalbatch/provenancebytesagree"
+  ],
+  "collectionChargedSeconds": 1560.5255814171396,
+  "cpuThrough034": 5204.947788709076,
+  "scope": "Collectionreviewonly;originalfullsemanticreconciliation035running;noassaysorinference"
+}

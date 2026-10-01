@@ -1,0 +1,43 @@
+{
+  "operation": "fixed-reviewed-remote-two-history-continuation",
+  "status": "settled",
+  "chargedSeconds": 61.48676120908931,
+  "releaseSha256": "c42017cfaee39d9fe414fbd1d7673f6f6041c57da2d46f193d1f6f845a70285e",
+  "helperSha256": "17165c502594d622ffdbbd0434550941cf5dca778bc88445393d5ab73c0e5554",
+  "workerSha256": "98858967a83892de8dc3c1ea47617601bdc90648aab0b677d2007138fbf4643b",
+  "planSha256": "66768bea0a6f03e797fd9c9b6cbac23385f43b546cf4f7c22f7047853a38eea7",
+  "unitIds": [
+    "discovery-cluster-4-6410007-normal",
+    "discovery-cluster-4-6410007-off"
+  ],
+  "priorReceiptPins": {
+    "001-remote-inventory.json": "ef24e727d641304ebdb7f99d2a023e46b29d4f743b6436a0ad494c44d6e2402d",
+    "002-transfer-first-history.json": "a4dd43bde3be569b254aec906328817d245c6a5594c15048673563509320de21",
+    "003-import-first-history.json": "cc1841a56f836f76560e00b6a704d82d8f865a640de3865578b2f4968feb8cdf",
+    "004-local-inventory-first4.json": "4e555f598a8aeddb56dd5fb442ff68b355419f7133d07e90c17294ed64e915fa",
+    "005-stage-local-first4.json": "2a1aaad4f361eaeca0bd01b7f031bb1ef38fab7bc7271aeb7f404248357af23a",
+    "006-import-local-first4.json": "4b18822d2e78f3830fed58cd380ef1038743966e5b744eb0c7cebe9dd2bf623c",
+    "007-local-next10.json": "13a61f570e3c424d0c6112478017774ef78ef12f43f2ed0dfa235082158bbab7",
+    "008-remote-next3.json": "e901675d16195f70d370209292e8af051d27829c2fe415bd7062ceba2337f3cf",
+    "009-remote-next3-recovery.json": "b4cedf1afffee8c903c810ce889c040f07475113873c80fa37abd48e345d9e3a",
+    "010-local-next2.json": "c4233a709a0bd4e7e6385aa2619e1983b038cc72bf97991396e1911d7a5bc87e",
+    "011-remote-next4.json": "fe707f3acdcc329daca0bcbf02ff8de6f68a44f2da5aeec2ada492d83f5954a5",
+    "012-remote-next4-recovery.json": "3582e67052f19a876f15642fae40c1bc864deca122cbe288f55d8f6759de95ac",
+    "013-local-next4b.json": "7b223d6b453456bb453f59abec29685d3507b52f9761ad542b982b41a5556b5f",
+    "014-local-final10.json": "f9549c9d37a595b64bf98931a55fab01740eddd3bdb09257760cae5093321162",
+    "015-local-final10-recovery-batch.json": "27ee1b5966d39d9e938ebde2b9c49e0396905b106bebb12038c2a116fc83db00",
+    "016-local-final10-recovery-batch.json": "97d62f35d237990abcd25832494e7d9ad68d7071601dc4c68432c3f3d31266f2",
+    "017-local-final10-recovery-batch.json": "218575d6efb292589816510435e9a2d8ad34a51490af742e6dcc5e6f992d7712",
+    "018-local-final10-recovery-batch.json": "0f9df0b0463bbde109643bce3ce67b61b043c3cca3b2f26aab506583378e668e",
+    "019-local-final10-recovery-batch.json": "b39beaca50200390c5153faad932e02e2d19fd2a41c736eb71b3267d4e32cbc8",
+    "020-remote-two-history-collection.json": "20cce261d748292f0bc031012df7fce0fc8faafb10f7b89a4ebc27b15c457029",
+    "021-remote-two-history-continuation.json": "d9195ebc9360f770d4746ad54ee2731166cf58607e7622d474162f6443493da9",
+    "022-remote-two-history-continuation.json": "dcbe4c27899d1b4715f1b465d3273b36caad36d777080cf7b4576634593866fb"
+  },
+  "firstBatchEvidencePins": {
+    "/Users/nicholas/develop/browser-life-founder-policy/runs/remote-collection-compressed-20261001/throughput-gate.json": "47760bee2b4437628a6b60f756e09a54895ea72d1a81146695f78f704c2d984e",
+    "/Users/nicholas/develop/browser-life-founder-policy/runs/remote-collection-compressed-20261001/batch-0/complete.json": "df6ec77458b5d6923de9f8f841199c8499ad015170d4ca9761aa9dc6f4dbf612"
+  },
+  "startedAt": 1790888543.584152,
+  "finishedAt": 1790888604.071687
+}

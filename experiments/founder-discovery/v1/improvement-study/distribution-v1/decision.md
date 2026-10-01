@@ -105,3 +105,9 @@ All 64 simulation histories have reached their terminal checkpoints. Only 34 his
 Operation 020 collected and semantically verified the normal/off pair for founder cluster 4, seed 6410004, in 60.800258875009604 seconds. Compression reduced this pair's transfer archive to approximately 9.3 MB. Independent review checked all 66 canonical file hashes in staging and consolidation, exact inventory/provenance/plan agreement, the compressed archive pin, completion receipt and accounting. Consolidation now has 36 histories; cumulative CPU evidence charges are 3,705.222466166946 seconds, leaving 9,894.777533833054 seconds.
 
 The first-batch helper intentionally stops after this gate. Its successful throughput supports preparing the remaining 14 two-history batches under the same 600-second per-operation limit and unchanged semantic importer. Their continuation helper requires review before execution. All simulation outputs and scientific decisions remain unchanged; assays are still gated on complete reconciliation.
+
+## All history evidence collected — 2026-10-01 UTC
+
+All 15 remote collection batches completed under the reviewed bounds, adding 30 histories to the existing collection. Independent review verified all 990 canonical files across staging and consolidation, all exact inventories/provenance/completion/plan/operation identities, and all 54 archival pins. The collection contains exactly the 64 assigned histories, with no active import lock; the collector exited successfully.
+
+Remote collection charged 1,560.5255814171396 seconds. Total CPU evidence charges through operation 034 are 5,204.947788709076 seconds, including preserved failed reservations. Original full-checkpoint reconciliation began as bounded operation 035 after the collection completed. It must finish and produce a complete roster before any assay release. No scientific improvement conclusion follows from collection completeness. Paid compute remains zero.

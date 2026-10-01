@@ -1,0 +1,27 @@
+{
+  "reviewer": "/root/distribution_review",
+  "verdict": "clear-fixed-14-batches",
+  "reviewedAt": "2026-10-01T21:00:17.047524+00:00",
+  "helperSha256": "17165c502594d622ffdbbd0434550941cf5dca778bc88445393d5ab73c0e5554",
+  "indices": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "maximumOperationSeconds": 600,
+  "deadlineSeconds": 571,
+  "worstCaseRemainingSeconds": 8400,
+  "verifiedAvailableSeconds": 9894.777533833054,
+  "scope": "Remaining28remotehistoriescollectiononly;unchangedpinnedworker;stopfirstfailure;reconciliationandassaysseparate."
+}
