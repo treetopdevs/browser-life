@@ -561,6 +561,12 @@ The amendment follows R1's result, so R1′ is exploratory. A positive R1′ onl
 - The unearmarked margin before this draw was about $1.12, so this draw took **about $2.82 from the cohort reserve**, which is now about **$117.18**.
 - The $60 RULE_VERSION 2 go/no-go is intact, and no unearmarked margin remains.
 
+**Row C (2026-10-01, the user's decision).** The line proceeds by protocol v1's row C, in two steps, each with its own review:
+1. **Integration (started now).** The pond cycle moves from the standalone tool into the shared runner, its checkpoints and segments, and the lab. Physics stays RULE_VERSION 1: the per-step rules, WGSL and golden pins do not change, and existing configurations hash identically. The design and its acceptance tests are fixed in `docs/scaffold-integration-v1.md` before code.
+2. **Registration draft** for a confirmatory scaffolding ensemble (an M7 candidate), after integration passes. It tests the genome swap with independent fragment draws per history and more replicates, which the R3 replication's caveats call for. Any AWS draw is recorded by a dated note before paid runs.
+
+Integration is engineering at $0, on the Mac. It does not count toward M6, and it changes no recorded result.
+
 
 ## Ecology-first founder discovery — 2026-09-29
 
