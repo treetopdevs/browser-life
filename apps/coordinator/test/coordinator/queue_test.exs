@@ -735,6 +735,203 @@ defmodule Coordinator.QueueTest do
     end
   end
 
+  # The pond presets (config.exs's `:pond_presets`; packages/schema/src/presets.ts)
+  # and the pond conditions (packages/runner/src/conditions.ts): refusals at
+  # creation mirror what the TypeScript runner throws on, and pond work goes
+  # only to islands that advertise "ponds-v1" (see Coordinator.Queue's moduledoc).
+  describe "ponds" do
+    @pond_spec %{
+      "experiment" => "pond",
+      "presetId" => "ponds-small",
+      "conditions" => ["treatment", "pond-rand", "pond-cont"],
+      "seeds" => [1],
+      "steps" => 4000,
+      "segmentSteps" => 2000,
+      "censusEvery" => 100,
+      "verifyFraction" => 1.0
+    }
+
+    test "a valid ponds-small spec with treatment, pond-rand and pond-cont is accepted" do
+      assert {:ok, 6} = Queue.create_experiment(@pond_spec)
+
+      assert {:ok, 1} =
+               Queue.create_experiment(%{
+                 @pond_spec
+                 | "experiment" => "pond-main",
+                   "presetId" => "ponds",
+                   "steps" => 10_000,
+                   "segmentSteps" => 10_000,
+                   "censusEvery" => 1000,
+                   "conditions" => ["pond-cont"]
+               })
+    end
+
+    test "a pond preset with a metapopulation is refused" do
+      for preset <- ~w(ponds-small ponds) do
+        assert {:error, "preset " <> rest} =
+                 Queue.create_experiment(
+                   %{
+                     @pond_spec
+                     | "presetId" => preset,
+                       "seeds" => [1, 2],
+                       "segmentSteps" => 10_000,
+                       "steps" => 10_000
+                   }
+                   |> Map.put("metapopulation", %{"topology" => "ring", "migrantCount" => 4})
+                 )
+
+        assert rest =~ "cannot have a metapopulation"
+      end
+    end
+
+    test "pond-rand and pond-cont are refused on every non-pond preset" do
+      pond_presets = Application.get_env(:coordinator, :pond_presets)
+
+      for preset <- Application.get_env(:coordinator, :presets) -- pond_presets,
+          c <- ~w(pond-rand pond-cont) do
+        assert {:error, "condition " <> ^c <> " does not apply to preset " <> ^preset} =
+                 Queue.create_experiment(%{
+                   @spec_ok
+                   | "presetId" => preset,
+                     "conditions" => ["treatment", c],
+                     "segmentSteps" => 600,
+                     "steps" => 600
+                 })
+      end
+    end
+
+    # The existing controls that throw on a pond preset in TypeScript
+    # (uniform light, no seasons, no migration and no metapopulation).
+    test "uniform-light, fixed-env and no-migration are refused on a pond preset" do
+      for preset <- ~w(ponds-small ponds), c <- ~w(uniform-light fixed-env no-migration) do
+        assert {:error, "condition " <> ^c <> " does not apply to preset " <> ^preset} =
+                 Queue.create_experiment(%{
+                   @pond_spec
+                   | "presetId" => preset,
+                     "conditions" => [c],
+                     "segmentSteps" => 10_000,
+                     "steps" => 10_000
+                 })
+      end
+    end
+
+    test "segmentSteps must be a multiple of the pond period, for every condition" do
+      for c <- ~w(treatment pond-rand pond-cont) do
+        assert {:error, msg} =
+                 Queue.create_experiment(%{
+                   @pond_spec
+                   | "conditions" => [c],
+                     "segmentSteps" => 1500
+                 })
+
+        assert msg == "segmentSteps must be a multiple of pondPeriod 1000 (condition #{c})"
+      end
+
+      assert {:error, "segmentSteps must be a multiple of pondPeriod 10000" <> _} =
+               Queue.create_experiment(%{
+                 @pond_spec
+                 | "presetId" => "ponds",
+                   "steps" => 10_000,
+                   "segmentSteps" => 5000
+               })
+    end
+
+    test "the pond period must be a multiple of censusEvery" do
+      assert {:error, "pondPeriod 1000 (condition treatment) must be a multiple of censusEvery"} =
+               Queue.create_experiment(%{
+                 @pond_spec
+                 | "censusEvery" => 300,
+                   "segmentSteps" => 3000,
+                   "steps" => 3000
+               })
+
+      assert {:error, "pondPeriod 1000 (condition pond-cont) must be a multiple of censusEvery"} =
+               Queue.create_experiment(%{
+                 @pond_spec
+                 | "conditions" => ["pond-cont"],
+                   "censusEvery" => 300,
+                   "segmentSteps" => 3000,
+                   "steps" => 3000
+               })
+    end
+
+    test "an island without ponds-v1 never gets a pond segment, while non-pond work still flows to it",
+         %{dir: dir} do
+      # "a-pond" sorts first, so its pending segment 0 is ahead of every
+      # "b-plain" segment in pick_task's order.
+      {:ok, 2} =
+        Queue.create_experiment(%{
+          @pond_spec
+          | "experiment" => "a-pond",
+            "conditions" => ["treatment"],
+            "steps" => 2000,
+            "segmentSteps" => 1000
+        })
+
+      # No verify of "b-plain" segment 0 (verification comes first in
+      # pick_task), so the capable island's next task below is a run.
+      {:ok, 3} =
+        Queue.create_experiment(%{@spec_ok | "experiment" => "b-plain", "verifyFraction" => 0.0})
+
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "old"})
+      {:ok, %{id: new}} = Queue.join(%{"adapter" => "new"})
+
+      # Default (no capabilities), an empty list and unrelated capabilities
+      # are all the same: the pond segment is skipped, not waited for.
+      {:ok, t1} = Queue.next_task(old)
+      assert t1.kind == "run" and String.starts_with?(t1.segment.run, "b-plain/")
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old, [])
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old, ["ponds-v0", "other"])
+
+      upload(dir, t1, old, "p0")
+      {:ok, "done"} = done(t1, old, "p0")
+      {:ok, t2} = Queue.next_task(old, [])
+      assert t2.kind == "run" and t2.segment.run == t1.segment.run and t2.segment.index == 1
+
+      # An island that advertises it gets the pond work, among other capabilities.
+      {:ok, p} = Queue.next_task(new, ["other", "ponds-v1"])
+      assert p.kind == "run" and String.starts_with?(p.segment.run, "a-pond/ponds-small/")
+      assert p.spec.presetId == "ponds-small"
+
+      # Never persisted: nothing about the request sticks to the island.
+      refute Map.has_key?(Queue.island_info(new), :capabilities)
+    end
+
+    test "an island without ponds-v1 is never given a pond verify task", %{dir: dir} do
+      {:ok, 1} =
+        Queue.create_experiment(%{
+          @pond_spec
+          | "experiment" => "a-pond",
+            "conditions" => ["treatment"],
+            "steps" => 2000,
+            "segmentSteps" => 2000
+        })
+
+      {:ok, %{id: producer}} = Queue.join(%{"adapter" => "producer"})
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "old"})
+      {:ok, %{id: new}} = Queue.join(%{"adapter" => "new"})
+
+      {:ok, t} = Queue.next_task(producer, ["ponds-v1"])
+      upload(dir, t, producer, "p0")
+      {:ok, "done"} = done(t, producer, "p0")
+
+      # The final segment always needs a verify by a different island: the
+      # one without the capability idles, even with nothing else to do ...
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old, [])
+
+      # ... while non-pond work created afterwards still reaches it ahead of
+      # the waiting pond verify.
+      {:ok, 3} = Queue.create_experiment(%{@spec_ok | "experiment" => "b-plain"})
+      {:ok, plain} = Queue.next_task(old)
+      assert plain.kind == "run" and String.starts_with?(plain.segment.run, "b-plain/")
+
+      {:ok, v} = Queue.next_task(new, ["ponds-v1"])
+      assert v.kind == "verify" and v.segment.id == t.segment.id
+      assert {:ok, "verified"} = Queue.complete(v.segment.id, new, v.lease, "verify", "p0", %{})
+    end
+  end
+
   test "large experiments stay responsive" do
     {:ok, 20_000} =
       Queue.create_experiment(%{

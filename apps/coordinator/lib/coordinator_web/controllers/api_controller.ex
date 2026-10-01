@@ -12,10 +12,11 @@ defmodule CoordinatorWeb.ApiController do
   # cheap regardless of what an island uploads.
   @max_manifest 1024 * 1024
   # Must match packages/runner/src/stitch.ts's VERIFIED_FILES (BUNDLE_FILES
-  # minus manifest.json, plus the optional migrations.tsv, exchanges.tsv and
-  # species.tsv) and Coordinator.Segment's @observation_files ++
-  # @optional_observation_files.
-  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json migrations.tsv exchanges.tsv species.tsv)
+  # minus manifest.json, plus the optional migrations.tsv, exchanges.tsv,
+  # species.tsv and ponds.tsv) and Coordinator.Segment's @observation_files ++
+  # @optional_observation_files (packages/runner/test/coordinator-files.test.ts
+  # checks both).
+  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json migrations.tsv exchanges.tsv species.tsv ponds.tsv)
 
   plug :require_island
        when action in [
@@ -72,8 +73,13 @@ defmodule CoordinatorWeb.ApiController do
     end
   end
 
-  def next(conn, _) do
-    {:ok, task} = Queue.next_task(conn.assigns.island)
+  # The island's `capabilities` (the JSON body, see `Coordinator.Queue`'s
+  # moduledoc) gate pond work for this request only. A well-formed JSON body
+  # whose `capabilities` is anything but a short list of short strings counts
+  # as none, so it never unlocks gated work (a body that is not JSON at all is
+  # still refused by the parser, as on every other route).
+  def next(conn, params) do
+    {:ok, task} = Queue.next_task(conn.assigns.island, capabilities(params["capabilities"]))
     json(conn, task)
   end
 
@@ -323,6 +329,14 @@ defmodule CoordinatorWeb.ApiController do
   defp safe_id!(id) do
     if is_binary(id) and Regex.match?(~r/^seg-[0-9]{1,9}$/, id), do: id, else: "seg-0"
   end
+
+  @max_capabilities 16
+
+  defp capabilities(list) when is_list(list) and length(list) <= @max_capabilities do
+    if Enum.all?(list, &(is_binary(&1) and byte_size(&1) <= 64)), do: list, else: []
+  end
+
+  defp capabilities(_), do: []
 
   defp hex16?(v), do: Regex.match?(~r/^[0-9a-f]{16}$/, v)
   defp hex64?(v), do: is_binary(v) and Regex.match?(~r/^[0-9a-f]{64}$/, v)
