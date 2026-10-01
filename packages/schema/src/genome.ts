@@ -25,8 +25,14 @@ export function encodeGenome(g: Genome, linHi: number, linLo: number): Uint32Arr
   out[G.LIN_LO] = linLo >>> 0;
   out[G.PARAM0] = ((g.mu & 0xffff) | ((g.sigma & 0xffff) << 16)) >>> 0;
   out[G.PARAM1] = g.motGain & 0xff;
-  const bytes = new Uint8Array(g.weights.buffer, g.weights.byteOffset, NN_BYTES);
-  for (let b = 0; b < NN_BYTES; b++) out[G.W0 + (b >> 2)] |= bytes[b] << ((b & 3) * 8);
+  // Index access works for an Int8Array, a plain array, and the {"0": …} object JSON.stringify
+  // makes of an Int8Array; anything missing or outside int8 is refused rather than encoded as 0.
+  const w = g.weights as unknown as ArrayLike<number>;
+  for (let b = 0; b < NN_BYTES; b++) {
+    const v = w[b];
+    if (!Number.isInteger(v) || v < -128 || v > 127) throw new Error(`encodeGenome: weight ${b} is ${v}; expected an int8 (did a genome lose its Int8Array in a JSON round-trip?)`);
+    out[G.W0 + (b >> 2)] |= (v & 0xff) << ((b & 3) * 8);
+  }
   return out;
 }
 

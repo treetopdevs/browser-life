@@ -53,6 +53,9 @@ import {
   pick,
   quality,
   qualityMaintenance,
+  BACKGROUND_ENCODING,
+  checkConfirmResumable,
+  reviveEvalConfig,
   type Evaluation,
   type EvalConfig,
   type ScoreFn,
@@ -125,7 +128,7 @@ type SavedArchive = {
   elites: { born: number; eval: Evaluation; genome: EncGenome }[];
 };
 type SavedRow = { screenCell: [number, number]; cell: [number, number]; eval: Evaluation; genome: EncGenome };
-type SavedConfirm = { gate: { confirmSeed: number; confirmSeeds?: [number, number][]; batchSize: number }; eval: typeof ec; rows: SavedRow[] };
+type SavedConfirm = { gate: { confirmSeed: number; confirmSeeds?: [number, number][]; batchSize: number }; eval: typeof ec; backgroundEncoding?: string; rows: SavedRow[] };
 const archivePath = `${a.out}/archive.json`, gatePath = `${a.out}/gate.json`, confirmPath = `${a.out}/confirm.json`, logPath = `${a.out}/viable.jsonl`;
 
 async function readJson<T>(path: string): Promise<T | undefined> {
@@ -229,8 +232,9 @@ if (restore) {
 // Everything the confirmation will need is checked before any GPU work, so a
 // conflict cannot surface after the search has spent seeds or written files.
 const [s0, s1]: [number, number] = a["confirm-only"] ? searchSeedsOf(saved!) : [ec.seed, ec.seed + Math.max(done, batches) - 1];
-const evalRef = a["confirm-only"] ? saved!.eval : ec;
+const evalRef = a["confirm-only"] ? reviveEvalConfig(saved!.eval) : ec;
 const prevConfirm = a.resume ? await readJson<SavedConfirm>(confirmPath) : undefined;
+checkConfirmResumable(prevConfirm, confirmPath);
 const confirmPer = reps > 0 ? Math.floor((evalRef.side * evalRef.side) / reps) : 0;
 if (reps > 0 && confirmPer < 1) throw new Error(`--confirm-reps ${reps} exceeds the ${evalRef.side * evalRef.side} tiles of a batch`);
 const prevRanges: [number, number][] = (prevConfirm
@@ -296,7 +300,7 @@ if (!a["confirm-only"]) {
 if (reps > 0) {
   const allScreened: { cell: [number, number]; genome: EncGenome }[] = JSON.parse(await Deno.readTextFile(gatePath));
   const arch: SavedArchive = JSON.parse(await Deno.readTextFile(archivePath));
-  const cec = { ...arch.eval, reps, seed: confirmSeed };
+  const cec = { ...reviveEvalConfig(arch.eval), reps, seed: confirmSeed };
   const confirmed = new Set(prevConfirm?.rows.map((r) => genomeKey(dec(r.genome))));
   const screened = allScreened.filter((s) => !confirmed.has(genomeKey(dec(s.genome))));
   const confirmBatches = Math.ceil(screened.length / confirmPer);
@@ -358,5 +362,5 @@ if (reps > 0) {
     const p = passing.indexOf(r);
     return { screenCell: r.screenCell, cell: r.cell, pass: p >= 0, cluster: p >= 0 ? cluster[p] : null, regenLowerBound: binomialLowerBound(r.eval.regenerated, r.eval.reps), eval: r.eval, genome: enc(r.genome) };
   });
-  await writeAtomic(confirmPath, JSON.stringify({ gate: detail, eval: cec, ...(dependence ? { dependence } : {}), rows: out }, null, 1));
+  await writeAtomic(confirmPath, JSON.stringify({ gate: detail, eval: cec, ...(cec.medium?.background ? { backgroundEncoding: BACKGROUND_ENCODING } : {}), ...(dependence ? { dependence } : {}), rows: out }, null, 1));
 }

@@ -6,6 +6,7 @@
 import {
   CH,
   G,
+  NN_BYTES,
   ROLE_WORDS,
   buildWorld,
   cellCount,
@@ -69,6 +70,42 @@ export const DEFAULT_EVAL: EvalConfig = {
   biomass: 64,
   seed: 1,
 };
+
+/**
+ * An EvalConfig read back from JSON (archive.json, confirm.json). JSON.stringify writes an
+ * Int8Array as {"0": …}, so a background genome's weights are rebuilt as an Int8Array here;
+ * a missing or out-of-range weight throws. Configs without a background are returned as is.
+ */
+export function reviveEvalConfig(raw: EvalConfig): EvalConfig {
+  const bg = raw.medium?.background;
+  if (!bg) return raw;
+  const w = bg.weights as unknown as ArrayLike<number>;
+  const weights = Int8Array.from({ length: NN_BYTES }, (_, i) => {
+    const v = w[i];
+    if (!Number.isInteger(v) || v < -128 || v > 127) throw new Error(`reviveEvalConfig: background weight ${i} is ${v}`);
+    return v;
+  });
+  return { ...raw, medium: { ...raw.medium, background: { mu: bg.mu, sigma: bg.sigma, motGain: bg.motGain, weights } } };
+}
+
+/**
+ * Written into confirm.json by tools/bootstrap.ts when the confirmation ran with a background genome,
+ * once background genomes are encoded by index (encodeGenome). Confirmations without it ran beside a
+ * ring whose controller weights were all zero.
+ */
+export const BACKGROUND_ENCODING = "by-index";
+
+/**
+ * Throws when `prev` (an existing confirm.json about to be extended by --resume) used a background genome
+ * but predates BACKGROUND_ENCODING: its rows ran beside a zero-weight ring, so adding rows evaluated against
+ * the real producer would pool two different conditions in one gate.
+ */
+export function checkConfirmResumable(prev: { eval?: EvalConfig; backgroundEncoding?: string } | undefined, file: string): void {
+  if (prev?.eval?.medium?.background && prev.backgroundEncoding !== BACKGROUND_ENCODING)
+    throw new Error(
+      `${file} was confirmed before background genomes were encoded by index: its background ring had all controller weights zero, so resuming would mix those rows with rows against the real producer. Keep it as the record; copy archive.json, gate.json and viable.jsonl to a new --out and run --confirm-only there to re-confirm against the real producer.`,
+    );
+}
 
 export interface Evaluation {
   /** Replicates with living bound mass after growth. */
@@ -216,7 +253,9 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
       owner[t] = k;
       const x = (t % ec.side) * ec.tile + ec.tile / 2;
       const y = Math.floor(t / ec.side) * ec.tile + ec.tile / 2;
-      // Background first as a larger disc; the candidate overwrites the centre → a producer ring.
+      // Background first as a larger disc. The candidate disc then overwrites the genome words at the
+      // centre but ADDS its biomass and energy to the background's (buildWorld uses +=), so in a
+      // background medium a candidate starts with roughly twice its own seeded mass.
       if (bg)
         founders.push({
           x,
