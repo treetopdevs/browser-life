@@ -489,3 +489,9 @@ The next step is the user's dated decision: either follow the table (a heredity 
 | **Total drawn** | **about $18.88** |
 
 - The unearmarked remainder before this draw was about $5.99, so this draw took **$0 from the cohort reserve**. The $120 cohort reserve and the $60 RULE_VERSION 2 go/no-go are intact, and about $1.12 of margin remains.
+
+**Amend R1 (2026-09-30, the user's decision, after the result).** R1 is amended to R1′ (protocol Amendment 2). R1′ keeps every part of R1 except two:
+- **time:** primary boundary 34, rebuilt by resuming the frozen main-run code from the cycle-33 checkpoint and verified row for row against the original run;
+- **trait:** the pond trait at τ, an observation time within the assay period, calibrated on the ancestor only and meant to reduce ceiling effects.
+
+The amendment follows R1's result, so R1′ is exploratory. A positive R1′ only replaces row 3's recommendation with "replicate on fresh histories with R1′ as the primary". It cannot reach integration or registration by itself. A negative R1′ leaves row 3 standing. It runs on the Mac at $0, with seeds 4,845,001–4,847,960 and 4,849,001–4,849,002.

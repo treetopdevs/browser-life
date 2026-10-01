@@ -308,3 +308,59 @@ These observations do not establish that selection depleted heritable variance, 
 - The assay regime is the same as the cycle regime.
 - R3's swap pass sits on the threshold.
 - R4 evaluates one genome per history.
+
+## Amendment 2 — 2026-09-30: R1′, an amended heredity test (post hoc; made after the R1 result)
+
+The user decided on 2026-09-30, after seeing R1's result, to amend R1. Because the amendment follows that result, everything below is exploratory. Its outcome changes only the recommendation (see "Disposition"). It cannot by itself move the line to integration (B) or registration (C). R1's own result and row 3 stand as recorded.
+
+**What changes, and why.** R1 at time C may have been limited by a ceiling (Results, post hoc paragraph):
+- in-run trait CV at boundary 100 was 0.01–0.26 in `scaf`;
+- 92–100% of `scaf` assay fragments ended at 80% or more of the assay budget.
+
+R1′ changes two things, the time and the trait. Everything else is R1 unchanged: donors, fragments, the assay world, the OLS covariates, the ICC, the permutation test and the 4-of-6 rule.
+
+1. **Time.**
+   - The primary time is boundary 34, the pre-cycle state there.
+   - Secondary times, descriptive only, are boundaries 67 and 100.
+   - Boundary 34 was chosen because it is the earliest state recoverable from a saved checkpoint (the post-cycle checkpoint at cycle 33), and because the in-run trait CV there is 0.35–0.62 in `scaf`. The CV is in-run pond-trait variation, already in the main run's records. No heredity outcome at boundary 34 or 67 has been computed or seen.
+2. **Reconstructing the states.** The pre-cycle states at boundaries 34 and 67 are rebuilt with the frozen main-run code itself: the tools and protocol at commit d198ceb4, in a separate workspace at that commit.
+   - **Replay.** Each history's run directory is copied with every checkpoint after cycle 33 (or 66) removed. Then `scaffold.ts evolve --resume --cycles 34` (or 67) runs with the history's own configuration, seed, mutation rate and 100-step census and drain cadence. That is the resume path shown byte-identical in the build gate, and it writes the pre-cycle checkpoint at the new final boundary.
+   - **Per-history check.** Every one of the 64 rows the replay writes for cycle 34 (or 67) must equal the original `ponds.tsv` row byte for byte. A row includes the heat booked from the whole pre-cycle world, and the packet's lineage ids and dominant lineage. Trait equality alone is only a consistency check.
+   - **Mechanism check.** Before any R1′ assay, one `scaf` history and one `rand` history (i = 0) are replayed from the cycle-50 checkpoint with `--cycles 66`. The resulting `b66-post` must equal the saved `b66-post` in `stateHash`.
+   - **Validity.** A history-time is valid when the mechanism check has passed, its own rows match, and its R1′ assay and analysis complete. Otherwise it is technically unavailable.
+   - Boundary 100 uses the existing `b100-pre` checkpoint.
+3. **Trait.** A fragment's trait is its pond trait at step τ of the assay period, instead of at the end. τ is an observation time calibrated on the ancestor, meant to reduce ceiling effects; it does not guarantee that evolved fragments are unsaturated. It is fixed before any R1′ assay, by a calibration on the ancestor only:
+   - **Calibration run.** The competence assay on the R3 ancestor source (seed 4,802,001 world), k = 8, two replicates, seeds 4,849,001 + s. The trait is recorded at every census (every 100 steps).
+   - **τ** is the first census step at which the median trait of the 128 ancestor fragments is at least 0.25 · ref = 25,764.5.
+   - If no census reaches it, τ = 10,000, and R1′'s trait is R1's end trait.
+   - τ is recorded in the result before any R1′ assay is analysed.
+4. **Seeds.** These come from a new block that does not overlap `assaySeed` (whose maximum is 4,844,690): 4,845,001 + 250·h + 100·t′ + s.
+   - h = 6·arm + i, with arm 0 for `scaf` and 1 for `rand`, so h runs 0–11.
+   - t′ = 0 for boundary 34, 1 for boundary 67 and 2 for boundary 100.
+   - s = 0–1 are the replicates, s = 8 the permutation stream and s = 9 the donor selection.
+
+   The block's maximum is 4,847,960. The τ calibration uses 4,849,001–4,849,002. The replays use each history's main-run seed, with no new randomness.
+
+**Rule.** Availability is evaluated first:
+- If fewer than 4 `scaf` histories are valid at boundary 34, R1′ is uninformative.
+- Otherwise, pond-level heredity is demonstrated in an arm (R1′) if, at boundary 34, the ICC of the trait at τ is above 0 with p < 0.05 in at least 4 of 6 histories.
+- A valid history with fewer than 2 eligible donors is a biological outcome. As in R1, it counts as not demonstrated.
+- A technically unavailable history also counts as not demonstrated.
+
+The rule is applied to `scaf` and reported for both `scaf` and `rand`.
+
+**Reported descriptively:**
+- the same statistic at boundaries 67 and 100;
+- the end-of-period trait at all three times;
+- each set's between-donor variance:
+  - the one-way ANOVA between-family variance component (MS_between − MS_within)/n₀ on the OLS-adjusted trait, with replicates pooled and negative estimates reported as they are;
+  - the variance of the raw family means;
+  - both at τ and at the end of the period;
+- saturation: the share of fragments at 80% or more of the assay budget at τ and at the end. It is reported only, and never used to retune τ.
+
+**Disposition (replaces only row 3's recommendation).**
+- **R1′ demonstrated in `scaf`.** Row 3's recommendation, a heredity rule variant, is withdrawn. The new recommendation is to replicate on fresh histories: a new main run with fresh seeds and with R1′ fixed in advance as the primary heredity readout. Only that replication can reach rows B or C.
+- **R1′ not demonstrated in `scaf`.** Row 3 and its recommendation stand, now resting on two designs.
+- **Fewer than 4 `scaf` histories valid at boundary 34.** R1′ is reported as uninformative, and row 3 stands.
+
+**Compute.** About 1.2 × 10⁶ 512² steps: 24 one-period replays, 36 transmission assays of two periods each, and the τ calibration. It runs on the Mac at $0.
