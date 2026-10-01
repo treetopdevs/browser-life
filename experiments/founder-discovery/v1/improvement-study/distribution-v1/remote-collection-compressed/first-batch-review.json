@@ -1,0 +1,9 @@
+{
+  "reviewer": "/root/distribution_review",
+  "verdict": "clear-first-batch-only",
+  "reviewedAt": "2026-10-01T20:56:52.491432+00:00",
+  "helperSha256": "98858967a83892de8dc3c1ea47617601bdc90648aab0b677d2007138fbf4643b",
+  "maximumOperationSeconds": 600,
+  "deadlineSeconds": 570,
+  "scope": "Two histories only; unchanged original semantic importer; continuation requires measured throughput and separate review."
+}
