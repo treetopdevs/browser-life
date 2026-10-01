@@ -524,6 +524,16 @@ The amendment follows R1's result, so R1′ is exploratory. A positive R1′ onl
 - **Next step:** a separate dated decision between integration (B) and an R3 replication on these fresh histories. The R3 replication comes before any registration.
 - **Cost:** $0, on the Mac.
 
+**Scaffold R3 replication (2026-10-01, the user's decision).** The R3 replication is chosen over integration. It reruns protocol v1's R3, unchanged, on fresh histories, fixed before any of its data exist: `docs/scaffold-r3-replication-v1.md`.
+- **Histories:** the 12 fresh `scaf` and `rand` histories, copied and extended from boundary 34 to 100; 6 new `cont` histories (seeds 4,811,301–4,811,306); a new ancestor source (seed 4,818,401).
+- **Rule:** v1's R3, decisive or not, after a device check (Mac to A10G) and the availability rule.
+- **Disposition:** replicates → row C (integration, then a registration draft, each by separate dated decision); does not replicate → row B; uninformative → report and stop.
+- **Seeds:** assays 4,816,301–4,818,112, continuations 4,818,301–4,818,319.
+
+**AWS draw (2026-10-01, before paid runs; approved by the user).** The replication runs on one g5.xlarge with six lanes: about 19 million 512² steps, about 4 h.
+- **Budget:** estimate about $5, hard stop $10, drawn from the follow-up $200.
+- **Ledger before this draw.** About $1.12 of unearmarked margin remains (the 2026-09-30 close-out above). By the user's decision (2026-10-01), what this draw spends beyond that margin comes out of the $120 cohort reserve, up to its $10 hard stop. The reduced reserve is recorded when this draw closes. The $60 RULE_VERSION 2 go/no-go stays untouched.
+
 
 ## Ecology-first founder discovery — 2026-09-29
 
