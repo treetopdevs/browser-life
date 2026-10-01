@@ -438,17 +438,8 @@ export class RefSim {
           x[7] = clampi(divi(Se - Sw, 4), -127, 127);
           x[8] = clampi(divi(Ss - Sn, 4), -127, 127);
           x[9] = clampi(divi(this.U[i], 2), -127, 127);
-          for (let j = 0; j < NN_H; j++) {
-            let acc = wb[B1_OFF + j] * 128;
-            for (let k = 0; k < NN_I; k++) acc += wb[W1_OFF + k * NN_H + j] * x[k];
-            h[j] = clampi(divi(acc, 128), 0, 127);
-          }
-          for (let k = 0; k < NN_O; k++) {
-            let acc = wb[B2_OFF + k] * 128;
-            for (let j = 0; j < NN_H; j++) acc += wb[W2_OFF + j * NN_O + k] * h[j];
-            o[k] = clampi(divi(acc, 128), -127, 127);
-          }
-          const r = (k: number) => (o[k] > 0 ? o[k] : 0);
+          controllerForward(wb, x, h, o);
+          const r =(k: number) => (o[k] > 0 ? o[k] : 0);
           mot = ((o[OUT.MX] + 128) | ((o[OUT.MY] + 128) << 8)) >>> 0;
 
           // Photosynthesis A + light -> B.
@@ -640,6 +631,24 @@ export function diffOut(q: number, d: number, De: number, baseS: number, sp: num
   const rot = baseS >>> 30;
   const portion = (q >>> 2) + (((d + rot) & 3) < (q & 3) ? 1 : 0);
   return mulFrac(portion, De * 4, 10, draw(baseS, RND.DIFF + d * 3 + sp));
+}
+
+/**
+ * The controller's forward pass: int8 weights `wb` (NN_BYTES) and sensors `x` (NN_I) give hidden
+ * units `h` (ReLU, saturating at 127) and outputs `o` (clamped to ±127). Exported so observers
+ * can evaluate a genome's response with exactly the arithmetic `react` uses.
+ */
+export function controllerForward(wb: Int8Array, x: Int32Array, h: Int32Array, o: Int32Array): void {
+  for (let j = 0; j < NN_H; j++) {
+    let acc = wb[B1_OFF + j] * 128;
+    for (let k = 0; k < NN_I; k++) acc += wb[W1_OFF + k * NN_H + j] * x[k];
+    h[j] = clampi(divi(acc, 128), 0, 127);
+  }
+  for (let k = 0; k < NN_O; k++) {
+    let acc = wb[B2_OFF + k] * 128;
+    for (let j = 0; j < NN_H; j++) acc += wb[W2_OFF + j * NN_O + k] * h[j];
+    o[k] = clampi(divi(acc, 128), -127, 127);
+  }
 }
 
 export function mutateInPlace(genome: Uint32Array, n: number, i: number, c: WorldConfig, which: number, deltaRnd: number): void {
