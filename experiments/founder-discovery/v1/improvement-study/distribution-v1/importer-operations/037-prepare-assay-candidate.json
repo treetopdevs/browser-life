@@ -1,0 +1,9 @@
+{
+  "operation": "prepare-nonauthorizing-assay-candidate",
+  "status": "settled",
+  "chargedSeconds": 1.4991096670273691,
+  "releaseSha256": "c42017cfaee39d9fe414fbd1d7673f6f6041c57da2d46f193d1f6f845a70285e",
+  "startedAt": 1790891516.192597,
+  "finishedAt": 1790891516.691888,
+  "candidateSha256": "ea6918ae6c92ff2ac5c584c3e93707049b3c711f1f6ea88da9077d91bda1b256"
+}

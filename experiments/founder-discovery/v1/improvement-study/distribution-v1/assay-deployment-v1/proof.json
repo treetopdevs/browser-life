@@ -1,0 +1,16 @@
+{
+  "format": "discovery-improvement-assay-deployment/v1",
+  "operations": [
+    "038-prepared-assay-deployment.json",
+    "039-released-assay-deployment.json"
+  ],
+  "failed038RemoteEffect": "transport directory and payload only; unpacked absent verified before039",
+  "files": {
+    "deployment039-helper.py": "de13a5c1a0cfb5d46d94969be7e21052e1ae080d09698d2b95267652c99cedde",
+    "failed038-helper.py": "009e7c6fd37060bfdc5ec32ad5855834dd9f354724819e54b8db4c5a1f79bbce",
+    "file-pins.json": "3cfdc276e02bfed923f7b719d6dd7a58a9502dab152ff9663ac0daf44181696c",
+    "release-verification.json": "70e21b0cc7c02f593c6e4ef7e04de2f2d5ea95b576a4610b51a84452ab50c323",
+    "remote-verification.json": "b033193dfe1ef990fcda58d20fcd0dd90cb8c970d77c78661b0eca3205f2a7df"
+  },
+  "executionLaunched": false
+}

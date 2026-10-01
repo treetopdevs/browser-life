@@ -1,0 +1,10 @@
+{
+  "operation": "released-assay-dependencies-remote-deployment-and-two-host-verification",
+  "status": "settled",
+  "chargedSeconds": 2.4730942910537124,
+  "releaseSha256": "c42017cfaee39d9fe414fbd1d7673f6f6041c57da2d46f193d1f6f845a70285e",
+  "startedAt": 1790892032.161866,
+  "finishedAt": 1790892033.635326,
+  "transferredFiles": 157,
+  "filePinsSha256": "3cfdc276e02bfed923f7b719d6dd7a58a9502dab152ff9663ac0daf44181696c"
+}

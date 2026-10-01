@@ -1,0 +1,9 @@
+{
+  "operation": "prepared-assay-dependencies-only-remote-deployment",
+  "status": "failed",
+  "chargedSeconds": 600,
+  "releaseSha256": "c42017cfaee39d9fe414fbd1d7673f6f6041c57da2d46f193d1f6f845a70285e",
+  "startedAt": 1790891870.5163908,
+  "finishedAt": 1790891871.248062,
+  "error": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\nTypeError: extractall() got an unexpected keyword argument 'filter'\n"
+}

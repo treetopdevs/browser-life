@@ -1,0 +1,9 @@
+{
+  "format": "discovery-improvement-assay-release/v1",
+  "status": "RELEASED",
+  "candidatePath": "experiments/founder-discovery/v1/improvement-study/distribution-v1/assay-candidate-v1.json",
+  "candidateSha256": "ea6918ae6c92ff2ac5c584c3e93707049b3c711f1f6ea88da9077d91bda1b256",
+  "reviewedBy": "Root with independent distribution_review",
+  "reviewReference": "experiments/founder-discovery/v1/improvement-study/distribution-v1/reconciliation-v2/final-review.json sha256:657ea2a36256091cbe81dd486a9c347e9dc354e441cbbd85798f74e32defec94",
+  "reviewedAt": "2026-10-01T21:58:23.732422+00:00"
+}
