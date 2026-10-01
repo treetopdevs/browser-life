@@ -8,6 +8,7 @@ import {
   applyBoundary, decodeArtifact, observeCensus, pondContext, pondContinuationError, restoreObservers, serializeObservers,
   type ObserverState, type PondCycle,
 } from "@bl/runner";
+import { MutationEdges } from "@bl/lineage";
 import { LabExecution, type LabSimulation } from "../src/execution.ts";
 
 const settings = { censusEvery: 100, deepEvery: 5, activityThreshold: null };
@@ -111,6 +112,44 @@ describe("lab execution", () => {
     const [ac, bc] = await Promise.all([a.execution.checkpoint(), resumed.execution.checkpoint()]);
     expect(stateHash(ac.state)).toBe(stateHash(bc.state));
     expect(ac.observer).toEqual(bc.observer);
+  });
+
+  it("keeps every mutation edge through a checkpoint and resumes them, exactly as a continuous run", async () => {
+    const state = initial();
+    state.cfg = { ...state.cfg, mutRate: 429_497 * 80 };
+    const reference = new RefSim(cloneState(state));
+    const edgesAt = (steps: number) => {
+      const e = new MutationEdges();
+      e.append(reference.run(steps));
+      return e;
+    };
+    const { execution } = setup(state);
+    await execution.advanceFrame(100);
+    await execution.advanceFrame(100);
+    await execution.advanceFrame(50);
+    const saved = await execution.checkpoint();
+    const first = edgesAt(300);
+    expect(first.length).toBeGreaterThan(3);
+    expect(saved.edges).toBe(first.length);
+    expect(Array.from(execution.edges.words())).toEqual(Array.from(first.words()));
+
+    const carried = new MutationEdges(execution.edges.words());
+    const resumed = setup(saved.state, { observer: saved.observer, lineage: { edges: carried, dropped: saved.dropped } });
+    await resumed.execution.advanceFrame(100);
+    const all = new MutationEdges(first.words());
+    all.append(reference.run(100));
+    expect(Array.from(resumed.execution.edges.words())).toEqual(Array.from(all.words()));
+  });
+
+  it("counts dropped mutation events and refuses edges minted past the world's step", async () => {
+    const { sim, execution } = setup();
+    sim.dropped = 3;
+    await execution.advanceFrame(100);
+    expect(execution.dropped).toBe(3);
+    expect((await execution.checkpoint()).dropped).toBe(3);
+    const ahead = new MutationEdges();
+    ahead.append([{ childHi: 5, childLo: 1, parentHi: 0, parentLo: 1 }]);
+    expect(() => setup(initial(0), { lineage: { edges: ahead, dropped: 0 } })).toThrow(/run past the simulation's step/);
   });
 
   it("commits observation before migration and reports dropped mutation events", async () => {

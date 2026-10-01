@@ -16,6 +16,7 @@ import {
   type PondContext,
   type PondCycle,
 } from "@bl/runner";
+import { MutationEdges } from "@bl/lineage";
 
 /** Real GPU simulation in the worker; reference physics with injectable readbacks in tests. */
 export type LabSimulation = Pick<GpuSim, "cfg" | "step" | "run" | "drainLedger" | "readSnapshot" | "readState" | "upload" | "destroy">;
@@ -23,6 +24,8 @@ interface ExecutionOptions {
   observer?: ObserverState;
   /** The state the simulation was built from; required for a pond world, whose cycles check against it. */
   start?: WorldState;
+  /** The run's mutation edges up to the simulation's step, and the events its ledger has dropped (lineage inspector). */
+  lineage?: { edges: MutationEdges; dropped: number };
   waitForIdle: () => Promise<unknown>;
   isCurrent: () => boolean;
   onObservation?: (census: Census, dropped: number) => void;
@@ -39,6 +42,9 @@ export class LabExecution {
   private readonly cursor: { observed: number };
   private readonly ponds: PondContext | null;
   private lost: string | null = null;
+  /** Mutation edges drained at each census, in step order: the lineage inspector's genealogy. */
+  readonly edges: MutationEdges;
+  private droppedEvents: number;
 
   constructor(private readonly sim: LabSimulation, private readonly settings: ObserverSettings, private readonly options: ExecutionOptions) {
     if (!Number.isSafeInteger(settings.censusEvery) || settings.censusEvery <= 0) throw new Error("censusEvery must be a positive integer");
@@ -62,7 +68,13 @@ export class LabExecution {
     if (pondPeriod !== undefined && !this.ponds) throw new Error("a pond world needs its start state for the pond cycle's conservation checks");
     this.obs = restoreObservers(options.observer, settings, sim.cfg);
     this.cursor = { observed: sim.step };
+    this.edges = options.lineage?.edges ?? new MutationEdges();
+    this.droppedEvents = options.lineage?.dropped ?? 0;
+    if (this.edges.countBefore(sim.step) !== this.edges.length) throw new Error("mutation edges run past the simulation's step");
   }
+
+  /** Mutation events the ledger dropped, so missing from `edges`. */
+  get dropped(): number { return this.droppedEvents; }
 
   get failure(): string | null { return this.lost; }
 
@@ -90,7 +102,7 @@ export class LabExecution {
     const state = await this.sim.readState();
     this.check();
     if (state.step !== this.cursor.observed) throw new Error(`observer state is at t=${this.cursor.observed}, not t=${state.step}`);
-    return { state, observer: serializeObservers(this.obs, state.step, this.settings), advanced: state.step - from };
+    return { state, observer: serializeObservers(this.obs, state.step, this.settings), advanced: state.step - from, edges: this.edges.length, dropped: this.droppedEvents };
   }
 
   /** Own the replay cursor and twin lifetime so verification cannot omit a migration or pond cycle. */
@@ -141,6 +153,8 @@ export class LabExecution {
       await this.walk(this.sim, this.cursor, target, async (step) => {
         const ledger = await this.sim.drainLedger();
         this.check();
+        this.edges.append(ledger.events);
+        this.droppedEvents += ledger.dropped;
         const snap = await this.sim.readSnapshot(false);
         this.check();
         if (snap.step !== step) throw new Error(`observation at t=${snap.step}, expected the census boundary t=${step}`);

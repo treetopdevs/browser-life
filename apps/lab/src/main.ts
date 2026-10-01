@@ -2,6 +2,7 @@ import { PRESETS, worldH, worldW, NN_I, NN_H, NN_O, NN_BYTES, type WorldConfig }
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import type { CensusMsg, FromWorker, PondsMsg, ProbeMsg, StatsMsg, ToWorker } from "./protocol.ts";
 import { Series } from "./sparkline.ts";
+import { createLineagePanel } from "./lineage-panel.ts";
 import "./theme.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -12,6 +13,7 @@ const canvas = $<HTMLCanvasElement>("world");
 const wrap = $("canvas-wrap");
 const worker = new Worker(new URL("./sim.worker.ts", import.meta.url), { type: "module" });
 const send = (m: ToWorker, t: Transferable[] = []) => worker.postMessage(m, t);
+const lineagePanel = createLineagePanel(send);
 
 let cfg: WorldConfig | null = null;
 let rect: ViewRect = { x: 0, y: 0, w: 256, h: 256 };
@@ -422,6 +424,11 @@ function onProbe(p: ProbeMsg) {
   }
   ctx.putImageData(img, 0, 0);
   cv.title = `Controller weights: ${NN_I}→${NN_H}→${NN_O} (red negative, blue positive)`;
+  const inspect = $<HTMLButtonElement>("btn-lineage");
+  // The key travels with the button: a later probe of an empty cell hides it rather than retargeting a click.
+  inspect.hidden = !p.lineage;
+  inspect.dataset.key = p.lineage;
+  inspect.onclick = () => inspect.dataset.key && lineagePanel.open(inspect.dataset.key);
 }
 
 // ---------- pond cycle ----------
@@ -475,6 +482,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       resetPondStatus();
       fit(true);
       toast(`Loaded ${m.manifest.runId}`);
+      lineagePanel.onLoaded();
       break;
     case "stats":
       onStats(m);
@@ -487,6 +495,12 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       break;
     case "ponds":
       onPonds(m);
+      break;
+    case "lineage":
+      lineagePanel.onLineage(m);
+      break;
+    case "highlight":
+      lineagePanel.onHighlight(m.key);
       break;
     case "checkpoints":
       $("checkpoint-empty").hidden = m.list.length > 0;
@@ -546,6 +560,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       }
       $<HTMLButtonElement>("btn-new").disabled = false;
       setStatus("Attention needed", "error");
+      lineagePanel.onError();
       toast(m.message, true);
       console.error(m.message);
       break;

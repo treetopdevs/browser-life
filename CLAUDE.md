@@ -30,7 +30,7 @@ Experiment CLIs (`tools/`, all Deno, native WebGPU): `run.ts` (write run bundles
 
 ## Architecture
 
-**Package imports.** `@bl/*` resolve to `packages/*/src/index.ts` via three separate maps that must stay in sync: `tsconfig.json` paths, `vitest.config.ts` aliases, and `deno.json` imports. There is no build step for packages.
+**Package imports.** `@bl/*` resolve to `packages/*/src/index.ts` via four separate maps that must stay in sync: `tsconfig.json` paths, `vitest.config.ts` aliases, `deno.json` imports, and `apps/lab/vite.config.ts` aliases. There is no build step for packages.
 
 **Two implementations of one rule set.**
 - `packages/sim-ref/src/step.ts` is the executable specification (CPU).
@@ -38,7 +38,7 @@ Experiment CLIs (`tools/`, all Deno, native WebGPU): `run.ts` (write run bundles
 - `packages/sim-ref/test/golden-hashes.test.ts` pins state hashes per `RULE_VERSION` (in `packages/schema/src/config.ts`). Any change to dynamics changes the hashes: an intended rule change bumps `RULE_VERSION` and re-pins deliberately. A change that isn't meant to alter dynamics must leave every pin untouched — new optional `WorldConfig` keys stay absent from `defaultConfig()` so existing configs hash identically.
 - All arithmetic is integer (u32 matter, fixed-point controllers, counter-based PRNG keyed on seed/step/cell, stochastic rounding with remainders to the source). Conservation residual is exactly zero. Keep new arithmetic inside the bounds listed in `docs/rules.md` (`MATTER_MAX`, `POOL_MAX`, `mulShr` limits); `validateConfig`/`validateState` enforce them.
 
-**Packages.** `schema` (config, presets, layout, genome, worlds, checkpoint encoding, migration/exchange, M3 founder set) → `sim-ref`, `sim-gpu` → `metrics` (census, tracker, collectives, activity, complexity, stats; runs on readbacks) → `runner` (conditions, `runExperiment`, observers, stitching, island client) and `search` (MAP-Elites, gates). `runner` code runs unchanged in browsers and Deno.
+**Packages.** `schema` (config, presets, layout, genome, worlds, checkpoint encoding, migration/exchange, M3 founder set) → `sim-ref`, `sim-gpu` → `metrics` (census, tracker, collectives, activity, complexity, stats; runs on readbacks) → `runner` (conditions, `runExperiment`, observers, stitching, island client) and `search` (MAP-Elites, gates). `lineage` (schema, sim-ref) is the lineage inspector's genotype core: keys, ancestry, mutation replay, the controller probe, and the mutation-edge store the lab keeps. `runner` code runs unchanged in browsers and Deno.
 
 **Checkpoints and replay.** A checkpoint artifact carries physics state and observer state together, under one digest. Segmented runs must equal a continuous run byte for byte (`tests/deno/segments.ts`, `tests/deno/stitch.ts`); this determinism is what makes distributed verification possible.
 

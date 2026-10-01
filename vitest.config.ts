@@ -12,6 +12,7 @@ export default defineConfig({
       "@bl/metrics": r("./packages/metrics/src/index.ts"),
       "@bl/runner": r("./packages/runner/src/index.ts"),
       "@bl/search": r("./packages/search/src/index.ts"),
+      "@bl/lineage": r("./packages/lineage/src/index.ts"),
     },
   },
   test: {

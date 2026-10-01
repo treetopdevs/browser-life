@@ -206,12 +206,12 @@ Each phase is observer or analysis only, and each is a separate change.
      Sections for offspring, tracker births, the neutral twin, what is not recorded, and provenance follow.
    - Pond dossiers get the subject's ancestry over the population trait band, and descent (descendants of each ancestor, then clade size). A pond twin shows both arms side by side.
    - On the M4 replay of seed 1 the page is about 315 KB. Series longer than the plot's pixel columns are drawn as per-column minimum-to-maximum bands, so no spike is dropped.
-4. **Lab integration.**
-   - `LabExecution` keeps mutation edges. About 16 B per event, roughly 7.5 MB per 10⁶ steps at M4 rates; persist them with the observer state in OPFS.
-   - New messages `lineage` and `highlight`, and a renderer highlight mode.
-   - The probe resolves to a lineage.
-   - "Jump to step" through checkpoint restore. The lab writes checkpoints only on Save today, so add periodic automatic checkpoints.
-   - Decide whether tracker history should survive checkpoints.
+4. **Built 2026-10-01: lab integration.** The genotype core moved to a package, `@bl/lineage` (`packages/lineage`), which `tools/lib/lineage.ts` re-exports.
+   - `LabExecution` appends each census's ledger drain to a `MutationEdges` store: 16 B per event, held sorted by child id, so a parent is a binary search. Each checkpoint writes its own OPFS sidecar, `<checkpoint>.edges`, holding the run's edges up to it. A failed save therefore cannot damage another checkpoint's genealogy, and a restore reads the sidecar back. The checkpoint format and observer state are unchanged.
+   - The selected-cell card has "Inspect lineage". The worker settles at the next census, because edges are drained there, then replays the ancestry with `lineageAncestry`. The controller probes, the slow part, run afterwards in cancellable slices (`probeLineage`), so the world keeps rendering. Replay starts from the earliest ancestor whose genome is known exactly: the start world (rebuilt from the preset and accepted only at the manifest's new `startHash`), the state a world was restored or imported from, or the live world. Every replayed genome that a known source also holds is checked against it, and a mismatch refuses the view. A world loaded from a file knows its genealogy only from that step, and the view says so.
+   - The drawer shows the subject, its response to light, and the ancestry with each mutation's locus, change and expression class. "Highlight on field" tints that lineage's cells and dims the rest, using the renderer's 3 spare uniform words. Highlighting a whole clade would need a key set on the GPU and is not built.
+   - "Jump" (per ancestor) saves the present, restores the latest checkpoint at or before the ancestor's minting, and replays to it. The lab now also writes an automatic checkpoint every 20,000 steps and keeps the newest 6 of each run's own; a fork never prunes the checkpoints it inherited from its parent. Jumps only target checkpoints whose files still exist. The Playwright test `tests/e2e/lab-lineage.spec.ts` checks that a jump back, replayed forward, reaches a world with the same state hash as the saved present.
+   - Decided: tracker history does not survive checkpoints. The tracker keeps counts and living individuals only. Keeping its event history would change the observer state that the runner, the coordinator and checkpoint digests share. The lab panel therefore shows genotype descent only, and says that tracker births are not kept.
 5. **Observer additions** for the gaps:
    - per-lineage E and mass, and realized motility and emission, in `profiles.tsv`;
    - a bounded sample of realized sensor vectors per lineage at deep censuses (for Proposal A).

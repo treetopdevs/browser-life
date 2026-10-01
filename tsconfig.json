@@ -19,7 +19,8 @@
       "@bl/sim-gpu": ["./packages/sim-gpu/src/index.ts"],
       "@bl/metrics": ["./packages/metrics/src/index.ts"],
       "@bl/runner": ["./packages/runner/src/index.ts"],
-      "@bl/search": ["./packages/search/src/index.ts"]
+      "@bl/search": ["./packages/search/src/index.ts"],
+      "@bl/lineage": ["./packages/lineage/src/index.ts"]
     }
   },
   "include": ["packages/*/src", "apps/lab/src", "apps/lab/test", "tests"],
