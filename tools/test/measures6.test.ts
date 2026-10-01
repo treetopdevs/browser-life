@@ -7,10 +7,13 @@ import {
   rankUniformity,
   realTurnover,
   rng,
+  runInputDifferences,
   shadowExcessReference,
   shadowExcessStream,
+  tieBrokenRanks,
   type Census,
   type ProfileRow,
+  type RunInput,
 } from "../lib/measures6.ts";
 
 async function* gen<T>(xs: T[]): AsyncGenerator<T> {
@@ -133,10 +136,12 @@ describe("shadowExcessStream, full mode", () => {
     for (const threshold of [300, 1000]) {
       const want = originalShadowExcess(stream, threshold);
       const got = await shadowExcessStream(gen(stream), threshold, 20, 4_500_001, "full");
-      const { rank, k, ...rest } = got;
+      const { rank, k, ties, ...rest } = got;
       expect(rest).toEqual(want);
       expect(k).toBe(20);
       expect(rank).toBeGreaterThanOrEqual(0);
+      expect(ties).toBeGreaterThanOrEqual(0);
+      expect(rank + ties).toBeLessThanOrEqual(20);
     }
   });
   it("defines rank as the number of shadows strictly exceeded, so flagged is rank === k", async () => {
@@ -145,6 +150,8 @@ describe("shadowExcessStream, full mode", () => {
         const res = await shadowExcessStream(gen(HAND), threshold, 9, seed, "full");
         expect(res.flagged).toBe(res.rank === 9);
         expect(res.rank).toBeLessThanOrEqual(9);
+        expect(res.ties).toBeGreaterThanOrEqual(0);
+        expect(res.rank + res.ties).toBeLessThanOrEqual(9);
         if (res.rank === 9) expect(res.real).toBeGreaterThan(res.shadowMax);
         if (res.rank === 0) expect(res.real).toBeLessThanOrEqual(res.shadowMedian);
       }
@@ -180,10 +187,12 @@ describe("shadowExcessStream equals the plain reference implementation", () => {
   it("reproduces the original shadowExcess loop exactly on the real-data scale of k = 20", async () => {
     const stream = randomStream(9, 150, 30, 300);
     const want = originalShadowExcess(stream, 600);
-    const { rank, k, ...rest } = await shadowExcessStream(gen(stream), 600, 20, 4_500_001, "full");
+    const { rank, k, ties, ...rest } = await shadowExcessStream(gen(stream), 600, 20, 4_500_001, "full");
     expect(rest).toEqual(want);
     expect(k).toBe(20);
     expect(rank).toBeGreaterThanOrEqual(0);
+    expect(ties).toBeGreaterThanOrEqual(0);
+    expect(rank + ties).toBeLessThanOrEqual(20);
   });
 });
 
@@ -203,6 +212,8 @@ describe("shadowExcessStream, observed mode", () => {
     expect(s.shadowMax).toBe(2);
     expect(s.flagged).toBe(false);
     expect(s.rank).toBe(0);
+    // Every shadow equals the real value: all k = 8 are ties.
+    expect(s.ties).toBe(8);
   });
 });
 
@@ -284,6 +295,65 @@ describe("chi-square survival function and rank uniformity", () => {
     expect(spike.p).toBeLessThan(1e-20);
     // k = 199: 200 ranks, 20 per bin.
     expect(rankUniformity([0, 19, 20, 199], 199, 10).bins).toEqual([2, 1, 0, 0, 0, 0, 0, 0, 0, 1]);
+  });
+});
+
+describe("runInputDifferences", () => {
+  const input: RunInput = { runId: "replay-m4/spots-m3/neutral/seed-1", initHash: "63266cb8fead45a5", finalHash: "91d64e06f31fb420", steps: 1_000_000, metricsVersion: 2, lineagesBytes: 20_889_522, profilesBytes: 4_957_384 };
+  it("is empty for equal inputs, including a missing table on both sides", () => {
+    expect(runInputDifferences(input, { ...input })).toEqual([]);
+    expect(runInputDifferences({ ...input, profilesBytes: null }, { ...input, profilesBytes: null })).toEqual([]);
+  });
+  it("names every differing field with the cached and the current value, in field order", () => {
+    const now: RunInput = { ...input, finalHash: "0000000000000000", lineagesBytes: 1_000_000, profilesBytes: null };
+    expect(runInputDifferences(input, now)).toEqual([
+      "finalHash: cached 91d64e06f31fb420, now 0000000000000000",
+      "lineagesBytes: cached 20889522, now 1000000",
+      "profilesBytes: cached 4957384, now null",
+    ]);
+  });
+  it("treats a field missing from the cached record as different", () => {
+    const { steps: _steps, ...rest } = input;
+    expect(runInputDifferences(rest as RunInput, input)).toEqual(["steps: cached undefined, now 1000000"]);
+  });
+});
+
+describe("tieBrokenRanks", () => {
+  const items = [{ rank: 0, ties: 99 }, { rank: 40, ties: 0 }, { rank: 10, ties: 5 }, { rank: 99, ties: 0 }, { rank: 3, ties: 7 }, { rank: 0, ties: 0 }];
+  it("is deterministic for a seed and changes with another seed", () => {
+    const a = tieBrokenRanks(items, 4_500_201);
+    expect(tieBrokenRanks(items, 4_500_201)).toEqual(a);
+    expect(tieBrokenRanks(items, 4_500_202)).not.toEqual(a);
+  });
+  it("stays within [rank, rank + ties] and equals the rank when there are no ties", () => {
+    for (const seed of [1, 2, 3, 4_500_201, 4_500_202]) {
+      const t = tieBrokenRanks(items, seed);
+      expect(t).toHaveLength(items.length);
+      items.forEach((x, i) => {
+        expect(Number.isInteger(t[i])).toBe(true);
+        expect(t[i]).toBeGreaterThanOrEqual(x.rank);
+        expect(t[i]).toBeLessThanOrEqual(x.rank + x.ties);
+        if (x.ties === 0) expect(t[i]).toBe(x.rank);
+      });
+    }
+  });
+  it("draws once per item even without ties, so the sequence is fixed by list order", () => {
+    // Item 1 (ties = 0) still consumes a draw: item 2 gets the third draw of the stream either way.
+    const r = rng(7);
+    const draws = [r(), r(), r()];
+    const t = tieBrokenRanks([{ rank: 0, ties: 9 }, { rank: 5, ties: 0 }, { rank: 0, ties: 9 }], 7);
+    expect(t).toEqual([Math.floor(draws[0] * 10), 5, Math.floor(draws[2] * 10)]);
+  });
+  it("repairs the review's scenario: 70 runs that tie all 99 shadows are not evidence against the null", () => {
+    const k = 99;
+    const tied = Array.from({ length: 70 }, () => ({ rank: 0, ties: 99 }));
+    // Strict ranks: all 70 land in the lowest bin (chi2 = 630, 9 df).
+    const strict = rankUniformity(tied.map((x) => x.rank), k, 10);
+    expect(strict.p).toBeLessThan(1e-50);
+    // Tie-broken ranks are uniform on 0..99 under exchangeability, and the test no longer rejects.
+    const broken = rankUniformity(tieBrokenRanks(tied, 4_500_201), k, 10);
+    expect(broken.n).toBe(70);
+    expect(broken.p).toBeGreaterThan(0.01);
   });
 });
 

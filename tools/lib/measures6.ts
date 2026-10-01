@@ -57,6 +57,12 @@ export interface ShadowResult {
   /** Number of shadows the real run strictly exceeds (0..k); flagged is rank === k. */
   rank: number;
   k: number;
+  /**
+   * Number of shadows exactly equal to the real value (0..k). Strict ranks are not uniform when the real run ties
+   * shadows (a run whose shadows all match it has rank 0 whatever the null); `ties` feeds the tie-aware
+   * diagnostic `tieBrokenRanks`. Strict `rank`, `flagged` and `rankUniformity` are unchanged.
+   */
+  ties: number;
 }
 
 /**
@@ -175,7 +181,8 @@ export async function shadowExcessReference(censuses: AsyncIterable<Census>, thr
   const shadows = sh.map((x) => x.cumNew).sort((p, q) => p - q);
   const median = quantileSorted(shadows, 0.5);
   const rank = shadows.filter((s) => s < realNew).length;
-  return { real: realNew, shadowMedian: median, shadowMax: shadows[shadows.length - 1], excess: realNew - median, flagged: realNew > shadows[shadows.length - 1], rank, k };
+  const ties = shadows.filter((s) => s === realNew).length;
+  return { real: realNew, shadowMedian: median, shadowMax: shadows[shadows.length - 1], excess: realNew - median, flagged: realNew > shadows[shadows.length - 1], rank, k, ties };
 }
 
 /**
@@ -330,7 +337,32 @@ export async function shadowExcessStream(censuses: AsyncIterable<Census>, thresh
   const shadows = sh.map((x) => x.cumNew).sort((p, q) => p - q);
   const median = quantileSorted(shadows, 0.5);
   const rank = shadows.filter((s) => s < realNew).length;
-  return { real: realNew, shadowMedian: median, shadowMax: shadows[shadows.length - 1], excess: realNew - median, flagged: realNew > shadows[shadows.length - 1], rank, k };
+  const ties = shadows.filter((s) => s === realNew).length;
+  return { real: realNew, shadowMedian: median, shadowMax: shadows[shadows.length - 1], excess: realNew - median, flagged: realNew > shadows[shadows.length - 1], rank, k, ties };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Cache inputs.
+
+/**
+ * What a cached shadow/profile value was computed from, cheap to read (the manifest plus the sizes of the two tables, no
+ * table reads): enough to notice that a cache entry is being reused with another set of files. A field is null when the
+ * source lacks it (a missing table, an old manifest).
+ */
+export interface RunInput {
+  runId: string | null;
+  initHash: string | null;
+  finalHash: string | null;
+  steps: number | null;
+  metricsVersion: number | null;
+  lineagesBytes: number | null;
+  profilesBytes: number | null;
+}
+export const RUN_INPUT_FIELDS: readonly (keyof RunInput)[] = ["runId", "initHash", "finalHash", "steps", "metricsVersion", "lineagesBytes", "profilesBytes"];
+
+/** Every field in which `cached` differs from `now`, as "<field>: cached X, now Y" (empty when the inputs agree). */
+export function runInputDifferences(cached: RunInput, now: RunInput): string[] {
+  return RUN_INPUT_FIELDS.filter((f) => cached[f] !== now[f]).map((f) => `${f}: cached ${String(cached[f])}, now ${String(now[f])}`);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -396,6 +428,18 @@ export interface RankUniformity {
   p: number;
   /** Mean of rank / k. */
   meanRankOverK: number;
+}
+
+/**
+ * Randomised tie-breaking of strict ranks: each item's rank becomes `rank + floor(u * (ties + 1))`, with `u` drawn from
+ * `rng(seed)` in input order (one draw per item, even when ties = 0, so the sequence is fixed by the list order).
+ * Under exchangeability of the real run and its shadows, the tie-broken rank is uniform on 0..k for an ideal uniform
+ * `u` (exact in the idealised formula; the 32-bit PRNG grid adds a negligible bias), which the strict rank is not when
+ * ties occur (plain ranks of tied values pile up at the low end).
+ */
+export function tieBrokenRanks(items: { rank: number; ties: number }[], seed: number): number[] {
+  const r = rng(seed);
+  return items.map((x) => x.rank + Math.floor(r() * (x.ties + 1)));
 }
 
 /**
