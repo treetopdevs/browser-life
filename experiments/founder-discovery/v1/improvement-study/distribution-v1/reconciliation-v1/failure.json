@@ -1,0 +1,17 @@
+{
+  "format": "discovery-reconciliation-timeout-evidence/v1",
+  "observedAt": "2026-10-01T21:39:50.396201+00:00",
+  "operation": 35,
+  "status": "failed-timeout",
+  "chargedSeconds": 600,
+  "checkedPids": [
+    90100,
+    90111
+  ],
+  "psExitCode": 1,
+  "psStdout": "",
+  "outputFiles": [],
+  "reviewer": "/root/distribution_review",
+  "recommendation": "Oneexplicit1800secondreservation1770deadlineunchangedverifierretry;successnotguaranteed",
+  "decisionSha256": "5efd50b5e8d1fb31d0e2cb55a81c60400c6fbe4dbdd5b89ec4e668b303a4f959"
+}

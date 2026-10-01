@@ -1,0 +1,8 @@
+{
+  "reviewer": "/root/distribution_review",
+  "verdict": "clear-single-cpu-retry",
+  "reviewedAt": "2026-10-01T21:41:09.822763+00:00",
+  "helperSha256": "560f9eedee5a73a6b13ceaf57b264c591168f7632ea1709305117a766263ce51",
+  "decisionSha256": "5efd50b5e8d1fb31d0e2cb55a81c60400c6fbe4dbdd5b89ec4e668b303a4f959",
+  "scope": "One1800secondreservation/1770deadlinewithunchangedverifier,freshv2,failed035chargepreserved,total13600unchanged;noassays"
+}

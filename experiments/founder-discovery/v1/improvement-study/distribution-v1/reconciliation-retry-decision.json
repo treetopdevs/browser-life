@@ -1,0 +1,35 @@
+{
+  "format": "discovery-reconciliation-runtime-exception/v1",
+  "status": "AUTHORIZED-CPU-ONLY",
+  "decidedAt": "2026-10-01T21:39:29.048553+00:00",
+  "owner": "/root",
+  "failedOperation": {
+    "path": "experiments/founder-discovery/v1/improvement-study/distribution-v1/importer-operations/035-global-history-reconciliation.json",
+    "sha256": "25bf7dfa2ac01dbc587f737fd697f35ba561d67e7bba435a6f227f07f8cd459e",
+    "preservedChargeSeconds": 600
+  },
+  "verifier": {
+    "path": "tools/discovery_improvement_reconcile.ts",
+    "sha256": "99b8bb09dab4eebb6890454f58038b81213ab99106cae6ab3ed11753498d6874"
+  },
+  "successorLedgerSha256": "c42017cfaee39d9fe414fbd1d7673f6f6041c57da2d46f193d1f6f845a70285e",
+  "cpuTotalCapSeconds": 13600,
+  "priorChargedSeconds": 5804.947788709076,
+  "oneTimeReservationSeconds": 1800,
+  "deadlineSeconds": 1770,
+  "cleanupSeconds": 10,
+  "remainingAfterReservationSeconds": 5995.052211290924,
+  "outputDirectory": "experiments/founder-discovery/v1/improvement-study/distribution-v1/reconciliation-v2",
+  "diagnosis": {
+    "checkpointFiles": 704,
+    "checkpointBytes": 9412725408,
+    "serialHistories": 64,
+    "approxCheckpointReadBytesFourPasses": 37650901632,
+    "pairedWorkflowMeanSeconds": 104.03503876114264,
+    "singleSemanticPassEstimateSeconds": 666,
+    "estimateIsNotGuarantee": true,
+    "explanation": "Serial full checkpoint validation plus repeated hashes, cumulative ancestry checks and per-cell genome decoding exceeds the initial short operation estimate."
+  },
+  "scope": "One retry of unchanged full verifier only. Explicit exception to prior per-operation600 seconds, not expansion of13600 CPU total or345600 global cap. No caching, semantic shortcut, changed science or assay release. Stop on timeout; preserve failure charge and any outputs. Independent review required before launch.",
+  "paidUSD": 0
+}
