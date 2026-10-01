@@ -1,0 +1,57 @@
+{
+  "observedAt": "2026-10-01T22:03:05.116Z",
+  "local": {
+    "launch": {
+      "hostId": "local",
+      "supervisorPid": 36749,
+      "awakePid": 36750,
+      "startedAt": 1790892110.1617122,
+      "releaseSha256": "51327e0a2f8eec32436f17279d14ab1005f815ba37d0a1936158b8cb930a9be9",
+      "command": [
+        "python3",
+        "-u",
+        "tools/discovery_improvement_assay_continue.py",
+        "/Users/nicholas/develop/browser-life-founder-policy/experiments/founder-discovery/v1/improvement-study/distribution-v1/assay-release-v1.json",
+        "local",
+        "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-assays-local-v1"
+      ],
+      "outputRoot": "/Users/nicholas/develop/browser-life-founder-policy/runs/founder-discovery-improvement-assays-local-v1",
+      "paidUSD": 0
+    },
+    "alive": true,
+    "assaysCompleted": 4,
+    "workerLock": {
+      "pid": 36751,
+      "hostId": "local",
+      "releaseHash": "51327e0a2f8eec32436f17279d14ab1005f815ba37d0a1936158b8cb930a9be9"
+    },
+    "console": ""
+  },
+  "remote": {
+    "launch": {
+      "hostId": "work-mac",
+      "supervisorPid": 53793,
+      "awakePid": 53794,
+      "startedAt": 1790892110.218136,
+      "releaseSha256": "51327e0a2f8eec32436f17279d14ab1005f815ba37d0a1936158b8cb930a9be9",
+      "command": [
+        "python3",
+        "-u",
+        "tools/discovery_improvement_assay_continue.py",
+        "/Users/180471/bl-founder-discovery/experiments/founder-discovery/v1/improvement-study/distribution-v1/assay-release-v1.json",
+        "work-mac",
+        "/Users/180471/bl-founder-discovery/runs/founder-discovery-improvement-assays-work-mac-v1"
+      ],
+      "outputRoot": "/Users/180471/bl-founder-discovery/runs/founder-discovery-improvement-assays-work-mac-v1",
+      "paidUSD": 0
+    },
+    "alive": true,
+    "assaysCompleted": 5,
+    "workerLock": {
+      "pid": 53802,
+      "hostId": "work-mac",
+      "releaseHash": "51327e0a2f8eec32436f17279d14ab1005f815ba37d0a1936158b8cb930a9be9"
+    },
+    "console": ""
+  }
+}
