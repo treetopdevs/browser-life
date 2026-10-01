@@ -1,0 +1,23 @@
+{
+  "operation": "inventory-stage-verify-and-consolidate-next-ten-local-histories",
+  "status": "settled",
+  "chargedSeconds": 288.81351270899177,
+  "startedAt": "2026-09-30T20:43:25.390735+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "unitIds": [
+    "discovery-cluster-33-6410003-normal",
+    "discovery-cluster-33-6410003-off",
+    "discovery-cluster-33-6410004-normal",
+    "discovery-cluster-33-6410004-off",
+    "discovery-cluster-33-6410005-normal",
+    "discovery-cluster-33-6410005-off",
+    "discovery-cluster-33-6410006-normal",
+    "discovery-cluster-33-6410006-off",
+    "discovery-cluster-4-6410001-normal",
+    "discovery-cluster-4-6410001-off"
+  ],
+  "finishedAt": "2026-09-30T20:48:13.207318+00:00",
+  "provenanceSha256": "5f1cafaa57ab2a67f4ca4362f4e58b3c87032cbb0aa573363b24e725dfdbbedd",
+  "verifiedHistories": 10,
+  "canonicalFiles": 330
+}

@@ -38,6 +38,11 @@ export type Request = {
   seed: number;
   assignment: number;
 };
+import type {
+  Pin,
+  verifySuccessorLedger,
+} from "./discovery_improvement_budget.ts";
+type VerifiedSuccessor = Awaited<ReturnType<typeof verifySuccessorLedger>>;
 export interface Candidate {
   format: "discovery-improvement-assay-candidate/v1";
   status: "PREPARED";
@@ -50,6 +55,7 @@ export interface Candidate {
     readiness: { path: string; sha256: string };
     roster: { path: string; sha256: string };
   };
+  successorBudgetLedger?: Pin;
   executionSources: Record<string, string>;
   budget: {
     globalCapSeconds: 345600;
@@ -58,7 +64,7 @@ export interface Candidate {
     historyReservedInvocations: number;
     engineeringReservedSeconds: number;
     engineeringReservedInvocations: number;
-    cpuReservedSeconds: 3600;
+    cpuReservedSeconds: number;
     remainingSeconds: number;
     remainingInvocations: number;
     reservationSeconds: 3600;
@@ -253,7 +259,8 @@ export function partition(
     hostIds.map((id, index) => [id, sorted.filter((_, i) => i % 2 === index)]),
   );
 }
-export function budget(a: Allocation) {
+export function budget(a: Allocation, successor?: VerifiedSuccessor) {
+  if (successor) return successor;
   const historyReservedSeconds = a.globalPriorSeconds +
       a.hosts.reduce((n, h) => n + h.capSeconds, 0),
     historyReservedInvocations = a.priorInvocations +
@@ -374,12 +381,33 @@ async function inputs(c: Candidate) {
     requests: validateRoster(m, r, ready, entries.roster),
   };
 }
+async function successorProof(
+  c: Pick<Candidate, "successorBudgetLedger" | "executionSources">,
+  a: Allocation,
+  allocationSha256: string,
+) {
+  if (!c.successorBudgetLedger) return undefined;
+  const modulePath = "tools/discovery_improvement_budget.ts";
+  if (
+    !hex.test(c.executionSources[modulePath] ?? "") ||
+    sha256(await bytes(modulePath)) !== c.executionSources[modulePath]
+  ) throw Error("successor verifier code drift");
+  const raw = await bytes(localPath(c.successorBudgetLedger.path));
+  if (sha256(raw) !== c.successorBudgetLedger.sha256) {
+    throw Error("successor ledger bytes drift");
+  }
+  const { verifySuccessorLedger } = await import(
+    "./discovery_improvement_budget.ts"
+  );
+  return await verifySuccessorLedger(a, allocationSha256, parse(raw));
+}
 async function candidate(
   manifestPath: string,
   allocationPath: string,
   readinessPath: string,
   rosterPath: string,
   out: string,
+  successorPath?: string,
 ) {
   const paths = {
       manifest: manifestPath,
@@ -397,6 +425,22 @@ async function candidate(
   await closure(m);
   const sources: Record<string, string> = {};
   for (const p of operationFiles) sources[p] = sha256(await bytes(p));
+  const successorBudgetLedger = successorPath
+    ? {
+      path: relative(Deno.cwd(), successorPath),
+      sha256: sha256(await bytes(successorPath)),
+    }
+    : undefined;
+  if (successorBudgetLedger) {
+    sources["tools/discovery_improvement_budget.ts"] = sha256(
+      await bytes("tools/discovery_improvement_budget.ts"),
+    );
+  }
+  const successor = await successorProof(
+    { successorBudgetLedger, executionSources: sources },
+    a,
+    records.allocation.sha256,
+  );
   const r = parse(await bytes(rosterPath)) as Roster,
     parts = partition(r.uniqueKeys, a.hosts.map((h) => h.id));
   const c: Candidate = {
@@ -407,7 +451,8 @@ async function candidate(
     sourceManifestHash: m.sourceManifestHash,
     inputs: records,
     executionSources: sources,
-    budget: budget(a),
+    ...(successorBudgetLedger ? { successorBudgetLedger } : {}),
+    budget: budget(a, successor),
     hosts: a.hosts.map((h) => ({
       id: h.id,
       root: h.root,
@@ -422,6 +467,20 @@ async function candidate(
   await noSymlinks(out);
   await writeNew(out, JSON.stringify(c, null, 2) + "\n");
 }
+export function validateAssayHostEnvelope(
+  hosts: Candidate["hosts"],
+  successorUsed: boolean,
+) {
+  if (
+    successorUsed &&
+    (hosts.length !== 2 ||
+      hosts.some((h) => h.capSeconds !== 43000 || h.maxInvocations !== 75))
+  ) {
+    throw Error(
+      "successor preserves exact assay caps; recovered resources remain unallocated",
+    );
+  }
+}
 export async function validateCandidate(c: Candidate) {
   if (
     c.format !== "discovery-improvement-assay-candidate/v1" ||
@@ -434,7 +493,10 @@ export async function validateCandidate(c: Candidate) {
       sha256(await bytes(p)) !== c.executionSources[p]
     ) throw Error(`operational source drift ${p}`);
   }
-  const data = await inputs(c), expectedBudget = budget(data.a);
+  const data = await inputs(c),
+    successor = await successorProof(c, data.a, c.inputs.allocation.sha256),
+    expectedBudget = budget(data.a, successor);
+  validateAssayHostEnvelope(c.hosts, !!c.successorBudgetLedger);
   if (
     !same(c.budget, expectedBudget) || c.hosts.length !== 2 ||
     c.hosts.reduce((n, h) => n + h.capSeconds, 0) > c.budget.remainingSeconds ||
@@ -711,7 +773,7 @@ async function run(
 }
 if (import.meta.main) {
   const [stage, ...args] = Deno.args;
-  if (stage === "candidate" && args.length === 5) {
+  if (stage === "candidate" && (args.length === 5 || args.length === 6)) {
     await candidate(
       ...args.map((p) => resolve(p)) as [
         string,
@@ -719,6 +781,7 @@ if (import.meta.main) {
         string,
         string,
         string,
+        string?,
       ],
     );
   } else if (stage === "verify" && args.length === 1) {
@@ -727,6 +790,6 @@ if (import.meta.main) {
   } else if (stage === "run" && args.length === 4) {
     await run(resolve(args[0]), args[1], resolve(args[2]), Number(args[3]));
   } else {throw Error(
-      "usage: candidate MANIFEST HISTORY_ALLOCATION READINESS ROSTER NEW_PREPARED_CANDIDATE | verify RELEASED_FILE | run RELEASED_FILE HOST OUT SECONDS",
+      "usage: candidate MANIFEST HISTORY_ALLOCATION READINESS ROSTER NEW_PREPARED_CANDIDATE [REVIEWED_SUCCESSOR_LEDGER] | verify RELEASED_FILE | run RELEASED_FILE HOST OUT SECONDS",
     );}
 }

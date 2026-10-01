@@ -1,0 +1,21 @@
+{
+  "operation": "inventory-stage-verify-and-consolidate-final-ten-local-histories",
+  "status": "failed",
+  "chargedSeconds": 600,
+  "startedAt": "2026-10-01T02:28:01.529389+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "unitIds": [
+    "discovery-cluster-139-6410001-normal",
+    "discovery-cluster-139-6410001-off",
+    "discovery-cluster-139-6410002-normal",
+    "discovery-cluster-139-6410002-off",
+    "discovery-cluster-139-6410003-normal",
+    "discovery-cluster-139-6410003-off",
+    "discovery-cluster-16-6410002-normal",
+    "discovery-cluster-16-6410002-off",
+    "discovery-cluster-16-6410003-normal",
+    "discovery-cluster-16-6410003-off"
+  ],
+  "error": "Command '['deno', 'run', '--no-lock', '-A', 'tools/discovery_improvement_import.ts', 'import', 'experiments/founder-discovery/v1/improvement-study/manifest.json', 'experiments/founder-discovery/v1/improvement-study/distribution-v1/allocation.json', 'experiments/founder-discovery/v1/improvement-study/distribution-v1/inventory-local-final10.json', 'runs/founder-discovery-import-staging/local-final10', 'runs/founder-discovery-improvement-consolidated-v1']' timed out after 454.27791800000705 seconds",
+  "finishedAt": "2026-10-01T02:37:31.553416+00:00"
+}

@@ -1,0 +1,9 @@
+{
+  "operation": "explicit-compressed-recovery-and-consolidate-four-remote-histories",
+  "status": "reserved",
+  "chargedSeconds": 600,
+  "startedAt": "2026-09-30T21:59:20.665535+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "inventorySha256": "5a815f7dc6926be702e299ccf7a7087e1e05e21b0c3a874ebb2a9d889f13bb10",
+  "recoveryDecisionSha256": "d730b121853eb3391512426c414e4462ff1ded439465e097e1c6f925fbfc64a4"
+}

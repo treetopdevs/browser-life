@@ -1,0 +1,54 @@
+{
+  "format": "discovery-improvement-budget-successor/v1",
+  "status": "REVIEWED",
+  "payload": {
+    "predecessorAllocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+    "retirements": [
+      {
+        "hostId": "local",
+        "closure": {
+          "path": "experiments/founder-discovery/v1/improvement-study/distribution-v1/history-closure-local/closure.json",
+          "sha256": "4133e3c0dc3212cb707fbc70e29d10a5d3ac8725ee0d1e2eaf0a279f85de710e"
+        },
+        "closureReview": {
+          "path": "experiments/founder-discovery/v1/improvement-study/distribution-v1/history-closure-local/review.json",
+          "sha256": "e0904d289e223af506ebdf2f6ebb8b294a39ae379eba440bbf269dab6f572e7d"
+        },
+        "evidenceDirectory": "experiments/founder-discovery/v1/improvement-study/distribution-v1/history-closure-local",
+        "actualSeconds": 22942.16142741812,
+        "actualInvocations": 35
+      }
+    ],
+    "cpu": {
+      "priorReserveSeconds": 3600,
+      "reserveSeconds": 13600,
+      "transferSeconds": 10000,
+      "priorRelease": {
+        "path": "experiments/founder-discovery/v1/improvement-study/distribution-v1/importer-release.json",
+        "sha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f"
+      },
+      "snapshotDirectory": "experiments/founder-discovery/v1/improvement-study/distribution-v1/budget-successor-v1/cpu-operations",
+      "operationFiles": {
+        "001-remote-inventory.json": "ef24e727d641304ebdb7f99d2a023e46b29d4f743b6436a0ad494c44d6e2402d",
+        "002-transfer-first-history.json": "a4dd43bde3be569b254aec906328817d245c6a5594c15048673563509320de21",
+        "003-import-first-history.json": "cc1841a56f836f76560e00b6a704d82d8f865a640de3865578b2f4968feb8cdf",
+        "004-local-inventory-first4.json": "4e555f598a8aeddb56dd5fb442ff68b355419f7133d07e90c17294ed64e915fa",
+        "005-stage-local-first4.json": "2a1aaad4f361eaeca0bd01b7f031bb1ef38fab7bc7271aeb7f404248357af23a",
+        "006-import-local-first4.json": "4b18822d2e78f3830fed58cd380ef1038743966e5b744eb0c7cebe9dd2bf623c",
+        "007-local-next10.json": "13a61f570e3c424d0c6112478017774ef78ef12f43f2ed0dfa235082158bbab7",
+        "008-remote-next3.json": "e901675d16195f70d370209292e8af051d27829c2fe415bd7062ceba2337f3cf",
+        "009-remote-next3-recovery.json": "b4cedf1afffee8c903c810ce889c040f07475113873c80fa37abd48e345d9e3a",
+        "010-local-next2.json": "c4233a709a0bd4e7e6385aa2619e1983b038cc72bf97991396e1911d7a5bc87e",
+        "011-remote-next4.json": "fe707f3acdcc329daca0bcbf02ff8de6f68a44f2da5aeec2ada492d83f5954a5",
+        "012-remote-next4-recovery.json": "3582e67052f19a876f15642fae40c1bc864deca122cbe288f55d8f6759de95ac",
+        "013-local-next4b.json": "7b223d6b453456bb453f59abec29685d3507b52f9761ad542b982b41a5556b5f",
+        "014-local-final10.json": "f9549c9d37a595b64bf98931a55fab01740eddd3bdb09257760cae5093321162"
+      },
+      "priorChargedSeconds": 3168.233267333824
+    }
+  },
+  "decision": {
+    "path": "experiments/founder-discovery/v1/improvement-study/distribution-v1/budget-successor-v1/review.json",
+    "sha256": "ae5c0dc5ac0fe4f3d7bebd9f3cfbb4f4b2ba7b8ac14e88454adc66d51afe79ad"
+  }
+}

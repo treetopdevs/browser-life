@@ -1,0 +1,12 @@
+{
+  "operation": "verify-and-consolidate-first-four-local-histories",
+  "status": "settled",
+  "chargedSeconds": 95.64911437500268,
+  "startedAt": "2026-09-30T20:31:18.998621+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "finishedAt": "2026-09-30T20:32:53.649273+00:00",
+  "provenanceSha256": "cf996f04933374cca8543199ab55042e1cb8caeaf41394030ba6da2881e07403",
+  "destination": "runs/founder-discovery-improvement-consolidated-v1",
+  "verifiedHistories": 4,
+  "canonicalFiles": 132
+}

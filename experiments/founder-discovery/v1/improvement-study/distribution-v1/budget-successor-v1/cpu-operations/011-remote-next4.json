@@ -1,0 +1,13 @@
+{
+  "operation": "remote-inventory-transfer-and-consolidate-four-histories",
+  "status": "reserved",
+  "chargedSeconds": 600,
+  "startedAt": "2026-09-30T21:48:07.638162+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "unitIds": [
+    "discovery-cluster-4-6410004-normal",
+    "discovery-cluster-4-6410004-off",
+    "discovery-cluster-4-6410005-normal",
+    "discovery-cluster-4-6410005-off"
+  ]
+}

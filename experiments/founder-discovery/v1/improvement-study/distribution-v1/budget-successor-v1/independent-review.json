@@ -1,0 +1,17 @@
+{
+  "format": "discovery-budget-successor-artifact-review/v1",
+  "reviewedAt": "2026-10-01T02:42:49.255298+00:00",
+  "reviewer": "/root/distribution_review",
+  "verdict": "clear",
+  "ledgerSha256": "c42017cfaee39d9fe414fbd1d7673f6f6041c57da2d46f193d1f6f845a70285e",
+  "checks": [
+    "Source, decision, payload, closure, prior release and operation pins match",
+    "CPU snapshot exactly preserves operations001 through014",
+    "All failed full600 second charges retained",
+    "No omitted CPU charges at snapshot time",
+    "Remote allocation unchanged; retirement administrative only",
+    "Assays remain unreleased with43000 seconds and75invocations perhost"
+  ],
+  "cpuChargedSeconds": 3168.233267333824,
+  "cpuFutureAvailableSeconds": 10431.766732666176
+}

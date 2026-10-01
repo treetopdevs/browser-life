@@ -1,0 +1,12 @@
+{
+  "operation": "transfer-first-completed-remote-history",
+  "status": "settled",
+  "chargedSeconds": 11.682204582961276,
+  "startedAt": "2026-09-30T20:23:17.587469+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "finishedAt": "2026-09-30T20:23:28.270872+00:00",
+  "inventorySha256": "f34717fa2f859d5b6f489740ca73a619f272daee6c4df70552d3f8e936144d82",
+  "staging": "runs/founder-discovery-import-staging/remote-first",
+  "verifiedFiles": 33,
+  "bytes": 159586438
+}

@@ -1,0 +1,15 @@
+{
+  "operation": "inventory-stage-verify-and-consolidate-two-local-histories",
+  "status": "settled",
+  "chargedSeconds": 70.25445416697767,
+  "startedAt": "2026-09-30T21:20:33.987362+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "unitIds": [
+    "discovery-cluster-4-6410002-normal",
+    "discovery-cluster-4-6410002-off"
+  ],
+  "finishedAt": "2026-09-30T21:21:43.246613+00:00",
+  "provenanceSha256": "9fd44c2caced8eaacbec852047617645b3759d942c1655835738d1f7e073ccc8",
+  "verifiedHistories": 2,
+  "canonicalFiles": 66
+}

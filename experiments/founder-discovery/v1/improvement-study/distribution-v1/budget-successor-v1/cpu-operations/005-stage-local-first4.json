@@ -1,0 +1,11 @@
+{
+  "operation": "stage-first-four-local-histories-and-preserve-inventory-bytes",
+  "status": "settled",
+  "chargedSeconds": 2.0187679999507964,
+  "startedAt": "2026-09-30T20:30:55.124387+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "finishedAt": "2026-09-30T20:30:56.144157+00:00",
+  "staging": "runs/founder-discovery-import-staging/local-first4",
+  "files": 132,
+  "inventoriesPreserved": 2
+}

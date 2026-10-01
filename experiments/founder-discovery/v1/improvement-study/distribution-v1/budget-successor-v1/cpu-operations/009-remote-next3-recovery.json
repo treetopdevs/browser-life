@@ -1,0 +1,13 @@
+{
+  "operation": "explicit-recovery-transfer-and-consolidate-three-remote-histories",
+  "status": "settled",
+  "chargedSeconds": 94.0253683750052,
+  "startedAt": "2026-09-30T21:01:44.714361+00:00",
+  "releaseSha256": "b1e72c65d2c52e4345eff356e106e5ee141323abc30c52e27a165cf6c34b025f",
+  "inventorySha256": "1565ccb29b613249d9b186e0ea56006f459438653c1e5aeafc13ebb94e16b1c2",
+  "recoveryDecisionSha256": "4067d72c01e0fbc7486ac5e332e100563a0b4a46cf85c62ddba7db7388ff18f3",
+  "finishedAt": "2026-09-30T21:03:17.741399+00:00",
+  "provenanceSha256": "0f383669e29e222708536e21308ed749a1a092d784d301c738ca4181f2260231",
+  "verifiedHistories": 3,
+  "canonicalFiles": 99
+}

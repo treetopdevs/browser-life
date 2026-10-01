@@ -1,0 +1,19 @@
+{
+  "format": "discovery-improvement-budget-successor-review/v1",
+  "verdict": "approved",
+  "predecessorAllocationSha256": "dd235c06811583e4f37d6682572f16b156a49b44a3aec787a5f52e0edbebaa6f",
+  "payloadSha256": "f4dbb7240d38f198b1cb898a5241d4d8f25bc64bae28c28ef821a47de4f5ae0a",
+  "retiredHostIds": [
+    "local"
+  ],
+  "reviewedBy": "/root with independent /root/distribution_review code and closure review",
+  "reviewedAt": "2026-10-01T02:41:38.562997+00:00",
+  "scope": "Retire local history authority administratively at settled actual usage; transfer 10000 unused seconds to CPU evidence operations. Frozen launcher unchanged. Remote allocation unchanged. Assays remain unreleased and capped at 43000 seconds / 75 invocations per host. No science changes. Global 345600 seconds and 576 invocations unchanged.",
+  "sources": {
+    "tools/discovery_improvement_budget.ts": "55bd539ea72e4ced3b8afc188e17ab9d76518599536de2c2b6df86cd0f52fe60",
+    "tools/discovery_improvement_assay.ts": "1e7c80ca072c2f6f4f3d6e4f4460c38f9379f9125405e0d33aaf464e9bf6fcf0",
+    "tools/test/discovery-improvement-budget.test.ts": "77048ee1b9615d2b9a3d2a253eab7f7060b2d67c4e0740af4f4b03fc190f7a24"
+  },
+  "maximumCpuOperationSeconds": 600,
+  "paidUSD": 0
+}
