@@ -1,13 +1,14 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { assaySeed } from "../lib/ponds.ts";
-import { ASSAY_COLUMNS, assayJson, assayLine, checkAssaySeeds, checkDonorSeed, decodeAssaySeed, donorSeedOf, parseAssayLabels, type Planted } from "../lib/pond-assay.ts";
+import { ASSAY_COLUMNS, M_ASSAY, TAU_LABELS, assayJson, assayLine, censusSteps, checkAssaySeeds, checkDonorSeed, decodeAssaySeed, donorSeedOf, parseAssayLabels, parseR1PrimeLabels, r1PrimeH, r1PrimeSeed, traitsTable, type Planted } from "../lib/pond-assay.ts";
 import {
   DECISION_TABLE,
+  NO_REPLAY_CHECK,
   R1_EXPECTED,
   R2_EXPECTED,
   R3_EXPECTED,
@@ -17,6 +18,7 @@ import {
   competence,
   decide,
   founderRank,
+  gridOfJson,
   highShare,
   highShareCounts,
   icc1,
@@ -24,6 +26,7 @@ import {
   mainRunOf,
   median,
   olsResiduals,
+  oneWayAnova,
   atLeastFourOfSix,
   p1Calibrate,
   p1Choose,
@@ -37,10 +40,16 @@ import {
   p2Replicate,
   p2RunProblems,
   p2Sensitivity,
+  parseReplayCheck,
   permutationP,
   populationCv,
   r1Evaluate,
   r1History,
+  r1PrimeEvaluate,
+  r1PrimeScreen,
+  r1PrimeStat,
+  r1PrimeVerdict,
+  r1Test,
   r1Verdict,
   r2Evaluate,
   r2Verdict,
@@ -48,11 +57,15 @@ import {
   r3Verdict,
   r4RowsOf,
   r4Table,
+  readTraits,
   readTsv,
   runStatus,
   setKey,
   shareDelta,
   summariseHistory,
+  tauJsonProblems,
+  tauRule,
+  tauScreen,
   tsvRows,
   validateAssayDirs,
   type AssayDir,
@@ -63,6 +76,10 @@ import {
   type P1Choice,
   type P1Row,
   type P1Run,
+  type R1PrimeFragment,
+  type R1PrimeSet,
+  type ReplayCheck,
+  type TraitSetDir,
 } from "../lib/scaffold-stats.ts";
 
 /** Deterministic pseudo-random values in [0, 1) so the "null" fixtures are fixed data, not flaky draws. */
@@ -1933,5 +1950,1039 @@ describe("scaffold-report CLI", () => {
     expect(byDir.arms.scaf.measures.quality.mean).toBe(0.5);
     const byFile = report("r4", "--in", join(root, "cap", "assay.json"));
     expect(byFile.arms.ancestor.measures.regenerated.mean).toBe(8);
+  });
+});
+
+// ---- Amendment 2: the tau calibration and R1' ------------------------------------------------------
+
+describe("one-way ANOVA", () => {
+  it("gives the mean squares, n0 and the family means, and icc1 is built on it", () => {
+    const y = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const fam = [0, 0, 0, 1, 1, 1, 2, 2, 2];
+    const an = oneWayAnova(y, fam)!;
+    expect(an).toEqual({ a: 3, N: 9, means: [2, 5, 8], msb: 27, msw: 1, n0: 3 });
+    expect((an.msb - an.msw) / an.n0).toBeCloseTo(26 / 3, 12);
+    expect(icc1(y, fam)).toBe((27 - 1) / (27 + 2 * 1));
+    // a negative between-family component is kept as it is
+    const flat = oneWayAnova([1, 3, 1, 3, 1, 3], [0, 0, 1, 1, 2, 2])!;
+    expect((flat.msb - flat.msw) / flat.n0).toBe(-1);
+    expect(oneWayAnova([1, 2, 3], [0, 0, 0])).toBeNull();
+    expect(oneWayAnova([1, 2], [0, 1])).toBeNull();
+  });
+});
+
+describe("traits.tsv reader", () => {
+  const text = traitsTable([
+    { replicate: 0, steps: [100, 200], traits: [[10, 20], [11, 21]] },
+    { replicate: 1, steps: [100, 200], traits: [[30, 40], [31, 41]] },
+  ]);
+
+  it("streams the writer's output, counting every step and keeping the steps asked for", async () => {
+    const all = await readTraits(tsvRows(text.split("\n")));
+    expect([...all.counts]).toEqual([[100, 4], [200, 4]]);
+    expect(all.rows.get(200)!.map((r) => [r.replicate, r.pond, r.trait])).toEqual([[0, 0, 11], [0, 1, 21], [1, 0, 31], [1, 1, 41]]);
+    const some = await readTraits(tsvRows(text.split("\n")), new Set([200]));
+    expect([...some.counts]).toEqual([[100, 4], [200, 4]]);
+    expect([...some.rows.keys()]).toEqual([200]);
+    const none = await readTraits(tsvRows(text.split("\n")), new Set());
+    expect(none.rows.size).toBe(0);
+    expect(none.counts.size).toBe(2);
+  });
+
+  it("counts the rows that repeat a (replicate, pond) of their step or lie outside the grid, when given one", async () => {
+    const grid = { replicates: 2, ponds: 2 };
+    expect([...(await readTraits(tsvRows(text.split("\n")), undefined, grid)).invalid]).toEqual([]);
+    const lines = text.trimEnd().split("\n");
+    // a repeated row (replacing another one) at step 200, and a pond outside the grid at step 100
+    const bad = lines.map((l) => (l === "0\t1\t200\t21" ? "0\t0\t200\t11" : l === "1\t1\t100\t40" ? "1\t2\t100\t40" : l));
+    const read = await readTraits(tsvRows(bad), undefined, grid);
+    expect([...read.invalid].sort(([x], [y]) => x - y)).toEqual([[100, 1], [200, 1]]);
+    expect([...read.counts]).toEqual([[100, 4], [200, 4]]);
+    expect(gridOfJson({ side: 8, replicates: 2 })).toEqual({ replicates: 2, ponds: 64 });
+    expect(gridOfJson({ side: 8 })).toBeNull();
+    expect(gridOfJson({ side: 0, replicates: 2 })).toBeNull();
+  });
+
+  it("reads a file from disk and refuses a malformed value", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "traits-"));
+    writeFileSync(join(dir, "traits.tsv"), text);
+    expect((await readTraits(readTsv(join(dir, "traits.tsv")))).counts.get(100)).toBe(4);
+    await expect(readTraits(tsvRows(["replicate\tpond\tstep\ttrait", "0\t0\t100\tx"]))).rejects.toThrow(/not a number/);
+  });
+});
+
+describe("tau rule", () => {
+  const medians = (m: Record<number, number>) => new Map(Object.entries(m).map(([step, v]) => [Number(step), [v - 1, v, v + 1]] as [number, number[]]));
+
+  it("is the first census step at which the median trait reaches 0.25 ref, whatever order the steps arrive in", () => {
+    const r = tauRule(new Map([[300, [20, 20, 20]], [100, [5, 5, 5]], [200, [12, 12, 12]]]), 40);
+    expect(r).toMatchObject({ tau: 200, crossed: true, threshold: 10, medianAtTau: 12 });
+    expect(r.curve).toEqual([{ step: 100, n: 3, median: 5 }, { step: 200, n: 3, median: 12 }, { step: 300, n: 3, median: 20 }]);
+  });
+
+  it("crosses at equality (>=), exactly, with the frozen ref 103,058 (0.25 ref = 25,764.5)", () => {
+    const at = (m: number) => tauRule(new Map([[100, [m, m]], [200, [30_000, 30_000]]]), 103_058);
+    expect(at(25_764.5).tau).toBe(100);
+    expect(at(25_764).tau).toBe(200);
+    expect(at(25_764).threshold).toBe(25_764.5);
+    // the median of an even count is the mean of the middle two
+    expect(tauRule(new Map([[100, [1, 2]]]), 6)).toMatchObject({ tau: 100, crossed: true, medianAtTau: 1.5 });
+    expect(tauRule(new Map([[100, [1, 1.5]], [200, [9, 9]]]), 6).tau).toBe(200);
+  });
+
+  it("falls back to 10,000 (or the given period) when no census reaches it", () => {
+    const never = new Map([[100, [1, 2, 3]], [200, [4, 5, 6]], [10_000, [9, 9, 9]]]);
+    expect(tauRule(never, 103_058)).toMatchObject({ tau: 10_000, crossed: false, medianAtTau: 9 });
+    const short = tauRule(new Map([[100, [1]], [300, [2]]]), 103_058);
+    expect(short).toMatchObject({ tau: 10_000, crossed: false, medianAtTau: null });
+    expect(tauRule(new Map([[100, [1]], [300, [2]]]), 103_058, 300)).toMatchObject({ tau: 300, crossed: false, medianAtTau: 2 });
+    expect(() => tauRule(never, 0)).toThrow(/positive ref/);
+  });
+
+  it("takes the median over every fragment, not the mean", () => {
+    // mean 30,000 but median 10
+    const skew = new Map([[100, [10, 10, 10, 10, 10, 10, 10, 200_000]]]);
+    expect(tauRule(skew, 103_058).crossed).toBe(false);
+    expect(tauRule(medians({ 100: 26_000 }), 103_058).tau).toBe(100);
+  });
+});
+
+// ---- fixtures: tau calibration and R1' sets as scaffold-assays --traits writes them
+
+const PRIME_STEPS = [100, 200, 300];
+const PRIME_PERIOD = 300;
+const PRIME_TAU = 200;
+const PRIME_REGIME = [{ k: 8, period: PRIME_PERIOD }];
+
+const strongTau = (donor: number, u: number) => 1000 + 300 * donor + Math.floor(u * 20);
+const weakTau = (_donor: number, u: number) => Math.floor(u * 1000);
+
+interface SetFixture {
+  json: Record<string, unknown>;
+  rows: AssayRow[];
+  assayText: string;
+  traitsText: string;
+  /** Per fragment (replicate 0 then 1): its trait at each of PRIME_STEPS. */
+  series: number[][];
+}
+
+/** One census-series of 128 fragments (replicate 0 then 1, 64 ponds): the trait at step c of fragment j. */
+function fixtureText(assay: string, rows: AssayRow[], series: number[][], insufficient: boolean, steps: readonly number[] = PRIME_STEPS): { assayText: string; traitsText: string } {
+  const planted = (r: AssayRow): Planted => ({ reqMass: r.retMass, retMass: r.retMass, reqE: r.retE ?? 0, retE: r.retE ?? 0, landed: 9, truncated: false });
+  const assayText =
+    [ASSAY_COLUMNS.join("\t"), ...rows.map((r) => assayLine({ assay, source: "t", replicate: r.replicate, pond: r.pond, family: r.family, inoculum: "fragment", planted: planted(r), endTrait: r.endTrait, success: r.success }))].join("\n") + "\n";
+  const traitsText = traitsTable(
+    insufficient || rows.length === 0
+      ? []
+      : [0, 1].map((replicate) => ({ replicate, steps, traits: steps.map((_, c) => Array.from({ length: 64 }, (_, pond) => series[replicate * 64 + pond][c])) })),
+  );
+  return { assayText, traitsText };
+}
+
+/** An R1' set at t' with `tau` giving the trait at step 200 of a fragment of donor 0-15 (strong donor effect by default); the end trait (step 300) is saturated (above 80% of the budget), as in R1. */
+function primeFixture(o: { arm?: "scaf" | "rand"; i: number; t?: 0 | 1 | 2; tau?: (donor: number, u: number) => number; insufficient?: boolean; json?: Record<string, unknown> }): SetFixture {
+  const arm = o.arm ?? "scaf";
+  const t = o.t ?? 0;
+  const labels = parseR1PrimeLabels({ arm, history: String(o.i), time: String(t) });
+  const seed = r1PrimeSeed(r1PrimeH(labels), t, 0);
+  const json = JSON.parse(
+    JSON.stringify({
+      ...assayJson({
+        ...BASE_JSON,
+        assay: "transmission",
+        k: 8,
+        period: PRIME_PERIOD,
+        side: 8,
+        replicates: 2,
+        inoculum: "fragment",
+        seeds: [0, 1].map((s) => ({ physics: seed + s, fragment: seed + s })),
+        labels,
+        extra: { donorSeed: seed + 9, donors: [], eligible: o.insufficient ? 1 : 64, insufficient: !!o.insufficient, traitsRecorded: true },
+      }),
+      ...o.json,
+    }),
+  ) as Record<string, unknown>;
+  const n = o.insufficient ? 0 : 128;
+  const r = lcg(1000 + 37 * o.i + 11 * t + (arm === "rand" ? 500 : 0));
+  const series: number[][] = [];
+  const rows = Array.from({ length: n }, (_, j) => {
+    const donor = (j % 64) % 16;
+    const tauTrait = (o.tau ?? strongTau)(donor, r());
+    const endTrait = 140_000 + Math.floor(r() * 3000);
+    series.push([Math.floor(tauTrait / 2), tauTrait, endTrait]);
+    return fragRow({ replicate: j >= 64 ? 1 : 0, pond: j % 64, family: 100 + donor, retMass: 50 + Math.floor(r() * 50), retE: 100 + Math.floor(r() * 100), endTrait, truncated: 0 });
+  });
+  return { json, rows, series, ...fixtureText("transmission", rows, series, !!o.insufficient) };
+}
+
+/**
+ * The tau calibration set: 128 ancestor fragments whose median trait is `curve` at each census step of `period` (default 300;
+ * a function of the step, or an array indexed by step / 100 - 1).
+ */
+function tauFixture(curve: number[] | ((step: number) => number), o: { ref?: number; period?: number; json?: Record<string, unknown> } = {}): SetFixture {
+  const period = o.period ?? PRIME_PERIOD;
+  const steps = censusSteps(period, 100);
+  const at = typeof curve === "function" ? curve : (step: number) => curve[step / 100 - 1];
+  const json = JSON.parse(
+    JSON.stringify({
+      ...assayJson({
+        ...BASE_JSON,
+        assay: "competence",
+        k: 8,
+        period,
+        side: 8,
+        replicates: 2,
+        inoculum: "fragment",
+        ref: o.ref ?? 40,
+        seeds: [0, 1].map((s) => ({ physics: 4_849_001 + s, fragment: 4_849_001 + s })),
+        labels: TAU_LABELS,
+        extra: { quench: false, swap: null, traitsRecorded: true },
+      }),
+      ...o.json,
+    }),
+  ) as Record<string, unknown>;
+  // j % 3 shifts by -1, 0, +1 (43, 43, 42 fragments of 128): the median is the curve value.
+  const series = Array.from({ length: 128 }, (_, j) => steps.map((st) => at(st) + ((j % 3) - 1)));
+  const rows = Array.from({ length: 128 }, (_, j) => fragRow({ assay: "competence", replicate: j >= 64 ? 1 : 0, pond: j % 64, endTrait: series[j][series[j].length - 1], success: 1, truncated: 0 }));
+  return { json, rows, series, ...fixtureText("competence", rows, series, false, steps) };
+}
+
+const FROZEN_SOURCE = "runs/scaffold/calib/source/ckpt/b1-pre.blck.gz";
+
+/** Amendment 2's tau calibration as the tool writes it: ref 103,058, k 8, period 10,000 (100 census steps), the ancestor source; the median reaches 0.25 ref (25,764.5) at step 2,600 by default. */
+const frozenTau = (curve: number[] | ((step: number) => number) = (step) => step * 10, json: Record<string, unknown> = {}): SetFixture =>
+  tauFixture(curve, { ref: 103_058, period: 10_000, json: { source: FROZEN_SOURCE, ...json } });
+
+/** The same set cut to `ponds` ponds of one replicate (smoke-sized, side 2): the rows and traits that fit. */
+function smallOf(f: SetFixture, ponds = 4): SetFixture {
+  const rows = f.rows.filter((r) => r.replicate === 0 && r.pond < ponds);
+  const lines = f.traitsText.trimEnd().split("\n");
+  const traitsText = [lines[0], ...lines.slice(1).filter((l) => l.split("\t")[0] === "0" && Number(l.split("\t")[1]) < ponds)].join("\n") + "\n";
+  const series = f.series.slice(0, ponds);
+  const assay = String(f.json.assay);
+  // fixtureText lays out 2 x 64 traits; only its assay.tsv is wanted here (the traits are the filtered lines above).
+  return { json: { ...f.json, side: Math.sqrt(ponds), replicates: 1 }, rows, series, traitsText, assayText: fixtureText(assay, rows, series, true).assayText };
+}
+
+const dirOf = async (f: SetFixture, name = "d", withTraits = true): Promise<TraitSetDir> => ({ dir: name, json: f.json, rows: f.rows, traits: withTraits ? await readTraits(tsvRows(f.traitsText.split("\n")), undefined, gridOfJson(f.json)) : null });
+
+describe("tau screening", () => {
+  const frozen = { regimes: [{ k: 8, period: 10_000 }] };
+  const why = async (f: SetFixture, o: Parameters<typeof tauScreen>[1] = { regimes: null }) => {
+    const r = tauScreen([await dirOf(f)], o);
+    return { accepted: r.accepted.length, reasons: r.rejected.flatMap((x) => x.reasons).join(" | ") };
+  };
+
+  it("accepts Amendment 2's calibration in strict mode and reads tau from its traits", async () => {
+    const d = await dirOf(frozenTau());
+    const r = tauScreen([d], frozen);
+    expect(r.rejected).toEqual([]);
+    expect(r.accepted).toHaveLength(1);
+    const byStep = new Map([...d.traits!.rows].map(([step, rows]) => [step, rows.map((t) => t.trait)]));
+    expect(byStep.size).toBe(100);
+    expect(byStep.get(100)).toHaveLength(128);
+    expect(tauRule(byStep, d.json.ref as number, 10_000)).toMatchObject({ tau: 2600, medianAtTau: 26_000, crossed: true });
+  });
+
+  it("binds tau to the frozen calibration: ref, regime, size, ancestor source, labels, seeds and census", async () => {
+    const strict = async (json: Record<string, unknown>, o: Parameters<typeof tauScreen>[1] = { regimes: null }) => why(frozenTau(undefined, json), o);
+    expect((await strict({ ref: 40 })).reasons).toMatch(/ref 40, want 103058/);
+    expect((await strict({ ref: 103_059 })).reasons).toMatch(/ref 103059, want 103058/);
+    expect((await strict({ ref: null })).reasons).toMatch(/ref null, want a positive number.*ref null, want 103058/);
+    expect((await strict({ k: 5 })).reasons).toMatch(/k 5, want 8/);
+    expect((await strict({ period: 3000 })).reasons).toMatch(/period 3000, want 10000/);
+    expect((await strict({ side: 2 })).reasons).toMatch(/side 2, want 8/);
+    expect((await strict({ replicates: 3 })).reasons).toMatch(/replicates 3, want 2/);
+    expect((await strict({ censusEvery: 50 })).reasons).toMatch(/censusEvery 50/);
+    expect((await strict({ source: "runs/scaffold/calib/ancestor/b1-pre.blck.gz" })).reasons).toMatch(/source .*want a path ending in calib\/source\/ckpt\/b1-pre\.blck\.gz/);
+    expect((await strict({ source: undefined })).reasons).toMatch(/want a path ending in calib/);
+    expect((await strict({ source: "b1-pre.blck.gz" })).reasons).toMatch(/want a path ending in calib/);
+    expect((await strict({ labels: { arm: "scaf", time: 0, timing: "a" } })).reasons).toMatch(/labels\.tauCalibration is not true.*labels\.arm "scaf", want ancestor/);
+    expect((await strict({ labels: { arm: "ancestor", time: 0, timing: "a", calibration: 1 } })).reasons).toMatch(/labels\.tauCalibration is not true/);
+    expect((await strict({ inoculum: "quenched" })).reasons).toMatch(/inoculum "quenched"/);
+    expect((await strict({ seeds: [{ physics: 4_802_011, fragment: 4_802_011 }, { physics: 4_802_012, fragment: 4_802_012 }] })).reasons).toMatch(/needs seed 4849001/);
+    expect((await strict({ seeds: [{ physics: 4_849_001, fragment: 4_849_001 }] })).reasons).toMatch(/1 seeds, want 2/);
+    expect((await strict({ assay: "transmission" })).reasons).toMatch(/want competence/);
+    expect((await strict({}, { regimes: [{ k: 8, period: 3000 }] })).reasons).toMatch(/period 10000, want k 8 period 3000/);
+    const short = frozenTau();
+    expect((await why({ ...short, rows: short.rows.slice(1) })).reasons).toMatch(/127 rows, want 128/);
+    // the strict calibration itself passes
+    expect(await why(frozenTau(), frozen)).toMatchObject({ accepted: 1, reasons: "" });
+  });
+
+  it("rejects a set whose traits are missing or incomplete", async () => {
+    const f = frozenTau();
+    const r = tauScreen([await dirOf(f, "d", false)], { regimes: null });
+    expect(r.rejected[0].reasons.join(" ")).toMatch(/no traits\.tsv/);
+    expect((await why({ ...f, json: { ...f.json, traitsRecorded: undefined } })).reasons).toMatch(/does not say traitsRecorded/);
+    // the last census is missing
+    const lines = f.traitsText.split("\n").filter((l) => !l.includes("\t10000\t"));
+    expect((await why({ ...f, traitsText: lines.join("\n") })).reasons).toMatch(/99 census steps \(100\.\.9900\), want 100 \(100\.\.10000\)/);
+    // a step short of rows
+    const thin = f.traitsText.split("\n");
+    thin.splice(5, 1);
+    expect((await why({ ...f, traitsText: thin.join("\n") })).reasons).toMatch(/without 128 rows/);
+  });
+
+  it("rejects a set whose (replicate, pond) grid is not filled exactly once, in assay.tsv or at any census step", async () => {
+    const f = frozenTau();
+    // a row repeated in place of another: 128 rows, but a fragment is missing
+    const dup = { ...f, rows: f.rows.map((r, j) => (j === 5 ? { ...r, replicate: f.rows[0].replicate, pond: f.rows[0].pond } : r)) };
+    expect(await why(dup, frozen)).toMatchObject({ accepted: 0 });
+    expect((await why(dup, frozen)).reasons).toBe("assay.tsv repeats a (replicate, pond) in 1 rows");
+    const outside = { ...f, rows: f.rows.map((r, j) => (j === 5 ? { ...r, pond: 64 } : r)) };
+    expect((await why(outside, frozen)).reasons).toMatch(/assay\.tsv has 1 rows outside the 2 x 64/);
+    const other = { ...f, rows: f.rows.map((r, j) => (j === 5 ? { ...r, inoculum: "disc" } : r)) };
+    expect((await why(other, frozen)).reasons).toMatch(/1 assay\.tsv rows are not fragment rows/);
+    // traits.tsv: at one census step a fragment's row replaces another's
+    const lines = f.traitsText.trimEnd().split("\n");
+    const first = lines.findIndex((l) => l.startsWith("0\t0\t5000\t"));
+    const second = lines.findIndex((l) => l.startsWith("0\t1\t5000\t"));
+    const twice = lines.map((l, k) => (k === second ? lines[first] : l)).join("\n") + "\n";
+    expect((await why({ ...f, traitsText: twice }, frozen)).reasons).toBe("traits.tsv has 1 census steps with a repeated or out-of-grid (replicate, pond) (step 5000: 1 rows)");
+    const grown = lines.map((l, k) => (k === second ? l.replace("\t1\t5000\t", "\t64\t5000\t") : l)).join("\n") + "\n";
+    expect((await why({ ...f, traitsText: grown }, frozen)).reasons).toMatch(/repeated or out-of-grid/);
+    // both tables fill the grid: accepted
+    expect((await why(f, frozen)).accepted).toBe(1);
+  });
+
+  it("--allow-any-seed waives the frozen binding of a smoke set and holds it to the grid it declares, and still needs the traits", async () => {
+    const smoke = tauFixture([5, 12, 20], { json: { seeds: [{ physics: 1, fragment: 1 }, { physics: 2, fragment: 2 }], source: "ckpt" } });
+    expect((await why(smoke)).accepted).toBe(0);
+    expect((await why(smoke, { regimes: [{ k: 1, period: 1 }], allowAnySeed: true })).accepted).toBe(1);
+    // a side-2, one-replicate set fills the 1 x 4 grid it declares
+    const small = smallOf(tauFixture([5, 12, 20], { json: { seeds: [{ physics: 1, fragment: 1 }], source: "ckpt" } }));
+    expect((await why(small, { regimes: null, allowAnySeed: true })).accepted).toBe(1);
+    expect((await why(small)).accepted).toBe(0);
+    // 3 rows where the declared grid has 4
+    expect((await why({ ...small, rows: small.rows.slice(1) }, { regimes: null, allowAnySeed: true })).reasons).toMatch(/3 rows, want 4/);
+    expect((await why({ ...smoke, json: { ...smoke.json, traitsRecorded: undefined } }, { regimes: null, allowAnySeed: true })).accepted).toBe(0);
+    expect((await why({ ...smoke, rows: smoke.rows.slice(0, 127) }, { regimes: null, allowAnySeed: true })).accepted).toBe(0);
+    expect((await why({ ...smoke, json: { ...smoke.json, labels: { arm: "ancestor", time: 0, timing: "a" } } }, { regimes: null, allowAnySeed: true })).reasons).toMatch(/labels\.tauCalibration is not true/);
+  });
+});
+
+describe("tau.json as r1prime's input", () => {
+  const good = () => ({
+    stage: "tau",
+    validated: true,
+    tau: 2600,
+    provenance: { source: FROZEN_SOURCE, ref: 103_058, k: 8, period: 10_000, side: 8, replicates: 2, seeds: [{ physics: 4_849_001, fragment: 4_849_001 }, { physics: 4_849_002, fragment: 4_849_002 }], labels: { arm: "ancestor", time: 0, timing: "a", tauCalibration: true } },
+  });
+
+  it("accepts validated strict calibration output", () => {
+    expect(tauJsonProblems(good())).toEqual([]);
+    expect(tauJsonProblems({ ...good(), tau: 10_000 })).toEqual([]);
+  });
+
+  it("refuses everything else: unvalidated, a smoke run, a wrong provenance or a tau that is not a census step", () => {
+    const why = (o: Record<string, unknown>) => tauJsonProblems({ ...good(), ...o }).join(" | ");
+    expect(why({ validated: false })).toMatch(/not validated strict calibration output/);
+    expect(why({ validated: undefined })).toMatch(/not validated/);
+    expect(why({ stage: "r1prime" })).toMatch(/stage "r1prime", want tau/);
+    expect(why({ tau: null })).toMatch(/tau null, want a positive integer/);
+    expect(why({ tau: 250 })).toMatch(/tau 250 is not a census step/);
+    expect(why({ tau: 10_100 })).toMatch(/tau 10100 is not a census step/);
+    expect(why({ provenance: undefined })).toMatch(/no provenance/);
+    expect(why({ provenance: { ...good().provenance, ref: 40 } })).toMatch(/provenance\.ref 40, want 103058/);
+    expect(why({ provenance: { ...good().provenance, period: 300 } })).toMatch(/provenance\.period 300, want 10000/);
+    expect(why({ provenance: { ...good().provenance, source: "elsewhere/b1-pre.blck.gz" } })).toMatch(/provenance\.source/);
+    expect(why({ provenance: { ...good().provenance, seeds: [{ physics: 1, fragment: 1 }] } })).toMatch(/provenance\.seeds/);
+    expect(why({ provenance: { ...good().provenance, labels: {} } })).toMatch(/provenance\.labels\.tauCalibration/);
+  });
+});
+
+describe("R1' screening", () => {
+  const screen = async (f: SetFixture, o: Partial<Parameters<typeof r1PrimeScreen>[1]> = {}, withTraits = true) => {
+    const r = r1PrimeScreen([await dirOf(f, "d", withTraits)], { tau: PRIME_TAU, regimes: PRIME_REGIME, ...o });
+    return { ...r, reasons: r.rejected.flatMap((x) => x.reasons).join(" | ") };
+  };
+
+  it("accepts a sound set and carries each fragment's trait at tau and at the end of the period", async () => {
+    const f = primeFixture({ i: 2, t: 1 });
+    const r = await screen(f);
+    expect(r.rejected).toEqual([]);
+    expect(r.regime).toEqual({ k: 8, period: PRIME_PERIOD });
+    expect(r.accepted).toHaveLength(1);
+    const set = r.accepted[0];
+    expect(set).toMatchObject({ arm: "scaf", history: 2, tPrime: 1, insufficient: false });
+    expect(set.fragments).toHaveLength(128);
+    // fragments are in R1's order, replicate 0's f = 0..63 then replicate 1's
+    set.fragments.forEach((fr, j) => {
+      expect(fr).toMatchObject({ family: f.rows[j].family, retMass: f.rows[j].retMass, retE: f.rows[j].retE, endTrait: f.series[j][2], tauTrait: f.series[j][1], truncated: false });
+    });
+  });
+
+  it("takes the trait at whichever census step tau names", async () => {
+    const f = primeFixture({ i: 0 });
+    expect((await screen(f, { tau: 100 })).accepted[0].fragments[5].tauTrait).toBe(f.series[5][0]);
+    expect((await screen(f, { tau: 300 })).accepted[0].fragments[5].tauTrait).toBe(f.series[5][2]);
+    expect((await screen(f, { tau: 250 })).reasons).toMatch(/tau 250 is not a census step/);
+  });
+
+  it("accepts an insufficient set (no fragments, no traits) as a valid one", async () => {
+    const r = await screen(primeFixture({ i: 3, insufficient: true }));
+    expect(r.rejected).toEqual([]);
+    expect(r.accepted[0]).toMatchObject({ arm: "scaf", history: 3, tPrime: 0, insufficient: true, fragments: [] });
+  });
+
+  it("rejects wrong seeds, donor seed, size, regime and labels, with the reasons", async () => {
+    const base = primeFixture({ i: 1, t: 2 });
+    const seed = r1PrimeSeed(1, 2, 0);
+    expect((await screen(primeFixture({ i: 1, t: 2, json: { seeds: [{ physics: seed, fragment: seed }, { physics: seed, fragment: seed + 1 }] } }))).reasons).toMatch(/does not match the R1' labels.*r1PrimeSeed\(h, t', 1\) = /);
+    expect((await screen(primeFixture({ i: 1, t: 2, json: { seeds: [{ physics: 4_820_001 + 5000 + 250 + 100, fragment: seed }, { physics: seed + 1, fragment: seed + 1 }] } }))).reasons).toMatch(/seed 4825351/);
+    expect((await screen(primeFixture({ i: 1, t: 2, json: { donorSeed: seed + 8 } }))).reasons).toMatch(/donor seed .* want r1PrimeSeed\(h, t', 9\)/);
+    expect((await screen(primeFixture({ i: 1, t: 2, json: { donorSeed: undefined } }))).reasons).toMatch(/no donorSeed/);
+    expect((await screen(primeFixture({ i: 1, t: 2, json: { side: 2 } }))).reasons).toMatch(/side 2/);
+    expect((await screen(primeFixture({ i: 1, t: 2, json: { replicates: 1 } }))).reasons).toMatch(/replicates 1/);
+    expect((await screen(base, { regimes: [{ k: 5, period: PRIME_PERIOD }] })).reasons).toMatch(/regime k 8 period 300, want k 5 period 300/);
+    expect((await screen({ ...base, rows: base.rows.slice(2) })).reasons).toMatch(/126 rows, want 128/);
+    expect((await screen(primeFixture({ i: 1, t: 2, json: { assay: "garden" } }))).reasons).toMatch(/want transmission/);
+    // labels that are not an R1' history: rejected without a key
+    const bad = r1PrimeScreen([await dirOf(primeFixture({ i: 1, t: 2, json: { labels: { arm: "cont", history: 1, r1prime: true, timePrime: 0 } } }))], { tau: PRIME_TAU, regimes: PRIME_REGIME });
+    expect(bad.rejected[0]).toMatchObject({ key: null });
+    expect(bad.rejected[0].reasons[0]).toMatch(/labels\.arm "cont"/);
+    const r1set = r1PrimeScreen([await dirOf(primeFixture({ i: 1, t: 2, json: { labels: { arm: "scaf", history: 1, time: 1, timing: "b" } } }))], { tau: PRIME_TAU, regimes: PRIME_REGIME });
+    expect(r1set.rejected[0].reasons[0]).toMatch(/labels\.r1prime is not true/);
+    const badT = r1PrimeScreen([await dirOf(primeFixture({ i: 1, t: 2, json: { labels: { arm: "scaf", history: 1, r1prime: true, timePrime: 3 } } }))], { tau: PRIME_TAU, regimes: PRIME_REGIME });
+    expect(badT.rejected[0].reasons[0]).toMatch(/timePrime 3/);
+    // a rejected set keeps its key, so the stage can say why that history is unavailable
+    expect((await screen(primeFixture({ i: 1, t: 2, json: { side: 2 } }))).rejected[0].key).toEqual({ arm: "scaf", history: 1, tPrime: 2 });
+  });
+
+  it("rejects missing, incomplete or inconsistent traits", async () => {
+    const f = primeFixture({ i: 0 });
+    expect((await screen(f, {}, false)).reasons).toMatch(/no traits\.tsv/);
+    expect((await screen({ ...f, json: { ...f.json, traitsRecorded: undefined } })).reasons).toMatch(/traitsRecorded/);
+    expect((await screen({ ...f, traitsText: f.traitsText.split("\n").filter((l) => !l.includes("\t200\t")).join("\n") })).reasons).toMatch(/2 census steps/);
+    // the end trait of assay.tsv is the last census: a different one is refused
+    const moved = { ...f, rows: f.rows.map((r, j) => (j === 7 ? { ...r, endTrait: r.endTrait + 1 } : r)) };
+    expect((await screen(moved)).reasons).toMatch(/disagrees with assay\.tsv for 1 fragments/);
+    // a fragment's row at tau repeated in place of another's: the counts agree, the fragments do not
+    const lines = f.traitsText.trimEnd().split("\n");
+    const first = lines.findIndex((l) => l.startsWith("0\t0\t200\t"));
+    const second = lines.findIndex((l) => l.startsWith("0\t1\t200\t"));
+    const twice = lines.map((l, k) => (k === second ? lines[first] : l)).join("\n") + "\n";
+    expect((await screen({ ...f, traitsText: twice })).reasons).toMatch(/1 census steps with a repeated or out-of-grid \(replicate, pond\) \(step 200: 1 rows\)/);
+    // the same in a table read without a grid is still caught when the fragments are joined
+    const bare = r1PrimeScreen([{ ...(await dirOf({ ...f, traitsText: twice })), traits: await readTraits(tsvRows(twice.split("\n"))) }], { tau: PRIME_TAU, regimes: PRIME_REGIME });
+    expect(bare.rejected[0].reasons.join(" ")).toMatch(/two rows for replicate 0 pond 0 at step 200/);
+    // a row more at one step is a count mismatch
+    expect((await screen({ ...f, traitsText: [...lines.slice(0, first + 1), lines[first], ...lines.slice(first + 1)].join("\n") + "\n" })).reasons).toMatch(/step 200 has 129/);
+  });
+
+  it("rejects a set whose assay.tsv does not fill the (replicate, pond) grid exactly once", async () => {
+    const f = primeFixture({ i: 0 });
+    // 128 rows, one repeated in place of another
+    const dup = { ...f, rows: f.rows.map((r, j) => (j === 5 ? { ...r, replicate: f.rows[0].replicate, pond: f.rows[0].pond } : r)) };
+    const r = await screen(dup);
+    expect(r.accepted).toHaveLength(0);
+    expect(r.reasons).toBe("assay.tsv repeats a (replicate, pond) in 1 rows");
+    expect(r.rejected[0].key).toEqual({ arm: "scaf", history: 0, tPrime: 0 });
+    expect((await screen({ ...f, rows: f.rows.map((r, j) => (j === 70 ? { ...r, replicate: 2 } : r)) })).reasons).toMatch(/1 rows outside the 2 x 64/);
+    expect((await screen({ ...f, rows: f.rows.map((r, j) => (j === 3 ? { ...r, inoculum: "disc" } : r)) })).reasons).toMatch(/1 assay\.tsv rows are not fragment rows/);
+    // an insufficient set has none
+    const ins = primeFixture({ i: 1, insufficient: true });
+    expect((await screen({ ...ins, rows: f.rows.slice(0, 2) })).reasons).toMatch(/2 rows, want 0/);
+  });
+
+  it("rejects, rather than throws on, a table without retE: another model is not fitted", async () => {
+    const f = primeFixture({ i: 0 });
+    const r = await screen({ ...f, rows: f.rows.map((r) => ({ ...r, retE: null })) });
+    expect(r.accepted).toHaveLength(0);
+    expect(r.reasons).toMatch(/no retE column/);
+    expect(r.rejected[0].key).toEqual({ arm: "scaf", history: 0, tPrime: 0 });
+  });
+
+  it("rejects both of two sets with one (arm, history, t') without throwing, and refuses mixed regimes", async () => {
+    const a = await dirOf(primeFixture({ i: 0 }), "a");
+    const b = await dirOf(primeFixture({ i: 0 }), "b");
+    const c = await dirOf(primeFixture({ i: 1 }), "c");
+    const twin = r1PrimeScreen([a, b, c], { tau: PRIME_TAU, regimes: PRIME_REGIME });
+    expect(twin.accepted.map((x) => x.dir)).toEqual(["c"]);
+    expect(twin.rejected.map((x) => [x.dir, x.key])).toEqual([["a", { arm: "scaf", history: 0, tPrime: 0 }], ["b", { arm: "scaf", history: 0, tPrime: 0 }]]);
+    expect(twin.rejected[0].reasons[0]).toMatch(/same R1' set \(scaf-i0-t0\) as b; a stage would count both/);
+    const other = await dirOf(primeFixture({ i: 1, json: { k: 5 } }), "c");
+    expect(() => r1PrimeScreen([a, other], { tau: PRIME_TAU, regimes: null })).toThrow(/mix regimes/);
+    expect(r1PrimeScreen([a], { tau: PRIME_TAU, regimes: null }).regime).toEqual({ k: 8, period: PRIME_PERIOD });
+  });
+
+  it("--allow-any-seed waives the size, regime and seed checks of a smoke set, not the traits or the label", async () => {
+    const smoke = primeFixture({ i: 0, json: { side: 2, replicates: 2, seeds: [{ physics: 1, fragment: 1 }, { physics: 2, fragment: 2 }], donorSeed: 3 } });
+    expect((await screen(smoke)).accepted).toHaveLength(0);
+    expect((await screen(smoke, { allowAnySeed: true, regimes: [{ k: 1, period: 1 }] })).accepted).toHaveLength(0); // 128 rows, but side 2 x 2 replicates is 8
+    // 4 ponds, replicate 0 only: rows 0-3 of replicate 0 and the matching traits
+    const four = smallOf(smoke);
+    expect(four.traitsText.trimEnd().split("\n")).toHaveLength(1 + 4 * 3);
+    const ok = await screen(four, { allowAnySeed: true, regimes: [{ k: 1, period: 1 }] });
+    expect(ok.reasons).toBe("");
+    expect(ok.accepted[0].fragments).toHaveLength(4);
+    expect((await screen({ ...four, json: { ...four.json, traitsRecorded: undefined } }, { allowAnySeed: true })).accepted).toHaveLength(0);
+  });
+});
+
+describe("R1' statistic", () => {
+  it("is R1's: the same OLS, ICC and permutation code, with the stream r1PrimeSeed(h, t', 8)", () => {
+    const r = lcg(5);
+    const frags: R1PrimeFragment[] = Array.from({ length: 128 }, (_, j) => ({ family: 100 + ((j % 64) % 16), retMass: 50 + Math.floor(r() * 50), retE: 100 + Math.floor(r() * 100), truncated: false, endTrait: 120_000, tauTrait: strongTau((j % 64) % 16, r()) }));
+    const sigma = r1PrimeSeed(3, 1, 8);
+    const st = r1PrimeStat(frags, (f) => f.tauTrait, sigma);
+    // the same numbers by hand through R1's pieces
+    const resid = olsResiduals(frags.map((f) => f.tauTrait), [frags.map((f) => Math.log1p(f.retMass)), frags.map((f) => Math.log1p(f.retE))]);
+    const ref = permutationP(resid, frags.map((f) => f.family), sigma, 1000)!;
+    expect(st.icc).toBe(ref.icc);
+    expect(st.p).toBe(ref.p);
+    expect(st.p).toBeCloseTo(1 / 1001, 12);
+    expect(st.demonstrated).toBe(true);
+    // and R1's own history function gives the same ICC (a different permutation stream moves only p)
+    const asRows = frags.map((f, j) => fragRow({ replicate: j >= 64 ? 1 : 0, pond: j % 64, family: f.family, retMass: f.retMass, retE: f.retE, endTrait: f.tauTrait }));
+    expect(r1History(asRows, 3, 1).icc).toBe(st.icc);
+    expect(r1Test(frags.map((f) => f.tauTrait), frags.map((f) => f.retMass), frags.map((f) => f.retE), frags.map((f) => f.family), sigma)).toMatchObject({ icc: st.icc, p: st.p, demonstrated: true });
+    // a different stream gives the same ICC and (the p-value being a count of 1001) possibly another p
+    expect(r1PrimeStat(frags, (f) => f.tauTrait, r1PrimeSeed(3, 1, 9)).icc).toBe(st.icc);
+  });
+
+  it("reports the between-donor variance component (negative kept), the raw family-mean variance and the saturation share", () => {
+    // 9 fragments, 3 donors; constant covariates drop out of the OLS, so the adjusted trait is the centred trait
+    const mk = (family: number, tauTrait: number, endTrait: number): R1PrimeFragment => ({ family, retMass: 100, retE: 200, truncated: false, tauTrait, endTrait });
+    const frags = [mk(0, 1, 121_241), mk(0, 2, 121_242), mk(0, 3, 150_000), mk(1, 4, 0), mk(1, 5, 0), mk(1, 6, 0), mk(2, 7, 0), mk(2, 8, 0), mk(2, 9, 0)];
+    const tau = r1PrimeStat(frags, (f) => f.tauTrait, 1);
+    expect(tau.varianceComponent!).toBeCloseTo(26 / 3, 9);
+    expect(tau.rawFamilyMeanVariance!).toBeCloseTo(9, 12); // means 2, 5, 8
+    expect(tau.meanTrait).toBe(5);
+    expect(tau.saturation).toBe(0);
+    // 121,241 x 5 = 606,205 < 4 M_ASSAY = 606,208 <= 121,242 x 5: the 80% line is between them
+    const end = r1PrimeStat(frags, (f) => f.endTrait, 1);
+    expect(end.saturation).toBeCloseTo(2 / 9, 12);
+    expect(M_ASSAY * 4).toBe(606_208);
+    // a negative component stays negative
+    const flat = [mk(0, 1, 0), mk(0, 3, 0), mk(1, 1, 0), mk(1, 3, 0), mk(2, 1, 0), mk(2, 3, 0)];
+    const neg = r1PrimeStat(flat, (f) => f.tauTrait, 1);
+    expect(neg.varianceComponent).toBe(-1);
+    expect(neg.demonstrated).toBe(false);
+    expect(neg.icc!).toBeLessThan(0);
+  });
+
+  it("has null variances and ICC when the donors cannot be told apart from one fragment each", () => {
+    const one: R1PrimeFragment[] = [0, 1, 2].map((i) => ({ family: i, retMass: 100, retE: 200, truncated: false, tauTrait: i, endTrait: i }));
+    expect(r1PrimeStat(one, (f) => f.tauTrait, 1)).toMatchObject({ icc: null, p: null, demonstrated: false, varianceComponent: null });
+  });
+});
+
+describe("replay check", () => {
+  const mc = (over: Record<string, unknown> = {}) => ({ passed: true, "scaf-i0": { replay: "aa11", saved: "aa11" }, "rand-i0": { replay: "bb22", saved: "bb22" }, ...over });
+
+  it("reads the coordinator's format: a mechanism check with its hash pairs, the valid history-times and the failures", () => {
+    const r = parseReplayCheck({ mechanismCheck: mc(), valid: ["scaf-i0-t0", "scaf-i0-t1", "rand-i3-t0"], failed: [{ id: "scaf-i3-t1", why: "row 4 differs" }, "rand-i2-t0", { id: "rand-i5-t1", reason: "x" }] });
+    expect(r).toEqual({
+      given: true,
+      mechanismPassed: true,
+      mechanismWhy: null,
+      valid: ["scaf-i0-t0", "scaf-i0-t1", "rand-i3-t0"],
+      failed: [{ id: "scaf-i3-t1", why: "row 4 differs" }, { id: "rand-i2-t0", why: null }, { id: "rand-i5-t1", why: "x" }],
+    });
+  });
+
+  it("does not take a missing, false or contradicted mechanism check as passed", () => {
+    const why = (json: unknown) => {
+      const r = parseReplayCheck(json);
+      return [r.given, r.mechanismPassed, r.mechanismWhy] as const;
+    };
+    expect(why({})).toEqual([true, false, "the replay check has no mechanismCheck object"]);
+    expect(why({ valid: ["scaf-i0-t0"] })[1]).toBe(false);
+    expect(why({ mechanismCheck: true })[1]).toBe(false); // passed must be the object's own `passed: true`
+    expect(why({ mechanismCheck: "passed" })[1]).toBe(false);
+    expect(why({ mechanismCheck: null })[1]).toBe(false);
+    expect(why({ mechanismCheck: { passed: false } })).toEqual([true, false, "mechanismCheck.passed is not true"]);
+    expect(why({ mechanismCheck: { passed: "true" } })[1]).toBe(false);
+    expect(why({ mechanismCheck: {} })[1]).toBe(false);
+    expect(why({ mechanismCheck: mc() })).toEqual([true, true, null]);
+    expect(why({ mechanismCheck: { passed: true } })[1]).toBe(true);
+    // passed is true but a replayed state does not equal the saved one
+    const bad = why({ mechanismCheck: mc({ "rand-i0": { replay: "bb22", saved: "cc33" } }) });
+    expect(bad[1]).toBe(false);
+    expect(bad[2]).toMatch(/hashes of rand-i0 differ or are missing/);
+    expect(why({ mechanismCheck: mc({ "scaf-i0": { replay: "aa11" } }) })[1]).toBe(false);
+    expect(why({ mechanismCheck: mc({ "scaf-i0": { replay: 7, saved: 7 } }) })[1]).toBe(false);
+  });
+
+  it("is not a replay check at all without one, so nothing is valid", () => {
+    expect(NO_REPLAY_CHECK).toMatchObject({ given: false, mechanismPassed: false, valid: [], failed: [] });
+    expect(NO_REPLAY_CHECK.mechanismWhy).toMatch(/no replay check was given/);
+  });
+
+  it("refuses what it cannot read instead of ignoring a failure or a valid entry", () => {
+    expect(() => parseReplayCheck(null)).toThrow(/want an object/);
+    expect(() => parseReplayCheck(["scaf-i0-t0"])).toThrow(/want an object/);
+    expect(() => parseReplayCheck({ valid: "scaf-i0-t0" })).toThrow(/valid must be an array/);
+    expect(() => parseReplayCheck({ valid: ["scaf-i0"] })).toThrow(/unrecognised valid entry/);
+    expect(() => parseReplayCheck({ valid: ["cont-i0-t0"] })).toThrow(/unrecognised valid entry/);
+    expect(() => parseReplayCheck({ valid: ["scaf-i6-t0"] })).toThrow(/unrecognised valid entry/);
+    expect(() => parseReplayCheck({ valid: [7] })).toThrow(/unrecognised valid entry/);
+    expect(() => parseReplayCheck({ failed: "scaf-i0-t0" })).toThrow(/failed must be an array/);
+    expect(() => parseReplayCheck({ failed: ["scaf-0-0"] })).toThrow(/unrecognised failed entry/);
+    expect(() => parseReplayCheck({ failed: [{ id: "scaf-i0-t3" }] })).toThrow(/unrecognised failed entry/);
+    expect(() => parseReplayCheck({ failed: [{ arm: "scaf", history: 0, tPrime: 1 }] })).toThrow(/unrecognised failed entry/);
+    expect(() => parseReplayCheck({ failed: [null] })).toThrow(/unrecognised failed entry/);
+  });
+});
+
+describe("R1' rule (Amendment 2)", () => {
+  /** A screened set from a fixture. */
+  const setOf = async (o: Parameters<typeof primeFixture>[0]): Promise<R1PrimeSet> => {
+    const r = r1PrimeScreen([await dirOf(primeFixture(o))], { tau: PRIME_TAU, regimes: PRIME_REGIME });
+    expect(r.rejected).toEqual([]);
+    return r.accepted[0];
+  };
+  const strong = (i: number, extra: Partial<Parameters<typeof primeFixture>[0]> = {}) => setOf({ i, tau: strongTau, ...extra });
+  const weak = (i: number, extra: Partial<Parameters<typeof primeFixture>[0]> = {}) => setOf({ i, tau: weakTau, ...extra });
+  const at = (r: ReturnType<typeof r1PrimeEvaluate>, arm: "scaf" | "rand", i: number, t: 0 | 1 | 2 = 0) => r.histories.find((x) => x.arm === arm && x.history === i && x.tPrime === t)!;
+  /** A replay check whose mechanism check passed and that lists every replayed history-time (t' = 0, 1; both arms) as valid. */
+  const REPLAYED = (["scaf", "rand"] as const).flatMap((arm) => [0, 1, 2, 3, 4, 5].flatMap((i) => [0, 1].map((t) => `${arm}-i${i}-t${t}`)));
+  const ok = (over: Partial<ReplayCheck> = {}): ReplayCheck => ({ given: true, mechanismPassed: true, mechanismWhy: null, valid: REPLAYED, failed: [], ...over });
+  const without = (...ids: string[]) => ok({ valid: REPLAYED.filter((id) => !ids.includes(id)) });
+
+  it("lists every (arm, history, t') and runs R1's statistic on the trait at tau and on the end trait", async () => {
+    const r = r1PrimeEvaluate([await strong(0), await weak(1)], ok());
+    expect(r.histories).toHaveLength(36);
+    expect(r.histories.slice(0, 4).map((h) => [h.arm, h.history, h.tPrime, h.h, h.boundary])).toEqual([["scaf", 0, 0, 0, 34], ["scaf", 0, 1, 0, 67], ["scaf", 0, 2, 0, 100], ["scaf", 1, 0, 1, 34]]);
+    expect(r.histories.filter((h) => h.arm === "rand")[0]).toMatchObject({ arm: "rand", history: 0, tPrime: 0, h: 6 });
+    const a = at(r, "scaf", 0);
+    expect(a).toMatchObject({ available: true, why: null, insufficient: false, n: 128, families: 16, demonstrated: true, covariates: ["log1p(retMass)", "log1p(retE)"] });
+    expect(a.atTau!.icc!).toBeGreaterThan(0.9);
+    expect(a.atTau!.p!).toBeCloseTo(1 / 1001, 12);
+    expect(a.atTau!.varianceComponent!).toBeGreaterThan(0);
+    expect(a.atTau!.saturation).toBe(0);
+    expect(a.atEnd!.saturation).toBe(1); // end traits 140,000-143,000 are above 0.8 x 151,552 = 121,241.6
+    expect(a.atEnd!.demonstrated).toBe(false);
+    // the weak history has no donor effect at tau
+    expect(at(r, "scaf", 1).demonstrated).toBe(false);
+    expect(at(r, "scaf", 1).atTau!.p!).toBeGreaterThan(0.05);
+    // every other key has no set
+    expect(at(r, "scaf", 2)).toMatchObject({ available: false, why: "no assay set", n: 0, atTau: null, atEnd: null, demonstrated: false });
+  });
+
+  it("is true with at least 4 of 6 scaf histories demonstrated at t' = 0, and false with 3: the 4-of-6 edge", async () => {
+    const four = r1PrimeEvaluate([await strong(0), await strong(1), await strong(2), await strong(3), await weak(4), await weak(5)], ok());
+    expect(four.arms.scaf).toMatchObject({ verdict: true, valid: 6, demonstrated: 4 });
+    expect(four.verdict).toBe(true);
+    const three = r1PrimeEvaluate([await strong(0), await strong(1), await strong(2), await weak(3), await weak(4), await weak(5)], ok());
+    expect(three.arms.scaf).toMatchObject({ verdict: false, valid: 6, demonstrated: 3 });
+    expect(three.verdict).toBe(false);
+  });
+
+  it("is uninformative with fewer than 4 valid scaf histories at t' = 0, however many are demonstrated", async () => {
+    const three = r1PrimeEvaluate([await strong(0), await strong(1), await strong(2)], ok());
+    expect(three.arms.scaf).toMatchObject({ verdict: "uninformative", valid: 3, demonstrated: 3 });
+    expect(three.verdict).toBe("uninformative");
+    expect(r1PrimeEvaluate([], ok()).verdict).toBe("uninformative");
+    // four valid is enough to be informative, and four demonstrated is true
+    expect(r1PrimeEvaluate([await strong(0), await strong(1), await strong(2), await strong(3)], ok()).verdict).toBe(true);
+    // t' = 1 and 2 sets do not make t' = 0 valid
+    expect(r1PrimeEvaluate([await strong(0), await strong(1), await strong(2), await strong(3, { t: 1 }), await strong(4, { t: 2 })], ok()).verdict).toBe("uninformative");
+  });
+
+  it("makes every replayed history-time unavailable without a replay check: the verdict is uninformative, never true", async () => {
+    const six = await Promise.all([0, 1, 2, 3, 4, 5].map((i) => strong(i)));
+    const t1 = await Promise.all([0, 1, 2, 3, 4, 5].map((i) => strong(i, { t: 1 })));
+    const t2 = await Promise.all([0, 1, 2, 3, 4, 5].map((i) => strong(i, { t: 2 })));
+    expect(r1PrimeEvaluate(six, ok()).verdict).toBe(true);
+    for (const r of [r1PrimeEvaluate([...six, ...t1, ...t2]), r1PrimeEvaluate([...six, ...t1, ...t2], NO_REPLAY_CHECK)]) {
+      expect(r.verdict).toBe("uninformative");
+      expect(r.arms.scaf).toMatchObject({ verdict: "uninformative", valid: 0, demonstrated: 0 });
+      expect(at(r, "scaf", 0).why).toBe("no replay evidence: no replay check was given (--replay)");
+      expect(at(r, "scaf", 0, 1)).toMatchObject({ available: false, atTau: null });
+      // t' = 2 is the original b100-pre checkpoint: it needs no replay evidence
+      expect(at(r, "scaf", 0, 2)).toMatchObject({ available: true, why: null });
+      expect(r.arms.scaf.byTime.map((b) => [b.tPrime, b.valid])).toEqual([[0, 0], [1, 0], [2, 6]]);
+    }
+  });
+
+  it("makes t' = 0 and 1 unavailable when the mechanism check did not pass, but not the existing boundary-100 checkpoint", async () => {
+    const six = await Promise.all([0, 1, 2, 3, 4, 5].map((i) => strong(i)));
+    const t2 = await Promise.all([0, 1, 2, 3, 4, 5].map((i) => strong(i, { t: 2 })));
+    // mechanismCheck.passed false (or contradicted, or missing) with every history-time listed as valid
+    for (const mechanismWhy of ["mechanismCheck.passed is not true", "the replay check has no mechanismCheck object"]) {
+      const r = r1PrimeEvaluate([...six, ...t2], ok({ mechanismPassed: false, mechanismWhy }));
+      expect(r.verdict).toBe("uninformative");
+      expect(at(r, "scaf", 0).why).toBe(`no replay evidence: ${mechanismWhy}`);
+      expect(at(r, "scaf", 0, 1).available).toBe(false);
+      expect(at(r, "scaf", 0, 2).available).toBe(true);
+      expect(r.arms.scaf.byTime.map((b) => [b.tPrime, b.valid])).toEqual([[0, 0], [1, 0], [2, 6]]);
+    }
+  });
+
+  it("needs the replay check to list a history-time as valid: a missing entry makes it unavailable, and failed wins", async () => {
+    const six = await Promise.all([0, 1, 2, 3, 4, 5].map((i) => strong(i)));
+    // two entries missing from `valid`: 4 valid, 4 demonstrated
+    const two = r1PrimeEvaluate(six, without("scaf-i0-t0", "scaf-i1-t0"));
+    expect(two.arms.scaf).toMatchObject({ verdict: true, valid: 4, demonstrated: 4 });
+    expect(at(two, "scaf", 0)).toMatchObject({ available: false, why: "no replay evidence: the replay check does not list it as valid", demonstrated: false, atTau: null });
+    expect(at(two, "scaf", 2).available).toBe(true);
+    // three missing: only 3 valid, uninformative although all 3 that remain are demonstrated
+    expect(r1PrimeEvaluate(six, without("scaf-i0-t0", "scaf-i1-t0", "scaf-i2-t0")).verdict).toBe("uninformative");
+    // an empty valid list is no evidence
+    expect(r1PrimeEvaluate(six, ok({ valid: [] })).verdict).toBe("uninformative");
+    // the id must match: another arm's or another boundary's entry is not this history-time's
+    expect(r1PrimeEvaluate(six, ok({ valid: REPLAYED.filter((id) => id.startsWith("rand") || id.endsWith("t1")) })).verdict).toBe("uninformative");
+    // failed wins over valid, and says why
+    const failed = r1PrimeEvaluate(six, ok({ failed: [{ id: "scaf-i0-t0", why: "row 12 differs" }, { id: "scaf-i1-t0", why: null }] }));
+    expect(at(failed, "scaf", 0)).toMatchObject({ available: false, why: "replay check failed: row 12 differs" });
+    expect(at(failed, "scaf", 1).why).toBe("replay check failed");
+    expect(failed.arms.scaf).toMatchObject({ verdict: true, valid: 4, demonstrated: 4 });
+    // a failed t' = 2 is unavailable too, although it needs no evidence
+    const t2 = await strong(0, { t: 2 });
+    expect(at(r1PrimeEvaluate([t2], ok({ failed: [{ id: "scaf-i0-t2", why: null }] })), "scaf", 0, 2).available).toBe(false);
+    expect(at(r1PrimeEvaluate([t2], ok()), "scaf", 0, 2).available).toBe(true);
+  });
+
+  it("counts a technically unavailable history as not demonstrated, and as not valid, with availability judged first", async () => {
+    const six = await Promise.all([0, 1, 2, 3, 4, 5].map((i) => strong(i)));
+    // an unavailable history is not demonstrated: 3 demonstrated of 4 valid is false, not uninformative
+    const mixed = [await strong(0), await strong(1), await strong(2), await weak(3), await strong(4), await strong(5)];
+    const f = r1PrimeEvaluate(mixed, ok({ failed: [{ id: "scaf-i4-t0", why: null }, { id: "scaf-i5-t0", why: null }] }));
+    expect(f.arms.scaf).toMatchObject({ verdict: false, valid: 4, demonstrated: 3 });
+    // missing sets are unavailable, with the reason of a rejected one when it carried the key
+    const some = r1PrimeEvaluate(six.slice(0, 5), ok(), [{ key: { arm: "scaf", history: 5, tPrime: 0 }, reasons: ["side 2, want 8"] }]);
+    expect(at(some, "scaf", 5).why).toBe("set rejected: side 2, want 8");
+    expect(at(some, "scaf", 5, 1).why).toBe("no assay set");
+    expect(some.arms.scaf).toMatchObject({ verdict: true, valid: 5, demonstrated: 5 });
+    // a rejected set whose directory could not be read is the same: unavailable, and the others go on
+    const unreadable = r1PrimeEvaluate(six.slice(1), ok(), [{ key: { arm: "scaf", history: 0, tPrime: 0 }, reasons: ["could not read the set: ENOENT"] }]);
+    expect(at(unreadable, "scaf", 0).why).toBe("set rejected: could not read the set: ENOENT");
+    expect(unreadable.arms.scaf).toMatchObject({ verdict: true, valid: 5, demonstrated: 5 });
+    // an analysis that throws makes that history-time unavailable instead of stopping the stage
+    const boom = { ...six[0], get fragments(): R1PrimeFragment[] { throw new Error("boom"); } };
+    const broken = r1PrimeEvaluate([boom, ...six.slice(1)], ok());
+    expect(at(broken, "scaf", 0)).toMatchObject({ available: false, why: "analysis failed: boom" });
+    expect(broken.arms.scaf).toMatchObject({ verdict: true, valid: 5, demonstrated: 5 });
+  });
+
+  it("treats fewer than 2 eligible donors as a valid, not demonstrated history (biological, not technical)", async () => {
+    const ins = await setOf({ i: 3, insufficient: true });
+    const r = r1PrimeEvaluate([await strong(0), await strong(1), await strong(2), ins], ok());
+    expect(at(r, "scaf", 3)).toMatchObject({ available: true, insufficient: true, demonstrated: false, n: 0, atTau: null, atEnd: null, why: null });
+    // 4 valid (one insufficient): informative, 3 demonstrated of 6 -> false
+    expect(r.arms.scaf).toMatchObject({ verdict: false, valid: 4, demonstrated: 3 });
+    // with the insufficient one, 3 strong and 3 more strong is still true
+    const r2 = r1PrimeEvaluate([await strong(0), await strong(1), await strong(2), await strong(4), ins], ok());
+    expect(r2.arms.scaf).toMatchObject({ verdict: true, valid: 5, demonstrated: 4 });
+    // it still needs the replay evidence like any replayed history-time
+    expect(at(r1PrimeEvaluate([ins], ok({ valid: [] })), "scaf", 3)).toMatchObject({ available: false, insufficient: false });
+  });
+
+  it("applies the rule to scaf and reports it for rand, and reads t' = 1 and 2 descriptively only", async () => {
+    const sets = [
+      ...(await Promise.all([0, 1, 2, 3, 4, 5].map((i) => weak(i)))),
+      ...(await Promise.all([0, 1, 2, 3, 4, 5].map((i) => strong(i, { arm: "rand" })))),
+      ...(await Promise.all([0, 1, 2, 3, 4, 5].map((i) => strong(i, { t: 1 })))),
+    ];
+    const r = r1PrimeEvaluate(sets, ok());
+    expect(r.verdict).toBe(false);
+    expect(r.arms.scaf.verdict).toBe(false);
+    expect(r.arms.rand.verdict).toBe(true);
+    expect(r.arms.rand.demonstrated).toBe(6);
+    expect(r.arms.scaf.byTime.map((b) => [b.tPrime, b.boundary, b.valid, b.demonstratedAtTau])).toEqual([[0, 34, 6, 0], [1, 67, 6, 6], [2, 100, 0, 0]]);
+    // the end trait is saturated and carries no donor effect: it is read apart from the trait at tau
+    expect(r.arms.scaf.byTime[1].demonstratedAtEnd).toBeLessThan(6);
+    expect(r.arms.scaf.byTime[1].meanSaturationAtTau).toBe(0);
+    expect(r.arms.scaf.byTime[1].meanSaturationAtEnd).toBe(1);
+    expect(r.arms.scaf.byTime[2].meanSaturationAtTau).toBeNull();
+  });
+
+  it("is deterministic", async () => {
+    const sets = [await strong(0), await weak(1)];
+    expect(r1PrimeEvaluate(sets, ok())).toEqual(r1PrimeEvaluate(sets, ok()));
+  });
+
+  it("takes the verdict from t' = 0 histories of the arm's own", () => {
+    const h = (arm: "scaf" | "rand", tPrime: 0 | 1 | 2, available: boolean, demonstrated: boolean) => ({ arm, history: 0, tPrime, h: 0, boundary: 34, available, why: null, insufficient: false, n: 0, families: 0, truncatedRows: 0, covariates: [], demonstrated, atTau: null, atEnd: null });
+    const four = (arm: "scaf" | "rand") => [0, 1, 2, 3].map(() => h(arm, 0, true, true));
+    expect(r1PrimeVerdict(four("scaf"), "scaf")).toBe(true);
+    expect(r1PrimeVerdict(four("scaf"), "rand")).toBe("uninformative");
+    expect(r1PrimeVerdict([...four("scaf"), h("scaf", 1, true, false)], "scaf")).toBe(true);
+    expect(r1PrimeVerdict([...four("scaf").slice(0, 3), h("scaf", 0, true, false)], "scaf")).toBe(false);
+  });
+});
+
+// ---- the CLI end to end for tau and r1prime --------------------------------------------------------
+
+function writeTraitDir(root: string, name: string, f: SetFixture, withTraits = true) {
+  const dir = join(root, name);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, "assay.json"), JSON.stringify(f.json));
+  writeFileSync(join(dir, "assay.tsv"), f.assayText);
+  if (withTraits) writeFileSync(join(dir, "traits.tsv"), f.traitsText);
+  return dir;
+}
+
+describe("scaffold-report tau and r1prime", () => {
+  const scratch = () => mkdtempSync(join(tmpdir(), "scaffold-r1prime-"));
+  const regime = ["--regime", "8", String(PRIME_PERIOD)];
+  const frozenRegime = ["--regime", "8", "10000"];
+  const find = (out: Record<string, any>, arm: string, history: number, tPrime: number) => out.histories.find((x: { arm: string; history: number; tPrime: number }) => x.arm === arm && x.history === history && x.tPrime === tPrime);
+  /** What the tau stage writes for the strict calibration (tau at a census step of the 10,000-step period). */
+  const tauFile = (root: string, tau: number, over: Record<string, unknown> = {}) => {
+    const path = join(root, "tau.json");
+    const f = frozenTau();
+    const { source, ref, k, period, side, replicates, seeds, labels } = f.json;
+    writeFileSync(path, JSON.stringify({ stage: "tau", verdict: null, validated: true, provenance: { source, ref, k, period, side, replicates, seeds, labels }, tau, ...over }));
+    return path;
+  };
+  /** A replay-check.json whose mechanism check passed and that lists `valid`. */
+  const replayFile = (root: string, valid: string[], over: Record<string, unknown> = {}) => {
+    const path = join(root, "replay-check.json");
+    writeFileSync(path, JSON.stringify({ mechanismCheck: { passed: true, "scaf-i0": { replay: "h1", saved: "h1" }, "rand-i0": { replay: "h2", saved: "h2" } }, valid, failed: [], ...over }));
+    return path;
+  };
+  const ids = (arm: string, t: number, histories = [0, 1, 2, 3, 4, 5]) => histories.map((i) => `${arm}-i${i}-t${t}`);
+
+  it("tau: reads the calibration's traits.tsv, prints tau with the median curve and records the provenance it validated", () => {
+    const root = scratch();
+    writeTraitDir(root, "tau", frozenTau());
+    // other sets under the same root are skipped
+    writeTraitDir(root, "prime", primeFixture({ i: 0 }));
+    const out = report("tau", "--assays", root, ...frozenRegime);
+    expect(out).toMatchObject({ stage: "tau", verdict: null, validated: true, tau: 2600, crossed: true, medianAtTau: 26_000, threshold: 25_764.5, ref: 103_058, fragments: 128, period: 10_000, skipped: 1, rejected: [] });
+    expect(out.curve).toHaveLength(100);
+    expect(out.curve[25]).toEqual({ step: 2600, n: 128, median: 26_000 });
+    expect(out.provenance).toMatchObject({ source: FROZEN_SOURCE, ref: 103_058, k: 8, period: 10_000, side: 8, replicates: 2, seeds: [{ physics: 4_849_001, fragment: 4_849_001 }, { physics: 4_849_002, fragment: 4_849_002 }], labels: { arm: "ancestor", tauCalibration: true } });
+    // never reaching 0.25 ref gives the whole period
+    const never = scratch();
+    writeTraitDir(never, "tau", frozenTau(() => 1000));
+    expect(report("tau", "--assays", never, ...frozenRegime)).toMatchObject({ validated: true, tau: 10_000, crossed: false, medianAtTau: 1000 });
+    // two calibration sets are an error
+    writeTraitDir(root, "tau2", frozenTau());
+    expect(() => report("tau", "--assays", root, ...frozenRegime)).toThrow(/2 tau calibration sets/);
+  });
+
+  it("tau: a calibration that is not Amendment 2's is refused, in strict mode, with the reasons; smoke runs are labelled unvalidated", () => {
+    const root = scratch();
+    // the wrong ref, a calibration at another source, and a smoke-sized set
+    writeTraitDir(root, "wrong-ref", frozenTau(undefined, { ref: 40 }));
+    const bad = report("tau", "--assays", root, ...frozenRegime);
+    expect(bad).toMatchObject({ stage: "tau", verdict: null, validated: false, tau: null });
+    expect(bad.rejected[0].reasons.join(" ")).toMatch(/ref 40, want 103058/);
+    const other = scratch();
+    writeTraitDir(other, "tau", frozenTau(undefined, { source: "runs/scaffold/main/scaf/i0/ckpt/b100-pre.blck.gz" }));
+    expect(report("tau", "--assays", other).rejected[0].reasons.join(" ")).toMatch(/want a path ending in calib\/source\/ckpt\/b1-pre\.blck\.gz/);
+    const smoke = scratch();
+    writeTraitDir(smoke, "tau", tauFixture([5, 12, 20], { json: { side: 2, seeds: [{ physics: 1, fragment: 1 }, { physics: 2, fragment: 2 }] } }));
+    const s = report("tau", "--assays", smoke, ...regime);
+    expect(s).toMatchObject({ stage: "tau", verdict: null, validated: false, tau: null });
+    expect(s.rejected[0].reasons.join(" ")).toMatch(/side 2/);
+    // --allow-any-seed reads a smoke calibration, but its tau.json is not validated
+    const free = scratch();
+    writeTraitDir(free, "tau", tauFixture([5, 12, 20], { json: { seeds: [{ physics: 1, fragment: 1 }, { physics: 2, fragment: 2 }], source: "ckpt" } }));
+    const f = report("tau", "--assays", free, "--allow-any-seed");
+    expect(f).toMatchObject({ stage: "tau", validated: false, tau: 200, crossed: true, medianAtTau: 12, period: PRIME_PERIOD, rejected: [] });
+  });
+
+  it("tau: a calibration with a missing or malformed table is rejected with the reason, not a crash", () => {
+    const root = scratch();
+    const noTsv = writeTraitDir(root, "tau", frozenTau());
+    execFileSync("rm", [join(noTsv, "assay.tsv")]);
+    const r = report("tau", "--assays", root, ...frozenRegime);
+    expect(r).toMatchObject({ validated: false, tau: null });
+    expect(r.rejected[0].reasons[0]).toMatch(/could not read the set/);
+    const bad = scratch();
+    const f = frozenTau();
+    writeTraitDir(bad, "tau", { ...f, traitsText: f.traitsText.replace("0\t0\t100\t", "0\t0\t100\tx") });
+    expect(report("tau", "--assays", bad, ...frozenRegime).rejected[0].reasons[0]).toMatch(/could not read the set.*not a number/);
+  });
+
+  it("r1prime: refuses a tau.json that is not validated strict calibration output", () => {
+    const root = scratch();
+    for (const i of [0, 1, 2, 3]) writeTraitDir(root, `scaf-i${i}-t0`, primeFixture({ i }));
+    const args = (tau: string, ...more: string[]) => ["r1prime", "--assays", root, "--tau", tau, ...regime, ...more];
+    const good = tauFile(root, PRIME_TAU);
+    expect(report(...args(good)).tauValidated).toBe(true);
+    // a hand-written or smoke tau.json
+    writeFileSync(join(root, "plain.json"), JSON.stringify({ stage: "tau", tau: PRIME_TAU }));
+    expect(() => report(...args(join(root, "plain.json")))).toThrow(/cannot fix tau for R1'.*not validated strict calibration output/);
+    expect(() => report(...args(tauFile(root, PRIME_TAU, { validated: false })))).toThrow(/not validated/);
+    expect(() => report(...args(tauFile(root, PRIME_TAU, { tau: null })))).toThrow(/tau null, want a positive integer/);
+    expect(() => report(...args(tauFile(root, 250)))).toThrow(/tau 250 is not a census step/);
+    const wrongRef = tauFile(root, PRIME_TAU, { provenance: { ...JSON.parse(readFileSync(good, "utf8")).provenance, ref: 40 } });
+    expect(() => report(...args(wrongRef))).toThrow(/provenance\.ref 40, want 103058/);
+    // the smoke flag reads it, and says it is unvalidated
+    const smoke = report(...args(join(root, "plain.json"), "--allow-any-seed"));
+    expect(smoke).toMatchObject({ stage: "r1prime", tau: PRIME_TAU, tauValidated: false });
+    writeFileSync(join(root, "plain.json"), JSON.stringify({ stage: "tau", tau: null }));
+    expect(() => report(...args(join(root, "plain.json"), "--allow-any-seed"))).toThrow(/tau null, want a positive integer/);
+    expect(() => report("r1prime", "--assays", root, ...regime)).toThrow();
+  });
+
+  it("r1prime: without --replay every t' = 0 and 1 history is unavailable and the verdict is uninformative; t' = 2 needs no replay", () => {
+    const root = scratch();
+    for (const i of [0, 1, 2, 3, 4, 5]) writeTraitDir(root, `scaf-i${i}-t0`, primeFixture({ i, tau: strongTau }));
+    for (const i of [0, 1]) writeTraitDir(root, `scaf-i${i}-t2`, primeFixture({ i, t: 2, tau: strongTau }));
+    const tau = tauFile(root, PRIME_TAU);
+    const out = report("r1prime", "--assays", root, "--tau", tau, ...regime);
+    expect(out).toMatchObject({ stage: "r1prime", verdict: "uninformative", tau: PRIME_TAU, tauValidated: true, regime: { k: 8, period: PRIME_PERIOD }, rejected: [], skipped: 0 });
+    expect(out.replay).toMatchObject({ given: false, mechanismPassed: false, valid: [], failed: [] });
+    expect(out.arms.scaf).toMatchObject({ verdict: "uninformative", valid: 0, demonstrated: 0 });
+    expect(find(out, "scaf", 0, 0)).toMatchObject({ available: false, atTau: null });
+    expect(find(out, "scaf", 0, 0).why).toMatch(/^no replay evidence: no replay check was given/);
+    expect(find(out, "scaf", 0, 2)).toMatchObject({ available: true });
+    expect(out.histories).toHaveLength(36);
+    // with the evidence the same sets give the verdict
+    const replay = replayFile(root, ids("scaf", 0));
+    expect(report("r1prime", "--assays", root, "--tau", tau, ...regime, "--replay", replay)).toMatchObject({ verdict: true });
+    // mechanismCheck false, or a valid list that leaves histories out, is uninformative again
+    expect(report("r1prime", "--assays", root, "--tau", tau, ...regime, "--replay", replayFile(root, ids("scaf", 0), { mechanismCheck: { passed: false } })).verdict).toBe("uninformative");
+    expect(report("r1prime", "--assays", root, "--tau", tau, ...regime, "--replay", replayFile(root, ids("scaf", 0, [0, 1, 2]))).verdict).toBe("uninformative");
+    const partial = report("r1prime", "--assays", root, "--tau", tau, ...regime, "--replay", replayFile(root, ids("scaf", 0, [0, 1, 2, 3])));
+    expect(partial.arms.scaf).toMatchObject({ verdict: true, valid: 4, demonstrated: 4 });
+    expect(find(partial, "scaf", 4, 0).why).toBe("no replay evidence: the replay check does not list it as valid");
+  });
+
+  it("r1prime: the rule, --replay, rejected sets, and the descriptive columns, through files", () => {
+    const root = scratch();
+    // scaf t' = 0: 4 strong + 2 weak histories; scaf t' = 1 strong; rand t' = 0 strong
+    for (const i of [0, 1, 2, 3]) writeTraitDir(root, `scaf-i${i}-t0`, primeFixture({ i, tau: strongTau }));
+    for (const i of [4, 5]) writeTraitDir(root, `scaf-i${i}-t0`, primeFixture({ i, tau: weakTau }));
+    for (const i of [0, 1]) writeTraitDir(root, `scaf-i${i}-t1`, primeFixture({ i, t: 1, tau: strongTau }));
+    for (const i of [0, 1, 2, 3, 4, 5]) writeTraitDir(root, `rand-i${i}-t0`, primeFixture({ arm: "rand", i, tau: strongTau }));
+    // a set that is not an R1' set is skipped; a smoke R1' set is rejected and its history is unavailable
+    writeTraitDir(root, "tau", tauFixture([5, 12, 20]));
+    writeTraitDir(root, "smoke", primeFixture({ i: 0, t: 2, json: { side: 2 } }));
+    const tau = tauFile(root, PRIME_TAU);
+    const everything = [...ids("scaf", 0), ...ids("scaf", 1), ...ids("rand", 0)];
+    const replay = replayFile(root, everything);
+    const args = ["r1prime", "--assays", root, "--tau", tau, ...regime, "--replay", replay];
+    const out = report(...args);
+    expect(out.verdict).toBe(true);
+    expect(out.skipped).toBe(1);
+    expect(out.rejected).toHaveLength(1);
+    expect(out.rejected[0].key).toEqual({ arm: "scaf", history: 0, tPrime: 2 });
+    expect(out.arms.scaf).toMatchObject({ verdict: true, valid: 6, demonstrated: 4 });
+    expect(out.arms.rand).toMatchObject({ verdict: true, valid: 6, demonstrated: 6 });
+    expect(out.arms.scaf.byTime.map((b: { valid: number }) => b.valid)).toEqual([6, 2, 0]);
+    const h = find(out, "scaf", 0, 0);
+    expect(h.atTau).toMatchObject({ demonstrated: true });
+    expect(Object.keys(h.atTau)).toEqual(["icc", "p", "demonstrated", "varianceComponent", "rawFamilyMeanVariance", "meanTrait", "saturation"]);
+    expect(h.atEnd.demonstrated).toBe(false);
+    expect(find(out, "scaf", 0, 2).why).toMatch(/^set rejected: side 2/);
+    expect(out.replay).toMatchObject({ given: true, mechanismPassed: true, mechanismWhy: null });
+    expect(out.replay.valid).toEqual(everything);
+
+    // failures listed in the replay: two failed histories leave 4 valid with 2 demonstrated -> false, not uninformative; 3 -> uninformative
+    const failed = report(...args.slice(0, -1), replayFile(root, everything, { failed: ["scaf-i0-t0", { id: "scaf-i1-t0", why: "row 7 differs" }] }));
+    expect(failed.arms.scaf).toMatchObject({ verdict: false, valid: 4, demonstrated: 2 });
+    expect(find(failed, "scaf", 1, 0).why).toBe("replay check failed: row 7 differs");
+    const three = report(...args.slice(0, -1), replayFile(root, everything, { failed: ["scaf-i0-t0", "scaf-i1-t0", "scaf-i2-t0"] }));
+    expect(three.verdict).toBe("uninformative");
+    expect(() => report(...args.slice(0, -1), replayFile(root, everything, { failed: ["nonsense"] }))).toThrow(/unrecognised failed entry/);
+  });
+
+  it("r1prime: a missing, malformed or incomplete set becomes unavailable with its reason while the others continue", () => {
+    const root = scratch();
+    for (const i of [0, 1, 2, 3, 4, 5]) writeTraitDir(root, `scaf-i${i}-t0`, primeFixture({ i, tau: strongTau }));
+    const tau = tauFile(root, PRIME_TAU);
+    const replay = replayFile(root, ids("scaf", 0));
+    const args = ["r1prime", "--assays", root, "--tau", tau, ...regime, "--replay", replay];
+    expect(report(...args)).toMatchObject({ verdict: true, rejected: [] });
+    // i0: no assay.tsv; i1: a non-numeric trait in traits.tsv; the other four still give the verdict
+    execFileSync("rm", [join(root, "scaf-i0-t0", "assay.tsv")]);
+    const f1 = primeFixture({ i: 1, tau: strongTau });
+    writeTraitDir(root, "scaf-i1-t0", { ...f1, traitsText: f1.traitsText.replace("0\t0\t100\t", "0\t0\t100\tx") });
+    const two = report(...args);
+    expect(two.verdict).toBe(true);
+    expect(two.arms.scaf).toMatchObject({ verdict: true, valid: 4, demonstrated: 4 });
+    expect(two.rejected.map((r: { key: unknown }) => r.key)).toEqual([{ arm: "scaf", history: 0, tPrime: 0 }, { arm: "scaf", history: 1, tPrime: 0 }]);
+    expect(find(two, "scaf", 0, 0)).toMatchObject({ available: false });
+    expect(find(two, "scaf", 0, 0).why).toMatch(/^set rejected: could not read the set/);
+    expect(find(two, "scaf", 1, 0).why).toMatch(/^set rejected: could not read the set.*not a number/);
+    // i2: an assay.tsv without the retE column; only 3 histories are valid now, so availability makes it uninformative
+    const f2 = primeFixture({ i: 2, tau: strongTau });
+    const cut = f2.assayText.trimEnd().split("\n").map((l) => l.split("\t").filter((_, c) => c !== ASSAY_COLUMNS.indexOf("retE")).join("\t")).join("\n") + "\n";
+    writeTraitDir(root, "scaf-i2-t0", { ...f2, assayText: cut });
+    const three = report(...args);
+    expect(three.verdict).toBe("uninformative");
+    expect(three.arms.scaf).toMatchObject({ verdict: "uninformative", valid: 3, demonstrated: 3 });
+    expect(find(three, "scaf", 2, 0).why).toMatch(/no retE column/);
+    // an unreadable assay.json is reported too (no key to attribute it to), and a traits.tsv that is simply absent
+    writeFileSync(join(root, "scaf-i3-t0", "assay.json"), "{ not json");
+    execFileSync("rm", [join(root, "scaf-i4-t0", "traits.tsv")]);
+    const more = report(...args);
+    expect(more.verdict).toBe("uninformative");
+    expect(more.rejected.find((r: { key: unknown }) => r.key === null).reasons[0]).toMatch(/^assay\.json:/);
+    expect(find(more, "scaf", 4, 0).why).toMatch(/no traits\.tsv/);
+    expect(more.arms.scaf).toMatchObject({ valid: 1 });
+  });
+
+  it("r1prime: a duplicate fragment grid is rejected and its history-time is unavailable", () => {
+    const root = scratch();
+    for (const i of [0, 1, 2, 3, 4]) writeTraitDir(root, `scaf-i${i}-t0`, primeFixture({ i, tau: strongTau }));
+    // scaf i5: assay.tsv repeats a fragment in place of another
+    const f5 = primeFixture({ i: 5, tau: strongTau });
+    const lines = f5.assayText.trimEnd().split("\n");
+    lines[6] = lines[1];
+    writeTraitDir(root, "scaf-i5-t0", { ...f5, assayText: lines.join("\n") + "\n" });
+    const tau = tauFile(root, PRIME_TAU);
+    const replay = replayFile(root, ids("scaf", 0));
+    const out = report("r1prime", "--assays", root, "--tau", tau, ...regime, "--replay", replay);
+    expect(out.arms.scaf).toMatchObject({ verdict: true, valid: 5, demonstrated: 5 });
+    expect(out.rejected).toHaveLength(1);
+    expect(out.rejected[0].reasons.join(" ")).toMatch(/assay\.tsv repeats a \(replicate, pond\) in 1 rows/);
+    expect(find(out, "scaf", 5, 0)).toMatchObject({ available: false });
+    // traits.tsv: a census step with a repeated fragment
+    const f4 = primeFixture({ i: 4, tau: strongTau });
+    const t = f4.traitsText.trimEnd().split("\n");
+    const first = t.findIndex((l) => l.startsWith("0\t0\t200\t"));
+    writeTraitDir(root, "scaf-i4-t0", { ...f4, traitsText: t.map((l, k) => (k === first + 3 ? t[first] : l)).join("\n") + "\n" });
+    const again = report("r1prime", "--assays", root, "--tau", tau, ...regime, "--replay", replay);
+    expect(again.arms.scaf).toMatchObject({ verdict: true, valid: 4, demonstrated: 4 });
+    expect(find(again, "scaf", 4, 0).why).toMatch(/repeated or out-of-grid/);
+    // the same history-time twice: neither set is used
+    writeTraitDir(root, "scaf-i0-t0-copy", primeFixture({ i: 0, tau: strongTau }));
+    const twice = report("r1prime", "--assays", root, "--tau", tau, ...regime, "--replay", replay);
+    expect(twice.arms.scaf).toMatchObject({ valid: 3 });
+    expect(twice.verdict).toBe("uninformative");
+    expect(find(twice, "scaf", 0, 0).why).toMatch(/same R1' set \(scaf-i0-t0\)/);
+  });
+
+  it("tau stage: a duplicate fragment grid in the calibration is rejected", () => {
+    const root = scratch();
+    const f = frozenTau();
+    const lines = f.assayText.trimEnd().split("\n");
+    lines[3] = lines[2];
+    writeTraitDir(root, "tau", { ...f, assayText: lines.join("\n") + "\n" });
+    const out = report("tau", "--assays", root, ...frozenRegime);
+    expect(out).toMatchObject({ tau: null, validated: false });
+    expect(out.rejected[0].reasons.join(" ")).toMatch(/assay\.tsv repeats a \(replicate, pond\) in 1 rows/);
+  });
+
+  it("r1, r2, r3 and calibrate leave R1' and tau directories out (counted as skipped), so existing readouts do not change", () => {
+    const root = scratch();
+    for (const i of [0, 1, 2]) writeAssayDir(root, `h${i}`, scafR1(i));
+    const before = report("r1", "--assays", root, "--regime", "5", "3000");
+    writeTraitDir(root, "prime", primeFixture({ i: 3 }));
+    writeTraitDir(root, "tau", tauFixture([5, 12, 20]));
+    const after = report("r1", "--assays", root, "--regime", "5", "3000");
+    expect(after.skipped).toBe(before.skipped + 2);
+    expect(after.rejected).toEqual(before.rejected);
+    expect({ ...after, skipped: 0 }).toEqual({ ...before, skipped: 0 });
+    const p = join(root, "p1.json");
+    writeFileSync(p, JSON.stringify({ stage: "p1", choice: { passing: [{ k: 8, period: 300 }] } }));
+    expect(report("r3", "--assays", root, "--regime", "8", "300").skipped).toBe(5);
+  });
+
+  it("r1prime --allow-any-seed reads a smoke-sized set (4 ponds x 1 replicate), and the stage still refuses missing traits", () => {
+    const root = scratch();
+    const small = smallOf(primeFixture({ i: 0, json: { seeds: [{ physics: 1, fragment: 1 }], donorSeed: 2 } }));
+    writeTraitDir(root, "smoke", small);
+    const tau = tauFile(root, PRIME_TAU);
+    const strict = report("r1prime", "--assays", root, "--tau", tau, ...regime);
+    expect(strict.rejected).toHaveLength(1);
+    const smoke = report("r1prime", "--assays", root, "--tau", tau, "--allow-any-seed");
+    expect(smoke.rejected).toEqual([]);
+    expect(smoke.histories[0]).toMatchObject({ available: false });
+    expect(smoke.verdict).toBe("uninformative");
+    // with the replay evidence the set is read: 4 fragments
+    const withReplay = report("r1prime", "--assays", root, "--tau", tau, "--allow-any-seed", "--replay", replayFile(root, ids("scaf", 0)));
+    expect(withReplay.histories[0]).toMatchObject({ available: true, n: 4 });
+    expect(withReplay.verdict).toBe("uninformative");
   });
 });

@@ -14,18 +14,32 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { MOT_ZERO } from "@bl/sim-ref";
-import { cloneWorld, pondConfig, pondMatter, pondTraits, randomKey } from "../lib/ponds.ts";
+import { assaySeed, cloneWorld, pondConfig, pondMatter, pondTraits, randomKey } from "../lib/ponds.ts";
 import {
   ASSAY_COLUMNS,
   M_ASSAY,
+  R1_PRIME_SEED_MAX,
+  TAU_LABELS,
+  TAU_SEED_BASE,
+  TRAIT_COLUMNS,
+  assayJson,
   assayLine,
   assaySuccess,
   buildAssayWorld,
+  censusSteps,
+  checkAssaySeeds,
+  checkR1PrimeDonorSeed,
+  checkR1PrimeSeeds,
+  checkTauSeeds,
   fragmentDominant,
+  parseR1PrimeLabels,
   quench,
   r1Donors,
+  r1PrimeDonorSeedOf,
+  r1PrimeSeed,
   standardFragment,
   swapGenome,
+  traitsTable,
   type AssayItem,
   type Fragment,
 } from "../lib/pond-assay.ts";
@@ -380,5 +394,132 @@ describe("assayLine", () => {
     expect(cells).toHaveLength(ASSAY_COLUMNS.length);
     expect(cells).toEqual(["transmission", "s", "1", "3", "7", "fragment", "300", "250", "1234", "1", "900", "800", "1"]);
     expect(assayLine({ assay: "a", source: "s", replicate: 0, pond: 0, family: -1, inoculum: "disc", planted: { ...planted, truncated: false }, endTrait: 0, success: -1 }).endsWith("\t900\t800\t0")).toBe(true);
+  });
+});
+
+describe("traits.tsv writer", () => {
+  it("lists the census steps of a period, the last chunk included", () => {
+    expect(censusSteps(1000, 100)).toEqual([100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]);
+    expect(censusSteps(10_000, 100)).toHaveLength(100);
+    expect(censusSteps(10_000, 100).at(0)).toBe(100);
+    expect(censusSteps(10_000, 100).at(-1)).toBe(10_000);
+    expect(censusSteps(250, 100)).toEqual([100, 200, 250]);
+    expect(censusSteps(50, 100)).toEqual([50]);
+    expect(() => censusSteps(0, 100)).toThrow();
+    expect(() => censusSteps(100, 0)).toThrow();
+  });
+
+  it("writes the header, then every replicate's ponds in step order", () => {
+    expect(TRAIT_COLUMNS).toEqual(["replicate", "pond", "step", "trait"]);
+    const text = traitsTable([
+      { replicate: 0, steps: [100, 200], traits: [[10, 20, 30], [11, 21, 31]] },
+      { replicate: 1, steps: [100, 200], traits: [[40, 50, 60], [41, 51, 61]] },
+    ]);
+    const lines = text.split("\n");
+    expect(lines.pop()).toBe("");
+    expect(lines).toEqual([
+      "replicate\tpond\tstep\ttrait",
+      "0\t0\t100\t10", "0\t0\t200\t11", "0\t1\t100\t20", "0\t1\t200\t21", "0\t2\t100\t30", "0\t2\t200\t31",
+      "1\t0\t100\t40", "1\t0\t200\t41", "1\t1\t100\t50", "1\t1\t200\t51", "1\t2\t100\t60", "1\t2\t200\t61",
+    ]);
+  });
+
+  it("writes only the header for no replicate (an insufficient set) and rejects a census count that is not the step count", () => {
+    expect(traitsTable([])).toBe("replicate\tpond\tstep\ttrait\n");
+    expect(traitsTable([{ replicate: 0, steps: [], traits: [] }])).toBe("replicate\tpond\tstep\ttrait\n");
+    expect(() => traitsTable([{ replicate: 0, steps: [100, 200], traits: [[1]] }])).toThrow(/1 censuses for 2 steps/);
+  });
+
+  it("matches pondTraits: the census trait is B+P over cells with B+P >= 48", () => {
+    // pondTraits is the one definition of the trait; the writer only formats what it is given.
+    const s = blobSource(2);
+    const traits = pondTraits(s);
+    const rows = traitsTable([{ replicate: 0, steps: [100], traits: [traits] }]).trim().split("\n").slice(1);
+    expect(rows.map((r) => Number(r.split("\t")[3]))).toEqual(traits);
+  });
+});
+
+describe("R1' seeds (Amendment 2)", () => {
+  it("is 4,845,001 + 250 h + 100 t' + s, ending at 4,847,960", () => {
+    expect(r1PrimeSeed(0, 0, 0)).toBe(4_845_001);
+    expect(r1PrimeSeed(1, 0, 0)).toBe(4_845_251);
+    expect(r1PrimeSeed(0, 1, 0)).toBe(4_845_101);
+    expect(r1PrimeSeed(0, 0, 9)).toBe(4_845_010);
+    expect(r1PrimeSeed(7, 2, 8)).toBe(4_845_001 + 1750 + 200 + 8);
+    expect(r1PrimeSeed(11, 2, 9)).toBe(4_847_960);
+    expect(R1_PRIME_SEED_MAX).toBe(4_847_960);
+  });
+
+  it("range-checks every field", () => {
+    for (const bad of [[12, 0, 0], [-1, 0, 0], [0, 3, 0], [0, -1, 0], [0, 0, 10], [0, 0, -1], [0.5, 0, 0], [0, 1.5, 0], [0, 0, NaN]] as const) expect(() => r1PrimeSeed(...bad)).toThrow(/r1PrimeSeed/);
+  });
+
+  it("cannot collide with assaySeed, itself, the tau calibration, P1, the calibration or the main run", () => {
+    const prime = new Set<number>();
+    for (let h = 0; h <= 11; h++) for (let t = 0; t <= 2; t++) for (let s = 0; s <= 9; s++) prime.add(r1PrimeSeed(h, t, s));
+    expect(prime.size).toBe(12 * 3 * 10);
+    const others = new Set<number>();
+    let maxAssay = 0;
+    for (let r = 0; r <= 4; r++) for (let h = 0; h <= 18; h++) for (let t = 0; t <= 1; t++) for (let v = 0; v <= 4; v++) for (let s = 0; s <= 9; s++) {
+      const x = assaySeed(r, h, t, v, s);
+      others.add(x);
+      maxAssay = Math.max(maxAssay, x);
+    }
+    expect(maxAssay).toBe(4_844_690);
+    expect(Math.min(...prime)).toBeGreaterThan(maxAssay);
+    for (let s = 0; s <= 9; s++) others.add(TAU_SEED_BASE + s);
+    for (let g = 0; g <= 14; g++) for (let s = 0; s <= 9; s++) others.add(4_800_001 + 100 * g + s);
+    for (let x = 4_802_001; x <= 4_802_022; x++) others.add(x);
+    for (let arm = 0; arm <= 2; arm++) for (let i = 0; i <= 5; i++) others.add(4_810_001 + 100 * arm + i);
+    for (const x of prime) expect(others.has(x)).toBe(false);
+    expect(Math.max(...prime)).toBeLessThan(TAU_SEED_BASE);
+  });
+
+  it("parses --arm, --history and --time as t', and refuses R1's flags", () => {
+    expect(parseR1PrimeLabels({ arm: "scaf", history: "3", time: "2" })).toEqual({ arm: "scaf", history: 3, r1prime: true, timePrime: 2 });
+    expect(parseR1PrimeLabels({ arm: "rand", history: "0", time: "0" })).toEqual({ arm: "rand", history: 0, r1prime: true, timePrime: 0 });
+    expect(() => parseR1PrimeLabels({ arm: "cont", history: "0", time: "0" })).toThrow(/--arm/);
+    expect(() => parseR1PrimeLabels({ arm: "scaf", history: "6", time: "0" })).toThrow(/--history/);
+    expect(() => parseR1PrimeLabels({ arm: "scaf", time: "0" })).toThrow(/--history/);
+    expect(() => parseR1PrimeLabels({ arm: "scaf", history: "0", time: "3" })).toThrow(/--time/);
+    expect(() => parseR1PrimeLabels({ arm: "scaf", history: "0" })).toThrow(/--time/);
+    expect(() => parseR1PrimeLabels({ arm: "scaf", history: "0", time: "0", timing: "a" })).toThrow(/--timing/);
+    expect(() => parseR1PrimeLabels({ arm: "scaf", history: "0", time: "0", calibration: "1" })).toThrow(/--calibration/);
+  });
+
+  it("checks each replicate's seeds and the donor seed against the labels", () => {
+    const l = parseR1PrimeLabels({ arm: "rand", history: "2", time: "1" }); // h = 8, t' = 1
+    const at = (s: number) => ({ physics: r1PrimeSeed(8, 1, s), fragment: r1PrimeSeed(8, 1, s) });
+    expect(() => checkR1PrimeSeeds(l, at(0), 0)).not.toThrow();
+    expect(() => checkR1PrimeSeeds(l, at(1), 1)).not.toThrow();
+    expect(() => checkR1PrimeSeeds(l, at(0), 1)).toThrow(/want r1PrimeSeed\(h, t', 1\) = 4847102/);
+    expect(() => checkR1PrimeSeeds(l, { physics: r1PrimeSeed(8, 1, 0), fragment: r1PrimeSeed(8, 1, 1) }, 0)).toThrow(/fragment seed/);
+    expect(() => checkR1PrimeSeeds(l, { physics: r1PrimeSeed(8, 0, 0), fragment: r1PrimeSeed(8, 0, 0) }, 0)).toThrow(/does not match/); // another boundary
+    expect(() => checkR1PrimeSeeds(l, { physics: r1PrimeSeed(2, 1, 0), fragment: r1PrimeSeed(2, 1, 0) }, 0)).toThrow(/does not match/); // the scaf history of that index
+    expect(r1PrimeDonorSeedOf(l)).toBe(r1PrimeSeed(8, 1, 9));
+    expect(() => checkR1PrimeDonorSeed(l, r1PrimeSeed(8, 1, 9))).not.toThrow();
+    expect(() => checkR1PrimeDonorSeed(l, r1PrimeSeed(8, 1, 8))).toThrow(/donor seed/); // the permutation stream
+    expect(() => checkR1PrimeDonorSeed(l, assaySeed(1, 8, 1, 0, 9))).toThrow(/donor seed/); // R1's donor seed
+  });
+
+  it("checks the tau calibration's seeds 4,849,001 + s, in checkAssaySeeds too", () => {
+    expect(TAU_SEED_BASE).toBe(4_849_001);
+    expect(() => checkTauSeeds({ physics: 4_849_001, fragment: 4_849_001 }, 0)).not.toThrow();
+    expect(() => checkTauSeeds({ physics: 4_849_002, fragment: 4_849_002 }, 1)).not.toThrow();
+    expect(() => checkTauSeeds({ physics: 4_849_001, fragment: 4_849_001 }, 1)).toThrow(/needs seed 4849002/);
+    expect(() => checkTauSeeds({ physics: 4_849_001, fragment: 4_849_002 }, 0)).toThrow(/needs seed 4849001/);
+    expect(() => checkAssaySeeds("competence", TAU_LABELS, "fragment", { physics: 4_849_002, fragment: 4_849_002 }, 1)).not.toThrow();
+    expect(() => checkAssaySeeds("competence", TAU_LABELS, "fragment", { physics: 4_802_011, fragment: 4_802_011 }, 0)).toThrow(/tau calibration/);
+  });
+
+  it("writes the R1' and tau labels into assay.json, and leaves other assay.json keys alone", () => {
+    const base = { protocolSha256: "0".repeat(64), assay: "transmission", source: "ckpt", tag: "t", k: 8, period: 10_000, ref: 103_058, side: 8, replicates: 2, censusEvery: 100, inoculum: "fragment", seeds: [], extra: {}, summary: {}, wallSeconds: 1 };
+    const prime = JSON.parse(JSON.stringify(assayJson({ ...base, labels: parseR1PrimeLabels({ arm: "scaf", history: "1", time: "0" }), extra: { traitsRecorded: true } })));
+    expect(prime.labels).toEqual({ arm: "scaf", history: 1, r1prime: true, timePrime: 0 });
+    expect(prime.traitsRecorded).toBe(true);
+    const tau = JSON.parse(JSON.stringify(assayJson({ ...base, assay: "competence", labels: TAU_LABELS })));
+    expect(tau.labels).toEqual({ arm: "ancestor", time: 0, timing: "a", tauCalibration: true });
+    // without --traits the keys are exactly the old ones
+    expect("traitsRecorded" in JSON.parse(JSON.stringify(assayJson({ ...base, labels: TAU_LABELS })))).toBe(false);
   });
 });

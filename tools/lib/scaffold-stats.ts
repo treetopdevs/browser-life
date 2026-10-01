@@ -6,7 +6,7 @@
 // Large tables (ponds.tsv, lineages.tsv) are streamed row by row, never loaded whole.
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
-import { checkAssaySeeds, checkDonorSeed, type AssayLabelSet, type AssayName } from "./pond-assay.ts";
+import { M_ASSAY, R1_PRIME_BOUNDARIES, TAU_SEED_BASE, censusSteps, checkAssaySeeds, checkDonorSeed, checkR1PrimeDonorSeed, checkR1PrimeSeeds, checkTauSeeds, r1PrimeH, r1PrimeSeed, type AssayLabelSet, type AssayName, type R1PrimeLabelSet } from "./pond-assay.ts";
 import { assaySeed, randomKey, weightedPick } from "./ponds.ts";
 
 // ---------------------------------------------------------------------------------------------
@@ -692,13 +692,22 @@ export function p2Sensitivity(
 // ---------------------------------------------------------------------------------------------
 // ICC(1), OLS residuals, permutation
 
+/** The one-way ANOVA of `y` by family: `a` families, `N` values, the family means (by first appearance) and the mean squares. */
+export interface OneWayAnova {
+  a: number;
+  N: number;
+  means: number[];
+  msb: number;
+  msw: number;
+  n0: number;
+}
+
 /**
- * One-way random-effects ICC(1) with unequal family sizes: (MSB - MSW) / (MSB + (n0 - 1) MSW) with
- * n0 = (N - sum n_i^2 / N) / (a - 1). Families are relabelled by first appearance, so any two label vectors
- * that induce the same partition give bit-identical results. null with fewer than 2 families or no
- * within-family degrees of freedom; 0 when the values are all equal.
+ * One-way ANOVA with unequal family sizes: MSB, MSW and n0 = (N - sum n_i^2 / N) / (a - 1). Families are relabelled
+ * by first appearance, so any two label vectors that induce the same partition give bit-identical results. null with
+ * fewer than 2 families or no within-family degrees of freedom.
  */
-export function icc1(y: readonly number[], labels: readonly number[]): number | null {
+export function oneWayAnova(y: readonly number[], labels: readonly number[]): OneWayAnova | null {
   const N = y.length;
   if (labels.length !== N) throw new Error("icc1: y and labels differ in length");
   const idOf = new Map<number, number>();
@@ -732,8 +741,19 @@ export function icc1(y: readonly number[], labels: readonly number[]): number | 
   const msb = ssb / (a - 1);
   const msw = ssw / (N - a);
   const n0 = (N - sq / N) / (a - 1);
-  const denom = msb + (n0 - 1) * msw;
-  return denom === 0 ? 0 : (msb - msw) / denom;
+  return { a, N, means: gm, msb, msw, n0 };
+}
+
+/**
+ * One-way random-effects ICC(1) with unequal family sizes: (MSB - MSW) / (MSB + (n0 - 1) MSW), the mean squares
+ * from `oneWayAnova`. null with fewer than 2 families or no within-family degrees of freedom; 0 when the values
+ * are all equal.
+ */
+export function icc1(y: readonly number[], labels: readonly number[]): number | null {
+  const an = oneWayAnova(y, labels);
+  if (an === null) return null;
+  const denom = an.msb + (an.n0 - 1) * an.msw;
+  return denom === 0 ? 0 : (an.msb - an.msw) / denom;
 }
 
 /**
@@ -1140,6 +1160,29 @@ export function validateAssayDirs(dirs: readonly AssayDir[], regimes: readonly A
 export const R1_PERMUTATIONS = 1000;
 export const R1_ALPHA = 0.05;
 
+/** R1's covariates: the trait is residualised on log(1 + retained B+P) and log(1 + retained E). */
+export const R1_COVARIATES = ["log1p(retMass)", "log1p(retE)"];
+
+/**
+ * R1's statistic on fragments in R1's order (replicate 0's f = 0..63, then replicate 1's): the OLS residuals of
+ * `trait` on `R1_COVARIATES`, fitted over every fragment given, the ICC(1) of the residuals with families = donors, and
+ * its permutation p-value from `R1_PERMUTATIONS` permutations with the stream `sigma`. `icc` and `p` are null when the
+ * ICC is undefined. R1 calls it with the end trait and sigma8 = assaySeed(1, h, t, 0, 8), R1' with the trait at tau
+ * (or the end trait) and sigma8 = r1PrimeSeed(h, t', 8).
+ */
+export function r1Test(
+  trait: readonly number[],
+  retMass: readonly number[],
+  retE: readonly number[],
+  families: readonly number[],
+  sigma: number,
+): { resid: number[]; icc: number | null; p: number | null; demonstrated: boolean } {
+  const resid = olsResiduals(trait, [retMass.map((m) => Math.log1p(m)), retE.map((e) => Math.log1p(e))]);
+  const res = permutationP(resid, families, sigma, R1_PERMUTATIONS);
+  if (!res) return { resid, icc: null, p: null, demonstrated: false };
+  return { resid, icc: res.icc, p: res.p, demonstrated: res.icc > 0 && res.p < R1_ALPHA };
+}
+
 export interface R1Result {
   /** History index h = 6 arm + i and time t (0 or 1) that key the permutation stream. */
   h: number;
@@ -1166,12 +1209,10 @@ export function r1History(rows: readonly AssayRow[], h: number, t: number, insuf
   if (insufficient || frag.length === 0) return { ...base, icc: null, p: null, demonstrated: false, covariates: [] };
   // The protocol residualises on log(1 + retained B+P) and log(1 + retained E); a table without retE is another model.
   if (frag.some((r) => r.retE === null)) throw new Error(`R1 (h ${h}, t ${t}): assay.tsv has no retE column, so the protocol's covariate is missing; re-run the transmission assay`);
-  const covariates = ["log1p(retMass)", "log1p(retE)"];
-  const xs = [frag.map((r) => Math.log1p(r.retMass)), frag.map((r) => Math.log1p(r.retE!))];
-  const resid = olsResiduals(frag.map((r) => r.endTrait), xs);
-  const res = permutationP(resid, frag.map((r) => r.family), assaySeed(1, h, t, 0, 8), R1_PERMUTATIONS);
-  if (!res) return { ...base, icc: null, p: null, demonstrated: false, covariates };
-  return { ...base, icc: res.icc, p: res.p, demonstrated: res.icc > 0 && res.p < R1_ALPHA, covariates };
+  const covariates = [...R1_COVARIATES];
+  const res = r1Test(frag.map((r) => r.endTrait), frag.map((r) => r.retMass), frag.map((r) => r.retE!), frag.map((r) => r.family), assaySeed(1, h, t, 0, 8));
+  if (res.icc === null) return { ...base, icc: null, p: null, demonstrated: false, covariates };
+  return { ...base, icc: res.icc, p: res.p, demonstrated: res.demonstrated, covariates };
 }
 
 /** R1 over every scaf and rand set (labels need `time`); an arm demonstrates heredity with at least 4 of 6 histories at C. */
@@ -1191,6 +1232,644 @@ export function r1Evaluate(sets: readonly AssaySet[]): {
     return { demonstratedAtC, demonstrated: demonstratedAtC >= 4 };
   };
   return { histories, arms: { scaf: armResult("scaf"), rand: armResult("rand") } };
+}
+
+// ---------------------------------------------------------------------------------------------
+// R1' and the tau calibration (protocol, Amendment 2)
+
+/** traits.tsv (`scaffold-assays --traits`) holds a trait at every census, every 100 steps of the period. */
+export const TRAIT_CENSUS = 100;
+
+/** A row of traits.tsv: a pond's trait (B+P over cells with B+P >= 48) at one census step of an assay period. */
+export interface TraitRow {
+  replicate: number;
+  pond: number;
+  step: number;
+  trait: number;
+}
+
+export function traitRow(r: TsvRow): TraitRow {
+  return { replicate: num(r, "replicate"), pond: num(r, "pond"), step: num(r, "step"), trait: num(r, "trait") };
+}
+
+/** The (replicate, pond) grid an assay fills exactly once: replicates 0..R-1 x ponds 0..P-1 (2 x 64 for the protocol's 8 x 8 ponds). */
+export interface FragmentGrid {
+  replicates: number;
+  ponds: number;
+}
+
+/** The grid an assay.json declares (replicates x side^2); null when it declares none. */
+export function gridOfJson(json: Record<string, unknown>): FragmentGrid | null {
+  const { side, replicates } = json;
+  return Number.isInteger(side) && Number.isInteger(replicates) && (side as number) >= 1 && (replicates as number) >= 1 ? { replicates: replicates as number, ponds: (side as number) ** 2 } : null;
+}
+
+/** Rows of `keys` that repeat an earlier (replicate, pond) or fall outside `grid`. */
+function gridViolations(keys: Iterable<{ replicate: number; pond: number }>, grid: FragmentGrid): { repeated: number; outside: number } {
+  const seen = new Set<number>();
+  let repeated = 0;
+  let outside = 0;
+  for (const { replicate, pond } of keys) {
+    if (!Number.isInteger(replicate) || !Number.isInteger(pond) || replicate < 0 || replicate >= grid.replicates || pond < 0 || pond >= grid.ponds) {
+      outside++;
+      continue;
+    }
+    const id = replicate * grid.ponds + pond;
+    if (seen.has(id)) repeated++;
+    else seen.add(id);
+  }
+  return { repeated, outside };
+}
+
+export interface TraitsRead {
+  /** Rows per census step, for every step in the file. */
+  counts: Map<number, number>;
+  /** Rows per census step that repeat a (replicate, pond) of that step or lie outside the grid; empty without a grid. */
+  invalid: Map<number, number>;
+  /** The rows of the steps in `keep` (every step when `keep` is omitted), in file order. */
+  rows: Map<number, TraitRow[]>;
+}
+
+/**
+ * Streams traits.tsv, counting every step's rows and keeping those of `keep`; the table is never held whole. With a
+ * `grid`, it also counts, per step, the rows that repeat a (replicate, pond) or lie outside it.
+ */
+export async function readTraits(lines: AsyncIterable<TsvRow>, keep?: ReadonlySet<number>, grid?: FragmentGrid | null): Promise<TraitsRead> {
+  const counts = new Map<number, number>();
+  const invalid = new Map<number, number>();
+  const seen = new Map<number, Set<number>>();
+  const rows = new Map<number, TraitRow[]>();
+  for await (const r of lines) {
+    const t = traitRow(r);
+    counts.set(t.step, (counts.get(t.step) ?? 0) + 1);
+    if (grid) {
+      let at = seen.get(t.step);
+      if (!at) seen.set(t.step, (at = new Set()));
+      const id = t.replicate * grid.ponds + t.pond;
+      const inside = Number.isInteger(t.replicate) && Number.isInteger(t.pond) && t.replicate >= 0 && t.replicate < grid.replicates && t.pond >= 0 && t.pond < grid.ponds;
+      if (!inside || at.has(id)) invalid.set(t.step, (invalid.get(t.step) ?? 0) + 1);
+      else at.add(id);
+    }
+    if (keep !== undefined && !keep.has(t.step)) continue;
+    const list = rows.get(t.step);
+    if (list) list.push(t);
+    else rows.set(t.step, [t]);
+  }
+  return { counts, invalid, rows };
+}
+
+/** The tau calibration's set and the R1' sets as read: path, assay.json, assay.tsv rows and traits.tsv (null when absent). */
+export interface TraitSetDir {
+  dir: string;
+  json: Record<string, unknown>;
+  rows: AssayRow[];
+  traits: TraitsRead | null;
+}
+
+/** What is wrong with a set's traits.tsv against its assay.json: not recorded, other census steps than every `censusEvery` up to `period`, or other than one row per assay row at a step. */
+function traitsProblems(json: Record<string, unknown>, assayRows: number, traits: TraitsRead | null): string[] {
+  const why: string[] = [];
+  if (json.traitsRecorded !== true) why.push("assay.json does not say traitsRecorded (run the assay with --traits)");
+  if (traits === null) {
+    why.push("no traits.tsv");
+    return why;
+  }
+  const { period, censusEvery } = json;
+  if (!Number.isInteger(period) || !Number.isInteger(censusEvery) || (period as number) < 1 || (censusEvery as number) < 1) {
+    why.push("assay.json has no period and censusEvery");
+    return why;
+  }
+  // An insufficient R1' set has no fragments, so no traits either.
+  const want = assayRows === 0 ? [] : censusSteps(period as number, censusEvery as number);
+  const have = [...traits.counts.keys()].sort((a, b) => a - b);
+  if (have.length !== want.length || have.some((st, i) => st !== want[i])) {
+    why.push(`traits.tsv has ${have.length} census steps${have.length ? ` (${have[0]}..${have[have.length - 1]})` : ""}, want ${want.length}${want.length ? ` (${want[0]}..${want[want.length - 1]})` : ""}`);
+    return why;
+  }
+  const off = [...traits.counts].filter(([, c]) => c !== assayRows);
+  if (off.length > 0) why.push(`traits.tsv has ${off.length} census steps without ${assayRows} rows (step ${off[0][0]} has ${off[0][1]})`);
+  const bad = [...traits.invalid].filter(([, c]) => c > 0).sort(([x], [y]) => x - y);
+  if (bad.length > 0) why.push(`traits.tsv has ${bad.length} census steps with a repeated or out-of-grid (replicate, pond) (step ${bad[0][0]}: ${bad[0][1]} rows)`);
+  return why;
+}
+
+/**
+ * What is wrong with assay.tsv's fragment grid: every row must be a fragment row, and (replicate, pond) must fill
+ * `grid` exactly once (a row count that matches the grid is checked by the caller).
+ */
+function rowsProblems(rows: readonly AssayRow[], grid: FragmentGrid | null): string[] {
+  const why: string[] = [];
+  const other = rows.filter((r) => r.inoculum !== "fragment").length;
+  if (other > 0) why.push(`${other} assay.tsv rows are not fragment rows`);
+  if (grid) {
+    const v = gridViolations(rows, grid);
+    if (v.repeated > 0) why.push(`assay.tsv repeats a (replicate, pond) in ${v.repeated} rows`);
+    if (v.outside > 0) why.push(`assay.tsv has ${v.outside} rows outside the ${grid.replicates} x ${grid.ponds} (replicate, pond) grid`);
+  }
+  return why;
+}
+
+// ---- tau
+
+/** With no census at 0.25 ref, tau is the whole period (Amendment 2: 10,000), and R1''s trait is R1's end trait. */
+export const TAU_FALLBACK = 10_000;
+
+export interface TauResult {
+  /** The first census step at which the median trait of the calibration's fragments is at least 0.25 ref, else the fallback. */
+  tau: number;
+  crossed: boolean;
+  /** 0.25 ref. */
+  threshold: number;
+  /** The median trait at tau; null when tau (the fallback) is not a census step of the curve. */
+  medianAtTau: number | null;
+  /** The median trait over every fragment at each census step. */
+  curve: { step: number; n: number; median: number }[];
+}
+
+/**
+ * Amendment 2's tau: from the traits of the calibration's fragments by census step, the first step (ascending) at which
+ * their median is at least 0.25 ref (4 median >= ref, exact since medians are halves); `fallback` when none is.
+ */
+export function tauRule(byStep: ReadonlyMap<number, readonly number[]>, ref: number, fallback = TAU_FALLBACK): TauResult {
+  if (!(ref > 0)) throw new Error(`tau needs a positive ref, got ${ref}`);
+  const curve = [...byStep].sort(([x], [y]) => x - y).map(([step, xs]) => ({ step, n: xs.length, median: median(xs) }));
+  const hit = curve.find((c) => 4 * c.median >= ref);
+  const tau = hit ? hit.step : fallback;
+  return { tau, crossed: hit !== undefined, threshold: ref / 4, medianAtTau: curve.find((c) => c.step === tau)?.median ?? null, curve };
+}
+
+/** The grid a screen holds an assay to: the protocol's 2 x 64 in strict mode, what assay.json declares for a smoke run. */
+const gridFor = (json: Record<string, unknown>, strict: boolean): FragmentGrid | null => (strict ? { replicates: ASSAY_REPLICATES, ponds: ASSAY_SIDE * ASSAY_SIDE } : gridOfJson(json));
+
+/**
+ * What Amendment 2's tau calibration is, in strict mode: the R3 ancestor source (seed 4,802,001 world) at the frozen
+ * regime and reference, 64 ponds x 2 replicates.
+ */
+export const TAU_FROZEN = { ref: 103_058, k: 8, period: 10_000, side: 8, replicates: 2, source: "calib/source/ckpt/b1-pre.blck.gz" } as const;
+
+/**
+ * Screens the tau calibration's directories (the competence sets labelled `tauCalibration`). Strict mode requires
+ * `TAU_FROZEN` (ref, k, period, side, replicates and an ancestor source path ending in its `source`), the label
+ * `tauCalibration` on the ancestor, seeds 4,849,001 + s, and 100-step censuses; `allowAnySeed` (smoke runs) waives those
+ * and holds the set to the grid assay.json declares. Either way the ref must be positive, assay.tsv and every census step
+ * of traits.tsv must fill the (replicate, pond) grid exactly once (128 fragments in strict mode), and traits are
+ * recorded. A set that fails is rejected with its reasons.
+ */
+export function tauScreen(dirs: readonly TraitSetDir[], o: { regimes: readonly AssayRegime[] | null; allowAnySeed?: boolean }): { accepted: TraitSetDir[]; rejected: { dir: string; reasons: string[] }[] } {
+  const accepted: TraitSetDir[] = [];
+  const rejected: { dir: string; reasons: string[] }[] = [];
+  const strict = !o.allowAnySeed;
+  for (const d of dirs) {
+    const { json, rows, traits } = d;
+    const why: string[] = [];
+    if (json.assay !== "competence") why.push(`assay ${JSON.stringify(json.assay)}, want competence`);
+    if (!(typeof json.ref === "number" && json.ref > 0)) why.push(`ref ${JSON.stringify(json.ref)}, want a positive number (the competence reference)`);
+    const labels = (json.labels ?? {}) as Record<string, unknown>;
+    if (labels.tauCalibration !== true) why.push("labels.tauCalibration is not true");
+    const grid = gridFor(json, strict);
+    if (grid === null) why.push("assay.json has no side and replicates");
+    else {
+      if (rows.length !== grid.replicates * grid.ponds) why.push(`${rows.length} rows, want ${grid.replicates * grid.ponds}`);
+      why.push(...rowsProblems(rows, grid));
+    }
+    if (strict) {
+      if (labels.arm !== "ancestor") why.push(`labels.arm ${JSON.stringify(labels.arm)}, want ancestor`);
+      if (json.ref !== TAU_FROZEN.ref) why.push(`ref ${JSON.stringify(json.ref)}, want ${TAU_FROZEN.ref}`);
+      if (json.k !== TAU_FROZEN.k) why.push(`k ${JSON.stringify(json.k)}, want ${TAU_FROZEN.k}`);
+      if (json.period !== TAU_FROZEN.period) why.push(`period ${JSON.stringify(json.period)}, want ${TAU_FROZEN.period}`);
+      if (json.side !== TAU_FROZEN.side) why.push(`side ${JSON.stringify(json.side)}, want ${TAU_FROZEN.side}`);
+      if (json.replicates !== TAU_FROZEN.replicates) why.push(`replicates ${JSON.stringify(json.replicates)}, want ${TAU_FROZEN.replicates}`);
+      if (!(typeof json.source === "string" && json.source.endsWith(TAU_FROZEN.source))) why.push(`source ${JSON.stringify(json.source)}, want a path ending in ${TAU_FROZEN.source}`);
+      if (json.inoculum !== undefined && json.inoculum !== "fragment") why.push(`inoculum ${JSON.stringify(json.inoculum)}, want fragment`);
+      if (json.censusEvery !== TRAIT_CENSUS) why.push(`censusEvery ${JSON.stringify(json.censusEvery)}, want ${TRAIT_CENSUS}`);
+      if (o.regimes !== null && !o.regimes.some((r) => r.k === json.k && r.period === json.period)) why.push(`regime k ${json.k} period ${json.period}, want ${o.regimes.map((r) => `k ${r.k} period ${r.period}`).join(" or ")}`);
+      const seeds = json.seeds as { physics?: unknown; fragment?: unknown }[] | undefined;
+      if (!Array.isArray(seeds) || seeds.length !== ASSAY_REPLICATES) why.push(`assay.json has ${Array.isArray(seeds) ? seeds.length : "no"} seeds, want ${ASSAY_REPLICATES} {physics, fragment}`);
+      else {
+        try {
+          seeds.forEach((sd, s) => {
+            if (typeof sd?.physics !== "number" || typeof sd.fragment !== "number") throw new Error(`assay.json seeds[${s}] is not {physics, fragment}`);
+            checkTauSeeds({ physics: sd.physics, fragment: sd.fragment }, s);
+          });
+        } catch (e) {
+          why.push((e as Error).message);
+        }
+      }
+    }
+    why.push(...traitsProblems(json, rows.length, traits));
+    if (why.length > 0) rejected.push({ dir: d.dir, reasons: why });
+    else accepted.push(d);
+  }
+  return { accepted, rejected };
+}
+
+/** What is wrong with a tau.json as r1prime's input: not strict calibration output (validated, at the frozen regime and ancestor source, tau a census step of the period). */
+export function tauJsonProblems(j: Record<string, unknown>): string[] {
+  const why: string[] = [];
+  if (j.stage !== "tau") why.push(`stage ${JSON.stringify(j.stage)}, want tau`);
+  const tau = j.tau;
+  if (!Number.isInteger(tau) || (tau as number) < 1) why.push(`tau ${JSON.stringify(tau)}, want a positive integer`);
+  else if ((tau as number) % TRAIT_CENSUS !== 0 || (tau as number) > TAU_FROZEN.period) why.push(`tau ${tau} is not a census step of the ${TAU_FROZEN.period}-step period`);
+  if (j.validated !== true) why.push("tau.json is not validated strict calibration output (validated is not true; a smoke or --allow-any-seed run?)");
+  const p = (j.provenance ?? null) as Record<string, unknown> | null;
+  if (p === null || typeof p !== "object") why.push("tau.json has no provenance");
+  else {
+    for (const key of ["ref", "k", "period", "side", "replicates"] as const) if (p[key] !== TAU_FROZEN[key]) why.push(`provenance.${key} ${JSON.stringify(p[key])}, want ${TAU_FROZEN[key]}`);
+    if (!(typeof p.source === "string" && p.source.endsWith(TAU_FROZEN.source))) why.push(`provenance.source ${JSON.stringify(p.source)}, want a path ending in ${TAU_FROZEN.source}`);
+    const seeds = p.seeds as { physics?: unknown; fragment?: unknown }[] | undefined;
+    if (!Array.isArray(seeds) || seeds.length !== ASSAY_REPLICATES || seeds.some((sd, s) => sd?.physics !== TAU_SEED_BASE + s || sd?.fragment !== TAU_SEED_BASE + s)) why.push(`provenance.seeds are not 4,849,001 + s for s = 0-${ASSAY_REPLICATES - 1}`);
+    if ((p.labels as Record<string, unknown> | undefined)?.tauCalibration !== true) why.push("provenance.labels.tauCalibration is not true");
+  }
+  return why;
+}
+
+// ---- R1'
+
+export type R1PrimeKey = { arm: "scaf" | "rand"; history: number; tPrime: 0 | 1 | 2 };
+
+const r1PrimeId = (k: R1PrimeKey): string => `${k.arm}-i${k.history}-t${k.tPrime}`;
+
+/** The 12 histories x 3 boundaries R1' reads: scaf then rand, i = 0-5, t' = 0-2. */
+export const R1_PRIME_KEYS: readonly R1PrimeKey[] = (["scaf", "rand"] as const).flatMap((arm) => HISTORIES.flatMap((history) => ([0, 1, 2] as const).map((tPrime) => ({ arm, history, tPrime }))));
+
+/** One fragment of an R1' set: R1's columns, the trait at the end of the period and the trait at tau. */
+export interface R1PrimeFragment {
+  family: number;
+  retMass: number;
+  retE: number;
+  truncated: boolean;
+  endTrait: number;
+  tauTrait: number;
+}
+
+/** A screened R1' set: fragments in R1's order (replicate 0's f = 0..63, then replicate 1's). */
+export interface R1PrimeSet extends R1PrimeKey {
+  /** Fewer than 2 eligible donors (a biological outcome: no fragments, not demonstrated). */
+  insufficient: boolean;
+  fragments: R1PrimeFragment[];
+}
+
+/** The (arm, history, t') an assay.json is labelled with, or null when it is not an R1' set's. */
+export function r1PrimeKeyOf(json: Record<string, unknown>): R1PrimeKey | null {
+  const lab = r1PrimeLabelsOf(json);
+  return "error" in lab ? null : { arm: lab.labels.arm, history: lab.labels.history, tPrime: lab.labels.timePrime };
+}
+
+/** The `labels` of an R1' directory, or why it has none. */
+function r1PrimeLabelsOf(json: Record<string, unknown>): { labels: R1PrimeLabelSet } | { error: string } {
+  const l = (json.labels ?? {}) as Record<string, unknown>;
+  if (l.r1prime !== true) return { error: "labels.r1prime is not true" };
+  const { arm, history, timePrime } = l;
+  if (arm !== "scaf" && arm !== "rand") return { error: `labels.arm ${JSON.stringify(arm)}, want scaf or rand` };
+  if (!Number.isInteger(history) || (history as number) < 0 || (history as number) > 5) return { error: `labels.history ${JSON.stringify(history)}, want 0-5` };
+  if (timePrime !== 0 && timePrime !== 1 && timePrime !== 2) return { error: `labels.timePrime ${JSON.stringify(timePrime)}, want 0, 1 or 2` };
+  return { labels: { arm, history: history as number, r1prime: true, timePrime } };
+}
+
+/**
+ * Screens R1' directories (transmission sets labelled `r1prime`) before the stage pools them. A set is rejected, with its
+ * reasons, unless it is 64 ponds x 2 replicates (side 8; no rows when `insufficient`) whose assay.tsv fills the
+ * (replicate, pond) grid exactly once and carries retE, at a regime in `regimes` (when null the accepted sets must agree,
+ * else this throws), with replicate s seeded r1PrimeSeed(h, t', s) for its labels and donors drawn with s = 9; its
+ * traits.tsv must fill the same grid exactly once at every census step (100..period) and agree with assay.tsv's end
+ * trait at the last, and `tau` must be one of its census steps. Two sets with one (arm, history, t') are both rejected
+ * (a stage would count both). Nothing here throws for one bad set: it is rejected with its key, so the stage can mark
+ * that history-time unavailable. `allowAnySeed` (smoke runs) waives the side, replicate, regime and seed checks and
+ * holds the set to the grid assay.json declares. An accepted set carries its fragments with the trait at `tau` and at
+ * the end of the period.
+ */
+export function r1PrimeScreen(
+  dirs: readonly TraitSetDir[],
+  o: { tau: number; regimes: readonly AssayRegime[] | null; allowAnySeed?: boolean },
+): { accepted: (R1PrimeSet & { dir: string })[]; rejected: { dir: string; key: R1PrimeKey | null; reasons: string[] }[]; regime: AssayRegime | null } {
+  const strict = !o.allowAnySeed;
+  const candidates: (R1PrimeSet & { dir: string; k: unknown; period: unknown })[] = [];
+  const rejected: { dir: string; key: R1PrimeKey | null; reasons: string[] }[] = [];
+  for (const d of dirs) {
+    const { json, rows, traits } = d;
+    const lab = r1PrimeLabelsOf(json);
+    if ("error" in lab) {
+      rejected.push({ dir: d.dir, key: null, reasons: [lab.error] });
+      continue;
+    }
+    const labels = lab.labels;
+    const key: R1PrimeKey = { arm: labels.arm, history: labels.history, tPrime: labels.timePrime };
+    const insufficient = json.insufficient === true;
+    const why: string[] = [];
+    if (json.assay !== "transmission") why.push(`assay ${JSON.stringify(json.assay)}, want transmission`);
+    const grid = gridFor(json, strict);
+    if (insufficient) {
+      if (rows.length !== 0) why.push(`${rows.length} rows, want 0 (fewer than 2 eligible donors)`);
+    } else if (grid === null) why.push("assay.json has no side and replicates");
+    else {
+      if (rows.length !== grid.replicates * grid.ponds) why.push(`${rows.length} rows, want ${grid.replicates * grid.ponds}`);
+      why.push(...rowsProblems(rows, grid));
+    }
+    if (rows.some((r) => r.retE === null)) why.push("assay.tsv has no retE column, so the protocol's covariate is missing; re-run the transmission assay");
+    if (strict) {
+      if (json.side !== ASSAY_SIDE) why.push(`side ${JSON.stringify(json.side)}, want ${ASSAY_SIDE}`);
+      if (json.replicates !== ASSAY_REPLICATES) why.push(`replicates ${JSON.stringify(json.replicates)}, want ${ASSAY_REPLICATES}`);
+      if (json.censusEvery !== TRAIT_CENSUS) why.push(`censusEvery ${JSON.stringify(json.censusEvery)}, want ${TRAIT_CENSUS}`);
+      if (o.regimes !== null && !o.regimes.some((r) => r.k === json.k && r.period === json.period)) why.push(`regime k ${json.k} period ${json.period}, want ${o.regimes.map((r) => `k ${r.k} period ${r.period}`).join(" or ")}`);
+      const seeds = json.seeds as { physics?: unknown; fragment?: unknown }[] | undefined;
+      if (!Array.isArray(seeds) || seeds.length !== ASSAY_REPLICATES) why.push(`assay.json has ${Array.isArray(seeds) ? seeds.length : "no"} seeds, want ${ASSAY_REPLICATES} {physics, fragment}`);
+      else {
+        try {
+          seeds.forEach((sd, s) => {
+            if (typeof sd?.physics !== "number" || typeof sd.fragment !== "number") throw new Error(`assay.json seeds[${s}] is not {physics, fragment}`);
+            checkR1PrimeSeeds(labels, { physics: sd.physics, fragment: sd.fragment }, s);
+          });
+          if (typeof json.donorSeed !== "number") throw new Error("assay.json has no donorSeed");
+          checkR1PrimeDonorSeed(labels, json.donorSeed);
+        } catch (e) {
+          why.push((e as Error).message);
+        }
+      }
+    }
+    why.push(...traitsProblems(json, rows.length, traits));
+    const frag = rows.filter((r) => r.inoculum === "fragment").sort((a, b) => a.replicate - b.replicate || a.pond - b.pond);
+    const fragments: R1PrimeFragment[] = [];
+    if (why.length === 0 && frag.length > 0) {
+      const period = json.period as number;
+      const at = (step: number): Map<string, number> | string => {
+        const m = new Map<string, number>();
+        for (const t of traits!.rows.get(step) ?? []) {
+          const id = `${t.replicate}:${t.pond}`;
+          if (m.has(id)) return `traits.tsv has two rows for replicate ${t.replicate} pond ${t.pond} at step ${step}`;
+          m.set(id, t.trait);
+        }
+        return m;
+      };
+      const tauTraits = traits!.counts.has(o.tau) ? at(o.tau) : `tau ${o.tau} is not a census step of traits.tsv`;
+      const endTraits = at(period);
+      if (typeof tauTraits === "string") why.push(tauTraits);
+      else if (typeof endTraits === "string") why.push(endTraits);
+      else {
+        let off = 0;
+        for (const r of frag) {
+          const id = `${r.replicate}:${r.pond}`;
+          const tauTrait = tauTraits.get(id);
+          if (tauTrait === undefined || endTraits.get(id) !== r.endTrait) {
+            off++;
+            continue;
+          }
+          fragments.push({ family: r.family, retMass: r.retMass, retE: r.retE!, truncated: (r.truncated ?? 0) > 0, endTrait: r.endTrait, tauTrait });
+        }
+        if (off > 0) why.push(`traits.tsv disagrees with assay.tsv for ${off} fragments (a fragment without a trait at tau, or an end trait other than the one at step ${period})`);
+      }
+    }
+    if (why.length > 0) rejected.push({ dir: d.dir, key, reasons: why });
+    else candidates.push({ ...key, dir: d.dir, insufficient, fragments, k: json.k, period: json.period });
+  }
+  // Two sets for one history-time are ambiguous: neither is used, and the history-time is unavailable.
+  const accepted: (R1PrimeSet & { dir: string })[] = [];
+  const regimesSeen: AssayRegime[] = [];
+  for (const c of candidates) {
+    const same = candidates.filter((x) => r1PrimeId(x) === r1PrimeId(c));
+    if (same.length > 1) {
+      rejected.push({ dir: c.dir, key: { arm: c.arm, history: c.history, tPrime: c.tPrime }, reasons: [`the same R1' set (${r1PrimeId(c)}) as ${same.filter((x) => x !== c).map((x) => x.dir).join(", ")}; a stage would count both`] });
+      continue;
+    }
+    if (typeof c.k === "number" && typeof c.period === "number") regimesSeen.push({ k: c.k, period: c.period });
+    const { k: _k, period: _period, ...set } = c;
+    accepted.push(set);
+  }
+  let regime: AssayRegime | null = o.regimes?.length === 1 ? o.regimes[0] : null;
+  if (o.regimes === null) {
+    for (const r of regimesSeen) {
+      if (regime === null) regime = r;
+      else if (regime.k !== r.k || regime.period !== r.period) throw new Error(`R1' sets mix regimes (k ${regime.k} period ${regime.period} and k ${r.k} period ${r.period}); pass --regime K PERIOD`);
+    }
+  }
+  return { accepted, rejected, regime };
+}
+
+/** The sample variance (n - 1) of `xs`; null with fewer than 2 values. */
+function sampleVariance(xs: readonly number[]): number | null {
+  if (xs.length < 2) return null;
+  const m = mean(xs);
+  return xs.reduce((a, x) => a + (x - m) * (x - m), 0) / (xs.length - 1);
+}
+
+/** One trait's statistic over a history-time's fragments. */
+export interface R1PrimeTraitStat {
+  icc: number | null;
+  p: number | null;
+  /** ICC above 0 with p < 0.05. */
+  demonstrated: boolean;
+  /** The one-way ANOVA between-family variance component (MS_between - MS_within) / n0 on the OLS-adjusted trait; negative estimates are kept. */
+  varianceComponent: number | null;
+  /** The sample variance of the family means of the raw trait. */
+  rawFamilyMeanVariance: number | null;
+  meanTrait: number;
+  /** The fraction of fragments at 80% or more of the assay budget (5 trait >= 4 M_ASSAY). */
+  saturation: number;
+}
+
+/**
+ * R1's statistic (`r1Test`: OLS residuals on log1p(retMass) and log1p(retE) over all fragments, ICC(1) with families =
+ * donors, `R1_PERMUTATIONS` permutations with the stream `sigma`) on the trait `pick` of `fragments`, with the
+ * descriptive between-donor variances and the saturation share.
+ */
+export function r1PrimeStat(fragments: readonly R1PrimeFragment[], pick: (f: R1PrimeFragment) => number, sigma: number): R1PrimeTraitStat {
+  const y = fragments.map(pick);
+  const families = fragments.map((f) => f.family);
+  const t = r1Test(y, fragments.map((f) => f.retMass), fragments.map((f) => f.retE), families, sigma);
+  const adjusted = oneWayAnova(t.resid, families);
+  const raw = oneWayAnova(y, families);
+  return {
+    icc: t.icc,
+    p: t.p,
+    demonstrated: t.demonstrated,
+    varianceComponent: adjusted && (adjusted.msb - adjusted.msw) / adjusted.n0,
+    rawFamilyMeanVariance: raw && sampleVariance(raw.means),
+    meanTrait: mean(y),
+    saturation: y.filter((v) => 5 * v >= 4 * M_ASSAY).length / y.length,
+  };
+}
+
+/**
+ * The replay check of the evolve path (`--replay`): the evidence that the pre-cycle states at boundaries 34 and 67 (t' = 0
+ * and 1) were rebuilt faithfully. It is required, not assumed: a replayed history-time is valid only with a replay check
+ * whose mechanism check passed and that lists it as valid. t' = 2 (boundary 100, the original b100-pre checkpoint) needs none.
+ */
+export interface ReplayCheck {
+  /** A replay-check.json was given. */
+  given: boolean;
+  /** `mechanismCheck.passed` is true (and every replay/saved hash pair in it agrees). */
+  mechanismPassed: boolean;
+  /** Why the mechanism check does not count as passed; null when it does. */
+  mechanismWhy: string | null;
+  /** History-times (`scaf-i0-t0`) the replay lists as valid. */
+  valid: string[];
+  /** History-times the replay lists as failed (they win over `valid`). */
+  failed: { id: string; why: string | null }[];
+}
+
+/** No replay check: no replayed boundary (t' = 0, 1) is valid. */
+export const NO_REPLAY_CHECK: ReplayCheck = { given: false, mechanismPassed: false, mechanismWhy: "no replay check was given (--replay)", valid: [], failed: [] };
+
+const REPLAY_ID = /^(scaf|rand)-i[0-5]-t[0-2]$/;
+
+/**
+ * Reads a replay-check.json: `{ "mechanismCheck": { "passed": true, "scaf-i0": { "replay": H, "saved": H }, "rand-i0": {...} },
+ * "valid": ["scaf-i0-t0", ...], "failed": [{ "id": "scaf-i3-t1", "why": "..." }] }`. The mechanism check counts as passed
+ * only if `mechanismCheck.passed === true` and no replay/saved pair in it differs; a missing or false check is
+ * recorded (`mechanismPassed` false, with the reason), not thrown, so the stage fails closed. A `failed` entry is an id
+ * string or { id, why | reason }. A shape this cannot read throws, so a failure is never silently ignored.
+ */
+export function parseReplayCheck(json: unknown): ReplayCheck {
+  if (typeof json !== "object" || json === null || Array.isArray(json)) throw new Error("replay check: want an object { mechanismCheck, valid, failed }");
+  const top = json as Record<string, unknown>;
+  const mc = top.mechanismCheck;
+  let mechanismWhy: string | null = null;
+  if (typeof mc !== "object" || mc === null || Array.isArray(mc)) mechanismWhy = "the replay check has no mechanismCheck object";
+  else {
+    const m = mc as Record<string, unknown>;
+    if (m.passed !== true) mechanismWhy = "mechanismCheck.passed is not true";
+    else {
+      const differ = Object.entries(m)
+        .filter(([key, v]) => key !== "passed" && typeof v === "object" && v !== null && ("replay" in v || "saved" in v))
+        .filter(([, v]) => typeof (v as Record<string, unknown>).replay !== "string" || (v as Record<string, unknown>).replay !== (v as Record<string, unknown>).saved)
+        .map(([key]) => key);
+      if (differ.length > 0) mechanismWhy = `mechanismCheck.passed is true but the replay and saved hashes of ${differ.join(", ")} differ or are missing`;
+    }
+  }
+  const ids = (name: string, list: unknown): unknown[] => {
+    if (list === undefined) return [];
+    if (!Array.isArray(list)) throw new Error(`replay check: ${name} must be an array`);
+    return list;
+  };
+  const valid = ids("valid", top.valid).map((e) => {
+    if (typeof e !== "string" || !REPLAY_ID.test(e)) throw new Error(`replay check: unrecognised valid entry ${JSON.stringify(e)} (want e.g. "scaf-i2-t0")`);
+    return e;
+  });
+  const failed = ids("failed", top.failed).map((e): ReplayCheck["failed"][number] => {
+    const o = typeof e === "string" ? { id: e } : ((e ?? {}) as Record<string, unknown>);
+    if (typeof o.id !== "string" || !REPLAY_ID.test(o.id)) throw new Error(`replay check: unrecognised failed entry ${JSON.stringify(e)} (want "scaf-i2-t0" or { "id": "scaf-i2-t0", "why": "..." })`);
+    const why = o.why ?? o.reason;
+    return { id: o.id, why: typeof why === "string" ? why : null };
+  });
+  return { given: true, mechanismPassed: mechanismWhy === null, mechanismWhy, valid, failed };
+}
+
+/** One (arm, history, t') of R1': its availability and, when available, its statistic at tau and at the end of the period. */
+export interface R1PrimeHistory extends R1PrimeKey {
+  /** h = 6 arm + i, the history index that keys the permutation stream r1PrimeSeed(h, t', 8). */
+  h: number;
+  /** 34, 67 or 100. */
+  boundary: number;
+  /** false: technically unavailable (no valid set, or the replay check failed), which counts as not demonstrated. */
+  available: boolean;
+  why: string | null;
+  /** Fewer than 2 eligible donors: a valid history that is not demonstrated. */
+  insufficient: boolean;
+  n: number;
+  families: number;
+  truncatedRows: number;
+  covariates: string[];
+  /** The primary statistic: the trait at tau. */
+  demonstrated: boolean;
+  atTau: R1PrimeTraitStat | null;
+  atEnd: R1PrimeTraitStat | null;
+}
+
+export interface R1PrimeArm {
+  /** The rule at t' = 0: uninformative with fewer than 4 valid histories, else whether at least 4 of 6 are demonstrated at tau. */
+  verdict: true | false | "uninformative";
+  valid: number;
+  demonstrated: number;
+  byTime: { tPrime: 0 | 1 | 2; boundary: number; valid: number; demonstratedAtTau: number; demonstratedAtEnd: number; meanSaturationAtTau: number | null; meanSaturationAtEnd: number | null }[];
+}
+
+/** Amendment 2's rule on an arm's t' = 0 histories: availability first (fewer than 4 valid is uninformative), then at least 4 of 6 with ICC > 0 and p < 0.05 at tau. */
+export function r1PrimeVerdict(histories: readonly R1PrimeHistory[], arm: "scaf" | "rand"): true | false | "uninformative" {
+  const at0 = histories.filter((x) => x.arm === arm && x.tPrime === 0);
+  if (at0.filter((x) => x.available).length < 4) return "uninformative";
+  return at0.filter((x) => x.demonstrated).length >= 4;
+}
+
+/**
+ * R1' over the screened sets: every (arm, history, t') of `R1_PRIME_KEYS`, with the statistic at tau and at the end of
+ * the period for the available ones. A key is unavailable when the replay check lists it as failed; at t' = 0 and 1,
+ * unless the replay check's mechanism check passed and lists it as valid (no replay check means none is valid);
+ * when it has no set (`rejected` says why when a rejected directory carried its labels); or when its analysis fails.
+ * The verdict is `r1PrimeVerdict` for scaf, reported for rand as well.
+ */
+export function r1PrimeEvaluate(
+  sets: readonly R1PrimeSet[],
+  replay: ReplayCheck = NO_REPLAY_CHECK,
+  rejected: readonly { key: R1PrimeKey | null; reasons: string[] }[] = [],
+): { verdict: true | false | "uninformative"; arms: Record<"scaf" | "rand", R1PrimeArm>; histories: R1PrimeHistory[] } {
+  const histories = R1_PRIME_KEYS.map((key): R1PrimeHistory => {
+    const h = r1PrimeH(key);
+    const id = r1PrimeId(key);
+    const entry = (o: Partial<R1PrimeHistory>): R1PrimeHistory => ({
+      ...key,
+      h,
+      boundary: R1_PRIME_BOUNDARIES[key.tPrime],
+      available: false,
+      why: null,
+      insufficient: false,
+      n: 0,
+      families: 0,
+      truncatedRows: 0,
+      covariates: [],
+      demonstrated: false,
+      atTau: null,
+      atEnd: null,
+      ...o,
+    });
+    const fail = replay.failed.find((f) => f.id === id);
+    if (fail) return entry({ why: `replay check failed${fail.why ? `: ${fail.why}` : ""}` });
+    // t' = 0 and 1 are replayed states: valid only on the replay's evidence. t' = 2 is the original checkpoint.
+    if (key.tPrime < 2) {
+      if (!replay.mechanismPassed) return entry({ why: `no replay evidence: ${replay.mechanismWhy ?? "the mechanism check did not pass"}` });
+      if (!replay.valid.includes(id)) return entry({ why: "no replay evidence: the replay check does not list it as valid" });
+    }
+    const set = sets.find((x) => r1PrimeId(x) === id);
+    if (!set) {
+      const rej = rejected.filter((r) => r.key !== null && r1PrimeId(r.key) === id);
+      return entry({ why: rej.length ? `set rejected: ${rej.flatMap((r) => r.reasons).join("; ")}` : "no assay set" });
+    }
+    try {
+      if (set.insufficient || set.fragments.length === 0) return entry({ available: true, insufficient: true });
+      const sigma = r1PrimeSeed(h, key.tPrime, 8);
+      const atTau = r1PrimeStat(set.fragments, (f) => f.tauTrait, sigma);
+      const atEnd = r1PrimeStat(set.fragments, (f) => f.endTrait, sigma);
+      return entry({
+        available: true,
+        n: set.fragments.length,
+        families: new Set(set.fragments.map((f) => f.family)).size,
+        truncatedRows: set.fragments.filter((f) => f.truncated).length,
+        covariates: [...R1_COVARIATES],
+        demonstrated: atTau.demonstrated,
+        atTau,
+        atEnd,
+      });
+    } catch (e) {
+      return entry({ why: `analysis failed: ${(e as Error).message}` });
+    }
+  });
+  const armResult = (arm: "scaf" | "rand"): R1PrimeArm => {
+    const at0 = histories.filter((x) => x.arm === arm && x.tPrime === 0);
+    const byTime = ([0, 1, 2] as const).map((tPrime) => {
+      const hs = histories.filter((x) => x.arm === arm && x.tPrime === tPrime);
+      const stats = hs.filter((x) => x.atTau !== null);
+      return {
+        tPrime,
+        boundary: R1_PRIME_BOUNDARIES[tPrime],
+        valid: hs.filter((x) => x.available).length,
+        demonstratedAtTau: hs.filter((x) => x.demonstrated).length,
+        demonstratedAtEnd: hs.filter((x) => x.atEnd?.demonstrated).length,
+        meanSaturationAtTau: stats.length ? mean(stats.map((x) => x.atTau!.saturation)) : null,
+        meanSaturationAtEnd: stats.length ? mean(stats.map((x) => x.atEnd!.saturation)) : null,
+      };
+    });
+    return { verdict: r1PrimeVerdict(histories, arm), valid: at0.filter((x) => x.available).length, demonstrated: at0.filter((x) => x.demonstrated).length, byTime };
+  };
+  const arms = { scaf: armResult("scaf"), rand: armResult("rand") };
+  return { verdict: arms.scaf.verdict, arms, histories };
 }
 
 // ---------------------------------------------------------------------------------------------

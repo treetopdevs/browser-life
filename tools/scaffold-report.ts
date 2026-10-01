@@ -8,6 +8,8 @@
 //   deno run -A tools/scaffold-report.ts r3 --assays <dir...> [--regime K PERIOD] [--runs <dir...>]    (competence assays)
 //   deno run -A tools/scaffold-report.ts r4 --assays <dir...> | --in <json...>
 //   deno run -A tools/scaffold-report.ts decide --in <json...>    (the outputs of the stages above)
+//   deno run -A tools/scaffold-report.ts tau --assays <dir...> [--regime K PERIOD]    (Amendment 2: the tau calibration)
+//   deno run -A tools/scaffold-report.ts r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <replay-check.json>]    (Amendment 2: R1')
 //
 // A flag takes every argument up to the next flag. A directory that is not itself a run (meta.json) or an
 // assay (assay.json) is searched for them up to four levels down. Every stage reports the truncation rule
@@ -38,8 +40,35 @@
 // from it (a chosen regime that has not been calibrated leaves p1 pending). The two calibrations of a regime
 // (ancestor and quenched, both seeded 4,802,011 + s) are paired by regime and must hold the same fragments; a
 // quenched set seeded separately (4,802,021 + s) is rejected as not a matched control, and an unpaired regime is undecided.
+//
+// Amendment 2 (docs/scaffold-protocol-v1.md; post hoc and exploratory) has two stages of its own, over assay directories
+// that scaffold-assays wrote with --traits (assay.json, assay.tsv and traits.tsv, which is streamed). r1, r2, r3 and
+// calibrate skip these directories (counted under `skipped`). `tau` reads the tau calibration (competence --tau-calibration,
+// 128 ancestor fragments, seeds 4,849,001 + s) and prints tau, the first census step at which the median trait is at
+// least 0.25 ref (the set's own ref; the whole period if none), with the median curve; its verdict is null. In strict mode
+// the set must be exactly Amendment 2's calibration (ref 103,058, k 8, period 10,000, side 8, 2 replicates, seeds
+// 4,849,001 + s, an ancestor source path ending in calib/source/ckpt/b1-pre.blck.gz, labels.tauCalibration) and the output
+// records that provenance with `validated: true`; --allow-any-seed (smoke runs) waives it and prints `validated: false`.
+// `r1prime` takes that output (--tau) and the transmission sets labelled r1prime (replicate seed 4,845,001 + 250 h + 100 t' +
+// s, h = 6 arm + i, t' = 0, 1, 2 for boundary 34, 67, 100): R1's statistic (OLS residuals on log1p retMass and log1p retE
+// over all fragments, ICC(1) by donor, 1,000 permutations on the stream s = 8) on each fragment's trait at tau, with the end
+// trait, the between-donor variances and the saturation share beside it. It refuses a tau.json that is not validated strict
+// calibration output (unless --allow-any-seed). Its verdict is true or false by the rule at t' = 0 (at least 4 of 6 scaf
+// histories with ICC > 0 and p < 0.05), or "uninformative" when fewer than 4 scaf histories are valid at t' = 0.
+// Validity is availability, evaluated first: a history-time is unavailable, and counts as not demonstrated, when its set
+// is missing, rejected or unreadable (a missing or malformed table is reported under `rejected`, not thrown), or, at
+// t' = 0 and 1 (replayed states), unless --replay gives the evidence. --replay is required for those boundaries; without it
+// every t' = 0 and 1 history is unavailable. The file is { "mechanismCheck": { "passed": true, "scaf-i0": { "replay": H,
+// "saved": H }, "rand-i0": {...} }, "valid": ["scaf-i0-t0", ...], "failed": [{ "id": "scaf-i3-t1", "why": "..." }] }: a
+// replayed history-time is valid only if mechanismCheck.passed is true (and no replay/saved pair differs) and `valid` lists
+// it, and `failed` always wins; t' = 2 (the original b100-pre) needs no replay evidence. Every assay.tsv and every census
+// step of traits.tsv must fill the (replicate, pond) grid, 2 x 64, exactly once. A set that is not 64 ponds x 2 replicates, is
+// outside --regime, has seeds that do not match its labels, or has no trait at tau is rejected and listed; two sets for one
+// history-time are both rejected. --allow-any-seed waives the side, replicate, row, regime and seed checks of both stages
+// (smoke runs; the grid is then the one assay.json declares).
 import {
   DECISION_TABLE,
+  NO_REPLAY_CHECK,
   P2_CYCLES,
   P2_RANK_SEEDS,
   P2_SEEDS,
@@ -51,6 +80,7 @@ import {
   assaySensitivity,
   decide,
   founderRank,
+  gridOfJson,
   highShareCounts,
   mainRunOf,
   p1Calibrate,
@@ -63,7 +93,11 @@ import {
   p2Replicate,
   p2RunProblems,
   p2Sensitivity,
+  parseReplayCheck,
   r1Evaluate,
+  r1PrimeEvaluate,
+  r1PrimeKeyOf,
+  r1PrimeScreen,
   r1Verdict,
   r2Evaluate,
   r2Verdict,
@@ -71,9 +105,13 @@ import {
   r3Verdict,
   r4RowsOf,
   r4Table,
+  readTraits,
   readTsv,
   runStatus,
   summariseHistory,
+  tauJsonProblems,
+  tauRule,
+  tauScreen,
   validateAssayDirs,
   truncationOf,
   type AssayDir,
@@ -87,14 +125,16 @@ import {
   type P1Run,
   type P2Arm,
   type P2Role,
+  type R1PrimeKey,
   type R4Row,
+  type TraitSetDir,
 } from "./lib/scaffold-stats.ts";
 
 const STAGES = ["p1", "p2", "r1", "r2", "r3"] as const;
 
 function usage(msg?: string): never {
   if (msg) console.error(msg);
-  console.error("usage: scaffold-report.ts p1 --runs <dir...> | calibrate --p1 <json> --assays <dir...> | p2 --rank <dir...> --scaf <dir...> --rand <dir...> (--regime K PERIOD | --p1 <json>) | r1|r2|r3 --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r4 --assays <dir...> | --in <json...> | decide --in <json...>");
+  console.error("usage: scaffold-report.ts p1 --runs <dir...> | calibrate --p1 <json> --assays <dir...> | p2 --rank <dir...> --scaf <dir...> --rand <dir...> (--regime K PERIOD | --p1 <json>) | r1|r2|r3 --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r4 --assays <dir...> | --in <json...> | decide --in <json...> | tau --assays <dir...> [--regime K PERIOD] | r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <json>]");
   Deno.exit(2);
 }
 
@@ -352,6 +392,11 @@ async function loadAssays(flags: Map<string, string[]>, assay: string, calibrati
   let skipped = 0;
   for (const d of await expandDirs(need(flags, "assays"), "assay.json")) {
     const json = await readJson(`${d}/assay.json`);
+    // Amendment 2's R1' sets and tau calibration belong to the tau and r1prime stages.
+    if (json.labels?.r1prime === true || json.labels?.tauCalibration === true) {
+      skipped++;
+      continue;
+    }
     const rows = [];
     for await (const r of readTsv(`${d}/assay.tsv`)) rows.push(assayRow(r));
     const name: string | undefined = json.assay ?? rows[0]?.assay;
@@ -386,6 +431,108 @@ async function r4(flags: Map<string, string[]>) {
   }
   if (rows.length === 0) usage("r4 needs --assays <dir...> or --in <json...> with capability rows");
   return { stage: "r4", verdict: null, ...r4Table(rows) };
+}
+
+const message = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+/** An assay directory with its traits.tsv streamed (null when absent), keeping only the steps `keep` names (all when it returns undefined). Throws on a missing or malformed table. */
+async function loadTraitSet(dir: string, json: Record<string, any>, keep: (period: unknown) => ReadonlySet<number> | undefined): Promise<TraitSetDir> {
+  const rows = [];
+  for await (const r of readTsv(`${dir}/assay.tsv`)) rows.push(assayRow(r));
+  const traits = (await exists(`${dir}/traits.tsv`)) ? await readTraits(readTsv(`${dir}/traits.tsv`), keep(json.period), gridOfJson(json)) : null;
+  return { dir, json, rows, traits };
+}
+
+/** Amendment 2's tau: the tau calibration's traits.tsv through `tauRule`; tau null while the set is missing or rejected. */
+async function tauStage(flags: Map<string, string[]>) {
+  const strict = !flags.has("allow-any-seed");
+  const dirs: TraitSetDir[] = [];
+  const rejected: { dir: string; reasons: string[] }[] = [];
+  let skipped = 0;
+  for (const d of await expandDirs(need(flags, "assays"), "assay.json")) {
+    let json;
+    try {
+      json = await readJson(`${d}/assay.json`);
+    } catch (e) {
+      rejected.push({ dir: d, reasons: [`assay.json: ${message(e)}`] });
+      continue;
+    }
+    if (json?.labels?.tauCalibration !== true) {
+      skipped++;
+      continue;
+    }
+    try {
+      dirs.push(await loadTraitSet(d, json, () => undefined));
+    } catch (e) {
+      rejected.push({ dir: d, reasons: [`could not read the set: ${message(e)}`] });
+    }
+  }
+  const screened = tauScreen(dirs, { regimes: regimeFlag(flags), allowAnySeed: !strict });
+  rejected.push(...screened.rejected);
+  if (screened.accepted.length > 1) throw new Error(`${screened.accepted.length} tau calibration sets (${screened.accepted.map((x) => x.dir).join(", ")}); the stage takes one`);
+  if (screened.accepted.length === 0) return { stage: "tau", verdict: null, validated: false, tau: null, reason: "no valid tau calibration set", skipped, rejected };
+  const set = screened.accepted[0];
+  const byStep = new Map<number, number[]>();
+  for (const [step, rows] of set.traits!.rows) byStep.set(step, rows.map((t) => t.trait));
+  const ref = set.json.ref as number;
+  const r = tauRule(byStep, ref, set.json.period as number);
+  // `validated` is true only for a strict screen: r1prime refuses a tau.json that is not (a smoke run's tau is a test of the tools, not a calibration).
+  const { source, k, period, side, replicates, seeds, labels } = set.json;
+  return { stage: "tau", verdict: null, validated: strict, provenance: { source, ref, k, period, side, replicates, seeds, labels }, dir: set.dir, ref, k: k ?? null, period, fragments: set.rows.length, ...r, skipped, rejected };
+}
+
+/** Amendment 2's R1': every R1' set's statistic at tau and at the end, and the rule at t' = 0 (see the header). */
+async function r1primeStage(flags: Map<string, string[]>) {
+  const strict = !flags.has("allow-any-seed");
+  const tauPath = need(flags, "tau")[0];
+  const tauJson = await readJson(tauPath);
+  // tau must be the output of a strict calibration (validated, at the frozen regime and ancestor source); a smoke run reads any integer tau.
+  const tauProblems = strict ? tauJsonProblems(tauJson) : Number.isInteger(tauJson.tau) && tauJson.tau >= 1 ? [] : [`tau ${JSON.stringify(tauJson.tau)}, want a positive integer`];
+  if (tauProblems.length > 0) usage(`${tauPath} cannot fix tau for R1': ${tauProblems.join("; ")}`);
+  const tau: number = tauJson.tau;
+  const dirs: TraitSetDir[] = [];
+  // A set that cannot be read (a missing or malformed table) makes its history-time unavailable; it does not stop the others.
+  const rejected: { dir: string; key: R1PrimeKey | null; reasons: string[] }[] = [];
+  let skipped = 0;
+  for (const d of await expandDirs(need(flags, "assays"), "assay.json")) {
+    let json;
+    try {
+      json = await readJson(`${d}/assay.json`);
+    } catch (e) {
+      rejected.push({ dir: d, key: null, reasons: [`assay.json: ${message(e)}`] });
+      continue;
+    }
+    if (json?.labels?.r1prime !== true) {
+      skipped++;
+      continue;
+    }
+    try {
+      // Only the traits at tau and at the end of the period are kept; the rest of traits.tsv is counted and dropped.
+      dirs.push(await loadTraitSet(d, json, (period) => new Set([tau, Number.isInteger(period) ? (period as number) : tau])));
+    } catch (e) {
+      rejected.push({ dir: d, key: r1PrimeKeyOf(json), reasons: [`could not read the set: ${message(e)}`] });
+    }
+  }
+  const screened = r1PrimeScreen(dirs, { tau, regimes: regimeFlag(flags), allowAnySeed: !strict });
+  rejected.push(...screened.rejected);
+  const replay = flags.has("replay") ? parseReplayCheck(await readJson(need(flags, "replay")[0])) : NO_REPLAY_CHECK;
+  const r = r1PrimeEvaluate(screened.accepted, replay, rejected);
+  return {
+    stage: "r1prime",
+    verdict: r.verdict,
+    tau,
+    tauFrom: tauPath,
+    tauValidated: tauJson.validated === true,
+    regime: screened.regime,
+    skipped,
+    rejected,
+    replay,
+    arms: r.arms,
+    histories: r.histories,
+    descriptive: {
+      note: "per (arm, history, t'): atTau is R1's statistic on the trait at tau, atEnd on the end trait; varianceComponent is the one-way ANOVA between-donor component (MS_between - MS_within) / n0 on the OLS-adjusted trait (negative kept), rawFamilyMeanVariance the sample variance of the raw donor means, saturation the fraction of fragments at 80% or more of the assay budget; `demonstrated` and the verdict read atTau at t' = 0 only; an unavailable history (no valid set, a failed or missing replay check at t' = 0 and 1, a set that could not be read) counts as not demonstrated",
+    },
+  };
 }
 
 async function decideCmd(flags: Map<string, string[]>) {
@@ -452,6 +599,12 @@ async function main() {
     }
     case "r4":
       out = await r4(flags);
+      break;
+    case "tau":
+      out = await tauStage(flags);
+      break;
+    case "r1prime":
+      out = await r1primeStage(flags);
       break;
     case "decide":
       out = await decideCmd(flags);

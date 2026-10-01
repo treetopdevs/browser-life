@@ -32,6 +32,9 @@ export const M_ASSAY = 151552;
  */
 export const ASSAY_COLUMNS = ["assay", "source", "replicate", "pond", "family", "inoculum", "reqMass", "retMass", "endTrait", "success", "reqE", "retE", "truncated"] as const;
 
+/** Column order of traits.tsv (`--traits`): a pond's trait at one census step of the assay period. */
+export const TRAIT_COLUMNS = ["replicate", "pond", "step", "trait"] as const;
+
 /** Pond side and the landing centre, fixed by the protocol (tiles are 64x64, the fragment lands at (32, 32)). */
 const TILE = 64;
 const CENTRE = 32;
@@ -345,6 +348,32 @@ export function assayLine(p: {
   return [p.assay, p.source, p.replicate, p.pond, p.family, p.inoculum, pl.reqMass, pl.retMass, p.endTrait, p.success, pl.reqE, pl.retE, pl.truncated ? 1 : 0].join("\t");
 }
 
+/**
+ * The census steps of one period: every `every` steps, and the last chunk when `period` is not a multiple (the
+ * steps `runPeriod` calls its census at). 100, 200, ..., 10,000 for the frozen regime.
+ */
+export function censusSteps(period: number, every: number): number[] {
+  if (!Number.isInteger(period) || period < 1 || !Number.isInteger(every) || every < 1) throw new Error(`censusSteps: period and every must be positive integers, got ${period} and ${every}`);
+  const steps: number[] = [];
+  for (let s = 0; s < period; ) steps.push((s += Math.min(every, period - s)));
+  return steps;
+}
+
+/**
+ * The traits.tsv text of an assay: the header, then for each replicate (in the order given) every pond's trait at
+ * every census step, ordered replicate, pond, step. `traits[c][pond]` is the trait of `pond` at `steps[c]`
+ * (`pondTraits` of the census snapshot, so B+P over cells with B+P >= 48).
+ */
+export function traitsTable(replicates: { replicate: number; steps: readonly number[]; traits: readonly (readonly number[])[] }[]): string {
+  const lines: string[] = [TRAIT_COLUMNS.join("\t")];
+  for (const r of replicates) {
+    if (r.traits.length !== r.steps.length) throw new Error(`traitsTable: ${r.traits.length} censuses for ${r.steps.length} steps (replicate ${r.replicate})`);
+    const ponds = r.traits[0]?.length ?? 0;
+    for (let pond = 0; pond < ponds; pond++) r.steps.forEach((step, c) => lines.push([r.replicate, pond, step, r.traits[c][pond]].join("\t")));
+  }
+  return lines.join("\n") + "\n";
+}
+
 // ---------------------------------------------------------------------------------------------
 // Labels: which history an assay directory belongs to (read back by scaffold-report)
 
@@ -363,6 +392,84 @@ export interface AssayLabelSet {
   timing: "a" | "b";
   /** P1's R3 calibration: 1 = ancestor competence, 2 = its quenched control (a label; both use the same seeds). */
   calibration?: 1 | 2;
+  /** Amendment 2's tau calibration: the ancestor competence set whose traits.tsv fixes tau (seeds `TAU_SEED_BASE` + s). */
+  tauCalibration?: true;
+}
+
+/** The boundaries R1' (protocol, Amendment 2) replays and assays: t' = 0, 1, 2. */
+export const R1_PRIME_BOUNDARIES = [34, 67, 100] as const;
+
+/**
+ * The `labels` of an R1' transmission set: the scaf or rand history and t' (0 = boundary 34, 1 = boundary 67, 2 =
+ * boundary 100). R1's `time` and `timing` do not apply, so they are absent.
+ */
+export interface R1PrimeLabelSet {
+  arm: "scaf" | "rand";
+  history: number;
+  r1prime: true;
+  timePrime: 0 | 1 | 2;
+}
+
+/** R1' seeds are 4,845,001 + 250 h + 100 t' + s (Amendment 2); h = 6 arm + i runs 0-11, so the block ends at 4,847,960. */
+export const R1_PRIME_SEED_BASE = 4_845_001;
+export const R1_PRIME_SEED_MAX = 4_847_960;
+/** The tau calibration's seeds are 4,849,001 + s (s = 0-1). */
+export const TAU_SEED_BASE = 4_849_001;
+
+/**
+ * Seed of an R1' assay: 4,845,001 + 250 h + 100 t' + s, with h = 6 arm + i (arm 0 scaf, 1 rand; 0-11), t' 0-2 and s the
+ * replicate (0-1), 8 the permutation stream or 9 the donor selection. Mixed radix (100 t' + s < 250), above
+ * assaySeed's maximum 4,844,690 and below the tau calibration, so it cannot collide with either; every field is range-checked.
+ */
+export function r1PrimeSeed(h: number, tPrime: number, s: number): number {
+  const field = (name: string, x: number, max: number) => {
+    if (!Number.isInteger(x) || x < 0 || x > max) throw new Error(`r1PrimeSeed: ${name} must be an integer in 0..${max}, got ${x}`);
+  };
+  field("h", h, 11);
+  field("t'", tPrime, 2);
+  field("s", s, 9);
+  const seed = R1_PRIME_SEED_BASE + 250 * h + 100 * tPrime + s;
+  if (seed > R1_PRIME_SEED_MAX) throw new Error(`r1PrimeSeed: ${seed} is above ${R1_PRIME_SEED_MAX}`);
+  return seed;
+}
+
+/** The labels of an R1' set from the CLI's --arm, --history and --time (t', 0-2); R1's --timing and --calibration do not apply. */
+export function parseR1PrimeLabels(v: { arm?: string; history?: string; time?: string; timing?: string; calibration?: string }): R1PrimeLabelSet {
+  if (v.arm !== "scaf" && v.arm !== "rand") throw new Error(`--arm must be scaf|rand for --r1prime, got ${v.arm}`);
+  const i = Number(v.history);
+  if (v.history === undefined || !Number.isInteger(i) || i < 0 || i > 5) throw new Error(`--history must be 0-5 for --r1prime, got ${v.history}`);
+  if (v.time !== "0" && v.time !== "1" && v.time !== "2") throw new Error(`--time must be 0, 1 or 2 (t': boundary 34, 67, 100) for --r1prime, got ${v.time}`);
+  if (v.timing !== undefined || v.calibration !== undefined) throw new Error("--r1prime takes --time (t'), not --timing or --calibration");
+  return { arm: v.arm, history: i, r1prime: true, timePrime: Number(v.time) as 0 | 1 | 2 };
+}
+
+/** The labels of the tau calibration: the ancestor competence set at timing (a), marked `tauCalibration`. */
+export const TAU_LABELS: AssayLabelSet = { arm: "ancestor", time: 0, timing: "a", tauCalibration: true };
+
+/** h = 6 arm + i of an R1' history (0-11). */
+export const r1PrimeH = (labels: Pick<R1PrimeLabelSet, "arm" | "history">): number => 6 * (labels.arm === "scaf" ? 0 : 1) + labels.history;
+
+/** Throws unless the seeds of replicate `replicate` are `r1PrimeSeed(h, t', replicate)` for the labelled history and boundary (fragment and physics alike). */
+export function checkR1PrimeSeeds(labels: R1PrimeLabelSet, seeds: { physics: number; fragment: number }, replicate = 0): void {
+  const want = r1PrimeSeed(r1PrimeH(labels), labels.timePrime, replicate);
+  for (const [name, seed] of [["seed", seeds.physics], ["fragment seed", seeds.fragment]] as const) {
+    if (seed !== want) throw new Error(`${name} ${seed} does not match the R1' labels (${JSON.stringify(labels)}): want r1PrimeSeed(h, t', ${replicate}) = ${want}`);
+  }
+}
+
+/** R1' draws its donors with s = 9 (`r1PrimeSeed(h, t', 9)`), and permutes with s = 8. */
+export const r1PrimeDonorSeedOf = (labels: R1PrimeLabelSet): number => r1PrimeSeed(r1PrimeH(labels), labels.timePrime, 9);
+
+/** Throws unless `donorSeed` is `r1PrimeDonorSeedOf(labels)`. */
+export function checkR1PrimeDonorSeed(labels: R1PrimeLabelSet, donorSeed: number): void {
+  const want = r1PrimeDonorSeedOf(labels);
+  if (donorSeed !== want) throw new Error(`donor seed ${donorSeed} does not match the R1' labels (${JSON.stringify(labels)}): want r1PrimeSeed(h, t', 9) = ${want}`);
+}
+
+/** Throws unless both seeds of replicate `replicate` are 4,849,001 + replicate (the tau calibration's streams). */
+export function checkTauSeeds(seeds: { physics: number; fragment: number }, replicate = 0): void {
+  const want = TAU_SEED_BASE + replicate;
+  if (seeds.physics !== want || seeds.fragment !== want) throw new Error(`the tau calibration needs seed ${want} for replicate ${replicate}, got ${seeds.physics} (fragment ${seeds.fragment})`);
 }
 
 /** Calibration seeds are 4,802,001 + 10 v + s (protocol, P1). */
@@ -435,9 +542,10 @@ export function parseAssayLabels(
  * come from the ancestor source: its seeds carry h = 18 while the labels name the scaf history it tests.
  * Calibration sets (`labels.calibration`, 1 or 2) both use `CALIBRATION_SEED` + replicate, so the quenched control
  * shares the ancestor's fragments and physics; a legacy quenched set seeded 4,802,021 + s is refused as unmatched.
- * Throws on any mismatch.
+ * The tau calibration (`labels.tauCalibration`) needs `TAU_SEED_BASE` + replicate. Throws on any mismatch.
  */
 export function checkAssaySeeds(assay: AssayName, labels: AssayLabelSet, inoculum: string, seeds: { physics: number; fragment: number }, replicate = 0): void {
+  if (labels.tauCalibration) return checkTauSeeds(seeds, replicate);
   if (labels.calibration !== undefined) {
     const want = CALIBRATION_SEED + replicate;
     if (seeds.physics === want && seeds.fragment === want) return;
@@ -482,7 +590,7 @@ export function assayJson(p: {
   censusEvery: number;
   inoculum: string;
   seeds: { physics: number; fragment: number }[];
-  labels: AssayLabelSet;
+  labels: AssayLabelSet | R1PrimeLabelSet;
   extra: Record<string, unknown>;
   summary: Record<string, unknown>;
   wallSeconds: number;

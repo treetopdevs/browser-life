@@ -16,9 +16,16 @@
 //     [--mut-rate R] [--census 100]
 //   deno run -A tools/scaffold-assays.ts capability   --source CKPT[,CKPT...] --seed S --out DIR          (R4)
 //     --arm ARM[,ARM...] [--history I[,I...]] [--tag NAME[,NAME...]]
+//   deno run -A tools/scaffold-assays.ts transmission --r1prime --traits --source CKPT --k K --period P --seed S --out DIR   (R1')
+//     --arm scaf|rand --history I --time 0|1|2 [--donor-seed D] [--ref REF] [--side 8] [--replicates 2] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts competence --tau-calibration --traits --source CKPT --k K --period P --seed S --out DIR   (tau)
+//     --ref REF [--side 8] [--replicates 2] [--tag NAME]
 //
 // --replicates is at most 8: s = 8 and s = 9 are reserved for R1's permutation stream and donor selection, so
-// they never seed a fragment or a physics stream. capability's --arm, --history and --tag are comma lists parallel
+// they never seed a fragment or a physics stream. --traits (competence, transmission, garden) also writes
+// <out>/traits.tsv (replicate, pond, step, trait: each pond's trait, B+P over cells with B+P >= 48, at every census
+// step of the period, steps 100..period) and `traitsRecorded: true` in assay.json; without it neither changes.
+// capability's --arm, --history and --tag are comma lists parallel
 // to --source (--history "-" for the ancestor); its rows go under `capability` in assay.json, which
 // scaffold-report r4 reads.
 //
@@ -27,6 +34,13 @@
 // its own v = 1 seed as --seed and the v = 0 seed as --frag-seed. transmission draws its donors with
 // --donor-seed (default --seed + 9, i.e. assaySeed(1, h, t, 0, 9)), which must equal that value for the labelled
 // history and time. Every seed must lie in 4,800,001-4,849,999 unless --allow-any-seed (smoke tests only).
+//
+// Amendment 2 (R1', post hoc): `transmission --r1prime --time 0|1|2` labels a scaf or rand history at t' (0 = boundary 34,
+// 1 = boundary 67, 2 = boundary 100; the source is that boundary's pre-cycle checkpoint) and takes its seeds from
+// r1PrimeSeed(h, t', s) = 4,845,001 + 250 h + 100 t' + s (h = 6 arm + i; replicate s, donors s = 9, permutations s = 8);
+// the labels are `r1prime: true` and `timePrime`. It needs --traits, since R1' reads the trait at tau. `competence
+// --tau-calibration` is the tau calibration: the ancestor source, seeds 4,849,001 + s (s = 0-1), --ref and --traits
+// required, labelled `tauCalibration: true`. Both validate their seeds unless --allow-any-seed.
 //
 // --arm/--history and --time (0 = time 0) or --timing (a = time 0) label the history the source belongs to;
 // they are written under `labels` in assay.json, which scaffold-report reads. Unless --allow-any-seed, the
@@ -41,33 +55,41 @@ import { GpuSim, requestDevice } from "@bl/sim-gpu";
 import { DEFAULT_EVAL, evaluateBatch, quality } from "@bl/search";
 import {
   ASSAY_COLUMNS,
+  TAU_LABELS,
   assayJson,
   assayLine,
   assaySuccess,
   buildAssayWorld,
+  censusSteps,
   checkAssaySeeds,
   checkDonorSeed,
+  checkR1PrimeDonorSeed,
+  checkR1PrimeSeeds,
   fragmentDominant,
   parseAssayLabels,
+  parseR1PrimeLabels,
   quench,
   r1Donors,
   standardFragment,
   swapGenome,
+  traitsTable,
   type AssayItem,
   type AssayLabelSet,
   type AssayName,
   type Fragment,
   type Planted,
+  type R1PrimeLabelSet,
 } from "./lib/pond-assay.ts";
-import { loadCheckpoint, runPeriod, saveCheckpoint } from "./lib/pond-gpu.ts";
+import { loadCheckpoint, runPeriod, saveCheckpoint, type CensusSnapshot } from "./lib/pond-gpu.ts";
 import { dominantGenome, ledgerEnergy, pondConfig, pondTraits } from "./lib/ponds.ts";
 
 const a = parseArgs(Deno.args, {
   string: ["source", "k", "period", "ref", "seed", "frag-seed", "donor-seed", "swap-hex", "swap-from", "swap-founder", "swap-label", "tag", "out", "side", "replicates", "inoculum", "steps", "census", "mut-rate", "arm", "history", "time", "timing", "calibration"],
-  boolean: ["quench", "allow-any-seed"],
+  boolean: ["quench", "allow-any-seed", "traits", "r1prime", "tau-calibration"],
   default: { side: "8", replicates: "2", census: "100", inoculum: "fragment" },
 });
 const cmd = String(a._[0] ?? "");
+if ((a.traits || a.r1prime || a["tau-calibration"]) && (cmd === "continue" || cmd === "capability")) throw new Error(`--traits, --r1prime and --tau-calibration do not apply to ${cmd}`);
 
 function need(name: keyof typeof a): string {
   const v = a[name];
@@ -144,17 +166,22 @@ interface AssaySpec {
   fragSeed: number;
   inoculum: string;
   /** The history this source belongs to, written to assay.json for scaffold-report. */
-  labels: AssayLabelSet;
+  labels: AssayLabelSet | R1PrimeLabelSet;
   /** Fragment f of replicate sigma `sigma`; the family label is the donor pond in R1, else -1. */
   plan: (sigma: number, f: number) => Plan;
 }
 
-/** One period of an assay world on the GPU with matter and the energy ledger checked at every census. */
-async function runWorld(device: GPUDevice, state: WorldState, period: number, censusEvery: number): Promise<WorldState> {
+/**
+ * One period of an assay world on the GPU with matter and the energy ledger checked at every census. `onTraits`
+ * (--traits) is called at each census with the elapsed step and every pond's trait (the snapshot's cells share
+ * WorldState's layout, so `pondTraits` reads them directly).
+ */
+async function runWorld(device: GPUDevice, state: WorldState, period: number, censusEvery: number, onTraits?: (step: number, traits: number[]) => void): Promise<WorldState> {
   const sim = await GpuSim.create(device, state);
   try {
     const check = { startMatter: totalsOf(state.cfg, state.cells).matter, baseline: ledgerEnergy(state) };
-    const r = await runPeriod(sim, device, period, censusEvery, check);
+    const onCensus = onTraits && (async (snap: CensusSnapshot) => onTraits(snap.step - state.step, pondTraits({ ...state, cells: snap.cells })));
+    const r = await runPeriod(sim, device, period, censusEvery, check, onCensus);
     if (!r.conservationOk) throw new Error(`matter or the energy ledger broke in the assay world (seed ${state.cfg.seed})`);
     return await sim.readState();
   } finally {
@@ -167,17 +194,36 @@ async function runAssay(spec: AssaySpec, out: string, extra: Record<string, unkn
   const t0 = performance.now();
   const ponds = spec.side * spec.side;
   const seeds = Array.from({ length: spec.replicates }, (_, s) => ({ physics: checkSeed("seed", spec.seed + s), fragment: checkSeed("fragment seed", spec.fragSeed + s) }));
-  if (!a["allow-any-seed"]) seeds.forEach((sd, s) => checkAssaySeeds(spec.name as AssayName, spec.labels, spec.inoculum, sd, s));
+  if (!a["allow-any-seed"]) {
+    const labels = spec.labels;
+    seeds.forEach((sd, s) => ("r1prime" in labels ? checkR1PrimeSeeds(labels, sd, s) : checkAssaySeeds(spec.name as AssayName, labels, spec.inoculum, sd, s)));
+  }
   const device = await requestDevice(navigator.gpu, pondConfig(spec.side, seeds[0].physics, 0));
   const lines: string[] = [ASSAY_COLUMNS.join("\t")];
   const sum = { rows: 0, success: 0, end: 0, ret: 0, retE: 0, absent: 0, truncated: 0 };
+  // --traits: every pond's trait at every census, per replicate (traits.tsv).
+  const traitLog: { replicate: number; steps: number[]; traits: number[][] }[] = [];
   if (rowFilter === undefined || rowFilter()) {
     for (let s = 0; s < spec.replicates; s++) {
       const plans = Array.from({ length: ponds }, (_, f) => spec.plan(seeds[s].fragment, f));
       const cfg = pondConfig(spec.side, seeds[s].physics, 0);
       const { state, planted } = buildAssayWorld(cfg, plans.map((p) => p.item));
+      const log = { replicate: s, steps: [] as number[], traits: [] as number[][] };
+      const record = (step: number, t: number[]) => {
+        log.steps.push(step);
+        log.traits.push(t);
+      };
       // A world with nothing planted has nothing to grow: every fragment is absent and fails.
-      const traits = plans.every((p) => p.item === null) ? new Array<number>(ponds).fill(0) : pondTraits(await runWorld(device, state, spec.period, Number(a.census)));
+      let traits: number[];
+      if (plans.every((p) => p.item === null)) {
+        traits = new Array<number>(ponds).fill(0);
+        if (a.traits) for (const step of censusSteps(spec.period, Number(a.census))) record(step, traits);
+      } else {
+        traits = pondTraits(await runWorld(device, state, spec.period, Number(a.census), a.traits ? record : undefined));
+        // The last census is the end of the period: its traits are the end traits, or the snapshot and the state disagree.
+        if (a.traits && (log.steps.at(-1) !== spec.period || log.traits.at(-1)!.some((v, f) => v !== traits[f]))) throw new Error(`the census at the end of the period disagrees with the final state (seed ${seeds[s].physics})`);
+      }
+      traitLog.push(log);
       plans.forEach((p, f) => {
         const pl: Planted = planted[f];
         const success = p.item === null ? (spec.ref === undefined ? -1 : 0) : assaySuccess(traits[f], pl.retMass, spec.ref);
@@ -194,6 +240,7 @@ async function runAssay(spec: AssaySpec, out: string, extra: Record<string, unkn
   }
   await Deno.mkdir(out, { recursive: true });
   await Deno.writeTextFile(`${out}/assay.tsv`, lines.join("\n") + "\n");
+  if (a.traits) await Deno.writeTextFile(`${out}/traits.tsv`, traitsTable(traitLog));
   await Deno.writeTextFile(
     `${out}/assay.json`,
     JSON.stringify(
@@ -211,7 +258,7 @@ async function runAssay(spec: AssaySpec, out: string, extra: Record<string, unkn
         inoculum: spec.inoculum,
         seeds,
         labels: spec.labels,
-        extra,
+        extra: a.traits ? { ...extra, traitsRecorded: true } : extra,
         summary: {
           rows: sum.rows,
           competence: spec.ref === undefined || sum.rows === 0 ? null : sum.success / sum.rows,
@@ -230,11 +277,30 @@ async function runAssay(spec: AssaySpec, out: string, extra: Record<string, unkn
   console.log(`${spec.name} ${spec.tag}: ${sum.rows} rows${spec.ref === undefined ? "" : sum.rows === 0 ? ", no rows (insufficient or empty source)" : `, competence ${(sum.success / sum.rows).toFixed(3)}`} -> ${out}`);
 }
 
+/** The labels of this assay from the CLI: R1' (--r1prime), the tau calibration (--tau-calibration) or R1-R3's. */
+function labelsFromArgs(name: AssayName): AssayLabelSet | R1PrimeLabelSet {
+  if (a["r1prime"] && a["tau-calibration"]) throw new Error("--r1prime and --tau-calibration are separate assays");
+  if (a["r1prime"]) {
+    if (name !== "transmission") throw new Error("--r1prime applies to transmission");
+    if (!a.traits) throw new Error("--r1prime needs --traits: R1' reads the trait at tau from traits.tsv");
+    return parseR1PrimeLabels({ arm: a.arm, history: a.history, time: a.time, timing: a.timing, calibration: a.calibration });
+  }
+  if (a["tau-calibration"]) {
+    if (name !== "competence") throw new Error("--tau-calibration applies to competence");
+    if (!a.traits) throw new Error("--tau-calibration needs --traits: tau is read from traits.tsv");
+    if (a.ref === undefined) throw new Error("--tau-calibration needs --ref: tau is a fraction of ref");
+    if ((a.arm ?? "ancestor") !== "ancestor" || a.history !== undefined || a.calibration !== undefined || a.quench || [a["swap-hex"], a["swap-from"], a["swap-founder"]].some((v) => v !== undefined)) throw new Error("--tau-calibration is the plain ancestor competence set (no --history, --calibration, --quench or swap)");
+    if ((a.timing ?? "a") !== "a" || (a.time ?? "0") !== "0") throw new Error("--tau-calibration labels the ancestor at timing a");
+    return TAU_LABELS;
+  }
+  return parseAssayLabels(name, { arm: a.arm, history: a.history, time: a.time, timing: a.timing, calibration: a.calibration });
+}
+
 async function specFromArgs(name: AssayName): Promise<AssaySpec> {
   const sourcePath = need("source");
   const seed = int("seed", 0);
   return {
-    labels: parseAssayLabels(name, { arm: a.arm, history: a.history, time: a.time, timing: a.timing, calibration: a.calibration }),
+    labels: labelsFromArgs(name),
     name,
     sourcePath,
     source: await loadCheckpoint(sourcePath),
@@ -259,7 +325,7 @@ switch (cmd) {
     const swap = await swapSpec();
     if (swap) spec.inoculum = swap.label;
     else if (a.quench) spec.inoculum = "quenched";
-    const cal = spec.labels.calibration;
+    const cal = "calibration" in spec.labels ? spec.labels.calibration : undefined;
     if (cal === 1 && (swap || a.quench)) throw new Error("--calibration 1 is the plain ancestor competence");
     if (cal === 2 && !a.quench) throw new Error("--calibration 2 is the quenched control (--quench)");
     if (cal === undefined && (swap || a.quench) && spec.labels.arm !== "scaf") throw new Error("swap and quenched arms label a scaf history (--arm scaf)");
@@ -274,7 +340,10 @@ switch (cmd) {
   case "transmission": {
     const spec = await specFromArgs("transmission");
     const donorSeed = checkSeed("donor seed", a["donor-seed"] === undefined ? spec.seed + 9 : int("donor-seed", 0));
-    if (!a["allow-any-seed"]) checkDonorSeed(spec.labels, donorSeed);
+    if (!a["allow-any-seed"]) {
+      if ("r1prime" in spec.labels) checkR1PrimeDonorSeed(spec.labels, donorSeed);
+      else checkDonorSeed(spec.labels, donorSeed);
+    }
     const { donors, eligible, insufficient } = r1Donors(spec.source, donorSeed);
     spec.plan = (sigma, f) => {
       const donor = donors[f % donors.length];
