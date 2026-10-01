@@ -53,10 +53,13 @@ defmodule Coordinator.Segment do
   @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json)
   # Optional: only a migration-enabled run writes migrations.tsv (see
   # stitch.ts's MIGRATIONS_FILE), only a metapopulation run writes
-  # exchanges.tsv (see stitch.ts's EXCHANGES_FILE), and only a run with
-  # RunSpec.speciesCensus writes species.tsv (see stitch.ts's SPECIES_FILE).
-  # Compared whenever either side has it.
-  @optional_observation_files ~w(migrations.tsv exchanges.tsv species.tsv)
+  # exchanges.tsv (see stitch.ts's EXCHANGES_FILE), only a run with
+  # RunSpec.speciesCensus writes species.tsv (see stitch.ts's SPECIES_FILE),
+  # and only a pond run writes ponds.tsv (see stitch.ts's PONDS_FILE).
+  # Compared whenever either side has it. Together with @observation_files,
+  # must equal stitch.ts's VERIFIED_FILES
+  # (packages/runner/test/coordinator-files.test.ts checks it).
+  @optional_observation_files ~w(migrations.tsv exchanges.tsv species.tsv ponds.tsv)
 
   @type status :: String.t()
   @type t :: %{
@@ -565,7 +568,7 @@ defmodule Coordinator.Segment do
 
   @doc """
   After a requeue, every `\"blocked\"` segment reachable from `seg_id` becomes
-  `\"pending\"` again -- not yet *runnable*: `Coordinator.Queue.pick_task/3`
+  `\"pending\"` again -- not yet *runnable*: `Coordinator.Queue.pick_task/4`
   re-checks each segment's own predecessor and `import_from` (if any) fresh
   against live status every time it looks for work, so a segment reset here
   before its actual dependencies are redone simply stays un-picked rather than

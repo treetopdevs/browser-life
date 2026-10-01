@@ -166,6 +166,8 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 .stage-title .eyebrow { width: 100%; margin-bottom: 3px; }
 .stage-title h1 { margin: 0; font-size: 1.1875rem; line-height: 1.2; letter-spacing: -.03em; }
 .run-label { min-width: 0; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--soft); font-size: .6875rem; }
+.pond-status { color: var(--muted); }
+.pond-status[hidden] { display: none; }
 .stage-actions { display: flex; align-items: center; gap: 14px; }
 .stage-rate { color: var(--muted); white-space: nowrap; font-size: .6875rem; }
 .view-bar { display: flex; align-items: flex-start; gap: 11px; }

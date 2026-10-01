@@ -28,15 +28,15 @@
 // moved aside to seed-<n>.stale-<time> (outside analyze.ts's input) before
 // anything new is written.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { METRICS_VERSION } from "@bl/schema";
-import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, SPECIES_FILE, stitchRun, type StitchSegment } from "@bl/runner";
+import { METRICS_VERSION, PRESETS } from "@bl/schema";
+import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, PONDS_FILE, SPECIES_FILE, stitchRun, type StitchSegment } from "@bl/runner";
 
 // Optional files (not in BUNDLE_FILES): recorded only when the run has the
 // corresponding mechanism configured (tile migration / a metapopulation /
-// RunSpec.speciesCensus), so a run without that mechanism never carries them
-// (see MIGRATIONS_FILE/EXCHANGES_FILE/SPECIES_FILE's own docs in
-// packages/runner/src/stitch.ts).
-const OPTIONAL_FILES = [MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE] as const;
+// RunSpec.speciesCensus / the pond cycle), so a run without that mechanism
+// never carries them (see MIGRATIONS_FILE/EXCHANGES_FILE/SPECIES_FILE/
+// PONDS_FILE's own docs in packages/runner/src/stitch.ts).
+const OPTIONAL_FILES = [MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE, PONDS_FILE] as const;
 
 const a = parseArgs(Deno.args, {
   string: ["experiment", "coordinator", "out", "token"],
@@ -94,6 +94,14 @@ for (const s of exp.segments) if (s.observationsVerified === false) console.warn
 // experiment-wide (Coordinator.Queue's `put_metapopulation/2`), so this is
 // the same for every run in `exp`, including its "no-migration" control.
 const metapopConfigured = Boolean(exp.spec.metapopulation);
+// Likewise for ponds.tsv: the pond cycle comes from the experiment's preset
+// (a coordinator spec carries no config overrides, and the pond conditions
+// only change the arm), so a pond preset expects it on every segment even
+// if none recorded one.
+const pondsConfigured = PRESETS.find((p) => p.id === exp.spec.presetId)?.cfg.pondPeriod !== undefined;
+// Whether optional file `f` is configured for a run whose segments are `segs`.
+const configuredFor = (f: (typeof OPTIONAL_FILES)[number], segs: Listed[]) =>
+  f === EXCHANGES_FILE ? metapopConfigured : (f === PONDS_FILE && pondsConfigured) || segs.some((s) => s.files?.[f]);
 // Why a run cannot be exported (yet), or null.
 function ineligible(segs: Listed[]): string | null {
   const unfinished = segs.filter((s) => s.status !== "done" && s.status !== "verified");
@@ -114,10 +122,11 @@ function ineligible(segs: Listed[]): string | null {
   // again, defensively.
   for (const f of OPTIONAL_FILES) {
     // exchanges.tsv's "is this configured" comes from the experiment's own
-    // spec (see metapopConfigured's doc), not file presence; migrations.tsv
-    // and species.tsv have no equivalent experiment-wide flag exposed here,
-    // so they keep the file-presence inference.
-    const configured = f === EXCHANGES_FILE ? metapopConfigured : segs.some((s) => s.files?.[f]);
+    // spec (see metapopConfigured's doc), not file presence, and ponds.tsv's
+    // from its preset (pondsConfigured); migrations.tsv and species.tsv have
+    // no equivalent experiment-wide flag exposed here, so they keep the
+    // file-presence inference.
+    const configured = configuredFor(f, segs);
     if (configured) {
       const missing = segs.filter((s) => !s.files?.[f]);
       if (missing.length) return `${f} is configured for this run but ${missing.length} segment(s) have no recorded ${f}`;
@@ -169,8 +178,7 @@ async function existing(dir: string, segs: Listed[]): Promise<string | null> {
   // (fingerprint covers accepted digests, not which files ended up on disk),
   // and it would never get rebuilt.
   for (const f of OPTIONAL_FILES) {
-    const configured = f === EXCHANGES_FILE ? metapopConfigured : segs.some((s) => s.files?.[f]);
-    if (configured && !(await Deno.stat(`${dir}/${f}`).catch(() => null))) return "incomplete";
+    if (configuredFor(f, segs) && !(await Deno.stat(`${dir}/${f}`).catch(() => null))) return "incomplete";
   }
   if ((manifest.metricsVersion ?? 1) !== METRICS_VERSION) return "stale-metrics-version";
   return fingerprint(manifest.segments ?? []);

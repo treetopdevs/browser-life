@@ -11,6 +11,15 @@ import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@
 import { continuationError, decodeArtifact, immigrantError, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
 import { observationDigests } from "./stitch.ts";
 
+/** What this island's code can run, sent as the JSON body of every
+ * `POST /api/next`. The coordinator offers segments and verify tasks of a
+ * pond experiment (a preset in its `:pond_presets`) only to an island that
+ * lists `"ponds-v1"`: older code cannot run the pond cycle
+ * (WorldConfig.pondPeriod), and would report a valid predecessor as invalid,
+ * its runner throwing on the unknown preset (see Coordinator.Queue's
+ * moduledoc). */
+export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1"];
+
 export interface Task {
   kind: "run" | "verify" | "idle";
   lease?: string;
@@ -250,7 +259,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
   let done = 0;
   let waiting = false;
   while (!opt.signal?.aborted && (!opt.maxTasks || done < opt.maxTasks)) {
-    const task = await call<Task>(`/api/next?${q()}`, { method: "POST" });
+    const task = await postJson<Task>(`/api/next?${q()}`, { capabilities: ISLAND_CAPABILITIES });
     if (task.kind === "idle" || !task.segment || !task.spec || !task.lease) {
       if (opt.maxTasks) break;
       if (!opt.signal?.aborted && !waiting) {

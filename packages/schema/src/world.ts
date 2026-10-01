@@ -58,7 +58,8 @@ export function allocState(cfg: WorldConfig): WorldState {
   };
 }
 
-const MOT_ZERO = 128 | (128 << 8);
+/** CH.MOT of a cell at rest, (mx+128) | (my+128) << 8 with mx = my = 0: the same value as @bl/sim-ref's MOT_ZERO. */
+export const MOT_ZERO = 128 | (128 << 8);
 
 export function buildWorld(cfg: WorldConfig, spec: InitSpec): WorldState {
   const s = allocState(cfg);

@@ -36,7 +36,7 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
-import { migrateAtBoundary } from "./migrate.ts";
+import { applyBoundary, pondContext, pondTsvRows, PONDS_HEADER } from "./migrate.ts";
 import {
   ActivityTracker,
   Tracker,
@@ -208,6 +208,15 @@ export interface ObserverState {
   censusIdx: number;
   extinct: boolean;
   prevSym: string | null;
+  /**
+   * Pond runs only (`WorldConfig.pondPeriod`); absent from every other
+   * observer, so their artifacts and digests are unchanged. `lastCycle` is
+   * the last boundary whose pond cycle has been applied (or, for arm cont,
+   * recorded): floor(step / pondPeriod) for every state a pond run writes,
+   * since each boundary's cycle runs before that step's checkpoint. See
+   * `pondContinuationError`.
+   */
+  ponds?: { lastCycle: number };
 }
 
 export interface RunOptions {
@@ -221,7 +230,8 @@ export interface RunOptions {
    * The ring-predecessor's own accepted end-of-segment state (see
    * `RunSpec.metapopulation`), if this segment has one — the same one
    * `spec.metapopulation` must also be set for. Applied once, before any
-   * physics steps, via `packages/schema/src/exchange.ts`.
+   * physics steps, via `packages/schema/src/exchange.ts`. Refused for a pond
+   * run, whose ponds each keep their own matter.
    */
   immigrant?: WorldState;
 }
@@ -322,6 +332,11 @@ export function specConfig(spec: RunSpec): WorldConfig {
   const cond = conditionById(spec.condition);
   // spec.overrides wins last, so e.g. { adhesion: true } re-enables adhesion even under no-signal-motility.
   const cfg = { ...base, ...cond.apply(base), ...(spec.overrides ?? {}) };
+  // Each pond keeps its own matter (WorldConfig.pondPeriod), which a
+  // metapopulation's cross-run exchange would break; validateConfig refuses
+  // the ring namespace below on a pond config too, but this says why, before
+  // any state is built.
+  if (spec.metapopulation && cfg.pondPeriod !== undefined) throw new Error("a pond run cannot belong to a metapopulation: cross-run exchange would move matter into and out of its ponds");
   if (spec.metapopulation) {
     const { migrantCount, salt } = spec.metapopulation;
     // The coordinator already bounds migrantCount to a conservative fixed
@@ -404,11 +419,36 @@ function sameSettings(a: ObserverSettings, b: ObserverSettings): boolean {
  */
 export function continuationError(spec: RunSpec, start: WorldState, observer: ObserverState | undefined): string | null {
   if (!sameConfig(start.cfg, specConfig(spec))) return "start state config differs from the run spec";
-  if (start.step === 0) return null;
+  // At step 0 an observer is optional, but one that is given must not carry a stray pond field.
+  if (start.step === 0) return observer && typeof observer === "object" ? pondContinuationError(start.cfg, observer, 0) : null;
   if (!observer || typeof observer !== "object") return "continuing from a checkpoint requires the matching observer state";
   if (observer.step !== start.step) return `observer state does not belong to the start checkpoint (t=${observer.step})`;
   if (!sameSettings(observer.settings, observerSettings(spec))) return "observer settings differ from the run spec";
-  return null;
+  return pondContinuationError(start.cfg, observer, start.step);
+}
+
+/**
+ * Why `observer` cannot continue a history of config `cfg` at `step` as far
+ * as the pond cycle is concerned, or null when it can. The `ponds` field
+ * must be present exactly in pond runs (`cfg.pondPeriod` set) past step 0 --
+ * at step 0 a pond observer may omit it, and if present it must say 0 -- and
+ * absent otherwise; and `ponds.lastCycle` must equal floor(step /
+ * pondPeriod). That rejects the one continuation the rest of the checks
+ * cannot see: a pre-cycle state at a boundary (a pond run never writes one,
+ * but tools/scaffold.ts's `b<C>-pre` checkpoints are such states), which
+ * would otherwise silently skip that boundary's cycle, since a history never
+ * cycles at its own start step. Shared by `continuationError` (tools/run.ts
+ * continuations and islands) and the lab's adoption of an imported or
+ * restored world.
+ */
+export function pondContinuationError(cfg: WorldConfig, observer: ObserverState | undefined, step: number): string | null {
+  const ponds = observer?.ponds;
+  if (cfg.pondPeriod === undefined) return ponds === undefined ? null : "the observer state carries a pond-cycle field but the config has no pond cycle";
+  if (ponds === undefined) return step > 0 ? "continuing a pond run requires the observer's pond-cycle field (ponds.lastCycle)" : null;
+  const want = Math.floor(step / cfg.pondPeriod);
+  if (ponds.lastCycle === want) return null;
+  const pre = ponds.lastCycle === want - 1 && step % cfg.pondPeriod === 0;
+  return `the observer's last pond cycle is ${ponds.lastCycle}, but t=${step} needs ${want}${pre ? " (a pre-cycle state: this boundary's cycle has not been applied)" : ""}`;
 }
 
 /**
@@ -450,6 +490,8 @@ function validateObserverShape(raw: unknown): ObserverState {
   if (!safeIntGe0(o.mutations) || !safeIntGe0(o.buddings) || !safeIntGe0(o.censusIdx)) throw new Error("checkpoint: observer counters are malformed");
   if (typeof o.extinct !== "boolean") throw new Error("checkpoint: observer extinct flag is malformed");
   if (o.prevSym != null && typeof o.prevSym !== "string") throw new Error("checkpoint: observer prevSym is malformed");
+  if (o.ponds !== undefined && (!o.ponds || typeof o.ponds !== "object" || !safeIntGe0((o.ponds as { lastCycle?: unknown }).lastCycle)))
+    throw new Error("checkpoint: observer ponds.lastCycle is malformed");
   return o as ObserverState;
 }
 
@@ -557,6 +599,14 @@ export async function runExperiment(
   // invariant tests/deno/stitch.ts checks), exactly like checkpointEvery's own rule below.
   const migrationPeriod = cfg.migrationPeriod ?? 0;
   if (migrationPeriod > 0 && migrationPeriod % spec.censusEvery !== 0) throw new Error("migrationPeriod must be a multiple of censusEvery");
+  // The pond cycle (WorldConfig.pondPeriod) is keyed on the absolute step like
+  // migration, at the same hook, so it takes the same cadence guards (this one
+  // and the start-step one below). Its ponds each keep their own matter, so a
+  // pond run never imports cells from another run (a metapopulation member is
+  // already refused by specConfig).
+  const pondPeriod = cfg.pondPeriod ?? 0;
+  if (pondPeriod > 0 && pondPeriod % spec.censusEvery !== 0) throw new Error("pondPeriod must be a multiple of censusEvery");
+  if (pondPeriod > 0 && opts.immigrant) throw new Error("a pond run cannot import an immigrant state: cross-run exchange would move matter into and out of its ponds");
   const init =
     opts.start ??
     (spec.soloFounder !== undefined || spec.soloGenome !== undefined || spec.founderSet !== undefined
@@ -589,12 +639,18 @@ export async function runExperiment(
   // separate "multiple of migrationPeriod" check is needed.)
   if (migrationPeriod > 0 && startStep % spec.censusEvery !== 0)
     throw new Error(`migration-enabled runs must start on a multiple of censusEvery (start step ${startStep}, censusEvery ${spec.censusEvery})`);
+  if (pondPeriod > 0 && startStep % spec.censusEvery !== 0)
+    throw new Error(`pond runs must start on a multiple of censusEvery (start step ${startStep}, censusEvery ${spec.censusEvery})`);
   const settings = observerSettings(spec);
   // The lineageObs bookkeeping (lineages already seen, the previous census's individuals) is not part of
   // the checkpointed observer state, so those files are only exact for a run observed from its start.
   if (spec.lineageObs && opts.start && opts.start.step > 0) throw new Error("lineageObs needs a run observed from step 0; it cannot continue a checkpoint");
   if (opts.start) {
     const bad = continuationError(spec, opts.start, opts.observer);
+    if (bad) throw new Error(bad);
+  } else if (opts.observer) {
+    // An observer for the preset's own start world: its pond field obeys the same rule.
+    const bad = pondContinuationError(cfg, opts.observer, startStep);
     if (bad) throw new Error(bad);
   }
   if (opts.immigrant && !spec.metapopulation) throw new Error("an immigrant state requires spec.metapopulation");
@@ -622,8 +678,11 @@ export async function runExperiment(
   // an import was never going to match.
   const baseline = t0tot.energy + actualInit.heatOut - actualInit.lightIn;
   const startMatter = t0tot.matter;
+  // Pond runs only: M_r and the conservation baseline of every cycle, from this
+  // segment's own start (see migrate.ts's PondContext).
+  const ponds = pondContext(actualInit);
   const sim = await GpuSim.create(device, actualInit);
-  const obs = restoreObservers(opts.observer, settings);
+  const obs = restoreObservers(opts.observer, settings, cfg);
   const { tracker, activity } = obs;
   const manifest = {
     runId: runId(spec),
@@ -679,6 +738,11 @@ export async function runExperiment(
   // run's own per-run ledger (see exchange.ts's doc on why the "export" rows
   // are logged here, by the *importing* run, not by the predecessor).
   if (spec.metapopulation) await sink.writeText("exchanges.tsv", "step\tdirection\tslot\tcell\tmatter\tlineageHi\tlineageLo\n");
+  // Written in every pond run, header only when this call crosses no boundary,
+  // and never otherwise (same discipline as migrations.tsv): one row per
+  // recipient (scaf, rand) or per pond (cont) per boundary, formatted as
+  // tools/scaffold.ts writes them.
+  if (ponds) await sink.writeText("ponds.tsv", PONDS_HEADER);
   if (exchange) {
     const rows = (dir: "import" | "export", es: typeof exchange.imports) => es.map((e) => `${e.step}\t${dir}\t${e.slot}\t${e.cell}\t${e.matter}\t${e.lineageHi}\t${e.lineageLo}`);
     await sink.appendText("exchanges.tsv", [...rows("import", exchange.imports), ...rows("export", exchange.exports)].join("\n") + "\n");
@@ -707,6 +771,11 @@ export async function runExperiment(
   let prevFlux = actualInit.flux.slice();
   let conservationOk = true;
   let lastCensus = { individuals: 0, lineages: 0 };
+  // Pond runs: whether the next census is the first after a pond boundary.
+  // Known from the step alone, so a segment starting at a boundary (whose
+  // cycle its predecessor applied) flags its first census as a continuous
+  // run would.
+  let afterCycle = ponds !== null && startStep > 0 && startStep % pondPeriod === 0;
 
   try {
     for (let s = 0; s < spec.steps; ) {
@@ -787,6 +856,13 @@ export async function runExperiment(
         mutations: obs.mutations,
         conservationOk,
       };
+      // Pond runs: tracker-derived outputs (life.jsonl, heredity.tsv, buddings,
+      // generations) link across a cycle's grind, so analysis must not read
+      // them across it (protocol v1); this marks where each cycle falls.
+      if (afterCycle) {
+        rec.afterCycle = true;
+        afterCycle = false;
+      }
 
       rec.patternEntropy = entropy(sym);
       if (o.prevSym) rec.temporalMI = temporalMI(o.prevSym, sym);
@@ -806,23 +882,33 @@ export async function runExperiment(
       // Observation continues through extinction (segments end at their boundary).
       if (o.becameExtinct) onProgress(`extinct at step ${c.step}`);
       // Scheduled through the same helper the lab worker uses (migrate.ts), so
-      // both agree bit for bit on when and how migration applies. Keyed on the
-      // absolute step (not this call's own start), so a segmented run fires it
-      // at the same steps a continuous run would. Applied after this step's
-      // census/observation, before any checkpoint at the same step, so a
-      // checkpoint always carries the post-migration state forward.
-      const mevents = await migrateAtBoundary(sim, c.step);
+      // both agree bit for bit on when and how migration and the pond cycle
+      // apply. Keyed on the absolute step (not this call's own start), so a
+      // segmented run fires them at the same steps a continuous run would.
+      // Applied after this step's census/observation, before any checkpoint at
+      // the same step, so a checkpoint always carries the post-migration and
+      // post-cycle state forward.
+      const boundary = await applyBoundary(sim, c.step, ponds);
+      const mevents = boundary.migrations;
       if (mevents.length)
         await sink.appendText(
           "migrations.tsv",
           mevents.map((e) => `${e.step}\t${e.slot}\t${e.fromTile}\t${e.toTile}\t${e.fromCell}\t${e.toCell}\t${e.matter}\t${e.lineageHi}\t${e.lineageLo}`).join("\n") + "\n",
         );
+      if (boundary.ponds) {
+        await sink.appendText("ponds.tsv", pondTsvRows(boundary.ponds.rows));
+        obs.ponds = { lastCycle: boundary.ponds.b };
+        afterCycle = true;
+        // Unlike tools/scaffold.ts, an ended history keeps stepping; later cycles take the same no-donor path.
+        if (boundary.ponds.ended) onProgress(`cycle ${boundary.ponds.b} at t=${c.step}: no pond eligible, every pond cleared to nutrient (history ended; stepping on)`);
+      }
       // One readState() when either a checkpoint or a species census is due -- never two: both
       // need the full genome buffer (species census needs every GENOME_CHANNELS word per cell,
       // not the 4-word genomeHead readSnapshot already read above), so they share this readback.
+      // A pond boundary has already read the post-cycle state back, so it is reused here.
       const dueForCheckpoint = spec.checkpointEvery > 0 && (sim.step - startStep) % spec.checkpointEvery === 0;
       if (dueForCheckpoint || spec.speciesCensus) {
-        const st = await sim.readState();
+        const st = boundary.state ?? (await sim.readState());
         if (dueForCheckpoint) {
           const file = `checkpoints/t${String(st.step).padStart(9, "0")}.blck`;
           await sink.writeBytes(file, encodeCheckpoint(st, serializeObservers(obs, st.step, settings)));
