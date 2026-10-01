@@ -534,6 +534,33 @@ The amendment follows R1's result, so R1′ is exploratory. A positive R1′ onl
 - **Budget:** estimate about $5, hard stop $10, drawn from the follow-up $200.
 - **Ledger before this draw.** About $1.12 of unearmarked margin remains (the 2026-09-30 close-out above). By the user's decision (2026-10-01), what this draw spends beyond that margin comes out of the $120 cohort reserve, up to its $10 hard stop. The reduced reserve is recorded when this draw closes. The $60 RULE_VERSION 2 go/no-go stays untouched.
 
+**Scaffold R3 replication result (2026-10-01).** R3 replicates on fresh histories.
+- **Rule:** the advantage over `rand`, `cont` and the ancestor at both timings holds in 6 of 6 histories, and the swap criterion in 6 of 6; quenched controls are 0 in 12 of 12.
+- **Checks:** the device check passed, all 101 commands and 62 sets are complete, and every number was re-derived independently.
+- **Record:** `docs/scaffold-r3-replication-v1.md`, "Results (2026-10-01)"; readout `experiments/scaffold/readouts/r3rep.json`.
+- **Disposition:** re-entering v1's table with R1″, R2 (as recorded) and this R3 reaches row C: integration, then a registration draft for a confirmatory scaffolding ensemble. Each is a separate dated decision.
+- **Caveats:**
+  - The advantage is large and robust: smallest margins 11–15 of 128, and it holds in each replicate alone.
+  - The swap criterion passes at the threshold again: margins 0 to +2.5 fragments; replicate 0 alone 6 of 6, replicate 1 alone 0 of 6.
+  - The six swap tests share one draw of ancestor fragments, so they are not independent. The genome effect's direction is consistent, but its size, "at least half the advantage", is not established beyond the threshold.
+  - A registration design should test the swap with independent fragment draws per history and more replicates.
+  - R2 has not been replicated on fresh histories.
+
+**Cost (closes the 2026-10-01 draw).**
+- AWS spent **$3.94** of the $10 hard stop: one g5.xlarge, about 4 h.
+- The key pair, security group and instance are gone, and the supervisor is unloaded.
+- The supervisor once read a failed status call as termination and stopped. It was restarted within 3 minutes, nothing was lost, and the script now retries in that case.
+- Ledger of the follow-up $200:
+
+| Item | Amount |
+|---|---|
+| Drawn before (2026-09-30 close-out) | about $18.88 |
+| This draw | $3.94 |
+| **Total drawn** | **about $22.82** |
+
+- The unearmarked margin before this draw was about $1.12, so this draw took **about $2.82 from the cohort reserve**, which is now about **$117.18**.
+- The $60 RULE_VERSION 2 go/no-go is intact, and no unearmarked margin remains.
+
 
 ## Ecology-first founder discovery — 2026-09-29
 

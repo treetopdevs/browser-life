@@ -111,3 +111,65 @@ Applied in this order:
   - 62 competence sets (38 sources, 12 swaps, 12 quenched) × 2 × 10⁴.
 - **Where:** one AWS g5.xlarge with six lanes (protocol v1's runs measured about 226 steps/s per lane), about 4 h.
 - **Budget:** estimate about $5, hard stop $10, under the dated draw note in `docs/plan.md`.
+
+## Results (2026-10-01)
+
+**Run and provenance.**
+- **Order of events:** the protocol was committed (4838f400) before any run, and the code (5aa706d2) before the instance started.
+- **Device check: passed.** On the A10G, `scaf` i0's cycles 23–34 reproduced the Mac's `b34-pre` and `b34-post` state hashes, `ponds.tsv` and `lineages.tsv` byte for byte.
+- **Histories:** all 18 completed 100 cycles with exact conservation, and none ended early.
+- **Truncation:** none, in the histories or in the 7,936 assay rows.
+- **Queue:** all 101 commands finished on their first attempt (no retry, no failure).
+- **Screening:** all 62 sets passed, and all 38 recorded checkpoints were reloaded and verified (none unverifiable).
+- **Independent re-derivation:** a separate re-derivation from the raw tables, by a different method, reproduced every number and every recorded success flag (7,936 of 7,936). Seeds, continuation provenance, copies and lane records all check out.
+- **Readout:** `experiments/scaffold/readouts/r3rep.json`.
+
+**Rule.**
+- **Quenched controls:** 0 in 12 of 12.
+- **Availability:** both ancestor sets and all 6 histories are available.
+- **Result: R3 replicates.** The advantage over `rand`, `cont` and the ancestor at both timings holds in 6 of 6 histories, and the swap criterion in 6 of 6. The rule needs 4 of each.
+
+Competences (out of 128 fragments; ancestor (a) 0.875, (b) 0.672):
+
+| i | `scaf` a | `rand` a | `cont` a | `scaf` b | `rand` b | `cont` b | `Ge-on-Fa` | swap margin (fragments) |
+|---|---|---|---|---|---|---|---|---|
+| 0 | 0.977 | 0.836 | 0.633 | 0.945 | 0.859 | 0.695 | 0.930 | +0.5 |
+| 1 | 0.984 | 0.000 | 0.727 | 0.930 | 0.062 | 0.688 | 0.938 | +1 |
+| 2 | 0.977 | 0.438 | 0.523 | 0.961 | 0.445 | 0.641 | 0.945 | +2.5 |
+| 3 | 0.961 | 0.773 | 0.727 | 0.961 | 0.742 | 0.688 | 0.930 | +1.5 |
+| 4 | 0.992 | 0.031 | 0.617 | 0.938 | 0.055 | 0.688 | 0.938 | +0.5 |
+| 5 | 0.984 | 0.766 | 0.664 | 0.969 | 0.641 | 0.594 | 0.930 | 0 |
+
+**Disposition, by the rule.** Protocol v1's R3 result replicates on fresh histories, by a design fixed in advance.
+- Re-entering v1's decision table with R1″ (fresh histories), R2 (as recorded on the v1 histories) and this R3 reaches row C: integrate the cycle into the runner and lab, then draft a registration for a confirmatory scaffolding ensemble.
+- Each of those is a separate dated decision.
+- R2 has not been replicated on fresh histories.
+- v1's R3 result stays recorded as it is.
+
+**Caveats (from the re-derivation; not decision inputs).**
+- **The advantage is large and robust.**
+  - Smallest margins are 11–15 fragments per history.
+  - It holds 6 of 6 in each replicate alone, and 5 of 5 with any one history dropped.
+  - Mass does not obviously explain it. At timing (a), `scaf` fragments have the lowest median retained B+P of the sources. Within the [2,500, 3,500) bin, pooled over histories, `scaf` succeeds 475 of 475, against `cont` 133 of 254. That is one bin, so it does not rule out confounding by mass.
+- **The swap criterion passes at the threshold again.**
+  - Margins are 0 to +2.5 fragments (v1: −3.5 to +3.5). i5 passes at exact equality, 7/128 ≥ 7/128.
+  - Replicate 0 alone gives 6 of 6, replicate 1 alone 0 of 6.
+- **The six swap tests are not independent.**
+  - By v1's pairing design, every `Ge-on-Fa` set uses the ancestor's own fragments and physics streams (σ(18, 0, s)).
+  - In replicate 1, all six evolved genomes score 58 of 64 on the same fragments, against the ancestor's 57.
+  - Seven small ancestor fragments (retained B+P 1,172–1,690) are dead under every genome, six of them in replicate 1. Each dead fragment lowers the ancestor's competence and so raises the bar, while the gain stays the same.
+  - So 6 of 6 is one fragment draw tested with six genomes, not six independent confirmations.
+- **The direction of the genome effect is consistent.** In each history, `Ge-on-Fa` beats the ancestor on 7–9 paired fragments and loses on none (exact McNemar p 0.004–0.016 each, not independent across histories). What sits at the threshold is its size, "at least half the advantage", not its sign.
+- **`Ga-on-Fe` is 0.031–0.062.** The ancestor genome mostly fails to grow in evolved fragments. No failure comes from the 4× requirement alone: every failed fragment also misses the 0.25·ref growth threshold.
+  - The pattern is consistent with size-dependent establishment, which was not tested: the ancestor genome also fails on its own fragments below 3,500 retained B+P, and evolved genomes establish from smaller inocula.
+  - If so, it would also limit the matched test's headroom on the ancestor's heavier fragments.
+- **Ceilings:** the ancestor at (a) and the `scaf` sets sit near the competence ceiling.
+- **For the separate registration decision (a recommendation, not part of this rule):** a confirmatory design should test the genome swap with independent fragment draws per history and more replicates.
+
+**Descriptive.**
+- **Mean pond trait, boundary 1 → 100:**
+  - `scaf` 100,687–103,926 → 131,226–139,128;
+  - `rand` → 5,158–105,029 (two histories collapsed to about 5,000);
+  - `cont` → 129,541–131,180.
+- **Extinct ponds at boundary 100:** `scaf` 0–4, `rand` 1–13, `cont` 0.
+- **Cost:** $3.94 on one g5.xlarge, about 4 h.
