@@ -504,3 +504,14 @@ The amendment follows R1's result, so R1′ is exploratory. A positive R1′ onl
   - A τ sweep would pass at some earlier census times, between 600 and 3,100 steps. That is post hoc and is not used.
 - **Settling it:** pond-level heredity under the scaffold is unresolved, not refuted. Settling it needs a fresh design fixed in advance, on fresh histories, with a measure that does not saturate.
 - **Cost:** $0, on the Mac. Details are under "R1′ result" in the protocol.
+
+**Scaffold heredity replication (2026-09-30, the user's decision).** This is a fresh test of pond-level heredity under the scaffold, fixed before any of its data exist: `docs/scaffold-heredity-replication-v1.md`.
+- **Histories:** 12 fresh ones (6 `scaf`, 6 `rand`), seeds 4,811,001 + 100·arm + i, at protocol v1's frozen regime, run to boundary 34.
+- **Trait (R1″):** a discretised, capped crossing time to m* = 25,764.5. It avoids the end-mass ceiling, but both of its endpoint fractions are reported.
+- **Controls:** a positive control (the founder worlds) must pass. A null-calibration gate also applies: at most 1 of 4 mutation-off clone worlds may be significant.
+- **Rule:** applied after the control and availability checks; at least 4 of 6 `scaf` histories.
+- **Disposition:**
+  - **demonstrated:** row 3 is superseded, and the next step is a separate decision between integration and an R3 replication;
+  - **not demonstrated:** row 3 stands, now on a measure that avoids the end-mass ceiling;
+  - **uninformative:** a control gate fails, or fewer than 4 `scaf` histories are valid. Report it and stop.
+- **Cost:** $0, on the Mac. Seeds: worlds 4,811,001–4,811,106 and 4,811,201–4,811,204; assays 4,812,001–4,816,260.
