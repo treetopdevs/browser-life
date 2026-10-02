@@ -573,7 +573,39 @@ Integration is engineering at $0, on the Mac. It does not count toward M6, and i
 - Segmented, lab and coordinator runs equal continuous ones byte for byte.
 - Non-pond bundles, preset identities and golden pins are unchanged.
 
-Step 2, the registration draft, has not started.
+**Registration draft (2026-10-01, the user's go).** Step 2 is drafted in `docs/scaffold-registration-v1.md`. It is not frozen and binds nothing until the user approves it.
+- **Primary hypotheses** (Holm at α = 0.01):
+  - H1: `scaf` competence ranks above `rand`, `cont` and the ancestor at both timings. Six exact Mann–Whitney tests, all required.
+  - H2: for each `scaf` history, its evolved genome founds more ponds than the relabelled ancestor genome on the same ancestral fragments. Each history has its own ancestor world and fragment draw. Tested by an exact sign test across histories.
+- **Secondary:** v1's "at least half the advantage" swap criterion, R2, and R1″, all on the fresh histories.
+- **Pilot finding (Mac, exploratory).** The new matched control (`Ga-on-Fa`) founds 5–6 more fragments of 128 than the unmodified ancestor set used by v1's and the replication's swap tests. Against it, the evolved genomes still gain in all 12 histories, but only 1–8 fragments, under half the advantage in every one. So those swap passes rested mostly on the control's mutants. A post hoc note in `docs/scaffold-r3-replication-v1.md` records this; its readout still reproduces.
+- **Size:** 24 histories per arm (the user's choice), with 4 replicates per set and 8 for the swap pair.
+  - The bootstrapped probability of confirming both is 0.99–1.00 (`tools/scaffold-power.ts`, with the pilot's control).
+  - It is 0.96 if 10% of evolved genomes carried no gain, against 0.75 with 16 histories.
+- **Data rules:**
+  - Sources are the runner's opt-in pre-cycle checkpoints, a small runner feature to build.
+  - Unresolved failures are never dropped: they count against the sign tests, and a rank comparison they enter is uninformative.
+  - There is no interim analysis.
+- **Cost:** about $28 estimated (hard stop $40) on three instances, from the cohort reserve, and only by a dated draw note approved before any paid run.
+- **Waiting on the user:** the remaining design choices and how a confirmed result relates to M7.
+
+**Transition hunt draft (2026-10-01, the user's go).** The registration stays at 24 histories per arm. Beside it, an exploratory hunt is drafted in `docs/scaffold-transition-hunt-v1.md`. It is not frozen and binds nothing until the user approves it.
+- **Why:** the registration confirms one known effect under a fully imposed life cycle. The hunt removes part of that scaffold and asks whether selection among ponds on their own reproductive output still produces a response.
+- **Regime (the "current"):**
+  - Each period, occupied ponds die at random (e = 1/2); empty ponds always die.
+  - Emptied ponds are refounded by an 8 × 8 propagule from a donor's edge zone.
+  - Donors are drawn in proportion to their own edge mass (`nat`), or to a permuted copy of those masses (`shuf`, the control).
+  - Nothing is ranked on a chosen trait. The host still fixes the zone, the packet, the schedule and the transport.
+- **Arms:** 24 histories each.
+  - From the ancestor: `nat-a` and `shuf-a`.
+  - Branched from 24 `scaf` histories at boundary 100: `nat-s` and `shuf-s`. The sources are the registration's if all 24 exist, otherwise the hunt's own.
+- **Primary signature:** common-garden export performance W, `nat` > `shuf`, at α = 0.05 for discovery.
+  - A hit is a candidate seed, not a demonstration of collective reproductive organisation, which a cell-level trait could mimic.
+  - Any hit needs a replication on fresh histories at α = 0.01 before a claim.
+  - Genome-only, heredity, edge-share and improvement tests are secondary.
+- **Stage 0, Mac, $0:** gates for viability and selection strength and for the instrument, plus a non-genetic-effects diagnostic.
+- **Stage 1 cost:** about $27 estimated (hard stop $35) on AWS with the registration's sources, or about $33 (hard stop $42) with its own scaffold phase; or 3–6 days on the Mac. Any paid run needs a dated draw note.
+- **Seeds:** 4,900,001–4,949,999.
 
 
 ## Ecology-first founder discovery — 2026-09-29
