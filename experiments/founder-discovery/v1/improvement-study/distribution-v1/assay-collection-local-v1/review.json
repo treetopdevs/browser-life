@@ -1,0 +1,24 @@
+{
+  "status": "CLEAR",
+  "reviewer": "independent distribution_review",
+  "recordedAt": "2026-10-02T01:30:27.267444+00:00",
+  "scope": "Completed local assay collection and global technical completeness",
+  "importReceiptSha256": "33385659c47d730f1e9cef8f49db1b5abec845c2578d2afaaae0c62243240912",
+  "sourceFilesVerified": 1942,
+  "localAssignedKeys": 960,
+  "globalUniqueKeys": 1920,
+  "requestedReferences": 6144,
+  "committedHosts": [
+    "local",
+    "work-mac"
+  ],
+  "operation041ChargedSeconds": 123.65380604099482,
+  "cpuThrough041ChargedSeconds": 7177.375640750048,
+  "checks": [
+    "Raw and consolidated bytes match closure",
+    "Host commit and attestation hashes agree",
+    "Exact global assigned-key coverage",
+    "Settled budget record"
+  ],
+  "scientificAnalysisPerformed": false
+}

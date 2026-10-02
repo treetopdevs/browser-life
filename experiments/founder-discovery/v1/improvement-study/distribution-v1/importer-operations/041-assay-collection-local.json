@@ -1,0 +1,11 @@
+{
+  "status": "settled",
+  "chargedSeconds": 123.65380604099482,
+  "releaseSha256": "c42017cfaee39d9fe414fbd1d7673f6f6041c57da2d46f193d1f6f845a70285e",
+  "approvalSha256": "b310c7e028cb610e3a32f0632c195dbb2f0b6ea767f8da9815e7bc9aebb188d1",
+  "helperSha256": "2dfd2cb56ac73d4e078f0df66ade7926a9cb3cbe8ea5c0d0dcd291de6593ec84",
+  "hostId": "local",
+  "startedAt": 1790904397.2691891,
+  "finishedAt": 1790904519.924854,
+  "importReceiptSha256": "33385659c47d730f1e9cef8f49db1b5abec845c2578d2afaaae0c62243240912"
+}

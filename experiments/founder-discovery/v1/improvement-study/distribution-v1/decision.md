@@ -141,3 +141,7 @@ Both assigned competition queues launched on 2026-10-01 at approximately 22:01:5
 Root observed the remote supervisor and last worker absent, no remaining assay processes, all 18 parent receipts settled, no active locks, and terminal completion of all 960 assigned keys. The unchanged reviewed collection helper transferred and verified all 1,939 source files and imported the full work-Mac partition. Independent distribution_review checked the assignment, hashes, provenance, closure and accounting with no findings. Operation 040 charged 60.83338433294557 seconds; remote assay parents charged 10,859.76508425 seconds. Paid compute remains $0. Original remote evidence is preserved.
 
 The import receipt correctly records globalComplete=false: the local partition is still running, and no scientific analysis or conclusion is authorized by this partial collection. See assay-collection-work-mac-v1 for the pinned approval, operating-system observation, closure, import receipt and independent review.
+
+## 2026-10-02T01:30:14.273132+00:00 — Complete collection; user-requested pause
+
+Both assay queues completed and their processes exited. Operation041 collected the remaining960 local results; the global receipt verifies1920 unique results and6144 requested references. No scientific analysis has run. Paid compute remains $0. At the user’s request, work pauses here; see PAUSED.md for the exact resume boundary.
