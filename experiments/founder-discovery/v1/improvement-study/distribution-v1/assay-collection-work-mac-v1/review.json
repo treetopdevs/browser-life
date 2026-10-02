@@ -1,0 +1,22 @@
+{
+  "status": "CLEAR",
+  "reviewedAt": "2026-10-02T01:06:07.006376+00:00",
+  "reviewer": "Independent distribution_review",
+  "scope": "Completed work-mac collection only; no scientific inference",
+  "checks": [
+    "All closure/approval pins and exact 39-operation prefix verified",
+    "960 assay keys exactly equal assigned candidate partition",
+    "All 1939 staged source files hash-match closure and consolidated canonical, provenance and host-closure bytes",
+    "18 settled parent receipts sum 10859.76508425 seconds within floating-point tolerance",
+    "Terminal log complete; host-commit and attestation hashes agree",
+    "Operation 040 settled at 60.83338433294557 seconds; import receipt hash verified",
+    "Global completion correctly false: only work-mac committed, 960 of 1920 results"
+  ],
+  "limitation": "Operating-system absence is root live SSH evidence; reviewer did not independently repeat SSH",
+  "pins": {
+    "approval.json": "fd892b99c717c877296e24358b10e1aa74e648dd58379c2d2100a7ba9aa19cf3",
+    "closure.json": "25378bbac2dffb879c216a2749854689714ee446979345ac5c7900fea702d932",
+    "import-receipt.json": "4e155c1ca81663eab71c14e7e5075b9839864728270229ad98e9a56c309afd4f",
+    "os-observation.json": "dcd012ae54c0bca21847c5b134265c1a9ea9fe1798847cbecd9211cea74a4ab9"
+  }
+}

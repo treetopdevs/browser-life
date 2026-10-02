@@ -1,0 +1,11 @@
+{
+  "status": "settled",
+  "chargedSeconds": 60.83338433294557,
+  "releaseSha256": "c42017cfaee39d9fe414fbd1d7673f6f6041c57da2d46f193d1f6f845a70285e",
+  "approvalSha256": "fd892b99c717c877296e24358b10e1aa74e648dd58379c2d2100a7ba9aa19cf3",
+  "helperSha256": "2dfd2cb56ac73d4e078f0df66ade7926a9cb3cbe8ea5c0d0dcd291de6593ec84",
+  "hostId": "work-mac",
+  "startedAt": 1790903025.0143192,
+  "finishedAt": 1790903084.849086,
+  "importReceiptSha256": "4e155c1ca81663eab71c14e7e5075b9839864728270229ad98e9a56c309afd4f"
+}

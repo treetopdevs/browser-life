@@ -1,0 +1,18 @@
+{
+  "format": "discovery-improvement-assay-collection-observation/v1",
+  "releaseSha256": "51327e0a2f8eec32436f17279d14ab1005f815ba37d0a1936158b8cb930a9be9",
+  "manifestHash": "0ebd3092056170b776f63c323ac3a0f3a3f553b3e0ac1c03f8c0e82ff96c2429",
+  "rosterSha256": "f3ed400e05c683b0d618670f06905ffa24af38682a3eee8881431e06674760e2",
+  "readinessSha256": "2513bf3629a30fa82ac515fec66c5284d83fe8c00fcab05960dc1f7de5778347",
+  "hostId": "work-mac",
+  "hostCommitSha256": "e89b8f2ca08edc47d46a0188e878b928ba857fd12530db410943748a48e2985b",
+  "attestationSha256": "25378bbac2dffb879c216a2749854689714ee446979345ac5c7900fea702d932",
+  "globalComplete": false,
+  "committedHosts": [
+    "work-mac"
+  ],
+  "globalResultCount": 960,
+  "globalUniqueConfigurations": 1920,
+  "requestedReferences": 6144,
+  "unavailableReferences": 0
+}

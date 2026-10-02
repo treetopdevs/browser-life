@@ -134,3 +134,10 @@ Deploy and hash-verify the exact reviewed dependency closure on the work Mac bef
 Deployment operation 038 stopped before extraction because the remote Python lacks the requested archive-filter option; its full 600-second charge remains. Operation 039 used explicit member/type/path checks and verified all 157 deployed files with zero mismatches, preserving replaced operational files separately. The original release verifier passed on both hosts. Operation 039 charged 2.4730942910537124 seconds; cumulative CPU evidence charges through 039 are 6992.888450376107 seconds of 13,600. No assay had launched at this deployment checkpoint.
 
 Both assigned competition queues launched on 2026-10-01 at approximately 22:01:50 UTC after two-host verification. Root observed both supervisors and workers alive, empty error consoles, and the first four local / five remote canonical competition results. The launch observation pins the release and records process identities. This is execution progress only; no competitive scores have been interpreted. Completion, collection and scientific analysis remain pending.
+
+
+### 2026-10-02 UTC — work-Mac assay collection verified
+
+Root observed the remote supervisor and last worker absent, no remaining assay processes, all 18 parent receipts settled, no active locks, and terminal completion of all 960 assigned keys. The unchanged reviewed collection helper transferred and verified all 1,939 source files and imported the full work-Mac partition. Independent distribution_review checked the assignment, hashes, provenance, closure and accounting with no findings. Operation 040 charged 60.83338433294557 seconds; remote assay parents charged 10,859.76508425 seconds. Paid compute remains $0. Original remote evidence is preserved.
+
+The import receipt correctly records globalComplete=false: the local partition is still running, and no scientific analysis or conclusion is authorized by this partial collection. See assay-collection-work-mac-v1 for the pinned approval, operating-system observation, closure, import receipt and independent review.
