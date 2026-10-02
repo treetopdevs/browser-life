@@ -37,7 +37,7 @@ Use the frozen study's competition unchanged: gradient chamber, two radius-12 di
 
 - Execution must use the study's frozen sources (the 54 hashes in the operation042 approval) and the same cache-key identity, so new results are comparable with E.
 - Score and missingness rules are unchanged. Signed score = (descendant − ancestor associated B/P) / their total. Both-extinct is unavailable and counts as [−1, 1] in bounds. Technical missingness must be repaired or the study declared incomplete.
-- **Replay check before any new competition:** re-execute 8 E configurations (two per founder, fixed by the generator) and require byte-identical results. A mismatch stops the study for diagnosis.
+- **Replay check before any new competition:** re-execute 8 E configurations (two per founder, fixed by the generator) and require results identical to the frozen originals in every field except the wall-clock `elapsedSeconds`. A mismatch stops the study for diagnosis.
 - **Counts:** M is 64 × 16 = 1,024 configurations. R is 14 distinct genomes × 16 = 224. The total is 1,248 new configurations plus 8 replay configurations. If distinct configurations exceed 1,256, stop and diagnose.
 
 ## Estimands and decision
@@ -70,6 +70,11 @@ Average the 16 competitions within each genome, then the two draws within each f
 1. **Generator** (`tools/discovery_divergence_control.ts plan`). Reads the pinned report and writes a roster: E observation references, all M and R genomes with seeds, the replay sample and every cache key. It refuses non-canonical genomes.
    - *Done 2026-10-02:* `tools/lib/discovery-divergence-control.ts`, with 8 passing tests in `tools/test/discovery-divergence-control.deno.ts`. On the pinned report it produces exactly the counts and reconstruction values above, deterministically. The roster is generated at freeze, not committed now.
 2. **Runner.** An additive runner over that roster, reusing the frozen competition execution, cache keys and result validation, with bounded invocations and receipts like the distribution study's.
+   - *Done 2026-10-02:* `tools/discovery_divergence_control_run.ts`, with 7 passing tests (fake executor) in `tools/test/discovery-divergence-control-run.deno.ts`.
+     - **Candidate and release.** `candidate` writes a PREPARED candidate. It pins the protocol, the generator's exact roster, the manifest and report, all 54 frozen sources, the runner sources and the 8 replay originals. Only a separate RELEASED file naming the candidate's hash authorizes execution.
+     - **Invocations.** `run` is one bounded invocation of at most 3,600 s. It takes a lock, reserves its full time, settles to the actual time, and keeps the full charge on failure. It refuses to start over an unresolved reservation, an exhausted budget or the storage floor.
+     - **Execution.** Replays run first, then roster order. Competitions go through the frozen `executeAssay` via the exact generated adapter. Resume re-validates every cached result and its provenance.
+     - **Supervision.** `supervise` chains invocations in fresh processes and stops on failure or no progress. A killed process leaves its reservation and lock for explicit diagnosis.
 3. **Analyzer.** Implements the estimands above from the report plus new results.
 4. **Tests:**
    - Generator determinism.
