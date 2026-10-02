@@ -443,7 +443,7 @@ Considered and left for later, each as a dated decision:
      2. Stage 0 runs on the Mac meanwhile.
      3. Stage 1 starts only after the registration's queue has completed, and branches from the sources the sources rule above designates (the registration's, or the hunt's own as the fallback).
 
-   **Still open:** approval of this document as a whole, and the registration's own open choices, which come first.
+   **Still open:** approval of this document as a whole. The registration was frozen on 2026-10-02.
 2. **Freeze,** after the registration's: a review of the final text, then a commit. The document's SHA-256 goes in `experiments/scaffold/HUNT-v1` and a dated note in `docs/plan.md`.
 3. **Stage 0:** code, its Astra review and commit; then G1, G2 and D3 on the Mac; then a dated amendment with their results.
 4. **Stage 1:** a dated draw note, approved by the user; the runs; the report; an independent re-derivation of every number; an Astra review; the dated result entry.

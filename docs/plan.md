@@ -616,7 +616,25 @@ Integration is engineering at $0, on the Mac. It does not count toward M6, and i
 
 **Cost.** Stage 1 is about 153 × 10⁶ steps: estimate about $38, hard stop $48, from the cohort reserve, by a dated draw note. With the registration's $40 stop, that leaves at least $29.18 of the reserve.
 
-**Still open:** approval of the draft as a whole, and the registration's own open choices, which come first. Neither document is frozen.
+**Still open:** approval of the draft as a whole, and the registration's own open choices, which come first. Neither document is frozen. *(The registration was frozen later the same day; see below.)*
+
+**Registration frozen (2026-10-02, the user's decision).** The user approved `docs/scaffold-registration-v1.md` as written, with every open choice as drafted:
+- 24 histories per arm, with 4 replicates per set and 8 for the swap pair;
+- H2 as a sign test of direction, with the size criterion as S1;
+- two-sample tests;
+- the missing-data rules;
+- S2 and S3 as secondaries.
+
+**M7.** A confirmed result stands as its own registered result and does not count toward M7. It informs M7's design.
+
+**Freeze.** The final text was reviewed with Antigravity (`agy`), standing in for Codex Astra by the user's instruction for 2026-10-02, and committed. Its SHA-256 is `8a1b00ec5bd1440e8c4ab4ea61f3816dee0dbe110cb2052f0ae0ca785a817f69`, recorded in `experiments/scaffold/REGISTRATION-v1`.
+
+**Next, each step reviewed:**
+1. Build the code the registration lists: opt-in pre-cycle checkpoints in the runner, runner-bundle sources, the `reg1` labels and seeds, the `Ga-on-Fa` variant, and the report stage.
+2. The dated AWS draw note (estimate about $28, hard stop $40), for the user's approval.
+3. The runs.
+
+The transition hunt stays a draft. It waits on the user's approval as a whole, and its Stage 1 waits on this registration's queue.
 
 
 ## Ecology-first founder discovery — 2026-09-29

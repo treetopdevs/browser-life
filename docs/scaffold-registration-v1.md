@@ -1,6 +1,6 @@
-# Scaffolding registration v1 (DRAFT, not frozen)
+# Scaffolding registration v1 (frozen 2026-10-02)
 
-*2026-10-01. Row C, step 2 of `docs/plan.md`. This is a draft for the user's decision, not a registration: nothing here binds until the user approves it and it is frozen (see "Freeze and order of events"). No run, assay or data of this design exists. After the freeze, any change goes in a dated amendment at the end and the original text stays.*
+*Drafted 2026-10-01 as row C, step 2 of `docs/plan.md`. Approved as written by the user on 2026-10-02, with the decisions recorded under "Freeze and order of events", and frozen that day. Its SHA-256 is in `experiments/scaffold/REGISTRATION-v1`. No run, assay or data of this design existed at the freeze. Any change from here on goes in a dated amendment at the end, and the original text stays.*
 
 ## Question
 
@@ -39,7 +39,7 @@ The trait is **propagule competence**: the probability that a k × k fragment of
 - **Not confirmed:** "not confirmed by this registration". That is not a demonstration that the exploratory result was wrong.
 - **Milestones.** It does not count toward M6.
   - `docs/plan.md`'s M7 row specifies adhesion and signalling with a collective tracker. This design enables neither and imposes the life cycle ecologically.
-  - Whether a confirmed result counts toward M7, as an ecological-scaffolding route, or stands as its own registered result is the user's decision, recorded at the freeze.
+  - **A confirmed result stands as its own registered result** and does not count toward M7 (the user's decision, 2026-10-02). It is evidence that informs M7's design. It is not a step of M7 that has been met, because the life cycle here is imposed and the north star asks for one that is not.
 
 ## What earlier data informed
 
@@ -310,16 +310,20 @@ Built after the freeze and before any instance starts: tested, reviewed by Astra
 
 ## Freeze and order of events
 
-1. **The user decides:**
-   - approve this draft as written or with changes;
-   - the design choices that most need a decision:
-     - 24 histories per arm, with 4 replicates per set and 8 for the swap pair (the history count is decided: the user chose 24 on 2026-10-01);
-     - H2 as a sign test of direction, with the size criterion as S1;
-     - two-sample tests in place of v1's paired counts;
-     - the missing-data rules: failures counted against the sign tests, rank comparisons uninformative;
-     - S2 and S3 as secondaries;
-   - how a confirmed result relates to M7.
-2. **Freeze:** an Astra review of the final text, then a commit. The document's SHA-256 is recorded in `experiments/scaffold/REGISTRATION-v1` and in a dated freeze note in `docs/plan.md`.
+1. **Decided by the user (2026-10-02): approved as written.** The design choices, all as drafted:
+   - 24 histories per arm, with 4 replicates per set and 8 for the swap pair (the history count was decided on 2026-10-01);
+   - H2 as a sign test of direction, with the size criterion as S1;
+   - two-sample tests in place of v1's paired counts;
+   - the missing-data rules: failures counted against the sign tests, rank comparisons uninformative;
+   - S2 and S3 as secondaries;
+   - M7: a confirmed result stands as its own registered result (see "What a confirmed result would and would not mean").
+2. **Freeze (2026-10-02).**
+   - **Review:** a review of the final text. By the user's instruction for that day, it was done with Antigravity (`agy`) instead of Codex Astra.
+   - **Commit:** the document's SHA-256 is recorded in `experiments/scaffold/REGISTRATION-v1` and in a dated freeze note in `docs/plan.md`.
+   - **Use by the transition hunt.** The exploratory transition hunt (`docs/scaffold-transition-hunt-v1.md`) may branch from this registration's boundary-100 pre-cycle checkpoints of the `scaf` histories.
+     - It starts only after this registration's queue has completed.
+     - It reads only those checkpoint files, never an assay, report or result of this registration.
+     - Those checkpoints are therefore kept after the report.
 3. **Code:** built and tested as above, reviewed by Astra, and committed, with the commit recorded.
 4. **Draw:** the dated AWS draw note, approved by the user.
 5. **Runs and assays.** Then the report stage, an independent re-derivation of every number from the raw files, an Astra review, and the dated result entry.
