@@ -1,0 +1,130 @@
+{
+  "format": "m4-growth-precision-verification/v1",
+  "verifiedAt": "2026-10-02",
+  "reportSha256": "6b0f5c2b6619afa3052ae7672e6844c2851fc7cdbbe8a4b31d80be9e562ce047",
+  "manifestSha256": "ffbdf6104e3722960c9c6ad9f27193a12306da37876a51ccad386c7dd7323907",
+  "verifier": "Independent post-run verifier (Python 3 + numpy 2.2.1 + scipy 1.17.0 for integrity, tally and simulation; Deno 2.9.7 only for the determinism re-run). Read-only on the repository; this file is the only file written.",
+  "verdict": "CONFIRMED-WITH-QUALIFICATIONS",
+  "verdictSummary": "Every number in the report reproduces from the raw rows with independent code, the run is complete and authentic, and 124 of 124 re-run trials are byte-identical. precisionPass: true is correct under the protocol's own decision rule. The three-part interpretation you asked about is accurate. The qualifications concern how far the write-up (docs/m4-growth-precision-results.md) pushes the dependence argument, not the data.",
+  "checks": [
+    {
+      "check": "1a. Shard manifests byte-identical to the frozen manifest",
+      "method": "sha256 and byte comparison of experiments/m4/growth-precision-v1/manifest.json and the four runs/m4-growth-precision-v1/shard-*/manifest.json.",
+      "result": "PASS. All five files are byte-identical and hash to ffbdf6104e3722960c9c6ad9f27193a12306da37876a51ccad386c7dd7323907."
+    },
+    {
+      "check": "1b. Receipts terminal, complete, bound to the manifest, log hash matches",
+      "method": "Parsed each attempt-1.json; recomputed sha256 of each trials.jsonl; listed each shard directory.",
+      "result": "PASS. Each shard has exactly attempt-1.json, manifest.json, runtime-1.json and trials.jsonl (one attempt, no attempt-2). Each receipt has terminal=true, complete=true, stopped=false, failure=null, phase=precision-extension, shard matching its index, retainedTrials=0, newTrials=blockTrials=10000, manifestHash = the frozen hash, and trialLogSha256 equal to the recomputed log SHA (shard-0 c1095654..., shard-1 7828545b..., shard-2 c7f9d546..., shard-3 efbc8013...). The report's shard hashes match."
+    },
+    {
+      "check": "1c. No writer locks remain",
+      "method": "Recursive search of runs/m4-growth-precision-v1 for *.lock and writer*; directory listings.",
+      "result": "PASS. None found. runs/m4-growth-precision-v1 contains only shard-0..3 and report.json."
+    },
+    {
+      "check": "1d. All 52 bound source hashes match disk",
+      "method": "Python sha256 of every path in manifest.sourceHashes, run twice: before and after my Deno re-run. Also listed every .ts in packages/{schema,runner,metrics}/src and compared with the bound set.",
+      "result": "PASS. 52 of 52 match, both times (deno.lock, deno.json and the protocol, contract, driver and library are all unchanged; the re-run used --no-lock). No unbound .ts file exists in the three package directories and no bound package file is missing."
+    },
+    {
+      "check": "1e. Shards are the exact contiguous partition of the stratum-major schedule; no duplicates or gaps",
+      "method": "Rebuilt the 40,000-entry schedule (gradient 0-19999 then spots 0-19999), cut it with floor(i*N/4) boundaries, and compared every row of every shard in order.",
+      "result": "PASS. Shard 0 = gradient 0-9999, shard 1 = gradient 10000-19999, shard 2 = spots 0-9999, shard 3 = spots 10000-19999. 40,000 rows, 40,000 unique (preset, trial) keys and 40,000 unique generator identities; row order equals the schedule exactly; each row's shard field equals its shard. Zero ordering or identity discrepancies."
+    },
+    {
+      "check": "1f. generatorIdentity and manifestHash on every row",
+      "method": "String comparison against precision-extension:650009003:pairedEndpoint1Null:<preset>:<trial> and the frozen hash, for all 40,000 rows; also identity.kind == synthetic.",
+      "result": "PASS. 0 mismatches in 40,000 rows."
+    },
+    {
+      "check": "2a. Endpoint-1 tally from raw rows",
+      "method": "Counted rows with endpoint1.complete and every one of the 2 comparison rows supported. Cross-checked by recomputing Holm adjustment from the stored p-values (adjusted p <= alpha 0.01) for every row.",
+      "result": "PASS. gradient-m3 428/20000 (0.0214); spots-m3 382/20000 (0.0191). Holm recomputation disagrees with the stored supported/pAdj on 0 of 40,000 rows. Every row has endpoint1.complete=true, 2 comparisons, nA=nB=64, available=true. The two comparisons (treatment vs neutral, treatment vs no-mutation) have identical p in all 40,000 rows, so support is exactly p <= 0.005. Supported patterns are only (false,false) and (true,true)."
+    },
+    {
+      "check": "2b. Endpoint-2 support, unavailable count, joint count",
+      "method": "Counted endpoint2.supported, endpoint2.status != ok, and jointPerPresetObserved; also recomputed joint as endpoint2.supported AND endpoint-1 both-supported.",
+      "result": "PASS. Endpoint 2 supported 3/20000 in each preset (gradient trials 916, 5622, 11262; spots trials 4938, 9095, 15778); unavailable 0 in each (all 40,000 status=ok); joint 3 in each. All six endpoint-2-supported trials were also endpoint-1-supported, so joint false support equals endpoint-2 false support. supported == (lowerBound > 1) on all rows."
+    },
+    {
+      "check": "2c. One-sided 95% Clopper-Pearson upper bounds and the decision rule",
+      "method": "scipy.stats.beta.ppf(0.95, k+1, n-k) (and the 2.5%/97.5% quantiles for two-sided). Applied the protocol rule: stratum passes iff n == 20000 and both upper bounds <= 0.025; precisionPass iff both strata pass. Also found the largest passing count by search.",
+      "result": "PASS. gradient endpoint 1 upper 0.0231606402 (report 0.02316064021167552), two-sided [0.0194392, 0.0235016]; spots upper 0.0207698298 (report 0.020769829765663883), two-sided [0.0172482, 0.0210934]. Endpoint 2 upper 0.00038764 in each. Differences from the report are below 1e-15. Largest passing endpoint-1 count at n=20000 is 463, as the protocol states. Both strata pass, so precisionPass = true is reproduced. Margins: gradient is 35 events under the cap (upper bound 0.0018 below 0.025); spots is 81 events under (0.0042 below). Pooled descriptive rate 810/40000 = 0.02025, two-sided CP [0.01889, 0.02168], one-sided upper 0.02145 (not a decision quantity). Per-preset wallSeconds in the report equal my sums of per-trial wallSeconds."
+    },
+    {
+      "check": "3. Determinism re-run through runTrial",
+      "method": "Seeded sample (python random.Random(20261002)) of 124 distinct trials: 30 uniformly random per preset, 25 endpoint-1-supported per preset, all 6 endpoint-2-supported trials, and the first/last trial of each shard block (0, 9999, 10000, 19999 in each preset). Called runTrial('precision-extension', 650009003, 64, {scenario: 'pairedEndpoint1Null', preset, trial}) from tools/lib/m4-growth-precision.ts under Deno 2.9.7 (the version that produced the run) with --no-lock, and compared JSON.stringify of identity, endpoint2, endpoint1, endpoint1Method, jointPerPresetObserved and threshold against the stored row. I first confirmed JSON.stringify(JSON.parse(line)) == line for each stored line, so the comparison is byte-level.",
+      "result": "PASS. 124 of 124 byte-identical on all six fields, 0 mismatches, 0 round-trip anomalies. 58 of the 124 were endpoint-1-supported trials (both presets) and 6 were endpoint-2-supported. Limitation: this re-uses the production code path, so it shows reproducibility and tamper-freedom of the logged rows, not correctness of the generator; the latter is covered by the independent simulation below. It also ran on the same machine and Deno build, so it is not a cross-platform test."
+    },
+    {
+      "check": "3b. Independent reimplementation of the stress-null law (not the study's code)",
+      "method": "numpy/scipy, own RNG (default_rng seed 88123417), 1,000,000 trials of 64 pairs. Per pair: baseline = 20+floor(30u); neutralLate = 1000+floor(10u); noise = floor(20 Z + 0.5); treatment = baseline+neutralLate+noise, controls (neutral and no-mutation, identical) = baseline+neutralLate-noise. Tie-corrected normal one-sided Mann-Whitney (no continuity correction) as in packages/metrics/src/stats.ts; Holm over two identical comparisons, so support is 2p <= 0.01. Spearman correlation of treatment vs control also measured.",
+      "result": "CONSISTENT. Simulated endpoint-1 false-support rate 0.021023 (95% CI 0.020743-0.021306), matching the protocol's pre-declared 0.0207 (CI 0.0201-0.0214). Mean treatment-control rank correlation -0.62 (protocol: about -0.64). Single-comparison tail rates p<=0.05: 0.0982 and p<=0.01: 0.0332, versus 0.0965 and 0.0319 observed in the 40,000 production trials. A back-of-envelope normal-theory calculation gives 0.0227, same ballpark. Observed vs the 0.021023 reference: gradient 428 vs 420.5 expected (z=+0.37, p=0.71); spots 382 (z=-1.90, two-sided p=0.058); pooled 810 vs 841 (p=0.29)."
+    },
+    {
+      "check": "4a. Timeline: launch, runtimes, receipts, single attempt",
+      "method": "Compared launch.json (startedAt 2026-10-02T21:21:07Z), logs/started file, runtime-1.json startedAt, receipt finishedAt and wall-clock fields, filesystem birth/mtime times (EDT -> UTC), and the per-trial wallSeconds sums.",
+      "result": "PASS. All four runtime-1.json record startedAt 21:21:07.877Z, attempt 1, priorWallSeconds 0, deno 2.9.7 aarch64-apple-darwin. Receipt finishedAt: shard-3 22:21:02.626Z, shard-0 22:21:05.859Z, shard-1 22:21:06.159Z, shard-2 22:27:06.489Z. Start + cumulativeWallSeconds reproduces finishedAt within 0.04 s for every shard (3594.7 to 3958.6 s against the 10,800 s cap; max 36.7% of cap). Receipt file mtimes equal finishedAt to the second. Sum of per-trial wallSeconds is 96.6-96.9% of each shard's wall time (the rest is the per-trial source re-hash and logging). One attempt per shard; no stopped or failed flags. The launch record is consistent with these times; the seed-ledger record for 650009003 in ../browser-life-foundations/runs/foundations-next/seed-ledger-v1.json exists with status consumed; the review.json and protocol hashes recorded in launch.json match disk; and the parent validation copies hash to fc22327f... (manifest) and b74d8f43... (report)."
+    },
+    {
+      "check": "4b. Report created after all receipts",
+      "method": "File birth times with stat.",
+      "result": "PASS. runs/m4-growth-precision-v1/report.json was created 2026-10-02T18:27:24 EDT = 22:27:24Z, 17.6 s after the last receipt (shard-2, 22:27:06Z) and 6 min after the other three. The copies under experiments/m4/growth-precision-v1/ (report.json, receipts/*, evidence-sha256.txt) were made at 18:28 EDT; I confirmed the receipt copies are byte-identical to the originals and report.json hashes to 6b0f5c2b..."
+    },
+    {
+      "check": "4c. No interim outcome tallies",
+      "method": "Searched the four shard progress logs for outcome terms (supported, endpoint, upper, precisionPass).",
+      "result": "NO EVIDENCE OF PEEKING, NOT PROVABLE. The logs hold only {shard, done, of, elapsed} lines and the terminal receipt (0 outcome terms). report.json is created with createNew and its content is consistent with a single run of the `report` command. A verifier cannot prove from artifacts that nobody read the trial logs earlier."
+    },
+    {
+      "check": "5a. Does the extension clear the parent's failed screen for both presets?",
+      "method": "Compared the protocol's decision rule (n=20000, one-sided 95% CP upper <= 0.025 for endpoint 1 and endpoint 2, both strata) with my recomputed bounds.",
+      "result": "YES, as worded. gradient 0.02316 and spots 0.02077 are both under 0.025, so the paired endpoint-1 stress-null screen that failed at 2/200 (upper 0.0311) now passes on both presets. It clears that one screen under the contract's coarse envelope; it does not show nominal size, and the other launch requirements stay open."
+    },
+    {
+      "check": "5b. Do observed rates match the development estimate?",
+      "method": "Compared 0.0214 and 0.0191 (pooled 0.02025) with the protocol's 0.0207 and my independent 0.021023.",
+      "result": "YES, within sampling error. Pooled 0.02025 is within the CI of both reference estimates (binomial p = 0.54 vs 0.0207, 0.29 vs 0.021023). Gradient is on target. Spots is the low side (z -1.9, p 0.058 vs the more precise 0.021023, 0.12 vs 0.0207), so 'match' is fair for the pooled rate and for gradient, 'consistent with' is the accurate word for spots. The write-up's 'about 0.021' is accurate."
+    },
+    {
+      "check": "5c. Inflation factors: about 2x the family alpha 0.01, about 4x the 0.005 per-comparison level",
+      "method": "Divided the observed rates by 0.01 and 0.005; checked that the comparisons are indeed identical; looked at single-comparison tail rates at 5%, 1% and 0.5%.",
+      "result": "ACCURATE. Pooled 2.03x of 0.01 (gradient 2.14x, spots 1.91x) and 4.05x of 0.005 (4.28x and 3.82x). The 0.005 level applies exactly: the two comparisons are identical in all 40,000 trials (neutral and no-mutation are the same construction), so Holm's 2p <= 0.01 is p <= 0.005. 'Equivalently' is fair: it is one rate against two denominators. The 4x figure is the right one for this stress, because a valid test would run at 0.005 here, and the 2x figure understates the miss. Tail inflation is about 1.9x at 0.05 (9.65%), 3.2x at 0.01 (3.19%) and 4.05x at 0.005 (2.03%)."
+    },
+    {
+      "check": "5d. Is the gradient-vs-spots difference chance?",
+      "method": "Fisher exact and two-proportion z on 428/20000 vs 382/20000; Monte Carlo of |difference| under a common rate; heterogeneity across the four shards; KS tests on the per-trial p-values and effects; reading of the generator code for any preset-dependent term.",
+      "result": "CONSISTENT WITH CHANCE. Difference 0.0023 (Wald 95% CI -0.0005 to +0.0051); Fisher two-sided p = 0.110; z-test p = 0.102; odds ratio 1.12 (0.98-1.29); Monte Carlo P(|difference| >= 46 events) = 0.106-0.113 under a common rate. Within presets the two 10,000-trial halves agree (gradient 214 vs 214; spots 198 vs 184, p = 0.50) and the four shards are homogeneous (chi-square p = 0.37). The per-trial p-value distributions do not differ (KS p = 0.28; mean effect 0.5004 vs 0.4992). The generator draws counts independently of the preset (the preset enters only through a threshold that every episode exceeds by 1, so activity counts and ranks are the same), so the true gap is zero by construction. A gap this size or larger arises about one time in nine. This does not prove the gap is zero, only that the data give no reason to believe otherwise."
+    },
+    {
+      "check": "5e. Is the endpoint-2 by-product a deep null, not boundary-size evidence?",
+      "method": "Read pairedMeanContrast (tools/lib/m4-growth.ts) and the contract (alphaPerPreset 0.005, floor 1); computed the expected false-support rate under noncentral t at the observed mean and standard error.",
+      "result": "YES. The observed mean excess is 0.005 (gradient) and -0.009 (spots) with SD about 1.0 across trials and mean standard error 1.0, so the true mean is about one standard error below the floor of 1. The test is a one-sided Student bound at alpha 0.005 (critical t = 2.656, 63 df). At true mean 0 the noncentral-t expectation is 0.000193, or 3.85 events per 20,000, and 3 were observed. At the boundary (true mean = 1) the nominal rate is 0.005, about 100 per 20,000, roughly 33 times the 3 seen here (26 times the 3.85 expected at true mean 0). So 3/20000 and its upper bound 0.00039 say nothing about endpoint-2 size at the boundary."
+    }
+  ],
+  "qualifications": [
+    "Scope of the pass. precisionPass: true means the false-support rate of original endpoint 1 under this one declared synthetic stress is shown to be <= 0.025 at one-sided 95% in each preset. It does not show endpoint 1 is at its nominal size (it is not), does not register the candidate, and does not touch joint power (blocker 2), the eleven development histories, the fresh seed matrix, the freeze and registration, or the user's launch decision. The synthetic generator uses abstract activity inputs ('not physical feasibility'), not the real ecology.",
+    "The 'bound on how bad an adversarial dependence could make it' wording in docs/m4-growth-precision-results.md is an overclaim. 0.0191-0.0214 is the rate at one dependence strength (treatment-control rank correlation about -0.62). It is not a worst case. My own sweep (numpy, noise scale varied, other terms fixed, 100,000 trials per point) gave endpoint-1 false support of 0.0055 at rho about -0.04, 0.0217 at -0.61, 0.0293 at -0.88 and 0.0333 at -0.97. By interpolation, the 0.025 envelope would be exceeded at about rho -0.7 to -0.75. Say 'the rate at the declared stress strength' and note that stronger negative dependence would breach the envelope. Near-zero dependence gives the nominal 0.005, as the protocol says.",
+    "The 'adequate for launch, given the dependence evidence' position rests on within-seed correlations from only 10-20 seeds in the 2026-09-28 ensemble (the protocol itself says 'context, not proof'). Fisher-z 95% intervals for those four correlations are gradient [-0.45, 0.43] and [-0.08, 0.70], spots [-0.60, 0.66] and [-0.62, 0.64]. The spots intervals reach to about -0.60 and -0.62, i.e. they do not exclude dependence as strong as the stress itself (about -0.62), so the real-data evidence cannot establish that real dependence is weaker than the stress. Their lower ends stop short of the roughly -0.73 region where my sweep crosses 0.025, so I am not claiming the data point to an exceedance. (Pearson r on cumulative activity is only loosely comparable with the rank correlation I swept.) The write-up should present adequacy as a judgment for the user's launch decision, not as an established result, and should keep the 'context, not proof' hedge.",
+    "Spots-m3 sits at the low end of the plausible range (z = -1.9, p = 0.058 against my 0.021023 reference). It is not significant, and the two-sided difference from gradient has p = 0.11, but it should be described as 'consistent with', not as a close match, and nothing should be read into a preset difference. Do not claim the preset gap is explained.",
+    "Margins are not large for gradient-m3: 428 events against a cap of 463 (upper bound 0.02316 vs 0.025). Under a true rate of 0.0214 the stratum passes with probability about 0.957, and about 0.992 at 0.0207, so this pass was likely but not certain. A true rate above 0.025 would pass with probability at most 0.0478.",
+    "The two strata are each tested at one-sided 95%. A statement that both rates are below 0.025 simultaneously has at least 90% joint confidence (Bonferroni), 90.25% if independent. This matches the protocol's rule and is a nuance for wording, not a defect.",
+    "What cannot be verified from artifacts: that no interim tally was read before `report` ran, and that report.json was written by the `report` command rather than by hand (its content and the 1e-15 agreement with my independent computation are consistent with the command). I found no evidence against either.",
+    "The determinism check used the production code, the same Deno build and the same machine; it checks the logged rows are reproducible, not that the generator is correct. The independent numpy simulation (0.021023) covers correctness of the law. The 124-trial sample is 0.31% of rows; the rest are covered by the receipt/log hash chain, row-level identity and manifest checks.",
+    "Process notes unchanged from the protocol and review: master seed 650009003 was fresh against local scans only (coordinator registry unreachable), and a ledger entry exists marked consumed.",
+    "I did not verify the joint-power document or the statements about the parent's other nine strata or the 0/200 boundary screens in the results write-up; they are outside this study's data."
+  ],
+  "findings": [
+    "F1. Integrity is clean. Frozen manifest in all four shards, one terminal complete receipt each, log hashes match, no locks, 52 of 52 source hashes match (before and after my re-run), exact contiguous partition, 40,000 unique rows, all identities and manifest hashes correct.",
+    "F2. Tally reproduced exactly: gradient-m3 428/20000 (0.0214, upper 0.023161), spots-m3 382/20000 (0.0191, upper 0.020770); endpoint 2 supported 3/20000 in each (upper 0.000388), 0 unavailable, 3 joint in each; pooled endpoint 1 is 810/40000 = 0.02025. Holm recomputed from stored p-values agrees on all 40,000 rows. precisionPass: true is correct.",
+    "F3. Determinism: 124 of 124 sampled trials (58 endpoint-1-supported, 6 endpoint-2-supported, all four shard boundaries) are byte-identical on all six fields under Deno 2.9.7.",
+    "F4. The observed rates agree with the pre-declared estimate. My independent 1,000,000-trial numpy simulation of the declared law gives 0.021023 (CI 0.0207-0.0213); the protocol's was 0.0207. Pooled observed 0.02025 is consistent with both (p 0.29-0.54).",
+    "F5. The inflation statement is accurate and the 4x framing is the one that applies: the two comparisons are identical in every trial, so the effective nominal level is exactly 0.005. Observed 2.03x the family alpha 0.01 and 4.05x the per-comparison 0.005 (gradient 2.14x/4.28x, spots 1.91x/3.82x).",
+    "F6. The gradient-vs-spots gap (0.0023, Fisher p 0.11, CI -0.0005 to 0.0051) is consistent with chance; the generator law is identical across presets. The four shards are homogeneous (p 0.37).",
+    "F7. Overclaim to fix in the write-up: the stress rate is not a bound on adversarial dependence. At rho about -0.88 my simulation gives 0.029 and at -0.97, 0.033, both above the 0.025 envelope, and the 2026-09-28 correlation evidence (n = 10-20) cannot exclude dependence as strong as the stress itself (about -0.6) for spots. The adequacy argument is a judgment, not a result.",
+    "F8. The endpoint-2 figure is a deep null: true mean 0 versus a floor of 1 with standard error about 1, test at alpha 0.005. Expected 3.85 false supports per 20,000 (observed 3); the boundary rate would be 0.005. Not evidence on endpoint-2 size at the boundary.",
+    "F9. Timeline is consistent: launch 21:21:07Z, shard wall times 3594.7-3958.6 s on one attempt each, last receipt 22:27:06Z, report created 22:27:24Z.",
+    "F10. Minor: the working copy now holds uncommitted evidence copies (experiments/m4/growth-precision-v1/{report.json,receipts/,evidence-sha256.txt}) and docs/m4-growth-precision-results.md. None are bound by the manifest. runs/ is gitignored, so the report and shard logs exist only on this machine unless the copies are committed; the shard trial logs (about 17 MB each) are not copied, only their hashes in evidence-sha256.txt."
+  ]
+}

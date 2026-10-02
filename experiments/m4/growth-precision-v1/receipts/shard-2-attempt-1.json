@@ -1,0 +1,18 @@
+{
+  "format": "m4-growth-precision-attempt/v1",
+  "phase": "precision-extension",
+  "shard": 2,
+  "attempt": 1,
+  "terminal": true,
+  "newTrials": 10000,
+  "retainedTrials": 0,
+  "trialLogSha256": "c7f9d546f8c4f84ff70748f52cc605628e99be9d2e1b429b1d05e5d3eb9930a3",
+  "manifestHash": "ffbdf6104e3722960c9c6ad9f27193a12306da37876a51ccad386c7dd7323907",
+  "wallSeconds": 3958.5802007909997,
+  "cumulativeWallSeconds": 3958.580211083,
+  "stopped": false,
+  "failure": null,
+  "complete": true,
+  "blockTrials": 10000,
+  "finishedAt": "2026-10-02T22:27:06.489Z"
+}

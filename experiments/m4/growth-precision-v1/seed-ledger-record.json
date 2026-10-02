@@ -18,5 +18,10 @@
     "last": 900000063
   },
   "recordedAt": "2026-10-02",
-  "notes": "Recorded before execution (consumed on launch, whatever the outcome). Fresh after a word-bounded scan of docs/tools/experiments/runs in all eight local browser-life workspaces; coordinator registry unreachable (BL_DATA_DIR unset, no apps/coordinator/data, nothing on 127.0.0.1:4000), so not proof of global freshness. Never concatenated with master 650009002 trials."
+  "notes": "Recorded before execution (consumed on launch, whatever the outcome). Fresh after a word-bounded scan of docs/tools/experiments/runs in all eight local browser-life workspaces; coordinator registry unreachable (BL_DATA_DIR unset, no apps/coordinator/data, nothing on 127.0.0.1:4000), so not proof of global freshness. Never concatenated with master 650009002 trials.",
+  "startedAt": "2026-10-02T21:21:07Z",
+  "completedAt": "2026-10-02T22:27:06Z",
+  "attemptsPerShard": 1,
+  "reportSha256": "6b0f5c2b6619afa3052ae7672e6844c2851fc7cdbbe8a4b31d80be9e562ce047",
+  "outcome": "precisionPass true (see browser-life-founder-policy docs/m4-growth-precision-results.md)"
 }

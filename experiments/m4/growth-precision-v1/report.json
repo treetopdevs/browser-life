@@ -1,0 +1,88 @@
+{
+  "format": "m4-growth-precision-report/v1",
+  "contract": "m4-growth-precision-v1",
+  "phase": "precision-extension",
+  "manifestHash": "ffbdf6104e3722960c9c6ad9f27193a12306da37876a51ccad386c7dd7323907",
+  "masterSeed": 650009003,
+  "trials": 20000,
+  "acceptance": {
+    "nullOneSided95UpperMax": 0.025,
+    "nominalPerPresetAlpha": 0.005,
+    "alternativeOneSided95PowerLowerMin": 0.8,
+    "alternativeMeanConfidenceMarginMax": 2,
+    "unavailable": "Report separately and include as non-support in unconditional procedure operating characteristics; never claim available inference for them."
+  },
+  "shards": [
+    {
+      "shard": 0,
+      "attempts": 1,
+      "trials": 10000,
+      "trialLogSha256": "c1095654647d7948707ea91250f943d0c3332ba07198216cd4cf6b3cd972d577",
+      "cumulativeWallSeconds": 3597.952327875
+    },
+    {
+      "shard": 1,
+      "attempts": 1,
+      "trials": 10000,
+      "trialLogSha256": "7828545b3fd64b192b4fa50eeed5139cfd12d24d1e254ccc5f1c437052593e54",
+      "cumulativeWallSeconds": 3598.2522226250003
+    },
+    {
+      "shard": 2,
+      "attempts": 1,
+      "trials": 10000,
+      "trialLogSha256": "c7f9d546f8c4f84ff70748f52cc605628e99be9d2e1b429b1d05e5d3eb9930a3",
+      "cumulativeWallSeconds": 3958.580211083
+    },
+    {
+      "shard": 3,
+      "attempts": 1,
+      "trials": 10000,
+      "trialLogSha256": "efbc801368ae60af611eef1e2f8f74177c58e430d156cd1e0c3c60b1785cd2d1",
+      "cumulativeWallSeconds": 3594.7201210420003
+    }
+  ],
+  "results": [
+    {
+      "scenario": "pairedEndpoint1Null",
+      "preset": "gradient-m3",
+      "n": 20000,
+      "complete": true,
+      "endpoint1Supported": 428,
+      "endpoint1Rate": 0.0214,
+      "endpoint1Upper95": 0.02316064021167552,
+      "endpoint1TwoSided95": [
+        0.019439214743056567,
+        0.02350157193432345
+      ],
+      "endpoint2Supported": 3,
+      "endpoint2Upper95": 0.0003876367557862359,
+      "endpoint2Unavailable": 0,
+      "jointSupported": 3,
+      "wallSeconds": 6954.260759598992,
+      "acceptancePass": true
+    },
+    {
+      "scenario": "pairedEndpoint1Null",
+      "preset": "spots-m3",
+      "n": 20000,
+      "complete": true,
+      "endpoint1Supported": 382,
+      "endpoint1Rate": 0.0191,
+      "endpoint1Upper95": 0.020769829765663883,
+      "endpoint1TwoSided95": [
+        0.017248178053026923,
+        0.021093415033786145
+      ],
+      "endpoint2Supported": 3,
+      "endpoint2Upper95": 0.0003876367557862359,
+      "endpoint2Unavailable": 0,
+      "jointSupported": 3,
+      "wallSeconds": 7308.093691025019,
+      "acceptancePass": true
+    }
+  ],
+  "complete": true,
+  "precisionPass": true,
+  "scope": "Original endpoint 1 and candidate endpoint 2 on the declared paired endpoint-1 stress null through the production activity path; synthetic calibration, not milestone confirmation. Never concatenated with the 2026-09-29 trials."
+}
