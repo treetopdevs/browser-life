@@ -1,0 +1,3523 @@
+{
+  "format": "discovery-divergence-control-analysis/v2",
+  "rosterPayloadSha256": "f80b6e58ba03f771235dc438a1d5cb56cf44f856b42d26b89b586bdd3c728f55",
+  "reportSha256": "085d55cf1f7121ece85ff3a5dc9fa5f236c912531e480e3262db99ad205ec68a",
+  "technicalComplete": true,
+  "missingNewResults": 0,
+  "replay": {
+    "expected": 8,
+    "matched": 8
+  },
+  "audits": {
+    "total": 28,
+    "matched": 28
+  },
+  "threshold": 0.1,
+  "required": 7,
+  "exactOneSidedSignTailPerTest": 0.03515625,
+  "confirmatoryTests": 6,
+  "selection": [
+    {
+      "founderId": "discovery-cluster-33",
+      "certifiedSeeds": 8,
+      "criterionMet": true,
+      "evolved": {
+        "lower": 0.9911465104757241,
+        "upper": 0.9911465104757241,
+        "point": 0.9911465104757241
+      },
+      "mutant": {
+        "lower": 0.021650410579628743,
+        "upper": 0.021650410579628743,
+        "point": 0.021650410579628743
+      },
+      "contrast": {
+        "lower": 0.9694960998960953,
+        "upper": 0.9694960998960953,
+        "point": 0.9694960998960953
+      },
+      "reading": "met, beyond divergence: evolved genomes beat the founder, random change of the same size does not clearly help, and evolved change beats it"
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "certifiedSeeds": 7,
+      "criterionMet": true,
+      "evolved": {
+        "lower": 0.5647222700231321,
+        "upper": 0.5647222700231321,
+        "point": 0.5647222700231321
+      },
+      "mutant": {
+        "lower": 0.09123546156332701,
+        "upper": 0.09123546156332701,
+        "point": 0.09123546156332701
+      },
+      "contrast": {
+        "lower": 0.4734868084598051,
+        "upper": 0.4734868084598051,
+        "point": 0.4734868084598051
+      },
+      "reading": "met, beyond divergence: evolved genomes beat the founder, random change of the same size does not clearly help, and evolved change beats it"
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "certifiedSeeds": 2,
+      "criterionMet": false,
+      "evolved": {
+        "lower": -0.0031182080650203683,
+        "upper": -0.0031182080650203683,
+        "point": -0.0031182080650203683
+      },
+      "mutant": {
+        "lower": -0.017836218774294393,
+        "upper": -0.017836218774294393,
+        "point": -0.017836218774294393
+      },
+      "contrast": {
+        "lower": 0.014718010709274023,
+        "upper": 0.014718010709274023,
+        "point": 0.014718010709274023
+      },
+      "reading": "not met: no evidence that evolved change beats random change of the same size; this is not evidence that selection was absent"
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "certifiedSeeds": 6,
+      "criterionMet": false,
+      "evolved": {
+        "lower": 0.5592258455340685,
+        "upper": 0.5592258455340685,
+        "point": 0.5592258455340685
+      },
+      "mutant": {
+        "lower": 0.19049535554437058,
+        "upper": 0.19049535554437058,
+        "point": 0.19049535554437058
+      },
+      "contrast": {
+        "lower": 0.36873048998969793,
+        "upper": 0.36873048998969793,
+        "point": 0.36873048998969793
+      },
+      "reading": "not met: no evidence that evolved change beats random change of the same size; this is not evidence that selection was absent"
+    }
+  ],
+  "reconstruction": [
+    {
+      "founderId": "discovery-cluster-33",
+      "slotName": "b2[PHOTO]",
+      "founderValue": 62,
+      "perSeed": [
+        {
+          "seed": 6410001,
+          "value": 97,
+          "genomeId": "r-33-b2PHOTO-97",
+          "lower": 1,
+          "upper": 1,
+          "point": 1,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410002,
+          "value": 73,
+          "genomeId": "r-33-b2PHOTO-73",
+          "lower": 0.8763051542521076,
+          "upper": 0.8763051542521076,
+          "point": 0.8763051542521076,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410003,
+          "value": 76,
+          "genomeId": "r-33-b2PHOTO-76",
+          "lower": 0.9460303771234092,
+          "upper": 0.9460303771234092,
+          "point": 0.9460303771234092,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410004,
+          "value": 72,
+          "genomeId": "r-33-b2PHOTO-72",
+          "lower": 0.822464825143933,
+          "upper": 0.822464825143933,
+          "point": 0.822464825143933,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410005,
+          "value": 86,
+          "genomeId": "r-33-b2PHOTO-86",
+          "lower": 0.980745036678348,
+          "upper": 0.980745036678348,
+          "point": 0.980745036678348,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410006,
+          "value": 99,
+          "genomeId": "r-33-b2PHOTO-99",
+          "lower": 1,
+          "upper": 1,
+          "point": 1,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410007,
+          "value": 82,
+          "genomeId": "r-33-b2PHOTO-82",
+          "lower": 0.9749024622095134,
+          "upper": 0.9749024622095134,
+          "point": 0.9749024622095134,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410008,
+          "value": 100,
+          "genomeId": "r-33-b2PHOTO-100",
+          "lower": 0.9924692934410042,
+          "upper": 0.9924692934410042,
+          "point": 0.9924692934410042,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        }
+      ],
+      "distinctGenomes": 8,
+      "mean": {
+        "lower": 0.9491146436060394,
+        "upper": 0.9491146436060394,
+        "point": 0.9491146436060394
+      },
+      "certifiedSeeds": 8,
+      "criterionMet": true,
+      "recoveredShareOfEvolved": 0.9575926803702204,
+      "specificity": {
+        "controls": [
+          {
+            "seed": 6410001,
+            "slot": 135,
+            "genomeId": "c-33-s6410001",
+            "control": {
+              "lower": 0,
+              "upper": 0,
+              "point": 0,
+              "scored": 8,
+              "bothExtinct": 0,
+              "missing": 0
+            },
+            "reconstructionMinusControl": {
+              "lower": 1,
+              "upper": 1,
+              "point": 1
+            }
+          },
+          {
+            "seed": 6410002,
+            "slot": 127,
+            "genomeId": "c-33-s6410002",
+            "control": {
+              "lower": 0,
+              "upper": 0,
+              "point": 0,
+              "scored": 8,
+              "bothExtinct": 0,
+              "missing": 0
+            },
+            "reconstructionMinusControl": {
+              "lower": 0.8763051542521076,
+              "upper": 0.8763051542521076,
+              "point": 0.8763051542521076
+            }
+          },
+          {
+            "seed": 6410003,
+            "slot": 19,
+            "genomeId": "c-33-s6410003",
+            "control": {
+              "lower": 0.04697864186877713,
+              "upper": 0.04697864186877713,
+              "point": 0.04697864186877713,
+              "scored": 8,
+              "bothExtinct": 0,
+              "missing": 0
+            },
+            "reconstructionMinusControl": {
+              "lower": 0.8990517352546321,
+              "upper": 0.8990517352546321,
+              "point": 0.8990517352546321
+            }
+          },
+          {
+            "seed": 6410004,
+            "slot": 80,
+            "genomeId": "c-33-s6410004",
+            "control": {
+              "lower": 0.5109750247683139,
+              "upper": 0.5109750247683139,
+              "point": 0.5109750247683139,
+              "scored": 8,
+              "bothExtinct": 0,
+              "missing": 0
+            },
+            "reconstructionMinusControl": {
+              "lower": 0.31148980037561913,
+              "upper": 0.31148980037561913,
+              "point": 0.31148980037561913
+            }
+          },
+          {
+            "seed": 6410005,
+            "slot": 75,
+            "genomeId": "c-33-s6410005",
+            "control": {
+              "lower": 0.1983464362194665,
+              "upper": 0.1983464362194665,
+              "point": 0.1983464362194665,
+              "scored": 8,
+              "bothExtinct": 0,
+              "missing": 0
+            },
+            "reconstructionMinusControl": {
+              "lower": 0.7823986004588815,
+              "upper": 0.7823986004588815,
+              "point": 0.7823986004588815
+            }
+          },
+          {
+            "seed": 6410006,
+            "slot": 53,
+            "genomeId": "c-33-s6410006",
+            "control": {
+              "lower": 0,
+              "upper": 0,
+              "point": 0,
+              "scored": 8,
+              "bothExtinct": 0,
+              "missing": 0
+            },
+            "reconstructionMinusControl": {
+              "lower": 1,
+              "upper": 1,
+              "point": 1
+            }
+          },
+          {
+            "seed": 6410007,
+            "slot": 30,
+            "genomeId": "c-33-s6410007",
+            "control": {
+              "lower": 0,
+              "upper": 0,
+              "point": 0,
+              "scored": 8,
+              "bothExtinct": 0,
+              "missing": 0
+            },
+            "reconstructionMinusControl": {
+              "lower": 0.9749024622095134,
+              "upper": 0.9749024622095134,
+              "point": 0.9749024622095134
+            }
+          },
+          {
+            "seed": 6410008,
+            "slot": 70,
+            "genomeId": "c-33-s6410008",
+            "control": {
+              "lower": 0,
+              "upper": 0,
+              "point": 0,
+              "scored": 8,
+              "bothExtinct": 0,
+              "missing": 0
+            },
+            "reconstructionMinusControl": {
+              "lower": 0.9924692934410042,
+              "upper": 0.9924692934410042,
+              "point": 0.9924692934410042
+            }
+          }
+        ],
+        "meanReconstructionMinusControl": {
+          "lower": 0.8545771307489698,
+          "upper": 0.8545771307489698,
+          "point": 0.8545771307489698
+        },
+        "seedsReconstructionAboveControl": 8
+      },
+      "reading": "met: the single evolved change alone gives an advantage over the founder in typical seeds; this shows sufficiency, not necessity; specificity is described by the control, not tested"
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "slotName": "mu",
+      "founderValue": 33,
+      "perSeed": [
+        {
+          "seed": 6410001,
+          "value": 49,
+          "genomeId": "r-139-mu-49",
+          "lower": 0.5703193175360727,
+          "upper": 0.5703193175360727,
+          "point": 0.5703193175360727,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410002,
+          "value": 55,
+          "genomeId": "r-139-mu-55",
+          "lower": 0.4814714615394452,
+          "upper": 0.4814714615394452,
+          "point": 0.4814714615394452,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410003,
+          "value": 46,
+          "genomeId": "r-139-mu-46",
+          "lower": 0.42816437150232967,
+          "upper": 0.42816437150232967,
+          "point": 0.42816437150232967,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410004,
+          "value": 57,
+          "genomeId": "r-139-mu-57",
+          "lower": 0.49097604105952886,
+          "upper": 0.49097604105952886,
+          "point": 0.49097604105952886,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410005,
+          "value": 49,
+          "genomeId": "r-139-mu-49",
+          "lower": 0.5703193175360727,
+          "upper": 0.5703193175360727,
+          "point": 0.5703193175360727,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410006,
+          "value": 47,
+          "genomeId": "r-139-mu-47",
+          "lower": 0.4048442902135935,
+          "upper": 0.4048442902135935,
+          "point": 0.4048442902135935,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410007,
+          "value": 47,
+          "genomeId": "r-139-mu-47",
+          "lower": 0.4048442902135935,
+          "upper": 0.4048442902135935,
+          "point": 0.4048442902135935,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        },
+        {
+          "seed": 6410008,
+          "value": 54,
+          "genomeId": "r-139-mu-54",
+          "lower": 0.46704306384265576,
+          "upper": 0.46704306384265576,
+          "point": 0.46704306384265576,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0,
+          "certified": true
+        }
+      ],
+      "distinctGenomes": 6,
+      "mean": {
+        "lower": 0.47724776918041145,
+        "upper": 0.47724776918041145,
+        "point": 0.47724776918041145
+      },
+      "certifiedSeeds": 8,
+      "criterionMet": true,
+      "recoveredShareOfEvolved": 0.8534079263175562,
+      "specificity": null,
+      "reading": "met: the single evolved change alone gives an advantage over the founder in typical seeds; this shows sufficiency, not necessity; specificity is described by the control, not tested"
+    }
+  ],
+  "descriptive": {
+    "pooledBlocks": [
+      {
+        "seed": 6410001,
+        "lower": 0.3285319061897946,
+        "upper": 0.3285319061897946,
+        "point": 0.3285319061897946,
+        "certified": true
+      },
+      {
+        "seed": 6410002,
+        "lower": 0.42950145225424313,
+        "upper": 0.42950145225424313,
+        "point": 0.42950145225424313,
+        "certified": true
+      },
+      {
+        "seed": 6410003,
+        "lower": 0.5725965387016156,
+        "upper": 0.5725965387016156,
+        "point": 0.5725965387016156,
+        "certified": true
+      },
+      {
+        "seed": 6410004,
+        "lower": 0.34241394282884974,
+        "upper": 0.34241394282884974,
+        "point": 0.34241394282884974,
+        "certified": true
+      },
+      {
+        "seed": 6410005,
+        "lower": 0.5866888776939829,
+        "upper": 0.5866888776939829,
+        "point": 0.5866888776939829,
+        "certified": true
+      },
+      {
+        "seed": 6410006,
+        "lower": 0.6258345932406227,
+        "upper": 0.6258345932406227,
+        "point": 0.6258345932406227,
+        "certified": true
+      },
+      {
+        "seed": 6410007,
+        "lower": 0.8198782715882658,
+        "upper": 0.8198782715882658,
+        "point": 0.8198782715882658,
+        "certified": true
+      },
+      {
+        "seed": 6410008,
+        "lower": -0.052582764387629544,
+        "upper": -0.052582764387629544,
+        "point": -0.052582764387629544,
+        "certified": false
+      }
+    ],
+    "pooledCertifiedBlocks": 7,
+    "pooledEffect": {
+      "lower": 0.45660785226371814,
+      "upper": 0.45660785226371814,
+      "point": 0.45660785226371814
+    },
+    "bootstrap": {
+      "seed": 6480300,
+      "resamples": 10000,
+      "bounded95": {
+        "lower": 0.2735932667975771,
+        "upper": 0.6144632413723119
+      },
+      "point95": {
+        "lower": 0.2735932667975771,
+        "upper": 0.6144632413723119
+      }
+    }
+  },
+  "units": [
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "evolved": {
+        "lower": 0.9963861616901627,
+        "upper": 0.9963861616901627,
+        "point": 0.9963861616901627
+      },
+      "mutant": {
+        "lower": -0.18030572938389092,
+        "upper": -0.18030572938389092,
+        "point": -0.18030572938389092
+      },
+      "contrast": {
+        "lower": 1.1766918910740536,
+        "upper": 1.1766918910740536,
+        "point": 1.1766918910740536
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.9974837222292194,
+        "upper": 0.9974837222292194,
+        "point": 0.9974837222292194
+      },
+      "mutant": {
+        "lower": 0.4567097375509103,
+        "upper": 0.4567097375509103,
+        "point": 0.4567097375509103
+      },
+      "contrast": {
+        "lower": 0.5407739846783091,
+        "upper": 0.5407739846783091,
+        "point": 0.5407739846783091
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 0.9831214596351628,
+        "upper": 0.9831214596351628,
+        "point": 0.9831214596351628
+      },
+      "mutant": {
+        "lower": 0.09326001129063713,
+        "upper": 0.09326001129063713,
+        "point": 0.09326001129063713
+      },
+      "contrast": {
+        "lower": 0.8898614483445257,
+        "upper": 0.8898614483445257,
+        "point": 0.8898614483445257
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.9758837980404047,
+        "upper": 0.9758837980404047,
+        "point": 0.9758837980404047
+      },
+      "mutant": {
+        "lower": 0.1368591416885399,
+        "upper": 0.1368591416885399,
+        "point": 0.1368591416885399
+      },
+      "contrast": {
+        "lower": 0.8390246563518649,
+        "upper": 0.8390246563518649,
+        "point": 0.8390246563518649
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.9996388025168419,
+        "upper": 0.9996388025168419,
+        "point": 0.9996388025168419
+      },
+      "mutant": {
+        "lower": -0.5637416277629476,
+        "upper": -0.5637416277629476,
+        "point": -0.5637416277629476
+      },
+      "contrast": {
+        "lower": 1.5633804302797896,
+        "upper": 1.5633804302797896,
+        "point": 1.5633804302797896
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "evolved": {
+        "lower": 0.999138039965369,
+        "upper": 0.999138039965369,
+        "point": 0.999138039965369
+      },
+      "mutant": {
+        "lower": -0.01974109808407412,
+        "upper": -0.01974109808407412,
+        "point": -0.01974109808407412
+      },
+      "contrast": {
+        "lower": 1.018879138049443,
+        "upper": 1.018879138049443,
+        "point": 1.018879138049443
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.9775200997286324,
+        "upper": 0.9775200997286324,
+        "point": 0.9775200997286324
+      },
+      "mutant": {
+        "lower": 0.04657263546434093,
+        "upper": 0.04657263546434093,
+        "point": 0.04657263546434093
+      },
+      "contrast": {
+        "lower": 0.9309474642642914,
+        "upper": 0.9309474642642914,
+        "point": 0.9309474642642914
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "evolved": {
+        "lower": 1,
+        "upper": 1,
+        "point": 1
+      },
+      "mutant": {
+        "lower": 0.20359021387351425,
+        "upper": 0.20359021387351425,
+        "point": 0.20359021387351425
+      },
+      "contrast": {
+        "lower": 0.7964097861264857,
+        "upper": 0.7964097861264857,
+        "point": 0.7964097861264857
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "evolved": {
+        "lower": 0.65981990567003,
+        "upper": 0.65981990567003,
+        "point": 0.65981990567003
+      },
+      "mutant": {
+        "lower": 0.5517219712671178,
+        "upper": 0.5517219712671178,
+        "point": 0.5517219712671178
+      },
+      "contrast": {
+        "lower": 0.10809793440291227,
+        "upper": 0.10809793440291227,
+        "point": 0.10809793440291227
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.148268074595618,
+        "upper": 0.148268074595618,
+        "point": 0.148268074595618
+      },
+      "mutant": {
+        "lower": -0.3028747636418706,
+        "upper": -0.3028747636418706,
+        "point": -0.3028747636418706
+      },
+      "contrast": {
+        "lower": 0.4511428382374886,
+        "upper": 0.4511428382374886,
+        "point": 0.4511428382374886
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 0.9972472561165698,
+        "upper": 0.9972472561165698,
+        "point": 0.9972472561165698
+      },
+      "mutant": {
+        "lower": -0.22085874653230467,
+        "upper": -0.22085874653230467,
+        "point": -0.22085874653230467
+      },
+      "contrast": {
+        "lower": 1.2181060026488746,
+        "upper": 1.2181060026488746,
+        "point": 1.2181060026488746
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.4775921295952345,
+        "upper": 0.4775921295952345,
+        "point": 0.4775921295952345
+      },
+      "mutant": {
+        "lower": 0.0894371213649165,
+        "upper": 0.0894371213649165,
+        "point": 0.0894371213649165
+      },
+      "contrast": {
+        "lower": 0.388155008230318,
+        "upper": 0.388155008230318,
+        "point": 0.388155008230318
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.9816718508280338,
+        "upper": 0.9816718508280338,
+        "point": 0.9816718508280338
+      },
+      "mutant": {
+        "lower": 0.42528108638313933,
+        "upper": 0.42528108638313933,
+        "point": 0.42528108638313933
+      },
+      "contrast": {
+        "lower": 0.5563907644448944,
+        "upper": 0.5563907644448944,
+        "point": 0.5563907644448944
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "evolved": {
+        "lower": 0.9911858624919954,
+        "upper": 0.9911858624919954,
+        "point": 0.9911858624919954
+      },
+      "mutant": {
+        "lower": 0.351473764441505,
+        "upper": 0.351473764441505,
+        "point": 0.351473764441505
+      },
+      "contrast": {
+        "lower": 0.6397120980504903,
+        "upper": 0.6397120980504903,
+        "point": 0.6397120980504903
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.9999979155835661,
+        "upper": 0.9999979155835661,
+        "point": 0.9999979155835661
+      },
+      "mutant": {
+        "lower": -0.3941281255494473,
+        "upper": -0.3941281255494473,
+        "point": -0.3941281255494473
+      },
+      "contrast": {
+        "lower": 1.3941260411330134,
+        "upper": 1.3941260411330134,
+        "point": 1.3941260411330134
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "evolved": {
+        "lower": -0.7380048346959904,
+        "upper": -0.7380048346959904,
+        "point": -0.7380048346959904
+      },
+      "mutant": {
+        "lower": 0.22983138477356013,
+        "upper": 0.22983138477356013,
+        "point": 0.22983138477356013
+      },
+      "contrast": {
+        "lower": -0.9678362194695506,
+        "upper": -0.9678362194695506,
+        "point": -0.9678362194695506
+      },
+      "certified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "evolved": {
+        "lower": -0.06042164290708382,
+        "upper": -0.06042164290708382,
+        "point": -0.06042164290708382
+      },
+      "mutant": {
+        "lower": -0.18649637797752855,
+        "upper": -0.18649637797752855,
+        "point": -0.18649637797752855
+      },
+      "contrast": {
+        "lower": 0.12607473507044473,
+        "upper": 0.12607473507044473,
+        "point": 0.12607473507044473
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.12090747601367771,
+        "upper": 0.12090747601367771,
+        "point": 0.12090747601367771
+      },
+      "mutant": {
+        "lower": 0.11912853574169414,
+        "upper": 0.11912853574169414,
+        "point": 0.11912853574169414
+      },
+      "contrast": {
+        "lower": 0.0017789402719835673,
+        "upper": 0.0017789402719835673,
+        "point": 0.0017789402719835673
+      },
+      "certified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "evolved": {
+        "lower": -0.032237555933133294,
+        "upper": -0.032237555933133294,
+        "point": -0.032237555933133294
+      },
+      "mutant": {
+        "lower": -0.008598128928952155,
+        "upper": -0.008598128928952155,
+        "point": -0.008598128928952155
+      },
+      "contrast": {
+        "lower": -0.02363942700418114,
+        "upper": -0.02363942700418114,
+        "point": -0.02363942700418114
+      },
+      "certified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.1261165676708369,
+        "upper": 0.1261165676708369,
+        "point": 0.1261165676708369
+      },
+      "mutant": {
+        "lower": 0.15088072341597997,
+        "upper": 0.15088072341597997,
+        "point": 0.15088072341597997
+      },
+      "contrast": {
+        "lower": -0.02476415574514307,
+        "upper": -0.02476415574514307,
+        "point": -0.02476415574514307
+      },
+      "certified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.09818521388278419,
+        "upper": 0.09818521388278419,
+        "point": 0.09818521388278419
+      },
+      "mutant": {
+        "lower": 0.13482022198416876,
+        "upper": 0.13482022198416876,
+        "point": 0.13482022198416876
+      },
+      "contrast": {
+        "lower": -0.03663500810138458,
+        "upper": -0.03663500810138458,
+        "point": -0.03663500810138458
+      },
+      "certified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "evolved": {
+        "lower": -0.22637638442336383,
+        "upper": -0.22637638442336383,
+        "point": -0.22637638442336383
+      },
+      "mutant": {
+        "lower": -0.24536996645887751,
+        "upper": -0.24536996645887751,
+        "point": -0.24536996645887751
+      },
+      "contrast": {
+        "lower": 0.018993582035513684,
+        "upper": 0.018993582035513684,
+        "point": 0.018993582035513684
+      },
+      "certified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.019628957784316312,
+        "upper": 0.019628957784316312,
+        "point": 0.019628957784316312
+      },
+      "mutant": {
+        "lower": -0.09503232360746858,
+        "upper": -0.09503232360746858,
+        "point": -0.09503232360746858
+      },
+      "contrast": {
+        "lower": 0.11466128139178489,
+        "upper": 0.11466128139178489,
+        "point": 0.11466128139178489
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "evolved": {
+        "lower": -0.07074829660819712,
+        "upper": -0.07074829660819712,
+        "point": -0.07074829660819712
+      },
+      "mutant": {
+        "lower": -0.012022434363371207,
+        "upper": -0.012022434363371207,
+        "point": -0.012022434363371207
+      },
+      "contrast": {
+        "lower": -0.05872586224482591,
+        "upper": -0.05872586224482591,
+        "point": -0.05872586224482591
+      },
+      "certified": false
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "evolved": {
+        "lower": 0.1807070255177819,
+        "upper": 0.1807070255177819,
+        "point": 0.1807070255177819
+      },
+      "mutant": {
+        "lower": 0.27744396130601406,
+        "upper": 0.27744396130601406,
+        "point": 0.27744396130601406
+      },
+      "contrast": {
+        "lower": -0.09673693578823217,
+        "upper": -0.09673693578823217,
+        "point": -0.09673693578823217
+      },
+      "certified": false
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.6293851929030533,
+        "upper": 0.6293851929030533,
+        "point": 0.6293851929030533
+      },
+      "mutant": {
+        "lower": -0.09492485292613809,
+        "upper": -0.09492485292613809,
+        "point": -0.09492485292613809
+      },
+      "contrast": {
+        "lower": 0.7243100458291913,
+        "upper": 0.7243100458291913,
+        "point": 0.7243100458291913
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 0.573477715591309,
+        "upper": 0.573477715591309,
+        "point": 0.573477715591309
+      },
+      "mutant": {
+        "lower": 0.3674195847740658,
+        "upper": 0.3674195847740658,
+        "point": 0.3674195847740658
+      },
+      "contrast": {
+        "lower": 0.20605813081724322,
+        "upper": 0.20605813081724322,
+        "point": 0.20605813081724322
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.5727322149639571,
+        "upper": 0.5727322149639571,
+        "point": 0.5727322149639571
+      },
+      "mutant": {
+        "lower": 0.4054919524855979,
+        "upper": 0.4054919524855979,
+        "point": 0.4054919524855979
+      },
+      "contrast": {
+        "lower": 0.16724026247835921,
+        "upper": 0.16724026247835921,
+        "point": 0.16724026247835921
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.6447517174500399,
+        "upper": 0.6447517174500399,
+        "point": 0.6447517174500399
+      },
+      "mutant": {
+        "lower": 0.38113239329740756,
+        "upper": 0.38113239329740756,
+        "point": 0.38113239329740756
+      },
+      "contrast": {
+        "lower": 0.26361932415263234,
+        "upper": 0.26361932415263234,
+        "point": 0.26361932415263234
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "evolved": {
+        "lower": 0.5497517127049412,
+        "upper": 0.5497517127049412,
+        "point": 0.5497517127049412
+      },
+      "mutant": {
+        "lower": -0.2760018421221029,
+        "upper": -0.2760018421221029,
+        "point": -0.2760018421221029
+      },
+      "contrast": {
+        "lower": 0.825753554827044,
+        "upper": 0.825753554827044,
+        "point": 0.825753554827044
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.7849531563387809,
+        "upper": 0.7849531563387809,
+        "point": 0.7849531563387809
+      },
+      "mutant": {
+        "lower": -0.05482514322519237,
+        "upper": -0.05482514322519237,
+        "point": -0.05482514322519237
+      },
+      "contrast": {
+        "lower": 0.8397782995639733,
+        "upper": 0.8397782995639733,
+        "point": 0.8397782995639733
+      },
+      "certified": true
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "evolved": {
+        "lower": 0.5380480288026851,
+        "upper": 0.5380480288026851,
+        "point": 0.5380480288026851
+      },
+      "mutant": {
+        "lower": 0.5182267907653125,
+        "upper": 0.5182267907653125,
+        "point": 0.5182267907653125
+      },
+      "contrast": {
+        "lower": 0.01982123803737257,
+        "upper": 0.01982123803737257,
+        "point": 0.01982123803737257
+      },
+      "certified": false
+    }
+  ],
+  "draws": [
+    {
+      "drawId": "discovery-cluster-33-6410001-normal-t1000000-d0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "evolved": {
+        "lower": 0.9949397071118733,
+        "upper": 0.9949397071118733,
+        "point": 0.9949397071118733,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.7459989679843497,
+          "upper": 0.7459989679843497,
+          "point": 0.7459989679843497,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.6508279463271969,
+          "upper": -0.6508279463271969,
+          "point": -0.6508279463271969,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.04758551082857643,
+        "upper": 0.04758551082857643,
+        "point": 0.04758551082857643
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410001-normal-t1000000-d1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "evolved": {
+        "lower": 0.9978326162684521,
+        "upper": 0.9978326162684521,
+        "point": 0.9978326162684521,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.17289554216898717,
+          "upper": 0.17289554216898717,
+          "point": 0.17289554216898717,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.9892894813617037,
+          "upper": -0.9892894813617037,
+          "point": -0.9892894813617037,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.40819696959635826,
+        "upper": -0.40819696959635826,
+        "point": -0.40819696959635826
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410002-normal-t1000000-d0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.9974837222292194,
+        "upper": 0.9974837222292194,
+        "point": 0.9974837222292194,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.19777793855240783,
+          "upper": 0.19777793855240783,
+          "point": 0.19777793855240783,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.09065840211381557,
+          "upper": 0.09065840211381557,
+          "point": 0.09065840211381557,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.14421817033311168,
+        "upper": 0.14421817033311168,
+        "point": 0.14421817033311168
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410002-normal-t1000000-d1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.9974837222292194,
+        "upper": 0.9974837222292194,
+        "point": 0.9974837222292194,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.599793446795601,
+          "upper": 0.599793446795601,
+          "point": 0.599793446795601,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.9386091627418169,
+          "upper": 0.9386091627418169,
+          "point": 0.9386091627418169,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.769201304768709,
+        "upper": 0.769201304768709,
+        "point": 0.769201304768709
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410003-normal-t1000000-d0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 0.9662429192703257,
+        "upper": 0.9662429192703257,
+        "point": 0.9662429192703257,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.26621746453172473,
+          "upper": 0.26621746453172473,
+          "point": 0.26621746453172473,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.24827911648641063,
+          "upper": -0.24827911648641063,
+          "point": -0.24827911648641063,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.008969174022657053,
+        "upper": 0.008969174022657053,
+        "point": 0.008969174022657053
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410003-normal-t1000000-d1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 1,
+        "upper": 1,
+        "point": 1,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.46356634484661663,
+          "upper": 0.46356634484661663,
+          "point": 0.46356634484661663,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.10846464772938225,
+          "upper": -0.10846464772938225,
+          "point": -0.10846464772938225,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.1775508485586172,
+        "upper": 0.1775508485586172,
+        "point": 0.1775508485586172
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410004-normal-t1000000-d0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.9540634824886269,
+        "upper": 0.9540634824886269,
+        "point": 0.9540634824886269,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.2623139534052218,
+          "upper": -0.2623139534052218,
+          "point": -0.2623139534052218,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.18001090857292723,
+          "upper": 0.18001090857292723,
+          "point": 0.18001090857292723,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.04115152241614728,
+        "upper": -0.04115152241614728,
+        "point": -0.04115152241614728
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410004-normal-t1000000-d1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.9977041135921825,
+        "upper": 0.9977041135921825,
+        "point": 0.9977041135921825,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.3133974191092157,
+          "upper": 0.3133974191092157,
+          "point": 0.3133974191092157,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.3163421924772385,
+          "upper": 0.3163421924772385,
+          "point": 0.3163421924772385,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.3148698057932271,
+        "upper": 0.3148698057932271,
+        "point": 0.3148698057932271
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410005-normal-t1000000-d0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.9993926490476426,
+        "upper": 0.9993926490476426,
+        "point": 0.9993926490476426,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.4722576684880158,
+          "upper": 0.4722576684880158,
+          "point": 0.4722576684880158,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.7350372375030347,
+          "upper": -0.7350372375030347,
+          "point": -0.7350372375030347,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.13138978450750946,
+        "upper": -0.13138978450750946,
+        "point": -0.13138978450750946
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410005-normal-t1000000-d1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.9998849559860413,
+        "upper": 0.9998849559860413,
+        "point": 0.9998849559860413,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -1,
+          "upper": -1,
+          "point": -1,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.9921869420367713,
+          "upper": -0.9921869420367713,
+          "point": -0.9921869420367713,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.9960934710183856,
+        "upper": -0.9960934710183856,
+        "point": -0.9960934710183856
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410006-normal-t1000000-d0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "evolved": {
+        "lower": 0.9991327378551902,
+        "upper": 0.9991327378551902,
+        "point": 0.9991327378551902,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.5190307185729641,
+          "upper": -0.5190307185729641,
+          "point": -0.5190307185729641,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.35716741668007923,
+          "upper": -0.35716741668007923,
+          "point": -0.35716741668007923,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.4380990676265217,
+        "upper": -0.4380990676265217,
+        "point": -0.4380990676265217
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410006-normal-t1000000-d1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "evolved": {
+        "lower": 0.9991433420755478,
+        "upper": 0.9991433420755478,
+        "point": 0.9991433420755478,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.32703589325625604,
+          "upper": 0.32703589325625604,
+          "point": 0.32703589325625604,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.47019784966049083,
+          "upper": 0.47019784966049083,
+          "point": 0.47019784966049083,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.39861687145837343,
+        "upper": 0.39861687145837343,
+        "point": 0.39861687145837343
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410007-normal-t1000000-d0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.9550401994572647,
+        "upper": 0.9550401994572647,
+        "point": 0.9550401994572647,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.4257981478247803,
+          "upper": -0.4257981478247803,
+          "point": -0.4257981478247803,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.619916683361311,
+          "upper": -0.619916683361311,
+          "point": -0.619916683361311,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.5228574155930457,
+        "upper": -0.5228574155930457,
+        "point": -0.5228574155930457
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410007-normal-t1000000-d1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 1,
+        "upper": 1,
+        "point": 1,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.24881826859185557,
+          "upper": 0.24881826859185557,
+          "point": 0.24881826859185557,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.9831871044515995,
+          "upper": 0.9831871044515995,
+          "point": 0.9831871044515995,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.6160026865217275,
+        "upper": 0.6160026865217275,
+        "point": 0.6160026865217275
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410008-normal-t1000000-d0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "evolved": {
+        "lower": 1,
+        "upper": 1,
+        "point": 1,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.6334647479274311,
+          "upper": 0.6334647479274311,
+          "point": 0.6334647479274311,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.22220766616669907,
+          "upper": -0.22220766616669907,
+          "point": -0.22220766616669907,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.20562854088036603,
+        "upper": 0.20562854088036603,
+        "point": 0.20562854088036603
+      }
+    },
+    {
+      "drawId": "discovery-cluster-33-6410008-normal-t1000000-d1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "evolved": {
+        "lower": 1,
+        "upper": 1,
+        "point": 1,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.07988750936504999,
+          "upper": 0.07988750936504999,
+          "point": 0.07988750936504999,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.323216264368275,
+          "upper": 0.323216264368275,
+          "point": 0.323216264368275,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.20155188686666248,
+        "upper": 0.20155188686666248,
+        "point": 0.20155188686666248
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410001-normal-t1000000-d0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "evolved": {
+        "lower": 0.45785315568216783,
+        "upper": 0.45785315568216783,
+        "point": 0.45785315568216783,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.8872291358930885,
+          "upper": 0.8872291358930885,
+          "point": 0.8872291358930885,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.3067961704348059,
+          "upper": 0.3067961704348059,
+          "point": 0.3067961704348059,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.5970126531639472,
+        "upper": 0.5970126531639472,
+        "point": 0.5970126531639472
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410001-normal-t1000000-d1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "evolved": {
+        "lower": 0.8617866556578921,
+        "upper": 0.8617866556578921,
+        "point": 0.8617866556578921,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.09446896439845504,
+          "upper": 0.09446896439845504,
+          "point": 0.09446896439845504,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.9183936143421214,
+          "upper": 0.9183936143421214,
+          "point": 0.9183936143421214,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.5064312893702883,
+        "upper": 0.5064312893702883,
+        "point": 0.5064312893702883
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410002-normal-t1000000-d0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.43339156791367905,
+        "upper": 0.43339156791367905,
+        "point": 0.43339156791367905,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.3019047462616357,
+          "upper": 0.3019047462616357,
+          "point": 0.3019047462616357,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.1267393594770746,
+          "upper": 0.1267393594770746,
+          "point": 0.1267393594770746,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.21432205286935516,
+        "upper": 0.21432205286935516,
+        "point": 0.21432205286935516
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410002-normal-t1000000-d1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "evolved": {
+        "lower": -0.13685541872244306,
+        "upper": -0.13685541872244306,
+        "point": -0.13685541872244306,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.8466747175079343,
+          "upper": -0.8466747175079343,
+          "point": -0.8466747175079343,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.7934684427982583,
+          "upper": -0.7934684427982583,
+          "point": -0.7934684427982583,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.8200715801530963,
+        "upper": -0.8200715801530963,
+        "point": -0.8200715801530963
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410003-normal-t1000000-d0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 0.9994776398160017,
+        "upper": 0.9994776398160017,
+        "point": 0.9994776398160017,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.15903800194323772,
+          "upper": 0.15903800194323772,
+          "point": 0.15903800194323772,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.9051019021789005,
+          "upper": -0.9051019021789005,
+          "point": -0.9051019021789005,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.3730319501178314,
+        "upper": -0.3730319501178314,
+        "point": -0.3730319501178314
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410003-normal-t1000000-d1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 0.995016872417138,
+        "upper": 0.995016872417138,
+        "point": 0.995016872417138,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.7513314258452264,
+          "upper": 0.7513314258452264,
+          "point": 0.7513314258452264,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.8887025117387822,
+          "upper": -0.8887025117387822,
+          "point": -0.8887025117387822,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.06868554294677792,
+        "upper": -0.06868554294677792,
+        "point": -0.06868554294677792
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410004-normal-t1000000-d0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.04081331334314804,
+        "upper": 0.04081331334314804,
+        "point": 0.04081331334314804,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.14793648619737362,
+          "upper": 0.14793648619737362,
+          "point": 0.14793648619737362,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.020326861266578386,
+          "upper": 0.020326861266578386,
+          "point": 0.020326861266578386,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.084131673731976,
+        "upper": 0.084131673731976,
+        "point": 0.084131673731976
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410004-normal-t1000000-d1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.9143709458473209,
+        "upper": 0.9143709458473209,
+        "point": 0.9143709458473209,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.6084472584831895,
+          "upper": -0.6084472584831895,
+          "point": -0.6084472584831895,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.7979323964789035,
+          "upper": 0.7979323964789035,
+          "point": 0.7979323964789035,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.09474256899785699,
+        "upper": 0.09474256899785699,
+        "point": 0.09474256899785699
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410005-normal-t1000000-d0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.9886527085602465,
+        "upper": 0.9886527085602465,
+        "point": 0.9886527085602465,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.9366842448257777,
+          "upper": 0.9366842448257777,
+          "point": 0.9366842448257777,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.9687884065476676,
+          "upper": -0.9687884065476676,
+          "point": -0.9687884065476676,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.01605208086094495,
+        "upper": -0.01605208086094495,
+        "point": -0.01605208086094495
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410005-normal-t1000000-d1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.9746909930958211,
+        "upper": 0.9746909930958211,
+        "point": 0.9746909930958211,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.8788957548897407,
+          "upper": 0.8788957548897407,
+          "point": 0.8788957548897407,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.8543327523647064,
+          "upper": 0.8543327523647064,
+          "point": 0.8543327523647064,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.8666142536272236,
+        "upper": 0.8666142536272236,
+        "point": 0.8666142536272236
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410006-normal-t1000000-d0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "evolved": {
+        "lower": 0.9908830192274968,
+        "upper": 0.9908830192274968,
+        "point": 0.9908830192274968,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.467583604011935,
+          "upper": 0.467583604011935,
+          "point": 0.467583604011935,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.7632725090200296,
+          "upper": -0.7632725090200296,
+          "point": -0.7632725090200296,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.14784445250404732,
+        "upper": -0.14784445250404732,
+        "point": -0.14784445250404732
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410006-normal-t1000000-d1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "evolved": {
+        "lower": 0.991488705756494,
+        "upper": 0.991488705756494,
+        "point": 0.991488705756494,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.8322038737522254,
+          "upper": 0.8322038737522254,
+          "point": 0.8322038737522254,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.8693800890218893,
+          "upper": 0.8693800890218893,
+          "point": 0.8693800890218893,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.8507919813870574,
+        "upper": 0.8507919813870574,
+        "point": 0.8507919813870574
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410007-normal-t1000000-d0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.9999964892013259,
+        "upper": 0.9999964892013259,
+        "point": 0.9999964892013259,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.583969725611635,
+          "upper": -0.583969725611635,
+          "point": -0.583969725611635,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.4950584636465463,
+          "upper": 0.4950584636465463,
+          "point": 0.4950584636465463,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.04445563098254432,
+        "upper": -0.04445563098254432,
+        "point": -0.04445563098254432
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410007-normal-t1000000-d1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.9999993419658064,
+        "upper": 0.9999993419658064,
+        "point": 0.9999993419658064,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.7356537169288718,
+          "upper": -0.7356537169288718,
+          "point": -0.7356537169288718,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.7519475233038286,
+          "upper": -0.7519475233038286,
+          "point": -0.7519475233038286,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.7438006201163503,
+        "upper": -0.7438006201163503,
+        "point": -0.7438006201163503
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410008-normal-t1000000-d0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "evolved": {
+        "lower": -0.8202216151055176,
+        "upper": -0.8202216151055176,
+        "point": -0.8202216151055176,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.770063485793912,
+          "upper": 0.770063485793912,
+          "point": 0.770063485793912,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.2834767730220133,
+          "upper": 0.2834767730220133,
+          "point": 0.2834767730220133,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.5267701294079626,
+        "upper": 0.5267701294079626,
+        "point": 0.5267701294079626
+      }
+    },
+    {
+      "drawId": "discovery-cluster-4-6410008-normal-t1000000-d1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "evolved": {
+        "lower": -0.6557880542864633,
+        "upper": -0.6557880542864633,
+        "point": -0.6557880542864633,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.10432059842742714,
+          "upper": -0.10432059842742714,
+          "point": -0.10432059842742714,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.029894121294257676,
+          "upper": -0.029894121294257676,
+          "point": -0.029894121294257676,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.0671073598608424,
+        "upper": -0.0671073598608424,
+        "point": -0.0671073598608424
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410001-normal-t1000000-d0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "evolved": {
+        "lower": -0.023386428388230115,
+        "upper": -0.023386428388230115,
+        "point": -0.023386428388230115,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.3041807364693618,
+          "upper": -0.3041807364693618,
+          "point": -0.3041807364693618,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.1492427101864973,
+          "upper": -0.1492427101864973,
+          "point": -0.1492427101864973,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.22671172332792955,
+        "upper": -0.22671172332792955,
+        "point": -0.22671172332792955
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410001-normal-t1000000-d1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "evolved": {
+        "lower": -0.09745685742593753,
+        "upper": -0.09745685742593753,
+        "point": -0.09745685742593753,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.13917285538236746,
+          "upper": -0.13917285538236746,
+          "point": -0.13917285538236746,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.1533892098718877,
+          "upper": -0.1533892098718877,
+          "point": -0.1533892098718877,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.14628103262712758,
+        "upper": -0.14628103262712758,
+        "point": -0.14628103262712758
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410002-normal-t1000000-d0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "evolved": {
+        "lower": -0.07014377174780895,
+        "upper": -0.07014377174780895,
+        "point": -0.07014377174780895,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.22986396507868231,
+          "upper": 0.22986396507868231,
+          "point": 0.22986396507868231,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.0379153557278529,
+          "upper": -0.0379153557278529,
+          "point": -0.0379153557278529,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.0959743046754147,
+        "upper": 0.0959743046754147,
+        "point": 0.0959743046754147
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410002-normal-t1000000-d1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.31195872377516437,
+        "upper": 0.31195872377516437,
+        "point": 0.31195872377516437,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.2708857714141989,
+          "upper": 0.2708857714141989,
+          "point": 0.2708857714141989,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.013679762201748278,
+          "upper": 0.013679762201748278,
+          "point": 0.013679762201748278,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.14228276680797358,
+        "upper": 0.14228276680797358,
+        "point": 0.14228276680797358
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410003-normal-t1000000-d0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 0.13016273391705493,
+        "upper": 0.13016273391705493,
+        "point": 0.13016273391705493,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.17745195467631159,
+          "upper": -0.17745195467631159,
+          "point": -0.17745195467631159,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.1495942896452507,
+          "upper": 0.1495942896452507,
+          "point": 0.1495942896452507,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.01392883251553044,
+        "upper": -0.01392883251553044,
+        "point": -0.01392883251553044
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410003-normal-t1000000-d1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "evolved": {
+        "lower": -0.19463784578332152,
+        "upper": -0.19463784578332152,
+        "point": -0.19463784578332152,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.0003830747023761344,
+          "upper": -0.0003830747023761344,
+          "point": -0.0003830747023761344,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.006151775982371608,
+          "upper": -0.006151775982371608,
+          "point": -0.006151775982371608,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.003267425342373871,
+        "upper": -0.003267425342373871,
+        "point": -0.003267425342373871
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410004-normal-t1000000-d0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "evolved": {
+        "lower": -0.11793784018244677,
+        "upper": -0.11793784018244677,
+        "point": -0.11793784018244677,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.00585793493832591,
+          "upper": 0.00585793493832591,
+          "point": 0.00585793493832591,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.04765279672537437,
+          "upper": -0.04765279672537437,
+          "point": -0.04765279672537437,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.02089743089352423,
+        "upper": -0.02089743089352423,
+        "point": -0.02089743089352423
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410004-normal-t1000000-d1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.3701709755241206,
+        "upper": 0.3701709755241206,
+        "point": 0.3701709755241206,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.29340670212576525,
+          "upper": 0.29340670212576525,
+          "point": 0.29340670212576525,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.35191105332520306,
+          "upper": 0.35191105332520306,
+          "point": 0.35191105332520306,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.3226588777254842,
+        "upper": 0.3226588777254842,
+        "point": 0.3226588777254842
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410005-normal-t1000000-d0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.19676312598828505,
+        "upper": 0.19676312598828505,
+        "point": 0.19676312598828505,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.25799890133322967,
+          "upper": 0.25799890133322967,
+          "point": 0.25799890133322967,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.24771535629310493,
+          "upper": 0.24771535629310493,
+          "point": 0.24771535629310493,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.2528571288131673,
+        "upper": 0.2528571288131673,
+        "point": 0.2528571288131673
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410005-normal-t1000000-d1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "evolved": {
+        "lower": -0.000392698222716684,
+        "upper": -0.000392698222716684,
+        "point": -0.000392698222716684,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.007762445803478122,
+          "upper": -0.007762445803478122,
+          "point": -0.007762445803478122,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.0413290761138186,
+          "upper": 0.0413290761138186,
+          "point": 0.0413290761138186,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.016783315155170238,
+        "upper": 0.016783315155170238,
+        "point": 0.016783315155170238
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410006-normal-t1000000-d0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "evolved": {
+        "lower": -0.2443379837977434,
+        "upper": -0.2443379837977434,
+        "point": -0.2443379837977434,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.1949013977826402,
+          "upper": -0.1949013977826402,
+          "point": -0.1949013977826402,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.45363197445804687,
+          "upper": -0.45363197445804687,
+          "point": -0.45363197445804687,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.32426668612034354,
+        "upper": -0.32426668612034354,
+        "point": -0.32426668612034354
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410006-normal-t1000000-d1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "evolved": {
+        "lower": -0.20841478504898422,
+        "upper": -0.20841478504898422,
+        "point": -0.20841478504898422,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.2552928683281894,
+          "upper": -0.2552928683281894,
+          "point": -0.2552928683281894,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.07765362526663357,
+          "upper": -0.07765362526663357,
+          "point": -0.07765362526663357,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.1664732467974115,
+        "upper": -0.1664732467974115,
+        "point": -0.1664732467974115
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410007-normal-t1000000-d0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "evolved": {
+        "lower": -0.053399527405037416,
+        "upper": -0.053399527405037416,
+        "point": -0.053399527405037416,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.056118055638729264,
+          "upper": -0.056118055638729264,
+          "point": -0.056118055638729264,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.04734981119266699,
+          "upper": 0.04734981119266699,
+          "point": 0.04734981119266699,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.004384122223031136,
+        "upper": -0.004384122223031136,
+        "point": -0.004384122223031136
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410007-normal-t1000000-d1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.09265744297367004,
+        "upper": 0.09265744297367004,
+        "point": 0.09265744297367004,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.004828509234440345,
+          "upper": -0.004828509234440345,
+          "point": -0.004828509234440345,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.3665325407493717,
+          "upper": -0.3665325407493717,
+          "point": -0.3665325407493717,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.18568052499190602,
+        "upper": -0.18568052499190602,
+        "point": -0.18568052499190602
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410008-normal-t1000000-d0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "evolved": {
+        "lower": -0.17987972445612171,
+        "upper": -0.17987972445612171,
+        "point": -0.17987972445612171,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.04842684674820186,
+          "upper": 0.04842684674820186,
+          "point": 0.04842684674820186,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.05100171546633943,
+          "upper": -0.05100171546633943,
+          "point": -0.05100171546633943,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.0012874343590687856,
+        "upper": -0.0012874343590687856,
+        "point": -0.0012874343590687856
+      }
+    },
+    {
+      "drawId": "discovery-cluster-16-6410008-normal-t1000000-d1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "evolved": {
+        "lower": 0.03838313123972749,
+        "upper": 0.03838313123972749,
+        "point": 0.03838313123972749,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.017465540529325543,
+          "upper": -0.017465540529325543,
+          "point": -0.017465540529325543,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.02804932820602171,
+          "upper": -0.02804932820602171,
+          "point": -0.02804932820602171,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.022757434367673628,
+        "upper": -0.022757434367673628,
+        "point": -0.022757434367673628
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410001-normal-t1000000-d0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "evolved": {
+        "lower": 0.5483957906356506,
+        "upper": 0.5483957906356506,
+        "point": 0.5483957906356506,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.5515859386213605,
+          "upper": 0.5515859386213605,
+          "point": 0.5515859386213605,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.5819758329222258,
+          "upper": 0.5819758329222258,
+          "point": 0.5819758329222258,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.5667808857717931,
+        "upper": 0.5667808857717931,
+        "point": 0.5667808857717931
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410001-normal-t1000000-d1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "evolved": {
+        "lower": -0.18698173960008677,
+        "upper": -0.18698173960008677,
+        "point": -0.18698173960008677,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.15173690118515443,
+          "upper": -0.15173690118515443,
+          "point": -0.15173690118515443,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.12795097486562454,
+          "upper": 0.12795097486562454,
+          "point": 0.12795097486562454,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.011892963159764944,
+        "upper": -0.011892963159764944,
+        "point": -0.011892963159764944
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410002-normal-t1000000-d0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.6326990877415856,
+        "upper": 0.6326990877415856,
+        "point": 0.6326990877415856,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.39167704382135315,
+          "upper": 0.39167704382135315,
+          "point": 0.39167704382135315,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.23769433693345784,
+          "upper": 0.23769433693345784,
+          "point": 0.23769433693345784,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.3146856903774055,
+        "upper": 0.3146856903774055,
+        "point": 0.3146856903774055
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410002-normal-t1000000-d1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "evolved": {
+        "lower": 0.626071298064521,
+        "upper": 0.626071298064521,
+        "point": 0.626071298064521,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.08366989544160333,
+          "upper": -0.08366989544160333,
+          "point": -0.08366989544160333,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.9254008970177601,
+          "upper": -0.9254008970177601,
+          "point": -0.9254008970177601,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.5045353962296817,
+        "upper": -0.5045353962296817,
+        "point": -0.5045353962296817
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410003-normal-t1000000-d0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 0.7289270703727391,
+        "upper": 0.7289270703727391,
+        "point": 0.7289270703727391,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.007689349158256478,
+          "upper": -0.007689349158256478,
+          "point": -0.007689349158256478,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.7819074969027391,
+          "upper": 0.7819074969027391,
+          "point": 0.7819074969027391,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.3871090738722413,
+        "upper": 0.3871090738722413,
+        "point": 0.3871090738722413
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410003-normal-t1000000-d1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "evolved": {
+        "lower": 0.418028360809879,
+        "upper": 0.418028360809879,
+        "point": 0.418028360809879,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.5585776466888912,
+          "upper": 0.5585776466888912,
+          "point": 0.5585776466888912,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.13688254466288918,
+          "upper": 0.13688254466288918,
+          "point": 0.13688254466288918,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.3477300956758902,
+        "upper": 0.3477300956758902,
+        "point": 0.3477300956758902
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410004-normal-t1000000-d0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.5211993444454653,
+        "upper": 0.5211993444454653,
+        "point": 0.5211993444454653,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.4255318758535448,
+          "upper": 0.4255318758535448,
+          "point": 0.4255318758535448,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.338812569750315,
+          "upper": 0.338812569750315,
+          "point": 0.338812569750315,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.38217222280192986,
+        "upper": 0.38217222280192986,
+        "point": 0.38217222280192986
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410004-normal-t1000000-d1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "evolved": {
+        "lower": 0.6242650854824489,
+        "upper": 0.6242650854824489,
+        "point": 0.6242650854824489,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.4477196390908109,
+          "upper": 0.4477196390908109,
+          "point": 0.4477196390908109,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.40990372524772095,
+          "upper": 0.40990372524772095,
+          "point": 0.40990372524772095,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.4288116821692659,
+        "upper": 0.4288116821692659,
+        "point": 0.4288116821692659
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410005-normal-t1000000-d0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.6535841508079723,
+        "upper": 0.6535841508079723,
+        "point": 0.6535841508079723,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.45815686063961814,
+          "upper": 0.45815686063961814,
+          "point": 0.45815686063961814,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.2263470499782693,
+          "upper": 0.2263470499782693,
+          "point": 0.2263470499782693,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.3422519553089437,
+        "upper": 0.3422519553089437,
+        "point": 0.3422519553089437
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410005-normal-t1000000-d1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "evolved": {
+        "lower": 0.6359192840921076,
+        "upper": 0.6359192840921076,
+        "point": 0.6359192840921076,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.22841311703150946,
+          "upper": 0.22841311703150946,
+          "point": 0.22841311703150946,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.6116125455402333,
+          "upper": 0.6116125455402333,
+          "point": 0.6116125455402333,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.42001283128587136,
+        "upper": 0.42001283128587136,
+        "point": 0.42001283128587136
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410006-normal-t1000000-d0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "evolved": {
+        "lower": 0.44902361924,
+        "upper": 0.44902361924,
+        "point": 0.44902361924,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.3676543030996748,
+          "upper": -0.3676543030996748,
+          "point": -0.3676543030996748,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.13717347389942325,
+          "upper": -0.13717347389942325,
+          "point": -0.13717347389942325,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.25241388849954904,
+        "upper": -0.25241388849954904,
+        "point": -0.25241388849954904
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410006-normal-t1000000-d1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "evolved": {
+        "lower": 0.6504798061698822,
+        "upper": 0.6504798061698822,
+        "point": 0.6504798061698822,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.003640307883260698,
+          "upper": -0.003640307883260698,
+          "point": -0.003640307883260698,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.5955392836060528,
+          "upper": -0.5955392836060528,
+          "point": -0.5955392836060528,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.2995897957446568,
+        "upper": -0.2995897957446568,
+        "point": -0.2995897957446568
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410007-normal-t1000000-d0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.8851803251904582,
+        "upper": 0.8851803251904582,
+        "point": 0.8851803251904582,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": -0.14207380710641693,
+          "upper": -0.14207380710641693,
+          "point": -0.14207380710641693,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.12682736436227296,
+          "upper": -0.12682736436227296,
+          "point": -0.12682736436227296,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": -0.13445058573434493,
+        "upper": -0.13445058573434493,
+        "point": -0.13445058573434493
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410007-normal-t1000000-d1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "evolved": {
+        "lower": 0.6847259874871037,
+        "upper": 0.6847259874871037,
+        "point": 0.6847259874871037,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.5489225667805804,
+          "upper": 0.5489225667805804,
+          "point": 0.5489225667805804,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.49932196821266,
+          "upper": -0.49932196821266,
+          "point": -0.49932196821266,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.024800299283960187,
+        "upper": 0.024800299283960187,
+        "point": 0.024800299283960187
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410008-normal-t1000000-d0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "evolved": {
+        "lower": 0.6031882301263676,
+        "upper": 0.6031882301263676,
+        "point": 0.6031882301263676,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.5745299014688048,
+          "upper": 0.5745299014688048,
+          "point": 0.5745299014688048,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.3351527727246163,
+          "upper": 0.3351527727246163,
+          "point": 0.3351527727246163,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.45484133709671054,
+        "upper": 0.45484133709671054,
+        "point": 0.45484133709671054
+      }
+    },
+    {
+      "drawId": "discovery-cluster-139-6410008-normal-t1000000-d1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "evolved": {
+        "lower": 0.4729078274790026,
+        "upper": 0.4729078274790026,
+        "point": 0.4729078274790026,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "mutants": [
+        {
+          "lower": 0.6297102408717047,
+          "upper": 0.6297102408717047,
+          "point": 0.6297102408717047,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.5335142479961243,
+          "upper": 0.5335142479961243,
+          "point": 0.5335142479961243,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "mutant": {
+        "lower": 0.5816122444339145,
+        "upper": 0.5816122444339145,
+        "point": 0.5816122444339145
+      }
+    }
+  ],
+  "stopped": false,
+  "inputs": {
+    "studyIdentitySha256": "feec9045cb6aac33540a69507d5a609809c182c1b6defd89cc1942fc94f997fb",
+    "candidateSha256": "e125585ae019e743edb9f7c37d6e722860080ace6219c4cda70f803aeddb77e4",
+    "releaseSha256": "0e822781e5ed2ecaffe76ee109054cd82e375a013e7402179449e1b84e4d83ae",
+    "rosterSha256": "21ff8f99c8895401a35397da14bbb5fbc853496dc6489d4bd224fc0ad643602a",
+    "frozenReportSha256": "085d55cf1f7121ece85ff3a5dc9fa5f236c912531e480e3262db99ad205ec68a",
+    "protocolSha256": "783015041a0fd30feb4b5f37b42dd2d8e8aaf7b6a1eeff783e7607902aa6d4c8"
+  }
+}

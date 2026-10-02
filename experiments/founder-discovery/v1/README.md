@@ -1,6 +1,6 @@
 # Founder discovery continuation — 2026-09-30
 
-Status: the frozen 252-unit capability screen is complete and strictly validated. Four diverse candidates are shortlisted for a fresh competition pilot. The subsequent improvement study completed on 2026-10-02 and met its frozen repeatability criterion (8/8 seed blocks, conditional on four founders, one of which did not improve); see `improvement-findings.md`. RULE_VERSION 1 remains unchanged. The failed founder-policy pilot remains a failed assay; this exploration neither reruns it nor reinterprets its controls.
+Status: the frozen 252-unit capability screen is complete and strictly validated. Four diverse candidates are shortlisted for a fresh competition pilot. The subsequent improvement study completed on 2026-10-02 and met its frozen repeatability criterion (8/8 seed blocks, conditional on four founders, one of which did not improve); see `improvement-findings.md`. A divergence control completed the same day: selection beyond divergence for cluster-33 and, with no margin, cluster-4, and the single swept change sufficient for most of the advantage in cluster-33 and cluster-139; see `divergence-control-findings.md`. RULE_VERSION 1 remains unchanged. The failed founder-policy pilot remains a failed assay; this exploration neither reruns it nor reinterprets its controls.
 
 ## Evidence and first decision
 

@@ -1,0 +1,379 @@
+{
+ "format": "founder-discovery-divergence-control-analysis-review-v1",
+ "reviewedReportSha256": "e72d47922ca0f95b221d78174fab537b69ef0a9d892c2f44773217d80b78638e",
+ "verdict": "CONFIRMED-WITH-QUALIFICATIONS",
+ "method": "Independent Python re-derivation (rederive.py; not the TypeScript analyzer; reads only, writes only to this folder). Indexed all 1,200 raw assay files by content (descendantHex, founderHex, seed, assignment) and recomputed each cache key from the JSON identity using the frozen study's own cfg; mapped every one of 150 genomes x 4 assay seeds x 2 assignments to exactly one file; recomputed every score from masses; verified provenance hashes. Regenerated all 128 type-matched mutants, 14 reconstructions (carrier lower-median) and 8 specificity controls bit for bit with my own Mulberry32 port from the frozen sampler semantics. Recomputed with exact rational arithmetic: genome means, draw means, mutant pairs, 32 unit values (E, M, E-M), certification, per-founder criteria and readings, pooled blocks, the whole-block bootstrap (seed 6480300, 10,000 resamples, exact reproduction), Test B per seed, recovered share, and the cluster-33 R-C comparison. Re-read the 512 evolved observations from the frozen raw files, compared all 8 replays and 28 audits to the frozen originals (all fields but elapsedSeconds), checked invocation ledger, charged seconds (15,307.339 s over 28 invocations), pins and file hashes, and reproduced post-hoc.json and the frozen founder effects. Maximum absolute difference from report.json anywhere: 2.2e-16. Then ran descriptive diagnostics (neutrality, position, duplicates, leave-one-assay-seed-out, unit bootstrap) that are mine and not part of the protocol.",
+ "checks": [
+  {
+   "name": "report sha256 = e72d4792...",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "protocol sha256 equals candidate pin",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster sha256 equals candidate pin",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "candidate sha256 equals release pin",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "frozen report sha256 equals candidate pin and task statement",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "manifest sha256 equals candidate pin",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster/candidate sourceManifestHash = manifest",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "frozen cfg found for all 4 assay seeds",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster counts 64/128/14/8/1200/8",
+   "result": "pass",
+   "detail": "{'evolvedDraws': 64, 'mutantGenomes': 128, 'reconstructionGenomes': 14, 'specificityGenomes': 8, 'newConfigurations': 1200, 'replayConfigurations': 8, 'totalConfigurations': 1208}"
+  },
+  {
+   "name": "150 genomes, unique ids",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "no duplicate (descendantHex,founderHex) genome pairs",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "1,200 raw assay files",
+   "result": "pass",
+   "detail": "1200"
+  },
+  {
+   "name": "every raw file: filename == recomputed cacheKey == stored cacheKey; cfg == frozen cfg; steps/format/sourceManifestHash ok",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "no two raw files with identical (desc,founder,seed,assignment)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "score/status in every raw file equals recomputation from masses (bitwise float equality)",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "no both-extinct outcome among 1,200 new results",
+   "result": "pass",
+   "detail": "{'scored': 1200}"
+  },
+  {
+   "name": "1,200 provenance files each bind study identity + sha256 of the raw result bytes",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "one founder hex per founder in manifest",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "64 evolved draws in report order",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster.evolved order/ids match report order",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster evolved descendantHex == frozen report sample draw genomes",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "all 128 mutants regenerated bit-for-bit from the protocol sampler (Mulberry32 6480000+j); magnitude/type multiset & bounds preserved",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "roster.mutants evolvedDrawId/seed fields consistent",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "14 reconstruction genomes + 8 specificity controls regenerated bit-for-bit (carrier lower-median; Mulberry32 6480200+i)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "every roster configuration (150 genomes x 4 seeds x 2 assignments) has exactly one raw result by content",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "cache keys recomputed from roster hexes + frozen cfg equal result filenames",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster.assays cacheKeys == those files, 1:1",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "512 evolved observations used (64 draws x 8)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "E: 512 observations re-read from the frozen raw result files, masses -> scores equal report scores; cfg/hex/seed/assignment/cache key consistent",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "frozen report: assignments 2,3 score exactly as 0,1 for every (draw, assay seed) in all arms/times",
+   "result": "pass",
+   "detail": "pairs=3072 bad=0"
+  },
+  {
+   "name": "no missing / unavailable outcome in any of 1,200 results -> all bounds collapse (lower==upper==point)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "A: founder-level E/M/contrast bounds, certified seed counts, criteria and readings match report",
+   "result": "pass",
+   "detail": "max abs diff 1.11e-16"
+  },
+  {
+   "name": "A: all 32 unit values (E, M, E-M) and certification flags match report",
+   "result": "pass",
+   "detail": "max abs diff 2.22e-16"
+  },
+  {
+   "name": "A: 64 draw-level E, mutant-pair values match report",
+   "result": "pass",
+   "detail": "max abs diff 1.11e-16"
+  },
+  {
+   "name": "descriptive: 8 pooled blocks match report (values and certification)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "descriptive: 7/8 pooled blocks certified; block 6410008 = -0.0526; mean 0.4566",
+   "result": "pass",
+   "detail": "block8=-0.052583 mean=0.456608"
+  },
+  {
+   "name": "descriptive: whole-block bootstrap (seed 6480300, 10,000 resamples, Mulberry32 reimplemented) reproduces report [0.2736, 0.6145] exactly",
+   "result": "pass",
+   "detail": "mine=[0.273593,0.614463] report=[0.273593,0.614463] diff=0.00e+00"
+  },
+  {
+   "name": "B: per-seed R values, certification, means, recovered share, distinct genomes, cluster-33 specificity (R-C per seed, count) match report",
+   "result": "pass",
+   "detail": "max abs diff 1.11e-16"
+  },
+  {
+   "name": "candidate.replayExpected keys == roster replay keys",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "8 replays: every field except elapsedSeconds equal to frozen originals; originals match pinned hashes and frozen report scores",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "28 invocation records, all settled",
+   "result": "pass",
+   "detail": "Counter({'settled': 28})"
+  },
+  {
+   "name": "charged seconds total 15,307.34 s over 28 invocations (<25,000 cap, <=60 invocations)",
+   "result": "pass",
+   "detail": "15307.339"
+  },
+  {
+   "name": "every invocation <= 600 s run + watchdog (max charged 564.1)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "sum of newAssays across invocations = 1,200; replayed total = 8",
+   "result": "pass",
+   "detail": "new=1200 replayed=8"
+  },
+  {
+   "name": "invocation records bind the pinned study identity, candidate and release hashes",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "no RUNNING lock, no STOPPED.json, tmp dir empty, no foreign entries",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "28 audit records: one per invocation (indices 1..28 = invocation indices that did work), each equal to its frozen original except elapsedSeconds",
+   "result": "pass",
+   "detail": "audits=28"
+  },
+  {
+   "name": "audits rotate through all eight replay configurations (index sequence is i mod 8 over roster replay order)",
+   "result": "pass",
+   "detail": "[0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3]"
+  },
+  {
+   "name": "supervisor log final line: complete, 1200/1200, 8/8 replays, 28/28 audits, charged 15307.339",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "technical completeness (independent): 1,200 results, 8/8 replays, matching audits for all 28 working invocations",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "report.technicalComplete True, replay 8/8, audits 28/28, missingNewResults 0",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "E reproduces frozen-study founder effects (0.9911, 0.5647, -0.0031, 0.5592) and per-seed pairs",
+   "result": "pass",
+   "detail": "max abs diff 2.22e-16; E=[0.9911, 0.5647, -0.0031, 0.5592]"
+  },
+  {
+   "name": "post-hoc.json: swept-slot split counts/means, mean mutant scores and parameter-change counts reproduced",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "replay originals include results produced on both hosts (3 work-mac, 5 local), all reproduced locally",
+   "result": "pass",
+   "detail": "{'208ed2ba': ['local'], 'cdfa00c0': ['work-mac'], '8b80f582': ['local'], '3b5db105': ['work-mac'], 'd5132a42': ['work-mac'], 'e135ff04': ['local'], '30d808b9': ['local'], '11467080': ['local']}"
+  },
+  {
+   "name": "all 8 replay files were written before the first new assay result file (mtime order)",
+   "result": "pass",
+   "detail": "last replay 1790948196, first assay 1790948207"
+  },
+  {
+   "name": "protocol file mtime precedes first new assay result file",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "GPU re-execution of any new competition",
+   "result": "not-checked",
+   "detail": "Forbidden by the review brief. Raw masses were taken as recorded; their integrity rests on the 8 replays and 28 audits, whose records I compared field by field to the frozen originals."
+  },
+  {
+   "name": "Independence of the 54 pinned execution sources / Deno tests",
+   "result": "not-checked",
+   "detail": "Source hashes in candidate.json were not re-verified, and the 27 Deno tests were not run."
+  },
+  {
+   "name": "byGenomeAbundance equals founder-lineage genomes at 1M (input to the carrier lower-median)",
+   "result": "not-checked",
+   "detail": "I reproduced the 16 R values and 8 C genomes from the frozen report's byGenomeAbundance exactly, but did not re-derive that abundance table from checkpoints."
+  }
+ ],
+ "claims": [
+  {
+   "id": "a",
+   "assessment": "SUPPORTED",
+   "detail": "Recomputed exactly (Fractions, then floats; max abs difference from the report 2.2e-16). Certified units: cluster-33 8/8, cluster-4 7/8, cluster-16 2/8, cluster-139 6/8; technically complete. Founder-level E / M / E-M: 33: 0.9911 / 0.0217 / 0.9695; 4: 0.5647 / 0.0912 / 0.4735; 16: -0.0031 / -0.0178 / 0.0147; 139: 0.5592 / 0.1905 / 0.3687. Readings by the fixed table: 33 and 4 \"beyond divergence\" (E lower > 0.10, M lower <= 0.10); 16 and 139 \"not met\". A33 is robust (smallest unit contrast 0.541; 8/8 after dropping any one assay seed). A4 is not (see b and additionalFindings)."
+  },
+  {
+   "id": "b",
+   "assessment": "SUPPORTED",
+   "detail": "M(cluster-4) = 0.091235, margin 0.00876 below 0.10; an M above 0.10 would give \"partly divergence\" under the same rule. The failing unit is 6410008: E = -0.738 (both draws negative: -0.820, -0.656), M = +0.230, E-M = -0.968. Facts the write-up should add: (i) the 7/8 criterion itself hangs on one unit, 6410001, at E-M = 0.1081 (margin 0.0081); (ii) dropping assay seed 6430003 gives 6/8 for cluster-4 (descriptive leave-one-assay-seed-out; 33, 16, 139 do not change); (iii) a descriptive unit bootstrap puts P(M mean > 0.10) near 0.47, so the \"beyond\" versus \"partly\" label is a threshold artefact; M lower bound is just the point estimate because nothing is missing."
+  },
+  {
+   "id": "c",
+   "assessment": "NEEDS-QUALIFICATION",
+   "detail": "Numbers reproduce exactly: 6/8 certified (6410001: E-M = -0.097; 6410008: +0.020); M = 0.1905; 19 of 32 mutants carry a mu increase, mean 0.326; the other 13 mean -0.008. Qualifications. (1) \"Narrowly\" holds for the count only: in 6410001 E is below M (E 0.181, M 0.277), and 6410008 is 0.08 under the threshold. (2) The 19/32 split is fixed by the frozen roster (stated in the protocol), but the 0.33 vs -0.01 scores are post hoc. (3) The \"other 13\" mix 7 mutants with a mu decrease (mean -0.126) and 6 with no mu change (mean +0.131); say so rather than implying a clean contrast. (4) Clamping explains less than the sentence suggests: 13 of the 16 evolved draws changed mu, all upward, so 26 mutants carry a mu change; 6 of them are forced up (E magnitudes 21, 24, 24 exceed the 17 available below 33); the other 20 are free-sign and 13 went up (p = 0.13 for a fair coin). Expected up under the clamp is 16 of 26 against 13 unconstrained, so about 3 of the 6 excess are the clamp and about 3 are chance. (5) \"A is conservative\" is right in direction (M inflated, E-M deflated). Counterfactual with equal up and down mutants: M falls to about 0.11, still near the 0.10 line. (6) The mu-up mutants do not explain both failures: dropping them lifts 6410001 to E-M = 0.19 (certified), but 6410008 has two non-mu-up mutants averaging 0.58 and stays at -0.04; seeds 6410004 and 6410005 have all four mutants mu-up and cannot be evaluated. So a post hoc rescue is not available, and it should not be offered. (7) \"Clearly help\": clear only under the protocol rule (point estimate > 0.10); a descriptive unit bootstrap interval for M is about [-0.01, 0.37]."
+  },
+  {
+   "id": "d",
+   "assessment": "NEEDS-QUALIFICATION",
+   "detail": "Numbers reproduce: B33 8/8 certified, mean R 0.9491 vs E 0.9911 (share 0.9576); B139 8/8, mean R 0.4772 vs E 0.5592 (share 0.8534); B139 has 6 distinct genomes (49 and 47 twice). Qualifications. (1) The share is a ratio of mean scores on a bounded [-1, 1] scale; cluster-33 E sits 0.009 under the ceiling (104 of 128 E competitions score > 0.99), so \"96%\" compresses real differences: R is 0.12-0.15 under E in seeds 6410002 and 6410004, 35 of 64 R competitions exceed 0.99, and R ranges 0.82-1.00 per seed. (2) It describes sufficiency in the founder background only. Evolved draws show the change is neither necessary nor sure to help in the evolved background: both cluster-33 draws of seed 6410002 lack the b2[PHOTO] change yet score 0.9975; cluster-139 seed 6410002 (both draws) and seed 6410008 draw 1 lack the mu change yet score 0.63, 0.63, 0.47; and seed 6410001 draw 1 carries mu +16 yet scores -0.187. (3) R values come from the same evolved populations and were chosen after seeing the data (the protocol says so); the competitions are new. (4) B139: every R genome mean is >= 0.405 and every one of 48 distinct-genome competitions is positive (min 0.279), so the pass is not marginal, but the duplicates mean the sign tail does not apply (I get a false-pass probability of 0.078 at a per-genome pass rate of 0.5, 0.029 at 0.4, matching the protocol's 0.03 figure). (5) R minus E per seed for 139 runs from -0.38 to +0.39, so \"about 85%\" is an average of heterogeneous seeds."
+  },
+  {
+   "id": "e",
+   "assessment": "NEEDS-QUALIFICATION",
+   "detail": "Numbers reproduce: R beats the matched control in 8/8 seeds (R lower > C upper), mean R-C = 0.8546, per-seed R-C = 1.000, 0.876, 0.899, 0.311, 0.782, 1.000, 0.975, 0.992. Controls scored 0, 0, 0.047, 0.511, 0.198, 0, 0, 0 (seed order 6410001..8). Qualification: the sentence \"single weight changes of that size are not generally neutral\" is misleading. Five of the eight controls are exactly neutral: the descendant score is exactly antisymmetric between assignments 0 and 1 in every assay seed, so the genome mean is exactly 0.000, meaning the changed weight has no effect on the dynamics. Three of eight are non-neutral and all three are positive (0.047, 0.511, 0.198; none negative). So say: most random single-weight changes of this size are inert here, a minority help, and R exceeds both. Also: the control is a random weight slot (159 candidates), not a same-class slot such as another output bias, and its magnitudes (10-38) are matched per seed. Nothing in this supports a specificity claim beyond \"R is far above what a random single weight change of equal size usually gives\"."
+  },
+  {
+   "id": "f",
+   "assessment": "SUPPORTED",
+   "detail": "Reproduced to the last digit, including the bootstrap (my own Mulberry32 port, seed 6480300, 10,000 whole-block resamples, JS summation order): 7 of 8 blocks certified; block 6410008 = -0.052583; mean 0.456608; 95% interval [0.2735932667975771, 0.6144632413723119], identical to the report. Add that the single failing block is one unit: block 6410008 is [33: +0.796, 4: -0.968, 16: -0.059, 139: +0.020], so cluster-4's unit alone drives it; and that the rule pools four founders including the null cluster-16, so it is descriptive."
+  },
+  {
+   "id": "g",
+   "assessment": "SUPPORTED",
+   "detail": "All 1,200 outcomes are scored; no both-extinct, no missing, unassociated mass is 0 in every result, so lower = upper = point everywhere and \"certified\" means the observed unit contrast (A) or observed R mean (B) exceeds 0.10. Each A unit is 2 evolved draws (16 competitions) and 4 mutants (32 competitions). What the write-up should add is that these bounds carry no sampling uncertainty at all, only missingness: genome-level SD of mutant means is 0.55 (33), 0.66 (4), 0.19 (16), 0.40 (139), so a unit's M from 4 mutants has an approximate SE of 0.27, 0.33, 0.09, 0.20. The only inferential element is the 7-of-8 count, whose 9/256 tail assumes independent units; units of a founder share the founder and the same four assay seeds, and the two evolved draws of a unit come from one population and can be near-clones (cluster-33 seed 6410001: 18 of 18 changed slots shared, differ at 1 of 163 slots)."
+  }
+ ],
+ "additionalFindings": [
+  {
+   "severity": "medium",
+   "detail": "Cluster-4 pass is fragile on three fronts: M is 0.0088 below the reading boundary; unit 6410001 passes at E-M = 0.1081 and is the only margin between 7/8 and 6/8; dropping assay seed 6430003 gives 6/8. Recommend saying \"met by the fixed rule, with no margin\" rather than a flat \"beyond divergence\"."
+  },
+  {
+   "severity": "medium",
+   "detail": "Cluster-33 specificity control is mostly exactly-neutral: 5 of 8 control genomes score exactly 0.000 in all 4 assay seeds (inert weight slots 135, 127, 53, 30, 70), 3 are positive (slot 19: 0.047, slot 80: 0.511, slot 75: 0.198). So R-C mostly measures R against nothing, and two controls show other single weights can be strongly beneficial. 0 of 128 random mutants are exactly neutral."
+  },
+  {
+   "severity": "medium",
+   "detail": "\"Certified\" carries no sampling uncertainty (all bounds collapse), and the units are not independent replicates: shared founder, shared assay seeds 6430001-6430004, and two evolved draws per unit drawn from one population. Unit-level near-threshold flags (cluster-4 0.108, cluster-16 0.115 and 0.126, which are irrelevant because 16 fails) are indistinguishable from non-certification. Descriptive unit bootstrap CIs for founder-level E-M are wide for cluster-4 [-0.02, 0.91] and cluster-139 [0.13, 0.62] (my numbers, not protocol)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Cluster-139 null bias in numbers: 26 of 32 mutants carry a mu change (13 of 16 evolved draws changed mu, all upward, by 13-24 from 33), 19 of those go up (73%); expected 13 with free signs and 16 with the lower-bound clamp, so roughly half of the excess is the clamp and half chance. The mu-up mutants mean 0.326, mu-down -0.126, no-mu-change +0.131 (n = 19, 7, 6). If up and down were equally represented, M would be about 0.11 instead of 0.19. This is post hoc arithmetic. A is conservative for cluster-139 but the counterfactual M is still near the 0.10 line, so no pass is implied."
+  },
+  {
+   "severity": "low",
+   "detail": "The same null contamination exists for cluster-33 by chance, not clamping: 4 of 32 mutants carry a b2[PHOTO] increase (none a decrease), scoring 0.56 on average against -0.055 for the other 28 (post-hoc.json, reproduced). This is independent support that the bias is beneficial in a random background and makes A33 slightly conservative; the protocol text only mentions cluster-139."
+  },
+  {
+   "severity": "low",
+   "detail": "Raw-data pattern: single-competition scores are dominated by position-by-seed luck. In the frozen identity (off) arm, identical genomes score |s| averaging 0.69 for cluster-33 (max 0.95), 0.16 for cluster-4, 0.12 for cluster-139, 0.02 for cluster-16, always exactly antisymmetric between assignments 0 and 1 (768 of 768 groups). Averaging both sides cancels this exactly only for phenotypically identical genomes. Cluster-33 and cluster-4 mutant genome means span -1.0 to +0.98 and -0.97 to +0.94. No systematic left/right residual appears in arm means (a0 vs a1: E 0.989/0.993, 0.561/0.569, -0.009/0.003, 0.563/0.555 for 33/4/16/139)."
+  },
+  {
+   "severity": "low",
+   "detail": "Duplicates and comparability: all 150 new genomes are distinct from each other and from all 64 evolved draws; the only shared genomes are the intended cluster-139 duplicates (49 and 47). The 8 replay originals were produced on both hosts (3 work-mac, 5 local) and all 8 reproduced bitwise locally, so E (two hosts) and M/R/C (local) are comparable. Replays were written before the first new result, and the protocol, candidate and release files are older than the first invocation and match their pinned hashes."
+  },
+  {
+   "severity": "low",
+   "detail": "Minor documentation points: the protocol says assignments 2 and 3 matched 0 and 1 in \"all 480 frozen groups\"; the frozen report has 1,536 (draw, assay seed) groups, all invariant (3,072 comparisons, 0 exceptions; 256 for the normal arm at 1M), and I could not reproduce the figure 480. release.json still says \"notStarted\": true because it is a hash-pinned pre-run artifact. Neither affects results."
+  },
+  {
+   "severity": "low",
+   "detail": "Family-level context: four of six confirmatory tests pass (A33, A4, B33, B139). With no multiplicity claim made, a rough reference is that six independent tests at a 9/256 tail would give at least one false pass with probability 0.19; A4 and B139 are the two where independence and margins are weakest."
+  }
+ ],
+ "limitations": "No simulation was re-run, so the raw masses are trusted as recorded, supported by 8 replays and 28 audits whose records I verified. I did not re-verify the 54 pinned source hashes, run the Deno tests, or re-derive byGenomeAbundance from checkpoints (R values and C genomes depend on it). My genome regeneration follows the library sampler where the protocol text is silent (random-number order for parameter signs, Mulberry32 constants), so the bit-for-bit match shows the roster implements that sampler, not that the sampler is the only reasonable reading. The unit bootstrap, leave-one-assay-seed-out, symmetric-sign counterfactual, what-if excluding mu-up mutants, and false-pass probabilities are my own descriptive calculations, none part of the frozen protocol and none to be used to change a reading. I did not judge whether the gradient competition is biologically meaningful or whether four founders generalize."
+}
