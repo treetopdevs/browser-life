@@ -589,6 +589,24 @@ Integration is engineering at $0, on the Mac. It does not count toward M6, and i
 - **Cost:** about $28 estimated (hard stop $40) on three instances, from the cohort reserve, and only by a dated draw note approved before any paid run.
 - **Waiting on the user:** the remaining design choices and how a confirmed result relates to M7.
 
+**Transition hunt draft (2026-10-01, the user's go).** The registration stays at 24 histories per arm. Beside it, an exploratory hunt is drafted in `docs/scaffold-transition-hunt-v1.md`. It is not frozen and binds nothing until the user approves it.
+- **Why:** the registration confirms one known effect under a fully imposed life cycle. The hunt removes part of that scaffold and asks whether selection among ponds on their own reproductive output still produces a response.
+- **Regime (the "current"):**
+  - Each period, occupied ponds die at random (e = 1/2); empty ponds always die.
+  - Emptied ponds are refounded by an 8 × 8 propagule from a donor's edge zone.
+  - Donors are drawn in proportion to their own edge mass (`nat`), or to a permuted copy of those masses (`shuf`, the control).
+  - Nothing is ranked on a chosen trait. The host still fixes the zone, the packet, the schedule and the transport.
+- **Arms:** 24 histories each.
+  - From the ancestor: `nat-a` and `shuf-a`.
+  - Branched from 24 `scaf` histories at boundary 100: `nat-s` and `shuf-s`. The sources are the registration's if all 24 exist, otherwise the hunt's own.
+- **Primary signature:** common-garden export performance W, `nat` > `shuf`, at α = 0.05 for discovery.
+  - A hit is a candidate seed, not a demonstration of collective reproductive organisation, which a cell-level trait could mimic.
+  - Any hit needs a replication on fresh histories at α = 0.01 before a claim.
+  - Genome-only, heredity, edge-share and improvement tests are secondary.
+- **Stage 0, Mac, $0:** gates for viability and selection strength and for the instrument, plus a non-genetic-effects diagnostic.
+- **Stage 1 cost:** about $27 estimated (hard stop $35) on AWS with the registration's sources, or about $33 (hard stop $42) with its own scaffold phase; or 3–6 days on the Mac. Any paid run needs a dated draw note.
+- **Seeds:** 4,900,001–4,949,999.
+
 
 ## Ecology-first founder discovery — 2026-09-29
 
