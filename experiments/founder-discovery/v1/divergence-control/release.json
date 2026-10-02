@@ -1,0 +1,11 @@
+{
+  "format": "discovery-divergence-control-release/v1",
+  "status": "RELEASED",
+  "candidatePath": "experiments/founder-discovery/v1/divergence-control/candidate.json",
+  "candidateSha256": "e125585ae019e743edb9f7c37d6e722860080ace6219c4cda70f803aeddb77e4",
+  "reviewedBy": "Nicholas Zographos (user, authorized in chat on 2026-10-02), after two independent read-only reviews",
+  "reviewReference": "experiments/founder-discovery/v1/divergence-control/reviews.json; protocol section 'Implementation and review'",
+  "reviewedAt": "2026-10-02T13:30:35.966931+00:00",
+  "authorizes": "Local GPU execution of the pinned roster only: 1,200 new competitions, 8 replays and their audits. Bounded by the candidate's budget of 25,000 s and 60 invocations of at most 600 s each, on owned hardware at $0. Authorizes no other simulation, assay, protocol change or analysis change.",
+  "notStarted": true
+}
