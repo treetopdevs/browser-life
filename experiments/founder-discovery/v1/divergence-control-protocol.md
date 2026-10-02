@@ -68,6 +68,7 @@ Average the 16 competitions within each genome, then the two draws within each f
 ## Before freeze
 
 1. **Generator** (`tools/discovery_divergence_control.ts plan`). Reads the pinned report and writes a roster: E observation references, all M and R genomes with seeds, the replay sample and every cache key. It refuses non-canonical genomes.
+   - *Done 2026-10-02:* `tools/lib/discovery-divergence-control.ts`, with 8 passing tests in `tools/test/discovery-divergence-control.deno.ts`. On the pinned report it produces exactly the counts and reconstruction values above, deterministically. The roster is generated at freeze, not committed now.
 2. **Runner.** An additive runner over that roster, reusing the frozen competition execution, cache keys and result validation, with bounded invocations and receipts like the distribution study's.
 3. **Analyzer.** Implements the estimands above from the report plus new results.
 4. **Tests:**
@@ -83,7 +84,7 @@ Average the 16 competitions within each genome, then the two draws within each f
 
 **Seed reservations.** These were checked against existing records: 6480001–6480064 for mutant generation and 6480100 for the bootstrap. The assay seeds 6430001–6430004 are reused on purpose. Seed 6470001 belongs to the exploration's descriptive null.
 
-## Decisions for review
+## Decisions (adopted 2026-10-02, user accepted each recommendation)
 
 1. **Random-mutant null.** Recommended: magnitude-preserving shuffle (above). The alternative replays the simulator's mutation operator for the same number of mutation events as the E draw's ancestry path. That is more literal, but it needs lineage paths recomputed from checkpoints, and it matches neither the distance nor the magnitudes exactly.
 2. **Assay seeds.** Recommended: reuse 6430001–6430004, so E needs no new runs and conditions are identical. Fresh seeds would add about 1,024 configurations to re-assay E.

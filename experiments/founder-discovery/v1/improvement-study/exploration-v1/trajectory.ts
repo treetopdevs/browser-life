@@ -12,9 +12,12 @@ import {
   sha256,
 } from "../../../../../tools/lib/founder-policy.ts";
 
-const MANIFEST = "experiments/founder-discovery/v1/improvement-study/manifest.json";
+const MANIFEST =
+  "experiments/founder-discovery/v1/improvement-study/manifest.json";
 const [historiesDir, outPath] = Deno.args;
-if (!historiesDir || !outPath) throw Error("usage: trajectory.ts HISTORIES_DIR NEW_OUT.jsonl");
+if (!historiesDir || !outPath) {
+  throw Error("usage: trajectory.ts HISTORIES_DIR NEW_OUT.jsonl");
+}
 const manifest = JSON.parse(await Deno.readTextFile(MANIFEST));
 const out = await Deno.open(outPath, { createNew: true, write: true });
 const enc = new TextEncoder();
@@ -23,7 +26,9 @@ for (const unit of manifest.units) {
   const dir = join(historiesDir, unit.id);
   let edges: MutationEdge[] = [];
   for (const step of manifest.checkpointSteps as number[]) {
-    const receipt = JSON.parse(await Deno.readTextFile(join(dir, `receipt-${step}.json`)));
+    const receipt = JSON.parse(
+      await Deno.readTextFile(join(dir, `receipt-${step}.json`)),
+    );
     const bytes = await Deno.readFile(join(dir, `checkpoint-${step}.blck`));
     const edgeBytes = await Deno.readFile(join(dir, `edges-${step}.json`));
     if (
@@ -36,17 +41,19 @@ for (const unit of manifest.units) {
     if (state.step !== step) throw Error(`step mismatch ${unit.id}/${step}`);
     const roots = { [lineageKey(0, packLineageLo(state.cfg, 1))]: 0 };
     const m = rootMasses(state, ancestryResolver(roots, edges));
-    await out.write(enc.encode(JSON.stringify({
-      unitId: unit.id,
-      founderId: unit.founderId,
-      seed: unit.seed,
-      mode: unit.mode,
-      step,
-      rootMass: m.roots[0].totalMass,
-      unknownAncestryMass: m.unknownAncestryMass,
-      unassociatedMass: m.unassociatedMass,
-      byGenome: m.roots[0].byGenome,
-    }) + "\n"));
+    await out.write(enc.encode(
+      JSON.stringify({
+        unitId: unit.id,
+        founderId: unit.founderId,
+        seed: unit.seed,
+        mode: unit.mode,
+        step,
+        rootMass: m.roots[0].totalMass,
+        unknownAncestryMass: m.unknownAncestryMass,
+        unassociatedMass: m.unassociatedMass,
+        byGenome: m.roots[0].byGenome,
+      }) + "\n",
+    ));
   }
   console.log(unit.id);
 }
