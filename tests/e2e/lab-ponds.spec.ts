@@ -23,7 +23,7 @@ const toBase64 = (bytes: Uint8Array) => {
   return btoa(text);
 };
 
-test("lab worker runs the runner's pond cycle, replays and resumes across it, and refuses a pre-cycle import", async ({ page }) => {
+test("lab worker runs the runner's pond cycle, replays, restores, plays and resumes across it, and refuses a pre-cycle import", async ({ page }) => {
   // An empty same-origin page gives this test its own worker and GPU device.
   await page.route("**/lab-worker-test", (route) => route.fulfill({ contentType: "text/html", body: "<html><body></body></html>" }));
   // A pre-cycle artifact: a post-cycle one with its last cycle undone, re-encoded with the schema's codec.
@@ -123,6 +123,41 @@ test("lab worker runs the runner's pond cycle, replays and resumes across it, an
       const resumed = await wait("exported");
       const resumedCycles = take("ponds");
 
+      // The saved checkpoint at t=2500, restored from storage (not imported): the pond observer comes back with it, and
+      // stepping on across cycles 3 and 4 gives the continuous run's artifact byte for byte.
+      const savedFile = saved.list.find((c) => c.step === 2500)!.file;
+      send({ type: "restore", file: savedFile });
+      const restored = await wait("loaded");
+      take("stats");
+      send({ type: "step", count: 1500 });
+      await wait("stats", (m) => m.step === 4000);
+      send({ type: "export" });
+      const restoredExport = await wait("exported");
+      const restoredCycles = take("ponds");
+
+      // The same restore, run with play instead of step: 500 steps a frame from t=2500, paused once past cycle 4. The
+      // export advances to the next census, so its step is read from the artifact's name, and a step run from the same
+      // restore to that step must give the same artifact.
+      send({ type: "restore", file: savedFile });
+      await wait("loaded");
+      take("stats");
+      take("ponds");
+      send({ type: "speed", stepsPerFrame: 500 });
+      send({ type: "play", playing: true });
+      await wait("stats", (m) => m.step >= 4000);
+      send({ type: "play", playing: false });
+      send({ type: "export" });
+      const played = await wait("exported");
+      const playedCycles = take("ponds");
+      const playedStep = Number(/-t(\d+)\.blck$/.exec(played.name)![1]);
+      send({ type: "restore", file: savedFile });
+      await wait("loaded");
+      take("stats");
+      send({ type: "step", count: playedStep - 2500 });
+      await wait("stats", (m) => m.step === playedStep);
+      send({ type: "export" });
+      const stepped = await wait("exported");
+
       // An unknown preset is refused without falling back to another one.
       send({ type: "load", presetId: "no-such-preset", seed: 1 });
       const unknown = await refused();
@@ -132,8 +167,10 @@ test("lab worker runs the runner's pond cycle, replays and resumes across it, an
         adapter: ready.adapter, loadedStep: loaded.step, importedStep: imported.step, replay,
         checkpointSteps: saved.list.map((c) => c.step),
         firstCycle, cycles, resumedCycles, guard, unknown,
+        restoredStep: restored.step, restoredCycles, restoredSame: same(restoredExport.bytes, continuous.bytes),
+        playedStep, playedCycles, playedSteppedSame: same(played.bytes, stepped.bytes), played: toBase64(played.bytes),
         keptSame: same(kept.bytes, continuous.bytes), resumedSame: same(resumed.bytes, continuous.bytes),
-        afterUnknownSame: same(afterUnknown.bytes, resumed.bytes), strayLoaded: messages.some((m) => m.type === "loaded"),
+        afterUnknownSame: same(afterUnknown.bytes, stepped.bytes), strayLoaded: messages.some((m) => m.type === "loaded"),
         mid: toBase64(mid.bytes), continuous: toBase64(continuous.bytes), resumed: toBase64(resumed.bytes),
       };
     } finally {
@@ -170,6 +207,18 @@ test("lab worker runs the runner's pond cycle, replays and resumes across it, an
   expect(stateHash(resumed.state)).toBe(stateHash(continuous.state));
   expect(resumed.observer).toEqual(continuous.observer);
   expect(result.resumedSame).toBe(true);
+
+  // Restored from storage at t=2500: the same display messages and the continuous run's artifact.
+  expect(result.restoredStep).toBe(2500);
+  expect(result.restoredCycles.map(cycle)).toEqual(want.slice(2));
+  expect(result.restoredSame).toBe(true);
+  // Played from the same restore: cycles 3 and 4 with the runner's donors, and the same artifact as stepping to its step.
+  expect(result.playedStep).toBeGreaterThanOrEqual(4000);
+  expect(result.playedCycles.slice(0, 2).map(cycle)).toEqual(want.slice(2));
+  expect(result.playedSteppedSame).toBe(true);
+  const played = decodeArtifact(fromBase64(result.played));
+  expect(played.state.step).toBe(result.playedStep);
+  expect(played.observer.ponds).toEqual({ lastCycle: Math.floor(result.playedStep / 1000) });
 
   expect(result.unknown).toBe('unknown preset "no-such-preset"');
   expect(result.afterUnknownSame).toBe(true);
