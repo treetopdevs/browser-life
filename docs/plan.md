@@ -604,8 +604,19 @@ Integration is engineering at $0, on the Mac. It does not count toward M6, and i
   - Any hit needs a replication on fresh histories at α = 0.01 before a claim.
   - Genome-only, heredity, edge-share and improvement tests are secondary.
 - **Stage 0, Mac, $0:** gates for viability and selection strength and for the instrument, plus a non-genetic-effects diagnostic.
-- **Stage 1 cost:** about $27 estimated (hard stop $35) on AWS with the registration's sources, or about $33 (hard stop $42) with its own scaffold phase; or 3–6 days on the Mac. Any paid run needs a dated draw note.
 - **Seeds:** 4,900,001–4,949,999.
+
+**Transition hunt settings (2026-10-02, the user's decision).** The user took the recommended settings, recorded in the draft's "Freeze and order of events":
+- death rate e = 1/2, with the fallback to 1;
+- export zone at distance 28 or more from the pond centre;
+- **200 cycles** for the ancestor arms (the scaffold arms keep 100 cycles after their 100 scaffold cycles);
+- α = 0.05 for discovery, with replication at 0.01;
+- Stage 1 on AWS;
+- **the registration first:** it is settled, frozen and run first; Stage 0 runs on the Mac meanwhile; Stage 1 starts after the registration's queue completes and branches from its `scaf` histories, or from the hunt's own if those are not all available (the draft's sources rule).
+
+**Cost.** Stage 1 is about 153 × 10⁶ steps: estimate about $38, hard stop $48, from the cohort reserve, by a dated draw note. With the registration's $40 stop, that leaves at least $29.18 of the reserve.
+
+**Still open:** approval of the draft as a whole, and the registration's own open choices, which come first. Neither document is frozen.
 
 
 ## Ecology-first founder discovery — 2026-09-29

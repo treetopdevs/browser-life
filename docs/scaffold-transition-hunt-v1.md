@@ -1,6 +1,6 @@
 # Transition hunt v1 (DRAFT, exploratory, not frozen)
 
-*2026-10-01. A draft for the user's decision, written after the user chose to keep the scaffolding registration (`docs/scaffold-registration-v1.md`) at 24 histories per arm and to draft a hunt beside it. The two are separate decisions: this document changes nothing in the registration. Nothing here binds until the user approves it and it is frozen (see "Freeze and order of events"). No run, assay or data of this design exists. After the freeze, any change goes in a dated amendment at the end and the original text stays. The line stays exploratory under RULE_VERSION 1: it does not count toward M6 and does not answer the reset line's entity question.*
+*2026-10-01. A draft for the user's decision, written after the user chose to keep the scaffolding registration (`docs/scaffold-registration-v1.md`) at 24 histories per arm and to draft a hunt beside it. The two are separate decisions: this document changes nothing in the registration. Nothing here binds until the user approves it and it is frozen (see "Freeze and order of events"). Its settings were decided by the user on 2026-10-02 (see "Freeze and order of events"). No run, assay or data of this design exists. After the freeze, any change goes in a dated amendment at the end and the original text stays. The line stays exploratory under RULE_VERSION 1: it does not count toward M6 and does not answer the reset line's entity question.*
 
 ## Why a hunt
 
@@ -42,7 +42,7 @@ Tiles are isolated tori under RULE_VERSION 1, so no physical process moves matte
   - individuality in the tracker's sense, or anything about the reset line's entity question;
   - **M7 by itself.** M7 as written in `docs/plan.md` specifies adhesion and signalling with a collective tracker, and is registered separately.
 - **It is exploratory.** A hit is a candidate. Only a replication on fresh histories at α = 0.01 (Stage 2, a separate registration draft) supports a claim.
-- **No hit** means "not found in this regime within 100 cycles". It does not show that the regime cannot produce one.
+- **No hit** means "not found in this regime within these histories": 200 cycles from the ancestor, or 100 after the scaffold. It does not show that the regime cannot produce one.
 
 ## World
 
@@ -125,7 +125,7 @@ Only the link between a pond's own export and its number of offspring is cut.
 
 ## Arms and histories
 
-24 histories per arm, i = 0–23. Each history runs 10⁶ steps under its arm.
+24 histories per arm, i = 0–23. The `-a` histories run 2 × 10⁶ steps (200 cycles) under their arm, and the `-s` histories 10⁶ steps (100 cycles) after their 100 scaffold cycles. Every history therefore ends at absolute boundary 200.
 
 | Arm | Origin | Regime |
 |---|---|---|
@@ -134,9 +134,9 @@ Only the link between a pond's own export and its number of offspring is cut.
 | `nat-s` | source i: the boundary-100 pre-cycle state of a `scaf` history (below) | `nat` from boundary 100 |
 | `shuf-s` | the same source i | `shuf` from boundary 100 |
 
-- **Time C** is the pre-cycle state 10⁶ steps after the start, written as an opt-in pre-cycle checkpoint (the registration's runner feature):
-  - for the `-a` arms, boundary 100, after transforms 1–99;
-  - for the `-s` arms, boundary 200, after transforms 100–199.
+- **Time C** is the pre-cycle state at boundary 200 (step 2 × 10⁶), written as an opt-in pre-cycle checkpoint (the registration's runner feature):
+  - for the `-a` arms, after transforms 1–199;
+  - for the `-s` arms, after transforms 100–199.
 - **Sources of the `-s` arms (fixed now).** When Stage 1's queue is built, the 24 sources are chosen by one rule:
   - **The registration's histories,** if all 24 of its `scaf` histories have a boundary-100 pre-cycle checkpoint whose hash matches the registration's manifest.
     - An ended registration history is a valid source.
@@ -230,7 +230,7 @@ Competence, by contrast, is near its ceiling in evolved worlds.
 - **Reported:** the four history-level differences in W, beside the spread of W among the four `nat` histories.
 - **What it can and cannot show.**
   - Without genetic variation, a difference would come from selection on the ponds' non-genetic state.
-  - Four pairs cannot exclude such effects, and 30 ancestral cycles cannot speak for 100 cycles or for scaffold-derived material.
+  - Four pairs cannot exclude such effects, and 30 ancestral cycles cannot speak for 200 cycles or for scaffold-derived material.
   - So D3 informs interpretation and never decides. Genetic attribution is addressed, in part, by the Genome secondary.
 
 The gates' and the diagnostic's outputs are recorded in a dated amendment before any Stage 1 draw. Stage 0 also measures throughput.
@@ -316,7 +316,7 @@ Otherwise each contrast, A and S, is reported as one of:
 | Contrast status | Statement | Next (each a separate dated decision) |
 |---|---|---|
 | **Hit** | Higher export performance under export-proportional selection than under shuffled weights, from that origin: a candidate seed, as defined above. | Stage 2: a registration draft replicating it on fresh histories (24 per arm, α = 0.01). Then discrimination (genome, structure, cell-level spread) and the M7 question. |
-| **No hit** | Not found from that origin in this regime within 100 cycles. | Candidates: e = 1, 200 cycles, a multi-founder start, a different export zone. |
+| **No hit** | Not found from that origin in this regime within its histories. | Candidates: e = 1, longer histories, a multi-founder start, a different export zone. |
 | **Not assessed** | An unresolved value entered the comparison. | Report; decide whether to rerun. |
 
 - **Comparing origins.** A hit from one origin and no hit from the other does not show that the effect depends on origin. There is no test of the difference.
@@ -402,28 +402,28 @@ Built, tested and reviewed by Astra before any gate runs:
   - D3: 2.7 × 10⁶.
 
   The Mac measured 250–470 steps/s per lane at 512² in the heredity replication, so about 3–5 hours.
-- **Stage 1, with the registration's sources:** about 105 × 10⁶ steps:
-  - 96 histories × 10⁶;
+- **Stage 1, with the registration's sources:** about 153 × 10⁶ steps:
+  - 48 `-a` histories × 2 × 10⁶ and 48 `-s` histories × 10⁶;
   - 124 W sets × 4 × 10⁴;
   - 96 genome-only sets and their control × 4 × 10⁴;
   - 48 quenched sets × 10⁴;
   - the ancestor worlds and device checks.
 
-  On AWS (three g5.xlarge, six lanes each), that is about 8 hours: about $22 of compute at the R3 replication's $0.21 per 10⁶ steps, an estimate of about $27 and a hard stop of $35.
-- **Stage 1 with its own scaffold phase:** about 129 × 10⁶ steps, about 10 hours: about $27 of compute, an estimate of about $33 and a hard stop of $42.
-- **Or the Mac:** $0, but roughly 3–6 days of a shared GPU on either path.
-- **Funding.** Any AWS spend comes from the cohort reserve (about $117.18), only by a dated draw note approved by the user.
-  - With the registration (estimate about $28, hard stop $40) and its sources, the two together come to about $55 estimated, or $75 at the hard stops. That leaves at least $42.18 for a Stage 2 replication.
-  - If the hunt runs its own scaffold phase beside the registration, the hard stops come to $82, leaving at least $35.18.
+  On AWS (three g5.xlarge, six lanes each), that is about 11 hours: about $32 of compute at the R3 replication's $0.21 per 10⁶ steps, an estimate of about $38 and a hard stop of $48.
+- **Stage 1 with its own scaffold phase** (only under the sources rule): about 177 × 10⁶ steps, about 13 hours: about $37 of compute, an estimate of about $44 and a hard stop of $55.
+- **Where (decided 2026-10-02): AWS**, on the registration's instance setup, after the registration's queue has completed. On the Mac it would have been $0 but roughly 4–8 days of a shared GPU.
+- **Funding.** The spend comes from the cohort reserve (about $117.18), only by a dated draw note approved by the user before any paid run.
+  - With the registration (estimate about $28, hard stop $40) and its sources, the two together come to about $66 estimated, or $88 at the hard stops. That leaves at least $29.18.
+  - If the hunt has to run its own scaffold phase, the hard stops come to $95, leaving at least $22.18.
+  - A Stage 2 replication is costed in its own draft. It may need more than what remains.
   - The $60 RULE_VERSION 2 go/no-go is untouched.
 
 ## Design choices, and what was left out
 
-Within one budget, the hunt puts its histories into one regime with a sharp control and two origins, rather than many regimes with few histories each. Each regime needs a matched control and enough histories to see a moderate effect, and four arms of 24 is what the reserve holds beside the registration. Using every exporting pond as a family, rather than a sample, makes W a census of the world's collectives at no extra cost.
+Within one budget, the hunt puts its histories into one regime with a sharp control and two origins, rather than many regimes with few histories each. Each regime needs a matched control and enough histories to see a moderate effect, and four arms of 24 is what the reserve holds beside the registration. Of the cheap levers, longer histories came first: the `-a` arms run 200 cycles. Using every exporting pond as a family, rather than a sample, makes W a census of the world's collectives at no extra cost.
 
 Considered and left for later, each as a dated decision:
 - **e = 1:** stronger collective selection, but less withdrawn. It is G1's fallback.
-- **200 cycles for the `-a` arms:** about $10 more.
 - **A multi-founder start:** consortia, an egalitarian route. It would lose comparability with the scaffold line.
 - **Adhesion:** its cohesion effect is not demonstrated, about 1% at the maximum gain (`WorldConfig.adhesion`), and enabling it is M7's registered route.
 - **Narrower bottlenecks:** k = 5 failed P1's viability.
@@ -432,14 +432,18 @@ Considered and left for later, each as a dated decision:
 
 ## Freeze and order of events
 
-1. **The user decides:**
-   - approve this draft as written or with changes;
-   - e = 1/2 with the fallback, or e = 1;
-   - the export zone;
-   - 100 or 200 cycles for the `-a` arms;
-   - α = 0.05 for discovery, with replication at 0.01;
-   - Mac or AWS for Stage 1;
-   - order relative to the registration (the sources rule above).
-2. **Freeze:** an Astra review of the final text, then a commit. The document's SHA-256 goes in `experiments/scaffold/HUNT-v1` and a dated note in `docs/plan.md`.
+1. **Settings decided by the user (2026-10-02):**
+   - **Death rate:** e = 1/2, with G1's fallback to e = 1.
+   - **Export zone:** Chebyshev distance at least 28 from the centre.
+   - **Length:** 200 cycles for the `-a` arms.
+   - **Thresholds:** α = 0.05 for discovery, with replication at 0.01.
+   - **Where:** Stage 1 on AWS.
+   - **Order:**
+     1. The registration is settled, frozen and run first.
+     2. Stage 0 runs on the Mac meanwhile.
+     3. Stage 1 starts only after the registration's queue has completed, and branches from the sources the sources rule above designates (the registration's, or the hunt's own as the fallback).
+
+   **Still open:** approval of this document as a whole, and the registration's own open choices, which come first.
+2. **Freeze,** after the registration's: a review of the final text, then a commit. The document's SHA-256 goes in `experiments/scaffold/HUNT-v1` and a dated note in `docs/plan.md`.
 3. **Stage 0:** code, its Astra review and commit; then G1, G2 and D3 on the Mac; then a dated amendment with their results.
-4. **Stage 1:** a dated draw note (if AWS), approved by the user; the runs; the report; an independent re-derivation of every number; an Astra review; the dated result entry.
+4. **Stage 1:** a dated draw note, approved by the user; the runs; the report; an independent re-derivation of every number; an Astra review; the dated result entry.
