@@ -12,13 +12,15 @@
 //  5. controls: pond-cont has the physics of the config without pond keys and scaf and rand do not,
 //     default-off parity, the exclusions, and recipientLineages' definition;
 //  6. the GPU side of the CPU-reference pin: the runner reaches the states and rows
-//     packages/runner/test/ponds.test.ts pins.
+//     packages/runner/test/ponds.test.ts pins;
+//  7. opt-in pre-cycle checkpoints (RunSpec.preCycleCheckpoints; Amendment 3): a run that writes
+//     them is otherwise the run that does not, and each one is the state before its boundary's cycle.
 //
 // Test 2 reads runs/scaffold/rep/main/{scaf,rand}/i0 and runs/scaffold/r3rep/main/cont/i0 and steps
 // 330,000 steps at 512 x 512 (several minutes on the Mac). Tests 3 and 4 run tools/scaffold.ts itself
 // on ponds-small, into a temporary directory, for their standalone side.
 //
-// Run from the repo root: deno run -A tests/deno/ponds.ts [equivalence] [parity] [guard] [controls] [pin]
+// Run from the repo root: deno run -A tests/deno/ponds.ts [equivalence] [parity] [guard] [controls] [pin] [precycle]
 // (no argument runs every section).
 import {
   CH,
@@ -26,6 +28,7 @@ import {
   GENOME_CHANNELS,
   POND_COLUMNS,
   PRESETS,
+  applyPondCycle,
   canonicalConfig,
   canonicalGenome,
   cellCount,
@@ -61,7 +64,7 @@ import { loadCheckpoint } from "../../tools/lib/pond-gpu.ts";
 
 const ROOT = decodeURIComponent(new URL("../../", import.meta.url).pathname);
 const RECORDED = `${ROOT}runs/scaffold`;
-const SECTIONS = ["equivalence", "parity", "guard", "controls", "pin"];
+const SECTIONS = ["equivalence", "parity", "guard", "controls", "pin", "precycle"];
 const sections = new Set(Deno.args);
 for (const a of sections) if (!SECTIONS.includes(a)) throw new Error(`unknown section ${a}; the sections are ${SECTIONS.join(", ")}`);
 const section = (name: string) => sections.size === 0 || sections.has(name);
@@ -506,6 +509,94 @@ try {
     const rand = await run({ ...spec, condition: "pond-rand", steps: 20 });
     check("rand: the runner's post-cycle state at cycle 1 equals the CPU-reference pin", stateHash(rand.final) === PINS.rand.state, stateHash(rand.final));
     check("rand: ...and its ponds.tsv", (await sha256(rand.files[PONDS_FILE])) === PINS.rand.ponds);
+  }
+
+  // --- 7. pre-cycle checkpoints ----------------------------------------------
+  if (section("precycle")) {
+    const sameBytes = (a: Uint8Array | undefined, b: Uint8Array | undefined) => !!a && !!b && a.length === b.length && a.every((x, i) => x === b[i]);
+    for (const [arm, condition] of ARMS) {
+      // Boundary 4 is the run's last step, as in production (histories' b100, ancestors' b001).
+      const spec: RunSpec = { experiment: "ponds-precycle", presetId: "ponds-small", condition, seed: 1, steps: 4000, censusEvery: 100, deepEvery: 10, checkpointEvery: 1000 };
+      const plain = await run(spec);
+      const withPre = await run({ ...spec, preCycleCheckpoints: [2, 4] });
+      const mPlain = JSON.parse(plain.files["manifest.json"]), mPre = JSON.parse(withPre.files["manifest.json"]);
+      const preFiles = (r: Run) => [...r.bytes.keys()].filter((f) => f.endsWith("-pre.blck")).sort();
+
+      // The run that writes them is otherwise the run that does not.
+      check(`${arm}: the same finalHash with and without pre-cycle checkpoints`, withPre.finalHash === plain.finalHash, `${withPre.finalHash} vs ${plain.finalHash}`);
+      check(`${arm}: ...the same ponds.tsv bytes`, plain.files[PONDS_FILE] !== undefined && withPre.files[PONDS_FILE] === plain.files[PONDS_FILE]);
+      const periodic = [...plain.bytes.keys()].sort();
+      check(
+        `${arm}: ...the same periodic checkpoints (manifest hashes and bytes)`,
+        mPlain.checkpoints.length === 4 && JSON.stringify(mPre.checkpoints) === JSON.stringify(mPlain.checkpoints) && periodic.every((f) => sameBytes(withPre.bytes.get(f), plain.bytes.get(f))),
+        `${JSON.stringify(mPre.checkpoints)} vs ${JSON.stringify(mPlain.checkpoints)}`,
+      );
+      const others = Object.keys(plain.files).filter((f) => f !== "manifest.json").sort();
+      check(`${arm}: ...and every other file but manifest.json byte-identical`, JSON.stringify(Object.keys(withPre.files).filter((f) => f !== "manifest.json").sort()) === JSON.stringify(others) && others.every((f) => withPre.files[f] === plain.files[f]));
+      check(
+        `${arm}: without the field, no preCycleCheckpoints in the spec or manifest and no pre-cycle file`,
+        !("preCycleCheckpoints" in mPlain) && !("preCycleCheckpoints" in mPlain.spec) && preFiles(plain).length === 0,
+      );
+      check(`${arm}: with it, the spec records the list`, JSON.stringify(mPre.spec.preCycleCheckpoints) === "[2,4]");
+      const entries = mPre.preCycleCheckpoints as { boundary: number; step: number; file: string; hash: string }[];
+      check(
+        `${arm}: the manifest lists b002-pre and b004-pre, in boundary order, and exactly those files are written`,
+        JSON.stringify(entries.map((e) => [e.boundary, e.step, e.file])) === JSON.stringify([[2, 2000, "checkpoints/b002-pre.blck"], [4, 4000, "checkpoints/b004-pre.blck"]]) &&
+          JSON.stringify(preFiles(withPre)) === JSON.stringify(entries.map((e) => e.file)),
+        JSON.stringify(entries),
+      );
+
+      // Each is the state before its boundary's cycle, with the pre-cycle observer.
+      const cfg = specConfig(spec);
+      const Mr = pondContext(initWorld(cfg, pondsSmall.init))!.Mr;
+      for (const e of entries) {
+        const { state, observer } = decodeArtifact(withPre.bytes.get(e.file)!);
+        const preHash = stateHash(state);
+        const post = artifactAt(plain, e.step);
+        const postHash = stateHash(post.state);
+        check(`${arm} b${e.boundary}: its step is ${e.boundary * 1000} and its observer's ponds.lastCycle is ${e.boundary - 1}`, state.step === e.boundary * 1000 && observer.ponds?.lastCycle === e.boundary - 1, `t=${state.step} ${JSON.stringify(observer.ponds)}`);
+        check(`${arm} b${e.boundary}: its stateHash is the manifest's`, preHash === e.hash, `${preHash} vs ${e.hash}`);
+        check(
+          `${arm} b${e.boundary}: its observer is the periodic checkpoint's at that step but for ponds.lastCycle`,
+          JSON.stringify({ ...observer, ponds: { lastCycle: e.boundary } }) === JSON.stringify(post.observer),
+        );
+        // The post-cycle state: applyPondCycle (CPU) of this one for scaf and rand, this one itself for cont.
+        let cycledHash = preHash;
+        if (arm === "cont") check(`${arm} b${e.boundary}: the pre-cycle state is the periodic checkpoint at t=${e.step}`, preHash === postHash, `${preHash} vs ${postHash}`);
+        else {
+          cycledHash = stateHash(applyPondCycle(state, e.boundary, cfg.pondArm as "scaf" | "rand", cfg.pondK!, Mr, pondCensus).state);
+          check(`${arm} b${e.boundary}: it differs from the post-cycle state`, preHash !== postHash);
+          check(`${arm} b${e.boundary}: applyPondCycle (CPU) on it gives the periodic checkpoint at t=${e.step}, the post-cycle state`, cycledHash === postHash, `${cycledHash} vs ${postHash}`);
+        }
+        if (e.step === spec.steps)
+          check(
+            `${arm} b${e.boundary}, the last step: ...and the final state of both runs`,
+            cycledHash === stateHash(withPre.final) && cycledHash === stateHash(plain.final),
+            `${cycledHash} vs ${stateHash(withPre.final)}, ${stateHash(plain.final)}`,
+          );
+        // A continuation from it would skip this boundary's cycle (the last one has nothing left to run).
+        if (e.step < spec.steps) {
+          const rest: RunSpec = { ...spec, steps: spec.steps - e.step };
+          check(`${arm} b${e.boundary}: continuationError refuses it as a pre-cycle state`, /pre-cycle state/.test(continuationError(rest, state, observer) ?? ""), String(continuationError(rest, state, observer)));
+          await rejects(`${arm} b${e.boundary}: ...and runExperiment does`, () => runExperiment(device, rest, new Mem(), host, () => {}, { start: state, observer }), /pre-cycle state/);
+        }
+        const more: RunSpec = { ...spec, steps: 1000 };
+        check(`${arm} b${e.boundary}: continuationError refuses it for any further steps`, /pre-cycle state/.test(continuationError(more, state, observer) ?? ""), String(continuationError(more, state, observer)));
+      }
+
+      // A continuation from the post-cycle checkpoint at 2000 writes the same pre-cycle files as a
+      // continuous run listing the same boundaries.
+      const ref = await run({ ...spec, preCycleCheckpoints: [3, 4] });
+      const at2000 = artifactAt(plain, 2000);
+      const cont = await run({ ...spec, steps: 2000, preCycleCheckpoints: [3, 4] }, { start: at2000.state, observer: at2000.observer });
+      const mRef = JSON.parse(ref.files["manifest.json"]), mCont = JSON.parse(cont.files["manifest.json"]);
+      check(`${arm}: continued from t=2000, the same finalHash as the continuous run`, cont.finalHash === plain.finalHash, `${cont.finalHash} vs ${plain.finalHash}`);
+      check(
+        `${arm}: ...its b003-pre and b004-pre bytes equal the continuous run's`,
+        ["checkpoints/b003-pre.blck", "checkpoints/b004-pre.blck"].every((f) => sameBytes(cont.bytes.get(f), ref.bytes.get(f))) && sameBytes(cont.bytes.get("checkpoints/b004-pre.blck"), withPre.bytes.get("checkpoints/b004-pre.blck")),
+      );
+      check(`${arm}: ...and its manifest lists the same entries`, mCont.preCycleCheckpoints.length === 2 && JSON.stringify(mCont.preCycleCheckpoints) === JSON.stringify(mRef.preCycleCheckpoints), `${JSON.stringify(mCont.preCycleCheckpoints)} vs ${JSON.stringify(mRef.preCycleCheckpoints)}`);
+    }
   }
 } finally {
   await Deno.remove(tmp, { recursive: true });

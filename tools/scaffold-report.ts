@@ -12,6 +12,9 @@
 //   deno run -A tools/scaffold-report.ts r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <replay-check.json>]    (Amendment 2: R1')
 //   deno run -A tools/scaffold-report.ts r1dprime --assays <dir...> [--regime K PERIOD] [--runs <dir...>]    (docs/scaffold-heredity-replication-v1.md: R1'')
 //   deno run -A tools/scaffold-report.ts r3rep --assays <dir...> [--runs <dir...>] [--v1 <r3.json>]    (docs/scaffold-r3-replication-v1.md: the R3 replication)
+//   deno run -A tools/scaffold-report.ts reg1 --assays <dir...> --runs <dir...> --device <dir...> --repro <dir...> --queue <queue.json> --status <status.json...>
+//     [--v1 <r3.json>] [--r3rep <r3rep.json>] [--budget-stopped]    (docs/scaffold-registration-v1.md: the scaffolding registration; production writes
+//     experiments/scaffold/readouts/reg1.json)
 //
 // A flag takes every argument up to the next flag. A directory that is not itself a run (meta.json) or an
 // assay (assay.json) is searched for them up to four levels down. Every stage reports the truncation rule
@@ -112,6 +115,35 @@
 // truncated rows are descriptive; --runs (the history run directories, runs/scaffold/r3rep/main/<arm>/i<i>, 100 cycles; ponds.tsv streamed)
 // adds each history's mean pond trait per boundary and its extinct ponds at boundary 100, and --v1 (v1's r3 readout) a side-by-side.
 // --allow-any-seed waives the regime, seed, hash and provenance checks (smoke runs), not the reloading.
+//
+// The scaffolding registration (docs/scaffold-registration-v1.md) has its own stage over the sets that scaffold-assays wrote with --reg1
+// (labels.reg1: set, arm, history, timing, time, h, control; 558 sets: per index i the 13 competence sets, S2's 192 garden sets and S3's 54
+// transmission sets, plus R4's capability set) and the run bundles tools/run.ts wrote (manifest.json with its pre-cycle checkpoints and
+// ponds.tsv): --runs the 72 histories and 24 ancestor worlds (experiments hist and anc, or hist-c100 and anc-c100 for a run repeated at
+// census 100 after an event-buffer overflow: exactly one finished bundle per history), --device the device checks (four: the Mac's, whose
+// host names darwin, and one per instance, with one finalHash, every run's host and adapter among theirs), --repro the Mac's reruns of the
+// two histories the reproducibility draw selects, --queue the queue manifest ({ commands: [{ id, instance }] }) and --status every
+// instance's status ({ instance, commands: { <id>: "done" | "fail" } }). Until every queue command has a terminal state nothing is analysed
+// and the outcome is "incomplete"; without --queue the stage refuses to run, unless --budget-stopped or --allow-any-seed. Every other stage
+// skips reg1 directories (counted under `skipped`), and `reg1` reads nothing else (listed under `skipped` with why). A bundle is the
+// expected one of its seed and must have finished with exact conservation and the registration's spec, preset identity, config and
+// pre-cycle checkpoints; its ponds.tsv is streamed and must hold one row per pond at every boundary (RecipientGuard with the pond and cycle
+// counts). A set is screened like r3rep's (labels that name one of the 558 and agree with it, the set's assay and grid, its treatment; in
+// strict mode the regime, every seed against its formula, protocolSha256Reg1 against the pinned SHA-256 of the frozen document, the
+// recorded source state hash against its bundle's manifest, a timing (b) set's continuation sidecar and origin, an S3 control's world
+// record); a Ge-on-Fa record without a dominant genome needs its donor's b100-pre reloaded and seen to have none. A set that is missing or
+// rejected, or whose source bundle is unresolved, is unresolved, never dropped; a history is unresolved when its bundle or any of its sets
+// is (`definitions.unresolved` in the output). The outcome follows the document in order, the validity checks once over every history: the
+// device check, the unresolved histories (more than 6 in an arm or the ancestor worlds is Uninformative), the quenched gate (any quenched
+// set above 0.05 is Invalid) and the reproducibility check; then H1 (six exact one-sided Mann-Whitney tests, uninformative with Holm slot 1
+// when an unresolved value would enter one) and H2 (the sign test on g_i > 0) under Holm at 0.01 pick the row, the first that matches; S1,
+// S2a, S2b and S3 are reported beside it with their own Holm family. Under Invalid or Uninformative no test statistic is printed
+// (`withheld`, `primary` and `secondary` null, no truncation verdict); under a row the tests decide, the tests alone are run again without
+// the histories with more than 1% truncated recipient rows, and the readout is sensitive to truncation when that row differs.
+// --budget-stopped analyses nothing (Uninformative, or Invalid if a given device check failed). Every competence, the retained mass and E,
+// success within retained-mass bins, the pond trajectories, R4 and the side-by-side with --v1 (v1's r3 readout) and --r3rep (the
+// replication's readout) are descriptive. --allow-any-seed waives the regime, seed, hash and provenance checks of the sets (smoke runs),
+// not the bundles' or the reloading.
 import {
   DECISION_TABLE,
   NO_REPLAY_CHECK,
@@ -163,8 +195,25 @@ import {
   r3Verdict,
   r4RowsOf,
   r4Table,
+  REG1_REPORT_PROTOCOL,
   RecipientGuard,
   readTraits,
+  reg1ReportBundleHashes,
+  reg1ReportBundleProblems,
+  reg1ReportBundleRoleOf,
+  reg1ReportDeviceCheck,
+  reg1ReportExpectedRuns,
+  reg1ReportExpectedSet,
+  reg1ReportHostOf,
+  reg1ReportPickBundle,
+  reg1ReportPriorSummary,
+  reg1ReportProtocolProblems,
+  reg1ReportQueueCheck,
+  reg1ReportReadout,
+  reg1ReportReproducibility,
+  reg1ReportScreen,
+  reg1ReportSetIdOf,
+  reg1ReportTrajectory,
   readTsv,
   runStatus,
   summariseHistory,
@@ -190,9 +239,14 @@ import {
   type R3RepRun,
   type R3RepSetDir,
   type R4Row,
+  type Reg1ReportBundleRole,
+  type Reg1ReportDonorCheck,
+  type Reg1ReportRun,
+  type Reg1ReportSetDir,
   type TraitSetDir,
 } from "./lib/scaffold-stats.ts";
 import { R3REP_PROTOCOLS, R3REP_SHA256, r3RepCheckpointOf, r3RepDominantRecord, r3RepProtocolProblems } from "./lib/pond-assay.ts";
+import { decodeCheckpoint, stateHash, type WorldState } from "@bl/schema";
 import { loadCheckpoint } from "./lib/pond-gpu.ts";
 import { dominantGenome } from "./lib/ponds.ts";
 
@@ -200,7 +254,7 @@ const STAGES = ["p1", "p2", "r1", "r2", "r3"] as const;
 
 function usage(msg?: string): never {
   if (msg) console.error(msg);
-  console.error("usage: scaffold-report.ts p1 --runs <dir...> | calibrate --p1 <json> --assays <dir...> | p2 --rank <dir...> --scaf <dir...> --rand <dir...> (--regime K PERIOD | --p1 <json>) | r1|r2|r3 --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r4 --assays <dir...> | --in <json...> | decide --in <json...> | tau --assays <dir...> [--regime K PERIOD] | r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <json>] | r1dprime --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r3rep --assays <dir...> [--runs <dir...>] [--v1 <r3.json>]");
+  console.error("usage: scaffold-report.ts p1 --runs <dir...> | calibrate --p1 <json> --assays <dir...> | p2 --rank <dir...> --scaf <dir...> --rand <dir...> (--regime K PERIOD | --p1 <json>) | r1|r2|r3 --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r4 --assays <dir...> | --in <json...> | decide --in <json...> | tau --assays <dir...> [--regime K PERIOD] | r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <json>] | r1dprime --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r3rep --assays <dir...> [--runs <dir...>] [--v1 <r3.json>] | reg1 --assays <dir...> --runs <dir...> --device <dir...> --repro <dir...> --queue <queue.json> --status <status.json...> [--v1 <r3.json>] [--r3rep <r3rep.json>] [--budget-stopped]");
   Deno.exit(2);
 }
 
@@ -491,8 +545,9 @@ async function loadAssays(flags: Map<string, string[]>, assay: string, calibrati
   let skipped = 0;
   for (const d of await expandDirs(need(flags, "assays"), "assay.json")) {
     const json = await readJson(`${d}/assay.json`);
-    // Amendment 2's R1' sets and tau calibration belong to the tau and r1prime stages, R1'' sets to r1dprime and the R3 replication's to r3rep.
-    if (json.labels?.r1prime === true || json.labels?.tauCalibration === true || json.labels?.r1dprime === true || json.labels?.r3rep === true) {
+    // Amendment 2's R1' sets and tau calibration belong to the tau and r1prime stages, R1'' sets to r1dprime, the R3 replication's to r3rep
+    // and the registration's to reg1.
+    if (json.labels?.r1prime === true || json.labels?.tauCalibration === true || json.labels?.r1dprime === true || json.labels?.r3rep === true || json.labels?.reg1 === true) {
       skipped++;
       continue;
     }
@@ -854,6 +909,183 @@ async function r3repStage(flags: Map<string, string[]>) {
   };
 }
 
+/** Every bundle directory (manifest.json) under `roots` with its parsed manifest; a root, directory or manifest that cannot be read is listed under `skipped`. */
+async function readBundles(roots: string[], skipped: { dir: string; why: string }[]): Promise<{ dir: string; manifest: unknown }[]> {
+  const out: { dir: string; manifest: unknown }[] = [];
+  for (const root of roots) {
+    const found = await expandDirsTolerant(root, "manifest.json", skipped);
+    if (found.length === 0) skipped.push({ dir: root, why: "no run bundle (manifest.json) under it" });
+    for (const dir of found) {
+      try {
+        out.push({ dir, manifest: await readJson(`${dir}/manifest.json`) });
+      } catch (e) {
+        skipped.push({ dir, why: `manifest.json could not be read: ${message(e)}` });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * The registration's 96 run bundles from the --runs bundles, in `reg1ReportExpectedRuns` order: each found exactly once, its manifest the
+ * registration's (`reg1ReportBundleProblems`) and its ponds.tsv streamed through `reg1ReportTrajectory` (one row per pond at every boundary);
+ * otherwise unresolved, with why. A bundle that is no history or ancestor world (a device check, a rerun, another seed) is listed under `skipped`.
+ */
+async function reg1Runs(bundles: { dir: string; manifest: unknown }[], skipped: { dir: string; why: string }[]): Promise<Reg1ReportRun[]> {
+  const byId = new Map<string, { dir: string; manifest: unknown; role: Reg1ReportBundleRole }[]>();
+  for (const b of bundles) {
+    const r = reg1ReportBundleRoleOf(b.manifest);
+    if ("why" in r) skipped.push({ dir: b.dir, why: r.why });
+    else if (r.role.role === "device") skipped.push({ dir: b.dir, why: "the device check (seed 4,880,301): give it with --device" });
+    else if (r.role.role === "repro") skipped.push({ dir: b.dir, why: `a reproducibility rerun of ${r.role.id} (340,000 steps): give it with --repro` });
+    else byId.set(r.role.id, [...(byId.get(r.role.id) ?? []), { ...b, role: r.role }]);
+  }
+  const runs: Reg1ReportRun[] = [];
+  for (const { id, arm, history } of reg1ReportExpectedRuns()) {
+    const found = byId.get(id) ?? [];
+    const base = { id, arm, history, hashes: {}, censusEvery: null, host: null, trajectory: null };
+    const { pick, superseded, why: refused } = reg1ReportPickBundle(found);
+    for (const s of superseded) skipped.push({ dir: s.dir, why: `an unfinished run of ${id}, superseded by the finished ${pick!.dir}` });
+    if (pick === null) {
+      runs.push({ ...base, dir: found.length ? found.map((f) => f.dir).join(", ") : null, resolved: false, why: [refused!] });
+      continue;
+    }
+    const { dir, manifest, role } = pick;
+    const why = reg1ReportBundleProblems(manifest, role, dir);
+    const spec = (manifest as { spec?: { censusEvery?: unknown } }).spec;
+    let trajectory = null;
+    if (why.length === 0) {
+      try {
+        trajectory = await reg1ReportTrajectory(readTsv(`${dir}/ponds.tsv`), { ponds: 64, cycles: role.role === "ancestor" ? 1 : 100 }, arm === "scaf" || arm === "rand");
+      } catch (e) {
+        why.push(`ponds.tsv: ${message(e)}`);
+      }
+    }
+    runs.push({ ...base, dir, resolved: why.length === 0, why, hashes: reg1ReportBundleHashes(manifest), censusEvery: typeof spec?.censusEvery === "number" ? spec.censusEvery : null, host: reg1ReportHostOf(manifest), trajectory });
+  }
+  return runs;
+}
+
+/** A checkpoint's state, raw (as the runner writes pre-cycle checkpoints) or gzipped. */
+async function readCheckpointState(path: string): Promise<WorldState> {
+  const bytes = await Deno.readFile(path);
+  if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) return decodeCheckpoint(bytes).state;
+  return decodeCheckpoint(new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer())).state;
+}
+
+/** The registration's frozen document as it is now (descriptive; the screen checks the pinned hash): its SHA-256 and whether it still begins with its frozen text. */
+async function reg1ProtocolNow(): Promise<{ doc: string; sha256: string; pinnedTextIntact: boolean }> {
+  const bytes = await Deno.readFile(new URL(`../${REG1_REPORT_PROTOCOL.doc}`, import.meta.url));
+  const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), (b) => b.toString(16).padStart(2, "0")).join("");
+  return { doc: REG1_REPORT_PROTOCOL.doc, sha256, pinnedTextIntact: (await reg1ReportProtocolProblems(bytes)).length === 0 };
+}
+
+/** The scaffolding registration (docs/scaffold-registration-v1.md): validity, the tests and the outcome row over the sets and bundles (see the header). */
+async function reg1Stage(flags: Map<string, string[]>) {
+  const strict = !flags.has("allow-any-seed");
+  const budgetStopped = flags.has("budget-stopped");
+  const skipped: { dir: string; why: string }[] = [];
+  const head = { stage: "reg1", protocolSha256Reg1: REG1_REPORT_PROTOCOL.sha256, protocolNow: await reg1ProtocolNow(), validated: strict };
+  // The queue's completeness: no partial ensemble is ever analysed, so a production readout needs the queue and every instance's status.
+  if (strict && !budgetStopped && !flags.has("queue")) usage("reg1 needs --queue <queue.json> --status <status.json...> (the queue's completeness) unless --budget-stopped or --allow-any-seed");
+  let queue = null;
+  if (flags.has("queue")) {
+    try {
+      queue = reg1ReportQueueCheck(await readJson(need(flags, "queue")[0]), await Promise.all((flags.get("status") ?? []).map(readJson)));
+    } catch (e) {
+      usage(`--queue / --status: ${message(e)}`);
+    }
+  }
+  // When nothing is analysed (the budget stopped the queue, or it has not completed), the device check is technical status: read if given, without the runs.
+  if (budgetStopped || queue?.complete === false) {
+    const device = flags.has("device") ? reg1ReportDeviceCheck(await readBundles(need(flags, "device"), skipped)) : null;
+    return { ...head, ...reg1ReportReadout({ sets: [], rejected: [], runs: [], device, reproducibility: null, budgetStopped, queue }), rejected: [], skipped };
+  }
+
+  const runs = await reg1Runs(await readBundles(need(flags, "runs"), skipped), skipped);
+  const runsById = new Map(runs.map((r) => [r.id, r]));
+  // Every run bundle taken must have run on a host and adapter that a device check covers.
+  const device = reg1ReportDeviceCheck(await readBundles(need(flags, "device"), skipped), runs);
+  // A set that cannot be read (a missing or malformed table) is unresolved with its reason; it does not stop the others.
+  const rejected: { dir: string; id: string | null; reasons: string[] }[] = [];
+  const dirs: Reg1ReportSetDir[] = [];
+  const capability: { dir: string; json: Record<string, any> }[] = [];
+  for (const d of await expandDirs(need(flags, "assays"), "assay.json")) {
+    let json;
+    try {
+      json = await readJson(`${d}/assay.json`);
+    } catch (e) {
+      rejected.push({ dir: d, id: null, reasons: [`assay.json: ${message(e)}`] });
+      continue;
+    }
+    if (json?.labels?.reg1 !== true) {
+      skipped.push({ dir: d, why: "not a registration set (labels.reg1 is not true)" });
+      continue;
+    }
+    if (json.labels.set === "capability") {
+      capability.push({ dir: d, json });
+      continue;
+    }
+    try {
+      const rows = [];
+      for await (const r of readTsv(`${d}/assay.tsv`)) rows.push(assayRow(r));
+      // S3 reads every census step of traits.tsv (each fragment's crossing time), streamed and checked against the grid.
+      const traits = json.labels.set === "heredity" && (await exists(`${d}/traits.tsv`)) ? await readTraits(readTsv(`${d}/traits.tsv`), undefined, gridOfJson(json)) : null;
+      dirs.push({ dir: d, json, rows, traits });
+    } catch (e) {
+      const named = reg1ReportSetIdOf(json.labels);
+      rejected.push({ dir: d, id: "id" in named ? named.id : null, reasons: [`could not read the set: ${message(e)}`] });
+    }
+  }
+  // A Ge-on-Fa record without a dominant genome is believed only once its donor (scaf_i's b100-pre, from its bundle) is reloaded and seen to have none.
+  const donors = new Map<string, Reg1ReportDonorCheck>();
+  for (const d of dirs) {
+    if (d.json.biologicallyUnavailable === undefined) continue;
+    const named = reg1ReportSetIdOf(d.json.labels);
+    const donor = "id" in named ? reg1ReportExpectedSet(named.id)?.sources[1]?.bundle : undefined;
+    const run = donor === undefined ? undefined : runsById.get(donor);
+    if (donor === undefined || donors.has(donor) || !run?.resolved || run.dir === null) continue;
+    try {
+      const state = await readCheckpointState(`${run.dir}/checkpoints/b100-pre.blck`);
+      const hash = stateHash(state);
+      donors.set(donor, hash === run.hashes.b100 ? { stateHash: hash, dominant: dominantGenome(state) !== null } : { error: `it hashes to ${hash}, not the ${run.hashes.b100} its manifest records` });
+    } catch (e) {
+      donors.set(donor, { error: message(e) });
+    }
+  }
+  const screened = reg1ReportScreen(dirs, { sha: REG1_REPORT_PROTOCOL.sha256, bundles: runsById, donors, allowAnySeed: !strict });
+  rejected.push(...screened.rejected);
+  // R4 (descriptive): one capability set, DEFAULT_EVAL with its own seed 1 and 4 replicates.
+  let capabilityRows: R4Row[] | null = null;
+  for (const c of capability) {
+    const why: string[] = [];
+    if (capability.length > 1) why.push(`${capability.length} capability sets (${capability.map((x) => x.dir).join(", ")}); the stage takes one`);
+    if (c.json.assay !== "capability") why.push(`assay ${JSON.stringify(c.json.assay)}, want capability`);
+    if (strict && (c.json.seed !== 1 || c.json.eval?.reps !== 4)) why.push(`seed ${JSON.stringify(c.json.seed)} with ${JSON.stringify(c.json.eval?.reps)} replicates, want DEFAULT_EVAL's own seed 1 and 4 replicates`);
+    try {
+      if (why.length === 0) capabilityRows = r4RowsOf(c.json);
+    } catch (e) {
+      why.push(message(e));
+    }
+    if (why.length > 0) rejected.push({ dir: c.dir, id: "capability", reasons: why });
+  }
+  const reproducibility = reg1ReportReproducibility(runsById, await readBundles(need(flags, "repro"), skipped));
+  // The prior readouts for the side-by-side (descriptive): v1's r3 stage and the R3 replication's.
+  const prior = async (flag: "v1" | "r3rep", stage: "r3" | "r3rep") => {
+    if (!flags.has(flag)) return undefined;
+    const path = need(flags, flag)[0];
+    try {
+      const json = await readJson(path);
+      reg1ReportPriorSummary(json, stage);
+      return json;
+    } catch (e) {
+      usage(`--${flag} ${path}: ${message(e)}`);
+    }
+  };
+  const r = reg1ReportReadout({ sets: screened.accepted, rejected, runs, device, reproducibility, queue, capability: capabilityRows, v1: await prior("v1", "r3"), r3rep: await prior("r3rep", "r3rep") });
+  return { ...head, ...r, rejected, skipped };
+}
+
 async function decideCmd(flags: Map<string, string[]>) {
   const inputs: DecisionInputs = {};
   let p1: boolean | null | undefined;
@@ -930,6 +1162,9 @@ async function main() {
       break;
     case "r3rep":
       out = await r3repStage(flags);
+      break;
+    case "reg1":
+      out = await reg1Stage(flags);
       break;
     case "decide":
       out = await decideCmd(flags);

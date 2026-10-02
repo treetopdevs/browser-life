@@ -200,6 +200,8 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     if (m.presetIdentity !== undefined && m.presetIdentity !== refIdentity)
       throw new Error(`${id}: preset identity ${m.presetIdentity} differs from the run's ${refIdentity}`);
     if (m.checkpoints?.length) throw new Error(`${id}: carries intermediate checkpoints, which stitching does not support`);
+    // Likewise RunSpec.preCycleCheckpoints: the stitched manifest would list files it does not carry.
+    if (m.preCycleCheckpoints !== undefined || m.spec.preCycleCheckpoints !== undefined) throw new Error(`${id}: carries pre-cycle checkpoints, which stitching does not support`);
 
     // Census grid: every censusEvery steps from the segment start, ending at its end.
     const series = lines(s.files["series.jsonl"]).map((l) => JSON.parse(l));

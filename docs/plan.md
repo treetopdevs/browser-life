@@ -636,6 +636,20 @@ Integration is engineering at $0, on the Mac. It does not count toward M6, and i
 
 The transition hunt stays a draft. It waits on the user's approval as a whole, and its Stage 1 waits on this registration's queue.
 
+**Registration code built (2026-10-02, the user's go: "push and start the build").** The code listed under the registration's "Code to build before any run" is built, audited and reviewed. It is $0 engineering on the Mac. No history, assay or data of the registration exists yet.
+- **Runner:** opt-in pre-cycle checkpoints, `RunSpec.preCycleCheckpoints` and `tools/run.ts --pre-cycle`, writing `checkpoints/b<NNN>-pre.blck` (integration Amendment 3). Runs without the field are byte-identical, and the golden pins are unchanged.
+- **Assays:** `tools/scaffold-assays.ts --reg1` loads runner-bundle sources and verifies them. It covers every set of the registration: sources, Ge-on-Fa, the new Ga-on-Fa control, Ga-on-Fe, quenched, continuations, S2, S3 and R4.
+- **Report:** `tools/scaffold-report.ts reg1` implements the registration's rules end to end. It withholds the tests under an Invalid or Uninformative row, and analyses nothing until every queue command has a terminal state.
+- **Queue:** `tools/reg1-queue.ts` generates the frozen queue: 757 commands on three instances, producing all 558 expected sets. It also writes the lane, history and device-check scripts (`tools/reg1-ops/`).
+- **Registration Amendment 1** records the implementation clarifications made during the build, before any run: run directories, census-100 overflow reruns, one definition of "unresolved", tests withheld when validity settles the row, the device check across all instances, completeness, R4's ancestor, S1's interval and the retained-mass bins. It changes no hypothesis, test, threshold, seed or sample size.
+- **Process:**
+  - three parallel builders;
+  - adversarial audits: the runner had no P1 or P2; the assays one P2; the report one P1 (a missing quenched set did not make its history unresolved, now fixed); the field coupling had two P2s;
+  - all audit findings fixed;
+  - pre-commit review by Antigravity (`agy`), standing in for Codex Astra by the user's instruction for 2026-10-02.
+- **Gates:** typecheck; vitest 1,388; deno checks; GPU golden 12/12; the ponds suite all pass; stitch 43/43; segments 7/7. The R3 replication's, R1″'s and R4's readouts reproduce unchanged.
+- **Next:** the Mac's device-check reference and the committed queue manifest, then the AWS operations for three instances, then the dated draw note for the user's approval (estimate about $28, hard stop $40).
+
 
 ## Ecology-first founder discovery — 2026-09-29
 

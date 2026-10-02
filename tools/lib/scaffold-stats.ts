@@ -2,12 +2,14 @@
 // P2 positive control, R1 pond-level heredity (ICC(1) + permutation), R2 adaptation gain, R3 removal
 // advantage, R4 table passthrough, the truncation sensitivity rule (assay rows and evolution histories), the
 // in-run donor repeatability and the decision table, and the later R1 variants on census traits: tau and R1'
-// (Amendment 2) and the replication's R1'' (docs/scaffold-heredity-replication-v1.md), and the R3 replication's screening, availability
-// and rule (docs/scaffold-r3-replication-v1.md). Everything except `readTsv` is pure (no Deno
+// (Amendment 2) and the replication's R1'' (docs/scaffold-heredity-replication-v1.md), the R3 replication's screening, availability
+// and rule (docs/scaffold-r3-replication-v1.md), and the scaffolding registration's validity, tests and outcome row
+// (docs/scaffold-registration-v1.md, `reg1Report*`). Everything except `readTsv` is pure (no Deno
 // API), so vitest exercises it directly with synthetic data; tools/scaffold-report.ts is the CLI over it.
 // Large tables (ponds.tsv, lineages.tsv) are streamed row by row, never loaded whole.
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
+import { holm, mannWhitney } from "@bl/metrics";
 import {
   M_ASSAY,
   R1DP_HISTORY_SEED_BASE,
@@ -17,6 +19,7 @@ import {
   R3REP_ANCESTOR_SEED,
   R3REP_CYCLES,
   R3REP_REGIME,
+  R3REP_SWAP_AE_WORDS,
   TAU_SEED_BASE,
   censusSteps,
   checkAssaySeeds,
@@ -42,6 +45,9 @@ import {
   r3RepUnavailableProblems,
   r3RepVariantProblems,
   r3RepWorldSeedOf,
+  reg1ContinuationPathOf,
+  reg1ContinuationProblems,
+  reg1ControlProblems,
   type AssayLabelSet,
   type AssayName,
   type R1PrimeLabelSet,
@@ -163,14 +169,17 @@ export const P1_SEED_BASE = 4_800_001;
  * counts, sums and maps below would aggregate it without error. `add` throws on a repeat as it arrives, `finish` on a gap;
  * only one small set per cycle is held.
  *
- * Limit: this checks identity within each cycle, not completeness. It does not know the configured pond count (meta.side
- * squared) or how many cycles the run recorded (done.cycles), so a cycle cut short at its end (recipients 0..62 of 64) or an
- * absent cycle passes. That is acceptable while ponds.tsv feeds only descriptive readouts, written by one tool and read once
- * the run is finished. A report stage whose decision rests on ponds.tsv should pass those two numbers in and require them in
- * `finish`: on all 79 recorded histories every cycle has exactly side^2 rows and the last cycle equals done.cycles.
+ * Limit: without `expect` this checks identity within each cycle, not completeness. It does not know the configured pond count
+ * (meta.side squared) or how many cycles the run recorded (done.cycles), so a cycle cut short at its end (recipients 0..62 of 64)
+ * or an absent cycle passes. That is acceptable while ponds.tsv feeds only descriptive readouts, written by one tool and read once
+ * the run is finished. A report stage whose decision rests on ponds.tsv passes those two numbers in as `expect`, and `finish` then
+ * also requires exactly the cycles 1..`cycles` with `ponds` rows each: on all 79 recorded histories every cycle has exactly side^2
+ * rows and the last cycle equals done.cycles.
  */
 export class RecipientGuard {
   private seen = new Map<number, Set<number>>();
+
+  constructor(private readonly expect?: { ponds: number; cycles: number }) {}
 
   /** One row by its raw cells: a blank or non-digit recipient is refused (`Number("")` is 0, which would read as pond 0). */
   addRow(r: TsvRow): void {
@@ -187,10 +196,18 @@ export class RecipientGuard {
     at.add(recipient);
   }
 
-  /** After the last row: every cycle's recipients are exactly 0..n-1. */
+  /** After the last row: every cycle's recipients are exactly 0..n-1 and, with `expect`, the cycles are exactly 1..cycles with `ponds` rows each. */
   finish(): void {
     for (const [cycle, at] of this.seen)
       for (let i = 0; i < at.size; i++) if (!at.has(i)) throw new Error(`ponds.tsv cycle ${cycle} has ${at.size} rows but none for recipient ${i}`);
+    if (!this.expect) return;
+    const { ponds, cycles } = this.expect;
+    for (let b = 1; b <= cycles; b++) {
+      const n = this.seen.get(b)?.size ?? 0;
+      if (n !== ponds) throw new Error(`ponds.tsv cycle ${b} has ${n} rows, want ${ponds} (one per pond)`);
+    }
+    const extra = [...this.seen.keys()].filter((b) => !(Number.isInteger(b) && b >= 1 && b <= cycles));
+    if (extra.length > 0) throw new Error(`ponds.tsv has cycle ${extra[0]}, want only cycles 1..${cycles}`);
   }
 }
 
@@ -2042,6 +2059,48 @@ function r1dPrimeProvenanceOf(x: unknown): R1dPrimeProvenance | null {
 }
 
 /**
+ * The crossing-time fragments of a transmission set with traits.tsv, in R1's order (replicate 0's f = 0..63, then replicate 1's): its
+ * traits.tsv is checked first (`traitsProblems`, onto `why`), and only while `why` is still empty is every fragment's T, trait at the
+ * end of the period and trait at tau read. A fragment short of a census step, or whose end trait is not assay.tsv's, adds a reason, as
+ * does (strict) a set whose census steps do not include tau. `censored` is one census past the set's period. R1'' and the
+ * registration's S3 read their sets through it.
+ */
+function crossingFragments(json: Record<string, unknown>, rows: readonly AssayRow[], traits: TraitsRead | null, why: string[], strict: boolean): { fragments: R1dPrimeFragment[]; censored: number } {
+  why.push(...traitsProblems(json, rows.length, traits));
+  const frag = rows.filter((r) => r.inoculum === "fragment").sort((a, b) => a.replicate - b.replicate || a.pond - b.pond);
+  const fragments: R1dPrimeFragment[] = [];
+  const period = json.period as number;
+  const censored = (Number.isInteger(period) ? period : 0) + (Number.isInteger(json.censusEvery) ? (json.censusEvery as number) : 0);
+  if (why.length === 0 && frag.length > 0) {
+    // Every census step of every fragment, grouped by (replicate, pond): its crossing time and its traits at tau and at the end.
+    const series = new Map<string, [number, number][]>();
+    for (const [step, list] of traits!.rows) {
+      for (const t of list) {
+        const id = `${t.replicate}:${t.pond}`;
+        const s = series.get(id);
+        if (s) s.push([step, t.trait]);
+        else series.set(id, [[step, t.trait]]);
+      }
+    }
+    let off = 0;
+    for (const r of frag) {
+      const s = series.get(`${r.replicate}:${r.pond}`);
+      const end = s?.find(([step]) => step === period);
+      // One row per census step: a fragment short of a step, or whose end trait is not assay.tsv's, is off.
+      if (s === undefined || s.length !== traits!.counts.size || end === undefined || end[1] !== r.endTrait) {
+        off++;
+        continue;
+      }
+      const atTau = s.find(([step]) => step === R1DP_TAU);
+      fragments.push({ family: r.family, retMass: r.retMass, retE: r.retE!, truncated: (r.truncated ?? 0) > 0, T: crossingTime(s, censored), endTrait: r.endTrait, tauTrait: atTau ? atTau[1] : null });
+    }
+    if (off > 0) why.push(`traits.tsv disagrees with assay.tsv for ${off} fragments (a census step missing, or an end trait other than the one at step ${period})`);
+    else if (strict && fragments.some((f) => f.tauTrait === null)) why.push(`tau ${R1DP_TAU} is not a census step of traits.tsv`);
+  }
+  return { fragments, censored };
+}
+
+/**
  * Screens R1'' directories (transmission sets labelled `r1dprime`) before the stage pools them. A set is rejected, with its
  * reasons, unless it is 64 ponds x 2 replicates (side 8; no rows when `insufficient`) whose assay.tsv fills the (replicate, pond)
  * grid exactly once and carries retE, at the frozen regime (k 8, period 10,000, census every 100; and `regimes` when given), with
@@ -2107,37 +2166,7 @@ export function r1dPrimeScreen(
       }
       if (!isHex64(json.protocolSha256R1dp)) why.push("assay.json has no protocolSha256R1dp");
     }
-    why.push(...traitsProblems(json, rows.length, traits));
-    const frag = rows.filter((r) => r.inoculum === "fragment").sort((a, b) => a.replicate - b.replicate || a.pond - b.pond);
-    const fragments: R1dPrimeFragment[] = [];
-    const period = json.period as number;
-    const censored = (Number.isInteger(period) ? period : 0) + (Number.isInteger(json.censusEvery) ? (json.censusEvery as number) : 0);
-    if (why.length === 0 && frag.length > 0) {
-      // Every census step of every fragment, grouped by (replicate, pond): its crossing time and its traits at tau and at the end.
-      const series = new Map<string, [number, number][]>();
-      for (const [step, list] of traits!.rows) {
-        for (const t of list) {
-          const id = `${t.replicate}:${t.pond}`;
-          const s = series.get(id);
-          if (s) s.push([step, t.trait]);
-          else series.set(id, [[step, t.trait]]);
-        }
-      }
-      let off = 0;
-      for (const r of frag) {
-        const s = series.get(`${r.replicate}:${r.pond}`);
-        const end = s?.find(([step]) => step === period);
-        // One row per census step: a fragment short of a step, or whose end trait is not assay.tsv's, is off.
-        if (s === undefined || s.length !== traits!.counts.size || end === undefined || end[1] !== r.endTrait) {
-          off++;
-          continue;
-        }
-        const atTau = s.find(([step]) => step === R1DP_TAU);
-        fragments.push({ family: r.family, retMass: r.retMass, retE: r.retE!, truncated: (r.truncated ?? 0) > 0, T: crossingTime(s, censored), endTrait: r.endTrait, tauTrait: atTau ? atTau[1] : null });
-      }
-      if (off > 0) why.push(`traits.tsv disagrees with assay.tsv for ${off} fragments (a census step missing, or an end trait other than the one at step ${period})`);
-      else if (strict && fragments.some((f) => f.tauTrait === null)) why.push(`tau ${R1DP_TAU} is not a census step of traits.tsv`);
-    }
+    const { fragments, censored } = crossingFragments(json, rows, traits, why, strict);
     if (why.length > 0) rejected.push({ dir: d.dir, h, reasons: why });
     else candidates.push({ dir: d.dir, h, insufficient, censored, fragments, provenance, protocolSha256R1dp: isHex64(json.protocolSha256R1dp) ? json.protocolSha256R1dp : null, k: json.k, period: json.period });
   }
@@ -3324,6 +3353,1635 @@ export function r3RepSideBySide(v1: unknown, rep: ReturnType<typeof r3Evaluate>,
 }
 
 // ---------------------------------------------------------------------------------------------
+// Scaffolding registration v1 (docs/scaffold-registration-v1.md): validity, the primary and secondary tests, the outcome row
+
+/**
+ * The frozen registration, pinned by SHA-256 and length (experiments/scaffold/REGISTRATION-v1). A change after the freeze goes in a
+ * dated amendment at the end, so the document keeps beginning with these bytes: sets are checked against the pin, never against the
+ * document as it is now, which the report only describes.
+ */
+export const REG1_REPORT_PROTOCOL = { doc: "docs/scaffold-registration-v1.md", sha256: "8a1b00ec5bd1440e8c4ab4ea61f3816dee0dbe110cb2052f0ae0ca785a817f69", bytes: 31_675 } as const;
+
+/** What is wrong with `doc` (the registration's bytes as they are now) as its frozen text followed by amendments only. */
+export async function reg1ReportProtocolProblems(doc: Uint8Array): Promise<string[]> {
+  const pin = REG1_REPORT_PROTOCOL;
+  if (doc.length < pin.bytes) return [`${pin.doc} has ${doc.length} bytes, fewer than the ${pin.bytes} it had when frozen`];
+  const sha = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", doc.slice(0, pin.bytes))), (b) => b.toString(16).padStart(2, "0")).join("");
+  if (sha === pin.sha256) return [];
+  return [`${pin.doc} no longer begins with its frozen text (SHA-256 ${pin.sha256}; its first ${pin.bytes} bytes hash to ${sha}): a change after the freeze goes in a dated amendment at the end`];
+}
+
+/** α of both Holm families, the histories per arm (and ancestor worlds), and the unresolved histories an arm may have before the whole outcome is uninformative. */
+export const REG1_REPORT_ALPHA = 0.01;
+export const REG1_REPORT_HISTORIES = 24;
+export const REG1_REPORT_UNRESOLVED_LIMIT = 6;
+/** The assay regime ("Assays", protocol v1's): k 8, period 10,000, ref 103,058, 64 ponds at 512^2 (side 8), census every 100, mutation off. */
+export const REG1_REPORT_REGIME = { k: 8, period: 10_000, ref: 103_058, side: 8, censusEvery: 100, mutRate: 0 } as const;
+/** Replicates of 64 fragments: 4 per competence set, 8 for the swap pair, 2 for S2's and S3's sets. */
+export const REG1_REPORT_REPLICATES = { competence: 4, swap: 8, garden: 2, heredity: 2 } as const;
+const REG1_PONDS = REG1_REPORT_REGIME.side * REG1_REPORT_REGIME.side;
+
+/** The registration's seed block ("Seeds"): every base the report checks or draws from. */
+export const REG1_REPORT_SEEDS = {
+  /** History i of arm a (0 scaf, 1 rand, 2 cont): + 100 a + i. */
+  history: 4_850_001,
+  /** Ancestor world i: + i. */
+  ancestor: 4_850_401,
+  /** The continuation (b) of seed index h: + h. */
+  continuation: 4_850_501,
+  /** σ(h, t, s): + 100 h + 10 t + s. */
+  competence: 4_851_001,
+  /** S2: + 100 h + 20 t + 10 v + s. */
+  garden: 4_861_001,
+  /** S3: + 250 h + s. */
+  heredity: 4_866_001,
+  /** S3's negative-control worlds: + j. */
+  negativeWorld: 4_880_001,
+  reproducibility: 4_880_101,
+  bootstrap: 4_880_201,
+  device: 4_880_301,
+} as const;
+
+/**
+ * The run bundles (tools/run.ts, "System under test" and "Histories and sources"): preset `ponds` with its identity, the default mutation
+ * rate, 8 x 8 ponds with period 10,000, deep metrics every 10 censuses, no periodic checkpoints, and per kind of run its steps, pre-cycle
+ * checkpoints and experiments with their census (`--out runs/scaffold/reg1 --experiment <name>`, so a bundle is
+ * runs/scaffold/reg1/<experiment>/ponds/<condition>/seed-<n>): census every 1,000, or every 100 under hist-c100 and anc-c100 for a run
+ * repeated after an event-buffer overflow ("Validity" 3; ponds.tsv and the physics do not depend on the census).
+ */
+export const REG1_REPORT_RUNS = {
+  presetId: "ponds",
+  presetIdentity: "56526b894cfccf3f",
+  mutRate: 429_497,
+  pondPeriod: 10_000,
+  side: 8,
+  deepEvery: 10,
+  history: { experiments: { hist: [1_000], "hist-c100": [100] }, steps: 1_000_000, cycles: 100, preCycle: [34, 100] },
+  ancestor: { experiments: { anc: [1_000], "anc-c100": [100] }, steps: 10_000, cycles: 1, preCycle: [1] },
+  repro: { experiments: { repro: [1_000, 100] }, steps: 340_000, preCycle: [34] },
+  device: { experiments: { device: [1_000] }, condition: "treatment", steps: 20_000 },
+} as const;
+
+export type Reg1ReportArm = "scaf" | "rand" | "cont" | "ancestor";
+const REG1_ARMS = ["scaf", "rand", "cont"] as const;
+const REG1_ALL_ARMS: readonly Reg1ReportArm[] = [...REG1_ARMS, "ancestor"];
+/** The runner condition of each arm (`scaf` = treatment); an ancestor world is a pond-cont world of one period. */
+export const REG1_REPORT_CONDITIONS: Readonly<Record<Reg1ReportArm, string>> = { scaf: "treatment", rand: "pond-rand", cont: "pond-cont", ancestor: "pond-cont" };
+/** S3's seed indices: 0-47 the scaf and rand histories, 48-49 the positive controls (s 0-1), 50-53 the negative controls (j 0-3). */
+export const REG1_REPORT_S3 = { positive: 48, negative: 50, sets: 54 } as const;
+
+const reg1Int = (fn: string, name: string, x: number, lo: number, hi: number): void => {
+  if (!Number.isInteger(x) || x < lo || x > hi) throw new Error(`${fn}: ${name} must be an integer in ${lo}..${hi}, got ${x}`);
+};
+
+/** A history's name in the report and in set ids: scaf-i00 .. cont-i23, and ancestor-i00 .. ancestor-i23 for the ancestor worlds. */
+export const reg1ReportHistoryId = (arm: Reg1ReportArm, i: number): string => `${arm}-i${String(i).padStart(2, "0")}`;
+
+/** The seed index h: 24 arm + i for history i of `arm` (0 scaf, 1 rand, 2 cont), 72 + i for ancestor world i. */
+export function reg1ReportH(arm: Reg1ReportArm, i: number): number {
+  reg1Int("reg1ReportH", "i", i, 0, REG1_REPORT_HISTORIES - 1);
+  if (arm === "ancestor") return 3 * REG1_REPORT_HISTORIES + i;
+  const a = REG1_ARMS.indexOf(arm);
+  if (a < 0) throw new Error(`reg1ReportH: arm must be scaf, rand, cont or ancestor, got ${JSON.stringify(arm)}`);
+  return REG1_REPORT_HISTORIES * a + i;
+}
+
+/** The world seed of history i of `arm` (4,850,001 + 100 arm + i) or of ancestor world i (4,850,401 + i). */
+export function reg1ReportWorldSeed(arm: Reg1ReportArm, i: number): number {
+  const h = reg1ReportH(arm, i);
+  return arm === "ancestor" ? REG1_REPORT_SEEDS.ancestor + i : REG1_REPORT_SEEDS.history + 100 * Math.floor(h / REG1_REPORT_HISTORIES) + i;
+}
+
+/** The seed of the continuation (b) of seed index h (0-95): 4,850,501 + h, at most 4,850,596. */
+export function reg1ReportContinuationSeed(h: number): number {
+  reg1Int("reg1ReportContinuationSeed", "h", h, 0, 4 * REG1_REPORT_HISTORIES - 1);
+  return REG1_REPORT_SEEDS.continuation + h;
+}
+
+/**
+ * σ(h, t, s) = 4,851,001 + 100 h + 10 t + s: h 0-95, t 0 for timing (a) and 1 for (b), s the replicate 0-3, or 0-7 for the swap pair
+ * (h 72-95 at t 0). At most 4,860,514.
+ */
+export function reg1ReportCompetenceSeed(h: number, t: number, s: number): number {
+  reg1Int("reg1ReportCompetenceSeed", "h", h, 0, 4 * REG1_REPORT_HISTORIES - 1);
+  reg1Int("reg1ReportCompetenceSeed", "t", t, 0, 1);
+  const swap = h >= 3 * REG1_REPORT_HISTORIES && t === 0;
+  reg1Int("reg1ReportCompetenceSeed", "s", s, 0, (swap ? REG1_REPORT_REPLICATES.swap : REG1_REPORT_REPLICATES.competence) - 1);
+  return REG1_REPORT_SEEDS.competence + 100 * h + 10 * t + s;
+}
+
+/** S2: 4,861,001 + 100 h + 20 t + 10 v + s, h 0-47 (scaf and rand), t 0 time 0 / 1 time C, v 0 raw / 1 disc, s 0-1. At most 4,865,732. */
+export function reg1ReportGardenSeed(h: number, t: number, v: number, s: number): number {
+  reg1Int("reg1ReportGardenSeed", "h", h, 0, 2 * REG1_REPORT_HISTORIES - 1);
+  reg1Int("reg1ReportGardenSeed", "t", t, 0, 1);
+  reg1Int("reg1ReportGardenSeed", "v", v, 0, 1);
+  reg1Int("reg1ReportGardenSeed", "s", s, 0, REG1_REPORT_REPLICATES.garden - 1);
+  return REG1_REPORT_SEEDS.garden + 100 * h + 20 * t + 10 * v + s;
+}
+
+/** S3: 4,866,001 + 250 h + s, h 0-53 (`REG1_REPORT_S3`), s 0-1 the replicates, 8 the permutation stream, 9 the donor selection. At most 4,879,260. */
+export function reg1ReportHereditySeed(h: number, s: number): number {
+  reg1Int("reg1ReportHereditySeed", "h", h, 0, REG1_REPORT_S3.sets - 1);
+  if (s !== 0 && s !== 1 && s !== 8 && s !== 9) throw new Error(`reg1ReportHereditySeed: s must be 0-1 (replicates), 8 (permutations) or 9 (donors), got ${s}`);
+  return REG1_REPORT_SEEDS.heredity + 250 * h + s;
+}
+
+/** The registration's sets by `labels.set`: the competence sets ("Assays"), S2's garden sets and S3's transmission sets. */
+export type Reg1ReportKind = "source" | "ge-on-fa" | "ga-on-fa" | "ga-on-fe" | "quench" | "garden-raw" | "garden-disc" | "heredity";
+/** The state of a run bundle a set's source is: a pre-cycle checkpoint by boundary, the initial world (S2 at time 0) or a continuation (timing b). */
+export type Reg1ReportCheckpoint = "b001" | "b034" | "b100" | "init" | "continuation";
+/** The state hashes a bundle's manifest records, by checkpoint (a continuation's state is in no manifest). */
+export type Reg1ReportHashes = Partial<Record<Exclude<Reg1ReportCheckpoint, "continuation">, string>>;
+
+/** An assay.json's `labels` for this registration: the set, the history it belongs to, and h, the seed index its seeds use. */
+export interface Reg1ReportLabels {
+  reg1: true;
+  set: Reg1ReportKind;
+  arm: Reg1ReportArm | "control";
+  /** The history (or ancestor world) i; null for S3's controls. */
+  history: number | null;
+  timing: "a" | "b" | null;
+  time: 0 | 1 | null;
+  h: number;
+  control: "positive" | "negative" | null;
+}
+
+/** One set the registration runs: its id, labels, assay and replicates, every replicate's seeds, and where its source comes from. */
+export interface Reg1ReportExpectedSet {
+  id: string;
+  labels: Reg1ReportLabels;
+  assay: "competence" | "garden" | "transmission";
+  replicates: number;
+  /** Replicate s's {physics, fragment} seeds. */
+  seeds: { physics: number; fragment: number }[];
+  /** The seed formula, for the reasons a screen gives. */
+  formula: string;
+  /** S3: the donor-selection seed (s = 9); null for every other set. */
+  donorSeed: number | null;
+  /** The run bundles its source is read from: the fragment source first, then (Ge-on-Fa) the genome donor. Empty for S3's controls. */
+  sources: { bundle: string; checkpoint: Reg1ReportCheckpoint }[];
+  /** The history or ancestor world it belongs to for the unresolved count (the swap pair is scaf_i's); null for S3's controls. */
+  owner: string | null;
+}
+
+let reg1Expected: readonly Reg1ReportExpectedSet[] | null = null;
+let reg1ExpectedById: ReadonlyMap<string, Reg1ReportExpectedSet> | null = null;
+
+/**
+ * Every set the registration runs (558), in queue order: per index i the 13 competence sets (scaf, rand, cont and the ancestor at (a) and
+ * (b), Ge-on-Fa, Ga-on-Fa, Ga-on-Fe and the quenched controls at (a) and (b)); then S2's four per scaf and rand history and time (raw and
+ * disc at time 0 and C); then S3's 48 history sets and its 6 controls. R4's capability set is descriptive and not listed.
+ */
+export function reg1ReportExpectedSets(): readonly Reg1ReportExpectedSet[] {
+  if (reg1Expected) return reg1Expected;
+  const out: Reg1ReportExpectedSet[] = [];
+  const labels = (set: Reg1ReportKind, arm: Reg1ReportLabels["arm"], history: number | null, h: number, o: Partial<Pick<Reg1ReportLabels, "timing" | "time" | "control">> = {}): Reg1ReportLabels => ({
+    reg1: true,
+    set,
+    arm,
+    history,
+    timing: o.timing ?? null,
+    time: o.time ?? null,
+    h,
+    control: o.control ?? null,
+  });
+  const competence = (id: string, l: Reg1ReportLabels, t: number, replicates: number, sources: Reg1ReportExpectedSet["sources"], owner: string): Reg1ReportExpectedSet => ({
+    id,
+    labels: l,
+    assay: "competence",
+    replicates,
+    seeds: Array.from({ length: replicates }, (_, s) => {
+      const x = reg1ReportCompetenceSeed(l.h, t, s);
+      return { physics: x, fragment: x };
+    }),
+    formula: `σ(${l.h}, ${t}, s) = 4,851,001 + 100·${l.h} + 10·${t} + s`,
+    donorSeed: null,
+    sources,
+    owner,
+  });
+  const heredity = (id: string, l: Reg1ReportLabels, sources: Reg1ReportExpectedSet["sources"], owner: string | null): Reg1ReportExpectedSet => ({
+    id,
+    labels: l,
+    assay: "transmission",
+    replicates: REG1_REPORT_REPLICATES.heredity,
+    seeds: Array.from({ length: REG1_REPORT_REPLICATES.heredity }, (_, s) => {
+      const x = reg1ReportHereditySeed(l.h, s);
+      return { physics: x, fragment: x };
+    }),
+    formula: `4,866,001 + 250·${l.h} + s`,
+    donorSeed: reg1ReportHereditySeed(l.h, 9),
+    sources,
+    owner,
+  });
+  const timings = ["a", "b"] as const;
+  for (let i = 0; i < REG1_REPORT_HISTORIES; i++) {
+    for (const arm of REG1_ALL_ARMS) {
+      const id = reg1ReportHistoryId(arm, i);
+      const h = reg1ReportH(arm, i);
+      for (const timing of timings) {
+        const checkpoint: Reg1ReportCheckpoint = timing === "b" ? "continuation" : arm === "ancestor" ? "b001" : "b100";
+        out.push(competence(`${id}-${timing}`, labels("source", arm, i, h, { timing }), timing === "a" ? 0 : 1, REG1_REPORT_REPLICATES.competence, [{ bundle: id, checkpoint }], id));
+      }
+    }
+    const scaf = reg1ReportHistoryId("scaf", i);
+    const anc = reg1ReportHistoryId("ancestor", i);
+    const ha = reg1ReportH("ancestor", i);
+    out.push(competence(`${scaf}-ge-on-fa`, labels("ge-on-fa", "scaf", i, ha, { timing: "a" }), 0, REG1_REPORT_REPLICATES.swap, [{ bundle: anc, checkpoint: "b001" }, { bundle: scaf, checkpoint: "b100" }], scaf));
+    out.push(competence(`${scaf}-ga-on-fa`, labels("ga-on-fa", "scaf", i, ha, { timing: "a" }), 0, REG1_REPORT_REPLICATES.swap, [{ bundle: anc, checkpoint: "b001" }], scaf));
+    out.push(competence(`${scaf}-ga-on-fe`, labels("ga-on-fe", "scaf", i, i, { timing: "a" }), 0, REG1_REPORT_REPLICATES.competence, [{ bundle: scaf, checkpoint: "b100" }], scaf));
+    for (const timing of timings) {
+      out.push(competence(`${scaf}-quench-${timing}`, labels("quench", "scaf", i, i, { timing }), timing === "a" ? 0 : 1, REG1_REPORT_REPLICATES.competence, [{ bundle: scaf, checkpoint: timing === "a" ? "b100" : "continuation" }], scaf));
+    }
+  }
+  for (const arm of ["scaf", "rand"] as const) {
+    for (let i = 0; i < REG1_REPORT_HISTORIES; i++) {
+      const id = reg1ReportHistoryId(arm, i);
+      const h = reg1ReportH(arm, i);
+      for (const time of [0, 1] as const) {
+        for (const v of [0, 1] as const) {
+          out.push({
+            id: `garden-${id}-t${time}-${v === 0 ? "raw" : "disc"}`,
+            labels: labels(v === 0 ? "garden-raw" : "garden-disc", arm, i, h, { time }),
+            assay: "garden",
+            replicates: REG1_REPORT_REPLICATES.garden,
+            seeds: Array.from({ length: REG1_REPORT_REPLICATES.garden }, (_, s) => ({ physics: reg1ReportGardenSeed(h, time, v, s), fragment: reg1ReportGardenSeed(h, time, 0, s) })),
+            formula: `physics 4,861,001 + 100·${h} + 20·${time} + 10·${v} + s, fragments the same with v = 0`,
+            donorSeed: null,
+            sources: [{ bundle: id, checkpoint: time === 0 ? "init" : "b100" }],
+            owner: id,
+          });
+        }
+      }
+    }
+  }
+  for (const arm of ["scaf", "rand"] as const) {
+    for (let i = 0; i < REG1_REPORT_HISTORIES; i++) {
+      const id = reg1ReportHistoryId(arm, i);
+      out.push(heredity(`heredity-${id}`, labels("heredity", arm, i, reg1ReportH(arm, i)), [{ bundle: id, checkpoint: "b034" }], id));
+    }
+  }
+  for (let s = 0; s < 2; s++) out.push(heredity(`heredity-pos-s${s}`, labels("heredity", "control", null, REG1_REPORT_S3.positive + s, { control: "positive" }), [], null));
+  for (let j = 0; j < 4; j++) out.push(heredity(`heredity-neg-j${j}`, labels("heredity", "control", null, REG1_REPORT_S3.negative + j, { control: "negative" }), [], null));
+  reg1Expected = out;
+  reg1ExpectedById = new Map(out.map((x) => [x.id, x]));
+  return out;
+}
+
+/** The expected set of an id, or undefined. */
+export function reg1ReportExpectedSet(id: string): Reg1ReportExpectedSet | undefined {
+  reg1ReportExpectedSets();
+  return reg1ExpectedById!.get(id);
+}
+
+/**
+ * The id of the set an assay.json's `labels` name (`set`, `arm`, `history`, `timing` or `time`, and for S3's controls `control` and h), or
+ * why they name none. The labels must still agree with the set in full (`reg1ReportLabelProblems`).
+ */
+export function reg1ReportSetIdOf(labels: unknown): { id: string } | { error: string } {
+  if (!isRecord(labels) || labels.reg1 !== true) return { error: "labels.reg1 is not true" };
+  const l = labels;
+  const i = l.history;
+  const history = (arms: readonly string[]): string | null =>
+    typeof l.arm === "string" && arms.includes(l.arm) && Number.isInteger(i) && (i as number) >= 0 && (i as number) < REG1_REPORT_HISTORIES ? reg1ReportHistoryId(l.arm as Reg1ReportArm, i as number) : null;
+  const bad = (what: string) => ({ error: `labels name no registration set (${what}): ${JSON.stringify(labels)}` });
+  switch (l.set) {
+    case "source": {
+      const id = history(REG1_ALL_ARMS);
+      if (id === null) return bad("a source needs arm scaf, rand, cont or ancestor and history 0-23");
+      return l.timing === "a" || l.timing === "b" ? { id: `${id}-${l.timing}` } : bad("a source needs timing a or b");
+    }
+    case "ge-on-fa":
+    case "ga-on-fa":
+    case "ga-on-fe": {
+      const id = history(["scaf"]);
+      return id === null ? bad(`${l.set} labels scaf history 0-23`) : { id: `${id}-${l.set}` };
+    }
+    case "quench": {
+      const id = history(["scaf"]);
+      if (id === null) return bad("quench labels scaf history 0-23");
+      return l.timing === "a" || l.timing === "b" ? { id: `${id}-quench-${l.timing}` } : bad("quench needs timing a or b");
+    }
+    case "garden-raw":
+    case "garden-disc": {
+      const id = history(["scaf", "rand"]);
+      if (id === null) return bad(`${l.set} labels scaf or rand history 0-23`);
+      return l.time === 0 || l.time === 1 ? { id: `garden-${id}-t${l.time}-${l.set === "garden-raw" ? "raw" : "disc"}` } : bad(`${l.set} needs time 0 or 1`);
+    }
+    case "heredity": {
+      if (l.arm === "control") {
+        const h = l.h as number;
+        if (l.control === "positive" && Number.isInteger(h) && h >= REG1_REPORT_S3.positive && h < REG1_REPORT_S3.negative) return { id: `heredity-pos-s${h - REG1_REPORT_S3.positive}` };
+        if (l.control === "negative" && Number.isInteger(h) && h >= REG1_REPORT_S3.negative && h < REG1_REPORT_S3.sets) return { id: `heredity-neg-j${h - REG1_REPORT_S3.negative}` };
+        return bad("an S3 control is positive with h 48-49 or negative with h 50-53");
+      }
+      const id = history(["scaf", "rand"]);
+      return id === null ? bad("heredity labels scaf or rand history 0-23, or arm control") : { id: `heredity-${id}` };
+    }
+    default:
+      return bad(`set ${JSON.stringify(l.set)}`);
+  }
+}
+
+/** What is wrong with `labels` for the set `want` (every field of reg1-interfaces.md's labels; an absent one reads as null). */
+export function reg1ReportLabelProblems(labels: Record<string, unknown>, want: Reg1ReportExpectedSet): string[] {
+  const why: string[] = [];
+  for (const key of ["set", "arm", "history", "timing", "time", "h", "control"] as const) {
+    if ((labels[key] ?? null) !== want.labels[key]) why.push(`labels.${key} ${JSON.stringify(labels[key])}, want ${JSON.stringify(want.labels[key])} for ${want.id}`);
+  }
+  return why;
+}
+
+/** The expected run bundles in order: the scaf, rand and cont histories, then the ancestor worlds, i = 0-23 each. */
+export function reg1ReportExpectedRuns(): { id: string; arm: Reg1ReportArm; history: number }[] {
+  return REG1_ALL_ARMS.flatMap((arm) => Array.from({ length: REG1_REPORT_HISTORIES }, (_, i) => ({ id: reg1ReportHistoryId(arm, i), arm, history: i })));
+}
+
+/** What a run bundle is, from its manifest's spec.seed: a history (1,000,000 steps), its reproducibility rerun (340,000), an ancestor world, or the device check. */
+export type Reg1ReportBundleRole =
+  | { role: "history" | "repro"; arm: "scaf" | "rand" | "cont"; history: number; id: string }
+  | { role: "ancestor"; arm: "ancestor"; history: number; id: string }
+  | { role: "device" };
+
+/** The role of a bundle from its manifest, or why it is none of the registration's (its seed is outside the block's run seeds). */
+export function reg1ReportBundleRoleOf(manifest: unknown): { role: Reg1ReportBundleRole } | { why: string } {
+  const spec = isRecord(manifest) && isRecord(manifest.spec) ? manifest.spec : null;
+  if (spec === null) return { why: "manifest.json has no spec" };
+  const seed = spec.seed;
+  if (seed === REG1_REPORT_SEEDS.device) return { role: { role: "device" } };
+  if (typeof seed === "number") {
+    for (let a = 0; a < REG1_ARMS.length; a++) {
+      const i = seed - REG1_REPORT_SEEDS.history - 100 * a;
+      if (Number.isInteger(i) && i >= 0 && i < REG1_REPORT_HISTORIES) {
+        const arm = REG1_ARMS[a];
+        return { role: { role: spec.steps === REG1_REPORT_RUNS.repro.steps ? "repro" : "history", arm, history: i, id: reg1ReportHistoryId(arm, i) } };
+      }
+    }
+    const i = seed - REG1_REPORT_SEEDS.ancestor;
+    if (Number.isInteger(i) && i >= 0 && i < REG1_REPORT_HISTORIES) return { role: { role: "ancestor", arm: "ancestor", history: i, id: reg1ReportHistoryId("ancestor", i) } };
+  }
+  return { why: `spec.seed ${JSON.stringify(seed)} is not a registration history (4,850,001 + 100 arm + i), ancestor world (4,850,401 + i) or device check (4,880,301) seed` };
+}
+
+const pad3 = (b: number) => String(b).padStart(3, "0");
+
+/**
+ * What is wrong with a bundle's manifest.json for its role (none: it is the registration's run). Every role: finished (summary and
+ * finishedAt) with exact conservation (summary.conservationOk), one of its experiments with that experiment's census (`REG1_REPORT_RUNS`:
+ * hist or hist-c100, anc or anc-c100, repro, device) and the runId the runner derives from it (<experiment>/ponds/<condition>/seed-<n>),
+ * which `dir`, when given, must end in. The device check: preset ponds, condition treatment, seed 4,880,301, 20,000 steps and a finalHash.
+ * A history, an ancestor world or a reproducibility rerun: preset ponds and its identity 56526b894cfccf3f, the arm's condition and world
+ * seed, its steps (10^6, 10^4 or 340,000), deep every 10, no periodic checkpoints, its pre-cycle boundaries (34 and 100, 1, or 34) and
+ * nothing else that changes the world; a config with the default mutation rate 429,497, 8 x 8 ponds, period 10,000 and the arm; started
+ * from the preset (startStep 0, initHash); and every pre-cycle checkpoint listed in order with its step, file checkpoints/b<NNN>-pre.blck and hash.
+ */
+export function reg1ReportBundleProblems(manifest: unknown, role: Reg1ReportBundleRole, dir?: string): string[] {
+  if (!isRecord(manifest) || !isRecord(manifest.spec)) return ["manifest.json has no spec"];
+  const m = manifest;
+  const spec = manifest.spec;
+  const why: string[] = [];
+  const want = (name: string, got: unknown, expected: unknown) => {
+    if (got !== expected) why.push(`${name} ${JSON.stringify(got)}, want ${JSON.stringify(expected)}`);
+  };
+  const summary = isRecord(m.summary) ? m.summary : null;
+  if (summary === null || typeof m.finishedAt !== "string") why.push("the run did not finish (manifest.json has no summary and finishedAt)");
+  else if (summary.conservationOk !== true) why.push(`summary.conservationOk ${JSON.stringify(summary.conservationOk)}: matter or the energy ledger was not conserved`);
+  const runs = REG1_REPORT_RUNS;
+  const kind = role.role === "device" ? runs.device : role.role === "ancestor" ? runs.ancestor : role.role === "repro" ? runs.repro : runs.history;
+  const condition = role.role === "device" ? runs.device.condition : REG1_REPORT_CONDITIONS[role.arm];
+  const experiments: Readonly<Record<string, readonly number[]>> = kind.experiments;
+  const experiment = typeof spec.experiment === "string" && Object.hasOwn(experiments, spec.experiment) ? spec.experiment : null;
+  if (experiment === null) why.push(`spec.experiment ${JSON.stringify(spec.experiment)}, want ${Object.keys(experiments).join(" or ")}`);
+  else if (!experiments[experiment].includes(spec.censusEvery as number)) why.push(`spec.censusEvery ${JSON.stringify(spec.censusEvery)}, want ${experiments[experiment].join(" or ")} under experiment ${experiment}`);
+  const runId = `${experiment ?? Object.keys(experiments)[0]}/${runs.presetId}/${condition}/seed-${role.role === "device" ? REG1_REPORT_SEEDS.device : reg1ReportWorldSeed(role.arm, role.history)}`;
+  want("runId", m.runId, runId);
+  if (dir !== undefined) {
+    const path = dir.replace(/\/+$/, "");
+    if (path !== runId && !path.endsWith(`/${runId}`)) why.push(`the bundle directory ${JSON.stringify(dir)} does not end in ${runId}`);
+  }
+  want("spec.presetId", spec.presetId, REG1_REPORT_RUNS.presetId);
+  if (role.role === "device") {
+    const d = runs.device;
+    want("spec.condition", spec.condition, d.condition);
+    want("spec.seed", spec.seed, REG1_REPORT_SEEDS.device);
+    want("spec.steps", spec.steps, d.steps);
+    if (summary !== null && typeof summary.finalHash !== "string") why.push("summary.finalHash is missing");
+    return why;
+  }
+  const shape: { steps: number; preCycle: readonly number[] } = role.role === "ancestor" ? REG1_REPORT_RUNS.ancestor : role.role === "repro" ? REG1_REPORT_RUNS.repro : REG1_REPORT_RUNS.history;
+  want("spec.condition", spec.condition, REG1_REPORT_CONDITIONS[role.arm]);
+  want("spec.seed", spec.seed, reg1ReportWorldSeed(role.arm, role.history));
+  want("spec.steps", spec.steps, shape.steps);
+  want("spec.deepEvery", spec.deepEvery, REG1_REPORT_RUNS.deepEvery);
+  want("spec.checkpointEvery", spec.checkpointEvery, 0);
+  if (JSON.stringify(spec.preCycleCheckpoints) !== JSON.stringify(shape.preCycle)) why.push(`spec.preCycleCheckpoints ${JSON.stringify(spec.preCycleCheckpoints)}, want ${JSON.stringify(shape.preCycle)}`);
+  for (const key of ["overrides", "metapopulation", "soloFounder", "soloGenome", "founderSet"]) if (spec[key] !== undefined) why.push(`spec.${key} is set, but the registration's runs are the preset's own world`);
+  want("presetIdentity", m.presetIdentity, REG1_REPORT_RUNS.presetIdentity);
+  want("startStep", m.startStep, 0);
+  if (typeof m.initHash !== "string") why.push("manifest.json has no initHash (not a run built from the preset)");
+  const cfg = isRecord(m.cfg) ? m.cfg : {};
+  want("cfg.mutRate", cfg.mutRate, REG1_REPORT_RUNS.mutRate);
+  want("cfg.pondPeriod", cfg.pondPeriod, REG1_REPORT_RUNS.pondPeriod);
+  want("cfg.tilesX", cfg.tilesX, REG1_REPORT_RUNS.side);
+  want("cfg.tilesY", cfg.tilesY, REG1_REPORT_RUNS.side);
+  want("cfg.pondArm", cfg.pondArm, role.arm === "ancestor" ? "cont" : role.arm);
+  if (summary !== null) want("summary.steps", summary.steps, shape.steps);
+  const listed = m.preCycleCheckpoints;
+  if (!Array.isArray(listed)) why.push("manifest.json lists no preCycleCheckpoints");
+  else {
+    if (listed.length !== shape.preCycle.length) why.push(`manifest.json lists ${listed.length} preCycleCheckpoints, want ${shape.preCycle.length}`);
+    shape.preCycle.forEach((b, k) => {
+      const e = listed[k];
+      const file = `checkpoints/b${pad3(b)}-pre.blck`;
+      if (!isRecord(e) || e.boundary !== b || e.step !== b * REG1_REPORT_RUNS.pondPeriod || e.file !== file || typeof e.hash !== "string" || e.hash === "") {
+        why.push(`preCycleCheckpoints[${k}] ${JSON.stringify(e)}, want boundary ${b} at step ${b * REG1_REPORT_RUNS.pondPeriod} in ${file} with its hash`);
+      }
+    });
+  }
+  return why;
+}
+
+/** The state hashes a bundle's manifest records: its pre-cycle checkpoints by boundary and its initial state (initHash). */
+export function reg1ReportBundleHashes(manifest: unknown): Reg1ReportHashes {
+  const out: Reg1ReportHashes = {};
+  if (!isRecord(manifest)) return out;
+  if (typeof manifest.initHash === "string") out.init = manifest.initHash;
+  for (const e of Array.isArray(manifest.preCycleCheckpoints) ? manifest.preCycleCheckpoints : []) {
+    if (!isRecord(e) || typeof e.hash !== "string") continue;
+    if (e.boundary === 1) out.b001 = e.hash;
+    if (e.boundary === 34) out.b034 = e.hash;
+    if (e.boundary === 100) out.b100 = e.hash;
+  }
+  return out;
+}
+
+/**
+ * The one bundle of a history (or ancestor world) among those found for it ("Validity" 2-3): reruns after an infrastructure failure
+ * write the same directory, and a run that stopped on an event-buffer overflow is repeated at census 100 under hist-c100 (anc-c100), so
+ * exactly one of them may be finished (summary and finishedAt). That one is taken and the unfinished attempts are `superseded`; with none
+ * finished a single attempt is taken (and fails as unfinished); two finished bundles, or several unfinished ones, are refused (`why`).
+ */
+export function reg1ReportPickBundle<T extends { dir: string; manifest: unknown }>(found: readonly T[]): { pick: T | null; superseded: T[]; why: string | null } {
+  const finished = (b: T) => isRecord(b.manifest) && isRecord(b.manifest.summary) && typeof b.manifest.finishedAt === "string";
+  const done = found.filter(finished);
+  if (found.length === 0) return { pick: null, superseded: [], why: "no run bundle" };
+  if (done.length > 1) return { pick: null, superseded: [], why: `${done.length} finished run bundles (${done.map((b) => b.dir).join(", ")}); neither is used` };
+  if (done.length === 1) return { pick: done[0], superseded: found.filter((b) => b !== done[0]), why: null };
+  if (found.length > 1) return { pick: null, superseded: [], why: `${found.length} unfinished run bundles (${found.map((b) => b.dir).join(", ")}) and none finished` };
+  return { pick: found[0], superseded: [], why: null };
+}
+
+/** A bundle's ponds.tsv, summarised: per boundary its rows, mean pre-cycle pond trait and extinct ponds; its truncation; whether its history ended. */
+export interface Reg1ReportTrajectory {
+  boundaries: { boundary: number; n: number; meanTrait: number; extinct: number }[];
+  /** The truncated share of its recipient rows (protocol v1's truncation rule). */
+  truncation: TruncationStat;
+  /** The first boundary at which no pond was eligible (every row's donor -1: the history ended and stepped on, cleared); null if none, and for cont. */
+  endedAt: number | null;
+}
+
+/**
+ * One streaming pass over a bundle's ponds.tsv, which must hold one row per pond (recipient) at every boundary 1..cycles and no other
+ * (`RecipientGuard` with `expect`): otherwise it throws, and the bundle is unresolved. `cycled` (scaf and rand) reads `endedAt`.
+ */
+export async function reg1ReportTrajectory(rows: AsyncIterable<TsvRow>, expect: { ponds: number; cycles: number }, cycled: boolean): Promise<Reg1ReportTrajectory> {
+  const at = new Map<number, { n: number; sum: number; extinct: number; donors: number }>();
+  const guard = new RecipientGuard(expect);
+  let n = 0;
+  let truncated = 0;
+  for await (const r of rows) {
+    n++;
+    guard.addRow(r);
+    if (num(r, "truncated") > 0) truncated++;
+    const b = num(r, "cycle");
+    const trait = num(r, "recipientTrait");
+    let x = at.get(b);
+    if (!x) at.set(b, (x = { n: 0, sum: 0, extinct: 0, donors: 0 }));
+    x.n++;
+    x.sum += trait;
+    if (trait === 0) x.extinct++;
+    if (num(r, "donor") >= 0) x.donors++;
+  }
+  guard.finish();
+  const sorted = [...at].sort(([p], [q]) => p - q);
+  return {
+    boundaries: sorted.map(([boundary, x]) => ({ boundary, n: x.n, meanTrait: x.sum / x.n, extinct: x.extinct })),
+    truncation: truncationOf(truncated, n),
+    endedAt: cycled ? (sorted.find(([, x]) => x.donors === 0)?.[0] ?? null) : null,
+  };
+}
+
+/** One expected run bundle (a history or an ancestor world) as the report found it. */
+export interface Reg1ReportRun {
+  id: string;
+  arm: Reg1ReportArm;
+  history: number;
+  /** The bundle directory; null when none was found. */
+  dir: string | null;
+  /** Found exactly once, finished, with a valid manifest and a complete ponds.tsv; otherwise unresolved, and why. */
+  resolved: boolean;
+  why: string[];
+  hashes: Reg1ReportHashes;
+  censusEvery: number | null;
+  /** The host and adapter its manifest records (tools/run.ts), which a device check must have covered; null when no one bundle was taken. */
+  host: { host: string | null; adapter: string | null } | null;
+  trajectory: Reg1ReportTrajectory | null;
+}
+
+/** The host and adapter a manifest records (`HostInfo`). */
+export function reg1ReportHostOf(manifest: unknown): { host: string | null; adapter: string | null } {
+  const h = isRecord(manifest) && isRecord(manifest.host) ? manifest.host : {};
+  return { host: typeof h.host === "string" ? h.host : null, adapter: typeof h.adapter === "string" ? h.adapter : null };
+}
+
+/** The device check's bundles: the Mac's (its host names darwin, the reference) and one per instance (three). */
+export const REG1_REPORT_DEVICES = { bundles: 4, mac: "darwin" } as const;
+
+/** The device check ("Validity" 1) over the --device bundles. */
+export interface Reg1ReportDevice {
+  /** Four bundles in distinct directories (the Mac's, whose host names darwin, and three instances'), every one the device spec, finished with exact conservation, all with one finalHash, and every run bundle's host and adapter among theirs. */
+  passed: boolean;
+  reasons: string[];
+  finalHash: string | null;
+  /** The Mac's bundle (the reference); null unless exactly one host names darwin. */
+  mac: string | null;
+  bundles: { dir: string; host: string | null; adapter: string | null; finalHash: string | null; problems: string[] }[];
+  /** Run bundles whose host and adapter no device check covers. */
+  uncovered: string[];
+}
+
+/**
+ * The device check: four --device bundles in distinct directories, exactly one of them the Mac's (its host names darwin: the reference)
+ * and three instances', each preset ponds, condition treatment, seed 4,880,301, 20,000 steps, census 1,000, finished with exact
+ * conservation, all reporting one `summary.finalHash`; and every run bundle taken (`runs`, when given) ran on a host and adapter that one
+ * of them reports. Anything else fails it: a check that cannot be made fails as a mismatch does.
+ */
+export function reg1ReportDeviceCheck(bundles: readonly { dir: string; manifest: unknown }[], runs: readonly Pick<Reg1ReportRun, "id" | "host">[] | null = null): Reg1ReportDevice {
+  const rows = bundles.map(({ dir, manifest }) => {
+    const m = isRecord(manifest) ? manifest : {};
+    const role = reg1ReportBundleRoleOf(manifest);
+    const problems = "why" in role ? [role.why] : role.role.role !== "device" ? [`spec.seed ${JSON.stringify(isRecord(m.spec) ? m.spec.seed : undefined)} is not the device check's (4,880,301)`] : reg1ReportBundleProblems(manifest, role.role, dir);
+    const summary = isRecord(m.summary) ? m.summary : {};
+    return { dir, ...reg1ReportHostOf(manifest), finalHash: typeof summary.finalHash === "string" ? summary.finalHash : null, problems };
+  });
+  const reasons: string[] = [];
+  const want = REG1_REPORT_DEVICES;
+  if (rows.length !== want.bundles) reasons.push(`${rows.length} device check bundle${rows.length === 1 ? "" : "s"}, want ${want.bundles}: the Mac's and one per instance`);
+  const dirs = rows.map((r) => r.dir.replace(/\/+$/, ""));
+  if (new Set(dirs).size !== dirs.length) reasons.push(`device check bundles share a directory: ${dirs.filter((d, k) => dirs.indexOf(d) !== k).join(", ")}`);
+  const macs = rows.filter((r) => r.host?.includes(want.mac) === true);
+  if (macs.length !== 1) reasons.push(`${macs.length} device check bundles ran on a host naming ${want.mac}, want exactly 1 (the Mac's, the reference)`);
+  for (const r of rows) if (r.problems.length > 0) reasons.push(`${r.dir}: ${r.problems.join("; ")}`);
+  const hashes = [...new Set(rows.map((r) => r.finalHash))];
+  if (rows.length > 0 && hashes.length > 1) reasons.push(`finalHash differs between the device check bundles: ${rows.map((r) => `${r.dir} ${r.finalHash}`).join(", ")}`);
+  const covered = new Set(rows.map((r) => JSON.stringify([r.host, r.adapter])));
+  const uncovered = (runs ?? []).filter((r) => r.host !== null && !covered.has(JSON.stringify([r.host.host, r.host.adapter]))).map((r) => r.id);
+  if (uncovered.length > 0) {
+    const first = runs!.find((r) => r.id === uncovered[0])!.host!;
+    reasons.push(`${uncovered.length} run bundles ran on a host and adapter no device check reports (${uncovered.slice(0, 5).join(", ")}${uncovered.length > 5 ? ", ..." : ""}; ${uncovered[0]} on ${JSON.stringify(first.host)} with ${JSON.stringify(first.adapter)})`);
+  }
+  const passed = reasons.length === 0;
+  return { passed, reasons, finalHash: passed ? rows[0].finalHash : null, mac: macs.length === 1 ? macs[0].dir : null, bundles: rows, uncovered };
+}
+
+/**
+ * The reproducibility draw ("Validity" 7): the first two distinct values of randomKey(4,880,101, 0, k, 0) mod 72 for k = 0, 1, ..., each
+ * naming a history in seed order (scaf 0-23, rand 24-47, cont 48-71), with every draw up to the second distinct value.
+ */
+export function reg1ReportReproSelection(): { draws: { k: number; value: number }[]; selected: { value: number; arm: "scaf" | "rand" | "cont"; history: number; id: string }[] } {
+  const draws: { k: number; value: number }[] = [];
+  const values: number[] = [];
+  for (let k = 0; values.length < 2; k++) {
+    if (k > 100_000) throw new Error("reg1ReportReproSelection: no second distinct value");
+    const value = randomKey(REG1_REPORT_SEEDS.reproducibility, 0, k, 0) % (3 * REG1_REPORT_HISTORIES);
+    draws.push({ k, value });
+    if (!values.includes(value)) values.push(value);
+  }
+  const selected = values.map((value) => {
+    const arm = REG1_ARMS[Math.floor(value / REG1_REPORT_HISTORIES)];
+    const history = value % REG1_REPORT_HISTORIES;
+    return { value, arm, history, id: reg1ReportHistoryId(arm, history) };
+  });
+  return { draws, selected };
+}
+
+/** The reproducibility check over the selected histories' Mac reruns. */
+export interface Reg1ReportReproducibility {
+  /** Both selected histories resolved, each with exactly one valid rerun whose b034-pre hash equals the instance's. */
+  passed: boolean;
+  reasons: string[];
+  draws: { k: number; value: number }[];
+  histories: { id: string; value: number; instanceHash: string | null; rerun: string | null; rerunHash: string | null; passed: boolean; why: string | null }[];
+  /** --repro bundles that are not a rerun of a selected history. */
+  skipped: { dir: string; why: string }[];
+}
+
+/**
+ * The reproducibility check: each selected history (`reg1ReportReproSelection`, never replaced) needs its instance bundle resolved and
+ * exactly one rerun among `reruns` (the history's condition and seed, 340,000 steps, its b034-pre listed; `reg1ReportBundleProblems`) made
+ * on the Mac (its host names darwin) whose b034-pre hash equals the instance's. A mismatch, a missing or invalid rerun, or an unresolved history fails it.
+ */
+export function reg1ReportReproducibility(runs: ReadonlyMap<string, Pick<Reg1ReportRun, "resolved" | "hashes">>, reruns: readonly { dir: string; manifest: unknown }[]): Reg1ReportReproducibility {
+  const { draws, selected } = reg1ReportReproSelection();
+  const skipped: { dir: string; why: string }[] = [];
+  const byId = new Map<string, { dir: string; manifest: unknown; role: Reg1ReportBundleRole }[]>();
+  for (const r of reruns) {
+    const role = reg1ReportBundleRoleOf(r.manifest);
+    if ("why" in role) skipped.push({ dir: r.dir, why: role.why });
+    else if (role.role.role !== "repro") skipped.push({ dir: r.dir, why: `not a reproducibility rerun (${role.role.role === "device" ? "the device check" : `${role.role.role} ${role.role.id}, ${JSON.stringify(isRecord(r.manifest) && isRecord(r.manifest.spec) ? r.manifest.spec.steps : undefined)} steps`})` });
+    else if (!selected.some((s) => s.id === (role.role as { id: string }).id)) skipped.push({ dir: r.dir, why: `${role.role.id} is not a selected history (${selected.map((s) => s.id).join(", ")})` });
+    else byId.set(role.role.id, [...(byId.get(role.role.id) ?? []), { ...r, role: role.role }]);
+  }
+  const histories = selected.map(({ id, value }) => {
+    const run = runs.get(id);
+    const instanceHash = run?.resolved ? (run.hashes.b034 ?? null) : null;
+    const found = byId.get(id) ?? [];
+    const base = { id, value, instanceHash, rerun: found.length === 1 ? found[0].dir : null };
+    const fail = (why: string, rerunHash: string | null = null) => ({ ...base, rerunHash, passed: false, why });
+    if (!run?.resolved) return fail(`${id} is unresolved, so the check cannot be made`);
+    if (found.length === 0) return fail(`no rerun of ${id}`);
+    if (found.length > 1) return fail(`${found.length} reruns of ${id} (${found.map((f) => f.dir).join(", ")}); neither is used`);
+    const problems = reg1ReportBundleProblems(found[0].manifest, found[0].role, found[0].dir);
+    const host = reg1ReportHostOf(found[0].manifest).host;
+    if (host?.includes(REG1_REPORT_DEVICES.mac) !== true) problems.push(`it ran on host ${JSON.stringify(host)}, not the Mac's (${REG1_REPORT_DEVICES.mac})`);
+    const rerunHash = reg1ReportBundleHashes(found[0].manifest).b034 ?? null;
+    if (problems.length > 0) return fail(`the rerun of ${id} is not valid: ${problems.join("; ")}`, rerunHash);
+    if (rerunHash !== instanceHash) return fail(`the rerun's b034-pre hash ${rerunHash} is not the instance's ${instanceHash}`, rerunHash);
+    return { ...base, rerunHash, passed: true, why: null };
+  });
+  const reasons = histories.filter((h) => !h.passed).map((h) => h.why!);
+  return { passed: reasons.length === 0, reasons, draws, histories, skipped };
+}
+
+/** An assay directory as read for the registration: its path, assay.json, every assay.tsv row and (S3) traits.tsv. */
+export interface Reg1ReportSetDir {
+  dir: string;
+  json: Record<string, unknown>;
+  rows: AssayRow[];
+  traits: TraitsRead | null;
+}
+
+/**
+ * A `scaf` history's source (a) as the report reloaded it from its bundle, for a Ge-on-Fa record that says it has no dominant genome: the
+ * state hash and whether it has a dominant genome (`dominantGenome`), or why it could not be read.
+ */
+export type Reg1ReportDonorCheck = { stateHash: string; dominant: boolean } | { error: string };
+
+/** A screened set of the registration. */
+export interface Reg1ReportSet {
+  id: string;
+  dir: string;
+  expected: Reg1ReportExpectedSet;
+  /** A Ge-on-Fa record whose donor has no dominant genome (no eligible cell): no rows, a measured failure of H2 and S1, never unresolved. */
+  biological: boolean;
+  rows: AssayRow[];
+  /** S3: the crossing-time fragments, or `insufficient` (fewer than 2 eligible donors, a biological outcome); null for other sets. */
+  heredity: { insufficient: boolean; censored: number; fragments: R1dPrimeFragment[] } | null;
+}
+
+const HEX_WORDS = new RegExp(`^[0-9a-f]{${R3REP_SWAP_AE_WORDS.length}}$`);
+
+/** What is wrong with the treatment a competence set records (`quench`, `swap`, as competence --r3rep records them) for its kind; Ge-on-Fa's words are its donor's recorded dominant genome. */
+function reg1TreatmentProblems(json: Record<string, unknown>, kind: Reg1ReportKind, biological: boolean): string[] {
+  const why: string[] = [];
+  const quench = kind === "quench";
+  if (json.quench !== quench) why.push(`quench ${JSON.stringify(json.quench)}, want ${quench} for ${kind}`);
+  const swap = isRecord(json.swap) ? json.swap : null;
+  if (kind === "source" || kind === "quench") {
+    if (json.swap !== null && json.swap !== undefined) why.push(`swap ${JSON.stringify(json.swap)}, want none: ${kind} plants no swapped genome`);
+  } else if (kind === "ga-on-fa" || kind === "ga-on-fe") {
+    if (swap?.words !== R3REP_SWAP_AE_WORDS) why.push(`swap words are not M3_FOUNDERS[2]'s relabelled to 0:1: ${kind} plants the ancestor's genome`);
+  } else if (kind === "ge-on-fa") {
+    const dominant = isRecord(json.provenance) && isRecord(json.provenance.donor) ? json.provenance.donor.dominant : undefined;
+    if (biological) {
+      if (swap !== null && swap.words !== null && swap.words !== undefined) why.push("swap words are recorded, but a biologically unavailable record plants no genome");
+    } else if (typeof swap?.words !== "string" || !HEX_WORDS.test(swap.words)) why.push(`swap ${JSON.stringify(json.swap)}: Ge-on-Fa records the dominant genome it planted (words)`);
+    else if (!isRecord(dominant) || swap.words !== dominant.words) why.push(`swap words are not the donor's dominant genome (provenance.donor.dominant.words ${JSON.stringify(isRecord(dominant) ? dominant.words : dominant)})`);
+  }
+  return why;
+}
+
+/** What is wrong with an assay.json's regime for its set (strict): k, period, side, census, replicates and mutation off; competence's ref 103,058, S2's 103,058 or none. */
+function reg1RegimeProblems(json: Record<string, unknown>, want: Reg1ReportExpectedSet): string[] {
+  const why: string[] = [];
+  const r = REG1_REPORT_REGIME;
+  for (const [key, value] of [["k", r.k], ["period", r.period], ["side", r.side], ["censusEvery", r.censusEvery], ["replicates", want.replicates], ["mutRate", r.mutRate]] as const) {
+    if (json[key] !== value) why.push(`${key} ${JSON.stringify(json[key])}, want ${value}`);
+  }
+  if (want.assay === "competence" && json.ref !== r.ref) why.push(`ref ${JSON.stringify(json.ref)}, want ${r.ref}`);
+  if (want.assay === "garden" && json.ref !== r.ref && json.ref !== null && json.ref !== undefined) why.push(`ref ${JSON.stringify(json.ref)}, want ${r.ref} or none`);
+  return why;
+}
+
+/** What is wrong with an assay.json's seeds (and S3's donor seed) against the set's formula. */
+function reg1SeedProblems(json: Record<string, unknown>, want: Reg1ReportExpectedSet): string[] {
+  const seeds = json.seeds;
+  if (!Array.isArray(seeds) || seeds.length !== want.replicates) return [`assay.json has ${Array.isArray(seeds) ? seeds.length : "no"} seeds, want ${want.replicates} {physics, fragment}`];
+  const why: string[] = [];
+  seeds.forEach((sd, s) => {
+    const w = want.seeds[s];
+    if (!isRecord(sd) || sd.physics !== w.physics || sd.fragment !== w.fragment) why.push(`seeds[${s}] ${JSON.stringify(sd)} do not match ${want.id}: want ${JSON.stringify(w)} (${want.formula})`);
+  });
+  if (want.donorSeed !== null && json.donorSeed !== want.donorSeed) why.push(`donorSeed ${JSON.stringify(json.donorSeed)}, want ${want.donorSeed} (s = 9)`);
+  return why;
+}
+
+const endsInPath = (path: string, tail: string): boolean => path === tail || path.endsWith(`/${tail}`);
+
+/**
+ * What is wrong with an assay.json's recorded source (strict). Its provenance's `stateHash` (and, for Ge-on-Fa, the donor's
+ * `provenance.donor.stateHash`) must be recorded and, where the source is a bundle's pre-cycle checkpoint or initial world and that bundle
+ * was loaded and resolved, equal the hash its manifest records. A timing (b) source is the continuation scaffold/reg1/cont200k/<id>.blck.gz
+ * with its sidecar (`reg1ContinuationProblems`: seed, steps, census, the timing (a) source it names and the end state) and that timing (a)
+ * source's state hash the manifest's b100-pre (b001-pre for an ancestor world). An S3 control's is the R1'' record of its world
+ * (`reg1ControlProblems`: path, seed, mutation off, step, genomes and the pre-cycle phase), the assay's own source. A bundle that is not
+ * resolved leaves the set unresolved anyway, so nothing is compared against it here.
+ */
+function reg1ProvenanceProblems(json: Record<string, unknown>, want: Reg1ReportExpectedSet, bundles: ReadonlyMap<string, { resolved: boolean; hashes: Reg1ReportHashes }>, sha: string): string[] {
+  const p = json.provenance;
+  if (want.sources.length === 0) {
+    const control = r1dPrimeProvenanceOf(p);
+    if (control === null) return ["assay.json has no provenance of the control world with its phase check (run the assay with --reg1)"];
+    return [...reg1ControlProblems(want.labels.h, control), ...(control.source !== json.source ? [`provenance.source ${JSON.stringify(control.source)} is not the assay's source ${JSON.stringify(json.source)}`] : [])];
+  }
+  if (!isRecord(p)) return ["assay.json has no provenance of its source (run the assay with --reg1)"];
+  const why: string[] = [];
+  const manifestHash = (bundle: string, checkpoint: Exclude<Reg1ReportCheckpoint, "continuation">) => {
+    const b = bundles.get(bundle);
+    return b?.resolved ? b.hashes[checkpoint] : undefined;
+  };
+  const check = (role: string, rec: unknown, src: Reg1ReportExpectedSet["sources"][number]) => {
+    if (!isRecord(rec) || typeof rec.stateHash !== "string" || rec.stateHash === "") {
+      why.push(`${role} records no stateHash`);
+      return;
+    }
+    if (src.checkpoint === "continuation") {
+      const path = reg1ContinuationPathOf(want.labels.h);
+      if (typeof rec.source !== "string" || !endsInPath(rec.source, path)) why.push(`${role} source ${JSON.stringify(rec.source)} does not end in ${path}`);
+      why.push(...reg1ContinuationProblems(want.labels.h, rec.continuation, rec.origin, rec, sha));
+      const origin = src.bundle.startsWith("ancestor-") ? "b001" : "b100";
+      const hash = manifestHash(src.bundle, origin);
+      const recorded = isRecord(rec.origin) ? rec.origin.stateHash : undefined;
+      if (hash !== undefined && recorded !== hash) why.push(`${role}.origin stateHash ${JSON.stringify(recorded)} is not ${src.bundle}'s ${origin}-pre hash ${hash} in its manifest`);
+      return;
+    }
+    const hash = manifestHash(src.bundle, src.checkpoint);
+    if (hash !== undefined && rec.stateHash !== hash) why.push(`${role} stateHash ${rec.stateHash} is not ${src.bundle}'s ${src.checkpoint === "init" ? "initHash" : `${src.checkpoint}-pre hash`} ${hash} in its manifest`);
+  };
+  check("provenance", p, want.sources[0]);
+  if (want.sources.length > 1) check("provenance.donor", p.donor, want.sources[1]);
+  return why;
+}
+
+/**
+ * What is wrong with a Ge-on-Fa set's `biologicallyUnavailable` record: { reason "no dominant genome", donor, donorStateHash } with
+ * summary.rows 0, its provenance.donor recording no dominant genome and that state hash, and its donor (scaf_i's source (a), reloaded by
+ * the report: `donors`) must have that state hash and indeed no dominant genome. In strict mode a donor the report could not reload rejects the record: "no dominant genome" is seen on the checkpoint, never
+ * taken from the record alone.
+ */
+function reg1UnavailableProblems(json: Record<string, unknown>, want: Reg1ReportExpectedSet, donors: ReadonlyMap<string, Reg1ReportDonorCheck>, strict: boolean): string[] {
+  const rec = json.biologicallyUnavailable;
+  if (!isRecord(rec) || rec.reason !== "no dominant genome" || typeof rec.donorStateHash !== "string") return [`biologicallyUnavailable ${JSON.stringify(rec)} is not { reason: "no dominant genome", donor, donorStateHash }`];
+  const why: string[] = [];
+  const summary = isRecord(json.summary) ? json.summary : {};
+  if (summary.rows !== 0) why.push(`summary.rows ${JSON.stringify(summary.rows)}, want 0`);
+  const recorded = isRecord(json.provenance) && isRecord(json.provenance.donor) ? json.provenance.donor : null;
+  if (recorded === null || recorded.dominant !== null) why.push(`provenance.donor.dominant ${JSON.stringify(recorded?.dominant)}, want null (no eligible cell)`);
+  if (recorded !== null && rec.donorStateHash !== recorded.stateHash) why.push(`biologicallyUnavailable.donorStateHash ${rec.donorStateHash} is not provenance.donor.stateHash ${JSON.stringify(recorded.stateHash)}`);
+  const donor = want.sources[1].bundle;
+  const check = donors.get(donor);
+  if (check === undefined) {
+    if (strict) why.push(`a biologically unavailable record needs its donor ${donor}'s b100-pre reloaded, to see that it has no dominant genome, but the report could not reach it`);
+  } else if ("error" in check) why.push(`donor ${donor}'s b100-pre could not be read: ${check.error}`);
+  else {
+    if (check.stateHash !== rec.donorStateHash) why.push(`donor ${donor}'s b100-pre hashes to ${check.stateHash}, but the record names ${rec.donorStateHash}`);
+    if (check.dominant) why.push(`donor ${donor} has a dominant genome, so its Ge-on-Fa set is not biologically unavailable`);
+  }
+  return why;
+}
+
+/**
+ * Screens the registration's assay directories (labels.reg1) before the stage reads them. Every problem of a set is collected and the set
+ * rejected with its directory, id (null when its labels name no set) and reasons; nothing throws for one bad set. A set needs labels that
+ * name one of `reg1ReportExpectedSets` and agree with it in full, the set's assay, and rows that fill its (replicate, pond) grid exactly
+ * once: competence rows of the set's inoculum with a success flag of 0 or 1 and a positive ref; S2's of fragment (raw) or disc
+ * inoculum; S3's fragment rows with retE and a traits.tsv that R1'' can read (none for fewer than 2 eligible donors). A competence set's
+ * treatment must be its kind's (`quench`; Ga-on-Fa and Ga-on-Fe plant M3_FOUNDERS[2] relabelled; Ge-on-Fa a dominant genome). Only
+ * Ge-on-Fa may be a biologically unavailable record, with no rows and its donor reloaded (`reg1UnavailableProblems`). In strict mode
+ * the regime (`REG1_REPORT_REGIME`, the set's replicates), every seed against the set's formula, protocolSha256Reg1 against `sha` (the
+ * pinned SHA-256) and the recorded source (`reg1ProvenanceProblems`, against `bundles`: a continuation's sidecar and an S3 control's
+ * world included) are checked too. Two sets that pass with one id
+ * are both rejected. `allowAnySeed` (smoke runs) waives the regime, seeds, hash and provenance and holds the set to the grid it declares.
+ */
+export function reg1ReportScreen(
+  dirs: readonly Reg1ReportSetDir[],
+  o: { sha: string; bundles?: ReadonlyMap<string, { resolved: boolean; hashes: Reg1ReportHashes }>; donors?: ReadonlyMap<string, Reg1ReportDonorCheck>; allowAnySeed?: boolean },
+): { accepted: Reg1ReportSet[]; rejected: { dir: string; id: string | null; reasons: string[] }[] } {
+  const strict = !o.allowAnySeed;
+  const candidates: Reg1ReportSet[] = [];
+  const rejected: { dir: string; id: string | null; reasons: string[] }[] = [];
+  for (const d of dirs) {
+    const { json, rows } = d;
+    const named = reg1ReportSetIdOf(json.labels);
+    if ("error" in named) {
+      rejected.push({ dir: d.dir, id: null, reasons: [named.error] });
+      continue;
+    }
+    const want = reg1ReportExpectedSet(named.id)!;
+    const kind = want.labels.set;
+    const why = reg1ReportLabelProblems(json.labels as Record<string, unknown>, want);
+    if (json.assay !== want.assay) why.push(`assay ${JSON.stringify(json.assay)}, want ${want.assay}`);
+    const grid: FragmentGrid | null = strict ? { replicates: want.replicates, ponds: REG1_PONDS } : gridOfJson(json);
+    const biological = json.biologicallyUnavailable !== undefined;
+    let heredity: Reg1ReportSet["heredity"] = null;
+    if (biological) {
+      if (kind !== "ge-on-fa") why.push(`only Ge-on-Fa can be biologically unavailable (no dominant genome), not ${want.id}`);
+      else why.push(...reg1UnavailableProblems(json, want, o.donors ?? new Map(), strict));
+      if (rows.length !== 0) why.push(`${rows.length} rows, want 0 (a biologically unavailable record has none)`);
+    } else if (kind === "heredity") {
+      const insufficient = json.insufficient === true;
+      if (insufficient) {
+        if (rows.length !== 0) why.push(`${rows.length} rows, want 0 (fewer than 2 eligible donors)`);
+      } else if (grid === null) why.push("assay.json has no side and replicates");
+      else {
+        if (rows.length !== grid.replicates * grid.ponds) why.push(`${rows.length} rows, want ${grid.replicates * grid.ponds}`);
+        why.push(...rowsProblems(rows, grid));
+      }
+      if (rows.some((r) => r.retE === null)) why.push("assay.tsv has no retE column, so R1''s covariate is missing");
+      heredity = { insufficient, ...crossingFragments(json, rows, d.traits, why, strict) };
+    } else {
+      if (grid === null) why.push("assay.json has no side and replicates");
+      else {
+        if (rows.length !== grid.replicates * grid.ponds) why.push(`${rows.length} rows, want ${grid.replicates * grid.ponds}`);
+        const v = gridViolations(rows, grid);
+        if (v.repeated > 0) why.push(`assay.tsv repeats a (replicate, pond) in ${v.repeated} rows`);
+        if (v.outside > 0) why.push(`assay.tsv has ${v.outside} rows outside the ${grid.replicates} x ${grid.ponds} (replicate, pond) grid`);
+      }
+      const inoculum = json.inoculum;
+      if (typeof inoculum !== "string") why.push(`inoculum ${JSON.stringify(inoculum)} is not recorded`);
+      else if (kind === "garden-raw" && inoculum !== "fragment") why.push(`inoculum ${JSON.stringify(inoculum)}, want fragment (the raw inoculum)`);
+      else if (kind === "garden-disc" && inoculum !== "disc") why.push(`inoculum ${JSON.stringify(inoculum)}, want disc (the standardised inoculum)`);
+      const other = rows.filter((r) => r.inoculum !== inoculum).length;
+      if (other > 0) why.push(`${other} assay.tsv rows are not ${inoculum} rows`);
+      const notAssay = rows.filter((r) => r.assay !== want.assay).length;
+      if (notAssay > 0) why.push(`${notAssay} assay.tsv rows are not ${want.assay} rows`);
+      if (want.assay === "competence") {
+        if (!(typeof json.ref === "number" && json.ref > 0)) why.push(`ref ${JSON.stringify(json.ref)}: competence needs a positive ref`);
+        const unflagged = rows.filter((r) => r.success !== 0 && r.success !== 1).length;
+        if (unflagged > 0) why.push(`${unflagged} assay.tsv rows have no success flag (0 or 1)`);
+      }
+    }
+    if (want.assay === "competence") why.push(...reg1TreatmentProblems(json, kind, biological));
+    if (strict) {
+      why.push(...reg1RegimeProblems(json, want));
+      why.push(...reg1SeedProblems(json, want));
+      if (json.protocolSha256Reg1 !== o.sha) why.push(`protocolSha256Reg1 ${JSON.stringify(json.protocolSha256Reg1)} is not the pinned SHA-256 of ${REG1_REPORT_PROTOCOL.doc} (${o.sha})`);
+      why.push(...reg1ProvenanceProblems(json, want, o.bundles ?? new Map(), o.sha));
+    }
+    if (why.length > 0) rejected.push({ dir: d.dir, id: want.id, reasons: why });
+    else candidates.push({ id: want.id, dir: d.dir, expected: want, biological, rows, heredity });
+  }
+  // Two sets for one id are ambiguous: neither is used, and the set is unresolved.
+  const accepted: Reg1ReportSet[] = [];
+  for (const c of candidates) {
+    const same = candidates.filter((x) => x.id === c.id);
+    if (same.length > 1) rejected.push({ dir: c.dir, id: c.id, reasons: [`the same registration set (${c.id}) as ${same.filter((x) => x !== c).map((x) => x.dir).join(", ")}; a stage would count both`] });
+    else accepted.push(c);
+  }
+  return { accepted, rejected };
+}
+
+/** One expected set as the rule reads it. */
+export interface Reg1ReportSetStatus {
+  id: string;
+  kind: Reg1ReportKind;
+  owner: string | null;
+  /** "measured" (screened, its source bundles resolved), "biological" (a Ge-on-Fa record without a dominant genome: a measured failure) or "unresolved" (missing, rejected, or a source bundle unresolved). */
+  status: "measured" | "biological" | "unresolved";
+  why: string | null;
+  dir: string | null;
+}
+
+/**
+ * Every expected set's status ("Validity" 4): a set that is missing or rejected (`rejected` names its id, with the reasons carried) is
+ * unresolved, never dropped; so is a set whose source bundle (`runs`, by history id) is missing or unresolved, since its source cannot
+ * be the manifest-recorded one. A Ge-on-Fa set without a dominant genome is biological.
+ */
+export function reg1ReportStatuses(sets: readonly Reg1ReportSet[], rejected: readonly { id: string | null; reasons: string[] }[], runs: ReadonlyMap<string, Pick<Reg1ReportRun, "resolved">>): Reg1ReportSetStatus[] {
+  const byId = new Map(sets.map((s) => [s.id, s]));
+  return reg1ReportExpectedSets().map((want) => {
+    const base = { id: want.id, kind: want.labels.set, owner: want.owner };
+    const set = byId.get(want.id);
+    if (!set) {
+      const rej = rejected.filter((r) => r.id === want.id);
+      return { ...base, status: "unresolved", why: rej.length ? `set rejected: ${rej.flatMap((r) => r.reasons).join("; ")}` : "no assay set", dir: null };
+    }
+    const gone = [...new Set(want.sources.map((x) => x.bundle))].filter((b) => !runs.get(b)?.resolved);
+    if (gone.length > 0) return { ...base, status: "unresolved", why: `its source bundle ${gone.map((b) => `${b} (${runs.has(b) ? "unresolved" : "not found"})`).join(", ")} is not resolved`, dir: set.dir };
+    return { ...base, status: set.biological ? "biological" : "measured", why: set.biological ? "Ge-on-Fa: the donor has no dominant genome (no eligible cell)" : null, dir: set.dir };
+  });
+}
+
+/**
+ * The registration's one definition of "unresolved" ("Validity, missing data and availability" 4-5), as the readout states it. A history's
+ * sets are those it owns (`Reg1ReportExpectedSet.owner`: the swap pair is scaf_i's).
+ */
+export const REG1_REPORT_UNRESOLVED =
+  "A history is unresolved when its run bundle or any of its sets is (scaf: a, b, Ge-on-Fa, Ga-on-Fa, Ga-on-Fe, both quenched controls, its four S2 sets and its S3 set; rand: a, b, S2 and S3; cont: a and b; an ancestor world: a and b), and a set when it is missing, rejected or reads an unresolved bundle. That count decides the more-than-6 rule; an unresolved history is not positive in H2, S1 and S2a and not significant in S3. A rank-test value (H1, S2b) is unresolved when its own set or bundle is, or, for a scaf history, when either quenched control is (step 5).";
+
+/** A history's (or ancestor world's) unresolved parts: its run bundle and the sets that belong to it. */
+export interface Reg1ReportHistoryStatus {
+  id: string;
+  arm: Reg1ReportArm;
+  history: number;
+  /** The bundle (`<id> run`) and the set ids that are unresolved; the history is unresolved when any is (`REG1_REPORT_UNRESOLVED`). */
+  unresolved: string[];
+}
+
+/** Every history's and ancestor world's unresolved parts, in `reg1ReportExpectedRuns` order. */
+export function reg1ReportHistoryStatuses(statuses: readonly Reg1ReportSetStatus[], runs: ReadonlyMap<string, Pick<Reg1ReportRun, "resolved">>): Reg1ReportHistoryStatus[] {
+  return reg1ReportExpectedRuns().map(({ id, arm, history }) => {
+    const own = statuses.filter((s) => s.owner === id && s.status === "unresolved");
+    return { id, arm, history, unresolved: [...(runs.get(id)?.resolved ? [] : [`${id} run`]), ...own.map((s) => s.id)] };
+  });
+}
+
+/**
+ * P(X >= k) for X ~ Binomial(n, num / den), summed exactly over integers (BigInt) and divided once in floating point. The sign test is
+ * num / den = 1 / 2; S3's per-history null rate is 1 / 20.
+ */
+export function binomialUpperTail(k: number, n: number, num = 1, den = 2): number {
+  if (!Number.isInteger(n) || n < 0 || !Number.isInteger(k) || !Number.isInteger(num) || !Number.isInteger(den) || den < 1 || num < 0 || num > den) throw new Error(`binomialUpperTail: need integers k, n >= 0 and 0 <= num <= den, got k=${k} n=${n} ${num}/${den}`);
+  if (k <= 0) return 1;
+  if (k > n) return 0;
+  const p = BigInt(num);
+  const q = BigInt(den - num);
+  let c = 1n;
+  let tail = 0n;
+  for (let j = 0; j <= n; j++) {
+    if (j >= k) tail += c * p ** BigInt(j) * q ** BigInt(n - j);
+    c = (c * BigInt(n - j)) / BigInt(j + 1);
+  }
+  return Number(tail) / Number(BigInt(den) ** BigInt(n));
+}
+
+/** The exact one-sided sign test ("Primary tests"): P(X >= positive) for X ~ Binomial(n, 1/2). */
+export const reg1ReportSignTest = (positive: number, n: number): number => binomialUpperTail(positive, n, 1, 2);
+
+/** S1's percentile bootstrap: 10,000 resamples, the 95% interval by nearest rank (the 250th and 9,750th of the sorted resample medians). */
+export const REG1_REPORT_BOOTSTRAP = { resamples: 10_000, lower: 25, upper: 975, per: 1000 } as const;
+/** How the S1 ratio's interval is taken, as the readout records it (the document leaves the percentile rule and the history order open). */
+export const REG1_REPORT_BOOTSTRAP_METHOD = "nearest-rank percentiles 250/9750 of 10,000 sorted medians; eligible histories in ascending i";
+
+/**
+ * The median of `xs` (in the order given) with a percentile bootstrap interval: resample r = 0..B-1 takes xs[randomKey(seed, r, j, 0) mod m]
+ * for j = 0..m-1, and the interval is the ⌈0.025 B⌉-th and ⌈0.975 B⌉-th smallest of the B resample medians (nearest rank). null for an
+ * empty `xs`: the ratio is unavailable.
+ */
+export function reg1ReportBootstrapMedian(xs: readonly number[], seed: number = REG1_REPORT_SEEDS.bootstrap, B: number = REG1_REPORT_BOOTSTRAP.resamples): { m: number; median: number; lower: number; upper: number; resamples: number } | null {
+  const m = xs.length;
+  if (m === 0) return null;
+  const medians = new Float64Array(B);
+  const pick = new Array<number>(m);
+  for (let r = 0; r < B; r++) {
+    for (let j = 0; j < m; j++) pick[j] = xs[randomKey(seed, r, j, 0) % m];
+    medians[r] = median(pick);
+  }
+  medians.sort();
+  const { lower, upper, per } = REG1_REPORT_BOOTSTRAP;
+  const nearest = (q: number) => medians[Math.max(1, Math.ceil((q * B) / per)) - 1];
+  return { m, median: median(xs), lower: nearest(lower), upper: nearest(upper), resamples: B };
+}
+
+/** The outcome table ("Outcomes and disposition"), in order: the first matching row is the outcome. */
+export const REG1_REPORT_OUTCOMES = [
+  { outcome: "Invalid", statement: "The device, quenched or reproducibility check failed.", next: "Report; no claim." },
+  { outcome: "Uninformative", statement: "More than 6 unresolved histories in an arm, or the budget stopped the queue.", next: "Report; decide whether to complete or rerun." },
+  {
+    outcome: "H1 and H2 confirmed",
+    statement: 'Both claims as stated under "What a confirmed result would and would not mean", reported separately; "heritable" only if S3 holds in `scaf`.',
+    next: "Next rung toward endogenisation, e.g. protocol v1's withdrawal ladder (longer removal, partial grind, migration-only dispersal), and the M7 question.",
+  },
+  { outcome: "H1 confirmed, H2 not", statement: "Persistence beyond the controls is confirmed; the genome effect is not confirmed by this registration. The advantage may sit in community composition or physical structure.", next: "Dissect: multi-genome swaps, community transplants." },
+  { outcome: "H2 confirmed, H1 not", statement: "The genome effect is confirmed; `scaf`'s advantage over every control is not, and the failed comparisons are named.", next: "Report which comparisons did not establish higher `scaf` competence, distinguishing uninformative ones." },
+  { outcome: "Neither", statement: "Not confirmed by this registration.", next: "Report; the exploratory results stay as recorded." },
+] as const;
+export type Reg1ReportOutcome = (typeof REG1_REPORT_OUTCOMES)[number]["outcome"];
+/** The table's note on H1 ("Outcomes and disposition"). */
+export const REG1_REPORT_H1_NOTE = "If an unresolved value entered an H1 comparison, H1 is uninformative: it counts as not confirmed for this table, with Holm slot p = 1, and the report marks it uninformative rather than not confirmed.";
+
+/** One of H1's six comparisons: scaf against `other` at `timing`. */
+export interface Reg1ReportComparison {
+  other: "rand" | "cont" | "ancestor";
+  timing: "a" | "b";
+  n: { scaf: number; other: number };
+  /** The exact one-sided Mann-Whitney p that scaf ranks higher; null when uninformative. */
+  p: number | null;
+  /** An unresolved value would enter it (listed): the comparison is uninformative and not run. */
+  uninformative: boolean;
+  unresolved: string[];
+  /** Its p alone would confirm H1 in the primary Holm family (beside H2's p); null when uninformative. */
+  established: boolean | null;
+  medians: { scaf: number | null; other: number | null };
+}
+
+/** One history's term of a sign test: measured (with its value), a failure without a dominant genome, or unresolved; only a measured positive one counts. */
+export interface Reg1ReportSignTerm {
+  id: string;
+  status: "measured" | "no dominant genome" | "unresolved";
+  value: number | null;
+  positive: boolean;
+  why: string | null;
+}
+
+/** An exact sign test over a family's terms (`n` the histories, unresolved and failures included as not positive). */
+export interface Reg1ReportSign {
+  positive: number;
+  n: number;
+  p: number;
+  terms: Reg1ReportSignTerm[];
+}
+
+/** One S3 set (`r1dPrimeStat` on its crossing times, stream 4,866,001 + 250 h + 8). */
+export interface Reg1ReportS3Entry {
+  id: string;
+  h: number;
+  arm: "scaf" | "rand" | "control";
+  control: "positive" | "negative" | null;
+  history: number | null;
+  /** "analysed", "donors" (fewer than 2 eligible donors: biological, not significant) or "unresolved" (not significant). */
+  outcome: "analysed" | "donors" | "unresolved";
+  why: string | null;
+  n: number;
+  families: number;
+  icc: number | null;
+  p: number | null;
+  /** ICC > 0 and p < 0.05. */
+  demonstrated: boolean;
+  /** p < 0.05. */
+  significant: boolean;
+  /** Analysed with scores that can carry the test (not degenerate). */
+  tested: boolean;
+  degenerate: R1dPrimeDegeneracy | null;
+}
+
+/** The validity checks ("Validity, missing data and availability"), evaluated once over every history. */
+export interface Reg1ReportValidity {
+  device: { passed: boolean; reasons: string[] };
+  unresolved: { limit: number; arms: Record<Reg1ReportArm, { histories: number; unresolved: number; ids: string[] }>; uninformative: boolean };
+  quenched: { limit: number; sets: { id: string; successes: number; n: number; competence: number | null; above: boolean }[]; max: number | null; failed: boolean };
+  reproducibility: { passed: boolean; reasons: string[] };
+}
+
+/** The tests on one set of histories (all of them, or without the truncation-flagged ones), and the row they decide. */
+export interface Reg1ReportTests {
+  /** The row the tests pick (H1 and H2 under Holm), when the validity checks leave it to them. */
+  outcome: Exclude<Reg1ReportOutcome, "Invalid" | "Uninformative">;
+  reasons: string[];
+  /** Histories left out (the truncation sensitivity). */
+  excluded: string[];
+  primary: {
+    alpha: number;
+    h1: { status: "confirmed" | "not confirmed" | "uninformative"; p: number | null; slot: number; holm: number; comparisons: Reg1ReportComparison[] };
+    h2: Reg1ReportSign & { status: "confirmed" | "not confirmed"; holm: number };
+  };
+  secondary: {
+    alpha: number;
+    s1: Reg1ReportSign & {
+      status: "confirmed" | "not confirmed";
+      holm: number;
+      ratio: { eligible: { id: string; ratio: number }[]; excluded: { unresolved: number; noDominantGenome: number; nonPositiveDenominator: number }; median: number | null; interval: { lower: number; upper: number; resamples: number } | null; available: boolean; method: string };
+    };
+    s2a: Reg1ReportSign & { status: "confirmed" | "not confirmed"; holm: number };
+    s2b: { status: "confirmed" | "not confirmed" | "uninformative"; p: number | null; slot: number; holm: number; n: { scaf: number; rand: number }; unresolved: string[]; medians: { scaf: number | null; rand: number | null } };
+    s3: {
+      status: "confirmed" | "not confirmed" | "uninformative";
+      p: number | null;
+      slot: number;
+      holm: number;
+      gates: { positivePassed: boolean; nullGatePassed: boolean; positive: Reg1ReportS3Entry[]; negative: Reg1ReportS3Entry[] };
+      arms: Record<"scaf" | "rand", { n: number; demonstrated: number; p: number }>;
+      histories: Reg1ReportS3Entry[];
+    };
+    /** "Heritable" is used for the pond-level trait only if S3 is confirmed in scaf. */
+    heritable: boolean;
+    gains: { scaf: { id: string; gain: number | null; status: "measured" | "unresolved" }[]; rand: { id: string; gain: number | null; status: "measured" | "unresolved" }[] };
+  };
+}
+
+/** The registration's evaluation: validity once over every history, then the tests, and the row. */
+export interface Reg1ReportEvaluation {
+  outcome: Reg1ReportOutcome;
+  reasons: string[];
+  validity: Reg1ReportValidity;
+  /** The tests decided the row (the validity checks did not settle it as Invalid or Uninformative); the readout withholds them otherwise. */
+  applied: boolean;
+  tests: Reg1ReportTests;
+}
+
+const reg1HeredityStats = new WeakMap<Reg1ReportSet, R1dPrimeStat>();
+
+/** R1''s statistic on an S3 set's crossing times with the stream 4,866,001 + 250 h + 8, kept per set object (1,000 permutations each). */
+function reg1HeredityStat(set: Reg1ReportSet): R1dPrimeStat {
+  let st = reg1HeredityStats.get(set);
+  if (!st) reg1HeredityStats.set(set, (st = r1dPrimeStat(set.heredity!.fragments, reg1ReportHereditySeed(set.expected.labels.h, 8))));
+  return st;
+}
+
+/**
+ * The validity checks, in the document's order, over every history: the device check, the unresolved histories (more than 6 in an arm or
+ * in the ancestor worlds is uninformative), the quenched gate (any screened quenched set above 0.05 is invalid, whatever else holds) and
+ * the reproducibility check (`reg1ReportDeviceCheck` and `reg1ReportReproducibility` are inputs). Invalid comes before Uninformative in
+ * the outcome table. They are never re-run without the truncation-flagged histories.
+ */
+export function reg1ReportValidity(
+  sets: readonly Reg1ReportSet[],
+  histories: readonly Reg1ReportHistoryStatus[],
+  gates: { device: Pick<Reg1ReportDevice, "passed" | "reasons">; reproducibility: Pick<Reg1ReportReproducibility, "passed" | "reasons"> },
+): { validity: Reg1ReportValidity; invalid: boolean; uninformative: boolean; reasons: string[] } {
+  const reasons: string[] = [];
+  const arms = Object.fromEntries(
+    REG1_ALL_ARMS.map((arm) => {
+      const hs = histories.filter((h) => h.arm === arm);
+      const bad = hs.filter((h) => h.unresolved.length > 0);
+      return [arm, { histories: hs.length, unresolved: bad.length, ids: bad.map((h) => h.id) }];
+    }),
+  ) as Reg1ReportValidity["unresolved"]["arms"];
+  const tooMany = REG1_ALL_ARMS.filter((arm) => arms[arm].unresolved > REG1_REPORT_UNRESOLVED_LIMIT);
+  const quenchedSets = sets
+    .filter((s) => s.expected.labels.set === "quench")
+    .map((s) => {
+      const successes = s.rows.filter((r) => r.success === 1).length;
+      const n = s.rows.length;
+      // competence > 0.05, exactly: 20 successes > n.
+      return { id: s.id, successes, n, competence: n > 0 ? successes / n : null, above: 20 * successes > n };
+    });
+  const quenched = { limit: R3_QUENCH_LIMIT, sets: quenchedSets, max: quenchedSets.length ? Math.max(...quenchedSets.map((q) => q.competence ?? 0)) : null, failed: quenchedSets.some((q) => q.above) };
+  if (!gates.device.passed) reasons.push(`device check failed: ${gates.device.reasons.join("; ")}`);
+  for (const q of quenchedSets.filter((x) => x.above)) reasons.push(`quenched control ${q.id} has competence ${q.successes}/${q.n}, above ${R3_QUENCH_LIMIT}`);
+  if (!gates.reproducibility.passed) reasons.push(`reproducibility check failed: ${gates.reproducibility.reasons.join("; ")}`);
+  for (const arm of tooMany) reasons.push(`${arm === "ancestor" ? "the ancestor worlds have" : `${arm} has`} ${arms[arm].unresolved} unresolved histories, more than ${REG1_REPORT_UNRESOLVED_LIMIT} (${arms[arm].ids.join(", ")})`);
+  return {
+    validity: { device: { passed: gates.device.passed, reasons: gates.device.reasons }, unresolved: { limit: REG1_REPORT_UNRESOLVED_LIMIT, arms, uninformative: tooMany.length > 0 }, quenched, reproducibility: { passed: gates.reproducibility.passed, reasons: gates.reproducibility.reasons } },
+    invalid: !gates.device.passed || quenched.failed || !gates.reproducibility.passed,
+    uninformative: tooMany.length > 0,
+    reasons,
+  };
+}
+
+/**
+ * The registration's tests over the screened sets, with one definition of unresolved (`REG1_REPORT_UNRESOLVED`). The primary tests (H1: six
+ * exact one-sided Mann-Whitney tests, p the largest, uninformative with Holm slot 1 when an unresolved value would enter one; H2: the exact
+ * sign test on g_i > 0, an unresolved history and a missing dominant genome counted as not positive; Holm over {H1, H2} at 0.01) pick the
+ * row; the secondary tests (S1, S2a, S2b, S3; their own Holm family) are reported beside it. `exclude` names histories left out whole (their
+ * values and terms; a sign test's n counts the rest), for the truncation sensitivity.
+ */
+export function reg1ReportTests(sets: readonly Reg1ReportSet[], statuses: readonly Reg1ReportSetStatus[], histories: readonly Reg1ReportHistoryStatus[], exclude: ReadonlySet<string> = new Set()): Reg1ReportTests {
+  const alpha = REG1_REPORT_ALPHA;
+  const setById = new Map(sets.map((s) => [s.id, s]));
+  const statusById = new Map(statuses.map((s) => [s.id, s]));
+  const historyById = new Map(histories.map((h) => [h.id, h]));
+  const kept = (arm: Reg1ReportArm) => Array.from({ length: REG1_REPORT_HISTORIES }, (_, i) => i).filter((i) => !exclude.has(reg1ReportHistoryId(arm, i)));
+  const status = (id: string) => statusById.get(id) ?? { id, status: "unresolved" as const, why: "not an expected set", dir: null };
+  /** Why a history is unresolved (its unresolved parts), or null: such a history is not positive in a sign test and not significant in S3. */
+  const historyGone = (id: string): string | null => {
+    const parts = historyById.get(id)?.unresolved ?? [`${id} run`];
+    return parts.length > 0 ? `${id} is unresolved (${parts.join(", ")})` : null;
+  };
+  /** Why a rank-test value is unresolved: its own set (or the bundle it reads) is, or, for a scaf history, either quenched control (step 5). */
+  const valueGone = (id: string, owner: string): string | null => {
+    if (status(id).status === "unresolved") return `${id}: ${status(id).why}`;
+    if (!owner.startsWith("scaf-")) return null;
+    const q = [`${owner}-quench-a`, `${owner}-quench-b`].filter((x) => status(x).status === "unresolved");
+    return q.length > 0 ? `${id}: its history's quenched control ${q.join(", ")} is unresolved` : null;
+  };
+  /** A measured competence set's successes and fragments; null unless measured. */
+  const comp = (id: string): { successes: number; n: number } | null => {
+    const s = setById.get(id);
+    if (!s || status(id).status !== "measured") return null;
+    return { successes: s.rows.filter((r) => r.success === 1).length, n: s.rows.length };
+  };
+  const frac = (c: { successes: number; n: number }) => c.successes / c.n;
+  const reasons: string[] = [];
+
+  // H2 (and S1's terms): g_i on the swap pair's identical fragments. A missing dominant genome is a measured failure, named before
+  // any unresolved part; an unresolved history (or, for d_i, an unresolved ancestor_i (a)) is not positive.
+  const swapTerm = (i: number, dTerm: boolean): Reg1ReportSignTerm & { g: number | null; adv: number | null; advPositive: boolean } => {
+    const scaf = reg1ReportHistoryId("scaf", i);
+    const anc = reg1ReportHistoryId("ancestor", i);
+    const base = { id: scaf, g: null, adv: null, advPositive: false, value: null, positive: false };
+    if (status(`${scaf}-ge-on-fa`).status === "biological") return { ...base, status: "no dominant genome", why: `${scaf}'s source (a) has no eligible cell` };
+    const gone = [historyGone(scaf), dTerm ? valueGone(`${anc}-a`, anc) : null].filter((x): x is string => x !== null);
+    if (gone.length > 0) return { ...base, status: "unresolved", why: gone.join("; ") };
+    const e = comp(`${scaf}-ge-on-fa`)!;
+    const a = comp(`${scaf}-ga-on-fa`)!;
+    const g = frac(e) - frac(a);
+    if (!dTerm) return { ...base, status: "measured", why: null, g, value: g, positive: e.successes * a.n > a.successes * e.n };
+    const s = comp(`${scaf}-a`)!;
+    const w = comp(`${anc}-a`)!;
+    const adv = frac(s) - frac(w);
+    // d_i = g_i - adv_i / 2 > 0, exactly: 2 (Se na - Sa ne) ns nw > (Ss nw - Sw ns) ne na.
+    const positive = 2 * (e.successes * a.n - a.successes * e.n) * s.n * w.n > (s.successes * w.n - w.successes * s.n) * e.n * a.n;
+    return { ...base, status: "measured", why: null, g, adv, advPositive: s.successes * w.n > w.successes * s.n, value: g - 0.5 * adv, positive };
+  };
+  const signOf = (terms: Reg1ReportSignTerm[]): Reg1ReportSign => {
+    const positive = terms.filter((t) => t.positive).length;
+    return { positive, n: terms.length, p: reg1ReportSignTest(positive, terms.length), terms };
+  };
+  const swapIdx = kept("scaf").filter((i) => !exclude.has(reg1ReportHistoryId("ancestor", i)));
+  const h2 = signOf(swapIdx.map((i) => swapTerm(i, false)).map(({ id, status: st, value, positive, why }) => ({ id, status: st, value, positive, why })));
+
+  // H1: six two-sample comparisons over the arms' independent histories.
+  const comparisons: Reg1ReportComparison[] = (["a", "b"] as const).flatMap((timing) =>
+    (["rand", "cont", "ancestor"] as const).map((other): Reg1ReportComparison => {
+      const ids = (arm: Reg1ReportArm) => kept(arm).map((i) => ({ id: `${reg1ReportHistoryId(arm, i)}-${timing}`, owner: reg1ReportHistoryId(arm, i) }));
+      const scafIds = ids("scaf");
+      const otherIds = ids(other);
+      const unresolved = [...scafIds, ...otherIds].filter((x) => valueGone(x.id, x.owner) !== null || comp(x.id) === null).map((x) => x.id);
+      const n = { scaf: scafIds.length, other: otherIds.length };
+      if (unresolved.length > 0) return { other, timing, n, p: null, uninformative: true, unresolved, established: null, medians: { scaf: null, other: null } };
+      const xs = scafIds.map((x) => frac(comp(x.id)!));
+      const ys = otherIds.map((x) => frac(comp(x.id)!));
+      return { other, timing, n, p: mannWhitney(xs, ys, "exact").pGreater, uninformative: false, unresolved, established: null, medians: { scaf: xs.length ? median(xs) : null, other: ys.length ? median(ys) : null } };
+    }),
+  );
+  const h1Uninformative = comparisons.some((c) => c.uninformative);
+  const h1P = h1Uninformative ? null : Math.max(...comparisons.map((c) => c.p!));
+  const h1Slot = h1P ?? 1;
+  const [h1Holm, h2Holm] = holm([h1Slot, h2.p]);
+  for (const c of comparisons) if (c.p !== null) c.established = holm([c.p, h2.p])[0] <= alpha;
+  const h1Confirmed = h1Holm <= alpha;
+  const h2Confirmed = h2Holm <= alpha;
+
+  // S1: d_i = g_i - 0.5 adv_i by a sign test; the ratio g_i / adv_i is descriptive.
+  const s1Terms = swapIdx.map((i) => swapTerm(i, true));
+  const s1 = signOf(s1Terms.map(({ id, status: st, value, positive, why }) => ({ id, status: st, value, positive, why })));
+  const eligible = s1Terms.filter((t) => t.status === "measured" && t.advPositive).map((t) => ({ id: t.id, ratio: t.g! / t.adv! }));
+  const excluded = { unresolved: s1Terms.filter((t) => t.status === "unresolved").length, noDominantGenome: s1Terms.filter((t) => t.status === "no dominant genome").length, nonPositiveDenominator: s1Terms.filter((t) => t.status === "measured" && !t.advPositive).length };
+  const boot = reg1ReportBootstrapMedian(eligible.map((x) => x.ratio));
+
+  // S2: gain_i = mean end trait at time C - at time 0 on the disc inoculum; S2a's terms read the history, S2b's ranks the values.
+  const gainOf = (arm: "scaf" | "rand", i: number, gone: string | null, inoculum: "raw" | "disc" = "disc"): { id: string; gain: number | null; status: "measured" | "unresolved"; positive: boolean; why: string | null } => {
+    const id = reg1ReportHistoryId(arm, i);
+    const ids = [0, 1].map((t) => `garden-${id}-t${t}-${inoculum}`);
+    const why = gone ?? ids.map((x) => valueGone(x, id)).find((x) => x !== null) ?? null;
+    if (why !== null) return { id, gain: null, status: "unresolved", positive: false, why };
+    const [t0, tC] = ids.map((x) => {
+      const rows = setById.get(x)!.rows;
+      return { sum: rows.reduce((a, r) => a + r.endTrait, 0), n: rows.length };
+    });
+    // Exact: the numerator is an integer, and equal rationals give one double.
+    const numer = tC.sum * t0.n - t0.sum * tC.n;
+    return { id, gain: numer / (tC.n * t0.n), status: "measured", positive: numer > 0, why: null };
+  };
+  const s2a = signOf(kept("scaf").map((i) => gainOf("scaf", i, historyGone(reg1ReportHistoryId("scaf", i)))).map(({ id, status: st, gain, positive, why }) => ({ id, status: st, value: gain, positive, why })));
+  const scafGains = kept("scaf").map((i) => gainOf("scaf", i, null));
+  const randGains = kept("rand").map((i) => gainOf("rand", i, null));
+  const s2bUnresolved = [...scafGains, ...randGains].filter((g) => g.status === "unresolved").map((g) => g.id);
+  const s2bP = s2bUnresolved.length > 0 ? null : mannWhitney(scafGains.map((g) => g.gain!), randGains.map((g) => g.gain!), "exact").pGreater;
+
+  // S3: R1'' at boundary 34, per arm the binomial tail of the histories with ICC > 0 and p < 0.05; the controls gate it.
+  const s3Entry = (want: Reg1ReportExpectedSet): Reg1ReportS3Entry => {
+    const l = want.labels;
+    const base = { id: want.id, h: l.h, arm: l.arm as Reg1ReportS3Entry["arm"], control: l.control, history: l.history, n: 0, families: 0, icc: null, p: null, demonstrated: false, significant: false, tested: false, degenerate: null };
+    const st = status(want.id);
+    const gone = want.owner !== null ? historyGone(want.owner) : st.status === "unresolved" ? st.why : null;
+    if (gone !== null) return { ...base, outcome: "unresolved", why: gone };
+    const set = setById.get(want.id)!;
+    if (set.heredity!.insufficient || set.heredity!.fragments.length === 0) return { ...base, outcome: "donors", why: "fewer than 2 eligible donors" };
+    try {
+      const stat = reg1HeredityStat(set);
+      const frags = set.heredity!.fragments;
+      return { ...base, outcome: "analysed", why: null, n: frags.length, families: new Set(frags.map((f) => f.family)).size, icc: stat.icc, p: stat.p, demonstrated: stat.demonstrated, significant: stat.p !== null && stat.p < R1_ALPHA, tested: stat.icc !== null && stat.degenerate === null, degenerate: stat.degenerate };
+    } catch (err) {
+      return { ...base, outcome: "unresolved", why: `analysis failed: ${(err as Error).message}` };
+    }
+  };
+  const heredity = reg1ReportExpectedSets().filter((x) => x.labels.set === "heredity");
+  const s3Histories = heredity.filter((x) => x.labels.arm !== "control" && !exclude.has(x.owner!)).map(s3Entry);
+  const positiveControls = heredity.filter((x) => x.labels.control === "positive").map(s3Entry);
+  const negativeControls = heredity.filter((x) => x.labels.control === "negative").map(s3Entry);
+  const positivePassed = positiveControls.every((c) => c.demonstrated);
+  const nullGatePassed = negativeControls.every((c) => c.tested) && negativeControls.filter((c) => c.significant).length <= 1;
+  const s3Arm = (arm: "scaf" | "rand") => {
+    const hs = s3Histories.filter((x) => x.arm === arm);
+    const demonstrated = hs.filter((x) => x.demonstrated).length;
+    return { n: hs.length, demonstrated, p: binomialUpperTail(demonstrated, hs.length, 1, 20) };
+  };
+  const s3Arms = { scaf: s3Arm("scaf"), rand: s3Arm("rand") };
+  const s3Gated = positivePassed && nullGatePassed;
+  const s3Slot = s3Gated ? s3Arms.scaf.p : 1;
+  const s2bSlot = s2bP ?? 1;
+  const [s1Holm, s2aHolm, s2bHolm, s3Holm] = holm([s1.p, s2a.p, s2bSlot, s3Slot]);
+  const verdict = (adjusted: number) => (adjusted <= alpha ? ("confirmed" as const) : ("not confirmed" as const));
+
+  const outcome = h1Confirmed && h2Confirmed ? "H1 and H2 confirmed" : h1Confirmed ? "H1 confirmed, H2 not" : h2Confirmed ? "H2 confirmed, H1 not" : "Neither";
+  const fmt = (p: number) => p.toPrecision(3);
+  const named = (c: Reg1ReportComparison) => `scaf > ${c.other} at (${c.timing})`;
+  reasons.push(
+    h1Uninformative
+      ? `H1 uninformative (an unresolved value enters ${comparisons.filter((c) => c.uninformative).map(named).join(", ")}): Holm slot p = 1; uninformative; counts as not confirmed for the table`
+      : `H1 ${h1Confirmed ? "confirmed" : "not confirmed"}: largest of the six p ${fmt(h1P!)}, Holm ${fmt(h1Holm)}`,
+    `H2 ${h2Confirmed ? "confirmed" : "not confirmed"}: ${h2.positive} of ${h2.n} histories with g > 0, sign test p ${fmt(h2.p)}, Holm ${fmt(h2Holm)}`,
+  );
+  if (outcome === "H2 confirmed, H1 not") {
+    const failed = comparisons.filter((c) => c.established !== true);
+    reasons.push(`comparisons that did not establish higher scaf competence: ${failed.map((c) => (c.uninformative ? `${named(c)} (uninformative)` : `${named(c)} (p ${fmt(c.p!)})`)).join(", ")}`);
+  }
+  return {
+    outcome,
+    reasons,
+    excluded: [...exclude].sort(),
+    primary: {
+      alpha,
+      h1: { status: h1Uninformative ? "uninformative" : verdict(h1Holm), p: h1P, slot: h1Slot, holm: h1Holm, comparisons },
+      h2: { ...h2, status: verdict(h2Holm), holm: h2Holm },
+    },
+    secondary: {
+      alpha,
+      s1: { ...s1, status: verdict(s1Holm), holm: s1Holm, ratio: { eligible, excluded, median: boot?.median ?? null, interval: boot && { lower: boot.lower, upper: boot.upper, resamples: boot.resamples }, available: boot !== null, method: REG1_REPORT_BOOTSTRAP_METHOD } },
+      s2a: { ...s2a, status: verdict(s2aHolm), holm: s2aHolm },
+      s2b: {
+        status: s2bP === null ? "uninformative" : verdict(s2bHolm),
+        p: s2bP,
+        slot: s2bSlot,
+        holm: s2bHolm,
+        n: { scaf: scafGains.length, rand: randGains.length },
+        unresolved: s2bUnresolved,
+        medians: { scaf: s2bP === null ? null : median(scafGains.map((g) => g.gain!)), rand: s2bP === null ? null : median(randGains.map((g) => g.gain!)) },
+      },
+      s3: { status: s3Gated ? verdict(s3Holm) : "uninformative", p: s3Gated ? s3Arms.scaf.p : null, slot: s3Slot, holm: s3Holm, gates: { positivePassed, nullGatePassed, positive: positiveControls, negative: negativeControls }, arms: s3Arms, histories: s3Histories },
+      heritable: s3Gated && s3Holm <= alpha,
+      gains: { scaf: scafGains.map(({ id, gain, status: st }) => ({ id, gain, status: st })), rand: randGains.map(({ id, gain, status: st }) => ({ id, gain, status: st })) },
+    },
+  };
+}
+
+/**
+ * The registration's rule: the validity checks once over every history (`reg1ReportValidity`), then the tests (`reg1ReportTests`). The
+ * first matching row of the outcome table is the outcome: Invalid, then Uninformative, then the row the tests pick.
+ */
+export function reg1ReportEvaluate(
+  sets: readonly Reg1ReportSet[],
+  statuses: readonly Reg1ReportSetStatus[],
+  histories: readonly Reg1ReportHistoryStatus[],
+  gates: { device: Pick<Reg1ReportDevice, "passed" | "reasons">; reproducibility: Pick<Reg1ReportReproducibility, "passed" | "reasons"> },
+): Reg1ReportEvaluation {
+  const v = reg1ReportValidity(sets, histories, gates);
+  const tests = reg1ReportTests(sets, statuses, histories);
+  const applied = !v.invalid && !v.uninformative;
+  const outcome: Reg1ReportOutcome = v.invalid ? "Invalid" : v.uninformative ? "Uninformative" : tests.outcome;
+  return { outcome, reasons: [...v.reasons, ...(applied ? tests.reasons : [])], validity: v.validity, applied, tests };
+}
+
+/** The retained-mass bin of a fragment: 0 (nothing landed), else [2^k, 2^(k+1)). */
+function reg1MassBin(m: number): { bin: string; lower: number } {
+  if (!(m > 0)) return { bin: "0", lower: 0 };
+  let lower = 1;
+  while (lower * 2 <= m) lower *= 2;
+  return { bin: `[${lower}, ${2 * lower})`, lower };
+}
+
+/**
+ * The medians the side-by-side reads from a prior R3 readout (v1's r3 stage, or the replication's r3rep stage): per source and timing,
+ * Ge-on-Fa - ancestor and the quenched maximum. Throws when `json` is not that stage's output.
+ */
+export function reg1ReportPriorSummary(json: unknown, stage: "r3" | "r3rep") {
+  if (!isRecord(json) || json.stage !== stage || !Array.isArray(json.histories)) throw new Error(`not a ${stage} stage output (stage ${stage} with histories)`);
+  const hs = json.histories.filter(isRecord);
+  const at = (h: Record<string, unknown>, t: "a" | "b", arm: string): number | null => {
+    const x = h[t];
+    return isRecord(x) && typeof x[arm] === "number" ? (x[arm] as number) : null;
+  };
+  const med = (pick: (h: Record<string, unknown>) => number | null) => {
+    const xs = hs.map(pick).filter((x): x is number => x !== null);
+    return xs.length ? median(xs) : null;
+  };
+  const timing = (t: "a" | "b") => Object.fromEntries(REG1_ALL_ARMS.map((arm) => [arm, med((h) => at(h, t, arm))]));
+  return {
+    histories: hs.length,
+    a: timing("a"),
+    b: timing("b"),
+    geOnFaMinusAncestor: med((h) => (typeof h.swapEa === "number" && at(h, "a", "ancestor") !== null ? (h.swapEa as number) - at(h, "a", "ancestor")! : null)),
+    quenchedMax: isRecord(json.quenched) && typeof json.quenched.max === "number" ? json.quenched.max : null,
+  };
+}
+
+/** Why the tests are withheld under a row the validity checks settle (its disposition is "no claim" or "decide whether to complete"); null under a row the tests decide. */
+function reg1Withheld(outcome: Reg1ReportOutcome): string | null {
+  if (outcome === "Invalid") return "the row is Invalid (Report; no claim): no test statistic is reported";
+  if (outcome === "Uninformative") return "the row is Uninformative (Report; decide whether to complete or rerun): no test statistic is reported";
+  return null;
+}
+
+/**
+ * The queue's completeness ("Execution order and stopping"): every command of the queue manifest (`{ commands: [{ id, instance }] }`) needs
+ * a terminal state ("done" or "fail", an unresolved command counting as complete) in its own instance's status file (`{ instance,
+ * commands: { <id>: "done" | "fail" } }`). Until then no partial ensemble is analysed. Throws on a malformed queue or status file, on two
+ * status files for one instance, and on a command listed twice.
+ */
+export function reg1ReportQueueCheck(queue: unknown, statusFiles: readonly unknown[]): { complete: boolean; commands: number; done: number; failed: number; pending: string[]; reasons: string[] } {
+  const commands = isRecord(queue) && Array.isArray(queue.commands) ? queue.commands : null;
+  if (commands === null) throw new Error('the queue is not { "commands": [{ "id", "instance" }] }');
+  const byInstance = new Map<number, Record<string, unknown>>();
+  for (const f of statusFiles) {
+    if (!isRecord(f) || !Number.isInteger(f.instance) || !isRecord(f.commands)) throw new Error('a status file is not { "instance": n, "commands": { "<id>": "done" | "fail" } }');
+    if (byInstance.has(f.instance as number)) throw new Error(`two status files for instance ${f.instance}`);
+    byInstance.set(f.instance as number, f.commands);
+  }
+  const seen = new Set<string>();
+  let done = 0;
+  let failed = 0;
+  const pending: string[] = [];
+  for (const c of commands) {
+    if (!isRecord(c) || typeof c.id !== "string" || !Number.isInteger(c.instance)) throw new Error(`queue command ${JSON.stringify(c)} is not { "id": string, "instance": n }`);
+    if (seen.has(c.id)) throw new Error(`queue command ${c.id} is listed twice`);
+    seen.add(c.id);
+    const state = byInstance.get(c.instance as number)?.[c.id];
+    if (state === "done") done++;
+    else if (state === "fail") failed++;
+    else pending.push(c.id);
+  }
+  const reasons = pending.length > 0 ? [`the queue has not completed: ${pending.length} of ${commands.length} commands have no terminal state (${pending.slice(0, 5).join(", ")}${pending.length > 5 ? ", ..." : ""})`] : [];
+  return { complete: pending.length === 0, commands: commands.length, done, failed, pending, reasons };
+}
+
+/**
+ * The registration's readout (pure; the CLI reads the files): the screened sets and their rejections, every expected run bundle, the
+ * device and reproducibility checks, the queue's completeness, the optional capability rows and prior readouts. With `budgetStopped`
+ * nothing is analysed: the outcome is Uninformative, or Invalid if the device check (technical status, if given) failed. With a queue that
+ * has not completed nothing is analysed either: the outcome is "incomplete", which is no row of the table. Otherwise the validity checks
+ * once over every history and the tests decide the row; under a row the validity checks settle (Invalid, Uninformative) the tests are
+ * withheld (`withheld`: `primary` and `secondary` null, and no truncation verdict). Under a row the tests decide, the tests are run again
+ * without the truncation-flagged histories (a history with more than 1% truncated recipient rows in its ponds.tsv), never the validity
+ * checks, and the readout is sensitive to truncation when that row differs. The descriptive outputs never feed the outcome.
+ */
+export function reg1ReportReadout(x: {
+  sets: readonly Reg1ReportSet[];
+  rejected: readonly { dir: string; id: string | null; reasons: string[] }[];
+  runs: readonly Reg1ReportRun[];
+  device: Reg1ReportDevice | null;
+  reproducibility: Reg1ReportReproducibility | null;
+  budgetStopped?: boolean;
+  queue?: ReturnType<typeof reg1ReportQueueCheck> | null;
+  capability?: readonly R4Row[] | null;
+  v1?: unknown;
+  r3rep?: unknown;
+}) {
+  const rowOf = (outcome: Reg1ReportOutcome) => ({ ...REG1_REPORT_OUTCOMES.find((r) => r.outcome === outcome)!, note: REG1_REPORT_H1_NOTE });
+  const definitions = { unresolved: REG1_REPORT_UNRESOLVED };
+  const nothing = { primary: null, secondary: null, truncation: null, availability: null, descriptive: null };
+  if (x.budgetStopped) {
+    const outcome: Reg1ReportOutcome = x.device?.passed === false ? "Invalid" : "Uninformative";
+    const reasons = [...(x.device?.passed === false ? [`device check failed: ${x.device.reasons.join("; ")}`] : []), "the budget stopped the queue: nothing is analysed (no partial ensemble is ever analysed)"];
+    return { outcome, row: rowOf(outcome), reasons, budgetStopped: true, withheld: true, withheldReason: "the budget stopped the queue: nothing is analysed", definitions, queue: x.queue ?? null, validity: { device: x.device ?? { passed: null, reasons: ["not given"] } }, ...nothing };
+  }
+  if (x.queue && !x.queue.complete) {
+    return { outcome: "incomplete" as const, row: null, reasons: [...x.queue.reasons, "nothing is analysed (no partial ensemble is ever analysed)"], budgetStopped: false, withheld: true, withheldReason: "the queue has not completed: nothing is analysed", definitions, queue: x.queue, validity: { device: x.device ?? { passed: null, reasons: ["not given"] } }, ...nothing };
+  }
+  if (x.device === null || x.reproducibility === null) throw new Error("reg1ReportReadout: the device and reproducibility checks are needed unless nothing is analysed");
+  const runs = new Map(x.runs.map((r) => [r.id, r]));
+  const statuses = reg1ReportStatuses(x.sets, x.rejected, runs);
+  const histories = reg1ReportHistoryStatuses(statuses, runs);
+  const all = reg1ReportEvaluate(x.sets, statuses, histories, { device: x.device, reproducibility: x.reproducibility });
+  const withheldReason = reg1Withheld(all.outcome);
+  const flagged = x.runs.filter((r) => r.trajectory?.truncation.flagged).map((r) => ({ id: r.id, ...r.trajectory!.truncation }));
+  // The tests only, without the flagged histories, and only under a row the tests decide: the validity checks stand as evaluated.
+  const without = withheldReason !== null ? null : flagged.length === 0 ? all.tests : reg1ReportTests(x.sets, statuses, histories, new Set(flagged.map((f) => f.id)));
+  const truncation = {
+    limit: TRUNCATION_LIMIT,
+    flagged,
+    /** Bundles whose ponds.tsv could not be read (unresolved): their truncation is unknown. */
+    unknown: x.runs.filter((r) => r.trajectory === null).map((r) => r.id),
+    without: without && {
+      outcome: without.outcome,
+      reasons: without.reasons,
+      excluded: without.excluded,
+      h1: { status: without.primary.h1.status, p: without.primary.h1.p, holm: without.primary.h1.holm },
+      h2: { status: without.primary.h2.status, positive: without.primary.h2.positive, n: without.primary.h2.n, p: without.primary.h2.p, holm: without.primary.h2.holm },
+      secondary: { s1: without.secondary.s1.status, s2a: without.secondary.s2a.status, s2b: without.secondary.s2b.status, s3: without.secondary.s3.status },
+    },
+    sensitive: without === null ? null : without.outcome !== all.outcome,
+  };
+  const reasons = [...all.reasons, ...(truncation.sensitive ? [`sensitive to truncation: without the ${flagged.length} flagged histories the row would be ${without!.outcome}`] : [])];
+
+  // Descriptive: never a decision input.
+  const statusById = new Map(statuses.map((s) => [s.id, s]));
+  const setById = new Map(x.sets.map((s) => [s.id, s]));
+  const count = (rows: readonly AssayRow[]) => ({ n: rows.length, successes: rows.filter((r) => r.success === 1).length });
+  const competences = reg1ReportExpectedSets()
+    .filter((w) => w.assay === "competence" && setById.has(w.id))
+    .map((w) => {
+      const s = setById.get(w.id)!;
+      const c = count(s.rows);
+      const perReplicate = [...new Set(s.rows.map((r) => r.replicate))].sort((p, q) => p - q).map((replicate) => ({ replicate, ...count(s.rows.filter((r) => r.replicate === replicate)) }));
+      const truncatedRows = s.rows.filter((r) => (r.truncated ?? 0) > 0).length;
+      return { id: w.id, status: statusById.get(w.id)!.status, ...c, competence: c.n ? c.successes / c.n : null, perReplicate, truncatedRows, truncationFlagged: truncationOf(truncatedRows, c.n).flagged, retMass: dist(s.rows.map((r) => r.retMass)), retE: dist(s.rows.filter((r) => r.retE !== null).map((r) => r.retE!)) };
+    });
+  const gaOnFe = Array.from({ length: REG1_REPORT_HISTORIES }, (_, i) => {
+    const id = `${reg1ReportHistoryId("scaf", i)}-ga-on-fe`;
+    const c = competences.find((y) => y.id === id);
+    return { id, status: statusById.get(id)!.status, successes: c?.successes ?? null, n: c?.n ?? null, competence: c?.competence ?? null };
+  });
+  const massBins = (["a", "b"] as const).flatMap((timing) =>
+    REG1_ALL_ARMS.map((arm) => {
+      const rows = Array.from({ length: REG1_REPORT_HISTORIES }, (_, i) => `${reg1ReportHistoryId(arm, i)}-${timing}`)
+        .filter((id) => statusById.get(id)?.status === "measured")
+        .flatMap((id) => setById.get(id)!.rows);
+      const bins = new Map<string, { bin: string; lower: number; n: number; successes: number }>();
+      for (const r of rows) {
+        const b = reg1MassBin(r.retMass);
+        const e = bins.get(b.bin) ?? { ...b, n: 0, successes: 0 };
+        e.n++;
+        if (r.success === 1) e.successes++;
+        bins.set(b.bin, e);
+      }
+      return { arm, timing, fragments: rows.length, bins: [...bins.values()].sort((p, q) => p.lower - q.lower).map(({ bin, n, successes }) => ({ bin, n, successes, competence: successes / n })) };
+    }),
+  );
+  const gardenOf = (inoculum: "raw" | "disc") =>
+    (["scaf", "rand"] as const).flatMap((arm) =>
+      Array.from({ length: REG1_REPORT_HISTORIES }, (_, i) => {
+        const id = reg1ReportHistoryId(arm, i);
+        const mean = (t: 0 | 1) => {
+          const s = setById.get(`garden-${id}-t${t}-${inoculum}`);
+          return s && statusById.get(s.id)!.status === "measured" && s.rows.length ? s.rows.reduce((a, r) => a + r.endTrait, 0) / s.rows.length : null;
+        };
+        const t0 = mean(0);
+        const tC = mean(1);
+        return { id, t0, tC, gain: t0 !== null && tC !== null ? tC - t0 : null };
+      }),
+    );
+  const trajectoryBoundaries = R3REP_TRAJECTORY_BOUNDARIES;
+  const runSummary = x.runs.map((r) => {
+    const b = r.trajectory?.boundaries ?? [];
+    return { id: r.id, arm: r.arm, history: r.history, dir: r.dir, resolved: r.resolved, censusEvery: r.censusEvery, endedAt: r.trajectory?.endedAt ?? null, extinctAt100: b.find((y) => y.boundary === REG1_REPORT_RUNS.history.cycles)?.extinct ?? null, lastBoundary: b.at(-1)?.boundary ?? null, truncation: r.trajectory?.truncation ?? null, trajectory: b };
+  });
+  const armTrajectory = (arm: Reg1ReportArm) =>
+    trajectoryBoundaries.map((boundary) => {
+      const at = runSummary.filter((h) => h.arm === arm).flatMap((h) => h.trajectory.filter((y) => y.boundary === boundary));
+      return { boundary, histories: at.length, medianMeanTrait: at.length ? median(at.map((y) => y.meanTrait)) : null, medianExtinct: at.length ? median(at.map((y) => y.extinct)) : null };
+    });
+  const sideBySide = {
+    reg1: {
+      histories: REG1_REPORT_HISTORIES,
+      ...Object.fromEntries((["a", "b"] as const).map((t) => [t, Object.fromEntries(REG1_ALL_ARMS.map((arm) => {
+        const ids = new Set(Array.from({ length: REG1_REPORT_HISTORIES }, (_, i) => `${reg1ReportHistoryId(arm, i)}-${t}`));
+        const xs = competences.filter((c) => c.status === "measured" && ids.has(c.id) && c.competence !== null).map((c) => c.competence!);
+        return [arm, xs.length ? median(xs) : null];
+      }))])),
+      geOnFaMinusAncestor: (() => {
+        const xs = Array.from({ length: REG1_REPORT_HISTORIES }, (_, i) => {
+          const e = competences.find((c) => c.id === `${reg1ReportHistoryId("scaf", i)}-ge-on-fa` && c.status === "measured");
+          const w = competences.find((c) => c.id === `${reg1ReportHistoryId("ancestor", i)}-a` && c.status === "measured");
+          return e && w ? e.competence! - w.competence! : null;
+        }).filter((v): v is number => v !== null);
+        return xs.length ? median(xs) : null;
+      })(),
+      g: (() => {
+        const xs = all.tests.primary.h2.terms.filter((t) => t.status === "measured").map((t) => t.value!);
+        return xs.length ? median(xs) : null;
+      })(),
+      quenchedMax: all.validity.quenched.max,
+    },
+    v1: x.v1 === undefined ? null : reg1ReportPriorSummary(x.v1, "r3"),
+    r3rep: x.r3rep === undefined ? null : reg1ReportPriorSummary(x.r3rep, "r3rep"),
+  };
+  return {
+    outcome: all.outcome,
+    row: rowOf(all.outcome),
+    reasons,
+    budgetStopped: false,
+    withheld: withheldReason !== null,
+    withheldReason,
+    definitions,
+    queue: x.queue ?? null,
+    validity: { ...all.validity, device: x.device, reproducibility: x.reproducibility },
+    primary: withheldReason === null ? all.tests.primary : null,
+    secondary: withheldReason === null ? all.tests.secondary : null,
+    truncation,
+    availability: {
+      expected: statuses.length,
+      measured: statuses.filter((s) => s.status === "measured").length,
+      biological: statuses.filter((s) => s.status === "biological").length,
+      unresolved: statuses.filter((s) => s.status === "unresolved").length,
+      sets: statuses,
+      histories,
+      runs: x.runs.map(({ id, dir, resolved, why, censusEvery }) => ({ id, dir, resolved, why, censusEvery })),
+    },
+    descriptive: {
+      note: "never a decision input. competences: every set's successes out of its fragments (256, the swap pair 512) and per replicate (64), its truncated rows and the retained B+P (retMass) and E (retE) of its fragments; gaOnFe: Ga-on-Fe per history; massBins: success within retained-mass bins (0, then [2^k, 2^(k+1))) per arm and timing over the measured source sets (the mass confound of the unmatched H1 comparisons); garden: the mean end trait at time 0 and C and the gain per history, raw and disc; runs: per bundle its mean pre-cycle pond trait per boundary (extinct ponds count 0), its extinct ponds at boundary 100 (null for an ancestor world), the boundary its history ended at and its truncation, and per arm the medians at boundaries 1, 10, 25, 50, 75 and 100; capability: R4's rows (DEFAULT_EVAL, its own seed 1 and 4 replicates); sideBySide: the medians beside protocol v1's (--v1) and the R3 replication's (--r3rep)",
+      competences,
+      gaOnFe,
+      massBins,
+      garden: { raw: gardenOf("raw"), disc: gardenOf("disc") },
+      runs: { histories: runSummary, ended: runSummary.filter((r) => r.endedAt !== null).map((r) => ({ id: r.id, endedAt: r.endedAt })), arms: Object.fromEntries(REG1_ALL_ARMS.map((arm) => [arm, armTrajectory(arm)])) },
+      capability: x.capability ? reg1ReportCapability(x.capability) : { given: false },
+      sideBySide,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------------------------
 // R4: capability (descriptive)
 
 /** A row of the capability table: an arm and history plus numeric measures (quality, recovery, regeneration, ...). */
@@ -3346,19 +5004,35 @@ export function r4RowsOf(json: unknown): R4Row[] {
   return rows as R4Row[];
 }
 
-/** Rows passed through as given, with per-arm mean and median of each numeric column. */
+/**
+ * Rows passed through as given, with per arm the evaluated rows (`evaluated` not false: a source whose genome was not evaluated has no
+ * measures) and the mean and median of each of their numeric columns; the labels arm, history and h are not measures.
+ */
 export function r4Table(rows: readonly R4Row[]): { rows: R4Row[]; arms: Record<string, { n: number; measures: Record<string, Dist> }> } {
   const arms: Record<string, { n: number; measures: Record<string, Dist> }> = {};
   const byArm = new Map<string, R4Row[]>();
   for (const r of rows) byArm.set(r.arm, [...(byArm.get(r.arm) ?? []), r]);
-  for (const [arm, rs] of byArm) {
-    const cols = new Set(rs.flatMap((r) => Object.keys(r).filter((k) => k !== "arm" && k !== "history" && typeof r[k] === "number")));
+  for (const [arm, all] of byArm) {
+    const rs = all.filter((r) => r.evaluated !== false);
+    const cols = new Set(rs.flatMap((r) => Object.keys(r).filter((k) => k !== "arm" && k !== "history" && k !== "h" && typeof r[k] === "number")));
     arms[arm] = {
       n: rs.length,
       measures: Object.fromEntries([...cols].sort().map((c) => [c, dist(rs.filter((r) => typeof r[c] === "number").map((r) => r[c] as number))])),
     };
   }
   return { rows: [...rows], arms };
+}
+
+/** R4 as the registration reports it (descriptive): `r4Table`, and per arm the rows given, the evaluated ones and the unavailable sources with why. */
+export function reg1ReportCapability(rows: readonly R4Row[]) {
+  const t = r4Table(rows);
+  const counts = Object.fromEntries(
+    Object.keys(t.arms).map((arm) => {
+      const rs = rows.filter((r) => r.arm === arm);
+      return [arm, { rows: rs.length, evaluated: rs.filter((r) => r.evaluated !== false).length, unavailable: rs.filter((r) => r.evaluated === false).map((r) => ({ history: r.history ?? null, why: typeof r.unavailable === "string" ? r.unavailable : null })) }];
+    }),
+  );
+  return { given: true, ...t, counts };
 }
 
 // ---------------------------------------------------------------------------------------------

@@ -2,20 +2,26 @@
 // "Standard fragment" and R1-R4). A source world (a pond-cycle history's state) is sampled into
 // standard fragments, each fragment is planted alone at the centre of a fresh pond holding a fixed
 // matter budget M_assay, and the assay world runs one period with mutation off. Everything here is
-// host-side, integer and pure (no Deno API), so vitest exercises it directly; the GPU loop and the
-// CLI are tools/scaffold-assays.ts.
+// host-side, integer and pure (no Deno API: the registration's runner-bundle loader takes its file
+// reader as an argument), so vitest exercises it directly; the GPU loop and the CLI are
+// tools/scaffold-assays.ts.
 import {
   CH,
   G,
   GENOME_CHANNELS,
   M3_FOUNDERS,
   NN_WORDS,
+  PRESETS,
+  RULE_VERSION,
   allocState,
   buildWorld,
+  canonicalConfig,
+  decodeCheckpoint,
   emptyGenome,
   encodeGenome,
   founderGenome,
   cellCount,
+  initWorld,
   stateHash,
   validateState,
   worldW,
@@ -24,6 +30,7 @@ import {
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
+import { runId, specConfig, type RunSpec } from "@bl/runner";
 import { MOT_ZERO } from "@bl/sim-ref";
 import { assaySeed, drawPacketCentre, packetWindow, pondConfig, pondTraits, randomKey, weightedPick } from "./ponds.ts";
 
@@ -744,7 +751,11 @@ const hexBytes = (b: Uint8Array): string => Array.from(b, (x) => x.toString(16).
  * `bytes` bytes must hash to the pinned SHA-256 (`R3REP_PROTOCOLS`).
  */
 export async function r3RepProtocolProblems(which: keyof typeof R3REP_PROTOCOLS, doc: Uint8Array): Promise<string[]> {
-  const pin = R3REP_PROTOCOLS[which];
+  return await pinnedTextProblems(R3REP_PROTOCOLS[which], doc);
+}
+
+/** What is wrong with `doc` as the pinned document `pin` (its first `bytes` bytes hashing to `sha256`) followed by amendments only. */
+async function pinnedTextProblems(pin: { doc: string; sha256: string; bytes: number }, doc: Uint8Array): Promise<string[]> {
   if (doc.length < pin.bytes) return [`${pin.doc} has ${doc.length} bytes, fewer than the ${pin.bytes} it had when pinned`];
   const sha = hexBytes(new Uint8Array(await crypto.subtle.digest("SHA-256", doc.slice(0, pin.bytes))));
   if (sha === pin.sha256) return [];
@@ -1257,6 +1268,898 @@ export function r3RepTreatmentProblems(json: Record<string, unknown>): string[] 
   return why;
 }
 
+// ---------------------------------------------------------------------------------------------
+// The scaffolding registration (docs/scaffold-registration-v1.md, reg1): protocol v1's assays on runner bundles
+
+/**
+ * The regime every reg1 assay runs at (the document's "Assays"): protocol v1's k and period, ref 103,058, 64 ponds at 512² and a census
+ * every 100 steps. The replicates are the set's (`reg1ReplicatesOf`); S3 runs, as R1'' did, without a ref.
+ */
+export const REG1_REGIME = { k: 8, period: 10_000, ref: 103_058, side: 8, censusEvery: 100 } as const;
+
+/** Histories per arm (i = 0-23). The source worlds by h: 24 arm + i for the histories (arm 0 scaf, 1 rand, 2 cont), 72 + i for ancestor world i. */
+export const REG1_HISTORIES = 24;
+export const REG1_ANCESTOR_H = 72;
+export const REG1_SOURCES = 96;
+const REG1_ARMS = ["scaf", "rand", "cont"] as const;
+/** S3's sets by h: 0-47 the scaf and rand histories (24 arm + i), 48-49 the positive controls (P2 ranking worlds s0, s1), 50-53 the negative controls j = 0-3. */
+export const REG1_HEREDITY_SETS = 54;
+const REG1_POSITIVE_H = 48;
+const REG1_NEGATIVE_H = 50;
+
+/**
+ * The document's seeds (block 4,850,001-4,899,999): histories 4,850,001 + 100 arm + i, ancestor worlds 4,850,401 + i, continuations
+ * 4,850,501 + h (at most 4,850,596), competence σ(h, t, s) (at most 4,860,514), S2 (at most 4,865,732), S3 (at most 4,879,260), the
+ * negative-control worlds 4,880,001 + j, and the reproducibility draw, the S1 bootstrap and the device check.
+ */
+export const REG1_SEED_BLOCK = { min: 4_850_001, max: 4_899_999 } as const;
+export const REG1_HISTORY_SEED_BASE = 4_850_001;
+export const REG1_ANCESTOR_SEED_BASE = 4_850_401;
+export const REG1_CONTINUE_SEED_BASE = 4_850_501;
+export const REG1_CONTINUE_SEED_MAX = 4_850_596;
+export const REG1_SEED_BASE = 4_851_001;
+export const REG1_SEED_MAX = 4_860_514;
+export const REG1_GARDEN_SEED_BASE = 4_861_001;
+export const REG1_GARDEN_SEED_MAX = 4_865_732;
+export const REG1_HEREDITY_SEED_BASE = 4_866_001;
+export const REG1_HEREDITY_SEED_MAX = 4_879_260;
+export const REG1_NEGATIVE_SEED_BASE = 4_880_001;
+export const REG1_REPRO_SEED = 4_880_101;
+export const REG1_S1_BOOTSTRAP_SEED = 4_880_201;
+export const REG1_DEVICE_SEED = 4_880_301;
+/**
+ * A history runs 10^6 steps (100 cycles), an ancestor world one period, both with a census every 1,000; a continuation 2 x 10^5 steps. A
+ * run that stops on an event-buffer overflow is rerun at census 100 (the document's "Validity", step 3) as experiment hist-c100 or anc-c100,
+ * the spec otherwise the same: neither the physics nor a pre-cycle state depends on the census cadence.
+ */
+export const REG1_HISTORY_STEPS = 1_000_000;
+export const REG1_ANCESTOR_STEPS = 10_000;
+export const REG1_RUN_CENSUS = 1_000;
+export const REG1_RERUN_CENSUS = 100;
+/** Every run takes deep metrics every 10 censuses and writes no periodic checkpoint; preset ponds has the identity the document names. */
+export const REG1_RUN_DEEP = 10;
+export const REG1_PONDS_IDENTITY = "56526b894cfccf3f";
+export const REG1_CONTINUE_STEPS = 200_000;
+/** Source (a) is boundary 100's pre-cycle checkpoint (b1 for an ancestor world); S3's is boundary 34's; S2's time C is source (a). */
+export const REG1_HEREDITY_BOUNDARY = 34;
+
+/**
+ * The registration as frozen on 2026-10-02, pinned by SHA-256 and length (experiments/scaffold/REGISTRATION-v1 records the same hash). Any
+ * change after the freeze goes in a dated amendment at the end, so the document keeps beginning with its pinned bytes; sets and sidecars
+ * record and are checked against this pin, never against the document as it is now.
+ */
+export const REG1_PROTOCOL = { doc: "docs/scaffold-registration-v1.md", sha256: "8a1b00ec5bd1440e8c4ab4ea61f3816dee0dbe110cb2052f0ae0ca785a817f69", bytes: 31_675 } as const;
+export const REG1_SHA256 = REG1_PROTOCOL.sha256;
+
+/** What is wrong with `doc` (the registration's bytes as they are now) as its pinned text followed by amendments only. */
+export async function reg1ProtocolProblems(doc: Uint8Array): Promise<string[]> {
+  return await pinnedTextProblems(REG1_PROTOCOL, doc);
+}
+
+/** Throws unless `x` is an integer in 0..max (the reg1 seed functions' range assertions). */
+function reg1Field(fn: string, name: string, x: number, max: number): void {
+  if (!Number.isInteger(x) || x < 0 || x > max) throw new Error(`${fn}: ${name} must be an integer in 0..${max}, got ${x}`);
+}
+
+export type Reg1Arm = "scaf" | "rand" | "cont" | "ancestor";
+
+/** A source world: `arm` with its index i (0-23; ancestor world i for the ancestor) and h = 24 arm + i, or 72 + i. */
+export interface Reg1History {
+  arm: Reg1Arm;
+  history: number;
+  h: number;
+}
+
+/** h of history i of `arm` (24 arm + i), or of ancestor world i (72 + i). */
+export function reg1H(arm: Reg1Arm, i: number): number {
+  reg1Field("reg1H", "i", i, REG1_HISTORIES - 1);
+  if (arm === "ancestor") return REG1_ANCESTOR_H + i;
+  const k = REG1_ARMS.indexOf(arm);
+  if (k < 0) throw new Error(`reg1H: arm must be scaf, rand, cont or ancestor, got ${JSON.stringify(arm)}`);
+  return REG1_HISTORIES * k + i;
+}
+
+/** The source world h names (`reg1H`'s inverse). */
+export function reg1HistoryOf(h: number): Reg1History {
+  reg1Field("reg1HistoryOf", "h", h, REG1_SOURCES - 1);
+  if (h >= REG1_ANCESTOR_H) return { arm: "ancestor", history: h - REG1_ANCESTOR_H, h };
+  return { arm: REG1_ARMS[Math.floor(h / REG1_HISTORIES)], history: h % REG1_HISTORIES, h };
+}
+
+/** The world seed of source h: 4,850,001 + 100 arm + i for a history, 4,850,401 + i for an ancestor world. */
+export function reg1WorldSeedOf(h: number): number {
+  const l = reg1HistoryOf(h);
+  return l.arm === "ancestor" ? REG1_ANCESTOR_SEED_BASE + l.history : REG1_HISTORY_SEED_BASE + 100 * REG1_ARMS.indexOf(l.arm) + l.history;
+}
+
+/** Seed of the continuation of source h (0-95) to timing (b): 4,850,501 + h. */
+export function reg1ContinueSeed(h: number): number {
+  reg1Field("reg1ContinueSeed", "h", h, REG1_SOURCES - 1);
+  return REG1_CONTINUE_SEED_BASE + h;
+}
+
+/**
+ * Competence seed σ(h, t, s) = 4,851,001 + 100 h + 10 t + s: h 0-95, t 0 for timing (a) and 1 for (b), s the replicate 0-3, or 0-7 for
+ * the swap pair, whose seeds are an ancestor world's at (a) (h 72-95, t 0). Mixed radix (10 t + s < 100), so it cannot collide; every
+ * field is range-checked.
+ */
+export function reg1Seed(h: number, t: number, s: number): number {
+  reg1Field("reg1Seed", "h", h, REG1_SOURCES - 1);
+  reg1Field("reg1Seed", "t", t, 1);
+  reg1Field("reg1Seed", "s", s, h >= REG1_ANCESTOR_H && t === 0 ? 7 : 3);
+  const seed = REG1_SEED_BASE + 100 * h + 10 * t + s;
+  if (seed > REG1_SEED_MAX) throw new Error(`reg1Seed: ${seed} is above ${REG1_SEED_MAX}`);
+  return seed;
+}
+
+/**
+ * S2's seed(h, t, v, s) = 4,861,001 + 100 h + 20 t + 10 v + s: h 0-47 (scaf and rand), t 0 = time 0 and 1 = time C, v 0 raw and 1 disc,
+ * s 0-1. Both inocula sample their fragments with v = 0; the assay world's physics uses v.
+ */
+export function reg1GardenSeed(h: number, t: number, v: number, s: number): number {
+  reg1Field("reg1GardenSeed", "h", h, 2 * REG1_HISTORIES - 1);
+  reg1Field("reg1GardenSeed", "t", t, 1);
+  reg1Field("reg1GardenSeed", "v", v, 1);
+  reg1Field("reg1GardenSeed", "s", s, 1);
+  const seed = REG1_GARDEN_SEED_BASE + 100 * h + 20 * t + 10 * v + s;
+  if (seed > REG1_GARDEN_SEED_MAX) throw new Error(`reg1GardenSeed: ${seed} is above ${REG1_GARDEN_SEED_MAX}`);
+  return seed;
+}
+
+/** S3's seed 4,866,001 + 250 h + s: h 0-53 (`REG1_HEREDITY_SETS`), s 0-1 the replicates, 8 the permutation stream, 9 the donor selection; no other s. */
+export function reg1HereditySeed(h: number, s: number): number {
+  reg1Field("reg1HereditySeed", "h", h, REG1_HEREDITY_SETS - 1);
+  if (s !== 0 && s !== 1 && s !== 8 && s !== 9) throw new Error(`reg1HereditySeed: s must be 0-1 (replicates), 8 (permutations) or 9 (donors), got ${s}`);
+  const seed = REG1_HEREDITY_SEED_BASE + 250 * h + s;
+  if (seed > REG1_HEREDITY_SEED_MAX) throw new Error(`reg1HereditySeed: ${seed} is above ${REG1_HEREDITY_SEED_MAX}`);
+  return seed;
+}
+
+/** The world seed of S3's negative control j (0-3): 4,880,001 + j. */
+export function reg1NegativeSeed(j: number): number {
+  reg1Field("reg1NegativeSeed", "j", j, 3);
+  return REG1_NEGATIVE_SEED_BASE + j;
+}
+
+/** The negative-control world j a seed names (`reg1NegativeSeed`'s inverse), or null. */
+export const reg1NegativeWorldOf = (seed: number): number | null => (Number.isInteger(seed) && seed >= REG1_NEGATIVE_SEED_BASE && seed <= REG1_NEGATIVE_SEED_BASE + 3 ? seed - REG1_NEGATIVE_SEED_BASE : null);
+
+/**
+ * What is wrong with a tools/scaffold.ts evolve run at a negative-control seed: it must make the heredity replication's control world,
+ * a clone world of arm cont with mutation off grown one period of 10,000 steps at 8 x 8 ponds.
+ */
+export function reg1NegativeRunProblems(x: { arm: string; init: string; mutOff: boolean; period: number; cycles: number; side: number }): string[] {
+  const why: string[] = [];
+  for (const [key, want] of [["arm", "cont"], ["init", "clone"], ["mutOff", true], ["period", REG1_REGIME.period], ["cycles", 1], ["side", REG1_REGIME.side]] as const) {
+    if (x[key] !== want) why.push(`${key} ${JSON.stringify(x[key])}, want ${JSON.stringify(want)}`);
+  }
+  return why;
+}
+
+/** The conditions of the arms (an ancestor world is a pond-cont world of one period). */
+export const REG1_CONDITIONS = { scaf: "treatment", rand: "pond-rand", cont: "pond-cont", ancestor: "pond-cont" } as const;
+
+const pad2 = (i: number): string => String(i).padStart(2, "0");
+
+/** A source world's name on disk and in a set id: scaf-i00..cont-i23, ancestor-i00..ancestor-i23. */
+export const reg1IdOf = (l: Pick<Reg1History, "arm" | "history">): string => `${l.arm}-i${pad2(l.history)}`;
+
+/**
+ * The run experiment of source h: `hist` for a history, `anc` for an ancestor world. Run ids cannot contain "/", so the runs are made with
+ * tools/run.ts --out runs/scaffold/reg1 --experiment hist|anc, and the manifest's runId is <experiment>/ponds/<condition>/seed-<n>.
+ */
+export const reg1ExperimentOf = (h: number): "hist" | "anc" => (reg1HistoryOf(h).arm === "ancestor" ? "anc" : "hist");
+
+/** The run bundle of source h under runs/ (tools/run.ts's <out>/<experiment>/<preset>/<condition>/seed-<n>): scaffold/reg1/hist/... or scaffold/reg1/anc/... */
+export function reg1BundleDirOf(h: number): string {
+  return `scaffold/reg1/${reg1ExperimentOf(h)}/ponds/${REG1_CONDITIONS[reg1HistoryOf(h).arm]}/seed-${reg1WorldSeedOf(h)}`;
+}
+
+/** The boundary of source h's timing (a): 100 for a history, 1 for an ancestor world. */
+export const reg1BoundaryAOf = (h: number): number => (reg1HistoryOf(h).arm === "ancestor" ? 1 : 100);
+
+/** A pre-cycle checkpoint's file in its bundle, as the runner names it: checkpoints/b<NNN>-pre.blck. */
+export const reg1PreCycleFileOf = (b: number): string => `checkpoints/b${String(b).padStart(3, "0")}-pre.blck`;
+
+/** Where `continue --reg1` writes source h's timing (b) state, under runs/: scaffold/reg1/cont200k/<arm>-i<NN>.blck.gz. */
+export const reg1ContinuationPathOf = (h: number): string => `scaffold/reg1/cont200k/${reg1IdOf(reg1HistoryOf(h))}.blck.gz`;
+
+/**
+ * What a source's run bundle must be: its directory (`reg1BundleDirOf`), spec (experiment, preset, condition, seed, steps, census, deep
+ * metrics and periodic checkpoints), the preset's identity and the state (period, ponds, mutation rate).
+ */
+export interface Reg1BundleWant {
+  dir: string;
+  experiment: string;
+  presetId: string;
+  presetIdentity: string;
+  condition: string;
+  seed: number;
+  steps: number;
+  censusEvery: number;
+  deepEvery: number;
+  checkpointEvery: number;
+  period: number;
+  side: number;
+  mutRate: number;
+}
+
+/** The production bundle of source h: experiment hist (anc), preset ponds, its arm's condition and seed, 10^6 steps (10^4 for an ancestor world), census every 1,000, the default mutation rate. */
+export function reg1BundleWantOf(h: number): Reg1BundleWant {
+  return reg1BundleWantsOf(h)[0];
+}
+
+/**
+ * The bundles source h may come from: its run at census 1,000 (`reg1BundleDirOf`) and that run's overflow rerun at census 100 (experiment
+ * hist-c100 or anc-c100, the same seed and spec otherwise). Exactly one of them must be complete (`reg1SourceProblems`).
+ */
+export function reg1BundleWantsOf(h: number): [Reg1BundleWant, Reg1BundleWant] {
+  const l = reg1HistoryOf(h);
+  const want: Reg1BundleWant = {
+    dir: reg1BundleDirOf(h),
+    experiment: reg1ExperimentOf(h),
+    presetId: "ponds",
+    presetIdentity: REG1_PONDS_IDENTITY,
+    condition: REG1_CONDITIONS[l.arm],
+    seed: reg1WorldSeedOf(h),
+    steps: l.arm === "ancestor" ? REG1_ANCESTOR_STEPS : REG1_HISTORY_STEPS,
+    censusEvery: REG1_RUN_CENSUS,
+    deepEvery: REG1_RUN_DEEP,
+    checkpointEvery: 0,
+    period: REG1_REGIME.period,
+    side: REG1_REGIME.side,
+    mutRate: pondConfig(REG1_REGIME.side, 0).mutRate,
+  };
+  const experiment = `${want.experiment}-c100`;
+  return [want, { ...want, dir: want.dir.replace(`/${want.experiment}/`, `/${experiment}/`), experiment, censusEvery: REG1_RERUN_CENSUS }];
+}
+
+/** The competence sets (labels.set) and the inoculum each plants: the source's fragments, Ge-on-Fa, Ga-on-Fa, Ga-on-Fe and the quenched control. */
+export const REG1_COMPETENCE_SETS = ["source", "ge-on-fa", "ga-on-fa", "ga-on-fe", "quench"] as const;
+export type Reg1CompetenceSet = (typeof REG1_COMPETENCE_SETS)[number];
+export type Reg1Set = Reg1CompetenceSet | "garden-raw" | "garden-disc" | "heredity" | "capability";
+export const REG1_INOCULA = { source: "fragment", "ge-on-fa": "swap-ea", "ga-on-fa": "swap-aa", "ga-on-fe": "swap-ae", quench: "quenched", "garden-raw": "fragment", "garden-disc": "disc", heredity: "fragment" } as const;
+
+/**
+ * The `labels` of a reg1 set, every key present: `set`, the source world (`arm`, `history`), `timing` (competence) or `time` (S2), `h`
+ * the seed index of the set's seeds (and of its fragment source: Ge-on-Fa and Ga-on-Fa carry 72 + i, ancestor world i, while `history`
+ * is i and `arm` scaf), and `control` for S3's controls, whose `history` is null. Fields that do not apply are null.
+ */
+export interface Reg1LabelSet {
+  reg1: true;
+  set: Reg1Set;
+  arm: Reg1Arm | "control" | null;
+  history: number | null;
+  timing: "a" | "b" | null;
+  time: 0 | 1 | null;
+  h: number | null;
+  control: "positive" | "negative" | null;
+}
+
+/**
+ * The labels of competence set `set` of history i at `timing`: the source's own fragments of any source world (h = 24 arm + i, or 72 + i);
+ * Ge-on-Fa and Ga-on-Fa of scaf_i at (a), on ancestor world i's fragments (h = 72 + i); Ga-on-Fe of scaf_i at (a) and the quenched control
+ * of scaf_i at either timing, on scaf_i's fragments (h = i).
+ */
+export function reg1CompetenceLabelsOf(set: Reg1CompetenceSet, arm: Reg1Arm, history: number, timing: "a" | "b"): Reg1LabelSet {
+  if (!(REG1_COMPETENCE_SETS as readonly string[]).includes(set)) throw new Error(`reg1 competence set must be one of ${REG1_COMPETENCE_SETS.join(", ")}, got ${JSON.stringify(set)}`);
+  if (timing !== "a" && timing !== "b") throw new Error(`reg1 timing must be a or b, got ${JSON.stringify(timing)}`);
+  if (set !== "source" && arm !== "scaf") throw new Error(`${set} labels a scaf history, not ${arm}`);
+  if ((set === "ge-on-fa" || set === "ga-on-fa" || set === "ga-on-fe") && timing !== "a") throw new Error(`${set} runs at timing a only, not ${timing}`);
+  const own = reg1H(arm, history);
+  const h = set === "ge-on-fa" || set === "ga-on-fa" ? REG1_ANCESTOR_H + history : own;
+  return { reg1: true, set, arm, history, timing, time: null, h, control: null };
+}
+
+/** The labels of S2's set of scaf or rand history i at time 0 or C (1) with the raw (fragment) or standardised (disc) inoculum; h = 24 arm + i. */
+export function reg1GardenLabelsOf(arm: "scaf" | "rand", history: number, time: 0 | 1, inoculum: "fragment" | "disc"): Reg1LabelSet {
+  if (arm !== "scaf" && arm !== "rand") throw new Error(`S2 labels a scaf or rand history, not ${JSON.stringify(arm)}`);
+  if (time !== 0 && time !== 1) throw new Error(`S2 time must be 0 or 1 (time C), got ${JSON.stringify(time)}`);
+  if (inoculum !== "fragment" && inoculum !== "disc") throw new Error(`S2 inoculum must be fragment (raw) or disc, got ${JSON.stringify(inoculum)}`);
+  return { reg1: true, set: inoculum === "disc" ? "garden-disc" : "garden-raw", arm, history, timing: null, time, h: reg1H(arm, history), control: null };
+}
+
+/** The labels of S3's set h (0-53): a scaf or rand history (h = 24 arm + i), a positive control (48-49) or a negative control (50-53). */
+export function reg1HeredityLabelsOf(h: number): Reg1LabelSet {
+  reg1Field("reg1HeredityLabelsOf", "h", h, REG1_HEREDITY_SETS - 1);
+  if (h < REG1_POSITIVE_H) return { reg1: true, set: "heredity", arm: REG1_ARMS[Math.floor(h / REG1_HISTORIES)], history: h % REG1_HISTORIES, timing: null, time: null, h, control: null };
+  return { reg1: true, set: "heredity", arm: "control", history: null, timing: null, time: null, h, control: h < REG1_NEGATIVE_H ? "positive" : "negative" };
+}
+
+/** The labels of R4 (`capability --reg1`): one set over every history's dominant genome at (a) and every ancestor world's; the rows carry arm, history and h. */
+export const REG1_CAPABILITY_LABELS: Reg1LabelSet = { reg1: true, set: "capability", arm: null, history: null, timing: "a", time: null, h: null, control: null };
+
+/** The world an S3 control h is: the P2 ranking world s = h - 48 (positive) or the negative-control world j = h - 50. */
+export const reg1ControlWorldOf = (h: number): number => (h < REG1_NEGATIVE_H ? h - REG1_POSITIVE_H : h - REG1_NEGATIVE_H);
+
+/**
+ * A set's name, and its directory under runs/scaffold/reg1/assays/: <arm>-i<NN>-a|b, scaf-i<NN>-ge-on-fa|ga-on-fa|ga-on-fe,
+ * scaf-i<NN>-quench-a|b, garden-<arm>-i<NN>-t0|t1-raw|disc, heredity-<arm>-i<NN>, heredity-pos-s<s>, heredity-neg-j<j>, capability.
+ */
+export function reg1SetIdOf(l: Reg1LabelSet): string {
+  const id = l.arm !== null && l.arm !== "control" && l.history !== null ? reg1IdOf({ arm: l.arm, history: l.history }) : "";
+  switch (l.set) {
+    case "source":
+      return `${id}-${l.timing}`;
+    case "ge-on-fa":
+    case "ga-on-fa":
+    case "ga-on-fe":
+      return `${id}-${l.set}`;
+    case "quench":
+      return `${id}-quench-${l.timing}`;
+    case "garden-raw":
+    case "garden-disc":
+      return `garden-${id}-t${l.time}-${l.set === "garden-disc" ? "disc" : "raw"}`;
+    case "heredity":
+      return l.control === null ? `heredity-${id}` : `heredity-${l.control === "positive" ? "pos-s" : "neg-j"}${reg1ControlWorldOf(l.h!)}`;
+    case "capability":
+      return "capability";
+  }
+}
+
+/** A set's directory under runs/: scaffold/reg1/assays/<reg1SetIdOf>. */
+export const reg1AssayDirOf = (l: Reg1LabelSet): string => `scaffold/reg1/assays/${reg1SetIdOf(l)}`;
+
+/**
+ * What is wrong with an output under --allow-any-seed: it must not lie inside `production`, the repository's own runs/scaffold/reg1 tree, so
+ * smoke output never lands among the registration's files. Both paths are absolute and normalised (symlinks resolved) by the caller.
+ */
+export function reg1WaiverOutProblems(out: string, production: string): string[] {
+  const o = out.replace(/\/+$/, ""), p = production.replace(/\/+$/, "");
+  return o === p || o.startsWith(`${p}/`) ? [`--allow-any-seed writes ${JSON.stringify(out)} inside the registration's production tree ${p}: a smoke test writes elsewhere`] : [];
+}
+
+/** What is wrong with a set's output directory: it must end in `reg1AssayDirOf(labels)`, so a directory's name is its set. */
+export function reg1AssayOutProblems(l: Reg1LabelSet, out: string): string[] {
+  return endsInPath(out.replace(/\/+$/, ""), reg1AssayDirOf(l)) ? [] : [`output ${JSON.stringify(out)} does not end in ${reg1AssayDirOf(l)}`];
+}
+
+/** The replicates of a set: 8 for the swap pair (Ge-on-Fa, Ga-on-Fa), 4 for every other competence set, 2 for S2 and S3. */
+export function reg1ReplicatesOf(l: Pick<Reg1LabelSet, "set">): number {
+  if (l.set === "ge-on-fa" || l.set === "ga-on-fa") return 8;
+  if ((REG1_COMPETENCE_SETS as readonly string[]).includes(l.set)) return 4;
+  if (l.set === "capability") throw new Error("capability evaluates genomes with DEFAULT_EVAL's own replicates; it plants no fragments");
+  return 2;
+}
+
+/**
+ * The seeds of replicate s of a set, fragment sampling and physics: σ(h, t, s) for every competence set (common random numbers: the swap
+ * pair takes ancestor world i's, Ga-on-Fe and the quenched control scaf_i's); S2's seed(h, t, v, s) for the physics and seed(h, t, 0, s) for
+ * the fragments; S3's 4,866,001 + 250 h + s for both.
+ */
+export function reg1SeedsOf(l: Reg1LabelSet, s: number): { physics: number; fragment: number } {
+  if (l.h === null) throw new Error(`reg1 set ${l.set} has no seed index h`);
+  if (l.set === "heredity") return { physics: reg1HereditySeed(l.h, s), fragment: reg1HereditySeed(l.h, s) };
+  if (l.set === "garden-raw" || l.set === "garden-disc") {
+    if (l.time === null) throw new Error("an S2 set needs its time");
+    return { physics: reg1GardenSeed(l.h, l.time, l.set === "garden-disc" ? 1 : 0, s), fragment: reg1GardenSeed(l.h, l.time, 0, s) };
+  }
+  if (l.set === "capability") throw new Error("capability has no fragment seeds");
+  const seed = reg1Seed(l.h, l.timing === "b" ? 1 : 0, s);
+  return { physics: seed, fragment: seed };
+}
+
+/** Throws unless the seeds of replicate `replicate` are `reg1SeedsOf(labels, replicate)` (fragment and physics). */
+export function checkReg1Seeds(l: Reg1LabelSet, seeds: { physics: number; fragment: number }, replicate = 0): void {
+  const want = reg1SeedsOf(l, replicate);
+  for (const [name, key] of [["seed", "physics"], ["fragment seed", "fragment"]] as const) {
+    if (seeds[key] !== want[key]) throw new Error(`${name} ${seeds[key]} does not match the reg1 labels (${reg1SetIdOf(l)}, h ${l.h}): want ${want[key]} for replicate ${replicate}`);
+  }
+}
+
+/** S3 draws its donors with s = 9 (`reg1HereditySeed(h, 9)`), and permutes with s = 8. */
+export function reg1DonorSeedOf(l: Pick<Reg1LabelSet, "set" | "h">): number {
+  if (l.set !== "heredity" || l.h === null) throw new Error("donors belong to an S3 (heredity) set");
+  return reg1HereditySeed(l.h, 9);
+}
+
+/** Throws unless `donorSeed` is `reg1DonorSeedOf(labels)`. */
+export function checkReg1DonorSeed(l: Pick<Reg1LabelSet, "set" | "h">, donorSeed: number): void {
+  const want = reg1DonorSeedOf(l);
+  if (donorSeed !== want) throw new Error(`donor seed ${donorSeed} does not match the reg1 labels (h ${l.h}): want reg1HereditySeed(h, 9) = ${want}`);
+}
+
+/** What is wrong with an assay's regime for its set: k 8, period 10,000, side 8, census every 100, the set's replicates, and ref 103,058 (none for S3, as R1''). */
+export function reg1RegimeProblems(l: Pick<Reg1LabelSet, "set">, x: { k: unknown; period: unknown; ref: unknown; side: unknown; replicates: unknown; censusEvery: unknown }): string[] {
+  const want = { ...REG1_REGIME, ref: l.set === "heredity" ? null : REG1_REGIME.ref, replicates: reg1ReplicatesOf(l) };
+  const why: string[] = [];
+  for (const key of ["k", "period", "ref", "side", "replicates", "censusEvery"] as const) if (x[key] !== want[key]) why.push(`${key} ${JSON.stringify(x[key])}, want ${JSON.stringify(want[key])}`);
+  return why;
+}
+
+/** An integer flag, NaN when missing or blank. */
+const flagInt = (s: string | undefined): number => (s === undefined || s.trim() === "" ? NaN : Number(s));
+
+/** The source world of the CLI's --arm and --history (0-23, ancestor world i for --arm ancestor); --h is derived and, if given, must agree. */
+function parseReg1History(v: { arm?: string; history?: string; h?: string }, arms: readonly string[]): Reg1History {
+  if (v.arm === undefined || !arms.includes(v.arm)) throw new Error(`--arm must be ${arms.join("|")} for --reg1, got ${v.arm}`);
+  const i = flagInt(v.history);
+  if (!Number.isInteger(i) || i < 0 || i >= REG1_HISTORIES) throw new Error(`--history must be 0-${REG1_HISTORIES - 1} for --reg1 (ancestor world i for --arm ancestor), got ${v.history}`);
+  return reg1HistoryOf(reg1H(v.arm as Reg1Arm, i));
+}
+
+/** Refuses an --h that disagrees with the derived one. */
+function agreeH(given: string | undefined, h: number, what: string): void {
+  if (given !== undefined && flagInt(given) !== h) throw new Error(`--h ${given} disagrees with ${what}: h is derived, here ${h}`);
+}
+
+/** The labels of a reg1 competence set from the CLI's --set, --arm, --history, --timing a|b and optional --h; --time, --calibration and --control do not apply. */
+export function parseReg1CompetenceLabels(v: { set?: string; arm?: string; history?: string; timing?: string; h?: string; time?: string; calibration?: string; control?: string }): Reg1LabelSet {
+  if (v.time !== undefined || v.calibration !== undefined || v.control !== undefined) throw new Error("competence --reg1 takes --set, --arm, --history and --timing a|b, not --time, --calibration or --control");
+  if (v.set === undefined || !(REG1_COMPETENCE_SETS as readonly string[]).includes(v.set)) throw new Error(`--set must be ${REG1_COMPETENCE_SETS.join("|")} for competence --reg1, got ${v.set}`);
+  if (v.timing !== "a" && v.timing !== "b") throw new Error(`--timing must be a or b for competence --reg1, got ${v.timing}`);
+  const set = v.set as Reg1CompetenceSet;
+  const l = parseReg1History(v, set === "source" ? ["scaf", "rand", "cont", "ancestor"] : ["scaf"]);
+  const labels = reg1CompetenceLabelsOf(set, l.arm, l.history, v.timing);
+  agreeH(v.h, labels.h!, `--set ${set} --arm ${l.arm} --history ${l.history}`);
+  return labels;
+}
+
+/** The source world of `continue --reg1` from --arm, --history (ancestor world i too) and optional --h; it makes the timing (b) source, so --timing, --time and --set do not apply. */
+export function parseReg1ContinueLabels(v: { arm?: string; history?: string; h?: string; timing?: string; time?: string; set?: string; calibration?: string; control?: string }): Reg1History {
+  if (v.timing !== undefined || v.time !== undefined || v.set !== undefined || v.calibration !== undefined || v.control !== undefined) throw new Error("continue --reg1 takes --arm and --history (it makes the timing (b) source), not --timing, --time, --set, --calibration or --control");
+  const l = parseReg1History(v, ["scaf", "rand", "cont", "ancestor"]);
+  agreeH(v.h, l.h, `--arm ${l.arm} --history ${l.history}`);
+  return l;
+}
+
+/** The labels of an S2 set from --arm scaf|rand, --history, --time 0|1 (1 = time C) and --inoculum fragment (raw) | disc; --timing, --set and the rest do not apply. */
+export function parseReg1GardenLabels(v: { arm?: string; history?: string; time?: string; inoculum?: string; h?: string; timing?: string; set?: string; calibration?: string; control?: string }): Reg1LabelSet {
+  if (v.timing !== undefined || v.set !== undefined || v.calibration !== undefined || v.control !== undefined) throw new Error("garden --reg1 takes --arm, --history, --time 0|1 and --inoculum, not --timing, --set, --calibration or --control");
+  if (v.time !== "0" && v.time !== "1") throw new Error(`--time must be 0 or 1 (time C) for garden --reg1, got ${v.time}`);
+  if (v.inoculum !== "fragment" && v.inoculum !== "disc") throw new Error(`--inoculum must be fragment (raw) or disc, got ${v.inoculum}`);
+  const l = parseReg1History(v, ["scaf", "rand"]);
+  const labels = reg1GardenLabelsOf(l.arm as "scaf" | "rand", l.history, v.time === "0" ? 0 : 1, v.inoculum);
+  agreeH(v.h, labels.h!, `--arm ${l.arm} --history ${l.history}`);
+  return labels;
+}
+
+/**
+ * The labels of an S3 set from --h (0-53), as R1'' takes them: --arm must be the one h implies (scaf 0-23, rand 24-47, control 48-53),
+ * a history needs --history i = h mod 24, and a control needs --control positive (48-49) or negative (50-53) and takes --history (its
+ * world, s or j) only if it agrees. --time, --timing and --set do not apply.
+ */
+export function parseReg1HeredityLabels(v: { h?: string; arm?: string; history?: string; control?: string; time?: string; timing?: string; set?: string; calibration?: string }): Reg1LabelSet {
+  const h = flagInt(v.h);
+  if (!Number.isInteger(h) || h < 0 || h >= REG1_HEREDITY_SETS) throw new Error(`--h must be 0-${REG1_HEREDITY_SETS - 1} for transmission --reg1, got ${v.h}`);
+  if (v.time !== undefined || v.timing !== undefined || v.set !== undefined || v.calibration !== undefined) throw new Error("transmission --reg1 takes --h, not --time, --timing, --set or --calibration");
+  const want = reg1HeredityLabelsOf(h);
+  if (v.arm !== want.arm) throw new Error(`--arm must be ${want.arm} for --h ${h}, got ${v.arm}`);
+  if (want.control !== null) {
+    if (v.control !== want.control) throw new Error(`--control must be ${want.control} for --h ${h}, got ${v.control}`);
+    if (v.history !== undefined && flagInt(v.history) !== reg1ControlWorldOf(h)) throw new Error(`--history must be ${reg1ControlWorldOf(h)} for --h ${h} (the ${want.control} control world), got ${v.history}`);
+  } else {
+    if (v.control !== undefined) throw new Error(`--control applies to --arm control, not --arm ${want.arm}`);
+    if (flagInt(v.history) !== want.history) throw new Error(`--history must be ${want.history} for --h ${h} (${want.arm}), got ${v.history}`);
+  }
+  return want;
+}
+
+/** The `labels` of an assay.json as a reg1 set (consistent with its h, set and source world), or why they are not one. */
+export function reg1LabelsFromJson(labels: unknown): { labels: Reg1LabelSet } | { error: string } {
+  if (!isRecord(labels) || labels.reg1 !== true) return { error: "labels.reg1 is not true" };
+  const l = labels;
+  let want: Reg1LabelSet;
+  try {
+    if ((REG1_COMPETENCE_SETS as readonly unknown[]).includes(l.set)) want = reg1CompetenceLabelsOf(l.set as Reg1CompetenceSet, l.arm as Reg1Arm, l.history as number, l.timing as "a" | "b");
+    else if (l.set === "garden-raw" || l.set === "garden-disc") want = reg1GardenLabelsOf(l.arm as "scaf" | "rand", l.history as number, l.time as 0 | 1, l.set === "garden-disc" ? "disc" : "fragment");
+    else if (l.set === "heredity") want = reg1HeredityLabelsOf(l.h as number);
+    else if (l.set === "capability") want = REG1_CAPABILITY_LABELS;
+    else return { error: `labels.set ${JSON.stringify(l.set)} is not a reg1 set` };
+  } catch (e) {
+    return { error: `labels ${JSON.stringify(labels)}: ${(e as Error).message}` };
+  }
+  for (const key of ["arm", "history", "timing", "time", "h", "control"] as const) if (l[key] !== want[key]) return { error: `labels.${key} ${JSON.stringify(l[key])}, want ${JSON.stringify(want[key])} for ${reg1SetIdOf(want)}` };
+  return { labels: want };
+}
+
+/**
+ * Every set the registration runs, in its queue's order per index i: the 13 competence sets (the 8 sources, Ge-on-Fa, Ga-on-Fa, Ga-on-Fe
+ * and both quenched controls), S2's 8 sets and S3's 2; then S3's 6 controls and R4.
+ */
+export function reg1ExpectedSets(): Reg1LabelSet[] {
+  const sets: Reg1LabelSet[] = [];
+  for (let i = 0; i < REG1_HISTORIES; i++) {
+    for (const arm of ["scaf", "rand", "cont", "ancestor"] as const) for (const timing of ["a", "b"] as const) sets.push(reg1CompetenceLabelsOf("source", arm, i, timing));
+    sets.push(reg1CompetenceLabelsOf("ge-on-fa", "scaf", i, "a"), reg1CompetenceLabelsOf("ga-on-fa", "scaf", i, "a"), reg1CompetenceLabelsOf("ga-on-fe", "scaf", i, "a"));
+    sets.push(reg1CompetenceLabelsOf("quench", "scaf", i, "a"), reg1CompetenceLabelsOf("quench", "scaf", i, "b"));
+    for (const arm of ["scaf", "rand"] as const) for (const time of [0, 1] as const) for (const inoculum of ["fragment", "disc"] as const) sets.push(reg1GardenLabelsOf(arm, i, time, inoculum));
+    for (const arm of [0, 1]) sets.push(reg1HeredityLabelsOf(REG1_HISTORIES * arm + i));
+  }
+  for (let h = REG1_POSITIVE_H; h < REG1_HEREDITY_SETS; h++) sets.push(reg1HeredityLabelsOf(h));
+  sets.push(REG1_CAPABILITY_LABELS);
+  return sets;
+}
+
+/** What a runner bundle's manifest says that a source's validation reads; null for what is missing (an unreadable manifest gives a record of nulls). */
+export interface Reg1RunRecord {
+  manifest: string;
+  runId: unknown;
+  spec: Record<string, unknown> | null;
+  presetIdentity: unknown;
+  ruleVersion: unknown;
+  startStep: unknown;
+  initHash: unknown;
+  /** The manifest has `summary` and `finishedAt`: the run completed. */
+  complete: boolean;
+  conservationOk: unknown;
+  /** The manifest's `preCycleCheckpoints` entry for the source's boundary, null when it lists none. */
+  preCycle: Record<string, unknown> | null;
+}
+
+/**
+ * A runner-bundle source as loaded (assay.json `provenance`): the state's record with `source` the bundle directory it came from, the
+ * boundary (null for the initial world, rebuilt), the checkpoint file read (null when rebuilt), whether the state's config is the spec's
+ * (`specConfig`), the run record of its manifest, and the candidate bundles the loader chose it from (`Reg1Candidate`).
+ */
+export interface Reg1Source extends R3RepCheckpoint {
+  boundary: number | null;
+  checkpoint: string | null;
+  sameConfig: boolean | null;
+  run: Reg1RunRecord;
+  candidates: Reg1Candidate[];
+}
+
+/**
+ * A bundle a source could have come from, as its manifest stood when the source was loaded: whether there is a readable manifest, whether it
+ * has a summary (only a run that finished has one), when the run started and finished, and so whether it is complete. A run that stopped
+ * on an overflow shows a manifest with startedAt and no summary, which is why its census-100 rerun is the source.
+ */
+export interface Reg1Candidate {
+  dir: string;
+  complete: boolean;
+  manifest: boolean;
+  summary: boolean;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+/**
+ * The initial world of a runner spec, built the way runExperiment builds a run from its preset: `specConfig`, then the preset's `initWorld`.
+ * A spec that founds its world otherwise (soloFounder, soloGenome, founderSet) is refused: no registered run does.
+ */
+export function reg1InitialWorld(spec: RunSpec): WorldState {
+  if (spec.soloFounder !== undefined || spec.soloGenome !== undefined || spec.founderSet !== undefined) throw new Error("reg1InitialWorld: the spec founds its world from soloFounder, soloGenome or founderSet, which no registered run does");
+  const preset = PRESETS.find((p) => p.id === spec.presetId);
+  if (!preset) throw new Error(`reg1InitialWorld: unknown preset ${JSON.stringify(spec.presetId)}`);
+  return initWorld(specConfig(spec), preset.init);
+}
+
+/** A bundle's manifest.json, parsed (null when it is missing, unreadable or not an object). */
+async function readManifest(dir: string, read: (path: string) => Promise<Uint8Array>): Promise<Record<string, unknown> | null> {
+  try {
+    const x: unknown = JSON.parse(new TextDecoder().decode(await read(`${dir}/manifest.json`)));
+    return isRecord(x) ? x : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A manifest the runner wrote at the end of a run: it has `summary` and `finishedAt` (a run that stopped, on an overflow or otherwise, has neither). */
+const completeManifest = (m: Record<string, unknown> | null): boolean => m !== null && isRecord(m.summary) && typeof m.finishedAt === "string";
+
+/**
+ * Loads a source from a run bundle: the pre-cycle checkpoint of `boundary` (the file the manifest lists for it, raw encodeCheckpoint;
+ * checkpoints/b<NNN>-pre.blck when it lists none), or with `boundary` null the initial world, rebuilt from the manifest's spec
+ * (`reg1InitialWorld`). The bundle is `dir`, or, when `wants` names the bundles the source may come from (`reg1BundleWantsOf`) and `dir` is
+ * one of them, the one of them that is complete: the run at census 1,000 or its overflow rerun at census 100 beside it. With none or more
+ * than one complete it is `dir`, and the record's `candidates` say why (`reg1SourceProblems`). Returns the state and its record; whether the
+ * source is the registration's is `reg1SourceProblems`'s to say. `read` reads a file's bytes (Deno.readFile, or node's readFile in tests).
+ * Throws when there is no state to load.
+ */
+export async function loadReg1Source(dir: string, boundary: number | null, read: (path: string) => Promise<Uint8Array>, wants?: readonly Reg1BundleWant[]): Promise<{ state: WorldState; record: Reg1Source }> {
+  const given = dir.replace(/\/+$/, "") || "/";
+  const at = wants?.find((w) => endsInPath(given, w.dir));
+  const dirs = at === undefined ? [given] : wants!.map((w) => `${given.slice(0, given.length - at.dir.length)}${w.dir}`);
+  const manifests = await Promise.all(dirs.map((d) => readManifest(d, read)));
+  const str = (x: unknown): string | null => (typeof x === "string" ? x : null);
+  const candidates: Reg1Candidate[] = dirs.map((d, k) => {
+    const mk = manifests[k];
+    return { dir: d, complete: completeManifest(mk), manifest: mk !== null, summary: mk !== null && isRecord(mk.summary), startedAt: str(mk?.startedAt), finishedAt: str(mk?.finishedAt) };
+  });
+  const complete = candidates.filter((c) => c.complete);
+  const root = complete.length === 1 ? complete[0].dir : given;
+  const manifestPath = `${root}/manifest.json`;
+  const m = manifests[dirs.indexOf(root)]; // `given` is always one of `dirs`
+  const spec = m !== null && isRecord(m.spec) ? m.spec : null;
+  const summary = m !== null && isRecord(m.summary) ? m.summary : null;
+  const listed = m !== null && Array.isArray(m.preCycleCheckpoints) ? (m.preCycleCheckpoints as unknown[]) : [];
+  const entry = boundary === null ? null : ((listed.find((e) => isRecord(e) && e.boundary === boundary) as Record<string, unknown> | undefined) ?? null);
+  const run: Reg1RunRecord = {
+    manifest: manifestPath,
+    runId: m?.runId ?? null,
+    spec,
+    presetIdentity: m?.presetIdentity ?? null,
+    ruleVersion: m?.ruleVersion ?? null,
+    startStep: m?.startStep ?? null,
+    initHash: m?.initHash ?? null,
+    complete: completeManifest(m),
+    conservationOk: summary?.conservationOk ?? null,
+    preCycle: entry,
+  };
+  let state: WorldState;
+  let checkpoint: string | null = null;
+  if (boundary === null) {
+    if (spec === null) throw new Error(`${manifestPath} has no spec, so the initial world cannot be rebuilt`);
+    state = reg1InitialWorld(spec as unknown as RunSpec);
+  } else {
+    checkpoint = `${root}/${entry !== null && typeof entry.file === "string" ? entry.file : reg1PreCycleFileOf(boundary)}`;
+    state = decodeCheckpoint(await read(checkpoint)).state;
+  }
+  let same: boolean | null = null;
+  try {
+    same = spec === null ? null : canonicalConfig(state.cfg) === canonicalConfig(specConfig(spec as unknown as RunSpec));
+  } catch {
+    same = null;
+  }
+  return { state, record: { ...r3RepCheckpointOf(root, state), boundary, checkpoint, sameConfig: same, run, candidates } };
+}
+
+/**
+ * What is wrong with `p` as a source of the registration (none: it is), every problem listed and prefixed with `role`. `wants` are the
+ * bundles it may come from (`reg1BundleWantsOf(h)` in production: the run at census 1,000 and its census-100 rerun), `want` below the one
+ * whose directory it is, and `boundary` the pre-cycle checkpoint it must be (null: the initial world).
+ * - The directory ends in `want.dir` and in the manifest's runId (the manifest is the directory's own).
+ * - The loader looked at every one of `wants` beside it, and at most one of them is complete: two complete runs of one history leave the
+ *   source ambiguous.
+ * - The manifest is complete (summary and finishedAt), with `summary.conservationOk` true and RULE_VERSION's rule version.
+ * - Its spec has `want`'s experiment, preset, condition, seed, steps, census, deep metrics and periodic checkpoints (none), and no override
+ *   or alternative founding; it lists `boundary` in `preCycleCheckpoints`. The manifest records the preset's identity (`want.presetIdentity`).
+ * - It is one uninterrupted run: from step 0 (startStep 0), its world built from the preset (an initHash).
+ * - The checkpoint is the manifest's file for `boundary` (checkpoints/b<NNN>-pre.blck) and its state hashes to the hash recorded there; its
+ *   step is boundary x period. The initial world (no checkpoint) is that of a run from step 0 and hashes to the manifest's initHash.
+ * - The state's config is the spec's (`specConfig`), so its seed is `spec.seed` and its mutation rate the default, on `want.side`² ponds.
+ */
+export function reg1SourceProblems(wants: Reg1BundleWant | readonly Reg1BundleWant[], boundary: number | null, p: unknown, role = "source"): string[] {
+  const shape = checkpointShapeProblems(p, role);
+  if (shape.length > 0) return shape;
+  const s = p as Reg1Source;
+  const why: string[] = [];
+  const is = (name: string, got: unknown, expected: unknown) => {
+    if (got !== expected) why.push(`${role} ${name} ${JSON.stringify(got)}, want ${JSON.stringify(expected)}`);
+  };
+  const all: readonly Reg1BundleWant[] = Array.isArray(wants) ? wants : [wants as Reg1BundleWant];
+  const dir = s.source.replace(/\/+$/, "");
+  const want = all.find((w) => endsInPath(dir, w.dir)) ?? all[0];
+  if (!endsInPath(dir, want.dir)) why.push(`${role} directory ${JSON.stringify(s.source)} is not ${all.map((w) => w.dir).join(" or ")}`);
+  // The bundles it was chosen from: every one it may come from, at most one of them complete.
+  const candidates = Array.isArray(s.candidates) ? s.candidates.filter(isRecord) : null;
+  if (candidates === null) why.push(`${role} records no candidate bundles`);
+  else {
+    for (const w of all) if (!candidates.some((c) => typeof c.dir === "string" && endsInPath(c.dir.replace(/\/+$/, ""), w.dir))) why.push(`${role} was not chosen with ${w.dir} in view`);
+    const complete = candidates.filter((c) => c.complete === true).map((c) => c.dir);
+    if (complete.length > 1) why.push(`${role} is ambiguous: ${complete.length} complete runs of it (${complete.join(", ")}), want one`);
+  }
+  is("boundary", s.boundary, boundary);
+  // The state itself.
+  is("seed", s.seed, want.seed);
+  is("mutRate", s.mutRate, want.mutRate);
+  if (s.tilesX !== want.side || s.tilesY !== want.side) why.push(`${role} has ${s.tilesX} x ${s.tilesY} ponds, want ${want.side} x ${want.side}`);
+  if (s.sameConfig !== true) why.push(`${role} state's config ${s.sameConfig === false ? "is not" : "was not compared with"} its spec's (specConfig)`);
+  // Its run, as the manifest records it.
+  const run: Record<string, unknown> = isRecord(s.run) ? s.run : {};
+  const spec = isRecord(run.spec) ? run.spec : null;
+  if (spec === null) why.push(`${role} has no readable manifest.json with a spec${typeof run.manifest === "string" ? ` (${run.manifest})` : ""}`);
+  else {
+    for (const key of ["experiment", "presetId", "condition", "seed", "steps", "censusEvery", "deepEvery", "checkpointEvery"] as const) is(`spec.${key}`, spec[key], want[key]);
+    for (const key of ["overrides", "soloFounder", "soloGenome", "founderSet", "metapopulation"]) if (spec[key] !== undefined) why.push(`${role} spec sets ${key}, which no registered run does`);
+    const id = runId(spec as unknown as RunSpec);
+    if (run.runId !== id) why.push(`${role} manifest runId ${JSON.stringify(run.runId)} is not its spec's ${JSON.stringify(id)}`);
+    else if (!endsInPath(dir, id)) why.push(`${role} directory ${JSON.stringify(s.source)} does not end in its manifest's runId ${id}`);
+    if (boundary !== null && !(Array.isArray(spec.preCycleCheckpoints) && spec.preCycleCheckpoints.includes(boundary))) why.push(`${role} spec.preCycleCheckpoints ${JSON.stringify(spec.preCycleCheckpoints)} does not list boundary ${boundary}`);
+  }
+  if (run.complete !== true) why.push(`${role} run is incomplete: its manifest.json has no summary and finishedAt`);
+  else is("run summary.conservationOk", run.conservationOk, true);
+  is("run ruleVersion", run.ruleVersion, RULE_VERSION);
+  is("run presetIdentity", run.presetIdentity, want.presetIdentity);
+  // One uninterrupted run: from step 0, its world built from the preset (the manifest records that world's hash).
+  is("run startStep", run.startStep, 0);
+  if (typeof run.initHash !== "string") why.push(`${role} manifest has no initHash (a run continued from a checkpoint, not one run from the preset)`);
+  if (boundary === null) {
+    // The initial world, rebuilt: it hashes to the manifest's initHash.
+    is("step", s.step, 0);
+    if (s.checkpoint !== null) why.push(`${role} is the initial world, rebuilt, but names the checkpoint ${JSON.stringify(s.checkpoint)}`);
+    if (typeof run.initHash === "string" && s.stateHash !== run.initHash) why.push(`${role} initial world rebuilt from the spec hashes to ${s.stateHash}, but the manifest's initHash is ${run.initHash}`);
+  } else {
+    is("step", s.step, boundary * want.period);
+    const e = isRecord(run.preCycle) ? run.preCycle : null;
+    if (e === null) why.push(`${role} manifest lists no pre-cycle checkpoint at boundary ${boundary}`);
+    else {
+      is("manifest pre-cycle file", e.file, reg1PreCycleFileOf(boundary));
+      is("manifest pre-cycle step", e.step, boundary * want.period);
+      if (s.checkpoint !== `${dir}/${e.file}`) why.push(`${role} checkpoint ${JSON.stringify(s.checkpoint)} is not the manifest's file for boundary ${boundary} (${JSON.stringify(e.file)})`);
+      if (s.stateHash !== e.hash) why.push(`${role} state hash ${s.stateHash}, but the manifest records ${JSON.stringify(e.hash)} for boundary ${boundary}`);
+    }
+  }
+  return why;
+}
+
+/** What `continue --reg1` writes beside its checkpoint (`r3RepSidecarPathOf`), last: the source it continued (with its whole record) and the end state. */
+export interface Reg1Continuation {
+  reg1: true;
+  arm: Reg1Arm;
+  history: number;
+  h: number;
+  source: string;
+  boundary: number;
+  sourceStateHash: string;
+  sourceSeed: number;
+  sourceStep: number;
+  seed: number;
+  steps: number;
+  mutRate: number;
+  censusEvery: number;
+  endStateHash: string;
+  endStep: number;
+  origin: Reg1Source;
+  protocolSha256Reg1: string;
+  /** Present (true) only when the continuation ran under --allow-any-seed: a smoke test's, never a production source. */
+  allowAnySeed?: true;
+}
+
+/** The sidecar of the continuation of source h from `origin` (its timing (a) source) to `end` after `steps` steps; `allowAnySeed` marks a smoke test's. */
+export function reg1ContinuationOf(p: { h: number; origin: Reg1Source; end: R3RepCheckpoint; steps: number; censusEvery: number; protocolSha256Reg1: string; allowAnySeed?: boolean }): Reg1Continuation {
+  const l = reg1HistoryOf(p.h);
+  return {
+    reg1: true,
+    arm: l.arm,
+    history: l.history,
+    h: l.h,
+    source: p.origin.source,
+    boundary: p.origin.boundary!,
+    sourceStateHash: p.origin.stateHash,
+    sourceSeed: p.origin.seed,
+    sourceStep: p.origin.step,
+    seed: p.end.seed,
+    steps: p.steps,
+    mutRate: p.end.mutRate,
+    censusEvery: p.censusEvery,
+    endStateHash: p.end.stateHash,
+    endStep: p.end.step,
+    origin: p.origin,
+    protocolSha256Reg1: p.protocolSha256Reg1,
+    ...(p.allowAnySeed ? { allowAnySeed: true as const } : {}),
+  };
+}
+
+/**
+ * What is wrong with `c` as the sidecar of source h's continuation, read against `origin` (its timing (a) source, loaded as it is now) and
+ * `end` (the checkpoint beside it, as loaded): the labels must be h's, the source, boundary, state hash, seed and step `origin`'s, the seed
+ * 4,850,501 + h, 2 x 10^5 steps, the default mutation rate, a census every 100, endStep = sourceStep + steps, the protocol hash
+ * `protocolSha256Reg1`, and the end state hash, seed, mutation rate and step `end`'s; one written under --allow-any-seed is refused.
+ */
+export function reg1ContinuationProblems(h: number, c: unknown, origin: unknown, end: unknown, protocolSha256Reg1: string): string[] {
+  if (!isRecord(c)) return ["no continuation sidecar (the <checkpoint>.json that continue --reg1 writes last)"];
+  const l = reg1HistoryOf(h);
+  const why: string[] = [];
+  const is = (name: string, got: unknown, expected: unknown) => {
+    if (got !== expected) why.push(`continuation ${name} ${JSON.stringify(got)}, want ${JSON.stringify(expected)}`);
+  };
+  is("reg1", c.reg1, true);
+  is("arm", c.arm, l.arm);
+  is("history", c.history, l.history);
+  is("h", c.h, h);
+  is("boundary", c.boundary, reg1BoundaryAOf(h));
+  is("seed", c.seed, reg1ContinueSeed(h));
+  is("steps", c.steps, REG1_CONTINUE_STEPS);
+  is("mutRate", c.mutRate, pondConfig(REG1_REGIME.side, 0).mutRate);
+  is("censusEvery", c.censusEvery, REG1_REGIME.censusEvery);
+  is("protocolSha256Reg1", c.protocolSha256Reg1, protocolSha256Reg1);
+  if (c.allowAnySeed !== undefined) why.push(`continuation was written under --allow-any-seed (allowAnySeed ${JSON.stringify(c.allowAnySeed)}): a smoke test's, not a source`);
+  if (!Number.isInteger(c.sourceStep) || !Number.isInteger(c.steps) || c.endStep !== (c.sourceStep as number) + (c.steps as number)) why.push(`continuation endStep ${JSON.stringify(c.endStep)} is not sourceStep ${JSON.stringify(c.sourceStep)} + steps ${JSON.stringify(c.steps)}`);
+  // The timing (a) source it names, as it is now.
+  if (!isRecord(origin)) why.push("the continuation's source was not read");
+  else {
+    is("source", c.source, origin.source);
+    is("boundary", c.boundary, origin.boundary);
+    is("sourceStateHash", c.sourceStateHash, origin.stateHash);
+    is("sourceSeed", c.sourceSeed, origin.seed);
+    is("sourceStep", c.sourceStep, origin.step);
+  }
+  // The checkpoint it wrote: the state being assayed.
+  if (!isRecord(end)) why.push("the continued checkpoint was not read");
+  else {
+    for (const [key, field] of [["stateHash", "endStateHash"], ["seed", "seed"], ["mutRate", "mutRate"], ["step", "endStep"]] as const) {
+      if (end[key] !== c[field]) why.push(`the continued checkpoint's ${key} ${JSON.stringify(end[key])} is not the continuation's ${field} ${JSON.stringify(c[field])}`);
+    }
+  }
+  return why;
+}
+
+/** What is wrong with a `continue --reg1` of source h: its seed (4,850,501 + h), steps (2 x 10^5), census (every 100) and output path (`reg1ContinuationPathOf`). */
+export function reg1ContinueProblems(h: number, x: { seed: number; steps: number; censusEvery: number; out: string }): string[] {
+  const why: string[] = [];
+  if (x.seed !== reg1ContinueSeed(h)) why.push(`seed ${x.seed}, want reg1ContinueSeed(${h}) = ${reg1ContinueSeed(h)}`);
+  if (x.steps !== REG1_CONTINUE_STEPS) why.push(`steps ${x.steps}, want ${REG1_CONTINUE_STEPS}`);
+  if (x.censusEvery !== REG1_REGIME.censusEvery) why.push(`census every ${x.censusEvery}, want ${REG1_REGIME.censusEvery}`);
+  if (!endsInPath(x.out, reg1ContinuationPathOf(h))) why.push(`output ${JSON.stringify(x.out)} does not end in ${reg1ContinuationPathOf(h)}`);
+  return why;
+}
+
+/** S3's control checkpoints (scaffold.ts runs, gzipped) under runs/: the P2 ranking world s at b1-pre, or the negative-control world j at b1-pre. */
+export const reg1ControlPathOf = (h: number): string =>
+  reg1HeredityLabelsOf(h).control === "positive" ? `scaffold/p2/rank/s${reg1ControlWorldOf(h)}/ckpt/b1-pre.blck.gz` : `scaffold/reg1/neg/j${reg1ControlWorldOf(h)}/ckpt/b1-pre.blck.gz`;
+
+/**
+ * What is wrong with an S3 control's source (h 48-53) against its labels, as R1'' checks its controls (`r1dPrimeSourceProblems`) with this
+ * block's paths and seeds: the checkpoint is `reg1ControlPathOf(h)`, mutation off, step 10,000, 8 x 8 ponds, a founders world (more than
+ * one genome) seeded 4,805,001 + s for a positive control, a clone world (one genome) seeded 4,880,001 + j for a negative one, and not a
+ * post-cycle state (`postCycleOf`, with a recorded flag its own measures give).
+ */
+export function reg1ControlProblems(h: number, p: Pick<R1dPrimeProvenance, "source" | "seed" | "mutRate" | "step" | "tilesX" | "tilesY" | "distinctGenomes" | "phase">): string[] {
+  const l = reg1HeredityLabelsOf(h);
+  if (l.control === null) return [`h ${h} is a history, not an S3 control`];
+  const why: string[] = [];
+  const positive = l.control === "positive";
+  if (!endsInPath(p.source, reg1ControlPathOf(h))) why.push(`source path ${JSON.stringify(p.source)} does not end in ${reg1ControlPathOf(h)}`);
+  const want = (name: string, got: number, expected: number) => {
+    if (got !== expected) why.push(`source ${name} ${got}, want ${expected}`);
+  };
+  want("seed", p.seed, positive ? R1DP_POSITIVE_SEED_BASE + reg1ControlWorldOf(h) : reg1NegativeSeed(reg1ControlWorldOf(h)));
+  want("mutRate", p.mutRate, 0);
+  want("step", p.step, R1DP_CONTROL_STEP);
+  if (positive ? !(p.distinctGenomes > 1) : p.distinctGenomes !== 1) why.push(`source holds ${p.distinctGenomes} distinct genomes, want ${positive ? "more than 1 (a founders world)" : "1 (a clone world)"}`);
+  if (p.tilesX !== REG1_REGIME.side || p.tilesY !== REG1_REGIME.side) why.push(`source has ${p.tilesX} x ${p.tilesY} ponds, want ${REG1_REGIME.side} x ${REG1_REGIME.side}`);
+  const post = postCycleOf(p.phase);
+  if (p.phase.postCycle !== post) why.push(`source phase flag postCycle ${p.phase.postCycle} disagrees with its measures (${post})`);
+  if (post) why.push(`source looks post-cycle (C ${p.phase.totalC}, S ${p.phase.totalS}; ${p.phase.outsideWindow} of ${p.phase.carrying} cells with bound mass or a lineage outside the landing window), want the pre-cycle state`);
+  return why;
+}
+
+/**
+ * What an assay's recorded `provenance` is for (assay.json): a competence set at timing (a), an S2 set and an S3 history's are the runner
+ * source (`Reg1Source`); at timing (b) the continued checkpoint with its sidecar (`continuation`) and the timing (a) source it names
+ * (`origin`); an S3 control's the R1'' record of its checkpoint. Ge-on-Fa also records its genome `donor`, scaf_i's timing (a) source, with
+ * its dominant genome (null when it has none).
+ */
+export interface Reg1Provenance extends R3RepCheckpoint {
+  continuation?: unknown;
+  origin?: Reg1Source | null;
+  donor?: Reg1Source & { dominant: R3RepDominant | null };
+}
+
+/**
+ * What is wrong with a set's recorded provenance for its labels (none: it is the registration's). A competence set's fragment source is
+ * source h (`labels.h`: ancestor world i for the swap pair) at timing (a) (`reg1SourceProblems` at boundary 100, or 1) or its
+ * continuation at (b) (path `reg1ContinuationPathOf(h)`, its sidecar and the timing (a) source the sidecar names); Ge-on-Fa's donor is
+ * scaf_i's timing (a) source with a dominant genome record (or null), and no other set has a donor. S2's source is the history's initial
+ * world (time 0) or its boundary-100 source (time C); S3's a history's boundary-34 pre-cycle checkpoint, or a control's (`reg1ControlProblems`).
+ */
+export function reg1ProvenanceProblems(labels: Reg1LabelSet, p: unknown, protocolSha256Reg1: string): string[] {
+  if (!isRecord(p)) return ["assay.json has no provenance of its source (run the assay with --reg1)"];
+  if (labels.h === null) return [`set ${labels.set} has no source of its own`];
+  const h = labels.h;
+  const why: string[] = [];
+  if (labels.set === "heredity") {
+    if (labels.control === null) why.push(...reg1SourceProblems(reg1BundleWantsOf(h), REG1_HEREDITY_BOUNDARY, p));
+    else if (typeof p.source !== "string" || !isRecord(p.phase) || !Number.isInteger(p.distinctGenomes)) why.push("source is not an S3 control's record (path, phase and distinct genomes)");
+    else why.push(...reg1ControlProblems(h, p as unknown as R1dPrimeProvenance));
+  } else if (labels.set === "garden-raw" || labels.set === "garden-disc") why.push(...reg1SourceProblems(reg1BundleWantsOf(h), labels.time === 0 ? null : reg1BoundaryAOf(h), p));
+  else if (labels.timing === "a") why.push(...reg1SourceProblems(reg1BundleWantsOf(h), reg1BoundaryAOf(h), p));
+  else {
+    const shape = checkpointShapeProblems(p, "source");
+    why.push(...shape);
+    if (shape.length === 0) {
+      if (!endsInPath(p.source as string, reg1ContinuationPathOf(h))) why.push(`source path ${JSON.stringify(p.source)} does not end in ${reg1ContinuationPathOf(h)}`);
+      if (p.tilesX !== REG1_REGIME.side || p.tilesY !== REG1_REGIME.side) why.push(`source has ${p.tilesX} x ${p.tilesY} ponds, want ${REG1_REGIME.side} x ${REG1_REGIME.side}`);
+    }
+    why.push(...reg1SourceProblems(reg1BundleWantsOf(h), reg1BoundaryAOf(h), p.origin, "continuation source"));
+    why.push(...reg1ContinuationProblems(h, p.continuation, p.origin, p, protocolSha256Reg1));
+  }
+  if (labels.set === "ge-on-fa") {
+    why.push(...reg1SourceProblems(reg1BundleWantsOf(labels.history!), reg1BoundaryAOf(labels.history!), p.donor, "donor"));
+    const d = isRecord(p.donor) ? p.donor.dominant : undefined;
+    const ok = d === null || (isRecord(d) && Number.isInteger(d.hi) && Number.isInteger(d.lo) && d.id === `${d.hi}:${d.lo}` && typeof d.words === "string" && new RegExp(`^[0-9a-f]{${8 * GENOME_CHANNELS}}$`).test(d.words));
+    if (!ok) why.push(`donor dominant ${JSON.stringify(d)} is not a dominant genome record (id hi:lo, hi, lo and ${GENOME_CHANNELS} hex words) or null`);
+  } else if (p.donor !== undefined) why.push(`provenance names a genome donor, but ${labels.set} has none`);
+  return why;
+}
+
+/** R4's sources in their fixed order (the genomes' order in evaluateBatch): every history's timing (a) source, scaf, rand, cont by i, then every ancestor world's. */
+export function reg1CapabilitySources(): (Reg1History & { dir: string; boundary: number })[] {
+  return Array.from({ length: REG1_SOURCES }, (_, h) => ({ ...reg1HistoryOf(h), dir: reg1BundleDirOf(h), boundary: reg1BoundaryAOf(h) }));
+}
+
 /** Calibration seeds are 4,802,001 + 10 v + s (protocol, P1). */
 export const CALIBRATION_SEED_BASE = 4_802_001;
 /**
@@ -1375,7 +2278,7 @@ export function assayJson(p: {
   censusEvery: number;
   inoculum: string;
   seeds: { physics: number; fragment: number }[];
-  labels: AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet | R3RepLabelSet;
+  labels: AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet | R3RepLabelSet | Reg1LabelSet;
   extra: Record<string, unknown>;
   summary: Record<string, unknown>;
   wallSeconds: number;

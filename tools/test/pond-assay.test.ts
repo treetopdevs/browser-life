@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
@@ -8,15 +11,21 @@ import {
   GENOME_CHANNELS,
   M3_FOUNDERS,
   NN_WORDS,
+  PRESETS,
+  RULE_VERSION,
   buildWorld,
   cellCount,
+  encodeCheckpoint,
   encodeGenome,
   founderGenome,
+  initWorld,
+  presetIdentity,
   stateHash,
   validateState,
   worldW,
   type WorldState,
 } from "@bl/schema";
+import { specConfig, type RunSpec } from "@bl/runner";
 import { MOT_ZERO } from "@bl/sim-ref";
 import { applyPondCycle, assaySeed, cloneWorld, dominantGenome, pondConfig, pondMatter, pondTraits, randomKey } from "../lib/ponds.ts";
 import { assayLabels } from "../lib/scaffold-stats.ts";
@@ -36,6 +45,20 @@ import {
   R3REP_SEED_MAX,
   R3REP_SHA256,
   R3REP_SWAP_AE_WORDS,
+  REG1_CAPABILITY_LABELS,
+  REG1_CONTINUE_SEED_MAX,
+  REG1_DEVICE_SEED,
+  REG1_GARDEN_SEED_MAX,
+  REG1_HEREDITY_SEED_MAX,
+  REG1_PONDS_IDENTITY,
+  REG1_PROTOCOL,
+  REG1_REGIME,
+  REG1_REPRO_SEED,
+  REG1_S1_BOOTSTRAP_SEED,
+  REG1_SEED_BLOCK,
+  REG1_SEED_MAX,
+  REG1_SHA256,
+  REG1_SOURCES,
   TAU_LABELS,
   TAU_SEED_BASE,
   TRAIT_COLUMNS,
@@ -50,13 +73,20 @@ import {
   checkR1dPrimeDonorSeed,
   checkR1dPrimeSeeds,
   checkR3RepSeeds,
+  checkReg1DonorSeed,
+  checkReg1Seeds,
   checkTauSeeds,
   distinctGenomes,
   fragmentDominant,
+  loadReg1Source,
   parseR1PrimeLabels,
   parseR1dPrimeLabels,
   parseR3RepContinueLabels,
   parseR3RepLabels,
+  parseReg1CompetenceLabels,
+  parseReg1ContinueLabels,
+  parseReg1GardenLabels,
+  parseReg1HeredityLabels,
   postCycleOf,
   quench,
   r1Donors,
@@ -99,6 +129,45 @@ import {
   r3RepUnavailableProblems,
   r3RepVariantProblems,
   r3RepWorldSeedOf,
+  reg1AssayDirOf,
+  reg1AssayOutProblems,
+  reg1BoundaryAOf,
+  reg1BundleDirOf,
+  reg1BundleWantOf,
+  reg1BundleWantsOf,
+  reg1CapabilitySources,
+  reg1CompetenceLabelsOf,
+  reg1ContinuationOf,
+  reg1ContinuationPathOf,
+  reg1ContinuationProblems,
+  reg1ContinueProblems,
+  reg1ContinueSeed,
+  reg1ControlPathOf,
+  reg1ControlProblems,
+  reg1DonorSeedOf,
+  reg1ExpectedSets,
+  reg1GardenLabelsOf,
+  reg1GardenSeed,
+  reg1H,
+  reg1HereditySeed,
+  reg1HeredityLabelsOf,
+  reg1HistoryOf,
+  reg1InitialWorld,
+  reg1LabelsFromJson,
+  reg1NegativeRunProblems,
+  reg1NegativeSeed,
+  reg1NegativeWorldOf,
+  reg1PreCycleFileOf,
+  reg1ProtocolProblems,
+  reg1ProvenanceProblems,
+  reg1RegimeProblems,
+  reg1ReplicatesOf,
+  reg1Seed,
+  reg1SeedsOf,
+  reg1SetIdOf,
+  reg1SourceProblems,
+  reg1WaiverOutProblems,
+  reg1WorldSeedOf,
   standardFragment,
   swapGenome,
   traitsTable,
@@ -106,6 +175,9 @@ import {
   type Fragment,
   type R3RepCheckpoint,
   type R3RepOrigin,
+  type Reg1BundleWant,
+  type Reg1LabelSet,
+  type Reg1Source,
 } from "../lib/pond-assay.ts";
 
 const genomeA = founderGenome(M3_FOUNDERS[2]);
@@ -1252,5 +1324,655 @@ describe("R3 replication seeds, labels and sources (docs/scaffold-r3-replication
       expect((await r3RepProtocolProblems(which, edited)).join(" ")).toMatch(new RegExp(`^${pin.doc.replace(/[.]/g, "\\.")} no longer begins with its pinned text \\(SHA-256 ${pin.sha256}; its first ${pin.bytes} bytes hash to [0-9a-f]{64}\\)`));
       expect(await r3RepProtocolProblems(which, doc.subarray(0, 100))).toEqual([`${pin.doc} has 100 bytes, fewer than the ${pin.bytes} it had when pinned`]);
     }
+  });
+});
+
+describe("the scaffolding registration's seeds, labels and sources (docs/scaffold-registration-v1.md)", () => {
+  const mut = pondConfig(8, 0).mutRate;
+  const REG = "5".repeat(64); // a stand-in for the registration's SHA-256 in a sidecar
+
+  it("is the document's seed block: worlds, continuations, competence, S2 and S3 at their corners and maxima", () => {
+    // source worlds by h: 24 arm + i for the histories, 72 + i for the ancestor worlds
+    expect([reg1H("scaf", 0), reg1H("scaf", 23), reg1H("rand", 0), reg1H("cont", 23), reg1H("ancestor", 0), reg1H("ancestor", 23)]).toEqual([0, 23, 24, 71, 72, 95]);
+    for (let h = 0; h < REG1_SOURCES; h++) {
+      const l = reg1HistoryOf(h);
+      expect(reg1H(l.arm, l.history)).toBe(h);
+    }
+    expect(reg1HistoryOf(30)).toEqual({ arm: "rand", history: 6, h: 30 });
+    expect(reg1HistoryOf(77)).toEqual({ arm: "ancestor", history: 5, h: 77 });
+    expect([0, 23, 24, 47, 48, 71, 72, 95].map(reg1WorldSeedOf)).toEqual([4_850_001, 4_850_024, 4_850_101, 4_850_124, 4_850_201, 4_850_224, 4_850_401, 4_850_424]);
+    expect([reg1ContinueSeed(0), reg1ContinueSeed(72), reg1ContinueSeed(95)]).toEqual([4_850_501, 4_850_573, 4_850_596]);
+    expect(REG1_CONTINUE_SEED_MAX).toBe(4_850_596);
+    // σ(h, t, s): the swap pair's replicates 4-7 exist only at an ancestor world's (a)
+    expect([reg1Seed(0, 0, 0), reg1Seed(0, 1, 0), reg1Seed(0, 0, 3), reg1Seed(1, 0, 0), reg1Seed(72, 0, 7), reg1Seed(95, 0, 7), reg1Seed(95, 1, 3)]).toEqual([4_851_001, 4_851_011, 4_851_004, 4_851_101, 4_858_208, 4_860_508, 4_860_514]);
+    expect(REG1_SEED_MAX).toBe(4_860_514);
+    expect([reg1GardenSeed(0, 0, 0, 0), reg1GardenSeed(0, 1, 0, 0), reg1GardenSeed(0, 0, 1, 0), reg1GardenSeed(0, 0, 0, 1), reg1GardenSeed(47, 1, 1, 1)]).toEqual([4_861_001, 4_861_021, 4_861_011, 4_861_002, 4_865_732]);
+    expect(REG1_GARDEN_SEED_MAX).toBe(4_865_732);
+    expect([reg1HereditySeed(0, 0), reg1HereditySeed(0, 9), reg1HereditySeed(1, 0), reg1HereditySeed(53, 9)]).toEqual([4_866_001, 4_866_010, 4_866_251, 4_879_260]);
+    expect(REG1_HEREDITY_SEED_MAX).toBe(4_879_260);
+    expect([0, 1, 2, 3].map(reg1NegativeSeed)).toEqual([4_880_001, 4_880_002, 4_880_003, 4_880_004]);
+    expect([4_880_000, 4_880_001, 4_880_004, 4_880_005, 4_811_201].map(reg1NegativeWorldOf)).toEqual([null, 0, 3, null, null]);
+    expect([REG1_REPRO_SEED, REG1_S1_BOOTSTRAP_SEED, REG1_DEVICE_SEED]).toEqual([4_880_101, 4_880_201, 4_880_301]);
+    expect(REG1_REGIME).toEqual({ k: 8, period: 10_000, ref: 103_058, side: 8, censusEvery: 100 });
+  });
+
+  it("range-checks every field", () => {
+    for (const h of [-1, 96, 1.5, NaN]) expect(() => reg1HistoryOf(h)).toThrow(/reg1HistoryOf/);
+    for (const i of [-1, 24, 0.5]) expect(() => reg1H("scaf", i)).toThrow(/reg1H/);
+    expect(() => reg1H("control" as "scaf", 0)).toThrow(/arm must be/);
+    for (const h of [-1, 96, NaN]) expect(() => reg1ContinueSeed(h)).toThrow(/reg1ContinueSeed/);
+    for (const [h, t, s] of [[96, 0, 0], [-1, 0, 0], [0, 2, 0], [0, 0, 4], [71, 0, 4], [72, 1, 4], [72, 0, 8], [0, 0, -1], [0.5, 0, 0], [0, 0, NaN]] as const) expect(() => reg1Seed(h, t, s)).toThrow(/reg1Seed/);
+    for (const [h, t, v, s] of [[48, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2], [-1, 0, 0, 0], [0, 0, 0, 0.5]] as const) expect(() => reg1GardenSeed(h, t, v, s)).toThrow(/reg1GardenSeed/);
+    for (const [h, s] of [[54, 0], [-1, 0], [0, 10], [0, -1], [1.5, 0], [0, 2], [0, 3], [0, 7], [0, 1.5]] as const) expect(() => reg1HereditySeed(h, s)).toThrow(/reg1HereditySeed/);
+    expect(() => reg1HereditySeed(0, 4)).toThrow(/s must be 0-1 \(replicates\), 8 \(permutations\) or 9 \(donors\), got 4/);
+    for (const j of [-1, 4, 0.5]) expect(() => reg1NegativeSeed(j)).toThrow(/reg1NegativeSeed/);
+  });
+
+  it("cannot collide with itself or with any earlier block, and stays inside 4,850,001-4,899,999", () => {
+    const worlds = Array.from({ length: REG1_SOURCES }, (_, h) => reg1WorldSeedOf(h));
+    const cont = Array.from({ length: REG1_SOURCES }, (_, h) => reg1ContinueSeed(h));
+    const comp: number[] = [];
+    for (let h = 0; h < REG1_SOURCES; h++) for (let t = 0; t <= 1; t++) for (let s = 0; s <= (h >= 72 && t === 0 ? 7 : 3); s++) comp.push(reg1Seed(h, t, s));
+    expect(comp).toHaveLength(96 * 2 * 4 + 24 * 4);
+    const garden: number[] = [];
+    for (let h = 0; h < 48; h++) for (let t = 0; t <= 1; t++) for (let v = 0; v <= 1; v++) for (let s = 0; s <= 1; s++) garden.push(reg1GardenSeed(h, t, v, s));
+    const heredity: number[] = [];
+    for (let h = 0; h < 54; h++) for (const s of [0, 1, 8, 9]) heredity.push(reg1HereditySeed(h, s));
+    const negative = [0, 1, 2, 3].map(reg1NegativeSeed);
+    const other = [REG1_REPRO_SEED, REG1_S1_BOOTSTRAP_SEED, REG1_DEVICE_SEED];
+    const blocks = [worlds, cont, comp, garden, heredity, negative, other];
+    const all = blocks.flat();
+    expect(new Set(all).size).toBe(all.length);
+    for (const x of all) expect(x >= REG1_SEED_BLOCK.min && x <= REG1_SEED_BLOCK.max).toBe(true);
+    // each formula's range lies below the next one's
+    for (let k = 1; k < blocks.length; k++) expect(Math.max(...blocks[k - 1])).toBeLessThan(Math.min(...blocks[k]));
+    // every earlier block's formulas and worlds
+    const earlier = new Set<number>();
+    for (let r = 0; r <= 4; r++) for (let h = 0; h <= 18; h++) for (let t = 0; t <= 1; t++) for (let v = 0; v <= 4; v++) for (let s = 0; s <= 9; s++) earlier.add(assaySeed(r, h, t, v, s));
+    for (let h = 0; h <= 11; h++) for (let t = 0; t <= 2; t++) for (let s = 0; s <= 9; s++) earlier.add(r1PrimeSeed(h, t, s));
+    for (let h = 0; h < R1DP_SETS; h++) for (let s = 0; s <= 9; s++) earlier.add(r1dPrimeSeed(h, s));
+    for (let h = 0; h <= 18; h++) for (let t = 0; t <= 1; t++) for (let s = 0; s <= 1; s++) earlier.add(r3RepSeed(h, t, s));
+    for (let h = 0; h <= 18; h++) earlier.add(r3RepContinueSeed(h)), earlier.add(r3RepWorldSeedOf(h));
+    for (let s = 0; s <= 9; s++) earlier.add(TAU_SEED_BASE + s);
+    for (let g = 0; g <= 14; g++) for (let s = 0; s <= 9; s++) earlier.add(4_800_001 + 100 * g + s); // P1
+    for (let x = 4_802_001; x <= 4_802_022; x++) earlier.add(x); // calibration
+    for (const x of [4_805_001, 4_805_002]) earlier.add(x); // P2 ranking worlds
+    for (let arm = 0; arm <= 1; arm++) for (let s = 0; s <= 1; s++) earlier.add(4_805_101 + 10 * arm + s); // P2 selection runs
+    for (let arm = 0; arm <= 2; arm++) for (let i = 0; i <= 5; i++) earlier.add(4_810_001 + 100 * arm + i); // main run
+    for (let j = 0; j <= 3; j++) earlier.add(4_811_201 + j); // R1'''s negative-control worlds
+    expect(Math.max(...earlier)).toBeLessThan(REG1_SEED_BLOCK.min);
+    for (const x of all) expect(earlier.has(x)).toBe(false);
+  });
+
+  it("labels every set of the table, and its flags, seeds, regime and directory check out", () => {
+    const sets = reg1ExpectedSets();
+    expect(sets).toHaveLength(24 * 23 + 7);
+    const ids = sets.map(reg1SetIdOf);
+    expect(new Set(ids).size).toBe(sets.length);
+    const count = (set: string) => sets.filter((l) => l.set === set).length;
+    expect(["source", "ge-on-fa", "ga-on-fa", "ga-on-fe", "quench", "garden-raw", "garden-disc", "heredity", "capability"].map(count)).toEqual([192, 24, 24, 24, 48, 96, 96, 54, 1]);
+    expect(ids.slice(0, 23)).toEqual([
+      "scaf-i00-a", "scaf-i00-b", "rand-i00-a", "rand-i00-b", "cont-i00-a", "cont-i00-b", "ancestor-i00-a", "ancestor-i00-b",
+      "scaf-i00-ge-on-fa", "scaf-i00-ga-on-fa", "scaf-i00-ga-on-fe", "scaf-i00-quench-a", "scaf-i00-quench-b",
+      "garden-scaf-i00-t0-raw", "garden-scaf-i00-t0-disc", "garden-scaf-i00-t1-raw", "garden-scaf-i00-t1-disc",
+      "garden-rand-i00-t0-raw", "garden-rand-i00-t0-disc", "garden-rand-i00-t1-raw", "garden-rand-i00-t1-disc",
+      "heredity-scaf-i00", "heredity-rand-i00",
+    ]);
+    expect(ids.slice(-7)).toEqual(["heredity-pos-s0", "heredity-pos-s1", "heredity-neg-j0", "heredity-neg-j1", "heredity-neg-j2", "heredity-neg-j3", "capability"]);
+    expect(ids).toContain("ancestor-i23-b");
+    for (const l of sets) {
+      expect(Object.keys(l)).toEqual(["reg1", "set", "arm", "history", "timing", "time", "h", "control"]);
+      expect(reg1LabelsFromJson(JSON.parse(JSON.stringify(l)))).toEqual({ labels: l });
+      expect(reg1AssayOutProblems(l, `runs/${reg1AssayDirOf(l)}`)).toEqual([]);
+      if (l.set === "capability") continue;
+      // the CLI flags of the set parse back to its labels
+      const parsed =
+        l.set === "heredity"
+          ? parseReg1HeredityLabels({ h: String(l.h), arm: l.arm!, history: l.control === null ? String(l.history) : undefined, control: l.control ?? undefined })
+          : l.set === "garden-raw" || l.set === "garden-disc"
+            ? parseReg1GardenLabels({ arm: l.arm!, history: String(l.history), time: String(l.time), inoculum: l.set === "garden-disc" ? "disc" : "fragment" })
+            : parseReg1CompetenceLabels({ set: l.set, arm: l.arm!, history: String(l.history), timing: l.timing!, h: String(l.h) });
+      expect(parsed).toEqual(l);
+      const reps = reg1ReplicatesOf(l);
+      for (let s = 0; s < reps; s++) expect(() => checkReg1Seeds(l, reg1SeedsOf(l, s), s)).not.toThrow();
+      expect(reg1RegimeProblems(l, { ...REG1_REGIME, ref: l.set === "heredity" ? null : REG1_REGIME.ref, replicates: reps })).toEqual([]);
+    }
+    // h is the seed index (and the fragment source): the swap pair carries ancestor world i's, Ga-on-Fe and the quenched controls scaf_i's
+    const ea = reg1CompetenceLabelsOf("ge-on-fa", "scaf", 5, "a");
+    expect(ea).toEqual({ reg1: true, set: "ge-on-fa", arm: "scaf", history: 5, timing: "a", time: null, h: 77, control: null });
+    expect(reg1CompetenceLabelsOf("ga-on-fa", "scaf", 5, "a").h).toBe(77);
+    expect(reg1CompetenceLabelsOf("ga-on-fe", "scaf", 5, "a").h).toBe(5);
+    expect(reg1CompetenceLabelsOf("quench", "scaf", 5, "b").h).toBe(5);
+    expect(reg1CompetenceLabelsOf("source", "cont", 5, "b").h).toBe(53);
+    expect(reg1CompetenceLabelsOf("source", "ancestor", 5, "a")).toMatchObject({ arm: "ancestor", history: 5, h: 77 });
+    for (let s = 0; s < 4; s++) {
+      // the swap pair's first four replicates are ancestor world i's own fragments at (a); Ga-on-Fe and quench-a scaf_i's
+      expect(reg1SeedsOf(ea, s)).toEqual(reg1SeedsOf(reg1CompetenceLabelsOf("source", "ancestor", 5, "a"), s));
+      expect(reg1SeedsOf(reg1CompetenceLabelsOf("ga-on-fa", "scaf", 5, "a"), s)).toEqual(reg1SeedsOf(ea, s));
+      expect(reg1SeedsOf(reg1CompetenceLabelsOf("ga-on-fe", "scaf", 5, "a"), s)).toEqual(reg1SeedsOf(reg1CompetenceLabelsOf("source", "scaf", 5, "a"), s));
+      expect(reg1SeedsOf(reg1CompetenceLabelsOf("quench", "scaf", 5, "b"), s)).toEqual({ physics: reg1Seed(5, 1, s), fragment: reg1Seed(5, 1, s) });
+    }
+    expect(reg1SeedsOf(ea, 7)).toEqual({ physics: 4_858_708, fragment: 4_858_708 });
+    // S2: the physics takes the inoculum's v, the fragments v = 0, so the disc inoculum plants the raw inoculum's fragments' genomes
+    expect(reg1SeedsOf(reg1GardenLabelsOf("rand", 2, 1, "disc"), 1)).toEqual({ physics: reg1GardenSeed(26, 1, 1, 1), fragment: reg1GardenSeed(26, 1, 0, 1) });
+    expect(reg1SeedsOf(reg1GardenLabelsOf("rand", 2, 1, "fragment"), 1)).toEqual({ physics: reg1GardenSeed(26, 1, 0, 1), fragment: reg1GardenSeed(26, 1, 0, 1) });
+    // S3 and R4
+    expect(reg1HeredityLabelsOf(49)).toEqual({ reg1: true, set: "heredity", arm: "control", history: null, timing: null, time: null, h: 49, control: "positive" });
+    expect(reg1HeredityLabelsOf(50)).toMatchObject({ arm: "control", history: null, control: "negative" });
+    expect(reg1HeredityLabelsOf(31)).toMatchObject({ arm: "rand", history: 7, control: null });
+    expect(reg1DonorSeedOf(reg1HeredityLabelsOf(31))).toBe(reg1HereditySeed(31, 9));
+    expect(REG1_CAPABILITY_LABELS).toEqual({ reg1: true, set: "capability", arm: null, history: null, timing: "a", time: null, h: null, control: null });
+    expect(() => reg1SeedsOf(REG1_CAPABILITY_LABELS, 0)).toThrow(/capability/);
+  });
+
+  it("refuses a mismatched set: a swap set on its history's seeds, the wrong replicates, the wrong timing or time, and flags that disagree", () => {
+    const at = (seed: number) => ({ physics: seed, fragment: seed });
+    const ea = reg1CompetenceLabelsOf("ge-on-fa", "scaf", 5, "a");
+    const aa = reg1CompetenceLabelsOf("ga-on-fa", "scaf", 5, "a");
+    const ae = reg1CompetenceLabelsOf("ga-on-fe", "scaf", 5, "a");
+    // a wrong h for a swap set: the swap pair takes ancestor world i's seeds, Ga-on-Fe scaf_i's
+    expect(() => checkReg1Seeds(ea, at(reg1Seed(5, 0, 0)), 0)).toThrow(/does not match the reg1 labels \(scaf-i05-ge-on-fa, h 77\): want 4858701/);
+    expect(() => checkReg1Seeds(aa, at(reg1Seed(5, 0, 0)), 0)).toThrow(/want 4858701/);
+    expect(() => checkReg1Seeds(ae, at(reg1Seed(77, 0, 0)), 0)).toThrow(/want 4851501/);
+    expect(() => checkReg1Seeds(ea, { physics: reg1Seed(77, 0, 0), fragment: reg1Seed(77, 0, 1) }, 0)).toThrow(/^fragment seed/);
+    // the wrong replicate counts
+    expect(reg1RegimeProblems(ea, { ...REG1_REGIME, replicates: 4 })).toEqual(["replicates 4, want 8"]);
+    expect(reg1RegimeProblems(aa, { ...REG1_REGIME, replicates: 2 })).toEqual(["replicates 2, want 8"]);
+    expect(reg1RegimeProblems(ae, { ...REG1_REGIME, replicates: 8 })).toEqual(["replicates 8, want 4"]);
+    expect(reg1RegimeProblems(reg1GardenLabelsOf("scaf", 0, 0, "disc"), { ...REG1_REGIME, replicates: 4 })).toEqual(["replicates 4, want 2"]);
+    expect(reg1RegimeProblems(reg1HeredityLabelsOf(0), { ...REG1_REGIME, replicates: 2 })).toEqual(["ref 103058, want null"]);
+    expect(reg1RegimeProblems(ae, { k: 5, period: 3000, ref: null, side: 2, replicates: 2, censusEvery: 1000 })).toHaveLength(6);
+    expect(() => checkReg1Seeds(reg1CompetenceLabelsOf("source", "scaf", 5, "a"), at(reg1Seed(5, 0, 3) + 1), 4)).toThrow(/reg1Seed: s must be an integer in 0..3/);
+    // the wrong t: (b) and time C take their own seeds
+    expect(() => checkReg1Seeds(reg1CompetenceLabelsOf("quench", "scaf", 5, "b"), at(reg1Seed(5, 0, 0)), 0)).toThrow(/want 4851511/);
+    expect(() => checkReg1Seeds(reg1CompetenceLabelsOf("source", "ancestor", 5, "b"), at(reg1Seed(77, 0, 0)), 0)).toThrow(/want 4858711/);
+    const g = reg1GardenLabelsOf("rand", 2, 1, "disc");
+    expect(() => checkReg1Seeds(g, { physics: reg1GardenSeed(26, 1, 1, 0), fragment: reg1GardenSeed(26, 1, 0, 0) }, 0)).not.toThrow();
+    expect(() => checkReg1Seeds(g, { physics: reg1GardenSeed(26, 0, 1, 0), fragment: reg1GardenSeed(26, 0, 0, 0) }, 0)).toThrow(/does not match/); // time 0's
+    expect(() => checkReg1Seeds(g, at(reg1GardenSeed(26, 1, 0, 0)), 0)).toThrow(/^seed/); // the raw inoculum's physics
+    expect(() => checkReg1Seeds(g, at(reg1GardenSeed(26, 1, 1, 0)), 0)).toThrow(/^fragment seed/);
+    // S3's donors, and earlier blocks' seeds of the same index
+    expect(() => checkReg1DonorSeed(reg1HeredityLabelsOf(30), reg1HereditySeed(30, 9))).not.toThrow();
+    expect(() => checkReg1DonorSeed(reg1HeredityLabelsOf(30), reg1HereditySeed(30, 8))).toThrow(/donor seed/);
+    expect(() => reg1DonorSeedOf(ea)).toThrow(/S3/);
+    expect(() => checkReg1Seeds(reg1CompetenceLabelsOf("source", "scaf", 3, "a"), at(r3RepSeed(3, 0, 0)), 0)).toThrow(/does not match/);
+    expect(() => checkReg1Seeds(reg1HeredityLabelsOf(3), at(r1dPrimeSeed(3, 0)), 0)).toThrow(/does not match/);
+    // competence flags
+    expect(parseReg1CompetenceLabels({ set: "ge-on-fa", arm: "scaf", history: "5", timing: "a", h: "77" })).toEqual(ea);
+    expect(() => parseReg1CompetenceLabels({ set: "ge-on-fa", arm: "scaf", history: "5", timing: "a", h: "5" })).toThrow(/--h 5 disagrees .*here 77/);
+    expect(() => parseReg1CompetenceLabels({ set: "swap-ea", arm: "scaf", history: "0", timing: "a" })).toThrow(/--set must be/);
+    expect(() => parseReg1CompetenceLabels({ arm: "scaf", history: "0", timing: "a" })).toThrow(/--set must be/);
+    expect(() => parseReg1CompetenceLabels({ set: "ge-on-fa", arm: "ancestor", history: "0", timing: "a" })).toThrow(/--arm must be scaf/);
+    expect(() => parseReg1CompetenceLabels({ set: "quench", arm: "rand", history: "0", timing: "a" })).toThrow(/--arm must be scaf/);
+    expect(() => parseReg1CompetenceLabels({ set: "ge-on-fa", arm: "scaf", history: "0", timing: "b" })).toThrow(/ge-on-fa runs at timing a only/);
+    expect(() => parseReg1CompetenceLabels({ set: "ga-on-fe", arm: "scaf", history: "0", timing: "b" })).toThrow(/ga-on-fe runs at timing a only/);
+    expect(() => parseReg1CompetenceLabels({ set: "source", arm: "scaf", history: "24", timing: "a" })).toThrow(/--history must be 0-23/);
+    expect(() => parseReg1CompetenceLabels({ set: "source", arm: "ancestor", timing: "a" })).toThrow(/--history/);
+    expect(() => parseReg1CompetenceLabels({ set: "source", arm: "scaf", history: "0" })).toThrow(/--timing/);
+    expect(() => parseReg1CompetenceLabels({ set: "source", arm: "scaf", history: "0", timing: "a", time: "0" })).toThrow(/--time/);
+    expect(() => parseReg1CompetenceLabels({ set: "source", arm: "scaf", history: "0", timing: "a", control: "positive" })).toThrow(/--control/);
+    // continue, S2 and S3 flags
+    expect(parseReg1ContinueLabels({ arm: "ancestor", history: "3" })).toEqual(reg1HistoryOf(75));
+    expect(parseReg1ContinueLabels({ arm: "rand", history: "3", h: "27" })).toEqual(reg1HistoryOf(27));
+    expect(() => parseReg1ContinueLabels({ arm: "rand", history: "3", h: "3" })).toThrow(/--h 3 disagrees/);
+    expect(() => parseReg1ContinueLabels({ arm: "scaf", history: "3", timing: "b" })).toThrow(/--timing/);
+    expect(() => parseReg1ContinueLabels({ arm: "scaf", history: "3", set: "source" })).toThrow(/--set/);
+    expect(() => parseReg1GardenLabels({ arm: "cont", history: "0", time: "0", inoculum: "disc" })).toThrow(/--arm must be scaf\|rand/);
+    expect(() => parseReg1GardenLabels({ arm: "scaf", history: "0", time: "2", inoculum: "disc" })).toThrow(/--time/);
+    expect(() => parseReg1GardenLabels({ arm: "scaf", history: "0", time: "0", inoculum: "raw" })).toThrow(/--inoculum/);
+    expect(() => parseReg1GardenLabels({ arm: "scaf", history: "0", timing: "a", inoculum: "disc" })).toThrow(/--timing/);
+    expect(() => parseReg1HeredityLabels({ h: "54", arm: "control", control: "negative" })).toThrow(/--h must be 0-53/);
+    expect(() => parseReg1HeredityLabels({ h: "30", arm: "scaf", history: "6" })).toThrow(/--arm must be rand for --h 30/);
+    expect(() => parseReg1HeredityLabels({ h: "30", arm: "rand", history: "5" })).toThrow(/--history must be 6 for --h 30/);
+    expect(() => parseReg1HeredityLabels({ h: "48", arm: "control", control: "negative" })).toThrow(/--control must be positive/);
+    expect(() => parseReg1HeredityLabels({ h: "50", arm: "control", control: "negative", history: "1" })).toThrow(/--history must be 0 for --h 50/);
+    expect(parseReg1HeredityLabels({ h: "53", arm: "control", control: "negative", history: "3" })).toEqual(reg1HeredityLabelsOf(53));
+    expect(() => parseReg1HeredityLabels({ h: "3", arm: "scaf", history: "3", timing: "a" })).toThrow(/--timing/);
+    // labels read back from assay.json must be consistent with their h, set and world
+    expect(reg1LabelsFromJson({ ...ea, h: 5 })).toMatchObject({ error: expect.stringMatching(/labels.h 5, want 77/) });
+    expect(reg1LabelsFromJson({ ...ea, timing: "b" })).toMatchObject({ error: expect.stringMatching(/timing a only/) });
+    expect(reg1LabelsFromJson({ ...ea, set: "swap" })).toMatchObject({ error: expect.stringMatching(/not a reg1 set/) });
+    expect(reg1LabelsFromJson({ ...ea, reg1: undefined })).toEqual({ error: "labels.reg1 is not true" });
+    expect(reg1AssayOutProblems(ea, "runs/scaffold/reg1/assays/scaf-i05-ga-on-fa").join(" ")).toMatch(/does not end in scaffold\/reg1\/assays\/scaf-i05-ge-on-fa/);
+  });
+
+  // ------------------------------------------------------------------------------------------
+  // Run-bundle sources: a tiny bundle (ponds-small) written as tools/run.ts writes one
+
+  const SMALL_DIR = "scaffold/reg1/hist/ponds-small/treatment/seed-4850001";
+  const smallSpec = (over: Partial<RunSpec> = {}): RunSpec => ({ experiment: "hist", presetId: "ponds-small", condition: "treatment", seed: 4_850_001, steps: 4000, censusEvery: 1000, deepEvery: 10, checkpointEvery: 0, preCycleCheckpoints: [2, 3], ...over });
+  /** What a ponds-small history at seed 4,850,001 must be: the production want of h = 0 with the small preset's directory, steps, period and ponds. */
+  const smallWant = (): Reg1BundleWant => ({ ...reg1BundleWantOf(0), dir: SMALL_DIR, presetId: "ponds-small", presetIdentity: presetIdentity(PRESETS.find((p) => p.id === "ponds-small")!), steps: 4000, period: 1000, side: 2 });
+  const read = (p: string) => readFile(p).then((b) => new Uint8Array(b));
+
+  /**
+   * Writes a run bundle under `root` (at `dir`): manifest.json as the runner writes it (runId, spec, cfg, initHash, ruleVersion, startStep,
+   * preCycleCheckpoints, summary, finishedAt) and checkpoints/b<NNN>-pre.blck for each of `states` (boundary -> state; by default the
+   * initial world at step 2,000 as boundary 2's). `edit` changes the manifest (and the directory) before it is written.
+   */
+  function writeBundle(root: string, o: { spec?: RunSpec; dir?: string; states?: (init: WorldState) => Record<number, WorldState>; edit?: (m: Record<string, unknown>, dir: string) => void } = {}): string {
+    const spec = o.spec ?? smallSpec();
+    const cfg = specConfig(spec);
+    const init = initWorld(cfg, PRESETS.find((p) => p.id === spec.presetId)!.init);
+    const dir = join(root, o.dir ?? SMALL_DIR);
+    mkdirSync(join(dir, "checkpoints"), { recursive: true });
+    const states = o.states ? o.states(init) : { 2: { ...init, step: 2000 } };
+    const preCycleCheckpoints = Object.entries(states).map(([b, s]) => {
+      const file = reg1PreCycleFileOf(Number(b));
+      writeFileSync(join(dir, file), encodeCheckpoint(s, { ponds: { lastCycle: Number(b) - 1 } }));
+      return { boundary: Number(b), step: s.step, file, hash: stateHash(s) };
+    });
+    const preset = PRESETS.find((p) => p.id === spec.presetId)!;
+    const m: Record<string, unknown> = { runId: `${spec.experiment}/${spec.presetId}/${spec.condition}/seed-${spec.seed}`, spec, cfg, presetIdentity: presetIdentity(preset), initHash: stateHash(init), ruleVersion: RULE_VERSION, startStep: 0, startedAt: "2026-10-02T00:00:00.000Z", checkpoints: [], preCycleCheckpoints, summary: { conservationOk: true, finalHash: "f".repeat(16) }, finishedAt: "2026-10-02T01:00:00.000Z" };
+    o.edit?.(m, dir);
+    writeFileSync(join(dir, "manifest.json"), JSON.stringify(m, null, 2));
+    return dir;
+  }
+
+  it("loads a source from a run bundle by the hash its manifest records, and refuses every way the bundle can be wrong", async () => {
+    const root = mkdtempSync(join(tmpdir(), "reg1-bundle-"));
+    try {
+      const want = smallWant();
+      const dir = writeBundle(join(root, "ok"));
+      const { state, record } = await loadReg1Source(dir, 2, read);
+      expect(state.step).toBe(2000);
+      expect(record).toMatchObject({ source: dir, boundary: 2, checkpoint: `${dir}/checkpoints/b002-pre.blck`, stateHash: stateHash(state), seed: 4_850_001, mutRate: mut, step: 2000, tilesX: 2, tilesY: 2, sameConfig: true });
+      expect(record.run).toMatchObject({ manifest: `${dir}/manifest.json`, runId: "hist/ponds-small/treatment/seed-4850001", complete: true, conservationOk: true, ruleVersion: RULE_VERSION, preCycle: { boundary: 2, step: 2000, file: "checkpoints/b002-pre.blck", hash: stateHash(state) } });
+      expect(reg1SourceProblems(want, 2, record)).toEqual([]);
+      expect(reg1SourceProblems(want, 2, (await loadReg1Source(`${dir}/`, 2, read)).record)).toEqual([]); // a trailing slash
+      expect(reg1SourceProblems(want, 2, JSON.parse(JSON.stringify(record)))).toEqual([]); // as assay.json records it
+
+      let n = 0;
+      const problems = async (o: Parameters<typeof writeBundle>[1], boundary: number | null = 2) => {
+        const d = writeBundle(join(root, `case${n++}`), o);
+        return reg1SourceProblems(want, boundary, (await loadReg1Source(d, boundary, read)).record).join(" ");
+      };
+      // an incomplete manifest (the run has not finished), or conservation broken
+      expect(await problems({ edit: (m) => (delete m.summary, delete m.finishedAt) })).toMatch(/^source run is incomplete: its manifest.json has no summary and finishedAt$/);
+      expect(await problems({ edit: (m) => delete m.finishedAt })).toMatch(/run is incomplete/);
+      expect(await problems({ edit: (m) => (m.summary = { conservationOk: false }) })).toMatch(/^source run summary.conservationOk false, want true$/);
+      expect(await problems({ edit: (m) => (m.ruleVersion = 2) })).toMatch(/run ruleVersion 2, want 1/);
+      // a wrong seed, condition or steps
+      const seed = await problems({ spec: smallSpec({ seed: 4_850_002 }) });
+      expect(seed).toMatch(/source seed 4850002, want 4850001/);
+      expect(seed).toMatch(/spec.seed 4850002, want 4850001/);
+      const cond = await problems({ spec: smallSpec({ condition: "pond-rand" }) });
+      expect(cond).toMatch(/spec.condition "pond-rand", want "treatment"/);
+      expect(await problems({ spec: smallSpec({ steps: 3000 }) })).toMatch(/^source spec.steps 3000, want 4000$/);
+      expect(await problems({ spec: smallSpec({ censusEvery: 100 }) })).toMatch(/^source spec.censusEvery 100, want 1000$/);
+      expect(await problems({ spec: smallSpec({ overrides: { mutRate: 0 } }) })).toMatch(/spec sets overrides/);
+      expect(await problems({ spec: smallSpec({ deepEvery: 1 }) })).toMatch(/^source spec.deepEvery 1, want 10$/);
+      expect(await problems({ spec: smallSpec({ checkpointEvery: 1000 }) })).toMatch(/^source spec.checkpointEvery 1000, want 0$/);
+      // the preset's identity, as the manifest records it
+      expect(await problems({ edit: (m) => (m.presetIdentity = "0".repeat(16)) })).toMatch(/^source run presetIdentity "0{16}", want "eb17008775286308"$/);
+      expect(await problems({ edit: (m) => delete m.presetIdentity })).toMatch(/run presetIdentity null, want/);
+      // one uninterrupted run: a segment continued from a checkpoint has another start step and no initHash
+      expect(await problems({ edit: (m) => (m.startStep = 1000) })).toMatch(/^source run startStep 1000, want 0$/);
+      expect(await problems({ edit: (m) => delete m.initHash })).toMatch(/^source manifest has no initHash \(a run continued from a checkpoint, not one run from the preset\)$/);
+      // run ids cannot hold "/": the runs are made with --out runs/scaffold/reg1 --experiment hist, so another experiment is another run
+      expect(await problems({ spec: smallSpec({ experiment: "anc" }), dir: "scaffold/reg1/hist/anc/ponds-small/treatment/seed-4850001" })).toMatch(/spec.experiment "anc", want "hist"/);
+      // a wrong path: the right bundle in another history's directory, or a manifest that is not the directory's
+      const path = await problems({ dir: "scaffold/reg1/hist/ponds-small/treatment/seed-4850002" });
+      expect(path).toMatch(/directory .*seed-4850002" is not scaffold\/reg1\/hist\/ponds-small\/treatment\/seed-4850001/);
+      expect(path).toMatch(/does not end in its manifest's runId/);
+      expect(await problems({ dir: "scaffold/reg1/anc/ponds-small/treatment/seed-4850001" })).toMatch(/is not scaffold\/reg1\/hist/);
+      expect(await problems({ edit: (m) => (m.runId = "other/ponds-small/treatment/seed-4850001") })).toMatch(/^source manifest runId "other\/ponds-small\/treatment\/seed-4850001" is not its spec's/);
+      // a missing boundary: neither the spec nor the manifest lists it (the file alone does not make it one), or there is no such file
+      const missing = await problems({ spec: smallSpec({ preCycleCheckpoints: [2] }), states: (init) => ({ 2: { ...init, step: 2000 }, 3: { ...init, step: 3000 } }), edit: (m) => (m.preCycleCheckpoints = (m.preCycleCheckpoints as unknown[]).slice(0, 1)) }, 3);
+      expect(missing).toMatch(/spec.preCycleCheckpoints \[2\] does not list boundary 3/);
+      expect(missing).toMatch(/manifest lists no pre-cycle checkpoint at boundary 3/);
+      await expect(loadReg1Source(writeBundle(join(root, `case${n++}`)), 3, read)).rejects.toThrow(/b003-pre\.blck/);
+      // a hash mismatch: the file is not the state the manifest recorded
+      expect(await problems({ edit: (m) => ((m.preCycleCheckpoints as Record<string, unknown>[])[0].hash = "0".repeat(16)) })).toMatch(/^source state hash [0-9a-f]{16}, but the manifest records "0{16}" for boundary 2$/);
+      // the manifest's file for the boundary must be the runner's name for it
+      const renamed = await problems({ edit: (m, d) => (renameSync(join(d, "checkpoints/b002-pre.blck"), join(d, "checkpoints/t000002000.blck")), ((m.preCycleCheckpoints as Record<string, unknown>[])[0].file = "checkpoints/t000002000.blck")) });
+      expect(renamed).toMatch(/manifest pre-cycle file "checkpoints\/t000002000.blck", want "checkpoints\/b002-pre.blck"/);
+      // a wrong step
+      const step = await problems({ states: (init) => ({ 2: { ...init, step: 2100 } }) });
+      expect(step).toMatch(/source step 2100, want 2000/);
+      expect(step).toMatch(/manifest pre-cycle step 2100, want 2000/);
+      // a wrong mutation rate: the state's config is not the spec's
+      const rate = await problems({ states: (init) => ({ 2: { ...init, cfg: { ...init.cfg, mutRate: 0 }, step: 2000 } }) });
+      expect(rate).toMatch(/source mutRate 0, want 429497/);
+      expect(rate).toMatch(/state's config is not its spec's/);
+      // no manifest at all: the checkpoint loads under its conventional name, and the record says what is missing
+      const bare = writeBundle(join(root, `case${n++}`));
+      unlinkSync(join(bare, "manifest.json"));
+      const orphan = reg1SourceProblems(want, 2, (await loadReg1Source(bare, 2, read)).record).join(" ");
+      expect(orphan).toMatch(/no readable manifest.json with a spec/);
+      expect(orphan).toMatch(/run is incomplete/);
+      expect(orphan).toMatch(/manifest lists no pre-cycle checkpoint at boundary 2/);
+      // a source labelled as another boundary
+      expect(reg1SourceProblems(want, 3, record).join(" ")).toMatch(/source boundary 2, want 3/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("takes the one complete run of a world, at census 1,000 or its census-100 overflow rerun, and refuses two", async () => {
+    const C100_DIR = "scaffold/reg1/hist-c100/ponds-small/treatment/seed-4850001";
+    const wants = [smallWant(), { ...smallWant(), dir: C100_DIR, experiment: "hist-c100", censusEvery: 100 }];
+    const c100 = { spec: smallSpec({ experiment: "hist-c100", censusEvery: 100 }), dir: C100_DIR };
+    const incomplete = (m: Record<string, unknown>) => (delete m.summary, delete m.finishedAt);
+    const root = mkdtempSync(join(tmpdir(), "reg1-rerun-"));
+    try {
+      const at = (name: string) => ({ hist: join(root, name, SMALL_DIR), c100: join(root, name, C100_DIR) });
+      const load = async (dir: string) => (await loadReg1Source(dir, 2, read, wants)).record;
+      // only the census-1,000 run
+      writeBundle(join(root, "hist"));
+      const hist = await load(at("hist").hist);
+      expect(hist.source).toBe(at("hist").hist);
+      expect(hist.candidates).toEqual([
+        { dir: at("hist").hist, complete: true, manifest: true, summary: true, startedAt: "2026-10-02T00:00:00.000Z", finishedAt: "2026-10-02T01:00:00.000Z" },
+        { dir: at("hist").c100, complete: false, manifest: false, summary: false, startedAt: null, finishedAt: null },
+      ]);
+      expect(reg1SourceProblems(wants, 2, hist)).toEqual([]);
+      // only the census-100 rerun: --source may name either directory
+      writeBundle(join(root, "c100"), c100);
+      for (const dir of [at("c100").hist, at("c100").c100, `${at("c100").hist}/`]) {
+        const r = await load(dir);
+        expect(r.source).toBe(at("c100").c100);
+        expect(r.run).toMatchObject({ runId: "hist-c100/ponds-small/treatment/seed-4850001", complete: true });
+        expect(reg1SourceProblems(wants, 2, r)).toEqual([]);
+      }
+      // an overflowed (incomplete) run beside its complete rerun: the rerun is the source, with the same pre-cycle state
+      writeBundle(join(root, "both"), { edit: incomplete });
+      writeBundle(join(root, "both"), c100);
+      const rerun = await load(at("both").hist);
+      expect(rerun.source).toBe(at("both").c100);
+      expect(rerun.stateHash).toBe(hist.stateHash);
+      // the overflowed run's manifest says why: it started and has no summary
+      expect(rerun.candidates).toEqual([
+        { dir: at("both").hist, complete: false, manifest: true, summary: false, startedAt: "2026-10-02T00:00:00.000Z", finishedAt: null },
+        { dir: at("both").c100, complete: true, manifest: true, summary: true, startedAt: "2026-10-02T00:00:00.000Z", finishedAt: "2026-10-02T01:00:00.000Z" },
+      ]);
+      expect(reg1SourceProblems(wants, 2, rerun)).toEqual([]);
+      // two complete runs of one world: ambiguous, whichever is named
+      writeBundle(join(root, "two"));
+      writeBundle(join(root, "two"), c100);
+      for (const dir of [at("two").hist, at("two").c100]) {
+        const r = await load(dir);
+        expect(r.source).toBe(dir);
+        expect(reg1SourceProblems(wants, 2, r).join(" ")).toMatch(/^source is ambiguous: 2 complete runs of it \(.*seed-4850001, .*seed-4850001\), want one$/);
+      }
+      // a census-100 directory holding a census-1,000 run, and the reverse
+      writeBundle(join(root, "c1000"), { dir: C100_DIR, spec: smallSpec({ experiment: "hist-c100" }) });
+      expect(reg1SourceProblems(wants, 2, await load(at("c1000").c100)).join(" ")).toMatch(/^source spec.censusEvery 1000, want 100$/);
+      writeBundle(join(root, "h100"), { spec: smallSpec({ censusEvery: 100 }) });
+      expect(reg1SourceProblems(wants, 2, await load(at("h100").hist)).join(" ")).toMatch(/^source spec.censusEvery 100, want 1000$/);
+      // neither complete: the named one, refused as incomplete
+      writeBundle(join(root, "none"), { edit: incomplete });
+      const none = await load(at("none").hist);
+      expect(none.source).toBe(at("none").hist);
+      expect(reg1SourceProblems(wants, 2, none).join(" ")).toMatch(/run is incomplete/);
+      // without `wants` the loader reads the named bundle only, and a production check then sees the rerun's directory was not looked at
+      expect(reg1SourceProblems(wants, 2, (await loadReg1Source(at("both").hist, 2, read)).record).join(" ")).toMatch(/was not chosen with scaffold\/reg1\/hist-c100\/ponds-small\/treatment\/seed-4850001 in view.*run is incomplete/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rebuilds the initial world from the spec as the runner does and holds it to the manifest's initHash", async () => {
+    const root = mkdtempSync(join(tmpdir(), "reg1-init-"));
+    try {
+      const want = smallWant();
+      const spec = smallSpec();
+      const dir = writeBundle(join(root, "ok"));
+      const { state, record } = await loadReg1Source(dir, null, read);
+      expect(state.step).toBe(0);
+      expect(stateHash(state)).toBe(stateHash(initWorld(specConfig(spec), PRESETS.find((p) => p.id === "ponds-small")!.init)));
+      expect(record).toMatchObject({ boundary: null, checkpoint: null, sameConfig: true, step: 0, seed: 4_850_001, mutRate: mut });
+      expect(reg1SourceProblems(want, null, record)).toEqual([]);
+      const problems = async (edit: (m: Record<string, unknown>) => void, name: string) => reg1SourceProblems(want, null, (await loadReg1Source(writeBundle(join(root, name), { edit }), null, read)).record).join(" ");
+      expect(await problems((m) => (m.initHash = "0".repeat(16)), "hash")).toMatch(/^source initial world rebuilt from the spec hashes to [0-9a-f]{16}, but the manifest's initHash is 0{16}$/);
+      expect(await problems((m) => delete m.initHash, "none")).toMatch(/manifest has no initHash/);
+      expect(await problems((m) => (m.startStep = 10_000), "start")).toMatch(/run startStep 10000, want 0/);
+      // the time-0 world and boundary 2's are not each other
+      expect(reg1SourceProblems(want, 2, record).length).toBeGreaterThan(0);
+      // the runner's founding only: a spec that founds its world otherwise, or an unknown preset, is refused
+      expect(() => reg1InitialWorld(smallSpec({ soloFounder: 3 }))).toThrow(/soloFounder/);
+      expect(() => reg1InitialWorld(smallSpec({ presetId: "nope" }))).toThrow(/unknown preset/);
+      // the production preset: 64 ponds, the history's seed, the default mutation rate, its arm's pond cycle
+      const ponds = reg1InitialWorld({ ...smallSpec(), presetId: "ponds", condition: "pond-rand", seed: 4_850_101, steps: 1_000_000 });
+      expect([ponds.cfg.tilesX, ponds.cfg.tilesY, ponds.cfg.seed, ponds.cfg.mutRate, ponds.cfg.pondPeriod, ponds.cfg.pondArm, ponds.step]).toEqual([8, 8, 4_850_101, mut, 10_000, "rand", 0]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  /**
+   * A source record of h as `loadReg1Source` gives it for a production bundle under runs/ (no state needed): the run at census 1,000, or
+   * with `c100` its overflow rerun at census 100, the other candidate incomplete.
+   */
+  const rec = (h: number, boundary: number | null = reg1BoundaryAOf(h), over: Partial<Reg1Source> = {}, c100 = false): Reg1Source => {
+    const ws = reg1BundleWantsOf(h);
+    const w = ws[c100 ? 1 : 0];
+    const dir = `runs/${w.dir}`;
+    const ancestor = reg1HistoryOf(h).arm === "ancestor";
+    const spec = { experiment: w.experiment, presetId: "ponds", condition: w.condition, seed: w.seed, steps: w.steps, censusEvery: w.censusEvery, deepEvery: 10, checkpointEvery: 0, preCycleCheckpoints: ancestor ? [1] : [34, 100] };
+    const hash = boundary === null ? `i${h}`.padEnd(16, "0") : `b${h}-${boundary}`.padEnd(16, "0");
+    return {
+      source: dir,
+      stateHash: hash,
+      seed: w.seed,
+      mutRate: mut,
+      step: boundary === null ? 0 : boundary * 10_000,
+      tilesX: 8,
+      tilesY: 8,
+      boundary,
+      checkpoint: boundary === null ? null : `${dir}/${reg1PreCycleFileOf(boundary)}`,
+      sameConfig: true,
+      run: { manifest: `${dir}/manifest.json`, runId: `${spec.experiment}/ponds/${w.condition}/seed-${w.seed}`, spec, presetIdentity: REG1_PONDS_IDENTITY, ruleVersion: RULE_VERSION, startStep: 0, initHash: `i${h}`.padEnd(16, "0"), complete: true, conservationOk: true, preCycle: boundary === null ? null : { boundary, step: boundary * 10_000, file: reg1PreCycleFileOf(boundary), hash } },
+      candidates: ws.map((x) => ({ dir: `runs/${x.dir}`, complete: x === w, manifest: true, summary: x === w, startedAt: "2026-10-02T00:00:00.000Z", finishedAt: x === w ? "2026-10-02T01:00:00.000Z" : null })),
+      ...over,
+    };
+  };
+
+  it("names every source's production bundle and holds a recorded source to the labelled world", () => {
+    expect([0, 30, 71, 72, 95].map(reg1BundleDirOf)).toEqual([
+      "scaffold/reg1/hist/ponds/treatment/seed-4850001",
+      "scaffold/reg1/hist/ponds/pond-rand/seed-4850107",
+      "scaffold/reg1/hist/ponds/pond-cont/seed-4850224",
+      "scaffold/reg1/anc/ponds/pond-cont/seed-4850401",
+      "scaffold/reg1/anc/ponds/pond-cont/seed-4850424",
+    ]);
+    expect(reg1BundleWantOf(0)).toEqual({ dir: reg1BundleDirOf(0), experiment: "hist", presetId: "ponds", presetIdentity: "56526b894cfccf3f", condition: "treatment", seed: 4_850_001, steps: 1_000_000, censusEvery: 1000, deepEvery: 10, checkpointEvery: 0, period: 10_000, side: 8, mutRate: 429_497 });
+    // the identity the document names is the ponds preset's in the code that runs
+    expect(presetIdentity(PRESETS.find((p) => p.id === "ponds")!)).toBe(REG1_PONDS_IDENTITY);
+    expect(reg1SourceProblems(reg1BundleWantsOf(0), 100, { ...rec(0), run: { ...rec(0).run, presetIdentity: "eb17008775286308" } }).join(" ")).toMatch(/run presetIdentity "eb17008775286308", want "56526b894cfccf3f"/);
+    expect(reg1BundleWantOf(72)).toMatchObject({ experiment: "anc", condition: "pond-cont", seed: 4_850_401, steps: 10_000 });
+    expect(reg1BundleWantsOf(30)).toEqual([reg1BundleWantOf(30), { ...reg1BundleWantOf(30), dir: "scaffold/reg1/hist-c100/ponds/pond-rand/seed-4850107", experiment: "hist-c100", censusEvery: 100 }]);
+    expect(reg1BundleWantsOf(72)[1]).toMatchObject({ dir: "scaffold/reg1/anc-c100/ponds/pond-cont/seed-4850401", experiment: "anc-c100", censusEvery: 100, steps: 10_000 });
+    // either run of a world is its source, with the other in view and incomplete
+    for (const h of [0, 47, 71, 95]) expect(reg1SourceProblems(reg1BundleWantsOf(h), reg1BoundaryAOf(h), rec(h, reg1BoundaryAOf(h), {}, true))).toEqual([]);
+    expect(reg1SourceProblems(reg1BundleWantsOf(3), 100, { ...rec(3), candidates: rec(3).candidates.map((c) => ({ ...c, complete: true })) }).join(" ")).toMatch(/source is ambiguous: 2 complete runs of it/);
+    expect(reg1SourceProblems(reg1BundleWantsOf(3), 100, { ...rec(3), candidates: rec(3).candidates.slice(0, 1) }).join(" ")).toMatch(/was not chosen with scaffold\/reg1\/hist-c100\/ponds\/treatment\/seed-4850004 in view/);
+    expect(reg1SourceProblems(reg1BundleWantsOf(3), 100, { ...rec(3), candidates: undefined as never }).join(" ")).toMatch(/records no candidate bundles/);
+    expect([0, 72].map(reg1BoundaryAOf)).toEqual([100, 1]);
+    expect([reg1PreCycleFileOf(1), reg1PreCycleFileOf(34), reg1PreCycleFileOf(100)]).toEqual(["checkpoints/b001-pre.blck", "checkpoints/b034-pre.blck", "checkpoints/b100-pre.blck"]);
+    for (const h of [0, 23, 24, 47, 48, 71, 72, 95]) expect(reg1SourceProblems(reg1BundleWantOf(h), reg1BoundaryAOf(h), rec(h))).toEqual([]);
+    for (const h of [0, 47]) expect(reg1SourceProblems(reg1BundleWantOf(h), 34, rec(h, 34))).toEqual([]);
+    expect(reg1SourceProblems(reg1BundleWantOf(5), null, rec(5, null))).toEqual([]);
+    // the path can be relative to runs/ or absolute
+    expect(reg1SourceProblems(reg1BundleWantOf(0), 100, { ...rec(0), source: "/home/u/bl/runs/scaffold/reg1/hist/ponds/treatment/seed-4850001", checkpoint: "/home/u/bl/runs/scaffold/reg1/hist/ponds/treatment/seed-4850001/checkpoints/b100-pre.blck" })).toEqual([]);
+    // another world's bundle under these labels
+    expect(reg1SourceProblems(reg1BundleWantOf(1), 100, rec(0)).join(" ")).toMatch(/is not scaffold\/reg1\/hist\/ponds\/treatment\/seed-4850002.*source seed 4850001, want 4850002/);
+    expect(reg1SourceProblems(reg1BundleWantOf(24), 100, rec(0)).join(" ")).toMatch(/spec.condition "treatment", want "pond-rand"/);
+    expect(reg1SourceProblems(reg1BundleWantOf(72), 1, rec(72, 100)).join(" ")).toMatch(/source boundary 100, want 1/);
+    expect(reg1SourceProblems(reg1BundleWantOf(72), 1, rec(72, 1, { run: { ...rec(72).run, spec: { ...rec(72).run.spec, experiment: "hist" }, runId: "hist/ponds/pond-cont/seed-4850401" } })).join(" ")).toMatch(/spec.experiment "hist", want "anc".*does not end in its manifest's runId/);
+    // every problem is listed, and a record without a run says so
+    expect(reg1SourceProblems(reg1BundleWantOf(0), 100, { ...rec(0), seed: 1, mutRate: 0, step: 5 }).length).toBe(3);
+    expect(reg1SourceProblems(reg1BundleWantOf(0), 100, undefined)).toEqual(["no source record"]);
+  });
+
+  it("validates a continuation's sidecar against its source as it is now and the checkpoint beside it", () => {
+    expect([reg1ContinuationPathOf(0), reg1ContinuationPathOf(77)]).toEqual(["scaffold/reg1/cont200k/scaf-i00.blck.gz", "scaffold/reg1/cont200k/ancestor-i05.blck.gz"]);
+    const continued = (h: number, from: Reg1Source, over: Partial<R3RepCheckpoint> = {}): R3RepCheckpoint => ({ source: `runs/${reg1ContinuationPathOf(h)}`, stateHash: `e${h}`.padEnd(16, "0"), seed: reg1ContinueSeed(h), mutRate: mut, step: from.step + 200_000, tilesX: 8, tilesY: 8, ...over });
+    const sidecarOf = (h: number, from: Reg1Source, end: R3RepCheckpoint) => reg1ContinuationOf({ h, origin: from, end, steps: 200_000, censusEvery: 100, protocolSha256Reg1: REG });
+    for (const h of [0, 30, 60, 77]) {
+      const from = rec(h);
+      const end = continued(h, from);
+      const c = sidecarOf(h, from, end);
+      expect(c).toMatchObject({ reg1: true, h, boundary: reg1BoundaryAOf(h), source: from.source, sourceStateHash: from.stateHash, sourceSeed: from.seed, sourceStep: from.step, seed: 4_850_501 + h, steps: 200_000, mutRate: mut, censusEvery: 100, endStateHash: end.stateHash, endStep: from.step + 200_000, origin: from, protocolSha256Reg1: REG });
+      expect(reg1ContinuationProblems(h, c, from, end, REG)).toEqual([]);
+    }
+    // a source that is its world's census-100 rerun
+    const rerun = rec(2, 100, {}, true);
+    expect(rerun.source).toBe("runs/scaffold/reg1/hist-c100/ponds/treatment/seed-4850003");
+    expect(reg1ContinuationProblems(2, sidecarOf(2, rerun, continued(2, rerun)), rerun, continued(2, rerun), REG)).toEqual([]);
+    expect(reg1ContinuationProblems(2, sidecarOf(2, rerun, continued(2, rerun)), rec(2), continued(2, rerun), REG).join(" ")).toMatch(/continuation source ".*hist-c100.*", want ".*\/hist\/ponds.*"/); // the source named now is another run
+    const from = rec(2);
+    const end = continued(2, from);
+    const c = sidecarOf(2, from, end);
+    expect(reg1ContinuationProblems(2, c, { ...from, stateHash: "f".repeat(16) }, end, REG).join(" ")).toMatch(/continuation sourceStateHash "b2-100.*", want "f{16}"/); // the source changed since
+    expect(reg1ContinuationProblems(2, sidecarOf(2, from, { ...end, seed: 4_850_502 }), from, { ...end, seed: 4_850_502 }, REG).join(" ")).toMatch(/continuation seed 4850502, want 4850503/);
+    expect(reg1ContinuationProblems(2, { ...c, steps: 100_000, endStep: 1_100_000 }, from, { ...end, step: 1_100_000 }, REG).join(" ")).toMatch(/continuation steps 100000, want 200000/);
+    expect(reg1ContinuationProblems(2, { ...c, censusEvery: 1000 }, from, end, REG).join(" ")).toMatch(/censusEvery 1000, want 100/);
+    expect(reg1ContinuationProblems(2, c, from, { ...end, stateHash: "d".repeat(16) }, REG).join(" ")).toMatch(/the continued checkpoint's stateHash "d{16}" is not the continuation's endStateHash/);
+    expect(reg1ContinuationProblems(3, c, from, end, REG).join(" ")).toMatch(/continuation history 2, want 3/);
+    expect(reg1ContinuationProblems(2, c, from, end, "4".repeat(64)).join(" ")).toMatch(/protocolSha256Reg1/);
+    expect(reg1ContinuationProblems(2, null, from, end, REG)).toEqual(["no continuation sidecar (the <checkpoint>.json that continue --reg1 writes last)"]);
+    // a smoke test's sidecar says so, and is never a source
+    expect("allowAnySeed" in c).toBe(false);
+    const smoke = reg1ContinuationOf({ h: 2, origin: from, end, steps: 200_000, censusEvery: 100, protocolSha256Reg1: REG, allowAnySeed: true });
+    expect(smoke.allowAnySeed).toBe(true);
+    expect(reg1ContinuationProblems(2, smoke, from, end, REG)).toEqual(["continuation was written under --allow-any-seed (allowAnySeed true): a smoke test's, not a source"]);
+    expect(reg1ContinuationProblems(2, c, null, end, REG).join(" ")).toMatch(/source was not read/);
+    // what continue --reg1 checks before it runs
+    expect(reg1ContinueProblems(2, { seed: 4_850_503, steps: 200_000, censusEvery: 100, out: "runs/scaffold/reg1/cont200k/scaf-i02.blck.gz" })).toEqual([]);
+    expect(reg1ContinueProblems(77, { seed: 4_850_578, steps: 200_000, censusEvery: 100, out: "scaffold/reg1/cont200k/ancestor-i05.blck.gz" })).toEqual([]);
+    expect(reg1ContinueProblems(2, { seed: r3RepContinueSeed(2), steps: 20_000, censusEvery: 1000, out: "runs/scaffold/r3rep/cont200k/scaf-i2.blck.gz" })).toEqual([
+      `seed ${r3RepContinueSeed(2)}, want reg1ContinueSeed(2) = 4850503`,
+      "steps 20000, want 200000",
+      "census every 1000, want 100",
+      'output "runs/scaffold/r3rep/cont200k/scaf-i2.blck.gz" does not end in scaffold/reg1/cont200k/scaf-i02.blck.gz',
+    ]);
+  });
+
+  it("checks each set's whole provenance: sources at a and b, the swap pair's ancestor fragments and Ge-on-Fa's donor, S2's times and S3's sources", () => {
+    const dom = r3RepDominantRecord(dominantGenome(blobSource(2)));
+    const l = (set: "source" | "ge-on-fa" | "ga-on-fa" | "ga-on-fe" | "quench", arm: "scaf" | "rand" | "cont" | "ancestor", i: number, timing: "a" | "b") => reg1CompetenceLabelsOf(set, arm, i, timing);
+    // timing a: the source itself; the swap pair's source is ancestor world i's (a), Ge-on-Fa's donor scaf_i's (a)
+    expect(reg1ProvenanceProblems(l("source", "rand", 4, "a"), rec(28), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(l("source", "ancestor", 4, "a"), rec(76), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(l("quench", "scaf", 4, "a"), rec(4), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(l("ga-on-fe", "scaf", 4, "a"), rec(4), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(l("ga-on-fa", "scaf", 4, "a"), rec(76), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(l("ge-on-fa", "scaf", 4, "a"), { ...rec(76), donor: { ...rec(4), dominant: dom } }, REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(l("ge-on-fa", "scaf", 4, "a"), { ...rec(76), donor: { ...rec(4), dominant: null } }, REG)).toEqual([]); // the biological record
+    expect(reg1ProvenanceProblems(l("ga-on-fa", "scaf", 4, "a"), rec(4), REG).join(" ")).toMatch(/directory .* is not scaffold\/reg1\/anc\/ponds\/pond-cont\/seed-4850405/); // scaf_i's fragments
+    expect(reg1ProvenanceProblems(l("ga-on-fe", "scaf", 4, "a"), rec(76), REG).join(" ")).toMatch(/is not scaffold\/reg1\/hist\/ponds\/treatment\/seed-4850005/); // the ancestor's
+    expect(reg1ProvenanceProblems(l("ge-on-fa", "scaf", 4, "a"), { ...rec(76), donor: { ...rec(5), dominant: dom } }, REG).join(" ")).toMatch(/^donor directory .* is not scaffold\/reg1\/hist\/ponds\/treatment\/seed-4850005/);
+    expect(reg1ProvenanceProblems(l("ge-on-fa", "scaf", 4, "a"), rec(76), REG).join(" ")).toMatch(/no donor record/);
+    expect(reg1ProvenanceProblems(l("ge-on-fa", "scaf", 4, "a"), { ...rec(76), donor: { ...rec(4), dominant: { ...dom!, words: "00" } } }, REG).join(" ")).toMatch(/not a dominant genome record/);
+    expect(reg1ProvenanceProblems(l("ga-on-fa", "scaf", 4, "a"), { ...rec(76), donor: { ...rec(4), dominant: dom } }, REG).join(" ")).toMatch(/names a genome donor, but ga-on-fa has none/);
+    expect(reg1ProvenanceProblems(l("source", "scaf", 4, "a"), undefined, REG)).toEqual(["assay.json has no provenance of its source (run the assay with --reg1)"]);
+    // timing b: the continued checkpoint, its sidecar and the timing (a) source the sidecar names
+    for (const [set, h] of [["source", 4], ["quench", 4], ["source", 64], ["source", 76]] as const) {
+      const from = rec(h);
+      const end = { source: `runs/${reg1ContinuationPathOf(h)}`, stateHash: "e".repeat(16), seed: reg1ContinueSeed(h), mutRate: mut, step: from.step + 200_000, tilesX: 8, tilesY: 8 };
+      const c = reg1ContinuationOf({ h, origin: from, end, steps: 200_000, censusEvery: 100, protocolSha256Reg1: REG });
+      const hist = reg1HistoryOf(h);
+      expect(reg1ProvenanceProblems(l(set, hist.arm, hist.history, "b"), { ...end, continuation: c, origin: from }, REG)).toEqual([]);
+      if (h === 4) {
+        expect(reg1ProvenanceProblems(l(set, "scaf", 4, "b"), { ...end, continuation: null, origin: from }, REG).join(" ")).toMatch(/no continuation sidecar/);
+        expect(reg1ProvenanceProblems(l(set, "scaf", 4, "b"), { ...end, continuation: c, origin: rec(4, 100, { run: { ...rec(4).run, complete: false } }) }, REG).join(" ")).toMatch(/continuation source run is incomplete/);
+        expect(reg1ProvenanceProblems(l(set, "scaf", 4, "b"), { ...end, source: "runs/scaffold/r3rep/cont200k/scaf-i4.blck.gz", continuation: c, origin: from }, REG).join(" ")).toMatch(/does not end in scaffold\/reg1\/cont200k\/scaf-i04\.blck\.gz/);
+        expect(reg1ProvenanceProblems(l(set, "scaf", 4, "a"), { ...end, continuation: c, origin: from }, REG).length).toBeGreaterThan(0); // a (b) source for (a)
+        expect(reg1ProvenanceProblems(l(set, "scaf", 4, "b"), rec(4), REG).length).toBeGreaterThan(0); // and the reverse
+      }
+    }
+    // census-100 reruns: a source at (a), a continuation's source at (b), Ge-on-Fa's donor, S2's time 0 and S3's boundary 34
+    expect(reg1ProvenanceProblems(l("source", "rand", 4, "a"), rec(28, 100, {}, true), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(l("ge-on-fa", "scaf", 4, "a"), { ...rec(76, 1, {}, true), donor: { ...rec(4, 100, {}, true), dominant: dom } }, REG)).toEqual([]);
+    {
+      const from = rec(64, 100, {}, true);
+      const end = { source: `runs/${reg1ContinuationPathOf(64)}`, stateHash: "e".repeat(16), seed: reg1ContinueSeed(64), mutRate: mut, step: from.step + 200_000, tilesX: 8, tilesY: 8 };
+      const c = reg1ContinuationOf({ h: 64, origin: from, end, steps: 200_000, censusEvery: 100, protocolSha256Reg1: REG });
+      expect(c.source).toBe("runs/scaffold/reg1/hist-c100/ponds/pond-cont/seed-4850217");
+      expect(reg1ProvenanceProblems(l("source", "cont", 16, "b"), { ...end, continuation: c, origin: from }, REG)).toEqual([]);
+    }
+    expect(reg1ProvenanceProblems(reg1GardenLabelsOf("scaf", 4, 0, "disc"), rec(4, null, {}, true), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(reg1HeredityLabelsOf(4), rec(4, 34, {}, true), REG)).toEqual([]);
+    // S2: time 0 is the initial world, time C boundary 100
+    expect(reg1ProvenanceProblems(reg1GardenLabelsOf("rand", 4, 0, "disc"), rec(28, null), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(reg1GardenLabelsOf("rand", 4, 1, "fragment"), rec(28), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(reg1GardenLabelsOf("rand", 4, 0, "disc"), rec(28), REG).join(" ")).toMatch(/source boundary 100, want null/);
+    // S3: a history's boundary 34, a control's checkpoint as R1'' records it
+    expect(reg1ProvenanceProblems(reg1HeredityLabelsOf(28), rec(28, 34), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(reg1HeredityLabelsOf(28), rec(28), REG).join(" ")).toMatch(/source boundary 100, want 34/);
+    const pre = { totalC: 85_566, totalS: 204_772, carrying: 94_592, outsideWindow: 92_766, postCycle: false };
+    const control = (h: number) => ({ source: `runs/${reg1ControlPathOf(h)}`, stateHash: "c".repeat(16), seed: h < 50 ? 4_805_001 + h - 48 : 4_880_001 + h - 50, mutRate: 0, step: 10_000, tilesX: 8, tilesY: 8, distinctGenomes: h < 50 ? 12 : 1, phase: pre });
+    for (let h = 48; h <= 53; h++) expect(reg1ProvenanceProblems(reg1HeredityLabelsOf(h), control(h), REG)).toEqual([]);
+    expect(reg1ProvenanceProblems(reg1HeredityLabelsOf(50), rec(0), REG).join(" ")).toMatch(/not an S3 control's record/);
+  });
+
+  it("holds S3's controls to the P2 ranking worlds and this block's negative-control worlds, and the tool that grows the latter to that world", () => {
+    expect([48, 49, 50, 53].map(reg1ControlPathOf)).toEqual(["scaffold/p2/rank/s0/ckpt/b1-pre.blck.gz", "scaffold/p2/rank/s1/ckpt/b1-pre.blck.gz", "scaffold/reg1/neg/j0/ckpt/b1-pre.blck.gz", "scaffold/reg1/neg/j3/ckpt/b1-pre.blck.gz"]);
+    const pre = { totalC: 462_380, totalS: 864_659, carrying: 194_040, outsideWindow: 190_125, postCycle: false };
+    const neg = (j: number, over = {}) => ({ source: `runs/scaffold/reg1/neg/j${j}/ckpt/b1-pre.blck.gz`, seed: 4_880_001 + j, mutRate: 0, step: 10_000, tilesX: 8, tilesY: 8, distinctGenomes: 1, phase: pre, ...over });
+    for (let j = 0; j <= 3; j++) expect(reg1ControlProblems(50 + j, neg(j))).toEqual([]);
+    expect(reg1ControlProblems(50, neg(0, { source: "runs/scaffold/rep/neg/j0/ckpt/b1-pre.blck.gz", seed: 4_811_201 })).join(" ")).toMatch(/does not end in scaffold\/reg1\/neg\/j0.*seed 4811201, want 4880001/); // R1'''s control
+    expect(reg1ControlProblems(51, neg(0)).join(" ")).toMatch(/seed 4880001, want 4880002/);
+    expect(reg1ControlProblems(50, neg(0, { distinctGenomes: 12 })).join(" ")).toMatch(/want 1 \(a clone world\)/);
+    expect(reg1ControlProblems(50, neg(0, { mutRate: 429_497 })).join(" ")).toMatch(/mutRate 429497, want 0/);
+    expect(reg1ControlProblems(50, neg(0, { phase: { totalC: 0, totalS: 0, carrying: 2014, outsideWindow: 0, postCycle: true } })).join(" ")).toMatch(/looks post-cycle/);
+    expect(reg1ControlProblems(48, { ...neg(0), source: "runs/scaffold/p2/rank/s0/ckpt/b1-pre.blck.gz", seed: 4_805_001, distinctGenomes: 12 })).toEqual([]);
+    expect(reg1ControlProblems(48, { ...neg(0), source: "runs/scaffold/p2/rank/s0/ckpt/b1-pre.blck.gz", seed: 4_805_001 }).join(" ")).toMatch(/more than 1 \(a founders world\)/);
+    expect(reg1ControlProblems(3, neg(0))).toEqual(["h 3 is a history, not an S3 control"]);
+    // tools/scaffold.ts grows a negative-control world at its seed only as the heredity replication grew its controls
+    const run = { arm: "cont", init: "clone", mutOff: true, period: 10_000, cycles: 1, side: 8 };
+    expect(reg1NegativeRunProblems(run)).toEqual([]);
+    expect(reg1NegativeRunProblems({ ...run, arm: "scaf", mutOff: false, cycles: 100 })).toEqual(['arm "scaf", want "cont"', "mutOff false, want true", "cycles 100, want 1"]);
+    expect(reg1NegativeRunProblems({ ...run, init: "founders", period: 3000, side: 2 })).toHaveLength(3);
+  });
+
+  it("keeps a waived (smoke) run out of the repository's production tree, and lets it write anywhere else", () => {
+    const prod = "/repo/runs/scaffold/reg1";
+    for (const out of ["/repo/runs/scaffold/reg1", "/repo/runs/scaffold/reg1/", "/repo/runs/scaffold/reg1/assays/scaf-i00-a", "/repo/runs/scaffold/reg1/cont200k/scaf-i00.blck.gz"]) {
+      expect(reg1WaiverOutProblems(out, prod).join(" ")).toMatch(/^--allow-any-seed writes .* inside the registration's production tree \/repo\/runs\/scaffold\/reg1: a smoke test writes elsewhere$/);
+    }
+    for (const out of ["/tmp/scratchpad/reg1-smoke/runs/scaffold/reg1/assays/scaf-i00-a", "/repo/runs/scaffold/reg1x/a", "/repo/runs/scaffold/reg2", "/repo/runs/scaffold", "/other/repo/runs/scaffold/reg1/a"]) {
+      expect(reg1WaiverOutProblems(out, prod)).toEqual([]);
+    }
+  });
+
+  it("lists R4's sources in a fixed order: every history's (a), then every ancestor world's", () => {
+    const srcs = reg1CapabilitySources();
+    expect(srcs).toHaveLength(96);
+    expect(srcs[0]).toEqual({ arm: "scaf", history: 0, h: 0, dir: reg1BundleDirOf(0), boundary: 100 });
+    expect(srcs[47]).toMatchObject({ arm: "rand", history: 23, boundary: 100 });
+    expect(srcs[95]).toEqual({ arm: "ancestor", history: 23, h: 95, dir: "scaffold/reg1/anc/ponds/pond-cont/seed-4850424", boundary: 1 });
+    expect(srcs.map((s) => s.h)).toEqual(Array.from({ length: 96 }, (_, h) => h));
+  });
+
+  it("writes the reg1 labels, provenance and registration hash into assay.json, and leaves other keys alone", () => {
+    const base = { protocolSha256: "0".repeat(64), assay: "competence", source: "s", tag: "t", k: 8, period: 10_000, ref: 103_058, side: 8, replicates: 8, censusEvery: 100, inoculum: "swap-aa", seeds: [], extra: {}, summary: {}, wallSeconds: 1 };
+    const labels: Reg1LabelSet = reg1CompetenceLabelsOf("ga-on-fa", "scaf", 3, "a");
+    const json = JSON.parse(JSON.stringify(assayJson({ ...base, labels, extra: { quench: false, provenance: rec(75), protocolSha256Reg1: REG1_SHA256 } })));
+    expect(json.labels).toEqual({ reg1: true, set: "ga-on-fa", arm: "scaf", history: 3, timing: "a", time: null, h: 75, control: null });
+    expect(json.provenance).toEqual(rec(75));
+    expect(json.protocolSha256Reg1).toBe(REG1_SHA256);
+    expect(json.protocolSha256).toBe("0".repeat(64));
+    expect(reg1LabelsFromJson(json.labels)).toEqual({ labels });
+  });
+
+  it("pins the registration as frozen: it still begins with its pinned text, which an amendment at the end keeps", async () => {
+    const doc = new Uint8Array(readFileSync(fileURLToPath(new URL(`../../${REG1_PROTOCOL.doc}`, import.meta.url))));
+    expect(REG1_SHA256).toBe("8a1b00ec5bd1440e8c4ab4ea61f3816dee0dbe110cb2052f0ae0ca785a817f69");
+    expect(REG1_PROTOCOL.bytes).toBe(31_675);
+    expect(createHash("sha256").update(doc.subarray(0, REG1_PROTOCOL.bytes)).digest("hex")).toBe(REG1_SHA256);
+    // the freeze record says the same
+    const frozen = readFileSync(fileURLToPath(new URL("../../experiments/scaffold/REGISTRATION-v1", import.meta.url)), "utf8");
+    expect(frozen.trim().split(/\s+/)[0]).toBe(REG1_SHA256);
+    expect(await reg1ProtocolProblems(doc)).toEqual([]);
+    const amended = new Uint8Array([...doc, ...new TextEncoder().encode("\n## Amendment 1 (2026-10-03)\n\nA dated amendment at the end.\n")]);
+    expect(await reg1ProtocolProblems(amended)).toEqual([]);
+    for (const at of [0, 5000, REG1_PROTOCOL.bytes - 1]) {
+      const edited = amended.slice();
+      edited[at] ^= 1;
+      expect((await reg1ProtocolProblems(edited)).join(" ")).toMatch(/^docs\/scaffold-registration-v1\.md no longer begins with its pinned text \(SHA-256 8a1b00ec.*; its first 31675 bytes hash to [0-9a-f]{64}\)/);
+    }
+    expect(await reg1ProtocolProblems(doc.subarray(0, 100))).toEqual(["docs/scaffold-registration-v1.md has 100 bytes, fewer than the 31675 it had when pinned"]);
   });
 });

@@ -8,6 +8,7 @@
 //   life.jsonl         inferred life events (fission, fusion, budding, birth, death)
 //   heredity.tsv       step, trait pairs of sibling pieces at fission
 //   checkpoints/*.blck periodic snapshots (optional)
+//   checkpoints/b<NNN>-pre.blck  pond runs: listed boundaries' pre-cycle states (optional)
 
 import {
   PRESETS,
@@ -153,6 +154,18 @@ export interface RunSpec {
    * preset's own world. Absent from the manifest of any run that does not set it.
    */
   founderSet?: string[];
+  /**
+   * Pond runs only: boundaries b (positive, strictly increasing) at whose step b · pondPeriod the
+   * runner also writes the state *before* that boundary's cycle (for arm cont, before its rows are
+   * recorded: the same state), with the pre-cycle observer (`ponds.lastCycle` = b - 1), to
+   * `checkpoints/b<NNN>-pre.blck`, and lists each in the manifest's `preCycleCheckpoints` with its
+   * `stateHash` -- the assay sources of the scaffolding registration (docs/scaffold-registration-v1.md,
+   * "Code to build"). Each boundary must fall inside this run, on its census grid. Observation only:
+   * the physics, the cycle and every other file are unchanged, and `continuationError` refuses to
+   * continue from such a state. Optional and absent from every default, so a run that does not set it
+   * keeps its spec, manifest and every output byte-identical to before this field existed.
+   */
+  preCycleCheckpoints?: number[];
 }
 
 export interface Sink {
@@ -213,8 +226,9 @@ export interface ObserverState {
    * observer, so their artifacts and digests are unchanged. `lastCycle` is
    * the last boundary whose pond cycle has been applied (or, for arm cont,
    * recorded): floor(step / pondPeriod) for every state a pond run writes,
-   * since each boundary's cycle runs before that step's checkpoint. See
-   * `pondContinuationError`.
+   * since each boundary's cycle runs before that step's checkpoint -- except
+   * the opt-in pre-cycle checkpoints (`RunSpec.preCycleCheckpoints`), which
+   * carry b - 1 at boundary b. See `pondContinuationError`.
    */
   ponds?: { lastCycle: number };
 }
@@ -282,7 +296,44 @@ export function validateSpec(spec: RunSpec): string[] {
       else if (PRESETS.find((p) => p.id === spec.presetId)?.init.kind !== "m3") errs.push("founderSet needs a preset founded from the M3 founder set");
     }
   }
+  // The pond-specific checks (a pond config, each boundary inside this run and on its census grid)
+  // need the config and the start step: `preCycleError`, which runExperiment applies.
+  if (spec.preCycleCheckpoints !== undefined) {
+    const bs = spec.preCycleCheckpoints;
+    // An indexed loop, not every/some, which skip the holes of a sparse array ([, 2]).
+    let shape = Array.isArray(bs) && bs.length > 0;
+    let increasing = true;
+    for (let i = 0; shape && i < bs.length; i++) {
+      if (!Number.isSafeInteger(bs[i]) || bs[i] <= 0) shape = false;
+      else if (i > 0 && bs[i] <= bs[i - 1]) increasing = false;
+    }
+    if (!shape) errs.push("preCycleCheckpoints must be a non-empty array of positive integers (pond boundaries)");
+    else if (!increasing) errs.push("preCycleCheckpoints must be strictly increasing");
+  }
   return errs;
+}
+
+/**
+ * Why `spec.preCycleCheckpoints` cannot be written by a run of config `cfg` from `startStep`, or
+ * null when it can (or is absent). The runner acts at census steps only, and a history never cycles
+ * at its own start step (that boundary's cycle belongs to the run that reached it), so each boundary
+ * step b · pondPeriod must lie in (startStep, startStep + steps] and on this run's census grid.
+ * runExperiment refuses such a spec before touching the GPU; tools/run.ts checks its fresh runs
+ * (startStep 0) before it even requests a device.
+ */
+export function preCycleError(spec: RunSpec, cfg: WorldConfig, startStep: number): string | null {
+  const bs = spec.preCycleCheckpoints;
+  if (bs === undefined) return null;
+  const period = cfg.pondPeriod;
+  if (period === undefined) return "preCycleCheckpoints needs a pond run: this config has no pondPeriod";
+  const end = startStep + spec.steps;
+  for (const b of bs) {
+    const t = b * period;
+    if (t <= startStep) return `preCycleCheckpoints: boundary ${b} (t=${t}) is at or before this run's start step ${startStep}; its cycle belongs to the run that reached it`;
+    if (t > end) return `preCycleCheckpoints: boundary ${b} (t=${t}) is beyond this run's last step ${end}`;
+    if ((t - startStep) % spec.censusEvery !== 0) return `preCycleCheckpoints: boundary ${b} (t=${t}) is not a census step of this run (start ${startStep}, censusEvery ${spec.censusEvery})`;
+  }
+  return null;
 }
 
 /**
@@ -434,8 +485,9 @@ export function continuationError(spec: RunSpec, start: WorldState, observer: Ob
  * at step 0 a pond observer may omit it, and if present it must say 0 -- and
  * absent otherwise; and `ponds.lastCycle` must equal floor(step /
  * pondPeriod). That rejects the one continuation the rest of the checks
- * cannot see: a pre-cycle state at a boundary (a pond run never writes one,
- * but tools/scaffold.ts's `b<C>-pre` checkpoints are such states), which
+ * cannot see: a pre-cycle state at a boundary (a pond run writes one only
+ * when asked, `RunSpec.preCycleCheckpoints`, and tools/scaffold.ts's
+ * `b<C>-pre` checkpoints are such states), which
  * would otherwise silently skip that boundary's cycle, since a history never
  * cycles at its own start step. Shared by `continuationError` (tools/run.ts
  * continuations and islands) and the lab's adoption of an imported or
@@ -623,6 +675,10 @@ export async function runExperiment(
         )
       : initWorld(cfg, preset.init));
   const startStep = init.step;
+  // Checked first among the start-step guards, so a listed boundary off this run's census grid
+  // (which the two pond cadence guards also rule out) is named as such.
+  const preCycleBad = preCycleError(spec, cfg, startStep);
+  if (preCycleBad) throw new Error(preCycleBad);
   // The step loop below re-chunks in `censusEvery`-sized steps *relative to
   // this call's own start* (unchanged from before migration existed, so a
   // migration-disabled continuation from any step -- aligned or not -- keeps
@@ -684,6 +740,9 @@ export async function runExperiment(
   const sim = await GpuSim.create(device, actualInit);
   const obs = restoreObservers(opts.observer, settings, cfg);
   const { tracker, activity } = obs;
+  // RunSpec.preCycleCheckpoints: boundary step -> b, and the manifest's list of what was written.
+  const preCycleAt = new Map((spec.preCycleCheckpoints ?? []).map((b) => [b * pondPeriod, b]));
+  const preCycleFiles: { boundary: number; step: number; file: string; hash: string }[] = [];
   const manifest = {
     runId: runId(spec),
     spec: normalizedSpec(spec),
@@ -721,6 +780,8 @@ export async function runExperiment(
       : {}),
     startedAt: new Date().toISOString(),
     checkpoints: [] as { step: number; file: string; hash: string }[],
+    // Only when RunSpec.preCycleCheckpoints is set, so every other manifest keeps its shape.
+    ...(spec.preCycleCheckpoints !== undefined ? { preCycleCheckpoints: preCycleFiles } : {}),
     summary: null as RunSummary | null,
   };
   await sink.writeText("manifest.json", JSON.stringify(manifest, null, 2));
@@ -881,6 +942,17 @@ export async function runExperiment(
       lastCensus = { individuals: ind.length, lineages: c.lineages.length };
       // Observation continues through extinction (segments end at their boundary).
       if (o.becameExtinct) onProgress(`extinct at step ${c.step}`);
+      // RunSpec.preCycleCheckpoints: the state at a listed boundary before its cycle, with the
+      // observer as it stands (ponds.lastCycle = b - 1), read back here, before applyBoundary. Its
+      // own readback, since the one applyBoundary returns is the post-cycle state for scaf and rand;
+      // the cycle's own readback and everything after it are untouched.
+      const preB = preCycleAt.get(c.step);
+      if (preB !== undefined) {
+        const pre = await sim.readState();
+        const file = `checkpoints/b${String(preB).padStart(3, "0")}-pre.blck`;
+        await sink.writeBytes(file, encodeCheckpoint(pre, serializeObservers(obs, pre.step, settings)));
+        preCycleFiles.push({ boundary: preB, step: pre.step, file, hash: stateHash(pre) });
+      }
       // Scheduled through the same helper the lab worker uses (migrate.ts), so
       // both agree bit for bit on when and how migration and the pond cycle
       // apply. Keyed on the absolute step (not this call's own start), so a

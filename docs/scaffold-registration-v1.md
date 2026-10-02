@@ -327,3 +327,21 @@ Built after the freeze and before any instance starts: tested, reviewed by Astra
 3. **Code:** built and tested as above, reviewed by Astra, and committed, with the commit recorded.
 4. **Draw:** the dated AWS draw note, approved by the user.
 5. **Runs and assays.** Then the report stage, an independent re-derivation of every number from the raw files, an Astra review, and the dated result entry.
+
+## Amendment 1 — 2026-10-02: implementation clarifications, before any run
+
+Written while building the code listed under "Code to build before any run", before any history, assay or data of this registration existed. It changes no hypothesis, test, threshold, seed formula, sample size or outcome row. It fixes how rules the text leaves open are implemented. Where it reads a rule more strictly than the text, the stricter reading counts against confirmation.
+
+1. **Run directories.** Run ids cannot contain `/`, so histories run with `tools/run.ts --out runs/scaffold/reg1 --experiment hist`. Ancestor worlds use `--experiment anc`, the reproducibility reruns `--experiment repro`, and the device check `--experiment device`. Bundles live at `runs/scaffold/reg1/<experiment>/ponds/<condition>/seed-<n>/`.
+2. **Pre-cycle checkpoints** are written as `checkpoints/b<NNN>-pre.blck`: the raw checkpoint artifact, with the pre-cycle observer and with `{ boundary, step, file, hash }` in the manifest. Stitching refuses segments that carry them.
+3. **Event-overflow reruns** (validity step 3) use `--experiment hist-c100` (or `anc-c100`) at census 100, with the spec otherwise identical. Exactly one complete bundle per history is accepted across the two directories. If both are complete, that history is unresolved.
+4. **"Unresolved."**
+   - **Unresolved history:** a history whose run bundle, or any of its assay sets, is unresolved. That covers sources, swaps, `Ga-on-Fe`, quenched, S2 and S3 sets, and continuations. This one definition is used for the more-than-6 rule and in the sign tests and S3, where an unresolved history counts as not positive or not significant.
+   - **Unresolved value, in the rank tests (H1, S2b):** a value whose own set or bundle is unresolved. Following validity step 5, a `scaf` history without both quenched sets also has every one of its values unresolved.
+5. **Rows that settle without the tests.** When the outcome row is Invalid or Uninformative, the report prints no test statistic. The truncation sensitivity is computed only when the tests decide the row, and the validity checks are never re-run without the flagged histories.
+6. **Device check.** It needs the Mac's reference bundle and one bundle per instance: four in all, with equal `finalHash`. Every history bundle's host and adapter must be among them.
+7. **Completeness.** The report analyses nothing unless every command of the committed queue manifest has a terminal state: done, or failed after its retry. Otherwise its outcome is "incomplete", the same as the budget stop.
+8. **R4's "ancestor"** is each ancestor world's dominant genome at (a), as protocol v1 evaluated its ancestor world. Evaluation slots are fixed in source order. An unavailable source's slot is filled with `M3_FOUNDERS[2]`, evaluated, and its result discarded.
+9. **S1's interval:** the 250th and 9,750th of the 10,000 sorted bootstrap medians (nearest rank), with eligible histories indexed in ascending i.
+10. **Retained-mass bins** (descriptive): 0, then [2^k, 2^(k+1)).
+11. **S3's negative-control worlds** (seeds 4,880,001–4,880,004) are made with `tools/scaffold.ts`, exactly as the heredity replication made its own: arm `cont`, clone, mutation off, one period, side 8.

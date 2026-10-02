@@ -188,3 +188,13 @@ The no-donor case of acceptance test 3 uses period 200, through a test config, w
 - **Step 0.** A pond observer at step 0 may omit `ponds` or carry `lastCycle: 0`; anything else is rejected.
 - **Lab until I2.** `migrateAtBoundary` refuses pond configs, so before I2 the lab marks a pond world lost at its first census instead of running it without the cycle.
 - **Test 2** uses a census every 1,000 steps, not the standalone histories' 100. Neither the physics nor `ponds.tsv` depends on the census cadence.
+
+## Amendment 3 — 2026-10-02: opt-in pre-cycle checkpoints for the registration
+
+Built for `docs/scaffold-registration-v1.md` ("Code to build before any run"). For runs that ask for it, this supplies the pre-cycle snapshot listed under Tools as not in v1.
+- `RunSpec.preCycleCheckpoints` (`tools/run.ts --pre-cycle 34,100`) lists boundaries b. At the census at step b · `pondPeriod`, after the census and observers and before the boundary helper, the runner reads the state back and writes it, with the pre-cycle observer (`ponds.lastCycle` = b − 1), to `checkpoints/b<NNN>-pre.blck`, raw like the periodic checkpoints. For `cont` this is the state at the boundary step.
+- The manifest gains `preCycleCheckpoints: [{ boundary, step, file, hash }]`, in boundary order, with `hash` = `stateHash` (physics only).
+- The list must be non-empty, of positive integers, strictly increasing, in a pond run, with every boundary step in (start step, start step + steps] and on the run's census grid. Otherwise the run is refused before the GPU is touched.
+- The field is optional and absent by default. Without it, the spec, manifest and every file are byte-identical to before. With it, the physics, `ponds.tsv`, the periodic checkpoints and every other file except the manifest are unchanged (`tests/deno/ponds.ts precycle`, `packages/runner/test/precycle.test.ts`).
+- `continuationError` refuses to continue from such an artifact, as from any pre-cycle state; assays only read it.
+- Islands and the coordinator are unchanged: the coordinator builds island specs from a fixed set of fields, so the field never reaches an island, and `stitchRun` refuses a segment that carries it. The registration's histories run through `tools/run.ts`.

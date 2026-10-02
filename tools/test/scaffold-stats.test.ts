@@ -1,13 +1,14 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { GENOME_CHANNELS, allocState, encodeCheckpoint, stateHash } from "@bl/schema";
-import { assaySeed, pondConfig } from "../lib/ponds.ts";
+import { mannWhitney } from "@bl/metrics";
+import { assaySeed, pondConfig, randomKey } from "../lib/ponds.ts";
 import {
   ASSAY_COLUMNS,
   M_ASSAY,
@@ -120,6 +121,35 @@ import {
   r3RepSideBySide,
   r3RepTrajectory,
   RecipientGuard,
+  REG1_REPORT_CONDITIONS,
+  REG1_REPORT_PROTOCOL,
+  REG1_REPORT_SEEDS,
+  binomialUpperTail,
+  reg1ReportBootstrapMedian,
+  reg1ReportBundleProblems,
+  reg1ReportBundleRoleOf,
+  reg1ReportCompetenceSeed,
+  reg1ReportContinuationSeed,
+  reg1ReportDeviceCheck,
+  reg1ReportExpectedRuns,
+  reg1ReportExpectedSet,
+  reg1ReportExpectedSets,
+  reg1ReportGardenSeed,
+  reg1ReportH,
+  reg1ReportPickBundle,
+  reg1ReportHereditySeed,
+  reg1ReportHistoryId,
+  reg1ReportLabelProblems,
+  reg1ReportProtocolProblems,
+  reg1ReportQueueCheck,
+  reg1ReportReadout,
+  reg1ReportReproducibility,
+  reg1ReportReproSelection,
+  reg1ReportScreen,
+  reg1ReportSetIdOf,
+  reg1ReportSignTest,
+  reg1ReportTrajectory,
+  reg1ReportWorldSeed,
   r3Verdict,
   r4RowsOf,
   r4Table,
@@ -133,6 +163,7 @@ import {
   tauJsonProblems,
   tauRule,
   tauScreen,
+  truncationOf,
   tsvRows,
   validateAssayDirs,
   type AssayDir,
@@ -152,6 +183,13 @@ import {
   type R3RepReload,
   type R3RepRun,
   type ReplayCheck,
+  type Reg1ReportArm,
+  type Reg1ReportDevice,
+  type Reg1ReportExpectedSet,
+  type Reg1ReportReproducibility,
+  type Reg1ReportRun,
+  type Reg1ReportSet,
+  type Reg1ReportSetDir,
   type TraitSetDir,
 } from "../lib/scaffold-stats.ts";
 
@@ -4764,5 +4802,1032 @@ describe("scaffold-report r3rep", () => {
     expect(rr.checkpoints).toMatchObject({ reloaded: 2, unreadable: [] });
     const ids = new Set(["scaf-i0-a", "cont-i0-b", "scaf-i1-a-swap-ea", "scaf-i2-a-swap-ea", "scaf-i0-a-swap-ae", "scaf-i0-b-quenched", "ancestor-a"]);
     expect(rr.descriptive.competences.map((c: { id: string }) => c.id)).toEqual(r3RepExpectedSets().map(({ labels, inoculum }) => r3RepSetIdOf(labels, inoculum)).filter((id) => ids.has(id)));
+  });
+});
+
+// ---- the scaffolding registration (docs/scaffold-registration-v1.md): reg1 ------------------------------------------------
+
+/**
+ * A crafted registration: every competence set's successes, every garden set's end trait, every S3 set's crossing-time pattern, the
+ * Ge-on-Fa records without a dominant genome and the sets that are missing. The default confirms H1 and H2: scaf 200 + i of 256 at both
+ * timings against rand 100 + i, cont 90 + i and the ancestor 80 + i; Ge-on-Fa 300 + i against Ga-on-Fa 280 + i of 512 (g > 0 in every
+ * history, but under half the advantage, so S1 fails); every quenched set 0; S2's disc gains 1000 + i (scaf) and 200 + i (rand); S3 strong
+ * in scaf and the positive controls, flat in rand and the negative controls.
+ */
+interface Reg1Plan {
+  successes: (id: string) => number;
+  gardenTrait: (id: string) => number;
+  heredity: (id: string) => "strong" | "flat" | "insufficient";
+  bio: ReadonlySet<string>;
+  missing: ReadonlySet<string>;
+}
+
+function reg1Successes(id: string): number {
+  const m = /^(scaf|rand|cont|ancestor)-i(\d\d)-(.+)$/.exec(id);
+  if (!m) throw new Error(`not a competence set: ${id}`);
+  const i = Number(m[2]);
+  if (m[3] === "a" || m[3] === "b") return { scaf: 200, rand: 100, cont: 90, ancestor: 80 }[m[1] as Reg1ReportArm] + i;
+  if (m[3] === "ge-on-fa") return 300 + i;
+  if (m[3] === "ga-on-fa") return 280 + i;
+  if (m[3] === "ga-on-fe") return 100;
+  return 0;
+}
+
+function reg1GardenTrait(id: string): number {
+  const m = /^garden-(scaf|rand)-i(\d\d)-t([01])-(raw|disc)$/.exec(id)!;
+  return m[3] === "0" ? 1000 : (m[1] === "scaf" ? 2000 : 1200) + Number(m[2]);
+}
+
+const reg1Plan = (o: Partial<Reg1Plan> = {}): Reg1Plan => ({
+  successes: reg1Successes,
+  gardenTrait: reg1GardenTrait,
+  heredity: (id) => (id.startsWith("heredity-scaf") || id.startsWith("heredity-pos") ? "strong" : "flat"),
+  bio: new Set(),
+  missing: new Set(),
+  ...o,
+});
+
+/** Override some values of a plan function by id. */
+const reg1Over = <T,>(base: (id: string) => T, over: Record<string, T>) => (id: string): T => (id in over ? over[id] : base(id));
+
+/**
+ * S3's crossing times on 128 fragments of 16 donor families: "strong" gives each family its own T (100 (f + 1)) with covariates that
+ * vary, so the ICC is high and p = 1/1001; "flat" gives every family the same T's (100..800) with constant covariates, so the family
+ * means are equal and the ICC is negative (tested, not significant).
+ */
+function reg1HeredityFragments(kind: "strong" | "flat"): R1dPrimeFragment[] {
+  return Array.from({ length: 128 }, (_, k) => {
+    const T = kind === "strong" ? 100 * (1 + (k % 16)) : 100 * (1 + Math.floor(k / 16));
+    return { family: k % 16, retMass: kind === "strong" ? 1000 + ((k * 37) % 500) : 1000, retE: kind === "strong" ? 50 + ((k * 13) % 40) : 50, truncated: false, T, endTrait: 30_000, tauTrait: T <= 4100 ? 30_000 : 0 };
+  });
+}
+
+/** A set's rows: replicate s's ponds 0..63 in order, the first `successes` rows succeeding (S2's rows carry no flag). */
+function reg1Rows(o: { assay: string; inoculum: string; replicates: number; successes?: number; endTrait?: (k: number) => number; family?: (k: number) => number; retMass?: (k: number) => number; retE?: (k: number) => number }): AssayRow[] {
+  return Array.from({ length: o.replicates * 64 }, (_, k) => ({
+    assay: o.assay,
+    source: "t",
+    replicate: Math.floor(k / 64),
+    pond: k % 64,
+    family: o.family?.(k) ?? -1,
+    inoculum: o.inoculum,
+    reqMass: 100,
+    retMass: o.retMass?.(k) ?? 100 + 50 * (k % 7),
+    reqE: 200,
+    retE: o.retE?.(k) ?? 50 + (k % 5),
+    truncated: 0,
+    endTrait: o.endTrait?.(k) ?? 0,
+    success: o.successes === undefined ? -1 : k < o.successes ? 1 : 0,
+  }));
+}
+
+const REG1_INOCULUM: Record<string, string> = { source: "fragment", quench: "quenched", "ge-on-fa": "swap-ea", "ga-on-fa": "swap-aa", "ga-on-fe": "swap-ae", "garden-raw": "fragment", "garden-disc": "disc", heredity: "fragment" };
+/** A dominant evolved genome's words (any 8-hex-digit words other than the ancestor's). */
+const REG1_EA_WORDS = (R3REP_SWAP_AE_WORDS[0] === "0" ? "1" : "0") + R3REP_SWAP_AE_WORDS.slice(1);
+/** Stand-in state hashes of the bundles' checkpoints, the same in the manifests and in the sets' provenance. */
+const reg1Hash = (bundle: string, checkpoint: string) => `${bundle}-${checkpoint}`;
+
+/** A set's rows under a plan (S3's from its fragments). */
+function reg1PlanRows(w: Reg1ReportExpectedSet, plan: Reg1Plan): AssayRow[] {
+  const kind = w.labels.set;
+  if (kind === "heredity") {
+    const h = plan.heredity(w.id);
+    if (h === "insufficient") return [];
+    const f = reg1HeredityFragments(h);
+    return reg1Rows({ assay: "transmission", inoculum: "fragment", replicates: 2, family: (k) => f[k].family, retMass: (k) => f[k].retMass, retE: (k) => f[k].retE, endTrait: (k) => f[k].endTrait });
+  }
+  if (plan.bio.has(w.id)) return [];
+  if (w.assay === "garden") return reg1Rows({ assay: "garden", inoculum: REG1_INOCULUM[kind], replicates: w.replicates, endTrait: () => plan.gardenTrait(w.id) });
+  return reg1Rows({ assay: "competence", inoculum: REG1_INOCULUM[kind], replicates: w.replicates, successes: plan.successes(w.id) });
+}
+
+/** S3's sets by id and pattern, shared between readouts: a screened set is never changed, and the rule keeps R1''s statistic per set object. */
+const reg1HereditySets = new Map<string, Reg1ReportSet>();
+
+/** The screened sets of a plan, built directly (the rule's input without the screen). */
+function reg1Sets(plan: Reg1Plan): Reg1ReportSet[] {
+  return reg1ReportExpectedSets()
+    .filter((w) => !plan.missing.has(w.id))
+    .map((w) => {
+      const kind = w.labels.set;
+      const h = kind === "heredity" ? plan.heredity(w.id) : null;
+      const key = `${w.id}|${h}`;
+      if (h !== null && reg1HereditySets.has(key)) return reg1HereditySets.get(key)!;
+      const set: Reg1ReportSet = {
+        id: w.id,
+        dir: `/assays/${w.id}`,
+        expected: w,
+        biological: plan.bio.has(w.id),
+        rows: reg1PlanRows(w, plan),
+        heredity: h === null ? null : h === "insufficient" ? { insufficient: true, censored: 10_100, fragments: [] } : { insufficient: false, censored: 10_100, fragments: reg1HeredityFragments(h) },
+      };
+      if (h !== null) reg1HereditySets.set(key, set);
+      return set;
+    });
+}
+
+/** The hosts of the device check: the Mac (the reference) and instances 1-3, which ran i = 0-7, 8-15 and 16-23. */
+const REG1_HOSTS = {
+  mac: { host: "deno 2.5.2 darwin-aarch64", adapter: "apple m2" },
+  1: { host: "deno 2.5.2 linux-x86_64", adapter: "nvidia a10g (1)" },
+  2: { host: "deno 2.5.2 linux-x86_64", adapter: "nvidia a10g (2)" },
+  3: { host: "deno 2.5.2 linux-x86_64", adapter: "nvidia a10g (3)" },
+} as const;
+const reg1InstanceOf = (i: number): 1 | 2 | 3 => (i < 8 ? 1 : i < 16 ? 2 : 3);
+
+/** Every expected run bundle, resolved with stand-in hashes and an untruncated ponds.tsv, except those named. */
+function reg1RunsFixture(o: { unresolved?: ReadonlySet<string>; flagged?: ReadonlySet<string> } = {}): Reg1ReportRun[] {
+  return reg1ReportExpectedRuns().map(({ id, arm, history }) => {
+    const bad = o.unresolved?.has(id) ?? false;
+    const rows = arm === "ancestor" ? 64 : 6400;
+    return {
+      id,
+      arm,
+      history,
+      dir: bad ? null : `/runs/${id}`,
+      resolved: !bad,
+      why: bad ? ["no run bundle"] : [],
+      hashes: { b001: reg1Hash(id, "b001"), b034: reg1Hash(id, "b034"), b100: reg1Hash(id, "b100"), init: reg1Hash(id, "init") },
+      censusEvery: 1000,
+      host: bad ? null : REG1_HOSTS[reg1InstanceOf(history)],
+      trajectory: bad ? null : { boundaries: [{ boundary: arm === "ancestor" ? 1 : 100, n: 64, meanTrait: 5000, extinct: 2 }], truncation: truncationOf(o.flagged?.has(id) ? Math.floor(rows / 100) + 1 : 0, rows), endedAt: null },
+    };
+  });
+}
+
+const REG1_DEVICE_OK: Reg1ReportDevice = { passed: true, reasons: [], finalHash: "f", mac: "/mac", bundles: [], uncovered: [] };
+const REG1_REPRO_OK: Reg1ReportReproducibility = { passed: true, reasons: [], draws: [], histories: [], skipped: [] };
+
+function reg1Readout(o: { plan?: Partial<Reg1Plan>; runs?: Reg1ReportRun[]; device?: Reg1ReportDevice | null; repro?: Reg1ReportReproducibility; budgetStopped?: boolean; queue?: ReturnType<typeof reg1ReportQueueCheck> } = {}): Record<string, any> {
+  return reg1ReportReadout({ sets: reg1Sets(reg1Plan(o.plan)), rejected: [], runs: o.runs ?? reg1RunsFixture(), device: o.device === undefined ? REG1_DEVICE_OK : o.device, reproducibility: o.repro ?? REG1_REPRO_OK, budgetStopped: o.budgetStopped, queue: o.queue });
+}
+
+/** An assay.json as scaffold-assays --reg1 is to write it for `w` (the fields the screen reads), with its provenance recorded. */
+function reg1SetJson(w: Reg1ReportExpectedSet, o: { rows: number; bio?: boolean; insufficient?: boolean; hash?: (bundle: string, checkpoint: string) => string } = { rows: 0 }): Record<string, any> {
+  const kind = w.labels.set;
+  const inoculum = REG1_INOCULUM[kind];
+  const hash = o.hash ?? reg1Hash;
+  /** A bundle's checkpoint as the assay records it; a continuation with its sidecar and origin, as continue --reg1 writes them. */
+  const src = (x: Reg1ReportExpectedSet["sources"][number]): Record<string, unknown> => {
+    if (x.checkpoint !== "continuation") return { source: `/runs/${x.bundle}/${x.checkpoint}`, stateHash: hash(x.bundle, x.checkpoint) };
+    const arm = x.bundle.slice(0, x.bundle.indexOf("-i")) as Reg1ReportArm;
+    const history = Number(x.bundle.slice(-2));
+    const boundary = arm === "ancestor" ? 1 : 100;
+    const mutRate = pondConfig(8, 0).mutRate;
+    const origin = { source: `/runs/${x.bundle}/b${String(boundary).padStart(3, "0")}`, boundary, stateHash: hash(x.bundle, arm === "ancestor" ? "b001" : "b100"), seed: reg1ReportWorldSeed(arm, history), step: boundary * 10_000 };
+    const end = { source: `/runs/scaffold/reg1/cont200k/${x.bundle}.blck.gz`, stateHash: `${x.bundle}-cont200k`, seed: reg1ReportContinuationSeed(w.labels.h), mutRate, step: origin.step + 200_000, tilesX: 8, tilesY: 8 };
+    const continuation = { reg1: true, arm, history, h: w.labels.h, boundary, source: origin.source, sourceStateHash: origin.stateHash, sourceSeed: origin.seed, sourceStep: origin.step, seed: end.seed, steps: 200_000, mutRate, censusEvery: 100, endStateHash: end.stateHash, endStep: end.step, protocolSha256Reg1: REG1_REPORT_PROTOCOL.sha256 };
+    return { ...end, origin, continuation };
+  };
+  /** An S3 control's world as R1'' records it: the P2 ranking world s or the clone world j at b1-pre, before its cycle. */
+  const control = (h: number) => {
+    const positive = h < 50;
+    const world = positive ? h - 48 : h - 50;
+    const phase = { postCycle: false, totalC: 5, totalS: 5, carrying: 10, outsideWindow: 3 };
+    return { source: positive ? `/runs/scaffold/p2/rank/s${world}/ckpt/b1-pre.blck.gz` : `/runs/scaffold/reg1/neg/j${world}/ckpt/b1-pre.blck.gz`, stateHash: "control", seed: positive ? 4_805_001 + world : 4_880_001 + world, mutRate: 0, step: 10_000, tilesX: 8, tilesY: 8, distinctGenomes: positive ? 12 : 1, phase };
+  };
+  const provenance = w.sources.length === 0 ? control(w.labels.h) : { ...src(w.sources[0]), ...(w.sources[1] ? { donor: { ...src(w.sources[1]), dominant: o.bio ? null : { id: "1:2", hi: 1, lo: 2, words: REG1_EA_WORDS } } } : {}) };
+  return {
+    tool: "scaffold-assays",
+    assay: w.assay,
+    source: provenance.source,
+    k: 8,
+    period: 10_000,
+    ref: w.assay === "transmission" ? null : 103_058,
+    side: 8,
+    replicates: w.replicates,
+    mutRate: 0,
+    censusEvery: 100,
+    inoculum,
+    seeds: w.seeds,
+    labels: w.labels,
+    ...(w.assay === "competence" ? { quench: kind === "quench", swap: kind === "source" || kind === "quench" ? null : { label: inoculum, from: "x", words: kind === "ge-on-fa" ? (o.bio ? null : REG1_EA_WORDS) : R3REP_SWAP_AE_WORDS } } : {}),
+    ...(w.assay === "transmission" ? { donorSeed: w.donorSeed, traitsRecorded: true, ...(o.insufficient ? { insufficient: true } : {}) } : {}),
+    ...(o.bio ? { biologicallyUnavailable: { reason: "no dominant genome", donor: src(w.sources[1]).source, donorStateHash: hash(w.sources[1].bundle, "b100") } } : {}),
+    provenance,
+    protocolSha256Reg1: REG1_REPORT_PROTOCOL.sha256,
+    summary: { rows: o.rows },
+  };
+}
+
+/** traits.tsv for an S3 set's rows: every fragment's trait at every census step, 30,000 from its crossing time on. */
+function reg1TraitsText(rows: readonly AssayRow[], kind: "strong" | "flat" | "insufficient"): string {
+  const lines = ["replicate\tpond\tstep\ttrait"];
+  if (kind !== "insufficient") {
+    const f = reg1HeredityFragments(kind);
+    for (let step = 100; step <= 10_000; step += 100) rows.forEach((r, k) => lines.push(`${r.replicate}\t${r.pond}\t${step}\t${step >= f[k].T ? 30_000 : 0}`));
+  }
+  return lines.join("\n") + "\n";
+}
+
+const reg1RowsText = (rows: readonly AssayRow[]): string => [ASSAY_COLUMNS.join("\t"), ...rows.map((r) => ASSAY_COLUMNS.map((c) => String(r[c])).join("\t"))].join("\n") + "\n";
+
+/** A screen input for `id` under a plan: its assay.json (with `json` merged over) and rows; S3's traits read as the CLI reads them. */
+async function reg1Dir(id: string, o: { plan?: Partial<Reg1Plan>; json?: Record<string, unknown>; dir?: string } = {}): Promise<Reg1ReportSetDir> {
+  const plan = reg1Plan(o.plan);
+  const w = reg1ReportExpectedSet(id)!;
+  const rows = reg1PlanRows(w, plan);
+  const h = w.labels.set === "heredity" ? plan.heredity(id) : null;
+  const json = { ...reg1SetJson(w, { rows: rows.length, bio: plan.bio.has(id), insufficient: h === "insufficient" }), ...o.json };
+  const traits = h === null ? null : await readTraits(tsvRows(reg1TraitsText(rows, h).split("\n")), undefined, { replicates: 2, ponds: 64 });
+  return { dir: o.dir ?? `/assays/${id}`, json, rows, traits };
+}
+
+/** A run bundle's manifest.json as tools/run.ts writes it for the registration (`over` merged over it). */
+function reg1Manifest(kind: "hist" | "anc" | "repro" | "device", arm: Reg1ReportArm, i: number, hashes: Record<string, string> = {}, over: Record<string, unknown> = {}): Record<string, any> {
+  const shape = { hist: { steps: 1_000_000, pre: [34, 100] }, anc: { steps: 10_000, pre: [1] }, repro: { steps: 340_000, pre: [34] }, device: { steps: 20_000, pre: null } }[kind];
+  const condition = kind === "device" ? "treatment" : REG1_REPORT_CONDITIONS[arm];
+  const seed = kind === "device" ? REG1_REPORT_SEEDS.device : reg1ReportWorldSeed(arm, i);
+  const id = reg1ReportHistoryId(arm, i);
+  const b = (x: number) => `b${String(x).padStart(3, "0")}`;
+  return {
+    runId: `${kind}/ponds/${condition}/seed-${seed}`,
+    spec: { experiment: kind, presetId: "ponds", condition, seed, steps: shape.steps, censusEvery: 1000, deepEvery: 10, checkpointEvery: 0, ...(shape.pre ? { preCycleCheckpoints: shape.pre } : {}) },
+    cfg: { mutRate: 429_497, pondPeriod: 10_000, tilesX: 8, tilesY: 8, pondArm: kind === "device" ? "scaf" : arm === "ancestor" ? "cont" : arm },
+    presetIdentity: "56526b894cfccf3f",
+    initHash: hashes.init ?? reg1Hash(id, "init"),
+    host: kind === "repro" ? REG1_HOSTS.mac : kind === "device" ? REG1_HOSTS[1] : REG1_HOSTS[reg1InstanceOf(i)],
+    startStep: 0,
+    checkpoints: [],
+    ...(shape.pre ? { preCycleCheckpoints: shape.pre.map((x) => ({ boundary: x, step: x * 10_000, file: `checkpoints/${b(x)}-pre.blck`, hash: hashes[b(x)] ?? reg1Hash(id, b(x)) })) } : {}),
+    summary: { steps: shape.steps, finalHash: "final", conservationOk: true },
+    finishedAt: "2026-10-02T00:00:00.000Z",
+    ...over,
+  };
+}
+
+describe("reg1 seeds and sets", () => {
+  it("follows the document's seed formulas at their corners, with its maxima and range checks", () => {
+    expect([reg1ReportWorldSeed("scaf", 0), reg1ReportWorldSeed("rand", 0), reg1ReportWorldSeed("cont", 23), reg1ReportWorldSeed("ancestor", 0), reg1ReportWorldSeed("ancestor", 23)]).toEqual([4_850_001, 4_850_101, 4_850_224, 4_850_401, 4_850_424]);
+    expect([reg1ReportH("scaf", 0), reg1ReportH("rand", 0), reg1ReportH("cont", 23), reg1ReportH("ancestor", 0), reg1ReportH("ancestor", 23)]).toEqual([0, 24, 71, 72, 95]);
+    expect([reg1ReportContinuationSeed(0), reg1ReportContinuationSeed(95)]).toEqual([4_850_501, 4_850_596]);
+    expect([reg1ReportCompetenceSeed(0, 0, 0), reg1ReportCompetenceSeed(95, 1, 3), reg1ReportCompetenceSeed(95, 0, 7)]).toEqual([4_851_001, 4_860_514, 4_860_508]);
+    expect([reg1ReportGardenSeed(0, 0, 0, 0), reg1ReportGardenSeed(47, 1, 1, 1)]).toEqual([4_861_001, 4_865_732]);
+    expect([reg1ReportHereditySeed(0, 0), reg1ReportHereditySeed(53, 9)]).toEqual([4_866_001, 4_879_260]);
+    // s 4-7 only for the swap pair (h 72-95 at timing a)
+    for (const bad of [() => reg1ReportCompetenceSeed(0, 0, 4), () => reg1ReportCompetenceSeed(72, 1, 4), () => reg1ReportCompetenceSeed(96, 0, 0), () => reg1ReportCompetenceSeed(0, 2, 0)]) expect(bad).toThrow(/reg1ReportCompetenceSeed/);
+    for (const bad of [() => reg1ReportGardenSeed(48, 0, 0, 0), () => reg1ReportGardenSeed(0, 0, 0, 2), () => reg1ReportHereditySeed(54, 0), () => reg1ReportHereditySeed(0, 2), () => reg1ReportContinuationSeed(96), () => reg1ReportWorldSeed("scaf", 24)]) expect(bad).toThrow();
+  });
+
+  it("lists the 558 sets, each named by its own labels, every seed in the block and none colliding across formulas", () => {
+    const sets = reg1ReportExpectedSets();
+    expect(sets).toHaveLength(558);
+    const count = (kind: string) => sets.filter((w) => w.labels.set === kind).length;
+    expect([count("source"), count("ge-on-fa"), count("ga-on-fa"), count("ga-on-fe"), count("quench"), count("garden-raw"), count("garden-disc"), count("heredity")]).toEqual([192, 24, 24, 24, 48, 96, 96, 54]);
+    expect(new Set(sets.map((w) => w.id)).size).toBe(558);
+    for (const w of sets) {
+      expect(reg1ReportSetIdOf(w.labels)).toEqual({ id: w.id });
+      expect(reg1ReportLabelProblems(w.labels as unknown as Record<string, unknown>, w)).toEqual([]);
+      expect(w.seeds).toHaveLength(w.replicates);
+    }
+    // the swap pair: h = 72 + i, 8 replicates, the first four the ancestor's own fragments at (a)
+    const ge = reg1ReportExpectedSet("scaf-i05-ge-on-fa")!;
+    expect(ge.labels).toMatchObject({ arm: "scaf", history: 5, timing: "a", h: 77 });
+    expect(ge.seeds.slice(0, 4)).toEqual(reg1ReportExpectedSet("ancestor-i05-a")!.seeds);
+    expect(reg1ReportExpectedSet("scaf-i05-ga-on-fa")!.seeds).toEqual(ge.seeds);
+    expect(reg1ReportExpectedSet("scaf-i05-ga-on-fe")!.seeds).toEqual(reg1ReportExpectedSet("scaf-i05-a")!.seeds);
+    expect(reg1ReportExpectedSet("scaf-i05-quench-b")!.seeds).toEqual(reg1ReportExpectedSet("scaf-i05-b")!.seeds);
+    // S2: both inocula sample their fragments with v = 0; S3: donors on s = 9
+    expect(reg1ReportExpectedSet("garden-rand-i02-t1-disc")!.seeds[1]).toEqual({ physics: reg1ReportGardenSeed(26, 1, 1, 1), fragment: reg1ReportGardenSeed(26, 1, 0, 1) });
+    expect(reg1ReportExpectedSet("heredity-neg-j3")!).toMatchObject({ labels: { arm: "control", control: "negative", h: 53, history: null }, donorSeed: 4_879_260 });
+    // every seed in the reserved block, and the formulas' ranges disjoint from each other and from the single draws
+    const all = sets.flatMap((w) => [...w.seeds.flatMap((x) => [x.physics, x.fragment]), ...(w.donorSeed === null ? [] : [w.donorSeed])]);
+    expect(Math.min(...all)).toBeGreaterThanOrEqual(4_850_001);
+    expect(Math.max(...all)).toBeLessThanOrEqual(4_899_999);
+    const ranges = [[4_850_001, 4_850_224], [4_850_401, 4_850_424], [4_850_501, 4_850_596], [4_851_001, 4_860_514], [4_861_001, 4_865_732], [4_866_001, 4_879_260], [4_880_001, 4_880_004]];
+    for (let a = 0; a < ranges.length; a++) for (let b = a + 1; b < ranges.length; b++) expect(ranges[a][1] < ranges[b][0] || ranges[b][1] < ranges[a][0]).toBe(true);
+    for (const draw of [REG1_REPORT_SEEDS.reproducibility, REG1_REPORT_SEEDS.bootstrap, REG1_REPORT_SEEDS.device]) expect(ranges.some(([lo, hi]) => draw >= lo && draw <= hi)).toBe(false);
+  });
+
+  it("names a set only from labels that agree with it in full", () => {
+    expect(reg1ReportSetIdOf({ reg1: true, set: "source", arm: "cont", history: 7, timing: "b", time: null, h: 55, control: null })).toEqual({ id: "cont-i07-b" });
+    expect(reg1ReportSetIdOf({ reg1: true, set: "heredity", arm: "control", history: null, h: 49, control: "positive" })).toEqual({ id: "heredity-pos-s1" });
+    expect(reg1ReportSetIdOf({ reg1: true, set: "ge-on-fa", arm: "rand", history: 1, timing: "a", h: 73 })).toMatchObject({ error: expect.stringMatching(/labels scaf history/) });
+    expect(reg1ReportSetIdOf({ r3rep: true })).toEqual({ error: "labels.reg1 is not true" });
+    // the swap pair's h is 72 + i, not the history's own
+    const w = reg1ReportExpectedSet("scaf-i03-ga-on-fa")!;
+    expect(reg1ReportLabelProblems({ ...w.labels, h: 3 }, w)).toEqual(["labels.h 3, want 75 for scaf-i03-ga-on-fa"]);
+  });
+});
+
+describe("reg1 exact tests against brute force", () => {
+  /** Midranks of `xs` (1-based, ties averaged). */
+  const midranks = (xs: number[]) => {
+    const order = xs.map((v, i) => [v, i] as const).sort((p, q) => p[0] - q[0]);
+    const r = new Array<number>(xs.length);
+    for (let i = 0; i < order.length; ) {
+      let j = i;
+      while (j + 1 < order.length && order[j + 1][0] === order[i][0]) j++;
+      for (let k = i; k <= j; k++) r[order[k][1]] = (i + j) / 2 + 1;
+      i = j + 1;
+    }
+    return r;
+  };
+
+  it("mannWhitney(…, 'exact').pGreater with ties equals the full enumeration of label permutations", () => {
+    const cases: [number[], number[]][] = [
+      [[3, 1, 2, 2], [2, 0, 1, 1, 2]],
+      [[0.5, 0.5, 0.25], [0.5, 0.25, 0.25, 0]],
+      [[1, 1, 1], [1, 1]],
+      [[5, 4], [3, 2, 1, 1]],
+      [[60 / 256, 61 / 256, 61 / 256, 70 / 256, 58 / 256], [61 / 256, 58 / 256, 50 / 256, 61 / 256, 49 / 256, 70 / 256]],
+    ];
+    for (const [a, b] of cases) {
+      const all = [...a, ...b];
+      const r2 = midranks(all).map((x) => Math.round(2 * x));
+      const obs = r2.slice(0, a.length).reduce((s, x) => s + x, 0);
+      let total = 0;
+      let ge = 0;
+      // every way to label a.length of the values as group a
+      for (let mask = 0; mask < 1 << all.length; mask++) {
+        let bits = 0;
+        let sum = 0;
+        for (let i = 0; i < all.length; i++) if (mask & (1 << i)) {
+          bits++;
+          sum += r2[i];
+        }
+        if (bits !== a.length) continue;
+        total++;
+        if (sum >= obs) ge++;
+      }
+      expect(mannWhitney(a, b, "exact").pGreater).toBeCloseTo(ge / total, 12);
+    }
+  });
+
+  it("the sign test is the binomial tail at one half, over every sign assignment; 19 of 24 gives 0.0033 and 18 gives 0.011", () => {
+    for (let n = 1; n <= 12; n++) {
+      for (let k = 0; k <= n + 1; k++) {
+        let ge = 0;
+        for (let mask = 0; mask < 1 << n; mask++) {
+          let bits = 0;
+          for (let i = 0; i < n; i++) if (mask & (1 << i)) bits++;
+          if (bits >= k) ge++;
+        }
+        expect(reg1ReportSignTest(k, n)).toBe(ge / 2 ** n);
+      }
+    }
+    expect(reg1ReportSignTest(19, 24)).toBe(55_455 / 2 ** 24);
+    expect(reg1ReportSignTest(19, 24)).toBeCloseTo(0.0033, 4);
+    expect(reg1ReportSignTest(18, 24)).toBeCloseTo(0.011, 3);
+  });
+
+  it("S3's binomial tail under 0.05 per history equals the enumeration of outcomes; 5 of 24 gives 0.006 and 6 gives 0.001", () => {
+    const n = 4;
+    const counts = new Array<number>(n + 1).fill(0);
+    // each history draws one of 20 equally likely outcomes, outcome 0 being significant
+    for (let x = 0; x < 20 ** n; x++) {
+      let hits = 0;
+      for (let v = x, i = 0; i < n; i++, v = Math.floor(v / 20)) if (v % 20 === 0) hits++;
+      counts[hits]++;
+    }
+    for (let k = 0; k <= n + 1; k++) expect(binomialUpperTail(k, n, 1, 20)).toBeCloseTo(counts.slice(k).reduce((s, c) => s + c, 0) / 20 ** n, 15);
+    expect(binomialUpperTail(5, 24, 1, 20)).toBeCloseTo(0.006, 3);
+    expect(binomialUpperTail(6, 24, 1, 20)).toBeCloseTo(0.001, 3);
+    expect(() => binomialUpperTail(1, 2, 3, 2)).toThrow();
+  });
+});
+
+describe("reg1 run bundles", () => {
+  it("knows a bundle by its seed and checks its manifest: experiment, runId and path, spec, identity, config and pre-cycle checkpoints", () => {
+    const m = reg1Manifest("hist", "rand", 4);
+    const role = reg1ReportBundleRoleOf(m);
+    expect(role).toEqual({ role: { role: "history", arm: "rand", history: 4, id: "rand-i04" } });
+    if (!("role" in role)) throw new Error("no role");
+    expect(reg1ReportBundleProblems(m, role.role, "/x/runs/scaffold/reg1/hist/ponds/pond-rand/seed-4850105")).toEqual([]);
+    expect(reg1ReportBundleRoleOf(reg1Manifest("anc", "ancestor", 3))).toEqual({ role: { role: "ancestor", arm: "ancestor", history: 3, id: "ancestor-i03" } });
+    expect(reg1ReportBundleRoleOf(reg1Manifest("repro", "scaf", 14))).toEqual({ role: { role: "repro", arm: "scaf", history: 14, id: "scaf-i14" } });
+    expect(reg1ReportBundleRoleOf(reg1Manifest("device", "scaf", 0))).toEqual({ role: { role: "device" } });
+    expect(reg1ReportBundleRoleOf({ spec: { seed: 4_811_001 } })).toMatchObject({ why: expect.stringMatching(/not a registration history/) });
+    const problems = (over: Record<string, unknown>, dir?: string) => reg1ReportBundleProblems({ ...m, ...over }, role.role, dir).join("; ");
+    const { summary: _s, ...unfinished } = m;
+    expect(reg1ReportBundleProblems(unfinished, role.role).join("; ")).toMatch(/did not finish/);
+    expect(problems({ summary: { ...m.summary, conservationOk: false } })).toMatch(/conservationOk false/);
+    expect(problems({ spec: { ...m.spec, experiment: "scaffold/reg1/hist" } })).toMatch(/spec.experiment "scaffold\/reg1\/hist", want hist or hist-c100/);
+    // census 100 only under hist-c100, the repeat of a run that stopped on an event-buffer overflow
+    expect(problems({ spec: { ...m.spec, censusEvery: 100 } })).toMatch(/spec.censusEvery 100, want 1000 under experiment hist/);
+    const c100 = { spec: { ...m.spec, experiment: "hist-c100", censusEvery: 100 }, runId: "hist-c100/ponds/pond-rand/seed-4850105" };
+    expect(problems(c100, "/x/runs/scaffold/reg1/hist-c100/ponds/pond-rand/seed-4850105")).toBe("");
+    expect(problems({ ...c100, spec: { ...c100.spec, censusEvery: 1000 } })).toMatch(/spec.censusEvery 1000, want 100 under experiment hist-c100/);
+    expect(problems({ spec: { ...m.spec, censusEvery: 500 } })).toMatch(/spec.censusEvery 500/);
+    expect(problems({ spec: { ...m.spec, condition: "treatment" } })).toMatch(/spec.condition "treatment", want "pond-rand"/);
+    expect(problems({ spec: { ...m.spec, overrides: { mutRate: 0 } } })).toMatch(/spec.overrides is set/);
+    expect(problems({ cfg: { ...m.cfg, mutRate: 0 } })).toMatch(/cfg.mutRate 0, want 429497/);
+    expect(problems({ presetIdentity: "x" })).toMatch(/presetIdentity "x"/);
+    expect(problems({ preCycleCheckpoints: m.preCycleCheckpoints.slice(0, 1) })).toMatch(/lists 1 preCycleCheckpoints, want 2/);
+    expect(problems({ preCycleCheckpoints: [m.preCycleCheckpoints[0], { ...m.preCycleCheckpoints[1], step: 990_000 }] })).toMatch(/preCycleCheckpoints\[1\]/);
+    expect(problems({}, "/x/runs/scaffold/reg1/hist/ponds/pond-rand/seed-4850106")).toMatch(/does not end in hist\/ponds\/pond-rand\/seed-4850105/);
+  });
+
+  it("takes the one finished bundle of a history: a census-100 repeat supersedes the overflowed run, and two finished ones are refused", () => {
+    const hist = { dir: "/r/hist/ponds/treatment/seed-4850001", manifest: reg1Manifest("hist", "scaf", 0) };
+    const { summary: _s, finishedAt: _f, ...overflowed } = hist.manifest;
+    const stopped = { dir: hist.dir, manifest: overflowed };
+    const c100 = { dir: "/r/hist-c100/ponds/treatment/seed-4850001", manifest: { ...hist.manifest, runId: "hist-c100/ponds/treatment/seed-4850001", spec: { ...hist.manifest.spec, experiment: "hist-c100", censusEvery: 100 } } };
+    expect(reg1ReportPickBundle([stopped, c100])).toEqual({ pick: c100, superseded: [stopped], why: null });
+    expect(reg1ReportPickBundle([hist])).toEqual({ pick: hist, superseded: [], why: null });
+    expect(reg1ReportPickBundle([stopped])).toEqual({ pick: stopped, superseded: [], why: null });
+    expect(reg1ReportPickBundle([hist, c100]).why).toBe(`2 finished run bundles (${hist.dir}, ${c100.dir}); neither is used`);
+    expect(reg1ReportPickBundle([stopped, { ...stopped, dir: c100.dir }]).why).toMatch(/^2 unfinished run bundles .* and none finished$/);
+    expect(reg1ReportPickBundle([])).toEqual({ pick: null, superseded: [], why: "no run bundle" });
+  });
+
+  it("streams ponds.tsv into the trajectory, requiring one row per pond at every boundary, and finds where a history ended", async () => {
+    const lines = (cycles: number[], ponds: number, donor: (c: number) => number = () => 0) => ["cycle\trecipient\tdonor\ttruncated\trecipientTrait", ...cycles.flatMap((c) => Array.from({ length: ponds }, (_, r) => `${c}\t${r}\t${donor(c)}\t${r === 0 && c === 1 ? 1 : 0}\t${r === 1 ? 0 : 100 * c}`))];
+    const t = await reg1ReportTrajectory(tsvRows(lines([1, 2, 3], 4, (c) => (c >= 2 ? -1 : 2))), { ponds: 4, cycles: 3 }, true);
+    expect(t.boundaries).toEqual([{ boundary: 1, n: 4, meanTrait: 75, extinct: 1 }, { boundary: 2, n: 4, meanTrait: 150, extinct: 1 }, { boundary: 3, n: 4, meanTrait: 225, extinct: 1 }]);
+    expect(t.truncation).toMatchObject({ truncated: 1, rows: 12, flagged: true });
+    expect(t.endedAt).toBe(2);
+    expect((await reg1ReportTrajectory(tsvRows(lines([1], 4, () => -1)), { ponds: 4, cycles: 1 }, false)).endedAt).toBeNull();
+    await expect(reg1ReportTrajectory(tsvRows(lines([1, 2], 4)), { ponds: 4, cycles: 3 }, true)).rejects.toThrow(/cycle 3 has 0 rows, want 4/);
+    await expect(reg1ReportTrajectory(tsvRows(lines([1, 2, 3], 3)), { ponds: 4, cycles: 3 }, true)).rejects.toThrow(/cycle 1 has 3 rows, want 4/);
+    await expect(reg1ReportTrajectory(tsvRows(lines([1, 2, 3, 4], 4)), { ponds: 4, cycles: 3 }, true)).rejects.toThrow(/has cycle 4, want only cycles 1..3/);
+    // without `expect` the guard keeps its old behaviour: a short cycle passes
+    const g = new RecipientGuard();
+    g.add(1, 0);
+    expect(() => g.finish()).not.toThrow();
+  });
+
+  it("the device check: four distinct bundles, the Mac's the one darwin host, one finalHash, and every run bundle's host among them", () => {
+    const at = (dir: string, host: { host: string; adapter: string }, over: Record<string, unknown> = {}) => ({ dir: `/${dir}/device/ponds/treatment/seed-4880301`, manifest: reg1Manifest("device", "scaf", 0, {}, { host, ...over }) });
+    const four = [at("mac", REG1_HOSTS.mac), at("i1", REG1_HOSTS[1]), at("i2", REG1_HOSTS[2]), at("i3", REG1_HOSTS[3])];
+    const runs = reg1RunsFixture();
+    expect(reg1ReportDeviceCheck(four, runs)).toMatchObject({ passed: true, reasons: [], finalHash: "final", mac: "/mac/device/ponds/treatment/seed-4880301", uncovered: [] });
+    const fails = (bundles: ReturnType<typeof at>[], r: Parameters<typeof reg1ReportDeviceCheck>[1] = runs) => {
+      const d = reg1ReportDeviceCheck(bundles, r);
+      expect(d.passed).toBe(false);
+      return d.reasons.join("; ");
+    };
+    expect(fails([four[0], four[1], four[2], at("i3", REG1_HOSTS[3], { summary: { steps: 20_000, finalHash: "other", conservationOk: true } })])).toMatch(/finalHash differs/);
+    expect(fails(four.slice(0, 3))).toMatch(/^3 device check bundles, want 4: the Mac's and one per instance/);
+    expect(fails([...four, at("i4", REG1_HOSTS[1])])).toMatch(/^5 device check bundles, want 4/);
+    expect(fails([four[0], four[1], four[2], four[2]])).toMatch(/device check bundles share a directory: \/i2/);
+    expect(fails([at("mac", REG1_HOSTS[1]), four[1], four[2], four[3]])).toMatch(/0 device check bundles ran on a host naming darwin, want exactly 1/);
+    expect(fails([four[0], at("i1", REG1_HOSTS.mac), four[2], four[3]])).toMatch(/2 device check bundles ran on a host naming darwin/);
+    expect(fails([four[0], four[1], four[2], { dir: "/i3", manifest: reg1Manifest("hist", "scaf", 0) }])).toMatch(/is not the device check's/);
+    expect(fails([four[0], four[1], four[2], at("i3", REG1_HOSTS[3], { spec: { ...reg1Manifest("device", "scaf", 0).spec, steps: 10_000 } })])).toMatch(/spec.steps 10000/);
+    // a run made on a host or adapter no device check reports
+    const odd = runs.map((r) => (r.id === "rand-i09" ? { ...r, host: { host: REG1_HOSTS[2].host, adapter: "another gpu" } } : r));
+    const d = reg1ReportDeviceCheck(four, odd);
+    expect(d).toMatchObject({ passed: false, uncovered: ["rand-i09"] });
+    expect(d.reasons[0]).toBe('1 run bundles ran on a host and adapter no device check reports (rand-i09; rand-i09 on "deno 2.5.2 linux-x86_64" with "another gpu")');
+    // without the runs (nothing is analysed) only the device bundles are compared
+    expect(reg1ReportDeviceCheck(four).passed).toBe(true);
+  });
+
+  it("selects the reproducibility histories by the draw, never replaced, and compares their b034-pre hashes", () => {
+    // the first two distinct values of randomKey(4,880,101, 0, k, 0) mod 72
+    const values: number[] = [];
+    for (let k = 0; values.length < 2; k++) {
+      const v = randomKey(4_880_101, 0, k, 0) % 72;
+      if (!values.includes(v)) values.push(v);
+    }
+    const ids = values.map((v) => reg1ReportHistoryId((["scaf", "rand", "cont"] as const)[Math.floor(v / 24)], v % 24));
+    const sel = reg1ReportReproSelection();
+    expect(sel.selected.map((s) => s.id)).toEqual(ids);
+    expect(ids).toEqual(["scaf-i14", "rand-i17"]);
+    const runs = new Map(reg1RunsFixture().map((r) => [r.id, r]));
+    const rerun = (id: string, hash = reg1Hash(id, "b034"), over: Record<string, unknown> = {}) => {
+      const [arm, i] = [id.slice(0, 4) as Reg1ReportArm, Number(id.slice(-2))];
+      const manifest = reg1Manifest("repro", arm, i, { b034: hash }, over);
+      return { dir: `/mac/${manifest.runId}`, manifest };
+    };
+    const ok = reg1ReportReproducibility(runs, [rerun("scaf-i14"), rerun("rand-i17"), rerun("cont-i02")]);
+    expect(ok).toMatchObject({ passed: true, reasons: [] });
+    expect(ok.histories.map((h) => [h.id, h.passed, h.instanceHash, h.rerunHash])).toEqual([["scaf-i14", true, "scaf-i14-b034", "scaf-i14-b034"], ["rand-i17", true, "rand-i17-b034", "rand-i17-b034"]]);
+    expect(ok.skipped).toEqual([{ dir: "/mac/repro/ponds/pond-cont/seed-4850203", why: "cont-i02 is not a selected history (scaf-i14, rand-i17)" }]);
+    const fails = (reruns: ReturnType<typeof rerun>[], r = runs) => reg1ReportReproducibility(r, reruns).reasons.join("; ");
+    expect(fails([rerun("scaf-i14", "other"), rerun("rand-i17")])).toMatch(/the rerun's b034-pre hash other is not the instance's scaf-i14-b034/);
+    expect(fails([rerun("scaf-i14")])).toMatch(/no rerun of rand-i17/);
+    expect(fails([rerun("scaf-i14"), rerun("rand-i17"), rerun("rand-i17")])).toMatch(/2 reruns of rand-i17/);
+    expect(fails([rerun("scaf-i14", undefined, { summary: { steps: 340_000, finalHash: "x", conservationOk: false } }), rerun("rand-i17")])).toMatch(/the rerun of scaf-i14 is not valid: summary.conservationOk false/);
+    // a rerun made anywhere but the Mac
+    expect(fails([rerun("scaf-i14", undefined, { host: REG1_HOSTS[1] }), rerun("rand-i17")])).toMatch(/the rerun of scaf-i14 is not valid: it ran on host "deno 2.5.2 linux-x86_64", not the Mac's \(darwin\)/);
+    // an unresolved selected history is never replaced: the check cannot be made
+    const gone = new Map(reg1RunsFixture({ unresolved: new Set(["rand-i17"]) }).map((r) => [r.id, r]));
+    expect(fails([rerun("scaf-i14"), rerun("rand-i17")], gone)).toMatch(/rand-i17 is unresolved, so the check cannot be made/);
+  });
+});
+
+describe("reg1 screening", () => {
+  const sha = REG1_REPORT_PROTOCOL.sha256;
+  const screen = (dirs: Reg1ReportSetDir[], o: Partial<Parameters<typeof reg1ReportScreen>[1]> = {}) => reg1ReportScreen(dirs, { sha, ...o });
+
+  it("accepts a set of every kind, S3's with its crossing times", async () => {
+    const ids = ["scaf-i03-a", "ancestor-i03-b", "scaf-i03-ge-on-fa", "scaf-i03-ga-on-fa", "scaf-i03-ga-on-fe", "scaf-i03-quench-b", "garden-rand-i03-t0-raw", "garden-scaf-i03-t1-disc", "heredity-scaf-i03", "heredity-neg-j2"];
+    const { accepted, rejected } = screen(await Promise.all(ids.map((id) => reg1Dir(id))));
+    expect(rejected).toEqual([]);
+    expect(accepted.map((s) => s.id)).toEqual(ids);
+    const s3 = accepted.find((s) => s.id === "heredity-scaf-i03")!;
+    expect(s3.heredity!.fragments.map((f) => f.T)).toEqual(reg1HeredityFragments("strong").map((f) => f.T));
+    const none = screen([await reg1Dir("heredity-rand-i01", { plan: { heredity: () => "insufficient" } })]);
+    expect(none.accepted[0].heredity).toEqual({ insufficient: true, censored: 10_100, fragments: [] });
+  });
+
+  it("refuses mis-seeded sets, a wrong h, the wrong replicates, a wrong protocol hash or source, and both of two sets for one id", async () => {
+    const reasons = async (id: string, json: Record<string, unknown>, o: Partial<Parameters<typeof reg1ReportScreen>[1]> = {}) => screen([await reg1Dir(id, { json })], o).rejected.flatMap((r) => r.reasons).join("; ");
+    const w = reg1ReportExpectedSet("scaf-i03-ge-on-fa")!;
+    const seeds = w.seeds.map((x, s) => (s === 2 ? { ...x, physics: x.physics + 1 } : x));
+    expect(await reasons("scaf-i03-ge-on-fa", { seeds })).toMatch(/seeds\[2\] .* do not match scaf-i03-ge-on-fa: want .*σ\(75, 0, s\)/);
+    // the swap pair seeded as the scaf history's own sets (h = i): the labels and every seed are wrong
+    expect(await reasons("scaf-i03-ga-on-fa", { labels: { ...w.labels, set: "ga-on-fa", h: 3 }, seeds: reg1ReportExpectedSet("scaf-i03-a")!.seeds })).toMatch(/labels.h 3, want 75 .*assay.json has 4 seeds, want 8/);
+    expect(await reasons("garden-scaf-i00-t1-disc", { seeds: reg1ReportExpectedSet("garden-scaf-i00-t1-raw")!.seeds })).toMatch(/seeds\[0\]/);
+    expect(await reasons("heredity-scaf-i00", { donorSeed: 4_866_001 + 8 })).toMatch(/donorSeed 4866009, want 4866010/);
+    expect(await reasons("scaf-i03-a", { replicates: 2 })).toMatch(/replicates 2, want 4/);
+    expect(await reasons("scaf-i03-a", { period: 3000, mutRate: 429_497 })).toMatch(/period 3000, want 10000; mutRate 429497, want 0/);
+    expect(await reasons("scaf-i03-a", { protocolSha256Reg1: "0".repeat(64) })).toMatch(/protocolSha256Reg1 .* is not the pinned SHA-256/);
+    expect(await reasons("scaf-i03-quench-a", { quench: false })).toMatch(/quench false, want true for quench/);
+    expect(await reasons("scaf-i03-ga-on-fe", { swap: { label: "swap-ae", words: REG1_EA_WORDS } })).toMatch(/ga-on-fe plants the ancestor's genome/);
+    // the recorded source must be the one its bundle's manifest records, once that bundle is resolved
+    const bundles = new Map([["scaf-i03", { resolved: true, hashes: { b100: "elsewhere" } }]]);
+    expect(await reasons("scaf-i03-ge-on-fa", {}, { bundles })).toMatch(/provenance.donor stateHash scaf-i03-b100 is not scaf-i03's b100-pre hash elsewhere/);
+    expect(await reasons("scaf-i03-a", { provenance: { source: "x" } })).toMatch(/provenance records no stateHash/);
+    // --allow-any-seed waives the seeds, regime, hash and provenance, not the labels
+    expect(screen([await reg1Dir("scaf-i03-ge-on-fa", { json: { seeds, protocolSha256Reg1: "x" } })], { allowAnySeed: true }).rejected).toEqual([]);
+    expect(screen([await reg1Dir("scaf-i03-a", { json: { labels: { reg1: true, set: "source", arm: "scaf", history: 3, timing: "a", h: 4 } } })], { allowAnySeed: true }).rejected[0].reasons).toEqual(["labels.h 4, want 3 for scaf-i03-a"]);
+    // duplicates: neither is used
+    const twice = screen([await reg1Dir("rand-i09-b", { dir: "/one" }), await reg1Dir("rand-i09-b", { dir: "/two" })]);
+    expect(twice.accepted).toEqual([]);
+    expect(twice.rejected.map((r) => [r.dir, r.id, r.reasons[0]])).toEqual([
+      ["/one", "rand-i09-b", "the same registration set (rand-i09-b) as /two; a stage would count both"],
+      ["/two", "rand-i09-b", "the same registration set (rand-i09-b) as /one; a stage would count both"],
+    ]);
+    // labels that name no set
+    expect(screen([await reg1Dir("scaf-i03-a", { json: { labels: { reg1: true, set: "swap" } } })]).rejected[0]).toMatchObject({ id: null, reasons: [expect.stringMatching(/name no registration set/)] });
+  });
+
+  it("checks a timing (b) set's continuation (path, sidecar, origin), an S3 control's world and Ge-on-Fa's planted words against its donor", async () => {
+    const reasons = async (id: string, edit: (j: Record<string, any>) => void, o: Partial<Parameters<typeof reg1ReportScreen>[1]> = {}) => {
+      const d = await reg1Dir(id);
+      edit(d.json);
+      return screen([d], o).rejected.flatMap((r) => r.reasons).join("; ");
+    };
+    const bundles = new Map([["scaf-i03", { resolved: true, hashes: { b100: "scaf-i03-b100" } }], ["ancestor-i03", { resolved: true, hashes: { b001: "ancestor-i03-b001" } }]]);
+    expect(await reasons("scaf-i03-b", () => {}, { bundles })).toBe("");
+    expect(await reasons("ancestor-i03-b", () => {}, { bundles })).toBe("");
+    expect(await reasons("scaf-i03-quench-b", () => {}, { bundles })).toBe("");
+    expect(await reasons("scaf-i03-b", (j) => (j.provenance.source = "/elsewhere/scaf-i03.blck.gz"))).toMatch(/provenance source "\/elsewhere\/scaf-i03.blck.gz" does not end in scaffold\/reg1\/cont200k\/scaf-i03.blck.gz/);
+    expect(await reasons("scaf-i03-b", (j) => Object.assign(j.provenance.continuation, { steps: 300, allowAnySeed: true }))).toMatch(/continuation steps 300, want 200000.*written under --allow-any-seed/);
+    expect(await reasons("scaf-i03-b", (j) => (j.provenance.continuation.endStateHash = "x"))).toMatch(/the continued checkpoint's stateHash "scaf-i03-cont200k" is not the continuation's endStateHash "x"/);
+    expect(await reasons("scaf-i03-b", (j) => (j.provenance.origin.stateHash = j.provenance.continuation.sourceStateHash = "y"), { bundles })).toMatch(/provenance.origin stateHash "y" is not scaf-i03's b100-pre hash scaf-i03-b100 in its manifest/);
+    expect(await reasons("ancestor-i03-b", (j) => (j.provenance.origin.stateHash = j.provenance.continuation.sourceStateHash = "y"), { bundles })).toMatch(/is not ancestor-i03's b001-pre hash ancestor-i03-b001/);
+    // S3's controls: their world's record, as R1'' checks its controls
+    expect(await reasons("heredity-pos-s1", () => {})).toBe("");
+    expect(await reasons("heredity-neg-j2", (j) => Object.assign(j.provenance, { step: 300, tilesX: 2 }))).toMatch(/source step 300, want 10000.*source has 2 x 8 ponds/);
+    expect(await reasons("heredity-neg-j2", (j) => (j.provenance.distinctGenomes = 7))).toMatch(/source holds 7 distinct genomes, want 1 \(a clone world\)/);
+    expect(await reasons("heredity-neg-j2", (j) => (j.source = "/other"))).toMatch(/is not the assay's source "\/other"/);
+    expect(await reasons("heredity-pos-s0", (j) => delete j.provenance.phase)).toMatch(/no provenance of the control world with its phase check/);
+    // Ge-on-Fa plants its donor's recorded dominant genome; a record without one names its donor's state
+    expect(await reasons("scaf-i03-ge-on-fa", (j) => (j.provenance.donor.dominant.words = R3REP_SWAP_AE_WORDS))).toMatch(/swap words are not the donor's dominant genome/);
+    const donors = new Map([["scaf-i03", { stateHash: "scaf-i03-b100", dominant: false }]]);
+    const bio = async (edit: (j: Record<string, any>) => void) => {
+      const d = await reg1Dir("scaf-i03-ge-on-fa", { plan: { bio: new Set(["scaf-i03-ge-on-fa"]) } });
+      edit(d.json);
+      return screen([d], { donors }).rejected.flatMap((r) => r.reasons).join("; ");
+    };
+    expect(await bio(() => {})).toBe("");
+    expect(await bio((j) => (j.provenance.donor.dominant = { id: "1:2", hi: 1, lo: 2, words: REG1_EA_WORDS }))).toMatch(/provenance.donor.dominant .*want null/);
+    expect(await bio((j) => (j.provenance.donor.stateHash = "z"))).toMatch(/donorStateHash scaf-i03-b100 is not provenance.donor.stateHash "z"/);
+  });
+
+  it("believes a Ge-on-Fa record without a dominant genome only once its donor is reloaded and seen to have none", async () => {
+    const bio = await reg1Dir("scaf-i04-ge-on-fa", { plan: { bio: new Set(["scaf-i04-ge-on-fa"]) } });
+    expect(bio.rows).toEqual([]);
+    expect(screen([bio]).rejected[0].reasons).toEqual([expect.stringMatching(/needs its donor scaf-i04's b100-pre reloaded/)]);
+    expect(screen([bio], { donors: new Map([["scaf-i04", { stateHash: "scaf-i04-b100", dominant: false }]]) })).toMatchObject({ rejected: [], accepted: [{ id: "scaf-i04-ge-on-fa", biological: true }] });
+    expect(screen([bio], { donors: new Map([["scaf-i04", { stateHash: "scaf-i04-b100", dominant: true }]]) }).rejected[0].reasons).toEqual(["donor scaf-i04 has a dominant genome, so its Ge-on-Fa set is not biologically unavailable"]);
+    expect(screen([bio], { donors: new Map([["scaf-i04", { error: "gone" }]]) }).rejected[0].reasons).toEqual(["donor scaf-i04's b100-pre could not be read: gone"]);
+    // only Ge-on-Fa can be one
+    const notSwap = await reg1Dir("scaf-i04-ga-on-fa", { json: { biologicallyUnavailable: { reason: "no dominant genome", donor: "x", donorStateHash: "y" } } });
+    expect(screen([{ ...notSwap, rows: [] }]).rejected[0].reasons.join("; ")).toMatch(/only Ge-on-Fa can be biologically unavailable/);
+  });
+});
+
+describe("reg1 decision procedure", () => {
+  const range = (n: number, from = 0) => Array.from({ length: n }, (_, k) => from + k);
+  /** Ge-on-Fa equal to Ga-on-Fa (g = 0, not positive) in the histories named. */
+  const noGain = (is: number[]) => reg1Over(reg1Successes, Object.fromEntries(is.map((i) => [`${reg1ReportHistoryId("scaf", i)}-ge-on-fa`, 280 + i])));
+  /** rand at (b) as competent as scaf, so scaf > rand at (b) fails. */
+  const randLikeScaf = (base: (id: string) => number = reg1Successes) => reg1Over(base, Object.fromEntries(range(24).map((i) => [`${reg1ReportHistoryId("rand", i)}-b`, 200 + i])));
+
+  it("H1 and H2 confirmed, with the secondaries beside the row", () => {
+    const r = reg1Readout();
+    expect(r).toMatchObject({ outcome: "H1 and H2 confirmed", withheld: false, withheldReason: null, budgetStopped: false, row: { outcome: "H1 and H2 confirmed", next: expect.stringMatching(/withdrawal ladder/) } });
+    expect(r.primary.h1).toMatchObject({ status: "confirmed" });
+    expect(r.primary.h1.p).toBeCloseTo(1 / 32_247_603_683_100, 25);
+    expect(r.primary.h1.comparisons.map((c: any) => [c.other, c.timing, c.established, c.n])).toEqual((["a", "b"] as const).flatMap((t) => ["rand", "cont", "ancestor"].map((o) => [o, t, true, { scaf: 24, other: 24 }])));
+    expect(r.primary.h2).toMatchObject({ status: "confirmed", positive: 24, n: 24, p: 2 ** -24 });
+    const s = r.secondary;
+    // S1 fails as the document expects: g = 20/512 is under half of the advantage 120/256
+    expect(s.s1).toMatchObject({ status: "not confirmed", positive: 0, n: 24, ratio: { available: true, excluded: { unresolved: 0, noDominantGenome: 0, nonPositiveDenominator: 0 } } });
+    expect(s.s1.ratio.median).toBeCloseTo(20 / 512 / (120 / 256), 12);
+    expect(s.s1.ratio.interval).toEqual({ lower: s.s1.ratio.median, upper: s.s1.ratio.median, resamples: 10_000 });
+    expect(s.s2a).toMatchObject({ status: "confirmed", positive: 24 });
+    expect(s.s2b).toMatchObject({ status: "confirmed", n: { scaf: 24, rand: 24 }, unresolved: [], medians: { scaf: 1011.5, rand: 211.5 } });
+    expect(s.s3).toMatchObject({ status: "confirmed", gates: { positivePassed: true, nullGatePassed: true }, arms: { scaf: { n: 24, demonstrated: 24 }, rand: { n: 24, demonstrated: 0 } } });
+    expect(s.s3.p).toBe(binomialUpperTail(24, 24, 1, 20));
+    expect(s.heritable).toBe(true);
+    expect(r.validity).toMatchObject({ quenched: { max: 0, failed: false }, unresolved: { uninformative: false, arms: { scaf: { unresolved: 0 }, ancestor: { histories: 24, unresolved: 0 } } } });
+    expect(r.truncation).toMatchObject({ flagged: [], unknown: [], sensitive: false, without: { outcome: "H1 and H2 confirmed" } });
+    expect(r.availability).toMatchObject({ expected: 558, measured: 558, biological: 0, unresolved: 0 });
+    expect(r.descriptive.competences).toHaveLength(312);
+    expect(r.descriptive.competences.find((c: any) => c.id === "scaf-i02-ge-on-fa")).toMatchObject({ n: 512, successes: 302, perReplicate: [{ replicate: 0, n: 64, successes: 64 }, ...range(3, 1).map((replicate) => ({ replicate, n: 64, successes: 64 })), { replicate: 4, n: 64, successes: 46 }, ...range(3, 5).map((replicate) => ({ replicate, n: 64, successes: 0 }))] });
+    expect(r.descriptive.gaOnFe[0]).toEqual({ id: "scaf-i00-ga-on-fe", status: "measured", successes: 100, n: 256, competence: 100 / 256 });
+    expect(r.descriptive.garden.disc[0]).toEqual({ id: "scaf-i00", t0: 1000, tC: 2000, gain: 1000 });
+    expect(r.descriptive.massBins.find((b: any) => b.arm === "scaf" && b.timing === "a").bins.map((b: any) => b.bin)).toEqual(["[64, 128)", "[128, 256)", "[256, 512)"]);
+    // the side-by-side medians are over each arm's own sources only (not its quenched controls or swaps)
+    expect(r.descriptive.sideBySide).toEqual({
+      reg1: { histories: 24, a: { scaf: 211.5 / 256, rand: 111.5 / 256, cont: 101.5 / 256, ancestor: 91.5 / 256 }, b: { scaf: 211.5 / 256, rand: 111.5 / 256, cont: 101.5 / 256, ancestor: 91.5 / 256 }, geOnFaMinusAncestor: 128.5 / 512, g: 20 / 512, quenchedMax: 0 },
+      v1: null,
+      r3rep: null,
+    });
+  });
+
+  it("H1 confirmed, H2 not: 18 of 24 genomes gain (p 0.011)", () => {
+    const r = reg1Readout({ plan: { successes: noGain(range(6)) } });
+    expect(r.outcome).toBe("H1 confirmed, H2 not");
+    expect(r.primary.h2).toMatchObject({ status: "not confirmed", positive: 18 });
+    expect(r.primary.h2.holm).toBeCloseTo(reg1ReportSignTest(18, 24), 15);
+  });
+
+  it("H2 confirmed, H1 not: scaf does not rank above rand at (b), and that comparison is named", () => {
+    const r = reg1Readout({ plan: { successes: randLikeScaf() } });
+    expect(r.outcome).toBe("H2 confirmed, H1 not");
+    expect(r.primary.h1.status).toBe("not confirmed");
+    expect(r.primary.h1.comparisons.filter((c: any) => !c.established).map((c: any) => [c.other, c.timing, c.uninformative])).toEqual([["rand", "b", false]]);
+    expect(r.primary.h1.p).toBe(r.primary.h1.comparisons.find((c: any) => c.other === "rand" && c.timing === "b").p);
+  });
+
+  it("neither", () => {
+    expect(reg1Readout({ plan: { successes: randLikeScaf(noGain(range(6))) } }).outcome).toBe("Neither");
+  });
+
+  it("invalid: a failed device check, a quenched set above 0.05 (13 of 256, not 12) or a failed reproducibility check, whatever else holds", () => {
+    const device = reg1Readout({ device: { ...REG1_DEVICE_OK, passed: false, reasons: ["finalHash differs between the device check bundles"], finalHash: null } });
+    // the row is settled by validity: no test statistic is printed and no truncation verdict; the validity, availability and descriptive parts stay
+    expect(device).toMatchObject({ outcome: "Invalid", withheld: true, withheldReason: "the row is Invalid (Report; no claim): no test statistic is reported", primary: null, secondary: null, availability: { expected: 558 } });
+    expect(device.descriptive.competences).toHaveLength(312);
+    expect(device.truncation).toEqual({ limit: 0.01, flagged: [], unknown: [], without: null, sensitive: null });
+    expect(device.reasons).toEqual(["device check failed: finalHash differs between the device check bundles"]);
+    const quench = (n: number) => reg1Readout({ plan: { successes: reg1Over(reg1Successes, { "scaf-i03-quench-b": n }) } });
+    expect(quench(12)).toMatchObject({ outcome: "H1 and H2 confirmed", validity: { quenched: { max: 12 / 256, failed: false } } });
+    expect(quench(13)).toMatchObject({ outcome: "Invalid", withheld: true, primary: null, secondary: null, validity: { quenched: { max: 13 / 256, failed: true } } });
+    expect(quench(13).reasons).toEqual(["quenched control scaf-i03-quench-b has competence 13/256, above 0.05"]);
+    const repro = reg1Readout({ repro: { ...REG1_REPRO_OK, passed: false, reasons: ["no rerun of rand-i17"] } });
+    expect(repro).toMatchObject({ outcome: "Invalid", withheld: true, primary: null });
+    expect(repro.reasons).toEqual(["reproducibility check failed: no rerun of rand-i17"]);
+    // invalid comes before uninformative in the table
+    const both = reg1Readout({ plan: { successes: reg1Over(reg1Successes, { "scaf-i03-quench-a": 20 }), missing: new Set(range(7).map((i) => `${reg1ReportHistoryId("scaf", i)}-a`)) } });
+    expect(both.outcome).toBe("Invalid");
+    expect(both.validity.unresolved.uninformative).toBe(true);
+  });
+
+  it("uninformative: more than 6 unresolved histories in an arm, or in the ancestor worlds, or the budget stop", () => {
+    const seven = reg1Readout({ plan: { missing: new Set(range(7).map((i) => `garden-rand-i${String(i).padStart(2, "0")}-t1-disc`)) } });
+    expect(seven).toMatchObject({ outcome: "Uninformative", withheld: true, withheldReason: "the row is Uninformative (Report; decide whether to complete or rerun): no test statistic is reported", primary: null, secondary: null, truncation: { without: null, sensitive: null }, validity: { unresolved: { uninformative: true, arms: { rand: { unresolved: 7 } } } } });
+    expect(seven.reasons).toEqual([expect.stringMatching(/^rand has 7 unresolved histories, more than 6 \(rand-i00, .*rand-i06\)/)]);
+    const runs = reg1RunsFixture({ unresolved: new Set(range(7).map((i) => reg1ReportHistoryId("ancestor", i))) });
+    const anc = reg1Readout({ runs });
+    expect(anc.outcome).toBe("Uninformative");
+    expect(anc.reasons.join("; ")).toMatch(/the ancestor worlds have 7 unresolved histories/);
+    // the ancestor world's bundle is a source of its sets and of scaf_i's swap pair: all of them are unresolved
+    expect(anc.availability.histories.find((h: any) => h.id === "ancestor-i00").unresolved).toEqual(["ancestor-i00 run", "ancestor-i00-a", "ancestor-i00-b"]);
+    expect(anc.availability.histories.find((h: any) => h.id === "scaf-i00").unresolved).toEqual(["scaf-i00-ge-on-fa", "scaf-i00-ga-on-fa"]);
+    // six is not too many
+    expect(reg1Readout({ plan: { missing: new Set(range(6).map((i) => `heredity-rand-i${String(i).padStart(2, "0")}`)) } }).outcome).toBe("H1 and H2 confirmed");
+    const stopped = reg1Readout({ budgetStopped: true });
+    expect(stopped).toMatchObject({ outcome: "Uninformative", budgetStopped: true, withheld: true, withheldReason: "the budget stopped the queue: nothing is analysed", primary: null, secondary: null, descriptive: null, row: { next: "Report; decide whether to complete or rerun." } });
+    expect(stopped.reasons).toEqual(["the budget stopped the queue: nothing is analysed (no partial ensemble is ever analysed)"]);
+    expect(reg1Readout({ budgetStopped: true, device: null }).outcome).toBe("Uninformative");
+    expect(reg1Readout({ budgetStopped: true, device: { ...REG1_DEVICE_OK, passed: false, reasons: ["x"], finalHash: null } }).outcome).toBe("Invalid");
+  });
+
+  it("a queue that has not completed is analysed by nothing: the outcome is incomplete, which is no row of the table", () => {
+    const queue = { commands: [{ id: "device-1", instance: 1 }, { id: "hist-scaf-i00", instance: 1 }, { id: "hist-scaf-i08", instance: 2 }] };
+    const done = reg1ReportQueueCheck(queue, [{ instance: 1, commands: { "device-1": "done", "hist-scaf-i00": "fail" } }, { instance: 2, commands: { "hist-scaf-i08": "done" } }]);
+    expect(done).toEqual({ complete: true, commands: 3, done: 2, failed: 1, pending: [], reasons: [] });
+    // a command's state counts only from its own instance's status file
+    const open = reg1ReportQueueCheck(queue, [{ instance: 1, commands: { "device-1": "done", "hist-scaf-i08": "done", "hist-scaf-i00": "running" } }]);
+    expect(open).toMatchObject({ complete: false, pending: ["hist-scaf-i00", "hist-scaf-i08"], reasons: ["the queue has not completed: 2 of 3 commands have no terminal state (hist-scaf-i00, hist-scaf-i08)"] });
+    for (const bad of [() => reg1ReportQueueCheck({ commands: [{ id: 1 }] }, []), () => reg1ReportQueueCheck(queue, [{ instance: 1, commands: {} }, { instance: 1, commands: {} }]), () => reg1ReportQueueCheck({ commands: [queue.commands[0], queue.commands[0]] }, [])]) expect(bad).toThrow();
+    const r = reg1Readout({ queue: open });
+    expect(r).toMatchObject({ outcome: "incomplete", row: null, withheld: true, withheldReason: "the queue has not completed: nothing is analysed", queue: open, primary: null, secondary: null, truncation: null, availability: null, descriptive: null });
+    expect(r.reasons).toEqual([open.reasons[0], "nothing is analysed (no partial ensemble is ever analysed)"]);
+    // the budget stop comes first, and a complete queue is reported beside the readout
+    expect(reg1Readout({ queue: open, budgetStopped: true }).outcome).toBe("Uninformative");
+    expect(reg1Readout({ queue: done })).toMatchObject({ outcome: "H1 and H2 confirmed", queue: { complete: true } });
+  });
+
+  it("an unresolved value entering an H1 comparison makes H1 uninformative (Holm slot 1), reported as uninformative, not as not confirmed", () => {
+    const r = reg1Readout({ plan: { missing: new Set(["rand-i05-a"]) } });
+    expect(r.outcome).toBe("H2 confirmed, H1 not");
+    expect(r.primary.h1).toMatchObject({ status: "uninformative", p: null, slot: 1 });
+    const c = r.primary.h1.comparisons.find((x: any) => x.other === "rand" && x.timing === "a");
+    expect(c).toMatchObject({ uninformative: true, p: null, established: null, unresolved: ["rand-i05-a"] });
+    expect(r.primary.h1.comparisons.filter((x: any) => x.uninformative)).toHaveLength(1);
+    expect(r.reasons[0]).toBe("H1 uninformative (an unresolved value enters scaf > rand at (a)): Holm slot p = 1; uninformative; counts as not confirmed for the table");
+    // under "H2 confirmed, H1 not" the comparisons that did not establish higher scaf competence are named, the uninformative one marked
+    expect(r.reasons[2]).toBe("comparisons that did not establish higher scaf competence: scaf > rand at (a) (uninformative)");
+    expect(r.row.note).toMatch(/marks it uninformative rather than not confirmed/);
+    // H2's Holm slot is tested beside p = 1
+    expect(r.primary.h2.holm).toBe(Math.min(1, 2 * 2 ** -24));
+  });
+
+  it("an unresolved history counts as not positive in every sign test, whichever of its sets is unresolved, and an unresolved gain makes S2b uninformative", () => {
+    // four swap pairs and one S2 set of scaf histories missing: five unresolved scaf histories, none positive in H2, S1 or S2a
+    const missing = new Set([...range(4).map((i) => `${reg1ReportHistoryId("scaf", i)}-ga-on-fa`), "garden-rand-i03-t0-disc", "garden-scaf-i09-t1-disc"]);
+    const r = reg1Readout({ plan: { missing } });
+    expect(r.outcome).toBe("H1 and H2 confirmed");
+    expect(r.primary.h2).toMatchObject({ positive: 19, n: 24, p: reg1ReportSignTest(19, 24) });
+    expect(r.primary.h2.terms[0]).toMatchObject({ id: "scaf-i00", status: "unresolved", positive: false, value: null, why: "scaf-i00 is unresolved (scaf-i00-ga-on-fa)" });
+    expect(r.primary.h2.terms[9]).toMatchObject({ id: "scaf-i09", status: "unresolved", positive: false, why: "scaf-i09 is unresolved (garden-scaf-i09-t1-disc)" });
+    expect(r.secondary.s1.ratio.excluded).toEqual({ unresolved: 5, noDominantGenome: 0, nonPositiveDenominator: 0 });
+    expect(r.secondary.s2a).toMatchObject({ positive: 19, n: 24 });
+    expect(r.secondary.s2a.terms[0]).toMatchObject({ status: "unresolved", why: "scaf-i00 is unresolved (scaf-i00-ga-on-fa)" });
+    // the rank test reads values: scaf-i00's disc gain is measured, scaf-i09's and rand-i03's are not
+    expect(r.secondary.s2b).toMatchObject({ status: "uninformative", p: null, slot: 1, unresolved: ["scaf-i09", "rand-i03"] });
+    expect(r.validity.unresolved.arms.scaf).toEqual({ histories: 24, unresolved: 5, ids: ["scaf-i00", "scaf-i01", "scaf-i02", "scaf-i03", "scaf-i09"] });
+    expect(r.definitions.unresolved).toMatch(/^A history is unresolved when its run bundle or any of its sets is/);
+  });
+
+  it("a missing quenched control: its history is not positive in H2, every one of its values is unresolved, so H1 is uninformative and the row Neither", () => {
+    // 19 of 24 genomes gain (i 0-18), and scaf-i00's quench-a is missing
+    const successes = reg1Over(reg1Successes, Object.fromEntries(range(5, 19).map((i) => [`${reg1ReportHistoryId("scaf", i)}-ge-on-fa`, 280 + i])));
+    expect(reg1Readout({ plan: { successes } })).toMatchObject({ outcome: "H1 and H2 confirmed", primary: { h2: { positive: 19 } } });
+    const r = reg1Readout({ plan: { successes, missing: new Set(["scaf-i00-quench-a"]) } });
+    expect(r.outcome).toBe("Neither");
+    expect(r.primary.h2).toMatchObject({ positive: 18, status: "not confirmed" });
+    expect(r.primary.h2.terms[0]).toMatchObject({ status: "unresolved", why: "scaf-i00 is unresolved (scaf-i00-quench-a)" });
+    expect(r.primary.h1.status).toBe("uninformative");
+    expect(r.primary.h1.comparisons.every((c: any) => c.uninformative && c.unresolved[0] === `scaf-i00-${c.timing}`)).toBe(true);
+    expect(r.secondary.s2b).toMatchObject({ status: "uninformative", unresolved: ["scaf-i00"] });
+    expect(r.validity.unresolved.arms.scaf).toMatchObject({ unresolved: 1, ids: ["scaf-i00"] });
+  });
+
+  it("a missing S3 set: its history is not positive in H2 or significant in S3, and H1 is unaffected", () => {
+    const r = reg1Readout({ plan: { missing: new Set(["heredity-scaf-i04"]) } });
+    expect(r.outcome).toBe("H1 and H2 confirmed");
+    expect(r.primary.h1).toMatchObject({ status: "confirmed" });
+    expect(r.primary.h1.comparisons.every((c: any) => !c.uninformative)).toBe(true);
+    expect(r.primary.h2).toMatchObject({ positive: 23, n: 24 });
+    expect(r.primary.h2.terms[4]).toMatchObject({ id: "scaf-i04", status: "unresolved", positive: false, why: "scaf-i04 is unresolved (heredity-scaf-i04)" });
+    expect(r.secondary.s3.arms.scaf).toMatchObject({ demonstrated: 23, n: 24 });
+  });
+
+  it("a missing dominant genome is a measured failure, not unresolved", () => {
+    const r = reg1Readout({ plan: { bio: new Set(["scaf-i00-ge-on-fa", "scaf-i01-ge-on-fa"]) } });
+    expect(r.primary.h2).toMatchObject({ positive: 22, n: 24 });
+    expect(r.primary.h2.terms[0]).toMatchObject({ status: "no dominant genome", positive: false });
+    expect(r.secondary.s1.terms[1]).toMatchObject({ status: "no dominant genome", positive: false });
+    expect(r.secondary.s1.ratio.excluded).toEqual({ unresolved: 0, noDominantGenome: 2, nonPositiveDenominator: 0 });
+    expect(r.secondary.s1.ratio.eligible).toHaveLength(22);
+    expect(r.availability).toMatchObject({ biological: 2, unresolved: 0 });
+    expect(r.validity.unresolved.arms.scaf.unresolved).toBe(0);
+    expect(r.descriptive.competences.find((c: any) => c.id === "scaf-i00-ge-on-fa")).toMatchObject({ status: "biological", n: 0, competence: null });
+  });
+
+  it("S3's gates: a failed positive control or two significant negatives make S3 uninformative with slot p = 1; an unresolved history is not significant", () => {
+    const heredity = (over: Record<string, "strong" | "flat" | "insufficient">) => reg1Over(reg1Plan().heredity, over);
+    const pos = reg1Readout({ plan: { heredity: heredity({ "heredity-pos-s1": "flat" }) } }).secondary.s3;
+    expect(pos).toMatchObject({ status: "uninformative", p: null, slot: 1, gates: { positivePassed: false, nullGatePassed: true } });
+    const neg = reg1Readout({ plan: { heredity: heredity({ "heredity-neg-j0": "strong", "heredity-neg-j2": "strong" }) } });
+    expect(neg.secondary.s3).toMatchObject({ status: "uninformative", gates: { nullGatePassed: false } });
+    expect(neg.secondary.heritable).toBe(false);
+    expect(neg.outcome).toBe("H1 and H2 confirmed"); // the secondaries never change the row
+    expect(reg1Readout({ plan: { heredity: heredity({ "heredity-neg-j3": "strong" }) } }).secondary.s3).toMatchObject({ status: "confirmed", gates: { nullGatePassed: true } });
+    // every negative must be tested: one with fewer than 2 donors, or missing, leaves the gate unmet
+    expect(reg1Readout({ plan: { heredity: heredity({ "heredity-neg-j1": "insufficient" }) } }).secondary.s3.gates.nullGatePassed).toBe(false);
+    expect(reg1Readout({ plan: { missing: new Set(["heredity-neg-j1"]) } }).secondary.s3.gates.nullGatePassed).toBe(false);
+    // 5 of 24 scaf histories significant: p 0.006 before Holm; unresolved and donor-less histories count as not significant
+    const five = Object.fromEntries(range(24).map((i) => [`heredity-scaf-i${String(i).padStart(2, "0")}`, (i < 5 ? "strong" : i < 10 ? "insufficient" : "flat") as "strong" | "flat" | "insufficient"]));
+    const r = reg1Readout({ plan: { heredity: heredity(five), missing: new Set(["heredity-scaf-i20"]) } }).secondary.s3;
+    expect(r.arms.scaf).toEqual({ n: 24, demonstrated: 5, p: binomialUpperTail(5, 24, 1, 20) });
+    expect(r.p).toBeCloseTo(0.006, 3);
+    expect(r.histories.find((x: any) => x.id === "heredity-scaf-i07")).toMatchObject({ outcome: "donors", demonstrated: false });
+    expect(r.histories.find((x: any) => x.id === "heredity-scaf-i20")).toMatchObject({ outcome: "unresolved", demonstrated: false, why: "scaf-i20 is unresolved (heredity-scaf-i20)" });
+  });
+
+  it("truncation: the row without the flagged histories is reported beside it, and called sensitive when it changes", () => {
+    // 19 of 24 genomes gain: H2 confirmed (p 0.0033)
+    const plan = { successes: noGain(range(5, 19)) };
+    const flip = reg1Readout({ plan, runs: reg1RunsFixture({ flagged: new Set(["scaf-i00", "scaf-i01", "scaf-i02"]) }) });
+    expect(flip.outcome).toBe("H1 and H2 confirmed");
+    expect(flip.truncation.flagged.map((f: any) => f.id)).toEqual(["scaf-i00", "scaf-i01", "scaf-i02"]);
+    expect(flip.truncation).toMatchObject({ sensitive: true, without: { outcome: "H1 confirmed, H2 not", excluded: ["scaf-i00", "scaf-i01", "scaf-i02"], h2: { positive: 16, n: 21 } } });
+    expect(flip.truncation.without.h2.p).toBe(reg1ReportSignTest(16, 21));
+    expect(flip.reasons.at(-1)).toBe("sensitive to truncation: without the 3 flagged histories the row would be H1 confirmed, H2 not");
+    const steady = reg1Readout({ plan, runs: reg1RunsFixture({ flagged: new Set(["scaf-i23", "rand-i04"]) }) });
+    expect(steady.truncation).toMatchObject({ sensitive: false, without: { outcome: "H1 and H2 confirmed", h2: { positive: 19, n: 23 } } });
+    // the sensitivity re-runs the tests only: no validity check is part of it
+    expect(Object.keys(flip.truncation.without)).toEqual(["outcome", "reasons", "excluded", "h1", "h2", "secondary"]);
+    // under a row the validity checks settle there is no sensitivity verdict, though the flagged histories are listed: a quenched control
+    // above 0.05 in a flagged history stays Invalid, as does more than 6 unresolved with one of them flagged
+    const settled = reg1Readout({ plan: { successes: reg1Over(reg1Successes, { "scaf-i02-quench-a": 30 }) }, runs: reg1RunsFixture({ flagged: new Set(["scaf-i02"]) }) });
+    expect(settled).toMatchObject({ outcome: "Invalid", withheld: true, primary: null, secondary: null });
+    expect(settled.truncation).toMatchObject({ flagged: [{ id: "scaf-i02" }], without: null, sensitive: null });
+    expect(settled.reasons).toEqual(["quenched control scaf-i02-quench-a has competence 30/256, above 0.05"]);
+    expect(JSON.stringify(settled)).not.toMatch(/"(holm|slot)"/);
+    const seven = reg1Readout({ plan: { missing: new Set(range(7).map((i) => `garden-scaf-i0${i}-t0-raw`)) }, runs: reg1RunsFixture({ flagged: new Set(["scaf-i06"]) }) });
+    expect(seven).toMatchObject({ outcome: "Uninformative", truncation: { flagged: [{ id: "scaf-i06" }], without: null, sensitive: null } });
+    // an unreadable bundle's truncation is unknown, and listed
+    expect(reg1Readout({ runs: reg1RunsFixture({ unresolved: new Set(["cont-i03"]) }) }).truncation.unknown).toEqual(["cont-i03"]);
+  });
+
+  it("S1's bootstrap: reproducible, nearest-rank percentiles of 10,000 resample medians drawn by randomKey(4,880,201, r, j, 0), and unavailable at m = 0", () => {
+    const xs = [0.3, 0.1, 0.25, 0.6, 0.05];
+    const a = reg1ReportBootstrapMedian(xs)!;
+    expect(reg1ReportBootstrapMedian(xs)).toEqual(a);
+    const medians: number[] = [];
+    for (let r = 0; r < 10_000; r++) medians.push(median(xs.map((_, j) => xs[randomKey(4_880_201, r, j, 0) % xs.length])));
+    medians.sort((p, q) => p - q);
+    expect(a).toEqual({ m: 5, median: 0.25, lower: medians[249], upper: medians[9749], resamples: 10_000 });
+    expect(reg1ReportBootstrapMedian([])).toBeNull();
+    const none = reg1Readout({ plan: { bio: new Set(range(24).map((i) => `${reg1ReportHistoryId("scaf", i)}-ge-on-fa`)) } });
+    expect(none.secondary.s1.ratio).toMatchObject({ available: false, median: null, interval: null, eligible: [], excluded: { noDominantGenome: 24 }, method: "nearest-rank percentiles 250/9750 of 10,000 sorted medians; eligible histories in ascending i" });
+    expect(none.outcome).toBe("H1 confirmed, H2 not");
+  });
+
+  it("is deterministic", () => {
+    expect(JSON.stringify(reg1Readout())).toBe(JSON.stringify(reg1Readout()));
+  });
+});
+
+describe("scaffold-report reg1", () => {
+  const scratch = () => mkdtempSync(join(tmpdir(), "scaffold-reg1-"));
+  /** The readout runs to a few MB (every set, bundle and trajectory), past execFileSync's default buffer. */
+  const report = (...args: string[]): Record<string, any> => JSON.parse(execFileSync("deno", ["run", "-A", REPORT, ...args], { stdio: "pipe", encoding: "utf8", maxBuffer: 1 << 28 }));
+  /**
+   * The registration's files under a scratch root: every assay set of `plan` (assays/<id>), the 96 bundles at their production paths
+   * (runs/hist|anc/ponds/<condition>/seed-<n>, ponds.tsv with the columns the report reads), the four device checks, the two reruns on the
+   * Mac and a completed queue (queue.json, status-<n>.json). Ge-on-Fa records without a dominant genome get a real (empty) b100-pre
+   * checkpoint in their donor's bundle, whose hash the manifest records.
+   */
+  const writeWorld = (plan: Reg1Plan): string => {
+    const root = scratch();
+    const realHash = new Map<string, string>();
+    for (const id of plan.bio) {
+      const donor = reg1ReportExpectedSet(id)!.sources[1].bundle;
+      const i = Number(donor.slice(-2));
+      const state = allocState({ ...pondConfig(8, reg1ReportWorldSeed("scaf", i)), tileW: 24, tileH: 24 });
+      state.step = 1_000_000;
+      const dir = join(root, "runs", "hist", "ponds", "treatment", `seed-${reg1ReportWorldSeed("scaf", i)}`, "checkpoints");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "b100-pre.blck"), encodeCheckpoint(state));
+      realHash.set(donor, stateHash(state));
+    }
+    const hash = (bundle: string, checkpoint: string) => (checkpoint === "b100" && realHash.has(bundle) ? realHash.get(bundle)! : reg1Hash(bundle, checkpoint));
+    for (const w of reg1ReportExpectedSets()) {
+      if (plan.missing.has(w.id)) continue;
+      const rows = reg1PlanRows(w, plan);
+      const h = w.labels.set === "heredity" ? plan.heredity(w.id) : null;
+      const dir = join(root, "assays", w.id);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "assay.json"), JSON.stringify(reg1SetJson(w, { rows: rows.length, bio: plan.bio.has(w.id), insufficient: h === "insufficient", hash })));
+      writeFileSync(join(dir, "assay.tsv"), reg1RowsText(rows));
+      if (h !== null) writeFileSync(join(dir, "traits.tsv"), reg1TraitsText(rows, h));
+    }
+    const bundle = (base: string, manifest: Record<string, any>, cycles: number) => {
+      const dir = join(base, manifest.runId);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "manifest.json"), JSON.stringify(manifest));
+      if (cycles === 0) return;
+      const lines = ["cycle\trecipient\tdonor\ttruncated\trecipientTrait"];
+      for (let c = 1; c <= cycles; c++) for (let r = 0; r < 64; r++) lines.push(`${c}\t${r}\t${manifest.cfg.pondArm === "cont" ? -1 : (r * 5) % 64}\t0\t${r < 2 ? 0 : 5000 + r}`);
+      writeFileSync(join(dir, "ponds.tsv"), lines.join("\n") + "\n");
+    };
+    for (const { id, arm, history } of reg1ReportExpectedRuns()) {
+      const hashes = { b001: hash(id, "b001"), b034: hash(id, "b034"), b100: hash(id, "b100"), init: hash(id, "init") };
+      bundle(join(root, "runs"), reg1Manifest(arm === "ancestor" ? "anc" : "hist", arm, history, hashes), arm === "ancestor" ? 1 : 100);
+    }
+    for (const where of ["mac", 1, 2, 3] as const) bundle(join(root, "devices", String(where)), reg1Manifest("device", "scaf", 0, {}, { host: REG1_HOSTS[where] }), 0);
+    const commands = reg1ReportExpectedSets().map((w) => ({ id: w.id, instance: reg1InstanceOf(w.labels.history ?? 0) }));
+    writeFileSync(join(root, "queue.json"), JSON.stringify({ commands }));
+    for (const n of [1, 2, 3]) writeFileSync(join(root, `status-${n}.json`), JSON.stringify({ instance: n, commands: Object.fromEntries(commands.filter((c) => c.instance === n).map((c) => [c.id, "done"])) }));
+    for (const id of ["scaf-i14", "rand-i17"]) bundle(join(root, "runs"), reg1Manifest("repro", id.slice(0, 4) as Reg1ReportArm, Number(id.slice(-2)), { b034: reg1Hash(id, "b034") }), 0);
+    return root;
+  };
+  /** S3 analysed in the controls and three histories, the others without enough donors (light fixtures). */
+  const plan = (o: Partial<Reg1Plan> = {}) =>
+    reg1Plan({
+      heredity: (id) => (id.startsWith("heredity-pos") || id === "heredity-scaf-i00" || id === "heredity-scaf-i01" ? "strong" : id.startsWith("heredity-neg") || id === "heredity-rand-i00" ? "flat" : "insufficient"),
+      ...o,
+    });
+  const devices = (root: string) => ["mac", "1", "2", "3"].map((where) => join(root, "devices", where));
+  const queue = (root: string) => ["--queue", join(root, "queue.json"), "--status", ...[1, 2, 3].map((n) => join(root, `status-${n}.json`))];
+  const args = (root: string) => ["--assays", join(root, "assays"), "--runs", join(root, "runs"), "--device", ...devices(root), "--repro", join(root, "runs", "repro"), ...queue(root)];
+
+  it("reads the sets and bundles: validity, the tests and the row, a verified missing dominant genome, the bundles it does not take listed", () => {
+    const root = writeWorld(plan({ bio: new Set(["scaf-i06-ge-on-fa"]) }));
+    // another stage's set beside them is skipped and listed
+    writeAssayDir(join(root, "assays"), "r1-h0", scafR1(0));
+    // R4's capability set (descriptive): DEFAULT_EVAL's own seed 1 and 4 replicates, a row per genome
+    mkdirSync(join(root, "assays", "capability"));
+    // an unavailable source is a row that was not evaluated; h labels the source and is not a measure
+    const capability = [{ arm: "scaf", history: 0, h: 0, evaluated: true, quality: 0.5 }, { arm: "scaf", history: 1, h: 1, evaluated: false, unavailable: "no eligible cell" }, { arm: "ancestor", history: 0, h: 72, evaluated: true, quality: 0.4 }];
+    writeFileSync(join(root, "assays", "capability", "assay.json"), JSON.stringify({ assay: "capability", seed: 1, eval: { reps: 4, seed: 1 }, labels: { reg1: true, set: "capability", arm: null, history: null, timing: null, time: null, h: null, control: null }, capability }));
+    const readout = (name: string) => fileURLToPath(new URL(`../../experiments/scaffold/readouts/${name}`, import.meta.url));
+    const out = report("reg1", ...args(root), "--v1", readout("r3.json"), "--r3rep", readout("r3rep.json"));
+    expect(Object.keys(out)).toEqual(["stage", "protocolSha256Reg1", "protocolNow", "validated", "outcome", "row", "reasons", "budgetStopped", "withheld", "withheldReason", "definitions", "queue", "validity", "primary", "secondary", "truncation", "availability", "descriptive", "rejected", "skipped"]);
+    expect(out.queue).toEqual({ complete: true, commands: 558, done: 558, failed: 0, pending: [], reasons: [] });
+    expect(out).toMatchObject({ stage: "reg1", outcome: "H1 and H2 confirmed", validated: true, rejected: [], protocolSha256Reg1: REG1_REPORT_PROTOCOL.sha256 });
+    expect(out.protocolNow).toEqual({ doc: "docs/scaffold-registration-v1.md", sha256: createHash("sha256").update(readFileSync(fileURLToPath(new URL("../../docs/scaffold-registration-v1.md", import.meta.url)))).digest("hex"), pinnedTextIntact: true });
+    expect(out.validity.device).toMatchObject({ passed: true, finalHash: "final", mac: join(root, "devices", "mac", "device/ponds/treatment/seed-4880301"), uncovered: [] });
+    expect(out.validity.device.bundles).toHaveLength(4);
+    expect(out.validity.reproducibility).toMatchObject({ passed: true, histories: [{ id: "scaf-i14", passed: true }, { id: "rand-i17", passed: true }] });
+    expect(out.availability).toMatchObject({ expected: 558, measured: 557, biological: 1, unresolved: 0 });
+    expect(out.primary.h2).toMatchObject({ positive: 23, n: 24, status: "confirmed" });
+    expect(out.primary.h2.terms[6]).toMatchObject({ id: "scaf-i06", status: "no dominant genome" });
+    expect(out.secondary.s3).toMatchObject({ status: "not confirmed", gates: { positivePassed: true, nullGatePassed: true }, arms: { scaf: { demonstrated: 2 } } });
+    expect(out.truncation).toMatchObject({ flagged: [], unknown: [], sensitive: false });
+    expect(out.descriptive.runs.histories.find((h: any) => h.id === "scaf-i00")).toMatchObject({ resolved: true, lastBoundary: 100, extinctAt100: 2, endedAt: null, truncation: { rows: 6400, truncated: 0 } });
+    expect(out.descriptive.runs.histories.find((h: any) => h.id === "ancestor-i00")).toMatchObject({ lastBoundary: 1, extinctAt100: null });
+    expect(out.descriptive.runs.arms.cont[5]).toEqual({ boundary: 100, histories: 24, medianMeanTrait: (62 * 5000 + (2 + 63) * 31) / 64, medianExtinct: 2 });
+    expect(out.descriptive.capability).toMatchObject({ given: true, rows: [{ arm: "scaf", history: 0 }, { arm: "scaf", history: 1 }, { arm: "ancestor", history: 0 }], arms: { scaf: { n: 1, measures: { quality: { n: 1, mean: 0.5 } } } } });
+    expect(Object.keys(out.descriptive.capability.arms.scaf.measures)).toEqual(["quality"]);
+    expect(out.descriptive.capability.counts.scaf).toEqual({ rows: 2, evaluated: 1, unavailable: [{ history: 1, why: "no eligible cell" }] });
+    expect(out.descriptive.sideBySide.v1).toMatchObject({ histories: 6, quenchedMax: 0 });
+    expect(out.descriptive.sideBySide.r3rep).toMatchObject({ histories: 6, quenchedMax: 0 });
+    expect(out.descriptive.sideBySide.reg1.a.scaf).toBe(211.5 / 256);
+    expect(out.skipped.map((s: any) => s.why)).toEqual(["a reproducibility rerun of rand-i17 (340,000 steps): give it with --repro", "a reproducibility rerun of scaf-i14 (340,000 steps): give it with --repro", "not a registration set (labels.reg1 is not true)"]);
+  });
+
+  it("collects unreadable and unsound sets and bundles as unresolved, and stops at nothing", () => {
+    const root = writeWorld(plan());
+    rmSync(join(root, "assays", "rand-i00-a", "assay.tsv"));
+    writeFileSync(join(root, "assays", "cont-i01-b", "assay.json"), "{ not json");
+    const anc = join(root, "runs", "anc", "ponds", "pond-cont", `seed-${reg1ReportWorldSeed("ancestor", 2)}`);
+    writeFileSync(join(anc, "ponds.tsv"), "cycle\trecipient\tdonor\ttruncated\trecipientTrait\n1\t0\t-1\t0\t5\n");
+    // rand-i05 stopped on an event-buffer overflow and was repeated at census 100 (hist-c100): the repeat is taken; cont-i04 finished under both: refused
+    const repeat = (cond: string, seed: number, finishedBoth: boolean) => {
+      const first = join(root, "runs", "hist", "ponds", cond, `seed-${seed}`);
+      const m = JSON.parse(readFileSync(join(first, "manifest.json"), "utf8"));
+      const { summary: _s, finishedAt: _f, ...stopped } = m;
+      if (!finishedBoth) writeFileSync(join(first, "manifest.json"), JSON.stringify(stopped));
+      const again = join(root, "runs", "hist-c100", "ponds", cond, `seed-${seed}`);
+      mkdirSync(again, { recursive: true });
+      writeFileSync(join(again, "manifest.json"), JSON.stringify({ ...m, runId: `hist-c100/ponds/${cond}/seed-${seed}`, spec: { ...m.spec, experiment: "hist-c100", censusEvery: 100 } }));
+      cpSync(join(first, "ponds.tsv"), join(again, "ponds.tsv"));
+      return [first, again];
+    };
+    const [overflowed, repeated] = repeat("pond-rand", reg1ReportWorldSeed("rand", 5), false);
+    const twice = repeat("pond-cont", reg1ReportWorldSeed("cont", 4), true);
+    const out = report("reg1", ...args(root));
+    const run = (id: string) => out.availability.runs.find((h: any) => h.id === id);
+    expect(run("rand-i05")).toEqual({ id: "rand-i05", dir: repeated, resolved: true, why: [], censusEvery: 100 });
+    expect(out.skipped).toContainEqual({ dir: overflowed, why: `an unfinished run of rand-i05, superseded by the finished ${repeated}` });
+    expect(run("cont-i04")).toMatchObject({ resolved: false, why: [`2 finished run bundles (${twice[0]}, ${twice[1]}); neither is used`] });
+    expect(out.rejected.map((r: any) => r.id)).toEqual([null, "rand-i00-a"]);
+    const status = (id: string) => out.availability.sets.find((s: any) => s.id === id);
+    expect(status("rand-i00-a").why).toMatch(/^set rejected: could not read the set/);
+    expect(status("cont-i01-b").why).toBe("no assay set");
+    expect(status("ancestor-i02-a").why).toMatch(/its source bundle ancestor-i02 \(unresolved\) is not resolved/);
+    expect(out.availability.runs.find((h: any) => h.id === "ancestor-i02")).toMatchObject({ resolved: false, why: [expect.stringMatching(/^ponds.tsv: ponds.tsv cycle 1 has 1 rows, want 64/)] });
+    // four comparisons take an unresolved value: H1 is uninformative
+    expect(out).toMatchObject({ outcome: "H2 confirmed, H1 not", primary: { h1: { status: "uninformative", slot: 1 } } });
+    expect(out.truncation.unknown).toEqual(["cont-i04", "ancestor-i02"]);
+  });
+
+  it("--budget-stopped analyses nothing; --allow-any-seed waives the sets' seeds, not their labels", () => {
+    const root = writeWorld(plan());
+    const stopped = report("reg1", "--budget-stopped", "--device", ...devices(root));
+    expect(stopped).toMatchObject({ outcome: "Uninformative", budgetStopped: true, withheld: true, primary: null, secondary: null, validity: { device: { passed: true } } });
+    const set = join(root, "assays", "scaf-i02-a", "assay.json");
+    const json = JSON.parse(readFileSync(set, "utf8"));
+    writeFileSync(set, JSON.stringify({ ...json, seeds: json.seeds.map((x: any) => ({ physics: x.physics + 1, fragment: x.fragment })) }));
+    const strict = report("reg1", ...args(root));
+    expect(strict.rejected).toEqual([{ dir: join(root, "assays", "scaf-i02-a"), id: "scaf-i02-a", reasons: [expect.stringMatching(/^seeds\[0\]/), expect.stringMatching(/^seeds\[1\]/), expect.stringMatching(/^seeds\[2\]/), expect.stringMatching(/^seeds\[3\]/)] }]);
+    expect(strict.primary.h1.status).toBe("uninformative");
+    const smoke = report("reg1", ...args(root), "--allow-any-seed");
+    expect(smoke).toMatchObject({ validated: false, rejected: [], outcome: "H1 and H2 confirmed" });
+    // strict mode refuses to run without the queue; a queue with a command pending is analysed by nothing
+    const noQueue = args(root).slice(0, args(root).indexOf("--queue"));
+    expect(() => execFileSync("deno", ["run", "-A", REPORT, "reg1", ...noQueue], { stdio: "pipe", encoding: "utf8" })).toThrow(/reg1 needs --queue/);
+    const status = join(root, "status-2.json");
+    const st = JSON.parse(readFileSync(status, "utf8"));
+    delete st.commands["rand-i09-b"];
+    writeFileSync(status, JSON.stringify(st));
+    const open = report("reg1", ...args(root));
+    expect(open).toMatchObject({ outcome: "incomplete", row: null, withheld: true, queue: { complete: false, pending: ["rand-i09-b"] }, primary: null, secondary: null, truncation: null, availability: null, descriptive: null, validity: { device: { passed: true } } });
+  });
+
+  it("the other stages skip registration directories and read exactly what they read without them", () => {
+    const root = scratch();
+    writeAssayDir(root, "r3-scaf-a", assayDirFixture({ assay: "competence", flags: { arm: "scaf", history: "0", timing: "a" }, seed: assaySeed(3, 0, 0, 0, 0), dir: "r3" }));
+    for (const i of [0, 1, 2]) writeAssayDir(root, `r1-h${i}`, scafR1(i));
+    const stages = () => ({ r1: report("r1", "--assays", root, "--regime", "5", "3000"), r3: report("r3", "--assays", root, "--regime", "5", "3000"), r3rep: report("r3rep", "--assays", root) });
+    const before = stages();
+    for (const id of ["scaf-i00-a", "heredity-pos-s0"]) {
+      const w = reg1ReportExpectedSet(id)!;
+      const rows = reg1PlanRows(w, reg1Plan());
+      mkdirSync(join(root, id));
+      writeFileSync(join(root, id, "assay.json"), JSON.stringify(reg1SetJson(w, { rows: rows.length })));
+      writeFileSync(join(root, id, "assay.tsv"), reg1RowsText(rows));
+    }
+    const after = stages();
+    for (const stage of ["r1", "r3"] as const) {
+      expect({ ...after[stage], skipped: 0 }).toEqual({ ...before[stage], skipped: 0 });
+      expect(after[stage].skipped).toBe(before[stage].skipped + 2);
+    }
+    expect(after.r3rep.skipped).toHaveLength(before.r3rep.skipped.length + 2);
+    expect({ ...after.r3rep, skipped: 0 }).toEqual({ ...before.r3rep, skipped: 0 });
   });
 });

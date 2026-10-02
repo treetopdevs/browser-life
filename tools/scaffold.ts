@@ -17,12 +17,15 @@
 // final checkpoint byte for byte. ckpt/status.json records, before each checkpoint, its boundary and whether
 // the history had ended there, so a crash after an extinction checkpoint but before done.json resumes as an
 // ended history (done.json restored, nothing advanced). Seeds must lie in 4,800,001-4,849,999 unless
-// --allow-any-seed (smoke tests).
+// --allow-any-seed (smoke tests); the scaffolding registration's S3 negative-control worlds, seeds 4,880,001-4,880,004
+// (docs/scaffold-registration-v1.md, "Seeds"), are allowed too, for exactly that world: --arm cont --init clone --mut-off
+// --period 10000 --cycles 1 --side 8, as the heredity replication grew its controls.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { CH, G, M3_FOUNDERS, RULE_VERSION, cellCount, founderGenome, stateHash, totalsOf, worldW, type WorldConfig, type WorldState } from "@bl/schema";
 import { DEFAULT_CENSUS, census, individuals } from "@bl/metrics";
 import { GpuSim, requestDevice } from "@bl/sim-gpu";
 import { encodePng } from "./lib/png.ts";
+import { reg1NegativeRunProblems, reg1NegativeWorldOf } from "./lib/pond-assay.ts";
 import { loadCheckpoint, runPeriod, saveCheckpoint } from "./lib/pond-gpu.ts";
 import {
   POND_COLUMNS,
@@ -242,7 +245,13 @@ async function evolve(argv: string[]): Promise<void> {
   const seed = int("seed", a.seed, 0, 0xffffffff);
   const censusEvery = int("census", a.census, 1);
   const ckptEvery = int("ckpt-every", a["ckpt-every"], 1);
-  if (!a["allow-any-seed"] && (seed < SEED_MIN || seed > SEED_MAX)) throw new Error(`--seed ${seed} is outside ${SEED_MIN}-${SEED_MAX} (--allow-any-seed is for smoke tests only)`);
+  // The registration's S3 negative-control worlds lie outside the sandbox block: their seeds make that world and nothing else.
+  const reg1Negative = reg1NegativeWorldOf(seed) !== null;
+  if (!a["allow-any-seed"] && reg1Negative) {
+    const why = reg1NegativeRunProblems({ arm, init, mutOff: !!a["mut-off"], period, cycles: C, side });
+    if (why.length > 0) throw new Error(`--seed ${seed} is the registration's S3 negative-control world ${reg1NegativeWorldOf(seed)}, a mutation-off clone world of one period: ${why.join("; ")}`);
+  }
+  if (!a["allow-any-seed"] && !reg1Negative && (seed < SEED_MIN || seed > SEED_MAX)) throw new Error(`--seed ${seed} is outside ${SEED_MIN}-${SEED_MAX} (--allow-any-seed is for smoke tests only)`);
 
   const cfg0 = pondConfig(side, seed, a["mut-off"] ? 0 : undefined);
   const protocolSha256 = await sha256Hex(await Deno.readFile(PROTOCOL_PATH));
