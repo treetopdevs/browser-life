@@ -1,5 +1,7 @@
 # Paused after complete assay collection
 
+**Resolved 2026-10-02.** The user resumed the study; operation042 completed the original analysis and it passed independent review. This pause no longer applies; see `analysis-v1/` and `../../improvement-findings.md`. The text below is kept as the historical resume boundary.
+
 Paused at the user's explicit request for token reasons, 2026-10-02T01:30:14.273132+00:00. No scientific analysis has started. Do not resume automatically.
 
 ## Completed evidence

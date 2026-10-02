@@ -1,0 +1,27 @@
+{
+  "format": "discovery-improvement-analysis-review/v1",
+  "status": "CONFIRMED",
+  "reviewer": "independent fresh-context reviewer (subagent), read-only",
+  "recordedAt": "2026-10-02T10:43:22.510792+00:00",
+  "scope": "Operation042 original analysis report: independent Python re-derivation from raw assay files and the earlier frozen roster; checkpoints not re-decoded",
+  "approvalSha256": "0098c854435cb6b3828648374c0f9065ad0d3ad3f3d3925503917db35e37372c",
+  "reportSha256": "085d55cf1f7121ece85ff3a5dc9fa5f236c912531e480e3262db99ad205ec68a",
+  "checks": [
+    "6144 observations map to 1920 raw results; status, score, genomes, seed, assignment, steps and source manifest hash agree; scores recompute from raw masses exactly; all 1920 cache keys recompute",
+    "All 3883 published raw files match both host import commits; all 68 approval pins still match",
+    "Observation ids, order and mapping identical to reconciliation-v2/assay-roster.json (384 draws, 6144 assays, 1920 keys); roster genomes equal checkpoint-recomputed draws",
+    "Seed-block lowers, 8/8 certified, criterion met, 0.5279941 effect, per-founder effects at 0/100k/1M and 9/256 tail reproduce; bootstrap reimplemented gives [0.413042, 0.625081]",
+    "No null scores; retention consistent with rootMass; zero unresolved, unknown-ancestry and unassociated mass",
+    "Analysis used physical checkpoint chains (useCache=false), frozen rule, equal weights and strict 0.10 threshold"
+  ],
+  "findings": [],
+  "cautions": [
+    "Off arm is an identity control: off draws equal the founder, so the contrast is the normal descendant-vs-founder score against a constant 0; no mutation-without-selection control separates adaptation from divergence",
+    "Result carried by three founders; cluster-16 shows no improvement (-0.003, 4/8 seeds positive). Leave-one-founder-out sensitivity: 7/8, 7/8, 8/8, 8/8 (dropping 33, 139, 4, 16)",
+    "With no missingness the bounds equal observed means; block 6410008 (0.182) sits about 1.2 reviewer-estimated SE above 0.10; 9/256 is the rule's size, observed 8/8 corresponds to 1/256",
+    "Four assignments collapse to two physical outcomes; strong position bias cancels only across positions",
+    "At 1M the 64 normal draws are distinct non-founder genomes and the exact founder genome has zero mass in all 32 normal histories",
+    "Retention means any founder-lineage mass; 100% everywhere, so the retention difference and its interval are degenerate, not precise"
+  ],
+  "scientificConclusionChanged": false
+}
