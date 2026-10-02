@@ -253,7 +253,7 @@ export async function released(releasePath: string) {
 }
 
 type Ledger = { count: number; charged: number; reserved: number };
-async function ledger(out: string): Promise<Ledger> {
+export async function ledger(out: string): Promise<Ledger> {
   const dir = join(out, "invocations"),
     l = { count: 0, charged: 0, reserved: 0 };
   if (!await exists(dir)) return l;

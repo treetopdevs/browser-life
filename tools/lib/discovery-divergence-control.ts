@@ -130,6 +130,7 @@ export interface ImprovementReport {
     assignment: number;
     cacheKey: string | null;
     status: string;
+    score: number | null;
   }[];
   byTime: {
     time: number;
@@ -348,5 +349,240 @@ export function buildRoster(
       totalConfigurations: unique.size + replay.length,
     },
     rosterPayloadSha256: sha256(JSON.stringify({ genomes, assays, replay })),
+  };
+}
+
+// ---- Analysis (pure). Unavailable or missing scores take their full [-1, 1] range.
+
+export const THRESHOLD = 0.10;
+export const REQUIRED = 7;
+export const SIGN_TAIL = 9 / 256;
+export type Roster = ReturnType<typeof buildRoster>;
+/** null = technically missing; a both-extinct outcome has status but no score. */
+export type Outcome = {
+  status: "scored" | "both-extinct";
+  score: number | null;
+} | null;
+type Range = { lower: number; upper: number; point: number | null };
+
+function summarize(outcomes: readonly Outcome[]) {
+  const scores = outcomes.map((o) => o?.score ?? null);
+  const n = scores.length;
+  return {
+    lower: scores.reduce<number>((a, s) => a + (s ?? -1), 0) / n,
+    upper: scores.reduce<number>((a, s) => a + (s ?? 1), 0) / n,
+    point: scores.every((s) => s !== null)
+      ? scores.reduce<number>((a, s) => a + s!, 0) / n
+      : null,
+    scored: outcomes.filter((o) => o?.status === "scored").length,
+    bothExtinct: outcomes.filter((o) => o?.status === "both-extinct").length,
+    missing: outcomes.filter((o) => o === null).length,
+  };
+}
+function average(ranges: readonly Range[]): Range {
+  const n = ranges.length;
+  return {
+    lower: ranges.reduce((a, r) => a + r.lower, 0) / n,
+    upper: ranges.reduce((a, r) => a + r.upper, 0) / n,
+    point: ranges.every((r) => r.point !== null)
+      ? ranges.reduce((a, r) => a + r.point!, 0) / n
+      : null,
+  };
+}
+const contrast = (a: Range, b: Range): Range => ({
+  lower: a.lower - b.upper,
+  upper: a.upper - b.lower,
+  point: a.point === null || b.point === null ? null : a.point - b.point,
+});
+function percentile(sorted: readonly number[], p: number): number {
+  const at = (sorted.length - 1) * p, lo = Math.floor(at), hi = Math.ceil(at);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (at - lo);
+}
+
+export function analyzeDivergence(input: {
+  roster: Roster;
+  evolvedObservations: ReadonlyMap<string, Outcome>;
+  results: ReadonlyMap<string, Outcome>;
+  replay: { expected: number; matched: number };
+  bootstrapResamples?: number;
+}) {
+  const { roster, evolvedObservations, results } = input;
+  const assaysByGenome = new Map<string, string[]>();
+  for (const a of roster.assays) {
+    assaysByGenome.set(a.genomeId, [
+      ...(assaysByGenome.get(a.genomeId) ?? []),
+      a.cacheKey,
+    ]);
+  }
+  const genomeSummary = (id: string) => {
+    const keys = assaysByGenome.get(id) ?? [];
+    if (keys.length !== 16) throw Error(`genome ${id} lacks 16 requests`);
+    return summarize(keys.map((k) => results.get(k) ?? null));
+  };
+  const founders = [...new Set(roster.evolved.map((e) => e.founderId))];
+  const seeds = [...new Set(roster.evolved.map((e) => e.seed))].sort((a, b) =>
+    a - b
+  );
+  const mutantOf = new Map(
+    roster.mutants.map((m) => [m.evolvedDrawId, m.genomeId]),
+  );
+
+  const draws = roster.evolved.map((e) => {
+    const evolved = summarize(e.observationIds.map((id) => {
+      if (!evolvedObservations.has(id)) {
+        throw Error(`unknown evolved observation ${id}`);
+      }
+      return evolvedObservations.get(id)!;
+    }));
+    return {
+      drawId: e.drawId,
+      founderId: e.founderId,
+      seed: e.seed,
+      evolved,
+      mutant: genomeSummary(mutantOf.get(e.drawId)!),
+    };
+  });
+  const units = founders.flatMap((founderId) =>
+    seeds.map((seed) => {
+      const d = draws.filter((x) =>
+        x.founderId === founderId && x.seed === seed
+      );
+      if (d.length !== 2) {
+        throw Error(`unit ${founderId}/${seed} lacks two draws`);
+      }
+      const evolved = average(d.map((x) => x.evolved)),
+        mutant = average(d.map((x) => x.mutant));
+      return {
+        founderId,
+        seed,
+        evolved,
+        mutant,
+        contrast: contrast(evolved, mutant),
+      };
+    })
+  );
+  const blocks = seeds.map((seed) => {
+    const effect = average(
+      units.filter((u) => u.seed === seed).map((u) => u.contrast),
+    );
+    return { seed, ...effect, certified: effect.lower > THRESHOLD };
+  });
+
+  const missing =
+    roster.assays.filter((a) => (results.get(a.cacheKey) ?? null) === null)
+      .length;
+  const evolvedMissing =
+    [...evolvedObservations.values()].filter((o) => o === null).length;
+  const technicalComplete = missing === 0 && evolvedMissing === 0 &&
+    input.replay.matched === input.replay.expected &&
+    input.replay.expected === roster.replay.length;
+
+  const certifiedA = blocks.filter((b) => b.certified).length;
+  const resamples = input.bootstrapResamples ?? 10_000;
+  const rng = new Random(BOOTSTRAP_SEED);
+  const bootLower: number[] = [],
+    bootUpper: number[] = [],
+    bootPoint: number[] = [];
+  const allPoints = blocks.every((b) => b.point !== null);
+  for (let i = 0; i < resamples; i++) {
+    const s = Array.from(
+      { length: blocks.length },
+      () => rng.int(blocks.length),
+    );
+    bootLower.push(s.reduce((a, j) => a + blocks[j].lower, 0) / s.length);
+    bootUpper.push(s.reduce((a, j) => a + blocks[j].upper, 0) / s.length);
+    if (allPoints) {
+      bootPoint.push(s.reduce((a, j) => a + blocks[j].point!, 0) / s.length);
+    }
+  }
+  for (const b of [bootLower, bootUpper, bootPoint]) b.sort((x, y) => x - y);
+
+  const byFounder = founders.map((founderId) => {
+    const u = units.filter((x) => x.founderId === founderId);
+    return {
+      founderId,
+      evolved: average(u.map((x) => x.evolved)),
+      mutant: average(u.map((x) => x.mutant)),
+      contrast: average(u.map((x) => x.contrast)),
+    };
+  });
+
+  const reconstruction = roster.reconstructions.map((r) => {
+    const perSeed = r.perSeed.map((p) => {
+      const s = genomeSummary(p.genomeId);
+      return {
+        seed: p.seed,
+        value: p.value,
+        genomeId: p.genomeId,
+        ...s,
+        certified: s.lower > THRESHOLD,
+      };
+    });
+    const certified = perSeed.filter((p) => p.certified).length;
+    const mean = average(perSeed);
+    const evolvedMean = byFounder.find((f) =>
+      f.founderId === r.founderId
+    )!.evolved;
+    return {
+      founderId: r.founderId,
+      slotName: r.slotName,
+      founderValue: r.founderValue,
+      perSeed,
+      distinctGenomes: new Set(r.perSeed.map((p) => p.genomeId)).size,
+      mean,
+      certifiedSeeds: certified,
+      criterionMet: technicalComplete && certified >= REQUIRED,
+      recoveredShareOfEvolved:
+        mean.point !== null && evolvedMean.point !== null &&
+          evolvedMean.point > 0
+          ? mean.point / evolvedMean.point
+          : null,
+      interpretation: !technicalComplete
+        ? "technically incomplete"
+        : certified >= REQUIRED
+        ? "the single evolved change alone gives an advantage over the founder in typical seeds; this shows sufficiency, not necessity"
+        : "criterion not met; this does not show the change is irrelevant",
+    };
+  });
+
+  return {
+    format: "discovery-divergence-control-analysis/v1",
+    rosterPayloadSha256: roster.rosterPayloadSha256,
+    reportSha256: roster.inputs.reportSha256,
+    technicalComplete,
+    missingNewResults: missing,
+    replay: input.replay,
+    threshold: THRESHOLD,
+    required: REQUIRED,
+    exactOneSidedSignTail: SIGN_TAIL,
+    selection: {
+      blocks,
+      certifiedBlocks: certifiedA,
+      criterionMet: technicalComplete && certifiedA >= REQUIRED,
+      effect: average(blocks),
+      bootstrap: {
+        seed: BOOTSTRAP_SEED,
+        resamples,
+        bounded95: {
+          lower: percentile(bootLower, 0.025),
+          upper: percentile(bootUpper, 0.975),
+        },
+        point95: allPoints
+          ? {
+            lower: percentile(bootPoint, 0.025),
+            upper: percentile(bootPoint, 0.975),
+          }
+          : null,
+      },
+      byFounder,
+      interpretation: !technicalComplete
+        ? "technically incomplete"
+        : certifiedA >= REQUIRED
+        ? "evolved descendants beat their founder by more than equally changed random mutants in typical seed blocks; read with the mutants' own scores, since harmful mutants with neutral descendants indicate purifying selection rather than adaptation"
+        : "criterion not met; this does not establish that selection was absent",
+    },
+    reconstruction,
+    units,
+    draws,
   };
 }

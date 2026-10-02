@@ -76,6 +76,7 @@ Average the 16 competitions within each genome, then the two draws within each f
      - **Execution.** Replays run first, then roster order. Competitions go through the frozen `executeAssay` via the exact generated adapter. Resume re-validates every cached result and its provenance.
      - **Supervision.** `supervise` chains invocations in fresh processes and stops on failure or no progress. A killed process leaves its reservation and lock for explicit diagnosis.
 3. **Analyzer.** Implements the estimands above from the report plus new results.
+   - *Done 2026-10-02:* pure `analyzeDivergence` in `tools/lib/discovery-divergence-control.ts`, plus `tools/discovery_divergence_control_analyze.ts analyze RELEASE NEW_REPORT`. It re-validates every result and its provenance, recomputes every replay match, refuses an active lock or unresolved reservation, and writes a new report only. Nine tests in `tools/test/discovery-divergence-control-analyze.deno.ts` cover: both criteria met and unmet; exact bound widening for a missing result; both-extinct counted as unavailable rather than missing; replay gating; the strict 0.10 threshold; duplicate genomes; file-level re-validation; and reproduction of the frozen founder effects from the evolved arm.
 4. **Tests:**
    - Generator determinism.
    - M preserves slot count and magnitude multiset; clamp handling.
