@@ -1,0 +1,222 @@
+{
+ "source": "runs/foundations-next/m4-calibration-validation-v4/trials.jsonl (browser-life-foundations workspace)",
+ "sourceSha256": "ee6808f0d41859fee46247fedffab160c3f27fe539af1b3054eb82e27b23683d",
+ "rows": [
+  {
+   "scenario": "pairedEndpoint1Null",
+   "preset": "gradient-m3",
+   "trial": 0,
+   "identity": {
+    "kind": "synthetic",
+    "generatorIdentity": "validation:650009002:pairedEndpoint1Null:gradient-m3:0"
+   },
+   "endpoint2": {
+    "status": "ok",
+    "n": 64,
+    "mean": -0.23749999999999938,
+    "standardError": 1.0372322278277144,
+    "pGreaterThanFloor": 0.881343848447748,
+    "lowerBound": -2.992539221822498,
+    "supported": false
+   },
+   "endpoint1": {
+    "kind": "test",
+    "id": "adaptive-activity",
+    "description": "**Adaptive activity.** Cumulative new evolutionary activity (Bedau\u2013Packard) with the threshold frozen per preset from a dedicated neutral-only calibration pilot (\"calib-neutral\", 20 runs per preset, seeds 1001\u20131020, 1,000,000 steps, census every 100, deep every 10), at the 95th percentile of pooled lineage activity (`tools/calibrate.ts`): gradient-m3: 10008; spots-m3: 14613. The analysed ensemble's own in-sample neutral 95th percentile is still reported by `tools/analyze.ts`, but only as a labelled diagnostic, never used for inference. Hypothesis: treatment > neutral and treatment > no-mutation (one-sided Mann\u2013Whitney, \u03b1 = 0.01 after Holm correction across the two comparisons).",
+    "alpha": 0.01,
+    "rows": [
+     {
+      "a": "treatment",
+      "b": "neutral",
+      "relation": "pGreater",
+      "nA": 64,
+      "nB": 64,
+      "effect": 0.467529296875,
+      "p": 0.7369386186676945,
+      "pAdj": 1,
+      "available": true,
+      "supported": false
+     },
+     {
+      "a": "treatment",
+      "b": "no-mutation",
+      "relation": "pGreater",
+      "nA": 64,
+      "nB": 64,
+      "effect": 0.467529296875,
+      "p": 0.7369386186676945,
+      "pAdj": 1,
+      "available": true,
+      "supported": false
+     }
+    ],
+    "complete": true
+   },
+   "endpoint1Method": "tie-corrected-normal",
+   "jointPerPresetObserved": false,
+   "threshold": 10008
+  },
+  {
+   "scenario": "pairedEndpoint1Null",
+   "preset": "gradient-m3",
+   "trial": 1,
+   "identity": {
+    "kind": "synthetic",
+    "generatorIdentity": "validation:650009002:pairedEndpoint1Null:gradient-m3:1"
+   },
+   "endpoint2": {
+    "status": "ok",
+    "n": 64,
+    "mean": -0.6437500000000016,
+    "standardError": 0.9787267882264505,
+    "pGreaterThanFloor": 0.9509938958643169,
+    "lowerBound": -3.243390289484059,
+    "supported": false
+   },
+   "endpoint1": {
+    "kind": "test",
+    "id": "adaptive-activity",
+    "description": "**Adaptive activity.** Cumulative new evolutionary activity (Bedau\u2013Packard) with the threshold frozen per preset from a dedicated neutral-only calibration pilot (\"calib-neutral\", 20 runs per preset, seeds 1001\u20131020, 1,000,000 steps, census every 100, deep every 10), at the 95th percentile of pooled lineage activity (`tools/calibrate.ts`): gradient-m3: 10008; spots-m3: 14613. The analysed ensemble's own in-sample neutral 95th percentile is still reported by `tools/analyze.ts`, but only as a labelled diagnostic, never used for inference. Hypothesis: treatment > neutral and treatment > no-mutation (one-sided Mann\u2013Whitney, \u03b1 = 0.01 after Holm correction across the two comparisons).",
+    "alpha": 0.01,
+    "rows": [
+     {
+      "a": "treatment",
+      "b": "neutral",
+      "relation": "pGreater",
+      "nA": 64,
+      "nB": 64,
+      "effect": 0.4617919921875,
+      "p": 0.7721683286011318,
+      "pAdj": 1,
+      "available": true,
+      "supported": false
+     },
+     {
+      "a": "treatment",
+      "b": "no-mutation",
+      "relation": "pGreater",
+      "nA": 64,
+      "nB": 64,
+      "effect": 0.4617919921875,
+      "p": 0.7721683286011318,
+      "pAdj": 1,
+      "available": true,
+      "supported": false
+     }
+    ],
+    "complete": true
+   },
+   "endpoint1Method": "tie-corrected-normal",
+   "jointPerPresetObserved": false,
+   "threshold": 10008
+  },
+  {
+   "scenario": "pairedEndpoint1Null",
+   "preset": "spots-m3",
+   "trial": 0,
+   "identity": {
+    "kind": "synthetic",
+    "generatorIdentity": "validation:650009002:pairedEndpoint1Null:spots-m3:0"
+   },
+   "endpoint2": {
+    "status": "ok",
+    "n": 64,
+    "mean": -1.3812500000000014,
+    "standardError": 0.9625086966211932,
+    "pGreaterThanFloor": 0.991966415750598,
+    "lowerBound": -3.937812686150068,
+    "supported": false
+   },
+   "endpoint1": {
+    "kind": "test",
+    "id": "adaptive-activity",
+    "description": "**Adaptive activity.** Cumulative new evolutionary activity (Bedau\u2013Packard) with the threshold frozen per preset from a dedicated neutral-only calibration pilot (\"calib-neutral\", 20 runs per preset, seeds 1001\u20131020, 1,000,000 steps, census every 100, deep every 10), at the 95th percentile of pooled lineage activity (`tools/calibrate.ts`): gradient-m3: 10008; spots-m3: 14613. The analysed ensemble's own in-sample neutral 95th percentile is still reported by `tools/analyze.ts`, but only as a labelled diagnostic, never used for inference. Hypothesis: treatment > neutral and treatment > no-mutation (one-sided Mann\u2013Whitney, \u03b1 = 0.01 after Holm correction across the two comparisons).",
+    "alpha": 0.01,
+    "rows": [
+     {
+      "a": "treatment",
+      "b": "neutral",
+      "relation": "pGreater",
+      "nA": 64,
+      "nB": 64,
+      "effect": 0.414306640625,
+      "p": 0.9528489762053953,
+      "pAdj": 1,
+      "available": true,
+      "supported": false
+     },
+     {
+      "a": "treatment",
+      "b": "no-mutation",
+      "relation": "pGreater",
+      "nA": 64,
+      "nB": 64,
+      "effect": 0.414306640625,
+      "p": 0.9528489762053953,
+      "pAdj": 1,
+      "available": true,
+      "supported": false
+     }
+    ],
+    "complete": true
+   },
+   "endpoint1Method": "tie-corrected-normal",
+   "jointPerPresetObserved": false,
+   "threshold": 14613
+  },
+  {
+   "scenario": "pairedEndpoint1Null",
+   "preset": "spots-m3",
+   "trial": 1,
+   "identity": {
+    "kind": "synthetic",
+    "generatorIdentity": "validation:650009002:pairedEndpoint1Null:spots-m3:1"
+   },
+   "endpoint2": {
+    "status": "ok",
+    "n": 64,
+    "mean": 1.6,
+    "standardError": 1.0674848052894292,
+    "pGreaterThanFloor": 0.28803174019922606,
+    "lowerBound": -1.2353944549440166,
+    "supported": false
+   },
+   "endpoint1": {
+    "kind": "test",
+    "id": "adaptive-activity",
+    "description": "**Adaptive activity.** Cumulative new evolutionary activity (Bedau\u2013Packard) with the threshold frozen per preset from a dedicated neutral-only calibration pilot (\"calib-neutral\", 20 runs per preset, seeds 1001\u20131020, 1,000,000 steps, census every 100, deep every 10), at the 95th percentile of pooled lineage activity (`tools/calibrate.ts`): gradient-m3: 10008; spots-m3: 14613. The analysed ensemble's own in-sample neutral 95th percentile is still reported by `tools/analyze.ts`, but only as a labelled diagnostic, never used for inference. Hypothesis: treatment > neutral and treatment > no-mutation (one-sided Mann\u2013Whitney, \u03b1 = 0.01 after Holm correction across the two comparisons).",
+    "alpha": 0.01,
+    "rows": [
+     {
+      "a": "treatment",
+      "b": "neutral",
+      "relation": "pGreater",
+      "nA": 64,
+      "nB": 64,
+      "effect": 0.5859375,
+      "p": 0.046695753673421825,
+      "pAdj": 0.09339150734684365,
+      "available": true,
+      "supported": false
+     },
+     {
+      "a": "treatment",
+      "b": "no-mutation",
+      "relation": "pGreater",
+      "nA": 64,
+      "nB": 64,
+      "effect": 0.5859375,
+      "p": 0.046695753673421825,
+      "pAdj": 0.09339150734684365,
+      "available": true,
+      "supported": false
+     }
+    ],
+    "complete": true
+   },
+   "endpoint1Method": "tie-corrected-normal",
+   "jointPerPresetObserved": false,
+   "threshold": 14613
+  }
+ ]
+}

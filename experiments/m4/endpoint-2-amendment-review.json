@@ -1,0 +1,202 @@
+{
+ "format": "m4-endpoint-2-amendment-review-v1",
+ "verdict": "CLEAR-WITH-FIXES",
+ "findings": [
+  {
+   "id": "A1",
+   "severity": "high",
+   "requiredBeforeFreeze": true,
+   "file": "experiments/preregistration.md",
+   "line": 184,
+   "detail": "The amendment does not mention the committed, earlier M4 candidate (experiments/amendments/2026-09-29-m4-growth.md, experiments/amendments/m4-growth-v1.ts, docs/m4-growth-amendment-design.md, docs/m4-growth-calibration-results.md, docs/foundations-next-plan.md track C). That candidate defines the SAME per-run statistic: g = [C_new(1e6) - C_new(5e5)]/5, i.e. new activity per 1e5 steps over the second half, same frozen thresholds. It was calibrated on 2,000 synthetic trials and FAILED its own declared readiness gate (spots-m3 paired endpoint-1 null: 2/200, one-sided 95% upper bound 0.0311 > the declared 0.025), so it was left unregistered. The 2026-10-02 design keeps g but changes everything around it: paired Student mean test with a minimum effect of 1 crossing/1e5 steps, alpha 0.005 per preset, 64 seed pairs -> unpaired exact Mann-Whitney, no effect floor, alpha 0.01, 20 seeds. The earlier plan (foundations-next-plan.md C1) listed several of these as REQUIRED resolutions: 'A test on ranks targets a different quantity and cannot silently stand in for that mean contrast', a smallest relevant effect, a sample size from power/precision calibration, pairing evidence, a missing-data rule, and calibration through the frozen-threshold path (it says nullcal's ignoreFrozenThreshold mode 'would not validate this amendment's frozen-threshold pipeline'). The calibration cited here is exactly that nullcal mode (in-sample neutral quantile), 128 pooled trials with upper bound 0.043, which would not have met the earlier 0.025 envelope. The user may decide to depart from all of this, but a permanent, frozen amendment that reuses the statistic of a failed candidate without saying so is a forking-path disclosure gap, and a later reader will find the 09-29 documents.",
+   "fix": "Add a short 'Relation to the 2026-09-29 candidate' paragraph: cite the candidate and its documents; say the per-run statistic is the same g; list the differences (rank test vs mean test, no minimum effect, alpha 0.01, 20 vs 64 pairs, unpaired, nullcal in-sample-threshold calibration); state that the candidate failed its declared readiness envelope and that this amendment applies a different, lighter standard by decision of the user on 2026-10-02; state that the claim is stochastic dominance of late-window rate (any positive shift suffices, no minimum effect) and that no power/precision analysis supports 20 seeds, so a failure on spots-m3 (where 2026-09-28 cumulative activity was only ~16% above neutral, p = 0.0116 at n=10) would be informative only about this design."
+  },
+  {
+   "id": "A2",
+   "severity": "high",
+   "requiredBeforeFreeze": true,
+   "file": "experiments/preregistration.md",
+   "line": 184,
+   "detail": "Two linked problems about the forking path. (a) The draft (experiments/m4/endpoint-2-amendment-draft.md, 'No re-reading') states 'no candidate statistic is tried on it [the 2026-09-28 ensemble]'; that attestation is not carried into the amendment text, which says only that the ensemble 'is never re-read under it'. The amendment should state what the design was informed by (aggregate results in experiments/m4/*.json, the exploratory note in docs/plan.md that on gradient-m3 every treatment run exceeds every neutral run in cumulative new activity, the 09-29 synthetic calibration, one development history of seed 650000001) and that no late-window statistic (this one or g) has been computed on the real 2026-09-28 bundles. I could not verify the last point: the 2026-09-28 bundles are not on this machine (runs/ has no m4 or foundations-next directory), and the 09-29 documents say real-bundle analysis was 'not performed' beyond one development history. (b) 'Never re-read' is enforced only inside tools/analyze.ts. The committed tools/analyze-m4-growth.ts (+ tools/lib/m4-growth-runs.ts) computes the same g on any bundle root and seed list with no seed restriction, so docs/plan.md's 'the analysis code refuses to compute the new statistic for its seeds' (line 199) is an over-claim.",
+   "fix": "Add an explicit attestation sentence (inputs that informed the design; no late-window statistic computed on real 2026-09-28 bundles, to the author's knowledge). Change plan.md line 199 to 'tools/analyze.ts refuses...' and add one sentence to the amendment that tools/analyze-m4-growth.ts (unregistered 09-29 candidate) must not be run on seeds 1-20 for the same reason; optionally add the same seed guard (or an assertion) there."
+  },
+  {
+   "id": "A3",
+   "severity": "medium",
+   "requiredBeforeFreeze": true,
+   "file": "experiments/preregistration.md",
+   "line": 195,
+   "detail": "Over-reach risk in the reading. 'Results remain \"practical open-endedness over the observation window\" at most' reads as if a pass could support practical open-endedness. The amended gate cannot: the bounded-treatment scenario passes 32/32 (a treatment that rises more slowly than the window, against a flat control), and the original endpoint 2 was the only M4 criterion that ever rejected bounded treatment (plan.md Gate calibration limitation (b): 'only unbounded-growth reliably rejects it'; and in those runs it rejected only because neutral was also classified growing). After the amendment nothing in the M4 gate distinguishes bounded from open-ended growth. docs/foundations-results.md (line 184) already says a finite-window excess-activity finding 'would remain a narrower claim than open-ended functional innovation'. The draft's sentence 'The amendment keeps that purpose' (the original purpose being growth that does not saturate) is correctly absent from the amendment but the plan note and 'Reading' bullet still lean on the original wording. Also, the gate name in plan.md is 'Open evolution', so 'M4 met' will be quoted without qualification.",
+   "fix": "Replace the 'at most' sentence with: a pass establishes only that, in the second half of the window, treatment crosses the frozen activity threshold at a higher rate than neutral on both presets; it supports no open-endedness claim, bounded or not. Add: when reported, the result is 'M4 met under the 2026-10-02 amended gate' (the 2026-09-28 failure on the original gate stands). Mirror in docs/plan.md note."
+  },
+  {
+   "id": "A4",
+   "severity": "medium",
+   "requiredBeforeFreeze": true,
+   "file": "experiments/preregistration.md",
+   "line": 206,
+   "detail": "No rule that the amended endpoint is evaluated once, on the complete ensemble. The guard (experiments/endpoints.ts amendedEndpointGuard) accepts ANY ensemble whose seeds all lie in 21-40, e.g. 2 seeds per condition or half of the matrix. With 120 runs on two owned Macs (~35 GPU-hours) results will arrive piecemeal, and nothing in the text or code stops interim evaluations, early stopping, or extension/replacement seeds after seeing a result. (A partial matrix also silently shrinks n, since analyzeEnsemble pools whatever complete bundles exist.) The 09-29 plan required 'complete expected seed/condition matrix' and 'technical incompleteness is unavailable, never zero or silent exclusion; retries repeat identical inputs, no replacement seed'.",
+   "fix": "Add to the amendment: analysis is run once, after all 120 runs (20 seeds x 3 conditions x 2 presets) are complete and verified; no interim evaluation of the amended endpoint or gate; a technically failed run is retried with identical inputs, never replaced; seeds 21-40 are spent once any of their runs has been analysed. Optional code hardening: for non-synthetic ensembles require every condition to carry all 20 seeds, else report the endpoint as unavailable (incomplete)."
+  },
+  {
+   "id": "A5",
+   "severity": "medium",
+   "requiredBeforeFreeze": true,
+   "file": "experiments/preregistration.md",
+   "line": 192,
+   "detail": "Missing-data handling is not stated. evaluateEndpoint (experiments/endpoints.ts) silently drops non-finite statistics (filter(Number.isFinite)), so a run whose late rate is NaN (no census at or before step 500000, final census not after it) is excluded and the test proceeds on the remaining runs; I confirmed 3 NaN treatment values give n = 17 vs 20 and a normal 'supported' result, visible only in the n column. This cannot happen at the registered schedule (census every 100) but the pre-registration should say what happens. Also unstated: extinct runs are kept (late rate 0, because empty post-extinction censuses are replayed) and runs failing conservation are excluded by the original Ensemble rule.",
+   "fix": "Add one sentence: a run whose statistic is undefined makes the endpoint unavailable for that preset (stricter, preferred; requires a small change: a NaN check before the test) or is excluded and reported with the n per arm (current behaviour); an endpoint with fewer than 2 finite values in an arm is unavailable; extinct runs count with their actual curve (rate 0 after extinction)."
+  },
+  {
+   "id": "A6",
+   "severity": "medium",
+   "requiredBeforeFreeze": true,
+   "file": "experiments/preregistration.md",
+   "line": 199,
+   "detail": "The null-calibration bullets overstate what 1/128 shows. I regenerated the late rates: in three of the four nulls the statistic is close to degenerate, not only in neutralDrift. Replicates 0-5 of the 40 treatment+neutral values: longPeriodLoop 13-15 zeros, 4-6 distinct values, max 1.2 per 1e5; saturatingProcess 16-26 zeros, 5-8 distinct, max 1.8; neutralDrift 23-40 zeros, 1-2 distinct (p = 1 in two of six replicates); only randomWalkNoise is continuous (0 zeros, 28-31 distinct, rate ~28 per 1e5), and it is 0/32 (95% upper bound 0.109). So the pooled interval [0.0002, 0.043] is far less informative about size than it looks; the exact permutation test is valid under exchangeability by construction, and the calibration mainly shows there is no coding artefact. Also unstated: the synthetic ensembles use the in-sample neutral 95th-percentile threshold (exploratory path), not the frozen threshold; conditions are drawn independently, whereas real conditions share seed indices (matched initial worlds, per docs/m4-growth-amendment-design.md) and the test is unpaired like endpoint 1; and the real neutral crossing rate (whole-window growthSlope ~250 per 1e5 steps on gradient-m3 and ~460-550 on spots-m3 in experiments/m4, so late rates are presumably similar) is roughly ten times the rate of even randomWalkNoise (~28 per 1e5) and two orders above the other three nulls. docs/plan.md line 197 says 'Null calibration confirms alpha'.",
+   "fix": "Reword: 'consistent with alpha = 0.01; only randomWalkNoise has a non-degenerate late-rate distribution (0/32); longPeriodLoop, saturatingProcess and neutralDrift are heavily tied and weakly informative'; drop or qualify the pooled interval; add the three caveats (in-sample threshold, independent draws across conditions vs matched seeds, synthetic magnitudes). Change plan.md 'confirms alpha' to 'is consistent with alpha'."
+  },
+  {
+   "id": "A7",
+   "severity": "medium",
+   "requiredBeforeFreeze": true,
+   "file": "experiments/preregistration.md",
+   "line": 198,
+   "detail": "The calibration evidence is untracked and unhashed: runs/nullcal/amendment-2026-10-02 is under the gitignored runs/ tree, and report.json's codeIdentity.commitId (e55dca75...) is an unnamed jj working-copy snapshot. The numbers themselves are right (see independent checks): the quoted table matches, the Clopper-Pearson interval recomputes to [0.000198, 0.04276], and I re-ran all 160 trials (4 nulls + bounded, 32 replicates, 20 seeds, window 1e6) under the final working-copy code in a scratch directory with identical per-trial decisions, generator parameters and tallies. The code changed after the report only in comments/description text (jj diff e55dca75..9c5f9ec6: endpoints.ts comment and endpoint description, analyze.ts report sentence).",
+   "fix": "Copy report.json and report.md to a tracked location (e.g. experiments/m4/nullcal-amendment-2026-10-02/) and cite their SHA-256 in the amendment (report.json ac12be2db8add14678c86f34db6d374ea1d8d1c4a02c2ef23f3e864f75f47bc6, report.md 60f1a49ee3f7b012216df609fe94f7b0b8fe716969c57b41e01bc3a66a261db8 as reviewed), plus the regeneration command."
+  },
+  {
+   "id": "A8",
+   "severity": "low",
+   "requiredBeforeFreeze": false,
+   "file": "experiments/preregistration.md",
+   "line": 217,
+   "detail": "Launch is deferred until the founder-discovery continuation study reports, and the plan note says that study bears on a possible physics change (the evolvability pivot). The amendment ties the ensemble to RULE_VERSION 1, the M3 founder set and unchanged preset identities but does not say what happens if any of those change before launch. analyze.ts already refuses the frozen thresholds on an identity mismatch, but the guard (amendedEndpointGuard) would still evaluate the amended endpoint for ANY non-synthetic ensemble whose seeds lie in 21-40, including an unregistered preset under the exploratory in-sample threshold (the committed test 'every seed in 21-40 -> evaluated' already shows this for the unregistered preset 'seasons' with seeds 21-26; the gate is then null).",
+   "fix": "Add: if rule/schema/metrics version, preset identity or founder set changes before launch, this amendment does not apply to that ensemble and a new amendment (and threshold pilot) is required; seeds 21-40 remain reserved. Optional hardening: for non-synthetic ensembles require thresholdMode === 'frozen' and presetId in gate.presets."
+  },
+  {
+   "id": "A9",
+   "severity": "low",
+   "requiredBeforeFreeze": false,
+   "file": "tests/deno/analyze.ts",
+   "line": 398,
+   "detail": "No committed end-to-end test covers the case the fresh ensemble will actually hit: registered preset + frozen threshold + on-disk lineages.tsv + seeds in 21-40 (tests/deno/analyze.ts uses gradient-m3 fixtures with seeds 10/20/30/40, so amended.endpoint is always 'not evaluated' there; the vitest tests use the unregistered preset 'seasons' with in-memory lineages). I ran this path in scratch (gradient-m3 bundles written like tests/deno/analyze.ts writeRun, seeds 21-24 vs 1-4 vs {21,22,23,5}): evaluated for 21-24 with the expected late rates (25.0 and 8.4 per 1e5 for the constructed lineage schedules), 'not evaluated' with runs=null for the other two, and report.json/report.md identical to the pre-change analyze.ts output apart from the 'amended' key, the amended markdown block and the generation timestamp. So the code works; the test is missing.",
+   "fix": "Add a Deno e2e case with seeds 21-22 (all three conditions) asserting amended.endpoint.evaluated === true and the expected rate, and one with a mixed seed set asserting false."
+  },
+  {
+   "id": "A10",
+   "severity": "low",
+   "requiredBeforeFreeze": false,
+   "file": "tools/analyze.ts",
+   "line": 606,
+   "detail": "For an ensemble the guard refuses (e.g. the 2026-09-28 bundles re-analysed), the report still prints '## M4 gate (amended 2026-10-02)' with 'M4 gate on preset ...: not met' whenever endpoint 1 fails (met = false because 'fails as soon as anything fails'), and 'not determined' otherwise. That is a verdict under a gate the amendment says does not apply to that ensemble, derived from endpoint 1 only (e.g. spots-m3 2026-09-28 would print 'not met (amended)').",
+   "fix": "When amended.endpoint.evaluated is false, set m4Gate.met = null and print 'not applicable: the amendment registers the gate only for the fresh ensemble'."
+  },
+  {
+   "id": "A11",
+   "severity": "low",
+   "requiredBeforeFreeze": false,
+   "file": "tools/analyze.ts",
+   "line": 576,
+   "detail": "Typo introduced by the last edit: the rendered sentence reads '...for the fresh ensemble only,seeds 21-40.' (missing space after the comma; confirmed in the generated report.md).",
+   "fix": "Add a trailing space after 'only,'."
+  },
+  {
+   "id": "A12",
+   "severity": "low",
+   "requiredBeforeFreeze": false,
+   "file": "experiments/preregistration.md",
+   "line": 194,
+   "detail": "Wording of the statistic. 'adaptively significant lineages' and 'new evolutionary activity' suggest unique lineages, but ActivityTracker.cumulativeNew counts threshold-crossing EPISODES: a key that goes extinct and recurs starts again from zero activity and can cross again (the 09-29 design notes say the same). The statistic is also confounded with standing abundance (activity is cells x censuses against a fixed absolute threshold), so a treatment with larger populations can show excess crossings without more novelty. The report does not carry a companion abundance diagnostic.",
+   "fix": "Say 'threshold-crossing episodes'; add one line that excess crossings can reflect larger standing abundance as well as novelty (limit, not a defect); optionally report mean total abundance per arm descriptively."
+  },
+  {
+   "id": "A13",
+   "severity": "low",
+   "requiredBeforeFreeze": false,
+   "file": "docs/plan.md",
+   "line": 112,
+   "detail": "Documents that now disagree with the amendment: the M4 milestone row (docs/plan.md:112) still states the gate as endpoints 1 and 2 with 'a majority of treatment runs are classified growing', and the Gate-calibration limitation (b) (plan.md:91) still says only unbounded-growth reliably rejects bounded treatment; neither points to the amendment. experiments/m4/endpoint-2-amendment-draft.md still says 'DRAFT ... not in force' and 'appended verbatim' although the amendment text was edited. In the report, the 'superseded' label appears only in the later amended section, not on endpoint 2's own entry, and endpoints 3, 4 and the held-out section print Supported yes/no with no note that they are descriptive for this ensemble (amendment, 'Other endpoints').",
+   "fix": "Add 'Amended 2026-10-02, see the 2026-10-02 section below' to the M4 row and to limitation (b); mark the draft 'superseded by the amendment section'; print the superseded label and a 'descriptive here' note under the relevant report entries."
+  }
+ ],
+ "independentChecks": [
+  {
+   "name": "Original pre-registration text byte-identical",
+   "result": "pass",
+   "detail": "head -n 180 experiments/preregistration.md hashes to 5e08b51d7b58d00ad11b192eca3195343f1fc96747a5b7972e847b1d73879b4d (= experiments/FROZEN, unchanged); jj file show -r @- of the file diffs empty against lines 1-180 of the working copy; the diff is a pure append from line 181."
+  },
+  {
+   "name": "Generated sections / gen-prereg",
+   "result": "pass",
+   "detail": "tests/deno/prereg-sync.ts: PASS; tools/gen-prereg.ts: 'generated section is already up to date'. tools/analyze.ts, endpoints.ts, threshold.ts, nullgen.ts and packages/metrics are unchanged between the freeze commit b7fd4c167767 and @- (so the pre-change code for comparison is the frozen analysis code)."
+  },
+  {
+   "name": "Regression pins come from pre-change code",
+   "result": "pass",
+   "detail": "Copied the repo to scratch, replaced endpoints.ts/analyze.ts/nullcal.ts by their @- versions, re-ran the test's recipe under Deno: all 20 digests (results, heldOut, json, markdown, charts x 4 ensembles) equal the PINNED values; the pre-change output has no 'amended' key or amended block. Coverage is the in-sample (nullcal) path only."
+  },
+  {
+   "name": "Frozen-threshold, on-disk-lineage path unchanged",
+   "result": "pass",
+   "detail": "Synthetic gradient-m3 bundles with provenance, frozen threshold 10008, lineages.tsv streamed from disk, seeds 21-24 and 1-4: report.json (minus 'amended') and report.md (minus the amended block and the timestamp) identical between pre-change and current analyze.ts; chart files identical."
+  },
+  {
+   "name": "Statistic matches the text",
+   "result": "pass",
+   "detail": "lateNewActivityRate: mid = last snapshot with step <= floor(horizon/2), final = last snapshot, rate per 1e5, NaN if none/no later final; at the registered schedule mid = 500000 and final = 1e6 (checked: 5000 crossings over 5e5 steps -> 1000 per 1e5). Frozen per-preset threshold is the one passed to activities(). Constructed lineage schedules gave the expected 25.0 and 8.4 per 1e5. Uncalibrated -> NaN."
+  },
+  {
+   "name": "Exact Mann-Whitney at 20 vs 20",
+   "result": "pass",
+   "detail": "EXACT_MAX = 60 and N = 40, so the exact (midrank permutation) branch is used. An independent DP over doubled midranks gave 7.4975772610826e-06 for a tied 20/20 example, identical to the TS value. All-ties 20/20 (zeros or equal constants): p = 1, effect 0.5, not supported, complete. Treatment below neutral: p ~ 1. NaN: dropped, n shown (see A5)."
+  },
+  {
+   "name": "Guard",
+   "result": "pass",
+   "detail": "CLI on the fresh-style registered ensemble (seeds 21-24): evaluated; seeds 1-4 and {21,22,23,5}: 'not evaluated', amended.runs = null, no lateNewActivityRate computed; ensembleProblems ties r.seed to the manifest seed so renaming directories cannot move seeds; --ignore-frozen-threshold on real bundles is refused (tests/deno/analyze.ts PASS). Gaps: tools/analyze-m4-growth.ts (A2), subset ensembles (A4), unregistered presets (A8)."
+  },
+  {
+   "name": "Gate semantics",
+   "result": "pass",
+   "detail": "amendedM4Gate: holds iff test complete and every row supported (endpoint 1 needs both Holm-adjusted comparisons); fails if any endpoint fails; null if none fails and one is unavailable or the preset is not registered; per preset, both presets named; original endpoint 2 excluded; endpoint 1 untouched. Matches the amendment, with the wording issue in A10."
+  },
+  {
+   "name": "Quoted null-calibration numbers",
+   "result": "pass",
+   "detail": "report.md: late-excess-activity 0/32 (longPeriodLoop, neutralDrift, randomWalkNoise), 1/32 (saturatingProcess), bounded 32/32 and m4-gate-amended 32/32; pooled 1/128 CP 95% [0.000198, 0.04276]; original 1e6 rows match docs/plan.md (unbounded-growth 3/32 [0.0198, 0.2502] on saturatingProcess, recycling 1/32 on longPeriodLoop, coexistence 32/32, bounded adaptive-activity/held-out-summary 32/32, unbounded-growth and role-count 0/32)."
+  },
+  {
+   "name": "Re-run of the null calibration under final code",
+   "result": "pass",
+   "detail": "nullcal re-run in scratch (4 nulls + bounded, 1e6, 32 replicates, 20 seeds, master seed 1): 160 trials, 0 differences in decisions, generator parameters or tallies versus runs/nullcal/amendment-2026-10-02/report.json. Code diff since the report snapshot is comment/description text only."
+  },
+  {
+   "name": "pnpm typecheck",
+   "result": "pass",
+   "detail": "exit 0."
+  },
+  {
+   "name": "pnpm vitest run experiments",
+   "result": "pass",
+   "detail": "4 files, 123 tests passed."
+  },
+  {
+   "name": "deno run -A tests/deno/analyze.ts",
+   "result": "pass",
+   "detail": "70 PASS, 0 FAIL, exit 0."
+  },
+  {
+   "name": "deno run -A tests/deno/nullcal.ts",
+   "result": "pass",
+   "detail": "48 PASS, 0 FAIL, exit 0."
+  },
+  {
+   "name": "Consistency of plan note, amendment and code",
+   "result": "fail",
+   "detail": "Facts agree (window 500k-1M, alpha 0.01, seeds 21-40, 120 runs, both presets, launch deferred), but the plan note says 'confirms alpha' and 'the analysis code refuses' (A2, A6) and the older plan rows are not updated (A13)."
+  }
+ ],
+ "assessment": "The freeze mechanics and the code are sound. The original text is byte-identical and matches FROZEN; the generated sections are unchanged; the regression pins really are the pre-change output (all 20 digests reproduced from the @- code, and the frozen-threshold on-disk path is byte-identical apart from a timestamp); the statistic, the exact test at 20 vs 20, the all-ties case, the gate and the guard behave as the text says; every number quoted from the null calibration is correct and survives a full re-run under the final code; all gates pass. The science is defensible as a deliberately narrow replacement: the structural argument for why the original endpoint 2 cannot hold (neutral cumulative activity is near-linear under a 95th-percentile threshold, so 'at most a minority of neutral growing' fails whatever treatment does) is sound and consistent with the 2026-09-28 reports (neutral slopes 248-262 per 1e5 steps, all 30 growing), and a late-window excess over neutral is a reasonable reading of 'keeps increasing above what neutral drift produces'. The problems are in what the frozen text leaves out. It reuses, without saying so, the statistic of the 2026-09-29 candidate that failed its own calibration gate, while dropping that candidate's mean test, effect floor and sample-size analysis (A1); it drops the draft's attestation that no candidate statistic was tried on the old data and over-claims that the code prevents re-reading (A2); it lets a pass be read as 'practical open-endedness' although the endpoint, by its own calibration, cannot reject a bounded effect (A3); it has no once-only/complete-matrix rule or missing-data rule (A4, A5); and the null calibration is presented as more informative than it is, since three of the four nulls give almost all-tied late rates (A6) and the evidence file is untracked (A7). Raising spots-m3 to 20 seeds is legitimate as written: the ensemble is fresh, the size is fixed before data, the motivation (p = 0.0116 near-miss) is disclosed, and old seeds are not pooled. All of A1-A7 are text edits (plus copying one report file); none requires new runs. Expect the gate to be informative: on gradient-m3 the old data showed complete separation of cumulative activity, whereas on spots-m3 treatment was only ~16% above neutral with overlapping ranges, so that preset may well fail for real reasons.",
+ "limitations": "Read-only review; no GPU work. I could not re-read the 2026-09-28 bundles (not on this machine), so I cannot independently confirm that no late-window statistic was ever computed on them; I relied on the 09-29 documents and the absence of such output in experiments/ and docs/. The null-calibration re-run used the same generators and master seed, so it checks reproducibility and code integrity, not the realism of the nulls. Behaviour on real simulation bundles was exercised only with hand-built synthetic bundles that carry real provenance. I did not review tools/*continuation* or experiments/founder-discovery/** (other reviewer), nor the 09-29 pipeline's code beyond checking that it can compute g on arbitrary bundles. The power of the amended gate on the fresh ensemble is not estimated by anyone; I did not attempt it."
+}

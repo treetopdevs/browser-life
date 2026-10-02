@@ -1,0 +1,1043 @@
+diff --git a/docs/plan.md b/docs/plan.md
+index 303660f0b8..4e231568fa 100644
+--- a/docs/plan.md
++++ b/docs/plan.md
+@@ -189,3 +189,14 @@
+ The user authorized a second owned Mac. The reviewed execution amendment assigns 30 histories to the original Mac and 34 to the work Mac, retaining each mutation pair on one machine and representing every founder on both. Both queues launched after mapped frozen-input verification and byte-identical 10,000-step mutation-on/off replay controls. The work Mac saved its first 100,000-step checkpoint. The prior single-machine supervisor retired at a clean tranche boundary; all existing history evidence and historical decisions are preserved.
+ 
+ The original scientific manifest, source bytes, seeds and analysis remain unchanged. The 96-hour execution ceiling is shared across both machines, including the 29 prior invocation charges and an engineering reserve; paid compute remains $0. Each queue stops after its assigned histories. Remote evidence import must be reviewed and verified before reconciliation; competition execution requires the complete reconciled roster and a further release within the remaining budget. No adaptation conclusion is available yet. See the [distribution decision and reviewed evidence](../experiments/founder-discovery/v1/improvement-study/distribution-v1/decision.md).
++
++## 2026-10-02 — M4 endpoint 2 amendment drafted (not in force)
++
++**Draft, pending the user's decision after review.** It overlaps the unregistered 2026-09-29 candidate (`experiments/amendments/2026-09-29-m4-growth.md`).
++
++The user decided a dated amendment to the frozen pre-registration (`experiments/preregistration.md`, "Amendment, 2026-10-02").
++- **Endpoint 2 in the M4 gate** is now late-window excess activity: treatment's rate of new adaptively significant lineages over 500k–1M steps must exceed neutral's (one-sided exact Mann–Whitney, α = 0.01). The original endpoint 2 is still reported, labelled superseded.
++- **Specificity.** Null calibration confirms α (1/128 on the exchangeable nulls). The amended endpoint measures excess over neutral, not unboundedness, and passes a bounded-but-real treatment effect that saturates more slowly than the window. Results remain practical open-endedness over the window at most.
++- **M4 is met** when endpoint 1 and amended endpoint 2 both hold on both presets in a fresh ensemble: treatment, neutral and no-mutation, seeds 21–40 on each preset, 120 runs at 10⁶ steps with the frozen thresholds.
++- **The 2026-09-28 verdict stands,** and that ensemble is not re-read; the analysis code refuses to compute the new statistic for its seeds.
++- **Launch** waits for a separate release, decided after the founder-discovery continuation study reports. That study asks whether adaptation continues after the first sweep, which bears on whether the evolvability pivot (a physics change) should come first.
+diff --git a/experiments/endpoints.ts b/experiments/endpoints.ts
+index 991c78114b..46fd866d92 100644
+--- a/experiments/endpoints.ts
++++ b/experiments/endpoints.ts
+@@ -907,3 +907,139 @@
+   }
+   return result;
+ }
++
++// ---- 2026-10-02 amendment: late-window excess activity (endpoint 2) ----
++//
++// Appended AFTER the freeze (experiments/FROZEN, 2026-09-27) and entirely
++// outside PRIMARY_ENDPOINTS / HELD_OUT_SPECS / ACTIVITY_THRESHOLDS:
++// nothing below is rendered into experiments/preregistration.md's GENERATED
++// sections (tools/gen-prereg.ts and experiments/test/prereg-sync.test.ts only
++// read PRIMARY_ENDPOINTS, HELD_OUT_SPECS and HELD_OUT_SUMMARY), so those
++// sections stay byte-identical. Draft and rationale:
++// experiments/preregistration.md, "Amendment, 2026-10-02" (drafted in
++// experiments/m4/endpoint-2-amendment-draft.md).
++//
++// Why: the original endpoint 2 ("unbounded-growth") needs at most a minority
++// of neutral runs classified "growing", which a frozen 95th-percentile
++// threshold makes essentially unsatisfiable (all 30 neutral runs of the
++// 2026-09-28 ensemble were "growing"). The amendment measures treatment's
++// late growth against neutral's instead of in absolute terms. The original
++// endpoint is still computed and reported, labelled superseded for the M4 gate.
++
++/** Key into a run's per-run statistics (RunView.stats) for the amended endpoint; see tools/analyze.ts's `lateNewActivityRate`. */
++export const LATE_RATE_STATISTIC = "lateNewActivityRate";
++
++/**
++ * Amended endpoint 2, as a TestEndpoint so the existing `evaluateEndpoint`
++ * machinery executes it unchanged: one comparison, so Holm is trivial and the
++ * adjusted p equals the one-sided exact Mann–Whitney p.
++ */
++export const LATE_EXCESS_ACTIVITY_ENDPOINT: TestEndpoint = {
++  id: "late-excess-activity",
++  kind: "test",
++  statistic: LATE_RATE_STATISTIC,
++  comparisons: [{ a: "treatment", b: "neutral", relation: "pGreater" }],
++  alpha: ALPHA,
++  description:
++    "**Amended endpoint 2 — late-window excess activity (2026-10-02).** Per-run statistic: the rate of new " +
++    "evolutionary activity in the second half of the registered window, i.e. cumulative new activity at the final " +
++    "census minus its value at the last census at or before half the registered horizon, per 10⁵ steps, with the " +
++    "frozen per-preset activity threshold of endpoint 1 unchanged. " +
++    `Hypothesis: treatment > neutral (one-sided exact Mann–Whitney, α = ${ALPHA}). Treatment must still be producing ` +
++    "adaptively significant lineages faster than the neutral shadow in the second half of the window; a treatment " +
++    "whose new activity falls back to neutral's rate, or saturates below it, fails. Within a finite window it " +
++    "cannot tell a real treatment effect that saturates more slowly than the window from open-ended growth (null " +
++    "calibration: the bounded-treatment scenario passes 32/32); it measures excess over neutral, not unboundedness. " +
++    "It replaces endpoint 2 (\"unbounded-growth\") in the M4 gate and is registered only for the fresh ensemble.",
++};
++
++export interface Amendment20261002 {
++  date: "2026-10-02";
++  /** The amended endpoint, executed by `evaluateEndpoint` like any other TestEndpoint. */
++  endpoint: TestEndpoint;
++  /** Fresh-ensemble seed range [first, last], inclusive. Disjoint from the M4 ensemble (1–20), the calibration pilot (1001–1020) and the registered extension (101–105, 1101–1110). */
++  seeds: [number, number];
++  /** Endpoint of PRIMARY_ENDPOINTS that is still computed and reported, but labelled superseded for the M4 gate. */
++  supersededEndpointId: string;
++  /** Label attached to the superseded endpoint wherever it is reported. */
++  supersededLabel: string;
++  /** M4 is met on a preset when every listed endpoint holds there, and met overall when that is so on every listed preset. */
++  gate: { endpointIds: string[]; presets: string[] };
++}
++
++export const AMENDMENT_2026_10_02: Amendment20261002 = {
++  date: "2026-10-02",
++  endpoint: LATE_EXCESS_ACTIVITY_ENDPOINT,
++  seeds: [21, 40],
++  supersededEndpointId: "unbounded-growth",
++  supersededLabel: "original; superseded for the M4 gate by the 2026-10-02 amendment",
++  gate: { endpointIds: ["adaptive-activity", LATE_EXCESS_ACTIVITY_ENDPOINT.id], presets: ["gradient-m3", "spots-m3"] },
++};
++
++/** Why the amended endpoint was not evaluated for an ensemble outside its registered seed range. */
++export function amendedNotEvaluatedReason(a: Amendment20261002 = AMENDMENT_2026_10_02): string {
++  return `not evaluated: the ${a.date} amendment registers it only for the fresh ensemble, seeds ${a.seeds[0]}–${a.seeds[1]}`;
++}
++
++export type AmendedGuard = { evaluate: true } | { evaluate: false; reason: string };
++
++/**
++ * Whether the amended endpoint may be evaluated for an ensemble. Allowed only
++ * for a synthetic ensemble (tools/nullcal.ts's null-generator calibration,
++ * `ignoreFrozenThreshold`) or when EVERY run's seed lies in the amendment's
++ * registered range. This enforces the amendment's rule that the 2026-09-28
++ * ensemble (seeds 1–20) is never re-read under the new endpoint: outside the
++ * range nothing is computed, not even descriptively.
++ */
++export function amendedEndpointGuard(seeds: number[], synthetic: boolean, a: Amendment20261002 = AMENDMENT_2026_10_02): AmendedGuard {
++  if (synthetic) return { evaluate: true };
++  const [first, last] = a.seeds;
++  if (seeds.length > 0 && seeds.every((s) => s >= first && s <= last)) return { evaluate: true };
++  return { evaluate: false, reason: amendedNotEvaluatedReason(a) };
++}
++
++/** The amended endpoint's result for one ensemble, or why it was not evaluated. */
++export type AmendedOutcome = { evaluated: true; result: TestResult } | { evaluated: false; reason: string };
++
++export type GateVerdict = "holds" | "fails" | "unavailable";
++
++export interface AmendedGate {
++  presetId: string;
++  /** Whether `presetId` is one of the presets the gate is registered for. */
++  registeredPreset: boolean;
++  endpoints: { id: string; verdict: GateVerdict; detail: string }[];
++  /** true: every gate endpoint holds on this preset; false: at least one fails; null: none fails but at least one is unavailable (or the preset is not a gate preset). */
++  met: boolean | null;
++}
++
++function testVerdict(r: EndpointResult | undefined): GateVerdict {
++  if (!r || r.kind !== "test" || !r.complete) return "unavailable";
++  return r.rows.every((row) => row.supported) ? "holds" : "fails";
++}
++
++/**
++ * The amended M4 gate for ONE preset's ensemble: endpoint 1 (from the
++ * ensemble's PRIMARY_ENDPOINTS results) and the amended endpoint 2 must both
++ * hold. Overall M4 needs the same on each preset in `gate.presets`; this
++ * summarises the preset at hand only. Pure.
++ */
++export function amendedM4Gate(presetId: string, primary: EndpointResult[], amended: AmendedOutcome, a: Amendment20261002 = AMENDMENT_2026_10_02): AmendedGate {
++  const endpoints = a.gate.endpointIds.map((id) => {
++    if (id === a.endpoint.id) {
++      return amended.evaluated
++        ? { id, verdict: testVerdict(amended.result), detail: "" }
++        : { id, verdict: "unavailable" as GateVerdict, detail: amended.reason };
++    }
++    const r = primary.find((x) => x.id === id);
++    return { id, verdict: testVerdict(r), detail: "" };
++  });
++  const registeredPreset = a.gate.presets.includes(presetId);
++  const met = !registeredPreset
++    ? null
++    : endpoints.some((e) => e.verdict === "fails")
++    ? false
++    : endpoints.every((e) => e.verdict === "holds")
++    ? true
++    : null;
++  return { presetId, registeredPreset, endpoints, met };
++}
+diff --git a/experiments/preregistration.md b/experiments/preregistration.md
+index 51efd094cd..0d19dc3a87 100644
+--- a/experiments/preregistration.md
++++ b/experiments/preregistration.md
+@@ -178,3 +178,42 @@
+ ## Analysis code
+ 
+ `tools/analyze.ts` at the frozen commit. It pools only runs forming one ensemble (same rule and schema versions, preset, horizon and observation schedule; configurations differing from the treatment exactly by their condition) and refuses anything else. Its "Primary endpoints" section implements the tests above; its "Held-out observables" section implements the held-out hypothesis above (confirmatory, not exploratory, per the 2026-09-26 amendment); every comparison outside those two sections is labelled exploratory.
++
++## Amendment, 2026-10-02: endpoint 2 and a fresh M4 ensemble
++
++**DRAFT: not frozen and not in force.** Its pre-freeze review (`experiments/m4/endpoint-2-amendment-review.json`) found an undisclosed predecessor, `experiments/amendments/2026-09-29-m4-growth.md`, and the user must decide how to proceed. Until this line is removed and the amended file's hash is added to `experiments/FROZEN`, nothing below applies.
++
++Written after the 2026-09-28 M4 ensemble was analysed, and decided by the user on 2026-10-02. The original text above, including endpoint 2, is unchanged and still computed. This amendment applies only to a fresh ensemble; the 2026-09-28 ensemble keeps its verdict and is never re-read under it.
++
++**Why.** M4 failed on endpoint 2. Treatment runs were "growing" (20/20 on `gradient-m3`, 8/10 on `spots-m3`), but so were all 30 neutral runs, and endpoint 2 requires at most a minority. This is structural (exploratory reasoning, recorded in `docs/plan.md`):
++- neutral runs express the reference phenotype, but mutation still mints lineage labels at a steady rate;
++- the frozen threshold is the neutral pilot's 95th percentile of lineage activity, so about 5% of neutral lineages cross it;
++- neutral cumulative new activity therefore rises almost linearly and is classified "growing", whatever treatment does.
++
++**Amended endpoint 2: late-window excess activity** (`late-excess-activity`; `AMENDMENT_2026_10_02` in `experiments/endpoints.ts`, executed by `tools/analyze.ts`).
++- **Per-run statistic:** the rate of new evolutionary activity in the second half of the registered window. It is cumulative new activity at the final census minus its value at the last census at or before half the horizon, per 10⁵ steps. Activity uses endpoint 1's frozen per-preset threshold, unchanged.
++- **Hypothesis:** treatment > neutral, one-sided exact Mann–Whitney, α = 0.01.
++- **Reading:** treatment is still producing adaptively significant lineages faster than the neutral shadow in the second half of the window.
++- **What it cannot show:** it measures excess over neutral, not unboundedness. Within a finite window it cannot tell a real treatment effect that saturates more slowly than the window from open-ended growth. Results remain "practical open-endedness over the observation window" at most, as declared above.
++- **Original endpoint 2** is still computed and reported, labelled "original; superseded for the M4 gate by the 2026-10-02 amendment".
++
++**Null calibration** (`tools/nullcal.ts`, window 10⁶, 32 replicates, 20 seeds per condition; `runs/nullcal/amendment-2026-10-02`):
++- The amended endpoint passes 0/32 on `longPeriodLoop`, `neutralDrift` and `randomWalkNoise`, and 1/32 on `saturatingProcess`. Pooled over the four exchangeable nulls that is 1/128, with 95% interval [0.0002, 0.043], consistent with α = 0.01.
++- `neutralDrift` is nearly uninformative for this endpoint, because its lineages fix early and few cross the threshold late. `randomWalkNoise` is the informative null.
++- The bounded-treatment scenario (`boundedTreatmentVsFlat`) passes 32/32, as does the amended gate. This shows the specificity limit stated above. The original endpoint 2 rejected that scenario only because its neutral runs were also "growing".
++- The original rows reproduce the plan's recorded 10⁶ results exactly.
++
++**M4 gate (amended).** M4 is met when endpoint 1 and amended endpoint 2 both hold in the fresh ensemble, on both `gradient-m3` and `spots-m3`. `tools/analyze.ts` reports the gate per preset.
++
++**Fresh ensemble:**
++- presets `gradient-m3` and `spots-m3`, the M3 founder set, and RULE_VERSION 1;
++- 10⁶ steps, census every 100, deep every 10, with the frozen activity thresholds (presets unchanged, so their identities still match);
++- conditions treatment, neutral and no-mutation;
++- seeds 21–40 per condition on both presets, giving 120 runs. `spots-m3` rises from 10 to 20 seeds. This is fixed before any new data, because endpoint 1 missed there at p = 0.0116 with 10 seeds.
++- These seeds are disjoint from the M4 ensemble (1–20), the calibration pilot (1001–1020) and the registered extension (101–105, 1101–1110).
++- `tools/analyze.ts` evaluates the amended endpoint only for an ensemble whose every seed lies in 21–40, or for a synthetic calibration. For any other ensemble it does not compute the statistic.
++- **Other endpoints:** endpoint 3 cannot be tested, since it needs the replenished control. Endpoint 4 and whichever held-out comparisons these conditions allow are reported descriptively; none is confirmatory here.
++
++**Analysis code:** `tools/analyze.ts` at the commit that records this amendment's hash in `experiments/FROZEN`. On synthetic ensembles it reproduces the original endpoints and held-out results byte for byte (`experiments/test/amendment-2026-10-02.test.ts`).
++
++**Launch** needs a separate release fixing the run manifest, budget cap and placement. The user's decision (2026-10-02) is to decide on the launch after the founder-discovery continuation study reports (`experiments/founder-discovery/v1/continuation-protocol.md`).
+diff --git a/experiments/test/amendment-2026-10-02.test.ts b/experiments/test/amendment-2026-10-02.test.ts
+new file mode 100644
+index 0000000000..7ac5a13788
+--- /dev/null
++++ b/experiments/test/amendment-2026-10-02.test.ts
+@@ -0,0 +1,518 @@
++// Tests for the 2026-10-02 amendment of endpoint 2 (late-window excess
++// activity; experiments/m4/endpoint-2-amendment-draft.md):
++//   - `lateNewActivityRate`, the per-run statistic (tools/analyze.ts);
++//   - the seed-range guard that keeps the 2026-09-28 ensemble from being
++//     re-read under the amended endpoint;
++//   - the shape of the amended endpoint / gate constants (experiments/endpoints.ts);
++//   - a regression pin: the ORIGINAL endpoints, held-out section, report.json
++//     fields, report.md text and charts are byte-identical to what the
++//     pre-amendment analysis code produced on synthetic nullcal ensembles.
++import { createHash } from "node:crypto";
++import { describe, expect, it } from "vitest";
++import { mannWhitney } from "@bl/metrics";
++import {
++  ACTIVITY_THRESHOLDS,
++  ALPHA,
++  AMENDMENT_2026_10_02,
++  amendedEndpointGuard,
++  amendedM4Gate,
++  amendedNotEvaluatedReason,
++  evaluateEndpoint,
++  LATE_EXCESS_ACTIVITY_ENDPOINT,
++  PRIMARY_ENDPOINTS,
++  type EndpointResult,
++  type RunView,
++  type TestResult,
++} from "../endpoints.ts";
++import { analyzeEnsemble, lateNewActivityRate, type Run } from "../../tools/analyze.ts";
++import { activities } from "../../tools/lib/bundle.ts";
++import {
++  boundedTreatmentVsFlat,
++  buildManifest,
++  makeSpec,
++  neutralDrift,
++  NULLCAL_CONDITIONS,
++  runNullGenerator,
++  type Identity,
++} from "../../tools/lib/nullgen.ts";
++
++const snap = (step: number, cumulativeNew: number) => ({ step, cumulativeNew });
++/** Snapshots every 100 steps up to 1000, with a hand-picked cumulative series. */
++const SERIES = [
++  snap(100, 0), snap(200, 1), snap(300, 1), snap(400, 2), snap(500, 4),
++  snap(600, 5), snap(700, 7), snap(800, 7), snap(900, 9), snap(1000, 12),
++];
++
++describe("lateNewActivityRate (per-run statistic of the amended endpoint 2)", () => {
++  it("is (final - mid) / (final.step - mid.step) * 1e5, mid = the last snapshot at or before half the horizon", () => {
++    // horizon 1000 -> half 500 -> mid = step 500 (cumulativeNew 4); final = step 1000 (12).
++    expect(lateNewActivityRate(SERIES, 1000)).toBe(((12 - 4) / (1000 - 500)) * 1e5);
++    expect(lateNewActivityRate(SERIES, 1000)).toBeCloseTo(1600, 9);
++  });
++
++  it("ignores everything before mid: only the two end points matter", () => {
++    const changedEarly = SERIES.map((s) => (s.step < 500 ? snap(s.step, s.cumulativeNew + 100) : s));
++    expect(lateNewActivityRate(changedEarly, 1000)).toBe(lateNewActivityRate(SERIES, 1000));
++    // ...and the interior of the late window does not matter either.
++    const changedInterior = SERIES.map((s) => (s.step > 500 && s.step < 1000 ? snap(s.step, 6) : s));
++    expect(lateNewActivityRate(changedInterior, 1000)).toBe(lateNewActivityRate(SERIES, 1000));
++  });
++
++  it("a snapshot exactly at floor(horizon/2) counts as 'at or before'", () => {
++    // Snapshot at step 500 is mid for horizon 1000 (above); drop it and mid falls back to step 400.
++    const without500 = SERIES.filter((s) => s.step !== 500);
++    expect(lateNewActivityRate(without500, 1000)).toBe(((12 - 2) / (1000 - 400)) * 1e5);
++  });
++
++  it("a snapshot one step past the half does not count as mid", () => {
++    const shifted = [snap(400, 2), snap(501, 4), snap(1000, 12)]; // 501 > floor(1000/2)
++    expect(lateNewActivityRate(shifted, 1000)).toBe(((12 - 2) / (1000 - 400)) * 1e5);
++  });
++
++  it("floors the half for an odd horizon", () => {
++    // horizon 1001 -> half 500 (floor of 500.5): step 500 is mid, step 501 is not.
++    const s = [snap(400, 2), snap(500, 4), snap(501, 5), snap(1001, 12)];
++    expect(lateNewActivityRate(s, 1001)).toBe(((12 - 4) / (1001 - 500)) * 1e5);
++    // horizon 999 -> half 499: step 500 is past the half, mid = step 400.
++    expect(lateNewActivityRate([snap(400, 2), snap(500, 4), snap(999, 12)], 999)).toBe(((12 - 2) / (999 - 400)) * 1e5);
++  });
++
++  it("uses the registered horizon, not the last snapshot's step", () => {
++    // A run that stopped at step 800 is judged against horizon 1000: half 500 is still mid.
++    const stopped = SERIES.filter((s) => s.step <= 800);
++    expect(lateNewActivityRate(stopped, 1000)).toBe(((7 - 4) / (800 - 500)) * 1e5);
++  });
++
++  it("is 0 when no new activity arrives in the second half, and never negative on a monotone series", () => {
++    expect(lateNewActivityRate([snap(500, 3), snap(1000, 3)], 1000)).toBe(0);
++    expect(lateNewActivityRate(SERIES, 1000)).toBeGreaterThan(0);
++  });
++
++  it("is NaN with no snapshots", () => {
++    expect(lateNewActivityRate([], 1000)).toBeNaN();
++  });
++
++  it("is NaN with no snapshot at or before the half", () => {
++    expect(lateNewActivityRate([snap(600, 5), snap(700, 7), snap(1000, 12)], 1000)).toBeNaN();
++  });
++
++  it("is NaN when the final snapshot is the mid snapshot", () => {
++    expect(lateNewActivityRate([snap(400, 2)], 1000)).toBeNaN();
++    // The run ended at or before the half of the registered horizon: final.step === mid.step.
++    expect(lateNewActivityRate([snap(100, 0), snap(500, 4)], 1000)).toBeNaN();
++  });
++
++  it("is NaN for a non-finite horizon", () => {
++    expect(lateNewActivityRate(SERIES, NaN)).toBeNaN();
++  });
++});
++
++// ---- helpers: in-memory synthetic ensembles, exactly as tools/nullcal.ts builds them ----
++
++type Gen = (id: Identity, spec: ReturnType<typeof makeSpec>) => ReturnType<typeof neutralDrift>;
++
++function buildRuns(opts: {
++  gen: Gen;
++  nullId?: string;
++  windowSteps: number;
++  seedsPerCondition: number;
++  replicate?: number;
++  /** Maps seedIndex -> the run's numeric seed (default: seedIndex, as nullcal does). */
++  seedOf?: (seedIndex: number) => number;
++  /** Replaces the spec's preset id (default: the nullcal preset "gradient-m3"). */
++  presetId?: string;
++  conditions?: readonly string[];
++}): Run[] {
++  const { gen, windowSteps, seedsPerCondition } = opts;
++  const nullId = opts.nullId ?? "test";
++  const rep = opts.replicate ?? 0;
++  const runs: Run[] = [];
++  for (const condition of opts.conditions ?? NULLCAL_CONDITIONS) {
++    for (let seedIndex = 0; seedIndex < seedsPerCondition; seedIndex++) {
++      const id: Identity = { masterSeed: 1, nullId, windowSteps, replicateIndex: rep, condition, seedIndex };
++      const base = makeSpec("nullcal", condition, opts.seedOf ? opts.seedOf(seedIndex) : seedIndex, windowSteps, 100, 10);
++      const spec = opts.presetId ? { ...base, presetId: opts.presetId } : base;
++      const bundle = gen(id, spec);
++      const manifest = buildManifest(spec, nullId, windowSteps, rep, bundle.generatorParams);
++      const lineages = new Map<number, [string, number][]>();
++      for (const row of bundle.lineages) {
++        let arr = lineages.get(row.step);
++        if (!arr) lineages.set(row.step, (arr = []));
++        arr.push([row.key, row.cells]);
++      }
++      runs.push({ condition, seed: spec.seed, dir: `${nullId}/${condition}/seed-${spec.seed}`, series: bundle.series, lineages, manifest });
++    }
++  }
++  return runs;
++}
++
++const NEUTRAL_DRIFT: Gen = (id, s) => neutralDrift(id, s);
++
++describe("the seed-range guard (the 2026-09-28 ensemble is never re-read under the amended endpoint)", () => {
++  const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
++
++  it("amendedEndpointGuard: only an all-seeds-in-21..40 ensemble, or a synthetic one, is evaluated", () => {
++    expect(amendedEndpointGuard(range(21, 40), false)).toEqual({ evaluate: true });
++    expect(amendedEndpointGuard([21], false)).toEqual({ evaluate: true });
++    expect(amendedEndpointGuard([40], false)).toEqual({ evaluate: true });
++    const refused = (seeds: number[]) => amendedEndpointGuard(seeds, false);
++    // The 2026-09-28 ensemble (seeds 1-20), the calibration pilot, the extension, one-off neighbours and a partial overlap.
++    for (const seeds of [range(1, 20), range(1001, 1020), range(101, 105), range(1101, 1110), [20, 21], [40, 41], [0], [...range(21, 39), 41], [...range(1, 5), ...range(21, 25)], []]) {
++      expect(refused(seeds)).toEqual({ evaluate: false, reason: "not evaluated: the 2026-10-02 amendment registers it only for the fresh ensemble, seeds 21–40" });
++    }
++    // Synthetic ensembles (nullcal) are exempt whatever their seeds.
++    expect(amendedEndpointGuard(range(0, 19), true)).toEqual({ evaluate: true });
++    expect(amendedEndpointGuard([], true)).toEqual({ evaluate: true });
++  });
++
++  it("analyzeEnsemble: real-style seeds outside 21-40 -> not evaluated, nothing computed", async () => {
++    // "seasons" is not in ACTIVITY_THRESHOLDS, so this exercises the non-synthetic path (no ignoreFrozenThreshold) without founder provenance.
++    const runs = buildRuns({ gen: NEUTRAL_DRIFT, windowSteps: 20_000, seedsPerCondition: 6, presetId: "seasons", seedOf: (i) => 1 + i });
++    const res = await analyzeEnsemble(runs, "guard-outside", {});
++    expect(res.json.thresholdMode).toBe("exploratory");
++    const reason = "not evaluated: the 2026-10-02 amendment registers it only for the fresh ensemble, seeds 21–40";
++    expect(res.amended.endpoint).toEqual({ evaluated: false, reason });
++    expect(res.amended.runs).toBeNull();
++    expect(res.amended.m4Gate.met).toBeNull();
++    expect(res.amended.m4Gate.endpoints.find((e) => e.id === "late-excess-activity")).toMatchObject({ verdict: "unavailable", detail: reason });
++    expect(res.json.amended).toBe(res.amended);
++    expect(res.markdown).toContain("## Amended endpoint 2 (2026-10-02)");
++    expect(res.markdown).toContain(`${reason}.`);
++    expect(res.markdown).toContain("## M4 gate (amended 2026-10-02)");
++    // The statistic is not computed anywhere, and `results` is still exactly the frozen endpoint list.
++    expect(res.markdown).not.toContain("lateNewActivityRate");
++    expect(JSON.stringify(res.json.runs)).not.toContain("lateNewActivityRate");
++    expect(res.results.map((r) => r.id)).toEqual(PRIMARY_ENDPOINTS.map((e) => e.id));
++    // The original endpoint 2 is still reported, labelled superseded.
++    expect(res.amended.superseded).toMatchObject({ id: "unbounded-growth", label: "original; superseded for the M4 gate by the 2026-10-02 amendment" });
++    expect(res.markdown).toContain("original; superseded for the M4 gate by the 2026-10-02 amendment");
++  });
++
++  it("analyzeEnsemble: a partial overlap with 21-40 is still refused", async () => {
++    const runs = buildRuns({ gen: NEUTRAL_DRIFT, windowSteps: 20_000, seedsPerCondition: 6, presetId: "seasons", seedOf: (i) => 17 + i }); // 17..22
++    const res = await analyzeEnsemble(runs, "guard-partial", {});
++    expect(res.amended.endpoint.evaluated).toBe(false);
++  });
++
++  it("analyzeEnsemble: every seed in 21-40 -> evaluated, matching an independent recomputation", async () => {
++    const runs = buildRuns({ gen: NEUTRAL_DRIFT, windowSteps: 20_000, seedsPerCondition: 6, presetId: "seasons", seedOf: (i) => 21 + i });
++    const res = await analyzeEnsemble(runs, "guard-inside", {});
++    expect(res.json.thresholdMode).toBe("exploratory");
++    expect(res.amended.endpoint.evaluated).toBe(true);
++    if (!res.amended.endpoint.evaluated) return;
++    const result = res.amended.endpoint.result;
++    expect(result.id).toBe("late-excess-activity");
++    expect(result.rows).toHaveLength(1);
++    expect(result.rows[0]).toMatchObject({ a: "treatment", b: "neutral", relation: "pGreater", nA: 6, nB: 6, available: true });
++
++    // Independent recomputation: replay each run's activity at the threshold the report used.
++    const rate = new Map<string, number>();
++    for (const r of runs) {
++      const { snaps } = await activities(r, res.json.threshold);
++      rate.set(`${r.condition}/${r.seed}`, lateNewActivityRate(snaps, r.manifest.spec.steps));
++    }
++    const of = (c: string) => runs.filter((r) => r.condition === c).map((r) => rate.get(`${r.condition}/${r.seed}`)!);
++    const mw = mannWhitney(of("treatment"), of("neutral"));
++    expect(result.rows[0].p).toBe(mw.pGreater);
++    expect(result.rows[0].pAdj).toBe(mw.pGreater); // one comparison: Holm is trivial
++    expect(result.rows[0].effect).toBe(mw.effect);
++    expect(result.rows[0].supported).toBe(mw.pGreater < ALPHA);
++    expect(res.amended.runs).toHaveLength(runs.length);
++    for (const row of res.amended.runs!) expect(row.lateNewActivityRate).toBe(Number.isFinite(rate.get(`${row.condition}/${row.seed}`)!) ? rate.get(`${row.condition}/${row.seed}`)! : null);
++    expect(res.markdown).toContain("2a. **Amended endpoint 2 — late-window excess activity (2026-10-02).**");
++    expect(res.markdown).toContain("lateNewActivityRate");
++    // The pre-existing statistics are untouched: the late rate is not a row of the old tables or of report.json's per-run stats.
++    expect(JSON.stringify(res.json.runs)).not.toContain("lateNewActivityRate");
++    expect(res.markdown.split("## Statistics")[1].split("## Primary endpoints")[0]).not.toContain("lateNewActivityRate");
++  });
++
++  it("analyzeEnsemble: a synthetic (nullcal) ensemble with seeds 0..19 is evaluated", async () => {
++    const runs = buildRuns({ gen: NEUTRAL_DRIFT, windowSteps: 20_000, seedsPerCondition: 6 });
++    const res = await analyzeEnsemble(runs, "guard-synthetic", { ignoreFrozenThreshold: true });
++    expect(res.amended.endpoint.evaluated).toBe(true);
++    expect(res.amended.m4Gate.registeredPreset).toBe(true); // nullcal ensembles reuse gradient-m3
++  });
++
++  it("an uncalibrated ensemble (no neutral runs) gives NaN late rates and an unavailable endpoint", async () => {
++    const conditions = NULLCAL_CONDITIONS.filter((c) => c !== "neutral");
++    const runs = buildRuns({ gen: NEUTRAL_DRIFT, windowSteps: 20_000, seedsPerCondition: 4, conditions });
++    const res = await analyzeEnsemble(runs, "uncalibrated", { ignoreFrozenThreshold: true });
++    expect(res.json.calibrated).toBe(false);
++    expect(res.amended.endpoint.evaluated).toBe(true);
++    if (!res.amended.endpoint.evaluated) return;
++    expect(res.amended.endpoint.result.complete).toBe(false);
++    expect(res.amended.endpoint.result.rows[0]).toMatchObject({ nA: 0, nB: 0, available: false, supported: false });
++    expect(res.amended.runs!.every((r) => r.lateNewActivityRate === null)).toBe(true);
++    expect(res.amended.m4Gate.met).toBeNull();
++  });
++});
++
++describe("amended endpoint 2 and gate constants (experiments/endpoints.ts)", () => {
++  it("the amended endpoint is a one-comparison TestEndpoint: treatment > neutral, pGreater, alpha 0.01", () => {
++    expect(LATE_EXCESS_ACTIVITY_ENDPOINT).toMatchObject({
++      id: "late-excess-activity",
++      kind: "test",
++      statistic: "lateNewActivityRate",
++      comparisons: [{ a: "treatment", b: "neutral", relation: "pGreater" }],
++      alpha: 0.01,
++    });
++    expect(LATE_EXCESS_ACTIVITY_ENDPOINT.alpha).toBe(ALPHA);
++    expect(LATE_EXCESS_ACTIVITY_ENDPOINT.description).toMatch(/second half/);
++    expect(LATE_EXCESS_ACTIVITY_ENDPOINT.description).toMatch(/treatment > neutral/);
++    expect(AMENDMENT_2026_10_02.endpoint).toBe(LATE_EXCESS_ACTIVITY_ENDPOINT);
++  });
++
++  it("registers fresh seeds 21-40, disjoint from every seed range already used", () => {
++    const [first, last] = AMENDMENT_2026_10_02.seeds;
++    expect([first, last]).toEqual([21, 40]);
++    const used: [number, number][] = [[1, 20], [1001, 1020], [101, 105], [1101, 1110]];
++    for (const [a, b] of used) expect(last < a || first > b).toBe(true);
++    // The calibration pilot's range is read from the frozen threshold entries, not retyped.
++    for (const t of Object.values(ACTIVITY_THRESHOLDS)) expect(last < t.pilot.seeds[0] || first > t.pilot.seeds[1]).toBe(true);
++  });
++
++  it("supersedes unbounded-growth, which stays in PRIMARY_ENDPOINTS, and gates M4 on endpoint 1 plus the amended endpoint on both presets", () => {
++    expect(AMENDMENT_2026_10_02.supersededEndpointId).toBe("unbounded-growth");
++    expect(PRIMARY_ENDPOINTS.some((e) => e.id === "unbounded-growth")).toBe(true);
++    expect(AMENDMENT_2026_10_02.supersededLabel).toBe("original; superseded for the M4 gate by the 2026-10-02 amendment");
++    expect(AMENDMENT_2026_10_02.gate).toEqual({ endpointIds: ["adaptive-activity", "late-excess-activity"], presets: ["gradient-m3", "spots-m3"] });
++    expect(AMENDMENT_2026_10_02.gate.endpointIds[0]).toBe(PRIMARY_ENDPOINTS[0].id);
++  });
++
++  it("leaves the frozen definitions alone: PRIMARY_ENDPOINTS has exactly the four original endpoints, alpha and thresholds unchanged", () => {
++    expect(PRIMARY_ENDPOINTS.map((e) => e.id)).toEqual(["adaptive-activity", "unbounded-growth", "ecological-closure-recycling", "ecological-closure-coexistence"]);
++    expect(PRIMARY_ENDPOINTS.some((e) => e.id === LATE_EXCESS_ACTIVITY_ENDPOINT.id)).toBe(false);
++    expect(ALPHA).toBe(0.01);
++    expect(ACTIVITY_THRESHOLDS["gradient-m3"].value).toBe(10008);
++    expect(ACTIVITY_THRESHOLDS["spots-m3"].value).toBe(14613);
++  });
++
++  it("the not-evaluated reason names the registered fresh range", () => {
++    expect(amendedNotEvaluatedReason()).toBe("not evaluated: the 2026-10-02 amendment registers it only for the fresh ensemble, seeds 21–40");
++  });
++
++  const view = (condition: string, rate: number, seed: number): RunView => ({ condition, seed, stats: { lateNewActivityRate: rate }, series: [] });
++  const ensemble = (treatment: number[], neutral: number[]): RunView[] => [
++    ...treatment.map((r, i) => view("treatment", r, i)),
++    ...neutral.map((r, i) => view("neutral", r, i)),
++  ];
++
++  it("evaluateEndpoint runs it unchanged: exact one-sided Mann-Whitney, Holm trivial, supported iff p < 0.01", () => {
++    const high = ensemble([5, 6, 7, 8, 9, 10], [0, 1, 2, 3, 4, 4.5]);
++    const r = evaluateEndpoint(LATE_EXCESS_ACTIVITY_ENDPOINT, high) as TestResult;
++    expect(r.kind).toBe("test");
++    expect(r.rows).toHaveLength(1);
++    // Complete separation of 6 vs 6: p = 1 / C(12, 6) = 1/924 ≈ 0.00108 < 0.01.
++    expect(r.rows[0].p).toBeCloseTo(1 / 924, 12);
++    expect(r.rows[0].pAdj).toBe(r.rows[0].p);
++    expect(r.rows[0].effect).toBe(1);
++    expect(r.rows[0].supported).toBe(true);
++    expect(r.complete).toBe(true);
++    // Identical distributions, or treatment below neutral: not supported (one-sided).
++    expect((evaluateEndpoint(LATE_EXCESS_ACTIVITY_ENDPOINT, ensemble([1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6])) as TestResult).rows[0].supported).toBe(false);
++    expect((evaluateEndpoint(LATE_EXCESS_ACTIVITY_ENDPOINT, ensemble([0, 1, 2, 3, 4, 4.5], [5, 6, 7, 8, 9, 10])) as TestResult).rows[0].supported).toBe(false);
++    // 5 vs 5 fully separated: p = 1/252 ≈ 0.004 passes; 4 vs 4: p = 1/70 ≈ 0.0143 cannot reach 0.01.
++    expect((evaluateEndpoint(LATE_EXCESS_ACTIVITY_ENDPOINT, ensemble([6, 7, 8, 9, 10], [1, 2, 3, 4, 5])) as TestResult).rows[0].supported).toBe(true);
++    expect((evaluateEndpoint(LATE_EXCESS_ACTIVITY_ENDPOINT, ensemble([7, 8, 9, 10], [1, 2, 3, 4])) as TestResult).rows[0].supported).toBe(false);
++  });
++
++  it("NaN rates are dropped like any other statistic; fewer than 2 finite values makes the endpoint unavailable", () => {
++    const r = evaluateEndpoint(LATE_EXCESS_ACTIVITY_ENDPOINT, ensemble([NaN, NaN, NaN], [1, 2, 3])) as TestResult;
++    expect(r.complete).toBe(false);
++    expect(r.rows[0]).toMatchObject({ nA: 0, nB: 3, available: false, supported: false });
++  });
++
++  describe("amendedM4Gate", () => {
++    const test = (id: string, supported: boolean | null): EndpointResult => ({
++      kind: "test", id, description: "", alpha: ALPHA, complete: supported !== null,
++      rows: [{ a: "treatment", b: "neutral", relation: "pGreater", nA: 2, nB: 2, effect: 1, p: 0, pAdj: 0, available: supported !== null, supported: supported === true }],
++    });
++    const amendedOf = (supported: boolean | null) => ({ evaluated: true as const, result: test("late-excess-activity", supported) as TestResult });
++    const gate = (e1: boolean | null, e2: boolean | null, preset = "gradient-m3") => amendedM4Gate(preset, [test("adaptive-activity", e1)], amendedOf(e2));
++
++    it("is met only when endpoint 1 and the amended endpoint 2 both hold", () => {
++      expect(gate(true, true).met).toBe(true);
++      expect(gate(true, false).met).toBe(false);
++      expect(gate(false, true).met).toBe(false);
++      expect(gate(false, false).met).toBe(false);
++      expect(gate(true, true).endpoints.map((e) => [e.id, e.verdict])).toEqual([["adaptive-activity", "holds"], ["late-excess-activity", "holds"]]);
++    });
++
++    it("is undetermined when nothing fails but something is unavailable, and fails as soon as anything fails", () => {
++      expect(gate(true, null).met).toBeNull();
++      expect(gate(null, true).met).toBeNull();
++      expect(gate(false, null).met).toBe(false);
++      expect(gate(null, false).met).toBe(false);
++    });
++
++    it("original endpoint 2 does not enter the gate, even when it holds or fails", () => {
++      const growth = (supported: boolean): EndpointResult => ({ kind: "threshold", id: "unbounded-growth", description: "", rows: [], available: true, supported });
++      for (const s of [true, false]) {
++        const g = amendedM4Gate("gradient-m3", [test("adaptive-activity", true), growth(s)], amendedOf(true));
++        expect(g.met).toBe(true);
++        expect(g.endpoints.some((e) => e.id === "unbounded-growth")).toBe(false);
++      }
++    });
++
++    it("a not-evaluated amended endpoint leaves the gate undetermined, with the reason attached", () => {
++      const g = amendedM4Gate("gradient-m3", [test("adaptive-activity", true)], { evaluated: false, reason: amendedNotEvaluatedReason() });
++      expect(g.met).toBeNull();
++      expect(g.endpoints[1]).toMatchObject({ verdict: "unavailable", detail: amendedNotEvaluatedReason() });
++    });
++
++    it("spots-m3 is a gate preset; an unregistered preset never reports met", () => {
++      expect(gate(true, true, "spots-m3")).toMatchObject({ registeredPreset: true, met: true });
++      expect(gate(true, true, "seasons")).toMatchObject({ registeredPreset: false, met: null });
++    });
++  });
++});
++
++// ---------------------------------------------------------------------------
++// Regression pin: the original results are byte-identical under the amended code.
++//
++// `sha256` values below were produced by the analysis code BEFORE the 2026-10-02
++// amendment was added (same recipe as `buildRuns`/tools/nullcal.ts, window 2e5,
++// 20 seeds per condition, census every 100, deep every 10, master seed 1,
++// ignoreFrozenThreshold). They hash, per ensemble: `results` (the four original
++// endpoint results), `heldOut`, `json` (report.json's pre-amendment content),
++// `markdown` (report.md's pre-amendment text) and the charts. The amendment
++// only ADDS: the `amended` key of `json`/result, and one contiguous block of
++// markdown between the primary endpoints and the held-out observables, both
++// removed here before hashing. Any change to an original endpoint, a
++// statistic, a table row or a number changes a hash and fails this test.
++// `summary` is the same information in readable form (orientation only).
++// ---------------------------------------------------------------------------
++
++const sha = (x: unknown) => createHash("sha256").update(typeof x === "string" ? x : JSON.stringify(x)).digest("hex");
++const r6 = (x: number) => (Number.isFinite(x) ? Number(x.toPrecision(6)) : null);
++
++function summarise(res: Awaited<ReturnType<typeof analyzeEnsemble>>): string[] {
++  const lines: string[] = [];
++  for (const r of res.results) {
++    if (r.kind === "test") {
++      for (const x of r.rows) lines.push(`${r.id} ${x.a}>${x.b} n=${x.nA}/${x.nB} effect=${r6(x.effect)} p=${r6(x.p)} pAdj=${r6(x.pAdj)} supported=${x.supported}`);
++    } else if (r.kind === "threshold") {
++      lines.push(`${r.id} available=${r.available} supported=${r.supported} ${r.rows.map((x) => `${x.condition}:${x.qualifying}/${x.total}`).join(" ")}`);
++    } else {
++      lines.push(`${r.id} ${r.qualifying}/${r.total} supported=${r.supported}`);
++    }
++  }
++  lines.push(`held-out ${res.heldOut.summary.outcome} established=${res.heldOut.summary.establishedCount}`);
++  lines.push(`threshold ${r6(res.json.threshold)}`);
++  return lines;
++}
++
++// report.json carries raw per-run means of series values, and the synthetic
++// generators use Math.exp/log/cos, whose last bits differ between V8 builds
++// (Deno 2.9.7 vs Node 26 differ in the 16th digit of the generated series
++// themselves). So `json` is hashed at 9 significant digits to stay portable;
++// `results` and `heldOut` are rank-based and hashed exactly.
++const roundedJson = (x: unknown) => JSON.stringify(x, (_k, v) => (typeof v === "number" && Number.isFinite(v) ? Number(v.toPrecision(9)) : v));
++
++function digests(res: Awaited<ReturnType<typeof analyzeEnsemble>>) {
++  const { amended: _jsonAmended, ...jsonBefore } = res.json;
++  const markdownBefore = res.markdown.replace(/\n## Amended endpoint 2 \(2026-10-02\)[\s\S]*?(?=\n## Held-out observables)/, "");
++  return {
++    results: sha(res.results),
++    heldOut: sha(res.heldOut),
++    json: sha(roundedJson(jsonBefore)),
++    markdown: sha(markdownBefore),
++    charts: sha(res.charts.map((c) => `${c.file}\n${c.svg}`).join("\n")),
++  };
++}
++
++const PINNED: Record<string, { summary: string[]; sha256: Record<string, string> }> = {
++  "saturatingProcess@200000#0x20": {
++    summary: [
++      "adaptive-activity treatment>neutral n=20/20 effect=0.43125 p=0.834163 pAdj=1 supported=false",
++      "adaptive-activity treatment>no-mutation n=20/20 effect=0.47 p=0.677233 pAdj=1 supported=false",
++      "unbounded-growth available=true supported=false treatment:5/20 neutral:7/20",
++      "ecological-closure-recycling treatment>replenished n=20/20 effect=0.5575 p=0.273412 pAdj=0.273412 supported=false",
++      "ecological-closure-coexistence 20/20 supported=true",
++      "held-out not-supported established=0",
++      "threshold 12901",
++    ],
++    sha256: {
++      results: "6f7303ca994c9d5d0aa039af912f99ee24a00af921b0396f779303c4405e39dc",
++      heldOut: "12aef24e0ed7814ec34ccd80430721b8bfb541b12096b34177485de569dbd004",
++      json: "7634f8e69e7077de5ad37c12a2c53a2fd333cd7dfd1aeb8fc80898f4b8effe4a",
++      markdown: "9821ea1a44d0c6efcccc558fdebe7dee793faf67f498aa5f3f4c8067f2acc712",
++      charts: "8b275248faf66b5f41b7898a2d55fb355603bf3fd459c1441783265c6aa8e561",
++    },
++  },
++  "neutralDrift@200000#1x20": {
++    summary: [
++      "adaptive-activity treatment>neutral n=20/20 effect=0.475 p=1 pAdj=1 supported=false",
++      "adaptive-activity treatment>no-mutation n=20/20 effect=0.5 p=0.75641 pAdj=1 supported=false",
++      "unbounded-growth available=true supported=false treatment:19/20 neutral:20/20",
++      "ecological-closure-recycling treatment>replenished n=20/20 effect=0.615 p=0.110532 pAdj=0.110532 supported=false",
++      "ecological-closure-coexistence 20/20 supported=true",
++      "held-out not-supported established=0",
++      "threshold 203867",
++    ],
++    sha256: {
++      results: "c8b156ccd40301c6fd0c4ae68420bac14dd822abd2025fb0d96e1079b4a46c8c",
++      heldOut: "0fd8c6ffa5d423d7658efd84a7abf6493eb67d849ca5b61f98b8484253287cf9",
++      json: "04dc578d9b3ebb7dde177118630349b578e4088cb75631f57d15fdfeb0410fd4",
++      markdown: "1cf9435f93eac2715f351c1e418b05c191761009046d42c8732aff374dca00b4",
++      charts: "42f9af5b9b61b73e63656c253b9e19d5c7e6525219493cfedc7758388759e607",
++    },
++  },
++  "boundedTreatmentVsFlat@200000#0x20": {
++    summary: [
++      "adaptive-activity treatment>neutral n=20/20 effect=1 p=7.25444e-12 pAdj=1.45089e-11 supported=true",
++      "adaptive-activity treatment>no-mutation n=20/20 effect=1 p=7.25444e-12 pAdj=1.45089e-11 supported=true",
++      "unbounded-growth available=true supported=false treatment:20/20 neutral:13/20",
++      "ecological-closure-recycling treatment>replenished n=20/20 effect=1 p=7.25444e-12 pAdj=7.25444e-12 supported=true",
++      "ecological-closure-coexistence 20/20 supported=true",
++      "held-out supported established=3",
++      "threshold 9844.35",
++    ],
++    sha256: {
++      results: "541d6bc92eb4298fd664ffa384be8158ef81881b54a20e828f8041f95fefed65",
++      heldOut: "395a2c47976db6e68f63ab2b7ba980bd6e412a13d6f10cae431b175eedc3e96f",
++      json: "42055e802a1fc21dc7b434662918b06d9d525c523e87363cc6324dd44026c8e3",
++      markdown: "baa017306680d2bf1c88dd8b779bc5651ac227423180ca751dcd6ff08512f8b6",
++      charts: "4b2f43c92b77810375facdcbb008f6de9c894d584f35097e5be4ab31fb0e8ec4",
++    },
++  },
++  "longPeriodLoop@200000#2x20": {
++    summary: [
++      "adaptive-activity treatment>neutral n=20/20 effect=0.555 p=0.262912 pAdj=0.262912 supported=false",
++      "adaptive-activity treatment>no-mutation n=20/20 effect=0.64375 p=0.0503197 pAdj=0.100639 supported=false",
++      "unbounded-growth available=true supported=false treatment:17/20 neutral:13/20",
++      "ecological-closure-recycling treatment>replenished n=20/20 effect=0.5875 p=0.177326 pAdj=0.177326 supported=false",
++      "ecological-closure-coexistence 20/20 supported=true",
++      "held-out not-supported established=0",
++      "threshold 54122",
++    ],
++    sha256: {
++      results: "78d8df65225af871f24c30ccb81f295216f17fb394aae343c6e0e1b8d8913015",
++      heldOut: "15d5eab64a8ab8b23efde0bf1a6fdbc791e170967ba2486e98fe6a55d76cfc96",
++      json: "17c3c16594064da4f7a50df7f771043e1b3cb4ef5fb38f9dd0fa103a57abafd6",
++      markdown: "7cf6299ad3e2046bb5f74835787b5f6be188f306ba5bd27a67a7858b487e6bc6",
++      charts: "7c5b14de1893139645fe32eb3d4b058bcef4eebfb663dfef85c6be35667767dd",
++    },
++  },
++};
++
++describe("regression: original endpoints, held-out section and report content are byte-identical under the amended analysis code", () => {
++  const cases: [string, string, number, number, Gen][] = [
++    ["saturatingProcess@200000#0x20", "saturatingProcess", 0, 20, (id, s) => runNullGenerator("saturatingProcess", id, s)],
++    ["neutralDrift@200000#1x20", "neutralDrift", 1, 20, (id, s) => runNullGenerator("neutralDrift", id, s)],
++    ["boundedTreatmentVsFlat@200000#0x20", "boundedTreatmentVsFlat", 0, 20, (id, s) => boundedTreatmentVsFlat(id, s)],
++    ["longPeriodLoop@200000#2x20", "longPeriodLoop", 2, 20, (id, s) => runNullGenerator("longPeriodLoop", id, s)],
++  ];
++  for (const [key, nullId, replicate, seedsPerCondition, gen] of cases) {
++    it(key, async () => {
++      const runs = buildRuns({ gen, nullId, windowSteps: 200_000, seedsPerCondition, replicate });
++      const res = await analyzeEnsemble(runs, key, { ignoreFrozenThreshold: true });
++      const pinned = PINNED[key];
++      expect(summarise(res)).toEqual(pinned.summary);
++      expect(digests(res)).toEqual(pinned.sha256);
++      // `results` is still exactly the four frozen endpoints; the amendment lives next to them.
++      expect(res.results.map((r) => r.id)).toEqual(PRIMARY_ENDPOINTS.map((e) => e.id));
++      expect(res.amended.endpoint.evaluated).toBe(true);
++    }, 120_000);
++  }
++});
+diff --git a/tests/deno/nullcal.ts b/tests/deno/nullcal.ts
+index 1d5451343c..b1dcc42058 100644
+--- a/tests/deno/nullcal.ts
++++ b/tests/deno/nullcal.ts
+@@ -38,6 +38,11 @@
+   const report = JSON.parse(await Deno.readTextFile(`${out}/report.json`));
+   const rowKeys = Object.keys(report.tallies).filter((k) => k.startsWith("longPeriodLoop@20000::"));
+   check("nullcal CLI: rows recorded for the requested (null, window) cell", rowKeys.length > 0, JSON.stringify(Object.keys(report.tallies)));
++  // 2026-10-02 amendment: the amended endpoint 2 and amended M4 gate get their own rows next to the original ones.
++  for (const id of ["late-excess-activity", "m4-gate-amended"]) {
++    const t = report.tallies[`longPeriodLoop@20000::${id}`];
++    check(`nullcal CLI: amended row ${id} recorded with a decision per replicate`, !!t && t.n + t.unavailable === 3, JSON.stringify(t));
++  }
+   for (const k of rowKeys) {
+     const t = report.tallies[k];
+     check(`nullcal CLI: ${k} k/n well-formed`, t.k >= 0 && t.k <= t.n, JSON.stringify(t));
+@@ -199,8 +204,11 @@
+   // frozen (2026-09-27), report.json's top-level shape has been exactly
+   // these keys (m4Descriptive, roleCutSensitivity and heredity added before the pre-registration freeze) (tests/deno/analyze.ts pins the CLI's own end-to-end
+   // behavior against real ACTIVITY_THRESHOLDS entries); pin that shape
+-  // directly here too.
+-  const expectedKeys = "adaptiveActivityNote,calibrated,ensembleIdentity,heredity,inSampleNeutralQuantile,m4Descriptive,presetId,q,roleCutSensitivity,runs,threshold,thresholdMode,unavailableReason";
++  // directly here too. `amended` (2026-10-02) is the one key the endpoint-2
++  // amendment adds: its late-excess-activity endpoint and amended M4 gate,
++  // next to -- never inside -- the original results; every other key and its
++  // content is unchanged (experiments/test/amendment-2026-10-02.test.ts).
++  const expectedKeys = "adaptiveActivityNote,amended,calibrated,ensembleIdentity,heredity,inSampleNeutralQuantile,m4Descriptive,presetId,q,roleCutSensitivity,runs,threshold,thresholdMode,unavailableReason";
+   check(
+     "split check: the CLI's report.json has exactly the current top-level shape, no extra or missing keys",
+     Object.keys(cliReport).sort().join(",") === expectedKeys,
+diff --git a/tools/analyze.ts b/tools/analyze.ts
+index 5dd4d2e501..051dfdf9d1 100644
+--- a/tools/analyze.ts
++++ b/tools/analyze.ts
+@@ -28,6 +28,13 @@
+ // 5. Exploratory: two-sided comparison of every statistic with the treatment
+ //    -- the only section of this report that is not part of the
+ //    pre-registered inference.
++// 6. Amended endpoint 2 and the amended M4 gate (experiments/endpoints.ts:
++//    AMENDMENT_2026_10_02): reported in their own clearly labelled sections,
++//    after the original primary endpoints, which are left exactly as they
++//    were. Evaluated only for a synthetic (nullcal) ensemble or an ensemble
++//    whose every seed lies in the amendment's registered fresh range; any
++//    other ensemble (notably the 2026-09-28 one) is reported "not evaluated"
++//    and its late-window statistic is never computed.
+ //
+ // Runs are pooled only if they form one ensemble: same rules, preset, horizon
+ // and observation schedule, with configurations differing from the treatment
+@@ -53,11 +60,17 @@
+ import { decideActivityThreshold, type EnsembleIdentity } from "./lib/threshold.ts";
+ import {
+   ACTIVITY_THRESHOLDS,
++  AMENDMENT_2026_10_02,
++  amendedEndpointGuard,
++  amendedM4Gate,
+   evaluateEndpoint,
+   evaluateHeldOut,
+   HELD_OUT_SPECS,
++  LATE_RATE_STATISTIC,
+   PRIMARY_ENDPOINTS,
+   type ActivityThresholdEntry,
++  type AmendedGate,
++  type AmendedOutcome,
+   type EndpointResult,
+   type HeldOutObservableResult,
+   type RunView,
+@@ -85,6 +98,23 @@
+   ignoreFrozenThreshold?: boolean;
+ }
+ 
++/**
++ * The 2026-10-02 amendment's results for one ensemble (experiments/endpoints.ts:
++ * AMENDMENT_2026_10_02). Reported next to, never inside, the original
++ * pre-registered results.
++ */
++export interface AmendedReport {
++  amendment: string;
++  /** The amended endpoint 2 (late-excess-activity), or why it was not evaluated for this ensemble. */
++  endpoint: AmendedOutcome;
++  /** The original endpoint 2, still computed and reported in `results`, labelled superseded for the M4 gate. `supported` is null when it was unavailable. */
++  superseded: { id: string; label: string; supported: boolean | null };
++  /** Amended M4 gate for this ensemble's preset alone; overall M4 needs the same on every registered preset. */
++  m4Gate: AmendedGate;
++  /** Per-run late-window rates (null = not computable); null when the endpoint was not evaluated, in which case the statistic is never computed. */
++  runs: { condition: string; seed: number; lateNewActivityRate: number | null }[] | null;
++}
++
+ export interface AnalyzeResult {
+   /** report.md content, chart embeds included as `![title](file)` links. */
+   markdown: string;
+@@ -106,10 +136,14 @@
+     /** Descriptive sibling correlations of mu and sigma at fission, per condition with heredity data. */
+     heredity: { condition: string; runs: number; fissions: number; muPooled: number; sigmaPooled: number; muMedianRun: number; sigmaMedianRun: number }[];
+     runs: unknown[];
++    /** 2026-10-02 amendment (endpoint 2 and the M4 gate); a key added after the fact, every other key above is unchanged. */
++    amended: AmendedReport;
+   };
+   /** Machine-readable endpoint decisions the CLI's own report.json does not carry -- exposed here for an in-memory caller (tools/nullcal.ts) that consumes them directly instead of parsing rendered Markdown. */
+   results: EndpointResult[];
+   heldOut: ReturnType<typeof evaluateHeldOut>;
++  /** The 2026-10-02 amendment's endpoint 2 and M4 gate for this ensemble (same object as `json.amended`). `results` above never contains it: it stays exactly PRIMARY_ENDPOINTS. */
++  amended: AmendedReport;
+   /** SVG chart bodies the CLI writes to `${outDir}/${file}`; a direct caller (e.g. nullcal) can ignore this. */
+   charts: { file: string; svg: string }[];
+ }
+@@ -126,6 +160,32 @@
+   return { experiment: "identity", presetId: id, condition: "neutral", seed: 0, steps: 1, censusEvery: 1, deepEvery: 1, checkpointEvery: 0 };
+ }
+ 
++/**
++ * Per-run statistic of the 2026-10-02 amended endpoint 2 ("late-excess-activity"):
++ * the rate of new evolutionary activity in the second half of the registered
++ * window, per 1e5 steps. `snaps` are the run's activity snapshots (the same
++ * ones `cumulativeNewActivity` is read from) at the activity threshold in use;
++ * `horizon` is the run's registered number of steps (manifest `spec.steps`).
++ *
++ *   final = the last snapshot
++ *   mid   = the last snapshot whose step <= floor(horizon / 2)
++ *   rate  = (final.cumulativeNew - mid.cumulativeNew) / (final.step - mid.step) * 1e5
++ *
++ * NaN when there is no snapshot, none at or before the half, or the final
++ * snapshot is not after the mid one. The "not calibrated" NaN (as for
++ * `cumulativeNewActivity`) is applied by the caller, since calibration is a
++ * property of the ensemble, not of the snapshots.
++ */
++export function lateNewActivityRate(snaps: { step: number; cumulativeNew: number }[], horizon: number): number {
++  const final = snaps[snaps.length - 1];
++  if (!final) return NaN;
++  const half = Math.floor(horizon / 2);
++  let mid: { step: number; cumulativeNew: number } | undefined;
++  for (const s of snaps) if (s.step <= half) mid = s;
++  if (!mid || !(final.step > mid.step)) return NaN;
++  return ((final.cumulativeNew - mid.cumulativeNew) / (final.step - mid.step)) * 1e5;
++}
++
+ // ---------------------------------------------------------------------------
+ // Analysis. Pure for in-memory runs (`Run.lineages` set, as tools/nullcal.ts
+ // builds them); a real bundle's lineages.tsv is streamed from disk by
+@@ -271,6 +331,14 @@
+   type Stats = Record<string, number>;
+   const perRun = new Map<Run, Stats>();
+   const trends = new Map<Run, string>();
++  // 2026-10-02 amendment: the amended endpoint 2 is evaluated only for a
++  // synthetic ensemble or one whose every seed (loaded, not just eligible) lies
++  // in the amendment's registered fresh range -- otherwise its statistic is not
++  // even computed, so the 2026-09-28 ensemble is never re-read under it. Kept
++  // in its own map, not in `perRun`, so the pre-existing statistics table, the
++  // exploratory table and report.json's `runs[].stats` stay exactly as they were.
++  const amendedGuard = amendedEndpointGuard(ensembleSeeds, options.ignoreFrozenThreshold === true);
++  const lateRate = new Map<Run, number>();
+   const timeAvg = (r: Run, f: (x: Record<string, any>) => number | undefined) => {
+     const v = r.series.map(f).filter((x): x is number => typeof x === "number" && Number.isFinite(x));
+     const tail = v.slice(Math.floor(v.length / 2)); // second half: post-transient
+@@ -319,6 +387,7 @@
+     const cum = snaps.map((s) => s.cumulativeNew);
+     const g = t.length > 5 ? growthVsSaturation(t, cum) : null;
+     if (g && calibrated) trends.set(r, g.verdict);
++    if (amendedGuard.evaluate) lateRate.set(r, calibrated ? lateNewActivityRate(snaps, r.manifest.spec.steps) : NaN);
+     perRun.set(r, {
+       cumulativeNewActivity: calibrated ? (last?.cumulativeNew ?? 0) : NaN,
+       newActivityRate: calibrated && last ? (last.cumulativeNew / Math.max(1, last.step)) * 1e5 : NaN,
+@@ -422,7 +491,7 @@
+   }));
+   const results: EndpointResult[] = PRIMARY_ENDPOINTS.map((e) => evaluateEndpoint(e, views));
+ 
+-  function renderEndpoint(n: number, r: EndpointResult): string {
++  function renderEndpoint(n: number | string, r: EndpointResult): string {
+     // `description` already leads with its own bold title (matching
+     // preregistration.md's generated numbered list) -- don't re-wrap it.
+     let out = `${n}. ${r.description}\n\n`;
+@@ -469,6 +538,74 @@
+     if (PRIMARY_ENDPOINTS[i].id === "adaptive-activity" && adaptiveActivityNote) md += `\n**Note for this report:** ${adaptiveActivityNote}\n`;
+   });
+ 
++  // ---- 2026-10-02 amendment: amended endpoint 2 and the amended M4 gate ----
++  // Kept apart from "## Primary endpoints (pre-registered)" above (whose
++  // content, results and numbering are untouched) and from `results`, which is
++  // still exactly PRIMARY_ENDPOINTS. Two sections inserted as one block between
++  // the primary endpoints and the held-out observables, so removing the block
++  // restores the pre-amendment report byte for byte (experiments/test/
++  // amendment-2026-10-02.test.ts relies on this).
++  const A = AMENDMENT_2026_10_02;
++  const amendedOutcome: AmendedOutcome = amendedGuard.evaluate
++    ? (() => {
++        const r = evaluateEndpoint(
++          A.endpoint,
++          views.map((v, i) => ({ ...v, stats: { ...v.stats, [LATE_RATE_STATISTIC]: lateRate.get(runs[i])! } })),
++        );
++        if (r.kind !== "test") throw new Error(`amended endpoint ${A.endpoint.id} must be a test endpoint`);
++        return { evaluated: true as const, result: r };
++      })()
++    : { evaluated: false as const, reason: amendedGuard.reason };
++  const originalEndpoint2 = results.find((r) => r.id === A.supersededEndpointId);
++  const amendedGate = amendedM4Gate(presetId, results, amendedOutcome);
++  const amended: AmendedReport = {
++    amendment: A.date,
++    endpoint: amendedOutcome,
++    superseded: {
++      id: A.supersededEndpointId,
++      label: A.supersededLabel,
++      supported: originalEndpoint2?.kind === "threshold" && originalEndpoint2.available ? originalEndpoint2.supported : null,
++    },
++    m4Gate: amendedGate,
++    runs: amendedOutcome.evaluated
++      ? runs.map((r) => ({ condition: r.condition, seed: r.seed, lateNewActivityRate: Number.isFinite(lateRate.get(r)!) ? lateRate.get(r)! : null }))
++      : null,
++  };
++
++  md += `\n## Amended endpoint 2 (${A.date})\n\n`;
++  md += `Registered by the ${A.date} amendment (\`experiments/preregistration.md\`, "Amendment, 2026-10-02") for the fresh ensemble only,` +
++    `seeds ${A.seeds[0]}–${A.seeds[1]}. It is not one of the original frozen endpoints listed above.\n\n`;
++  if (amendedOutcome.evaluated) {
++    md += renderEndpoint("2a", amendedOutcome.result);
++    md += `\nPer-run statistic \`${LATE_RATE_STATISTIC}\` (new activity per 10⁵ steps over the second half of each run; mean ± sd over seeds):\n\n`;
++    md += `| condition | runs | ${LATE_RATE_STATISTIC} |\n|---|---|---|\n`;
++    for (const c of conditions) {
++      const v = runs.filter((r) => r.condition === c).map((r) => lateRate.get(r)!).filter(Number.isFinite);
++      md += `| ${c} | ${v.length} | ${v.length ? `${fmt(mean(v))} ± ${fmt(sd(v))}` : "—"} |\n`;
++    }
++  } else {
++    md += `**${amendedOutcome.reason}.** The late-window statistic was not computed for this ensemble.\n`;
++  }
++  md += `\nOriginal endpoint 2 (\`${A.supersededEndpointId}\`) is still computed and reported under "Primary endpoints (pre-registered)" above, labelled: ${A.supersededLabel}.`;
++  if (originalEndpoint2?.kind === "threshold") {
++    md += ` Its result here: ${originalEndpoint2.rows.map((row) => `${row.condition} ${row.qualifying}/${row.total} growing`).join(", ")}; ` +
++      `${originalEndpoint2.available ? `supported: ${originalEndpoint2.supported ? "yes" : "no"}` : "unavailable"}.`;
++  }
++  md += `\n`;
++
++  md += `\n## M4 gate (amended ${A.date})\n\n`;
++  const endpointLabel = (id: string) => {
++    const k = PRIMARY_ENDPOINTS.findIndex((e) => e.id === id);
++    return k >= 0 ? `endpoint ${k + 1} (${id})` : `amended endpoint 2 (${id})`;
++  };
++  md += `M4 is met when ${A.gate.endpointIds.map(endpointLabel).join(" and ")} both hold, on each registered preset (${A.gate.presets.join(", ")}). ` +
++    `This report covers preset "${presetId}" only${amendedGate.registeredPreset ? "" : ", which is not a registered gate preset"}; ` +
++    `M4 overall needs the same verdict on every registered preset. Original endpoint 2 (\`${A.supersededEndpointId}\`) no longer enters the M4 gate.\n\n`;
++  md += `| endpoint | verdict |\n|---|---|\n`;
++  for (const e of amendedGate.endpoints) md += `| ${endpointLabel(e.id)} | ${e.verdict}${e.detail ? ` (${e.detail})` : ""} |\n`;
++  md += `\nM4 gate on preset "${presetId}": **${amendedGate.met === true ? "met" : amendedGate.met === false ? "not met" : "not determined"}**` +
++    `${amendedGate.met === null ? (amendedGate.registeredPreset ? " (at least one gate endpoint is unavailable)" : " (not a registered gate preset)") : ""}.\n`;
++
+   // ---- held-out observables (experiments/endpoints.ts: HELD_OUT_SPECS) ----
+   // Confirmatory, not exploratory (2026-09-26 amendment) -- kept in its own
+   // section, clearly separate from "## Primary endpoints" above and
+@@ -745,8 +882,9 @@
+     roleCutSensitivity,
+     heredity,
+     runs: runs.map((r) => ({ condition: r.condition, seed: r.seed, trend: trends.get(r), stats: perRun.get(r) })),
++    amended,
+   };
+-  return { markdown: md, json, results, heldOut, charts };
++  return { markdown: md, json, results, heldOut, amended, charts };
+ }
+ 
+ // ---------------------------------------------------------------------------
+diff --git a/tools/nullcal.ts b/tools/nullcal.ts
+index 8b2bc104c8..509cfee9ab 100644
+--- a/tools/nullcal.ts
++++ b/tools/nullcal.ts
+@@ -9,6 +9,13 @@
+ // threshold, alpha or endpoint definition; it only measures how often the
+ // gates as coded today pass on data known to be bounded / non-open-ended.
+ //
++// 2026-10-02 amendment (experiments/endpoints.ts: AMENDMENT_2026_10_02): each
++// trial additionally records the amended endpoint 2 ("late-excess-activity")
++// and the amended M4 gate ("m4-gate-amended": endpoint 1 and the amended
++// endpoint 2 both hold) as extra rows next to the original ones, which are
++// unchanged. The exchangeable nulls tally them as false positives; the
++// bounded-treatment scenario tallies them separately like every other row.
++//
+ //   deno run -A tools/nullcal.ts \
+ //     [--nulls longPeriodLoop,neutralDrift,saturatingProcess,randomWalkNoise] \
+ //     [--windows 1e5,1e6] [--replicates 32] [--seeds-per-condition 20] \
+@@ -179,7 +186,7 @@
+   // meaningful here, so every nullcal trial always uses analyzeEnsemble's
+   // exploratory path: this ensemble's own neutral condition's in-sample
+   // activity quantile (docs/plan.md "Gate calibration").
+-  const { results: endpointResults, heldOut } = await analyzeEnsemble(runs, `${nullId}@${windowSteps}#${replicateIndex}`, { ignoreFrozenThreshold: true });
++  const { results: endpointResults, heldOut, amended } = await analyzeEnsemble(runs, `${nullId}@${windowSteps}#${replicateIndex}`, { ignoreFrozenThreshold: true });
+ 
+   const dest = nullId === "boundedTreatmentVsFlat" ? boundedRows : tallies;
+   const windowPrefix = `${nullId}@${windowSteps}`;
+@@ -229,6 +236,16 @@
+   // is not the same as a decided "no" and must not count as 0/R.
+   record(`${windowPrefix}::held-out-summary`, heldOut.summary.outcome === "unavailable" ? null : heldOut.summary.outcome === "supported");
+ 
++  // ---- 2026-10-02 amendment: recorded after every original row, so those are untouched ----
++  // Same convention as the original test endpoints: an incomplete family is
++  // excluded as unavailable (null), never counted as a pass or a failure.
++  // nullcal ensembles are synthetic, so the amended endpoint is always evaluated.
++  if (amended.endpoint.evaluated) {
++    const r = amended.endpoint.result;
++    record(`${windowPrefix}::${r.id}`, r.complete ? r.rows.every((row) => row.supported) : null);
++  }
++  record(`${windowPrefix}::m4-gate-amended`, amended.m4Gate.met);
++
+   return { nullId, windowSteps, replicateIndex, generatorParams: treatmentGeneratorParams, decisions };
+ }
+ 
+@@ -294,7 +311,7 @@
+   let md = `# nullcal report\n\n`;
+   md += `Config: ${JSON.stringify(config)}\n\n`;
+   md += `Wall time: ${totalWallSeconds.toFixed(1)}s total, ${meanTrialSeconds.toFixed(2)}s/trial (${trials.length} trials).\n\n`;
+-  md += `## Pass rates under exchangeable null generators (${nulls.join(", ")})\n\nEvery pass here is a false positive except ecological-closure-coexistence, which these generators genuinely satisfy (see docs/plan.md).\n\n${renderTable(tallies)}\n`;
++  md += `## Pass rates under exchangeable null generators (${nulls.join(", ")})\n\nEvery pass here is a false positive except ecological-closure-coexistence, which these generators genuinely satisfy (see docs/plan.md). The \`late-excess-activity\` and \`m4-gate-amended\` rows are the 2026-10-02 amendment's amended endpoint 2 and amended M4 gate; their passes are false positives too.\n\n${renderTable(tallies)}\n`;
+   if (runBounded) md += `\n## boundedTreatmentVsFlat (a real treatment/control difference, bounded not open-ended -- NOT a false-positive tally, see docs/plan.md)\n\n${renderTable(boundedRows)}\n`;
+   await Deno.writeTextFile(`${outRoot}/report.md`, md);
+ 

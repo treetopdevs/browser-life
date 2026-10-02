@@ -1,0 +1,108 @@
+{
+  "phase": "validation",
+  "trials": 200,
+  "pairs": 64,
+  "masterSeed": 650009002,
+  "capSeconds": 28000,
+  "strata": [
+    {
+      "scenario": "pairedEndpoint1Null",
+      "preset": "gradient-m3"
+    },
+    {
+      "scenario": "pairedEndpoint1Null",
+      "preset": "spots-m3"
+    },
+    {
+      "scenario": "boundaryRareNegative",
+      "preset": "gradient-m3"
+    },
+    {
+      "scenario": "boundaryRareNegative",
+      "preset": "spots-m3"
+    },
+    {
+      "scenario": "extinctionBoundary",
+      "preset": "gradient-m3"
+    },
+    {
+      "scenario": "extinctionBoundary",
+      "preset": "spots-m3"
+    },
+    {
+      "scenario": "meanAlternative",
+      "preset": "gradient-m3"
+    },
+    {
+      "scenario": "meanAlternative",
+      "preset": "spots-m3"
+    },
+    {
+      "scenario": "longPeriodLoop",
+      "preset": "gradient-m3"
+    },
+    {
+      "scenario": "longPeriodLoop",
+      "preset": "spots-m3"
+    }
+  ],
+  "sourceHashes": {
+    "tools/m4-growth-calibration.ts": "a5c0c856d37108caaad70641277aa01876efbad87179c2f2267188dd3b6f3567",
+    "tools/lib/m4-growth-runs.ts": "a707cd32197c81a54cb51043b1c5407940ae9860b12d9e7a556009ad2f1926a4",
+    "tools/lib/m4-growth.ts": "c2b56e411f759e82124a56fd7aafbb8f60a425a280c16c9560a56c5ef63a975d",
+    "tools/lib/nullgen.ts": "de48b9cb83802bb37d96fccb3779c714849ee155565c0843b12ebccafff33da8",
+    "tools/lib/idhash.ts": "641158d70ceb5621a4a8dae354399dc533251cdb599d1f61e5c2ed9999bda992",
+    "tools/lib/bundle.ts": "59f5d8f69bbe32925e65f351d4d90180e77b63b787552bdad41aae38ac4fd175",
+    "tools/lib/threshold.ts": "2f354897bc57bf41d69f862add75eed88307612d00b2fa7d9a9b9200bb2c4084",
+    "experiments/amendments/m4-growth-v1.ts": "93ea2be0cf0eefb1692b6fd1707c485e574c81a4617bd958cbb0c1dff36c27fd",
+    "experiments/endpoints.ts": "9b5db700e4922078a59c61fdaca4e22332d304cf40b226b770d53a9836c51718",
+    "packages/schema/src/int.ts": "08b39f755a5832868420eb8f1de7df1f847f03f71ec01f3bd6510f7eb17ad790",
+    "packages/schema/src/genome.ts": "7891129752917a988066f8348de199463f1744db4bac4a90b09de6ca0d6f6f7d",
+    "packages/schema/src/migration.ts": "31e134afb7f120bbbadcfa739ffe71304bae647039ff567cfc30bc643b2dd33f",
+    "packages/schema/src/genetics.ts": "ac96945f62a9f675b76aea1e2939d9288f66cac947c8850ec51e52ee243ccb93",
+    "packages/schema/src/founders.ts": "db5da8085a8f01a27f42cb1033e59efb4cbba3743e1d9c0ff41a92b1e34da436",
+    "packages/schema/src/exchange.ts": "a4997afcb484a15d9ee6aa755262f4233d9a56ea680cd5c16093e740dd45eba3",
+    "packages/schema/src/layout.ts": "8c65351ed3052fca6f7aba062a41fc5278414ad6b3c20aace8c08da8bf7ec51f",
+    "packages/schema/src/presets.ts": "18fd24af3ec0698b4ca222ae64c58c8785e1e4937d241f18fcbbcb691c5ed20e",
+    "packages/schema/src/index.ts": "cac88dc5880ef1f05bf04b149df06ce1ad892e90155fa87949e2fb4ee215988b",
+    "packages/schema/src/kernel.ts": "a7509b9fe522c7e848634224d719e53f0b41123e12e99a69d142131ef8a57978",
+    "packages/schema/src/config.ts": "dfcd1463a8eba0faca6a18804ecb2533b11a0f301515f0247df24fa2a66ba601",
+    "packages/schema/src/checkpoint.ts": "5a2115d57112c8606b162b5a1fcc2531aaec0db1ac476a48f6ed585943b73f71",
+    "packages/schema/src/accounting.ts": "aa2be7b8accf4fc5e34acf8e6890bc8370bf00fd6bd960b49b76b192a0311fb4",
+    "packages/schema/src/world.ts": "85c0980a3cba1fe2b5875890204d9d80362986573f89c8e62f74ef625a1c6ee6",
+    "packages/runner/src/migrate.ts": "73f408ba3b5bd7bdc6d4e6ee435ff5a8ca1a0202dfe70ba898daa50be8474d4f",
+    "packages/runner/src/stitch.ts": "7ec1308c16771ecea26d0a574adab6b1b878389557756b6af54a9c5b33e1b6ef",
+    "packages/runner/src/island.ts": "909271cce145d661fcff19e994021b2c3ad488e6733619168551500b160ea461",
+    "packages/runner/src/observe.ts": "89ede5e9ec446355e80d1f8e63585d13c7ca74e6f057bbc184077edecef6d59d",
+    "packages/runner/src/island-page.ts": "9b7d702cc70714b98259e3a44b6c124e0e460f1ff32748cd37cc65dc2b4f5898",
+    "packages/runner/src/conditions.ts": "47feb36234c368799b16e07eaa80a1f3b53e0f1f0e0d0fa6b8868c92dfe3deb3",
+    "packages/runner/src/index.ts": "7505a0e6b90eaabe11cd39ceea502a5a95e253e354de809a91162d127468c7e6",
+    "packages/runner/src/runner.ts": "da63a85ca101e00335cc8b788b3f76c266440dbfdd6336f95faf899d7ccddeab",
+    "packages/metrics/src/ecology.ts": "54c480b257985310cca97273eaeec94883ccd267e0ecaa21849e6f29b74e158e",
+    "packages/metrics/src/calibration.ts": "61eb14e56c034d1881dbe318e08205295bbeb047ae75d280ee6f2e0cc78b54d1",
+    "packages/metrics/src/tracker.ts": "9a84685120920c2898ea89ecbe90d227b62c4bc51c65d8b16e9334ca2e585ce9",
+    "packages/metrics/src/stats.ts": "da12ccc972b40b416b70ae8a2892cbfbb9fd44a1b8fd88529576297d9ed5c854",
+    "packages/metrics/src/biogeography.ts": "ac4f14bda24452bb24678d71e5bce916352762b82216cc40eae66b1bb072de93",
+    "packages/metrics/src/individuality.ts": "729e0e7a1ee153c1df879bd6630ee74a2a6c961c7a0902d4cadb1cd7e310cc18",
+    "packages/metrics/src/activity.ts": "355ddcb595e0575ac1af7cc3ec9bddeb3a38caec90fa1461c2358ebf555d602e",
+    "packages/metrics/src/collectives.ts": "08e35cc619154905ae163b0ae48cdcb4fa342fecac876ffb0e12deef9418f8b8",
+    "packages/metrics/src/complexity.ts": "2d8ab8f398e2d482c44ef80ddc5ab774d0185af1320970adb242716d9d5d488c",
+    "packages/metrics/src/render.ts": "93cf4cab563766a536a5e3237f17408ba8090ad7feb287db479c9c2c0545a25f",
+    "packages/metrics/src/index.ts": "641bf59581ad456a1c94a11852ba8a82423a9f5d88c721f91682a7866f34587e",
+    "packages/metrics/src/census.ts": "ea4809e93616b3e2e9288213d8e23385009549dc61eb9fa58f5fe8e984b70695",
+    "tools/lib/m4-growth-generators.ts": "d94b73a80dffd0514eb3a480149a23fdaabf241538412ef69ea2aa7518f1c21d",
+    "deno.json": "c1fa14c927f33ec7675744d714cc03517ac68c650423b29d9a1e9415274b92a0",
+    "deno.lock": "8630fa4d89086681cfed42c0f5977e2e34e720d1b32580300df124f83cf872bd",
+    "docs/m4-growth-amendment-design.md": "919eb7218af8606c035df016fb13ea7fc35fea69e23e0ad14231ebcbadd5706c",
+    "tools/lib/m4-calibration-checkpoint.ts": "7095934a505eecf7fb299668f589f913ed174cd4128fef5e9e1fba0e190807e3"
+  },
+  "scope": "Independent original endpoint1 plus amended endpoint2 validation; pairedEndpoint1Null and longPeriodLoop are endpoint1 nulls; other strata have real endpoint1 differences.",
+  "acceptance": {
+    "nullOneSided95UpperMax": 0.025,
+    "nominalPerPresetAlpha": 0.005,
+    "alternativeOneSided95PowerLowerMin": 0.8,
+    "alternativeMeanConfidenceMarginMax": 2,
+    "unavailable": "Report separately and include as non-support in unconditional procedure operating characteristics; never claim available inference for them."
+  },
+  "forecastSeconds": 5100
+}
