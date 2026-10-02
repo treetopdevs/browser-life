@@ -119,6 +119,7 @@ import {
   r3RepScreen,
   r3RepSideBySide,
   r3RepTrajectory,
+  RecipientGuard,
   r3Verdict,
   r4RowsOf,
   r4Table,
@@ -1320,6 +1321,37 @@ describe("main-run histories", () => {
     const hundred = history(100, () => 1).slice(0, 100);
     expect((await summariseHistory(tsv(hundred.map((r, i) => ({ ...r, truncated: i < 1 ? 1 : 0 }))), 100, false)).truncation).toMatchObject({ truncated: 1, rows: 100, flagged: false });
     expect((await summariseHistory(tsv(hundred.map((r, i) => ({ ...r, truncated: i < 2 ? 1 : 0 }))), 100, false)).truncation).toMatchObject({ truncated: 2, rows: 100, flagged: true });
+  });
+
+  it("refuses a ponds.tsv whose recipients repeat or have gaps at a cycle, whatever the row count (RecipientGuard)", async () => {
+    const good = history(4, () => 100);
+    expect((await summariseHistory(tsv(good), 4, true)).truncation.rows).toBe(32);
+    // Cycle 3's recipient 7 row replaced by a copy of recipient 0's: still 8 rows, only 7 ponds. Without the check the mean
+    // trait of that cycle silently changes (the probe that found this).
+    const dup = good.map((r) => (r.cycle === 3 && r.recipient === 7 ? { ...r, recipient: 0 } : r));
+    await expect(summariseHistory(tsv(dup), 4, true)).rejects.toThrow(/two rows for cycle 3, recipient 0/);
+    await expect(summariseHistory(tsv(dup), 4, false)).rejects.toThrow(/two rows for cycle 3, recipient 0/);
+    // A gap without a repeat: recipients 0..6 and 8.
+    const gap = good.map((r) => (r.cycle === 2 && r.recipient === 7 ? { ...r, recipient: 8 } : r));
+    await expect(summariseHistory(tsv(gap), 4, true)).rejects.toThrow(/cycle 2 has 8 rows but none for recipient 7/);
+    // A blank cell is not pond 0, even where pond 0's own row is the blanked one.
+    const lines = ["cycle\trecipient\tdonor\tretMass\trecipientTrait\ttruncated", "1\t\t0\t5\t10\t0", "1\t1\t0\t5\t10\t0"];
+    await expect(summariseHistory(tsvRows(lines), 1, false)).rejects.toThrow(/recipient "" is not a pond index/);
+    await expect(r3RepTrajectory(tsvRows(lines))).rejects.toThrow(/recipient "" is not a pond index/);
+    await expect(r3RepTrajectory(tsv(dup))).rejects.toThrow(/two rows for cycle 3, recipient 0/);
+    // p1RunOf, whose rows are numbers by then
+    const p1 = dup.map((r) => ({ cycle: r.cycle, recipient: r.recipient, retMass: r.ret, recipientTrait: r.trait, truncated: 0 }));
+    expect(() => p1RunOf({ k: 8, period: 10000, seed: 1, side: 3, cycles: 4 }, { conservationOk: true, cycles: 4, ended: false } as never, p1)).toThrow(/two rows for cycle 3, recipient 0/);
+  });
+
+  it("RecipientGuard holds only the recipients of each cycle and accepts any order", () => {
+    const g = new RecipientGuard();
+    for (const [c, r] of [[1, 2], [1, 0], [1, 1], [2, 1], [2, 0]]) g.add(c, r);
+    expect(() => g.finish()).not.toThrow();
+    expect(() => g.add(2, -1)).toThrow(/not a pond index/);
+    expect(() => g.add(2, 0.5)).toThrow(/not a pond index/);
+    expect(() => new RecipientGuard().addRow({ cycle: "1", recipient: "x" })).toThrow(/"x" is not a pond index/);
+    expect(() => new RecipientGuard().addRow({ cycle: "1" })).toThrow(/undefined is not a pond index/);
   });
 });
 

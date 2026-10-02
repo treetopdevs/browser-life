@@ -163,6 +163,7 @@ import {
   r3Verdict,
   r4RowsOf,
   r4Table,
+  RecipientGuard,
   readTraits,
   readTsv,
   runStatus,
@@ -285,7 +286,12 @@ async function loadP1Run(dir: string): Promise<P1Run | null> {
   const done = await readDone(dir);
   if (runStatus(done, meta.cycles) === "unfinished") return null;
   const rows: P1Row[] = [];
-  for await (const r of readTsv(`${dir}/ponds.tsv`)) rows.push(p1Row(r));
+  const guard = new RecipientGuard();
+  for await (const r of readTsv(`${dir}/ponds.tsv`)) {
+    guard.addRow(r);
+    rows.push(p1Row(r));
+  }
+  guard.finish();
   return p1RunOf(meta, done, rows);
 }
 
@@ -332,12 +338,15 @@ async function pondTraitsAt(dir: string, boundary: number): Promise<{ traits: Ma
   const traits = new Map<number, number>();
   let rows = 0;
   let truncated = 0;
+  const guard = new RecipientGuard();
   for await (const r of readTsv(`${dir}/ponds.tsv`)) {
+    guard.addRow(r);
     const p = p1Row(r);
     rows++;
     if (p.truncated > 0) truncated++;
     if (p.cycle === boundary) traits.set(p.recipient, p.recipientTrait);
   }
+  guard.finish();
   return { traits, truncation: truncationOf(truncated, rows) };
 }
 

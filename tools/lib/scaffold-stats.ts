@@ -157,6 +157,37 @@ export const P1_PERIODS = [1000, 3000, 10000] as const;
 /** P1 seeds are 4,800,001 + 100 g + s; s is the seed's replicate within its regime. */
 export const P1_SEED_BASE = 4_800_001;
 
+/**
+ * Streaming check of ponds.tsv's recipient identity. At every cycle the rows name each recipient 0..n-1 exactly once (every
+ * arm writes one row per pond), so a duplicated recipient hides a missing pond behind the right row count, and the per-cycle
+ * counts, sums and maps below would aggregate it without error. `add` throws on a repeat as it arrives, `finish` on a gap;
+ * only one small set per cycle is held.
+ */
+export class RecipientGuard {
+  private seen = new Map<number, Set<number>>();
+
+  /** One row by its raw cells: a blank or non-digit recipient is refused (`Number("")` is 0, which would read as pond 0). */
+  addRow(r: TsvRow): void {
+    const cell = r["recipient"];
+    if (cell === undefined || !/^\d+$/.test(cell)) throw new Error(`ponds.tsv: recipient ${JSON.stringify(cell)} is not a pond index`);
+    this.add(num(r, "cycle"), Number(cell));
+  }
+
+  add(cycle: number, recipient: number): void {
+    if (!Number.isInteger(recipient) || recipient < 0) throw new Error(`ponds.tsv: recipient ${recipient} at cycle ${cycle} is not a pond index`);
+    let at = this.seen.get(cycle);
+    if (!at) this.seen.set(cycle, (at = new Set()));
+    if (at.has(recipient)) throw new Error(`ponds.tsv has two rows for cycle ${cycle}, recipient ${recipient}`);
+    at.add(recipient);
+  }
+
+  /** After the last row: every cycle's recipients are exactly 0..n-1. */
+  finish(): void {
+    for (const [cycle, at] of this.seen)
+      for (let i = 0; i < at.size; i++) if (!at.has(i)) throw new Error(`ponds.tsv cycle ${cycle} has ${at.size} rows but none for recipient ${i}`);
+  }
+}
+
 /** The columns of ponds.tsv that P1 reads. */
 export interface P1Row {
   cycle: number;
@@ -212,6 +243,9 @@ export function runStatus(done: DoneJson | null | undefined, scheduledCycles: nu
 export function p1RunOf(meta: { k: number; period: number; seed: number; side: number; cycles: number }, done: DoneJson | null, rows: P1Row[]): P1Run | null {
   const status = runStatus(done, meta.cycles);
   if (status === "unfinished") return null;
+  const guard = new RecipientGuard();
+  for (const r of rows) guard.add(r.cycle, r.recipient);
+  guard.finish();
   return { k: meta.k, period: meta.period, seed: meta.seed, ponds: meta.side * meta.side, cycles: meta.cycles, conservationOk: status === "finished", rows };
 }
 
@@ -924,6 +958,7 @@ export async function summariseHistory(rows: AsyncIterable<TsvRow>, cycles: numb
   let truncated = 0;
   let prev: { cycle: number; pts: Point[] } | null = null;
   let cur: { cycle: number; pts: Point[] } | null = null;
+  const guard = new RecipientGuard();
   // Cycle b is settled once cycle b + 1 has been read: its recipients' traits there are the next-boundary traits.
   const settle = () => {
     if (prev === null || cur === null || cur.cycle !== prev.cycle + 1 || prev.cycle >= cycles) return;
@@ -936,6 +971,7 @@ export async function summariseHistory(rows: AsyncIterable<TsvRow>, cycles: numb
   };
   for await (const r of rows) {
     n++;
+    guard.addRow(r);
     if (num(r, "truncated") > 0) truncated++;
     if (!donors) continue;
     const cycle = num(r, "cycle");
@@ -947,6 +983,7 @@ export async function summariseHistory(rows: AsyncIterable<TsvRow>, cycles: numb
     }
     cur.pts.push({ recipient: num(r, "recipient"), donor: num(r, "donor"), retMass: num(r, "retMass"), trait: num(r, "recipientTrait") });
   }
+  guard.finish();
   const truncation = truncationOf(truncated, n);
   if (!donors) return { truncation, repeatability: null };
   settle();
@@ -3208,10 +3245,12 @@ export interface R3RepTrajectory {
 /** One streaming pass over a history's ponds.tsv: per boundary only a row count and two sums are held. */
 export async function r3RepTrajectory(rows: AsyncIterable<TsvRow>): Promise<R3RepTrajectory> {
   const at = new Map<number, { n: number; sum: number; extinct: number }>();
+  const guard = new RecipientGuard();
   let n = 0;
   let truncated = 0;
   for await (const r of rows) {
     n++;
+    guard.addRow(r);
     if (num(r, "truncated") > 0) truncated++;
     const trait = num(r, "recipientTrait");
     const b = num(r, "cycle");
@@ -3221,6 +3260,7 @@ export async function r3RepTrajectory(rows: AsyncIterable<TsvRow>): Promise<R3Re
     x.sum += trait;
     if (trait === 0) x.extinct++;
   }
+  guard.finish();
   const boundaries = [...at].sort(([p], [q]) => p - q).map(([boundary, x]) => ({ boundary, n: x.n, meanTrait: x.sum / x.n, extinct: x.extinct }));
   return { boundaries, truncation: truncationOf(truncated, n) };
 }
