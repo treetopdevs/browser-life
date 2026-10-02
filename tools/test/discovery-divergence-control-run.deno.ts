@@ -177,6 +177,7 @@ Deno.test("a replay mismatch stops the study and blocks later invocations", asyn
       () => invocation(o, ticking(now)),
       /mismatch recorded/,
     );
+    assert.equal((await receipts(o.out)).length, 1); // refused before reserving
   } finally {
     await Deno.remove(dir, { recursive: true });
   }
@@ -197,6 +198,7 @@ Deno.test("a device that stops reproducing fails the end-of-invocation audit", a
       () => invocation(o, ticking(now)),
       /audit mismatch recorded/,
     );
+    assert.equal((await receipts(o.out)).length, 1); // refused before reserving
   } finally {
     await Deno.remove(dir, { recursive: true });
   }
@@ -343,6 +345,43 @@ Deno.test("candidate pins the exact roster and evidence; only a matching RELEASE
       60,
     );
     const c = JSON.parse(await Deno.readTextFile(candidatePath));
+    await assert.rejects(
+      () =>
+        candidate(
+          rosterPath,
+          MANIFEST,
+          REPORT,
+          PROTOCOL,
+          forecast,
+          check,
+          join(dir, "c0.json"),
+          30_000,
+          60,
+        ),
+      /differs from the pinned forecast/,
+    );
+    // A protocol amendment changes the candidate but not the study identity.
+    const amended = join(dir, "protocol.md");
+    await Deno.writeTextFile(
+      amended,
+      (await Deno.readTextFile(PROTOCOL)) + "\n## Amendment\n",
+    );
+    await candidate(
+      rosterPath,
+      MANIFEST,
+      REPORT,
+      amended,
+      forecast,
+      check,
+      join(dir, "c1.json"),
+      25_000,
+      60,
+    );
+    assert.equal(
+      JSON.parse(await Deno.readTextFile(join(dir, "c1.json")))
+        .studyIdentitySha256,
+      c.studyIdentitySha256,
+    );
     assert.deepEqual([
       c.status,
       c.authorizesGpu,
@@ -423,6 +462,64 @@ Deno.test("candidate pins the exact roster and evidence; only a matching RELEASE
         ),
       /frozen report hash drift/,
     );
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("an interrupted invocation is charged in full and audited by the next one", async () => {
+  const { o, dir, now } = await fixture({ seconds: 600 });
+  try {
+    let calls = 0;
+    const counting = (request: Request) => {
+      now.t += 1;
+      calls++;
+      return Promise.resolve(fake(request));
+    };
+    await assert.rejects(
+      () => invocation({ ...o, shouldStop: () => calls >= 4 }, counting),
+      /interrupted/,
+    );
+    const [first] = await receipts(o.out);
+    assert.deepEqual([
+      first.status,
+      first.chargedSeconds,
+      first.newAssays,
+      first.audited,
+    ], ["failed", 600, 2, 0]);
+    const next = await invocation(o, counting);
+    assert.ok(next.complete);
+    assert.equal(next.audited, 2); // catch-up for invocation 1, then its own
+    assert.equal(await count(join(o.out, "audit")), 2);
+  } finally {
+    await Deno.remove(dir, { recursive: true });
+  }
+});
+
+Deno.test("a lone provenance from a crash is repaired, .DS_Store is ignored, charges never go negative", async () => {
+  const { o, dir, now } = await fixture({
+    seconds: 600,
+    requests: requests.slice(0, 6),
+  });
+  try {
+    await invocation({ ...o, requests: main }, ticking(now, 1));
+    await Deno.writeTextFile(
+      join(o.out, "provenance", `${requests[5].cacheKey}.json`),
+      "partial",
+    );
+    await Deno.writeTextFile(join(o.out, ".DS_Store"), "");
+    await Deno.writeTextFile(join(o.out, "assays", ".DS_Store"), "");
+    let t = 1000;
+    const back = await invocation(
+      { ...o, clock: () => (t -= 50) },
+      (r) => Promise.resolve(fake(r)),
+    );
+    assert.deepEqual([
+      back.repaired,
+      back.newAssays,
+      back.complete,
+      back.chargedSeconds,
+    ], [1, 1, true, 0]);
   } finally {
     await Deno.remove(dir, { recursive: true });
   }

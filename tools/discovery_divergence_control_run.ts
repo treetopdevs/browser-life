@@ -40,6 +40,13 @@ export const RUNNER_SOURCES = [
   "tools/discovery_improvement_import.ts",
   "tools/discovery_improvement_adapter.generated.ts",
 ];
+// Pinned by every candidate but outside the study identity: they do not determine
+// results (the roster's own hash covers the generator's output).
+const ANALYSIS_ONLY = [
+  "tools/discovery_divergence_control_analyze.ts",
+  "tools/discovery_divergence_control.ts",
+  "tools/lib/discovery-divergence-control.ts",
+];
 export const EVOLVED_RESULTS =
   "runs/founder-discovery-improvement-consolidated-v1/assays";
 export const OUTPUT_REL = "runs/founder-discovery-divergence-control-v1";
@@ -50,9 +57,11 @@ const OUT_ENTRIES = [
   "audit",
   "invocations",
   "resolutions",
+  "tmp",
   "RUNNING",
   "STOPPED.json",
 ];
+const IGNORED = new Set([".DS_Store"]);
 
 export type Request = {
   cacheKey: string;
@@ -100,6 +109,7 @@ export type Identity = {
 
 const hashFile = async (p: string) => sha256(await Deno.readFile(p));
 const canonical = (r: AssayResult) => JSON.stringify(r) + "\n";
+const pad = (n: number) => String(n).padStart(3, "0");
 const env = () => ({
   deno: Deno.version.deno,
   os: Deno.build.os,
@@ -110,15 +120,23 @@ export function hashMap(map: Record<string, string>): string {
     JSON.stringify(Object.entries(map).sort(([a], [b]) => a.localeCompare(b))),
   );
 }
-/** Results, replays and audits bind to what was studied, not to the budget. */
+/**
+ * Results, replays and audits bind to what determines them: roster, manifest,
+ * frozen report, replay originals and execution-path sources. Not to the protocol
+ * text, analysis-only code or the budget, so a dated amendment, an analyzer fix or a
+ * larger budget can be released as a successor candidate that reuses results.
+ */
 export function studyIdentity(c: Omit<Candidate, "studyIdentitySha256">) {
   return sha256(JSON.stringify({
-    protocol: c.protocol.sha256,
     roster: c.roster.sha256,
     manifest: c.manifest.sha256,
     report: c.report.sha256,
     replayExpected: c.replayExpected,
-    executionSources: c.executionSources,
+    executionSources: Object.fromEntries(
+      Object.entries(c.executionSources).filter(([p]) =>
+        !ANALYSIS_ONLY.includes(p)
+      ),
+    ),
   }));
 }
 async function exists(p: string): Promise<boolean> {
@@ -195,11 +213,8 @@ export async function candidate(
   if (hashMap(manifest.sources) !== manifest.sourceManifestHash) {
     throw Error("source manifest hash drift");
   }
-  const roster = buildRoster(
-    await frozenReport(reportPath),
-    REPORT_SHA256,
-    manifest,
-  );
+  const report = await frozenReport(reportPath);
+  const roster = buildRoster(report, REPORT_SHA256, manifest);
   const rosterBytes = await Deno.readFile(rosterPath);
   if (
     new TextDecoder().decode(rosterBytes) !==
@@ -207,9 +222,12 @@ export async function candidate(
   ) {
     throw Error("roster is not the generator's exact output for this report");
   }
-  const check = JSON.parse(await Deno.readTextFile(engineeringCheckPath));
-  if (check.reproduced !== true) {
-    throw Error("engineering check did not reproduce");
+  const forecast = JSON.parse(await Deno.readTextFile(forecastPath));
+  if (
+    forecast.capSeconds !== capSeconds ||
+    forecast.maxInvocations !== maxInvocations
+  ) {
+    throw Error("budget differs from the pinned forecast");
   }
   const executionSources: Record<string, string> = {};
   for (const [p, h] of Object.entries(manifest.sources)) {
@@ -219,8 +237,26 @@ export async function candidate(
   for (const p of RUNNER_SOURCES) executionSources[p] = await hashFile(p);
   const replayExpected: Record<string, string> = {};
   for (const r of roster.replay) {
-    replayExpected[r.cacheKey] = await hashFile(
+    const raw = await Deno.readFile(
       join(EVOLVED_RESULTS, `${r.cacheKey}.json`),
+    );
+    const frozenScore = report.observations.find((o) =>
+      o.id === r.observationId
+    )?.score;
+    if (JSON.parse(new TextDecoder().decode(raw)).score !== frozenScore) {
+      throw Error(
+        `replay original disagrees with the frozen report ${r.cacheKey}`,
+      );
+    }
+    replayExpected[r.cacheKey] = sha256(raw);
+  }
+  const check = JSON.parse(await Deno.readTextFile(engineeringCheckPath));
+  if (
+    check.reproduced !== true ||
+    replayExpected[check.cacheKey] !== check.expectedSha256
+  ) {
+    throw Error(
+      "engineering check does not reproduce a pinned replay original",
     );
   }
   const body: Omit<Candidate, "studyIdentitySha256"> = {
@@ -358,12 +394,25 @@ export async function released(releasePath: string) {
   };
 }
 
-type Ledger = { count: number; charged: number; reserved: string[] };
+export type InvocationRecord = {
+  name: string;
+  index: number;
+  status: "reserved" | "settled" | "failed";
+  chargedSeconds: number;
+  newAssays?: number;
+};
+type Ledger = {
+  count: number;
+  charged: number;
+  reserved: string[];
+  records: InvocationRecord[];
+};
 export async function ledger(out: string): Promise<Ledger> {
-  const dir = join(out, "invocations"),
-    l: Ledger = { count: 0, charged: 0, reserved: [] };
+  const dir = join(out, "invocations");
+  const l: Ledger = { count: 0, charged: 0, reserved: [], records: [] };
   if (!await exists(dir)) return l;
   for await (const e of Deno.readDir(dir)) {
+    if (IGNORED.has(e.name)) continue;
     if (!e.isFile || !/^[0-9]{3}-[0-9]+\.json$/.test(e.name)) {
       throw Error("foreign invocation record");
     }
@@ -377,8 +426,42 @@ export async function ledger(out: string): Promise<Ledger> {
     l.count++;
     l.charged += r.chargedSeconds;
     if (r.status === "reserved") l.reserved.push(e.name);
+    l.records.push({
+      name: e.name,
+      index: Number(e.name.slice(0, 3)),
+      status: r.status,
+      chargedSeconds: r.chargedSeconds,
+      newAssays: r.newAssays,
+    });
   }
+  l.records.sort((a, b) => a.index - b.index);
   return l;
+}
+/** Invocations that did, or may have done, new work must each carry a matching audit. */
+export const needsAudit = (r: InvocationRecord) =>
+  r.newAssays === undefined || r.newAssays > 0;
+
+/** Cheap pre-reservation scan: any recorded replay or audit mismatch stops the study. */
+async function recordedMismatch(out: string): Promise<boolean> {
+  for (const dir of ["replay", "audit"]) {
+    if (!await exists(join(out, dir))) continue;
+    for await (const e of Deno.readDir(join(out, dir))) {
+      if (!e.isFile || !e.name.endsWith(".json")) continue;
+      if (
+        JSON.parse(await Deno.readTextFile(join(out, dir, e.name))).matches !==
+          true
+      ) return true;
+    }
+  }
+  return false;
+}
+
+/** Write a file into place atomically, via the output's tmp directory. */
+async function place(out: string, path: string, text: string) {
+  if (await exists(path)) throw new Deno.errors.AlreadyExists(path);
+  const tmp = join(out, "tmp", `${crypto.randomUUID()}.json`);
+  await Deno.writeTextFile(tmp, text, { createNew: true });
+  await Deno.rename(tmp, path);
 }
 
 export interface InvocationOptions {
@@ -394,12 +477,13 @@ export interface InvocationOptions {
   clock?: () => number; // seconds; wall clock by default, so host sleep is charged
   freeBytes?: (path: string) => number;
   signals?: boolean; // install SIGINT/SIGTERM handlers (CLI only)
+  shouldStop?: () => boolean; // test hook equivalent to a received signal
 }
 export type Execute = (request: Request) => Promise<AssayResult>;
 
 /**
- * One bounded invocation: replays first, then roster order, then one rotating replay
- * audit. Resumes only from re-validated results, replays and audits.
+ * One bounded invocation: catch-up audits, replays, roster order, then one audit of
+ * this invocation's work. Resumes only from re-validated results, replays and audits.
  */
 export async function invocation(o: InvocationOptions, execute: Execute) {
   const clock = o.clock ?? (() => Date.now() / 1000);
@@ -415,6 +499,7 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
   await Deno.mkdir(o.out, { recursive: true });
   await noSymlinks(o.out);
   for await (const e of Deno.readDir(o.out)) {
+    if (IGNORED.has(e.name)) continue;
     if (e.isSymlink || !OUT_ENTRIES.includes(e.name)) {
       throw Error(`unexpected output artifact ${e.name}`);
     }
@@ -422,17 +507,21 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
   if (await exists(join(o.out, "STOPPED.json"))) throw Error("study stopped");
   const lock = join(o.out, "RUNNING");
   await writeNew(lock, JSON.stringify({ pid: Deno.pid, ...o.identity }) + "\n");
-  let stopping = false;
-  const stop = () => {
-    stopping = true;
+  let signalled = false;
+  const onSignal = () => {
+    signalled = true;
   };
+  const stopping = () => signalled || (o.shouldStop?.() ?? false);
   if (o.signals) {
-    Deno.addSignalListener("SIGINT", stop);
-    Deno.addSignalListener("SIGTERM", stop);
+    Deno.addSignalListener("SIGINT", onSignal);
+    Deno.addSignalListener("SIGTERM", onSignal);
   }
   try {
     const l = await ledger(o.out);
     if (l.reserved.length) throw Error("unresolved invocation reservation");
+    if (await recordedMismatch(o.out)) {
+      throw Error("replay or audit mismatch recorded; stop for diagnosis");
+    }
     if (
       l.count + 1 > o.maxInvocations || l.charged + o.seconds > o.capSeconds
     ) {
@@ -445,7 +534,7 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
     const receiptPath = join(
       o.out,
       "invocations",
-      `${String(index).padStart(3, "0")}-${Deno.pid}.json`,
+      `${pad(index)}-${Deno.pid}.json`,
     );
     const receipt: Record<string, unknown> = {
       format: "discovery-divergence-control-invocation/v2",
@@ -457,14 +546,19 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
     };
     await writeNew(receiptPath, JSON.stringify(receipt) + "\n");
     const start = clock();
-    let newAssays = 0, replayed = 0, audited = 0;
+    let newAssays = 0, replayed = 0, audited = 0, repaired = 0;
     try {
       const sid = o.identity.studyIdentitySha256;
       const byKey = new Map(o.requests.map((r) => [r.cacheKey, r]));
       const replayByKey = new Map(o.replay.map((r) => [r.request.cacheKey, r]));
-      const done = new Set<string>(), replayDone = new Set<string>();
-      for (const dir of ["assays", "provenance", "replay", "audit"]) {
+      const done = new Set<string>(),
+        replayDone = new Set<string>(),
+        auditDone = new Set<number>();
+      for (const dir of ["assays", "provenance", "replay", "audit", "tmp"]) {
         await Deno.mkdir(join(o.out, dir), { recursive: true });
+      }
+      for await (const e of Deno.readDir(join(o.out, "tmp"))) {
+        await Deno.remove(join(o.out, "tmp", e.name));
       }
       const recordOk = (
         rec: {
@@ -478,7 +572,14 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
         return rec.studyIdentitySha256 === sid && rec.matches === true &&
           sameOutcome(rec.result, r.expected);
       };
-      for await (const e of Deno.readDir(join(o.out, "replay"))) {
+      const entries = async (dir: string) => {
+        const all = [];
+        for await (const e of Deno.readDir(join(o.out, dir))) {
+          if (!IGNORED.has(e.name)) all.push(e);
+        }
+        return all;
+      };
+      for (const e of await entries("replay")) {
         const r = replayByKey.get(e.name.slice(0, -5));
         if (!r || !e.isFile || !e.name.endsWith(".json")) {
           throw Error("foreign replay record");
@@ -493,7 +594,7 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
         }
         replayDone.add(r.request.cacheKey);
       }
-      for await (const e of Deno.readDir(join(o.out, "audit"))) {
+      for (const e of await entries("audit")) {
         if (!e.isFile || !/^[0-9]{3}\.json$/.test(e.name)) {
           throw Error("foreign audit record");
         }
@@ -504,8 +605,9 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
         if (!r || !recordOk(rec, r)) {
           throw Error("audit mismatch recorded; stop for diagnosis");
         }
+        auditDone.add(Number(e.name.slice(0, 3)));
       }
-      for await (const e of Deno.readDir(join(o.out, "assays"))) {
+      for (const e of await entries("assays")) {
         const key = e.name.slice(0, -5), request = byKey.get(key);
         if (!request || !e.isFile || !e.name.endsWith(".json")) {
           throw Error("foreign assay cache entry");
@@ -525,25 +627,56 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
         }
         done.add(key);
       }
-      for await (const e of Deno.readDir(join(o.out, "provenance"))) {
-        if (!e.isFile || !done.has(e.name.slice(0, -5))) {
-          throw Error("orphan provenance");
+      for (const e of await entries("provenance")) {
+        if (!e.isFile || !byKey.has(e.name.slice(0, -5))) {
+          throw Error("foreign provenance");
+        }
+        if (!done.has(e.name.slice(0, -5))) {
+          // Provenance is placed before its result; a lone one means the result was never recorded.
+          await Deno.remove(join(o.out, "provenance", e.name));
+          repaired++;
         }
       }
       const room = () =>
-        !stopping && clock() - start + START_MARGIN_SECONDS < o.seconds;
+        !stopping() && clock() - start + START_MARGIN_SECONDS < o.seconds;
       const checked = async (request: Request) => {
         if (freeBytes(o.out) < o.minimumFreeBytes) {
           throw Error("storage floor reached");
         }
         return validate(await execute(request), request, o.sourceManifestHash);
       };
+      const audit = async (certifies: number) => {
+        const r = o.replay[(certifies - 1) % o.replay.length];
+        const result = await checked(r.request);
+        const matches = sameOutcome(result, r.expected);
+        await place(
+          o.out,
+          join(o.out, "audit", `${pad(certifies)}.json`),
+          JSON.stringify({
+            studyIdentitySha256: sid,
+            certifies,
+            matches,
+            result,
+          }) + "\n",
+        );
+        audited++;
+        if (!matches) throw Error("audit mismatch; stop for diagnosis");
+        auditDone.add(certifies);
+      };
+      // Catch-up: earlier invocations that failed or were killed after doing work.
+      for (const rec of l.records) {
+        if (needsAudit(rec) && !auditDone.has(rec.index)) {
+          if (!room()) break;
+          await audit(rec.index);
+        }
+      }
       for (const r of o.replay) {
         if (replayDone.has(r.request.cacheKey)) continue;
         if (!room()) break;
         const result = await checked(r.request);
         const matches = sameOutcome(result, r.expected);
-        await writeNew(
+        await place(
+          o.out,
           join(o.out, "replay", `${r.request.cacheKey}.json`),
           JSON.stringify({ studyIdentitySha256: sid, matches, result }) + "\n",
         );
@@ -556,47 +689,40 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
           if (done.has(request.cacheKey)) continue;
           if (!room()) break;
           const text = canonical(await checked(request));
-          await writeNew(
-            join(o.out, "assays", `${request.cacheKey}.json`),
-            text,
-          );
-          await writeNew(
+          await place(
+            o.out,
             join(o.out, "provenance", `${request.cacheKey}.json`),
             provenanceText(sid, request.cacheKey, sha256(text)),
+          );
+          await place(
+            o.out,
+            join(o.out, "assays", `${request.cacheKey}.json`),
+            text,
           );
           done.add(request.cacheKey);
           newAssays++;
         }
-        // Rotating end-of-invocation audit: the device must still reproduce a frozen result.
-        if (newAssays > 0 && !stopping) {
-          const r = o.replay[(index - 1) % o.replay.length];
-          const result = await checked(r.request);
-          const matches = sameOutcome(result, r.expected);
-          await writeNew(
-            join(o.out, "audit", `${String(index).padStart(3, "0")}.json`),
-            JSON.stringify({ studyIdentitySha256: sid, matches, result }) +
-              "\n",
-          );
-          audited++;
-          if (!matches) throw Error("audit mismatch; stop for diagnosis");
-        }
       }
-      if (stopping) throw Error("interrupted by signal");
+      if (stopping()) throw Error("interrupted by signal");
+      // The device must still reproduce a frozen result after this invocation's work.
+      if (newAssays > 0) await audit(index);
       const complete = replayDone.size === o.replay.length &&
         done.size === o.requests.length;
       Object.assign(receipt, {
         status: "settled",
-        chargedSeconds: clock() - start,
+        chargedSeconds: Math.max(0, clock() - start),
         finishedAt: new Date().toISOString(),
         replayed,
         newAssays,
         audited,
+        repaired,
         complete,
       });
       return {
         replayed,
         newAssays,
         audited,
+        repaired,
         complete,
         chargedSeconds: receipt.chargedSeconds as number,
       };
@@ -608,6 +734,7 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
         replayed,
         newAssays,
         audited,
+        repaired,
         error: e instanceof Error ? e.message : String(e),
       });
       throw e;
@@ -616,8 +743,8 @@ export async function invocation(o: InvocationOptions, execute: Execute) {
     }
   } finally {
     if (o.signals) {
-      Deno.removeSignalListener("SIGINT", stop);
-      Deno.removeSignalListener("SIGTERM", stop);
+      Deno.removeSignalListener("SIGINT", onSignal);
+      Deno.removeSignalListener("SIGTERM", onSignal);
     }
     await Deno.remove(lock);
   }
@@ -707,7 +834,9 @@ async function frozenExecutor(manifest: Manifest) {
 
 async function count(dir: string) {
   let n = 0;
-  if (await exists(dir)) { for await (const _ of Deno.readDir(dir)) n++; }
+  if (await exists(dir)) {
+    for await (const e of Deno.readDir(dir)) if (!IGNORED.has(e.name)) n++;
+  }
   return n;
 }
 async function status(releasePath: string) {
@@ -719,6 +848,8 @@ async function status(releasePath: string) {
     assays: await count(join(r.out, "assays")),
     assayTotal: r.requests.length,
     audits: await count(join(r.out, "audit")),
+    auditsOwed: l.records.filter(needsAudit).length,
+    mismatchRecorded: await recordedMismatch(r.out),
     invocations: l.count,
     chargedSeconds: l.charged,
     unresolvedReservations: l.reserved.length,
@@ -756,14 +887,20 @@ async function run(releasePath: string, seconds: number) {
 
 /**
  * Sequential bounded invocations in fresh processes until complete. Stops on a failed
- * or stalled invocation; a child exceeding its reservation plus grace is terminated
- * (SIGTERM, then SIGKILL) and supervision stops for diagnosis.
+ * or stalled invocation or a recorded mismatch; a child exceeding its reservation plus
+ * grace is terminated (SIGTERM, then SIGKILL) and supervision stops for diagnosis.
  */
 async function supervise(releasePath: string, seconds: number) {
   for (;;) {
     const s = await status(releasePath);
     if (s.stopped) throw Error("study stopped");
-    if (s.replayed === s.replayTotal && s.assays === s.assayTotal) {
+    if (s.mismatchRecorded) {
+      throw Error("replay or audit mismatch recorded; stop for diagnosis");
+    }
+    if (
+      s.replayed === s.replayTotal && s.assays === s.assayTotal &&
+      s.audits >= s.auditsOwed
+    ) {
       console.log(JSON.stringify({ complete: true, ...s }));
       return;
     }
@@ -799,7 +936,10 @@ async function supervise(releasePath: string, seconds: number) {
     }
     if (code !== 0) throw Error(`invocation failed with exit ${code}; stopped`);
     const after = await status(releasePath);
-    if (after.replayed === s.replayed && after.assays === s.assays) {
+    if (
+      after.replayed === s.replayed && after.assays === s.assays &&
+      after.audits === s.audits
+    ) {
       throw Error("invocation made no progress; stopped");
     }
   }

@@ -113,8 +113,13 @@ Deno.test("harmful mutants and beneficial reconstructions: per-founder results a
 
 Deno.test("mildly helpful mutants read as partly divergence; matching mutants leave no contrast", () => {
   assert.match(
-    founder(run(results(0.05, 0.6)), "33").reading,
+    founder(run(results(0.2, 0.6)), "33").reading,
     /partly divergence/,
+  );
+  // A barely positive random-change score is noise, not "random change helps".
+  assert.match(
+    founder(run(results(0.05, 0.6)), "33").reading,
+    /beyond divergence/,
   );
   const res = results(0, 0);
   for (const e of roster.evolved) {
@@ -330,6 +335,15 @@ Deno.test("collect re-validates output and refuses interim analysis", async () =
       JSON.stringify({ ...rec, matches: false }) + "\n",
     );
     await assert.rejects(() => collect(...args, identity), /disagrees/);
+    await Deno.writeTextFile(recPath, JSON.stringify(rec) + "\n");
+    const auditPath = join(out, "audit", "001.json");
+    const auditText = await Deno.readTextFile(auditPath);
+    await Deno.remove(auditPath);
+    assert.deepEqual((await collect(...args, identity)).audits, {
+      total: 1,
+      matched: 0,
+    });
+    await Deno.writeTextFile(auditPath, auditText);
     await Deno.writeTextFile(recPath, JSON.stringify(rec) + "\n");
     await Deno.writeTextFile(join(out, "replay", "notes.txt"), "x");
     await assert.rejects(() => collect(...args, identity), /foreign entry/);

@@ -20,6 +20,7 @@ import { REPORT_SHA256 } from "./discovery_divergence_control.ts";
 import {
   type Identity,
   ledger,
+  needsAudit,
   provenanceText,
   released,
   type Request,
@@ -39,6 +40,7 @@ async function names(dir: string): Promise<string[]> {
   const all: string[] = [];
   if (!await exists(dir)) return all;
   for await (const e of Deno.readDir(dir)) {
+    if (e.name === ".DS_Store") continue;
     if (!e.isFile || !e.name.endsWith(".json")) {
       throw Error(`foreign entry ${dir}/${e.name}`);
     }
@@ -66,7 +68,8 @@ export async function collect(
   identity: Identity,
 ) {
   if (await exists(join(out, "RUNNING"))) throw Error("runner lock is active");
-  if ((await ledger(out)).reserved.length) {
+  const l = await ledger(out);
+  if (l.reserved.length) {
     throw Error("unresolved invocation reservation");
   }
   const sid = identity.studyIdentitySha256;
@@ -125,12 +128,20 @@ export async function collect(
       )
     ) matched++;
   }
-  const audits = { total: 0, matched: 0 };
+  // Every invocation that did, or may have done, new work needs its own matching audit.
+  const auditOk = new Map<number, boolean>();
   for (const n of await names(join(out, "audit"))) {
     const rec = JSON.parse(await Deno.readTextFile(join(out, "audit", n)));
-    audits.total++;
-    if (check(rec, rec.result?.cacheKey)) audits.matched++;
+    if (rec.certifies !== Number(n.slice(0, 3))) {
+      throw Error(`audit record misfiled ${n}`);
+    }
+    auditOk.set(rec.certifies, check(rec, rec.result?.cacheKey));
   }
+  const owed = l.records.filter(needsAudit);
+  const audits = {
+    total: owed.length,
+    matched: owed.filter((r) => auditOk.get(r.index) === true).length,
+  };
   const missing = [...results.values()].filter((o) => o === null).length;
   if (missing && !await exists(join(out, "STOPPED.json"))) {
     throw Error(

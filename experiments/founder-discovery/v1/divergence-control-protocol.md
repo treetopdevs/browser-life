@@ -23,7 +23,7 @@ B's slots and values were chosen after seeing the data, but every competition it
 - **Weights.** The E draw's weight changes are taken in ascending slot order. Each magnitude goes to a weight slot drawn uniformly from the not-yet-used weights; the slot is drawn first, then a uniform sign. If that sign leaves [−127, 127], the other sign is used. If both do, the slot is excluded for this magnitude and another is drawn.
 - **Parameters.** Each changed mu, sigma or gain keeps its own parameter and magnitude, with a uniform sign. The other sign is used if the first leaves bounds: mu [16, 4095], sigma [2, 1023], gain [0, 255]. E's own value proves at least one sign fits.
 - Each mutant therefore matches its E draw exactly in which kinds of slot changed and by how much. Only the locations of weight changes and all directions are random.
-- Half the cluster-139 mutants will carry an upward mu change by chance. This makes A conservative for that founder.
+- In cluster-139, 19 of 32 mutants (about 60%) carry an upward mu change. Signs are random, but a downward change of 18 or more would fall below mu's lower bound of 16, so those changes go up. Some mutants therefore carry the swept direction by chance, which makes A conservative for that founder.
 
 **Reconstruction arm (R): two founders × 8 seeds, 14 distinct genomes.** Each genome is the founder with one slot set to the value that evolved in that seed. That value is the mass-weighted lower median among founder-lineage genomes at 1M carrying an upward change in the slot: the first value, in ascending order, whose cumulative mass reaches half. Every seed has carriers.
 
@@ -48,8 +48,8 @@ Use the frozen study's competition unchanged: gradient chamber, two radius-12 di
 - **Scoring:** signed score = (descendant − ancestor associated B/P) / their total. Both-extinct is unavailable, not missing.
 - **Counts:** M 1,024, R 112 and C 64, for 1,200 new configurations, plus 8 replays. If the generator's counts differ, stop.
 - **Replay check before any new competition:** re-execute 8 E configurations, two per founder, fixed by the generator. Every field except the wall-clock `elapsedSeconds` must equal the frozen original.
-- **Audit at the end of every invocation that did new work:** re-execute one replay configuration, rotating through the eight, under the same rule.
-- Any replay or audit mismatch stops the study for diagnosis.
+- **Audits:** every invocation that did, or may have done, new work must have its own matching audit, a re-execution of one replay configuration rotating through the eight under the same rule. It normally runs at the end of that invocation. One that failed, was interrupted or was killed is audited at the start of the next invocation.
+- Any replay or audit mismatch stops the study for diagnosis. Later invocations refuse before reserving any time, and `status` and `supervise` report it.
 
 ## Estimands and decision
 
@@ -59,8 +59,8 @@ Average each genome's 8 competitions. Average the two mutants of each E draw, th
 - For each unit, the contrast is E − M, with lower bound E lower − M upper.
 - A founder meets A if at least 7 of its 8 seeds are certified and the study is technically complete.
 - **Reading, fixed now:**
-  - *Beyond divergence:* met, the founder-level E lower bound is above 0.10, and the M upper bound is ≤ 0. Evolved genomes beat the founder, random change of the same size does not help, and evolved change beats it.
-  - *Partly divergence:* met with E above 0.10 but M upper above 0. Random change of this size may also help, but evolved change beats it.
+  - *Beyond divergence:* met, the founder-level E lower bound is above 0.10, and random change is not clearly helpful (M lower bound ≤ 0.10). Evolved genomes beat the founder, and evolved change beats random change of the same size.
+  - *Partly divergence:* met with E above 0.10 and random change clearly helpful (M lower bound > 0.10, the certification rule). Random change of this size also helps, but evolved change helps more.
   - *Purifying selection only:* met but E not above 0.10. Evolved genomes are not clearly better than the founder, but avoid the harm that random change causes.
   - *Not met:* no evidence that evolved change beats random change of the same size. This is not evidence that selection was absent.
 - A is evidence against "divergence alone suffices". It is not, by itself, evidence of adaptation over purifying selection; the reading separates the two.
@@ -69,7 +69,7 @@ Average each genome's 8 competitions. Average the two mutants of each E draw, th
 
 **Six confirmatory tests** (A × 4, B × 2) are reported separately, without a family-wise claim. Under independent seeds and a per-seed success probability of at most ½, each has an exact one-sided tail of 9/256. B139's duplicate genomes weaken that independence; with 6 distinct genomes its false-pass rate can be higher (about 0.03 at a per-genome pass rate of 0.4).
 
-**Technical completeness** requires all 1,200 results, all 8 replays matching, and every audit matching. Otherwise every criterion is reported as not met (technically incomplete).
+**Technical completeness** requires all 1,200 results, all 8 replays matching, and a matching audit for every invocation that did or may have done new work. Otherwise every criterion is reported as not met (technically incomplete).
 
 **Descriptive only:**
 - the original pooled block rule (mean contrast over founders per seed) and its whole-block bootstrap, with seed 6480300 and 10,000 resamples, mirroring the frozen study's method;
@@ -81,8 +81,9 @@ Average each genome's 8 competitions. Average the two mutants of each E draw, th
 
 ## Execution, budget and recovery
 
-- **Release gating.** `tools/discovery_divergence_control_run.ts candidate` pins the protocol, the generator's exact roster, the manifest, the frozen report (hash enforced), the resource forecast, the engineering check, all 54 frozen sources, the 7 runner, generator and analyzer sources, and the 8 replay originals. Results, replays and audits are bound to a study identity that excludes the budget. A successor candidate with a larger budget can therefore reuse them, through a dated amendment.
-- **Invocations.** Each `run` is one invocation of at most 600 s, matching the frozen runners. It refuses an active lock, an unresolved reservation, an exhausted budget, a stopped study or the storage floor before reserving. It reserves its full time, settles to the actual wall-clock time (sleep is charged), and keeps the full charge on failure.
+- **Release gating.** `tools/discovery_divergence_control_run.ts candidate` pins the protocol, the generator's exact roster, the manifest, the frozen report (hash enforced), the resource forecast (budget must match), the engineering check (must reproduce a pinned replay original), all 54 frozen sources, the 7 runner, generator and analyzer sources, and the 8 replay originals (checked against the frozen report).
+- **Study identity.** Results, replays and audits are bound to a study identity covering only what determines them: the roster, manifest, frozen report, replay originals and execution-path sources. It excludes the protocol text, analysis-only code and the budget. A dated amendment, an analyzer fix or a larger budget is therefore released as a successor candidate that keeps every result. A change to the runner or any frozen source starts a new study.
+- **Invocations.** Each `run` is one invocation of at most 600 s, matching the frozen runners. It refuses an active lock, an unresolved reservation, a recorded mismatch, an exhausted budget, a stopped study or the storage floor before reserving. It reserves its full time, settles to the actual wall-clock time (sleep is charged, never below zero), and keeps the full charge on failure. Results are written atomically, provenance first. A lone provenance left by a crash is removed and its competition redone, and stray `.DS_Store` files are ignored.
 - **Interruptions.** SIGINT or SIGTERM ends the invocation after the current competition, as failed with the full charge.
 - **Supervision.** `supervise` runs invocations in fresh processes. It terminates a child at its reservation plus 120 s and stops on any failure, timeout or lack of progress.
 - **Recovery.** After a killed process, `resolve RELEASE REASON` settles that process's reservation as failed and records who resolved it and why. It refuses while the process is alive.
@@ -95,9 +96,9 @@ Average each genome's 8 competitions. Average the two mutants of each E draw, th
   - generator: `tools/discovery_divergence_control.ts plan` with `tools/lib/discovery-divergence-control.ts`;
   - runner: `tools/discovery_divergence_control_run.ts`;
   - analyzer: `tools/discovery_divergence_control_analyze.ts analyze RELEASE NEW_REPORT`.
-- **Tests:** 25 Deno tests in `tools/test/discovery-divergence-control{,-run,-analyze}.deno.ts`. They cover:
+- **Tests:** 27 Deno tests in `tools/test/discovery-divergence-control{,-run,-analyze}.deno.ts`. They cover:
   - the generator's invariants, counts, values and the assignment-pair assertion;
-  - every runner guard, replay, audit and recovery path;
+  - the runner's guards, replay and audit stops, catch-up audits after interruption, stale-lock resolution and crash repair. The signal handler, the `supervise` watchdog and the `stop` and `analyze` command glue were exercised by the second reviewer in scratch copies, not by unit tests;
   - every decision rule, reading and missingness case;
   - reproduction of the frozen founder effects from E.
 - **Independent review (2026-10-02):** CLEAR-WITH-FIXES, no blocking defect. Its design findings were decided by the user:
@@ -113,6 +114,12 @@ Average each genome's 8 competitions. Average the two mutants of each E draw, th
   - the storage check before reserving;
   - re-validated replays, foreign-file checks and study-identity provenance;
   - the specification details above.
+- **Second verification (2026-10-02):** CLEAR-WITH-FIXES, no blocking defect. It confirmed 11 of the 12 findings fixed and 1 partially, and ran a full fake-executor dry run: 28 invocations and 15,450 s charged. It found three issues to fix before freeze, all now fixed: amendments would have orphaned results (now the study identity), audits were not required per invocation (now catch-up audits plus an analyzer requirement), and the mu-bias text (corrected). Lower-severity items are fixed too:
+  - the reading uses the certification rule for "random change helps";
+  - a recorded mismatch is refused before reserving;
+  - writes are atomic;
+  - charges are clamped at zero;
+  - the candidate cross-checks its pins.
 - **Seed reservations** were checked against existing records: 6480001–6480128 (mutants), 6480201–6480208 (specificity) and 6480300 (bootstrap). Assay seeds 6430001–6430004 are reused on purpose. Seed 6470001 belongs to the exploration's descriptive null.
 
 ## Decisions (user, 2026-10-02)

@@ -527,10 +527,10 @@ export function readSelection(
   if (evolved.lower <= THRESHOLD) {
     return "met, purifying selection only: evolved genomes are not clearly better than the founder, but avoid the harm that random change of this size causes";
   }
-  if (mutant.upper <= 0) {
-    return "met, beyond divergence: evolved genomes beat the founder, random change of the same size does not help, and evolved change beats it";
+  if (mutant.lower <= THRESHOLD) {
+    return "met, beyond divergence: evolved genomes beat the founder, random change of the same size does not clearly help, and evolved change beats it";
   }
-  return "met, partly divergence: random change of this size may also help, but evolved change beats it";
+  return "met, partly divergence: random change of this size also clearly helps, but evolved change beats it";
 }
 
 export function analyzeDivergence(input: {

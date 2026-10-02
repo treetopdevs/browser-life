@@ -1,0 +1,49 @@
+{
+  "format": "discovery-divergence-control-reviews/v1",
+  "reviews": [
+    {
+      "round": 1,
+      "reviewer": "independent fresh-context reviewer (subagent), read-only",
+      "date": "2026-10-02",
+      "verdict": "CLEAR-WITH-FIXES",
+      "designFindingsDecidedByUser": [
+        "per-founder test A with a fixed reading table",
+        "type-matched mutants",
+        "assignments 0 and 1 with two mutants per draw",
+        "cluster-33 specificity control"
+      ],
+      "engineeringFindingsFixed": [
+        "analyzer pinned and report hash enforced",
+        "600-second invocations, watchdog and rotating audits",
+        "signal handling, resolve and stop",
+        "storage check before reserving",
+        "re-validated replays, foreign-file checks and study-identity provenance",
+        "sampler specification and hedged interpretation; no interim analysis"
+      ]
+    },
+    {
+      "round": 2,
+      "reviewer": "independent fresh-context verifier (subagent), read-only",
+      "date": "2026-10-02",
+      "verdict": "CLEAR-WITH-FIXES",
+      "priorFindings": "11 fixed, 1 partial (study identity versus amendments)",
+      "dryRun": "full fake-executor run: 28 invocations, 1,200 results and 8 replays, 15,450 s charged; analysis matched independent Python to 1e-12",
+      "fixedBeforeFreeze": [
+        "N1: study identity excludes protocol text, analysis-only code and budget",
+        "N2: catch-up audits plus a per-invocation audit requirement in analysis",
+        "N3: reading uses the certification rule for random change",
+        "N4: mu-bias text corrected to 19 of 32",
+        "N6: mismatch refused before reserving and reported by status and supervise",
+        "N7: atomic writes, lone-provenance repair, .DS_Store ignored",
+        "N8: charge clamped at zero",
+        "N9: candidate cross-checks forecast, engineering check and replay originals"
+      ],
+      "acknowledged": [
+        "N5: the signal handler, the supervise watchdog and the stop and analyze command glue are exercised by the reviewer, not by unit tests",
+        "N10: the forecast is conservative; hashMap uses localeCompare and fails safe"
+      ]
+    }
+  ],
+  "authorDryRun": "Full fake run after the round-2 fixes: 29 invocations (1 interrupted), 1,237 competitions including 29 audits, 15,912.5 s charged, technically complete with 29 of 29 audits matched.",
+  "tests": "27 Deno tests pass."
+}
