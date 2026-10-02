@@ -13,7 +13,7 @@ Status: **exploratory, post hoc, not confirmatory.** It was run after the frozen
 - `explore.py` reads the committed operation042 report (hash-checked). That report holds every genome and its mass at 0, 100k and 1M for all 64 histories.
 - `trajectory.ts` adds the 8 intermediate checkpoints (200k–900k) per history. It uses the study's own checkpoint decoder and ancestry code, after checking each checkpoint and edge delta against its receipt. Its 0/100k/1M values reproduce the report's frozen samples exactly for all 64 histories.
 - Distance is counted in the mutation operator's own units: the number of the 163 mutable slots (160 controller weights, mu, sigma, motility gain) that differ from the founder.
-- Parallelism uses each seed's highest-mass genome at 1M, and asks whether the same slot moved in the same direction in more seeds than chance. The null keeps each seed's number of changed slots, draws slots uniformly over 163 and directions at even odds (2,000 draws, seed 6460001). The real mutation operator is uniform over slots, with a slight +1 bias (25/49 upward) and value clamps.
+- Parallelism uses each seed's highest-mass genome at 1M, and asks whether the same slot moved in the same direction in more seeds than chance. The null keeps each seed's number of changed slots, draws slots uniformly over 163 and directions at even odds (2,000 draws, seed 6470001; first run used 6460001, a seed already reserved for the study's engineering workloads, and was re-run on a fresh seed). The real mutation operator is uniform over slots, with a slight +1 bias (25/49 upward) and value clamps.
 - Compute: about 270 CPU seconds locally, $0. This is outside the study's frozen operation ledger.
 
 ## Findings
@@ -24,8 +24,8 @@ Status: **exploratory, post hoc, not confirmatory.** It was run after the frozen
 | --- | ---: | --- | ---: | ---: | --- |
 | cluster-33 | 0.991 | `b2[PHOTO]` up (photosynthesis output bias) | 8/8 | < 1/2000 | 62 → 72–119 |
 | cluster-139 | 0.559 | `mu` up (growth-function centre) | 7/8 | < 1/2000 | 33 → 46–55 |
-| cluster-4 | 0.565 | `mu` up; `b2[RESP]` down | 4/8 each | 0.10 | 68 → 78–88; 14 → −8 to −1 |
-| cluster-16 | −0.003 | `w2[h0→DECOMP]` up | 4/8 | 0.28 | 59 → 71–81 |
+| cluster-4 | 0.565 | `mu` up; `b2[RESP]` down | 4/8 each | 0.11 | 68 → 78–88; 14 → −8 to −1 |
+| cluster-16 | −0.003 | `w2[h0→DECOMP]` up | 4/8 | 0.27 | 59 → 71–81 |
 
 Both sweeps were essentially complete. By 1M, 100% of cluster-33's founder-lineage mass carried the raised `b2[PHOTO]` in 7 of 8 seeds (median 1.00). In cluster-139, a median 95% carried the raised `mu`, at least 76% in every seed.
 
@@ -61,7 +61,7 @@ Both sweeps were essentially complete. By 1M, 100% of cluster-33's founder-linea
 
 ## Files and provenance
 
-- `explore.py` writes `results.json` (SHA-256 `293d0b8ca78a100754322d2690f4c5fb83768f366ae1c6f657a3761ea6687430`). It reads `../distribution-v1/analysis-v1/report.json` (`085d55cf…`) and, if present, the trajectory.
+- `explore.py` writes `results.json` (SHA-256 `a3d313018b2d28d3f8499622f00c9b78076aba16c33e86493bc9c067fbfe7943`). It reads `../distribution-v1/analysis-v1/report.json` (`085d55cf…`) and, if present, the trajectory.
 - `trajectory.ts` writes `runs/founder-discovery-improvement-exploration-v1/trajectory.jsonl` (ignored, about 30 MB, SHA-256 `eca81f31f0810300bcf45a4b66e77c8cf93a9202edf0cd4508792b7ab15f3924`), with 704 rows: 64 histories × 11 checkpoints.
 - Re-run with:
   - `deno run --no-lock -A experiments/founder-discovery/v1/improvement-study/exploration-v1/trajectory.ts runs/founder-discovery-improvement-consolidated-v1/histories <new.jsonl>`

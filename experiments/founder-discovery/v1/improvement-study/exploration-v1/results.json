@@ -1412,7 +1412,7 @@
         }
       ],
       "maxSeedsSharingOneChange": 4,
-      "nullMaxSharingP": 0.098
+      "nullMaxSharingP": 0.11
     },
     "discovery-cluster-16": {
       "topGenomeSlotsChangedBySeed": [
@@ -1448,7 +1448,7 @@
         }
       ],
       "maxSeedsSharingOneChange": 4,
-      "nullMaxSharingP": 0.2825
+      "nullMaxSharingP": 0.274
     },
     "discovery-cluster-33": {
       "topGenomeSlotsChangedBySeed": [

@@ -114,7 +114,7 @@ for fid in FIDS:
         for c in changes: counts[c] = counts.get(c, 0) + 1
     shared = sorted(((n, s, up) for (s, up), n in counts.items() if n >= 3), reverse=True)
     # Null: same number of changed slots per seed, slots uniform over 163, direction a fair coin.
-    rng = random.Random(6460001); sims = []
+    rng = random.Random(6470001); sims = []
     for _ in range(2000):
         cc = {}
         for changes in tops:
