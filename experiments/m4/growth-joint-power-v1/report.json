@@ -1,0 +1,83 @@
+{
+  "format": "m4-growth-joint-power/v1",
+  "date": "2026-10-02",
+  "seed": 20261002,
+  "inner": 2000,
+  "outer": 1000,
+  "outerInner": 200,
+  "sources": {
+    "endpoint1": "experiments/m4/{gradient-m3,spots-m3}.json (2026-09-28, already reported)",
+    "endpoint2": "experiments/m4/growth-precision-v1/parent-validation-v4-report.json"
+  },
+  "method": "Endpoint-1 support = production evaluateEndpoint(PRIMARY_ENDPOINTS[0]) on n runs per condition drawn with replacement from the 2026-09-28 per-run values, conditions drawn independently. Joint lower bound = max(0, P(E1) + P(E2) - 1) (Frechet; no independence assumed).",
+  "presets": [
+    {
+      "preset": "gradient-m3",
+      "runsPerCondition": {
+        "treatment": 20,
+        "neutral": 20,
+        "no-mutation": 20
+      },
+      "treatmentOverNeutralAuc": 1,
+      "endpoint1ConditionalPower": {
+        "20": 1,
+        "32": 1,
+        "64": 1,
+        "128": 1
+      },
+      "endpoint1Assurance": {
+        "64": {
+          "mean": 1,
+          "p05": 1,
+          "p10": 1
+        },
+        "128": {
+          "mean": 1,
+          "p05": 1,
+          "p10": 1
+        }
+      },
+      "endpoint2PowerLower95Synthetic": 0.8868616117335993,
+      "endpoint2SyntheticObserved": "185/200",
+      "jointLowerBoundAt64": {
+        "conditional": 0.8868616117335995,
+        "assurance": 0.8868616117335995,
+        "pessimistic05": 0.8868616117335995
+      }
+    },
+    {
+      "preset": "spots-m3",
+      "runsPerCondition": {
+        "treatment": 10,
+        "neutral": 10,
+        "no-mutation": 10
+      },
+      "treatmentOverNeutralAuc": 0.8,
+      "endpoint1ConditionalPower": {
+        "20": 0.8085,
+        "32": 0.953,
+        "64": 1,
+        "128": 1
+      },
+      "endpoint1Assurance": {
+        "64": {
+          "mean": 0.8978849999999974,
+          "p05": 0.365,
+          "p10": 0.415
+        },
+        "128": {
+          "mean": 0.9419049999999998,
+          "p05": 0.64,
+          "p10": 0.695
+        }
+      },
+      "endpoint2PowerLower95Synthetic": 0.8810282256716788,
+      "endpoint2SyntheticObserved": "184/200",
+      "jointLowerBoundAt64": {
+        "conditional": 0.8810282256716788,
+        "assurance": 0.7789132256716762,
+        "pessimistic05": 0.2460282256716788
+      }
+    }
+  ]
+}
