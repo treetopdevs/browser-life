@@ -1,0 +1,28 @@
+{
+  "format": "discovery-divergence-control-resource-forecast/v2",
+  "basis": {
+    "engineeringCheck": {
+      "path": "experiments/founder-discovery/v1/divergence-control/engineering-check.json",
+      "sha256": "162d72f98e9215de98c43ecdb7c846e0732667fa5a5100e14c06a01a75a8171e",
+      "assayWallSeconds": 12.494664624999999,
+      "reproduced": true
+    },
+    "frozenStudyLocalMeanSecondsPerCompetition": 12.756999929558393,
+    "note": "The frozen-study local mean includes supervisor and import overhead across 21 parent invocations."
+  },
+  "configurations": {
+    "new": 1200,
+    "replay": 8,
+    "auditsEstimate": 40
+  },
+  "projectedSeconds": 15593.3,
+  "projectedHours": 4.33,
+  "invocationSeconds": 600,
+  "invocationsEstimate": 30,
+  "capSeconds": 25000,
+  "maxInvocations": 60,
+  "minimumFreeBytes": 21474836480,
+  "storageEstimateBytes": 9984000,
+  "paidUSD": 0,
+  "limitation": "One measured competition, so this is a projection, not a guarantee. A failed invocation keeps its full 600-second charge."
+}

@@ -1,6 +1,6 @@
-// Divergence-control roster: magnitude-matched random mutants and single-slot
-// reconstructions of the completed improvement study's evolved descendants.
-// Pure functions over the frozen operation042 report; no simulation here.
+// Divergence-control roster and analysis: type-matched random mutants, single-slot
+// reconstructions and a reconstruction specificity control for the completed
+// improvement study's evolved descendants. Pure functions; no simulation here.
 // Protocol: experiments/founder-discovery/v1/divergence-control-protocol.md
 import { B2_OFF, NN_BYTES, OUT } from "@bl/schema";
 import { Random, sha256 } from "./founder-policy.ts";
@@ -13,16 +13,28 @@ import {
 
 export const SLOTS = NN_BYTES + 3; // 160 weights, mu, sigma, motGain (mutateInPlace order)
 export const MU = NN_BYTES, SIGMA = NN_BYTES + 1, GAIN = NN_BYTES + 2;
-export const MUTANT_SEED_BASE = 6480000;
-export const BOOTSTRAP_SEED = 6480100;
 export const ENDPOINT = 1_000_000;
+// Assignments 2 and 3 only swap lineage labels of 0 and 1; the frozen study shows
+// identical outcomes for each pair, which buildRoster re-asserts on the evolved arm.
+export const ASSIGNMENTS = [0, 1] as const;
+export const PER_GENOME = ASSAY_SEEDS.length * ASSIGNMENTS.length; // 8
+export const MUTANTS_PER_DRAW = 2;
+export const MUTANT_SEED_BASE = 6480000; // mutant j = 1..128 uses 6480000 + j
+export const SPECIFICITY_SEED_BASE = 6480200; // seed index i = 1..8 uses 6480200 + i
+export const BOOTSTRAP_SEED = 6480300;
 export const RECONSTRUCTIONS = [
   {
     founderId: "discovery-cluster-33",
     slot: B2_OFF + OUT.PHOTO,
     slotName: "b2[PHOTO]",
+    specificity: true,
   },
-  { founderId: "discovery-cluster-139", slot: MU, slotName: "mu" },
+  {
+    founderId: "discovery-cluster-139",
+    slot: MU,
+    slotName: "mu",
+    specificity: false,
+  },
 ] as const;
 
 // Value bounds the simulator's mutation operator enforces per slot.
@@ -50,52 +62,76 @@ export function hexOf(slots: readonly number[]): string {
   });
 }
 
+/** First in-bounds value of founder ± magnitude, trying the drawn sign first. */
+function signed(slot: number, base: number, magnitude: number, sign: number) {
+  const [lo, hi] = bounds(slot);
+  return [base + sign * magnitude, base - sign * magnitude].find((v) =>
+    v >= lo && v <= hi
+  );
+}
+
+/** Place one magnitude on a uniformly drawn slot from `pool`; redraw if both signs clamp. */
+function place(
+  rng: Random,
+  base: readonly number[],
+  out: number[],
+  pool: number[],
+  magnitude: number,
+): number {
+  const excluded = new Set<number>();
+  for (;;) {
+    const candidates = pool.filter((s) => !excluded.has(s));
+    if (!candidates.length) throw Error(`no slot fits magnitude ${magnitude}`);
+    const slot = candidates[rng.int(candidates.length)];
+    const value = signed(slot, base[slot], magnitude, rng.int(2) ? 1 : -1);
+    if (value === undefined) {
+      excluded.add(slot);
+      continue;
+    }
+    out[slot] = value;
+    pool.splice(pool.indexOf(slot), 1);
+    return slot;
+  }
+}
+
 /**
- * Founder plus the descendant's change magnitudes, placed on uniformly drawn
- * distinct slots with uniform signs. A clamped sign takes the other sign; if both
- * clamp, that slot is excluded for this magnitude and another is drawn.
+ * Type-matched mutant. Weight-change magnitudes (in ascending slot order) go to
+ * uniformly drawn distinct weight slots with uniform signs. Each mu, sigma or gain
+ * change keeps its own parameter and magnitude with a uniform sign. A clamped sign
+ * takes the other sign; a weight slot where both clamp is redrawn.
  */
-export function shuffledMutant(
+export function typeMatchedMutant(
   founder: readonly number[],
   descendant: readonly number[],
   seed: number,
-): { slots: number[]; magnitudes: number[] } {
+) {
   if (founder.length !== SLOTS || descendant.length !== SLOTS) {
     throw Error("genome requires 163 slots");
   }
-  const magnitudes = founder.flatMap((v, s) =>
-    descendant[s] === v ? [] : [Math.abs(descendant[s] - v)]
-  );
+  const changed = founder.flatMap((v, s) => descendant[s] === v ? [] : [s]);
   const rng = new Random(seed), out = [...founder];
-  const available = Array.from({ length: SLOTS }, (_, s) => s);
-  for (const magnitude of magnitudes) {
-    const excluded = new Set<number>();
-    for (;;) {
-      const candidates = available.filter((s) => !excluded.has(s));
-      if (!candidates.length) {
-        throw Error(`no slot fits magnitude ${magnitude}`);
-      }
-      const slot = candidates[rng.int(candidates.length)];
-      const sign = rng.int(2) ? 1 : -1;
-      const [lo, hi] = bounds(slot);
-      const value = [
-        founder[slot] + sign * magnitude,
-        founder[slot] - sign * magnitude,
-      ]
-        .find((v) => v >= lo && v <= hi);
-      if (value === undefined) {
-        excluded.add(slot);
-        continue;
-      }
-      out[slot] = value;
-      available.splice(available.indexOf(slot), 1);
-      break;
-    }
+  const weights = Array.from({ length: NN_BYTES }, (_, s) => s);
+  for (const s of changed.filter((s) => s < NN_BYTES)) {
+    place(rng, founder, out, weights, Math.abs(descendant[s] - founder[s]));
   }
-  return { slots: out, magnitudes };
+  for (const s of changed.filter((s) => s >= NN_BYTES)) {
+    const magnitude = Math.abs(descendant[s] - founder[s]);
+    const value = signed(s, founder[s], magnitude, rng.int(2) ? 1 : -1);
+    if (value === undefined) {
+      throw Error(`parameter ${s} cannot take ${magnitude}`);
+    }
+    out[s] = value;
+  }
+  return {
+    slots: out,
+    weightMagnitudes: changed.filter((s) => s < NN_BYTES).map((s) =>
+      Math.abs(descendant[s] - founder[s])
+    ),
+    parameterSlots: changed.filter((s) => s >= NN_BYTES),
+  };
 }
 
-/** Mass-weighted median of a slot over genomes carrying an upward change. */
+/** Mass-weighted lower median of a slot over genomes carrying an upward change. */
 export function carrierMedian(
   founder: readonly number[],
   abundance: readonly { hex: string; mass: number }[],
@@ -149,7 +185,7 @@ export interface ImprovementReport {
 
 export type GenomeRequest = {
   id: string;
-  arm: "mutant" | "reconstruction";
+  arm: "mutant" | "reconstruction" | "specificity";
   founderId: string;
   founderHex: string;
   descendantHex: string;
@@ -157,7 +193,7 @@ export type GenomeRequest = {
 
 function assaysOf(genome: GenomeRequest, sourceManifestHash: string) {
   return ASSAY_SEEDS.flatMap((assaySeed) =>
-    [0, 1, 2, 3].map((assignment) => ({
+    ASSIGNMENTS.map((assignment) => ({
       id: `${genome.id}-s${assaySeed}-a${assignment}`,
       genomeId: genome.id,
       assaySeed,
@@ -190,7 +226,9 @@ export function buildRoster(
     return s;
   };
 
-  // Evolved arm: normal-mode endpoint draws, in report observation order.
+  // Evolved arm: normal-mode endpoint draws in report observation order. Every
+  // observation's identity is re-derived; scores at assignments 2 and 3 must equal
+  // those at 0 and 1 for the same assay seed, or the reduced design is invalid.
   const evolved: {
     k: number;
     drawId: string;
@@ -201,6 +239,7 @@ export function buildRoster(
     descendantHex: string;
     observationIds: string[];
   }[] = [];
+  const scoreBy = new Map<string, number | null>();
   for (const o of report.observations) {
     if (o.time !== ENDPOINT || o.mode !== "normal") continue;
     let e = evolved.find((x) => x.drawId === o.drawId);
@@ -228,48 +267,77 @@ export function buildRoster(
           manifest.sourceManifestHash,
         )
     ) throw Error(`evolved observation identity drift ${o.id}`);
-    e.observationIds.push(o.id);
+    scoreBy.set(`${o.drawId}/${o.assaySeed}/${o.assignment}`, o.score);
+    if ((ASSIGNMENTS as readonly number[]).includes(o.assignment)) {
+      e.observationIds.push(o.id);
+    }
   }
   if (
-    evolved.length !== 64 || evolved.some((e) => e.observationIds.length !== 16)
-  ) {
-    throw Error("evolved arm must be 64 draws of 16 observations");
+    evolved.length !== 64 ||
+    evolved.some((e) => e.observationIds.length !== PER_GENOME)
+  ) throw Error("evolved arm must be 64 draws of 8 used observations");
+  for (const e of evolved) {
+    for (const s of ASSAY_SEEDS) {
+      for (const a of ASSIGNMENTS) {
+        if (
+          scoreBy.get(`${e.drawId}/${s}/${a}`) !==
+            scoreBy.get(`${e.drawId}/${s}/${a + 2}`)
+        ) {
+          throw Error(
+            `assignment pair invariance violated ${e.drawId}/${s}/${a}`,
+          );
+        }
+      }
+    }
   }
 
   const genomes: GenomeRequest[] = [];
-  const mutants = evolved.map((e) => {
+  const mutants = evolved.flatMap((e) => {
     const founderHex = unitById.get(e.unitId)!.founderHex;
-    const seed = MUTANT_SEED_BASE + e.k;
-    const { slots, magnitudes } = shuffledMutant(
-      slotsOf(founderHex),
-      slotsOf(e.descendantHex),
-      seed,
-    );
-    const hex = hexOf(slots);
-    genomes.push({
-      id: `m${String(e.k).padStart(2, "0")}`,
-      arm: "mutant",
-      founderId: e.founderId,
-      founderHex,
-      descendantHex: hex,
+    return Array.from({ length: MUTANTS_PER_DRAW }, (_, i) => {
+      const j = (e.k - 1) * MUTANTS_PER_DRAW + i + 1;
+      const seed = MUTANT_SEED_BASE + j;
+      const m = typeMatchedMutant(
+        slotsOf(founderHex),
+        slotsOf(e.descendantHex),
+        seed,
+      );
+      const id = `m${String(j).padStart(3, "0")}`;
+      const hex = hexOf(m.slots);
+      genomes.push({
+        id,
+        arm: "mutant",
+        founderId: e.founderId,
+        founderHex,
+        descendantHex: hex,
+      });
+      return {
+        genomeId: id,
+        evolvedDrawId: e.drawId,
+        seed,
+        weightMagnitudes: m.weightMagnitudes,
+        parameterSlots: m.parameterSlots,
+        hex,
+      };
     });
-    return {
-      genomeId: `m${String(e.k).padStart(2, "0")}`,
-      evolvedDrawId: e.drawId,
-      seed,
-      slotsChanged: magnitudes.length,
-      magnitudes,
-      hex,
-    };
   });
 
+  const specificity: {
+    founderId: string;
+    seed: number;
+    controlSeed: number;
+    slot: number;
+    value: number;
+    genomeId: string;
+  }[] = [];
   const reconstructions = RECONSTRUCTIONS.map((r) => {
     const units = manifest.units
       .filter((u) => u.founderId === r.founderId && u.mode === "normal")
       .sort((a, b) => a.seed - b.seed);
     const founderHex = units[0].founderHex;
     const founder = slotsOf(founderHex);
-    const perSeed = units.map((u) => {
+    const short = r.founderId.split("-").at(-1);
+    const perSeed = units.map((u, index) => {
       const value = carrierMedian(
         founder,
         sampleOf(u.id).byGenomeAbundance,
@@ -278,17 +346,45 @@ export function buildRoster(
       if (value === null) throw Error(`no carriers ${u.id}`);
       const slots = [...founder];
       slots[r.slot] = value;
-      const hex = hexOf(slots);
-      const id = `r-${r.founderId.split("-").at(-1)}-${
-        r.slotName.replace(/\W/g, "")
-      }-${value}`;
+      const id = `r-${short}-${r.slotName.replace(/\W/g, "")}-${value}`;
       if (!genomes.some((g) => g.id === id)) {
         genomes.push({
           id,
           arm: "reconstruction",
           founderId: r.founderId,
           founderHex,
-          descendantHex: hex,
+          descendantHex: hexOf(slots),
+        });
+      }
+      if (r.specificity) {
+        // Same magnitude on a uniformly drawn other weight slot, uniform sign.
+        const controlSeed = SPECIFICITY_SEED_BASE + index + 1;
+        const out = [...founder];
+        const pool = Array.from({ length: NN_BYTES }, (_, s) => s).filter((s) =>
+          s !== r.slot
+        );
+        const slot = place(
+          new Random(controlSeed),
+          founder,
+          out,
+          pool,
+          Math.abs(value - founder[r.slot]),
+        );
+        const cid = `c-${short}-s${u.seed}`;
+        genomes.push({
+          id: cid,
+          arm: "specificity",
+          founderId: r.founderId,
+          founderHex,
+          descendantHex: hexOf(out),
+        });
+        specificity.push({
+          founderId: r.founderId,
+          seed: u.seed,
+          controlSeed,
+          slot,
+          value: out[slot],
+          genomeId: cid,
         });
       }
       return { seed: u.seed, value, genomeId: id };
@@ -296,10 +392,10 @@ export function buildRoster(
     return { ...r, founderValue: founder[r.slot], perSeed };
   });
 
-  // Replay: first observation of each founder's first evolved draw and last of its last.
+  // Replay: first used observation of each founder's first evolved draw and last of its last.
   const replay = manifest.founders.flatMap((f) => {
     const draws = evolved.filter((e) => e.founderId === f.id);
-    return [draws[0].observationIds[0], draws.at(-1)!.observationIds[15]];
+    return [draws[0].observationIds[0], draws.at(-1)!.observationIds.at(-1)!];
   }).map((id) => ({
     observationId: id,
     cacheKey: report.observations.find((o) => o.id === id)!.cacheKey!,
@@ -312,6 +408,12 @@ export function buildRoster(
   const evolvedKeys = new Set(
     report.observations.filter((o) => o.cacheKey).map((o) => o.cacheKey!),
   );
+  if (
+    new Set(genomes.map((g) => g.descendantHex + g.founderHex)).size !==
+      genomes.length
+  ) {
+    throw Error("duplicate new genome");
+  }
   if (unique.size !== assays.length) throw Error("duplicate new configuration");
   if (assays.some((a) => evolvedKeys.has(a.cacheKey))) {
     throw Error("new configuration collides with an existing assay");
@@ -320,7 +422,7 @@ export function buildRoster(
     throw Error("replay sample must be distinct");
   }
   return {
-    format: "discovery-divergence-control-roster/v1",
+    format: "discovery-divergence-control-roster/v2",
     status: "PREPARED",
     note: "A PREPARED roster never authorizes execution.",
     inputs: {
@@ -328,14 +430,24 @@ export function buildRoster(
       manifestHash: manifest.manifestHash,
       sourceManifestHash: manifest.sourceManifestHash,
     },
-    seeds: {
-      mutants: [MUTANT_SEED_BASE + 1, MUTANT_SEED_BASE + evolved.length],
-      bootstrap: BOOTSTRAP_SEED,
-      assay: ASSAY_SEEDS,
+    design: {
+      assaySeeds: ASSAY_SEEDS,
+      assignments: ASSIGNMENTS,
+      mutantsPerDraw: MUTANTS_PER_DRAW,
+      mutantSeeds: [
+        MUTANT_SEED_BASE + 1,
+        MUTANT_SEED_BASE + evolved.length * MUTANTS_PER_DRAW,
+      ],
+      specificitySeeds: [
+        SPECIFICITY_SEED_BASE + 1,
+        SPECIFICITY_SEED_BASE + specificity.length,
+      ],
+      bootstrapSeed: BOOTSTRAP_SEED,
     },
     evolved,
     mutants,
     reconstructions,
+    specificity,
     genomes,
     replay,
     assays,
@@ -344,6 +456,7 @@ export function buildRoster(
       mutantGenomes: mutants.length,
       reconstructionGenomes:
         genomes.filter((g) => g.arm === "reconstruction").length,
+      specificityGenomes: specificity.length,
       newConfigurations: unique.size,
       replayConfigurations: replay.length,
       totalConfigurations: unique.size + replay.length,
@@ -352,7 +465,8 @@ export function buildRoster(
   };
 }
 
-// ---- Analysis (pure). Unavailable or missing scores take their full [-1, 1] range.
+// ---- Analysis (pure). Unavailable or missing scores take their full [-1, 1] range
+// and stay in every denominator.
 
 export const THRESHOLD = 0.10;
 export const REQUIRED = 7;
@@ -399,11 +513,32 @@ function percentile(sorted: readonly number[], p: number): number {
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (at - lo);
 }
 
+/** The protocol's fixed reading of a per-founder selection test. */
+export function readSelection(
+  technicalComplete: boolean,
+  met: boolean,
+  evolved: Range,
+  mutant: Range,
+): string {
+  if (!technicalComplete) return "technically incomplete";
+  if (!met) {
+    return "not met: no evidence that evolved change beats random change of the same size; this is not evidence that selection was absent";
+  }
+  if (evolved.lower <= THRESHOLD) {
+    return "met, purifying selection only: evolved genomes are not clearly better than the founder, but avoid the harm that random change of this size causes";
+  }
+  if (mutant.upper <= 0) {
+    return "met, beyond divergence: evolved genomes beat the founder, random change of the same size does not help, and evolved change beats it";
+  }
+  return "met, partly divergence: random change of this size may also help, but evolved change beats it";
+}
+
 export function analyzeDivergence(input: {
   roster: Roster;
   evolvedObservations: ReadonlyMap<string, Outcome>;
   results: ReadonlyMap<string, Outcome>;
   replay: { expected: number; matched: number };
+  audits: { total: number; matched: number };
   bootstrapResamples?: number;
 }) {
   const { roster, evolvedObservations, results } = input;
@@ -416,30 +551,45 @@ export function analyzeDivergence(input: {
   }
   const genomeSummary = (id: string) => {
     const keys = assaysByGenome.get(id) ?? [];
-    if (keys.length !== 16) throw Error(`genome ${id} lacks 16 requests`);
+    if (keys.length !== PER_GENOME) {
+      throw Error(`genome ${id} lacks ${PER_GENOME} requests`);
+    }
     return summarize(keys.map((k) => results.get(k) ?? null));
   };
   const founders = [...new Set(roster.evolved.map((e) => e.founderId))];
   const seeds = [...new Set(roster.evolved.map((e) => e.seed))].sort((a, b) =>
     a - b
   );
-  const mutantOf = new Map(
-    roster.mutants.map((m) => [m.evolvedDrawId, m.genomeId]),
-  );
+  const mutantsOf = new Map<string, string[]>();
+  for (const m of roster.mutants) {
+    mutantsOf.set(m.evolvedDrawId, [
+      ...(mutantsOf.get(m.evolvedDrawId) ?? []),
+      m.genomeId,
+    ]);
+  }
 
   const draws = roster.evolved.map((e) => {
+    if (e.observationIds.length !== PER_GENOME) {
+      throw Error(`draw ${e.drawId} lacks observations`);
+    }
     const evolved = summarize(e.observationIds.map((id) => {
       if (!evolvedObservations.has(id)) {
         throw Error(`unknown evolved observation ${id}`);
       }
       return evolvedObservations.get(id)!;
     }));
+    const ids = mutantsOf.get(e.drawId) ?? [];
+    if (ids.length !== MUTANTS_PER_DRAW) {
+      throw Error(`draw ${e.drawId} lacks mutants`);
+    }
+    const mutants = ids.map(genomeSummary);
     return {
       drawId: e.drawId,
       founderId: e.founderId,
       seed: e.seed,
       evolved,
-      mutant: genomeSummary(mutantOf.get(e.drawId)!),
+      mutants,
+      mutant: average(mutants),
     };
   });
   const units = founders.flatMap((founderId) =>
@@ -452,21 +602,17 @@ export function analyzeDivergence(input: {
       }
       const evolved = average(d.map((x) => x.evolved)),
         mutant = average(d.map((x) => x.mutant));
+      const c = contrast(evolved, mutant);
       return {
         founderId,
         seed,
         evolved,
         mutant,
-        contrast: contrast(evolved, mutant),
+        contrast: c,
+        certified: c.lower > THRESHOLD,
       };
     })
   );
-  const blocks = seeds.map((seed) => {
-    const effect = average(
-      units.filter((u) => u.seed === seed).map((u) => u.contrast),
-    );
-    return { seed, ...effect, certified: effect.lower > THRESHOLD };
-  });
 
   const missing =
     roster.assays.filter((a) => (results.get(a.cacheKey) ?? null) === null)
@@ -474,10 +620,35 @@ export function analyzeDivergence(input: {
   const evolvedMissing =
     [...evolvedObservations.values()].filter((o) => o === null).length;
   const technicalComplete = missing === 0 && evolvedMissing === 0 &&
+    input.replay.expected === roster.replay.length &&
     input.replay.matched === input.replay.expected &&
-    input.replay.expected === roster.replay.length;
+    input.audits.matched === input.audits.total;
 
-  const certifiedA = blocks.filter((b) => b.certified).length;
+  // Confirmatory A: one test per founder.
+  const selection = founders.map((founderId) => {
+    const u = units.filter((x) => x.founderId === founderId);
+    const evolved = average(u.map((x) => x.evolved)),
+      mutant = average(u.map((x) => x.mutant));
+    const certified = u.filter((x) => x.certified).length;
+    const met = technicalComplete && certified >= REQUIRED;
+    return {
+      founderId,
+      certifiedSeeds: certified,
+      criterionMet: met,
+      evolved,
+      mutant,
+      contrast: average(u.map((x) => x.contrast)),
+      reading: readSelection(technicalComplete, met, evolved, mutant),
+    };
+  });
+
+  // Descriptive: the original pooled block rule and its bootstrap.
+  const blocks = seeds.map((seed) => {
+    const effect = average(
+      units.filter((u) => u.seed === seed).map((u) => u.contrast),
+    );
+    return { seed, ...effect, certified: effect.lower > THRESHOLD };
+  });
   const resamples = input.bootstrapResamples ?? 10_000;
   const rng = new Random(BOOTSTRAP_SEED);
   const bootLower: number[] = [],
@@ -497,16 +668,7 @@ export function analyzeDivergence(input: {
   }
   for (const b of [bootLower, bootUpper, bootPoint]) b.sort((x, y) => x - y);
 
-  const byFounder = founders.map((founderId) => {
-    const u = units.filter((x) => x.founderId === founderId);
-    return {
-      founderId,
-      evolved: average(u.map((x) => x.evolved)),
-      mutant: average(u.map((x) => x.mutant)),
-      contrast: average(u.map((x) => x.contrast)),
-    };
-  });
-
+  // Confirmatory B, plus the descriptive specificity comparison for cluster-33.
   const reconstruction = roster.reconstructions.map((r) => {
     const perSeed = r.perSeed.map((p) => {
       const s = genomeSummary(p.genomeId);
@@ -520,9 +682,22 @@ export function analyzeDivergence(input: {
     });
     const certified = perSeed.filter((p) => p.certified).length;
     const mean = average(perSeed);
-    const evolvedMean = byFounder.find((f) =>
+    const evolvedMean = selection.find((f) =>
       f.founderId === r.founderId
     )!.evolved;
+    const controls = roster.specificity.filter((c) =>
+      c.founderId === r.founderId
+    ).map((c) => {
+      const s = genomeSummary(c.genomeId);
+      const own = perSeed.find((p) => p.seed === c.seed)!;
+      return {
+        seed: c.seed,
+        slot: c.slot,
+        genomeId: c.genomeId,
+        control: s,
+        reconstructionMinusControl: contrast(own, s),
+      };
+    });
     return {
       founderId: r.founderId,
       slotName: r.slotName,
@@ -537,29 +712,43 @@ export function analyzeDivergence(input: {
           evolvedMean.point > 0
           ? mean.point / evolvedMean.point
           : null,
-      interpretation: !technicalComplete
+      specificity: controls.length
+        ? {
+          controls,
+          meanReconstructionMinusControl: average(
+            controls.map((c) => c.reconstructionMinusControl),
+          ),
+          seedsReconstructionAboveControl:
+            controls.filter((c) => c.reconstructionMinusControl.lower > 0)
+              .length,
+        }
+        : null,
+      reading: !technicalComplete
         ? "technically incomplete"
         : certified >= REQUIRED
-        ? "the single evolved change alone gives an advantage over the founder in typical seeds; this shows sufficiency, not necessity"
-        : "criterion not met; this does not show the change is irrelevant",
+        ? "met: the single evolved change alone gives an advantage over the founder in typical seeds; this shows sufficiency, not necessity; specificity is described by the control, not tested"
+        : "not met: this does not show the change is irrelevant",
     };
   });
 
   return {
-    format: "discovery-divergence-control-analysis/v1",
+    format: "discovery-divergence-control-analysis/v2",
     rosterPayloadSha256: roster.rosterPayloadSha256,
     reportSha256: roster.inputs.reportSha256,
     technicalComplete,
     missingNewResults: missing,
     replay: input.replay,
+    audits: input.audits,
     threshold: THRESHOLD,
     required: REQUIRED,
-    exactOneSidedSignTail: SIGN_TAIL,
-    selection: {
-      blocks,
-      certifiedBlocks: certifiedA,
-      criterionMet: technicalComplete && certifiedA >= REQUIRED,
-      effect: average(blocks),
+    exactOneSidedSignTailPerTest: SIGN_TAIL,
+    confirmatoryTests: founders.length + roster.reconstructions.length,
+    selection,
+    reconstruction,
+    descriptive: {
+      pooledBlocks: blocks,
+      pooledCertifiedBlocks: blocks.filter((b) => b.certified).length,
+      pooledEffect: average(blocks),
       bootstrap: {
         seed: BOOTSTRAP_SEED,
         resamples,
@@ -574,14 +763,7 @@ export function analyzeDivergence(input: {
           }
           : null,
       },
-      byFounder,
-      interpretation: !technicalComplete
-        ? "technically incomplete"
-        : certifiedA >= REQUIRED
-        ? "evolved descendants beat their founder by more than equally changed random mutants in typical seed blocks; read with the mutants' own scores, since harmful mutants with neutral descendants indicate purifying selection rather than adaptation"
-        : "criterion not met; this does not establish that selection was absent",
     },
-    reconstruction,
     units,
     draws,
   };

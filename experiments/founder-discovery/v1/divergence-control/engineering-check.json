@@ -1,0 +1,21 @@
+{
+  "format": "discovery-divergence-control-engineering-check/v1",
+  "purpose": "Reproduction and timing for the cost forecast; not study evidence.",
+  "cacheKey": "208ed2baf21d0f1aeae6b4dee5093cbd7ab601998258a308a7258b23fbe5e92e",
+  "expectedPath": "runs/founder-discovery-improvement-consolidated-v1/assays/208ed2baf21d0f1aeae6b4dee5093cbd7ab601998258a308a7258b23fbe5e92e.json",
+  "expectedSha256": "46dc2cd107fd10b10a72baa92f2cdbfb7298990f5a9d40c38680e28f0e059e76",
+  "reproduced": true,
+  "differingFields": [],
+  "expectedElapsedSeconds": 11.928449791999999,
+  "measured": {
+    "deviceInitSeconds": 0.226319917,
+    "assayElapsedSeconds": 11.667949541,
+    "assayWallSeconds": 12.494664624999999
+  },
+  "host": {
+    "os": "darwin",
+    "arch": "aarch64",
+    "deno": "2.9.7"
+  },
+  "at": "2026-10-02T12:08:33.540Z"
+}
