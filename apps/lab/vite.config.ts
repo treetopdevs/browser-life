@@ -2,7 +2,9 @@ import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
-const coordinatorUrl = `http://localhost:${process.env.PORT ?? "4000"}`;
+// Not PORT: hosts that launch Vite (preview tools, PaaS) set PORT to Vite's own
+// port, which would make /api proxy to itself. bin/dev sets COORDINATOR_PORT.
+const coordinatorUrl = `http://localhost:${process.env.COORDINATOR_PORT ?? "4000"}`;
 
 export default defineConfig({
   resolve: {

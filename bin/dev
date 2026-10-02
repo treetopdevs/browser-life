@@ -59,7 +59,7 @@ trap 'exit 143' 15
 (cd apps/coordinator && PORT=$coordinator_port exec mix phx.server) &
 coordinator_pid=$!
 
-pnpm --filter @bl/lab dev --port "$lab_port" &
+COORDINATOR_PORT=$coordinator_port pnpm --filter @bl/lab dev --port "$lab_port" &
 lab_pid=$!
 
 echo "Coordinator: http://localhost:$coordinator_port/index.html"
