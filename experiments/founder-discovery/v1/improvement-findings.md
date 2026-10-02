@@ -56,6 +56,10 @@ Further cautions, most of them from the independent review:
 
 The protocol makes the bootstrap descriptive. Time 0 and 100k cannot select the endpoint; at 100k, 5 of 8 block means exceed 0.10.
 
+## Exploratory follow-up (post hoc)
+
+`improvement-study/exploration-v1/` was added after this decision. It is not confirmatory and does not change anything above. It finds parallel sweeps in the two strongly improving founders: cluster-33 raised its photosynthesis output bias in 8/8 seeds between 100k and 200k steps, and cluster-139 raised `mu` in 7/8. cluster-16 has no comparable change and appears to sit at an abundance ceiling from the start. Divergence alone does not predict winning. These results shape the proposed divergence control: reconstruct the sweep allele alone, and compare against random mutants at matched distance.
+
 ## Resources
 
 All compute ran on owned hardware; paid compute was $0. History execution closures record 22,942 s over 35 invocations locally and 31,704 s over 50 parent invocations on the work Mac. Competition assays used 12,247 s over 21 parent invocations locally and 10,860 s over 18 on the work Mac. CPU evidence operations 001–042 charged 7,844.75 s of the 13,600 s allowance. Operation 042, the analysis, used 667.37 s of its 1,800 s reservation.

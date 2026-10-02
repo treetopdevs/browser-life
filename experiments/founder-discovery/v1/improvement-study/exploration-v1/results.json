@@ -1,0 +1,2537 @@
+{
+  "format": "founder-improvement-exploration/v1",
+  "status": "EXPLORATORY-POST-HOC",
+  "reportSha256": "085d55cf1f7121ece85ff3a5dc9fa5f236c912531e480e3262db99ad205ec68a",
+  "founders": {
+    "discovery-cluster-4": {
+      "100000": {
+        "founderLineageMassNormalMedian": 942694.0,
+        "founderLineageMassOffMedian": 941716.5,
+        "genomesNormalMedian": 221.5,
+        "topGenomeShareNormalMedian": 0.14312066821015146,
+        "founderGenomeShareNormalMedian": 0.14312066821015146,
+        "meanSlotsChangedMassWeightedMedian": 1.9185114434979573,
+        "drawSlotsChangedMedian": 1.5,
+        "drawScoreMean": 0.07921889970408631,
+        "drawScoreVsSlotsSpearman": 0.20967616933804434
+      },
+      "1000000": {
+        "founderLineageMassNormalMedian": 1086301.0,
+        "founderLineageMassOffMedian": 936150.0,
+        "genomesNormalMedian": 208.5,
+        "topGenomeShareNormalMedian": 0.06221349191533075,
+        "founderGenomeShareNormalMedian": 0.0,
+        "meanSlotsChangedMassWeightedMedian": 17.415361905339815,
+        "drawSlotsChangedMedian": 16.5,
+        "drawScoreMean": 0.5647222700231321,
+        "drawScoreVsSlotsSpearman": -0.10790979603383064
+      }
+    },
+    "discovery-cluster-16": {
+      "100000": {
+        "founderLineageMassNormalMedian": 2041900.5,
+        "founderLineageMassOffMedian": 2048620.5,
+        "genomesNormalMedian": 401.0,
+        "topGenomeShareNormalMedian": 0.03448256426786188,
+        "founderGenomeShareNormalMedian": 0.03448256426786188,
+        "meanSlotsChangedMassWeightedMedian": 3.348930583120291,
+        "drawSlotsChangedMedian": 2.0,
+        "drawScoreMean": 0.02255804978359089,
+        "drawScoreVsSlotsSpearman": 0.3620042942629617
+      },
+      "1000000": {
+        "founderLineageMassNormalMedian": 2041257.0,
+        "founderLineageMassOffMedian": 2021889.5,
+        "genomesNormalMedian": 385.5,
+        "topGenomeShareNormalMedian": 0.03937657890381942,
+        "founderGenomeShareNormalMedian": 0.0,
+        "meanSlotsChangedMassWeightedMedian": 32.02438935089418,
+        "drawSlotsChangedMedian": 30.0,
+        "drawScoreMean": -0.003118208065020364,
+        "drawScoreVsSlotsSpearman": -0.10782971454151394
+      }
+    },
+    "discovery-cluster-33": {
+      "100000": {
+        "founderLineageMassNormalMedian": 659149.5,
+        "founderLineageMassOffMedian": 639121.0,
+        "genomesNormalMedian": 47.0,
+        "topGenomeShareNormalMedian": 0.1739338657699036,
+        "founderGenomeShareNormalMedian": 0.03648414159387121,
+        "meanSlotsChangedMassWeightedMedian": 2.9152630235228565,
+        "drawSlotsChangedMedian": 2.0,
+        "drawScoreMean": 0.30874326367420385,
+        "drawScoreVsSlotsSpearman": 0.827397830721415
+      },
+      "1000000": {
+        "founderLineageMassNormalMedian": 752769.0,
+        "founderLineageMassOffMedian": 644510.5,
+        "genomesNormalMedian": 68.0,
+        "topGenomeShareNormalMedian": 0.11782045422811452,
+        "founderGenomeShareNormalMedian": 0.0,
+        "meanSlotsChangedMassWeightedMedian": 22.1971159433112,
+        "drawSlotsChangedMedian": 22.0,
+        "drawScoreMean": 0.9911465104757241,
+        "drawScoreVsSlotsSpearman": 0.1203288490284006
+      }
+    },
+    "discovery-cluster-139": {
+      "100000": {
+        "founderLineageMassNormalMedian": 1703472.0,
+        "founderLineageMassOffMedian": 1612176.0,
+        "genomesNormalMedian": 39.5,
+        "topGenomeShareNormalMedian": 0.2800687623315755,
+        "founderGenomeShareNormalMedian": 0.23513308414677517,
+        "meanSlotsChangedMassWeightedMedian": 1.4112310976229974,
+        "drawSlotsChangedMedian": 1.0,
+        "drawScoreMean": 0.12817159665339856,
+        "drawScoreVsSlotsSpearman": 0.4857633545312249
+      },
+      "1000000": {
+        "founderLineageMassNormalMedian": 2056566.5,
+        "founderLineageMassOffMedian": 1631565.0,
+        "genomesNormalMedian": 449.5,
+        "topGenomeShareNormalMedian": 0.009460039205227196,
+        "founderGenomeShareNormalMedian": 0.0,
+        "meanSlotsChangedMassWeightedMedian": 25.450102723490602,
+        "drawSlotsChangedMedian": 25.5,
+        "drawScoreMean": 0.5592258455340685,
+        "drawScoreVsSlotsSpearman": -0.38342819723103316
+      }
+    }
+  },
+  "draws": [
+    {
+      "unitId": "discovery-cluster-33-6410001-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 1,
+      "absDelta": 9,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-33-6410001-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 1,
+      "absDelta": 9,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-33-6410002-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 1,
+      "absDelta": 19,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-33-6410002-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 25,
+      "meanScore": 0.37543544953759184
+    },
+    {
+      "unitId": "discovery-cluster-33-6410003-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 5,
+      "absDelta": 59,
+      "meanScore": 0.9487714595831437
+    },
+    {
+      "unitId": "discovery-cluster-33-6410003-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 3,
+      "absDelta": 20,
+      "meanScore": 0.9746443398818225
+    },
+    {
+      "unitId": "discovery-cluster-33-6410004-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 4,
+      "absDelta": 47,
+      "meanScore": 0.8494611086811606
+    },
+    {
+      "unitId": "discovery-cluster-33-6410004-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 3,
+      "absDelta": 16,
+      "meanScore": 0.7094788639469377
+    },
+    {
+      "unitId": "discovery-cluster-33-6410005-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 2,
+      "absDelta": 27,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-33-6410005-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 17,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-33-6410006-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 0,
+      "absDelta": 0,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-33-6410006-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 3,
+      "absDelta": 56,
+      "meanScore": 0.46668747661139276
+    },
+    {
+      "unitId": "discovery-cluster-33-6410007-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 1,
+      "absDelta": 1,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-33-6410007-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 3,
+      "absDelta": 58,
+      "meanScore": 0.4812468629551632
+    },
+    {
+      "unitId": "discovery-cluster-33-6410008-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 1,
+      "absDelta": 18,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-33-6410008-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 5,
+      "absDelta": 78,
+      "meanScore": 0.13416665759004948
+    },
+    {
+      "unitId": "discovery-cluster-4-6410001-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 3,
+      "absDelta": 44,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410001-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 1,
+      "absDelta": 13,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410002-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 0,
+      "absDelta": 0,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410002-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 41,
+      "meanScore": 0.8049327841073274
+    },
+    {
+      "unitId": "discovery-cluster-4-6410003-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 3,
+      "absDelta": 37,
+      "meanScore": 0.6923958826546421
+    },
+    {
+      "unitId": "discovery-cluster-4-6410003-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 39,
+      "meanScore": -0.779489104477029
+    },
+    {
+      "unitId": "discovery-cluster-4-6410004-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 0,
+      "absDelta": 0,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410004-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 1,
+      "absDelta": 9,
+      "meanScore": 0.05425825229857622
+    },
+    {
+      "unitId": "discovery-cluster-4-6410005-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 3,
+      "absDelta": 30,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410005-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 1,
+      "absDelta": 6,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410006-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 0,
+      "absDelta": 0,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410006-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 20,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410007-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 0,
+      "absDelta": 0,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410007-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 32,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-4-6410008-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 2,
+      "absDelta": 25,
+      "meanScore": 0.3983053095942306
+    },
+    {
+      "unitId": "discovery-cluster-4-6410008-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 1,
+      "absDelta": 4,
+      "meanScore": 0.09709927108763376
+    },
+    {
+      "unitId": "discovery-cluster-16-6410001-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 1,
+      "absDelta": 11,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-16-6410001-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 5,
+      "absDelta": 93,
+      "meanScore": 0.030444059920788462
+    },
+    {
+      "unitId": "discovery-cluster-16-6410002-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 2,
+      "absDelta": 43,
+      "meanScore": 0.003809132738468215
+    },
+    {
+      "unitId": "discovery-cluster-16-6410002-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 0,
+      "absDelta": 0,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-16-6410003-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 2,
+      "absDelta": 39,
+      "meanScore": 0.015680135656616283
+    },
+    {
+      "unitId": "discovery-cluster-16-6410003-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 1,
+      "absDelta": 18,
+      "meanScore": -0.010996358687233256
+    },
+    {
+      "unitId": "discovery-cluster-16-6410004-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 2,
+      "absDelta": 22,
+      "meanScore": 0.0013789868232526215
+    },
+    {
+      "unitId": "discovery-cluster-16-6410004-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 23,
+      "meanScore": -0.0004727605536284816
+    },
+    {
+      "unitId": "discovery-cluster-16-6410005-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 3,
+      "absDelta": 40,
+      "meanScore": 0.013529587462479599
+    },
+    {
+      "unitId": "discovery-cluster-16-6410005-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 24,
+      "meanScore": 0.05091721823548956
+    },
+    {
+      "unitId": "discovery-cluster-16-6410006-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 4,
+      "absDelta": 61,
+      "meanScore": 0.2928822457154632
+    },
+    {
+      "unitId": "discovery-cluster-16-6410006-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 16,
+      "meanScore": -0.006018570281248048
+    },
+    {
+      "unitId": "discovery-cluster-16-6410007-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 2,
+      "absDelta": 25,
+      "meanScore": 0.0107491563867945
+    },
+    {
+      "unitId": "discovery-cluster-16-6410007-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 3,
+      "absDelta": 14,
+      "meanScore": 0.018066715743328046
+    },
+    {
+      "unitId": "discovery-cluster-16-6410008-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 5,
+      "absDelta": 24,
+      "meanScore": 0.002842575673715213
+    },
+    {
+      "unitId": "discovery-cluster-16-6410008-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 5,
+      "absDelta": 58,
+      "meanScore": -0.06188332829683162
+    },
+    {
+      "unitId": "discovery-cluster-139-6410001-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 1,
+      "absDelta": 8,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-139-6410001-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 1,
+      "absDelta": 8,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-139-6410002-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 3,
+      "absDelta": 32,
+      "meanScore": 0.1788814991577723
+    },
+    {
+      "unitId": "discovery-cluster-139-6410002-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 0,
+      "absDelta": 0,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-139-6410003-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 1,
+      "absDelta": 3,
+      "meanScore": -0.07928039722453328
+    },
+    {
+      "unitId": "discovery-cluster-139-6410003-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 2,
+      "absDelta": 39,
+      "meanScore": 0.1698302205247593
+    },
+    {
+      "unitId": "discovery-cluster-139-6410004-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 4,
+      "absDelta": 66,
+      "meanScore": 0.44614175527729444
+    },
+    {
+      "unitId": "discovery-cluster-139-6410004-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 4,
+      "absDelta": 54,
+      "meanScore": 0.48958881958337597
+    },
+    {
+      "unitId": "discovery-cluster-139-6410005-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 0,
+      "absDelta": 0,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-139-6410005-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 1,
+      "absDelta": 2,
+      "meanScore": 0.09697399449687989
+    },
+    {
+      "unitId": "discovery-cluster-139-6410006-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 1,
+      "absDelta": 3,
+      "meanScore": -0.10570621019891
+    },
+    {
+      "unitId": "discovery-cluster-139-6410006-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 1,
+      "absDelta": 3,
+      "meanScore": -0.10570621019891
+    },
+    {
+      "unitId": "discovery-cluster-139-6410007-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 1,
+      "absDelta": 23,
+      "meanScore": 0.5293719444998349
+    },
+    {
+      "unitId": "discovery-cluster-139-6410007-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 0,
+      "absDelta": 0,
+      "meanScore": 0.0
+    },
+    {
+      "unitId": "discovery-cluster-139-6410008-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "time": 100000,
+      "draw": 0,
+      "slotsChanged": 3,
+      "absDelta": 42,
+      "meanScore": -0.0933201421024077
+    },
+    {
+      "unitId": "discovery-cluster-139-6410008-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "time": 100000,
+      "draw": 1,
+      "slotsChanged": 5,
+      "absDelta": 69,
+      "meanScore": 0.523970272639221
+    },
+    {
+      "unitId": "discovery-cluster-33-6410001-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 18,
+      "absDelta": 287,
+      "meanScore": 0.9949397071118733
+    },
+    {
+      "unitId": "discovery-cluster-33-6410001-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 18,
+      "absDelta": 285,
+      "meanScore": 0.9978326162684521
+    },
+    {
+      "unitId": "discovery-cluster-33-6410002-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 23,
+      "absDelta": 280,
+      "meanScore": 0.9974837222292194
+    },
+    {
+      "unitId": "discovery-cluster-33-6410002-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 22,
+      "absDelta": 247,
+      "meanScore": 0.9974837222292194
+    },
+    {
+      "unitId": "discovery-cluster-33-6410003-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 25,
+      "absDelta": 399,
+      "meanScore": 0.9662429192703257
+    },
+    {
+      "unitId": "discovery-cluster-33-6410003-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 27,
+      "absDelta": 326,
+      "meanScore": 1
+    },
+    {
+      "unitId": "discovery-cluster-33-6410004-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 22,
+      "absDelta": 294,
+      "meanScore": 0.954063482488627
+    },
+    {
+      "unitId": "discovery-cluster-33-6410004-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 24,
+      "absDelta": 329,
+      "meanScore": 0.9977041135921825
+    },
+    {
+      "unitId": "discovery-cluster-33-6410005-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 26,
+      "absDelta": 352,
+      "meanScore": 0.9993926490476427
+    },
+    {
+      "unitId": "discovery-cluster-33-6410005-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 19,
+      "absDelta": 254,
+      "meanScore": 0.9998849559860413
+    },
+    {
+      "unitId": "discovery-cluster-33-6410006-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 24,
+      "absDelta": 308,
+      "meanScore": 0.9991327378551902
+    },
+    {
+      "unitId": "discovery-cluster-33-6410006-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 19,
+      "absDelta": 198,
+      "meanScore": 0.9991433420755478
+    },
+    {
+      "unitId": "discovery-cluster-33-6410007-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 21,
+      "absDelta": 249,
+      "meanScore": 0.9550401994572647
+    },
+    {
+      "unitId": "discovery-cluster-33-6410007-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 21,
+      "absDelta": 293,
+      "meanScore": 1
+    },
+    {
+      "unitId": "discovery-cluster-33-6410008-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 24,
+      "absDelta": 381,
+      "meanScore": 1
+    },
+    {
+      "unitId": "discovery-cluster-33-6410008-normal",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 21,
+      "absDelta": 343,
+      "meanScore": 1
+    },
+    {
+      "unitId": "discovery-cluster-4-6410001-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 28,
+      "absDelta": 350,
+      "meanScore": 0.45785315568216783
+    },
+    {
+      "unitId": "discovery-cluster-4-6410001-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 19,
+      "absDelta": 216,
+      "meanScore": 0.8617866556578921
+    },
+    {
+      "unitId": "discovery-cluster-4-6410002-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 17,
+      "absDelta": 217,
+      "meanScore": 0.43339156791367905
+    },
+    {
+      "unitId": "discovery-cluster-4-6410002-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 13,
+      "absDelta": 157,
+      "meanScore": -0.13685541872244308
+    },
+    {
+      "unitId": "discovery-cluster-4-6410003-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 15,
+      "absDelta": 267,
+      "meanScore": 0.9994776398160017
+    },
+    {
+      "unitId": "discovery-cluster-4-6410003-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 18,
+      "absDelta": 268,
+      "meanScore": 0.995016872417138
+    },
+    {
+      "unitId": "discovery-cluster-4-6410004-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 14,
+      "absDelta": 145,
+      "meanScore": 0.040813313343148035
+    },
+    {
+      "unitId": "discovery-cluster-4-6410004-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 14,
+      "absDelta": 151,
+      "meanScore": 0.914370945847321
+    },
+    {
+      "unitId": "discovery-cluster-4-6410005-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 17,
+      "absDelta": 209,
+      "meanScore": 0.9886527085602465
+    },
+    {
+      "unitId": "discovery-cluster-4-6410005-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 21,
+      "absDelta": 235,
+      "meanScore": 0.9746909930958211
+    },
+    {
+      "unitId": "discovery-cluster-4-6410006-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 11,
+      "absDelta": 136,
+      "meanScore": 0.9908830192274968
+    },
+    {
+      "unitId": "discovery-cluster-4-6410006-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 24,
+      "absDelta": 312,
+      "meanScore": 0.9914887057564941
+    },
+    {
+      "unitId": "discovery-cluster-4-6410007-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 15,
+      "absDelta": 213,
+      "meanScore": 0.9999964892013259
+    },
+    {
+      "unitId": "discovery-cluster-4-6410007-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 14,
+      "absDelta": 207,
+      "meanScore": 0.9999993419658064
+    },
+    {
+      "unitId": "discovery-cluster-4-6410008-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 16,
+      "absDelta": 196,
+      "meanScore": -0.8202216151055176
+    },
+    {
+      "unitId": "discovery-cluster-4-6410008-normal",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 21,
+      "absDelta": 298,
+      "meanScore": -0.6557880542864633
+    },
+    {
+      "unitId": "discovery-cluster-16-6410001-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 30,
+      "absDelta": 389,
+      "meanScore": -0.023386428388230115
+    },
+    {
+      "unitId": "discovery-cluster-16-6410001-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 26,
+      "absDelta": 401,
+      "meanScore": -0.09745685742593753
+    },
+    {
+      "unitId": "discovery-cluster-16-6410002-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 26,
+      "absDelta": 341,
+      "meanScore": -0.07014377174780893
+    },
+    {
+      "unitId": "discovery-cluster-16-6410002-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 19,
+      "absDelta": 193,
+      "meanScore": 0.3119587237751643
+    },
+    {
+      "unitId": "discovery-cluster-16-6410003-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 37,
+      "absDelta": 464,
+      "meanScore": 0.13016273391705493
+    },
+    {
+      "unitId": "discovery-cluster-16-6410003-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 30,
+      "absDelta": 372,
+      "meanScore": -0.1946378457833215
+    },
+    {
+      "unitId": "discovery-cluster-16-6410004-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 28,
+      "absDelta": 363,
+      "meanScore": -0.11793784018244677
+    },
+    {
+      "unitId": "discovery-cluster-16-6410004-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 40,
+      "absDelta": 519,
+      "meanScore": 0.37017097552412065
+    },
+    {
+      "unitId": "discovery-cluster-16-6410005-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 31,
+      "absDelta": 341,
+      "meanScore": 0.19676312598828505
+    },
+    {
+      "unitId": "discovery-cluster-16-6410005-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 24,
+      "absDelta": 211,
+      "meanScore": -0.0003926982227166839
+    },
+    {
+      "unitId": "discovery-cluster-16-6410006-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 36,
+      "absDelta": 518,
+      "meanScore": -0.2443379837977434
+    },
+    {
+      "unitId": "discovery-cluster-16-6410006-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 41,
+      "absDelta": 648,
+      "meanScore": -0.20841478504898422
+    },
+    {
+      "unitId": "discovery-cluster-16-6410007-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 30,
+      "absDelta": 373,
+      "meanScore": -0.053399527405037416
+    },
+    {
+      "unitId": "discovery-cluster-16-6410007-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 33,
+      "absDelta": 407,
+      "meanScore": 0.09265744297367005
+    },
+    {
+      "unitId": "discovery-cluster-16-6410008-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 31,
+      "absDelta": 321,
+      "meanScore": -0.17987972445612174
+    },
+    {
+      "unitId": "discovery-cluster-16-6410008-normal",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 16,
+      "absDelta": 178,
+      "meanScore": 0.03838313123972749
+    },
+    {
+      "unitId": "discovery-cluster-139-6410001-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 15,
+      "absDelta": 194,
+      "meanScore": 0.5483957906356507
+    },
+    {
+      "unitId": "discovery-cluster-139-6410001-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 27,
+      "absDelta": 329,
+      "meanScore": -0.18698173960008677
+    },
+    {
+      "unitId": "discovery-cluster-139-6410002-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 24,
+      "absDelta": 271,
+      "meanScore": 0.6326990877415857
+    },
+    {
+      "unitId": "discovery-cluster-139-6410002-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 25,
+      "absDelta": 253,
+      "meanScore": 0.626071298064521
+    },
+    {
+      "unitId": "discovery-cluster-139-6410003-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 26,
+      "absDelta": 322,
+      "meanScore": 0.7289270703727391
+    },
+    {
+      "unitId": "discovery-cluster-139-6410003-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 24,
+      "absDelta": 359,
+      "meanScore": 0.41802836080987904
+    },
+    {
+      "unitId": "discovery-cluster-139-6410004-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 26,
+      "absDelta": 308,
+      "meanScore": 0.5211993444454653
+    },
+    {
+      "unitId": "discovery-cluster-139-6410004-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 27,
+      "absDelta": 428,
+      "meanScore": 0.6242650854824487
+    },
+    {
+      "unitId": "discovery-cluster-139-6410005-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 22,
+      "absDelta": 235,
+      "meanScore": 0.6535841508079723
+    },
+    {
+      "unitId": "discovery-cluster-139-6410005-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 24,
+      "absDelta": 312,
+      "meanScore": 0.6359192840921076
+    },
+    {
+      "unitId": "discovery-cluster-139-6410006-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 26,
+      "absDelta": 301,
+      "meanScore": 0.44902361924
+    },
+    {
+      "unitId": "discovery-cluster-139-6410006-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 29,
+      "absDelta": 355,
+      "meanScore": 0.6504798061698822
+    },
+    {
+      "unitId": "discovery-cluster-139-6410007-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 21,
+      "absDelta": 267,
+      "meanScore": 0.8851803251904581
+    },
+    {
+      "unitId": "discovery-cluster-139-6410007-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 18,
+      "absDelta": 301,
+      "meanScore": 0.6847259874871037
+    },
+    {
+      "unitId": "discovery-cluster-139-6410008-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "time": 1000000,
+      "draw": 0,
+      "slotsChanged": 37,
+      "absDelta": 453,
+      "meanScore": 0.6031882301263675
+    },
+    {
+      "unitId": "discovery-cluster-139-6410008-normal",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "time": 1000000,
+      "draw": 1,
+      "slotsChanged": 31,
+      "absDelta": 455,
+      "meanScore": 0.4729078274790026
+    }
+  ],
+  "parallelism": {
+    "discovery-cluster-4": {
+      "topGenomeSlotsChangedBySeed": [
+        23,
+        13,
+        15,
+        17,
+        13,
+        16,
+        15,
+        18
+      ],
+      "sharedInAtLeast3Seeds": [
+        {
+          "seeds": 4,
+          "slot": "mu",
+          "direction": "up"
+        },
+        {
+          "seeds": 4,
+          "slot": "b2[RESP]",
+          "direction": "down"
+        },
+        {
+          "seeds": 3,
+          "slot": "b2[PHOTO]",
+          "direction": "up"
+        }
+      ],
+      "maxSeedsSharingOneChange": 4,
+      "nullMaxSharingP": 0.098
+    },
+    "discovery-cluster-16": {
+      "topGenomeSlotsChangedBySeed": [
+        22,
+        18,
+        30,
+        22,
+        15,
+        17,
+        29,
+        16
+      ],
+      "sharedInAtLeast3Seeds": [
+        {
+          "seeds": 4,
+          "slot": "w2[h0->DECOMP]",
+          "direction": "up"
+        },
+        {
+          "seeds": 3,
+          "slot": "w2[h3->BUILD]",
+          "direction": "up"
+        },
+        {
+          "seeds": 3,
+          "slot": "w2[h2->EMIT]",
+          "direction": "down"
+        },
+        {
+          "seeds": 3,
+          "slot": "w2[h0->MY]",
+          "direction": "up"
+        }
+      ],
+      "maxSeedsSharingOneChange": 4,
+      "nullMaxSharingP": 0.2825
+    },
+    "discovery-cluster-33": {
+      "topGenomeSlotsChangedBySeed": [
+        19,
+        25,
+        25,
+        24,
+        19,
+        23,
+        19,
+        20
+      ],
+      "sharedInAtLeast3Seeds": [
+        {
+          "seeds": 8,
+          "slot": "b2[PHOTO]",
+          "direction": "up"
+        },
+        {
+          "seeds": 4,
+          "slot": "mu",
+          "direction": "down"
+        },
+        {
+          "seeds": 4,
+          "slot": "w2[h7->PHOTO]",
+          "direction": "up"
+        },
+        {
+          "seeds": 3,
+          "slot": "sigma",
+          "direction": "down"
+        },
+        {
+          "seeds": 3,
+          "slot": "w1[LIGHT->h7]",
+          "direction": "up"
+        },
+        {
+          "seeds": 3,
+          "slot": "w1[P->h7]",
+          "direction": "down"
+        }
+      ],
+      "maxSeedsSharingOneChange": 8,
+      "nullMaxSharingP": 0.0
+    },
+    "discovery-cluster-139": {
+      "topGenomeSlotsChangedBySeed": [
+        25,
+        37,
+        15,
+        27,
+        29,
+        26,
+        16,
+        31
+      ],
+      "sharedInAtLeast3Seeds": [
+        {
+          "seeds": 7,
+          "slot": "mu",
+          "direction": "up"
+        },
+        {
+          "seeds": 4,
+          "slot": "w1[U->h6]",
+          "direction": "up"
+        },
+        {
+          "seeds": 3,
+          "slot": "sigma",
+          "direction": "up"
+        },
+        {
+          "seeds": 3,
+          "slot": "b2[DECOMP]",
+          "direction": "up"
+        },
+        {
+          "seeds": 3,
+          "slot": "w2[h4->MY]",
+          "direction": "down"
+        },
+        {
+          "seeds": 3,
+          "slot": "w1[B->h1]",
+          "direction": "down"
+        }
+      ],
+      "maxSeedsSharingOneChange": 7,
+      "nullMaxSharingP": 0.0
+    }
+  },
+  "trajectory": {
+    "sha256": "eca81f31f0810300bcf45a4b66e77c8cf93a9202edf0cd4508792b7ab15f3924",
+    "sweepSlots": {
+      "discovery-cluster-33": [
+        "b2[PHOTO]",
+        1
+      ],
+      "discovery-cluster-139": [
+        "mu",
+        1
+      ],
+      "discovery-cluster-4": [
+        "mu",
+        1
+      ],
+      "discovery-cluster-16": [
+        "w2[h0->DECOMP]",
+        1
+      ]
+    },
+    "medians": [
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 0,
+        "rootMass": 28463.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 100000,
+        "rootMass": 942694.0,
+        "genomes": 221.5,
+        "divergence": 1.9185114434979573,
+        "founderShare": 0.14312066821015146,
+        "sweepShare": 0.006448689499218721,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 200000,
+        "rootMass": 950314.0,
+        "genomes": 229.0,
+        "divergence": 4.026463216030294,
+        "founderShare": 0.015076652324824037,
+        "sweepShare": 0.015400269127678452,
+        "sweepShareMin": 0.0031339252970005445
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 300000,
+        "rootMass": 966815.0,
+        "genomes": 217.5,
+        "divergence": 6.124752573015398,
+        "founderShare": 0.0,
+        "sweepShare": 0.02482320860805451,
+        "sweepShareMin": 0.0076179258523296
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 400000,
+        "rootMass": 995807.0,
+        "genomes": 213.0,
+        "divergence": 7.672583498497373,
+        "founderShare": 0.0,
+        "sweepShare": 0.08731574350199482,
+        "sweepShareMin": 0.016850125262007597
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 500000,
+        "rootMass": 1008736.0,
+        "genomes": 215.0,
+        "divergence": 9.723162350242477,
+        "founderShare": 0.0,
+        "sweepShare": 0.1324826830215277,
+        "sweepShareMin": 0.03797177720531073
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 600000,
+        "rootMass": 1034697.5,
+        "genomes": 216.0,
+        "divergence": 11.791011489790836,
+        "founderShare": 0.0,
+        "sweepShare": 0.13293814041681457,
+        "sweepShareMin": 0.023609026964731664
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 700000,
+        "rootMass": 1048704.5,
+        "genomes": 221.5,
+        "divergence": 13.334160869761844,
+        "founderShare": 0.0,
+        "sweepShare": 0.15948005931057496,
+        "sweepShareMin": 0.06511011230822102
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 800000,
+        "rootMass": 1075533.0,
+        "genomes": 215.0,
+        "divergence": 14.485273104161843,
+        "founderShare": 0.0,
+        "sweepShare": 0.20370551344126714,
+        "sweepShareMin": 0.06720446980633811
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 900000,
+        "rootMass": 1077223.5,
+        "genomes": 213.0,
+        "divergence": 15.944783388447945,
+        "founderShare": 0.0,
+        "sweepShare": 0.20529247494242117,
+        "sweepShareMin": 0.07095912374635685
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "normal",
+        "step": 1000000,
+        "rootMass": 1086301.0,
+        "genomes": 208.5,
+        "divergence": 17.415361905339815,
+        "founderShare": 0.0,
+        "sweepShare": 0.2097377603689829,
+        "sweepShareMin": 0.07851917127933981
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 0,
+        "rootMass": 28463.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 100000,
+        "rootMass": 941716.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 200000,
+        "rootMass": 939956.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 300000,
+        "rootMass": 937837.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 400000,
+        "rootMass": 937915.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 500000,
+        "rootMass": 938402.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 600000,
+        "rootMass": 937227.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 700000,
+        "rootMass": 936727.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 800000,
+        "rootMass": 938428.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 900000,
+        "rootMass": 934843.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "mode": "off",
+        "step": 1000000,
+        "rootMass": 936150.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 0,
+        "rootMass": 28463.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 100000,
+        "rootMass": 2041900.5,
+        "genomes": 401.0,
+        "divergence": 3.348930583120291,
+        "founderShare": 0.03448256426786188,
+        "sweepShare": 0.009887568872033735,
+        "sweepShareMin": 0.0026624454139916503
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 200000,
+        "rootMass": 2033020.0,
+        "genomes": 411.0,
+        "divergence": 6.914966635587456,
+        "founderShare": 0.0,
+        "sweepShare": 0.0171304961023529,
+        "sweepShareMin": 0.005222825836069567
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 300000,
+        "rootMass": 2030178.0,
+        "genomes": 400.0,
+        "divergence": 10.44154271740917,
+        "founderShare": 0.0,
+        "sweepShare": 0.029488665876279796,
+        "sweepShareMin": 0.015956792159496046
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 400000,
+        "rootMass": 2027526.0,
+        "genomes": 397.5,
+        "divergence": 13.878557813834178,
+        "founderShare": 0.0,
+        "sweepShare": 0.03753916831343142,
+        "sweepShareMin": 0.02732047547574271
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 500000,
+        "rootMass": 2029409.5,
+        "genomes": 396.5,
+        "divergence": 17.29473319922001,
+        "founderShare": 0.0,
+        "sweepShare": 0.05417060977518091,
+        "sweepShareMin": 0.03504390355575137
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 600000,
+        "rootMass": 2032257.5,
+        "genomes": 395.0,
+        "divergence": 20.585984159742097,
+        "founderShare": 0.0,
+        "sweepShare": 0.07109850847511286,
+        "sweepShareMin": 0.04311972616885432
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 700000,
+        "rootMass": 2034293.0,
+        "genomes": 388.5,
+        "divergence": 23.632520374367708,
+        "founderShare": 0.0,
+        "sweepShare": 0.08031395847924253,
+        "sweepShareMin": 0.039721985392053245
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 800000,
+        "rootMass": 2035309.0,
+        "genomes": 378.0,
+        "divergence": 26.42359119643318,
+        "founderShare": 0.0,
+        "sweepShare": 0.08444755044194391,
+        "sweepShareMin": 0.05465915853689675
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 900000,
+        "rootMass": 2037512.5,
+        "genomes": 387.0,
+        "divergence": 29.411952421926184,
+        "founderShare": 0.0,
+        "sweepShare": 0.11114945848588142,
+        "sweepShareMin": 0.08830458156063732
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "normal",
+        "step": 1000000,
+        "rootMass": 2041257.0,
+        "genomes": 385.5,
+        "divergence": 32.02438935089418,
+        "founderShare": 0.0,
+        "sweepShare": 0.12837010973479798,
+        "sweepShareMin": 0.09857707455694542
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 0,
+        "rootMass": 28463.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 100000,
+        "rootMass": 2048620.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 200000,
+        "rootMass": 2042506.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 300000,
+        "rootMass": 2040637.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 400000,
+        "rootMass": 2038929.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 500000,
+        "rootMass": 2032736.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 600000,
+        "rootMass": 2030034.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 700000,
+        "rootMass": 2027062.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 800000,
+        "rootMass": 2023582.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 900000,
+        "rootMass": 2022466.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "mode": "off",
+        "step": 1000000,
+        "rootMass": 2021889.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 0,
+        "rootMass": 28463.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 100000,
+        "rootMass": 659149.5,
+        "genomes": 47.0,
+        "divergence": 2.9152630235228565,
+        "founderShare": 0.03648414159387121,
+        "sweepShare": 0.02876338204561401,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 200000,
+        "rootMass": 715509.5,
+        "genomes": 53.5,
+        "divergence": 6.298950622831148,
+        "founderShare": 0.0,
+        "sweepShare": 0.9151237127060264,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 300000,
+        "rootMass": 719839.5,
+        "genomes": 53.0,
+        "divergence": 8.873367954491702,
+        "founderShare": 0.0,
+        "sweepShare": 1.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 400000,
+        "rootMass": 732321.5,
+        "genomes": 57.5,
+        "divergence": 10.862364951729127,
+        "founderShare": 0.0,
+        "sweepShare": 1.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 500000,
+        "rootMass": 736948.5,
+        "genomes": 52.5,
+        "divergence": 11.74582641830437,
+        "founderShare": 0.0,
+        "sweepShare": 1.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 600000,
+        "rootMass": 734549.5,
+        "genomes": 60.0,
+        "divergence": 13.916520794245642,
+        "founderShare": 0.0,
+        "sweepShare": 1.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 700000,
+        "rootMass": 740145.0,
+        "genomes": 64.5,
+        "divergence": 16.69384535999129,
+        "founderShare": 0.0,
+        "sweepShare": 1.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 800000,
+        "rootMass": 742821.0,
+        "genomes": 65.0,
+        "divergence": 18.261968041283787,
+        "founderShare": 0.0,
+        "sweepShare": 1.0,
+        "sweepShareMin": 0.002903579377727569
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 900000,
+        "rootMass": 753069.0,
+        "genomes": 68.0,
+        "divergence": 20.397648955208716,
+        "founderShare": 0.0,
+        "sweepShare": 1.0,
+        "sweepShareMin": 0.07437968940614358
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "normal",
+        "step": 1000000,
+        "rootMass": 752769.0,
+        "genomes": 68.0,
+        "divergence": 22.1971159433112,
+        "founderShare": 0.0,
+        "sweepShare": 1.0,
+        "sweepShareMin": 0.30253966276544003
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 0,
+        "rootMass": 28463.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 100000,
+        "rootMass": 639121.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 200000,
+        "rootMass": 642248.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 300000,
+        "rootMass": 647447.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 400000,
+        "rootMass": 648427.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 500000,
+        "rootMass": 656306.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 600000,
+        "rootMass": 642980.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 700000,
+        "rootMass": 640532.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 800000,
+        "rootMass": 635400.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 900000,
+        "rootMass": 646334.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-33",
+        "mode": "off",
+        "step": 1000000,
+        "rootMass": 644510.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 0,
+        "rootMass": 28463.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 100000,
+        "rootMass": 1703472.0,
+        "genomes": 39.5,
+        "divergence": 1.4112310976229974,
+        "founderShare": 0.23513308414677517,
+        "sweepShare": 0.025248533796992843,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 200000,
+        "rootMass": 1996110.0,
+        "genomes": 218.0,
+        "divergence": 2.9460848839414737,
+        "founderShare": 0.01522541682393397,
+        "sweepShare": 0.5584925423704599,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 300000,
+        "rootMass": 2043069.0,
+        "genomes": 396.5,
+        "divergence": 6.154663577526527,
+        "founderShare": 0.0,
+        "sweepShare": 0.7418140164339855,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 400000,
+        "rootMass": 2041304.0,
+        "genomes": 451.5,
+        "divergence": 9.00273373099574,
+        "founderShare": 0.0,
+        "sweepShare": 0.7971617012756507,
+        "sweepShareMin": 0.0008646004237193785
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 500000,
+        "rootMass": 2047025.0,
+        "genomes": 443.0,
+        "divergence": 11.818657220134401,
+        "founderShare": 0.0,
+        "sweepShare": 0.8493775538479472,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 600000,
+        "rootMass": 2048922.0,
+        "genomes": 419.0,
+        "divergence": 14.534922855484115,
+        "founderShare": 0.0,
+        "sweepShare": 0.9297794351787815,
+        "sweepShareMin": 0.7198994802186685
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 700000,
+        "rootMass": 2053650.0,
+        "genomes": 453.0,
+        "divergence": 17.19798020999373,
+        "founderShare": 0.0,
+        "sweepShare": 0.9353454083282047,
+        "sweepShareMin": 0.7585372869714279
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 800000,
+        "rootMass": 2052415.0,
+        "genomes": 463.5,
+        "divergence": 20.000079326287775,
+        "founderShare": 0.0,
+        "sweepShare": 0.930089553246328,
+        "sweepShareMin": 0.7561179741185223
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 900000,
+        "rootMass": 2054083.5,
+        "genomes": 447.5,
+        "divergence": 22.713268010768644,
+        "founderShare": 0.0,
+        "sweepShare": 0.9355062409147235,
+        "sweepShareMin": 0.7754453675182776
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "normal",
+        "step": 1000000,
+        "rootMass": 2056566.5,
+        "genomes": 449.5,
+        "divergence": 25.450102723490602,
+        "founderShare": 0.0,
+        "sweepShare": 0.9501210428918008,
+        "sweepShareMin": 0.7586321939813189
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 0,
+        "rootMass": 28463.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 100000,
+        "rootMass": 1612176.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 200000,
+        "rootMass": 1633915.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 300000,
+        "rootMass": 1626909.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 400000,
+        "rootMass": 1619463.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 500000,
+        "rootMass": 1637279.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 600000,
+        "rootMass": 1648264.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 700000,
+        "rootMass": 1624591.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 800000,
+        "rootMass": 1626815.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 900000,
+        "rootMass": 1629247.5,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "mode": "off",
+        "step": 1000000,
+        "rootMass": 1631565.0,
+        "genomes": 1.0,
+        "divergence": 0.0,
+        "founderShare": 1.0,
+        "sweepShare": 0.0,
+        "sweepShareMin": 0.0
+      }
+    ]
+  }
+}
