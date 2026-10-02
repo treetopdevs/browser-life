@@ -162,6 +162,12 @@ export const P1_SEED_BASE = 4_800_001;
  * arm writes one row per pond), so a duplicated recipient hides a missing pond behind the right row count, and the per-cycle
  * counts, sums and maps below would aggregate it without error. `add` throws on a repeat as it arrives, `finish` on a gap;
  * only one small set per cycle is held.
+ *
+ * Limit: this checks identity within each cycle, not completeness. It does not know the configured pond count (meta.side
+ * squared) or how many cycles the run recorded (done.cycles), so a cycle cut short at its end (recipients 0..62 of 64) or an
+ * absent cycle passes. That is acceptable while ponds.tsv feeds only descriptive readouts, written by one tool and read once
+ * the run is finished. A report stage whose decision rests on ponds.tsv should pass those two numbers in and require them in
+ * `finish`: on all 79 recorded histories every cycle has exactly side^2 rows and the last cycle equals done.cycles.
  */
 export class RecipientGuard {
   private seen = new Map<number, Set<number>>();
