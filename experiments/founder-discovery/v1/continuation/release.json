@@ -1,0 +1,11 @@
+{
+  "format": "discovery-continuation-release/v1",
+  "status": "RELEASED",
+  "candidatePath": "experiments/founder-discovery/v1/continuation/candidate.json",
+  "candidateSha256": "6ff0266acf75807672d846b921cbbb989d7577a6bb459609cdc137f0d24e255d",
+  "reviewedBy": "Nicholas Zographos (user, authorized in chat on 2026-10-02: start the run once the reviews come back clear), after two independent read-only reviews, the second CLEAR",
+  "reviewReference": "experiments/founder-discovery/v1/continuation/reviews.json; protocol section 'Review and rework'",
+  "reviewedAt": "2026-10-02T20:02:47.472862+00:00",
+  "authorizes": "Local GPU execution of the pinned roster only: 1,536 new competitions, 8 replays and their audits, bounded by the candidate's budget of 30,000 s and 70 invocations of at most 600 s each, on owned hardware at $0. Authorizes no other simulation, assay, protocol change or analysis change.",
+  "notStarted": true
+}

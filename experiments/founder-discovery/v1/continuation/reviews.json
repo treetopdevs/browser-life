@@ -1,0 +1,409 @@
+{
+  "format": "founder-discovery-continuation-reviews-v1",
+  "rounds": [
+    {
+      "round": 1,
+      "date": "2026-10-02",
+      "scope": "protocol draft, generator, runner, analyzer, roster (independent-draw design)",
+      "review": {
+        "format": "founder-discovery-continuation-prefreeze-review-v1",
+        "verdict": "CLEAR-WITH-FIXES",
+        "findings": [
+          {
+            "id": "F1",
+            "severity": "high",
+            "area": "design: H and L are collateral relatives, so the null overstates the post-midpoint change",
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 9,
+            "detail": "H is an independent mass-weighted draw from the 500k population and is paired with L only by draw index (tools/lib/discovery-continuation.ts:243). Reconstructing lineages from the recorded mutation-parent edges (own script, ancestry.ts) shows that in only 7 of 64 pairs (cluster-33: 6, cluster-4: 1) is H on L's lineage. In 57 pairs H is a collateral relative: 32 meet only at the founder lineage (cluster-16 16/16, cluster-4 13/16, cluster-139 3/16) and 25 at a later ancestor (median MRCA birth about 136k steps). The H->L difference is therefore the symmetric difference of two independent branches (H's private changes undone plus L's private changes), mean 28.9 slots (cluster-16 43.4, cluster-139 30.8, cluster-4 24.6, cluster-33 16.8), whereas L's own change since its 500k ancestor averages 12.4 slots (cluster-16 16.2, cluster-139 15.1, cluster-33 10.6, cluster-4 7.8). The type-matched null (lib:258-262) copies the whole symmetric difference onto H, so N carries about 2.3x (1.6x to 3.1x by founder) the change that L actually accumulated since the midpoint, keeps all of H's private changes and cannot model their reversal. The protocol's question and null description ('random mutants of the midpoint genome carrying the same amount and kind of genetic change', 'change since the midpoint') are not true of the roster. L-N > 0 can arise with no adaptation (N is a degraded H), and L vs H measures a population-level difference between typical 1M and typical 500k members, which can also reflect standing diversity and non-transitivity between collaterals. The estimand is defensible as a population comparison but is not what the text says, and the null is not the divergence control's ancestor-descendant null.",
+            "fix": "Preferred: pair each L draw with its own 500k ancestor A(L): the lineage on L's path with the largest birth step <= 500k. It is always alive at the 500k state (it has a child born later), and I verified A(L) exists as a single genome for all 64 L draws. H=A(L) makes every pair ancestor-descendant, the null the exact analogue of the divergence control, and the H sampling seeds unnecessary; the roster, runner and 1,536-competition budget are otherwise unchanged. It needs a new generator step, tests and a re-review. Minimum if the independent-draw design is kept: rewrite the question, the null and the M4 claims to state the population-level estimand and that the null overstates the change; compute per-pair relation (ancestral vs collateral, MRCA birth, A->L distance) in the generator from existing edges and put it in the roster; pre-register descriptive stratification by relation; optionally add 512 descriptive L-vs-A(L) competitions (about 1.8 h) as a direct within-lineage measure."
+          },
+          {
+            "id": "F2",
+            "severity": "high",
+            "area": "protocol: M4 table over-reads 'not met' and omits outcomes",
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 68,
+            "detail": "Row 'Not met, L ~ H' concludes 'adaptation stalls ... supports the registered pivot', but (a) L ~ H has no operational definition anywhere in the protocol or analyzer; (b) the analyzer's own reading says not-met is 'not evidence that adaptation stopped' (lib:436); (c) the design has little power for moderate effects. From the divergence control's per-draw scores the within-seed SD of one evolved draw is 0.02/0.28/0.19/0.22 and of one matched mutant 0.54/0.66/0.15/0.34 (cluster-33/4/16/139), so a unit contrast (2 L draws, 4 nulls) has SD about 0.15-0.4. With the 0.10 per-seed bar and 7/8 rule, P(met) at a true contrast of 0.3 is about 0.29 (SD 0.35) to 0.47 (SD 0.25) to 0.84 (SD 0.15); at 0.5 it is 0.73-1.0; at 0.2 it is 0.12-0.36. A 'not met' is therefore the expected outcome for real but moderate continued adaptation, and cannot support the physics-change pivot. Also missing: a row for 'met, purifying only' (a reachable outcome with L ~ 0 when N is degraded); a rule for which founders decide M4 (line 63 says cluster-33 matters most, line 69 says mixed means no pivot); and what a positive cluster-16 reading means (the stated no-adaptation reference).",
+            "fix": "Before freezing: (1) replace row 2 with 'Not met: inconclusive for M4, no stall claim' unless an equivalence rule is pre-registered (for example founder-level L point estimate and unit-bootstrap upper bound both below a stated value); (2) add rows for purifying-only and for a cluster-16 reading of continued/partly ('assay or design is not detecting adaptation; other readings uninterpretable'); (3) state which founder tests the M4 table is applied to and how mixed founder results combine; (4) add one sentence that the study can only detect large continued gains (unit contrast of roughly 0.4-0.5 or more) in typical seeds."
+          },
+          {
+            "id": "F3",
+            "severity": "medium",
+            "area": "confirmatory criterion does not itself encode progress",
+            "file": "tools/lib/discovery-continuation.ts",
+            "line": 494,
+            "detail": "'Met' is 7/8 units with L-N lower bound > 0.10 (lib:494, 512). Progress (L vs H > 0.10) enters only through the founder-level mean L lower bound in the reading (lib:438), not per seed. Because N is a degraded H, L-N can exceed 0.10 in 7/8 seeds with L about 0 ('purifying only', lib:438-440), and a founder can be 'continued' on a mean L that one or two large seeds carry (in the divergence control cluster-4 seed 6410008 had E=-0.74 against its founder). The protocol's headline question (do 1M descendants beat 500k descendants by more than random mutants) reads as if 'met' implied progress.",
+            "fix": "Report, and preferably include in the 'continued' reading, the number of seeds with L vs H lower bound > 0.10 (same 7/8 rule), or state explicitly that 'met' alone means only 'better than a degraded midpoint'."
+          },
+          {
+            "id": "F4",
+            "severity": "medium",
+            "area": "design: no control for standing diversity or non-transitivity",
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 33,
+            "detail": "The 500k and 1M populations are mutant swarms (distinct genomes at 500k: cluster-33 45-58, cluster-4 154-250, cluster-16 386-410, cluster-139 64-471; no genome above 6% in cluster-16 and none above 1.3% in 5 of 8 cluster-139 seeds). A randomly drawn H is one member of a cloud, and L vs H mixes adaptation with member-to-member variation. Nothing measures the exchangeable baseline (two same-time draws), so the spread of L vs H cannot be compared with pure sampling noise.",
+            "fix": "Optional but cheap: 256 competitions of H0 vs H1 (32 units x 8, about 0.9 h) and, if desired, L0 vs L1, give an empirical noise floor and a same-time null; or rely on the ancestor pairing in F1."
+          },
+          {
+            "id": "F5",
+            "severity": "medium",
+            "area": "cluster-139 and cluster-33 sweep status at 500k is stated incorrectly or loosely",
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 56,
+            "detail": "From roster.json (sweep.ts): cluster-33 H draws carry the raised b2[PHOTO] (>62) in 14/16 draws (seed 6410002 neither H nor L carries it); L carries a further increase in seed 6410006 (99->119, 82->99). cluster-139: H carries the mu sweep (>=45) in 14/16 draws; only seed 6410007 (both draws) has H=33 and L=47, a sweep that falls after 500k; in seeds 6410002 (both draws) and 6410008 (draw 1) L has mu=33 while H has 54-55, i.e. L has lost the swept allele. So the 'sweep tail' worry is confined to one cluster-139 seed, and the larger interpretive problem is reversal or alternative routes, which an L-N contrast cannot call adaptation. Separately, the type-matched null copies each mu change with a random sign, so about half of the nulls of seed 6410007 reproduce the sweep and half of seed 6410002's reproduce L's mu=33 (the mirror-sign bias already documented for the divergence control).",
+            "fix": "State these counts in the protocol as descriptive pre-run facts, say cluster-139 is not read for M4 'after the first sweep', and compute the sweep-carriage table in the analyzer (F6)."
+          },
+          {
+            "id": "F6",
+            "severity": "medium",
+            "area": "descriptive items listed in the protocol have no code",
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 53,
+            "detail": "The protocol's 'Descriptive only' list (H carries the swept change; abundance at 500k and 1M from the exploration trajectory) is not produced by analyzeContinuation or discovery_continuation_analyze.ts (lib:447-586; analyze.ts:22-54). Writing that code after the results exist makes it post hoc.",
+            "fix": "Add roster-only functions (sweep carriage, relation classification, abundance from trajectory.jsonl with its hash) to the analyzer before the candidate is built; the analyzer is outside the study identity, so a later fix does not orphan results."
+          },
+          {
+            "id": "F7",
+            "severity": "low",
+            "area": "sampling: restated sampler and truncated-chain loader",
+            "file": "tools/lib/discovery-continuation.ts",
+            "line": 63,
+            "detail": "sampleState equals the frozen computation for everything that determines the draws (founder root, rootMasses with ancestryResolver, sampleRoot with Random(seed).int53). I reproduced it with independent code: all 32 histories' midpoint draws, rootMass, distinct-genome counts, state hashes, receipt SHA-256s and seeds match roster.json, and the same code reproduces all 64 frozen 100k and 1M samples including abundance-table order. Omitted from sampleDiscoveryEvolution: validateEdges' id-pattern/leading-zero and lineageKey round-trip checks, and the per-occupied-cell canonical re-encoding and hex round-trip checks. validateCheckpointBiology (run by the loader at 500k) covers edge shape/causality/cycles/conflicts, founder-lineage genome identity and the founding-root check; rootMasses covers padding and conflicting lineage words. Uncovered at 500k only: the canonical encode/decode round trip of every occupied cell, which the hash-pinned state makes a simulator invariant. A malformed edge id would produce unknown ancestry and refuse the draw, not change it silently. Truncated chain: tampered 500k and 300k checkpoints, an edited edge delta, a missing triple, a swapped receipt and a non-checkpoint step are all refused (negative.ts); the 500k receipt is also anchored by the 1M-chain load done first. One gap: verifyCheckpointInventory runs on the scratch hard-link directory, so a stray file in the real history directory is not detected (tested: no error).",
+            "fix": "Optional hardening: call the frozen sampleDiscoveryEvolution on { ...state, step: 1_000_000 } (all edges are <= 500k so validateEdges passes) and use its draws, which runs every frozen check on the 500k state; optionally run verifyCheckpointInventory on the real history directory."
+          },
+          {
+            "id": "F8",
+            "severity": "low",
+            "area": "candidate can silently skip re-derivation",
+            "file": "tools/discovery_continuation_run.ts",
+            "line": 172,
+            "detail": "candidate(..., only) re-derives a subset of histories and the resulting candidate does not record that. The CLI never passes it (main block), so this is a misuse hazard only.",
+            "fix": "Record rederivedHistories (must be 32) in the candidate and check it in released(), or drop the parameter outside tests."
+          },
+          {
+            "id": "F9",
+            "severity": "low",
+            "area": "shared core writes divergence-control format strings",
+            "file": "tools/discovery_divergence_control_run.ts",
+            "line": 162,
+            "detail": "Provenance ('discovery-divergence-control-provenance/v2', line 162) and invocation receipts ('discovery-divergence-control-invocation/v2', line 540) are written into runs/founder-discovery-continuation-v1. Confusion is prevented by the output directory (released() requires outputRel == runs/founder-discovery-continuation-v1, tested), the formats of release and candidate, and the study identity bound into every provenance, replay and audit record and checked by collect(). No path writes into the divergence output directory. I confirmed the divergence release still verifies and that all four divergence sources match the hashes pinned in its candidate.",
+            "fix": "Add one sentence to the protocol and findings that the invocation and provenance records of this study carry the divergence-control format names by design."
+          },
+          {
+            "id": "F10",
+            "severity": "low",
+            "area": "protocol/forecast inconsistency",
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 78,
+            "detail": "The protocol says 12.7 s per competition; resource-forecast.json bases 19,580 s on 12.38 s measured over the divergence run (15,307 s / 1,236 competitions). Cap 30,000 s is 1.53x the projection, adequate.",
+            "fix": "Use one number (12.4 s) in the protocol."
+          },
+          {
+            "id": "F11",
+            "severity": "low",
+            "area": "test coverage gaps",
+            "file": "tools/test/discovery-continuation-run.deno.ts",
+            "line": 95,
+            "detail": "Not covered: plan() refusals (I checked by hand: drifted report and an existing roster are refused before any work); midpointDraw failure paths; pin drift for midpoint receipts and forecast; the candidate re-derivation for all 32 histories (tests use ONLY=1 history; the full re-derivation takes roughly 7-10 min); the status/supervise/stop/resolve/run glue and the real GPU executor (these functions are textually identical to the divergence runner's by diff, which two reviews exercised in scratch copies); discovery_continuation_analyze.ts analyze() wrapper; the 'continued vs purifying' precedence edge. The run test uses a fake executor that builds all 1,536 competition worlds, so every request's genomes parse, but no GPU competition with a non-founder ancestor has ever run.",
+            "fix": "Add a plan-refusal test and a receipt-pin-drift test. A one-competition check of a continuation request (an N-vs-H configuration) on the GPU (about 12 s) before release would close the GPU-path gap; the first invocation's 8 replays use founder-ancestor requests only. executeAssay has no founder gate (tools/discovery_improvement.ts:557-640), so I expect it to pass."
+          },
+          {
+            "id": "F12",
+            "severity": "low",
+            "area": "scratch directory inside the frozen data tree",
+            "file": "tools/discovery_continuation.ts",
+            "line": 32,
+            "detail": "midpoints() creates continuation-scratch-* under runs/founder-discovery-improvement-consolidated-v1/ (I saw it present during plan). A killed generator or candidate leaves a stray directory beside histories/ in the frozen tree, where inventory scripts may treat it as foreign. Hard links make deletion safe for the data.",
+            "fix": "Create the scratch under a separate runs/ directory on the same filesystem (not the study output directory, whose contents invocation() validates)."
+          },
+          {
+            "id": "F13",
+            "severity": "low",
+            "area": "independence and reading precedence",
+            "file": "tools/lib/discovery-continuation.ts",
+            "line": 438,
+            "detail": "Units are not independent draws: two of 32 units have H0 == H1 (cluster-33 seed 6410008, cluster-4 seed 6410005), so their two pairs share H; all units share the same four assay seeds (the divergence review found one assay seed flipping cluster-4's pass), so the 9/256 tail is optimistic. readContinuation tests 'purifying only' (L lower <= 0.10) before 'partly divergence', whereas the protocol states partly as 'met and N lower > 0.10' without an L condition; the two differ only in practically unreachable cases. Float sums are compared with > 0.10 (exact ties cannot occur for rational scores).",
+            "fix": "State the evaluation order in the protocol and the shared-H/shared-assay-seed caveat next to the 9/256 statement."
+          }
+        ],
+        "independentChecks": [
+          {
+            "name": "midpoint draws re-derived (32 histories)",
+            "result": "pass",
+            "detail": "Own TypeScript path (own Mulberry32, ancestry walk, mass table; only @bl/schema decode) on checkpoint-500000 with receipt SHA and state-hash checks: both H draws, rootMass, distinct genomes, state hash, receipt SHA-256 and sampling seeds match roster.json for all 32 normal histories (rederive.ts, rederive-all.jsonl)."
+          },
+          {
+            "name": "own sampler vs frozen samples",
+            "result": "pass",
+            "detail": "Same independent code reproduces all 64 frozen receipt samples (100k and 1M: draws, rootMass, full abundance table in order) (frozen-check.ts)."
+          },
+          {
+            "name": "generator CLI regenerates roster.json",
+            "result": "pass",
+            "detail": "tools/discovery_continuation.ts plan wrote a roster byte-identical to experiments/founder-discovery/v1/continuation/roster.json (SHA-256 5601aea5...8a16), including the sampler proof on all 32 histories. It refuses a drifted report and an existing roster."
+          },
+          {
+            "name": "128 null genomes regenerated",
+            "result": "pass",
+            "detail": "Independent Python port of Mulberry32 and typeMatchedMutant, applied to H (ancestorHex) toward L with seeds 6490100+j: all 128 hexes, magnitudes and parameter slots match (check_nulls.py)."
+          },
+          {
+            "name": "cache keys and pairing",
+            "result": "pass",
+            "detail": "All 1,536 assay keys and 192 per-genome key lists recomputed in Python from manifest.assayConfigs: 0 mismatches; 8/8 replay keys exist in the frozen report as scored observations; 0 overlap with frozen keys; L hexes equal the frozen 1M draws; pair k uses H draw k of the same history; sampling seeds 6490001-6490064 map to manifest order."
+          },
+          {
+            "name": "seed reservations",
+            "result": "pass",
+            "detail": "649xxxx appears nowhere else in the repository (one coincidental 7-digit value inside a flux array in a competition-pilot receipt); namespaces 641 evolution, 642 sampling, 643 assay, 644 pilot, 645 bootstrap, 646 engineering, 647 exploration, 648 divergence, 649 here. 6490001-064, 6490101-228, 6490300 are disjoint."
+          },
+          {
+            "name": "analysis re-implemented",
+            "result": "pass",
+            "detail": "Independent Python (exact rationals) reproduces unit, founder and pooled-block bounds, certification, 7/8 rule and readings from analyzeContinuation on 5 synthetic scenarios, including both-extinct and missing results (check_analysis.py): no mismatch."
+          },
+          {
+            "name": "tests",
+            "result": "pass",
+            "detail": "Continuation: 7 passed (2m41s). Divergence: 27 passed. discovery_divergence_control_run.ts verify on divergence-control/release.json: verified RELEASED. deno check on all new files passes. The four divergence sources match the hashes pinned in divergence-control/candidate.json."
+          },
+          {
+            "name": "runner glue equals divergence runner",
+            "result": "pass",
+            "detail": "By diff, frozenExecutor, run, supervise, count, recordedMismatch, exists, frozenReport and the main dispatch are identical to the divergence runner (only the usage string and an export on status differ)."
+          },
+          {
+            "name": "truncated-chain negatives",
+            "result": "pass",
+            "detail": "Flipped byte in 500k or 300k checkpoint, edited edge delta, missing triple, swapped receipt, non-checkpoint step: all refused. A stray file in the real history directory is not detected (see F7)."
+          },
+          {
+            "name": "ancestry of H relative to L (design check)",
+            "result": "info",
+            "detail": "7/64 ancestral; 57 collateral (32 MRCA at founder, 25 later); A(L) alive at 500k for all 64; mean H->L 28.9 slots vs A(L)->L 12.4 (ancestry.ts, ancestry.jsonl)."
+          }
+        ],
+        "designAssessment": "The code, roster and analysis are sound and independently reproduced, and nothing in the released-candidate path can confuse this study with the divergence control. The weaknesses are in what the experiment measures. (1) H and L are independent draws from two mutant swarms, collateral relatives in 57 of 64 pairs and meeting only at the founder lineage in 32; the H->L difference averages 28.9 slots against 12.4 slots that L actually accumulated since its own 500k ancestor, so the type-matched null applies about 2.3x the real post-midpoint change to H and cannot represent the reversal of H's private changes. The study measures 'typical 1M member vs typical 500k member, beyond a degraded H', not 'continued adaptation along a lineage'. Pairing each L with its own 500k ancestor (fully computable from existing checkpoints) makes the null the exact analogue of the divergence control and is my main recommendation; if declined, the protocol must say what is actually measured. (2) The confirmatory 7/8 L-N rule can be met with L about 0 (purifying only), and cannot be met reliably for moderate real effects: with unit-contrast SD about 0.15-0.4, P(met) is about 0.3-0.8 at a true contrast of 0.3 and about 0.1-0.4 at 0.2, so 'not met' is weak evidence and the M4 row that reads it as 'adaptation stalls, supporting the pivot' is not supported. The M4 table also lacks a purifying-only row, a founder-selection rule and a cluster-16 failure rule. (3) The swept-allele tail matters for one cluster-139 seed (6410007: H=33, L=47) and the opposite problem, L reverting to mu=33, appears in two cluster-139 seeds; cluster-33 is a clean post-sweep case (14/16 H draws already carry it), so the decision effectively rests on a single founder's test. (4) Power and independence: two pairs per unit, two units with H0==H1, four shared assay seeds, and single competitions that are position-by-seed noisy for near-clones (positions cancel exactly only for phenotypically identical genomes). The 500k midpoint is defensible (cluster-33 sweep done by 200-300k; 14/16 cluster-139 H draws swept) but 12 slots of true change may be too small to move a pairwise score by 0.1, so the study most likely tests only for large continued gains. Outcomes most at risk of misreading: 'not met' as stall; 'continued' in cluster-139 or cluster-4 where differences come from reversals or one large seed; a positive cluster-16 reading with no stated meaning.",
+        "limitations": "No GPU work, competitions or protocol-stage writes were run. Read-only, with scratch hard links under runs/ created and removed by the tests and by one regeneration of the roster (output in my scratch folder). I did not re-verify the 54 frozen sources, the physical correctness of the 500k states beyond the frozen loader's receipt/hash/biology checks, or the competition executor on a non-founder ancestor. Lineage relationships come from the recorded mutation-parent edges and 100k-granular checkpoints; an ancestor lineage with a later child must be alive at 500k, and every A(L) was found there. Power figures are rough: unit-contrast SD is taken from the divergence control's per-draw dispersion (different comparison) and not from any continuation data. Disclosure: a mistyped loop of mine briefly wrote one scratch file named 'undefined' (synthetic analysis outputs, ~200 KB) into the repository root at 14:55; I deleted it and confirmed that no other file in the repository changed because of this review. Files being edited by the other engineer (endpoints.ts, analyze.ts, nullcal.ts, experiments/test) were ignored."
+      },
+      "resolution": "F1 fixed by ancestor pairing; F2 M4 table rewritten with power statement; F3 per-seed late-certified count in the reading; F5 pre-run facts in the protocol; F6 roster description computed before results; F8 re-derivation recorded and enforced; F9 format-name note; F10 unified 12.4 s; F11 plan-refusal and pin-drift tests; F12 scratch moved out of the frozen tree; F13 reading order and independence caveat stated; F4 not adopted (answers the replaced design); F7 moot (no sampling at 500k)."
+    },
+    {
+      "round": 2,
+      "date": "2026-10-02",
+      "scope": "rework: ancestor pairing, readings, M4 table, roster 988e61fd",
+      "review": {
+        "format": "founder-discovery-continuation-prefreeze-review-v1",
+        "round": 2,
+        "verdict": "CLEAR",
+        "roundOneFindings": [
+          {
+            "id": "F1",
+            "status": "fixed",
+            "evidence": "Each L is now paired with its own 500k ancestor. My own code path (ancestry-r2.ts: reads receipts, edge deltas and checkpoints directly, shares only @bl/schema decode) re-derived all 64 pairs: L lineage, ancestor lineage, ancestor genome, generations, lineage masses and H-to-L slot change all equal roster.json (0 mismatches). No lineage between L and A was born at or before 500k, so the H-to-L change is exactly the post-500k change along L's own lineage. The slot change never exceeds the generations walked (difference -3..0), which would not hold for a wrong parent path. The null is now the exact analogue of the divergence control's ancestor-descendant null."
+          },
+          {
+            "id": "F2",
+            "status": "fixed",
+            "evidence": "Protocol 'What the outcomes mean for M4' now reads 'not met' as inconclusive with no stall claim, has a row for met-not-clearly-progressing (the purifying-only case), names cluster-33 as the deciding founder, gives a cluster-16 failure rule, and states power. I recomputed the power numbers (see N3): the statement is approximately right for SD about 0.25-0.3 and slightly optimistic at SD 0.4; wording nit only."
+          },
+          {
+            "id": "F3",
+            "status": "fixed",
+            "evidence": "lateCertified (unit late lower bound > 0.10) is computed per unit and counted per founder; readContinuation requires >= 7 of 8 for the 'continued' and 'partly' readings. My exact-rational Python re-implementation matches the TypeScript analyzer on 7 synthetic scenarios (random, noisy, one flat scenario per reading branch, missing, both-extinct, lumpy 6/7/8 late seeds, near-threshold): counts, readings, unit/founder/pooled bounds and bootstrap all agree to 1e-12."
+          },
+          {
+            "id": "F4",
+            "status": "fixed",
+            "evidence": "Not adopted, and the reason holds: the finding concerned a randomly drawn H being one member of a mutant swarm, which no longer applies when H is the ancestor of L on the same lineage. Residual interpretive limit (head-to-head non-transitivity) is not controllable cheaply and is not claimed against."
+          },
+          {
+            "id": "F5",
+            "status": "fixed",
+            "evidence": "The protocol's pre-run facts now describe the new pairing, and every number checks out against roster.json, describeRoster() output and my own state decoding: cluster-33 H carries b2[PHOTO] > 62 in 14/16 pairs, neither H nor L in seed 6410002, no gain or loss, one L raised further (99 to 119, seed 6410006); cluster-139 H carries mu in 11/16, L in 13/16, both pairs of seed 6410007 gained (33 to 47), neither carries it in seed 6410002 (both) and seed 6410008 (one pair); medians 10/7/17/14 slots (ranges 7-15, 4-16, 5-27, 8-26); founder-lineage mass means 0.734M to 0.828M, 1.007M to 1.066M, 2.031M to 2.040M, 1.999M to 2.057M."
+          },
+          {
+            "id": "F6",
+            "status": "fixed",
+            "evidence": "describeRoster() and analyzeContinuation().descriptive.roster compute every descriptive item listed in the protocol from the roster alone, before any result exists. Independently recomputed founder-lineage masses (500k and 1M) and distinct-genome counts at 500k from the checkpoints for all 32 histories: all equal the roster."
+          },
+          {
+            "id": "F7",
+            "status": "fixed",
+            "evidence": "Moot: there is no sampling at 500k any more; ancestors come from the lineage table of the state loaded by the frozen loader on hard links truncated at 500k. Residual: verifyCheckpointInventory runs on the scratch directory, so a stray file in the real history directory would not be noticed. It cannot affect results (the run never reads histories)."
+          },
+          {
+            "id": "F8",
+            "status": "fixed",
+            "evidence": "candidate() records rederivedHistories and released() requires it to equal the roster's 32 histories in order and requires 64 midpoint receipt pins; the run test shows a one-history candidate is refused ('did not re-derive every history'). The CLI path never passes the 'only' argument. Residual hardening only: see N4."
+          },
+          {
+            "id": "F9",
+            "status": "fixed",
+            "evidence": "Protocol line 53 states that invocation and provenance records carry the divergence-control format names by design and names what keeps the studies apart. Verified: released() requires format discovery-continuation-release/v1 and candidate/v1, outputRel == runs/founder-discovery-continuation-v1 (test rejects the divergence output dir), study identity is bound into every provenance, replay and audit record and checked by collect(). The glue code (frozenExecutor, status, run, supervise, resolve, stop, dispatch) is identical to the divergence runner by diff apart from the child script path in supervise and a local copy of recordedMismatch."
+          },
+          {
+            "id": "F10",
+            "status": "fixed",
+            "evidence": "Protocol and resource-forecast.json both use 12.4 s per competition. Re-derived from the divergence invocation records: 28 invocations, 15,307.339 s charged, 1,200 new + 8 replays + 28 audits = 1,236 competitions, 12.3846 s each; projection (1,536 + 8 + 37) x 12.3846 = 19,580 s. Cap 30,000 s is 1.53x."
+          },
+          {
+            "id": "F11",
+            "status": "partial",
+            "evidence": "Added: plan() refusal test (drifted report, existing roster), midpoint-receipt pin drift test, rederivedHistories test, ancestorIn test, describeRoster test, per-seed reading tests. Still open, and acknowledged in the protocol: no non-founder-ancestor competition has run on the GPU (the 8 replays use founder ancestors only), and the full 32-history candidate path is not exercised by tests (it is the same ancestry() code that plan runs, which I did run in full and which regenerated the roster byte for byte). The residual cost of a GPU-path failure is bounded: one failed invocation (<= 600 s charge), supervision stops, no result is affected (see N5)."
+          },
+          {
+            "id": "F12",
+            "status": "fixed",
+            "evidence": "Scratch hard links are created in runs/continuation-scratch-* (directly under runs/, on the same volume, outside the frozen tree) and removed in a finally block. After my plan regeneration, my negative test and the test suites, no continuation-scratch directory remained."
+          },
+          {
+            "id": "F13",
+            "status": "fixed",
+            "evidence": "Protocol lists the five readings 'evaluated in this order' and the code's readContinuation follows exactly that order; the independence caveat (shared founder, shared assay seeds, shared H) is stated next to the 9/256 tail. See N1 for the quantification that is still missing."
+          }
+        ],
+        "findings": [
+          {
+            "id": "N1",
+            "severity": "low",
+            "requiredBeforeFreeze": false,
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 62,
+            "detail": "The independence caveat says a unit's two pairs 'can share an H'. They do in 10 of 32 units: cluster-33 5/8 (seeds 6410001, 02, 04, 06, 08), cluster-4 3/8 (01, 03, 07), cluster-139 2/8 (02, 07), cluster-16 0/8. For the deciding founder, 5 of 8 units therefore rest on one 500k ancestor lineage with two late descendants and four nulls of that same ancestor. Estimation is not biased (contrast is paired through H), but information per unit is lower and the 9/256 tail is more optimistic than the generic caveat suggests.",
+            "fix": "Add one pre-run fact: both pairs of a unit share the same 500k ancestor lineage in 10 of 32 units (cluster-33 5/8, cluster-4 3/8, cluster-139 2/8, cluster-16 0/8)."
+          },
+          {
+            "id": "N2",
+            "severity": "low",
+            "requiredBeforeFreeze": false,
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 91,
+            "detail": "'cluster-33 decides. Its sweep was complete before 500k' is true for 7 of 8 seeds. In seed 6410002 neither H nor L carries the raised photosynthesis bias (both draws), and one pair (seed 6410006) raised it further after 500k (99 to 119). The pre-run facts state this correctly; the one-line rationale in the M4 section overstates it.",
+            "fix": "Say 'complete before 500k in 7 of 8 seeds (seed 6410002 never carried it)'."
+          },
+          {
+            "id": "N3",
+            "severity": "low",
+            "requiredBeforeFreeze": false,
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 83,
+            "detail": "Power statement. (a) The SD 0.15-0.4 is derived from founder-versus-descendant spread in the divergence control, where genome distance is larger. L-versus-H and N-versus-H are near-clone comparisons (4-27 differing slots); the divergence findings note that competing identical genomes gives |score| averaging 0.69 per competition and that position cancellation is exact only for phenotypically identical genomes, so the spread here is unmeasured and may differ in either direction. (b) With 'certified' meaning observed mean > 0.10, P(7 of 8 seeds) for a true unit contrast d and unit SD s: s=0.15: 0.36 (d=0.2), 0.84 (0.3), 0.99 (0.4); s=0.25: 0.18, 0.47, 0.77, 0.93 (d=0.5); s=0.40: 0.11, 0.24, 0.43, 0.63 (d=0.5), 0.80 (0.6). 80% power needs d of about 0.29, 0.41, 0.60 for s of 0.15, 0.25, 0.40. 'About 0.4-0.5 or more reliably' is right for s up to about 0.3 and optimistic at 0.4. (c) The protocol's 'lower bound' wording can read as a confidence bound; it only widens for unavailable scores. There is no sampling uncertainty over the four assay seeds, so 'certified' means observed mean above 0.10 (the divergence findings state this caution; the continuation protocol does not).",
+            "fix": "Optional wording: 'the spread for near-clone pairs is unmeasured; with SD 0.15 / 0.25 / 0.4, 80% power needs a unit contrast of about 0.3 / 0.4 / 0.6', and 'bounds cover unavailable scores only; certified means the observed mean exceeds 0.10'. Does not change any decision rule, since the M4 table already treats every non-pass as inconclusive."
+          },
+          {
+            "id": "N4",
+            "severity": "low",
+            "requiredBeforeFreeze": false,
+            "file": "tools/discovery_continuation_run.ts",
+            "line": 325,
+            "detail": "released() re-hashes each pinned midpoint receipt against the candidate's own pin but never compares those pins with roster.histories[].receipt500kSha256 / receipt1MSha256, and rederivedHistories is a self-attested list (it equals the roster's order, which released() checks). A candidate produced by the CLI is consistent by construction, and the candidate hash is pinned by the release, so this is not exploitable without re-making the release. Hardening only.",
+            "fix": "Optional: in released(), assert pins[join(historiesDir-relative path)] equals the roster's receipt hashes for every history."
+          },
+          {
+            "id": "N5",
+            "severity": "low",
+            "requiredBeforeFreeze": false,
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 110,
+            "detail": "No competition with a non-founder ancestor has run on the GPU; the 8 opening replays and all audits use founder ancestors. I read executeAssay and discoveryCompetitionWorld: neither gates on founders, the world builder is genome-agnostic, every null genome is inside the slot bounds (checked), and the run test builds every one of the 1,536 requested worlds. A failure would surface in the first invocation (<= 600 s charge, supervision stops, no result affected). I did no GPU work.",
+            "fix": "Optional: one non-study engineering competition (for example two frozen late draws of one unit in the ancestor role, with a fresh non-study seed) before release, about 12 s."
+          },
+          {
+            "id": "N6",
+            "severity": "low",
+            "requiredBeforeFreeze": false,
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 109,
+            "detail": "Operational. The ledger charges wall-clock time, so a sleeping host is charged and the supervisor's watchdog (reservation + 120 s) would terminate a child that overran because of sleep, stopping supervision. Concurrent GPU work during the 5.4 h run would also slow competitions toward the 30,000 s cap (1.53x slack).",
+            "fix": "Run under caffeinate (or equivalent) and keep the GPU otherwise idle; no code change."
+          },
+          {
+            "id": "N7",
+            "severity": "low",
+            "requiredBeforeFreeze": false,
+            "file": "experiments/founder-discovery/v1/continuation-protocol.md",
+            "line": 99,
+            "detail": "'If cluster-16 reads continued or partly divergence, the assay or design is detecting something other than adaptation, since cluster-16 never improved over its founder.' Competition scores exist only at 100k and 1M, so a mid-run dip in cluster-16's competitive ability followed by recovery cannot be excluded; a positive cluster-16 reading would then be recovery, not an artefact. The rule is still a sensible guard.",
+            "fix": "Optional: add 'or recovery from an unmeasured mid-run decline' to the sentence."
+          },
+          {
+            "id": "N8",
+            "severity": "low",
+            "requiredBeforeFreeze": false,
+            "file": "tools/test/discovery-continuation.deno.ts",
+            "line": 1,
+            "detail": "Test and wording gaps, none affecting results. 'Present in the verified 500k state' is not defined in the protocol (code: lineage word nonzero and B+P mass > 0 at the checkpoint). No test pins the protocol's pre-run numbers or exercises the failure branch of the 1M-sample binding in historyAncestry; I exercised that branch by hand with a swapped, a wrong and a short draw list and all three throw 'late draws are not the verified 1M sample'.",
+            "fix": "Optional: define 'present' in the protocol; add a negative historyAncestry test and a test asserting the pre-run counts."
+          }
+        ],
+        "independentChecks": [
+          {
+            "name": "ancestor pairing, own code path (64 pairs, all 4 founders, all 32 histories)",
+            "result": "pass",
+            "detail": "ancestry-r2.ts reads receipts, edge deltas (10 per history, 208k-312k edges) and checkpoints at 500k and 1M directly; takes L from the receipt's verified 1M sample (not from the roster); groups lineages by genome; picks the heaviest carrier; walks recorded parents. All 64: carriers = 1; L lineage, ancestor lineage, ancestor genome (hex), generations, lineage masses and slot change equal roster.json. Receipt, checkpoint and edge-delta SHA-256s equal the receipts and the roster's pins."
+          },
+          {
+            "name": "definition: no overshoot, nearest born <= 500k equals nearest present",
+            "result": "pass",
+            "detail": "For all 64 paths the nearest path lineage with birth step (LIN_HI) <= 500000 is exactly the nearest path lineage present in the 500k state, and no path lineage between L and A was born <= 500k, so H-to-L is purely post-500k change. Over all 32 histories there is no lineage born <= 500k that is absent at 500k yet has a child born later (0 of 35..437 per history). Reason: a lineage id is minted only by a mutation event, so extinction is permanent and a parent must be alive when its child is born. 22 of 64 pairs have two or more path lineages alive at 500k; the walk takes the youngest, which is the right choice for a post-500k comparison."
+          },
+          {
+            "name": "edge map completeness and consistency",
+            "result": "pass",
+            "detail": "No duplicate or conflicting child across all 10 deltas of any history; every edge's child birth step lies inside its checkpoint interval and strictly after its parent's; every lineage alive at 500k or 1M reaches the founder through the map (0 unresolved); delta SHA-256s equal the receipts. The slot change between L and its ancestor never exceeds the number of generations walked (difference -3..0 over 64 pairs), which a wrong parent chain would break (round 1 measured about 29 slots between collateral relatives)."
+          },
+          {
+            "name": "L identity tied to the verified 1M sample",
+            "result": "pass",
+            "detail": "historyAncestry compares the report's late hexes, in draw order, with the loader-verified (receipt-recomputed) 1M sample. By hand: swapped, wrong and one-element lists all throw 'late draws are not the verified 1M sample'. The 8 replay originals' descendantHex/founderHex equal the roster's late hexes and the founder hexes."
+          },
+          {
+            "name": "plan regenerates roster.json byte-identically",
+            "result": "pass",
+            "detail": "deno run --no-lock -A tools/discovery_continuation.ts plan ... <scratch>/roster-regen.json finished (32 histories traced, about 5 minutes); cmp reports identical; SHA-256 988e61fdf6f3c504dbf874a9ac7d4e7794b7981877a9497ef9d5b5f116203bdd. Counts: 64 pairs, 64 late, 128 null, 1,536 new configurations, 0 shared, 0 overlapping the frozen study, 0 pairs with L = H, 8 replays."
+          },
+          {
+            "name": "128 null genomes regenerated, type-matching relative to H",
+            "result": "pass",
+            "detail": "Independent Python port of Mulberry32 and typeMatchedMutant applied to H (ancestorHex) toward L with seeds 6490100 + j (j = 2(k-1)+i+1): all 128 null hexes, weight magnitudes and parameter slots equal the roster. Property checks per null: sorted weight-change magnitudes equal L's, parameter slots and magnitudes equal L's, all slots within the simulator bounds, null differs from H and L. Seeds are exactly 6490101..6490228; 649xxxx appears nowhere else in tools, experiments (apart from one coincidental number in a competition-pilot receipt), packages, apps, docs or tests."
+          },
+          {
+            "name": "cache keys, replays, pairing",
+            "result": "pass",
+            "detail": "Recomputed all 192 genomes x 8 = 1,536 assay keys in Python from manifest.assayConfigs (JSON order preserved): 0 mismatches, all distinct, assay list equals first-seen order, 0 overlap with the frozen report's keys. Eight replay keys exist in the frozen report as scored observations (2 per founder: draw 0 of seed 6410001 and draw 1 of seed 6410008, assay seed 6430001/6430004), their stored results carry the roster's late hex and the founder hex. Pair k uses draw k and nulls 2k-1, 2k."
+          },
+          {
+            "name": "protocol pre-run facts",
+            "result": "pass",
+            "detail": "Every number in 'Pre-run facts' verified from roster.json, describeRoster() and (for masses and distinct genomes) my own decoding of all 64 checkpoints: single carrier and ancestor for all 64; no L = H; medians and ranges of slot change (10 [7-15], 7 [4-16], 17 [5-27], 14 [8-26]); generations similar (10, 8, 18, 14); cluster-33 sweep carriage 14/14/0/0 with the one further raise 99 to 119; cluster-139 11 (H), 13 (L), 2 gained, 0 lost, seed breakdown; masses 0.734M to 0.828M, 1.007M to 1.066M, 2.031M to 2.040M, 1.999M to 2.057M. Additional facts not in the protocol: 10 of 32 units share an H (N1); the ancestor lineage holds a median 0.39% (min 0.18%, max 18%) of the 500k founder-lineage mass."
+          },
+          {
+            "name": "analysis re-implemented (exact rationals) on 7 synthetic scenarios",
+            "result": "pass",
+            "detail": "an/gen.py builds score tables (random; late-leaning; one flat scenario per reading including technically-incomplete; 7 missing + 11 both-extinct; 40 both-extinct; lumpy with 6/7/8 late-certified seeds; near threshold). an/run.ts feeds them to analyzeContinuation; an/cmp.py recomputes with Fractions and my own Mulberry32. technicalComplete, missing count, per-unit and per-founder bounds and points, certified and late-certified counts, readings (all five branches reached), pooled blocks and both bootstrap intervals agree to 1e-12 in every scenario."
+          },
+          {
+            "name": "runner gating and glue",
+            "result": "pass",
+            "detail": "released(): formats, outputRel pinned to runs/founder-discovery-continuation-v1 (not the divergence directory), report hash, budget, study identity, host root, five pin hashes, 64 midpoint receipt hashes, every execution source (54 frozen + 11 runner sources), source manifest hash, rederivedHistories == roster order, 2 x 32 receipt pins, replay evidence. Tail of the file (frozenExecutor, count, status, run, supervise, resolve, stop, dispatch) diffs against the divergence runner only in the supervise child path, a local recordedMismatch copy and usage text. No tool path writes into the divergence output directory: run/stop/resolve use the release's outputRel; the shared invocation core only writes under that directory; plan/candidate write only to new paths given on the command line."
+          },
+          {
+            "name": "tests, checks, divergence integrity",
+            "result": "pass",
+            "detail": "Continuation tests: 10 passed, 0 failed (2m56s). Divergence tests: 27 passed, 0 failed (6s). deno run tools/discovery_divergence_control_run.ts verify experiments/founder-discovery/v1/divergence-control/release.json prints 'verified RELEASED'. deno check on tools/discovery_continuation.ts, tools/discovery_continuation_run.ts, tools/discovery_continuation_analyze.ts, tools/lib/discovery-continuation.ts passes. Divergence-control source files last modified 07:49-09:23, before the continuation work."
+          },
+          {
+            "name": "budget and forecast basis",
+            "result": "pass",
+            "detail": "Recomputed from runs/founder-discovery-divergence-control-v1/invocations: 28 invocations, 15,307.339 s, 1,236 competitions, 12.3846 s each. resource-forecast.json matches (projection 19,580 s = 5.44 h over about 35 invocations; cap 30,000 s, 70 invocations, 600 s each; storage estimate about 12 MB; free disk 222 GiB against the 20 GiB floor). No runs/founder-discovery-continuation-v1 directory exists yet."
+          }
+        ],
+        "designAssessment": "The rework fixes the one design flaw round 1 found. Each late genome is now compared with its own lineage's 500k ancestor, so the head-to-head is a within-lineage before/after, the change separating the pair is exactly the post-500k change, and the type-matched null is the same construct as the divergence control's. I re-derived all 64 pairs independently and could not break the definition: the nearest path lineage born at or before 500k is always the nearest one alive at 500k, the edge map is complete and unique, and the identity of L is bound to the loader-verified 1M sample. The reading logic, the per-seed late-certified count and the M4 table are consistent with each other and with the code, and the table is honest about what the study cannot show: no outcome supports a stall or the physics-change pivot, and only a clear positive reading for cluster-33 changes the picture. What the study measures is lineage-conditional progress: H is a small clade (median 0.4% of 500k mass) chosen because it gave rise to a 1M survivor, so L-versus-H is progress along realized successful lineages, not a population-average difference, which is what the question asks. The honest expectation is that the most likely result for the deciding founder is inconclusive: 14 of 16 cluster-33 ancestors already carry the sweep and the remaining post-500k change is 7-15 slots, so only a large late gain (unit contrast of roughly 0.4-0.6, depending on the unmeasured near-clone spread) passes the 7-of-8 rule. That is acceptable because the cost is compute on owned hardware at $0 and 5.4 hours, the table says so, and a pass would be informative. The remaining items (N1-N8) are wording, hardening and operational notes; none changes a decision rule or can cause a wrong or unrecoverable run. I would run it.",
+        "limitations": "No GPU work and none of the run, supervise, candidate, stop or resolve stages were executed; the candidate CLI's full 32-history path was therefore not run end to end, although the ancestry() call it relies on is the one plan() ran in full and it reproduced the roster byte for byte. I did not re-verify the 54 frozen sources beyond what the divergence verify command and the continuation tests check, nor the physical correctness of the checkpoints beyond the frozen loader (I used its output through the generator and my own reads of the same files with receipt hash checks, but did not re-simulate). The no-resurrection argument for lineages rests on how the simulator mints lineage ids; I confirmed it empirically on every edge of all 32 normal histories rather than from the simulator source. Power figures use a normal approximation of the unit contrast with the protocol's SD range and are indicative only; the real spread of near-clone comparisons is unknown until data exist. The competition world was read, not run, for a non-founder ancestor. Disclosure: my work created and removed temporary directories runs/continuation-scratch-* (my plan regeneration, one negative test of historyAncestry, and the test suites); none remains. No repository file was modified by me; files modified during the review (tools/analyze.ts, experiments/endpoints.ts, experiments/preregistration.md, docs/plan.md, runs/nullcal/*) belong to the other engineer's amendment and were ignored."
+      },
+      "resolution": "CLEAR, no required fix. N1, N2, N3, N6, N7 and N8's definition adopted as protocol wording before freezing; N4, N5 and N8's test not adopted (reasons in the protocol)."
+    }
+  ]
+}

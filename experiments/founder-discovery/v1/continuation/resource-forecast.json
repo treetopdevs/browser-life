@@ -1,0 +1,28 @@
+{
+  "format": "discovery-continuation-resource-forecast/v1",
+  "basis": {
+    "divergenceControlRun": {
+      "path": "runs/founder-discovery-divergence-control-v1/invocations",
+      "invocations": 28,
+      "chargedSeconds": 15307.339000463486,
+      "competitions": 1236,
+      "secondsPerCompetition": 12.384578479339389,
+      "note": "Measured on this Mac with the same frozen executor and invocation core: 1,200 new competitions, 8 replays and one audit per invocation, including all per-invocation overhead."
+    }
+  },
+  "configurations": {
+    "new": 1536,
+    "replay": 8,
+    "auditsEstimate": 37
+  },
+  "projectedSeconds": 19580.0,
+  "projectedHours": 5.44,
+  "invocationSeconds": 600,
+  "invocationsEstimate": 35,
+  "capSeconds": 30000,
+  "maxInvocations": 70,
+  "minimumFreeBytes": 21474836480,
+  "storageEstimateBytes": 12279611,
+  "paidUSD": 0,
+  "limitation": "A projection from one completed run on this machine, not a guarantee. A failed invocation keeps its full 600-second charge."
+}
