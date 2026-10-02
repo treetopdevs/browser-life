@@ -1,0 +1,135 @@
+{
+  "format": "m4-growth-precision-review/v1",
+  "reviewedCommit": "ff7e1e319d0d432400b8a734d3347487ad0f4292",
+  "manifestSha256": "ffbdf6104e3722960c9c6ad9f27193a12306da37876a51ccad386c7dd7323907",
+  "reviewedAt": "2026-10-02",
+  "verdict": "CLEAR-WITH-FIXES",
+  "verdictSummary": "The design can answer its question and I found no defect in the frozen code, contract, manifest or numerics. Nothing bound by the manifest needs to change: manifest ffbdf610 can launch as frozen. One non-binding launch prerequisite (finding R1, the seed ledger entry) is required by the project's own rules; the remaining findings are notes for the launch record and results write-up. I did not run the scientific manifest and did not call any generator with master 650009003 or phase precision-extension.",
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "fix-before-launch",
+      "file": "docs/foundations-next-audit.md",
+      "line": 15,
+      "summary": "Master seed 650009003 is not in the common seed ledger, and the project rule is to record the exact manifest and output path there before any execution. This is a bookkeeping step that touches no manifest-bound file.",
+      "evidence": "docs/foundations-next-audit.md:15 ('Before an execution, save its exact manifest and output path to the seed ledger ... preserve consumed seeds') and docs/foundations-next-plan.md:38. ../browser-life-foundations/runs/foundations-next/seed-ledger-final-v1.json records 650009001 (reserved) and 650009002 (consumed, with planManifest, manifestSha256, output, scope, capSeconds); grep finds no 650009003 in any ledger or audit file. The protocol itself (line 31) says the coordinator registry was not reachable, so the local scan is not proof of global freshness.",
+      "recommendation": "Before launching, add a ledger record for 650009003: purpose 'M4 growth precision extension (endpoint-1 paired-null, 2 strata x 20,000 trials)', status 'reserved', planManifest experiments/m4/growth-precision-v1/manifest.json, manifestSha256 ffbdf6104e3722960c9c6ad9f27193a12306da37876a51ccad386c7dd7323907, output runs/m4-growth-precision-v1, capSecondsPerShard 10800, forecastSecondsPerShard 4200, 4 shards. Mark it 'consumed' at launch (preserve it after failure, per the rule). Retry the coordinator registry check if it is reachable. No re-plan or re-freeze is needed."
+    },
+    {
+      "id": "R2",
+      "severity": "note",
+      "file": "tools/m4-growth-precision.ts",
+      "line": 149,
+      "summary": "The protocol markdown, contract, driver and library are source-bound, and `report` re-verifies all 52 hashes. Recording the result inside the protocol (as the 2026-09-29 amendment did with its 'Result record' section), or any edit to a bound file or any new .ts file in packages/{schema,runner,metrics}/src while shards run, makes the run stop or `report` refuse with 'source drift'. The workspace is shared and active: commit f586e51c (joint-power) landed on top of the freeze while this review ran.",
+      "evidence": "manifest.json:48-51 bind experiments/amendments/2026-10-02-m4-growth-precision.md, m4-growth-precision-v1.ts, tools/lib/m4-growth-precision.ts, tools/m4-growth-precision.ts. tools/m4-growth-precision.ts:20-33 (sourceList/verifySources: every .ts in the three package dirs must be bound; any hash difference throws) and :115,:121,:149 (verification before and after each trial and at report). The seed-ledger note for 650009002 says 'no source edits while live', i.e. the same discipline.",
+      "recommendation": "Launch from a clean checkout or workspace of ff7e1e31 (or at least freeze edits to the bound files and packages/*/src while shards are live). Run `report` before touching any bound file. Write results in a new document (for example docs/m4-growth-precision-results.md) and never append to the bound protocol. A drift stop is recoverable by restoring the file and running --resume, but only while the shard's cap is not exhausted (R3). Commit or record the report.json hash and the four shard trialLogSha256 values at once, because runs/ is gitignored."
+    },
+    {
+      "id": "R3",
+      "severity": "note",
+      "file": "experiments/amendments/2026-10-02-m4-growth-precision.md",
+      "line": 45,
+      "summary": "The protocol does not say what a non-completed run means. Cap exhaustion, a killed writer (no terminal receipt, stale writer.lock) and a shard whose final trial straddles the cap are permanent dead ends under the existing resume rules, so `report` can never succeed. The outcome is then an undefined non-result.",
+      "evidence": "Engineering demonstration (cap 1 s): the shard stops with failure 'CPU budget exhausted inside trial', `--resume` throws 'cumulative calibration budget exhausted' and `report` throws 'shard 0 is not complete and authenticated'. By code: tools/m4-growth-precision.ts:132 turns an over-cap finish into failure even if every row was written, so complete=false although rows are complete (line 139); a killed writer leaves writer.lock (line 106) and a log hash that no receipt matches (resume check at line 95). The parent design (docs/m4-growth-amendment-design.md:57) only says such cases are 'refused pending explicit technical recovery'.",
+      "recommendation": "State in the launch record, before launch, that (a) any run that does not end with all four shards complete and authenticated is a non-result that is NOT a pass, with no top-up, no new seed and no pooling; (b) because every row is a deterministic function of its frozen identity, a shard with no authenticated terminal receipt may be deleted and re-run from trial 0 into a fresh shard directory without being resampling, and this must be disclosed. A restart can only turn a pass into a non-pass, never the reverse, so it creates no false-clearance path. Optionally consider a larger capSecondsPerShard if the machine is expected to stay heavily loaded (see R7); measured pace gives about 2.6x margin."
+    },
+    {
+      "id": "R4",
+      "severity": "note",
+      "file": "tools/test/fixtures/m4-growth-v4-paired-null-rows.json",
+      "line": 1,
+      "summary": "The committed byte-parity test is genuine but narrow: the fixture holds 4 parent rows (trials 0 and 1 of each preset), none with endpoint-1 support, so the supported path through runTrial is not exercised by the committed Deno test. I closed the gap myself (see independentChecks), so this is not a launch blocker. The protocol's wording ('reproduces the parent's validation rows byte for byte') is true for all 400 paired-null parent rows but the committed test only demonstrates 4.",
+      "evidence": "tools/test/m4-growth-precision.deno.ts:11-19 compares JSON.stringify of identity, endpoint2, endpoint1, endpoint1Method, jointPerPresetObserved and threshold for the 4 fixture rows. The fixture equals the corresponding rows of the parent trials.jsonl (SHA ee6808f0...). I ran all 400 parent pairedEndpoint1Null rows through runTrial('validation', 650009002, 64, ...) under Deno 2.9.7: 400/400 byte-identical, including the three endpoint-1-supported trials (gradient-m3 125; spots-m3 151 and 186).",
+      "recommendation": "Optional and non-binding (tests and fixtures are not manifest-bound, so no re-freeze): add gradient-m3 trial 125 and spots-m3 trials 151 and 186 to the fixture so the supported path and the tally definition are covered by the committed test."
+    },
+    {
+      "id": "R5",
+      "severity": "note",
+      "file": "experiments/amendments/2026-10-02-m4-growth-precision.md",
+      "line": 37,
+      "summary": "'No interim tallies' holds for the tool output only. shard-*/trials.jsonl is plain text on disk, and receipts are hash links, not signatures: an edit that changes both a log and its receipt hash is accepted by `report`. Neither point threatens the decision rule, but the wording slightly overstates the safeguard.",
+      "evidence": "Console paths checked: progress lines (tools/m4-growth-precision.ts:126) print only shard/done/of/elapsed; the end-of-shard receipt (line 204; built at lines 133-139) contains phase, shard, attempt, newTrials, retainedTrials, trialLogSha256, manifestHash, wallSeconds, cumulativeWallSeconds, stopped, failure, complete, blockTrials, finishedAt, with no outcome tally; `report` prints only after every shard is complete and authenticated (lines 155-173). Adversarial engineering runs: writer.lock present, swapped shard directories and a truncated log with a rewritten receipt are all refused; flipping a supported flag AND recomputing the receipt hash passes. Peeking cannot inflate false clearance: the only path to a pass is completion of all 40,000 trials with the fixed rule, so an early look at a partial count can at most justify abandoning a run, which is 'not a pass' either way.",
+      "recommendation": "In the launch record: nobody reads shard-*/trials.jsonl before `report`. At completion, record the four trialLogSha256 values and the report hash in a committed document. If desired, add an optional audit that recomputes a random sample of rows with runTrial (about 0.4 s per row, deterministic). Disclose any abandoned or restarted run."
+    },
+    {
+      "id": "R6",
+      "severity": "note",
+      "file": "tools/m4-growth-precision.ts",
+      "line": 20,
+      "summary": "Source binding is complete for everything the trial path executes, but a few loaded modules and the runtime are not pinned: packages/sim-ref/src/{index,step}.ts and packages/sim-gpu/src/*.ts (imported through @bl/runner, not called by synthetic trials), npm fflate (pinned only through deno.lock), and the Deno/V8 version (recorded in runtime-N.json but not checked across shards or attempts). The parent had the same gaps.",
+      "evidence": "`deno info --json tools/m4-growth-precision.ts`: 58 local modules; unbound local modules are packages/sim-gpu/src/{golden,gpu-sim,index,renderer,shaders}.ts, packages/sim-ref/src/{index,step}.ts and node_modules type/fflate files. sourceList() only scans top-level *.ts in schema, runner, metrics (os.walk shows no subdirectories, so nothing in those three dirs is unbound). Parent validation ran under Deno 2.9.7 / V8 15.0.245.2 and so did every parity run here.",
+      "recommendation": "No manifest change needed. Launch with Deno 2.9.7 (the version of the parent run and of the 400/400 parity result) and keep the same version for all shards and resumes; compare the runtime-N.json versions when writing the results record."
+    },
+    {
+      "id": "R7",
+      "severity": "note",
+      "file": "experiments/m4/growth-precision-v1/manifest.json",
+      "line": 26,
+      "summary": "The aggregate budget is 4 x 10,800 s = 43,200 CPU-seconds (12 h), against a forecast of 16,800 s (4.7 h). The parent design says 'The eight-hour CPU cap includes development and failed attempts' (and the 650009002 ledger note counts cumulative CPU). The extension is described as separately costed, but the protocol does not say that the eight-hour cap is superseded or how it reconciles. The per-shard margin is adequate on the evidence.",
+      "evidence": "docs/m4-growth-amendment-design.md:29; manifest.json:26-27; protocol line 45. Measured pace: parent paired-null trials mean 0.405 s (median 0.371, max 1.335); four concurrent engineering shards on this 10-core machine at load averages 6 to 23 gave mean 0.375 s (80 trials). Forecast 10,000 x 0.42 = 4,200 s per shard, so the 10,800 s cap leaves about 2.6x headroom. Parent CPU used so far is about 1.4 h (4,834 s validation plus roughly 96 s development).",
+      "recommendation": "Record in the launch record that this extension is separately costed (expected 4.7 CPU-hours, cap 12 CPU-hours) and supersedes the 2026-09-29 eight-hour cap for this screen, or confirm the combined total stays under eight hours if that cap is meant to be cumulative (about 6.0 h expected). Watch elapsed in the progress lines; because exhausted caps cannot be resumed (R3), consider whether the 2.6x margin is enough under the expected CPU contention."
+    },
+    {
+      "id": "R8",
+      "severity": "note",
+      "file": "experiments/amendments/2026-10-02-m4-growth-precision.md",
+      "line": 49,
+      "summary": "Interpretation guardrails for the results record. (1) A pass is the expected outcome (about 97 to 98 percent for both strata under every estimate I can make), so it mainly shows that the production path matches an independent reimplementation; it adds little new information about endpoint 1, and the underlying inflation (about 4x nominal 0.005) remains. (2) The two strata are replicates of one law, so a single-stratum miss (about 1.2 percent per stratum, 2.3 percent for either) would be sampling noise but is a failure under the frozen rule. (3) The endpoint-2 conjunct is vacuous here (false-support rate about 2e-4, about 4 expected in 20,000). (4) Sizing is sensitive to the true rate: both-pass probability is 99 percent at 0.0204, 98 percent at 0.0209, 93 percent at 0.0213, and 55 percent at 0.0225. (5) Retesting after a failed screen is a two-stage procedure; the extension's own error control is exact (at most 0.048 for a true rate above 0.025) but the end-to-end chance of eventually clearing a bad stratum is at most about 0.09.",
+      "evidence": "Independent estimates of the stress false-support rate: 0.02097 (numpy, 200,000 trials, CP95 0.02035 to 0.02161) and 0.02102 (production growthGenerator under the consumed engineering master 650009001, 40,000 trials, my own Mann-Whitney, CP95 0.01964 to 0.02248); the protocol says 0.0207 (0.0201 to 0.0214). Binomial table at k*=463: rate 0.0207 gives 0.9922 per stratum, 0.9846 both. Endpoint-2 rate from 400,000 simulated trials: 78 supports, 1.95e-4.",
+      "recommendation": "No protocol change required (the protocol's 'What the result can and cannot mean' already says a pass does not show nominal size and that the inflation must be stated). In the results record, report both strata's counts, the two-sided intervals, the 0.0207 development rate, the inflation ratio, and the fact that the pass was the expected outcome. Do not describe a pass as evidence that original endpoint 1 is valid under negative dependence."
+    }
+  ],
+  "independentChecks": [
+    {
+      "check": "Identity of what was reviewed",
+      "method": "jj log/diff; sha256 of manifest and parent copies; comparison of the working copy to the commit",
+      "result": "Commit ff7e1e31 (bookmark codex/founder-discovery). manifest.json sha256 = ffbdf610... (matches the brief); parent-validation-v4-manifest.json = fc22327f...; parent-validation-v4-report.json = b74d8f43.... Two later commits (f586e51c joint-power, e6d6b51f empty) add only unrelated unbound files; no bound file differs from the freeze. The study has not started: no runs/m4-growth-precision-v1 anywhere, no running process."
+    },
+    {
+      "check": "Source binding (item 3)",
+      "method": "python sha256 of all 52 manifest-bound files vs disk; parent manifest's 48 hashes vs the new manifest and vs disk; os.walk of packages/{schema,runner,metrics}/src; `jj log -r ::ff7e1e31` filtered to the 48 parent paths; `jj diff` for ff7e1e31..@-; `deno info --json` import closure; checkManifest and sourceList emulation on the real manifest",
+      "result": "52/52 hashes match disk. All 48 parent hashes are present and identical in the new manifest and on disk; the 4 additions are the contract, protocol, library and driver. No unbound .ts file exists in the three package trees (including subdirectories). The newest commit touching any of the 48 parent-bound paths is 68be3d1a (2026-09-29 21:29); ff7e1e31 and later commits do not touch them (its 13 files are all additions). experiments/preregistration.md still hashes to the FROZEN value 5e08b51d.... checkManifest accepts the real manifest and the required source set equals the bound set. Unbound-but-loaded modules are listed in finding R6. `run` verifies sources at start, before and after every trial; `report` verifies again."
+    },
+    {
+      "check": "Equivalence with tools/m4-growth-calibration.ts (item 1)",
+      "method": "line-by-line comparison; all 400 parent pairedEndpoint1Null rows regenerated with runTrial('validation', 650009002, 64, ...) under Deno 2.9.7 and compared by JSON.stringify of identity, endpoint2, endpoint1, endpoint1Method, jointPerPresetObserved and threshold; phase-string invariance; decide() run on the parent rows",
+      "result": "Slot seeds 900000000+i, Identity fields {masterSeed, nullId 'scenario:preset', windowSteps C.horizon, replicateIndex trial, condition, seedIndex}, spec from makeSpec('m4-<phase>', ...) with presetId, growthGenerator, the guard placement before each yield, analyzeGrowthRuns call and generatorIdentity string are identical to the parent loop. Row fields are the parent's plus 'shard'. 400/400 rows byte-identical (3 endpoint-1-supported trials included). Output is identical apart from generatorIdentity when only the phase string changes ('validation' vs 'precision-engineering', two parent identities), and no code branches on the experiment name (threshold.ts, bundle.ts), so the unrun 'precision-extension' phase string cannot change numbers. decide() on the 400 parent rows reproduces the parent report: gradient 1/200, upper 0.0234985, pass; spots 2/200, upper 0.0311426, fail; endpoint-2 0/200, 0.0148670. The tally definition (endpoint1.complete AND every row supported; endpoint2.supported; status != ok as unavailable) matches tools/m4-growth-calibration.ts:96-97. The committed Deno test covers only 4 of these (finding R4)."
+    },
+    {
+      "check": "Seed independence and audit (item 2)",
+      "method": "reading tools/lib/idhash.ts (streamRng = sfc32 seeded by SHA-256 of canonical JSON of {masterSeed, nullId, windowSteps, replicateIndex, condition, seedIndex, metric}); word-bounded grep -w 650009003 over browser-life, -deploy, -foundations, -founder-policy, -planet, -scaffold, -scaffold-frozen, -snapshots (excluding node_modules, .git, .jj); rg for the 6500xxxxx family; identity-level SHA-256 collision audit in independent python (strings only, no PRNG output)",
+      "result": "650009003 occurs only in this repo's four extension files (protocol, contract, manifest, Deno test). Nearby values are 650000001/2 (development pilot seeds), 650009001/2 (consumed masters) and 650009999 (end of the reserved 'M4 design/pipeline pilot' range 650000001-650009999 in docs/foundations-next-plan.md:46, within which all three masters sit). The masterSeed is inside the hashed key, so streams for 650009001/2/3 are independent apart from SHA-256 collisions; gradient and spots strata differ in nullId, so they are independent too. Hashing 2,586,880 identities (650009003 x 2 presets x 20,000 trials x 64 slots, plus 650009002 x 200 trials and 650009001 x 10 trials) gave 2,586,880 distinct 128-bit seeds. Scan limits: compressed archives and the coordinator registry were not searched."
+    },
+    {
+      "check": "Numerics of the Clopper-Pearson bound (item 4)",
+      "method": "Deno evaluation of stableBinomialLowerBound/upper95 on 110 (k, n) points (n from 200 to 20,000, k from 0 to n, plus k = 400 to 600 at n = 20,000) vs scipy.stats.beta.ppf; comparison with packages/metrics binomialLowerBound on 1,228 points up to n = 1,028; scipy search for k*",
+      "result": "Max absolute error of the stable bound vs scipy: 3.0e-14 (lower and upper, alpha 0.05 and 0.025). Against production it agrees to about 4e-16 for every tested n up to 1,020; the production function collapses to a lower bound of 0 from n = 1,021 (k = n/2) and at every k except k = 0 by n = 1,028, and at n = 20,000, k = 19,537 it returns 0, i.e. an upper bound of 1, so the claim that it fails at 20,000 is confirmed. k* = 463: upper(463) = 0.0249763, upper(464) = 0.0250281; binom.cdf(463; 20000, 0.025) = 0.04785 and cdf(464) = 0.05265. Log-space accumulated rounding error is far below the 2.4e-5 margin."
+    },
+    {
+      "check": "Decision rule and report integrity (items 5 and 6)",
+      "method": "code reading; vitest decide() tests; engineering-phase runs through the real CLI (plan, run, resume, report) with adversarial edits in a scratch directory",
+      "result": "decide() passes a stratum only if n == 20,000 AND the CP95 upper bounds for endpoint 1 (both comparisons supported) and endpoint 2 are <= 0.025; unavailable/degenerate trials are non-support; precisionPass requires both strata and is null outside the scientific phase. `report` accepts shards only with a terminal, complete, same-shard, same-manifest receipt whose trialLogSha256 matches the log, rows that are the exact frozen prefix, and the full block; it refuses a writer.lock. Shards partition the 40,000-trial schedule exactly (gradient 0-9999, gradient 10000-19999, spots 0-9999, spots 10000-19999). Refused in testing: held writer.lock, swapped shard directories, truncated log with a rewritten receipt, tampered log with an old receipt, partial and absent shards, changed manifest bytes on resume, cap-exhausted resume. Not detected: a coordinated edit of log and receipt hash (finding R5). Incomplete data cannot reach precisionPass: decide() requires complete == true and report() requires every shard to be complete. deno.lock is unchanged by `deno run` with the default lock."
+    },
+    {
+      "check": "Sizing and pass-probability claims (item 7)",
+      "method": "own numpy reimplementation of the generator law and tie-corrected normal Mann-Whitney with Holm on two identical comparisons (supported iff p < 0.005), seeds 20261002; production growthGenerator under engineering master 650009001 for 40,000 trials with my own Mann-Whitney; model validated against 80 parent pipeline p-values; scipy binomial tables",
+      "result": "Rate of false support 0.02097 (200,000 trials, CP95 0.02035 to 0.02161) and 0.02102 (production generator, 40,000 trials, CP95 0.01964 to 0.02248): both agree with the protocol's 0.0207. My Mann-Whitney reproduces 80 parent pipeline p-values to max relative difference 3.5e-6 (the pipeline's Abramowitz-Stegun normal CDF). Pooled rank correlation of treatment and neutral -0.627 (Pearson -0.655, theory -0.656) vs the protocol's 'about -0.64'. Parent paired-null p <= 0.05 in 46/400 = 11.5% and p <= 0.01 in 12/400 = 3.0% (verified); simulation gives 9.9% and 3.4%; KS parent vs simulation p = 0.37, vs uniform p = 0.0006. Pass table at k* = 463: rate 0.0207 gives 0.992 per stratum and 0.985 both (protocol 0.992 and 0.984); N = 1,000 gives both about 3.1% (protocol 'about 3%'). Posterior-averaged both-pass probability over my pooled rate estimate (0.02085 +/- 0.00022) is about 0.974. Error control: P(pass | rate = 0.025, N = 20,000) = 0.0478, and it is smaller for any larger rate, so 'at most 0.05' holds; it holds for any N by the Clopper-Pearson coverage property. Endpoint-2 false support under the stress is about 1.95e-4, so that conjunct cannot realistically fail."
+    },
+    {
+      "check": "Real-data dependence table (item 8)",
+      "method": "recomputed Pearson (and Spearman) correlations of stats.cumulativeNewActivity by shared seed from experiments/m4/gradient-m3.json (n = 20) and spots-m3.json (n = 10)",
+      "result": "gradient treatment-neutral -0.013, treatment-no-mutation +0.376; spots treatment-neutral +0.045, treatment-no-mutation +0.019: the protocol's table (-0.01, +0.38, +0.05, +0.02) is accurate (Spearman: -0.068, +0.352, -0.115, +0.058). Seeds are shared across conditions as stated. Approximate Fisher 95% intervals are about (-0.45, 0.43) at n = 20 and (-0.60, 0.66) at n = 10, so the stress value of -0.64 is excluded by gradient and only just by spots; 'context, not proof' is the right hedge."
+    },
+    {
+      "check": "Protocol honesty and rule compliance (items 8 and 9)",
+      "method": "read protocol against docs/m4-growth-amendment-design.md, docs/m4-growth-calibration-results.md and experiments/amendments/2026-09-29-m4-growth.md",
+      "result": "Every numeric statement in the protocol that I could test is accurate (master seed absence, 463, 0.992/0.984, 3%, 11.5%/3.0%, 48 sources, parity, production overflow). Choosing N from a development estimate is disclosed and is not an error-control violation: N is fixed before any confirmatory data and the CP guarantee holds for any fixed N; the estimate changes only power. The protocol complies with 'Do not remove the stratum, pool it with gradient, or keep sampling new sets until it passes' (both strata are re-run, judged separately, one pre-declared sample, no top-up), 'Do not concatenate reruns or deterministic supersets' (fresh master, nothing combined with the parent trials), the parent's call for 'a costed precision extension with a valid ... fixed-sample decision rule', and 'the final launch decision must explicitly judge whether this coarse envelope is adequate' (stated). It does not treat the old 2/200 as erased: failure leaves blocker 1 standing. Open items are R3 and R7 (undefined non-completion, eight-hour cap) and R8 (interpretation)."
+    },
+    {
+      "check": "Tests, type check and console output",
+      "method": "pnpm vitest run tools/test/m4-growth-precision.test.ts; deno test --no-lock -A tools/test/m4-growth-precision.deno.ts; deno check; engineering CLI run capturing stdout",
+      "result": "Vitest 6/6 passed; Deno 3/3 passed; deno check clean; deno lint reports only the repo-wide no-import-prefix hint for the jsr: import, same as the parent tool. The engineering run printed only the final receipt (no tallies) and left deno.lock unchanged. Tests write only to temp or scratch directories; the repo gained no files from this review other than review.json."
+    }
+  ],
+  "limitations": "I did not run the scientific manifest or call runTrial, growthGenerator or the stream functions with master 650009003 or phase 'precision-extension', per the hard rule; the scientific-phase path is therefore covered by the phase-invariance check, checkManifest on the real manifest, engineering-phase end-to-end runs and unit tests, not by an actual 10,000-row shard (resume at that scale, log size and report memory were not exercised; estimated about 26 MB per shard log and 100 MB for report). I never saw the protocol author's numpy code; the 0.0207 estimate is corroborated by my own implementation and by the production generator under the consumed engineering master, using my own Mann-Whitney rather than the full analysis pipeline (the pipeline's p-values were matched on 80 parent trials). Deno 2.9.7 on one Apple-silicon machine only: determinism across Deno/V8 versions or platforms is untested. The seed audit covers text files in eight local workspaces; compressed archives and the coordinator registry were not searched, and the seed ledger lives in another workspace. The Fisher intervals and the interpretation guardrails are my analysis, not frozen content. I did not review the separate joint-power rationale or the withdrawn endpoint-2 draft."
+}

@@ -1,0 +1,26 @@
+{
+  "format": "m4-growth-precision-launch/v1",
+  "contract": "m4-growth-precision-v1",
+  "manifest": "experiments/m4/growth-precision-v1/manifest.json",
+  "manifestSha256": "ffbdf6104e3722960c9c6ad9f27193a12306da37876a51ccad386c7dd7323907",
+  "protocol": "experiments/amendments/2026-10-02-m4-growth-precision.md",
+  "protocolSha256": "283f74355e87f637e0324577f9df7bf4bf874dc688d599620209d639c5abc583",
+  "review": {
+    "file": "experiments/m4/growth-precision-v1/review.json",
+    "sha256": "1977b47409ce1437dece2af6fcf66a6941dd48bafacb11902c87fd228dbadf7b",
+    "verdict": "CLEAR-WITH-FIXES",
+    "reviewedCommit": "ff7e1e319d0d432400b8a734d3347487ad0f4292",
+    "fixBeforeLaunch": "R1 seed ledger: applied before launch (record appended to ../browser-life-foundations/runs/foundations-next/seed-ledger-v1.json; copy in seed-ledger-record.json). Nothing the manifest binds changed; no re-plan."
+  },
+  "authorization": "User, 2026-10-02: \"go ahead, run the validation now\" and \"Adopt the 2026-09-29 contract and withdraw my draft.\" CPU only; no GPU.",
+  "startedAt": "2026-10-02T21:21:07Z",
+  "runtime": "deno 2.9.7 (stable, release, aarch64-apple-darwin) for every shard (review R6)",
+  "execution": "Four concurrent shards, `deno run --no-lock -A tools/m4-growth-precision.ts run --manifest <manifest> --out runs/m4-growth-precision-v1 --shard <i>`, under caffeinate, beside the founder-discovery continuation GPU run. Logs in runs/m4-growth-precision-v1-logs/.",
+  "operatingRules": [
+    "No file the manifest binds is edited while shards run; report re-verifies all 52 hashes (review R2).",
+    "No interim outcome tallies are computed or read; progress is trial counts only. report runs once, after every shard has a complete terminal receipt (review R5).",
+    "Non-completion is a non-result, never a pass: cap exhaustion, a killed writer, a stale lock or a refused resume leaves the extension incomplete (review R3).",
+    "Technical recovery only for a shard that stopped without a terminal receipt: preserve its directory under a renamed path, record why, and rerun that shard from trial 0 with identical inputs. Rows are deterministic, so this repeats the same trials rather than drawing new ones. It is never used after any outcome has been read.",
+    "The results record states the endpoint-1 inflation under this stress (development estimate ~0.021: about 2x the nominal family alpha 0.01 and about 4x the 0.005 per-comparison level) alongside any pass (review R8)."
+  ]
+}

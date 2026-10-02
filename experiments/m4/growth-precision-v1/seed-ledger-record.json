@@ -1,0 +1,22 @@
+{
+  "purpose": "M4 growth precision extension: endpoint-1 paired stress null (m4-growth-precision-v1)",
+  "status": "consumed",
+  "masterSeed": 650009003,
+  "phase": "precision-extension",
+  "workspace": "browser-life-founder-policy",
+  "manifest": "experiments/m4/growth-precision-v1/manifest.json",
+  "manifestSha256": "ffbdf6104e3722960c9c6ad9f27193a12306da37876a51ccad386c7dd7323907",
+  "output": "runs/m4-growth-precision-v1",
+  "strata": [
+    "pairedEndpoint1Null:gradient-m3",
+    "pairedEndpoint1Null:spots-m3"
+  ],
+  "trialsPerStratum": 20000,
+  "pairs": 64,
+  "pairedSeedSlots": {
+    "first": 900000000,
+    "last": 900000063
+  },
+  "recordedAt": "2026-10-02",
+  "notes": "Recorded before execution (consumed on launch, whatever the outcome). Fresh after a word-bounded scan of docs/tools/experiments/runs in all eight local browser-life workspaces; coordinator registry unreachable (BL_DATA_DIR unset, no apps/coordinator/data, nothing on 127.0.0.1:4000), so not proof of global freshness. Never concatenated with master 650009002 trials."
+}
