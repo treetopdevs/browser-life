@@ -19,7 +19,7 @@
 // more `--replicates` (deterministic), not merging separate reports.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { binomialLowerBound } from "@bl/metrics";
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
+import { METRICS_VERSION, SCHEMA_VERSION } from "@bl/schema";
 import { analyzeEnsemble, type Run } from "./analyze.ts";
 import {
   boundedTreatmentVsFlat,
@@ -118,7 +118,7 @@ function maxObservableSpan(steps: number, censusEveryV: number, deepEveryV: numb
 }
 
 /** Generator/analysis code identity: recorded once, at the top level of report.json, so a result can be traced back to the exact working-copy commit that produced it. `jj`'s auto-snapshot means the commit id changes with any tracked-file edit, with no commit/describe needed; falls back to "unknown" when `jj` isn't on PATH (e.g. a plain git checkout or CI without jj). */
-async function codeIdentity(): Promise<{ commitId: string; ruleVersion: number; schemaVersion: number; metricsVersion: number }> {
+async function codeIdentity(ruleVersion: number): Promise<{ commitId: string; ruleVersion: number; schemaVersion: number; metricsVersion: number }> {
   let commitId = "unknown";
   try {
     const cmd = new Deno.Command("jj", { args: ["log", "-r", "@", "--no-graph", "-T", "commit_id"], stdout: "piped", stderr: "null" });
@@ -127,7 +127,7 @@ async function codeIdentity(): Promise<{ commitId: string; ruleVersion: number; 
   } catch {
     // jj not on PATH, or not a jj repo.
   }
-  return { commitId, ruleVersion: RULE_VERSION, schemaVersion: SCHEMA_VERSION, metricsVersion: METRICS_VERSION };
+  return { commitId, ruleVersion, schemaVersion: SCHEMA_VERSION, metricsVersion: METRICS_VERSION };
 }
 
 interface TrialRow {
@@ -140,9 +140,11 @@ interface TrialRow {
 }
 
 /** Builds one Run in memory for (nullId, id, spec) -- the same shape tools/analyze.ts's loader produces from a real bundle on disk, without ever touching the filesystem. */
+const executedRuleVersions = new Set<number>();
 function buildRun(nullId: NullGeneratorId | "boundedTreatmentVsFlat", id: Identity, spec: ReturnType<typeof makeSpec>): Run {
   const bundle = nullId === "boundedTreatmentVsFlat" ? boundedTreatmentVsFlat(id, spec) : runNullGenerator(nullId, id, spec);
   const manifest = buildManifest(spec, nullId, id.windowSteps, id.replicateIndex, bundle.generatorParams);
+  executedRuleVersions.add(manifest.ruleVersion);
   const lineages = new Map<number, [string, number][]>();
   for (const row of bundle.lineages) {
     let arr = lineages.get(row.step);
@@ -282,9 +284,10 @@ async function main() {
   // deliberately kept out of report.json: that file is the one compared for
   // determinism (same inputs -> byte-identical report.json), and measured
   // wall time varies run to run regardless of the data.
+  if (executedRuleVersions.size !== 1) throw new Error("nullcal requires one consistent executed rule version");
   const jsonOut = {
     config,
-    codeIdentity: await codeIdentity(),
+    codeIdentity: await codeIdentity([...executedRuleVersions][0]),
     tallies: Object.fromEntries([...tallies.entries()].map(([k, v]) => [k, { ...v, ci: v.n > 0 ? clopperPearson(v.k, v.n) : null }])),
     boundedTreatmentVsFlat: Object.fromEntries([...boundedRows.entries()].map(([k, v]) => [k, { ...v, ci: v.n > 0 ? clopperPearson(v.k, v.n) : null }])),
     trials,

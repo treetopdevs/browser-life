@@ -61,9 +61,17 @@ describe("runExperiment: migration requires an on-grid start", () => {
 const reuseSpec: RunSpec = { experiment: "reuse", presetId: "spots", condition: "treatment", seed: 1, steps: 1000, censusEvery: 100, deepEvery: 10, checkpointEvery: 0 };
 const cfg = specConfig(reuseSpec);
 
-const baseManifest = () => ({ spec: reuseSpec, ruleVersion: RULE_VERSION, schemaVersion: SCHEMA_VERSION, metricsVersion: METRICS_VERSION, cfg });
+const baseManifest = () => ({ spec: reuseSpec, ruleVersion: cfg.ruleVersion, schemaVersion: SCHEMA_VERSION, metricsVersion: METRICS_VERSION, cfg });
 
 describe("sameCompletedRun (tools/run.ts reuse check)", () => {
+  it("uses the requested physics version, including an explicit rule-2 experiment", () => {
+    for (const ruleVersion of [1, 2]) {
+      const spec = { ...reuseSpec, overrides: { ruleVersion, ...(ruleVersion === 2 ? { polymerDrag: true } : {}) } };
+      const done = { ...baseManifest(), spec, cfg: specConfig(spec), ruleVersion };
+      expect(sameCompletedRun(done, spec)).toBe(true);
+      expect(sameCompletedRun({ ...done, ruleVersion: ruleVersion === 1 ? 2 : 1 }, spec)).toBe(false);
+    }
+  });
   it("accepts an identical, current-metrics-version manifest", () => {
     expect(sameCompletedRun(baseManifest(), reuseSpec)).toBe(true);
   });

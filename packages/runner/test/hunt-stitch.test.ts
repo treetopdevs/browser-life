@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CH, HUNT_POND_COLUMNS, METRICS_VERSION, POND_COLUMNS, RULE_VERSION, SCHEMA_VERSION, applyCurrentCycle, buildWorld, cellCount, defaultConfig, pondMatter, worldW, type WorldState } from "@bl/schema";
+import { CH, HUNT_POND_COLUMNS, METRICS_VERSION, POND_COLUMNS, SCHEMA_VERSION, applyCurrentCycle, buildWorld, cellCount, defaultConfig, pondMatter, worldW, type WorldState } from "@bl/schema";
 import {
   BUNDLE_FILES,
   ISLAND_CAPABILITIES,
@@ -93,7 +93,7 @@ function segment(spec: RunSpec, index: number, startStep: number, steps: number,
     cfg: specConfig(spec),
     init: "seed",
     schemaVersion: SCHEMA_VERSION,
-    ruleVersion: RULE_VERSION,
+    ruleVersion: specConfig(spec).ruleVersion,
     metricsVersion: METRICS_VERSION,
     host,
     startStep,

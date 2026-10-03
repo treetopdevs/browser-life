@@ -1053,7 +1053,7 @@ function compartmentCheck() {
   for (const radius of [2, 3, 4, 6, 10])
     for (const rim of [true, false])
       for (const at of ["centre", "tile edge"]) {
-        const cfg = defaultConfig({ tileW: 64, tileH: 64, tilesX: 2, tilesY: 1 });
+        const cfg = defaultConfig({ ruleVersion: 1, tileW: 64, tileH: 64, tilesX: 2, tilesY: 1 });
         const st = allocState(cfg);
         const n = cellCount(cfg), W = 128;
         const cx = at === "centre" ? 32 : 63, cy = 32;

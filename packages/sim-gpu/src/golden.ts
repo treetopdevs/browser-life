@@ -6,6 +6,8 @@ import {
   CH,
   MATTER_MAX,
   POOL_MAX,
+  RULE_VERSION,
+  SUPPORTED_RULE_VERSIONS,
   buildWorld,
   cloneState,
   defaultConfig,
@@ -61,9 +63,9 @@ function irregularPolymerField(c: WorldConfig): WorldState {
   return s;
 }
 
-export function goldenCases(): GoldenCase[] {
+export function goldenCases(ruleVersion = RULE_VERSION): GoldenCase[] {
   const base = { tileW: 40, tileH: 40, kernelRadius: 5 };
-  return [
+  const cases: GoldenCase[] = [
     { name: "soup", cfg: defaultConfig({ ...base, seed: 11 }), init: (c) => soupWorld(c, 6), steps: 120, every: 20 },
     {
       name: "tiled+mutation-heavy",
@@ -161,6 +163,55 @@ export function goldenCases(): GoldenCase[] {
       every: 30,
     },
     {
+      // Polymer remains present and costly; only its A/C permeability effect
+      // is removed. Nonuniform P and dissolved material make that branch
+      // observable from the first step, while living founders also build P.
+      name: "polymer-transport-off",
+      cfg: defaultConfig({ tileW: 32, tileH: 32, kernelRadius: 4, seed: 47, polymerTransport: false }),
+      init: (c) => {
+        const s = generalistWorld(c, 4, 32, 64);
+        const n = c.tileW * c.tileH;
+        for (let i = 0; i < n; i++) {
+          s.cells[CH.P * n + i] = (i * 73) % 512;
+          s.cells[CH.A * n + i] = (i * 37) % 257;
+          s.cells[CH.C * n + i] = (i * 19) % 129;
+        }
+        return s;
+      },
+      steps: 40,
+      every: 10,
+    },
+    {
+      name: "polymer-drag",
+      cfg: defaultConfig({ tileW: 32, tileH: 32, kernelRadius: 4, seed: 53, polymerDrag: true, mutRate: 20_000_000 }),
+      init: (c) => {
+        const s = generalistWorld(c, 4, 32, 64);
+        const n = c.tileW * c.tileH;
+        for (let i = 0; i < n; i++) s.cells[CH.P * n + i] = (i * 73) % 129;
+        return s;
+      },
+      steps: 60,
+      every: 15,
+    },
+    {
+      // Minimum residual mobility, maximum total matter and source free
+      // energy: rounding and pool/ledger bounds must remain bit exact.
+      name: "polymer-drag-extremes",
+      cfg: defaultConfig({ tileW: 16, tileH: 16, kernelRadius: 3, seed: 59, polymerDrag: true }),
+      init: (c) => {
+        const s = buildWorld(c, { nutrient: 0, founders: [] });
+        const n = c.tileW * c.tileH;
+        for (const i of [3 * 16 + 3, 11 * 16 + 11]) {
+          s.cells[CH.B * n + i] = 1024;
+          s.cells[CH.P * n + i] = MATTER_MAX / 2 - 1024;
+          s.cells[CH.E * n + i] = POOL_MAX;
+        }
+        return s;
+      },
+      steps: 20,
+      every: 5,
+    },
+    {
       // Review regression: mutCap = floor(U32_MAX / mutRate) = 1, so a cell
       // synthesising exactly one quantum mutates with probability ~1/2 and
       // only larger syntheses saturate.
@@ -183,11 +234,15 @@ export function goldenCases(): GoldenCase[] {
       every: 30,
     },
   ];
+  return cases.filter((gc) => ruleVersion !== 1 || gc.cfg.polymerDrag !== true)
+    .map((gc) => ({ ...gc, cfg: { ...gc.cfg, ruleVersion } }));
 }
 
-export async function runGolden(device: GPUDevice, log: (s: string) => void = () => {}): Promise<GoldenResult[]> {
+/** Run every supported version by default; pass a version for a scoped check. */
+export async function runGolden(device: GPUDevice, log: (s: string) => void = () => {}, ruleVersion?: number): Promise<GoldenResult[]> {
   const results: GoldenResult[] = [];
-  for (const gc of goldenCases()) {
+  const versions = ruleVersion === undefined ? SUPPORTED_RULE_VERSIONS : [ruleVersion];
+  for (const gc of versions.flatMap((version) => goldenCases(version))) {
     const init = gc.init(gc.cfg);
     const start = totalsOf(gc.cfg, init.cells);
     const ref = new RefSim(cloneState(init));
@@ -249,8 +304,8 @@ export async function runGolden(device: GPUDevice, log: (s: string) => void = ()
     } finally {
       gpu.destroy();
     }
-    const r = { name: gc.name, ok, steps: gc.steps, hash, detail: detail || "bit-exact", events: refEvents.length };
-    log(`${ok ? "PASS" : "FAIL"} ${gc.name} (${gc.steps} steps, ${r.events} mutations, hash ${hash}) ${detail}`);
+    const r = { name: `rule-${gc.cfg.ruleVersion}/${gc.name}`, ok, steps: gc.steps, hash, detail: detail || "bit-exact", events: refEvents.length };
+    log(`${ok ? "PASS" : "FAIL"} ${r.name} (${gc.steps} steps, ${r.events} mutations, hash ${hash}) ${detail}`);
     results.push(r);
   }
   return results;

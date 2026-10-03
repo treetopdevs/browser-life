@@ -8,7 +8,7 @@
 // concatenation of its segments' (tests/deno/stitch.ts checks this against a
 // continuous run byte for byte). The manifest is the last segment's, widened
 // to cover the whole history.
-import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, exchangePositions, type PondArm } from "@bl/schema";
+import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, isSupportedRuleVersion, SCHEMA_VERSION, exchangePositions, validateConfig, type PondArm } from "@bl/schema";
 import { runId, sameConfig, type RunSummary } from "./runner.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
@@ -301,7 +301,11 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     if (!m.summary) throw new Error(`${id}: manifest has no summary (run did not finish)`);
     // A branch run (RunSpec.branch) starts from a decoded source checkpoint that no segment chain carries: not distributed.
     if (m.branch !== undefined || m.spec.branch !== undefined) throw new Error(`${id}: manifest records a branch run (${JSON.stringify(m.branch ?? m.spec.branch)}); branches are not distributed, so they cannot be stitched`);
-    if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION) throw new Error(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, expected ${RULE_VERSION}/${SCHEMA_VERSION}`);
+    if (!isSupportedRuleVersion(m.ruleVersion) || m.schemaVersion !== SCHEMA_VERSION) throw new Error(`${id}: unsupported rule/schema ${m.ruleVersion}/${m.schemaVersion}; expected rule 1 or 2, schema ${SCHEMA_VERSION}`);
+    if (m.cfg?.ruleVersion !== m.ruleVersion) throw new Error(`${id}: manifest ruleVersion ${m.ruleVersion} differs from config ${m.cfg?.ruleVersion}`);
+    if (m.ruleVersion !== first.ruleVersion) throw new Error(`${id}: ruleVersion ${m.ruleVersion} differs from segment #0's ${first.ruleVersion}`);
+    const configErrors = validateConfig(m.cfg);
+    if (configErrors.length) throw new Error(`${id}: invalid config: ${configErrors.join("; ")}`);
     // A missing field predates METRICS_VERSION and is version 1 — differing
     // metric definitions (e.g. compressionRatio's compressor) must never pool.
     if ((m.metricsVersion ?? 1) !== METRICS_VERSION) throw new Error(`${id}: metrics version ${m.metricsVersion ?? 1}, expected ${METRICS_VERSION}`);

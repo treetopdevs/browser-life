@@ -29,7 +29,6 @@ import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import {
   M3_FOUNDERS,
   PRESETS,
-  RULE_VERSION,
   SCHEMA_VERSION,
   cloneState,
   defaultConfig,
@@ -400,7 +399,7 @@ await Deno.writeTextFile(
   JSON.stringify(
     {
       args: { seeds, period, periodsA, switchShorter, switchLonger, k, tile, founders, kernelRadius, controlLevelShift, reps, bootSeed, out: a.out },
-      ruleVersion: RULE_VERSION,
+      ruleVersion: baseCfg(params, seeds[0], period, evolvedMutRate).ruleVersion,
       schemaVersion: SCHEMA_VERSION,
       preset: SPOTS_M3.id,
       baseOverride: BASE_OVERRIDE,

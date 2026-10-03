@@ -4,7 +4,7 @@
 // roots (the initial world, or genomes.tsv), mutations.tsv and the config, without replay.
 // Tracker births are attribution, not copying, and are reported apart from genotype descent.
 // Pure: bundle files arrive as line iterables, so vitest can exercise it directly.
-import { G, PRESETS, RULE_VERSION, genomeFromHex, initWorld, lowbias32, m3World, stateHash, type WorldConfig, type WorldState } from "@bl/schema";
+import { G, PRESETS, isSupportedRuleVersion, genomeFromHex, initWorld, lowbias32, m3World, stateHash, validateConfig, type WorldConfig, type WorldState } from "@bl/schema";
 import {
   ancestry,
   applyMutation,
@@ -270,7 +270,9 @@ async function seriesCensuses(src: BundleSource): Promise<{ steps: number[]; lin
 export async function buildDossier(src: BundleSource, rule: SubjectRule, opts: DossierOptions = {}): Promise<Dossier> {
   const m = src.manifest;
   const cfg = m.cfg as WorldConfig;
-  if (m.ruleVersion !== RULE_VERSION || cfg.ruleVersion !== RULE_VERSION) throw new Error(`${src.dir}: rule version ${m.ruleVersion}, this tool reconstructs RULE_VERSION ${RULE_VERSION}`);
+  if (!isSupportedRuleVersion(m.ruleVersion) || cfg?.ruleVersion !== m.ruleVersion) throw new Error(`${src.dir}: unsupported or inconsistent rule version ${m.ruleVersion}/${cfg?.ruleVersion}; expected matching rule 1 or 2`);
+  const configErrors = validateConfig(cfg);
+  if (configErrors.length) throw new Error(`${src.dir}: invalid config: ${configErrors.join("; ")}`);
   checkRule(rule);
   const ruleStep = rule.kind === "key" ? undefined : rule.step;
   if (opts.step !== undefined && !(Number.isSafeInteger(opts.step) && opts.step >= 0)) throw new Error(`census step must be a non-negative integer, got ${opts.step}`);

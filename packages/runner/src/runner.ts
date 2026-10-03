@@ -16,7 +16,6 @@ import {
   cellCount,
   exchangeMatterTotal,
   exchangePositions,
-  RULE_VERSION,
   SCHEMA_VERSION,
   METRICS_VERSION,
   artifactDigest,
@@ -525,12 +524,13 @@ export function specConfig(spec: RunSpec): WorldConfig {
  * though its spec/config/rule/schema otherwise match exactly.
  */
 export function sameCompletedRun(done: Record<string, unknown>, spec: RunSpec): boolean {
+  const cfg = specConfig(spec);
   return (
     JSON.stringify(done.spec) === JSON.stringify(normalizedSpec(spec)) &&
-    done.ruleVersion === RULE_VERSION &&
+    done.ruleVersion === cfg.ruleVersion &&
     done.schemaVersion === SCHEMA_VERSION &&
     ((done.metricsVersion as number | undefined) ?? 1) === METRICS_VERSION &&
-    sameConfig(done.cfg as WorldConfig, specConfig(spec))
+    sameConfig(done.cfg as WorldConfig, cfg)
   );
 }
 
@@ -875,7 +875,7 @@ export async function runExperiment(
     // from the source must reproduce. Absent from every other manifest (a branch's later segments included).
     ...(branched ? { branch: { ...spec.branch!, postHash: stateHash(actualInit) } } : {}),
     schemaVersion: SCHEMA_VERSION,
-    ruleVersion: RULE_VERSION,
+    ruleVersion: cfg.ruleVersion,
     metricsVersion: METRICS_VERSION,
     host,
     startStep,

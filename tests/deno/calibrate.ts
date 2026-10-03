@@ -12,7 +12,7 @@
 //      against the REAL ACTIVITY_THRESHOLDS declaration.
 //
 // Run from the repo root: deno run -A tests/deno/calibrate.ts
-import { initWorld, METRICS_VERSION, PRESETS, presetIdentity, RULE_VERSION, SCHEMA_VERSION, stateHash } from "@bl/schema";
+import { initWorld, METRICS_VERSION, PRESETS, presetIdentity, SCHEMA_VERSION, stateHash } from "@bl/schema";
 import { specConfig, type RunSpec } from "@bl/runner";
 import { ACTIVITY_THRESHOLDS } from "../../experiments/endpoints.ts";
 import { evaluateFreezeability, type CohortRunInfo, type FreezeabilityDeclaration } from "../../tools/lib/calibration-decision.ts";
@@ -133,7 +133,7 @@ async function writeNeutralRun(pilotRoot: string, presetId: string, spec: RunSpe
     spec,
     cfg,
     ...provenance,
-    ruleVersion: RULE_VERSION,
+    ruleVersion: cfg.ruleVersion,
     schemaVersion: SCHEMA_VERSION,
     metricsVersion: METRICS_VERSION,
     startStep: 0,

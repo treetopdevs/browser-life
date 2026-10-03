@@ -3,7 +3,7 @@
 // tests/deno/analyze.ts's own check(name, cond, detail) pattern.
 //
 // Run from the repo root: deno run -A tests/deno/nullcal.ts
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
+import { METRICS_VERSION, SCHEMA_VERSION } from "@bl/schema";
 import { analyzeEnsemble, loadEnsemble } from "../../tools/analyze.ts";
 import { buildManifest, makeSpec, NULLCAL_CONDITIONS, plantedSignal, type Identity } from "../../tools/lib/nullgen.ts";
 
@@ -47,8 +47,8 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
   for (const t of report.trials) check("nullcal CLI: trial provenance recorded", Object.keys(t.generatorParams).length > 0, JSON.stringify(t));
   for (const t of report.trials) check("nullcal CLI: trial decisions recorded", !!t.decisions && Object.keys(t.decisions).length > 0, JSON.stringify(t));
   check(
-    "nullcal CLI: codeIdentity's version numbers match the real constants",
-    report.codeIdentity?.ruleVersion === RULE_VERSION && report.codeIdentity?.schemaVersion === SCHEMA_VERSION && report.codeIdentity?.metricsVersion === METRICS_VERSION,
+    "nullcal CLI: codeIdentity records the historical preset law and current schema/metrics",
+    report.codeIdentity?.ruleVersion === 1 && report.codeIdentity?.schemaVersion === SCHEMA_VERSION && report.codeIdentity?.metricsVersion === METRICS_VERSION,
     JSON.stringify(report.codeIdentity),
   );
   check(

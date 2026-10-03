@@ -263,6 +263,7 @@ export class RefSim {
     const step = this.state.step;
     const hw = 32 + c.spread;
     const d2 = 4 * hw * hw;
+    const drag = c.polymerDrag === true;
     const srcs = new Int32Array(9);
     const lot = new Uint32Array(9);
     for (let y = 0; y < this.H; y++) {
@@ -278,6 +279,7 @@ export class RefSim {
             const dx = (d & 0xff) - 64;
             const dy = ((d >>> 8) & 0xff) - 64;
             const qB = cells[CH.B * n + s], qP = cells[CH.P * n + s], qE = cells[CH.E * n + s];
+            const baseS = drag ? cellBase(seed, step, s) : 0;
             let sB: number, sP: number, sE: number;
             if (ox === 0 && oy === 0) {
               // Stay = everything not sent to another cell (includes rounding remainders).
@@ -287,16 +289,18 @@ export class RefSim {
                   if (tx === 0 && ty === 0) continue;
                   const w = w1d(dx, tx, hw) * w1d(dy, ty, hw);
                   if (w === 0) continue;
-                  sB = subu(sB, mulShareD(qB, w, d2));
-                  sP = subu(sP, mulShareD(qP, w, d2));
-                  sE = subu(sE, mulShareD(qE, w, d2));
+                  const direction = (ty + 1) * 3 + tx + 1;
+                  sB = subu(sB, boundShare(qB, w, d2, drag, qP, baseS, direction, 0));
+                  sP = subu(sP, boundShare(qP, w, d2, drag, qP, baseS, direction, 1));
+                  sE = subu(sE, boundShare(qE, w, d2, drag, qP, baseS, direction, 2));
                 }
               }
             } else {
               const w = w1d(dx, -ox, hw) * w1d(dy, -oy, hw);
-              sB = mulShareD(qB, w, d2);
-              sP = mulShareD(qP, w, d2);
-              sE = mulShareD(qE, w, d2);
+              const direction = (1 - oy) * 3 + 1 - ox;
+              sB = boundShare(qB, w, d2, drag, qP, baseS, direction, 0);
+              sP = boundShare(qP, w, d2, drag, qP, baseS, direction, 1);
+              sE = boundShare(qE, w, d2, drag, qP, baseS, direction, 2);
             }
             inB = addu(inB, sB);
             inP = addu(inP, sP);
@@ -342,7 +346,7 @@ export class RefSim {
         for (let sp = 0; sp < 3; sp++) {
           const ch = sp === 0 ? CH.A : sp === 1 ? CH.C : CH.S;
           const D = sp === 0 ? c.diffA : sp === 1 ? c.diffC : c.diffS;
-          const gated = sp < 2;
+          const gated = sp < 2 && c.polymerTransport !== false;
           const qt = cells[ch * n + t];
           let v = qt;
           for (let d = 0; d < 4; d++) {
@@ -611,6 +615,22 @@ export function w1d(d: number, o: number, hw: number): number {
 /** Exact floor(q * w / d2) for w <= d2 <= 2^14 without overflow. */
 export function mulShareD(q: number, w: number, d2: number): number {
   return addu(mulu(divu(q, d2), w), divu(mulu(q % d2, w), d2));
+}
+
+/**
+ * Rule-2 matrix drag: thin an existing outgoing offer, never exceeding it.
+ * The caller supplies the source's pre-transport P and RNG base, and the
+ * direction FROM that source. Recomputing this at both endpoints preserves
+ * every quantum. Nonzero mobility avoids a new deterministic freeze cutoff.
+ */
+export function polymerDragShare(offer: number, sourceP: number, baseS: number, direction: number, species: number): number {
+  const mobility = Math.max(1, divu(8192, addu(32, sourceP)));
+  return mulFrac(offer, mobility, 8, draw(baseS, RND.POLYMER_DRAG + species * 9 + direction));
+}
+
+function boundShare(q: number, w: number, d2: number, drag: boolean, sourceP: number, baseS: number, direction: number, species: number): number {
+  const offer = mulShareD(q, w, d2);
+  return drag ? polymerDragShare(offer, sourceP, baseS, direction, species) : offer;
 }
 
 /**

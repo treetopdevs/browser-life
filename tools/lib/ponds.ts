@@ -44,6 +44,7 @@ const CENTRE = 32;
 /** The M3 evaluator's world configuration at `side`x`side` ponds. An undefined `mutRate` keeps defaultConfig's own. */
 export function pondConfig(side: number, seed: number, mutRate?: number): WorldConfig {
   return defaultConfig({
+    ruleVersion: 1,
     ...DEFAULT_EVAL.world,
     tileW: TILE,
     tileH: TILE,

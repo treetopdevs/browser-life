@@ -1,0 +1,190 @@
+{
+  "date": "2026-10-04",
+  "source": "Preserved source-build-*-seed-*-mut-1-gate-1.json; no new simulations",
+  "qualifyingHistories": 5,
+  "distinctTerminalGenomes": 5,
+  "qualifyingSeedBlocks": [
+    504,
+    505
+  ],
+  "pairwiseOverlap": [
+    {
+      "seed": 504,
+      "pairs": [
+        {
+          "founders": [
+            4,
+            8
+          ],
+          "eventCounts": [
+            10,
+            20
+          ],
+          "sharedEventSteps": [
+            69,
+            336,
+            346,
+            593,
+            1249,
+            1346,
+            1362,
+            1516,
+            1805,
+            2116
+          ],
+          "sharedEventCount": 10,
+          "distinctTerminalGenomes": true,
+          "differingTerminalByteOffsets": [
+            15,
+            37,
+            74,
+            96,
+            121,
+            123,
+            124,
+            151,
+            153,
+            167
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 505,
+      "pairs": [
+        {
+          "founders": [
+            1,
+            4
+          ],
+          "eventCounts": [
+            14,
+            16
+          ],
+          "sharedEventSteps": [
+            85,
+            137,
+            146,
+            205,
+            289,
+            298,
+            442,
+            811,
+            844,
+            1387,
+            1838,
+            2106,
+            2287,
+            2680
+          ],
+          "sharedEventCount": 14,
+          "distinctTerminalGenomes": true,
+          "differingTerminalByteOffsets": [
+            3,
+            113,
+            167
+          ]
+        },
+        {
+          "founders": [
+            1,
+            8
+          ],
+          "eventCounts": [
+            14,
+            21
+          ],
+          "sharedEventSteps": [
+            85,
+            137,
+            146,
+            205,
+            289,
+            298,
+            442,
+            811,
+            844,
+            1387,
+            1838,
+            2106,
+            2287,
+            2680
+          ],
+          "sharedEventCount": 14,
+          "distinctTerminalGenomes": true,
+          "differingTerminalByteOffsets": [
+            3,
+            42,
+            75,
+            88,
+            113,
+            139,
+            156,
+            167
+          ]
+        },
+        {
+          "founders": [
+            4,
+            8
+          ],
+          "eventCounts": [
+            16,
+            21
+          ],
+          "sharedEventSteps": [
+            85,
+            137,
+            146,
+            205,
+            289,
+            298,
+            442,
+            811,
+            844,
+            1387,
+            1408,
+            1838,
+            2106,
+            2287,
+            2384,
+            2680
+          ],
+          "sharedEventCount": 16,
+          "distinctTerminalGenomes": true,
+          "differingTerminalByteOffsets": [
+            42,
+            75,
+            88,
+            139,
+            156,
+            167
+          ]
+        }
+      ]
+    }
+  ],
+  "interpretation": "Common event steps share target/delta draws because seed, step and cell agree. Realized byte changes can differ with ancestral value and clamping. Distinct terminal variants are not independent evolutionary discoveries; shared mutations have not been causally isolated.",
+  "inputFiles": [
+    {
+      "path": "runs/construction/evolution-v1/source-build-1-seed-505-mut-1-gate-1.json",
+      "sha256": "72c5d739438a55fedc6d4da2995526c6fa9a894eec9abe3fc88cf09886b13287"
+    },
+    {
+      "path": "runs/construction/evolution-v1/source-build-4-seed-504-mut-1-gate-1.json",
+      "sha256": "fd4adbd220bb842a3aa8a12f1938e53bf90210f1e8a39d92a512f2588711d173"
+    },
+    {
+      "path": "runs/construction/evolution-v1/source-build-4-seed-505-mut-1-gate-1.json",
+      "sha256": "f858dd4b60d635d6bd1877e5d40180ca6ea2e4963c265dce9f954876e4d644de"
+    },
+    {
+      "path": "runs/construction/evolution-v1/source-build-8-seed-504-mut-1-gate-1.json",
+      "sha256": "96d0380345494c70a1de6ed50d4445933ab6789c2d5dd8252ae670e40bc6fd8e"
+    },
+    {
+      "path": "runs/construction/evolution-v1/source-build-8-seed-505-mut-1-gate-1.json",
+      "sha256": "c0f275ed387cfa89f77f2053c8c5ad20ad9e10391fafbbea23eb721627d1f057"
+    }
+  ]
+}

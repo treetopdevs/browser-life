@@ -11,7 +11,6 @@ import {
   GENOME_CHANNELS,
   M3_FOUNDERS,
   PRESETS,
-  RULE_VERSION,
   buildWorld,
   cellCount,
   drawExportCentre,
@@ -666,7 +665,7 @@ describe("runner-bundle sources (D3 and Stage 1)", () => {
       spec,
       cfg,
       presetIdentity: smallIdentity,
-      ruleVersion: RULE_VERSION,
+      ruleVersion: 1,
       startStep: 0,
       startedAt: "2026-10-02T00:00:00.000Z",
       checkpoints: [],
@@ -722,7 +721,7 @@ describe("runner-bundle sources (D3 and Stage 1)", () => {
         const { state, record } = await loadHunt1Source(at, B, read, w);
         expect(state.step, name).toBe(B * 1000);
         expect(record).toMatchObject({ source: at, boundary: B, checkpoint: `${at}/checkpoints/b003-pre.blck`, stateHash: stateHash(state), seed: w.seed, mutRate: w.mutRate, step: B * 1000, tilesX: 2, tilesY: 2, sameConfig: true });
-        expect(record.run).toMatchObject({ complete: true, conservationOk: true, ruleVersion: RULE_VERSION, presetIdentity: smallIdentity, preCycle: { boundary: B, step: 3000, file: "checkpoints/b003-pre.blck", hash: stateHash(state) } });
+        expect(record.run).toMatchObject({ complete: true, conservationOk: true, ruleVersion: 1, presetIdentity: smallIdentity, preCycle: { boundary: B, step: 3000, file: "checkpoints/b003-pre.blck", hash: stateHash(state) } });
         expect(record.run.spec).toMatchObject({ seed: w.seed, condition: w.condition });
         expect(record.run.branch === null, name).toBe(w.branch === null);
         expect(hunt1BundleProblems(w, record), name).toEqual([]);

@@ -98,7 +98,7 @@ export function mutant(f: number, s: number, m: number) {
   return { genome: decodeGenome(words), unchanged: words.every((w, i) => w === before[i]), slot, delta, hex: hexWords(words) };
 }
 
-const device = await requestDevice(navigator.gpu, defaultConfig({ tileW: 512, tileH: 512 }));
+const device = await requestDevice(navigator.gpu, defaultConfig({ ruleVersion: 1, tileW: 512, tileH: 512 }));
 const ec: EvalConfig = { ...DEFAULT_EVAL, roles: true, perRep: true };
 
 
@@ -141,7 +141,7 @@ async function garden() {
 async function gardenBatch(ps: GardenPlan["plantings"], plan: GardenPlan, seed: number) {
   const T = DEFAULT_EVAL.tile, side = DEFAULT_EVAL.side;
   const light = plan.gradient ? { lightMode: "gradient" as const, lightBase: plan.gradient.lightBase, lightAmp: plan.gradient.lightAmp } : {};
-  const cfg = defaultConfig({ ...DEFAULT_EVAL.world, ...light, tileW: T, tileH: T, tilesX: side, tilesY: side, seed, mutRate: 0 });
+  const cfg = defaultConfig({ ruleVersion: 1, ...DEFAULT_EVAL.world, ...light, tileW: T, tileH: T, tilesX: side, tilesY: side, seed, mutRate: 0 });
   const n = cellCount(cfg), W = worldW(cfg);
   const founders: Founder[] = [];
   const owner: { planting: number; slot: number; tile: number }[] = []; // by founder index (lineage lo - 1)

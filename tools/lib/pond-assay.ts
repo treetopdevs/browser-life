@@ -12,7 +12,6 @@ import {
   M3_FOUNDERS,
   NN_WORDS,
   PRESETS,
-  RULE_VERSION,
   allocState,
   buildWorld,
   canonicalConfig,
@@ -1902,7 +1901,7 @@ export async function loadReg1Source(dir: string, boundary: number | null, read:
  * - The directory ends in `want.dir` and in the manifest's runId (the manifest is the directory's own).
  * - The loader looked at every one of `wants` beside it, and at most one of them is complete: two complete runs of one history leave the
  *   source ambiguous.
- * - The manifest is complete (summary and finishedAt), with `summary.conservationOk` true and RULE_VERSION's rule version.
+ * - The manifest is complete (summary and finishedAt), with `summary.conservationOk` true and the frozen protocol's rule version 1.
  * - Its spec has `want`'s experiment, preset, condition, seed, steps, census, deep metrics and periodic checkpoints (none), and no override
  *   or alternative founding; it lists `boundary` in `preCycleCheckpoints`. The manifest records the preset's identity (`want.presetIdentity`).
  * - It is one uninterrupted run: from step 0 (startStep 0), its world built from the preset (an initHash).
@@ -1950,7 +1949,7 @@ export function reg1SourceProblems(wants: Reg1BundleWant | readonly Reg1BundleWa
   }
   if (run.complete !== true) why.push(`${role} run is incomplete: its manifest.json has no summary and finishedAt`);
   else is("run summary.conservationOk", run.conservationOk, true);
-  is("run ruleVersion", run.ruleVersion, RULE_VERSION);
+  is("run ruleVersion", run.ruleVersion, 1);
   is("run presetIdentity", run.presetIdentity, want.presetIdentity);
   // One uninterrupted run: from step 0, its world built from the preset (the manifest records that world's hash).
   is("run startStep", run.startStep, 0);

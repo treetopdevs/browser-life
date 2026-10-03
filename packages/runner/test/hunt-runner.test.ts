@@ -12,7 +12,6 @@ import {
   METRICS_VERSION,
   POND_COLUMNS,
   PRESETS,
-  RULE_VERSION,
   SCHEMA_VERSION,
   applyCurrentCycle,
   cellCount,
@@ -154,7 +153,7 @@ describe("a spec without overrides or branch is unchanged", () => {
   const done = (spec: RunSpec): Record<string, unknown> => ({
     spec: JSON.parse(JSON.stringify(spec)),
     cfg: specConfig(spec),
-    ruleVersion: RULE_VERSION,
+    ruleVersion: specConfig(spec).ruleVersion,
     schemaVersion: SCHEMA_VERSION,
     metricsVersion: METRICS_VERSION,
   });

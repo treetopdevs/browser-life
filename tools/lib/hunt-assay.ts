@@ -3,7 +3,7 @@
 // of a source world draws from its export zone, the summary W / Wexport / edgeShare, the pinned hunt document and the provenance checks of every
 // source (protocol v1's main-run checkpoints for G2, runner bundles for D3 and Stage 1). Pure and integer-or-float host code with no Deno API (the
 // bundle loader takes its file reader as an argument), so vitest exercises it directly; the GPU loop and the CLI are tools/scaffold-assays.ts.
-import { CH, GENOME_CHANNELS, RULE_VERSION, cellCount, drawExportCentre, packetWindow, pondExportMasses, worldW, type WorldState } from "@bl/schema";
+import { CH, GENOME_CHANNELS, cellCount, drawExportCentre, packetWindow, pondExportMasses, worldW, type WorldState } from "@bl/schema";
 import { runId, type RunSpec } from "@bl/runner";
 import {
   ASSAY_COLUMNS,
@@ -643,7 +643,7 @@ function overridesProblem(got: unknown, want: Record<string, number> | null): st
  *   bundle) and in the manifest's runId, which is its spec's.
  * - The loader looked at both the run and its rerun (`candidates`, as `reg1SourceProblems` requires) and at most one of them is complete: two complete runs of
  *   one source leave it ambiguous.
- * - The manifest is complete (summary and finishedAt) with `summary.conservationOk` true and RULE_VERSION's rule version, and records the preset's identity.
+ * - The manifest is complete (summary and finishedAt) with `summary.conservationOk` true and the frozen protocol's rule version 1, and records the preset's identity.
  * - Its spec has the preset, condition, seed and `overrides` of `want` (none: no overrides) and no alternative founding or metapopulation, and lists
  *   the boundary in `preCycleCheckpoints`.
  * - The checkpoint is the manifest's file for the boundary (checkpoints/b<NNN>-pre.blck) and its state hashes to the hash recorded there; the state's
@@ -694,7 +694,7 @@ export function hunt1BundleProblems(want: Hunt1BundleWant, p: unknown, role = "s
   }
   if (run.complete !== true) why.push(`${role} run is incomplete: its manifest.json has no summary and finishedAt`);
   else is("run summary.conservationOk", run.conservationOk, true);
-  is("run ruleVersion", run.ruleVersion, RULE_VERSION);
+  is("run ruleVersion", run.ruleVersion, 1);
   is("run presetIdentity", run.presetIdentity, want.presetIdentity);
   is("step", s.step, want.boundary * want.period);
   const e = isRecord(run.preCycle) ? run.preCycle : null;

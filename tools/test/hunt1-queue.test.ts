@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PRESETS, RULE_VERSION, encodeCheckpoint, initWorld, presetIdentity, stateHash, type WorldState } from "@bl/schema";
+import { PRESETS, encodeCheckpoint, initWorld, presetIdentity, stateHash, type WorldState } from "@bl/schema";
 import { specConfig, type RunSpec } from "@bl/runner";
 import { assaySuccess, reg1PreCycleFileOf } from "../lib/pond-assay.ts";
 import { pondConfig, randomKey } from "../lib/ponds.ts";
@@ -295,7 +295,7 @@ describe("the histories and ancestor worlds", () => {
       files.set(
         `${dir}/manifest.json`,
         new TextEncoder().encode(
-          JSON.stringify({ runId: `${experiment}/ponds-small/pond-cont/seed-${want.seed}`, spec, cfg: specConfig(spec), presetIdentity: presetIdentity(small), ruleVersion: RULE_VERSION, startStep: 0, startedAt: "2026-10-04T00:00:00.000Z", checkpoints: [], preCycleCheckpoints: [{ boundary: 1, step: 1000, file, hash: stateHash(state) }], summary: { conservationOk: true, finalHash: "f".repeat(16) }, finishedAt: "2026-10-04T01:00:00.000Z" }),
+          JSON.stringify({ runId: `${experiment}/ponds-small/pond-cont/seed-${want.seed}`, spec, cfg: specConfig(spec), presetIdentity: presetIdentity(small), ruleVersion: 1, startStep: 0, startedAt: "2026-10-04T00:00:00.000Z", checkpoints: [], preCycleCheckpoints: [{ boundary: 1, step: 1000, file, hash: stateHash(state) }], summary: { conservationOk: true, finalHash: "f".repeat(16) }, finishedAt: "2026-10-04T01:00:00.000Z" }),
         ),
       );
       return dir;

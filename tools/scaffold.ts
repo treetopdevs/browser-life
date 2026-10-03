@@ -21,7 +21,7 @@
 // (docs/scaffold-registration-v1.md, "Seeds"), are allowed too, for exactly that world: --arm cont --init clone --mut-off
 // --period 10000 --cycles 1 --side 8, as the heredity replication grew its controls.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { CH, G, M3_FOUNDERS, RULE_VERSION, cellCount, founderGenome, stateHash, totalsOf, worldW, type WorldConfig, type WorldState } from "@bl/schema";
+import { CH, G, M3_FOUNDERS, canonicalConfig, cellCount, founderGenome, stateHash, totalsOf, worldW, type WorldConfig, type WorldState } from "@bl/schema";
 import { DEFAULT_CENSUS, census, individuals } from "@bl/metrics";
 import { GpuSim, requestDevice } from "@bl/sim-gpu";
 import { encodePng } from "./lib/png.ts";
@@ -277,8 +277,10 @@ async function evolve(argv: string[]): Promise<void> {
 
   if (a.resume) {
     meta = JSON.parse(await Deno.readTextFile(`${out}/meta.json`));
-    for (const [key, want] of Object.entries({ arm, k, period, side, seed, mutRate: cfg0.mutRate, init, censusEvery, protocolSha256 }))
+    for (const [key, want] of Object.entries({ arm, k, period, side, seed, mutRate: cfg0.mutRate, init, censusEvery, protocolSha256, ruleVersion: cfg0.ruleVersion }))
       if (meta[key] !== want) throw new Error(`--resume: ${key} is ${JSON.stringify(want)} but ${out}/meta.json has ${JSON.stringify(meta[key])}`);
+    if (!meta.config || typeof meta.config !== "object" || Array.isArray(meta.config) || canonicalConfig(meta.config as WorldConfig) !== canonicalConfig(cfg0))
+      throw new Error(`--resume: ${out}/meta.json config differs from the requested configuration`);
     if (await fileExists(`${out}/done.json`)) {
       const done = JSON.parse(await Deno.readTextFile(`${out}/done.json`));
       if (done.ended) {
@@ -294,6 +296,7 @@ async function evolve(argv: string[]): Promise<void> {
     // A crash before the first boundary checkpoint restarts from the initial state.
     if (b0 === 0 && !(await fileExists(`${ckptDir}/init.blck.gz`))) throw new Error(`--resume: no ${want}-cycle checkpoint at or before cycle ${C} and no init.blck.gz in ${ckptDir}`);
     state = await loadCheckpoint(b0 === 0 ? `${ckptDir}/init.blck.gz` : ckptPath(b0, want));
+    if (canonicalConfig(state.cfg) !== canonicalConfig(cfg0)) throw new Error("--resume: checkpoint configuration differs from the requested configuration");
     if (state.step !== b0 * period) throw new Error(`checkpoint ${b0 === 0 ? "init" : `b${b0}`} is at step ${state.step}, expected ${b0 * period}`);
     // A status for this very checkpoint says whether the history ended there (the crash came before done.json).
     const status = b0 > 0 ? await readStatus(statusPath) : null;
@@ -335,7 +338,7 @@ async function evolve(argv: string[]): Promise<void> {
     meta = {
       tool: "scaffold",
       protocolSha256,
-      ruleVersion: RULE_VERSION,
+      ruleVersion: state.cfg.ruleVersion,
       arm,
       k,
       period,

@@ -709,7 +709,7 @@ describe("applyCurrentCycle", () => {
 describe("v1 outputs are unchanged", () => {
   /** A seeded scatter of cells over a crafted world: some dense (to truncate), with genomes, energy, waste and signal. */
   function scattered(side: number, seed: number, density: number, heavy: boolean): WorldState {
-    const cfg = defaultConfig({ tileW: 64, tileH: 64, tilesX: side, tilesY: side, seed, mutRate: 0 });
+    const cfg = defaultConfig({ ruleVersion: 1, tileW: 64, tileH: 64, tilesX: side, tilesY: side, seed, mutRate: 0 });
     const s = buildWorld(cfg, { nutrient: 32, founders: [] });
     const n = cellCount(cfg);
     let state = (seed * 7919) >>> 0;

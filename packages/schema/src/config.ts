@@ -4,7 +4,15 @@
 import type { PondArm } from "./ponds.ts";
 
 export const SCHEMA_VERSION = 3;
-export const RULE_VERSION = 1;
+/** Latest supported physics version; experimental versions are explicitly selected. */
+export const RULE_VERSION = 2;
+/** Stable default for new configs, historical presets and registered experiments. */
+export const DEFAULT_RULE_VERSION = 1;
+export const SUPPORTED_RULE_VERSIONS = [1, 2] as const;
+/** Versions this implementation can execute; manifests must also match their own config. */
+export function isSupportedRuleVersion(version: unknown): version is 1 | 2 {
+  return version === 1 || version === 2;
+}
 /**
  * Bumped whenever a metric's *definition* changes (e.g. `compressionRatio`'s
  * compressor) in a way that makes its values incomparable to earlier runs,
@@ -53,6 +61,22 @@ export interface WorldConfig {
   diffS: number;
   /** Membrane gate: D_eff = D * gateK / (gateK + P_s + P_t). */
   gateK: number;
+  /**
+   * Causal ablation: exactly false removes polymer's effect on dissolved A/C
+   * diffusion. BUILD still consumes biomass and energy, and P retains its
+   * ordinary transport, decay and mechanical effects. Absent/true retains
+   * the original gate. Omitted from defaults to preserve existing digests.
+   */
+  polymerTransport?: boolean;
+  /**
+   * Rule 2 only: polymer at a source resists outgoing B/P/E transport.
+   * Each original integer share is thinned with mobility
+   * max(1, floor(8192 / (32 + P_source))) / 256, using stochastic rounding.
+   * Retained matter/energy stays at its source. BUILD costs and dissolved
+   * diffusion are unchanged. Absent/false preserves the original dynamics;
+   * deliberately omitted from defaults and historical rule-1 configs.
+   */
+  polymerDrag?: boolean;
 
   /** Catalyst half-saturation (quanta): effective catalyst = B^2 / (B + kCatHalf). */
   kCatHalf: number;
@@ -302,7 +326,7 @@ export const DEFAULT_K_ADHESION = 64;
 
 export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig {
   return {
-    ruleVersion: RULE_VERSION,
+    ruleVersion: DEFAULT_RULE_VERSION,
     seed: 1,
     tileW: 256,
     tileH: 256,
@@ -454,13 +478,16 @@ export function validateConfig(c: WorldConfig): string[] {
   // defaultConfig()'s keys above; validate them only when present, since a
   // missing key is a valid, meaningful value (off / DEFAULT_K_ADHESION).
   if (c.adhesion !== undefined && typeof c.adhesion !== "boolean") errs.push("adhesion must be a boolean");
+  if (c.polymerTransport !== undefined && typeof c.polymerTransport !== "boolean") errs.push("polymerTransport must be a boolean");
+  if (c.polymerDrag !== undefined && typeof c.polymerDrag !== "boolean") errs.push("polymerDrag must be a boolean");
   if (c.kAdhesion !== undefined) {
     const r = RANGES.kAdhesion!;
     if (typeof c.kAdhesion !== "number" || !Number.isInteger(c.kAdhesion) || c.kAdhesion < r[0] || c.kAdhesion > r[1])
       errs.push(`kAdhesion must be an integer in ${r[0]}..${r[1]}`);
   }
   if (errs.length) return errs;
-  if (c.ruleVersion !== RULE_VERSION) errs.push(`ruleVersion ${c.ruleVersion} != ${RULE_VERSION}`);
+  if (!isSupportedRuleVersion(c.ruleVersion)) errs.push(`unsupported ruleVersion ${c.ruleVersion}; expected 1 or ${RULE_VERSION}`);
+  if (c.polymerDrag === true && c.ruleVersion !== 2) errs.push("polymerDrag requires ruleVersion 2");
   if (!["uniform", "gradient", "patches"].includes(c.lightMode)) errs.push("lightMode must be uniform, gradient or patches");
   if (c.tileW % 8 !== 0 || c.tileH % 8 !== 0) errs.push("tile dimensions must be multiples of 8");
   if (c.kernelRadius * 2 + 1 > Math.min(c.tileW, c.tileH)) errs.push("kernel larger than tile");

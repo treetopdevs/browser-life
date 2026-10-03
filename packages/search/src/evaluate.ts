@@ -271,7 +271,9 @@ export async function evaluateBatch(device: GPUDevice, genomes: Genome[], ec: Ev
   const tiles = ec.side * ec.side;
   const perBatch = Math.floor(tiles / ec.reps);
   if (genomes.length > perBatch) throw new Error(`batch holds ${perBatch} genomes`);
-  const cfg = defaultConfig({ ...ec.world, tileW: ec.tile, tileH: ec.tile, tilesX: ec.side, tilesY: ec.side, seed: ec.seed, mutRate: 0 });
+  // Historical evaluation archives omit a version in ec.world; preserve
+  // their rule-1 config without changing the archived EvalConfig shape.
+  const cfg = defaultConfig({ ruleVersion: 1, ...ec.world, tileW: ec.tile, tileH: ec.tile, tilesX: ec.side, tilesY: ec.side, seed: ec.seed, mutRate: 0 });
   const owner = new Int32Array(tiles).fill(-1);
   const candidateRawId = new Int32Array(tiles);
   const founders: Founder[] = [];

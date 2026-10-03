@@ -32,7 +32,7 @@ export interface Preset {
 }
 
 /** Physics shared by all presets: the spot-forming Flow-Lenia regime found in the M3 sweeps. */
-const SPOT_REGIME: Partial<WorldConfig> = { defaultMu: 60, defaultSigma: 20, kernelRadius: 9 };
+const SPOT_REGIME: Partial<WorldConfig> = { ruleVersion: 1, defaultMu: 60, defaultSigma: 20, kernelRadius: 9 };
 
 /**
  * The M3 evaluator's world physics (`DEFAULT_EVAL.world`, packages/search/src/evaluate.ts),
@@ -40,7 +40,7 @@ const SPOT_REGIME: Partial<WorldConfig> = { defaultMu: 60, defaultSigma: 20, ker
  * schema does not depend on search. packages/schema/test/ponds.test.ts checks
  * the pond presets against tools/lib/ponds.ts's pondConfig.
  */
-const POND_REGIME: Partial<WorldConfig> = { defaultMu: 60, defaultSigma: 20, kernelRadius: 9, lightMode: "uniform", lightBase: 40, lightAmp: 160 };
+const POND_REGIME: Partial<WorldConfig> = { ruleVersion: 1, defaultMu: 60, defaultSigma: 20, kernelRadius: 9, lightMode: "uniform", lightBase: 40, lightAmp: 160 };
 
 export const PRESETS: Preset[] = [
   {

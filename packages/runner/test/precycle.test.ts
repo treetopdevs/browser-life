@@ -4,7 +4,7 @@
 // field, and stitchRun's refusal. tests/deno/ponds.ts (section precycle) writes and checks the
 // checkpoints themselves on a GPU, and that a run without the field has no trace of it in its manifest.
 import { describe, expect, it } from "vitest";
-import { METRICS_VERSION, PRESETS, RULE_VERSION, SCHEMA_VERSION, cloneState, initWorld, presetConfig, type WorldState } from "@bl/schema";
+import { METRICS_VERSION, PRESETS, SCHEMA_VERSION, cloneState, initWorld, presetConfig, type WorldState } from "@bl/schema";
 import {
   PONDS_HEADER,
   observerSettings,
@@ -117,7 +117,7 @@ describe("a spec without the field is unchanged", () => {
   const done = (spec: RunSpec): Record<string, unknown> => ({
     spec: JSON.parse(JSON.stringify(spec)),
     cfg: specConfig(spec),
-    ruleVersion: RULE_VERSION,
+    ruleVersion: specConfig(spec).ruleVersion,
     schemaVersion: SCHEMA_VERSION,
     metricsVersion: METRICS_VERSION,
   });
@@ -152,7 +152,7 @@ describe("stitchRun refuses segments that carry pre-cycle checkpoints", () => {
       cfg: specConfig(spec),
       init: "seed",
       schemaVersion: SCHEMA_VERSION,
-      ruleVersion: RULE_VERSION,
+      ruleVersion: specConfig(spec).ruleVersion,
       metricsVersion: METRICS_VERSION,
       host,
       startStep: 0,

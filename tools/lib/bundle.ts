@@ -14,7 +14,7 @@
 // packages/runner/src/runner.ts) and type-checked under tsc's Node-ish lib
 // set with no Deno types. This module is checked separately via
 // `deno check tools/*.ts`.
-import { METRICS_VERSION, PRESETS, presetIdentity, RULE_VERSION, SCHEMA_VERSION, initWorld, stateHash, type Preset } from "@bl/schema";
+import { METRICS_VERSION, PRESETS, presetIdentity, isSupportedRuleVersion, SCHEMA_VERSION, initWorld, stateHash, validateConfig, type Preset } from "@bl/schema";
 import { ActivityTracker } from "@bl/metrics";
 import { sameConfig, specConfig } from "@bl/runner";
 
@@ -182,11 +182,15 @@ export function ensembleProblems(loaded: Run[], sharedKeys: readonly string[] = 
   const problems: string[] = [];
   if (!loaded.length) return problems;
   const ref = loaded[0].manifest.spec;
+  const refRule = loaded[0].manifest.ruleVersion;
   for (const r of loaded) {
     const m = r.manifest;
     const id = `${r.condition}/seed-${r.seed}`;
-    if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION)
-      problems.push(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, analysis expects ${RULE_VERSION}/${SCHEMA_VERSION}`);
+    if (!isSupportedRuleVersion(m.ruleVersion) || m.schemaVersion !== SCHEMA_VERSION)
+      problems.push(`${id}: unsupported rule/schema ${m.ruleVersion}/${m.schemaVersion}; analysis supports rules 1/2, schema ${SCHEMA_VERSION}`);
+    if (m.cfg?.ruleVersion !== m.ruleVersion) problems.push(`${id}: manifest ruleVersion ${m.ruleVersion} differs from config ${m.cfg?.ruleVersion}`);
+    if (m.ruleVersion !== refRule) problems.push(`${id}: ruleVersion ${m.ruleVersion} differs from ensemble ${refRule}; versions cannot pool`);
+    for (const error of validateConfig(m.cfg)) problems.push(`${id}: ${error}`);
     // A missing field predates METRICS_VERSION and is version 1 — never pool
     // runs whose held-out metrics (e.g. compressionRatio) were computed under
     // different definitions.

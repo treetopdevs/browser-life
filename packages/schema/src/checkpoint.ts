@@ -1,4 +1,4 @@
-import { SCHEMA_VERSION, RULE_VERSION, defaultConfig, validateConfig, cellCount, type WorldConfig } from "./config.ts";
+import { SCHEMA_VERSION, isSupportedRuleVersion, defaultConfig, validateConfig, cellCount, type WorldConfig } from "./config.ts";
 import { CELL_CHANNELS, FLUX_COUNT, GENOME_CHANNELS } from "./layout.ts";
 import { canonicalGenome, digestWords } from "./accounting.ts";
 import { validateState, type WorldState } from "./world.ts";
@@ -92,7 +92,7 @@ export function decodeCheckpoint(bytes: Uint8Array): { state: WorldState; observ
   const schema = word();
   if (schema !== SCHEMA_VERSION) throw new Error(`checkpoint: schema ${schema} != ${SCHEMA_VERSION}`);
   const rule = word();
-  if (rule !== RULE_VERSION) throw new Error(`checkpoint: rule version ${rule} != ${RULE_VERSION}`);
+  if (!isSupportedRuleVersion(rule)) throw new Error(`checkpoint: unsupported rule version ${rule}`);
   const step = word();
   const u64 = () => BigInt(word()) | (BigInt(word()) << 32n);
   const lightIn = u64();
@@ -109,6 +109,7 @@ export function decodeCheckpoint(bytes: Uint8Array): { state: WorldState; observ
     throw new Error("checkpoint: config is not valid JSON");
   }
   const cfg = { ...defaultConfig(), ...(parsed as object) } as WorldConfig;
+  if (cfg.ruleVersion !== rule) throw new Error(`checkpoint: header rule version ${rule} != config ${cfg.ruleVersion}`);
   const errs = validateConfig(cfg);
   if (errs.length) throw new Error(`checkpoint: invalid config: ${errs.join("; ")}`);
   const n = cellCount(cfg);

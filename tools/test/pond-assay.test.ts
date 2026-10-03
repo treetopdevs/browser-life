@@ -12,7 +12,6 @@ import {
   M3_FOUNDERS,
   NN_WORDS,
   PRESETS,
-  RULE_VERSION,
   buildWorld,
   cellCount,
   encodeCheckpoint,
@@ -1563,7 +1562,7 @@ describe("the scaffolding registration's seeds, labels and sources (docs/scaffol
       return { boundary: Number(b), step: s.step, file, hash: stateHash(s) };
     });
     const preset = PRESETS.find((p) => p.id === spec.presetId)!;
-    const m: Record<string, unknown> = { runId: `${spec.experiment}/${spec.presetId}/${spec.condition}/seed-${spec.seed}`, spec, cfg, presetIdentity: presetIdentity(preset), initHash: stateHash(init), ruleVersion: RULE_VERSION, startStep: 0, startedAt: "2026-10-02T00:00:00.000Z", checkpoints: [], preCycleCheckpoints, summary: { conservationOk: true, finalHash: "f".repeat(16) }, finishedAt: "2026-10-02T01:00:00.000Z" };
+    const m: Record<string, unknown> = { runId: `${spec.experiment}/${spec.presetId}/${spec.condition}/seed-${spec.seed}`, spec, cfg, presetIdentity: presetIdentity(preset), initHash: stateHash(init), ruleVersion: 1, startStep: 0, startedAt: "2026-10-02T00:00:00.000Z", checkpoints: [], preCycleCheckpoints, summary: { conservationOk: true, finalHash: "f".repeat(16) }, finishedAt: "2026-10-02T01:00:00.000Z" };
     o.edit?.(m, dir);
     writeFileSync(join(dir, "manifest.json"), JSON.stringify(m, null, 2));
     return dir;
@@ -1577,7 +1576,7 @@ describe("the scaffolding registration's seeds, labels and sources (docs/scaffol
       const { state, record } = await loadReg1Source(dir, 2, read);
       expect(state.step).toBe(2000);
       expect(record).toMatchObject({ source: dir, boundary: 2, checkpoint: `${dir}/checkpoints/b002-pre.blck`, stateHash: stateHash(state), seed: 4_850_001, mutRate: mut, step: 2000, tilesX: 2, tilesY: 2, sameConfig: true });
-      expect(record.run).toMatchObject({ manifest: `${dir}/manifest.json`, runId: "hist/ponds-small/treatment/seed-4850001", complete: true, conservationOk: true, ruleVersion: RULE_VERSION, preCycle: { boundary: 2, step: 2000, file: "checkpoints/b002-pre.blck", hash: stateHash(state) } });
+      expect(record.run).toMatchObject({ manifest: `${dir}/manifest.json`, runId: "hist/ponds-small/treatment/seed-4850001", complete: true, conservationOk: true, ruleVersion: 1, preCycle: { boundary: 2, step: 2000, file: "checkpoints/b002-pre.blck", hash: stateHash(state) } });
       expect(reg1SourceProblems(want, 2, record)).toEqual([]);
       expect(reg1SourceProblems(want, 2, (await loadReg1Source(`${dir}/`, 2, read)).record)).toEqual([]); // a trailing slash
       expect(reg1SourceProblems(want, 2, JSON.parse(JSON.stringify(record)))).toEqual([]); // as assay.json records it
@@ -1762,7 +1761,7 @@ describe("the scaffolding registration's seeds, labels and sources (docs/scaffol
       boundary,
       checkpoint: boundary === null ? null : `${dir}/${reg1PreCycleFileOf(boundary)}`,
       sameConfig: true,
-      run: { manifest: `${dir}/manifest.json`, runId: `${spec.experiment}/ponds/${w.condition}/seed-${w.seed}`, spec, presetIdentity: REG1_PONDS_IDENTITY, ruleVersion: RULE_VERSION, startStep: 0, initHash: `i${h}`.padEnd(16, "0"), complete: true, conservationOk: true, preCycle: boundary === null ? null : { boundary, step: boundary * 10_000, file: reg1PreCycleFileOf(boundary), hash } },
+      run: { manifest: `${dir}/manifest.json`, runId: `${spec.experiment}/ponds/${w.condition}/seed-${w.seed}`, spec, presetIdentity: REG1_PONDS_IDENTITY, ruleVersion: 1, startStep: 0, initHash: `i${h}`.padEnd(16, "0"), complete: true, conservationOk: true, preCycle: boundary === null ? null : { boundary, step: boundary * 10_000, file: reg1PreCycleFileOf(boundary), hash } },
       candidates: ws.map((x) => ({ dir: `runs/${x.dir}`, complete: x === w, manifest: true, summary: x === w, startedAt: "2026-10-02T00:00:00.000Z", finishedAt: x === w ? "2026-10-02T01:00:00.000Z" : null })),
       ...over,
     };

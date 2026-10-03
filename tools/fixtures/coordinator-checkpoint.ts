@@ -7,7 +7,7 @@ import { defaultConfig, soupWorld, encodeCheckpoint, stateHash, artifactDigest, 
 import { RefSim } from "@bl/sim-ref";
 
 function build(steps: number, observer: unknown, cfgOverrides: Partial<WorldConfig> = {}) {
-  const cfg = defaultConfig({ tileW: 24, tileH: 24, kernelRadius: 3, seed: 7, ...cfgOverrides });
+  const cfg = defaultConfig({ ruleVersion: 1, tileW: 24, tileH: 24, kernelRadius: 3, seed: 7, ...cfgOverrides });
   const sim = new RefSim(soupWorld(cfg, 2, 32, 64));
   sim.run(steps);
   return {

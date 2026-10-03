@@ -54,7 +54,7 @@
 // Checkpoints are replaced atomically and archive.json is written last, so a
 // run stopped at any point resumes from its last completed batch.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { CLUSTER_DISTANCE, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, genomeFromHex, generalistGenome, randomGenome, type Genome } from "@bl/schema";
+import { CLUSTER_DISTANCE, METRICS_VERSION, SCHEMA_VERSION, genomeFromHex, generalistGenome, randomGenome, type Genome } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { binomialLowerBound } from "@bl/metrics";
 import {
@@ -98,7 +98,7 @@ const int = (flag: "batches" | "seed" | "confirm-reps" | "confirm-seed") => {
 };
 const batches = int("batches"), reps = int("confirm-reps"), confirmSeedFlag = int("confirm-seed");
 
-function parseMedium(raw: string): Pick<EvalConfig, "nutrient" | "medium" | "darkSteps"> {
+function parseMedium(raw: string): Partial<Pick<EvalConfig, "nutrient" | "medium" | "darkSteps">> {
   if (raw.startsWith("waste:")) {
     const parts = raw.slice("waste:".length).split(":");
     if (parts.length !== 2) throw new Error(`--medium waste:A:C needs two integers, not ${JSON.stringify(raw)}`);
@@ -235,7 +235,7 @@ const searchOfRecord = a["confirm-only"] ? saved!.search : search;
 // the archive's own settings, not its flags). No regeneration threshold applies to the maintenance gate.
 const provenance = {
   schemaVersion: SCHEMA_VERSION,
-  ruleVersion: RULE_VERSION,
+  ruleVersion: evalRef.world.ruleVersion ?? 1,
   metricsVersion: METRICS_VERSION,
   archiveSpec: DEFAULT_ARCHIVE,
   clusterDistance: CLUSTER_DISTANCE,

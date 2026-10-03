@@ -17,7 +17,7 @@
 // generator code. `boundedTreatmentVsFlat` and `plantedSignal` are
 // deliberately NOT fair (see their own doc) -- they branch on whether
 // `id.condition === "treatment"`.
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, type WorldConfig } from "@bl/schema";
+import { METRICS_VERSION, SCHEMA_VERSION, type WorldConfig } from "@bl/schema";
 import { ROLES, type Role } from "@bl/metrics";
 import { specConfig, type RunSpec } from "@bl/runner";
 import { streamRng } from "./idhash.ts";
@@ -177,10 +177,11 @@ export interface NullManifest {
 
 /** Builds a real manifest (real `cfg = specConfig(spec)`, real version numbers) for one synthetic bundle. */
 export function buildManifest(spec: RunSpec, nullId: string, windowSteps: number, replicateIndex: number, generatorParams: Record<string, unknown>): NullManifest {
+  const cfg = specConfig(spec);
   return {
     spec,
-    cfg: specConfig(spec),
-    ruleVersion: RULE_VERSION,
+    cfg,
+    ruleVersion: cfg.ruleVersion,
     schemaVersion: SCHEMA_VERSION,
     metricsVersion: METRICS_VERSION,
     startStep: 0,
