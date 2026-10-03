@@ -661,6 +661,18 @@ The transition hunt stays a draft. It waits on the user's approval as a whole, a
 - **After the queue, on the Mac at $0:** R4, the two reproducibility reruns, then the report with its independent re-derivation.
 - **Close-out:** the cost is recorded here when the draw closes.
 
+**Transition hunt frozen (2026-10-02, the user's decision).** The user approved `docs/scaffold-transition-hunt-v1.md` as a whole while the registration's queue ran on AWS.
+- **Before the freeze,** the text gained clarifications only:
+  - the no-packet row sentinel;
+  - the population coefficient of variation;
+  - midranks for Spearman ties;
+  - the unequal-size ICC(1);
+  - the no-export case (m = 0);
+  - what follows if G1's e = 1 fallback passes.
+- **Review:** two rounds by Antigravity (`agy`), standing in for Codex Astra by the user's instruction for 2026-10-02. Of its first round, two findings were applied (the m = 0 case) and two were not: G2 uses protocol v1's existing states, not the registration's, and "not assessed" against the 6-history threshold is the registration's chosen missing-data rule. The second round passed the diff.
+- **Freeze:** the SHA-256 is `13246200a5277ecbbbefb8d5b220f61a10ba1d33dc39a748fefbc224904a1f97` over its 38,736 bytes, recorded in `experiments/scaffold/HUNT-v1`. Changes from here on go in dated amendments at the end.
+- **Next:** Stage 0 on the Mac at $0: build the code the hunt lists, review it, commit; then G1, G2 and D3, and a dated amendment with their results. Stage 1 waits for the registration's queue and its own draw note.
+
 
 ## Ecology-first founder discovery — 2026-09-29
 

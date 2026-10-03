@@ -1,6 +1,6 @@
-# Transition hunt v1 (DRAFT, exploratory, not frozen)
+# Transition hunt v1 (exploratory, frozen 2026-10-02)
 
-*2026-10-01. A draft for the user's decision, written after the user chose to keep the scaffolding registration (`docs/scaffold-registration-v1.md`) at 24 histories per arm and to draft a hunt beside it. The two are separate decisions: this document changes nothing in the registration. Nothing here binds until the user approves it and it is frozen (see "Freeze and order of events"). Its settings were decided by the user on 2026-10-02 (see "Freeze and order of events"). No run, assay or data of this design exists. After the freeze, any change goes in a dated amendment at the end and the original text stays. The line stays exploratory under RULE_VERSION 1: it does not count toward M6 and does not answer the reset line's entity question.*
+*Drafted 2026-10-01, after the user chose to keep the scaffolding registration (`docs/scaffold-registration-v1.md`) at 24 histories per arm and to draft a hunt beside it. The two are separate decisions: this document changes nothing in the registration. Its settings were decided by the user on 2026-10-02, and the user approved it as a whole the same day (see "Freeze and order of events"); it was frozen that day. Its SHA-256 is in `experiments/scaffold/HUNT-v1`. No run, assay or data of this design existed at the freeze. Any change from here on goes in a dated amendment at the end, and the original text stays. The line stays exploratory under RULE_VERSION 1: it does not count toward M6 and does not answer the reset line's entity question.*
 
 ## Why a hunt
 
@@ -101,8 +101,10 @@ Tiles are isolated tori under RULE_VERSION 1, so no physical process moves matte
 | Pond | `died` | `donor` | Packet fields |
 |---|---|---|---|
 | Recipient with a packet | 1 | the donor | filled |
-| Dying with no export anywhere | 1 | −1 | 0 |
-| Survivor | 0 | −2 | 0 |
+| Dying with no export anywhere | 1 | −1 | none |
+| Survivor | 0 | −2 | none |
+
+"None" is v1's row without a packet: `cx` = `cy` = −1 and every other packet field 0. Every row, whatever its kind, carries the pond's pre-cycle measurements (`recipientTrait`, `recipientIndividuals`, `recipientLineages`), its own `heat` and `light` (0 for a survivor), and `donorTrait` (the donor's trait, or 0 without a donor).
 
 **Derived rates and their denominators.**
 - **Truncation rate:** truncated rows over recipient rows (died = 1 with a donor). v1's 1% flag applies to that rate.
@@ -165,7 +167,7 @@ W is the **family-uniform offspring export performance** of a source state S: fo
 - survivors also persist across boundaries, which a one-period assay omits.
 
 **Procedure,** for a source S at its pre-cycle step:
-- **Families:** every exporting pond of S, in ascending pond index, with m the number of families. If m = 0, W(S) = 0: a measured outcome, because the world releases no propagules.
+- **Families:** every exporting pond of S, in ascending pond index, with m the number of families. If m = 0, W(S) = 0: a measured outcome, because the world releases no propagules. No assay world is run then, and the export-weighted W, the edge share and every fragment count of S are 0.
 - **Fragments.** Four replicates, s = 0–3. Each replicate is one assay world of 64 fresh ponds:
   - per-pond matter M_assay = 151,552, mutation off, one period of 10,000 steps, no transform.
   - **Source family:** the fragment in assay pond f of replicate s, with global index g = 64·s + f, comes from family g mod m. With m = 64, each pond of S is a family with four fragments.
@@ -176,7 +178,7 @@ W is the **family-uniform offspring export performance** of a source state S: fo
   - its trait;
   - v1's success flag (trait ≥ 0.25 · 103,058 and ≥ 4 × retained landed B+P), descriptive.
 - **W(S):** the mean over families of each family's mean X_f, with equal weight per family whatever m is.
-- **Also reported:** the export-weighted version Σ_p X_p · (family mean of p) / Σ_p X_p, which follows the regime's donor weighting.
+- **Also reported:** the export-weighted version Σ_p X_p · (family mean of p) / Σ_p X_p, which follows the regime's donor weighting (0 when m = 0).
 - **Quenched control:** S's replicate-0 fragments with the controller weight words and E set to 0, relabelled (64 fragments). It runs on every `nat` source at time C.
 
 **Genome-only variant.** It addresses the genetic-attribution question in part.
@@ -205,18 +207,19 @@ Competence, by contrast, is near its ceiling in evolved worlds.
   - the mean fraction of occupied ponds over boundaries 2–30 is at least 0.5;
   - pooled recolonisation success over recipients of boundaries 1–29 is at least 0.3. With no recipient in that interval the success is not estimable, and the run is not viable;
   - matter and the ledger are exact at every census and transform.
-- **Selection strength.** A `nat` run has a non-negligible contrast if the mean coefficient of variation of X among exporting ponds, over boundaries 2–30, is at least 0.1. Boundaries with fewer than two exporters count as 0.
+- **Selection strength.** A `nat` run has a non-negligible contrast if the mean coefficient of variation of X among exporting ponds, over boundaries 2–30, is at least 0.1. The coefficient of variation is the population one (standard deviation with denominator m, over the mean), as v1's P1 used. Boundaries with fewer than two exporters count as 0.
 - **Recorded per boundary for all four runs** (descriptive):
   - the number of exporters;
   - that coefficient of variation;
   - the effective number of donors (Σw)² / Σw²;
-  - the Spearman correlation between X_p and realised offspring count, among exporting ponds. It should be positive in `nat` and near 0 in `shuf`.
+  - the Spearman correlation between X_p and realised offspring count, among exporting ponds, with midranks for ties. It should be positive in `nat` and near 0 in `shuf`.
 
   A diagnostic is reported as not estimable (null) when it is undefined: fewer than two exporters, constant values, or Σw = 0.
 - **`shuf` runs** need only exact conservation. A collapse or an ending in `shuf` is a biological outcome, the one the control exists to reveal.
 - **Decision:**
   - if either `nat` run is not viable, G1 reruns once with e = 1 (`pondDeath` 65,536) at the fallback seeds;
-  - if that fails too, or if either viable `nat` run lacks selection strength, the hunt stops and is reported.
+  - if that fails too, or if either viable `nat` run lacks selection strength, the hunt stops and is reported;
+  - if the fallback passes, the hunt continues at e = 1: Stage 1, D3 and the device check then use `pondDeath` 65,536, and every other rule is unchanged.
 
 **G2, a sensitivity check of the instrument.**
 - **What runs:** W on protocol v1's main-run states at boundary 100, pre-cycle: `scaf` i0–i5 and `rand` i0–i5 (`runs/scaffold/main`).
@@ -254,7 +257,7 @@ One-sided, exact, at α = 0.05 with Holm over the two contrasts. Here α is a di
   - **Genome performance alone.** A test is read as genome performance only if every history in both compared arms has a genome. Otherwise it is reported as the composite, with the availability counts, and with a descriptive comparison of measured W_G among histories that have a genome. That comparison is conditional on survival, so it is never tested.
   - **Even then, it is limited:** the comparison concerns dominant genomes on one fixed ancestral background, and does not establish that the genome causes the W difference.
 - **Heredity** (two tests, `nat-a` and `nat-s`).
-  - **Per history at time C:** the one-way ICC(1) of X_f, with families as groups.
+  - **Per history at time C:** the one-way ICC(1) of X_f, with families as groups, in its unequal-size form: (MSB − MSW) / (MSB + (n₀ − 1) MSW), with n₀ = (N − Σ n_g² / N) / (G − 1) over G families and N fragments, and 0 when every value is equal.
   - **Its p** is a Monte Carlo permutation p: 1,000 permutations of family labels by R1's Fisher–Yates scheme, with stream σ(h, 8) in place of R1's σ8, and p = (1 + #{permuted ICC ≥ observed}) / 1001.
   - **Not significant** for that history, without a test: fewer than two families, or a family with only one fragment, or a constant X_f across all fragments.
   - **The arm's test:** the count of histories with ICC > 0 and p < 0.05, among a fixed 24. Its p is the exact binomial upper tail under a per-history rate of 0.05.
@@ -443,7 +446,7 @@ Considered and left for later, each as a dated decision:
      2. Stage 0 runs on the Mac meanwhile.
      3. Stage 1 starts only after the registration's queue has completed, and branches from the sources the sources rule above designates (the registration's, or the hunt's own as the fallback).
 
-   **Still open:** approval of this document as a whole. The registration was frozen on 2026-10-02.
+   **Approved as a whole by the user (2026-10-02),** after the registration was frozen and while its queue ran.
 2. **Freeze,** after the registration's: a review of the final text, then a commit. The document's SHA-256 goes in `experiments/scaffold/HUNT-v1` and a dated note in `docs/plan.md`.
 3. **Stage 0:** code, its Astra review and commit; then G1, G2 and D3 on the Mac; then a dated amendment with their results.
 4. **Stage 1:** a dated draw note, approved by the user; the runs; the report; an independent re-derivation of every number; an Astra review; the dated result entry.
