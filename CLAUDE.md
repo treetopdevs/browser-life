@@ -49,3 +49,13 @@ Experiment CLIs (`tools/`, all Deno, native WebGPU): `run.ts` (write run bundles
 **Pre-registration.** `experiments/endpoints.ts` is the source of truth for primary endpoints, held-out observables and activity thresholds, and `tools/analyze.ts` executes it. The generated sections of `experiments/preregistration.md` (between `GENERATED` markers) come from `pnpm gen:prereg`, and `experiments/test/prereg-sync.test.ts` fails when they are stale. Edit `endpoints.ts` and regenerate; never hand-edit inside the markers. The doc is frozen (2026-09-27): its SHA-256 is recorded in `experiments/FROZEN`, `pnpm gen:prereg` now refuses to rewrite the generated sections, and every change goes in a dated amendment section.
 
 **Analysis scale.** Run bundles can be hundreds of MB per run (for example `lineages.tsv`). Analysis tools stream per census rather than loading whole tables; keep new analysis code streaming.
+
+## Codex reviews
+
+Reviews by Codex use **Sol 6.1 at High effort**, not Astra (standing instruction from 2026-10-03, replaces the earlier `gpt-6-astra` policy). Run them read-only at phase boundaries and always before committing:
+
+```bash
+codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -s read-only -C <checkout> - < prompt.md > review.txt
+```
+
+Use `< /dev/null` when the prompt is an argument (otherwise codex waits on stdin) and `-o <file>` for the final message. Historical "Astra review" comments in the code are provenance for past reviews; leave them. Delegated agents and workspaces follow the same rule.

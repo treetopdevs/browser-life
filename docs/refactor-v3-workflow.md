@@ -83,8 +83,8 @@ Plus three small, independently-fixable bugs from review round 5 (item **D** bel
   save/restore logic out of order. **D2 (`main.ts`) and D3 (`island.ts` idle wait) have zero
   dependency on A/B/C** and can land whenever, independently.
 
-Each part ends with: run its checks (below) → **codex-astra read-only review**
-(`codex exec -m gpt-6-astra -s read-only -C /Users/nicholas/develop/browser-life ... < /dev/null`,
+Each part ends with: run its checks (below) → **Codex Sol 6.1 High read-only review**
+(`codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -s read-only -C /Users/nicholas/develop/browser-life ... < /dev/null`,
 background, per the standing review policy) → address findings → commit.
 
 ## Part A — TS artifact unification
@@ -456,8 +456,8 @@ Redirect stdin from `/dev/null` for every `deno`/`codex` invocation.
 ## Review process
 
 Per the standing review policy: at each part's boundary (A, B, C, D) — checks green → background
-`codex exec -m gpt-6-astra -s read-only -C /Users/nicholas/develop/browser-life ... < /dev/null`
-read-only review of the diff → address findings → commit. A final astra review of the whole branch
+`codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -s read-only -C /Users/nicholas/develop/browser-life ... < /dev/null`
+read-only review of the diff → address findings → commit. A final Sol 6.1 High review of the whole branch
 before it's considered done, in addition to the per-part reviews.
 
 ## Open questions to resolve during implementation (not blocking the plan)
@@ -474,7 +474,7 @@ before it's considered done, in addition to the per-part reviews.
 
 ## Review resolutions
 
-A background `codex exec -m gpt-6-astra -s read-only` review of this document against the current
+A background `codex exec -m gpt-6.1-sol -c model_reasoning_effort=high -s read-only` review of this document against the current
 code (base commit `68f2336`) found 15 issues, most of them factual mismatches between the plan and
 `apps/coordinator/lib/coordinator/queue.ex`, `packages/runner/src/runner.ts` and
 `apps/lab/src/sim.worker.ts`. All 15 were verified against the source before fixing; every one was
