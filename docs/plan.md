@@ -202,3 +202,16 @@ The user chose the 2026-09-29 M4 growth contract (`experiments/amendments/2026-0
   - **Records.** `docs/m4-growth-precision-results.md`, plus `experiments/m4/growth-precision-v1/`.
 - **Blocker 2, joint power.** `experiments/amendments/2026-10-02-m4-growth-joint-power.md`: resolved for gradient-m3 (joint at least 0.89); a quantified limitation for spots-m3 (endpoint-1 assurance 0.90 at 64 pairs, from only 10 runs per condition; 128 pairs would lift it to 0.94 at about 61 more GPU-hours).
 - **Still required before any fresh ensemble:** the 11 remaining development histories, the exact seed matrix, the freeze, an independent review and registration. The launch decision waits for the founder-discovery continuation study.
+
+### 2026-10-03 update
+
+- **Continuation study: no test met, so the result is inconclusive for M4.** See `experiments/founder-discovery/v1/continuation-findings.md`.
+  - cluster-33, the deciding founder, has 5 of 8 certified seeds against the 7 required. Its mean contrast is 0.43, carried by five seeds.
+  - The other founders: cluster-4 3/8, cluster-139 4/8, cluster-16 1/8.
+  - Under the frozen table, this is not evidence of a stall and gives no support for the physics-change pivot.
+  - The M4 question goes to the fresh ensemble under the growth contract above.
+- **Development rehearsal: ended incomplete at 2 of 12 histories.** See `experiments/m4/rehearsal-v1/execution.md`.
+  - Index 1 completed in 1,334 s.
+  - Index 2 was stopped by the external-GPU-worker guard when another session started `tools/run.ts`. An `island.ts` worker, which the guard does not detect, was also running.
+  - The plan-v7 budget gate now refuses the remaining indices: 10,642 s are left against 11,411 s projected.
+  - Completing the rehearsal needs a reviewed plan revision: a fresh budget, a guard that covers `island.ts`, and a rule on carrying over jobs 0–1.

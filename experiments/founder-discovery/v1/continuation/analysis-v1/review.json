@@ -1,0 +1,1400 @@
+{
+ "format": "founder-discovery-continuation-analysis-review-v1",
+ "reviewedAt": "2026-10-03T03:16:57Z",
+ "reviewedReportSha256": "017d63dc206cefa42419369fac0b1243c04a7e3fca01e54bb4713efaf9f791cc",
+ "reviewedReportPath": "experiments/founder-discovery/v1/continuation/analysis-v1/report.json",
+ "rederivationScript": {
+  "path": "experiments/founder-discovery/v1/continuation/analysis-v1/review-rederive.py",
+  "sha256": "679f3beb0ca4487e51dec2bc67f0ef9e4440f435f3e1bb108847f49bda85af54",
+  "runtime": "about 18 s, single process, python3 + numpy (numpy only to read checkpoint buffers); read-only"
+ },
+ "verdict": "CONFIRMED-WITH-QUALIFICATIONS",
+ "verdictSummary": "No discrepancy. Every number in report.json (64 pair scores, 32 unit values and flags, 4 founder rows, readings, 8 pooled blocks, the whole-block bootstrap, the descriptive roster items) was re-derived from the 1,536 raw result files and the roster, with exact rational arithmetic, and agrees to a maximum absolute difference of 2.22e-16 (float rounding). The study is technically complete by the protocol's definition. All four founders read 'not met'; cluster-33 therefore reads 'not met' in the M4 table (inconclusive, not evidence of a stall, cannot support the physics-change pivot) and the cluster-16 clause is not triggered. The qualifications below concern what 'not met' can and cannot carry, not the arithmetic.",
+ "method": "Independent Python re-derivation (review-rederive.py); it does not call or port the TypeScript analyzer. It (1) verifies the pin chain (report, protocol, roster, candidate, release, manifest, forecast, 65 execution sources, 64 receipts) and recomputes the study identity and the roster payload hash; (2) indexes all 1,536 raw assay files by content, recomputes each cache key from the roster hexes and the frozen study's own cfg, recomputes every score from the recorded masses and every provenance record; (3) regenerates all 128 type-matched null genomes bit for bit from (H, L) with my own Mulberry32 (seeds 6490100 + j); (4) re-derives all 64 H genomes (500k ancestors) in a third implementation directly from the 64 checkpoints and the mutation-edge deltas of the 32 normal histories, after verifying the receipt chain and every edge/checkpoint file hash; (5) recomputes every estimand with exact Fractions then floats (genome mean of 8 competitions, two nulls per pair, two pairs per unit, L - N with lower bound L lower - N upper, certification lower > 0.10 strictly, late-certification, founder-level L / N / contrast, readings in the protocol's fixed order), the pooled block rule and the whole-block bootstrap (seed 6490300, 10,000 resamples, my own Mulberry32 and JS summation order); (6) recomputes the descriptive roster items and the protocol's pre-run facts from the roster; (7) checks technical completeness from the raw evidence (replays, audits, ledger, supervisor log, lock/stop/tmp state); (8) cross-checks the already-written continuation-findings.md tables. Reads only; the single optional --out writes JSON to a path the caller names (I used my scratch directory).",
+ "completeness": {
+  "technicallyComplete": true,
+  "requestedResults": {
+   "requested": 1536,
+   "present": 1536,
+   "missing": 0,
+   "duplicate": 0,
+   "foreign": 0,
+   "bothExtinct": 0,
+   "unassociatedMassNonzero": 0
+  },
+  "everyConfigurationMapsToExactlyOneResult": "192 genomes x 4 assay seeds x 2 assignments = 1,536 roster configurations; each found exactly once by content (descendantHex, H hex, seed, assignment); cache keys recomputed from the roster hexes and the frozen study's cfg equal the file names and the roster's genome.cacheKeys",
+  "replays": {
+   "expected": 8,
+   "matched": 8,
+   "perFounder": {
+    "discovery-cluster-33": 2,
+    "discovery-cluster-4": 2,
+    "discovery-cluster-16": 2,
+    "discovery-cluster-139": 2
+   },
+   "detail": "every field except elapsedSeconds equals the frozen original; originals match candidate.replayExpected hashes and the frozen report's scores; all written before the first new result (mtime)"
+  },
+  "audits": {
+   "owed": 39,
+   "present": 39,
+   "matched": 39,
+   "detail": "one audit record per invocation index 1..39 (every invocation did new work), each equal to its frozen original except elapsedSeconds, all matches true; audits per replay configuration: {\"208ed2ba\": 5, \"cdfa00c0\": 5, \"8b80f582\": 5, \"3b5db105\": 5, \"d5132a42\": 5, \"e135ff04\": 5, \"30d808b9\": 5, \"11467080\": 4}"
+  },
+  "invocations": {
+   "records": 39,
+   "settled": 39,
+   "reservedOrFailed": 0,
+   "chargedSeconds": 21624.25699853897,
+   "capSeconds": 30000,
+   "maxInvocations": 70,
+   "maxChargedPerInvocation": 571.1449999809265,
+   "newAssaysTotal": 1536,
+   "replayedTotal": 8,
+   "first": "2026-10-02T20:03:04.873Z",
+   "last": "2026-10-03T02:04:07.108Z"
+  },
+  "mismatchRecorded": false,
+  "unresolvedReservations": 0,
+  "stopped": false,
+  "stoppedJsonPresent": false,
+  "runningLockPresent": false,
+  "tmpEmpty": true,
+  "provenanceBindsThisStudy": "1,536 provenance files carry studyIdentitySha256 56f661c5... (this study; the divergence control's is feec9045...) and the sha256 of the exact result bytes; 39 invocation records carry this study's identity, candidate (6ff0266a...) and release (aa744f13...) hashes, none the divergence control's candidate/release; the format-name strings 'discovery-divergence-control-*' are the reused core's, as the protocol states",
+  "noOverlapWithOtherStudies": "none of the 1,536 cache keys is a key of the frozen improvement study (1,920 keys) or of the divergence control (1,200 keys); 1,536 distinct initial-state hashes and 1,536 distinct final-state hashes",
+  "ancestryRederivedFromCheckpoints": "all 64 L draws: heaviest 1M carrier lineage, first ancestor on the mutation-parent path present at 500k, generations walked, lineage and genome masses, H genome, founder-lineage masses at 500k and 1M, distinct genomes at 500k, state hash and 1M sample draws all equal the roster (18 s)"
+ },
+ "rederivation": {
+  "maxAbsDifferenceFromReport": {
+   "pair": 2.220446049250313e-16,
+   "unit": 1.1102230246251565e-16,
+   "founder": 5.551115123125783e-17,
+   "block": 2.7755575615628914e-17,
+   "pooled": 0.0,
+   "bootstrap": 2.7755575615628914e-17
+  },
+  "maxAbsDifferenceOverall": 2.220446049250313e-16,
+  "note": "differences are exact-Fraction vs the analyzer's float arithmetic (last-ulp). No certification flag, count, reading, ordering or bootstrap bound differs. Closest unit L - N to the 0.10 threshold: discovery-cluster-139/6410001 at margin 0.0264; closest unit L to 0.10: [0.029633501541880644, 'discovery-cluster-16/6410003'].",
+  "perFounder": {
+   "33": {
+    "certifiedSeeds": 5,
+    "lateCertifiedSeeds": 5,
+    "L": 0.3859574584722552,
+    "N": -0.0411224332109673,
+    "L_minus_N": 0.4270798916832225
+   },
+   "4": {
+    "certifiedSeeds": 3,
+    "lateCertifiedSeeds": 3,
+    "L": -0.05307345782002997,
+    "N": -0.10097408238441166,
+    "L_minus_N": 0.04790062456438169
+   },
+   "16": {
+    "certifiedSeeds": 1,
+    "lateCertifiedSeeds": 0,
+    "L": -0.025468097409093355,
+    "N": -0.028160421886464577,
+    "L_minus_N": 0.0026923244773712223
+   },
+   "139": {
+    "certifiedSeeds": 4,
+    "lateCertifiedSeeds": 2,
+    "L": 0.10285621056562448,
+    "N": -0.10095532693234119,
+    "L_minus_N": 0.20381153749796566
+   }
+  },
+  "pooledBlockRule": {
+   "blocks": [
+    0.022201,
+    0.159408,
+    0.272481,
+    0.133983,
+    0.158649,
+    0.160409,
+    0.224315,
+    0.231522
+   ],
+   "certifiedBlocks": 7,
+   "mean": 0.17037109455573526,
+   "wholeBlockBootstrap95": [
+    0.11903665075417703,
+    0.2182929092557052
+   ],
+   "bootstrapReproduction": "seed 6490300, 10,000 resamples, reproduced to 2.8e-17"
+  },
+  "unitTable": {
+   "33/6410001": {
+    "L": 0.1804,
+    "N": 0.1151,
+    "L-N": 0.0653,
+    "cert": false,
+    "lateCert": true
+   },
+   "33/6410002": {
+    "L": 0.587,
+    "N": 0.0254,
+    "L-N": 0.5616,
+    "cert": true,
+    "lateCert": true
+   },
+   "33/6410003": {
+    "L": 0.0245,
+    "N": -0.1703,
+    "L-N": 0.1947,
+    "cert": true,
+    "lateCert": false
+   },
+   "33/6410004": {
+    "L": 0.8183,
+    "N": -0.0601,
+    "L-N": 0.8783,
+    "cert": true,
+    "lateCert": true
+   },
+   "33/6410005": {
+    "L": 0.7,
+    "N": 0.0068,
+    "L-N": 0.6932,
+    "cert": true,
+    "lateCert": true
+   },
+   "33/6410006": {
+    "L": -0.1426,
+    "N": -0.1547,
+    "L-N": 0.0122,
+    "cert": false,
+    "lateCert": false
+   },
+   "33/6410007": {
+    "L": 0.0144,
+    "N": -0.0264,
+    "L-N": 0.0408,
+    "cert": false,
+    "lateCert": false
+   },
+   "33/6410008": {
+    "L": 0.9057,
+    "N": -0.0649,
+    "L-N": 0.9706,
+    "cert": true,
+    "lateCert": true
+   },
+   "4/6410001": {
+    "L": -0.3811,
+    "N": -0.2448,
+    "L-N": -0.1363,
+    "cert": false,
+    "lateCert": false
+   },
+   "4/6410002": {
+    "L": -0.5184,
+    "N": -0.1042,
+    "L-N": -0.4142,
+    "cert": false,
+    "lateCert": false
+   },
+   "4/6410003": {
+    "L": 0.522,
+    "N": -0.1376,
+    "L-N": 0.6596,
+    "cert": true,
+    "lateCert": true
+   },
+   "4/6410004": {
+    "L": -0.3193,
+    "N": 0.0867,
+    "L-N": -0.406,
+    "cert": false,
+    "lateCert": false
+   },
+   "4/6410005": {
+    "L": -0.1096,
+    "N": -0.0169,
+    "L-N": -0.0927,
+    "cert": false,
+    "lateCert": false
+   },
+   "4/6410006": {
+    "L": 0.3687,
+    "N": -0.4494,
+    "L-N": 0.8181,
+    "cert": true,
+    "lateCert": true
+   },
+   "4/6410007": {
+    "L": 0.134,
+    "N": -0.1722,
+    "L-N": 0.3062,
+    "cert": true,
+    "lateCert": true
+   },
+   "4/6410008": {
+    "L": -0.1209,
+    "N": 0.2305,
+    "L-N": -0.3514,
+    "cert": false,
+    "lateCert": false
+   },
+   "16/6410001": {
+    "L": -0.0058,
+    "N": -0.0392,
+    "L-N": 0.0334,
+    "cert": false,
+    "lateCert": false
+   },
+   "16/6410002": {
+    "L": 0.0097,
+    "N": 0.0046,
+    "L-N": 0.005,
+    "cert": false,
+    "lateCert": false
+   },
+   "16/6410003": {
+    "L": 0.0704,
+    "N": -0.1178,
+    "L-N": 0.1881,
+    "cert": true,
+    "lateCert": false
+   },
+   "16/6410004": {
+    "L": -0.0293,
+    "N": -0.0847,
+    "L-N": 0.0553,
+    "cert": false,
+    "lateCert": false
+   },
+   "16/6410005": {
+    "L": -0.0462,
+    "N": -0.0086,
+    "L-N": -0.0377,
+    "cert": false,
+    "lateCert": false
+   },
+   "16/6410006": {
+    "L": -0.1846,
+    "N": 0.0096,
+    "L-N": -0.1943,
+    "cert": false,
+    "lateCert": false
+   },
+   "16/6410007": {
+    "L": -0.002,
+    "N": -0.0098,
+    "L-N": 0.0077,
+    "cert": false,
+    "lateCert": false
+   },
+   "16/6410008": {
+    "L": -0.0158,
+    "N": 0.0204,
+    "L-N": -0.0362,
+    "cert": false,
+    "lateCert": false
+   },
+   "139/6410001": {
+    "L": 0.0453,
+    "N": -0.0812,
+    "L-N": 0.1264,
+    "cert": true,
+    "lateCert": false
+   },
+   "139/6410002": {
+    "L": -0.0731,
+    "N": -0.5584,
+    "L-N": 0.4853,
+    "cert": true,
+    "lateCert": false
+   },
+   "139/6410003": {
+    "L": 0.0212,
+    "N": -0.0263,
+    "L-N": 0.0475,
+    "cert": false,
+    "lateCert": false
+   },
+   "139/6410004": {
+    "L": 0.0423,
+    "N": 0.0341,
+    "L-N": 0.0083,
+    "cert": false,
+    "lateCert": false
+   },
+   "139/6410005": {
+    "L": 0.0016,
+    "N": -0.0702,
+    "L-N": 0.0718,
+    "cert": false,
+    "lateCert": false
+   },
+   "139/6410006": {
+    "L": 0.0452,
+    "N": 0.0396,
+    "L-N": 0.0056,
+    "cert": false,
+    "lateCert": false
+   },
+   "139/6410007": {
+    "L": 0.5202,
+    "N": -0.0224,
+    "L-N": 0.5425,
+    "cert": true,
+    "lateCert": true
+   },
+   "139/6410008": {
+    "L": 0.2202,
+    "N": -0.1229,
+    "L-N": 0.3431,
+    "cert": true,
+    "lateCert": true
+   }
+  },
+  "descriptiveRoster": {
+   "33": {
+    "pairs": 16,
+    "medianSlotsChanged": 10.0,
+    "rangeSlotsChanged": [
+     7,
+     15
+    ],
+    "medianGenerations": 10.5,
+    "lateEqualsMidpoint": 0,
+    "meanFounderMass500k": 733610.5,
+    "meanFounderMass1M": 827635.75,
+    "medianGenomes500k": 52.5,
+    "sweep": {
+     "slotName": "b2[PHOTO]",
+     "founderValue": 62,
+     "midpointCarries": 14,
+     "lateCarries": 14,
+     "gainedAfterMidpoint": 0,
+     "lostAfterMidpoint": 0
+    }
+   },
+   "4": {
+    "pairs": 16,
+    "medianSlotsChanged": 7.0,
+    "rangeSlotsChanged": [
+     4,
+     16
+    ],
+    "medianGenerations": 8.0,
+    "lateEqualsMidpoint": 0,
+    "meanFounderMass500k": 1006836.25,
+    "meanFounderMass1M": 1065803.25,
+    "medianGenomes500k": 215.0,
+    "sweep": null
+   },
+   "16": {
+    "pairs": 16,
+    "medianSlotsChanged": 17.0,
+    "rangeSlotsChanged": [
+     5,
+     27
+    ],
+    "medianGenerations": 17.5,
+    "lateEqualsMidpoint": 0,
+    "meanFounderMass500k": 2031161.5,
+    "meanFounderMass1M": 2040125.625,
+    "medianGenomes500k": 396.5,
+    "sweep": null
+   },
+   "139": {
+    "pairs": 16,
+    "medianSlotsChanged": 14.0,
+    "rangeSlotsChanged": [
+     8,
+     26
+    ],
+    "medianGenerations": 14.5,
+    "lateEqualsMidpoint": 0,
+    "meanFounderMass500k": 1998786.75,
+    "meanFounderMass1M": 2056750.25,
+    "medianGenomes500k": 443.0,
+    "sweep": {
+     "slotName": "mu",
+     "founderValue": 33,
+     "midpointCarries": 11,
+     "lateCarries": 13,
+     "gainedAfterMidpoint": 2,
+     "lostAfterMidpoint": 0
+    }
+   }
+  }
+ },
+ "readingsConfirmed": {
+  "evaluationOrder": "1 technically incomplete; 2 not met (< 7 of 8 certified); 3 met, not clearly progressing (< 7 late-certified); 4 met, continued beyond divergence (N lower <= 0.10); 5 met, partly divergence",
+  "discovery-cluster-33": {
+   "certifiedSeeds": "5/8 (6410002, 003, 004, 005, 008)",
+   "lateCertifiedSeeds": "5/8 (001, 002, 004, 005, 008)",
+   "L": 0.3859574584722552,
+   "N": -0.0411224332109673,
+   "L_minus_N": 0.4270798916832225,
+   "reading": "not met",
+   "protocolStep": "step 2: 5 < 7 certified seeds, technically complete",
+   "confirmed": true
+  },
+  "discovery-cluster-4": {
+   "certifiedSeeds": "3/8 (003, 006, 007)",
+   "lateCertifiedSeeds": "3/8",
+   "L": -0.05307345782002997,
+   "N": -0.10097408238441166,
+   "L_minus_N": 0.04790062456438169,
+   "reading": "not met",
+   "protocolStep": "step 2",
+   "confirmed": true
+  },
+  "discovery-cluster-16": {
+   "certifiedSeeds": "1/8 (003)",
+   "lateCertifiedSeeds": "0/8",
+   "L": -0.02546809740909336,
+   "N": -0.028160421886464577,
+   "L_minus_N": 0.002692324477371221,
+   "reading": "not met",
+   "protocolStep": "step 2",
+   "confirmed": true
+  },
+  "discovery-cluster-139": {
+   "certifiedSeeds": "4/8 (001, 002, 007, 008)",
+   "lateCertifiedSeeds": "2/8 (007, 008)",
+   "L": 0.10285621056562448,
+   "N": -0.10095532693234117,
+   "L_minus_N": 0.20381153749796566,
+   "reading": "not met",
+   "protocolStep": "step 2",
+   "confirmed": true
+  }
+ },
+ "m4Implication": {
+  "cluster33Reading": "not met",
+  "protocolRow": "Not met -> Inconclusive. Given the power paragraph, this is not evidence of a stall, and it cannot support the physics-change pivot. The pivot decision rests on other evidence: the fresh M4 ensemble tests continued activity directly.",
+  "confirmedAgainstProtocolText": true,
+  "implies": "No stall claim and no support for the evolvability (physics-change) pivot; no support against it either. cluster-4, cluster-139 and cluster-16 'support but do not decide' per the protocol and all read not met.",
+  "note": "The protocol's row names the 'amended endpoint 2'; decision.md / continuation-findings.md say that draft was withdrawn on 2026-10-02 and the route is now the 2026-09-29 growth contract. That substitution is a user/plan matter outside the arithmetic and I did not audit it."
+ },
+ "protocolFlags": {
+  "cluster16Clause": "NOT triggered: cluster-16 (the no-adaptation reference) reads 'not met' (1/8 certified, 0/8 late-certified, L - N = 0.0027), not 'continued' or 'partly divergence'; the other founders' readings are therefore not rendered uninterpretable.",
+  "technicallyIncomplete": "not applicable",
+  "sharedAncestors": "10 of 32 units have both pairs on one 500k ancestor lineage and one H genome (cluster-33 5, cluster-4 3, cluster-139 2), as the protocol's pre-run facts state; reproduced from the roster and from the checkpoints",
+  "preRunFacts": "all reproduced: no pair with L = H; 1,536 distinct configurations, none in the frozen study; median H->L slot change 10 / 7 / 17 / 14 (ranges 7-15, 4-16, 5-27, 8-26); cluster-33 H carries the bias in 14 of 16 pairs, none in seed 6410002, none gained or lost, one L raised it further (99 -> 119, seed 6410006); cluster-139 H carries mu in 11, L in 13, both pairs of seed 6410007 gained it (33 -> 47), seed 6410002 (both) and 6410008 (one) carry neither; founder-lineage mass 500k -> 1M as stated"
+ },
+ "qualifications": [
+  {
+   "id": "Q1",
+   "kind": "protocol-stated",
+   "severity": "high",
+   "detail": "'Not met' is a failure to clear a 7-of-8 rule, not a finding of no effect or of a stall. The protocol's power paragraph assumed a unit-contrast SD of 0.15-0.4; the observed sample SDs are 0.395 (cluster-33), 0.488 (cluster-4, above the assumed range), 0.220 (cluster-139), 0.107 (cluster-16). Post hoc illustration, not a decision rule: if cluster-33's units were independent Normal at the observed mean (0.427) and SD (0.395), the chance of 7-of-8 would be about 0.49; at the observed certified fraction (5/8) it would be 0.135. So the result is consistent with real but uneven post-sweep gains and with no general gain, which is what the findings text and the protocol's table say."
+  },
+  {
+   "id": "Q2",
+   "kind": "observed",
+   "severity": "medium",
+   "detail": "Heterogeneity across seeds dominates cluster-33: unit L - N values are 0.065, 0.562, 0.195, 0.878, 0.693, 0.012, 0.041, 0.971 (three near zero, four above 0.5). L vs H is 0.18, 0.59, 0.02, 0.82, 0.70, -0.14, 0.01, 0.91. Post hoc: the three uncertified units (6410001, 006, 007) all have an H that already carries the swept bias (94, 99 -> 119, 82), whereas the one seed with no sweep at all (6410002) is among the clearer gains (L 0.587, L - N 0.562); among the seven seeds whose first sweep was complete by 500k (the protocol's clean case) 4 are certified (003, 004, 005, 008) and 4 are late-certified (001, 004, 005, 008). The pooled founder-level contrast (0.43) is carried by a few seeds, which is exactly why the protocol fixed a per-seed rule."
+  },
+  {
+   "id": "Q3",
+   "kind": "observed",
+   "severity": "medium",
+   "detail": "'Certified' (L - N > 0.10) is not progress. The null N is on average a damaged H (founder-level N vs H: -0.041, -0.101, -0.028, -0.101 for cluster-33, 4, 16, 139), so L - N can clear 0.10 while L itself does not beat H: four units are certified but not late-certified (33/6410003 L 0.024; 16/6410003 L 0.070; 139/6410001 L 0.045; 139/6410002 L -0.073 against N -0.558). The protocol's separate late-certified count exists for this reason; here both counts fall below 7 for every founder, so the reading does not depend on the difference. The no-adaptation reference cluster-16 was certified in 1 of 8 units (6410003), a chance-level event."
+  },
+  {
+   "id": "Q4",
+   "kind": "protocol-stated",
+   "severity": "medium",
+   "detail": "The 9/256 per-test tail is optimistic (shared founder, the same four assay seeds, and 10 of 32 units whose two pairs share one H; 7 of the 13 certified units are shared-H units, post hoc count). Optimism inflates false positives; no test was met, so it does not touch any reading. 'Certified' means the observed mean exceeds 0.10 with nothing missing: all bounds collapse to the point value, so no sampling uncertainty is carried. A unit's N is the mean of 4 null genomes whose means have SD 0.30 (cluster-33), 0.36 (cluster-4), 0.30 (cluster-139), 0.09 (cluster-16), so a unit's N has a standard error of about 0.15-0.18 (post hoc) against a threshold of 0.10; the closest unit contrast to the threshold is 139/6410001 at 0.126."
+  },
+  {
+   "id": "Q5",
+   "kind": "observed",
+   "severity": "medium",
+   "detail": "cluster-139's founder-level L vs H (0.103) comes from two seeds (6410007: 0.520, 6410008: 0.220); the other six are between -0.07 and 0.05. In 6410007 both pairs gained the mu sweep after 500k (33 -> 47), so part of that advantage is the sweep itself, as the protocol anticipated. In 6410008 one pair has no mu sweep (33 -> 33) and one has (54 -> 54)."
+  },
+  {
+   "id": "Q6",
+   "kind": "observed",
+   "severity": "low",
+   "detail": "cluster-4: L loses to its own 500k ancestor in 5 of 8 seeds (-0.381, -0.518, -0.319, -0.110, -0.121 in seeds 1, 2, 4, 5, 8) while its founder-lineage mass rose 1.01M -> 1.07M. Head-to-head and abundance proxies therefore disagree for this founder in most seeds (descriptive; non-transitivity of the gradient competition is possible and not tested)."
+  },
+  {
+   "id": "Q7",
+   "kind": "observed",
+   "severity": "medium",
+   "detail": "The replays and audits (8 configurations, 39 audit re-runs) re-execute only the frozen originals, whose ancestor is a founder. None of the 1,536 new configurations (ancestor = a 500k genome) was ever re-run, so run-to-run determinism for them rests on the same pinned executor, not on a replay of their own; I could not re-execute anything (GPU forbidden). The collector's own validation (not re-derived here) recomputes each result's initial-state hash from its genomes; I verified only that all 1,536 initial and final state hashes are distinct and every score follows from the recorded masses. The protocol discloses that no non-founder-ancestor competition had run before; no invocation failed."
+  },
+  {
+   "id": "Q8",
+   "kind": "wording",
+   "severity": "low",
+   "detail": "The fixed reading text for 'not met' ('no evidence that change since the midpoint beats random change of the same size') labels failure of the 7-of-8 rule. It should not be quoted as 'no evidence' for cluster-33: the observed founder-level contrast is 0.43 and 5 of 8 units clear 0.10 (descriptive). The protocol itself adds that it is not evidence that adaptation stopped."
+  },
+  {
+   "id": "Q9",
+   "kind": "observed",
+   "severity": "low",
+   "detail": "The H -> L change is small (median 7-17 of 163 slots), so the nulls are small perturbations of an adapted genome; about half of the individual null genomes beat H (null genome means > 0: 17 of 32, 10 of 32, 14 of 32, 15 of 32 for clusters 33, 4, 16, 139), so 'random change is neutral to mildly harmful' holds for the mean, not for individual nulls. Leave-one-assay-seed-out changes no certified or late-certified count for any founder (post hoc); the assignment-0 and assignment-1 arm means differ by at most 0.055 (largest for the cluster-33 and cluster-4 nulls), and averaging both positions is built into every genome mean."
+  },
+  {
+   "id": "Q10",
+   "kind": "scope",
+   "severity": "low",
+   "detail": "Results are conditional (as the protocol says) on the four deliberately discovered founders, single-founder chambers, the gradient competition, the fixed assay seeds, and a 500k midpoint chosen once. The pooled block rule (7 of 8 blocks, mean 0.170, bootstrap [0.119, 0.218]) is descriptive, includes the no-adaptation reference founder, and block 6410008 (0.232) is carried by cluster-33's 0.971; it plays no part in any reading."
+  },
+  {
+   "id": "Q11",
+   "kind": "documents",
+   "severity": "low",
+   "detail": "continuation-findings.md: every table value and all 64 check marks reproduce; two printed cells round differently from the recomputation (cluster-33 seed 6410003 L - N printed 0.20, value 0.1947; cluster-16 seed 6410006 L vs H printed -0.19, value -0.1846; both within 0.0054). Both continuation-findings.md and continuation/decision.md still contain a REVIEW-PLACEHOLDER marker awaiting this review. The wording about the withdrawn 'amended endpoint 2' is the authors', not checked here."
+  }
+ ],
+ "descriptivePostHocNotPartOfProtocol": {
+  "unitContrastSD_sample_perFounder": {
+   "33": 0.395,
+   "4": 0.488,
+   "16": 0.107,
+   "139": 0.22
+  },
+  "unitContrastSD_pop_perFounder": {
+   "33": 0.37,
+   "4": 0.456,
+   "16": 0.1,
+   "139": 0.206
+  },
+  "unitLateSD_sample_perFounder": {
+   "33": 0.412,
+   "4": 0.368,
+   "16": 0.073,
+   "139": 0.188
+  },
+  "P(>=7 of 8 certified) if every seed certified independently with the observed fraction": {
+   "33": 0.135,
+   "4": 0.0056,
+   "16": 0.0,
+   "139": 0.0352
+  },
+  "exactSignTail_7of8": 0.03515625,
+  "P(meet 7-of-8) if unit contrasts were Normal(observed mean, observed SD), independent (illustration)": {
+   "33": 0.492,
+   "4": 0.02,
+   "16": 0.0,
+   "139": 0.221
+  },
+  "sharedHUnits_status (unit: cert, lateCert, L-N)": {
+   "33/6410001": [
+    false,
+    true,
+    0.065
+   ],
+   "33/6410002": [
+    true,
+    true,
+    0.562
+   ],
+   "33/6410004": [
+    true,
+    true,
+    0.878
+   ],
+   "33/6410006": [
+    false,
+    false,
+    0.012
+   ],
+   "33/6410008": [
+    true,
+    true,
+    0.971
+   ],
+   "4/6410001": [
+    false,
+    false,
+    -0.136
+   ],
+   "4/6410003": [
+    true,
+    true,
+    0.66
+   ],
+   "4/6410007": [
+    true,
+    true,
+    0.306
+   ],
+   "139/6410002": [
+    true,
+    false,
+    0.485
+   ],
+   "139/6410007": [
+    true,
+    true,
+    0.543
+   ]
+  },
+  "certifiedUnits_sharingH": 7,
+  "certifiedUnits_total": 13,
+  "units_cert_and_lateCert / cert_only / lateCert_only": [
+   9,
+   4,
+   1
+  ],
+  "certified_but_not_lateCert_units": [
+   "33/6410003 (L 0.024, N -0.170)",
+   "16/6410003 (L 0.070, N -0.118)",
+   "139/6410001 (L 0.045, N -0.081)",
+   "139/6410002 (L -0.073, N -0.558)"
+  ],
+  "cluster33_failing_units (L-N)": {
+   "1": 0.065,
+   "6": 0.012,
+   "7": 0.041
+  },
+  "cluster33_failing_units_L": {
+   "1": 0.18,
+   "6": -0.143,
+   "7": 0.014
+  },
+  "cluster33_failing_units_N": {
+   "1": 0.115,
+   "6": -0.155,
+   "7": -0.026
+  },
+  "cluster33_failing_units_sweepStatus (H,L carry b2[PHOTO] raised; values)": {
+   "1": [
+    [
+     [
+      true,
+      true,
+      94,
+      94
+     ],
+     [
+      true,
+      true,
+      94,
+      94
+     ]
+    ]
+   ],
+   "6": [
+    [
+     [
+      true,
+      true,
+      99,
+      119
+     ],
+     [
+      true,
+      true,
+      99,
+      99
+     ]
+    ]
+   ],
+   "7": [
+    [
+     [
+      true,
+      true,
+      82,
+      82
+     ],
+     [
+      true,
+      true,
+      82,
+      82
+     ]
+    ]
+   ]
+  },
+  "leave_one_assay_seed_out [certified, lateCertified] per founder": {
+   "6430001": {
+    "33": [
+     5,
+     5
+    ],
+    "4": [
+     3,
+     3
+    ],
+    "16": [
+     1,
+     0
+    ],
+    "139": [
+     4,
+     2
+    ]
+   },
+   "6430002": {
+    "33": [
+     5,
+     5
+    ],
+    "4": [
+     3,
+     3
+    ],
+    "16": [
+     1,
+     0
+    ],
+    "139": [
+     4,
+     2
+    ]
+   },
+   "6430003": {
+    "33": [
+     5,
+     5
+    ],
+    "4": [
+     3,
+     3
+    ],
+    "16": [
+     1,
+     0
+    ],
+    "139": [
+     4,
+     2
+    ]
+   },
+   "6430004": {
+    "33": [
+     5,
+     5
+    ],
+    "4": [
+     3,
+     3
+    ],
+    "16": [
+     1,
+     0
+    ],
+    "139": [
+     4,
+     2
+    ]
+   }
+  },
+  "pairs_with_L_gt_H (pair mean > 0) per founder": {
+   "33": 12,
+   "4": 8,
+   "16": 7,
+   "139": 12
+  },
+  "pairs_with_L_gt_N per founder": {
+   "33": 14,
+   "4": 10,
+   "16": 7,
+   "139": 14
+  },
+  "position_effect_meanScore_assignment0_vs_1": {
+   "late|139": [
+    0.1081,
+    0.0976
+   ],
+   "late|16": [
+    -0.0271,
+    -0.0239
+   ],
+   "late|33": [
+    0.3872,
+    0.3847
+   ],
+   "late|4": [
+    -0.0382,
+    -0.0679
+   ],
+   "null|139": [
+    -0.1014,
+    -0.1005
+   ],
+   "null|16": [
+    -0.0304,
+    -0.0259
+   ],
+   "null|33": [
+    -0.0684,
+    -0.0139
+   ],
+   "null|4": [
+    -0.0745,
+    -0.1275
+   ]
+  },
+  "exactly_neutral_genomes [n_neutral, n_total] (mean score exactly 0)": {
+   "late|139": [
+    0,
+    16
+   ],
+   "late|16": [
+    0,
+    16
+   ],
+   "late|33": [
+    0,
+    16
+   ],
+   "late|4": [
+    0,
+    16
+   ],
+   "null|139": [
+    0,
+    32
+   ],
+   "null|16": [
+    0,
+    32
+   ],
+   "null|33": [
+    0,
+    32
+   ],
+   "null|4": [
+    0,
+    32
+   ]
+  },
+  "cluster4_units_with_L_lt_H": [
+   "1 (-0.381)",
+   "2 (-0.518)",
+   "4 (-0.319)",
+   "5 (-0.110)",
+   "8 (-0.121)"
+  ],
+  "cluster139_lateCertified_units": [
+   7,
+   8
+  ],
+  "cluster139_pairs_gained_mu_after_500k (seed, draw, H mu, L mu)": [
+   [
+    7,
+    0,
+    33,
+    47
+   ],
+   [
+    7,
+    1,
+    33,
+    47
+   ]
+  ],
+  "protocol_assumed_unit_contrast_SD_range": [
+   0.15,
+   0.4
+  ],
+  "cluster33_L_competitions_abs_gt_0.99 / total": [
+   9,
+   128
+  ],
+  "null_genome_mean_SD_per_founder (so a unit N from 4 nulls has SE about SD/2)": {
+   "33": 0.301,
+   "4": 0.358,
+   "16": 0.088,
+   "139": 0.299
+  },
+  "null_genomes_with_mean_gt_0 [n, of 32]": {
+   "33": 17,
+   "4": 10,
+   "16": 14,
+   "139": 15
+  },
+  "founder_level_N_vs_H (random change of the same size is not neutral: mean < 0)": {
+   "33": -0.0411,
+   "4": -0.101,
+   "16": -0.0282,
+   "139": -0.101
+  }
+ },
+ "notChecked": [
+  "No simulation or competition was re-run (GPU forbidden). Raw masses are taken as recorded; see Q7.",
+  "I did not re-run the Deno tests, re-read the 54 frozen + 11 runner source files for correctness (only that their SHA-256s equal the candidate's pins on the current tree), or recompute state hashes / conservation / biology checks of the checkpoint chain (the frozen loader's job; I verified the receipt chain, the edge-delta and checkpoint file hashes and the lineage/mass tables).",
+  "My genome sampler and Mulberry32 follow the library's semantics read from tools/lib/discovery-divergence-control.ts and founder-policy.ts; the bit-for-bit match shows the roster implements that sampler, not that it is the only reasonable reading of the protocol's wording.",
+  "Absence of any interim analysis is inferred only from report.json being the sole analysis output and being newer than every run artifact.",
+  "Whether the gradient competition is biologically meaningful, whether four founders generalize, and the plan-level substitution for the 'amended endpoint 2' were not judged."
+ ],
+ "commands": [
+  "Read/cat/head/ls (read-only): experiments/founder-discovery/v1/continuation-protocol.md, continuation/{release,candidate,roster,reviews,decision}.json|md, continuation/analysis-v1/report.json, continuation-findings.md, divergence-control/analysis-v1/{review.json,review-rederive.py}, tools/lib/discovery-continuation.ts, tools/discovery_continuation_{analyze,run}.ts, tools/discovery_divergence_control_{analyze,run}.ts, tools/lib/discovery-divergence-control.ts, tools/lib/discovery-improvement-runtime.ts, tools/lib/founder-policy.ts, packages/schema/src/{checkpoint,layout,genome}.ts",
+  "sha256sum runs/founder-discovery-improvement-consolidated-v1/histories/discovery-cluster-33-6410001-normal/{checkpoint-500000.blck,edges-500000.json,receipt-500000.json}  (format probe)",
+  "shasum -a 256 experiments/founder-discovery/v1/divergence-control/{candidate,release}.json experiments/founder-discovery/v1/continuation/{release,candidate}.json experiments/founder-discovery/v1/continuation-protocol.md",
+  "sha256sum experiments/founder-discovery/v1/continuation/analysis-v1/report.json",
+  "jj st   (read-only status)",
+  "stat -f \"%Sm %N\" -t \"%Y-%m-%dT%H:%M:%S\" experiments/founder-discovery/v1/continuation/analysis-v1/report.json runs/founder-discovery-continuation-v1.supervise.log runs/founder-discovery-continuation-v1/audit/039.json",
+  "python3 (inline, read-only JSON inspection of roster/candidate/report/invocation/receipt files)",
+  "python3 experiments/founder-discovery/v1/continuation/analysis-v1/review-rederive.py --skip-checkpoints   (quick run, 1 s)",
+  "python3 experiments/founder-discovery/v1/continuation/analysis-v1/review-rederive.py --out <scratchpad>/rederive_output.json > <scratchpad>/rederive_stdout.txt 2>&1   (final run, about 18 s, exit 0, 91 checks: 90 pass, 0 fail, 1 info)",
+  "<scratchpad>/build_review.py   (assembles this file from rederive_output.json; scratchpad only)"
+ ],
+ "checkSummary": {
+  "total": 91,
+  "pass": 90,
+  "fail": 0,
+  "info": 1
+ },
+ "checks": [
+  {
+   "name": "report.json sha256 = 017d63dc...",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "protocol sha256 equals candidate pin",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster sha256 equals candidate pin",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "candidate sha256 equals release pin",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "frozen improvement report sha256 equals candidate pin and 085d55cf...",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "manifest sha256 equals candidate pin",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "forecast sha256 equals candidate pin",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster/candidate sourceManifestHash = manifest",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster.inputs.reportSha256 = frozen report; manifestHash = manifest",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "report.inputs bind this study: identity, candidate, release, roster, frozen report, protocol",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "release.json: format RELEASED, candidatePath is this study's candidate",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "candidate output dir is the continuation run dir and differs from the divergence control's",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "study identity differs from divergence control's; candidate sha differs",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "studyIdentitySha256 recomputed from the candidate's pins",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "all 65 pinned execution sources hash to their pins on the current tree",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "candidate.executionSources covers every manifest source (54) and 11 runner sources",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "64 pinned 500k/1M receipts hash to their pins on disk",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "candidate.rederivedHistories = the 32 roster histories in order; budget 30,000 s / 70 invocations / 600 s",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "rosterPayloadSha256 recomputed from roster contents = roster field = report field",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster counts: 64 pairs, 64 late, 128 null, 1,536 requested = 1,536 new, 0 shared, 0 also in frozen, 0 L=H, 8 replays",
+   "result": "pass",
+   "detail": "{'pairs': 64, 'lateGenomes': 64, 'nullGenomes': 128, 'requestedConfigurations': 1536, 'newConfigurations': 1536, 'sharedConfigurations': 0, 'configurationsAlsoInFrozenStudy': 0, 'pairsWithLateEqualToMidpoint': 0, 'pairsWithAncestorDisagreementAcrossCarriers': 0, 'replayConfigurations': 8, 'totalConfigurations': 1544}"
+  },
+  {
+   "name": "frozen cfg found for all 4 assay seeds",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster.design: midpoint 500000, endpoint 1000000, assay seeds, assignments 0/1, 2 mutants/pair, bootstrap seed 6490300, mutant seeds 6490101..6490228",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "manifest has 32 normal-arm units in roster.histories order",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "each normal unit's founderHex = manifest founder hex",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "64 normal-arm 1M draws in frozen report order",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "192 genomes, unique ids",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster.pairs follow the frozen report order (lateDrawId, unit, founder, seed, draw)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "every late genome hex = frozen report's 1M sample draw genome (L is an existing genome)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "64 ancestor records, one per (unit, draw), lateHex = L, ancestorHex = genome ancestorHex",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "no L equals its H; every genome row keeps H as the ancestor of its pair",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "all 128 null genomes regenerated bit for bit from (H, L) with Mulberry32 6490100 + j; magnitudes/parameter slots/bounds preserved; slotsChanged recomputed",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "no duplicate (descendantHex, ancestorHex) among the 192 genomes",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "the two null mutants of every pair are distinct genomes",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "1,536 raw assay files",
+   "result": "pass",
+   "detail": "1536"
+  },
+  {
+   "name": "every raw file: filename == recomputed cacheKey == stored cacheKey; cfg == frozen cfg; steps/format/sourceManifestHash ok; no duplicate content",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "raw files byte-identical to compact re-serialization (informational; float formatting may differ between JS and Python)",
+   "result": "info",
+   "detail": "1536 of 1536"
+  },
+  {
+   "name": "score/status in every raw file equals recomputation from masses (bitwise float equality)",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "no both-extinct outcome among the 1,536 results",
+   "result": "pass",
+   "detail": "{'scored': 1536}"
+  },
+  {
+   "name": "sanity: 1,536 distinct initial-state hashes and 1,536 distinct final-state hashes (no result reused or copied between configurations)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "1,536 provenance files each bind THIS study's identity + sha256 of the raw result bytes (format name is the reused divergence-control one, by design)",
+   "result": "pass",
+   "detail": "bad=0"
+  },
+  {
+   "name": "provenance and result file sets are identical",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "every roster configuration (192 genomes x 4 seeds x 2 assignments) has exactly one raw result by content; none missing",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "cache keys recomputed from roster hexes + frozen cfg equal result filenames and roster genome.cacheKeys (order seed-major)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "roster.assays cacheKeys = the 1,536 files = the 1,536 mapped configurations, 1:1 (no duplicate, no foreign, none unused)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "no continuation configuration is a frozen-study configuration, nor a divergence-control one",
+   "result": "pass",
+   "detail": "frozenKeys=1920 dcKeys=1200"
+  },
+  {
+   "name": "divergence control provenance carries a different identity than this study's",
+   "result": "pass",
+   "detail": "{'feec9045cb6aac33540a69507d5a609809c182c1b6defd89cc1942fc94f997fb'}"
+  },
+  {
+   "name": "candidate.replayExpected keys == roster replay keys (8)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "8 replays: every field except elapsedSeconds equals the frozen original; originals match pinned hashes and frozen report scores; identity is this study's",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "replays: 2 per founder",
+   "result": "pass",
+   "detail": "{'discovery-cluster-33': 2, 'discovery-cluster-4': 2, 'discovery-cluster-16': 2, 'discovery-cluster-139': 2}"
+  },
+  {
+   "name": "39 invocation records, all settled, none reserved/failed",
+   "result": "pass",
+   "detail": "Counter({'settled': 39})"
+  },
+  {
+   "name": "invocation indices are 1..39 with no gap",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "charged 21624.26 s total over 39 invocations (cap 30,000 s, <= 70 invocations)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "every invocation charged <= 600 s run + 120 s watchdog (max 571.1 s)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "sum newAssays = 1,536 and sum replayed = 8 across invocations; every invocation did new work (so owes an audit)",
+   "result": "pass",
+   "detail": "new=1536 replayed=8"
+  },
+  {
+   "name": "invocation records bind this study's identity, candidate and release hashes (not the divergence control's)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "only the first invocation replayed (8) and the final one reports complete",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "no repaired/recovery action recorded (repaired == 0 everywhere)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "release reviewedAt precedes the first invocation start",
+   "result": "pass",
+   "detail": "2026-10-02T20:02:47.472862+00:00 < 2026-10-02T20:03:04.873Z"
+  },
+  {
+   "name": "no RUNNING lock, no STOPPED.json, tmp empty, no foreign entries in the run dir",
+   "result": "pass",
+   "detail": "['assays', 'audit', 'invocations', 'provenance', 'replay', 'tmp']"
+  },
+  {
+   "name": "39 audit records, one per invocation index 1..39, each equal to its frozen original except elapsedSeconds, matches true, this study's identity",
+   "result": "pass",
+   "detail": "audits=39"
+  },
+  {
+   "name": "audits cover all eight replay configurations",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "supervisor final line: complete, 1536/1536, 8/8 replays, 39/39 audits, no mismatch, no unresolved reservation, not stopped, charged matches",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "all 8 replay files were written before the first new assay file (mtime order)",
+   "result": "pass",
+   "detail": "last replay 1790971498 first assay 1790971510"
+  },
+  {
+   "name": "protocol file mtime precedes the first new assay file (mtime is only indicative; the sha pin is the real check)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "report.json was written after the last run artifact, and is the only analysis output in analysis-v1 (single analyzer run; \"no interim analysis\" is not otherwise observable)",
+   "result": "pass",
+   "detail": "['report.json']"
+  },
+  {
+   "name": "technical completeness (independent): 1,536 results, 8/8 replays, matching audits for all 39 working invocations, no mismatch, no reservation, no STOPPED",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "report.technicalComplete True, replay 8/8, audits 39/39, missingNewResults 0, stopped False",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "self-test: bounds for two unavailable scores among four take [-1, 1] each: lower = (1/2 - 1/4 - 2)/4, upper = (1/2 - 1/4 + 2)/4, point None",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "founders in report order cluster-33, -4, -16, -139; evolution seeds 6410001..6410008",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "no missing/unavailable outcome: every bound collapses to the point value (lower == upper == point) at pair, unit and contrast level",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "A: all 64 pair-level L, N1, N2 and N (late, two mutants, mean) match report; 8 scored per genome",
+   "result": "pass",
+   "detail": "max abs diff 2.22e-16"
+  },
+  {
+   "name": "A: all 32 unit values (L, N, L-N), certification flags and late-certification flags match report",
+   "result": "pass",
+   "detail": "max abs diff 1.11e-16"
+  },
+  {
+   "name": "A: founder-level L, N, contrast; certified-seed and late-certified counts; criterionMet; readings (fixed protocol order) match report",
+   "result": "pass",
+   "detail": "max abs diff 5.55e-17"
+  },
+  {
+   "name": "descriptive: 8 pooled blocks (values and certification) match report",
+   "result": "pass",
+   "detail": "max abs diff 2.78e-17"
+  },
+  {
+   "name": "descriptive: pooled certified blocks = 7 of 8 and pooled mean 0.17037 match report",
+   "result": "pass",
+   "detail": "mean=0.170371 diff 0.00e+00"
+  },
+  {
+   "name": "descriptive: whole-block bootstrap (seed 6490300, 10,000 resamples, my own Mulberry32, JS summation order) reproduces report",
+   "result": "pass",
+   "detail": "mine=[0.119037,0.218293] report=[0.119037,0.218293] diff=2.78e-17"
+  },
+  {
+   "name": "report fixed settings: threshold 0.1, required 7, tail 9/256, 4 confirmatory tests",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "descriptive roster items (median H->L slot change and generations, pairs L=H, mean founder-lineage mass 500k/1M, median distinct genomes at 500k, sweep carriers) recomputed from the roster match report",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "protocol pre-run facts: median slot change 10/7/17/14; ranges 7-15, 4-16, 5-27, 8-26",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "protocol pre-run facts: mass 500k->1M cluster-33 0.73M->0.83M, cluster-4 1.01M->1.07M, cluster-16 2.03M->2.04M, cluster-139 2.00M->2.06M",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "protocol pre-run facts, cluster-33: H carries the raised bias in 14 of 16 pairs; neither H nor L carries it in seed 6410002; none gains or loses it; one L raised it further (99 -> 119, seed 6410006)",
+   "result": "pass",
+   "detail": "[(1, 0, 94, 94), (1, 1, 94, 94), (2, 0, 62, 62), (2, 1, 62, 62), (3, 0, 76, 76), (3, 1, 76, 76), (4, 0, 72, 72), (4, 1, 72, 72), (5, 0, 86, 86), (5, 1, 86, 86), (6, 0, 99, 119), (6, 1, 99, 99), (7, 0, 82, 82), (7, 1, 82, 82), (8, 0, 100, 100), (8, 1, 100, 100)]"
+  },
+  {
+   "name": "protocol pre-run facts, cluster-139: H carries raised mu in 11 of 16 pairs, L in 13; both pairs of seed 6410007 gained it (33 -> 47); neither carries it in seed 6410002 (both pairs) and seed 6410008 (one pair)",
+   "result": "pass",
+   "detail": "[(1, 0, 49, 49), (1, 1, 49, 49), (2, 0, 33, 33), (2, 1, 33, 33), (3, 0, 46, 46), (3, 1, 46, 46), (4, 0, 57, 57), (4, 1, 57, 57), (5, 0, 49, 49), (5, 1, 49, 49), (6, 0, 47, 47), (6, 1, 47, 47), (7, 0, 33, 47), (7, 1, 33, 47), (8, 0, 54, 54), (8, 1, 33, 33)]"
+  },
+  {
+   "name": "protocol pre-run facts: both pairs share one 500k ancestor lineage in 10 of 32 units (cluster-33 5, cluster-4 3, cluster-139 2)",
+   "result": "pass",
+   "detail": "{'33': 5, '4': 3, '16': 0, '139': 2}"
+  },
+  {
+   "name": "shared-ancestor units also share the ancestor genome (same H hex)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "every L genome carried by a single 1M lineage; carriers agree on the ancestor genome",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "H re-derived independently in Python from the checkpoints and mutation edges for all 32 histories: receipts chain and hash to the pins; edge deltas and checkpoints hash to their receipts; mass tables, state hash, 1M sample draws and genome abundance agree",
+   "result": "pass",
+   "detail": "[]"
+  },
+  {
+   "name": "H re-derived for all 64 L draws (heaviest 1M lineage carrying L; first ancestor on the parent path present at 500k): lineage keys, masses, generations walked, H genome and carrier agreement equal the roster",
+   "result": "pass",
+   "detail": "checked=64 bad=[]"
+  },
+  {
+   "name": "findings document (continuation-findings.md): both unit tables (L - N, L vs H), all 64 check marks, equal the recomputation (max abs diff 0.0054; cells that do not round to the printed 2 decimals: 2)",
+   "result": "pass",
+   "detail": "L-N 33 3: table 0.20 ✓ vs 0.1947; L vs H 16 6: table −0.19 vs -0.1846"
+  },
+  {
+   "name": "protocol reading: no founder is technically incomplete; all four read \"not met\" (certified seeds below 7)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "protocol cluster-16 clause not triggered: cluster-16 does not read \"continued beyond divergence\" nor \"partly divergence\" (reads not met; 1/8 certified; 0/8 late-certified)",
+   "result": "pass",
+   "detail": ""
+  },
+  {
+   "name": "protocol M4 table row for cluster-33: reading \"not met\" (5/8 certified, 5/8 late-certified, technically complete) -> inconclusive, not evidence of a stall, cannot support the physics-change pivot",
+   "result": "pass",
+   "detail": ""
+  }
+ ],
+ "limitations": "Read-only review in a fresh context. Nothing was committed, no existing file was edited, no GPU work, no run/supervise/stop/resolve command. The only files created in the repository are review-rederive.py and this review.json. The descriptive and post hoc calculations (SDs, illustrative probabilities, leave-one-assay-seed-out, shared-H counts, sweep splits by seed) are mine, are not protocol decision rules, and must not be used to change any reading."
+}

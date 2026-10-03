@@ -1,0 +1,3237 @@
+{
+  "format": "discovery-continuation-analysis/v2",
+  "rosterPayloadSha256": "684f758cce85b6c0884dc4aa57e95bd2ecd1bf689f4c9d84e79bac828c3149ef",
+  "reportSha256": "085d55cf1f7121ece85ff3a5dc9fa5f236c912531e480e3262db99ad205ec68a",
+  "technicalComplete": true,
+  "missingNewResults": 0,
+  "replay": {
+    "expected": 8,
+    "matched": 8
+  },
+  "audits": {
+    "total": 39,
+    "matched": 39
+  },
+  "threshold": 0.1,
+  "required": 7,
+  "exactOneSidedSignTailPerTest": 0.03515625,
+  "confirmatoryTests": 4,
+  "continuation": [
+    {
+      "founderId": "discovery-cluster-33",
+      "certifiedSeeds": 5,
+      "criterionMet": false,
+      "lateCertifiedSeeds": 5,
+      "late": {
+        "lower": 0.38595745847225527,
+        "upper": 0.38595745847225527,
+        "point": 0.38595745847225527
+      },
+      "null": {
+        "lower": -0.0411224332109673,
+        "upper": -0.0411224332109673,
+        "point": -0.0411224332109673
+      },
+      "contrast": {
+        "lower": 0.4270798916832225,
+        "upper": 0.4270798916832225,
+        "point": 0.4270798916832225
+      },
+      "reading": "not met: no evidence that change since the midpoint beats random change of the same size; this is not evidence that adaptation stopped"
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "certifiedSeeds": 3,
+      "criterionMet": false,
+      "lateCertifiedSeeds": 3,
+      "late": {
+        "lower": -0.05307345782002998,
+        "upper": -0.05307345782002998,
+        "point": -0.05307345782002998
+      },
+      "null": {
+        "lower": -0.10097408238441166,
+        "upper": -0.10097408238441166,
+        "point": -0.10097408238441166
+      },
+      "contrast": {
+        "lower": 0.04790062456438168,
+        "upper": 0.04790062456438168,
+        "point": 0.04790062456438168
+      },
+      "reading": "not met: no evidence that change since the midpoint beats random change of the same size; this is not evidence that adaptation stopped"
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "certifiedSeeds": 1,
+      "criterionMet": false,
+      "lateCertifiedSeeds": 0,
+      "late": {
+        "lower": -0.02546809740909336,
+        "upper": -0.02546809740909336,
+        "point": -0.02546809740909336
+      },
+      "null": {
+        "lower": -0.028160421886464577,
+        "upper": -0.028160421886464577,
+        "point": -0.028160421886464577
+      },
+      "contrast": {
+        "lower": 0.002692324477371221,
+        "upper": 0.002692324477371221,
+        "point": 0.002692324477371221
+      },
+      "reading": "not met: no evidence that change since the midpoint beats random change of the same size; this is not evidence that adaptation stopped"
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "certifiedSeeds": 4,
+      "criterionMet": false,
+      "lateCertifiedSeeds": 2,
+      "late": {
+        "lower": 0.10285621056562448,
+        "upper": 0.10285621056562448,
+        "point": 0.10285621056562448
+      },
+      "null": {
+        "lower": -0.10095532693234117,
+        "upper": -0.10095532693234117,
+        "point": -0.10095532693234117
+      },
+      "contrast": {
+        "lower": 0.20381153749796566,
+        "upper": 0.20381153749796566,
+        "point": 0.20381153749796566
+      },
+      "reading": "not met: no evidence that change since the midpoint beats random change of the same size; this is not evidence that adaptation stopped"
+    }
+  ],
+  "descriptive": {
+    "pooledBlocks": [
+      {
+        "seed": 6410001,
+        "lower": 0.022201334846493448,
+        "upper": 0.022201334846493448,
+        "point": 0.022201334846493448,
+        "certified": false
+      },
+      {
+        "seed": 6410002,
+        "lower": 0.15940784237980116,
+        "upper": 0.15940784237980116,
+        "point": 0.15940784237980116,
+        "certified": true
+      },
+      {
+        "seed": 6410003,
+        "lower": 0.2724808266478176,
+        "upper": 0.2724808266478176,
+        "point": 0.2724808266478176,
+        "certified": true
+      },
+      {
+        "seed": 6410004,
+        "lower": 0.1339833917371268,
+        "upper": 0.1339833917371268,
+        "point": 0.1339833917371268,
+        "certified": true
+      },
+      {
+        "seed": 6410005,
+        "lower": 0.1586487320235864,
+        "upper": 0.1586487320235864,
+        "point": 0.1586487320235864,
+        "certified": true
+      },
+      {
+        "seed": 6410006,
+        "lower": 0.16040929834938925,
+        "upper": 0.16040929834938925,
+        "point": 0.16040929834938925,
+        "certified": true
+      },
+      {
+        "seed": 6410007,
+        "lower": 0.2243151554209825,
+        "upper": 0.2243151554209825,
+        "point": 0.2243151554209825,
+        "certified": true
+      },
+      {
+        "seed": 6410008,
+        "lower": 0.23152217504068506,
+        "upper": 0.23152217504068506,
+        "point": 0.23152217504068506,
+        "certified": true
+      }
+    ],
+    "pooledCertifiedBlocks": 7,
+    "pooledEffect": {
+      "lower": 0.17037109455573526,
+      "upper": 0.17037109455573526,
+      "point": 0.17037109455573526
+    },
+    "bootstrap": {
+      "seed": 6490300,
+      "resamples": 10000,
+      "bounded95": {
+        "lower": 0.11903665075417703,
+        "upper": 0.21829290925570521
+      },
+      "point95": {
+        "lower": 0.11903665075417703,
+        "upper": 0.21829290925570521
+      }
+    },
+    "lateEqualsMidpointPairs": 0,
+    "roster": [
+      {
+        "founderId": "discovery-cluster-33",
+        "pairs": 16,
+        "medianSlotsChanged": 10,
+        "medianGenerations": 10.5,
+        "lateEqualsMidpoint": 0,
+        "meanFounderMass500k": 733610.5,
+        "meanFounderMass1M": 827635.75,
+        "medianGenomes500k": 52.5,
+        "sweep": {
+          "slotName": "b2[PHOTO]",
+          "founderValue": 62,
+          "midpointCarries": 14,
+          "lateCarries": 14,
+          "gainedAfterMidpoint": 0,
+          "lostAfterMidpoint": 0
+        }
+      },
+      {
+        "founderId": "discovery-cluster-4",
+        "pairs": 16,
+        "medianSlotsChanged": 7,
+        "medianGenerations": 8,
+        "lateEqualsMidpoint": 0,
+        "meanFounderMass500k": 1006836.25,
+        "meanFounderMass1M": 1065803.25,
+        "medianGenomes500k": 215,
+        "sweep": null
+      },
+      {
+        "founderId": "discovery-cluster-16",
+        "pairs": 16,
+        "medianSlotsChanged": 17,
+        "medianGenerations": 17.5,
+        "lateEqualsMidpoint": 0,
+        "meanFounderMass500k": 2031161.5,
+        "meanFounderMass1M": 2040125.625,
+        "medianGenomes500k": 396.5,
+        "sweep": null
+      },
+      {
+        "founderId": "discovery-cluster-139",
+        "pairs": 16,
+        "medianSlotsChanged": 14,
+        "medianGenerations": 14.5,
+        "lateEqualsMidpoint": 0,
+        "meanFounderMass500k": 1998786.75,
+        "meanFounderMass1M": 2056750.25,
+        "medianGenomes500k": 443,
+        "sweep": {
+          "slotName": "mu",
+          "founderValue": 33,
+          "midpointCarries": 11,
+          "lateCarries": 13,
+          "gainedAfterMidpoint": 2,
+          "lostAfterMidpoint": 0
+        }
+      }
+    ]
+  },
+  "units": [
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "late": {
+        "lower": 0.18039799484450303,
+        "upper": 0.18039799484450303,
+        "point": 0.18039799484450303
+      },
+      "null": {
+        "lower": 0.11509314494243213,
+        "upper": 0.11509314494243213,
+        "point": 0.11509314494243213
+      },
+      "contrast": {
+        "lower": 0.0653048499020709,
+        "upper": 0.0653048499020709,
+        "point": 0.0653048499020709
+      },
+      "certified": false,
+      "lateCertified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "late": {
+        "lower": 0.5869820046498194,
+        "upper": 0.5869820046498194,
+        "point": 0.5869820046498194
+      },
+      "null": {
+        "lower": 0.025423523373679424,
+        "upper": 0.025423523373679424,
+        "point": 0.025423523373679424
+      },
+      "contrast": {
+        "lower": 0.56155848127614,
+        "upper": 0.56155848127614,
+        "point": 0.56155848127614
+      },
+      "certified": true,
+      "lateCertified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.024482727244983654,
+        "upper": 0.024482727244983654,
+        "point": 0.024482727244983654
+      },
+      "null": {
+        "lower": -0.1702526697576643,
+        "upper": -0.1702526697576643,
+        "point": -0.1702526697576643
+      },
+      "contrast": {
+        "lower": 0.19473539700264794,
+        "upper": 0.19473539700264794,
+        "point": 0.19473539700264794
+      },
+      "certified": true,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "late": {
+        "lower": 0.8182663894210194,
+        "upper": 0.8182663894210194,
+        "point": 0.8182663894210194
+      },
+      "null": {
+        "lower": -0.06005025173993257,
+        "upper": -0.06005025173993257,
+        "point": -0.06005025173993257
+      },
+      "contrast": {
+        "lower": 0.878316641160952,
+        "upper": 0.878316641160952,
+        "point": 0.878316641160952
+      },
+      "certified": true,
+      "lateCertified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "late": {
+        "lower": 0.699991926402397,
+        "upper": 0.699991926402397,
+        "point": 0.699991926402397
+      },
+      "null": {
+        "lower": 0.006838419750037166,
+        "upper": 0.006838419750037166,
+        "point": 0.006838419750037166
+      },
+      "contrast": {
+        "lower": 0.6931535066523599,
+        "upper": 0.6931535066523599,
+        "point": 0.6931535066523599
+      },
+      "certified": true,
+      "lateCertified": true
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "late": {
+        "lower": -0.1425644018539658,
+        "upper": -0.1425644018539658,
+        "point": -0.1425644018539658
+      },
+      "null": {
+        "lower": -0.15474251716933896,
+        "upper": -0.15474251716933896,
+        "point": -0.15474251716933896
+      },
+      "contrast": {
+        "lower": 0.012178115315373161,
+        "upper": 0.012178115315373161,
+        "point": 0.012178115315373161
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "late": {
+        "lower": 0.014405922200965177,
+        "upper": 0.014405922200965177,
+        "point": 0.014405922200965177
+      },
+      "null": {
+        "lower": -0.02639718025330649,
+        "upper": -0.02639718025330649,
+        "point": -0.02639718025330649
+      },
+      "contrast": {
+        "lower": 0.04080310245427167,
+        "upper": 0.04080310245427167,
+        "point": 0.04080310245427167
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "late": {
+        "lower": 0.90569710486832,
+        "upper": 0.90569710486832,
+        "point": 0.90569710486832
+      },
+      "null": {
+        "lower": -0.06489193483364479,
+        "upper": -0.06489193483364479,
+        "point": -0.06489193483364479
+      },
+      "contrast": {
+        "lower": 0.9705890397019648,
+        "upper": 0.9705890397019648,
+        "point": 0.9705890397019648
+      },
+      "certified": true,
+      "lateCertified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "late": {
+        "lower": -0.3811209639959421,
+        "upper": -0.3811209639959421,
+        "point": -0.3811209639959421
+      },
+      "null": {
+        "lower": -0.24478987930567309,
+        "upper": -0.24478987930567309,
+        "point": -0.24478987930567309
+      },
+      "contrast": {
+        "lower": -0.136331084690269,
+        "upper": -0.136331084690269,
+        "point": -0.136331084690269
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "late": {
+        "lower": -0.5184042631845477,
+        "upper": -0.5184042631845477,
+        "point": -0.5184042631845477
+      },
+      "null": {
+        "lower": -0.10417229090671384,
+        "upper": -0.10417229090671384,
+        "point": -0.10417229090671384
+      },
+      "contrast": {
+        "lower": -0.4142319722778338,
+        "upper": -0.4142319722778338,
+        "point": -0.4142319722778338
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.5219641484356319,
+        "upper": 0.5219641484356319,
+        "point": 0.5219641484356319
+      },
+      "null": {
+        "lower": -0.13759914552736158,
+        "upper": -0.13759914552736158,
+        "point": -0.13759914552736158
+      },
+      "contrast": {
+        "lower": 0.6595632939629934,
+        "upper": 0.6595632939629934,
+        "point": 0.6595632939629934
+      },
+      "certified": true,
+      "lateCertified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "late": {
+        "lower": -0.3193185136777955,
+        "upper": -0.3193185136777955,
+        "point": -0.3193185136777955
+      },
+      "null": {
+        "lower": 0.08666147903074588,
+        "upper": 0.08666147903074588,
+        "point": 0.08666147903074588
+      },
+      "contrast": {
+        "lower": -0.4059799927085414,
+        "upper": -0.4059799927085414,
+        "point": -0.4059799927085414
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "late": {
+        "lower": -0.10955984580068756,
+        "upper": -0.10955984580068756,
+        "point": -0.10955984580068756
+      },
+      "null": {
+        "lower": -0.016882111464547846,
+        "upper": -0.016882111464547846,
+        "point": -0.016882111464547846
+      },
+      "contrast": {
+        "lower": -0.09267773433613971,
+        "upper": -0.09267773433613971,
+        "point": -0.09267773433613971
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "late": {
+        "lower": 0.3687231858604332,
+        "upper": 0.3687231858604332,
+        "point": 0.3687231858604332
+      },
+      "null": {
+        "lower": -0.44935154026160995,
+        "upper": -0.44935154026160995,
+        "point": -0.44935154026160995
+      },
+      "contrast": {
+        "lower": 0.8180747261220431,
+        "upper": 0.8180747261220431,
+        "point": 0.8180747261220431
+      },
+      "certified": true,
+      "lateCertified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "late": {
+        "lower": 0.13400720189249343,
+        "upper": 0.13400720189249343,
+        "point": 0.13400720189249343
+      },
+      "null": {
+        "lower": -0.17217138656610723,
+        "upper": -0.17217138656610723,
+        "point": -0.17217138656610723
+      },
+      "contrast": {
+        "lower": 0.3061785884586007,
+        "upper": 0.3061785884586007,
+        "point": 0.3061785884586007
+      },
+      "certified": true,
+      "lateCertified": true
+    },
+    {
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "late": {
+        "lower": -0.12087861208982545,
+        "upper": -0.12087861208982545,
+        "point": -0.12087861208982545
+      },
+      "null": {
+        "lower": 0.23051221592597432,
+        "upper": 0.23051221592597432,
+        "point": 0.23051221592597432
+      },
+      "contrast": {
+        "lower": -0.3513908280157998,
+        "upper": -0.3513908280157998,
+        "point": -0.3513908280157998
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "late": {
+        "lower": -0.005778164348695757,
+        "upper": -0.005778164348695757,
+        "point": -0.005778164348695757
+      },
+      "null": {
+        "lower": -0.039170195984154436,
+        "upper": -0.039170195984154436,
+        "point": -0.039170195984154436
+      },
+      "contrast": {
+        "lower": 0.03339203163545868,
+        "upper": 0.03339203163545868,
+        "point": 0.03339203163545868
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "late": {
+        "lower": 0.009662955159597414,
+        "upper": 0.009662955159597414,
+        "point": 0.009662955159597414
+      },
+      "null": {
+        "lower": 0.0046178047775665585,
+        "upper": 0.0046178047775665585,
+        "point": 0.0046178047775665585
+      },
+      "contrast": {
+        "lower": 0.005045150382030856,
+        "upper": 0.005045150382030856,
+        "point": 0.005045150382030856
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.07036649845811935,
+        "upper": 0.07036649845811935,
+        "point": 0.07036649845811935
+      },
+      "null": {
+        "lower": -0.11775775519028345,
+        "upper": -0.11775775519028345,
+        "point": -0.11775775519028345
+      },
+      "contrast": {
+        "lower": 0.1881242536484028,
+        "upper": 0.1881242536484028,
+        "point": 0.1881242536484028
+      },
+      "certified": true,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "late": {
+        "lower": -0.029339681576701065,
+        "upper": -0.029339681576701065,
+        "point": -0.029339681576701065
+      },
+      "null": {
+        "lower": -0.0846804390680475,
+        "upper": -0.0846804390680475,
+        "point": -0.0846804390680475
+      },
+      "contrast": {
+        "lower": 0.055340757491346426,
+        "upper": 0.055340757491346426,
+        "point": 0.055340757491346426
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "late": {
+        "lower": -0.0462349036255236,
+        "upper": -0.0462349036255236,
+        "point": -0.0462349036255236
+      },
+      "null": {
+        "lower": -0.008560623349728791,
+        "upper": -0.008560623349728791,
+        "point": -0.008560623349728791
+      },
+      "contrast": {
+        "lower": -0.03767428027579481,
+        "upper": -0.03767428027579481,
+        "point": -0.03767428027579481
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "late": {
+        "lower": -0.18463367544102108,
+        "upper": -0.18463367544102108,
+        "point": -0.18463367544102108
+      },
+      "null": {
+        "lower": 0.009629151055864687,
+        "upper": 0.009629151055864687,
+        "point": 0.009629151055864687
+      },
+      "contrast": {
+        "lower": -0.19426282649688575,
+        "upper": -0.19426282649688575,
+        "point": -0.19426282649688575
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "late": {
+        "lower": -0.002033674646412565,
+        "upper": -0.002033674646412565,
+        "point": -0.002033674646412565
+      },
+      "null": {
+        "lower": -0.009767284760571414,
+        "upper": -0.009767284760571414,
+        "point": -0.009767284760571414
+      },
+      "contrast": {
+        "lower": 0.007733610114158849,
+        "upper": 0.007733610114158849,
+        "point": 0.007733610114158849
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "late": {
+        "lower": -0.015754133252109545,
+        "upper": -0.015754133252109545,
+        "point": -0.015754133252109545
+      },
+      "null": {
+        "lower": 0.02040596742763772,
+        "upper": 0.02040596742763772,
+        "point": 0.02040596742763772
+      },
+      "contrast": {
+        "lower": -0.036160100679747266,
+        "upper": -0.036160100679747266,
+        "point": -0.036160100679747266
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "late": {
+        "lower": 0.045268656179288935,
+        "upper": 0.045268656179288935,
+        "point": 0.045268656179288935
+      },
+      "null": {
+        "lower": -0.08117088635942428,
+        "upper": -0.08117088635942428,
+        "point": -0.08117088635942428
+      },
+      "contrast": {
+        "lower": 0.1264395425387132,
+        "upper": 0.1264395425387132,
+        "point": 0.1264395425387132
+      },
+      "certified": true,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "late": {
+        "lower": -0.07310560332596043,
+        "upper": -0.07310560332596043,
+        "point": -0.07310560332596043
+      },
+      "null": {
+        "lower": -0.558365313464828,
+        "upper": -0.558365313464828,
+        "point": -0.558365313464828
+      },
+      "contrast": {
+        "lower": 0.48525971013886754,
+        "upper": 0.48525971013886754,
+        "point": 0.48525971013886754
+      },
+      "certified": true,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.021177318518250533,
+        "upper": 0.021177318518250533,
+        "point": 0.021177318518250533
+      },
+      "null": {
+        "lower": -0.026323043458975695,
+        "upper": -0.026323043458975695,
+        "point": -0.026323043458975695
+      },
+      "contrast": {
+        "lower": 0.04750036197722623,
+        "upper": 0.04750036197722623,
+        "point": 0.04750036197722623
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "late": {
+        "lower": 0.04233601137955448,
+        "upper": 0.04233601137955448,
+        "point": 0.04233601137955448
+      },
+      "null": {
+        "lower": 0.034079850374804196,
+        "upper": 0.034079850374804196,
+        "point": 0.034079850374804196
+      },
+      "contrast": {
+        "lower": 0.008256161004750281,
+        "upper": 0.008256161004750281,
+        "point": 0.008256161004750281
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "late": {
+        "lower": 0.001579877887393654,
+        "upper": 0.001579877887393654,
+        "point": 0.001579877887393654
+      },
+      "null": {
+        "lower": -0.07021355816652652,
+        "upper": -0.07021355816652652,
+        "point": -0.07021355816652652
+      },
+      "contrast": {
+        "lower": 0.07179343605392018,
+        "upper": 0.07179343605392018,
+        "point": 0.07179343605392018
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "late": {
+        "lower": 0.04524025813455361,
+        "upper": 0.04524025813455361,
+        "point": 0.04524025813455361
+      },
+      "null": {
+        "lower": 0.039593079677527176,
+        "upper": 0.039593079677527176,
+        "point": 0.039593079677527176
+      },
+      "contrast": {
+        "lower": 0.005647178457026433,
+        "upper": 0.005647178457026433,
+        "point": 0.005647178457026433
+      },
+      "certified": false,
+      "lateCertified": false
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "late": {
+        "lower": 0.5201806191016203,
+        "upper": 0.5201806191016203,
+        "point": 0.5201806191016203
+      },
+      "null": {
+        "lower": -0.02236470155527851,
+        "upper": -0.02236470155527851,
+        "point": -0.02236470155527851
+      },
+      "contrast": {
+        "lower": 0.5425453206568988,
+        "upper": 0.5425453206568988,
+        "point": 0.5425453206568988
+      },
+      "certified": true,
+      "lateCertified": true
+    },
+    {
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "late": {
+        "lower": 0.22017254665029473,
+        "upper": 0.22017254665029473,
+        "point": 0.22017254665029473
+      },
+      "null": {
+        "lower": -0.12287804250602782,
+        "upper": -0.12287804250602782,
+        "point": -0.12287804250602782
+      },
+      "contrast": {
+        "lower": 0.3430505891563226,
+        "upper": 0.3430505891563226,
+        "point": 0.3430505891563226
+      },
+      "certified": true,
+      "lateCertified": true
+    }
+  ],
+  "pairs": [
+    {
+      "pairId": "discovery-cluster-33-6410001-normal-p0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "late": {
+        "lower": 0.15720855545288895,
+        "upper": 0.15720855545288895,
+        "point": 0.15720855545288895,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.17490817842160616,
+          "upper": 0.17490817842160616,
+          "point": 0.17490817842160616,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.059050202946507896,
+          "upper": 0.059050202946507896,
+          "point": 0.059050202946507896,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.11697919068405703,
+        "upper": 0.11697919068405703,
+        "point": 0.11697919068405703
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410001-normal-p1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410001,
+      "late": {
+        "lower": 0.20358743423611708,
+        "upper": 0.20358743423611708,
+        "point": 0.20358743423611708,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.015615868059922025,
+          "upper": 0.015615868059922025,
+          "point": 0.015615868059922025,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.21079833034169243,
+          "upper": 0.21079833034169243,
+          "point": 0.21079833034169243,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.11320709920080722,
+        "upper": 0.11320709920080722,
+        "point": 0.11320709920080722
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410002-normal-p0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "late": {
+        "lower": 0.5882191054690433,
+        "upper": 0.5882191054690433,
+        "point": 0.5882191054690433,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.2540502656386834,
+          "upper": -0.2540502656386834,
+          "point": -0.2540502656386834,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.051770385072272426,
+          "upper": -0.051770385072272426,
+          "point": -0.051770385072272426,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.1529103253554779,
+        "upper": -0.1529103253554779,
+        "point": -0.1529103253554779
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410002-normal-p1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410002,
+      "late": {
+        "lower": 0.5857449038305955,
+        "upper": 0.5857449038305955,
+        "point": 0.5857449038305955,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.31706716227434406,
+          "upper": 0.31706716227434406,
+          "point": 0.31706716227434406,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.09044758193132947,
+          "upper": 0.09044758193132947,
+          "point": 0.09044758193132947,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.20375737210283676,
+        "upper": 0.20375737210283676,
+        "point": 0.20375737210283676
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410003-normal-p0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "late": {
+        "lower": -0.36717698520868963,
+        "upper": -0.36717698520868963,
+        "point": -0.36717698520868963,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.6383024898122165,
+          "upper": -0.6383024898122165,
+          "point": -0.6383024898122165,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.737548025552408,
+          "upper": -0.737548025552408,
+          "point": -0.737548025552408,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.6879252576823123,
+        "upper": -0.6879252576823123,
+        "point": -0.6879252576823123
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410003-normal-p1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.41614243969865694,
+        "upper": 0.41614243969865694,
+        "point": 0.41614243969865694,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.0549674230428576,
+          "upper": 0.0549674230428576,
+          "point": 0.0549674230428576,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.6398724132911098,
+          "upper": 0.6398724132911098,
+          "point": 0.6398724132911098,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.3474199181669837,
+        "upper": 0.3474199181669837,
+        "point": 0.3474199181669837
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410004-normal-p0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "late": {
+        "lower": 0.6611525472868953,
+        "upper": 0.6611525472868953,
+        "point": 0.6611525472868953,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.15371812744235916,
+          "upper": -0.15371812744235916,
+          "point": -0.15371812744235916,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.15787201629475472,
+          "upper": 0.15787201629475472,
+          "point": 0.15787201629475472,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.0020769444261977826,
+        "upper": 0.0020769444261977826,
+        "point": 0.0020769444261977826
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410004-normal-p1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410004,
+      "late": {
+        "lower": 0.9753802315551434,
+        "upper": 0.9753802315551434,
+        "point": 0.9753802315551434,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.22851995559618096,
+          "upper": -0.22851995559618096,
+          "point": -0.22851995559618096,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.015834940215944896,
+          "upper": -0.015834940215944896,
+          "point": -0.015834940215944896,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.12217744790606293,
+        "upper": -0.12217744790606293,
+        "point": -0.12217744790606293
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410005-normal-p0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "late": {
+        "lower": 0.5051752754541885,
+        "upper": 0.5051752754541885,
+        "point": 0.5051752754541885,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.07964984749842319,
+          "upper": -0.07964984749842319,
+          "point": -0.07964984749842319,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.09996251331858495,
+          "upper": 0.09996251331858495,
+          "point": 0.09996251331858495,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.010156332910080883,
+        "upper": 0.010156332910080883,
+        "point": 0.010156332910080883
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410005-normal-p1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410005,
+      "late": {
+        "lower": 0.8948085773506056,
+        "upper": 0.8948085773506056,
+        "point": 0.8948085773506056,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.49927912541884356,
+          "upper": 0.49927912541884356,
+          "point": 0.49927912541884356,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.49223811223885666,
+          "upper": -0.49223811223885666,
+          "point": -0.49223811223885666,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.0035205065899934496,
+        "upper": 0.0035205065899934496,
+        "point": 0.0035205065899934496
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410006-normal-p0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "late": {
+        "lower": -0.163356647568426,
+        "upper": -0.163356647568426,
+        "point": -0.163356647568426,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.25993152174677575,
+          "upper": -0.25993152174677575,
+          "point": -0.25993152174677575,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.26878986555950574,
+          "upper": -0.26878986555950574,
+          "point": -0.26878986555950574,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.26436069365314074,
+        "upper": -0.26436069365314074,
+        "point": -0.26436069365314074
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410006-normal-p1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410006,
+      "late": {
+        "lower": -0.12177215613950557,
+        "upper": -0.12177215613950557,
+        "point": -0.12177215613950557,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.09435078968981518,
+          "upper": -0.09435078968981518,
+          "point": -0.09435078968981518,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.00410210831874083,
+          "upper": 0.00410210831874083,
+          "point": 0.00410210831874083,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.045124340685537175,
+        "upper": -0.045124340685537175,
+        "point": -0.045124340685537175
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410007-normal-p0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "late": {
+        "lower": -0.1736026143841397,
+        "upper": -0.1736026143841397,
+        "point": -0.1736026143841397,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.4004063735274284,
+          "upper": -0.4004063735274284,
+          "point": -0.4004063735274284,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.3241595284862644,
+          "upper": 0.3241595284862644,
+          "point": 0.3241595284862644,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.03812342252058201,
+        "upper": -0.03812342252058201,
+        "point": -0.03812342252058201
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410007-normal-p1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410007,
+      "late": {
+        "lower": 0.20241445878607006,
+        "upper": 0.20241445878607006,
+        "point": 0.20241445878607006,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.0887932582955939,
+          "upper": 0.0887932582955939,
+          "point": 0.0887932582955939,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.11813513426765583,
+          "upper": -0.11813513426765583,
+          "point": -0.11813513426765583,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.014670937986030967,
+        "upper": -0.014670937986030967,
+        "point": -0.014670937986030967
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410008-normal-p0",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "late": {
+        "lower": 0.81139420973664,
+        "upper": 0.81139420973664,
+        "point": 0.81139420973664,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.5028091707808505,
+          "upper": -0.5028091707808505,
+          "point": -0.5028091707808505,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.1851791702395631,
+          "upper": 0.1851791702395631,
+          "point": 0.1851791702395631,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.1588150002706437,
+        "upper": -0.1588150002706437,
+        "point": -0.1588150002706437
+      }
+    },
+    {
+      "pairId": "discovery-cluster-33-6410008-normal-p1",
+      "founderId": "discovery-cluster-33",
+      "seed": 6410008,
+      "late": {
+        "lower": 1,
+        "upper": 1,
+        "point": 1,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.055214856926799255,
+          "upper": 0.055214856926799255,
+          "point": 0.055214856926799255,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.0028474042799090243,
+          "upper": 0.0028474042799090243,
+          "point": 0.0028474042799090243,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.02903113060335414,
+        "upper": 0.02903113060335414,
+        "point": 0.02903113060335414
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410001-normal-p0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "late": {
+        "lower": -0.7250138778357773,
+        "upper": -0.7250138778357773,
+        "point": -0.7250138778357773,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.28431755946196613,
+          "upper": -0.28431755946196613,
+          "point": -0.28431755946196613,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.04076373438719957,
+          "upper": -0.04076373438719957,
+          "point": -0.04076373438719957,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.16254064692458284,
+        "upper": -0.16254064692458284,
+        "point": -0.16254064692458284
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410001-normal-p1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410001,
+      "late": {
+        "lower": -0.03722805015610692,
+        "upper": -0.03722805015610692,
+        "point": -0.03722805015610692,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.04972887873840898,
+          "upper": -0.04972887873840898,
+          "point": -0.04972887873840898,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.6043493446351177,
+          "upper": -0.6043493446351177,
+          "point": -0.6043493446351177,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.32703911168676336,
+        "upper": -0.32703911168676336,
+        "point": -0.32703911168676336
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410002-normal-p0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "late": {
+        "lower": -0.04098861633478769,
+        "upper": -0.04098861633478769,
+        "point": -0.04098861633478769,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.09279250942092565,
+          "upper": -0.09279250942092565,
+          "point": -0.09279250942092565,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.4291346189517039,
+          "upper": -0.4291346189517039,
+          "point": -0.4291346189517039,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.2609635641863148,
+        "upper": -0.2609635641863148,
+        "point": -0.2609635641863148
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410002-normal-p1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410002,
+      "late": {
+        "lower": -0.9958199100343076,
+        "upper": -0.9958199100343076,
+        "point": -0.9958199100343076,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.04317679023037977,
+          "upper": 0.04317679023037977,
+          "point": 0.04317679023037977,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.0620611745153944,
+          "upper": 0.0620611745153944,
+          "point": 0.0620611745153944,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.052618982372887084,
+        "upper": 0.052618982372887084,
+        "point": 0.052618982372887084
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410003-normal-p0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.6314290960491462,
+        "upper": 0.6314290960491462,
+        "point": 0.6314290960491462,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.23398279403409403,
+          "upper": -0.23398279403409403,
+          "point": -0.23398279403409403,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.04475358081784189,
+          "upper": -0.04475358081784189,
+          "point": -0.04475358081784189,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.13936818742596796,
+        "upper": -0.13936818742596796,
+        "point": -0.13936818742596796
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410003-normal-p1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.41249920082211766,
+        "upper": 0.41249920082211766,
+        "point": 0.41249920082211766,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.026439056622824232,
+          "upper": -0.026439056622824232,
+          "point": -0.026439056622824232,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.24522115063468622,
+          "upper": -0.24522115063468622,
+          "point": -0.24522115063468622,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.13583010362875522,
+        "upper": -0.13583010362875522,
+        "point": -0.13583010362875522
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410004-normal-p0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "late": {
+        "lower": -0.6297902208644298,
+        "upper": -0.6297902208644298,
+        "point": -0.6297902208644298,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.06204103839627792,
+          "upper": 0.06204103839627792,
+          "point": 0.06204103839627792,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.19447600572297222,
+          "upper": 0.19447600572297222,
+          "point": 0.19447600572297222,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.12825852205962507,
+        "upper": 0.12825852205962507,
+        "point": 0.12825852205962507
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410004-normal-p1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410004,
+      "late": {
+        "lower": -0.008846806491161222,
+        "upper": -0.008846806491161222,
+        "point": -0.008846806491161222,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.019498032654409296,
+          "upper": -0.019498032654409296,
+          "point": -0.019498032654409296,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.10962690465814268,
+          "upper": 0.10962690465814268,
+          "point": 0.10962690465814268,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.04506443600186669,
+        "upper": 0.04506443600186669,
+        "point": 0.04506443600186669
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410005-normal-p0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "late": {
+        "lower": -0.27133563729787136,
+        "upper": -0.27133563729787136,
+        "point": -0.27133563729787136,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.02232518082493906,
+          "upper": -0.02232518082493906,
+          "point": -0.02232518082493906,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.027724219578611382,
+          "upper": -0.027724219578611382,
+          "point": -0.027724219578611382,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.025024700201775222,
+        "upper": -0.025024700201775222,
+        "point": -0.025024700201775222
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410005-normal-p1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410005,
+      "late": {
+        "lower": 0.05221594569649624,
+        "upper": 0.05221594569649624,
+        "point": 0.05221594569649624,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.00517592125459072,
+          "upper": -0.00517592125459072,
+          "point": -0.00517592125459072,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.012303124200050223,
+          "upper": -0.012303124200050223,
+          "point": -0.012303124200050223,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.00873952272732047,
+        "upper": -0.00873952272732047,
+        "point": -0.00873952272732047
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410006-normal-p0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "late": {
+        "lower": 0.3374474784493704,
+        "upper": 0.3374474784493704,
+        "point": 0.3374474784493704,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.017254667204467854,
+          "upper": -0.017254667204467854,
+          "point": -0.017254667204467854,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.011614566828304087,
+          "upper": -0.011614566828304087,
+          "point": -0.011614566828304087,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.01443461701638597,
+        "upper": -0.01443461701638597,
+        "point": -0.01443461701638597
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410006-normal-p1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410006,
+      "late": {
+        "lower": 0.3999988932714959,
+        "upper": 0.3999988932714959,
+        "point": 0.3999988932714959,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.9716808746723792,
+          "upper": -0.9716808746723792,
+          "point": -0.9716808746723792,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.7968560523412888,
+          "upper": -0.7968560523412888,
+          "point": -0.7968560523412888,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.884268463506834,
+        "upper": -0.884268463506834,
+        "point": -0.884268463506834
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410007-normal-p0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "late": {
+        "lower": 0.00873462831499259,
+        "upper": 0.00873462831499259,
+        "point": 0.00873462831499259,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.04194987865833453,
+          "upper": -0.04194987865833453,
+          "point": -0.04194987865833453,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.015925635190221703,
+          "upper": 0.015925635190221703,
+          "point": 0.015925635190221703,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.013012121734056413,
+        "upper": -0.013012121734056413,
+        "point": -0.013012121734056413
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410007-normal-p1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410007,
+      "late": {
+        "lower": 0.25927977546999426,
+        "upper": 0.25927977546999426,
+        "point": 0.25927977546999426,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.9675362398205442,
+          "upper": -0.9675362398205442,
+          "point": -0.9675362398205442,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.3048749370242281,
+          "upper": 0.3048749370242281,
+          "point": 0.3048749370242281,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.33133065139815804,
+        "upper": -0.33133065139815804,
+        "point": -0.33133065139815804
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410008-normal-p0",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "late": {
+        "lower": -0.25971743629252664,
+        "upper": -0.25971743629252664,
+        "point": -0.25971743629252664,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.023506225822827423,
+          "upper": 0.023506225822827423,
+          "point": 0.023506225822827423,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.9879665733271008,
+          "upper": 0.9879665733271008,
+          "point": 0.9879665733271008,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.5057363995749641,
+        "upper": 0.5057363995749641,
+        "point": 0.5057363995749641
+      }
+    },
+    {
+      "pairId": "discovery-cluster-4-6410008-normal-p1",
+      "founderId": "discovery-cluster-4",
+      "seed": 6410008,
+      "late": {
+        "lower": 0.01796021211287574,
+        "upper": 0.01796021211287574,
+        "point": 0.01796021211287574,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.1359619701458513,
+          "upper": -0.1359619701458513,
+          "point": -0.1359619701458513,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.04653803469982045,
+          "upper": 0.04653803469982045,
+          "point": 0.04653803469982045,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.04471196772301542,
+        "upper": -0.04471196772301542,
+        "point": -0.04471196772301542
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410001-normal-p0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "late": {
+        "lower": 0.009778034724853127,
+        "upper": 0.009778034724853127,
+        "point": 0.009778034724853127,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.06852760420835918,
+          "upper": -0.06852760420835918,
+          "point": -0.06852760420835918,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.11052000964785894,
+          "upper": -0.11052000964785894,
+          "point": -0.11052000964785894,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.08952380692810906,
+        "upper": -0.08952380692810906,
+        "point": -0.08952380692810906
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410001-normal-p1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410001,
+      "late": {
+        "lower": -0.02133436342224464,
+        "upper": -0.02133436342224464,
+        "point": -0.02133436342224464,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.059368003690345526,
+          "upper": -0.059368003690345526,
+          "point": -0.059368003690345526,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.08173483360994589,
+          "upper": 0.08173483360994589,
+          "point": 0.08173483360994589,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.011183414959800183,
+        "upper": 0.011183414959800183,
+        "point": 0.011183414959800183
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410002-normal-p0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "late": {
+        "lower": -0.026428980135351218,
+        "upper": -0.026428980135351218,
+        "point": -0.026428980135351218,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.02269274762477112,
+          "upper": -0.02269274762477112,
+          "point": -0.02269274762477112,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.02750090360372513,
+          "upper": 0.02750090360372513,
+          "point": 0.02750090360372513,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.002404077989477005,
+        "upper": 0.002404077989477005,
+        "point": 0.002404077989477005
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410002-normal-p1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410002,
+      "late": {
+        "lower": 0.045754890454546046,
+        "upper": 0.045754890454546046,
+        "point": 0.045754890454546046,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.01014612149968604,
+          "upper": 0.01014612149968604,
+          "point": 0.01014612149968604,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.0035169416316261854,
+          "upper": 0.0035169416316261854,
+          "point": 0.0035169416316261854,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.006831531565656112,
+        "upper": 0.006831531565656112,
+        "point": 0.006831531565656112
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410003-normal-p0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.13870688579885432,
+        "upper": 0.13870688579885432,
+        "point": 0.13870688579885432,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.3735717695998637,
+          "upper": -0.3735717695998637,
+          "point": -0.3735717695998637,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.039536740958797015,
+          "upper": 0.039536740958797015,
+          "point": 0.039536740958797015,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.16701751432053336,
+        "upper": -0.16701751432053336,
+        "point": -0.16701751432053336
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410003-normal-p1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.002026111117384379,
+        "upper": 0.002026111117384379,
+        "point": 0.002026111117384379,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.08147596698621139,
+          "upper": -0.08147596698621139,
+          "point": -0.08147596698621139,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.05552002513385572,
+          "upper": -0.05552002513385572,
+          "point": -0.05552002513385572,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.06849799606003355,
+        "upper": -0.06849799606003355,
+        "point": -0.06849799606003355
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410004-normal-p0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "late": {
+        "lower": -0.06349452732164322,
+        "upper": -0.06349452732164322,
+        "point": -0.06349452732164322,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.04655604934235806,
+          "upper": 0.04655604934235806,
+          "point": 0.04655604934235806,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.02447075561555611,
+          "upper": -0.02447075561555611,
+          "point": -0.02447075561555611,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.011042646863400975,
+        "upper": 0.011042646863400975,
+        "point": 0.011042646863400975
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410004-normal-p1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410004,
+      "late": {
+        "lower": 0.004815164168241093,
+        "upper": 0.004815164168241093,
+        "point": 0.004815164168241093,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.1766491970385286,
+          "upper": -0.1766491970385286,
+          "point": -0.1766491970385286,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.18415785296046333,
+          "upper": -0.18415785296046333,
+          "point": -0.18415785296046333,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.18040352499949597,
+        "upper": -0.18040352499949597,
+        "point": -0.18040352499949597
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410005-normal-p0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "late": {
+        "lower": -0.07633713748526559,
+        "upper": -0.07633713748526559,
+        "point": -0.07633713748526559,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.02244373744254339,
+          "upper": -0.02244373744254339,
+          "point": -0.02244373744254339,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.016065570373264698,
+          "upper": -0.016065570373264698,
+          "point": -0.016065570373264698,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.019254653907904044,
+        "upper": -0.019254653907904044,
+        "point": -0.019254653907904044
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410005-normal-p1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410005,
+      "late": {
+        "lower": -0.0161326697657816,
+        "upper": -0.0161326697657816,
+        "point": -0.0161326697657816,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.01582421641815647,
+          "upper": 0.01582421641815647,
+          "point": 0.01582421641815647,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.011557402001263548,
+          "upper": -0.011557402001263548,
+          "point": -0.011557402001263548,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.002133407208446461,
+        "upper": 0.002133407208446461,
+        "point": 0.002133407208446461
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410006-normal-p0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "late": {
+        "lower": -0.15566537863723406,
+        "upper": -0.15566537863723406,
+        "point": -0.15566537863723406,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.05466431168965855,
+          "upper": 0.05466431168965855,
+          "point": 0.05466431168965855,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.012851315129735912,
+          "upper": 0.012851315129735912,
+          "point": 0.012851315129735912,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.03375781340969723,
+        "upper": 0.03375781340969723,
+        "point": 0.03375781340969723
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410006-normal-p1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410006,
+      "late": {
+        "lower": -0.2136019722448081,
+        "upper": -0.2136019722448081,
+        "point": -0.2136019722448081,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.054602836505047436,
+          "upper": -0.054602836505047436,
+          "point": -0.054602836505047436,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.02560381390911172,
+          "upper": 0.02560381390911172,
+          "point": 0.02560381390911172,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.014499511297967858,
+        "upper": -0.014499511297967858,
+        "point": -0.014499511297967858
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410007-normal-p0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "late": {
+        "lower": -0.026884339224156874,
+        "upper": -0.026884339224156874,
+        "point": -0.026884339224156874,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.0396630028779177,
+          "upper": 0.0396630028779177,
+          "point": 0.0396630028779177,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.06502006192591381,
+          "upper": -0.06502006192591381,
+          "point": -0.06502006192591381,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.012678529523998054,
+        "upper": -0.012678529523998054,
+        "point": -0.012678529523998054
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410007-normal-p1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410007,
+      "late": {
+        "lower": 0.022816989931331744,
+        "upper": 0.022816989931331744,
+        "point": 0.022816989931331744,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.032132197501124414,
+          "upper": 0.032132197501124414,
+          "point": 0.032132197501124414,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.04584427749541396,
+          "upper": -0.04584427749541396,
+          "point": -0.04584427749541396,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.006856039997144774,
+        "upper": -0.006856039997144774,
+        "point": -0.006856039997144774
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410008-normal-p0",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "late": {
+        "lower": -0.07857855052742242,
+        "upper": -0.07857855052742242,
+        "point": -0.07857855052742242,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.01163076300096071,
+          "upper": -0.01163076300096071,
+          "point": -0.01163076300096071,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.029051359847865044,
+          "upper": 0.029051359847865044,
+          "point": 0.029051359847865044,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.008710298423452167,
+        "upper": 0.008710298423452167,
+        "point": 0.008710298423452167
+      }
+    },
+    {
+      "pairId": "discovery-cluster-16-6410008-normal-p1",
+      "founderId": "discovery-cluster-16",
+      "seed": 6410008,
+      "late": {
+        "lower": 0.04707028402320333,
+        "upper": 0.04707028402320333,
+        "point": 0.04707028402320333,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.012712893449832799,
+          "upper": -0.012712893449832799,
+          "point": -0.012712893449832799,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.07691616631347935,
+          "upper": 0.07691616631347935,
+          "point": 0.07691616631347935,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.032101636431823274,
+        "upper": 0.032101636431823274,
+        "point": 0.032101636431823274
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410001-normal-p0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "late": {
+        "lower": 0.056906111644658,
+        "upper": 0.056906111644658,
+        "point": 0.056906111644658,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.1401604664742723,
+          "upper": 0.1401604664742723,
+          "point": 0.1401604664742723,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.1248742889316036,
+          "upper": -0.1248742889316036,
+          "point": -0.1248742889316036,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.00764308877133435,
+        "upper": 0.00764308877133435,
+        "point": 0.00764308877133435
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410001-normal-p1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410001,
+      "late": {
+        "lower": 0.033631200713919875,
+        "upper": 0.033631200713919875,
+        "point": 0.033631200713919875,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.2617024547058667,
+          "upper": -0.2617024547058667,
+          "point": -0.2617024547058667,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.07826726827449909,
+          "upper": -0.07826726827449909,
+          "point": -0.07826726827449909,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.1699848614901829,
+        "upper": -0.1699848614901829,
+        "point": -0.1699848614901829
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410002-normal-p0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "late": {
+        "lower": -0.1312107018660763,
+        "upper": -0.1312107018660763,
+        "point": -0.1312107018660763,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.5393414910951724,
+          "upper": -0.5393414910951724,
+          "point": -0.5393414910951724,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.0514431853095848,
+          "upper": 0.0514431853095848,
+          "point": 0.0514431853095848,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.24394915289279379,
+        "upper": -0.24394915289279379,
+        "point": -0.24394915289279379
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410002-normal-p1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410002,
+      "late": {
+        "lower": -0.015000504785844547,
+        "upper": -0.015000504785844547,
+        "point": -0.015000504785844547,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.7863691892705269,
+          "upper": -0.7863691892705269,
+          "point": -0.7863691892705269,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.9591937588031977,
+          "upper": -0.9591937588031977,
+          "point": -0.9591937588031977,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.8727814740368622,
+        "upper": -0.8727814740368622,
+        "point": -0.8727814740368622
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410003-normal-p0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "late": {
+        "lower": 0.0660384584688938,
+        "upper": 0.0660384584688938,
+        "point": 0.0660384584688938,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.10743100952035761,
+          "upper": -0.10743100952035761,
+          "point": -0.10743100952035761,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.07247532524883943,
+          "upper": 0.07247532524883943,
+          "point": 0.07247532524883943,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.017477842135759092,
+        "upper": -0.017477842135759092,
+        "point": -0.017477842135759092
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410003-normal-p1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410003,
+      "late": {
+        "lower": -0.023683821432392723,
+        "upper": -0.023683821432392723,
+        "point": -0.023683821432392723,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.1891728472695547,
+          "upper": -0.1891728472695547,
+          "point": -0.1891728472695547,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.11883635770517009,
+          "upper": 0.11883635770517009,
+          "point": 0.11883635770517009,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.0351682447821923,
+        "upper": -0.0351682447821923,
+        "point": -0.0351682447821923
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410004-normal-p0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "late": {
+        "lower": 0.02552166929778665,
+        "upper": 0.02552166929778665,
+        "point": 0.02552166929778665,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.011111044354841206,
+          "upper": 0.011111044354841206,
+          "point": 0.011111044354841206,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.008137800958714796,
+          "upper": 0.008137800958714796,
+          "point": 0.008137800958714796,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.009624422656778,
+        "upper": 0.009624422656778,
+        "point": 0.009624422656778
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410004-normal-p1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410004,
+      "late": {
+        "lower": 0.05915035346132231,
+        "upper": 0.05915035346132231,
+        "point": 0.05915035346132231,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.006902034015016255,
+          "upper": 0.006902034015016255,
+          "point": 0.006902034015016255,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.11016852217064452,
+          "upper": 0.11016852217064452,
+          "point": 0.11016852217064452,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.058535278092830385,
+        "upper": 0.058535278092830385,
+        "point": 0.058535278092830385
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410005-normal-p0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "late": {
+        "lower": 0.003558580602821934,
+        "upper": 0.003558580602821934,
+        "point": 0.003558580602821934,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.016790903417717447,
+          "upper": -0.016790903417717447,
+          "point": -0.016790903417717447,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.04733931618415727,
+          "upper": 0.04733931618415727,
+          "point": 0.04733931618415727,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.015274206383219913,
+        "upper": 0.015274206383219913,
+        "point": 0.015274206383219913
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410005-normal-p1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410005,
+      "late": {
+        "lower": -0.000398824828034626,
+        "upper": -0.000398824828034626,
+        "point": -0.000398824828034626,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.2739301151423399,
+          "upper": -0.2739301151423399,
+          "point": -0.2739301151423399,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.03747253029020604,
+          "upper": -0.03747253029020604,
+          "point": -0.03747253029020604,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.15570132271627296,
+        "upper": -0.15570132271627296,
+        "point": -0.15570132271627296
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410006-normal-p0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "late": {
+        "lower": 0.04110414931148417,
+        "upper": 0.04110414931148417,
+        "point": 0.04110414931148417,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.07383608879191216,
+          "upper": 0.07383608879191216,
+          "point": 0.07383608879191216,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.053876406445849775,
+          "upper": 0.053876406445849775,
+          "point": 0.053876406445849775,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.06385624761888097,
+        "upper": 0.06385624761888097,
+        "point": 0.06385624761888097
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410006-normal-p1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410006,
+      "late": {
+        "lower": 0.04937636695762304,
+        "upper": 0.04937636695762304,
+        "point": 0.04937636695762304,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.00047891901174346944,
+          "upper": -0.00047891901174346944,
+          "point": -0.00047891901174346944,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.031138742484090244,
+          "upper": 0.031138742484090244,
+          "point": 0.031138742484090244,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.015329911736173388,
+        "upper": 0.015329911736173388,
+        "point": 0.015329911736173388
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410007-normal-p0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "late": {
+        "lower": 0.6238190592828496,
+        "upper": 0.6238190592828496,
+        "point": 0.6238190592828496,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.21412012064871552,
+          "upper": -0.21412012064871552,
+          "point": -0.21412012064871552,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.4584323691542883,
+          "upper": 0.4584323691542883,
+          "point": 0.4584323691542883,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": 0.1221561242527864,
+        "upper": 0.1221561242527864,
+        "point": 0.1221561242527864
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410007-normal-p1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410007,
+      "late": {
+        "lower": 0.4165421789203909,
+        "upper": 0.4165421789203909,
+        "point": 0.4165421789203909,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.316905417494548,
+          "upper": -0.316905417494548,
+          "point": -0.316905417494548,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.016865637232138835,
+          "upper": -0.016865637232138835,
+          "point": -0.016865637232138835,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.16688552736334342,
+        "upper": -0.16688552736334342,
+        "point": -0.16688552736334342
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410008-normal-p0",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "late": {
+        "lower": 0.02398291388423721,
+        "upper": 0.02398291388423721,
+        "point": 0.02398291388423721,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": 0.0012967914177366715,
+          "upper": 0.0012967914177366715,
+          "point": 0.0012967914177366715,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": -0.06945876681558188,
+          "upper": -0.06945876681558188,
+          "point": -0.06945876681558188,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.03408098769892261,
+        "upper": -0.03408098769892261,
+        "point": -0.03408098769892261
+      }
+    },
+    {
+      "pairId": "discovery-cluster-139-6410008-normal-p1",
+      "founderId": "discovery-cluster-139",
+      "seed": 6410008,
+      "late": {
+        "lower": 0.41636217941635223,
+        "upper": 0.41636217941635223,
+        "point": 0.41636217941635223,
+        "scored": 8,
+        "bothExtinct": 0,
+        "missing": 0
+      },
+      "nulls": [
+        {
+          "lower": -0.7690687699569256,
+          "upper": -0.7690687699569256,
+          "point": -0.7690687699569256,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        },
+        {
+          "lower": 0.3457185753306596,
+          "upper": 0.3457185753306596,
+          "point": 0.3457185753306596,
+          "scored": 8,
+          "bothExtinct": 0,
+          "missing": 0
+        }
+      ],
+      "null": {
+        "lower": -0.21167509731313303,
+        "upper": -0.21167509731313303,
+        "point": -0.21167509731313303
+      }
+    }
+  ],
+  "stopped": false,
+  "inputs": {
+    "studyIdentitySha256": "56f661c55c232dd0df6be837bdf01b6564fe621a5279bf8cbc9cbaa11fc6fa20",
+    "candidateSha256": "6ff0266acf75807672d846b921cbbb989d7577a6bb459609cdc137f0d24e255d",
+    "releaseSha256": "aa744f137f1d0d661fde81f5fb8d424e8ce5807ce729037bbdc08d804ffefb66",
+    "rosterSha256": "988e61fdf6f3c504dbf874a9ac7d4e7794b7981877a9497ef9d5b5f116203bdd",
+    "frozenReportSha256": "085d55cf1f7121ece85ff3a5dc9fa5f236c912531e480e3262db99ad205ec68a",
+    "protocolSha256": "c4dd6a0c89de51513d7034a1eeaa7e89cf18db4d3960b7ff48cb5e330909bfbd"
+  }
+}
