@@ -755,7 +755,7 @@ export async function r3RepProtocolProblems(which: keyof typeof R3REP_PROTOCOLS,
 }
 
 /** What is wrong with `doc` as the pinned document `pin` (its first `bytes` bytes hashing to `sha256`) followed by amendments only. */
-async function pinnedTextProblems(pin: { doc: string; sha256: string; bytes: number }, doc: Uint8Array): Promise<string[]> {
+export async function pinnedTextProblems(pin: { doc: string; sha256: string; bytes: number }, doc: Uint8Array): Promise<string[]> {
   if (doc.length < pin.bytes) return [`${pin.doc} has ${doc.length} bytes, fewer than the ${pin.bytes} it had when pinned`];
   const sha = hexBytes(new Uint8Array(await crypto.subtle.digest("SHA-256", doc.slice(0, pin.bytes))));
   if (sha === pin.sha256) return [];
@@ -935,7 +935,7 @@ export const r3RepRunDirOf = (h: number): string => {
 export const r3RepContinuationPathOf = (h: number): string => `r3rep/cont200k/${r3RepIdOf(r3RepHistoryOf(h))}.blck.gz`;
 
 /** `path` ends in `tail` at a path-component boundary. */
-const endsInPath = (path: string, tail: string): boolean => path === tail || path.endsWith(`/${tail}`);
+export const endsInPath = (path: string, tail: string): boolean => path === tail || path.endsWith(`/${tail}`);
 
 /**
  * The boundary N of a timing (a) source path of h, which must end in `<run dir>/ckpt/b<N>-pre.blck.gz` (`r3RepRunDirOf`) with N 1-100
@@ -1058,7 +1058,7 @@ export interface R3RepProvenance extends R3RepCheckpoint {
 }
 
 /** What is wrong with the shape of a recorded checkpoint: a path, a state hash, and integer seed, mutRate, step and pond grid. */
-function checkpointShapeProblems(x: unknown, role: string): string[] {
+export function checkpointShapeProblems(x: unknown, role: string): string[] {
   if (!isRecord(x)) return [`no ${role} record`];
   const why: string[] = [];
   if (typeof x.source !== "string") why.push(`${role} has no path`);

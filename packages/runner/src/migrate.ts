@@ -11,7 +11,9 @@
 // refuses a pond config) at every census boundary, in every place a world is
 // stepped, keeps all of them bit for bit identical.
 import {
+  HUNT_POND_COLUMNS,
   POND_COLUMNS,
+  applyCurrentCycle,
   applyMigration,
   applyPondCycle,
   assertConserved,
@@ -19,8 +21,11 @@ import {
   ledgerEnergy,
   pondMatter,
   totalsOf,
+  type CycleResult,
   type MigrationEvent,
+  type PondArm,
   type PondRow,
+  type WorldConfig,
   type WorldState,
 } from "@bl/schema";
 import { census, individuals } from "@bl/metrics";
@@ -111,28 +116,39 @@ export function pondCensus(state: WorldState): { individuals: number[]; lineages
   return { individuals: count, lineages: seen.map((s) => s.size) };
 }
 
-/** ponds.tsv's header line: `POND_COLUMNS`, tab-separated. */
+/** ponds.tsv's header line for the v1 arms (scaf, rand, cont): `POND_COLUMNS`, tab-separated. */
 export const PONDS_HEADER = POND_COLUMNS.join("\t") + "\n";
 
-/** One boundary's ponds.tsv rows, in `POND_COLUMNS` order and formatted (`String` of each value) as tools/scaffold.ts writes them. */
-export function pondTsvRows(rows: PondRow[]): string {
-  return rows.map((r) => POND_COLUMNS.map((c) => String(r[c])).join("\t")).join("\n") + "\n";
+/** ponds.tsv's columns for a run of pond arm `arm`: `HUNT_POND_COLUMNS` for the hunt's nat and shuf, `POND_COLUMNS` for every other arm. */
+export function pondColumns(arm: PondArm | undefined): readonly (keyof PondRow)[] {
+  return arm === "nat" || arm === "shuf" ? HUNT_POND_COLUMNS : POND_COLUMNS;
+}
+
+/** ponds.tsv's header line for a run of pond arm `arm` (`PONDS_HEADER` for the v1 arms, whose files stay byte-identical). */
+export function pondsHeader(arm: PondArm | undefined): string {
+  return pondColumns(arm).join("\t") + "\n";
+}
+
+/** One boundary's ponds.tsv rows, in `columns` order (default `POND_COLUMNS`) and formatted (`String` of each value) as tools/scaffold.ts writes them. */
+export function pondTsvRows(rows: PondRow[], columns: readonly (keyof PondRow)[] = POND_COLUMNS): string {
+  return rows.map((r) => columns.map((c) => String(r[c])).join("\t")).join("\n") + "\n";
 }
 
 /** One pond boundary, as `applyBoundary` handled it. */
 export interface PondCycle {
   /** Cycle index: the boundary's absolute step / `pondPeriod`. */
   b: number;
-  /** ponds.tsv rows: one per recipient (scaf, rand) or one per pond (cont). */
+  /** ponds.tsv rows: one per recipient (scaf, rand) or one per pond (cont, nat, shuf). */
   rows: PondRow[];
   /**
    * No pond was eligible, so every pond was cleared to nutrient (protocol
    * v1's end of a history). The run keeps stepping the A-only world, and
    * every later cycle takes the same no-donor path (donor -1 rows). Always
-   * false for cont.
+   * false for cont. For nat and shuf, no pond is occupied after the cycle (the
+   * history has ended and keeps stepping).
    */
   ended: boolean;
-  /** Donor ponds in selection order (empty for cont and for an ended cycle). */
+  /** Donor ponds in selection order (empty for cont and for an ended cycle; for nat and shuf, one per dying pond, empty when none died or nothing exports). */
   donors: number[];
 }
 
@@ -155,10 +171,11 @@ export interface BoundaryResult {
  * Every host-side transform due at census step `step`: migration
  * (as `migrateAtBoundary`, unchanged) and then, when `sim.cfg.pondPeriod`
  * divides `step` (> 0), the pond cycle with b = step / `pondPeriod`: read the
- * state, transform it (`applyPondCycle` for scaf/rand, with `pondCensus` for
- * `recipientIndividuals`) or only measure it (`contRows` for cont), check
- * matter and the energy ledger exactly (`assertConserved`, which throws), and
- * upload the post-cycle state (scaf/rand only). `ponds` is the history's
+ * state, transform it (`applyPondCycle` for scaf/rand, `applyCurrentCycle` for
+ * the hunt's nat/shuf, with `pondCensus` for `recipientIndividuals`) or only
+ * measure it (`contRows` for cont), check matter and the energy ledger exactly
+ * (`assertConserved`, which throws), and upload the post-cycle state (every
+ * arm but cont). `ponds` is the history's
  * `pondContext`, required when the config has the pond cycle.
  *
  * The same contract as `migrateAtBoundary`: `step` is the absolute step, the
@@ -182,9 +199,38 @@ export async function applyBoundary(sim: BoundarySim, step: number, ponds: PondC
     assertConserved(pre, ponds.startMatter, ponds.baseline);
     return { migrations, ponds: { b, rows, ended: false, donors: [] }, state: pre };
   }
-  if (arm !== "scaf" && arm !== "rand") throw new Error(`pondArm must be scaf, rand or cont, got ${JSON.stringify(arm)}`);
-  const cycle = applyPondCycle(pre, b, arm, sim.cfg.pondK!, ponds.Mr, pondCensus);
-  assertConserved(cycle.state, ponds.startMatter, ponds.baseline);
+  const cycle = transformPonds(sim.cfg, pre, b, ponds);
   sim.upload(cycle.state);
   return { migrations, ponds: { b, rows: cycle.rows, ended: cycle.ended, donors: cycle.donors }, state: cycle.state };
+}
+
+/**
+ * The pond cycle of arm scaf, rand, nat or shuf at boundary `b` on the pre-cycle state `pre` (`applyPondCycle`,
+ * or `applyCurrentCycle` with the config's `pondDeath` and `pondExport`, both with `pondCensus` for
+ * `recipientIndividuals`), with matter and the energy ledger checked exactly (`assertConserved`, which throws).
+ * `cfg` is the simulation's config (its arm and keys). Shared by `applyBoundary` and a branch's first transform
+ * (`branchTransform`), so both agree bit for bit.
+ */
+function transformPonds(cfg: WorldConfig, pre: WorldState, b: number, ponds: PondContext): CycleResult {
+  const arm = cfg.pondArm;
+  let cycle: CycleResult;
+  if (arm === "scaf" || arm === "rand") cycle = applyPondCycle(pre, b, arm, cfg.pondK!, ponds.Mr, pondCensus);
+  else if (arm === "nat" || arm === "shuf") cycle = applyCurrentCycle(pre, b, arm, cfg.pondK!, cfg.pondDeath!, cfg.pondExport!, ponds.Mr, pondCensus);
+  else throw new Error(`pondArm must be scaf, rand, cont, nat or shuf, got ${JSON.stringify(arm)}`);
+  assertConserved(cycle.state, ponds.startMatter, ponds.baseline);
+  return cycle;
+}
+
+/**
+ * A branch run's first transform (docs/scaffold-transition-hunt-v1.md, "Branch contract"): boundary `b` of the hunt's
+ * current (arm nat or shuf, with the branch's seed in `source.cfg`) applied on the CPU to the decoded pre-cycle
+ * `source`, before any simulation exists. `ponds` is the source's own `pondContext`, so M_r and the ledger baseline are
+ * the source's. Returns the cycle exactly as `applyBoundary` would (its rows go to ponds.tsv) and the post-transform
+ * state the run starts stepping from. Throws if matter or the ledger is off.
+ */
+export function branchTransform(source: WorldState, b: number, ponds: PondContext): { ponds: PondCycle; state: WorldState } {
+  const arm = source.cfg.pondArm;
+  if (arm !== "nat" && arm !== "shuf") throw new Error(`a branch transform needs pondArm nat or shuf, got ${JSON.stringify(arm)}`);
+  const cycle = transformPonds(source.cfg, source, b, ponds);
+  return { ponds: { b, rows: cycle.rows, ended: cycle.ended, donors: cycle.donors }, state: cycle.state };
 }

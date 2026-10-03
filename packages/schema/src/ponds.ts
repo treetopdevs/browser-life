@@ -7,10 +7,16 @@
 // up, lightIn for what lands), the way applyLesion books its heat. All arithmetic is integer; ledger sums
 // are bigint. Moved unchanged from tools/lib/ponds.ts, which re-exports it beside the sandbox's world
 // builders and assay helpers.
+//
+// The transition hunt (docs/scaffold-transition-hunt-v1.md, "The current") adds the arms nat and shuf beside
+// them: ponds die at random instead of all at once, and the dying ones are reseeded from the export zone of
+// a donor drawn in proportion to its export (nat) or to a shuffled copy of it (shuf). Same ground rules --
+// host-side, pure, integer, matter and ledger exact -- and applyPondCycle's behaviour and output are
+// untouched; the two cycles share the landing and the measurements.
 import { totalsOf } from "./accounting.ts";
 import { cellCount, worldW, type WorldConfig } from "./config.ts";
 import { cellBase, draw } from "./int.ts";
-import { CH, G, GENOME_CHANNELS } from "./layout.ts";
+import { CELL_CHANNELS, CH, G, GENOME_CHANNELS } from "./layout.ts";
 import { MOT_ZERO, type WorldState } from "./world.ts";
 
 /** Salts every pond-cycle random key away from the physics and mutation streams ("POND"). */
@@ -22,7 +28,13 @@ export const POND_COLUMNS = [
   "packetLineages", "domHi", "domLo", "domShare", "donorTrait", "recipientTrait", "recipientIndividuals", "recipientLineages", "heat", "light",
 ] as const;
 
-export type PondArm = "scaf" | "rand" | "cont";
+/**
+ * Column order of ponds.tsv for the hunt's arms nat and shuf: `POND_COLUMNS` plus the pond's death, export mass
+ * and donor weight. The v1 arms keep `POND_COLUMNS`, so their files stay byte-identical.
+ */
+export const HUNT_POND_COLUMNS = [...POND_COLUMNS, "died", "exportMass", "weight"] as const;
+
+export type PondArm = "scaf" | "rand" | "cont" | "nat" | "shuf";
 
 /**
  * One recipient's row of one cycle. Integers except `domShare`; `heat` and `light` are decimal strings
@@ -52,6 +64,14 @@ export interface PondRow {
   recipientLineages: number;
   heat: string;
   light: string;
+  /**
+   * Rows of the arms nat and shuf only (absent on scaf, rand and cont rows, so their formatting is unchanged;
+   * see `HUNT_POND_COLUMNS`): 1 if the pond died at this boundary, its export mass X_p and its donor weight w_p.
+   * On these rows `donor` is -1 for a dying pond with no packet (no export anywhere) and -2 for a survivor.
+   */
+  died?: number;
+  exportMass?: number;
+  weight?: number;
 }
 
 /** Census support threshold: a cell counts toward a pond's trait, lineages and packet centre from B+P >= 48. */
@@ -59,6 +79,9 @@ const SUPPORT = 48;
 /** Pond side and the landing centre, fixed by the protocol (tiles are 64x64, the packet lands at (32, 32)). */
 const TILE = 64;
 const CENTRE = 32;
+/** Ranges of the config keys pondDeath and pondExport (config.ts), the current's per-boundary death and export threshold. */
+const POND_DEATH_MAX = 65_536;
+const POND_EXPORT_MAX = 32;
 
 const lineageKey = (hi: number, lo: number): string => `${hi}:${lo}`;
 const pondCount = (cfg: WorldConfig): number => cfg.tilesX * cfg.tilesY;
@@ -105,7 +128,11 @@ export function pondTraits(state: WorldState): number[] {
   });
 }
 
-/** `draw(cellBase((seed ^ POND_SALT) >>> 0, b, slot), purpose)`. Purposes 0-4 cycle, 5-6 assay source pond, 8 permutation. */
+/**
+ * `draw(cellBase((seed ^ POND_SALT) >>> 0, b, slot), purpose)`. Purposes 0-4 cycle, 5-6 assay source pond, 8
+ * permutation; the current (nat, shuf) uses 1 (shuf's permutation, slot = pond), 3 and 4 (packet centre, slot =
+ * recipient), 10 and 11 (donor draw, slot = recipient) and 12 (death, slot = pond).
+ */
 export function randomKey(seed: number, b: number, slot: number, purpose: number): number {
   return draw(cellBase((seed ^ POND_SALT) >>> 0, b, slot), purpose);
 }
@@ -175,31 +202,90 @@ export function packetWindow(state: WorldState, pond: number, k: number, centreC
 }
 
 /**
- * The packet centre for `slot` (the recipient) in `pond` (the donor): an eligible cell (B+P >= 48) drawn with
- * probability proportional to its B+P from purposes 3 (high) and 4 (low), walking the tile in raster order.
- * `null` if the pond has no eligible cell.
+ * The weighted draw of drawPacketCentre and drawExportCentre: a cell of `pond` with B+P >= 48 (restricted to the
+ * tile-local raster `zone`, index y * 64 + x, when given), probability proportional to its B+P, from purposes 3
+ * (high) and 4 (low), walking the tile in raster order. `null` if there is no such cell.
  */
-export function drawPacketCentre(state: WorldState, pond: number, seed: number, b: number, slot: number): number | null {
+function drawCentre(state: WorldState, pond: number, seed: number, b: number, slot: number, zone: Uint8Array | null, who: string): number | null {
   const cfg = state.cfg;
   const n = cellCount(cfg);
   const c = state.cells;
-  const weight = (i: number) => {
+  const weight = (x: number, y: number) => {
+    if (zone !== null && zone[y * TILE + x] === 0) return 0;
+    const i = cellOf(cfg, pond, x, y);
     const m = c[CH.B * n + i] + c[CH.P * n + i];
     return m >= SUPPORT ? m : 0;
   };
   let total = 0;
-  for (let y = 0; y < cfg.tileH; y++) for (let x = 0; x < cfg.tileW; x++) total += weight(cellOf(cfg, pond, x, y));
+  for (let y = 0; y < cfg.tileH; y++) for (let x = 0; x < cfg.tileW; x++) total += weight(x, y);
   if (total === 0) return null;
   const v = weightedPick(randomKey(seed, b, slot, 3), randomKey(seed, b, slot, 4), total);
   let acc = 0;
   for (let y = 0; y < cfg.tileH; y++) {
     for (let x = 0; x < cfg.tileW; x++) {
-      const i = cellOf(cfg, pond, x, y);
-      acc += weight(i);
-      if (acc > v) return i;
+      acc += weight(x, y);
+      if (acc > v) return cellOf(cfg, pond, x, y);
     }
   }
-  throw new Error("drawPacketCentre: unreachable, the weighted walk always ends past the draw");
+  throw new Error(`${who}: unreachable, the weighted walk always ends past the draw`);
+}
+
+/**
+ * The packet centre for `slot` (the recipient) in `pond` (the donor): an eligible cell (B+P >= 48) drawn with
+ * probability proportional to its B+P from purposes 3 (high) and 4 (low), walking the tile in raster order.
+ * `null` if the pond has no eligible cell.
+ */
+export function drawPacketCentre(state: WorldState, pond: number, seed: number, b: number, slot: number): number | null {
+  return drawCentre(state, pond, seed, b, slot, null, "drawPacketCentre");
+}
+
+/**
+ * Torus Chebyshev distance of tile-local (x, y) from the landing centre (32, 32) on the 64 x 64 torus:
+ * max(dx, dy) with dx = min(|x - 32|, 64 - |x - 32|). A cell is in the export zone iff this is >= the zone's
+ * threshold (config key `pondExport`); with threshold 28 that is x or y in {0..4, 60..63}, 1,071 of 4,096 cells.
+ */
+export function exportDistance(x: number, y: number): number {
+  const dx = Math.abs(x - CENTRE), dy = Math.abs(y - CENTRE);
+  return Math.max(Math.min(dx, TILE - dx), Math.min(dy, TILE - dy));
+}
+
+/** Tile-local raster mask (index y * 64 + x) of the export zone at `threshold`: 1 where `exportDistance` >= threshold. */
+function exportZone(threshold: number): Uint8Array {
+  if (!Number.isInteger(threshold) || threshold < 0) throw new Error(`export threshold must be a non-negative integer, got ${threshold}`);
+  const zone = new Uint8Array(TILE * TILE);
+  for (let y = 0; y < TILE; y++) for (let x = 0; x < TILE; x++) zone[y * TILE + x] = exportDistance(x, y) >= threshold ? 1 : 0;
+  return zone;
+}
+
+/** Export mass X_p per pond: B+P summed over the cells of its export zone (`exportDistance` >= threshold) with B+P >= 48. */
+export function pondExportMasses(state: WorldState, threshold: number): number[] {
+  const cfg = state.cfg;
+  assertPondTiles(cfg);
+  const zone = exportZone(threshold);
+  const n = cellCount(cfg);
+  const c = state.cells;
+  const out = new Array<number>(pondCount(cfg)).fill(0);
+  for (let p = 0; p < out.length; p++) {
+    for (let y = 0; y < TILE; y++) {
+      for (let x = 0; x < TILE; x++) {
+        if (zone[y * TILE + x] === 0) continue;
+        const i = cellOf(cfg, p, x, y);
+        const m = c[CH.B * n + i] + c[CH.P * n + i];
+        if (m >= SUPPORT) out[p] += m;
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * drawPacketCentre restricted to the donor's export zone: the same two draws (purposes 3 and 4 for `slot`) and
+ * the same raster walk, with weight B+P for the zone's cells with B+P >= 48 and 0 elsewhere, so the two agree
+ * when the zone is the whole tile (threshold 0). `null` if the zone has no eligible cell.
+ */
+export function drawExportCentre(state: WorldState, pond: number, threshold: number, seed: number, b: number, slot: number): number | null {
+  assertPondTiles(state.cfg);
+  return drawCentre(state, pond, seed, b, slot, exportZone(threshold), "drawExportCentre");
 }
 
 export interface CycleResult {
@@ -263,6 +349,73 @@ function refillA(cells: Uint32Array, cfg: WorldConfig, pond: number, amount: num
     for (let x = 0; x < cfg.tileW; x++) cells[CH.A * n + cellOf(cfg, pond, x, y)] = each + (r++ < rem ? 1 : 0);
 }
 
+/** The packet columns of a row (everything `makeRow` zeroes except the measurements and the donor). */
+type PacketFields = Pick<PondRow, "cx" | "cy" | "landed" | "reqMass" | "retMass" | "reqE" | "retE" | "truncated" | "packetLineages" | "domHi" | "domLo" | "domShare">;
+
+/**
+ * Lands the k x k packet about `centre` (a cell of `donor`, read from `pre`) at the centre of recipient `r`'s tile
+ * in the post-transform `cells` and `genome`: drops landing cells in reverse raster order until the packet's B+P
+ * fits `Mr` (the recipient's matter), copies B, P, E, MOT and every genome word, and refills A to Mr - retMass.
+ * Returns the row's packet fields and the light that landed (the energy of the retained cells above A's).
+ * Shared by the v1 cycle and the current, so the two land a window identically.
+ */
+function landPacket(pre: WorldState, cells: Uint32Array, genome: Uint32Array, k: number, r: number, donor: number, centre: number, Mr: number): { packet: PacketFields; light: bigint } {
+  const cfg = pre.cfg;
+  const n = cellCount(cfg);
+  const half = k >> 1;
+  const dB = BigInt(cfg.eB - cfg.eA), dP = BigInt(cfg.eP - cfg.eA);
+  const window = packetWindow(pre, donor, k, centre);
+  const mass = window.map((i) => pre.cells[CH.B * n + i] + pre.cells[CH.P * n + i]);
+  const reqMass = mass.reduce((a, m) => a + m, 0);
+  const reqE = window.reduce((a, i) => a + pre.cells[CH.E * n + i], 0);
+  // Truncation: drop landing cells in reverse raster order (window order is raster order) until the packet fits.
+  let kept = window.length;
+  let retMass = reqMass;
+  while (retMass > Mr) retMass -= mass[--kept];
+  let retE = 0;
+  let light = 0n;
+  const packetMass = new Map<string, { hi: number; lo: number; mass: number }>();
+  for (let q = 0; q < kept; q++) {
+    const src = window[q];
+    const dst = cellOf(cfg, r, CENTRE - half + (q % k), CENTRE - half + Math.floor(q / k));
+    const B = pre.cells[CH.B * n + src], P = pre.cells[CH.P * n + src], E = pre.cells[CH.E * n + src];
+    cells[CH.B * n + dst] = B;
+    cells[CH.P * n + dst] = P;
+    cells[CH.E * n + dst] = E;
+    cells[CH.MOT * n + dst] = pre.cells[CH.MOT * n + src];
+    for (let w = 0; w < GENOME_CHANNELS; w++) genome[w * n + dst] = pre.genome[w * n + src];
+    retE += E;
+    light += BigInt(B) * dB + BigInt(P) * dP + BigInt(E);
+    const hi = pre.genome[G.LIN_HI * n + src], lo = pre.genome[G.LIN_LO * n + src];
+    if (B + P > 0 && (hi | lo) !== 0) {
+      const key = lineageKey(hi, lo);
+      const e = packetMass.get(key);
+      if (e) e.mass += B + P;
+      else packetMass.set(key, { hi, lo, mass: B + P });
+    }
+  }
+  refillA(cells, cfg, r, Mr - retMass);
+  let dom: { hi: number; lo: number; mass: number } | null = null;
+  for (const e of packetMass.values())
+    if (!dom || e.mass > dom.mass || (e.mass === dom.mass && (e.hi < dom.hi || (e.hi === dom.hi && e.lo < dom.lo)))) dom = e;
+  const W = worldW(cfg);
+  const packet: PacketFields = {
+    cx: (centre % W) % cfg.tileW,
+    cy: Math.floor(centre / W) % cfg.tileH,
+    landed: kept,
+    reqMass,
+    retMass,
+    reqE,
+    retE,
+    truncated: kept < window.length ? 1 : 0,
+    packetLineages: packetMass.size,
+    domHi: dom?.hi ?? 0,
+    domLo: dom?.lo ?? 0,
+    domShare: dom && retMass > 0 ? dom.mass / retMass : 0,
+  };
+  return { packet, light };
+}
+
 /**
  * One cycle of the pond transform at boundary `b` (protocol steps 1-7), from the pre-cycle snapshot `pre`.
  * Pure: `pre` is not mutated. `Mr` is each pond's initial matter; the post-transform state has exactly that
@@ -305,7 +458,6 @@ export function applyPondCycle(pre: WorldState, b: number, arm: "scaf" | "rand",
   const genome = new Uint32Array(pre.genome.length);
   const cen = census?.(pre);
   const lineages = pondLineages(pre);
-  const dB = BigInt(cfg.eB - cfg.eA), dP = BigInt(cfg.eP - cfg.eA);
   const rows: PondRow[] = [];
 
   if (Dp === 0) {
@@ -319,61 +471,13 @@ export function applyPondCycle(pre: WorldState, b: number, arm: "scaf" | "rand",
     const donorOf = new Array<number>(R).fill(-1);
     recipients.forEach((r, p) => (donorOf[r.pond] = donors[p % Dp]));
 
-    const half = k >> 1;
     for (let r = 0; r < R; r++) {
       const donor = donorOf[r];
       const centre = drawPacketCentre(pre, donor, seed, b, r);
       if (centre === null) throw new Error(`donor pond ${donor} has no eligible cell`);
-      const window = packetWindow(pre, donor, k, centre);
-      const mass = window.map((i) => pre.cells[CH.B * n + i] + pre.cells[CH.P * n + i]);
-      const reqMass = mass.reduce((a, m) => a + m, 0);
-      const reqE = window.reduce((a, i) => a + pre.cells[CH.E * n + i], 0);
-      // Truncation: drop landing cells in reverse raster order (window order is raster order) until the packet fits.
-      let kept = window.length;
-      let retMass = reqMass;
-      while (retMass > Mr[r]) retMass -= mass[--kept];
-      let retE = 0;
-      let light = 0n;
-      const packetMass = new Map<string, { hi: number; lo: number; mass: number }>();
-      for (let q = 0; q < kept; q++) {
-        const src = window[q];
-        const dst = cellOf(cfg, r, CENTRE - half + (q % k), CENTRE - half + Math.floor(q / k));
-        const B = pre.cells[CH.B * n + src], P = pre.cells[CH.P * n + src], E = pre.cells[CH.E * n + src];
-        cells[CH.B * n + dst] = B;
-        cells[CH.P * n + dst] = P;
-        cells[CH.E * n + dst] = E;
-        cells[CH.MOT * n + dst] = pre.cells[CH.MOT * n + src];
-        for (let w = 0; w < GENOME_CHANNELS; w++) genome[w * n + dst] = pre.genome[w * n + src];
-        retE += E;
-        light += BigInt(B) * dB + BigInt(P) * dP + BigInt(E);
-        const hi = pre.genome[G.LIN_HI * n + src], lo = pre.genome[G.LIN_LO * n + src];
-        if (B + P > 0 && (hi | lo) !== 0) {
-          const key = lineageKey(hi, lo);
-          const e = packetMass.get(key);
-          if (e) e.mass += B + P;
-          else packetMass.set(key, { hi, lo, mass: B + P });
-        }
-      }
-      refillA(cells, cfg, r, Mr[r] - retMass);
+      const { packet, light } = landPacket(pre, cells, genome, k, r, donor, centre, Mr[r]);
       lightPond[r] = light;
-      let dom: { hi: number; lo: number; mass: number } | null = null;
-      for (const e of packetMass.values())
-        if (!dom || e.mass > dom.mass || (e.mass === dom.mass && (e.hi < dom.hi || (e.hi === dom.hi && e.lo < dom.lo)))) dom = e;
-      const W = worldW(cfg);
-      const row = makeRow(pre, b, r, donor, traits, cen, lineages, heatPond[r], light);
-      row.cx = (centre % W) % cfg.tileW;
-      row.cy = Math.floor(centre / W) % cfg.tileH;
-      row.landed = kept;
-      row.reqMass = reqMass;
-      row.retMass = retMass;
-      row.reqE = reqE;
-      row.retE = retE;
-      row.truncated = kept < window.length ? 1 : 0;
-      row.packetLineages = packetMass.size;
-      row.domHi = dom?.hi ?? 0;
-      row.domLo = dom?.lo ?? 0;
-      row.domShare = dom && retMass > 0 ? dom.mass / retMass : 0;
-      rows.push(row);
+      rows.push(Object.assign(makeRow(pre, b, r, donor, traits, cen, lineages, heatPond[r], light), packet));
     }
   }
 
@@ -419,6 +523,135 @@ export function contRows(pre: WorldState, b: number, census?: PondCensus): PondR
   const cen = census?.(pre);
   const lineages = pondLineages(pre);
   return traits.map((_, p) => makeRow(pre, b, p, -1, traits, cen, lineages, 0n, 0n));
+}
+
+/** Pond `p`'s cells and genome words copied from `pre` into the post-transform arrays, bit for bit. */
+function copyPond(pre: WorldState, cells: Uint32Array, genome: Uint32Array, p: number): void {
+  const cfg = pre.cfg;
+  const n = cellCount(cfg);
+  const W = worldW(cfg);
+  const tx = p % cfg.tilesX;
+  const ty = (p - tx) / cfg.tilesX;
+  for (let y = 0; y < cfg.tileH; y++) {
+    const at = (ty * cfg.tileH + y) * W + tx * cfg.tileW;
+    for (let ch = 0; ch < CELL_CHANNELS; ch++) cells.set(pre.cells.subarray(ch * n + at, ch * n + at + cfg.tileW), ch * n + at);
+    for (let w = 0; w < GENOME_CHANNELS; w++) genome.set(pre.genome.subarray(w * n + at, w * n + at + cfg.tileW), w * n + at);
+  }
+}
+
+/**
+ * One boundary of the hunt's current (arms nat and shuf; docs/scaffold-transition-hunt-v1.md, "The current"),
+ * from the pre-cycle snapshot `pre`. Pure: `pre` is not mutated; the seed is `pre.cfg.seed`. A pond dies if it
+ * is unoccupied (trait 0) or `randomKey(seed, b, p, 12) < death * 65536` (`death` = `pondDeath`, 1..65,536, so
+ * 65,536 kills every pond). Each dying pond r, in ascending index, draws a donor among the ponds with weight
+ * w_p > 0 with probability w_p / Σw -- nat: w_p = X_p, the export mass of `pondExportMasses`; shuf: the same
+ * multiset of X values dealt to the exporting ponds in the order of `randomKey(seed, b, p, 1)` -- then lands a
+ * packet from the export zone of the donor's snapshot (`drawExportCentre`, window k x k) at r's centre, with
+ * v1's landing. Donors may be dying ponds or r itself (propagules are released before the disturbance, and
+ * read from the snapshot). Survivors are copied bit for bit. With no export anywhere (Σw = 0) every dying pond
+ * is refilled with A only and gets donor -1; `ended` is true when no pond is occupied afterwards. `death` and
+ * `threshold` (`pondExport`, 1..32) are the config's keys; `Mr`, `census` and the matter checks are as for
+ * `applyPondCycle`. heat books only the dying ponds' grind and light only the packets that landed, so the
+ * ledger closes exactly.
+ *
+ * Rows: one per pond in ascending index (HUNT_POND_COLUMNS). `died`, `exportMass` and `weight` on every row;
+ * `donor` is the donor (packet fields as applyPondCycle's), -1 for a dying pond without a packet and -2 for a
+ * survivor, whose packet fields are v1's no-packet row (cx = cy = -1, the rest 0). `donors` lists each
+ * recipient's donor in ascending recipient order (empty when Σw = 0 or nobody died).
+ */
+export function applyCurrentCycle(
+  pre: WorldState,
+  b: number,
+  arm: "nat" | "shuf",
+  k: number,
+  death: number,
+  threshold: number,
+  Mr: number[],
+  census?: PondCensus,
+): CycleResult {
+  const cfg = pre.cfg;
+  assertPondTiles(cfg);
+  if (arm !== "nat" && arm !== "shuf") throw new Error(`the current's arm must be nat or shuf, got ${JSON.stringify(arm)}`);
+  if (!Number.isInteger(death) || death < 1 || death > POND_DEATH_MAX) throw new Error(`pondDeath must be an integer in 1..${POND_DEATH_MAX}, got ${death}`);
+  if (!Number.isInteger(threshold) || threshold < 1 || threshold > POND_EXPORT_MAX) throw new Error(`pondExport must be an integer in 1..${POND_EXPORT_MAX}, got ${threshold}`);
+  const R = pondCount(cfg);
+  const n = cellCount(cfg);
+  if (Mr.length !== R) throw new Error(`Mr has ${Mr.length} ponds, the world has ${R}`);
+  const preMatter = pondMatter(pre);
+  for (let p = 0; p < R; p++) if (preMatter[p] !== Mr[p]) throw new Error(`pond ${p} holds matter ${preMatter[p]} before the cycle, not ${Mr[p]}`);
+
+  const seed = cfg.seed;
+  const traits = pondTraits(pre);
+  // death * 65536 <= 2^32, exact in a double, and compared with the u32 key.
+  const dies = traits.map((t, p) => t === 0 || randomKey(seed, b, p, 12) < death * 65_536);
+
+  const X = pondExportMasses(pre, threshold);
+  let weight = X;
+  if (arm === "shuf") {
+    const exporters: number[] = [];
+    for (let p = 0; p < R; p++) if (X[p] > 0) exporters.push(p);
+    const order = exporters.map((pond) => ({ pond, key: randomKey(seed, b, pond, 1) }));
+    order.sort(cmpKey);
+    weight = new Array<number>(R).fill(0);
+    order.forEach((o, j) => (weight[o.pond] = X[exporters[j]]));
+  }
+  const cumulative: number[] = [];
+  let totalWeight = 0;
+  for (let p = 0; p < R; p++) cumulative.push((totalWeight += weight[p]));
+
+  const donorOf = dies.map((d): number => (d ? -1 : -2));
+  const donors: number[] = [];
+  if (totalWeight > 0) {
+    for (let r = 0; r < R; r++) {
+      if (!dies[r]) continue;
+      const v = weightedPick(randomKey(seed, b, r, 10), randomKey(seed, b, r, 11), totalWeight);
+      let donor = 0;
+      while (cumulative[donor] <= v) donor++;
+      donorOf[r] = donor;
+      donors.push(donor);
+    }
+  }
+
+  const heatPond = pondHeat(pre);
+  const heatRow = heatPond.map((h, p) => (dies[p] ? h : 0n));
+  const lightRow = new Array<bigint>(R).fill(0n);
+  const cells = new Uint32Array(pre.cells.length);
+  cells.fill(MOT_ZERO, CH.MOT * n, (CH.MOT + 1) * n);
+  const genome = new Uint32Array(pre.genome.length);
+  const cen = census?.(pre);
+  const lineages = pondLineages(pre);
+  const packets: (PacketFields | null)[] = new Array(R).fill(null);
+
+  for (let r = 0; r < R; r++) {
+    if (!dies[r]) copyPond(pre, cells, genome, r);
+    else if (donorOf[r] < 0) refillA(cells, cfg, r, Mr[r]);
+    else {
+      const donor = donorOf[r];
+      const centre = drawExportCentre(pre, donor, threshold, seed, b, r);
+      if (centre === null) throw new Error(`donor pond ${donor} has no eligible cell in its export zone`);
+      const landed = landPacket(pre, cells, genome, k, r, donor, centre, Mr[r]);
+      packets[r] = landed.packet;
+      lightRow[r] = landed.light;
+    }
+  }
+
+  const rows: PondRow[] = [];
+  for (let p = 0; p < R; p++) {
+    const row = makeRow(pre, b, p, donorOf[p], traits, cen, lineages, heatRow[p], lightRow[p]);
+    const packet = packets[p];
+    if (packet) Object.assign(row, packet);
+    row.died = dies[p] ? 1 : 0;
+    row.exportMass = X[p];
+    row.weight = weight[p];
+    rows.push(row);
+  }
+
+  const heat = heatRow.reduce((a, h) => a + h, 0n);
+  const light = lightRow.reduce((a, l) => a + l, 0n);
+  const post: WorldState = { cfg, step: pre.step, cells, genome, lightIn: pre.lightIn + light, heatOut: pre.heatOut + heat, flux: pre.flux.slice() };
+  const postMatter = pondMatter(post);
+  for (let p = 0; p < R; p++) if (postMatter[p] !== Mr[p]) throw new Error(`pond ${p} holds matter ${postMatter[p]} after the cycle, not ${Mr[p]}`);
+  return { state: post, rows, heat, light, ended: pondTraits(post).every((t) => t === 0), donors };
 }
 
 /** Σ e·X + E + S + heatOut − lightIn over the full state: the quantity the energy ledger holds constant. */

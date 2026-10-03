@@ -345,3 +345,19 @@ Written while building the code listed under "Code to build before any run", bef
 9. **S1's interval:** the 250th and 9,750th of the 10,000 sorted bootstrap medians (nearest rank), with eligible histories indexed in ascending i.
 10. **Retained-mass bins** (descriptive): 0, then [2^k, 2^(k+1)).
 11. **S3's negative-control worlds** (seeds 4,880,001–4,880,004) are made with `tools/scaffold.ts`, exactly as the heredity replication made its own: arm `cont`, clone, mutation off, one period, side 8.
+
+## Amendment 2 — 2026-10-03: the device bundles' pulled path, after the queue and before any test statistic
+
+**What happened.** The Mac supervisor pulled each instance's device-check bundle to `runs/scaffold/reg1/device-inst<N>/ponds/treatment/seed-4880301/`, dropping the `device/` component of the bundle's run id (`device/ponds/treatment/seed-4880301`). The report checks that a bundle's directory ends in its run id. Its first run (2026-10-03 03:48:17 EDT) therefore refused the three instance bundles and returned **Invalid** on the device check. Since that row settles the outcome, it computed no test statistic. Its descriptive section did hold per-set competences and garden gains. The correction below rests on the registered device criterion alone, which does not depend on them, and its review was asked to read only the readout's validity section.
+
+**The device check itself passed by its registered criterion** (validity step 1, and Amendment 1 item 6: the Mac's bundle and one per instance, four in all, with equal `finalHash`):
+- all four bundles report `finalHash` `0a81d98f7c148684`, with conservation exact: the Mac (Apple M1 Max) and the three instances (NVIDIA A10G);
+- each instance's own device check (`devcheck.sh`) compared the same hash before its queue ran and logged `DEVICE CHECK PASS`. The pulled logs are `runs/scaffold/ops-reg1/remote-ops-<N>.tgz`, in `ops/logs/devcheck-<N>.log`;
+- in the same first readout, reproducibility passed (`scaf-i14` and `rand-i17` match their instance checkpoints), no history was unresolved in any arm, and no quenched set exceeded 5%.
+
+**Correction (2026-10-03, EDT).** The correction was decided and passed by a Codex Astra review (03:50–03:52) before any test statistic was computed. The move followed at 03:53:05 and the second readout at 03:53:37. It moves files only: no data, code, rule or threshold changes. In order:
+1. The first readout was preserved as `experiments/scaffold/readouts/reg1-path-invalid.json`.
+2. The three instance bundles were moved, unchanged, to `runs/scaffold/reg1/device-inst<N>/device/ponds/treatment/seed-4880301/`, the path the runner wrote on the instance. The SHA-256 of all 24 files is identical before and after; the inventory is `experiments/scaffold/readouts/reg1-device-move.sha256`.
+3. The report was run again with the same command: `deno run -A tools/scaffold-report.ts reg1 --assays runs/scaffold/reg1/assays --runs runs/scaffold/reg1/hist runs/scaffold/reg1/anc --device runs/scaffold/reg1/device runs/scaffold/reg1/device-inst1 runs/scaffold/reg1/device-inst2 runs/scaffold/reg1/device-inst3 --repro runs/scaffold/reg1/repro --queue experiments/scaffold/reg1-queue.json --status runs/scaffold/ops-reg1/status-1.json runs/scaffold/ops-reg1/status-2.json runs/scaffold/ops-reg1/status-3.json --v1 experiments/scaffold/readouts/r3.json --r3rep experiments/scaffold/readouts/r3rep.json`, into `experiments/scaffold/readouts/reg1.json`.
+
+**Cause and prevention.** The ops script's trailing-slash `rsync` laid out the pull (`runs/scaffold/ops-reg1/supervise.sh`); the registration's code was not involved. The transition hunt's Stage 1 supervisor (`runs/scaffold/ops-hunt1/supervise.sh`) pulls to `device-inst<N>/device/` for this reason.

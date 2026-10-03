@@ -217,11 +217,36 @@ export interface WorldConfig {
   pondK?: number;
   /**
    * Donor rule of the pond cycle: "scaf" (the ponds with the largest trait
-   * donate), "rand" (random surviving ponds donate) or "cont" (no transform;
-   * each boundary only records one row per pond). Set exactly when
-   * `pondPeriod` is; see its doc.
+   * donate), "rand" (random surviving ponds donate), "cont" (no transform;
+   * each boundary only records one row per pond), or the transition hunt's
+   * "nat" and "shuf" (the current: ponds die at random and are reseeded from
+   * the export zone of a donor drawn in proportion to its export mass, or to a
+   * shuffled copy of it; docs/scaffold-transition-hunt-v1.md). Set exactly
+   * when `pondPeriod` is; see its doc.
    */
   pondArm?: PondArm;
+  /**
+   * The current's per-boundary death probability, `pondDeath` / 65,536 (integer
+   * 1..65,536; the hunt uses 32,768, so e = 1/2, and 65,536 kills every pond):
+   * a pond dies at a boundary if it is unoccupied or its death key is below
+   * `pondDeath * 65,536` (applyCurrentCycle, packages/schema/src/ponds.ts).
+   * Set exactly when `pondArm` is "nat" or "shuf", and then required; absent
+   * for "scaf", "rand", "cont" and without a pond cycle.
+   *
+   * Optional, absent from `defaultConfig()` and from every preset, for the
+   * reason `pondPeriod` is: the keys enter `stateHash`/`artifactDigest` through
+   * the config's own JSON, so every config without them hashes exactly as it
+   * did before the current existed.
+   */
+  pondDeath?: number;
+  /**
+   * The current's export threshold (integer 1..32; the hunt uses 28): the
+   * export zone is the cells of a pond whose torus Chebyshev distance from the
+   * landing centre (32, 32) is at least `pondExport` (`exportDistance`; 1,071
+   * cells at 28). Set exactly when `pondArm` is "nat" or "shuf"; see
+   * `pondDeath`.
+   */
+  pondExport?: number;
 }
 
 /**
@@ -322,7 +347,7 @@ export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig
     eventCap: 1 << 16,
     neutral: false,
     motility: true,
-    // migrationPeriod/migrantCount and pondPeriod/pondK/pondArm deliberately absent here — see their docs on WorldConfig.
+    // migrationPeriod/migrantCount, pondPeriod/pondK/pondArm and pondDeath/pondExport deliberately absent here — see their docs on WorldConfig.
     ...overrides,
   };
 }
@@ -406,7 +431,10 @@ const MIGRANT_COUNT_RANGE: Range = [0, 4096];
 /** Bounds for pondPeriod/pondK, checked explicitly in `validateConfig` like migration's. A pond is a 64 x 64 tile, so k <= 64. */
 const POND_PERIOD_RANGE: Range = [1, MAX_STEP];
 const POND_K_RANGE: Range = [1, 64];
-const POND_ARMS: readonly PondArm[] = ["scaf", "rand", "cont"];
+/** Bounds for pondDeath (a probability in 1/65,536) and pondExport (a Chebyshev distance on the 64-torus is at most 32). */
+const POND_DEATH_RANGE: Range = [1, 65_536];
+const POND_EXPORT_RANGE: Range = [1, 32];
+const POND_ARMS: readonly PondArm[] = ["scaf", "rand", "cont", "nat", "shuf"];
 
 export function validateConfig(c: WorldConfig): string[] {
   const errs: string[] = [];
@@ -448,14 +476,22 @@ export function validateConfig(c: WorldConfig): string[] {
     ["ringNamespace", [0, MAX_RING_NAMESPACE] as Range],
     ["pondPeriod", POND_PERIOD_RANGE],
     ["pondK", POND_K_RANGE],
+    ["pondDeath", POND_DEATH_RANGE],
+    ["pondExport", POND_EXPORT_RANGE],
   ] as const) {
     const v = c[key];
     if (v === undefined) continue;
     if (!Number.isInteger(v) || v < range[0] || v > range[1]) errs.push(`${key} must be an integer in ${range[0]}..${range[1]}`);
   }
-  if (c.pondArm !== undefined && !POND_ARMS.includes(c.pondArm)) errs.push("pondArm must be scaf, rand or cont");
+  if (c.pondArm !== undefined && !POND_ARMS.includes(c.pondArm)) errs.push("pondArm must be scaf, rand, cont, nat or shuf");
   const pondKeys = [c.pondPeriod, c.pondK, c.pondArm].filter((v) => v !== undefined).length;
   if (pondKeys !== 0 && pondKeys !== 3) errs.push("pondPeriod, pondK and pondArm must be set together");
+  // The current's keys go with its arms, both required there and neither anywhere else.
+  const current = c.pondArm === "nat" || c.pondArm === "shuf";
+  for (const key of ["pondDeath", "pondExport"] as const) {
+    if (current && c[key] === undefined) errs.push(`${key} is required when pondArm is nat or shuf`);
+    if (!current && c[key] !== undefined) errs.push(`${key} may be set only when pondArm is nat or shuf`);
+  }
   if (errs.length) return errs;
   const migrationPeriod = c.migrationPeriod ?? 0;
   const migrantCount = c.migrantCount ?? 0;
