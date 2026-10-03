@@ -10,6 +10,7 @@ import {
   cloneState,
   defaultConfig,
   generalistWorld,
+  m3World,
   soupWorld,
   stateHash,
   totalsOf,
@@ -179,6 +180,43 @@ export function goldenCases(): GoldenCase[] {
       name: "ring-namespace",
       cfg: defaultConfig({ tileW: 24, tileH: 24, kernelRadius: 4, seed: 23, mutRate: 60_000_000, ringNamespace: 7 }),
       init: (c) => soupWorld(c, 8),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // Lossy takeover (WorldConfig.takeover, ownership sandbox): the 12 M3
+      // founders (distinct lineages and mu/sigma) in contact, with mutation,
+      // so non-kin bound shares become waste and release energy into E.
+      name: "takeover-lineage",
+      cfg: defaultConfig({ ...base, seed: 51, mutRate: 60_000_000, takeover: "lossy", takeoverKin: "lineage" }),
+      init: (c) => m3World(c, 12, 32, 64),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // As "takeover-lineage" with kin = mu/sigma within a tolerance.
+      name: "takeover-growth",
+      cfg: defaultConfig({ ...base, seed: 53, mutRate: 60_000_000, takeover: "lossy", takeoverKin: "growth", takeoverTol: 8 }),
+      init: (c) => m3World(c, 12, 32, 64),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // Recurring injury (WorldConfig.injuryPeriod, ownership sandbox): every
+      // 7th step about 1 cell in 150 centres a radius-2 wound, on founders in
+      // contact with mutation, so wounds overlap bodies, tile edges and each other.
+      name: "injury",
+      cfg: defaultConfig({ ...base, seed: 59, mutRate: 60_000_000, injuryPeriod: 7, injuryRadius: 2, injuryProb: 28_633_115 }),
+      init: (c) => m3World(c, 12, 32, 64),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // As "takeover-lineage" with kin = at most 1 differing genome word, so
+      // single mutants stay kin to their parents and founders do not.
+      name: "takeover-genome",
+      cfg: defaultConfig({ ...base, seed: 57, mutRate: 60_000_000, takeover: "lossy", takeoverKin: "genome", takeoverTol: 1 }),
+      init: (c) => m3World(c, 12, 32, 64),
       steps: 120,
       every: 30,
     },

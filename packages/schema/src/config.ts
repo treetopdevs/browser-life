@@ -222,7 +222,53 @@ export interface WorldConfig {
    * `pondPeriod` is; see its doc.
    */
   pondArm?: PondArm;
+
+  /**
+   * Lossy takeover (exploratory sandbox, docs/sandbox-ownership.md). Absent =
+   * RULE_VERSION 1. With "lossy", transport still picks the lottery winner
+   * exactly as before, but bound matter (B, P) arriving from a source that is
+   * not kin to the winner is not merged: it lands in the target as waste C,
+   * and its released potential energy sB*(eB-eC) + sP*(eP-eC) joins the
+   * target's E. Matter and energy content stay exactly conserved inside
+   * transport; react's POOL_MAX cap exports any excess as heat. Optional and
+   * absent from `defaultConfig()` for the same hashing reason as `adhesion`.
+   */
+  takeover?: "lossy";
+  /**
+   * Kin test for `takeover`: "lineage" (same LIN_HI/LIN_LO; the default),
+   * "growth" (Lenia mu and sigma within `takeoverTol`) or "genome" (at most
+   * `takeoverTol` of the heritable genome words PARAM0.. differ from the
+   * winner's; the lineage id words are not compared).
+   */
+  takeoverKin?: TakeoverKin;
+  /**
+   * Kin tolerance. "growth": |mu_s - mu_w| <= tol and |sigma_s - sigma_w| <= tol >> 2.
+   * "genome": number of differing genome words <= tol (0..TAKEOVER_GENOME_WORDS). Absent = 0.
+   */
+  takeoverTol?: number;
+
+  /**
+   * Recurring injury (exploratory sandbox, docs/sandbox-ownership.md). Absent =
+   * RULE_VERSION 1. On every step with (step + 1) % injuryPeriod === 0, each
+   * cell is a wound centre with probability injuryProb / 2^32 (counter PRNG,
+   * stream RND.INJURY), and react ends by lesioning every cell within
+   * injuryRadius (Euclidean, wrapping inside its tile) of a centre exactly as
+   * `applyLesion` does: B and P become waste C, their excess chemical energy
+   * and the free pool E leave as heat, motility resets and the lineage is
+   * cleared. Matter is conserved and the energy ledger closes. The three keys
+   * are set together; optional and absent from `defaultConfig()` for the same
+   * hashing reason as `adhesion`.
+   */
+  injuryPeriod?: number;
+  /** Wound disc radius in cells, 0..INJURY_MAX_RADIUS and at most maxLesionRadius(cfg). */
+  injuryRadius?: number;
+  /** Per-cell probability of being a wound centre at an injury step, as a numerator over 2^32 (1..2^32-1). */
+  injuryProb?: number;
 }
+
+export type TakeoverKin = "lineage" | "growth" | "genome";
+/** Genome words the "genome" kin test compares: PARAM0, PARAM1 and the NN weight words (GENOME_CHANNELS - G.PARAM0). */
+export const TAKEOVER_GENOME_WORDS = 42;
 
 /**
  * Bit layout for a namespaced LIN_LO (see `WorldConfig.ringNamespace`): the
@@ -481,6 +527,53 @@ export function validateConfig(c: WorldConfig): string[] {
     if (migrationPeriod > 0) errs.push("a pond config (pondPeriod set) cannot migrate between tiles (migrationPeriod > 0)");
     if (c.ringNamespace !== undefined) errs.push("a pond config (pondPeriod set) cannot be a metapopulation member (ringNamespace set)");
   }
+  errs.push(...validateTakeover(c));
+  errs.push(...validateInjury(c));
+  return errs;
+}
+
+/** Largest injuryRadius: bounds the per-cell centre scan to (2 * 16 + 1)^2 draws on an injury step. */
+export const INJURY_MAX_RADIUS = 16;
+
+function validateInjury(c: WorldConfig): string[] {
+  const keys = [c.injuryPeriod, c.injuryRadius, c.injuryProb];
+  if (keys.every((k) => k === undefined)) return [];
+  if (keys.some((k) => k === undefined)) return ["injuryPeriod, injuryRadius and injuryProb are set together"];
+  const errs: string[] = [];
+  const int = (v: unknown, lo: number, hi: number) => typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi;
+  if (!int(c.injuryPeriod, 1, 2 ** 31 - 1)) errs.push("injuryPeriod must be an integer in 1..2^31-1");
+  const maxR = Math.min(INJURY_MAX_RADIUS, Math.floor((Math.min(c.tileW, c.tileH) - 1) / 2));
+  if (!int(c.injuryRadius, 0, maxR)) errs.push(`injuryRadius must be an integer in 0..${maxR} (a disc must not wrap onto itself)`);
+  if (!int(c.injuryProb, 1, 2 ** 32 - 1)) errs.push("injuryProb must be an integer in 1..2^32-1");
+  return errs;
+}
+
+/** Bounds for takeoverTol: mu and sigma are 16-bit genome fields. */
+const TAKEOVER_TOL_RANGE: Range = [0, 0xffff];
+
+/**
+ * Lossy takeover's u32 bound (see WorldConfig.takeover). A target's transport
+ * E is the sum of nine sources' E shares, each source <= POOL_MAX (states are
+ * capped), so <= 9 * POOL_MAX, plus the potential energy released by non-kin
+ * bound matter, <= (eP - eC) * (incoming B + P) <= (eP - eC) * MATTER_MAX
+ * (total world matter). 9 * 2^28 + g * 2^26 < 2^32 needs g <= 27, so a
+ * takeover config requires eP - eC <= 27; nothing is clamped.
+ */
+export const TAKEOVER_MAX_GAP = Math.floor((2 ** 32 - 1 - 9 * POOL_MAX) / MATTER_MAX);
+
+function validateTakeover(c: WorldConfig): string[] {
+  const errs: string[] = [];
+  if (c.takeover === undefined) {
+    if (c.takeoverKin !== undefined || c.takeoverTol !== undefined) errs.push("takeoverKin and takeoverTol require takeover");
+    return errs;
+  }
+  if (c.takeover !== "lossy") errs.push('takeover must be "lossy"');
+  if (c.takeoverKin !== undefined && c.takeoverKin !== "lineage" && c.takeoverKin !== "growth" && c.takeoverKin !== "genome") errs.push('takeoverKin must be "lineage", "growth" or "genome"');
+  const t = c.takeoverTol;
+  if (t !== undefined && (typeof t !== "number" || !Number.isInteger(t) || t < TAKEOVER_TOL_RANGE[0] || t > TAKEOVER_TOL_RANGE[1]))
+    errs.push(`takeoverTol must be an integer in ${TAKEOVER_TOL_RANGE[0]}..${TAKEOVER_TOL_RANGE[1]}`);
+  else if (c.takeoverKin === "genome" && t !== undefined && t > TAKEOVER_GENOME_WORDS) errs.push(`takeoverTol must be <= ${TAKEOVER_GENOME_WORDS} with "genome" kin`);
+  if (c.eP - c.eC > TAKEOVER_MAX_GAP) errs.push(`a takeover config needs eP - eC <= ${TAKEOVER_MAX_GAP} (transport E bound)`);
   return errs;
 }
 

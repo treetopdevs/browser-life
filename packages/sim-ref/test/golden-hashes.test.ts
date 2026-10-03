@@ -33,6 +33,13 @@ const PINNED: Record<number, Record<string, string>> = {
     "adhesion-default-gain": "16b879ff174bb74c",
     "mutation-boundary": "0966e96ab1306e8f",
     "ring-namespace": "e277953f6ebc2ea2",
+    // Lossy takeover (WorldConfig.takeover, optional, ownership sandbox): new
+    // cases only; every pin above is unchanged.
+    "takeover-lineage": "b73f19659cf78e51",
+    "takeover-growth": "e01f6f014554e875",
+    "takeover-genome": "dfb56d29a4d59f7a",
+    // Recurring injury (WorldConfig.injuryPeriod, optional, ownership sandbox).
+    injury: "1fd51d2042631706",
   },
 };
 

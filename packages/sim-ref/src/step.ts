@@ -122,6 +122,18 @@ export class RefSim {
     return (ty * tileH + ly) * this.W + tx * tileW + lx;
   }
 
+  /** Recurring injury (WorldConfig.injuryPeriod): is a wound centre within injuryRadius of (x, y) at this step? */
+  injured(x: number, y: number, step: number): boolean {
+    const c = this.cfg;
+    const r = c.injuryRadius ?? 0, p = c.injuryProb ?? 0;
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        if (dx * dx + dy * dy > r * r) continue;
+        if (draw(cellBase(c.seed, step, this.nb(x, y, dx, dy)), RND.INJURY) < p) return true;
+      }
+    return false;
+  }
+
   light(x: number, y: number, step: number): number {
     const c = this.cfg;
     const lx = x % c.tileW;
@@ -265,6 +277,14 @@ export class RefSim {
     const d2 = 4 * hw * hw;
     const srcs = new Int32Array(9);
     const lot = new Uint32Array(9);
+    // Lossy takeover (WorldConfig.takeover; absent = RULE_VERSION 1).
+    const lossy = c.takeover === "lossy";
+    const kinGrowth = c.takeoverKin === "growth";
+    const kinGenome = c.takeoverKin === "genome";
+    const tolMu = c.takeoverTol ?? 0;
+    const tolSigma = tolMu >>> 2;
+    const gB = c.eB - c.eC, gP = c.eP - c.eC;
+    const shB = new Uint32Array(9), shP = new Uint32Array(9);
     for (let y = 0; y < this.H; y++) {
       for (let x = 0; x < this.W; x++) {
         const t = y * this.W + x;
@@ -302,6 +322,8 @@ export class RefSim {
             inP = addu(inP, sP);
             inE = addu(inE, sE);
             lot[k] = addu(sB, sP);
+            shB[k] = sB;
+            shP[k] = sP;
           }
         }
         out[CH.B * n + t] = inB;
@@ -310,6 +332,7 @@ export class RefSim {
 
         // Genome: mass-weighted lottery over the sources of incoming bound mass.
         const T = addu(inB, inP);
+        let waste = 0;
         // Genomes are immutable per lineage id (a mutation always mints a new id),
         // so a destination that already holds the winner's lineage is left as is.
         // Words of empty cells are don't-care (see canonicalGenome).
@@ -333,6 +356,41 @@ export class RefSim {
           if (gout[G.LIN_HI * n + t] !== hi || gout[G.LIN_LO * n + t] !== lo || (hi | lo) === 0)
             for (let g = 0; g < GENOME_CHANNELS; g++) gout[g * n + t] = genome[g * n + s];
           out[CH.MOT * n + t] = cells[CH.MOT * n + s];
+          if (lossy) {
+            // Non-kin bound shares become waste C here; their potential
+            // energy joins E (sE is kept by every source). Bound: see
+            // TAKEOVER_MAX_GAP in @bl/schema (no u32 wrap, nothing clamped).
+            const muW = genome[G.PARAM0 * n + s] & 0xffff, sgW = genome[G.PARAM0 * n + s] >>> 16;
+            let kB = 0, kP = 0, rel = 0;
+            for (let j = 0; j < 9; j++) {
+              const sj = srcs[j];
+              let kin = lot[j] === 0;
+              if (!kin) {
+                const hj = genome[G.LIN_HI * n + sj], lj = genome[G.LIN_LO * n + sj];
+                if ((hj === hi && lj === lo) || !(kinGrowth || kinGenome) || (hi | lo) === 0 || (hj | lj) === 0) kin = hj === hi && lj === lo;
+                else if (kinGenome) {
+                  // Whole-genome kin: at most takeoverTol heritable words differ
+                  // (a lineage id names one genome, so equal ids were kin above).
+                  let d = 0;
+                  for (let g = G.PARAM0; g < GENOME_CHANNELS && d <= tolMu; g++) if (genome[g * n + sj] !== genome[g * n + s]) d++;
+                  kin = d <= tolMu;
+                } else {
+                  const pj = genome[G.PARAM0 * n + sj];
+                  kin = Math.abs((pj & 0xffff) - muW) <= tolMu && Math.abs((pj >>> 16) - sgW) <= tolSigma;
+                }
+              }
+              if (kin) {
+                kB = addu(kB, shB[j]);
+                kP = addu(kP, shP[j]);
+              } else {
+                waste = addu(waste, lot[j]);
+                rel = addu(rel, addu(mulu(shB[j], gB), mulu(shP[j], gP)));
+              }
+            }
+            out[CH.B * n + t] = kB;
+            out[CH.P * n + t] = kP;
+            out[CH.E * n + t] = addu(inE, rel);
+          }
         }
 
         // Diffusion of dissolved species.
@@ -354,7 +412,7 @@ export class RefSim {
             const baseN = cellBase(seed, step, nbi);
             v = addu(v, diffOut(qn, d ^ 1, De, baseN, sp));
           }
-          out[ch * n + t] = v;
+          out[ch * n + t] = sp === 1 ? addu(v, waste) : v;
         }
       }
     }
@@ -386,6 +444,8 @@ export class RefSim {
     const o = new Int32Array(NN_O);
     const wb = new Int8Array(NN_BYTES);
     const mutCap = c.mutRate === 0 ? 0 : divu(U32_MAX, c.mutRate);
+    // Recurring injury (WorldConfig.injuryPeriod; absent = RULE_VERSION 1).
+    const injuryStep = c.injuryPeriod !== undefined && (step + 1) % c.injuryPeriod === 0;
 
     for (let yy = 0; yy < this.H; yy++) {
       for (let xx = 0; xx < this.W; xx++) {
@@ -526,6 +586,17 @@ export class RefSim {
         const t = mulFrac(C, L, 8, draw(base, RND.ABIO1));
         q = Math.min(C, mulFrac(t, c.kAbio, 16, draw(base, RND.ABIO2)));
         C -= q; A += q; heat += q * (c.eC - c.eA); F[FX.abio] = q;
+
+        // Injury: the cell's bound structure is destroyed as by applyLesion
+        // (the lineage is cleared just below, since B and P are now 0).
+        if (injuryStep && this.injured(xx, yy, step)) {
+          heat += B * (c.eB - c.eC) + P * (c.eP - c.eC) + E;
+          C += B + P;
+          B = 0;
+          P = 0;
+          E = 0;
+          mot = MOT_ZERO;
+        }
 
         if (living && B === 0 && P === 0) {
           genome[G.LIN_HI * n + i] = 0;

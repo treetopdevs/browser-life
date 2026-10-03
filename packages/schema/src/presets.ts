@@ -125,6 +125,55 @@ export const PRESETS: Preset[] = [
     cfg: { ...POND_REGIME, tileW: 64, tileH: 64, tilesX: 2, tilesY: 2, pondPeriod: 1000, pondK: 8, pondArm: "scaf" },
     init: { kind: "ponds", founders: 4, nutrient: 32, biomass: 64, start: "clone", founder: 2 },
   },
+  // Ownership sandbox (docs/sandbox-ownership.md): gradient-m3's cfg and init
+  // plus one difference each. Exploratory, not registered.
+  {
+    id: "own-lossy",
+    name: "Ownership: lossy takeover (lineage kin)",
+    description: "gradient-m3 where bound matter that loses the transport lottery to a different lineage becomes waste C and its potential energy feeds the winner's E.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, takeover: "lossy", takeoverKin: "lineage" },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "own-match",
+    name: "Ownership: lossy takeover (growth kin)",
+    description: "own-lossy, but kin means Lenia mu within 8 and sigma within 2 of the winner, so most single mutants stay kin.",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, takeover: "lossy", takeoverKin: "growth", takeoverTol: 8 },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  },
+  {
+    id: "own-seasons",
+    name: "Ownership: seasons control",
+    description: "gradient-m3 with no rule change but seasonal light forcing (4,000-step period).",
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 160, seasonPeriod: 4000, seasonAmp: 75 },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  },
+  // Whole-genome kin: at most `takeoverTol` of the 42 heritable genome words
+  // differ from the winner's. Tolerance 1 keeps a single mutant kin to its
+  // parent; founders differ from each other in 41 or 42 words.
+  ...[1, 3, 8].map((tol): Preset => ({
+    id: `own-genome-${tol}`,
+    name: `Ownership: lossy takeover (genome kin, ${tol} word${tol > 1 ? "s" : ""})`,
+    description: `own-lossy, but kin means at most ${tol} of the 42 heritable genome words differ from the lottery winner's.`,
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, takeover: "lossy", takeoverKin: "genome", takeoverTol: tol },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  })),
+  // Recurring injury, no takeover change: gradient-m3 where wound discs destroy
+  // bound structure as the assay's lesion does. `every` is the mean number of
+  // steps between hits on any one cell; a radius-3 wound (29 cells) takes about
+  // 30% of a 20-cell body, a radius-8 wound (197 cells) removes whole bodies.
+  ...([["light", 3, 13_000], ["heavy", 3, 3_250], ["coarse", 8, 13_000]] as const).map(([tag, radius, every]): Preset => {
+    const period = 13;
+    let disc = 0;
+    for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) if (dx * dx + dy * dy <= radius * radius) disc++;
+    return {
+      id: `own-injury-${tag}`,
+      name: `Ownership: recurring injury (${tag})`,
+      description: `gradient-m3 with radius-${radius} wounds every ${period} steps; each cell is hit about once per ${every.toLocaleString("en-US")} steps.`,
+      cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, injuryPeriod: period, injuryRadius: radius, injuryProb: Math.round((2 ** 32 * period) / (disc * every)) },
+      init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+    };
+  }),
 ];
 
 export function presetConfig(p: Preset, seed: number, extra: Partial<WorldConfig> = {}): WorldConfig {

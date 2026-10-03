@@ -108,6 +108,7 @@ export function prelude(c: WorldConfig): string {
     G_PARAM0: u(G.PARAM0 * n),
     G_PARAM1: u(G.PARAM1 * n),
     G_W0: u(G.W0),
+    G_HERIT0: u(G.PARAM0),
     GENOME_CH: u(GENOME_CHANNELS),
     NN_I: u(NN_I),
     NN_H: u(NN_H),
@@ -133,6 +134,18 @@ export function prelude(c: WorldConfig): string {
   consts.MOTILITY = c.motility === false ? "false" : "true";
   consts.ADHESION = c.adhesion === true ? "true" : "false";
   consts.K_ADHESION = i(c.kAdhesion ?? DEFAULT_K_ADHESION);
+  // Lossy takeover (WorldConfig.takeover): constant-folded away when absent.
+  consts.TAKEOVER = c.takeover === "lossy" ? "true" : "false";
+  consts.KIN_GROWTH = c.takeoverKin === "growth" ? "true" : "false";
+  consts.KIN_GENOME = c.takeoverKin === "genome" ? "true" : "false";
+  // Recurring injury (WorldConfig.injuryPeriod): constant-folded away when absent.
+  consts.INJURY = c.injuryPeriod !== undefined ? "true" : "false";
+  consts.INJURY_PERIOD = u(c.injuryPeriod ?? 1);
+  consts.INJURY_R = i(c.injuryRadius ?? 0);
+  consts.INJURY_PROB = u(c.injuryProb ?? 0);
+  consts.TOL_WORDS = u(c.takeoverTol ?? 0);
+  consts.TOL_MU = i(c.takeoverTol ?? 0);
+  consts.TOL_SIGMA = i((c.takeoverTol ?? 0) >>> 2);
   // See WorldConfig.ringNamespace / packLineageLo (@bl/schema): a mutation's
   // childLo packs the ring namespace into the top RING_NAMESPACE_BITS bits
   // when configured, unchanged (just the cell index) otherwise -- the
@@ -397,6 +410,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   var inE = 0u;
   var srcs: array<u32, 9>;
   var lot: array<u32, 9>;
+  var shB: array<u32, 9>;
+  var shP: array<u32, 9>;
   var k = 0u;
   for (var oy = -1; oy <= 1; oy++) {
     for (var ox = -1; ox <= 1; ox++) {
@@ -433,6 +448,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       inP += sP;
       inE += sE;
       lot[k] = sB + sP;
+      shB[k] = sB;
+      shP[k] = sP;
       k++;
     }
   }
@@ -441,6 +458,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   cellsOut[CH_E + i] = inE;
 
   let T = inB + inP;
+  var waste = 0u;
   if (T == 0u) {
     genomeOut[G_LIN_HI + i] = 0u;
     genomeOut[G_LIN_LO + i] = 0u;
@@ -460,6 +478,47 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       for (var g = 0u; g < GENOME_CH; g++) { genomeOut[g * N + i] = genome[g * N + s]; }
     }
     cellsOut[CH_MOT + i] = cells[CH_MOT + s];
+    if (TAKEOVER) {
+      // Mirrors step.ts transport: non-kin bound shares become waste C and
+      // release their potential energy into E (bound: TAKEOVER_MAX_GAP).
+      let pw = genome[G_PARAM0 + s];
+      let muW = i32(pw & 0xffffu);
+      let sgW = i32(pw >> 16u);
+      var kB = 0u;
+      var kP = 0u;
+      var rel = 0u;
+      for (var j = 0u; j < 9u; j++) {
+        let sj = srcs[j];
+        var kin = lot[j] == 0u;
+        if (!kin) {
+          let hj = genome[G_LIN_HI + sj];
+          let lj = genome[G_LIN_LO + sj];
+          if ((hj == hi && lj == lo) || !(KIN_GROWTH || KIN_GENOME) || (hi | lo) == 0u || (hj | lj) == 0u) {
+            kin = hj == hi && lj == lo;
+          } else if (KIN_GENOME) {
+            var d = 0u;
+            for (var g = G_HERIT0; g < GENOME_CH; g++) {
+              if (genome[g * N + sj] != genome[g * N + s]) { d++; }
+              if (d > TOL_WORDS) { break; }
+            }
+            kin = d <= TOL_WORDS;
+          } else {
+            let pj = genome[G_PARAM0 + sj];
+            kin = abs(i32(pj & 0xffffu) - muW) <= TOL_MU && abs(i32(pj >> 16u) - sgW) <= TOL_SIGMA;
+          }
+        }
+        if (kin) {
+          kB += shB[j];
+          kP += shP[j];
+        } else {
+          waste += lot[j];
+          rel += shB[j] * (E_B - E_C) + shP[j] * (E_P - E_C);
+        }
+      }
+      cellsOut[CH_B + i] = kB;
+      cellsOut[CH_P + i] = kP;
+      cellsOut[CH_E + i] = inE + rel;
+    }
   }
 
   let baseT = cell_base(step, i);
@@ -481,6 +540,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       let qn = cells[ch + nbi];
       v += diff_out(qn, d ^ 1u, De, cell_base(step, nbi), sp);
     }
+    if (sp == 1u) { v += waste; }
     cellsOut[ch + i] = v;
   }
 }
@@ -569,6 +629,17 @@ fn mutate(i: u32, which: u32, deltaRnd: u32) {
     let gain = clamp(i32(p1 & 0xffu) + delta, 0, 255);
     genome[G_PARAM1 + i] = (p1 & 0xffffff00u) | u32(gain);
   }
+}
+
+// Mirrors RefSim.injured: is a wound centre within INJURY_R of (x, y) at this step?
+fn injured(x: u32, y: u32, step: u32) -> bool {
+  for (var dy = -INJURY_R; dy <= INJURY_R; dy++) {
+    for (var dx = -INJURY_R; dx <= INJURY_R; dx++) {
+      if (dx * dx + dy * dy > INJURY_R * INJURY_R) { continue; }
+      if (draw(cell_base(step, nb(x, y, dx, dy)), RND_INJURY) < INJURY_PROB) { return true; }
+    }
+  }
+  return false;
 }
 
 @compute @workgroup_size(${WG}, ${WG})
@@ -721,6 +792,17 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     let ta = mul_frac(C, L, 8u, draw(base, RND_ABIO1));
     q = min(C, mul_frac(ta, K_ABIO, 16u, draw(base, RND_ABIO2)));
     C -= q; A += q; hadd(q * (E_C - E_A)); F[FX_ABIO] = q;
+
+    if (INJURY && (step + 1u) % INJURY_PERIOD == 0u && injured(x, y, step)) {
+      hadd(B * (E_B - E_C));
+      hadd(P * (E_P - E_C));
+      hadd(E);
+      C += B + P;
+      B = 0u;
+      P = 0u;
+      E = 0u;
+      mot = MOT_ZERO;
+    }
 
     if (living && B == 0u && P == 0u) {
       genome[G_LIN_HI + i] = 0u;

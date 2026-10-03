@@ -29,6 +29,8 @@ importers:
 
   apps/lab: {}
 
+  packages/lineage: {}
+
   packages/metrics:
     dependencies:
       fflate:
