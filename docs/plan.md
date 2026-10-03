@@ -767,6 +767,27 @@ The transition hunt stays a draft. It waits on the user's approval as a whole, a
 - **D3 (diagnostic):** with mutation off, `nat` − `shuf` differences in W were +33, −368, +825 and −93, so there was no consistent advantage. `nat` still beats `shuf` on in-run occupancy and recolonisation even without mutation, a non-genetic effect of the donor weighting. Only W, measured in the common garden, carries the contrasts.
 - **Next:** Stage 1 needs its own dated AWS draw note, for the user's approval: estimate about $38, hard stop $48. The reserve after the registration (about $94.68) covers it and leaves the $60 RULE_VERSION 2 go/no-go untouched. The `-s` sources follow the sources rule.
 
+**AWS draw for the transition hunt's Stage 1 (2026-10-03, before paid runs; for the user's approval).** Stage 1 runs on AWS as the hunt fixes it, with its queue fixed in the hunt's Amendment 3.
+- **Queue:** the committed `experiments/scaffold/hunt1-queue.json`, 374 commands; the Mac's device reference is `fa001d7a011fdfee`.
+  - 48 `-a` histories × 2 × 10⁶ steps from the ancestor clone;
+  - 48 `-s` branches × 10⁶ steps from the registration's 24 `scaf` histories at boundary 100 (all 24 verified, so the hunt runs no scaffold phase of its own);
+  - 4 ancestor worlds, plus 2 copies of world 0;
+  - 269 export-assay sets.
+
+  That is about 153 × 10⁶ steps.
+- **Instances:** three g5.xlarge, each with six lanes and about 51 × 10⁶ steps, so about 8–11 hours. Instance 1 takes i = 0–7, instance 2 i = 8–15 and instance 3 i = 16–23. Each runs the device check first and stops if it differs from the Mac.
+- **Budget:** an estimate of about $38 and a hard stop of $48, from the cohort reserve (about $94.68 after the registration). The $60 RULE_VERSION 2 go/no-go is untouched. After the stop, at least about $46.68 of the reserve remains.
+  - **The Mac supervisor** (launchd `com.browser-life.scaf-hunt1`, every 10 minutes) charges a ledger for all three instances. Each transfer's maximum is debited before it starts and settled after it ends.
+  - **The reserve:** the supervisor reserves the remaining runtime to the instances' deadlines plus one transfer, and tears everything down as soon as the ledger plus that reserve reaches $46.
+  - **Independent of the Mac:** every instance terminates itself 13 hours after launch (a deadline armed at first boot and verified at bootstrap), which caps compute at about $39.9.
+  - **Review:** the hardened operations passed six rounds of Codex Astra review.
+- **Infrastructure:** a separate key pair and security group, `bl-scaf-hunt1`. They share nothing with any other job, and the registration's are deleted.
+  - Each instance receives its eight registration sources (manifest and boundary-100 checkpoint only).
+  - Results are pulled into `runs/scaffold/hunt1/`. Device bundles go to `device-inst<N>/`, and the ancestor-world copies to `runs/scaffold/hunt1-anc-copy/`, outside the report's runs.
+  - Teardown terminates each instance individually and confirms nothing is left before deleting the key pair and security group.
+- **After the queue, on the Mac at $0:** the two reproducibility reruns (`shuf-s` i13, `shuf-a` i04), then the `hunt1` report, an independent re-derivation of every number, an Astra review and the dated result entry.
+- **Status:** waiting for the user's approval. Nothing is launched.
+
 
 ## Ecology-first founder discovery — 2026-09-29
 

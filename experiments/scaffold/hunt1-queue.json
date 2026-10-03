@@ -1,0 +1,3451 @@
+{
+ "hunt": {
+  "doc": "docs/scaffold-transition-hunt-v1.md",
+  "sha256": "13246200a5277ecbbbefb8d5b220f61a10ba1d33dc39a748fefbc224904a1f97",
+  "bytes": 38736
+ },
+ "deviceRef": {
+  "spec": "tools/run.ts --out runs/scaffold/hunt1 --experiment device --preset ponds --conditions pond-nat --seeds 4905001 --steps 20000 --census 1000 --deep 10 --checkpoint 0",
+  "finalHash": "fa001d7a011fdfee"
+ },
+ "instances": [
+  {
+   "instance": 1,
+   "histories": [
+    0,
+    7
+   ],
+   "ship": [
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850001/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850001/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850002/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850002/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850003/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850003/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850004/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850004/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850005/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850005/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850006/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850006/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850007/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850007/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850008/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850008/checkpoints/b100-pre.blck"
+   ],
+   "estimatedSteps": 51300000
+  },
+  {
+   "instance": 2,
+   "histories": [
+    8,
+    15
+   ],
+   "ship": [
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850009/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850009/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850010/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850010/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850011/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850011/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850012/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850012/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850013/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850013/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850014/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850014/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850015/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850015/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850016/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850016/checkpoints/b100-pre.blck"
+   ],
+   "estimatedSteps": 51070000
+  },
+  {
+   "instance": 3,
+   "histories": [
+    16,
+    23
+   ],
+   "ship": [
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850017/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850017/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850018/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850018/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850019/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850019/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850020/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850020/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850021/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850021/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850022/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850022/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850023/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850023/checkpoints/b100-pre.blck",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850024/manifest.json",
+    "runs/scaffold/reg1/hist/ponds/treatment/seed-4850024/checkpoints/b100-pre.blck"
+   ],
+   "estimatedSteps": 51070000
+  }
+ ],
+ "mac": {
+  "reproducibility": {
+   "draw": "randomKey(4905101, 0, k, 0) mod 96, the first two distinct values, histories in seed order",
+   "draws": [
+    {
+     "k": 0,
+     "value": 85
+    },
+    {
+     "k": 1,
+     "value": 28
+    }
+   ],
+   "reruns": [
+    {
+     "value": 85,
+     "history": "shuf-s-i13",
+     "seed": 4901314,
+     "boundary": 134,
+     "cmd": "deno run -A tools/run.ts --out runs/scaffold/hunt1 --experiment repro --preset ponds --conditions pond-shuf --seeds 4901314 --steps 340000 --census 1000 --deep 10 --checkpoint 0 --pre-cycle 134 --branch-from runs/scaffold/reg1/hist/ponds/treatment/seed-4850014 --branch-boundary 100"
+    },
+    {
+     "value": 28,
+     "history": "shuf-a-i04",
+     "seed": 4901105,
+     "boundary": 34,
+     "cmd": "deno run -A tools/run.ts --out runs/scaffold/hunt1 --experiment repro --preset ponds --conditions pond-shuf --seeds 4901105 --steps 340000 --census 1000 --deep 10 --checkpoint 0 --pre-cycle 34"
+    }
+   ]
+  }
+ },
+ "commands": [
+  {
+   "id": "devcheck-1",
+   "instance": 1,
+   "deps": [],
+   "cmd": "bash ops/devcheck.sh"
+  },
+  {
+   "id": "h-nat-a-i00",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901001 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i00",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901101 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i00",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901201 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850001"
+  },
+  {
+   "id": "h-shuf-s-i00",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901301 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850001"
+  },
+  {
+   "id": "h-nat-a-i01",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901002 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i01",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901102 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i01",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901202 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850002"
+  },
+  {
+   "id": "h-shuf-s-i01",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901302 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850002"
+  },
+  {
+   "id": "h-nat-a-i02",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901003 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i02",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901103 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i02",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901203 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850003"
+  },
+  {
+   "id": "h-shuf-s-i02",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901303 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850003"
+  },
+  {
+   "id": "h-nat-a-i03",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901004 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i03",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901104 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i03",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901204 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850004"
+  },
+  {
+   "id": "h-shuf-s-i03",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901304 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850004"
+  },
+  {
+   "id": "h-nat-a-i04",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901005 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i04",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901105 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i04",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901205 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850005"
+  },
+  {
+   "id": "h-shuf-s-i04",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901305 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850005"
+  },
+  {
+   "id": "h-nat-a-i05",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901006 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i05",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901106 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i05",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901206 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850006"
+  },
+  {
+   "id": "h-shuf-s-i05",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901306 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850006"
+  },
+  {
+   "id": "h-nat-a-i06",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901007 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i06",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901107 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i06",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901207 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850007"
+  },
+  {
+   "id": "h-shuf-s-i06",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901307 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850007"
+  },
+  {
+   "id": "h-nat-a-i07",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901008 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i07",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901108 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i07",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901208 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850008"
+  },
+  {
+   "id": "h-shuf-s-i07",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901308 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850008"
+  },
+  {
+   "id": "h-anc-j0",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh anc pond-cont 4901401 10000 1"
+  },
+  {
+   "id": "h-anc-j1",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh anc pond-cont 4901402 10000 1"
+  },
+  {
+   "id": "h-anc-j2",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh anc pond-cont 4901403 10000 1"
+  },
+  {
+   "id": "h-anc-j3",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "bash ops/history.sh anc pond-cont 4901404 10000 1"
+  },
+  {
+   "id": "a-s1-src-i00",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i00 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850001 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903001 --out runs/scaffold/hunt1/assays/s1-src-i00"
+  },
+  {
+   "id": "a-s1-src-i01",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i01 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850002 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903011 --out runs/scaffold/hunt1/assays/s1-src-i01"
+  },
+  {
+   "id": "a-s1-src-i02",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i02 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850003 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903021 --out runs/scaffold/hunt1/assays/s1-src-i02"
+  },
+  {
+   "id": "a-s1-src-i03",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i03 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850004 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903031 --out runs/scaffold/hunt1/assays/s1-src-i03"
+  },
+  {
+   "id": "a-s1-src-i04",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i04 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850005 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903041 --out runs/scaffold/hunt1/assays/s1-src-i04"
+  },
+  {
+   "id": "a-s1-src-i05",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i05 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850006 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903051 --out runs/scaffold/hunt1/assays/s1-src-i05"
+  },
+  {
+   "id": "a-s1-src-i06",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i06 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850007 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903061 --out runs/scaffold/hunt1/assays/s1-src-i06"
+  },
+  {
+   "id": "a-s1-src-i07",
+   "instance": 1,
+   "deps": [
+    "devcheck-1"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i07 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850008 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903071 --out runs/scaffold/hunt1/assays/s1-src-i07"
+  },
+  {
+   "id": "a-s1-anc-j0",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-anc-j0 --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-anc-j0"
+  },
+  {
+   "id": "a-s1-anc-j1",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j1"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-anc-j1 --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901402 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902971 --out runs/scaffold/hunt1/assays/s1-anc-j1"
+  },
+  {
+   "id": "a-s1-anc-j2",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j2"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-anc-j2 --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901403 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902981 --out runs/scaffold/hunt1/assays/s1-anc-j2"
+  },
+  {
+   "id": "a-s1-anc-j3",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j3"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-anc-j3 --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901404 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902991 --out runs/scaffold/hunt1/assays/s1-anc-j3"
+  },
+  {
+   "id": "a-s1-nat-a-i00",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i00 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901001 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902001 --out runs/scaffold/hunt1/assays/s1-nat-a-i00"
+  },
+  {
+   "id": "a-s1-nat-a-i00-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i00-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901001 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902001 --out runs/scaffold/hunt1/assays/s1-nat-a-i00-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i00-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-a-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i00-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901001 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i00-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i00",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-a-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i00 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901101 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902241 --out runs/scaffold/hunt1/assays/s1-shuf-a-i00"
+  },
+  {
+   "id": "a-s1-shuf-a-i00-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-a-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i00-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901101 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i00-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i00",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i00 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901201 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902481 --out runs/scaffold/hunt1/assays/s1-nat-s-i00"
+  },
+  {
+   "id": "a-s1-nat-s-i00-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i00-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901201 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902481 --out runs/scaffold/hunt1/assays/s1-nat-s-i00-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i00-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-s-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i00-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901201 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i00-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i00",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-s-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i00 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901301 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902721 --out runs/scaffold/hunt1/assays/s1-shuf-s-i00"
+  },
+  {
+   "id": "a-s1-shuf-s-i00-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-s-i00"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i00-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901301 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i00-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i01",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i01 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901002 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902011 --out runs/scaffold/hunt1/assays/s1-nat-a-i01"
+  },
+  {
+   "id": "a-s1-nat-a-i01-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i01-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901002 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902011 --out runs/scaffold/hunt1/assays/s1-nat-a-i01-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i01-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-a-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i01-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901002 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i01-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i01",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-a-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i01 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901102 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902251 --out runs/scaffold/hunt1/assays/s1-shuf-a-i01"
+  },
+  {
+   "id": "a-s1-shuf-a-i01-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-a-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i01-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901102 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i01-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i01",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i01 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901202 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902491 --out runs/scaffold/hunt1/assays/s1-nat-s-i01"
+  },
+  {
+   "id": "a-s1-nat-s-i01-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i01-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901202 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902491 --out runs/scaffold/hunt1/assays/s1-nat-s-i01-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i01-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-s-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i01-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901202 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i01-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i01",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-s-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i01 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901302 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902731 --out runs/scaffold/hunt1/assays/s1-shuf-s-i01"
+  },
+  {
+   "id": "a-s1-shuf-s-i01-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-s-i01"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i01-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901302 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i01-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i02",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i02 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901003 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902021 --out runs/scaffold/hunt1/assays/s1-nat-a-i02"
+  },
+  {
+   "id": "a-s1-nat-a-i02-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i02-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901003 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902021 --out runs/scaffold/hunt1/assays/s1-nat-a-i02-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i02-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-a-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i02-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901003 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i02-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i02",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-a-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i02 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901103 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902261 --out runs/scaffold/hunt1/assays/s1-shuf-a-i02"
+  },
+  {
+   "id": "a-s1-shuf-a-i02-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-a-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i02-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901103 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i02-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i02",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i02 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901203 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902501 --out runs/scaffold/hunt1/assays/s1-nat-s-i02"
+  },
+  {
+   "id": "a-s1-nat-s-i02-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i02-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901203 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902501 --out runs/scaffold/hunt1/assays/s1-nat-s-i02-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i02-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-s-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i02-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901203 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i02-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i02",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-s-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i02 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901303 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902741 --out runs/scaffold/hunt1/assays/s1-shuf-s-i02"
+  },
+  {
+   "id": "a-s1-shuf-s-i02-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-s-i02"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i02-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901303 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i02-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i03",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i03 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901004 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902031 --out runs/scaffold/hunt1/assays/s1-nat-a-i03"
+  },
+  {
+   "id": "a-s1-nat-a-i03-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i03-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901004 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902031 --out runs/scaffold/hunt1/assays/s1-nat-a-i03-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i03-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-a-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i03-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901004 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i03-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i03",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-a-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i03 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901104 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902271 --out runs/scaffold/hunt1/assays/s1-shuf-a-i03"
+  },
+  {
+   "id": "a-s1-shuf-a-i03-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-a-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i03-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901104 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i03-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i03",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i03 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901204 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902511 --out runs/scaffold/hunt1/assays/s1-nat-s-i03"
+  },
+  {
+   "id": "a-s1-nat-s-i03-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i03-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901204 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902511 --out runs/scaffold/hunt1/assays/s1-nat-s-i03-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i03-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-s-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i03-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901204 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i03-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i03",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-s-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i03 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901304 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902751 --out runs/scaffold/hunt1/assays/s1-shuf-s-i03"
+  },
+  {
+   "id": "a-s1-shuf-s-i03-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-s-i03"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i03-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901304 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i03-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i04",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i04 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901005 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902041 --out runs/scaffold/hunt1/assays/s1-nat-a-i04"
+  },
+  {
+   "id": "a-s1-nat-a-i04-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i04-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901005 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902041 --out runs/scaffold/hunt1/assays/s1-nat-a-i04-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i04-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-a-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i04-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901005 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i04-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i04",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-a-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i04 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901105 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902281 --out runs/scaffold/hunt1/assays/s1-shuf-a-i04"
+  },
+  {
+   "id": "a-s1-shuf-a-i04-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-a-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i04-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901105 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i04-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i04",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i04 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901205 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902521 --out runs/scaffold/hunt1/assays/s1-nat-s-i04"
+  },
+  {
+   "id": "a-s1-nat-s-i04-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i04-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901205 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902521 --out runs/scaffold/hunt1/assays/s1-nat-s-i04-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i04-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-s-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i04-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901205 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i04-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i04",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-s-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i04 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901305 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902761 --out runs/scaffold/hunt1/assays/s1-shuf-s-i04"
+  },
+  {
+   "id": "a-s1-shuf-s-i04-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-s-i04"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i04-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901305 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i04-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i05",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i05 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901006 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902051 --out runs/scaffold/hunt1/assays/s1-nat-a-i05"
+  },
+  {
+   "id": "a-s1-nat-a-i05-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i05-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901006 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902051 --out runs/scaffold/hunt1/assays/s1-nat-a-i05-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i05-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-a-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i05-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901006 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i05-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i05",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-a-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i05 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901106 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902291 --out runs/scaffold/hunt1/assays/s1-shuf-a-i05"
+  },
+  {
+   "id": "a-s1-shuf-a-i05-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-a-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i05-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901106 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i05-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i05",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i05 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901206 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902531 --out runs/scaffold/hunt1/assays/s1-nat-s-i05"
+  },
+  {
+   "id": "a-s1-nat-s-i05-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i05-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901206 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902531 --out runs/scaffold/hunt1/assays/s1-nat-s-i05-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i05-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-s-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i05-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901206 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i05-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i05",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-s-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i05 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901306 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902771 --out runs/scaffold/hunt1/assays/s1-shuf-s-i05"
+  },
+  {
+   "id": "a-s1-shuf-s-i05-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-s-i05"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i05-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901306 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i05-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i06",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i06 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901007 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902061 --out runs/scaffold/hunt1/assays/s1-nat-a-i06"
+  },
+  {
+   "id": "a-s1-nat-a-i06-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i06-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901007 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902061 --out runs/scaffold/hunt1/assays/s1-nat-a-i06-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i06-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-a-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i06-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901007 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i06-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i06",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-a-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i06 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901107 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902301 --out runs/scaffold/hunt1/assays/s1-shuf-a-i06"
+  },
+  {
+   "id": "a-s1-shuf-a-i06-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-a-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i06-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901107 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i06-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i06",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i06 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901207 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902541 --out runs/scaffold/hunt1/assays/s1-nat-s-i06"
+  },
+  {
+   "id": "a-s1-nat-s-i06-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i06-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901207 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902541 --out runs/scaffold/hunt1/assays/s1-nat-s-i06-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i06-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-s-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i06-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901207 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i06-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i06",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-s-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i06 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901307 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902781 --out runs/scaffold/hunt1/assays/s1-shuf-s-i06"
+  },
+  {
+   "id": "a-s1-shuf-s-i06-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-s-i06"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i06-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901307 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i06-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i07",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i07 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901008 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902071 --out runs/scaffold/hunt1/assays/s1-nat-a-i07"
+  },
+  {
+   "id": "a-s1-nat-a-i07-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-a-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i07-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901008 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902071 --out runs/scaffold/hunt1/assays/s1-nat-a-i07-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i07-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-a-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i07-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901008 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i07-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i07",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-a-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i07 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901108 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902311 --out runs/scaffold/hunt1/assays/s1-shuf-a-i07"
+  },
+  {
+   "id": "a-s1-shuf-a-i07-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-a-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i07-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901108 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i07-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i07",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i07 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901208 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902551 --out runs/scaffold/hunt1/assays/s1-nat-s-i07"
+  },
+  {
+   "id": "a-s1-nat-s-i07-quench",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-nat-s-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i07-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901208 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902551 --out runs/scaffold/hunt1/assays/s1-nat-s-i07-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i07-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-nat-s-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i07-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901208 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i07-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i07",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-shuf-s-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i07 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901308 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902791 --out runs/scaffold/hunt1/assays/s1-shuf-s-i07"
+  },
+  {
+   "id": "a-s1-shuf-s-i07-genome",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0",
+    "h-shuf-s-i07"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i07-genome --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901308 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i07-genome"
+  },
+  {
+   "id": "a-s1-genome-control",
+   "instance": 1,
+   "deps": [
+    "devcheck-1",
+    "h-anc-j0"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-genome-control --source runs/scaffold/hunt1/anc/ponds/pond-cont/seed-4901401 --genome-founder --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-genome-control"
+  },
+  {
+   "id": "devcheck-2",
+   "instance": 2,
+   "deps": [],
+   "cmd": "bash ops/devcheck.sh"
+  },
+  {
+   "id": "h-nat-a-i08",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901009 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i08",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901109 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i08",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901209 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850009"
+  },
+  {
+   "id": "h-shuf-s-i08",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901309 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850009"
+  },
+  {
+   "id": "h-nat-a-i09",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901010 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i09",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901110 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i09",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901210 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850010"
+  },
+  {
+   "id": "h-shuf-s-i09",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901310 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850010"
+  },
+  {
+   "id": "h-nat-a-i10",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901011 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i10",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901111 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i10",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901211 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850011"
+  },
+  {
+   "id": "h-shuf-s-i10",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901311 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850011"
+  },
+  {
+   "id": "h-nat-a-i11",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901012 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i11",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901112 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i11",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901212 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850012"
+  },
+  {
+   "id": "h-shuf-s-i11",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901312 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850012"
+  },
+  {
+   "id": "h-nat-a-i12",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901013 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i12",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901113 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i12",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901213 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850013"
+  },
+  {
+   "id": "h-shuf-s-i12",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901313 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850013"
+  },
+  {
+   "id": "h-nat-a-i13",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901014 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i13",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901114 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i13",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901214 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850014"
+  },
+  {
+   "id": "h-shuf-s-i13",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901314 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850014"
+  },
+  {
+   "id": "h-nat-a-i14",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901015 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i14",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901115 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i14",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901215 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850015"
+  },
+  {
+   "id": "h-shuf-s-i14",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901315 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850015"
+  },
+  {
+   "id": "h-nat-a-i15",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901016 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i15",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901116 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i15",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901216 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850016"
+  },
+  {
+   "id": "h-shuf-s-i15",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901316 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850016"
+  },
+  {
+   "id": "h-anc-copy-2",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "bash ops/history.sh anc-copy pond-cont 4901401 10000 1"
+  },
+  {
+   "id": "a-s1-src-i08",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i08 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850009 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903081 --out runs/scaffold/hunt1/assays/s1-src-i08"
+  },
+  {
+   "id": "a-s1-src-i09",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i09 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850010 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903091 --out runs/scaffold/hunt1/assays/s1-src-i09"
+  },
+  {
+   "id": "a-s1-src-i10",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i10 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850011 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903101 --out runs/scaffold/hunt1/assays/s1-src-i10"
+  },
+  {
+   "id": "a-s1-src-i11",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i11 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850012 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903111 --out runs/scaffold/hunt1/assays/s1-src-i11"
+  },
+  {
+   "id": "a-s1-src-i12",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i12 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850013 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903121 --out runs/scaffold/hunt1/assays/s1-src-i12"
+  },
+  {
+   "id": "a-s1-src-i13",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i13 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850014 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903131 --out runs/scaffold/hunt1/assays/s1-src-i13"
+  },
+  {
+   "id": "a-s1-src-i14",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i14 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850015 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903141 --out runs/scaffold/hunt1/assays/s1-src-i14"
+  },
+  {
+   "id": "a-s1-src-i15",
+   "instance": 2,
+   "deps": [
+    "devcheck-2"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i15 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850016 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903151 --out runs/scaffold/hunt1/assays/s1-src-i15"
+  },
+  {
+   "id": "a-s1-nat-a-i08",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i08 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901009 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902081 --out runs/scaffold/hunt1/assays/s1-nat-a-i08"
+  },
+  {
+   "id": "a-s1-nat-a-i08-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i08-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901009 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902081 --out runs/scaffold/hunt1/assays/s1-nat-a-i08-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i08-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-a-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i08-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901009 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i08-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i08",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-a-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i08 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901109 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902321 --out runs/scaffold/hunt1/assays/s1-shuf-a-i08"
+  },
+  {
+   "id": "a-s1-shuf-a-i08-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-a-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i08-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901109 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i08-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i08",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i08 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901209 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902561 --out runs/scaffold/hunt1/assays/s1-nat-s-i08"
+  },
+  {
+   "id": "a-s1-nat-s-i08-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i08-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901209 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902561 --out runs/scaffold/hunt1/assays/s1-nat-s-i08-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i08-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-s-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i08-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901209 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i08-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i08",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-s-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i08 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901309 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902801 --out runs/scaffold/hunt1/assays/s1-shuf-s-i08"
+  },
+  {
+   "id": "a-s1-shuf-s-i08-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-s-i08"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i08-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901309 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i08-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i09",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i09 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901010 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902091 --out runs/scaffold/hunt1/assays/s1-nat-a-i09"
+  },
+  {
+   "id": "a-s1-nat-a-i09-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i09-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901010 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902091 --out runs/scaffold/hunt1/assays/s1-nat-a-i09-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i09-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-a-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i09-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901010 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i09-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i09",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-a-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i09 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901110 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902331 --out runs/scaffold/hunt1/assays/s1-shuf-a-i09"
+  },
+  {
+   "id": "a-s1-shuf-a-i09-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-a-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i09-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901110 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i09-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i09",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i09 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901210 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902571 --out runs/scaffold/hunt1/assays/s1-nat-s-i09"
+  },
+  {
+   "id": "a-s1-nat-s-i09-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i09-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901210 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902571 --out runs/scaffold/hunt1/assays/s1-nat-s-i09-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i09-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-s-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i09-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901210 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i09-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i09",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-s-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i09 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901310 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902811 --out runs/scaffold/hunt1/assays/s1-shuf-s-i09"
+  },
+  {
+   "id": "a-s1-shuf-s-i09-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-s-i09"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i09-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901310 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i09-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i10",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i10 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901011 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902101 --out runs/scaffold/hunt1/assays/s1-nat-a-i10"
+  },
+  {
+   "id": "a-s1-nat-a-i10-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i10-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901011 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902101 --out runs/scaffold/hunt1/assays/s1-nat-a-i10-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i10-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-a-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i10-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901011 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i10-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i10",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-a-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i10 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901111 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902341 --out runs/scaffold/hunt1/assays/s1-shuf-a-i10"
+  },
+  {
+   "id": "a-s1-shuf-a-i10-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-a-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i10-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901111 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i10-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i10",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i10 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901211 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902581 --out runs/scaffold/hunt1/assays/s1-nat-s-i10"
+  },
+  {
+   "id": "a-s1-nat-s-i10-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i10-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901211 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902581 --out runs/scaffold/hunt1/assays/s1-nat-s-i10-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i10-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-s-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i10-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901211 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i10-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i10",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-s-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i10 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901311 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902821 --out runs/scaffold/hunt1/assays/s1-shuf-s-i10"
+  },
+  {
+   "id": "a-s1-shuf-s-i10-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-s-i10"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i10-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901311 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i10-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i11",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i11 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901012 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902111 --out runs/scaffold/hunt1/assays/s1-nat-a-i11"
+  },
+  {
+   "id": "a-s1-nat-a-i11-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i11-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901012 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902111 --out runs/scaffold/hunt1/assays/s1-nat-a-i11-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i11-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-a-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i11-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901012 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i11-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i11",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-a-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i11 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901112 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902351 --out runs/scaffold/hunt1/assays/s1-shuf-a-i11"
+  },
+  {
+   "id": "a-s1-shuf-a-i11-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-a-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i11-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901112 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i11-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i11",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i11 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901212 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902591 --out runs/scaffold/hunt1/assays/s1-nat-s-i11"
+  },
+  {
+   "id": "a-s1-nat-s-i11-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i11-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901212 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902591 --out runs/scaffold/hunt1/assays/s1-nat-s-i11-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i11-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-s-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i11-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901212 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i11-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i11",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-s-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i11 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901312 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902831 --out runs/scaffold/hunt1/assays/s1-shuf-s-i11"
+  },
+  {
+   "id": "a-s1-shuf-s-i11-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-s-i11"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i11-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901312 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i11-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i12",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i12 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901013 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902121 --out runs/scaffold/hunt1/assays/s1-nat-a-i12"
+  },
+  {
+   "id": "a-s1-nat-a-i12-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i12-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901013 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902121 --out runs/scaffold/hunt1/assays/s1-nat-a-i12-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i12-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-a-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i12-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901013 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i12-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i12",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-a-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i12 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901113 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902361 --out runs/scaffold/hunt1/assays/s1-shuf-a-i12"
+  },
+  {
+   "id": "a-s1-shuf-a-i12-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-a-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i12-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901113 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i12-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i12",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i12 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901213 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902601 --out runs/scaffold/hunt1/assays/s1-nat-s-i12"
+  },
+  {
+   "id": "a-s1-nat-s-i12-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i12-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901213 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902601 --out runs/scaffold/hunt1/assays/s1-nat-s-i12-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i12-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-s-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i12-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901213 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i12-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i12",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-s-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i12 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901313 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902841 --out runs/scaffold/hunt1/assays/s1-shuf-s-i12"
+  },
+  {
+   "id": "a-s1-shuf-s-i12-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-s-i12"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i12-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901313 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i12-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i13",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i13 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901014 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902131 --out runs/scaffold/hunt1/assays/s1-nat-a-i13"
+  },
+  {
+   "id": "a-s1-nat-a-i13-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i13-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901014 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902131 --out runs/scaffold/hunt1/assays/s1-nat-a-i13-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i13-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-a-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i13-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901014 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i13-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i13",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-a-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i13 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901114 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902371 --out runs/scaffold/hunt1/assays/s1-shuf-a-i13"
+  },
+  {
+   "id": "a-s1-shuf-a-i13-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-a-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i13-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901114 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i13-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i13",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i13 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901214 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902611 --out runs/scaffold/hunt1/assays/s1-nat-s-i13"
+  },
+  {
+   "id": "a-s1-nat-s-i13-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i13-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901214 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902611 --out runs/scaffold/hunt1/assays/s1-nat-s-i13-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i13-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-s-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i13-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901214 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i13-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i13",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-s-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i13 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901314 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902851 --out runs/scaffold/hunt1/assays/s1-shuf-s-i13"
+  },
+  {
+   "id": "a-s1-shuf-s-i13-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-s-i13"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i13-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901314 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i13-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i14",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i14 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901015 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902141 --out runs/scaffold/hunt1/assays/s1-nat-a-i14"
+  },
+  {
+   "id": "a-s1-nat-a-i14-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i14-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901015 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902141 --out runs/scaffold/hunt1/assays/s1-nat-a-i14-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i14-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-a-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i14-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901015 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i14-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i14",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-a-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i14 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901115 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902381 --out runs/scaffold/hunt1/assays/s1-shuf-a-i14"
+  },
+  {
+   "id": "a-s1-shuf-a-i14-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-a-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i14-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901115 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i14-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i14",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i14 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901215 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902621 --out runs/scaffold/hunt1/assays/s1-nat-s-i14"
+  },
+  {
+   "id": "a-s1-nat-s-i14-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i14-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901215 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902621 --out runs/scaffold/hunt1/assays/s1-nat-s-i14-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i14-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-s-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i14-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901215 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i14-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i14",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-s-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i14 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901315 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902861 --out runs/scaffold/hunt1/assays/s1-shuf-s-i14"
+  },
+  {
+   "id": "a-s1-shuf-s-i14-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-s-i14"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i14-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901315 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i14-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i15",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i15 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901016 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902151 --out runs/scaffold/hunt1/assays/s1-nat-a-i15"
+  },
+  {
+   "id": "a-s1-nat-a-i15-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-a-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i15-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901016 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902151 --out runs/scaffold/hunt1/assays/s1-nat-a-i15-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i15-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-a-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i15-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901016 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i15-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i15",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-a-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i15 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901116 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902391 --out runs/scaffold/hunt1/assays/s1-shuf-a-i15"
+  },
+  {
+   "id": "a-s1-shuf-a-i15-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-a-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i15-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901116 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i15-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i15",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i15 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901216 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902631 --out runs/scaffold/hunt1/assays/s1-nat-s-i15"
+  },
+  {
+   "id": "a-s1-nat-s-i15-quench",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-nat-s-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i15-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901216 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902631 --out runs/scaffold/hunt1/assays/s1-nat-s-i15-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i15-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-nat-s-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i15-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901216 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i15-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i15",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-shuf-s-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i15 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901316 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902871 --out runs/scaffold/hunt1/assays/s1-shuf-s-i15"
+  },
+  {
+   "id": "a-s1-shuf-s-i15-genome",
+   "instance": 2,
+   "deps": [
+    "devcheck-2",
+    "h-anc-copy-2",
+    "h-shuf-s-i15"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i15-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901316 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i15-genome"
+  },
+  {
+   "id": "devcheck-3",
+   "instance": 3,
+   "deps": [],
+   "cmd": "bash ops/devcheck.sh"
+  },
+  {
+   "id": "h-nat-a-i16",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901017 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i16",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901117 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i16",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901217 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850017"
+  },
+  {
+   "id": "h-shuf-s-i16",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901317 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850017"
+  },
+  {
+   "id": "h-nat-a-i17",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901018 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i17",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901118 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i17",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901218 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850018"
+  },
+  {
+   "id": "h-shuf-s-i17",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901318 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850018"
+  },
+  {
+   "id": "h-nat-a-i18",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901019 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i18",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901119 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i18",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901219 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850019"
+  },
+  {
+   "id": "h-shuf-s-i18",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901319 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850019"
+  },
+  {
+   "id": "h-nat-a-i19",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901020 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i19",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901120 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i19",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901220 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850020"
+  },
+  {
+   "id": "h-shuf-s-i19",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901320 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850020"
+  },
+  {
+   "id": "h-nat-a-i20",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901021 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i20",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901121 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i20",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901221 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850021"
+  },
+  {
+   "id": "h-shuf-s-i20",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901321 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850021"
+  },
+  {
+   "id": "h-nat-a-i21",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901022 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i21",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901122 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i21",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901222 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850022"
+  },
+  {
+   "id": "h-shuf-s-i21",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901322 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850022"
+  },
+  {
+   "id": "h-nat-a-i22",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901023 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i22",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901123 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i22",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901223 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850023"
+  },
+  {
+   "id": "h-shuf-s-i22",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901323 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850023"
+  },
+  {
+   "id": "h-nat-a-i23",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901024 2000000 34,200"
+  },
+  {
+   "id": "h-shuf-a-i23",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901124 2000000 34,200"
+  },
+  {
+   "id": "h-nat-s-i23",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-nat 4901224 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850024"
+  },
+  {
+   "id": "h-shuf-s-i23",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh hist pond-shuf 4901324 1000000 134,200 runs/scaffold/reg1/hist/ponds/treatment/seed-4850024"
+  },
+  {
+   "id": "h-anc-copy-3",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "bash ops/history.sh anc-copy pond-cont 4901401 10000 1"
+  },
+  {
+   "id": "a-s1-src-i16",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i16 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850017 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903161 --out runs/scaffold/hunt1/assays/s1-src-i16"
+  },
+  {
+   "id": "a-s1-src-i17",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i17 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850018 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903171 --out runs/scaffold/hunt1/assays/s1-src-i17"
+  },
+  {
+   "id": "a-s1-src-i18",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i18 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850019 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903181 --out runs/scaffold/hunt1/assays/s1-src-i18"
+  },
+  {
+   "id": "a-s1-src-i19",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i19 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850020 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903191 --out runs/scaffold/hunt1/assays/s1-src-i19"
+  },
+  {
+   "id": "a-s1-src-i20",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i20 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850021 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903201 --out runs/scaffold/hunt1/assays/s1-src-i20"
+  },
+  {
+   "id": "a-s1-src-i21",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i21 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850022 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903211 --out runs/scaffold/hunt1/assays/s1-src-i21"
+  },
+  {
+   "id": "a-s1-src-i22",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i22 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850023 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903221 --out runs/scaffold/hunt1/assays/s1-src-i22"
+  },
+  {
+   "id": "a-s1-src-i23",
+   "instance": 3,
+   "deps": [
+    "devcheck-3"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-src-i23 --source runs/scaffold/reg1/hist/ponds/treatment/seed-4850024 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4903231 --out runs/scaffold/hunt1/assays/s1-src-i23"
+  },
+  {
+   "id": "a-s1-nat-a-i16",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i16 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901017 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902161 --out runs/scaffold/hunt1/assays/s1-nat-a-i16"
+  },
+  {
+   "id": "a-s1-nat-a-i16-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i16-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901017 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902161 --out runs/scaffold/hunt1/assays/s1-nat-a-i16-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i16-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-a-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i16-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901017 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i16-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i16",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-a-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i16 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901117 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902401 --out runs/scaffold/hunt1/assays/s1-shuf-a-i16"
+  },
+  {
+   "id": "a-s1-shuf-a-i16-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-a-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i16-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901117 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i16-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i16",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i16 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901217 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902641 --out runs/scaffold/hunt1/assays/s1-nat-s-i16"
+  },
+  {
+   "id": "a-s1-nat-s-i16-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i16-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901217 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902641 --out runs/scaffold/hunt1/assays/s1-nat-s-i16-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i16-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-s-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i16-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901217 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i16-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i16",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-s-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i16 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901317 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902881 --out runs/scaffold/hunt1/assays/s1-shuf-s-i16"
+  },
+  {
+   "id": "a-s1-shuf-s-i16-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-s-i16"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i16-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901317 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i16-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i17",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i17 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901018 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902171 --out runs/scaffold/hunt1/assays/s1-nat-a-i17"
+  },
+  {
+   "id": "a-s1-nat-a-i17-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i17-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901018 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902171 --out runs/scaffold/hunt1/assays/s1-nat-a-i17-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i17-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-a-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i17-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901018 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i17-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i17",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-a-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i17 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901118 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902411 --out runs/scaffold/hunt1/assays/s1-shuf-a-i17"
+  },
+  {
+   "id": "a-s1-shuf-a-i17-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-a-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i17-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901118 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i17-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i17",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i17 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901218 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902651 --out runs/scaffold/hunt1/assays/s1-nat-s-i17"
+  },
+  {
+   "id": "a-s1-nat-s-i17-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i17-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901218 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902651 --out runs/scaffold/hunt1/assays/s1-nat-s-i17-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i17-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-s-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i17-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901218 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i17-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i17",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-s-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i17 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901318 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902891 --out runs/scaffold/hunt1/assays/s1-shuf-s-i17"
+  },
+  {
+   "id": "a-s1-shuf-s-i17-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-s-i17"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i17-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901318 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i17-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i18",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i18 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901019 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902181 --out runs/scaffold/hunt1/assays/s1-nat-a-i18"
+  },
+  {
+   "id": "a-s1-nat-a-i18-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i18-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901019 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902181 --out runs/scaffold/hunt1/assays/s1-nat-a-i18-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i18-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-a-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i18-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901019 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i18-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i18",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-a-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i18 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901119 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902421 --out runs/scaffold/hunt1/assays/s1-shuf-a-i18"
+  },
+  {
+   "id": "a-s1-shuf-a-i18-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-a-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i18-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901119 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i18-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i18",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i18 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901219 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902661 --out runs/scaffold/hunt1/assays/s1-nat-s-i18"
+  },
+  {
+   "id": "a-s1-nat-s-i18-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i18-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901219 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902661 --out runs/scaffold/hunt1/assays/s1-nat-s-i18-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i18-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-s-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i18-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901219 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i18-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i18",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-s-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i18 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901319 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902901 --out runs/scaffold/hunt1/assays/s1-shuf-s-i18"
+  },
+  {
+   "id": "a-s1-shuf-s-i18-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-s-i18"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i18-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901319 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i18-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i19",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i19 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901020 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902191 --out runs/scaffold/hunt1/assays/s1-nat-a-i19"
+  },
+  {
+   "id": "a-s1-nat-a-i19-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i19-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901020 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902191 --out runs/scaffold/hunt1/assays/s1-nat-a-i19-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i19-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-a-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i19-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901020 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i19-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i19",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-a-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i19 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901120 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902431 --out runs/scaffold/hunt1/assays/s1-shuf-a-i19"
+  },
+  {
+   "id": "a-s1-shuf-a-i19-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-a-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i19-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901120 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i19-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i19",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i19 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901220 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902671 --out runs/scaffold/hunt1/assays/s1-nat-s-i19"
+  },
+  {
+   "id": "a-s1-nat-s-i19-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i19-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901220 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902671 --out runs/scaffold/hunt1/assays/s1-nat-s-i19-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i19-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-s-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i19-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901220 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i19-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i19",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-s-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i19 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901320 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902911 --out runs/scaffold/hunt1/assays/s1-shuf-s-i19"
+  },
+  {
+   "id": "a-s1-shuf-s-i19-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-s-i19"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i19-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901320 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i19-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i20",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i20 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901021 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902201 --out runs/scaffold/hunt1/assays/s1-nat-a-i20"
+  },
+  {
+   "id": "a-s1-nat-a-i20-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i20-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901021 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902201 --out runs/scaffold/hunt1/assays/s1-nat-a-i20-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i20-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-a-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i20-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901021 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i20-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i20",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-a-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i20 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901121 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902441 --out runs/scaffold/hunt1/assays/s1-shuf-a-i20"
+  },
+  {
+   "id": "a-s1-shuf-a-i20-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-a-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i20-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901121 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i20-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i20",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i20 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901221 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902681 --out runs/scaffold/hunt1/assays/s1-nat-s-i20"
+  },
+  {
+   "id": "a-s1-nat-s-i20-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i20-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901221 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902681 --out runs/scaffold/hunt1/assays/s1-nat-s-i20-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i20-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-s-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i20-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901221 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i20-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i20",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-s-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i20 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901321 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902921 --out runs/scaffold/hunt1/assays/s1-shuf-s-i20"
+  },
+  {
+   "id": "a-s1-shuf-s-i20-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-s-i20"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i20-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901321 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i20-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i21",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i21 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901022 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902211 --out runs/scaffold/hunt1/assays/s1-nat-a-i21"
+  },
+  {
+   "id": "a-s1-nat-a-i21-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i21-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901022 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902211 --out runs/scaffold/hunt1/assays/s1-nat-a-i21-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i21-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-a-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i21-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901022 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i21-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i21",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-a-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i21 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901122 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902451 --out runs/scaffold/hunt1/assays/s1-shuf-a-i21"
+  },
+  {
+   "id": "a-s1-shuf-a-i21-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-a-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i21-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901122 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i21-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i21",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i21 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901222 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902691 --out runs/scaffold/hunt1/assays/s1-nat-s-i21"
+  },
+  {
+   "id": "a-s1-nat-s-i21-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i21-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901222 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902691 --out runs/scaffold/hunt1/assays/s1-nat-s-i21-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i21-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-s-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i21-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901222 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i21-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i21",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-s-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i21 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901322 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902931 --out runs/scaffold/hunt1/assays/s1-shuf-s-i21"
+  },
+  {
+   "id": "a-s1-shuf-s-i21-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-s-i21"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i21-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901322 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i21-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i22",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i22 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901023 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902221 --out runs/scaffold/hunt1/assays/s1-nat-a-i22"
+  },
+  {
+   "id": "a-s1-nat-a-i22-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i22-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901023 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902221 --out runs/scaffold/hunt1/assays/s1-nat-a-i22-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i22-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-a-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i22-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901023 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i22-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i22",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-a-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i22 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901123 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902461 --out runs/scaffold/hunt1/assays/s1-shuf-a-i22"
+  },
+  {
+   "id": "a-s1-shuf-a-i22-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-a-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i22-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901123 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i22-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i22",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i22 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901223 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902701 --out runs/scaffold/hunt1/assays/s1-nat-s-i22"
+  },
+  {
+   "id": "a-s1-nat-s-i22-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i22-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901223 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902701 --out runs/scaffold/hunt1/assays/s1-nat-s-i22-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i22-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-s-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i22-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901223 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i22-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i22",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-s-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i22 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901323 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902941 --out runs/scaffold/hunt1/assays/s1-shuf-s-i22"
+  },
+  {
+   "id": "a-s1-shuf-s-i22-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-s-i22"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i22-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901323 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i22-genome"
+  },
+  {
+   "id": "a-s1-nat-a-i23",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i23 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901024 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902231 --out runs/scaffold/hunt1/assays/s1-nat-a-i23"
+  },
+  {
+   "id": "a-s1-nat-a-i23-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-a-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i23-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901024 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902231 --out runs/scaffold/hunt1/assays/s1-nat-a-i23-quench"
+  },
+  {
+   "id": "a-s1-nat-a-i23-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-a-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-a-i23-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901024 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-a-i23-genome"
+  },
+  {
+   "id": "a-s1-shuf-a-i23",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-a-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i23 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901124 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902471 --out runs/scaffold/hunt1/assays/s1-shuf-a-i23"
+  },
+  {
+   "id": "a-s1-shuf-a-i23-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-a-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-a-i23-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901124 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-a-i23-genome"
+  },
+  {
+   "id": "a-s1-nat-s-i23",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i23 --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901224 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902711 --out runs/scaffold/hunt1/assays/s1-nat-s-i23"
+  },
+  {
+   "id": "a-s1-nat-s-i23-quench",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-nat-s-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i23-quench --source runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901224 --quench --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902711 --out runs/scaffold/hunt1/assays/s1-nat-s-i23-quench"
+  },
+  {
+   "id": "a-s1-nat-s-i23-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-nat-s-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-nat-s-i23-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-nat/seed-4901224 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-nat-s-i23-genome"
+  },
+  {
+   "id": "a-s1-shuf-s-i23",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-shuf-s-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i23 --source runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901324 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902951 --out runs/scaffold/hunt1/assays/s1-shuf-s-i23"
+  },
+  {
+   "id": "a-s1-shuf-s-i23-genome",
+   "instance": 3,
+   "deps": [
+    "devcheck-3",
+    "h-anc-copy-3",
+    "h-shuf-s-i23"
+   ],
+   "cmd": "deno run -A tools/scaffold-assays.ts export --hunt1 --stage s1 --set s1-shuf-s-i23-genome --source runs/scaffold/hunt1/anc-copy/ponds/pond-cont/seed-4901401 --genome-from runs/scaffold/hunt1/hist/ponds/pond-shuf/seed-4901324 --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4 --seed 4902961 --out runs/scaffold/hunt1/assays/s1-shuf-s-i23-genome"
+  }
+ ]
+}
