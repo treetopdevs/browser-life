@@ -3,7 +3,8 @@ import {
   applyMigration, cellCount, cloneState, defaultConfig, buildWorld, encodeCheckpoint, generalistGenome, initWorld, MAX_STEP, presetConfig, PRESETS, stateHash, CH,
   type WorldConfig, type WorldState,
 } from "@bl/schema";
-import { applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
+import { applyCellPass, applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
+import { M3_FOUNDERS, founderGenome } from "@bl/schema";
 import {
   applyBoundary, decodeArtifact, observeCensus, pondContext, pondContinuationError, restoreObservers, serializeObservers,
   type ObserverState, type PondCycle,
@@ -417,4 +418,63 @@ describe("lab execution of pond worlds", () => {
     expect(execution.failure).toBeNull();
     expect((await execution.checkpoint()).observer.ponds).toEqual({ lastCycle: 1 });
   }, 30_000);
+});
+
+describe("lab execution of declared-cell worlds", () => {
+  const cfg = defaultConfig({ tileW: 24, tileH: 24, kernelRadius: 3, seed: 79, mutRate: 0, cellPeriod: 100, cellMutProb: 2 ** 32 });
+  // Two separate bodies of one founder under one id, so the first pass has a daughter to declare.
+  const start = () => {
+    const s = buildWorld(cfg, {
+      nutrient: 32,
+      founders: [[6, 6], [18, 18]].map(([x, y]) => ({ x, y, radius: 4, genome: founderGenome(M3_FOUNDERS[0]), biomass: 200, energy: 400 })),
+    });
+    const n = cellCount(cfg);
+    for (let i = 0; i < n; i++) if (s.genome[n + i] === 2) s.genome[n + i] = 1; // G.LIN_LO: the second disc takes the first's id
+    return s;
+  };
+
+  it("applies the pass at its boundaries as the reference does, records births as edges, and replays them in the twin", async () => {
+    const { sim, execution } = setup(start());
+    const ref = new RefSim(cloneState(start()));
+    const want = new MutationEdges();
+    for (let step = 100; step <= 300; step += 100) {
+      ref.run(100);
+      want.append(applyCellPass(ref.state));
+    }
+    const births = want.length;
+    for (let k = 0; k < 3; k++) expect(await execution.advanceFrame(100)).toBe(100);
+    const saved = await execution.checkpoint();
+    expect(stateHash(saved.state)).toBe(stateHash(ref.state));
+    expect(births).toBeGreaterThan(0);
+    // The genealogy itself, not only its size: every birth edge with its parent, as the reference minted it.
+    expect(Array.from(execution.edges.words())).toEqual(Array.from(want.words()));
+    expect(saved.observer.mutations).toBe(births);
+    expect(sim.uploads.length).toBeGreaterThan(0);
+
+    // A checkpoint taken at a pass step carries the post-pass state: a world restored from its encoded
+    // artifact continues exactly as the uninterrupted one, observer and edges included, and does not
+    // repeat the pass it was saved at.
+    const artifact = decodeArtifact(encodeCheckpoint(saved.state, saved.observer));
+    const resumed = setup(artifact.state, { observer: artifact.observer as ObserverState, lineage: { edges: new MutationEdges(execution.edges.words()), dropped: 0 } });
+    const whole = setup(start());
+    for (let k = 0; k < 5; k++) await whole.execution.advanceFrame(100);
+    for (let k = 0; k < 2; k++) await resumed.execution.advanceFrame(100);
+    const a = await whole.execution.checkpoint(), b = await resumed.execution.checkpoint();
+    expect(stateHash(b.state)).toBe(stateHash(a.state));
+    expect(JSON.stringify(b.observer)).toBe(JSON.stringify(a.observer));
+    expect(Array.from(resumed.execution.edges.words())).toEqual(Array.from(whole.execution.edges.words()));
+    // The replay twin walks the same boundaries, so it applies the same passes.
+    const v = await execution.verify(200, async (state) => new CpuSimulation(state));
+    expect(v.twinHash).toBe(v.liveHash);
+    for (let k = 0; k < 2; k++) {
+      ref.run(100);
+      applyCellPass(ref.state);
+    }
+    expect(v.liveHash).toBe(stateHash(ref.state));
+  }, 120_000);
+
+  it("rejects a cellPeriod off the census grid before stepping", () => {
+    const off = buildWorld({ ...cfg, cellPeriod: 150 }, { nutrient: 32, founders: [] });
+    expect(() => setup(off)).toThrow(/cellPeriod 150 is not a multiple/);
+  });
 });

@@ -28,7 +28,10 @@ import {
   W1_OFF,
   W2_OFF,
   addu,
+  SHAPE_BASE,
   buildKernel,
+  buildShapeKernel,
+  shapeRings,
   cellBase,
   cellCount,
   clampi,
@@ -56,6 +59,7 @@ import {
   packLineageLo,
   type FluxName,
   type KernelTable,
+  type ShapeKernel,
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
@@ -83,6 +87,8 @@ export class RefSim {
   readonly W: number;
   readonly H: number;
   readonly kernel: KernelTable;
+  /** Ring-tagged kernel under WorldConfig.shapeReach (then also `kernel`), else null. */
+  private readonly shape: ShapeKernel | null;
   state: WorldState;
   private cellsB: Uint32Array;
   private genomeB: Uint32Array;
@@ -102,7 +108,8 @@ export class RefSim {
     this.n = cellCount(this.cfg);
     this.W = worldW(this.cfg);
     this.H = this.n / this.W;
-    this.kernel = buildKernel(this.cfg.kernelRadius);
+    this.shape = this.cfg.shapeReach === undefined ? null : buildShapeKernel(this.cfg.kernelRadius, this.cfg.shapeReach);
+    this.kernel = this.shape ?? buildKernel(this.cfg.kernelRadius);
     this.cellsB = new Uint32Array(this.n * CELL_CHANNELS);
     this.genomeB = new Uint32Array(this.n * GENOME_CHANNELS);
     this.U = new Int32Array(this.n);
@@ -188,23 +195,39 @@ export class RefSim {
     const { cells, genome } = this.state;
     const { taps, count, sum } = this.kernel;
     const c = this.cfg;
+    const shape = this.shape;
+    const conv3 = [0, 0, 0];
     for (let y = 0; y < this.H; y++) {
       for (let x = 0; x < this.W; x++) {
         const i = y * this.W + x;
-        let conv = 0;
-        for (let k = 0; k < count; k++) {
-          const j = this.nb(x, y, taps[k * 4], taps[k * 4 + 1]);
-          conv = addu(conv, mulu(taps[k * 4 + 2], this.mass(cells, j)));
-        }
-        const uq = divu(conv, sum);
-        let u = divu(mulu(uq, 1024), c.massUnit);
-        if (u > 4095) u = 4095;
         let mu = c.defaultMu;
         let sigma = c.defaultSigma;
+        let ringBytes = 0;
         if (!c.neutral && this.living(genome, i)) {
           const p0 = genome[G.PARAM0 * this.n + i];
           mu = p0 & 0xffff;
           sigma = p0 >>> 16;
+          ringBytes = genome[G.PARAM1 * this.n + i] >>> 8;
+        }
+        let u: number;
+        if (shape) {
+          // Heritable shape (WorldConfig.shapeReach): one sum per ring, weighted by the genome.
+          conv3[0] = conv3[1] = conv3[2] = 0;
+          for (let k = 0; k < count; k++) {
+            const j = this.nb(x, y, taps[k * 4], taps[k * 4 + 1]);
+            const r = taps[k * 4 + 3];
+            conv3[r] = addu(conv3[r], mulu(taps[k * 4 + 2], this.mass(cells, j)));
+          }
+          u = shapeDensity(conv3, shape.ringSum, shape.rings, ringBytes, c.massUnit);
+        } else {
+          let conv = 0;
+          for (let k = 0; k < count; k++) {
+            const j = this.nb(x, y, taps[k * 4], taps[k * 4 + 1]);
+            conv = addu(conv, mulu(taps[k * 4 + 2], this.mass(cells, j)));
+          }
+          const uq = divu(conv, sum);
+          u = divu(mulu(uq, 1024), c.massUnit);
+          if (u > 4095) u = 4095;
         }
         mu = mu > 4095 ? 4095 : mu;
         sigma = clampi(sigma, 1, 1023);
@@ -637,6 +660,39 @@ export class RefSim {
   }
 }
 
+const s8 = (b: number) => ((b & 0xff) > 127 ? (b & 0xff) - 256 : b & 0xff);
+
+/** A ring's mean capped mass with 8 fractional bits: floor(conv * 256 / sum), 0 for an empty ring. */
+function ringMean(conv: number, sum: number): number {
+  if (sum === 0) return 0;
+  return addu(mulu(divu(conv, sum), 256), divu(mulu(conv % sum, 256), sum));
+}
+
+/**
+ * Kernel density under WorldConfig.shapeReach, in 1/1024 of massUnit and capped at 4095 like
+ * RULE_VERSION 1's. `conv` and `ringSum` are per ring (see buildShapeKernel); `ringBytes` is the
+ * genome's PARAM1 >>> 8, three signed offsets from the neutral weights (SHAPE_BASE, SHAPE_BASE, 0),
+ * each weight floored at 0, the far ring's ignored when the kernel has none. Neutral weights give
+ * RULE_VERSION 1's floor(conv / sum) exactly; any other weighting is the weighted mean of the ring
+ * means. Bounds: a ring mean is < 2^22 (mass is capped at 16383), weights sum to at most 509, so
+ * the weighted sum stays below 2^31.
+ */
+export function shapeDensity(conv: ArrayLike<number>, ringSum: ArrayLike<number>, rings: number, ringBytes: number, massUnit: number): number {
+  const w0 = Math.max(SHAPE_BASE + s8(ringBytes), 0);
+  const w1 = Math.max(SHAPE_BASE + s8(ringBytes >>> 8), 0);
+  const w2 = rings > 2 ? Math.max(s8(ringBytes >>> 16), 0) : 0;
+  let u: number;
+  if (w0 === SHAPE_BASE && w1 === SHAPE_BASE && w2 === 0) {
+    u = divu(mulu(divu(addu(conv[0], conv[1]), addu(ringSum[0], ringSum[1])), 1024), massUnit);
+  } else {
+    const den = w0 + w1 + w2;
+    if (den === 0) return 0;
+    const num = addu(addu(mulu(w0, ringMean(conv[0], ringSum[0])), mulu(w1, ringMean(conv[1], ringSum[1]))), mulu(w2, ringMean(conv[2], ringSum[2])));
+    u = divu(mulu(divu(num, den), 4), massUnit);
+  }
+  return u > 4095 ? 4095 : u;
+}
+
 /** Polynomial Lenia growth: 2(1 - (u-mu)^2 / 9 sigma^2)^4 - 1, as i32 in [-256, 256]. */
 /**
  * Draw threshold for a mutation given `newB` synthesised quanta: newB·mutRate,
@@ -723,7 +779,8 @@ export function controllerForward(wb: Int8Array, x: Int32Array, h: Int32Array, o
 }
 
 export function mutateInPlace(genome: Uint32Array, n: number, i: number, c: WorldConfig, which: number, deltaRnd: number): void {
-  const slot = which % (NN_BYTES + 3);
+  // Under WorldConfig.shapeReach each kernel ring adds one slot after the motility gain.
+  const slot = which % (NN_BYTES + 3 + shapeRings(c));
   let delta = (deltaRnd % (2 * c.mutStep + 1)) - c.mutStep;
   if (delta === 0) delta = 1;
   if (slot < NN_BYTES) {
@@ -740,10 +797,17 @@ export function mutateInPlace(genome: Uint32Array, n: number, i: number, c: Worl
     const p0 = genome[G.PARAM0 * n + i];
     const sigma = clampi((p0 >>> 16) + (delta >> 2 === 0 ? (delta > 0 ? 1 : -1) : delta >> 2), 2, 1023);
     genome[G.PARAM0 * n + i] = ((p0 & 0xffff) | (sigma << 16)) >>> 0;
-  } else {
+  } else if (slot === NN_BYTES + 2) {
     const p1 = genome[G.PARAM1 * n + i];
     const gain = clampi((p1 & 0xff) + delta, 0, 255);
     genome[G.PARAM1 * n + i] = ((p1 & 0xffffff00) | gain) >>> 0;
+  } else {
+    // Ring weight offset: the two near rings may fall to weight 0 (offset -SHAPE_BASE), the far ring starts there.
+    const k = slot - (NN_BYTES + 3);
+    const sh = (k + 1) * 8;
+    const p1 = genome[G.PARAM1 * n + i];
+    const v = clampi(s8(p1 >>> sh) + delta, k < 2 ? -SHAPE_BASE : 0, 127);
+    genome[G.PARAM1 * n + i] = ((p1 & ~(0xff << sh)) | ((v & 0xff) << sh)) >>> 0;
   }
 }
 

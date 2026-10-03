@@ -2,6 +2,7 @@
 // and the WGSL kernels agree exactly. Fractions are numerators over the
 // power of two named in the comment.
 import type { PondArm } from "./ponds.ts";
+import { SHAPE_MAX_REACH } from "./kernel.ts";
 
 export const SCHEMA_VERSION = 3;
 export const RULE_VERSION = 1;
@@ -247,6 +248,27 @@ export interface WorldConfig {
    */
   takeoverTol?: number;
 
+  /**
+   * Declared cells (cells sandbox; absent = RULE_VERSION 1): every
+   * `cellPeriod` steps a host-side pass (applyCellPass in @bl/sim-ref) gives
+   * each connected body of one lineage id its own id, the heaviest keeping
+   * the old one, and mutates each new daughter with probability
+   * `cellMutProb` / 2^32. Set together, and only with mutRate 0: a genome
+   * then changes at a cell's birth and nowhere else.
+   */
+  cellPeriod?: number;
+  cellMutProb?: number;
+  /**
+   * Heritable kernel shape (cells sandbox; absent = RULE_VERSION 1). The
+   * kernel is split into rings (see buildShapeKernel in kernel.ts): the
+   * RULE_VERSION 1 taps inside and outside half the kernel radius, plus a far
+   * shell out to `shapeReach` when that exceeds kernelRadius. Bytes 1..3 of a
+   * genome's PARAM1 are signed offsets from the neutral ring weights
+   * (64, 64, 0); a cell's kernel density is the weighted mean of its genome's
+   * ring means, and mutation gains one slot per ring. A genome whose ring
+   * bytes are all zero has exactly the RULE_VERSION 1 density.
+   */
+  shapeReach?: number;
   /**
    * Recurring injury (exploratory sandbox, docs/sandbox-ownership.md). Absent =
    * RULE_VERSION 1. On every step with (step + 1) % injuryPeriod === 0, each
@@ -529,7 +551,35 @@ export function validateConfig(c: WorldConfig): string[] {
   }
   errs.push(...validateTakeover(c));
   errs.push(...validateInjury(c));
+  errs.push(...validateShape(c));
+  errs.push(...validateCells(c));
   return errs;
+}
+
+function validateCells(c: WorldConfig): string[] {
+  if (c.cellPeriod === undefined && c.cellMutProb === undefined) return [];
+  if (c.cellPeriod === undefined || c.cellMutProb === undefined) return ["cellPeriod and cellMutProb are set together"];
+  const errs: string[] = [];
+  if (!Number.isInteger(c.cellPeriod) || c.cellPeriod < 1 || c.cellPeriod > 2 ** 31 - 1) errs.push("cellPeriod must be an integer in 1..2^31-1");
+  if (!Number.isInteger(c.cellMutProb) || c.cellMutProb < 0 || c.cellMutProb > 2 ** 32) errs.push("cellMutProb must be an integer in 0..2^32");
+  if (c.mutRate !== 0) errs.push("declared cells need mutRate 0 (genomes change at a cell's birth only)");
+  if (c.migrationPeriod || c.pondPeriod !== undefined || c.neutral) errs.push("declared cells are not defined with migration, the pond cycle or the neutral shadow");
+  return errs;
+}
+
+/** Rings of the heritable-shape kernel: 0 without WorldConfig.shapeReach, 2 without a far ring, else 3. */
+export function shapeRings(c: Pick<WorldConfig, "shapeReach" | "kernelRadius">): number {
+  return c.shapeReach === undefined ? 0 : c.shapeReach > c.kernelRadius ? 3 : 2;
+}
+
+function validateShape(c: WorldConfig): string[] {
+  if (c.shapeReach === undefined) return [];
+  const maxR = Math.min(SHAPE_MAX_REACH, Math.floor((Math.min(c.tileW, c.tileH) - 1) / 2));
+  if (!Number.isInteger(c.shapeReach) || c.shapeReach < c.kernelRadius || c.shapeReach > maxR)
+    return [`shapeReach must be an integer in kernelRadius..${maxR} (the far ring must fit inside a tile)`];
+  // Below radius 3 the inner ring (|d| < radius / 2) has no taps, and its weight would only dilute the mean.
+  if (c.kernelRadius < 3) return ["shapeReach needs kernelRadius >= 3 (the inner ring must have taps)"];
+  return [];
 }
 
 /** Largest injuryRadius: bounds the per-cell centre scan to (2 * 16 + 1)^2 draws on an injury step. */

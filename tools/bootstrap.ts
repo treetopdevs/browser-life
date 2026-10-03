@@ -54,7 +54,7 @@
 // Checkpoints are replaced atomically and archive.json is written last, so a
 // run stopped at any point resumes from its last completed batch.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { CLUSTER_DISTANCE, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, genomeFromHex, generalistGenome, randomGenome, type Genome } from "@bl/schema";
+import { CLUSTER_DISTANCE, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, genomeFromHex, generalistGenome, randomGenome, ringsOf, type Genome } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { binomialLowerBound } from "@bl/metrics";
 import {
@@ -145,9 +145,9 @@ const search = {
   ...(gateName !== "m3" ? { gate: gateName as "maintenance" } : {}),
 };
 const perBatch = Math.floor((ec.side * ec.side) / ec.reps);
-type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[] };
-const enc = (g: Genome): EncGenome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Array.from(g.weights) });
-const dec = (g: EncGenome): Genome => ({ ...g, weights: Int8Array.from(g.weights) });
+type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[]; rings?: number[] };
+const enc = (g: Genome): EncGenome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}) });
+const dec = (g: EncGenome): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}) });
 type SavedArchive = {
   evaluated: number;
   eval: typeof ec;

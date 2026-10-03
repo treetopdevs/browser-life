@@ -462,12 +462,14 @@ if (cmd === "mutants") {
 } else if (cmd === "retest") {
   // Plan: {seed0, reps?, genomes: [{label, hex}]}; 64 / reps genomes per batch, at 32 replicates (the
   // M3 retest) unless the plan says otherwise.
-  const plan: { seed0: number; reps?: number; genomes: { label: string; hex: string }[] } = JSON.parse(await Deno.readTextFile(a.plan!));
+  // `world` adds config keys to the evaluator's world (the cells sandbox passes shapeReach, without which
+  // a genome's kernel ring weights would not be expressed).
+  const plan: { seed0: number; reps?: number; world?: Partial<WorldConfig>; genomes: { label: string; hex: string }[] } = JSON.parse(await Deno.readTextFile(a.plan!));
   const reps = plan.reps ?? 32, per = Math.floor((DEFAULT_EVAL.side * DEFAULT_EVAL.side) / reps);
   const units = Array.from({ length: Math.ceil(plan.genomes.length / per) }, (_, j) => ({ j, gs: plan.genomes.slice(per * j, per * j + per) }));
   await forUnits(units, (u) => `r${u.j}`, async ({ j, gs }) => {
     const seed = plan.seed0 + j;
-    const ev = await evaluateBatch(device, gs.map((g) => genomeFromHex(g.hex)), { ...ec, reps, seed });
+    const ev = await evaluateBatch(device, gs.map((g) => genomeFromHex(g.hex)), { ...ec, reps, seed, ...(plan.world ? { world: { ...ec.world, ...plan.world } } : {}) });
     return { j, seed, genomes: gs.map((g, k) => ({ ...g, eval: ev[k] })) };
   });
 } else if (cmd === "garden") {

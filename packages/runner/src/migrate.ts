@@ -24,6 +24,7 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { census, individuals } from "@bl/metrics";
+import { applyCellPass, type CellBirth } from "@bl/sim-ref";
 import type { GpuSim } from "@bl/sim-gpu";
 
 type BoundarySim = Pick<GpuSim, "cfg" | "readState" | "upload">;
@@ -187,4 +188,24 @@ export async function applyBoundary(sim: BoundarySim, step: number, ponds: PondC
   assertConserved(cycle.state, ponds.startMatter, ponds.baseline);
   sim.upload(cycle.state);
   return { migrations, ponds: { b, rows: cycle.rows, ended: cycle.ended, donors: cycle.donors }, state: cycle.state };
+}
+
+/**
+ * Declared cells (WorldConfig.cellPeriod, cells sandbox): when `cellPeriod`
+ * divides the absolute step `step` (> 0), reads the state back (or takes
+ * `known`, a readback of this same step), applies `applyCellPass` to it and
+ * uploads it when a cell was born. Same contract as `applyBoundary`: after
+ * that step's census and observers, before any checkpoint at it. `state` is
+ * the post-pass state whenever the pass ran, for a caller that needs the full
+ * state at this step anyway. Only the headless runner calls this; the lab
+ * does not step declared-cell worlds.
+ */
+export async function cellsAtBoundary(sim: BoundarySim, step: number, known: WorldState | null = null): Promise<{ births: CellBirth[]; state: WorldState | null }> {
+  const period = sim.cfg.cellPeriod;
+  if (period === undefined || step === 0 || step % period !== 0) return { births: [], state: null };
+  const st = known ?? (await sim.readState());
+  if (st.step !== step) throw new Error(`cell pass at t=${step}, but the simulation is at t=${st.step}`);
+  const births = applyCellPass(st);
+  if (births.length) sim.upload(st);
+  return { births, state: st };
 }

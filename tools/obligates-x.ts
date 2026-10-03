@@ -14,7 +14,7 @@
 // Roles are read out, never scored. Seeds: batch b of medium k uses seed + 20 k + b; a --reps that needs more than
 // 20 batches per medium is refused (its batches would reuse the next medium's seeds).
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { M3_FOUNDERS, emptyGenome, founderGenome, genomeDistance, genomeHex, type Genome } from "@bl/schema";
+import { M3_FOUNDERS, emptyGenome, founderGenome, genomeDistance, genomeHex, ringsOf, type Genome } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { DEFAULT_EVAL, evaluateBatch, type EvalConfig, type Evaluation } from "@bl/search";
 import { MEDIA, SEED_STRIDE, checkSeedCapacity, farthest, interleave, pickSubjects, readOut, type Cell, type Cells, type MediumId, type Subject } from "./lib/obligates-x.ts";
@@ -27,9 +27,9 @@ const reps = Number(a.reps), seed0 = Number(a.seed);
 if (!Number.isSafeInteger(reps) || reps < 8 || !Number.isSafeInteger(seed0)) throw new Error("--reps must be an integer >= 8 and --seed an integer");
 const perBatch = Math.floor((DEFAULT_EVAL.side * DEFAULT_EVAL.side) / reps);
 
-type Enc = { mu: number; sigma: number; motGain: number; weights: number[] | Record<string, number> };
-const toG = (g: Enc): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from({ length: 160 }, (_, i) => (Array.isArray(g.weights) ? g.weights[i] : g.weights[String(i)]) ?? 0) });
-const key = (g: Genome) => JSON.stringify([g.mu, g.sigma, g.motGain, Array.from(g.weights)]);
+type Enc = { mu: number; sigma: number; motGain: number; weights: number[] | Record<string, number>; rings?: number[] };
+const toG = (g: Enc): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from({ length: 160 }, (_, i) => (Array.isArray(g.weights) ? g.weights[i] : g.weights[String(i)]) ?? 0), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}) });
+const key = (g: Genome) => JSON.stringify([g.mu, g.sigma, g.motGain, Array.from(g.weights), ...(ringsOf(g) ? [ringsOf(g)] : [])]);
 const json = (x: unknown) => JSON.stringify(x, null, 1) + "\n";
 
 // ---------- plan (deterministic, CPU)

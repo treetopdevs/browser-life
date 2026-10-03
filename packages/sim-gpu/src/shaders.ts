@@ -29,7 +29,10 @@ import {
   FLUX_NAMES,
   encodeGenome,
   generalistGenome,
+  SHAPE_BASE,
   buildKernel,
+  buildShapeKernel,
+  shapeRings,
   cellCount,
   lightModeId,
   worldW,
@@ -143,6 +146,13 @@ export function prelude(c: WorldConfig): string {
   consts.INJURY_PERIOD = u(c.injuryPeriod ?? 1);
   consts.INJURY_R = i(c.injuryRadius ?? 0);
   consts.INJURY_PROB = u(c.injuryProb ?? 0);
+  // Heritable shape (WorldConfig.shapeReach): constant-folded away when absent.
+  const sk = c.shapeReach === undefined ? null : buildShapeKernel(c.kernelRadius, c.shapeReach);
+  consts.SHAPE_RINGS = u(shapeRings(c));
+  consts.SHAPE_BASE = i(SHAPE_BASE);
+  consts.K_S0 = u(sk ? sk.ringSum[0] : 0);
+  consts.K_S1 = u(sk ? sk.ringSum[1] : 0);
+  consts.K_S2 = u(sk ? sk.ringSum[2] : 0);
   consts.TOL_WORDS = u(c.takeoverTol ?? 0);
   consts.TOL_MU = i(c.takeoverTol ?? 0);
   consts.TOL_SIGMA = i((c.takeoverTol ?? 0) >>> 2);
@@ -232,6 +242,28 @@ const at = (xy: string) => /* wgsl */ `
   if (x >= WORLD_W || y >= WORLD_H) { return; }
   let i = y * WORLD_W + x;`;
 
+// Mirrors ringMean and shapeDensity in sim-ref (WorldConfig.shapeReach).
+const SHAPE_WGSL = /* wgsl */ `
+fn ring_mean(conv: u32, s: u32) -> u32 {
+  if (s == 0u) { return 0u; }
+  return (conv / s) * 256u + ((conv % s) * 256u) / s;
+}
+fn shape_density(c0: u32, c1: u32, c2: u32, ringBytes: u32) -> u32 {
+  let b = bitcast<i32>(ringBytes);
+  let w0 = u32(max(SHAPE_BASE + extractBits(b, 0u, 8u), 0));
+  let w1 = u32(max(SHAPE_BASE + extractBits(b, 8u, 8u), 0));
+  var w2 = 0u;
+  if (SHAPE_RINGS > 2u) { w2 = u32(max(extractBits(b, 16u, 8u), 0)); }
+  if (w0 == u32(SHAPE_BASE) && w1 == u32(SHAPE_BASE) && w2 == 0u) {
+    return min((((c0 + c1) / KSUM) * 1024u) / MASS_UNIT, 4095u);
+  }
+  let den = w0 + w1 + w2;
+  if (den == 0u) { return 0u; }
+  let num = w0 * ring_mean(c0, K_S0) + w1 * ring_mean(c1, K_S1) + w2 * ring_mean(c2, K_S2);
+  return min(((num / den) * 4u) / MASS_UNIT, 4095u);
+}
+`;
+
 /** Affinity uses 2x2 register blocking when tiles are multiples of 16. */
 export const affinityBlock = (c: WorldConfig) => (c.tileW % 16 === 0 && c.tileH % 16 === 0 ? 2 : 1);
 
@@ -241,13 +273,18 @@ export function affinityShader(c: WorldConfig): string {
   // load across the cells whose kernel covers it. Tiles are multiples of the
   // block, so a workgroup never straddles two independent worlds. Integer
   // sums are order-independent, so the result is identical to the reference.
-  const R = c.kernelRadius;
+  // Under WorldConfig.shapeReach the halo grows to the reach and each tap adds
+  // to its ring's sum (conv, conv1, conv2 for rings 0, 1, 2); without it there
+  // is one ring and the generated code is RULE_VERSION 1's.
+  const shape = c.shapeReach !== undefined;
+  const R = shape ? c.shapeReach! : c.kernelRadius;
   const Bk = affinityBlock(c);
   const CB = WG * Bk; // cells per workgroup side
   const SW = CB + 2 * R;
-  const k = buildKernel(R);
-  const wmap = new Map<string, number>();
-  for (let t = 0; t < k.count; t++) wmap.set(`${k.taps[t * 4]},${k.taps[t * 4 + 1]}`, k.taps[t * 4 + 2]);
+  const k = shape ? buildShapeKernel(c.kernelRadius, c.shapeReach!) : buildKernel(R);
+  const wmap = new Map<string, [number, number]>();
+  for (let t = 0; t < k.count; t++) wmap.set(`${k.taps[t * 4]},${k.taps[t * 4 + 1]}`, [k.taps[t * 4 + 2], k.taps[t * 4 + 3]]);
+  const acc = ["conv", "conv1", "conv2"];
   const lines: string[] = [];
   for (let dy = -R; dy <= R + Bk - 1; dy++) {
     for (let dx = -R; dx <= R + Bk - 1; dx++) {
@@ -255,7 +292,7 @@ export function affinityShader(c: WorldConfig): string {
       for (let cy = 0; cy < Bk; cy++)
         for (let cx = 0; cx < Bk; cx++) {
           const w = wmap.get(`${dx - cx},${dy - cy}`);
-          if (w) terms.push(`conv[${cy * Bk + cx}] += ${w}u * v;`);
+          if (w) terms.push(`${acc[w[1]]}[${cy * Bk + cx}] += ${w[0]}u * v;`);
         }
       if (!terms.length) continue;
       lines.push(`  { let v = sm[b + ${dy * SW + dx}]; ${terms.join(" ")} }`);
@@ -282,6 +319,7 @@ fn growth(u: u32, mu: u32, sigma: u32) -> i32 {
   return 2 * i32(z) - 256;
 }
 
+${shape ? SHAPE_WGSL : ""}
 @compute @workgroup_size(${WG}, ${WG})
 fn main(@builtin(local_invocation_id) lid: vec3<u32>, @builtin(workgroup_id) wid: vec3<u32>,
         @builtin(local_invocation_index) li: u32) {
@@ -298,21 +336,26 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>, @builtin(workgroup_id) wid
   let by = oy + lid.y * BK;
   if (bx >= WORLD_W || by >= WORLD_H) { return; }
   let b = i32((lid.y * BK + R) * SW + lid.x * BK + R);
-  var conv: array<u32, ${Bk * Bk}>;
+  var conv: array<u32, ${Bk * Bk}>;${shape ? `
+  var conv1: array<u32, ${Bk * Bk}>;
+  var conv2: array<u32, ${Bk * Bk}>;` : ""}
 ${lines.join("\n")}
   for (var q = 0u; q < BK * BK; q++) {
     let x = bx + (q % BK);
     let y = by + (q / BK);
     let i = y * WORLD_W + x;
-    let uq = conv[q] / KSUM;
+${shape ? "" : `    let uq = conv[q] / KSUM;
     let uu = min((uq * 1024u) / MASS_UNIT, 4095u);
-    var mu = DEF_MU;
-    var sigma = DEF_SIGMA;
+`}    var mu = DEF_MU;
+    var sigma = DEF_SIGMA;${shape ? `
+    var ringBytes = 0u;` : ""}
     if (!NEUTRAL && (genome[G_LIN_HI + i] | genome[G_LIN_LO + i]) != 0u) {
       let p0 = genome[G_PARAM0 + i];
       mu = p0 & 0xffffu;
-      sigma = p0 >> 16u;
-    }
+      sigma = p0 >> 16u;${shape ? `
+      ringBytes = genome[G_PARAM1 + i] >> 8u;` : ""}
+    }${shape ? `
+    let uu = shape_density(conv[q], conv1[q], conv2[q], ringBytes);` : ""}
     U[i] = growth(uu, min(mu, 4095u), clamp(sigma, 1u, 1023u));
   }
 }
@@ -605,7 +648,7 @@ fn add64(lo: u32, hi: u32, v: u32) {
 }
 
 fn mutate(i: u32, which: u32, deltaRnd: u32) {
-  let slot = which % (NN_BYTES + 3u);
+  let slot = which % (NN_BYTES + 3u + SHAPE_RINGS);
   var delta = i32(deltaRnd % u32(2 * MUT_STEP + 1)) - MUT_STEP;
   if (delta == 0) { delta = 1; }
   if (slot < NN_BYTES) {
@@ -624,10 +667,17 @@ fn mutate(i: u32, which: u32, deltaRnd: u32) {
     if (sd == 0) { sd = select(-1, 1, delta > 0); }
     let sigma = clamp(i32(p0 >> 16u) + sd, 2, 1023);
     genome[G_PARAM0 + i] = (p0 & 0xffffu) | (u32(sigma) << 16u);
-  } else {
+  } else if (slot == NN_BYTES + 2u) {
     let p1 = genome[G_PARAM1 + i];
     let gain = clamp(i32(p1 & 0xffu) + delta, 0, 255);
     genome[G_PARAM1 + i] = (p1 & 0xffffff00u) | u32(gain);
+  } else {
+    // Ring weight offset (WorldConfig.shapeReach), as mutateInPlace in sim-ref.
+    let k = slot - (NN_BYTES + 3u);
+    let sh = (k + 1u) * 8u;
+    let p1 = genome[G_PARAM1 + i];
+    let v = clamp(extractBits(bitcast<i32>(p1), sh, 8u) + delta, select(0, -SHAPE_BASE, k < 2u), 127);
+    genome[G_PARAM1 + i] = (p1 & ~(0xffu << sh)) | ((u32(v) & 0xffu) << sh);
   }
 }
 

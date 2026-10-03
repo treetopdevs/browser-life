@@ -42,6 +42,16 @@ const SPOT_REGIME: Partial<WorldConfig> = { defaultMu: 60, defaultSigma: 20, ker
  */
 const POND_REGIME: Partial<WorldConfig> = { defaultMu: 60, defaultSigma: 20, kernelRadius: 9, lightMode: "uniform", lightBase: 40, lightAmp: 160 };
 
+/** Wounds land every WOUND_PERIOD steps in the injury presets. */
+const WOUND_PERIOD = 13;
+
+/** Recurring-injury keys: radius-`radius` wound discs, each cell hit about once per `every` steps. */
+function wounds(radius: number, every: number): Pick<WorldConfig, "injuryPeriod" | "injuryRadius" | "injuryProb"> {
+  let disc = 0;
+  for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) if (dx * dx + dy * dy <= radius * radius) disc++;
+  return { injuryPeriod: WOUND_PERIOD, injuryRadius: radius, injuryProb: Math.round((2 ** 32 * WOUND_PERIOD) / (disc * every)) };
+}
+
 export const PRESETS: Preset[] = [
   {
     id: "spots",
@@ -162,18 +172,42 @@ export const PRESETS: Preset[] = [
   // bound structure as the assay's lesion does. `every` is the mean number of
   // steps between hits on any one cell; a radius-3 wound (29 cells) takes about
   // 30% of a 20-cell body, a radius-8 wound (197 cells) removes whole bodies.
-  ...([["light", 3, 13_000], ["heavy", 3, 3_250], ["coarse", 8, 13_000]] as const).map(([tag, radius, every]): Preset => {
-    const period = 13;
-    let disc = 0;
-    for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) if (dx * dx + dy * dy <= radius * radius) disc++;
-    return {
-      id: `own-injury-${tag}`,
-      name: `Ownership: recurring injury (${tag})`,
-      description: `gradient-m3 with radius-${radius} wounds every ${period} steps; each cell is hit about once per ${every.toLocaleString("en-US")} steps.`,
-      cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, injuryPeriod: period, injuryRadius: radius, injuryProb: Math.round((2 ** 32 * period) / (disc * every)) },
-      init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
-    };
-  }),
+  ...([["light", 3, 13_000], ["heavy", 3, 3_250], ["coarse", 8, 13_000]] as const).map(([tag, radius, every]): Preset => ({
+    id: `own-injury-${tag}`,
+    name: `Ownership: recurring injury (${tag})`,
+    description: `gradient-m3 with radius-${radius} wounds every ${WOUND_PERIOD} steps; each cell is hit about once per ${every.toLocaleString("en-US")} steps.`,
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, ...wounds(radius, every) },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  })),
+  // Cells sandbox (docs/sandbox-cells.md): heritable kernel shape. Founders
+  // carry neutral ring weights, so their kernel density is gradient-m3's. The
+  // histories still part from gradient-m3's at the first mutation, because
+  // the ring slots change which slot a mutation draw selects.
+  ...([["own-shape", 9, "the two rings of the radius-9 kernel"], ["own-shape-far", 13, "those two rings plus a far ring out to radius 13"]] as const).map(([id, reach, what]): Preset => ({
+    id,
+    name: `Cells: heritable kernel shape (reach ${reach})`,
+    description: `gradient-m3 where each genome weights ${what}; mutation gains one slot per ring.`,
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, shapeReach: reach },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  })),
+  // Declared cells: no in-step mutation; every daughter body gets its own id
+  // and one mutation at birth (cellMutProb 2^32 = always). The wall arm adds
+  // lossy takeover between ids, so a cell's matter is never assimilated. The
+  // injury arms add own-injury-light's wounds (radius 3, each cell hit about
+  // once per 13,000 steps) to each; a wound that cuts a body in two makes a
+  // daughter at the next pass.
+  ...([
+    ["own-cell", {}, "RULE_VERSION 1 takeover between cells"],
+    ["own-cell-wall", { takeover: "lossy", takeoverKin: "lineage" }, "lossy takeover between cells"],
+    ["own-cell-injury", wounds(3, 13_000), "RULE_VERSION 1 takeover between cells, recurring radius-3 wounds"],
+    ["own-cell-wall-injury", { takeover: "lossy", takeoverKin: "lineage", ...wounds(3, 13_000) }, "lossy takeover between cells, recurring radius-3 wounds"],
+  ] as const).map(([id, extra, what]): Preset => ({
+    id,
+    name: `Cells: declared cells (${what})`,
+    description: `gradient-m3 with mutation at cell birth only: every 1,000 steps each body that shares its id with a heavier one becomes a daughter with a new id and one mutation; ${what}.`,
+    cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, mutRate: 0, cellPeriod: 1000, cellMutProb: 2 ** 32, ...extra },
+    init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
+  })),
 ];
 
 export function presetConfig(p: Preset, seed: number, extra: Partial<WorldConfig> = {}): WorldConfig {

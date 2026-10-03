@@ -7,13 +7,15 @@
 //   removes an incomplete bundle first (run.ts appends). Bundles land in DIR/screen/<arm>/treatment/seed-<n>/.
 // read: for every arm/seed/snapshot with a checkpoint and no cached assay, assays the top lineages
 //   (>= 16 cells) with `tools/assay.ts retest` (assay seed0 = 4900001 + offset), caches under DIR/assays/,
-//   then rewrites DIR/summary.tsv, DIR/summary.md and DIR/frames.png (seed 1 contact sheet).
+//   then rewrites DIR/summary.tsv, DIR/summary.md, DIR/frames.png (the lowest seed at each snapshot) and
+//   DIR/frames-seeds.png (every seed at the last snapshot). Rows are arms in both sheets.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { CH, G, M3_FOUNDERS, cellCount, decodeCheckpoint } from "@bl/schema";
+import { cellBodies } from "@bl/sim-ref";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
 const CONTROL = "gradient-m3";
-const KNOWN_ARMS = [CONTROL, "own-lossy", "own-match", "own-seasons", "own-genome-1", "own-genome-3", "own-genome-8", "own-injury-light", "own-injury-heavy", "own-injury-coarse"];
+const KNOWN_ARMS = [CONTROL, "own-lossy", "own-match", "own-seasons", "own-genome-1", "own-genome-3", "own-genome-8", "own-injury-light", "own-injury-heavy", "own-injury-coarse", "own-shape", "own-shape-far", "own-cell", "own-cell-wall", "own-cell-injury", "own-cell-wall-injury"];
 const KNOWN_SNAPS = [100_000, 250_000, 500_000, 1_000_000];
 const a = parseArgs(Deno.args.slice(1), {
   string: ["arms", "seeds", "steps", "checkpoint", "out", "top", "reps", "snapshots"],
@@ -90,16 +92,31 @@ async function assayOne(arms: string[], arm: string, seed: number, snap: number,
   const dir = `${OUT}/assays/${arm}-s${seed}-t${snap}`;
   const cache = `${dir}/result.json`;
   if (await exists(cache)) return JSON.parse(await Deno.readTextFile(cache));
-  const top = Number(a.top), reps = Number(a.reps);
-  const stats = worldStats(decodeCheckpoint(await Deno.readFile(ck)).state);
-  const picks = stats.lineages.filter((l) => l.cells >= 16).slice(0, top);
+  const ckState = decodeCheckpoint(await Deno.readFile(ck)).state;
+  const stats = worldStats(ckState);
+  // Genome semantics that the assay world must share with the evolving world (heritable shape).
+  const world = ckState.cfg.shapeReach !== undefined ? { shapeReach: ckState.cfg.shapeReach } : undefined;
+  // Declared cells (cellPeriod): an id is one body, so the top four ids would be four bodies. Sixteen
+  // bodies at evenly spaced size ranks, four replicates each, sample the population of declared cells
+  // with the same 64 tiles. Ranks are over the bodies the pass sees (cellBodies), not over ids' total
+  // occupancy, which would admit ids that are only film or fragments.
+  const cellArm = ckState.cfg.cellPeriod !== undefined;
+  const top = cellArm ? 16 : Number(a.top), reps = cellArm ? 4 : Number(a.reps);
+  let picks: Lin[];
+  if (cellArm) {
+    const byKey = new Map(stats.lineages.map((l) => [l.key, l]));
+    const bodies = cellBodies(ckState).sort((x, y) => y.cells - x.cells || x.anchor - y.anchor);
+    const ranked = bodies.length > top ? Array.from({ length: top }, (_, k) => bodies[Math.floor(((k + 0.5) * bodies.length) / top)]) : bodies;
+    // `cells` in the plan is the body's size. Two sampled bodies may share an id only before the first pass.
+    picks = ranked.map((b) => ({ ...byKey.get(`${b.hi}:${b.lo}`)!, cells: b.cells }));
+  } else picks = stats.lineages.filter((l) => l.cells >= 16).slice(0, top);
   const armIdx = Math.max(0, arms.indexOf(arm));
   const offset = armIdx * 1000 + seed * 100 + snapIdx * 10; // < 9,999 for <= 10 arms, seeds <= 9, snapshots <= 9; batches add j < 10
   const seed0 = 4_900_001 + offset;
   await Deno.mkdir(dir, { recursive: true });
   let surv = 0, regen = 0, light = 0, nreps = 0, t = 0;
   if (picks.length) {
-    await Deno.writeTextFile(`${dir}/plan.json`, JSON.stringify({ seed0, reps, genomes: picks.map((l, r) => ({ label: `r${r}-${l.key}`, hex: l.hex, cells: l.cells })) }));
+    await Deno.writeTextFile(`${dir}/plan.json`, JSON.stringify({ seed0, reps, ...(world ? { world } : {}), genomes: picks.map((l, r) => ({ label: `r${r}-${l.key}`, hex: l.hex, cells: l.cells })) }));
     const t0 = performance.now();
     const r = await sh(["run", "-A", "tools/assay.ts", "retest", "--out", `${dir.startsWith("/") ? dir : `${ROOT}/${dir}`}`, "--plan", `${dir.startsWith("/") ? dir : `${ROOT}/${dir}`}/plan.json`], false);
     if (!r.ok) throw new Error(`assay failed for ${arm} seed ${seed} t${snap}`);
@@ -145,12 +162,12 @@ function hsv(h: number, s: number, v: number): [number, number, number] {
 }
 function lowbias(x: number): number { x >>>= 0; x ^= x >>> 16; x = Math.imul(x, 0x7feb352d); x ^= x >>> 15; x = Math.imul(x, 0x846ca68b); x ^= x >>> 16; return x >>> 0; }
 
-async function frames(arms: string[], snaps: number[]) {
-  const T = 256, gap = 4, W = snaps.length * (T + gap) + gap, H = arms.length * (T + gap) + gap;
+async function frames(file: string, arms: string[], cols: { seed: number; snap: number }[]) {
+  const T = 256, gap = 4, W = cols.length * (T + gap) + gap, H = arms.length * (T + gap) + gap;
   const img = new Uint8Array(W * H * 3).fill(40);
   for (let r = 0; r < arms.length; r++)
-    for (let c = 0; c < snaps.length; c++) {
-      const ck = `${bundle(arms[r], 1)}/checkpoints/${pad(snaps[c])}`;
+    for (let c = 0; c < cols.length; c++) {
+      const ck = `${bundle(arms[r], cols[c].seed)}/checkpoints/${pad(cols[c].snap)}`;
       if (!(await exists(ck))) continue;
       const st = decodeCheckpoint(await Deno.readFile(ck)).state;
       const n = cellCount(st.cfg), side = Math.round(Math.sqrt(n));
@@ -163,7 +180,7 @@ async function frames(arms: string[], snaps: number[]) {
           const o = ((y0 + y) * W + x0 + x) * 3; img[o] = px[0]; img[o + 1] = px[1]; img[o + 2] = px[2];
         }
     }
-  await Deno.writeFile(`${OUT}/frames.png`, await encodePng(W, H, img));
+  await Deno.writeFile(`${OUT}/${file}`, await encodePng(W, H, img));
 }
 
 async function read() {
@@ -220,8 +237,9 @@ async function read() {
     }
   }
   await Deno.writeTextFile(`${OUT}/summary.md`, md.slice(0, 60).join("\n") + "\n");
-  await frames(arms, snapsPresent);
-  console.log(`wrote summary.tsv, summary.md, frames.png (${cells.length} cells, ${arms.length} arms)`);
+  await frames("frames.png", arms, snapsPresent.map((snap) => ({ seed: seedsAll[0] ?? 1, snap })));
+  if (snapsPresent.length) await frames("frames-seeds.png", arms, seedsAll.map((seed) => ({ seed, snap: snapsPresent[snapsPresent.length - 1] })));
+  console.log(`wrote summary.tsv, summary.md, frames.png, frames-seeds.png (${cells.length} cells, ${arms.length} arms)`);
 }
 
 if (cmd === "evolve") await evolve();

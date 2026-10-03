@@ -2,7 +2,7 @@
 // repertoire of viable founders; ensemble runs switch it off, and none of the
 // held-out observables is a descriptor or part of quality.
 
-import { CLUSTER_DISTANCE, NN_BYTES, draw, genomeDistance, geneticClusters, lowbias32, type Genome } from "@bl/schema";
+import { CLUSTER_DISTANCE, NN_BYTES, draw, genomeDistance, geneticClusters, lowbias32, ringsOf, type Genome } from "@bl/schema";
 import { quality, type Evaluation } from "./evaluate.ts";
 
 // CLUSTER_DISTANCE/genomeDistance/geneticClusters used to be defined here;
@@ -223,9 +223,10 @@ export function m3Gate(confirmations: { genome: Genome; eval: Evaluation }[], mi
   return { screened: confirmations.length, confirmed: ok.length, clusters, met: clusters >= minClusters };
 }
 
-/** Identity of a genome by its parameters and weights. */
+/** Identity of a genome by its parameters and weights, and by its kernel ring offsets when any is non-zero. */
 export function genomeKey(g: Genome): string {
-  return `${g.mu}:${g.sigma}:${g.motGain}:${Array.from(g.weights).join(",")}`;
+  const r = ringsOf(g);
+  return `${g.mu}:${g.sigma}:${g.motGain}:${Array.from(g.weights).join(",")}${r ? `:r${r.join("/")}` : ""}`;
 }
 
 /** A few random weight/parameter perturbations, deterministic in `seed`. */

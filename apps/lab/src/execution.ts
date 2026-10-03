@@ -5,6 +5,7 @@ import type { GpuSim } from "@bl/sim-gpu";
 import type { Census } from "@bl/metrics";
 import {
   applyBoundary,
+  cellsAtBoundary,
   observeCensus,
   pondContext,
   pondContinuationError,
@@ -17,6 +18,7 @@ import {
   type PondCycle,
 } from "@bl/runner";
 import { MutationEdges } from "@bl/lineage";
+import type { CellBirth } from "@bl/sim-ref";
 
 /** Real GPU simulation in the worker; reference physics with injectable readbacks in tests. */
 export type LabSimulation = Pick<GpuSim, "cfg" | "step" | "run" | "drainLedger" | "readSnapshot" | "readState" | "upload" | "destroy">;
@@ -56,6 +58,10 @@ export class LabExecution {
     const pondPeriod = sim.cfg.pondPeriod;
     if (pondPeriod !== undefined && pondPeriod % settings.censusEvery !== 0) {
       throw new Error(`pondPeriod ${pondPeriod} is not a multiple of this world's censusEvery (${settings.censusEvery}); the pond cycle would fire at the wrong cadence in the lab`);
+    }
+    const cellPeriod = sim.cfg.cellPeriod;
+    if (cellPeriod !== undefined && cellPeriod % settings.censusEvery !== 0) {
+      throw new Error(`cellPeriod ${cellPeriod} is not a multiple of this world's censusEvery (${settings.censusEvery}); the declared-cell pass would fire at the wrong cadence in the lab`);
     }
     if (options.observer && options.observer.step !== sim.step) throw new Error("observer and simulation steps differ");
     const pondError = pondContinuationError(sim.cfg, options.observer, sim.step);
@@ -142,7 +148,7 @@ export class LabExecution {
     // Imported migration-enabled and pond worlds realign to the absolute census
     // grid, where their transforms fire. Otherwise retain the history's
     // original relative cadence.
-    const absolute = (this.sim.cfg.migrationPeriod ?? 0) > 0 || this.sim.cfg.pondPeriod !== undefined;
+    const absolute = (this.sim.cfg.migrationPeriod ?? 0) > 0 || this.sim.cfg.pondPeriod !== undefined || this.sim.cfg.cellPeriod !== undefined;
     const rem = absolute ? cursor.observed % every : 0;
     return cursor.observed + (rem === 0 ? every : every - rem);
   }
@@ -159,9 +165,14 @@ export class LabExecution {
         this.check();
         if (snap.step !== step) throw new Error(`observation at t=${snap.step}, expected the census boundary t=${step}`);
         const observed = observeCensus(this.obs, this.sim.cfg, snap, ledger.events.length + ledger.dropped);
-        const { ponds } = await this.boundaryAt(this.sim, step);
+        const { ponds, births } = await this.boundaryAt(this.sim, step);
         // As the runner records it: the last boundary whose cycle is applied (or recorded, for cont).
         if (ponds) this.obs.ponds = { lastCycle: ponds.b };
+        // Declared cells: births are lineage edges and count as mutations, as in the runner.
+        if (births.length) {
+          this.edges.append(births);
+          this.obs.mutations += births.length;
+        }
         this.check();
         this.display(() => this.options.onObservation?.(observed.census, ledger.dropped));
         if (ponds) this.display(() => this.options.onPondCycle?.(ponds, step));
@@ -187,17 +198,23 @@ export class LabExecution {
     }
   }
 
-  /** The runner's boundary helper: migration, then the pond cycle with this history's context. */
-  private boundaryAt(sim: LabSimulation, step: number): Promise<BoundaryResult> {
-    return applyBoundary({
+  /**
+   * The runner's boundary helpers: migration, then the pond cycle with this history's context, then the
+   * declared-cell pass (WorldConfig.cellPeriod), in the runner's order.
+   */
+  private async boundaryAt(sim: LabSimulation, step: number): Promise<BoundaryResult & { births: CellBirth[] }> {
+    const host = {
       cfg: sim.cfg,
       readState: async () => {
         const state = await sim.readState();
         this.check();
         return state;
       },
-      upload: (state) => sim.upload(state),
-    }, step, this.ponds);
+      upload: (state: WorldState) => sim.upload(state),
+    };
+    const boundary = await applyBoundary(host, step, this.ponds);
+    const cells = await cellsAtBoundary(host, step, boundary.state);
+    return { ...boundary, state: cells.state ?? boundary.state, births: cells.births };
   }
 
   /** The single traversal for live worlds and physics-only replay twins. */

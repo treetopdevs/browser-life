@@ -399,6 +399,8 @@ function onProbe(p: ProbeMsg) {
     ["lineage", p.lineage || "none"],
     ["μ / σ", p.lineage ? `${(p.mu / 1024).toFixed(3)} / ${(p.sigma / 1024).toFixed(3)}` : "—"],
     ["motility gain", p.lineage ? String(p.motGain) : "—"],
+    // Heritable kernel shape: weights of the inner, outer and far ring (neutral 64 / 64 / 0), shown once a genome leaves neutral.
+    ...(p.lineage && p.rings ? [["ring weights", `${Math.max(64 + p.rings[0], 0)} / ${Math.max(64 + p.rings[1], 0)} / ${Math.max(p.rings[2], 0)}`] as [string, string]] : []),
   ];
   $("probe-kv").replaceChildren(
     ...rows.flatMap(([k, v]) => {

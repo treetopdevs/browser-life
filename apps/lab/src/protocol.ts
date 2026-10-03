@@ -85,6 +85,8 @@ export interface ProbeMsg {
   sigma: number;
   motGain: number;
   weights: number[];
+  /** Kernel ring offsets (WorldConfig.shapeReach), present only when some offset is non-zero. */
+  rings?: [number, number, number];
 }
 
 /** Display only: the pond cycle just applied (or, for arm cont, recorded) at `step`. */

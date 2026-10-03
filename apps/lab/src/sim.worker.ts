@@ -407,6 +407,7 @@ async function probe(x: number, y: number) {
     sigma: g.sigma,
     motGain: g.motGain,
     weights: Array.from(g.weights),
+    ...(g.rings ? { rings: g.rings } : {}),
   });
 }
 

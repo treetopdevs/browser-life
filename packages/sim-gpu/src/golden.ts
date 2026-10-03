@@ -4,17 +4,20 @@
 
 import {
   CH,
+  M3_FOUNDERS,
   MATTER_MAX,
   POOL_MAX,
   buildWorld,
   cloneState,
   defaultConfig,
+  founderGenome,
   generalistWorld,
   m3World,
   soupWorld,
   stateHash,
   totalsOf,
   ledgerResidual,
+  type Genome,
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
@@ -60,6 +63,19 @@ function irregularPolymerField(c: WorldConfig): WorldState {
       s.cells[CH.E * n + i] = (23 * x * y) % 2000;
     }
   return s;
+}
+
+/**
+ * The M3 founders with kernel ring offsets planted (WorldConfig.shapeReach),
+ * so every branch of shapeDensity runs from step 0: neutral; near rings
+ * reweighted; the inner ring at weight 0 with the far ring on; neutral near
+ * rings plus the far ring; the far ring alone; every weight 0 (density 0);
+ * a negative far byte (weight 0) with a reweighted near ring; and offsets
+ * below -64 (floored at weight 0) with the largest far weight.
+ */
+function ringedFounders(): Genome[] {
+  const rings: [number, number, number][] = [[0, 0, 0], [20, -30, 0], [-64, 10, 40], [0, 0, 25], [-64, -64, 25], [-64, -64, 0], [10, 0, -20], [-128, -100, 127]];
+  return M3_FOUNDERS.map((f, k) => ({ ...founderGenome(f), rings: rings[k % rings.length] }));
 }
 
 export function goldenCases(): GoldenCase[] {
@@ -217,6 +233,50 @@ export function goldenCases(): GoldenCase[] {
       name: "takeover-genome",
       cfg: defaultConfig({ ...base, seed: 57, mutRate: 60_000_000, takeover: "lossy", takeoverKin: "genome", takeoverTol: 1 }),
       init: (c) => m3World(c, 12, 32, 64),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // Injury review (Codex, 2026-10-03): injury at the arithmetic bounds and
+      // across tiles. Two 16 x 16 tiles; half the left one holds
+      // MATTER_MAX / 256 polymer per cell with E at POOL_MAX and the widest
+      // energy gap, so one wound exports far more than 2^32 heat through the
+      // 64-bit reductions, and wounds of radius 7 (the largest a 16-cell tile
+      // allows) wrap inside their own tile, every other step. The right tile
+      // holds a founder, so a wound leaking across tiles would show.
+      name: "injury-extremes",
+      cfg: defaultConfig({ tileW: 16, tileH: 16, tilesX: 2, kernelRadius: 3, seed: 71, eB: 30, eP: 31, eC: 1, injuryPeriod: 2, injuryRadius: 7, injuryProb: 2 ** 32 / 64 }),
+      init: (c) => {
+        const s = buildWorld(c, { nutrient: 0, founders: [{ x: 24, y: 8, radius: 5, genome: founderGenome(M3_FOUNDERS[0]), biomass: 64, energy: 128 }] });
+        const n = 512;
+        const per = Math.floor(MATTER_MAX / 256);
+        for (let y = 0; y < 16; y++)
+          for (let x = 0; x < 8; x++) {
+            const i = y * 32 + (x < 4 ? x : x + 8);
+            s.cells[CH.P * n + i] = per;
+            s.cells[CH.E * n + i] = POOL_MAX;
+          }
+        return s;
+      },
+      steps: 12,
+      every: 4,
+    },
+    {
+      // Heritable shape (WorldConfig.shapeReach, cells sandbox) with a far
+      // ring, on 2x2-blocked affinity (tiles a multiple of 16): ringed
+      // founders in contact, with mutation reaching the three ring slots.
+      name: "shape-far",
+      cfg: defaultConfig({ tileW: 48, tileH: 48, kernelRadius: 5, seed: 61, mutRate: 60_000_000, shapeReach: 8 }),
+      init: (c) => m3World(c, 12, 32, 64, ringedFounders()),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // As "shape-far" without a far ring (shapeReach == kernelRadius: two
+      // rings, the third byte inert) and on unblocked affinity.
+      name: "shape-near",
+      cfg: defaultConfig({ ...base, seed: 67, mutRate: 60_000_000, shapeReach: 5 }),
+      init: (c) => m3World(c, 12, 32, 64, ringedFounders()),
       steps: 120,
       every: 30,
     },

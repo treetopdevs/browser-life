@@ -37,7 +37,7 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
-import { applyBoundary, pondContext, pondTsvRows, PONDS_HEADER } from "./migrate.ts";
+import { applyBoundary, cellsAtBoundary, pondContext, pondTsvRows, PONDS_HEADER } from "./migrate.ts";
 import {
   ActivityTracker,
   Tracker,
@@ -658,6 +658,9 @@ export async function runExperiment(
   // already refused by specConfig).
   const pondPeriod = cfg.pondPeriod ?? 0;
   if (pondPeriod > 0 && pondPeriod % spec.censusEvery !== 0) throw new Error("pondPeriod must be a multiple of censusEvery");
+  // Declared cells (WorldConfig.cellPeriod, cells sandbox): the same hook and the same cadence guards.
+  const cellPeriod = cfg.cellPeriod ?? 0;
+  if (cellPeriod > 0 && cellPeriod % spec.censusEvery !== 0) throw new Error("cellPeriod must be a multiple of censusEvery");
   if (pondPeriod > 0 && opts.immigrant) throw new Error("a pond run cannot import an immigrant state: cross-run exchange would move matter into and out of its ponds");
   const init =
     opts.start ??
@@ -697,6 +700,8 @@ export async function runExperiment(
     throw new Error(`migration-enabled runs must start on a multiple of censusEvery (start step ${startStep}, censusEvery ${spec.censusEvery})`);
   if (pondPeriod > 0 && startStep % spec.censusEvery !== 0)
     throw new Error(`pond runs must start on a multiple of censusEvery (start step ${startStep}, censusEvery ${spec.censusEvery})`);
+  if (cellPeriod > 0 && startStep % spec.censusEvery !== 0)
+    throw new Error(`declared-cell runs must start on a multiple of censusEvery (start step ${startStep}, censusEvery ${spec.censusEvery})`);
   const settings = observerSettings(spec);
   // The lineageObs bookkeeping (lineages already seen, the previous census's individuals) is not part of
   // the checkpointed observer state, so those files are only exact for a run observed from its start.
@@ -786,6 +791,8 @@ export async function runExperiment(
   };
   await sink.writeText("manifest.json", JSON.stringify(manifest, null, 2));
   await sink.writeText("mutations.tsv", "childHi\tchildLo\tparentHi\tparentLo\n");
+  // Declared cells: every birth is also a mutations.tsv row (child and parent ids); cells.tsv adds what the pass saw.
+  if (cellPeriod > 0) await sink.writeText("cells.tsv", "step\tchildHi\tchildLo\tparentHi\tparentLo\tanchor\tcells\tmass\tmutated\n");
   await sink.writeText("lineages.tsv", "step\tlineage\tcells\n");
   await sink.writeText("heredity.tsv", "step\tmuA\tmuB\tsigmaA\tsigmaB\tmassA\tmassB\n");
   await sink.writeText("series.jsonl", "");
@@ -974,13 +981,21 @@ export async function runExperiment(
         // Unlike tools/scaffold.ts, an ended history keeps stepping; later cycles take the same no-donor path.
         if (boundary.ponds.ended) onProgress(`cycle ${boundary.ponds.b} at t=${c.step}: no pond eligible, every pond cleared to nutrient (history ended; stepping on)`);
       }
+      // Declared cells: the pass at this boundary, after the census saw the pre-pass state and before
+      // any checkpoint. Births are lineage events like mutations (a new id with its parent's).
+      const cellPass = await cellsAtBoundary(sim, c.step, boundary.state);
+      if (cellPass.births.length) {
+        await sink.appendText("mutations.tsv", cellPass.births.map((e) => `${e.childHi}\t${e.childLo}\t${e.parentHi}\t${e.parentLo}`).join("\n") + "\n");
+        await sink.appendText("cells.tsv", cellPass.births.map((e) => [e.step, e.childHi, e.childLo, e.parentHi, e.parentLo, e.anchor, e.cells, e.mass, e.mutated ? 1 : 0].join("\t")).join("\n") + "\n");
+        obs.mutations += cellPass.births.length;
+      }
       // One readState() when either a checkpoint or a species census is due -- never two: both
       // need the full genome buffer (species census needs every GENOME_CHANNELS word per cell,
       // not the 4-word genomeHead readSnapshot already read above), so they share this readback.
       // A pond boundary has already read the post-cycle state back, so it is reused here.
       const dueForCheckpoint = spec.checkpointEvery > 0 && (sim.step - startStep) % spec.checkpointEvery === 0;
       if (dueForCheckpoint || spec.speciesCensus) {
-        const st = boundary.state ?? (await sim.readState());
+        const st = cellPass.state ?? boundary.state ?? (await sim.readState());
         if (dueForCheckpoint) {
           const file = `checkpoints/t${String(st.step).padStart(9, "0")}.blck`;
           await sink.writeBytes(file, encodeCheckpoint(st, serializeObservers(obs, st.step, settings)));

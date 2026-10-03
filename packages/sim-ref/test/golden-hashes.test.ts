@@ -40,6 +40,10 @@ const PINNED: Record<number, Record<string, string>> = {
     "takeover-genome": "dfb56d29a4d59f7a",
     // Recurring injury (WorldConfig.injuryPeriod, optional, ownership sandbox).
     injury: "1fd51d2042631706",
+    "injury-extremes": "a007c064a2346ee8",
+    // Heritable kernel shape (WorldConfig.shapeReach, optional, cells sandbox).
+    "shape-far": "2f9a2c0e000f2330",
+    "shape-near": "01fbc54dc408e1e1",
   },
 };
 
