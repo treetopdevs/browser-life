@@ -468,3 +468,58 @@ Written while building the code listed under "Code to build (Stage 0)", before a
 11. **Completeness.** Nothing is analysed unless every command of the committed queue manifest has a terminal state. Otherwise the readout is "incomplete": like the budget stop it withholds every test, but it is a status, not an outcome row. Only the technical checks (the device check and, when given, the reproducibility check) are still read then, and a failure of either keeps the Invalid row's precedence; a budget stop is otherwise Uninformative. No assay result, the quenched controls included, is read under a budget stop or an incomplete queue.
 12. **Descriptives the text leaves open:** mean export share = mean over occupied ponds of X / trait; distinct lineages = mean `recipientLineages` over occupied ponds; offspring-number distribution = histogram among exporting ponds; the truncation rate's 1% flag is reported, with no consequence for the tests.
 13. **Distribution.** The coordinator hands `pond-nat`/`pond-shuf` runs only to islands advertising `ponds-v2`, and stitching refuses branch segments; the hunt's runs are not distributed.
+
+## Amendment 2 — 2026-10-03: Stage 0 results
+
+Stage 0 ran on the Mac on 2026-10-03 from commit `01cc159b` (`runs/scaffold/hunt0/stage0.sh`), with every decision taken by `scaffold-report.ts hunt0`. The readout is `experiments/scaffold/readouts/hunt0.json`. **Outcome: Stage 0 passed at e = 1/2.** The fallback was not needed, so Stage 1, its device check and every later reference use `pondDeath` 32,768 as written.
+
+**G1, viability and selection strength (base pair, boundaries 1–30; criteria in "Stage 0").**
+
+| Run | Seed | Mean occupancy (b 2–30) | Recolonisation (recipients of b 1–29) | Selection strength (mean CV of X) | Ended | Conservation |
+|---|---|---|---|---|---|---|
+| `nat` s0 | 4,900,001 | 0.961 | 829 / 979 = 0.847 | 0.349 | no | exact |
+| `nat` s1 | 4,900,002 | 0.890 | 738 / 1,009 = 0.731 | 0.433 | no | exact |
+| `shuf` s0 | 4,900,011 | 0.866 | 707 / 1,032 = 0.685 | 0.505 | no | exact |
+| `shuf` s1 | 4,900,012 | 0.872 | 691 / 1,039 = 0.665 | 0.470 | no | exact |
+
+- Both `nat` runs are viable and have selection strength above 0.1, and both `shuf` runs conserve exactly, so G1 passes at the base pair.
+- **Descriptive, means over boundaries 1–30:**
+
+  | | `nat` s0 | `nat` s1 | `shuf` s0 | `shuf` s1 |
+  |---|---|---|---|---|
+  | Spearman (export vs offspring count) | +0.26 | +0.37 | −0.01 | −0.00 |
+  | Effective number of donors | 52.3 | 46.0 | 42.1 | 42.2 |
+  | Exporting ponds | 58.9 | 54.6 | 52.7 | 51.3 |
+
+  No recipient row was truncated.
+
+**G2, the instrument (W on protocol v1's main-run states at boundary 100).**
+
+| i | W(`scaf` i) | W(`rand` i) | `scaf` > `rand` | Quenched `scaf` i: X_f > 0 |
+|---|---|---|---|---|
+| 0 | 31,010 | 22,251 | yes | 0 of 64 |
+| 1 | 32,845 | 1,253 | yes | 0 of 64 |
+| 2 | 30,857 | 4,347 | yes | 0 of 64 |
+| 3 | 35,858 | 893 | yes | 0 of 64 |
+| 4 | 31,718 | 21,430 | yes | 0 of 64 |
+| 5 | 31,432 | 15,050 | yes | 0 of 64 |
+
+6 of 6 (5 needed), and every quenched control is dead, so G2 passes. As the hunt states, this shows only that W registers a large difference in evolved material.
+
+**D3, non-genetic effects (no gate).** Four pairs from the ancestor clone with mutation off, boundaries 1–30, W at the boundary-30 pre-cycle state.
+- The differences W(`nat` j) − W(`shuf` j) are +33, −368, +825 and −93 (2 of 4 positive).
+- The spread of W among the four `nat` worlds is a mean of 6,835, a population SD (denominator n) of 269 (sample SD 311) and a range of 656.
+- Every D3 run conserves exactly and none ended. The `nat` runs' selection strength is 0.58–0.60.
+- Read as the hunt says D3 is to be read: in 30 ancestral cycles without genetic variation, `nat` shows no consistent W advantage over `shuf`. Two of four differences are positive, and their mean is +99. The largest, +825 in pair 2, exceeds the `nat` range because `shuf` world 2 has the lowest W of all eight. Four pairs cannot exclude non-genetic effects, and this says nothing about 200 cycles or scaffold-derived material.
+- **A caveat for Stage 1's descriptives.** With mutation off, `nat` still beats `shuf` within the runs in all four pairs:
+  - occupancy: 0.95–0.96 against 0.85–0.90;
+  - recolonisation: 0.89–0.92 against 0.72–0.79;
+  - retained packet mass per recipient: means 5,202–5,258 against 4,470–4,721.
+
+  These are non-genetic effects of the donor weighting itself. G1, with mutation, also shows higher occupancy and recolonisation in both `nat` runs, but its packet-mass contrast is not consistent: in seed 1, `nat` recipients' mean retained mass is 4,038 against `shuf`'s 4,646. So differences of this kind in Stage 1's `ponds.tsv` cannot be read as evolved; only W, measured in the common garden, carries the contrasts.
+
+**Throughput.** The Mac ran four lanes at 117–155 steps/s each at 512², sharing its GPU with another session's job, so 300,000 steps took about 32–43 minutes per lane. Stage 1 runs on AWS as decided.
+
+**Re-derivation.** Every number above was re-derived independently from the raw files with separate code. It replayed every death, `shuf` permutation and donor draw from the seeds, recomputed the sources' export masses from the decoded checkpoints, and recomputed W from the fragment rows. All matched.
+
+**Next:** Stage 1 needs the registration's queue to complete (it did, on 2026-10-03) and its own dated draw note approved by the user. Its sources follow the sources rule: the registration's 24 `scaf` histories if all have a verified boundary-100 pre-cycle checkpoint, otherwise the hunt's own.
