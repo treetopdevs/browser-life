@@ -2,7 +2,8 @@
 # lane.sh <n>: runs this instance's commands from ops/cmds.txt ("id|deps|command", a copy of tools/reg1-queue.ts's cmds-<n>.txt)
 # in file order, as the R3 replication's lanes did. A command runs once every dependency is satisfied: a plain dependency must
 # be in ops/done (if it is in ops/fail, the command fails too); an ordering-only dependency ~id only has to be in ops/done or
-# ops/fail. Claims are mkdir locks in ops/claims. A failed command is retried once with the same seeds (registration validity
+# ops/fail. Claims are mkdir locks in ops/claims, each
+# holding its lane's pid (watchdog.sh releases a claim whose lane is gone). A failed command is retried once with the same seeds (registration validity
 # step 2), except the device check.
 cd ~/bl || exit 1
 export PATH=$HOME/.deno/bin:$PATH
@@ -30,6 +31,7 @@ while true; do
     fi
     [ $ready = 1 ] || continue
     mkdir ops/claims/$id 2>/dev/null || continue
+    echo $$ > ops/claims/$id/lane   # the watchdog releases a claim whose lane has died
     echo "$(date -u +%FT%T) lane$n start $id" >> ops/lanes.log
     bash -c "$cmd" > ops/logs/$id.log 2>&1; rc=$?
     if [ $rc != 0 ] && [ "${id%%-*}" != devcheck ]; then

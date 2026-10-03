@@ -129,7 +129,9 @@ for (const [n0, [lo, hi]] of INSTANCES.entries()) {
   if (n === 1) {
     const s3 = commands.filter((c) => c.instance === 1 && c.id.startsWith("a-heredity-")).map((c) => `~${c.id}`);
     for (let j = 0; j < 4; j++)
-      add(n, `n-j${j}`, [dc, ...s3], `deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed ${reg1NegativeSeed(j)} --out runs/scaffold/reg1/neg/j${j}`);
+      // tools/scaffold.ts refuses an existing --out without --resume, so a retry resumes (as the R3 replication's queue did);
+      // a directory left without its meta.json (killed before writing it) is removed first.
+      add(n, `n-j${j}`, [dc, ...s3], `D=runs/scaffold/reg1/neg/j${j}; [ -d $D ] && [ ! -f $D/meta.json ] && rm -rf $D; R=""; [ -f $D/meta.json ] && R=--resume; deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed ${reg1NegativeSeed(j)} --out $D $R`);
     for (let h = 48; h < 54; h++) {
       const l = reg1HeredityLabelsOf(h);
       const deps = [dc, ...s3, ...(l.control === "negative" ? [`n-j${h - 50}`] : [])];
@@ -161,8 +163,8 @@ if (a.ops) {
   await Deno.mkdir(a.ops, { recursive: true });
   for (const n of [1, 2, 3] as const)
     await Deno.writeTextFile(`${a.ops}/cmds-${n}.txt`, commands.filter((c) => c.instance === n).map((c) => `${c.id}|${c.deps.length ? c.deps.join(",") : "-"}|${c.cmd}`).join("\n") + "\n");
-  // history.sh and lane.sh are committed as they are (tools/reg1-ops/); devcheck.sh carries this queue's --device-ref.
-  for (const f of ["history.sh", "lane.sh"]) await Deno.copyFile(new URL(`./reg1-ops/${f}`, import.meta.url), `${a.ops}/${f}`);
+  // history.sh, lane.sh, start.sh and watchdog.sh are committed as they are (tools/reg1-ops/); devcheck.sh carries --device-ref.
+  for (const f of ["history.sh", "lane.sh", "start.sh", "watchdog.sh"]) await Deno.copyFile(new URL(`./reg1-ops/${f}`, import.meta.url), `${a.ops}/${f}`);
   await Deno.writeTextFile(
     `${a.ops}/devcheck.sh`,
     `#!/bin/bash

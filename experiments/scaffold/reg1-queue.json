@@ -2272,7 +2272,7 @@
     "~a-heredity-scaf-i07",
     "~a-heredity-rand-i07"
    ],
-   "cmd": "deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed 4880001 --out runs/scaffold/reg1/neg/j0"
+   "cmd": "D=runs/scaffold/reg1/neg/j0; [ -d $D ] && [ ! -f $D/meta.json ] && rm -rf $D; R=\"\"; [ -f $D/meta.json ] && R=--resume; deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed 4880001 --out $D $R"
   },
   {
    "id": "n-j1",
@@ -2296,7 +2296,7 @@
     "~a-heredity-scaf-i07",
     "~a-heredity-rand-i07"
    ],
-   "cmd": "deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed 4880002 --out runs/scaffold/reg1/neg/j1"
+   "cmd": "D=runs/scaffold/reg1/neg/j1; [ -d $D ] && [ ! -f $D/meta.json ] && rm -rf $D; R=\"\"; [ -f $D/meta.json ] && R=--resume; deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed 4880002 --out $D $R"
   },
   {
    "id": "n-j2",
@@ -2320,7 +2320,7 @@
     "~a-heredity-scaf-i07",
     "~a-heredity-rand-i07"
    ],
-   "cmd": "deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed 4880003 --out runs/scaffold/reg1/neg/j2"
+   "cmd": "D=runs/scaffold/reg1/neg/j2; [ -d $D ] && [ ! -f $D/meta.json ] && rm -rf $D; R=\"\"; [ -f $D/meta.json ] && R=--resume; deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed 4880003 --out $D $R"
   },
   {
    "id": "n-j3",
@@ -2344,7 +2344,7 @@
     "~a-heredity-scaf-i07",
     "~a-heredity-rand-i07"
    ],
-   "cmd": "deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed 4880004 --out runs/scaffold/reg1/neg/j3"
+   "cmd": "D=runs/scaffold/reg1/neg/j3; [ -d $D ] && [ ! -f $D/meta.json ] && rm -rf $D; R=\"\"; [ -f $D/meta.json ] && R=--resume; deno run -A tools/scaffold.ts evolve --arm cont --init clone --mut-off --period 10000 --cycles 1 --side 8 --seed 4880004 --out $D $R"
   },
   {
    "id": "a-heredity-pos-s0",
