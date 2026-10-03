@@ -669,6 +669,54 @@ The transition hunt stays a draft. It waits on the user's approval as a whole, a
 - **Retry safety, fixed before the clean start.** `tools/run.ts` appends to an incomplete bundle, so `history.sh` now removes one before a retry. A retried negative-control world resumes or is rebuilt, and stale lane claims are released. This was reviewed by `agy` and committed as `de885902`, and the queue restarted from scratch. The aborted attempts' logs stay on the (now terminated) instances, and none of their output is used.
 - **Next, on the Mac at $0:** R4 (done, 96 of 96 genomes), the reproducibility reruns of `scaf-i14` and `rand-i17`, then the report, an independent re-derivation of every number, an Astra review and the dated result entry.
 
+**Scaffolding registration result (2026-10-03): H1 and H2 confirmed** (the registration's outcome row; `docs/scaffold-registration-v1.md`, readout `experiments/scaffold/readouts/reg1.json`). Every number below was re-derived independently from the raw files with separate code, and all matched.
+
+**Validity.**
+- **Device check:** all four bundles (the Mac's M1 Max and three A10Gs) have `finalHash` `0a81d98f7c148684`.
+- **Quenched gate:** all 48 quenched sets have competence 0.
+- **Reproducibility:** `scaf-i14` and `rand-i17` rerun on the Mac to identical boundary-34 states.
+- **Completeness:** no history unresolved in any arm; 757 of 757 queue commands done; no truncated row.
+- **Amendment 2:** the report's first run returned Invalid only because the Mac supervisor had pulled the instance device bundles to a path missing `device/`. The bundles were moved unchanged, the move reviewed before any test statistic was computed, and the report rerun with the same command. The first readout is kept as `reg1-path-invalid.json`, and the amendment discloses that its descriptive section already held per-set competences.
+
+**H1 (Holm p 2.4 × 10⁻¹¹).** `scaf` competence ranks above every control at both timings: at withdrawal (a), and 2 × 10⁵ steps after the cycle stops (b). The largest of the six exact Mann–Whitney p-values is 1.2 × 10⁻¹¹ (`scaf` against the ancestor at (a)); the three at (b) are complete separations. Median competence (successes of 256 fragments):
+
+| Timing | `scaf` | `rand` | `cont` | Ancestor |
+|---|---|---|---|---|
+| (a) | 0.979 | 0.025 | 0.623 | 0.885 |
+| (b) | 0.967 | 0.111 | 0.605 | 0.660 |
+
+**H2 (sign test p 6.0 × 10⁻⁸).** In 24 of 24 histories, `scaf`'s dominant genome, relabelled onto its own ancestor world's fragments, founds more ponds than the matched ancestor-genome control on the same fragments. The effect is consistent but small:
+- a median of 19 more successes of 512 fragments, with a range of 1 to 35;
+- 448 fragments succeed only with the evolved genome, against 2 only with the ancestor's.
+
+**Secondaries** (Holm at 0.01; they never change the row):
+
+| Test | Result | Unadjusted p | Holm p |
+|---|---|---|---|
+| S1, d_i = g_i − ½ (competence of `scaf` − ancestor) > 0 | **Not confirmed**, as the pilot predicted: 5 of 24. The descriptive gain-to-advantage ratio has median 0.38 (95% interval 0.34–0.43) | 0.999 | 0.999 |
+| S2a, common-garden trait gain in `scaf` | **Confirmed**: 24 of 24, about +36,000 | 6.0 × 10⁻⁸ | 1.2 × 10⁻⁷ |
+| S2b, that gain above `rand`'s | **Confirmed** (median `rand` gain −85,000) | 3.1 × 10⁻¹⁴ | 9.3 × 10⁻¹⁴ |
+| S3, heredity in `scaf` | **Confirmed**: 17 of 24 histories with ICC > 0 and permutation p < 0.05; positive controls ICC 0.49 and 0.77; null gate 1 of 4, at its limit | 1.9 × 10⁻¹⁷ | 7.5 × 10⁻¹⁷ |
+
+**What it means** (the registration's own terms):
+- Worlds evolved under scaffolded selection found ponds from fragments better than worlds evolved under the bottleneck alone, without the cycle, or the ancestor. The advantage persists 2 × 10⁵ steps after the cycle stops.
+- The `scaf` genome alone, on ancestral material, founds better than the ancestor's genome.
+- The pond-level trait may be called **heritable** (S3 holds in `scaf`), in the heredity replication's sense: heritable genetic or structural variation.
+
+**Caveats:**
+1. **The genome effect is small beside the worlds' advantage, and S1 is not confirmed.** The descriptive ratio (median 0.38) compares two homogenised genomes on ancestral material with an unmatched difference between worlds. As the registration states, it is not the fraction of the advantage that the genome causes. H2 tests timing-(a) genomes on ancestral material. It does not show that the genome causes the persistence at timing (b), or that `scaf`'s genomes improved more than `rand`'s or `cont`'s.
+2. **`rand` degraded.** 10 of 24 `rand` histories score 0 at (a), and 14 end with a mean pond trait around 5,000 (the ancestor's is about 102,000). So `scaf` against `rand` is partly about `rand` collapsing. The comparisons that carry the claim are `scaf` against `cont` and against the ancestor, and both separate completely or nearly so.
+3. **Heredity is not shown to be specific to the scaffold.** It was demonstrated in 17 of 24 histories in both `scaf` and `rand` (`rand` is descriptive, outside the family); equal counts do not establish equal heredity. S3 measures crossing-time heredity at boundary 34, not competence at boundary 100.
+4. **Fragment mass.** `scaf` fragments retain less mass (median 3,255, against the ancestor's 5,400), and in the shared mass bins above 1,024 `scaf` succeeds more often; in the lowest bin, [512, 1,024), no fragment of any arm succeeds. Success itself requires fourfold growth of the retained mass, and the comparisons are not matched on mass, so H1 stays an unmatched comparison of worlds. `scaf` sits near its ceiling (0.97), which does not threaten a "higher" claim.
+5. **Not established:**
+   - that ponds reproduce as units once the scaffold is gone (no endogenous life cycle is tested);
+   - individuality or the reset line's entity question;
+   - anything beyond this regime (k 8, period 10⁴, 64 ponds, one ancestor, 10⁶ steps).
+
+**Milestones.** This stands as its own registered result, and counts toward neither M6 nor M7 (the user's decision, 2026-10-02). It informs M7's design.
+
+**Disposition (the registration's row; each next step a separate dated decision):** the next rung toward endogenisation, such as protocol v1's withdrawal ladder (longer removal, partial grind, migration-only dispersal), and the M7 question. The frozen transition hunt is already the next rung in that direction: its Stage 0 passed, and its Stage 1 draw note awaits the user.
+
 **Transition hunt frozen (2026-10-02, the user's decision).** The user approved `docs/scaffold-transition-hunt-v1.md` as a whole while the registration's queue ran on AWS.
 - **Before the freeze,** the text gained clarifications only:
   - the no-packet row sentinel;
