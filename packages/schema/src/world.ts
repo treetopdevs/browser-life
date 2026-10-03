@@ -16,14 +16,15 @@ export interface WorldState {
   flux: bigint[];
 }
 
-/** An experimenter intervention, logged so a run can be replayed exactly. */
-export interface Intervention {
-  step: number;
-  kind: "lesion";
-  x: number;
-  y: number;
-  r: number;
-}
+/**
+ * An experimenter intervention, logged so a run can be replayed exactly. A lesion converts matter in
+ * place. A feed (feed.ts) adds `amount` quanta of nutrient to each cell of the disc, or drains up to
+ * that many when negative; `matter` is the net quanta it added to the world, which is no longer closed
+ * in matter across it.
+ */
+export type Intervention =
+  | { step: number; kind: "lesion"; x: number; y: number; r: number }
+  | { step: number; kind: "feed"; x: number; y: number; r: number; amount: number; matter: number };
 
 export interface Founder {
   x: number;

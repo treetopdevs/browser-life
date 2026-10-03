@@ -18,7 +18,7 @@ const lineagePanel = createLineagePanel(send);
 let cfg: WorldConfig | null = null;
 let rect: ViewRect = { x: 0, y: 0, w: 256, h: 256 };
 let mode: GpuViewMode = "composite";
-let tool: "inspect" | "lesion" | "pan" = "inspect";
+let tool: "inspect" | "lesion" | "feed" | "drain" | "pan" = "inspect";
 let playing = false;
 let lastStep = 0;
 let worldReady = false;
@@ -117,11 +117,27 @@ for (const b of tools.querySelectorAll<HTMLButtonElement>("button"))
       o.setAttribute("aria-pressed", String(selected));
     }
     wrap.dataset.tool = tool;
-    radius.disabled = tool !== "lesion";
+    syncBrush();
   };
 wrap.dataset.tool = tool;
 const radius = $<HTMLInputElement>("radius");
 radius.oninput = () => ($("radius-val").textContent = radius.value);
+const amount = $<HTMLInputElement>("amount");
+amount.oninput = () => ($("amount-val").textContent = amount.value);
+const brush = () => tool === "lesion" || tool === "feed" || tool === "drain";
+const feeding = () => tool === "feed" || tool === "drain";
+/** The radius serves every brush; the amount only Feed and Drain, with their notice. */
+function syncBrush() {
+  radius.disabled = !brush();
+  amount.disabled = !feeding();
+  $("feed-hint").hidden = !feeding();
+}
+syncBrush();
+/** One application of the current brush at world position (x, y). */
+function applyBrush(x: number, y: number) {
+  if (tool === "lesion") send({ type: "lesion", x, y, r: Number(radius.value) });
+  else if (feeding()) send({ type: "feed", x, y, r: Number(radius.value), amount: (tool === "feed" ? 1 : -1) * Number(amount.value) });
+}
 radius.disabled = true;
 tools.querySelector(".on")?.setAttribute("aria-pressed", "true");
 
@@ -213,7 +229,7 @@ canvas.addEventListener("keydown", (ev) => {
     ev.preventDefault();
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
     if (tool === "inspect") send({ type: "probe", x, y });
-    else if (tool === "lesion") send({ type: "lesion", x, y, r: Number(radius.value) });
+    else if (brush()) applyBrush(x, y);
     else { rect.x = x - rect.w / 2; rect.y = y - rect.h / 2; pushView(); }
   } else if ((ev.key === "+" || ev.key === "-") && cfg) {
     ev.preventDefault();
@@ -230,7 +246,7 @@ canvas.onpointerdown = (ev) => {
   canvas.setPointerCapture(ev.pointerId);
   if (tool === "pan" || ev.button === 1 || ev.button === 2) {
     drag = { x: ev.clientX, y: ev.clientY, rx: rect.x, ry: rect.y };
-  } else if (tool === "lesion") {
+  } else if (brush()) {
     lesionDrag = true;
     lesionAt(ev);
   } else {
@@ -265,7 +281,7 @@ function lesionAt(ev: PointerEvent) {
   if (now - lastLesion < 60) return;
   lastLesion = now;
   const [x, y] = toWorld(ev);
-  send({ type: "lesion", x, y, r: Number(radius.value) });
+  applyBrush(x, y);
 }
 
 // ---------- keyboard ----------
@@ -308,7 +324,7 @@ const spLin = new Series($<HTMLCanvasElement>("sp-lin"), chartColor("--waste"));
 window.addEventListener("browser-life-theme-change", () => { spInd.redraw(); spBio.redraw(); spLin.redraw(); });
 
 function resetEvidence() {
-  for (const id of ["k-matter", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen"])
+  for (const id of ["k-matter", "k-fed", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen"])
     $(id).textContent = "—";
   $("ledger-badge").textContent = "waiting";
   $("ledger-badge").className = "badge";
@@ -331,9 +347,11 @@ function onStats(s: StatsMsg) {
   $("k-resid").textContent = s.residual;
   $("k-light").textContent = fmt(s.lightIn);
   $("k-heat").textContent = fmt(s.heatOut);
+  // A fed world is exact against a baseline that moved: say so, in words, beside the amount.
+  $("k-fed").textContent = s.feeds === 0 ? "none" : `${Number(s.fed) > 0 ? "+" : ""}${Number(s.fed).toLocaleString()} in ${s.feeds} feed${s.feeds === 1 ? "" : "s"}`;
   const ok = s.residual === "0" && s.matterDelta === "0";
   const badge = $("ledger-badge");
-  badge.textContent = ok ? "exact" : "violation";
+  badge.textContent = ok ? (s.feeds === 0 ? "exact" : "exact, fed") : "violation";
   badge.className = `badge ${ok ? "ok" : "bad"}`;
   const pools: [string, number, string][] = [
     ["A nutrient", s.A, "var(--nutrient)"],

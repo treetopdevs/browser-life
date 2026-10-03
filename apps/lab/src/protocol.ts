@@ -56,7 +56,11 @@ export interface StatsMsg {
   heatOut: number;
   /** Exact energy ledger residual (should be 0). */
   residual: string;
+  /** Total matter against the ledger's baseline, which each feed moves by what it added (should be 0). */
   matterDelta: string;
+  /** Net nutrient this run's logged feeds have added (negative: drained), and how many feeds: the world is closed in matter only between them. */
+  fed: string;
+  feeds: number;
 }
 
 export interface CensusMsg {
@@ -115,6 +119,8 @@ export type ToWorker =
   | { type: "view"; mode: GpuViewMode; rect: ViewRect }
   | { type: "resize"; width: number; height: number }
   | { type: "lesion"; x: number; y: number; r: number }
+  /** Feed (`amount` > 0) or drain (< 0) nutrient in a disc: a logged intervention that changes total matter. */
+  | { type: "feed"; x: number; y: number; r: number; amount: number }
   | { type: "probe"; x: number; y: number }
   | { type: "save" }
   | { type: "listCheckpoints" }

@@ -4,6 +4,7 @@ import {
   type WorldConfig, type WorldState,
 } from "@bl/schema";
 import { applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
+import { applyFeed, clampLesionRadius, type Intervention } from "@bl/schema";
 import {
   applyBoundary, decodeArtifact, observeCensus, pondContext, pondContinuationError, restoreObservers, serializeObservers,
   type ObserverState, type PondCycle,
@@ -62,6 +63,16 @@ class CpuSimulation implements LabSimulation {
     this.ref = new RefSim(cloneState(state));
   }
   destroy() { this.destroyed = true; }
+  lesion(cx: number, cy: number, r: number) {
+    const eff = clampLesionRadius(this.cfg, r);
+    applyLesion(this.ref, cx, cy, eff);
+    return eff;
+  }
+  async feed(cx: number, cy: number, r: number, amount: number) {
+    await this.beforeFeed?.();
+    return applyFeed(this.ref.state, cx, cy, r, amount);
+  }
+  beforeFeed?: () => Promise<void>;
 }
 function setup(state = initial(), overrides: Partial<ConstructorParameters<typeof LabExecution>[2]> = {}) {
   const sim = new CpuSimulation(state);
@@ -300,6 +311,151 @@ async function runnerReference(start: WorldState, to: number) {
   }
   return at;
 }
+
+describe("lab execution of fed worlds", () => {
+  it("carries the feed total in the observer state, through a checkpoint artifact and a restore", async () => {
+    const { execution } = setup();
+    expect(execution.fed).toEqual({ matter: 0, feeds: 0 });
+    await execution.advanceFrame(100);
+    // A never-fed history's observer state has no `fed` field, so its artifact and digest are as before.
+    expect("fed" in (await execution.checkpoint()).observer).toBe(false);
+    execution.recordFeed(464);
+    execution.recordFeed(-64);
+    expect(execution.fed).toEqual({ matter: 400, feeds: 2 });
+    expect(() => execution.recordFeed(1.5)).toThrow(/not an integer/);
+    const saved = await execution.checkpoint();
+    expect(saved.observer.fed).toEqual({ matter: 400, feeds: 2 });
+    const artifact = decodeArtifact(encodeCheckpoint(saved.state, saved.observer));
+    expect(artifact.observer.fed).toEqual({ matter: 400, feeds: 2 });
+    const resumed = setup(artifact.state, { observer: artifact.observer as ObserverState });
+    expect(resumed.execution.fed).toEqual({ matter: 400, feeds: 2 });
+    resumed.execution.recordFeed(8);
+    expect((await resumed.execution.checkpoint()).observer.fed).toEqual({ matter: 408, feeds: 3 });
+    // A malformed total in a file from elsewhere is refused at decode, not added to.
+    for (const fed of [{ matter: "400", feeds: "2" }, {}, { matter: 400, feeds: 0 }, { matter: 1.5, feeds: 1 }, null])
+      expect(() => decodeArtifact(encodeCheckpoint(saved.state, { ...saved.observer, fed } as unknown as ObserverState))).toThrow(/observer fed is malformed/);
+  });
+});
+
+describe("lab execution replaying logged interventions", () => {
+  // The observed history: a checkpoint at t=100 that has seen nothing, a feed at that same step, a lesion
+  // and a drain at t=150 (inside a census interval), a lesion at the census step t=200, then on to t=300.
+  // Returns the log as the worker would have written it, and the observed world at t=200 (after its
+  // lesion) and t=300.
+  async function observed() {
+    const { sim, execution } = setup();
+    await execution.advanceFrame(100);
+    const start = await execution.checkpoint();
+    const log: Intervention[] = [];
+    const feed = async (x: number, y: number, r: number, amount: number) => {
+      const step = sim.step, res = await sim.feed(x, y, r, amount);
+      execution.recordFeed(res.matter);
+      log.push({ step, kind: "feed", x, y, r: res.radius, amount, matter: res.matter });
+    };
+    await feed(3, 3, 2, 24);
+    await execution.advanceFrame(50);
+    log.push({ step: sim.step, kind: "lesion", x: 3, y: 3, r: sim.lesion(3, 3, 1) });
+    await feed(11, 4, 2, -5);
+    // Settle to the census at t=200, then a lesion there that removes the founder: made after that
+    // census, so its deaths belong to the census at t=300. A replay that applied it before observing
+    // t=200 would reach the same physics with a different observer history.
+    await execution.checkpoint();
+    log.push({ step: sim.step, kind: "lesion", x: 3, y: 3, r: sim.lesion(3, 3, 3) });
+    const at200 = await execution.checkpoint();
+    await execution.advanceFrame(100);
+    const at300 = await execution.checkpoint();
+    expect(log.map((iv) => iv.step)).toEqual([100, 150, 150, 200]);
+    expect(JSON.stringify(at300.observer.tracker)).not.toBe(JSON.stringify(at200.observer.tracker));
+    expect(log.filter((iv) => iv.kind === "feed").every((iv) => iv.kind === "feed" && iv.matter !== 0)).toBe(true);
+    return { start, log, at200, at300 };
+  }
+  const resume = (h: Awaited<ReturnType<typeof observed>>, booked: Intervention[] = []) =>
+    setup(h.start.state, { observer: h.start.observer, onReplayed: (iv) => { booked.push(iv); } });
+  const same = (a: { state: WorldState; observer: ObserverState }, b: { state: WorldState; observer: ObserverState }) => {
+    expect(stateHash(a.state)).toBe(stateHash(b.state));
+    expect(JSON.stringify(a.observer)).toBe(JSON.stringify(b.observer));
+  };
+
+  it("reaches the observed world, physics and observer, booking each intervention once and in order", async () => {
+    const h = await observed();
+    const booked: Intervention[] = [];
+    const { execution } = resume(h, booked);
+    execution.queueReplay(h.log);
+    expect(execution.pendingReplay.length).toBe(4);
+    // Frames of any size (to t=130, 200 and 300): the traversal stops at each intervention's step by itself.
+    for (const n of [30, 500, 500]) await execution.advanceFrame(n);
+    same(await execution.checkpoint(), h.at300);
+    expect(booked).toEqual(h.log);
+    expect(execution.pendingReplay.length).toBe(0);
+    expect(execution.fed).toEqual(h.at300.observer.fed);
+    // Without the replay the same steps reach a different world.
+    const plain = resume(h);
+    for (const n of [500, 500]) await plain.execution.advanceFrame(n);
+    expect(stateHash((await plain.execution.checkpoint()).state)).not.toBe(stateHash(h.at300.state));
+  });
+
+  it("applies due interventions when a checkpoint settles, at its own step and on the way to the census", async () => {
+    const h = await observed();
+    // At the checkpoint's own step, before any frame: the feed logged at t=100 is due at once.
+    const a = resume(h);
+    a.execution.queueReplay(h.log);
+    const saved = await a.execution.checkpoint();
+    expect(saved.state.step).toBe(100);
+    expect(saved.observer.fed?.feeds).toBe(1);
+    expect(a.execution.pendingReplay.length).toBe(3);
+    // A zero-step frame applies what is due at the current step and moves nothing: how a jump makes the
+    // restored world whole before anything reads it.
+    const c = resume(h);
+    c.execution.queueReplay(h.log);
+    expect(await c.execution.advanceFrame(0)).toBe(0);
+    expect([c.sim.step, c.execution.pendingReplay.length, c.execution.fed.feeds]).toEqual([100, 3, 1]);
+    // Stopped at t=130 with the lesion and the drain still queued for t=150: settlement to the census at
+    // t=200 must stop there, apply them, observe t=200, and then apply the lesion logged at t=200.
+    const b = resume(h);
+    b.execution.queueReplay(h.log);
+    await b.execution.advanceFrame(30);
+    expect(b.sim.step).toBe(130);
+    expect(b.execution.pendingReplay.length).toBe(3);
+    same(await b.execution.checkpoint(), h.at200);
+    expect(b.execution.pendingReplay.length).toBe(0);
+  });
+
+  it("replays the same interventions in the verification twin", async () => {
+    const h = await observed();
+    const { execution } = resume(h);
+    execution.queueReplay(h.log);
+    const v = await execution.verify(200, async (state) => new CpuSimulation(state));
+    expect(v.twinHash).toBe(v.liveHash);
+    expect(v.liveHash).toBe(stateHash(h.at300.state));
+  });
+
+  it("marks the world failed when a replayed feed does not move what the log says, and goes no further", async () => {
+    const h = await observed();
+    const wrong = h.log.map((iv) => (iv.kind === "feed" && iv.step === 150 ? { ...iv, matter: iv.matter - 1 } : iv));
+    const { sim, execution } = resume(h);
+    execution.queueReplay(wrong);
+    await expect((async () => { for (const n of [500, 500]) await execution.advanceFrame(n); })()).rejects.toThrow(/not the observed history/);
+    expect(execution.failure).toMatch(/not the observed history/);
+    const stuck = sim.step;
+    await expect(execution.advanceFrame(10)).rejects.toThrow(/not the observed history/);
+    await expect(execution.checkpoint()).rejects.toThrow(/not the observed history/);
+    expect(sim.step).toBe(stuck);
+    // The failed entry was not dropped, nor the one after it.
+    expect(execution.pendingReplay.length).toBe(2);
+  });
+
+  it("refuses a queue behind the world or out of order, and drops the queue on request", async () => {
+    const h = await observed();
+    const { execution } = resume(h);
+    expect(() => execution.queueReplay([{ step: 99, kind: "lesion", x: 1, y: 1, r: 1 }])).toThrow(/behind t=100/);
+    expect(() => execution.queueReplay([h.log[1], h.log[0]])).toThrow(/behind t=150/);
+    execution.queueReplay(h.log);
+    expect(execution.dropReplay()).toBe(4);
+    expect(execution.pendingReplay.length).toBe(0);
+    await execution.advanceFrame(100);
+    expect(execution.fed).toEqual({ matter: 0, feeds: 0 });
+  });
+});
 
 describe("lab execution of pond worlds", () => {
   it("cycles at census boundaries exactly as the runner's helper does, in checkpoints, the replay twin and a restore", async () => {

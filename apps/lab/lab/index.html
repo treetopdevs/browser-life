@@ -68,8 +68,10 @@
         </section>
         <section class="rail-section" aria-labelledby="tools-heading">
           <h3 id="tools-heading">Field tools</h3>
-          <div class="seg tool-group" id="tools" role="group" aria-label="Field tool"><button data-tool="inspect" class="on" type="button">Inspect</button><button data-tool="lesion" type="button">Lesion</button><button data-tool="pan" type="button">Pan</button></div>
-          <label class="field range-field" id="radius-field"><span>Lesion radius <b class="mono" id="radius-val">10</b></span><input id="radius" type="range" min="2" max="40" step="1" value="10" /></label>
+          <div class="seg tool-group" id="tools" role="group" aria-label="Field tool"><button data-tool="inspect" class="on" type="button">Inspect</button><button data-tool="lesion" type="button">Lesion</button><button data-tool="feed" type="button">Feed</button><button data-tool="drain" type="button">Drain</button><button data-tool="pan" type="button">Pan</button></div>
+          <label class="field range-field" id="radius-field"><span>Brush radius <b class="mono" id="radius-val">10</b></span><input id="radius" type="range" min="2" max="40" step="1" value="10" /></label>
+          <label class="field range-field" id="amount-field"><span>Nutrient per cell <b class="mono" id="amount-val">16</b></span><input id="amount" type="range" min="1" max="128" step="1" value="16" /></label>
+          <p class="hint" id="feed-hint" hidden>Feed and Drain change the world's total matter. Each use is logged as an intervention, and the ledger counts it.</p>
         </section>
         <section class="rail-section" aria-labelledby="checkpoint-heading">
           <h3 id="checkpoint-heading">Checkpoints</h3><p class="hint">Save a world locally or export it as a file.</p>
@@ -83,7 +85,7 @@
         <div class="rail-intro evidence-intro"><span class="eyebrow">02 / Examine</span><h2>Evidence</h2><p>Measurements from this world. Replay checks whether a segment is reproducible.</p></div>
         <section class="evidence-section" aria-labelledby="ledger-heading">
           <div class="section-heading"><h3 id="ledger-heading">Conservation ledger</h3><span class="badge" id="ledger-badge">waiting</span></div>
-          <dl class="kv mono"><dt>Matter change</dt><dd id="k-matter">—</dd><dt>Energy residual</dt><dd id="k-resid">—</dd><dt>Light absorbed</dt><dd id="k-light">—</dd><dt>Heat exported</dt><dd id="k-heat">—</dd></dl>
+          <dl class="kv mono"><dt>Matter change</dt><dd id="k-matter">—</dd><dt>Nutrient fed</dt><dd id="k-fed">—</dd><dt>Energy residual</dt><dd id="k-resid">—</dd><dt>Light absorbed</dt><dd id="k-light">—</dd><dt>Heat exported</dt><dd id="k-heat">—</dd></dl>
           <div class="bars" id="pools" aria-label="Matter pool proportions"></div>
           <div class="pool-legend"><span><i class="key key-a"></i>Nutrient</span><span><i class="key key-b"></i>Biomass</span><span><i class="key key-p"></i>Membrane</span><span><i class="key key-c"></i>Waste</span></div>
         </section>

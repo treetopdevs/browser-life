@@ -1,6 +1,6 @@
 // Cadence and observer integrity for one lab world. Callers serialize operations;
 // the worker's generation predicate invalidates outstanding work on replacement.
-import { cloneState, MAX_STEP, stateHash, type WorldConfig, type WorldState } from "@bl/schema";
+import { cloneState, MAX_STEP, stateHash, type FeedResult, type Intervention, type WorldConfig, type WorldState } from "@bl/schema";
 import type { GpuSim } from "@bl/sim-gpu";
 import type { Census } from "@bl/metrics";
 import {
@@ -19,7 +19,7 @@ import {
 import { MutationEdges } from "@bl/lineage";
 
 /** Real GPU simulation in the worker; reference physics with injectable readbacks in tests. */
-export type LabSimulation = Pick<GpuSim, "cfg" | "step" | "run" | "drainLedger" | "readSnapshot" | "readState" | "upload" | "destroy">;
+export type LabSimulation = Pick<GpuSim, "cfg" | "step" | "run" | "drainLedger" | "readSnapshot" | "readState" | "upload" | "destroy" | "lesion" | "feed">;
 interface ExecutionOptions {
   observer?: ObserverState;
   /** The state the simulation was built from; required for a pond world, whose cycles check against it. */
@@ -32,6 +32,11 @@ interface ExecutionOptions {
   /** Display only, after a pond boundary's cycle (or, for arm cont, its record) has been applied at `step`. */
   onPondCycle?: (cycle: PondCycle, step: number) => void;
   onDisplayError?: (message: string) => void;
+  /**
+   * A queued intervention (`queueReplay`) has just been re-applied to the live world: the host books it
+   * (its log, and for a feed its conservation baselines, by `result`). A lesion has no result.
+   */
+  onReplayed?: (iv: Intervention, result: FeedResult | null) => void;
 }
 const message = (e: unknown) => e instanceof Error ? e.message : String(e);
 /** Raised before any submission, so the world is unchanged and remains usable. */
@@ -54,6 +59,12 @@ export class LabExecution {
   private readonly cursor: { observed: number };
   private readonly ponds: PondContext | null;
   private lost: string | null = null;
+  /**
+   * Logged interventions still to re-apply, in order, each when the world reaches its step. The single
+   * traversal (`walk`) owns them, so frames, checkpoint settlement and replay verification all stop at an
+   * intervention's step and apply it: none can step past one.
+   */
+  private replay: Intervention[] = [];
   /** Mutation edges drained at each census, in step order: the lineage inspector's genealogy. */
   readonly edges: MutationEdges;
   private droppedEvents: number;
@@ -92,6 +103,41 @@ export class LabExecution {
 
   get failure(): string | null { return this.lost; }
 
+  /** Net nutrient this history's logged feeds have added and their number (ObserverState.fed; zeros when never fed). */
+  get fed(): { matter: number; feeds: number } { return this.obs.fed ?? { matter: 0, feeds: 0 }; }
+
+  /** Books one feed of `matter` net quanta into the observer state, which the next checkpoint carries. */
+  recordFeed(matter: number) {
+    this.check();
+    if (!Number.isSafeInteger(matter)) throw new Error(`feed amount ${matter} is not an integer`);
+    const f = this.fed;
+    this.obs.fed = { matter: f.matter + matter, feeds: f.feeds + 1 };
+  }
+
+  /**
+   * Queues logged interventions for re-application on the way forward (a jump back across them). They
+   * must be in step order and not behind the world. Replaces any queue already there.
+   */
+  queueReplay(list: readonly Intervention[]) {
+    this.check();
+    let at = this.sim.step;
+    for (const iv of list) {
+      if (!Number.isSafeInteger(iv.step) || iv.step < at) throw new Error(`replay entry at t=${iv.step} is behind t=${at}; a log replays in step order from the world's step`);
+      at = iv.step;
+    }
+    this.replay = list.slice();
+  }
+
+  /** What `queueReplay` queued and the traversal has not yet re-applied. */
+  get pendingReplay(): readonly Intervention[] { return this.replay; }
+
+  /** A manual intervention forks the history: what was still queued no longer applies. Returns how many were dropped. */
+  dropReplay(): number {
+    const n = this.replay.length;
+    this.replay = [];
+    return n;
+  }
+
   /** Display totals only; callers never receive mutable observers or the cadence cursor. */
   counts() {
     const t = this.obs.tracker;
@@ -113,6 +159,8 @@ export class LabExecution {
     this.check();
     const from = this.sim.step;
     if (from !== this.cursor.observed) await this.advanceLive(this.boundary(this.cursor));
+    // Already at a census: still apply any queued intervention due at this very step first.
+    else if (this.replay.length && this.replay[0].step <= from) await this.advanceLive(from);
     const state = await this.sim.readState();
     this.check();
     if (state.step !== this.cursor.observed) throw new Error(`observer state is at t=${this.cursor.observed}, not t=${state.step}`);
@@ -126,6 +174,8 @@ export class LabExecution {
     const start = await this.sim.readState();
     this.check();
     const twinCursor = { ...this.cursor };
+    // The twin replays the same queued interventions as the live world, physics only.
+    const twinReplay = this.replay.slice();
     const twin = await createTwin(cloneState(start));
     try {
       this.check();
@@ -133,7 +183,7 @@ export class LabExecution {
       await this.walk(twin, twinCursor, start.step + steps, async (step) => {
         await this.boundaryAt(twin, step);
         this.check();
-      });
+      }, twinReplay);
       const [a, b] = await Promise.all([this.sim.readState(), twin.readState()]);
       this.check();
       return { from: start.step, steps, liveHash: stateHash(a), twinHash: stateHash(b) };
@@ -179,6 +229,9 @@ export class LabExecution {
         this.check();
         this.display(() => this.options.onObservation?.(observed.census, ledger.dropped));
         if (ponds) this.display(() => this.options.onPondCycle?.(ponds, step));
+      }, this.replay, (iv, result) => {
+        if (result) this.recordFeed(result.matter);
+        this.options.onReplayed?.(iv, result);
       });
     } catch (e) {
       if (e instanceof StepLimitError) throw e;
@@ -214,8 +267,27 @@ export class LabExecution {
     }, step, this.ponds);
   }
 
-  /** The single traversal for live worlds and physics-only replay twins. */
-  private async walk(sim: LabSimulation, cursor: { observed: number }, target: number, observe: (step: number) => Promise<void>) {
+  /** One logged intervention re-applied to `sim`; a feed must move exactly what the log says it moved. */
+  private async reapply(sim: LabSimulation, iv: Intervention): Promise<FeedResult | null> {
+    if (iv.kind === "lesion") {
+      sim.lesion(iv.x, iv.y, iv.r);
+      return null;
+    }
+    const result = await sim.feed(iv.x, iv.y, iv.r, iv.amount);
+    this.check();
+    if (result.matter !== iv.matter) throw new Error(`replayed feed at t=${iv.step} moved ${result.matter} quanta, the log says ${iv.matter}: this is not the observed history`);
+    return result;
+  }
+
+  /**
+   * The single traversal for live worlds and physics-only replay twins. `replay` is consumed from the
+   * front: an entry is applied when the world is at its step, after that step's census (a manual
+   * intervention always came after the census of the step it was made at), and no chunk steps past one.
+   */
+  private async walk(
+    sim: LabSimulation, cursor: { observed: number }, target: number, observe: (step: number) => Promise<void>,
+    replay: Intervention[] = [], applied?: (iv: Intervention, result: FeedResult | null) => void,
+  ) {
     for (;;) {
       this.check();
       const boundary = this.boundary(cursor);
@@ -225,8 +297,17 @@ export class LabExecution {
         cursor.observed = boundary;
         continue;
       }
+      const due = replay[0];
+      if (due && due.step <= sim.step) {
+        if (due.step < sim.step) throw new Error(`replay passed a logged ${due.kind} at t=${due.step}: this is not the observed history`);
+        const result = await this.reapply(sim, due);
+        // Removed only once applied: a failure leaves it queued and the world marked as failed.
+        replay.shift();
+        applied?.(due, result);
+        continue;
+      }
       if (sim.step >= target) return;
-      let n = Math.min(target, boundary) - sim.step;
+      let n = Math.min(target, boundary, due ? due.step : Infinity) - sim.step;
       if (n <= 0) throw new Error("simulation passed an unobserved census");
       if (sim.step + n > MAX_STEP) throw new StepLimitError(`step limit ${MAX_STEP} reached`);
       while (n > 0) {

@@ -58,6 +58,8 @@ interface World {
   /** Ledger baseline: content + heat - light, invariant under exact rules. */
   baseline: bigint;
   startMatter: bigint;
+  /** Bumped whenever a feed moves the baselines, so a stats readback begun before it is discarded. */
+  accounting: number;
   execution: LabExecution;
   lineage: LabLineage;
   /** Step of the newest checkpoint saved or restored for this world. */
@@ -186,6 +188,14 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
       // Every cycle, unthrottled: one per pondPeriod steps.
       onPondCycle: (cycle, step) => post({ type: "ponds", step, cycle: cycle.b, arm: sim.cfg.pondArm!, donors: cycle.donors }),
       onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
+      // A jump's replay re-applied a logged intervention: it re-enters this run's log, and a feed moves
+      // the baselines exactly as it did when it was first made.
+      onReplayed: (iv, result) => {
+        const w = world;
+        if (!w || w.sim !== sim) return;
+        if (result) bookFeed(w, result.matter, result.energy);
+        w.manifest.interventions.push(iv);
+      },
     });
     renderer = new Renderer(device, ctx, format, sim);
   } catch (e) {
@@ -201,6 +211,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
     manifest,
     baseline: t.energy + state.heatOut - state.lightIn,
     startMatter: t.matter,
+    accounting: 0,
     execution,
     lineage: { edgesFrom: lineage.edgesFrom, known: lineage.known, highlight: null },
     lastCheckpoint: state.step,
@@ -322,8 +333,11 @@ const current = (w: World) => world === w && w.gen === generation;
 async function sendStats(w: World) {
   statsBusy = true;
   try {
+    // The baselines and the feed total belong to the snapshot: a feed that lands while the readback is
+    // awaited moves them, and totals from before it must not be judged against baselines from after it.
+    const accounting = w.accounting, fed = w.execution.fed;
     const s = await w.sim.readStats();
-    if (!current(w)) return;
+    if (!current(w) || w.accounting !== accounting) return;
     const cfg = w.sim.cfg;
     const energy = s.A * BigInt(cfg.eA) + s.B * BigInt(cfg.eB) + s.C * BigInt(cfg.eC) + s.P * BigInt(cfg.eP) + s.E + s.S;
     const residual = energy + s.heatOut - s.lightIn - w.baseline;
@@ -346,6 +360,8 @@ async function sendStats(w: World) {
       heatOut: Number(s.heatOut),
       residual: residual.toString(),
       matterDelta: (matter - w.startMatter).toString(),
+      fed: String(fed.matter),
+      feeds: fed.feeds,
     });
   } catch (e) {
     if (current(w)) post({ type: "error", message: `stats: ${e instanceof Error ? e.message : e}` });
@@ -556,7 +572,9 @@ async function inspectLineage(key: string, ticket: number) {
 /**
  * Keeps the present (a checkpoint), restores the latest checkpoint of this run at or before `step` and
  * queues the steps up to it; replay is deterministic, so the world reached is the one that was there.
- * Lesions made after that checkpoint are not re-applied.
+ * Interventions logged after that checkpoint and before `step` (lesions and feeds) are queued in the
+ * execution (`queueReplay`) and re-applied at their steps on the way, by every path that advances the
+ * world. A jump made while an earlier jump is still replaying counts what that one had not yet re-applied.
  */
 async function jump(step: number, key: string | null) {
   const w = world;
@@ -565,8 +583,16 @@ async function jump(step: number, key: string | null) {
   const target = jumpTarget(w.manifest.checkpoints, await filesOnDisk(), step);
   if (!target) throw new Error(`no checkpoint of this run at or before step ${step}`);
   const present = await saveCheckpoint(w, false);
+  // Everything this run logged that the target checkpoint has not seen and that happened before `step`.
+  const history = [...w.manifest.interventions, ...w.execution.pendingReplay];
+  const missed = history.slice(target.interventions).filter((iv) => iv.step < step);
   await restore(target.file);
   const now = world!;
+  now.execution.queueReplay(missed.filter((iv) => iv.step >= now.sim.step));
+  // Entries logged at the restored step itself are due at once: apply them before any probe, lineage
+  // request or display reads this world. Later ones are applied by the traversal as it reaches them,
+  // and it never returns with an entry due at the step it stopped on.
+  await now.execution.advanceFrame(0);
   pendingSteps = step - now.sim.step;
   now.lineage.highlight = key ? parseKey(key) : null;
   post({ type: "highlight", key });
@@ -598,9 +624,49 @@ async function lesion(x: number, y: number, r: number) {
   const H = cellCount(w.sim.cfg) / W;
   const cx = ((Math.floor(x) % W) + W) % W;
   const cy = ((Math.floor(y) % H) + H) % H;
+  // A failed world (a census or a replay that could not complete) takes no further intervention.
+  if (w.execution.failure) throw new Error(w.execution.failure);
   const step = w.sim.step;
   const eff = w.sim.lesion(cx, cy, r);
   w.manifest.interventions.push({ step, kind: "lesion", x: cx, y: cy, r: eff });
+  forkReplay(w);
+}
+
+/** A manual intervention during a jump's replay forks the history: what was still queued no longer applies. */
+function forkReplay(w: World) {
+  const dropped = w.execution.dropReplay();
+  if (dropped) post({ type: "notice", message: `Intervened during a replay: ${dropped} logged intervention${dropped === 1 ? "" : "s"} from t=${w.sim.step} on will not be re-applied` });
+}
+
+/** Books a feed's result into the world's conservation baselines (the observer total is the execution's). */
+function bookFeed(w: World, matter: number, energy: bigint) {
+  w.startMatter += BigInt(matter);
+  w.baseline += energy;
+  w.accounting++;
+}
+
+/**
+ * Feed or drain nutrient in a disc: the one intervention that changes the world's total matter. It is
+ * logged with the exact amount it moved, and the ledger's baselines move with it (matter by that amount,
+ * energy by its chemical energy), so the conservation check stays exact between feeds while the panel
+ * shows how much this run was fed.
+ */
+async function feed(x: number, y: number, r: number, amount: number) {
+  const w = world;
+  if (!w) return;
+  const W = worldW(w.sim.cfg);
+  const H = cellCount(w.sim.cfg) / W;
+  const cx = ((Math.floor(x) % W) + W) % W;
+  const cy = ((Math.floor(y) % H) + H) % H;
+  if (w.execution.failure) throw new Error(w.execution.failure);
+  const step = w.sim.step, asked = Math.trunc(amount);
+  const res = await w.sim.feed(cx, cy, r, asked);
+  if (!current(w)) return;
+  bookFeed(w, res.matter, res.energy);
+  w.execution.recordFeed(res.matter);
+  w.manifest.interventions.push({ step, kind: "feed", x: cx, y: cy, r: res.radius, amount: asked, matter: res.matter });
+  // Only a feed that happened forks a replay in progress: a refused one changes nothing.
+  forkReplay(w);
 }
 
 self.onmessage = (ev: MessageEvent<ToWorker>) => {
@@ -650,6 +716,8 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
         return load(m.presetId, m.seed, m.overrides);
       case "lesion":
         return lesion(m.x, m.y, m.r);
+      case "feed":
+        return feed(m.x, m.y, m.r, m.amount);
       case "probe":
         return probe(m.x, m.y);
       case "save":

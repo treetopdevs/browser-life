@@ -152,6 +152,8 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 .seg button:hover { background: var(--hover); color: var(--text); }
 .tool-group { display: grid; grid-template-columns: repeat(3, 1fr); }
 .tool-group button { padding-inline: 5px; }
+#feed-hint { margin-top: 12px; }
+#feed-hint[hidden] { display: none; }
 #import { display: none; }
 .import-button { flex: 1; }
 #checkpoint-empty[hidden] { display: none; }
@@ -179,7 +181,9 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
   border: 1px solid var(--line); border-radius: 7px; background: oklch(11% 0.009 164);
 }
 .canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; touch-action: none; }
-.canvas-wrap[data-tool="lesion"] canvas { cursor: crosshair; }
+.canvas-wrap[data-tool="lesion"] canvas,
+.canvas-wrap[data-tool="feed"] canvas,
+.canvas-wrap[data-tool="drain"] canvas { cursor: crosshair; }
 .canvas-wrap[data-tool="pan"] canvas { cursor: grab; }
 .canvas-wrap.keyboard-focus { outline: 2px solid var(--accent); outline-offset: 2px; }
 .focus-cursor {

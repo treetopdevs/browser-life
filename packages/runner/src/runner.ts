@@ -259,6 +259,13 @@ export interface ObserverState {
    * carry b - 1 at boundary b. See `pondContinuationError`.
    */
   ponds?: { lastCycle: number };
+  /**
+   * Fed histories only (feed.ts in @bl/schema): the net quanta of nutrient this history's logged feeds
+   * have added (negative: drained) and how many feeds there were. Absent when the history was never
+   * fed, so every other observer state and its digest are unchanged. It travels with the checkpoint
+   * artifact, so a fed world exported and imported elsewhere still says that it was fed.
+   */
+  fed?: { matter: number; feeds: number };
 }
 
 export interface RunOptions {
@@ -647,6 +654,10 @@ function validateObserverShape(raw: unknown): ObserverState {
   if (o.prevSym != null && typeof o.prevSym !== "string") throw new Error("checkpoint: observer prevSym is malformed");
   if (o.ponds !== undefined && (!o.ponds || typeof o.ponds !== "object" || !safeIntGe0((o.ponds as { lastCycle?: unknown }).lastCycle)))
     throw new Error("checkpoint: observer ponds.lastCycle is malformed");
+  if (o.fed !== undefined) {
+    const f = o.fed as { matter?: unknown; feeds?: unknown } | null;
+    if (!f || typeof f !== "object" || !Number.isSafeInteger(f.matter) || !posInt(f.feeds)) throw new Error("checkpoint: observer fed is malformed");
+  }
   return o as ObserverState;
 }
 
