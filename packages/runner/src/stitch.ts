@@ -8,7 +8,7 @@
 // concatenation of its segments' (tests/deno/stitch.ts checks this against a
 // continuous run byte for byte). The manifest is the last segment's, widened
 // to cover the whole history.
-import { MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, exchangePositions } from "@bl/schema";
+import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, exchangePositions, type PondArm } from "@bl/schema";
 import { runId, sameConfig, type RunSummary } from "./runner.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
@@ -107,14 +107,41 @@ export interface StitchSegment {
   files: Record<string, string>;
 }
 
+/** The columns only the hunt's arms write (`HUNT_POND_COLUMNS` beyond v1's). */
+const HUNT_ONLY_COLUMNS = ["died", "exportMass", "weight"] as const;
+
+/** The packet columns, beyond `cx` and `cy`, that a row without a packet holds at "0" (`makeRow`'s zeroes). */
+const NO_PACKET_COLUMNS = ["landed", "reqMass", "retMass", "reqE", "retE", "truncated", "packetLineages", "domHi", "domLo", "domShare"] as const;
+
+/** One nat/shuf row's fields the stitch rules read. */
+interface HuntRow {
+  died: number;
+  donor: number;
+  exportMass: number;
+  weight: number;
+  recipientTrait: number;
+  landed: number;
+  cx: number;
+  cy: number;
+  /** The raw cells of `NO_PACKET_COLUMNS`, in that order. */
+  packet: string[];
+  heat: string;
+  light: string;
+}
+
 /**
  * The ponds.tsv rules for one stretch of a run, throwing with `id` as the prefix: a header with the step, cycle and
  * recipient columns; rows only in (startStep, end], on the pond boundaries (every `period` steps, cycle = step / period);
  * and at every boundary in that range exactly one row per pond, each recipient index 0..ponds-1 once. `stitchRun` applies
  * it to every segment, and tools/stitch.ts to a cached export over (0, steps], so an export written before a rule
  * existed cannot be kept.
+ *
+ * The hunt's arms nat and shuf (`arm`, or, where the caller has none, a header carrying their `died`, `exportMass` or
+ * `weight` column) write `HUNT_POND_COLUMNS` exactly, and every boundary's rows must then also come in ascending pond
+ * index (boundaries in ascending step) and satisfy `checkHuntBoundary`. `arm` of any other value (including none, with
+ * a v1 header) leaves the v1 rules, and a v1 file's bytes, as they were.
  */
-export function checkPondsFile(id: string, text: string, period: number | undefined, ponds: number, startStep: number, end: number): void {
+export function checkPondsFile(id: string, text: string, period: number | undefined, ponds: number, startStep: number, end: number, arm?: PondArm): void {
   const [header, ...rows] = lines(text);
   const names = (header ?? "").split("\t");
   const col = names.indexOf("step");
@@ -122,8 +149,17 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
   const recipientCol = names.indexOf("recipient");
   if (col < 0 || cycleCol < 0 || recipientCol < 0)
     throw new Error(`${id}: ${PONDS_FILE} has no ${col < 0 ? "step" : cycleCol < 0 ? "cycle" : "recipient"} column in its header`);
+  const huntArm = arm === "nat" || arm === "shuf";
+  const huntHeader = HUNT_ONLY_COLUMNS.some((c) => names.includes(c));
+  if (arm !== undefined && huntArm !== huntHeader)
+    throw new Error(`${id}: ${PONDS_FILE} header ${huntHeader ? "carries" : "lacks"} the hunt's columns (${HUNT_ONLY_COLUMNS.join(", ")}), but the arm is ${arm}`);
+  const hunt = huntArm || huntHeader;
+  if (hunt && names.join("\t") !== HUNT_POND_COLUMNS.join("\t"))
+    throw new Error(`${id}: ${PONDS_FILE} header is not the hunt's columns (${HUNT_POND_COLUMNS.join(", ")})`);
   if (period === undefined || !Number.isSafeInteger(period) || period <= 0) throw new Error(`${id}: pondPeriod ${period} is not a positive integer`);
   const perBoundary = new Map<number, number[]>();
+  const huntRows = new Map<number, HuntRow[]>();
+  let lastStep = -Infinity;
   for (const row of rows) {
     const cells = row.split("\t");
     const step = Number(cells[col]);
@@ -136,6 +172,11 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
     if (!Number.isInteger(recipient) || recipient < 0 || recipient >= ponds)
       throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with recipient "${recipientCell}", not a pond index in [0, ${ponds})`);
     (perBoundary.get(step) ?? perBoundary.set(step, []).get(step)!).push(recipient);
+    if (hunt) {
+      if (step < lastStep) throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} after one at step ${lastStep}; boundaries come in ascending order`);
+      lastStep = step;
+      (huntRows.get(step) ?? huntRows.set(step, []).get(step)!).push(huntRow(id, step, cells, names, ponds));
+    }
   }
   for (let b = (Math.floor(startStep / period) + 1) * period; b <= end; b += period) {
     const recipients = perBoundary.get(b) ?? [];
@@ -143,7 +184,80 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
     // The right count is not enough: a duplicated recipient hides a missing pond.
     if (new Set(recipients).size !== ponds)
       throw new Error(`${id}: ${PONDS_FILE} has recipients [${recipients.join(",")}] for the boundary at t=${b}, expected each pond 0..${ponds - 1} exactly once`);
+    if (hunt) checkHuntBoundary(id, b, recipients, huntRows.get(b)!, arm);
   }
+}
+
+/** A nat/shuf row's structural fields (`HuntRow`), each a decimal integer (digits only, as the recipient is read; `donor`, `cx` and `cy` may be negative), `heat` and `light` as their cells. */
+function huntRow(id: string, step: number, cells: string[], names: string[], ponds: number): HuntRow {
+  const read = (name: string, signed: boolean): number => {
+    const cell = cells[names.indexOf(name)] ?? "";
+    const v = (signed ? /^-?\d+$/ : /^\d+$/).test(cell) ? Number(cell) : NaN;
+    if (!Number.isSafeInteger(v)) throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with ${name} "${cell}", not ${signed ? "an integer" : "a nonnegative integer"}`);
+    return v;
+  };
+  const died = read("died", false);
+  if (died !== 0 && died !== 1) throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with died ${died}, expected 0 or 1`);
+  const donor = read("donor", true);
+  if (donor < -2 || donor >= ponds) throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with donor ${donor}, not -2, -1 or a pond index in [0, ${ponds})`);
+  const cell = (name: string) => cells[names.indexOf(name)] ?? "";
+  return {
+    died,
+    donor,
+    exportMass: read("exportMass", false),
+    weight: read("weight", false),
+    recipientTrait: read("recipientTrait", false),
+    landed: read("landed", false),
+    cx: read("cx", true),
+    cy: read("cy", true),
+    packet: NO_PACKET_COLUMNS.map(cell),
+    heat: cell("heat"),
+    light: cell("light"),
+  };
+}
+
+/**
+ * One nat/shuf boundary's rows (`rows[p]` is pond p's; `recipients` is the file order of the boundary, which must be
+ * ascending pond index) against the hunt's row table. Per boundary, the weights: nat's `weight` is each pond's
+ * `exportMass`; shuf's is the same multiset of masses dealt to the same exporting ponds (weight > 0 exactly where
+ * exportMass > 0, the sorted values equal), which is also what nat's satisfies, so `arm` of neither (a cached export
+ * checked from its header alone) is held to that. Per row: an unoccupied pond (`recipientTrait` 0) died; a survivor
+ * (`died` 0) has donor -2 and a dying pond (`died` 1) has a donor index or -1, and -1 only when no pond at that
+ * boundary has weight (no export anywhere, Σw = 0); a donor is a pond with weight, so with Σw = 0 every dying pond has
+ * -1. A donor index means a packet landed (`landed` >= 1, centre cx, cy >= 0); donor -1 or -2 is v1's no-packet row
+ * (cx = cy = -1, every other packet column and `light` "0"); and a survivor books no `heat`.
+ */
+function checkHuntBoundary(id: string, b: number, recipients: number[], rows: HuntRow[], arm?: PondArm): void {
+  if (recipients.some((r, p) => r !== p))
+    throw new Error(`${id}: ${PONDS_FILE} has recipients [${recipients.join(",")}] for the boundary at t=${b}, expected ascending pond index 0..${recipients.length - 1}`);
+  const pondAt = (p: number) => `${id}: ${PONDS_FILE} pond ${p} at the boundary t=${b}`;
+  if (arm === "nat") {
+    const p = rows.findIndex((r) => r.weight !== r.exportMass);
+    if (p >= 0) throw new Error(`${pondAt(p)} has weight ${rows[p].weight}, not its exportMass ${rows[p].exportMass} (nat's donor weights are the export masses)`);
+  } else {
+    const p = rows.findIndex((r) => r.weight > 0 !== r.exportMass > 0);
+    if (p >= 0) throw new Error(`${pondAt(p)} has weight ${rows[p].weight} with exportMass ${rows[p].exportMass}; the weights go to exactly the exporting ponds`);
+    const mass = rows.map((r) => r.exportMass).sort((x, y) => x - y);
+    const dealt = rows.map((r) => r.weight).sort((x, y) => x - y);
+    if (mass.some((m, j) => m !== dealt[j]))
+      throw new Error(`${id}: ${PONDS_FILE} at the boundary t=${b}: the weights [${dealt.filter((w) => w > 0).join(",")}] are not a permutation of the export masses [${mass.filter((m) => m > 0).join(",")}]`);
+  }
+  const noExport = rows.every((r) => r.weight === 0);
+  rows.forEach((r, p) => {
+    const at = pondAt(p);
+    if (r.died === 0 ? r.donor !== -2 : r.donor === -2) throw new Error(`${at} has died ${r.died} with donor ${r.donor}; a survivor has donor -2 and a dying pond does not`);
+    if (r.recipientTrait === 0 && r.died === 0) throw new Error(`${at} has recipientTrait 0 but did not die (an unoccupied pond always dies)`);
+    if (r.donor === -1 && !noExport) throw new Error(`${at} has donor -1 (no packet) though a pond at that boundary has weight`);
+    if (r.died === 1 && r.donor >= 0 && rows[r.donor].weight === 0) throw new Error(`${at} has donor ${r.donor}, a pond with weight 0`);
+    if (r.donor >= 0) {
+      if (r.landed < 1 || r.cx < 0 || r.cy < 0) throw new Error(`${at} has donor ${r.donor} but landed ${r.landed} at (${r.cx}, ${r.cy}); a donor's packet lands with a centre in its tile`);
+    } else {
+      const stray = r.packet.findIndex((c) => c !== "0");
+      if (r.cx !== -1 || r.cy !== -1 || stray >= 0 || r.light !== "0")
+        throw new Error(`${at} has donor ${r.donor} (no packet) but cx ${r.cx}, cy ${r.cy}, ${stray >= 0 ? `${NO_PACKET_COLUMNS[stray]} ${r.packet[stray]}` : `light ${r.light}`}; no packet means cx = cy = -1 and every other packet column and light 0`);
+    }
+    if (r.died === 0 && r.heat !== "0") throw new Error(`${at} survived but books heat ${r.heat}; only a dying pond's heat is booked`);
+  });
 }
 
 /**
@@ -185,6 +299,8 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     if (s.index !== k) throw new Error(`${id}: expected segment #${k}`);
     if (s.startStep !== at) throw new Error(`${id}: starts at ${s.startStep}, previous segment ended at ${at}`);
     if (!m.summary) throw new Error(`${id}: manifest has no summary (run did not finish)`);
+    // A branch run (RunSpec.branch) starts from a decoded source checkpoint that no segment chain carries: not distributed.
+    if (m.branch !== undefined || m.spec.branch !== undefined) throw new Error(`${id}: manifest records a branch run (${JSON.stringify(m.branch ?? m.spec.branch)}); branches are not distributed, so they cannot be stitched`);
     if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION) throw new Error(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, expected ${RULE_VERSION}/${SCHEMA_VERSION}`);
     // A missing field predates METRICS_VERSION and is version 1 — differing
     // metric definitions (e.g. compressionRatio's compressor) must never pool.
@@ -249,10 +365,11 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     // first column is the cycle index. Every boundary in that range has
     // exactly one row per pond (every arm, the no-donor path included), each
     // recipient index 0..ponds-1 once, with cycle = step / pondPeriod, like
-    // series.jsonl's census grid.
+    // series.jsonl's census grid. The hunt's arms (nat, shuf) write the longer
+    // header and add the ascending-order and died/donor rules of `checkPondsFile`.
     if (pondRun) {
       if (typeof s.files[PONDS_FILE] !== "string") throw new Error(`${id}: pond run but missing ${PONDS_FILE}`);
-      checkPondsFile(id, s.files[PONDS_FILE], first.cfg.pondPeriod, first.cfg.tilesX * first.cfg.tilesY, s.startStep, end);
+      checkPondsFile(id, s.files[PONDS_FILE], first.cfg.pondPeriod, first.cfg.tilesX * first.cfg.tilesY, s.startStep, end, first.cfg.pondArm);
     } else if (typeof s.files[PONDS_FILE] === "string") {
       throw new Error(`${id}: ${PONDS_FILE} present on a run without the pond cycle`);
     }

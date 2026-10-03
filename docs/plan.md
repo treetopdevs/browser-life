@@ -673,6 +673,35 @@ The transition hunt stays a draft. It waits on the user's approval as a whole, a
 - **Freeze:** the SHA-256 is `13246200a5277ecbbbefb8d5b220f61a10ba1d33dc39a748fefbc224904a1f97` over its 38,736 bytes, recorded in `experiments/scaffold/HUNT-v1`. Changes from here on go in dated amendments at the end.
 - **Next:** Stage 0 on the Mac at $0: build the code the hunt lists, review it, commit; then G1, G2 and D3, and a dated amendment with their results. Stage 1 waits for the registration's queue and its own draw note.
 
+**Transition hunt Stage 0 code built (2026-10-03).** The code listed under the hunt's "Code to build (Stage 0)" is built, audited and reviewed. It is $0 engineering on the Mac. No gate run, history, assay or data of the hunt exists yet.
+- **The current:** arms `nat` and `shuf` (`applyCurrentCycle`) with the optional keys `pondDeath` and `pondExport`, and the conditions `pond-nat` and `pond-shuf`. Physics is unchanged: the golden pins, the preset identities and protocol v1's recorded pond states and rows (the `equivalence` suite) all reproduce.
+- **Runner:**
+  - the new arms' `ponds.tsv`, with one row per pond and three new columns;
+  - `--override` for `mutRate` and `pondDeath` only;
+  - branch runs from a pre-cycle checkpoint, by the hunt's branch contract;
+  - stitch rules for the new arms; stitching refuses branch segments;
+  - the island capability `ponds-v2`, with the coordinator's gate;
+  - a lab guard.
+- **Assay and report:**
+  - the export assay W (`scaffold-assays.ts export --hunt1`);
+  - the report stages `hunt0` (G1, G2, D3) and `hunt1` (Stage 1), with strict provenance, source authentication and the hunt's validity order.
+- **Amendment 1** (13 items, appended to the hunt) records the implementation clarifications made during the build, before any run. Among them: run directories, overflow reruns, G1's decision read literally and strictly, "unresolved", the one-origin rule for the `-s` sources, and the quenched gate's use of rejected sets. It changes no hypothesis, test, threshold, seed formula, sample size or outcome row. The frozen prefix still hashes to the pinned SHA-256.
+- **Process:**
+  - five parallel builders;
+  - three adversarial audits, with no P1 (their P2s were the strict report accepting smoke or mis-sourced sets, and `-s` pairs not tied to their source);
+  - two fix rounds;
+  - five rounds of Codex Astra review, which found five P2s in the report and four in the run script; all were fixed, and the last round passed the build.
+- **Gates:**
+  - typecheck;
+  - vitest, 1,644 tests;
+  - deno checks;
+  - GPU golden 12/12;
+  - the ponds suite, all sections, including `equivalence`, `natshuf` and `branch`;
+  - stitch and segments;
+  - coordinator `mix precommit`;
+  - the R3 replication's readout, unchanged.
+- **Next:** Stage 0 on the Mac (`runs/scaffold/hunt0/stage0.sh`): G1, then its e = 1 fallback only if G1 asks for it, then G2, then D3. Every decision is taken by `scaffold-report.ts hunt0`. The results go in a dated amendment.
+
 
 ## Ecology-first founder discovery — 2026-09-29
 

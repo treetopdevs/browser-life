@@ -1,6 +1,6 @@
 // Cadence and observer integrity for one lab world. Callers serialize operations;
 // the worker's generation predicate invalidates outstanding work on replacement.
-import { cloneState, MAX_STEP, stateHash, type WorldState } from "@bl/schema";
+import { cloneState, MAX_STEP, stateHash, type WorldConfig, type WorldState } from "@bl/schema";
 import type { GpuSim } from "@bl/sim-gpu";
 import type { Census } from "@bl/metrics";
 import {
@@ -37,6 +37,18 @@ const message = (e: unknown) => e instanceof Error ? e.message : String(e);
 /** Raised before any submission, so the world is unchanged and remains usable. */
 class StepLimitError extends Error {}
 
+/**
+ * Why the lab will not take a world with `cfg`, or null. The transition hunt's pond arms (`pondArm` "nat" and "shuf",
+ * docs/scaffold-transition-hunt-v1.md) run only in the headless runner and on islands, never in the lab: a world that
+ * has one is refused wherever it can enter (a preset with overrides, an import, a restore or jump), and by
+ * `LabExecution` itself, so no cycle, replay twin or checkpoint of one is ever made here.
+ */
+export function huntArmError(cfg: Pick<WorldConfig, "pondArm">): string | null {
+  const arm = cfg.pondArm;
+  if (arm !== "nat" && arm !== "shuf") return null;
+  return `This world uses pond arm "${arm}", one of the transition hunt's (docs/scaffold-transition-hunt-v1.md); the lab does not run the hunt's arms yet. Run it with tools/run.ts or on an island.`;
+}
+
 export class LabExecution {
   private readonly obs;
   private readonly cursor: { observed: number };
@@ -47,6 +59,8 @@ export class LabExecution {
   private droppedEvents: number;
 
   constructor(private readonly sim: LabSimulation, private readonly settings: ObserverSettings, private readonly options: ExecutionOptions) {
+    const huntError = huntArmError(sim.cfg);
+    if (huntError) throw new Error(huntError);
     if (!Number.isSafeInteger(settings.censusEvery) || settings.censusEvery <= 0) throw new Error("censusEvery must be a positive integer");
     const period = sim.cfg.migrationPeriod ?? 0;
     if (period > 0 && period % settings.censusEvery !== 0) {

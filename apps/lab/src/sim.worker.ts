@@ -26,7 +26,7 @@ import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from
 import { census, individuals, lineageRGB } from "@bl/metrics";
 import { decodeArtifact, pondContinuationError, type ObserverSettings, type ObserverState } from "@bl/runner";
 import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
-import { LabExecution } from "./execution.ts";
+import { LabExecution, huntArmError } from "./execution.ts";
 import { jumpTarget, prunableAuto } from "./checkpoints.ts";
 import type { CensusMsg, FromWorker, RunManifest, ToWorker } from "./protocol.ts";
 import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
@@ -157,6 +157,9 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
  */
 async function adopt(state: WorldState, manifest: RunManifest, observer: ObserverState | undefined, lineage: AdoptLineage) {
   if (!device || !ctx) throw new Error("GPU not initialised");
+  // Every world enters here (a new preset, an import, a restore or jump); the hunt's pond arms are refused before any GPU allocation.
+  const huntError = huntArmError(state.cfg);
+  if (huntError) throw new Error(huntError);
   // The runner's continuation guard: a pond world's observer must say its
   // last cycle is floor(step / pondPeriod). A pre-cycle state at a boundary
   // would otherwise skip that cycle, since a history never cycles at its start.
@@ -234,6 +237,8 @@ async function load(presetId: string, seed: number, overrides = {}) {
   const preset = PRESETS.find((p) => p.id === presetId);
   if (!preset) throw new Error(`unknown preset "${presetId}"`);
   const cfg = presetConfig(preset, seed, overrides);
+  const huntError = huntArmError(cfg);
+  if (huntError) throw new Error(huntError);
   const state = initWorld(cfg, preset.init);
   const manifest = { ...newManifest(preset.id, seed, state, preset.init, DEFAULT_SETTINGS), startHash: stateHash(state), edgesFrom: 0 };
   await adopt(state, manifest, undefined, { edges: new MutationEdges(), dropped: 0, edgesFrom: 0, known: [{ source: "start world", genomes: genomesOf(state, cfg) }] });
