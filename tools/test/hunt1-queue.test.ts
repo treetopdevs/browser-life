@@ -3,7 +3,7 @@
 // report read of each command: seeds, set ids, bundle directories, dependencies, the device check, the reproducibility draw and reg1ReportQueueCheck.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -559,6 +559,51 @@ describe("the ops files", () => {
       for (const line of lines) expect(line.split("|"), line).toHaveLength(3);
     }
   });
+
+  it("copies the AWS scripts from tools/hunt1-ops/aws as they are, renders the launchd plist for this workspace, and writes no account value, credential or key", () => {
+    for (const f of ["launch.sh", "supervise.sh", "bootstrap.sh", "finish.sh", "make-src.sh", "rsh", "rcp"]) {
+      expect(ops(f), f).toBe(readFileSync(join(REPO, "tools", "hunt1-ops", "aws", f), "utf8"));
+      expect(statSync(join(tmp, "ops", f)).mode & 0o111, `${f} stays executable`).not.toBe(0);
+    }
+    // no aws.conf in the scratch directory: the plist takes this workspace
+    const plist = ops("com.browser-life.scaf-hunt1.plist");
+    expect(plist).not.toContain("@WORKSPACE@");
+    expect(plist).toContain(`<string>${REPO}/runs/scaffold/ops-hunt1/supervise.sh</string>`);
+    expect(plist).toBe(readFileSync(join(REPO, "tools", "hunt1-ops", "aws", "com.browser-life.scaf-hunt1.plist"), "utf8").replaceAll("@WORKSPACE@", REPO));
+    for (const f of ["aws.conf", "awsenv.sh", "bl_key", "bl_key.pub"]) expect(existsSync(join(tmp, "ops", f)), f).toBe(false);
+  });
+
+  it("fills the plist from WORKSPACE in the state directory's aws.conf when there is one", () => {
+    const dir = mkdtempSync(join(tmpdir(), "hunt1-queue-conf-"));
+    try {
+      mkdirSync(join(dir, "ops"));
+      writeFileSync(join(dir, "ops", "aws.conf"), "VPC=x\nWORKSPACE=/some/other/workspace\n");
+      execFileSync("deno", ["run", "-A", QUEUE_TS, "--device-ref", DEVICE_REF, "--out", join(dir, "queue.json"), "--ops", join(dir, "ops")], { cwd: REPO, stdio: "pipe" });
+      const plist = readFileSync(join(dir, "ops", "com.browser-life.scaf-hunt1.plist"), "utf8");
+      expect(plist).toContain("<string>/some/other/workspace/runs/scaffold/ops-hunt1/supervise.sh</string>");
+      expect(plist).not.toContain(REPO);
+      expect(readFileSync(join(dir, "ops", "aws.conf"), "utf8")).toBe("VPC=x\nWORKSPACE=/some/other/workspace\n");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 120_000);
+
+  it("reads WORKSPACE as bash does (quotes are shell syntax, as when make-src.sh sources aws.conf), and refuses a path the plist cannot carry", () => {
+    const dir = mkdtempSync(join(tmpdir(), "hunt1-queue-quoted-"));
+    const gen = () => execFileSync("deno", ["run", "-A", QUEUE_TS, "--device-ref", DEVICE_REF, "--out", join(dir, "queue.json"), "--ops", join(dir, "ops")], { cwd: REPO, stdio: "pipe" });
+    try {
+      mkdirSync(join(dir, "ops"));
+      writeFileSync(join(dir, "ops", "aws.conf"), 'VPC=x\nWORKSPACE="/some/quoted workspace"\n');
+      gen();
+      const plist = readFileSync(join(dir, "ops", "com.browser-life.scaf-hunt1.plist"), "utf8");
+      expect(plist).toContain("<string>/some/quoted workspace/runs/scaffold/ops-hunt1/supervise.sh</string>");
+      expect(plist).not.toContain('"/some');
+      writeFileSync(join(dir, "ops", "aws.conf"), "WORKSPACE='/a&b'\n");
+      expect(gen).toThrow(/the plist cannot carry/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 240_000);
 
   it("takes lane.sh, start.sh, watchdog.sh and history.sh from tools/hunt1-ops", () => {
     for (const f of ["lane.sh", "start.sh", "watchdog.sh", "history.sh"]) expect(ops(f), f).toBe(readFileSync(join(REPO, "tools", "hunt1-ops", f), "utf8"));

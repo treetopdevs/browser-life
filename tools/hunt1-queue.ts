@@ -12,6 +12,8 @@
 //   history.sh     a history or ancestor world at census 1,000 (a -s history branching from its source), rerun at census 100 under <experiment>-c100
 //                  only when the first run stopped on event-buffer overflow (tools/hunt1-ops/history.sh);
 //   devcheck.sh    the device check: the pinned hunt text, then the device spec's finalHash against --device-ref;
+//   launch.sh, supervise.sh, bootstrap.sh, finish.sh, make-src.sh, rsh, rcp   the AWS operations (tools/hunt1-ops/aws/, copied as they are; machine and account specifics
+//                  come from the gitignored aws.conf in DIR), and com.browser-life.scaf-hunt1.plist, the launchd template with WORKSPACE (from aws.conf) filled in;
 //   lane.sh, start.sh, watchdog.sh   the hunt's (tools/hunt1-ops/): lane.sh runs each command in a process group of its own, publishes it in the claim before the command
 //                  runs and kills what survives the command before it retries or publishes a status; start.sh takes an OS-held lock (flock; the kernel releases it), starts only the missing lanes and releases a
 //                  claim only when its lane and its command's group are both gone (`start.sh sweep` is the watchdog's, under the same lock); watchdog.sh never powers the
@@ -196,6 +198,23 @@ if (a.ops) {
   }
   // lane.sh, start.sh, watchdog.sh and history.sh are the hunt's (tools/hunt1-ops/); devcheck.sh carries --device-ref.
   for (const f of ["lane.sh", "start.sh", "watchdog.sh", "history.sh"]) await Deno.copyFile(new URL(`./hunt1-ops/${f}`, import.meta.url), `${a.ops}/${f}`);
+  // The AWS scripts (tools/hunt1-ops/aws/) run from the state directory, which is three levels below the workspace root as tools/hunt1-ops/aws/ is. Nothing machine-specific is in
+  // them: aws.conf (VPC, AMI, the colocated repo, the workspace path), awsenv.sh and the keys stay in the state directory, untracked, and are never written here.
+  for (const f of ["launch.sh", "supervise.sh", "bootstrap.sh", "finish.sh", "make-src.sh", "rsh", "rcp"]) await Deno.copyFile(new URL(`./hunt1-ops/aws/${f}`, import.meta.url), `${a.ops}/${f}`);
+  // The launchd plist is its template with the workspace path filled in: WORKSPACE from aws.conf in the state directory, failing that this workspace.
+  // aws.conf is read by bash, as the scripts source it, so quoting means the same here as in make-src.sh's check of this plist.
+  const confPath = `${a.ops}/aws.conf`;
+  let confWorkspace = "";
+  if (await Deno.stat(confPath).then(() => true, () => false)) {
+    const r = await new Deno.Command("/bin/bash", { args: ["-c", '. "$1" && printf %s "${WORKSPACE-}"', "_", confPath], stdin: "null", stdout: "piped" }).output();
+    if (!r.success) throw new Error(`${confPath}: bash could not source it`);
+    confWorkspace = new TextDecoder().decode(r.stdout);
+  }
+  const workspace = confWorkspace || decodeURIComponent(new URL("..", import.meta.url).pathname).replace(/\/$/, "");
+  // make-src.sh fills the template with sed (# delimiter) to check it; the value also lands in XML
+  if (/[&<>#\\\n]/.test(workspace)) throw new Error(`workspace path ${JSON.stringify(workspace)}: the plist cannot carry &, <, >, #, \\ or a newline`);
+  const plist = await Deno.readTextFile(new URL("./hunt1-ops/aws/com.browser-life.scaf-hunt1.plist", import.meta.url));
+  await Deno.writeTextFile(`${a.ops}/com.browser-life.scaf-hunt1.plist`, plist.replaceAll("@WORKSPACE@", workspace));
   await Deno.writeTextFile(
     `${a.ops}/devcheck.sh`,
     `#!/bin/bash

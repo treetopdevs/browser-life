@@ -1,10 +1,11 @@
-// The transition hunt's Stage 1 AWS operations (runs/scaffold/ops-hunt1: launch.sh, supervise.sh, bootstrap.sh, finish.sh, and the instance
-// scripts tools/hunt1-ops/start.sh and watchdog.sh), run for real under /bin/bash against stubs: a fake `aws` (a small in-memory EC2 with
+// The transition hunt's Stage 1 AWS operations (tools/hunt1-ops/aws/: launch.sh, supervise.sh, bootstrap.sh, finish.sh, make-src.sh, rsh, rcp,
+// and the launchd plist template; and the instance scripts tools/hunt1-ops/lane.sh, start.sh, watchdog.sh), run for real under /bin/bash against stubs: a fake `aws` (a small in-memory EC2 with
 // failure injection), `ssh` and `rsync` (a fake instance's home is a directory), `curl`, `launchctl`, `sudo`, `deno`. Nothing here reaches AWS or a
 // host; the stubs come first on PATH, the scratch directory holds copies of the scripts, and no key or credential file is read.
-// The ops scripts live in runs/ (gitignored): those suites are skipped where they are absent.
+// The scripts are the tracked copies: each sandbox gets them as tools/hunt1-queue.ts --ops puts them in the ops state directory
+// (runs/scaffold/ops-hunt1, three levels below the workspace root), with an aws.conf of fake account values.
 import { spawn, spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,11 +13,12 @@ import { createHash } from "node:crypto";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const OPS = join(REPO, "runs", "scaffold", "ops-hunt1");
 const HUNT_OPS = join(REPO, "tools", "hunt1-ops");
-const OPS_SCRIPTS = ["launch.sh", "supervise.sh", "bootstrap.sh", "finish.sh", "make-src.sh"];
-const haveOps = OPS_SCRIPTS.every((f) => existsSync(join(OPS, f)));
-const describeOps = haveOps ? describe : describe.skip;
+const AWS_OPS = join(HUNT_OPS, "aws");
+const AWS_SCRIPTS = ["launch.sh", "supervise.sh", "bootstrap.sh", "finish.sh", "make-src.sh", "rsh", "rcp"];
+/** Fake account values: the scripts read VPC and AMI from aws.conf, so none is in them. */
+const TEST_VPC = "vpc-0testtesttesttest0";
+const TEST_AMI = "ami-0testtesttesttest0";
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // The stubs
@@ -408,13 +410,14 @@ class Sandbox {
     put("curl", SH('sleep "${CURL_DELAY:-0}"; echo 203.0.113.7'));
     put("launchctl", SH('echo "$@" >> "$FAKE/launchctl.log"'));
     put("sudo", SH('echo "$@" >> "$FAKE/sudo.log"'));
-    // the scripts source awsenv.sh for credentials; the stand-in sets nothing secret
+    // the scripts source awsenv.sh for credentials; the stand-in sets nothing secret. aws.conf holds the account and machine specifics (fake here).
     writeFileSync(join(this.ops, "awsenv.sh"), "export AWS_DEFAULT_REGION=us-east-1\n");
+    writeFileSync(join(this.ops, "aws.conf"), `VPC=${TEST_VPC}\nAMI=${TEST_AMI}\nREPO=${join(this.root, "colocated-repo")}\nWORKSPACE=${this.root}\n`);
     this.setState({ keypairs: {}, sgs: {}, instances: {}, tokens: {}, seq: 0, inject: [] });
   }
-  /** Copies scripts (from OPS, or HUNT_OPS for the instance ones) into the sandbox's ops directory. */
+  /** Copies tracked scripts (tools/hunt1-ops/aws/, or tools/hunt1-ops/ for the instance ones) into the sandbox's ops directory, as hunt1-queue.ts --ops does. */
   install(...names: string[]): void {
-    for (const f of names) copyFileSync(existsSync(join(OPS, f)) ? join(OPS, f) : join(HUNT_OPS, f), join(this.ops, f));
+    for (const f of names) copyFileSync(existsSync(join(AWS_OPS, f)) ? join(AWS_OPS, f) : join(HUNT_OPS, f), join(this.ops, f));
   }
   env(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
     return { PATH: `${this.bin}:${process.env.PATH}`, HOME: this.home, FAKE: this.fake, TMPDIR: this.root, ...extra };
@@ -497,7 +500,7 @@ const num = (s: string): number => Number(s.trim());
 describe("the hunt's ops scripts parse", () => {
   const files = [
     ...["lane.sh", "start.sh", "watchdog.sh", "history.sh"].map((f) => join(HUNT_OPS, f)),
-    ...(haveOps ? [...OPS_SCRIPTS.map((f) => join(OPS, f)), join(OPS, "devcheck.sh")] : []),
+    ...AWS_SCRIPTS.map((f) => join(AWS_OPS, f)),
   ];
   it.each(files.map((f) => [f.replace(REPO + "/", ""), f]))("bash -n %s", (_n, f) => {
     for (const sh of ["/bin/bash", "bash"]) {
@@ -514,9 +517,117 @@ describe("the hunt's ops scripts parse", () => {
 });
 
 // ---------------------------------------------------------------------------------------------------------------------------------
+// Nothing machine- or account-specific is tracked; aws.conf (untracked) is where it lives
+
+describe("the tracked ops scripts hold no account or machine specifics", () => {
+  const listed = (dir: string): string[] => readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? listed(join(dir, e.name)) : [join(dir, e.name)]));
+  const files = [...listed(HUNT_OPS), join(REPO, "tools", "hunt1-queue.ts")];
+
+  it("the AWS scripts and the plist template are where they are meant to be", () => {
+    for (const f of [...AWS_SCRIPTS, "com.browser-life.scaf-hunt1.plist"]) expect(existsSync(join(AWS_OPS, f)), f).toBe(true);
+    for (const f of AWS_SCRIPTS.filter((x) => x.endsWith(".sh") || x === "rsh" || x === "rcp")) expect(statSync(join(AWS_OPS, f)).mode & 0o111, `${f} is executable`).not.toBe(0);
+  });
+
+  it.each(files.map((f) => [f.replace(REPO + "/", ""), f]))("%s has no home path, VPC or AMI id, key path or credential", (_n, f) => {
+    const text = readFileSync(f, "utf8");
+    expect(text, "a home or workspace path").not.toContain("/Users/");
+    expect(text, "a VPC id (the vpc-id API names are not ids)").not.toMatch(/\bvpc-[0-9a-f]{6,}/);
+    expect(text, "an AMI id").not.toMatch(/\bami-[0-9a-f]{6,}/);
+    expect(text, "an absolute key path").not.toMatch(/(^|[\s"'=(])\/[^\s"']*(bl_key|bl_gpu_key|\.pem\b|id_rsa|id_ed25519)/);
+    expect(text, "an access key id").not.toMatch(/AKIA[0-9A-Z]{12,}/);
+    expect(text, "a credential file").not.toMatch(/\.env\b/);
+  });
+
+  it("the scripts that need account values source them from aws.conf in the state directory, and stop with a message when it is missing", () => {
+    for (const f of ["launch.sh", "supervise.sh", "make-src.sh"]) {
+      const text = readFileSync(join(AWS_OPS, f), "utf8");
+      expect(text, f).toContain('source "$O/aws.conf"');
+      expect(text, f).toContain("aws.conf is missing");
+    }
+    // and take the state directory from the workspace root, three levels above the script wherever it sits
+    for (const f of ["launch.sh", "supervise.sh", "bootstrap.sh", "finish.sh", "make-src.sh", "rsh", "rcp"]) expect(readFileSync(join(AWS_OPS, f), "utf8"), f).toContain("/../../..");
+  });
+
+  it("run in place from tools/hunt1-ops/aws, a script still works on the state directory runs/scaffold/ops-hunt1 of its workspace", () => {
+    const box = new Sandbox();
+    cpSync(HUNT_OPS, join(box.root, "tools", "hunt1-ops"), { recursive: true });
+    const r = box.run(join(box.root, "tools", "hunt1-ops", "aws", "launch.sh"), [], { LAUNCH_PAUSE: "0" }, { cwd: box.root });
+    expect(r.status, r.stderr + r.stdout).toBe(0);
+    for (const n of [1, 2, 3]) expect(box.has(`instance-${n}`), `instance-${n} in the state directory`).toBe(true);
+    expect(existsSync(join(box.root, "tools", "hunt1-ops", "aws", "instance-1"))).toBe(false);
+  });
+
+  it.each([["launch.sh"], ["supervise.sh"], ["make-src.sh"]])("%s with no aws.conf exits 1 naming it, before doing anything", (f) => {
+    const box = new Sandbox();
+    box.install(f);
+    rmSync(join(box.ops, "aws.conf"));
+    const r = box.run(join(box.ops, f), f === "make-src.sh" ? ["HEAD"] : [], {}, { cwd: box.ops });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("aws.conf is missing");
+    expect(box.fakeLog("calls.log")).toEqual([]);
+  });
+
+  it("launch.sh takes the VPC and AMI from aws.conf", () => {
+    const box = new Sandbox();
+    box.install("launch.sh");
+    expect(box.run(join(box.ops, "launch.sh"), [], { LAUNCH_PAUSE: "0" }, { cwd: box.ops }).status).toBe(0);
+    const calls = box.fakeLog("calls.log");
+    expect(calls.some((l) => l.includes("create-security-group") && l.includes(`--vpc-id ${TEST_VPC}`))).toBe(true);
+    expect(calls.filter((l) => l.includes("run-instances")).every((l) => l.includes(`--image-id ${TEST_AMI}`))).toBe(true);
+  });
+});
+
+describe("make-src.sh checks the ops files against the tracked copies", () => {
+  const prepared = () => {
+    const box = new Sandbox();
+    cpSync(HUNT_OPS, join(box.root, "tools", "hunt1-ops"), { recursive: true });
+    // the ops state directory as hunt1-queue.ts --ops leaves it: the tracked scripts, and the plist template with the workspace filled in
+    for (const f of ["lane.sh", "start.sh", "watchdog.sh", "history.sh", ...AWS_SCRIPTS]) box.install(f);
+    writeFileSync(join(box.ops, "com.browser-life.scaf-hunt1.plist"), readFileSync(join(AWS_OPS, "com.browser-life.scaf-hunt1.plist"), "utf8").replaceAll("@WORKSPACE@", box.root));
+    return box;
+  };
+  const make = (box: Sandbox) => box.run(join(box.ops, "make-src.sh"), ["HEAD"], {}, { cwd: box.ops });
+
+  it("passes the check when every copy is the tracked one, and goes on to archive from the colocated repo of aws.conf (absent here)", () => {
+    const box = prepared();
+    const r = make(box);
+    expect(r.stderr).not.toContain("is not tools/hunt1-ops");
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain("colocated-repo");   // git could not change to REPO from aws.conf
+  });
+
+  it("passes the check with a quoted WORKSPACE in aws.conf (the plist carries the unquoted path, as hunt1-queue.ts --ops renders it)", () => {
+    const box = prepared();
+    const conf = readFileSync(join(box.ops, "aws.conf"), "utf8");
+    writeFileSync(join(box.ops, "aws.conf"), conf.replace(`WORKSPACE=${box.root}`, `WORKSPACE="${box.root}"`));
+    expect(readFileSync(join(box.ops, "aws.conf"), "utf8")).toContain(`WORKSPACE="${box.root}"`);
+    const r = make(box);
+    expect(r.stderr).not.toContain("is not tools/hunt1-ops");
+    expect(r.stderr).toContain("colocated-repo");
+  });
+
+  it.each([["launch.sh"], ["supervise.sh"], ["bootstrap.sh"], ["finish.sh"], ["make-src.sh"], ["rsh"], ["rcp"], ["lane.sh"], ["start.sh"], ["watchdog.sh"], ["history.sh"]])("refuses a stale %s", (f) => {
+    const box = prepared();
+    writeFileSync(join(box.ops, f), readFileSync(join(box.ops, f), "utf8") + "\n# stale\n");
+    const r = make(box);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(new RegExp(`${f.replace(".", "\\.")} is not tools/hunt1-ops/(aws/)?${f.replace(".", "\\.")}`));
+    expect(box.has("bl-src.tar")).toBe(false);
+  });
+
+  it("refuses a plist that is not the template with the workspace of aws.conf", () => {
+    const box = prepared();
+    writeFileSync(join(box.ops, "com.browser-life.scaf-hunt1.plist"), readFileSync(join(box.ops, "com.browser-life.scaf-hunt1.plist"), "utf8").replace(box.root, "/elsewhere"));
+    const r = make(box);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("com.browser-life.scaf-hunt1.plist is not");
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------------------------
 // launch.sh
 
-describeOps("launch.sh", () => {
+describe("launch.sh", () => {
   let sb: Sandbox;
   beforeEach(() => {
     sb = mkSandbox();
@@ -734,7 +845,7 @@ describeOps("launch.sh", () => {
   });
 
   it("reuses the security group of sg.conf, or the one found by name, and never creates a second", () => {
-    sb.edit((s) => (s.sgs["sg-0077"] = { name: "bl-scaf-hunt1", vpc: "vpc-7f9d051a", rules: [] }));
+    sb.edit((s) => (s.sgs["sg-0077"] = { name: "bl-scaf-hunt1", vpc: TEST_VPC, rules: [] }));
     writeFileSync(join(sb.ops, "sg.conf"), "SG=sg-0077\n");
     expect(launch().status).toBe(0);
     expect(sb.file("sg.conf").trim()).toBe("SG=sg-0077");
@@ -743,7 +854,7 @@ describeOps("launch.sh", () => {
     // by name, with no sg.conf (or a recorded group that is gone)
     const sb2 = mkSandbox();
     sb2.install("launch.sh");
-    sb2.edit((s) => (s.sgs["sg-0088"] = { name: "bl-scaf-hunt1", vpc: "vpc-7f9d051a", rules: [] }));
+    sb2.edit((s) => (s.sgs["sg-0088"] = { name: "bl-scaf-hunt1", vpc: TEST_VPC, rules: [] }));
     writeFileSync(join(sb2.ops, "sg.conf"), "SG=sg-0001\n");
     expect(sb2.run(join(sb2.ops, "launch.sh"), [], { LAUNCH_PAUSE: "0" }, { cwd: sb2.ops }).status).toBe(0);
     expect(sb2.file("sg.conf").trim()).toBe("SG=sg-0088");
@@ -962,7 +1073,7 @@ describeOps("launch.sh", () => {
 // ---------------------------------------------------------------------------------------------------------------------------------
 // supervise.sh
 
-describeOps("supervise.sh", () => {
+describe("supervise.sh", () => {
   let sb: Sandbox;
   const ID = (n: number) => `i-${String(n).padStart(17, "0")}`;
   const nowS = () => Math.floor(Date.now() / 1000);
@@ -1002,7 +1113,7 @@ describeOps("supervise.sh", () => {
     writeFileSync(join(sb.home, "Library", "LaunchAgents", "com.browser-life.scaf-hunt1.plist"), "<plist/>");
     sb.edit((s) => {
       s.keypairs["bl-scaf-hunt1"] = { fp: "x" };
-      s.sgs["sg-0001"] = { name: "bl-scaf-hunt1", vpc: "vpc-7f9d051a", rules: [] };
+      s.sgs["sg-0001"] = { name: "bl-scaf-hunt1", vpc: TEST_VPC, rules: [] };
       for (const n of [1, 2, 3]) s.instances[ID(n)] = { name: `bl-scaf-hunt1-${n}`, state: "running", type: "g5.xlarge", key: "bl-scaf-hunt1", launch: "2026-10-03T00:00:00+00:00", ip: `10.0.0.${n}` };
     });
   });
@@ -1552,7 +1663,7 @@ describeOps("supervise.sh", () => {
 // ---------------------------------------------------------------------------------------------------------------------------------
 // bootstrap.sh
 
-describeOps("bootstrap.sh", () => {
+describe("bootstrap.sh", () => {
   let sb: Sandbox;
   beforeEach(() => {
     sb = mkSandbox();
@@ -1669,7 +1780,7 @@ describeOps("bootstrap.sh", () => {
 // ---------------------------------------------------------------------------------------------------------------------------------
 // finish.sh
 
-describeOps("finish.sh", () => {
+describe("finish.sh", () => {
   let sb: Sandbox;
   const H = () => join(sb.root, "runs/scaffold/hunt1");
   const queue = JSON.parse(readFileSync(join(REPO, "experiments/scaffold/hunt1-queue.json"), "utf8")) as { mac: { reproducibility: { reruns: { seed: number; cmd: string }[] } } };
