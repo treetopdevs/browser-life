@@ -1,0 +1,17 @@
+# Initial architecture review
+
+Sol 6.1 High, read-only, 2026-10-04. Reviewed the initial plan; all five findings were incorporated afterward. This is not a second review of the revised plan.
+
+Found **five actionable findings**. The JJ/process boundary is correctly distinguished at lines 30 and 86; the remaining gaps concern recovery, authorization and persistence.
+
+1. **P2 — Crash recovery omits unfinished dispatches.** [Lines 52, 58 and 68](/Users/nicholas/develop/browser-life-agent-secrets/docs/jj-agent-secret-handling-plan.md:52) preserve *uncertain* dispatches, but a crash after `dispatch_committed` can occur before any terminal event exists. Require recovery to classify every unmatched dispatch commitment as uncertain and block replacement authorization until reconciled. Add crash gates before provider submission, after acceptance, and during completion persistence; define durable journal acknowledgement and handling of unreadable journal state.
+
+2. **P2 — Reconciliation lacks a sufficient negative-evidence rule.** [Line 50](/Users/nicholas/develop/browser-life-agent-secrets/docs/jj-agent-secret-handling-plan.md:50) permits replacement after evidence proves no write occurred without defining that evidence. An empty read cannot establish this while the original request may still finish. GitHub’s PR listing also defaults to open PRs and paginated results. Define acceptable evidence, require complete relevant reads, and keep unresolved attempts blocked when provider settlement cannot be established. [GitHub API documentation](https://docs.github.com/en/rest/pulls/pulls#list-pull-requests).
+
+3. **P2 — Required provider reads have no authorization lifecycle.** [Lines 43, 50, 52, 59 and 62](/Users/nicholas/develop/browser-life-agent-secrets/docs/jj-agent-secret-handling-plan.md:43) define one creation operation and endpoint, yet require head validation and reconciliation after restart invalidates every lease. Specify narrowly bounded internal read endpoints and a trusted recovery authority that works without reviving the agent’s lease. Include their permission requirements: private-repository head validation through GitHub’s reference endpoint requires `Contents: read`, beyond the stated PR permissions. [GitHub reference API](https://docs.github.com/en/rest/git/refs#get-a-reference).
+
+4. **P2 — Credential persistence gates exclude the credential-holding processes.** [Lines 32, 60, 68 and 82](/Users/nicholas/develop/browser-life-agent-secrets/docs/jj-agent-secret-handling-plan.md:32) restrict credential sources, sanitize audit records and scan agent artifacts, but do not cover proxy/resolver logs, diagnostic dumps, temporary files or token caches. Dropping references does not prevent those persistence paths. Define permitted storage in the selected host facility, prohibit incidental token persistence, and extend sentinel gates to host-side outputs and failure artifacts.
+
+5. **P3 — The allowance contract contradicts lease consumption semantics.** [Line 44](/Users/nicholas/develop/browser-life-agent-secrets/docs/jj-agent-secret-handling-plan.md:44) grants “one successful dispatch allowance”; [line 50](/Users/nicholas/develop/browser-life-agent-secrets/docs/jj-agent-secret-handling-plan.md:50) consumes the lease on any dispatch. Specify one dispatch commitment regardless of outcome, including failure and uncertainty, and explicitly prohibit transport-level POST retries.
+
+Read-only review completed with the shared repository’s `AGENTS.md` consulted. No files modified or tests run.
