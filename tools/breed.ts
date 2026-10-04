@@ -10,6 +10,8 @@
 //   deno run -A tools/breed.ts read   --dir runs/wild/breed1/ponds [--conditions a,b] [--seed 1] [--out DIR] [--every 5] [--boundaries 20,60]
 //   deno run -A tools/breed.ts motion --dir runs/wild/breed1/ponds --boundary 10 [--steps 32] [--window 4] [--conditions a,b] [--seed 1] [--out DIR]
 //
+// A picked run (tools/run.ts --picker) is read by its directory name: --conditions treatment-by-rule,treatment-by-random.
+//
 // read: for every condition under DIR (or those named) with a seed-<n> bundle, streams ponds.tsv into
 //   OUT/trajectory.tsv (one row per condition and cycle; OUT defaults to DIR/report-seed-<n>) and prints every
 //   `--every`-th cycle. scorePerMass is the sum of scores over the sum of bound mass; for score "drive" that is
@@ -32,6 +34,7 @@ import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { CH, G, POND_TERMS, cellCount, decodeCheckpoint, lowbias32, motilityReader, pondScoreTerms, worldH, worldW, type WorldState } from "@bl/schema";
 import { GpuSim, requestDevice } from "@bl/sim-gpu";
 import { cycleSummaries, tileShift, type CycleSummary } from "./lib/breed-stats.ts";
+import { hsv } from "./lib/pond-sheet.ts";
 import { encodePng } from "./lib/png.ts";
 import { readTsv } from "./lib/scaffold-stats.ts";
 
@@ -54,13 +57,6 @@ if (!conditions.length) {
 }
 if (!conditions.length) throw new Error(`no condition under ${DIR} has a seed-${seed} bundle with ponds.tsv`);
 await Deno.mkdir(OUT, { recursive: true });
-
-/** HSV (each 0..1) to RGB bytes. */
-function hsv(h: number, s: number, v: number): [number, number, number] {
-  const i = Math.floor(h * 6) % 6, f = h * 6 - Math.floor(h * 6), p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
-  const [r, g, b] = [[v, t, p], [q, v, p], [p, v, t], [p, q, v], [t, p, v], [v, p, q]][i];
-  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-}
 
 const median = (xs: number[]): number => {
   if (!xs.length) return NaN;

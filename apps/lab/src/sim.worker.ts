@@ -474,8 +474,10 @@ async function save() {
   const w = world;
   if (!w || waitingForDonors(w, "save", "save")) return;
   const saved = await saveCheckpoint(w, false);
-  if (saved.advanced) post({ type: "notice", message: `Advanced ${saved.advanced} steps to the census at t=${saved.step}` });
-  post({ type: "notice", message: `Saved ${saved.file} (${(saved.bytes / 1e6).toFixed(1)} MB)` });
+  // One message: a second notice would replace the first before it could be read.
+  const settled = saved.advanced ? `The world advanced ${saved.advanced} steps to its census at t=${saved.step} first. ` : "";
+  post({ type: "notice", message: `${settled}Saved ${saved.file} (${(saved.bytes / 1e6).toFixed(1)} MB)` });
+  post({ type: "saved", file: saved.file, step: saved.step });
   post({ type: "checkpoints", list: await listCheckpoints() });
 }
 
@@ -643,7 +645,7 @@ async function verify(steps: number) {
   const w = world;
   if (!w || !device) return;
   const { from, liveHash: a, twinHash: b } = await w.execution.verify(steps, (state) => GpuSim.create(device!, state));
-  post({ type: "verify", ok: a === b, detail: `${steps} steps from t=${from}: ${a}${a === b ? " = " : " ≠ "}${b}` });
+  post({ type: "verify", ok: a === b, detail: `${steps} steps from t=${from}: ${a}${a === b ? " = " : " ≠ "}${b}`, from, steps, live: a, twin: b });
 }
 
 async function lesion(x: number, y: number, r: number) {

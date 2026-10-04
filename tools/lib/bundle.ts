@@ -192,6 +192,7 @@ export function ensembleProblems(loaded: Run[], sharedKeys: readonly string[] = 
     // different definitions.
     if ((m.metricsVersion ?? 1) !== METRICS_VERSION) problems.push(`${id}: metrics version ${m.metricsVersion ?? 1}, analysis expects ${METRICS_VERSION}`);
     if (m.spec.condition !== r.condition || m.spec.seed !== r.seed) problems.push(`${id}: manifest says ${m.spec.condition}/seed-${m.spec.seed}`);
+    if (m.spec.picked) problems.push(`${id}: a picked run (donors chosen outside the rule) is not a replicate of its condition`);
     for (const k of sharedKeys) if ((m.spec[k] ?? null) !== (ref[k] ?? null)) problems.push(`${id}: ${k} ${m.spec[k]} differs from ${ref[k]}`);
     if (m.spec.overrides && Object.keys(m.spec.overrides).length) problems.push(`${id}: config overrides ${JSON.stringify(m.spec.overrides)}`);
     else {

@@ -77,6 +77,7 @@ function speciesTsvRows(step: number, rows: TileSpeciesRow[]): string {
 }
 import { conditionById } from "./conditions.ts";
 import { observeCensus, restoreObservers, serializeObservers } from "./observe.ts";
+import { PICKS_FILE, PickError, thrownMessage, formatFailedLine, formatPickLine, makeDonorHook, picksDigest, picksPreflightError, type PickEntry, type PickNote, type Picker } from "./picks.ts";
 
 export interface RunSpec {
   experiment: string;
@@ -187,6 +188,16 @@ export interface RunSpec {
    * A later segment of a branch run is an ordinary continuation (`start` and `observer`) of the same spec.
    */
   branch?: BranchSpec;
+  /**
+   * A picked run (picks.ts): the pond cycles' donors come from `RunOptions.picker` or `RunOptions.picks` instead of
+   * the arm's rule, and every boundary's donors are logged in `picks.jsonl` (the manifest's `picks` block says
+   * who chose). It is part of `manifest.spec`, so a picked run and a rule-bred run are never the same run
+   * (`sameCompletedRun`). Needs a pond config of arm scaf, rand or breed (`pickedConfigError`); exclusive with
+   * `branch` and `metapopulation`. Never segmented: `runExperiment` refuses `start` and `immigrant` for it, an island
+   * refuses it and `stitchRun` throws. Optional and absent from every default, so a run without it keeps its spec,
+   * manifest and every output byte-identical to before this field existed.
+   */
+  picked?: true;
 }
 
 /** `RunSpec.branch`: where a branch run's pre-cycle source came from, and which boundary's transform it applies first. */
@@ -289,6 +300,20 @@ export interface RunOptions {
    * otherwise and with `start`/`observer` (a branch's later segments continue from `start` instead).
    */
   branchFrom?: WorldState;
+  /**
+   * Chooses the donors of a pond boundary the record (`picks`) does not cover (a picked run, `RunSpec.picked`; picks.ts).
+   * A run is picked exactly when it has a picker or a record: the two are required to agree with `spec.picked`.
+   */
+  picker?: Picker;
+  /**
+   * Recorded donors (a `picks.jsonl`, or a lab manifest's pick interventions), applied at their boundaries with no picker
+   * consulted; the record wins where it has an entry. With no picker the record must cover every boundary
+   * (`picksPreflightError`), unless `implicitRule` says a boundary without an entry takes the rule's donors, as the lab's
+   * own replay does.
+   */
+  picks?: readonly PickEntry[];
+  /** `picks` came from a lab manifest, which is sparse: a boundary with no entry and no picker takes the rule's donors. */
+  implicitRule?: boolean;
 }
 
 export interface RunResult {
@@ -349,6 +374,11 @@ export function validateSpec(spec: RunSpec): string[] {
     if (spec.condition !== "pond-nat" && spec.condition !== "pond-shuf") errs.push("a branch run needs the condition pond-nat or pond-shuf");
     if (spec.soloFounder !== undefined || spec.soloGenome !== undefined || spec.founderSet !== undefined) errs.push("a branch starts from its source, so it excludes soloFounder, soloGenome and founderSet");
     if (spec.lineageObs) errs.push("lineageObs needs a run observed from step 0; a branch starts at its source's step");
+  }
+  if (spec.picked !== undefined) {
+    if ((spec.picked as unknown) !== true) errs.push("picked must be true or absent");
+    if (spec.branch !== undefined) errs.push("a picked run cannot be a branch run");
+    if (spec.metapopulation !== undefined) errs.push("a picked run cannot belong to a metapopulation");
   }
   // The pond-specific checks (a pond config, each boundary inside this run and on its census grid)
   // need the config and the start step: `preCycleError`, which runExperiment applies.
@@ -447,6 +477,17 @@ export function branchError(spec: RunSpec, cfg: WorldConfig, opts: Pick<RunOptio
 }
 
 /**
+ * Why a picked run (`spec.picked`) cannot run on `cfg`, or null (also null for an unpicked spec): the donors it takes
+ * belong to a pond cycle of arm scaf, rand or breed. Needs no GPU, so tools/run.ts checks it first.
+ */
+export function pickedConfigError(spec: RunSpec, cfg: WorldConfig): string | null {
+  if (!spec.picked) return null;
+  if (cfg.pondPeriod === undefined) return "a picked run needs a pond config (a pond preset)";
+  if (cfg.pondArm !== "scaf" && cfg.pondArm !== "rand" && cfg.pondArm !== "breed") return `a picked run needs pond arm scaf, rand or breed, got ${JSON.stringify(cfg.pondArm)}: only those arms choose donors`;
+  return null;
+}
+
+/**
  * `spec` with `speciesCensus` dropped unless it is exactly `true` -- so a caller that explicitly
  * writes `speciesCensus: false` serializes (in `manifest.json`, and for `sameCompletedRun`'s
  * comparison below) byte-identically to one that never mentioned the field at all. `JSON.stringify`
@@ -460,6 +501,10 @@ function normalizedSpec(spec: RunSpec): RunSpec {
   }
   if (out.lineageObs === false) {
     const { lineageObs: _drop, ...rest } = out;
+    out = rest;
+  }
+  if ((out.picked as unknown) === false) {
+    const { picked: _drop, ...rest } = out;
     out = rest;
   }
   return out;
@@ -762,6 +807,15 @@ export async function runExperiment(
   // A branch run (RunSpec.branch) is refused here, before any state is built or the GPU touched.
   const branchBad = branchError(spec, cfg, opts);
   if (branchBad) throw new Error(branchBad);
+  // A picked run (RunSpec.picked) is one whole history from its preset: refused here too, before any state is built.
+  const picked = spec.picked === true;
+  if (picked !== !!(opts.picker || opts.picks)) throw new Error(picked ? "a picked run needs its picks (a picker or a record)" : "a picker or recorded picks need spec.picked");
+  if (picked) {
+    if (opts.start || opts.observer) throw new Error("a picked run cannot continue from a checkpoint; replay its picks (--picks-from) from step 0");
+    if (opts.immigrant) throw new Error("a picked run cannot import an immigrant state");
+    const pickedBad = pickedConfigError(spec, cfg) ?? picksPreflightError(opts.picks ?? [], cfg, 0, spec.steps, !!opts.picker || !!opts.implicitRule);
+    if (pickedBad) throw new Error(pickedBad);
+  }
   // Migration fires on multiples of the *absolute* step (see migration.ts), checked once
   // per census chunk: requiring it to land on a census boundary keeps a segmented run's
   // migration events at the same absolute steps as a continuous run's (the stitching
@@ -874,6 +928,11 @@ export async function runExperiment(
   // RunSpec.preCycleCheckpoints: boundary step -> b, and the manifest's list of what was written.
   const preCycleAt = new Map((spec.preCycleCheckpoints ?? []).map((b) => [b * pondPeriod, b]));
   const preCycleFiles: { boundary: number; step: number; file: string; hash: string }[] = [];
+  // A picked run's record of who chose, finished with counts and the digest at the end.
+  const picksInfo: { file: string; picker: string; recorded?: number; live?: number; boundaries?: number; digest?: string } = { file: PICKS_FILE, picker: opts.picker?.name ?? "replay" };
+  const pickLog: PickEntry[] = [];
+  const pickBy = { recorded: 0, live: 0 };
+  const note: PickNote = { by: "none", suggested: [] };
   const manifest = {
     runId: runId(spec),
     spec: normalizedSpec(spec),
@@ -916,6 +975,8 @@ export async function runExperiment(
     checkpoints: [] as { step: number; file: string; hash: string }[],
     // Only when RunSpec.preCycleCheckpoints is set, so every other manifest keeps its shape.
     ...(spec.preCycleCheckpoints !== undefined ? { preCycleCheckpoints: preCycleFiles } : {}),
+    // Only for a picked run. Its checkpoints are analysis artifacts, not resume points (`picked` refuses `start`).
+    ...(picked ? { picks: picksInfo } : {}),
     summary: null as RunSummary | null,
   };
   await sink.writeText("manifest.json", JSON.stringify(manifest, null, 2));
@@ -941,6 +1002,11 @@ export async function runExperiment(
   // tools/scaffold.ts writes them (the hunt's nat and shuf with three more columns).
   const pondCols = pondColumns(cfg.pondArm, cfg.pondScore);
   if (ponds) await sink.writeText("ponds.tsv", pondsHeader(cfg.pondArm, cfg.pondScore));
+  // Only a picked run has a pick log; the donor hook appends its `failed` lines to it.
+  if (picked) await sink.writeText(PICKS_FILE, "");
+  const hook = picked
+    ? makeDonorHook({ cfg, recorded: new Map((opts.picks ?? []).map((e) => [e.step, e])), picker: opts.picker, implicitRule: opts.implicitRule, sink, note })
+    : undefined;
   // A branch's own transform, at its source's boundary: its rows come before the first census, as they would in a run that reached it.
   if (branched) {
     await sink.appendText("ponds.tsv", pondTsvRows(branched.ponds.rows, pondCols));
@@ -1102,7 +1168,10 @@ export async function runExperiment(
       // Applied after this step's census/observation, before any checkpoint at
       // the same step, so a checkpoint always carries the post-migration and
       // post-cycle state forward.
-      const boundary = await applyBoundary(sim, c.step, ponds);
+      // A picked run's hook is passed only at an actual pond boundary: applyBoundary refuses donors anywhere else,
+      // and this is called at every census.
+      const atPondBoundary = pondPeriod > 0 && c.step !== 0 && c.step % pondPeriod === 0;
+      const boundary = await applyBoundary(sim, c.step, ponds, hook && atPondBoundary ? hook : undefined);
       const mevents = boundary.migrations;
       if (mevents.length)
         await sink.appendText(
@@ -1115,6 +1184,24 @@ export async function runExperiment(
         afterCycle = true;
         // Unlike tools/scaffold.ts, an ended history keeps stepping; later cycles take the same no-donor path.
         if (boundary.ponds.ended) onProgress(`cycle ${boundary.ponds.b} at t=${c.step}: no pond eligible, every pond cleared to nutrient (history ended; stepping on)`);
+        if (picked) {
+          // From the donors the boundary reports, so the log cannot disagree with what was applied; the rows are already written.
+          const entry = { step: c.step, cycle: boundary.ponds.b, donors: [...boundary.ponds.donors] };
+          await sink.appendText(PICKS_FILE, formatPickLine({ ...entry, by: note.by, suggested: note.suggested }));
+          pickLog.push(entry);
+          if (note.by === "recorded") pickBy.recorded++;
+          else if (note.by === opts.picker?.name) pickBy.live++;
+          // Post-commit: the boundary is applied and logged, so a failure here is recorded as such and recovery replays it.
+          if (note.request && opts.picker?.applied) {
+            try {
+              // A copy: the log's entries feed the manifest's digest, and a callback may scribble on what it is given.
+              await opts.picker.applied(note.request, [...entry.donors], note.by);
+            } catch (e) {
+              await sink.appendText(PICKS_FILE, formatFailedLine(c.step, entry.cycle, note.by, thrownMessage(e), "after"));
+              throw new PickError(`pond cycle ${entry.cycle} at t=${c.step}, after the boundary was applied: ${thrownMessage(e)}`);
+            }
+          }
+        }
       }
       // Declared cells: the pass at this boundary, after the census saw the pre-pass state and before
       // any checkpoint. Births are lineage events like mutations (a new id with its parent's).
@@ -1165,6 +1252,7 @@ export async function runExperiment(
       conservationOk,
     };
     manifest.summary = summary;
+    if (picked) Object.assign(picksInfo, { recorded: pickBy.recorded, live: pickBy.live, boundaries: pickLog.length, digest: await picksDigest(pickLog) });
     await sink.writeText("manifest.json", JSON.stringify({ ...manifest, finishedAt: new Date().toISOString() }, null, 2));
     await sink.writeText("activity-final.json", JSON.stringify({ all: activity.allActivities(), top: activity.top(50) }));
     return { summary, final: opts.keepFinal ? final : undefined, observer };

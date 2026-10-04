@@ -176,6 +176,8 @@ export type FromWorker =
   | LineageMsg
   | { type: "highlight"; key: string | null }
   | { type: "checkpoints"; list: CheckpointMeta[] }
+  /** A save the page asked for ("save") is written: its file and the step it holds. Automatic checkpoints do not send it. */
+  | { type: "saved"; file: string; step: number }
   | { type: "exported"; bytes: ArrayBuffer; name: string }
   | { type: "notice"; message: string }
   /**
@@ -183,4 +185,5 @@ export type FromWorker =
    * usable, and whoever made the request (the lineage panel's inspection or jump) must stop waiting for it.
    */
   | { type: "refused"; request: ToWorker["type"]; message: string }
-  | { type: "verify"; ok: boolean; detail: string };
+  /** A replay check of `steps` steps from step `from`, which the live world has now run: its state hash and the twin's. */
+  | { type: "verify"; ok: boolean; detail: string; from: number; steps: number; live: string; twin: string };

@@ -108,6 +108,75 @@ boundary.
   steps per frame a cycle takes about 3 seconds on the Apple GPU this was built on (about 1,750 steps a
   second; about 11 seconds while two headless runs shared the GPU).
 
+### Picking donors outside the lab
+
+`tools/run.ts --picker` takes the donors of every pond boundary from a picker instead of the arm's rule, with no
+lab and no browser: the same `applyPondCycle` `picks`, the same bit-exact cycle. It needs a pond preset of arm
+`scaf`, `rand` or `breed` (`pickedConfigError`).
+
+```bash
+# the rule through the picker path: identical to the unpicked run, bit for bit
+deno run -A tools/run.ts --experiment pick1 --preset breeder --conditions treatment --seeds 1 --steps 80000 \
+  --census 1000 --deep 20 --checkpoint 0 --pre-cycle 1,4,8,12,16 --out runs/wild --picker rule --pick-label rule
+# a seeded random control, then a model (tools/picker-claude.ts; its header says how it is called)
+deno run -A tools/run.ts ... --picker random --pick-seed 1 --pick-label random
+deno run -A tools/run.ts ... --picker command --pick-label model \
+  --pick-cmd '["deno","run","-A","/abs/tools/picker-claude.ts","--model","sonnet"]'
+# an exact replay of any picked run's log, checked against it; a lab run manifest works too
+deno run -A tools/run.ts ... --picks-from runs/.../picks.jsonl --verify-against runs/.../seed-1
+# the three side by side: frames.png and trajectory.tsv (a picked run is read by its directory name)
+deno run -A tools/breed.ts read --dir runs/wild/pick1/breeder \
+  --conditions treatment-by-rule,treatment-by-random,treatment-by-model --out runs/wild/pick1/report
+```
+Repeat the same flags for each picker. A model run leaves `picker/notebook.md`, `picker/album.png` and, per cycle, a
+contact sheet and the donors the run applied (`b<NNN>-applied.json`) beside its bundle, and spends one call a cycle from the call log at `runs/wild/review/model-calls.log`
+(`--max-calls` stops it at the cap).
+
+- Pickers: `rule` (the arm's own donors), `random` (seeded, uniform over the ponds able to found a pond, the
+  rule's count), `file` (writes `b<NNN>-request.json` and a contact sheet `b<NNN>-sheet.png` into the pick
+  directory and waits for the file the request's `answer` names, `b<NNN>-picks-<nonce>.json`: one per request, so
+  a late answer to an earlier attempt of the boundary lands elsewhere), `command` (the same files, then a command
+  with the request on stdin and `{"donors":[...]}` on stdout; at the deadline the command and its descendants are
+  ended, SIGTERM then SIGKILL, output that ends after the deadline is late even if the command itself exited in
+  time (judged by the clock, not by which event arrived first), and more than 1 MiB on either stream fails the pick). Once a boundary is committed, replayed ones included,
+  `b<NNN>-applied.json` (the request's `applied`) holds the donors the run applied there, so an answerer that keeps
+  a memory can tell a choice the run took from one it never applied. A pick directory belongs to one run
+  (`owner.json` names its bundle directory in canonical form, so a recovery through a symbolic link is the same
+  run): another run pointed at it is refused before any GPU work and before recovery changes anything. The sheet is drawn from the state alone, in pond-index order, coloured
+  by bound mass, labelled white for a pond able to found a pond. Neither it nor the request carries the rule's
+  donors, scores or ranks. The visible state still carries what the rule reads (bound mass drives `scaf` and the
+  mass term, the packet mass is a breeder term), so a picker that favours the heaviest eligible ponds agrees
+  with the rule because the picture shows what the rule uses, not because it saw the rule.
+- Log: `picks.jsonl`, one line per pond boundary, `{step, kind: "pick", cycle, donors, by, suggested}`; the first
+  four keys are the lab's `pick` intervention. `suggested` is the arm's own donors, kept for agreement
+  statistics and never shown to a picker. The manifest carries `spec.picked` and a `picks` block (counts, digest),
+  so a picked run is never the same run as a rule-bred one, and the bundle goes to `<condition>-by-<label>/`
+  (`tools/breed.ts read` reads those names; the ensemble tools refuse picked runs).
+- Failure rule: any picker error (a throw, a non-zero exit, a timeout, unparsable output, an invalid answer, a
+  recorded entry that is not a valid pick) stops the run at that boundary with the world exactly as it was,
+  a `failed` line in the log and exit 3. Nothing retries or falls back to the rule. Recovery: re-run the same
+  command with `--picks-from <bundle>/picks.jsonl`; recorded boundaries replay (seconds) and only the missing
+  ones are asked. The record replayed is every boundary that `--picks-from`, `picks.jsonl` and
+  `picks.recovery.jsonl` hold between them, so a given record of later cycles cannot displace committed earlier
+  ones, and whether the record covers the run is judged on that merged record; it is written to `picks.recovery.jsonl`, as pick lines whatever the source's format, before anything is
+  truncated. Recovery refuses (exit 2) rather than guess: a log damaged anywhere but its last record is left as it
+  is, and logs that disagree on the cycle or ordered donors at a shared step are not merged. A last record cut by a crash (unterminated, not JSON) is the one repair: its complete picks
+  are used and the original is kept as `picks.jsonl.torn`.
+- Replay and replay-then-continue: the record wins where it has an entry, so `--picks-from` alone is an exact
+  replay (same final hash and `ponds.tsv` bytes; the replayed `picks.jsonl` has the same `step`, `cycle` and
+  `donors` per line but `by: "recorded"`, so its bytes are not the original's), and with `--picker` it is a continuation that spends calls
+  only on new boundaries. A picked run cannot resume from a checkpoint, be segmented, stitched or run on an
+  island.
+- Lab histories: `--picks-from` takes a lab run manifest (`<runId>.run.json` in the lab's storage; the Export
+  button makes a `.blck`, not this). Its `pick` interventions replay, a boundary it has none for takes the
+  rule's donors as the lab's own replay does, and lesions, feeds or an observation that starts after step 0 are
+  refused. This reproduces the physics, not the lab's observer settings, so `finalHash` can differ from the
+  lab's. It was proven on a manifest built by hand from a log, not on a real lab export.
+- Eligibility: a pond can found a pond when its expected packet mass (`pondSeeds`) is at least 3,000, from the
+  survival table under "Why bred ponds died". That table was measured at 10,000-step cycles on 64 ponds; the
+  breeder preset cycles every 5,000 steps, where the threshold is unmeasured. The runner does not enforce it
+  (an ineligible pick is a valid pick); the model script does, for its own answers.
+
 ### Tests
 
 - `packages/schema/test/breed.test.ts`: the key and its validation, the scores (truncation as in `flow`,
@@ -135,10 +204,25 @@ boundary.
   and v1 rows of `treatment` and `pond-rand`; the breeder is its mass control until a pond scores, then seeds
   from the best-scoring pond and ends in a different physical state. The same checks run for
   `pond-breed-drive+seed+body`, and picked donors are checked on the GPU through `applyBoundary`.
+- `packages/runner/test/picks.test.ts`, `tools/test/pond-sheet.test.ts`, `tools/test/pickers.test.ts` and
+  `tools/test/picker-prompt.test.ts`: the log and its refusals, the donor hook and its failure rule, the sheet
+  and its scale rule, the pickers with a fake clock and file system, the prompt, the result parser, answer
+  validation and the call budget.
+- `tests/deno/picked.ts` (GPU): the rule picker equals the unpicked run; a random picker's run equals the replay
+  of its log, with every pre-cycle checkpoint; replay-then-continue with a record longer than the live count in
+  reversed order (rows equal `applyPondCycle`'s on each boundary's own checkpoint); the file and command
+  pickers; the model script against a stub `claude`; eight failure modes (and a readback of the simulation
+  after the rejection equal to the state before it); a throwing `applied`; a failed recovery through
+  `tools/run.ts` that keeps all ten recorded picks; recovery from a torn log, from logs that disagree, from a given
+  record of later cycles only, and from a lab manifest after two failed attempts; real child processes (a
+  process tree at the deadline, floods, an answer that arrives late from a descendant); preflight, resume and
+  stitch refusals; a hand-built lab manifest, sparse and with a lesion.
 
 ### Reviews
 
-Four read-only passes by Codex Sol 6.1 High (`runs/wild/review/review-sol-1.md` to `-4.md`, gitignored).
+Eight read-only passes by Codex Sol 6.1 High (`runs/wild/review/review-sol-1.md` to `-8.md`, gitignored), and one
+of the picker slice's plan before it was built (`plan-picker-review.md`: 22 findings, six of them P1, all taken
+into the plan).
 
 - **First** (the breeder): one P0 (the drive score did not share flow's definition of a moving cell: fixed by
   `motilityTerm` and `motilityReader`), one P1 (branch runs refuse the breeder: left unbuilt, see below) and
@@ -154,10 +238,59 @@ Four read-only passes by Codex Sol 6.1 High (`runs/wild/review/review-sol-1.md` 
   different world waiting at the same step (a pick now names its world), and a jump refused because a cycle was
   waiting left the lineage panel expecting a restore (refusals are now a message of their own, which clears
   it).
+- **Fifth** (the picker slice: `--picker`, `--picks-from`, the model picker): three P1 and eight P2. Fixed, each
+  with a test that fails without it:
+  - a command's deadline ended only the direct child, so a descendant holding a pipe, or a child ignoring SIGTERM,
+    kept the run waiting, and output was buffered without limit: both pickers now run commands through
+    `tools/lib/run-command.ts` (the tree gets SIGTERM then SIGKILL and is reaped, each stream is capped at 1 MiB and
+    overflow stops the child, a pipe a leftover process holds is not waited on);
+  - recovery from a pick log with a torn last record ignored the log and let a live rerun truncate it, and recovery
+    could mix two histories (an equal-length external log won a tie): a torn last record now recovers its complete
+    picks (original kept as `picks.jsonl.torn`), other damage and any disagreement at a shared step refuse the
+    recovery before anything is copied, cleared or truncated;
+  - a file answer: one answer path per request (`b<NNN>-picks-<nonce>.json`), an answer without the request's nonce
+    must be newer than the request, each poll is bounded by the deadline and an answer that completes after it is
+    not taken;
+  - a picker that threw null, undefined or a string lost its failed line (`thrownMessage`, also on the post-commit
+    path); `Picker.applied` gets a copy of the donors, so it cannot change the manifest's digest;
+  - concurrent model pickers could pass the call cap together: the check and the `started` line are one step under
+    a lock beside the call log.
+  Replay not reproducing `picks.jsonl` byte for byte is by design (plan 1.3: replayed lines say `by: "recorded"`):
+  resolved by saying so here and in `tools/run.ts`. One P2 was in the lab: a Verify refused with a waiting
+  boundary left its pending state stuck (`main.ts` cleared it only for lineage and jump). Fixed after the sixth
+  pass: a refused verify clears `verifying`, brings the button back and says the check did not run. It was not
+  exercised in a browser.
+- **Sixth**: confirmed the fifth pass's fixes. One new P1 and three P2, all in failure paths, fixed with tests:
+  - recovery took the longest log alone, so a given record of later cycles displaced the bundle's committed
+    earlier ones (P1), and a lab manifest chosen that way was copied into `picks.recovery.jsonl` as its own JSON,
+    which the next recovery could not read: recovery now merges every agreeing log by boundary (`mergePickLogs`),
+    checks the merged record against the run, and writes it out as pick lines;
+  - a command that exited at once while a descendant wrote the answer after the deadline was accepted: the end of
+    the output is now held to the same deadline as the exit;
+  - the model's notebook promoted a pending block whenever a later cycle was asked, even when a recovery had
+    replayed other donors at that cycle: the dir picker now records what the run applied at each boundary
+    (`b<NNN>-applied.json`), and a block enters the notebook only when its donors are the ones on record.
+- **Seventh**: confirmed the sixth pass's fixes (the merge keeps agreeing boundaries; the recovery copy is always
+  pick lines). No P0 or P1; three P2, fixed with tests:
+  - with no live picker, a given record of later cycles was refused as short before recovery could merge the
+    bundle's committed ones: the given record is now checked for structure first and for coverage after the merge;
+  - when this process's event loop was held up past a command's deadline, late output could still win the race
+    against the overdue timer: the deadline is now also read off the clock;
+  - two runs sharing a pick directory could pass one run's applied record for the other's: a pick directory now
+    belongs to one run (`owner.json`, `claimPickDir`), and a second run is refused before any GPU work.
+- **Eighth**: confirmed those three and the lab's refused-Verify fix (read, not run). No P0 or P1; two P2, both in
+  the ownership check just added, fixed with tests and **not re-reviewed**:
+  - owners were compared as spelled, so a recovery through another spelling of the same directory (`/tmp` for
+    `/private/tmp`, a symbolic link) was locked out, and a link followed by `..` could make two runs look like
+    one: owners are now compared by canonical path on both sides (`canonicalPath`);
+  - the refusal came after recovery had written its copy and cleared the bundle's checkpoints: ownership is now
+    checked (read-only, `pickDirTaken`) before recovery changes anything, and claimed after it.
 
-Final state: typecheck clean; vitest 1,969 passed in 86 files; GPU golden 23 of 23; `tests/deno/breed.ts` 93
-checks, all pass. The lab's picker was exercised by hand in a browser (pick, the rule's choice, leaving breeder
-mode, save and restore, a failed load while waiting); the worker and page code has no tests of its own beyond
+Final state (after the eighth pass's fixes): typecheck clean; vitest 2,078 passed in 90 files in one full run;
+`tests/deno/picked.ts` 92 PASS lines, ALL PASS. `tests/deno/breed.ts` (92 PASS lines, ALL PASS) and the GPU golden
+cases (23 of 23) were last run after the sixth pass's fixes; nothing they exercise changed after that. The lab's
+picker was exercised by hand in a browser before the picker slice (pick, the rule's choice, leaving breeder mode,
+save and restore, a failed load while waiting); the worker and page code has no tests of its own beyond
 `LabExecution`'s and the checkpoint helpers'.
 
 ### How to run and read
@@ -274,13 +407,76 @@ Not looked at: other seeds, the default mutation rate, longer runs (does `drive+
 lab's `breeder` preset beyond trying it (4 x 4 ponds and a 5,000-step cycle: under `drive+seed+body` four of its
 16 ponds were empty at cycle 9 in the one world watched).
 
+## First look: three pickers (2026-10-04)
+
+Preset `breeder`, seed 1, condition `treatment` (arm `breed`, `drive+seed+body`), 16 cycles of 5,000 steps (80,000),
+census every 1,000 steps, the same world and seed under three pickers (`runs/wild/pick1/breeder/treatment-by-{rule,random,model}`,
+report in `runs/wild/pick1/report`: `frames.png`, `trajectory.tsv`). The rule run is also the unpicked run, bit for
+bit (final hash b0eb4c1474bb222e and `ponds.tsv` bytes against `pick1-ref`, checked by `--verify-against`). The
+random picker is seeded (`--pick-seed 1`) and names four ponds a cycle among those able to found a pond, the rule's
+count. The model is `claude -p` on Sonnet through `tools/picker-claude.ts`: one tool (Read), no MCP server, no user
+settings, a three-sentence system prompt, the contact sheet and the album of what it has already picked, and its own
+notebook pasted into every prompt. Its brief: pick four eligible ponds that look most unlike anything the notebook and
+the album show, one sentence each on what is new. It is never shown the rule's choice, a score or a rank. Sixteen calls
+took 5.2 to 11.0 seconds each and cost $0.54 in all; the call log holds 27 attempts across the whole slice (3 flag
+trials, a probe, a 7-call build run and this run's 16). The model run is slower than the others (about 420 steps a
+second against 1,700) because each boundary waits for a call.
+
+| picker | occupied at cycle 16 | scoring ponds | drive median | seed median | body median (cells) | individuals (mean per pond) |
+| --- | --- | --- | --- | --- | --- | --- |
+| rule | 13 | 13 | 383,849 | 4,322 | 5,682 | 18.2 |
+| random | 14 | 2 | 0 | 4,276 | 11,362 | 20.4 |
+| model | 9 | 0 | 0 | 3,219 | 6,388 | 16.1 |
+
+Across the 16 cycles (`trajectory.tsv` has each one): the rule's drive median is nonzero from cycle 3 on and rises
+to 3.8e5 by cycle 15; scoring ponds are 10 to 15 of 16 occupied. The random control's drive median is 0 at every
+cycle, with at most three scoring ponds at a cycle (and none at cycles 7, 8 and 11). The model's drive median is
+nonzero from cycle 3 to cycle 7 (peaking at 19,706 at cycle 4, 12 scoring ponds) and 0 from cycle 8 to the end, with
+none to two scoring ponds at each later cycle. Occupied ponds at a cycle: rule 12 to 16, random 10 to 16, model 8 to 16
+(8 at cycle 8, 9 at cycle 16). The model's picks overlap the rule's four donors in 22 of 64 places, random's in 19 of 64.
+
+What was seen in `frames.png` (rows: rule, random, model; two rows each, lineage colour and movement; boundaries 1,
+4, 8, 12, 16): the three worlds are the same at cycle 1 and then separate. The rule's ponds stay full of dot lattices
+and a movement field (orange) covers much of most ponds from cycle 4 on. The random control thins to small halos and
+single dots by cycle 4 and 8, then regrows to large, regular, square-ish lattices by cycle 16 with almost no
+movement. The model's ponds are the most mixed: several empty at every boundary, lattices with red wall frames, ring
+cells, and single-dot shells; movement shows at cycle 4 and then mostly not. Its notebook (15 blocks; the last cycle's
+stays pending by design) reads as descriptions of shape, and it names single-dot shells and sparse ponds as "new" in
+most later cycles. `album.png` is mostly such shells and lattice variants, not the rule's heavy lattices.
+
+An earlier 7-cycle model run of the same world and seed (the build's own, not kept as a result) kept a nonzero drive
+median through cycle 7, as this one does, but its picks from cycle 2 on were different ponds (only cycle 1 named the
+same four, in another order, which changes the recipient assignment). The model is not deterministic, so a model
+run is one draw of the model picker, replayable from its log and not repeatable from its prompt.
+
+What one seed and 16 cycles cannot show, and this run does not claim:
+
+- whether the model's choices differ from random's by more than the seed-to-seed spread of one condition (one seed
+  and one model draw each); the second model run above is one hint that a model draw varies;
+- whether "new-looking" tracks anything measurable (the model was asked for novelty, not for drive, so a drive
+  median of 0 after cycle 7 does not say the model picks badly, only that novelty and movement are not the same
+  thing here);
+- whether the three terms' differences are the picker or the divergence of one chaotic history (the worlds are
+  identical until the first boundary and then diverge; a lone reordering of four donors changes a world);
+- the founding threshold at 5,000-step cycles (unmeasured; the table above was taken at 10,000 steps on 64 ponds,
+  the model was told 3,000, and this run's founding survival by packet mass was not read);
+- anything past cycle 16: the rule's movement is still rising at 16 and the model's and random's histories are
+  not at a steady state.
+
 ## Not built
 
 - Branch runs (`RunSpec.branch`, the hunt's way to start from a pre-cycle checkpoint under another arm)
   still take only `pond-nat` and `pond-shuf`. Branching a bred world to another score would need the branch
   rules, `branchError` and `branchTransform` widened and their GPU tests repeated.
 - Islands and the coordinator do not know the `breed` arm (no capability, no allowed condition).
-- `tools/run.ts` cannot re-run a history bred by hand in the lab (it takes no picks).
+- `tools/run.ts --picks-from` replays a lab history, proven on a hand-built manifest only (no real lab export
+  could be made headless); it reproduces the physics, not the lab's `finalHash`.
+- Not built around the pickers: resume from a checkpoint for a picked run (replay costs seconds), islands and
+  the coordinator, branch runs, a movement overlay on the sheet (it is the `drive` term's picture and would
+  show a model what the rule rewards), enforcing eligibility in the runner, retries or a fallback in the runner,
+  several conditions or seeds in one picked invocation, `tools/lineage.ts` on picked runs, a multi-seed or
+  repeated-draw model demo (the first look is one seed, one draw, 16 cycles), founding survival by packet mass at
+  5,000-step cycles (the 3,000 threshold is the 10,000-step table's), and a model brief other than novelty.
 - Scores for elongation and for sensing. Productivity (bound mass) is a term but is in neither combined
   condition.
 - `tools/run.ts --override` takes only `mutRate` and `pondDeath`, so a shorter pond period needs a preset.

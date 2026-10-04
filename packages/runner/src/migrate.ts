@@ -37,6 +37,14 @@ import type { GpuSim } from "@bl/sim-gpu";
 type BoundarySim = Pick<GpuSim, "cfg" | "readState" | "upload">;
 
 /**
+ * Donors for the pond cycle at boundary `b`, chosen from the pre-cycle state `pre` after `applyBoundary`'s one
+ * readback (a picker outside the lab: picks.ts's `makeDonorHook`). `undefined` leaves the choice to the arm,
+ * which a hook answers only when no pond is occupied. A hook that throws stops the boundary before anything
+ * is applied. The hook must not keep or change `pre`: it is the state the cycle transforms.
+ */
+export type DonorHook = (pre: WorldState, b: number) => Promise<readonly number[] | undefined>;
+
+/**
  * If `sim.cfg.migrationPeriod` divides `step`, reads the full state back,
  * applies one migration event (packages/schema/src/migration.ts) and
  * re-uploads the result, returning the events for the caller to log (e.g.
@@ -196,13 +204,14 @@ export interface BoundaryResult {
  * config excludes migration (`validateConfig`), so at most one of the two
  * transforms fires.
  */
-export async function applyBoundary(sim: BoundarySim, step: number, ponds: PondContext | null, picks?: readonly number[]): Promise<BoundaryResult> {
-  const migrations = await migrate(sim, step);
+export async function applyBoundary(sim: BoundarySim, step: number, ponds: PondContext | null, picks?: readonly number[] | DonorHook): Promise<BoundaryResult> {
   const period = sim.cfg.pondPeriod;
   const boundary = period !== undefined && step !== 0 && step % period === 0;
   // Picks belong to one pond cycle: with none here, or an arm that chooses no donors, they would be dropped silently.
+  // Checked before `migrate`, which reads and uploads on a migration step (a pond config excludes migration, so no valid run changes).
   if (picks !== undefined && !(boundary && (sim.cfg.pondArm === "scaf" || sim.cfg.pondArm === "rand" || sim.cfg.pondArm === "breed")))
     throw new Error(`donors were picked for t=${step}, which is not a pond boundary of an arm that takes donors (scaf, rand or breed)`);
+  const migrations = await migrate(sim, step);
   if (period === undefined || !boundary) return { migrations, ponds: null, state: null };
   if (!ponds) throw new Error("a pond config needs its pond context (pondContext of the history's start state) at every boundary");
   const pre = await sim.readState();
@@ -214,7 +223,8 @@ export async function applyBoundary(sim: BoundarySim, step: number, ponds: PondC
     assertConserved(pre, ponds.startMatter, ponds.baseline);
     return { migrations, ponds: { b, rows, ended: false, donors: [] }, state: pre };
   }
-  const cycle = transformPonds(sim.cfg, pre, b, ponds, picks);
+  const chosen = typeof picks === "function" ? await picks(pre, b) : picks;
+  const cycle = transformPonds(sim.cfg, pre, b, ponds, chosen);
   sim.upload(cycle.state);
   return { migrations, ponds: { b, rows: cycle.rows, ended: cycle.ended, donors: cycle.donors }, state: cycle.state };
 }
