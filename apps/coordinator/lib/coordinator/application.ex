@@ -13,6 +13,11 @@ defmodule Coordinator.Application do
       {Phoenix.PubSub, name: Coordinator.PubSub},
       Application.get_env(:coordinator, :start_queue, true) &&
         {Coordinator.Queue, data_dir: Application.get_env(:coordinator, :data_dir, "data")},
+      Application.get_env(:coordinator, :start_discovery, true) &&
+        {Coordinator.Discovery,
+         data_dir: Application.get_env(:coordinator, :discovery_data_dir, "data-discovery"),
+         queue_data_dir: Application.get_env(:coordinator, :data_dir, "data"),
+         lease_ms: Application.get_env(:coordinator, :discovery_lease_ms, 120_000)},
       # Start to serve requests, typically the last entry
       CoordinatorWeb.Endpoint
     ]

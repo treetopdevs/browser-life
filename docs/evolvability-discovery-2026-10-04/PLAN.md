@@ -1,6 +1,6 @@
 # Implementation and experiment plan
 
-Canonical after council, 2026-10-04. No stage has been executed. The user's decisions D1 and D2, taken the same day, are applied here. This plan adds a workbench around capability tests. It does not authorize rerunning or revising closed construction experiments, and it does not touch the frozen transition hunt. See the [design](DESIGN.md) and the [council record](COUNCIL.md).
+Canonical after council, 2026-10-04. Stages 3a (engineering part) and 3b have since been built and passed; no other stage has run (see Implementation status). The user's decisions D1 and D2, taken the same day, are applied here. This plan adds a workbench around capability tests. It does not authorize rerunning or revising closed construction experiments, and it does not touch the frozen transition hunt. See the [design](DESIGN.md) and the [council record](COUNCIL.md).
 
 ## Stages at a glance
 
@@ -22,6 +22,50 @@ Two workstreams run in parallel. The construction workstream does Stages 1 and 2
 Stages 4a and 4b are independent of each other. Campaigns from Stage 4 on are submitted through the plane. A campaign that is ready before 3b's gate passes may run by shards over the same manifest; its case identities do not change.
 
 The plane was Stage 7 in the council's ordering. That number is retired, not reused, so stage references in the reviews and the council record stay readable.
+
+## Implementation status
+
+Updated 2026-10-04. Stages 3a and 3b are built; Stages 1 and 2 belong to the construction workstream and have not started; nothing from Stage 4 on has started, and no scientific case has run.
+
+| Item | State | Evidence |
+|---|---|---|
+| Stage 0 records | Written | [Council record, Stage 0 records](COUNCIL.md#stage-0-records): owner and revision status, dependency map, namespaces and seed registry, engineering manifest and caps, evidence vocabulary |
+| Stage 3a core | Built: contracts and canonical hashing (`packages/schema/src/discovery.ts`), exact-ledger observer, transport arithmetic and readouts (`packages/metrics/src/capabilities.ts`), CPU runner, validator, decision rule and reducer (`packages/runner/src/discovery.ts`), shard CLI (`tools/discovery.ts`) | Focused Vitest files, shared test vectors reproduced independently in Python, `tests/deno/discovery_local.ts` (fault injection: killed run, corrupt bytes, wrong observer version, duplicate and disagreeing results, crash boundaries, locks, caps, export reproduction) |
+| Stage 3a engineering gate | **Passed on two physical hosts**, 2026-10-04: the Mac (M1 Max, host `mac-m1max`) and the work Mac (M3 Pro, `m3pro`, decision D6). Campaign `runs/discovery/engineering-v1`, manifest `6cfdafb49bfe7db7c0923456be620b2dcb1304d0fa270cb13297a712148a722a`, source closure `7f164395…` on both hosts. Shard 0/2 ran on the Mac and shard 1/2 on the work Mac; every case was replayed on the other host. Injected: an interrupted case (killed mid-run on the work Mac, then rerun under a new attempt number), corrupt bytes, a wrong observer version, and an independent duplicate primary. Result: 12 of 12 accepted, every fixture's expectation met with exact conservation and energy ledgers, the faulty attempts rejected or retained as partial with their reasons. Each host validated and reduced the merged root on its own: identical `report.json` bytes, reduction `c386e0929fff4601…`. The export (`engineering-v1-export`) reproduces it | Plumbing benchmark (`stats.json`, primary and replay separately, observer, serialization and hashing included): median 0.95 s and 0.87 s, 90th percentile 9.4 s and 9.0 s, about 221 KB per execution. It prices the plumbing only, never a scientific campaign |
+| Stage 3a calibration gate | Not started: needs Stages 1 and 2 and D5 | – |
+| Stage 3b plane | Built: `Coordinator.Discovery` with its own data directory and API under `/api/discovery`, the CLI worker (`tools/discovery-worker.ts`), the browser worker page served by the coordinator (`/discovery/index.html`), `submit` and `collect` | `test/coordinator/discovery_test.exs`; `tests/deno/discovery_plane.ts` on one Mac (lease expiry, corrupt and wrong-observer uploads, a late upload, a repeated completion, a coordinator restart, the browser page, and an export whose reduction equals the shard run's) |
+| Stage 3b gate | **Passed on two physical hosts**, 2026-10-04. A private coordinator on the Mac (its own data directories under `runs/discovery/`, reached from the work Mac through an SSH reverse tunnel to `localhost`) ran the same manifest. Work Mac: the CLI worker with injected faults (a disconnect holding a lease, a corrupt upload, a wrong observer version, an upload after its lease expired, a repeated completion), then the browser worker page started with one click. The coordinator was killed mid-run and restarted while the page kept working. Mac: the CLI worker and the browser page. Accepted: 8 primaries from the work Mac's browser page and 4 from its CLI; 6 replays from the Mac's CLI and 6 from its browser page. Collected into `engineering-v1-plane-export`, validated and reduced: the same manifest, case set, canonical result per case and reduction digest `c386e0929fff4601…` as the shard run; rejected and abandoned attempts are kept with reasons. The registered queue's data directory stayed empty | Onboarding on the work Mac: copying the checkout and `deno install` took about two minutes; after that, joining is one command or one click, and the first case was leased within about two seconds |
+
+Operational criteria of the PRD, as of these runs:
+
+| ID | Local | Distributed |
+|---|---|---|
+| O1 | Met: two physical hosts by shards with cross-replay | Met: both hosts through the plane; the browser route and the CLI route each ran on both |
+| O2 | Met: CPU only, no GPU requested; a worker with different code or another backend is told why it gets no work | Met: the browser page runs cases in Web Workers on the CPU |
+| O3 | Met: an interrupted case leaves a retained partial and a rerun yields one accepted result | Met: lease expiry and reassignment, worker restart, coordinator restart, upload retries, a late upload and a repeated completion, with one accepted result per case |
+| O4 | Met: every result binds protocol, case, initial state, source closure, physics, observer and readout versions | Met: the same contract, plus the lease, worker and host each result came from |
+| O5 | Met: complete-set reduction, quarantine on disagreement, cross-host equality of state and canonical observations, validation before acceptance or reuse | Met: the coordinator runs the same validator before acceptance; the export reduces identically |
+| O6 | Met: concurrency, case and campaign wall time, storage and attempts per role are enforced; the engineering caps sit far above the measured need (about 5 MB and a few minutes against 2 GB and 2 h) | Met: the same caps on the plane; the cloud allowance is zero and a cloud worker is refused without a launch envelope. Scientific campaigns take their caps from the benchmark with the renewal observer (Stage 3a calibration part) |
+| O7 | Not applicable: no search exists | Not applicable |
+| O8 | Met: one export with manifest, acceptance index, rejected attempts, hashes and a reproducible report | Met: `collect` produces the same layout |
+| O9 | Met: research roots refuse the coordinator's directories, through symlinks too | Met: a separate queue, API and data directory, refused if it overlaps the registered queue's; that queue's data directory stayed empty |
+
+The scientific requirements are not met by this work and cannot be met from this workstream alone. S2 and S3, part of the initial release, need the construction workstream's renewal observer (Stages 1 and 2, decision D2) and the dependency boundary (D5). S1 is met in structure (separate assay families and evidence statuses) but has no scientific assay yet. S4 to S11 are gated extensions.
+
+Reviews: Sol 6.1 High reviewed Stage 3a (no P0; 5 P1, 6 P2, 1 P3, all repaired), then Stage 3b with the 3a repairs (no P0; 4 P1, 8 P2), then the 3b repairs (eight closed, four partial; the partial ones repaired afterwards), then everything before commit (no P0; 2 P1, 1 P2, 1 P3, all repaired and confirmed closed in two further passes). Raw text in the reviews listed in the council record.
+
+How to run it:
+
+```text
+deno run -A tools/discovery.ts freeze --protocol experiments/discovery/engineering-v1/protocol.json --out runs/discovery/<campaign>
+deno run -A tools/discovery.ts run    --root runs/discovery/<campaign> --shard 0/2 --host <this-machine>
+deno run -A tools/discovery.ts replay --root runs/discovery/<campaign> --host <this-machine>     # after collecting the other host's results
+deno run -A tools/discovery.ts validate --root runs/discovery/<campaign>
+deno run -A tools/discovery.ts reduce   --root runs/discovery/<campaign>
+deno run -A tools/discovery.ts submit   --root runs/discovery/<campaign> --coordinator URL   # register with the plane
+deno run -A tools/discovery-worker.ts --coordinator URL --host <this-machine>               # or open URL/discovery/index.html
+deno run -A tools/discovery.ts collect  --coordinator URL --campaign <manifest digest> --out <dir>
+```
 
 ## Stage 0 — Ownership, boundaries and records
 

@@ -1,0 +1,377 @@
+{
+ "note": "Shared test vectors for discovery-v1 (DESIGN section 4), computed independently with Python's json.dumps(sort_keys=True, separators=(',', ':')) and hashlib; a second implementation checks itself against these.",
+ "canonical": {
+  "input": {
+   "counter": "18446744073709551617",
+   "words": [
+    1,
+    3735928559
+   ],
+   "label": "vector"
+  },
+  "canonicalJSON": "{\"counter\":\"18446744073709551617\",\"label\":\"vector\",\"words\":\"01000000efbeadde\"}",
+  "sha256": "138cd816af571c94f5c55d7c2e3704435f9d6bda7563a73827b9885657995e85"
+ },
+ "manifest": {
+  "value": {
+   "archiveDefinition": null,
+   "assayDefinitions": [
+    {
+     "assayId": "passive-transport",
+     "fixtureIds": [
+      "passive-spread0",
+      "passive-spread1",
+      "passive-spread2"
+     ]
+    },
+    {
+     "assayId": "reacting-ledger",
+     "fixtureIds": [
+      "reacting-ledger"
+     ]
+    },
+    {
+     "assayId": "extinction",
+     "fixtureIds": [
+      "extinction"
+     ]
+    },
+    {
+     "assayId": "census-checkpoint",
+     "fixtureIds": [
+      "census-checkpoint"
+     ]
+    }
+   ],
+   "buildDigest": "3a18323ac4bb0de1db77ac2bc93ffcc745bd24564c09be34afe0604898c56a08",
+   "campaign": "engineering-v1",
+   "encodedFounderPanel": [
+    {
+     "founderId": "none",
+     "genomeHex": []
+    },
+    {
+     "founderId": "generalist-60-20",
+     "genomeHex": [
+      "0014003c0000000000000000000000000000000000000000000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007f008100000000000000006e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e82846000000000c"
+     ]
+    }
+   ],
+   "habitats": [
+    {
+     "fixtureId": "passive-spread0/eng-a",
+     "habitatId": "deposits16-a32",
+     "initialArtifactDigest": "7ed8f8a5f19d88641464e676d45c5d7913c90f197f0ce648e8d3a1ecf9fba8a2"
+    },
+    {
+     "fixtureId": "passive-spread0/eng-b",
+     "habitatId": "deposits16-a32",
+     "initialArtifactDigest": "a04e6977962d7ac2cf71879f738cc13249c49daa89c53d11d5dac6895d99ca21"
+    },
+    {
+     "fixtureId": "passive-spread1/eng-a",
+     "habitatId": "deposits16-a32",
+     "initialArtifactDigest": "c2f0d674bc50a19bd9ade5caa658a22b4c44e81145331e4885363df6a3f07115"
+    },
+    {
+     "fixtureId": "passive-spread1/eng-b",
+     "habitatId": "deposits16-a32",
+     "initialArtifactDigest": "50640f456d8318d80a6858ad0c82e26d97870ec7925f14844d8da50e71f3dc6d"
+    },
+    {
+     "fixtureId": "passive-spread2/eng-a",
+     "habitatId": "deposits16-a32",
+     "initialArtifactDigest": "49d169f5cff26f8eae1d0c4a913d2b24550f097b808fa50324acf2b381c57e93"
+    },
+    {
+     "fixtureId": "passive-spread2/eng-b",
+     "habitatId": "deposits16-a32",
+     "initialArtifactDigest": "c25ba42e75910161bb33508bf81e4eb7707c15e82a66145122a3e165ed5e64e0"
+    },
+    {
+     "fixtureId": "reacting-ledger/eng-a",
+     "habitatId": "a64-disc6-a32",
+     "initialArtifactDigest": "23c0933fcf62583167c68afd58eec10818a329479ab8be3082c6c608f13f7f3a"
+    },
+    {
+     "fixtureId": "reacting-ledger/eng-b",
+     "habitatId": "a64-disc6-a32",
+     "initialArtifactDigest": "9cd8d442922a157c1cc2f9aed3790fa141bd6a6aad2304d53282d45c90ad2dcd"
+    },
+    {
+     "fixtureId": "extinction/eng-a",
+     "habitatId": "a64-disc6-a32",
+     "initialArtifactDigest": "bedf1e01daef57e5ebdc5b02e3a7d6576ee9ca965a83c64eecffdacd3d45bc3e"
+    },
+    {
+     "fixtureId": "extinction/eng-b",
+     "habitatId": "a64-disc6-a32",
+     "initialArtifactDigest": "6b115e4e30549a575c902054d32b7d7d605a1a6cf1a9517e1b427fa4b367ad83"
+    },
+    {
+     "fixtureId": "census-checkpoint/eng-a",
+     "habitatId": "a64-disc6-a32",
+     "initialArtifactDigest": "23c0933fcf62583167c68afd58eec10818a329479ab8be3082c6c608f13f7f3a"
+    },
+    {
+     "fixtureId": "census-checkpoint/eng-b",
+     "habitatId": "a64-disc6-a32",
+     "initialArtifactDigest": "9cd8d442922a157c1cc2f9aed3790fa141bd6a6aad2304d53282d45c90ad2dcd"
+    }
+   ],
+   "observerVersion": "exact-ledger-v1",
+   "orderedCaseIds": [],
+   "physicsVersions": {
+    "checkpointSchema": 3,
+    "ruleVersion": 1
+   },
+   "proposalBatches": [],
+   "protocolDigest": "d2e0f35a6e942c1679f218eca52bd58ca5c05a3d9dd604043aad981030eee4ec",
+   "purpose": "engineering",
+   "question": "Does the workbench core (frozen manifest, CPU case runner, acceptance validator, reducer) produce one validated, cross-host reproducible result per case on artificial fixtures? Plumbing only: these cases are not evidence about evolution.",
+   "readoutVersion": "engineering-readout-v1",
+   "resolvedParameterDomain": [
+    {
+     "candidateId": "rule1-passive-spread0",
+     "config": {
+      "dtQ": 0,
+      "kBDecay": 0,
+      "kELeak": 0,
+      "kPDecay": 0,
+      "motility": false,
+      "spread": 0,
+      "tileH": 32,
+      "tileW": 32
+     },
+     "fixtureId": "passive-spread0"
+    },
+    {
+     "candidateId": "rule1-passive-spread1",
+     "config": {
+      "dtQ": 0,
+      "kBDecay": 0,
+      "kELeak": 0,
+      "kPDecay": 0,
+      "motility": false,
+      "spread": 1,
+      "tileH": 32,
+      "tileW": 32
+     },
+     "fixtureId": "passive-spread1"
+    },
+    {
+     "candidateId": "rule1-passive-spread2",
+     "config": {
+      "dtQ": 0,
+      "kBDecay": 0,
+      "kELeak": 0,
+      "kPDecay": 0,
+      "motility": false,
+      "spread": 2,
+      "tileH": 32,
+      "tileW": 32
+     },
+     "fixtureId": "passive-spread2"
+    },
+    {
+     "candidateId": "rule1-default-uniform",
+     "config": {
+      "lightMode": "uniform",
+      "tileH": 32,
+      "tileW": 32
+     },
+     "fixtureId": "reacting-ledger"
+    },
+    {
+     "candidateId": "rule1-dark-fastdecay",
+     "config": {
+      "kBDecay": 2000,
+      "kPDecay": 2000,
+      "lightAmp": 0,
+      "lightBase": 0,
+      "lightMode": "uniform",
+      "tileH": 32,
+      "tileW": 32
+     },
+     "fixtureId": "extinction"
+    },
+    {
+     "candidateId": "rule1-default-uniform",
+     "config": {
+      "lightMode": "uniform",
+      "tileH": 32,
+      "tileW": 32
+     },
+     "fixtureId": "census-checkpoint"
+    }
+   ],
+   "resourceLimits": {
+    "attemptsPerCasePerRole": 3,
+    "campaignBytes": 2000000000,
+    "campaignWallSeconds": 7200,
+    "caseWallSeconds": 600,
+    "concurrentCasesPerHost": 4
+   },
+   "schemaVersion": "discovery-v1",
+   "seedNamespaces": {
+    "blocks": [
+     {
+      "id": "eng-a",
+      "seed": 8500001
+     },
+     {
+      "id": "eng-b",
+      "seed": 8500002
+     }
+    ],
+    "first": 8500001,
+    "last": 8500999,
+    "name": "discovery-engineering"
+   },
+   "sourceClosureDigest": "f78518bda7ca4acdaf972c9a6539fcce860ab53bfe06b3d8d69e32d76f648a22",
+   "stoppingRule": "Run all 12 cases once as primaries (sharded across hosts) and replay every case on a different physical host. Stop at the caps; a cap reached yields an incomplete report, never a changed case set.",
+   "verificationPolicy": {
+    "replay": "every-case-cross-host"
+   }
+  },
+  "coreDigest": "5bfb0b440309d44e05dd3008ef1b4e480fcc01708d27412a0fc3b251c9f0f9e7",
+  "manifestDigest": "30df2a463cece4218f487ea19b35a95b4341a375fb36f78bb750e1273de6bc53"
+ },
+ "case": {
+  "spec": {
+   "armId": "fixture",
+   "assayId": "passive-transport",
+   "blockId": "eng-a",
+   "campaignDigest": "5bfb0b440309d44e05dd3008ef1b4e480fcc01708d27412a0fc3b251c9f0f9e7",
+   "candidateId": "rule1-passive-spread0",
+   "fixtureId": "passive-spread0",
+   "founderId": "none",
+   "habitatId": "deposits16-a32",
+   "initialArtifactDigest": "7ed8f8a5f19d88641464e676d45c5d7913c90f197f0ce648e8d3a1ecf9fba8a2",
+   "mutationPolicy": "as-configured",
+   "observationSchedule": {
+    "censusEvery": 50,
+    "segmentAt": [],
+    "sites": [
+     {
+      "x": 4,
+      "y": 4
+     },
+     {
+      "x": 12,
+      "y": 4
+     },
+     {
+      "x": 20,
+      "y": 4
+     },
+     {
+      "x": 28,
+      "y": 4
+     },
+     {
+      "x": 4,
+      "y": 12
+     },
+     {
+      "x": 12,
+      "y": 12
+     },
+     {
+      "x": 20,
+      "y": 12
+     },
+     {
+      "x": 28,
+      "y": 12
+     },
+     {
+      "x": 4,
+      "y": 20
+     },
+     {
+      "x": 12,
+      "y": 20
+     },
+     {
+      "x": 20,
+      "y": 20
+     },
+     {
+      "x": 28,
+      "y": 20
+     },
+     {
+      "x": 4,
+      "y": 28
+     },
+     {
+      "x": 12,
+      "y": 28
+     },
+     {
+      "x": 20,
+      "y": 28
+     },
+     {
+      "x": 28,
+      "y": 28
+     }
+    ]
+   },
+   "physicsSeed": 8500001,
+   "requiredBackendContract": "cpu-ref-v1",
+   "resolvedWorldConfig": {
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "dtQ": 0,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "eventCap": 65536,
+    "gateK": 64,
+    "kAbio": 400,
+    "kBDecay": 0,
+    "kBuild": 64,
+    "kCatHalf": 128,
+    "kCost": 64,
+    "kDecomp": 96,
+    "kELeak": 0,
+    "kEmit": 64,
+    "kGrow": 128,
+    "kMaint": 200,
+    "kPDecay": 0,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kSDecay": 1300,
+    "kernelRadius": 9,
+    "lightAmp": 200,
+    "lightBase": 40,
+    "lightMode": "gradient",
+    "massUnit": 256,
+    "motility": false,
+    "mutRate": 429497,
+    "mutStep": 24,
+    "neutral": false,
+    "ruleVersion": 1,
+    "seasonAmp": 0,
+    "seasonPeriod": 0,
+    "seed": 8500001,
+    "spread": 0,
+    "thetaMass": 512,
+    "tileH": 32,
+    "tileW": 32,
+    "tilesX": 1,
+    "tilesY": 1
+   },
+   "resourceClass": "small-cpu",
+   "schemaVersion": "discovery-v1",
+   "steps": 200
+  },
+  "caseId": "196d4ae5477311a43c573567d322d1fce82dbc21b67ef20b390d544913e6a2d5"
+ }
+}

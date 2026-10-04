@@ -1,6 +1,6 @@
 # Discovering worlds that support cumulative evolution
 
-2026-10-04 · Canonical plan after council · Nothing here is implemented or run
+2026-10-04 · Canonical plan after council · The workbench is built: Stage 3a's engineering gate and Stage 3b's gate passed on two physical hosts; Stage 3a's calibration part and every scientific stage wait for the renewal experiment, and no scientific case has run
 
 We want to know which worlds let evolution accumulate, and why the others fail. The work keeps three questions apart: what the physics permits (feasibility), whether inherited variation can reach it (accessibility), and whether one gain opens the way to another (opportunity). It measures them with exact, replayable cases and reports a bounded negative as a real result.
 
@@ -42,7 +42,8 @@ What did not change: the three layers, the frozen protocols and namespaces, the 
 ## Status and boundaries
 
 - **Reviews.** Fable's critique and Astra's review of it are complete and reconciled in the council record. The Sol 6.1 High review of this set found no P0, two P1 and eight P2 issues. Two further Sol sessions confirmed all thirteen repairs closed. The second of them also reviewed the edits that apply the user's two decisions and found one P1 and two P2 issues; those three were repaired and have not been reviewed again.
-- **Decisions.** Two are taken (2026-10-04): one owner in the construction workstream has the renewal experiment, and the workbench is built now, plane included. Five remain on their defaults in the council record. Two of those come due soon: the second physical host, and the caps with any cloud allowance.
-- **Boundaries.** These documents do not amend frozen experiments, do not run or replace the construction workspace's renewal protocol, do not touch the transition hunt, and do not certify deployed infrastructure. No worker, service, experiment or AWS resource has been started.
+- **Decisions.** Three are taken (2026-10-04): one owner in the construction workstream has the renewal experiment; the workbench is built now, plane included; and the work Mac is the second physical host. D5, how the unlanded ablation and renewal observer are depended on, comes due next. The rest stay on their defaults in the council record.
+- **Implementation.** The workbench core (Stage 3a) and the distributed plane (Stage 3b) are built and passed their engineering gates on the Mac and the work Mac on 2026-10-04: [PLAN, Implementation status](PLAN.md#implementation-status). The renewal experiment (Stages 1 and 2) has not started in the construction workspace, so the calibration part of Stage 3a and everything from Stage 4 on wait for it.
+- **Boundaries.** These documents do not amend frozen experiments, do not run or replace the construction workspace's renewal protocol, do not touch the transition hunt, and do not certify deployed infrastructure. The only cases run are the twelve engineering fixtures on artificial states; no AWS resource was used, and the demonstration coordinator ran privately and has been stopped.
 - **Provenance.** The first proposal is commit `7a96fd7`. Hashes, models and sessions are in the council record.
 - **Links.** Links into the construction workspace are relative to a main checkout with that workspace beside it, the convention `docs/plan.md` uses. They do not resolve from a nested worktree.
