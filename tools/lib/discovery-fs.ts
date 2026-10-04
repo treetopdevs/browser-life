@@ -29,6 +29,11 @@ import {
 } from "@bl/schema";
 import { decideCase, validateAttempt, type AcceptanceIndex, type AttemptInfo, type CaseAcceptance, type CaseContext, type CaseFiles } from "../../packages/runner/src/discovery.ts";
 
+import { pinnedValidator } from "./discovery-pin.ts";
+import { fileURLToPath } from "node:url";
+
+/** Repository root of this checkout, where the vendored pin lives. */
+const PIN_REPO = fileURLToPath(new URL("../..", import.meta.url));
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -202,7 +207,7 @@ export async function checkAttempt(c: Campaign, caseId: string, a: AttemptDir): 
     return { attemptId: a.attemptId, role: a.role, physicalHostId: a.host, partial: false, canonical: null, verdict: { valid: false, errors: [`rejected by the coordinator: ${why.join("; ") || "no reason recorded"}`], readout: null } };
   }
   const { result, files } = await readAttemptFiles(a.dir);
-  const verdict = await validateAttempt(ctx, result, files, await initialFor(c, ctx.spec));
+  const verdict = await validateAttempt(ctx, result, files, await initialFor(c, ctx.spec), pinnedValidator(PIN_REPO));
   let r: ResultManifest | null = null;
   try {
     r = result ? (JSON.parse(dec.decode(result)) as ResultManifest) : null;

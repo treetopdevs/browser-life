@@ -7,6 +7,10 @@ import {
   generalistGenome,
   genomeHex,
   sha256Hex,
+  RENEWAL_PIN,
+  validateCaseSpec,
+  validateManifest,
+  validateProtocol,
   type CaseSpec,
   type DiscoveryProtocol,
   type ResultFile,
@@ -414,4 +418,67 @@ describe("reduceCampaign", () => {
     const idx = await index(["mac", "m3pro"]);
     await expect(reduceCampaign(frozen.manifest, specs(), { ...idx, manifestDigest: "0".repeat(64) })).rejects.toThrow(/different manifest/);
   }, 60_000);
+});
+
+describe("pinned renewal campaigns (D5)", () => {
+  const PIN = { name: RENEWAL_PIN.name, constructionRevision: RENEWAL_PIN.constructionRevision, sourceDigest: RENEWAL_PIN.sourceDigest };
+  const pinnedProtocol: DiscoveryProtocol = {
+    ...protocol,
+    campaign: "pinned",
+    fixtures: [
+      {
+        ...protocol.fixtures[0],
+        id: "cells",
+        assayId: "renewal-null",
+        config: { ...small, dtQ: 0, motility: false, mutRate: 0 },
+        initial: { kind: "cells", nutrient: 4, founders: [{ x: 3, y: 5, genomeHex: hex, biomass: 512, energy: 1024 }, { x: 12, y: 5, genomeHex: hex, biomass: 64, energy: 128 }] },
+      },
+    ],
+    observerVersion: RENEWAL_PIN.observerVersion,
+    readoutVersion: RENEWAL_PIN.readoutVersion,
+  };
+
+  it("the launcher's hard-coded pin is the schema's pin", async () => {
+    const { EXPECTED_PIN } = await import("../../../tools/lib/discovery-pin.ts");
+    expect({ name: EXPECTED_PIN.name, constructionRevision: EXPECTED_PIN.constructionRevision, sourceDigest: EXPECTED_PIN.sourceDigest }).toEqual(PIN);
+  });
+
+  it("allows polymerTransport only on a pinned campaign", () => {
+    const withAbl = (pinnedOrNot: DiscoveryProtocol) => ({ ...pinnedOrNot, fixtures: [{ ...pinnedOrNot.fixtures[0], config: { ...pinnedOrNot.fixtures[0].config, polymerTransport: false } as never }] });
+    expect(validateProtocol(withAbl(pinnedProtocol))).toEqual([]);
+    expect(validateProtocol(withAbl(protocol)).join()).toMatch(/allowed only on a campaign pinned/);
+  });
+
+  it("needs the verified pin, the matching readout and a known pin record", async () => {
+    await expect(freezeCampaign(pinnedProtocol, { sourceClosureDigest: CLOSURE, registry: [] })).rejects.toThrow(/needs the verified construction pin/);
+    await expect(freezeCampaign({ ...pinnedProtocol, readoutVersion: "engineering-readout-v1" }, { sourceClosureDigest: CLOSURE, registry: [], pin: PIN })).rejects.toThrow(/goes with readout/);
+    await expect(freezeCampaign(pinnedProtocol, { sourceClosureDigest: CLOSURE, registry: [], pin: { ...PIN, sourceDigest: "0".repeat(64) } })).rejects.toThrow(/not the one this build knows/);
+  });
+
+  it("records the pin and its physics, and binds every case to the pinned backend", async () => {
+    const f = await freezeCampaign(pinnedProtocol, { sourceClosureDigest: CLOSURE, registry: [], pin: PIN });
+    expect(f.manifest.pin).toEqual(PIN);
+    expect(f.manifest.physicsVersions).toEqual(RENEWAL_PIN.physicsVersions);
+    expect(validateManifest(f.manifest)).toEqual([]);
+    expect(f.cases.every((c) => c.spec.requiredBackendContract === RENEWAL_PIN.backend && validateCaseSpec(c.spec).length === 0)).toBe(true);
+    const { pin: _p, ...unpinned } = f.manifest;
+    expect(validateManifest(unpinned).join()).toMatch(/needs the pin record/);
+    expect(validateManifest({ ...f.manifest, pin: { ...PIN, constructionRevision: "x" } }).join()).toMatch(/not a pin this build knows/);
+    // Without its validator a pinned result is never valid.
+    const c = f.cases[0];
+    const v = await validateAttempt({ manifest: f.manifest, campaignDigest: f.campaignDigest, caseId: c.caseId, spec: c.spec }, bytesOf(results.values().next().value!.result), results.values().next().value!.files, f.initialArtifacts.get(c.spec.initialArtifactDigest)!);
+    expect(v.valid).toBe(false);
+  });
+
+  it("builds exact single-cell founders (the construction workstream's constructionWorld)", async () => {
+    const f = await freezeCampaign(pinnedProtocol, { sourceClosureDigest: CLOSURE, registry: [], pin: PIN });
+    const { state } = decodeCheckpoint(f.initialArtifacts.get(f.cases[0].spec.initialArtifactDigest)!);
+    const n = 256, CHB = 1, CHE = 4, CHA = 0;
+    const at = (x: number, y: number) => y * 16 + x;
+    expect(state.cells[CHB * n + at(3, 5)]).toBe(512);
+    expect(state.cells[CHE * n + at(12, 5)]).toBe(128);
+    expect(Array.from(state.cells.subarray(CHA * n, (CHA + 1) * n)).every((v) => v === 4)).toBe(true);
+    expect(Array.from(state.cells.subarray(CHB * n, (CHB + 1) * n)).reduce((a, b) => a + b, 0)).toBe(576);
+    expect(validateProtocol({ ...pinnedProtocol, fixtures: [{ ...pinnedProtocol.fixtures[0], initial: { kind: "cells", nutrient: 4, founders: [{ x: 3, y: 5, genomeHex: hex, biomass: 1, energy: 1 }, { x: 3, y: 5, genomeHex: hex, biomass: 1, energy: 1 }] } }] }).join()).toMatch(/overlaps/);
+  });
 });

@@ -1,0 +1,19 @@
+# Sol 6.1 High review: renewal Stage 2 interpretation repairs (confirmation)
+
+Raw final message, unedited. Session `01a1082e-7300-7a10-bcf7-26cef380af7d`, 2026-10-04, read-only.
+
+---
+
+All five original findings are **closed**. I read only the named repair documents and renewal-v1 run root; modified nothing. All 40 result hashes match the audit, and all census hashes match their results.
+
+| Repair | Status | Confirmation |
+|---|---|---|
+| P1 U4 persistence inference | **Closed** | [RESULTS.md:26](/Users/nicholas/develop/browser-life-construction/experiments/construction/renewal-v1/RESULTS.md:26) and [COUNCIL.md:77](/Users/nicholas/develop/browser-life/.claude/worktrees/codex-astra-critique-b22475/docs/evolvability-discovery-2026-10-04/COUNCIL.md:77): thresholds **69/37 B** verified from frozen transport arithmetic. Longest run **8 censuses, steps 100–800**; matched A16/s1 **31/100**, longest **6**; **17/24** sources reached threshold at most once. U4 correctly remains **open**. |
+| P2 traffic labels | **Closed** | [RESULTS.md:28](/Users/nicholas/develop/browser-life-construction/experiments/construction/renewal-v1/RESULTS.md:28): all **24** spreading sources were full-horizon net exporters, range **−1,836 to −28 B**. Matched A16/s1: **11,961 in / 13,240 out**. Both small A16/s1 founders: zero inbound; five threshold censuses at **1,400, 1,500, 2,400, 3,900, 6,700**; exports **1,752/1,836 B**. |
+| P2 U3 overstatement | **Closed** | [COUNCIL.md:76](/Users/nicholas/develop/browser-life/.claude/worktrees/codex-astra-critique-b22475/docs/evolvability-discovery-2026-10-04/COUNCIL.md:76): all **24** main cases have RENEW=false; selection is `none-eligible`; no confirmation case exists. Broader witness-family renewal remains **open**. |
+| P2 stale status lines | **Closed** | [PLAN.md:3](/Users/nicholas/develop/browser-life/.claude/worktrees/codex-astra-critique-b22475/docs/evolvability-discovery-2026-10-04/PLAN.md:3), [PLAN.md:28](/Users/nicholas/develop/browser-life/.claude/worktrees/codex-astra-critique-b22475/docs/evolvability-discovery-2026-10-04/PLAN.md:28), and [COUNCIL.md:154](/Users/nicholas/develop/browser-life/.claude/worktrees/codex-astra-critique-b22475/docs/evolvability-discovery-2026-10-04/COUNCIL.md:154) now correctly record completed renewal and available artifacts. Workbench implementation claims cannot be independently verified from this run root. |
+| P3 pooled timing | **Closed** | [RESULTS.md:36](/Users/nicholas/develop/browser-life-construction/experiments/construction/renewal-v1/RESULTS.md:36): main-case median **16.201 s**, nearest-rank p90 **16.646 s**, maximum **18.887 s**; pooled 36-history median **15.6225 s**. Main artifact median/max **3.739535/4.255251 MB**; short-control median **4.1595 s / 1.317158 MB**; totals **576.051 s / 140.114843 MB**. CPU replays **15.611/16.678 s**, GPU **6.811/7.277 s**. [U5](/Users/nicholas/develop/browser-life/.claude/worktrees/codex-astra-critique-b22475/docs/evolvability-discovery-2026-10-04/COUNCIL.md:78) correctly remains **partial** pending the adapter benchmark. |
+
+**New P3 — storage units are mixed**, at [RESULTS.md:36](/Users/nicholas/develop/browser-life-construction/experiments/construction/renewal-v1/RESULTS.md:36): the root contains **149,164,064 logical bytes (149.2 MB)** and occupies **164,872,192 allocated bytes (157.234375 MiB)**. “157 MB” matches allocated **MiB**, whereas the case sizes use decimal MB. Specify “157.2 MiB allocated disk space” or “149.2 MB logical size.”
+
+**Verdict:** All five repairs pass; U3/U4 remain scientifically open and U5 partial, with one minor P3 storage-unit correction outstanding.

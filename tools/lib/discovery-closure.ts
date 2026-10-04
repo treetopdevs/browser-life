@@ -13,6 +13,7 @@
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, relative, resolve } from "node:path";
+import { pinClosureFiles } from "./discovery-pin.ts";
 
 export const CLOSURE_ENTRY = "packages/runner/src/discovery.ts";
 const EXTRA = ["deno.json", "deno.lock"];
@@ -42,7 +43,8 @@ export function closureFiles(repoRoot: string): string[] {
       if (target) stack.push(target);
     }
   }
-  return [...[...seen].map((f) => relative(repoRoot, f)), ...EXTRA].map((p) => p.split("\\").join("/")).sort();
+  // The vendored construction pin (D5) and the scripts that run it are part of every build's closure.
+  return [...new Set([...[...seen].map((f) => relative(repoRoot, f)), ...EXTRA, ...pinClosureFiles(repoRoot)].map((p) => p.split("\\").join("/")))].sort();
 }
 
 export function closureDigest(repoRoot: string): { digest: string; files: { path: string; sha256: string }[] } {

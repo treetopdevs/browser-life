@@ -11,6 +11,8 @@
 //   deno run -A tools/discovery.ts check-attempt --manifest <manifest.json> --case <case.json> --attempt <dir>
 //   deno run -A tools/discovery.ts submit   --root <root> --coordinator URL [--admin-token T] [--qualify <caseId>]
 //   deno run -A tools/discovery.ts collect  --coordinator URL --campaign <manifest digest> --out <dir> [--admin-token T]
+//   deno run -A tools/discovery.ts import-renewal  --renewal-root <construction runs/construction/renewal-v1> --out <dir>
+//   deno run -A tools/discovery.ts validate-import --root <dir> --renewal-root <same>
 //
 // check-attempt is the validator the coordinator runs on every uploaded
 // attempt (one JSON verdict line). submit registers a frozen root with the
@@ -30,6 +32,9 @@ import { RESULT_FILES, canonicalJSON, sha256Hex, type CaseSpec, type DiscoveryPr
 import { campaignCoreDigest, caseIdOf, type CampaignManifest } from "@bl/schema";
 import { CPU_BACKEND, caseContextErrors, freezeCampaign, reduceCampaign, reportMarkdown, validateAttempt, type AcceptanceIndex, type CaseFiles } from "../packages/runner/src/discovery.ts";
 import { closureDigest } from "./lib/discovery-closure.ts";
+import { b64, pinCall, pinManifestRecord, pinnedValidator, pinRunCase, verifyPin } from "./lib/discovery-pin.ts";
+import { importMarkdown, importRenewal, verifyImport } from "./lib/discovery-import.ts";
+import { RENEWAL_PIN } from "@bl/schema";
 import {
   buildAcceptanceIndex,
   checkAttempt,
@@ -135,7 +140,18 @@ async function freeze(f: Record<string, string>): Promise<void> {
   const protocol = JSON.parse(protoText) as DiscoveryProtocol;
   const registry = (JSON.parse(await Deno.readTextFile(f.registry ?? `${REPO}/experiments/discovery/seed-registry.json`)) as { reservations: SeedReservation[] }).reservations;
   const closure = closureDigest(REPO);
-  const frozen = await freezeCampaign(protocol, { sourceClosureDigest: closure.digest, registry });
+  const pinned = protocol.observerVersion === RENEWAL_PIN.observerVersion;
+  // A pinned campaign (D5) is available only when the vendored construction tree verifies.
+  const pin = pinned ? pinManifestRecord(verifyPin(REPO)) : undefined;
+  const frozen = await freezeCampaign(protocol, { sourceClosureDigest: closure.digest, registry, pin });
+  if (pinned) {
+    // Every case's shape and the pinned observer's domain and exactness, checked under the pin before anything is written.
+    const { checks } = await pinCall<{ checks: { ok: boolean; reason: string }[] }>(REPO, "freeze-check", {
+      cases: frozen.cases.map((c) => ({ spec: c.spec, initial: b64(frozen.initialArtifacts.get(c.spec.initialArtifactDigest)!) })),
+    });
+    const bad = checks.map((ch, k) => (ch.ok ? null : `${frozen.cases[k].spec.fixtureId}/${frozen.cases[k].spec.blockId}: ${ch.reason}`)).filter(Boolean);
+    if (bad.length) throw new Error(`freeze refused: the pinned renewal observer cannot measure these cases exactly:\n  ${bad.join("\n  ")}`);
+  }
   await mkdirDurable(resolve(out, ".."));
   await Deno.mkdir(out); // exclusive: fails if the root exists
   await syncDir(resolve(out, ".."));
@@ -187,8 +203,8 @@ async function plan(c: Campaign, role: "primary" | "replay", host: string, shard
   for (const [idx, caseId] of c.manifest.orderedCaseIds.entries()) {
     if (idx % shard.n !== shard.i) continue;
     const spec = c.specs.get(caseId)!;
-    if (spec.requiredBackendContract !== CPU_BACKEND) {
-      skipped.push(`${caseId}: requires backend ${spec.requiredBackendContract}; this host provides ${CPU_BACKEND} only`);
+    if (spec.requiredBackendContract !== CPU_BACKEND && spec.requiredBackendContract !== RENEWAL_PIN.backend) {
+      skipped.push(`${caseId}: requires backend ${spec.requiredBackendContract}; this host provides ${CPU_BACKEND} and ${RENEWAL_PIN.backend}`);
       continue;
     }
     const attempts = await listAttempts(c.root, caseId);
@@ -297,6 +313,7 @@ async function execute(f: Record<string, string>, role: "primary" | "replay"): P
   const closure = closureDigest(REPO);
   if (closure.digest !== c.manifest.sourceClosureDigest)
     throw new Error(`source closure of this checkout (${closure.digest}) differs from the manifest's (${c.manifest.sourceClosureDigest}); refusing to run`);
+  if (c.manifest.pin) verifyPin(REPO);
   const lim = c.manifest.resourceLimits;
   const concurrency = Math.max(1, Math.min(lim.concurrentCasesPerHost, f.concurrency ? +f.concurrency : lim.concurrentCasesPerHost));
   const maxCases = f["max-cases"] ? +f["max-cases"] : Infinity;
@@ -352,7 +369,10 @@ async function execute(f: Record<string, string>, role: "primary" | "replay"): P
       try {
         const initial = await readInitial(c, job.spec);
         // The case's own limit, cut short by the campaign's remaining time: the worker is terminated at whichever comes first.
-        const out = await runInWorker(job.spec, initial, opts, Math.max(1, Math.min(lim.caseWallSeconds * 1000 + 5000, campaignDeadline - Date.now())));
+        const limitMs = Math.max(1, Math.min(lim.caseWallSeconds * 1000 + 5000, campaignDeadline - Date.now()));
+        const out = job.spec.requiredBackendContract === RENEWAL_PIN.backend
+          ? ((await pinRunCase(REPO, job.spec, job.caseId, initial, { ...opts, backendBuild: `deno ${Deno.version.deno} ${Deno.build.os}-${Deno.build.arch} ${RENEWAL_PIN.backend}` }, limitMs)) as unknown as { result: ResultManifest; files: CaseFiles })
+          : await runInWorker(job.spec, initial, opts, limitMs);
         // Publications are serialized and checked against the storage cap with their own bytes counted.
         const turn = publishing.then(async () => {
           const adding = RESULT_FILES.reduce((a, k) => a + out.files[k].byteLength, 0) + 4096;
@@ -490,22 +510,45 @@ async function stats(f: Record<string, string>): Promise<void> {
   const release = await acquireRootLock(root);
   try {
   const c = await loadCampaign(root);
-  const rows: { role: string; fixture: string; seconds: number; bytes: number }[] = [];
+  const rows: { role: string; fixture: string; host: string; seconds: number; validateSeconds: number; completeSeconds: number; bytes: number }[] = [];
   for (const id of c.manifest.orderedCaseIds)
     for (const a of await listAttempts(root, id)) {
       if (a.partial) continue;
+      // Validation is part of a complete case's cost: time it here, on the host running stats.
+      const t0 = performance.now();
       const info = await checkAttempt(c, id, a);
+      const validateSeconds = (performance.now() - t0) / 1000;
       if (!info.verdict.valid) continue;
       const r = JSON.parse(await Deno.readTextFile(`${a.dir}/result.json`)) as ResultManifest;
-      rows.push({ role: a.role, fixture: c.specs.get(id)!.fixtureId, seconds: r.execution.measuredWallMs / 1000, bytes: RESULT_FILES.reduce((s, k) => s + r.execution.artifactSizes[k], 0) });
+      const seconds = r.execution.measuredWallMs / 1000;
+      rows.push({ role: a.role, fixture: c.specs.get(id)!.fixtureId, host: a.host, seconds, validateSeconds, completeSeconds: seconds + validateSeconds, bytes: RESULT_FILES.reduce((s, k) => s + r.execution.artifactSizes[k], 0) });
     }
   const summary = (["primary", "replay"] as const).map((role) => {
     const xs = rows.filter((r) => r.role === role);
-    return { role, executions: xs.length, medianSeconds: pct(xs.map((x) => x.seconds), 0.5), p90Seconds: pct(xs.map((x) => x.seconds), 0.9), medianBytes: pct(xs.map((x) => x.bytes), 0.5), p90Bytes: pct(xs.map((x) => x.bytes), 0.9) };
+    const q = (k: "seconds" | "validateSeconds" | "completeSeconds" | "bytes", p: number) => pct(xs.map((x) => x[k]), p);
+    return {
+      role,
+      executions: xs.length,
+      medianSeconds: q("seconds", 0.5),
+      p90Seconds: q("seconds", 0.9),
+      medianValidateSeconds: q("validateSeconds", 0.5),
+      p90ValidateSeconds: q("validateSeconds", 0.9),
+      medianCompleteSeconds: q("completeSeconds", 0.5),
+      p90CompleteSeconds: q("completeSeconds", 0.9),
+      medianBytes: q("bytes", 0.5),
+      p90Bytes: q("bytes", 0.9),
+    };
   });
-  const out = { campaign: c.manifest.campaign, manifestDigest: c.manifestDigest, note: "Measured from valid attempts' own wall time and artifact sizes (observer, serialization and hashing included; validation and transfer excluded). Engineering figures price the plumbing only, never a scientific campaign.", summary, byFixture: rows };
+  const out = {
+    campaign: c.manifest.campaign,
+    manifestDigest: c.manifestDigest,
+    statsHost: Deno.hostname(),
+    note: "Execution seconds and bytes are the valid attempts' own records (observer, serialization and hashing included). Validation seconds are measured by this command on statsHost, one full validation per attempt; complete = execution + validation. Transfer is excluded. Engineering figures price the plumbing only, never a scientific campaign.",
+    summary,
+    byFixture: rows,
+  };
   await writeAtomic(`${root}/stats.json`, enc.encode(JSON.stringify(out, null, 1) + "\n"));
-  for (const s of summary) console.log(`${s.role}: n=${s.executions} median ${s.medianSeconds.toFixed(2)} s, p90 ${s.p90Seconds.toFixed(2)} s; median ${s.medianBytes} bytes, p90 ${s.p90Bytes} bytes`);
+  for (const s of summary) console.log(`${s.role}: n=${s.executions} execution median ${s.medianSeconds.toFixed(2)} s, p90 ${s.p90Seconds.toFixed(2)} s; validation median ${s.medianValidateSeconds.toFixed(2)} s, p90 ${s.p90ValidateSeconds.toFixed(2)} s; complete median ${s.medianCompleteSeconds.toFixed(2)} s, p90 ${s.p90CompleteSeconds.toFixed(2)} s; median ${s.medianBytes} bytes, p90 ${s.p90Bytes} bytes`);
   } finally {
     release();
   }
@@ -541,7 +584,7 @@ async function checkAttemptCmd(f: Record<string, string>): Promise<void> {
   const ctxErrs = await caseContextErrors(ctx);
   if (ctxErrs.length) return say({ valid: false, errors: ctxErrs, canonical: null });
   const { result, files } = await readAttemptFiles(need(f, "attempt"));
-  const v = await validateAttempt(ctx, result, files, f.initial ? await Deno.readFile(f.initial) : null);
+  const v = await validateAttempt(ctx, result, files, f.initial ? await Deno.readFile(f.initial) : null, pinnedValidator(REPO));
   say({ valid: v.valid, errors: v.errors, canonical: v.valid ? (JSON.parse(new TextDecoder().decode(result!)) as ResultManifest).canonical : null });
 }
 
@@ -560,6 +603,7 @@ async function submit(f: Record<string, string>): Promise<void> {
   const root = resolve(need(f, "root"));
   const base = need(f, "coordinator").replace(/\/$/, "");
   const c = await loadCampaign(root);
+  if (c.manifest.pin) throw new Error(`the discovery plane serves ${CPU_BACKEND} campaigns only; run this pinned renewal campaign (${RENEWAL_PIN.backend}) with \`tools/discovery.ts run\` and \`replay\` on two hosts`);
   const h = adminHeaders(f);
   const idx = JSON.parse(await Deno.readTextFile(`${root}/acceptance.json`)) as AcceptanceIndex;
   // The qualification reference: an accepted case of this root (default: the shortest one).
@@ -673,6 +717,30 @@ async function collect(f: Record<string, string>): Promise<void> {
   console.log(`collected ${idx.campaign} into ${out}: plane decisions ${[...decisions].map(([k, v]) => `${v} ${k}`).join(", ")}; now run validate and reduce on it`);
 }
 
+/** Imported evidence (DESIGN 7): the renewal experiment's artifacts by exact identity, in their own class. */
+async function importRenewalCmd(f: Record<string, string>): Promise<void> {
+  const out = resolve(need(f, "out"));
+  assertResearchRoot(out);
+  const rec = await importRenewal(resolve(need(f, "renewal-root")));
+  await mkdirDurable(resolve(out, ".."));
+  await Deno.mkdir(out); // exclusive
+  await writeDurable(`${out}/imported.json`, enc.encode(canonicalJSON(rec)));
+  await writeDurable(`${out}/IMPORT.md`, enc.encode(importMarkdown(rec)));
+  await syncDir(out);
+  console.log(`imported ${rec.cases.length} ${rec.class} cases from ${rec.source.protocol}; import digest ${rec.importDigest}; selection ${rec.readout.selection.status}`);
+}
+
+async function validateImportCmd(f: Record<string, string>): Promise<void> {
+  const root = resolve(need(f, "root"));
+  const rec = JSON.parse(await Deno.readTextFile(`${root}/imported.json`));
+  const errs = await verifyImport(rec, resolve(need(f, "renewal-root")));
+  if (errs.length) {
+    console.error(`imported evidence INVALID:\n  ${errs.join("\n  ")}`);
+    Deno.exit(1);
+  }
+  console.log(`imported evidence valid: ${rec.cases.length} ${rec.class} cases re-derived byte for byte from the source root; import digest ${rec.importDigest}; none counted as discovery-replayed`);
+}
+
 const [cmd, ...rest] = Deno.args;
 const f = flags(rest);
 try {
@@ -687,6 +755,8 @@ try {
   else if (cmd === "check-attempt") await checkAttemptCmd(f);
   else if (cmd === "submit") await submit(f);
   else if (cmd === "collect") await collect(f);
+  else if (cmd === "import-renewal") await importRenewalCmd(f);
+  else if (cmd === "validate-import") await validateImportCmd(f);
   else {
     console.error("usage: tools/discovery.ts freeze|run|replay|validate|reduce|export|stats|status|check-attempt|submit|collect [flags] (see the header comment)");
     Deno.exit(2);

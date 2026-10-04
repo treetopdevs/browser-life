@@ -20,6 +20,32 @@ import { RULE_VERSION, SCHEMA_VERSION, defaultConfig, validateConfig, type World
 
 export const DISCOVERY_SCHEMA = "discovery-v1";
 
+/** The CPU reference of this build. */
+export const CPU_BACKEND = "cpu-ref-v1" as const;
+/**
+ * Decision D5 (2026-10-04): cases that need the construction workstream's
+ * renewal observer run pinned to a named construction revision, vendored byte
+ * for byte in vendor/construction-renewal-v1 (tools/lib/discovery-pin.ts).
+ * These labels name that pin; a manifest that uses them records the pin and
+ * the pin's physics versions, never this build's.
+ */
+export const RENEWAL_PIN = {
+  backend: "cpu-ref-renewal-pin-v1",
+  observerVersion: "renewal-observer-v1.pin-24cef9e2",
+  readoutVersion: "renewal-readout-v1.pin-24cef9e2",
+  name: "construction-renewal-v1",
+  constructionRevision: "ca8a4dbd08000ae406e48acf242469d48d04b6c2",
+  sourceDigest: "24cef9e2f79abaad6d9260e63585c30c1b0a3516d38e669321235ccd3d0e6362",
+  physicsVersions: { ruleVersion: 2, checkpointSchema: 3 },
+} as const;
+export const BACKEND_CONTRACTS = [CPU_BACKEND, RENEWAL_PIN.backend] as const;
+export type BackendContract = (typeof BACKEND_CONTRACTS)[number];
+export interface PinRecord {
+  name: string;
+  constructionRevision: string;
+  sourceDigest: string;
+}
+
 /** The evidence vocabulary of PLAN Stage 0. A technical failure is never a biological negative. */
 export const EVIDENCE_STATUSES = ["supported", "unsupported-within-tested-domain", "invalid-or-incomplete", "unsupported-measurement"] as const;
 export type EvidenceStatus = (typeof EVIDENCE_STATUSES)[number];
@@ -191,6 +217,16 @@ export type InitialRecipe =
       deposits: { x: number; y: number; B: number; P: number; E: number }[];
     }
   | {
+      /**
+       * Exact single-cell founders (the construction workstream's
+       * `constructionWorld`): biomass and free energy in one cell each, lineage
+       * ids 1, 2, ... in listed order, no founder noise; nutrient in every cell.
+       */
+      kind: "cells";
+      nutrient: number;
+      founders: { x: number; y: number; genomeHex: string; biomass: number; energy: number }[];
+    }
+  | {
       kind: "founders";
       nutrient: number;
       /** Each founder's genome is the hex of `genomeHex` (an explicit encoding, never a name). */
@@ -264,7 +300,7 @@ export interface CaseSpec {
   initialArtifactDigest: string;
   steps: number;
   observationSchedule: { censusEvery: number; segmentAt: number[]; sites: { x: number; y: number }[] };
-  requiredBackendContract: "cpu-ref-v1";
+  requiredBackendContract: BackendContract;
   resourceClass: "small-cpu";
 }
 
@@ -291,6 +327,8 @@ export interface CampaignManifest {
   orderedCaseIds: string[];
   proposalBatches: string[][];
   archiveDefinition: null;
+  /** Present only on campaigns that run pinned to a construction revision (D5); absent keys keep older manifests' digests. */
+  pin?: PinRecord;
 }
 
 /** The two fields that hold case IDs (DESIGN 4, "Hashing order"); a schema that adds another must add it here. */
@@ -392,6 +430,19 @@ function checkRecipe(r: unknown, path: string, errs: Errs): void {
       if (!keysExactly(d, ["x", "y", "B", "P", "E"], p, errs)) return;
       for (const k of ["x", "y", "B", "P", "E"]) if (!int(d[k], 0, 1 << 26)) errs.push(`${p}.${k}: bad`);
     });
+  } else if (kind === "cells") {
+    if (!keysExactly(r, ["kind", "nutrient", "founders"], path, errs)) return;
+    if (!int(r.nutrient, 0, 1 << 20)) errs.push(`${path}.nutrient: bad`);
+    if (!Array.isArray(r.founders) || r.founders.length === 0) return void errs.push(`${path}.founders: not a non-empty array`);
+    const seen = new Set<string>();
+    r.founders.forEach((f, i) => {
+      const p = `${path}.founders[${i}]`;
+      if (!keysExactly(f, ["x", "y", "genomeHex", "biomass", "energy"], p, errs)) return;
+      for (const k of ["x", "y", "biomass", "energy"]) if (!int(f[k], 0, 1 << 20)) errs.push(`${p}.${k}: bad`);
+      if (typeof f.genomeHex !== "string" || !/^[0-9a-f]+$/.test(f.genomeHex)) errs.push(`${p}.genomeHex: bad`);
+      if (seen.has(`${f.x},${f.y}`)) errs.push(`${p}: overlaps another founder`);
+      seen.add(`${f.x},${f.y}`);
+    });
   } else if (kind === "founders") {
     if (!keysExactly(r, ["kind", "nutrient", "founders"], path, errs)) return;
     if (!int(r.nutrient, 0, 1 << 20)) errs.push(`${path}.nutrient: bad`);
@@ -403,6 +454,26 @@ function checkRecipe(r: unknown, path: string, errs: Errs): void {
       if (typeof f.genomeHex !== "string" || !/^[0-9a-f]+$/.test(f.genomeHex)) errs.push(`${p}.genomeHex: bad`);
     });
   } else errs.push(`${path}.kind: unknown ${String(kind)}`);
+}
+
+/**
+ * Config keys a fixture may set: the default keys, plus, on a pinned campaign
+ * only, the pin's cost-retaining ablation switch `polymerTransport` (D5). This
+ * build's own physics would silently ignore that key, so an unpinned campaign
+ * must never carry it.
+ */
+export function configKeyErrors(config: Record<string, unknown>, pinned: boolean): string[] {
+  const errs: string[] = [];
+  const known = Object.keys(defaultConfig());
+  for (const k of Object.keys(config)) {
+    if (k === "seed" || known.includes(k)) continue;
+    if (k === "polymerTransport" && pinned) {
+      if (typeof config[k] !== "boolean") errs.push("polymerTransport must be a boolean");
+      continue;
+    }
+    errs.push(`key ${k} is not a default config key${k === "polymerTransport" ? " (allowed only on a campaign pinned to the construction revision)" : ""}`);
+  }
+  return errs;
 }
 
 const FIXTURE_KEYS = ["id", "candidateId", "habitatId", "founderId", "assayId", "armId", "config", "initial", "steps", "censusEvery", "segmentAt", "sites"] as const;
@@ -455,8 +526,7 @@ export function validateProtocol(p: unknown): string[] {
         if ("seed" in (f.config as object)) errs.push(`${path}.config: seed is set per block, not per fixture`);
         const cfgErrs = validateConfig(defaultConfig({ ...(f.config as Partial<WorldConfig>), seed: 1 }));
         for (const e of cfgErrs) errs.push(`${path}.config: ${e}`);
-        const known = Object.keys(defaultConfig());
-        for (const k of Object.keys(f.config as object)) if (!known.includes(k)) errs.push(`${path}.config: key ${k} is not a default config key`);
+        for (const e of configKeyErrors(f.config as Record<string, unknown>, p.observerVersion === RENEWAL_PIN.observerVersion)) errs.push(`${path}.config: ${e}`);
       }
       checkRecipe(f.initial, `${path}.initial`, errs);
       if (!int(f.steps, 1, 10_000_000)) errs.push(`${path}.steps: bad`);
@@ -523,15 +593,23 @@ const MANIFEST_KEYS = [
 /** Strict structural check of a frozen manifest (its digests are checked by the loader). */
 export function validateManifest(m: unknown): string[] {
   const errs: Errs = [];
-  if (!keysExactly(m, MANIFEST_KEYS, "manifest", errs)) return errs;
+  const pinned = !!m && typeof m === "object" && "pin" in (m as object);
+  if (!keysExactly(m, pinned ? [...MANIFEST_KEYS, "pin"] : MANIFEST_KEYS, "manifest", errs)) return errs;
+  if (pinned) {
+    const pin = m.pin as Record<string, unknown>;
+    if (keysExactly(pin, ["name", "constructionRevision", "sourceDigest"], "manifest.pin", errs) && (pin.name !== RENEWAL_PIN.name || pin.constructionRevision !== RENEWAL_PIN.constructionRevision || pin.sourceDigest !== RENEWAL_PIN.sourceDigest))
+      errs.push("manifest.pin: not a pin this build knows");
+    if (m.observerVersion !== RENEWAL_PIN.observerVersion || m.readoutVersion !== RENEWAL_PIN.readoutVersion) errs.push("manifest.pin: a pinned campaign must use the pinned observer and readout");
+  } else if (m.observerVersion === RENEWAL_PIN.observerVersion || m.readoutVersion === RENEWAL_PIN.readoutVersion) errs.push("manifest: the pinned observer or readout needs the pin record");
   if (m.schemaVersion !== DISCOVERY_SCHEMA) errs.push("manifest.schemaVersion: bad");
   if (!label(m.campaign)) errs.push("manifest.campaign: bad label");
   if (!CAMPAIGN_PURPOSES.includes(m.purpose as CampaignPurpose)) errs.push("manifest.purpose: unknown");
   for (const k of ["protocolDigest", "buildDigest", "sourceClosureDigest"]) if (!isDigest(m[k])) errs.push(`manifest.${k}: not a digest`);
   for (const k of ["observerVersion", "readoutVersion"]) if (!label(m[k])) errs.push(`manifest.${k}: bad label`);
   const pv = m.physicsVersions as Record<string, unknown>;
-  if (keysExactly(pv, ["ruleVersion", "checkpointSchema"], "manifest.physicsVersions", errs) && (pv.ruleVersion !== RULE_VERSION || pv.checkpointSchema !== SCHEMA_VERSION))
-    errs.push(`manifest.physicsVersions: this build runs rule ${RULE_VERSION}, checkpoint schema ${SCHEMA_VERSION}`);
+  const physics = pinned ? RENEWAL_PIN.physicsVersions : { ruleVersion: RULE_VERSION, checkpointSchema: SCHEMA_VERSION };
+  if (keysExactly(pv, ["ruleVersion", "checkpointSchema"], "manifest.physicsVersions", errs) && (pv.ruleVersion !== physics.ruleVersion || pv.checkpointSchema !== physics.checkpointSchema))
+    errs.push(`manifest.physicsVersions: ${pinned ? "the pin" : "this build"} runs rule ${physics.ruleVersion}, checkpoint schema ${physics.checkpointSchema}`);
   const lim = m.resourceLimits as Record<string, unknown>;
   if (keysExactly(lim, LIMIT_KEYS, "manifest.resourceLimits", errs)) for (const k of LIMIT_KEYS) if (!int(lim[k], 1, Number.MAX_SAFE_INTEGER)) errs.push(`manifest.resourceLimits.${k}: bad`);
   const vp = m.verificationPolicy as Record<string, unknown>;
@@ -552,8 +630,8 @@ export function validateManifest(m: unknown): string[] {
     if (!label(o.candidateId)) errs.push(`${p}.candidateId: bad label`);
     if (!o.config || typeof o.config !== "object" || Array.isArray(o.config)) errs.push(`${p}.config: not an object`);
     else {
-      const known = Object.keys(defaultConfig());
-      for (const k of Object.keys(o.config)) if (k === "seed" || !known.includes(k)) errs.push(`${p}.config: key ${k} not allowed`);
+      if ("seed" in o.config) errs.push(`${p}.config: key seed not allowed`);
+      for (const e of configKeyErrors(o.config as Record<string, unknown>, pinned)) errs.push(`${p}.config: ${e}`);
       for (const e of validateConfig(defaultConfig({ ...(o.config as Partial<WorldConfig>), seed: 1 }))) errs.push(`${p}.config: ${e}`);
     }
   });
@@ -606,6 +684,7 @@ export function validateCaseSpec(c: unknown): string[] {
   if (!cfg || typeof cfg !== "object") errs.push("case.resolvedWorldConfig: not an object");
   else {
     for (const e of validateConfig(cfg)) errs.push(`case.resolvedWorldConfig: ${e}`);
+    for (const e of configKeyErrors(cfg as unknown as Record<string, unknown>, c.requiredBackendContract === RENEWAL_PIN.backend)) errs.push(`case.resolvedWorldConfig: ${e}`);
     if (cfg.seed !== c.physicsSeed) errs.push("case.resolvedWorldConfig.seed differs from physicsSeed");
   }
   const o = c.observationSchedule as Record<string, unknown>;
@@ -614,7 +693,7 @@ export function validateCaseSpec(c: unknown): string[] {
     if (!Array.isArray(o.segmentAt) || o.segmentAt.some((x, j, a) => !int(x, 1, (c.steps as number) - 1) || (j > 0 && x <= a[j - 1]))) errs.push("case.observationSchedule.segmentAt: bad");
     if (!Array.isArray(o.sites) || o.sites.some((x) => !keysExactly(x, ["x", "y"], "case.observationSchedule.sites[]", errs) || !int(x.x, 0, 1 << 16) || !int(x.y, 0, 1 << 16))) errs.push("case.observationSchedule.sites: bad");
   }
-  if (c.requiredBackendContract !== "cpu-ref-v1") errs.push("case.requiredBackendContract: unknown");
+  if (!BACKEND_CONTRACTS.includes(c.requiredBackendContract as BackendContract)) errs.push("case.requiredBackendContract: unknown");
   if (c.resourceClass !== "small-cpu") errs.push("case.resourceClass: unknown");
   return errs;
 }

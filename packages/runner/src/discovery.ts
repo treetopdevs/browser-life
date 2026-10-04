@@ -13,7 +13,11 @@
 
 import {
   CH,
+  CPU_BACKEND,
   DISCOVERY_SCHEMA,
+  GENOME_CHANNELS,
+  RENEWAL_PIN,
+  encodeGenome,
   MOT_ZERO,
   PHYSICS_VERSIONS,
   RESULT_FILES,
@@ -47,6 +51,7 @@ import {
   type EvidenceStatus,
   type ExecutionRecord,
   type FixtureSpec,
+  type PinRecord,
   type ResultFile,
   type ResultManifest,
   type SeedReservation,
@@ -67,7 +72,7 @@ import {
 import { observeCensus, restoreObservers, serializeObservers, type Observers } from "./observe.ts";
 import type { ObserverSettings, ObserverState } from "./runner.ts";
 
-export const CPU_BACKEND = "cpu-ref-v1" as const;
+export { CPU_BACKEND };
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -76,6 +81,25 @@ const dec = new TextDecoder();
 
 export function buildInitialState(f: FixtureSpec, seed: number): WorldState {
   const cfg = defaultConfig({ ...f.config, seed });
+  if (f.initial.kind === "cells") {
+    // Exact single-cell founders, as the construction workstream's constructionWorld builds them.
+    if (cfg.tilesX !== 1 || cfg.tilesY !== 1) throw new Error(`fixture ${f.id}: cells recipes need one tile`);
+    const s = allocState(cfg);
+    const n = cellCount(cfg);
+    s.cells.fill(f.initial.nutrient, CH.A * n, (CH.A + 1) * n);
+    s.cells.fill(MOT_ZERO, CH.MOT * n, (CH.MOT + 1) * n);
+    f.initial.founders.forEach((x, k) => {
+      if (x.x >= cfg.tileW || x.y >= cfg.tileH) throw new Error(`fixture ${f.id}: founder (${x.x}, ${x.y}) outside the tile`);
+      const i = x.y * cfg.tileW + x.x;
+      s.cells[CH.B * n + i] = x.biomass;
+      s.cells[CH.E * n + i] = x.energy;
+      const words = encodeGenome(genomeFromHex(x.genomeHex), 0, k + 1);
+      for (let j = 0; j < GENOME_CHANNELS; j++) s.genome[j * n + i] = words[j];
+    });
+    const errs = validateState(s);
+    if (errs.length) throw new Error(`fixture ${f.id}: invalid initial state: ${errs.join("; ")}`);
+    return s;
+  }
   if (f.initial.kind === "founders")
     return buildWorld(cfg, { nutrient: f.initial.nutrient, founders: f.initial.founders.map((x) => ({ ...x, genome: genomeFromHex(x.genomeHex) })) });
   const s = allocState(cfg);
@@ -110,8 +134,19 @@ export interface FrozenCampaign {
  */
 export async function freezeCampaign(
   protocol: DiscoveryProtocol,
-  opts: { sourceClosureDigest: string; registry: SeedReservation[] },
+  opts: { sourceClosureDigest: string; registry: SeedReservation[]; pin?: PinRecord },
 ): Promise<FrozenCampaign> {
+  // Observers and readouts this build can run: the exact-ledger engineering pair, and the renewal pair
+  // only when the caller verified the vendored pin (D5) and passes its record.
+  const pinned = protocol.observerVersion === RENEWAL_PIN.observerVersion;
+  if (pinned) {
+    if (!opts.pin) throw new Error(`freeze: observer ${protocol.observerVersion} needs the verified construction pin, which was not supplied`);
+    if (opts.pin.name !== RENEWAL_PIN.name || opts.pin.constructionRevision !== RENEWAL_PIN.constructionRevision || opts.pin.sourceDigest !== RENEWAL_PIN.sourceDigest) throw new Error("freeze: the supplied pin is not the one this build knows");
+    if (protocol.readoutVersion !== RENEWAL_PIN.readoutVersion) throw new Error(`freeze: observer ${protocol.observerVersion} goes with readout ${RENEWAL_PIN.readoutVersion}, not ${protocol.readoutVersion}`);
+  } else if (protocol.observerVersion !== EXACT_LEDGER_OBSERVER || protocol.readoutVersion !== ENGINEERING_READOUT) {
+    throw new Error(`freeze: observer ${protocol.observerVersion} with readout ${protocol.readoutVersion} is not available in this build (have ${EXACT_LEDGER_OBSERVER} with ${ENGINEERING_READOUT}, and ${RENEWAL_PIN.observerVersion} with ${RENEWAL_PIN.readoutVersion} when pinned)`);
+  }
+  const backend = pinned ? RENEWAL_PIN.backend : CPU_BACKEND;
   const errs = validateProtocol(protocol);
   if (errs.length) throw new Error(`protocol invalid:\n  ${errs.join("\n  ")}`);
   const coll = seedCollisions(protocol.blocks, opts.registry, protocol.seedNamespace.name);
@@ -130,7 +165,7 @@ export async function freezeCampaign(
   const founders = new Map<string, Set<string>>();
   for (const f of protocol.fixtures) {
     const set = founders.get(f.founderId) ?? new Set<string>();
-    if (f.initial.kind === "founders") for (const x of f.initial.founders) set.add(x.genomeHex);
+    if (f.initial.kind === "founders" || f.initial.kind === "cells") for (const x of f.initial.founders) set.add(x.genomeHex);
     founders.set(f.founderId, set);
   }
   const assays = new Map<string, string[]>();
@@ -141,9 +176,9 @@ export async function freezeCampaign(
     purpose: protocol.purpose,
     question: protocol.question,
     protocolDigest: await digestOf(protocol),
-    buildDigest: await digestOf({ sourceClosureDigest: opts.sourceClosureDigest, backendContract: CPU_BACKEND }),
+    buildDigest: await digestOf(pinned ? { sourceClosureDigest: opts.sourceClosureDigest, backendContract: backend, pin: opts.pin } : { sourceClosureDigest: opts.sourceClosureDigest, backendContract: CPU_BACKEND }),
     sourceClosureDigest: opts.sourceClosureDigest,
-    physicsVersions: { ...PHYSICS_VERSIONS },
+    physicsVersions: pinned ? { ...RENEWAL_PIN.physicsVersions } : { ...PHYSICS_VERSIONS },
     observerVersion: protocol.observerVersion,
     readoutVersion: protocol.readoutVersion,
     resolvedParameterDomain: protocol.fixtures.map((f) => ({ fixtureId: f.id, candidateId: f.candidateId, config: f.config })),
@@ -158,8 +193,7 @@ export async function freezeCampaign(
     proposalBatches: [],
     archiveDefinition: null,
   };
-  if (manifest.observerVersion !== EXACT_LEDGER_OBSERVER) throw new Error(`freeze: observer ${manifest.observerVersion} is not available in this build (have ${EXACT_LEDGER_OBSERVER})`);
-  if (manifest.readoutVersion !== ENGINEERING_READOUT) throw new Error(`freeze: readout ${manifest.readoutVersion} is not available in this build (have ${ENGINEERING_READOUT})`);
+  if (pinned) manifest.pin = { name: opts.pin!.name, constructionRevision: opts.pin!.constructionRevision, sourceDigest: opts.pin!.sourceDigest };
   const campaignDigest = await campaignCoreDigest(manifest);
   const cases: { caseId: string; spec: CaseSpec }[] = [];
   for (const r of resolved) {
@@ -179,7 +213,7 @@ export async function freezeCampaign(
       initialArtifactDigest: r.digest,
       steps: r.f.steps,
       observationSchedule: { censusEvery: r.f.censusEvery, segmentAt: r.f.segmentAt, sites: r.f.sites },
-      requiredBackendContract: CPU_BACKEND,
+      requiredBackendContract: backend,
       resourceClass: "small-cpu",
     };
     cases.push({ caseId: await caseIdOf(spec), spec });
@@ -388,14 +422,22 @@ export interface AttemptVerdict {
  * independent re-derivation of the readout. A directory's existence is never
  * acceptance.
  */
+/**
+ * The pinned renewal validator (D5), injected by Deno callers: it decodes and
+ * re-derives a pinned result under the pin's own code. The core cannot spawn
+ * it, and without it a pinned result is never valid.
+ */
+export type PinnedValidator = (req: { spec: CaseSpec; caseId: string; result: ResultManifest; initial: Uint8Array; files: Record<ResultFile, Uint8Array> }) => Promise<{ errors: string[]; readout: EngineeringReadout | null }>;
+
 export async function validateAttempt(
   ctx: CaseContext,
   resultBytes: Uint8Array | null,
   files: Partial<Record<ResultFile, Uint8Array>>,
   initialBytes: Uint8Array | null,
+  pinnedValidator?: PinnedValidator,
 ): Promise<AttemptVerdict> {
   try {
-    return await validateAttemptInner(ctx, resultBytes, files, initialBytes);
+    return await validateAttemptInner(ctx, resultBytes, files, initialBytes, pinnedValidator);
   } catch (e) {
     // Malformed input must reject the attempt, never abort a campaign's validation.
     return { valid: false, errors: [`validation failed: ${(e as Error).message}`], readout: null };
@@ -461,7 +503,7 @@ export function observationStructureErrors(spec: CaseSpec, records: unknown[]): 
   return errs;
 }
 
-async function validateAttemptInner(ctx: CaseContext, resultBytes: Uint8Array | null, files: Partial<Record<ResultFile, Uint8Array>>, initialBytes: Uint8Array | null): Promise<AttemptVerdict> {
+async function validateAttemptInner(ctx: CaseContext, resultBytes: Uint8Array | null, files: Partial<Record<ResultFile, Uint8Array>>, initialBytes: Uint8Array | null, pinnedValidator?: PinnedValidator): Promise<AttemptVerdict> {
   const errors: string[] = [];
   const bad = (e: string): AttemptVerdict => ({ valid: false, errors: [...errors, e], readout: null });
   if (!resultBytes) return bad("missing result.json");
@@ -493,6 +535,16 @@ async function validateAttemptInner(ctx: CaseContext, resultBytes: Uint8Array | 
   if (c.endArtifactDigest !== r.execution.files["end.blck"]) errors.push("end artifact digest is not the end file's");
   if (c.canonicalObservationDigests.observations !== r.execution.files["observations.jsonl"]) errors.push("observation digest is not the observation file's");
   if (c.readoutDigest !== r.execution.files["readout.json"]) errors.push("readout digest is not the readout file's");
+  if (m.observerVersion === RENEWAL_PIN.observerVersion) {
+    // Identity, sizes and digests are checked above; everything that needs the pinned code is checked under it.
+    if (ctx.spec.requiredBackendContract !== RENEWAL_PIN.backend) errors.push("a pinned campaign's case must require the pinned backend");
+    if (!pinnedValidator) return bad("pinned renewal results need the pinned validator, which this caller does not provide");
+    if (errors.length) return { valid: false, errors, readout: null };
+    const v = await pinnedValidator({ spec: ctx.spec, caseId: ctx.caseId, result: r, initial: initialBytes, files: files as Record<ResultFile, Uint8Array> });
+    const errs = [...v.errors];
+    if (!errs.length && v.readout?.readoutVersion !== m.readoutVersion) errs.push(`readout version ${String(v.readout?.readoutVersion)} != manifest ${m.readoutVersion}`);
+    return { valid: errs.length === 0, errors: errs, readout: errs.length === 0 ? v.readout : null };
+  }
   let end: WorldState;
   let observer: unknown;
   try {
