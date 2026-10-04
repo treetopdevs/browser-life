@@ -173,7 +173,7 @@ button { font: inherit; cursor: pointer; }
   .shell { width: min(100% - 30px, 1220px); }
   .header-inner { gap: 10px; }
   .site-brand { margin-right: auto; }
-  .site-nav { overflow-x: auto; flex-wrap: nowrap; }
+  .site-nav { flex-wrap: wrap; }
   .site-nav a { flex: none; min-height: 40px; padding-inline: 9px; }
   .hero { padding-block: 58px 65px; }
   .hero h1 { font-size: clamp(2.8rem, 11vw, 4.25rem); }
@@ -199,3 +199,47 @@ button { font: inherit; cursor: pointer; }
 }
 @media (pointer: coarse) { .theme-toggle, .site-nav a { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .button { transition: none; } }
+
+/* A field notebook for stranger worlds. */
+:root { --accent: oklch(86% .15 120); --accent-ink: oklch(20% .035 130); --field-amber: oklch(80% .12 72); }
+:root[data-theme="light"] { --accent: oklch(40% .09 135); --accent-ink: oklch(98% .006 130); --field-amber: oklch(43% .085 60); }
+.hero h1, .page-intro h1, .feature h2, .section-heading h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -.045em;
+}
+.hero h1 em { font-style: italic; }
+.hero { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; padding-block: 86px; }
+.hero-art { margin: 0; padding: 14px; border-radius: 2px; transform: rotate(-2deg); }
+.world-preview { aspect-ratio: 686 / 336; object-fit: contain; border-radius: 0; }
+.art-caption { color: var(--muted); flex-wrap: wrap; }
+.specimen-note { margin: 24px 10px 12px; color: var(--field-amber); font: italic clamp(1.25rem, 2vw, 1.75rem)/1.35 Georgia, serif; }
+.section-heading { padding-top: 42px; }
+.section-heading h2 { margin: 0; font-size: clamp(2rem, 3.7vw, 3.25rem); line-height: 1.12; text-wrap: balance; }
+.section-heading > p:last-child { max-width: 65ch; color: var(--muted); }
+.sightings h3 { margin: 16px 0 10px; font-size: 1.45rem; letter-spacing: -.035em; line-height: 1.2; }
+.sightings .index { color: var(--field-amber); }
+.observation { color: var(--muted); font: .6875rem/1.4 var(--mono); }
+.band-link { padding-bottom: 30px; }
+.bets { padding-bottom: 90px; scroll-margin-top: 24px; }
+.bets .section-heading { padding-top: 0; margin-bottom: 40px; }
+.bet-list { margin: 0; padding: 0; list-style: none; }
+.bet-list li { display: grid; grid-template-columns: 90px minmax(0, 1fr) 100px; gap: 24px; padding: 30px 0; border-top: 1px solid var(--line); }
+.bet-list li:last-child { border-bottom: 1px solid var(--line); }
+.bet-number { color: var(--field-amber); font: italic 2rem/1.2 Georgia, serif; }
+.bet-list h3 { margin: 12px 0 8px; font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 500; letter-spacing: -.035em; }
+.bet-list p { margin: 0; max-width: 65ch; color: var(--muted); }
+.bet-motif { align-self: center; justify-self: center; color: var(--accent); font: 4rem/1 Georgia, serif; }
+.invitation { border-radius: 2px; }
+.invitation .button { flex-shrink: 0; }
+@media (max-width: 1000px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-art { max-width: 686px; transform: none; }
+}
+@media (max-width: 700px) {
+  .hero { padding-block: 52px; gap: 32px; }
+  .bet-list li { grid-template-columns: 35px minmax(0, 1fr); gap: 12px; }
+  .bet-number { font-size: 1.5rem; }
+  .bet-motif { display: none; }
+  .bets { padding-bottom: 60px; }
+}
