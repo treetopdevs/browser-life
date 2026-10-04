@@ -14,20 +14,31 @@
 //  6. the GPU side of the CPU-reference pin: the runner reaches the states and rows
 //     packages/runner/test/ponds.test.ts pins;
 //  7. opt-in pre-cycle checkpoints (RunSpec.preCycleCheckpoints; Amendment 3): a run that writes
-//     them is otherwise the run that does not, and each one is the state before its boundary's cycle.
+//     them is otherwise the run that does not, and each one is the state before its boundary's cycle;
+//  8. the transition hunt's arms nat and shuf (docs/scaffold-transition-hunt-v1.md, "The current";
+//     Amendment 4) on ponds-small, in two regimes (the hunt's own, where nothing exports at this scale
+//     and every dying pond is refilled with A only, and a small export zone with a lower death rate,
+//     where donors, survivors and shuf's permutation all occur): conservation, one ponds.tsv row per
+//     pond per boundary with the extended header, 2,000 + 2,000 steps equal to 4,000 byte for byte, and
+//     each boundary's transform equal to `applyCurrentCycle` on the pre-cycle checkpoint;
+//  9. branch runs (RunSpec.branch, "Branch contract"): from a treatment history's pre-cycle checkpoint,
+//     the first transform equals `applyCurrentCycle` on the decoded source (rows, post-transform hash),
+//     the manifest records the branch and no initHash, and the branch in two segments equals one.
 //
 // Test 2 reads runs/scaffold/rep/main/{scaf,rand}/i0 and runs/scaffold/r3rep/main/cont/i0 and steps
 // 330,000 steps at 512 x 512 (several minutes on the Mac). Tests 3 and 4 run tools/scaffold.ts itself
 // on ponds-small, into a temporary directory, for their standalone side.
 //
-// Run from the repo root: deno run -A tests/deno/ponds.ts [equivalence] [parity] [guard] [controls] [pin] [precycle]
+// Run from the repo root: deno run -A tests/deno/ponds.ts [equivalence] [parity] [guard] [controls] [pin] [precycle] [natshuf] [branch]
 // (no argument runs every section).
 import {
   CH,
   G,
   GENOME_CHANNELS,
+  HUNT_POND_COLUMNS,
   POND_COLUMNS,
   PRESETS,
+  applyCurrentCycle,
   applyPondCycle,
   canonicalConfig,
   canonicalGenome,
@@ -52,6 +63,7 @@ import {
   decodeArtifact,
   pondCensus,
   pondContext,
+  pondTsvRows,
   runExperiment,
   specConfig,
   stitchRun,
@@ -64,7 +76,7 @@ import { loadCheckpoint } from "../../tools/lib/pond-gpu.ts";
 
 const ROOT = decodeURIComponent(new URL("../../", import.meta.url).pathname);
 const RECORDED = `${ROOT}runs/scaffold`;
-const SECTIONS = ["equivalence", "parity", "guard", "controls", "pin", "precycle"];
+const SECTIONS = ["equivalence", "parity", "guard", "controls", "pin", "precycle", "natshuf", "branch"];
 const sections = new Set(Deno.args);
 for (const a of sections) if (!SECTIONS.includes(a)) throw new Error(`unknown section ${a}; the sections are ${SECTIONS.join(", ")}`);
 const section = (name: string) => sections.size === 0 || sections.has(name);
@@ -148,6 +160,13 @@ const firstDiff = (a: string[][], b: string[][]) => {
   return `${a.length} vs ${b.length} rows; first difference at row ${i}: ${a[i]?.join(" ")} | ${b[i]?.join(" ")}`;
 };
 
+/** ponds.tsv rows of the hunt's arms, by header: one record of column name to text per row. */
+function huntRows(text: string): Record<string, string>[] {
+  const [head, ...lines] = text.split("\n").filter(Boolean).map((l) => l.split("\t"));
+  return lines.map((f) => Object.fromEntries(head.map((c, i) => [c, f[i]])));
+}
+const bytesEqual = (a: Uint8Array | undefined, b: Uint8Array | undefined) => !!a && !!b && a.length === b.length && a.every((x, i) => x === b[i]);
+
 const host = { host: "test", adapter: "test" };
 const ponds = PRESETS.find((p) => p.id === "ponds")!;
 const pondsSmall = PRESETS.find((p) => p.id === "ponds-small")!;
@@ -162,9 +181,9 @@ interface Run {
   files: Record<string, string>;
   bytes: Map<string, Uint8Array>;
 }
-async function run(spec: RunSpec, opts: { start?: WorldState; observer?: ObserverState; verbose?: boolean } = {}): Promise<Run> {
+async function run(spec: RunSpec, opts: { start?: WorldState; observer?: ObserverState; branchFrom?: WorldState; verbose?: boolean } = {}): Promise<Run> {
   const sink = new Mem();
-  const r = await runExperiment(device, spec, sink, host, opts.verbose ? (m) => console.log(`  ${m}`) : () => {}, { start: opts.start, observer: opts.observer, keepFinal: true });
+  const r = await runExperiment(device, spec, sink, host, opts.verbose ? (m) => console.log(`  ${m}`) : () => {}, { start: opts.start, observer: opts.observer, branchFrom: opts.branchFrom, keepFinal: true });
   return { finalHash: r.summary.finalHash, final: r.final!, observer: r.observer, conservationOk: r.summary.conservationOk, files: Object.fromEntries(sink.files), bytes: sink.bytes };
 }
 /** The checkpoint artifact a run wrote at `step`. */
@@ -596,6 +615,149 @@ try {
         ["checkpoints/b003-pre.blck", "checkpoints/b004-pre.blck"].every((f) => sameBytes(cont.bytes.get(f), ref.bytes.get(f))) && sameBytes(cont.bytes.get("checkpoints/b004-pre.blck"), withPre.bytes.get("checkpoints/b004-pre.blck")),
       );
       check(`${arm}: ...and its manifest lists the same entries`, mCont.preCycleCheckpoints.length === 2 && JSON.stringify(mCont.preCycleCheckpoints) === JSON.stringify(mRef.preCycleCheckpoints), `${JSON.stringify(mCont.preCycleCheckpoints)} vs ${JSON.stringify(mRef.preCycleCheckpoints)}`);
+    }
+  }
+
+  // --- 8. the current's arms nat and shuf ---------------------------------------
+  if (section("natshuf")) {
+    for (const [arm, condition] of [["nat", "pond-nat"], ["shuf", "pond-shuf"]] as const) {
+      for (const [regime, overrides] of [["the hunt's regime", undefined], ["export zone 12, death 3/8", { pondExport: 12, pondDeath: 24_576 }]] as const) {
+        const label = `${arm}, ${regime}`;
+        const spec: RunSpec = { experiment: "ponds-hunt", presetId: "ponds-small", condition, seed: 1, steps: 4000, censusEvery: 100, deepEvery: 10, checkpointEvery: 1000, ...(overrides ? { overrides } : {}) };
+        const cfg = specConfig(spec);
+        const Mr = pondContext(initWorld(cfg, pondsSmall.init))!.Mr;
+        const whole = await run({ ...spec, preCycleCheckpoints: [2, 4] });
+        const manifest = JSON.parse(whole.files["manifest.json"]);
+        check(`${label}: the config has the arm and both keys`, cfg.pondArm === arm && cfg.pondDeath === (overrides?.pondDeath ?? 32_768) && cfg.pondExport === (overrides?.pondExport ?? 28), JSON.stringify([cfg.pondArm, cfg.pondDeath, cfg.pondExport]));
+        check(`${label}: conserves matter and energy exactly`, whole.conservationOk);
+        check(`${label}: no branch, and an initHash, in the manifest of an ordinary run`, !("branch" in manifest) && typeof manifest.initHash === "string");
+
+        // ponds.tsv: the extended header and one row per pond per boundary.
+        const text = whole.files[PONDS_FILE];
+        const rows = huntRows(text);
+        check(`${label}: ponds.tsv has the extended header`, text.startsWith(HUNT_POND_COLUMNS.join("\t") + "\n"), text.split("\n", 1)[0]);
+        check(
+          `${label}: ...and one row per pond (ascending) for each of the 4 boundaries`,
+          rows.length === 16 && rows.every((r, i) => r.cycle === String(Math.floor(i / 4) + 1) && r.step === String(1000 * (Math.floor(i / 4) + 1)) && r.recipient === String(i % 4)),
+          rows.map((r) => `${r.cycle}:${r.recipient}`).join(" "),
+        );
+        const byCycle = (b: number) => rows.filter((r) => r.cycle === String(b));
+        check(
+          `${label}: died, donor, landed and weight agree (a survivor has donor -2 and no packet; a recipient's donor weighs > 0)`,
+          rows.every((r) => (r.died === "0") === (r.donor === "-2") && (r.donor === "-2" || r.donor === "-1" || Number(r.landed) > 0) && (Number(r.donor) < 0 || Number(byCycle(Number(r.cycle))[Number(r.donor)].weight) > 0)),
+        );
+        check(
+          `${label}: ${arm === "nat" ? "weight is the export mass" : "the weights are a permutation of the export masses"} at every boundary`,
+          [1, 2, 3, 4].every((b) => {
+            const x = byCycle(b).map((r) => Number(r.exportMass)), w = byCycle(b).map((r) => Number(r.weight));
+            return arm === "nat" ? x.join() === w.join() : [...x].sort((p, q) => p - q).join() === [...w].sort((p, q) => p - q).join();
+          }),
+        );
+        if (overrides) check(`${label}: this regime has exporters, recipients with donors and survivors`, rows.some((r) => Number(r.exportMass) > 0) && rows.some((r) => Number(r.donor) >= 0) && rows.some((r) => r.donor === "-2"));
+        else check(`${label}: nothing exports at this scale, so every dying pond is refilled with A only (donor -1)`, rows.every((r) => r.exportMass === "0" && (r.died === "0" ? r.donor === "-2" : r.donor === "-1")));
+        const flagged = whole.files["series.jsonl"].trim().split("\n").map((l) => JSON.parse(l)).filter((x) => x.afterCycle).map((x) => x.step);
+        check(`${label}: the first census after each of boundaries 1-3 is flagged`, flagged.join() === "1100,2100,3100", flagged.join());
+
+        // 2,000 + 2,000 steps, the second from the first's checkpoint at 2,000, equal the 4,000.
+        const first = await run({ ...spec, steps: 2000, preCycleCheckpoints: [2] });
+        const at2000 = artifactAt(first, 2000);
+        const second = await run({ ...spec, steps: 2000, preCycleCheckpoints: [4] }, { start: at2000.state, observer: at2000.observer });
+        const header = HUNT_POND_COLUMNS.join("\t") + "\n";
+        check(`${label}: segmented, the final hash is the continuous run's`, second.finalHash === whole.finalHash, `${second.finalHash} vs ${whole.finalHash}`);
+        check(`${label}: ...ponds.tsv (the second segment's has the header and boundaries 3 and 4)`, second.files[PONDS_FILE].startsWith(header) && first.files[PONDS_FILE] + second.files[PONDS_FILE].slice(header.length) === text);
+        check(`${label}: ...series.jsonl`, first.files["series.jsonl"] + second.files["series.jsonl"] === whole.files["series.jsonl"]);
+        const want: [string, Run][] = [["t000001000", first], ["t000002000", first], ["t000003000", second], ["t000004000", second], ["b002-pre", first], ["b004-pre", second]];
+        for (const [name, r] of want) {
+          const file = `checkpoints/${name}.blck`;
+          check(`${label}: ...${file}`, bytesEqual(r.bytes.get(file), whole.bytes.get(file)));
+        }
+
+        // Each boundary's transform on its own pre-cycle checkpoint: the rows and the post-cycle state the run recorded.
+        for (const e of manifest.preCycleCheckpoints as { boundary: number; step: number; file: string; hash: string }[]) {
+          const { state, observer } = decodeArtifact(whole.bytes.get(e.file)!);
+          const cycle = applyCurrentCycle(state, e.boundary, arm, cfg.pondK!, cfg.pondDeath!, cfg.pondExport!, Mr, pondCensus);
+          const recorded = text.split("\n").filter((l) => l.split("\t", 1)[0] === String(e.boundary)).join("\n") + "\n";
+          check(`${label} b${e.boundary}: the pre-cycle checkpoint is the state before the cycle (hash, observer lastCycle ${e.boundary - 1})`, stateHash(state) === e.hash && observer.ponds?.lastCycle === e.boundary - 1);
+          check(`${label} b${e.boundary}: applyCurrentCycle (CPU) on it gives the run's ponds.tsv rows`, pondTsvRows(cycle.rows, HUNT_POND_COLUMNS) === recorded);
+          check(
+            `${label} b${e.boundary}: ...and the post-cycle state of the run's checkpoint at t=${e.step}`,
+            stateHash(cycle.state) === stateHash(artifactAt(whole, e.step).state),
+            `${stateHash(cycle.state)} vs ${stateHash(artifactAt(whole, e.step).state)}`,
+          );
+        }
+      }
+    }
+  }
+
+  // --- 9. branch runs ----------------------------------------------------------
+  if (section("branch")) {
+    // A treatment history to boundary 3, whose pre-cycle state at boundary 2 is the source (docs/scaffold-transition-hunt-v1.md,
+    // "Branch contract"), branched under both arms with a fresh seed and the small export zone (the hunt's own would export nothing here).
+    const base: RunSpec = { experiment: "ponds-branch", presetId: "ponds-small", condition: "treatment", seed: 1, steps: 3000, censusEvery: 100, deepEvery: 10, checkpointEvery: 1000, preCycleCheckpoints: [2] };
+    const history = await run(base);
+    const entry = JSON.parse(history.files["manifest.json"]).preCycleCheckpoints[0] as { boundary: number; step: number; file: string; hash: string };
+    const { state: source } = decodeArtifact(history.bytes.get(entry.file)!);
+    check("the source is the history's pre-cycle state at boundary 2 (hash and step)", stateHash(source) === entry.hash && source.step === 2000 && entry.boundary === 2);
+    const Mr = pondContext(source)!.Mr;
+    for (const [arm, condition] of [["nat", "pond-nat"], ["shuf", "pond-shuf"]] as const) {
+      const label = `branch ${arm}`;
+      const branch = { source: "mem:history", sourceHash: entry.hash, boundary: 2 };
+      const spec: RunSpec = { experiment: "ponds-branch", presetId: "ponds-small", condition, seed: 2, steps: 2000, censusEvery: 100, deepEvery: 10, checkpointEvery: 1000, overrides: { pondExport: 12, pondDeath: 24_576 }, branch };
+      const cfg = specConfig(spec);
+      const whole = await run({ ...spec, preCycleCheckpoints: [3] }, { branchFrom: source });
+      const manifest = JSON.parse(whole.files["manifest.json"]);
+      const text = whole.files[PONDS_FILE];
+      const rows = huntRows(text);
+
+      // The first transform equals the CPU transform of the decoded source, with the branch's seed.
+      const first = applyCurrentCycle({ ...source, cfg }, 2, arm, cfg.pondK!, cfg.pondDeath!, cfg.pondExport!, Mr, pondCensus);
+      check(`${label}: conserves matter and energy exactly`, whole.conservationOk);
+      check(
+        `${label}: the manifest records branch (with the post-transform hash) and no initHash`,
+        JSON.stringify(manifest.branch) === JSON.stringify({ ...branch, postHash: stateHash(first.state) }) && !("initHash" in manifest) && JSON.stringify(manifest.spec.branch) === JSON.stringify(branch) && manifest.startStep === 2000,
+        JSON.stringify(manifest.branch),
+      );
+      check(
+        `${label}: the first transform's rows (boundary 2) are applyCurrentCycle's on the decoded source`,
+        text.startsWith(HUNT_POND_COLUMNS.join("\t") + "\n" + pondTsvRows(first.rows, HUNT_POND_COLUMNS)),
+        text.split("\n").slice(0, 5).join(" | "),
+      );
+      check(`${label}: ...and its post-transform hash (branch.postHash) is applyCurrentCycle's`, manifest.branch.postHash === stateHash(first.state));
+      check(
+        `${label}: the first transform is not trivial (exporters, a recipient with a donor, a survivor)`,
+        rows.slice(0, 4).some((r) => Number(r.exportMass) > 0) && rows.slice(0, 4).some((r) => Number(r.donor) >= 0) && rows.slice(0, 4).some((r) => r.donor === "-2"),
+        rows.slice(0, 4).map((r) => `${r.donor}/${r.exportMass}`).join(" "),
+      );
+      check(`${label}: the branch is not the source's own history (another regime and seed)`, manifest.branch.postHash !== stateHash(artifactAt(history, 2000).state));
+      check(`${label}: ponds.tsv has one row per pond for boundaries 2, 3 and 4`, rows.length === 12 && rows.every((r, i) => r.cycle === String(Math.floor(i / 4) + 2) && r.recipient === String(i % 4)), rows.map((r) => `${r.cycle}:${r.recipient}`).join(" "));
+      const series = whole.files["series.jsonl"].trim().split("\n").map((l) => JSON.parse(l));
+      check(`${label}: the first census is at t=2100 and flagged after-cycle, with observers fresh`, series[0].step === 2100 && series[0].afterCycle === true && series.filter((x) => x.afterCycle).map((x) => x.step).join() === "2100,3100", series.filter((x) => x.afterCycle).map((x) => x.step).join());
+      check(`${label}: the run ends at t=4000 with ponds.lastCycle 4`, whole.final.step === 4000 && whole.observer.ponds?.lastCycle === 4 && whole.observer.censusIdx === 20);
+
+      // A pre-cycle checkpoint after the boundary carries the observer as of the previous cycle, and its cycle is the run's.
+      const pre = decodeArtifact(whole.bytes.get("checkpoints/b003-pre.blck")!);
+      const cycle3 = applyCurrentCycle(pre.state, 3, arm, cfg.pondK!, cfg.pondDeath!, cfg.pondExport!, Mr, pondCensus);
+      check(`${label} b3: the pre-cycle checkpoint is at t=3000 with ponds.lastCycle 2`, pre.state.step === 3000 && pre.observer.ponds?.lastCycle === 2);
+      check(
+        `${label} b3: applyCurrentCycle (CPU) on it gives the run's rows and its checkpoint at t=3000`,
+        pondTsvRows(cycle3.rows, HUNT_POND_COLUMNS) === text.split("\n").filter((l) => l.split("\t", 1)[0] === "3").join("\n") + "\n" && stateHash(cycle3.state) === stateHash(artifactAt(whole, 3000).state),
+      );
+
+      // One segment equals two (cut at t=3000, from the first's checkpoint): final hash, ponds.tsv, series, checkpoints.
+      const seg1 = await run({ ...spec, steps: 1000, preCycleCheckpoints: [3] }, { branchFrom: source });
+      const at3000 = artifactAt(seg1, 3000);
+      const seg2 = await run({ ...spec, steps: 1000 }, { start: at3000.state, observer: at3000.observer });
+      const header = HUNT_POND_COLUMNS.join("\t") + "\n";
+      const m1 = JSON.parse(seg1.files["manifest.json"]), m2 = JSON.parse(seg2.files["manifest.json"]);
+      check(`${label}: in two segments, the final hash is the continuous branch's`, seg2.finalHash === whole.finalHash, `${seg2.finalHash} vs ${whole.finalHash}`);
+      check(`${label}: ...ponds.tsv`, seg2.files[PONDS_FILE].startsWith(header) && seg1.files[PONDS_FILE] + seg2.files[PONDS_FILE].slice(header.length) === text);
+      check(`${label}: ...series.jsonl`, seg1.files["series.jsonl"] + seg2.files["series.jsonl"] === whole.files["series.jsonl"]);
+      for (const [file, r] of [["checkpoints/t000003000.blck", seg1], ["checkpoints/t000004000.blck", seg2], ["checkpoints/b003-pre.blck", seg1]] as const)
+        check(`${label}: ...${file}`, bytesEqual(r.bytes.get(file), whole.bytes.get(file)));
+      check(
+        `${label}: ...the first segment's manifest is the continuous one's branch record; the continuation records the spec's branch and neither branch nor initHash`,
+        JSON.stringify(m1.branch) === JSON.stringify(manifest.branch) && !("branch" in m2) && !("initHash" in m2) && JSON.stringify(m2.spec.branch) === JSON.stringify(branch),
+      );
     }
   }
 } finally {

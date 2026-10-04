@@ -18,7 +18,7 @@ export const RULE_VERSION = 1;
  */
 export const METRICS_VERSION = 2;
 
-export type LightMode = "uniform" | "gradient" | "patches";
+export type LightMode = "uniform" | "gradient" | "patches" | "sweep";
 
 export interface WorldConfig {
   ruleVersion: number;
@@ -82,7 +82,7 @@ export interface WorldConfig {
   lightMode: LightMode;
   /** 0..255 */
   lightBase: number;
-  /** Added across the tile (gradient) or inside patches. */
+  /** Added across the tile (gradient), inside patches, or at the sun's meridian (sweep). */
   lightAmp: number;
   /** Steps per seasonal cycle; 0 disables seasons. */
   seasonPeriod: number;
@@ -218,11 +218,51 @@ export interface WorldConfig {
   pondK?: number;
   /**
    * Donor rule of the pond cycle: "scaf" (the ponds with the largest trait
-   * donate), "rand" (random surviving ponds donate) or "cont" (no transform;
-   * each boundary only records one row per pond). Set exactly when
-   * `pondPeriod` is; see its doc.
+   * donate), "rand" (random surviving ponds donate), "cont" (no transform;
+   * each boundary only records one row per pond), or the transition hunt's
+   * "nat" and "shuf" (the current: ponds die at random and are reseeded from
+   * the export zone of a donor drawn in proportion to its export mass, or to a
+   * shuffled copy of it; docs/scaffold-transition-hunt-v1.md). Set exactly
+   * when `pondPeriod` is; see its doc.
    */
   pondArm?: PondArm;
+  /**
+   * The current's per-boundary death probability, `pondDeath` / 65,536 (integer
+   * 1..65,536; the hunt uses 32,768, so e = 1/2, and 65,536 kills every pond):
+   * a pond dies at a boundary if it is unoccupied or its death key is below
+   * `pondDeath * 65,536` (applyCurrentCycle, packages/schema/src/ponds.ts).
+   * Set exactly when `pondArm` is "nat" or "shuf", and then required; absent
+   * for "scaf", "rand", "cont" and without a pond cycle.
+   *
+   * Optional, absent from `defaultConfig()` and from every preset, for the
+   * reason `pondPeriod` is: the keys enter `stateHash`/`artifactDigest` through
+   * the config's own JSON, so every config without them hashes exactly as it
+   * did before the current existed.
+   */
+  pondDeath?: number;
+  /**
+   * The current's export threshold (integer 1..32; the hunt uses 28): the
+   * export zone is the cells of a pond whose torus Chebyshev distance from the
+   * landing centre (32, 32) is at least `pondExport` (`exportDistance`; 1,071
+   * cells at 28). Set exactly when `pondArm` is "nat" or "shuf"; see
+   * `pondDeath`.
+   */
+  pondExport?: number;
+  /**
+   * The breeder (wild sandbox): what the pond cycle ranks ponds by, a named
+   * integer measure of the pre-cycle snapshot or a combination of several
+   * (`PondScore`, `POND_TERMS`, and `pondScores` in
+   * packages/schema/src/ponds.ts). Required when `pondArm` is "breed", whose
+   * donors are the ponds with the largest score (bound mass breaking ties).
+   * Allowed with "scaf" and "rand", which then record the same score in
+   * ponds.tsv while choosing donors as they always do (the breeder's
+   * controls), and with no other arm.
+   *
+   * Optional and absent from `defaultConfig()` and from every v1 preset, for
+   * the reason `pondPeriod` is: a config without it hashes, and its ponds.tsv
+   * reads, exactly as before the breeder existed.
+   */
+  pondScore?: PondScore;
 
   /**
    * Lossy takeover (exploratory sandbox, docs/sandbox-ownership.md). Absent =
@@ -286,6 +326,43 @@ export interface WorldConfig {
   injuryRadius?: number;
   /** Per-cell probability of being a wound centre at an injury step, as a numerator over 2^32 (1..2^32-1). */
   injuryProb?: number;
+
+  /**
+   * lightMode "sweep" (a rotating planet): the sun's meridian crosses each
+   * tile along x once every `dayPeriod` steps, and light falls off linearly
+   * with circular x-distance from it, from lightBase + lightAmp at the
+   * meridian to lightBase at the antipode. The spatial mean is about the
+   * gradient mode's, so the two differ mainly in that the light moves. Absent
+   * or 0: the sun stands still at x = 0 (the matched static control).
+   *
+   * Optional and absent by default for the same reason `migrationPeriod` is:
+   * a config without it hashes exactly as before this feature existed.
+   * `validateConfig` requires dayPeriod * tileW < 2^32 so the sun's position
+   * `(step % dayPeriod) * tileW / dayPeriod` fits in u32 on both backends.
+   */
+  dayPeriod?: number;
+
+  /**
+   * Sandbox: multiplies the sensed signal gradient (SGX, SGY) before the
+   * existing /4 and the clamp to +-127. At the default settings a neighbour
+   * difference below 8 reads as nothing to the int8 controller. Absent means 1,
+   * which is the original sensor exactly. Bounded by 127 so
+   * (Se - Sw) * signalGain stays below 2^31 with Se, Sw capped at 2^24 - 1.
+   * Optional and absent by default for the same reason `migrationPeriod` is.
+   */
+  signalGain?: number;
+
+  /**
+   * lightMode "sweep" only (sandbox): a wandering sun. The meridian is offset
+   * by wanderAmp * tri(step / wanderPeriod) cells, where tri rises 0 -> 1 over
+   * the first half of each period and falls back over the second, quantised
+   * to 1/256. On top of the dayPeriod rotation (or alone, with dayPeriod 0)
+   * the sun's velocity alternates each half-period, e.g. reverses. Absent or
+   * 0: no wander. Optional and absent by default like `migrationPeriod`.
+   */
+  wanderPeriod?: number;
+  /** Wander amplitude in cells (see `wanderPeriod`). */
+  wanderAmp?: number;
 }
 
 export type TakeoverKin = "lineage" | "growth" | "genome";
@@ -390,7 +467,7 @@ export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig
     eventCap: 1 << 16,
     neutral: false,
     motility: true,
-    // migrationPeriod/migrantCount and pondPeriod/pondK/pondArm deliberately absent here — see their docs on WorldConfig.
+    // migrationPeriod/migrantCount, pondPeriod/pondK/pondArm, pondDeath/pondExport and pondScore deliberately absent here — see their docs on WorldConfig.
     ...overrides,
   };
 }
@@ -401,7 +478,7 @@ export const cellCount = (c: WorldConfig) => worldW(c) * worldH(c);
 
 /** Numeric view of the config used for WGSL constants and validation. */
 export function lightModeId(m: LightMode): number {
-  return m === "uniform" ? 0 : m === "gradient" ? 1 : 2;
+  return m === "uniform" ? 0 : m === "gradient" ? 1 : m === "patches" ? 2 : 3;
 }
 
 /**
@@ -474,7 +551,40 @@ const MIGRANT_COUNT_RANGE: Range = [0, 4096];
 /** Bounds for pondPeriod/pondK, checked explicitly in `validateConfig` like migration's. A pond is a 64 x 64 tile, so k <= 64. */
 const POND_PERIOD_RANGE: Range = [1, MAX_STEP];
 const POND_K_RANGE: Range = [1, 64];
-const POND_ARMS: readonly PondArm[] = ["scaf", "rand", "cont"];
+/** Bounds for pondDeath (a probability in 1/65,536) and pondExport (a Chebyshev distance on the 64-torus is at most 32). */
+const POND_DEATH_RANGE: Range = [1, 65_536];
+const POND_EXPORT_RANGE: Range = [1, 32];
+const POND_ARMS: readonly PondArm[] = ["scaf", "rand", "cont", "nat", "shuf", "breed"];
+/**
+ * The measures a pond score is built from (the breeder, wild sandbox; `pondTermValues` in ponds.ts computes them, and
+ * they live here because ponds.ts imports this module). Each is a nonnegative integer measure of one pond on one
+ * pre-cycle snapshot:
+ * - "mass": bound mass, v1's trait (`pondTraits`);
+ * - "drive": moving mass, the bound mass of each living cell at the census support threshold times the size of the
+ *   motility term flow adds to its displacement (`pondDrives`);
+ * - "reach": bound mass in the pond's export zone at Chebyshev distance >= 28 from the landing centre
+ *   (`pondExportMasses`), i.e. how much of the packet's descent reached the pond's edge within one cycle;
+ * - "seed": the expected bound mass of a packet drawn from the pond, which decides whether the pond it founds lasts
+ *   (`pondSeeds`);
+ * - "body": the size, in 1/256 cell, of the body a unit of the pond's bound mass sits in (`pondBodies`).
+ */
+export const POND_TERMS = ["mass", "drive", "reach", "seed", "body"] as const;
+export type PondTerm = (typeof POND_TERMS)[number];
+/**
+ * What the breeder ranks ponds by (config key `pondScore`; `pondScores` in ponds.ts): one term, whose value is the
+ * score, or two or more distinct terms joined by "+" ("drive+seed+body"), a combined score under which a pond is as
+ * good as its worst term -- its score is the smallest, over the terms, of the number of ponds it beats on that term.
+ */
+export type PondScore = PondTerm | `${PondTerm}+${string}`;
+
+/** The terms of a `pondScore`, in its order. Throws unless it is one term or distinct terms joined by "+". */
+export function pondScoreTerms(score: unknown): PondTerm[] {
+  const terms = typeof score === "string" ? score.split("+") : [];
+  if (!terms.length || terms.some((t) => !(POND_TERMS as readonly string[]).includes(t)) || new Set(terms).size !== terms.length)
+    throw new Error(`pondScore must be one of ${POND_TERMS.join(", ")}, or distinct ones joined by "+", got ${JSON.stringify(score)}`);
+  return terms as PondTerm[];
+}
+const DAY_PERIOD_RANGE: Range = [0, 8_000_000];
 
 export function validateConfig(c: WorldConfig): string[] {
   const errs: string[] = [];
@@ -501,7 +611,7 @@ export function validateConfig(c: WorldConfig): string[] {
   }
   if (errs.length) return errs;
   if (c.ruleVersion !== RULE_VERSION) errs.push(`ruleVersion ${c.ruleVersion} != ${RULE_VERSION}`);
-  if (!["uniform", "gradient", "patches"].includes(c.lightMode)) errs.push("lightMode must be uniform, gradient or patches");
+  if (!["uniform", "gradient", "patches", "sweep"].includes(c.lightMode)) errs.push("lightMode must be uniform, gradient, patches or sweep");
   if (c.tileW % 8 !== 0 || c.tileH % 8 !== 0) errs.push("tile dimensions must be multiples of 8");
   if (c.kernelRadius * 2 + 1 > Math.min(c.tileW, c.tileH)) errs.push("kernel larger than tile");
   if (cellCount(c) > 1 << 24) errs.push("world larger than 2^24 cells");
@@ -514,16 +624,38 @@ export function validateConfig(c: WorldConfig): string[] {
     ["migrationPeriod", MIGRATION_PERIOD_RANGE],
     ["migrantCount", MIGRANT_COUNT_RANGE],
     ["ringNamespace", [0, MAX_RING_NAMESPACE] as Range],
+    ["dayPeriod", DAY_PERIOD_RANGE],
+    ["signalGain", [1, 127] as Range],
+    ["wanderPeriod", [0, 8_000_000] as Range],
+    ["wanderAmp", [0, 4096] as Range],
     ["pondPeriod", POND_PERIOD_RANGE],
     ["pondK", POND_K_RANGE],
+    ["pondDeath", POND_DEATH_RANGE],
+    ["pondExport", POND_EXPORT_RANGE],
   ] as const) {
     const v = c[key];
     if (v === undefined) continue;
     if (!Number.isInteger(v) || v < range[0] || v > range[1]) errs.push(`${key} must be an integer in ${range[0]}..${range[1]}`);
   }
-  if (c.pondArm !== undefined && !POND_ARMS.includes(c.pondArm)) errs.push("pondArm must be scaf, rand or cont");
+  if (c.pondArm !== undefined && !POND_ARMS.includes(c.pondArm)) errs.push("pondArm must be scaf, rand, cont, nat, shuf or breed");
   const pondKeys = [c.pondPeriod, c.pondK, c.pondArm].filter((v) => v !== undefined).length;
   if (pondKeys !== 0 && pondKeys !== 3) errs.push("pondPeriod, pondK and pondArm must be set together");
+  // The current's keys go with its arms, both required there and neither anywhere else.
+  const current = c.pondArm === "nat" || c.pondArm === "shuf";
+  for (const key of ["pondDeath", "pondExport"] as const) {
+    if (current && c[key] === undefined) errs.push(`${key} is required when pondArm is nat or shuf`);
+    if (!current && c[key] !== undefined) errs.push(`${key} may be set only when pondArm is nat or shuf`);
+  }
+  // The breeder's score goes with arm breed (required) and its controls scaf and rand (optional), and with nothing else.
+  if (c.pondScore !== undefined) {
+    try {
+      pondScoreTerms(c.pondScore);
+    } catch {
+      errs.push(`pondScore must be one of ${POND_TERMS.join(", ")}, or distinct ones joined by "+"`);
+    }
+  }
+  if (c.pondArm === "breed" && c.pondScore === undefined) errs.push("pondScore is required when pondArm is breed");
+  if (c.pondScore !== undefined && c.pondArm !== "breed" && c.pondArm !== "scaf" && c.pondArm !== "rand") errs.push("pondScore may be set only when pondArm is breed, scaf or rand");
   if (errs.length) return errs;
   const migrationPeriod = c.migrationPeriod ?? 0;
   const migrantCount = c.migrantCount ?? 0;
@@ -538,6 +670,7 @@ export function validateConfig(c: WorldConfig): string[] {
   // index packLineageLo packs in -- every cell index (and founder index) must
   // fit in that narrower range, or two different cells could pack to the same
   // LIN_LO (a real, not just cosmetic, collision).
+  if ((c.dayPeriod ?? 0) * c.tileW > 0xffffffff) errs.push("dayPeriod * tileW must be below 2^32");
   if (c.ringNamespace !== undefined && cellCount(c) > 1 << RING_CELL_BITS) errs.push(`a namespaced config (ringNamespace set) must have cellCount at most 2^${RING_CELL_BITS}`);
   // The pond cycle (see WorldConfig's pondPeriod): ponds are the protocol's
   // 64 x 64 tiles, D = max(1, floor(R / 4)) donors need R >= 4 ponds, and each

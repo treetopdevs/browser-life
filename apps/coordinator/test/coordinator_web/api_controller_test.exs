@@ -409,6 +409,33 @@ defmodule CoordinatorWeb.ApiControllerTest do
     assert p["spec"]["presetId"] == "ponds-small"
   end
 
+  test "/api/next offers a nat run only when the capabilities list carries \"ponds-v2\" as well",
+       %{conn: conn} do
+    # config.exs's `:conditions` does not list the hunt's conditions; add them for this test.
+    conditions = Application.get_env(:coordinator, :conditions)
+    Application.put_env(:coordinator, :conditions, conditions ++ ~w(pond-nat))
+    on_exit(fn -> Application.put_env(:coordinator, :conditions, conditions) end)
+
+    conn
+    |> post("/api/experiments", %{
+      @pond_spec
+      | "experiment" => "a-nat",
+        "conditions" => ["pond-nat"]
+    })
+    |> json_response(200)
+
+    {old, old_token} = join(conn)
+    {new, new_token} = join(build_conn())
+
+    for caps <- [["ponds-v1"], ["ponds-v2"], ["ponds-v1", 2]] do
+      assert %{"kind" => "idle"} = next_with(old, old_token, %{"capabilities" => caps})
+    end
+
+    p = next_with(new, new_token, %{"capabilities" => ["ponds-v1", "ponds-v2"]})
+    assert p["kind"] == "run" and p["spec"]["condition"] == "pond-nat"
+    assert String.starts_with?(p["segment"]["run"], "a-nat/ponds-small/pond-nat/")
+  end
+
   test "a verify completion's ponds.tsv digest is accepted and compared like the other optional files",
        %{conn: conn} do
     conn |> post("/api/experiments", @pond_spec) |> json_response(200)

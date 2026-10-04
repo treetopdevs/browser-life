@@ -44,6 +44,15 @@ const PINNED: Record<number, Record<string, string>> = {
     // Heritable kernel shape (WorldConfig.shapeReach, optional, cells sandbox).
     "shape-far": "2f9a2c0e000f2330",
     "shape-near": "01fbc54dc408e1e1",
+    // Sandbox "sweep" light mode (optional dayPeriod, absent elsewhere): a new
+    // case with its own pin; every pin above is untouched.
+    sweep: "e69b229777d809cf",
+    // Sandbox optional signalGain (absent elsewhere): its own new pin.
+    "signal-gain": "950301275043e2fa",
+    // Sandbox optional wanderPeriod/wanderAmp (absent elsewhere): its own new pin.
+    "sweep-wander": "dcfbb10ffe638f13",
+    // Wild sandbox: every optional lever at once (see the case in golden.ts).
+    "wild-stack": "ba3c41c46b14c035",
   },
 };
 

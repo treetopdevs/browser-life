@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { jumpTarget, prunableAuto } from "../src/checkpoints.ts";
+import type { Intervention } from "@bl/schema";
+import { jumpTarget, prunableAuto, replayPlan } from "../src/checkpoints.ts";
 
 const ck = (file: string, step: number, auto = false) => ({ file, step, hash: "h", interventions: 0, edges: 0, dropped: 0, ...(auto ? { auto } : {}) });
 
@@ -21,5 +22,34 @@ describe("lab checkpoint policies", () => {
     expect(jumpTarget(fork.checkpoints, onDisk, 50_000)?.step).toBe(20_000);
     expect(jumpTarget(fork.checkpoints, onDisk, 130_000)?.step).toBe(120_000);
     expect(jumpTarget(fork.checkpoints, onDisk, 19_999)).toBeUndefined();
+  });
+
+  describe("what a jump replays", () => {
+    const lesion = (step: number): Intervention => ({ step, kind: "lesion", x: 1, y: 1, r: 2 });
+    const pick = (step: number, donors: number[]): Intervention => ({ step, kind: "pick", cycle: step / 4, donors });
+    // Picks at the boundaries t=4 and t=8, a lesion after each, and the world now at t=10.
+    const log = [pick(4, [3, 1]), lesion(4), lesion(6), pick(8, [0]), lesion(8)];
+
+    it("is everything before the step that the checkpoint has not seen, and a pick at the step itself", () => {
+      expect(replayPlan(log, 0, 10, 10)).toEqual({ missed: log, dropped: 0, until: 11 });
+      // A checkpoint at t=4 saved after its pick and lesion has seen two entries.
+      expect(replayPlan(log, 2, 10, 10)).toEqual({ missed: log.slice(2), dropped: 0, until: 11 });
+      // To a boundary: its cycle is part of arriving there, so its pick is replayed and the lesion made after it is not.
+      expect(replayPlan(log, 0, 8, 10)).toEqual({ missed: log.slice(0, 4), dropped: 1, until: 9 });
+      expect(replayPlan(log, 0, 4, 10)).toEqual({ missed: [log[0]], dropped: 4, until: 5 });
+      // Between boundaries: the later entries stay with the saved present.
+      expect(replayPlan(log, 0, 6, 10)).toEqual({ missed: log.slice(0, 2), dropped: 3, until: 7 });
+      expect(replayPlan([], 0, 6, 10)).toEqual({ missed: [], dropped: 0, until: 7 });
+    });
+
+    it("never treats steps beyond the known history as replayed", () => {
+      // A jump to t=6 kept only the entries before it. A second jump, to t=10, made while that replay stood at t=2
+      // (so the history known runs to 6): the pick at t=8 is gone, and the boundary there must wait again.
+      const first = replayPlan(log, 0, 6, 10);
+      const second = replayPlan(first.missed, 0, 10, Math.max(2, first.until - 1));
+      expect(second).toEqual({ missed: log.slice(0, 2), dropped: 0, until: 7 });
+      // A jump forward from the present enters steps nobody has seen: nothing there is replayed.
+      expect(replayPlan(log, 5, 30, 10).until).toBe(11);
+    });
   });
 });

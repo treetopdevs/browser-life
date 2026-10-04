@@ -97,6 +97,33 @@ export function goldenCases(): GoldenCase[] {
       every: 40,
     },
     {
+      // Sandbox light mode (a rotating planet): the sun crosses the 40-cell tile
+      // every 37 steps, so 120 steps cover several days and the x wrap.
+      name: "sweep",
+      cfg: defaultConfig({ ...base, seed: 77, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 37 }),
+      init: (c) => generalistWorld(c, 4),
+      steps: 120,
+      every: 40,
+    },
+    {
+      // Sandbox signal-gradient gain on random controllers (which emit and
+      // move), with a long-lived signal so gradients are large enough to clamp.
+      name: "signal-gain",
+      cfg: defaultConfig({ ...base, seed: 78, signalGain: 127, kSDecay: 13, kEmit: 1024 }),
+      init: (c) => soupWorld(c, 6),
+      steps: 120,
+      every: 40,
+    },
+    {
+      // Sandbox wandering sun: no rotation, the meridian swings 30 cells out
+      // and back every 50 steps, so 120 steps cover both directions and wraps.
+      name: "sweep-wander",
+      cfg: defaultConfig({ ...base, seed: 79, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 0, wanderPeriod: 50, wanderAmp: 30 }),
+      init: (c) => generalistWorld(c, 4),
+      steps: 120,
+      every: 40,
+    },
+    {
       name: "lesion+stats",
       cfg: defaultConfig({ ...base, seed: 3, defaultMu: 60, defaultSigma: 20 }),
       init: (c) => generalistWorld(c, 5, 32, 64),
@@ -276,6 +303,22 @@ export function goldenCases(): GoldenCase[] {
       // rings, the third byte inert) and on unblocked affinity.
       name: "shape-near",
       cfg: defaultConfig({ ...base, seed: 67, mutRate: 60_000_000, shapeReach: 5 }),
+      init: (c) => m3World(c, 12, 32, 64, ringedFounders()),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // Wild sandbox: every optional lever in one config (a rotating and
+      // wandering sun with seasons, signal gain, recurring wounds and a
+      // far-ring heritable shape), which no single sandbox's cases combine.
+      name: "wild-stack",
+      cfg: defaultConfig({
+        tileW: 48, tileH: 48, kernelRadius: 5, seed: 83, mutRate: 60_000_000,
+        lightMode: "sweep", lightBase: 20, lightAmp: 170, dayPeriod: 37, wanderPeriod: 50, wanderAmp: 30, seasonPeriod: 37, seasonAmp: 60,
+        signalGain: 127, kSDecay: 13, kEmit: 1024,
+        injuryPeriod: 7, injuryRadius: 2, injuryProb: 28_633_115,
+        shapeReach: 8,
+      }),
       init: (c) => m3World(c, 12, 32, 64, ringedFounders()),
       steps: 120,
       every: 30,

@@ -71,6 +71,14 @@ defmodule Coordinator.Queue do
   blocks it. A pond preset also refuses a `metapopulation` at creation: its
   ponds each keep their own matter, which cross-run exchange would break.
 
+  The transition hunt's arms (`WorldConfig.pondArm` `nat` or `shuf`, set by the
+  conditions `pond-nat` and `pond-shuf`) need `"ponds-v2"` as well: an island
+  that advertises only `"ponds-v1"` cannot run them (its runner throws on the
+  arm). The gate is per segment, on its condition, so an experiment that mixes
+  them with other conditions still hands those to every `"ponds-v1"` island.
+  `"ponds-v2"` is asked for in addition to `"ponds-v1"`, never instead of it
+  (`ISLAND_CAPABILITIES` lists both); a `ponds-v1` rule is otherwise unchanged.
+
   Islands authenticate with a private token issued at join; every assignment
   carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
   heartbeats and completion. The end checkpoint of every accepted run attempt
@@ -962,14 +970,14 @@ defmodule Coordinator.Queue do
           not Segment.pending_or_assigned_verify?(seg) and
           Segment.accepted_island(seg) != island and
           metrics_version_compatible?(s, seg, island) and
-          not MapSet.member?(gated, seg.experiment)
+          not gated?(gated, capabilities, seg)
       end)
 
     runnable =
       Enum.find(segs, fn seg ->
         seg.status == "pending" and (seg.index == 0 or prev_done?(s, seg)) and
           metrics_version_compatible?(s, seg, island) and import_ready?(s, seg) and
-          not MapSet.member?(gated, seg.experiment)
+          not gated?(gated, capabilities, seg)
       end)
 
     lease = rand(12)
@@ -1109,6 +1117,11 @@ defmodule Coordinator.Queue do
   # ---- capability gating (see moduledoc) ----
 
   @pond_capability "ponds-v1"
+  # The hunt's arms nat and shuf (WorldConfig.pondArm), set by these conditions
+  # (packages/runner/src/conditions.ts); kept in sync with it by hand, like
+  # `:presets`/`:conditions` in config.exs.
+  @current_capability "ponds-v2"
+  @current_conditions ~w(pond-nat pond-shuf)
 
   # The experiments whose work an island with `capabilities` must not be
   # offered: every pond experiment, unless it advertises `@pond_capability`.
@@ -1124,6 +1137,14 @@ defmodule Coordinator.Queue do
           do: name
     end
   end
+
+  # Whether `seg` is withheld from an island with `capabilities`: its experiment
+  # is in `gated` (a pond experiment without `@pond_capability`), or its
+  # condition runs one of the hunt's arms and the island lacks `@current_capability`.
+  defp gated?(gated, capabilities, seg),
+    do:
+      MapSet.member?(gated, seg.experiment) or
+        (seg.condition in @current_conditions and @current_capability not in capabilities)
 
   # ---- metrics-version gating (see moduledoc) ----
 

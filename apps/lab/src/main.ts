@@ -1,6 +1,6 @@
-import { PRESETS, worldH, worldW, NN_I, NN_H, NN_O, NN_BYTES, type WorldConfig } from "@bl/schema";
+import { PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondTerm, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
-import type { CensusMsg, FromWorker, PondsMsg, ProbeMsg, StatsMsg, ToWorker } from "./protocol.ts";
+import type { CensusMsg, FromWorker, PondAwaitMsg, PondsMsg, ProbeMsg, StatsMsg, ToWorker } from "./protocol.ts";
 import { Series } from "./sparkline.ts";
 import { createLineagePanel } from "./lineage-panel.ts";
 import "./theme.ts";
@@ -16,9 +16,12 @@ const send = (m: ToWorker, t: Transferable[] = []) => worker.postMessage(m, t);
 const lineagePanel = createLineagePanel(send);
 
 let cfg: WorldConfig | null = null;
+/** The world's config when a load was requested: the worker keeps that world if the load fails. */
+let cfgBeforeLoad: WorldConfig | null = null;
 let rect: ViewRect = { x: 0, y: 0, w: 256, h: 256 };
 let mode: GpuViewMode = "composite";
-let tool: "inspect" | "lesion" | "pan" = "inspect";
+type Tool = "inspect" | "lesion" | "feed" | "drain" | "pan" | "pick";
+let tool: Tool = "inspect";
 let playing = false;
 let lastStep = 0;
 let worldReady = false;
@@ -79,6 +82,7 @@ showPresetDesc();
 $("btn-new").onclick = () => {
   setPlaying(false);
   setWorldControls(false);
+  cfgBeforeLoad = cfg;
   cfg = null;
   loadingWorld = true;
   setStatus("Loading world", "loading");
@@ -108,20 +112,36 @@ $("btn-step100").onclick = () => send({ type: "step", count: 100 });
 
 // ---------- tools ----------
 const tools = $("tools");
-for (const b of tools.querySelectorAll<HTMLButtonElement>("button"))
-  b.onclick = () => {
-    tool = b.dataset.tool as typeof tool;
-    for (const o of tools.querySelectorAll("button")) {
-      const selected = o === b;
-      o.classList.toggle("on", selected);
-      o.setAttribute("aria-pressed", String(selected));
-    }
-    wrap.dataset.tool = tool;
-    radius.disabled = tool !== "lesion";
-  };
+function setTool(t: Tool) {
+  tool = t;
+  for (const o of tools.querySelectorAll<HTMLButtonElement>("button")) {
+    const selected = o.dataset.tool === t;
+    o.classList.toggle("on", selected);
+    o.setAttribute("aria-pressed", String(selected));
+  }
+  wrap.dataset.tool = tool;
+  syncBrush();
+}
+for (const b of tools.querySelectorAll<HTMLButtonElement>("button")) b.onclick = () => setTool(b.dataset.tool as Tool);
 wrap.dataset.tool = tool;
 const radius = $<HTMLInputElement>("radius");
 radius.oninput = () => ($("radius-val").textContent = radius.value);
+const amount = $<HTMLInputElement>("amount");
+amount.oninput = () => ($("amount-val").textContent = amount.value);
+const brush = () => tool === "lesion" || tool === "feed" || tool === "drain";
+const feeding = () => tool === "feed" || tool === "drain";
+/** The radius serves every brush; the amount only Feed and Drain, with their notice. */
+function syncBrush() {
+  radius.disabled = !brush();
+  amount.disabled = !feeding();
+  $("feed-hint").hidden = !feeding();
+}
+syncBrush();
+/** One application of the current brush at world position (x, y). */
+function applyBrush(x: number, y: number) {
+  if (tool === "lesion") send({ type: "lesion", x, y, r: Number(radius.value) });
+  else if (feeding()) send({ type: "feed", x, y, r: Number(radius.value), amount: (tool === "feed" ? 1 : -1) * Number(amount.value) });
+}
 radius.disabled = true;
 tools.querySelector(".on")?.setAttribute("aria-pressed", "true");
 
@@ -152,6 +172,7 @@ function fit(reset = true) {
 }
 function pushView() {
   send({ type: "view", mode, rect: { ...rect } });
+  drawPondOverlay();
 }
 function toWorld(ev: { clientX: number; clientY: number }): [number, number] {
   const r = canvas.getBoundingClientRect();
@@ -213,7 +234,8 @@ canvas.addEventListener("keydown", (ev) => {
     ev.preventDefault();
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
     if (tool === "inspect") send({ type: "probe", x, y });
-    else if (tool === "lesion") send({ type: "lesion", x, y, r: Number(radius.value) });
+    else if (brush()) applyBrush(x, y);
+    else if (tool === "pick") togglePick(pondAt(x, y));
     else { rect.x = x - rect.w / 2; rect.y = y - rect.h / 2; pushView(); }
   } else if ((ev.key === "+" || ev.key === "-") && cfg) {
     ev.preventDefault();
@@ -230,9 +252,12 @@ canvas.onpointerdown = (ev) => {
   canvas.setPointerCapture(ev.pointerId);
   if (tool === "pan" || ev.button === 1 || ev.button === 2) {
     drag = { x: ev.clientX, y: ev.clientY, rx: rect.x, ry: rect.y };
-  } else if (tool === "lesion") {
+  } else if (brush()) {
     lesionDrag = true;
     lesionAt(ev);
+  } else if (tool === "pick") {
+    const [x, y] = toWorld(ev);
+    togglePick(pondAt(x, y));
   } else {
     const [x, y] = toWorld(ev);
     send({ type: "probe", x, y });
@@ -243,7 +268,7 @@ canvas.onpointermove = (ev) => {
   if (cfg) {
     const W = worldW(cfg), H = worldH(cfg);
     const pond = pondAt(x, y);
-    $("hover").textContent = `x ${(((Math.floor(x) % W) + W) % W)}  y ${(((Math.floor(y) % H) + H) % H)}  · zoom ${(worldW(cfg) / rect.w).toFixed(2)}×${pond === null ? "" : ` · pond ${pond}`}`;
+    $("hover").textContent = `x ${(((Math.floor(x) % W) + W) % W)}  y ${(((Math.floor(y) % H) + H) % H)}  · zoom ${(worldW(cfg) / rect.w).toFixed(2)}×${pond === null ? "" : ` · pond ${pond}${pondReadout(pond)}`}`;
   }
   if (drag) {
     const r = canvas.getBoundingClientRect();
@@ -265,7 +290,7 @@ function lesionAt(ev: PointerEvent) {
   if (now - lastLesion < 60) return;
   lastLesion = now;
   const [x, y] = toWorld(ev);
-  send({ type: "lesion", x, y, r: Number(radius.value) });
+  applyBrush(x, y);
 }
 
 // ---------- keyboard ----------
@@ -308,7 +333,7 @@ const spLin = new Series($<HTMLCanvasElement>("sp-lin"), chartColor("--waste"));
 window.addEventListener("browser-life-theme-change", () => { spInd.redraw(); spBio.redraw(); spLin.redraw(); });
 
 function resetEvidence() {
-  for (const id of ["k-matter", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen"])
+  for (const id of ["k-matter", "k-fed", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen"])
     $(id).textContent = "—";
   $("ledger-badge").textContent = "waiting";
   $("ledger-badge").className = "badge";
@@ -331,9 +356,11 @@ function onStats(s: StatsMsg) {
   $("k-resid").textContent = s.residual;
   $("k-light").textContent = fmt(s.lightIn);
   $("k-heat").textContent = fmt(s.heatOut);
+  // A fed world is exact against a baseline that moved: say so, in words, beside the amount.
+  $("k-fed").textContent = s.feeds === 0 ? "none" : `${Number(s.fed) > 0 ? "+" : ""}${Number(s.fed).toLocaleString()} in ${s.feeds} feed${s.feeds === 1 ? "" : "s"}`;
   const ok = s.residual === "0" && s.matterDelta === "0";
   const badge = $("ledger-badge");
-  badge.textContent = ok ? "exact" : "violation";
+  badge.textContent = ok ? (s.feeds === 0 ? "exact" : "exact, fed") : "violation";
   badge.className = `badge ${ok ? "ok" : "bad"}`;
   const pools: [string, number, string][] = [
     ["A nutrient", s.A, "var(--nutrient)"],
@@ -444,9 +471,178 @@ function resetPondStatus() {
 function onPonds(m: PondsMsg) {
   const line = $("pond-status");
   line.hidden = false;
-  line.textContent = `cycle ${m.cycle} · ${m.arm} · donors ${m.donors.length ? m.donors.join(", ") : "none"}`;
+  line.textContent = `cycle ${m.cycle} · ${m.hand ? "by hand" : m.arm} · donors ${m.donors.length ? m.donors.join(", ") : "none"}`;
   // The line can clip a long donor list (up to 16 on the 8 × 8 preset); the tooltip always holds it in full.
   line.title = `Pond cycle ${m.cycle} at t=${m.step.toLocaleString()} · donors ${m.donors.length ? m.donors.join(", ") : "none"}`;
+  // The cycle that was waiting has been applied.
+  if (awaiting && awaiting.step === m.step) endAwait();
+}
+
+// ---------- breeder: choosing the donors of a pond cycle by hand ----------
+/** What a pond is ranked by while picking: a term, or the world's own score ("score") when it has one. */
+type RankKey = PondTerm | "speed" | "score";
+const RANK_LABELS: Record<RankKey, string> = {
+  score: "This world's score",
+  speed: "Speed",
+  drive: "Moving mass",
+  seed: "Seed packet",
+  body: "Body size",
+  mass: "Bound mass",
+  reach: "Reach to the edge",
+};
+let awaiting: PondAwaitMsg | null = null;
+let picks: number[] = [];
+/** The ranking last chosen; until one is, the world's own score when it has one, else speed. */
+let rankKey: RankKey | null = null;
+let toolBeforePick: Tool = "inspect";
+const overlay = $<HTMLCanvasElement>("pond-overlay");
+const breederOn = $<HTMLInputElement>("breeder-on");
+const termSel = $<HTMLSelectElement>("breeder-term");
+
+/** The lab can let a person choose donors for the arms whose cycle chooses them. */
+const takesDonors = (c: WorldConfig | null) => !!c && c.pondPeriod !== undefined && (c.pondArm === "scaf" || c.pondArm === "rand" || c.pondArm === "breed");
+
+/** Each pond's value of `key` at the waiting boundary. Speed is the motility term per unit of bound mass, in cells per 1,000 steps. */
+function rankValues(a: PondAwaitMsg, key: RankKey): number[] {
+  if (key === "score") return a.score === null ? a.terms.mass : (() => { const t = pondScoreTerms(a.score).map((term) => a.terms[term]); return t.length === 1 ? t[0] : worstRanks(t); })();
+  if (key === "speed") return a.terms.drive.map((d, p) => (a.terms.mass[p] > 0 ? ((d / a.terms.mass[p]) * 1000) / 64 : 0));
+  return a.terms[key];
+}
+/** Occupied ponds from the best value of `key` down; equal values by bound mass, then by index. */
+function rankOrder(a: PondAwaitMsg, key: RankKey): number[] {
+  const v = rankValues(a, key), mass = a.terms.mass;
+  return mass.map((_, p) => p).filter((p) => mass[p] > 0).sort((x, y) => v[y] - v[x] || mass[y] - mass[x] || x - y);
+}
+const showValue = (key: RankKey, v: number) => (key === "body" ? (v / 256).toFixed(1) : key === "speed" ? v.toFixed(1) : fmt(v));
+/** The hover line's account of a pond while a cycle waits. */
+function pondReadout(pond: number): string {
+  const a = awaiting;
+  if (!a) return "";
+  if (a.terms.mass[pond] === 0) return " · empty";
+  return ` · speed ${showValue("speed", rankValues(a, "speed")[pond])} · seed ${fmt(a.terms.seed[pond])} · body ${showValue("body", a.terms.body[pond])} · mass ${fmt(a.terms.mass[pond])}`;
+}
+
+function resetBreeder() {
+  $("breeder").hidden = !takesDonors(cfg);
+  endAwait();
+}
+function onPondAwait(m: PondAwaitMsg) {
+  awaiting = m;
+  picks = m.suggested.slice();
+  const keys: RankKey[] = [...(m.score === null ? [] : ["score" as const]), "speed", "seed", "body", "mass", "drive", "reach"];
+  if (rankKey === null || !keys.includes(rankKey)) rankKey = keys[0];
+  termSel.replaceChildren(...keys.map((k) => new Option(k === "score" ? `${RANK_LABELS.score} (${m.score})` : RANK_LABELS[k], k, false, k === rankKey)));
+  $("breeder-pick").hidden = false;
+  overlay.hidden = false;
+  const pickTool = tools.querySelector<HTMLButtonElement>('button[data-tool="pick"]')!;
+  pickTool.hidden = false;
+  if (tool !== "pick") toolBeforePick = tool;
+  setTool("pick");
+  setStatus(`Cycle ${m.cycle}: choose the donors`, "ready");
+  syncWaitingControls();
+  syncPicks();
+}
+/** A waiting cycle holds a pre-cycle world, which cannot be saved, exported or verified: those wait for the pick. */
+function syncWaitingControls() {
+  for (const id of ["btn-save", "btn-export", "btn-verify"]) $<HTMLButtonElement>(id).disabled = !worldReady || awaiting !== null || (id === "btn-verify" && verifying);
+}
+function endAwait() {
+  const was = awaiting !== null;
+  awaiting = null;
+  picks = [];
+  $("breeder-pick").hidden = true;
+  overlay.hidden = true;
+  tools.querySelector<HTMLButtonElement>('button[data-tool="pick"]')!.hidden = true;
+  if (tool === "pick") setTool(toolBeforePick);
+  if (was && worldReady) setStatus(playing ? "Running" : "Paused", playing ? "running" : "ready");
+  if (was) syncWaitingControls();
+}
+function togglePick(pond: number | null) {
+  const a = awaiting;
+  if (!a || pond === null) return;
+  if (a.terms.mass[pond] === 0) return toast(`Pond ${pond} is empty: it has nothing to seed a pond with`);
+  const at = picks.indexOf(pond);
+  if (at >= 0) picks.splice(at, 1);
+  else picks.push(pond);
+  syncPicks();
+}
+/** The panel and the overlay after the picks, the ranking or the waiting cycle changed. */
+function syncPicks() {
+  const a = awaiting;
+  if (!a) return;
+  const occupied = a.terms.mass.filter((m) => m > 0).length;
+  $("breeder-call").textContent = `Cycle ${a.cycle} at t=${a.step.toLocaleString()} is waiting. ${occupied} of ${a.terms.mass.length} ponds are occupied.`;
+  const go = $<HTMLButtonElement>("breeder-go");
+  go.disabled = picks.length === 0;
+  go.textContent = picks.length === 0 ? "Pick at least one pond" : `Breed from ${picks.length} pond${picks.length === 1 ? "" : "s"}`;
+  $("breeder-list").replaceChildren(...picks.map((p) => { const li = document.createElement("li"); li.textContent = String(p); return li; }));
+  drawPondOverlay();
+}
+termSel.onchange = () => { rankKey = termSel.value as RankKey; syncPicks(); };
+$("breeder-top").onclick = () => {
+  if (!awaiting) return;
+  picks = rankOrder(awaiting, rankKey ?? "speed").slice(0, Math.max(1, Math.floor(awaiting.terms.mass.length / 4)));
+  syncPicks();
+};
+$("breeder-rule").onclick = () => { if (awaiting) { picks = awaiting.suggested.slice(); syncPicks(); } };
+$("breeder-clear").onclick = () => { picks = []; syncPicks(); };
+$("breeder-go").onclick = () => {
+  if (!awaiting || !picks.length) return;
+  send({ type: "pick", world: awaiting.world, step: awaiting.step, donors: picks.slice() });
+  // One message per cycle: the panel closes when the worker reports the cycle applied.
+  $<HTMLButtonElement>("breeder-go").disabled = true;
+};
+breederOn.onchange = () => send({ type: "breeder", on: breederOn.checked });
+
+/**
+ * The pond grid over the field while a cycle waits: each occupied pond's rank by the chosen measure, empty ponds
+ * dimmed, picked ponds outlined with their place in the order. Drawn for the world's own copy only.
+ */
+function drawPondOverlay() {
+  const a = awaiting;
+  if (!a || !cfg || overlay.hidden) return;
+  const box = wrap.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(box.width * dpr)), h = Math.max(1, Math.round(box.height * dpr));
+  if (overlay.width !== w || overlay.height !== h) { overlay.width = w; overlay.height = h; }
+  const g = overlay.getContext("2d")!;
+  g.clearRect(0, 0, w, h);
+  const sx = w / rect.w, sy = h / rect.h;
+  const rank = new Map(rankOrder(a, rankKey ?? "speed").map((p, j) => [p, j + 1]));
+  const side = cfg.tileW * sx;
+  const font = Math.max(9, Math.min(15, side / 5)) * (dpr > 1 ? 1.25 : 1);
+  g.font = `600 ${font}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+  g.textBaseline = "top";
+  for (let p = 0; p < a.terms.mass.length; p++) {
+    const tx = p % cfg.tilesX, ty = (p - tx) / cfg.tilesX;
+    const x = (tx * cfg.tileW - rect.x) * sx, y = (ty * cfg.tileH - rect.y) * sy, pw = cfg.tileW * sx, ph = cfg.tileH * sy;
+    if (x + pw < 0 || y + ph < 0 || x > w || y > h) continue;
+    const order = picks.indexOf(p);
+    if (a.terms.mass[p] === 0) {
+      g.fillStyle = "rgba(0, 0, 0, 0.55)";
+      g.fillRect(x, y, pw, ph);
+    }
+    g.lineWidth = order >= 0 ? 3 * dpr : 1;
+    g.strokeStyle = order >= 0 ? "rgb(255, 196, 61)" : "rgba(255, 255, 255, 0.28)";
+    const inset = order >= 0 ? 1.5 * dpr : 0.5;
+    g.strokeRect(x + inset, y + inset, pw - 2 * inset, ph - 2 * inset);
+    const r = rank.get(p);
+    if (r !== undefined && side >= 26) {
+      const label = `#${r}`;
+      g.fillStyle = "rgba(0, 0, 0, 0.6)";
+      g.fillRect(x + 3 * dpr, y + 3 * dpr, g.measureText(label).width + 6, font + 4);
+      g.fillStyle = order >= 0 ? "rgb(255, 196, 61)" : "rgba(255, 255, 255, 0.85)";
+      g.fillText(label, x + 3 * dpr + 3, y + 3 * dpr + 2);
+    }
+    if (order >= 0 && side >= 26) {
+      const label = String(order + 1);
+      const tw = g.measureText(label).width + 8;
+      g.fillStyle = "rgb(255, 196, 61)";
+      g.fillRect(x + pw - tw - 3 * dpr, y + 3 * dpr, tw, font + 4);
+      g.fillStyle = "rgb(30, 22, 0)";
+      g.fillText(label, x + pw - tw - 3 * dpr + 4, y + 3 * dpr + 2);
+    }
+  }
 }
 
 let toastTimer = 0;
@@ -482,6 +678,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       setPlaying(false);
       resetEvidence();
       resetPondStatus();
+      resetBreeder();
       fit(true);
       toast(`Loaded ${m.manifest.runId}`);
       lineagePanel.onLoaded();
@@ -497,6 +694,9 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       break;
     case "ponds":
       onPonds(m);
+      break;
+    case "pondAwait":
+      onPondAwait(m);
       break;
     case "lineage":
       lineagePanel.onLineage(m);
@@ -537,9 +737,14 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
     case "notice":
       toast(m.message);
       break;
+    case "refused":
+      // The world is fine; a lineage inspection or a jump that was refused must not be waited for any longer.
+      toast(m.message);
+      if (m.request === "lineage" || m.request === "jump") lineagePanel.onError();
+      break;
     case "verify":
       verifying = false;
-      $<HTMLButtonElement>("btn-verify").disabled = !worldReady;
+      syncWaitingControls();
       $("verification-status").textContent = m.ok ? "Identical" : "Diverged";
       $("verification-status").className = `badge ${m.ok ? "ok" : "bad"}`;
       $("verify-out").textContent = `${m.ok ? "Identical state" : "State divergence"}: ${m.detail}`;
@@ -548,14 +753,17 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       // The worker pauses itself on stepping and census failures; stay in sync.
       if (playing) setPlaying(false);
       if (loadingWorld) {
+        // The worker builds a replacement first and keeps the current world when that fails: so does this page,
+        // with whatever that world was waiting for (a pond cycle's donors) still on screen.
         loadingWorld = false;
-        setWorldControls(false);
-        cfg = null;
-        resetPondStatus();
+        cfg = cfgBeforeLoad;
+        setWorldControls(cfg !== null);
+        syncWaitingControls();
+        drawPondOverlay();
       }
       if (verifying) {
         verifying = false;
-        $<HTMLButtonElement>("btn-verify").disabled = !worldReady;
+        syncWaitingControls();
         $("verification-status").textContent = "Could not verify";
         $("verification-status").className = "badge bad";
         $("verify-out").textContent = m.message;

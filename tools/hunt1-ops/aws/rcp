@@ -1,0 +1,5 @@
+#!/bin/bash
+# rcp N FILE [DEST]: scp a file to instance N.
+# (tracked in tools/hunt1-ops/aws/, copied by tools/hunt1-queue.ts --ops: the ops state directory is runs/scaffold/ops-hunt1 under the workspace root three levels up)
+O=$(cd "$(dirname "$0")/../../.." && pwd)/runs/scaffold/ops-hunt1; n=$1
+exec scp -q -i $O/bl_key -o UserKnownHostsFile=$O/known_hosts -o StrictHostKeyChecking=accept-new -o BatchMode=yes "$2" ubuntu@"$(cat "$O/ip-$n")":${3:-}

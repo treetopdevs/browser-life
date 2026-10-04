@@ -2,7 +2,7 @@
 // Each is a pure transformation of the world config, so a (preset, condition,
 // seed) triple fully determines a run.
 
-import type { WorldConfig } from "@bl/schema";
+import { POND_SCORES, type WorldConfig } from "@bl/schema";
 
 /** Integer mean of f over 0..n-1, rounded half up (exact: sums are small integers). */
 function meanRounded(n: number, f: (i: number) => number): number {
@@ -106,6 +106,58 @@ export const CONDITIONS: Condition[] = [
       return { pondArm: "cont" };
     },
   },
+  {
+    id: "pond-nat",
+    label: "Natural current",
+    removes: "nothing (the transition hunt's regime: ponds die at random, and the dying are reseeded from the export zone of a donor drawn in proportion to its export)",
+    // The hunt's nat arm (docs/scaffold-transition-hunt-v1.md, "The current"): e = 1/2, export zone at Chebyshev distance 28.
+    // A fallback e = 1 uses RunSpec.overrides ({ pondDeath: 65536 }), which wins after this condition.
+    apply: (c) => {
+      if (c.pondPeriod === undefined) throw new Error("pond-nat needs a preset with the pond cycle");
+      return { pondArm: "nat", pondDeath: 32_768, pondExport: 28 };
+    },
+  },
+  {
+    id: "pond-shuf",
+    label: "Shuffled current",
+    removes: "the link between a pond's own export and its number of offspring (the export weights are dealt to the exporting ponds at random)",
+    // The hunt's shuf arm: pond-nat's cycle with the same multiset of weights assigned at random among the exporting ponds.
+    apply: (c) => {
+      if (c.pondPeriod === undefined) throw new Error("pond-shuf needs a preset with the pond cycle");
+      return { pondArm: "shuf", pondDeath: 32_768, pondExport: 28 };
+    },
+  },
+  // The breeder (wild sandbox; WorldConfig.pondScore): v1's cycle with the donors chosen by a named score, and
+  // its two controls, which record the same score while choosing donors by bound mass (scaf) or at random (rand).
+  ...POND_SCORES.flatMap((score): Condition[] => [
+    {
+      id: `pond-breed-${score}`,
+      label: `Breeder (${score})`,
+      removes: `nothing (the ponds with the largest ${score} score seed the next cycle)`,
+      apply: (c) => {
+        if (c.pondPeriod === undefined) throw new Error(`pond-breed-${score} needs a preset with the pond cycle`);
+        return { pondArm: "breed", pondScore: score };
+      },
+    },
+    {
+      id: `pond-mass-${score}`,
+      label: `Breeder control, mass (${score})`,
+      removes: `selection among ponds on ${score} (the most massive ponds donate; the score is only recorded)`,
+      apply: (c) => {
+        if (c.pondPeriod === undefined) throw new Error(`pond-mass-${score} needs a preset with the pond cycle`);
+        return { pondArm: "scaf", pondScore: score };
+      },
+    },
+    {
+      id: `pond-drift-${score}`,
+      label: `Breeder control, random (${score})`,
+      removes: `selection among ponds (donors drawn at random; the score is only recorded)`,
+      apply: (c) => {
+        if (c.pondPeriod === undefined) throw new Error(`pond-drift-${score} needs a preset with the pond cycle`);
+        return { pondArm: "rand", pondScore: score };
+      },
+    },
+  ]),
 ];
 
 export function conditionById(id: string): Condition {

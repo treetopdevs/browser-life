@@ -932,6 +932,122 @@ defmodule Coordinator.QueueTest do
     end
   end
 
+  # The transition hunt's arms (WorldConfig.pondArm nat and shuf; the conditions pond-nat and
+  # pond-shuf in packages/runner/src/conditions.ts) need "ponds-v2" on top of "ponds-v1": a run of
+  # either, segment or verify, goes only to an island that advertises both. config.exs's
+  # `:conditions` does not list them, so these tests add them for their own duration.
+  describe "ponds, the hunt's arms" do
+    @hunt_spec %{
+      "experiment" => "a-hunt",
+      "presetId" => "ponds-small",
+      "conditions" => ["pond-nat", "pond-shuf"],
+      "seeds" => [1],
+      "steps" => 1000,
+      "segmentSteps" => 1000,
+      "censusEvery" => 100,
+      "verifyFraction" => 1.0
+    }
+
+    setup do
+      conditions = Application.get_env(:coordinator, :conditions)
+      Application.put_env(:coordinator, :conditions, conditions ++ ~w(pond-nat pond-shuf))
+      on_exit(fn -> Application.put_env(:coordinator, :conditions, conditions) end)
+    end
+
+    test "a run of nat or shuf is not handed to a ponds-v1 island, and is to one with both capabilities" do
+      assert {:ok, 2} = Queue.create_experiment(@hunt_spec)
+      {:ok, %{id: v1}} = Queue.join(%{"adapter" => "v1"})
+      {:ok, %{id: v2}} = Queue.join(%{"adapter" => "v2"})
+
+      # Nothing, only ponds-v1, only ponds-v2 (it extends ponds-v1, never replaces it) or an
+      # unrelated capability: the segments are skipped, not waited for.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(v1)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(v1, [])
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(v1, ["ponds-v1"])
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(v1, ["ponds-v1", "other"])
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(v1, ["ponds-v2"])
+
+      {:ok, nat} = Queue.next_task(v2, ["ponds-v1", "ponds-v2"])
+      assert nat.kind == "run" and nat.segment.run == "a-hunt/ponds-small/pond-nat/seed-1"
+      assert nat.spec.condition == "pond-nat"
+
+      {:ok, shuf} = Queue.next_task(v2, ["other", "ponds-v2", "ponds-v1"])
+      assert shuf.kind == "run" and shuf.spec.condition == "pond-shuf"
+
+      refute Map.has_key?(Queue.island_info(v2), :capabilities)
+    end
+
+    test "the gate is per condition: v1 conditions of the same experiment still go to a ponds-v1 island" do
+      assert {:ok, 4} =
+               Queue.create_experiment(%{
+                 @hunt_spec
+                 | "conditions" => ["treatment", "pond-cont", "pond-nat", "pond-rand"]
+               })
+
+      {:ok, %{id: v1}} = Queue.join(%{"adapter" => "v1"})
+      {:ok, %{id: v2}} = Queue.join(%{"adapter" => "v2"})
+
+      # Runs go in run-id order; the nat run sits between pond-cont and pond-rand and is skipped.
+      taken =
+        for _ <- 1..3 do
+          {:ok, t} = Queue.next_task(v1, ["ponds-v1"])
+          assert t.kind == "run"
+          t.spec.condition
+        end
+
+      assert taken == ["pond-cont", "pond-rand", "treatment"]
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(v1, ["ponds-v1"])
+
+      {:ok, nat} = Queue.next_task(v2, ["ponds-v1", "ponds-v2"])
+      assert nat.kind == "run" and nat.spec.condition == "pond-nat"
+    end
+
+    test "scaf, rand and cont runs go to a ponds-v1 island as before, with or without ponds-v2" do
+      assert {:ok, 3} =
+               Queue.create_experiment(%{
+                 @hunt_spec
+                 | "experiment" => "a-v1",
+                   "conditions" => ["treatment", "pond-rand", "pond-cont"]
+               })
+
+      {:ok, %{id: v1}} = Queue.join(%{"adapter" => "v1"})
+      {:ok, %{id: v2}} = Queue.join(%{"adapter" => "v2"})
+      {:ok, %{id: odd}} = Queue.join(%{"adapter" => "odd"})
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(odd, ["ponds-v2"])
+      {:ok, a} = Queue.next_task(v1, ["ponds-v1"])
+      {:ok, b} = Queue.next_task(v2, ["ponds-v1", "ponds-v2"])
+      {:ok, c} = Queue.next_task(v1, ["ponds-v1"])
+
+      assert Enum.sort([a.spec.condition, b.spec.condition, c.spec.condition]) == [
+               "pond-cont",
+               "pond-rand",
+               "treatment"
+             ]
+    end
+
+    test "a nat run's verify goes only to an island with ponds-v2 as well", %{dir: dir} do
+      {:ok, 1} = Queue.create_experiment(%{@hunt_spec | "conditions" => ["pond-nat"]})
+
+      {:ok, %{id: producer}} = Queue.join(%{"adapter" => "producer"})
+      {:ok, %{id: v1}} = Queue.join(%{"adapter" => "v1"})
+      {:ok, %{id: v2}} = Queue.join(%{"adapter" => "v2"})
+
+      {:ok, t} = Queue.next_task(producer, ["ponds-v1", "ponds-v2"])
+      upload(dir, t, producer, "p0")
+      {:ok, "done"} = done(t, producer, "p0")
+
+      # The final segment always needs a verify by a different island: ponds-v1 alone idles ...
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(v1, ["ponds-v1"])
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(v1, ["ponds-v2"])
+
+      # ... and an island with both gets it.
+      {:ok, v} = Queue.next_task(v2, ["ponds-v1", "ponds-v2"])
+      assert v.kind == "verify" and v.segment.id == t.segment.id
+      assert {:ok, "verified"} = Queue.complete(v.segment.id, v2, v.lease, "verify", "p0", %{})
+    end
+  end
+
   test "large experiments stay responsive" do
     {:ok, 20_000} =
       Queue.create_experiment(%{

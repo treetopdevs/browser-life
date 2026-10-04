@@ -1,6 +1,6 @@
-# Transition hunt v1 (DRAFT, exploratory, not frozen)
+# Transition hunt v1 (exploratory, frozen 2026-10-02)
 
-*2026-10-01. A draft for the user's decision, written after the user chose to keep the scaffolding registration (`docs/scaffold-registration-v1.md`) at 24 histories per arm and to draft a hunt beside it. The two are separate decisions: this document changes nothing in the registration. Nothing here binds until the user approves it and it is frozen (see "Freeze and order of events"). Its settings were decided by the user on 2026-10-02 (see "Freeze and order of events"). No run, assay or data of this design exists. After the freeze, any change goes in a dated amendment at the end and the original text stays. The line stays exploratory under RULE_VERSION 1: it does not count toward M6 and does not answer the reset line's entity question.*
+*Drafted 2026-10-01, after the user chose to keep the scaffolding registration (`docs/scaffold-registration-v1.md`) at 24 histories per arm and to draft a hunt beside it. The two are separate decisions: this document changes nothing in the registration. Its settings were decided by the user on 2026-10-02, and the user approved it as a whole the same day (see "Freeze and order of events"); it was frozen that day. Its SHA-256 is in `experiments/scaffold/HUNT-v1`. No run, assay or data of this design existed at the freeze. Any change from here on goes in a dated amendment at the end, and the original text stays. The line stays exploratory under RULE_VERSION 1: it does not count toward M6 and does not answer the reset line's entity question.*
 
 ## Why a hunt
 
@@ -101,8 +101,10 @@ Tiles are isolated tori under RULE_VERSION 1, so no physical process moves matte
 | Pond | `died` | `donor` | Packet fields |
 |---|---|---|---|
 | Recipient with a packet | 1 | the donor | filled |
-| Dying with no export anywhere | 1 | −1 | 0 |
-| Survivor | 0 | −2 | 0 |
+| Dying with no export anywhere | 1 | −1 | none |
+| Survivor | 0 | −2 | none |
+
+"None" is v1's row without a packet: `cx` = `cy` = −1 and every other packet field 0. Every row, whatever its kind, carries the pond's pre-cycle measurements (`recipientTrait`, `recipientIndividuals`, `recipientLineages`), its own `heat` and `light` (0 for a survivor), and `donorTrait` (the donor's trait, or 0 without a donor).
 
 **Derived rates and their denominators.**
 - **Truncation rate:** truncated rows over recipient rows (died = 1 with a donor). v1's 1% flag applies to that rate.
@@ -165,7 +167,7 @@ W is the **family-uniform offspring export performance** of a source state S: fo
 - survivors also persist across boundaries, which a one-period assay omits.
 
 **Procedure,** for a source S at its pre-cycle step:
-- **Families:** every exporting pond of S, in ascending pond index, with m the number of families. If m = 0, W(S) = 0: a measured outcome, because the world releases no propagules.
+- **Families:** every exporting pond of S, in ascending pond index, with m the number of families. If m = 0, W(S) = 0: a measured outcome, because the world releases no propagules. No assay world is run then, and the export-weighted W, the edge share and every fragment count of S are 0.
 - **Fragments.** Four replicates, s = 0–3. Each replicate is one assay world of 64 fresh ponds:
   - per-pond matter M_assay = 151,552, mutation off, one period of 10,000 steps, no transform.
   - **Source family:** the fragment in assay pond f of replicate s, with global index g = 64·s + f, comes from family g mod m. With m = 64, each pond of S is a family with four fragments.
@@ -176,7 +178,7 @@ W is the **family-uniform offspring export performance** of a source state S: fo
   - its trait;
   - v1's success flag (trait ≥ 0.25 · 103,058 and ≥ 4 × retained landed B+P), descriptive.
 - **W(S):** the mean over families of each family's mean X_f, with equal weight per family whatever m is.
-- **Also reported:** the export-weighted version Σ_p X_p · (family mean of p) / Σ_p X_p, which follows the regime's donor weighting.
+- **Also reported:** the export-weighted version Σ_p X_p · (family mean of p) / Σ_p X_p, which follows the regime's donor weighting (0 when m = 0).
 - **Quenched control:** S's replicate-0 fragments with the controller weight words and E set to 0, relabelled (64 fragments). It runs on every `nat` source at time C.
 
 **Genome-only variant.** It addresses the genetic-attribution question in part.
@@ -205,18 +207,19 @@ Competence, by contrast, is near its ceiling in evolved worlds.
   - the mean fraction of occupied ponds over boundaries 2–30 is at least 0.5;
   - pooled recolonisation success over recipients of boundaries 1–29 is at least 0.3. With no recipient in that interval the success is not estimable, and the run is not viable;
   - matter and the ledger are exact at every census and transform.
-- **Selection strength.** A `nat` run has a non-negligible contrast if the mean coefficient of variation of X among exporting ponds, over boundaries 2–30, is at least 0.1. Boundaries with fewer than two exporters count as 0.
+- **Selection strength.** A `nat` run has a non-negligible contrast if the mean coefficient of variation of X among exporting ponds, over boundaries 2–30, is at least 0.1. The coefficient of variation is the population one (standard deviation with denominator m, over the mean), as v1's P1 used. Boundaries with fewer than two exporters count as 0.
 - **Recorded per boundary for all four runs** (descriptive):
   - the number of exporters;
   - that coefficient of variation;
   - the effective number of donors (Σw)² / Σw²;
-  - the Spearman correlation between X_p and realised offspring count, among exporting ponds. It should be positive in `nat` and near 0 in `shuf`.
+  - the Spearman correlation between X_p and realised offspring count, among exporting ponds, with midranks for ties. It should be positive in `nat` and near 0 in `shuf`.
 
   A diagnostic is reported as not estimable (null) when it is undefined: fewer than two exporters, constant values, or Σw = 0.
 - **`shuf` runs** need only exact conservation. A collapse or an ending in `shuf` is a biological outcome, the one the control exists to reveal.
 - **Decision:**
   - if either `nat` run is not viable, G1 reruns once with e = 1 (`pondDeath` 65,536) at the fallback seeds;
-  - if that fails too, or if either viable `nat` run lacks selection strength, the hunt stops and is reported.
+  - if that fails too, or if either viable `nat` run lacks selection strength, the hunt stops and is reported;
+  - if the fallback passes, the hunt continues at e = 1: Stage 1, D3 and the device check then use `pondDeath` 65,536, and every other rule is unchanged.
 
 **G2, a sensitivity check of the instrument.**
 - **What runs:** W on protocol v1's main-run states at boundary 100, pre-cycle: `scaf` i0–i5 and `rand` i0–i5 (`runs/scaffold/main`).
@@ -254,7 +257,7 @@ One-sided, exact, at α = 0.05 with Holm over the two contrasts. Here α is a di
   - **Genome performance alone.** A test is read as genome performance only if every history in both compared arms has a genome. Otherwise it is reported as the composite, with the availability counts, and with a descriptive comparison of measured W_G among histories that have a genome. That comparison is conditional on survival, so it is never tested.
   - **Even then, it is limited:** the comparison concerns dominant genomes on one fixed ancestral background, and does not establish that the genome causes the W difference.
 - **Heredity** (two tests, `nat-a` and `nat-s`).
-  - **Per history at time C:** the one-way ICC(1) of X_f, with families as groups.
+  - **Per history at time C:** the one-way ICC(1) of X_f, with families as groups, in its unequal-size form: (MSB − MSW) / (MSB + (n₀ − 1) MSW), with n₀ = (N − Σ n_g² / N) / (G − 1) over G families and N fragments, and 0 when every value is equal.
   - **Its p** is a Monte Carlo permutation p: 1,000 permutations of family labels by R1's Fisher–Yates scheme, with stream σ(h, 8) in place of R1's σ8, and p = (1 + #{permuted ICC ≥ observed}) / 1001.
   - **Not significant** for that history, without a test: fewer than two families, or a family with only one fragment, or a constant X_f across all fragments.
   - **The arm's test:** the count of histories with ICC > 0 and p < 0.05, among a fixed 24. Its p is the exact binomial upper tail under a per-history rate of 0.05.
@@ -443,7 +446,103 @@ Considered and left for later, each as a dated decision:
      2. Stage 0 runs on the Mac meanwhile.
      3. Stage 1 starts only after the registration's queue has completed, and branches from the sources the sources rule above designates (the registration's, or the hunt's own as the fallback).
 
-   **Still open:** approval of this document as a whole. The registration was frozen on 2026-10-02.
+   **Approved as a whole by the user (2026-10-02),** after the registration was frozen and while its queue ran.
 2. **Freeze,** after the registration's: a review of the final text, then a commit. The document's SHA-256 goes in `experiments/scaffold/HUNT-v1` and a dated note in `docs/plan.md`.
 3. **Stage 0:** code, its Astra review and commit; then G1, G2 and D3 on the Mac; then a dated amendment with their results.
 4. **Stage 1:** a dated draw note, approved by the user; the runs; the report; an independent re-derivation of every number; an Astra review; the dated result entry.
+
+## Amendment 1 — 2026-10-03: implementation clarifications, before any run
+
+Written while building the code listed under "Code to build (Stage 0)", before any gate run, history, assay or data of this hunt existed. It changes no hypothesis, test, threshold, seed formula, sample size or outcome row. It fixes how rules the text leaves open are implemented. Where it reads a rule more strictly than the text, the stricter reading counts against a hit.
+
+1. **Run directories.** `tools/run.ts --out runs/scaffold/hunt0 --experiment g1` for G1 (`g1-e1` for its fallback) and `--out runs/scaffold/hunt1 --experiment d3` for D3. Bundles live at `<out>/<experiment>/ponds/<condition>/seed-<n>/`. Stage 1's directories are fixed with its queue, before its draw. Export-assay sets live at `runs/scaffold/hunt1/assays/<set id>/`.
+2. **Conditions and overrides.** `pond-nat` and `pond-shuf` set `pondDeath` 32,768 and `pondExport` 28. G1's fallback and, if it is taken, D3 and Stage 1 add `--override pondDeath=65536`; D3 adds `mutRate=0`. Only those two keys can be overridden.
+3. **Boundaries read.** The runner also applies the transform at a history's last step, so an `-a` history's `ponds.tsv` holds boundaries 1–200 and an `-s` history's 100–200; boundary 200's pre-cycle measurements describe time C, while its transform (recipients, packets, truncation, offspring) comes after time C and enters no summary. An `-s` branch's `spec.steps` (10⁶) counts from its source's step. Stage 1 histories write pre-cycle checkpoints at boundary 34 (`-a`) or 134 (`-s`) and at 200; a history whose manifest or files lack them is unresolved. The reproducibility check decodes both selected histories' checkpoints and the Mac reruns' and compares the verified state hashes.
+4. **G1's decision, read literally and strictly.** At the base pair, if any viable `nat` run lacks selection strength, the hunt stops, even when the other `nat` run is not viable. Otherwise, if a base `nat` run is not viable, the fallback pair decides. It passes only if both fallback `nat` runs are viable with selection strength at least 0.1 and both fallback `shuf` runs conserve exactly; otherwise the hunt stops. Otherwise G1 passes at the base pair if both base `shuf` runs conserve exactly. A history "has ended" when every pond died at a boundary and none received a packet. The report is told e explicitly (`--pond-death`) for D3 and Stage 1.
+5. **"Unresolved"** (as the registration's Amendment 1): a history is unresolved if its run bundle or any of its assay sets is (W, genome-only, and for `nat` arms its quenched control). A `nat` history without its quenched control has its W values unresolved. In Heredity and Improvement any unresolved history counts as not significant or not improved. Ancestor worlds are not histories and do not count toward the per-arm limit of 6, but a missing or unresolved ancestor world 0 makes every genome-only set unresolved. An `-s` pair whose source fails item 7 has both of its histories unresolved, and they count toward their arms' limits.
+6. **Event-overflow reruns** (validity step 3) use `--experiment <experiment>-c100` at census 100, with the spec otherwise identical. Exactly one complete bundle per run is accepted across the two directories; if both are complete, the run is unresolved.
+7. **Sources of the `-s` arms.** The 24 sources come uniformly from the registration's `scaf` histories or uniformly from the hunt's own scaffold phase; with mixed origins every `-s` history is unresolved. Each pair's recorded `branch.sourceHash` must equal its source set's (`s1-src-i<NN>`) state hash, and the 24 hashes must be distinct; otherwise that pair is unresolved.
+8. **The quenched gate and G2's quench criterion** also read a quenched set rejected at screening when it is still the protocol's set (its seeds, regime and source are the ones its id names, and it was not made with `--allow-any-seed`) and its rows can be read: such a set can make Stage 1 Invalid or fail G2, never rescue either. Any other set never touches a gate.
+9. **Provenance in the report.** The report re-checks each set's source against the run it names: v1's states for G2, ancestor world 0's boundary-1 state for the genome-only sets and their control, and the history's time-C state for the genome donor. A "no genome" record stands only if the report, reloading that state, also finds no dominant genome. A set made with `--allow-any-seed` is never used.
+10. **Device check.** The Mac's reference bundle and one bundle per instance, with equal `finalHash`.
+11. **Completeness.** Nothing is analysed unless every command of the committed queue manifest has a terminal state. Otherwise the readout is "incomplete": like the budget stop it withholds every test, but it is a status, not an outcome row. Only the technical checks (the device check and, when given, the reproducibility check) are still read then, and a failure of either keeps the Invalid row's precedence; a budget stop is otherwise Uninformative. No assay result, the quenched controls included, is read under a budget stop or an incomplete queue.
+12. **Descriptives the text leaves open:** mean export share = mean over occupied ponds of X / trait; distinct lineages = mean `recipientLineages` over occupied ponds; offspring-number distribution = histogram among exporting ponds; the truncation rate's 1% flag is reported, with no consequence for the tests.
+13. **Distribution.** The coordinator hands `pond-nat`/`pond-shuf` runs only to islands advertising `ponds-v2`, and stitching refuses branch segments; the hunt's runs are not distributed.
+
+## Amendment 2 — 2026-10-03: Stage 0 results
+
+Stage 0 ran on the Mac on 2026-10-03 from commit `01cc159b` (`runs/scaffold/hunt0/stage0.sh`), with every decision taken by `scaffold-report.ts hunt0`. The readout is `experiments/scaffold/readouts/hunt0.json`. **Outcome: Stage 0 passed at e = 1/2.** The fallback was not needed, so Stage 1, its device check and every later reference use `pondDeath` 32,768 as written.
+
+**G1, viability and selection strength (base pair, boundaries 1–30; criteria in "Stage 0").**
+
+| Run | Seed | Mean occupancy (b 2–30) | Recolonisation (recipients of b 1–29) | Selection strength (mean CV of X) | Ended | Conservation |
+|---|---|---|---|---|---|---|
+| `nat` s0 | 4,900,001 | 0.961 | 829 / 979 = 0.847 | 0.349 | no | exact |
+| `nat` s1 | 4,900,002 | 0.890 | 738 / 1,009 = 0.731 | 0.433 | no | exact |
+| `shuf` s0 | 4,900,011 | 0.866 | 707 / 1,032 = 0.685 | 0.505 | no | exact |
+| `shuf` s1 | 4,900,012 | 0.872 | 691 / 1,039 = 0.665 | 0.470 | no | exact |
+
+- Both `nat` runs are viable and have selection strength above 0.1, and both `shuf` runs conserve exactly, so G1 passes at the base pair.
+- **Descriptive, means over boundaries 1–30:**
+
+  | | `nat` s0 | `nat` s1 | `shuf` s0 | `shuf` s1 |
+  |---|---|---|---|---|
+  | Spearman (export vs offspring count) | +0.26 | +0.37 | −0.01 | −0.00 |
+  | Effective number of donors | 52.3 | 46.0 | 42.1 | 42.2 |
+  | Exporting ponds | 58.9 | 54.6 | 52.7 | 51.3 |
+
+  No recipient row was truncated.
+
+**G2, the instrument (W on protocol v1's main-run states at boundary 100).**
+
+| i | W(`scaf` i) | W(`rand` i) | `scaf` > `rand` | Quenched `scaf` i: X_f > 0 |
+|---|---|---|---|---|
+| 0 | 31,010 | 22,251 | yes | 0 of 64 |
+| 1 | 32,845 | 1,253 | yes | 0 of 64 |
+| 2 | 30,857 | 4,347 | yes | 0 of 64 |
+| 3 | 35,858 | 893 | yes | 0 of 64 |
+| 4 | 31,718 | 21,430 | yes | 0 of 64 |
+| 5 | 31,432 | 15,050 | yes | 0 of 64 |
+
+6 of 6 (5 needed), and every quenched control is dead, so G2 passes. As the hunt states, this shows only that W registers a large difference in evolved material.
+
+**D3, non-genetic effects (no gate).** Four pairs from the ancestor clone with mutation off, boundaries 1–30, W at the boundary-30 pre-cycle state.
+- The differences W(`nat` j) − W(`shuf` j) are +33, −368, +825 and −93 (2 of 4 positive).
+- The spread of W among the four `nat` worlds is a mean of 6,835, a population SD (denominator n) of 269 (sample SD 311) and a range of 656.
+- Every D3 run conserves exactly and none ended. The `nat` runs' selection strength is 0.58–0.60.
+- Read as the hunt says D3 is to be read: in 30 ancestral cycles without genetic variation, `nat` shows no consistent W advantage over `shuf`. Two of four differences are positive, and their mean is +99. The largest, +825 in pair 2, exceeds the `nat` range because `shuf` world 2 has the lowest W of all eight. Four pairs cannot exclude non-genetic effects, and this says nothing about 200 cycles or scaffold-derived material.
+- **A caveat for Stage 1's descriptives.** With mutation off, `nat` still beats `shuf` within the runs in all four pairs:
+  - occupancy: 0.95–0.96 against 0.85–0.90;
+  - recolonisation: 0.89–0.92 against 0.72–0.79;
+  - retained packet mass per recipient: means 5,202–5,258 against 4,470–4,721.
+
+  These are non-genetic effects of the donor weighting itself. G1, with mutation, also shows higher occupancy and recolonisation in both `nat` runs, but its packet-mass contrast is not consistent: in seed 1, `nat` recipients' mean retained mass is 4,038 against `shuf`'s 4,646. So differences of this kind in Stage 1's `ponds.tsv` cannot be read as evolved; only W, measured in the common garden, carries the contrasts.
+
+**Throughput.** The Mac ran four lanes at 117–155 steps/s each at 512², sharing its GPU with another session's job, so 300,000 steps took about 32–43 minutes per lane. Stage 1 runs on AWS as decided.
+
+**Re-derivation.** Every number above was re-derived independently from the raw files with separate code. It replayed every death, `shuf` permutation and donor draw from the seeds, recomputed the sources' export masses from the decoded checkpoints, and recomputed W from the fragment rows. All matched.
+
+**Next:** Stage 1 needs the registration's queue to complete (it did, on 2026-10-03) and its own dated draw note approved by the user. Its sources follow the sources rule: the registration's 24 `scaf` histories if all have a verified boundary-100 pre-cycle checkpoint, otherwise the hunt's own.
+
+## Amendment 3 — 2026-10-03: Stage 1's queue, fixed before its draw
+
+Written after Stage 0 passed and before any Stage 1 run. It fixes what the text and Amendment 1 leave to "the queue", and changes no hypothesis, test, threshold, seed formula, sample size or outcome row. The queue manifest is `experiments/scaffold/hunt1-queue.json`, generated by `tools/hunt1-queue.ts --device-ref fa001d7a011fdfee` and committed before any instance starts.
+
+1. **Sources.** All 24 of the registration's `scaf` histories have a boundary-100 pre-cycle checkpoint whose decoded state hash equals their manifest entry (checked 2026-10-03, after the registration's queue completed; reading only manifests and those checkpoint files). By the sources rule, the `-s` arms branch from them: pair i from `runs/scaffold/reg1/hist/ponds/treatment/seed-<4,850,001 + i>`. There is no scaffold phase of the hunt's own. Each instance receives only its eight sources' `manifest.json` and `checkpoints/b100-pre.blck`.
+2. **Instances.** Three. Instance 1 takes i = 0–7, instance 2 i = 8–15 and instance 3 i = 16–23, with all four arms of an index on the same instance. That is about 51 × 10⁶ steps each, and 153.4 × 10⁶ in all.
+3. **Run directories** (`--out runs/scaffold/hunt1`): histories `--experiment hist` (all four arms), ancestor worlds `anc`, the device check `device`, overflow reruns `<experiment>-c100`, and the Mac's reruns `repro`. Assay sets go in `runs/scaffold/hunt1/assays/<set id>/`.
+4. **Run settings:** census 1,000, deep census every 10, no periodic checkpoints, as the registration's.
+   - `-a` histories: 2 × 10⁶ steps with pre-cycle checkpoints at 34 and 200.
+   - `-s` histories: branches of 10⁶ steps with pre-cycle checkpoints at 134 and 200.
+   - Ancestor worlds: `pond-cont`, 10⁴ steps, with a pre-cycle checkpoint at 1.
+   - Every history and ancestor world uses e = 1/2 (no override), per Amendment 2.
+5. **Ancestor world 0 on every instance.** Instance 1 builds the four ancestor worlds, and its `anc` bundles are the canonical ones. Instances 2 and 3 each rebuild ancestor world 0 under `--experiment anc-copy` (the same seed and spec, so the same state) and use that copy only as the fragment source of their own genome-only sets. The report authenticates every genome-only set by its source's state hash against the canonical world 0, and the copies are pulled apart from `runs/scaffold/hunt1` and never given to the report as runs.
+6. **Order on each instance:**
+   1. The device check: the frozen hunt's pinned text, then `pond-nat` seed 4,905,001, 2 × 10⁴ steps, compared with the Mac's `finalHash` `fa001d7a011fdfee`. Every command depends on it.
+   2. The histories, interleaved by index (`nat-a`, `shuf-a`, `nat-s`, `shuf-s`).
+   3. The ancestor worlds.
+   4. The assay sets: the `-s` sources' sets, the ancestor sets (instance 1), each history's sets in index order, then the genome control (instance 1).
+
+   Each assay depends on the runs that produce its inputs, so a failed run leaves its sets unresolved. A failed command is retried once on the same instance, with two exceptions: the device check is never retried, and a command whose input failed is marked failed without running.
+7. **Reproducibility.** The draw `randomKey(4,905,101, 0, k, 0) mod 96` selects 85 (`shuf-s` i13, seed 4,901,314, rerun to boundary 134 as a branch from source 13) and 28 (`shuf-a` i04, seed 4,901,105, rerun to boundary 34). Both are rerun on the Mac with `--experiment repro`, 340,000 steps from their start. Their commands are listed in the manifest's `mac` section.
+8. **Budget.** The draw note in `docs/plan.md` gives an estimate of about $38 and a hard stop of $48. Each instance is launched to terminate itself 13 hours after launch: an absolute deadline written at first boot, before any bootstrap, and enforced across reboots. Bootstrap proves the deadline is armed, or terminates the instance. That bounds compute at about $39.9 even if the Mac stops supervising; results not yet pulled by then are lost. The supervisor charges every transfer conservatively. It keeps a reserve of the remaining runtime to the deadlines plus one transfer's maximum, and tears everything down as soon as the ledger plus that reserve reaches $46. Expected egress is about $2–3. If the stop comes first, nothing is analysed and Stage 1 is uninformative unless a further dated draw completes the same queue.

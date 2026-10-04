@@ -15,6 +15,12 @@
 //   deno run -A tools/scaffold-report.ts reg1 --assays <dir...> --runs <dir...> --device <dir...> --repro <dir...> --queue <queue.json> --status <status.json...>
 //     [--v1 <r3.json>] [--r3rep <r3rep.json>] [--budget-stopped]    (docs/scaffold-registration-v1.md: the scaffolding registration; production writes
 //     experiments/scaffold/readouts/reg1.json)
+//   deno run -A tools/scaffold-report.ts hunt0 [--g1 <bundle dir...>] [--g1-fallback <bundle dir...>] [--g2 <set dir...>] [--d3-runs <bundle dir...>] [--d3 <set dir...>]
+//     [--pond-death 32768|65536 (required with --d3-runs or --d3)] [--allow-any-seed]    (docs/scaffold-transition-hunt-v1.md: Stage 0, G1, G2 and D3; production writes
+//     experiments/scaffold/readouts/hunt0.json)
+//   deno run -A tools/scaffold-report.ts hunt1 --assays <dir...> --runs <dir...> --device <dir...> --repro <dir...> --queue <queue.json> --status <status.json...>
+//     --pond-death 32768|65536 [--budget-stopped] [--allow-any-seed]    (docs/scaffold-transition-hunt-v1.md: Stage 1; production writes
+//     experiments/scaffold/readouts/hunt1.json)
 //
 // A flag takes every argument up to the next flag. A directory that is not itself a run (meta.json) or an
 // assay (assay.json) is searched for them up to four levels down. Every stage reports the truncation rule
@@ -144,6 +150,40 @@
 // success within retained-mass bins, the pond trajectories, R4 and the side-by-side with --v1 (v1's r3 readout) and --r3rep (the
 // replication's readout) are descriptive. --allow-any-seed waives the regime, seed, hash and provenance checks of the sets (smoke runs),
 // not the bundles' or the reloading.
+//
+// The transition hunt (docs/scaffold-transition-hunt-v1.md; exploratory) has two stages over the run bundles tools/run.ts wrote (manifest.json, and
+// for the nat and shuf arms a ponds.tsv with the columns of HUNT_POND_COLUMNS: one row per pond per boundary, streamed, checked for order, count and the
+// died/donor sentinels) and the export-assay sets tools/scaffold-assays.ts wrote with `export --hunt1` (assay.json with labels.hunt1, assay.tsv with exportMass).
+// A flag takes every argument up to the next flag; every directory is searched for manifest.json or assay.json up to four levels down. Every other stage
+// skips hunt1 sets (counted under `skipped`), and the hunt stages read nothing else (listed under `skipped` with why). The statistics are tools/lib/hunt-stats.ts.
+// A bundle must be the expected one of its seed (the hunt's "Seeds") and have finished with the hunt's spec, overrides and configuration (`huntBundleProblems`); a
+// set is screened (labels, grid, integer columns, families at g mod m, success flags, summary against its rows, and in strict mode the regime, every seed,
+// protocolSha256Hunt1 against the pinned SHA-256 of the frozen document, the recorded source against its bundle: a G2 set's as protocol v1's main run of its history,
+// a genome-only set's and the control's against ancestor-j0's b001-pre hash and a genome-only set's donor against its history's b200-pre, a -s source's as one of the two
+// origins; a set made under --allow-any-seed is rejected); --allow-any-seed waives the regime, seed, hash and provenance checks of the sets (smoke runs), not the bundles'.
+// A genome-only set that records noGenome is believed only once its history's b200-pre is reloaded here and has no dominant genome. A quenched set rejected at
+// screening whose rows could be read still counts at the quenched gate and at G2's quench criterion (it can fail either, never rescue), but only if it is an authenticated
+// protocol member: strict, not a smoke test's, its seeds and regime, and its source hash equal to the manifest's of a bundle that was read. A quenched control, accepted or
+// rejected, that no bundle backs touches no gate, and a source set that is not such a member never establishes an origin for the -s sources. hunt1 also reads the 24 scaffold-phase runs (4,901,501 + i), needed only when the -s sources
+// are the hunt's own, and refuses a -s pair whose source set is missing or records another hash, a source hash two indices share, or sources of two origins.
+// A history bundle is resolved only if every pre-cycle checkpoint file it was queued to write (b034 or b134, and b200) exists and is not empty (existence only); the
+// reproducibility check decodes the two selected histories' b034 / b134 checkpoints and their Mac reruns' (the rerun is the one finished bundle among <experiment> and
+// <experiment>-c100, as everywhere), verifies each state hash against its manifest entry and then compares them (a missing or corrupt file fails it: Invalid). A history's boundary 200 is the transform after time C: its pre-cycle measurements are kept, its transform's
+// fields (recipients, truncation, offspring, donors, packet fields, heat, light) are in no pooled lifecycle summary or descriptive. Both stages print one JSON document with the keys `stage`, `protocolSha256Hunt1`, `protocolNow` (the
+// document as it is now; descriptive), `validated` (false under --allow-any-seed), `skipped` ({ dir, why }), `rejected` ({ dir, id, reasons }), and:
+//   hunt0: `outcome` ("Stopped at Stage 0", "Stage 0 passed" or "pending"), `row`, `reasons`, `pondDeath` (32,768, or 65,536 when G1's e = 1 fallback passed; null
+//     otherwise), `g1`, `g2`, `d3`. Any part may be missing: it stays pending, so the stage runs as results come in. `g1` ({ given, decision "pass" | "pass-fallback" |
+//     "stop" | "pending", pondDeath, reasons, fallbackUsed, base, fallback }): per set its four runs (nat s0, s1, shuf s0, s1: ended, mean occupancy over boundaries 2-30,
+//     pooled recolonisation over the recipients of 1-29 (null without a recipient), the mean CV of X among exporters over 2-30, viable, strength, truncation, and per
+//     boundary the exporters, CV, effective donors (Σw)^2 / Σw^2 and Spearman (null where undefined)). `g2` ({ decision "pass" | "fail" | "pending", pairs, wins,
+//     quenched, unresolved }) and `d3` ({ worlds, differences, natSpread, ... }; never decides). D3's bundles and --d3 sets run at the --pond-death given (required with them, no default); a D3 set needs its --d3-runs bundle (its source is that bundle's b030-pre).
+//   hunt1: `outcome` ("Invalid", "Uninformative", "incomplete" or "analysed"), `row` (the outcome table's), `pondDeath`, `reasons`, `budgetStopped`, `withheld` and
+//     `withheldReason`, `contrasts` ({ A, S }: "Hit", "No hit" or "Not assessed"; null when withheld), `definitions` (the one definition of unresolved), `queue`,
+//     `validity` (device, quenched gate, reproducibility, unresolved per arm), `primary` (contrasts A and S: test, p, Holm slot and adjusted p, status), `secondary` (the
+//     seven tests with their Holm family, and the genome composite's availability and reading, heredity per history, edge share and improvement), `availability`
+//     (every expected set and history, resolved or not) and `descriptive` (never a decision input). The order of the rule is the hunt's: the device, quenched and
+//     reproducibility checks (Invalid), more than 6 unresolved histories in an arm (Uninformative), then the tests; an incomplete queue or --budget-stopped analyses
+//     nothing (the outcome stays Invalid when the device check, if given, failed: Invalid comes first in the table); --queue and --status are required unless --budget-stopped or --allow-any-seed. --pond-death (required unless --allow-any-seed) is 32,768, or 65,536 after G1's fallback.
 import {
   DECISION_TABLE,
   NO_REPLAY_CHECK,
@@ -245,6 +285,34 @@ import {
   type Reg1ReportSetDir,
   type TraitSetDir,
 } from "./lib/scaffold-stats.ts";
+import {
+  HUNT1_PROTOCOL,
+  HUNT_DEATH,
+  HUNT_TIME_C,
+  huntDeviceCheck,
+  huntExpectedRuns,
+  huntExpectedSet,
+  huntFragmentRow,
+  huntPairingProblems,
+  huntPondsSummary,
+  huntPreCycleFile,
+  huntProtocolProblems,
+  huntQueueInstances,
+  huntReadout,
+  huntReproTargets,
+  huntReproducibility,
+  huntResolveRuns,
+  huntScreenSets,
+  huntStage0Readout,
+  type HuntCheckpointCheck,
+  type HuntDonorCheck,
+  type HuntExpectedRun,
+  type HuntPondsExpect,
+  type HuntRejected,
+  type HuntRun,
+  type HuntSetDir,
+  type HuntStage,
+} from "./lib/hunt-stats.ts";
 import { R3REP_PROTOCOLS, R3REP_SHA256, r3RepCheckpointOf, r3RepDominantRecord, r3RepProtocolProblems } from "./lib/pond-assay.ts";
 import { decodeCheckpoint, stateHash, type WorldState } from "@bl/schema";
 import { loadCheckpoint } from "./lib/pond-gpu.ts";
@@ -254,7 +322,7 @@ const STAGES = ["p1", "p2", "r1", "r2", "r3"] as const;
 
 function usage(msg?: string): never {
   if (msg) console.error(msg);
-  console.error("usage: scaffold-report.ts p1 --runs <dir...> | calibrate --p1 <json> --assays <dir...> | p2 --rank <dir...> --scaf <dir...> --rand <dir...> (--regime K PERIOD | --p1 <json>) | r1|r2|r3 --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r4 --assays <dir...> | --in <json...> | decide --in <json...> | tau --assays <dir...> [--regime K PERIOD] | r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <json>] | r1dprime --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r3rep --assays <dir...> [--runs <dir...>] [--v1 <r3.json>] | reg1 --assays <dir...> --runs <dir...> --device <dir...> --repro <dir...> --queue <queue.json> --status <status.json...> [--v1 <r3.json>] [--r3rep <r3rep.json>] [--budget-stopped]");
+  console.error("usage: scaffold-report.ts p1 --runs <dir...> | calibrate --p1 <json> --assays <dir...> | p2 --rank <dir...> --scaf <dir...> --rand <dir...> (--regime K PERIOD | --p1 <json>) | r1|r2|r3 --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r4 --assays <dir...> | --in <json...> | decide --in <json...> | tau --assays <dir...> [--regime K PERIOD] | r1prime --assays <dir...> --tau <tau.json> [--regime K PERIOD] [--replay <json>] | r1dprime --assays <dir...> [--regime K PERIOD] [--runs <dir...>] | r3rep --assays <dir...> [--runs <dir...>] [--v1 <r3.json>] | reg1 --assays <dir...> --runs <dir...> --device <dir...> --repro <dir...> --queue <queue.json> --status <status.json...> [--v1 <r3.json>] [--r3rep <r3rep.json>] [--budget-stopped] | hunt0 [--g1 <bundle dir...>] [--g1-fallback <bundle dir...>] [--g2 <set dir...>] [--d3-runs <bundle dir...>] [--d3 <set dir...>] [--pond-death 32768|65536 (required with --d3-runs or --d3)] [--allow-any-seed] | hunt1 --assays <dir...> --runs <dir...> --device <dir...> --repro <dir...> --queue <queue.json> --status <status.json...> --pond-death 32768|65536 [--budget-stopped] [--allow-any-seed]");
   Deno.exit(2);
 }
 
@@ -545,9 +613,9 @@ async function loadAssays(flags: Map<string, string[]>, assay: string, calibrati
   let skipped = 0;
   for (const d of await expandDirs(need(flags, "assays"), "assay.json")) {
     const json = await readJson(`${d}/assay.json`);
-    // Amendment 2's R1' sets and tau calibration belong to the tau and r1prime stages, R1'' sets to r1dprime, the R3 replication's to r3rep
-    // and the registration's to reg1.
-    if (json.labels?.r1prime === true || json.labels?.tauCalibration === true || json.labels?.r1dprime === true || json.labels?.r3rep === true || json.labels?.reg1 === true) {
+    // Amendment 2's R1' sets and tau calibration belong to the tau and r1prime stages, R1'' sets to r1dprime, the R3 replication's to r3rep,
+    // the registration's to reg1 and the transition hunt's to hunt0 and hunt1.
+    if (json.labels?.r1prime === true || json.labels?.tauCalibration === true || json.labels?.r1dprime === true || json.labels?.r3rep === true || json.labels?.reg1 === true || json.labels?.hunt1 === true) {
       skipped++;
       continue;
     }
@@ -1086,6 +1154,189 @@ async function reg1Stage(flags: Map<string, string[]>) {
   return { ...head, ...r, rejected, skipped };
 }
 
+/** The hunt's frozen document as it is now (descriptive; the screen checks the pinned hash): its SHA-256 and whether it still begins with its frozen text. */
+async function huntProtocolNow(): Promise<{ doc: string; sha256: string; pinnedTextIntact: boolean }> {
+  const bytes = await Deno.readFile(new URL(`../${HUNT1_PROTOCOL.doc}`, import.meta.url));
+  const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), (b) => b.toString(16).padStart(2, "0")).join("");
+  return { doc: HUNT1_PROTOCOL.doc, sha256, pinnedTextIntact: (await huntProtocolProblems(bytes)).length === 0 };
+}
+
+/**
+ * `--pond-death`: 32,768 (the hunt's e = 1/2) or 65,536 (G1's fallback, e = 1), the e D3 and Stage 1 ran at; null when the flag is absent. It has no default:
+ * where a stage needs it, `hunt0Stage` and `hunt1Stage` refuse its absence, so the e of what is read is always the operator's explicit word (G1's own pairs
+ * are 32,768 and 65,536 whatever the flag says).
+ */
+function pondDeathFlag(flags: Map<string, string[]>): number | null {
+  if (!flags.has("pond-death")) return null;
+  const v = Number(need(flags, "pond-death")[0]);
+  if (v !== HUNT_DEATH.base && v !== HUNT_DEATH.fallback) usage(`--pond-death must be ${HUNT_DEATH.base} or ${HUNT_DEATH.fallback}`);
+  return v;
+}
+
+/** A hunt bundle's ponds.tsv through `huntPondsSummary` (streamed); a missing file is a problem, not a throw. */
+async function huntReadPonds(dir: string, expect: HuntPondsExpect) {
+  if (!(await exists(`${dir}/ponds.tsv`))) return { problems: ["ponds.tsv is missing"], summary: null };
+  return await huntPondsSummary(readTsv(`${dir}/ponds.tsv`), expect);
+}
+
+/** The size of a file in bytes, null when it does not exist (a history bundle needs its pre-cycle checkpoint files: existence and a non-empty size only). */
+async function huntCheckpointSize(path: string): Promise<number | null> {
+  try {
+    return (await Deno.stat(path)).size;
+  } catch (e) {
+    if (e instanceof Deno.errors.NotFound) return null;
+    throw e;
+  }
+}
+
+/** A pre-cycle checkpoint of `boundary` in the bundle `dir`, decoded, as the hash of its state; why it could not be loaded otherwise (`huntReproducibility` verifies it against the manifest). */
+async function huntLoadCheckpoint(dir: string, boundary: number): Promise<HuntCheckpointCheck> {
+  const path = `${dir.replace(/\/+$/, "")}/${huntPreCycleFile(boundary)}`;
+  try {
+    if (((await Deno.stat(path)).size) === 0) return { error: "the file is empty" };
+    return { stateHash: stateHash(await readCheckpointState(path)) };
+  } catch (e) {
+    return { error: e instanceof Deno.errors.NotFound ? "the file is missing" : message(e) };
+  }
+}
+
+/** The bundles of the `expected` runs under `roots` (see `huntResolveRuns`); a bundle that is none of them is listed under `skipped`. */
+async function loadHuntRuns(roots: string[], expected: HuntExpectedRun[], skipped: { dir: string; why: string }[], o: { pondDeath: number; conservationIsResult?: boolean }): Promise<HuntRun[]> {
+  const { runs, others } = await huntResolveRuns(await readBundles(roots, skipped), expected, { ...o, readPonds: huntReadPonds, checkpointSize: huntCheckpointSize });
+  skipped.push(...others);
+  return runs;
+}
+
+/** The export sets under `roots` that belong to `stage` (labels.hunt1, labels.stage); anything else is listed under `skipped`, a set that cannot be read under `rejected`. */
+async function loadHuntSets(roots: string[], stage: HuntStage, skipped: { dir: string; why: string }[], rejected: { dir: string; id: string | null; reasons: string[] }[]): Promise<HuntSetDir[]> {
+  const out: HuntSetDir[] = [];
+  for (const root of roots) {
+    const found = await expandDirsTolerant(root, "assay.json", skipped);
+    if (found.length === 0) skipped.push({ dir: root, why: "no assay set (assay.json) under it" });
+    for (const d of found) {
+      let json;
+      try {
+        json = await readJson(`${d}/assay.json`);
+      } catch (e) {
+        rejected.push({ dir: d, id: null, reasons: [`assay.json: ${message(e)}`] });
+        continue;
+      }
+      if (json?.labels?.hunt1 !== true) {
+        skipped.push({ dir: d, why: "not a hunt set (labels.hunt1 is not true)" });
+        continue;
+      }
+      if (json.labels.stage !== stage) {
+        skipped.push({ dir: d, why: `a ${JSON.stringify(json.labels.stage)} set: this stage reads ${stage} sets` });
+        continue;
+      }
+      try {
+        const rows = [];
+        for await (const r of readTsv(`${d}/assay.tsv`)) rows.push(huntFragmentRow(r));
+        out.push({ dir: d, json, rows });
+      } catch (e) {
+        rejected.push({ dir: d, id: typeof json.labels.set === "string" ? json.labels.set : null, reasons: [`could not read the set: ${message(e)}`] });
+      }
+    }
+  }
+  return out;
+}
+
+/** The hunt's Stage 0 (docs/scaffold-transition-hunt-v1.md): G1, G2 and D3 over the bundles and sets given (see the header). */
+async function hunt0Stage(flags: Map<string, string[]>) {
+  const strict = !flags.has("allow-any-seed");
+  if (!["g1", "g1-fallback", "g2", "d3-runs", "d3"].some((f) => flags.has(f))) usage("hunt0 needs at least one of --g1, --g1-fallback, --g2, --d3-runs, --d3");
+  const skipped: { dir: string; why: string }[] = [];
+  const rejected: { dir: string; id: string | null; reasons: string[] }[] = [];
+  const head = { stage: "hunt0", protocolSha256Hunt1: HUNT1_PROTOCOL.sha256, protocolNow: await huntProtocolNow(), validated: strict };
+  // G1 reads conservation as its result (a nat run that is not exact is not viable; a shuf run that is not exact fails it).
+  const g1Base = flags.has("g1") ? await loadHuntRuns(need(flags, "g1"), huntExpectedRuns("g1"), skipped, { pondDeath: HUNT_DEATH.base, conservationIsResult: true }) : null;
+  const g1Fallback = flags.has("g1-fallback") ? await loadHuntRuns(need(flags, "g1-fallback"), huntExpectedRuns("g1f"), skipped, { pondDeath: HUNT_DEATH.fallback, conservationIsResult: true }) : null;
+  // D3 runs at the e --pond-death names (65,536 after G1's fallback passed): no default, whatever G1 decided.
+  const pondDeath = pondDeathFlag(flags);
+  if ((flags.has("d3-runs") || flags.has("d3")) && pondDeath === null) usage(`hunt0 --d3-runs / --d3 need --pond-death ${HUNT_DEATH.base}|${HUNT_DEATH.fallback}, the e D3 ran at (${HUNT_DEATH.fallback} only if G1's e = 1 fallback passed)`);
+  const d3PondDeath = pondDeath ?? HUNT_DEATH.base;
+  let g2 = null;
+  if (flags.has("g2")) {
+    const screened = huntScreenSets(await loadHuntSets(need(flags, "g2"), "g2", skipped, rejected), { stage: "g2", sha: HUNT1_PROTOCOL.sha256, allowAnySeed: !strict });
+    rejected.push(...screened.rejected);
+    g2 = { sets: screened.accepted, rejected: screened.rejected };
+  }
+  let d3 = null;
+  if (flags.has("d3-runs") || flags.has("d3")) {
+    const runs = flags.has("d3-runs") ? await loadHuntRuns(need(flags, "d3-runs"), huntExpectedRuns("d3"), skipped, { pondDeath: d3PondDeath }) : null;
+    const bundles = new Map((runs ?? []).map((r) => [r.id, r]));
+    const found: { dir: string; id: string | null; reasons: string[] }[] = [];
+    const screened = huntScreenSets(flags.has("d3") ? await loadHuntSets(need(flags, "d3"), "d3", skipped, found) : [], { stage: "d3", sha: HUNT1_PROTOCOL.sha256, bundles, allowAnySeed: !strict });
+    rejected.push(...found, ...screened.rejected);
+    d3 = { runs, sets: screened.accepted, rejected: [...found, ...screened.rejected] };
+  }
+  const r = huntStage0Readout({ g1: { base: g1Base, fallback: g1Fallback }, g2, d3, d3PondDeath });
+  return { ...head, ...r, rejected, skipped };
+}
+
+/** The hunt's Stage 1 (docs/scaffold-transition-hunt-v1.md): validity, the two contrasts, the seven secondary tests and the outcome over the bundles and sets (see the header). */
+async function hunt1Stage(flags: Map<string, string[]>) {
+  const strict = !flags.has("allow-any-seed");
+  const budgetStopped = flags.has("budget-stopped");
+  const given = pondDeathFlag(flags);
+  if (given === null && strict) usage(`hunt1 needs --pond-death ${HUNT_DEATH.base}|${HUNT_DEATH.fallback}, the e the histories ran at (${HUNT_DEATH.fallback} only if G1's e = 1 fallback passed): it has no default`);
+  const pondDeath = given ?? HUNT_DEATH.base;
+  const skipped: { dir: string; why: string }[] = [];
+  const head = { stage: "hunt1", protocolSha256Hunt1: HUNT1_PROTOCOL.sha256, protocolNow: await huntProtocolNow(), validated: strict };
+  // The queue's completeness: no partial ensemble is ever analysed, so a production readout needs the queue and every instance's status.
+  if (strict && !budgetStopped && !flags.has("queue")) usage("hunt1 needs --queue <queue.json> --status <status.json...> (the queue's completeness) unless --budget-stopped or --allow-any-seed");
+  let queue = null;
+  let queueJson: unknown = null;
+  if (flags.has("queue")) {
+    try {
+      queueJson = await readJson(need(flags, "queue")[0]);
+      queue = reg1ReportQueueCheck(queueJson, await Promise.all((flags.get("status") ?? []).map(readJson)));
+    } catch (e) {
+      usage(`--queue / --status: ${message(e)}`);
+    }
+  }
+  const instances = huntQueueInstances(queueJson) ?? undefined;
+  // When nothing is analysed (the budget stopped the queue, or it has not completed), the device check is technical status: read if given, without the runs.
+  if (budgetStopped || queue?.complete === false) {
+    const device = flags.has("device") ? huntDeviceCheck(await readBundles(need(flags, "device"), skipped), { pondDeath, instances }) : null;
+    return { ...head, ...huntReadout({ sets: [], rejected: [], runs: [], device, reproducibility: null, budgetStopped, queue, pondDeath }), rejected: [], skipped };
+  }
+
+  // The 96 histories and, when given, the four ancestor worlds (they cross-check their sets and feed the descriptives; a genome-only set needs ancestor-j0) and
+  // the 24 scaffold-phase runs of the hunt's own sources (needed only when the -s sources are the hunt's own: `huntSourceProblems`).
+  const runs = await loadHuntRuns(need(flags, "runs"), [...huntExpectedRuns("history"), ...huntExpectedRuns("ancestor"), ...huntExpectedRuns("scaffold")], skipped, { pondDeath });
+  huntPairingProblems(runs);
+  const runsById = new Map(runs.map((r) => [r.id, r]));
+  // Every run bundle taken must have run on a host and adapter that a device check covers.
+  const device = huntDeviceCheck(await readBundles(need(flags, "device"), skipped), { pondDeath, instances, runs: runs.filter((r) => r.host !== null) });
+  const rejected: HuntRejected[] = [];
+  const setDirs = await loadHuntSets(need(flags, "assays"), "s1", skipped, rejected);
+  // A genome-only set whose history has no dominant genome is believed only once that history's b200-pre is reloaded here and seen to have none.
+  const donors = new Map<string, HuntDonorCheck>();
+  for (const d of setDirs) {
+    const set = (d.json.labels as { set?: unknown } | undefined)?.set;
+    const bundle = d.json.noGenome === true && typeof set === "string" ? huntExpectedSet(set)?.bundle : null;
+    const run = bundle == null ? undefined : runsById.get(bundle);
+    if (bundle == null || donors.has(bundle) || !run?.resolved || run.dir === null) continue;
+    try {
+      const state = await readCheckpointState(`${run.dir}/checkpoints/b${String(HUNT_TIME_C).padStart(3, "0")}-pre.blck`);
+      const hash = stateHash(state);
+      donors.set(bundle, hash === run.hashes[HUNT_TIME_C] ? { stateHash: hash, dominant: dominantGenome(state) !== null } : { error: `it hashes to ${hash}, not the ${run.hashes[HUNT_TIME_C]} its manifest records` });
+    } catch (e) {
+      donors.set(bundle, { error: message(e) });
+    }
+  }
+  const screened = huntScreenSets(setDirs, { stage: "s1", sha: HUNT1_PROTOCOL.sha256, bundles: runsById, donors, allowAnySeed: !strict });
+  rejected.push(...screened.rejected);
+  // The two selected histories' checkpoints (instance and Mac reruns) are decoded here, not taken from the manifests' hash strings.
+  const reruns = await readBundles(need(flags, "repro"), skipped);
+  const loaded = new Map<string, HuntCheckpointCheck>();
+  for (const t of huntReproTargets(runsById, reruns)) loaded.set(`${t.dir}#${t.boundary}`, await huntLoadCheckpoint(t.dir, t.boundary));
+  const reproducibility = huntReproducibility(runsById, reruns, { pondDeath, checkpoint: (dir, boundary) => loaded.get(`${dir}#${boundary}`) ?? { error: "it was not loaded" } });
+  const r = huntReadout({ sets: screened.accepted, rejected, runs, device, reproducibility, queue, pondDeath });
+  return { ...head, ...r, rejected, skipped };
+}
+
 async function decideCmd(flags: Map<string, string[]>) {
   const inputs: DecisionInputs = {};
   let p1: boolean | null | undefined;
@@ -1165,6 +1416,12 @@ async function main() {
       break;
     case "reg1":
       out = await reg1Stage(flags);
+      break;
+    case "hunt0":
+      out = await hunt0Stage(flags);
+      break;
+    case "hunt1":
+      out = await hunt1Stage(flags);
       break;
     case "decide":
       out = await decideCmd(flags);
