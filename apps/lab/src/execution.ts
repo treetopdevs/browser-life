@@ -263,13 +263,13 @@ export class LabExecution {
   async verify(steps: number, createTwin: (state: WorldState) => Promise<LabSimulation>) {
     this.check();
     this.checkSteps(steps);
-    if (this.awaitingPond) throw new Error(this.waitingMessage("verify"));
+    if (this.awaitingPond) throw new PondWaitingError(this.waitingMessage("verify"));
     // A boundary that would wait for donors inside the window cannot be replayed unattended.
     const period = this.sim.cfg.pondPeriod;
     if (period !== undefined) {
       for (let at = (Math.floor(this.sim.step / period) + 1) * period; at <= this.sim.step + steps; at += period) {
         if (this.pausesAt(at) && !this.replay.some((iv) => iv.kind === "pick" && iv.step === at))
-          throw new Error(`verifying ${steps} steps would pass the pond boundary at t=${at}, which waits for donors in breeder mode; choose them first or verify fewer steps`);
+          throw new PondWaitingError(`verifying ${steps} steps would pass the pond boundary at t=${at}, which waits for donors in breeder mode; choose them first or verify fewer steps`);
       }
     }
     const start = await this.sim.readState();

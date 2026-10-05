@@ -43,6 +43,14 @@ import { runBounded } from "./lib/run-command.ts";
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 
 const a = parseArgs(Deno.args, { string: ["model", "max-calls", "call-log", "timeout", "max-budget"], default: { model: "sonnet", "max-calls": "40", timeout: "150", "max-budget": "0.5" } });
+// A cap that is not a positive number would never apply (n >= NaN is false), so each is checked before anything runs.
+for (const k of ["max-calls", "timeout", "max-budget"] as const) {
+  const v = Number(a[k]);
+  if (!Number.isFinite(v) || v <= 0 || (k === "max-calls" && !Number.isInteger(v))) {
+    console.error(`picker-claude: --${k} must be a positive ${k === "max-calls" ? "integer" : "number"}, got ${JSON.stringify(a[k])}`);
+    Deno.exit(1);
+  }
+}
 const logPath = a["call-log"] ?? new URL("../runs/wild/review/model-calls.log", import.meta.url).pathname;
 const fail = (msg: string): never => {
   console.error(`picker-claude: ${msg}`);

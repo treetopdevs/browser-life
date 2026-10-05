@@ -282,6 +282,16 @@ try {
     const capped = await call(3, [3, 0, 6], 6);
     const after = lines(await Deno.readTextFile(callLog));
     check("7b. ...the call log counts attempts (started lines), and a call at the cap is refused without launching claude", capped.code === 1 && /limit is 6/.test(capped.stderr) && after.filter((l) => l.status === "started").length === 6 && after.length === log.length, capped.stderr);
+    // A cap that is not a positive finite number would never apply: refused at startup, before the log or the stub is touched.
+    for (const flag of [["--max-calls", "abc"], ["--max-calls", "2.5"], ["--timeout", "Infinity"], ["--max-budget", "1e309"], ["--max-budget", "0"]]) {
+      const before = await Deno.readTextFile(callLog);
+      const out = await new Deno.Command(Deno.execPath(), {
+        args: ["run", "-A", new URL("../../tools/picker-claude.ts", import.meta.url).pathname, "--call-log", callLog, ...flag],
+        cwd: dir, stdin: "null", stdout: "piped", stderr: "piped", env: { CLAUDE_BIN: stub, STUB_ARGS: `${tmp}/args.txt`, STUB_REPLY: `${tmp}/reply.json` },
+      }).output();
+      const err = new TextDecoder().decode(out.stderr);
+      check(`7b. ...${flag.join(" ")} is refused at startup without a call`, out.code === 1 && err.includes(`${flag[0]} must be a positive`) && (await Deno.readTextFile(callLog)) === before, err);
+    }
     // Two pick directories sharing one call log, one call left under the cap: exactly one may launch.
     const race = `${tmp}/race.log`;
     await Deno.writeTextFile(race, [1, 2].map(() => JSON.stringify({ status: "started" })).join("\n") + "\n");

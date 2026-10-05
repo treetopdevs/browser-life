@@ -616,6 +616,8 @@ describe("lab execution in breeder mode", () => {
     expect(sim.step).toBe(4);
     await expect(execution.checkpoint()).rejects.toThrow(/pond cycle 1 at t=4 is waiting for its donors; choose them before you save or read this world/);
     await expect(execution.verify(2, async (state) => new CpuSimulation(state))).rejects.toThrow(/waiting for its donors; choose them before you verify/);
+    // A refusal, not a failure: the worker answers it as "refused" and the world stays usable.
+    await expect(execution.verify(2, async (state) => new CpuSimulation(state))).rejects.toBeInstanceOf(PondWaitingError);
     expect(() => execution.queueReplay([])).toThrow(/waiting for its donors; choose them before you queue a replay/);
     expect(() => execution.setHandPicks(false)).toThrow(/waiting for its donors; choose them before you leave breeder mode/);
     expect(execution.failure).toBeNull();
@@ -748,6 +750,8 @@ describe("lab execution in breeder mode", () => {
   it("refuses to verify across a boundary that would wait, and a logged pick that is not at a pond boundary", async () => {
     const { execution } = breeder();
     await expect(execution.verify(4, async (state) => new CpuSimulation(state))).rejects.toThrow(/verifying 4 steps would pass the pond boundary at t=4, which waits for donors in breeder mode/);
+    // A refusal, not a failure: the worker answers it as "refused" and the world stays usable.
+    await expect(execution.verify(4, async (state) => new CpuSimulation(state))).rejects.toBeInstanceOf(PondWaitingError);
     expect(execution.failure).toBeNull();
     const short = await execution.verify(2, async (state) => new CpuSimulation(state));
     expect(short.twinHash).toBe(short.liveHash);
