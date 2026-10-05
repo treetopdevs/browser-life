@@ -1,0 +1,175 @@
+{
+  "id": "construction-renewal-v1",
+  "protocolVersion": 1,
+  "status": "Declarative source of truth for RENEWAL-PLAN.md. Every numeric choice below is copied from that plan; nothing here was chosen after a trajectory was seen.",
+  "plan": {
+    "path": "experiments/construction/RENEWAL-PLAN.md",
+    "sha256": "5fef434533e07b376cf4e6b465929ee8561699471a2556f1a514406d9da4bf3d"
+  },
+  "question": "Can a finite, initially supplied nutrient reservoir support a retained source and new, metabolically maintained sites under the existing rule-1 dynamics? If so, is the paid polymer-retention mechanism necessary for that result among the four specified arms?",
+  "inputs": {
+    "witness": {
+      "path": "experiments/construction/witness-v1.json",
+      "sha256": "7cbf49c409b137768b90c176b2a68c7034e3a870f81163cf969b0bbfc03e6019"
+    },
+    "selected": {
+      "path": "experiments/construction/selected-competitor-v1.json",
+      "sha256": "18b596eaf84a2724706e1b93988c40f0992ed25c182c248af0a17c7cf719ebdd"
+    }
+  },
+  "configPolicy": {
+    "source": "the complete cfg of witness-v1.json",
+    "overrides": ["seed", "spread", "polymerTransport"],
+    "required": {
+      "ruleVersion": 1,
+      "tileW": 32,
+      "tileH": 32,
+      "tilesX": 1,
+      "tilesY": 1,
+      "dtQ": 0,
+      "motility": false,
+      "mutRate": 0,
+      "lightMode": "uniform",
+      "lightBase": 255,
+      "lightAmp": 0,
+      "seasonPeriod": 0,
+      "kAbio": 0,
+      "gateK": 1,
+      "eA": 0,
+      "eB": 10,
+      "eC": 2,
+      "eP": 12
+    },
+    "absent": ["adhesion", "kAdhesion", "polymerDrag", "migrationPeriod", "migrantCount", "ringNamespace", "pondPeriod", "pondK", "pondArm"]
+  },
+  "arms": [
+    { "id": "builder", "genome": "witness", "description": "Exact witness BUILD16 genome, ordinary polymer transport gate" },
+    { "id": "matched", "genome": "witness", "buildBias": { "from": 16, "to": 0 }, "description": "Same genome with only b2(OUT.BUILD) changed from 16 to 0; feedback wiring unchanged" },
+    { "id": "selected", "genome": "selected", "description": "Exact previously selected nonbuilder; its stationary ranking is not claimed to hold in this habitat" },
+    { "id": "ablation", "genome": "witness", "polymerTransport": false, "description": "Exact builder genome with polymerTransport:false; construction still consumes B and E" }
+  ],
+  "seeds": {
+    "controls": 7310001,
+    "pilot": 7310001,
+    "confirmation": [7311001, 7311002, 7311003, 7311004, 7311005]
+  },
+  "reservoirLevels": [4, 16],
+  "spreads": [0, 1, 2],
+  "censusEvery": 100,
+  "checkpointSteps": [0, 3000, 9000, 10000],
+  "phases": {
+    "controls": [
+      {
+        "kind": "capacity",
+        "label": "Original-density capacity",
+        "arm": "builder",
+        "spread": 0,
+        "horizon": 3000,
+        "reservoirLevels": [4, 16],
+        "founders": [
+          { "x": 8, "y": 16, "biomass": 1024, "energy": 2048 },
+          { "x": 24, "y": 16, "biomass": 1024, "energy": 2048 }
+        ]
+      },
+      {
+        "kind": "division",
+        "label": "Same-budget division",
+        "arm": "builder",
+        "spread": 0,
+        "horizon": 3000,
+        "reservoirLevels": [4, 16],
+        "founders": [
+          { "x": 8, "y": 16, "biomass": 512, "energy": 1024 },
+          { "x": 24, "y": 16, "biomass": 512, "energy": 1024 }
+        ]
+      },
+      {
+        "kind": "small-founder",
+        "label": "Small-founder probes",
+        "arm": "builder",
+        "spreads": [0, 1, 2],
+        "horizon": 10000,
+        "reservoirLevels": [4, 16],
+        "site": { "x": 16, "y": 16 },
+        "founderSizes": [
+          { "biomass": 64, "energy": 128 },
+          { "biomass": 128, "energy": 256 }
+        ]
+      }
+    ],
+    "pilot": {
+      "arms": ["builder", "matched", "selected", "ablation"],
+      "founder": { "x": 16, "y": 16, "biomass": 1024, "energy": 2048 },
+      "spreads": [0, 1, 2],
+      "reservoirLevels": [4, 16],
+      "horizon": 10000
+    },
+    "confirmation": {
+      "arms": ["builder", "matched", "selected", "ablation"],
+      "eligibleSpreads": [1, 2],
+      "selectionOrder": [
+        { "reservoir": 4, "spread": 1 },
+        { "reservoir": 4, "spread": 2 },
+        { "reservoir": 16, "spread": 1 },
+        { "reservoir": 16, "spread": 2 }
+      ],
+      "habitatEligibility": "at least one of the four arms has RENEW=true in the main pilot",
+      "horizon": 10000,
+      "blocks": 5,
+      "blocksRequired": 4
+    }
+  },
+  "endpoints": {
+    "V": 128,
+    "Qmin": 128,
+    "Rmin": 0,
+    "mainWindow": { "from": 9000, "to": 10000 },
+    "controlWindow": { "from": 2000, "to": 3000 },
+    "censusesPerWindow": 11,
+    "maintained": "B_i >= V at every census from..to; Q_i(from,to) = sum of PHOTO+GROW at i >= Qmin; R_i(from,to) = net reaction change of B at i, bound transport excluded, >= Rmin",
+    "renew": "maintained(source, 9000, 10000) and maintained(j, 9000, 10000) for at least one same fixed site j outside the initial one-site footprint; all qualifying sites recorded",
+    "controls": {
+      "capacity": "both initialized sites have B >= 128 at all 11 censuses 2000..3000 and Q >= 128 in that window; R reported separately",
+      "division": "both initialized sites have B >= 128 at all 11 censuses 2000..3000 and Q >= 128 in that window; R reported separately",
+      "small-founder": "whether any one same site, including the initial site, satisfies maintained(i, 9000, 10000); all raw source and field outcomes reported"
+    },
+    "spreadZeroInvariant": "in spread-0 main cases every off-source B is exactly zero at every step; any off-source B is a technical failure",
+    "confirmed": "at least one same arm has RENEW=true in at least 4 of its 5 blocks",
+    "constructionSpecific": "in at least 4 of the 5 paired blocks the builder has RENEW=true, all three other arms RENEW=false, and builder and ablation both have positive recorded BUILD expenditure",
+    "secondary": [
+      "final active B",
+      "exact step-summed active-B area",
+      "final and late-minimum source B",
+      "qualifying-site count",
+      "sampled support extent",
+      "local Q, R and bound-B imports",
+      "total construction expenditure",
+      "reservoir depletion",
+      "harvested light",
+      "all global reaction totals",
+      "per-site free-energy accounting (energy dependence)"
+    ],
+    "secondaryRule": "Secondary readouts explain a primary outcome and never rescue a failed primary gate. Observational masks are fixed cells, not declared organisms."
+  },
+  "energyAccounting": {
+    "perSite": true,
+    "status": "secondary and explanatory; entered before the freeze at the evolvability-discovery workstream's request (PLAN Stage 1), no threshold or decision rule depends on it",
+    "records": "per-cell E at each census, cumulative bound-E gross import and export, cumulative E change by reactions, cumulative PHOTO, GROW, RESP and DECOMP",
+    "inequality": "for any window and site set with eA 0, eB 10, eC 2: 10*sum(GROW) <= E_start - E_end + 8*sum(RESP) + 2*sum(DECOMP) + net bound-E import"
+  },
+  "budget": {
+    "pilotControlHistories": 40,
+    "confirmationHistories": 20,
+    "initialSteps": 372000,
+    "maxScientificSteps": 572000,
+    "verificationSteps": 40000
+  },
+  "verification": {
+    "replayCases": ["pilot-builder-A16-s1", "pilot-ablation-A16-s1"],
+    "backends": ["cpu", "gpu"],
+    "cpu": "complete replay; every census's hashes, ledgers, cumulative observer values and checkpoint digests compared",
+    "gpu": "native replay; every census's state hash, global ledger and flux, and last-step role digest compared against the CPU records"
+  },
+  "backend": "CPU RefSim, primary, one case at a time; native GPU is an independent replay check only",
+  "offeredLightExposure10000Steps": "2611200000"
+}

@@ -18,7 +18,7 @@ config :phoenix,
   sort_verified_routes_query_params: true
 
 # Tests start their own isolated queue with start_supervised!/1.
-config :coordinator, start_queue: false
+config :coordinator, start_queue: false, start_discovery: false
 
 # Tokenless experiment creation from loopback clients (never in production).
 config :coordinator, allow_local_admin: true

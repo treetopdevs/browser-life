@@ -13,3 +13,4 @@ export * from "./exchange.ts";
 export * from "./ponds.ts";
 export * from "./presets.ts";
 export * from "./feed.ts";
+export * from "./discovery.ts";

@@ -1,0 +1,160 @@
+import { cellCount, type WorldConfig } from "./config.ts";
+import { CH, G, GENOME_CHANNELS } from "./layout.ts";
+import type { WorldState } from "./world.ts";
+
+export interface Totals {
+  A: bigint;
+  B: bigint;
+  C: bigint;
+  P: bigint;
+  E: bigint;
+  S: bigint;
+  matter: bigint;
+  /** Chemical potential + free pools + signal. */
+  energy: bigint;
+  living: number;
+}
+
+export function sumChannel(cells: Uint32Array, n: number, ch: number): bigint {
+  let acc = 0;
+  let big = 0n;
+  const end = (ch + 1) * n;
+  for (let i = ch * n; i < end; i++) {
+    acc += cells[i];
+    if (acc > 2 ** 50) {
+      big += BigInt(acc);
+      acc = 0;
+    }
+  }
+  return big + BigInt(acc);
+}
+
+export function totalsOf(cfg: WorldConfig, cells: Uint32Array): Omit<Totals, "living"> {
+  const n = cellCount(cfg);
+  const A = sumChannel(cells, n, CH.A);
+  const B = sumChannel(cells, n, CH.B);
+  const C = sumChannel(cells, n, CH.C);
+  const P = sumChannel(cells, n, CH.P);
+  const E = sumChannel(cells, n, CH.E);
+  const S = sumChannel(cells, n, CH.S);
+  const energy = BigInt(cfg.eA) * A + BigInt(cfg.eB) * B + BigInt(cfg.eC) * C + BigInt(cfg.eP) * P + E + S;
+  return { A, B, C, P, E, S, matter: A + B + C + P, energy };
+}
+
+/**
+ * Energy ledger residual: (content now + heat exported) - (content at start + light absorbed).
+ * Exactly zero when the rules conserve energy.
+ */
+export function ledgerResidual(start: { energy: bigint }, s: WorldState): bigint {
+  const now = totalsOf(s.cfg, s.cells);
+  return now.energy + s.heatOut - (start.energy + s.lightIn);
+}
+
+/** Order-dependent 64-bit digest of a word array, as 16 hex chars. */
+export function digestWords(words: Uint32Array, h1 = 0x811c9dc5, h2 = 0x01000193): [number, number] {
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    h1 = Math.imul(h1 ^ w, 0x85ebca6b) >>> 0;
+    h1 = ((h1 << 13) | (h1 >>> 19)) >>> 0;
+    h2 = Math.imul(h2 + w + i, 0xc2b2ae35) >>> 0;
+    h2 = (h2 ^ (h2 >>> 16)) >>> 0;
+  }
+  return [h1, h2];
+}
+
+/**
+ * Genome words of empty cells (lineage 0:0) are never read by the rules and
+ * may hold stale data; the canonical form zeroes them.
+ */
+export function canonicalGenome(genome: Uint32Array): Uint32Array {
+  const n = genome.length / GENOME_CHANNELS;
+  let dirty = false;
+  for (let i = 0; i < n && !dirty; i++)
+    if ((genome[G.LIN_HI * n + i] | genome[G.LIN_LO * n + i]) === 0)
+      for (let g = 2; g < GENOME_CHANNELS; g++) if (genome[g * n + i] !== 0) { dirty = true; break; }
+  if (!dirty) return genome;
+  const out = genome.slice();
+  for (let i = 0; i < n; i++)
+    if ((out[G.LIN_HI * n + i] | out[G.LIN_LO * n + i]) === 0) for (let g = 2; g < GENOME_CHANNELS; g++) out[g * n + i] = 0;
+  return out;
+}
+
+/** Config serialised with sorted keys (stable across key order). */
+export function canonicalConfig(c: WorldState["cfg"]): string {
+  const o = c as unknown as Record<string, unknown>;
+  return JSON.stringify(Object.fromEntries(Object.keys(o).sort().map((k) => [k, o[k]])));
+}
+
+const u64Words = (v: bigint) => [Number(v & 0xffffffffn), Number((v >> 32n) & 0xffffffffn)];
+
+function stateHashWords(s: WorldState): [number, number] {
+  const cfg = new TextEncoder().encode(canonicalConfig(s.cfg));
+  const cfgWords = new Uint32Array(Math.ceil(cfg.length / 4));
+  new Uint8Array(cfgWords.buffer).set(cfg);
+  let [a, b] = digestWords(Uint32Array.of(cfg.length, ...cfgWords));
+  [a, b] = digestWords(Uint32Array.of(s.step, ...u64Words(s.lightIn), ...u64Words(s.heatOut), ...s.flux.flatMap(u64Words)), a, b);
+  [a, b] = digestWords(s.cells, a, b);
+  [a, b] = digestWords(canonicalGenome(s.genome), a, b);
+  return [a, b];
+}
+
+const hex = (a: number, b: number) => a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+
+/**
+ * Canonical 64-bit digest of every persistent field: config, step, cells,
+ * canonical genome and the full ledger (light, heat, fluxes). Physics-only —
+ * used for pinned hashes, segment `startHash`/`startFrom` continuity checks
+ * and same-device replay verification. Does not cover observer state; see
+ * `artifactDigest` for the digest that does.
+ */
+export function stateHash(s: WorldState): string {
+  const [a, b] = stateHashWords(s);
+  return hex(a, b);
+}
+
+/**
+ * Deterministic JSON for digesting: object keys sorted recursively (arrays
+ * keep their order, since it's meaningful there). The observer payload is
+ * caller-constructed, not arbitrary user JSON, so this only needs to be
+ * stable across the field-insertion-order variance between callers, not
+ * hostile input.
+ */
+function canonicalize(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(canonicalize);
+  if (v && typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return Object.fromEntries(Object.keys(o).sort().map((k) => [k, canonicalize(o[k])]));
+  }
+  return v;
+}
+
+/** Canonical JSON text of an observer payload, keys sorted recursively. */
+export function canonicalObserverJSON(observer: unknown): string {
+  return JSON.stringify(canonicalize(observer));
+}
+
+/**
+ * Digest of a checkpoint artifact: `stateHash`'s digest words, chained with
+ * the observer's canonical JSON bytes (same length-prefix + word-padding
+ * pattern the config section uses). This is the digest checkpoint upload,
+ * replay verification and the predecessor-start check all compare — it
+ * replaces the old, separate physics `endHash` and `observer_hash` pair with
+ * one value that covers the whole artifact. `startHash`/`startFrom`
+ * continuity keeps using physics-only `stateHash`, unchanged.
+ */
+export function artifactDigest(s: WorldState, observer: unknown): string {
+  let [a, b] = stateHashWords(s);
+  const bytes = new TextEncoder().encode(canonicalObserverJSON(observer));
+  const words = new Uint32Array(Math.ceil(bytes.length / 4));
+  new Uint8Array(words.buffer).set(bytes);
+  // Framed as [length, ...words] via `.set()`, not `Uint32Array.of(len,
+  // ...words)`: spreading `words` into call arguments blows the engine's
+  // argument-count limit once an observer gets large (a populated tracker on
+  // the 512x512 "large" preset is well past it), throwing "Maximum call
+  // stack size exceeded" instead of ever producing a digest.
+  const framed = new Uint32Array(1 + words.length);
+  framed[0] = bytes.length;
+  framed.set(words, 1);
+  [a, b] = digestWords(framed, a, b);
+  return hex(a, b);
+}

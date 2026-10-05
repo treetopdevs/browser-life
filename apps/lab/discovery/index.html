@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Discovery worker</title>
+    <style>
+      :root { --bg: #fbfaf7; --fg: #1d1d1b; --muted: #6b6a66; --line: #dcd9d2; --accent: #2d6a4f; --warn: #9b2c2c; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #161615; --fg: #ecebe6; --muted: #a3a29c; --line: #3a3936; --accent: #74c69d; --warn: #f2a3a3; } }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, sans-serif; }
+      main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+      h1 { font-size: 22px; margin: 0 0 4px; }
+      p.lede { color: var(--muted); margin: 0 0 20px; }
+      fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 0 0 16px; }
+      legend { color: var(--muted); padding: 0 6px; }
+      label { display: grid; grid-template-columns: 11rem 1fr; gap: 8px; align-items: center; margin: 6px 0; }
+      input { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: inherit; width: 100%; }
+      .allowance { padding: 10px 12px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); margin: 0 0 16px; }
+      .buttons { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+      button { font: inherit; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: inherit; cursor: pointer; }
+      button.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+      button:disabled { opacity: 0.45; cursor: default; }
+      dl { display: grid; grid-template-columns: 11rem 1fr; gap: 4px 8px; margin: 0 0 16px; }
+      dt { color: var(--muted); }
+      dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+      pre { border: 1px solid var(--line); border-radius: 8px; padding: 10px; max-height: 320px; overflow: auto; font-size: 12.5px; white-space: pre-wrap; }
+      .warn { color: var(--warn); }
+      @media (max-width: 560px) { label, dl { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Discovery worker</h1>
+      <p class="lede">Runs exact, small simulation cases of the evolvability-discovery workbench on this computer's CPU and sends the results back. Research cases only; nothing here enters the public queue.</p>
+      <fieldset>
+        <legend>This machine</legend>
+        <label>Physical host ID <input id="host" placeholder="e.g. work-laptop" autocomplete="off" /></label>
+        <label>Join token <input id="token" type="password" autocomplete="off" /></label>
+        <label>CPU threads <input id="threads" type="number" min="1" step="1" value="1" /></label>
+        <label>Minutes <input id="minutes" type="number" min="1" step="1" value="60" /></label>
+      </fieldset>
+      <div class="allowance" id="allowance"></div>
+      <div class="buttons">
+        <button id="start" class="primary">Start</button>
+        <button id="pause" disabled>Pause</button>
+        <button id="stop" disabled>Stop now</button>
+      </div>
+      <dl>
+        <dt>Coordinator</dt><dd id="coord"></dd>
+        <dt>State</dt><dd id="state">not joined</dd>
+        <dt>Completed cases</dt><dd id="done">0</dd>
+        <dt>Source closure</dt><dd id="closure"></dd>
+      </dl>
+      <pre id="log" aria-live="polite"></pre>
+    </main>
+    <script type="module" src="../src/discovery-page.ts"></script>
+  </body>
+</html>

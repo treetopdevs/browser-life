@@ -12,6 +12,29 @@ if origins = System.get_env("BL_CORS_ORIGINS"),
 # server at a scratch directory instead of the default `data/`.
 if dir = System.get_env("BL_DATA_DIR"), do: config(:coordinator, data_dir: dir)
 
+if dir = System.get_env("BL_DISCOVERY_DATA_DIR"),
+  do: config(:coordinator, discovery_data_dir: dir)
+
+if token = System.get_env("BL_DISCOVERY_JOIN_TOKEN"),
+  do: config(:coordinator, discovery_join_token: token)
+
+if ms = System.get_env("BL_DISCOVERY_LEASE_MS"),
+  do: config(:coordinator, discovery_lease_ms: String.to_integer(ms))
+
+# The discovery validator: BL_DISCOVERY_VALIDATOR (a command line), else deno
+# with the checkout's tools/discovery.ts when both exist.
+case System.get_env("BL_DISCOVERY_VALIDATOR") do
+  v when is_binary(v) and v != "" ->
+    config(:coordinator, discovery_validator: String.split(v, " ", trim: true))
+
+  _ ->
+    tool = Path.expand("../../tools/discovery.ts", File.cwd!())
+    deno = System.find_executable("deno")
+
+    if deno && File.exists?(tool),
+      do: config(:coordinator, discovery_validator: [deno, "run", "-A", tool, "check-attempt"])
+end
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration

@@ -87,6 +87,19 @@ config :coordinator,
   # presets by hand.
   pond_period: %{"ponds" => 10_000, "ponds-small" => 1_000}
 
+# Discovery plane (Coordinator.Discovery; docs/evolvability-discovery-2026-10-04
+# PLAN Stage 3b): its own data directory, never inside :data_dir; the research
+# join token workers present (unset: loopback only); the lease length; and the
+# cloud launch envelope, absent so that the cloud allowance is zero. The
+# validator command is set in runtime.exs when deno and tools/discovery.ts are
+# found; without one no discovery result is ever accepted.
+config :coordinator,
+  discovery_data_dir: "data-discovery",
+  discovery_join_token: nil,
+  discovery_lease_ms: 120_000,
+  discovery_cloud_envelope: nil,
+  discovery_validator: nil
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

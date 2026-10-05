@@ -6,3 +6,5 @@ export * from "./island.ts";
 export * from "./island-page.ts";
 export * from "./observe.ts";
 export * from "./stitch.ts";
+export * from "./discovery.ts";
+export * from "./discovery-transport.ts";

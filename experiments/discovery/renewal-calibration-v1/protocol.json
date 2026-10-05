@@ -1,0 +1,644 @@
+{
+ "schemaVersion": "discovery-v1",
+ "observerVersion": "renewal-observer-v1.pin-24cef9e2",
+ "readoutVersion": "renewal-readout-v1.pin-24cef9e2",
+ "verificationPolicy": {
+  "replay": "every-case-cross-host"
+ },
+ "campaign": "renewal-calibration-v1",
+ "purpose": "calibration",
+ "question": "Do the pinned maintenance readouts behave as specified on controls whose answer is known by construction? Light dependence: a stationary builder (two founder sizes) is maintained under light 255 and not under light 0. Passive-material false positives: bound biomass with no genome (stable or decaying, stationary or spreading) and polymer alone are never read as a maintained site.",
+ "seedNamespace": {
+  "name": "discovery-calibration",
+  "first": 8501001,
+  "last": 8501999
+ },
+ "blocks": [
+  {
+   "id": "c1",
+   "seed": 8501001
+  },
+  {
+   "id": "c2",
+   "seed": 8501002
+  }
+ ],
+ "fixtures": [
+  {
+   "id": "lit-builder",
+   "candidateId": "witness-rule1",
+   "habitatId": "lit-builder",
+   "founderId": "builder",
+   "assayId": "renewal-positive",
+   "armId": "builder",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 0,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 500,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 255,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "cells",
+    "nutrient": 16,
+    "founders": [
+     {
+      "x": 16,
+      "y": 16,
+      "genomeHex": "0018009a0000000000000000000000000000000000000000000000000000000000007f00000000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008100000000000000000000000081000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007f107f00000010",
+      "biomass": 1024,
+      "energy": 2048
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  },
+  {
+   "id": "dark-builder",
+   "candidateId": "witness-rule1",
+   "habitatId": "dark-builder",
+   "founderId": "builder",
+   "assayId": "renewal-null",
+   "armId": "builder",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 0,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 500,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 0,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "cells",
+    "nutrient": 16,
+    "founders": [
+     {
+      "x": 16,
+      "y": 16,
+      "genomeHex": "0018009a0000000000000000000000000000000000000000000000000000000000007f00000000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008100000000000000000000000081000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007f107f00000010",
+      "biomass": 1024,
+      "energy": 2048
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  },
+  {
+   "id": "lit-small",
+   "candidateId": "witness-rule1",
+   "habitatId": "lit-small",
+   "founderId": "builder",
+   "assayId": "renewal-positive",
+   "armId": "builder",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 0,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 500,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 255,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "cells",
+    "nutrient": 16,
+    "founders": [
+     {
+      "x": 16,
+      "y": 16,
+      "genomeHex": "0018009a0000000000000000000000000000000000000000000000000000000000007f00000000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008100000000000000000000000081000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007f107f00000010",
+      "biomass": 128,
+      "energy": 256
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  },
+  {
+   "id": "dark-small",
+   "candidateId": "witness-rule1",
+   "habitatId": "dark-small",
+   "founderId": "builder",
+   "assayId": "renewal-null",
+   "armId": "builder",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 0,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 500,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 0,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "cells",
+    "nutrient": 16,
+    "founders": [
+     {
+      "x": 16,
+      "y": 16,
+      "genomeHex": "0018009a0000000000000000000000000000000000000000000000000000000000007f00000000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008100000000000000000000000081000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007f107f00000010",
+      "biomass": 128,
+      "energy": 256
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  },
+  {
+   "id": "passive-stable-b",
+   "candidateId": "witness-rule1",
+   "habitatId": "passive-stable-b",
+   "founderId": "none",
+   "assayId": "renewal-null",
+   "armId": "passive",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 0,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 0,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 255,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "deposits",
+    "nutrient": 16,
+    "deposits": [
+     {
+      "x": 16,
+      "y": 16,
+      "B": 1024,
+      "P": 0,
+      "E": 2048
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  },
+  {
+   "id": "passive-decaying-b",
+   "candidateId": "witness-rule1",
+   "habitatId": "passive-decaying-b",
+   "founderId": "none",
+   "assayId": "renewal-null",
+   "armId": "passive",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 0,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 500,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 255,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "deposits",
+    "nutrient": 16,
+    "deposits": [
+     {
+      "x": 16,
+      "y": 16,
+      "B": 1024,
+      "P": 0,
+      "E": 2048
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  },
+  {
+   "id": "passive-polymer",
+   "candidateId": "witness-rule1",
+   "habitatId": "passive-polymer",
+   "founderId": "none",
+   "assayId": "renewal-null",
+   "armId": "passive",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 0,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 0,
+    "kBDecay": 500,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 255,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "deposits",
+    "nutrient": 16,
+    "deposits": [
+     {
+      "x": 16,
+      "y": 16,
+      "B": 0,
+      "P": 4096,
+      "E": 0
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  },
+  {
+   "id": "passive-spreading-b",
+   "candidateId": "witness-rule1",
+   "habitatId": "passive-spreading-b",
+   "founderId": "none",
+   "assayId": "renewal-null",
+   "armId": "passive",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 1,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 0,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 255,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "deposits",
+    "nutrient": 16,
+    "deposits": [
+     {
+      "x": 16,
+      "y": 16,
+      "B": 4096,
+      "P": 0,
+      "E": 0
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  }
+ ],
+ "resourceLimits": {
+  "concurrentCasesPerHost": 2,
+  "caseWallSeconds": 120,
+  "campaignWallSeconds": 1800,
+  "campaignBytes": 400000000,
+  "attemptsPerCasePerRole": 3
+ },
+ "stoppingRule": "Run all 16 cases once as primaries and once as cross-host replays, validate and reduce; then stop. Null controls must read no maintained site and positive controls a maintained one; a failure is a calibration finding about the readout, not a biological result. Secondary readouts are exploratory and decide nothing."
+}
