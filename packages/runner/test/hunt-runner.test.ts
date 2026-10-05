@@ -253,7 +253,7 @@ describe("applyBoundary and branchTransform for nat and shuf", () => {
     const pre = sourceAt(2000);
     let uploads = 0;
     const sim = { cfg: { ...pre.cfg, pondArm: "bogus" as never }, readState: async () => pre, upload: () => void uploads++ };
-    await expect(applyBoundary(sim, 2000, pondContext(pre))).rejects.toThrow(/pondArm must be scaf, rand, cont, nat or shuf, got "bogus"/);
+    await expect(applyBoundary(sim, 2000, pondContext(pre))).rejects.toThrow(/pondArm must be scaf, rand, cont, nat, shuf or breed, got "bogus"/);
     expect(uploads).toBe(0);
   });
 

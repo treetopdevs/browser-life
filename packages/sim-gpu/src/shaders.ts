@@ -29,7 +29,10 @@ import {
   FLUX_NAMES,
   encodeGenome,
   generalistGenome,
+  SHAPE_BASE,
   buildKernel,
+  buildShapeKernel,
+  shapeRings,
   cellCount,
   lightModeId,
   worldW,
@@ -93,6 +96,10 @@ export function prelude(c: WorldConfig): string {
     LIGHT_AMP: u(c.lightAmp),
     SEASON_PERIOD: u(c.seasonPeriod),
     SEASON_AMP: i(c.seasonAmp),
+    DAY_PERIOD: u(c.dayPeriod ?? 0),
+    SIGNAL_GAIN: i(c.signalGain ?? 1),
+    WANDER_PERIOD: u(c.wanderPeriod ?? 0),
+    WANDER_AMP: u(c.wanderAmp ?? 0),
     EVENT_CAP: u(c.eventCap),
     KN: u(k.count),
     KSUM: u(k.sum),
@@ -108,6 +115,7 @@ export function prelude(c: WorldConfig): string {
     G_PARAM0: u(G.PARAM0 * n),
     G_PARAM1: u(G.PARAM1 * n),
     G_W0: u(G.W0),
+    G_HERIT0: u(G.PARAM0),
     GENOME_CH: u(GENOME_CHANNELS),
     NN_I: u(NN_I),
     NN_H: u(NN_H),
@@ -133,6 +141,25 @@ export function prelude(c: WorldConfig): string {
   consts.MOTILITY = c.motility === false ? "false" : "true";
   consts.ADHESION = c.adhesion === true ? "true" : "false";
   consts.K_ADHESION = i(c.kAdhesion ?? DEFAULT_K_ADHESION);
+  // Lossy takeover (WorldConfig.takeover): constant-folded away when absent.
+  consts.TAKEOVER = c.takeover === "lossy" ? "true" : "false";
+  consts.KIN_GROWTH = c.takeoverKin === "growth" ? "true" : "false";
+  consts.KIN_GENOME = c.takeoverKin === "genome" ? "true" : "false";
+  // Recurring injury (WorldConfig.injuryPeriod): constant-folded away when absent.
+  consts.INJURY = c.injuryPeriod !== undefined ? "true" : "false";
+  consts.INJURY_PERIOD = u(c.injuryPeriod ?? 1);
+  consts.INJURY_R = i(c.injuryRadius ?? 0);
+  consts.INJURY_PROB = u(c.injuryProb ?? 0);
+  // Heritable shape (WorldConfig.shapeReach): constant-folded away when absent.
+  const sk = c.shapeReach === undefined ? null : buildShapeKernel(c.kernelRadius, c.shapeReach);
+  consts.SHAPE_RINGS = u(shapeRings(c));
+  consts.SHAPE_BASE = i(SHAPE_BASE);
+  consts.K_S0 = u(sk ? sk.ringSum[0] : 0);
+  consts.K_S1 = u(sk ? sk.ringSum[1] : 0);
+  consts.K_S2 = u(sk ? sk.ringSum[2] : 0);
+  consts.TOL_WORDS = u(c.takeoverTol ?? 0);
+  consts.TOL_MU = i(c.takeoverTol ?? 0);
+  consts.TOL_SIGMA = i((c.takeoverTol ?? 0) >>> 2);
   // See WorldConfig.ringNamespace / packLineageLo (@bl/schema): a mutation's
   // childLo packs the ring namespace into the top RING_NAMESPACE_BITS bits
   // when configured, unchanged (just the cell index) otherwise -- the
@@ -200,8 +227,27 @@ fn light_at(x: u32, y: u32, step: u32) -> u32 {
     L += i32(LIGHT_AMP);
   } else if (LIGHT_MODE == 1u) {
     L += i32((LIGHT_AMP * ly) / (TILE_H - 1u));
-  } else if ((((lx >> 5u) + (ly >> 5u)) & 1u) == 0u) {
-    L += i32(LIGHT_AMP);
+  } else if (LIGHT_MODE == 2u) {
+    if ((((lx >> 5u) + (ly >> 5u)) & 1u) == 0u) {
+      L += i32(LIGHT_AMP);
+    }
+  } else {
+    // Rotating planet: a tent of light centred on the sun's meridian.
+    var sun = 0u;
+    if (DAY_PERIOD > 0u) {
+      let dp = max(DAY_PERIOD, 1u); // avoid const-eval x/0 when disabled
+      sun = ((step % dp) * TILE_W) / dp;
+    }
+    if (WANDER_PERIOD > 0u) {
+      let wp = max(WANDER_PERIOD, 1u); // avoid const-eval x/0 when disabled
+      let ph = ((step % wp) * 512u) / wp;
+      let tri = u32(256 - abs(i32(ph) - 256));
+      sun = (sun + ((WANDER_AMP * tri) >> 8u)) % TILE_W;
+    }
+    let half = TILE_W >> 1u;
+    let d0 = (lx + TILE_W - sun) % TILE_W;
+    let d = min(d0, TILE_W - d0);
+    L += i32((LIGHT_AMP * (half - d)) / half);
   }
   if (SEASON_PERIOD > 0u) {
     let period = max(SEASON_PERIOD, 1u); // avoid const-eval x/0 when disabled
@@ -219,6 +265,28 @@ const at = (xy: string) => /* wgsl */ `
   if (x >= WORLD_W || y >= WORLD_H) { return; }
   let i = y * WORLD_W + x;`;
 
+// Mirrors ringMean and shapeDensity in sim-ref (WorldConfig.shapeReach).
+const SHAPE_WGSL = /* wgsl */ `
+fn ring_mean(conv: u32, s: u32) -> u32 {
+  if (s == 0u) { return 0u; }
+  return (conv / s) * 256u + ((conv % s) * 256u) / s;
+}
+fn shape_density(c0: u32, c1: u32, c2: u32, ringBytes: u32) -> u32 {
+  let b = bitcast<i32>(ringBytes);
+  let w0 = u32(max(SHAPE_BASE + extractBits(b, 0u, 8u), 0));
+  let w1 = u32(max(SHAPE_BASE + extractBits(b, 8u, 8u), 0));
+  var w2 = 0u;
+  if (SHAPE_RINGS > 2u) { w2 = u32(max(extractBits(b, 16u, 8u), 0)); }
+  if (w0 == u32(SHAPE_BASE) && w1 == u32(SHAPE_BASE) && w2 == 0u) {
+    return min((((c0 + c1) / KSUM) * 1024u) / MASS_UNIT, 4095u);
+  }
+  let den = w0 + w1 + w2;
+  if (den == 0u) { return 0u; }
+  let num = w0 * ring_mean(c0, K_S0) + w1 * ring_mean(c1, K_S1) + w2 * ring_mean(c2, K_S2);
+  return min(((num / den) * 4u) / MASS_UNIT, 4095u);
+}
+`;
+
 /** Affinity uses 2x2 register blocking when tiles are multiples of 16. */
 export const affinityBlock = (c: WorldConfig) => (c.tileW % 16 === 0 && c.tileH % 16 === 0 ? 2 : 1);
 
@@ -228,13 +296,18 @@ export function affinityShader(c: WorldConfig): string {
   // load across the cells whose kernel covers it. Tiles are multiples of the
   // block, so a workgroup never straddles two independent worlds. Integer
   // sums are order-independent, so the result is identical to the reference.
-  const R = c.kernelRadius;
+  // Under WorldConfig.shapeReach the halo grows to the reach and each tap adds
+  // to its ring's sum (conv, conv1, conv2 for rings 0, 1, 2); without it there
+  // is one ring and the generated code is RULE_VERSION 1's.
+  const shape = c.shapeReach !== undefined;
+  const R = shape ? c.shapeReach! : c.kernelRadius;
   const Bk = affinityBlock(c);
   const CB = WG * Bk; // cells per workgroup side
   const SW = CB + 2 * R;
-  const k = buildKernel(R);
-  const wmap = new Map<string, number>();
-  for (let t = 0; t < k.count; t++) wmap.set(`${k.taps[t * 4]},${k.taps[t * 4 + 1]}`, k.taps[t * 4 + 2]);
+  const k = shape ? buildShapeKernel(c.kernelRadius, c.shapeReach!) : buildKernel(R);
+  const wmap = new Map<string, [number, number]>();
+  for (let t = 0; t < k.count; t++) wmap.set(`${k.taps[t * 4]},${k.taps[t * 4 + 1]}`, [k.taps[t * 4 + 2], k.taps[t * 4 + 3]]);
+  const acc = ["conv", "conv1", "conv2"];
   const lines: string[] = [];
   for (let dy = -R; dy <= R + Bk - 1; dy++) {
     for (let dx = -R; dx <= R + Bk - 1; dx++) {
@@ -242,7 +315,7 @@ export function affinityShader(c: WorldConfig): string {
       for (let cy = 0; cy < Bk; cy++)
         for (let cx = 0; cx < Bk; cx++) {
           const w = wmap.get(`${dx - cx},${dy - cy}`);
-          if (w) terms.push(`conv[${cy * Bk + cx}] += ${w}u * v;`);
+          if (w) terms.push(`${acc[w[1]]}[${cy * Bk + cx}] += ${w[0]}u * v;`);
         }
       if (!terms.length) continue;
       lines.push(`  { let v = sm[b + ${dy * SW + dx}]; ${terms.join(" ")} }`);
@@ -269,6 +342,7 @@ fn growth(u: u32, mu: u32, sigma: u32) -> i32 {
   return 2 * i32(z) - 256;
 }
 
+${shape ? SHAPE_WGSL : ""}
 @compute @workgroup_size(${WG}, ${WG})
 fn main(@builtin(local_invocation_id) lid: vec3<u32>, @builtin(workgroup_id) wid: vec3<u32>,
         @builtin(local_invocation_index) li: u32) {
@@ -285,21 +359,26 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>, @builtin(workgroup_id) wid
   let by = oy + lid.y * BK;
   if (bx >= WORLD_W || by >= WORLD_H) { return; }
   let b = i32((lid.y * BK + R) * SW + lid.x * BK + R);
-  var conv: array<u32, ${Bk * Bk}>;
+  var conv: array<u32, ${Bk * Bk}>;${shape ? `
+  var conv1: array<u32, ${Bk * Bk}>;
+  var conv2: array<u32, ${Bk * Bk}>;` : ""}
 ${lines.join("\n")}
   for (var q = 0u; q < BK * BK; q++) {
     let x = bx + (q % BK);
     let y = by + (q / BK);
     let i = y * WORLD_W + x;
-    let uq = conv[q] / KSUM;
+${shape ? "" : `    let uq = conv[q] / KSUM;
     let uu = min((uq * 1024u) / MASS_UNIT, 4095u);
-    var mu = DEF_MU;
-    var sigma = DEF_SIGMA;
+`}    var mu = DEF_MU;
+    var sigma = DEF_SIGMA;${shape ? `
+    var ringBytes = 0u;` : ""}
     if (!NEUTRAL && (genome[G_LIN_HI + i] | genome[G_LIN_LO + i]) != 0u) {
       let p0 = genome[G_PARAM0 + i];
       mu = p0 & 0xffffu;
-      sigma = p0 >> 16u;
-    }
+      sigma = p0 >> 16u;${shape ? `
+      ringBytes = genome[G_PARAM1 + i] >> 8u;` : ""}
+    }${shape ? `
+    let uu = shape_density(conv[q], conv1[q], conv2[q], ringBytes);` : ""}
     U[i] = growth(uu, min(mu, 4095u), clamp(sigma, 1u, 1023u));
   }
 }
@@ -397,6 +476,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   var inE = 0u;
   var srcs: array<u32, 9>;
   var lot: array<u32, 9>;
+  var shB: array<u32, 9>;
+  var shP: array<u32, 9>;
   var k = 0u;
   for (var oy = -1; oy <= 1; oy++) {
     for (var ox = -1; ox <= 1; ox++) {
@@ -433,6 +514,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       inP += sP;
       inE += sE;
       lot[k] = sB + sP;
+      shB[k] = sB;
+      shP[k] = sP;
       k++;
     }
   }
@@ -441,6 +524,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   cellsOut[CH_E + i] = inE;
 
   let T = inB + inP;
+  var waste = 0u;
   if (T == 0u) {
     genomeOut[G_LIN_HI + i] = 0u;
     genomeOut[G_LIN_LO + i] = 0u;
@@ -460,6 +544,47 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       for (var g = 0u; g < GENOME_CH; g++) { genomeOut[g * N + i] = genome[g * N + s]; }
     }
     cellsOut[CH_MOT + i] = cells[CH_MOT + s];
+    if (TAKEOVER) {
+      // Mirrors step.ts transport: non-kin bound shares become waste C and
+      // release their potential energy into E (bound: TAKEOVER_MAX_GAP).
+      let pw = genome[G_PARAM0 + s];
+      let muW = i32(pw & 0xffffu);
+      let sgW = i32(pw >> 16u);
+      var kB = 0u;
+      var kP = 0u;
+      var rel = 0u;
+      for (var j = 0u; j < 9u; j++) {
+        let sj = srcs[j];
+        var kin = lot[j] == 0u;
+        if (!kin) {
+          let hj = genome[G_LIN_HI + sj];
+          let lj = genome[G_LIN_LO + sj];
+          if ((hj == hi && lj == lo) || !(KIN_GROWTH || KIN_GENOME) || (hi | lo) == 0u || (hj | lj) == 0u) {
+            kin = hj == hi && lj == lo;
+          } else if (KIN_GENOME) {
+            var d = 0u;
+            for (var g = G_HERIT0; g < GENOME_CH; g++) {
+              if (genome[g * N + sj] != genome[g * N + s]) { d++; }
+              if (d > TOL_WORDS) { break; }
+            }
+            kin = d <= TOL_WORDS;
+          } else {
+            let pj = genome[G_PARAM0 + sj];
+            kin = abs(i32(pj & 0xffffu) - muW) <= TOL_MU && abs(i32(pj >> 16u) - sgW) <= TOL_SIGMA;
+          }
+        }
+        if (kin) {
+          kB += shB[j];
+          kP += shP[j];
+        } else {
+          waste += lot[j];
+          rel += shB[j] * (E_B - E_C) + shP[j] * (E_P - E_C);
+        }
+      }
+      cellsOut[CH_B + i] = kB;
+      cellsOut[CH_P + i] = kP;
+      cellsOut[CH_E + i] = inE + rel;
+    }
   }
 
   let baseT = cell_base(step, i);
@@ -481,6 +606,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       let qn = cells[ch + nbi];
       v += diff_out(qn, d ^ 1u, De, cell_base(step, nbi), sp);
     }
+    if (sp == 1u) { v += waste; }
     cellsOut[ch + i] = v;
   }
 }
@@ -545,7 +671,7 @@ fn add64(lo: u32, hi: u32, v: u32) {
 }
 
 fn mutate(i: u32, which: u32, deltaRnd: u32) {
-  let slot = which % (NN_BYTES + 3u);
+  let slot = which % (NN_BYTES + 3u + SHAPE_RINGS);
   var delta = i32(deltaRnd % u32(2 * MUT_STEP + 1)) - MUT_STEP;
   if (delta == 0) { delta = 1; }
   if (slot < NN_BYTES) {
@@ -564,11 +690,29 @@ fn mutate(i: u32, which: u32, deltaRnd: u32) {
     if (sd == 0) { sd = select(-1, 1, delta > 0); }
     let sigma = clamp(i32(p0 >> 16u) + sd, 2, 1023);
     genome[G_PARAM0 + i] = (p0 & 0xffffu) | (u32(sigma) << 16u);
-  } else {
+  } else if (slot == NN_BYTES + 2u) {
     let p1 = genome[G_PARAM1 + i];
     let gain = clamp(i32(p1 & 0xffu) + delta, 0, 255);
     genome[G_PARAM1 + i] = (p1 & 0xffffff00u) | u32(gain);
+  } else {
+    // Ring weight offset (WorldConfig.shapeReach), as mutateInPlace in sim-ref.
+    let k = slot - (NN_BYTES + 3u);
+    let sh = (k + 1u) * 8u;
+    let p1 = genome[G_PARAM1 + i];
+    let v = clamp(extractBits(bitcast<i32>(p1), sh, 8u) + delta, select(0, -SHAPE_BASE, k < 2u), 127);
+    genome[G_PARAM1 + i] = (p1 & ~(0xffu << sh)) | ((u32(v) & 0xffu) << sh);
   }
+}
+
+// Mirrors RefSim.injured: is a wound centre within INJURY_R of (x, y) at this step?
+fn injured(x: u32, y: u32, step: u32) -> bool {
+  for (var dy = -INJURY_R; dy <= INJURY_R; dy++) {
+    for (var dx = -INJURY_R; dx <= INJURY_R; dx++) {
+      if (dx * dx + dy * dy > INJURY_R * INJURY_R) { continue; }
+      if (draw(cell_base(step, nb(x, y, dx, dy)), RND_INJURY) < INJURY_PROB) { return true; }
+    }
+  }
+  return false;
 }
 
 @compute @workgroup_size(${WG}, ${WG})
@@ -615,8 +759,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
       xin[4] = sat((cap24(E) * 16u) / (B + 1u));
       xin[5] = i32(L >> 1u);
       xin[6] = sat(S >> 2u);
-      xin[7] = clamp((Se - Sw) / 4, -127, 127);
-      xin[8] = clamp((Ss - Sn) / 4, -127, 127);
+      xin[7] = clamp(((Se - Sw) * SIGNAL_GAIN) / 4, -127, 127);
+      xin[8] = clamp(((Ss - Sn) * SIGNAL_GAIN) / 4, -127, 127);
       xin[9] = clamp(U[i] / 2, -127, 127);
       var h: array<i32, ${NN_H}>;
       for (var j = 0u; j < NN_H; j++) {
@@ -721,6 +865,17 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     let ta = mul_frac(C, L, 8u, draw(base, RND_ABIO1));
     q = min(C, mul_frac(ta, K_ABIO, 16u, draw(base, RND_ABIO2)));
     C -= q; A += q; hadd(q * (E_C - E_A)); F[FX_ABIO] = q;
+
+    if (INJURY && (step + 1u) % INJURY_PERIOD == 0u && injured(x, y, step)) {
+      hadd(B * (E_B - E_C));
+      hadd(P * (E_P - E_C));
+      hadd(E);
+      C += B + P;
+      B = 0u;
+      P = 0u;
+      E = 0u;
+      mot = MOT_ZERO;
+    }
 
     if (living && B == 0u && P == 0u) {
       genome[G_LIN_HI + i] = 0u;

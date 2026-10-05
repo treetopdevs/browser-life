@@ -7,6 +7,17 @@ export interface Genome {
   sigma: number; // /1024
   motGain: number; // 0..255
   weights: Int8Array; // NN_BYTES
+  /**
+   * Kernel ring weights as signed offsets from the neutral (64, 64, 0), bytes 1..3 of PARAM1
+   * (WorldConfig.shapeReach). Absent when all three are zero, which is every RULE_VERSION 1 genome.
+   */
+  rings?: [number, number, number];
+}
+
+/** A genome's kernel ring offsets when any is non-zero, else undefined: absence and (0, 0, 0) are one genome. */
+export function ringsOf(g: { rings?: ArrayLike<number> }): [number, number, number] | undefined {
+  const r = g.rings;
+  return r && (r[0] || r[1] || r[2]) ? [r[0], r[1], r[2]] : undefined;
 }
 
 export function emptyGenome(mu: number, sigma: number): Genome {
@@ -25,6 +36,13 @@ export function encodeGenome(g: Genome, linHi: number, linLo: number): Uint32Arr
   out[G.LIN_LO] = linLo >>> 0;
   out[G.PARAM0] = ((g.mu & 0xffff) | ((g.sigma & 0xffff) << 16)) >>> 0;
   out[G.PARAM1] = g.motGain & 0xff;
+  if (g.rings) {
+    for (let k = 0; k < 3; k++) {
+      const v = g.rings[k];
+      if (!Number.isInteger(v) || v < -128 || v > 127) throw new Error(`encodeGenome: ring ${k} is ${v}; expected an int8`);
+      out[G.PARAM1] = (out[G.PARAM1] | ((v & 0xff) << (8 * (k + 1)))) >>> 0;
+    }
+  }
   // Index access works for an Int8Array, a plain array, and the {"0": …} object JSON.stringify
   // makes of an Int8Array; anything missing or outside int8 is refused rather than encoded as 0.
   const w = g.weights as unknown as ArrayLike<number>;
@@ -42,12 +60,17 @@ export function decodeGenome(words: ArrayLike<number>): Genome {
     const byte = (words[G.W0 + (b >> 2)] >>> ((b & 3) * 8)) & 0xff;
     weights[b] = byte > 127 ? byte - 256 : byte;
   }
-  return {
+  const g: Genome = {
     mu: words[G.PARAM0] & 0xffff,
     sigma: words[G.PARAM0] >>> 16,
     motGain: words[G.PARAM1] & 0xff,
     weights,
   };
+  if (words[G.PARAM1] >>> 8 !== 0) {
+    const s8 = (b: number) => ((b & 0xff) > 127 ? (b & 0xff) - 256 : b & 0xff);
+    g.rings = [s8(words[G.PARAM1] >>> 8), s8(words[G.PARAM1] >>> 16), s8(words[G.PARAM1] >>> 24)];
+  }
+  return g;
 }
 
 /** Genome words from PARAM0 onwards as hex, 8 digits each (the runner's `genomes.tsv` column). */

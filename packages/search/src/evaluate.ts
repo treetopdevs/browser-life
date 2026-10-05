@@ -14,6 +14,7 @@ import {
   cloneState,
   defaultConfig,
   packLineageLo,
+  ringsOf,
   worldW,
   type Founder,
   type Genome,
@@ -92,7 +93,7 @@ export function reviveEvalConfig(raw: EvalConfig): EvalConfig {
     if (!Number.isInteger(v) || v < -128 || v > 127) throw new Error(`reviveEvalConfig: background weight ${i} is ${v}`);
     return v;
   });
-  return { ...raw, medium: { ...raw.medium, background: { mu: bg.mu, sigma: bg.sigma, motGain: bg.motGain, weights } } };
+  return { ...raw, medium: { ...raw.medium, background: { mu: bg.mu, sigma: bg.sigma, motGain: bg.motGain, weights, ...(ringsOf(bg) ? { rings: ringsOf(bg) } : {}) } } };
 }
 
 /**

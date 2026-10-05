@@ -1,4 +1,4 @@
-import type { Intervention, WorldConfig, InitParams, PondArm } from "@bl/schema";
+import type { Intervention, WorldConfig, InitParams, PondArm, PondScore, PondTerm } from "@bl/schema";
 import type { GpuViewMode, ViewRect } from "@bl/sim-gpu";
 import type { ObserverSettings } from "@bl/runner";
 import type { LineageView } from "@bl/lineage";
@@ -56,7 +56,11 @@ export interface StatsMsg {
   heatOut: number;
   /** Exact energy ledger residual (should be 0). */
   residual: string;
+  /** Total matter against the ledger's baseline, which each feed moves by what it added (should be 0). */
   matterDelta: string;
+  /** Net nutrient this run's logged feeds have added (negative: drained), and how many feeds: the world is closed in matter only between them. */
+  fed: string;
+  feeds: number;
 }
 
 export interface CensusMsg {
@@ -85,6 +89,8 @@ export interface ProbeMsg {
   sigma: number;
   motGain: number;
   weights: number[];
+  /** Kernel ring offsets (WorldConfig.shapeReach), present only when some offset is non-zero. */
+  rings?: [number, number, number];
 }
 
 /** Display only: the pond cycle just applied (or, for arm cont, recorded) at `step`. */
@@ -96,6 +102,25 @@ export interface PondsMsg {
   arm: PondArm;
   /** Donor ponds in selection order; empty for cont and for a cycle with no eligible pond. */
   donors: number[];
+  /** The donors were given in breeder mode (a person's picks, or the rule's own applied on request) rather than chosen by the cycle itself. */
+  hand: boolean;
+}
+
+/** Breeder mode: the world has stopped at a pond boundary, before its cycle, and waits for the donors (`ToWorker` "pick"). */
+export interface PondAwaitMsg {
+  type: "pondAwait";
+  /** Which world waits: the worker's number for it, which a "pick" must name back. */
+  world: number;
+  step: number;
+  /** Cycle index b = step / pondPeriod. */
+  cycle: number;
+  arm: PondArm;
+  /** The world's own score (config key pondScore), or null without one. */
+  score: PondScore | null;
+  /** The donors the world's own rule would choose, in its order. */
+  suggested: number[];
+  /** Each term's value per pond; a pond whose "mass" is 0 is empty and cannot donate. */
+  terms: Record<PondTerm, number[]>;
 }
 
 /** One lineage, settled at a census (the lineage inspector's lab panel). */
@@ -115,7 +140,17 @@ export type ToWorker =
   | { type: "view"; mode: GpuViewMode; rect: ViewRect }
   | { type: "resize"; width: number; height: number }
   | { type: "lesion"; x: number; y: number; r: number }
+  /** Feed (`amount` > 0) or drain (< 0) nutrient in a disc: a logged intervention that changes total matter. */
+  | { type: "feed"; x: number; y: number; r: number; amount: number }
   | { type: "probe"; x: number; y: number }
+  /** Breeder mode on or off: stop at each pond boundary and wait for "pick". Turning it off lets the rule choose for a cycle that is waiting. */
+  | { type: "breeder"; on: boolean }
+  /**
+   * The donors of the pond cycle that world `world` (`PondAwaitMsg.world`) has waiting at `step`, in order (a logged
+   * intervention); null lets the world's own rule choose. Ignored unless that world is current and waits at that
+   * step: a repeated or late message never reaches another boundary or another world.
+   */
+  | { type: "pick"; world: number; step: number; donors: number[] | null }
   | { type: "save" }
   | { type: "listCheckpoints" }
   | { type: "restore"; file: string }
@@ -137,9 +172,18 @@ export type FromWorker =
   | CensusMsg
   | ProbeMsg
   | PondsMsg
+  | PondAwaitMsg
   | LineageMsg
   | { type: "highlight"; key: string | null }
   | { type: "checkpoints"; list: CheckpointMeta[] }
+  /** A save the page asked for ("save") is written: its file and the step it holds. Automatic checkpoints do not send it. */
+  | { type: "saved"; file: string; step: number }
   | { type: "exported"; bytes: ArrayBuffer; name: string }
   | { type: "notice"; message: string }
-  | { type: "verify"; ok: boolean; detail: string };
+  /**
+   * Request `request` was refused because a pond cycle is waiting for its donors. Not a failure: the world is
+   * usable, and whoever made the request (the lineage panel's inspection or jump) must stop waiting for it.
+   */
+  | { type: "refused"; request: ToWorker["type"]; message: string }
+  /** A replay check of `steps` steps from step `from`, which the live world has now run: its state hash and the twin's. */
+  | { type: "verify"; ok: boolean; detail: string; from: number; steps: number; live: string; twin: string };

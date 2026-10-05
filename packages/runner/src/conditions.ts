@@ -2,7 +2,7 @@
 // Each is a pure transformation of the world config, so a (preset, condition,
 // seed) triple fully determines a run.
 
-import type { WorldConfig } from "@bl/schema";
+import { POND_SCORES, type WorldConfig } from "@bl/schema";
 
 /** Integer mean of f over 0..n-1, rounded half up (exact: sums are small integers). */
 function meanRounded(n: number, f: (i: number) => number): number {
@@ -127,6 +127,37 @@ export const CONDITIONS: Condition[] = [
       return { pondArm: "shuf", pondDeath: 32_768, pondExport: 28 };
     },
   },
+  // The breeder (wild sandbox; WorldConfig.pondScore): v1's cycle with the donors chosen by a named score, and
+  // its two controls, which record the same score while choosing donors by bound mass (scaf) or at random (rand).
+  ...POND_SCORES.flatMap((score): Condition[] => [
+    {
+      id: `pond-breed-${score}`,
+      label: `Breeder (${score})`,
+      removes: `nothing (the ponds with the largest ${score} score seed the next cycle)`,
+      apply: (c) => {
+        if (c.pondPeriod === undefined) throw new Error(`pond-breed-${score} needs a preset with the pond cycle`);
+        return { pondArm: "breed", pondScore: score };
+      },
+    },
+    {
+      id: `pond-mass-${score}`,
+      label: `Breeder control, mass (${score})`,
+      removes: `selection among ponds on ${score} (the most massive ponds donate; the score is only recorded)`,
+      apply: (c) => {
+        if (c.pondPeriod === undefined) throw new Error(`pond-mass-${score} needs a preset with the pond cycle`);
+        return { pondArm: "scaf", pondScore: score };
+      },
+    },
+    {
+      id: `pond-drift-${score}`,
+      label: `Breeder control, random (${score})`,
+      removes: `selection among ponds (donors drawn at random; the score is only recorded)`,
+      apply: (c) => {
+        if (c.pondPeriod === undefined) throw new Error(`pond-drift-${score} needs a preset with the pond cycle`);
+        return { pondArm: "rand", pondScore: score };
+      },
+    },
+  ]),
 ];
 
 export function conditionById(id: string): Condition {

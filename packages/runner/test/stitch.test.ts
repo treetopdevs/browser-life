@@ -16,6 +16,7 @@ interface Opts {
   observationsVerified?: boolean | null;
   metricsVersion?: number;
   omitMetricsVersion?: boolean;
+  picked?: boolean;
 }
 
 /** A minimal, internally consistent segment bundle stitchRun accepts on its own terms (no relation to a real run). */
@@ -27,7 +28,7 @@ function segment(index: number, startStep: number, steps: number, opts: Opts = {
     rows.push({ step: Math.min(s, end), individuals: 1, lineages: 1, mutations: 0, fissions: 0, fusions: 0, buddings: 0, maxGeneration: 0, conservationOk: true });
   const tail = rows[rows.length - 1];
   const digest = `digest-${index}`;
-  const spec = { ...baseSpec, steps };
+  const spec = { ...baseSpec, steps, ...(opts.picked ? { picked: true } : {}) };
 
   const manifest: Record<string, unknown> = {
     runId: runId(baseSpec),
@@ -112,6 +113,13 @@ describe("stitchRun refuses a segment computed under a different metrics version
   it("refuses when only a later segment's metrics version is outdated", () => {
     const segs = [segment(0, 0, 10, { metricsVersion: METRICS_VERSION }), segment(1, 10, 10, { metricsVersion: METRICS_VERSION - 1 })];
     expect(() => stitchRun(segs, 20)).toThrow(/segment #1.*metrics version/);
+  });
+});
+
+describe("stitchRun refuses a picked run's segments", () => {
+  it("throws for a segment whose spec is picked: its donors are in picks.jsonl, not in the segment files", () => {
+    expect(() => stitchRun([segment(0, 0, 10, { picked: true })], 10)).toThrow(/picked runs cannot be stitched/);
+    expect(() => stitchRun([segment(0, 0, 10), segment(1, 10, 10, { picked: true })], 20)).toThrow(/segment #1.*picked runs cannot be stitched/);
   });
 });
 

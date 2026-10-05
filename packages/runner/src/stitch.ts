@@ -8,7 +8,7 @@
 // concatenation of its segments' (tests/deno/stitch.ts checks this against a
 // continuous run byte for byte). The manifest is the last segment's, widened
 // to cover the whole history.
-import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, exchangePositions, type PondArm } from "@bl/schema";
+import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, breedPondColumns, exchangePositions, type PondArm, type PondScore } from "@bl/schema";
 import { runId, sameConfig, type RunSummary } from "./runner.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
@@ -110,6 +110,9 @@ export interface StitchSegment {
 /** The columns only the hunt's arms write (`HUNT_POND_COLUMNS` beyond v1's). */
 const HUNT_ONLY_COLUMNS = ["died", "exportMass", "weight"] as const;
 
+/** The columns only a run with `pondScore` writes (`BREED_POND_COLUMNS` beyond v1's). */
+const SCORE_ONLY_COLUMNS = ["score", "donorScore"] as const;
+
 /** The packet columns, beyond `cx` and `cy`, that a row without a packet holds at "0" (`makeRow`'s zeroes). */
 const NO_PACKET_COLUMNS = ["landed", "reqMass", "retMass", "reqE", "retE", "truncated", "packetLineages", "domHi", "domLo", "domShare"] as const;
 
@@ -140,8 +143,13 @@ interface HuntRow {
  * `weight` column) write `HUNT_POND_COLUMNS` exactly, and every boundary's rows must then also come in ascending pond
  * index (boundaries in ascending step) and satisfy `checkHuntBoundary`. `arm` of any other value (including none, with
  * a v1 header) leaves the v1 rules, and a v1 file's bytes, as they were.
+ *
+ * A run with `pondScore` (`score`; the breeder and its controls) writes `breedPondColumns(score)` exactly
+ * (`BREED_POND_COLUMNS`, plus one column per term under a combined score), and every row's `score`, `donorScore` and
+ * term values must be nonnegative integers below 2^53. Where the caller knows the arm, a file carrying the score
+ * columns without a score in the config is refused, as a hunt header on another arm is.
  */
-export function checkPondsFile(id: string, text: string, period: number | undefined, ponds: number, startStep: number, end: number, arm?: PondArm): void {
+export function checkPondsFile(id: string, text: string, period: number | undefined, ponds: number, startStep: number, end: number, arm?: PondArm, score?: PondScore): void {
   const [header, ...rows] = lines(text);
   const names = (header ?? "").split("\t");
   const col = names.indexOf("step");
@@ -156,6 +164,13 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
   const hunt = huntArm || huntHeader;
   if (hunt && names.join("\t") !== HUNT_POND_COLUMNS.join("\t"))
     throw new Error(`${id}: ${PONDS_FILE} header is not the hunt's columns (${HUNT_POND_COLUMNS.join(", ")})`);
+  const scoreHeader = SCORE_ONLY_COLUMNS.some((c) => names.includes(c));
+  const breedColumns = score === undefined ? null : breedPondColumns(score);
+  if (breedColumns !== null && names.join("\t") !== breedColumns.join("\t"))
+    throw new Error(`${id}: ${PONDS_FILE} header is not the breeder's columns (${breedColumns.join(", ")}), but the run has pondScore ${score}`);
+  if (score === undefined && arm !== undefined && scoreHeader)
+    throw new Error(`${id}: ${PONDS_FILE} header carries the breeder's columns (${SCORE_ONLY_COLUMNS.join(", ")}), but the run has no pondScore`);
+  const scoreCols = breedColumns === null ? [] : breedColumns.slice(breedColumns.indexOf("score")).map((c) => [c, names.indexOf(c)] as const);
   if (period === undefined || !Number.isSafeInteger(period) || period <= 0) throw new Error(`${id}: pondPeriod ${period} is not a positive integer`);
   const perBoundary = new Map<number, number[]>();
   const huntRows = new Map<number, HuntRow[]>();
@@ -172,6 +187,10 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
     if (!Number.isInteger(recipient) || recipient < 0 || recipient >= ponds)
       throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with recipient "${recipientCell}", not a pond index in [0, ${ponds})`);
     (perBoundary.get(step) ?? perBoundary.set(step, []).get(step)!).push(recipient);
+    // Digits only and exactly representable, as huntRow reads its integers: a reader takes these with Number().
+    for (const [name, at] of scoreCols)
+      if (!/^\d+$/.test(cells[at] ?? "") || !Number.isSafeInteger(Number(cells[at])))
+        throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with ${name} "${cells[at] ?? ""}", not a nonnegative integer below 2^53`);
     if (hunt) {
       if (step < lastStep) throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} after one at step ${lastStep}; boundaries come in ascending order`);
       lastStep = step;
@@ -299,6 +318,8 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     if (s.index !== k) throw new Error(`${id}: expected segment #${k}`);
     if (s.startStep !== at) throw new Error(`${id}: starts at ${s.startStep}, previous segment ended at ${at}`);
     if (!m.summary) throw new Error(`${id}: manifest has no summary (run did not finish)`);
+    // A picked run's donors are in its picks.jsonl, not in any segment file (PICKS_FILE is deliberately in no file list), so its segments cannot be chained.
+    if (m.spec.picked !== undefined) throw new Error(`${id}: picked runs cannot be stitched: their donors are not in the segment files`);
     // A branch run (RunSpec.branch) starts from a decoded source checkpoint that no segment chain carries: not distributed.
     if (m.branch !== undefined || m.spec.branch !== undefined) throw new Error(`${id}: manifest records a branch run (${JSON.stringify(m.branch ?? m.spec.branch)}); branches are not distributed, so they cannot be stitched`);
     if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION) throw new Error(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, expected ${RULE_VERSION}/${SCHEMA_VERSION}`);
@@ -369,7 +390,7 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     // header and add the ascending-order and died/donor rules of `checkPondsFile`.
     if (pondRun) {
       if (typeof s.files[PONDS_FILE] !== "string") throw new Error(`${id}: pond run but missing ${PONDS_FILE}`);
-      checkPondsFile(id, s.files[PONDS_FILE], first.cfg.pondPeriod, first.cfg.tilesX * first.cfg.tilesY, s.startStep, end, first.cfg.pondArm);
+      checkPondsFile(id, s.files[PONDS_FILE], first.cfg.pondPeriod, first.cfg.tilesX * first.cfg.tilesY, s.startStep, end, first.cfg.pondArm, first.cfg.pondScore);
     } else if (typeof s.files[PONDS_FILE] === "string") {
       throw new Error(`${id}: ${PONDS_FILE} present on a run without the pond cycle`);
     }

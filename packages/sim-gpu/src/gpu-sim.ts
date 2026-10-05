@@ -1,5 +1,6 @@
 import {
   CELL_CHANNELS,
+  CH,
   EVENT_WORDS,
   GENOME_CHANNELS,
   LEDGER,
@@ -8,6 +9,9 @@ import {
   FLAG_LEDGER_OVERFLOW,
   MAX_STEP,
   clampLesionRadius,
+  feedError,
+  feedNutrient,
+  type FeedResult,
   validateState,
   FLUX_COUNT,
   ROLE_WORDS,
@@ -288,6 +292,40 @@ export class GpuSim {
     pass.end();
     this.device.queue.submit([enc.finish()]);
     return r;
+  }
+
+  /**
+   * Feed or drain nutrient in a disc (between steps), an experimenter intervention that changes the
+   * world's total matter: see feed.ts in @bl/schema, whose `feedNutrient` this runs on a readback of
+   * the nutrient channel, so it equals the reference (`applyFeed`) by construction. Only that channel
+   * is written back: the ledger, the genome and undrained mutation events are untouched. The caller
+   * logs the intervention and moves its conservation baselines by the result.
+   */
+  async feed(cx: number, cy: number, radius: number, amount: number): Promise<FeedResult> {
+    const gone = () => { if (this.destroyed) throw new Error("GpuSim destroyed"); };
+    gone();
+    const err = feedError(this.cfg, amount, radius);
+    if (err) throw new Error(err);
+    const size = this.n * 4, offset = CH.A * this.n * 4;
+    const stats = await this.readStats();
+    // The sim can be destroyed while a readback is awaited: nothing may be read from or written to it then.
+    gone();
+    const st = this.device.createBuffer({ size, usage: MAP_READ | COPY_DST });
+    let A: Uint32Array;
+    try {
+      const enc = this.device.createCommandEncoder();
+      enc.copyBufferToBuffer(this.cells[0], offset, st, 0, size);
+      this.device.queue.submit([enc.finish()]);
+      await st.mapAsync(MAP_READ);
+      A = new Uint32Array(st.getMappedRange().slice(0));
+      st.unmap();
+    } finally {
+      st.destroy();
+    }
+    gone();
+    const res = feedNutrient(this.cfg, A, stats.A + stats.B + stats.C + stats.P, cx, cy, radius, amount);
+    if (res.matter !== 0) this.device.queue.writeBuffer(this.cells[0], offset, A as BufferSource);
+    return res;
   }
 
   /**

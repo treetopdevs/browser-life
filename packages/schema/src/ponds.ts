@@ -13,11 +13,19 @@
 // a donor drawn in proportion to its export (nat) or to a shuffled copy of it (shuf). Same ground rules --
 // host-side, pure, integer, matter and ledger exact -- and applyPondCycle's behaviour and output are
 // untouched; the two cycles share the landing and the measurements.
+//
+// The breeder (wild sandbox) adds the arm breed and the config key pondScore to applyPondCycle: the cycle is v1's,
+// but the donors are the ponds with the largest *score* -- a named integer measure of the pre-cycle snapshot
+// (`pondScores`) -- and, among ponds of equal score, the largest bound mass, as scaf's are. With pondScore set,
+// arms scaf and rand record the same score while choosing donors as they always do: the breeder's controls with
+// and without selection for mass. Without pondScore every v1 output is unchanged. A score is one term (its value is
+// the score) or several joined by "+", under which a pond is as good as its worst term (`pondScores`). At any
+// boundary the donors can instead be given by hand (`picks`), which is how the lab's breeder lets a person choose.
 import { totalsOf } from "./accounting.ts";
-import { cellCount, worldW, type WorldConfig } from "./config.ts";
+import { cellCount, pondScoreTerms, worldW, type PondScore, type PondTerm, type WorldConfig } from "./config.ts";
 import { cellBase, draw } from "./int.ts";
 import { CELL_CHANNELS, CH, G, GENOME_CHANNELS } from "./layout.ts";
-import { MOT_ZERO, type WorldState } from "./world.ts";
+import { MOT_ZERO, motilityReader, type WorldState } from "./world.ts";
 
 /** Salts every pond-cycle random key away from the physics and mutation streams ("POND"). */
 export const POND_SALT = 0x504f4e44;
@@ -34,7 +42,32 @@ export const POND_COLUMNS = [
  */
 export const HUNT_POND_COLUMNS = [...POND_COLUMNS, "died", "exportMass", "weight"] as const;
 
-export type PondArm = "scaf" | "rand" | "cont" | "nat" | "shuf";
+/**
+ * Column order of ponds.tsv for a run with `pondScore` (the breeder and its control): `POND_COLUMNS` plus the
+ * recipient's pre-cycle score and its donor's. Runs without `pondScore` keep their own columns.
+ */
+export const BREED_POND_COLUMNS = [...POND_COLUMNS, "score", "donorScore"] as const;
+
+/**
+ * Column order of ponds.tsv for a run with `pondScore` `score`: `BREED_POND_COLUMNS`, and for a combined score one
+ * more column per term, named by the term and in the score's order, holding the recipient's pre-cycle value of it
+ * (the `score` column of a combined score is a rank, which says nothing across cycles).
+ */
+export function breedPondColumns(score: PondScore): readonly (keyof PondRow)[] {
+  const terms = pondScoreTerms(score);
+  return terms.length === 1 ? BREED_POND_COLUMNS : [...BREED_POND_COLUMNS, ...terms];
+}
+
+export type PondArm = "scaf" | "rand" | "cont" | "nat" | "shuf" | "breed";
+
+/**
+ * The scores with conditions of their own (packages/runner/src/conditions.ts): every term (`POND_TERMS` in config.ts,
+ * which documents them; "mass" makes arm breed the scaf arm exactly) and two combinations, movement that founds
+ * ponds which last ("drive+seed") and the same with large bodies ("drive+seed+body"). Any other combination is a
+ * valid `pondScore` too (`pondScoreTerms`). Every term is an integer measure of one pre-cycle snapshot, so the cycle
+ * stays a pure function of that snapshot.
+ */
+export const POND_SCORES: readonly PondScore[] = ["mass", "drive", "reach", "seed", "body", "drive+seed", "drive+seed+body"];
 
 /**
  * One recipient's row of one cycle. Integers except `domShare`; `heat` and `light` are decimal strings
@@ -72,6 +105,21 @@ export interface PondRow {
   died?: number;
   exportMass?: number;
   weight?: number;
+  /**
+   * Rows of a run with `pondScore` only (`BREED_POND_COLUMNS`): the recipient's pre-cycle score and its donor's
+   * (0 for a row without a donor).
+   */
+  score?: number;
+  donorScore?: number;
+  /**
+   * Rows of a run with a combined `pondScore` only (`breedPondColumns`): the recipient's pre-cycle value of each of
+   * the score's terms.
+   */
+  mass?: number;
+  drive?: number;
+  reach?: number;
+  seed?: number;
+  body?: number;
 }
 
 /** Census support threshold: a cell counts toward a pond's trait, lineages and packet centre from B+P >= 48. */
@@ -82,6 +130,8 @@ const CENTRE = 32;
 /** Ranges of the config keys pondDeath and pondExport (config.ts), the current's per-boundary death and export threshold. */
 const POND_DEATH_MAX = 65_536;
 const POND_EXPORT_MAX = 32;
+/** The export-zone threshold of score "reach": the hunt's zone (Chebyshev distance >= 28, 1,071 cells). */
+const REACH_ZONE = 28;
 
 const lineageKey = (hi: number, lo: number): string => `${hi}:${lo}`;
 const pondCount = (cfg: WorldConfig): number => cfg.tilesX * cfg.tilesY;
@@ -129,9 +179,163 @@ export function pondTraits(state: WorldState): number[] {
 }
 
 /**
+ * Moving mass per pond: over cells with B+P >= 48, the sum of (B+P) * (|dx| + |dy|), where (dx, dy) is the
+ * motility term `flow` adds to the cell's displacement (`motilityReader`: 1/64 cell per step, before the
+ * displacement clamp, 0 without a lineage or with `motility` off, the reference gain in a neutral run).
+ *
+ * The support threshold is the census's and v1's trait's, on purpose: the score counts moving *bodies*. `flow`
+ * moves thinner living cells too, and they are left out, so a film of cells under 48 scores nothing however it
+ * is driven. |dx| + |dy| <= 254 (each axis reaches -127 at byte 0 and gain 255) and a pond's bound mass is at
+ * most MATTER_MAX = 2^26, so the sum stays below 2^34 and is exact.
+ */
+export function pondDrives(state: WorldState): number[] {
+  const n = cellCount(state.cfg);
+  const c = state.cells;
+  const motility = motilityReader(state);
+  return perPond(state, (i) => {
+    const m = c[CH.B * n + i] + c[CH.P * n + i];
+    if (m < SUPPORT) return 0;
+    const [dx, dy] = motility(i);
+    return m * (Math.abs(dx) + Math.abs(dy));
+  });
+}
+
+/** floor(a / b) for nonnegative safe integers a and b > 0, exactly (the remainder of doubles is exact). */
+const floorDiv = (a: number, b: number): number => (a - (a % b)) / b;
+
+/** Pond `p`'s B+P per cell as a tile-local raster (index y * tileW + x). */
+function pondBound(state: WorldState, p: number): Float64Array {
+  const cfg = state.cfg;
+  const n = cellCount(cfg);
+  const c = state.cells;
+  const out = new Float64Array(cfg.tileW * cfg.tileH);
+  for (let y = 0; y < cfg.tileH; y++)
+    for (let x = 0; x < cfg.tileW; x++) {
+      const i = cellOf(cfg, p, x, y);
+      out[y * cfg.tileW + x] = c[CH.B * n + i] + c[CH.P * n + i];
+    }
+  return out;
+}
+
+/**
+ * Expected packet mass per pond: the mean, over the cycle's own packet-centre draw (`drawPacketCentre`: a cell with
+ * B+P >= 48, probability proportional to its B+P), of the B+P in the `k` x `k` window about the centre
+ * (`packetWindow`; the packet's `reqMass`, before any truncation), rounded down. 0 for a pond without such a cell.
+ *
+ * This is what decides whether a pond's offspring ponds last: in the first breeder run a packet under about 2,800
+ * founded a pond that was empty a cycle later 19 times in 20, and one over about 3,200 a pond that lasted 19 times
+ * in 20 (docs/sandbox-wild.md). The numerator is at most (a pond's bound mass)^2 <= MATTER_MAX^2 = 2^52, so every
+ * sum is an exact integer.
+ */
+export function pondSeeds(state: WorldState, k: number): number[] {
+  const cfg = state.cfg;
+  const W = cfg.tileW, H = cfg.tileH;
+  if (!Number.isInteger(k) || k < 1 || k > Math.min(W, H)) throw new Error(`packet size k must be in 1..${Math.min(W, H)}, got ${k}`);
+  const half = k >> 1;
+  const out: number[] = [];
+  for (let p = 0; p < pondCount(cfg); p++) {
+    const m = pondBound(state, p);
+    // Window sums in two passes: along x, then along y, both wrapping inside the tile.
+    const row = new Float64Array(W * H);
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        let sum = 0;
+        for (let i = 0; i < k; i++) sum += m[y * W + ((((x + i - half) % W) + W) % W)];
+        row[y * W + x] = sum;
+      }
+    let num = 0, den = 0;
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        const w = m[y * W + x];
+        if (w < SUPPORT) continue;
+        let window = 0;
+        for (let j = 0; j < k; j++) window += row[((((y + j - half) % H) + H) % H) * W + x];
+        num += w * window;
+        den += w;
+      }
+    out.push(den > 0 ? floorDiv(num, den) : 0);
+  }
+  return out;
+}
+
+/**
+ * Body size per pond, in 1/256 cell: a body is a set of cells with B+P >= 48 connected through their four
+ * neighbours on the pond's torus, and the value is the mean number of cells in the body a unit of that bound mass
+ * sits in, floor(256 * sum(cells_i * mass_i) / sum(mass_i)) over the pond's bodies i. 0 for a pond without such a
+ * cell. A pond of round dots scores what one dot covers; larger or merged bodies score more. At most
+ * 256 * 4,096 * MATTER_MAX = 2^46, so every sum is an exact integer.
+ */
+export function pondBodies(state: WorldState): number[] {
+  const cfg = state.cfg;
+  const W = cfg.tileW, H = cfg.tileH;
+  const out: number[] = [];
+  const stack: number[] = [];
+  for (let p = 0; p < pondCount(cfg); p++) {
+    const m = pondBound(state, p);
+    const seen = new Uint8Array(W * H);
+    let num = 0, den = 0;
+    for (let start = 0; start < W * H; start++) {
+      if (seen[start] || m[start] < SUPPORT) continue;
+      let cellsIn = 0, mass = 0;
+      seen[start] = 1;
+      stack.push(start);
+      while (stack.length) {
+        const at = stack.pop()!;
+        cellsIn++;
+        mass += m[at];
+        const x = at % W, y = (at - x) / W;
+        for (const next of [y * W + ((x + 1) % W), y * W + ((x + W - 1) % W), ((y + 1) % H) * W + x, ((y + H - 1) % H) * W + x]) {
+          if (seen[next] || m[next] < SUPPORT) continue;
+          seen[next] = 1;
+          stack.push(next);
+        }
+      }
+      num += cellsIn * mass;
+      den += mass;
+    }
+    out.push(den > 0 ? floorDiv(256 * num, den) : 0);
+  }
+  return out;
+}
+
+/** Each pond's value of one term (`POND_TERMS` in config.ts) on the snapshot `state`; `k` is the packet side, which "seed" needs. */
+export function pondTermValues(state: WorldState, term: PondTerm, k?: number): number[] {
+  if (term === "mass") return pondTraits(state);
+  if (term === "drive") return pondDrives(state);
+  if (term === "reach") return pondExportMasses(state, REACH_ZONE);
+  if (term === "body") return pondBodies(state);
+  if (term === "seed") {
+    if (k === undefined) throw new Error("pond term seed needs the packet side k");
+    return pondSeeds(state, k);
+  }
+  throw new Error(`unknown pond term ${JSON.stringify(term)}`);
+}
+
+/**
+ * The combined score of ponds with the term values `values[t][pond]`: for each pond, the smallest over the terms of
+ * the number of ponds whose value of that term is strictly smaller. A pond is as good as its worst term, whatever
+ * the terms' units, so no term can be bought with another; a pond at the bottom of any term (an empty pond, or one
+ * that does not move while "drive" is a term) scores 0.
+ */
+export function worstRanks(values: number[][]): number[] {
+  if (!values.length) throw new Error("worstRanks needs at least one term");
+  return values[0].map((_, p) => Math.min(...values.map((v) => v.reduce((below, x) => below + (x < v[p] ? 1 : 0), 0))));
+}
+
+/**
+ * Each pond's `score` on the snapshot `state` (see `PondScore`): nonnegative integers, indexed by pond. One term:
+ * its values. Several: `worstRanks` of theirs. `k` is the packet side, needed when "seed" is a term.
+ */
+export function pondScores(state: WorldState, score: PondScore, k?: number): number[] {
+  const values = pondScoreTerms(score).map((term) => pondTermValues(state, term, k));
+  return values.length === 1 ? values[0] : worstRanks(values);
+}
+
+/**
  * `draw(cellBase((seed ^ POND_SALT) >>> 0, b, slot), purpose)`. Purposes 0-4 cycle, 5-6 assay source pond, 8
  * permutation; the current (nat, shuf) uses 1 (shuf's permutation, slot = pond), 3 and 4 (packet centre, slot =
- * recipient), 10 and 11 (donor draw, slot = recipient) and 12 (death, slot = pond).
+ * recipient), 10 and 11 (donor draw, slot = recipient) and 12 (death, slot = pond). Arm breed uses scaf's
+ * purposes, so it is scaf wherever the score does not separate two ponds.
  */
 export function randomKey(seed: number, b: number, slot: number, purpose: number): number {
   return draw(cellBase((seed ^ POND_SALT) >>> 0, b, slot), purpose);
@@ -300,6 +504,17 @@ export interface CycleResult {
   donors: number[];
 }
 
+/**
+ * Why `picks` cannot be the donors of a cycle over ponds of bound mass `traits` (`pondTraits` of its pre-cycle
+ * snapshot), or null: they must be one or more distinct occupied ponds.
+ */
+export function pondPickError(traits: readonly number[], picks: readonly number[]): string | null {
+  if (!picks.length) return "picks must name at least one pond";
+  for (const p of picks) if (!Number.isInteger(p) || p < 0 || p >= traits.length || traits[p] === 0) return `picked pond ${p} is not an occupied pond`;
+  if (new Set(picks).size !== picks.length) return `picks repeat a pond: ${picks.join(", ")}`;
+  return null;
+}
+
 /** Per-pond census callback of applyPondCycle and contRows, indexed by pond. */
 export type PondCensus = (s: WorldState) => { individuals: number[]; lineages: number[] };
 
@@ -337,6 +552,42 @@ function pondHeat(state: WorldState): bigint[] {
 }
 
 const cmpKey = (a: { key: number; pond: number }, b: { key: number; pond: number }): number => a.key - b.key || a.pond - b.pond;
+
+/**
+ * The donors arm `arm` chooses at boundary `b` among ponds of bound mass `traits` (and, for breed, score `scores`),
+ * in selection order: up to a quarter of the ponds, from the occupied ones. scaf: the largest bound mass, then
+ * `randomKey(seed, b, pond, 0)`; breed: the largest score, then as scaf; rand: the smallest
+ * `randomKey(seed, b, pond, 1)`.
+ */
+function armDonors(cfg: WorldConfig, b: number, arm: "scaf" | "rand" | "breed", traits: number[], scores: number[] | null): number[] {
+  const seed = cfg.seed;
+  const eligible: number[] = [];
+  for (let p = 0; p < traits.length; p++) if (traits[p] > 0) eligible.push(p);
+  const Dp = Math.min(Math.max(1, Math.floor(traits.length / 4)), eligible.length);
+  let order: { pond: number; key: number }[];
+  if (arm === "scaf") {
+    const ranked = eligible.map((pond) => ({ pond, key: randomKey(seed, b, pond, 0), trait: traits[pond] }));
+    order = ranked.sort((x, y) => y.trait - x.trait || cmpKey(x, y));
+  } else if (arm === "breed") {
+    if (scores === null) throw new Error("pond arm breed needs pondScore");
+    const ranked = eligible.map((pond) => ({ pond, key: randomKey(seed, b, pond, 0), trait: traits[pond], score: scores[pond] }));
+    order = ranked.sort((x, y) => y.score - x.score || y.trait - x.trait || cmpKey(x, y));
+  } else {
+    order = eligible.map((pond) => ({ pond, key: randomKey(seed, b, pond, 1) })).sort(cmpKey);
+  }
+  return order.slice(0, Dp).map((o) => o.pond);
+}
+
+/**
+ * The donors `applyPondCycle` would choose by itself at boundary `b` on the snapshot `pre`, in its order (empty when
+ * no pond is occupied): what a host shows a person before they pick, and what passing it back as `picks` reproduces
+ * bit for bit.
+ */
+export function pondDonors(pre: WorldState, b: number, arm: "scaf" | "rand" | "breed", k: number, score?: PondScore): number[] {
+  assertPondTiles(pre.cfg);
+  if (arm === "breed" && score === undefined) throw new Error("pond arm breed needs pondScore");
+  return armDonors(pre.cfg, b, arm, pondTraits(pre), score === undefined ? null : pondScores(pre, score, k));
+}
 
 /** A pond's A refilled uniformly to `amount`, remainder one quantum per cell in raster order. */
 function refillA(cells: Uint32Array, cfg: WorldConfig, pond: number, amount: number): void {
@@ -421,8 +672,20 @@ function landPacket(pre: WorldState, cells: Uint32Array, genome: Uint32Array, k:
  * Pure: `pre` is not mutated. `Mr` is each pond's initial matter; the post-transform state has exactly that
  * matter in every pond and the same `ledgerEnergy` as `pre`. Throws if the pre-cycle matter of any pond is not
  * `Mr` (the ledger would not close) or the post-transform matter is not.
+ *
+ * `score` is the config's `pondScore`. Arm breed needs it: its donors are the D eligible ponds (bound mass > 0,
+ * as for scaf) with the largest `pondScores`, equal scores ordered as scaf orders ponds (larger bound mass first,
+ * then `randomKey(seed, b, pond, 0)`) -- so while no pond scores above 0 the breeder is scaf, which keeps ponds
+ * productive, and a pond that scores at all outranks every pond that does not. Arms scaf and rand choose donors
+ * as without it. With `score` every row also carries `score` and `donorScore`, and under a combined score each
+ * term's value (`breedPondColumns`); without it the rows are v1's.
+ *
+ * `picks` are donors chosen by hand for this boundary (the lab's breeder): one or more distinct occupied ponds, which
+ * replace the arm's choice and donate in the order given. Everything else -- which recipient takes which donor in
+ * turn, the packet centres, the landing, the rows -- is the arm's, so a cycle whose picks are the arm's own donors
+ * in the arm's order is the arm's cycle bit for bit. Throws on a pick that is not an occupied pond or is repeated.
  */
-export function applyPondCycle(pre: WorldState, b: number, arm: "scaf" | "rand", k: number, Mr: number[], census?: PondCensus): CycleResult {
+export function applyPondCycle(pre: WorldState, b: number, arm: "scaf" | "rand" | "breed", k: number, Mr: number[], census?: PondCensus, score?: PondScore, picks?: readonly number[]): CycleResult {
   const cfg = pre.cfg;
   assertPondTiles(cfg);
   const R = pondCount(cfg);
@@ -431,25 +694,16 @@ export function applyPondCycle(pre: WorldState, b: number, arm: "scaf" | "rand",
   const preMatter = pondMatter(pre);
   for (let p = 0; p < R; p++) if (preMatter[p] !== Mr[p]) throw new Error(`pond ${p} holds matter ${preMatter[p]} before the cycle, not ${Mr[p]}`);
 
+  if (arm === "breed" && score === undefined) throw new Error("pond arm breed needs pondScore");
   const seed = cfg.seed;
   const traits = pondTraits(pre);
-  const eligible: number[] = [];
-  for (let p = 0; p < R; p++) if (traits[p] > 0) eligible.push(p);
-  const D = Math.max(1, Math.floor(R / 4));
-  const Dp = Math.min(D, eligible.length);
-
-  const donors: number[] = [];
-  if (Dp > 0) {
-    if (arm === "scaf") {
-      const order = eligible.map((pond) => ({ pond, key: randomKey(seed, b, pond, 0), trait: traits[pond] }));
-      order.sort((x, y) => y.trait - x.trait || cmpKey(x, y));
-      for (let d = 0; d < Dp; d++) donors.push(order[d].pond);
-    } else {
-      const order = eligible.map((pond) => ({ pond, key: randomKey(seed, b, pond, 1) }));
-      order.sort(cmpKey);
-      for (let d = 0; d < Dp; d++) donors.push(order[d].pond);
-    }
-  }
+  const terms = score === undefined ? null : pondScoreTerms(score);
+  const termValues = terms === null ? null : terms.map((term) => pondTermValues(pre, term, k));
+  const scores = termValues === null ? null : termValues.length === 1 ? termValues[0] : worstRanks(termValues);
+  const pickError = picks === undefined ? null : pondPickError(traits, picks);
+  if (pickError) throw new Error(pickError);
+  const donors = picks !== undefined ? [...picks] : armDonors(cfg, b, arm, traits, scores);
+  const Dp = donors.length;
 
   const heatPond = pondHeat(pre);
   const lightPond = new Array<bigint>(R).fill(0n);
@@ -480,6 +734,13 @@ export function applyPondCycle(pre: WorldState, b: number, arm: "scaf" | "rand",
       rows.push(Object.assign(makeRow(pre, b, r, donor, traits, cen, lineages, heatPond[r], light), packet));
     }
   }
+
+  if (scores)
+    for (const row of rows) {
+      row.score = scores[row.recipient];
+      row.donorScore = row.donor >= 0 ? scores[row.donor] : 0;
+      if (terms!.length > 1) terms!.forEach((term, t) => (row[term] = termValues![t][row.recipient]));
+    }
 
   const heat = heatPond.reduce((a, h) => a + h, 0n);
   const light = lightPond.reduce((a, l) => a + l, 0n);

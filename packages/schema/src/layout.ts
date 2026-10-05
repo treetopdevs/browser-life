@@ -82,6 +82,7 @@ export const RND = {
   MUT: 34,
   MUT_WHICH: 35,
   MUT_DELTA: 36,
+  INJURY: 37, // WorldConfig.injuryPeriod (ownership sandbox); unused without it
 } as const;
 
 /**

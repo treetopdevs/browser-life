@@ -26,9 +26,13 @@ export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2"];
 /** Why this island will not run `spec`, or null. A branch run (RunSpec.branch)
  * starts from a source checkpoint that only tools/run.ts reads, from a local
  * bundle: branches are not distributed, the coordinator never builds one, and
- * a task that carries one is refused before anything is fetched. */
+ * a task that carries one is refused before anything is fetched. A picked run
+ * (RunSpec.picked) takes its donors from a picker or a record that no segment
+ * carries, so it is refused the same way. */
 export function specRefusal(spec: RunSpec): string | null {
-  return (spec as { branch?: unknown }).branch === undefined ? null : "the spec is a branch run (spec.branch); branches are not distributed, so an island does not run them";
+  if ((spec as { branch?: unknown }).branch !== undefined) return "the spec is a branch run (spec.branch); branches are not distributed, so an island does not run them";
+  if ((spec as { picked?: unknown }).picked !== undefined) return "the spec is a picked run (spec.picked); picked runs are not distributed, so an island does not run them";
+  return null;
 }
 
 export interface Task {

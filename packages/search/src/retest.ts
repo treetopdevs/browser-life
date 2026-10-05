@@ -3,11 +3,12 @@
 // built on it. Shared by tools/retest.ts and the founder-set tests so that
 // packages/schema/src/founders.ts can be regenerated and checked exactly.
 
-import { digestWords, NN_BYTES } from "@bl/schema";
+import { digestWords, NN_BYTES, ringsOf } from "@bl/schema";
 import { passesProbabilityGate, PROBABILITY_GATE } from "@bl/metrics";
 import type { Evaluation } from "./evaluate.ts";
 
-export type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[] };
+/** `rings` (kernel ring offsets, WorldConfig.shapeReach) is present only when some offset is non-zero. */
+export type EncGenome = { mu: number; sigma: number; motGain: number; weights: number[]; rings?: number[] };
 
 /** One retested genome; `cluster` is its M3 genetic cluster (null for reference genomes such as the generalist). */
 export interface RetestRow {
@@ -152,6 +153,9 @@ export function founderSetId(genomes: EncGenome[]): string {
   for (const g of genomes) {
     if (g.weights.length !== NN_BYTES) throw new Error(`founder has ${g.weights.length} weights, expected ${NN_BYTES}`);
     words.push(g.mu >>> 0, g.sigma >>> 0, g.motGain >>> 0, ...g.weights.map((w) => w & 0xff));
+    // Non-zero ring offsets follow a marker no mu can equal (mu <= 0xffff), so neutral sets keep their ids.
+    const r = ringsOf(g);
+    if (r) words.push(0x52494e47, r[0] & 0xff, r[1] & 0xff, r[2] & 0xff);
   }
   const [a, b] = digestWords(Uint32Array.from(words));
   return `m3-${a.toString(16).padStart(8, "0")}${b.toString(16).padStart(8, "0")}`;
@@ -176,7 +180,7 @@ export function poolCounts(a: Evaluation, b: Evaluation): Evaluation {
  * A selected genome without a replication row is an error, not a pass.
  */
 export function replicatedFounders(selected: RetestRow[], replication: ReplicateRow[]): { row: RetestRow; replication: ReplicateRow; pooled: Evaluation }[] {
-  const key = (g: EncGenome) => JSON.stringify([g.mu, g.sigma, g.motGain, g.weights]);
+  const key = (g: EncGenome) => JSON.stringify([g.mu, g.sigma, g.motGain, g.weights, ...(ringsOf(g) ? [ringsOf(g)] : [])]);
   const by = new Map(replication.map((r) => [key(r.genome), r]));
   return selected.flatMap((row) => {
     const rep = by.get(key(row.genome));

@@ -2,7 +2,7 @@ import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, RING_CELL_MASK, cellCount, 
 import { CELL_CHANNELS, CH, FLUX_COUNT, G, GENOME_CHANNELS } from "./layout.ts";
 import { encodeGenome, generalistGenome, randomGenome, type Genome } from "./genome.ts";
 import { founderGenome, M3_FOUNDERS } from "./founders.ts";
-import { draw, lowbias32 } from "./int.ts";
+import { divi, draw, lowbias32 } from "./int.ts";
 
 /** Complete simulation state. Channel-major: arr[ch * N + cell]. */
 export interface WorldState {
@@ -16,14 +16,18 @@ export interface WorldState {
   flux: bigint[];
 }
 
-/** An experimenter intervention, logged so a run can be replayed exactly. */
-export interface Intervention {
-  step: number;
-  kind: "lesion";
-  x: number;
-  y: number;
-  r: number;
-}
+/**
+ * An experimenter intervention, logged so a run can be replayed exactly. A lesion converts matter in
+ * place. A feed (feed.ts) adds `amount` quanta of nutrient to each cell of the disc, or drains up to
+ * that many when negative; `matter` is the net quanta it added to the world, which is no longer closed
+ * in matter across it. A pick (the lab's breeder) names the donor ponds of the pond cycle at boundary
+ * `cycle` (`step` = `cycle` * pondPeriod), in order, in place of the arm's own (`applyPondCycle`'s
+ * `picks`); unlike the others it is part of that step's boundary, not something done after it.
+ */
+export type Intervention =
+  | { step: number; kind: "lesion"; x: number; y: number; r: number }
+  | { step: number; kind: "feed"; x: number; y: number; r: number; amount: number; matter: number }
+  | { step: number; kind: "pick"; cycle: number; donors: number[] };
 
 export interface Founder {
   x: number;
@@ -60,6 +64,31 @@ export function allocState(cfg: WorldConfig): WorldState {
 
 /** CH.MOT of a cell at rest, (mx+128) | (my+128) << 8 with mx = my = 0: the same value as @bl/sim-ref's MOT_ZERO. */
 export const MOT_ZERO = 128 | (128 << 8);
+
+/**
+ * The motility term `flow` adds to one axis of a living cell's displacement, in 1/64 cell per step, from that
+ * axis's byte of CH.MOT and the expressed motility gain: (byte - 128) * gain / 256, truncated toward zero.
+ * packages/sim-ref/src/step.ts calls this, so a readout built on it cannot drift from the rule.
+ */
+export const motilityTerm = (byte: number, gain: number): number => divi((byte - 128) * gain, 256);
+
+/**
+ * A reader of the motility term of `state`'s cells: `(i) => [dx, dy]`, what `flow` adds to cell i's displacement
+ * on the next step before the displacement clamp. [0, 0] for a cell without a lineage and everywhere when the
+ * config has `motility` off; in a neutral run the gain is the reference genome's, as every cell expresses it.
+ */
+export function motilityReader(state: WorldState): (i: number) => [number, number] {
+  const cfg = state.cfg;
+  const n = cellCount(cfg);
+  const { cells, genome } = state;
+  const refGain = cfg.neutral ? encodeGenome(generalistGenome(cfg.defaultMu, cfg.defaultSigma), 0, 0)[G.PARAM1] & 0xff : null;
+  return (i) => {
+    if (!cfg.motility || (genome[G.LIN_HI * n + i] | genome[G.LIN_LO * n + i]) === 0) return [0, 0];
+    const gain = refGain ?? genome[G.PARAM1 * n + i] & 0xff;
+    const mot = cells[CH.MOT * n + i];
+    return [motilityTerm(mot & 0xff, gain), motilityTerm((mot >>> 8) & 0xff, gain)];
+  };
+}
 
 export function buildWorld(cfg: WorldConfig, spec: InitSpec): WorldState {
   const s = allocState(cfg);

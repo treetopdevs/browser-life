@@ -3,13 +3,15 @@ import {
   applyMigration, cellCount, cloneState, defaultConfig, buildWorld, encodeCheckpoint, generalistGenome, initWorld, MAX_STEP, presetConfig, PRESETS, stateHash, CH,
   type WorldConfig, type WorldState,
 } from "@bl/schema";
-import { applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
+import { applyCellPass, applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
+import { M3_FOUNDERS, founderGenome } from "@bl/schema";
+import { applyFeed, applyPondCycle, clampLesionRadius, pondDonors, pondMatter, pondTermValues, pondTraits, POND_TERMS, type Intervention } from "@bl/schema";
 import {
-  applyBoundary, decodeArtifact, observeCensus, pondContext, pondContinuationError, restoreObservers, serializeObservers,
+  applyBoundary, decodeArtifact, observeCensus, pondCensus, pondContext, pondContinuationError, restoreObservers, serializeObservers,
   type ObserverState, type PondCycle,
 } from "@bl/runner";
 import { MutationEdges } from "@bl/lineage";
-import { LabExecution, type LabSimulation } from "../src/execution.ts";
+import { LabExecution, PondWaitingError, type LabSimulation, type PondSurvey } from "../src/execution.ts";
 
 const settings = { censusEvery: 100, deepEvery: 5, activityThreshold: null };
 function initial(step = 0, migration = 0) {
@@ -62,6 +64,16 @@ class CpuSimulation implements LabSimulation {
     this.ref = new RefSim(cloneState(state));
   }
   destroy() { this.destroyed = true; }
+  lesion(cx: number, cy: number, r: number) {
+    const eff = clampLesionRadius(this.cfg, r);
+    applyLesion(this.ref, cx, cy, eff);
+    return eff;
+  }
+  async feed(cx: number, cy: number, r: number, amount: number) {
+    await this.beforeFeed?.();
+    return applyFeed(this.ref.state, cx, cy, r, amount);
+  }
+  beforeFeed?: () => Promise<void>;
 }
 function setup(state = initial(), overrides: Partial<ConstructorParameters<typeof LabExecution>[2]> = {}) {
   const sim = new CpuSimulation(state);
@@ -301,6 +313,151 @@ async function runnerReference(start: WorldState, to: number) {
   return at;
 }
 
+describe("lab execution of fed worlds", () => {
+  it("carries the feed total in the observer state, through a checkpoint artifact and a restore", async () => {
+    const { execution } = setup();
+    expect(execution.fed).toEqual({ matter: 0, feeds: 0 });
+    await execution.advanceFrame(100);
+    // A never-fed history's observer state has no `fed` field, so its artifact and digest are as before.
+    expect("fed" in (await execution.checkpoint()).observer).toBe(false);
+    execution.recordFeed(464);
+    execution.recordFeed(-64);
+    expect(execution.fed).toEqual({ matter: 400, feeds: 2 });
+    expect(() => execution.recordFeed(1.5)).toThrow(/not an integer/);
+    const saved = await execution.checkpoint();
+    expect(saved.observer.fed).toEqual({ matter: 400, feeds: 2 });
+    const artifact = decodeArtifact(encodeCheckpoint(saved.state, saved.observer));
+    expect(artifact.observer.fed).toEqual({ matter: 400, feeds: 2 });
+    const resumed = setup(artifact.state, { observer: artifact.observer as ObserverState });
+    expect(resumed.execution.fed).toEqual({ matter: 400, feeds: 2 });
+    resumed.execution.recordFeed(8);
+    expect((await resumed.execution.checkpoint()).observer.fed).toEqual({ matter: 408, feeds: 3 });
+    // A malformed total in a file from elsewhere is refused at decode, not added to.
+    for (const fed of [{ matter: "400", feeds: "2" }, {}, { matter: 400, feeds: 0 }, { matter: 1.5, feeds: 1 }, null])
+      expect(() => decodeArtifact(encodeCheckpoint(saved.state, { ...saved.observer, fed } as unknown as ObserverState))).toThrow(/observer fed is malformed/);
+  });
+});
+
+describe("lab execution replaying logged interventions", () => {
+  // The observed history: a checkpoint at t=100 that has seen nothing, a feed at that same step, a lesion
+  // and a drain at t=150 (inside a census interval), a lesion at the census step t=200, then on to t=300.
+  // Returns the log as the worker would have written it, and the observed world at t=200 (after its
+  // lesion) and t=300.
+  async function observed() {
+    const { sim, execution } = setup();
+    await execution.advanceFrame(100);
+    const start = await execution.checkpoint();
+    const log: Intervention[] = [];
+    const feed = async (x: number, y: number, r: number, amount: number) => {
+      const step = sim.step, res = await sim.feed(x, y, r, amount);
+      execution.recordFeed(res.matter);
+      log.push({ step, kind: "feed", x, y, r: res.radius, amount, matter: res.matter });
+    };
+    await feed(3, 3, 2, 24);
+    await execution.advanceFrame(50);
+    log.push({ step: sim.step, kind: "lesion", x: 3, y: 3, r: sim.lesion(3, 3, 1) });
+    await feed(11, 4, 2, -5);
+    // Settle to the census at t=200, then a lesion there that removes the founder: made after that
+    // census, so its deaths belong to the census at t=300. A replay that applied it before observing
+    // t=200 would reach the same physics with a different observer history.
+    await execution.checkpoint();
+    log.push({ step: sim.step, kind: "lesion", x: 3, y: 3, r: sim.lesion(3, 3, 3) });
+    const at200 = await execution.checkpoint();
+    await execution.advanceFrame(100);
+    const at300 = await execution.checkpoint();
+    expect(log.map((iv) => iv.step)).toEqual([100, 150, 150, 200]);
+    expect(JSON.stringify(at300.observer.tracker)).not.toBe(JSON.stringify(at200.observer.tracker));
+    expect(log.filter((iv) => iv.kind === "feed").every((iv) => iv.kind === "feed" && iv.matter !== 0)).toBe(true);
+    return { start, log, at200, at300 };
+  }
+  const resume = (h: Awaited<ReturnType<typeof observed>>, booked: Intervention[] = []) =>
+    setup(h.start.state, { observer: h.start.observer, onReplayed: (iv) => { booked.push(iv); } });
+  const same = (a: { state: WorldState; observer: ObserverState }, b: { state: WorldState; observer: ObserverState }) => {
+    expect(stateHash(a.state)).toBe(stateHash(b.state));
+    expect(JSON.stringify(a.observer)).toBe(JSON.stringify(b.observer));
+  };
+
+  it("reaches the observed world, physics and observer, booking each intervention once and in order", async () => {
+    const h = await observed();
+    const booked: Intervention[] = [];
+    const { execution } = resume(h, booked);
+    execution.queueReplay(h.log);
+    expect(execution.pendingReplay.length).toBe(4);
+    // Frames of any size (to t=130, 200 and 300): the traversal stops at each intervention's step by itself.
+    for (const n of [30, 500, 500]) await execution.advanceFrame(n);
+    same(await execution.checkpoint(), h.at300);
+    expect(booked).toEqual(h.log);
+    expect(execution.pendingReplay.length).toBe(0);
+    expect(execution.fed).toEqual(h.at300.observer.fed);
+    // Without the replay the same steps reach a different world.
+    const plain = resume(h);
+    for (const n of [500, 500]) await plain.execution.advanceFrame(n);
+    expect(stateHash((await plain.execution.checkpoint()).state)).not.toBe(stateHash(h.at300.state));
+  });
+
+  it("applies due interventions when a checkpoint settles, at its own step and on the way to the census", async () => {
+    const h = await observed();
+    // At the checkpoint's own step, before any frame: the feed logged at t=100 is due at once.
+    const a = resume(h);
+    a.execution.queueReplay(h.log);
+    const saved = await a.execution.checkpoint();
+    expect(saved.state.step).toBe(100);
+    expect(saved.observer.fed?.feeds).toBe(1);
+    expect(a.execution.pendingReplay.length).toBe(3);
+    // A zero-step frame applies what is due at the current step and moves nothing: how a jump makes the
+    // restored world whole before anything reads it.
+    const c = resume(h);
+    c.execution.queueReplay(h.log);
+    expect(await c.execution.advanceFrame(0)).toBe(0);
+    expect([c.sim.step, c.execution.pendingReplay.length, c.execution.fed.feeds]).toEqual([100, 3, 1]);
+    // Stopped at t=130 with the lesion and the drain still queued for t=150: settlement to the census at
+    // t=200 must stop there, apply them, observe t=200, and then apply the lesion logged at t=200.
+    const b = resume(h);
+    b.execution.queueReplay(h.log);
+    await b.execution.advanceFrame(30);
+    expect(b.sim.step).toBe(130);
+    expect(b.execution.pendingReplay.length).toBe(3);
+    same(await b.execution.checkpoint(), h.at200);
+    expect(b.execution.pendingReplay.length).toBe(0);
+  });
+
+  it("replays the same interventions in the verification twin", async () => {
+    const h = await observed();
+    const { execution } = resume(h);
+    execution.queueReplay(h.log);
+    const v = await execution.verify(200, async (state) => new CpuSimulation(state));
+    expect(v.twinHash).toBe(v.liveHash);
+    expect(v.liveHash).toBe(stateHash(h.at300.state));
+  });
+
+  it("marks the world failed when a replayed feed does not move what the log says, and goes no further", async () => {
+    const h = await observed();
+    const wrong = h.log.map((iv) => (iv.kind === "feed" && iv.step === 150 ? { ...iv, matter: iv.matter - 1 } : iv));
+    const { sim, execution } = resume(h);
+    execution.queueReplay(wrong);
+    await expect((async () => { for (const n of [500, 500]) await execution.advanceFrame(n); })()).rejects.toThrow(/not the observed history/);
+    expect(execution.failure).toMatch(/not the observed history/);
+    const stuck = sim.step;
+    await expect(execution.advanceFrame(10)).rejects.toThrow(/not the observed history/);
+    await expect(execution.checkpoint()).rejects.toThrow(/not the observed history/);
+    expect(sim.step).toBe(stuck);
+    // The failed entry was not dropped, nor the one after it.
+    expect(execution.pendingReplay.length).toBe(2);
+  });
+
+  it("refuses a queue behind the world or out of order, and drops the queue on request", async () => {
+    const h = await observed();
+    const { execution } = resume(h);
+    expect(() => execution.queueReplay([{ step: 99, kind: "lesion", x: 1, y: 1, r: 1 }])).toThrow(/behind t=100/);
+    expect(() => execution.queueReplay([h.log[1], h.log[0]])).toThrow(/behind t=150/);
+    execution.queueReplay(h.log);
+    expect(execution.dropReplay()).toBe(4);
+    expect(execution.pendingReplay.length).toBe(0);
+    await execution.advanceFrame(100);
+    expect(execution.fed).toEqual({ matter: 0, feeds: 0 });
+  });
+});
+
 describe("lab execution of pond worlds", () => {
   it("cycles at census boundaries exactly as the runner's helper does, in checkpoints, the replay twin and a restore", async () => {
     const start = pondWorld();
@@ -417,4 +574,288 @@ describe("lab execution of pond worlds", () => {
     expect(execution.failure).toBeNull();
     expect((await execution.checkpoint()).observer.ponds).toEqual({ lastCycle: 1 });
   }, 30_000);
+});
+
+// Breeder mode: at a pond boundary the census is taken and the cycle waits for a person's donors.
+describe("lab execution in breeder mode", () => {
+  /** A pond world in breeder mode, with the surveys it stopped on. */
+  function breeder(state = pondWorld(), overrides: Partial<ConstructorParameters<typeof LabExecution>[2]> = {}) {
+    const surveys: PondSurvey[] = [];
+    const s = pondSetup(state, { onPondAwait: (survey) => { surveys.push(survey); }, ...overrides });
+    s.execution.setHandPicks(true);
+    return { ...s, surveys };
+  }
+  /** The reference world `steps` steps on from `start`, with no cycle applied. */
+  function stepped(start: WorldState, steps: number): WorldState {
+    const ref = new RefSim(cloneState(start));
+    ref.run(steps);
+    return cloneState(ref.state);
+  }
+
+  it("stops at the boundary with the census taken and the cycle not applied, and holds the world there", async () => {
+    const start = pondWorld();
+    const { sim, execution, observed, cycles, surveys } = breeder(start);
+    expect(execution.handPicks).toBe(true);
+    expect(await execution.advanceFrame(2)).toBe(2);
+    expect(execution.awaiting).toBeNull();
+    expect(await execution.advanceFrame(2)).toBe(2);
+    const pre = stepped(start, 4);
+    const waiting = execution.awaiting!;
+    expect(surveys).toEqual([waiting]);
+    expect([waiting.step, waiting.cycle]).toEqual([4, 1]);
+    expect(waiting.suggested).toEqual(pondDonors(pre, 1, "scaf", 8));
+    expect(waiting.suggested).toHaveLength(1);
+    for (const term of POND_TERMS) expect(waiting.terms[term]).toEqual(pondTermValues(pre, term, 8));
+    // The census of t=4 saw the pre-cycle world; nothing was uploaded, and the world is that pre-cycle state.
+    expect(observed).toEqual([2, 4]);
+    expect(cycles).toEqual([]);
+    expect(sim.uploads).toEqual([]);
+    expect(stateHash(await sim.readState())).toBe(stateHash(pre));
+    // It goes nowhere and cannot be saved, verified, queued or taken out of breeder mode until the donors are in.
+    expect(await execution.advanceFrame(10)).toBe(0);
+    expect(sim.step).toBe(4);
+    await expect(execution.checkpoint()).rejects.toThrow(/pond cycle 1 at t=4 is waiting for its donors; choose them before you save or read this world/);
+    await expect(execution.verify(2, async (state) => new CpuSimulation(state))).rejects.toThrow(/waiting for its donors; choose them before you verify/);
+    // A refusal, not a failure: the worker answers it as "refused" and the world stays usable.
+    await expect(execution.verify(2, async (state) => new CpuSimulation(state))).rejects.toBeInstanceOf(PondWaitingError);
+    expect(() => execution.queueReplay([])).toThrow(/waiting for its donors; choose them before you queue a replay/);
+    expect(() => execution.setHandPicks(false)).toThrow(/waiting for its donors; choose them before you leave breeder mode/);
+    expect(execution.failure).toBeNull();
+    expect(execution.awaiting).toBe(waiting);
+  });
+
+  it("refuses, without failing, a checkpoint that settles onto a boundary which then waits", async () => {
+    const { sim, execution } = breeder();
+    await execution.advanceFrame(2);
+    expect(await execution.advanceFrame(1)).toBe(1);
+    // Settling to the next census runs the world onto the boundary at t=4: it waits there, and nothing is saved.
+    const refusal = await execution.checkpoint().then(() => null, (e) => e);
+    expect(refusal).toBeInstanceOf(PondWaitingError);
+    expect(String(refusal)).toMatch(/pond cycle 1 at t=4 is waiting for its donors/);
+    expect(sim.step).toBe(4);
+    expect(sim.uploads).toEqual([]);
+    expect(execution.failure).toBeNull();
+    expect(execution.awaiting!.step).toBe(4);
+    await execution.resolvePond(null);
+    const saved = await execution.checkpoint();
+    expect([saved.state.step, saved.advanced, saved.observer.ponds]).toEqual([4, 0, { lastCycle: 1 }]);
+  });
+
+  it("applies the picked donors exactly as the cycle with picks does, and then goes on to wait at the next boundary", async () => {
+    const start = pondWorld();
+    const { sim, execution, cycles, observed } = breeder(start);
+    await execution.advanceFrame(4);
+    await execution.advanceFrame(4);
+    const pre = stepped(start, 4);
+    const picks = [2, 0];
+    // Picks that cannot be donors are refused and leave the world waiting, unharmed.
+    await expect(execution.resolvePond([])).rejects.toThrow(/picks must name at least one pond/);
+    await expect(execution.resolvePond([9])).rejects.toThrow(/picked pond 9 is not an occupied pond/);
+    await expect(execution.resolvePond([1, 1])).rejects.toThrow(/picks repeat a pond: 1, 1/);
+    expect(execution.failure).toBeNull();
+    expect(execution.awaiting).not.toBeNull();
+    expect(sim.uploads).toEqual([]);
+
+    expect(await execution.resolvePond(picks)).toEqual({ step: 4, cycle: 1, donors: picks });
+    const want = applyPondCycle(pre, 1, "scaf", 8, pondMatter(start), pondCensus, undefined, picks);
+    expect(stateHash(await sim.readState())).toBe(stateHash(want.state));
+    expect(cycles).toEqual([{ step: 4, b: 1, donors: picks }]);
+    expect(execution.awaiting).toBeNull();
+    await expect(execution.resolvePond(picks)).rejects.toThrow(/no pond cycle is waiting for donors/);
+    // The checkpoint at the boundary is the post-cycle world with its cycle recorded, as any pond checkpoint.
+    const at4 = await execution.checkpoint();
+    expect(at4.advanced).toBe(0);
+    expect(at4.observer.ponds).toEqual({ lastCycle: 1 });
+    expect(pondContinuationError(at4.state.cfg, at4.observer, at4.state.step)).toBeNull();
+    expect(await execution.advanceFrame(2)).toBe(2);
+    expect(await execution.advanceFrame(2)).toBe(2);
+    expect(execution.awaiting!.cycle).toBe(2);
+    expect(observed).toEqual([2, 4, 6, 8]);
+  });
+
+  it("with the rule's own donors is the world the rule makes without breeder mode, physics and observer", async () => {
+    const start = pondWorld();
+    const ref = await runnerReference(start, 4);
+    const { execution } = breeder(start);
+    await execution.advanceFrame(2);
+    await execution.advanceFrame(2);
+    const suggested = execution.awaiting!.suggested;
+    expect(await execution.resolvePond(null)).toEqual({ step: 4, cycle: 1, donors: suggested });
+    const at4 = await execution.checkpoint();
+    expect(stateHash(at4.state)).toBe(ref.get(4)!.hash);
+    expect(at4.observer).toEqual(ref.get(4)!.observer);
+    expect(suggested).toEqual(ref.get(4)!.cycle!.donors);
+    // Out of breeder mode again, the next boundary cycles by itself.
+    execution.setHandPicks(false);
+    expect(execution.handPicks).toBe(false);
+  });
+
+  it("replays logged picks without waiting, live and in the twin, and waits again past the replayed history", async () => {
+    const start = pondWorld();
+    // The observed history: picks at the boundaries t=4 and t=8, then on to the census at t=10.
+    const first = breeder(start);
+    const log: Intervention[] = [];
+    for (const donors of [[3, 1], [0]]) {
+      while (!first.execution.awaiting) await first.execution.advanceFrame(2);
+      const done = await first.execution.resolvePond(donors);
+      log.push({ step: done.step, kind: "pick", cycle: done.cycle, donors: done.donors });
+    }
+    await first.execution.advanceFrame(2);
+    const seen = await first.execution.checkpoint();
+    expect(log).toEqual([{ step: 4, kind: "pick", cycle: 1, donors: [3, 1] }, { step: 8, kind: "pick", cycle: 2, donors: [0] }]);
+    expect(seen.state.step).toBe(10);
+
+    // A jump back to the start replays it: the picks come from the queue, in order, and no boundary waits.
+    const booked: Intervention[] = [];
+    const again = breeder(start, { onReplayed: (iv) => { booked.push(iv); } });
+    again.execution.queueReplay(log, 10);
+    for (let n = 0; n < 5; n++) expect(await again.execution.advanceFrame(2)).toBe(2);
+    expect(again.surveys).toEqual([]);
+    expect(booked).toEqual(log);
+    expect(again.execution.pendingReplay).toEqual([]);
+    expect(again.cycles.map((c) => c.donors)).toEqual([[3, 1], [0]]);
+    const replayed = await again.execution.checkpoint();
+    expect(stateHash(replayed.state)).toBe(stateHash(seen.state));
+    expect(JSON.stringify(replayed.observer)).toBe(JSON.stringify(seen.observer));
+    // Past the replayed history the next boundary is new, and waits.
+    expect(await again.execution.advanceFrame(2)).toBe(2);
+    expect(again.execution.awaiting!.step).toBe(12);
+
+    // The verification twin takes the same picks from its own copy of the queue.
+    const twin = breeder(start);
+    twin.execution.queueReplay(log, 10);
+    const v = await twin.execution.verify(10, async (state) => new CpuSimulation(state));
+    expect(v.twinHash).toBe(v.liveHash);
+    expect(v.liveHash).toBe(stateHash(seen.state));
+
+    // A horizon short of the history's end (a second jump made during a first one's replay, which had dropped the
+    // pick at t=8): the boundary at t=8 is past it, so it waits instead of taking the rule's donors unasked.
+    const short = breeder(start);
+    short.execution.queueReplay(log.slice(0, 1), 7);
+    expect(short.execution.replayHorizon).toBe(7);
+    for (let n = 0; n < 4; n++) await short.execution.advanceFrame(2);
+    expect(short.cycles.map((c) => c.donors)).toEqual([[3, 1]]);
+    expect(short.execution.awaiting!.step).toBe(8);
+    expect(short.execution.dropReplay()).toBe(0);
+    expect(short.execution.replayHorizon).toBe(0);
+
+    // A boundary of the replayed history without a logged pick takes the rule's donors, as it did when first run.
+    const ruled = breeder(start);
+    ruled.execution.queueReplay([], 6);
+    for (let n = 0; n < 3; n++) await ruled.execution.advanceFrame(2);
+    expect(ruled.surveys).toEqual([]);
+    expect(stateHash((await ruled.execution.checkpoint()).state)).toBe((await runnerReference(start, 6)).get(6)!.hash);
+  });
+
+  it("refuses to verify across a boundary that would wait, and a logged pick that is not at a pond boundary", async () => {
+    const { execution } = breeder();
+    await expect(execution.verify(4, async (state) => new CpuSimulation(state))).rejects.toThrow(/verifying 4 steps would pass the pond boundary at t=4, which waits for donors in breeder mode/);
+    // A refusal, not a failure: the worker answers it as "refused" and the world stays usable.
+    await expect(execution.verify(4, async (state) => new CpuSimulation(state))).rejects.toBeInstanceOf(PondWaitingError);
+    expect(execution.failure).toBeNull();
+    const short = await execution.verify(2, async (state) => new CpuSimulation(state));
+    expect(short.twinHash).toBe(short.liveHash);
+
+    // At a census that is no pond boundary the pick has no cycle to belong to; off the census grid it is never reached as one.
+    const census = breeder();
+    census.execution.queueReplay([{ step: 2, kind: "pick", cycle: 1, donors: [0] }]);
+    await expect(census.execution.advanceFrame(2)).rejects.toThrow(/donors were picked for t=2, which is not a pond boundary/);
+    expect(census.execution.failure).toMatch(/census at t=2 failed/);
+    const off = breeder();
+    off.execution.queueReplay([{ step: 1, kind: "pick", cycle: 1, donors: [0] }]);
+    await expect(off.execution.advanceFrame(2)).rejects.toThrow(/replay met a logged pick at t=1 away from its pond boundary/);
+  });
+
+  it("does not wait where there is nothing to choose: an ended history, or an arm without donors", async () => {
+    // No pond is occupied: the cycle clears the world as ever.
+    const empty = pondWorld();
+    const n = cellCount(empty.cfg);
+    for (let i = 0; i < n; i++) {
+      empty.cells[CH.A * n + i] += empty.cells[CH.B * n + i] + empty.cells[CH.P * n + i];
+      empty.cells[CH.B * n + i] = 0;
+      empty.cells[CH.P * n + i] = 0;
+    }
+    expect(pondTraits(empty).every((t) => t === 0)).toBe(true);
+    const ended = breeder(empty);
+    await ended.execution.advanceFrame(2);
+    await ended.execution.advanceFrame(2);
+    expect(ended.execution.awaiting).toBeNull();
+    expect(ended.surveys).toEqual([]);
+    expect(ended.cycles).toEqual([{ step: 4, b: 1, donors: [] }]);
+
+    const cont = breeder(pondWorld(2, { pondArm: "cont" }));
+    await cont.execution.advanceFrame(2);
+    expect(cont.execution.awaiting).toBeNull();
+    expect(cont.cycles).toEqual([{ step: 4, b: 1, donors: [] }]);
+    expect(cont.sim.uploads).toEqual([]);
+  });
+
+  it("marks the world failed when the picked cycle cannot be applied", async () => {
+    const { sim, execution } = breeder(pondWorld(2));
+    await execution.advanceFrame(2);
+    expect(execution.awaiting!.step).toBe(4);
+    sim.fail = "migration";
+    await expect(execution.resolvePond([0])).rejects.toThrow(/migration failed/);
+    expect(execution.failure).toMatch(/census at t=4 failed \(migration failed\)/);
+    await expect(execution.advanceFrame(2)).rejects.toThrow(/census at t=4 failed/);
+  });
+});
+
+describe("lab execution of declared-cell worlds", () => {
+  const cfg = defaultConfig({ tileW: 24, tileH: 24, kernelRadius: 3, seed: 79, mutRate: 0, cellPeriod: 100, cellMutProb: 2 ** 32 });
+  // Two separate bodies of one founder under one id, so the first pass has a daughter to declare.
+  const start = () => {
+    const s = buildWorld(cfg, {
+      nutrient: 32,
+      founders: [[6, 6], [18, 18]].map(([x, y]) => ({ x, y, radius: 4, genome: founderGenome(M3_FOUNDERS[0]), biomass: 200, energy: 400 })),
+    });
+    const n = cellCount(cfg);
+    for (let i = 0; i < n; i++) if (s.genome[n + i] === 2) s.genome[n + i] = 1; // G.LIN_LO: the second disc takes the first's id
+    return s;
+  };
+
+  it("applies the pass at its boundaries as the reference does, records births as edges, and replays them in the twin", async () => {
+    const { sim, execution } = setup(start());
+    const ref = new RefSim(cloneState(start()));
+    const want = new MutationEdges();
+    for (let step = 100; step <= 300; step += 100) {
+      ref.run(100);
+      want.append(applyCellPass(ref.state));
+    }
+    const births = want.length;
+    for (let k = 0; k < 3; k++) expect(await execution.advanceFrame(100)).toBe(100);
+    const saved = await execution.checkpoint();
+    expect(stateHash(saved.state)).toBe(stateHash(ref.state));
+    expect(births).toBeGreaterThan(0);
+    // The genealogy itself, not only its size: every birth edge with its parent, as the reference minted it.
+    expect(Array.from(execution.edges.words())).toEqual(Array.from(want.words()));
+    expect(saved.observer.mutations).toBe(births);
+    expect(sim.uploads.length).toBeGreaterThan(0);
+
+    // A checkpoint taken at a pass step carries the post-pass state: a world restored from its encoded
+    // artifact continues exactly as the uninterrupted one, observer and edges included, and does not
+    // repeat the pass it was saved at.
+    const artifact = decodeArtifact(encodeCheckpoint(saved.state, saved.observer));
+    const resumed = setup(artifact.state, { observer: artifact.observer as ObserverState, lineage: { edges: new MutationEdges(execution.edges.words()), dropped: 0 } });
+    const whole = setup(start());
+    for (let k = 0; k < 5; k++) await whole.execution.advanceFrame(100);
+    for (let k = 0; k < 2; k++) await resumed.execution.advanceFrame(100);
+    const a = await whole.execution.checkpoint(), b = await resumed.execution.checkpoint();
+    expect(stateHash(b.state)).toBe(stateHash(a.state));
+    expect(JSON.stringify(b.observer)).toBe(JSON.stringify(a.observer));
+    expect(Array.from(resumed.execution.edges.words())).toEqual(Array.from(whole.execution.edges.words()));
+    // The replay twin walks the same boundaries, so it applies the same passes.
+    const v = await execution.verify(200, async (state) => new CpuSimulation(state));
+    expect(v.twinHash).toBe(v.liveHash);
+    for (let k = 0; k < 2; k++) {
+      ref.run(100);
+      applyCellPass(ref.state);
+    }
+    expect(v.liveHash).toBe(stateHash(ref.state));
+  }, 120_000);
+
+  it("rejects a cellPeriod off the census grid before stepping", () => {
+    const off = buildWorld({ ...cfg, cellPeriod: 150 }, { nutrient: 32, founders: [] });
+    expect(() => setup(off)).toThrow(/cellPeriod 150 is not a multiple/);
+  });
 });
