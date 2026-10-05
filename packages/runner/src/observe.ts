@@ -19,6 +19,8 @@ export interface Observers {
   prevSym: Uint8Array | null;
   /** Pond runs only: see `ObserverState.ponds`. */
   ponds?: { lastCycle: number };
+  /** Fed histories only: see `ObserverState.fed`. */
+  fed?: { matter: number; feeds: number };
 }
 
 /**
@@ -36,6 +38,7 @@ export function restoreObservers(o: ObserverState | undefined, settings: Observe
     extinct: o?.extinct ?? false,
     prevSym: o?.prevSym ? unb64(o.prevSym) : null,
     ...(o?.ponds ? { ponds: { lastCycle: o.ponds.lastCycle } } : cfg?.pondPeriod !== undefined ? { ponds: { lastCycle: 0 } } : {}),
+    ...(o?.fed ? { fed: { matter: o.fed.matter, feeds: o.fed.feeds } } : {}),
   };
 }
 
@@ -52,6 +55,8 @@ export function serializeObservers(obs: Observers, step: number, settings: Obser
     prevSym: obs.prevSym ? b64(obs.prevSym) : null,
     // Only in pond runs, so every other observer (and its digest) is unchanged.
     ...(obs.ponds ? { ponds: { lastCycle: obs.ponds.lastCycle } } : {}),
+    // Only in fed histories, for the same reason.
+    ...(obs.fed ? { fed: { matter: obs.fed.matter, feeds: obs.fed.feeds } } : {}),
   };
 }
 

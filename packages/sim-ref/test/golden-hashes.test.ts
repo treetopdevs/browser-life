@@ -34,6 +34,26 @@ const PINNED: Record<number, Record<string, string>> = {
     "polymer-transport-off": "2adcd0a6ecc3761a",
     "mutation-boundary": "0966e96ab1306e8f",
     "ring-namespace": "e277953f6ebc2ea2",
+    // Lossy takeover (WorldConfig.takeover, optional, ownership sandbox): new
+    // cases only; every pin above is unchanged.
+    "takeover-lineage": "b73f19659cf78e51",
+    "takeover-growth": "e01f6f014554e875",
+    "takeover-genome": "dfb56d29a4d59f7a",
+    // Recurring injury (WorldConfig.injuryPeriod, optional, ownership sandbox).
+    injury: "1fd51d2042631706",
+    "injury-extremes": "a007c064a2346ee8",
+    // Heritable kernel shape (WorldConfig.shapeReach, optional, cells sandbox).
+    "shape-far": "2f9a2c0e000f2330",
+    "shape-near": "01fbc54dc408e1e1",
+    // Sandbox "sweep" light mode (optional dayPeriod, absent elsewhere): a new
+    // case with its own pin; every pin above is untouched.
+    sweep: "e69b229777d809cf",
+    // Sandbox optional signalGain (absent elsewhere): its own new pin.
+    "signal-gain": "950301275043e2fa",
+    // Sandbox optional wanderPeriod/wanderAmp (absent elsewhere): its own new pin.
+    "sweep-wander": "dcfbb10ffe638f13",
+    // Wild sandbox: every optional lever at once (see the case in golden.ts).
+    "wild-stack": "ba3c41c46b14c035",
   },
   // Rule 2 introduces optional matrix drag. Even unchanged trajectories get
   // new hashes because the digest includes cfg.ruleVersion. Rule-1 pins
@@ -54,6 +74,20 @@ const PINNED: Record<number, Record<string, string>> = {
     "polymer-drag-extremes": "0326b44826cbccd1",
     "mutation-boundary": "92eed0da25afc74a",
     "ring-namespace": "46eb59a05b14971f",
+    // The lab sandboxes' optional levers under rule 2 (drag off): the same
+    // trajectories and mutation counts as their rule-1 pins; only the digest's
+    // cfg.ruleVersion differs. GPU bit-exact (tests/deno/gpu_golden.ts).
+    sweep: "95be3c44a2d3238f",
+    "signal-gain": "0f46cd7a78627e94",
+    "sweep-wander": "c64c0a163d68afc7",
+    "takeover-lineage": "2fc60340920457dd",
+    "takeover-growth": "f52f56c125dfda63",
+    injury: "2cd4123610cf79b9",
+    "takeover-genome": "ddd6663de0234d14",
+    "injury-extremes": "d68803060baee716",
+    "shape-far": "1ba1c13e5d0a2c51",
+    "shape-near": "93391c919d6b2188",
+    "wild-stack": "55a674bf977d88c2",
   },
 };
 

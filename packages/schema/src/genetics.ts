@@ -22,6 +22,7 @@ export const CLUSTER_DISTANCE = 10;
 /** Number of genome slots (weights, mu, sigma, motGain) that differ; stops counting once past `limit`. */
 export function genomeDistance(a: Genome, b: Genome, limit = Infinity): number {
   let d = Number(a.mu !== b.mu) + Number(a.sigma !== b.sigma) + Number(a.motGain !== b.motGain);
+  if (a.rings || b.rings) for (let k = 0; k < 3; k++) d += Number((a.rings?.[k] ?? 0) !== (b.rings?.[k] ?? 0));
   for (let i = 0; i < a.weights.length && d <= limit; i++) if (a.weights[i] !== b.weights[i]) d++;
   return d;
 }

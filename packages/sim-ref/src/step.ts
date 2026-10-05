@@ -28,7 +28,10 @@ import {
   W1_OFF,
   W2_OFF,
   addu,
+  SHAPE_BASE,
   buildKernel,
+  buildShapeKernel,
+  shapeRings,
   cellBase,
   cellCount,
   clampi,
@@ -37,6 +40,7 @@ import {
   draw,
   lightModeId,
   mulFrac,
+  muli,
   mulu,
   subu,
   worldW,
@@ -47,6 +51,7 @@ import {
   DEFAULT_K_ADHESION,
   clampLesionRadius,
   mulShr,
+  motilityTerm,
   validateState,
   FLUX_COUNT,
   FLUX_NAMES,
@@ -56,6 +61,7 @@ import {
   packLineageLo,
   type FluxName,
   type KernelTable,
+  type ShapeKernel,
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
@@ -83,6 +89,8 @@ export class RefSim {
   readonly W: number;
   readonly H: number;
   readonly kernel: KernelTable;
+  /** Ring-tagged kernel under WorldConfig.shapeReach (then also `kernel`), else null. */
+  private readonly shape: ShapeKernel | null;
   state: WorldState;
   private cellsB: Uint32Array;
   private genomeB: Uint32Array;
@@ -102,7 +110,8 @@ export class RefSim {
     this.n = cellCount(this.cfg);
     this.W = worldW(this.cfg);
     this.H = this.n / this.W;
-    this.kernel = buildKernel(this.cfg.kernelRadius);
+    this.shape = this.cfg.shapeReach === undefined ? null : buildShapeKernel(this.cfg.kernelRadius, this.cfg.shapeReach);
+    this.kernel = this.shape ?? buildKernel(this.cfg.kernelRadius);
     this.cellsB = new Uint32Array(this.n * CELL_CHANNELS);
     this.genomeB = new Uint32Array(this.n * GENOME_CHANNELS);
     this.U = new Int32Array(this.n);
@@ -122,6 +131,18 @@ export class RefSim {
     return (ty * tileH + ly) * this.W + tx * tileW + lx;
   }
 
+  /** Recurring injury (WorldConfig.injuryPeriod): is a wound centre within injuryRadius of (x, y) at this step? */
+  injured(x: number, y: number, step: number): boolean {
+    const c = this.cfg;
+    const r = c.injuryRadius ?? 0, p = c.injuryProb ?? 0;
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        if (dx * dx + dy * dy > r * r) continue;
+        if (draw(cellBase(c.seed, step, this.nb(x, y, dx, dy)), RND.INJURY) < p) return true;
+      }
+    return false;
+  }
+
   light(x: number, y: number, step: number): number {
     const c = this.cfg;
     const lx = x % c.tileW;
@@ -130,7 +151,23 @@ export class RefSim {
     const mode = lightModeId(c.lightMode);
     if (mode === 0) L += c.lightAmp;
     else if (mode === 1) L += divu(mulu(c.lightAmp, ly), c.tileH - 1);
-    else if ((((lx >> 5) + (ly >> 5)) & 1) === 0) L += c.lightAmp;
+    else if (mode === 2) {
+      if ((((lx >> 5) + (ly >> 5)) & 1) === 0) L += c.lightAmp;
+    } else {
+      // Rotating planet: a tent of light centred on the sun's meridian.
+      const P = c.dayPeriod ?? 0;
+      let sun = P > 0 ? divu(mulu(step % P, c.tileW), P) : 0;
+      const WP = c.wanderPeriod ?? 0;
+      if (WP > 0) {
+        const ph = divu(mulu(step % WP, 512), WP);
+        const tri = 256 - Math.abs(ph - 256);
+        sun = (sun + (((c.wanderAmp ?? 0) * tri) >> 8)) % c.tileW;
+      }
+      const half = c.tileW >> 1;
+      const d0 = (lx + c.tileW - sun) % c.tileW;
+      const d = Math.min(d0, c.tileW - d0);
+      L += divu(mulu(c.lightAmp, half - d), half);
+    }
     if (c.seasonPeriod > 0) {
       const ph = divu(mulu(step % c.seasonPeriod, 512), c.seasonPeriod);
       const tri = Math.abs(ph - 256);
@@ -176,23 +213,39 @@ export class RefSim {
     const { cells, genome } = this.state;
     const { taps, count, sum } = this.kernel;
     const c = this.cfg;
+    const shape = this.shape;
+    const conv3 = [0, 0, 0];
     for (let y = 0; y < this.H; y++) {
       for (let x = 0; x < this.W; x++) {
         const i = y * this.W + x;
-        let conv = 0;
-        for (let k = 0; k < count; k++) {
-          const j = this.nb(x, y, taps[k * 4], taps[k * 4 + 1]);
-          conv = addu(conv, mulu(taps[k * 4 + 2], this.mass(cells, j)));
-        }
-        const uq = divu(conv, sum);
-        let u = divu(mulu(uq, 1024), c.massUnit);
-        if (u > 4095) u = 4095;
         let mu = c.defaultMu;
         let sigma = c.defaultSigma;
+        let ringBytes = 0;
         if (!c.neutral && this.living(genome, i)) {
           const p0 = genome[G.PARAM0 * this.n + i];
           mu = p0 & 0xffff;
           sigma = p0 >>> 16;
+          ringBytes = genome[G.PARAM1 * this.n + i] >>> 8;
+        }
+        let u: number;
+        if (shape) {
+          // Heritable shape (WorldConfig.shapeReach): one sum per ring, weighted by the genome.
+          conv3[0] = conv3[1] = conv3[2] = 0;
+          for (let k = 0; k < count; k++) {
+            const j = this.nb(x, y, taps[k * 4], taps[k * 4 + 1]);
+            const r = taps[k * 4 + 3];
+            conv3[r] = addu(conv3[r], mulu(taps[k * 4 + 2], this.mass(cells, j)));
+          }
+          u = shapeDensity(conv3, shape.ringSum, shape.rings, ringBytes, c.massUnit);
+        } else {
+          let conv = 0;
+          for (let k = 0; k < count; k++) {
+            const j = this.nb(x, y, taps[k * 4], taps[k * 4 + 1]);
+            conv = addu(conv, mulu(taps[k * 4 + 2], this.mass(cells, j)));
+          }
+          const uq = divu(conv, sum);
+          u = divu(mulu(uq, 1024), c.massUnit);
+          if (u > 4095) u = 4095;
         }
         mu = mu > 4095 ? 4095 : mu;
         sigma = clampi(sigma, 1, 1023);
@@ -242,8 +295,8 @@ export class RefSim {
         if (c.motility && this.living(genome, i)) {
           const mot = cells[CH.MOT * n + i];
           const gain = (this.refWords ? this.refWords[G.PARAM1] : genome[G.PARAM1 * n + i]) & 0xff;
-          dx += divi(((mot & 0xff) - 128) * gain, 256);
-          dy += divi((((mot >>> 8) & 0xff) - 128) * gain, 256);
+          dx += motilityTerm(mot & 0xff, gain);
+          dy += motilityTerm((mot >>> 8) & 0xff, gain);
         }
         const dmax = 64 - c.spread;
         dx = clampi(dx, -dmax, dmax);
@@ -266,6 +319,14 @@ export class RefSim {
     const drag = c.polymerDrag === true;
     const srcs = new Int32Array(9);
     const lot = new Uint32Array(9);
+    // Lossy takeover (WorldConfig.takeover; absent = RULE_VERSION 1).
+    const lossy = c.takeover === "lossy";
+    const kinGrowth = c.takeoverKin === "growth";
+    const kinGenome = c.takeoverKin === "genome";
+    const tolMu = c.takeoverTol ?? 0;
+    const tolSigma = tolMu >>> 2;
+    const gB = c.eB - c.eC, gP = c.eP - c.eC;
+    const shB = new Uint32Array(9), shP = new Uint32Array(9);
     for (let y = 0; y < this.H; y++) {
       for (let x = 0; x < this.W; x++) {
         const t = y * this.W + x;
@@ -306,6 +367,8 @@ export class RefSim {
             inP = addu(inP, sP);
             inE = addu(inE, sE);
             lot[k] = addu(sB, sP);
+            shB[k] = sB;
+            shP[k] = sP;
           }
         }
         out[CH.B * n + t] = inB;
@@ -314,6 +377,7 @@ export class RefSim {
 
         // Genome: mass-weighted lottery over the sources of incoming bound mass.
         const T = addu(inB, inP);
+        let waste = 0;
         // Genomes are immutable per lineage id (a mutation always mints a new id),
         // so a destination that already holds the winner's lineage is left as is.
         // Words of empty cells are don't-care (see canonicalGenome).
@@ -337,6 +401,41 @@ export class RefSim {
           if (gout[G.LIN_HI * n + t] !== hi || gout[G.LIN_LO * n + t] !== lo || (hi | lo) === 0)
             for (let g = 0; g < GENOME_CHANNELS; g++) gout[g * n + t] = genome[g * n + s];
           out[CH.MOT * n + t] = cells[CH.MOT * n + s];
+          if (lossy) {
+            // Non-kin bound shares become waste C here; their potential
+            // energy joins E (sE is kept by every source). Bound: see
+            // TAKEOVER_MAX_GAP in @bl/schema (no u32 wrap, nothing clamped).
+            const muW = genome[G.PARAM0 * n + s] & 0xffff, sgW = genome[G.PARAM0 * n + s] >>> 16;
+            let kB = 0, kP = 0, rel = 0;
+            for (let j = 0; j < 9; j++) {
+              const sj = srcs[j];
+              let kin = lot[j] === 0;
+              if (!kin) {
+                const hj = genome[G.LIN_HI * n + sj], lj = genome[G.LIN_LO * n + sj];
+                if ((hj === hi && lj === lo) || !(kinGrowth || kinGenome) || (hi | lo) === 0 || (hj | lj) === 0) kin = hj === hi && lj === lo;
+                else if (kinGenome) {
+                  // Whole-genome kin: at most takeoverTol heritable words differ
+                  // (a lineage id names one genome, so equal ids were kin above).
+                  let d = 0;
+                  for (let g = G.PARAM0; g < GENOME_CHANNELS && d <= tolMu; g++) if (genome[g * n + sj] !== genome[g * n + s]) d++;
+                  kin = d <= tolMu;
+                } else {
+                  const pj = genome[G.PARAM0 * n + sj];
+                  kin = Math.abs((pj & 0xffff) - muW) <= tolMu && Math.abs((pj >>> 16) - sgW) <= tolSigma;
+                }
+              }
+              if (kin) {
+                kB = addu(kB, shB[j]);
+                kP = addu(kP, shP[j]);
+              } else {
+                waste = addu(waste, lot[j]);
+                rel = addu(rel, addu(mulu(shB[j], gB), mulu(shP[j], gP)));
+              }
+            }
+            out[CH.B * n + t] = kB;
+            out[CH.P * n + t] = kP;
+            out[CH.E * n + t] = addu(inE, rel);
+          }
         }
 
         // Diffusion of dissolved species.
@@ -358,7 +457,7 @@ export class RefSim {
             const baseN = cellBase(seed, step, nbi);
             v = addu(v, diffOut(qn, d ^ 1, De, baseN, sp));
           }
-          out[ch * n + t] = v;
+          out[ch * n + t] = sp === 1 ? addu(v, waste) : v;
         }
       }
     }
@@ -390,6 +489,8 @@ export class RefSim {
     const o = new Int32Array(NN_O);
     const wb = new Int8Array(NN_BYTES);
     const mutCap = c.mutRate === 0 ? 0 : divu(U32_MAX, c.mutRate);
+    // Recurring injury (WorldConfig.injuryPeriod; absent = RULE_VERSION 1).
+    const injuryStep = c.injuryPeriod !== undefined && (step + 1) % c.injuryPeriod === 0;
 
     for (let yy = 0; yy < this.H; yy++) {
       for (let xx = 0; xx < this.W; xx++) {
@@ -439,8 +540,9 @@ export class RefSim {
           x[4] = sat(divu(mulu(cap24(E), 16), addu(B, 1)));
           x[5] = L >>> 1;
           x[6] = sat(S >>> 2);
-          x[7] = clampi(divi(Se - Sw, 4), -127, 127);
-          x[8] = clampi(divi(Ss - Sn, 4), -127, 127);
+          const sg = c.signalGain ?? 1;
+          x[7] = clampi(divi(muli(Se - Sw, sg), 4), -127, 127);
+          x[8] = clampi(divi(muli(Ss - Sn, sg), 4), -127, 127);
           x[9] = clampi(divi(this.U[i], 2), -127, 127);
           controllerForward(wb, x, h, o);
           const r =(k: number) => (o[k] > 0 ? o[k] : 0);
@@ -531,6 +633,17 @@ export class RefSim {
         q = Math.min(C, mulFrac(t, c.kAbio, 16, draw(base, RND.ABIO2)));
         C -= q; A += q; heat += q * (c.eC - c.eA); F[FX.abio] = q;
 
+        // Injury: the cell's bound structure is destroyed as by applyLesion
+        // (the lineage is cleared just below, since B and P are now 0).
+        if (injuryStep && this.injured(xx, yy, step)) {
+          heat += B * (c.eB - c.eC) + P * (c.eP - c.eC) + E;
+          C += B + P;
+          B = 0;
+          P = 0;
+          E = 0;
+          mot = MOT_ZERO;
+        }
+
         if (living && B === 0 && P === 0) {
           genome[G.LIN_HI * n + i] = 0;
           genome[G.LIN_LO * n + i] = 0;
@@ -568,6 +681,39 @@ export class RefSim {
   get affinityField(): Int32Array {
     return this.U;
   }
+}
+
+const s8 = (b: number) => ((b & 0xff) > 127 ? (b & 0xff) - 256 : b & 0xff);
+
+/** A ring's mean capped mass with 8 fractional bits: floor(conv * 256 / sum), 0 for an empty ring. */
+function ringMean(conv: number, sum: number): number {
+  if (sum === 0) return 0;
+  return addu(mulu(divu(conv, sum), 256), divu(mulu(conv % sum, 256), sum));
+}
+
+/**
+ * Kernel density under WorldConfig.shapeReach, in 1/1024 of massUnit and capped at 4095 like
+ * RULE_VERSION 1's. `conv` and `ringSum` are per ring (see buildShapeKernel); `ringBytes` is the
+ * genome's PARAM1 >>> 8, three signed offsets from the neutral weights (SHAPE_BASE, SHAPE_BASE, 0),
+ * each weight floored at 0, the far ring's ignored when the kernel has none. Neutral weights give
+ * RULE_VERSION 1's floor(conv / sum) exactly; any other weighting is the weighted mean of the ring
+ * means. Bounds: a ring mean is < 2^22 (mass is capped at 16383), weights sum to at most 509, so
+ * the weighted sum stays below 2^31.
+ */
+export function shapeDensity(conv: ArrayLike<number>, ringSum: ArrayLike<number>, rings: number, ringBytes: number, massUnit: number): number {
+  const w0 = Math.max(SHAPE_BASE + s8(ringBytes), 0);
+  const w1 = Math.max(SHAPE_BASE + s8(ringBytes >>> 8), 0);
+  const w2 = rings > 2 ? Math.max(s8(ringBytes >>> 16), 0) : 0;
+  let u: number;
+  if (w0 === SHAPE_BASE && w1 === SHAPE_BASE && w2 === 0) {
+    u = divu(mulu(divu(addu(conv[0], conv[1]), addu(ringSum[0], ringSum[1])), 1024), massUnit);
+  } else {
+    const den = w0 + w1 + w2;
+    if (den === 0) return 0;
+    const num = addu(addu(mulu(w0, ringMean(conv[0], ringSum[0])), mulu(w1, ringMean(conv[1], ringSum[1]))), mulu(w2, ringMean(conv[2], ringSum[2])));
+    u = divu(mulu(divu(num, den), 4), massUnit);
+  }
+  return u > 4095 ? 4095 : u;
 }
 
 /** Polynomial Lenia growth: 2(1 - (u-mu)^2 / 9 sigma^2)^4 - 1, as i32 in [-256, 256]. */
@@ -672,7 +818,8 @@ export function controllerForward(wb: Int8Array, x: Int32Array, h: Int32Array, o
 }
 
 export function mutateInPlace(genome: Uint32Array, n: number, i: number, c: WorldConfig, which: number, deltaRnd: number): void {
-  const slot = which % (NN_BYTES + 3);
+  // Under WorldConfig.shapeReach each kernel ring adds one slot after the motility gain.
+  const slot = which % (NN_BYTES + 3 + shapeRings(c));
   let delta = (deltaRnd % (2 * c.mutStep + 1)) - c.mutStep;
   if (delta === 0) delta = 1;
   if (slot < NN_BYTES) {
@@ -689,10 +836,17 @@ export function mutateInPlace(genome: Uint32Array, n: number, i: number, c: Worl
     const p0 = genome[G.PARAM0 * n + i];
     const sigma = clampi((p0 >>> 16) + (delta >> 2 === 0 ? (delta > 0 ? 1 : -1) : delta >> 2), 2, 1023);
     genome[G.PARAM0 * n + i] = ((p0 & 0xffff) | (sigma << 16)) >>> 0;
-  } else {
+  } else if (slot === NN_BYTES + 2) {
     const p1 = genome[G.PARAM1 * n + i];
     const gain = clampi((p1 & 0xff) + delta, 0, 255);
     genome[G.PARAM1 * n + i] = ((p1 & 0xffffff00) | gain) >>> 0;
+  } else {
+    // Ring weight offset: the two near rings may fall to weight 0 (offset -SHAPE_BASE), the far ring starts there.
+    const k = slot - (NN_BYTES + 3);
+    const sh = (k + 1) * 8;
+    const p1 = genome[G.PARAM1 * n + i];
+    const v = clampi(s8(p1 >>> sh) + delta, k < 2 ? -SHAPE_BASE : 0, 127);
+    genome[G.PARAM1 * n + i] = ((p1 & ~(0xff << sh)) | ((v & 0xff) << sh)) >>> 0;
   }
 }
 

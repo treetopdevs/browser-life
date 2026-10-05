@@ -6,9 +6,11 @@
   --line: oklch(31% 0.013 164);
   --text: oklch(93% 0.008 160);
   --muted: oklch(69% 0.013 160);
-  --soft: oklch(55% 0.014 160);
-  --accent: oklch(82% 0.115 155);
-  --accent-ink: oklch(19% 0.025 160);
+  --soft: oklch(60% 0.014 160);
+  /* Chrome is neutral: the accent is ink. Colour belongs to the world (--life, the pools) and to verification state. */
+  --accent: oklch(93% 0.009 160);
+  --accent-ink: oklch(19% 0.012 164);
+  --life: oklch(82% 0.115 155);
   --warning: oklch(81% 0.11 76);
   --negative: oklch(76% 0.105 32);
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -22,9 +24,10 @@
   --line: oklch(81% 0.014 164);
   --text: oklch(22% 0.014 164);
   --muted: oklch(43% 0.015 164);
-  --soft: oklch(55% 0.015 164);
-  --accent: oklch(42% 0.102 155);
+  --soft: oklch(50% 0.015 164);
+  --accent: oklch(24% 0.012 164);
   --accent-ink: oklch(98% 0.006 160);
+  --life: oklch(42% 0.102 155);
   --warning: oklch(47% 0.10 76);
   --negative: oklch(50% 0.13 32);
 }
@@ -46,11 +49,11 @@ button { font: inherit; cursor: pointer; }
 .brand-light { font-weight: 450; color: var(--muted); }
 .brand-mark {
   width: 24px; height: 24px; flex: none;
-  background: radial-gradient(circle at 26% 29%, var(--accent) 0 2px, transparent 2.5px),
-              radial-gradient(circle at 68% 24%, var(--accent) 0 3px, transparent 3.5px),
-              radial-gradient(circle at 50% 57%, var(--accent) 0 2.5px, transparent 3px),
-              radial-gradient(circle at 20% 76%, var(--accent) 0 1.5px, transparent 2px),
-              radial-gradient(circle at 77% 77%, var(--accent) 0 2px, transparent 2.5px);
+  background: radial-gradient(circle at 26% 29%, var(--life) 0 2px, transparent 2.5px),
+              radial-gradient(circle at 68% 24%, var(--life) 0 3px, transparent 3.5px),
+              radial-gradient(circle at 50% 57%, var(--life) 0 2.5px, transparent 3px),
+              radial-gradient(circle at 20% 76%, var(--life) 0 1.5px, transparent 2px),
+              radial-gradient(circle at 77% 77%, var(--life) 0 2px, transparent 2.5px);
 }
 .site-nav { display: flex; align-self: stretch; align-items: stretch; gap: 1px; flex-wrap: wrap; margin-left: auto; }
 .site-nav a { display: inline-flex; align-items: center; padding: 0 10px; border-bottom: 2px solid transparent; text-decoration: none; color: var(--muted); font-size: .75rem; font-weight: 600; }
@@ -63,11 +66,11 @@ button { font: inherit; cursor: pointer; }
   color: var(--accent); font: 700 .6875rem/1.4 var(--mono); letter-spacing: .09em; text-transform: uppercase;
 }
 .eyebrow { margin: 0 0 18px; }
-.signal-dot { display: inline-block; width: 6px; height: 6px; margin-right: 8px; vertical-align: 1px; border-radius: 50%; background: var(--accent); }
+.signal-dot { display: inline-block; width: 6px; height: 6px; margin-right: 8px; vertical-align: 1px; border-radius: 50%; background: var(--life); }
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .94fr); gap: clamp(36px, 5vw, 80px); align-items: center; padding-block: clamp(64px, 8vw, 112px); }
 .hero-copy { max-width: 620px; }
 .hero h1, .page-intro h1 { margin: 0; font-size: clamp(3.2rem, 6.4vw, 5.4rem); line-height: 1.04; letter-spacing: -.055em; font-weight: 640; text-wrap: balance; }
-.hero h1 em { font-style: normal; color: var(--accent); }
+.hero h1 em { font-style: normal; color: var(--life); }
 .lede { max-width: 60ch; margin: 22px 0 0; color: var(--muted); font-size: clamp(1.0625rem, 1.65vw, 1.25rem); line-height: 1.55; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
 .button {
@@ -86,7 +89,7 @@ button { font: inherit; cursor: pointer; }
 .hero .fine { margin: 14px 0 0; }
 .hero-art { padding: 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
 .world-preview { display: block; width: 100%; height: auto; aspect-ratio: 9 / 7; object-fit: cover; border-radius: 4px; background: oklch(11% .009 164); image-rendering: pixelated; }
-.art-caption { display: flex; justify-content: space-between; gap: 8px; padding: 10px 3px 2px; color: var(--soft); font: 700 .625rem/1.3 var(--mono); letter-spacing: .06em; }
+.art-caption { display: flex; justify-content: space-between; gap: 8px; padding: 10px 3px 2px; color: var(--soft); font: 700 .6875rem/1.3 var(--mono); letter-spacing: .04em; }
 .band { background: var(--surface); border-block: 1px solid var(--line); }
 .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .three > div { padding: 34px 28px 39px 0; }
@@ -127,7 +130,7 @@ button { font: inherit; cursor: pointer; }
 .evidence-card p { margin: 0; max-width: 62ch; font-size: .9375rem; }
 .evidence-card .fine { color: var(--soft); }
 .evidence-card > div > p + p { margin-top: 10px; }
-.state { display: inline-flex; justify-self: start; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 99px; font-size: .625rem; }
+.state { display: inline-flex; justify-self: start; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 99px; font-size: .6875rem; }
 .state.measured { color: var(--warning); border-color: var(--warning); }
 .state.pending { color: var(--muted); border-color: var(--muted); }
 .state.negative { color: var(--negative); border-color: var(--negative); }
@@ -173,7 +176,7 @@ button { font: inherit; cursor: pointer; }
   .shell { width: min(100% - 30px, 1220px); }
   .header-inner { gap: 10px; }
   .site-brand { margin-right: auto; }
-  .site-nav { overflow-x: auto; flex-wrap: nowrap; }
+  .site-nav { flex-wrap: wrap; }
   .site-nav a { flex: none; min-height: 40px; padding-inline: 9px; }
   .hero { padding-block: 58px 65px; }
   .hero h1 { font-size: clamp(2.8rem, 11vw, 4.25rem); }
@@ -199,3 +202,47 @@ button { font: inherit; cursor: pointer; }
 }
 @media (pointer: coarse) { .theme-toggle, .site-nav a { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .button { transition: none; } }
+
+/* A field notebook for stranger worlds. Chrome stays ink; amber marks notebook annotations, --life marks the living. */
+:root { --field-amber: oklch(80% .12 72); }
+:root[data-theme="light"] { --field-amber: oklch(43% .085 60); }
+.hero h1, .page-intro h1, .feature h2, .section-heading h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -.045em;
+}
+.hero h1 em { font-style: italic; }
+.hero { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; padding-block: 86px; }
+.hero-art { margin: 0; padding: 14px; border-radius: 2px; transform: rotate(-2deg); }
+.world-preview { aspect-ratio: 686 / 336; object-fit: contain; border-radius: 0; }
+.art-caption { color: var(--muted); flex-wrap: wrap; }
+.specimen-note { margin: 24px 10px 12px; color: var(--field-amber); font: italic clamp(1.25rem, 2vw, 1.75rem)/1.35 Georgia, serif; }
+.section-heading { padding-top: 42px; }
+.section-heading h2 { margin: 0; font-size: clamp(2rem, 3.7vw, 3.25rem); line-height: 1.12; text-wrap: balance; }
+.section-heading > p:last-child { max-width: 65ch; color: var(--muted); }
+.sightings h3 { margin: 16px 0 10px; font-size: 1.45rem; letter-spacing: -.035em; line-height: 1.2; }
+.sightings .index { color: var(--field-amber); }
+.observation { color: var(--muted); font: .6875rem/1.4 var(--mono); }
+.band-link { padding-bottom: 30px; }
+.bets { padding-bottom: 90px; scroll-margin-top: 24px; }
+.bets .section-heading { padding-top: 0; margin-bottom: 40px; }
+.bet-list { margin: 0; padding: 0; list-style: none; }
+.bet-list li { display: grid; grid-template-columns: 90px minmax(0, 1fr) 100px; gap: 24px; padding: 30px 0; border-top: 1px solid var(--line); }
+.bet-list li:last-child { border-bottom: 1px solid var(--line); }
+.bet-number { color: var(--field-amber); font: italic 2rem/1.2 Georgia, serif; }
+.bet-list h3 { margin: 12px 0 8px; font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 500; letter-spacing: -.035em; }
+.bet-list p { margin: 0; max-width: 65ch; color: var(--muted); }
+.bet-motif { align-self: center; justify-self: center; color: var(--life); font: 4rem/1 Georgia, serif; }
+.invitation { border-radius: 2px; }
+.invitation .button { flex-shrink: 0; }
+@media (max-width: 1000px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-art { max-width: 686px; transform: none; }
+}
+@media (max-width: 700px) {
+  .hero { padding-block: 52px; gap: 32px; }
+  .bet-list li { grid-template-columns: 35px minmax(0, 1fr); gap: 12px; }
+  .bet-number { font-size: 1.5rem; }
+  .bet-motif { display: none; }
+  .bets { padding-bottom: 60px; }
+}

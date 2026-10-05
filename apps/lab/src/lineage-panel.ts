@@ -15,11 +15,13 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, cls?: 
 }
 const n = (v: number) => v.toLocaleString("en-US");
 
-function chip(word: "exact" | "context" | "not recorded"): HTMLElement {
-  return el("span", word, `badge ${word === "exact" ? "ok" : word === "context" ? "busy" : ""}`.trim());
+type Evidence = "exact" | "computed" | "context" | "not recorded";
+/** "exact" is for what was observed or replayed; "computed" for what is derived from it on inputs the lineage never met. */
+function chip(word: Evidence): HTMLElement {
+  return el("span", word, `badge ${word === "exact" ? "ok" : word === "context" ? "busy" : word === "computed" ? "note" : ""}`.trim());
 }
 
-function heading(text: string, evidence?: "exact" | "context" | "not recorded"): HTMLElement {
+function heading(text: string, evidence?: Evidence): HTMLElement {
   const h = el("h3", text);
   if (evidence) h.append(chip(evidence));
   return h;
@@ -157,7 +159,7 @@ export function createLineagePanel(send: (m: ToWorker) => void): LineagePanel {
     summary.append(dl, actions);
 
     const strategy = el("section");
-    strategy.append(heading("Response to light", "exact"));
+    strategy.append(heading("Response to light", "computed"));
     const drawn = curves(v);
     if (drawn) {
       const who = drawn.earliest ? `Solid: ${subject.key}. Dashed: ${drawn.earliest}, its earliest ancestor with a known genome.` : `Line: ${subject.key}.`;
@@ -179,7 +181,7 @@ export function createLineagePanel(send: (m: ToWorker) => void): LineagePanel {
       // A drawn marker (shape differs by class) and the class's name, so colour never carries the class alone.
       const cls = mu ? (mu.expression ?? "unknown") : "root";
       const exprCell = el("td", undefined, `expr expr-${cls}`);
-      const mark = el("span", undefined, "mark");
+      const mark = el("span", undefined, "expr-mark");
       mark.setAttribute("aria-hidden", "true");
       exprCell.append(mark, document.createTextNode(cls));
       tr.append(

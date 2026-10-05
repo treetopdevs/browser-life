@@ -17,7 +17,7 @@
 //   deno run -A tools/foundations.ts gate                the decision gate from the saved results
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { CLUSTER_DISTANCE, G, genomeDistance, GENOME_CHANNELS, M3_FOUNDERS, cellCount, decodeCheckpoint, encodeGenome, founderGenome, geneticClusters, genomeHex as hexOf, type Genome } from "@bl/schema";
-import { CH, allocState, defaultConfig } from "@bl/schema";
+import { CH, allocState, defaultConfig, ringsOf } from "@bl/schema";
 import { DEFAULT_CENSUS, census, classify, mannWhitney, morphology, passesProbabilityGate, binomialLowerBound, type Role } from "@bl/metrics";
 import { ACTIVITY_THRESHOLDS } from "../experiments/endpoints.ts";
 import { lineageCensuses } from "./lib/bundle.ts";
@@ -757,7 +757,7 @@ const confirmPath = "runs/bootstrap-200/confirm.json";
 async function fdPool() {
   const rows: any[] = JSON.parse(await Deno.readTextFile(confirmPath)).rows;
   const founders = new Set(M3_FOUNDERS.map((_, k) => founderHex(k)));
-  const toGenome = (g: any): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(Array.isArray(g.weights) ? g.weights : Object.values(g.weights)) });
+  const toGenome = (g: any): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(Array.isArray(g.weights) ? g.weights : Object.values(g.weights)), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}) });
   const seen = new Set<string>();
   const pool: { i: number; hex: string; genome: Genome; m3pass: boolean; regenerated: number }[] = [];
   rows.forEach((r, i) => {

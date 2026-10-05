@@ -9,6 +9,7 @@ import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import {
   CLUSTER_DISTANCE,
   IN,
+  ringsOf,
   M3_FOUNDERS,
   NN_H,
   NN_I,
@@ -33,10 +34,10 @@ const a = parseArgs(Deno.args, {
   default: { dir: "runs/bootstrap-medium-background", out: "experiments/foundations/fa-background.json" },
 });
 
-type Enc = { mu: number; sigma: number; motGain: number; weights: number[] };
+type Enc = { mu: number; sigma: number; motGain: number; weights: number[]; rings?: number[] };
 type Ev = { survived: number; recovered: number; lightDependent: number; reps: number; individuals: number; meanMass: number; speed: number; mass: number; recovery: number; reproduction: number; regenerated: number };
-const toG = (g: Enc): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(g.weights) });
-const key = (g: Enc) => JSON.stringify([g.mu, g.sigma, g.motGain, g.weights]);
+const toG = (g: Enc): Genome => ({ mu: g.mu, sigma: g.sigma, motGain: g.motGain, weights: Int8Array.from(g.weights), ...(ringsOf(g) ? { rings: ringsOf(g) } : {}) });
+const key = (g: Enc) => JSON.stringify([g.mu, g.sigma, g.motGain, g.weights, ...(ringsOf(g) ? [ringsOf(g)] : [])]);
 
 const confirm = JSON.parse(await Deno.readTextFile(`${a.dir}/confirm.json`));
 // confirm.rows holds every screening passer (1,633); `pass` marks the 1,476 confirmed ones.

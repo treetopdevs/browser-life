@@ -57,9 +57,13 @@ function livingCellsByTile(frame: SpeciesFrame): { tile: number; i: number }[][]
   return out;
 }
 
-/** Bit-exact identity key for a genome's clustering-relevant fields (mu/sigma/motGain/weights). */
+/**
+ * Bit-exact identity key for a genome's clustering-relevant fields (mu/sigma/motGain/weights, plus the
+ * kernel ring offsets when any is non-zero, which `genomeDistance` also counts).
+ */
 function genomeKey(g: Genome): string {
-  return `${g.mu},${g.sigma},${g.motGain},${Array.from(g.weights).join(",")}`;
+  const rings = g.rings && g.rings.some((v) => v !== 0) ? `,r${g.rings.join("/")}` : "";
+  return `${g.mu},${g.sigma},${g.motGain},${Array.from(g.weights).join(",")}${rings}`;
 }
 
 /**

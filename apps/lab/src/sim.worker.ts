@@ -25,8 +25,8 @@ import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from
 import { census, individuals, lineageRGB } from "@bl/metrics";
 import { decodeArtifact, pondContinuationError, type ObserverSettings, type ObserverState } from "@bl/runner";
 import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
-import { LabExecution, huntArmError } from "./execution.ts";
-import { jumpTarget, prunableAuto } from "./checkpoints.ts";
+import { LabExecution, PondWaitingError, huntArmError } from "./execution.ts";
+import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
 import type { CensusMsg, FromWorker, RunManifest, ToWorker } from "./protocol.ts";
 import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
 
@@ -57,6 +57,8 @@ interface World {
   /** Ledger baseline: content + heat - light, invariant under exact rules. */
   baseline: bigint;
   startMatter: bigint;
+  /** Bumped whenever a feed moves the baselines, so a stats readback begun before it is discarded. */
+  accounting: number;
   execution: LabExecution;
   lineage: LabLineage;
   /** Step of the newest checkpoint saved or restored for this world. */
@@ -97,6 +99,10 @@ let rect: ViewRect = { x: 0, y: 0, w: 256, h: 256 };
 let inflight: Promise<unknown> | null = null;
 let busy = 0;
 let autoQueued = false;
+/** Breeder mode (ToWorker "breeder"): a setting of the lab, not of a world, so it carries over to every world adopted. */
+let breeder = false;
+/** The step of a pond cycle being applied with donors given in breeder mode, for its display message. */
+let handCycle = -1;
 
 let lastStatsAt = 0;
 let lastCensusAt = 0;
@@ -183,8 +189,20 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         }
       },
       // Every cycle, unthrottled: one per pondPeriod steps.
-      onPondCycle: (cycle, step) => post({ type: "ponds", step, cycle: cycle.b, arm: sim.cfg.pondArm!, donors: cycle.donors }),
+      onPondCycle: (cycle, step) => post({ type: "ponds", step, cycle: cycle.b, arm: sim.cfg.pondArm!, donors: cycle.donors, hand: step === handCycle }),
+      onPondAwait: (s) => {
+        const w = world;
+        if (w && w.execution === execution) post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms });
+      },
       onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
+      // A jump's replay re-applied a logged intervention: it re-enters this run's log, and a feed moves
+      // the baselines exactly as it did when it was first made.
+      onReplayed: (iv, result) => {
+        const w = world;
+        if (!w || w.sim !== sim) return;
+        if (result) bookFeed(w, result.matter, result.energy);
+        w.manifest.interventions.push(iv);
+      },
     });
     renderer = new Renderer(device, ctx, format, sim);
   } catch (e) {
@@ -200,12 +218,14 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
     manifest,
     baseline: t.energy + state.heatOut - state.lightIn,
     startMatter: t.matter,
+    accounting: 0,
     execution,
     lineage: { edgesFrom: lineage.edgesFrom, known: lineage.known, highlight: null },
     lastCheckpoint: state.step,
   };
   old?.renderer.destroy();
   old?.sim.destroy();
+  execution.setHandPicks(breeder);
   // Steps requested for the previous world do not carry over.
   pendingSteps = 0;
   playing = false;
@@ -292,7 +312,8 @@ async function drawFrame(w: World) {
     else if (!settled) pendingSteps = Math.max(0, pendingSteps - requestedPending);
     post({ type: "error", message: w.execution.failure ?? (e instanceof Error ? e.message : String(e)) });
   }
-  if (settled && !autoQueued && !w.execution.failure && w.sim.step - w.lastCheckpoint >= AUTO_EVERY) {
+  // A cycle waiting for donors holds a pre-cycle state, which no checkpoint may carry: the save follows the pick.
+  if (settled && !autoQueued && !w.execution.failure && !w.execution.awaiting && w.sim.step - w.lastCheckpoint >= AUTO_EVERY) {
     autoQueued = true;
     exclusive(() => autoSave(w))
       .catch((e) => current(w) && post({ type: "error", message: `automatic checkpoint: ${e instanceof Error ? e.message : e}` }))
@@ -321,8 +342,11 @@ const current = (w: World) => world === w && w.gen === generation;
 async function sendStats(w: World) {
   statsBusy = true;
   try {
+    // The baselines and the feed total belong to the snapshot: a feed that lands while the readback is
+    // awaited moves them, and totals from before it must not be judged against baselines from after it.
+    const accounting = w.accounting, fed = w.execution.fed;
     const s = await w.sim.readStats();
-    if (!current(w)) return;
+    if (!current(w) || w.accounting !== accounting) return;
     const cfg = w.sim.cfg;
     const energy = s.A * BigInt(cfg.eA) + s.B * BigInt(cfg.eB) + s.C * BigInt(cfg.eC) + s.P * BigInt(cfg.eP) + s.E + s.S;
     const residual = energy + s.heatOut - s.lightIn - w.baseline;
@@ -345,6 +369,8 @@ async function sendStats(w: World) {
       heatOut: Number(s.heatOut),
       residual: residual.toString(),
       matterDelta: (matter - w.startMatter).toString(),
+      fed: String(fed.matter),
+      feeds: fed.feeds,
     });
   } catch (e) {
     if (current(w)) post({ type: "error", message: `stats: ${e instanceof Error ? e.message : e}` });
@@ -411,6 +437,7 @@ async function probe(x: number, y: number) {
     sigma: g.sigma,
     motGain: g.motGain,
     weights: Array.from(g.weights),
+    ...(g.rings ? { rings: g.rings } : {}),
   });
 }
 
@@ -430,12 +457,26 @@ async function saveCheckpoint(w: World, auto: boolean) {
   return { file, step: state.step, bytes: bytes.byteLength, advanced };
 }
 
+/**
+ * True, with a refusal of `request`, when a pond cycle is waiting for donors: the world then holds a pre-cycle
+ * state that no checkpoint may carry, so saving, exporting, a lineage reading and a jump all wait for the pick. A
+ * refusal, not a failure: the world is untouched.
+ */
+function waitingForDonors(w: World, request: ToWorker["type"], what: string): boolean {
+  const waiting = w.execution.awaiting;
+  if (!waiting) return false;
+  post({ type: "refused", request, message: `Pond cycle ${waiting.cycle} is waiting for its donors: choose them, then ${what}` });
+  return true;
+}
+
 async function save() {
   const w = world;
-  if (!w) return;
+  if (!w || waitingForDonors(w, "save", "save")) return;
   const saved = await saveCheckpoint(w, false);
-  if (saved.advanced) post({ type: "notice", message: `Advanced ${saved.advanced} steps to the census at t=${saved.step}` });
-  post({ type: "notice", message: `Saved ${saved.file} (${(saved.bytes / 1e6).toFixed(1)} MB)` });
+  // One message: a second notice would replace the first before it could be read.
+  const settled = saved.advanced ? `The world advanced ${saved.advanced} steps to its census at t=${saved.step} first. ` : "";
+  post({ type: "notice", message: `${settled}Saved ${saved.file} (${(saved.bytes / 1e6).toFixed(1)} MB)` });
+  post({ type: "saved", file: saved.file, step: saved.step });
   post({ type: "checkpoints", list: await listCheckpoints() });
 }
 
@@ -530,7 +571,7 @@ let lineageTicket = 0;
  */
 async function inspectLineage(key: string, ticket: number) {
   const w = world;
-  if (!w || ticket !== lineageTicket) return;
+  if (!w || ticket !== lineageTicket || waitingForDonors(w, "lineage", "inspect the lineage")) return;
   parseKey(key);
   const { state, advanced } = await w.execution.checkpoint();
   if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
@@ -555,27 +596,43 @@ async function inspectLineage(key: string, ticket: number) {
 /**
  * Keeps the present (a checkpoint), restores the latest checkpoint of this run at or before `step` and
  * queues the steps up to it; replay is deterministic, so the world reached is the one that was there.
- * Lesions made after that checkpoint are not re-applied.
+ * Interventions logged after that checkpoint and before `step` (lesions and feeds) are queued in the
+ * execution (`queueReplay`) and re-applied at their steps on the way, by every path that advances the
+ * world. A jump made while an earlier jump is still replaying counts what that one had not yet re-applied.
  */
 async function jump(step: number, key: string | null) {
   const w = world;
-  if (!w) return;
+  if (!w || waitingForDonors(w, "jump", "jump")) return;
   if (!Number.isSafeInteger(step) || step < 0) throw new Error(`cannot jump to step ${step}`);
   const target = jumpTarget(w.manifest.checkpoints, await filesOnDisk(), step);
   if (!target) throw new Error(`no checkpoint of this run at or before step ${step}`);
   const present = await saveCheckpoint(w, false);
+  // Everything this run logged that the target checkpoint has not seen and that happened before `step`, and a
+  // pick at `step` itself: the pond cycle is part of arriving at its boundary, as it is in a world that chooses
+  // its own donors, so the world reached there is the one that was bred. The history this log covers ends at
+  // the present or, while an earlier jump is still replaying, at that jump's destination; pond cycles up to
+  // there take their logged picks or the rule's donors and none waits, and beyond it a boundary is a new choice.
+  const history = [...w.manifest.interventions, ...w.execution.pendingReplay];
+  const known = Math.max(present.step, w.execution.replayHorizon - 1);
+  const plan = replayPlan(history, target.interventions, step, known);
   await restore(target.file);
   const now = world!;
+  now.execution.queueReplay(plan.missed.filter((iv) => iv.step >= now.sim.step), plan.until);
+  // Entries logged at the restored step itself are due at once: apply them before any probe, lineage
+  // request or display reads this world. Later ones are applied by the traversal as it reaches them,
+  // and it never returns with an entry due at the step it stopped on.
+  await now.execution.advanceFrame(0);
   pendingSteps = step - now.sim.step;
   now.lineage.highlight = key ? parseKey(key) : null;
   post({ type: "highlight", key });
-  post({ type: "notice", message: `Saved the present (t=${present.step}); restored t=${target.step} and advancing to t=${step}` });
+  const left = plan.dropped ? `; ${plan.dropped} later logged intervention${plan.dropped === 1 ? " stays" : "s stay"} with the saved present` : "";
+  post({ type: "notice", message: `Saved the present (t=${present.step}); restored t=${target.step} and advancing to t=${step}${left}` });
   post({ type: "checkpoints", list: await listCheckpoints() });
 }
 
 async function exportRun() {
   const w = world;
-  if (!w) return;
+  if (!w || waitingForDonors(w, "export", "export")) return;
   const { state, observer, advanced } = await w.execution.checkpoint();
   if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
   const bytes = encodeCheckpoint(state, observer);
@@ -587,7 +644,7 @@ async function verify(steps: number) {
   const w = world;
   if (!w || !device) return;
   const { from, liveHash: a, twinHash: b } = await w.execution.verify(steps, (state) => GpuSim.create(device!, state));
-  post({ type: "verify", ok: a === b, detail: `${steps} steps from t=${from}: ${a}${a === b ? " = " : " ≠ "}${b}` });
+  post({ type: "verify", ok: a === b, detail: `${steps} steps from t=${from}: ${a}${a === b ? " = " : " ≠ "}${b}`, from, steps, live: a, twin: b });
 }
 
 async function lesion(x: number, y: number, r: number) {
@@ -597,14 +654,95 @@ async function lesion(x: number, y: number, r: number) {
   const H = cellCount(w.sim.cfg) / W;
   const cx = ((Math.floor(x) % W) + W) % W;
   const cy = ((Math.floor(y) % H) + H) % H;
+  // A failed world (a census or a replay that could not complete) takes no further intervention.
+  if (w.execution.failure) throw new Error(w.execution.failure);
+  // The pick is part of its boundary and is replayed before anything else logged at that step: a lesion made
+  // first, on the pre-cycle world, would come back in the wrong order.
+  if (waitingForDonors(w, "lesion", "make the lesion")) return;
   const step = w.sim.step;
   const eff = w.sim.lesion(cx, cy, r);
   w.manifest.interventions.push({ step, kind: "lesion", x: cx, y: cy, r: eff });
+  forkReplay(w);
+}
+
+/** A manual intervention during a jump's replay forks the history: what was still queued no longer applies. */
+function forkReplay(w: World) {
+  const dropped = w.execution.dropReplay();
+  if (dropped) post({ type: "notice", message: `Intervened during a replay: ${dropped} logged intervention${dropped === 1 ? "" : "s"} from t=${w.sim.step} on will not be re-applied` });
+}
+
+/** Books a feed's result into the world's conservation baselines (the observer total is the execution's). */
+function bookFeed(w: World, matter: number, energy: bigint) {
+  w.startMatter += BigInt(matter);
+  w.baseline += energy;
+  w.accounting++;
+}
+
+/**
+ * Feed or drain nutrient in a disc: the one intervention that changes the world's total matter. It is
+ * logged with the exact amount it moved, and the ledger's baselines move with it (matter by that amount,
+ * energy by its chemical energy), so the conservation check stays exact between feeds while the panel
+ * shows how much this run was fed.
+ */
+async function feed(x: number, y: number, r: number, amount: number) {
+  const w = world;
+  if (!w) return;
+  const W = worldW(w.sim.cfg);
+  const H = cellCount(w.sim.cfg) / W;
+  const cx = ((Math.floor(x) % W) + W) % W;
+  const cy = ((Math.floor(y) % H) + H) % H;
+  if (w.execution.failure) throw new Error(w.execution.failure);
+  const step = w.sim.step, asked = Math.trunc(amount);
+  const res = await w.sim.feed(cx, cy, r, asked);
+  if (!current(w)) return;
+  bookFeed(w, res.matter, res.energy);
+  w.execution.recordFeed(res.matter);
+  w.manifest.interventions.push({ step, kind: "feed", x: cx, y: cy, r: res.radius, amount: asked, matter: res.matter });
+  // Only a feed that happened forks a replay in progress: a refused one changes nothing.
+  forkReplay(w);
+}
+
+/**
+ * Applies the waiting pond cycle with the donors a person chose (or, for null, the rule's own) and logs them as
+ * a pick, so a replay of this history takes the same donors without asking.
+ */
+async function resolvePick(w: World, donors: number[] | null) {
+  if (w.execution.failure) throw new Error(w.execution.failure);
+  const waiting = w.execution.awaiting;
+  if (!waiting) throw new Error("no pond cycle is waiting for donors");
+  // The display says "by hand" only for a person's own picks, not for the rule's donors applied on request.
+  handCycle = donors === null ? -1 : waiting.step;
+  try {
+    const done = await w.execution.resolvePond(donors);
+    w.manifest.interventions.push({ step: done.step, kind: "pick", cycle: done.cycle, donors: done.donors });
+    forkReplay(w);
+  } finally {
+    handCycle = -1;
+  }
+}
+
+async function pick(gen: number, step: number, donors: number[] | null) {
+  const w = world;
+  // A repeated or late message is for a cycle already applied, or for a world since replaced (another world can
+  // wait at the same step): it is dropped, not an error.
+  if (!w || w.gen !== gen || w.execution.awaiting?.step !== step) return;
+  await resolvePick(w, donors);
+}
+
+/** Breeder mode on or off, for this world and those adopted later. Leaving it lets the rule choose for a cycle that is waiting. */
+async function setBreeder(on: boolean) {
+  breeder = on;
+  const w = world;
+  if (!w || w.execution.failure) return;
+  if (!on && w.execution.awaiting) await resolvePick(w, null);
+  w.execution.setHandPicks(on);
 }
 
 self.onmessage = (ev: MessageEvent<ToWorker>) => {
   const m = ev.data;
   const fail = (e: unknown) => {
+    // A request refused because a pond cycle waits for donors (for instance a save that settled onto the boundary) is no failure.
+    if (e instanceof PondWaitingError && !world?.execution.failure) return post({ type: "refused", request: m.type, message: e.message });
     if (world?.execution.failure) { playing = false; pendingSteps = 0; }
     post({ type: "error", message: world?.execution.failure ?? (e instanceof Error ? e.message : String(e)) });
   };
@@ -649,8 +787,14 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
         return load(m.presetId, m.seed, m.overrides);
       case "lesion":
         return lesion(m.x, m.y, m.r);
+      case "feed":
+        return feed(m.x, m.y, m.r, m.amount);
       case "probe":
         return probe(m.x, m.y);
+      case "breeder":
+        return setBreeder(m.on);
+      case "pick":
+        return pick(m.world, m.step, m.donors);
       case "save":
         return save();
       case "listCheckpoints":

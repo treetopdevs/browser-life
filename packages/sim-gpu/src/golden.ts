@@ -4,6 +4,7 @@
 
 import {
   CH,
+  M3_FOUNDERS,
   MATTER_MAX,
   POOL_MAX,
   RULE_VERSION,
@@ -11,11 +12,14 @@ import {
   buildWorld,
   cloneState,
   defaultConfig,
+  founderGenome,
   generalistWorld,
+  m3World,
   soupWorld,
   stateHash,
   totalsOf,
   ledgerResidual,
+  type Genome,
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
@@ -63,6 +67,19 @@ function irregularPolymerField(c: WorldConfig): WorldState {
   return s;
 }
 
+/**
+ * The M3 founders with kernel ring offsets planted (WorldConfig.shapeReach),
+ * so every branch of shapeDensity runs from step 0: neutral; near rings
+ * reweighted; the inner ring at weight 0 with the far ring on; neutral near
+ * rings plus the far ring; the far ring alone; every weight 0 (density 0);
+ * a negative far byte (weight 0) with a reweighted near ring; and offsets
+ * below -64 (floored at weight 0) with the largest far weight.
+ */
+function ringedFounders(): Genome[] {
+  const rings: [number, number, number][] = [[0, 0, 0], [20, -30, 0], [-64, 10, 40], [0, 0, 25], [-64, -64, 25], [-64, -64, 0], [10, 0, -20], [-128, -100, 127]];
+  return M3_FOUNDERS.map((f, k) => ({ ...founderGenome(f), rings: rings[k % rings.length] }));
+}
+
 export function goldenCases(ruleVersion = RULE_VERSION): GoldenCase[] {
   const base = { tileW: 40, tileH: 40, kernelRadius: 5 };
   const cases: GoldenCase[] = [
@@ -77,6 +94,33 @@ export function goldenCases(ruleVersion = RULE_VERSION): GoldenCase[] {
     {
       name: "patches+seasons",
       cfg: defaultConfig({ ...base, seed: 99, lightMode: "patches", lightBase: 20, lightAmp: 150, seasonPeriod: 37, seasonAmp: 60 }),
+      init: (c) => generalistWorld(c, 4),
+      steps: 120,
+      every: 40,
+    },
+    {
+      // Sandbox light mode (a rotating planet): the sun crosses the 40-cell tile
+      // every 37 steps, so 120 steps cover several days and the x wrap.
+      name: "sweep",
+      cfg: defaultConfig({ ...base, seed: 77, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 37 }),
+      init: (c) => generalistWorld(c, 4),
+      steps: 120,
+      every: 40,
+    },
+    {
+      // Sandbox signal-gradient gain on random controllers (which emit and
+      // move), with a long-lived signal so gradients are large enough to clamp.
+      name: "signal-gain",
+      cfg: defaultConfig({ ...base, seed: 78, signalGain: 127, kSDecay: 13, kEmit: 1024 }),
+      init: (c) => soupWorld(c, 6),
+      steps: 120,
+      every: 40,
+    },
+    {
+      // Sandbox wandering sun: no rotation, the meridian swings 30 cells out
+      // and back every 50 steps, so 120 steps cover both directions and wraps.
+      name: "sweep-wander",
+      cfg: defaultConfig({ ...base, seed: 79, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 0, wanderPeriod: 50, wanderAmp: 30 }),
       init: (c) => generalistWorld(c, 4),
       steps: 120,
       every: 40,
@@ -230,6 +274,103 @@ export function goldenCases(ruleVersion = RULE_VERSION): GoldenCase[] {
       name: "ring-namespace",
       cfg: defaultConfig({ tileW: 24, tileH: 24, kernelRadius: 4, seed: 23, mutRate: 60_000_000, ringNamespace: 7 }),
       init: (c) => soupWorld(c, 8),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // Lossy takeover (WorldConfig.takeover, ownership sandbox): the 12 M3
+      // founders (distinct lineages and mu/sigma) in contact, with mutation,
+      // so non-kin bound shares become waste and release energy into E.
+      name: "takeover-lineage",
+      cfg: defaultConfig({ ...base, seed: 51, mutRate: 60_000_000, takeover: "lossy", takeoverKin: "lineage" }),
+      init: (c) => m3World(c, 12, 32, 64),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // As "takeover-lineage" with kin = mu/sigma within a tolerance.
+      name: "takeover-growth",
+      cfg: defaultConfig({ ...base, seed: 53, mutRate: 60_000_000, takeover: "lossy", takeoverKin: "growth", takeoverTol: 8 }),
+      init: (c) => m3World(c, 12, 32, 64),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // Recurring injury (WorldConfig.injuryPeriod, ownership sandbox): every
+      // 7th step about 1 cell in 150 centres a radius-2 wound, on founders in
+      // contact with mutation, so wounds overlap bodies, tile edges and each other.
+      name: "injury",
+      cfg: defaultConfig({ ...base, seed: 59, mutRate: 60_000_000, injuryPeriod: 7, injuryRadius: 2, injuryProb: 28_633_115 }),
+      init: (c) => m3World(c, 12, 32, 64),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // As "takeover-lineage" with kin = at most 1 differing genome word, so
+      // single mutants stay kin to their parents and founders do not.
+      name: "takeover-genome",
+      cfg: defaultConfig({ ...base, seed: 57, mutRate: 60_000_000, takeover: "lossy", takeoverKin: "genome", takeoverTol: 1 }),
+      init: (c) => m3World(c, 12, 32, 64),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // Injury review (Codex, 2026-10-03): injury at the arithmetic bounds and
+      // across tiles. Two 16 x 16 tiles; half the left one holds
+      // MATTER_MAX / 256 polymer per cell with E at POOL_MAX and the widest
+      // energy gap, so one wound exports far more than 2^32 heat through the
+      // 64-bit reductions, and wounds of radius 7 (the largest a 16-cell tile
+      // allows) wrap inside their own tile, every other step. The right tile
+      // holds a founder, so a wound leaking across tiles would show.
+      name: "injury-extremes",
+      cfg: defaultConfig({ tileW: 16, tileH: 16, tilesX: 2, kernelRadius: 3, seed: 71, eB: 30, eP: 31, eC: 1, injuryPeriod: 2, injuryRadius: 7, injuryProb: 2 ** 32 / 64 }),
+      init: (c) => {
+        const s = buildWorld(c, { nutrient: 0, founders: [{ x: 24, y: 8, radius: 5, genome: founderGenome(M3_FOUNDERS[0]), biomass: 64, energy: 128 }] });
+        const n = 512;
+        const per = Math.floor(MATTER_MAX / 256);
+        for (let y = 0; y < 16; y++)
+          for (let x = 0; x < 8; x++) {
+            const i = y * 32 + (x < 4 ? x : x + 8);
+            s.cells[CH.P * n + i] = per;
+            s.cells[CH.E * n + i] = POOL_MAX;
+          }
+        return s;
+      },
+      steps: 12,
+      every: 4,
+    },
+    {
+      // Heritable shape (WorldConfig.shapeReach, cells sandbox) with a far
+      // ring, on 2x2-blocked affinity (tiles a multiple of 16): ringed
+      // founders in contact, with mutation reaching the three ring slots.
+      name: "shape-far",
+      cfg: defaultConfig({ tileW: 48, tileH: 48, kernelRadius: 5, seed: 61, mutRate: 60_000_000, shapeReach: 8 }),
+      init: (c) => m3World(c, 12, 32, 64, ringedFounders()),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // As "shape-far" without a far ring (shapeReach == kernelRadius: two
+      // rings, the third byte inert) and on unblocked affinity.
+      name: "shape-near",
+      cfg: defaultConfig({ ...base, seed: 67, mutRate: 60_000_000, shapeReach: 5 }),
+      init: (c) => m3World(c, 12, 32, 64, ringedFounders()),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // Wild sandbox: every optional lever in one config (a rotating and
+      // wandering sun with seasons, signal gain, recurring wounds and a
+      // far-ring heritable shape), which no single sandbox's cases combine.
+      name: "wild-stack",
+      cfg: defaultConfig({
+        tileW: 48, tileH: 48, kernelRadius: 5, seed: 83, mutRate: 60_000_000,
+        lightMode: "sweep", lightBase: 20, lightAmp: 170, dayPeriod: 37, wanderPeriod: 50, wanderAmp: 30, seasonPeriod: 37, seasonAmp: 60,
+        signalGain: 127, kSDecay: 13, kEmit: 1024,
+        injuryPeriod: 7, injuryRadius: 2, injuryProb: 28_633_115,
+        shapeReach: 8,
+      }),
+      init: (c) => m3World(c, 12, 32, 64, ringedFounders()),
       steps: 120,
       every: 30,
     },

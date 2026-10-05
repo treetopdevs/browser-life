@@ -77,7 +77,7 @@ describe("pond config keys", () => {
     for (const pondPeriod of [1, 200, MAX_STEP]) expect(validateConfig({ ...ok, pondPeriod })).toEqual([]);
     for (const pondK of [0, 65, 2.5]) expect(validateConfig({ ...ok, pondK })).toEqual(["pondK must be an integer in 1..64"]);
     for (const pondK of [1, 64]) expect(validateConfig({ ...ok, pondK })).toEqual([]);
-    for (const pondArm of ["", "SCAF", "random", 1]) expect(validateConfig({ ...ok, pondArm: pondArm as never })).toEqual(["pondArm must be scaf, rand, cont, nat or shuf"]);
+    for (const pondArm of ["", "SCAF", "random", 1]) expect(validateConfig({ ...ok, pondArm: pondArm as never })).toEqual(["pondArm must be scaf, rand, cont, nat, shuf or breed"]);
   });
 
   it("need 64x64 tiles and at least 4 ponds", () => {

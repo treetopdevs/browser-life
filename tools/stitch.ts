@@ -194,7 +194,7 @@ async function existing(dir: string, segs: Listed[]): Promise<string | null> {
     try {
       // The arm is the run's own, from the manifest the stitcher wrote (the preset's is not: a nat or shuf run is a pond preset's
       // with another arm); a manifest without one leaves the arm to the file's header, as for an export older than the arm.
-      checkPondsFile(dir, text, cfg.pondPeriod, cfg.tilesX * cfg.tilesY, 0, exp.spec.steps, manifest.cfg?.pondArm);
+      checkPondsFile(dir, text, cfg.pondPeriod, cfg.tilesX * cfg.tilesY, 0, exp.spec.steps, manifest.cfg?.pondArm, manifest.cfg?.pondScore);
     } catch (e) {
       return `invalid-ponds: ${e instanceof Error ? e.message : String(e)}`;
     }

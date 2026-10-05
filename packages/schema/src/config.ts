@@ -2,6 +2,7 @@
 // and the WGSL kernels agree exactly. Fractions are numerators over the
 // power of two named in the comment.
 import type { PondArm } from "./ponds.ts";
+import { SHAPE_MAX_REACH } from "./kernel.ts";
 
 export const SCHEMA_VERSION = 3;
 /** Latest supported physics version; experimental versions are explicitly selected. */
@@ -25,7 +26,7 @@ export function isSupportedRuleVersion(version: unknown): version is 1 | 2 {
  */
 export const METRICS_VERSION = 2;
 
-export type LightMode = "uniform" | "gradient" | "patches";
+export type LightMode = "uniform" | "gradient" | "patches" | "sweep";
 
 export interface WorldConfig {
   ruleVersion: number;
@@ -105,7 +106,7 @@ export interface WorldConfig {
   lightMode: LightMode;
   /** 0..255 */
   lightBase: number;
-  /** Added across the tile (gradient) or inside patches. */
+  /** Added across the tile (gradient), inside patches, or at the sun's meridian (sweep). */
   lightAmp: number;
   /** Steps per seasonal cycle; 0 disables seasons. */
   seasonPeriod: number;
@@ -271,7 +272,126 @@ export interface WorldConfig {
    * `pondDeath`.
    */
   pondExport?: number;
+  /**
+   * The breeder (wild sandbox): what the pond cycle ranks ponds by, a named
+   * integer measure of the pre-cycle snapshot or a combination of several
+   * (`PondScore`, `POND_TERMS`, and `pondScores` in
+   * packages/schema/src/ponds.ts). Required when `pondArm` is "breed", whose
+   * donors are the ponds with the largest score (bound mass breaking ties).
+   * Allowed with "scaf" and "rand", which then record the same score in
+   * ponds.tsv while choosing donors as they always do (the breeder's
+   * controls), and with no other arm.
+   *
+   * Optional and absent from `defaultConfig()` and from every v1 preset, for
+   * the reason `pondPeriod` is: a config without it hashes, and its ponds.tsv
+   * reads, exactly as before the breeder existed.
+   */
+  pondScore?: PondScore;
+
+  /**
+   * Lossy takeover (exploratory sandbox, docs/sandbox-ownership.md). Absent =
+   * RULE_VERSION 1. With "lossy", transport still picks the lottery winner
+   * exactly as before, but bound matter (B, P) arriving from a source that is
+   * not kin to the winner is not merged: it lands in the target as waste C,
+   * and its released potential energy sB*(eB-eC) + sP*(eP-eC) joins the
+   * target's E. Matter and energy content stay exactly conserved inside
+   * transport; react's POOL_MAX cap exports any excess as heat. Optional and
+   * absent from `defaultConfig()` for the same hashing reason as `adhesion`.
+   */
+  takeover?: "lossy";
+  /**
+   * Kin test for `takeover`: "lineage" (same LIN_HI/LIN_LO; the default),
+   * "growth" (Lenia mu and sigma within `takeoverTol`) or "genome" (at most
+   * `takeoverTol` of the heritable genome words PARAM0.. differ from the
+   * winner's; the lineage id words are not compared).
+   */
+  takeoverKin?: TakeoverKin;
+  /**
+   * Kin tolerance. "growth": |mu_s - mu_w| <= tol and |sigma_s - sigma_w| <= tol >> 2.
+   * "genome": number of differing genome words <= tol (0..TAKEOVER_GENOME_WORDS). Absent = 0.
+   */
+  takeoverTol?: number;
+
+  /**
+   * Declared cells (cells sandbox; absent = RULE_VERSION 1): every
+   * `cellPeriod` steps a host-side pass (applyCellPass in @bl/sim-ref) gives
+   * each connected body of one lineage id its own id, the heaviest keeping
+   * the old one, and mutates each new daughter with probability
+   * `cellMutProb` / 2^32. Set together, and only with mutRate 0: a genome
+   * then changes at a cell's birth and nowhere else.
+   */
+  cellPeriod?: number;
+  cellMutProb?: number;
+  /**
+   * Heritable kernel shape (cells sandbox; absent = RULE_VERSION 1). The
+   * kernel is split into rings (see buildShapeKernel in kernel.ts): the
+   * RULE_VERSION 1 taps inside and outside half the kernel radius, plus a far
+   * shell out to `shapeReach` when that exceeds kernelRadius. Bytes 1..3 of a
+   * genome's PARAM1 are signed offsets from the neutral ring weights
+   * (64, 64, 0); a cell's kernel density is the weighted mean of its genome's
+   * ring means, and mutation gains one slot per ring. A genome whose ring
+   * bytes are all zero has exactly the RULE_VERSION 1 density.
+   */
+  shapeReach?: number;
+  /**
+   * Recurring injury (exploratory sandbox, docs/sandbox-ownership.md). Absent =
+   * RULE_VERSION 1. On every step with (step + 1) % injuryPeriod === 0, each
+   * cell is a wound centre with probability injuryProb / 2^32 (counter PRNG,
+   * stream RND.INJURY), and react ends by lesioning every cell within
+   * injuryRadius (Euclidean, wrapping inside its tile) of a centre exactly as
+   * `applyLesion` does: B and P become waste C, their excess chemical energy
+   * and the free pool E leave as heat, motility resets and the lineage is
+   * cleared. Matter is conserved and the energy ledger closes. The three keys
+   * are set together; optional and absent from `defaultConfig()` for the same
+   * hashing reason as `adhesion`.
+   */
+  injuryPeriod?: number;
+  /** Wound disc radius in cells, 0..INJURY_MAX_RADIUS and at most maxLesionRadius(cfg). */
+  injuryRadius?: number;
+  /** Per-cell probability of being a wound centre at an injury step, as a numerator over 2^32 (1..2^32-1). */
+  injuryProb?: number;
+
+  /**
+   * lightMode "sweep" (a rotating planet): the sun's meridian crosses each
+   * tile along x once every `dayPeriod` steps, and light falls off linearly
+   * with circular x-distance from it, from lightBase + lightAmp at the
+   * meridian to lightBase at the antipode. The spatial mean is about the
+   * gradient mode's, so the two differ mainly in that the light moves. Absent
+   * or 0: the sun stands still at x = 0 (the matched static control).
+   *
+   * Optional and absent by default for the same reason `migrationPeriod` is:
+   * a config without it hashes exactly as before this feature existed.
+   * `validateConfig` requires dayPeriod * tileW < 2^32 so the sun's position
+   * `(step % dayPeriod) * tileW / dayPeriod` fits in u32 on both backends.
+   */
+  dayPeriod?: number;
+
+  /**
+   * Sandbox: multiplies the sensed signal gradient (SGX, SGY) before the
+   * existing /4 and the clamp to +-127. At the default settings a neighbour
+   * difference below 8 reads as nothing to the int8 controller. Absent means 1,
+   * which is the original sensor exactly. Bounded by 127 so
+   * (Se - Sw) * signalGain stays below 2^31 with Se, Sw capped at 2^24 - 1.
+   * Optional and absent by default for the same reason `migrationPeriod` is.
+   */
+  signalGain?: number;
+
+  /**
+   * lightMode "sweep" only (sandbox): a wandering sun. The meridian is offset
+   * by wanderAmp * tri(step / wanderPeriod) cells, where tri rises 0 -> 1 over
+   * the first half of each period and falls back over the second, quantised
+   * to 1/256. On top of the dayPeriod rotation (or alone, with dayPeriod 0)
+   * the sun's velocity alternates each half-period, e.g. reverses. Absent or
+   * 0: no wander. Optional and absent by default like `migrationPeriod`.
+   */
+  wanderPeriod?: number;
+  /** Wander amplitude in cells (see `wanderPeriod`). */
+  wanderAmp?: number;
 }
+
+export type TakeoverKin = "lineage" | "growth" | "genome";
+/** Genome words the "genome" kin test compares: PARAM0, PARAM1 and the NN weight words (GENOME_CHANNELS - G.PARAM0). */
+export const TAKEOVER_GENOME_WORDS = 42;
 
 /**
  * Bit layout for a namespaced LIN_LO (see `WorldConfig.ringNamespace`): the
@@ -371,7 +491,7 @@ export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig
     eventCap: 1 << 16,
     neutral: false,
     motility: true,
-    // migrationPeriod/migrantCount, pondPeriod/pondK/pondArm and pondDeath/pondExport deliberately absent here — see their docs on WorldConfig.
+    // migrationPeriod/migrantCount, pondPeriod/pondK/pondArm, pondDeath/pondExport and pondScore deliberately absent here — see their docs on WorldConfig.
     ...overrides,
   };
 }
@@ -382,7 +502,7 @@ export const cellCount = (c: WorldConfig) => worldW(c) * worldH(c);
 
 /** Numeric view of the config used for WGSL constants and validation. */
 export function lightModeId(m: LightMode): number {
-  return m === "uniform" ? 0 : m === "gradient" ? 1 : 2;
+  return m === "uniform" ? 0 : m === "gradient" ? 1 : m === "patches" ? 2 : 3;
 }
 
 /**
@@ -458,7 +578,37 @@ const POND_K_RANGE: Range = [1, 64];
 /** Bounds for pondDeath (a probability in 1/65,536) and pondExport (a Chebyshev distance on the 64-torus is at most 32). */
 const POND_DEATH_RANGE: Range = [1, 65_536];
 const POND_EXPORT_RANGE: Range = [1, 32];
-const POND_ARMS: readonly PondArm[] = ["scaf", "rand", "cont", "nat", "shuf"];
+const POND_ARMS: readonly PondArm[] = ["scaf", "rand", "cont", "nat", "shuf", "breed"];
+/**
+ * The measures a pond score is built from (the breeder, wild sandbox; `pondTermValues` in ponds.ts computes them, and
+ * they live here because ponds.ts imports this module). Each is a nonnegative integer measure of one pond on one
+ * pre-cycle snapshot:
+ * - "mass": bound mass, v1's trait (`pondTraits`);
+ * - "drive": moving mass, the bound mass of each living cell at the census support threshold times the size of the
+ *   motility term flow adds to its displacement (`pondDrives`);
+ * - "reach": bound mass in the pond's export zone at Chebyshev distance >= 28 from the landing centre
+ *   (`pondExportMasses`), i.e. how much of the packet's descent reached the pond's edge within one cycle;
+ * - "seed": the expected bound mass of a packet drawn from the pond, which decides whether the pond it founds lasts
+ *   (`pondSeeds`);
+ * - "body": the size, in 1/256 cell, of the body a unit of the pond's bound mass sits in (`pondBodies`).
+ */
+export const POND_TERMS = ["mass", "drive", "reach", "seed", "body"] as const;
+export type PondTerm = (typeof POND_TERMS)[number];
+/**
+ * What the breeder ranks ponds by (config key `pondScore`; `pondScores` in ponds.ts): one term, whose value is the
+ * score, or two or more distinct terms joined by "+" ("drive+seed+body"), a combined score under which a pond is as
+ * good as its worst term -- its score is the smallest, over the terms, of the number of ponds it beats on that term.
+ */
+export type PondScore = PondTerm | `${PondTerm}+${string}`;
+
+/** The terms of a `pondScore`, in its order. Throws unless it is one term or distinct terms joined by "+". */
+export function pondScoreTerms(score: unknown): PondTerm[] {
+  const terms = typeof score === "string" ? score.split("+") : [];
+  if (!terms.length || terms.some((t) => !(POND_TERMS as readonly string[]).includes(t)) || new Set(terms).size !== terms.length)
+    throw new Error(`pondScore must be one of ${POND_TERMS.join(", ")}, or distinct ones joined by "+", got ${JSON.stringify(score)}`);
+  return terms as PondTerm[];
+}
+const DAY_PERIOD_RANGE: Range = [0, 8_000_000];
 
 export function validateConfig(c: WorldConfig): string[] {
   const errs: string[] = [];
@@ -488,7 +638,7 @@ export function validateConfig(c: WorldConfig): string[] {
   if (errs.length) return errs;
   if (!isSupportedRuleVersion(c.ruleVersion)) errs.push(`unsupported ruleVersion ${c.ruleVersion}; expected 1 or ${RULE_VERSION}`);
   if (c.polymerDrag === true && c.ruleVersion !== 2) errs.push("polymerDrag requires ruleVersion 2");
-  if (!["uniform", "gradient", "patches"].includes(c.lightMode)) errs.push("lightMode must be uniform, gradient or patches");
+  if (!["uniform", "gradient", "patches", "sweep"].includes(c.lightMode)) errs.push("lightMode must be uniform, gradient, patches or sweep");
   if (c.tileW % 8 !== 0 || c.tileH % 8 !== 0) errs.push("tile dimensions must be multiples of 8");
   if (c.kernelRadius * 2 + 1 > Math.min(c.tileW, c.tileH)) errs.push("kernel larger than tile");
   if (cellCount(c) > 1 << 24) errs.push("world larger than 2^24 cells");
@@ -501,6 +651,10 @@ export function validateConfig(c: WorldConfig): string[] {
     ["migrationPeriod", MIGRATION_PERIOD_RANGE],
     ["migrantCount", MIGRANT_COUNT_RANGE],
     ["ringNamespace", [0, MAX_RING_NAMESPACE] as Range],
+    ["dayPeriod", DAY_PERIOD_RANGE],
+    ["signalGain", [1, 127] as Range],
+    ["wanderPeriod", [0, 8_000_000] as Range],
+    ["wanderAmp", [0, 4096] as Range],
     ["pondPeriod", POND_PERIOD_RANGE],
     ["pondK", POND_K_RANGE],
     ["pondDeath", POND_DEATH_RANGE],
@@ -510,7 +664,7 @@ export function validateConfig(c: WorldConfig): string[] {
     if (v === undefined) continue;
     if (!Number.isInteger(v) || v < range[0] || v > range[1]) errs.push(`${key} must be an integer in ${range[0]}..${range[1]}`);
   }
-  if (c.pondArm !== undefined && !POND_ARMS.includes(c.pondArm)) errs.push("pondArm must be scaf, rand, cont, nat or shuf");
+  if (c.pondArm !== undefined && !POND_ARMS.includes(c.pondArm)) errs.push("pondArm must be scaf, rand, cont, nat, shuf or breed");
   const pondKeys = [c.pondPeriod, c.pondK, c.pondArm].filter((v) => v !== undefined).length;
   if (pondKeys !== 0 && pondKeys !== 3) errs.push("pondPeriod, pondK and pondArm must be set together");
   // The current's keys go with its arms, both required there and neither anywhere else.
@@ -519,6 +673,16 @@ export function validateConfig(c: WorldConfig): string[] {
     if (current && c[key] === undefined) errs.push(`${key} is required when pondArm is nat or shuf`);
     if (!current && c[key] !== undefined) errs.push(`${key} may be set only when pondArm is nat or shuf`);
   }
+  // The breeder's score goes with arm breed (required) and its controls scaf and rand (optional), and with nothing else.
+  if (c.pondScore !== undefined) {
+    try {
+      pondScoreTerms(c.pondScore);
+    } catch {
+      errs.push(`pondScore must be one of ${POND_TERMS.join(", ")}, or distinct ones joined by "+"`);
+    }
+  }
+  if (c.pondArm === "breed" && c.pondScore === undefined) errs.push("pondScore is required when pondArm is breed");
+  if (c.pondScore !== undefined && c.pondArm !== "breed" && c.pondArm !== "scaf" && c.pondArm !== "rand") errs.push("pondScore may be set only when pondArm is breed, scaf or rand");
   if (errs.length) return errs;
   const migrationPeriod = c.migrationPeriod ?? 0;
   const migrantCount = c.migrantCount ?? 0;
@@ -533,6 +697,7 @@ export function validateConfig(c: WorldConfig): string[] {
   // index packLineageLo packs in -- every cell index (and founder index) must
   // fit in that narrower range, or two different cells could pack to the same
   // LIN_LO (a real, not just cosmetic, collision).
+  if ((c.dayPeriod ?? 0) * c.tileW > 0xffffffff) errs.push("dayPeriod * tileW must be below 2^32");
   if (c.ringNamespace !== undefined && cellCount(c) > 1 << RING_CELL_BITS) errs.push(`a namespaced config (ringNamespace set) must have cellCount at most 2^${RING_CELL_BITS}`);
   // The pond cycle (see WorldConfig's pondPeriod): ponds are the protocol's
   // 64 x 64 tiles, D = max(1, floor(R / 4)) donors need R >= 4 ponds, and each
@@ -544,6 +709,81 @@ export function validateConfig(c: WorldConfig): string[] {
     if (migrationPeriod > 0) errs.push("a pond config (pondPeriod set) cannot migrate between tiles (migrationPeriod > 0)");
     if (c.ringNamespace !== undefined) errs.push("a pond config (pondPeriod set) cannot be a metapopulation member (ringNamespace set)");
   }
+  errs.push(...validateTakeover(c));
+  errs.push(...validateInjury(c));
+  errs.push(...validateShape(c));
+  errs.push(...validateCells(c));
+  return errs;
+}
+
+function validateCells(c: WorldConfig): string[] {
+  if (c.cellPeriod === undefined && c.cellMutProb === undefined) return [];
+  if (c.cellPeriod === undefined || c.cellMutProb === undefined) return ["cellPeriod and cellMutProb are set together"];
+  const errs: string[] = [];
+  if (!Number.isInteger(c.cellPeriod) || c.cellPeriod < 1 || c.cellPeriod > 2 ** 31 - 1) errs.push("cellPeriod must be an integer in 1..2^31-1");
+  if (!Number.isInteger(c.cellMutProb) || c.cellMutProb < 0 || c.cellMutProb > 2 ** 32) errs.push("cellMutProb must be an integer in 0..2^32");
+  if (c.mutRate !== 0) errs.push("declared cells need mutRate 0 (genomes change at a cell's birth only)");
+  if (c.migrationPeriod || c.pondPeriod !== undefined || c.neutral) errs.push("declared cells are not defined with migration, the pond cycle or the neutral shadow");
+  return errs;
+}
+
+/** Rings of the heritable-shape kernel: 0 without WorldConfig.shapeReach, 2 without a far ring, else 3. */
+export function shapeRings(c: Pick<WorldConfig, "shapeReach" | "kernelRadius">): number {
+  return c.shapeReach === undefined ? 0 : c.shapeReach > c.kernelRadius ? 3 : 2;
+}
+
+function validateShape(c: WorldConfig): string[] {
+  if (c.shapeReach === undefined) return [];
+  const maxR = Math.min(SHAPE_MAX_REACH, Math.floor((Math.min(c.tileW, c.tileH) - 1) / 2));
+  if (!Number.isInteger(c.shapeReach) || c.shapeReach < c.kernelRadius || c.shapeReach > maxR)
+    return [`shapeReach must be an integer in kernelRadius..${maxR} (the far ring must fit inside a tile)`];
+  // Below radius 3 the inner ring (|d| < radius / 2) has no taps, and its weight would only dilute the mean.
+  if (c.kernelRadius < 3) return ["shapeReach needs kernelRadius >= 3 (the inner ring must have taps)"];
+  return [];
+}
+
+/** Largest injuryRadius: bounds the per-cell centre scan to (2 * 16 + 1)^2 draws on an injury step. */
+export const INJURY_MAX_RADIUS = 16;
+
+function validateInjury(c: WorldConfig): string[] {
+  const keys = [c.injuryPeriod, c.injuryRadius, c.injuryProb];
+  if (keys.every((k) => k === undefined)) return [];
+  if (keys.some((k) => k === undefined)) return ["injuryPeriod, injuryRadius and injuryProb are set together"];
+  const errs: string[] = [];
+  const int = (v: unknown, lo: number, hi: number) => typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi;
+  if (!int(c.injuryPeriod, 1, 2 ** 31 - 1)) errs.push("injuryPeriod must be an integer in 1..2^31-1");
+  const maxR = Math.min(INJURY_MAX_RADIUS, Math.floor((Math.min(c.tileW, c.tileH) - 1) / 2));
+  if (!int(c.injuryRadius, 0, maxR)) errs.push(`injuryRadius must be an integer in 0..${maxR} (a disc must not wrap onto itself)`);
+  if (!int(c.injuryProb, 1, 2 ** 32 - 1)) errs.push("injuryProb must be an integer in 1..2^32-1");
+  return errs;
+}
+
+/** Bounds for takeoverTol: mu and sigma are 16-bit genome fields. */
+const TAKEOVER_TOL_RANGE: Range = [0, 0xffff];
+
+/**
+ * Lossy takeover's u32 bound (see WorldConfig.takeover). A target's transport
+ * E is the sum of nine sources' E shares, each source <= POOL_MAX (states are
+ * capped), so <= 9 * POOL_MAX, plus the potential energy released by non-kin
+ * bound matter, <= (eP - eC) * (incoming B + P) <= (eP - eC) * MATTER_MAX
+ * (total world matter). 9 * 2^28 + g * 2^26 < 2^32 needs g <= 27, so a
+ * takeover config requires eP - eC <= 27; nothing is clamped.
+ */
+export const TAKEOVER_MAX_GAP = Math.floor((2 ** 32 - 1 - 9 * POOL_MAX) / MATTER_MAX);
+
+function validateTakeover(c: WorldConfig): string[] {
+  const errs: string[] = [];
+  if (c.takeover === undefined) {
+    if (c.takeoverKin !== undefined || c.takeoverTol !== undefined) errs.push("takeoverKin and takeoverTol require takeover");
+    return errs;
+  }
+  if (c.takeover !== "lossy") errs.push('takeover must be "lossy"');
+  if (c.takeoverKin !== undefined && c.takeoverKin !== "lineage" && c.takeoverKin !== "growth" && c.takeoverKin !== "genome") errs.push('takeoverKin must be "lineage", "growth" or "genome"');
+  const t = c.takeoverTol;
+  if (t !== undefined && (typeof t !== "number" || !Number.isInteger(t) || t < TAKEOVER_TOL_RANGE[0] || t > TAKEOVER_TOL_RANGE[1]))
+    errs.push(`takeoverTol must be an integer in ${TAKEOVER_TOL_RANGE[0]}..${TAKEOVER_TOL_RANGE[1]}`);
+  else if (c.takeoverKin === "genome" && t !== undefined && t > TAKEOVER_GENOME_WORDS) errs.push(`takeoverTol must be <= ${TAKEOVER_GENOME_WORDS} with "genome" kin`);
+  if (c.eP - c.eC > TAKEOVER_MAX_GAP) errs.push(`a takeover config needs eP - eC <= ${TAKEOVER_MAX_GAP} (transport E bound)`);
   return errs;
 }
 

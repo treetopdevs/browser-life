@@ -17,6 +17,7 @@ import {
   applyMigration,
   applyPondCycle,
   assertConserved,
+  breedPondColumns,
   contRows,
   ledgerEnergy,
   pondMatter,
@@ -25,13 +26,23 @@ import {
   type MigrationEvent,
   type PondArm,
   type PondRow,
+  type PondScore,
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
 import { census, individuals } from "@bl/metrics";
+import { applyCellPass, type CellBirth } from "@bl/sim-ref";
 import type { GpuSim } from "@bl/sim-gpu";
 
 type BoundarySim = Pick<GpuSim, "cfg" | "readState" | "upload">;
+
+/**
+ * Donors for the pond cycle at boundary `b`, chosen from the pre-cycle state `pre` after `applyBoundary`'s one
+ * readback (a picker outside the lab: picks.ts's `makeDonorHook`). `undefined` leaves the choice to the arm,
+ * which a hook answers only when no pond is occupied. A hook that throws stops the boundary before anything
+ * is applied. The hook must not keep or change `pre`: it is the state the cycle transforms.
+ */
+export type DonorHook = (pre: WorldState, b: number) => Promise<readonly number[] | undefined>;
 
 /**
  * If `sim.cfg.migrationPeriod` divides `step`, reads the full state back,
@@ -119,14 +130,19 @@ export function pondCensus(state: WorldState): { individuals: number[]; lineages
 /** ponds.tsv's header line for the v1 arms (scaf, rand, cont): `POND_COLUMNS`, tab-separated. */
 export const PONDS_HEADER = POND_COLUMNS.join("\t") + "\n";
 
-/** ponds.tsv's columns for a run of pond arm `arm`: `HUNT_POND_COLUMNS` for the hunt's nat and shuf, `POND_COLUMNS` for every other arm. */
-export function pondColumns(arm: PondArm | undefined): readonly (keyof PondRow)[] {
-  return arm === "nat" || arm === "shuf" ? HUNT_POND_COLUMNS : POND_COLUMNS;
+/**
+ * ponds.tsv's columns for a run of pond arm `arm` and config key `pondScore` `score`: `HUNT_POND_COLUMNS` for the
+ * hunt's nat and shuf, `breedPondColumns` for a run with a score (the breeder and its controls: `BREED_POND_COLUMNS`,
+ * plus a column per term under a combined score), `POND_COLUMNS` otherwise.
+ */
+export function pondColumns(arm: PondArm | undefined, score?: PondScore): readonly (keyof PondRow)[] {
+  if (arm === "nat" || arm === "shuf") return HUNT_POND_COLUMNS;
+  return score !== undefined ? breedPondColumns(score) : POND_COLUMNS;
 }
 
-/** ponds.tsv's header line for a run of pond arm `arm` (`PONDS_HEADER` for the v1 arms, whose files stay byte-identical). */
-export function pondsHeader(arm: PondArm | undefined): string {
-  return pondColumns(arm).join("\t") + "\n";
+/** ponds.tsv's header line for a run of pond arm `arm` and score `score` (`PONDS_HEADER` for the v1 arms without a score, whose files stay byte-identical). */
+export function pondsHeader(arm: PondArm | undefined, score?: PondScore): string {
+  return pondColumns(arm, score).join("\t") + "\n";
 }
 
 /** One boundary's ponds.tsv rows, in `columns` order (default `POND_COLUMNS`) and formatted (`String` of each value) as tools/scaffold.ts writes them. */
@@ -176,7 +192,10 @@ export interface BoundaryResult {
  * measure it (`contRows` for cont), check matter and the energy ledger exactly
  * (`assertConserved`, which throws), and upload the post-cycle state (every
  * arm but cont). `ponds` is the history's
- * `pondContext`, required when the config has the pond cycle.
+ * `pondContext`, required when the config has the pond cycle. `picks` are
+ * donors chosen by hand for the pond cycle at this step (`applyPondCycle`'s
+ * `picks`, the lab's breeder); they are refused, before anything is read,
+ * unless `step` is a pond boundary of arm scaf, rand or breed.
  *
  * The same contract as `migrateAtBoundary`: `step` is the absolute step, the
  * call comes after that step's census and observers (which see the
@@ -185,10 +204,15 @@ export interface BoundaryResult {
  * config excludes migration (`validateConfig`), so at most one of the two
  * transforms fires.
  */
-export async function applyBoundary(sim: BoundarySim, step: number, ponds: PondContext | null): Promise<BoundaryResult> {
-  const migrations = await migrate(sim, step);
+export async function applyBoundary(sim: BoundarySim, step: number, ponds: PondContext | null, picks?: readonly number[] | DonorHook): Promise<BoundaryResult> {
   const period = sim.cfg.pondPeriod;
-  if (period === undefined || step === 0 || step % period !== 0) return { migrations, ponds: null, state: null };
+  const boundary = period !== undefined && step !== 0 && step % period === 0;
+  // Picks belong to one pond cycle: with none here, or an arm that chooses no donors, they would be dropped silently.
+  // Checked before `migrate`, which reads and uploads on a migration step (a pond config excludes migration, so no valid run changes).
+  if (picks !== undefined && !(boundary && (sim.cfg.pondArm === "scaf" || sim.cfg.pondArm === "rand" || sim.cfg.pondArm === "breed")))
+    throw new Error(`donors were picked for t=${step}, which is not a pond boundary of an arm that takes donors (scaf, rand or breed)`);
+  const migrations = await migrate(sim, step);
+  if (period === undefined || !boundary) return { migrations, ponds: null, state: null };
   if (!ponds) throw new Error("a pond config needs its pond context (pondContext of the history's start state) at every boundary");
   const pre = await sim.readState();
   if (pre.step !== step) throw new Error(`pond boundary at t=${step}, but the simulation is at t=${pre.step}`);
@@ -199,24 +223,25 @@ export async function applyBoundary(sim: BoundarySim, step: number, ponds: PondC
     assertConserved(pre, ponds.startMatter, ponds.baseline);
     return { migrations, ponds: { b, rows, ended: false, donors: [] }, state: pre };
   }
-  const cycle = transformPonds(sim.cfg, pre, b, ponds);
+  const chosen = typeof picks === "function" ? await picks(pre, b) : picks;
+  const cycle = transformPonds(sim.cfg, pre, b, ponds, chosen);
   sim.upload(cycle.state);
   return { migrations, ponds: { b, rows: cycle.rows, ended: cycle.ended, donors: cycle.donors }, state: cycle.state };
 }
 
 /**
- * The pond cycle of arm scaf, rand, nat or shuf at boundary `b` on the pre-cycle state `pre` (`applyPondCycle`,
- * or `applyCurrentCycle` with the config's `pondDeath` and `pondExport`, both with `pondCensus` for
+ * The pond cycle of arm scaf, rand, breed, nat or shuf at boundary `b` on the pre-cycle state `pre` (`applyPondCycle`
+ * with the config's `pondScore`, or `applyCurrentCycle` with the config's `pondDeath` and `pondExport`, both with `pondCensus` for
  * `recipientIndividuals`), with matter and the energy ledger checked exactly (`assertConserved`, which throws).
  * `cfg` is the simulation's config (its arm and keys). Shared by `applyBoundary` and a branch's first transform
  * (`branchTransform`), so both agree bit for bit.
  */
-function transformPonds(cfg: WorldConfig, pre: WorldState, b: number, ponds: PondContext): CycleResult {
+function transformPonds(cfg: WorldConfig, pre: WorldState, b: number, ponds: PondContext, picks?: readonly number[]): CycleResult {
   const arm = cfg.pondArm;
   let cycle: CycleResult;
-  if (arm === "scaf" || arm === "rand") cycle = applyPondCycle(pre, b, arm, cfg.pondK!, ponds.Mr, pondCensus);
+  if (arm === "scaf" || arm === "rand" || arm === "breed") cycle = applyPondCycle(pre, b, arm, cfg.pondK!, ponds.Mr, pondCensus, cfg.pondScore, picks);
   else if (arm === "nat" || arm === "shuf") cycle = applyCurrentCycle(pre, b, arm, cfg.pondK!, cfg.pondDeath!, cfg.pondExport!, ponds.Mr, pondCensus);
-  else throw new Error(`pondArm must be scaf, rand, cont, nat or shuf, got ${JSON.stringify(arm)}`);
+  else throw new Error(`pondArm must be scaf, rand, cont, nat, shuf or breed, got ${JSON.stringify(arm)}`);
   assertConserved(cycle.state, ponds.startMatter, ponds.baseline);
   return cycle;
 }
@@ -233,4 +258,24 @@ export function branchTransform(source: WorldState, b: number, ponds: PondContex
   if (arm !== "nat" && arm !== "shuf") throw new Error(`a branch transform needs pondArm nat or shuf, got ${JSON.stringify(arm)}`);
   const cycle = transformPonds(source.cfg, source, b, ponds);
   return { ponds: { b, rows: cycle.rows, ended: cycle.ended, donors: cycle.donors }, state: cycle.state };
+}
+
+/**
+ * Declared cells (WorldConfig.cellPeriod, cells sandbox): when `cellPeriod`
+ * divides the absolute step `step` (> 0), reads the state back (or takes
+ * `known`, a readback of this same step), applies `applyCellPass` to it and
+ * uploads it when a cell was born. Same contract as `applyBoundary`: after
+ * that step's census and observers, before any checkpoint at it. `state` is
+ * the post-pass state whenever the pass ran, for a caller that needs the full
+ * state at this step anyway. Only the headless runner calls this; the lab
+ * does not step declared-cell worlds.
+ */
+export async function cellsAtBoundary(sim: BoundarySim, step: number, known: WorldState | null = null): Promise<{ births: CellBirth[]; state: WorldState | null }> {
+  const period = sim.cfg.cellPeriod;
+  if (period === undefined || step === 0 || step % period !== 0) return { births: [], state: null };
+  const st = known ?? (await sim.readState());
+  if (st.step !== step) throw new Error(`cell pass at t=${step}, but the simulation is at t=${st.step}`);
+  const births = applyCellPass(st);
+  if (births.length) sim.upload(st);
+  return { births, state: st };
 }

@@ -18,11 +18,12 @@ import {
   cellBase,
   cellCount,
   draw,
+  shapeRings,
   worldW,
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
-import { controllerForward, mutateInPlace } from "@bl/sim-ref";
+import { CELL_SEED_SALT, controllerForward, mutateInPlace } from "@bl/sim-ref";
 
 export type Key = string;
 
@@ -103,9 +104,12 @@ export function descendants(subject: Key, parent: Map<Key, Key>): Set<Key> {
 const signed = (b: number) => (b > 127 ? b - 256 : b);
 const byteOf = (w: Uint32Array, b: number) => signed((w[G.W0 + (b >> 2)] >>> ((b & 3) * 8)) & 0xff);
 
-export type LocusKind = "w1" | "b1" | "w2" | "b2" | "mu" | "sigma" | "gain";
+export type LocusKind = "w1" | "b1" | "w2" | "b2" | "mu" | "sigma" | "gain" | "ring";
 
-/** The genome slot `mutateInPlace` changes for slot index `slot` (0 .. NN_BYTES + 2). */
+/**
+ * The genome slot `mutateInPlace` changes for slot index `slot` (0 .. NN_BYTES + 2, then one slot per
+ * kernel ring under WorldConfig.shapeReach).
+ */
 export function locusOf(slot: number): { kind: LocusKind; label: string } {
   if (slot < B1_OFF) return { kind: "w1", label: `${INPUTS[Math.floor(slot / NN_H)]}→h${slot % NN_H}` };
   if (slot < W2_OFF) return { kind: "b1", label: `bias h${slot - B1_OFF}` };
@@ -113,14 +117,16 @@ export function locusOf(slot: number): { kind: LocusKind; label: string } {
   if (slot < NN_BYTES) return { kind: "b2", label: `bias ${OUTPUTS[slot - B2_OFF]}` };
   if (slot === NN_BYTES) return { kind: "mu", label: "μ" };
   if (slot === NN_BYTES + 1) return { kind: "sigma", label: "σ" };
-  return { kind: "gain", label: "motility gain" };
+  if (slot === NN_BYTES + 2) return { kind: "gain", label: "motility gain" };
+  return { kind: "ring", label: `ring ${slot - (NN_BYTES + 3)} weight offset` };
 }
 
 export function slotValue(w: Uint32Array, slot: number): number {
   if (slot < NN_BYTES) return byteOf(w, slot);
   if (slot === NN_BYTES) return w[G.PARAM0] & 0xffff;
   if (slot === NN_BYTES + 1) return w[G.PARAM0] >>> 16;
-  return w[G.PARAM1] & 0xff;
+  if (slot === NN_BYTES + 2) return w[G.PARAM1] & 0xff;
+  return signed((w[G.PARAM1] >>> (8 * (slot - (NN_BYTES + 2)))) & 0xff);
 }
 
 export interface Mutation {
@@ -136,31 +142,49 @@ export interface Mutation {
   after: number;
   /** Clamping left the genome unchanged; a new id is minted regardless. */
   clamped: boolean;
+  /**
+   * Declared cells (WorldConfig.cellPeriod): the child is a daughter body given its id by the pass at
+   * the boundary that ends `step` (so at step hi), at its anchor `cell`. `mutated` is whether the pass's
+   * draw mutated it at all; when it did not, the genome is the parent's and `clamped` is true.
+   */
+  cellBirth?: { mutated: boolean };
 }
 
 /** The child's genome words and its mutation, recomputed from the counter PRNG exactly as `react` draws it. */
 /** Where and in which genome slot the mutation that minted `child` struck: known from the draws alone, without the parent's genome. */
-export function mutationSite(child: Key, cfg: WorldConfig): { step: number; cell: number; slot: number; kind: LocusKind; locus: string; which: number; delta: number } {
+export function mutationSite(child: Key, cfg: WorldConfig): { step: number; cell: number; slot: number; kind: LocusKind; locus: string; which: number; delta: number; cellBirth?: { mutated: boolean } } {
   const [hi, lo] = parseKey(child);
   if (hi === 0) throw new Error(`${child} is a founder, not a mutant`);
-  const step = hi - 1;
   const cell = cfg.ringNamespace === undefined ? lo : lo & RING_CELL_MASK;
+  if (cfg.cellPeriod !== undefined) {
+    // Declared cells: every id past the founders is a daughter minted by applyCellPass (@bl/sim-ref) at
+    // step hi, anchored at `cell`, from the pass's own salted draws: 0 decides whether it mutates at all,
+    // 1 and 2 are mutateInPlace's `which` and `deltaRnd`.
+    const base = cellBase((cfg.seed ^ CELL_SEED_SALT) >>> 0, hi, cell);
+    const which = draw(base, 1);
+    const slot = which % (SLOTS + shapeRings(cfg));
+    const { kind, label } = locusOf(slot);
+    // `step` keeps the convention of in-step mutations (hi - 1, the last step before the lineage exists):
+    // the pass runs at the boundary that ends it, and the settled state at step hi is the first to hold the child.
+    return { step: hi - 1, cell, slot, kind, locus: label, which, delta: draw(base, 2), cellBirth: { mutated: draw(base, 0) < (cfg.cellMutProb ?? 0) } };
+  }
+  const step = hi - 1;
   const base = cellBase(cfg.seed, step, cell);
   const which = draw(base, RND.MUT_WHICH);
-  const slot = which % SLOTS;
+  const slot = which % (SLOTS + shapeRings(cfg));
   const { kind, label } = locusOf(slot);
   return { step, cell, slot, kind, locus: label, which, delta: draw(base, RND.MUT_DELTA) };
 }
 
 export function applyMutation(parentWords: Uint32Array, child: Key, parent: Key, cfg: WorldConfig): { words: Uint32Array; mutation: Mutation } {
-  const { step, cell, slot, kind, locus, which, delta } = mutationSite(child, cfg);
+  const { step, cell, slot, kind, locus, which, delta, cellBirth } = mutationSite(child, cfg);
   const [hi, lo] = parseKey(child);
   const words = parentWords.slice();
-  mutateInPlace(words, 1, 0, cfg, which, delta);
+  if (!cellBirth || cellBirth.mutated) mutateInPlace(words, 1, 0, cfg, which, delta);
   words[G.LIN_HI] = hi;
   words[G.LIN_LO] = lo;
   const before = slotValue(parentWords, slot), after = slotValue(words, slot);
-  return { words, mutation: { child, parent, step, cell, slot, kind, locus, before, after, clamped: before === after } };
+  return { words, mutation: { child, parent, step, cell, slot, kind, locus, before, after, clamped: before === after, ...(cellBirth ? { cellBirth } : {}) } };
 }
 
 /** Genome words from PARAM0 onwards as hex, the genomes.tsv / genomeHex column. */
@@ -292,6 +316,6 @@ export function expressionOf(m: Mutation, before: Probe, after: Probe): { expres
     changed[k]++;
     if (d > maxDelta[k]) maxDelta[k] = d;
   }
-  const expression: Expression = m.clamped ? "clamped" : m.kind === "mu" || m.kind === "sigma" || m.kind === "gain" ? "physics" : maxDelta.some((d) => d > 0) ? "controller" : "probe-silent";
+  const expression: Expression = m.clamped ? "clamped" : m.kind === "mu" || m.kind === "sigma" || m.kind === "gain" || m.kind === "ring" ? "physics" : maxDelta.some((d) => d > 0) ? "controller" : "probe-silent";
   return { expression, maxDelta, changedShare: changed.map((c) => Math.round((1000 * c) / n) / 1000) };
 }

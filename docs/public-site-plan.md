@@ -27,3 +27,27 @@
 - Test public join load limits and abuse controls against the chosen host before promoting volunteer participation broadly.
 - Audit what the public status response exposes, and verify the detailed status endpoint rejects unauthenticated requests from the public network.
 - Check every public route, metadata, mobile/keyboard access, missing-GPU behavior, 404s, and the live status API. Confirm the canonical URLs and sitemap resolve at the live domain.
+
+## Creative direction refresh — 4 October 2026
+
+The public site now leads with an open artificial-life playground: surprising bodies and behaviors,
+bolder combinations of environmental levers, breeding toward visible traits, and the longer-term
+possibility of games and persistent shared worlds. The tenfold trait increase is a search ambition,
+not a measured outcome. Field notes retain the earlier results and distinguish observations from tests.
+
+Checked jj in the primary repository: `sandbox/wild` at `a3c35639` describes storm presets and the
+breeder in a separate, unlanded development workspace. The site changes here are based on main
+`03e5ff6` in the isolated Git worktree; they do not import that sandbox's simulation code. Storm and
+breeder copy is labelled sandbox; AI naturalist, visitor selection and shared-garden copy is aspirational.
+The homepage image remains the existing real simulation capture, not an illustration of those features.
+
+The shared visual style uses warmer field-notebook typography, ink chrome, life green for living things, amber annotations, an uncropped
+simulation image and numbered experiment directions. All informational pages retain theme switching,
+keyboard navigation and static content without WebGPU. Participation now offers exploration and
+observation sharing before explaining the existing explicit-opt-in compute runner.
+
+## Sandbox features in the lab — 5 October 2026
+
+This branch merges the sandbox stack, so the storm and breeder presets ship in the lab as sandbox presets
+(not registered), and visitors can pick a cycle's donor ponds by hand. The homepage, about and field-notes
+copy now says so; the AI naturalist and the shared garden remain aspirational.
