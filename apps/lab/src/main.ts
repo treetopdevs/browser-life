@@ -140,7 +140,7 @@ function ask(host: HTMLElement, opener: HTMLElement, text: string, choices: Choi
     closeQuestion = null;
     // The answered button is gone: focus goes back to what raised the question, or to the nearest control still
     // there when that was a checkpoint row redrawn in the meantime.
-    if (refocus) [opener, ...host.parentElement!.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.isConnected && !(b as HTMLButtonElement).disabled && !b.hidden)?.focus();
+    if (refocus) [opener, ...host.parentElement!.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.isConnected && !(b as HTMLButtonElement).disabled && b.getClientRects().length > 0)?.focus();
   };
   closeQuestion = () => close(false);
   const p = document.createElement("p");
@@ -203,11 +203,17 @@ function setPlaying(p: boolean) {
   const b = $("btn-play");
   b.textContent = p ? "Pause" : "Play";
   b.setAttribute("aria-pressed", String(p));
-  if (worldReady) setStatus(p ? "Running" : "Paused", p ? "running" : "ready");
+  if (worldReady) showRunStatus();
   if (p) askedToAdvance();
   send({ type: "play", playing: p });
 }
-const stepBy = (count: number) => { askedToAdvance(); send({ type: "step", count }); };
+/** The header status: a waiting pond cycle is the news until it is resolved, whatever Play says. */
+function showRunStatus() {
+  if (awaiting) setStatus(`Cycle ${awaiting.cycle}: choose the donors${playing ? ", then the world runs on" : ""}`, "ready");
+  else setStatus(playing ? "Running" : "Paused", playing ? "running" : "ready");
+}
+/** Steps wait with everything else while a pond cycle waits: the "." shortcut included. */
+const stepBy = (count: number) => { if (awaiting) return; askedToAdvance(); send({ type: "step", count }); };
 $("btn-play").onclick = () => setPlaying(!playing);
 $("btn-step").onclick = () => stepBy(1);
 $("btn-step100").onclick = () => stepBy(100);
@@ -426,6 +432,18 @@ window.addEventListener("keydown", (e) => {
 });
 
 // ---------- checkpoints ----------
+/** The newest checkpoints stay in view; the rest fold behind one control. */
+const CKPT_SHOWN = 4;
+let ckptAll = false;
+function syncCkptMore() {
+  const list = $("ckpts"), more = $<HTMLButtonElement>("ckpt-more");
+  const extra = list.querySelectorAll("li.extra").length;
+  list.classList.toggle("folded", !ckptAll);
+  more.hidden = extra === 0;
+  more.textContent = ckptAll ? "Show the newest only" : `Show all ${extra + CKPT_SHOWN}`;
+  more.setAttribute("aria-expanded", String(ckptAll));
+}
+$("ckpt-more").onclick = () => { ckptAll = !ckptAll; syncCkptMore(); };
 $("btn-save").onclick = requestSave;
 $("btn-export").onclick = () => send({ type: "export" });
 $("btn-import").onclick = () => guardUnsaved($("guard-ckpt"), $("btn-import"), "import", "An imported world replaces it.", () => $<HTMLInputElement>("import").click());
@@ -481,7 +499,7 @@ window.addEventListener("browser-life-theme-change", () => { spInd.redraw(); spB
 
 function resetEvidence() {
   for (const id of ["k-matter", "k-fed", "k-resid", "k-light", "k-heat", "k-ind", "k-mass", "k-lin", "k-mut", "k-fis", "k-bd", "k-gen"])
-    $(id).textContent = "—";
+    $(id).textContent = "";
   $("ledger-badge").textContent = "waiting";
   $("ledger-badge").className = "badge";
   $("verification-status").textContent = "Not run";
@@ -587,8 +605,8 @@ function onProbe(p: ProbeMsg) {
     ...(pond === null ? [] : [["pond", String(pond)] as [string, string]]),
     ...Object.entries(p.cells).map(([k, v]) => [CHANNEL_LABELS[k] ?? k, k === "MOT" ? `${(v & 255) - 128}, ${((v >> 8) & 255) - 128}` : String(v)] as [string, string]),
     ["lineage", p.lineage || "none"],
-    ["μ / σ", p.lineage ? `${(p.mu / 1024).toFixed(3)} / ${(p.sigma / 1024).toFixed(3)}` : "—"],
-    ["motility gain", p.lineage ? String(p.motGain) : "—"],
+    ["μ / σ", p.lineage ? `${(p.mu / 1024).toFixed(3)} / ${(p.sigma / 1024).toFixed(3)}` : "none"],
+    ["motility gain", p.lineage ? String(p.motGain) : "none"],
     // Heritable kernel shape: weights of the inner, outer and far ring (neutral 64 / 64 / 0), shown once a genome leaves neutral.
     ...(p.lineage && p.rings ? [["ring weights", `${Math.max(64 + p.rings[0], 0)} / ${Math.max(64 + p.rings[1], 0)} / ${Math.max(p.rings[2], 0)}`] as [string, string]] : []),
   ];
@@ -634,11 +652,17 @@ function resetPondStatus() {
 function onPonds(m: PondsMsg) {
   const line = $("pond-status");
   line.hidden = false;
-  line.textContent = `cycle ${m.cycle} · ${m.hand ? "by hand" : m.arm} · donors ${m.donors.length ? m.donors.join(", ") : "none"}`;
+  line.textContent = `cycle ${m.cycle} · ${m.hand ? "by hand" : m.arm} · donor ponds ${m.donors.length ? m.donors.join(", ") : "none"}`;
   // The line can clip a long donor list (up to 16 on the 8 × 8 preset); the tooltip always holds it in full.
-  line.title = `Pond cycle ${m.cycle} at t=${m.step.toLocaleString()} · donors ${m.donors.length ? m.donors.join(", ") : "none"}`;
+  line.title = `Pond cycle ${m.cycle} at t=${m.step.toLocaleString()} · donor ponds ${m.donors.length ? m.donors.join(", ") : "none"}${m.hand && pickedBy ? ` · picked by hand, viewing ranks by ${pickedBy}` : ""}`;
+  // A cycle clears every pond: the histories mark where, so the drop that follows reads as the cycle, not a collapse.
+  spInd.mark(); spBio.mark(); spLin.mark();
   // The cycle that was waiting has been applied.
-  if (awaiting && awaiting.step === m.step) endAwait();
+  if (awaiting && awaiting.step === m.step) {
+    endAwait();
+    toast(`Cycle ${m.cycle} applied: ${m.donors.length} donor pond${m.donors.length === 1 ? "" : "s"} (${m.donors.join(", ")})`);
+  }
+  pickedBy = null;
 }
 
 // ---------- breeder: choosing the donors of a pond cycle by hand ----------
@@ -653,7 +677,11 @@ const RANK_LABELS: Record<RankKey, string> = {
   mass: "Bound mass",
   reach: "Reach to the edge",
 };
+/** The world's own score, in the measures' names: "drive+seed+body" reads as "Moving mass, seed packet, body size". */
+const scoreLabel = (score: string) => `This world's score: ${pondScoreTerms(score).map((k, i) => (i ? RANK_LABELS[k].toLowerCase() : RANK_LABELS[k])).join(", ")}`;
 let awaiting: PondAwaitMsg | null = null;
+/** The ranking on screen when Breed was pressed: shown with the cycle it applies to. Display only; the log holds the donors. */
+let pickedBy: string | null = null;
 let picks: number[] = [];
 /** The ranking last chosen; until one is, the world's own score when it has one, else speed. */
 let rankKey: RankKey | null = null;
@@ -694,30 +722,49 @@ function onPondAwait(m: PondAwaitMsg) {
   picks = m.suggested.slice();
   const keys: RankKey[] = [...(m.score === null ? [] : ["score" as const]), "speed", "seed", "body", "mass", "drive", "reach"];
   if (rankKey === null || !keys.includes(rankKey)) rankKey = keys[0];
-  termSel.replaceChildren(...keys.map((k) => new Option(k === "score" ? `${RANK_LABELS.score} (${m.score})` : RANK_LABELS[k], k, false, k === rankKey)));
+  termSel.replaceChildren(...keys.map((k) => new Option(k === "score" ? scoreLabel(m.score!) : RANK_LABELS[k], k, false, k === rankKey)));
   $("breeder-pick").hidden = false;
+  $("breeder-hint").hidden = true;
+  $("breed-bar").hidden = false;
+  document.body.classList.add("breeding");
   overlay.hidden = false;
   const pickTool = tools.querySelector<HTMLButtonElement>('button[data-tool="pick"]')!;
   pickTool.hidden = false;
-  if (tool !== "pick") toolBeforePick = tool;
+  if (tool !== "pick") {
+    toolBeforePick = tool;
+    toast("The Pick tool is selected: select ponds on the field to choose donors");
+  }
   setTool("pick");
-  setStatus(`Cycle ${m.cycle}: choose the donors`, "ready");
+  showRunStatus();
   syncWaitingControls();
   syncPicks();
 }
-/** A waiting cycle holds a pre-cycle world, which cannot be saved, exported or verified: those wait for the pick. */
+/**
+ * A waiting cycle holds a pre-cycle world, which cannot be saved, exported or verified, and does not step: those
+ * wait for the pick. Each says so beside it rather than going quiet.
+ */
 function syncWaitingControls() {
-  for (const id of ["btn-save", "btn-export", "btn-verify"]) $<HTMLButtonElement>(id).disabled = !worldReady || awaiting !== null || (id === "btn-verify" && verifying);
+  const waiting = awaiting !== null;
+  for (const id of ["btn-save", "btn-export", "btn-verify", "btn-step", "btn-step100"]) {
+    const b = $<HTMLButtonElement>(id);
+    b.disabled = !worldReady || waiting || (id === "btn-verify" && verifying);
+    if (id.startsWith("btn-step")) b.title = waiting ? "The world waits for this cycle's donors: breed first" : id === "btn-step" ? "One step (.)" : "100 steps";
+  }
+  $("ckpt-wait").hidden = !waiting;
+  $("verify-wait").hidden = !waiting;
 }
 function endAwait() {
   const was = awaiting !== null;
   awaiting = null;
   picks = [];
   $("breeder-pick").hidden = true;
+  $("breeder-hint").hidden = false;
+  $("breed-bar").hidden = true;
+  document.body.classList.remove("breeding");
   overlay.hidden = true;
   tools.querySelector<HTMLButtonElement>('button[data-tool="pick"]')!.hidden = true;
   if (tool === "pick") setTool(toolBeforePick);
-  if (was && worldReady) setStatus(playing ? "Running" : "Paused", playing ? "running" : "ready");
+  if (was && worldReady) showRunStatus();
   if (was) syncWaitingControls();
 }
 function togglePick(pond: number | null) {
@@ -728,38 +775,57 @@ function togglePick(pond: number | null) {
   if (at >= 0) picks.splice(at, 1);
   else picks.push(pond);
   syncPicks();
+  // The overlay is a picture: say what changed, in the same terms.
+  const r = rankOrder(a, rankKey ?? "speed").indexOf(pond) + 1;
+  $("keyboard-position").textContent = at >= 0 ? `Pond ${pond} removed. ${picks.length} picked.` : `Pond ${pond} picked, number ${picks.length} in the order. Rank ${r} by ${RANK_LABELS[rankKey ?? "speed"].toLowerCase()}.`;
 }
 /** The panel and the overlay after the picks, the ranking or the waiting cycle changed. */
 function syncPicks() {
   const a = awaiting;
   if (!a) return;
   const occupied = a.terms.mass.filter((m) => m > 0).length;
+  const key = rankKey ?? "speed";
   $("breeder-call").textContent = `Cycle ${a.cycle} at t=${a.step.toLocaleString()} is waiting. ${occupied} of ${a.terms.mass.length} ponds are occupied.`;
+  $("breed-bar-call").textContent = `Cycle ${a.cycle} waits for its donors. ${picks.length === 0 ? "Select ponds on the field." : `${picks.length} picked: pond${picks.length === 1 ? "" : "s"} ${picks.join(", ")}.`}`;
   const go = $<HTMLButtonElement>("breeder-go");
   go.disabled = picks.length === 0;
   go.textContent = picks.length === 0 ? "Pick at least one pond" : `Breed from ${picks.length} pond${picks.length === 1 ? "" : "s"}`;
-  $("breeder-list").replaceChildren(...picks.map((p) => { const li = document.createElement("li"); li.textContent = String(p); return li; }));
+  $("breeder-top").textContent = `Top ${topCount(a)} by ${key === "score" ? "score" : RANK_LABELS[key].toLowerCase()}`;
+  // Pond number first, as on the field and in the run strip; then its rank and value by the measure on screen.
+  const rank = new Map(rankOrder(a, key).map((p, j) => [p, j + 1]));
+  const values = rankValues(a, key);
+  $("breeder-list").replaceChildren(...picks.map((p) => {
+    const li = document.createElement("li");
+    li.textContent = `${p} #${rank.get(p)} · ${showValue(key, values[p])}`;
+    li.setAttribute("aria-label", `Pond ${p}, rank ${rank.get(p)}, ${RANK_LABELS[key].toLowerCase()} ${showValue(key, values[p])}`);
+    return li;
+  }));
   drawPondOverlay();
 }
 termSel.onchange = () => { rankKey = termSel.value as RankKey; syncPicks(); };
 $("breeder-top").onclick = () => {
   if (!awaiting) return;
-  picks = rankOrder(awaiting, rankKey ?? "speed").slice(0, Math.max(1, Math.floor(awaiting.terms.mass.length / 4)));
+  picks = rankOrder(awaiting, rankKey ?? "speed").slice(0, topCount(awaiting));
   syncPicks();
 };
+/** A quarter of the ponds, at least one. */
+function topCount(a: PondAwaitMsg) { return Math.max(1, Math.floor(a.terms.mass.length / 4)); }
 $("breeder-rule").onclick = () => { if (awaiting) { picks = awaiting.suggested.slice(); syncPicks(); } };
 $("breeder-clear").onclick = () => { picks = []; syncPicks(); };
 $("breeder-go").onclick = () => {
   if (!awaiting || !picks.length) return;
   send({ type: "pick", world: awaiting.world, step: awaiting.step, donors: picks.slice() });
+  pickedBy = (rankKey ?? "speed") === "score" ? "this world's score" : RANK_LABELS[rankKey ?? "speed"].toLowerCase();
   // One message per cycle: the panel closes when the worker reports the cycle applied.
   $<HTMLButtonElement>("breeder-go").disabled = true;
 };
 breederOn.onchange = () => send({ type: "breeder", on: breederOn.checked });
 
 /**
- * The pond grid over the field while a cycle waits: each occupied pond's rank by the chosen measure, empty ponds
- * dimmed, picked ponds outlined with their place in the order. Drawn for the world's own copy only.
+ * The pond grid over the field while a cycle waits: each pond's number and its rank by the chosen measure, empty
+ * ponds dimmed, picked ponds outlined with their place in the order. Drawn on every copy of the world in view, since
+ * a click on any copy picks the same pond. Picks are marked by weight and shape in the field's own ink, never a hue:
+ * colour on the field belongs to the pools.
  */
 function drawPondOverlay() {
   const a = awaiting;
@@ -770,42 +836,70 @@ function drawPondOverlay() {
   if (overlay.width !== w || overlay.height !== h) { overlay.width = w; overlay.height = h; }
   const g = overlay.getContext("2d")!;
   g.clearRect(0, 0, w, h);
+  const css = getComputedStyle(wrap);
+  const ink = css.getPropertyValue("--field-ink").trim(), ground = css.getPropertyValue("--field").trim();
+  const W = worldW(cfg), H = worldH(cfg);
   const sx = w / rect.w, sy = h / rect.h;
   const rank = new Map(rankOrder(a, rankKey ?? "speed").map((p, j) => [p, j + 1]));
-  const side = cfg.tileW * sx;
-  const font = Math.max(9, Math.min(15, side / 5)) * (dpr > 1 ? 1.25 : 1);
+  // Sizes in CSS pixels, scaled to the canvas: labels never drop below the lab's 11px floor; ponds too small to carry one go unlabelled (the hover line names them).
+  const sideCss = (cfg.tileW * sx) / dpr;
+  const fontCss = Math.min(14, Math.max(11, sideCss / 6));
+  const labelled = sideCss >= 46;
+  const font = fontCss * dpr, pad = 3 * dpr, gap = 4 * dpr;
   g.font = `600 ${font}px ui-monospace, SFMono-Regular, Menlo, monospace`;
   g.textBaseline = "top";
-  for (let p = 0; p < a.terms.mass.length; p++) {
-    const tx = p % cfg.tilesX, ty = (p - tx) / cfg.tilesX;
-    const x = (tx * cfg.tileW - rect.x) * sx, y = (ty * cfg.tileH - rect.y) * sy, pw = cfg.tileW * sx, ph = cfg.tileH * sy;
-    if (x + pw < 0 || y + ph < 0 || x > w || y > h) continue;
-    const order = picks.indexOf(p);
-    if (a.terms.mass[p] === 0) {
-      g.fillStyle = "rgba(0, 0, 0, 0.55)";
-      g.fillRect(x, y, pw, ph);
-    }
-    g.lineWidth = order >= 0 ? 3 * dpr : 1;
-    g.strokeStyle = order >= 0 ? "rgb(255, 196, 61)" : "rgba(255, 255, 255, 0.28)";
-    const inset = order >= 0 ? 1.5 * dpr : 0.5;
-    g.strokeRect(x + inset, y + inset, pw - 2 * inset, ph - 2 * inset);
-    const r = rank.get(p);
-    if (r !== undefined && side >= 26) {
-      const label = `#${r}`;
-      g.fillStyle = "rgba(0, 0, 0, 0.6)";
-      g.fillRect(x + 3 * dpr, y + 3 * dpr, g.measureText(label).width + 6, font + 4);
-      g.fillStyle = order >= 0 ? "rgb(255, 196, 61)" : "rgba(255, 255, 255, 0.85)";
-      g.fillText(label, x + 3 * dpr + 3, y + 3 * dpr + 2);
-    }
-    if (order >= 0 && side >= 26) {
-      const label = String(order + 1);
-      const tw = g.measureText(label).width + 8;
-      g.fillStyle = "rgb(255, 196, 61)";
-      g.fillRect(x + pw - tw - 3 * dpr, y + 3 * dpr, tw, font + 4);
-      g.fillStyle = "rgb(30, 22, 0)";
-      g.fillText(label, x + pw - tw - 3 * dpr + 4, y + 3 * dpr + 2);
-    }
-  }
+  const tag = (text: string, x: number, y: number, fill: string, color: string) => {
+    const tw = g.measureText(text).width + 2 * pad;
+    g.fillStyle = fill;
+    g.fillRect(x, y, tw, font + 2 * pad);
+    g.fillStyle = color;
+    g.fillText(text, x + pad, y + pad);
+    return tw;
+  };
+  for (let ox = Math.floor(rect.x / W) * W; ox < rect.x + rect.w; ox += W)
+    for (let oy = Math.floor(rect.y / H) * H; oy < rect.y + rect.h; oy += H)
+      for (let p = 0; p < a.terms.mass.length; p++) {
+        const tx = p % cfg.tilesX, ty = (p - tx) / cfg.tilesX;
+        const x = (ox + tx * cfg.tileW - rect.x) * sx, y = (oy + ty * cfg.tileH - rect.y) * sy, pw = cfg.tileW * sx, ph = cfg.tileH * sy;
+        if (x + pw < 0 || y + ph < 0 || x > w || y > h) continue;
+        const order = picks.indexOf(p);
+        g.globalAlpha = 1;
+        if (a.terms.mass[p] === 0) {
+          g.fillStyle = ground;
+          g.globalAlpha = 0.6;
+          g.fillRect(x, y, pw, ph);
+          g.globalAlpha = 1;
+        }
+        if (order >= 0) {
+          // A dark halo under a heavy ink outline holds against any pool colour beneath it.
+          g.strokeStyle = ground;
+          g.lineWidth = 5 * dpr;
+          g.strokeRect(x + 2.5 * dpr, y + 2.5 * dpr, pw - 5 * dpr, ph - 5 * dpr);
+          g.strokeStyle = ink;
+          g.lineWidth = 2.5 * dpr;
+          g.strokeRect(x + 2.5 * dpr, y + 2.5 * dpr, pw - 5 * dpr, ph - 5 * dpr);
+        } else {
+          g.strokeStyle = ink;
+          g.globalAlpha = 0.28;
+          g.lineWidth = 1;
+          g.strokeRect(x + 0.5, y + 0.5, pw - 1, ph - 1);
+          g.globalAlpha = 1;
+        }
+        if (!labelled) continue;
+        const r = rank.get(p);
+        // Number first, then rank: the same reading as the picked list and the run strip.
+        // The rank drops off a pond too narrow to hold it beside the number; the list and the hover line still give it.
+        const full = r === undefined ? `${p}` : `${p} #${r}`;
+        const fits = g.measureText(full).width + 2 * pad + 2 * gap + 4 * dpr <= pw;
+        const nw = tag(fits ? full : `${p}`, x + gap + 2 * dpr, y + gap + 2 * dpr, ground, ink);
+        if (order >= 0) {
+          // The pick order goes top right when both tags fit on one row, under the number otherwise.
+          const label = `${order + 1}`;
+          const lw = g.measureText(label).width + 2 * pad;
+          const oneRow = nw + lw + 3 * gap + 4 * dpr <= pw;
+          tag(label, oneRow ? x + pw - lw - gap - 2 * dpr : x + gap + 2 * dpr, oneRow ? y + gap + 2 * dpr : y + 2 * gap + 2 * dpr + font + 2 * pad, ink, ground);
+        }
+      }
 }
 
 let toastTimer = 0;
@@ -908,13 +1002,15 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       $("checkpoint-empty").hidden = m.list.length > 0;
       // Redrawing the rows must not drop the keyboard's place in them.
       const rowHadFocus = $("ckpts").contains(document.activeElement);
+      // A row reads by what it holds: the step, and whether it is this run's. The file name stays in the tooltip.
       $("ckpts").replaceChildren(
         ...m.list
           .sort((a, b) => b.savedAt.localeCompare(a.savedAt))
-          .map((c) => {
+          .map((c, i) => {
             const li = document.createElement("li");
+            if (i >= CKPT_SHOWN) li.className = "extra";
             const name = document.createElement("span");
-            name.textContent = c.file;
+            name.textContent = `${t(c.step)}${c.runId === runId ? "" : " · other run"}${c.auto ? " · auto" : ""} · ${(c.bytes / 1e6).toFixed(1)} MB`;
             name.title = `${c.file} · ${(c.bytes / 1e6).toFixed(1)} MB · ${c.savedAt}`;
             const restore = document.createElement("button");
             restore.type = "button";
@@ -925,11 +1021,12 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
             del.type = "button";
             del.textContent = "Delete";
             del.setAttribute("aria-label", `Delete ${c.file}`);
-            del.onclick = () => ask($("guard-ckpt"), del, `Delete ${c.file}? A deleted checkpoint cannot be restored.`, [["Delete checkpoint", () => send({ type: "deleteCheckpoint", file: c.file })]], "Keep it");
+            del.onclick = () => ask($("guard-ckpt"), del, `Delete the checkpoint at ${t(c.step)} (${c.file})? A deleted checkpoint cannot be restored.`, [["Delete checkpoint", () => send({ type: "deleteCheckpoint", file: c.file })]], "Keep it");
             li.append(name, restore, del);
             return li;
           }),
       );
+      syncCkptMore();
       if (rowHadFocus) ($("ckpts").querySelector<HTMLButtonElement>("button") ?? $("btn-import")).focus();
       break;
     case "saved": {
@@ -959,6 +1056,15 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       toast(m.message);
       if (m.request === "save") { savesAsked.shift(); afterSave = null; }
       if (m.request === "lineage" || m.request === "jump") lineagePanel.onError();
+      if (m.request === "verify" && verifying) {
+        // The check never ran: the button comes back and the panel says so (no earlier result survives, the click cleared it).
+        verifying = false;
+        syncWaitingControls();
+        $("verification-status").textContent = "Not run";
+        $("verification-status").className = "badge";
+        $("verify-out").textContent = m.message;
+        setStrip("run-replay", "not run");
+      }
       break;
     case "verify":
       verifying = false;

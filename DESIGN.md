@@ -13,7 +13,7 @@ The lab uses a compact instrument layout: world setup, tools and checkpoints on 
 
 ## Components and behavior
 
-- Buttons have a clear active or disabled state. View and tool selections expose `aria-pressed`; feedback appears beside the action and in live status regions. Play is the one primary action and sits under the field; while running it reads Pause and loses its fill.
+- Buttons have a clear active or disabled state. View and tool selections expose `aria-pressed`; feedback appears beside the action and in live status regions. Play is the one primary action and sits under the field; while running it reads Pause and loses its fill. While a pond cycle waits for donors, Breed takes that place in a bar under the field (fixed to the bottom of the screen at narrow widths), and controls that cannot act until then stay visible, disabled, with the reason beside them. Picked ponds are marked in field ink by weight and a numbered tag, never a hue; a pond is named by its number everywhere, and its rank carries a `#`.
 - An action that would lose unsaved steps, and deleting a checkpoint, ask inline beside the action (`.guard`), with a save-first choice. No native dialogs.
 - A badge is green only for a clean pass. A true statement that is not one (a fed ledger, a replay check of an earlier segment, a computed curve) takes the neutral `.badge.note`.
 - The field can be operated with a pointer or keyboard. Arrow keys move the field focus, Enter uses the selected tool, and plus/minus zoom. Ordinary keyboard behavior of focused form controls and links takes precedence over lab shortcuts.

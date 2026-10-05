@@ -182,6 +182,13 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 .list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 5px; }
 .list li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font: var(--t-micro) var(--mono); }
 .list li button { min-height: 30px; padding: 4px 7px; font-size: var(--t-micro); }
+.list.folded li.extra { display: none; }
+.ckpt-more { min-height: 30px; margin-top: 8px; padding: 4px 8px; font-size: var(--t-small); color: var(--muted); }
+.ckpt-more[hidden] { display: none; }
+/* Why a control is off, beside it. */
+.wait-note { margin: 8px 0 0; }
+.wait-note[hidden] { display: none; }
+#verify-wait { margin: 8px 0 0; }
 /* An inline question beside the action that raised it, instead of a dialog. */
 .guard { margin-top: 10px; padding: 11px 12px; border: 1px solid var(--control-line); border-radius: 6px; background: var(--raised); font-size: var(--t-small); }
 .guard[hidden] { display: none; }
@@ -227,10 +234,18 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 .breeder-call { margin: 12px 0 10px; font-size: var(--t-ui); font-weight: 600; line-height: 1.4; }
 .breeder .row { margin: 0 0 9px; }
 .breeder .row button { min-height: 30px; padding: 4px 8px; font-size: var(--t-micro); }
-.breeder #breeder-go { margin: 0 0 9px; }
-.breeder-list { margin: 9px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px; font-size: var(--t-micro); color: var(--muted); }
+#breeder-hint[hidden] { display: none; }
+/* Picks in order: the pond number, its rank, its value by the measure on screen. */
+.breeder-list { margin: 9px 0 0; padding: 0; list-style: none; counter-reset: pick; display: grid; gap: 3px; font-size: var(--t-micro); color: var(--text); }
 .breeder-list:empty { display: none; }
-.breeder-list li { padding: 2px 6px; border: 1px solid var(--line); border-radius: 4px; }
+.breeder-list li { counter-increment: pick; display: flex; gap: 8px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 4px; }
+.breeder-list li::before { content: counter(pick); min-width: 2ch; color: var(--soft); }
+/* A waiting cycle's one action sits under the field it is chosen on, where Play would be. */
+.breed-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; padding: 10px 12px; border: 1px solid var(--control-line); border-radius: 7px; background: var(--raised); }
+.breed-bar[hidden] { display: none; }
+.breed-bar p { flex: 1 1 220px; margin: 0; font-size: var(--t-ui); font-weight: 600; line-height: 1.4; }
+.breed-bar #breeder-go { min-width: 150px; }
+.breed-bar-more { display: none; }
 .seg button[hidden] { display: none; }
 .canvas-wrap.keyboard-focus { outline: 2px solid var(--accent); outline-offset: 2px; }
 .focus-cursor {
@@ -296,6 +311,8 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 .kv { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px 8px; margin: 0; font-size: var(--t-small); }
 .kv dt { min-width: 0; color: var(--muted); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
 .kv dd { margin: 0; color: var(--text); text-align: right; white-space: nowrap; }
+/* No reading yet: a quiet mark for the eye that a screen reader skips. */
+.kv dd:empty::before, .run-strip dd:empty::before { content: "–"; content: "–" / ""; color: var(--soft); }
 .badge { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 99px; padding: 2px 8px; color: var(--muted); font-size: var(--t-micro); font-weight: 700; line-height: 1.4; white-space: nowrap; }
 /* A true statement that is not a clean pass: a fed ledger, a check of an earlier segment. */
 .badge.note { color: var(--text); border-color: var(--muted); }
@@ -387,6 +404,12 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
   .canvas-wrap { flex: none; width: 100%; aspect-ratio: 1.14; min-height: 270px; }
   .rail-section, .evidence-section { padding: 16px 18px; }
   .history { min-height: 0; }
+  /* The picks are made on the field at the top of the page and the ranking lives far below: Breed stays on screen. */
+  .breed-bar { position: fixed; z-index: 15; left: 0; right: 0; bottom: 0; border-radius: 0; border-width: 1px 0 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: var(--surface); }
+  .breed-bar p { flex-basis: 100%; }
+  .breed-bar-more { display: inline; }
+  .breed-bar #breeder-go { margin-left: auto; }
+  body.breeding { padding-bottom: 120px; }
 }
 @media (max-width: 500px) {
   .curves { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -402,6 +425,7 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 }
 @media (pointer: coarse) {
   button, .button, select, input[type="number"] { min-height: 44px; }
+  .list li button, .breeder .row button, .guard .row button, .ckpt-more, .stage-alert button, .theme-toggle { min-height: 44px; }
   .lineage-table button { min-height: 36px; }
   .site-nav a { min-height: 44px; }
 }

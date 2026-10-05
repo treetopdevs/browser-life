@@ -4,6 +4,8 @@
  */
 export class Series {
   private values: number[] = [];
+  /** Indices into `values` where a pond cycle was applied: drawn as faint rules, so the drop after one reads as the cycle. */
+  private marks: number[] = [];
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -12,12 +14,22 @@ export class Series {
 
   push(v: number): void {
     this.values.push(v);
-    if (this.values.length > this.cap) this.values.splice(0, this.values.length - this.cap);
+    if (this.values.length > this.cap) {
+      const drop = this.values.length - this.cap;
+      this.values.splice(0, drop);
+      this.marks = this.marks.map((m) => m - drop).filter((m) => m >= 0);
+    }
     this.draw();
+  }
+
+  /** Marks the next reading as the first after a pond cycle. */
+  mark(): void {
+    this.marks.push(this.values.length);
   }
 
   clear(): void {
     this.values = [];
+    this.marks = [];
     this.draw();
   }
 
@@ -39,7 +51,7 @@ export class Series {
     const v = this.values;
     const ink = getComputedStyle(c).color;
     ctx.fillStyle = ink;
-    ctx.font = `${10 * dpr}px ui-monospace, Menlo, monospace`;
+    ctx.font = `${11 * dpr}px ui-monospace, Menlo, monospace`;
     if (v.length < 2) {
       ctx.globalAlpha = 0.6;
       ctx.textAlign = "center";
@@ -50,9 +62,13 @@ export class Series {
     let hi = 1;
     for (const x of v) hi = Math.max(hi, x);
     const top = 13 * dpr;
+    const xAt = (i: number) => (i / (v.length - 1)) * (w - 2) + 1;
+    ctx.globalAlpha = 0.3;
+    for (const m of this.marks) if (m > 0 && m < v.length) ctx.fillRect(Math.round(xAt(m - 0.5)), top, dpr, h - top);
+    ctx.globalAlpha = 1;
     ctx.beginPath();
     v.forEach((x, i) => {
-      const px = (i / (v.length - 1)) * (w - 2) + 1;
+      const px = xAt(i);
       const py = h - 2 - (Math.max(0, x) / hi) * (h - 2 - top);
       if (i === 0) ctx.moveTo(px, py);
       else ctx.lineTo(px, py);

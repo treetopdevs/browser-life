@@ -33,8 +33,8 @@
             <h1 id="world-heading">Simulation field</h1>
             <dl class="run-strip mono" aria-label="Run identity and integrity">
               <div><dt>Run</dt><dd id="run-id">waiting for WebGPU</dd></div>
-              <div><dt>Seed</dt><dd id="run-seed">—</dd></div>
-              <div><dt>Rules</dt><dd id="run-rules">—</dd></div>
+              <div><dt>Seed</dt><dd id="run-seed"></dd></div>
+              <div><dt>Rules</dt><dd id="run-rules"></dd></div>
               <div><dt>Ledger</dt><dd id="run-ledger">waiting</dd></div>
               <div><dt>Replay</dt><dd><a href="#verification" id="run-replay">not run</a></dd></div>
             </dl>
@@ -65,6 +65,11 @@
           <span class="mono transport-step" id="chip-step">t = 0</span>
           <span class="mono transport-rate" id="chip-rate">0 steps/s</span>
         </div>
+        <div class="breed-bar" id="breed-bar" role="group" aria-labelledby="breed-bar-call" hidden>
+          <p id="breed-bar-call"></p>
+          <a class="text-link breed-bar-more" href="#breeder">Ranking and picks</a>
+          <button id="breeder-go" class="primary" type="button">Breed</button>
+        </div>
         <div class="stage-caption"><span id="legend">Composite view</span><span class="stage-hint">Scroll to zoom · double-click to fit · focus field for keyboard tools</span></div>
         <section class="history" aria-labelledby="history-heading">
           <div class="section-heading"><h2 id="history-heading">Population history</h2><span class="hint">Each chart runs from 0 to the value at its top left · census every 100 steps</span></div>
@@ -88,13 +93,12 @@
         <section class="rail-section breeder" id="breeder" aria-labelledby="breeder-heading" hidden>
           <h2 id="breeder-heading">Breeder</h2>
           <label class="check"><input id="breeder-on" type="checkbox" /><span>Stop at each pond cycle and let me choose the donors</span></label>
-          <p class="hint" id="breeder-hint">At a cycle every pond is cleared and reseeded from the donor ponds. Left alone, the world's own rule chooses them.</p>
+          <p class="hint" id="breeder-hint">At each pond cycle every pond is cleared and reseeded from a few donor ponds. Left alone, the world's own rule chooses the donors.</p>
           <div id="breeder-pick" hidden>
             <p class="breeder-call" id="breeder-call" role="status" aria-live="polite"></p>
             <label class="field"><span>Rank the ponds by</span><select id="breeder-term"></select></label>
             <div class="row"><button id="breeder-top" type="button">Top quarter</button><button id="breeder-rule" type="button">The rule's choice</button><button id="breeder-clear" type="button">Clear</button></div>
-            <button id="breeder-go" class="primary full" type="button">Breed</button>
-            <p class="hint">With the Pick tool, select a pond in the field to add or remove it. Donors seed the ponds in turn, in the order picked.</p>
+            <p class="hint">Select a pond on the field to add or remove it. Each pond shows its number and, after #, its rank by the measure above. Donors seed the ponds in turn, in the order picked.</p>
             <ol class="breeder-list mono" id="breeder-list" aria-label="Picked ponds, in order"></ol>
           </div>
         </section>
@@ -107,9 +111,11 @@
         </section>
         <section class="rail-section" aria-labelledby="checkpoint-heading">
           <h2 id="checkpoint-heading">Checkpoints</h2><p class="hint">Save keeps a checkpoint in this browser. Export downloads one as a file. Both settle the world at its next census first.</p>
-          <div class="row"><button id="btn-save" type="button">Save</button><button id="btn-export" type="button">Export</button><button id="btn-import" class="import-button" type="button">Import</button><input id="import" type="file" accept=".blck" hidden /></div>
+          <div class="row"><button id="btn-save" type="button" aria-describedby="ckpt-wait">Save</button><button id="btn-export" type="button" aria-describedby="ckpt-wait">Export</button><button id="btn-import" class="import-button" type="button">Import</button><input id="import" type="file" accept=".blck" hidden /></div>
+          <p class="hint wait-note" id="ckpt-wait" hidden>Save and Export are off while a pond cycle waits: the world stands before its cycle, and a checkpoint cannot hold that. They return once you breed.</p>
           <div class="guard" id="guard-ckpt" role="group" aria-label="Confirm checkpoint action" hidden></div>
           <p class="hint" id="checkpoint-empty">No local checkpoints yet.</p><ul class="list" id="ckpts" aria-label="Saved checkpoints"></ul>
+          <button class="quiet ckpt-more" id="ckpt-more" type="button" aria-controls="ckpts" hidden></button>
         </section>
         <div class="rail-footer">
           <details class="keys">
@@ -124,14 +130,15 @@
       <aside class="evidence" aria-label="Live evidence and verification">
         <section class="evidence-section" aria-labelledby="ledger-heading">
           <div class="section-heading"><h2 id="ledger-heading">Conservation ledger</h2><span class="badge" id="ledger-badge">waiting</span></div>
-          <dl class="kv mono"><dt>Matter change</dt><dd id="k-matter">—</dd><dt>Nutrient fed</dt><dd id="k-fed">—</dd><dt>Energy residual</dt><dd id="k-resid">—</dd><dt>Light absorbed</dt><dd id="k-light">—</dd><dt>Heat exported</dt><dd id="k-heat">—</dd></dl>
+          <dl class="kv mono"><dt>Matter change</dt><dd id="k-matter"></dd><dt>Nutrient fed</dt><dd id="k-fed"></dd><dt>Energy residual</dt><dd id="k-resid"></dd><dt>Light absorbed</dt><dd id="k-light"></dd><dt>Heat exported</dt><dd id="k-heat"></dd></dl>
           <div class="bars" id="pools" aria-label="Matter pool proportions"></div>
           <div class="pool-legend"><span><i class="key key-a"></i>Nutrient</span><span><i class="key key-b"></i>Biomass</span><span><i class="key key-p"></i>Membrane</span><span><i class="key key-c"></i>Waste</span></div>
         </section>
         <section class="evidence-section verification" id="verification" aria-labelledby="verification-heading">
           <div class="section-heading"><h2 id="verification-heading">Replay verification</h2><span class="badge" id="verification-status">Not run</span></div>
           <p class="hint">Runs the next 200 steps here and in a second GPU instance, then compares the two state hashes bit for bit. The world advances by those 200 steps, and the result covers only them.</p>
-          <button id="btn-verify" type="button">Verify next 200 steps</button>
+          <button id="btn-verify" type="button" aria-describedby="verify-wait">Verify next 200 steps</button>
+          <p class="hint wait-note" id="verify-wait" hidden>Verification waits for the pond cycle: breed first.</p>
           <p class="mono small" id="verify-out" role="status" aria-live="polite"></p>
           <a class="text-link" href="/selftest.html" target="_blank" rel="noopener">Open CPU ⇄ GPU self-test <span aria-hidden="true">↗</span></a>
         </section>
@@ -141,7 +148,7 @@
         </section>
         <section class="evidence-section" aria-labelledby="population-heading">
           <div class="section-heading"><h2 id="population-heading">Population</h2><span class="hint">Inferred, not declared</span></div>
-          <dl class="kv mono"><dt>Individuals</dt><dd id="k-ind">—</dd><dt>Mean mass</dt><dd id="k-mass">—</dd><dt>Lineages</dt><dd id="k-lin">—</dd><dt>Mutations</dt><dd id="k-mut">—</dd><dt>Fissions / fusions</dt><dd id="k-fis">—</dd><dt>Births / deaths</dt><dd id="k-bd">—</dd><dt>Max generation</dt><dd id="k-gen">—</dd></dl>
+          <dl class="kv mono"><dt>Individuals</dt><dd id="k-ind"></dd><dt>Mean mass</dt><dd id="k-mass"></dd><dt>Lineages</dt><dd id="k-lin"></dd><dt>Mutations</dt><dd id="k-mut"></dd><dt>Fissions / fusions</dt><dd id="k-fis"></dd><dt>Births / deaths</dt><dd id="k-bd"></dd><dt>Max generation</dt><dd id="k-gen"></dd></dl>
           <h3 class="subheading">Largest lineages</h3><div class="lineages" id="top-lin"></div>
         </section>
       </aside>
