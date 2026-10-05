@@ -15,7 +15,7 @@
 // set with no Deno types. This module is checked separately via
 // `deno check tools/*.ts`.
 import { METRICS_VERSION, PRESETS, presetIdentity, isSupportedRuleVersion, SCHEMA_VERSION, initWorld, stateHash, validateConfig, type Preset } from "@bl/schema";
-import { ActivityTracker } from "@bl/metrics";
+import { ActivityTracker, type RunActivities } from "@bl/metrics";
 import { sameConfig, specConfig } from "@bl/runner";
 
 export interface Run {
@@ -32,8 +32,6 @@ export interface Run {
   /** In-memory sibling pairs at fission ([muA, muB, sigmaA, sigmaB]) for a synthetic run; see `heredityPairs`. */
   heredity?: [number, number, number, number][];
   manifest: any;
-  /** Set by a `loadRunsUnder` reducer that replays activities as each run loads (see calibrate.ts). */
-  activities?: number[];
 }
 
 export class RunReplayError extends Error {
@@ -67,10 +65,9 @@ export async function loadRun(dir: string, condition: string, seed: number): Pro
  * Loads every seed-N run bundle under every condition subdirectory of
  * `root` (a "report" subdirectory, e.g. analyze.ts's own output, is
  * skipped). Incomplete bundles are silently omitted (see `loadRun`).
- * `reduce`, applied to each run as it loads, lets a caller derive what it
- * needs up front (e.g. calibrate.ts's activity distribution).
+ * Loading never replays lineage data: cohort eligibility comes first.
  */
-export async function loadRunsUnder(root: string, reduce: (r: Run) => Run | Promise<Run> = (r) => r): Promise<Run[]> {
+export async function loadRunsUnder(root: string): Promise<Run[]> {
   const loaded: Run[] = [];
   for await (const cond of Deno.readDir(root)) {
     if (!cond.isDirectory || cond.name === "report") continue;
@@ -78,13 +75,7 @@ export async function loadRunsUnder(root: string, reduce: (r: Run) => Run | Prom
       const m = /^seed-(\d+)$/.exec(sd.name);
       if (!m) continue;
       const r = await loadRun(`${root}/${cond.name}/${sd.name}`, cond.name, Number(m[1]));
-      if (r) {
-        try {
-          loaded.push(await reduce(r));
-        } catch (e) {
-          throw new RunReplayError(r.dir, e);
-        }
-      }
+      if (r) loaded.push(r);
     }
   }
   return loaded;
@@ -321,4 +312,112 @@ export async function heredityPairs(r: Run): Promise<[number, number, number, nu
     const f = l.split("\t").map(Number);
     return [f[ma], f[mb], f[sa], f[sb]];
   });
+}
+
+/**
+ * The two existing scientific policies, not arbitrary caller-ordered guards.
+ * `admit` (analysis only) carries the analysis caller's own refusals that must
+ * precede provenance and replay (tools/analyze.ts: the synthetic-only opt-out
+ * guard and the threshold-registry check); it throws to refuse, exactly as the
+ * analysis caller always has.
+ */
+export type CohortPolicy =
+  | { kind: "analysis"; registeredPresets: readonly string[]; admit?: (eligible: Run[], presetId: string) => void }
+  | { kind: "calibration"; presetId: string };
+
+export type CohortIssue =
+  | { kind: "empty" }
+  | { kind: "ensemble"; problems: string[] }
+  | { kind: "ring"; conditions: string[]; count: number }
+  | { kind: "provenance"; presetId: string; problems: string[] }
+  | { kind: "conservation" }
+  | { kind: "insufficient"; count: number };
+
+interface CohortEvidence {
+  /** All completed histories, including excluded seeds reserved by the experiment. */
+  loaded: Run[];
+  /** All histories selected by the policy, including conservation failures. */
+  selected: Run[];
+  ignored: Run[];
+  invalid: Run[];
+}
+
+type CohortRefusal = { ok: false; issue: CohortIssue };
+type CohortReady = { ok: true; presetId: string; runs: Run[] };
+export type PreparedAnalysisCohort = CohortEvidence & (
+  | CohortRefusal
+  | (CohortReady & { neutralActivities: number[] })
+);
+export type PreparedCalibrationCohort = CohortEvidence & (
+  | CohortRefusal
+  | (CohortReady & { neutralActivities: RunActivities[] })
+);
+type PreparedCohort = PreparedAnalysisCohort | PreparedCalibrationCohort;
+
+/**
+ * Prepare independent histories before touching their potentially large lineage
+ * tables. Analysis retains every completed seed for reservation checks and only
+ * requires provenance on conservation-eligible registered runs. Calibration
+ * selects neutral histories first and requires provenance even on histories
+ * later excluded by conservation. These distinct policies are intentional.
+ *
+ * Neutral activity replay is sequential and streaming. Ignored conditions,
+ * excluded histories and cohorts refused by these guards never reach replay.
+ * A corrupt eligible table still fails: analysis rethrows the replay error as
+ * is, calibration throws it as a `RunReplayError` naming the run (calibrate.ts
+ * reports that preset unavailable). Threshold choice, freezeability and
+ * inference remain caller responsibilities.
+ */
+export function prepareCohort(root: string, policy: Extract<CohortPolicy, { kind: "analysis" }>): Promise<PreparedAnalysisCohort>;
+export function prepareCohort(root: string, policy: Extract<CohortPolicy, { kind: "calibration" }>): Promise<PreparedCalibrationCohort>;
+export async function prepareCohort(root: string, policy: CohortPolicy): Promise<PreparedCohort> {
+  return prepareLoadedCohort(await loadRunsUnder(root), policy as never);
+}
+
+/**
+ * `prepareCohort` over runs already in memory: loaded from disk by
+ * `loadRunsUnder`, or synthetic (`Run.lineages` set, tools/nullcal.ts via
+ * tools/analyze.ts's `analyzeEnsemble`).
+ */
+export function prepareLoadedCohort(loaded: Run[], policy: Extract<CohortPolicy, { kind: "analysis" }>): Promise<PreparedAnalysisCohort>;
+export function prepareLoadedCohort(loaded: Run[], policy: Extract<CohortPolicy, { kind: "calibration" }>): Promise<PreparedCalibrationCohort>;
+export async function prepareLoadedCohort(loaded: Run[], policy: CohortPolicy): Promise<PreparedCohort> {
+  const selected = policy.kind === "calibration" ? loaded.filter((r) => r.condition === "neutral") : loaded;
+  const ignored = policy.kind === "calibration" ? loaded.filter((r) => r.condition !== "neutral") : [];
+  const { eligible, invalid } = partitionByConservation(selected);
+  const evidence: CohortEvidence = { loaded, selected, ignored, invalid };
+  const refuse = (issue: CohortIssue): CohortEvidence & CohortRefusal => ({ ...evidence, ok: false, issue });
+  if (!selected.length) return refuse({ kind: "empty" });
+  const problems = ensembleProblems(selected);
+  if (problems.length) return refuse({ kind: "ensemble", problems });
+  const ring = metapopulationRingProblems(selected);
+  if (ring) return refuse({ kind: "ring", ...ring });
+
+  if (policy.kind === "analysis" && !eligible.length) return refuse({ kind: "conservation" });
+  const presetId = policy.kind === "calibration" ? policy.presetId : eligible[0].manifest.spec.presetId as string;
+  if (policy.kind === "analysis") policy.admit?.(eligible, presetId);
+  if (policy.kind === "calibration" || policy.registeredPresets.includes(presetId)) {
+    const problems = provenanceProblems(policy.kind === "calibration" ? selected : eligible, presetId);
+    if (problems.length) return refuse({ kind: "provenance", presetId, problems });
+  }
+  if (policy.kind === "calibration" && eligible.length < 2) return refuse({ kind: "insufficient", count: eligible.length });
+  const runs = policy.kind === "calibration" ? [...eligible].sort((a, b) => a.seed - b.seed) : eligible;
+  // Analysis needs one pooled distribution, calibration needs per-run values
+  // for resampling. Never retain both representations for analysis.
+  const pooled: number[] = [];
+  const perRun: RunActivities[] = [];
+  for (const r of runs) {
+    if (r.condition !== "neutral") continue;
+    if (policy.kind === "calibration") {
+      let values: number[];
+      try {
+        values = (await activities(r)).tracker.allActivities();
+      } catch (e) {
+        throw new RunReplayError(r.dir, e);
+      }
+      perRun.push({ seed: r.seed, activities: values });
+    } else for (const value of (await activities(r)).tracker.allActivities()) pooled.push(value);
+  }
+  if (policy.kind === "calibration") return { ...evidence, ok: true, presetId, runs, neutralActivities: perRun };
+  return { ...evidence, ok: true, presetId, runs, neutralActivities: pooled };
 }

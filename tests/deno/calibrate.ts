@@ -172,6 +172,43 @@ async function runCalibrate(args: string[]): Promise<{ code: number; stdout: str
   return { code, stdout: new TextDecoder().decode(stdout), stderr: new TextDecoder().decode(stderr) };
 }
 
+// Preparation must reject or ignore histories before reading lineage data.
+// A descending table is deliberately poisonous if replay ever reaches it.
+for (const scenario of ["ignored", "excluded", "metadata", "provenance", "accepted"] as const) {
+  const pilotRoot = `${root}/replay-order-${scenario}`;
+  const presetId = "gradient-m3";
+  const spec = (seed: number, condition = "neutral"): RunSpec => ({ experiment: "calib-neutral", presetId, condition, seed, steps: 200, censusEvery: 100, deepEvery: 2, checkpointEvery: 0 });
+  await writeNeutralRun(pilotRoot, presetId, spec(1));
+  await writeNeutralRun(pilotRoot, presetId, spec(2));
+  const poisoned = spec(3, scenario === "ignored" ? "treatment" : "neutral");
+  await writeNeutralRun(pilotRoot, presetId, poisoned, { conservationOk: scenario !== "excluded", provenance: scenario !== "provenance" });
+  const dir = `${pilotRoot}/${presetId}/${poisoned.condition}/seed-3`;
+  await Deno.writeTextFile(`${dir}/lineages.tsv`, "step\tlineage\tcells\n200\taaaa\t2\n100\taaaa\t2\n");
+  if (scenario === "metadata") {
+    const m = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
+    m.metricsVersion = -1;
+    await Deno.writeTextFile(`${dir}/manifest.json`, JSON.stringify(m));
+  }
+  const outPath = `${pilotRoot}/out.json`;
+  const result = await runCalibrate([pilotRoot, "--presets", presetId, "--draws", "10", "--out", outPath]);
+  let report: any;
+  try { report = JSON.parse(await Deno.readTextFile(outPath)); } catch { /* failure recorded below */ }
+  const preset = report?.presets?.[0];
+  if (scenario === "accepted") {
+    // An eligible corrupt history still fails replay; since RunReplayError the
+    // failure is a written "unavailable" report and a non-zero exit (see
+    // "corrupt replay -> unavailable report" below), not an aborted run.
+    check("eligible corrupt history still fails replay", result.code !== 0 && preset?.status === "unavailable" && /seed-3.*ascending census order/.test(preset?.reason ?? ""), result.stderr || JSON.stringify(preset));
+    continue;
+  }
+  if (scenario === "ignored" || scenario === "excluded") {
+    check(`${scenario} corrupt history does not prevent calibration`, preset?.status === "provisional" && preset?.eligibleRuns === 2, result.stderr || JSON.stringify(preset));
+    check(`${scenario} corrupt history preserves exclusion evidence`, scenario === "ignored" ? /ignoring 1 non-neutral/.test(result.stdout) : preset?.excludedRuns === 1, result.stdout);
+  } else {
+    check(`${scenario} failure is reported before replay`, preset?.status === "unavailable" && new RegExp(scenario === "metadata" ? "metrics version" : "provenance check failed").test(preset?.reason ?? ""), result.stderr || JSON.stringify(preset));
+  }
+}
+
 // --- invalid options refused before touching the filesystem ---
 {
   const nonexistent = `${root}/does-not-exist`;

@@ -14,7 +14,7 @@
 // own layout: `<out>/<experiment>/<presetId>/<condition>/seed-<n>/`, so
 // `pilotRoot` is `<out>/<experiment>`). Per preset:
 //   1. Loads every seed-N bundle under `<pilotRoot>/<presetId>` (tools/lib/bundle.ts's
-//      loadRunsUnder -- an in-progress run, still missing manifest.summary,
+//      prepareCohort -- an in-progress run, still missing manifest.summary,
 //      is silently skipped, never read as if it were finished data), keeps
 //      only the `neutral` condition, and applies the SAME eligibility check
 //      tools/analyze.ts applies to an ensemble (tools/lib/bundle.ts's
@@ -58,19 +58,9 @@ import {
   perRunQuantileSpread,
   quantile,
   splitHalfQuantile,
-  type RunActivities,
 } from "@bl/metrics";
 import { canonicalConfig, distributionIdentity, type WorldConfig } from "@bl/schema";
-import {
-  activities,
-  ensembleProblems,
-  loadRunsUnder,
-  metapopulationRingProblems,
-  partitionByConservation,
-  provenanceProblems,
-  RunReplayError,
-  type Run,
-} from "./lib/bundle.ts";
+import { prepareCohort, RunReplayError, type PreparedCalibrationCohort } from "./lib/bundle.ts";
 import { evaluateFreezeability, type CohortRunInfo } from "./lib/calibration-decision.ts";
 import { ACTIVITY_THRESHOLDS as FROZEN_THRESHOLDS } from "../experiments/endpoints.ts";
 import { EXTENSION_ACTIVITY_THRESHOLDS } from "../experiments/extension.ts";
@@ -131,10 +121,9 @@ const results: PresetCalibration[] = [];
 for (const presetId of presets) {
   console.log(`\n== ${presetId} ==`);
   const presetRoot = `${pilotRoot}/${presetId}`;
-  let loaded: Run[];
+  let cohort: PreparedCalibrationCohort;
   try {
-    // Each run's activities are replayed (lineages.tsv streamed) as it loads.
-    loaded = await loadRunsUnder(presetRoot, async (r) => ({ ...r, activities: (await activities(r)).tracker.allActivities() }));
+    cohort = await prepareCohort(presetRoot, { kind: "calibration", presetId });
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
       console.log(`  unavailable: no directory at ${presetRoot}`);
@@ -148,57 +137,28 @@ for (const presetId of presets) {
     }
     throw e;
   }
-  const other = loaded.filter((r) => r.condition !== "neutral");
+  const other = cohort.ignored;
   if (other.length) console.log(`  note: ignoring ${other.length} non-neutral run(s) under ${presetRoot} (${[...new Set(other.map((r) => r.condition))].join(", ")}) -- this pilot calibrates from neutral runs only`);
-  const neutral = loaded.filter((r) => r.condition === "neutral");
-  if (!neutral.length) {
-    console.log(`  unavailable: no completed neutral runs under ${presetRoot}`);
-    results.push({ presetId, status: "unavailable", reason: "no completed neutral runs" });
+  if (!cohort.ok) {
+    const issue = cohort.issue;
+    let reason: string;
+    switch (issue.kind) {
+      case "empty": reason = "no completed neutral runs"; break;
+      case "ensemble": reason = `not one eligible ensemble: ${issue.problems.join("; ")}`; break;
+      case "ring": reason = "includes a metapopulation ring"; break;
+      case "provenance": reason = `provenance check failed: ${issue.problems.join("; ")}`; break;
+      case "conservation": reason = "no run passed the conservation check"; break;
+      case "insufficient": reason = `only ${issue.count} eligible neutral run(s)`; break;
+    }
+    if (issue.kind === "insufficient" && cohort.invalid.length)
+      console.log(`  excluded (conservation failed): ${cohort.invalid.map((r) => `seed-${r.seed}`).join(", ")}`);
+    console.log(`  unavailable: ${reason}`);
+    results.push({ presetId, status: "unavailable", reason });
     continue;
   }
-
-  // Same eligibility standard as tools/analyze.ts applies to an ensemble
-  // (tools/lib/bundle.ts): rule/schema/metrics versions, spec consistency
-  // (steps/censusEvery/deepEvery/activityThreshold identical across runs, no
-  // overrides), config match and full horizon.
-  const problems = ensembleProblems(neutral);
-  if (problems.length) {
-    console.log(`  unavailable: pilot runs are not one eligible ensemble:\n    ${problems.slice(0, 40).join("\n    ")}`);
-    results.push({ presetId, status: "unavailable", reason: `not one eligible ensemble: ${problems.join("; ")}` });
-    continue;
-  }
-  const ring = metapopulationRingProblems(neutral);
-  if (ring) {
-    console.log(`  unavailable: pilot includes a metapopulation ring (condition(s) ${ring.conditions.join(", ")}, ${ring.count} seed(s)) -- not independent replicates`);
-    results.push({ presetId, status: "unavailable", reason: "includes a metapopulation ring" });
-    continue;
-  }
-  // Provenance (Astra review, 2026-09-27, item 1): ensembleProblems above
-  // only ever compares WorldConfig fields, never founder content, so a run
-  // recorded under a mismatched founder set could otherwise pass every
-  // check so far and still be pooled into the frozen value. Verifies every
-  // pilot run's manifest.presetIdentity/init/initHash against what CURRENT
-  // code (@bl/schema's PRESETS) actually produces for this preset -- a
-  // legacy bundle (missing these fields) or a mismatch refuses the whole
-  // preset outright, never a silently-accepted "ok".
-  const provenance = provenanceProblems(neutral, presetId);
-  if (provenance.length) {
-    console.log(`  unavailable: provenance check failed:\n    ${provenance.slice(0, 40).join("\n    ")}`);
-    results.push({ presetId, status: "unavailable", reason: `provenance check failed: ${provenance.join("; ")}` });
-    continue;
-  }
-  const { eligible: eligibleUnsorted, invalid } = partitionByConservation(neutral);
+  const { selected: neutral, runs: eligible, invalid, neutralActivities: runActivities } = cohort;
   if (invalid.length) console.log(`  excluded (conservation failed): ${invalid.map((r) => `seed-${r.seed}`).join(", ")}`);
-  if (eligibleUnsorted.length < 2) {
-    console.log(`  unavailable: only ${eligibleUnsorted.length} eligible neutral run(s) (need >= 2 to pool a distribution)`);
-    results.push({ presetId, status: "unavailable", reason: `only ${eligibleUnsorted.length} eligible neutral run(s)` });
-    continue;
-  }
-  // Sorted by seed (Astra review, P2): the bootstrap below must not depend
-  // on filesystem/Deno.readDir iteration order, which is not guaranteed.
-  const eligible = [...eligibleUnsorted].sort((a, b) => a.seed - b.seed);
 
-  const runActivities: RunActivities[] = eligible.map((r) => ({ seed: r.seed, activities: r.activities! }));
   const pooled = runActivities.flatMap((r) => r.activities);
   const value = quantile(pooled, q);
   // Empty/invalid distribution (Astra review, P2): quantile([]) is Infinity
@@ -268,7 +228,7 @@ for (const presetId of presets) {
   console.log(`  per-run q=${q} spread: mean=${fmt(spread.mean)} sd=${fmt(spread.sd)} min=${fmt(spread.min)} max=${fmt(spread.max)}`);
 
   const declared = ACTIVITY_THRESHOLDS[presetId];
-  const cohort: CohortRunInfo[] = neutral.map((r) => ({
+  const freezeabilityCohort: CohortRunInfo[] = neutral.map((r) => ({
     seed: r.seed,
     experiment: r.manifest.spec.experiment,
     presetId: r.manifest.spec.presetId,
@@ -276,7 +236,7 @@ for (const presetId of presets) {
   }));
   const freezeability = declared
     ? evaluateFreezeability(
-        cohort,
+        freezeabilityCohort,
         {
           declaredExperiment: declared.pilot.experiment,
           declaredPresetId: presetId,
