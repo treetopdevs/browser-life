@@ -82,6 +82,10 @@ export const RND = {
   MUT: 34,
   MUT_WHICH: 35,
   MUT_DELTA: 36,
+  // 64..90: source-local bound-share thinning, + species*9 + direction.
+  // Species B/P/E = 0/1/2; direction = (dy+1)*3+(dx+1), centre unused.
+  // Both endpoints use the source cell's base and its OUTGOING direction.
+  POLYMER_DRAG: 64,
 } as const;
 
 /**

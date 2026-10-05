@@ -1,0 +1,7479 @@
+{
+  "label": "Exploratory constructed possibility, mutation disabled. Not evolved. Finite-horizon stationary retention only.",
+  "records": [
+    {
+      "phase": "core-v1",
+      "case": "builder-on",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 676,
+      "P": 68,
+      "E": 1435,
+      "assignedBiomass": {
+        "0:1": 676
+      },
+      "biomassArea": 2340418,
+      "buildQuanta": 107,
+      "photo": 17737,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 5,
+          "grossOut": 131,
+          "netIn": -126,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 6,
+          "grossOut": 148,
+          "netIn": -142,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "73bc0c362c9fa150"
+    },
+    {
+      "phase": "core-v1",
+      "case": "builder-on",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 630,
+      "P": 68,
+      "E": 1334,
+      "assignedBiomass": {
+        "0:1": 630
+      },
+      "biomassArea": 2309307,
+      "buildQuanta": 124,
+      "photo": 17443,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1,
+          "grossOut": 163,
+          "netIn": -162,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 7,
+          "grossOut": 161,
+          "netIn": -154,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "4fd9af477fd3882e"
+    },
+    {
+      "phase": "core-v1",
+      "case": "builder-on",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 671,
+      "P": 65,
+      "E": 1416,
+      "assignedBiomass": {
+        "0:1": 671
+      },
+      "biomassArea": 2380110,
+      "buildQuanta": 106,
+      "photo": 18059,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 142,
+          "netIn": -136,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 4,
+          "grossOut": 146,
+          "netIn": -142,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "bb553c6a5e877898"
+    },
+    {
+      "phase": "core-v1",
+      "case": "builder-on",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 634,
+      "P": 67,
+      "E": 1354,
+      "assignedBiomass": {
+        "0:1": 634
+      },
+      "biomassArea": 2323540,
+      "buildQuanta": 109,
+      "photo": 17595,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 7,
+          "grossOut": 171,
+          "netIn": -164,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 7,
+          "grossOut": 156,
+          "netIn": -149,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "631453074a055eb4"
+    },
+    {
+      "phase": "core-v1",
+      "case": "builder-on",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 661,
+      "P": 68,
+      "E": 1413,
+      "assignedBiomass": {
+        "0:1": 661
+      },
+      "biomassArea": 2317573,
+      "buildQuanta": 115,
+      "photo": 17588,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 157,
+          "netIn": -151,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 10,
+          "grossOut": 145,
+          "netIn": -135,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "fd0a1dfbb9776e4e"
+    },
+    {
+      "phase": "core-v1",
+      "case": "builder-off",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 42,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 258849,
+      "buildQuanta": 75,
+      "photo": 1028,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1326,
+          "grossOut": 1699,
+          "netIn": -373,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2065,
+          "grossOut": 2673,
+          "netIn": -608,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "9a6a71532ca97d78"
+    },
+    {
+      "phase": "core-v1",
+      "case": "builder-off",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 30,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 249179,
+      "buildQuanta": 77,
+      "photo": 960,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1272,
+          "grossOut": 1641,
+          "netIn": -369,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2113,
+          "grossOut": 2738,
+          "netIn": -625,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "ca04d0fac81c2cc2"
+    },
+    {
+      "phase": "core-v1",
+      "case": "builder-off",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 41,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 252221,
+      "buildQuanta": 72,
+      "photo": 993,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1270,
+          "grossOut": 1633,
+          "netIn": -363,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2091,
+          "grossOut": 2710,
+          "netIn": -619,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "d5b3570a6b98ce74"
+    },
+    {
+      "phase": "core-v1",
+      "case": "builder-off",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 36,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 246194,
+      "buildQuanta": 68,
+      "photo": 982,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1300,
+          "grossOut": 1657,
+          "netIn": -357,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2093,
+          "grossOut": 2724,
+          "netIn": -631,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "aa9e3c329ab04713"
+    },
+    {
+      "phase": "core-v1",
+      "case": "builder-off",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 36,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 245707,
+      "buildQuanta": 73,
+      "photo": 948,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1362,
+          "grossOut": 1728,
+          "netIn": -366,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2125,
+          "grossOut": 2746,
+          "netIn": -621,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2a88655310d39817"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-on",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 283058,
+      "buildQuanta": 0,
+      "photo": 1124,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1401,
+          "grossOut": 1794,
+          "netIn": -393,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2186,
+          "grossOut": 2816,
+          "netIn": -630,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "ade7945a8691c947"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-on",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 274923,
+      "buildQuanta": 0,
+      "photo": 1073,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1354,
+          "grossOut": 1746,
+          "netIn": -392,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2172,
+          "grossOut": 2804,
+          "netIn": -632,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a49f9a23d4112e77"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-on",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 273008,
+      "buildQuanta": 0,
+      "photo": 1065,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1371,
+          "grossOut": 1765,
+          "netIn": -394,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2175,
+          "grossOut": 2804,
+          "netIn": -629,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "b771a25a2c6b1d09"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-on",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 267816,
+      "buildQuanta": 0,
+      "photo": 1059,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1376,
+          "grossOut": 1754,
+          "netIn": -378,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2178,
+          "grossOut": 2824,
+          "netIn": -646,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7ca9fa45bdde07f5"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-on",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 269032,
+      "buildQuanta": 0,
+      "photo": 1050,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1485,
+          "grossOut": 1885,
+          "netIn": -400,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2191,
+          "grossOut": 2814,
+          "netIn": -623,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2ae87e26563e6b71"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-off",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 283058,
+      "buildQuanta": 0,
+      "photo": 1124,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1401,
+          "grossOut": 1794,
+          "netIn": -393,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2186,
+          "grossOut": 2816,
+          "netIn": -630,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7dd9d8249ecaa7eb"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-off",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 274923,
+      "buildQuanta": 0,
+      "photo": 1073,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1354,
+          "grossOut": 1746,
+          "netIn": -392,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2172,
+          "grossOut": 2804,
+          "netIn": -632,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "aa4266c4257e7822"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-off",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 273008,
+      "buildQuanta": 0,
+      "photo": 1065,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1371,
+          "grossOut": 1765,
+          "netIn": -394,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2175,
+          "grossOut": 2804,
+          "netIn": -629,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "92e3f7c388b64800"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-off",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 267816,
+      "buildQuanta": 0,
+      "photo": 1059,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1376,
+          "grossOut": 1754,
+          "netIn": -378,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2178,
+          "grossOut": 2824,
+          "netIn": -646,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "4555869a05822985"
+    },
+    {
+      "phase": "core-v1",
+      "case": "nonbuilder-off",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 269032,
+      "buildQuanta": 0,
+      "photo": 1050,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1485,
+          "grossOut": 1885,
+          "netIn": -400,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2191,
+          "grossOut": 2814,
+          "netIn": -623,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "ec7907e7cf15f591"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-0",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 283058,
+      "buildQuanta": 0,
+      "photo": 1124,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1401,
+          "grossOut": 1794,
+          "netIn": -393,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2186,
+          "grossOut": 2816,
+          "netIn": -630,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "ade7945a8691c947"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-0",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 274923,
+      "buildQuanta": 0,
+      "photo": 1073,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1354,
+          "grossOut": 1746,
+          "netIn": -392,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2172,
+          "grossOut": 2804,
+          "netIn": -632,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a49f9a23d4112e77"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-0",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 273008,
+      "buildQuanta": 0,
+      "photo": 1065,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1371,
+          "grossOut": 1765,
+          "netIn": -394,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2175,
+          "grossOut": 2804,
+          "netIn": -629,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "b771a25a2c6b1d09"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-0",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 267816,
+      "buildQuanta": 0,
+      "photo": 1059,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1376,
+          "grossOut": 1754,
+          "netIn": -378,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2178,
+          "grossOut": 2824,
+          "netIn": -646,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7ca9fa45bdde07f5"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-0",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 269032,
+      "buildQuanta": 0,
+      "photo": 1050,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1485,
+          "grossOut": 1885,
+          "netIn": -400,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2191,
+          "grossOut": 2814,
+          "netIn": -623,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2ae87e26563e6b71"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-1",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 46,
+      "P": 6,
+      "E": 112,
+      "assignedBiomass": {
+        "0:1": 46
+      },
+      "biomassArea": 730125,
+      "buildQuanta": 8,
+      "photo": 4647,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 257,
+          "grossOut": 674,
+          "netIn": -417,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 365,
+          "grossOut": 917,
+          "netIn": -552,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7fddb3d1c6ddba0a"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-1",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 80,
+      "P": 6,
+      "E": 169,
+      "assignedBiomass": {
+        "0:1": 80
+      },
+      "biomassArea": 913470,
+      "buildQuanta": 11,
+      "photo": 6081,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 170,
+          "grossOut": 604,
+          "netIn": -434,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 196,
+          "grossOut": 698,
+          "netIn": -502,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "09caac5d0b5a9440"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-1",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 31,
+      "P": 5,
+      "E": 75,
+      "assignedBiomass": {
+        "0:1": 31
+      },
+      "biomassArea": 852264,
+      "buildQuanta": 11,
+      "photo": 5559,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 183,
+          "grossOut": 634,
+          "netIn": -451,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 210,
+          "grossOut": 745,
+          "netIn": -535,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "071d27ac0fa61856"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-1",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 38,
+      "P": 7,
+      "E": 103,
+      "assignedBiomass": {
+        "0:1": 38
+      },
+      "biomassArea": 912932,
+      "buildQuanta": 9,
+      "photo": 6076,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 156,
+          "grossOut": 601,
+          "netIn": -445,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 163,
+          "grossOut": 695,
+          "netIn": -532,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "fdfd9d6797564327"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-1",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 8,
+      "P": 4,
+      "E": 54,
+      "assignedBiomass": {
+        "0:1": 8
+      },
+      "biomassArea": 795609,
+      "buildQuanta": 9,
+      "photo": 5133,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 214,
+          "grossOut": 662,
+          "netIn": -448,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 286,
+          "grossOut": 847,
+          "netIn": -561,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "844392a8b1235cb9"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-2",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 138,
+      "P": 11,
+      "E": 322,
+      "assignedBiomass": {
+        "0:1": 138
+      },
+      "biomassArea": 1102604,
+      "buildQuanta": 19,
+      "photo": 7576,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 119,
+          "grossOut": 529,
+          "netIn": -410,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 138,
+          "grossOut": 601,
+          "netIn": -463,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "06d0a4eea3c90bd8"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-2",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 122,
+      "P": 9,
+      "E": 263,
+      "assignedBiomass": {
+        "0:1": 122
+      },
+      "biomassArea": 1169127,
+      "buildQuanta": 19,
+      "photo": 8101,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 94,
+          "grossOut": 506,
+          "netIn": -412,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 110,
+          "grossOut": 589,
+          "netIn": -479,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "4dbcecb5144b454d"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-2",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 126,
+      "P": 10,
+      "E": 293,
+      "assignedBiomass": {
+        "0:1": 126
+      },
+      "biomassArea": 1154580,
+      "buildQuanta": 17,
+      "photo": 7995,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 116,
+          "grossOut": 541,
+          "netIn": -425,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 115,
+          "grossOut": 576,
+          "netIn": -461,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "b76b1657ac759d80"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-2",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 108,
+      "P": 10,
+      "E": 265,
+      "assignedBiomass": {
+        "0:1": 108
+      },
+      "biomassArea": 1153254,
+      "buildQuanta": 15,
+      "photo": 7993,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 93,
+          "grossOut": 534,
+          "netIn": -441,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 94,
+          "grossOut": 557,
+          "netIn": -463,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a8fcd96324a14be8"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-2",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 124,
+      "P": 9,
+      "E": 308,
+      "assignedBiomass": {
+        "0:1": 124
+      },
+      "biomassArea": 1138437,
+      "buildQuanta": 15,
+      "photo": 7859,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 124,
+          "grossOut": 545,
+          "netIn": -421,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 120,
+          "grossOut": 588,
+          "netIn": -468,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "3de4fc5f9571cb62"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-3",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 193,
+      "P": 16,
+      "E": 431,
+      "assignedBiomass": {
+        "0:1": 193
+      },
+      "biomassArea": 1333010,
+      "buildQuanta": 25,
+      "photo": 9427,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 85,
+          "grossOut": 467,
+          "netIn": -382,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 94,
+          "grossOut": 523,
+          "netIn": -429,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7d5d607daff765ee"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-3",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 180,
+      "P": 15,
+      "E": 393,
+      "assignedBiomass": {
+        "0:1": 180
+      },
+      "biomassArea": 1378574,
+      "buildQuanta": 26,
+      "photo": 9767,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 51,
+          "grossOut": 429,
+          "netIn": -378,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 70,
+          "grossOut": 518,
+          "netIn": -448,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "b355cefd875ea1f2"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-3",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 192,
+      "P": 13,
+      "E": 429,
+      "assignedBiomass": {
+        "0:1": 192
+      },
+      "biomassArea": 1380161,
+      "buildQuanta": 22,
+      "photo": 9803,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 75,
+          "grossOut": 470,
+          "netIn": -395,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 77,
+          "grossOut": 499,
+          "netIn": -422,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "c4ba7f5e3759f758"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-3",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 172,
+      "P": 15,
+      "E": 390,
+      "assignedBiomass": {
+        "0:1": 172
+      },
+      "biomassArea": 1352353,
+      "buildQuanta": 22,
+      "photo": 9590,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 70,
+          "grossOut": 481,
+          "netIn": -411,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 61,
+          "grossOut": 485,
+          "netIn": -424,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2fc76c0803db4163"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-3",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 190,
+      "P": 15,
+      "E": 471,
+      "assignedBiomass": {
+        "0:1": 190
+      },
+      "biomassArea": 1361960,
+      "buildQuanta": 24,
+      "photo": 9702,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 83,
+          "grossOut": 477,
+          "netIn": -394,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 83,
+          "grossOut": 505,
+          "netIn": -422,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "9c9ea8d78fbb8ac3"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-4",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 261,
+      "P": 20,
+      "E": 594,
+      "assignedBiomass": {
+        "0:1": 261
+      },
+      "biomassArea": 1531369,
+      "buildQuanta": 34,
+      "photo": 11022,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 59,
+          "grossOut": 417,
+          "netIn": -358,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 59,
+          "grossOut": 440,
+          "netIn": -381,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "e2dc86e2bc7d65f1"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-4",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 256,
+      "P": 20,
+      "E": 551,
+      "assignedBiomass": {
+        "0:1": 256
+      },
+      "biomassArea": 1538368,
+      "buildQuanta": 32,
+      "photo": 11091,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 40,
+          "grossOut": 396,
+          "netIn": -356,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 55,
+          "grossOut": 443,
+          "netIn": -388,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "649f1ce0c12fc389"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-4",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 245,
+      "P": 18,
+      "E": 559,
+      "assignedBiomass": {
+        "0:1": 245
+      },
+      "biomassArea": 1515189,
+      "buildQuanta": 32,
+      "photo": 10904,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 45,
+          "grossOut": 420,
+          "netIn": -375,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 56,
+          "grossOut": 438,
+          "netIn": -382,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "f70ee5d59f6f2e20"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-4",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 226,
+      "P": 20,
+      "E": 517,
+      "assignedBiomass": {
+        "0:1": 226
+      },
+      "biomassArea": 1514097,
+      "buildQuanta": 31,
+      "photo": 10878,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 53,
+          "grossOut": 433,
+          "netIn": -380,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 47,
+          "grossOut": 441,
+          "netIn": -394,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "0d1eb304ac08bb8f"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-4",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 245,
+      "P": 20,
+      "E": 566,
+      "assignedBiomass": {
+        "0:1": 245
+      },
+      "biomassArea": 1512868,
+      "buildQuanta": 32,
+      "photo": 10897,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 66,
+          "grossOut": 443,
+          "netIn": -377,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 73,
+          "grossOut": 452,
+          "netIn": -379,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "e8fc1a468687e8da"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-8",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 444,
+      "P": 36,
+      "E": 965,
+      "assignedBiomass": {
+        "0:1": 444
+      },
+      "biomassArea": 1948527,
+      "buildQuanta": 59,
+      "photo": 14462,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 28,
+          "grossOut": 289,
+          "netIn": -261,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 22,
+          "grossOut": 297,
+          "netIn": -275,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "92ddebc8fc7bc88c"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-8",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 417,
+      "P": 36,
+      "E": 895,
+      "assignedBiomass": {
+        "0:1": 417
+      },
+      "biomassArea": 1956341,
+      "buildQuanta": 68,
+      "photo": 14490,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 10,
+          "grossOut": 287,
+          "netIn": -277,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 17,
+          "grossOut": 305,
+          "netIn": -288,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "deb54f9aa76c93e3"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-8",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 422,
+      "P": 34,
+      "E": 904,
+      "assignedBiomass": {
+        "0:1": 422
+      },
+      "biomassArea": 1954187,
+      "buildQuanta": 55,
+      "photo": 14467,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 16,
+          "grossOut": 295,
+          "netIn": -279,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 16,
+          "grossOut": 299,
+          "netIn": -283,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "fa8eafb80f678b90"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-8",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 391,
+      "P": 35,
+      "E": 860,
+      "assignedBiomass": {
+        "0:1": 391
+      },
+      "biomassArea": 1883815,
+      "buildQuanta": 55,
+      "photo": 13938,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 24,
+          "grossOut": 332,
+          "netIn": -308,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 19,
+          "grossOut": 303,
+          "netIn": -284,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "f5dc8566777ce681"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-8",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 436,
+      "P": 36,
+      "E": 975,
+      "assignedBiomass": {
+        "0:1": 436
+      },
+      "biomassArea": 1943089,
+      "buildQuanta": 61,
+      "photo": 14464,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 24,
+          "grossOut": 301,
+          "netIn": -277,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 29,
+          "grossOut": 299,
+          "netIn": -270,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "92b7d388504eb221"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-12",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 572,
+      "P": 52,
+      "E": 1221,
+      "assignedBiomass": {
+        "0:1": 572
+      },
+      "biomassArea": 2169289,
+      "buildQuanta": 82,
+      "photo": 16295,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 14,
+          "grossOut": 197,
+          "netIn": -183,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 11,
+          "grossOut": 218,
+          "netIn": -207,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7cc1d453fa0e8875"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-12",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 543,
+      "P": 52,
+      "E": 1160,
+      "assignedBiomass": {
+        "0:1": 543
+      },
+      "biomassArea": 2183580,
+      "buildQuanta": 98,
+      "photo": 16415,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 7,
+          "grossOut": 216,
+          "netIn": -209,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 10,
+          "grossOut": 222,
+          "netIn": -212,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "c25af6173bf2fb3d"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-12",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 579,
+      "P": 50,
+      "E": 1227,
+      "assignedBiomass": {
+        "0:1": 579
+      },
+      "biomassArea": 2234831,
+      "buildQuanta": 79,
+      "photo": 16797,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 8,
+          "grossOut": 200,
+          "netIn": -192,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 5,
+          "grossOut": 200,
+          "netIn": -195,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "6d8e84ca79e9d053"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-12",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 551,
+      "P": 51,
+      "E": 1180,
+      "assignedBiomass": {
+        "0:1": 551
+      },
+      "biomassArea": 2192899,
+      "buildQuanta": 82,
+      "photo": 16480,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 12,
+          "grossOut": 230,
+          "netIn": -218,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 11,
+          "grossOut": 206,
+          "netIn": -195,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "5ede377717cfe737"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-12",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 569,
+      "P": 52,
+      "E": 1255,
+      "assignedBiomass": {
+        "0:1": 569
+      },
+      "biomassArea": 2195820,
+      "buildQuanta": 86,
+      "photo": 16545,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 10,
+          "grossOut": 204,
+          "netIn": -194,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 12,
+          "grossOut": 213,
+          "netIn": -201,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "5de3457f56da11e5"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-15",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 572,
+      "P": 64,
+      "E": 1221,
+      "assignedBiomass": {
+        "0:1": 572
+      },
+      "biomassArea": 2169744,
+      "buildQuanta": 100,
+      "photo": 16316,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 14,
+          "grossOut": 192,
+          "netIn": -178,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 10,
+          "grossOut": 210,
+          "netIn": -200,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "e6754f47a3feb9dc"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-15",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 543,
+      "P": 64,
+      "E": 1160,
+      "assignedBiomass": {
+        "0:1": 543
+      },
+      "biomassArea": 2171812,
+      "buildQuanta": 116,
+      "photo": 16346,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 7,
+          "grossOut": 212,
+          "netIn": -205,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 9,
+          "grossOut": 213,
+          "netIn": -204,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "0e2c312ac9d1b0bb"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-15",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 579,
+      "P": 61,
+      "E": 1227,
+      "assignedBiomass": {
+        "0:1": 579
+      },
+      "biomassArea": 2232016,
+      "buildQuanta": 101,
+      "photo": 16791,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 8,
+          "grossOut": 194,
+          "netIn": -186,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 5,
+          "grossOut": 195,
+          "netIn": -190,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "c0cb65d6f558de55"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-15",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 546,
+      "P": 63,
+      "E": 1165,
+      "assignedBiomass": {
+        "0:1": 546
+      },
+      "biomassArea": 2177241,
+      "buildQuanta": 102,
+      "photo": 16355,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 10,
+          "grossOut": 224,
+          "netIn": -214,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 11,
+          "grossOut": 203,
+          "netIn": -192,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "cfec3645c8b18942"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-15",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 562,
+      "P": 64,
+      "E": 1241,
+      "assignedBiomass": {
+        "0:1": 562
+      },
+      "biomassArea": 2166469,
+      "buildQuanta": 107,
+      "photo": 16356,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 10,
+          "grossOut": 202,
+          "netIn": -192,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 12,
+          "grossOut": 211,
+          "netIn": -199,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "6378ea82bdd8075c"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-16",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 676,
+      "P": 68,
+      "E": 1435,
+      "assignedBiomass": {
+        "0:1": 676
+      },
+      "biomassArea": 2340418,
+      "buildQuanta": 107,
+      "photo": 17737,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 5,
+          "grossOut": 131,
+          "netIn": -126,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 6,
+          "grossOut": 148,
+          "netIn": -142,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "73bc0c362c9fa150"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-16",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 630,
+      "P": 68,
+      "E": 1334,
+      "assignedBiomass": {
+        "0:1": 630
+      },
+      "biomassArea": 2309307,
+      "buildQuanta": 124,
+      "photo": 17443,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1,
+          "grossOut": 163,
+          "netIn": -162,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 7,
+          "grossOut": 161,
+          "netIn": -154,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "4fd9af477fd3882e"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-16",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 671,
+      "P": 65,
+      "E": 1416,
+      "assignedBiomass": {
+        "0:1": 671
+      },
+      "biomassArea": 2380110,
+      "buildQuanta": 106,
+      "photo": 18059,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 142,
+          "netIn": -136,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 4,
+          "grossOut": 146,
+          "netIn": -142,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "bb553c6a5e877898"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-16",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 634,
+      "P": 67,
+      "E": 1354,
+      "assignedBiomass": {
+        "0:1": 634
+      },
+      "biomassArea": 2323540,
+      "buildQuanta": 109,
+      "photo": 17595,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 7,
+          "grossOut": 171,
+          "netIn": -164,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 7,
+          "grossOut": 156,
+          "netIn": -149,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "631453074a055eb4"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-16",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 661,
+      "P": 68,
+      "E": 1413,
+      "assignedBiomass": {
+        "0:1": 661
+      },
+      "biomassArea": 2317573,
+      "buildQuanta": 115,
+      "photo": 17588,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 157,
+          "netIn": -151,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 10,
+          "grossOut": 145,
+          "netIn": -135,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "fd0a1dfbb9776e4e"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-17",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 676,
+      "P": 72,
+      "E": 1435,
+      "assignedBiomass": {
+        "0:1": 676
+      },
+      "biomassArea": 2340119,
+      "buildQuanta": 114,
+      "photo": 17740,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 5,
+          "grossOut": 128,
+          "netIn": -123,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 6,
+          "grossOut": 147,
+          "netIn": -141,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "3647977066e9779a"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-17",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 631,
+      "P": 72,
+      "E": 1335,
+      "assignedBiomass": {
+        "0:1": 631
+      },
+      "biomassArea": 2304565,
+      "buildQuanta": 130,
+      "photo": 17418,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1,
+          "grossOut": 161,
+          "netIn": -160,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 7,
+          "grossOut": 158,
+          "netIn": -151,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "c6bcf9f7649ea30c"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-17",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 671,
+      "P": 69,
+      "E": 1415,
+      "assignedBiomass": {
+        "0:1": 671
+      },
+      "biomassArea": 2374366,
+      "buildQuanta": 112,
+      "photo": 18019,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 141,
+          "netIn": -135,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 4,
+          "grossOut": 143,
+          "netIn": -139,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "20cf335e873a6841"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-17",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 631,
+      "P": 71,
+      "E": 1354,
+      "assignedBiomass": {
+        "0:1": 631
+      },
+      "biomassArea": 2314366,
+      "buildQuanta": 118,
+      "photo": 17536,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 5,
+          "grossOut": 167,
+          "netIn": -162,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 6,
+          "grossOut": 156,
+          "netIn": -150,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "36ca65cda3c42f71"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-17",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 658,
+      "P": 72,
+      "E": 1405,
+      "assignedBiomass": {
+        "0:1": 658
+      },
+      "biomassArea": 2308875,
+      "buildQuanta": 121,
+      "photo": 17503,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 156,
+          "netIn": -150,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 10,
+          "grossOut": 145,
+          "netIn": -135,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "206ce2d99465acec"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-20",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 670,
+      "P": 84,
+      "E": 1423,
+      "assignedBiomass": {
+        "0:1": 670
+      },
+      "biomassArea": 2320594,
+      "buildQuanta": 132,
+      "photo": 17595,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 4,
+          "grossOut": 126,
+          "netIn": -122,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 6,
+          "grossOut": 142,
+          "netIn": -136,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "be4eed0f345454aa"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-20",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 625,
+      "P": 84,
+      "E": 1329,
+      "assignedBiomass": {
+        "0:1": 625
+      },
+      "biomassArea": 2283055,
+      "buildQuanta": 147,
+      "photo": 17286,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1,
+          "grossOut": 159,
+          "netIn": -158,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 7,
+          "grossOut": 154,
+          "netIn": -147,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "d57033fc45128114"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-20",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 663,
+      "P": 81,
+      "E": 1397,
+      "assignedBiomass": {
+        "0:1": 663
+      },
+      "biomassArea": 2350145,
+      "buildQuanta": 135,
+      "photo": 17823,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 140,
+          "netIn": -134,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 4,
+          "grossOut": 140,
+          "netIn": -136,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "0dc378beef205caf"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-20",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 625,
+      "P": 83,
+      "E": 1336,
+      "assignedBiomass": {
+        "0:1": 625
+      },
+      "biomassArea": 2292620,
+      "buildQuanta": 138,
+      "photo": 17388,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 5,
+          "grossOut": 166,
+          "netIn": -161,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 5,
+          "grossOut": 150,
+          "netIn": -145,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "e498e1706a30df4d"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-20",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 654,
+      "P": 84,
+      "E": 1399,
+      "assignedBiomass": {
+        "0:1": 654
+      },
+      "biomassArea": 2295401,
+      "buildQuanta": 140,
+      "photo": 17432,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 151,
+          "netIn": -145,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 8,
+          "grossOut": 140,
+          "netIn": -132,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "6f3ebebed7c28c33"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-24",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 742,
+      "P": 100,
+      "E": 1565,
+      "assignedBiomass": {
+        "0:1": 742
+      },
+      "biomassArea": 2437911,
+      "buildQuanta": 157,
+      "photo": 18615,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 3,
+          "grossOut": 83,
+          "netIn": -80,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 4,
+          "grossOut": 94,
+          "netIn": -90,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "ef72ad6bf5ff85ce"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-24",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 700,
+      "P": 100,
+      "E": 1468,
+      "assignedBiomass": {
+        "0:1": 700
+      },
+      "biomassArea": 2397164,
+      "buildQuanta": 179,
+      "photo": 18299,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1,
+          "grossOut": 112,
+          "netIn": -111,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2,
+          "grossOut": 104,
+          "netIn": -102,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "ce245d48fa1b5f42"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-24",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 740,
+      "P": 96,
+      "E": 1542,
+      "assignedBiomass": {
+        "0:1": 740
+      },
+      "biomassArea": 2456077,
+      "buildQuanta": 156,
+      "photo": 18732,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 3,
+          "grossOut": 89,
+          "netIn": -86,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 1,
+          "grossOut": 92,
+          "netIn": -91,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "da2888b996758767"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-24",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 696,
+      "P": 99,
+      "E": 1479,
+      "assignedBiomass": {
+        "0:1": 696
+      },
+      "biomassArea": 2387559,
+      "buildQuanta": 163,
+      "photo": 18217,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 0,
+          "grossOut": 110,
+          "netIn": -110,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 4,
+          "grossOut": 111,
+          "netIn": -107,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2bd9c2a5081bf730"
+    },
+    {
+      "phase": "access-v1",
+      "case": "build-24",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 703,
+      "P": 100,
+      "E": 1521,
+      "assignedBiomass": {
+        "0:1": 703
+      },
+      "biomassArea": 2379465,
+      "buildQuanta": 165,
+      "photo": 18173,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1,
+          "grossOut": 120,
+          "netIn": -119,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 4,
+          "grossOut": 95,
+          "netIn": -91,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "c8bee2a9051a7c86"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-on",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 708,
+      "P": 68,
+      "E": 1494,
+      "assignedBiomass": {
+        "0:1": 708
+      },
+      "biomassArea": 2762025,
+      "buildQuanta": 107,
+      "photo": 19947,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 21,
+          "grossOut": 135,
+          "netIn": -114,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 31,
+          "grossOut": 153,
+          "netIn": -122,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "eaafbf36b2b5049d"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-on",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 666,
+      "P": 68,
+      "E": 1408,
+      "assignedBiomass": {
+        "0:1": 666
+      },
+      "biomassArea": 2710359,
+      "buildQuanta": 124,
+      "photo": 19586,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 20,
+          "grossOut": 167,
+          "netIn": -147,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 31,
+          "grossOut": 164,
+          "netIn": -133,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "81e81d1d1e6e0cc5"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-on",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 705,
+      "P": 65,
+      "E": 1476,
+      "assignedBiomass": {
+        "0:1": 705
+      },
+      "biomassArea": 2760144,
+      "buildQuanta": 106,
+      "photo": 19979,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 18,
+          "grossOut": 145,
+          "netIn": -127,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 30,
+          "grossOut": 147,
+          "netIn": -117,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "01debebf273af69d"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-on",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 663,
+      "P": 67,
+      "E": 1418,
+      "assignedBiomass": {
+        "0:1": 663
+      },
+      "biomassArea": 2745577,
+      "buildQuanta": 109,
+      "photo": 19839,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 25,
+          "grossOut": 175,
+          "netIn": -150,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 26,
+          "grossOut": 160,
+          "netIn": -134,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "47e4cc6ee451035c"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-on",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 694,
+      "P": 68,
+      "E": 1493,
+      "assignedBiomass": {
+        "0:1": 694
+      },
+      "biomassArea": 2747164,
+      "buildQuanta": 115,
+      "photo": 19894,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 26,
+          "grossOut": 165,
+          "netIn": -139,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 37,
+          "grossOut": 151,
+          "netIn": -114,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "4bc9630c4a671366"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-off",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 56,
+      "P": 48,
+      "E": 141,
+      "assignedBiomass": {
+        "0:1": 5,
+        "0:2": 51
+      },
+      "biomassArea": 1130776,
+      "buildQuanta": 85,
+      "photo": 6747,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2846,
+          "grossOut": 3258,
+          "netIn": -412,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3730,
+          "grossOut": 4286,
+          "netIn": -556,
+          "internal": 0
+        }
+      },
+      "externalB": 51,
+      "occupied": 2,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a56baa51590ac8a4"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-off",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 30,
+      "P": 41,
+      "E": 69,
+      "assignedBiomass": {
+        "0:1": 30
+      },
+      "biomassArea": 1014434,
+      "buildQuanta": 91,
+      "photo": 5912,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2722,
+          "grossOut": 3093,
+          "netIn": -371,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3858,
+          "grossOut": 4438,
+          "netIn": -580,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "6a9a61262efd6fcc"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-off",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 24,
+      "P": 43,
+      "E": 51,
+      "assignedBiomass": {
+        "0:1": 0,
+        "0:2": 24
+      },
+      "biomassArea": 1014092,
+      "buildQuanta": 77,
+      "photo": 5845,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2672,
+          "grossOut": 3051,
+          "netIn": -379,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3836,
+          "grossOut": 4437,
+          "netIn": -601,
+          "internal": 0
+        }
+      },
+      "externalB": 24,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "e7c88f18665ae8a9"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-off",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 49,
+      "P": 48,
+      "E": 112,
+      "assignedBiomass": {
+        "0:1": 49
+      },
+      "biomassArea": 1032262,
+      "buildQuanta": 82,
+      "photo": 6034,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2749,
+          "grossOut": 3115,
+          "netIn": -366,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3769,
+          "grossOut": 4328,
+          "netIn": -559,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "68da0a81d3d362fc"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-normal-off",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 5,
+      "P": 46,
+      "E": 60,
+      "assignedBiomass": {
+        "0:1": 4,
+        "0:2": 1
+      },
+      "biomassArea": 1096842,
+      "buildQuanta": 89,
+      "photo": 6494,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2839,
+          "grossOut": 3195,
+          "netIn": -356,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3853,
+          "grossOut": 4468,
+          "netIn": -615,
+          "internal": 0
+        }
+      },
+      "externalB": 1,
+      "occupied": 2,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "8e65cd760fb22edf"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-on",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 686,
+      "P": 68,
+      "E": 1454,
+      "assignedBiomass": {
+        "0:1": 686
+      },
+      "biomassArea": 2778089,
+      "buildQuanta": 110,
+      "photo": 20089,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 17,
+          "grossOut": 137,
+          "netIn": -120,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 31,
+          "grossOut": 171,
+          "netIn": -140,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "d26de6da54d5cbd1"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-on",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 668,
+      "P": 68,
+      "E": 1425,
+      "assignedBiomass": {
+        "0:1": 668
+      },
+      "biomassArea": 2685345,
+      "buildQuanta": 116,
+      "photo": 19409,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 21,
+          "grossOut": 165,
+          "netIn": -144,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 31,
+          "grossOut": 165,
+          "netIn": -134,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "4d927f5dc6221cbc"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-on",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 668,
+      "P": 68,
+      "E": 1418,
+      "assignedBiomass": {
+        "0:1": 668
+      },
+      "biomassArea": 2720795,
+      "buildQuanta": 118,
+      "photo": 19631,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 24,
+          "grossOut": 156,
+          "netIn": -132,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 25,
+          "grossOut": 171,
+          "netIn": -146,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "f5d91c0451ef712b"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-on",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 698,
+      "P": 66,
+      "E": 1462,
+      "assignedBiomass": {
+        "0:1": 698
+      },
+      "biomassArea": 2766201,
+      "buildQuanta": 106,
+      "photo": 20033,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 21,
+          "grossOut": 150,
+          "netIn": -129,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 16,
+          "grossOut": 137,
+          "netIn": -121,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a119bdb75f7a28fd"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-on",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 645,
+      "P": 68,
+      "E": 1380,
+      "assignedBiomass": {
+        "0:1": 645
+      },
+      "biomassArea": 2695378,
+      "buildQuanta": 124,
+      "photo": 19491,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 22,
+          "grossOut": 183,
+          "netIn": -161,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 29,
+          "grossOut": 169,
+          "netIn": -140,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "07fcdc6e6e0612ed"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-off",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 49,
+      "P": 48,
+      "E": 135,
+      "assignedBiomass": {
+        "0:2": 5,
+        "0:1": 44
+      },
+      "biomassArea": 1122039,
+      "buildQuanta": 87,
+      "photo": 6666,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2806,
+          "grossOut": 3175,
+          "netIn": -369,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3787,
+          "grossOut": 4347,
+          "netIn": -560,
+          "internal": 0
+        }
+      },
+      "externalB": 5,
+      "occupied": 2,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "943ea3304509892b"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-off",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 40,
+      "P": 41,
+      "E": 86,
+      "assignedBiomass": {
+        "0:2": 40,
+        "0:1": 0
+      },
+      "biomassArea": 1027544,
+      "buildQuanta": 81,
+      "photo": 5993,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2697,
+          "grossOut": 3093,
+          "netIn": -396,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3808,
+          "grossOut": 4394,
+          "netIn": -586,
+          "internal": 0
+        }
+      },
+      "externalB": 40,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "e39938e0496db57b"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-off",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 17,
+      "P": 45,
+      "E": 41,
+      "assignedBiomass": {
+        "0:1": 17
+      },
+      "biomassArea": 1013197,
+      "buildQuanta": 87,
+      "photo": 5829,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2657,
+          "grossOut": 3023,
+          "netIn": -366,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3685,
+          "grossOut": 4281,
+          "netIn": -596,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "3f02b84f6baeaa68"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-off",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 69,
+      "P": 41,
+      "E": 148,
+      "assignedBiomass": {
+        "0:2": 69,
+        "0:1": 0
+      },
+      "biomassArea": 1033664,
+      "buildQuanta": 77,
+      "photo": 6070,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2728,
+          "grossOut": 3128,
+          "netIn": -400,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3758,
+          "grossOut": 4338,
+          "netIn": -580,
+          "internal": 0
+        }
+      },
+      "externalB": 69,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "86dc8c1e40765c84"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-1-mirror-off",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 11,
+      "P": 43,
+      "E": 65,
+      "assignedBiomass": {
+        "0:2": 4,
+        "0:1": 7
+      },
+      "biomassArea": 1096825,
+      "buildQuanta": 95,
+      "photo": 6499,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2808,
+          "grossOut": 3179,
+          "netIn": -371,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3900,
+          "grossOut": 4502,
+          "netIn": -602,
+          "internal": 0
+        }
+      },
+      "externalB": 4,
+      "occupied": 2,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "9ad50f96ba99edff"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-on",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 701,
+      "P": 68,
+      "E": 1470,
+      "assignedBiomass": {
+        "0:1": 701
+      },
+      "biomassArea": 2693306,
+      "buildQuanta": 107,
+      "photo": 19410,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 17,
+          "grossOut": 134,
+          "netIn": -117,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 24,
+          "grossOut": 150,
+          "netIn": -126,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "94c330d3410d356a"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-on",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 658,
+      "P": 68,
+      "E": 1392,
+      "assignedBiomass": {
+        "0:1": 658
+      },
+      "biomassArea": 2647266,
+      "buildQuanta": 124,
+      "photo": 19054,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 12,
+          "grossOut": 164,
+          "netIn": -152,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 26,
+          "grossOut": 162,
+          "netIn": -136,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "d76cb09b792c3b89"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-on",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 703,
+      "P": 65,
+      "E": 1472,
+      "assignedBiomass": {
+        "0:1": 703
+      },
+      "biomassArea": 2729068,
+      "buildQuanta": 106,
+      "photo": 19744,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 17,
+          "grossOut": 145,
+          "netIn": -128,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 29,
+          "grossOut": 147,
+          "netIn": -118,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "493d92e5092f20d8"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-on",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 659,
+      "P": 67,
+      "E": 1409,
+      "assignedBiomass": {
+        "0:1": 659
+      },
+      "biomassArea": 2664385,
+      "buildQuanta": 109,
+      "photo": 19214,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 22,
+          "grossOut": 174,
+          "netIn": -152,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 24,
+          "grossOut": 160,
+          "netIn": -136,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a1ac69c249acda4a"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-on",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 692,
+      "P": 68,
+      "E": 1492,
+      "assignedBiomass": {
+        "0:1": 692
+      },
+      "biomassArea": 2698359,
+      "buildQuanta": 115,
+      "photo": 19515,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 21,
+          "grossOut": 163,
+          "netIn": -142,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 36,
+          "grossOut": 149,
+          "netIn": -113,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "8702bd0304e29962"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-off",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 12,
+      "P": 48,
+      "E": 42,
+      "assignedBiomass": {
+        "0:1": 12
+      },
+      "biomassArea": 1011714,
+      "buildQuanta": 85,
+      "photo": 5796,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2665,
+          "grossOut": 3044,
+          "netIn": -379,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3624,
+          "grossOut": 4206,
+          "netIn": -582,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a1a1f3434708d4f3"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-off",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 0,
+      "P": 37,
+      "E": 3,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 887911,
+      "buildQuanta": 86,
+      "photo": 4851,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2460,
+          "grossOut": 2837,
+          "netIn": -377,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3688,
+          "grossOut": 4296,
+          "netIn": -608,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2d7a74d578ccf602"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-off",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 1,
+      "P": 43,
+      "E": 6,
+      "assignedBiomass": {
+        "0:1": 0,
+        "0:2": 1
+      },
+      "biomassArea": 943543,
+      "buildQuanta": 77,
+      "photo": 5262,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2550,
+          "grossOut": 2916,
+          "netIn": -366,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3635,
+          "grossOut": 4249,
+          "netIn": -614,
+          "internal": 0
+        }
+      },
+      "externalB": 1,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "3159ebc69098fe7b"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-off",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 0,
+      "P": 42,
+      "E": 5,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 903854,
+      "buildQuanta": 76,
+      "photo": 4992,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2504,
+          "grossOut": 2889,
+          "netIn": -385,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3611,
+          "grossOut": 4207,
+          "netIn": -596,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "6aea2aeca02ced6e"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-normal-off",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 12,
+      "P": 48,
+      "E": 57,
+      "assignedBiomass": {
+        "0:1": 11,
+        "0:2": 1
+      },
+      "biomassArea": 998552,
+      "buildQuanta": 90,
+      "photo": 5758,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2600,
+          "grossOut": 2943,
+          "netIn": -343,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3620,
+          "grossOut": 4240,
+          "netIn": -620,
+          "internal": 0
+        }
+      },
+      "externalB": 1,
+      "occupied": 2,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "affe59f27c9dea53"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-on",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 671,
+      "P": 68,
+      "E": 1431,
+      "assignedBiomass": {
+        "0:1": 671
+      },
+      "biomassArea": 2690932,
+      "buildQuanta": 129,
+      "photo": 19441,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 12,
+          "grossOut": 143,
+          "netIn": -131,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 24,
+          "grossOut": 167,
+          "netIn": -143,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "97ef9b24bc307dd3"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-on",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 657,
+      "P": 67,
+      "E": 1398,
+      "assignedBiomass": {
+        "0:1": 657
+      },
+      "biomassArea": 2633006,
+      "buildQuanta": 118,
+      "photo": 18971,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 16,
+          "grossOut": 168,
+          "netIn": -152,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 25,
+          "grossOut": 163,
+          "netIn": -138,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "50af3d1ff1d00afd"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-on",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 664,
+      "P": 68,
+      "E": 1407,
+      "assignedBiomass": {
+        "0:1": 664
+      },
+      "biomassArea": 2645101,
+      "buildQuanta": 125,
+      "photo": 19065,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 17,
+          "grossOut": 172,
+          "netIn": -155,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 17,
+          "grossOut": 143,
+          "netIn": -126,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "40335a931682ea56"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-on",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 677,
+      "P": 68,
+      "E": 1448,
+      "assignedBiomass": {
+        "0:1": 677
+      },
+      "biomassArea": 2681473,
+      "buildQuanta": 122,
+      "photo": 19387,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 12,
+          "grossOut": 152,
+          "netIn": -140,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 16,
+          "grossOut": 145,
+          "netIn": -129,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "6ebe222fcaf58d74"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-on",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 679,
+      "P": 68,
+      "E": 1436,
+      "assignedBiomass": {
+        "0:1": 679
+      },
+      "biomassArea": 2680461,
+      "buildQuanta": 113,
+      "photo": 19372,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 19,
+          "grossOut": 137,
+          "netIn": -118,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 22,
+          "grossOut": 171,
+          "netIn": -149,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "5f8a648d0d48e099"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-off",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 12,
+      "P": 33,
+      "E": 42,
+      "assignedBiomass": {
+        "0:2": 12,
+        "0:1": 0
+      },
+      "biomassArea": 1011996,
+      "buildQuanta": 89,
+      "photo": 5818,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2629,
+          "grossOut": 3019,
+          "netIn": -390,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3702,
+          "grossOut": 4300,
+          "netIn": -598,
+          "internal": 0
+        }
+      },
+      "externalB": 12,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "bcdeae3b944980c9"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-off",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 0,
+      "P": 32,
+      "E": 3,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 901386,
+      "buildQuanta": 80,
+      "photo": 4932,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2463,
+          "grossOut": 2827,
+          "netIn": -364,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3682,
+          "grossOut": 4309,
+          "netIn": -627,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "16fe58c7bacbacc9"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-off",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 1,
+      "P": 43,
+      "E": 6,
+      "assignedBiomass": {
+        "0:1": 1
+      },
+      "biomassArea": 941712,
+      "buildQuanta": 88,
+      "photo": 5256,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2536,
+          "grossOut": 2919,
+          "netIn": -383,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3637,
+          "grossOut": 4232,
+          "netIn": -595,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2224586a90a2987f"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-off",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 0,
+      "P": 38,
+      "E": 6,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 920012,
+      "buildQuanta": 84,
+      "photo": 5112,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2493,
+          "grossOut": 2867,
+          "netIn": -374,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3596,
+          "grossOut": 4207,
+          "netIn": -611,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "56a738356a41f8f4"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-2-mirror-off",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 11,
+      "P": 38,
+      "E": 60,
+      "assignedBiomass": {
+        "0:2": 11,
+        "0:1": 0
+      },
+      "biomassArea": 992481,
+      "buildQuanta": 80,
+      "photo": 5716,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2572,
+          "grossOut": 2956,
+          "netIn": -384,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3590,
+          "grossOut": 4188,
+          "netIn": -598,
+          "internal": 0
+        }
+      },
+      "externalB": 11,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "eb8efaff4a942ffe"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-on",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 699,
+      "P": 68,
+      "E": 1466,
+      "assignedBiomass": {
+        "0:1": 699
+      },
+      "biomassArea": 2660756,
+      "buildQuanta": 107,
+      "photo": 19166,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 17,
+          "grossOut": 134,
+          "netIn": -117,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 21,
+          "grossOut": 149,
+          "netIn": -128,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a6cf85e15391b419"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-on",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 654,
+      "P": 68,
+      "E": 1392,
+      "assignedBiomass": {
+        "0:1": 654
+      },
+      "biomassArea": 2628671,
+      "buildQuanta": 124,
+      "photo": 18912,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 10,
+          "grossOut": 164,
+          "netIn": -154,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 23,
+          "grossOut": 161,
+          "netIn": -138,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "d0a1adf0b2a5aa14"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-on",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 695,
+      "P": 65,
+      "E": 1463,
+      "assignedBiomass": {
+        "0:1": 695
+      },
+      "biomassArea": 2696396,
+      "buildQuanta": 106,
+      "photo": 19495,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 16,
+          "grossOut": 145,
+          "netIn": -129,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 22,
+          "grossOut": 147,
+          "netIn": -125,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "78a461efeb42c9db"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-on",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 651,
+      "P": 67,
+      "E": 1383,
+      "assignedBiomass": {
+        "0:1": 651
+      },
+      "biomassArea": 2620621,
+      "buildQuanta": 109,
+      "photo": 18854,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 17,
+          "grossOut": 172,
+          "netIn": -155,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 19,
+          "grossOut": 160,
+          "netIn": -141,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "5dba519fb460449f"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-on",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 686,
+      "P": 68,
+      "E": 1476,
+      "assignedBiomass": {
+        "0:1": 686
+      },
+      "biomassArea": 2658617,
+      "buildQuanta": 115,
+      "photo": 19225,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 18,
+          "grossOut": 162,
+          "netIn": -144,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 32,
+          "grossOut": 149,
+          "netIn": -117,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "00d9597a3243001e"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-off",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 4,
+      "P": 44,
+      "E": 26,
+      "assignedBiomass": {
+        "0:1": 4
+      },
+      "biomassArea": 891727,
+      "buildQuanta": 80,
+      "photo": 4918,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2441,
+          "grossOut": 2835,
+          "netIn": -394,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3432,
+          "grossOut": 4011,
+          "netIn": -579,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "aab574844c717c2f"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-off",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 0,
+      "P": 38,
+      "E": 1,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 775910,
+      "buildQuanta": 86,
+      "photo": 3999,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2308,
+          "grossOut": 2665,
+          "netIn": -357,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3487,
+          "grossOut": 4114,
+          "netIn": -627,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "9abd4b8f5344d613"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-off",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 0,
+      "P": 43,
+      "E": 1,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 829018,
+      "buildQuanta": 77,
+      "photo": 4419,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2360,
+          "grossOut": 2723,
+          "netIn": -363,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3422,
+          "grossOut": 4039,
+          "netIn": -617,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "3b0cc5a0bf3d5b54"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-off",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 1,
+      "P": 43,
+      "E": 1,
+      "assignedBiomass": {
+        "0:1": 1
+      },
+      "biomassArea": 803158,
+      "buildQuanta": 76,
+      "photo": 4188,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2298,
+          "grossOut": 2672,
+          "netIn": -374,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3459,
+          "grossOut": 4064,
+          "netIn": -605,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "8bbaf5fb4a41eee8"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-normal-off",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 4,
+      "P": 46,
+      "E": 39,
+      "assignedBiomass": {
+        "0:1": 4
+      },
+      "biomassArea": 915209,
+      "buildQuanta": 87,
+      "photo": 5120,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2424,
+          "grossOut": 2772,
+          "netIn": -348,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3449,
+          "grossOut": 4073,
+          "netIn": -624,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "d3a3b494eff6d786"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-on",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 662,
+      "P": 68,
+      "E": 1410,
+      "assignedBiomass": {
+        "0:1": 662
+      },
+      "biomassArea": 2655482,
+      "buildQuanta": 130,
+      "photo": 19155,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 12,
+          "grossOut": 158,
+          "netIn": -146,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 25,
+          "grossOut": 163,
+          "netIn": -138,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "4dc02df39dce765a"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-on",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 673,
+      "P": 68,
+      "E": 1449,
+      "assignedBiomass": {
+        "0:1": 673
+      },
+      "biomassArea": 2656762,
+      "buildQuanta": 119,
+      "photo": 19155,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 15,
+          "grossOut": 155,
+          "netIn": -140,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 20,
+          "grossOut": 152,
+          "netIn": -132,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "ea15e2bda81e6598"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-on",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 655,
+      "P": 68,
+      "E": 1401,
+      "assignedBiomass": {
+        "0:1": 655
+      },
+      "biomassArea": 2639513,
+      "buildQuanta": 112,
+      "photo": 19001,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 16,
+          "grossOut": 143,
+          "netIn": -127,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 14,
+          "grossOut": 178,
+          "netIn": -164,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "03eb02f884b836aa"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-on",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 671,
+      "P": 68,
+      "E": 1440,
+      "assignedBiomass": {
+        "0:1": 671
+      },
+      "biomassArea": 2681897,
+      "buildQuanta": 114,
+      "photo": 19385,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 10,
+          "grossOut": 146,
+          "netIn": -136,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 22,
+          "grossOut": 161,
+          "netIn": -139,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "0caa3f616f73ad64"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-on",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 642,
+      "P": 68,
+      "E": 1367,
+      "assignedBiomass": {
+        "0:1": 642
+      },
+      "biomassArea": 2586652,
+      "buildQuanta": 117,
+      "photo": 18653,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 10,
+          "grossOut": 172,
+          "netIn": -162,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 13,
+          "grossOut": 155,
+          "netIn": -142,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "c0c5876e53da8244"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-off",
+      "seed": 101,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 4,
+      "P": 34,
+      "E": 26,
+      "assignedBiomass": {
+        "0:2": 4,
+        "0:1": 0
+      },
+      "biomassArea": 889825,
+      "buildQuanta": 81,
+      "photo": 4891,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2297,
+          "grossOut": 2674,
+          "netIn": -377,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3412,
+          "grossOut": 4022,
+          "netIn": -610,
+          "internal": 0
+        }
+      },
+      "externalB": 4,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "0e314fdb3ecd3a40"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-off",
+      "seed": 102,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 0,
+      "P": 33,
+      "E": 1,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 777677,
+      "buildQuanta": 78,
+      "photo": 4013,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2305,
+          "grossOut": 2697,
+          "netIn": -392,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3448,
+          "grossOut": 4045,
+          "netIn": -597,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7f2c1072ea962cd0"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-off",
+      "seed": 103,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 0,
+      "P": 39,
+      "E": 1,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 830749,
+      "buildQuanta": 75,
+      "photo": 4430,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2318,
+          "grossOut": 2699,
+          "netIn": -381,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3491,
+          "grossOut": 4090,
+          "netIn": -599,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "f6e21f28da014a13"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-off",
+      "seed": 104,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 3,
+      "P": 40,
+      "E": 4,
+      "assignedBiomass": {
+        "0:2": 3,
+        "0:1": 0
+      },
+      "biomassArea": 810735,
+      "buildQuanta": 77,
+      "photo": 4251,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2159,
+          "grossOut": 2502,
+          "netIn": -343,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3345,
+          "grossOut": 3984,
+          "netIn": -639,
+          "internal": 0
+        }
+      },
+      "externalB": 3,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "fb2262fd7040961b"
+    },
+    {
+      "phase": "neighbours-v1",
+      "case": "distance-4-mirror-off",
+      "seed": 105,
+      "initialMatter": "2048",
+      "initialEnergy": "24576",
+      "B": 4,
+      "P": 42,
+      "E": 39,
+      "assignedBiomass": {
+        "0:2": 4,
+        "0:1": 0
+      },
+      "biomassArea": 917992,
+      "buildQuanta": 80,
+      "photo": 5149,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 2437,
+          "grossOut": 2819,
+          "netIn": -382,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 3569,
+          "grossOut": 4169,
+          "netIn": -600,
+          "internal": 0
+        }
+      },
+      "externalB": 4,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2807a4041b72b278"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-on",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 294922,
+      "buildQuanta": 0,
+      "photo": 1244,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 680,
+          "grossOut": 729,
+          "netIn": -49,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2690,
+          "grossOut": 2796,
+          "netIn": -106,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "f9f02d41a45d8740"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-on",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 291401,
+      "buildQuanta": 0,
+      "photo": 1224,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 615,
+          "grossOut": 680,
+          "netIn": -65,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2677,
+          "grossOut": 2783,
+          "netIn": -106,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "cc8a4fb26e6f9b70"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-on",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 282496,
+      "buildQuanta": 0,
+      "photo": 1147,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 733,
+          "grossOut": 774,
+          "netIn": -41,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2519,
+          "grossOut": 2625,
+          "netIn": -106,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "0c0ea28fe43f28ff"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-on",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 284842,
+      "buildQuanta": 0,
+      "photo": 1180,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 814,
+          "grossOut": 852,
+          "netIn": -38,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2502,
+          "grossOut": 2606,
+          "netIn": -104,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "612b0340657cfe22"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-on",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 302740,
+      "buildQuanta": 0,
+      "photo": 1321,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 763,
+          "grossOut": 814,
+          "netIn": -51,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2645,
+          "grossOut": 2744,
+          "netIn": -99,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "09c1a534caacc53c"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-on",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 55,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 279549,
+      "buildQuanta": 120,
+      "photo": 1253,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 25,
+          "grossOut": 32,
+          "netIn": -7,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 150,
+          "grossOut": 236,
+          "netIn": -86,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "674ff2f2acf1ec97"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-on",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 47,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 286946,
+      "buildQuanta": 110,
+      "photo": 1299,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 13,
+          "grossOut": 26,
+          "netIn": -13,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 133,
+          "grossOut": 224,
+          "netIn": -91,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "5effc5bc4d8eb2af"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-on",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 71,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 292552,
+      "buildQuanta": 132,
+      "photo": 1334,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 14,
+          "grossOut": 34,
+          "netIn": -20,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 139,
+          "grossOut": 211,
+          "netIn": -72,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "06120b70dac1c412"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-on",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 62,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 312017,
+      "buildQuanta": 125,
+      "photo": 1519,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 27,
+          "grossOut": 36,
+          "netIn": -9,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 136,
+          "grossOut": 218,
+          "netIn": -82,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7bcd84a3c40e362a"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-on",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 50,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 285527,
+      "buildQuanta": 113,
+      "photo": 1314,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 20,
+          "grossOut": 37,
+          "netIn": -17,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 153,
+          "grossOut": 234,
+          "netIn": -81,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "313b7d193ed50ea8"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-off",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 294922,
+      "buildQuanta": 0,
+      "photo": 1244,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 680,
+          "grossOut": 729,
+          "netIn": -49,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2690,
+          "grossOut": 2796,
+          "netIn": -106,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "818a46cf7908b811"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-off",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 291401,
+      "buildQuanta": 0,
+      "photo": 1224,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 615,
+          "grossOut": 680,
+          "netIn": -65,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2677,
+          "grossOut": 2783,
+          "netIn": -106,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2542d7c357a14444"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-off",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 282496,
+      "buildQuanta": 0,
+      "photo": 1147,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 733,
+          "grossOut": 774,
+          "netIn": -41,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2519,
+          "grossOut": 2625,
+          "netIn": -106,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "0b4b3d5bfdbf1b9a"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-off",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 284842,
+      "buildQuanta": 0,
+      "photo": 1180,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 814,
+          "grossOut": 852,
+          "netIn": -38,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2502,
+          "grossOut": 2606,
+          "netIn": -104,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "585af0a705dd1688"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-0-off",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 302740,
+      "buildQuanta": 0,
+      "photo": 1321,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 763,
+          "grossOut": 814,
+          "netIn": -51,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2645,
+          "grossOut": 2744,
+          "netIn": -99,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "17989ee5c0f5a31b"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-off",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 51,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 253363,
+      "buildQuanta": 111,
+      "photo": 1052,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 585,
+          "grossOut": 629,
+          "netIn": -44,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2583,
+          "grossOut": 2699,
+          "netIn": -116,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "c4768e2fd0259a17"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-off",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 42,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 254531,
+      "buildQuanta": 91,
+      "photo": 1018,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 579,
+          "grossOut": 641,
+          "netIn": -62,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2525,
+          "grossOut": 2643,
+          "netIn": -118,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "d363b21f6543f5ac"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-off",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 58,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 248641,
+      "buildQuanta": 110,
+      "photo": 995,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 669,
+          "grossOut": 704,
+          "netIn": -35,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2423,
+          "grossOut": 2535,
+          "netIn": -112,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "dabef5db3dae6371"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-off",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 48,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 248471,
+      "buildQuanta": 101,
+      "photo": 996,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 693,
+          "grossOut": 745,
+          "netIn": -52,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2428,
+          "grossOut": 2530,
+          "netIn": -102,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "36810c2d1c9722e0"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-1-build-16-off",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 48,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 256023,
+      "buildQuanta": 102,
+      "photo": 1062,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 717,
+          "grossOut": 771,
+          "netIn": -54,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2469,
+          "grossOut": 2571,
+          "netIn": -102,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "3d5a264bc984cc0e"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-on",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 197558,
+      "buildQuanta": 0,
+      "photo": 475,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 579,
+          "grossOut": 599,
+          "netIn": -20,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2734,
+          "grossOut": 2796,
+          "netIn": -62,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "18780330af40e1f9"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-on",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 188966,
+      "buildQuanta": 0,
+      "photo": 426,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 541,
+          "grossOut": 568,
+          "netIn": -27,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2659,
+          "grossOut": 2723,
+          "netIn": -64,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "ed2c98a9842b7815"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-on",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 189112,
+      "buildQuanta": 0,
+      "photo": 414,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 520,
+          "grossOut": 540,
+          "netIn": -20,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2693,
+          "grossOut": 2746,
+          "netIn": -53,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7b99f415e65a9ba1"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-on",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 190878,
+      "buildQuanta": 0,
+      "photo": 416,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 481,
+          "grossOut": 491,
+          "netIn": -10,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2715,
+          "grossOut": 2787,
+          "netIn": -72,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "f7a10355a459b597"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-on",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 186508,
+      "buildQuanta": 0,
+      "photo": 410,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 601,
+          "grossOut": 617,
+          "netIn": -16,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2807,
+          "grossOut": 2864,
+          "netIn": -57,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a694c82e1a05f80a"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-on",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 20,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 189966,
+      "buildQuanta": 46,
+      "photo": 455,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 49,
+          "grossOut": 56,
+          "netIn": -7,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 225,
+          "grossOut": 272,
+          "netIn": -47,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "12982663963dec01"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-on",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 19,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 186484,
+      "buildQuanta": 34,
+      "photo": 443,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 33,
+          "grossOut": 42,
+          "netIn": -9,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 210,
+          "grossOut": 266,
+          "netIn": -56,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "b487137a8125f9e4"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-on",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 25,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 183932,
+      "buildQuanta": 49,
+      "photo": 422,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 25,
+          "grossOut": 38,
+          "netIn": -13,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 175,
+          "grossOut": 215,
+          "netIn": -40,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "942f261e0afedea5"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-on",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 17,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 180329,
+      "buildQuanta": 38,
+      "photo": 394,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 39,
+          "grossOut": 42,
+          "netIn": -3,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 164,
+          "grossOut": 220,
+          "netIn": -56,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "9b0c74299e309434"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-on",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 16,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 178907,
+      "buildQuanta": 33,
+      "photo": 391,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 36,
+          "grossOut": 50,
+          "netIn": -14,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 209,
+          "grossOut": 254,
+          "netIn": -45,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "9888b9ff8ddb8681"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-off",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 197558,
+      "buildQuanta": 0,
+      "photo": 475,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 579,
+          "grossOut": 599,
+          "netIn": -20,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2734,
+          "grossOut": 2796,
+          "netIn": -62,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "c163d5df49152948"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-off",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 188966,
+      "buildQuanta": 0,
+      "photo": 426,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 541,
+          "grossOut": 568,
+          "netIn": -27,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2659,
+          "grossOut": 2723,
+          "netIn": -64,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7827567c3e0c3f46"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-off",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 189112,
+      "buildQuanta": 0,
+      "photo": 414,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 520,
+          "grossOut": 540,
+          "netIn": -20,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2693,
+          "grossOut": 2746,
+          "netIn": -53,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "61d8b57a364fd18f"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-off",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 190878,
+      "buildQuanta": 0,
+      "photo": 416,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 481,
+          "grossOut": 491,
+          "netIn": -10,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2715,
+          "grossOut": 2787,
+          "netIn": -72,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "1cd3da2d989f2d1c"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-0-off",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 186508,
+      "buildQuanta": 0,
+      "photo": 410,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 601,
+          "grossOut": 617,
+          "netIn": -16,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2807,
+          "grossOut": 2864,
+          "netIn": -57,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "e1a737b7561e5257"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-off",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 19,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 189557,
+      "buildQuanta": 43,
+      "photo": 447,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 562,
+          "grossOut": 577,
+          "netIn": -15,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2704,
+          "grossOut": 2774,
+          "netIn": -70,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "826e830f521667d6"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-off",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 19,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 183000,
+      "buildQuanta": 33,
+      "photo": 414,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 511,
+          "grossOut": 537,
+          "netIn": -26,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2626,
+          "grossOut": 2700,
+          "netIn": -74,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "5ba559ffa6eb61a9"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-off",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 21,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 181718,
+      "buildQuanta": 42,
+      "photo": 394,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 515,
+          "grossOut": 533,
+          "netIn": -18,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2610,
+          "grossOut": 2673,
+          "netIn": -63,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "41c1837cd13d2f87"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-off",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 17,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 182951,
+      "buildQuanta": 36,
+      "photo": 394,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 444,
+          "grossOut": 453,
+          "netIn": -9,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2678,
+          "grossOut": 2755,
+          "netIn": -77,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "df64e9e8239e5d58"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-2-build-16-off",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 15,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 176873,
+      "buildQuanta": 32,
+      "photo": 376,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 584,
+          "grossOut": 602,
+          "netIn": -18,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2748,
+          "grossOut": 2812,
+          "netIn": -64,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "b89d006fbc064274"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-on",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 152933,
+      "buildQuanta": 0,
+      "photo": 153,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 365,
+          "grossOut": 382,
+          "netIn": -17,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2818,
+          "grossOut": 2852,
+          "netIn": -34,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "b5697f3377860517"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-on",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 153560,
+      "buildQuanta": 0,
+      "photo": 148,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 297,
+          "grossOut": 311,
+          "netIn": -14,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2732,
+          "grossOut": 2773,
+          "netIn": -41,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "3ca1450323913671"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-on",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 152598,
+      "buildQuanta": 0,
+      "photo": 149,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 351,
+          "grossOut": 358,
+          "netIn": -7,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2686,
+          "grossOut": 2723,
+          "netIn": -37,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a2d82fbec6208400"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-on",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 150984,
+      "buildQuanta": 0,
+      "photo": 141,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 322,
+          "grossOut": 330,
+          "netIn": -8,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2717,
+          "grossOut": 2762,
+          "netIn": -45,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "ee3a4b209a2b3ce5"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-on",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 150615,
+      "buildQuanta": 0,
+      "photo": 141,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 397,
+          "grossOut": 401,
+          "netIn": -4,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2850,
+          "grossOut": 2887,
+          "netIn": -37,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "063a35289e0831a4"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-on",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 10,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 150874,
+      "buildQuanta": 19,
+      "photo": 144,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 47,
+          "grossOut": 53,
+          "netIn": -6,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 429,
+          "grossOut": 463,
+          "netIn": -34,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "9fea769678f621e3"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-on",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 9,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 151611,
+      "buildQuanta": 16,
+      "photo": 159,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 36,
+          "grossOut": 43,
+          "netIn": -7,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 314,
+          "grossOut": 345,
+          "netIn": -31,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "3bf119348961a818"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-on",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 9,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 151702,
+      "buildQuanta": 16,
+      "photo": 156,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 67,
+          "grossOut": 68,
+          "netIn": -1,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 429,
+          "grossOut": 463,
+          "netIn": -34,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "7f51ba4809c27ddc"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-on",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 6,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 150240,
+      "buildQuanta": 13,
+      "photo": 145,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 59,
+          "grossOut": 63,
+          "netIn": -4,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 456,
+          "grossOut": 487,
+          "netIn": -31,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "8cce8eda299c7745"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-on",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 6,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 151880,
+      "buildQuanta": 11,
+      "photo": 153,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 48,
+          "grossOut": 55,
+          "netIn": -7,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 419,
+          "grossOut": 446,
+          "netIn": -27,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "531e2689a60bebc2"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-off",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 152933,
+      "buildQuanta": 0,
+      "photo": 153,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 365,
+          "grossOut": 382,
+          "netIn": -17,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2818,
+          "grossOut": 2852,
+          "netIn": -34,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "780c5f9c4841f24c"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-off",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 153560,
+      "buildQuanta": 0,
+      "photo": 148,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 297,
+          "grossOut": 311,
+          "netIn": -14,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2732,
+          "grossOut": 2773,
+          "netIn": -41,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2e7d2ec0a87e5c60"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-off",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 152598,
+      "buildQuanta": 0,
+      "photo": 149,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 351,
+          "grossOut": 358,
+          "netIn": -7,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2686,
+          "grossOut": 2723,
+          "netIn": -37,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "db216a059f1c1ada"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-off",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 150984,
+      "buildQuanta": 0,
+      "photo": 141,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 322,
+          "grossOut": 330,
+          "netIn": -8,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2717,
+          "grossOut": 2762,
+          "netIn": -45,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "8149d8c1fb286da7"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-0-off",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 150615,
+      "buildQuanta": 0,
+      "photo": 141,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 397,
+          "grossOut": 401,
+          "netIn": -4,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2850,
+          "grossOut": 2887,
+          "netIn": -37,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "55dabd2e0c04addf"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-off",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 9,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 150019,
+      "buildQuanta": 17,
+      "photo": 151,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 378,
+          "grossOut": 393,
+          "netIn": -15,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2783,
+          "grossOut": 2819,
+          "netIn": -36,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "9cef9fee1642d63e"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-off",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 9,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 150759,
+      "buildQuanta": 16,
+      "photo": 143,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 325,
+          "grossOut": 336,
+          "netIn": -11,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2694,
+          "grossOut": 2741,
+          "netIn": -47,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2273a90257c8e4f3"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-off",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 9,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 147749,
+      "buildQuanta": 16,
+      "photo": 141,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 371,
+          "grossOut": 380,
+          "netIn": -9,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2662,
+          "grossOut": 2701,
+          "netIn": -39,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "11cf6562f3649e3c"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-off",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 6,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 149692,
+      "buildQuanta": 13,
+      "photo": 135,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 320,
+          "grossOut": 328,
+          "netIn": -8,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2688,
+          "grossOut": 2733,
+          "netIn": -45,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "52c3cf71e46aa1cd"
+    },
+    {
+      "phase": "spread-v1",
+      "case": "spread-4-build-16-off",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 6,
+      "E": 0,
+      "assignedBiomass": {
+        "0:1": 0
+      },
+      "biomassArea": 150535,
+      "buildQuanta": 12,
+      "photo": 143,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 385,
+          "grossOut": 389,
+          "netIn": -4,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2817,
+          "grossOut": 2857,
+          "netIn": -40,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "2eaf17ce8f352003"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "selected-competitor",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 279256,
+      "buildQuanta": 0,
+      "photo": 913,
+      "grow": 387,
+      "transport": {
+        "A": {
+          "grossIn": 1164,
+          "grossOut": 1497,
+          "netIn": -333,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2376,
+          "grossOut": 3066,
+          "netIn": -690,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a57e9e490f768dcd"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "selected-competitor",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 281191,
+      "buildQuanta": 0,
+      "photo": 915,
+      "grow": 388,
+      "transport": {
+        "A": {
+          "grossIn": 1149,
+          "grossOut": 1480,
+          "netIn": -331,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2397,
+          "grossOut": 3090,
+          "netIn": -693,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "6f50426eb81f728f"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "selected-competitor",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 272249,
+      "buildQuanta": 0,
+      "photo": 869,
+      "grow": 386,
+      "transport": {
+        "A": {
+          "grossIn": 1152,
+          "grossOut": 1485,
+          "netIn": -333,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2372,
+          "grossOut": 3062,
+          "netIn": -690,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "37184e58ef78031c"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "selected-competitor",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 264878,
+      "buildQuanta": 0,
+      "photo": 873,
+      "grow": 390,
+      "transport": {
+        "A": {
+          "grossIn": 1186,
+          "grossOut": 1514,
+          "netIn": -328,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2395,
+          "grossOut": 3091,
+          "netIn": -696,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "8b6276ed3fadcfad"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "selected-competitor",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 0,
+      "P": 0,
+      "E": 0,
+      "assignedBiomass": {},
+      "biomassArea": 272970,
+      "buildQuanta": 0,
+      "photo": 884,
+      "grow": 385,
+      "transport": {
+        "A": {
+          "grossIn": 1222,
+          "grossOut": 1556,
+          "netIn": -334,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 2448,
+          "grossOut": 3137,
+          "netIn": -689,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 0,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "a49d33f2850ebe1e"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "builder",
+      "seed": 101,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 676,
+      "P": 68,
+      "E": 1435,
+      "assignedBiomass": {
+        "0:1": 676
+      },
+      "biomassArea": 2340418,
+      "buildQuanta": 107,
+      "photo": 17737,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 5,
+          "grossOut": 131,
+          "netIn": -126,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 6,
+          "grossOut": 148,
+          "netIn": -142,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "73bc0c362c9fa150"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "builder",
+      "seed": 102,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 630,
+      "P": 68,
+      "E": 1334,
+      "assignedBiomass": {
+        "0:1": 630
+      },
+      "biomassArea": 2309307,
+      "buildQuanta": 124,
+      "photo": 17443,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 1,
+          "grossOut": 163,
+          "netIn": -162,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 7,
+          "grossOut": 161,
+          "netIn": -154,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "4fd9af477fd3882e"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "builder",
+      "seed": 103,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 671,
+      "P": 65,
+      "E": 1416,
+      "assignedBiomass": {
+        "0:1": 671
+      },
+      "biomassArea": 2380110,
+      "buildQuanta": 106,
+      "photo": 18059,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 142,
+          "netIn": -136,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 4,
+          "grossOut": 146,
+          "netIn": -142,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "bb553c6a5e877898"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "builder",
+      "seed": 104,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 634,
+      "P": 67,
+      "E": 1354,
+      "assignedBiomass": {
+        "0:1": 634
+      },
+      "biomassArea": 2323540,
+      "buildQuanta": 109,
+      "photo": 17595,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 7,
+          "grossOut": 171,
+          "netIn": -164,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 7,
+          "grossOut": 156,
+          "netIn": -149,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "631453074a055eb4"
+    },
+    {
+      "phase": "competitor-confirm-v1",
+      "case": "builder",
+      "seed": 105,
+      "initialMatter": "1024",
+      "initialEnergy": "12288",
+      "B": 661,
+      "P": 68,
+      "E": 1413,
+      "assignedBiomass": {
+        "0:1": 661
+      },
+      "biomassArea": 2317573,
+      "buildQuanta": 115,
+      "photo": 17588,
+      "grow": 0,
+      "transport": {
+        "A": {
+          "grossIn": 6,
+          "grossOut": 157,
+          "netIn": -151,
+          "internal": 0
+        },
+        "C": {
+          "grossIn": 10,
+          "grossOut": 145,
+          "netIn": -135,
+          "internal": 0
+        }
+      },
+      "externalB": 0,
+      "occupied": 1,
+      "mutations": 0,
+      "residual": "0",
+      "hash": "fd0a1dfbb9776e4e"
+    }
+  ]
+}

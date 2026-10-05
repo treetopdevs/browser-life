@@ -14,9 +14,9 @@
 // would otherwise refuse the pooled ensemble later (tools/analyze.ts), but
 // only after the reuse had already skipped a run that should have redone.
 import { describe, expect, it } from "vitest";
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, type WorldState } from "@bl/schema";
+import { G, GENOME_CHANNELS, M3_FOUNDERS, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, cellCount, encodeGenome, founderGenome, genomeFromHex, genomeHex, m3World, type WorldState } from "@bl/schema";
 import { sameCompletedRun } from "@bl/runner";
-import { immigrantError, runExperiment, specConfig, type RunSpec, type Sink } from "../src/runner.ts";
+import { immigrantError, runExperiment, specConfig, validateSpec, type RunSpec, type Sink } from "../src/runner.ts";
 
 const noopSink: Sink = {
   async writeText() {},
@@ -61,9 +61,17 @@ describe("runExperiment: migration requires an on-grid start", () => {
 const reuseSpec: RunSpec = { experiment: "reuse", presetId: "spots", condition: "treatment", seed: 1, steps: 1000, censusEvery: 100, deepEvery: 10, checkpointEvery: 0 };
 const cfg = specConfig(reuseSpec);
 
-const baseManifest = () => ({ spec: reuseSpec, ruleVersion: RULE_VERSION, schemaVersion: SCHEMA_VERSION, metricsVersion: METRICS_VERSION, cfg });
+const baseManifest = () => ({ spec: reuseSpec, ruleVersion: cfg.ruleVersion, schemaVersion: SCHEMA_VERSION, metricsVersion: METRICS_VERSION, cfg });
 
 describe("sameCompletedRun (tools/run.ts reuse check)", () => {
+  it("uses the requested physics version, including an explicit rule-2 experiment", () => {
+    for (const ruleVersion of [1, 2]) {
+      const spec = { ...reuseSpec, overrides: { ruleVersion, ...(ruleVersion === 2 ? { polymerDrag: true } : {}) } };
+      const done = { ...baseManifest(), spec, cfg: specConfig(spec), ruleVersion };
+      expect(sameCompletedRun(done, spec)).toBe(true);
+      expect(sameCompletedRun({ ...done, ruleVersion: ruleVersion === 1 ? 2 : 1 }, spec)).toBe(false);
+    }
+  });
   it("accepts an identical, current-metrics-version manifest", () => {
     expect(sameCompletedRun(baseManifest(), reuseSpec)).toBe(true);
   });
@@ -182,5 +190,71 @@ describe("RunSpec.speciesCensus is optional (?:), never present when unset", () 
     // tests/deno/species-census.ts) must still treat it as identical to a manifest that never
     // mentioned the field, the same guarantee explicit-undefined and omitted already have.
     expect(sameCompletedRun(baseManifest(), spec)).toBe(true);
+  });
+});
+
+// Foundations-review options (RunSpec.lineageObs, RunSpec.soloFounder): absent or explicitly off,
+// they must leave a run's identity as it was; soloFounder is checked before any GPU work.
+describe("foundations-review run options", () => {
+  it("an explicit lineageObs: false is the same completed run as one without the field", () => {
+    expect(sameCompletedRun(baseManifest(), { ...reuseSpec, lineageObs: false })).toBe(true);
+    expect(sameCompletedRun(baseManifest(), { ...reuseSpec, lineageObs: true })).toBe(false);
+  });
+
+  it("validateSpec accepts a founder index into an m3 preset and refuses anything else", () => {
+    const m3: RunSpec = { ...reuseSpec, presetId: "gradient-m3" };
+    expect(validateSpec({ ...m3, soloFounder: 0 })).toEqual([]);
+    expect(validateSpec({ ...m3, soloFounder: M3_FOUNDERS.length - 1 })).toEqual([]);
+    expect(validateSpec({ ...m3, soloFounder: M3_FOUNDERS.length }).join()).toMatch(/soloFounder/);
+    expect(validateSpec({ ...m3, soloFounder: 1.5 }).join()).toMatch(/soloFounder/);
+    expect(validateSpec({ ...reuseSpec, soloFounder: 0 }).join()).toMatch(/M3 founder set/);
+  });
+
+  it("lineageObs refuses to continue a checkpoint (its bookkeeping is not checkpointed)", async () => {
+    const spec: RunSpec = { ...reuseSpec, lineageObs: true };
+    const fakeStart = { step: 100, cfg: specConfig(spec) } as unknown as WorldState;
+    await expect(runExperiment({} as GPUDevice, spec, noopSink, host, () => {}, { start: fakeStart })).rejects.toThrow(/lineageObs/);
+  });
+
+  it("a single-founder world gives every founder disc that founder's genome, at the preset's positions", () => {
+    const cfg = specConfig({ ...reuseSpec, presetId: "gradient-m3" });
+    const [solo, full] = [m3World(cfg, 13, 32, 64, 3), m3World(cfg, 13, 32, 64)];
+    const n = cellCount(cfg);
+    const want = encodeGenome(founderGenome(M3_FOUNDERS[3]), 0, 0);
+    let living = 0;
+    for (let i = 0; i < n; i++) {
+      const alive = solo.genome[G.LIN_LO * n + i] !== 0;
+      expect(alive).toBe(full.genome[G.LIN_LO * n + i] !== 0);
+      if (!alive) continue;
+      living++;
+      for (let g = G.PARAM0; g < GENOME_CHANNELS; g++) expect(solo.genome[g * n + i]).toBe(want[g]);
+    }
+    expect(living).toBeGreaterThan(0);
+  });
+
+  it("a soloGenome world equals the soloFounder world of the same genome, and bad hex is refused", () => {
+    const m3: RunSpec = { ...reuseSpec, presetId: "gradient-m3" };
+    const hex = genomeHex(founderGenome(M3_FOUNDERS[3]));
+    expect(validateSpec({ ...m3, soloGenome: hex })).toEqual([]);
+    expect(validateSpec({ ...m3, soloGenome: hex.slice(1) }).join()).toMatch(/soloGenome/);
+    expect(validateSpec({ ...m3, soloGenome: hex, soloFounder: 3 }).join()).toMatch(/exclusive/);
+    expect(validateSpec({ ...reuseSpec, soloGenome: hex }).join()).toMatch(/M3 founder set/);
+    const cfg = specConfig(m3);
+    const [byGenome, byIndex] = [m3World(cfg, 13, 32, 64, genomeFromHex(hex)), m3World(cfg, 13, 32, 64, 3)];
+    expect(Array.from(byGenome.cells)).toEqual(Array.from(byIndex.cells));
+    expect(Array.from(byGenome.genome)).toEqual(Array.from(byIndex.genome));
+  });
+
+  it("validateSpec accepts founderSet on an m3 preset and refuses bad or conflicting specs", () => {
+    const m3: RunSpec = { ...reuseSpec, presetId: "gradient-m3" };
+    const hexA = genomeHex(founderGenome(M3_FOUNDERS[0]));
+    const hexB = genomeHex(founderGenome(M3_FOUNDERS[1]));
+    expect(validateSpec({ ...m3, founderSet: [hexA, hexB] })).toEqual([]);
+    expect(validateSpec({ ...m3, founderSet: [] }).join()).toMatch(/founderSet/);
+    expect(validateSpec({ ...m3, founderSet: [hexA.slice(1)] }).join()).toMatch(/founderSet/);
+    expect(validateSpec({ ...m3, founderSet: [hexA], soloGenome: hexA }).join()).toMatch(/exclusive/);
+    expect(validateSpec({ ...m3, founderSet: [hexA], soloFounder: 0 }).join()).toMatch(/exclusive/);
+    expect(validateSpec({ ...reuseSpec, founderSet: [hexA] }).join()).toMatch(/M3 founder set/);
+    expect(sameCompletedRun(baseManifest(), { ...reuseSpec, founderSet: [hexA] })).toBe(false);
   });
 });

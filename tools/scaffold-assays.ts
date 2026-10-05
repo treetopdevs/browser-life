@@ -1,0 +1,1298 @@
+// Readout assays of the ecological-scaffolding sandbox (docs/scaffold-protocol-v1.md, "Readouts (assay seeds)"
+// and R1-R4), on native WebGPU. Sources are full checkpoints written by tools/scaffold.ts (gzipped
+// encodeCheckpoint). Each assay plants standard fragments (or discs) of a source into fresh ponds, runs one
+// period with mutation off, and writes <out>/assay.json and <out>/assay.tsv.
+//
+//   deno run -A tools/scaffold-assays.ts competence   --source CKPT --k K --period P --seed S --out DIR   (R3)
+//     --arm scaf|rand|cont|ancestor [--history I] --timing a|b [--calibration 1|2]
+//     [--ref REF] [--quench | --swap-hex HEX | --swap-from CKPT | --swap-founder I [--swap-label ea|ae]]
+//     [--side 8] [--replicates 2] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts transmission --source CKPT --k K --period P --seed S --out DIR   (R1)
+//     --arm scaf|rand --history I --time 0|1 [--donor-seed D] [--ref REF] [--side 8] [--replicates 2] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts garden       --source CKPT --k K --period P --seed S --out DIR   (R2)
+//     --arm scaf|rand --history I --time 0|1 [--inoculum fragment|disc] [--frag-seed F] [--ref REF]
+//     [--side 8] [--replicates 2] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts continue     --source CKPT --steps N --seed S --out CKPT         (R3 timing b)
+//     [--mut-rate R] [--census 100]
+//   deno run -A tools/scaffold-assays.ts capability   --source CKPT[,CKPT...] --seed S --out DIR          (R4)
+//     --arm ARM[,ARM...] [--history I[,I...]] [--tag NAME[,NAME...]]
+//   deno run -A tools/scaffold-assays.ts transmission --r1prime --traits --source CKPT --k K --period P --seed S --out DIR   (R1')
+//     --arm scaf|rand --history I --time 0|1|2 [--donor-seed D] [--ref REF] [--side 8] [--replicates 2] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts competence --tau-calibration --traits --source CKPT --k K --period P --seed S --out DIR   (tau)
+//     --ref REF [--side 8] [--replicates 2] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts transmission --r1dprime --traits --h H --source CKPT --k K --period P --seed S --out DIR   (R1'')
+//     --arm scaf|rand|control [--history I] [--control positive|negative] [--donor-seed D] [--side 8] [--replicates 2] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts competence --r3rep --source CKPT --k 8 --period 10000 --ref 103058 --seed S --out DIR   (R3 replication)
+//     --arm scaf|rand|cont|ancestor [--history I] --timing a|b [--quench | --swap-from CKPT | --swap-founder 2] [--h H]
+//     [--side 8] [--replicates 2] [--census 100] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts continue --r3rep --source CKPT --steps 200000 --seed S --out CKPT   (R3 replication, timing b)
+//     --arm scaf|rand|cont|ancestor [--history I] [--h H] [--census 100]
+//   deno run -A tools/scaffold-assays.ts competence --reg1 --set SET --source BUNDLE|CKPT --k 8 --period 10000 --ref 103058 --seed S --out DIR   (registration)
+//     --arm scaf|rand|cont|ancestor --history I --timing a|b [--swap-from BUNDLE] [--h H] [--side 8] [--replicates 4|8] [--census 100] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts continue --reg1 --source BUNDLE --steps 200000 --seed S --out CKPT   (registration, timing b)
+//     --arm scaf|rand|cont|ancestor --history I [--h H] [--census 100]
+//   deno run -A tools/scaffold-assays.ts garden --reg1 --source BUNDLE --k 8 --period 10000 --ref 103058 --seed S [--frag-seed F] --out DIR   (S2)
+//     --arm scaf|rand --history I --time 0|1 --inoculum fragment|disc [--h H] [--side 8] [--replicates 2] [--census 100] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts transmission --reg1 --traits --h H --source BUNDLE|CKPT --k 8 --period 10000 --seed S --out DIR   (S3)
+//     --arm scaf|rand|control [--history I] [--control positive|negative] [--donor-seed D] [--side 8] [--replicates 2] [--census 100] [--tag NAME]
+//   deno run -A tools/scaffold-assays.ts capability --reg1 --runs ROOT --seed 1 --out DIR   (R4)
+//   deno run -A tools/scaffold-assays.ts export --hunt1 --stage g2|d3|s1 --set SETID --source SRC --k 8 --period 10000 --ref 103058   (transition hunt, export assay W)
+//     --side 8 --census 100 --export 28 --replicates 4 --seed SIGMA0 --out DIR [--genome-from SRC2 | --genome-founder] [--quench] [--death 65536]
+//
+// --replicates is at most 8: s = 8 and s = 9 are reserved for R1's permutation stream and donor selection, so
+// they never seed a fragment or a physics stream. --traits (competence, transmission, garden) also writes
+// <out>/traits.tsv (replicate, pond, step, trait: each pond's trait, B+P over cells with B+P >= 48, at every census
+// step of the period, steps 100..period) and `traitsRecorded: true` in assay.json; without it neither changes.
+// capability's --arm, --history and --tag are comma lists parallel
+// to --source (--history "-" for the ancestor); its rows go under `capability` in assay.json, which
+// scaffold-report r4 reads.
+//
+// --seed is the assay seed of replicate 0 (assaySeed(r, h, t, v, 0)); replicate s uses --seed + s for its
+// fragment sampling and physics seed (common random numbers across variants). R2's disc inoculum passes
+// its own v = 1 seed as --seed and the v = 0 seed as --frag-seed. transmission draws its donors with
+// --donor-seed (default --seed + 9, i.e. assaySeed(1, h, t, 0, 9)), which must equal that value for the labelled
+// history and time. Every seed must lie in 4,800,001-4,849,999 unless --allow-any-seed (smoke tests only).
+//
+// Amendment 2 (R1', post hoc): `transmission --r1prime --time 0|1|2` labels a scaf or rand history at t' (0 = boundary 34,
+// 1 = boundary 67, 2 = boundary 100; the source is that boundary's pre-cycle checkpoint) and takes its seeds from
+// r1PrimeSeed(h, t', s) = 4,845,001 + 250 h + 100 t' + s (h = 6 arm + i; replicate s, donors s = 9, permutations s = 8);
+// the labels are `r1prime: true` and `timePrime`. It needs --traits, since R1' reads the trait at tau. `competence
+// --tau-calibration` is the tau calibration: the ancestor source, seeds 4,849,001 + s (s = 0-1), --ref and --traits
+// required, labelled `tauCalibration: true`. Both validate their seeds unless --allow-any-seed.
+//
+// docs/scaffold-heredity-replication-v1.md (R1''): `transmission --r1dprime --traits --h H` labels one of 18 sets by h and takes its
+// seeds from r1dPrimeSeed(h, s) = 4,812,001 + 250 h + s (replicates s = 0-1, permutations s = 8, donors s = 9). h = 0-11 is a fresh
+// history's pre-cycle state at boundary 34 (h = 6 arm + i; --arm scaf|rand --history i, the source being b34-pre of the history
+// seeded 4,811,001 + 100 arm + i at step 340,000 with the default mutation rate); h = 12-13 the positive-control world s0, s1
+// (--arm control --control positive; a P2 ranking world at b1-pre: founders, mutation off, seed 4,805,001 + s, step 10,000); h = 14-17
+// the negative-control world j = 0-3 (--control negative; a mutation-off clone world at b1-pre, seed 4,811,201 + j, step 10,000). The
+// labels are `r1dprime: true`, `h`, `arm`, `history` and (controls) `control`. It validates the source (a path inside a run directory
+// ending ckpt/b34-pre.blck.gz, or ckpt/b1-pre.blck.gz for a control; its config seed, mutRate and step, its genomes, and its phase: a
+// post-cycle state, which has the same seed, mutRate and step as the pre-cycle one, has C = S = 0 and its mass only in the landing
+// windows) and the regime (--k 8 --period 10000 --side 8 --replicates 2 --census 100), and records the source's provenance (path,
+// stateHash, world seed, mutRate, step, phase measures) under `provenance` and the SHA-256 of the protocol document as
+// `protocolSha256R1dp`; all of it unless --allow-any-seed (smoke tests only; production runs never use it).
+//
+// docs/scaffold-r3-replication-v1.md (the R3 replication): `competence --r3rep` and `continue --r3rep` name a source world by --arm and
+// --history, h = 6 arm + i (arm 0 scaf, 1 rand, 2 cont) or 18 for --arm ancestor; h is derived, and --h, if given, must agree. They apply to
+// competence and continue only, and not with --r1prime, --r1dprime, --tau-calibration or --calibration. Competence seeds are r3RepSeed(h, t, s)
+// = 4,816,301 + 100 h + 10 t + s (t 0 = timing a, 1 = b; replicates s = 0-1), fragment and physics alike: every variant of a source and timing
+// uses that source's seeds, and Ge-on-Fa (swap-ea: --source the ancestor's (a), --swap-from the scaf history's (a)) uses the ancestor's,
+// h = 18 at t = 0. swap-ea and Ga-on-Fe (swap-ae: --swap-founder 2, M3_FOUNDERS[2]) label a scaf history at timing a; the quenched control
+// (--quench) a scaf history at either timing; --swap-hex and --swap-label do not apply. A timing (a) source is
+// runs/scaffold/r3rep/main/<arm>/i<i>/ckpt/b100-pre.blck.gz (or the terminal b<e>-pre of a scaf or rand history that ended at e, as its
+// done.json says), in a run directory whose meta.json has the history's world seed (4,811,001 + 100 arm + i; cont 4,811,301 + i), arm, k (8;
+// 0 for cont), period 10,000, side 8, clone init, the default mutation rate, census 100 and protocol v1's pinned SHA-256, and whose done.json is ok
+// with 100 cycles; the ancestor's is r3rep/anc/ckpt/b1-pre.blck.gz (arm cont, 1 cycle, seed 4,818,401). The state's seed, mutation rate and
+// step (N x 10,000) must agree. A timing (b) source is r3rep/cont200k/<arm>-i<i>.blck.gz (or ancestor.blck.gz) with the sidecar
+// <path minus .blck.gz>.json that `continue --r3rep` writes last, atomically: its source re-validates as the timing (a) source of the same h
+// and still hashes to the recorded source state hash, its seed is 4,818,301 + h and its steps 200,000, and the loaded state's hash, seed and
+// step are the sidecar's end values. `continue --r3rep` validates its source the same way and needs --seed 4,818,301 + h, --steps 200000,
+// --census 100, no --mut-rate (mutation on at the source's default rate) and --out ending in r3rep/cont200k/<arm>-i<i>.blck.gz; a stale
+// sidecar is removed before the run. swap-ea records the donor's dominant genome (id and words, recomputed from the donor state); a donor with
+// no eligible cell has none, and the assay writes a biologically-unavailable record instead (assay.json with `biologicallyUnavailable`
+// { reason, donor, donorStateHash } and summary.rows 0, assay.tsv with its header only) and exits 0. The regime is --k 8 --period 10000
+// --ref 103058 --side 8 --replicates 2 --census 100. assay.json records `labels` (arm, history, timing, r3rep: true, h), the source's
+// `provenance` (path, stateHash, world seed, mutRate, step and pond grid; the run record at timing a, the sidecar and its source at timing
+// b; swap-ea's donor) and the SHA-256 of the protocol document as `protocolSha256R3rep`. The protocol hashes are pinned (R3REP_SHA256 in
+// tools/lib/pond-assay.ts: the replication's document as committed before any run, and protocol v1's as the histories ran under it), and
+// the document must still begin with its pinned text, amendments only at the end, so a later amendment changes no record. --allow-any-seed
+// waives the seed, regime, source and document checks (smoke tests only; production runs never use it).
+//
+// docs/scaffold-registration-v1.md (the registration, reg1): --reg1 runs its sets on run bundles (tools/run.ts --out runs/scaffold/reg1
+// --experiment hist|anc --preset ponds --pre-cycle ...). A source world is a bundle directory, runs/scaffold/reg1/hist/ponds/<treatment|
+// pond-rand|pond-cont>/seed-<4,850,001 + 100 arm + i> or runs/scaffold/reg1/anc/ponds/pond-cont/seed-<4,850,401 + i>, read at a boundary's
+// pre-cycle checkpoint (checkpoints/b<NNN>-pre.blck, the file its manifest lists, by the hash recorded there) or, for S2's time 0, as its
+// initial world rebuilt from the spec as the runner builds it and checked against the manifest's initHash. A source is refused unless its
+// directory is the labelled world's, its manifest complete with summary.conservationOk true, its spec the registration's (experiment hist
+// or anc, preset ponds, the arm's condition, the seed, steps, census, deep metrics every 10 censuses, no periodic checkpoint and the
+// boundary listed in preCycleCheckpoints), its run one run from step 0 of the preset (an initHash; the identity 56526b894cfccf3f) and its
+// state what the manifest recorded (hash, step N x 10,000, the spec's config: its seed and the default mutation rate). A run that stopped
+// on an event-buffer overflow is rerun at census 100 as experiment hist-c100 (anc-c100), the spec otherwise the same, beside it: --source
+// names either, and exactly one of the two must be complete (both complete is refused as ambiguous); the provenance records which was used,
+// and the candidates. h = 24 arm + i (arm 0 scaf, 1 rand, 2 cont), or 72 + i for ancestor world i (--arm ancestor --history i), is derived,
+// and --h, if given, must agree. competence --reg1 names its set with --set: source (any source world at timing a or b); ge-on-fa and
+// ga-on-fa (scaf_i at a, on ancestor world i's fragments with its seeds, h = 72 + i: --source the ancestor's bundle; ge-on-fa plants the
+// dominant genome of --swap-from, scaf_i's bundle, ga-on-fa M3_FOUNDERS[2], each relabelled to one id); ga-on-fe (scaf_i's fragments at a
+// with M3_FOUNDERS[2]); quench (scaf_i at a or b). Its seeds are σ(h, t, s) = 4,851,001 + 100 h + 10 t + s with 4 replicates, 8 for
+// ge-on-fa and ga-on-fa. Timing (a) is boundary 100 (1 for an ancestor world); (b) is runs/scaffold/reg1/cont200k/<arm>-i<NN>.blck.gz with
+// the sidecar that `continue --reg1` writes last, atomically (from (a): seed 4,850,501 + h, 2 x 10^5 steps, census 100, mutation on at the
+// source's rate, no --mut-rate; a stale sidecar is removed first), and the source the sidecar names is loaded and validated again and must
+// still hash to what it recorded. garden --reg1 is S2: seeds 4,861,001 + 100 h + 20 t + 10 v + s (--seed the inoculum's v, --frag-seed v =
+// 0), 2 replicates, time 0 the initial world and time 1 boundary 100. transmission --reg1 --traits is S3, R1'''s assay: --h 0-47 a
+// history's boundary 34, 48-49 the P2 ranking worlds (runs/scaffold/p2/rank/s<s>/ckpt/b1-pre.blck.gz) and 50-53 the negative-control worlds
+// (runs/scaffold/reg1/neg/j<j>/ckpt/b1-pre.blck.gz, grown by tools/scaffold.ts at 4,880,001 + j), with seeds 4,866,001 + 250 h + s (donors
+// s = 9), 2 replicates and no --ref. capability --reg1 is R4 on the dominant genome of every history's and every ancestor world's (a), from
+// the bundles under --runs, with seed 1 (DEFAULT_EVAL's own), in fixed slots (source k is genome k mod 16 of batch floor(k / 16); a source
+// that fails is a row with its reason, never dropped, and its slot holds M3_FOUNDERS[2], evaluated and discarded). Every set writes into
+// runs/scaffold/reg1/assays/<set id> (`reg1SetIdOf`) and records `labels` (reg1: true, set, arm, history, timing, time, h, control), its
+// sources' `provenance` and `protocolSha256Reg1` (REG1_SHA256 in tools/lib/pond-assay.ts: the registration pinned as frozen, amendments
+// only at the end) in assay.json; a Ge-on-Fa donor with no eligible cell writes the biologically-unavailable record. Seeds lie in
+// 4,850,001-4,899,999. --allow-any-seed waives the seed, regime, output, source and document checks and prints what fails (smoke tests
+// only; production runs never use it), and only then may --boundary N|init replace every boundary a command reads. A waived run records
+// `allowAnySeed: true` in its assay.json or sidecar, and refuses to write inside this repository's runs/scaffold/reg1.
+//
+// docs/scaffold-transition-hunt-v1.md (the hunt): `export --hunt1` is the export assay W of one set (one source, one variant), named by --stage and --set (g2-<scaf|rand>-
+// i<N>[-quench], d3-<nat|shuf>-j<J>, s1-<nat-a|shuf-a|nat-s|shuf-s>-i<NN>[-quench|-genome], s1-anc-j<J>, s1-src-i<NN>, s1-genome-control; the flags --quench, --genome-from and
+// --genome-founder must be the set's own). The families of the source S are its exporting ponds (X_p > 0, the B+P over cells with B+P >= 48 within Chebyshev distance
+// --export 28 of the pond centre, in the pre-cycle state), ascending; m of them. Replicate s (seed --seed + s, for the fragments and the assay world's physics alike) plants
+// the 64 fragments g = 64 s + f of family g mod m, each a k x k window about a centre drawn from the family's export zone (drawExportCentre with keys (σ, 0, f)), landed as
+// v1 does (buildAssayWorld), runs one period with mutation off, and measures each pond's trait and export mass X_f. assay.tsv is ASSAY_COLUMNS and exportMass; assay.json
+// records `labels` (hunt1, stage, set, arm, history, h, variant, control), the source's `provenance`, `protocolSha256Hunt1` (HUNT1_SHA256 in tools/lib/hunt-assay.ts: the hunt
+// pinned as frozen, amendments only at the end) and `summary` { W, Wexport, families, fragments, edgeShare }. m = 0 writes `noFamilies` (W = 0, assay.tsv with its header
+// only, no assay world); a --quench set runs replicate 0 only (64 fragments, the controller weight words and E set to 0); --genome-from SRC2 (genome-only) fragments ancestor
+// world 0 (--source) and plants the dominant genome of SRC2 (a history's b200-pre) on every carrying cell, relabelled to one id, or writes `noGenome` (W = 0) when SRC2 has none;
+// --genome-founder plants M3_FOUNDERS[2] on the same fragments. Sources: g2 reads protocol v1's runs/scaffold/main/<arm>/i<i>/ckpt/b100-pre.blck.gz (checked as the run's meta.json
+// and done.json record it); d3 and s1 read a runner bundle's pre-cycle checkpoint (D3's b030-pre, a history's b200-pre, an ancestor world's b001-pre, a `-s` source's b100-pre,
+// from the registration's bundle by reg1's checks or the hunt's own) and check its manifest (complete, conservationOk, preset ponds and its identity, condition, seed, overrides,
+// the boundary listed, file hash = manifest hash, step; a `-s` history a branch from boundary 100 whose branch.source ends in its source i's directory, the registration's
+// scaffold/reg1/hist[-c100]/ponds/treatment/seed-<4,850,001 + i> or the hunt's own .../ponds/treatment/seed-<4,901,501 + i>; a source named by its normal directory is the
+// single complete bundle among <experiment> and its overflow rerun <experiment>-c100, both complete is refused). --death 65536 expects the e = 1 fallback's override { pondDeath: 65536 } on
+// D3's worlds and the histories. A set is written to runs/scaffold/hunt1/assays/<set id> and its regime is --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28
+// --replicates 4 (a quenched set still takes --replicates 4 and runs replicate 0). --allow-any-seed waives the seed, regime, output, source and document checks and prints what fails
+// (smoke tests only; production runs never use it), records `allowAnySeed: true`, and refuses to write inside this repository's runs/scaffold/hunt1.
+//
+// --arm/--history and --time (0 = time 0) or --timing (a = time 0) label the history the source belongs to;
+// they are written under `labels` in assay.json, which scaffold-report reads. Unless --allow-any-seed, the
+// seeds are decoded (assaySeed's inverse) and must carry the assay's r, the labelled h (6 arm + i, 18 for the
+// ancestor) and t, replicate s carrying s. The one exception is swap-ea (Ge-on-Fa): its fragments come from the
+// ancestor source, so its seeds carry h = 18 while the labels name the scaf history it tests. A P1 calibration set
+// is labelled --arm ancestor --timing a --calibration 1 (ancestor competence) or 2 (with --quench); both use seed
+// 4,802,011 (+ s), so the quenched control gets the ancestor's fragments and physics stream.
+import { parseArgs } from "jsr:@std/cli@1/parse-args";
+import { M3_FOUNDERS, decodeGenome, encodeGenome, founderGenome, genomeFromHex, pondExportMasses, totalsOf, type WorldState } from "@bl/schema";
+import { GpuSim, requestDevice } from "@bl/sim-gpu";
+import { DEFAULT_EVAL, evaluateBatch, quality } from "@bl/search";
+import {
+  ASSAY_COLUMNS,
+  R1DP_REGIME,
+  R3REP_SHA256,
+  REG1_CAPABILITY_LABELS,
+  REG1_HEREDITY_BOUNDARY,
+  REG1_INOCULA,
+  REG1_SEED_BLOCK,
+  REG1_SHA256,
+  TAU_LABELS,
+  assayJson,
+  assayLine,
+  assaySuccess,
+  buildAssayWorld,
+  censusSteps,
+  checkAssaySeeds,
+  checkDonorSeed,
+  checkR1PrimeDonorSeed,
+  checkR1PrimeSeeds,
+  checkR1dPrimeDonorSeed,
+  checkR1dPrimeSeeds,
+  checkR3RepSeeds,
+  checkReg1DonorSeed,
+  checkReg1Seeds,
+  fragmentDominant,
+  parseAssayLabels,
+  parseR1PrimeLabels,
+  parseR1dPrimeLabels,
+  parseR3RepContinueLabels,
+  parseR3RepLabels,
+  parseReg1CompetenceLabels,
+  parseReg1ContinueLabels,
+  parseReg1GardenLabels,
+  parseReg1HeredityLabels,
+  quench,
+  r1Donors,
+  r1dPrimeCheckpointOf,
+  r1dPrimeProvenance,
+  r1dPrimeSourceProblems,
+  r3RepCheckpointOf,
+  r3RepContinuationOf,
+  r3RepContinueProblems,
+  r3RepDominantRecord,
+  r3RepIdOf,
+  r3RepOriginProblems,
+  r3RepProtocolProblems,
+  r3RepProvenanceProblems,
+  r3RepRegimeProblems,
+  r3RepRunRecordOf,
+  r3RepSetIdOf,
+  r3RepSidecarPathOf,
+  r3RepUnavailableOf,
+  r3RepVariantProblems,
+  reg1AssayOutProblems,
+  reg1BoundaryAOf,
+  reg1BundleWantsOf,
+  reg1CapabilitySources,
+  reg1ContinuationOf,
+  reg1ContinueProblems,
+  reg1IdOf,
+  reg1ProtocolProblems,
+  reg1ProvenanceProblems,
+  reg1RegimeProblems,
+  reg1SetIdOf,
+  reg1SourceProblems,
+  reg1WaiverOutProblems,
+  loadReg1Source,
+  standardFragment,
+  swapGenome,
+  traitsTable,
+  type AssayItem,
+  type AssayLabelSet,
+  type AssayName,
+  type Fragment,
+  type Planted,
+  type R1PrimeLabelSet,
+  type R1dPrimeLabelSet,
+  type R3RepCheckpoint,
+  type R3RepInoculum,
+  type R3RepLabelSet,
+  type R3RepOrigin,
+  type R3RepProvenance,
+  type Reg1LabelSet,
+  type Reg1Provenance,
+  type Reg1Source,
+} from "./lib/pond-assay.ts";
+import {
+  HUNT1_COLUMNS,
+  HUNT1_DEATH,
+  HUNT1_SHA256,
+  checkHunt1Seeds,
+  exportFamilies,
+  exportFragment,
+  familyOf,
+  hunt1AssayJson,
+  hunt1AssayOutProblems,
+  hunt1BundleProblems,
+  hunt1BundleWant,
+  hunt1Line,
+  hunt1NoRows,
+  hunt1ProtocolProblems,
+  hunt1RegimeProblems,
+  hunt1Summary,
+  hunt1V1SourceProblems,
+  hunt1WaiverOutProblems,
+  loadHunt1Source,
+  parseHunt1Set,
+  type Hunt1Row,
+  type Hunt1Source,
+} from "./lib/hunt-assay.ts";
+import { loadCheckpoint, runPeriod, saveCheckpoint, type CensusSnapshot } from "./lib/pond-gpu.ts";
+import { dominantGenome, ledgerEnergy, pondConfig, pondTraits } from "./lib/ponds.ts";
+
+const a = parseArgs(Deno.args, {
+  string: ["source", "k", "period", "ref", "seed", "frag-seed", "donor-seed", "swap-hex", "swap-from", "swap-founder", "swap-label", "tag", "out", "side", "replicates", "inoculum", "steps", "census", "mut-rate", "arm", "history", "time", "timing", "calibration", "h", "control", "set", "boundary", "runs", "stage", "genome-from", "export", "death"],
+  boolean: ["quench", "allow-any-seed", "traits", "r1prime", "tau-calibration", "r1dprime", "r3rep", "reg1", "hunt1", "genome-founder"],
+  default: { side: "8", replicates: "2", census: "100", inoculum: "fragment" },
+});
+const cmd = String(a._[0] ?? "");
+if (a.hunt1 !== (cmd === "export")) throw new Error(cmd === "export" ? "export is the hunt's assay: pass --hunt1" : "--hunt1 applies to export only");
+if ((a.traits || a.r1prime || a["tau-calibration"] || a.r1dprime) && (cmd === "continue" || cmd === "capability")) throw new Error(`--traits, --r1prime, --tau-calibration and --r1dprime do not apply to ${cmd}`);
+if ((a.h !== undefined || a.control !== undefined) && !a.r1dprime && !a.r3rep && !a.reg1) throw new Error("--h and --control belong to --r1dprime");
+if (a.reg1) {
+  if (a.r3rep || a.r1prime || a.r1dprime || a["tau-calibration"] || a.calibration !== undefined) throw new Error("--reg1 is its own assay block: not with --r3rep, --r1prime, --r1dprime, --tau-calibration or --calibration");
+} else if (a.boundary !== undefined || a.runs !== undefined || (a.set !== undefined && !a.hunt1)) throw new Error("--set, --boundary and --runs belong to --reg1");
+if (a.hunt1 && (a.reg1 || a.r3rep || a.r1prime || a.r1dprime || a["tau-calibration"] || a.traits || a.boundary !== undefined || a.runs !== undefined)) throw new Error("--hunt1 is its own assay block: not with --reg1, --r3rep, --r1prime, --r1dprime, --tau-calibration, --traits, --boundary or --runs");
+if (!a.hunt1 && (a.stage !== undefined || a["genome-from"] !== undefined || a["genome-founder"] || a.export !== undefined || a.death !== undefined)) throw new Error("--stage, --genome-from, --genome-founder, --export and --death belong to export --hunt1");
+if (a.r3rep) {
+  if (cmd !== "competence" && cmd !== "continue") throw new Error(`--r3rep applies to competence and continue, not ${cmd}`);
+  if (a.r1prime || a.r1dprime || a["tau-calibration"] || a.calibration !== undefined) throw new Error("--r3rep is its own assay block: not with --r1prime, --r1dprime, --tau-calibration or --calibration");
+}
+
+function need(name: keyof typeof a): string {
+  const v = a[name];
+  if (typeof v !== "string" || v === "") throw new Error(`--${name} is required`);
+  return v;
+}
+function int(name: keyof typeof a, min: number, max = Number.MAX_SAFE_INTEGER): number {
+  const v = Number(need(name));
+  if (!Number.isInteger(v) || v < min || v > max) throw new Error(`--${name} must be an integer in ${min}..${max}, got ${a[name]}`);
+  return v;
+}
+/** Seeds live in the sandbox's reserved range (4,800,001-4,849,999), or with --reg1 the registration's (4,850,001-4,899,999); --allow-any-seed is for smoke tests only. */
+function checkSeed(name: string, v: number): number {
+  if (a.reg1) {
+    if (!a["allow-any-seed"] && !(Number.isInteger(v) && v >= REG1_SEED_BLOCK.min && v <= REG1_SEED_BLOCK.max)) throw new Error(`${name} ${v} is outside 4,850,001-4,899,999`);
+    return v;
+  }
+  if (!a["allow-any-seed"] && !(Number.isInteger(v) && v >= 4_800_001 && v <= 4_849_999)) throw new Error(`${name} ${v} is outside 4,800,001-4,849,999`);
+  return v;
+}
+
+const sha256File = async (url: URL): Promise<string> =>
+  Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(url))), (b) => b.toString(16).padStart(2, "0")).join("");
+const protocolSha256 = await sha256File(new URL("../docs/scaffold-protocol-v1.md", import.meta.url));
+/**
+ * --r3rep records and checks the pinned protocol hashes (`R3REP_SHA256`), not the documents as they are now; the replication's document
+ * must still begin with its pinned text (amendments only at the end) unless --allow-any-seed.
+ */
+async function checkR3RepProtocol(): Promise<void> {
+  const why = await r3RepProtocolProblems("r3rep", await Deno.readFile(new URL("../docs/scaffold-r3-replication-v1.md", import.meta.url)));
+  if (why.length > 0 && !a["allow-any-seed"]) throw new Error(why.join("; "));
+}
+
+const baseName = (p: string) => p.replace(/^.*\//, "").replace(/\.blck(\.gz)?$/, "");
+const words = (g: Uint32Array) => Array.from(g, (x) => x.toString(16).padStart(8, "0")).join("");
+
+/** The swap arms' genome words (`--swap-hex`, `--swap-from` or `--swap-founder`) with their label, or null. */
+async function swapSpec(): Promise<{ words: Uint32Array; label: string; from: string } | null> {
+  const given = [a["swap-hex"], a["swap-from"], a["swap-founder"]].filter((v) => v !== undefined);
+  if (given.length === 0) return null;
+  if (given.length > 1) throw new Error("give one of --swap-hex, --swap-from, --swap-founder");
+  if (a.quench) throw new Error("--quench and a swap are separate arms");
+  let w: Uint32Array, from: string, label: string;
+  if (a["swap-from"] !== undefined) {
+    const dom = dominantGenome(await loadCheckpoint(a["swap-from"]));
+    if (!dom) throw new Error(`${a["swap-from"]} has no eligible cell, so no dominant genome`);
+    w = dom.words;
+    from = `${a["swap-from"]} (dominant ${dom.hi}:${dom.lo})`;
+    label = "swap-ea";
+  } else if (a["swap-hex"] !== undefined) {
+    w = encodeGenome(genomeFromHex(a["swap-hex"]), 0, 1);
+    from = `hex ${a["swap-hex"]}`;
+    label = "swap-ae";
+  } else {
+    const i = Number(a["swap-founder"]);
+    if (!Number.isInteger(i) || i < 0 || i >= M3_FOUNDERS.length) throw new Error(`--swap-founder must be 0-${M3_FOUNDERS.length - 1}`);
+    w = encodeGenome(founderGenome(M3_FOUNDERS[i]), 0, 1);
+    from = `M3_FOUNDERS[${i}]`;
+    label = "swap-ae";
+  }
+  if (a["swap-label"] !== undefined) {
+    if (a["swap-label"] !== "ea" && a["swap-label"] !== "ae") throw new Error("--swap-label must be ea or ae");
+    label = `swap-${a["swap-label"]}`;
+  }
+  return { words: w, label, from };
+}
+
+interface Plan {
+  /** Fragment of pond f, or null for an absent one. */
+  item: AssayItem;
+  family: number;
+}
+
+interface AssaySpec {
+  name: string;
+  sourcePath: string;
+  source: WorldState;
+  tag: string;
+  k: number;
+  period: number;
+  ref: number | undefined;
+  side: number;
+  replicates: number;
+  seed: number;
+  fragSeed: number;
+  inoculum: string;
+  /** The history this source belongs to, written to assay.json for scaffold-report. */
+  labels: AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet | R3RepLabelSet | Reg1LabelSet;
+  /** Fragment f of replicate sigma `sigma`; the family label is the donor pond in R1, else -1. */
+  plan: (sigma: number, f: number) => Plan;
+}
+
+/**
+ * One period of an assay world on the GPU with matter and the energy ledger checked at every census. `onTraits`
+ * (--traits) is called at each census with the elapsed step and every pond's trait (the snapshot's cells share
+ * WorldState's layout, so `pondTraits` reads them directly).
+ */
+async function runWorld(device: GPUDevice, state: WorldState, period: number, censusEvery: number, onTraits?: (step: number, traits: number[]) => void): Promise<WorldState> {
+  const sim = await GpuSim.create(device, state);
+  try {
+    const check = { startMatter: totalsOf(state.cfg, state.cells).matter, baseline: ledgerEnergy(state) };
+    const onCensus = onTraits && (async (snap: CensusSnapshot) => onTraits(snap.step - state.step, pondTraits({ ...state, cells: snap.cells })));
+    const r = await runPeriod(sim, device, period, censusEvery, check, onCensus);
+    if (!r.conservationOk) throw new Error(`matter or the energy ledger broke in the assay world (seed ${state.cfg.seed})`);
+    return await sim.readState();
+  } finally {
+    sim.destroy();
+  }
+}
+
+/** Runs every replicate of `spec` (one period, mutation off) and writes assay.json and assay.tsv into `out`. */
+async function runAssay(spec: AssaySpec, out: string, extra: Record<string, unknown>, rowFilter?: () => boolean) {
+  const t0 = performance.now();
+  const ponds = spec.side * spec.side;
+  const seeds = Array.from({ length: spec.replicates }, (_, s) => ({ physics: checkSeed("seed", spec.seed + s), fragment: checkSeed("fragment seed", spec.fragSeed + s) }));
+  if (!a["allow-any-seed"]) {
+    const labels = spec.labels;
+    seeds.forEach((sd, s) => ("reg1" in labels ? checkReg1Seeds(labels, sd, s) : "r3rep" in labels ? checkR3RepSeeds(labels, spec.inoculum, sd, s) : "r1dprime" in labels ? checkR1dPrimeSeeds(labels, sd, s) : "r1prime" in labels ? checkR1PrimeSeeds(labels, sd, s) : checkAssaySeeds(spec.name as AssayName, labels, spec.inoculum, sd, s)));
+  }
+  const device = await requestDevice(navigator.gpu, pondConfig(spec.side, seeds[0].physics, 0));
+  const lines: string[] = [ASSAY_COLUMNS.join("\t")];
+  const sum = { rows: 0, success: 0, end: 0, ret: 0, retE: 0, absent: 0, truncated: 0 };
+  // --traits: every pond's trait at every census, per replicate (traits.tsv).
+  const traitLog: { replicate: number; steps: number[]; traits: number[][] }[] = [];
+  if (rowFilter === undefined || rowFilter()) {
+    for (let s = 0; s < spec.replicates; s++) {
+      const plans = Array.from({ length: ponds }, (_, f) => spec.plan(seeds[s].fragment, f));
+      const cfg = pondConfig(spec.side, seeds[s].physics, 0);
+      const { state, planted } = buildAssayWorld(cfg, plans.map((p) => p.item));
+      const log = { replicate: s, steps: [] as number[], traits: [] as number[][] };
+      const record = (step: number, t: number[]) => {
+        log.steps.push(step);
+        log.traits.push(t);
+      };
+      // A world with nothing planted has nothing to grow: every fragment is absent and fails.
+      let traits: number[];
+      if (plans.every((p) => p.item === null)) {
+        traits = new Array<number>(ponds).fill(0);
+        if (a.traits) for (const step of censusSteps(spec.period, Number(a.census))) record(step, traits);
+      } else {
+        traits = pondTraits(await runWorld(device, state, spec.period, Number(a.census), a.traits ? record : undefined));
+        // The last census is the end of the period: its traits are the end traits, or the snapshot and the state disagree.
+        if (a.traits && (log.steps.at(-1) !== spec.period || log.traits.at(-1)!.some((v, f) => v !== traits[f]))) throw new Error(`the census at the end of the period disagrees with the final state (seed ${seeds[s].physics})`);
+      }
+      traitLog.push(log);
+      plans.forEach((p, f) => {
+        const pl: Planted = planted[f];
+        const success = p.item === null ? (spec.ref === undefined ? -1 : 0) : assaySuccess(traits[f], pl.retMass, spec.ref);
+        lines.push(assayLine({ assay: spec.name, source: spec.tag, replicate: s, pond: f, family: p.family, inoculum: spec.inoculum, planted: pl, endTrait: traits[f], success }));
+        sum.rows++;
+        sum.success += Math.max(success, 0);
+        sum.end += traits[f];
+        sum.ret += pl.retMass;
+        sum.retE += pl.retE;
+        if (p.item === null) sum.absent++;
+        if (pl.truncated) sum.truncated++;
+      });
+    }
+  }
+  await Deno.mkdir(out, { recursive: true });
+  await Deno.writeTextFile(`${out}/assay.tsv`, lines.join("\n") + "\n");
+  if (a.traits) await Deno.writeTextFile(`${out}/traits.tsv`, traitsTable(traitLog));
+  await Deno.writeTextFile(
+    `${out}/assay.json`,
+    JSON.stringify(
+      assayJson({
+        protocolSha256,
+        assay: spec.name,
+        source: spec.sourcePath,
+        tag: spec.tag,
+        k: spec.k,
+        period: spec.period,
+        ref: spec.ref ?? null,
+        side: spec.side,
+        replicates: spec.replicates,
+        censusEvery: Number(a.census),
+        inoculum: spec.inoculum,
+        seeds,
+        labels: spec.labels,
+        extra: a.traits ? { ...extra, traitsRecorded: true } : extra,
+        summary: {
+          rows: sum.rows,
+          competence: spec.ref === undefined || sum.rows === 0 ? null : sum.success / sum.rows,
+          meanEndTrait: sum.rows ? sum.end / sum.rows : null,
+          meanRetMass: sum.rows ? sum.ret / sum.rows : null,
+          meanRetE: sum.rows ? sum.retE / sum.rows : null,
+          absent: sum.absent,
+          truncated: sum.truncated,
+        },
+        wallSeconds: (performance.now() - t0) / 1000,
+      }),
+      null,
+      2,
+    ) + "\n",
+  );
+  console.log(`${spec.name} ${spec.tag}: ${sum.rows} rows${spec.ref === undefined ? "" : sum.rows === 0 ? ", no rows (insufficient or empty source)" : `, competence ${(sum.success / sum.rows).toFixed(3)}`} -> ${out}`);
+}
+
+/** The labels of this assay from the CLI: the R3 replication (--r3rep), R1'' (--r1dprime), R1' (--r1prime), the tau calibration (--tau-calibration) or R1-R3's. */
+function labelsFromArgs(name: AssayName): AssayLabelSet | R1PrimeLabelSet | R1dPrimeLabelSet | R3RepLabelSet {
+  if (a.r3rep) {
+    if (name !== "competence") throw new Error("--r3rep applies to competence and continue");
+    return parseR3RepLabels({ arm: a.arm, history: a.history, timing: a.timing, h: a.h, time: a.time, calibration: a.calibration, control: a.control });
+  }
+  if (a["r1dprime"]) {
+    if (a["r1prime"] || a["tau-calibration"]) throw new Error("--r1dprime, --r1prime and --tau-calibration are separate assays");
+    if (name !== "transmission") throw new Error("--r1dprime applies to transmission");
+    if (!a.traits) throw new Error("--r1dprime needs --traits: R1'' reads each fragment's crossing time from traits.tsv");
+    return parseR1dPrimeLabels({ h: a.h, arm: a.arm, history: a.history, control: a.control, time: a.time, timing: a.timing, calibration: a.calibration });
+  }
+  if (a["r1prime"] && a["tau-calibration"]) throw new Error("--r1prime and --tau-calibration are separate assays");
+  if (a["r1prime"]) {
+    if (name !== "transmission") throw new Error("--r1prime applies to transmission");
+    if (!a.traits) throw new Error("--r1prime needs --traits: R1' reads the trait at tau from traits.tsv");
+    return parseR1PrimeLabels({ arm: a.arm, history: a.history, time: a.time, timing: a.timing, calibration: a.calibration });
+  }
+  if (a["tau-calibration"]) {
+    if (name !== "competence") throw new Error("--tau-calibration applies to competence");
+    if (!a.traits) throw new Error("--tau-calibration needs --traits: tau is read from traits.tsv");
+    if (a.ref === undefined) throw new Error("--tau-calibration needs --ref: tau is a fraction of ref");
+    if ((a.arm ?? "ancestor") !== "ancestor" || a.history !== undefined || a.calibration !== undefined || a.quench || [a["swap-hex"], a["swap-from"], a["swap-founder"]].some((v) => v !== undefined)) throw new Error("--tau-calibration is the plain ancestor competence set (no --history, --calibration, --quench or swap)");
+    if ((a.timing ?? "a") !== "a" || (a.time ?? "0") !== "0") throw new Error("--tau-calibration labels the ancestor at timing a");
+    return TAU_LABELS;
+  }
+  return parseAssayLabels(name, { arm: a.arm, history: a.history, time: a.time, timing: a.timing, calibration: a.calibration });
+}
+
+/**
+ * The assay of --source from the CLI; a --reg1 set passes its labels, its source and where that came from (the resolved bundle: the
+ * census-100 rerun when that is the source), and its tag defaults to the set's name.
+ */
+async function specFromArgs(name: AssayName, loaded?: { labels: Reg1LabelSet; source: WorldState; sourcePath: string }): Promise<AssaySpec> {
+  const sourcePath = loaded?.sourcePath ?? need("source");
+  const seed = int("seed", 0);
+  return {
+    labels: loaded?.labels ?? labelsFromArgs(name),
+    name,
+    sourcePath,
+    source: loaded?.source ?? (await loadCheckpoint(sourcePath)),
+    tag: a.tag ?? (loaded ? reg1SetIdOf(loaded.labels) : baseName(sourcePath)),
+    k: int("k", 1, 64),
+    period: int("period", 1),
+    ref: a.ref === undefined ? undefined : Number(a.ref),
+    side: int("side", 1, 16),
+    replicates: int("replicates", 1, 8),
+    seed,
+    fragSeed: a["frag-seed"] === undefined ? seed : int("frag-seed", 0),
+    inoculum: "fragment",
+    plan: () => ({ item: null, family: -1 }),
+  };
+}
+
+const fragmentItem = (f: Fragment | null): AssayItem => (f === null ? null : { kind: "fragment", fragment: f });
+
+/** A parsed JSON file, or null when it is missing or unreadable. */
+const readJson = (path: string): Promise<unknown> =>
+  Deno.readTextFile(path)
+    .then((t) => JSON.parse(t) as unknown)
+    .catch(() => null);
+
+/**
+ * A timing (a) source of the R3 replication as loaded from `path`: the checkpoint's record and its run directory's meta.json and
+ * done.json (the directory holding ckpt/; null files when the path is not inside one).
+ */
+async function r3RepOriginOf(path: string, state: WorldState): Promise<R3RepOrigin> {
+  const runDir = /(^|\/)ckpt\/[^/]+$/.test(path) ? path.replace(/ckpt\/[^/]+$/, "") || "./" : null;
+  const run = runDir === null ? r3RepRunRecordOf(null, null) : r3RepRunRecordOf(await readJson(`${runDir}meta.json`), await readJson(`${runDir}done.json`));
+  return { ...r3RepCheckpointOf(path, state), run };
+}
+
+/**
+ * The provenance of an R3-replication source at `timing`: at (a) its origin record; at (b) the continued checkpoint's record, its sidecar
+ * and the timing (a) source the sidecar names, loaded and hashed as it is now (null when the sidecar names none).
+ */
+async function r3RepProvenanceOf(path: string, state: WorldState, timing: "a" | "b"): Promise<R3RepProvenance> {
+  if (timing === "a") return await r3RepOriginOf(path, state);
+  const continuation = path.endsWith(".blck.gz") ? await readJson(r3RepSidecarPathOf(path)) : null;
+  const from = (continuation as { source?: unknown } | null)?.source;
+  const load = (p: string) => loadCheckpoint(p).catch((e) => Promise.reject(new Error(`${r3RepSidecarPathOf(path)} names the source ${p}, which does not load: ${(e as Error).message}`)));
+  const origin = typeof from === "string" ? await r3RepOriginOf(from, await load(from)) : null;
+  return { ...r3RepCheckpointOf(path, state), continuation, origin };
+}
+
+/**
+ * competence --r3rep: one set of the R3 replication. The variant comes from --quench, --swap-from (Ge-on-Fa) or --swap-founder 2
+ * (Ga-on-Fe); the regime, the seeds (in runAssay) and the provenance of every checkpoint involved are the protocol's unless
+ * --allow-any-seed. A Ge-on-Fa donor with no eligible cell writes the biologically-unavailable record (no rows) instead of an assay.
+ */
+async function competenceR3Rep(spec: AssaySpec, labels: R3RepLabelSet): Promise<void> {
+  const strict = !a["allow-any-seed"];
+  if (a["swap-hex"] !== undefined || a["swap-label"] !== undefined) throw new Error("--r3rep takes --swap-from (Ge-on-Fa) or --swap-founder 2 (Ga-on-Fe), not --swap-hex or --swap-label");
+  const given = [a.quench ? "--quench" : null, a["swap-from"] !== undefined ? "--swap-from" : null, a["swap-founder"] !== undefined ? "--swap-founder" : null].filter((f) => f !== null);
+  if (given.length > 1) throw new Error(`give at most one of --quench, --swap-from, --swap-founder (got ${given.join(", ")})`);
+  const inoculum: R3RepInoculum = a.quench ? "quenched" : a["swap-from"] !== undefined ? "swap-ea" : a["swap-founder"] !== undefined ? "swap-ae" : "fragment";
+  if (inoculum === "swap-ae" && a["swap-founder"] !== "2") throw new Error(`--swap-founder must be 2 for --r3rep (Ga-on-Fe carries M3_FOUNDERS[2], the ancestor), got ${a["swap-founder"]}`);
+  const variant = r3RepVariantProblems(labels, inoculum);
+  if (variant.length > 0) throw new Error(`${r3RepSetIdOf(labels, inoculum)}: ${variant.join("; ")}`);
+  spec.inoculum = inoculum;
+  if (strict) {
+    const regime = r3RepRegimeProblems({ k: spec.k, period: spec.period, ref: spec.ref ?? null, side: spec.side, replicates: spec.replicates, censusEvery: Number(a.census) });
+    if (regime.length > 0) throw new Error(`--r3rep runs at --k 8 --period 10000 --ref 103058 --side 8 --replicates 2 --census 100: ${regime.join("; ")}`);
+  }
+  // Every checkpoint involved, validated against the labels: the fragment source (the ancestor's (a) for Ge-on-Fa) and Ge-on-Fa's donor.
+  await checkR3RepProtocol();
+  const sha = R3REP_SHA256;
+  const provenance = await r3RepProvenanceOf(spec.sourcePath, spec.source, labels.timing);
+  let donor: WorldState | null = null;
+  if (inoculum === "swap-ea") {
+    donor = await loadCheckpoint(a["swap-from"]!);
+    provenance.donor = { ...(await r3RepOriginOf(a["swap-from"]!, donor)), dominant: r3RepDominantRecord(dominantGenome(donor)) };
+  }
+  const problems = r3RepProvenanceProblems(labels, inoculum, provenance, sha);
+  if (problems.length > 0 && strict) throw new Error(`${spec.sourcePath}${donor ? ` with donor ${a["swap-from"]}` : ""} is not the protocol's source of R3-replication set ${r3RepSetIdOf(labels, inoculum)}: ${problems.join("; ")}`);
+  const extra = { provenance, protocolSha256R3rep: sha.r3rep };
+  const out = need("out");
+  if (donor !== null && provenance.donor!.dominant === null) {
+    // No eligible cell in the donor's (a), so no dominant genome: the set is biologically unavailable, a validated record with no rows.
+    console.log(`${r3RepSetIdOf(labels, inoculum)}: donor ${a["swap-from"]} has no eligible cell, so no dominant genome; writing the biologically-unavailable record`);
+    await runAssay(spec, out, { quench: false, swap: { label: "swap-ea", from: a["swap-from"], words: null }, biologicallyUnavailable: r3RepUnavailableOf(provenance.donor!), ...extra }, () => false);
+    return;
+  }
+  let swap: { words: Uint32Array; label: string; from: string } | null = null;
+  if (donor !== null) {
+    const dom = dominantGenome(donor)!;
+    swap = { words: dom.words, label: "swap-ea", from: `${a["swap-from"]} (dominant ${dom.hi}:${dom.lo})` };
+    // The planted words are the donor's dominant genome under the tie rule: what was recorded, and what the donor state gives again.
+    const recorded = provenance.donor!.dominant!;
+    const again = r3RepDominantRecord(dominantGenome(donor));
+    if (again === null || again.id !== recorded.id || again.words !== recorded.words || words(swap.words) !== recorded.words) throw new Error(`the Ge-on-Fa words are not the donor's dominant genome ${recorded.id}`);
+  } else if (inoculum === "swap-ae") swap = { words: encodeGenome(founderGenome(M3_FOUNDERS[2]), 0, 1), label: "swap-ae", from: "M3_FOUNDERS[2]" };
+  spec.plan = (sigma, f) => {
+    const fr = standardFragment(spec.source, spec.k, sigma, f);
+    const item = fr === null ? null : a.quench ? quench(fr) : swap ? swapGenome(fr, swap.words) : fr;
+    return { item: fragmentItem(item), family: -1 };
+  };
+  await runAssay(spec, out, { quench: !!a.quench, swap: swap && { label: swap.label, from: swap.from, words: words(swap.words) }, ...extra });
+}
+
+/**
+ * --reg1 records and checks the pinned registration (`REG1_SHA256`), not the document as it is now; the document must still begin with its
+ * pinned text (amendments only at the end) unless --allow-any-seed.
+ */
+async function checkReg1Protocol(): Promise<void> {
+  const why = await reg1ProtocolProblems(await Deno.readFile(new URL("../docs/scaffold-registration-v1.md", import.meta.url)));
+  if (why.length > 0 && !a["allow-any-seed"]) throw new Error(why.join("; "));
+}
+
+/** Throws with `problems` unless there are none; --allow-any-seed (smoke tests) only prints them. */
+function reg1Refuse(what: string, problems: string[]): void {
+  if (problems.length === 0) return;
+  if (!a["allow-any-seed"]) throw new Error(`${what}: ${problems.join("; ")}`);
+  console.warn(`--allow-any-seed, not the registration's: ${what}: ${problems.join("; ")}`);
+}
+
+/** `path` made absolute and normalised, with symlinks resolved through its deepest existing ancestor (so /tmp and /private/tmp agree). */
+function realPathOf(path: string): string {
+  const parts: string[] = [];
+  for (const p of (path.startsWith("/") ? path : `${Deno.cwd()}/${path}`).split("/")) {
+    if (p === "" || p === ".") continue;
+    if (p === "..") parts.pop();
+    else parts.push(p);
+  }
+  for (let k = parts.length; k >= 0; k--) {
+    try {
+      return [Deno.realPathSync(`/${parts.slice(0, k).join("/")}`).replace(/\/+$/, ""), ...parts.slice(k)].join("/");
+    } catch {
+      // not there yet: try its parent
+    }
+  }
+  return `/${parts.join("/")}`;
+}
+
+/** Under --allow-any-seed, refuses an output inside this repository's runs/scaffold/reg1 (the production tree): a smoke test writes elsewhere. */
+function reg1WaiverGuard(out: string): void {
+  if (!a["allow-any-seed"]) return;
+  const why = reg1WaiverOutProblems(realPathOf(out), realPathOf(decodeURIComponent(new URL("../runs/scaffold/reg1", import.meta.url).pathname)));
+  if (why.length > 0) throw new Error(why.join("; "));
+}
+
+/** What a --reg1 record says of a waived run: `allowAnySeed: true` under --allow-any-seed, nothing otherwise. */
+const waived = (): { allowAnySeed?: true } => (a["allow-any-seed"] ? { allowAnySeed: true } : {});
+
+/**
+ * The boundary a --reg1 command reads from a run bundle: the set's own (`own`; null for the initial world), or --boundary N|init, which
+ * only a smoke test (--allow-any-seed) may give; it then replaces every boundary the command reads.
+ */
+function reg1Boundary(own: number | null): number | null {
+  if (a.boundary === undefined) return own;
+  if (!a["allow-any-seed"]) throw new Error("--boundary is for smoke tests (--allow-any-seed): a production set reads its own boundary");
+  if (a.boundary === "init") return null;
+  const b = Number(a.boundary);
+  if (!Number.isInteger(b) || b < 1) throw new Error(`--boundary must be a positive integer or init, got ${a.boundary}`);
+  return b;
+}
+
+/**
+ * Source h from its run bundle (`loadReg1Source`), read with Deno: `dir` names the run at census 1,000 or its census-100 rerun, and the
+ * one of the two that is complete is the source.
+ */
+async function loadReg1(dir: string, boundary: number | null, h: number): Promise<{ state: WorldState; record: Reg1Source }> {
+  const loaded = await loadReg1Source(dir, boundary, (p) => Deno.readFile(p), reg1BundleWantsOf(h));
+  if (loaded.record.source !== dir.replace(/\/+$/, "")) console.log(`source ${dir}: the complete run is ${loaded.record.source}`);
+  return loaded;
+}
+
+/** The regime the CLI asks for, as `reg1RegimeProblems` reads it (before any source is loaded). */
+const regimeOfArgs = () => ({ k: int("k", 1, 64), period: int("period", 1), ref: a.ref === undefined ? null : Number(a.ref), side: int("side", 1, 16), replicates: int("replicates", 1, 8), censusEvery: Number(a.census) });
+
+/**
+ * A timing (b) source: the continued checkpoint `path` (gzipped, as continue --reg1 saves it), its sidecar, and the timing (a) source the
+ * sidecar names, loaded from its bundle and hashed as it is now (null when the sidecar names none).
+ */
+async function reg1ContinuedOf(path: string, h: number): Promise<{ state: WorldState; provenance: Reg1Provenance }> {
+  const state = await loadCheckpoint(path);
+  const continuation = path.endsWith(".blck.gz") ? await readJson(r3RepSidecarPathOf(path)) : null;
+  const c = continuation as { source?: unknown; boundary?: unknown } | null;
+  let origin: Reg1Source | null = null;
+  if (typeof c?.source === "string" && Number.isInteger(c.boundary)) {
+    const from = c.source, b = c.boundary as number;
+    origin = (await loadReg1(from, b, h).catch((e) => Promise.reject(new Error(`${r3RepSidecarPathOf(path)} names the source ${from} at boundary ${b}, which does not load: ${(e as Error).message}`)))).record;
+  }
+  return { state, provenance: { ...r3RepCheckpointOf(path, state), continuation, origin } };
+}
+
+/**
+ * competence --reg1: one competence set of the registration, named by --set (source, ge-on-fa, ga-on-fa, ga-on-fe or quench). The regime,
+ * the seeds (in runAssay), the output directory and the provenance of every source involved are the registration's unless --allow-any-seed.
+ * A Ge-on-Fa donor with no eligible cell writes the biologically-unavailable record (no rows) instead of an assay.
+ */
+async function competenceReg1(): Promise<void> {
+  for (const flag of ["swap-hex", "swap-founder", "swap-label"] as const) if (a[flag] !== undefined) throw new Error(`competence --reg1 names its variant by --set: --${flag} does not apply`);
+  if (a.quench) throw new Error("competence --reg1 names its variant by --set: --quench does not apply (--set quench)");
+  const labels = parseReg1CompetenceLabels({ set: a.set, arm: a.arm, history: a.history, timing: a.timing, h: a.h, time: a.time, calibration: a.calibration, control: a.control });
+  if ((labels.set === "ge-on-fa") !== (a["swap-from"] !== undefined)) throw new Error(labels.set === "ge-on-fa" ? "--set ge-on-fa needs --swap-from, the run bundle of scaf_i whose dominant genome it plants" : `--swap-from belongs to --set ge-on-fa, not ${labels.set}`);
+  const id = reg1SetIdOf(labels);
+  const h = labels.h!;
+  const sourcePath = need("source");
+  const out = need("out");
+  reg1WaiverGuard(out);
+  reg1Refuse(`${id} runs at --k 8 --period 10000 --ref 103058 --side 8 --replicates ${labels.set === "ge-on-fa" || labels.set === "ga-on-fa" ? 8 : 4} --census 100`, reg1RegimeProblems(labels, regimeOfArgs()));
+  reg1Refuse(id, reg1AssayOutProblems(labels, out));
+  await checkReg1Protocol();
+  // The fragment source (source h: ancestor world i for the swap pair) at (a) from its bundle, or its continuation at (b); Ge-on-Fa's donor is scaf_i's (a).
+  let source: WorldState, provenance: Reg1Provenance;
+  if (labels.timing === "a") {
+    const loaded = await loadReg1(sourcePath, reg1Boundary(reg1BoundaryAOf(h)), h);
+    ({ state: source, record: provenance } = loaded);
+  } else ({ state: source, provenance } = await reg1ContinuedOf(sourcePath, h));
+  let donor: WorldState | null = null;
+  if (labels.set === "ge-on-fa") {
+    const loaded = await loadReg1(a["swap-from"]!, reg1Boundary(reg1BoundaryAOf(labels.history!)), labels.history!);
+    donor = loaded.state;
+    provenance.donor = { ...loaded.record, dominant: r3RepDominantRecord(dominantGenome(donor)) };
+  }
+  reg1Refuse(`${sourcePath}${donor ? ` with donor ${a["swap-from"]}` : ""} is not the registration's source of set ${id}`, reg1ProvenanceProblems(labels, provenance, REG1_SHA256));
+  const spec = await specFromArgs("competence", { labels, source, sourcePath: provenance.source });
+  spec.inoculum = REG1_INOCULA[labels.set as keyof typeof REG1_INOCULA];
+  const extra = { provenance, protocolSha256Reg1: REG1_SHA256, ...waived() };
+  if (donor !== null && provenance.donor!.dominant === null) {
+    // No eligible cell in the donor's (a), so no dominant genome: the set is biologically unavailable, a validated record with no rows.
+    console.log(`${id}: donor ${a["swap-from"]} has no eligible cell, so no dominant genome; writing the biologically-unavailable record`);
+    await runAssay(spec, out, { quench: false, swap: { label: spec.inoculum, from: a["swap-from"], words: null }, biologicallyUnavailable: r3RepUnavailableOf(provenance.donor!), ...extra }, () => false);
+    return;
+  }
+  let swap: { words: Uint32Array; label: string; from: string } | null = null;
+  if (donor !== null) {
+    const dom = dominantGenome(donor)!;
+    swap = { words: dom.words, label: spec.inoculum, from: `${a["swap-from"]} (dominant ${dom.hi}:${dom.lo})` };
+    // The planted words are the donor's dominant genome under the tie rule: what was recorded, and what the donor state gives again.
+    const recorded = provenance.donor!.dominant!;
+    const again = r3RepDominantRecord(dominantGenome(donor));
+    if (again === null || again.id !== recorded.id || again.words !== recorded.words || words(swap.words) !== recorded.words) throw new Error(`the Ge-on-Fa words are not the donor's dominant genome ${recorded.id}`);
+  } else if (labels.set === "ga-on-fa" || labels.set === "ga-on-fe") swap = { words: encodeGenome(founderGenome(M3_FOUNDERS[2]), 0, 1), label: spec.inoculum, from: "M3_FOUNDERS[2]" };
+  // Both swaps plant one genome under one id in every carrying cell, and buildAssayWorld relabels it (0, 1): Ge-on-Fa and Ga-on-Fa differ only in genome words.
+  const quenched = labels.set === "quench";
+  spec.plan = (sigma, f) => {
+    const fr = standardFragment(spec.source, spec.k, sigma, f);
+    const item = fr === null ? null : quenched ? quench(fr) : swap ? swapGenome(fr, swap.words) : fr;
+    return { item: fragmentItem(item), family: -1 };
+  };
+  await runAssay(spec, out, { quench: quenched, swap: swap && { label: swap.label, from: swap.from, words: words(swap.words) }, ...extra });
+}
+
+/**
+ * transmission --reg1 --traits: one S3 set (`--h`), the heredity replication's R1'' assay with this block's seeds: a history's boundary-34
+ * pre-cycle checkpoint from its run bundle, or a control's checkpoint (the P2 ranking worlds, the negative-control worlds).
+ */
+async function transmissionReg1(): Promise<void> {
+  const labels = parseReg1HeredityLabels({ h: a.h, arm: a.arm, history: a.history, control: a.control, time: a.time, timing: a.timing, set: a.set, calibration: a.calibration });
+  if (!a.traits) throw new Error("transmission --reg1 needs --traits: S3 reads each fragment's crossing time from traits.tsv");
+  const id = reg1SetIdOf(labels);
+  const sourcePath = need("source");
+  const out = need("out");
+  reg1WaiverGuard(out);
+  reg1Refuse(`${id} runs at --k 8 --period 10000 --side 8 --replicates 2 --census 100 and no --ref`, reg1RegimeProblems(labels, regimeOfArgs()));
+  reg1Refuse(id, reg1AssayOutProblems(labels, out));
+  await checkReg1Protocol();
+  let source: WorldState, provenance: R3RepCheckpoint;
+  if (labels.control === null) ({ state: source, record: provenance } = await loadReg1(sourcePath, reg1Boundary(REG1_HEREDITY_BOUNDARY), labels.h!));
+  else {
+    source = await loadCheckpoint(sourcePath);
+    provenance = r1dPrimeProvenance(sourcePath, source);
+    // The checkpoint sits in a run directory (ckpt/ beside its meta.json): a copy lifted out of one has lost what says which run it is.
+    const runDir = sourcePath.replace(/ckpt\/[^/]+$/, "") || "./";
+    if (!a["allow-any-seed"] && !(await Deno.stat(`${runDir}meta.json`).then((st) => st.isFile, () => false))) throw new Error(`${sourcePath} is not inside a run directory (no ${runDir}meta.json)`);
+  }
+  reg1Refuse(`${sourcePath} is not the registration's source of S3 set ${id}`, reg1ProvenanceProblems(labels, provenance, REG1_SHA256));
+  const spec = await specFromArgs("transmission", { labels, source, sourcePath: provenance.source });
+  const donorSeed = checkSeed("donor seed", a["donor-seed"] === undefined ? spec.seed + 9 : int("donor-seed", 0));
+  if (!a["allow-any-seed"]) checkReg1DonorSeed(labels, donorSeed);
+  const { donors, eligible, insufficient } = r1Donors(spec.source, donorSeed);
+  spec.plan = (sigma, f) => {
+    const donor = donors[f % donors.length];
+    return { item: fragmentItem(standardFragment(spec.source, spec.k, sigma, f, donor)), family: donor };
+  };
+  // Fewer than two eligible ponds: S3 is not demonstrated for the history, and no row is written.
+  await runAssay(spec, out, { donorSeed, donors, eligible, insufficient, provenance, protocolSha256Reg1: REG1_SHA256, ...waived() }, () => !insufficient);
+}
+
+/**
+ * garden --reg1: one S2 set, protocol v1's R2 on a history's run bundle: time 0 is its initial world rebuilt from the spec and checked against
+ * the manifest's initHash, time C (--time 1) its boundary-100 pre-cycle checkpoint; --inoculum fragment (raw) or disc (standardised).
+ */
+async function gardenReg1(): Promise<void> {
+  const labels = parseReg1GardenLabels({ arm: a.arm, history: a.history, time: a.time, inoculum: a.inoculum, h: a.h, timing: a.timing, set: a.set, calibration: a.calibration, control: a.control });
+  const id = reg1SetIdOf(labels);
+  const sourcePath = need("source");
+  const out = need("out");
+  reg1WaiverGuard(out);
+  reg1Refuse(`${id} runs at --k 8 --period 10000 --ref 103058 --side 8 --replicates 2 --census 100`, reg1RegimeProblems(labels, regimeOfArgs()));
+  reg1Refuse(id, reg1AssayOutProblems(labels, out));
+  await checkReg1Protocol();
+  const { state: source, record: provenance } = await loadReg1(sourcePath, reg1Boundary(labels.time === 0 ? null : reg1BoundaryAOf(labels.h!)), labels.h!);
+  reg1Refuse(`${sourcePath} is not the registration's source of S2 set ${id}`, reg1ProvenanceProblems(labels, provenance, REG1_SHA256));
+  const spec = await specFromArgs("garden", { labels, source, sourcePath: provenance.source });
+  spec.inoculum = a.inoculum;
+  spec.plan = (sigma, f) => {
+    const fr = standardFragment(spec.source, spec.k, sigma, f);
+    if (a.inoculum === "fragment" || fr === null) return { item: fragmentItem(fr), family: -1 };
+    // Standardised inoculum: the fragment's dominant genome (by B+P) as the standard disc.
+    const dom = fragmentDominant(fr);
+    return { item: dom === null ? null : { kind: "disc", genome: decodeGenome(dom.words) }, family: -1 };
+  };
+  await runAssay(spec, out, { provenance, protocolSha256Reg1: REG1_SHA256, ...waived() });
+}
+
+/**
+ * continue --reg1: source h's timing (b) state, from its timing (a) checkpoint in its run bundle, with mutation on at the source's rate and
+ * no cycle. The seed, steps, census and output path are the registration's unless --allow-any-seed. The sidecar, written last and
+ * atomically, records the source's provenance and the end state; a stale one is removed before the run.
+ */
+async function continueReg1(): Promise<void> {
+  const world = parseReg1ContinueLabels({ arm: a.arm, history: a.history, h: a.h, timing: a.timing, time: a.time, set: a.set, calibration: a.calibration, control: a.control });
+  if (a["mut-rate"] !== undefined) throw new Error("continue --reg1 runs with mutation on at the source's (default) rate: --mut-rate does not apply");
+  const steps = int("steps", 1);
+  const seed = checkSeed("seed", int("seed", 0));
+  const censusEvery = int("census", 1);
+  const out = need("out");
+  reg1WaiverGuard(out);
+  reg1Refuse(`continue --reg1 of ${reg1IdOf(world)} (h ${world.h})`, reg1ContinueProblems(world.h, { seed, steps, censusEvery, out }));
+  await checkReg1Protocol();
+  const { state: src, record: origin } = await loadReg1(need("source"), reg1Boundary(reg1BoundaryAOf(world.h)), world.h);
+  reg1Refuse(`${a.source} is not the timing (a) source of ${reg1IdOf(world)}`, reg1SourceProblems(reg1BundleWantsOf(world.h), reg1BoundaryAOf(world.h), origin));
+  if (src.cfg.mutRate === 0) throw new Error("continue runs with mutation on: the source has mutRate 0");
+  // A sidecar describes the checkpoint beside it: a stale one goes before that checkpoint is rewritten.
+  const sidecarPath = r3RepSidecarPathOf(out);
+  await Deno.remove(sidecarPath).catch((e) => {
+    if (!(e instanceof Deno.errors.NotFound)) throw e;
+  });
+  if (/\//.test(out)) await Deno.mkdir(out.replace(/\/[^/]*$/, "") || "/", { recursive: true });
+  const state: WorldState = { ...src, cfg: { ...src.cfg, seed } };
+  const device = await requestDevice(navigator.gpu, state.cfg);
+  const sim = await GpuSim.create(device, state);
+  const t0 = performance.now();
+  try {
+    const check = { startMatter: totalsOf(state.cfg, state.cells).matter, baseline: ledgerEnergy(state) };
+    const r = await runPeriod(sim, device, steps, censusEvery, check);
+    if (!r.conservationOk) throw new Error("matter or the energy ledger broke during the continuation");
+    const end = await sim.readState();
+    await saveCheckpoint(out, end);
+    const sidecar = reg1ContinuationOf({ h: world.h, origin, end: r3RepCheckpointOf(out, end), steps, censusEvery, protocolSha256Reg1: REG1_SHA256, allowAnySeed: !!a["allow-any-seed"] });
+    await Deno.writeTextFile(`${sidecarPath}.tmp`, JSON.stringify(sidecar, null, 2) + "\n");
+    await Deno.rename(`${sidecarPath}.tmp`, sidecarPath);
+    console.log(`continue ${a.source} (b${origin.boundary}): ${steps} steps from step ${src.step} to ${end.step}, ${r.events} mutation events, seed ${seed}, conservation OK, ${((performance.now() - t0) / 1000).toFixed(1)}s -> ${out}`);
+  } finally {
+    sim.destroy();
+  }
+}
+
+/**
+ * capability --reg1: R4 on the dominant genome of every history's timing (a) source and of every ancestor world's, read from the run
+ * bundles under --runs (the directory holding scaffold/reg1/: `runs` in production), with DEFAULT_EVAL and its own seed 1 (the document's
+ * "Descriptive"). The slots are fixed: source k of `reg1CapabilitySources` is genome k mod 16 of batch floor(k / 16), whatever is available,
+ * since an evaluation depends on its slot. A source that does not load or fails validation is a row with its reason (`unavailable`), never
+ * dropped; it and a source with no dominant genome hold their slot with M3_FOUNDERS[2], evaluated and discarded. --allow-any-seed evaluates
+ * a failing source anyway (smoke tests).
+ */
+async function capabilityReg1(): Promise<void> {
+  for (const flag of ["source", "arm", "history", "tag"] as const) if (a[flag] !== undefined) throw new Error(`capability --reg1 reads its sources from --runs: --${flag} does not apply`);
+  const root = need("runs").replace(/\/+$/, "");
+  const seed = int("seed", 0);
+  if (!a["allow-any-seed"] && seed !== DEFAULT_EVAL.seed) throw new Error(`capability --reg1 runs DEFAULT_EVAL with its own seed ${DEFAULT_EVAL.seed}, got ${seed}`);
+  const out = need("out");
+  reg1WaiverGuard(out);
+  reg1Refuse("capability", reg1AssayOutProblems(REG1_CAPABILITY_LABELS, out));
+  // Operator errors are not an R4 result: a stray --boundary, or a --runs without scaffold/reg1/, stops here, before anything is written.
+  const forced = a.boundary === undefined ? undefined : reg1Boundary(null);
+  if (!(await Deno.stat(`${root}/scaffold/reg1`).then((st) => st.isDirectory, () => false))) throw new Error(`--runs ${root} has no scaffold/reg1/ directory (--runs is the directory holding it: runs in production)`);
+  await checkReg1Protocol();
+  const t0 = performance.now();
+  const rows: { arm: string; history: number; h: number; tag: string; source: string; record: Reg1Source | null; dom: ReturnType<typeof dominantGenome>; unavailable: string | null; evaluation: Awaited<ReturnType<typeof evaluateBatch>>[number] | null }[] = [];
+  for (const src of reg1CapabilitySources()) {
+    const dir = `${root}/${src.dir}`;
+    const row = { arm: src.arm, history: src.history, h: src.h, tag: reg1IdOf(src), source: dir, record: null as Reg1Source | null, dom: null as ReturnType<typeof dominantGenome>, unavailable: null as string | null, evaluation: null };
+    try {
+      const loaded = await loadReg1(dir, forced === undefined ? src.boundary : forced, src.h);
+      row.record = loaded.record;
+      const why = reg1SourceProblems(reg1BundleWantsOf(src.h), src.boundary, loaded.record);
+      if (why.length > 0 && !a["allow-any-seed"]) row.unavailable = why.join("; ");
+      else {
+        if (why.length > 0) console.warn(`--allow-any-seed, not the registration's: ${dir}: ${why.join("; ")}`);
+        row.dom = dominantGenome(loaded.state);
+      }
+    } catch (e) {
+      row.unavailable = `does not load: ${(e as Error).message}`;
+    }
+    if (row.unavailable !== null) console.warn(`capability: ${row.tag} unavailable: ${row.unavailable}`);
+    rows.push(row);
+  }
+  if (rows.every((r) => r.record === null)) throw new Error(`capability --reg1: no source under ${root} loads (the first: ${rows[0].unavailable}); nothing written`);
+  const have = rows.filter((r) => r.dom !== null);
+  if (have.length > 0) {
+    // Every source keeps its slot: one without a genome holds the placeholder, whose evaluation is discarded.
+    const placeholder = founderGenome(M3_FOUNDERS[2]);
+    const device = await requestDevice(navigator.gpu);
+    const perBatch = Math.floor((DEFAULT_EVAL.side * DEFAULT_EVAL.side) / DEFAULT_EVAL.reps);
+    for (let b = 0; b < rows.length; b += perBatch) {
+      const chunk = rows.slice(b, b + perBatch);
+      const evals = await evaluateBatch(device, chunk.map((r) => (r.dom === null ? placeholder : decodeGenome(r.dom.words))), { ...DEFAULT_EVAL, seed });
+      chunk.forEach((r, i) => (r.evaluation = r.dom === null ? null : evals[i]));
+    }
+  }
+  await Deno.mkdir(out, { recursive: true });
+  const cols = ["assay", "source", "arm", "history", "hi", "lo", "survived", "recovered", "lightDependent", "reps", "individuals", "meanMass", "mass", "recovery", "regenerated", "quality"];
+  const lines = [cols.join("\t")];
+  for (const r of rows) {
+    const e = r.evaluation;
+    lines.push(["capability", r.tag, r.arm, r.history, r.dom?.hi ?? 0, r.dom?.lo ?? 0, ...(e ? [e.survived, e.recovered, e.lightDependent, e.reps, e.individuals, e.meanMass, e.mass, e.recovery, e.regenerated, quality(e)] : cols.slice(6).map(() => "NA"))].join("\t"));
+  }
+  // One row per source, as capability writes them, with h and (a source that was not evaluated) why; each source's provenance under `provenance`.
+  const capability = rows.map(({ evaluation: e, dom, record: _record, unavailable, ...r }) => ({ ...r, dominant: `${dom?.hi ?? 0}:${dom?.lo ?? 0}`, evaluated: e !== null, ...(unavailable !== null ? { unavailable } : {}), ...(e ? { ...e, quality: quality(e) } : {}) }));
+  await Deno.writeTextFile(`${out}/assay.tsv`, ASSAY_COLUMNS.join("\t") + "\n");
+  await Deno.writeTextFile(`${out}/capability.tsv`, lines.join("\n") + "\n");
+  await Deno.writeTextFile(
+    `${out}/assay.json`,
+    JSON.stringify(
+      { tool: "scaffold-assays", protocolSha256, assay: "capability", seed, eval: { ...DEFAULT_EVAL, seed }, labels: REG1_CAPABILITY_LABELS, provenance: { runs: root, sources: rows.map((r) => r.record) }, protocolSha256Reg1: REG1_SHA256, ...waived(), capability, wallSeconds: (performance.now() - t0) / 1000 },
+      null,
+      2,
+    ) + "\n",
+  );
+  console.log(`capability --reg1: ${have.length}/${rows.length} genomes evaluated -> ${out}`);
+}
+
+/** Throws with `problems` unless there are none; --allow-any-seed (smoke tests) only prints them (the hunt's counterpart of `reg1Refuse`). */
+function hunt1Refuse(what: string, problems: string[]): void {
+  if (problems.length === 0) return;
+  if (!a["allow-any-seed"]) throw new Error(`${what}: ${problems.join("; ")}`);
+  console.warn(`--allow-any-seed, not the hunt's: ${what}: ${problems.join("; ")}`);
+}
+
+/**
+ * export --hunt1 records and checks the pinned hunt (`HUNT1_SHA256`), not the document as it is now; the document must still begin with its
+ * pinned text (amendments only at the end) unless --allow-any-seed.
+ */
+async function checkHunt1Protocol(): Promise<void> {
+  const why = await hunt1ProtocolProblems(await Deno.readFile(new URL("../docs/scaffold-transition-hunt-v1.md", import.meta.url)));
+  if (why.length > 0 && !a["allow-any-seed"]) throw new Error(why.join("; "));
+}
+
+/** Under --allow-any-seed, refuses an output inside this repository's runs/scaffold/hunt1 (the production tree): a smoke test writes elsewhere. */
+function hunt1WaiverGuard(out: string): void {
+  if (!a["allow-any-seed"]) return;
+  const why = hunt1WaiverOutProblems(realPathOf(out), realPathOf(decodeURIComponent(new URL("../runs/scaffold/hunt1", import.meta.url).pathname)));
+  if (why.length > 0) throw new Error(why.join("; "));
+}
+
+/**
+ * A source of an export set as read from `path`, with the record that goes under `provenance` in assay.json: protocol v1's main-run checkpoint
+ * (g2: `r3RepOriginOf`, its run directory's meta.json and done.json), the registration's own bundle for a `-s` source (reg1's loader and checks),
+ * or a runner bundle's pre-cycle checkpoint (`loadHunt1Source`, `hunt1BundleProblems`). A bundle named by its normal directory is the single complete one
+ * among it and its overflow rerun at census 100 (<experiment>-c100, as reg1's sources are): both complete is refused.
+ */
+async function hunt1Load(source: Hunt1Source, path: string, death: number, role: string): Promise<{ state: WorldState; provenance: Record<string, unknown> }> {
+  const readBytes = (p: string) => Deno.readFile(p);
+  if (source.kind === "v1") {
+    const state = await loadCheckpoint(path);
+    const origin = await r3RepOriginOf(path, state);
+    hunt1Refuse(`${path} is not protocol v1's main-run source ${source.arm} i${source.i}`, hunt1V1SourceProblems(source.arm, source.i, origin, role));
+    return { state, provenance: { ...origin } };
+  }
+  if (source.kind === "src") {
+    const wants = reg1BundleWantsOf(source.i);
+    const given = path.replace(/\/+$/, "");
+    if (wants.some((w) => given === w.dir || given.endsWith(`/${w.dir}`))) {
+      const loaded = await loadReg1Source(path, reg1BoundaryAOf(source.i), readBytes, wants);
+      hunt1Refuse(`${path} is not the registration's boundary-100 source of scaf i${source.i}`, reg1SourceProblems(wants, reg1BoundaryAOf(source.i), loaded.record, role));
+      return { state: loaded.state, provenance: { ...loaded.record } };
+    }
+  }
+  const want = hunt1BundleWant(source, death);
+  const loaded = await loadHunt1Source(path, want.boundary, readBytes, want);
+  hunt1Refuse(`${path} is not the hunt's ${source.kind} source (seed ${want.seed}, boundary ${want.boundary})`, hunt1BundleProblems(want, loaded.record, role));
+  return { state: loaded.state, provenance: { ...loaded.record } };
+}
+
+/**
+ * export --hunt1: one export set (W) of the hunt, one source and one variant, named by --stage and --set (`parseHunt1Set`). The regime, the seeds, the
+ * output directory, the document and the provenance of every source involved (the fragment source, and a genome-only set's history) are the hunt's
+ * unless --allow-any-seed. A source with no exporting pond (m = 0), and a genome-only set whose history has no dominant genome, write their record
+ * (`noFamilies`, `noGenome`; W = 0, assay.tsv with its header only) and exit 0, with no assay world.
+ */
+async function exportHunt1(): Promise<void> {
+  const t0 = performance.now();
+  const strict = !a["allow-any-seed"];
+  for (const flag of ["arm", "history", "time", "timing", "calibration", "tag", "frag-seed", "donor-seed", "swap-hex", "swap-from", "swap-founder", "swap-label", "steps", "mut-rate"] as const) {
+    if (a[flag] !== undefined) throw new Error(`export --hunt1 names its set by --stage and --set: --${flag} does not apply`);
+  }
+  const set = parseHunt1Set(a.stage, a.set);
+  const labels = set.labels;
+  const id = labels.set;
+  if (!!a.quench !== (labels.variant === "quench")) throw new Error(labels.variant === "quench" ? `${id} is a quenched set: pass --quench` : `--quench belongs to a quenched set, not ${id}`);
+  if ((a["genome-from"] !== undefined) !== (labels.variant === "genome")) throw new Error(labels.variant === "genome" ? `${id} needs --genome-from, the history's b200-pre bundle whose dominant genome it plants` : `--genome-from belongs to a genome-only set, not ${id}`);
+  if (!!a["genome-founder"] !== (labels.variant === "genome-control")) throw new Error(labels.variant === "genome-control" ? `${id} needs --genome-founder` : `--genome-founder belongs to s1-genome-control, not ${id}`);
+  const out = need("out");
+  const k = int("k", 1, 64), period = int("period", 1), side = int("side", 1, 16), censusEvery = int("census", 1), threshold = int("export", 1, 32), replicates = int("replicates", 1, 4);
+  const ref = Number(need("ref"));
+  const death = a.death === undefined ? HUNT1_DEATH.base : int("death", 1, 65_536);
+  hunt1WaiverGuard(out);
+  hunt1Refuse(`${id} runs at --k 8 --period 10000 --ref 103058 --side 8 --census 100 --export 28 --replicates 4`, hunt1RegimeProblems({ k, period, ref, side, censusEvery, export: threshold, replicates }));
+  hunt1Refuse(id, hunt1AssayOutProblems(labels, out));
+  await checkHunt1Protocol();
+  // Seeds: σ(h, s) for the fragments and the physics alike; a quenched set runs replicate 0 only.
+  const sigma0 = int("seed", 0);
+  const runs = labels.variant === "quench" ? 1 : replicates;
+  const seeds = Array.from({ length: runs }, (_, s) => ({ physics: sigma0 + s, fragment: sigma0 + s }));
+  if (strict) seeds.forEach((sd, s) => checkHunt1Seeds(labels, sd, s));
+  // The fragment source and, for a genome-only set, the history whose dominant genome it plants.
+  const { state: source, provenance } = await hunt1Load(set.source, need("source"), death, "source");
+  const { families, exportMass } = exportFamilies(source, threshold);
+  let swap: { words: Uint32Array; label: string; from: string } | null = null;
+  let noGenome = false;
+  if (set.donor !== null) {
+    const donor = await hunt1Load(set.donor, need("genome-from"), death, "donor");
+    const dom = dominantGenome(donor.state);
+    provenance.donor = { ...donor.provenance, dominant: r3RepDominantRecord(dom) };
+    if (dom === null) noGenome = true;
+    else swap = { words: dom.words, label: set.inoculum, from: `${a["genome-from"]} (dominant ${dom.hi}:${dom.lo})` };
+  } else if (labels.variant === "genome-control") swap = { words: encodeGenome(founderGenome(M3_FOUNDERS[2]), 0, 1), label: set.inoculum, from: "M3_FOUNDERS[2]" };
+  const header = { protocolSha256, set: id, source: need("source"), labels, inoculum: set.inoculum, k, period, ref, side, replicates: runs, censusEvery, threshold, seeds };
+  const extra = { provenance, protocolSha256Hunt1: HUNT1_SHA256, death, sourceExportMass: exportMass, quench: labels.variant === "quench", swap: swap && { label: swap.label, from: swap.from, words: words(swap.words) }, ...waived() };
+  if (families.length === 0 || noGenome) {
+    const record = hunt1NoRows(families.length === 0 ? "noFamilies" : "noGenome", families.length);
+    console.log(`${id}: ${families.length === 0 ? `${a.source} has no exporting pond, so no families` : `${a["genome-from"]} has no eligible cell, so no dominant genome`}; writing the record (W = 0), no assay world`);
+    await Deno.mkdir(out, { recursive: true });
+    await Deno.writeTextFile(`${out}/assay.tsv`, record.tsv);
+    await Deno.writeTextFile(`${out}/assay.json`, JSON.stringify(hunt1AssayJson({ ...header, extra: { ...extra, ...record.flags }, summary: record.summary, wallSeconds: (performance.now() - t0) / 1000 }), null, 2) + "\n");
+    return;
+  }
+  const device = await requestDevice(navigator.gpu, pondConfig(side, seeds[0].physics, 0));
+  const lines: string[] = [HUNT1_COLUMNS.join("\t")];
+  const rows: Hunt1Row[] = [];
+  const tally = { success: 0, truncated: 0 };
+  for (let s = 0; s < runs; s++) {
+    const plans = Array.from({ length: side * side }, (_, f) => {
+      const family = familyOf(families, s, f);
+      const fr = exportFragment(source, k, threshold, seeds[s].fragment, f, family);
+      if (fr === null) throw new Error(`family ${family} of ${a.source} has no eligible cell in its export zone, though it exports`);
+      return { family, item: fragmentItem(a.quench ? quench(fr) : swap ? swapGenome(fr, swap.words) : fr) };
+    });
+    const { state, planted } = buildAssayWorld(pondConfig(side, seeds[s].physics, 0), plans.map((p) => p.item));
+    const end = await runWorld(device, state, period, censusEvery);
+    const traits = pondTraits(end);
+    const exported = pondExportMasses(end, threshold);
+    plans.forEach((p, f) => {
+      const success = assaySuccess(traits[f], planted[f].retMass, ref);
+      lines.push(hunt1Line({ set: id, replicate: s, pond: f, family: p.family, inoculum: set.inoculum, planted: planted[f], endTrait: traits[f], success, exportMass: exported[f] }));
+      rows.push({ replicate: s, pond: f, family: p.family, endTrait: traits[f], exportMass: exported[f] });
+      tally.success += success;
+      if (planted[f].truncated) tally.truncated++;
+    });
+  }
+  const summary = hunt1Summary(rows, families, families.map((p) => exportMass[p]));
+  await Deno.mkdir(out, { recursive: true });
+  await Deno.writeTextFile(`${out}/assay.tsv`, lines.join("\n") + "\n");
+  await Deno.writeTextFile(`${out}/assay.json`, JSON.stringify(hunt1AssayJson({ ...header, extra, summary, wallSeconds: (performance.now() - t0) / 1000 }), null, 2) + "\n");
+  console.log(`export ${id}: W ${summary.W.toFixed(1)} over ${summary.families} families, Wexport ${summary.Wexport.toFixed(1)}, edge share ${summary.edgeShare.toFixed(4)}, ${rows.length} fragments (${tally.success} succeeded, ${tally.truncated} truncated), ${((performance.now() - t0) / 1000).toFixed(1)}s -> ${out}`);
+}
+
+switch (cmd) {
+  case "competence": {
+    if (a.reg1) {
+      await competenceReg1();
+      break;
+    }
+    const spec = await specFromArgs("competence");
+    if ("r3rep" in spec.labels) {
+      await competenceR3Rep(spec, spec.labels);
+      break;
+    }
+    const swap = await swapSpec();
+    if (swap) spec.inoculum = swap.label;
+    else if (a.quench) spec.inoculum = "quenched";
+    const cal = "calibration" in spec.labels ? spec.labels.calibration : undefined;
+    if (cal === 1 && (swap || a.quench)) throw new Error("--calibration 1 is the plain ancestor competence");
+    if (cal === 2 && !a.quench) throw new Error("--calibration 2 is the quenched control (--quench)");
+    if (cal === undefined && (swap || a.quench) && spec.labels.arm !== "scaf") throw new Error("swap and quenched arms label a scaf history (--arm scaf)");
+    spec.plan = (sigma, f) => {
+      const fr = standardFragment(spec.source, spec.k, sigma, f);
+      const item = fr === null ? null : a.quench ? quench(fr) : swap ? swapGenome(fr, swap.words) : fr;
+      return { item: fragmentItem(item), family: -1 };
+    };
+    await runAssay(spec, need("out"), { quench: !!a.quench, swap: swap && { label: swap.label, from: swap.from, words: words(swap.words) } });
+    break;
+  }
+  case "transmission": {
+    if (a.reg1) {
+      await transmissionReg1();
+      break;
+    }
+    const spec = await specFromArgs("transmission");
+    const donorSeed = checkSeed("donor seed", a["donor-seed"] === undefined ? spec.seed + 9 : int("donor-seed", 0));
+    if (!a["allow-any-seed"]) {
+      if ("r1dprime" in spec.labels) checkR1dPrimeDonorSeed(spec.labels, donorSeed);
+      else if ("r1prime" in spec.labels) checkR1PrimeDonorSeed(spec.labels, donorSeed);
+      else if (!("r3rep" in spec.labels) && !("reg1" in spec.labels)) checkDonorSeed(spec.labels, donorSeed); // --r3rep never reaches transmission (refused above), --reg1 has its own
+    }
+    // R1'': the regime and the source are the protocol's (production runs), and the assay records where it came from.
+    let r1dp: Record<string, unknown> = {};
+    if ("r1dprime" in spec.labels) {
+      if (!a["allow-any-seed"]) {
+        for (const [flag, got, want] of [["k", spec.k, R1DP_REGIME.k], ["period", spec.period, R1DP_REGIME.period], ["side", spec.side, R1DP_REGIME.side], ["replicates", spec.replicates, R1DP_REGIME.replicates], ["census", Number(a.census), R1DP_REGIME.censusEvery]] as const) {
+          if (got !== want) throw new Error(`--${flag} must be ${want} for --r1dprime, got ${got}`);
+        }
+      }
+      const provenance = r1dPrimeProvenance(spec.sourcePath, spec.source);
+      const problems = r1dPrimeSourceProblems(spec.labels, provenance);
+      if (problems.length > 0 && !a["allow-any-seed"]) throw new Error(`${spec.sourcePath} is not the source of R1'' set h ${spec.labels.h}: ${problems.join("; ")}`);
+      // The checkpoint sits in a run directory (ckpt/ beside its meta.json): a copy lifted out of one has lost what says which run it is.
+      if (!a["allow-any-seed"]) {
+        const runDir = spec.sourcePath.slice(0, spec.sourcePath.length - `ckpt/${r1dPrimeCheckpointOf(spec.labels.h)}.blck.gz`.length) || "./";
+        if (!(await Deno.stat(`${runDir}meta.json`).then((st) => st.isFile, () => false))) throw new Error(`${spec.sourcePath} is not inside a run directory (no ${runDir}meta.json)`);
+      }
+      r1dp = { provenance, protocolSha256R1dp: await sha256File(new URL("../docs/scaffold-heredity-replication-v1.md", import.meta.url)) };
+    }
+    const { donors, eligible, insufficient } = r1Donors(spec.source, donorSeed);
+    spec.plan = (sigma, f) => {
+      const donor = donors[f % donors.length];
+      return { item: fragmentItem(standardFragment(spec.source, spec.k, sigma, f, donor)), family: donor };
+    };
+    // Fewer than two eligible ponds: R1 is not demonstrated for the history, and no row is written.
+    await runAssay(spec, need("out"), { donorSeed, donors, eligible, insufficient, ...r1dp }, () => !insufficient);
+    break;
+  }
+  case "garden": {
+    if (a.reg1) {
+      await gardenReg1();
+      break;
+    }
+    const spec = await specFromArgs("garden");
+    if (a.inoculum !== "fragment" && a.inoculum !== "disc") throw new Error("--inoculum must be fragment or disc");
+    spec.inoculum = a.inoculum;
+    spec.plan = (sigma, f) => {
+      const fr = standardFragment(spec.source, spec.k, sigma, f);
+      if (a.inoculum === "fragment" || fr === null) return { item: fragmentItem(fr), family: -1 };
+      // Standardised inoculum: the fragment's dominant genome (by B+P) as the standard disc.
+      const dom = fragmentDominant(fr);
+      return { item: dom === null ? null : { kind: "disc", genome: decodeGenome(dom.words) }, family: -1 };
+    };
+    await runAssay(spec, need("out"), {});
+    break;
+  }
+  case "continue": {
+    if (a.reg1) {
+      await continueReg1();
+      break;
+    }
+    const src = await loadCheckpoint(need("source"));
+    const steps = int("steps", 1);
+    const seed = checkSeed("seed", int("seed", 0));
+    if (a.r3rep && a["mut-rate"] !== undefined) throw new Error("continue --r3rep runs with mutation on at the source's (default) rate: --mut-rate does not apply");
+    const mutRate = a["mut-rate"] === undefined ? src.cfg.mutRate : int("mut-rate", 0);
+    if (mutRate === 0) throw new Error("continue runs with mutation on: the source has mutRate 0 (pass --mut-rate)");
+    // R3 replication: the source is the labelled world's timing (a) source, and the sidecar written last says where the timing (b) state came from.
+    let r3rep: { h: number; origin: R3RepOrigin; sidecar: string; sha: string } | null = null;
+    if (a.r3rep) {
+      const world = parseR3RepContinueLabels({ arm: a.arm, history: a.history, h: a.h, timing: a.timing, time: a.time, calibration: a.calibration, control: a.control });
+      const h = world.h;
+      const out = need("out");
+      const origin = await r3RepOriginOf(need("source"), src);
+      const problems = [...r3RepOriginProblems(h, origin, R3REP_SHA256.protocol), ...r3RepContinueProblems(h, { seed, steps, censusEvery: int("census", 1), out })];
+      if (problems.length > 0 && !a["allow-any-seed"]) throw new Error(`continue --r3rep of ${r3RepIdOf(world)} (h ${h}): ${problems.join("; ")}`);
+      await checkR3RepProtocol();
+      r3rep = { h, origin, sidecar: r3RepSidecarPathOf(out), sha: R3REP_SHA256.r3rep };
+      // A sidecar describes the checkpoint beside it: a stale one goes before that checkpoint is rewritten.
+      await Deno.remove(r3rep.sidecar).catch((e) => {
+        if (!(e instanceof Deno.errors.NotFound)) throw e;
+      });
+    }
+    const state: WorldState = { ...src, cfg: { ...src.cfg, seed, mutRate } };
+    const device = await requestDevice(navigator.gpu, state.cfg);
+    const sim = await GpuSim.create(device, state);
+    const t0 = performance.now();
+    try {
+      const check = { startMatter: totalsOf(state.cfg, state.cells).matter, baseline: ledgerEnergy(state) };
+      const r = await runPeriod(sim, device, steps, int("census", 1), check);
+      if (!r.conservationOk) throw new Error("matter or the energy ledger broke during the continuation");
+      const end = await sim.readState();
+      await saveCheckpoint(need("out"), end);
+      if (r3rep) {
+        const sidecar = r3RepContinuationOf({ h: r3rep.h, origin: r3rep.origin, end: r3RepCheckpointOf(need("out"), end), steps, protocolSha256R3rep: r3rep.sha });
+        await Deno.writeTextFile(`${r3rep.sidecar}.tmp`, JSON.stringify(sidecar, null, 2) + "\n");
+        await Deno.rename(`${r3rep.sidecar}.tmp`, r3rep.sidecar);
+      }
+      console.log(`continue ${a.source}: ${steps} steps from step ${src.step} to ${end.step}, ${r.events} mutation events, seed ${seed}, conservation OK, ${((performance.now() - t0) / 1000).toFixed(1)}s -> ${a.out}`);
+    } finally {
+      sim.destroy();
+    }
+    break;
+  }
+  case "export":
+    await exportHunt1();
+    break;
+  case "capability": {
+    if (a.reg1) {
+      await capabilityReg1();
+      break;
+    }
+    const sources = need("source").split(",");
+    const tags = a.tag === undefined ? sources.map(baseName) : a.tag.split(",");
+    if (tags.length !== sources.length) throw new Error("--tag needs one name per source");
+    const arms = need("arm").split(",");
+    if (arms.length !== sources.length) throw new Error("--arm needs one arm per source");
+    const histories = a.history === undefined ? arms.map(() => "-") : a.history.split(",");
+    if (histories.length !== sources.length) throw new Error("--history needs one entry per source (\"-\" for the ancestor)");
+    const labels = arms.map((arm, i) => {
+      if (arm !== "scaf" && arm !== "rand" && arm !== "cont" && arm !== "ancestor") throw new Error(`--arm must be scaf|rand|cont|ancestor, got ${arm}`);
+      if (arm === "ancestor") {
+        if (histories[i] !== "-") throw new Error("--history does not apply to the ancestor (use \"-\")");
+        return { arm };
+      }
+      const h = Number(histories[i]);
+      if (!Number.isInteger(h) || h < 0 || h > 5) throw new Error(`--history must be 0-5 for arm ${arm}, got ${histories[i]}`);
+      return { arm, history: h };
+    });
+    const seed = checkSeed("seed", int("seed", 0));
+    const t0 = performance.now();
+    const doms: ReturnType<typeof dominantGenome>[] = [];
+    for (const s of sources) doms.push(dominantGenome(await loadCheckpoint(s)));
+    const rows: { arm: string; history?: number; tag: string; source: string; hi: number; lo: number; evaluation: Awaited<ReturnType<typeof evaluateBatch>>[number] | null }[] = sources.map((source, i) => ({
+      ...labels[i],
+      tag: tags[i],
+      source,
+      hi: doms[i]?.hi ?? 0,
+      lo: doms[i]?.lo ?? 0,
+      evaluation: null,
+    }));
+    const have = rows.filter((_, i) => doms[i] !== null);
+    if (have.length > 0) {
+      const device = await requestDevice(navigator.gpu);
+      const perBatch = Math.floor((DEFAULT_EVAL.side * DEFAULT_EVAL.side) / DEFAULT_EVAL.reps);
+      for (let b = 0; b < have.length; b += perBatch) {
+        const chunk = have.slice(b, b + perBatch);
+        const genomes = chunk.map((r) => decodeGenome(doms[rows.indexOf(r)]!.words));
+        const evals = await evaluateBatch(device, genomes, { ...DEFAULT_EVAL, seed });
+        chunk.forEach((r, i) => (r.evaluation = evals[i]));
+      }
+    }
+    const out = need("out");
+    await Deno.mkdir(out, { recursive: true });
+    const cols = ["assay", "source", "arm", "history", "hi", "lo", "survived", "recovered", "lightDependent", "reps", "individuals", "meanMass", "mass", "recovery", "regenerated", "quality"];
+    const lines = [cols.join("\t")];
+    for (const r of rows) {
+      const e = r.evaluation;
+      lines.push(["capability", r.tag, r.arm, r.history ?? "-", r.hi, r.lo, ...(e ? [e.survived, e.recovered, e.lightDependent, e.reps, e.individuals, e.meanMass, e.mass, e.recovery, e.regenerated, quality(e)] : cols.slice(6).map(() => "NA"))].join("\t"));
+    }
+    // One row per source for scaffold-report r4: arm and history label it, the measures sit beside them (numeric
+    // ones are summarised per arm; the dominant genome's id is a string so it is not).
+    const capability = rows.map(({ evaluation: e, hi, lo, ...r }) => ({ ...r, dominant: `${hi}:${lo}`, evaluated: e !== null, ...(e ? { ...e, quality: quality(e) } : {}) }));
+    // assay.tsv keeps the shared header; capability rows are per genome, not per fragment, so they live in capability.tsv.
+    await Deno.writeTextFile(`${out}/assay.tsv`, ASSAY_COLUMNS.join("\t") + "\n");
+    await Deno.writeTextFile(`${out}/capability.tsv`, lines.join("\n") + "\n");
+    await Deno.writeTextFile(
+      `${out}/assay.json`,
+      JSON.stringify({ tool: "scaffold-assays", protocolSha256, assay: "capability", seed, eval: { ...DEFAULT_EVAL, seed }, capability, wallSeconds: (performance.now() - t0) / 1000 }, null, 2) + "\n",
+    );
+    console.log(`capability: ${have.length}/${rows.length} genomes evaluated -> ${out}`);
+    break;
+  }
+  default:
+    throw new Error(`usage: scaffold-assays.ts competence|transmission|garden|continue|capability|export (see the file header), got "${cmd}"`);
+}

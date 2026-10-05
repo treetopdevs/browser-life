@@ -243,6 +243,30 @@ describe("Clopper–Pearson lower bound", () => {
     // 15/16 at one-sided 95% (Beta(15, 2) 5th percentile).
     expect(binomialLowerBound(15, 16)).toBeCloseTo(0.7358, 3);
   });
+
+  it("refuses counts that are not integers with 0 <= k <= n and n >= 1", () => {
+    // deno-lint-ignore no-explicit-any
+    expect(() => binomialLowerBound(undefined as any, 32)).toThrow();
+    expect(() => binomialLowerBound(NaN, 32)).toThrow();
+    expect(() => binomialLowerBound(33, 32)).toThrow();
+    expect(() => binomialLowerBound(-1, 32)).toThrow();
+    expect(() => binomialLowerBound(1.5, 32)).toThrow();
+    expect(() => binomialLowerBound(0, 0)).toThrow();
+    expect(() => binomialLowerBound(1, NaN)).toThrow();
+    expect(binomialLowerBound(32, 32)).toBeGreaterThan(0.9);
+  });
+
+  it("stays meaningful above n = 1000, where the direct sum collapsed to 0", () => {
+    // 1000/2000: the normal approximation to the one-sided 95% bound is 0.5 - 1.645 * sqrt(0.25 / 2000) = 0.4816.
+    const half = binomialLowerBound(1000, 2000);
+    expect(half).toBeGreaterThanOrEqual(0.475);
+    expect(half).toBeLessThanOrEqual(0.49);
+    expect(binomialLowerBound(600, 1100)).toBeGreaterThan(0.5);
+    // Continuous across the switch at n = 1000, and k = n still solves p^n = alpha.
+    expect(Math.abs(binomialLowerBound(501, 1001) - binomialLowerBound(500, 1000))).toBeLessThan(0.005);
+    expect(binomialLowerBound(1001, 1001)).toBeCloseTo(0.05 ** (1 / 1001), 6);
+    expect(binomialLowerBound(0, 2000)).toBe(0);
+  });
 });
 
 import { passesProbabilityGate } from "@bl/metrics";

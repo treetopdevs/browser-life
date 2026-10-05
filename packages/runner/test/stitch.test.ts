@@ -6,7 +6,7 @@
 // hand-built instead, so every field stitchRun actually inspects is
 // satisfied deliberately rather than incidentally.
 import { describe, expect, it } from "vitest";
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
+import { METRICS_VERSION, SCHEMA_VERSION } from "@bl/schema";
 import { observationDigests, runId, specConfig, stitchRun, type RunSpec, type StitchSegment } from "@bl/runner";
 
 const baseSpec: RunSpec = { experiment: "fx", presetId: "spots", condition: "treatment", seed: 1, steps: 0, censusEvery: 10, deepEvery: 1000, checkpointEvery: 0 };
@@ -35,7 +35,7 @@ function segment(index: number, startStep: number, steps: number, opts: Opts = {
     cfg,
     init: "seed",
     schemaVersion: SCHEMA_VERSION,
-    ruleVersion: RULE_VERSION,
+    ruleVersion: cfg.ruleVersion,
     host: { host: "test", adapter: "test" },
     startStep,
     startedAt: new Date(0).toISOString(),
@@ -112,6 +112,31 @@ describe("stitchRun refuses a segment computed under a different metrics version
   it("refuses when only a later segment's metrics version is outdated", () => {
     const segs = [segment(0, 0, 10, { metricsVersion: METRICS_VERSION }), segment(1, 10, 10, { metricsVersion: METRICS_VERSION - 1 })];
     expect(() => stitchRun(segs, 20)).toThrow(/segment #1.*metrics version/);
+  });
+});
+
+describe("stitchRun rule-version provenance", () => {
+  const versioned = (s: StitchSegment, version: number) => {
+    const m = JSON.parse(s.files["manifest.json"]);
+    m.ruleVersion = version; m.cfg.ruleVersion = version;
+    return { ...s, files: { ...s.files, "manifest.json": JSON.stringify(m) } };
+  };
+
+  it("accepts a consistent supported version and preserves it", () => {
+    for (const version of [1, 2]) {
+      const stitched = stitchRun([versioned(segment(0, 0, 10), version)], 10);
+      const m = JSON.parse(stitched["manifest.json"]);
+      expect(m.ruleVersion).toBe(version); expect(m.cfg.ruleVersion).toBe(version);
+    }
+  });
+
+  it("rejects mislabeled configs and mixed versions", () => {
+    const first = versioned(segment(0, 0, 10), 1), second = versioned(segment(1, 10, 10), 2);
+    expect(() => stitchRun([first, second], 20)).toThrow(/ruleVersion 2 differs/);
+    const m = JSON.parse(first.files["manifest.json"]); m.ruleVersion = 2;
+    first.files["manifest.json"] = JSON.stringify(m);
+    expect(() => stitchRun([first], 10)).toThrow(/differs from config/);
+    expect(() => stitchRun([versioned(segment(0, 0, 10), 3)], 10)).toThrow(/unsupported rule/);
   });
 });
 

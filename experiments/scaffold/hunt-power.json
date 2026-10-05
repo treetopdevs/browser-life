@@ -1,0 +1,95 @@
+{
+ "n": 24,
+ "reps": 2000,
+ "seed": 20261002,
+ "rows": [
+  {
+   "alpha": 0.025,
+   "zero": 0,
+   "effect": 0.65,
+   "mannWhitney": 0.437,
+   "mannWhitneySE": 0.01109123527836282,
+   "signedRank": 0.4205,
+   "signedRankSE": 0.011038110119037587,
+   "sign": 0.21055184598415583,
+   "signNeeds": 18
+  },
+  {
+   "alpha": 0.025,
+   "zero": 0,
+   "effect": 0.7,
+   "mannWhitney": 0.6875,
+   "mannWhitneySE": 0.010364452469860624,
+   "signedRank": 0.6575,
+   "signedRankSE": 0.01061116746640067,
+   "sign": 0.3885891233931381,
+   "signNeeds": 18
+  },
+  {
+   "alpha": 0.025,
+   "zero": 0,
+   "effect": 0.75,
+   "mannWhitney": 0.8705,
+   "mannWhitneySE": 0.007507654427316162,
+   "signedRank": 0.868,
+   "signedRankSE": 0.007568883669339885,
+   "sign": 0.607412338166295,
+   "signNeeds": 18
+  },
+  {
+   "alpha": 0.025,
+   "zero": 0,
+   "effect": 0.8,
+   "mannWhitney": 0.9735,
+   "mannWhitneySE": 0.00359150038284837,
+   "signedRank": 0.97,
+   "signedRankSE": 0.003814446224552132,
+   "sign": 0.8110710551188801,
+   "signNeeds": 18
+  },
+  {
+   "alpha": 0.025,
+   "zero": 0.25,
+   "effect": 0.65,
+   "mannWhitney": 0.172,
+   "mannWhitneySE": 0.0084384832760396,
+   "signedRank": 0.311,
+   "signedRankSE": 0.010350821223458553,
+   "sign": null,
+   "signNeeds": 18
+  },
+  {
+   "alpha": 0.025,
+   "zero": 0.25,
+   "effect": 0.7,
+   "mannWhitney": 0.2685,
+   "mannWhitneySE": 0.009909786829190626,
+   "signedRank": 0.547,
+   "signedRankSE": 0.011130835548151809,
+   "sign": null,
+   "signNeeds": 18
+  },
+  {
+   "alpha": 0.025,
+   "zero": 0.25,
+   "effect": 0.75,
+   "mannWhitney": 0.394,
+   "mannWhitneySE": 0.0109262070271435,
+   "signedRank": 0.7455,
+   "signedRankSE": 0.009739860111931793,
+   "sign": null,
+   "signNeeds": 18
+  },
+  {
+   "alpha": 0.025,
+   "zero": 0.25,
+   "effect": 0.8,
+   "mannWhitney": 0.544,
+   "mannWhitneySE": 0.011136965475388706,
+   "signedRank": 0.8895,
+   "signedRankSE": 0.007010340576605391,
+   "sign": null,
+   "signNeeds": 18
+  }
+ ]
+}

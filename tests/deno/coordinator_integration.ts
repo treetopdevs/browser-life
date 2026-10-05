@@ -9,12 +9,15 @@
 // 0 to isolate and confirm mandatory final-segment verification on its own
 // (the first experiment's fractional verification alone can't tell a broken
 // "only verify the sampled fraction, never the last segment on its own"
-// implementation from a correct one).
+// implementation from a correct one). A last, ponds-small experiment checks
+// capability gating over the wire (pond work only for an island that
+// advertises "ponds-v1") and that its stitched bundles equal single
+// tools/run.ts runs, ponds.tsv included.
 //
 // Run from the repo root: deno run -A tests/deno/coordinator_integration.ts < /dev/null
 import { requestDevice } from "@bl/sim-gpu";
 import { METRICS_VERSION } from "@bl/schema";
-import { BUNDLE_FILES, runExperiment, runIsland, type RunSpec, type Sink } from "@bl/runner";
+import { BUNDLE_FILES, OBSERVATION_FILES, observationDigests, PONDS_FILE, runExperiment, runIsland, VERIFIED_FILES, type RunSpec, type Sink, type Task } from "@bl/runner";
 
 const root = Deno.cwd();
 const coordinatorDir = `${root}/apps/coordinator`;
@@ -358,6 +361,167 @@ try {
 
   const producedGated = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200 });
   check("a current-version island (real runIsland) is offered and completes the gated experiment's one segment", producedGated === 1, String(producedGated));
+
+  // Capability gating (Coordinator.Queue's moduledoc): a pond experiment's
+  // segments, run or verify, go only to an island whose /next carries
+  // "ponds-v1" (runIsland's ISLAND_CAPABILITIES). Created last, so no earlier
+  // runIsland call above can pick up its work and change those task counts.
+  const pondSpec = {
+    experiment: "it-ponds",
+    presetId: "ponds-small",
+    conditions: ["treatment", "pond-cont"],
+    seeds: [1],
+    steps: 4000,
+    segmentSteps: 2000,
+    censusEvery: 100,
+    verifyFraction: 1.0,
+  };
+  const createdPonds = await call<{ segments: number }>("/api/experiments", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(pondSpec),
+  });
+  check("creates the ponds-small experiment (2 runs of 2 segments)", createdPonds.segments === 4, JSON.stringify(createdPonds));
+
+  // An island built before the pond cycle: it declares the current metrics
+  // version (so metrics-version gating doesn't stand in for the capability),
+  // but its /next carries no "ponds-v1".
+  const noCap = await call<{ id: string; token: string }>("/api/islands", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ adapter: "no-ponds-capability", metricsVersion: METRICS_VERSION }),
+  });
+  const noCapQ = `island=${encodeURIComponent(noCap.id)}`;
+  const noCapAuthed = (init: RequestInit = {}): RequestInit => ({ ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${noCap.token}` } });
+  const noCapNext = (body?: unknown) =>
+    call<Task>(
+      `/api/next?${noCapQ}`,
+      noCapAuthed(body === undefined ? { method: "POST" } : { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }),
+    );
+
+  // The metrics-gated experiment's one segment, just produced above with
+  // verifyFraction 1.0, still waits for its verify: non-pond work, which must
+  // still flow to this island. It replays it honestly in-process, as a real
+  // island would (one segment: no start checkpoint), so nothing is left leased.
+  const nonPond = await noCapNext();
+  check(
+    "an island without the ponds-v1 capability is still offered non-pond work (the metrics-gated segment's verify)",
+    nonPond.kind === "verify" && nonPond.segment?.run.startsWith("it-metrics-gate/") === true,
+    JSON.stringify(nonPond.segment ?? nonPond),
+  );
+  if (nonPond.kind === "verify" && nonPond.segment && nonPond.spec) {
+    const replay = new Map<string, string>();
+    const replaySink: Sink = {
+      async writeText(f, t) { replay.set(f, t); },
+      async appendText(f, t) { replay.set(f, (replay.get(f) ?? "") + t); },
+      async writeBytes() {},
+    };
+    const replayed = await runExperiment(device, nonPond.spec, replaySink, host, () => {});
+    const nonPondDone = await call<{ status: string }>(`/api/segments/${nonPond.segment.id}/complete?${noCapQ}`, noCapAuthed({
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "verify", lease: nonPond.lease, endHash: replayed.summary.finalHash, summary: replayed.summary, observationDigests: await observationDigests(replay) }),
+    }));
+    check("its honest replay verifies that segment", nonPondDone.status === "verified", JSON.stringify(nonPondDone));
+  }
+
+  // Only the pond experiment's run tasks are left; ApiController.next/2 reads
+  // a missing, empty or malformed capability list as none.
+  for (const [what, body] of [["no body", undefined], ["an empty list", { capabilities: [] }], ["a malformed value", { capabilities: "ponds-v1" }]] as const) {
+    const t = await noCapNext(body);
+    check(`an island whose /next carries ${what} is idle while pond run tasks are waiting`, t.kind === "idle", JSON.stringify(t.segment ?? t));
+  }
+
+  // runIsland advertises "ponds-v1". One island runs both runs' segments
+  // (never offered its own segments' verifies), a second verifies all four.
+  const producedPonds = await runIsland(device, { coordinator: base, host, maxTasks: 4, idleMs: 200 });
+  check("a capable island (real runIsland) runs all 4 pond segments", producedPonds === 4, String(producedPonds));
+  const idleForVerify = await noCapNext();
+  check("an island without the capability is idle while pond verify tasks are waiting", idleForVerify.kind === "idle", JSON.stringify(idleForVerify.segment ?? idleForVerify));
+  const verifiedPonds = await runIsland(device, { coordinator: base, host, maxTasks: 4, idleMs: 200 });
+  check("a second capable island verifies all 4 pond segments", verifiedPonds === 4, String(verifiedPonds));
+
+  const pondStatus = await call<{ runs: { run: string; segments: number; verified: number; diverged: number; blocked: number }[] }>("/api/status");
+  const pondRuns = pondStatus.runs.filter((r) => r.run.startsWith("it-ponds/"));
+  check(
+    "both pond runs are fully verified, with no divergence or blocking",
+    pondRuns.length === 2 && pondRuns.every((r) => r.segments === 2 && r.verified === 2 && r.diverged === 0 && r.blocked === 0),
+    JSON.stringify(pondRuns),
+  );
+  const expPonds = await call<{ segments: { run: string; index: number; files: Record<string, string> | null; observationsVerified: boolean | null }[] }>("/api/experiments/it-ponds");
+  check(
+    "every pond segment uploaded ponds.tsv, and its verifier's observation digests (ponds.tsv among them) matched",
+    expPonds.segments.length === 4 && expPonds.segments.every((s) => typeof s.files?.[PONDS_FILE] === "string" && s.observationsVerified === true),
+    JSON.stringify(expPonds.segments.map((s) => ({ run: s.run, index: s.index, ponds: s.files?.[PONDS_FILE] ?? null, observationsVerified: s.observationsVerified }))),
+  );
+
+  // The stitched bundles must equal single, unsegmented tools/run.ts runs of
+  // the same preset, conditions, seed and steps (--deep 10 and --checkpoint 0
+  // are the coordinator's task spec: Queue's default deepEvery, and no
+  // checkpoints): finalHash and every verified file byte for byte.
+  const pondStitch = await stitchCli("it-ponds");
+  check("stitch.ts exports both pond runs", pondStitch.success && stdout(pondStitch).includes("2 written"), stdout(pondStitch).slice(-200));
+  const singleOut = `${dataDir}/single`;
+  const single = await new Deno.Command(Deno.execPath(), {
+    args: [
+      "run", "-A", "tools/run.ts", "--experiment", "it-ponds", "--preset", "ponds-small", "--conditions", pondSpec.conditions.join(","),
+      "--seeds", "1", "--steps", String(pondSpec.steps), "--census", String(pondSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
+    ],
+    stdin: "null",
+  }).output();
+  check("tools/run.ts runs both pond conditions unsegmented", single.success, new TextDecoder().decode(single.stderr).slice(0, 300));
+  const readOr = (p: string) => Deno.readTextFile(p).catch(() => undefined);
+  for (const condition of pondSpec.conditions) {
+    const stitchedDir = `${outDir}/it-ponds/ponds-small/${condition}/seed-1`;
+    const singleDir = `${singleOut}/it-ponds/ponds-small/${condition}/seed-1`;
+    // Equal, or absent from both: only a pond run's other optional files
+    // (migrations.tsv, exchanges.tsv, species.tsv) may be absent.
+    const differing: string[] = [];
+    const missing: string[] = [];
+    for (const f of VERIFIED_FILES) {
+      const text = await readOr(`${stitchedDir}/${f}`);
+      if (text !== (await readOr(`${singleDir}/${f}`))) differing.push(f);
+      if (text === undefined && (f === PONDS_FILE || (OBSERVATION_FILES as readonly string[]).includes(f))) missing.push(f);
+    }
+    const pondRows = ((await readOr(`${stitchedDir}/${PONDS_FILE}`)) ?? "").split("\n").filter(Boolean).length - 1;
+    const finalHash = async (dir: string) => JSON.parse((await readOr(`${dir}/manifest.json`)) ?? "{}").summary?.finalHash as string | undefined;
+    const [stitchedHash, singleHash] = [await finalHash(stitchedDir), await finalHash(singleDir)];
+    check(
+      `the stitched ${condition} bundle equals the single tools/run.ts run's: finalHash and every verified file, ponds.tsv included`,
+      differing.length === 0 && missing.length === 0 && pondRows > 0 && stitchedHash !== undefined && stitchedHash === singleHash,
+      `differing [${differing.join(", ")}], missing [${missing.join(", ")}], ${pondRows} ponds.tsv rows, finalHash ${stitchedHash} vs ${singleHash}`,
+    );
+  }
+
+  // A cached export is re-checked against the stitch rules, because its fingerprint covers accepted digests and not
+  // them: an exported ponds.tsv whose second row repeats the first row's recipient (same row count) is moved aside
+  // and the run re-exported, instead of being kept as "already present".
+  {
+    const condition = pondSpec.conditions[0];
+    const cachedDir = `${outDir}/it-ponds/ponds-small/${condition}/seed-1`;
+    const good = await Deno.readTextFile(`${cachedDir}/${PONDS_FILE}`);
+    const lines = good.split("\n");
+    const recipientCol = lines[0].split("\t").indexOf("recipient");
+    const first = lines[1].split("\t");
+    const second = lines[2].split("\t");
+    second[recipientCol] = first[recipientCol];
+    lines[2] = second.join("\t");
+    await Deno.writeTextFile(`${cachedDir}/${PONDS_FILE}`, lines.join("\n"));
+    const unchanged = await stitchCli("it-ponds");
+    const asides = [...Deno.readDirSync(`${outDir}/it-ponds/ponds-small/${condition}`)].map((e) => e.name).filter((n) => n.startsWith("seed-1.stale-"));
+    check(
+      "a cached pond export whose ponds.tsv repeats a recipient is moved aside and rewritten, not kept",
+      unchanged.success && asides.length === 1 && new TextDecoder().decode(unchanged.stderr).includes("export fails the ponds.tsv check") && (await Deno.readTextFile(`${cachedDir}/${PONDS_FILE}`)) === good,
+      `${asides.join(",")} | ${new TextDecoder().decode(unchanged.stderr).slice(0, 300)}`,
+    );
+    const kept = await stitchCli("it-ponds");
+    const asidesAfter = [...Deno.readDirSync(`${outDir}/it-ponds/ponds-small/${condition}`)].filter((e) => e.name.startsWith("seed-1.stale-")).length;
+    check(
+      "the rewritten export is then kept as present: nothing written, nothing skipped, no further bundle moved aside",
+      kept.success && stdout(kept).includes("0 written, 2 already present, 0 skipped") && asidesAfter === 1 && (await Deno.readTextFile(`${cachedDir}/${PONDS_FILE}`)) === good,
+      stdout(kept).slice(-200),
+    );
+  }
 } finally {
   try {
     server.kill("SIGTERM");

@@ -17,7 +17,7 @@ export interface ViewRect {
 }
 
 const shader = (pre: string) => /* wgsl */ `${pre}
-struct View { origin: vec2f, size: vec2f, canvas: vec2f, mode: u32, unit: f32, tiles: u32, pad0: u32, pad1: u32, pad2: u32 }
+struct View { origin: vec2f, size: vec2f, canvas: vec2f, mode: u32, unit: f32, tiles: u32, hl: u32, hlHi: u32, hlLo: u32 }
 @group(0) @binding(0) var<storage, read> cells: array<u32>;
 @group(0) @binding(1) var<storage, read> genome: array<u32>;
 @group(0) @binding(2) var<storage, read> U: array<i32>;
@@ -79,6 +79,14 @@ fn fs(@builtin(position) pos: vec4f) -> @location(0) vec4f {
       col = select(vec3f(0.15, 0.3, 1.0) * -g, vec3f(1.0, 0.35, 0.2) * g, g > 0.0);
     }
   }
+  // Lineage highlight (the lineage inspector): its cells tinted, everything else dimmed.
+  if (view.hl != 0u) {
+    if (genome[G_LIN_HI + i] == view.hlHi && genome[G_LIN_LO + i] == view.hlLo) {
+      col = mix(max(col, vec3f(0.1)), vec3f(1.0, 0.82, 0.25), 0.45);
+    } else {
+      col = col * 0.22;
+    }
+  }
   // Tile borders when a world is split into independent tiles.
   if (view.tiles != 0u) {
     let px = view.size.x / view.canvas.x;
@@ -132,7 +140,8 @@ export class Renderer {
     this.boundTo = this.sim;
   }
 
-  draw(mode: GpuViewMode, rect: ViewRect, canvasW: number, canvasH: number, unit = 256): void {
+  /** `highlight`: a lineage id [hi, lo] whose cells are drawn tinted while the rest are dimmed. */
+  draw(mode: GpuViewMode, rect: ViewRect, canvasW: number, canvasH: number, unit = 256, highlight: readonly [number, number] | null = null): void {
     this.bind();
     const u = new ArrayBuffer(48);
     const f = new Float32Array(u);
@@ -146,6 +155,9 @@ export class Renderer {
     w[6] = VIEW_MODES.indexOf(mode);
     f[7] = unit;
     w[8] = this.sim.cfg.tilesX * this.sim.cfg.tilesY > 1 ? 1 : 0;
+    w[9] = highlight ? 1 : 0;
+    w[10] = highlight ? highlight[0] >>> 0 : 0;
+    w[11] = highlight ? highlight[1] >>> 0 : 0;
     this.device.queue.writeBuffer(this.uniform, 0, u);
     const enc = this.device.createCommandEncoder();
     const pass = enc.beginRenderPass({

@@ -1,0 +1,681 @@
+{
+ "tool": "tools/scaffold-power.ts",
+ "commands": [
+  "deno run -A tools/scaffold-power.ts --sets r3rep,v1 --adverse 0,0.1 --swap-r 4,8 --n 8,12,16,24",
+  "deno run -A tools/scaffold-power.ts --sets v1 --swap-r 4,8 --n 8,12,16,24",
+  "deno run -A tools/scaffold-power.ts --sets r3rep --swap-r 4,8 --n 8,12,16,24"
+ ],
+ "defaults": {
+  "reps": 400,
+  "seed": 20261001,
+  "alpha": 0.01,
+  "control": "relabelled",
+  "r": 4
+ },
+ "runs": [
+  {
+   "sets": "r3rep,v1",
+   "reps": 400,
+   "seed": 20261001,
+   "alpha": 0.01,
+   "designs": [
+    {
+     "n": 8,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.863,
+     "H2": 0.893,
+     "both": 0.783,
+     "bothSE": 0.021,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.878,
+      1,
+      1,
+      0.93,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 12,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.98,
+     "H2": 0.98,
+     "both": 0.96,
+     "bothSE": 0.01,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.983,
+      1,
+      1,
+      0.995,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 16,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.995,
+     "H2": 1,
+     "both": 0.995,
+     "bothSE": 0.004,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.995,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 24,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 1,
+     "both": 1,
+     "bothSE": 0,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 8,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.87,
+     "H2": 0.998,
+     "both": 0.868,
+     "bothSE": 0.017,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.87,
+      1,
+      1,
+      0.928,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 12,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.97,
+     "H2": 1,
+     "both": 0.97,
+     "bothSE": 0.009,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.97,
+      1,
+      1,
+      0.993,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 16,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.998,
+     "H2": 1,
+     "both": 0.998,
+     "bothSE": 0.002,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.998,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 24,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 1,
+     "both": 1,
+     "bothSE": 0,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 8,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0.1,
+     "control": "relabelled",
+     "H1": 0.813,
+     "H2": 0.408,
+     "both": 0.333,
+     "bothSE": 0.024,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.845,
+      1,
+      1,
+      0.895,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 12,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0.1,
+     "control": "relabelled",
+     "H1": 0.943,
+     "H2": 0.58,
+     "both": 0.553,
+     "bothSE": 0.025,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.953,
+      1,
+      1,
+      0.985,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 16,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0.1,
+     "control": "relabelled",
+     "H1": 0.993,
+     "H2": 0.693,
+     "both": 0.693,
+     "bothSE": 0.023,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.993,
+      1,
+      1,
+      0.998,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 24,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0.1,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 0.95,
+     "both": 0.95,
+     "bothSE": 0.011,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 8,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0.1,
+     "control": "relabelled",
+     "H1": 0.865,
+     "H2": 0.445,
+     "both": 0.39,
+     "bothSE": 0.024,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.898,
+      1,
+      1,
+      0.95,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 12,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0.1,
+     "control": "relabelled",
+     "H1": 0.963,
+     "H2": 0.66,
+     "both": 0.635,
+     "bothSE": 0.024,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.97,
+      1,
+      1,
+      0.998,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 16,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0.1,
+     "control": "relabelled",
+     "H1": 0.995,
+     "H2": 0.755,
+     "both": 0.75,
+     "bothSE": 0.022,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.995,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 24,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0.1,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 0.96,
+     "both": 0.96,
+     "bothSE": 0.01,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "sets": "v1",
+   "reps": 400,
+   "seed": 20261001,
+   "alpha": 0.01,
+   "designs": [
+    {
+     "n": 8,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.648,
+     "H2": 0.828,
+     "both": 0.553,
+     "bothSE": 0.025,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.665,
+      1,
+      1,
+      0.87,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 12,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.828,
+     "H2": 0.978,
+     "both": 0.808,
+     "bothSE": 0.02,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.83,
+      1,
+      1,
+      0.99,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 16,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.928,
+     "H2": 0.993,
+     "both": 0.92,
+     "bothSE": 0.014,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.928,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 24,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.985,
+     "H2": 1,
+     "both": 0.985,
+     "bothSE": 0.006,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.985,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 8,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.635,
+     "H2": 0.963,
+     "both": 0.61,
+     "bothSE": 0.024,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.66,
+      1,
+      1,
+      0.868,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 12,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.858,
+     "H2": 0.998,
+     "both": 0.858,
+     "bothSE": 0.017,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.86,
+      1,
+      1,
+      0.988,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 16,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.933,
+     "H2": 1,
+     "both": 0.933,
+     "bothSE": 0.013,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.935,
+      1,
+      1,
+      0.993,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 24,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 0.993,
+     "H2": 1,
+     "both": 0.993,
+     "bothSE": 0.004,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      0.993,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "sets": "r3rep",
+   "reps": 400,
+   "seed": 20261001,
+   "alpha": 0.01,
+   "designs": [
+    {
+     "n": 8,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 0.92,
+     "both": 0.92,
+     "bothSE": 0.014,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 12,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 0.995,
+     "both": 0.995,
+     "bothSE": 0.004,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 16,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 1,
+     "both": 1,
+     "bothSE": 0,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 24,
+     "R": 4,
+     "swapR": 4,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 1,
+     "both": 1,
+     "bothSE": 0,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 8,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 1,
+     "both": 1,
+     "bothSE": 0,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 12,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 1,
+     "both": 1,
+     "bothSE": 0,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 16,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 1,
+     "both": 1,
+     "bothSE": 0,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    },
+    {
+     "n": 24,
+     "R": 4,
+     "swapR": 8,
+     "adverse": 0,
+     "control": "relabelled",
+     "H1": 1,
+     "H2": 1,
+     "both": 1,
+     "bothSE": 0,
+     "S1Unadjusted": 0,
+     "H1parts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    }
+   ]
+  }
+ ]
+}

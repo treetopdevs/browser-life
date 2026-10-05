@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lineage Inspector Sketch</title>
+<meta name="description" content="Panel sketch for the browser-life lineage inspector, drawn from one real run (replay-m4/gradient-m3/treatment/seed-1). Design draft: docs/lineage-inspector.md.">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: oklch(14% 0.009 164);
+  --surface: oklch(17% 0.009 164);
+  --raised: oklch(20% 0.011 164);
+  --hover: oklch(24% 0.014 164);
+  --line: oklch(32% 0.012 164);
+  --line-soft: oklch(26% 0.010 164);
+  --text: oklch(93% 0.009 160);
+  --muted: oklch(69% 0.012 160);
+  --soft: oklch(55% 0.014 160);
+  --accent: oklch(82% 0.115 155);
+  --accent-ink: oklch(19% 0.025 160);
+  --warning: oklch(80% 0.11 76);
+  --error: oklch(76% 0.13 28);
+  --nutrient: oklch(66% 0.13 252);
+  --biomass: oklch(75% 0.13 155);
+  --membrane: oklch(86% 0.014 170);
+  --waste: oklch(69% 0.10 65);
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: oklch(96% 0.008 164);
+  --surface: oklch(99% 0.006 164);
+  --raised: oklch(94% 0.009 164);
+  --hover: oklch(90% 0.012 164);
+  --line: oklch(81% 0.012 164);
+  --line-soft: oklch(88% 0.009 164);
+  --text: oklch(22% 0.012 164);
+  --muted: oklch(43% 0.014 164);
+  --soft: oklch(55% 0.014 164);
+  --accent: oklch(42% 0.102 155);
+  --accent-ink: oklch(98% 0.006 160);
+  --warning: oklch(47% 0.11 76);
+  --error: oklch(51% 0.13 28);
+  --nutrient: oklch(49% 0.12 252);
+  --biomass: oklch(48% 0.11 155);
+  --membrane: oklch(55% 0.015 170);
+  --waste: oklch(52% 0.09 65);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--sans); }
+body { padding: 20px 16px 48px; }
+.wrap { max-width: 1180px; margin: 0 auto; }
+.mono, code, td.num, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+code { font-size: .92em; color: var(--muted); }
+h1 { font-size: 1.05rem; margin: 0; font-weight: 600; letter-spacing: .01em; }
+h2 { font-size: .75rem; margin: 0 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+h2 .idx { font-family: var(--mono); color: var(--soft); }
+p { margin: 0 0 8px; }
+.note { color: var(--muted); font-size: .8125rem; }
+.topbar { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 14px; }
+.topbar .note { max-width: 760px; }
+button { font: inherit; font-size: .8125rem; color: var(--text); background: var(--raised); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+button:hover { background: var(--hover); }
+button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:focus-visible, .lane:focus-visible, tr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.drawer { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.drawer-head { padding: 16px 18px; border-bottom: 1px solid var(--line); background: var(--raised); display: grid; grid-template-columns: 1fr auto; gap: 10px 20px; }
+.ident { font-family: var(--mono); font-size: 1.5rem; font-weight: 600; letter-spacing: -.01em; }
+.ident small { font-size: .8125rem; color: var(--muted); font-weight: 400; margin-left: 8px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 6px; font-size: .8125rem; color: var(--muted); }
+.facts b { color: var(--text); font-weight: 500; font-family: var(--mono); }
+.rule { grid-column: 1 / -1; font-size: .8125rem; color: var(--muted); border-top: 1px dashed var(--line-soft); padding-top: 8px; }
+.rule b { color: var(--text); font-weight: 500; }
+.legend-ev { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font: 500 .6875rem/1 var(--mono); padding: 3px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; vertical-align: 1px; }
+.chip.exact { border-style: solid; color: var(--text); border-color: var(--muted); }
+.chip.inferred { border-style: dashed; color: var(--warning); border-color: var(--warning); }
+.chip.context { border-style: dotted; color: var(--nutrient); border-color: var(--nutrient); }
+.chip.missing { border-style: solid; color: var(--soft); background: repeating-linear-gradient(135deg, transparent 0 4px, var(--line-soft) 4px 6px); }
+.chip.schem { border-style: dashed; color: var(--error); border-color: var(--error); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sec { padding: 16px 18px; border-bottom: 1px solid var(--line-soft); min-width: 0; }
+.grid > .sec:nth-child(odd):not(.full) { border-right: 1px solid var(--line-soft); }
+.sec.full { grid-column: 1 / -1; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
+svg .axis { stroke: var(--line); stroke-width: 1; }
+svg .grid-l { stroke: var(--line-soft); stroke-width: 1; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.tablewrap { max-height: 420px; overflow: auto; border: 1px solid var(--line-soft); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: .78rem; }
+th { position: sticky; top: 0; background: var(--raised); text-align: left; font-weight: 500; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 4px 8px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+tr.sel td { background: color-mix(in oklch, var(--accent) 12%, transparent); }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--hover); }
+td.num { text-align: right; white-space: nowrap; }
+td.say { color: var(--muted); min-width: 260px; }
+.cls { display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: .8125rem; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-family: var(--mono); }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.card { border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px 12px; background: var(--bg); min-width: 0; }
+.card h3 { font-size: .75rem; margin: 0 0 6px; font-weight: 600; display: flex; gap: 6px; align-items: center; }
+.big { font: 600 1.25rem/1.2 var(--mono); }
+.missing-box { border: 1px dashed var(--line); border-radius: 8px; padding: 12px; background: repeating-linear-gradient(135deg, transparent 0 8px, color-mix(in oklch, var(--line-soft) 45%, transparent) 8px 10px); font-size: .8125rem; color: var(--muted); }
+.missing-box ul { margin: 6px 0 0; padding-left: 18px; }
+.keyrow { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .75rem; color: var(--muted); margin-top: 6px; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.cmp { width: 100%; font-size: .8rem; }
+.cmp td:first-child { color: var(--muted); }
+.foot { padding: 12px 18px; font-size: .75rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 18px; background: var(--raised); }
+.foot b { color: var(--text); font-weight: 500; font-family: var(--mono); }
+.schematic { margin-top: 22px; border: 1px dashed var(--error); border-radius: 10px; padding: 16px 18px; }
+.schematic .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.schematic h3 { font-size: .8125rem; margin: 6px 0 4px; }
+.tip { position: fixed; pointer-events: none; background: var(--raised); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: .75rem/1.35 var(--mono); max-width: 320px; z-index: 5; display: none; }
+@media (max-width: 860px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .grid > .sec:nth-child(odd):not(.full) { border-right: 0; }
+  .schematic .three, .split { grid-template-columns: minmax(0, 1fr); }
+  .drawer-head { grid-template-columns: 1fr; }
+  .legend-ev { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>Lineage inspector: panel sketch</h1>
+      <p class="note">Real data from one history: <code>runs/replay-m4/gradient-m3/treatment/seed-1</code> (10⁶ steps), read by a prototype dossier script. Descriptive only, nothing registered. Sections marked <span class="chip schem">schematic</span> hold no data. Design: <code>docs/lineage-inspector.md</code>.</p>
+    </div>
+    <button id="theme" type="button" aria-pressed="false">Light theme</button>
+  </div>
+
+  <section class="drawer" aria-label="Lineage inspector">
+    <header class="drawer-head">
+      <div>
+        <div class="ident" id="ident"></div>
+        <div class="facts" id="facts"></div>
+      </div>
+      <div class="legend-ev" aria-label="Evidence key">
+        <span class="chip exact">exact</span>
+        <span class="chip inferred">inferred</span>
+        <span class="chip context">context</span>
+        <span class="chip missing">not recorded</span>
+      </div>
+      <div class="rule" id="rule"></div>
+    </header>
+
+    <div class="grid">
+      <section class="sec full" aria-labelledby="h-anc">
+        <h2 id="h-anc"><span class="idx">01</span> Ancestry <span class="chip exact">exact</span> <span class="note" style="text-transform:none;letter-spacing:0;font-weight:400">one row per ancestor, founder at top · shade = living cells per census (log) · marker = the mutation that minted it</span></h2>
+        <div id="anc"></div>
+        <div class="keyrow" id="anc-key"></div>
+      </section>
+
+      <section class="sec full" aria-labelledby="h-mut">
+        <h2 id="h-mut"><span class="idx">02</span> Mutations <span class="chip exact">exact</span> <span class="note" style="text-transform:none;letter-spacing:0;font-weight:400">locus and size from the counter PRNG · output effect measured on a probe grid, not on realized inputs yet</span></h2>
+        <div class="filters" role="group" aria-label="Filter mutations">
+          <button type="button" data-f="all" aria-pressed="true">All</button>
+          <button type="button" data-f="controller" aria-pressed="false">Controller output changed</button>
+          <button type="button" data-f="physics" aria-pressed="false">Physics parameter</button>
+          <button type="button" data-f="none" aria-pressed="false">No effect on probe grid</button>
+          <button type="button" data-f="big" aria-pressed="false">Followed by expansion</button>
+        </div>
+        <div class="tablewrap"><table>
+          <thead><tr><th>step</th><th>locus</th><th>change</th><th>class</th><th>outputs moved (max |Δ|)</th><th>child peak</th><th>what changed</th></tr></thead>
+          <tbody id="mut"></tbody>
+        </table></div>
+      </section>
+
+      <section class="sec" aria-labelledby="h-str">
+        <h2 id="h-str"><span class="idx">03</span> Strategy <span class="chip exact">exact</span> <span class="note" style="text-transform:none;letter-spacing:0;font-weight:400">controller response to light; other inputs at probe values</span></h2>
+        <div id="curves"></div>
+        <div class="keyrow"><span><svg width="22" height="8" style="display:inline;width:22px"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--soft)" stroke-width="1.5" stroke-dasharray="3 2"/></svg> founder 0:10</span><span><svg width="22" height="8" style="display:inline;width:22px"><line x1="0" y1="4" x2="22" y2="4" stroke="var(--accent)" stroke-width="2"/></svg> subject</span></div>
+        <h2 style="margin-top:14px"><span class="idx">03b</span> Mean output along the ancestry</h2>
+        <div id="strip"></div>
+      </section>
+
+      <section class="sec" aria-labelledby="h-beh">
+        <h2 id="h-beh"><span class="idx">04</span> Behaviour <span class="chip context">context</span> <span class="note" style="text-transform:none;letter-spacing:0;font-weight:400">role of each ancestor's cells at deep censuses</span></h2>
+        <div id="roles"></div>
+        <div class="keyrow"><span><i class="sw" style="background:var(--biomass)"></i>phototroph</span><span><i class="sw" style="background:var(--waste)"></i>decomposer</span><span><i class="sw" style="background:var(--nutrient)"></i>chemotroph</span><span><i class="sw" style="background:var(--soft)"></i>mixed</span></div>
+        <p class="note" style="margin-top:8px" id="role-note"></p>
+      </section>
+
+      <section class="sec" aria-labelledby="h-en">
+        <h2 id="h-en"><span class="idx">05</span> Energy history <span class="chip context">context</span> <span class="chip missing">partly not recorded</span></h2>
+        <div id="flux"></div>
+        <div class="keyrow"><span><i class="sw" style="background:var(--biomass)"></i>photosynthesis (capture)</span><span><i class="sw" style="background:var(--waste)"></i>decomposition</span><span><i class="sw" style="background:var(--nutrient)"></i>respiration</span></div>
+        <div class="missing-box" style="margin-top:10px">Not in the bundle yet: free energy per unit biomass, capture against catalysis and maintenance cost, starvation. Needs per-lineage E and mass columns in <code>profiles.tsv</code> (design §6.5).</div>
+      </section>
+
+      <section class="sec" aria-labelledby="h-off">
+        <h2 id="h-off"><span class="idx">06</span> Offspring</h2>
+        <div class="split" id="off"></div>
+      </section>
+
+      <section class="sec" aria-labelledby="h-env">
+        <h2 id="h-env"><span class="idx">07</span> Environmental pressures <span class="chip missing">not recorded</span></h2>
+        <div class="missing-box">
+          What this section will show, read from checkpoints (every 10⁵ steps in replays) and later from an observer:
+          <ul>
+            <li>light, nutrient A and waste C at the lineage's cells, against the whole world's distribution</li>
+            <li>neighbours: which lineages share its components or border it, and their roles</li>
+            <li>local selection readout: its share growth against co-located lineages in the same window</li>
+            <li>regime events: light shifts, crashes in bound mass, lesions</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="sec" aria-labelledby="h-twin">
+        <h2 id="h-twin"><span class="idx">08</span> Neutral twin <span class="note" style="text-transform:none;letter-spacing:0;font-weight:400">same subject rule on the same-seed <code>neutral</code> replay, where genomes mutate but every cell expresses the reference phenotype</span></h2>
+        <div id="twin"></div>
+      </section>
+    </div>
+    <footer class="foot" id="foot"></footer>
+  </section>
+
+  <section class="schematic" aria-labelledby="h-cx">
+    <h2 id="h-cx"><span class="chip schem">schematic · no data</span> Complexity rather than population: three views proposed in design §5</h2>
+    <p class="note">Wireframes only. None of the proposed measures has been computed; computing them waits for a dated decision that fixes the definition and expected directions.</p>
+    <div class="three">
+      <div><h3>1 · Traitgram</h3><div id="sx1"></div><p class="note">Ancestry as a path in time × complexity, dead siblings as stubs, the population's cell-weighted band behind it, the neutral twin beside it. Reads as "climbed" or "wandered".</p></div>
+      <div><h3>2 · Selection skew</h3><div id="sx2"></div><p class="note">Δc of every minted mutation against the ones that spread. The gap is selection's push; doubling births leaves it unchanged. Neutral should show no gap.</p></div>
+      <div><h3>3 · Decoupling</h3><div id="sx3"></div><p class="note">One dot per run (shape and colour by condition). Population can grow along x without rising in y; only rise beyond the neutral and no-mutation clouds counts.</p></div>
+    </div>
+  </section>
+</div>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script id="data" type="application/json">{"run":"replay-m4/gradient-m3/treatment/seed-1","subject":"988713:40332","founder":"0:10","depth":54,"minted":467436,"recorded":101055,"recon":{"chainGenomesCheckedAgainstGenomesTsv":54,"mismatched":0},"finalCells":868,"finalTotal":45920,"chain":[{"k":"0:10","b":0,"f":100,"l":59000,"p":2238,"mu":38,"sg":27,"g":0,"o":[39.7,17.5,69.2,1.2,19.6,72.3,-9.6,4.6],"roles":{"phototroph":41232,"decomposer":15520,"mixed":69},"flux":[0.148,0.136,0.132,0.001],"s":[[0,1803],[2000,1710],[4000,1274],[6000,1455],[8000,1917],[10000,2030],[12000,2238],[14000,1918],[16000,2139],[18000,1511],[20000,1303],[22000,1631],[24000,1393],[26000,1315],[28000,1197],[30000,1121],[32000,1189],[34000,717],[36000,440],[38000,581],[40000,801],[42000,1006],[44000,957],[46000,459],[48000,486],[50000,505],[52000,178],[54000,384],[56000,280],[58000,100]]},{"k":"16283:53573","b":16282,"f":16300,"l":102400,"p":10544,"mu":38,"sg":27,"g":0,"o":[43.3,16,67.1,1.7,17.6,71.5,-4.6,8.5],"roles":{"decomposer":37340,"phototroph":178596,"chemotroph":232,"mixed":10},"flux":[0.101,0.097,0.079,0.003],"s":[[16000,392],[18000,290],[20000,319],[22000,647],[24000,943],[26000,1604],[28000,1933],[30000,4031],[32000,4606],[34000,7036],[36000,8634],[38000,7620],[40000,10544],[42000,10265],[44000,9977],[46000,8136],[48000,7610],[50000,6730],[52000,6703],[54000,6700],[56000,3852],[58000,3886],[60000,3455],[62000,3473],[64000,1978],[66000,1097],[68000,1202],[70000,903],[72000,461],[74000,193],[76000,179],[78000,176],[80000,377],[82000,145],[84000,192],[86000,292],[88000,160],[90000,75],[92000,75],[94000,84],[96000,82],[98000,42],[100000,37],[102000,1]]},{"k":"20018:51020","b":20017,"f":20100,"l":51600,"p":1306,"mu":38,"sg":27,"g":0,"o":[43.3,16,67.1,1.7,17.6,71.5,-4.6,8.5],"roles":{"phototroph":9626,"decomposer":3679},"flux":[0.101,0.094,0.08,0.004],"s":[[20000,369],[22000,340],[24000,769],[26000,1049],[28000,843],[30000,930],[32000,1306],[34000,951],[36000,1090],[38000,485],[40000,359],[42000,39],[44000,38],[46000,40],[48000,36],[50000,34]]},{"k":"27504:42600","b":27503,"f":27600,"l":64200,"p":1545,"mu":38,"sg":27,"g":0,"o":[43.3,16,67.1,1.7,17.6,71.5,-4.6,8.5],"roles":{"phototroph":12564,"decomposer":7529,"mixed":395},"flux":[0.105,0.095,0.083,0.004],"s":[[26000,193],[28000,398],[30000,375],[32000,440],[34000,1086],[36000,1392],[38000,1222],[40000,1545],[42000,1030],[44000,885],[46000,422],[48000,886],[50000,869],[52000,693],[54000,1072],[56000,998],[58000,665],[60000,319],[62000,158],[64000,15]]},{"k":"30027:39275","b":30026,"f":30100,"l":43000,"p":522,"mu":38,"sg":27,"g":0,"o":[43.3,16,67.1,1.7,17.6,71.5,-4.6,8.5],"roles":{"phototroph":1872,"decomposer":377},"flux":[0.163,0.153,0.137,0.001],"s":[[30000,358],[32000,494],[34000,522],[36000,332],[38000,60],[40000,82],[42000,42]]},{"k":"33136:37492","b":33135,"f":33200,"l":33500,"p":19,"mu":38,"sg":27,"g":0,"o":[43.3,15.8,67.1,1.7,17.6,71.5,-4.6,8.5],"roles":{},"flux":[null,null,null,null],"s":[[32000,19]]},{"k":"33286:36981","b":33285,"f":33300,"l":110600,"p":4276,"mu":38,"sg":27,"g":0,"o":[43.3,15.7,67.1,1.7,17.5,71.6,-4.6,8.5],"roles":{"phototroph":107205,"decomposer":26385,"mixed":2},"flux":[0.069,0.062,0.045,0.002],"s":[[32000,217],[34000,652],[36000,1182],[38000,1375],[40000,2060],[42000,2812],[44000,3115],[46000,2631],[48000,3276],[50000,3236],[52000,2591],[54000,2443],[56000,2688],[58000,2609],[60000,3107],[62000,2845],[64000,2895],[66000,2703],[68000,1991],[70000,2117],[72000,2028],[74000,4087],[76000,4240],[78000,4276],[80000,4003],[82000,3289],[84000,2780],[86000,2403],[88000,2530],[90000,1976],[92000,1162],[94000,1118],[96000,588],[98000,530],[100000,349],[102000,411],[104000,128],[106000,150],[108000,27],[110000,3]]},{"k":"36975:29836","b":36974,"f":37000,"l":95500,"p":3249,"mu":38,"sg":27,"g":0,"o":[43.3,15.7,67.1,1.7,17.6,71.6,-4.6,8.5],"roles":{"decomposer":14410,"phototroph":53060,"chemotroph":1059,"mixed":5},"flux":[0.065,0.06,0.043,0.002],"s":[[36000,286],[38000,919],[40000,1408],[42000,2037],[44000,2579],[46000,2951],[48000,3249],[50000,2813],[52000,2683],[54000,1944],[56000,1483],[58000,1795],[60000,1947],[62000,2176],[64000,2391],[66000,1892],[68000,1467],[70000,1022],[72000,1072],[74000,1299],[76000,1396],[78000,1126],[80000,817],[82000,393],[84000,283],[86000,409],[88000,358],[90000,446],[92000,180],[94000,166]]},{"k":"48557:27065","b":48556,"f":48600,"l":89300,"p":3644,"mu":38,"sg":27,"g":0,"o":[43.5,16,66.2,1.7,17.1,70.4,-5.3,10.2],"roles":{"phototroph":34350,"decomposer":5934},"flux":[0.059,0.053,0.037,0.001],"s":[[48000,383],[50000,815],[52000,926],[54000,869],[56000,1265],[58000,1390],[60000,1890],[62000,2010],[64000,1865],[66000,2478],[68000,3644],[70000,3287],[72000,1591],[74000,1369],[76000,878],[78000,439],[80000,423],[82000,237],[84000,151],[86000,188],[88000,72]]},{"k":"65260:22990","b":65259,"f":65300,"l":78300,"p":427,"mu":38,"sg":27,"g":0,"o":[43.5,16,66.2,1.7,13,70.4,-5.3,10.2],"roles":{"phototroph":1366,"decomposer":1046,"chemotroph":125,"mixed":72},"flux":[0.059,0.055,0.041,0.002],"s":[[64000,27],[66000,231],[68000,321],[70000,413],[72000,427],[74000,404],[76000,303],[78000,12]]},{"k":"72235:21212","b":72234,"f":72300,"l":203800,"p":3888,"mu":60,"sg":27,"g":0,"o":[43.5,16,66.2,1.7,13,70.4,-5.3,10.2],"roles":{"phototroph":122263,"decomposer":51094,"mixed":87},"flux":[0.083,0.082,0.057,0.003],"s":[[72000,176],[74000,1024],[76000,1903],[78000,2635],[80000,3096],[82000,3888],[84000,3040],[86000,3536],[88000,3706],[90000,3678],[92000,3741],[94000,3584],[96000,3837],[98000,3594],[100000,2616],[102000,2684],[104000,2981],[106000,2898],[108000,1637],[110000,1908],[112000,1714],[114000,1640],[116000,1732],[118000,2293],[120000,1744],[122000,1614],[124000,1352],[126000,1478],[128000,1982],[130000,1841],[132000,1241],[134000,1405],[136000,1279],[138000,1380],[140000,1455],[142000,1403],[144000,1325],[146000,1254],[148000,1174],[150000,950],[152000,1046],[154000,1243],[156000,1216],[158000,969],[160000,956],[162000,927],[164000,825],[166000,815],[168000,516],[170000,460],[172000,338],[174000,229],[176000,220],[178000,213],[180000,209],[182000,121],[184000,118],[186000,121],[188000,109],[190000,87],[192000,92],[194000,83],[196000,92],[198000,78],[200000,149],[202000,96]]},{"k":"77836:22465","b":77835,"f":77900,"l":129800,"p":896,"mu":60,"sg":27,"g":0,"o":[43.5,16,66.2,1.7,13,70.4,-5.3,10.2],"roles":{"chemotroph":98,"decomposer":2633,"phototroph":11320,"mixed":93},"flux":[0.08,0.079,0.056,0.004],"s":[[76000,27],[78000,126],[80000,273],[82000,420],[84000,537],[86000,582],[88000,662],[90000,578],[92000,823],[94000,896],[96000,770],[98000,651],[100000,525],[102000,359],[104000,261],[106000,241],[108000,234],[110000,115],[112000,118],[114000,110],[116000,113],[118000,93],[120000,101],[122000,97],[124000,78],[126000,77],[128000,77]]},{"k":"85810:20897","b":85809,"f":85900,"l":135800,"p":1239,"mu":60,"sg":27,"g":0,"o":[43.5,16,66.2,1.7,13,69.3,-5.3,10.2],"roles":{"chemotroph":138,"phototroph":13079,"decomposer":10767,"mixed":184},"flux":[0.084,0.083,0.06,0.003],"s":[[84000,40],[86000,138],[88000,226],[90000,444],[92000,929],[94000,983],[96000,855],[98000,890],[100000,1055],[102000,1239],[104000,1214],[106000,1023],[108000,1032],[110000,922],[112000,723],[114000,482],[116000,361],[118000,463],[120000,374],[122000,307],[124000,291],[126000,165],[128000,181],[130000,234],[132000,290],[134000,186]]},{"k":"104481:23967","b":104480,"f":104500,"l":110200,"p":57,"mu":60,"sg":27,"g":0,"o":[67.5,16,66.2,1.7,13,69.3,-5.3,10.2],"roles":{"phototroph":69,"decomposer":133,"mixed":13},"flux":[0.2,0.237,0.195,0.0],"s":[[104000,34],[106000,42],[108000,57],[110000,18]]},{"k":"109335:23966","b":109334,"f":109400,"l":151000,"p":335,"mu":60,"sg":27,"g":0,"o":[67.6,16,66.2,1.7,13,69.3,-5.3,10.2],"roles":{"decomposer":1787,"phototroph":2122,"mixed":42},"flux":[0.147,0.149,0.127,0.001],"s":[[108000,41],[110000,279],[112000,80],[114000,78],[116000,217],[118000,232],[120000,335],[122000,99],[124000,82],[126000,143],[128000,175],[130000,116],[132000,123],[134000,137],[136000,116],[138000,61],[140000,62],[142000,32],[144000,38],[146000,74],[148000,131],[150000,49]]},{"k":"129022:23941","b":129021,"f":129100,"l":223000,"p":520,"mu":60,"sg":27,"g":0,"o":[67.6,16,66.2,1.7,13,69.3,1.3,10.2],"roles":{"phototroph":8051,"decomposer":5504,"mixed":155},"flux":[0.139,0.136,0.116,0.001],"s":[[128000,85],[130000,177],[132000,71],[134000,72],[136000,102],[138000,143],[140000,216],[142000,320],[144000,321],[146000,352],[148000,423],[150000,190],[152000,224],[154000,225],[156000,211],[158000,291],[160000,250],[162000,520],[164000,407],[166000,192],[168000,132],[170000,256],[172000,223],[174000,82],[176000,85],[178000,126],[180000,144],[182000,297],[184000,288],[186000,135],[188000,139],[190000,194],[192000,279],[194000,100],[196000,113],[198000,130],[200000,244],[202000,145],[204000,130],[206000,149],[208000,149],[210000,109],[212000,107],[214000,162],[216000,33],[218000,11],[220000,6],[222000,2]]},{"k":"149323:20602","b":149322,"f":149400,"l":157700,"p":40,"mu":60,"sg":27,"g":0,"o":[72.1,16,66.2,1.7,13,69.3,1.3,10.2],"roles":{"phototroph":163,"decomposer":67,"mixed":6},"flux":[0.161,0.136,0.11,0.004],"s":[[148000,34],[150000,34],[152000,33],[154000,36],[156000,40]]},{"k":"156768:20601","b":156767,"f":156800,"l":209100,"p":444,"mu":60,"sg":27,"g":0,"o":[72.1,16,66.2,1.8,13,69.3,1.3,10.2],"roles":{"phototroph":4220,"decomposer":3613,"mixed":307},"flux":[0.112,0.112,0.09,0.002],"s":[[156000,100],[158000,160],[160000,160],[162000,287],[164000,241],[166000,132],[168000,164],[170000,196],[172000,220],[174000,413],[176000,444],[178000,238],[180000,167],[182000,136],[184000,184],[186000,231],[188000,264],[190000,319],[192000,247],[194000,64],[196000,78],[198000,74],[200000,133],[202000,266],[204000,311],[206000,95],[208000,19]]},{"k":"204524:18820","b":204523,"f":204600,"l":247200,"p":176,"mu":60,"sg":27,"g":0,"o":[74.5,15,64.8,2.3,12,68.7,4.7,13],"roles":{"phototroph":2257,"decomposer":1018,"mixed":250},"flux":[0.089,0.093,0.071,0.003],"s":[[204000,114],[206000,169],[208000,176],[210000,173],[212000,174],[214000,140],[216000,78],[218000,125],[220000,156],[222000,173],[224000,100],[226000,35],[228000,34],[230000,34],[232000,32],[234000,63],[236000,116],[238000,81],[240000,132],[242000,44],[244000,27],[246000,17]]},{"k":"241029:21382","b":241028,"f":241100,"l":261400,"p":128,"mu":60,"sg":27,"g":0,"o":[74.5,15,65,2.3,12,68.7,4.7,13],"roles":{"phototroph":613,"decomposer":279,"mixed":181},"flux":[0.129,0.132,0.103,0.005],"s":[[240000,102],[242000,120],[244000,128],[246000,55],[248000,50],[250000,49],[252000,37],[254000,36],[256000,54],[258000,60],[260000,60]]},{"k":"244478:21894","b":244477,"f":244500,"l":272000,"p":225,"mu":60,"sg":27,"g":0,"o":[74.5,15,65,2.3,12,68.7,4.7,13],"roles":{"phototroph":867,"decomposer":1238,"mixed":8},"flux":[0.135,0.151,0.118,0.003],"s":[[244000,63],[246000,152],[248000,139],[250000,129],[252000,100],[254000,102],[256000,120],[258000,126],[260000,225],[262000,109],[264000,39],[266000,35],[268000,37],[270000,55],[272000,2]]},{"k":"261349:21632","b":261348,"f":261400,"l":325300,"p":24764,"mu":60,"sg":27,"g":17,"o":[74.5,15,65,2.3,12,68.7,4.7,13],"roles":{"chemotroph":132,"phototroph":464673,"decomposer":58988},"flux":[0.051,0.045,0.016,0.002],"s":[[260000,111],[262000,614],[264000,1414],[266000,2078],[268000,5332],[270000,7414],[272000,8470],[274000,6310],[276000,8276],[278000,10636],[280000,14106],[282000,20832],[284000,23948],[286000,24764],[288000,19615],[290000,12317],[292000,16259],[294000,18198],[296000,19113],[298000,16946],[300000,14642],[302000,13035],[304000,9804],[306000,10279],[308000,5467],[310000,2996],[312000,2451],[314000,1756],[316000,1451],[318000,1508],[320000,2080],[322000,1309],[324000,491]]},{"k":"292886:36178","b":292885,"f":292900,"l":346700,"p":14896,"mu":60,"sg":27,"g":17,"o":[92.9,15,65,2.3,12,68.7,4.7,13],"roles":{"decomposer":2759,"phototroph":332231},"flux":[0.051,0.041,0.017,0.001],"s":[[292000,799],[294000,1551],[296000,4668],[298000,7683],[300000,12105],[302000,14896],[304000,13409],[306000,11194],[308000,10230],[310000,9909],[312000,8722],[314000,9643],[316000,13010],[318000,12652],[320000,11110],[322000,12774],[324000,11122],[326000,6607],[328000,7494],[330000,5682],[332000,3230],[334000,3607],[336000,2688],[338000,2282],[340000,2121],[342000,1600],[344000,1664],[346000,330]]},{"k":"301634:11716","b":301633,"f":301700,"l":318300,"p":3379,"mu":60,"sg":27,"g":17,"o":[92.9,15,77,2.3,12,68.7,4.7,13],"roles":{"phototroph":18133,"decomposer":10030,"mixed":2},"flux":[0.044,0.041,0.023,0.002],"s":[[300000,321],[302000,1766],[304000,3060],[306000,3202],[308000,3169],[310000,3006],[312000,3379],[314000,1239],[316000,566],[318000,3]]},{"k":"310271:49912","b":310270,"f":310300,"l":336700,"p":3754,"mu":60,"sg":27,"g":17,"o":[92.9,15,84.9,2.3,12,68.7,4.7,13],"roles":{"phototroph":17453,"decomposer":24487,"mixed":90},"flux":[0.051,0.053,0.014,0.001],"s":[[310000,859],[312000,821],[314000,2020],[316000,3008],[318000,3062],[320000,2595],[322000,3343],[324000,3754],[326000,3497],[328000,2441],[330000,2234],[332000,1675],[334000,354],[336000,111]]},{"k":"323668:56612","b":323667,"f":323700,"l":332000,"p":1195,"mu":60,"sg":27,"g":17,"o":[93.7,14.5,84.4,2.4,11.4,68.5,5.9,13.9],"roles":{"phototroph":1493,"decomposer":3500},"flux":[0.051,0.051,0.012,0.001],"s":[[322000,46],[324000,739],[326000,1195],[328000,955],[330000,751],[332000,2]]},{"k":"325885:26199","b":325884,"f":325900,"l":342500,"p":3914,"mu":60,"sg":27,"g":17,"o":[93.7,14.5,84.4,2.4,11.4,68.5,5.9,7.3],"roles":{"phototroph":17013,"decomposer":11085},"flux":[0.054,0.05,0.022,0.001],"s":[[324000,14],[326000,1724],[328000,1627],[330000,2364],[332000,1727],[334000,3007],[336000,3579],[338000,3914],[340000,2642],[342000,281]]},{"k":"338812:19617","b":338811,"f":338900,"l":425700,"p":9613,"mu":60,"sg":27,"g":17,"o":[93.7,14.5,84.4,2.4,11.4,68.5,5.9,4.7],"roles":{"phototroph":156897,"decomposer":73188},"flux":[0.05,0.048,0.016,0.001],"s":[[338000,218],[340000,417],[342000,715],[344000,681],[346000,402],[348000,1376],[350000,2380],[352000,2381],[354000,2101],[356000,2304],[358000,2513],[360000,2391],[362000,3383],[364000,5194],[366000,5032],[368000,7831],[370000,9613],[372000,8817],[374000,6373],[376000,5061],[378000,3662],[380000,3700],[382000,4123],[384000,4156],[386000,4894],[388000,4947],[390000,4079],[392000,4232],[394000,5043],[396000,5094],[398000,3818],[400000,5290],[402000,5448],[404000,5043],[406000,3186],[408000,1176],[410000,1237],[412000,1011],[414000,689],[416000,665],[418000,698],[420000,1179],[422000,1024],[424000,269]]},{"k":"367950:34030","b":367949,"f":368000,"l":451800,"p":24561,"mu":72,"sg":27,"g":17,"o":[93.7,14.5,84.4,2.4,11.4,68.5,5.9,4.7],"roles":{"phototroph":790315,"decomposer":25138,"mixed":58},"flux":[0.054,0.048,0.021,0.001],"s":[[368000,1356],[370000,1449],[372000,1554],[374000,1644],[376000,3004],[378000,3511],[380000,3772],[382000,6132],[384000,6466],[386000,5199],[388000,5289],[390000,9770],[392000,12084],[394000,13038],[396000,12413],[398000,15225],[400000,15316],[402000,17405],[404000,17772],[406000,19302],[408000,19847],[410000,23849],[412000,24561],[414000,24154],[416000,19434],[418000,19637],[420000,15751],[422000,15639],[424000,17072],[426000,19036],[428000,17364],[430000,15036],[432000,10273],[434000,10823],[436000,9428],[438000,8139],[440000,6467],[442000,2966],[444000,1970],[446000,1716],[448000,1406],[450000,300]]},{"k":"395600:23120","b":395599,"f":395600,"l":414900,"p":2531,"mu":72,"sg":27,"g":17,"o":[93.7,14.5,84.4,1.1,11.4,68.5,5.9,4.7],"roles":{"phototroph":7366,"decomposer":7649},"flux":[0.054,0.053,0.024,0.001],"s":[[394000,136],[396000,291],[398000,1034],[400000,1338],[402000,1364],[404000,2531],[406000,2289],[408000,1012],[410000,1413],[412000,250],[414000,184]]},{"k":"404307:27706","b":404306,"f":404400,"l":534200,"p":13654,"mu":72,"sg":27,"g":17,"o":[93.7,14.5,84.4,1.1,11.4,44.5,5.9,4.7],"roles":{"decomposer":68718,"phototroph":598687,"mixed":10},"flux":[0.049,0.042,0.02,0.001],"s":[[404000,1245],[406000,1351],[408000,1042],[410000,2474],[412000,3727],[414000,4497],[416000,5899],[418000,7415],[420000,6939],[422000,6454],[424000,5205],[426000,5292],[428000,6260],[430000,6732],[432000,5103],[434000,3793],[436000,3222],[438000,4109],[440000,6588],[442000,8075],[444000,12893],[446000,13465],[448000,12378],[450000,13654],[452000,10462],[454000,6169],[456000,8664],[458000,6949],[460000,9488],[462000,11583],[464000,11374],[466000,11994],[468000,13074],[470000,10250],[472000,8190],[474000,9704],[476000,10963],[478000,9789],[480000,9726],[482000,8843],[484000,7759],[486000,6447],[488000,6514],[490000,4551],[492000,5462],[494000,4279],[496000,3464],[498000,3056],[500000,3803],[502000,2678],[504000,3496],[506000,4039],[508000,4769],[510000,4894],[512000,2887],[514000,5182],[516000,5142],[518000,5454],[520000,4899],[522000,3990],[524000,3030],[526000,2135],[528000,868],[530000,490],[532000,332],[534000,39]]},{"k":"409199:32757","b":409198,"f":409200,"l":467600,"p":16414,"mu":72,"sg":27,"g":17,"o":[94,13.6,84.8,1.1,12.9,42.6,6.9,5.6],"roles":{"phototroph":327048,"decomposer":17046},"flux":[0.048,0.04,0.018,0.001],"s":[[408000,250],[410000,1071],[412000,1231],[414000,2006],[416000,2420],[418000,2419],[420000,2044],[422000,4298],[424000,6832],[426000,8112],[428000,7604],[430000,13841],[432000,16414],[434000,13918],[436000,13456],[438000,9956],[440000,9990],[442000,9453],[444000,14344],[446000,13479],[448000,9229],[450000,9091],[452000,8944],[454000,9050],[456000,7308],[458000,6259],[460000,3153],[462000,2451],[464000,1614],[466000,340]]},{"k":"455445:61578","b":455444,"f":455500,"l":637600,"p":17392,"mu":72,"sg":27,"g":6,"o":[94,13.6,84.8,1.1,12.9,42.6,6.9,5.6],"roles":{"phototroph":633378,"decomposer":176529,"mixed":53},"flux":[0.07,0.067,0.046,0.001],"s":[[454000,557],[456000,663],[458000,328],[460000,939],[462000,1432],[464000,1049],[466000,1055],[468000,514],[470000,696],[472000,648],[474000,1300],[476000,2316],[478000,2101],[480000,3007],[482000,2675],[484000,1698],[486000,689],[488000,1081],[490000,1263],[492000,2317],[494000,2192],[496000,2701],[498000,5552],[500000,6171],[502000,6754],[504000,4994],[506000,6482],[508000,9135],[510000,12034],[512000,14113],[514000,12340],[516000,12601],[518000,15008],[520000,14814],[522000,15170],[524000,14607],[526000,15579],[528000,17392],[530000,15954],[532000,16431],[534000,14919],[536000,14486],[538000,14721],[540000,13065],[542000,9576],[544000,9744],[546000,9515],[548000,8254],[550000,7719],[552000,6828],[554000,6909],[556000,6773],[558000,6666],[560000,5753],[562000,5721],[564000,7078],[566000,7025],[568000,6245],[570000,4567],[572000,4255],[574000,3927],[576000,3295],[578000,2595],[580000,2540],[582000,2954],[584000,3009],[586000,2672],[588000,2513],[590000,2522],[592000,1331],[594000,1451],[596000,1486],[598000,1053],[600000,814],[602000,640],[604000,464],[606000,572],[608000,568],[610000,545],[612000,342],[614000,145],[616000,99],[618000,157],[620000,63],[622000,86],[624000,124],[626000,204],[628000,173],[630000,185],[632000,135],[634000,184],[636000,146]]},{"k":"559181:50731","b":559180,"f":559200,"l":562200,"p":81,"mu":72,"sg":27,"g":6,"o":[94,13.6,84.8,1.1,12.8,42.6,6.9,5.6],"roles":{"decomposer":77,"phototroph":74,"mixed":4},"flux":[0.168,0.181,0.148,0.0],"s":[[558000,80],[560000,81],[562000,5]]},{"k":"560997:60462","b":560996,"f":561000,"l":612000,"p":883,"mu":72,"sg":27,"g":6,"o":[94.8,13.3,84.4,1.2,12.3,42.4,8.1,6.6],"roles":{"decomposer":5830,"phototroph":10035,"mixed":174},"flux":[0.082,0.083,0.065,0.0],"s":[[560000,74],[562000,145],[564000,331],[566000,343],[568000,377],[570000,370],[572000,360],[574000,416],[576000,344],[578000,282],[580000,244],[582000,435],[584000,421],[586000,244],[588000,331],[590000,440],[592000,734],[594000,851],[596000,883],[598000,807],[600000,672],[602000,208],[604000,208],[606000,208],[608000,34],[610000,6],[612000,1]]},{"k":"600224:29046","b":600223,"f":600300,"l":614600,"p":241,"mu":72,"sg":27,"g":6,"o":[94.8,13.3,84.4,1.2,12.3,33.9,8.1,6.6],"roles":{"decomposer":701,"phototroph":659,"mixed":185},"flux":[0.15,0.153,0.146,0.001],"s":[[600000,100],[602000,102],[604000,110],[606000,126],[608000,241],[610000,178],[612000,151],[614000,3]]},{"k":"610167:59243","b":610166,"f":610200,"l":628300,"p":644,"mu":72,"sg":27,"g":6,"o":[93.8,12.4,89.5,1.5,13.6,38.3,10.7,0.1],"roles":{"phototroph":4097,"decomposer":1495,"mixed":6},"flux":[0.068,0.067,0.05,0.001],"s":[[610000,172],[612000,438],[614000,623],[616000,644],[618000,526],[620000,551],[622000,274],[624000,294],[626000,249],[628000,6]]},{"k":"623073:42338","b":623072,"f":623100,"l":644300,"p":552,"mu":72,"sg":27,"g":6,"o":[96.3,11.1,88,1.9,12.1,37.7,14.8,3.3],"roles":{"decomposer":1640,"phototroph":2888,"mixed":35},"flux":[0.087,0.086,0.062,0.001],"s":[[622000,109],[624000,103],[626000,240],[628000,328],[630000,271],[632000,409],[634000,496],[636000,552],[638000,249],[640000,240],[642000,35],[644000,2]]},{"k":"640389:35740","b":640388,"f":640400,"l":673900,"p":404,"mu":72,"sg":27,"g":6,"o":[96.2,11.1,87.9,1.9,12,37.7,14.9,3.3],"roles":{"phototroph":3980,"decomposer":2645,"mixed":23},"flux":[0.088,0.085,0.068,0.0],"s":[[640000,103],[642000,184],[644000,140],[646000,167],[648000,349],[650000,380],[652000,329],[654000,394],[656000,404],[658000,212],[660000,290],[662000,350],[664000,320],[666000,263],[668000,136],[670000,121],[672000,107]]},{"k":"643564:43940","b":643563,"f":643600,"l":652000,"p":160,"mu":72,"sg":27,"g":6,"o":[96.1,11.3,87.6,1.8,11.5,37.6,14.5,3.6],"roles":{"phototroph":455,"decomposer":203,"mixed":28},"flux":[0.197,0.181,0.165,0.0],"s":[[642000,46],[644000,157],[646000,160],[648000,105],[650000,17],[652000,1]]},{"k":"649553:61356","b":649552,"f":649600,"l":664300,"p":259,"mu":72,"sg":27,"g":6,"o":[95.6,10.9,87.7,1.8,11.1,37.1,15.4,3.7],"roles":{"phototroph":1588,"decomposer":624,"mixed":6},"flux":[0.064,0.061,0.044,0.0],"s":[[648000,65],[650000,172],[652000,169],[654000,225],[656000,259],[658000,254],[660000,159],[662000,174],[664000,16]]},{"k":"657857:31672","b":657856,"f":657900,"l":714100,"p":934,"mu":72,"sg":27,"g":6,"o":[95.6,10.9,92.9,1.8,11.1,37.1,15.4,3.7],"roles":{"phototroph":11235,"decomposer":6376,"mixed":116},"flux":[0.068,0.068,0.05,0.0],"s":[[656000,15],[658000,122],[660000,557],[662000,717],[664000,791],[666000,934],[668000,642],[670000,594],[672000,567],[674000,387],[676000,310],[678000,348],[680000,217],[682000,205],[684000,254],[686000,199],[688000,280],[690000,414],[692000,437],[694000,421],[696000,208],[698000,287],[700000,213],[702000,207],[704000,232],[706000,226],[708000,381],[710000,548],[712000,506],[714000,2]]},{"k":"695332:19689","b":695331,"f":695400,"l":773700,"p":675,"mu":72,"sg":27,"g":6,"o":[95.6,10.9,92.9,0.6,11.1,37.1,15.4,3.7],"roles":{"phototroph":13042,"decomposer":6240,"mixed":35},"flux":[0.083,0.08,0.06,0.0],"s":[[694000,77],[696000,165],[698000,428],[700000,331],[702000,266],[704000,237],[706000,181],[708000,196],[710000,172],[712000,100],[714000,139],[716000,106],[718000,160],[720000,179],[722000,158],[724000,319],[726000,426],[728000,353],[730000,300],[732000,318],[734000,342],[736000,325],[738000,479],[740000,571],[742000,576],[744000,639],[746000,612],[748000,429],[750000,347],[752000,287],[754000,491],[756000,592],[758000,675],[760000,219],[762000,150],[764000,139],[766000,139],[768000,121],[770000,167],[772000,41]]},{"k":"757373:44392","b":757372,"f":757400,"l":809300,"p":475,"mu":72,"sg":27,"g":6,"o":[95.4,11,93,0.6,11.2,37.2,15.1,3.4],"roles":{"phototroph":4973,"decomposer":2962,"mixed":21},"flux":[0.071,0.07,0.05,0.0],"s":[[756000,76],[758000,96],[760000,103],[762000,149],[764000,278],[766000,267],[768000,253],[770000,183],[772000,249],[774000,475],[776000,446],[778000,161],[780000,268],[782000,263],[784000,209],[786000,134],[788000,240],[790000,309],[792000,137],[794000,97],[796000,89],[798000,98],[800000,87],[802000,95],[804000,72],[806000,69],[808000,21]]},{"k":"766883:63139","b":766882,"f":766900,"l":786100,"p":185,"mu":72,"sg":27,"g":6,"o":[95.5,11.3,93.1,0.6,11.3,37.3,14.8,3.4],"roles":{"phototroph":1145,"decomposer":421,"mixed":17},"flux":[0.081,0.072,0.04,0.0],"s":[[766000,44],[768000,171],[770000,130],[772000,86],[774000,128],[776000,112],[778000,106],[780000,144],[782000,185],[784000,11],[786000,1]]},{"k":"782501:34035","b":782500,"f":782600,"l":871800,"p":1006,"mu":72,"sg":27,"g":6,"o":[95.5,11.5,93.3,0.8,11.5,37.3,15,3.2],"roles":{"decomposer":3814,"phototroph":9106,"mixed":33},"flux":[0.097,0.094,0.076,0.0],"s":[[782000,116],[784000,154],[786000,167],[788000,216],[790000,676],[792000,1006],[794000,733],[796000,667],[798000,729],[800000,399],[802000,142],[804000,97],[806000,118],[808000,106],[810000,64],[812000,72],[814000,229],[816000,203],[818000,54],[820000,121],[822000,130],[824000,97],[826000,76],[828000,56],[830000,57],[832000,124],[834000,134],[836000,185],[838000,169],[840000,141],[842000,105],[844000,68],[846000,44],[848000,50],[850000,69],[852000,58],[854000,105],[856000,123],[858000,119],[860000,80],[862000,92],[864000,95],[866000,96],[868000,65],[870000,8]]},{"k":"798269:59687","b":798268,"f":798300,"l":805800,"p":111,"mu":72,"sg":27,"g":6,"o":[95.5,11.5,93.3,0.8,11.5,37.3,15,3.2],"roles":{"decomposer":199,"phototroph":308},"flux":[0.116,0.118,0.077,0.0],"s":[[798000,62],[800000,75],[802000,111],[804000,100]]},{"k":"805022:4910","b":805021,"f":805100,"l":810200,"p":160,"mu":72,"sg":27,"g":6,"o":[95.4,11.4,93.9,0.8,11.7,38,15.4,2.4],"roles":{"decomposer":262,"phototroph":268},"flux":[0.043,0.043,0.009,0.0],"s":[[804000,82],[806000,160],[808000,158],[810000,6]]},{"k":"809024:10306","b":809023,"f":809100,"l":835600,"p":308,"mu":72,"sg":27,"g":6,"o":[95.4,11.4,93.9,0.8,11.7,37.9,15.4,2.4],"roles":{"decomposer":1298,"phototroph":2075,"mixed":22},"flux":[0.08,0.078,0.056,0.0],"s":[[808000,142],[810000,263],[812000,276],[814000,267],[816000,291],[818000,308],[820000,257],[822000,91],[824000,58],[826000,61],[828000,77],[830000,79],[832000,6],[834000,1]]},{"k":"830080:37268","b":830079,"f":830100,"l":901100,"p":266,"mu":72,"sg":27,"g":6,"o":[95.4,10.5,93.9,0.8,11.7,37.9,15.4,2.4],"roles":{"decomposer":3597,"phototroph":6039,"mixed":47},"flux":[0.105,0.103,0.082,0.0],"s":[[830000,71],[832000,77],[834000,96],[836000,136],[838000,86],[840000,111],[842000,148],[844000,104],[846000,98],[848000,166],[850000,200],[852000,197],[854000,191],[856000,171],[858000,175],[860000,164],[862000,247],[864000,265],[866000,246],[868000,266],[870000,251],[872000,233],[874000,252],[876000,222],[878000,167],[880000,142],[882000,154],[884000,211],[886000,194],[888000,182],[890000,136],[892000,166],[894000,161],[896000,35],[898000,6],[900000,1]]},{"k":"885768:36028","b":885767,"f":885800,"l":899000,"p":101,"mu":72,"sg":27,"g":6,"o":[95.4,10.5,93.9,0.8,14.4,37.9,15.4,2.4],"roles":{"phototroph":758,"decomposer":228,"mixed":24},"flux":[0.104,0.093,0.087,0.0],"s":[[884000,40],[886000,96],[888000,96],[890000,99],[892000,83],[894000,101],[896000,101],[898000,28]]},{"k":"897576:44488","b":897575,"f":897600,"l":914800,"p":134,"mu":72,"sg":27,"g":6,"o":[95.4,10.5,93.9,0.8,14.4,37.9,15.4,11],"roles":{"decomposer":431,"phototroph":216,"mixed":89},"flux":[0.101,0.118,0.095,0.0],"s":[[896000,39],[898000,56],[900000,64],[902000,134],[904000,93],[906000,100],[908000,21],[910000,6],[912000,5],[914000,1]]},{"k":"903878:46297","b":903877,"f":903900,"l":929500,"p":181,"mu":72,"sg":27,"g":6,"o":[95.5,10.4,94.1,0.8,14.6,38,15.7,10.9],"roles":{"phototroph":996,"decomposer":702,"mixed":71},"flux":[0.181,0.173,0.155,0.0],"s":[[902000,23],[904000,76],[906000,71],[908000,100],[910000,84],[912000,87],[914000,82],[916000,74],[918000,136],[920000,181],[922000,131],[924000,78],[926000,60],[928000,7]]},{"k":"921980:58628","b":921979,"f":922000,"l":990400,"p":432,"mu":72,"sg":27,"g":6,"o":[94.8,10.2,93.9,0.8,14.3,37.8,16.4,11.3],"roles":{"phototroph":6094,"decomposer":5616},"flux":[0.08,0.082,0.057,0.0],"s":[[922000,84],[924000,109],[926000,432],[928000,331],[930000,132],[932000,118],[934000,128],[936000,154],[938000,136],[940000,105],[942000,96],[944000,110],[946000,133],[948000,129],[950000,143],[952000,187],[954000,120],[956000,152],[958000,164],[960000,193],[962000,307],[964000,322],[966000,281],[968000,258],[970000,216],[972000,203],[974000,299],[976000,323],[978000,369],[980000,283],[982000,264],[984000,257],[986000,293],[988000,308],[990000,194]]},{"k":"988713:40332","b":988712,"f":988800,"l":1000000,"p":1378,"mu":72,"sg":27,"g":6,"o":[94.8,10.2,93.9,0.8,14.3,37.8,16.4,17.2],"roles":{"phototroph":6431,"decomposer":1836},"flux":[0.076,0.076,0.048,0.0],"s":[[988000,116],[990000,716],[992000,1025],[994000,1378],[996000,1334],[998000,896],[1000000,868]]}],"edges":[{"s":16282,"c":"16283:53573","lab":"bias h1","kind":"b1","a":52,"z":69,"cls":"controller","md":[6,4,4,5,6,2,8,7],"sh":[0.717,0.439,0.706,0.156,0.424,0.669,0.72,0.718]},{"s":20017,"c":"20018:51020","lab":"S\u2192h7","kind":"w1","a":-32,"z":-31,"cls":"controller","md":[1,1,1,1,1,1,1,1],"sh":[0.004,0.013,0.006,0.001,0.021,0.027,0.035,0.007]},{"s":27503,"c":"27504:42600","lab":"\u2207Sx\u2192h5","kind":"w1","a":60,"z":65,"cls":"controller","md":[1,1,1,1,1,1,1,1],"sh":[0.006,0.037,0.056,0.016,0.101,0.007,0.081,0.013]},{"s":30026,"c":"30027:39275","lab":"\u2207Sx\u2192h6","kind":"w1","a":31,"z":18,"cls":"controller","md":[1,1,1,1,1,1,1,1],"sh":[0.238,0.15,0.024,0.036,0.216,0.228,0.347,0.03]},{"s":33135,"c":"33136:37492","lab":"U\u2192h7","kind":"w1","a":3,"z":-9,"cls":"controller","md":[1,2,1,1,2,2,2,1],"sh":[0.125,0.335,0.196,0.023,0.369,0.549,0.551,0.225]},{"s":33285,"c":"33286:36981","lab":"U\u2192h7","kind":"w1","a":-9,"z":-16,"cls":"controller","md":[1,1,1,1,2,2,2,1],"sh":[0.075,0.241,0.118,0.013,0.344,0.495,0.533,0.133]},{"s":36974,"c":"36975:29836","lab":"\u2207Sx\u2192h4","kind":"w1","a":-20,"z":-15,"cls":"controller","md":[1,1,1,1,1,1,1,1],"sh":[0.028,0.027,0.092,0.012,0.044,0.12,0.074,0.178]},{"s":48556,"c":"48557:27065","lab":"E/B\u2192h4","kind":"w1","a":20,"z":10,"cls":"controller","md":[1,2,3,2,2,4,2,5],"sh":[0.27,0.229,0.466,0.037,0.292,0.532,0.428,0.571]},{"s":65259,"c":"65260:22990","lab":"bias build","kind":"b2","a":-29,"z":-36,"cls":"controller","md":[0,0,0,0,7,0,0,0],"sh":[0,0,0,0,0.62,0,0,0]},{"s":72234,"c":"72235:21212","lab":"\u03bc","kind":"param","a":38,"z":60,"cls":"physics","md":[0,0,0,0,0,0,0,0],"sh":[0,0,0,0,0,0,0,0]},{"s":77835,"c":"77836:22465","lab":"\u2207Sy\u2192h4","kind":"w1","a":-11,"z":2,"cls":"none","md":[0,0,0,0,0,0,0,0],"sh":[0,0,0,0,0,0,0,0]},{"s":85809,"c":"85810:20897","lab":"h6\u2192emit","kind":"w2","a":38,"z":34,"cls":"controller","md":[0,0,0,0,0,4,0,0],"sh":[0,0,0,0,0,0.607,0,0]},{"s":104480,"c":"104481:23967","lab":"bias photo","kind":"b2","a":27,"z":51,"cls":"controller","md":[24,0,0,0,0,0,0,0],"sh":[1,0,0,0,0,0,0,0]},{"s":109334,"c":"109335:23966","lab":"S\u2192h1","kind":"w1","a":59,"z":60,"cls":"controller","md":[1,1,1,1,1,1,1,1],"sh":[0.031,0.014,0.017,0.009,0.016,0.006,0.044,0.038]},{"s":129021,"c":"129022:23941","lab":"h7\u2192moveX","kind":"w2","a":-42,"z":-18,"cls":"controller","md":[0,0,0,0,0,0,24,0],"sh":[0,0,0,0,0,0,0.79,0]},{"s":149322,"c":"149323:20602","lab":"h3\u2192photo","kind":"w2","a":15,"z":35,"cls":"controller","md":[20,0,0,0,0,0,0,0],"sh":[0.699,0,0,0,0,0,0,0]},{"s":156767,"c":"156768:20601","lab":"h2\u2192grow","kind":"w2","a":35,"z":51,"cls":"controller","md":[0,0,0,6,0,0,0,0],"sh":[0,0,0,0.042,0,0,0,0]},{"s":204523,"c":"204524:18820","lab":"bias h1","kind":"b1","a":69,"z":79,"cls":"controller","md":[4,3,2,3,4,1,5,4],"sh":[0.785,0.456,0.784,0.21,0.34,0.541,0.795,0.791]},{"s":241028,"c":"241029:21382","lab":"h2\u2192decomp","kind":"w2","a":-23,"z":-13,"cls":"controller","md":[0,0,5,0,0,0,0,0],"sh":[0,0,0.123,0,0,0,0,0]},{"s":244477,"c":"244478:21894","lab":"\u2207Sy\u2192h4","kind":"w1","a":2,"z":24,"cls":"none","md":[0,0,0,0,0,0,0,0],"sh":[0,0,0,0,0,0,0,0]},{"s":261348,"c":"261349:21632","lab":"motility gain","kind":"param","a":0,"z":17,"cls":"physics","md":[0,0,0,0,0,0,0,0],"sh":[0,0,0,0,0,0,0,0]},{"s":292885,"c":"292886:36178","lab":"bias photo","kind":"b2","a":51,"z":70,"cls":"controller","md":[19,0,0,0,0,0,0,0],"sh":[0.99,0,0,0,0,0,0,0]},{"s":301633,"c":"301634:11716","lab":"h4\u2192decomp","kind":"w2","a":31,"z":52,"cls":"controller","md":[0,0,21,0,0,0,0,0],"sh":[0,0,0.972,0,0,0,0,0]},{"s":310270,"c":"310271:49912","lab":"h0\u2192decomp","kind":"w2","a":54,"z":77,"cls":"controller","md":[0,0,23,0,0,0,0,0],"sh":[0,0,0.851,0,0,0,0,0]},{"s":323667,"c":"323668:56612","lab":"C\u2192h1","kind":"w1","a":-61,"z":-51,"cls":"controller","md":[4,3,2,3,4,1,5,4],"sh":[0.421,0.27,0.314,0.069,0.238,0.185,0.497,0.468]},{"s":325884,"c":"325885:26199","lab":"h7\u2192moveY","kind":"w2","a":9,"z":-15,"cls":"controller","md":[0,0,0,0,0,0,0,24],"sh":[0,0,0,0,0,0,0,0.791]},{"s":338811,"c":"338812:19617","lab":"h5\u2192moveY","kind":"w2","a":-7,"z":-19,"cls":"controller","md":[0,0,0,0,0,0,0,12],"sh":[0,0,0,0,0,0,0,0.596]},{"s":367949,"c":"367950:34030","lab":"\u03bc","kind":"param","a":60,"z":72,"cls":"physics","md":[0,0,0,0,0,0,0,0],"sh":[0,0,0,0,0,0,0,0]},{"s":395599,"c":"395600:23120","lab":"bias grow","kind":"b2","a":-13,"z":-19,"cls":"controller","md":[0,0,0,6,0,0,0,0],"sh":[0,0,0,0.262,0,0,0,0]},{"s":404306,"c":"404307:27706","lab":"bias emit","kind":"b2","a":37,"z":13,"cls":"controller","md":[0,0,0,0,0,24,0,0],"sh":[0,0,0,0,0,1,0,0]},{"s":409198,"c":"409199:32757","lab":"B\u2192h7","kind":"w1","a":35,"z":19,"cls":"controller","md":[1,4,1,1,5,5,3,2],"sh":[0.275,0.402,0.393,0.043,0.408,0.695,0.621,0.593]},{"s":455444,"c":"455445:61578","lab":"motility gain","kind":"param","a":17,"z":6,"cls":"physics","md":[0,0,0,0,0,0,0,0],"sh":[0,0,0,0,0,0,0,0]},{"s":559180,"c":"559181:50731","lab":"h2\u2192build","kind":"w2","a":-33,"z":-41,"cls":"controller","md":[0,0,0,0,4,0,0,0],"sh":[0,0,0,0,0.064,0,0,0]},{"s":560996,"c":"560997:60462","lab":"E/B\u2192h1","kind":"w1","a":-13,"z":-5,"cls":"controller","md":[3,2,2,3,3,1,4,3],"sh":[0.442,0.219,0.355,0.038,0.227,0.195,0.541,0.487]},{"s":600223,"c":"600224:29046","lab":"h0\u2192emit","kind":"w2","a":-33,"z":-56,"cls":"controller","md":[0,0,0,0,0,23,0,0],"sh":[0,0,0,0,0,0.868,0,0]},{"s":610166,"c":"610167:59243","lab":"bias h4","kind":"b1","a":52,"z":68,"cls":"controller","md":[2,2,7,3,4,6,4,8],"sh":[0.778,0.463,0.836,0.168,0.444,0.866,0.875,0.885]},{"s":623072,"c":"623073:42338","lab":"light\u2192h1","kind":"w1","a":23,"z":43,"cls":"controller","md":[7,5,4,6,7,2,9,7],"sh":[0.687,0.412,0.647,0.159,0.382,0.529,0.82,0.774]},{"s":640388,"c":"640389:35740","lab":"E/B\u2192h2","kind":"w1","a":-3,"z":3,"cls":"controller","md":[3,3,1,1,2,1,3,2],"sh":[0.088,0.035,0.027,0.014,0.046,0.033,0.088,0.073]},{"s":643563,"c":"643564:43940","lab":"light\u2192h5","kind":"w1","a":-40,"z":-46,"cls":"controller","md":[1,2,2,2,3,1,2,1],"sh":[0.033,0.193,0.26,0.063,0.273,0.049,0.364,0.236]},{"s":649552,"c":"649553:61356","lab":"light\u2192h6","kind":"w1","a":61,"z":56,"cls":"controller","md":[2,2,1,2,3,2,3,1],"sh":[0.406,0.325,0.057,0.082,0.274,0.45,0.551,0.077]},{"s":657856,"c":"657857:31672","lab":"h6\u2192decomp","kind":"w2","a":-4,"z":19,"cls":"controller","md":[0,0,23,0,0,0,0,0],"sh":[0,0,0.635,0,0,0,0,0]},{"s":695331,"c":"695332:19689","lab":"h1\u2192grow","kind":"w2","a":35,"z":15,"cls":"controller","md":[0,0,0,17,0,0,0,0],"sh":[0,0,0,0.202,0,0,0,0]},{"s":757372,"c":"757373:44392","lab":"S\u2192h1","kind":"w1","a":60,"z":54,"cls":"controller","md":[1,1,1,1,1,1,1,1],"sh":[0.194,0.072,0.113,0.01,0.103,0.044,0.31,0.243]},{"s":766882,"c":"766883:63139","lab":"U\u2192h6","kind":"w1","a":53,"z":63,"cls":"controller","md":[2,2,1,2,3,2,3,1],"sh":[0.377,0.291,0.289,0.048,0.234,0.444,0.46,0.089]},{"s":782500,"c":"782501:34035","lab":"U\u2192h5","kind":"w1","a":-26,"z":-46,"cls":"controller","md":[1,3,3,3,5,1,3,2],"sh":[0.084,0.18,0.352,0.09,0.261,0.127,0.422,0.41]},{"s":798268,"c":"798269:59687","lab":"h2\u2192grow","kind":"w2","a":51,"z":41,"cls":"controller","md":[0,0,0,4,0,0,0,0],"sh":[0,0,0,0.017,0,0,0,0]},{"s":805021,"c":"805022:4910","lab":"light\u2192h4","kind":"w1","a":20,"z":25,"cls":"controller","md":[1,1,3,1,1,2,1,3],"sh":[0.115,0.154,0.436,0.009,0.166,0.464,0.348,0.548]},{"s":809023,"c":"809024:10306","lab":"\u2207Sx\u2192h1","kind":"w1","a":-54,"z":-65,"cls":"controller","md":[1,1,1,1,1,1,1,1],"sh":[0.233,0.081,0.131,0.011,0.122,0.059,0.367,0.293]},{"s":830079,"c":"830080:37268","lab":"h3\u2192resp","kind":"w2","a":51,"z":44,"cls":"controller","md":[0,7,0,0,0,0,0,0],"sh":[0,0.314,0,0,0,0,0,0]},{"s":885767,"c":"885768:36028","lab":"h6\u2192build","kind":"w2","a":52,"z":66,"cls":"controller","md":[0,0,0,0,14,0,0,0],"sh":[0,0,0,0,0.404,0,0,0]},{"s":897575,"c":"897576:44488","lab":"h0\u2192moveY","kind":"w2","a":-38,"z":-15,"cls":"controller","md":[0,0,0,0,0,0,0,23],"sh":[0,0,0,0,0,0,0,0.869]},{"s":903877,"c":"903878:46297","lab":"S\u2192h5","kind":"w1","a":-40,"z":-28,"cls":"controller","md":[1,1,1,1,2,1,1,1],"sh":[0.019,0.087,0.155,0.048,0.19,0.028,0.248,0.129]},{"s":921979,"c":"921980:58628","lab":"E/B\u2192h2","kind":"w1","a":3,"z":22,"cls":"controller","md":[7,8,2,6,7,2,8,4],"sh":[0.172,0.063,0.084,0.013,0.099,0.121,0.176,0.167]},{"s":988712,"c":"988713:40332","lab":"bias moveY","kind":"b2","a":40,"z":46,"cls":"controller","md":[0,0,0,0,0,0,0,6],"sh":[0,0,0,0,0,0,0,1]}],"share":[[0,0.1232,13144],[2000,0.1269,11970],[4000,0.0822,14732],[6000,0.0746,16358],[8000,0.0827,21288],[10000,0.0749,22628],[12000,0.0849,24434],[14000,0.0813,21342],[16000,0.099,20759],[18000,0.0795,18110],[20000,0.0885,18192],[22000,0.0827,25345],[24000,0.0704,32440],[26000,0.1027,31395],[28000,0.117,30634],[30000,0.1571,30914],[32000,0.1909,33715],[34000,0.2372,35863],[36000,0.2622,40701],[38000,0.2525,42636],[40000,0.2815,47207],[42000,0.3002,49749],[44000,0.3001,51488],[46000,0.2628,49723],[48000,0.2589,53201],[50000,0.2388,51641],[52000,0.2189,51067],[54000,0.1957,52565],[56000,0.1713,50806],[58000,0.1584,52291],[60000,0.1706,52535],[62000,0.1639,51464],[64000,0.1472,52427],[66000,0.1309,51404],[68000,0.1325,52274],[70000,0.117,51790],[72000,0.0868,51658],[74000,0.1169,53385],[76000,0.1442,50772],[78000,0.1317,52434],[80000,0.1378,52222],[82000,0.1388,50549],[84000,0.1371,44264],[86000,0.1242,51249],[88000,0.1255,51614],[90000,0.1201,48959],[92000,0.1275,43536],[94000,0.1254,43379],[96000,0.1049,47526],[98000,0.1167,35722],[100000,0.1096,36675],[102000,0.0958,44821],[104000,0.1162,36281],[106000,0.0867,43269],[108000,0.0667,41414],[110000,0.0633,42030],[112000,0.0636,37699],[114000,0.0524,38063],[116000,0.0495,42578],[118000,0.0621,43471],[120000,0.0457,46573],[122000,0.0379,49624],[124000,0.0339,49249],[126000,0.038,43998],[128000,0.0483,39807],[130000,0.0463,40151],[132000,0.0381,41187],[134000,0.0378,41002],[136000,0.0346,38288],[138000,0.0387,37775],[140000,0.0424,38218],[142000,0.0406,39689],[144000,0.0414,38512],[146000,0.0402,38158],[148000,0.0361,42618],[150000,0.0238,46205],[152000,0.03,40520],[154000,0.0375,37020],[156000,0.0363,36931],[158000,0.0294,43054],[160000,0.0327,40110],[162000,0.0338,39619],[164000,0.0322,36928],[166000,0.0243,39453],[168000,0.0207,35433],[170000,0.0173,38961],[172000,0.0146,41037],[174000,0.0121,43286],[176000,0.0158,39461],[178000,0.0139,36551],[180000,0.0109,36778],[182000,0.0112,38280],[184000,0.0116,39188],[186000,0.0109,40643],[188000,0.0109,43533],[190000,0.0109,46445],[192000,0.0092,37107],[194000,0.0064,34505],[196000,0.0071,36044],[198000,0.0059,40454],[200000,0.0077,43288],[202000,0.0088,38887],[204000,0.0105,36574],[206000,0.0085,37433],[208000,0.0067,41243],[210000,0.0074,36976],[212000,0.0063,39721],[214000,0.0042,44228],[216000,0.0021,38504],[218000,0.0022,38915],[220000,0.0036,39285],[222000,0.003,48008],[224000,0.001,44154],[226000,0.0009,37947],[228000,0.0009,37615],[230000,0.0009,37734],[232000,0.0008,38300],[234000,0.0008,43043],[236000,0.0025,41196],[238000,0.0018,43077],[240000,0.0032,35356],[242000,0.0042,35766],[244000,0.004,36621],[246000,0.0038,37294],[248000,0.0037,38237],[250000,0.004,36862],[252000,0.003,41073],[254000,0.0032,38513],[256000,0.004,38696],[258000,0.0041,42319],[260000,0.005,40860],[262000,0.0082,43390],[264000,0.0223,43108],[266000,0.0386,48293],[268000,0.0851,46201],[270000,0.1353,47079],[272000,0.1406,49529],[274000,0.1076,50421],[276000,0.1375,51701],[278000,0.1703,51919],[280000,0.2383,53427],[282000,0.3274,54448],[284000,0.3873,57824],[286000,0.4106,55883],[288000,0.2879,48311],[290000,0.2426,47920],[292000,0.2716,54679],[294000,0.3029,59569],[296000,0.356,58149],[298000,0.3551,58746],[300000,0.3984,60172],[302000,0.4186,59415],[304000,0.3927,60006],[306000,0.337,58438],[308000,0.254,58697],[310000,0.2186,61001],[312000,0.2114,61002],[314000,0.1995,61744],[316000,0.2455,63357],[318000,0.2183,63218],[320000,0.2013,62711],[322000,0.2504,58733],[324000,0.2159,61473],[326000,0.1747,62637],[328000,0.1608,61473],[330000,0.1287,55921],[332000,0.0796,57951],[334000,0.0814,62797],[336000,0.0791,63508],[338000,0.0783,64307],[340000,0.0339,64056],[342000,0.0226,64785],[344000,0.0212,64570],[346000,0.0045,64785],[348000,0.0115,63729],[350000,0.0258,61187],[352000,0.0314,62176],[354000,0.025,62789],[356000,0.028,62276],[358000,0.0285,62415],[360000,0.0285,62748],[362000,0.0425,62617],[364000,0.0743,63826],[366000,0.0666,64986],[368000,0.1042,64940],[370000,0.153,64288],[372000,0.141,63622],[374000,0.1134,62448],[376000,0.0998,59583],[378000,0.0952,60992],[380000,0.1023,60839],[382000,0.1303,62731],[384000,0.1478,63879],[386000,0.1427,63923],[388000,0.1277,62422],[390000,0.1734,59861],[392000,0.2284,58956],[394000,0.2586,62260],[396000,0.2446,63112],[398000,0.2775,63661],[400000,0.296,64363],[402000,0.3236,65158],[404000,0.3531,64933],[406000,0.3449,64294],[408000,0.3381,63025],[410000,0.4117,63792],[412000,0.4286,65007],[414000,0.4052,65142],[416000,0.3833,65134],[418000,0.3979,64836],[420000,0.3549,65234],[422000,0.3422,65066],[424000,0.3976,65419],[426000,0.4236,65409],[428000,0.4409,65286],[430000,0.438,63490],[432000,0.4381,64815],[434000,0.3915,65224],[436000,0.348,65224],[438000,0.3024,65280],[440000,0.2757,65284],[442000,0.2371,65496],[444000,0.367,65458],[446000,0.3782,62970],[448000,0.309,65079],[450000,0.2971,65378],[452000,0.2371,63608],[454000,0.1874,65018],[456000,0.226,65173],[458000,0.1717,65247],[460000,0.1632,64457],[462000,0.1911,65348],[464000,0.1845,65168],[466000,0.1733,65140],[468000,0.1742,65412],[470000,0.1397,65061],[472000,0.1208,64936],[474000,0.1358,65225],[476000,0.1669,65456],[478000,0.1494,65515],[480000,0.1574,65025],[482000,0.155,64959],[484000,0.112,65403],[486000,0.0947,64438],[488000,0.0976,65336],[490000,0.0771,65480],[492000,0.0986,65506],[494000,0.0755,65072],[496000,0.0675,64965],[498000,0.0929,65194],[500000,0.1244,65431],[502000,0.1158,65322],[504000,0.1062,65431],[506000,0.1296,65214],[508000,0.1668,65425],[510000,0.215,65258],[512000,0.2258,64730],[514000,0.2229,65174],[516000,0.2507,65362],[518000,0.2735,65364],[520000,0.2695,65199],[522000,0.2616,65080],[524000,0.2481,64786],[526000,0.2336,64828],[528000,0.2588,64817],[530000,0.2378,64999],[532000,0.2416,64743],[534000,0.2124,64109],[536000,0.2095,64660],[538000,0.2058,64502],[540000,0.1835,64471],[542000,0.1403,64098],[544000,0.1401,63967],[546000,0.1369,63769],[548000,0.1213,63849],[550000,0.106,63226],[552000,0.1013,63080],[554000,0.1038,62905],[556000,0.1046,62419],[558000,0.1004,62258],[560000,0.0913,62474],[562000,0.0899,62704],[564000,0.1114,61367],[566000,0.1096,61193],[568000,0.0906,62917],[570000,0.0757,62077],[572000,0.068,61969],[574000,0.064,62515],[576000,0.0537,61417],[578000,0.0376,60468],[580000,0.0391,60667],[582000,0.0459,60965],[584000,0.0486,60359],[586000,0.0471,59811],[588000,0.0438,59128],[590000,0.0392,58595],[592000,0.0288,60238],[594000,0.0337,60825],[596000,0.0336,61146],[598000,0.0244,62188],[600000,0.0201,61182],[602000,0.013,61417],[604000,0.0117,61462],[606000,0.0118,61848],[608000,0.0115,61251],[610000,0.0112,61029],[612000,0.0102,60511],[614000,0.0096,59787],[616000,0.0098,59009],[618000,0.01,58508],[620000,0.0075,58397],[622000,0.0055,59271],[624000,0.0075,59428],[626000,0.0077,59118],[628000,0.0074,58589],[630000,0.0062,59181],[632000,0.0063,59294],[634000,0.0098,59740],[636000,0.0069,59984],[638000,0.0038,59842],[640000,0.0035,60163],[642000,0.0029,60166],[644000,0.0042,58968],[646000,0.0045,58005],[648000,0.0061,57662],[650000,0.0082,58037],[652000,0.0076,58524],[654000,0.0094,58424],[656000,0.0083,58038],[658000,0.0079,57537],[660000,0.0104,56813],[662000,0.0167,57369],[664000,0.0154,57840],[666000,0.0161,57640],[668000,0.0108,57599],[670000,0.0109,57292],[672000,0.0093,57681],[674000,0.0053,57837],[676000,0.0044,57318],[678000,0.0046,57681],[680000,0.0027,57790],[682000,0.0032,57690],[684000,0.0038,57413],[686000,0.0033,57089],[688000,0.0036,56793],[690000,0.006,56417],[692000,0.0068,57390],[694000,0.0058,58672],[696000,0.0047,61150],[698000,0.0084,60282],[700000,0.0087,57226],[702000,0.0069,56401],[704000,0.0073,55997],[706000,0.0066,55798],[708000,0.0073,55005],[710000,0.0102,54229],[712000,0.0057,54288],[714000,0.0019,54409],[716000,0.0015,54027],[718000,0.0027,53837],[720000,0.0028,54094],[722000,0.0028,53641],[724000,0.0035,52927],[726000,0.0066,53351],[728000,0.0062,52367],[730000,0.005,52280],[732000,0.0057,52104],[734000,0.0063,52262],[736000,0.006,52674],[738000,0.0068,52463],[740000,0.008,52134],[742000,0.0093,52278],[744000,0.0109,52346],[746000,0.0094,54147],[748000,0.0074,54360],[750000,0.0059,52432],[752000,0.0044,50481],[754000,0.0077,50610],[756000,0.0104,49952],[758000,0.011,49752],[760000,0.0038,49708],[762000,0.0045,51837],[764000,0.007,51756],[766000,0.0076,50872],[768000,0.0077,48552],[770000,0.0084,47487],[772000,0.0058,46815],[774000,0.0104,47291],[776000,0.0075,47410],[778000,0.0044,49276],[780000,0.0071,50987],[782000,0.0075,50288],[784000,0.006,49932],[786000,0.0052,50644],[788000,0.0063,50558],[790000,0.0115,50261],[792000,0.0184,50938],[794000,0.0153,49896],[796000,0.0139,49935],[798000,0.0147,49708],[800000,0.0071,50596],[802000,0.0059,49765],[804000,0.0048,49411],[806000,0.0055,49041],[808000,0.0047,49369],[810000,0.0054,49486],[812000,0.0061,49510],[814000,0.0072,49159],[816000,0.007,48988],[818000,0.0067,47584],[820000,0.0051,47950],[822000,0.0039,48311],[824000,0.0027,48168],[826000,0.0023,49308],[828000,0.0023,49027],[830000,0.0026,48829],[832000,0.0038,47655],[834000,0.0045,46842],[836000,0.0051,47452],[838000,0.0045,48050],[840000,0.0046,48552],[842000,0.0042,48381],[844000,0.0029,48072],[846000,0.0026,48082],[848000,0.0033,48203],[850000,0.005,48853],[852000,0.0049,48665],[854000,0.0048,48536],[856000,0.0056,48664],[858000,0.0053,48542],[860000,0.0045,48287],[862000,0.0054,48542],[864000,0.0064,48944],[866000,0.0057,49256],[868000,0.0057,48855],[870000,0.0048,48557],[872000,0.0042,49018],[874000,0.0045,48927],[876000,0.0037,48787],[878000,0.003,48922],[880000,0.002,48684],[882000,0.0022,48648],[884000,0.0039,49321],[886000,0.005,49486],[888000,0.0051,49495],[890000,0.0041,49819],[892000,0.0043,49256],[894000,0.0042,49417],[896000,0.002,49304],[898000,0.0012,49197],[900000,0.0011,49230],[902000,0.0019,49328],[904000,0.003,49601],[906000,0.0022,50097],[908000,0.0016,48546],[910000,0.0016,48157],[912000,0.0016,48299],[914000,0.0014,48614],[916000,0.0013,48971],[918000,0.0014,49410],[920000,0.0035,48920],[922000,0.0031,48515],[924000,0.003,48454],[926000,0.0065,48634],[928000,0.0042,48467],[930000,0.0022,49554],[932000,0.0019,48865],[934000,0.0019,48446],[936000,0.0026,49297],[938000,0.002,50351],[940000,0.0019,48239],[942000,0.0017,48083],[944000,0.0016,47428],[946000,0.002,46663],[948000,0.0024,47668],[950000,0.0018,48722],[952000,0.0029,47790],[954000,0.0018,48050],[956000,0.0028,48252],[958000,0.0029,48408],[960000,0.0037,48362],[962000,0.0047,47742],[964000,0.0062,47516],[966000,0.0056,47254],[968000,0.0051,47705],[970000,0.0041,48011],[972000,0.0036,47940],[974000,0.0053,47916],[976000,0.0061,47353],[978000,0.0069,48418],[980000,0.0046,49448],[982000,0.0043,47257],[984000,0.0049,46887],[986000,0.0054,47035],[988000,0.0062,47354],[990000,0.0062,49443],[992000,0.0178,50218],[994000,0.0237,46801],[996000,0.0224,47697],[998000,0.0189,45965],[1000000,0.0189,45920]],"light":{"founder":[[0,24,0,52,0,0,66,29,12],[8,25,0,52,0,0,67,27,12],[16,25,0,53,0,0,67,24,11],[24,26,0,54,0,0,67,19,11],[32,27,0,55,0,0,69,15,9],[40,29,0,56,0,0,69,11,9],[48,30,0,57,0,0,71,6,8],[56,32,4,58,0,0,71,1,7],[64,33,7,60,0,0,73,-2,6],[72,35,10,61,0,0,74,-7,5],[80,36,13,63,0,0,75,-10,5],[88,38,16,64,0,2,76,-15,4],[96,40,19,66,0,4,78,-18,2],[104,41,22,67,0,6,79,-22,1],[112,43,25,69,0,8,80,-26,0],[120,44,28,70,0,10,81,-30,0]],"subject":[[0,81,0,64,0,0,43,48,20],[8,81,0,65,0,0,43,47,21],[16,82,0,66,0,0,42,45,21],[24,83,0,68,0,0,42,42,21],[32,85,0,70,0,0,42,39,22],[40,87,0,73,0,0,42,35,21],[48,89,0,75,0,0,42,32,21],[56,91,0,78,0,0,42,29,21],[64,93,0,81,0,0,43,26,20],[72,95,0,84,0,0,43,23,20],[80,97,0,87,0,0,43,20,20],[88,99,0,90,0,0,43,17,20],[96,101,2,93,0,0,44,15,19],[104,103,5,96,0,0,44,12,19],[112,105,7,99,0,0,44,10,18],[120,107,10,102,0,0,44,6,18]]},"off":{"children":62,"childrenCensused":10,"grandchildren":23,"descendants":87},"births":{"fission":18,"budding":17,"asParent":21,"asChild":25},"birthSample":[["990400","fission","561182","562248","1","940201:43226","988713:40332","175502","173792","3079","0.0978","445","426","9","0.8889"],["991200","budding","562348","562442","1","988713:40332","940201:43226","2762","2762","19","1","865","865","9","1"],["991500","fission","561182","562478","1","986550:46525","988713:40332","92338","92022","1522","0.2799","39234","39004","670","0.2104"]],"neutral":{"run":"replay-m4/gradient-m3/neutral/seed-1","subject":"986643:51366","depth":34,"minted":248249,"medianPeak":2746,"uncensused":1,"recon":{"chainGenomesCheckedAgainstGenomesTsv":33,"mismatched":0},"off":{"children":134,"childrenCensused":23,"grandchildren":18,"descendants":153},"births":{"fission":0,"budding":69,"asParent":64,"asChild":63}},"treatMedianPeak":644}</script>
+<script>
+(() => {
+const D = JSON.parse(document.getElementById("data").textContent);
+const NS = "http://www.w3.org/2000/svg";
+const OUT = ["photo", "resp", "decomp", "grow", "build", "emit", "moveX", "moveY"];
+const fmt = (n) => n.toLocaleString("en-US");
+const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (parent) parent.appendChild(e); return e; };
+const svg = (w, h, label) => { const s = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": label }); return s; };
+const txt = (s, x, y, t, a = {}) => { const e = el("text", { x, y, ...a }, s); e.textContent = t; return e; };
+const tip = document.getElementById("tip");
+const showTip = (ev, html) => { tip.innerHTML = html; tip.style.display = "block"; const x = Math.min(ev.clientX + 12, innerWidth - 330); tip.style.left = x + "px"; tip.style.top = (ev.clientY + 14) + "px"; };
+const hideTip = () => { tip.style.display = "none"; };
+const CLS = {
+  controller: { name: "controller output changed", color: "var(--accent)" },
+  physics: { name: "physics parameter", color: "var(--warning)" },
+  none: { name: "no effect on probe grid", color: "var(--soft)" },
+};
+const marker = (s, cls, x, y, r = 3.4) => {
+  const c = CLS[cls].color;
+  if (cls === "physics") return el("path", { d: `M${x} ${y - r - 0.6}L${x + r + 0.6} ${y}L${x} ${y + r + 0.6}L${x - r - 0.6} ${y}Z`, fill: c }, s);
+  if (cls === "none") return el("circle", { cx: x, cy: y, r: r - 0.6, fill: "var(--surface)", stroke: c, "stroke-width": 1.4 }, s);
+  return el("circle", { cx: x, cy: y, r, fill: c }, s);
+};
+const markerHTML = (cls) => {
+  const s = svg(10, 10, CLS[cls].name); s.setAttribute("width", "10"); s.style.width = "10px"; s.style.display = "inline";
+  marker(s, cls, 5, 5, 3.6); return s.outerHTML;
+};
+
+// Header
+const subj = D.chain[D.chain.length - 1];
+const [hi, lo] = D.subject.split(":").map(Number);
+document.getElementById("ident").innerHTML = `${D.subject}<small>genotype lineage</small>`;
+const share = (100 * D.finalCells / D.finalTotal).toFixed(1);
+document.getElementById("facts").innerHTML = [
+  `minted <b>step ${fmt(hi - 1)}</b> at cell <b>(${lo % 256}, ${Math.floor(lo / 256)})</b> <span class="chip exact">exact</span>`,
+  `founder <b>${D.founder}</b> · depth <b>${D.depth}</b> mutations <span class="chip exact">exact</span>`,
+  `<b>${fmt(D.finalCells)}</b> cells · <b>${share}%</b> of ${fmt(D.finalTotal)} living at step 10⁶ <span class="chip exact">exact</span>`,
+  `μ <b>${subj.mu}</b> σ <b>${subj.sg}</b> motility gain <b>${subj.g}</b> <span class="chip exact">exact</span>`,
+  `dominant in — components, purity — <span class="chip missing">not computed in sketch</span>`,
+].map((x) => `<span>${x}</span>`).join("");
+document.getElementById("rule").innerHTML = `Chosen by rule: <b>most abundant lineage at step 1,000,000</b>. Other rules: random lineage ≥1% at step t (seeded) · longest-lived · picked on canvas (flagged "chosen by eye"). The neutral twin (section 08) uses the same rule.`;
+
+// 01 Ancestry lanes
+(() => {
+  const W = 1100, L = 118, R = 14, top = 92, rowH = 7, n = D.chain.length, H = top + n * rowH + 26;
+  const s = svg(W, H, "Ancestry lanes from founder to subject with mutation markers and population share");
+  const x = (t) => L + (t / 1e6) * (W - L - R);
+  // share trace
+  const sh = D.share, maxS = Math.max(...sh.map((d) => d[1]));
+  const sy = (v) => 74 - (v / maxS) * 62;
+  txt(s, 4, 40, "ancestor line's", { style: "font-size:9px" });
+  txt(s, 4, 51, "share of living", { style: "font-size:9px" });
+  txt(s, 4, 62, "cells", { style: "font-size:9px" });
+  txt(s, L - 6, sy(maxS) + 3, (100 * maxS).toFixed(0) + "%", { "text-anchor": "end" });
+  txt(s, L - 6, sy(0) + 3, "0%", { "text-anchor": "end" });
+  el("line", { x1: L, x2: W - R, y1: sy(0), y2: sy(0), class: "axis" }, s);
+  let dA = `M${x(sh[0][0])} ${sy(0)}`;
+  for (const [t, v] of sh) dA += `L${x(t)} ${sy(v)}`;
+  dA += `L${x(sh[sh.length - 1][0])} ${sy(0)}Z`;
+  el("path", { d: dA, fill: "color-mix(in oklch, var(--accent) 22%, transparent)", stroke: "var(--accent)", "stroke-width": 1 }, s);
+  // time axis
+  for (let t = 0; t <= 1e6; t += 1e5) {
+    el("line", { x1: x(t), x2: x(t), y1: top - 4, y2: top + n * rowH, class: "grid-l" }, s);
+    txt(s, x(t), top + n * rowH + 14, t === 0 ? "0" : `${t / 1e3}k`, { "text-anchor": "middle" });
+  }
+  const maxP = Math.max(...D.chain.map((c) => c.p));
+  const lp = (v) => Math.log1p(v) / Math.log1p(maxP);
+  const rows = [];
+  let lastLab = -9;
+  D.chain.forEach((c, i) => {
+    const y = top + i * rowH;
+    const g = el("g", { class: "lane", tabindex: "-1", "data-i": i }, s);
+    el("rect", { x: L, y, width: W - L - R, height: rowH, fill: "transparent" }, g);
+    for (const [t, v] of c.s) el("rect", { x: x(t), y: y + 1, width: Math.max(1, x(t + 2000) - x(t)), height: rowH - 2, fill: "var(--biomass)", opacity: (0.12 + 0.88 * lp(v)).toFixed(3) }, g);
+    if (i > 0) {
+      const e = D.edges[i - 1];
+      el("line", { x1: x(e.s), x2: x(e.s), y1: y - rowH + rowH / 2, y2: y + rowH / 2, stroke: "var(--line)", "stroke-width": 1 }, g);
+      marker(g, e.cls, x(e.s), y + rowH / 2, 2.8);
+    }
+    if ((i === 0 || i === n - 1 || c.p > 9000) && i - lastLab >= 2) { txt(g, L - 6, y + rowH - 0.5, c.k, { "text-anchor": "end", style: "font-size:8.5px" }); lastLab = i; }
+    const e = i > 0 ? D.edges[i - 1] : null;
+    g.addEventListener("mousemove", (ev) => showTip(ev, `<b>${c.k}</b><br>${i === 0 ? "founder" : `minted step ${fmt(e.s)} by ${e.lab} ${e.a}→${e.z}`}<br>seen ${c.f == null ? "never" : `${fmt(c.f)}–${fmt(c.l)}`} · peak ${fmt(c.p)} cells<br>μ ${c.mu} · gain ${c.g}`));
+    g.addEventListener("mouseleave", hideTip);
+    g.addEventListener("click", () => select(i));
+    rows.push(g);
+  });
+  const hl = el("rect", { x: L - 2, y: 0, width: W - L - R + 4, height: rowH, fill: "none", stroke: "var(--text)", "stroke-width": 1, rx: 2, visibility: "hidden" }, s);
+  window.__laneSelect = (i) => { hl.setAttribute("y", top + i * rowH); hl.setAttribute("visibility", "visible"); };
+  document.getElementById("anc").appendChild(s);
+  document.getElementById("anc-key").innerHTML = Object.keys(CLS).map((k) => `<span>${markerHTML(k)} ${CLS[k].name}</span>`).join("") + `<span>labels: founder, subject and (where room) ancestors that peaked above 9,000 cells · hover or click a row</span>`;
+})();
+
+// 02 Mutations table
+const BIG = 5; // child peak at least 5x its parent's
+const say = (e, i) => {
+  const p = D.chain[i], c = D.chain[i + 1];
+  if (e.cls === "physics") {
+    const what = e.lab === "μ" ? "Lenia growth centre" : e.lab === "σ" ? "Lenia growth width" : "motility scale";
+    return `${e.lab} (${what}) ${e.a} → ${e.z}. Acts through physics, not the controller; needs its own evidence.`;
+  }
+  if (e.cls === "none") return `No output change on the probe grid${e.lab.includes("∇Sy") ? " (the grid holds ∇Sy at 0)" : ""}. Judge on realized inputs.`;
+  const moved = e.md.map((d, k) => [d, k]).filter(([d]) => d >= 3).sort((a, b) => b[0] - a[0]).slice(0, 3);
+  if (!moved.length) return `All outputs shift by at most ${Math.max(...e.md)}: small, diffuse change.`;
+  return moved.map(([, k]) => `mean ${OUT[k]} ${p.o[k]} → ${c.o[k]}`).join(" · ");
+};
+const tbody = document.getElementById("mut");
+const trs = D.edges.map((e, i) => {
+  const tr = document.createElement("tr");
+  tr.tabIndex = 0;
+  tr.dataset.cls = e.cls;
+  const parent = D.chain[i], child = D.chain[i + 1];
+  tr.dataset.big = child.p >= BIG * Math.max(parent.p, 1) && child.p > 1000 ? "1" : "0";
+  const mx = Math.max(...e.md, 1);
+  const bars = e.md.map((d, k) => `<span title="${OUT[k]} ${d}" style="display:inline-block;width:7px;margin-right:1px;height:${Math.max(1, Math.round(14 * d / 24))}px;background:${d ? (k < 6 ? "var(--accent)" : "var(--nutrient)") : "var(--line-soft)"};vertical-align:bottom"></span>`).join("");
+  tr.innerHTML = `<td class="num">${fmt(e.s)}</td><td class="mono">${e.lab}</td><td class="num">${e.a} → ${e.z}</td><td><span class="cls">${markerHTML(e.cls)} ${CLS[e.cls].name}</span></td><td><span aria-label="max change per output">${bars}</span></td><td class="num">${fmt(child.p)}${tr.dataset.big === "1" ? ' <span class="chip context" title="peak at least 5× the parent\'s; candidate beat, untested">↑ candidate</span>' : ""}</td><td class="say">${say(e, i)}</td>`;
+  tr.addEventListener("click", () => select(i + 1));
+  tr.addEventListener("keydown", (ev) => { if (ev.key === "Enter") select(i + 1); });
+  tbody.appendChild(tr);
+  return tr;
+});
+document.querySelectorAll(".filters button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll(".filters button").forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+  const f = b.dataset.f;
+  trs.forEach((tr) => { tr.hidden = !(f === "all" || (f === "big" ? tr.dataset.big === "1" : tr.dataset.cls === f)); });
+}));
+
+// 03 Strategy curves
+(() => {
+  const host = document.getElementById("curves");
+  const W = 520, H = 250, pads = [[0, 0], [1, 0], [0, 1], [1, 1]];
+  const s = svg(W, H, "Controller output against light, founder versus subject");
+  const panels = [0, 2, 1, 5]; // photo, decomp, resp, emit
+  const pw = 230, ph = 92;
+  panels.forEach((k, pi) => {
+    const ox = 34 + pads[pi][0] * (pw + 30), oy = 14 + pads[pi][1] * (ph + 30);
+    const xs = (L) => ox + (L / 127) * pw, ys = (v) => oy + ph - (v / 127) * ph;
+    el("rect", { x: ox, y: oy, width: pw, height: ph, fill: "none", class: "axis" }, s);
+    txt(s, ox + 4, oy + 12, OUT[k], { style: "fill:var(--text)" });
+    txt(s, ox - 4, oy + 4, "127", { "text-anchor": "end" });
+    txt(s, ox - 4, oy + ph + 3, "0", { "text-anchor": "end" });
+    txt(s, ox + pw, oy + ph + 12, "light →", { "text-anchor": "end" });
+    for (const [key, style] of [["founder", { stroke: "var(--soft)", "stroke-width": 1.5, "stroke-dasharray": "3 2" }], ["subject", { stroke: "var(--accent)", "stroke-width": 2 }]]) {
+      const pts = D.light[key].map((r) => `${xs(r[0])},${ys(r[1 + k])}`).join(" ");
+      el("polyline", { points: pts, fill: "none", ...style }, s);
+    }
+  });
+  host.appendChild(s);
+})();
+
+// 03b strip of mean outputs per ancestor
+(() => {
+  const n = D.chain.length, W = 520, L = 52, cw = (W - L - 6) / n, rh = 11, H = 8 * rh + 30;
+  const s = svg(W, H, "Mean controller outputs along the ancestry");
+  OUT.forEach((name, k) => {
+    txt(s, L - 6, 9 + k * rh, name, { "text-anchor": "end", style: "font-size:9px" });
+    D.chain.forEach((c, i) => {
+      const v = c.o[k];
+      const fill = k < 6 ? "var(--accent)" : v >= 0 ? "var(--waste)" : "var(--nutrient)";
+      const op = k < 6 ? Math.min(1, v / 110) : Math.min(1, Math.abs(v) / 40);
+      el("rect", { x: L + i * cw, y: k * rh + 1, width: cw - 0.6, height: rh - 2, fill, opacity: (0.06 + 0.94 * op).toFixed(3) }, s);
+    });
+  });
+  // param change marks
+  D.chain.forEach((c, i) => { if (i && D.edges[i - 1].cls === "physics") marker(s, "physics", L + i * cw + cw / 2, 8 * rh + 6, 2.6); });
+  txt(s, L, 8 * rh + 22, "founder", { style: "font-size:9px" });
+  txt(s, W - 6, 8 * rh + 22, "subject", { "text-anchor": "end", style: "font-size:9px" });
+  const hl = el("rect", { x: 0, y: 0, width: cw, height: 8 * rh, fill: "none", stroke: "var(--text)", "stroke-width": 1, visibility: "hidden" }, s);
+  window.__stripSelect = (i) => { hl.setAttribute("x", L + i * cw - 0.3); hl.setAttribute("visibility", "visible"); };
+  document.getElementById("strip").appendChild(s);
+})();
+
+// 04 Behaviour: role mix per ancestor
+(() => {
+  const n = D.chain.length, W = 520, L = 34, cw = (W - L - 6) / n, H = 120, ph = 92;
+  const s = svg(W, H, "Role mix of each ancestor's cells");
+  const ROLES = [["phototroph", "var(--biomass)"], ["decomposer", "var(--waste)"], ["chemotroph", "var(--nutrient)"], ["mixed", "var(--soft)"]];
+  txt(s, L - 4, 10, "100%", { "text-anchor": "end" });
+  txt(s, L - 4, ph + 4, "0", { "text-anchor": "end" });
+  D.chain.forEach((c, i) => {
+    const tot = Object.values(c.roles).reduce((a, b) => a + b, 0);
+    if (!tot) { el("rect", { x: L + i * cw, y: 4, width: cw - 0.6, height: ph, fill: "none", stroke: "var(--line)", "stroke-dasharray": "2 2" }, s); return; }
+    let y = 4;
+    for (const [r, col] of ROLES) {
+      const h = ph * (c.roles[r] || 0) / tot;
+      if (h > 0) el("rect", { x: L + i * cw, y, width: cw - 0.6, height: h, fill: col }, s);
+      y += h;
+    }
+  });
+  txt(s, L, H - 4, "founder", { style: "font-size:9px" });
+  txt(s, W - 6, H - 4, "subject", { "text-anchor": "end", style: "font-size:9px" });
+  document.getElementById("roles").appendChild(s);
+  const r = subj.roles, t = Object.values(r).reduce((a, b) => a + b, 0);
+  document.getElementById("role-note").textContent = `One genome, several roles: the subject's cells read phototroph in ${Math.round(100 * (r.phototroph || 0) / t)}% of cell-censuses and decomposer in ${Math.round(100 * (r.decomposer || 0) / t)}%. Role is where a cell is, not a strategy; strategy is section 03. Dashed column: an ancestor with no deep census.`;
+})();
+
+// 05 Energy proxy: realized flux per cell per ancestor
+(() => {
+  const n = D.chain.length, W = 520, L = 34, H = 130, ph = 100, cw = (W - L - 6) / (n - 1);
+  const s = svg(W, H, "Realized flux per cell along the ancestry");
+  const vals = D.chain.flatMap((c) => c.flux.filter((v) => v != null).slice(0, 3));
+  const mx = Math.max(...vals);
+  const y = (v) => 6 + ph - (v / mx) * ph;
+  el("line", { x1: L, x2: W - 6, y1: y(0), y2: y(0), class: "axis" }, s);
+  txt(s, L - 4, y(mx) + 3, mx.toFixed(2), { "text-anchor": "end" });
+  txt(s, L - 4, y(0) + 3, "0", { "text-anchor": "end" });
+  [[0, "var(--biomass)"], [1, "var(--waste)"], [2, "var(--nutrient)"]].forEach(([k, col]) => {
+    let d = "", pen = false;
+    D.chain.forEach((c, i) => { const v = c.flux[k]; if (v == null) { pen = false; return; } d += `${pen ? "L" : "M"}${L + i * cw} ${y(v)}`; pen = true; });
+    el("path", { d, fill: "none", stroke: col, "stroke-width": 1.6 }, s);
+  });
+  txt(s, L, H - 6, "founder · quanta per cell per step, deep censuses · spikes: ancestors with few cells", { style: "font-size:9px" });
+  txt(s, W - 6, H - 6, "subject", { "text-anchor": "end", style: "font-size:9px" });
+  document.getElementById("flux").appendChild(s);
+})();
+
+// 06 Offspring
+document.getElementById("off").innerHTML = `
+  <div class="card"><h3>Genotype children <span class="chip exact">exact</span></h3>
+    <div class="big">${D.off.children}</div><dl class="kv"><dt>minted</dt><dd>${D.off.children}</dd><dt>reached a census</dt><dd>${D.off.childrenCensused}</dd><dt>grandchildren</dt><dd>${D.off.grandchildren}</dd><dt>all descendants</dt><dd>${D.off.descendants}</dd><dt>window</dt><dd>${fmt(1e6 - (hi - 1))} steps</dd></dl></div>
+  <div class="card"><h3>Tracker births <span class="chip inferred">inferred</span></h3>
+    <div class="big">${D.births.fission + D.births.budding}</div><dl class="kv"><dt>fission</dt><dd>${D.births.fission}</dd><dt>budding</dt><dd>${D.births.budding}</dd><dt>as tracked parent</dt><dd>${D.births.asParent}</dd><dt>as tracked child</dt><dd>${D.births.asChild}</dd></dl>
+    <p class="note" style="margin-top:6px">Step ${fmt(+D.birthSample[0][0])}: a fission credits component ${D.birthSample[0][2]} as parent, but its plurality genotype is ${D.birthSample[0][5]} at purity ${(+D.birthSample[0][10]).toFixed(2)}. Tracker parenthood is attribution, not copying.</p></div>`;
+
+// 08 Neutral twin
+(() => {
+  const N = D.neutral;
+  const ctrl = D.edges.filter((e) => e.cls === "controller").length, phys = D.edges.filter((e) => e.cls === "physics").length;
+  const rows = [
+    ["subject (most abundant at 10⁶)", D.subject, N.subject],
+    ["ancestry depth (mutations)", D.depth, N.depth],
+    ["lineages minted in the run", fmt(D.minted), fmt(N.minted)],
+    ["median ancestor peak, cells", fmt(D.treatMedianPeak), fmt(N.medianPeak)],
+    ["ancestors never censused (reconstruction only)", 0, N.uncensused],
+    ["mutations expressed", `${ctrl} controller · ${phys} physics`, "none: reference phenotype everywhere"],
+    ["genomes verified against genomes.tsv", `${D.recon.chainGenomesCheckedAgainstGenomesTsv} of ${D.recon.chainGenomesCheckedAgainstGenomesTsv}`, `${N.recon.chainGenomesCheckedAgainstGenomesTsv} of ${N.recon.chainGenomesCheckedAgainstGenomesTsv}`],
+    ["genotype children of subject", D.off.children, N.off.children],
+  ];
+  document.getElementById("twin").innerHTML = `<div class="tablewrap" style="max-height:none"><table class="cmp"><thead><tr><th></th><th>treatment seed 1</th><th>neutral seed 1</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${r[0]}</td><td class="mono">${r[1]}</td><td class="mono">${r[2]}</td></tr>`).join("")}</tbody></table></div><p class="note" style="margin-top:8px">The neutral run tells a story too: a deep ancestry, expansions, an ancestor that never reached a census. Whatever the treatment story claims has to differ from this.</p>`;
+})();
+
+// Footer
+document.getElementById("foot").innerHTML = [
+  `bundle <b>${D.run}</b>`, `final hash <b>8ecf6564a99ae04d</b>`, `census every <b>100</b> · deep every <b>10</b>`, `checkpoints every <b>10⁵</b> (jump to step = restore + advance)`,
+  `reconstruction <b>${D.recon.chainGenomesCheckedAgainstGenomesTsv}/${D.recon.chainGenomesCheckedAgainstGenomesTsv}</b> verified`, `<b>${fmt(D.minted)}</b> minted · <b>${fmt(D.recorded)}</b> ever censused`,
+].map((x) => `<span>${x}</span>`).join("");
+
+// Selection sync
+function select(i) {
+  window.__laneSelect(i); window.__stripSelect(i);
+  trs.forEach((tr, j) => tr.classList.toggle("sel", j === i - 1));
+}
+select(D.chain.length - 1);
+
+// Schematics
+const schem = (id, label, draw) => { const s = svg(320, 200, label); draw(s); document.getElementById(id).appendChild(s); };
+const dash = { stroke: "var(--muted)", "stroke-width": 1.4, fill: "none", "stroke-dasharray": "4 3" };
+schem("sx1", "Schematic traitgram", (s) => {
+  el("line", { x1: 30, y1: 180, x2: 310, y2: 180, class: "axis" }, s); el("line", { x1: 30, y1: 180, x2: 30, y2: 10, class: "axis" }, s);
+  txt(s, 310, 194, "step →", { "text-anchor": "end" }); txt(s, 34, 14, "complexity c");
+  el("path", { d: "M30 150 C110 145 200 125 310 105 L310 160 C200 165 110 168 30 170Z", fill: "none", stroke: "var(--line)", "stroke-dasharray": "2 3" }, s);
+  txt(s, 300, 152, "population band", { "text-anchor": "end" });
+  el("path", { d: "M30 160 L80 158 L95 150 L150 146 L170 132 L230 128 L250 112 L310 96", ...dash }, s);
+  for (const [x, y] of [[80, 158], [150, 146], [230, 128]]) el("path", { d: `M${x} ${y} l14 10`, stroke: "var(--soft)", "stroke-width": 1, "stroke-dasharray": "2 2" }, s);
+  txt(s, 250, 90, "ancestry path"); txt(s, 160, 168, "dead siblings");
+});
+schem("sx2", "Schematic selection skew histograms", (s) => {
+  el("line", { x1: 20, y1: 170, x2: 310, y2: 170, class: "axis" }, s);
+  el("line", { x1: 165, y1: 20, x2: 165, y2: 170, stroke: "var(--line)", "stroke-dasharray": "3 3" }, s);
+  txt(s, 165, 186, "Δc = 0", { "text-anchor": "middle" }); txt(s, 306, 186, "Δc →", { "text-anchor": "end" });
+  el("path", { d: "M40 170 C90 168 130 60 160 60 C190 60 230 168 290 170", ...dash }, s);
+  el("path", { d: "M70 170 C120 168 160 40 195 40 C230 40 262 168 300 170", fill: "none", stroke: "var(--muted)", "stroke-width": 1.4 }, s);
+  txt(s, 60, 80, "minted"); txt(s, 236, 52, "spread");
+  el("path", { d: "M160 24 L195 24 M190 20 L195 24 L190 28", stroke: "var(--text)", "stroke-width": 1, fill: "none" }, s); txt(s, 178, 16, "skew?", { "text-anchor": "middle", style: "fill:var(--text)" });
+});
+schem("sx3", "Schematic decoupling quadrant", (s) => {
+  el("line", { x1: 30, y1: 100, x2: 310, y2: 100, class: "axis" }, s); el("line", { x1: 120, y1: 10, x2: 120, y2: 190, class: "axis" }, s);
+  txt(s, 310, 196, "log Δ living cells →", { "text-anchor": "end" }); txt(s, 124, 18, "Δ median complexity");
+  el("ellipse", { cx: 200, cy: 100, rx: 90, ry: 22, ...dash }, s); txt(s, 250, 138, "growth only", { "text-anchor": "middle" });
+  el("ellipse", { cx: 110, cy: 104, rx: 34, ry: 16, fill: "none", stroke: "var(--line)", "stroke-dasharray": "2 3" }, s); txt(s, 40, 136, "no-mutation");
+  el("path", { d: "M150 60 L290 30", stroke: "var(--muted)", "stroke-dasharray": "4 3" }, s); txt(s, 300, 62, "complexity rise", { "text-anchor": "end" });
+});
+
+// Theme
+const tb = document.getElementById("theme");
+tb.addEventListener("click", () => { const light = document.documentElement.dataset.theme !== "light"; document.documentElement.dataset.theme = light ? "light" : "dark"; tb.setAttribute("aria-pressed", String(light)); });
+})();
+</script>
+</body>
+</html>

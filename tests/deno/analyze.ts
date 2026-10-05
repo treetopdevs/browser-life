@@ -18,7 +18,7 @@
 // map (both registered presets currently have value: null): the
 // not-yet-calibrated "unavailable" report, and the schedule-mismatch
 // refusal.
-import { initWorld, METRICS_VERSION, PRESETS, presetIdentity, RULE_VERSION, SCHEMA_VERSION, stateHash } from "@bl/schema";
+import { initWorld, METRICS_VERSION, PRESETS, presetIdentity, SCHEMA_VERSION, stateHash } from "@bl/schema";
 import { quantile } from "@bl/metrics";
 import { specConfig, type RunSpec } from "@bl/runner";
 import { ACTIVITY_THRESHOLDS } from "../../experiments/endpoints.ts";
@@ -66,7 +66,7 @@ async function writeRun(experiment: string, presetId: string, spec: RunSpec, ful
     spec,
     cfg,
     ...provenance,
-    ruleVersion: RULE_VERSION,
+    ruleVersion: cfg.ruleVersion,
     schemaVersion: SCHEMA_VERSION,
     metricsVersion: METRICS_VERSION,
     startStep: 0,

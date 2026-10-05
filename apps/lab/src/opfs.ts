@@ -71,9 +71,12 @@ export async function recordCheckpoint(meta: CheckpointMeta): Promise<void> {
 export async function forgetCheckpoint(file: string): Promise<void> {
   const list = (await listCheckpoints()).filter((m) => m.file !== file);
   await writeFile("index.json", new TextEncoder().encode(JSON.stringify(list)));
-  try {
-    await removeFile(file);
-  } catch {
-    // already gone
+  // The checkpoint and its mutation-edges sidecar (the lineage inspector's), either possibly already gone.
+  for (const f of [file, `${file}.edges`]) {
+    try {
+      await removeFile(f);
+    } catch {
+      // already gone
+    }
   }
 }

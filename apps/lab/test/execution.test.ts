@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { applyMigration, cellCount, cloneState, defaultConfig, buildWorld, generalistGenome, MAX_STEP, stateHash, type WorldState } from "@bl/schema";
-import { RefSim, type MutationEvent } from "@bl/sim-ref";
-import { observeCensus, restoreObservers, serializeObservers } from "@bl/runner";
+import {
+  applyMigration, cellCount, cloneState, defaultConfig, buildWorld, encodeCheckpoint, generalistGenome, initWorld, MAX_STEP, presetConfig, PRESETS, stateHash, CH,
+  type WorldConfig, type WorldState,
+} from "@bl/schema";
+import { applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
+import {
+  applyBoundary, decodeArtifact, observeCensus, pondContext, pondContinuationError, restoreObservers, serializeObservers,
+  type ObserverState, type PondCycle,
+} from "@bl/runner";
+import { MutationEdges } from "@bl/lineage";
 import { LabExecution, type LabSimulation } from "../src/execution.ts";
 
 const settings = { censusEvery: 100, deepEvery: 5, activityThreshold: null };
@@ -107,6 +114,44 @@ describe("lab execution", () => {
     expect(ac.observer).toEqual(bc.observer);
   });
 
+  it("keeps every mutation edge through a checkpoint and resumes them, exactly as a continuous run", async () => {
+    const state = initial();
+    state.cfg = { ...state.cfg, mutRate: 429_497 * 80 };
+    const reference = new RefSim(cloneState(state));
+    const edgesAt = (steps: number) => {
+      const e = new MutationEdges();
+      e.append(reference.run(steps));
+      return e;
+    };
+    const { execution } = setup(state);
+    await execution.advanceFrame(100);
+    await execution.advanceFrame(100);
+    await execution.advanceFrame(50);
+    const saved = await execution.checkpoint();
+    const first = edgesAt(300);
+    expect(first.length).toBeGreaterThan(3);
+    expect(saved.edges).toBe(first.length);
+    expect(Array.from(execution.edges.words())).toEqual(Array.from(first.words()));
+
+    const carried = new MutationEdges(execution.edges.words());
+    const resumed = setup(saved.state, { observer: saved.observer, lineage: { edges: carried, dropped: saved.dropped } });
+    await resumed.execution.advanceFrame(100);
+    const all = new MutationEdges(first.words());
+    all.append(reference.run(100));
+    expect(Array.from(resumed.execution.edges.words())).toEqual(Array.from(all.words()));
+  });
+
+  it("counts dropped mutation events and refuses edges minted past the world's step", async () => {
+    const { sim, execution } = setup();
+    sim.dropped = 3;
+    await execution.advanceFrame(100);
+    expect(execution.dropped).toBe(3);
+    expect((await execution.checkpoint()).dropped).toBe(3);
+    const ahead = new MutationEdges();
+    ahead.append([{ childHi: 5, childLo: 1, parentHi: 0, parentLo: 1 }]);
+    expect(() => setup(initial(0), { lineage: { edges: ahead, dropped: 0 } })).toThrow(/run past the simulation's step/);
+  });
+
   it("commits observation before migration and reports dropped mutation events", async () => {
     const state = initial(99, 100);
     state.cfg.migrantCount = 64; // Rotate whole tiles, making the observation order visible.
@@ -207,4 +252,169 @@ describe("lab execution", () => {
     expect(execution.failure).toBeNull();
     expect((await execution.checkpoint()).observer.censusIdx).toBe(1);
   });
+});
+
+// Pond worlds (docs/scaffold-integration-v1.md, "Lab"): ponds-small's physics at seed 1, with a 4-step
+// period and a census every 2 steps, since the reference runs this 128 x 128 world (the smallest valid
+// pond config) at 0.3-0.6 s a step. The runner's own sequence, applied directly, is the reference.
+const pondSettings = { censusEvery: 2, deepEvery: 5, activityThreshold: null };
+const pondsSmall = PRESETS.find((p) => p.id === "ponds-small")!;
+function pondWorld(step = 0, extra: Partial<WorldConfig> = {}) {
+  const state = initWorld(presetConfig(pondsSmall, 1, { pondPeriod: 4, ...extra }), pondsSmall.init);
+  state.step = step;
+  return state;
+}
+/** The observer an import of `state` carries: fresh, except that its last cycle is floor(step / pondPeriod), or `lastCycle`. */
+function pondObserver(state: WorldState, lastCycle = Math.floor(state.step / state.cfg.pondPeriod!)): ObserverState {
+  return { ...serializeObservers(restoreObservers(undefined, pondSettings), state.step, pondSettings), ponds: { lastCycle } };
+}
+function pondSetup(state: WorldState, overrides: Partial<ConstructorParameters<typeof LabExecution>[2]> = {}) {
+  const sim = new CpuSimulation(state);
+  const observed: number[] = [];
+  const cycles: { step: number; b: number; donors: number[] }[] = [];
+  const execution = new LabExecution(sim, pondSettings, {
+    start: state, ...(state.step > 0 ? { observer: pondObserver(state) } : {}),
+    waitForIdle: async () => {}, isCurrent: () => true,
+    onObservation: (c) => { observed.push(c.step); },
+    onPondCycle: (cycle, step) => { cycles.push({ step, b: cycle.b, donors: cycle.donors }); }, ...overrides,
+  });
+  return { sim, execution, observed, cycles };
+}
+/**
+ * runner.ts's sequence at every census up to `to`, on the same reference physics: observe the
+ * pre-cycle state, then applyBoundary with the history's pondContext, then record the cycle in
+ * the observer. Returns the state hash, observer and cycle at each census.
+ */
+async function runnerReference(start: WorldState, to: number) {
+  const sim = new CpuSimulation(start);
+  const obs = restoreObservers(undefined, pondSettings, start.cfg);
+  const ctx = pondContext(start);
+  const at = new Map<number, { hash: string; observer: ObserverState; cycle: PondCycle | null }>();
+  while (sim.step < to) {
+    sim.run(pondSettings.censusEvery);
+    const ledger = await sim.drainLedger();
+    observeCensus(obs, sim.cfg, await sim.readSnapshot(), ledger.events.length);
+    const { ponds } = await applyBoundary(sim, sim.step, ctx);
+    if (ponds) obs.ponds = { lastCycle: ponds.b };
+    at.set(sim.step, { hash: stateHash(await sim.readState()), observer: serializeObservers(obs, sim.step, pondSettings), cycle: ponds });
+  }
+  return at;
+}
+
+describe("lab execution of pond worlds", () => {
+  it("cycles at census boundaries exactly as the runner's helper does, in checkpoints, the replay twin and a restore", async () => {
+    const start = pondWorld();
+    const want = await runnerReference(start, 8);
+    const { sim, execution, observed, cycles } = pondSetup(start);
+    expect(await execution.advanceFrame(3)).toBe(2);
+    expect(await execution.advanceFrame(1)).toBe(1);
+    // Settling at t=4 runs that boundary's census on the pre-cycle state, then the cycle.
+    const atCycle = await execution.checkpoint();
+    expect(atCycle.advanced).toBe(1);
+    expect(stateHash(atCycle.state)).toBe(want.get(4)!.hash);
+    expect(atCycle.observer).toEqual(want.get(4)!.observer);
+    expect(atCycle.observer.ponds).toEqual({ lastCycle: 1 });
+    // An artifact the runner accepts as a continuation.
+    const artifact = decodeArtifact(encodeCheckpoint(atCycle.state, atCycle.observer));
+    expect(pondContinuationError(artifact.state.cfg, artifact.observer, artifact.state.step)).toBeNull();
+
+    let twin: CpuSimulation | undefined;
+    const replay = await execution.verify(4, async (state) => (twin = new CpuSimulation(state)));
+    expect(replay.liveHash).toBe(replay.twinHash);
+    expect(twin!.uploads).toEqual([8]);
+    expect(sim.uploads).toEqual([4, 8]);
+    const end = await execution.checkpoint();
+    expect(end.advanced).toBe(0);
+    expect(stateHash(end.state)).toBe(want.get(8)!.hash);
+    expect(end.observer).toEqual(want.get(8)!.observer);
+    expect(end.observer.ponds).toEqual({ lastCycle: 2 });
+    expect(observed).toEqual([2, 4, 6, 8]);
+    expect(cycles).toEqual([4, 8].map((step) => ({ step, b: step / 4, donors: want.get(step)!.cycle!.donors })));
+    expect(cycles[0].donors.length).toBeGreaterThan(0);
+
+    // The post-cycle artifact continues identically, never re-running the cycle at its own start.
+    const resumed = pondSetup(artifact.state, { observer: artifact.observer });
+    expect(await resumed.execution.advanceFrame(4)).toBe(2);
+    expect(await resumed.execution.advanceFrame(4)).toBe(2);
+    const continued = await resumed.execution.checkpoint();
+    expect(resumed.sim.uploads).toEqual([8]);
+    expect(stateHash(continued.state)).toBe(want.get(8)!.hash);
+    expect(continued.observer).toEqual(want.get(8)!.observer);
+  }, 60_000);
+
+  it("rejects an incompatible pond cadence, a missing start state and a pre-cycle observer before stepping", () => {
+    const options = { waitForIdle: async () => {}, isCurrent: () => true };
+    const off = pondWorld(0, { pondPeriod: 5 });
+    expect(() => new LabExecution(new CpuSimulation(off), pondSettings, { ...options, start: off })).toThrow(/pondPeriod 5 is not a multiple/);
+    expect(() => new LabExecution(new CpuSimulation(pondWorld()), pondSettings, options)).toThrow(/needs its start state/);
+    const s4 = pondWorld(4);
+    expect(() => pondSetup(s4, { observer: pondObserver(s4, 0) })).toThrow(/pre-cycle state/);
+    expect(() => pondSetup(s4, { observer: undefined })).toThrow(/pond-cycle field/);
+  });
+
+  it("realigns an imported mid-period pond world to the absolute census grid and cycles at the absolute step", async () => {
+    // From t=5 the censuses fall at 6 and 8 (not 7 and 9), and the cycle at 8 = 2 x pondPeriod.
+    const { sim, execution, observed, cycles } = pondSetup(pondWorld(5));
+    expect(await execution.advanceFrame(10)).toBe(1);
+    expect(await execution.advanceFrame(10)).toBe(2);
+    expect(observed).toEqual([6, 8]);
+    expect(sim.uploads).toEqual([8]);
+    expect(cycles.map((c) => [c.step, c.b])).toEqual([[8, 2]]);
+    expect((await execution.checkpoint()).observer.ponds).toEqual({ lastCycle: 2 });
+  }, 30_000);
+
+  it("records a cont boundary without changing the state", async () => {
+    const { sim, execution, cycles } = pondSetup(pondWorld(2, { pondArm: "cont" }));
+    await execution.advanceFrame(2);
+    expect(sim.uploads).toEqual([]);
+    expect(cycles).toEqual([{ step: 4, b: 1, donors: [] }]);
+    expect((await execution.checkpoint()).observer.ponds).toEqual({ lastCycle: 1 });
+  }, 30_000);
+
+  it.each(["upload", "conservation"] as const)("permanently refuses advancement after a failed pond cycle (%s)", async (failure) => {
+    const { sim, execution, observed, cycles } = pondSetup(pondWorld(2));
+    if (failure === "upload") sim.fail = "migration";
+    else sim.ref.state.cells[CH.A * cellCount(sim.cfg)] += 1; // pond 0 no longer holds M_r
+    await expect(execution.advanceFrame(2)).rejects.toThrow(failure === "upload" ? /migration failed/ : /pond 0 holds matter/);
+    expect(execution.failure).toMatch(/history is incomplete/);
+    expect(observed).toEqual([]);
+    expect(cycles).toEqual([]);
+    const drains = sim.drains;
+    sim.fail = null;
+    await expect(execution.advanceFrame(2)).rejects.toThrow(/history is incomplete/);
+    await expect(execution.checkpoint()).rejects.toThrow(/history is incomplete/);
+    expect(sim.drains).toBe(drains);
+    expect(sim.uploads).toEqual([]);
+  }, 30_000);
+
+  it("keeps M_r and the ledger valid across lesions, so the next cycle's conservation check passes", async () => {
+    const s2 = pondWorld(2);
+    const { sim, execution, cycles } = pondSetup(s2);
+    await execution.advanceFrame(1);
+    const before = await sim.readState();
+    // One lesion on pond 0's founder disc, one across the corner where all four ponds meet.
+    applyLesion(sim.ref, 36, 32, 8);
+    applyLesion(sim.ref, 64, 64, 12);
+    const after = await sim.readState();
+    const bound = (s: WorldState) => s.cells.subarray(CH.B * cellCount(s.cfg), (CH.B + 1) * cellCount(s.cfg)).reduce((a, v) => a + v, 0);
+    expect(bound(after)).toBeLessThan(bound(before));
+    expect(after.heatOut).toBeGreaterThan(before.heatOut);
+    expect(pondContext(after)).toEqual(pondContext(s2));
+    await execution.advanceFrame(1);
+    expect(execution.failure).toBeNull();
+    expect(cycles.map((c) => c.b)).toEqual([1]);
+    expect((await execution.checkpoint()).observer.ponds).toEqual({ lastCycle: 1 });
+  }, 30_000);
+
+  it("keeps a pond world usable when its cycle display throws", async () => {
+    const errors: string[] = [];
+    const { execution } = pondSetup(pondWorld(2), {
+      onPondCycle: () => { throw new Error("pond UI failed"); },
+      onDisplayError: (message) => { errors.push(message); },
+    });
+    await execution.advanceFrame(2);
+    expect(errors).toEqual(["pond UI failed"]);
+    expect(execution.failure).toBeNull();
+    expect((await execution.checkpoint()).observer.ponds).toEqual({ lastCycle: 1 });
+  }, 30_000);
 });

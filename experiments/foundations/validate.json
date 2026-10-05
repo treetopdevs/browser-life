@@ -1,0 +1,512 @@
+[
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1001",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1002",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1003",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1004",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1005",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1006",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1007",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1008",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1009",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1010",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1011",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1012",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1013",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1014",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1015",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1016",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1017",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1018",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1019",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/gradient-m3/neutral/seed-1020",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1001",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1002",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1003",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1004",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1005",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1006",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1007",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1008",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1009",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1010",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1011",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1012",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1013",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1014",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1015",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1016",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1017",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1018",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1019",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-calib/spots-m3/neutral/seed-1020",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-1",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-10",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-11",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-12",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-13",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-14",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-15",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-16",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-17",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-18",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-19",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-2",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-20",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-3",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-4",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-5",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-6",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-7",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-8",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/neutral/seed-9",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/no-mutation/seed-1",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/no-mutation/seed-2",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/no-mutation/seed-3",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/no-mutation/seed-4",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/no-mutation/seed-5",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-1",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-10",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-2",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-3",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-4",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-5",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-6",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-7",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-8",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/gradient-m3/treatment/seed-9",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-1",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-10",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-2",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-3",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-4",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-5",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-6",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-7",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-8",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ },
+ {
+  "run": "runs/replay-m4/spots-m3/neutral/seed-9",
+  "status": "accepted",
+  "series.jsonl": true,
+  "lineages.tsv": true
+ }
+]

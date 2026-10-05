@@ -1,7 +1,8 @@
 import { PRESETS, worldH, worldW, NN_I, NN_H, NN_O, NN_BYTES, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
-import type { CensusMsg, FromWorker, ProbeMsg, StatsMsg, ToWorker } from "./protocol.ts";
+import type { CensusMsg, FromWorker, PondsMsg, ProbeMsg, StatsMsg, ToWorker } from "./protocol.ts";
 import { Series } from "./sparkline.ts";
+import { createLineagePanel } from "./lineage-panel.ts";
 import "./theme.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -12,6 +13,7 @@ const canvas = $<HTMLCanvasElement>("world");
 const wrap = $("canvas-wrap");
 const worker = new Worker(new URL("./sim.worker.ts", import.meta.url), { type: "module" });
 const send = (m: ToWorker, t: Transferable[] = []) => worker.postMessage(m, t);
+const lineagePanel = createLineagePanel(send);
 
 let cfg: WorldConfig | null = null;
 let rect: ViewRect = { x: 0, y: 0, w: 256, h: 256 };
@@ -155,6 +157,13 @@ function toWorld(ev: { clientX: number; clientY: number }): [number, number] {
   const r = canvas.getBoundingClientRect();
   return [rect.x + ((ev.clientX - r.left) / r.width) * rect.w, rect.y + ((ev.clientY - r.top) / r.height) * rect.h];
 }
+/** In a pond world, the pond under world point (x, y), wrapped: the index the pond cycle uses (ty * tilesX + tx); null otherwise. */
+function pondAt(x: number, y: number): number | null {
+  if (!cfg || cfg.pondPeriod === undefined) return null;
+  const W = worldW(cfg), H = worldH(cfg);
+  const cx = ((Math.floor(x) % W) + W) % W, cy = ((Math.floor(y) % H) + H) % H;
+  return Math.floor(cy / cfg.tileH) * cfg.tilesX + Math.floor(cx / cfg.tileW);
+}
 new ResizeObserver(resize).observe(wrap);
 $("btn-fit").onclick = () => fit(true);
 canvas.ondblclick = () => fit(true);
@@ -183,8 +192,9 @@ function placeFocusCursor() {
   focusCursor.style.top = `${focusY * 100}%`;
   if (cfg) {
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
-    $("hover").textContent = `x ${Math.floor(x)}  y ${Math.floor(y)} · Enter to ${tool === "pan" ? "center" : tool}`;
-    $("keyboard-position").textContent = `Column ${Math.floor(x)}, row ${Math.floor(y)}. Enter to ${tool === "pan" ? "center" : tool}.`;
+    const pond = pondAt(x, y);
+    $("hover").textContent = `x ${Math.floor(x)}  y ${Math.floor(y)}${pond === null ? "" : ` · pond ${pond}`} · Enter to ${tool === "pan" ? "center" : tool}`;
+    $("keyboard-position").textContent = `Column ${Math.floor(x)}, row ${Math.floor(y)}.${pond === null ? "" : ` Pond ${pond}.`} Enter to ${tool === "pan" ? "center" : tool}.`;
   }
 }
 canvas.addEventListener("focus", () => { wrap.classList.add("keyboard-focus"); placeFocusCursor(); });
@@ -232,7 +242,8 @@ canvas.onpointermove = (ev) => {
   const [x, y] = toWorld(ev);
   if (cfg) {
     const W = worldW(cfg), H = worldH(cfg);
-    $("hover").textContent = `x ${(((Math.floor(x) % W) + W) % W)}  y ${(((Math.floor(y) % H) + H) % H)}  · zoom ${(worldW(cfg) / rect.w).toFixed(2)}×`;
+    const pond = pondAt(x, y);
+    $("hover").textContent = `x ${(((Math.floor(x) % W) + W) % W)}  y ${(((Math.floor(y) % H) + H) % H)}  · zoom ${(worldW(cfg) / rect.w).toFixed(2)}×${pond === null ? "" : ` · pond ${pond}`}`;
   }
   if (drag) {
     const r = canvas.getBoundingClientRect();
@@ -380,8 +391,10 @@ function onCensus(c: CensusMsg) {
 function onProbe(p: ProbeMsg) {
   $("probe-empty").hidden = true;
   $("probe").hidden = false;
+  const pond = pondAt(p.x, p.y);
   const rows: [string, string][] = [
     ["cell", `(${p.x}, ${p.y}) @ t=${p.step}`],
+    ...(pond === null ? [] : [["pond", String(pond)] as [string, string]]),
     ...Object.entries(p.cells).map(([k, v]) => [k, k === "MOT" ? `${(v & 255) - 128}, ${((v >> 8) & 255) - 128}` : String(v)] as [string, string]),
     ["lineage", p.lineage || "none"],
     ["μ / σ", p.lineage ? `${(p.mu / 1024).toFixed(3)} / ${(p.sigma / 1024).toFixed(3)}` : "—"],
@@ -411,6 +424,27 @@ function onProbe(p: ProbeMsg) {
   }
   ctx.putImageData(img, 0, 0);
   cv.title = `Controller weights: ${NN_I}→${NN_H}→${NN_O} (red negative, blue positive)`;
+  const inspect = $<HTMLButtonElement>("btn-lineage");
+  // The key travels with the button: a later probe of an empty cell hides it rather than retargeting a click.
+  inspect.hidden = !p.lineage;
+  inspect.dataset.key = p.lineage;
+  inspect.onclick = () => inspect.dataset.key && lineagePanel.open(inspect.dataset.key);
+}
+
+// ---------- pond cycle ----------
+/** The cycle status line: shown only for pond worlds, and fed only by the worker's display-only `ponds` message. */
+function resetPondStatus() {
+  const line = $("pond-status");
+  line.hidden = !cfg || cfg.pondPeriod === undefined;
+  line.textContent = cfg?.pondPeriod === undefined ? "" : `${cfg.pondArm} · cycle every ${cfg.pondPeriod.toLocaleString()} steps`;
+  line.title = "";
+}
+function onPonds(m: PondsMsg) {
+  const line = $("pond-status");
+  line.hidden = false;
+  line.textContent = `cycle ${m.cycle} · ${m.arm} · donors ${m.donors.length ? m.donors.join(", ") : "none"}`;
+  // The line can clip a long donor list (up to 16 on the 8 × 8 preset); the tooltip always holds it in full.
+  line.title = `Pond cycle ${m.cycle} at t=${m.step.toLocaleString()} · donors ${m.donors.length ? m.donors.join(", ") : "none"}`;
 }
 
 let toastTimer = 0;
@@ -445,8 +479,10 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       // (harmless no-op message if we were already paused).
       setPlaying(false);
       resetEvidence();
+      resetPondStatus();
       fit(true);
       toast(`Loaded ${m.manifest.runId}`);
+      lineagePanel.onLoaded();
       break;
     case "stats":
       onStats(m);
@@ -456,6 +492,15 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       break;
     case "probe":
       onProbe(m);
+      break;
+    case "ponds":
+      onPonds(m);
+      break;
+    case "lineage":
+      lineagePanel.onLineage(m);
+      break;
+    case "highlight":
+      lineagePanel.onHighlight(m.key);
       break;
     case "checkpoints":
       $("checkpoint-empty").hidden = m.list.length > 0;
@@ -504,6 +549,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         loadingWorld = false;
         setWorldControls(false);
         cfg = null;
+        resetPondStatus();
       }
       if (verifying) {
         verifying = false;
@@ -514,6 +560,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       }
       $<HTMLButtonElement>("btn-new").disabled = false;
       setStatus("Attention needed", "error");
+      lineagePanel.onError();
       toast(m.message, true);
       console.error(m.message);
       break;

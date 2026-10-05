@@ -160,7 +160,7 @@ try {
 // world's sim seed differs. Colony triangle (side ~8, radius 3 -> disks well
 // clear of each other, centres <= linkDist=10 apart) plus isolated founders
 // far from it and from each other (>> linkDist), scaled to --tile. ---
-const geomCfg: WorldConfig = defaultConfig({ tileW: TILE, tileH: TILE, tilesX: 1, tilesY: 1, kernelRadius: 5, lightMode: "gradient", mutRate: 0 });
+const geomCfg: WorldConfig = defaultConfig({ ruleVersion: 1, tileW: TILE, tileH: TILE, tilesX: 1, tilesY: 1, kernelRadius: 5, lightMode: "gradient", mutRate: 0 });
 const n = cellCount(geomCfg);
 
 const scale = TILE / 64;
@@ -239,7 +239,7 @@ interface WorldOutcome {
  * founders, window-start/window-steps) is identical between the two.
  */
 function runWorld(seed: number): WorldOutcome {
-  const cfg: WorldConfig = defaultConfig({ seed, tileW: TILE, tileH: TILE, tilesX: 1, tilesY: 1, kernelRadius: 5, lightMode: "gradient", mutRate: 0 });
+  const cfg: WorldConfig = defaultConfig({ ruleVersion: 1, seed, tileW: TILE, tileH: TILE, tilesX: 1, tilesY: 1, kernelRadius: 5, lightMode: "gradient", mutRate: 0 });
   const world = buildWorld(cfg, { nutrient: 256, founders });
   const sim = new RefSim(world);
   const tracker = new Tracker(DEFAULT_CENSUS);

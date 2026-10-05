@@ -8,6 +8,7 @@
 //   life.jsonl         inferred life events (fission, fusion, budding, birth, death)
 //   heredity.tsv       step, trait pairs of sibling pieces at fission
 //   checkpoints/*.blck periodic snapshots (optional)
+//   checkpoints/b<NNN>-pre.blck  pond runs: listed boundaries' pre-cycle states (optional)
 
 import {
   PRESETS,
@@ -15,24 +16,28 @@ import {
   cellCount,
   exchangeMatterTotal,
   exchangePositions,
-  RULE_VERSION,
   SCHEMA_VERSION,
   METRICS_VERSION,
   artifactDigest,
   decodeCheckpoint,
   encodeCheckpoint,
   founderGenome,
+  genomeFromHex,
   initWorld,
+  G,
+  GENOME_CHANNELS,
+  m3World,
   M3_FOUNDERS,
   presetConfig,
   stateHash,
   presetIdentity,
   totalsOf,
+  validateConfig,
   type WorldConfig,
   type WorldState,
 } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
-import { migrateAtBoundary } from "./migrate.ts";
+import { applyBoundary, branchTransform, pondColumns, pondContext, pondTsvRows, pondsHeader } from "./migrate.ts";
 import {
   ActivityTracker,
   Tracker,
@@ -52,6 +57,7 @@ import {
   type ActivityState,
   type TrackerState,
   type TileSpeciesRow,
+  type Census,
 } from "@bl/metrics";
 
 /**
@@ -84,7 +90,11 @@ export interface RunSpec {
   checkpointEvery: number;
   /** Activity threshold (from neutral runs); Infinity collects distributions only. */
   activityThreshold?: number;
-  /** Optional world overrides applied after the condition. */
+  /**
+   * Optional world overrides applied after the condition. tools/run.ts's `--override` sets them from an
+   * allowlist (`parseOverrides`): `mutRate` (the hunt's D3 runs with mutation off) and `pondDeath` (its G1
+   * fallback at e = 1, `pondDeath` 65,536, which wins over pond-nat's and pond-shuf's 32,768).
+   */
   overrides?: Partial<WorldConfig>;
   /**
    * This run's metapopulation, if it belongs to one (see
@@ -124,6 +134,65 @@ export interface RunSpec {
    * it always has (this field costs nothing to a run that doesn't opt in).
    */
   runId?: string;
+  /**
+   * Foundations-review observers (docs/plan.md, "M4 pivot: foundations review"), for replays and
+   * assays: `profiles.tsv` (each lineage's catalytic profile, role and Lenia parameters at every deep
+   * census), `genomes.tsv` (the genome of every lineage when first seen at a census) and `births.tsv`
+   * (the traits of parent and offspring individuals at each fission and budding). Observation only:
+   * the physics and every other file are unchanged. Omitted: none of these files, as before.
+   */
+  lineageObs?: boolean;
+  /**
+   * Index into `M3_FOUNDERS`: an m3 preset's founder discs all carry this one founder's genome
+   * (same count, positions and amounts), for single-founder starts. Omitted: the preset's own world.
+   */
+  soloFounder?: number;
+  /**
+   * A genome as hex words from PARAM0 onwards (`genomeHex`, the `genomes.tsv` column): like
+   * `soloFounder`, but every founder disc carries this genome. Omitted: the preset's own world.
+   */
+  soloGenome?: string;
+  /**
+   * Genome hex words (`genomeHex`) founding an m3 preset as a set: disc `i` carries
+   * `founderSet[i % founderSet.length]`. Exclusive with `soloFounder` / `soloGenome`. Omitted: the
+   * preset's own world. Absent from the manifest of any run that does not set it.
+   */
+  founderSet?: string[];
+  /**
+   * Pond runs only: boundaries b (positive, strictly increasing) at whose step b · pondPeriod the
+   * runner also writes the state *before* that boundary's cycle (for arm cont, before its rows are
+   * recorded: the same state), with the pre-cycle observer (`ponds.lastCycle` = b - 1), to
+   * `checkpoints/b<NNN>-pre.blck`, and lists each in the manifest's `preCycleCheckpoints` with its
+   * `stateHash` -- the assay sources of the scaffolding registration (docs/scaffold-registration-v1.md,
+   * "Code to build"). Each boundary must fall inside this run, on its census grid. Observation only:
+   * the physics, the cycle and every other file are unchanged, and `continuationError` refuses to
+   * continue from such a state. Optional and absent from every default, so a run that does not set it
+   * keeps its spec, manifest and every output byte-identical to before this field existed.
+   */
+  preCycleCheckpoints?: number[];
+  /**
+   * A branch run (docs/scaffold-transition-hunt-v1.md, "Branch contract"): instead of the preset's initial
+   * world, the run starts from the pre-cycle state of another run at pond boundary `boundary`
+   * (`RunOptions.branchFrom`, the decoded `checkpoints/b<NNN>-pre.blck` of the bundle at `source`) and applies
+   * that boundary's transform, under this run's condition (`pond-nat` or `pond-shuf`) and seed, before its first
+   * step. `source` is the source bundle's directory as the caller named it, `sourceHash` the `stateHash` of the
+   * pre-cycle state, which the runner checks. `steps` then counts from the source's step, so a branch from
+   * boundary 100 with `steps` 10^6 ends at step 2 * 10^6. The manifest records `branch` (this and the post-transform
+   * `postHash`) and no `initHash`. Refused, before the GPU is touched, unless the condition is `pond-nat` or
+   * `pond-shuf`, the source is at `boundary` * `pondPeriod`, its hash is `sourceHash`, and this run's config equals
+   * the source's except `pondArm`, `pondDeath`, `pondExport` and `seed`; exclusive with the founder options and
+   * `lineageObs`, and `preCycleCheckpoints` may list only boundaries after `boundary`. Optional and absent from every
+   * default, so a run without it keeps its spec, manifest and every output byte-identical to before this field existed.
+   * A later segment of a branch run is an ordinary continuation (`start` and `observer`) of the same spec.
+   */
+  branch?: BranchSpec;
+}
+
+/** `RunSpec.branch`: where a branch run's pre-cycle source came from, and which boundary's transform it applies first. */
+export interface BranchSpec {
+  source: string;
+  sourceHash: string;
+  boundary: number;
 }
 
 export interface Sink {
@@ -179,6 +248,16 @@ export interface ObserverState {
   censusIdx: number;
   extinct: boolean;
   prevSym: string | null;
+  /**
+   * Pond runs only (`WorldConfig.pondPeriod`); absent from every other
+   * observer, so their artifacts and digests are unchanged. `lastCycle` is
+   * the last boundary whose pond cycle has been applied (or, for arm cont,
+   * recorded): floor(step / pondPeriod) for every state a pond run writes,
+   * since each boundary's cycle runs before that step's checkpoint -- except
+   * the opt-in pre-cycle checkpoints (`RunSpec.preCycleCheckpoints`), which
+   * carry b - 1 at boundary b. See `pondContinuationError`.
+   */
+  ponds?: { lastCycle: number };
 }
 
 export interface RunOptions {
@@ -192,9 +271,16 @@ export interface RunOptions {
    * The ring-predecessor's own accepted end-of-segment state (see
    * `RunSpec.metapopulation`), if this segment has one — the same one
    * `spec.metapopulation` must also be set for. Applied once, before any
-   * physics steps, via `packages/schema/src/exchange.ts`.
+   * physics steps, via `packages/schema/src/exchange.ts`. Refused for a pond
+   * run, whose ponds each keep their own matter.
    */
   immigrant?: WorldState;
+  /**
+   * The decoded pre-cycle source of a branch run (`RunSpec.branch`), whose boundary transform `runExperiment`
+   * applies on the CPU before creating the simulation. Required for a branch run's first segment, refused
+   * otherwise and with `start`/`observer` (a branch's later segments continue from `start` instead).
+   */
+  branchFrom?: WorldState;
 }
 
 export interface RunResult {
@@ -216,7 +302,140 @@ export function validateSpec(spec: RunSpec): string[] {
   if (!Number.isInteger(spec.checkpointEvery) || spec.checkpointEvery < 0) errs.push("checkpointEvery must be a non-negative integer");
   else if (spec.checkpointEvery > 0 && spec.checkpointEvery % spec.censusEvery !== 0) errs.push("checkpointEvery must be a multiple of censusEvery");
   if (spec.activityThreshold !== undefined && !(spec.activityThreshold > 0)) errs.push("activityThreshold must be positive");
+  if (spec.soloFounder !== undefined) {
+    if (!Number.isInteger(spec.soloFounder) || spec.soloFounder < 0 || spec.soloFounder >= M3_FOUNDERS.length) errs.push(`soloFounder must be an index into the ${M3_FOUNDERS.length} M3 founders`);
+    else if (PRESETS.find((p) => p.id === spec.presetId)?.init.kind !== "m3") errs.push("soloFounder needs a preset founded from the M3 founder set");
+  }
+  if (spec.soloGenome !== undefined) {
+    try {
+      genomeFromHex(spec.soloGenome);
+      if (spec.soloFounder !== undefined) errs.push("soloGenome and soloFounder are exclusive");
+      else if (PRESETS.find((p) => p.id === spec.presetId)?.init.kind !== "m3") errs.push("soloGenome needs a preset founded from the M3 founder set");
+    } catch (e) {
+      errs.push(`soloGenome: ${(e as Error).message}`);
+    }
+  }
+  if (spec.founderSet !== undefined) {
+    if (!Array.isArray(spec.founderSet) || spec.founderSet.length === 0) errs.push("founderSet must be a non-empty array of genome hex strings");
+    else {
+      for (let i = 0; i < spec.founderSet.length; i++) {
+        try {
+          genomeFromHex(spec.founderSet[i]);
+        } catch (e) {
+          errs.push(`founderSet[${i}]: ${(e as Error).message}`);
+        }
+      }
+      if (spec.soloFounder !== undefined || spec.soloGenome !== undefined) errs.push("founderSet is exclusive with soloFounder and soloGenome");
+      else if (PRESETS.find((p) => p.id === spec.presetId)?.init.kind !== "m3") errs.push("founderSet needs a preset founded from the M3 founder set");
+    }
+  }
+  if (spec.branch !== undefined) {
+    const br = spec.branch as Partial<BranchSpec> | null;
+    if (!br || typeof br !== "object" || Array.isArray(br)) errs.push("branch must be an object { source, sourceHash, boundary }");
+    else {
+      if (Object.keys(br).sort().join() !== "boundary,source,sourceHash") errs.push("branch must have exactly the keys source, sourceHash and boundary");
+      if (typeof br.source !== "string" || br.source === "") errs.push("branch.source must be a non-empty string (the source bundle's directory)");
+      if (typeof br.sourceHash !== "string" || !/^[0-9a-f]{16}$/.test(br.sourceHash)) errs.push("branch.sourceHash must be a 16-digit hex state hash");
+      if (!Number.isSafeInteger(br.boundary) || (br.boundary as number) <= 0) errs.push("branch.boundary must be a positive integer (a pond boundary)");
+    }
+    if (spec.condition !== "pond-nat" && spec.condition !== "pond-shuf") errs.push("a branch run needs the condition pond-nat or pond-shuf");
+    if (spec.soloFounder !== undefined || spec.soloGenome !== undefined || spec.founderSet !== undefined) errs.push("a branch starts from its source, so it excludes soloFounder, soloGenome and founderSet");
+    if (spec.lineageObs) errs.push("lineageObs needs a run observed from step 0; a branch starts at its source's step");
+  }
+  // The pond-specific checks (a pond config, each boundary inside this run and on its census grid)
+  // need the config and the start step: `preCycleError`, which runExperiment applies.
+  if (spec.preCycleCheckpoints !== undefined) {
+    const bs = spec.preCycleCheckpoints;
+    // An indexed loop, not every/some, which skip the holes of a sparse array ([, 2]).
+    let shape = Array.isArray(bs) && bs.length > 0;
+    let increasing = true;
+    for (let i = 0; shape && i < bs.length; i++) {
+      if (!Number.isSafeInteger(bs[i]) || bs[i] <= 0) shape = false;
+      else if (i > 0 && bs[i] <= bs[i - 1]) increasing = false;
+    }
+    if (!shape) errs.push("preCycleCheckpoints must be a non-empty array of positive integers (pond boundaries)");
+    else if (!increasing) errs.push("preCycleCheckpoints must be strictly increasing");
+  }
   return errs;
+}
+
+/**
+ * Why `spec.preCycleCheckpoints` cannot be written by a run of config `cfg` from `startStep`, or
+ * null when it can (or is absent). The runner acts at census steps only, and a history never cycles
+ * at its own start step (that boundary's cycle belongs to the run that reached it), so each boundary
+ * step b · pondPeriod must lie in (startStep, startStep + steps] and on this run's census grid.
+ * runExperiment refuses such a spec before touching the GPU; tools/run.ts checks its fresh runs
+ * (startStep 0) before it even requests a device.
+ */
+export function preCycleError(spec: RunSpec, cfg: WorldConfig, startStep: number): string | null {
+  const bs = spec.preCycleCheckpoints;
+  if (bs === undefined) return null;
+  const period = cfg.pondPeriod;
+  if (period === undefined) return "preCycleCheckpoints needs a pond run: this config has no pondPeriod";
+  const end = startStep + spec.steps;
+  for (const b of bs) {
+    const t = b * period;
+    if (t <= startStep) return `preCycleCheckpoints: boundary ${b} (t=${t}) is at or before this run's start step ${startStep}; its cycle belongs to the run that reached it`;
+    if (t > end) return `preCycleCheckpoints: boundary ${b} (t=${t}) is beyond this run's last step ${end}`;
+    if ((t - startStep) % spec.censusEvery !== 0) return `preCycleCheckpoints: boundary ${b} (t=${t}) is not a census step of this run (start ${startStep}, censusEvery ${spec.censusEvery})`;
+  }
+  return null;
+}
+
+/** The `WorldConfig` keys tools/run.ts's `--override` accepts: the hunt's D3 (mutation off) and G1 fallback (e = 1). */
+const OVERRIDE_KEYS = ["mutRate", "pondDeath"] as const;
+
+/**
+ * `RunSpec.overrides` from tools/run.ts's `--override` text: a comma-separated list of `key=integer`, with keys from
+ * the allowlist `mutRate` and `pondDeath` (each at most once). Throws on any other key, a value that is not a plain
+ * decimal integer, a repeated key or an empty list; range and arm checks are `validateConfig`'s, on the run's config.
+ */
+export function parseOverrides(text: string): Partial<WorldConfig> {
+  const out: Partial<WorldConfig> = {};
+  const parts = text.split(",").map((part) => part.trim());
+  if (text.trim() === "" || parts.some((part) => part === "")) throw new Error(`--override needs key=integer pairs separated by commas, got ${JSON.stringify(text)}`);
+  for (const part of parts) {
+    const eq = part.indexOf("=");
+    const key = part.slice(0, eq), value = part.slice(eq + 1);
+    if (eq < 0 || !(OVERRIDE_KEYS as readonly string[]).includes(key)) throw new Error(`--override ${JSON.stringify(part)}: the keys allowed are ${OVERRIDE_KEYS.join(", ")}, as key=integer`);
+    if (!/^(0|-?[1-9]\d*)$/.test(value) || !Number.isSafeInteger(Number(value))) throw new Error(`--override ${key}: ${JSON.stringify(value)} is not an integer`);
+    if (key in out) throw new Error(`--override ${key} is given twice`);
+    out[key as (typeof OVERRIDE_KEYS)[number]] = Number(value);
+  }
+  return out;
+}
+
+/**
+ * Why `spec.branch` and `opts.branchFrom` do not make a legal branch run of config `cfg` (`specConfig(spec)`), or null
+ * when they do, or when neither is involved. Pure and independent of the GPU: runExperiment refuses before touching
+ * it, and tools/run.ts checks every spec before it requests a device. The branch contract's refusals, in order:
+ * `branchFrom` without `spec.branch`; a branch without its source (a later segment continues from `start` instead,
+ * which must not precede its boundary); `start` or `observer` beside `branchFrom`; an arm other than nat and shuf; a
+ * source not at `boundary` * `pondPeriod` (> 0); a source whose `stateHash` is not `sourceHash`; an invalid config;
+ * and a config that differs from the source's in anything but `pondArm`, `pondDeath`, `pondExport` and `seed`.
+ */
+export function branchError(spec: RunSpec, cfg: WorldConfig, opts: Pick<RunOptions, "start" | "observer" | "branchFrom">): string | null {
+  const br = spec.branch;
+  const source = opts.branchFrom;
+  if (!br) return source ? "a branch source (branchFrom) needs spec.branch" : null;
+  if (cfg.pondArm !== "nat" && cfg.pondArm !== "shuf") return `a branch run needs the pond arm nat or shuf, got ${JSON.stringify(cfg.pondArm)}`;
+  if (!source) {
+    if (!opts.start) return "a branch run needs its source state (branchFrom), or a start state to continue from";
+    if (opts.start.step < br.boundary * cfg.pondPeriod!) return `a branch continuation starts at t=${opts.start.step}, before its boundary ${br.boundary} (t=${br.boundary * cfg.pondPeriod!})`;
+    return null;
+  }
+  if (opts.start || opts.observer) return "a branch starts from its source alone: branchFrom excludes a start state and an observer";
+  const want = br.boundary * cfg.pondPeriod!;
+  if (source.step !== want || want <= 0) return `branch source is at t=${source.step}, but boundary ${br.boundary} is at t=${want}`;
+  const hash = stateHash(source);
+  if (hash !== br.sourceHash) return `branch source's state hash ${hash} is not the spec's ${br.sourceHash}`;
+  const errs = validateConfig(cfg);
+  if (errs.length) return `invalid config: ${errs.join("; ")}`;
+  const own = new Set(["pondArm", "pondDeath", "pondExport", "seed"]);
+  const a = source.cfg as unknown as Record<string, unknown>, b = cfg as unknown as Record<string, unknown>;
+  const differs = [...new Set([...Object.keys(a), ...Object.keys(b)])].sort().find((k) => !own.has(k) && a[k] !== b[k]);
+  if (differs !== undefined) return `branch config differs from its source's at ${differs} (only pondArm, pondDeath, pondExport and seed may differ)`;
+  return null;
 }
 
 /**
@@ -226,9 +445,16 @@ export function validateSpec(spec: RunSpec): string[] {
  * already drops an `undefined` value on its own; only the explicit-`false` case needs this.
  */
 function normalizedSpec(spec: RunSpec): RunSpec {
-  if (spec.speciesCensus !== false) return spec;
-  const { speciesCensus: _drop, ...rest } = spec;
-  return rest;
+  let out = spec;
+  if (out.speciesCensus === false) {
+    const { speciesCensus: _drop, ...rest } = out;
+    out = rest;
+  }
+  if (out.lineageObs === false) {
+    const { lineageObs: _drop, ...rest } = out;
+    out = rest;
+  }
+  return out;
 }
 
 export function sameConfig(a: WorldConfig, b: WorldConfig): boolean {
@@ -259,6 +485,11 @@ export function specConfig(spec: RunSpec): WorldConfig {
   const cond = conditionById(spec.condition);
   // spec.overrides wins last, so e.g. { adhesion: true } re-enables adhesion even under no-signal-motility.
   const cfg = { ...base, ...cond.apply(base), ...(spec.overrides ?? {}) };
+  // Each pond keeps its own matter (WorldConfig.pondPeriod), which a
+  // metapopulation's cross-run exchange would break; validateConfig refuses
+  // the ring namespace below on a pond config too, but this says why, before
+  // any state is built.
+  if (spec.metapopulation && cfg.pondPeriod !== undefined) throw new Error("a pond run cannot belong to a metapopulation: cross-run exchange would move matter into and out of its ponds");
   if (spec.metapopulation) {
     const { migrantCount, salt } = spec.metapopulation;
     // The coordinator already bounds migrantCount to a conservative fixed
@@ -293,12 +524,13 @@ export function specConfig(spec: RunSpec): WorldConfig {
  * though its spec/config/rule/schema otherwise match exactly.
  */
 export function sameCompletedRun(done: Record<string, unknown>, spec: RunSpec): boolean {
+  const cfg = specConfig(spec);
   return (
     JSON.stringify(done.spec) === JSON.stringify(normalizedSpec(spec)) &&
-    done.ruleVersion === RULE_VERSION &&
+    done.ruleVersion === cfg.ruleVersion &&
     done.schemaVersion === SCHEMA_VERSION &&
     ((done.metricsVersion as number | undefined) ?? 1) === METRICS_VERSION &&
-    sameConfig(done.cfg as WorldConfig, specConfig(spec))
+    sameConfig(done.cfg as WorldConfig, cfg)
   );
 }
 
@@ -341,11 +573,37 @@ function sameSettings(a: ObserverSettings, b: ObserverSettings): boolean {
  */
 export function continuationError(spec: RunSpec, start: WorldState, observer: ObserverState | undefined): string | null {
   if (!sameConfig(start.cfg, specConfig(spec))) return "start state config differs from the run spec";
-  if (start.step === 0) return null;
+  // At step 0 an observer is optional, but one that is given must not carry a stray pond field.
+  if (start.step === 0) return observer && typeof observer === "object" ? pondContinuationError(start.cfg, observer, 0) : null;
   if (!observer || typeof observer !== "object") return "continuing from a checkpoint requires the matching observer state";
   if (observer.step !== start.step) return `observer state does not belong to the start checkpoint (t=${observer.step})`;
   if (!sameSettings(observer.settings, observerSettings(spec))) return "observer settings differ from the run spec";
-  return null;
+  return pondContinuationError(start.cfg, observer, start.step);
+}
+
+/**
+ * Why `observer` cannot continue a history of config `cfg` at `step` as far
+ * as the pond cycle is concerned, or null when it can. The `ponds` field
+ * must be present exactly in pond runs (`cfg.pondPeriod` set) past step 0 --
+ * at step 0 a pond observer may omit it, and if present it must say 0 -- and
+ * absent otherwise; and `ponds.lastCycle` must equal floor(step /
+ * pondPeriod). That rejects the one continuation the rest of the checks
+ * cannot see: a pre-cycle state at a boundary (a pond run writes one only
+ * when asked, `RunSpec.preCycleCheckpoints`, and tools/scaffold.ts's
+ * `b<C>-pre` checkpoints are such states), which
+ * would otherwise silently skip that boundary's cycle, since a history never
+ * cycles at its own start step. Shared by `continuationError` (tools/run.ts
+ * continuations and islands) and the lab's adoption of an imported or
+ * restored world.
+ */
+export function pondContinuationError(cfg: WorldConfig, observer: ObserverState | undefined, step: number): string | null {
+  const ponds = observer?.ponds;
+  if (cfg.pondPeriod === undefined) return ponds === undefined ? null : "the observer state carries a pond-cycle field but the config has no pond cycle";
+  if (ponds === undefined) return step > 0 ? "continuing a pond run requires the observer's pond-cycle field (ponds.lastCycle)" : null;
+  const want = Math.floor(step / cfg.pondPeriod);
+  if (ponds.lastCycle === want) return null;
+  const pre = ponds.lastCycle === want - 1 && step % cfg.pondPeriod === 0;
+  return `the observer's last pond cycle is ${ponds.lastCycle}, but t=${step} needs ${want}${pre ? " (a pre-cycle state: this boundary's cycle has not been applied)" : ""}`;
 }
 
 /**
@@ -387,6 +645,8 @@ function validateObserverShape(raw: unknown): ObserverState {
   if (!safeIntGe0(o.mutations) || !safeIntGe0(o.buddings) || !safeIntGe0(o.censusIdx)) throw new Error("checkpoint: observer counters are malformed");
   if (typeof o.extinct !== "boolean") throw new Error("checkpoint: observer extinct flag is malformed");
   if (o.prevSym != null && typeof o.prevSym !== "string") throw new Error("checkpoint: observer prevSym is malformed");
+  if (o.ponds !== undefined && (!o.ponds || typeof o.ponds !== "object" || !safeIntGe0((o.ponds as { lastCycle?: unknown }).lastCycle)))
+    throw new Error("checkpoint: observer ponds.lastCycle is malformed");
   return o as ObserverState;
 }
 
@@ -419,6 +679,59 @@ export function decodeArtifact(bytes: Uint8Array): { state: WorldState; observer
   return { state, observer };
 }
 
+interface IndStats {
+  lineage: string;
+  mass: number;
+  biomass: number;
+  cells: number;
+  purity: number;
+}
+
+/** Each tracked individual's component at this census, keyed by individual id. */
+function indStats(c: Census, tracker: Tracker): Map<number, IndStats> {
+  const out = new Map<number, IndStats>();
+  for (const k of c.components) {
+    const id = tracker.idOf(k.idx);
+    if (id !== undefined) out.set(id, { lineage: k.lineage, mass: k.mass, biomass: k.biomass, cells: k.cells, purity: +k.purity.toFixed(4) });
+  }
+  return out;
+}
+
+/** `genomes.tsv` rows: genome words PARAM0.. (hex, 8 digits each) of each lineage in `keys`, read from its first cell. */
+function genomeRows(cfg: WorldConfig, step: number, keys: Set<string>, genome: Uint32Array): string {
+  const n = cellCount(cfg);
+  const rows: string[] = [];
+  for (let i = 0; i < n && keys.size; i++) {
+    const hi = genome[G.LIN_HI * n + i], lo = genome[G.LIN_LO * n + i];
+    if ((hi | lo) === 0) continue;
+    const key = `${hi}:${lo}`;
+    if (!keys.delete(key)) continue;
+    let words = "";
+    for (let g = G.PARAM0; g < GENOME_CHANNELS; g++) words += genome[g * n + i].toString(16).padStart(8, "0");
+    rows.push(`${key}\t${step}\t${words}\n`);
+  }
+  return rows.join("");
+}
+
+/** `profiles.tsv` rows: each lineage's summed catalytic profile, role and Lenia parameters. */
+function profileRows(cfg: WorldConfig, c: Census, profiles: ReturnType<typeof lineageProfiles>, genomeHead: Uint32Array): string {
+  const n = cellCount(cfg);
+  const params = new Map<string, [number, number]>();
+  for (let i = 0; i < n; i++) {
+    const hi = genomeHead[G.LIN_HI * n + i], lo = genomeHead[G.LIN_LO * n + i];
+    if ((hi | lo) === 0) continue;
+    const key = `${hi}:${lo}`;
+    if (!params.has(key)) params.set(key, [genomeHead[G.PARAM0 * n + i], genomeHead[G.PARAM1 * n + i]]);
+  }
+  const mass = new Map(c.lineages.map((l) => [l.key, l.mass]));
+  return profiles
+    .map((p) => {
+      const [p0, p1] = params.get(p.key) ?? [0, 0];
+      return `${c.step}\t${p.key}\t${p.cells}\t${mass.get(p.key) ?? 0}\t${p.photo}\t${p.grow}\t${p.decomp}\t${p.resp}\t${p.role}\t${p0 & 0xffff}\t${p0 >>> 16}\t${p1 & 0xff}\n`;
+    })
+    .join("");
+}
+
 export function runId(spec: RunSpec): string {
   return spec.runId ?? `${spec.experiment}/${spec.presetId}/${spec.condition}/seed-${spec.seed}`;
 }
@@ -435,14 +748,46 @@ export async function runExperiment(
   if (errs.length) throw new Error(`invalid run spec: ${errs.join("; ")}`);
   const preset = PRESETS.find((p) => p.id === spec.presetId)!;
   const cfg = specConfig(spec);
+  // A branch run (RunSpec.branch) is refused here, before any state is built or the GPU touched.
+  const branchBad = branchError(spec, cfg, opts);
+  if (branchBad) throw new Error(branchBad);
   // Migration fires on multiples of the *absolute* step (see migration.ts), checked once
   // per census chunk: requiring it to land on a census boundary keeps a segmented run's
   // migration events at the same absolute steps as a continuous run's (the stitching
   // invariant tests/deno/stitch.ts checks), exactly like checkpointEvery's own rule below.
   const migrationPeriod = cfg.migrationPeriod ?? 0;
   if (migrationPeriod > 0 && migrationPeriod % spec.censusEvery !== 0) throw new Error("migrationPeriod must be a multiple of censusEvery");
-  const init = opts.start ?? initWorld(cfg, preset.init);
+  // The pond cycle (WorldConfig.pondPeriod) is keyed on the absolute step like
+  // migration, at the same hook, so it takes the same cadence guards (this one
+  // and the start-step one below). Its ponds each keep their own matter, so a
+  // pond run never imports cells from another run (a metapopulation member is
+  // already refused by specConfig).
+  const pondPeriod = cfg.pondPeriod ?? 0;
+  if (pondPeriod > 0 && pondPeriod % spec.censusEvery !== 0) throw new Error("pondPeriod must be a multiple of censusEvery");
+  if (pondPeriod > 0 && opts.immigrant) throw new Error("a pond run cannot import an immigrant state: cross-run exchange would move matter into and out of its ponds");
+  // A branch run starts from its source (RunOptions.branchFrom) under this run's own config: the source's cells, genome
+  // and ledger at its step, whose boundary transform is applied below.
+  const init =
+    (opts.branchFrom ? { ...opts.branchFrom, cfg } : undefined) ??
+    opts.start ??
+    (spec.soloFounder !== undefined || spec.soloGenome !== undefined || spec.founderSet !== undefined
+      ? m3World(
+          cfg,
+          preset.init.founders,
+          preset.init.nutrient,
+          preset.init.biomass,
+          spec.founderSet !== undefined
+            ? spec.founderSet.map(genomeFromHex)
+            : spec.soloGenome !== undefined
+              ? genomeFromHex(spec.soloGenome)
+              : spec.soloFounder,
+        )
+      : initWorld(cfg, preset.init));
   const startStep = init.step;
+  // Checked first among the start-step guards, so a listed boundary off this run's census grid
+  // (which the two pond cadence guards also rule out) is named as such.
+  const preCycleBad = preCycleError(spec, cfg, startStep);
+  if (preCycleBad) throw new Error(preCycleBad);
   // The step loop below re-chunks in `censusEvery`-sized steps *relative to
   // this call's own start* (unchanged from before migration existed, so a
   // migration-disabled continuation from any step -- aligned or not -- keeps
@@ -459,9 +804,18 @@ export async function runExperiment(
   // separate "multiple of migrationPeriod" check is needed.)
   if (migrationPeriod > 0 && startStep % spec.censusEvery !== 0)
     throw new Error(`migration-enabled runs must start on a multiple of censusEvery (start step ${startStep}, censusEvery ${spec.censusEvery})`);
+  if (pondPeriod > 0 && startStep % spec.censusEvery !== 0)
+    throw new Error(`pond runs must start on a multiple of censusEvery (start step ${startStep}, censusEvery ${spec.censusEvery})`);
   const settings = observerSettings(spec);
+  // The lineageObs bookkeeping (lineages already seen, the previous census's individuals) is not part of
+  // the checkpointed observer state, so those files are only exact for a run observed from its start.
+  if (spec.lineageObs && opts.start && opts.start.step > 0) throw new Error("lineageObs needs a run observed from step 0; it cannot continue a checkpoint");
   if (opts.start) {
     const bad = continuationError(spec, opts.start, opts.observer);
+    if (bad) throw new Error(bad);
+  } else if (opts.observer) {
+    // An observer for the preset's own start world: its pond field obeys the same rule.
+    const bad = pondContinuationError(cfg, opts.observer, startStep);
     if (bad) throw new Error(bad);
   }
   if (opts.immigrant && !spec.metapopulation) throw new Error("an immigrant state requires spec.metapopulation");
@@ -478,7 +832,11 @@ export async function runExperiment(
   const exchange = opts.immigrant
     ? applyExchange(init, opts.immigrant, exchangePositions(cfg, spec.metapopulation!.salt, startStep, spec.metapopulation!.migrantCount), startStep)
     : null;
-  const actualInit = exchange?.state ?? init;
+  // A branch's first transform (the branch contract): boundary B's cycle of the current, with this run's seed, on the CPU
+  // before any simulation exists. M_r, the matter total and the ledger baseline are the source's own, which the
+  // transform preserves exactly (`branchTransform` asserts it).
+  const branched = opts.branchFrom ? branchTransform(init, spec.branch!.boundary, pondContext(init)!) : null;
+  const actualInit = branched?.state ?? exchange?.state ?? init;
   const t0tot = totalsOf(cfg, actualInit.cells);
   // Ledger baseline: content + exported heat - absorbed light is invariant.
   // Computed from `actualInit` (post-import when there is one), so this
@@ -489,9 +847,17 @@ export async function runExperiment(
   // an import was never going to match.
   const baseline = t0tot.energy + actualInit.heatOut - actualInit.lightIn;
   const startMatter = t0tot.matter;
+  // Pond runs only: M_r and the conservation baseline of every cycle, from this
+  // segment's own start (see migrate.ts's PondContext).
+  const ponds = pondContext(branched ? init : actualInit);
   const sim = await GpuSim.create(device, actualInit);
-  const obs = restoreObservers(opts.observer, settings);
+  const obs = restoreObservers(opts.observer, settings, cfg);
+  // Observers start fresh on a branch's post-transform state, which has had its boundary's cycle.
+  if (branched) obs.ponds = { lastCycle: branched.ponds.b };
   const { tracker, activity } = obs;
+  // RunSpec.preCycleCheckpoints: boundary step -> b, and the manifest's list of what was written.
+  const preCycleAt = new Map((spec.preCycleCheckpoints ?? []).map((b) => [b * pondPeriod, b]));
+  const preCycleFiles: { boundary: number; step: number; file: string; hash: string }[] = [];
   const manifest = {
     runId: runId(spec),
     spec: normalizedSpec(spec),
@@ -504,9 +870,12 @@ export async function runExperiment(
     // This is the preset-built world, which analysis can rebuild and compare;
     // a step-zero import is recorded separately as importedStartHash below.
     presetIdentity: presetIdentity(preset),
-    ...(opts.start ? {} : { initHash: stateHash(init) }),
+    ...(opts.start || branched ? {} : { initHash: stateHash(init) }),
+    // A branch's first segment: where it came from and the state its transform produced, which a replay of the transform
+    // from the source must reproduce. Absent from every other manifest (a branch's later segments included).
+    ...(branched ? { branch: { ...spec.branch!, postHash: stateHash(actualInit) } } : {}),
     schemaVersion: SCHEMA_VERSION,
-    ruleVersion: RULE_VERSION,
+    ruleVersion: cfg.ruleVersion,
     metricsVersion: METRICS_VERSION,
     host,
     startStep,
@@ -529,6 +898,8 @@ export async function runExperiment(
       : {}),
     startedAt: new Date().toISOString(),
     checkpoints: [] as { step: number; file: string; hash: string }[],
+    // Only when RunSpec.preCycleCheckpoints is set, so every other manifest keeps its shape.
+    ...(spec.preCycleCheckpoints !== undefined ? { preCycleCheckpoints: preCycleFiles } : {}),
     summary: null as RunSummary | null,
   };
   await sink.writeText("manifest.json", JSON.stringify(manifest, null, 2));
@@ -546,6 +917,17 @@ export async function runExperiment(
   // run's own per-run ledger (see exchange.ts's doc on why the "export" rows
   // are logged here, by the *importing* run, not by the predecessor).
   if (spec.metapopulation) await sink.writeText("exchanges.tsv", "step\tdirection\tslot\tcell\tmatter\tlineageHi\tlineageLo\n");
+  // Written in every pond run, header only when this call crosses no boundary,
+  // and never otherwise (same discipline as migrations.tsv): one row per
+  // recipient (scaf, rand) or per pond (cont, nat, shuf) per boundary, formatted as
+  // tools/scaffold.ts writes them (the hunt's nat and shuf with three more columns).
+  const pondCols = pondColumns(cfg.pondArm);
+  if (ponds) await sink.writeText("ponds.tsv", pondsHeader(cfg.pondArm));
+  // A branch's own transform, at its source's boundary: its rows come before the first census, as they would in a run that reached it.
+  if (branched) {
+    await sink.appendText("ponds.tsv", pondTsvRows(branched.ponds.rows, pondCols));
+    if (branched.ponds.ended) onProgress(`cycle ${branched.ponds.b} at t=${startStep}: no pond eligible, every pond cleared to nutrient (branch ended; stepping on)`);
+  }
   if (exchange) {
     const rows = (dir: "import" | "export", es: typeof exchange.imports) => es.map((e) => `${e.step}\t${dir}\t${e.slot}\t${e.cell}\t${e.matter}\t${e.lineageHi}\t${e.lineageLo}`);
     await sink.appendText("exchanges.tsv", [...rows("import", exchange.imports), ...rows("export", exchange.exports)].join("\n") + "\n");
@@ -559,10 +941,26 @@ export async function runExperiment(
     await sink.appendText("species.tsv", speciesTsvRows(actualInit.step, tileSpeciesCensus({ step: actualInit.step, cfg, genome: actualInit.genome }, SPECIES_ANCHORS)));
   }
 
+  // Foundations-review observers (RunSpec.lineageObs): written only when opted into, same
+  // discipline as species.tsv, so every other file stays byte-identical.
+  if (spec.lineageObs) {
+    await sink.writeText("profiles.tsv", "step\tlineage\tcells\tmass\tphoto\tgrow\tdecomp\tresp\trole\tmu\tsigma\tmotGain\n");
+    await sink.writeText("genomes.tsv", "lineage\tfirstStep\twords\n");
+    await sink.writeText("births.tsv", "step\tkind\tparent\tchild\tchildGeneration\tparentLineage\tchildLineage\tparentMass\tparentBiomass\tparentCells\tparentPurity\tchildMass\tchildBiomass\tchildCells\tchildPurity\n");
+  }
+  const seenLineages = new Set<string>();
+  // Individual id -> its component at the previous census (a parent's traits just before a fission).
+  let prevIndStats = new Map<number, IndStats>();
+
   const t0 = performance.now();
   let prevFlux = actualInit.flux.slice();
   let conservationOk = true;
   let lastCensus = { individuals: 0, lineages: 0 };
+  // Pond runs: whether the next census is the first after a pond boundary.
+  // Known from the step alone, so a segment starting at a boundary (whose
+  // cycle its predecessor applied) flags its first census as a continuous
+  // run would.
+  let afterCycle = ponds !== null && startStep > 0 && startStep % pondPeriod === 0;
 
   try {
     for (let s = 0; s < spec.steps; ) {
@@ -598,6 +996,25 @@ export async function runExperiment(
       }
       if (o.life.length) await sink.appendText("life.jsonl", o.life.map((x) => JSON.stringify(x)).join("\n") + "\n");
       await sink.appendText("lineages.tsv", c.lineages.map((l) => `${c.step}\t${l.key}\t${l.cells}`).join("\n") + (c.lineages.length ? "\n" : ""));
+      if (spec.lineageObs) {
+        const fresh = c.lineages.filter((l) => !seenLineages.has(l.key));
+        if (fresh.length) {
+          for (const l of fresh) seenLineages.add(l.key);
+          await sink.appendText("genomes.tsv", genomeRows(cfg, c.step, new Set(fresh.map((l) => l.key)), await sim.readGenomeChannels(0, GENOME_CHANNELS)));
+        }
+        const cur = indStats(c, obs.tracker);
+        const rows: string[] = [];
+        const row = (kind: string, parent: number, child: number) => {
+          const p = prevIndStats.get(parent), k = cur.get(child);
+          if (!p || !k) return;
+          const gen = obs.tracker.alive.get(child)?.generation ?? 0;
+          rows.push(`${c.step}\t${kind}\t${parent}\t${child}\t${gen}\t${p.lineage}\t${k.lineage}\t${p.mass}\t${p.biomass}\t${p.cells}\t${p.purity}\t${k.mass}\t${k.biomass}\t${k.cells}\t${k.purity}`);
+        };
+        for (const e of o.events) if (e.kind === "fission") for (const id of e.children) row("fission", e.parent, id);
+        for (const x of o.life as { kind: string; parent?: number; child?: number }[]) if (x.kind === "budding") row("budding", x.parent!, x.child!);
+        if (rows.length) await sink.appendText("births.tsv", rows.join("\n") + "\n");
+        prevIndStats = cur;
+      }
 
       const rates = fluxRates(prevFlux, stats.flux, chunk);
       prevFlux = stats.flux;
@@ -624,6 +1041,13 @@ export async function runExperiment(
         mutations: obs.mutations,
         conservationOk,
       };
+      // Pond runs: tracker-derived outputs (life.jsonl, heredity.tsv, buddings,
+      // generations) link across a cycle's grind, so analysis must not read
+      // them across it (protocol v1); this marks where each cycle falls.
+      if (afterCycle) {
+        rec.afterCycle = true;
+        afterCycle = false;
+      }
 
       rec.patternEntropy = entropy(sym);
       if (o.prevSym) rec.temporalMI = temporalMI(o.prevSym, sym);
@@ -636,29 +1060,51 @@ export async function runExperiment(
         rec.lineageCompression = compressionRatio(lineageBytes(cfg, genomeHead));
         rec.patternCompression = compressionRatio(sym);
         rec.morphology = morphology(cfg, cells, c, DEFAULT_CENSUS.minMass);
+        if (spec.lineageObs) await sink.appendText("profiles.tsv", profileRows(cfg, c, profiles, genomeHead));
       }
       await sink.appendText("series.jsonl", JSON.stringify(rec) + "\n");
       lastCensus = { individuals: ind.length, lineages: c.lineages.length };
       // Observation continues through extinction (segments end at their boundary).
       if (o.becameExtinct) onProgress(`extinct at step ${c.step}`);
+      // RunSpec.preCycleCheckpoints: the state at a listed boundary before its cycle, with the
+      // observer as it stands (ponds.lastCycle = b - 1), read back here, before applyBoundary. Its
+      // own readback, since the one applyBoundary returns is the post-cycle state for scaf and rand;
+      // the cycle's own readback and everything after it are untouched.
+      const preB = preCycleAt.get(c.step);
+      if (preB !== undefined) {
+        const pre = await sim.readState();
+        const file = `checkpoints/b${String(preB).padStart(3, "0")}-pre.blck`;
+        await sink.writeBytes(file, encodeCheckpoint(pre, serializeObservers(obs, pre.step, settings)));
+        preCycleFiles.push({ boundary: preB, step: pre.step, file, hash: stateHash(pre) });
+      }
       // Scheduled through the same helper the lab worker uses (migrate.ts), so
-      // both agree bit for bit on when and how migration applies. Keyed on the
-      // absolute step (not this call's own start), so a segmented run fires it
-      // at the same steps a continuous run would. Applied after this step's
-      // census/observation, before any checkpoint at the same step, so a
-      // checkpoint always carries the post-migration state forward.
-      const mevents = await migrateAtBoundary(sim, c.step);
+      // both agree bit for bit on when and how migration and the pond cycle
+      // apply. Keyed on the absolute step (not this call's own start), so a
+      // segmented run fires them at the same steps a continuous run would.
+      // Applied after this step's census/observation, before any checkpoint at
+      // the same step, so a checkpoint always carries the post-migration and
+      // post-cycle state forward.
+      const boundary = await applyBoundary(sim, c.step, ponds);
+      const mevents = boundary.migrations;
       if (mevents.length)
         await sink.appendText(
           "migrations.tsv",
           mevents.map((e) => `${e.step}\t${e.slot}\t${e.fromTile}\t${e.toTile}\t${e.fromCell}\t${e.toCell}\t${e.matter}\t${e.lineageHi}\t${e.lineageLo}`).join("\n") + "\n",
         );
+      if (boundary.ponds) {
+        await sink.appendText("ponds.tsv", pondTsvRows(boundary.ponds.rows, pondCols));
+        obs.ponds = { lastCycle: boundary.ponds.b };
+        afterCycle = true;
+        // Unlike tools/scaffold.ts, an ended history keeps stepping; later cycles take the same no-donor path.
+        if (boundary.ponds.ended) onProgress(`cycle ${boundary.ponds.b} at t=${c.step}: no pond eligible, every pond cleared to nutrient (history ended; stepping on)`);
+      }
       // One readState() when either a checkpoint or a species census is due -- never two: both
       // need the full genome buffer (species census needs every GENOME_CHANNELS word per cell,
       // not the 4-word genomeHead readSnapshot already read above), so they share this readback.
+      // A pond boundary has already read the post-cycle state back, so it is reused here.
       const dueForCheckpoint = spec.checkpointEvery > 0 && (sim.step - startStep) % spec.checkpointEvery === 0;
       if (dueForCheckpoint || spec.speciesCensus) {
-        const st = await sim.readState();
+        const st = boundary.state ?? (await sim.readState());
         if (dueForCheckpoint) {
           const file = `checkpoints/t${String(st.step).padStart(9, "0")}.blck`;
           await sink.writeBytes(file, encodeCheckpoint(st, serializeObservers(obs, st.step, settings)));

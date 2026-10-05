@@ -28,15 +28,15 @@
 // moved aside to seed-<n>.stale-<time> (outside analyze.ts's input) before
 // anything new is written.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { METRICS_VERSION } from "@bl/schema";
-import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, SPECIES_FILE, stitchRun, type StitchSegment } from "@bl/runner";
+import { METRICS_VERSION, PRESETS, defaultConfig } from "@bl/schema";
+import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, PONDS_FILE, SPECIES_FILE, checkPondsFile, stitchRun, type StitchSegment } from "@bl/runner";
 
 // Optional files (not in BUNDLE_FILES): recorded only when the run has the
 // corresponding mechanism configured (tile migration / a metapopulation /
-// RunSpec.speciesCensus), so a run without that mechanism never carries them
-// (see MIGRATIONS_FILE/EXCHANGES_FILE/SPECIES_FILE's own docs in
-// packages/runner/src/stitch.ts).
-const OPTIONAL_FILES = [MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE] as const;
+// RunSpec.speciesCensus / the pond cycle), so a run without that mechanism
+// never carries them (see MIGRATIONS_FILE/EXCHANGES_FILE/SPECIES_FILE/
+// PONDS_FILE's own docs in packages/runner/src/stitch.ts).
+const OPTIONAL_FILES = [MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE, PONDS_FILE] as const;
 
 const a = parseArgs(Deno.args, {
   string: ["experiment", "coordinator", "out", "token"],
@@ -94,6 +94,15 @@ for (const s of exp.segments) if (s.observationsVerified === false) console.warn
 // experiment-wide (Coordinator.Queue's `put_metapopulation/2`), so this is
 // the same for every run in `exp`, including its "no-migration" control.
 const metapopConfigured = Boolean(exp.spec.metapopulation);
+// Likewise for ponds.tsv: the pond cycle comes from the experiment's preset
+// (a coordinator spec carries no config overrides, and the pond conditions
+// only change the arm), so a pond preset expects it on every segment even
+// if none recorded one.
+const pondCfg = PRESETS.find((p) => p.id === exp.spec.presetId)?.cfg;
+const pondsConfigured = pondCfg?.pondPeriod !== undefined;
+// Whether optional file `f` is configured for a run whose segments are `segs`.
+const configuredFor = (f: (typeof OPTIONAL_FILES)[number], segs: Listed[]) =>
+  f === EXCHANGES_FILE ? metapopConfigured : (f === PONDS_FILE && pondsConfigured) || segs.some((s) => s.files?.[f]);
 // Why a run cannot be exported (yet), or null.
 function ineligible(segs: Listed[]): string | null {
   const unfinished = segs.filter((s) => s.status !== "done" && s.status !== "verified");
@@ -114,10 +123,11 @@ function ineligible(segs: Listed[]): string | null {
   // again, defensively.
   for (const f of OPTIONAL_FILES) {
     // exchanges.tsv's "is this configured" comes from the experiment's own
-    // spec (see metapopConfigured's doc), not file presence; migrations.tsv
-    // and species.tsv have no equivalent experiment-wide flag exposed here,
-    // so they keep the file-presence inference.
-    const configured = f === EXCHANGES_FILE ? metapopConfigured : segs.some((s) => s.files?.[f]);
+    // spec (see metapopConfigured's doc), not file presence, and ponds.tsv's
+    // from its preset (pondsConfigured); migrations.tsv and species.tsv have
+    // no equivalent experiment-wide flag exposed here, so they keep the
+    // file-presence inference.
+    const configured = configuredFor(f, segs);
     if (configured) {
       const missing = segs.filter((s) => !s.files?.[f]);
       if (missing.length) return `${f} is configured for this run but ${missing.length} segment(s) have no recorded ${f}`;
@@ -136,6 +146,7 @@ const fingerprint = (segs: { digest: string | null; files: Record<string, string
   JSON.stringify(segs.map((s) => [s.digest, Object.entries(s.files ?? {}).sort(([x], [y]) => x.localeCompare(y)), s.verifiedBy, s.observationsVerified]));
 
 // The fingerprint of an existing export, "incomplete" if files are missing,
+// "invalid-ponds: <why>" if a pond run's ponds.tsv fails the stitch rules,
 // "stale-metrics-version" if it predates the current METRICS_VERSION (which
 // would otherwise never be caught: stitchRun's own version check only runs
 // on a fresh re-stitch, and an unchanged fingerprint would keep this export
@@ -169,10 +180,25 @@ async function existing(dir: string, segs: Listed[]): Promise<string | null> {
   // (fingerprint covers accepted digests, not which files ended up on disk),
   // and it would never get rebuilt.
   for (const f of OPTIONAL_FILES) {
-    const configured = f === EXCHANGES_FILE ? metapopConfigured : segs.some((s) => s.files?.[f]);
-    if (configured && !(await Deno.stat(`${dir}/${f}`).catch(() => null))) return "incomplete";
+    if (configuredFor(f, segs) && !(await Deno.stat(`${dir}/${f}`).catch(() => null))) return "incomplete";
   }
   if ((manifest.metricsVersion ?? 1) !== METRICS_VERSION) return "stale-metrics-version";
+  // A pond run's ponds.tsv is re-checked against the stitch rules, whole, because the fingerprint covers accepted
+  // digests and not these rules: an export written by a stitcher that did not yet check each recipient, or edited
+  // since, would otherwise be kept for as long as the coordinator's record is unchanged.
+  if (pondsConfigured && pondCfg) {
+    // Read outside the try: a file that cannot be read is an operational error to surface, not evidence the export is invalid
+    // (which would move a possibly good bundle aside before its replacement is downloaded).
+    const text = await Deno.readTextFile(`${dir}/${PONDS_FILE}`);
+    const cfg = { ...defaultConfig(), ...pondCfg };
+    try {
+      // The arm is the run's own, from the manifest the stitcher wrote (the preset's is not: a nat or shuf run is a pond preset's
+      // with another arm); a manifest without one leaves the arm to the file's header, as for an export older than the arm.
+      checkPondsFile(dir, text, cfg.pondPeriod, cfg.tilesX * cfg.tilesY, 0, exp.spec.steps, manifest.cfg?.pondArm);
+    } catch (e) {
+      return `invalid-ponds: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }
   return fingerprint(manifest.segments ?? []);
 }
 
@@ -234,7 +260,9 @@ for (const [run, segs] of byRun) {
         ? "incomplete bundle"
         : have === "stale-metrics-version"
           ? "export predates the current metrics version"
-          : "history differs from the coordinator's accepted one",
+          : have.startsWith("invalid-ponds: ")
+            ? `export fails the ponds.tsv check (${have.slice("invalid-ponds: ".length)})`
+            : "history differs from the coordinator's accepted one",
     );
 
   const stitched = stitchRun(await Promise.all(segs.map(download)), exp.spec.steps);

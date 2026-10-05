@@ -1,0 +1,446 @@
+{
+  "stage": "p1",
+  "verdict": true,
+  "choice": {
+    "primaryComplete": true,
+    "fallbackComplete": false,
+    "passing": [
+      {
+        "k": 8,
+        "period": 10000
+      }
+    ],
+    "stage": "primary",
+    "chosen": {
+      "k": 8,
+      "period": 10000
+    },
+    "candidate": {
+      "k": 8,
+      "period": 10000
+    },
+    "verdict": true
+  },
+  "refs": {
+    "1000": 19770,
+    "3000": 50630.5,
+    "10000": 103058
+  },
+  "regimes": [
+    {
+      "k": 3,
+      "period": 1000,
+      "ref": 19770,
+      "seeds": [
+        {
+          "seed": 4800001,
+          "s": 0,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 1,
+          "meanCv": 0,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": false,
+            "c": false,
+            "d": true
+          },
+          "pass": false
+        },
+        {
+          "seed": 4800002,
+          "s": 1,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 1,
+          "meanCv": 0,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": false,
+            "c": false,
+            "d": true
+          },
+          "pass": false
+        }
+      ],
+      "complete": true,
+      "pass": false
+    },
+    {
+      "k": 3,
+      "period": 3000,
+      "ref": 50630.5,
+      "seeds": [
+        {
+          "seed": 4800101,
+          "s": 0,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 1,
+          "meanCv": 0,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": false,
+            "c": false,
+            "d": true
+          },
+          "pass": false
+        },
+        {
+          "seed": 4800102,
+          "s": 1,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 1,
+          "meanCv": 0,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": false,
+            "c": false,
+            "d": true
+          },
+          "pass": false
+        }
+      ],
+      "complete": true,
+      "pass": false
+    },
+    {
+      "k": 3,
+      "period": 10000,
+      "ref": 103058,
+      "seeds": [
+        {
+          "seed": 4800201,
+          "s": 0,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 1,
+          "meanCv": 0,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": false,
+            "c": false,
+            "d": true
+          },
+          "pass": false
+        },
+        {
+          "seed": 4800202,
+          "s": 1,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 1,
+          "meanCv": 0,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": false,
+            "c": false,
+            "d": true
+          },
+          "pass": false
+        }
+      ],
+      "complete": true,
+      "pass": false
+    },
+    {
+      "k": 5,
+      "period": 1000,
+      "ref": 19770,
+      "seeds": [
+        {
+          "seed": 4800301,
+          "s": 0,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 0.8125,
+          "meanCv": 0.6648228906989779,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": false,
+            "c": true,
+            "d": true
+          },
+          "pass": false
+        },
+        {
+          "seed": 4800302,
+          "s": 1,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 0.48660714285714285,
+          "meanCv": 1.1667353617451162,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": true,
+            "c": true,
+            "d": true
+          },
+          "pass": false
+        }
+      ],
+      "complete": true,
+      "pass": false
+    },
+    {
+      "k": 5,
+      "period": 3000,
+      "ref": 50630.5,
+      "seeds": [
+        {
+          "seed": 4800401,
+          "s": 0,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 0.9330357142857143,
+          "meanCv": 0.2050440065002545,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": false,
+            "c": true,
+            "d": true
+          },
+          "pass": false
+        },
+        {
+          "seed": 4800402,
+          "s": 1,
+          "scheduled": 224,
+          "successes": 2,
+          "successFraction": 0.008928571428571428,
+          "meanIneligible": 0.5625,
+          "meanCv": 1.4301827025448524,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": false,
+            "c": true,
+            "d": true
+          },
+          "pass": false
+        }
+      ],
+      "complete": true,
+      "pass": false
+    },
+    {
+      "k": 5,
+      "period": 10000,
+      "ref": 103058,
+      "seeds": [
+        {
+          "seed": 4800501,
+          "s": 0,
+          "scheduled": 224,
+          "successes": 91,
+          "successFraction": 0.40625,
+          "meanIneligible": 0.5491071428571429,
+          "meanCv": 1.3547110890397744,
+          "conservationOk": true,
+          "criteria": {
+            "a": true,
+            "b": false,
+            "c": true,
+            "d": true
+          },
+          "pass": false
+        },
+        {
+          "seed": 4800502,
+          "s": 1,
+          "scheduled": 224,
+          "successes": 72,
+          "successFraction": 0.32142857142857145,
+          "meanIneligible": 0.44642857142857145,
+          "meanCv": 1.488691070830775,
+          "conservationOk": true,
+          "criteria": {
+            "a": true,
+            "b": true,
+            "c": true,
+            "d": true
+          },
+          "pass": true
+        }
+      ],
+      "complete": true,
+      "pass": false
+    },
+    {
+      "k": 8,
+      "period": 1000,
+      "ref": 19770,
+      "seeds": [
+        {
+          "seed": 4800601,
+          "s": 0,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 0.24553571428571427,
+          "meanCv": 0.5710627419194457,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": true,
+            "c": true,
+            "d": true
+          },
+          "pass": false
+        },
+        {
+          "seed": 4800602,
+          "s": 1,
+          "scheduled": 224,
+          "successes": 0,
+          "successFraction": 0,
+          "meanIneligible": 0.19642857142857142,
+          "meanCv": 0.4895956850875777,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": true,
+            "c": true,
+            "d": true
+          },
+          "pass": false
+        }
+      ],
+      "complete": true,
+      "pass": false
+    },
+    {
+      "k": 8,
+      "period": 3000,
+      "ref": 50630.5,
+      "seeds": [
+        {
+          "seed": 4800701,
+          "s": 0,
+          "scheduled": 224,
+          "successes": 13,
+          "successFraction": 0.05803571428571429,
+          "meanIneligible": 0.3392857142857143,
+          "meanCv": 0.9103624209639515,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": true,
+            "c": true,
+            "d": true
+          },
+          "pass": false
+        },
+        {
+          "seed": 4800702,
+          "s": 1,
+          "scheduled": 224,
+          "successes": 25,
+          "successFraction": 0.11160714285714286,
+          "meanIneligible": 0.36607142857142855,
+          "meanCv": 0.9681260008755048,
+          "conservationOk": true,
+          "criteria": {
+            "a": false,
+            "b": true,
+            "c": true,
+            "d": true
+          },
+          "pass": false
+        }
+      ],
+      "complete": true,
+      "pass": false
+    },
+    {
+      "k": 8,
+      "period": 10000,
+      "ref": 103058,
+      "seeds": [
+        {
+          "seed": 4800801,
+          "s": 0,
+          "scheduled": 224,
+          "successes": 133,
+          "successFraction": 0.59375,
+          "meanIneligible": 0.13392857142857142,
+          "meanCv": 0.8395118389785303,
+          "conservationOk": true,
+          "criteria": {
+            "a": true,
+            "b": true,
+            "c": true,
+            "d": true
+          },
+          "pass": true
+        },
+        {
+          "seed": 4800802,
+          "s": 1,
+          "scheduled": 224,
+          "successes": 184,
+          "successFraction": 0.8214285714285714,
+          "meanIneligible": 0.07142857142857142,
+          "meanCv": 0.4717091285683486,
+          "conservationOk": true,
+          "criteria": {
+            "a": true,
+            "b": true,
+            "c": true,
+            "d": true
+          },
+          "pass": true
+        }
+      ],
+      "complete": true,
+      "pass": true
+    }
+  ],
+  "runs": 18,
+  "unfinished": [],
+  "skipped": [],
+  "truncation": {
+    "flagged": [],
+    "full": {
+      "primaryComplete": true,
+      "fallbackComplete": false,
+      "passing": [
+        {
+          "k": 8,
+          "period": 10000
+        }
+      ],
+      "stage": "primary",
+      "chosen": {
+        "k": 8,
+        "period": 10000
+      },
+      "candidate": {
+        "k": 8,
+        "period": 10000
+      },
+      "verdict": true
+    },
+    "without": null,
+    "sensitive": false
+  }
+}

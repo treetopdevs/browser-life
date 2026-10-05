@@ -350,6 +350,161 @@ defmodule CoordinatorWeb.ApiControllerTest do
     assert complete_verify.(%{}) |> json_response(200) == %{"status" => "verified"}
   end
 
+  @pond_spec %{
+    "experiment" => "pond",
+    "presetId" => "ponds-small",
+    "conditions" => ["treatment"],
+    "seeds" => [1],
+    "steps" => 2000,
+    "segmentSteps" => 1000,
+    "censusEvery" => 100,
+    "verifyFraction" => 1.0
+  }
+
+  # What packages/runner/src/island.ts's runIsland sends: a JSON body.
+  defp next_with(id, token, body) do
+    build_conn()
+    |> authed(token)
+    |> put_req_header("content-type", "application/json")
+    |> post("/api/next?island=#{id}", Jason.encode!(body))
+    |> json_response(200)
+  end
+
+  test "/api/next offers pond work only with \"ponds-v1\" in a well-formed capabilities list, and never blocks other work",
+       %{conn: conn} do
+    # "a-pond" sorts ahead of "b-plain" in pick_task's order.
+    conn
+    |> post("/api/experiments", %{@pond_spec | "experiment" => "a-pond"})
+    |> json_response(200)
+
+    conn
+    |> post("/api/experiments", %{@spec_ok | "experiment" => "b-plain"})
+    |> json_response(200)
+
+    {old, old_token} = join(conn)
+    {odd, odd_token} = join(build_conn())
+    {new, new_token} = join(build_conn())
+
+    # No body at all (an island from before capabilities): non-pond work.
+    t = build_conn() |> authed(old_token) |> post("/api/next?island=#{old}") |> json_response(200)
+    assert t["kind"] == "run" and String.starts_with?(t["segment"]["run"], "b-plain/")
+
+    # Malformed values count as no capabilities, even when they mention "ponds-v1".
+    for caps <- [
+          nil,
+          [],
+          "ponds-v1",
+          %{"ponds-v1" => true},
+          ["ponds-v1", 1],
+          ["ponds-v1", String.duplicate("x", 65)],
+          ["ponds-v1" | List.duplicate("other", 16)]
+        ] do
+      assert %{"kind" => "idle"} = next_with(odd, odd_token, %{"capabilities" => caps})
+    end
+
+    assert %{"kind" => "idle"} = next_with(odd, odd_token, %{})
+
+    p = next_with(new, new_token, %{"capabilities" => ["ponds-v1"]})
+    assert p["kind"] == "run" and String.starts_with?(p["segment"]["run"], "a-pond/ponds-small/")
+    assert p["spec"]["presetId"] == "ponds-small"
+  end
+
+  test "/api/next offers a nat run only when the capabilities list carries \"ponds-v2\" as well",
+       %{conn: conn} do
+    # config.exs's `:conditions` does not list the hunt's conditions; add them for this test.
+    conditions = Application.get_env(:coordinator, :conditions)
+    Application.put_env(:coordinator, :conditions, conditions ++ ~w(pond-nat))
+    on_exit(fn -> Application.put_env(:coordinator, :conditions, conditions) end)
+
+    conn
+    |> post("/api/experiments", %{
+      @pond_spec
+      | "experiment" => "a-nat",
+        "conditions" => ["pond-nat"]
+    })
+    |> json_response(200)
+
+    {old, old_token} = join(conn)
+    {new, new_token} = join(build_conn())
+
+    for caps <- [["ponds-v1"], ["ponds-v2"], ["ponds-v1", 2]] do
+      assert %{"kind" => "idle"} = next_with(old, old_token, %{"capabilities" => caps})
+    end
+
+    p = next_with(new, new_token, %{"capabilities" => ["ponds-v1", "ponds-v2"]})
+    assert p["kind"] == "run" and p["spec"]["condition"] == "pond-nat"
+    assert String.starts_with?(p["segment"]["run"], "a-nat/ponds-small/pond-nat/")
+  end
+
+  test "a verify completion's ponds.tsv digest is accepted and compared like the other optional files",
+       %{conn: conn} do
+    conn |> post("/api/experiments", @pond_spec) |> json_response(200)
+    {a, token_a} = join(conn)
+    {b, token_b} = join(build_conn())
+    caps = %{"capabilities" => ["ponds-v1"]}
+    names = @observation_files ++ ["ponds.tsv"]
+    sha = fn s -> :crypto.hash(:sha256, s) |> Base.encode16(case: :lower) end
+
+    put = fn path, body ->
+      build_conn()
+      |> authed(token_a)
+      |> put_req_header("content-type", "application/octet-stream")
+      |> put(path, body)
+    end
+
+    # Runs segment `index` on island a (each file's content is its own name),
+    # then verifies it on island b, reporting `reported` as its file digests.
+    run_and_verify = fn index, reported ->
+      t = next_with(a, token_a, caps)
+      assert t["kind"] == "run" and t["segment"]["index"] == index
+      q = "island=#{a}&lease=#{t["lease"]}"
+      bin = Coordinator.CheckpointTest.build(1000 * (index + 1), seed: 1)
+
+      assert %{"digest" => digest} =
+               put.("/api/segments/#{t["segment"]["id"]}/checkpoint?#{q}", bin)
+               |> json_response(200)
+
+      for name <- names do
+        assert %{"ok" => true} =
+                 put.("/api/segments/#{t["segment"]["id"]}/files/#{name}?#{q}", name)
+                 |> json_response(200)
+      end
+
+      assert build_conn()
+             |> authed(token_a)
+             |> post("/api/segments/#{t["segment"]["id"]}/complete?island=#{a}", %{
+               "kind" => "run",
+               "endHash" => digest,
+               "lease" => t["lease"]
+             })
+             |> json_response(200) == %{"status" => "done"}
+
+      v = next_with(b, token_b, caps)
+      assert v["kind"] == "verify" and v["segment"]["id"] == t["segment"]["id"]
+
+      assert build_conn()
+             |> authed(token_b)
+             |> post("/api/segments/#{v["segment"]["id"]}/complete?island=#{b}", %{
+               "kind" => "verify",
+               "endHash" => digest,
+               "lease" => v["lease"],
+               "observationDigests" => reported
+             })
+             |> json_response(200) == %{"status" => "verified"}
+    end
+
+    good = Map.new(names, &{&1, sha.(&1)})
+    run_and_verify.(0, good)
+    run_and_verify.(1, %{good | "ponds.tsv" => sha.("other rows")})
+
+    assert %{"segments" => [s0, s1]} =
+             build_conn() |> get("/api/experiments/pond") |> json_response(200)
+
+    assert s0["observationsVerified"] == true
+    # The six agree; only ponds.tsv differs, and that is a mismatch.
+    assert s1["observationsVerified"] == false
+  end
+
   # `manifest.json`'s metricsVersion is extracted and size-bounded in this
   # controller, outside Coordinator.Queue's shared GenServer (see its
   # moduledoc and Coordinator.Attempt's `manifest_metrics_version`) -- these

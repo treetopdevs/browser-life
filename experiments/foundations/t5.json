@@ -1,0 +1,567 @@
+{
+ "result": {
+  "evolved": 50,
+  "evolvedStrictM3": 0,
+  "evolvedRates": {
+   "survived": 0.955625,
+   "regenerated": 0.168125,
+   "lightDependent": 0.955625
+  },
+  "founderRates": {
+   "survived": 0.9973958333333334,
+   "regenerated": 0.9791666666666666,
+   "lightDependent": 0.9973958333333334
+  },
+  "founderStrictM3": 12
+ },
+ "rows": [
+  {
+   "label": "h1-r0-868568:62833",
+   "survived": 32,
+   "regenerated": 5,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h1-r1-887040:62242",
+   "survived": 32,
+   "regenerated": 1,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h1-r2-872570:61826",
+   "survived": 32,
+   "regenerated": 0,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h1-r3-892647:44297",
+   "survived": 32,
+   "regenerated": 7,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h3-r0-794137:62535",
+   "survived": 32,
+   "regenerated": 3,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h3-r1-749280:64432",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h3-r2-859552:64559",
+   "survived": 32,
+   "regenerated": 10,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h3-r3-859543:56739",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h3-r4-666378:58428",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h3-r5-866097:45827",
+   "survived": 32,
+   "regenerated": 7,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h3-r6-888571:62271",
+   "survived": 32,
+   "regenerated": 8,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h3-r7-881345:62778",
+   "survived": 32,
+   "regenerated": 6,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h3-r8-894752:45511",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h3-r9-882832:56850",
+   "survived": 32,
+   "regenerated": 3,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h4-r0-881082:61551",
+   "survived": 32,
+   "regenerated": 5,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h4-r1-790339:24137",
+   "survived": 32,
+   "regenerated": 11,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h4-r2-792919:42549",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h4-r3-866592:22533",
+   "survived": 25,
+   "regenerated": 1,
+   "lightDependent": 25,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h4-r4-856146:63389",
+   "survived": 32,
+   "regenerated": 6,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h4-r5-886797:21580",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h4-r6-878083:64308",
+   "survived": 32,
+   "regenerated": 13,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h4-r7-887303:60377",
+   "survived": 32,
+   "regenerated": 10,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h4-r8-846729:29284",
+   "survived": 32,
+   "regenerated": 9,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h4-r9-887102:59224",
+   "survived": 32,
+   "regenerated": 18,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h1-r4-872932:21822",
+   "survived": 32,
+   "regenerated": 8,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h1-r5-893177:54298",
+   "survived": 32,
+   "regenerated": 1,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r0-849323:55419",
+   "survived": 32,
+   "regenerated": 2,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r1-867686:57359",
+   "survived": 0,
+   "regenerated": 0,
+   "lightDependent": 0,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r2-825344:58284",
+   "survived": 32,
+   "regenerated": 6,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r3-828521:21279",
+   "survived": 32,
+   "regenerated": 5,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r4-888812:61576",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r5-874746:58093",
+   "survived": 0,
+   "regenerated": 0,
+   "lightDependent": 0,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r6-864626:20112",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r7-835108:51560",
+   "survived": 32,
+   "regenerated": 3,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r8-868738:55892",
+   "survived": 32,
+   "regenerated": 6,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h5-r9-800736:51530",
+   "survived": 32,
+   "regenerated": 1,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h1-r6-887330:60302",
+   "survived": 32,
+   "regenerated": 6,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h1-r7-868284:14249",
+   "survived": 32,
+   "regenerated": 8,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h1-r8-873874:24258",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h1-r9-862425:60205",
+   "survived": 32,
+   "regenerated": 5,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h2-r0-794218:51876",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h2-r1-835710:3322",
+   "survived": 32,
+   "regenerated": 5,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h2-r2-877795:30043",
+   "survived": 32,
+   "regenerated": 2,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h2-r3-881735:54824",
+   "survived": 32,
+   "regenerated": 9,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h2-r4-867201:57915",
+   "survived": 32,
+   "regenerated": 3,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h2-r5-884964:27525",
+   "survived": 32,
+   "regenerated": 7,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h2-r6-885951:59621",
+   "survived": 32,
+   "regenerated": 4,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h2-r7-843014:27365",
+   "survived": 32,
+   "regenerated": 10,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "mixed"
+  },
+  {
+   "label": "h2-r8-887140:54198",
+   "survived": 32,
+   "regenerated": 8,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  },
+  {
+   "label": "h2-r9-894395:50359",
+   "survived": 32,
+   "regenerated": 7,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": false,
+   "role": "phototroph"
+  }
+ ],
+ "founders": [
+  {
+   "cluster": 0,
+   "survived": 32,
+   "regenerated": 30,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 1,
+   "survived": 32,
+   "regenerated": 31,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 2,
+   "survived": 32,
+   "regenerated": 32,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 4,
+   "survived": 32,
+   "regenerated": 32,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 5,
+   "survived": 32,
+   "regenerated": 32,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 9,
+   "survived": 32,
+   "regenerated": 32,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 10,
+   "survived": 32,
+   "regenerated": 31,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 11,
+   "survived": 32,
+   "regenerated": 31,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 12,
+   "survived": 32,
+   "regenerated": 31,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 16,
+   "survived": 32,
+   "regenerated": 32,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 17,
+   "survived": 31,
+   "regenerated": 30,
+   "lightDependent": 31,
+   "reps": 32,
+   "strictM3": true
+  },
+  {
+   "cluster": 20,
+   "survived": 32,
+   "regenerated": 32,
+   "lightDependent": 32,
+   "reps": 32,
+   "strictM3": true
+  }
+ ]
+}

@@ -11,7 +11,6 @@ import {
   CH,
   G,
   PRESETS,
-  RULE_VERSION,
   cellCount,
   decodeGenome,
   encodeCheckpoint,
@@ -24,8 +23,10 @@ import {
 } from "@bl/schema";
 import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import { census, individuals, lineageRGB } from "@bl/metrics";
-import { decodeArtifact, type ObserverSettings, type ObserverState } from "@bl/runner";
-import { LabExecution } from "./execution.ts";
+import { decodeArtifact, pondContinuationError, type ObserverSettings, type ObserverState } from "@bl/runner";
+import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
+import { LabExecution, huntArmError } from "./execution.ts";
+import { jumpTarget, prunableAuto } from "./checkpoints.ts";
 import type { CensusMsg, FromWorker, RunManifest, ToWorker } from "./protocol.ts";
 import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
 
@@ -39,6 +40,13 @@ import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFil
  */
 const DEFAULT_SETTINGS: ObserverSettings = { censusEvery: 100, deepEvery: 5, activityThreshold: null };
 
+/**
+ * Automatic checkpoints, so "jump to step" has somewhere to restore from: one each time a world gets
+ * AUTO_EVERY steps past its last checkpoint, keeping the newest AUTO_KEEP automatic ones per run.
+ */
+const AUTO_EVERY = 20_000;
+const AUTO_KEEP = 6;
+
 const post = (m: FromWorker, transfer: Transferable[] = []) => (self as DedicatedWorkerGlobalScope).postMessage(m, transfer);
 
 interface World {
@@ -50,6 +58,27 @@ interface World {
   baseline: bigint;
   startMatter: bigint;
   execution: LabExecution;
+  lineage: LabLineage;
+  /** Step of the newest checkpoint saved or restored for this world. */
+  lastCheckpoint: number;
+}
+
+/** What the lineage inspector knows about a world beyond its live state. */
+interface LabLineage {
+  /** The step from which the execution's mutation edges are complete. */
+  edgesFrom: number;
+  /** Genomes known exactly besides the live world's: the start world's, and the state it was loaded from. */
+  known: GenomeSource[];
+  /** The lineage drawn highlighted, as [hi, lo]. */
+  highlight: [number, number] | null;
+}
+
+/** A world's genealogy as `adopt` receives it. */
+interface AdoptLineage {
+  edges: MutationEdges;
+  dropped: number;
+  edgesFrom: number;
+  known: GenomeSource[];
 }
 
 let device: GPUDevice | null = null;
@@ -67,6 +96,7 @@ let mode: GpuViewMode = "composite";
 let rect: ViewRect = { x: 0, y: 0, w: 256, h: 256 };
 let inflight: Promise<unknown> | null = null;
 let busy = 0;
+let autoQueued = false;
 
 let lastStatsAt = 0;
 let lastCensusAt = 0;
@@ -124,14 +154,24 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
  * `observer` rehydrates the tracker/activity/counters from a restored or
  * imported checkpoint; omitted for a fresh `load()`, which starts clean.
  */
-async function adopt(state: WorldState, manifest: RunManifest, observer?: ObserverState) {
+async function adopt(state: WorldState, manifest: RunManifest, observer: ObserverState | undefined, lineage: AdoptLineage) {
   if (!device || !ctx) throw new Error("GPU not initialised");
+  // Every world enters here (a new preset, an import, a restore or jump); the hunt's pond arms are refused before any GPU allocation.
+  const huntError = huntArmError(state.cfg);
+  if (huntError) throw new Error(huntError);
+  // The runner's continuation guard: a pond world's observer must say its
+  // last cycle is floor(step / pondPeriod). A pre-cycle state at a boundary
+  // would otherwise skip that cycle, since a history never cycles at its start.
+  const pondError = pondContinuationError(state.cfg, observer, state.step);
+  if (pondError) throw new Error(pondError);
   const sim = await GpuSim.create(device, state);
   let renderer: Renderer;
   let execution: LabExecution;
   try {
     execution = new LabExecution(sim, manifest.settings, {
       observer,
+      start: state,
+      lineage: { edges: lineage.edges, dropped: lineage.dropped },
       waitForIdle: () => device!.queue.onSubmittedWorkDone(),
       isCurrent: () => world?.execution === execution,
       onObservation: (c, dropped) => {
@@ -142,6 +182,8 @@ async function adopt(state: WorldState, manifest: RunManifest, observer?: Observ
           postCensus(world!, c);
         }
       },
+      // Every cycle, unthrottled: one per pondPeriod steps.
+      onPondCycle: (cycle, step) => post({ type: "ponds", step, cycle: cycle.b, arm: sim.cfg.pondArm!, donors: cycle.donors }),
       onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
     });
     renderer = new Renderer(device, ctx, format, sim);
@@ -159,6 +201,8 @@ async function adopt(state: WorldState, manifest: RunManifest, observer?: Observ
     baseline: t.energy + state.heatOut - state.lightIn,
     startMatter: t.matter,
     execution,
+    lineage: { edgesFrom: lineage.edgesFrom, known: lineage.known, highlight: null },
+    lastCheckpoint: state.step,
   };
   old?.renderer.destroy();
   old?.sim.destroy();
@@ -178,7 +222,7 @@ function newManifest(presetId: string, seed: number, state: WorldState, init: Ru
     seed,
     cfg: state.cfg,
     init,
-    ruleVersion: RULE_VERSION,
+    ruleVersion: state.cfg.ruleVersion,
     createdAt: new Date().toISOString(),
     adapter: adapterDesc,
     userAgent: navigator.userAgent,
@@ -189,10 +233,33 @@ function newManifest(presetId: string, seed: number, state: WorldState, init: Ru
 }
 
 async function load(presetId: string, seed: number, overrides = {}) {
-  const preset = PRESETS.find((p) => p.id === presetId) ?? PRESETS[0];
+  const preset = PRESETS.find((p) => p.id === presetId);
+  if (!preset) throw new Error(`unknown preset "${presetId}"`);
   const cfg = presetConfig(preset, seed, overrides);
+  const huntError = huntArmError(cfg);
+  if (huntError) throw new Error(huntError);
   const state = initWorld(cfg, preset.init);
-  await adopt(state, newManifest(preset.id, seed, state, preset.init, DEFAULT_SETTINGS));
+  const manifest = { ...newManifest(preset.id, seed, state, preset.init, DEFAULT_SETTINGS), startHash: stateHash(state), edgesFrom: 0 };
+  await adopt(state, manifest, undefined, { edges: new MutationEdges(), dropped: 0, edgesFrom: 0, known: [{ source: "start world", genomes: genomesOf(state, cfg) }] });
+}
+
+/** The founders' genomes of a run built here, rebuilt from its preset and accepted only at its recorded start hash. */
+function startGenomes(m: RunManifest): GenomeSource | null {
+  if (!m.startHash || m.presetId === "imported") return null;
+  try {
+    const s = initWorld(m.cfg, m.init);
+    return stateHash(s) === m.startHash ? { source: "start world", genomes: genomesOf(s, s.cfg) } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A checkpoint's own copy of the run's mutation edges up to it: a save writes only new files, so a failed one cannot damage another checkpoint's genealogy. */
+const edgesFile = (checkpoint: string) => `${checkpoint}.edges`;
+
+/** A world loaded from a file outside any run's history: its genealogy starts here. */
+function freshLineage(state: WorldState, source: string): AdoptLineage {
+  return { edges: new MutationEdges(), dropped: 0, edgesFrom: state.step, known: [{ source, genomes: genomesOf(state, state.cfg) }] };
 }
 
 function frame() {
@@ -216,7 +283,7 @@ async function drawFrame(w: World) {
       pendingSteps -= Math.min(requestedPending, consumed);
     }
     settled = true;
-    w.renderer.draw(mode, rect, canvas!.width, canvas!.height);
+    w.renderer.draw(mode, rect, canvas!.width, canvas!.height, 256, w.lineage.highlight);
     await device!.queue.onSubmittedWorkDone();
   } catch (e) {
     playing = false;
@@ -224,6 +291,12 @@ async function drawFrame(w: World) {
     // A rejected request (e.g. past the step limit) is dropped rather than retried every frame.
     else if (!settled) pendingSteps = Math.max(0, pendingSteps - requestedPending);
     post({ type: "error", message: w.execution.failure ?? (e instanceof Error ? e.message : String(e)) });
+  }
+  if (settled && !autoQueued && !w.execution.failure && w.sim.step - w.lastCheckpoint >= AUTO_EVERY) {
+    autoQueued = true;
+    exclusive(() => autoSave(w))
+      .catch((e) => current(w) && post({ type: "error", message: `automatic checkpoint: ${e instanceof Error ? e.message : e}` }))
+      .finally(() => (autoQueued = false));
   }
   const now = performance.now();
   if (now - rateAt > 1000) {
@@ -341,20 +414,42 @@ async function probe(x: number, y: number) {
   });
 }
 
-async function save() {
-  const w = world;
-  if (!w) return;
-  const { state, observer, advanced } = await w.execution.checkpoint();
-  if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
+/** Writes a checkpoint of the settled world, the run's mutation edges and its manifest. */
+async function saveCheckpoint(w: World, auto: boolean) {
+  const { state, observer, advanced, edges, dropped } = await w.execution.checkpoint();
   const m = w.manifest;
   const bytes = encodeCheckpoint(state, observer);
   // Unique even after a restore trims the manifest's checkpoint list.
   const file = `${m.runId}-t${state.step}-${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}.blck`;
   await writeFile(file, bytes);
-  m.checkpoints.push({ step: state.step, file, hash: stateHash(state), interventions: m.interventions.length });
+  await writeFile(edgesFile(file), new Uint8Array(w.execution.edges.words().buffer));
+  m.checkpoints.push({ step: state.step, file, hash: stateHash(state), interventions: m.interventions.length, edges, dropped, edgesFrom: w.lineage.edgesFrom, ...(auto ? { auto } : {}) });
   await writeFile(`${m.runId}.run.json`, new TextEncoder().encode(JSON.stringify(m)));
-  await recordCheckpoint({ file, runId: m.runId, step: state.step, bytes: bytes.byteLength, savedAt: new Date().toISOString() });
-  post({ type: "notice", message: `Saved ${file} (${(bytes.byteLength / 1e6).toFixed(1)} MB)` });
+  await recordCheckpoint({ file, runId: m.runId, step: state.step, bytes: bytes.byteLength, savedAt: new Date().toISOString(), ...(auto ? { auto } : {}) });
+  w.lastCheckpoint = state.step;
+  return { file, step: state.step, bytes: bytes.byteLength, advanced };
+}
+
+async function save() {
+  const w = world;
+  if (!w) return;
+  const saved = await saveCheckpoint(w, false);
+  if (saved.advanced) post({ type: "notice", message: `Advanced ${saved.advanced} steps to the census at t=${saved.step}` });
+  post({ type: "notice", message: `Saved ${saved.file} (${(saved.bytes / 1e6).toFixed(1)} MB)` });
+  post({ type: "checkpoints", list: await listCheckpoints() });
+}
+
+/** An automatic checkpoint, then the run's oldest automatic ones beyond AUTO_KEEP are removed. */
+async function autoSave(w: World) {
+  if (!current(w) || w.execution.failure) return;
+  await saveCheckpoint(w, true);
+  const m = w.manifest;
+  // Only this run's own: a fork's manifest also lists its parent's checkpoints, which the parent still uses.
+  for (const c of prunableAuto(m, AUTO_KEEP)) {
+    await forgetCheckpoint(c.file);
+    m.checkpoints.splice(m.checkpoints.indexOf(c), 1);
+  }
+  await writeFile(`${m.runId}.run.json`, new TextEncoder().encode(JSON.stringify(m)));
   post({ type: "checkpoints", list: await listCheckpoints() });
 }
 
@@ -368,6 +463,7 @@ async function restore(file: string) {
   if (!meta) throw new Error(`unknown checkpoint ${file}`);
   const { state, observer } = decodeArtifact(await readFile(file));
   let m: RunManifest;
+  let lineage: AdoptLineage;
   try {
     const saved: RunManifest = JSON.parse(new TextDecoder().decode(await readFile(`${meta.runId}.run.json`)));
     const ck = saved.checkpoints.find((c) => c.file === file);
@@ -383,18 +479,98 @@ async function restore(file: string) {
       interventions: saved.interventions.slice(0, ck.interventions),
       checkpoints: saved.checkpoints.slice(0, saved.checkpoints.indexOf(ck) + 1),
     };
+    lineage = await restoredLineage(saved, ck, state);
   } catch {
     // No confirmed, intact prior manifest to safely continue: always fork,
     // never reuse the old run's id (a missing/corrupt manifest is not "the
     // same run, resumed", it's a fresh branch from this checkpoint).
     m = importedManifest(state, forkRunId(meta.runId), observer.settings);
+    lineage = freshLineage(state, "restored state");
   }
-  await adopt(state, m, observer);
+  await adopt(state, m, observer, lineage);
   post({ type: "notice", message: `Restored ${file} at step ${state.step}` });
 }
 
 function importedManifest(state: WorldState, runId: string, settings: ObserverSettings): RunManifest {
-  return { ...newManifest("imported", state.cfg.seed, state, { kind: "generalist", founders: 0, nutrient: 0, biomass: 0 }, settings), runId };
+  return { ...newManifest("imported", state.cfg.seed, state, { kind: "generalist", founders: 0, nutrient: 0, biomass: 0 }, settings), runId, edgesFrom: state.step };
+}
+
+/**
+ * A restored checkpoint's genealogy: its own edges file, the founders when the start world can be rebuilt,
+ * and the restored state's genomes. Missing or inconsistent edges start the genealogy at the checkpoint.
+ */
+async function restoredLineage(saved: RunManifest, ck: RunManifest["checkpoints"][number], state: WorldState): Promise<AdoptLineage> {
+  const known: GenomeSource[] = [];
+  const start = startGenomes(saved);
+  if (start) known.push(start);
+  known.push({ source: "restored state", genomes: genomesOf(state, state.cfg) });
+  if (ck.edges !== undefined) {
+    try {
+      const bytes = await readFile(edgesFile(ck.file));
+      const edges = new MutationEdges(new Uint32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4));
+      if (edges.length === ck.edges && edges.countBefore(state.step) === edges.length) return { edges, dropped: ck.dropped ?? 0, edgesFrom: ck.edgesFrom ?? saved.edgesFrom ?? 0, known };
+    } catch {
+      // Fall through: the genealogy starts at this checkpoint.
+    }
+  }
+  return { edges: new MutationEdges(), dropped: 0, edgesFrom: state.step, known };
+}
+
+/** Files of the checkpoints that still exist (a parent run may have pruned one that a fork's manifest lists). */
+async function filesOnDisk(): Promise<Set<string>> {
+  return new Set((await listCheckpoints()).map((c) => c.file));
+}
+
+let lineageTicket = 0;
+
+/**
+ * One lineage at the next census (where every living lineage's edge has been drained). The ancestry is read
+ * here, inside the exclusive section; the controller probes, the slow part, run after it in slices, so frames
+ * and other requests are not held up. A newer request or a new world cancels them.
+ */
+async function inspectLineage(key: string, ticket: number) {
+  const w = world;
+  if (!w || ticket !== lineageTicket) return;
+  parseKey(key);
+  const { state, advanced } = await w.execution.checkpoint();
+  if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
+  const c = census({ cfg: state.cfg, step: state.step, cells: state.cells, genomeHead: state.genome });
+  const ancestry = lineageAncestry({
+    subject: key,
+    cfg: state.cfg,
+    edges: w.execution.edges,
+    known: [...w.lineage.known, { source: "live world", genomes: genomesOf(state, state.cfg) }],
+    census: { step: state.step, rows: c.lineages.map((l) => [l.key, l.cells] as const) },
+    edgesFrom: w.lineage.edgesFrom,
+    dropped: w.execution.dropped,
+  });
+  const onDisk = await filesOnDisk();
+  const checkpoints = w.manifest.checkpoints.filter((k) => onDisk.has(k.file)).map((k) => k.step);
+  if (ticket !== lineageTicket) return;
+  void probeLineage(ancestry, { cancelled: () => ticket !== lineageTicket || !current(w) })
+    .then((done) => done && ticket === lineageTicket && current(w) && post({ type: "lineage", view: ancestry.view, checkpoints }))
+    .catch((e) => current(w) && post({ type: "error", message: `lineage: ${e instanceof Error ? e.message : e}` }));
+}
+
+/**
+ * Keeps the present (a checkpoint), restores the latest checkpoint of this run at or before `step` and
+ * queues the steps up to it; replay is deterministic, so the world reached is the one that was there.
+ * Lesions made after that checkpoint are not re-applied.
+ */
+async function jump(step: number, key: string | null) {
+  const w = world;
+  if (!w) return;
+  if (!Number.isSafeInteger(step) || step < 0) throw new Error(`cannot jump to step ${step}`);
+  const target = jumpTarget(w.manifest.checkpoints, await filesOnDisk(), step);
+  if (!target) throw new Error(`no checkpoint of this run at or before step ${step}`);
+  const present = await saveCheckpoint(w, false);
+  await restore(target.file);
+  const now = world!;
+  pendingSteps = step - now.sim.step;
+  now.lineage.highlight = key ? parseKey(key) : null;
+  post({ type: "highlight", key });
+  post({ type: "notice", message: `Saved the present (t=${present.step}); restored t=${target.step} and advancing to t=${step}` });
+  post({ type: "checkpoints", list: await listCheckpoints() });
 }
 
 async function exportRun() {
@@ -447,6 +623,13 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       mode = m.mode;
       rect = m.rect;
       return;
+    case "highlight":
+      try {
+        if (world) world.lineage.highlight = m.key ? parseKey(m.key) : null;
+      } catch (e) {
+        fail(e);
+      }
+      return;
     case "resize":
       if (canvas) {
         canvas.width = Math.max(1, m.width);
@@ -457,6 +640,8 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       init(m.canvas, m.width, m.height).catch(fail);
       return;
   }
+  // A newer lineage request supersedes older ones from the moment it arrives, even while they are probing.
+  const lineageRequest = m.type === "lineage" ? ++lineageTicket : 0;
   // Everything else is serialized.
   exclusive(async () => {
     switch (m.type) {
@@ -479,11 +664,15 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
         return exportRun();
       case "import": {
         const { state, observer } = decodeArtifact(new Uint8Array(m.bytes));
-        await adopt(state, importedManifest(state, m.name.replace(/\.blck$/, ""), observer.settings), observer);
+        await adopt(state, importedManifest(state, m.name.replace(/\.blck$/, ""), observer.settings), observer, freshLineage(state, "imported state"));
         return post({ type: "notice", message: `Imported ${m.name} at step ${state.step}` });
       }
       case "verify":
         return verify(m.steps);
+      case "lineage":
+        return inspectLineage(m.key, lineageRequest);
+      case "jump":
+        return jump(m.step, m.key);
     }
   }).catch(fail);
 };

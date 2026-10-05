@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0b1110" />
     <meta name="description"
-      content="See what Browser Life has demonstrated, what is pending, and how the experiments are registered." />
+      content="The Browser Life research log: what has passed, what failed, what replicated, and what is running now. Updated 1 October 2026." />
     <title>Research and results · Browser Life</title>
     <link rel="canonical" href="https://cadence.garden/research/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -23,26 +23,108 @@
     </header>
     <main id="main">
       <section class="page-intro shell">
-        <p class="eyebrow">RESEARCH LOG / UPDATED 28 SEP 2026</p>
+        <p class="eyebrow">RESEARCH LOG / UPDATED <time datetime="2026-10-01">1 OCT 2026</time></p>
         <h1>What the evidence says</h1>
         <p
-          class="lede">The goal is to test for sustained organization and evolution. The results below are bounded by their documented experiments.</p>
+          class="lede">The first long-run test for open-ended evolution did not pass. Since then the work has looked for the reason and tested another route: a life cycle imposed on whole groups of cells. Each result below holds only within the experiment that produced it.</p>
       </section>
-      <section class="shell evidence-grid">
-        <article
-          class="evidence-card"><span class="state observed">OBSERVED</span><h2>Regenerating founders</h2><p>The M3 screen found genetically distinct candidates that recovered after a 30% lesion and died in a no-light control under the specified test. Stronger retesting narrowed the founder set to 12 genomes.</p><p class="fine">Passing that gate does not establish indefinite evolution.</p></article>
-        <article
-          class="evidence-card"><span class="state measured">CALIBRATED</span><h2>Activity thresholds</h2><p>A neutral-only pilot fixed the activity threshold for each registered preset before the long-run comparison: 10,008 for gradient-m3 and 14,613 for spots-m3.</p><p class="fine">These are measurement cutoffs, not positive evolutionary findings.</p></article>
-        <article
-          class="evidence-card"><span class="state pending">PENDING</span><h2>Long-run claims</h2><p>The main ensemble asks whether adaptive activity, continued growth, and ecological roles exceed predeclared controls over the observation window. The preregistration was frozen on 27 September 2026; no positive M4 or M5 result is claimed here.</p></article>
+      <section class="shell glance" aria-label="At a glance">
+        <div class="aside-label">AT A GLANCE</div>
+        <div class="status-grid">
+          <div><span class="status-value">Met</span><span class="status-label">M3: founders that regrow after a lesion</span></div>
+          <div><span class="status-value">Not met</span><span class="status-label">M4: open-ended evolution over 10⁶ steps</span></div>
+          <div><span class="status-value">185</span><span class="status-label">Long runs, each with matter conserved exactly</span></div>
+          <div><span class="status-value">1 of 12</span><span class="status-label">Founders whose mutants reliably took up a new ecological role</span></div>
+          <div><span class="status-value">6 of 6</span><span class="status-label">Fresh pond histories with heritable differences between ponds</span></div>
+          <div><span class="status-value">6 of 6</span><span class="status-label">Fresh pond histories where the regrowth advantage replicated</span></div>
+        </div>
+      </section>
+      <section class="shell evidence-grid" aria-label="Results so far">
+        <article class="evidence-card">
+          <span class="state observed">MET · 27 SEP</span>
+          <h2>Regenerating founders</h2>
+          <div>
+            <p>The M3 screen found genetically distinct seeds that regrow after a 30% lesion and die in a no-light control. A stricter retest narrowed the founder set to 12 genomes, which seeded the long-run ensemble.</p>
+            <p class="fine">Passing this gate does not establish open-ended evolution.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state negative">NOT MET · 28 SEP</span>
+          <h2>Open-ended evolution (M4)</h2>
+          <div>
+            <p>All 170 registered runs of 10⁶ steps finished with exact conservation. With mutation, new adaptive activity exceeded both controls in one of the two worlds. The second test failed in both: neutral runs, where mutations do not change behaviour, also counted as “growing”. A 10⁷-step extension showed the same pattern.</p>
+            <p class="fine">Biotic recycling and coexisting roles held. The held-out hypothesis was not supported (0 of 4 observables).</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state measured">FINDING · 29 SEP</span>
+          <h2>Where variation stalls</h2>
+          <div>
+            <p>Genomes are copied faithfully: grown separately, the genomes of tracked parents and offspring behave alike (slopes of 0.85–0.96), though most pairs carried identical genomes. Mutation rarely changes what a genome does in the ecosystem: the mutants of only 1 of the 12 founders reliably took up a new role. A broader sample of genomes did so far more often (11 of 24), so the way founders were chosen was a bottleneck.</p>
+            <p class="fine">Evolved lineages also lost the founders’ ability to regenerate (0.17 against 0.98).</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state pending">OPEN · 29 SEP</span>
+          <h2>What counts as an individual</h2>
+          <div>
+            <p>The tracker credits each birth to a nearby parent. A direct check found that in 135 of 200 sampled births the credited parent contributed no copied material at the time of the birth. A tracked birth is therefore not, by itself, evidence that an individual reproduced.</p>
+            <p class="fine">This is a limit of the measurement, not a negative result. It qualifies every result built on tracked births, and physics changes wait until it is resolved.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state measured">EXPLORATORY · 30 SEP</span>
+          <h2>Founders and environments</h2>
+          <div>
+            <p>What the founders were mattered more than how varied they were. Clouds of drifted founder genomes did little better than single founders (2 of 12 against 1 of 12), while a set made only of non-producing genomes met the new-role criterion in 4 of 5 runs, though part of that may be sorting of roles already present. Whether new roles keep arriving after niches first fill is mixed: they do not in the main comparison, and an excess in the 10⁷-step extension becomes unclear once ambiguous returns are set aside.</p>
+            <p class="fine">A bug that zeroed a background genome’s weights in one screen was found and fixed; the affected result is corrected in the plan.</p>
+          </div>
+        </article>
+        <article class="evidence-card">
+          <span class="state observed">REPLICATED · 1 OCT</span>
+          <h2>A life cycle for groups</h2>
+          <div>
+            <p>Following experiments that impose a group life cycle on microbes (Black, Bourrat &amp; Rainey, 2020), each tile became a pond. At every cycle, ponds are cleared and reseeded with a small fragment from a successful pond. In new histories, with each test fixed before its data, heritable differences between ponds (genetic or structural) appeared in 6 of 6. Fragments from cycled ponds also passed a regrowth test more often than those from random-donor ponds, uncycled ponds and the ancestor, both at once and after 200,000 steps without the cycle, again in 6 of 6.</p>
+            <p class="fine">Exploratory, not a registered milestone. Random-donor ponds show heritable differences too, so the cycle’s causal role is not shown. The test of how much of the advantage the genome carries passed only at its threshold. The life cycle is imposed rather than discovered.</p>
+          </div>
+        </article>
+      </section>
+      <section class="shell prose-grid">
+        <div class="aside-label">NOW</div>
+        <div class="prose">
+          <h2>Work in progress</h2>
+          <ul class="now-list" role="list">
+            <li><strong>Ponds in the shared machinery.</strong> The pond cycle is now part of the shared runner, lab and archipelago, with the physics unchanged. However a pond history is run, split or verified, the results are identical. A registration for a confirmatory pond ensemble is the next, separate decision.</li>
+            <li><strong>Can mutation improve good founders?</strong> Four founders, eight seeds each, with mutation on and off: 64 histories of 10⁶ steps. No result yet.</li>
+            <li><strong>Measures a neutral world can pass.</strong> None of the four activity, novelty and role measures met every validation requirement: three flagged too many neutral runs, and the role measure barely separated the comparison it was meant to. Rebuilt versions are being computed, with their expected outcomes written down first.</li>
+            <li><strong>A moving sun (sandbox).</strong> Under a steady sun, organisms that drift blindly beat those that sense the light. When the sun wanders, the drifters crash and the sensing ones survive. The sandbox changes the physics, so it stays outside the registered work.</li>
+            <li><strong>On hold.</strong> A physics change, with costly and resistible predation as the leading candidate, waits for the individuality question above.</li>
+          </ul>
+        </div>
+      </section>
+      <section class="shell prose-grid">
+        <div class="aside-label">LOG</div>
+        <div class="prose">
+          <h2>Since 28 September</h2>
+          <ol class="log" role="list">
+            <li><time datetime="2026-10-01">1 Oct</time><span>The decisive pond test replicates on fresh histories (6 of 6). Next: integrate the pond cycle, then draft a registration.</span></li>
+            <li><time datetime="2026-10-01">1 Oct</time><span>A fresh pond-heredity test, fixed before any data, shows heritable differences between ponds in 6 of 6 histories.</span></li>
+            <li><time datetime="2026-09-30">30 Sep</time><span>The first pond-heredity test is not demonstrated (0 of 6), and an adjusted reading made afterwards falls short too (3 of 6, with 4 needed).</span></li>
+            <li><time datetime="2026-09-30">30 Sep</time><span>Founder recipes tested: drifted clouds, sets that leave a niche empty, and screens in conditioned media. Whether new roles keep arriving reads mixed.</span></li>
+            <li><time datetime="2026-09-29">29 Sep</time><span>Tracked births fail a direct copy check in 135 of 200 samples, so tracker parenthood is no longer taken as evidence of reproduction.</span></li>
+            <li><time datetime="2026-09-29">29 Sep</time><span>A 10⁷-step extension repeats M4: mutation beats both controls, and neutral runs also count as growing.</span></li>
+            <li><time datetime="2026-09-29">29 Sep</time><span>The foundations review’s gate reads <em>Variation</em>. A founder diagnostic finds that founder selection is a major bottleneck.</span></li>
+            <li><time datetime="2026-09-28">28 Sep</time><span>The M4 ensemble completes and M4 is not met. A time-boxed foundations review replaces scaling up.</span></li>
+          </ol>
+        </div>
       </section>
       <section class="shell prose-grid">
         <div class="aside-label">METHOD</div>
         <div class="prose">
           <h2>Checks before claims</h2>
-          <p>Runs are compared across conditions and seeds. Conservation checks, CPU/GPU golden tests, and replay verification help detect implementation drift. Observation files still have their own provenance limits, so the research keeps verification and interpretation separate.</p>
+          <p>Runs are compared across conditions and seeds. Conservation checks, CPU/GPU golden tests and replay verification catch implementation drift. Decisions are written down before the data they depend on. Readings made after looking at the data are labelled as such, and a failed test stays recorded as failed.</p>
           <div
-            class="link-list"><a href="https://github.com/treetopdevs/browser-life/blob/main/docs/plan.md">Milestone plan and gate results ↗</a><a href="https://github.com/treetopdevs/browser-life/blob/main/experiments/preregistration.md">Frozen preregistration ↗</a><a href="https://github.com/treetopdevs/browser-life/blob/main/docs/rules.md">Detailed rules ↗</a><a href="https://github.com/treetopdevs/browser-life">Code and issue history ↗</a></div>
+            class="link-list"><a href="https://github.com/treetopdevs/browser-life/blob/main/docs/plan.md">Milestone plan and gate results ↗</a><a href="https://github.com/treetopdevs/browser-life/blob/main/docs/reassessment-2026-09-30.md">Reassessment of the open threads ↗</a><a href="https://github.com/treetopdevs/browser-life/blob/main/docs/scaffold-protocol-v1.md">Pond life-cycle protocol and results ↗</a><a href="https://github.com/treetopdevs/browser-life/tree/main/experiments/m4">M4 ensemble reports ↗</a><a href="https://github.com/treetopdevs/browser-life/blob/main/experiments/preregistration.md">Frozen preregistration ↗</a><a href="https://github.com/treetopdevs/browser-life/blob/main/docs/rules.md">Detailed rules ↗</a></div>
         </div>
       </section>
     </main>

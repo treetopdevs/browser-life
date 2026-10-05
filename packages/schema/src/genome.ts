@@ -25,8 +25,14 @@ export function encodeGenome(g: Genome, linHi: number, linLo: number): Uint32Arr
   out[G.LIN_LO] = linLo >>> 0;
   out[G.PARAM0] = ((g.mu & 0xffff) | ((g.sigma & 0xffff) << 16)) >>> 0;
   out[G.PARAM1] = g.motGain & 0xff;
-  const bytes = new Uint8Array(g.weights.buffer, g.weights.byteOffset, NN_BYTES);
-  for (let b = 0; b < NN_BYTES; b++) out[G.W0 + (b >> 2)] |= bytes[b] << ((b & 3) * 8);
+  // Index access works for an Int8Array, a plain array, and the {"0": …} object JSON.stringify
+  // makes of an Int8Array; anything missing or outside int8 is refused rather than encoded as 0.
+  const w = g.weights as unknown as ArrayLike<number>;
+  for (let b = 0; b < NN_BYTES; b++) {
+    const v = w[b];
+    if (!Number.isInteger(v) || v < -128 || v > 127) throw new Error(`encodeGenome: weight ${b} is ${v}; expected an int8 (did a genome lose its Int8Array in a JSON round-trip?)`);
+    out[G.W0 + (b >> 2)] |= (v & 0xff) << ((b & 3) * 8);
+  }
   return out;
 }
 
@@ -42,6 +48,19 @@ export function decodeGenome(words: ArrayLike<number>): Genome {
     motGain: words[G.PARAM1] & 0xff,
     weights,
   };
+}
+
+/** Genome words from PARAM0 onwards as hex, 8 digits each (the runner's `genomes.tsv` column). */
+export function genomeHex(g: Genome): string {
+  return Array.from(encodeGenome(g, 0, 0).subarray(G.PARAM0), (x) => x.toString(16).padStart(8, "0")).join("");
+}
+
+/** Inverse of `genomeHex`; throws unless `hex` holds exactly the words from PARAM0 onwards. */
+export function genomeFromHex(hex: string): Genome {
+  if (!new RegExp(`^[0-9a-f]{${8 * (GENOME_CHANNELS - G.PARAM0)}}$`).test(hex)) throw new Error(`genome hex must be ${8 * (GENOME_CHANNELS - G.PARAM0)} lowercase hex digits`);
+  const w = new Uint32Array(GENOME_CHANNELS);
+  for (let g = G.PARAM0; g < GENOME_CHANNELS; g++) w[g] = parseInt(hex.slice((g - G.PARAM0) * 8, (g - G.PARAM0 + 1) * 8), 16) >>> 0;
+  return decodeGenome(w);
 }
 
 /**

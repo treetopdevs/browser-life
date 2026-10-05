@@ -20,6 +20,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { buildPondHistory, parsePondRows, pondDossier } from "../../lib/pond-lineage.ts";
 
 const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const CLI = "tools/report-html.ts";
@@ -63,7 +64,7 @@ describe("tools/report-html.ts CLI", () => {
     const r = run(["not-a-track", input, "--out", join(dir, "out.html")]);
     expect(r.status).not.toBe(0);
     expect(r.stderr).toMatch(/unknown track "not-a-track"/);
-    expect(r.stderr).toMatch(/nullcal, individuality, anticipation, biogeography/);
+    expect(r.stderr).toMatch(/nullcal, individuality, anticipation, biogeography, lineage/);
   });
 
   it("rejects the wrong number of input files for a track", () => {
@@ -130,6 +131,21 @@ describe("tools/report-html.ts CLI", () => {
     expect(r.status, r.stderr).toBe(0);
     const html = readFileSync(out, "utf8");
     expect(html.startsWith("<title>Island Biogeography</title>")).toBe(true);
+  });
+
+  it("dispatches lineage to its real renderer, with SMOKE status on request", () => {
+    // A pond dossier is cheap to build in-process (a genotype dossier needs a CPU history; its renderer
+    // is covered in lineage.test.ts).
+    const ponds = ["cycle\tstep\trecipient\tdonor\trecipientTrait", "1\t100\t0\t1\t5", "1\t100\t1\t1\t9", "2\t200\t0\t0\t7", "2\t200\t1\t0\t3"];
+    const dossier = pondDossier(buildPondHistory(parsePondRows(ponds), { arm: "scaf" }), { kind: "top" });
+    const input = join(dir, "dossier.json");
+    writeFileSync(input, JSON.stringify(dossier));
+    const out = join(dir, "lineage.html");
+    const r = run(["lineage", input, "--out", out, "--status", "smoke"]);
+    expect(r.status, r.stderr).toBe(0);
+    const html = readFileSync(out, "utf8");
+    expect(html.startsWith("<title>Pond Lineage Dossier</title>")).toBe(true);
+    expect(html).toContain('class="status-chip status-smoke"');
   });
 
   it("refuses to overwrite an existing --out without --force, and proceeds (past the guard) with --force", () => {

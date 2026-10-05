@@ -38,6 +38,8 @@ export interface Founder {
 export interface InitSpec {
   /** Nutrient quanta per cell. */
   nutrient: number;
+  /** Dissolved waste (channel C) quanta per cell. Absent leaves C empty (zeros). */
+  waste?: number;
   founders: Founder[];
 }
 
@@ -56,13 +58,15 @@ export function allocState(cfg: WorldConfig): WorldState {
   };
 }
 
-const MOT_ZERO = 128 | (128 << 8);
+/** CH.MOT of a cell at rest, (mx+128) | (my+128) << 8 with mx = my = 0: the same value as @bl/sim-ref's MOT_ZERO. */
+export const MOT_ZERO = 128 | (128 << 8);
 
 export function buildWorld(cfg: WorldConfig, spec: InitSpec): WorldState {
   const s = allocState(cfg);
   const n = cellCount(cfg);
   const W = worldW(cfg);
   s.cells.fill(spec.nutrient, CH.A * n, (CH.A + 1) * n);
+  if (spec.waste) s.cells.fill(spec.waste, CH.C * n, (CH.C + 1) * n);
   s.cells.fill(MOT_ZERO, CH.MOT * n, (CH.MOT + 1) * n);
   const H = n / W;
   spec.founders.forEach((f, idx) => {
@@ -218,19 +222,26 @@ export function soupWorld(cfg: WorldConfig, count = 24, nutrient = 256, biomass 
  * instead of the hand-built generalist genome. Same placement/radius/biomass/energy
  * scheme as generalistWorld, but with a distinct hash salt (197, vs. 31 for
  * generalist and 131 for soup) so a m3-preset run never lands on the same founder
- * layout as a generalist or soup run with the same seed.
+ * layout as a generalist or soup run with the same seed. `only` (an index into M3_FOUNDERS, a genome,
+ * or a genome array) selects founders: a single value gives every disc that one genome; an array
+ * cycles disc `i` onto `only[i % only.length]`. Placement and amounts are unchanged.
  */
-export function m3World(cfg: WorldConfig, count = 13, nutrient = 256, biomass = 256): WorldState {
+export function m3World(cfg: WorldConfig, count = 13, nutrient = 256, biomass = 256, only?: number | Genome | Genome[]): WorldState {
   const W = worldW(cfg);
   const H = cellCount(cfg) / W;
   const founders: Founder[] = [];
   for (let i = 0; i < count; i++) {
     const h = lowbias32(cfg.seed * 197 + i);
+    const genome = Array.isArray(only)
+      ? only[i % only.length]
+      : typeof only === "object"
+        ? only
+        : founderGenome(M3_FOUNDERS[only ?? i % M3_FOUNDERS.length]);
     founders.push({
       x: h % W,
       y: (h >>> 12) % H,
       radius: 12,
-      genome: founderGenome(M3_FOUNDERS[i % M3_FOUNDERS.length]),
+      genome,
       biomass,
       energy: 2 * biomass,
     });

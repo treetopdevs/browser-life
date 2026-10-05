@@ -1,9 +1,18 @@
 // World configuration. Every value is an integer so that the CPU reference
 // and the WGSL kernels agree exactly. Fractions are numerators over the
 // power of two named in the comment.
+import type { PondArm } from "./ponds.ts";
 
 export const SCHEMA_VERSION = 3;
-export const RULE_VERSION = 1;
+/** Latest supported physics version; experimental versions are explicitly selected. */
+export const RULE_VERSION = 2;
+/** Stable default for new configs, historical presets and registered experiments. */
+export const DEFAULT_RULE_VERSION = 1;
+export const SUPPORTED_RULE_VERSIONS = [1, 2] as const;
+/** Versions this implementation can execute; manifests must also match their own config. */
+export function isSupportedRuleVersion(version: unknown): version is 1 | 2 {
+  return version === 1 || version === 2;
+}
 /**
  * Bumped whenever a metric's *definition* changes (e.g. `compressionRatio`'s
  * compressor) in a way that makes its values incomparable to earlier runs,
@@ -52,6 +61,22 @@ export interface WorldConfig {
   diffS: number;
   /** Membrane gate: D_eff = D * gateK / (gateK + P_s + P_t). */
   gateK: number;
+  /**
+   * Causal ablation: exactly false removes polymer's effect on dissolved A/C
+   * diffusion. BUILD still consumes biomass and energy, and P retains its
+   * ordinary transport, decay and mechanical effects. Absent/true retains
+   * the original gate. Omitted from defaults to preserve existing digests.
+   */
+  polymerTransport?: boolean;
+  /**
+   * Rule 2 only: polymer at a source resists outgoing B/P/E transport.
+   * Each original integer share is thinned with mobility
+   * max(1, floor(8192 / (32 + P_source))) / 256, using stochastic rounding.
+   * Retained matter/energy stays at its source. BUILD costs and dissolved
+   * diffusion are unchanged. Absent/false preserves the original dynamics;
+   * deliberately omitted from defaults and historical rule-1 configs.
+   */
+  polymerDrag?: boolean;
 
   /** Catalyst half-saturation (quanta): effective catalyst = B^2 / (B + kCatHalf). */
   kCatHalf: number;
@@ -192,6 +217,60 @@ export interface WorldConfig {
    * overflow into the namespace bits.
    */
   ringNamespace?: number;
+
+  /**
+   * Pond cycle of the ecological-scaffolding protocol (docs/scaffold-protocol-v1.md,
+   * "Pond cycle"; docs/scaffold-integration-v1.md): tiles are ponds, and at
+   * every step s > 0 with s mod `pondPeriod` = 0 (an *absolute* step, so
+   * segmented and continuous runs cycle at the same steps, as migration does)
+   * every pond is ground back to nutrient and reseeded by a `pondK` x `pondK`
+   * packet from a donor pond chosen by `pondArm` (packages/schema/src/ponds.ts,
+   * a host-side transform between steps). The cycle index is
+   * step / `pondPeriod`. Absent disables the cycle (the default).
+   *
+   * Optional, with `pondK` and `pondArm`, for the reason `migrationPeriod` is:
+   * `stateHash`/`artifactDigest` hash the config's own JSON, so `defaultConfig`
+   * never sets these keys and every config without them hashes exactly as it
+   * did before the pond cycle existed. `validateConfig` checks them
+   * explicitly: all three together, 64 x 64 tiles, at least 4 ponds, and no
+   * tile migration or `ringNamespace` -- both move matter between ponds or
+   * runs, which breaks the per-pond matter invariant the cycle restores.
+   */
+  pondPeriod?: number;
+  /** Packet side k of the pond cycle, 1..64. Set exactly when `pondPeriod` is; see its doc. */
+  pondK?: number;
+  /**
+   * Donor rule of the pond cycle: "scaf" (the ponds with the largest trait
+   * donate), "rand" (random surviving ponds donate), "cont" (no transform;
+   * each boundary only records one row per pond), or the transition hunt's
+   * "nat" and "shuf" (the current: ponds die at random and are reseeded from
+   * the export zone of a donor drawn in proportion to its export mass, or to a
+   * shuffled copy of it; docs/scaffold-transition-hunt-v1.md). Set exactly
+   * when `pondPeriod` is; see its doc.
+   */
+  pondArm?: PondArm;
+  /**
+   * The current's per-boundary death probability, `pondDeath` / 65,536 (integer
+   * 1..65,536; the hunt uses 32,768, so e = 1/2, and 65,536 kills every pond):
+   * a pond dies at a boundary if it is unoccupied or its death key is below
+   * `pondDeath * 65,536` (applyCurrentCycle, packages/schema/src/ponds.ts).
+   * Set exactly when `pondArm` is "nat" or "shuf", and then required; absent
+   * for "scaf", "rand", "cont" and without a pond cycle.
+   *
+   * Optional, absent from `defaultConfig()` and from every preset, for the
+   * reason `pondPeriod` is: the keys enter `stateHash`/`artifactDigest` through
+   * the config's own JSON, so every config without them hashes exactly as it
+   * did before the current existed.
+   */
+  pondDeath?: number;
+  /**
+   * The current's export threshold (integer 1..32; the hunt uses 28): the
+   * export zone is the cells of a pond whose torus Chebyshev distance from the
+   * landing centre (32, 32) is at least `pondExport` (`exportDistance`; 1,071
+   * cells at 28). Set exactly when `pondArm` is "nat" or "shuf"; see
+   * `pondDeath`.
+   */
+  pondExport?: number;
 }
 
 /**
@@ -247,7 +326,7 @@ export const DEFAULT_K_ADHESION = 64;
 
 export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig {
   return {
-    ruleVersion: RULE_VERSION,
+    ruleVersion: DEFAULT_RULE_VERSION,
     seed: 1,
     tileW: 256,
     tileH: 256,
@@ -292,7 +371,7 @@ export function defaultConfig(overrides: Partial<WorldConfig> = {}): WorldConfig
     eventCap: 1 << 16,
     neutral: false,
     motility: true,
-    // migrationPeriod/migrantCount deliberately absent here — see their doc on WorldConfig.
+    // migrationPeriod/migrantCount, pondPeriod/pondK/pondArm and pondDeath/pondExport deliberately absent here — see their docs on WorldConfig.
     ...overrides,
   };
 }
@@ -373,6 +452,13 @@ const RANGES: Partial<Record<keyof WorldConfig, Range>> = {
 /** Bounds for migrationPeriod/migrantCount, checked explicitly in `validateConfig` (see WorldConfig's doc on why they're not in `RANGES`/the generic per-key loop). */
 const MIGRATION_PERIOD_RANGE: Range = [0, 8_000_000];
 const MIGRANT_COUNT_RANGE: Range = [0, 4096];
+/** Bounds for pondPeriod/pondK, checked explicitly in `validateConfig` like migration's. A pond is a 64 x 64 tile, so k <= 64. */
+const POND_PERIOD_RANGE: Range = [1, MAX_STEP];
+const POND_K_RANGE: Range = [1, 64];
+/** Bounds for pondDeath (a probability in 1/65,536) and pondExport (a Chebyshev distance on the 64-torus is at most 32). */
+const POND_DEATH_RANGE: Range = [1, 65_536];
+const POND_EXPORT_RANGE: Range = [1, 32];
+const POND_ARMS: readonly PondArm[] = ["scaf", "rand", "cont", "nat", "shuf"];
 
 export function validateConfig(c: WorldConfig): string[] {
   const errs: string[] = [];
@@ -392,13 +478,16 @@ export function validateConfig(c: WorldConfig): string[] {
   // defaultConfig()'s keys above; validate them only when present, since a
   // missing key is a valid, meaningful value (off / DEFAULT_K_ADHESION).
   if (c.adhesion !== undefined && typeof c.adhesion !== "boolean") errs.push("adhesion must be a boolean");
+  if (c.polymerTransport !== undefined && typeof c.polymerTransport !== "boolean") errs.push("polymerTransport must be a boolean");
+  if (c.polymerDrag !== undefined && typeof c.polymerDrag !== "boolean") errs.push("polymerDrag must be a boolean");
   if (c.kAdhesion !== undefined) {
     const r = RANGES.kAdhesion!;
     if (typeof c.kAdhesion !== "number" || !Number.isInteger(c.kAdhesion) || c.kAdhesion < r[0] || c.kAdhesion > r[1])
       errs.push(`kAdhesion must be an integer in ${r[0]}..${r[1]}`);
   }
   if (errs.length) return errs;
-  if (c.ruleVersion !== RULE_VERSION) errs.push(`ruleVersion ${c.ruleVersion} != ${RULE_VERSION}`);
+  if (!isSupportedRuleVersion(c.ruleVersion)) errs.push(`unsupported ruleVersion ${c.ruleVersion}; expected 1 or ${RULE_VERSION}`);
+  if (c.polymerDrag === true && c.ruleVersion !== 2) errs.push("polymerDrag requires ruleVersion 2");
   if (!["uniform", "gradient", "patches"].includes(c.lightMode)) errs.push("lightMode must be uniform, gradient or patches");
   if (c.tileW % 8 !== 0 || c.tileH % 8 !== 0) errs.push("tile dimensions must be multiples of 8");
   if (c.kernelRadius * 2 + 1 > Math.min(c.tileW, c.tileH)) errs.push("kernel larger than tile");
@@ -412,10 +501,23 @@ export function validateConfig(c: WorldConfig): string[] {
     ["migrationPeriod", MIGRATION_PERIOD_RANGE],
     ["migrantCount", MIGRANT_COUNT_RANGE],
     ["ringNamespace", [0, MAX_RING_NAMESPACE] as Range],
+    ["pondPeriod", POND_PERIOD_RANGE],
+    ["pondK", POND_K_RANGE],
+    ["pondDeath", POND_DEATH_RANGE],
+    ["pondExport", POND_EXPORT_RANGE],
   ] as const) {
     const v = c[key];
     if (v === undefined) continue;
     if (!Number.isInteger(v) || v < range[0] || v > range[1]) errs.push(`${key} must be an integer in ${range[0]}..${range[1]}`);
+  }
+  if (c.pondArm !== undefined && !POND_ARMS.includes(c.pondArm)) errs.push("pondArm must be scaf, rand, cont, nat or shuf");
+  const pondKeys = [c.pondPeriod, c.pondK, c.pondArm].filter((v) => v !== undefined).length;
+  if (pondKeys !== 0 && pondKeys !== 3) errs.push("pondPeriod, pondK and pondArm must be set together");
+  // The current's keys go with its arms, both required there and neither anywhere else.
+  const current = c.pondArm === "nat" || c.pondArm === "shuf";
+  for (const key of ["pondDeath", "pondExport"] as const) {
+    if (current && c[key] === undefined) errs.push(`${key} is required when pondArm is nat or shuf`);
+    if (!current && c[key] !== undefined) errs.push(`${key} may be set only when pondArm is nat or shuf`);
   }
   if (errs.length) return errs;
   const migrationPeriod = c.migrationPeriod ?? 0;
@@ -432,6 +534,16 @@ export function validateConfig(c: WorldConfig): string[] {
   // fit in that narrower range, or two different cells could pack to the same
   // LIN_LO (a real, not just cosmetic, collision).
   if (c.ringNamespace !== undefined && cellCount(c) > 1 << RING_CELL_BITS) errs.push(`a namespaced config (ringNamespace set) must have cellCount at most 2^${RING_CELL_BITS}`);
+  // The pond cycle (see WorldConfig's pondPeriod): ponds are the protocol's
+  // 64 x 64 tiles, D = max(1, floor(R / 4)) donors need R >= 4 ponds, and each
+  // pond's matter must stay its own -- so no tile migration and no
+  // metapopulation ring (the runner rejects an immigrant state as well).
+  if (c.pondPeriod !== undefined) {
+    if (c.tileW !== 64 || c.tileH !== 64) errs.push("a pond config (pondPeriod set) must have 64x64 tiles");
+    if (c.tilesX * c.tilesY < 4) errs.push("a pond config (pondPeriod set) must have at least 4 ponds (tilesX * tilesY >= 4)");
+    if (migrationPeriod > 0) errs.push("a pond config (pondPeriod set) cannot migrate between tiles (migrationPeriod > 0)");
+    if (c.ringNamespace !== undefined) errs.push("a pond config (pondPeriod set) cannot be a metapopulation member (ringNamespace set)");
+  }
   return errs;
 }
 

@@ -13,7 +13,7 @@
 // tools/biogeo-sweep.ts's own doc). The pure functions below are exported and
 // exercised directly by tools/biogeo-smoke.ts. Only the `import.meta.main`
 // CLI block reads the filesystem end to end and writes a report.
-import { archipelagoFounderLayout, M3_FOUNDERS, M3_FOUNDER_SET, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, type WorldConfig } from "@bl/schema";
+import { archipelagoFounderLayout, M3_FOUNDERS, M3_FOUNDER_SET, METRICS_VERSION, isSupportedRuleVersion, SCHEMA_VERSION, validateConfig, type WorldConfig } from "@bl/schema";
 import { sameConfig, type RunSpec } from "@bl/runner";
 import { isolationEffect, mean, speciesAreaFit, turnoverEquilibrium, turnoverSeries, type TurnoverEquilibrium, type TurnoverRow } from "@bl/metrics";
 // Type-only: no runtime coupling to tools/biogeo-sweep.ts at all -- experiment.json (this file's
@@ -43,7 +43,18 @@ export async function loadExperimentManifest(root: string): Promise<ExperimentMa
       `${root}/experiment.json was generated from founder set ${JSON.stringify(manifest.founderSetId)}, but this code's M3_FOUNDERS is ${M3_FOUNDER_SET} -- ` +
         `species.tsv founder-presence masks from a different founder set cannot be decoded correctly; re-run tools/biogeo-sweep.ts under this code to regenerate, or analyze with the matching code revision`,
     );
+  const ruleProblems = experimentRuleProblems(manifest.runs);
+  if (ruleProblems.length) throw new Error(`${root}/experiment.json: ${ruleProblems.join("; ")}`);
   return manifest;
+}
+
+/** An experiment may use either supported law, but never pool different versions. */
+export function experimentRuleProblems(runs: ExperimentRun[]): string[] {
+  const errors: string[] = [];
+  const versions = new Set(runs.map((run) => run.config?.ruleVersion));
+  if (versions.size > 1) errors.push("rule versions cannot pool within one experiment");
+  for (const run of runs) for (const error of validateConfig(run.config)) errors.push(`${run.runId}: ${error}`);
+  return errors;
 }
 
 export interface SpeciesRow { step: number; tile: number; geneticRichness: number; livingCells: number; founderSet: Set<number>; }
@@ -78,7 +89,10 @@ export function checkEligibility(run: ExperimentRun, manifest: Record<string, un
   const summary = manifest.summary as Record<string, unknown> | null | undefined;
   if (!summary) return { eligible: false, problems: ["no manifest.summary (incomplete run)"] };
   if (summary.conservationOk !== true) problems.push(`conservationOk is ${JSON.stringify(summary.conservationOk)}, not true`);
-  if (manifest.ruleVersion !== RULE_VERSION) problems.push(`ruleVersion ${manifest.ruleVersion} != ${RULE_VERSION}`);
+  if (!isSupportedRuleVersion(manifest.ruleVersion)) problems.push(`unsupported ruleVersion ${manifest.ruleVersion}; expected 1 or 2`);
+  const cfg = manifest.cfg as WorldConfig | undefined;
+  if (cfg?.ruleVersion !== manifest.ruleVersion) problems.push(`manifest ruleVersion ${manifest.ruleVersion} differs from config ${cfg?.ruleVersion}`);
+  for (const error of validateConfig(cfg as WorldConfig)) problems.push(`invalid config: ${error}`);
   if (manifest.schemaVersion !== SCHEMA_VERSION) problems.push(`schemaVersion ${manifest.schemaVersion} != ${SCHEMA_VERSION}`);
   if (((manifest.metricsVersion as number | undefined) ?? 1) !== METRICS_VERSION) problems.push(`metricsVersion ${manifest.metricsVersion ?? 1} != ${METRICS_VERSION}`);
 

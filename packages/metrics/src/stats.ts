@@ -326,9 +326,44 @@ export function holm(ps: number[]): number[] {
   return out;
 }
 
-/** One-sided Clopper–Pearson lower confidence bound on a binomial proportion (k successes in n). */
+/**
+ * One-sided Clopper–Pearson lower confidence bound on a binomial proportion (k successes in n).
+ * Throws unless k and n are integers with 0 <= k <= n and n >= 1 (a malformed count used to return
+ * about 1 and so pass a strict gate). Up to n = 1000 the direct sum is used, bit for bit as before;
+ * above that the direct sum underflows (its running binomial coefficient overflows), so the tail is
+ * summed in log space.
+ */
 export function binomialLowerBound(k: number, n: number, alpha = 0.05): number {
+  if (!Number.isInteger(n) || n < 1 || !Number.isInteger(k) || k < 0 || k > n) throw new Error(`binomialLowerBound: need integers 0 <= k <= n, n >= 1; got k=${k}, n=${n}`);
   if (k <= 0) return 0;
+  if (n > 1000) {
+    // log P(X >= k | p) by log-sum-exp; log C(n, i) built term by term (no overflow).
+    const tailLog = (p: number) => {
+      const lp = Math.log(p), lq = Math.log1p(-p);
+      let logC = 0;
+      let m = -Infinity;
+      const terms: number[] = [];
+      for (let i = 0; i <= n; i++) {
+        if (i > 0) logC += Math.log((n - i + 1) / i);
+        if (i >= k) {
+          const t = logC + i * lp + (n - i) * lq;
+          terms.push(t);
+          if (t > m) m = t;
+        }
+      }
+      let s = 0;
+      for (const t of terms) s += Math.exp(t - m);
+      return m + Math.log(s);
+    };
+    const logAlpha = Math.log(alpha);
+    let lo = 0, hi = 1;
+    for (let it = 0; it < 60; it++) {
+      const mid = (lo + hi) / 2;
+      if (tailLog(mid) < logAlpha) lo = mid;
+      else hi = mid;
+    }
+    return lo;
+  }
   // P(X >= k | p), increasing in p.
   const tail = (p: number) => {
     let s = 0, c = 1;

@@ -79,6 +79,41 @@ describe("adhesion config is opt-in", () => {
   });
 });
 
+describe("polymer transport ablation config", () => {
+  it("leaves existing configs unchanged and validates an explicit boolean", () => {
+    expect("polymerTransport" in defaultConfig()).toBe(false);
+    expect(canonicalConfig(defaultConfig())).not.toContain("polymerTransport");
+    for (const polymerTransport of [true, false])
+      expect(validateConfig(defaultConfig({ polymerTransport }))).toEqual([]);
+    expect(validateConfig(defaultConfig({ polymerTransport: 0 as never }))).toContain("polymerTransport must be a boolean");
+  });
+
+  it("preserves the selected mechanism through checkpoint replay", () => {
+    for (const polymerTransport of [undefined, true, false]) {
+      const cfg = defaultConfig({ tileW: 32, tileH: 32, kernelRadius: 4,
+        ...(polymerTransport === undefined ? {} : { polymerTransport }) });
+      const s = soupWorld(cfg, 2, 32, 64);
+      const { state } = decodeCheckpoint(encodeCheckpoint(s));
+      expect(state.cfg.polymerTransport).toBe(polymerTransport);
+      expect(stateHash(state)).toBe(stateHash(s));
+    }
+  });
+});
+
+describe("versioned polymer drag", () => {
+  it("is absent by default and belongs only to rule 2", () => {
+    expect(defaultConfig().ruleVersion).toBe(1);
+    expect(canonicalConfig(defaultConfig())).toBe(canonicalConfig(defaultConfig({ ruleVersion: 1 })));
+    expect("polymerDrag" in defaultConfig()).toBe(false);
+    expect(validateConfig(defaultConfig({ ruleVersion: 1 }))).toEqual([]);
+    expect(validateConfig(defaultConfig({ ruleVersion: 1, polymerDrag: false }))).toEqual([]);
+    expect(validateConfig(defaultConfig({ ruleVersion: 2, polymerDrag: true }))).toEqual([]);
+    expect(validateConfig(defaultConfig({ polymerDrag: true }))).toContain("polymerDrag requires ruleVersion 2");
+    expect(validateConfig(defaultConfig({ ruleVersion: 1, polymerDrag: true }))).toContain("polymerDrag requires ruleVersion 2");
+    expect(validateConfig(defaultConfig({ polymerDrag: 1 as never }))).toContain("polymerDrag must be a boolean");
+  });
+});
+
 describe("integer helpers", () => {
   it("divu normalises operands before the zero test (WGSL u32 semantics)", () => {
     expect(divu(100, 2 ** 32)).toBe(100); // denominator wraps to 0 -> x/0 = x

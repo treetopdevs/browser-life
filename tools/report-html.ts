@@ -10,9 +10,10 @@
 //
 //   deno run -A tools/report-html.ts <track> <input...> --out <file.html> [--force] [--status REAL|PILOT|SMOKE]
 //
-// `<input...>` is one file for nullcal/individuality (report.json) and two
-// for anticipation (results.json manifest.json) / biogeography (report.json
-// experiment.json), in that order -- see each track's `argNames` below.
+// `<input...>` is one file for nullcal/individuality (report.json) and lineage
+// (a dossier written by tools/lineage.ts --out), and two for anticipation
+// (results.json manifest.json) / biogeography (report.json experiment.json),
+// in that order -- see each track's `argNames` below.
 // `--out` must not already exist unless `--force` is given (same
 // refuse-to-overwrite convention as tools/nullcal.ts/tools/individuality.ts's
 // `--out` guard). `--status` overrides the track's default DATA STATUS
@@ -56,8 +57,8 @@ export interface TrackRenderer<T> {
   render(data: T, meta: RenderMeta): string;
 }
 
-type Track = "nullcal" | "individuality" | "anticipation" | "biogeography";
-const TRACK_NAMES: readonly Track[] = ["nullcal", "individuality", "anticipation", "biogeography"];
+type Track = "nullcal" | "individuality" | "anticipation" | "biogeography" | "lineage";
+const TRACK_NAMES: readonly Track[] = ["nullcal", "individuality", "anticipation", "biogeography", "lineage"];
 
 function notImplemented(track: Track): TrackRenderer<unknown> {
   const msg = `${track}: renderer not implemented yet -- tools/lib/report-html/${track}.ts does not exist. ` +
@@ -123,6 +124,14 @@ const TRACKS: Record<Track, TrackSpec> = {
     defaultStatus: "SMOKE",
     combine: ([report, experiment]) => ({ report, experiment }),
     load: () => import("./lib/report-html/biogeography.ts") as unknown as Promise<TrackRenderer<unknown>>,
+  },
+  // One genotype or pond lineage (docs/lineage-inspector.md): descriptive, so REAL marks real-run data,
+  // and --status SMOKE suits a dossier of a test history.
+  lineage: {
+    argNames: ["dossier"],
+    defaultStatus: "REAL",
+    combine: ([dossier]) => dossier,
+    load: () => import("./lib/report-html/lineage.ts") as unknown as Promise<TrackRenderer<unknown>>,
   },
 };
 

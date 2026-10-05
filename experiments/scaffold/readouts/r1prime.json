@@ -1,0 +1,1416 @@
+{
+  "stage": "r1prime",
+  "verdict": false,
+  "tau": 4100,
+  "tauFrom": "runs/scaffold/readouts/tau.json",
+  "tauValidated": true,
+  "regime": {
+    "k": 8,
+    "period": 10000
+  },
+  "skipped": 1,
+  "rejected": [],
+  "replay": {
+    "given": true,
+    "mechanismPassed": true,
+    "mechanismWhy": null,
+    "valid": [
+      "scaf-i0-t0",
+      "scaf-i1-t0",
+      "scaf-i2-t0",
+      "scaf-i3-t0",
+      "scaf-i4-t0",
+      "scaf-i5-t0",
+      "rand-i0-t0",
+      "rand-i1-t0",
+      "rand-i2-t0",
+      "rand-i3-t0",
+      "rand-i4-t0",
+      "rand-i5-t0",
+      "scaf-i0-t1",
+      "scaf-i1-t1",
+      "scaf-i2-t1",
+      "scaf-i3-t1",
+      "scaf-i4-t1",
+      "scaf-i5-t1",
+      "rand-i0-t1",
+      "rand-i1-t1",
+      "rand-i2-t1",
+      "rand-i3-t1",
+      "rand-i4-t1",
+      "rand-i5-t1"
+    ],
+    "failed": []
+  },
+  "arms": {
+    "scaf": {
+      "verdict": false,
+      "valid": 6,
+      "demonstrated": 3,
+      "byTime": [
+        {
+          "tPrime": 0,
+          "boundary": 34,
+          "valid": 6,
+          "demonstratedAtTau": 3,
+          "demonstratedAtEnd": 2,
+          "meanSaturationAtTau": 0.7786458333333334,
+          "meanSaturationAtEnd": 0.82421875
+        },
+        {
+          "tPrime": 1,
+          "boundary": 67,
+          "valid": 6,
+          "demonstratedAtTau": 2,
+          "demonstratedAtEnd": 1,
+          "meanSaturationAtTau": 0.8828125,
+          "meanSaturationAtEnd": 0.90234375
+        },
+        {
+          "tPrime": 2,
+          "boundary": 100,
+          "valid": 6,
+          "demonstratedAtTau": 2,
+          "demonstratedAtEnd": 2,
+          "meanSaturationAtTau": 0.96875,
+          "meanSaturationAtEnd": 0.9674479166666666
+        }
+      ]
+    },
+    "rand": {
+      "verdict": true,
+      "valid": 6,
+      "demonstrated": 4,
+      "byTime": [
+        {
+          "tPrime": 0,
+          "boundary": 34,
+          "valid": 6,
+          "demonstratedAtTau": 4,
+          "demonstratedAtEnd": 3,
+          "meanSaturationAtTau": 0.17578125,
+          "meanSaturationAtEnd": 0.24609375
+        },
+        {
+          "tPrime": 1,
+          "boundary": 67,
+          "valid": 6,
+          "demonstratedAtTau": 6,
+          "demonstratedAtEnd": 5,
+          "meanSaturationAtTau": 0.14973958333333334,
+          "meanSaturationAtEnd": 0.21875
+        },
+        {
+          "tPrime": 2,
+          "boundary": 100,
+          "valid": 6,
+          "demonstratedAtTau": 6,
+          "demonstratedAtEnd": 6,
+          "meanSaturationAtTau": 0.12369791666666667,
+          "meanSaturationAtEnd": 0.1875
+        }
+      ]
+    }
+  },
+  "histories": [
+    {
+      "arm": "scaf",
+      "history": 0,
+      "tPrime": 0,
+      "h": 0,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.1000490177455127,
+        "p": 0.030969030969030968,
+        "demonstrated": true,
+        "varianceComponent": 122159080.19414854,
+        "rawFamilyMeanVariance": 507605621.38639325,
+        "meanTrait": 112854.2578125,
+        "saturation": 0.828125
+      },
+      "atEnd": {
+        "icc": 0.09955601131391936,
+        "p": 0.03196803196803197,
+        "demonstrated": true,
+        "varianceComponent": 125876369.87072596,
+        "rawFamilyMeanVariance": 534525117.70358074,
+        "meanTrait": 114403.4140625,
+        "saturation": 0.8359375
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 0,
+      "tPrime": 1,
+      "h": 0,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.007473183757712375,
+        "p": 0.37662337662337664,
+        "demonstrated": false,
+        "varianceComponent": 5403907.866732404,
+        "rawFamilyMeanVariance": 185151001.95983073,
+        "meanTrait": 124952.3359375,
+        "saturation": 0.9140625
+      },
+      "atEnd": {
+        "icc": 0.0075605824186229745,
+        "p": 0.3756243756243756,
+        "demonstrated": false,
+        "varianceComponent": 5542142.375756919,
+        "rawFamilyMeanVariance": 191196209.76608074,
+        "meanTrait": 125968.0390625,
+        "saturation": 0.9140625
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 0,
+      "tPrime": 2,
+      "h": 0,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.0032460536162150426,
+        "p": 0.36163836163836166,
+        "demonstrated": false,
+        "varianceComponent": 1181637.7959975079,
+        "rawFamilyMeanVariance": 46650654.98014323,
+        "meanTrait": 134282.5078125,
+        "saturation": 0.9765625
+      },
+      "atEnd": {
+        "icc": 0.004898602124963133,
+        "p": 0.34865134865134867,
+        "demonstrated": false,
+        "varianceComponent": 1852814.3300989792,
+        "rawFamilyMeanVariance": 48621890.03587239,
+        "meanTrait": 135542.9765625,
+        "saturation": 0.96875
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 1,
+      "tPrime": 0,
+      "h": 1,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.17435590120017994,
+        "p": 0.004995004995004995,
+        "demonstrated": true,
+        "varianceComponent": 297537927.7919073,
+        "rawFamilyMeanVariance": 407532115.4030599,
+        "meanTrait": 114761.3828125,
+        "saturation": 0.84375
+      },
+      "atEnd": {
+        "icc": 0.013550382719413237,
+        "p": 0.34265734265734266,
+        "demonstrated": false,
+        "varianceComponent": 15141579.84595853,
+        "rawFamilyMeanVariance": 202089131.28020832,
+        "meanTrait": 122825.78125,
+        "saturation": 0.8984375
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 1,
+      "tPrime": 1,
+      "h": 1,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.3441454678502365,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 702851840.5596476,
+        "rawFamilyMeanVariance": 1400141673.145573,
+        "meanTrait": 107685.140625,
+        "saturation": 0.78125
+      },
+      "atEnd": {
+        "icc": 0.04245559617744567,
+        "p": 0.17782217782217782,
+        "demonstrated": false,
+        "varianceComponent": 57075498.62605569,
+        "rawFamilyMeanVariance": 571738200.0202473,
+        "meanTrait": 117964.5859375,
+        "saturation": 0.8515625
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 1,
+      "tPrime": 2,
+      "h": 1,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.1351576009361407,
+        "p": 0.016983016983016984,
+        "demonstrated": true,
+        "varianceComponent": 117947.84103347707,
+        "rawFamilyMeanVariance": 206845.91015625,
+        "meanTrait": 138403.640625,
+        "saturation": 1
+      },
+      "atEnd": {
+        "icc": 0.132795155943388,
+        "p": 0.013986013986013986,
+        "demonstrated": true,
+        "varianceComponent": 80021.57406631914,
+        "rawFamilyMeanVariance": 150466.4712890625,
+        "meanTrait": 140028.6484375,
+        "saturation": 1
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 2,
+      "tPrime": 0,
+      "h": 2,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.0024983927834508956,
+        "p": 0.4405594405594406,
+        "demonstrated": false,
+        "varianceComponent": 2619995.460743636,
+        "rawFamilyMeanVariance": 267408061.13098958,
+        "meanTrait": 118079.296875,
+        "saturation": 0.875
+      },
+      "atEnd": {
+        "icc": 0.0004839262241719473,
+        "p": 0.45454545454545453,
+        "demonstrated": false,
+        "varianceComponent": 515287.84919705987,
+        "rawFamilyMeanVariance": 271558303.57682294,
+        "meanTrait": 119203.234375,
+        "saturation": 0.875
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 2,
+      "tPrime": 1,
+      "h": 2,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": -0.014665472126797453,
+        "p": 0.5984015984015985,
+        "demonstrated": false,
+        "varianceComponent": -14131633.999200389,
+        "rawFamilyMeanVariance": 191190433.09160155,
+        "meanTrait": 125399.8203125,
+        "saturation": 0.9140625
+      },
+      "atEnd": {
+        "icc": -0.016285189346926826,
+        "p": 0.6093906093906094,
+        "demonstrated": false,
+        "varianceComponent": -16074442.811661527,
+        "rawFamilyMeanVariance": 192746622.08170572,
+        "meanTrait": 126661.6484375,
+        "saturation": 0.9140625
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 2,
+      "tPrime": 2,
+      "h": 2,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.05024043009324423,
+        "p": 0.15584415584415584,
+        "demonstrated": false,
+        "varianceComponent": 36488318.875941426,
+        "rawFamilyMeanVariance": 162928782.44003907,
+        "meanTrait": 129657.8515625,
+        "saturation": 0.9375
+      },
+      "atEnd": {
+        "icc": 0.04977869092092892,
+        "p": 0.15684315684315683,
+        "demonstrated": false,
+        "varianceComponent": 36767686.30828966,
+        "rawFamilyMeanVariance": 164088374.9830729,
+        "meanTrait": 130909.515625,
+        "saturation": 0.9375
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 3,
+      "tPrime": 0,
+      "h": 3,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.5019182593944711,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 1596880690.6113815,
+        "rawFamilyMeanVariance": 2512909426.616667,
+        "meanTrait": 68972.1875,
+        "saturation": 0.375
+      },
+      "atEnd": {
+        "icc": 0.4552779156171338,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 1508484424.45137,
+        "rawFamilyMeanVariance": 2771372741.662435,
+        "meanTrait": 80060.8046875,
+        "saturation": 0.578125
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 3,
+      "tPrime": 1,
+      "h": 3,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.16138702305264013,
+        "p": 0.006993006993006993,
+        "demonstrated": true,
+        "varianceComponent": 180874036.58678213,
+        "rawFamilyMeanVariance": 285372871.5077474,
+        "meanTrait": 126983.2109375,
+        "saturation": 0.8984375
+      },
+      "atEnd": {
+        "icc": 0.1775579596723746,
+        "p": 0.005994005994005994,
+        "demonstrated": true,
+        "varianceComponent": 168283671.2869007,
+        "rawFamilyMeanVariance": 249085820.48645833,
+        "meanTrait": 132498.84375,
+        "saturation": 0.9375
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 3,
+      "tPrime": 2,
+      "h": 3,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.10075772181443328,
+        "p": 0.03396603396603397,
+        "demonstrated": true,
+        "varianceComponent": 45184302.83603105,
+        "rawFamilyMeanVariance": 123065483.53098959,
+        "meanTrait": 132357.421875,
+        "saturation": 0.9453125
+      },
+      "atEnd": {
+        "icc": 0.09391318783296858,
+        "p": 0.04095904095904096,
+        "demonstrated": true,
+        "varianceComponent": 42598830.82215709,
+        "rawFamilyMeanVariance": 123254397.540625,
+        "meanTrait": 133621.28125,
+        "saturation": 0.9453125
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 4,
+      "tPrime": 0,
+      "h": 4,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.0014373363783944581,
+        "p": 0.45454545454545453,
+        "demonstrated": false,
+        "varianceComponent": 1613984.1608544588,
+        "rawFamilyMeanVariance": 165772234.2955729,
+        "meanTrait": 119456.015625,
+        "saturation": 0.8828125
+      },
+      "atEnd": {
+        "icc": 0.047229054483218146,
+        "p": 0.16983016983016982,
+        "demonstrated": false,
+        "varianceComponent": 49974178.329622924,
+        "rawFamilyMeanVariance": 185957848.15104166,
+        "meanTrait": 122436.90625,
+        "saturation": 0.890625
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 4,
+      "tPrime": 1,
+      "h": 4,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.06940376984350041,
+        "p": 0.07992007992007992,
+        "demonstrated": false,
+        "varianceComponent": 43192008.751811385,
+        "rawFamilyMeanVariance": 113932311.93307291,
+        "meanTrait": 127381.640625,
+        "saturation": 0.9375
+      },
+      "atEnd": {
+        "icc": 0.06903632521697597,
+        "p": 0.07992007992007992,
+        "demonstrated": false,
+        "varianceComponent": 46183112.9830599,
+        "rawFamilyMeanVariance": 118413838.9702474,
+        "meanTrait": 130292.2109375,
+        "saturation": 0.9375
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 4,
+      "tPrime": 2,
+      "h": 4,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.05703978789644491,
+        "p": 0.1038961038961039,
+        "demonstrated": false,
+        "varianceComponent": 17703765.882302545,
+        "rawFamilyMeanVariance": 87608208.54348959,
+        "meanTrait": 133952.515625,
+        "saturation": 0.9765625
+      },
+      "atEnd": {
+        "icc": 0.0501475924123861,
+        "p": 0.12287712287712288,
+        "demonstrated": false,
+        "varianceComponent": 16279289.139288738,
+        "rawFamilyMeanVariance": 88181596.209375,
+        "meanTrait": 136037.09375,
+        "saturation": 0.9765625
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 5,
+      "tPrime": 0,
+      "h": 5,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.043452714889177846,
+        "p": 0.17482517482517482,
+        "demonstrated": false,
+        "varianceComponent": 43761269.2086736,
+        "rawFamilyMeanVariance": 250585225.72916666,
+        "meanTrait": 118447.875,
+        "saturation": 0.8671875
+      },
+      "atEnd": {
+        "icc": 0.04965316701281969,
+        "p": 0.14585414585414586,
+        "demonstrated": false,
+        "varianceComponent": 51371657.77206494,
+        "rawFamilyMeanVariance": 253752745.28951824,
+        "meanTrait": 119139.6796875,
+        "saturation": 0.8671875
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 5,
+      "tPrime": 1,
+      "h": 5,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.06438454615303507,
+        "p": 0.08891108891108891,
+        "demonstrated": false,
+        "varianceComponent": 70101133.02149098,
+        "rawFamilyMeanVariance": 250657599.07858074,
+        "meanTrait": 116943.4140625,
+        "saturation": 0.8515625
+      },
+      "atEnd": {
+        "icc": 0.011595033990711448,
+        "p": 0.38161838161838163,
+        "demonstrated": false,
+        "varianceComponent": 11160463.625631198,
+        "rawFamilyMeanVariance": 195218845.7749349,
+        "meanTrait": 119137.6796875,
+        "saturation": 0.859375
+      }
+    },
+    {
+      "arm": "scaf",
+      "history": 5,
+      "tPrime": 2,
+      "h": 5,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.02577676407846833,
+        "p": 0.23176823176823177,
+        "demonstrated": false,
+        "varianceComponent": 8044630.627424508,
+        "rawFamilyMeanVariance": 46791143.327539064,
+        "meanTrait": 133897.1484375,
+        "saturation": 0.9765625
+      },
+      "atEnd": {
+        "icc": 0.02973335667142465,
+        "p": 0.21478521478521478,
+        "demonstrated": false,
+        "varianceComponent": 9810023.560430847,
+        "rawFamilyMeanVariance": 51990903.85104167,
+        "meanTrait": 136230.40625,
+        "saturation": 0.9765625
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 0,
+      "tPrime": 0,
+      "h": 6,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.7538176188421615,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 15489763.062243598,
+        "rawFamilyMeanVariance": 20914712.499739584,
+        "meanTrait": 6317.890625,
+        "saturation": 0
+      },
+      "atEnd": {
+        "icc": 0.8510116341921949,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 521872477.5647544,
+        "rawFamilyMeanVariance": 786215609.8351562,
+        "meanTrait": 14927.921875,
+        "saturation": 0
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 0,
+      "tPrime": 1,
+      "h": 6,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.10460273215240733,
+        "p": 0.03196803196803197,
+        "demonstrated": true,
+        "varianceComponent": 6163.043854867738,
+        "rawFamilyMeanVariance": 151216.44576822917,
+        "meanTrait": 5057.6796875,
+        "saturation": 0
+      },
+      "atEnd": {
+        "icc": 0.08633006241745385,
+        "p": 0.052947052947052944,
+        "demonstrated": false,
+        "varianceComponent": 5351.520953977443,
+        "rawFamilyMeanVariance": 143243.86451822918,
+        "meanTrait": 5053.8203125,
+        "saturation": 0
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 0,
+      "tPrime": 2,
+      "h": 6,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.9950438562519852,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 2178857789.8273892,
+        "rawFamilyMeanVariance": 2206476255.3613935,
+        "meanTrait": 35438.1328125,
+        "saturation": 0
+      },
+      "atEnd": {
+        "icc": 0.9950299625750847,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 2358678407.342332,
+        "rawFamilyMeanVariance": 2389523032.159375,
+        "meanTrait": 36679.96875,
+        "saturation": 0
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 1,
+      "tPrime": 0,
+      "h": 7,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": -0.022111659498833633,
+        "p": 0.6603396603396603,
+        "demonstrated": false,
+        "varianceComponent": -17796.3255853219,
+        "rawFamilyMeanVariance": 609963.6309895833,
+        "meanTrait": 4768.453125,
+        "saturation": 0
+      },
+      "atEnd": {
+        "icc": -0.025970475503741285,
+        "p": 0.6913086913086913,
+        "demonstrated": false,
+        "varianceComponent": -20557.57986756436,
+        "rawFamilyMeanVariance": 605879.7989583333,
+        "meanTrait": 4778.84375,
+        "saturation": 0
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 1,
+      "tPrime": 1,
+      "h": 7,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.16205768024440317,
+        "p": 0.001998001998001998,
+        "demonstrated": true,
+        "varianceComponent": 118692.02315590747,
+        "rawFamilyMeanVariance": 201611.94837239583,
+        "meanTrait": 4978.2265625,
+        "saturation": 0
+      },
+      "atEnd": {
+        "icc": 0.446783685382103,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 125040927.05551785,
+        "rawFamilyMeanVariance": 147626760.9997396,
+        "meanTrait": 9127.515625,
+        "saturation": 0
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 1,
+      "tPrime": 2,
+      "h": 7,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.3239382224092736,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 15236.825293668411,
+        "rawFamilyMeanVariance": 35461.0791015625,
+        "meanTrait": 4608.9453125,
+        "saturation": 0
+      },
+      "atEnd": {
+        "icc": 0.34335024497331984,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 14570.59974965257,
+        "rawFamilyMeanVariance": 33445.34680989583,
+        "meanTrait": 4603.2421875,
+        "saturation": 0
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 2,
+      "tPrime": 0,
+      "h": 8,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.6911479875589027,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 1518704439.1336086,
+        "rawFamilyMeanVariance": 1559942728.1113932,
+        "meanTrait": 39269.2578125,
+        "saturation": 0.1328125
+      },
+      "atEnd": {
+        "icc": 0.6215472111663944,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 1812799923.8276243,
+        "rawFamilyMeanVariance": 1911909762.886914,
+        "meanTrait": 60532.1640625,
+        "saturation": 0.171875
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 2,
+      "tPrime": 1,
+      "h": 8,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.2803158140577641,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 274476919.4770422,
+        "rawFamilyMeanVariance": 356849982.59375,
+        "meanTrait": 16289.9375,
+        "saturation": 0.0234375
+      },
+      "atEnd": {
+        "icc": 0.4747823789023949,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 1083505545.6313932,
+        "rawFamilyMeanVariance": 1446004168.8583333,
+        "meanTrait": 30369.125,
+        "saturation": 0.1328125
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 2,
+      "tPrime": 2,
+      "h": 8,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.22184940903205277,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 7417665.793734731,
+        "rawFamilyMeanVariance": 35648834.33932292,
+        "meanTrait": 6959.046875,
+        "saturation": 0
+      },
+      "atEnd": {
+        "icc": 0.3654331179403129,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 111912327.65529048,
+        "rawFamilyMeanVariance": 411871095.48014325,
+        "meanTrait": 13789.6171875,
+        "saturation": 0
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 3,
+      "tPrime": 0,
+      "h": 9,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.40143553909237967,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 238092123.0946843,
+        "rawFamilyMeanVariance": 387573813.48333335,
+        "meanTrait": 24391.4375,
+        "saturation": 0.0234375
+      },
+      "atEnd": {
+        "icc": 0.6987661294816351,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 1712927210.4536293,
+        "rawFamilyMeanVariance": 2467051513.5914063,
+        "meanTrait": 61230.921875,
+        "saturation": 0.1484375
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 3,
+      "tPrime": 1,
+      "h": 9,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.24902484013695667,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 374410.47604234156,
+        "rawFamilyMeanVariance": 741226.5556640625,
+        "meanTrait": 5113.3359375,
+        "saturation": 0
+      },
+      "atEnd": {
+        "icc": 0.25825059769106823,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 388821.1974698397,
+        "rawFamilyMeanVariance": 758909.0728515625,
+        "meanTrait": 5089.4453125,
+        "saturation": 0
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 3,
+      "tPrime": 2,
+      "h": 9,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.11690002859662894,
+        "p": 0.016983016983016984,
+        "demonstrated": true,
+        "varianceComponent": 67195.59072524426,
+        "rawFamilyMeanVariance": 592259.2176432292,
+        "meanTrait": 5097.9921875,
+        "saturation": 0
+      },
+      "atEnd": {
+        "icc": 0.12503246296136517,
+        "p": 0.014985014985014986,
+        "demonstrated": true,
+        "varianceComponent": 73084.29852402318,
+        "rawFamilyMeanVariance": 576177.2874348959,
+        "meanTrait": 5115.4453125,
+        "saturation": 0
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 4,
+      "tPrime": 0,
+      "h": 10,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": false,
+      "atTau": {
+        "icc": 0.0060379108430595645,
+        "p": 0.38961038961038963,
+        "demonstrated": false,
+        "varianceComponent": 6725479.000651956,
+        "rawFamilyMeanVariance": 256314225.50670573,
+        "meanTrait": 118567.7734375,
+        "saturation": 0.890625
+      },
+      "atEnd": {
+        "icc": 0.00316547730968352,
+        "p": 0.4115884115884116,
+        "demonstrated": false,
+        "varianceComponent": 3634228.412290007,
+        "rawFamilyMeanVariance": 259312995.5393229,
+        "meanTrait": 119938.203125,
+        "saturation": 0.890625
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 4,
+      "tPrime": 1,
+      "h": 10,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.2715277407832268,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 310045772.3564336,
+        "rawFamilyMeanVariance": 796480570.4811848,
+        "meanTrait": 110814.4453125,
+        "saturation": 0.765625
+      },
+      "atEnd": {
+        "icc": 0.140728192284015,
+        "p": 0.007992007992007992,
+        "demonstrated": true,
+        "varianceComponent": 122082038.84664962,
+        "rawFamilyMeanVariance": 585626821.2905599,
+        "meanTrait": 116125.2578125,
+        "saturation": 0.8203125
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 4,
+      "tPrime": 2,
+      "h": 10,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.2958804639609651,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 49848502.96092803,
+        "rawFamilyMeanVariance": 62926411.858333334,
+        "meanTrait": 122906,
+        "saturation": 0.6484375
+      },
+      "atEnd": {
+        "icc": 0.29994666708552664,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 54354578.17790629,
+        "rawFamilyMeanVariance": 120100589.25598958,
+        "meanTrait": 122074.796875,
+        "saturation": 0.6953125
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 5,
+      "tPrime": 0,
+      "h": 11,
+      "boundary": 34,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.1015149232476229,
+        "p": 0.026973026973026972,
+        "demonstrated": true,
+        "varianceComponent": 43884063.88726035,
+        "rawFamilyMeanVariance": 202180763.18932292,
+        "meanTrait": 41975.734375,
+        "saturation": 0.0078125
+      },
+      "atEnd": {
+        "icc": -0.07179956530134361,
+        "p": 0.957042957042957,
+        "demonstrated": false,
+        "varianceComponent": -58853808.299157135,
+        "rawFamilyMeanVariance": 652729896.546875,
+        "meanTrait": 79325.34375,
+        "saturation": 0.265625
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 5,
+      "tPrime": 1,
+      "h": 11,
+      "boundary": 67,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.17120335464589614,
+        "p": 0.002997002997002997,
+        "demonstrated": true,
+        "varianceComponent": 258521290.89472708,
+        "rawFamilyMeanVariance": 1176815115.2604167,
+        "meanTrait": 44528.8125,
+        "saturation": 0.109375
+      },
+      "atEnd": {
+        "icc": 0.2172081210375584,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 381286864.02845865,
+        "rawFamilyMeanVariance": 2050085627.4822917,
+        "meanTrait": 67822.15625,
+        "saturation": 0.359375
+      }
+    },
+    {
+      "arm": "rand",
+      "history": 5,
+      "tPrime": 2,
+      "h": 11,
+      "boundary": 100,
+      "available": true,
+      "why": null,
+      "insufficient": false,
+      "n": 128,
+      "families": 16,
+      "truncatedRows": 0,
+      "covariates": [
+        "log1p(retMass)",
+        "log1p(retE)"
+      ],
+      "demonstrated": true,
+      "atTau": {
+        "icc": 0.30457631656385076,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 411683966.8272594,
+        "rawFamilyMeanVariance": 1013192890.2900391,
+        "meanTrait": 62902.4765625,
+        "saturation": 0.09375
+      },
+      "atEnd": {
+        "icc": 0.20034807917943834,
+        "p": 0.000999000999000999,
+        "demonstrated": true,
+        "varianceComponent": 174092973.63679427,
+        "rawFamilyMeanVariance": 1103126341.949935,
+        "meanTrait": 93459.1796875,
+        "saturation": 0.4296875
+      }
+    }
+  ],
+  "descriptive": {
+    "note": "per (arm, history, t'): atTau is R1's statistic on the trait at tau, atEnd on the end trait; varianceComponent is the one-way ANOVA between-donor component (MS_between - MS_within) / n0 on the OLS-adjusted trait (negative kept), rawFamilyMeanVariance the sample variance of the raw donor means, saturation the fraction of fragments at 80% or more of the assay budget; `demonstrated` and the verdict read atTau at t' = 0 only; an unavailable history (no valid set, a failed or missing replay check at t' = 0 and 1, a set that could not be read) counts as not demonstrated"
+  }
+}

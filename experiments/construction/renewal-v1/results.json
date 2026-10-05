@@ -1,0 +1,4140 @@
+{
+  "study": "construction-renewal-v1",
+  "manifestSha256": "0df114ada3dfba34f601cd70afea764f1af6207565cf8ce1cca1cb882250f1e0",
+  "frozen": {
+    "frozenAt": "2026-10-04T18:05:36.679Z",
+    "protocolSha256": "af22151cfbf0a2f2aebd73f3e8985a75e106e416718e56daeaa91f6ffd12246a",
+    "planSha256": "5fef434533e07b376cf4e6b465929ee8561699471a2556f1a514406d9da4bf3d",
+    "manifestSha256": "0df114ada3dfba34f601cd70afea764f1af6207565cf8ce1cca1cb882250f1e0",
+    "sourcesSha256": "d3c3fa3cc61d6399cf85bc62644acf3077f8cd3b86aa3288b70f759288bc328a",
+    "sourceDigest": "24cef9e2f79abaad6d9260e63585c30c1b0a3516d38e669321235ccd3d0e6362",
+    "stepsExecuted": 0
+  },
+  "plan": {
+    "path": "experiments/construction/RENEWAL-PLAN.md",
+    "sha256": "5fef434533e07b376cf4e6b465929ee8561699471a2556f1a514406d9da4bf3d"
+  },
+  "inputs": {
+    "witness": {
+      "path": "experiments/construction/witness-v1.json",
+      "sha256": "7cbf49c409b137768b90c176b2a68c7034e3a870f81163cf969b0bbfc03e6019"
+    },
+    "selected": {
+      "path": "experiments/construction/selected-competitor-v1.json",
+      "sha256": "18b596eaf84a2724706e1b93988c40f0992ed25c182c248af0a17c7cf719ebdd"
+    }
+  },
+  "pilotReadoutSha256": "8dd797efeec1fccb78c56883f4cc7bd2a49015e2cde1a67728469e8563672e78",
+  "pilotAudit": {
+    "path": "verify/pilot-attempt-1/audit.json",
+    "sha256": "c3caf48a0bc3d551efb472c40c71478e57cc9a432e2323052aa55d9ec86398c4"
+  },
+  "selection": {
+    "status": "none-eligible",
+    "eligible": []
+  },
+  "confirmation": {
+    "status": "absent: not earned (no pilot habitat qualified)"
+  },
+  "limitations": [
+    "Finite-horizon local renewal only: not autonomous offspring, evolution, indefinite persistence or antifragility.",
+    "Maintenance is sampled at censuses every 100 steps; no claim of survival between censuses, independence from dissolved resources supplied by the source, or autonomy from gross B exchanges.",
+    "Q and reaction balance exclude static or purely imported deposits; they do not prove atom-by-atom material ancestry.",
+    "All genomes are fixed (mutRate 0): this is not a heritable-selection endpoint.",
+    "The reservoir changes available matter; different A levels are not an equal-resource comparison. Within an A/spread cell, arms share resources and light.",
+    "Capacity and division controls apply only to spread 0 and their layouts; two small-founder sizes do not locate a viability threshold.",
+    "The selected habitat is the first eligible one in a frozen order, not an optimum; arms sharing a seed are a paired block, not independent histories.",
+    "Native GPU replays check state hash, ledgers, flux and last-step roles at censuses; they do not reconstruct the CPU observer's per-step history.",
+    "This study's data are separate from the earlier nutrient-free construction runs."
+  ],
+  "cases": [
+    {
+      "id": "control-capacity-A4",
+      "phase": "controls",
+      "kind": "capacity",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 0,
+      "horizon": 3000,
+      "attempt": 1,
+      "finalStateHash": "1fba3e221ffd82aa",
+      "censusSha256": "a394198461f7c9d7890d1f67e244bd78019c3ca5a33d29da1063d4ffb227848c",
+      "elapsedMs": 4269,
+      "artifactBytes": 1317242,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "2048",
+          "C": "0",
+          "P": "0",
+          "E": "4096",
+          "S": "0",
+          "matter": "6144",
+          "energy": "24576"
+        },
+        "finalTotals": {
+          "A": "4211",
+          "B": "1498",
+          "C": "300",
+          "P": "135",
+          "E": "3146",
+          "S": "0",
+          "matter": "6144",
+          "energy": "20346"
+        },
+        "offeredLightExposure": "783360000",
+        "harvestedLight": "381320",
+        "heatExport": "385550",
+        "flux": {
+          "photo": "38132",
+          "resp": "0",
+          "decomp": "38247",
+          "grow": "0",
+          "build": "225",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "90",
+          "bdecay": "38457",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-capacity-A4",
+        "status": "complete",
+        "kind": "capacity",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 1498,
+          "activeBArea": "5007312",
+          "finalSourceB": [
+            752,
+            746
+          ],
+          "lateMinSourceB": [
+            752,
+            746
+          ],
+          "supportExtentFinal": 2,
+          "supportExtentAtV": 2,
+          "sourceWindow": [
+            {
+              "Q": 5934,
+              "R": -52,
+              "netBoundBImport": 0
+            },
+            {
+              "Q": 5920,
+              "R": -54,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "225",
+          "reservoirDepletionA": "-115",
+          "harvestedLight": "381320",
+          "flux": {
+            "photo": "38132",
+            "resp": "0",
+            "decomp": "38247",
+            "grow": "0",
+            "build": "225",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "90",
+            "bdecay": "38457",
+            "abio": "0"
+          }
+        },
+        "bothSitesPersist": true,
+        "controlSites": [
+          {
+            "status": "ok",
+            "site": 520,
+            "maintained": false,
+            "minB": 752,
+            "Q": 5934,
+            "R": -52,
+            "censuses": 11
+          },
+          {
+            "status": "ok",
+            "site": 536,
+            "maintained": false,
+            "minB": 746,
+            "Q": 5920,
+            "R": -54,
+            "censuses": 11
+          }
+        ]
+      }
+    },
+    {
+      "id": "control-capacity-A16",
+      "phase": "controls",
+      "kind": "capacity",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 0,
+      "horizon": 3000,
+      "attempt": 1,
+      "finalStateHash": "a14a19827ab3760b",
+      "censusSha256": "c8fd7d91d83dbf433695e38647fbb0c37c462b84ba322ef31f1d3ae5976d0fe8",
+      "elapsedMs": 4145,
+      "artifactBytes": 1317254,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "2048",
+          "C": "0",
+          "P": "0",
+          "E": "4096",
+          "S": "0",
+          "matter": "18432",
+          "energy": "24576"
+        },
+        "finalTotals": {
+          "A": "15919",
+          "B": "2020",
+          "C": "358",
+          "P": "135",
+          "E": "4190",
+          "S": "0",
+          "matter": "18432",
+          "energy": "26726"
+        },
+        "offeredLightExposure": "783360000",
+        "harvestedLight": "458440",
+        "heatExport": "456290",
+        "flux": {
+          "photo": "45844",
+          "resp": "0",
+          "decomp": "45379",
+          "grow": "0",
+          "build": "225",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "90",
+          "bdecay": "45647",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-capacity-A16",
+        "status": "complete",
+        "kind": "capacity",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 2020,
+          "activeBArea": "5932984",
+          "finalSourceB": [
+            1012,
+            1008
+          ],
+          "lateMinSourceB": [
+            998,
+            985
+          ],
+          "supportExtentFinal": 2,
+          "supportExtentAtV": 2,
+          "sourceWindow": [
+            {
+              "Q": 7772,
+              "R": 10,
+              "netBoundBImport": 0
+            },
+            {
+              "Q": 7761,
+              "R": 21,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "225",
+          "reservoirDepletionA": "465",
+          "harvestedLight": "458440",
+          "flux": {
+            "photo": "45844",
+            "resp": "0",
+            "decomp": "45379",
+            "grow": "0",
+            "build": "225",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "90",
+            "bdecay": "45647",
+            "abio": "0"
+          }
+        },
+        "bothSitesPersist": true,
+        "controlSites": [
+          {
+            "status": "ok",
+            "site": 520,
+            "maintained": true,
+            "minB": 998,
+            "Q": 7772,
+            "R": 10,
+            "censuses": 11
+          },
+          {
+            "status": "ok",
+            "site": 536,
+            "maintained": true,
+            "minB": 985,
+            "Q": 7761,
+            "R": 21,
+            "censuses": 11
+          }
+        ]
+      }
+    },
+    {
+      "id": "control-division-A4",
+      "phase": "controls",
+      "kind": "division",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 0,
+      "horizon": 3000,
+      "attempt": 1,
+      "finalStateHash": "9342311a08f90af7",
+      "censusSha256": "e647b909fa4aa13909adfdc55a3f3d7db5cccbd91a802bc264eca4bc766aa2c6",
+      "elapsedMs": 4174,
+      "artifactBytes": 1316835,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "4050",
+          "B": "778",
+          "C": "158",
+          "P": "134",
+          "E": "1651",
+          "S": "0",
+          "matter": "5120",
+          "energy": "11355"
+        },
+        "offeredLightExposure": "783360000",
+        "harvestedLight": "188270",
+        "heatExport": "189203",
+        "flux": {
+          "photo": "18827",
+          "resp": "0",
+          "decomp": "18781",
+          "grow": "0",
+          "build": "223",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "89",
+          "bdecay": "18850",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-division-A4",
+        "status": "complete",
+        "kind": "division",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 778,
+          "activeBArea": "2452527",
+          "finalSourceB": [
+            390,
+            388
+          ],
+          "lateMinSourceB": [
+            387,
+            388
+          ],
+          "supportExtentFinal": 2,
+          "supportExtentAtV": 2,
+          "sourceWindow": [
+            {
+              "Q": 3027,
+              "R": -11,
+              "netBoundBImport": 0
+            },
+            {
+              "Q": 3036,
+              "R": -7,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "223",
+          "reservoirDepletionA": "46",
+          "harvestedLight": "188270",
+          "flux": {
+            "photo": "18827",
+            "resp": "0",
+            "decomp": "18781",
+            "grow": "0",
+            "build": "223",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "89",
+            "bdecay": "18850",
+            "abio": "0"
+          }
+        },
+        "bothSitesPersist": true,
+        "controlSites": [
+          {
+            "status": "ok",
+            "site": 520,
+            "maintained": false,
+            "minB": 387,
+            "Q": 3027,
+            "R": -11,
+            "censuses": 11
+          },
+          {
+            "status": "ok",
+            "site": 536,
+            "maintained": false,
+            "minB": 388,
+            "Q": 3036,
+            "R": -7,
+            "censuses": 11
+          }
+        ]
+      }
+    },
+    {
+      "id": "control-division-A16",
+      "phase": "controls",
+      "kind": "division",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 0,
+      "horizon": 3000,
+      "attempt": 1,
+      "finalStateHash": "7ced1be21a2e8ac3",
+      "censusSha256": "532c85c56e7c18fe9bcfe17b2c56d835117aaac73f8cf09a63a93e53133c2cf1",
+      "elapsedMs": 4057,
+      "artifactBytes": 1317073,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "15716",
+          "B": "1339",
+          "C": "218",
+          "P": "135",
+          "E": "2765",
+          "S": "0",
+          "matter": "17408",
+          "energy": "18211"
+        },
+        "offeredLightExposure": "783360000",
+        "harvestedLight": "276950",
+        "heatExport": "271027",
+        "flux": {
+          "photo": "27695",
+          "resp": "0",
+          "decomp": "27027",
+          "grow": "0",
+          "build": "224",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "89",
+          "bdecay": "27156",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-division-A16",
+        "status": "complete",
+        "kind": "division",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 1339,
+          "activeBArea": "3534026",
+          "finalSourceB": [
+            659,
+            680
+          ],
+          "lateMinSourceB": [
+            626,
+            612
+          ],
+          "supportExtentFinal": 2,
+          "supportExtentAtV": 2,
+          "sourceWindow": [
+            {
+              "Q": 5009,
+              "R": 33,
+              "netBoundBImport": 0
+            },
+            {
+              "Q": 5101,
+              "R": 68,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "224",
+          "reservoirDepletionA": "668",
+          "harvestedLight": "276950",
+          "flux": {
+            "photo": "27695",
+            "resp": "0",
+            "decomp": "27027",
+            "grow": "0",
+            "build": "224",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "89",
+            "bdecay": "27156",
+            "abio": "0"
+          }
+        },
+        "bothSitesPersist": true,
+        "controlSites": [
+          {
+            "status": "ok",
+            "site": 520,
+            "maintained": true,
+            "minB": 626,
+            "Q": 5009,
+            "R": 33,
+            "censuses": 11
+          },
+          {
+            "status": "ok",
+            "site": 536,
+            "maintained": true,
+            "minB": 612,
+            "Q": 5101,
+            "R": 68,
+            "censuses": 11
+          }
+        ]
+      }
+    },
+    {
+      "id": "control-small-B64-A4-s0",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "a94b37ce4a743f81",
+      "censusSha256": "cf2e171d62719ac2a0fbd2356197119b29d59f445b25167d3381a70c2c8c5225",
+      "elapsedMs": 13311,
+      "artifactBytes": 3695474,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "64",
+          "C": "0",
+          "P": "0",
+          "E": "128",
+          "S": "0",
+          "matter": "4160",
+          "energy": "768"
+        },
+        "finalTotals": {
+          "A": "3699",
+          "B": "228",
+          "C": "170",
+          "P": "63",
+          "E": "512",
+          "S": "0",
+          "matter": "4160",
+          "energy": "3888"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "135450",
+        "heatExport": "132330",
+        "flux": {
+          "photo": "13545",
+          "resp": "0",
+          "decomp": "13148",
+          "grow": "0",
+          "build": "217",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "154",
+          "bdecay": "13164",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B64-A4-s0",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 228,
+          "activeBArea": "1704533",
+          "finalSourceB": [
+            228
+          ],
+          "lateMinSourceB": [
+            223
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 1795,
+              "R": 5,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "217",
+          "reservoirDepletionA": "397",
+          "harvestedLight": "135450",
+          "flux": {
+            "photo": "13545",
+            "resp": "0",
+            "decomp": "13148",
+            "grow": "0",
+            "build": "217",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "154",
+            "bdecay": "13164",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": true,
+        "maintainedSites": [
+          528
+        ]
+      }
+    },
+    {
+      "id": "control-small-B64-A4-s1",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "f5c2b5a26124db99",
+      "censusSha256": "ac53d162dd019db0fba7cfa200a6b8a4fb4936244f6dfc9da77b6db4253d7c55",
+      "elapsedMs": 15211,
+      "artifactBytes": 3696543,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "64",
+          "C": "0",
+          "P": "0",
+          "E": "128",
+          "S": "0",
+          "matter": "4160",
+          "energy": "768"
+        },
+        "finalTotals": {
+          "A": "3931",
+          "B": "0",
+          "C": "225",
+          "P": "4",
+          "E": "0",
+          "S": "0",
+          "matter": "4160",
+          "energy": "498"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "6730",
+        "heatExport": "7000",
+        "flux": {
+          "photo": "673",
+          "resp": "0",
+          "decomp": "508",
+          "grow": "0",
+          "build": "31",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "27",
+          "bdecay": "706",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B64-A4-s1",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "90272",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "31",
+          "reservoirDepletionA": "165",
+          "harvestedLight": "6730",
+          "flux": {
+            "photo": "673",
+            "resp": "0",
+            "decomp": "508",
+            "grow": "0",
+            "build": "31",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "27",
+            "bdecay": "706",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": false,
+        "maintainedSites": []
+      }
+    },
+    {
+      "id": "control-small-B64-A4-s2",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "34efb6fc23e1e9d1",
+      "censusSha256": "bd8d2efebe0adeb2e56967ec5d367814254fd2f6a0e4f52d3dced3c515d45421",
+      "elapsedMs": 15052,
+      "artifactBytes": 3694713,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "64",
+          "C": "0",
+          "P": "0",
+          "E": "128",
+          "S": "0",
+          "matter": "4160",
+          "energy": "768"
+        },
+        "finalTotals": {
+          "A": "4085",
+          "B": "0",
+          "C": "75",
+          "P": "0",
+          "E": "0",
+          "S": "0",
+          "matter": "4160",
+          "energy": "150"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "210",
+        "heatExport": "828",
+        "flux": {
+          "photo": "21",
+          "resp": "0",
+          "decomp": "10",
+          "grow": "0",
+          "build": "0",
+          "emit": "0",
+          "starve": "1",
+          "pdecay": "0",
+          "bdecay": "84",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B64-A4-s2",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "10971",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "11",
+          "harvestedLight": "210",
+          "flux": {
+            "photo": "21",
+            "resp": "0",
+            "decomp": "10",
+            "grow": "0",
+            "build": "0",
+            "emit": "0",
+            "starve": "1",
+            "pdecay": "0",
+            "bdecay": "84",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": false,
+        "maintainedSites": []
+      }
+    },
+    {
+      "id": "control-small-B64-A16-s0",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "505daa7782be224f",
+      "censusSha256": "2a5de02516b07cb6088183b866f77ea35b4670ea54dcd76cec188c8845dea49a",
+      "elapsedMs": 14362,
+      "artifactBytes": 3696637,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "64",
+          "C": "0",
+          "P": "0",
+          "E": "128",
+          "S": "0",
+          "matter": "16448",
+          "energy": "768"
+        },
+        "finalTotals": {
+          "A": "15272",
+          "B": "762",
+          "C": "348",
+          "P": "66",
+          "E": "1604",
+          "S": "0",
+          "matter": "16448",
+          "energy": "10712"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "430250",
+        "heatExport": "420306",
+        "flux": {
+          "photo": "43025",
+          "resp": "2",
+          "decomp": "41913",
+          "grow": "0",
+          "build": "243",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "177",
+          "bdecay": "42082",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B64-A16-s0",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 762,
+          "activeBArea": "5461639",
+          "finalSourceB": [
+            762
+          ],
+          "lateMinSourceB": [
+            721
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 5823,
+              "R": 41,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "243",
+          "reservoirDepletionA": "1112",
+          "harvestedLight": "430250",
+          "flux": {
+            "photo": "43025",
+            "resp": "2",
+            "decomp": "41913",
+            "grow": "0",
+            "build": "243",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "177",
+            "bdecay": "42082",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": true,
+        "maintainedSites": [
+          528
+        ]
+      }
+    },
+    {
+      "id": "control-small-B64-A16-s1",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "8e4e4c4795b74efc",
+      "censusSha256": "f20d1a876684f57ed403126af5340374d415cf52cb350461980c907d2f9573ab",
+      "elapsedMs": 15514,
+      "artifactBytes": 3700562,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "64",
+          "C": "0",
+          "P": "0",
+          "E": "128",
+          "S": "0",
+          "matter": "16448",
+          "energy": "768"
+        },
+        "finalTotals": {
+          "A": "14102",
+          "B": "77",
+          "C": "2226",
+          "P": "43",
+          "E": "135",
+          "S": "0",
+          "matter": "16448",
+          "energy": "5873"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "70050",
+        "heatExport": "64945",
+        "flux": {
+          "photo": "7005",
+          "resp": "0",
+          "decomp": "4723",
+          "grow": "0",
+          "build": "140",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "97",
+          "bdecay": "6852",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B64-A16-s1",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 77,
+          "activeBArea": "889663",
+          "finalSourceB": [
+            65
+          ],
+          "lateMinSourceB": [
+            58
+          ],
+          "supportExtentFinal": 5,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 672,
+              "R": 128,
+              "netBoundBImport": -128
+            }
+          ],
+          "buildExpenditureB": "140",
+          "reservoirDepletionA": "2282",
+          "harvestedLight": "70050",
+          "flux": {
+            "photo": "7005",
+            "resp": "0",
+            "decomp": "4723",
+            "grow": "0",
+            "build": "140",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "97",
+            "bdecay": "6852",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": false,
+        "maintainedSites": []
+      }
+    },
+    {
+      "id": "control-small-B64-A16-s2",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "fe627e28d08180f5",
+      "censusSha256": "cd69598d9be1bcff1ba47a2c83871e66147f7c2bfbfeaca1fc2ecccd2d3bf308",
+      "elapsedMs": 14497,
+      "artifactBytes": 3695125,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "64",
+          "C": "0",
+          "P": "0",
+          "E": "128",
+          "S": "0",
+          "matter": "16448",
+          "energy": "768"
+        },
+        "finalTotals": {
+          "A": "16373",
+          "B": "0",
+          "C": "75",
+          "P": "0",
+          "E": "0",
+          "S": "0",
+          "matter": "16448",
+          "energy": "150"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "210",
+        "heatExport": "828",
+        "flux": {
+          "photo": "21",
+          "resp": "0",
+          "decomp": "10",
+          "grow": "0",
+          "build": "0",
+          "emit": "0",
+          "starve": "1",
+          "pdecay": "0",
+          "bdecay": "84",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B64-A16-s2",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "10971",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "11",
+          "harvestedLight": "210",
+          "flux": {
+            "photo": "21",
+            "resp": "0",
+            "decomp": "10",
+            "grow": "0",
+            "build": "0",
+            "emit": "0",
+            "starve": "1",
+            "pdecay": "0",
+            "bdecay": "84",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": false,
+        "maintainedSites": []
+      }
+    },
+    {
+      "id": "control-small-B128-A4-s0",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "e9ee82ec242daf8e",
+      "censusSha256": "29b7ae4167a31f71f4a98210ce5401bfb139809f49f8bb224f382b6ef66e884a",
+      "elapsedMs": 14100,
+      "artifactBytes": 3695467,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "128",
+          "C": "0",
+          "P": "0",
+          "E": "256",
+          "S": "0",
+          "matter": "4224",
+          "energy": "1536"
+        },
+        "finalTotals": {
+          "A": "3765",
+          "B": "237",
+          "C": "159",
+          "P": "63",
+          "E": "529",
+          "S": "0",
+          "matter": "4224",
+          "energy": "3973"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "147690",
+        "heatExport": "145253",
+        "flux": {
+          "photo": "14769",
+          "resp": "0",
+          "decomp": "14438",
+          "grow": "0",
+          "build": "227",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "164",
+          "bdecay": "14433",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B128-A4-s0",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 237,
+          "activeBArea": "1865720",
+          "finalSourceB": [
+            237
+          ],
+          "lateMinSourceB": [
+            232
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 1868,
+              "R": 5,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "227",
+          "reservoirDepletionA": "331",
+          "harvestedLight": "147690",
+          "flux": {
+            "photo": "14769",
+            "resp": "0",
+            "decomp": "14438",
+            "grow": "0",
+            "build": "227",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "164",
+            "bdecay": "14433",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": true,
+        "maintainedSites": [
+          528
+        ]
+      }
+    },
+    {
+      "id": "control-small-B128-A4-s1",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "69e1f1ad187698e6",
+      "censusSha256": "d8a58871870e0474f62ef052744e490ebe1e10e1c17e52f06fced921127f9de6",
+      "elapsedMs": 15052,
+      "artifactBytes": 3696907,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "128",
+          "C": "0",
+          "P": "0",
+          "E": "256",
+          "S": "0",
+          "matter": "4224",
+          "energy": "1536"
+        },
+        "finalTotals": {
+          "A": "3924",
+          "B": "0",
+          "C": "296",
+          "P": "4",
+          "E": "0",
+          "S": "0",
+          "matter": "4224",
+          "energy": "640"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "7090",
+        "heatExport": "7986",
+        "flux": {
+          "photo": "709",
+          "resp": "0",
+          "decomp": "537",
+          "grow": "0",
+          "build": "30",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "26",
+          "bdecay": "807",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B128-A4-s1",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "103196",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "30",
+          "reservoirDepletionA": "172",
+          "harvestedLight": "7090",
+          "flux": {
+            "photo": "709",
+            "resp": "0",
+            "decomp": "537",
+            "grow": "0",
+            "build": "30",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "26",
+            "bdecay": "807",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": false,
+        "maintainedSites": []
+      }
+    },
+    {
+      "id": "control-small-B128-A4-s2",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "d0a3867295764aaf",
+      "censusSha256": "cb9697706310e8eca4eaaf54f971e6891fc07171799b31b2a17fed0ec2c358ea",
+      "elapsedMs": 14786,
+      "artifactBytes": 3698459,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "128",
+          "C": "0",
+          "P": "0",
+          "E": "256",
+          "S": "0",
+          "matter": "4224",
+          "energy": "1536"
+        },
+        "finalTotals": {
+          "A": "4051",
+          "B": "0",
+          "C": "172",
+          "P": "1",
+          "E": "0",
+          "S": "0",
+          "matter": "4224",
+          "energy": "356"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "800",
+        "heatExport": "1980",
+        "flux": {
+          "photo": "80",
+          "resp": "0",
+          "decomp": "35",
+          "grow": "0",
+          "build": "1",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "0",
+          "bdecay": "207",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B128-A4-s2",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "26848",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "1",
+          "reservoirDepletionA": "45",
+          "harvestedLight": "800",
+          "flux": {
+            "photo": "80",
+            "resp": "0",
+            "decomp": "35",
+            "grow": "0",
+            "build": "1",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "0",
+            "bdecay": "207",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": false,
+        "maintainedSites": []
+      }
+    },
+    {
+      "id": "control-small-B128-A16-s0",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "8732052620fff031",
+      "censusSha256": "bf2a5f985292a97c0172c827eab88123e1f7be9693329ce86b9f08421b6ed316",
+      "elapsedMs": 14049,
+      "artifactBytes": 3696712,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "128",
+          "C": "0",
+          "P": "0",
+          "E": "256",
+          "S": "0",
+          "matter": "16512",
+          "energy": "1536"
+        },
+        "finalTotals": {
+          "A": "15323",
+          "B": "775",
+          "C": "348",
+          "P": "66",
+          "E": "1617",
+          "S": "0",
+          "matter": "16512",
+          "energy": "10855"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "445240",
+        "heatExport": "435921",
+        "flux": {
+          "photo": "44524",
+          "resp": "0",
+          "decomp": "43463",
+          "grow": "0",
+          "build": "245",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "179",
+          "bdecay": "43632",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B128-A16-s0",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 775,
+          "activeBArea": "5666111",
+          "finalSourceB": [
+            775
+          ],
+          "lateMinSourceB": [
+            735
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 5921,
+              "R": 40,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "245",
+          "reservoirDepletionA": "1061",
+          "harvestedLight": "445240",
+          "flux": {
+            "photo": "44524",
+            "resp": "0",
+            "decomp": "43463",
+            "grow": "0",
+            "build": "245",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "179",
+            "bdecay": "43632",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": true,
+        "maintainedSites": [
+          528
+        ]
+      }
+    },
+    {
+      "id": "control-small-B128-A16-s1",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "ce4ee86a9bb4346a",
+      "censusSha256": "5a2f28fefabc8fbe6010b176466d263bfede6053cb92b950d587c2c7063fbee1",
+      "elapsedMs": 15890,
+      "artifactBytes": 3701032,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "128",
+          "C": "0",
+          "P": "0",
+          "E": "256",
+          "S": "0",
+          "matter": "16512",
+          "energy": "1536"
+        },
+        "finalTotals": {
+          "A": "14096",
+          "B": "77",
+          "C": "2296",
+          "P": "43",
+          "E": "135",
+          "S": "0",
+          "matter": "16512",
+          "energy": "6013"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "70550",
+        "heatExport": "66073",
+        "flux": {
+          "photo": "7055",
+          "resp": "0",
+          "decomp": "4767",
+          "grow": "0",
+          "build": "140",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "97",
+          "bdecay": "6966",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B128-A16-s1",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 77,
+          "activeBArea": "904658",
+          "finalSourceB": [
+            65
+          ],
+          "lateMinSourceB": [
+            58
+          ],
+          "supportExtentFinal": 5,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 672,
+              "R": 128,
+              "netBoundBImport": -128
+            }
+          ],
+          "buildExpenditureB": "140",
+          "reservoirDepletionA": "2288",
+          "harvestedLight": "70550",
+          "flux": {
+            "photo": "7055",
+            "resp": "0",
+            "decomp": "4767",
+            "grow": "0",
+            "build": "140",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "97",
+            "bdecay": "6966",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": false,
+        "maintainedSites": []
+      }
+    },
+    {
+      "id": "control-small-B128-A16-s2",
+      "phase": "controls",
+      "kind": "small-founder",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "6e9f84f8370421ac",
+      "censusSha256": "92e389d67874c92f1afd61fdb8566907eb8d1907ce618c5ecf111e82b3f68a03",
+      "elapsedMs": 14911,
+      "artifactBytes": 3698875,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "128",
+          "C": "0",
+          "P": "0",
+          "E": "256",
+          "S": "0",
+          "matter": "16512",
+          "energy": "1536"
+        },
+        "finalTotals": {
+          "A": "16339",
+          "B": "0",
+          "C": "172",
+          "P": "1",
+          "E": "0",
+          "S": "0",
+          "matter": "16512",
+          "energy": "356"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "820",
+        "heatExport": "2000",
+        "flux": {
+          "photo": "82",
+          "resp": "0",
+          "decomp": "37",
+          "grow": "0",
+          "build": "1",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "0",
+          "bdecay": "209",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "control-small-B128-A16-s2",
+        "status": "complete",
+        "kind": "small-founder",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "27118",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "1",
+          "reservoirDepletionA": "45",
+          "harvestedLight": "820",
+          "flux": {
+            "photo": "82",
+            "resp": "0",
+            "decomp": "37",
+            "grow": "0",
+            "build": "1",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "0",
+            "bdecay": "209",
+            "abio": "0"
+          }
+        },
+        "anySiteMaintained": false,
+        "maintainedSites": []
+      }
+    },
+    {
+      "id": "pilot-builder-A4-s0",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "fa2c2551c22d5002",
+      "censusSha256": "f72541ff80be4ad08fa2224f820c2195b4bded5c353b210d61d6c11688639268",
+      "elapsedMs": 13696,
+      "artifactBytes": 3696250,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "4174",
+          "B": "492",
+          "C": "388",
+          "P": "66",
+          "E": "1059",
+          "S": "0",
+          "matter": "5120",
+          "energy": "7547"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "505640",
+        "heatExport": "510381",
+        "flux": {
+          "photo": "50564",
+          "resp": "0",
+          "decomp": "50642",
+          "grow": "0",
+          "build": "249",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "183",
+          "bdecay": "50847",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-builder-A4-s0",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 492,
+          "activeBArea": "6601953",
+          "finalSourceB": [
+            492
+          ],
+          "lateMinSourceB": [
+            492
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 3887,
+              "R": -11,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "249",
+          "reservoirDepletionA": "-78",
+          "harvestedLight": "505640",
+          "flux": {
+            "photo": "50564",
+            "resp": "0",
+            "decomp": "50642",
+            "grow": "0",
+            "build": "249",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "183",
+            "bdecay": "50847",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 492,
+          "Q": 3887,
+          "R": -11,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-matched-A4-s0",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "matched",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "91e60020f17e3752",
+      "censusSha256": "89761ff4c566e45c9e5a0c1f0acaedcc831ebb72c68c9cae7db4509c0224bd66",
+      "elapsedMs": 14500,
+      "artifactBytes": 3696524,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "2442",
+          "B": "296",
+          "C": "2382",
+          "P": "0",
+          "E": "637",
+          "S": "0",
+          "matter": "5120",
+          "energy": "8361"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "250900",
+        "heatExport": "254827",
+        "flux": {
+          "photo": "25090",
+          "resp": "0",
+          "decomp": "23436",
+          "grow": "0",
+          "build": "0",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "0",
+          "bdecay": "25818",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-matched-A4-s0",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 296,
+          "activeBArea": "3343763",
+          "finalSourceB": [
+            296
+          ],
+          "lateMinSourceB": [
+            289
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 2321,
+              "R": -16,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "1654",
+          "harvestedLight": "250900",
+          "flux": {
+            "photo": "25090",
+            "resp": "0",
+            "decomp": "23436",
+            "grow": "0",
+            "build": "0",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "0",
+            "bdecay": "25818",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 289,
+          "Q": 2321,
+          "R": -16,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-selected-A4-s0",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "selected",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "1cf59856ad14d3e3",
+      "censusSha256": "f73f5a892de268889866694d429ebdb0a3290bdd3a33e9c889d258c8faebb63b",
+      "elapsedMs": 14393,
+      "artifactBytes": 3697055,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "2246",
+          "B": "294",
+          "C": "2580",
+          "P": "0",
+          "E": "3",
+          "S": "0",
+          "matter": "5120",
+          "energy": "8103"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "233250",
+        "heatExport": "237435",
+        "flux": {
+          "photo": "23325",
+          "resp": "0",
+          "decomp": "25329",
+          "grow": "3854",
+          "build": "0",
+          "emit": "0",
+          "starve": "2355",
+          "pdecay": "0",
+          "bdecay": "25554",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-selected-A4-s0",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 294,
+          "activeBArea": "3311045",
+          "finalSourceB": [
+            294
+          ],
+          "lateMinSourceB": [
+            294
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 2547,
+              "R": -12,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "1850",
+          "harvestedLight": "233250",
+          "flux": {
+            "photo": "23325",
+            "resp": "0",
+            "decomp": "25329",
+            "grow": "3854",
+            "build": "0",
+            "emit": "0",
+            "starve": "2355",
+            "pdecay": "0",
+            "bdecay": "25554",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 294,
+          "Q": 2547,
+          "R": -12,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-ablation-A4-s0",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "ablation",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "99d13d027e21b1f3",
+      "censusSha256": "78ef788e69dad65d25d33955c3e83867393b470331ef8baf67516c80dc430482",
+      "elapsedMs": 14086,
+      "artifactBytes": 3697219,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "2410",
+          "B": "293",
+          "C": "2354",
+          "P": "63",
+          "E": "621",
+          "S": "0",
+          "matter": "5120",
+          "energy": "9015"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "247240",
+        "heatExport": "250513",
+        "flux": {
+          "photo": "24724",
+          "resp": "0",
+          "decomp": "23038",
+          "grow": "0",
+          "build": "242",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "179",
+          "bdecay": "25213",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-ablation-A4-s0",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 293,
+          "activeBArea": "3266769",
+          "finalSourceB": [
+            293
+          ],
+          "lateMinSourceB": [
+            278
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 2283,
+              "R": -14,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "242",
+          "reservoirDepletionA": "1686",
+          "harvestedLight": "247240",
+          "flux": {
+            "photo": "24724",
+            "resp": "0",
+            "decomp": "23038",
+            "grow": "0",
+            "build": "242",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "179",
+            "bdecay": "25213",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 278,
+          "Q": 2283,
+          "R": -14,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-builder-A4-s1",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "e67e3764c717ae39",
+      "censusSha256": "94ba404716f1f73ff057727c6eb06987c09abb452d48a6b609f659ca7e77a366",
+      "elapsedMs": 16467,
+      "artifactBytes": 3729232,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "3381",
+          "B": "0",
+          "C": "1717",
+          "P": "22",
+          "E": "0",
+          "S": "0",
+          "matter": "5120",
+          "energy": "3698"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "55410",
+        "heatExport": "64000",
+        "flux": {
+          "photo": "5541",
+          "resp": "0",
+          "decomp": "4826",
+          "grow": "0",
+          "build": "298",
+          "emit": "0",
+          "starve": "1",
+          "pdecay": "276",
+          "bdecay": "6266",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-builder-A4-s1",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "817521",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "298",
+          "reservoirDepletionA": "715",
+          "harvestedLight": "55410",
+          "flux": {
+            "photo": "5541",
+            "resp": "0",
+            "decomp": "4826",
+            "grow": "0",
+            "build": "298",
+            "emit": "0",
+            "starve": "1",
+            "pdecay": "276",
+            "bdecay": "6266",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-matched-A4-s1",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "matched",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "4d28d93643b556f1",
+      "censusSha256": "f62f63a21e8b5083a60f78bb307d2c03a7d1848e50ccd95c770a745e23328bed",
+      "elapsedMs": 16485,
+      "artifactBytes": 3758261,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "1220",
+          "B": "0",
+          "C": "3900",
+          "P": "0",
+          "E": "0",
+          "S": "0",
+          "matter": "5120",
+          "energy": "7800"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "297080",
+        "heatExport": "301568",
+        "flux": {
+          "photo": "29708",
+          "resp": "0",
+          "decomp": "26832",
+          "grow": "0",
+          "build": "0",
+          "emit": "0",
+          "starve": "1",
+          "pdecay": "0",
+          "bdecay": "30731",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-matched-A4-s1",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "4002627",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "2876",
+          "harvestedLight": "297080",
+          "flux": {
+            "photo": "29708",
+            "resp": "0",
+            "decomp": "26832",
+            "grow": "0",
+            "build": "0",
+            "emit": "0",
+            "starve": "1",
+            "pdecay": "0",
+            "bdecay": "30731",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-selected-A4-s1",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "selected",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "38d1a3defbdc240a",
+      "censusSha256": "bd92e4493de5ad6ffa904729c362a89fae422e9ef24f1261f048a8933d326f75",
+      "elapsedMs": 16440,
+      "artifactBytes": 3731486,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "996",
+          "B": "0",
+          "C": "4124",
+          "P": "0",
+          "E": "0",
+          "S": "0",
+          "matter": "5120",
+          "energy": "8248"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "247530",
+        "heatExport": "251570",
+        "flux": {
+          "photo": "24753",
+          "resp": "0",
+          "decomp": "25429",
+          "grow": "3776",
+          "build": "0",
+          "emit": "0",
+          "starve": "1247",
+          "pdecay": "0",
+          "bdecay": "28306",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-selected-A4-s1",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "3693935",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "3100",
+          "harvestedLight": "247530",
+          "flux": {
+            "photo": "24753",
+            "resp": "0",
+            "decomp": "25429",
+            "grow": "3776",
+            "build": "0",
+            "emit": "0",
+            "starve": "1247",
+            "pdecay": "0",
+            "bdecay": "28306",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-ablation-A4-s1",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "ablation",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "95a04ec90b1ccd72",
+      "censusSha256": "21597b45ef3547f00788d6378519e0b81a3fe673e33241de2a61c010527834b8",
+      "elapsedMs": 16008,
+      "artifactBytes": 3741184,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "1275",
+          "B": "0",
+          "C": "3762",
+          "P": "83",
+          "E": "0",
+          "S": "0",
+          "matter": "5120",
+          "energy": "8520"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "194010",
+        "heatExport": "197778",
+        "flux": {
+          "photo": "19401",
+          "resp": "0",
+          "decomp": "16580",
+          "grow": "0",
+          "build": "703",
+          "emit": "0",
+          "starve": "1",
+          "pdecay": "620",
+          "bdecay": "19721",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-ablation-A4-s1",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "2565439",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "703",
+          "reservoirDepletionA": "2821",
+          "harvestedLight": "194010",
+          "flux": {
+            "photo": "19401",
+            "resp": "0",
+            "decomp": "16580",
+            "grow": "0",
+            "build": "703",
+            "emit": "0",
+            "starve": "1",
+            "pdecay": "620",
+            "bdecay": "19721",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-builder-A4-s2",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "26c0f787b1d534fc",
+      "censusSha256": "1caf71649de8d7b26216ad69f6a373af862a18cdf712d38c5f06a00a0c30426e",
+      "elapsedMs": 16404,
+      "artifactBytes": 3739117,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "3880",
+          "B": "0",
+          "C": "1236",
+          "P": "4",
+          "E": "0",
+          "S": "0",
+          "matter": "5120",
+          "energy": "2520"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "11440",
+        "heatExport": "21208",
+        "flux": {
+          "photo": "1144",
+          "resp": "0",
+          "decomp": "928",
+          "grow": "0",
+          "build": "59",
+          "emit": "0",
+          "starve": "8",
+          "pdecay": "55",
+          "bdecay": "2101",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-builder-A4-s2",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "271772",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "59",
+          "reservoirDepletionA": "216",
+          "harvestedLight": "11440",
+          "flux": {
+            "photo": "1144",
+            "resp": "0",
+            "decomp": "928",
+            "grow": "0",
+            "build": "59",
+            "emit": "0",
+            "starve": "8",
+            "pdecay": "55",
+            "bdecay": "2101",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-matched-A4-s2",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "matched",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "9cf261ea2ea041c8",
+      "censusSha256": "d90be97e5622e004dcd111cd81ec207ada411d8f9f05635f7f6e2131441bb2e8",
+      "elapsedMs": 16360,
+      "artifactBytes": 3740598,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "3849",
+          "B": "0",
+          "C": "1271",
+          "P": "0",
+          "E": "0",
+          "S": "0",
+          "matter": "5120",
+          "energy": "2542"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "12650",
+        "heatExport": "22396",
+        "flux": {
+          "photo": "1265",
+          "resp": "0",
+          "decomp": "1018",
+          "grow": "0",
+          "build": "0",
+          "emit": "0",
+          "starve": "12",
+          "pdecay": "0",
+          "bdecay": "2277",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-matched-A4-s2",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "294585",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "247",
+          "harvestedLight": "12650",
+          "flux": {
+            "photo": "1265",
+            "resp": "0",
+            "decomp": "1018",
+            "grow": "0",
+            "build": "0",
+            "emit": "0",
+            "starve": "12",
+            "pdecay": "0",
+            "bdecay": "2277",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-selected-A4-s2",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "selected",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "32dfbbd513ba2741",
+      "censusSha256": "b35de9faabd5c41b455c4b5374307f6c0534324bca435354680c2b655ca44288",
+      "elapsedMs": 16412,
+      "artifactBytes": 3726463,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "3710",
+          "B": "0",
+          "C": "1410",
+          "P": "0",
+          "E": "0",
+          "S": "0",
+          "matter": "5120",
+          "energy": "2820"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "12120",
+        "heatExport": "21588",
+        "flux": {
+          "photo": "1212",
+          "resp": "0",
+          "decomp": "1115",
+          "grow": "289",
+          "build": "0",
+          "emit": "0",
+          "starve": "188",
+          "pdecay": "0",
+          "bdecay": "2337",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-selected-A4-s2",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "301436",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "386",
+          "harvestedLight": "12120",
+          "flux": {
+            "photo": "1212",
+            "resp": "0",
+            "decomp": "1115",
+            "grow": "289",
+            "build": "0",
+            "emit": "0",
+            "starve": "188",
+            "pdecay": "0",
+            "bdecay": "2337",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-ablation-A4-s2",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "ablation",
+      "seed": 7310001,
+      "reservoir": 4,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "8699231e635cb566",
+      "censusSha256": "816f9a2645ce1475e2e9a02eb977539325048d0a9b4852c293b62edf8e3028f7",
+      "elapsedMs": 15609,
+      "artifactBytes": 3739953,
+      "accounting": {
+        "initialTotals": {
+          "A": "4096",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "5120",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "3846",
+          "B": "0",
+          "C": "1270",
+          "P": "4",
+          "E": "0",
+          "S": "0",
+          "matter": "5120",
+          "energy": "2588"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "12150",
+        "heatExport": "21850",
+        "flux": {
+          "photo": "1215",
+          "resp": "0",
+          "decomp": "965",
+          "grow": "0",
+          "build": "57",
+          "emit": "0",
+          "starve": "7",
+          "pdecay": "53",
+          "bdecay": "2175",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-ablation-A4-s2",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "278404",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "57",
+          "reservoirDepletionA": "250",
+          "harvestedLight": "12150",
+          "flux": {
+            "photo": "1215",
+            "resp": "0",
+            "decomp": "965",
+            "grow": "0",
+            "build": "57",
+            "emit": "0",
+            "starve": "7",
+            "pdecay": "53",
+            "bdecay": "2175",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-builder-A16-s0",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "1ad1ca218ea5da3b",
+      "censusSha256": "ef00c13d5af5ec5057d7c5124a149ee1f5f57a98de06d4dcbe39ed187bd224ed",
+      "elapsedMs": 14546,
+      "artifactBytes": 3696438,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "15761",
+          "B": "996",
+          "C": "584",
+          "P": "67",
+          "E": "2098",
+          "S": "0",
+          "matter": "17408",
+          "energy": "14030"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "763060",
+        "heatExport": "761318",
+        "flux": {
+          "photo": "76306",
+          "resp": "0",
+          "decomp": "75683",
+          "grow": "0",
+          "build": "250",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "183",
+          "bdecay": "76084",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-builder-A16-s0",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 996,
+          "activeBArea": "9890151",
+          "finalSourceB": [
+            996
+          ],
+          "lateMinSourceB": [
+            984
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 7692,
+              "R": 12,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "250",
+          "reservoirDepletionA": "623",
+          "harvestedLight": "763060",
+          "flux": {
+            "photo": "76306",
+            "resp": "0",
+            "decomp": "75683",
+            "grow": "0",
+            "build": "250",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "183",
+            "bdecay": "76084",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": true,
+          "minB": 984,
+          "Q": 7692,
+          "R": 12,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-matched-A16-s0",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "matched",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "7b7846c9d284a1c8",
+      "censusSha256": "f8018715239639ab2cfb83da0fc788c63bb85c6286fd379550964d55ce91618c",
+      "elapsedMs": 16353,
+      "artifactBytes": 3697270,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "8340",
+          "B": "1044",
+          "C": "8024",
+          "P": "0",
+          "E": "2157",
+          "S": "0",
+          "matter": "17408",
+          "energy": "28645"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "837610",
+        "heatExport": "821253",
+        "flux": {
+          "photo": "83761",
+          "resp": "0",
+          "decomp": "75717",
+          "grow": "0",
+          "build": "0",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "0",
+          "bdecay": "83741",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-matched-A16-s0",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 1044,
+          "activeBArea": "10889500",
+          "finalSourceB": [
+            1044
+          ],
+          "lateMinSourceB": [
+            1029
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 8009,
+              "R": 1,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "8044",
+          "harvestedLight": "837610",
+          "flux": {
+            "photo": "83761",
+            "resp": "0",
+            "decomp": "75717",
+            "grow": "0",
+            "build": "0",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "0",
+            "bdecay": "83741",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": true,
+          "minB": 1029,
+          "Q": 8009,
+          "R": 1,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-selected-A16-s0",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "selected",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "6134d8ba78afad85",
+      "censusSha256": "b0ef157592b1b7eb78ec5531494b3ddba51a7635b3b49cf57fbc8fca4f6df6d7",
+      "elapsedMs": 16393,
+      "artifactBytes": 3697870,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "7700",
+          "B": "916",
+          "C": "8792",
+          "P": "0",
+          "E": "4",
+          "S": "0",
+          "matter": "17408",
+          "energy": "26748"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "780270",
+        "heatExport": "765810",
+        "flux": {
+          "photo": "78027",
+          "resp": "0",
+          "decomp": "82487",
+          "grow": "13144",
+          "build": "0",
+          "emit": "0",
+          "starve": "16031",
+          "pdecay": "0",
+          "bdecay": "75248",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-selected-A16-s0",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 916,
+          "activeBArea": "9778348",
+          "finalSourceB": [
+            916
+          ],
+          "lateMinSourceB": [
+            891
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 8702,
+              "R": -20,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "8684",
+          "harvestedLight": "780270",
+          "flux": {
+            "photo": "78027",
+            "resp": "0",
+            "decomp": "82487",
+            "grow": "13144",
+            "build": "0",
+            "emit": "0",
+            "starve": "16031",
+            "pdecay": "0",
+            "bdecay": "75248",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 891,
+          "Q": 8702,
+          "R": -20,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-ablation-A16-s0",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "ablation",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 0,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "6c1a52fcc8bba5b4",
+      "censusSha256": "d1c4c9739dc135fa9571ef4bac62f2c1e840fba9753e3a4fc47d2fbdf2420573",
+      "elapsedMs": 15334,
+      "artifactBytes": 3697977,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "8306",
+          "B": "1037",
+          "C": "7998",
+          "P": "67",
+          "E": "2152",
+          "S": "0",
+          "matter": "17408",
+          "energy": "29322"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "834330",
+        "heatExport": "817296",
+        "flux": {
+          "photo": "83433",
+          "resp": "0",
+          "decomp": "75355",
+          "grow": "0",
+          "build": "250",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "183",
+          "bdecay": "83170",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-ablation-A16-s0",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 1037,
+          "activeBArea": "10812987",
+          "finalSourceB": [
+            1037
+          ],
+          "lateMinSourceB": [
+            1025
+          ],
+          "supportExtentFinal": 1,
+          "supportExtentAtV": 1,
+          "sourceWindow": [
+            {
+              "Q": 7981,
+              "R": -2,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "250",
+          "reservoirDepletionA": "8078",
+          "harvestedLight": "834330",
+          "flux": {
+            "photo": "83433",
+            "resp": "0",
+            "decomp": "75355",
+            "grow": "0",
+            "build": "250",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "183",
+            "bdecay": "83170",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 1025,
+          "Q": 7981,
+          "R": -2,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-builder-A16-s1",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "ab9f7776df6e9a19",
+      "censusSha256": "bb830497a98fbbf2b6af34c076532e7f17a242cdc7b65316446e2911fe7d0d57",
+      "elapsedMs": 17447,
+      "artifactBytes": 3803056,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "7016",
+          "B": "163",
+          "C": "9855",
+          "P": "374",
+          "E": "311",
+          "S": "0",
+          "matter": "17408",
+          "energy": "26139"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "691830",
+        "heatExport": "677979",
+        "flux": {
+          "photo": "69183",
+          "resp": "0",
+          "decomp": "59815",
+          "grow": "0",
+          "build": "2190",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "1816",
+          "bdecay": "67854",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-builder-A16-s1",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 163,
+          "activeBArea": "8850504",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 10,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "2190",
+          "reservoirDepletionA": "9368",
+          "harvestedLight": "691830",
+          "flux": {
+            "photo": "69183",
+            "resp": "0",
+            "decomp": "59815",
+            "grow": "0",
+            "build": "2190",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "1816",
+            "bdecay": "67854",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-matched-A16-s1",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "matched",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "d0a9d178e93c95dc",
+      "censusSha256": "efb970471c11d2268b8bca3d93aee9a6978dae5ea9a5bfacb07ce37fc5c35783",
+      "elapsedMs": 18887,
+      "artifactBytes": 4255251,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "976",
+          "B": "11753",
+          "C": "4679",
+          "P": "0",
+          "E": "26960",
+          "S": "0",
+          "matter": "17408",
+          "energy": "153848"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "8825260",
+        "heatExport": "8683700",
+        "flux": {
+          "photo": "882526",
+          "resp": "4",
+          "decomp": "867118",
+          "grow": "0",
+          "build": "0",
+          "emit": "0",
+          "starve": "0",
+          "pdecay": "0",
+          "bdecay": "871793",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-matched-A16-s1",
+        "status": "complete",
+        "kind": "main",
+        "extinct": false,
+        "secondary": {
+          "finalActiveB": 11753,
+          "activeBArea": "113477168",
+          "finalSourceB": [
+            67
+          ],
+          "lateMinSourceB": [
+            65
+          ],
+          "supportExtentFinal": 216,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 550,
+              "R": -1,
+              "netBoundBImport": -1
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "15408",
+          "harvestedLight": "8825260",
+          "flux": {
+            "photo": "882526",
+            "resp": "4",
+            "decomp": "867118",
+            "grow": "0",
+            "build": "0",
+            "emit": "0",
+            "starve": "0",
+            "pdecay": "0",
+            "bdecay": "871793",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 65,
+          "Q": 550,
+          "R": -1,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-selected-A16-s1",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "selected",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "aadea73c3d7350e5",
+      "censusSha256": "0f5f630a3ec8f80f3b77e98cb4bc8936eb73ebf8c6800113222920faae18870a",
+      "elapsedMs": 16646,
+      "artifactBytes": 3933859,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "819",
+          "B": "0",
+          "C": "16589",
+          "P": "0",
+          "E": "0",
+          "S": "0",
+          "matter": "17408",
+          "energy": "33178"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "1832510",
+        "heatExport": "1811620",
+        "flux": {
+          "photo": "183251",
+          "resp": "0",
+          "decomp": "195921",
+          "grow": "28235",
+          "build": "0",
+          "emit": "0",
+          "starve": "6946",
+          "pdecay": "0",
+          "bdecay": "205564",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-selected-A16-s1",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "26757160",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "15565",
+          "harvestedLight": "1832510",
+          "flux": {
+            "photo": "183251",
+            "resp": "0",
+            "decomp": "195921",
+            "grow": "28235",
+            "build": "0",
+            "emit": "0",
+            "starve": "6946",
+            "pdecay": "0",
+            "bdecay": "205564",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-ablation-A16-s1",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "ablation",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 1,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "f67ca51ebaa45d62",
+      "censusSha256": "68a0ace5d552cb6816f491ad8989b48bee60f74f28b173cd3ff2df0d3f7395d1",
+      "elapsedMs": 16049,
+      "artifactBytes": 4010227,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "1081",
+          "B": "0",
+          "C": "15583",
+          "P": "744",
+          "E": "0",
+          "S": "0",
+          "matter": "17408",
+          "energy": "40094"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "1546510",
+        "heatExport": "1518704",
+        "flux": {
+          "photo": "154651",
+          "resp": "3",
+          "decomp": "139348",
+          "grow": "0",
+          "build": "5993",
+          "emit": "0",
+          "starve": "8",
+          "pdecay": "5249",
+          "bdecay": "149671",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-ablation-A16-s1",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "19473879",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "5993",
+          "reservoirDepletionA": "15303",
+          "harvestedLight": "1546510",
+          "flux": {
+            "photo": "154651",
+            "resp": "3",
+            "decomp": "139348",
+            "grow": "0",
+            "build": "5993",
+            "emit": "0",
+            "starve": "8",
+            "pdecay": "5249",
+            "bdecay": "149671",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-builder-A16-s2",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "builder",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "8970c3e4aa500564",
+      "censusSha256": "4ee79db5effc8ad174ffb5726a419966e11588b476f200d76338cb5a70a8a054",
+      "elapsedMs": 15960,
+      "artifactBytes": 3744001,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "15882",
+          "B": "0",
+          "C": "1521",
+          "P": "5",
+          "E": "0",
+          "S": "0",
+          "matter": "17408",
+          "energy": "3102"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "18210",
+        "heatExport": "27396",
+        "flux": {
+          "photo": "1821",
+          "resp": "0",
+          "decomp": "1319",
+          "grow": "0",
+          "build": "71",
+          "emit": "0",
+          "starve": "11",
+          "pdecay": "66",
+          "bdecay": "2763",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-builder-A16-s2",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "355012",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "71",
+          "reservoirDepletionA": "502",
+          "harvestedLight": "18210",
+          "flux": {
+            "photo": "1821",
+            "resp": "0",
+            "decomp": "1319",
+            "grow": "0",
+            "build": "71",
+            "emit": "0",
+            "starve": "11",
+            "pdecay": "66",
+            "bdecay": "2763",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-matched-A16-s2",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "matched",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "b7d9b3bcec567a57",
+      "censusSha256": "ed09c04dd2bc9795ad96c0f28f81f858c538ed26d95340d8300dc78834784c79",
+      "elapsedMs": 16025,
+      "artifactBytes": 3755880,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "15442",
+          "B": "0",
+          "C": "1966",
+          "P": "0",
+          "E": "0",
+          "S": "0",
+          "matter": "17408",
+          "energy": "3932"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "28940",
+        "heatExport": "37296",
+        "flux": {
+          "photo": "2894",
+          "resp": "0",
+          "decomp": "1952",
+          "grow": "0",
+          "build": "0",
+          "emit": "0",
+          "starve": "18",
+          "pdecay": "0",
+          "bdecay": "3900",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-matched-A16-s2",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "499104",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "942",
+          "harvestedLight": "28940",
+          "flux": {
+            "photo": "2894",
+            "resp": "0",
+            "decomp": "1952",
+            "grow": "0",
+            "build": "0",
+            "emit": "0",
+            "starve": "18",
+            "pdecay": "0",
+            "bdecay": "3900",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-selected-A16-s2",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "selected",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "033b19073f73c0e4",
+      "censusSha256": "4fb2908030fb74baf2e0d90a8ad4bc55e3e4ab92af4400307ff2fdcea237eb0d",
+      "elapsedMs": 16535,
+      "artifactBytes": 3744281,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "14571",
+          "B": "0",
+          "C": "2837",
+          "P": "0",
+          "E": "0",
+          "S": "0",
+          "matter": "17408",
+          "energy": "5674"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "41690",
+        "heatExport": "48304",
+        "flux": {
+          "photo": "4169",
+          "resp": "0",
+          "decomp": "2845",
+          "grow": "489",
+          "build": "0",
+          "emit": "0",
+          "starve": "350",
+          "pdecay": "0",
+          "bdecay": "5332",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-selected-A16-s2",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "683927",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "0",
+          "reservoirDepletionA": "1813",
+          "harvestedLight": "41690",
+          "flux": {
+            "photo": "4169",
+            "resp": "0",
+            "decomp": "2845",
+            "grow": "489",
+            "build": "0",
+            "emit": "0",
+            "starve": "350",
+            "pdecay": "0",
+            "bdecay": "5332",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    },
+    {
+      "id": "pilot-ablation-A16-s2",
+      "phase": "pilot",
+      "kind": "main",
+      "arm": "ablation",
+      "seed": 7310001,
+      "reservoir": 16,
+      "spread": 2,
+      "horizon": 10000,
+      "attempt": 1,
+      "finalStateHash": "b5738f1d7d1a3e3b",
+      "censusSha256": "7ea5ac936959d200644cad328ba297fa4466ce5608f390b733cf259560fc75f4",
+      "elapsedMs": 15636,
+      "artifactBytes": 3750481,
+      "accounting": {
+        "initialTotals": {
+          "A": "16384",
+          "B": "1024",
+          "C": "0",
+          "P": "0",
+          "E": "2048",
+          "S": "0",
+          "matter": "17408",
+          "energy": "12288"
+        },
+        "finalTotals": {
+          "A": "15616",
+          "B": "0",
+          "C": "1786",
+          "P": "6",
+          "E": "0",
+          "S": "0",
+          "matter": "17408",
+          "energy": "3644"
+        },
+        "offeredLightExposure": "2611200000",
+        "harvestedLight": "24710",
+        "heatExport": "33354",
+        "flux": {
+          "photo": "2471",
+          "resp": "0",
+          "decomp": "1703",
+          "grow": "0",
+          "build": "98",
+          "emit": "0",
+          "starve": "15",
+          "pdecay": "92",
+          "bdecay": "3382",
+          "abio": "0"
+        }
+      },
+      "readout": {
+        "id": "pilot-ablation-A16-s2",
+        "status": "complete",
+        "kind": "main",
+        "extinct": true,
+        "secondary": {
+          "finalActiveB": 0,
+          "activeBArea": "434192",
+          "finalSourceB": [
+            0
+          ],
+          "lateMinSourceB": [
+            0
+          ],
+          "supportExtentFinal": 0,
+          "supportExtentAtV": 0,
+          "sourceWindow": [
+            {
+              "Q": 0,
+              "R": 0,
+              "netBoundBImport": 0
+            }
+          ],
+          "buildExpenditureB": "98",
+          "reservoirDepletionA": "768",
+          "harvestedLight": "24710",
+          "flux": {
+            "photo": "2471",
+            "resp": "0",
+            "decomp": "1703",
+            "grow": "0",
+            "build": "98",
+            "emit": "0",
+            "starve": "15",
+            "pdecay": "92",
+            "bdecay": "3382",
+            "abio": "0"
+          }
+        },
+        "renew": false,
+        "sourceMaintenance": {
+          "status": "ok",
+          "site": 528,
+          "maintained": false,
+          "minB": 0,
+          "Q": 0,
+          "R": 0,
+          "censuses": 11
+        },
+        "qualifyingSites": []
+      }
+    }
+  ]
+}

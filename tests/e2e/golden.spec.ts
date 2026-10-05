@@ -8,6 +8,7 @@ test("GPU kernels match the CPU reference bit for bit", async ({ page }) => {
   console.log("adapter:", g.adapter);
   for (const r of g.results ?? []) console.log(`${r.ok ? "PASS" : "FAIL"} ${r.name} ${r.hash} ${r.detail}`);
   expect(g.error).toBeUndefined();
-  expect(g.results?.length).toBeGreaterThan(0);
+  expect(g.results?.filter((r) => r.name.startsWith("rule-1/"))).toHaveLength(13);
+  expect(g.results?.filter((r) => r.name.startsWith("rule-2/"))).toHaveLength(15);
   for (const r of g.results!) expect(r.ok, `${r.name}: ${r.detail}`).toBe(true);
 });

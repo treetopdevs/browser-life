@@ -1,0 +1,2778 @@
+{
+ "note": "exploratory recurrence readout on the registered worlds (M4 replays and the 10^7 extension); definitions and the reading rule fixed in docs/plan.md ('Recurrence on the registered worlds (fixed 2026-10-01, before computing)') before computing; descriptive, no significance claims",
+ "complete": true,
+ "recordVersion": 2,
+ "tool": "tools/recurrence-x.ts (runs-m4, summary-m4) + tools/lib/recurrence.ts",
+ "definitions": {
+  "windowsFillsReturnsReplacements": "as fixed in docs/plan.md for the recurrence readout: windows of consecutive deep censuses with role share >= 5% spanning >= 1e5 steps; a return is a window k>=2 after a gap >= 1e5 steps, a replacement a window after a shorter gap held by a clade that has not held an earlier window of the role; events count from windows starting at step >= 2e5",
+  "m4": "profiles.tsv deep censuses every 1,000 steps; clades from mutations.tsv roots and founder genomes; 10 treatment against 5 no-mutation, 20 neutral replays against the same no-mutation runs as the null",
+  "m4Variants": "role recomputed from profiles.tsv photo/grow/decomp fluxes with classify at dominance 0.5, 0.6 or 0.7; d0.6-noinactive counts zero-flux rows in the living total but in no role; d0.6 is asserted equal to the stored role column on every row",
+  "ext": "series.jsonl role shares at every deep census (every 1,000 steps, steps 100 .. 9,999,100); one pseudo-clade, so only returns; seeds 101-105 per condition; returns per 1e5 steps = mean returns / 98",
+  "robustness": "robust if the treatment reading is the same under all four variants, otherwise threshold-sensitive",
+  "specificity": "specific unless the neutral null reads recurring (M4: on variant d0.6)"
+ },
+ "runs": {
+  "total": 155,
+  "m4": 140,
+  "ext": 15,
+  "extinct": 0
+ },
+ "m4": {
+  "byVariant": [
+   {
+    "variant": "d0.5",
+    "reading": "unclear",
+    "diffPostFill": {
+     "n": 15,
+     "mean": 0.1,
+     "lo": 0,
+     "hi": 0.3
+    },
+    "diffReturns": {
+     "n": 15,
+     "mean": 0.1,
+     "lo": 0,
+     "hi": 0.3
+    },
+    "nullReading": "one-shot",
+    "nullDiffPostFill": {
+     "n": 25,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "nullDiffReturns": {
+     "n": 25,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "mixedInactiveShare": {
+     "treatment": 1,
+     "noMutation": 1,
+     "neutral": 1
+    },
+    "main": {
+     "stratum": "m4 d0.5",
+     "mutation": {
+      "runs": 10,
+      "fills": {
+       "n": 10,
+       "mean": 2.6,
+       "lo": 2.3,
+       "hi": 2.8
+      },
+      "atStartFills": {
+       "n": 10,
+       "mean": 1.1,
+       "lo": 1,
+       "hi": 1.3
+      },
+      "lateFills": {
+       "n": 10,
+       "mean": 0.1,
+       "lo": 0,
+       "hi": 0.3
+      },
+      "postFill": {
+       "n": 10,
+       "mean": 0.1,
+       "lo": 0,
+       "hi": 0.3
+      },
+      "returns": {
+       "n": 10,
+       "mean": 0.1,
+       "lo": 0,
+       "hi": 0.3
+      },
+      "replacements": {
+       "n": 10,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 10,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 1,
+      "extinct": 0
+     },
+     "noMutation": {
+      "runs": 5,
+      "fills": {
+       "n": 5,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 5,
+       "mean": 0.6,
+       "lo": 0.2,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "diffPostFill": {
+      "n": 15,
+      "mean": 0.1,
+      "lo": 0,
+      "hi": 0.3
+     },
+     "diffReturns": {
+      "n": 15,
+      "mean": 0.1,
+      "lo": 0,
+      "hi": 0.3
+     },
+     "diffLateFills": {
+      "n": 15,
+      "mean": 0.1,
+      "lo": 0,
+      "hi": 0.3
+     },
+     "perE5": {
+      "mutation": 0.0125,
+      "noMutation": 0
+     },
+     "reading": "unclear",
+     "readingWithoutExtinct": "unclear"
+    },
+    "null": {
+     "stratum": "m4 neutral d0.5",
+     "mutation": {
+      "runs": 20,
+      "fills": {
+       "n": 20,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 20,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "noMutation": {
+      "runs": 5,
+      "fills": {
+       "n": 5,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 5,
+       "mean": 0.6,
+       "lo": 0.2,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "diffPostFill": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "diffReturns": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "diffLateFills": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "perE5": {
+      "mutation": 0,
+      "noMutation": 0
+     },
+     "reading": "one-shot",
+     "readingWithoutExtinct": "one-shot"
+    },
+    "eventsByRole": {
+     "treatment": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 1,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 1,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 6,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 7,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 8,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 9,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 10,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     },
+     "no-mutation": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 0,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     },
+     "neutral": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 0,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 6,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 7,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 8,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 9,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 10,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 11,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 12,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 13,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 14,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 15,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 16,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 17,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 18,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 19,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 20,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     }
+    }
+   },
+   {
+    "variant": "d0.6",
+    "reading": "unclear",
+    "diffPostFill": {
+     "n": 15,
+     "mean": 0.2,
+     "lo": 0,
+     "hi": 0.4
+    },
+    "diffReturns": {
+     "n": 15,
+     "mean": 0.2,
+     "lo": 0,
+     "hi": 0.4
+    },
+    "nullReading": "one-shot",
+    "nullDiffPostFill": {
+     "n": 25,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "nullDiffReturns": {
+     "n": 25,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "mixedInactiveShare": {
+     "treatment": 0.3501764733329599,
+     "noMutation": 0.24259894385949882,
+     "neutral": 0.6814402532414897
+    },
+    "main": {
+     "stratum": "m4 d0.6",
+     "mutation": {
+      "runs": 10,
+      "fills": {
+       "n": 10,
+       "mean": 3.1,
+       "lo": 2.6,
+       "hi": 3.6
+      },
+      "atStartFills": {
+       "n": 10,
+       "mean": 1,
+       "lo": 0.8,
+       "hi": 1.2
+      },
+      "lateFills": {
+       "n": 10,
+       "mean": 0.4,
+       "lo": 0.1,
+       "hi": 0.6050000000000182
+      },
+      "postFill": {
+       "n": 10,
+       "mean": 0.2,
+       "lo": 0,
+       "hi": 0.4
+      },
+      "returns": {
+       "n": 10,
+       "mean": 0.2,
+       "lo": 0,
+       "hi": 0.4
+      },
+      "replacements": {
+       "n": 10,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 10,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 2,
+      "extinct": 0
+     },
+     "noMutation": {
+      "runs": 5,
+      "fills": {
+       "n": 5,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 5,
+       "mean": 0.6,
+       "lo": 0.2,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "diffPostFill": {
+      "n": 15,
+      "mean": 0.2,
+      "lo": 0,
+      "hi": 0.4
+     },
+     "diffReturns": {
+      "n": 15,
+      "mean": 0.2,
+      "lo": 0,
+      "hi": 0.4
+     },
+     "diffLateFills": {
+      "n": 15,
+      "mean": 0.4,
+      "lo": 0.2,
+      "hi": 0.7
+     },
+     "perE5": {
+      "mutation": 0.025,
+      "noMutation": 0
+     },
+     "reading": "unclear",
+     "readingWithoutExtinct": "unclear"
+    },
+    "null": {
+     "stratum": "m4 neutral d0.6",
+     "mutation": {
+      "runs": 20,
+      "fills": {
+       "n": 20,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 20,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "noMutation": {
+      "runs": 5,
+      "fills": {
+       "n": 5,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 5,
+       "mean": 0.6,
+       "lo": 0.2,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "diffPostFill": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "diffReturns": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "diffLateFills": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "perE5": {
+      "mutation": 0,
+      "noMutation": 0
+     },
+     "reading": "one-shot",
+     "readingWithoutExtinct": "one-shot"
+    },
+    "eventsByRole": {
+     "treatment": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 2,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 6,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 7,
+        "phototroph": 0,
+        "chemotroph": 1,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 8,
+        "phototroph": 0,
+        "chemotroph": 1,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 9,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 10,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     },
+     "no-mutation": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 0,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     },
+     "neutral": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 0,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 6,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 7,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 8,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 9,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 10,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 11,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 12,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 13,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 14,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 15,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 16,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 17,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 18,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 19,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 20,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     }
+    }
+   },
+   {
+    "variant": "d0.7",
+    "reading": "unclear",
+    "diffPostFill": {
+     "n": 15,
+     "mean": 0.2,
+     "lo": 0,
+     "hi": 0.4
+    },
+    "diffReturns": {
+     "n": 15,
+     "mean": 0.2,
+     "lo": 0,
+     "hi": 0.4
+    },
+    "nullReading": "one-shot",
+    "nullDiffPostFill": {
+     "n": 25,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "nullDiffReturns": {
+     "n": 25,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "mixedInactiveShare": {
+     "treatment": 0.3098672938397772,
+     "noMutation": 0.2042131471033636,
+     "neutral": 0.17176478992220912
+    },
+    "main": {
+     "stratum": "m4 d0.7",
+     "mutation": {
+      "runs": 10,
+      "fills": {
+       "n": 10,
+       "mean": 2.8,
+       "lo": 2.4,
+       "hi": 3.2
+      },
+      "atStartFills": {
+       "n": 10,
+       "mean": 1.1,
+       "lo": 0.8,
+       "hi": 1.4
+      },
+      "lateFills": {
+       "n": 10,
+       "mean": 0.5,
+       "lo": 0.2,
+       "hi": 0.9
+      },
+      "postFill": {
+       "n": 10,
+       "mean": 0.2,
+       "lo": 0,
+       "hi": 0.4
+      },
+      "returns": {
+       "n": 10,
+       "mean": 0.2,
+       "lo": 0,
+       "hi": 0.4
+      },
+      "replacements": {
+       "n": 10,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 10,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 2,
+      "extinct": 0
+     },
+     "noMutation": {
+      "runs": 5,
+      "fills": {
+       "n": 5,
+       "mean": 1.2,
+       "lo": 1,
+       "hi": 1.6
+      },
+      "atStartFills": {
+       "n": 5,
+       "mean": 0.8,
+       "lo": 0.4,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "diffPostFill": {
+      "n": 15,
+      "mean": 0.2,
+      "lo": 0,
+      "hi": 0.4
+     },
+     "diffReturns": {
+      "n": 15,
+      "mean": 0.2,
+      "lo": 0,
+      "hi": 0.4
+     },
+     "diffLateFills": {
+      "n": 15,
+      "mean": 0.5,
+      "lo": 0.2,
+      "hi": 0.9
+     },
+     "perE5": {
+      "mutation": 0.025,
+      "noMutation": 0
+     },
+     "reading": "unclear",
+     "readingWithoutExtinct": "unclear"
+    },
+    "null": {
+     "stratum": "m4 neutral d0.7",
+     "mutation": {
+      "runs": 20,
+      "fills": {
+       "n": 20,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 20,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "noMutation": {
+      "runs": 5,
+      "fills": {
+       "n": 5,
+       "mean": 1.2,
+       "lo": 1,
+       "hi": 1.6
+      },
+      "atStartFills": {
+       "n": 5,
+       "mean": 0.8,
+       "lo": 0.4,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "diffPostFill": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "diffReturns": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "diffLateFills": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "perE5": {
+      "mutation": 0,
+      "noMutation": 0
+     },
+     "reading": "one-shot",
+     "readingWithoutExtinct": "one-shot"
+    },
+    "eventsByRole": {
+     "treatment": {
+      "total": {
+       "phototroph": 1,
+       "chemotroph": 0,
+       "decomposer": 0,
+       "mixed": 1
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 1,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 6,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 1
+       },
+       {
+        "seed": 7,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 8,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 9,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 10,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     },
+     "no-mutation": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 0,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     },
+     "neutral": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 0,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 6,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 7,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 8,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 9,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 10,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 11,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 12,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 13,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 14,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 15,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 16,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 17,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 18,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 19,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 20,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     }
+    }
+   },
+   {
+    "variant": "d0.6-noinactive",
+    "reading": "unclear",
+    "diffPostFill": {
+     "n": 15,
+     "mean": 0.2,
+     "lo": 0,
+     "hi": 0.4
+    },
+    "diffReturns": {
+     "n": 15,
+     "mean": 0.2,
+     "lo": 0,
+     "hi": 0.4
+    },
+    "nullReading": "one-shot",
+    "nullDiffPostFill": {
+     "n": 25,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "nullDiffReturns": {
+     "n": 25,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "mixedInactiveShare": {
+     "treatment": 0,
+     "noMutation": 0,
+     "neutral": 0
+    },
+    "main": {
+     "stratum": "m4 d0.6-noinactive",
+     "mutation": {
+      "runs": 10,
+      "fills": {
+       "n": 10,
+       "mean": 3.1,
+       "lo": 2.6,
+       "hi": 3.6
+      },
+      "atStartFills": {
+       "n": 10,
+       "mean": 1,
+       "lo": 0.8,
+       "hi": 1.2
+      },
+      "lateFills": {
+       "n": 10,
+       "mean": 0.4,
+       "lo": 0.1,
+       "hi": 0.6050000000000182
+      },
+      "postFill": {
+       "n": 10,
+       "mean": 0.2,
+       "lo": 0,
+       "hi": 0.4
+      },
+      "returns": {
+       "n": 10,
+       "mean": 0.2,
+       "lo": 0,
+       "hi": 0.4
+      },
+      "replacements": {
+       "n": 10,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 10,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 2,
+      "extinct": 0
+     },
+     "noMutation": {
+      "runs": 5,
+      "fills": {
+       "n": 5,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 5,
+       "mean": 0.6,
+       "lo": 0.2,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "diffPostFill": {
+      "n": 15,
+      "mean": 0.2,
+      "lo": 0,
+      "hi": 0.4
+     },
+     "diffReturns": {
+      "n": 15,
+      "mean": 0.2,
+      "lo": 0,
+      "hi": 0.4
+     },
+     "diffLateFills": {
+      "n": 15,
+      "mean": 0.4,
+      "lo": 0.2,
+      "hi": 0.7
+     },
+     "perE5": {
+      "mutation": 0.025,
+      "noMutation": 0
+     },
+     "reading": "unclear",
+     "readingWithoutExtinct": "unclear"
+    },
+    "null": {
+     "stratum": "m4 neutral d0.6-noinactive",
+     "mutation": {
+      "runs": 20,
+      "fills": {
+       "n": 20,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 20,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 20,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "noMutation": {
+      "runs": 5,
+      "fills": {
+       "n": 5,
+       "mean": 1,
+       "lo": 1,
+       "hi": 1
+      },
+      "atStartFills": {
+       "n": 5,
+       "mean": 0.6,
+       "lo": 0.2,
+       "hi": 1
+      },
+      "lateFills": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "postFill": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "returns": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "replacements": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "earlyReentries": {
+       "n": 5,
+       "mean": 0,
+       "lo": 0,
+       "hi": 0
+      },
+      "runsWithEvent": 0,
+      "extinct": 0
+     },
+     "diffPostFill": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "diffReturns": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "diffLateFills": {
+      "n": 25,
+      "mean": 0,
+      "lo": 0,
+      "hi": 0
+     },
+     "perE5": {
+      "mutation": 0,
+      "noMutation": 0
+     },
+     "reading": "one-shot",
+     "readingWithoutExtinct": "one-shot"
+    },
+    "eventsByRole": {
+     "treatment": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 2,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 6,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 7,
+        "phototroph": 0,
+        "chemotroph": 1,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 8,
+        "phototroph": 0,
+        "chemotroph": 1,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 9,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 10,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     },
+     "no-mutation": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 0,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     },
+     "neutral": {
+      "total": {
+       "phototroph": 0,
+       "chemotroph": 0,
+       "decomposer": 0,
+       "mixed": 0
+      },
+      "perRun": [
+       {
+        "seed": 1,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 2,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 3,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 4,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 5,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 6,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 7,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 8,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 9,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 10,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 11,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 12,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 13,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 14,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 15,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 16,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 17,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 18,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 19,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       },
+       {
+        "seed": 20,
+        "phototroph": 0,
+        "chemotroph": 0,
+        "decomposer": 0,
+        "mixed": 0
+       }
+      ]
+     }
+    }
+   }
+  ],
+  "robustness": "robust",
+  "specificity": "specific",
+  "specificityByVariant": {
+   "d0.5": "specific",
+   "d0.6": "specific",
+   "d0.7": "specific",
+   "d0.6-noinactive": "specific"
+  }
+ },
+ "ext": {
+  "reading": "recurring",
+  "diffReturns": {
+   "n": 10,
+   "mean": 2.4,
+   "lo": 0.8,
+   "hi": 4.2
+  },
+  "null": {
+   "reading": "one-shot",
+   "diffReturns": {
+    "n": 10,
+    "mean": 0,
+    "lo": 0,
+    "hi": 0
+   }
+  },
+  "specificity": "specific",
+  "perBlockMean": {
+   "treatment": [
+    0.4,
+    0,
+    0,
+    0.2,
+    0.2,
+    0,
+    0.4,
+    0.4,
+    0.4,
+    0.4
+   ],
+   "no-mutation": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "neutral": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "lateMean": {
+   "treatment": 1.6,
+   "no-mutation": 0,
+   "neutral": 0
+  },
+  "statement": "excess role returns at 10⁷ (specific)",
+  "perCondition": {
+   "treatment": {
+    "runs": 5,
+    "meanReturns": 2.4,
+    "returnsPerE5": 0.024489795918367346,
+    "perBlockMean": [
+     0.4,
+     0,
+     0,
+     0.2,
+     0.2,
+     0,
+     0.4,
+     0.4,
+     0.4,
+     0.4
+    ],
+    "lateMean": 1.6
+   },
+   "no-mutation": {
+    "runs": 5,
+    "meanReturns": 0,
+    "returnsPerE5": 0,
+    "perBlockMean": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "lateMean": 0
+   },
+   "neutral": {
+    "runs": 5,
+    "meanReturns": 0,
+    "returnsPerE5": 0,
+    "perBlockMean": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "lateMean": 0
+   }
+  },
+  "row": {
+   "stratum": "ext",
+   "mutation": {
+    "runs": 5,
+    "fills": {
+     "n": 5,
+     "mean": 3.4,
+     "lo": 2.8,
+     "hi": 4
+    },
+    "atStartFills": {
+     "n": 5,
+     "mean": 1.2,
+     "lo": 0.6,
+     "hi": 1.8
+    },
+    "lateFills": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "postFill": {
+     "n": 5,
+     "mean": 2.4,
+     "lo": 0.8,
+     "hi": 4.2
+    },
+    "returns": {
+     "n": 5,
+     "mean": 2.4,
+     "lo": 0.8,
+     "hi": 4.2
+    },
+    "replacements": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "earlyReentries": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "runsWithEvent": 4,
+    "extinct": 0
+   },
+   "noMutation": {
+    "runs": 5,
+    "fills": {
+     "n": 5,
+     "mean": 1,
+     "lo": 1,
+     "hi": 1
+    },
+    "atStartFills": {
+     "n": 5,
+     "mean": 0.4,
+     "lo": 0,
+     "hi": 0.8
+    },
+    "lateFills": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "postFill": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "returns": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "replacements": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "earlyReentries": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "runsWithEvent": 0,
+    "extinct": 0
+   },
+   "diffPostFill": {
+    "n": 10,
+    "mean": 2.4,
+    "lo": 0.8,
+    "hi": 4.2
+   },
+   "diffReturns": {
+    "n": 10,
+    "mean": 2.4,
+    "lo": 0.8,
+    "hi": 4.2
+   },
+   "diffLateFills": {
+    "n": 10,
+    "mean": 0,
+    "lo": 0,
+    "hi": 0
+   },
+   "reading": "recurring",
+   "readingWithoutExtinct": "recurring"
+  },
+  "nullRow": {
+   "stratum": "ext neutral",
+   "mutation": {
+    "runs": 5,
+    "fills": {
+     "n": 5,
+     "mean": 1,
+     "lo": 1,
+     "hi": 1
+    },
+    "atStartFills": {
+     "n": 5,
+     "mean": 1,
+     "lo": 1,
+     "hi": 1
+    },
+    "lateFills": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "postFill": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "returns": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "replacements": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "earlyReentries": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "runsWithEvent": 0,
+    "extinct": 0
+   },
+   "noMutation": {
+    "runs": 5,
+    "fills": {
+     "n": 5,
+     "mean": 1,
+     "lo": 1,
+     "hi": 1
+    },
+    "atStartFills": {
+     "n": 5,
+     "mean": 0.4,
+     "lo": 0,
+     "hi": 0.8
+    },
+    "lateFills": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "postFill": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "returns": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "replacements": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "earlyReentries": {
+     "n": 5,
+     "mean": 0,
+     "lo": 0,
+     "hi": 0
+    },
+    "runsWithEvent": 0,
+    "extinct": 0
+   },
+   "diffPostFill": {
+    "n": 10,
+    "mean": 0,
+    "lo": 0,
+    "hi": 0
+   },
+   "diffReturns": {
+    "n": 10,
+    "mean": 0,
+    "lo": 0,
+    "hi": 0
+   },
+   "diffLateFills": {
+    "n": 10,
+    "mean": 0,
+    "lo": 0,
+    "hi": 0
+   },
+   "reading": "one-shot",
+   "readingWithoutExtinct": "one-shot"
+  },
+  "returnsByRole": {
+   "treatment": {
+    "total": {
+     "phototroph": 2,
+     "chemotroph": 3,
+     "decomposer": 0,
+     "mixed": 7
+    },
+    "perRun": [
+     {
+      "seed": 101,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 102,
+      "phototroph": 1,
+      "chemotroph": 3,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 103,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 1
+     },
+     {
+      "seed": 104,
+      "phototroph": 1,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 105,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 6
+     }
+    ]
+   },
+   "no-mutation": {
+    "total": {
+     "phototroph": 0,
+     "chemotroph": 0,
+     "decomposer": 0,
+     "mixed": 0
+    },
+    "perRun": [
+     {
+      "seed": 101,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 102,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 103,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 104,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 105,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     }
+    ]
+   },
+   "neutral": {
+    "total": {
+     "phototroph": 0,
+     "chemotroph": 0,
+     "decomposer": 0,
+     "mixed": 0
+    },
+    "perRun": [
+     {
+      "seed": 101,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 102,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 103,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 104,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     },
+     {
+      "seed": 105,
+      "phototroph": 0,
+      "chemotroph": 0,
+      "decomposer": 0,
+      "mixed": 0
+     }
+    ]
+   }
+  },
+  "postHocExcludingMixed": {
+   "note": "post hoc, computed after the fixed reading was seen; context only; the fixed reading and statement above stand",
+   "treatmentReturnsPerRun": [
+    {
+     "seed": 101,
+     "returns": 0
+    },
+    {
+     "seed": 102,
+     "returns": 4
+    },
+    {
+     "seed": 103,
+     "returns": 0
+    },
+    {
+     "seed": 104,
+     "returns": 1
+    },
+    {
+     "seed": 105,
+     "returns": 0
+    }
+   ],
+   "treatmentReturns": {
+    "n": 5,
+    "mean": 1,
+    "lo": 0,
+    "hi": 2.4
+   },
+   "noMutationReturns": {
+    "n": 5,
+    "mean": 0,
+    "lo": 0,
+    "hi": 0
+   },
+   "diffReturns": {
+    "n": 10,
+    "mean": 1,
+    "lo": 0,
+    "hi": 2.4
+   },
+   "reading": "unclear"
+  }
+ }
+}

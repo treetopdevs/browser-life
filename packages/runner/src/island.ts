@@ -11,6 +11,26 @@ import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@
 import { continuationError, decodeArtifact, immigrantError, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
 import { observationDigests } from "./stitch.ts";
 
+/** What this island's code can run, sent as the JSON body of every
+ * `POST /api/next`. The coordinator offers segments and verify tasks of a
+ * pond experiment (a preset in its `:pond_presets`) only to an island that
+ * lists `"ponds-v1"`: older code cannot run the pond cycle
+ * (WorldConfig.pondPeriod), and would report a valid predecessor as invalid,
+ * its runner throwing on the unknown preset (see Coordinator.Queue's
+ * moduledoc). `"ponds-v2"` adds the transition hunt's arms nat and shuf
+ * (conditions pond-nat and pond-shuf): older code throws on those arms in
+ * the same way, so the coordinator hands a run of either only to an island
+ * that lists both. */
+export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2"];
+
+/** Why this island will not run `spec`, or null. A branch run (RunSpec.branch)
+ * starts from a source checkpoint that only tools/run.ts reads, from a local
+ * bundle: branches are not distributed, the coordinator never builds one, and
+ * a task that carries one is refused before anything is fetched. */
+export function specRefusal(spec: RunSpec): string | null {
+  return (spec as { branch?: unknown }).branch === undefined ? null : "the spec is a branch run (spec.branch); branches are not distributed, so an island does not run them";
+}
+
 export interface Task {
   kind: "run" | "verify" | "idle";
   lease?: string;
@@ -250,7 +270,7 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
   let done = 0;
   let waiting = false;
   while (!opt.signal?.aborted && (!opt.maxTasks || done < opt.maxTasks)) {
-    const task = await call<Task>(`/api/next?${q()}`, { method: "POST" });
+    const task = await postJson<Task>(`/api/next?${q()}`, { capabilities: ISLAND_CAPABILITIES });
     if (task.kind === "idle" || !task.segment || !task.spec || !task.lease) {
       if (opt.maxTasks) break;
       if (!opt.signal?.aborted && !waiting) {
@@ -274,6 +294,8 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
     waiting = false;
     const seg = task.segment;
     const lease = task.lease;
+    const refusal = specRefusal(task.spec);
+    if (refusal) throw new Error(`refusing ${seg.run} #${seg.index}: ${refusal}`);
     log(`${task.kind} ${seg.run} #${seg.index} (${seg.steps} steps from t=${seg.startStep})`);
     const beat = setInterval(() => {
       postJson(`/api/segments/${seg.id}/heartbeat?${q()}`, { lease }).catch((e) => log(`  heartbeat: ${e.message}`));

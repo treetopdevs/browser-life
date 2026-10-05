@@ -86,6 +86,47 @@ export const CONDITIONS: Condition[] = [
     // specConfig (runner.ts) -- not here.
     apply: (c) => (c.migrationPeriod ? { migrationPeriod: 0, migrantCount: 0 } : {}),
   },
+  {
+    id: "pond-rand",
+    label: "Random pond donors",
+    removes: "selection among ponds (donors drawn at random from the surviving ponds)",
+    // Protocol v1's rand arm (docs/scaffold-protocol-v1.md): the same cycle, with donors drawn at random.
+    apply: (c) => {
+      if (c.pondPeriod === undefined) throw new Error("pond-rand control needs a preset with the pond cycle");
+      return { pondArm: "rand" };
+    },
+  },
+  {
+    id: "pond-cont",
+    label: "No pond cycle",
+    removes: "the pond cycle (each boundary is only measured, one row per pond)",
+    // Protocol v1's cont arm: no transform, so the physics is that of the same config without pond keys.
+    apply: (c) => {
+      if (c.pondPeriod === undefined) throw new Error("pond-cont control needs a preset with the pond cycle");
+      return { pondArm: "cont" };
+    },
+  },
+  {
+    id: "pond-nat",
+    label: "Natural current",
+    removes: "nothing (the transition hunt's regime: ponds die at random, and the dying are reseeded from the export zone of a donor drawn in proportion to its export)",
+    // The hunt's nat arm (docs/scaffold-transition-hunt-v1.md, "The current"): e = 1/2, export zone at Chebyshev distance 28.
+    // A fallback e = 1 uses RunSpec.overrides ({ pondDeath: 65536 }), which wins after this condition.
+    apply: (c) => {
+      if (c.pondPeriod === undefined) throw new Error("pond-nat needs a preset with the pond cycle");
+      return { pondArm: "nat", pondDeath: 32_768, pondExport: 28 };
+    },
+  },
+  {
+    id: "pond-shuf",
+    label: "Shuffled current",
+    removes: "the link between a pond's own export and its number of offspring (the export weights are dealt to the exporting ponds at random)",
+    // The hunt's shuf arm: pond-nat's cycle with the same multiset of weights assigned at random among the exporting ponds.
+    apply: (c) => {
+      if (c.pondPeriod === undefined) throw new Error("pond-shuf needs a preset with the pond cycle");
+      return { pondArm: "shuf", pondDeath: 32_768, pondExport: 28 };
+    },
+  },
 ];
 
 export function conditionById(id: string): Condition {

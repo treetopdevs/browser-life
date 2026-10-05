@@ -32,9 +32,10 @@ describe("m4 growth precision extension", () => {
     expect(upper95(400, 20000)).toBeCloseTo(0.021706022589480678, 10);
     expect(upper95(463, 20000)).toBeCloseTo(0.024976291403849278, 10);
     expect(upper95(464, 20000)).toBeCloseTo(0.02502812732812322, 10);
-    // The production form overflows at this n (it returns a lower bound of 0,
-    // so an upper bound of 1); the extension must not use it.
-    expect(1 - binomialLowerBound(19537, 20000, 0.05)).toBeGreaterThan(0.5);
+    // When the extension was written, the production form overflowed at this n (it returned a
+    // lower bound of 0, so an upper bound of 1), so the extension does not use it. Main's
+    // 0d7f1bb7 later moved production to a log-space sum above n = 1000; it now agrees here.
+    expect(1 - binomialLowerBound(19537, 20000, 0.05)).toBeCloseTo(upper95(463, 20000), 10);
   });
 
   // Node and Deno may differ in the last ulp of a few transcendental results;

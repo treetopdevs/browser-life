@@ -1,6 +1,8 @@
-# Rules (RULE_VERSION 1)
+# Rules (versions 1 and 2)
 
 The executable specification is `packages/sim-ref/src/step.ts`; the WGSL kernels in `packages/sim-gpu/src/shaders.ts` must match it bit for bit, which `packages/sim-gpu/src/golden.ts` checks on every WebGPU host and `packages/sim-ref/test/golden-hashes.test.ts` pins. This page explains the rules in prose and records the arithmetic-bounds argument.
+
+Rule 2 adds the optional `polymerDrag` mechanism described below. It is an experimental extension in the construction workspace, not a demonstrated route to evolution. `RULE_VERSION` identifies the latest supported version (2), while `DEFAULT_RULE_VERSION` and `defaultConfig()` retain rule 1. Select `ruleVersion: 2` explicitly for experimental drag. Existing presets retain rule 1, and historical checkpoints are decoded without upgrading their configuration. Rule 1 rejects enabled polymer drag. With drag absent or false, rule 2 has the same dynamics as rule 1; its explicitly different version still produces a different configuration digest. The deployed coordinator remains configured for rule 1, so rule-2 experiments are local only.
 
 ## State
 
@@ -29,6 +31,16 @@ Potential energies `eA ≤ eC < eB < eP` make every reaction balance: matter is 
 
 Every stochastic rounding uses `floor(x) + [frac(x) > rnd]` with a deterministic draw, so expectations are exact and the CPU and GPU agree.
 
+### Optional polymer drag (rule 2)
+
+With `polymerDrag: true`, each original outgoing integer B, P or E share is thinned by the source's mobility
+
+`mobilityQ8 = max(1, floor(8192 / (32 + P_source)))`.
+
+The transmitted share is `mulFrac(originalShare, mobilityQ8, 8, draw)`. Any unsent material or energy stays at the source through the existing remainder rule. At P=0, transmission is unchanged; at P=32 its expectation is half the original offer. The positive floor leaves a 1/256 transmission probability even at maximal P, including for a one-quantum offer. This does not remove zeros already caused by the original integer reintegration. Draws use the source cell, step, species and outgoing direction (purposes 64–90), with the same key at the source and destination. Polymer changes both its own mobility and that of biomass and stored energy at its site; the rule gives no special protection to the genotype that built it.
+
+This is separate from adhesion's force and from dissolved-resource gating. A factorial experiment can independently disable drag and the A/C gate while leaving construction costs and polymer decay intact. Whether it permits persistent, expanding or competing patches is an experimental question.
+
 ## Bounds
 
 The rules assume the following, enforced by `validateConfig` and `validateState` (at world construction, GPU upload, reference construction and checkpoint decoding):
@@ -37,6 +49,7 @@ The rules assume the following, enforced by `validateConfig` and `validateState`
 - energies ≤ 31, hence `q · (energy gap) < 2^31`;
 - `E, S ≤ POOL_MAX = 2^28` per cell. Excess is exported as heat at the start of `react` and after every E or S increase, so `E + q·gap ≤ 2^28 + 2^26·31 < 2^32`;
 - after transport, `E ≤ 9 · 2^28 < 2^32` (at most nine sources contribute);
+- polymer drag has `1 ≤ mobilityQ8 ≤ 256`; stochastic thinning of an integer offer cannot exceed that offer. Thus every outgoing sum remains bounded by the original reintegration sum, its retained remainder is nonnegative, and the existing transport bounds remain valid. `32 + P ≤ 32 + 2^26` fits u32. The split `mulFrac` calculation avoids the overflowing unsplit `offer · mobilityQ8` product;
 - products with rates use `mulShr(a, b, s) = (a >> s)·b + ((a & mask)·b >> s)`, exact when `(a >> s)·b < 2^32`. For `a ≤ 2^26`: rate ×127 (s=7), light ×255 (s=8), and the summed rates ×762 (s=7) all fit;
 - `cat(B) = B − (K − ⌈K²/(B+K)⌉)` avoids the `B·K` product (K ≤ 65535);
 - per-cell heat is accumulated as a 64-bit (lo, hi) pair on the GPU and as an exact JavaScript number on the CPU. Workgroup sums of light, heat, fluxes and statistics use carry-aware (lo, hi) accumulators;
@@ -48,3 +61,5 @@ The `extremes` golden case runs a world at these limits (total matter at `MATTER
 ## Controls
 
 `neutral` expresses one reference phenotype everywhere while lineages and mutations still propagate. `motility: false` disables active movement. `adhesion: false` (the default) disables the polymer-gradient attraction term in flow, so a disabled world steps bit-identically to a build without the flag. There is no free controller output or genome slot for a dedicated adhesion signal without changing genome layout, so adhesion is derived from the existing "deposition of structural polymer" actuator (BUILD/P, see docs/plan.md decision 4) instead of adding one. Conditions in `packages/runner/src/conditions.ts` map these flags and parameters to the pre-registered controls.
+
+Construction experiments additionally use `polymerTransport: false` to remove only polymer's A/C diffusion gate. BUILD still consumes biomass and energy; P still decays and participates in bound transport and the genome lottery. This optional control is absent from legacy defaults. `polymerDrag: false` disables only rule 2's outgoing-share thinning. Neither control refunds construction costs.

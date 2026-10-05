@@ -67,6 +67,24 @@ deno run -A tools/analyze.ts runs/pilot/gradient
 deno run -A tools/bootstrap.ts --batches 50 --out runs/bootstrap
 ```
 
+To inspect one lineage of a finished bundle, with its exact ancestry rebuilt from `mutations.tsv` (no replay; design in `docs/lineage-inspector.md`):
+
+```bash
+deno run -A tools/lineage.ts --dir runs/pilot/gradient/treatment/seed-1 --twin runs/pilot/gradient/neutral/seed-1 --out dossier.json
+```
+
+The same tool takes a scaffold pond as its subject, with exact donor-packet descent from `ponds.tsv`:
+
+```bash
+deno run -A tools/lineage.ts pond --dir runs/scaffold/main/scaf/i0 --twin runs/scaffold/main/rand/i0 --out pond.json
+```
+
+Either dossier renders as a static panel, an HTML fragment ready to publish as an artifact:
+
+```bash
+deno run -A tools/report-html.ts lineage dossier.json --out dossier.html
+```
+
 ### Founder-policy comparison
 
 The staged founder-policy study is specified in [`docs/founder-policy-protocol-v1.md`](docs/founder-policy-protocol-v1.md). The `plan` stage checks the pinned selection-audit snapshots and writes the exact cohorts, seeds, configurations, thresholds, and source hashes. It does not run a simulation:

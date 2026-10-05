@@ -1,6 +1,8 @@
 // Ensemble analysis over run bundles written by tools/run.ts.
 //
 //   deno run -A tools/analyze.ts runs/<experiment>/<preset> [--out report]
+//   deno run -A tools/analyze.ts runs/m4-ext/gradient-m3 --registry extension   (registered 10^7 extension,
+//     thresholds from experiments/extension.ts; secondary and descriptive)
 //
 // 1. Activity threshold (Bedau & Packard): for a preset registered in
 //    experiments/endpoints.ts's ACTIVITY_THRESHOLDS (gradient-m3, spots-m3),
@@ -83,6 +85,12 @@ export interface AnalyzeOptions {
    * data that should be held to it.
    */
   ignoreFrozenThreshold?: boolean;
+  /**
+   * The threshold registry to use instead of ACTIVITY_THRESHOLDS: the registered 10^7 extension's
+   * (experiments/extension.ts, via `--registry extension`). Omitted: ACTIVITY_THRESHOLDS, exactly as
+   * at the freeze. `note` heads the report.
+   */
+  registry?: { thresholds: Record<string, ActivityThresholdEntry>; note: string };
 }
 
 export interface AnalyzeResult {
@@ -192,7 +200,10 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
     const real = runs.find((r) => !r.manifest.nullcal || r.manifest.presetIdentity !== undefined || r.manifest.initHash !== undefined);
     if (real) throw new Error(`ignoreFrozenThreshold is only for synthetic (nullcal) ensembles; ${real.condition} seed ${real.seed} under ${label} is not one`);
   }
-  const activityThresholds: Record<string, ActivityThresholdEntry> = options.ignoreFrozenThreshold ? {} : ACTIVITY_THRESHOLDS;
+  const activityThresholds: Record<string, ActivityThresholdEntry> = options.ignoreFrozenThreshold ? {} : (options.registry?.thresholds ?? ACTIVITY_THRESHOLDS);
+  // A registry override is for its own registered presets only; anything else would silently fall back
+  // to an in-sample (exploratory) threshold under the registry's banner.
+  if (options.registry && !options.registry.thresholds[presetId]) throw new Error(`preset "${presetId}" is not registered in the requested threshold registry`);
   const frozen = activityThresholds[presetId];
 
   // ---- provenance (Astra review, 2026-09-27, item 1) ----
@@ -746,7 +757,14 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
     heredity,
     runs: runs.map((r) => ({ condition: r.condition, seed: r.seed, trend: trends.get(r), stats: perRun.get(r) })),
   };
-  return { markdown: md, json, results, heldOut, charts };
+  if (!options.registry) return { markdown: md, json, results, heldOut, charts };
+  // A registered secondary analysis: every endpoint section is secondary and descriptive.
+  const secondaryMd =
+    options.registry.note +
+    md
+      .replace("\n## Primary endpoints (pre-registered)\n", "\n## Endpoints (registered secondary analysis; descriptive)\n")
+      .replace("\n## Held-out observables (pre-registered, confirmatory -- 2026-09-26 amendment)\n", "\n## Held-out observables (registered secondary analysis; descriptive)\n");
+  return { markdown: secondaryMd, json: { analysis: "registered secondary (10^7 extension); descriptive", ...json } as typeof json, results, heldOut, charts };
 }
 
 // ---------------------------------------------------------------------------
@@ -759,7 +777,7 @@ if (import.meta.main) {
   // import never runs the CLI body.
   const { parseArgs } = await import("jsr:@std/cli@1/parse-args");
   const a = parseArgs(Deno.args, {
-    string: ["out", "q"],
+    string: ["out", "q", "registry"],
     boolean: ["ignore-frozen-threshold"],
     default: { q: "0.95", "ignore-frozen-threshold": false },
   });
@@ -767,12 +785,15 @@ if (import.meta.main) {
   if (!root) throw new Error("usage: analyze.ts runs/<experiment>/<preset>");
   const outDir = a.out ?? `${root}/report`;
 
+  if (a.registry !== undefined && a.registry !== "extension") throw new Error(`--registry must be "extension" (the registered 10^7 extension); got ${a.registry}`);
+  const registry = a.registry === "extension" ? await import("../experiments/extension.ts").then((m) => ({ thresholds: m.EXTENSION_ACTIVITY_THRESHOLDS, note: m.EXTENSION_REPORT_NOTE })) : undefined;
   const loaded = await loadRunsUnder(root);
   if (!loaded.length) throw new Error(`no completed runs under ${root}`);
   const { markdown, json, charts } = await analyzeEnsemble(loaded, root, {
     q: Number(a.q ?? "0.95"),
     generatedAt: new Date().toISOString(),
     ignoreFrozenThreshold: Boolean(a["ignore-frozen-threshold"]),
+    ...(registry ? { registry } : {}),
   });
 
   await Deno.mkdir(outDir, { recursive: true });

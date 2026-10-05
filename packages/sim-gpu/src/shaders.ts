@@ -131,6 +131,8 @@ export function prelude(c: WorldConfig): string {
   };
   consts.NEUTRAL = c.neutral ? "true" : "false";
   consts.MOTILITY = c.motility === false ? "false" : "true";
+  consts.POLYMER_TRANSPORT = c.polymerTransport === false ? "false" : "true";
+  consts.POLYMER_DRAG = c.polymerDrag === true ? "true" : "false";
   consts.ADHESION = c.adhesion === true ? "true" : "false";
   consts.K_ADHESION = i(c.kAdhesion ?? DEFAULT_K_ADHESION);
   // See WorldConfig.ringNamespace / packLineageLo (@bl/schema): a mutation's
@@ -381,6 +383,14 @@ fn share(q: u32, w: u32) -> u32 {
   return (q / D2) * w + ((q % D2) * w) / D2;
 }
 
+// The outgoing direction and draw belong to the source at both endpoints.
+fn bound_share(q: u32, w: u32, sourceP: u32, baseS: u32, direction: u32, species: u32) -> u32 {
+  let offer = share(q, w);
+  if (!POLYMER_DRAG) { return offer; }
+  let mobility = max(1u, 8192u / (32u + sourceP));
+  return mul_frac(offer, mobility, 8u, draw(baseS, RND_POLYMER_DRAG + species * 9u + direction));
+}
+
 fn diff_out(q: u32, d: u32, De: u32, baseS: u32, sp: u32) -> u32 {
   let rot = baseS >> 30u;
   var portion = q >> 2u;
@@ -408,6 +418,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       let qB = cells[CH_B + s];
       let qP = cells[CH_P + s];
       let qE = cells[CH_E + s];
+      var baseS = 0u;
+      if (POLYMER_DRAG) { baseS = cell_base(step, s); }
       var sB: u32;
       var sP: u32;
       var sE: u32;
@@ -418,16 +430,18 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             if (tx == 0 && ty == 0) { continue; }
             let w = w1d(dx, tx) * w1d(dy, ty);
             if (w == 0u) { continue; }
-            sB -= share(qB, w);
-            sP -= share(qP, w);
-            sE -= share(qE, w);
+            let direction = u32((ty + 1) * 3 + tx + 1);
+            sB -= bound_share(qB, w, qP, baseS, direction, 0u);
+            sP -= bound_share(qP, w, qP, baseS, direction, 1u);
+            sE -= bound_share(qE, w, qP, baseS, direction, 2u);
           }
         }
       } else {
         let w = w1d(dx, -ox) * w1d(dy, -oy);
-        sB = share(qB, w);
-        sP = share(qP, w);
-        sE = share(qE, w);
+        let direction = u32((1 - oy) * 3 + 1 - ox);
+        sB = bound_share(qB, w, qP, baseS, direction, 0u);
+        sP = bound_share(qP, w, qP, baseS, direction, 1u);
+        sE = bound_share(qE, w, qP, baseS, direction, 2u);
       }
       inB += sB;
       inP += sP;
@@ -476,7 +490,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       let nbi = nbs[d];
       let Pn = cells[CH_P + nbi];
       var De = D;
-      if (sp < 2u) { De = (D * GATE_K) / (GATE_K + Pt + Pn); }
+      if (sp < 2u && POLYMER_TRANSPORT) { De = (D * GATE_K) / (GATE_K + Pt + Pn); }
       v -= diff_out(qt, d, De, baseT, sp);
       let qn = cells[ch + nbi];
       v += diff_out(qn, d ^ 1u, De, cell_base(step, nbi), sp);

@@ -166,6 +166,8 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 .stage-title .eyebrow { width: 100%; margin-bottom: 3px; }
 .stage-title h1 { margin: 0; font-size: 1.1875rem; line-height: 1.2; letter-spacing: -.03em; }
 .run-label { min-width: 0; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--soft); font-size: .6875rem; }
+.pond-status { color: var(--muted); }
+.pond-status[hidden] { display: none; }
 .stage-actions { display: flex; align-items: center; gap: 14px; }
 .stage-rate { color: var(--muted); white-space: nowrap; font-size: .6875rem; }
 .view-bar { display: flex; align-items: flex-start; gap: 11px; }
@@ -235,6 +237,50 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 .verification .hint { margin: 10px 0 12px; }
 #verify-out { min-height: 18px; margin: 9px 0; color: var(--muted); overflow-wrap: anywhere; }
 .text-link { color: var(--accent); font-size: .71875rem; text-decoration: underline; text-underline-offset: 3px; }
+.lineage-open { margin-top: 12px; }
+.lineage-open[hidden] { display: none; }
+
+/* Lineage inspector drawer: over the evidence rail, the field stays visible. */
+.lineage-drawer {
+  position: fixed; z-index: 20; top: 62px; right: 0; bottom: 0; width: min(660px, 100vw);
+  display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--line);
+  box-shadow: -18px 0 40px oklch(0% 0 0 / .32);
+}
+.lineage-drawer[hidden] { display: none; }
+.drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 18px 10px; }
+.drawer-head h2 { margin: 7px 0 4px; font-size: 1.0625rem; line-height: 1.25; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.drawer-head h2:focus { outline: none; }
+.drawer-highlight { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 18px 10px; border-bottom: 1px solid var(--line-soft); color: var(--muted); font-size: .6875rem; }
+.drawer-highlight span:empty + button { display: none; }
+.drawer-highlight button { min-height: 28px; padding: 3px 8px; font-size: .6875rem; }
+.drawer-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 18px 28px; scrollbar-color: var(--line) transparent; }
+.drawer-body section { padding: 16px 0; border-bottom: 1px solid var(--line-soft); }
+.drawer-body h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 11px; font-size: .8125rem; }
+.lineage-actions { margin-top: 12px; }
+.curves { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.curves svg { display: block; width: 100%; height: auto; background: var(--bg); border: 1px solid var(--line-soft); border-radius: 4px; }
+.curves + .hint { margin-top: 8px; }
+.curve-label { fill: var(--muted); font: 9px var(--mono); }
+.curve-base { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.curve-root, .curve-subject { fill: none; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.curve-root { stroke: var(--muted); stroke-dasharray: 4 3; }
+.curve-subject { stroke: var(--accent); }
+.lineage-table-wrap { overflow-x: auto; margin-bottom: 10px; }
+.lineage-table { width: 100%; border-collapse: collapse; font: .6875rem var(--mono); font-variant-numeric: tabular-nums; }
+.lineage-table th, .lineage-table td { padding: 4px 6px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line-soft); }
+.lineage-table th { color: var(--muted); font-weight: 600; border-bottom-color: var(--line); }
+.lineage-table th:nth-child(1), .lineage-table td:nth-child(1), .lineage-table th:nth-child(3), .lineage-table td:nth-child(3),
+.lineage-table th:nth-child(4), .lineage-table td:nth-child(4), .lineage-table th:nth-child(5), .lineage-table td:nth-child(5) { text-align: left; }
+.lineage-table button { min-height: 24px; padding: 2px 8px; font-size: .625rem; }
+.expr .mark { display: inline-block; width: 7px; height: 7px; margin-right: 6px; vertical-align: 0; background: var(--soft); }
+.expr-controller .mark { border-radius: 50%; background: var(--nutrient); }
+.expr-physics .mark { background: var(--biomass); }
+.expr-probe-silent .mark { border-radius: 50%; background: transparent; border: 1.5px solid var(--soft); }
+.expr-clamped .mark { background: transparent; border: 1.5px dashed var(--soft); }
+.expr-unknown .mark { background: transparent; border: 1.5px dotted var(--soft); }
+.expr-root .mark { background: var(--text); transform: rotate(45deg) scale(.85); }
+.lineage-gaps { margin: 0; padding-left: 18px; color: var(--muted); font-size: .71875rem; }
+.lineage-gaps li + li { margin-top: 5px; }
 
 @media (max-width: 1160px) {
   .layout { grid-template-columns: minmax(220px, 244px) minmax(0, 1fr); grid-template-areas: "controls stage" "evidence evidence"; overflow-y: auto; }
@@ -245,6 +291,7 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
   .stage { min-height: 680px; overflow: visible; }
 }
 @media (max-width: 760px) {
+  .lineage-drawer { top: 0; width: 100vw; border-left: 0; }
   body.lab-page { height: auto; min-height: 100dvh; overflow: visible; }
   .top { grid-template-columns: 1fr auto; gap: 0 12px; padding: 11px 14px 0; }
   .site-nav { grid-row: 2; grid-column: 1 / -1; min-height: 38px; }
@@ -261,6 +308,7 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
   .history { min-height: 0; }
 }
 @media (max-width: 500px) {
+  .curves { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .header-status { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; padding-block: 6px; }
   .site-nav { grid-row: 3; }
   .stage-title { display: block; }
@@ -274,6 +322,7 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 }
 @media (pointer: coarse) {
   button, .button, select, input[type="number"] { min-height: 44px; }
+  .lineage-table button { min-height: 36px; }
   .site-nav a { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {

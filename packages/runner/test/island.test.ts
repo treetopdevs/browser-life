@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PRESETS, encodeCheckpoint, initWorld, stateHash } from "@bl/schema";
 import { ActivityTracker, Tracker, b64 } from "@bl/metrics";
 import { METRICS_VERSION } from "@bl/schema";
-import { continuationError, decideRejoin, probeIslandIdentity, resolveRejoin, runIsland, specConfig, STALE_REGISTRATION, timeoutSignal, type ObserverState, type RunSpec } from "../src/index.ts";
+import { continuationError, decideRejoin, ISLAND_CAPABILITIES, probeIslandIdentity, resolveRejoin, runIsland, specConfig, STALE_REGISTRATION, timeoutSignal, type ObserverState, type RunSpec } from "../src/index.ts";
 
 const spec: RunSpec = { experiment: "t", presetId: "spots", condition: "treatment", seed: 3, steps: 500, censusEvery: 100, deepEvery: 5, checkpointEvery: 0, activityThreshold: 7 };
 const start = { ...initWorld(specConfig(spec), PRESETS.find((p) => p.id === "spots")!.init), step: 500 };
@@ -211,6 +211,29 @@ describe("island idle wait", () => {
 
     expect(polls).toBe(2);
     expect(messages.filter((message) => message.includes("waiting for work"))).toHaveLength(1);
+  });
+
+  // The coordinator gates pond work on this capability (Coordinator.Queue's
+  // moduledoc), so it must go with every `/next`, not just the first.
+  it("advertises ISLAND_CAPABILITIES as the JSON body of every /next", async () => {
+    const controller = new AbortController();
+    const bodies: unknown[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
+      const path = new URL(url).pathname;
+      const json = (v: unknown) => new Response(JSON.stringify(v), { headers: { "content-type": "application/json" } });
+      if (path === "/api/islands") return json({ id: "isl", token: "tok" });
+      if (path === "/api/next") {
+        expect(init.method).toBe("POST");
+        expect(new Headers(init.headers).get("content-type")).toBe("application/json");
+        bodies.push(JSON.parse(String(init.body)));
+        if (bodies.length === 2) controller.abort();
+        return json({ kind: "idle" });
+      }
+      throw new Error(`unexpected ${path}`);
+    });
+    await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, idleMs: 1, signal: controller.signal });
+    expect(ISLAND_CAPABILITIES).toEqual(["ponds-v1", "ponds-v2"]);
+    expect(bodies).toEqual([{ capabilities: ["ponds-v1", "ponds-v2"] }, { capabilities: ["ponds-v1", "ponds-v2"] }]);
   });
 
   // Review 5: Stop can abort while `/next` is in flight and it comes back

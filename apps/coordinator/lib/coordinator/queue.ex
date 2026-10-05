@@ -28,7 +28,7 @@ defmodule Coordinator.Queue do
       its own at `join/1` (`:metricsVersion`, missing ⇒ version 1 — an old
       island that predates the field); an experiment records its *required*
       version at creation (`:metrics_version` config, default current);
-      `pick_task/3` only offers an experiment's segments (run or verify) to
+      `pick_task/4` only offers an experiment's segments (run or verify) to
       an island whose declared version matches (others go idle *for that
       experiment*, not necessarily idle overall). That alone cannot stop an
       island lying about — or simply predating — the concept, so a run
@@ -50,12 +50,34 @@ defmodule Coordinator.Queue do
   small cross-run exchange packet from run *i*'s ring-predecessor's segment
   `k` (`Coordinator.Segment.t`'s `import_from`, packages/schema/src/exchange.ts),
   and is only offered once that predecessor segment is itself done or verified
-  (the barrier — see `pick_task/3`'s `import_ready?`). `"no-migration"` runs
+  (the barrier — see `pick_task/4`'s `import_ready?`). `"no-migration"` runs
   within a metapopulation experiment get no `import_from` wiring at all: that
   condition is the metapopulation-level control (same seeds, scheduled with no
   barrier, exactly as if there were no metapopulation). A divergence or reject
   propagates across both same-run and cross-run edges (`Coordinator.Segment`'s
   `dependents_graph/1` + `reachable/2`), not just along one run's own chain.
+
+  Pond experiments (a `presetId` in the `:pond_presets` config, whose worlds
+  run the pond cycle — packages/schema/src/presets.ts) are gated by island
+  capability. An island lists what its code can run in the body of every
+  `/api/next` (`capabilities`, e.g. `["ponds-v1"]`, see
+  packages/runner/src/island.ts's `ISLAND_CAPABILITIES`; read per request,
+  never persisted), and `pick_task/4` offers a pond experiment's segments, run
+  or verify, only to an island whose request carries `"ponds-v1"`. An island
+  built before the pond cycle cannot run them, and on a continuation would
+  report a valid predecessor as invalid (its runner throws on the unknown
+  preset inside the predecessor check). Every other experiment's work still
+  flows to every island, and a pond segment waiting for a capable island never
+  blocks it. A pond preset also refuses a `metapopulation` at creation: its
+  ponds each keep their own matter, which cross-run exchange would break.
+
+  The transition hunt's arms (`WorldConfig.pondArm` `nat` or `shuf`, set by the
+  conditions `pond-nat` and `pond-shuf`) need `"ponds-v2"` as well: an island
+  that advertises only `"ponds-v1"` cannot run them (its runner throws on the
+  arm). The gate is per segment, on its condition, so an experiment that mixes
+  them with other conditions still hands those to every `"ponds-v1"` island.
+  `"ponds-v2"` is asked for in addition to `"ponds-v1"`, never instead of it
+  (`ISLAND_CAPABILITIES` lists both); a `ponds-v1` rule is otherwise unchanged.
 
   Islands authenticate with a private token issued at join; every assignment
   carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
@@ -98,7 +120,10 @@ defmodule Coordinator.Queue do
   @doc "Public info for an already-authenticated island (never the token/token_hash); a read, not a claim -- see ApiController.me/2. Doesn't touch last_seen: authenticate/2 doesn't either, and this shouldn't add state a bare probe wouldn't otherwise have."
   def island_info(id), do: GenServer.call(__MODULE__, {:island_info, id})
   def create_experiment(spec), do: GenServer.call(__MODULE__, {:create, spec})
-  def next_task(island), do: GenServer.call(__MODULE__, {:next, island})
+
+  @doc "Claims the next task for `island`. `capabilities` is the list the island sent with this request (see the moduledoc); it gates pond work and is never stored."
+  def next_task(island, capabilities \\ []) when is_list(capabilities),
+    do: GenServer.call(__MODULE__, {:next, island, capabilities})
 
   def heartbeat(seg_id, island, lease),
     do: GenServer.call(__MODULE__, {:heartbeat, seg_id, island, lease})
@@ -258,14 +283,14 @@ defmodule Coordinator.Queue do
     end
   end
 
-  def handle_call({:next, island_id}, _from, s) do
+  def handle_call({:next, island_id, capabilities}, _from, s) do
     now = now()
 
     s =
       %{s | segments: Segment.reclaim_stale(s.segments, now, lease_ms())}
       |> put_in([:islands, island_id, :last_seen], now)
 
-    {task, s} = pick_task(s, island_id, now)
+    {task, s} = pick_task(s, island_id, capabilities, now)
     {:reply, {:ok, task}, persist(s)}
   end
 
@@ -640,6 +665,13 @@ defmodule Coordinator.Queue do
       not unique_list?(spec["conditions"], 16, &(&1 in conditions)) ->
         {:error, "conditions must be 1..16 unique values from #{Enum.join(conditions, ", ")}"}
 
+      # Each pond keeps its own matter (WorldConfig.pondPeriod), which a
+      # metapopulation's cross-run exchange would break; the runner refuses it
+      # too (packages/runner/src/runner.ts's specConfig), on every island.
+      pond_preset?(spec["presetId"]) and spec["metapopulation"] != nil ->
+        {:error,
+         "preset #{spec["presetId"]} cannot have a metapopulation: cross-run exchange would move matter into and out of its ponds"}
+
       (bad = incompatible(spec["presetId"], spec["conditions"], spec)) != nil ->
         {:error, "condition #{bad} does not apply to preset #{spec["presetId"]}"}
 
@@ -668,7 +700,10 @@ defmodule Coordinator.Queue do
       # *other* conditions' runs, which still migrate. This can't read packages/schema
       # itself (a separate app), so `:migration_period` in config.exs is a duplicated
       # fact that must be kept in sync with the preset it names -- like `:presets`/
-      # `:conditions`/`:incompatible` above already are.
+      # `:conditions`/`:incompatible` above already are. A pond preset's pondPeriod
+      # (`:pond_period`, the same kind of fact) takes the same two rules (the runner
+      # refuses one that is not a multiple of censusEvery too); no condition disables
+      # it ("pond-cont" keeps the period and only stops the transform).
       (bad =
          incompatible_cadence(
            spec["presetId"],
@@ -722,7 +757,9 @@ defmodule Coordinator.Queue do
   # every other condition): it is meaningful whenever *either* mechanism it
   # could remove is present -- tile migration configured for this preset
   # (`:migration_period`), or this spec has a `:metapopulation` -- so its
-  # compatibility depends on the *spec*, not just the preset.
+  # compatibility depends on the *spec*, not just the preset. A pond preset has
+  # neither (no migration, and `validate/1` refuses its metapopulation before
+  # this), so "no-migration" is always refused there.
   defp incompatible(preset, conditions, spec) do
     table = Application.get_env(:coordinator, :incompatible, %{})
     has_metapop = is_map(spec["metapopulation"])
@@ -746,6 +783,15 @@ defmodule Coordinator.Queue do
   defp effective_migration_period(preset, _condition),
     do: Map.get(Application.get_env(:coordinator, :migration_period, %{}), preset, 0)
 
+  # The pondPeriod one (preset, condition) run will actually run with: 0 if
+  # the preset has no pond cycle. Every condition keeps it, "pond-cont"
+  # included (that arm still measures at every boundary; it only skips the
+  # transform). See config.exs's `:pond_period` doc.
+  defp effective_pond_period(preset, _condition),
+    do: Map.get(Application.get_env(:coordinator, :pond_period, %{}), preset, 0)
+
+  defp pond_preset?(preset), do: preset in Application.get_env(:coordinator, :pond_presets, [])
+
   # The first cadence error among `conditions`' own runs (each condition is a
   # separate run against `preset`, at the same censusEvery/segmentSteps -- see
   # build_segments/2), or nil if every one of them is compatible. Defensive
@@ -756,21 +802,27 @@ defmodule Coordinator.Queue do
   defp incompatible_cadence(preset, conditions, census_every, segment_steps) do
     if is_list(conditions) do
       Enum.find_value(conditions, fn condition ->
-        period = effective_migration_period(preset, condition)
+        Enum.find_value(
+          [
+            {"migrationPeriod", effective_migration_period(preset, condition)},
+            {"pondPeriod", effective_pond_period(preset, condition)}
+          ],
+          fn {name, period} ->
+            cond do
+              period == 0 ->
+                nil
 
-        cond do
-          period == 0 ->
-            nil
+              rem(period, census_every) != 0 ->
+                "#{name} #{period} (condition #{condition}) must be a multiple of censusEvery"
 
-          rem(period, census_every) != 0 ->
-            "migrationPeriod #{period} (condition #{condition}) must be a multiple of censusEvery"
+              rem(segment_steps, period) != 0 ->
+                "segmentSteps must be a multiple of #{name} #{period} (condition #{condition})"
 
-          rem(segment_steps, period) != 0 ->
-            "segmentSteps must be a multiple of migrationPeriod #{period} (condition #{condition})"
-
-          true ->
-            nil
-        end
+              true ->
+                nil
+            end
+          end
+        )
       end)
     end
   end
@@ -905,22 +957,27 @@ defmodule Coordinator.Queue do
     do: Map.put(s, :index, Map.new(s.segments, fn {id, seg} -> {{seg.run, seg.index}, id} end))
 
   # Verification first (by a different island), then runnable segments in run
-  # order; segment k is runnable once k - 1 is done or verified.
-  defp pick_task(s, island, now) do
+  # order; segment k is runnable once k - 1 is done or verified. A segment this
+  # island's `capabilities` cannot run (see the moduledoc) is skipped, not
+  # waited for: later segments of other experiments are still offered.
+  defp pick_task(s, island, capabilities, now) do
     segs = s.segments |> Map.values() |> Enum.sort_by(&{&1.run, &1.index})
+    gated = gated_experiments(s, capabilities)
 
     verify =
       Enum.find(segs, fn seg ->
         seg.status == "done" and maybe_verify?(seg, s) and
           not Segment.pending_or_assigned_verify?(seg) and
           Segment.accepted_island(seg) != island and
-          metrics_version_compatible?(s, seg, island)
+          metrics_version_compatible?(s, seg, island) and
+          not gated?(gated, capabilities, seg)
       end)
 
     runnable =
       Enum.find(segs, fn seg ->
         seg.status == "pending" and (seg.index == 0 or prev_done?(s, seg)) and
-          metrics_version_compatible?(s, seg, island) and import_ready?(s, seg)
+          metrics_version_compatible?(s, seg, island) and import_ready?(s, seg) and
+          not gated?(gated, capabilities, seg)
       end)
 
     lease = rand(12)
@@ -961,7 +1018,7 @@ defmodule Coordinator.Queue do
   # producing island vanishes, the existing stale-lease reclaim
   # (`Segment.reclaim_stale/3`, already run at the top of `{:next, ...}`)
   # requeues its segment like any other, and any island can pick it up --
-  # once redone, this barrier clears on the next `pick_task/3` call.
+  # once redone, this barrier clears on the next `pick_task/4` call.
   defp import_ready?(s, seg) do
     case Map.get(seg, :import_from) do
       nil -> true
@@ -1043,7 +1100,7 @@ defmodule Coordinator.Queue do
 
   # A deterministic fraction of segments is replayed, and the final segment of
   # every run always is. Purely a function of the segment id (hashed) and the
-  # run's `verifyFraction`, so it is safe to recompute on every `pick_task/3`
+  # run's `verifyFraction`, so it is safe to recompute on every `pick_task/4`
   # call instead of deciding it once at completion time and storing the
   # answer — same result either way, one fewer thing to persist.
   defp maybe_verify?(seg, s) do
@@ -1056,6 +1113,38 @@ defmodule Coordinator.Queue do
 
   defp current_verify(seg),
     do: Enum.find(seg.attempts, &(&1.kind == "verify" and Attempt.pending?(&1)))
+
+  # ---- capability gating (see moduledoc) ----
+
+  @pond_capability "ponds-v1"
+  # The hunt's arms nat and shuf (WorldConfig.pondArm), set by these conditions
+  # (packages/runner/src/conditions.ts); kept in sync with it by hand, like
+  # `:presets`/`:conditions` in config.exs.
+  @current_capability "ponds-v2"
+  @current_conditions ~w(pond-nat pond-shuf)
+
+  # The experiments whose work an island with `capabilities` must not be
+  # offered: every pond experiment, unless it advertises `@pond_capability`.
+  # Computed once per `pick_task/4` call rather than per segment, so a large
+  # queue costs one pass over the experiments, not one config lookup per segment.
+  defp gated_experiments(s, capabilities) do
+    if @pond_capability in capabilities do
+      MapSet.new()
+    else
+      for {name, exp} <- s.experiments,
+          pond_preset?(exp.spec["presetId"]),
+          into: MapSet.new(),
+          do: name
+    end
+  end
+
+  # Whether `seg` is withheld from an island with `capabilities`: its experiment
+  # is in `gated` (a pond experiment without `@pond_capability`), or its
+  # condition runs one of the hunt's arms and the island lacks `@current_capability`.
+  defp gated?(gated, capabilities, seg),
+    do:
+      MapSet.member?(gated, seg.experiment) or
+        (seg.condition in @current_conditions and @current_capability not in capabilities)
 
   # ---- metrics-version gating (see moduledoc) ----
 

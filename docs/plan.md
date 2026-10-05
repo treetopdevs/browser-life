@@ -26,10 +26,10 @@ Mass is stored as `u32` quanta and controllers run in fixed-point `i32`. Transpo
 - Distributed runs become **verifiable**: the coordinator can spot-check any volunteer's segment by replaying it (see §7).
 
 ### 3. Heredity rides on matter (the Flow-Lenia move)
-Every cell carries a genome vector that is advected with its mass. When mass from several sources merges into one cell, the resulting genome is chosen by mass-weighted lottery using a counter-based PRNG keyed on `(seed, step, cell)`. Mutation happens at copy time with a fixed per-quantum rate. Each genome also carries a `u32` lineage ID; a mutation mints a new ID and appends a birth event to a GPU event buffer.
+Every cell carries a genome vector that is advected with its mass. When mass from several sources merges into one cell, the resulting genome is chosen by mass-weighted lottery using a counter-based PRNG keyed on `(seed, step, cell)`. Mutation happens at copy time with a fixed per-quantum rate. Each genome also carries a `u32` lineage ID; a mutation mints a new ID and appends a birth event to a GPU event buffer. *As implemented (RULE_VERSION 1), mutation happens when biomass is synthesised, not when it moves, and the lineage ID takes two words; see "Plan versus implementation" under "M4 pivot: foundations review".*
 
 ### 4. The genome is a developmental program, not a parameter list
-The genome holds the weights of a small fixed-topology local network (about 12 sensors → 8 hidden → 8 actuators, fixed-point). It reads local chemistry, gradients, signals and its own state channels. Actuators: catalysis rate for each reaction, flow bias (motility), adhesion, signal secretion, and deposition of structural polymer (a membrane). Evolvability features are built in from the start: modular per-reaction weight blocks, silent slots available for neutral drift, and a duplication mutation that copies one module into a silent slot.
+The genome holds the weights of a small fixed-topology local network (about 12 sensors → 8 hidden → 8 actuators, fixed-point). It reads local chemistry, gradients, signals and its own state channels. Actuators: catalysis rate for each reaction, flow bias (motility), adhesion, signal secretion, and deposition of structural polymer (a membrane). Evolvability features are built in from the start: modular per-reaction weight blocks, silent slots available for neutral drift, and a duplication mutation that copies one module into a silent slot. *Not implemented in RULE_VERSION 1. The controller is 10 → 8 → 8 with no adhesion output, and there are no module blocks, silent slots or duplication mutation; see "Plan versus implementation" under "M4 pivot: foundations review".*
 
 ### 5. A chemistry whose loops are open but not scripted
 Start with about five species (roughly `A`, `B`, `C`, a structural polymer `P`, and signal `S`). Each species has a potential energy, and every reaction balances matter + energy + heat:
@@ -124,11 +124,259 @@ Each gate is a pass/fail check. The **pivot** column is what we do instead of pu
 - **M4 not met (2026-09-28).** The registered ensemble ran to completion: 170 runs of 10⁶ steps (`gradient-m3`, 6 conditions × seeds 1–20; `spots-m3`, 5 conditions × seeds 1–10; census every 100, deep every 10), all with exact conservation and none extinct. It was analysed with `tools/analyze.ts` from the freeze commit `b7fd4c1`; the reports are `experiments/m4/gradient-m3.json` and `experiments/m4/spots-m3.json`.
   - *Endpoint 1* holds on `gradient-m3`: treatment beats both neutral and no-mutation with effect 1.00 (Holm-adjusted p < 0.0001). It fails on `spots-m3`, where treatment > neutral misses α = 0.01 (effect 0.80, p = 0.0116); treatment > no-mutation holds there (effect 1.00).
   - *Endpoint 2* fails on both presets. Treatment runs are "growing" (20 of 20; 8 of 10), but so are neutral runs (20 of 20; 10 of 10), where the endpoint requires at most a minority.
-  - *Pivot.* The registered response to a failed M4 is to strengthen evolvability; see the exploratory note below before choosing how.
+  - *Pivot.* The registered response to a failed M4 is to strengthen evolvability. The foundations review below decides how, before any amendment or fresh ensemble.
   - *Other registered results from the same ensemble.* Endpoint 3 holds (biotic recycling above replenished, effect 1.00 on both presets), and so does endpoint 4 (at least 2 roles for 10⁵ steps in 20 of 20 and 10 of 10 treatment runs). The M5 criterion of at least 3 roles holds in 13 of 20 and 10 of 10. The held-out hypothesis is a fully evaluated negative on both presets: 0 of 4 observables established.
   - *Calibration check.* The frozen thresholds reproduced: this ensemble's own neutral 95th percentiles are 9,940 and 14,646, against the frozen 10,008 and 14,613.
   - *Hardware.* 40 runs ran on an Apple M1 Max and 130 on an NVIDIA A10G (AWS g5.xlarge). The A10G passed `tests/deno/gpu_golden.ts`, and a shared run's first 50,000 steps were byte-identical on both devices.
   - *Exploratory, from looking at the data, not confirmatory.* Endpoint 2's neutral-minority condition is hard to satisfy. The threshold is the neutral pilot's 95th percentile, so it leaves about 5% of the pilot's pooled neutral lineages above it (ties aside). A similar fraction is expected in independent neutral runs while the activity distribution stays stable. With new lineages arriving at a roughly steady rate, that yields almost linear cumulative new activity. All 30 neutral runs here were classified "growing". On `gradient-m3`, every treatment run still exceeds every neutral run in cumulative new activity. A criterion that compares treatment's growth with neutral's would need a dated amendment and a fresh ensemble; this ensemble cannot be re-read under it.
+- **Foundations review: Variation (2026-09-29).** `tools/foundations.ts gate`, on the results in `experiments/foundations/`. Rows in order:
+  - *Substrate does not fire.* Test 1's parent–offspring slopes are 0.85 (95% interval 0.69–1.00) for mass at reproduction, 0.96 (0.94–1.02) for membrane fraction and 0.90 (0.60–0.96) for reproduction rate, all above 0.2. All 10 histories hold viable three-generation chains. 148 of the 200 links are clonal, so the slopes mostly measure how faithfully whole genomes are passed on.
+  - *Variation fires.* In test 2, 310 of the 2,400 `mutStep` 24 mutants (12.9%; 298 under the literal parent − 0.10 margin) are viable and changed, far above 1%. But viable role-changing mutants appear for only 1 founder of 12: founder 2, mixed to phototroph, in 3 mutants. Test 3 found 75 candidate roles in its 60 mutation runs. Beside the founder in the garden, 10 keep a different role, 63 take the founder's role and 2 are inactive. Founder 2 originates a role in 5 of 5 runs, founder 10 in 2 and founder 3 in 1, so 1 founder of 12 counts. Without mutation every founder holds one role.
+  - *Caveats, recorded with the verdict, which they do not change.* Both tests read roles in the evaluator's uniform light (level 200). Test 2 judges each mutant alone, where a mutant living on others' products cannot be viable, so the only role change it can see is between self-feeding strategies. In test 3, 31 of the 34 decomposer candidates took the founder's role beside it (28 of them as phototrophs), and bright uniform light may make almost any genome a phototroph. Both tests may therefore understate heritable role change. The founder diagnostic's gradient garden (Part A, below) checked this for test 3. 16 of the 75 candidates keep a different role there, against 10 in uniform light. But founder 2 is still the only founder that counts (founders 3 and 10 originate a role in 2 runs each), and 28 of the 34 decomposer candidates are still phototrophs beside the founder. Uniform light does not explain test 3's result. Test 5 adds that the replays' evolved lineages keep survival and light dependence (0.956 each) but not regeneration (0.168, against the founders' 0.979; 0 of 50 pass the strict M3 retest).
+  - *Test 4, reported beside the row, which does not need it:* Inconclusive. Late lineages beat early ones by the margin in both states in 0 of 10 histories, although in the early state they win by far more than the margin in 7. In the late state both groups sit at the extinction floor in 9 of 10. The neutral control cleared the margin in 0 of 5. Test 4b, with 256-cell implants, is Inconclusive too: late beats early by the margin in both states in 5 of 10 histories. In the early state late implants win in all 10, by 4.7–10.6 in log cell count; 35–95% of early implants go extinct there against 0–35% of late ones. In the other 5 histories both groups sit at the extinction floor in the late state. Its neutral control cleared in 0 of 5. Descriptively, competitive ability accumulates between 10⁵ and 9 × 10⁵ steps: mean fitness, late minus early, is positive in every history in both states. The floor hides whether late lineages keep that edge at home.
+  - *Test 6, measurement validation* (not a gate row; it decides which measures a future registration may use): none of the four activity, novelty and role measures is eligible; the compartment detector passes its check. All 85 replays matched their originals.
+    - *Shadow excess* separates treatment from no-mutation replays (effect 1.00), but its null check flags 30 of the 70 neutral runs (upper bound 0.53, against the required 0.10). The shadow is miscalibrated in opposite directions on the two presets. All 30 `spots-m3` neutral runs are flagged, exceeding their shadows by 1,482–2,266. All 40 `gradient-m3` neutral runs fall below theirs, by 184–357, while all 10 gradient-m3 treatment replays are flagged.
+    - *Phenotype-bin novelty* separates them too (effect 1.00), but flags 40 of 70 neutral runs, since genome μ and σ drift there by design. *Persistent novelty* separates them at only 0.50 and flags 14 of 70. Both are zero in the no-mutation replays and single-founder no-mutation runs (medians), as expected.
+    - *Uncapped role clusters* separate the specialisation pair at only 0.63. The pair counts, but barely: over the second half the no-mutation replays hold 1.10 roles at 5% or more on average, the single-founder no-mutation runs 1.08.
+    - All four pass the between-condition split check (at most 0.047 of 1,000 splits reject, against 2α = 0.10), which is a sanity check only.
+    - *The compartment detector* flags a membrane rim in 10 of 10 hand-built individuals (radius 2–10, at a tile's centre and edge) and in 0 of 10 without one. That shows it works on these fixtures, not that it would catch every evolved morphology, so M4's zeros stay unexplained.
+    - Before any new freeze, then, replacement measures are still needed. A per-run criterion has to pass every neutral run on both presets, so it should be calibrated against the neutral runs themselves.
+  - *Next move,* as the row says: RULE_VERSION 2 aimed at variation, and founder selection that measures evolvability. First, the founder diagnostic below asks how much of the verdict belongs to these 12 founders.
+  - *Sequencing, added 2026-09-29 after the gate.* This changes the order of the next moves, not the verdict. RULE_VERSION 2's target waits until a short foundational check answers one question: are the tracker's births entities reproducing, or genomes spreading through shared material?
+    - Test 1 did not test that. A link is a tracker attribution: a budding is a birth credited to the nearest same-lineage individual, alive before that census, less than 24 cells away in the same tile. 148 of its 200 links are clonal. So its slopes mostly show that identical genomes grown in one garden behave alike. The Substrate row was checked at the level of genomes, not of reproducing entities.
+    - Other results point to selection acting on genomes rather than organisms. Evolved lineages lose regeneration (test 5), and no compartmentalised individual was detected in any M4 treatment run. Competitive gains still accumulate, descriptively (test 4b).
+    - If entities do not reproduce, that would argue for aiming RULE_VERSION 2 at inheritance (for example, compartmentalised genome transport) rather than variation. Any change of target is a separate dated decision, recorded here after the check.
+    - The check runs in the `evolution-foundations` workspace, trimmed to its entity definition, observation and current-rule phases, and its outcome is recorded here. The founder diagnostic, the extension's analysis and the extension time-shift finish as registered, and they feed into it. Nothing else starts on the *entity* line meanwhile. An exploratory ecology-first founder-discovery line (A/B/C) is opened beside it under RULE_VERSION 1; see "Ecology-first founder discovery — 2026-09-29". It does not answer the entity question.
+  - **Reset decision and bounded-observer follow-up (2026-09-29).** The reviewed reset completed all ten exact mutation-enabled histories and all 200 original Test 1 links. It found zero immediate attributed-parent copy contribution in 135 links (118 of 127 budding; 17 of 73 fission). This challenges tracker parenthood as evidence of causal transmission; it does not establish invasion, inability to reproduce, or absence of older shared ancestry. Material continuity and functional descendant identity remain unresolved: the outcome is a **measurement limitation**.
+    - **The historical Variation verdict does not select the next mechanism.** Its original reading stays recorded above. The founder diagnostic (11/24 versus 1/12, chiefly transitions toward photosynthesis, with multiple roles in six mutation-off subjects) informs founder dependence of that diagnostic. The extension time-shift remains incomplete with descriptive gains and an uninformative neutral extinction floor. Neither selects duplication, predation, inheritance changes, or a new founder cohort.
+    - Keep RULE_VERSION 1. The authorized next step is a bounded local observer feasibility test through transport, mixing, synthesis and loss, checked against known-history controls. Contact-versus-separated recovery with mutation enabled is conditional on informative bounds; a measurement failure stops that assay and triggers reconsideration of the entity definition before any physics change. No new cloud ensemble starts before measurement passes.
+    - *Local feasibility outcome (2026-09-29): measurement gate not passed for the proposed 100-step contact plus 1,000-step recovery use.* A passive observer now tracks conservative continuously-bound B/P intervals using exact local reaction diagnostics; instrumented reference worlds match unchanged twins at every step. In a fixed technical region, the same active physical history admits material allocations of 0/79 versus 78/79 retained quanta at step 100. At step 1,100, the interval is 0–88 of 88, with explicit feasible allocations 0 and 66; the passive control admits 0/11 versus 11/11. These regions are not moving entities, and the active final witnesses do not establish both the 80%/20% calibration extremes. No biological contact trial or fresh-case evaluation follows an unpassed gate. Reconsider organizational continuity and functional reproduction as operational entity criteria before selecting a mechanism. RULE_VERSION 1 and both founder/rule decisions remain unchanged; no cloud or GPU compute was used. See the [follow-up result and limitations](../../browser-life-foundations/docs/reset-followup-results-v1.md).
+    - Reviewed reset evidence and the new execution plan remain in the preserved sibling workspace: [decision handoff](../../browser-life-foundations/docs/reset-decision-handoff.md), [phase 2 report](../../browser-life-foundations/docs/reset-phase2-report.md), [follow-up plan](../../browser-life-foundations/docs/reset-followup-plan-v1.md). The follow-up's `experiments/foundations/followup-v1/input-manifest.json` pins snapshots of this plan before this note, the founder/time-shift results, and reviewed reset records. These local cross-workspace links require both workspaces; no merge or push is implied.
+  - *Candidate target: predation, added 2026-09-29.*
+    - *What prompted it.* In informal lab runs, `large` appears to settle into a static lattice of similar-looking producers, and to return there after a crash in bound mass. The user also tried the `seasons` and `soup` presets and reports that they break that attractor. None of this is measured.
+    - *A likely reason, untested.* Organisms only compete for nutrient, light and space, and feed on waste. The transport lottery lets moving mass take over neighbouring cells passively and at no cost, resisted only by mass. Polymer gates diffusion and adds lottery weight, but nothing gives a boundary a dedicated defence against takeover.
+    - *The hypothesis.* A costly, resistible way to consume another genome's living biomass would bring consumer–resource dynamics and select for boundaries and bodies.
+    - *Handed to the reset* as the specific ecological incentive in its decision table, beside variation and inheritance. Forcing (`seasons`, available now under RULE_VERSION 1) is the comparison it must beat.
+    - *Cost.* It changes the genome layout, since all 8 controller outputs are in use.
+    - Choosing it would be a separate dated decision. Nothing is built on this line meanwhile.
+
+### M4 pivot: foundations review (decided 2026-09-28)
+
+*Decided after the M4 result and before any foundations experiment ran. Everything here is exploratory: nothing is a registered endpoint, and none of it re-reads the M4 ensemble as confirmatory. The decision-gate thresholds were written before any result, and they change only by a dated note below them.*
+
+Repairing endpoint 2 answers a narrow question. The question that decides M4–M7 is whether this world can accumulate heritable capabilities that open the way to further evolution. The review tests that first, reusing the existing simulation, replay and analysis infrastructure. The endpoint-2 amendment and any fresh ensemble wait for its decision gate.
+
+**Why.**
+- *The M4 data, looked at per window (exploratory).* For each gradient-m3 run, the lineages first seen in each 100k-step window of `lineages.tsv`, and the share of them that cross the frozen threshold (medians over runs):
+  - Neutral runs have about 5,100 new lineages per window, and 4.9–5.3% of them cross, in every window. Their cumulative new activity is a straight line by construction.
+  - Treatment runs have 10,200–14,000 new lineages per window, and 5.7–8.8% cross. Crossings per window are flat too: the median ratio of windows 8–10 to windows 2–4 is 0.94 (neutral 1.01). Nothing speeds up or levels off.
+  - Part of endpoint 1's margin is therefore demographic: treatment has about twice neutral's births and 1.2–1.8× its crossing share. The `neutral` condition expresses one reference phenotype everywhere (203 individuals against 533), so it is not the demography-matched shadow described under "Measurement". Comparing treatment's slope with neutral's would restate endpoint 1, since both curves are straight lines from zero.
+  - At step 100, at least 3 roles are present in 19 of 20 gradient-m3 runs in both treatment and no-mutation (7 of 10 each on spots-m3). The founders supply the roles. Mutation keeps them (no-mutation falls to 1.13 roles on average in the second half), but nothing shows they evolved.
+  - Crossings per window fall over the run in 18 of 20 `uniform-light` runs (11 of 20 treatment) and in all 10 `replenished` spots-m3 runs. This hints that light patchiness and matter closure help sustain turnover.
+- *The mechanism the pivot names doesn't exist yet.* The table below lists where the implemented rules depart from the design decisions above. The largest gap is decision 4: strengthening evolvability through duplication or modularity means adding a mechanism, not tuning one.
+- *Two held-out measures had little room to move.* Role count uses four fixed categories, one a catch-all (`ROLES` in `packages/metrics/src/ecology.ts`), and gradient-m3 treatment runs already average 3.04 roles, some at 4. `compartmentalised` is zero in every treatment run on both presets. The heredity statistic (sibling μ and σ, about 0.95) is as high in no-mutation runs, so it reflects shared genomes, not transmitted organisation. Founder selection scored lesion recovery and light dependence, with size and speed only as MAP-Elites descriptors (`packages/search/src/evaluate.ts`); nothing measured evolvability.
+
+**Plan versus implementation (RULE_VERSION 1).**
+
+| Design decision | Implemented |
+|---|---|
+| 3: mutation at copy time, fixed per-quantum rate | Mutation happens in `react`, when biomass is synthesised: at most one event per cell per step, with probability new quanta × `mutRate` / 2³² (default 429,497, about 10⁻⁴ per new quantum). Transport never mutates. |
+| 3: a `u32` lineage ID | Two words: birth step + 1 and birth cell. A mutation mints a new ID even when clamping leaves the genome unchanged. |
+| 4: about 12 sensors → 8 hidden → 8 actuators | 10 → 8 (ReLU) → 8, 160 int8 weights and biases. Inputs: A, B, C, P, E per unit B, light, S, the S gradient (x, y), Lenia affinity U. Outputs: photosynthesis, respiration, decomposition, growth, polymer building, signal emission, motility (x, y). |
+| 4: adhesion actuator | None. `WorldConfig.adhesion` derives attraction from the polymer gradient, and it is off in every registered run. |
+| 4: per-reaction modules, silent slots, duplication | None. A mutation picks one of 163 loci (160 controller bytes, μ, σ and motility gain) and draws δ uniformly from −24…24 (`mutStep`), with 0 replaced by +1, so +1 is twice as likely. σ receives δ shifted right by 2, so at most 6 in size and never 0. Every locus is clamped to its range, so a mutation can leave the genome unchanged. |
+| 5: five reactions | Six catalysed reactions (photosynthesis, respiration, decomposition, growth A + E → B, polymer building, signal emission), all through an Allee-type effective catalyst, plus passive decay and light-driven abiotic recycling (`docs/rules.md`). |
+| 6: GPU label propagation, grouped by genome similarity | Connected bound-mass components (B + P ≥ 48, individuals ≥ 256 quanta), found on census readbacks and tracked by overlap. Each component records the share of its cells carrying its dominant lineage (`purity` in `packages/metrics/src/census.ts`), but components are not grouped by genome. |
+| Measurement: interaction network, nesting depth | Not implemented. A collective tracker exists (`packages/metrics/src/collectives.ts`); no registered analysis has used it. |
+
+**Tests.** Time box 2026-09-29 to 2026-10-19. Seeds 4,000,001–4,599,999 are reserved for this review, split by test below, and are never reused by a registered ensemble.
+
+*Compute.* GPU work runs on AWS; the Mac is for development, smoke tests and jobs under an hour. Two budgets are approved (2026-09-28): up to **$50** for the tests below and a separate **$50** for the registered 10⁷ extension. Each includes its own storage and transfer.
+- *Allocation.* At M4 throughput the tests come to about $22–25, including the conditional search in the Substrate row. The extension comes to about $20 (about 19 instance-hours). Each budget's remainder covers its storage, transfer, reruns and overruns, and each stops at $50.
+- *Instance.* The M4 ensemble's g5.xlarge (NVIDIA A10G, about $1 an hour on demand in us-east-1) ran 6 concurrent lanes at about 730 steps/s each. That was 130 runs of 10⁶ steps at 256² in about 8.5 hours, roughly $0.07 per run.
+- *Operation.* The same pattern repeats here: a supervisor starts the lanes, copies results back and terminates the instance when its queue is empty. Each instance passes `tests/deno/gpu_golden.ts` before contributing. Throughput is measured before each job, and the projected cost is checked against what remains of its budget, leaving room for storage, transfer and the jobs still to come.
+- *Added 2026-09-29, after the gate:* a further **$200**, on top of the two budgets above, for follow-ups. Planned split:
+  - about $10 for the extension time-shift below;
+  - about $60 for a RULE_VERSION 2 go/no-go: test 3's screen on old and new founders, each under both rule versions (a 2×2), which also settles an ambiguous founder diagnostic;
+  - about $10 of margin on the tests' budget;
+  - about $120 held for the next registered cohort. Its horizon (10⁶ with a 10⁷ extension, or 10⁷ as primary) is decided after the extension time-shift, and after test 6's measurement problem is fixed.
+
+  Doubling the founder diagnostic to 48 genomes was considered before any of its results and not taken up. The pool has 21 clusters, with non-phototrophs in only 4, so more picks would mostly repeat near-clones; and at a true rate of 0.15–0.2 the ambiguous band is about as likely with 48 genomes as with 24.
+- *Closed 2026-09-29 20:51.* Every instance is terminated and the security group deleted. Totals from the supervisor's ledgers (`runs/foundations/ops/cost-*`):
+  - the extension's instance, $15.77 of its $50;
+  - the tests' two instances, $41.50. About $5 of that is the extension time-shift, which comes from the $200. That charges about $36.50 against the tests' $50, leaving about $13.50.
+  - Nothing else has been drawn from the $200. Any draw by the foundational reset is recorded here before its paid runs.
+
+The replayed source histories are fixed now, before any assay result: M4 gradient-m3 seeds 1–10 in treatment and seeds 1–5 in neutral and no-mutation. A replay takes about 23 minutes per 10⁶ steps on one lane (1,383 s for treatment seed 1 on the M1 Max; A10G lanes run about 730 steps/s). It is accepted only if its census rows match the original `series.jsonl` up to each state it saves; the M1 Max and A10G were byte-identical in M4. Observer additions (per-lineage role and Lenia parameters) are recorded during replay and change no physics.
+
+1. *Life-cycle heredity* (feasibility; seeds from 4,000,001). In the ten treatment replays, follow individuals through fissions and buddings over at least three linked generations. Grow parent and offspring propagules in a common garden (the batched small-world evaluator, standard light and matter). Measure mass at fission, membrane fraction and time to the next fission, censored when none happens, and record each individual's lineage purity alongside.
+2. *Mutation neighbourhood* (access to variation; seeds from 4,100,001). 200 single mutants of each of the 12 founders at `mutStep` 24, the rule's value, and at 8 and 4 as perturbations. Each mutant is paired with its parent at identical seeds and tile positions, with 4 replicates and mutation off. Measures: survival, recovery, regeneration, light dependence, mass, speed, reproduction and dominant role (an observer addition to the evaluator).
+   - A mutant is *viable* if it survives at no less than the parent's rate minus 10 points and still dies without light.
+   - It is *changed* if a measured trait's mean falls outside the parent's central 95% range over 32 seeds.
+   - It is *role-changing* if its dominant role differs from the parent's.
+
+   Mutants are drawn with `mutateInPlace` itself, with only `mutStep` changed for the perturbation scales. Clamped proposals that leave the genome unchanged are kept and counted, not redrawn. Candidate classes are confirmed on 32 fresh replicates under the probability-gate rule. If the throughput pilot projects the full screen above $6, it drops to 100 mutants per founder.
+3. *Single-founder starts* (access to ecology; seeds from 4,200,001). Each founder alone, gradient-m3 otherwise unchanged, 10⁶ steps: 5 seeds with mutation and 3 without. Roles are read from current fluxes, so they shift with resources and light even when genomes don't change.
+   - A role *originates* in a mutation run when three things hold. Lineages in that role hold at least 5% of living cells for at least 10⁵ steps across consecutive deep censuses. The role never qualifies that way in any of the founder's runs without mutation. And a descendant genome holding it, grown in the common garden of test 1 beside the founder, keeps a dominant role different from the founder's.
+   - A founder counts when 3 of its 5 mutation runs originate a role.
+4. *Time-shift competition* (accumulation; seeds from 4,300,001). From each of the ten treatment replays, save the states at 10⁵ and 9 × 10⁵ steps. From each of the five most abundant lineages at each time, take exactly 64 of that lineage's own cells (matter and genome): the 64 nearest the centroid of its largest individual. A lineage with fewer than 64 cells in one individual is skipped for the next most abundant. Every implant thus starts from the same cell count, and its bound mass is reported. Implant it into both states, with mutation off, at the same 4 positions in every state, fixed on the torus before any implant.
+   - *Labels.* Implanted cells get lineage IDs present in neither state; the rest of the genome is unchanged. IDs only label genomes, so this changes no physics, and only the implant's descendants are counted, never residents of the same lineage.
+   - *Fitness.* An implant's fitness is log((N_end + 1) / (N_start + 1)), where N counts cells carrying its assay IDs at implant and after 5 × 10⁴ steps. Extinction therefore stays finite. W(o, e) is the median fitness over one history's implants from time o in the state from time e; the share of those implants that went extinct is reported beside it.
+   - *Tool.* `applyExchange` (`packages/schema/src/exchange.ts`) already overwrites one run's cells with another run's checkpointed cells, but only at the same positions. The transplant tool adds the offset and the relabelling.
+   - A middle state at 5 × 10⁵ steps is added, descriptively, only if the tests' budget has room after everything else; it shows whether any change is monotone.
+5. *Lesion battery on evolved individuals* (does evolution keep self-maintenance; seeds from 4,400,001). The ten most abundant lineages at 9 × 10⁵ steps in each of the first five treatment replays go through the M3 retest: 32 replicates of survival, regeneration after a 30% lesion, and death without light. Descriptive, compared with the founder set; it is not a gate row.
+6. *Measurement validation* (seeds from 4,500,001).
+   - *Worlds known to differ*, built from existing conditions:
+     - neutral turnover: the `neutral` replays;
+     - a fixed, monomorphic organism: test 3's single-founder runs without mutation;
+     - sorting among fixed founders without new variation: the `no-mutation` replays;
+     - ecological specialisation: the full founder set without mutation (at least 3 roles at step 100 in 19 of 20 M4 runs) against the single-founder runs without mutation. This pair counts only once test 3 confirms that those single-founder runs hold fewer roles.
+   - Candidate measures: new activity in excess of a demography-matched shadow; novelty in phenotype bins (μ, σ and catalytic profile, counting bins never occupied before); an uncapped role measure (distinct catalytic-profile clusters); and the compartment detector, checked first on a hand-built individual with a membrane rim.
+   - *Eligibility.* A measure is eligible for a future registration only if both of these hold, with each measure's expected direction for each pair written down before it is computed:
+     - It separates each pair of worlds it should, with effect P(a > b) ≥ 0.8.
+     - It passes its null checks. A per-run criterion (for example, excess over the shadow, or a growth shape) is applied to every neutral run available, the calibration pilots' 40 and M4's 30. It qualifies when the one-sided 95% Clopper–Pearson upper bound on its flag rate is below 10%, which means at most 2 of the 70 runs flagged. A between-condition comparison is run on 1,000 random 10/10 splits of each preset's pilot and must reject in no more than 2α of them. That is a sanity check only, since splits of the same runs aren't independent trials.
+   - A reproducing collective can't be built yet, so that case is a known gap.
+
+**Operational definitions (fixed 2026-09-28, before any assay result).** These fill in what the tests above leave open. The replays and single-founder runs were already running, but nothing below had been computed.
+- *Tools and observers.*
+  - Replays and single-founder runs use `tools/run.ts --lineage-obs`. This writes `profiles.tsv`, `genomes.tsv` and `births.tsv`:
+    - `profiles.tsv`: each lineage's catalytic profile, role and genome μ, σ and motility gain, at every deep census;
+    - `genomes.tsv`: each lineage's genome when first seen;
+    - `births.tsv`: parent and child traits at each fission and budding.
+  - Single-founder runs use `--solo-founder k`: all 13 founder discs of `gradient-m3` carry founder k (the index into `M3_FOUNDERS`), with placement and amounts unchanged.
+  - The evaluator's optional observers are `EvalConfig.roles` (catalytic fluxes summed per tile over the censuses of the last 1,000 growth steps) and `perRep`. With both off, M3 evaluations are unchanged.
+  - A replay is accepted when its `series.jsonl` and `lineages.tsv` equal the original's line for line.
+- *Common garden* (tests 1 and 3): the M3 evaluator's world (`DEFAULT_EVAL`: 64² tiles, uniform light, nutrient 32, mutation off) grown for 20,000 steps, with a census every 100 and the tracker at B + P ≥ 48 and mass ≥ 128.
+  - *Reproduction* is a tracker fission, or a budding: a birth within 24 cells of a living individual of the same lineage in the same tile, the runner's own attribution. A parent reproducing at a census counts as one reproduction event, however many offspring it has.
+  - *Changed 2026-09-28, before any garden result:* the garden first ran 6,000 steps and counted fissions only. A smoke test with founder 0 gave 0–2 fissions per tile in 6,000 steps, while buddings outnumber fissions about 20 to 1 in the replays.
+- *Test 1.*
+  - A *link* is a fission or budding row of `births.tsv`. A *chain* is three links in series (g0 → g1 → g2 → g3). g3 is *viable* if it lives at least 10⁴ steps. The earlier "or reproduces" was dropped before any result: the garden smoke test showed bursts of short-lived buds, which would make it trivial.
+  - Pairs: from each treatment replay, 20 links drawn uniformly (sampling seed 4,000,001), among those whose parent and child lineages both appear in `genomes.tsv`.
+  - Parent and child genomes are grown in separate tiles, 8 each, seeds from 4,000,101. Measured per genome:
+    - mass at reproduction (the plan's "mass at fission"): the parent's mass at the census before each reproduction;
+    - membrane fraction: P / (B + P) summed over individuals, across the censuses of the last 3,000 steps;
+    - time to next reproduction, as its survival-aware inverse, the reproduction rate: reproduction events per 10⁴ individual-steps at risk, each tracked individual counting 100 steps per census, pooled over the genome's tiles. This handles individuals that die or never reproduce, which averaging censored intervals would not.
+  - Slope: the OLS slope of the child genome's mean on the parent genome's mean. Its 95% interval comes from 2,000 bootstrap resamples of histories (percentile).
+- *Test 2.*
+  - *Mutants.* Mutant m of founder f at step size s: `mutateInPlace` on a copy of the founder. It is fed `draw(base, RND.MUT_WHICH)` and `draw(base, RND.MUT_DELTA)`, with base = `cellBase(4,100,000, s, 200f + m)`.
+  - *Screen.* `evaluateBatch` with 4 replicates, 16 genomes per batch, and roles and per-replicate values on.
+    - Batch b of founder f at step-size index i has seed 4,100,001 + 13(3f + i) + b. Each has a parent batch of 16 founder copies at the same seed.
+    - The parent's rates, its central 95% range of 4-replicate means, and its dominant role come from all its parent batches (39 seeds per founder).
+    - The six traits for *changed* are recovery, bound mass, mean individual mass, individuals, speed and reproduction. Each is estimated throughout (parent ranges, screen and confirmation) as the unweighted mean of per-tile values, with a dead tile counting 0.
+    - *Viable*: survival and death without light each at no less than the parent's pooled rate minus 0.10.
+  - *Confirmation* (step size 24 only; 8 and 4 are reported from the screen). Every screen candidate, viable and changed or viable and role-changing, is run on 32 fresh replicates (seeds from 4,150,001), beside its parent at the same seeds and positions.
+    - Viable: survival and death without light each have a one-sided 95% Clopper–Pearson lower bound above min(parent rate − 0.10, 0.8).
+    - *This amends test 2's viability margin for the confirmation step (2026-09-28, before any result).* The founders' rates are near 1, so the literal parent − 0.10 needs a bound above 0.9, which takes 32 of 32 replicates. That would reject mutants as reliable as the founders themselves were when selected (at least 30 of 32, bound above 0.8). The screen keeps parent − 0.10. The literal 0.9 version is reported beside it, and any change it would make to the Variation row is recorded.
+    - Changed: each trait flagged in the screen falls, on the same side, outside the central 99% of 2,000 bootstrap 32-replicate means of the parent's screen tiles.
+    - Role-changing: the mutant's dominant role over the 32 differs from the parent's at the same seeds.
+- *Test 3.*
+  - Founder k runs on seeds 4,200,001 + 10k + j: j = 0–4 with mutation, j = 5–7 without.
+  - A role's share is its lineages' share of the living cells in `profiles.tsv`. A role *qualifies* when that share is at least 5% at every deep census across a window of at least 10⁵ steps.
+  - Its *descendant* is the lineage with the most cells in that role at the midpoint of the first qualifying window. It is co-cultured with the founder, one disc each at a third and two thirds of the tile's width, over 16 tiles (seeds from 4,250,001). Each lineage's dominant role comes from its own summed fluxes in those tiles.
+  - Roles are compared only between *active* lineages, meaning present and catalysing. A descendant inactive beside its founder does not originate a role. A founder inactive beside its descendant is represented by its own monoculture, grown in the same batches.
+- *Test 4.*
+  - The implant positions are the torus cells (64, 64), (192, 64), (64, 192) and (192, 192).
+  - *Changed 2026-09-28, before any assay ran.* Individuals are far smaller than 64 cells: in replayed states at 2 × 10⁴ and 2 × 10⁵ steps the median is 16–17 cells and the largest 29–36. So "fewer than 64 cells in one individual" would skip every lineage.
+  - A lineage's *largest individual* is instead the individual (census component of mass ≥ 256) of greatest mass whose dominant lineage it is. The implant is the lineage's 64 cells nearest that individual's centroid on the torus, whether or not they belong to it, ties broken by cell index. A lineage is skipped when it has no such individual or fewer than 64 cells.
+  - All channels are copied, relative offsets are kept, and the implant is centred on the position, overwriting what was there.
+  - Assay IDs are (1, lo) with lo counting down from 65,535, skipping any present in either state.
+  - The assay uses the source config with `mutRate` 0 and seed 4,300,001 + 80h + 40o + 20e + 4r + p. Here h is the history (the replay's seed minus 1), o the origin, e the environment, r the rank and p the position. Logs are natural.
+  - Implant cells are ranked by torus distance to the exact centroid. Offsets are taken from the centroid rounded to a cell, and that cell is placed on the position.
+  - *Opportunity* also needs its residual condition: every history where late does not beat early shows home advantage, or has neither late-over-early edge clearing the margin. Otherwise the result is Inconclusive.
+  - *Neutral control, added 2026-09-28 before any assay result.* The added rule follows the practice of testing simple baselines before crediting the dynamics. The same assay runs on `neutral` replays 1–5, seeds 4,300,801 + 80h + 40o + 20e + 4r + p. There every cell expresses the same phenotype, so a late-over-early difference can only come from the assay itself (implant contents, state density). If the control clears test 4's margin in both states in at least 3 of its 5 histories, test 4's verdict is recorded as Inconclusive (assay confounded), whatever the treatment count. The rule can only move a verdict to Inconclusive.
+- *Incomplete inputs decide nothing.* A test whose expected runs, controls or assay results are missing reports "incomplete" and fills no gate row.
+- *Test 4b, fixed 2026-09-29 after test 4's result and before any 4b assay ran.* Test 4 as defined came out Inconclusive (`runs/foundations/results/t4.json`):
+  - Late lineages beat early ones by far more than the margin in the early state, in 7 of 10 histories.
+  - In the late state, at least half of each group's implants went extinct in 9 of 10 histories, so both medians sit at the extinction floor, log(1/65). Neither edge can clear the margin there, and the residual condition fails.
+  - The neutral control cleared the margin in 0 of 5 histories.
+
+  The gate's Inconclusive row asks for the cheapest test that would decide the question. With the time box and the tests' budget still open, it runs as test 4b:
+  - *Changed:* implants of 256 cells instead of 64 (the lineage's 256 cells nearest its heaviest individual's centroid; a lineage with fewer is skipped). Seeds 4,303,001 + 80h + 40o + 20e + 4r + p, and 4,304,001 + … for the neutral control.
+  - *Unchanged:* the positions, 5 × 10⁴ steps, fitness, W, margin, gate rule and neutral-control rule.
+  - Test 4b decides test 4's gate row, and test 4 is reported beside it.
+  - *The middle state* (descriptive) was to use 4b's 256-cell implants, in the five origin/environment combinations that involve the 5 × 10⁵ state, with seeds 4,302,001 + 100h + 20c + 4r + p for combination c. *Cancelled 2026-09-29, before any of its assays ran:* after the gate, its budget and instance time go to the founder diagnostic below.
+  - *Floor guard, for both tests.* A state is at the floor in a history when at least half of both groups' implants in it went extinct. Such a history can still count toward "late beats early", but it cannot count as "neither edge clears the margin". A floor can hide a difference, never show its absence. So floors that leave the rule undecided give Inconclusive, with the survival shares reported.
+- *Test 5.* The ten lineages with the most cells at the 9 × 10⁵ checkpoint of treatment replays 1–5 get `evaluateBatch` with 32 replicates, 2 genomes per batch, seeds from 4,400,001. They are reported against the founders' retest counts.
+- *Test 6.*
+  - *Shadow excess.* Each run's cumulative new activity (the preset's frozen threshold) minus the median of 20 shadows. A shadow keeps the run's living cells at each census and its lineage births, each entering at its first-census cell count, and redraws the remaining cells multinomially from its own previous abundances. A run is flagged when it exceeds all 20 shadows.
+  - *Phenotype-bin novelty.* Bins are μ / 8, σ / 4 and role, using genome μ and σ (so drift counts in `neutral`, where every cell expresses the reference phenotype). Only lineages with at least 1% of living cells at a deep census count. Novelty is the number of bins first occupied after step 10⁵, and a run is flagged when it is above zero.
+    - Also, in the style of ANNECS (added 2026-09-28, before computing), *persistent novelty* counts only those new bins that some lineage in the bin later holds at 1% or more across 10⁵ steps of consecutive deep censuses.
+  - *Uncapped roles.* Catalytic-profile clusters among lineages with at least 5% of living cells: shares of (photo, grow, decomp, resp), single linkage at L1 distance below 0.2, averaged over the second half's deep censuses.
+  - *Compartment detector.* Checked on a hand-built individual with and without a membrane rim.
+  - *Expected directions, written before computing* (a > b):
+    - treatment > no-mutation replays for shadow excess and novelty;
+    - no-mutation replays > single-founder no-mutation runs for uncapped roles (the specialisation pair, counted only if test 3 shows fewer roles there);
+    - no-mutation replays and single-founder no-mutation runs near zero for novelty.
+    - The null checks run over the 70 neutral runs, replayed with the observers.
+
+**Decision gate.** Checked in this order; the first row whose condition holds decides. The margins are prioritisation choices fixed before any result, not biological constants.
+
+| Row | Condition | Next move |
+|---|---|---|
+| Substrate | Test 1 finds no heritable life cycle: no trait's parent–offspring slope has a 95% interval above 0.2, or fewer than 5 of 10 histories hold a lineage that reproduces over 3 generations with viable descendants. A MAP-Elites search scored on that life cycle then finds none either (at most $5 of the tests' budget, descriptors disjoint from every held-out measure). | Prototype a different substrate, keeping the integer physics, replay, coordinator and analysis infrastructure. |
+| Variation | Test 2: fewer than 1% of `mutStep` 24 mutants, pooled over founders, are viable and changed, or viable role-changing mutants appear for fewer than 3 of 12 founders. *And* test 3: a role originates for fewer than 3 of 12 founders. | RULE_VERSION 2 aimed at variation: duplication, modules or silent slots, and step size. Founder selection that measures evolvability, with a score disjoint from every held-out measure. |
+| Opportunity | Test 4: late lineages beat early ones by at least log 1.10 in both states in at most 4 of 10 histories; in the rest, either each time wins at home or neither edge clears the margin. | RULE_VERSION 2 aimed at ecological opportunity: a way for products to open new niches (for example, a polymer or signal carrying a genome tag that only matching lineages can use), possibly with duplication. |
+| Measurement | Test 4: W(late, e) − W(early, e) ≥ log 1.10 in both states in at least 8 of 10 histories. | Keep RULE_VERSION 1. Replace the measures that missed it with measures that pass test 6, then write the amendment and run a new pilot and a fresh ensemble. |
+| Inconclusive | 5 to 7 of 10 histories clear test 4's margin, or anything is left undecided within the review's time box and the tests' $50 budget. | Record what is missing and the cheapest test that would decide it. The fresh ensemble stays on hold. |
+
+If only one of tests 2 and 3 fails, the failure is recorded and the gate moves on to test 4.
+
+**Founder diagnostic (exploratory; fixed 2026-09-29, after the gate and before any of its runs).** Is the Variation verdict mostly about these 12 founders or about the mechanism? M3's selection put half its weight on regeneration and judged each genome alone in uniform light, which may favour self-feeding phototrophs: in that evaluator 9 of the 12 founders are phototrophs and 3 mixed (founders 2, 8 and 10). Founder 2 supplied every viable role-changing mutant and is the only founder that counts in test 3; founder 10 originates a role in 2 runs and founder 8 in none. The diagnostic does not re-decide the gate, and nothing in it is registered. Its genomes never found an ensemble (see *Separation*). It informs the RULE_VERSION 2 founder rule, which is written separately and registered before that cohort's pilot. The role strata used here never become a selection criterion, since M5 would then be selected for.
+- *Part A, a gradient garden.* Test 3's 75 candidates and 12 founder monocultures regrow in the garden with light 20 + 220y/63 down each 64-row tile, which is gradient-m3's range. Both discs of a replicate sit on the same row: rows 12, 26, 38 and 52 in turn over the 16 replicates (light about 61, 110, 152 and 201). Seeds from 4,260,001. It is read with test 3's rules and reported beside test 3, never in its place.
+- *Part B, 24 other genomes.*
+  - *16 from the archive.* The pool is the M3 confirmations (`runs/bootstrap-200/confirm.json`) that survived and died without light in at least 13 of 16 replicates, whatever their regeneration, less the founders' own genomes. That is 826 genomes in 21 clusters at the M3 cluster distance, 9 of them containing a founder. Each pool genome's role comes from the evaluator with roles on: 4 replicates, seeds from 4,205,001. Picks: 8 not phototroph and 8 phototroph, drawn at random (mulberry32, seed 4,210,000), one per cluster within each group while clusters last. A short group is filled from the other.
+  - *8 evolved.* From test 5's lineages that survived and died without light in at least 26 of 32: 4 not phototroph and 4 phototroph, one per history within each group while histories last.
+  - *Harness.* Test 3's: all 13 gradient-m3 discs carry the genome (`tools/run.ts --solo-genome`), 10⁶ steps, seeds 4,210,001 + 10c + j for subject c, with j = 0–4 with mutation and 5–7 without. Candidates, descendants and gardens follow test 3's rules, with the subject's monoculture in place of the founder's. Both gardens are used: uniform (test 3's, seeds from 4,270,001) and gradient (Part A's, seeds from 4,280,001).
+- *Reading, fixed before any run.* A genome counts as in test 3: it originates a role in at least 3 of its 5 mutation runs. The primary reading is the uniform garden, where the founders' rate is 1 of 12.
+  - 6 or more of 24 count: founder selection is a major bottleneck. At the founders' rate that would happen with probability about 1.2%.
+  - 3 or fewer: the mechanism is the bottleneck, and RULE_VERSION 2's variation changes come first.
+  - 4 or 5: ambiguous.
+  - The gradient garden is read the same way, against the founders' rate there from Part A, and only once Part A is complete. Incomplete runs or gardens decide nothing: the runs must be exactly the prescribed 192, each finished at 10⁶ steps. Counts are also reported by stratum (archive or evolved, phototroph or not), with the runs in which the genome died out (the manifest's extinction flag). The phototroph strata show whether producer founders can originate roles at all, which an all-producer RULE_VERSION 2 cohort would need.
+- *Cost.* About $16 of the tests' budget, mostly the 192 runs of 10⁶ steps; the tests' total comes to about $37 of $50.
+- *Result (2026-09-29): founder selection is a major bottleneck.* The runs are the prescribed 192, each finished at 10⁶ steps. Two of subject 2's mutation runs died out. Both gardens are complete: 177 candidates, 201 plantings each. Results are in `experiments/foundations/fd.json`.
+  - *Uniform garden (primary):* 11 of 24 genomes count, against the founders' 1 of 12. At that rate, 11 or more of 24 has probability about 10⁻⁶. The gradient garden gives the same 11 of 24 (subjects 0, 1, 3–7, 17–19 and 22), against Part A's 1 of 12.
+  - *By stratum,* the same in both gardens: archive not phototroph 7 of 8, archive phototroph 0 of 8, evolved not phototroph 3 of 4, evolved phototroph 1 of 4. Phototroph genomes count in 1 of 12, the founders' rate, whatever their source. Genomes that are not phototrophs in the evaluator count in 10 of 12.
+  - *Direction, descriptive.* Of the descendants that keep a different role beside their founder, most are descendants of non-phototroph founders turning phototroph or mixed: 82 of 107 in the uniform garden, 65 of 98 in the gradient garden. Much of the variation found is gaining photosynthesis in the light.
+  - *Controls.* Without mutation, 6 of the 24 subjects show more than one role (subjects 10, 16, 18, 19, 22 and 23, five of them evolved). In test 3, each founder held one role. Three of those six count (18, 19 and 22). Leaving all six out, 8 of 18 count, still far above the founders' rate.
+  - *What it informs.* The Variation verdict's rarity of role change is mostly a property of the M3 founders, not of the mutation mechanism alone: M3's evaluator favoured phototrophs, and phototroph genomes rarely originate a role here either. The diagnostic suggests a risk, though it does not establish a future cohort's rate, least of all under changed rules: a cohort founded on producers alone may inherit the low rate that these sampled phototrophs show under RULE_VERSION 1. This bears on the RULE_VERSION 2 founder rule, written separately. Per the rule above, role strata never become a selection criterion. It does not re-decide the gate or answer the entity question that RULE_VERSION 2's target waits on.
+
+**Extension time-shift (descriptive, outside the gate; fixed 2026-09-29, before any of its assays).** Do the competitive gains of test 4b keep accumulating, or level off? It answers the question endpoint 2 was meant to, and it informs the next cohort's horizon.
+- *States.* The 10⁷ extension's saved states at 10⁶, 3 × 10⁶ and 10⁷ steps, treatment seeds 101–105, so no replays are needed. The replays' 5 × 10⁵ middle state stays cancelled.
+- *Assay.* Test 4b's, unchanged: 256-cell implants of the five most abundant lineages, the same 4 positions, mutation off, 5 × 10⁴ steps, fitness log((N_end + 1) / (N_start + 1)), W the median, margin log 1.1. Every origin is implanted in every state (9 pairs). Seeds 4,305,001 + 200(h − 101) + 60o + 20e + 4r + p, with o and e indexing the three times. The neutral control is the same assay on the extension's neutral seeds 101–105, seeds 4,306,001 + ….
+- *Per pair of times,* as in test 4: the later origin *beats* the earlier when it wins by the margin in both of the pair's own states. A history whose pair fails with one of those states at the floor (both groups at least half extinct) is counted as *blocked by the floor*. Mean fitness, survival shares and whether mean fitness rises monotonically over the three origins are reported in every state.
+- *Reading.*
+  - *Still accumulating* when 10⁷ beats 3 × 10⁶ in at least 3 of 5 histories.
+  - *Levelled off* when it does in at most 1, with at most 1 blocked by the floor, while 3 × 10⁶ beats 10⁶ in at least 3.
+  - Otherwise *unclear*.
+  - A pair that the neutral control also shows in 3 or more of its 5 histories reads nothing.
+- *Cost.* About 1,800 assays, about $5, run on the tests' instances after the founder diagnostic's gardens.
+- *Result (2026-09-29): incomplete, so no reading.* All 1,800 scheduled units were processed: 828 treatment assays and 900 neutral, plus 72 treatment units with no implant to run. Results are in `experiments/foundations/t4x.json`.
+  - *Why incomplete.* The completeness check fixed with the design wants one implant per rank and position in every cell. An eligible lineage needs at least 256 cells and a heavy component (mass ≥ 256) of its own. Three states hold fewer than five eligible lineages: history 103 at 3 × 10⁶ steps (2), and history 105 at 10⁶ (4) and 3 × 10⁶ (3). The missing ranks lack an implant in every state and position, so a rerun cannot fill them. The neutral control is complete.
+  - *Descriptive only.* The numbers below are not the reading. A rule that used the ranks present was not fixed in advance.
+    - 10⁷ beats 3 × 10⁶ in 4 of 5 histories, 2 of them on partial cells. In the three complete histories it does in 2 of 3; history 101 misses in the 3 × 10⁶ state (a difference of 0.04).
+    - 3 × 10⁶ beats 10⁶ in 5 of 5, and 10⁷ beats 10⁶ in 5 of 5. None is blocked by the floor.
+    - Mean fitness rises monotonically over the three origins in the 10⁶ and 3 × 10⁶ states in all 5 histories, and in the 10⁷ state in 3 of 5. Later origins beat 10⁶ origins on mean fitness in 29 of 30 origin–state comparisons.
+    - Every origin does worse in the 10⁷ state than in the 10⁶ state, in all 15 origin–history combinations: the later worlds are harder for everyone.
+    - 10⁶ lineages survive in only 20–70% of implants even in their own state.
+  - *Neutral control.* 75–100% of implants die out in every cell, so every pair is at the floor in all 5 histories. It shows no pair, so it confounds nothing, but it cannot show one either.
+  - *For the next cohort's horizon,* read descriptively: competitive gains look likely to keep accumulating past 3 × 10⁶ steps in most histories, but this assay does not establish it.
+
+**Also.**
+- *The registered 10⁷ extension* runs on AWS alongside the review, from its own $50 budget.
+  - Size: 15 histories plus its 10-run neutral pilot, 2.5 × 10⁸ steps. Each history takes about 3.8 hours on one lane, and 25 histories on 6 lanes take about 19 instance-hours.
+  - It runs with `--checkpoint` every 10⁶ steps, since segmented runs equal continuous ones byte for byte. Its saved states then extend test 4's gap to 10⁷ steps without replays, as descriptive evidence outside the gate.
+  - Its analysis still needs schedule-aware threshold code and its pilot first (pre-registration, "Secondary analyses").
+  - *Threshold frozen 2026-09-29, before any extension run was analysed:* 9,848, the pooled 95th percentile of the calib-ext pilot (seeds 1101–1110, 10 runs at 10⁷ steps; bootstrap 90% interval 9,782–9,918; split halves 9,813 and 9,885). It sits in `experiments/extension.ts`, committed as `16fb79efa2f254901a76e9f72433025ac28f851c`. The analysis runs as `deno run -A tools/analyze.ts runs/m4-ext/gradient-m3 --registry extension`.
+  - *Result (2026-09-29; secondary and descriptive; report `experiments/m4/extension-gradient-m3.json`).* 15 runs of 10⁷ steps, all with exact conservation, none extinct. At 10⁷ steps it repeats M4's pattern at 10⁶:
+    - *Endpoint 1 holds:* treatment beats neutral and no-mutation with effect 1.00 (Holm-adjusted p = 0.0079 each). Cumulative new activity is 98,709 ± 11,507 in treatment, 25,817 ± 199 in neutral and 12 in no-mutation.
+    - *Endpoint 2 fails as before:* all 5 treatment runs are "growing", and so are all 5 neutral runs.
+    - Endpoint 4 holds in 5 of 5, and the ≥3-role criterion in 4 of 5. Both count role labels (`rolesPresent`). Test 6 gave no eligibility verdict for label-based coexistence, and role count is to be replaced before any new freeze (below).
+    - Endpoint 3 and each held-out observable are unavailable, since the extension has no replenished, uniform-light or no-signal-motility runs. The held-out hypothesis itself is not supported: 0 of 4 observables are established, and even the best possible p-values for the missing tests could not reach the 2 required. `compartmentalised` is 0 in every treatment run.
+    - *Calibration check:* the ensemble's own neutral 95th percentile is 9,934, against the frozen 9,848.
+    - The report's endpoint-1 paragraph quotes the frozen primary definition, with the primary thresholds. The threshold actually applied is 9,848, as its header says.
+- *On hold until the gate:* the endpoint-2 amendment, and whether it also re-tests endpoint 1 against a matched shadow; the fresh ensemble; founder changes; any RULE_VERSION change.
+- *Before any new freeze:* role count and `compartmentalised` are replaced by measures that pass test 6. The full analysis is rehearsed on pilot data and the test-6 worlds. Every comparative endpoint must fail neutral against neutral and be passable by a world that differs. A non-comparative endpoint, such as coexistence, must instead fail a world that lacks the property. spots-m3 gets 20 seeds.
+- *Separation.* A RULE_VERSION 2 is a separate cohort with its own presets, pilot and thresholds, never pooled with RULE_VERSION 1. Organisms built or searched for in this review are positive controls only and never found an emergence ensemble. The registered 10⁷ extension keeps the M3 founder set. A future cohort's founders come from a selection rule registered before its pilot, with a score disjoint from every held-out measure.
 
 Rough timeline for one person working part-time: M0–M3 in about 4 months, M4–M6 in about 4 more, and M7 open-ended. Throughput is unknown until it is measured in M0. For planning, assume 1024² at 1–3k steps/s on an M-series GPU, which puts a 10⁷-step history at about 1–3 hours.
 
@@ -163,6 +411,535 @@ Per-cell state at 1024² comes to about 64 × 32-bit channels (species ×5, ener
 3. Add a golden test: 64², 1,000 steps, same seed, comparing GPU and CPU state hashes, run headlessly in Chrome via Playwright.
 4. Add a conservation assertion (sum of quanta, via GPU reduction) checked every step in debug builds.
 5. Draft `packages/schema` v0 and the checkpoint format (header, checksum, schema version, rule version).
+
+
+## Selection-mismatch audit decision — 2026-09-29
+
+The independently reviewed, existing-record audit accounts for all seven archive genomes that later originated roles. Two failed regeneration at 16-replicate confirmation (a452, a718); one passed confirmation but missed the stricter strong-cluster admission criterion (a543); four had perfect confirmation results but fell beyond the reconstructed per-cluster admission cap (a73, a118, a374, a414). None was tested in the 32-replicate retest, so none is assigned a retest failure or an evaluated within-cluster ranking loss. All five confirmation passers are in historical M3 cluster 2, which remains represented among the founders.
+
+The full recorded funnel reconciles: 839 screening/confirmation records, 99 retests, 13 replication candidates and 12 ordered final founders, with identifier `m3-50886563ec90fb39`. The unstored admission cap is reconstructed as four under the pinned code, not recovered as a historical setting. The inexact legacy resume, absent quality-zero identities and uncertain historical executable provenance remain limitations. The seven subjects were selected using a later exploratory outcome; their histories cannot establish the causal effect of the regeneration score or population-wide evolvability loss.
+
+Decision: investigate selection mismatch, including input-order-dependent admission, with regeneration retained as a recorded trait. No founder, environment or physics intervention is selected by this audit. The historical **Variation** verdict remains intact and does not select the next mechanism. Operational-unit/evaluation validation remains Gate A; prospective surrogate validation, matched founder-policy comparisons and separate ecological factors remain later frozen-protocol gates. The material-observer limitation remains in force. No simulations or cloud work were launched.
+
+Reviewed artifacts are preserved in the isolated foundations workspace: [findings](../../browser-life-foundations/docs/selection-mismatch-audit-results-v1.md), [input manifest](../../browser-life-foundations/experiments/foundations/selection-audit-v1/input-manifest.json), [review](../../browser-life-foundations/experiments/foundations/selection-audit-v1/independent-review.md), and `results-v3/`. These sibling-workspace references are local handoff pointers; historical entries above are preserved.
+
+
+## Gate A operational-unit evaluation — 2026-09-29
+
+Implemented and independently reviewed a genome-independent support evaluator, then executed the frozen CPU development controls: 3,000 preparation steps and 2,000 steps each for sham, lesion and quenched continuations, with normal mutation enabled. Eleven focused tests pass, including an actual-mutation twin comparison. All source and output hashes verified; physical execution took 146.743 seconds, with a conservative 180-second total command charge against the 600-second ceiling. No cloud work occurred.
+
+**Gate A is not passed.** At the dense threshold 48 support, sham maintenance passes and lesion recovery fails (final mass 2,985 versus initial 5,040). At threshold 1, lesion recovery passes (5,719), while sham continuity becomes ambiguous after a split. The quenched arm retains 2,673 bound units without metabolic activity at threshold 1. The frozen overall verdict is segmentation-dependent/unavailable; mass persistence, local activity and a component split do not establish reconstructed organization or reproduction.
+
+The selected support descends from a chamber seeded with M3 founder index 2; 46 preparation mutation events mean it is not assumed genetically unchanged. Isolation removed 75,989 bound units outside the candidate. This substantial intervention and the absence of physical production-positive/causal-origin evidence limit interpretation. The prior material-observer limitation remains.
+
+Decision: leave surrogate validation, founder-policy, ecology and physics changes gated. A future foundational design should address causal boundaries between the dense support and its surroundings using matched controls, without choosing thresholds retrospectively. No such new experiment was launched. The historical Variation verdict remains and does not select the next mechanism. See the local sibling-workspace [report](../../browser-life-foundations/docs/gate-a-results-v1.md), [frozen protocol](../../browser-life-foundations/docs/gate-a-protocol-v1.md), and [review](../../browser-life-foundations/experiments/foundations/gate-a/final-review.md).
+
+
+## Ecological scaffolding (sandbox) — 2026-09-30
+
+This decision opens one exploratory ecology intervention under RULE_VERSION 1. Gate A's decision above keeps ecology and physics changes gated; this note is the dated decision that lifts that hold for this sandbox line only. It is not registered, does not answer the reset line's entity question, and does not count toward M6: ponds that exchange propagules are not independent histories. Nothing here re-reads M4 or the Variation gate as confirmatory.
+
+**Rationale.** The north star's hardest item is a collective that reproduces as a unit through a bottleneck. Experimental evolution has produced such collectives by imposing a group life cycle through the environment (Ratcliff et al. 2012; Hammerschmidt et al. 2014; Black, Bourrat & Rainey 2020). Evolution under RULE_VERSION 1 has so far reduced measured regeneration (test 5: 0.168 against 0.979). The hypothesis is that nothing pays for organisation, and that a bottleneck plus selection among ponds would. Here tiles are ponds. Each cycle, every pond is ground back to nutrient and reseeded with a small packet from a donor pond, chosen by truncation on pond bound mass (`scaf`) or at random among surviving ponds (`rand`). A third arm, `cont`, runs without the cycle. The result that counts is whether the evolved group-level trait, propagule competence, survives when the cycle is removed.
+
+**Scope.** The per-step physics, the WGSL and the golden pins are unchanged, and no `WorldConfig` key is added. The pond cycle is a host-side transform between steps in a standalone tool (`tools/scaffold.ts`, `tools/lib/ponds.ts`). Integrating it into the runner and lab is a later step, taken only under branches B or C of the protocol's decision table. The protocol, including the mechanics, pilot criteria, readouts and decision rules, is [`docs/scaffold-protocol-v1.md`](scaffold-protocol-v1.md), fixed before any run. Changes after the main run starts go in dated amendments there.
+
+**Seeds.** 4,800,001–4,849,999: P1 4,800,001+, P2 4,805,001+, main 4,810,001+, assays 4,820,001+. The range 4,000,001–4,799,999 is taken by the review and by ecology-first discovery.
+
+**Budget.** $0: Mac only through the readouts. Any AWS draw needs its own dated note after the pilots, drawn from the $200's margin. The $60 RULE_VERSION 2 go/no-go and the $120 cohort reserve are untouched. *(Superseded for the AWS draw below: by the user's decision of 2026-09-30, that draw may reduce the cohort reserve.)*
+
+**Pilots and freeze (2026-09-30).** P1 chose k = 8 with period 10,000. The R3 calibration passed: ancestor competence 0.859, quenched 0.000, on paired fragments. P2, the positive control, passed in both seeds. Details are in the protocol's Amendment 1. The frozen main configuration is `experiments/scaffold/main-config-v1.json`, SHA-256 `8d5dd3b93a7150119d79cf8be840fde8949310be39cd65ebb134f9bf45d74fc6`. It records the protocol SHA-256 `fa5b85bc…` and the tool commit `319f8794`.
+
+**AWS draw (2026-09-30, before paid runs; approved by the user).** The main run (18 histories × 10⁶ steps at 512²) and the readout assays go to one g5.xlarge with six lanes: about 25 million 512² steps, estimated at about 7 h. The Mac GPU is shared with other lines' jobs, and this would take it about 1.5–2 days.
+- **Budget:** estimate about $12, with a hard stop at $20, drawn from the follow-up $200.
+  - **Ledger before this draw.** The $200 has these draws recorded so far: about $5 for the extension time-shift, and the ecology-first draw (authorised about $20, hard stop $25). That draw has spent $8.02 on B and C; its `fx2` job is still running under its own cap. With the $60 go/no-go and the $120 cohort reserve earmarked, the unearmarked remainder is at most about $7, and less once `fx2` closes.
+  - **Amendment by the user's decision (2026-09-30).** This draw may take what it spends beyond that remainder out of the cohort reserve. The reserve is reduced by that amount, up to this draw's $20 hard stop, and the reduced figure is recorded here when this draw closes. The $60 RULE_VERSION 2 go/no-go stays untouched.
+- **Infrastructure:** a separate key pair and security group (`bl-scaf`), and a separate supervisor. They share nothing with the running `bl-found` supervisor or its jobs. Everything is torn down when the queue is done, or at the cap.
+- **Results:** they are pulled into `runs/scaffold/` in the scaffold workspace, and the cost is recorded here when the work closes.
+
+## Ecological scaffolding result (2026-09-30)
+
+The frozen main run (18 histories × 100 cycles, k 8, period 10,000, 64 ponds) and readouts R1–R4 are complete. Numbers, rules and caveats are in `docs/scaffold-protocol-v1.md` under "Results (2026-09-30)"; the machine-readable readouts are in `experiments/scaffold/readouts/`. Each readout was re-derived independently, and no number was disputed. The line is exploratory and not registered. It does not answer the reset line's entity question and does not count toward M6.
+
+**Matched row: 3, "R1 not demonstrated in `scaf`."** P1 and P2 passed. The standardised heredity assay did not show pond-level heritability in `scaf`: it met the rule in 0 of 6 histories. The table's disposition applies:
+- the line stops here, with no runner or lab integration and no confirmatory ensemble;
+- a heredity rule variant is recommended as a separate dated decision, which is not taken here.
+
+R2 showed genome-level adaptation in `scaf` (6 of 6, median gain +36,684 against `rand`'s −61,826). R3 was decisive by its rule, but only at the threshold. Neither is decision-relevant once row 3 matches. R4 found that the scaffold did not preserve regeneration.
+
+**Post hoc, not a decision input.** A plausible explanation of the R1 non-result, not an established one:
+- At time C, 92–100% of `scaf` fragments ended at 80% or more of the assay budget, and donor-family means were compressed to 104,882–142,006. That may have left little between-donor variance for R1's covariate-adjusted ICC to detect.
+- The same assay found strong pond-level heritability in `rand` (6 of 6), and P2, R2 and R3 each responded to selection among ponds.
+
+The data do not establish that selection depleted heritable variance, or that R1 missed heredity that exists. "Not demonstrated" stays "not demonstrated", not "absent".
+- Descriptive: with random donors, pond productivity collapsed (median 102,465 → 30,977); with truncation, it rose (102,589 → 136,940). This is consistent with a conflict between selection within ponds and selection among them, but the mechanism was not established.
+
+The next step is the user's dated decision: either follow the table (a heredity rule variant), or amend with a heredity test that is not confounded by depleted variance (for example, R1 at an early cycle, or across pooled donors from several histories).
+
+**Cost (closes the 2026-09-30 draw).**
+- AWS spent **$4.87** of the $20 hard stop: one g5.xlarge, about 4.7 h.
+- The key pair, security group and instance are gone, and the supervisor is unloaded.
+- Ledger of the follow-up $200:
+
+| Item | Amount |
+|---|---|
+| Extension time-shift | about $5 |
+| Ecology-first B and C | $8.02 |
+| Ecology-first `fx2` | $0.99 |
+| This line | $4.87 |
+| **Total drawn** | **about $18.88** |
+
+- The unearmarked remainder before this draw was about $5.99, so this draw took **$0 from the cohort reserve**. The $120 cohort reserve and the $60 RULE_VERSION 2 go/no-go are intact, and about $1.12 of margin remains.
+
+**Amend R1 (2026-09-30, the user's decision, after the result).** R1 is amended to R1′ (protocol Amendment 2). R1′ keeps every part of R1 except two:
+- **time:** primary boundary 34, rebuilt by resuming the frozen main-run code from the cycle-33 checkpoint and verified row for row against the original run;
+- **trait:** the pond trait at τ, an observation time within the assay period, calibrated on the ancestor only and meant to reduce ceiling effects.
+
+The amendment follows R1's result, so R1′ is exploratory. A positive R1′ only replaces row 3's recommendation with "replicate on fresh histories with R1′ as the primary". It cannot reach integration or registration by itself. A negative R1′ leaves row 3 standing. It runs on the Mac at $0, with seeds 4,845,001–4,847,960 and 4,849,001–4,849,002.
+
+**R1′ result (2026-09-30, exploratory).** R1′ was not demonstrated in `scaf`.
+- **Numbers:** 3 of 6 histories at boundary 34, with τ = 4,100 steps fixed on the ancestor; the rule needs 4. Every reconstruction verified, and every number was reproduced independently.
+- **Disposition:** row 3 and its recommendation (a heredity rule variant, as a separate dated decision) stand.
+- **Caveats:**
+  - Evolved `scaf` fragments were mostly saturated at τ: 0.95–1.00 of surviving fragments in 5 of 6 histories. So both designs ran at high saturation, and "not demonstrated" is not "absent".
+  - A τ sweep would pass at some earlier census times, between 600 and 3,100 steps. That is post hoc and is not used.
+- **Settling it:** pond-level heredity under the scaffold is unresolved, not refuted. Settling it needs a fresh design fixed in advance, on fresh histories, with a measure that does not saturate.
+- **Cost:** $0, on the Mac. Details are under "R1′ result" in the protocol.
+
+**Scaffold heredity replication (2026-09-30, the user's decision).** This is a fresh test of pond-level heredity under the scaffold, fixed before any of its data exist: `docs/scaffold-heredity-replication-v1.md`.
+- **Histories:** 12 fresh ones (6 `scaf`, 6 `rand`), seeds 4,811,001 + 100·arm + i, at protocol v1's frozen regime, run to boundary 34.
+- **Trait (R1″):** a discretised, capped crossing time to m* = 25,764.5. It avoids the end-mass ceiling, but both of its endpoint fractions are reported.
+- **Controls:** a positive control (the founder worlds) must pass. A null-calibration gate also applies: at most 1 of 4 mutation-off clone worlds may be significant.
+- **Rule:** applied after the control and availability checks; at least 4 of 6 `scaf` histories.
+- **Disposition:**
+  - **demonstrated:** row 3 is superseded, and the next step is a separate decision between integration and an R3 replication;
+  - **not demonstrated:** row 3 stands, now on a measure that avoids the end-mass ceiling;
+  - **uninformative:** a control gate fails, or fewer than 4 `scaf` histories are valid. Report it and stop.
+- **Cost:** $0, on the Mac. Seeds: worlds 4,811,001–4,811,106 and 4,811,201–4,811,204; assays 4,812,001–4,816,260.
+
+**Scaffold heredity replication result (2026-10-01).** R1″ is demonstrated in `scaf` in 6 of 6 fresh histories (ICC 0.09–0.59, p 0.001–0.036). Both control gates passed: positive controls ICC 0.94 and 0.75; 0 of 4 null worlds significant. The full record is in `docs/scaffold-heredity-replication-v1.md`, "Results (2026-10-01)", and every number was re-derived independently.
+- **Disposition:** protocol v1's row 3 is superseded, and the heredity-rule-variant recommendation is withdrawn. Pond-level heredity, genetic or structural, is demonstrable under the scaffold with a design fixed in advance.
+- **Caveats:**
+  - Heredity is present under the scaffold, but these data do not establish that the scaffold causes or increases it: `rand` shows it as strongly.
+  - It is fragile without covariates (3 of 6), and in three histories it rests on a few donor families.
+- **Next step:** a separate dated decision between integration (B) and an R3 replication on these fresh histories. The R3 replication comes before any registration.
+- **Cost:** $0, on the Mac.
+
+**Scaffold R3 replication (2026-10-01, the user's decision).** The R3 replication is chosen over integration. It reruns protocol v1's R3, unchanged, on fresh histories, fixed before any of its data exist: `docs/scaffold-r3-replication-v1.md`.
+- **Histories:** the 12 fresh `scaf` and `rand` histories, copied and extended from boundary 34 to 100; 6 new `cont` histories (seeds 4,811,301–4,811,306); a new ancestor source (seed 4,818,401).
+- **Rule:** v1's R3, decisive or not, after a device check (Mac to A10G) and the availability rule.
+- **Disposition:** replicates → row C (integration, then a registration draft, each by separate dated decision); does not replicate → row B; uninformative → report and stop.
+- **Seeds:** assays 4,816,301–4,818,112, continuations 4,818,301–4,818,319.
+
+**AWS draw (2026-10-01, before paid runs; approved by the user).** The replication runs on one g5.xlarge with six lanes: about 19 million 512² steps, about 4 h.
+- **Budget:** estimate about $5, hard stop $10, drawn from the follow-up $200.
+- **Ledger before this draw.** About $1.12 of unearmarked margin remains (the 2026-09-30 close-out above). By the user's decision (2026-10-01), what this draw spends beyond that margin comes out of the $120 cohort reserve, up to its $10 hard stop. The reduced reserve is recorded when this draw closes. The $60 RULE_VERSION 2 go/no-go stays untouched.
+
+**Scaffold R3 replication result (2026-10-01).** R3 replicates on fresh histories.
+- **Rule:** the advantage over `rand`, `cont` and the ancestor at both timings holds in 6 of 6 histories, and the swap criterion in 6 of 6; quenched controls are 0 in 12 of 12.
+- **Checks:** the device check passed, all 101 commands and 62 sets are complete, and every number was re-derived independently.
+- **Record:** `docs/scaffold-r3-replication-v1.md`, "Results (2026-10-01)"; readout `experiments/scaffold/readouts/r3rep.json`.
+- **Disposition:** re-entering v1's table with R1″, R2 (as recorded) and this R3 reaches row C: integration, then a registration draft for a confirmatory scaffolding ensemble. Each is a separate dated decision.
+- **Caveats:**
+  - The advantage is large and robust: smallest margins 11–15 of 128, and it holds in each replicate alone.
+  - The swap criterion passes at the threshold again: margins 0 to +2.5 fragments; replicate 0 alone 6 of 6, replicate 1 alone 0 of 6.
+  - The six swap tests share one draw of ancestor fragments, so they are not independent. The genome effect's direction is consistent, but its size, "at least half the advantage", is not established beyond the threshold.
+  - A registration design should test the swap with independent fragment draws per history and more replicates.
+  - R2 has not been replicated on fresh histories.
+
+**Cost (closes the 2026-10-01 draw).**
+- AWS spent **$3.94** of the $10 hard stop: one g5.xlarge, about 4 h.
+- The key pair, security group and instance are gone, and the supervisor is unloaded.
+- The supervisor once read a failed status call as termination and stopped. It was restarted within 3 minutes, nothing was lost, and the script now retries in that case.
+- Ledger of the follow-up $200:
+
+| Item | Amount |
+|---|---|
+| Drawn before (2026-09-30 close-out) | about $18.88 |
+| This draw | $3.94 |
+| **Total drawn** | **about $22.82** |
+
+- The unearmarked margin before this draw was about $1.12, so this draw took **about $2.82 from the cohort reserve**, which is now about **$117.18**.
+- The $60 RULE_VERSION 2 go/no-go is intact, and no unearmarked margin remains.
+
+**Row C (2026-10-01, the user's decision).** The line proceeds by protocol v1's row C, in two steps, each with its own review:
+1. **Integration (started now).** The pond cycle moves from the standalone tool into the shared runner, its checkpoints and segments, and the lab. Physics stays RULE_VERSION 1: the per-step rules, WGSL and golden pins do not change, and existing configurations hash identically. The design and its acceptance tests are fixed in `docs/scaffold-integration-v1.md` before code.
+2. **Registration draft** for a confirmatory scaffolding ensemble (an M7 candidate), after integration passes. It tests the genome swap with independent fragment draws per history and more replicates, which the R3 replication's caveats call for. Any AWS draw is recorded by a dated note before paid runs.
+
+Integration is engineering at $0, on the Mac. It does not count toward M6, and it changes no recorded result.
+
+**Integration result (2026-10-01).** Step 1 is done, at $0 on the Mac, in three commits: I1 core (6cfd2a1a), I2 lab (b659418b) and I3 archipelago. Each was built, audited, gated and reviewed by Astra (A16–A18).
+- All eight acceptance tests of `docs/scaffold-integration-v1.md` pass. Its Amendments 1–2 record the deviations, mainly `ponds-small` at period 1,000 and the CPU-reference pin at period 20.
+- The runner reproduces the standalone histories (state and `ponds.tsv`) through boundary 11.
+- Segmented, lab and coordinator runs equal continuous ones byte for byte.
+- Non-pond bundles, preset identities and golden pins are unchanged.
+
+**Registration draft (2026-10-01, the user's go).** Step 2 is drafted in `docs/scaffold-registration-v1.md`. It is not frozen and binds nothing until the user approves it.
+- **Primary hypotheses** (Holm at α = 0.01):
+  - H1: `scaf` competence ranks above `rand`, `cont` and the ancestor at both timings. Six exact Mann–Whitney tests, all required.
+  - H2: for each `scaf` history, its evolved genome founds more ponds than the relabelled ancestor genome on the same ancestral fragments. Each history has its own ancestor world and fragment draw. Tested by an exact sign test across histories.
+- **Secondary:** v1's "at least half the advantage" swap criterion, R2, and R1″, all on the fresh histories.
+- **Pilot finding (Mac, exploratory).** The new matched control (`Ga-on-Fa`) founds 5–6 more fragments of 128 than the unmodified ancestor set used by v1's and the replication's swap tests. Against it, the evolved genomes still gain in all 12 histories, but only 1–8 fragments, under half the advantage in every one. So those swap passes rested mostly on the control's mutants. A post hoc note in `docs/scaffold-r3-replication-v1.md` records this; its readout still reproduces.
+- **Size:** 24 histories per arm (the user's choice), with 4 replicates per set and 8 for the swap pair.
+  - The bootstrapped probability of confirming both is 0.99–1.00 (`tools/scaffold-power.ts`, with the pilot's control).
+  - It is 0.96 if 10% of evolved genomes carried no gain, against 0.75 with 16 histories.
+- **Data rules:**
+  - Sources are the runner's opt-in pre-cycle checkpoints, a small runner feature to build.
+  - Unresolved failures are never dropped: they count against the sign tests, and a rank comparison they enter is uninformative.
+  - There is no interim analysis.
+- **Cost:** about $28 estimated (hard stop $40) on three instances, from the cohort reserve, and only by a dated draw note approved before any paid run.
+- **Waiting on the user:** the remaining design choices and how a confirmed result relates to M7.
+
+**Transition hunt draft (2026-10-01, the user's go).** The registration stays at 24 histories per arm. Beside it, an exploratory hunt is drafted in `docs/scaffold-transition-hunt-v1.md`. It is not frozen and binds nothing until the user approves it.
+- **Why:** the registration confirms one known effect under a fully imposed life cycle. The hunt removes part of that scaffold and asks whether selection among ponds on their own reproductive output still produces a response.
+- **Regime (the "current"):**
+  - Each period, occupied ponds die at random (e = 1/2); empty ponds always die.
+  - Emptied ponds are refounded by an 8 × 8 propagule from a donor's edge zone.
+  - Donors are drawn in proportion to their own edge mass (`nat`), or to a permuted copy of those masses (`shuf`, the control).
+  - Nothing is ranked on a chosen trait. The host still fixes the zone, the packet, the schedule and the transport.
+- **Arms:** 24 histories each.
+  - From the ancestor: `nat-a` and `shuf-a`.
+  - Branched from 24 `scaf` histories at boundary 100: `nat-s` and `shuf-s`. The sources are the registration's if all 24 exist, otherwise the hunt's own.
+- **Primary signature:** common-garden export performance W, `nat` > `shuf`, at α = 0.05 for discovery.
+  - A hit is a candidate seed, not a demonstration of collective reproductive organisation, which a cell-level trait could mimic.
+  - Any hit needs a replication on fresh histories at α = 0.01 before a claim.
+  - Genome-only, heredity, edge-share and improvement tests are secondary.
+- **Stage 0, Mac, $0:** gates for viability and selection strength and for the instrument, plus a non-genetic-effects diagnostic.
+- **Seeds:** 4,900,001–4,949,999.
+
+**Transition hunt settings (2026-10-02, the user's decision).** The user took the recommended settings, recorded in the draft's "Freeze and order of events":
+- death rate e = 1/2, with the fallback to 1;
+- export zone at distance 28 or more from the pond centre;
+- **200 cycles** for the ancestor arms (the scaffold arms keep 100 cycles after their 100 scaffold cycles);
+- α = 0.05 for discovery, with replication at 0.01;
+- Stage 1 on AWS;
+- **the registration first:** it is settled, frozen and run first; Stage 0 runs on the Mac meanwhile; Stage 1 starts after the registration's queue completes and branches from its `scaf` histories, or from the hunt's own if those are not all available (the draft's sources rule).
+
+**Cost.** Stage 1 is about 153 × 10⁶ steps: estimate about $38, hard stop $48, from the cohort reserve, by a dated draw note. With the registration's $40 stop, that leaves at least $29.18 of the reserve.
+
+**Still open:** approval of the draft as a whole, and the registration's own open choices, which come first. Neither document is frozen. *(The registration was frozen later the same day; see below.)*
+
+**Registration frozen (2026-10-02, the user's decision).** The user approved `docs/scaffold-registration-v1.md` as written, with every open choice as drafted:
+- 24 histories per arm, with 4 replicates per set and 8 for the swap pair;
+- H2 as a sign test of direction, with the size criterion as S1;
+- two-sample tests;
+- the missing-data rules;
+- S2 and S3 as secondaries.
+
+**M7.** A confirmed result stands as its own registered result and does not count toward M7. It informs M7's design.
+
+**Freeze.** The final text was reviewed with Antigravity (`agy`), standing in for Codex Astra by the user's instruction for 2026-10-02, and committed. Its SHA-256 is `8a1b00ec5bd1440e8c4ab4ea61f3816dee0dbe110cb2052f0ae0ca785a817f69`, recorded in `experiments/scaffold/REGISTRATION-v1`.
+
+**Next, each step reviewed:**
+1. Build the code the registration lists: opt-in pre-cycle checkpoints in the runner, runner-bundle sources, the `reg1` labels and seeds, the `Ga-on-Fa` variant, and the report stage.
+2. The dated AWS draw note (estimate about $28, hard stop $40), for the user's approval.
+3. The runs.
+
+The transition hunt stays a draft. It waits on the user's approval as a whole, and its Stage 1 waits on this registration's queue.
+
+**Registration code built (2026-10-02, the user's go: "push and start the build").** The code listed under the registration's "Code to build before any run" is built, audited and reviewed. It is $0 engineering on the Mac. No history, assay or data of the registration exists yet.
+- **Runner:** opt-in pre-cycle checkpoints, `RunSpec.preCycleCheckpoints` and `tools/run.ts --pre-cycle`, writing `checkpoints/b<NNN>-pre.blck` (integration Amendment 3). Runs without the field are byte-identical, and the golden pins are unchanged.
+- **Assays:** `tools/scaffold-assays.ts --reg1` loads runner-bundle sources and verifies them. It covers every set of the registration: sources, Ge-on-Fa, the new Ga-on-Fa control, Ga-on-Fe, quenched, continuations, S2, S3 and R4.
+- **Report:** `tools/scaffold-report.ts reg1` implements the registration's rules end to end. It withholds the tests under an Invalid or Uninformative row, and analyses nothing until every queue command has a terminal state.
+- **Queue:** `tools/reg1-queue.ts` generates the frozen queue: 757 commands on three instances, producing all 558 expected sets. It also writes the lane, history and device-check scripts (`tools/reg1-ops/`).
+- **Registration Amendment 1** records the implementation clarifications made during the build, before any run: run directories, census-100 overflow reruns, one definition of "unresolved", tests withheld when validity settles the row, the device check across all instances, completeness, R4's ancestor, S1's interval and the retained-mass bins. It changes no hypothesis, test, threshold, seed or sample size.
+- **Process:**
+  - three parallel builders;
+  - adversarial audits: the runner had no P1 or P2; the assays one P2; the report one P1 (a missing quenched set did not make its history unresolved, now fixed); the field coupling had two P2s;
+  - all audit findings fixed;
+  - pre-commit review by Antigravity (`agy`), standing in for Codex Astra by the user's instruction for 2026-10-02.
+- **Gates:** typecheck; vitest 1,388; deno checks; GPU golden 12/12; the ponds suite all pass; stitch 43/43; segments 7/7. The R3 replication's, R1″'s and R4's readouts reproduce unchanged.
+- **Next:** the Mac's device-check reference and the committed queue manifest, then the AWS operations for three instances, then the dated draw note for the user's approval (estimate about $28, hard stop $40).
+
+**AWS draw for the registration (2026-10-02, before paid runs; approved by the user).** The registration's queue runs on AWS as its "Execution order and stopping" fixes it.
+- **Queue:** the committed `experiments/scaffold/reg1-queue.json` (757 commands; Mac device reference `0a81d98f7c148684`). That is 72 histories × 10⁶ steps, 24 ancestor worlds, 96 continuations × 2 × 10⁵, and 558 assay sets.
+- **Instances:** three g5.xlarge with six lanes each, about 8 hours. Instance 1 takes i = 0–7, instance 2 i = 8–15, and instance 3 i = 16–23. Each runs the device check first and stops if it differs from the Mac.
+- **Budget:** estimate about $28, hard stop $40, drawn from the cohort reserve (about $117.18). A Mac supervisor (launchd `com.browser-life.scaf-reg1`, every 10 minutes) charges a ledger for all three instances and tears everything down at $38, which leaves margin under the stop. The $60 RULE_VERSION 2 go/no-go is untouched.
+- **Infrastructure:** a separate key pair and security group, `bl-scaf-reg1`. They share nothing with any other job.
+  - Teardown terminates each instance individually and confirms that nothing launched with the key pair is still alive before deleting the key pair and security group.
+  - Results are pulled into `runs/scaffold/reg1/`, with each instance's device bundle in `device-inst<N>/` and a per-instance status file for the report's completeness check.
+  - The ops scripts, generated by `tools/reg1-queue.ts`, were reviewed by `agy` before launch.
+- **After the queue, on the Mac at $0:** R4, the two reproducibility reruns, then the report with its independent re-derivation.
+- **Close-out:** the cost is recorded here when the draw closes.
+
+**Registration draw closed (2026-10-03).**
+- **Cost:** $22.50, against the estimate of about $28 and the hard stop of $40. The cohort reserve is now about $94.68, and the $60 RULE_VERSION 2 go/no-go is untouched.
+- **Queue:** all 757 commands finished, with no failed command and no event-overflow rerun. The clean queue ran from 20:14 on 2026-10-02 to 03:07 on 2026-10-03 EDT, and the instances were terminated at 03:13. Their results were pulled to `runs/scaffold/reg1/`: 558 assay sets, plus each instance's device bundle and status file.
+- **Teardown:** the supervisor terminated all three instances, confirmed none was left, deleted the key pair and security group, and unloaded itself.
+- **Start incident (2026-10-02, before any data).** The first device check failed on all three instances. Without the Vulkan loader, `wgpu` fell back to GL, which lacks storage buffers and compute shaders. The check failed safe, as designed, and nothing else ran. `bootstrap.sh` now installs `vulkan-tools`, and then all three A10Gs matched the Mac's device hash `0a81d98f7c148684`.
+- **Retry safety, fixed before the clean start.** `tools/run.ts` appends to an incomplete bundle, so `history.sh` now removes one before a retry. A retried negative-control world resumes or is rebuilt, and stale lane claims are released. This was reviewed by `agy` and committed as `de885902`, and the queue restarted from scratch. The aborted attempts' logs stay on the (now terminated) instances, and none of their output is used.
+- **Next, on the Mac at $0:** R4 (done, 96 of 96 genomes), the reproducibility reruns of `scaf-i14` and `rand-i17`, then the report, an independent re-derivation of every number, an Astra review and the dated result entry.
+
+**Scaffolding registration result (2026-10-03): H1 and H2 confirmed** (the registration's outcome row; `docs/scaffold-registration-v1.md`, readout `experiments/scaffold/readouts/reg1.json`). Every number below was re-derived independently from the raw files with separate code, and all matched.
+
+**Validity.**
+- **Device check:** all four bundles (the Mac's M1 Max and three A10Gs) have `finalHash` `0a81d98f7c148684`.
+- **Quenched gate:** all 48 quenched sets have competence 0.
+- **Reproducibility:** `scaf-i14` and `rand-i17` rerun on the Mac to identical boundary-34 states.
+- **Completeness:** no history unresolved in any arm; 757 of 757 queue commands done; no truncated row.
+- **Amendment 2:** the report's first run returned Invalid only because the Mac supervisor had pulled the instance device bundles to a path missing `device/`. The bundles were moved unchanged, the move reviewed before any test statistic was computed, and the report rerun with the same command. The first readout is kept as `reg1-path-invalid.json`, and the amendment discloses that its descriptive section already held per-set competences.
+
+**H1 (Holm p 2.4 × 10⁻¹¹).** `scaf` competence ranks above every control at both timings: at withdrawal (a), and 2 × 10⁵ steps after the cycle stops (b). The largest of the six exact Mann–Whitney p-values is 1.2 × 10⁻¹¹ (`scaf` against the ancestor at (a)); the three at (b) are complete separations. Median competence (successes of 256 fragments):
+
+| Timing | `scaf` | `rand` | `cont` | Ancestor |
+|---|---|---|---|---|
+| (a) | 0.979 | 0.025 | 0.623 | 0.885 |
+| (b) | 0.967 | 0.111 | 0.605 | 0.660 |
+
+**H2 (sign test p 6.0 × 10⁻⁸).** In 24 of 24 histories, `scaf`'s dominant genome, relabelled onto its own ancestor world's fragments, founds more ponds than the matched ancestor-genome control on the same fragments. The effect is consistent but small:
+- a median of 19 more successes of 512 fragments, with a range of 1 to 35;
+- 448 fragments succeed only with the evolved genome, against 2 only with the ancestor's.
+
+**Secondaries** (Holm at 0.01; they never change the row):
+
+| Test | Result | Unadjusted p | Holm p |
+|---|---|---|---|
+| S1, d_i = g_i − ½ (competence of `scaf` − ancestor) > 0 | **Not confirmed**, as the pilot predicted: 5 of 24. The descriptive gain-to-advantage ratio has median 0.38 (95% interval 0.34–0.43) | 0.999 | 0.999 |
+| S2a, common-garden trait gain in `scaf` | **Confirmed**: 24 of 24, about +36,000 | 6.0 × 10⁻⁸ | 1.2 × 10⁻⁷ |
+| S2b, that gain above `rand`'s | **Confirmed** (median `rand` gain −85,000) | 3.1 × 10⁻¹⁴ | 9.3 × 10⁻¹⁴ |
+| S3, heredity in `scaf` | **Confirmed**: 17 of 24 histories with ICC > 0 and permutation p < 0.05; positive controls ICC 0.49 and 0.77; null gate 1 of 4, at its limit | 1.9 × 10⁻¹⁷ | 7.5 × 10⁻¹⁷ |
+
+**What it means** (the registration's own terms):
+- Worlds evolved under scaffolded selection found ponds from fragments better than worlds evolved under the bottleneck alone, without the cycle, or the ancestor. The advantage persists 2 × 10⁵ steps after the cycle stops.
+- The `scaf` genome alone, on ancestral material, founds better than the ancestor's genome.
+- The pond-level trait may be called **heritable** (S3 holds in `scaf`), in the heredity replication's sense: heritable genetic or structural variation.
+
+**Caveats:**
+1. **The genome effect is small beside the worlds' advantage, and S1 is not confirmed.** The descriptive ratio (median 0.38) compares two homogenised genomes on ancestral material with an unmatched difference between worlds. As the registration states, it is not the fraction of the advantage that the genome causes. H2 tests timing-(a) genomes on ancestral material. It does not show that the genome causes the persistence at timing (b), or that `scaf`'s genomes improved more than `rand`'s or `cont`'s.
+2. **`rand` degraded.** 10 of 24 `rand` histories score 0 at (a), and 14 end with a mean pond trait around 5,000 (the ancestor's is about 102,000). So `scaf` against `rand` is partly about `rand` collapsing. The comparisons that carry the claim are `scaf` against `cont` and against the ancestor, and both separate completely or nearly so.
+3. **Heredity is not shown to be specific to the scaffold.** It was demonstrated in 17 of 24 histories in both `scaf` and `rand` (`rand` is descriptive, outside the family); equal counts do not establish equal heredity. S3 measures crossing-time heredity at boundary 34, not competence at boundary 100.
+4. **Fragment mass.** `scaf` fragments retain less mass (median 3,255, against the ancestor's 5,400), and in the shared mass bins above 1,024 `scaf` succeeds more often; in the lowest bin, [512, 1,024), no fragment of any arm succeeds. Success itself requires fourfold growth of the retained mass, and the comparisons are not matched on mass, so H1 stays an unmatched comparison of worlds. `scaf` sits near its ceiling (0.97), which does not threaten a "higher" claim.
+5. **Not established:**
+   - that ponds reproduce as units once the scaffold is gone (no endogenous life cycle is tested);
+   - individuality or the reset line's entity question;
+   - anything beyond this regime (k 8, period 10⁴, 64 ponds, one ancestor, 10⁶ steps).
+
+**Milestones.** This stands as its own registered result, and counts toward neither M6 nor M7 (the user's decision, 2026-10-02). It informs M7's design.
+
+**Disposition (the registration's row; each next step a separate dated decision):** the next rung toward endogenisation, such as protocol v1's withdrawal ladder (longer removal, partial grind, migration-only dispersal), and the M7 question. The frozen transition hunt is already the next rung in that direction: its Stage 0 passed, and its Stage 1 draw note awaits the user.
+
+**Transition hunt frozen (2026-10-02, the user's decision).** The user approved `docs/scaffold-transition-hunt-v1.md` as a whole while the registration's queue ran on AWS.
+- **Before the freeze,** the text gained clarifications only:
+  - the no-packet row sentinel;
+  - the population coefficient of variation;
+  - midranks for Spearman ties;
+  - the unequal-size ICC(1);
+  - the no-export case (m = 0);
+  - what follows if G1's e = 1 fallback passes.
+- **Review:** two rounds by Antigravity (`agy`), standing in for Codex Astra by the user's instruction for 2026-10-02. Of its first round, two findings were applied (the m = 0 case) and two were not: G2 uses protocol v1's existing states, not the registration's, and "not assessed" against the 6-history threshold is the registration's chosen missing-data rule. The second round passed the diff.
+- **Freeze:** the SHA-256 is `13246200a5277ecbbbefb8d5b220f61a10ba1d33dc39a748fefbc224904a1f97` over its 38,736 bytes, recorded in `experiments/scaffold/HUNT-v1`. Changes from here on go in dated amendments at the end.
+- **Next:** Stage 0 on the Mac at $0: build the code the hunt lists, review it, commit; then G1, G2 and D3, and a dated amendment with their results. Stage 1 waits for the registration's queue and its own draw note.
+
+**Transition hunt Stage 0 code built (2026-10-03).** The code listed under the hunt's "Code to build (Stage 0)" is built, audited and reviewed. It is $0 engineering on the Mac. No gate run, history, assay or data of the hunt exists yet.
+- **The current:** arms `nat` and `shuf` (`applyCurrentCycle`) with the optional keys `pondDeath` and `pondExport`, and the conditions `pond-nat` and `pond-shuf`. Physics is unchanged: the golden pins, the preset identities and protocol v1's recorded pond states and rows (the `equivalence` suite) all reproduce.
+- **Runner:**
+  - the new arms' `ponds.tsv`, with one row per pond and three new columns;
+  - `--override` for `mutRate` and `pondDeath` only;
+  - branch runs from a pre-cycle checkpoint, by the hunt's branch contract;
+  - stitch rules for the new arms; stitching refuses branch segments;
+  - the island capability `ponds-v2`, with the coordinator's gate;
+  - a lab guard.
+- **Assay and report:**
+  - the export assay W (`scaffold-assays.ts export --hunt1`);
+  - the report stages `hunt0` (G1, G2, D3) and `hunt1` (Stage 1), with strict provenance, source authentication and the hunt's validity order.
+- **Amendment 1** (13 items, appended to the hunt) records the implementation clarifications made during the build, before any run. Among them: run directories, overflow reruns, G1's decision read literally and strictly, "unresolved", the one-origin rule for the `-s` sources, and the quenched gate's use of rejected sets. It changes no hypothesis, test, threshold, seed formula, sample size or outcome row. The frozen prefix still hashes to the pinned SHA-256.
+- **Process:**
+  - five parallel builders;
+  - three adversarial audits, with no P1 (their P2s were the strict report accepting smoke or mis-sourced sets, and `-s` pairs not tied to their source);
+  - two fix rounds;
+  - five rounds of Codex Astra review, which found five P2s in the report and four in the run script; all were fixed, and the last round passed the build.
+- **Gates:**
+  - typecheck;
+  - vitest, 1,644 tests;
+  - deno checks;
+  - GPU golden 12/12;
+  - the ponds suite, all sections, including `equivalence`, `natshuf` and `branch`;
+  - stitch and segments;
+  - coordinator `mix precommit`;
+  - the R3 replication's readout, unchanged.
+- **Next:** Stage 0 on the Mac (`runs/scaffold/hunt0/stage0.sh`): G1, then its e = 1 fallback only if G1 asks for it, then G2, then D3. Every decision is taken by `scaffold-report.ts hunt0`. The results go in a dated amendment.
+
+**Transition hunt Stage 0 passed (2026-10-03).** The full results are in the hunt's Amendment 2, with the readout in `experiments/scaffold/readouts/hunt0.json`. Every number was re-derived independently from the raw files.
+- **G1 passed at e = 1/2**, with no fallback:
+  - both `nat` runs are viable: occupancy 0.96 and 0.89, recolonisation 0.85 and 0.73;
+  - their selection strength is 0.35 and 0.43, against 0.1 needed;
+  - the export–offspring Spearman is +0.26 and +0.37 in `nat`, and about 0 in `shuf`.
+- **G2 passed 6 of 6.** W was 30,857–35,858 on v1's `scaf` states against 893–22,251 on its `rand` states, and every quenched control was dead (0 of 64).
+- **D3 (diagnostic):** with mutation off, `nat` − `shuf` differences in W were +33, −368, +825 and −93, so there was no consistent advantage. `nat` still beats `shuf` on in-run occupancy and recolonisation even without mutation, a non-genetic effect of the donor weighting. Only W, measured in the common garden, carries the contrasts.
+- **Next:** Stage 1 needs its own dated AWS draw note, for the user's approval: estimate about $38, hard stop $48. The reserve after the registration (about $94.68) covers it and leaves the $60 RULE_VERSION 2 go/no-go untouched. The `-s` sources follow the sources rule.
+
+**AWS draw for the transition hunt's Stage 1 (2026-10-03, before paid runs; for the user's approval).** Stage 1 runs on AWS as the hunt fixes it, with its queue fixed in the hunt's Amendment 3.
+- **Queue:** the committed `experiments/scaffold/hunt1-queue.json`, 374 commands; the Mac's device reference is `fa001d7a011fdfee`.
+  - 48 `-a` histories × 2 × 10⁶ steps from the ancestor clone;
+  - 48 `-s` branches × 10⁶ steps from the registration's 24 `scaf` histories at boundary 100 (all 24 verified, so the hunt runs no scaffold phase of its own);
+  - 4 ancestor worlds, plus 2 copies of world 0;
+  - 269 export-assay sets.
+
+  That is about 153 × 10⁶ steps.
+- **Instances:** three g5.xlarge, each with six lanes and about 51 × 10⁶ steps, so about 8–11 hours. Instance 1 takes i = 0–7, instance 2 i = 8–15 and instance 3 i = 16–23. Each runs the device check first and stops if it differs from the Mac.
+- **Budget:** an estimate of about $38 and a hard stop of $48, from the cohort reserve (about $94.68 after the registration). The $60 RULE_VERSION 2 go/no-go is untouched. After the stop, at least about $46.68 of the reserve remains.
+  - **The Mac supervisor** (launchd `com.browser-life.scaf-hunt1`, every 10 minutes) charges a ledger for all three instances. Each transfer's maximum is debited before it starts and settled after it ends.
+  - **The reserve:** the supervisor reserves the remaining runtime to the instances' deadlines plus one transfer, and tears everything down as soon as the ledger plus that reserve reaches $46.
+  - **Independent of the Mac:** every instance terminates itself 13 hours after launch (a deadline armed at first boot and verified at bootstrap), which caps compute at about $39.9.
+  - **Review:** the hardened operations passed six rounds of Codex Astra review.
+- **Infrastructure:** a separate key pair and security group, `bl-scaf-hunt1`. They share nothing with any other job, and the registration's are deleted.
+  - Each instance receives its eight registration sources (manifest and boundary-100 checkpoint only).
+  - Results are pulled into `runs/scaffold/hunt1/`. Device bundles go to `device-inst<N>/`, and the ancestor-world copies to `runs/scaffold/hunt1-anc-copy/`, outside the report's runs.
+  - Teardown terminates each instance individually and confirms nothing is left before deleting the key pair and security group.
+- **After the queue, on the Mac at $0:** the two reproducibility reruns (`shuf-s` i13, `shuf-a` i04), then the `hunt1` report, an independent re-derivation of every number, an Astra review and the dated result entry.
+- **Status:** waiting for the user's approval. Nothing is launched.
+
+
+## Ecology-first founder discovery — 2026-09-29
+
+Opens an exploratory founder-discovery line beside the reset follow-up (and Gate A's open entity question), under RULE_VERSION 1. It does not answer whether tracker births are reproducing entities; that question stays with the reset line. Nothing here is registered, and none of it re-reads M4 or the Variation gate as confirmatory.
+
+**Rationale.** The M3 screen evaluates monocultures in fresh nutrient with no waste, so consumers and decomposers cannot pass; the 12 founders are mostly phototrophs, and the founder diagnostic found that phototroph genomes rarely originate roles. A 12-founder start also pre-fills every niche by step 100. The program therefore treats the founder problem as an ecology problem along three angles: (A) screen in conditioned medium, (B) found from drifted genome clouds instead of clonal points, and (C) found with assembled sets that leave a niche empty.
+
+**Separation.** Roles are a readout of what a run produced, never a selection score. No score in A uses role, `compartmentalised`, or any held-out measure. The deliverable is the method (screen config, set recipe, cloud recipe) plus evidence; a future registered cohort re-runs any adopted screen under its own registered rule and seeds.
+
+**Seeds.** 4,700,001–4,799,999 (the review reserved up to 4,599,999). Split: A 4,700,001+, B 4,720,001+, C 4,740,001+, gardens 4,760,001+.
+
+**Fixed readouts (exploratory).** A: confirmed passers by cluster and by evaluator role, against the pool's phototroph/chemotroph/mixed/decomposer counts; count of obligate-dependence clusters (survive on medium, die under `DEFAULT_EVAL`). B and C: roles originating under test 3's definitions (against each cloud or set's own no-mutation runs), time of first qualifying window, and distinct qualifying role windows per 10⁵-step window; C also records roles present at step 100 and roles that qualify later but not at start. Descendants go through uniform and gradient gardens as in the founder diagnostic.
+
+**Budget.** Drawn from the follow-up $200. Per-angle envelope (pre-pilot): A about $10, B about $14 (or about $7 trimmed to the 12 founder clouds), C about $4, with about $7 margin — about $30–35 if all three run on AWS.
+
+**Authorised draw (2026-09-29, before paid runs).** A on the local Mac at $0. B and C on AWS, about **$20** of the $200 (hard stop $25 total for this draw). What runs: **B trimmed** (12 founder clouds × 8 = 96 runs at 10⁶) then **C** (S1, S2, S4 × 8 = 24 runs at 10⁶); not the full 192-run B list. Projection from pilots (~$7–12 at one g5.xlarge / 6 lanes) is under the draw; stop and report if a revised projection exceeds $25.
+
+**Pilot results (2026-09-29).** Mac-only; no AWS. Revised Mac timings used for the production envelope above.
+
+- **A waste** (`--medium waste:8:24 --score maintenance`, 5 batches, seed 4,700,001, `--confirm-reps 0`): 128 s wall (21.8–31.0 s/batch, mean ~26 s → **~1.4 h for 200 batches** search). 80 evaluated, 63 viable, best maintenance q 0.999, 0 gate-passing (regen 0 on elites). Pass for screen running; no M3-style regen passers in 5 batches.
+- **A background** (`--medium background:<founder-0 hex> --score maintenance`, 5 batches, seed 4,700,011): 225 s wall (37.6–52.9 s/batch, mean ~45 s; darkSteps 4000 → **~2.5 h for 200 batches** search). 80 evaluated, 64 viable, 47 gate-passing, best q 1.000. Candidate lineages survive on the producer background. Pass. **A both media serial on Mac ~3.9 h search** before confirmation and the dependence re-screen.
+- **Dependence re-screen:** 4 background screening passers all still survived 4/4 under `DEFAULT_EVAL` (not obligate). Founder-diag subject 0 (chemotroph) also survived 4/4 alone under `DEFAULT_EVAL`, on waste:8:24, and on background at both darkSteps 2000 and 4000 (lightDependent 4/4 either way). Honest: no obligate-dependent genome appeared in this pilot. darkSteps 4000 kept as the background default (safe; 2000 matched on the chemotroph probe).
+- **A quality sanity** (default medium, `--score quality`, 2 batches, seed 4,700,021): 44 s (22.0 + 21.8 s/batch). 32 evaluated, 24 viable, best q 0.621, 1 gate-passing; search block omits `score` (quality default). Behaves as before. Pass.
+- **B** (cloud from founder-2 test-3 `seed-4200021` at step 100100 → 13 hexes; `tools/run.ts --founder-set` 10⁵ steps, seed 4,720,001): 132 s, 764 st/s (**~22 min per 10⁶ on Mac**). `profiles.tsv` has 13 lineages at step 100; 88,331 mutation events; not extinct (427 individuals / 516 lineages at end). Pass.
+- **C** (S1 non-producers only, 10⁵ steps, seed 4,740,001): 136 s, 740 st/s. Not extinct (484 individuals / 540 lineages). Roles at step 100 (cells): mixed 3689, decomposer 2767, phototroph 2721, chemotroph 1571 (13 lineages). At end (~99,100): chemotroph 16133, decomposer 13159, mixed 7497, phototroph 694 (530 lineages). Pass.
+- **Checks:** `pnpm typecheck` ok; `pnpm test` 669 passed; `deno run -A tests/deno/gpu_golden.ts` all PASS; `golden-hashes.test.ts` untouched. S4 filled in `tools/founders-x.ts` (S2 genomes on `gradient-m3-waste`, 8-run harness from 4,740,001).
+
+**S5 control — fixed reading (2026-09-30, before runs).** Question: does S1's uniform-garden origination (≥3 of 5) vanish when the same non-producer genomes are founded together with producers (meaning the empty niche / community composition matters), or persist (meaning those non-producer genomes matter on their own)? **S5** = S1 subjects 0,3,1,6 interleaved with S2's nine phototroph founders (disc `i` carries `set[i % 13]`; ordering recorded in `fx-c-plan.json` `s5Ordering`), preset `gradient-m3`, 8 runs (5 mutation + 3 no-mutation), 10⁶ steps, `--lineage-obs`, seeds `4,740,001 + 10 × 3 + j` = 4,740,031–4,740,038 (next free C setIndex; no collision with S1/S2/S4). **Counting rule** (same as C): a set counts if ≥3 of 5 mutation runs originate a role under test 3's definitions against that set's own no-mutation runs; primary reading is the uniform garden; gardens use seeds from 4,760,001 continuing without colliding with prior FX garden units. **Expected readings:** S5 counts like S1 (≥3/5 on uniform) → the non-producer genomes matter; S5 fails like S2/S4 (0/5 on uniform) → the hole / community matters; 1–2 of 5, or no-mutation controls already showing several roles that muddy the garden reading → ambiguous, say so. One set of 5 mutation runs, exploratory; at 8 runs it cannot separate small effects. **Authorised draw:** about **$2** of AWS from the $200 (already drawn: $8.02 of the ~$20 authorised for B+C); hard stop $5 (`cost-fx2`). A is still on the Mac GPU, so S5 runs on AWS only.
+
+**Results (2026-09-30).** B trimmed and C on AWS; A still on the Mac (not closed here). Exploratory only. Machine-readable: `experiments/foundations/fx.json`. AWS for this draw: instance terminated, security group deleted, actual cost **$8.02** of the ~$20 authorised, drawn from the $200 (`runs/foundations/ops/cost-fx` and `STATUS`).
+
+- **Completeness.** All planned runs present locally: B 96/96 and C 24/24, each finished at 10⁶ steps with manifests, `profiles.tsv` and `genomes.tsv`. No gaps. Three B mutation runs extinct (founder-0 seed 4,720,002; founder-7 seeds 4,720,073 and 4,720,074). No C extinctions.
+- **B (drifted clouds, primary = uniform garden).** 1 of 12 clouds counts (founder-2's cloud, 4 of 5 mutation runs), against the point-founder baseline of 1 of 12 in test 3 (`t3.json`) and 11 of 24 in the founder diagnostic (`fd.json`). The gradient garden gives 3 of 12 (founders 2, 3 and 9). Raw role windows against each cloud's own no-mutation runs look much higher (10 of 12 would meet the ≥3/5 bar before the garden), but most candidates keep the same role beside the cloud's standing hex — 70 of 92 uniform outcomes are "same role", 18 "different role". First qualifying windows are often early (many by ~10⁴ steps; founder-2's cloud from step 100–4,100). Distinct qualifying windows per 10⁵ steps stay modest (cloud means about 0.04–0.32). Most clouds already show several roles at step 100 from standing variation; roles that qualify later but were absent at step 100 are rare (chemotroph on founder-6; phototroph on founders 8 and 10).
+- **C (empty-niche sets, primary = uniform garden).** 1 of 3 sets counts: **S1** (non-producers) in 3 of 5 mutation runs, in both gardens. **S2** (phototrophs only, the no-hole control) and **S4** (S2 genomes on `gradient-m3-waste`) do not count on the uniform garden (0 of 5); the gradient garden leaves them at 1 of 5 each. All three sets already carry multiple roles at step 100; none adds a role that qualifies later but was missing at start. S1 and S2 already show more than one role in their own no-mutation runs (S1 chemotroph+mixed; S2 phototroph+mixed), so part of what looks like origination is sorting of standing set diversity — same control caveat as the diagnostic's multi-role mutation-off subjects.
+- **Headline, without overclaim.** Cloud founders did not beat the point-founder rate on the primary garden reading (1/12 vs 1/12). The empty-niche non-producer set (S1) is the one C recipe that counts; the producer-only and producer+waste sets do not. This does not select a registered founder rule; A is still open, and nothing here answers the entity question.
+- **A, waste medium (2026-09-30).** Full Mac search finished (`runs/bootstrap-medium-waste`, `--medium waste:8:24 --score maintenance`, 200 batches, seeds 4,700,001–4,700,200). Machine-readable: `experiments/foundations/fa-waste.json`. Read-only; no new GPU. Background medium's dependence re-screen was left running and untouched.
+  - 3,200 evaluated → **2,677 viable** → **232 gate-passing** (screen) → **148 confirmed** on 16 reps; **14 genetic clusters** (`geneticClusters`; matches `confirm.json`). M3 gate not met (needs ≥20 clusters).
+  - Dependence re-screen: **0/148 obligate** under `DEFAULT_EVAL` (147 survived 16/16, one 15/16). Method success (≥1 obligate cluster) not met on waste.
+  - Roles not recorded (`EvalConfig.roles` off in bootstrap); no breakdown to compare with the M3 pool's 586 phototroph / 131 chemotroph / 109 mixed / 0 decomposer.
+  - `motGain > 0`: 298 viable, 5 gate-passing, **2 confirmed** (still almost all sessile).
+  - Regeneration: pilot's regen-0 elites under maintenance **persisted** (20 of 35 archive elites still regen 0); gate-passers only appear once regen hits 4/4 (first around batch 10). Confirmed passers regenerate 13–16 of 16 (mean ~14.7). Reading: `qualityMaintenance` does not score regen, so the archive can fill with maintainers that fail the regen gate; the gate still filters for regenerators separately.
+  - Background dependence (still running): confirm finished at **1,476** passers / 33 clusters; re-screen ~68/1,476 with 0 obligate so far; remaining ~**5 h** at ~4 genomes / ~50 s. A one-best-per-cluster sample (~33 genomes, ~8 min) would have decided the same binary on waste (0 obligate); on background it would likely decide the same *if* the early zero holds, but could miss rare obligates inside facultative clusters — full re-screen left as-is.
+
+**A, background medium result (2026-09-30).** The full re-screen finished (`runs/bootstrap-medium-background`, `--medium background:<founder-0 hex> --score maintenance`, 200 batches, search seeds 4,705,001–4,705,200, confirm seed 4,715,001, dependence seeds 4,715,410–4,715,778). Read-only analysis of `confirm.json`; no new runs and no cloud spend. Exploratory, like the rest of this section.
+
+- **Yield.** 3,200 evaluated → 2,854 viable (archive `viableCount`) → 1,633 gate-passing (screen) → **1,476 confirmed** on 16 reps → **33 genetic clusters**. The M3 gate is met on this medium (≥20 clusters needed; 1,301 of the 1,476 have a regeneration lower bound above 0.8, spanning all 33 clusters). The waste medium reached 14 clusters and did not meet it.
+- **Dependence re-screen.** **209 of 1,476** confirmed genomes are obligate (survive on the producer background, die under `DEFAULT_EVAL`), against 0 of 148 on waste. Every re-screened genome matched a confirmed row, so the cluster counts below are complete.
+- **Obligate genomes fall in 12 of the 33 clusters.** The method criterion (at least one obligate cluster) is met under any reading; the count depends on the definition.
+
+  | Cluster | Obligate / total | Mean survival under `DEFAULT_EVAL` |
+  | --- | ---: | ---: |
+  | 3 | 144 / 145 | 0.1 of 16 |
+  | 19 | 20 / 34 | 6.4 |
+  | 11 | 14 / 40 | 7.9 |
+  | 4 | 12 / 110 | 13.1 |
+  | 9 | 5 / 10 | 3.7 |
+  | 17 | 3 / 27 | 9.4 |
+  | 0 | 3 / 445 | 15.9 |
+  | 1 | 3 / 145 | 15.0 |
+  | 7 | 2 / 68 | 8.8 |
+  | 5 | 1 / 90 | 15.2 |
+  | 31 | 1 / 1 | 0.0 |
+  | 32 | 1 / 1 | 0.0 |
+
+  The other 21 clusters contain no obligate genome. Counting clusters where most genomes are obligate gives 4 (3, 19, 31, 32; cluster 9 is exactly half, 5 of 10, so it makes 5 at "half or more"); counting any obligate genome gives 12. Machine-readable: `experiments/foundations/fa-background.json`.
+- **Reading, without overclaim.** One cluster carries the result: cluster 3 holds 144 of the 209 obligate genomes and survives the default evaluation in about 0.1 of 16 replicates. Clusters 31 and 32 are single genomes. Clusters 0, 1, 4 and 5 are facultative, with a few obligate genomes inside them. This shows dependence on the conditioned medium only. The medium is founder-0's genome, a phototroph producer, so it does not show what the dependent genomes eat, and roles were not recorded in this search (`EvalConfig.roles` is off in bootstrap), so there is no role breakdown to compare with the M3 pool. Cluster labels are local to this pool and do not match the historical M3, waste-pool or diagnostic clusters.
+- **Derivation.** `dependence.rows[].genome` matched to `rows[].cluster` by exact genome (mu, sigma, motGain, weights) in `confirm.json`. Nothing here selects a founder rule; the founder-discovery continuation in the isolated founder-policy workspace draws its background candidates from this archive.
+
+**S5 results (2026-09-30).** Control run after the fixed reading above. 8/8 runs at 10⁶ on AWS (`cost-fx2`); instance terminated, security group deleted; actual cost **$0.99** of the ~$2 authorised / $5 hard stop (8 founder runs + short garden instance). Machine-readable: `experiments/foundations/fx.json` (`s5`, `aws.costFx2`). Gardens used seeds continuing from prior FX units (uniform 4,760,028+, gradient 4,770,028+).
+
+- **Completeness.** S5 8/8 present locally with manifests, `profiles.tsv`, `genomes.tsv`; no extinctions. Ordering recorded in `fx-c-plan.json` `s5Ordering` (S1,S2,S1,S2,… through discs 0–12).
+- **Primary (uniform garden).** **5 of 5** mutation runs originate a role → S5 **counts** (≥3/5). Gradient garden also 5 of 5. Raw (pre-garden) likewise 5 of 5; originating roles are phototroph and decomposer against the set's own no-mutation runs.
+- **Reading against the fixed rule.** S5 counts like S1 → the non-producer genomes matter (the hole is not required for the S1-class effect in this one set). Same control caveat as S1: no-mutation already shows chemotroph+mixed, so part of the signal can be sorting of standing set diversity. One set of 5 mutation runs, exploratory; at 8 runs it cannot separate small effects.
+- **Also at step 100.** All four roles already present; no role qualifies later that was missing at start (same pattern as S1/S2/S4).
+
+**Summary (2026-09-30).** One-page summary of the whole line (M3 through S5), the background-medium cluster analysis, costs and ranked next steps: [founder-program-summary-2026-09-30.html](founder-program-summary-2026-09-30.html).
+
+**Recurrence readout (fixed 2026-09-30, before computing).** Next step 2 of the summary: does role origination keep recurring after the first niche fill, or is it one-shot filling? Zero GPU, no AWS, no new runs; read-only on existing bundles. Only the layout of `profiles.tsv`/`mutations.tsv` and the run counts had been looked at when this was written; no event had been counted. Exploratory, like the rest of this section. Tool: `tools/recurrence-x.ts` (logic in `tools/lib/recurrence.ts`), output `experiments/foundations/fr.json`.
+
+- **Data (all 10⁶ steps, `--lineage-obs`).** B 96 (12 founder clouds × 5 mutation + 3 no-mutation, `runs/founders-x-b`), C 32 (S1, S2, S4, S5 × 5 + 3, `runs/founders-x-c`; S4 on `gradient-m3-waste`, the rest `gradient-m3`) — the 128 runs; test 3's solo founders 96 on disk (12 founders × 5 + 3, `runs/solo/gradient-m3`; 60 mutation + 36 no-mutation); the founder diagnostic 192 (24 subjects × 5 + 3, `runs/founders-diag/gradient-m3`). 416 runs. Deep censuses come every 1,000 steps (steps 100, 1,100, …, 999,100). Grouping uses the seed layout of each plan (B `4,720,001 + 10 i + j`, C `4,740,001 + 10 setIndex + j`, solo `4,200,001 + 10 k + j`, diagnostic `4,210,001 + 10 c + j`; `j < 5` mutation). Extinct runs stay in, flagged; the headline is also given without them.
+- **Definitions (per run, streamed per deep census).**
+  - *Role share* of role r at a deep census = cells of lineages whose `profiles.tsv` role is r ÷ living cells.
+  - *Window* = a maximal run of consecutive deep censuses with share ≥ 5% whose first-to-last span is ≥ 10⁵ steps (the existing qualification, `qualifying` in `tools/foundations.ts`). Windows of a role in time order are W₁, W₂, …
+  - *Fill* = W₁ of a role (at most 4 per run). *At start* if it begins at step 100; *late* if it begins at step ≥ 2×10⁵.
+  - *Clade* of a lineage = the founder lineage it descends from, by walking `mutations.tsv` parent links to a lineage that is nobody's child. The *holder* of a window = the clade with the most cells in that role summed over the window's censuses. A point-founder run has one clade, so replacement is impossible there by construction.
+  - *Post-fill event* = a window Wₖ (k ≥ 2) that starts at step ≥ 2×10⁵ and is either a **return** (gap from the end of Wₖ₋₁ to the start of Wₖ ≥ 10⁵ steps, any holder: the role lost qualification and came back) or a **replacement** (gap < 10⁵ and the holder clade has not held an earlier window of that role: a new clade holds a role that was already filled). A gap < 10⁵ with a holder that has held the role before is a flicker around 5%, not an event. Each window is counted once. Counted per run: fills (by role, at start or late), returns, replacements, post-fill events = returns + replacements; windows of k ≥ 2 starting before 2×10⁵ are reported apart as *early re-entries*; late fills are reported apart as *new-role fills* and are not post-fill events.
+- **Comparisons (fixed).** (i) Mutation against no-mutation of the same set, set by set and pooled. (ii) S1 and S5 (the sets that count on the uniform garden) against S2 and S4. (iii) Point founders (solo; diagnostic) against clouds (B), the clouds being paired with the solo runs of the same founder; because replacement cannot exist for a point founder, this comparison uses returns only. Strata that count on the uniform garden: C pool S1+S5 (primary), B founder-2 cloud, solo founder 2, the diagnostic's 11 counting subjects (`fx.json`, `t3.json`, `fd.json`).
+- **Statistic.** Post-fill events per run (also per 10⁵ steps: ÷ 8, the exposure after 2×10⁵), mean per arm, percentile bootstrap over runs (5,000 resamples, runs resampled within each arm independently, fixed seed), 90% interval (5th–95th percentile) for each arm and for the difference mutation − no-mutation. Descriptive: no p-values, no significance claim; with 3 no-mutation runs per set, intervals for single sets are wide and say so.
+- **Reading, fixed in advance.** Applied to the primary pool (C, S1+S5): **one-shot** if the mutation arm shows no more post-fill events per run than its no-mutation arm (mean difference ≤ 0); **recurring** if the mutation arm's rate exceeds the no-mutation rate and the 90% interval of the difference excludes zero; otherwise **unclear**. The other counting strata are reported by the same rule; if they disagree with the primary pool the reading is stated as mixed, not averaged. Reported with the rule even when the answer is "unclear".
+- **Bar this sets for next step 1 (S6, producer-plus-obligate).** Run this tool unchanged on the S6 bundles (it needs only `profiles.tsv`, `mutations.tsv`, `manifest.json`). S6 shows more than one-shot filling only if all hold: (a) post-fill events per mutation run exceed the same set's no-mutation runs, the 90% interval of the difference excluding zero; (b) at least 3 of 5 mutation runs have ≥ 1 post-fill event; (c) the S6 mutation-arm mean exceeds the largest mutation-arm mean among the strata above (clouds, point founders, S1/S5 pool), so S6 beats what existing starts already do; and (d) its producer-only and obligate-only mutation controls show fewer post-fill events per run than S6. If the existing strata read "one-shot", (c) falls to roughly the no-mutation level and (a), (b) and (d) carry the bar. Events are counted on role windows, so they remain tracker-based and inherit the entity limits.
+
+**Recurrence results (2026-09-30).** Run exactly as fixed above; no definition was changed after the first census was counted. 416 of 416 runs present and analysed (5 extinct: 3 B, 2 diagnostic, all mutation runs; the reading is the same without them). Machine-readable: `experiments/foundations/fr.json` (strata, per-set rows, comparisons, bar); per-run records under `runs/foundations/results/recurrence/`. Zero GPU, no new runs. Exploratory and descriptive; intervals are 90% bootstrap over runs.
+
+- **Reading on the primary pool (C, S1+S5): one-shot.** Not one post-fill event in any of the 16 runs, 10 mutation and 6 no-mutation; difference 0.00 [0.00, 0.00] events per run. S2 and S4 are also zero (20 of 20 C mutation runs, 12 of 12 no-mutation runs). All C sets fill their roles early: mutation runs average 4.0 fills (S1+S5) and 2.1 (S2+S4), no-mutation 1.7 and 1.5, and no window k ≥ 2 started before 2×10⁵ either.
+- **Elsewhere, mixed.** Post-fill events per run, mutation against no-mutation: B clouds (12) **0.28 [0.17, 0.40]** against 0.06 [0.00, 0.11], difference 0.23 [0.10, 0.36]; solo point founders (12) **0.18 [0.10, 0.27]** against 0.00, difference 0.18 [0.10, 0.27]; both read "recurring" by the rule. The diagnostic's 24 subjects read the other way: 0.06 [0.03, 0.10] against 0.17 [0.07, 0.28], difference −0.11 [−0.23, 0.00] ("one-shot"; its 11 counting subjects 0.05 against 0.30, difference −0.25 [−0.45, −0.06]), and the 13 non-counting subjects are "unclear" (0.01 [−0.10, 0.11]). Of the strata that count on the uniform garden: the B founder-2 cloud reads "recurring" (0.80 [0.40, 1.00] against 0.00, 4 of 5 runs, n = 5 against 3), solo founder 2 "unclear" (0.40 [0.00, 0.80]), the diagnostic's counting subjects "one-shot". By the rule fixed above, disagreement is stated as mixed, not averaged.
+- **Rates are small and uneven.** Runs with at least one post-fill event: B 15 of 60 mutation runs (2 of 36 no-mutation), solo 11 of 60 (0 of 36), diagnostic 6 of 120 (8 of 72), C 0 of 20 (0 of 12). That is about 0.035 events per 10⁵ steps in the B mutation runs, 0.02 in solo and 0.01 in the diagnostic. They concentrate in a few starts: B founders 10 and 2 (4 of 5 runs each), 3, 7 and 8 (2 of 5 each) and the same founders (10, 2, 7, 8) in solo; 6 of the 12 clouds have no event at all. Event kinds in B mutation runs: 11 returns and 6 replacements (a new founder clade holding a filled role: 3 chemotroph, 3 mixed); solo and diagnostic events are all returns, because a point founder has one clade.
+- **Clouds against point founders (returns only).** Mutation-arm returns are identical in B and solo, 0.18 [0.10, 0.27] per run each (diagnostic 0.06 [0.03, 0.10]); the difference in mutation-minus-no-mutation between B and solo is −0.06 [−0.19, 0.07]. Standing variation in the cloud adds replacements (6 events in 60 runs) but no more returns than the same founder alone; what recurs there is mutation-dependent and does not need a cloud.
+- **S1/S5 against S2/S4.** Difference in differences 0.00 [0.00, 0.00]: the sets that count on the garden are no more recurrent than the ones that do not, because none recur.
+- **New-role fills are more common than post-fill events.** A role whose first qualifying window begins at step ≥ 2×10⁵ (not the same as "absent at step 100": it may have been present below 5%) occurs 0.42 per run in B mutation runs against 0.03 without mutation, 0.30 against 0.00 in solo, 0.65 against 0.17 in C and 0.40 against 0.10 in the diagnostic. So late fills depend on mutation in every family, while repeats of an already filled role do not do so consistently. This is a secondary count, not part of the fixed reading.
+- **Reading, without overclaim.** The pre-stated rule reads **one-shot** where the program's strongest candidate for dependence-on-origination sits (S1/S5), and the families that read "recurring" (B clouds, solo) do so at a rate of roughly one event per 3 to 5 runs, from a few founders, with returns that need no cloud. The overall answer is therefore mixed leaning one-shot: after the first fill a role is rarely refilled, though late first fills of new roles do occur. This does not test the entity question. Roles are tracker-based, three no-mutation arms per set give wide intervals, and a role "returning" after ≥ 10⁵ steps below 5% may be a fluctuation of the same population rather than a new origination.
+- **Bar for next step 1, with the numbers.** The tool runs unchanged on the S6 bundles. S6 shows more than one-shot filling only if (a) its mutation arm exceeds its no-mutation arm with the 90% interval of the difference excluding zero, (b) at least 3 of 5 mutation runs have at least one post-fill event (so at least about 0.6 events per run), (c) its mutation-arm mean exceeds the largest pooled existing stratum, the B clouds at 0.28 per run (upper 90% limit 0.40; best single set 0.80 for B founder-10), and (d) the producer-only and obligate-only mutation controls show fewer events per run than S6. For comparison, S1/S5 stand at 0 of 10 mutation runs. Note (b) already asks for more than any pooled existing stratum shows.
+
+**Obligate characterisation (fixed 2026-09-30, before any result).** Next step 1, stage 1 of the program summary: what do the background-medium obligates actually do? Mac GPU, $0, no AWS. Exploratory, nothing registered, RULE_VERSION 1 unchanged. Script: `tools/obligates-x.ts` (plan, run and read in one; pure logic in `tools/lib/obligates-x.ts`); output `experiments/foundations/fo.json`; raw per-batch evaluations in `runs/obligates-x/batches.jsonl`.
+
+- **Question.** (1) Does the obligation reproduce on fresh seeds? (2) What roles do obligates express, and in which media do they live (standard, waste, two producer backgrounds, 4× biomass)? (3) Are they trophically distinct from the non-obligate confirmed genomes? (4) Do they consume the producer's products, and how does the producer respond to them?
+- **Subjects (48; each one genome, the medoid by genome distance).** 12 *obligate* representatives: for each of the 12 background-pool clusters that hold any obligate genome, the medoid of that cluster's obligate members. 2 *obligate-extra*: in the cluster holding most obligates (cluster 3, 144 of 209) the obligate member farthest from its medoid and the one at the median distance. These two are its mutant cloud, so they test within-cluster spread, not new lineages. 21 *nonobligate-cluster*: the medoid of every one of the 21 clusters that hold no obligate genome. 10 *facultative-sibling*: for each mixed cluster, the medoid of its non-obligate members (cluster 31 and 32 are single obligates; they have none). Plus 3 references: the producer genome itself (M3 founder 0, which is the screen's background; checked at distance 0), a second producer (the M3 founder among 1–11 farthest from founder 0 in genome slots, ties to the lowest index; the planner chose founder 5 at distance 162), and a *null* candidate (all-zero weights, expected to die). The null candidate is the producer-alone control inside the background-ring geometry. Cluster labels are the pool's own (`confirm.json`). Subjects are interleaved across groups over 12 batches of 4.
+- **Media (the five defined in the summary's next-steps section).** `standard` = `DEFAULT_EVAL`; `waste` = nutrient 8, waste 24 (the waste screen's medium, darkSteps 2000); `bg0` = producer ring of founder 0 under the candidate disc (the background screen's medium: biomass 64, darkSteps 4000); `bg2` = the same with the second producer; `x4` = standard with the candidate seeded at four times the biomass (256, energy 512). No dead-producer medium was used: the summary defines five, and waste is the corpse-only analogue. In `bg0` and `bg2` the producer disc starts larger (radius 21 against the candidate's 10), as in the screens.
+- **Measures.** 16 replicate tiles per genome-medium (≥ 8 required), fresh seeds from 4,790,001 (batch b of medium k uses 4,790,001 + 20 k + b). Per genome-medium: survived (of 16), recovered, light dependence (dies in the dark while a lit control lives), regenerated, recovery, individuals, mean mass, speed, reproduction (fission plus budding per tile), and the role sums with `EvalConfig.roles` (the last 1,000 growth steps) and the dominant role. **Role attribution.** `EvalConfig.roles` alone sums every cell in a tile, so in co-culture it would mix the candidate with the producer. A minimal per-lineage observer was added instead, `EvalConfig.roleScope: "lineage"` (only with `roles` and a background medium): it splits each cell's fluxes by founder lineage, so `roleSums` and `role` describe the candidate lineage alone, `roleSumsOther` the producer, and `otherMass` the producer's bound mass before the lesion. The default (`"tile"`) and every path without `roleScope` are unchanged, so `DEFAULT_EVAL` output is byte-identical (the gate and golden tests are the check). Light dependence in a background medium is not direct: the dark arm also kills the producer, so only `standard`, `waste` and `x4` show a candidate's own light dependence.
+- **Readings, fixed now.** Per genome-medium, *viable* = survives in at least 12 of 16, *dead* = at most 2 of 16, otherwise marginal (the same as 6 of 8 and 1 of 8).
+  1. **Obligation reproduces.** A representative is *confirmed obligate* if it is dead in `standard` and viable in `bg0`. At least 10 of the 12 confirmed: it reproduces; 6–9: partial; 5 or fewer: not reproducible. The screen picked genomes at 0 of 16 out of 1,476, so regression toward the mean is expected for clusters whose other members mostly live alone (clusters 0, 1, 4, 5); an unconfirmed representative stays in the table and is excluded from readings 3 and 4.
+  2. **Summary's stage-1 rule (the dominant cluster's three representatives).** *Success* = all three confirmed, each viable in `bg2` or `waste`, and each at under 8 of 16 in `x4`. *Kill (density)* = the cluster medoid at 8 of 16 or more in `x4` (more biomass rescues it, so an Allee threshold rather than interdependence). Anything else is reported as mixed.
+  3. **Dependence class** per confirmed representative: producer-general (viable in both backgrounds), producer-0-only, producer-2-only; waste-viable and density-rescued flags are separate.
+  4. **Trophic distinctness (read out, never a score).** In `bg0`, among confirmed obligate representatives against `nonobligate-cluster` representatives viable in `bg0`: share whose candidate role is not *phototroph*, two-sided Fisher exact. *Distinct* only if p < 0.05; otherwise "not distinguishable at this n". Medians of the photo, grow and decomp shares of the three summed fluxes are descriptive. A confirmed obligate that is photosynthetic yet dies alone is reported as such (dependence that is not through waste).
+  5. **Consumes the producer's products.** *Decomposer-type* = role decomposer or decomposition share at least 0.25 in `bg0`. *Producer response* = producer bound mass beside the candidate over producer mass beside the null candidate, in the same geometry: at most 0.7 draws it down, at least 1.3 benefits, otherwise neutral. This contrast is valid only if the null candidate is not viable in either background. The producer-alone flux contrast uses `roleSumsOther` against the null control, with the `producer0` monoculture in `standard` as a secondary reference (different starting geometry). One observation per representative cannot show a flow of matter, so "consumes" is read only as decomposer-type with a producer response that is not neutral; anything weaker is reported as unknown.
+  - **What would change the plan.** Few confirmed (reading 1) or density rescue (reading 2) means the 209 are not a usable obligate pool and stage 2 is not built around them. Obligates that are decomposer-type and viable in both backgrounds would justify producer-plus-obligate worlds with a second producer; producer-0-only would mean the dependence is on one genome.
+- **Instrument checks (not results).** A one-batch smoke run on a separate seed (4,799,001) and work directory checks only that `roleScope: "lineage"` returns candidate and producer fluxes and that the null candidate dies; it is not read for any subject. Unit tests cover `addLineageRoles`, subject choice and the Fisher helper. Gates: `pnpm typecheck`, `pnpm test`, `deno run -A tests/deno/gpu_golden.ts`, golden hashes untouched.
+
+**Obligate characterisation results (2026-09-30).** Run on the Mac, $0, no AWS. Machine-readable: `experiments/foundations/fo.json` (plan, per-subject per-medium cells, the readings); raw per-batch evaluations (with every replicate) in `runs/obligates-x/batches.jsonl`; log `runs/ops/obligates-x.log`. 48 subjects × 5 media × 16 replicates in 60 batches, seeds 4,790,001–4,790,092 (batch b of medium k: 4,790,001 + 20 k + b). GPU time about 42 minutes. The first launch died before its first batch (a detached shell was killed) and was restarted from scratch with no results kept from it. Other jobs shared the GPU during the run. The one-batch smoke run on seed 4,799,001 only checked the instrument and is not used.
+
+- **Instrument checks.** `evaluateBatch` output with the old file and the new one is byte-identical for `DEFAULT_EVAL`, for `roles` plus `perRep`, and for `roles` plus a background medium without `roleScope` (a four-genome, one-batch comparison). `pnpm typecheck` ok; `pnpm test` 695 passed (46 files); `deno run -A tests/deno/gpu_golden.ts` all PASS; golden hashes and `RULE_VERSION` untouched. The null candidate dies in `standard`, `waste`, `bg0` and `x4` (0 of 16) but keeps 7 of 16 in `bg2` (a marginal result: some null-lineage cells persist beside producer 2, so the `bg2` producer-alone control is imperfect; `bg0` is the primary).
+- **Reading 1, obligation reproduces: yes, 12 of 12.** Every representative is dead in `standard` (0–1 of 16) and 16 of 16 in `bg0`, as well as 16 of 16 in `bg2`, and dead in `waste` (0 of 16). Regression to the mean did not occur, even for clusters 0, 1, 4 and 5 where most members live alone.
+- **Reading 2, the summary's stage-1 rule: kill fired (density).** Cluster 3's medoid and both extras are 16 of 16 in `x4`, 16 of 16 in `bg2`, and 0 of 16 in `waste`. Four times the seeding biomass rescues 11 of 12 obligate representatives to 16 of 16. The exception is cluster 9 (1 of 16 in `x4`, 16 of 16 in both backgrounds). The non-obligate representatives that were marginal in `standard` (clusters 10 and 27, and the siblings of clusters 7, 9, 11 and 17: 6–11 of 16) are also 16 of 16 in `x4`. The dependence looks like a founding-density threshold at the screen's seeding (mean 64 per cell over a radius-10 disc), which a producer ring beside it, or more seeding biomass, removes. It is not shown to be a need for another lineage's products. Caveat: `x4` also raises seeded energy (2 × biomass), so it tests seeding mass, not density in isolation, and the background media start with a larger total of living cells for the same reason.
+- **Reading 3, dependence class.** 12 of 12 producer-general (both producers); 0 viable in waste; 11 of 12 density-rescued.
+- **Reading 4, trophic distinctness: not distinguishable at this n.** In `bg0`, 10 of 12 obligate representatives are phototroph and 2 mixed (clusters 11 and 19), against 21 of 21 phototroph for the non-obligate-cluster representatives; two-sided Fisher p = 0.125. In `x4` (monoculture, so attribution is exact) the 11 rescued obligates are 8 phototroph, 2 mixed and 1 decomposer (cluster 4); the 21 non-obligate representatives are 21 phototroph. Medians of the photo and decomposition shares are the same for obligates and non-obligates (decomposition about 0.49 against 0.48). The two non-phototroph obligate clusters (11, 19) are the only visible hint of a different trophic type, and cluster-11's facultative sibling is also mixed or chemotroph, so it follows the cluster rather than the dependence.
+- **Reading 5, consumes the producer's products: formal rule met, but not discriminating, so unsupported.** By the pre-stated rule 12 of 12 are decomposer-type (decomposition share at least 0.25) and 10 of 12 draw the producer down (producer mass at most 0.7 of the null control's, `bg0`), the other two neutral (clusters 0 and 11, 0.86 and 0.71). But the non-obligate representatives do the same: median decomposition share 0.476 and median producer-mass ratio 0.02 (obligates 0.03). Candidates of both kinds mostly take over the tile (about one individual per tile at roughly 230,000 bound mass) and leave the producer at a few percent of its producer-alone level. So this is displacement, not a consumer-producer pair, and the "decomposer-type" criterion was a poor choice because most genomes in this pool split their flux about evenly between photosynthesis and decomposition. This reading was fixed in advance and is reported as it came out; the discriminating comparison above is post hoc.
+- **Descriptive (post hoc).** Motility: 1 of 12 obligate representatives has `motGain` above 0 (cluster 5, 23; speed 5.4), 0 of 21 non-obligate; speed medians 2.4 against 1.9 per 100 steps, which is mostly growth drift for sessile genomes. Light dependence under `x4` (direct, no producer): 10 of 12 obligates are dependent in 16 of 16; cluster 4 (the decomposer one) is 0 of 16 (the dark arm there is 2,000 steps against 4,000 in the backgrounds) and cluster 9 is 1 of 16 (almost nothing survives to test). In `bg0` all 12 are light-dependent in 16 of 16, but that is indirect (the producer also dies). Regeneration in `bg0`: obligates 15.5 of 16 on average; in `x4`, 10.4 of 16 (non-obligates 7.4).
+- **What it implies.** Stage 2 as written (producer plus one obligate per cluster, to read consumer-resource dynamics) is not supported by these genomes: they are founding-density specialists that overgrow the producer, so the likely outcome is a single fill again, and an S6 would probably show displacement rather than consumer-resource dynamics. The pool of 209 does not supply interdependence on this evidence. Honest remaining candidates: cluster 9's representative (the only one not rescued by more seeding biomass; its cluster is half obligate and its siblings are marginal in `standard`), and a screen that requires dependence at seeding biomass 256, which would drop the Allee class. Before building anything, one question this design cannot separate is whether the producer's benefit is only extra seeded living mass (a cheap follow-up: the obligate beside a producer ring at several background biomasses, and alone at 2× and 8×). Effective n is still about 12 clusters of one pool and one producer pair; exploratory and unregistered.
+
+**Correction: the background-medium confirmation ran beside a dead ring (2026-09-30).** The 16-replicate confirmation and the obligate definition in "A, background medium result" did not run against a living producer. `tools/bootstrap.ts` rebuilt the confirmation's evaluation config from `archive.json`, where `JSON.stringify` had written the background genome's `Int8Array` weights as a plain object; `encodeGenome` then encoded every controller weight as 0. The ring therefore had founder 0's μ, σ and motility gain but no controller. The 4-replicate search screen did use the real producer. `buildWorld` also adds the ring's seeded biomass and energy to the candidate disc, so candidates started with roughly twice their own seeded mass. The 209 "obligate" genomes are therefore genomes that die alone under `DEFAULT_EVAL` but survive beside a zero-weight ring with extra starting matter; the confirmation is in effect a dead-ring control. The obligate characterisation above ran its own evaluations against live producers (`bg0`, `bg2`) and at 4× biomass (`x4`), so its readings are not affected by this bug; its output now also carries each subject's dead-ring confirmation counts beside them. `backgroundGenomeIsFounder0: true` in `experiments/foundations/fa-background.json` describes the recorded config, not what the GPU ran. Fixed in code: `encodeGenome` reads weights by index and refuses missing or out-of-range values, and `tools/bootstrap.ts` revives the stored config (`reviveEvalConfig`). Nothing else in this section is re-read.
+
+**Founder-set gardens re-run beside each descendant's own ancestor (fixed 2026-10-01, before any re-garden result).** The B/C gardens compared every candidate descendant with its set's first genome (`founderSet[0]`), not with the founder lineage it descends from. In S1 (two chemotrophs, two mixed genomes) a mixed descendant read as "different role" against the chemotroph comparator, and in S5 a phototroph descendant of a producer founder could read the same way. The re-garden plants each candidate beside its clade root's genome (walked through `mutations.tsv`, genome from `genomes.tsv`), with each root's monoculture as the inactive-founder fallback. Everything else follows test 3's rules unchanged: 16 replicates, 20,000 steps, the uniform garden primary and the gradient garden secondary, and a cloud or set counts when at least 3 of its 5 mutation runs originate a role. Seeds: uniform from 4,761,001, gradient from 4,771,001. Output: `experiments/foundations/fx-root.json`; `fx.json` stays as the record of the old comparator. Also reported: candidates whose qualifying window starts at step 100, the founding census. Exploratory, like the rest of this section.
+
+*Re-garden result (2026-10-01; `experiments/foundations/fx-root.json`).* Uniform garden: S1 4/5 (was 3/5), S2 1/5 (was 0/5), S4 0/5 (was 0/5), S5 5/5 (was 5/5); clouds counting 2/12 (founder-2, founder-3; was 1/12: founder-2). Gradient garden: S1 3/5 (was 3/5), S2 1/5 (was 1/5), S4 0/5 (was 1/5), S5 5/5 (was 5/5); clouds counting 2/12 (founder-2, founder-3; was 3/12: founder-2, founder-3, founder-9). 82 of 102 candidates had a different comparator from before; 9 candidates' windows start at step 100.
+
+**Recurrence readout, hardened rerun (2026-10-01; `experiments/foundations/fr-v2.json`).** Same fixed definitions; the tool now refuses incomplete inputs (416 of 416 complete), states "mixed" when the counting strata disagree (overall: mixed; disagreeing: B counting clouds, Solo counting founders), takes the counting strata from the re-gardened `fx-root.json`, counts every window k ≥ 2 before 2×10⁵ as an early re-entry, pairs comparison (iii) by founder (returns: −0.06 [−0.17, 0.05]), reports both readings of bar (c) (pooled 0.28, counting-only 0.60), and uses string lineage keys. Per-run post-fill counts are unchanged from the first run; strata that depend on which sets count may differ. Share of "mixed" cells with no catalytic flux in the deep-census snapshot: 0.50 in mutation runs, 0.47 without, pooled over all 416 runs; mixed post-fill events: 15, median inactive share 0.12.
+
+**Recurrence on the registered worlds (fixed 2026-10-01, before computing).** The recurrence readout's definitions (windows, fills, returns, replacements, the 2×10⁵ cut-off, the bootstrap and the reading rule) applied unchanged to two families not read before. Exploratory and descriptive; zero GPU; output `experiments/foundations/fr-m4.json`.
+- *M4 replays* (`runs/replay-m4/gradient-m3`): treatment seeds 1–10 against no-mutation seeds 1–5, post-fill events per run (returns and replacements, clades from `mutations.tsv`). Null: the 20 neutral replays read by the same rule against the same no-mutation runs.
+- *10⁷ extension* (`runs/m4-ext/gradient-m3`, seeds 101–105 per condition): role shares from `series.jsonl` at every deep census. No lineage profiles exist, so only returns can be counted (no clades). Events are returns in windows starting at or after 2×10⁵; treatment against no-mutation, neutral as the null. Reported beside it, descriptively: returns per 10⁶-step block, and returns in windows starting at or after 5×10⁶.
+- *Specificity.* A family's treatment reading counts as specific only if its neutral null does not read "recurring"; otherwise it is reported as "not specific".
+- *Threshold robustness (M4 replays only, since the extension stores shares, not fluxes).* Roles recomputed from `profiles.tsv` fluxes at dominance 0.5 and 0.7, and at 0.6 with zero-flux rows counted in the living total but in no role. The treatment reading is "robust" if all four variants (0.5, 0.6, 0.7, 0.6 without inactive rows) give the same reading, and "threshold-sensitive" otherwise.
+- *What it would mean, stated now.* An extension reading of one-shot (mean difference ≤ 0) is recorded as "no excess role returns over no-mutation at 10⁷ in the registered world". A specific "recurring" is recorded as such, with the per-block profile showing whether returns persist late. Either way the roles are tracker-free here, but they are still flux-snapshot labels, and the entity question is untouched.
+
+*Result (2026-10-01; `experiments/foundations/fr-m4.json`).* M4 replays, post-fill events per run, treatment 0.20 [0.00, 0.40] against no-mutation 0.00: unclear (robust across dominance 0.5/0.6/0.7 and without inactive rows; neutral null reads one-shot, so specific). 10⁷ extension, returns per run, treatment 2.40 [0.80, 4.20] against no-mutation 0.00 (neutral 0.00): excess role returns at 10⁷ (specific). Returns per 10⁶ block, treatment mean: 0.40, 0.00, 0.00, 0.20, 0.20, 0.00, 0.40, 0.40, 0.40, 0.40; returns starting at or after 5×10⁶: treatment 1.60, no-mutation 0.00 (mean per run). Mean share of "mixed" cells with no flux in M4 replays: treatment 0.35, no-mutation 0.24, neutral 0.68. Of the 12 treatment returns in the extension, 7 are in the "mixed" role (6 in one run, seed 105), 3 chemotroph and 2 phototroph; "mixed" includes lineages with no catalytic flux, which series.jsonl cannot separate. Post hoc, excluding mixed-role returns: 1.00 [0.00, 2.40], unclear.
+
+**Test 6 measures rebuilt (fixed 2026-10-01, before computing any flag).** Two test-6 failures came from measure construction rather than from the worlds: persistent novelty and role clusters were keyed on single lineage IDs, which turn over by the thousand per 10⁵ steps under mutation (persistent novelty 0 in all 10 treatment replays; role clusters 0–0.77 while 2–4 roles were present). And with 20 shadows a perfectly calibrated shadow flags 1 run in 21, so it meets "at most 2 of 70" only about 35% of the time. Rebuilt, exploratory, same worlds and same eligibility rules (`tools/t6v2.ts`, `tools/lib/measures6.ts`, output `experiments/foundations/t6-v2.json`; `t6.json` stays the record):
+- *Shadow excess* with 99 shadows (a perfect shadow then flags about 1/100), in two modes: the original full redraw each census, and a turnover-matched shadow that keeps Binomial(x, 1 − τ) of each component and redraws the rest, τ being the real world's census-to-census turnover. Also the rank of each run among its shadows, whose distribution over the 70 neutral runs should be uniform.
+- *Persistent novelty v2*: a (μ/8, σ/4, role) bin newly reaching 1% of living cells after 10⁵ steps, summed over every lineage in the bin, that stays at ≥ 1% for ≥ 10⁵ steps of consecutive deep censuses.
+- *Role clusters v2*: catalytic-profile clusters (single linkage, L1 < 0.2 on profiles rounded to 0.02) whose summed share is ≥ 5%, zero-flux rows excluded, averaged over the second half.
+- *Expected directions, written before computing* (a > b): treatment > no-mutation replays for both shadow excesses and persistent novelty v2; no-mutation replays > single-founder no-mutation runs for role clusters v2 (specialisation pair, counted only if they hold more roles, as before). Null checks over the same 70 neutral runs; eligibility as in test 6.
+
+*Result (2026-10-01; `experiments/foundations/t6-v2.json`; K = 99).* Eligible: shadow excess (full) no (effect 1, neutral flagged 30/70, upper bound 0.534, rank uniformity p 1.4e-56); shadow excess (turnover-matched) no (effect 0.3, 30/70, 0.534, p 1.4e-56); persistent novelty v2 no (effect 0.95, 34/70, 0.590); role clusters v2 no (pair effect 0.617; treatment mean 1.003). Mean zero-flux share of living cells: treatment 0.023, no-mutation 0.0004, neutral 0.012. In both shadow modes the 40 gradient-m3 neutral runs all sit at rank 0 of 99 and the 30 spots-m3 neutral runs all at rank 99 (expected flagged 0.7 of 70; p from the exact chi-square survival function, 9 df). Post hoc: the turnover-matched shadow's τ is net census-to-census change, which understates gross cell replacement, so the shadow keeps too many cells and is miscalibrated by construction (per-run `runs.neutral` values, observed mode: shadow median above the real value in all 40 gradient-m3 neutral runs, e.g. 7319 against 2592 in calib seed-1001, and far below it in all 30 spots-m3 neutral runs, e.g. 273 against 4501 in replay-m4 seed-1), so its failure does not test a gross-turnover (demography-matched) shadow. Post hoc: persistent novelty v2 flags 23/40 gradient-m3 and 11/30 spots-m3 neutral runs, and its (μ/8, σ/4, role) bins are built from genome μ/σ, which drift under neutral mutation even where the reference phenotype is expressed (41 distinct μ values after 10⁵ steps in neutral calib seed-1001's `profiles.tsv` against 3 in no-mutation replay seed-1, counted with awk), so the measure tracks genotype drift as well as expressed novelty.
 
 
 ## Founder-policy assay decision — 2026-09-30 UTC

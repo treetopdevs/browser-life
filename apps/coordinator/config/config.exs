@@ -34,9 +34,10 @@ config :phoenix, :json_library, Jason
 # token required to create experiments (unset: loopback clients only).
 config :coordinator,
   data_dir: "data",
-  presets: ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago),
+  presets:
+    ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago ponds ponds-small),
   conditions:
-    ~w(treatment no-mutation neutral uniform-light fixed-env replenished no-signal-motility no-migration),
+    ~w(treatment no-mutation neutral uniform-light fixed-env replenished no-signal-motility no-migration pond-rand pond-cont),
   cors_origins: ["http://localhost:5173"],
   admin_token: nil,
   allow_local_admin: false,
@@ -53,10 +54,15 @@ config :coordinator,
   # "no-migration" is not listed here: it is meaningful whenever *either*
   # mechanism it could remove is present (tile migration, via :migration_period
   # below, or a per-experiment :metapopulation), so Queue.incompatible/3 checks
-  # it dynamically against the spec instead of this static preset list.
+  # it dynamically against the spec instead of this static preset list. The
+  # pond presets have uniform light and no seasons, and the pond conditions
+  # need a preset with the pond cycle.
   incompatible: %{
-    "uniform-light" => ~w(spots spots-m3 soup),
-    "fixed-env" => ~w(spots gradient spots-m3 gradient-m3 soup large archipelago)
+    "uniform-light" => ~w(spots spots-m3 soup ponds ponds-small),
+    "fixed-env" =>
+      ~w(spots gradient spots-m3 gradient-m3 soup large archipelago ponds ponds-small),
+    "pond-rand" => ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago),
+    "pond-cont" => ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago)
   },
   # preset => its migrationPeriod (packages/schema/src/presets.ts's "archipelago"
   # preset; 0/absent for every preset without migration configured). Used only to
@@ -65,7 +71,21 @@ config :coordinator,
   # of migrationPeriod, or every island assigned to the run fails at runtime
   # (packages/runner/src/runner.ts). Must be kept in sync with the TS preset by hand,
   # like `:presets`/`:conditions`/`:incompatible` above already are.
-  migration_period: %{"archipelago" => 200}
+  migration_period: %{"archipelago" => 200},
+  # Presets with the pond cycle (packages/schema/src/presets.ts's "ponds" and
+  # "ponds-small": WorldConfig.pondPeriod/pondK/pondArm). Their segments and
+  # verify tasks go only to islands that advertise the "ponds-v1" capability
+  # (Queue.pick_task/4), and they refuse a :metapopulation, whose cross-run
+  # exchange would move matter into and out of their ponds. Kept in sync with
+  # the TS presets by hand, like `:presets` above.
+  pond_presets: ~w(ponds ponds-small),
+  # preset => its pondPeriod (the same presets.ts presets; every condition
+  # keeps it, pond-cont included). Used only to validate cadence at experiment
+  # creation, like `:migration_period`: pondPeriod must be a multiple of
+  # censusEvery (packages/runner/src/runner.ts refuses it otherwise), and
+  # segmentSteps a multiple of pondPeriod. Must be kept in sync with the TS
+  # presets by hand.
+  pond_period: %{"ponds" => 10_000, "ponds-small" => 1_000}
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

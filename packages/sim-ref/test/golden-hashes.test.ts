@@ -31,20 +31,41 @@ const PINNED: Record<number, Record<string, string>> = {
     adhesion: "50eddcb6828ecddd",
     "adhesion-extremes": "00c9ffa767290ed9",
     "adhesion-default-gain": "16b879ff174bb74c",
+    "polymer-transport-off": "2adcd0a6ecc3761a",
     "mutation-boundary": "0966e96ab1306e8f",
     "ring-namespace": "e277953f6ebc2ea2",
   },
+  // Rule 2 introduces optional matrix drag. Even unchanged trajectories get
+  // new hashes because the digest includes cfg.ruleVersion. Rule-1 pins
+  // above remain unchanged and are executed separately below.
+  2: {
+    soup: "8672cf43e23a2191",
+    "tiled+mutation-heavy": "965191399086d4e6",
+    "patches+seasons": "99dd24075d570eec",
+    "lesion+stats": "25b1ea708beacf51",
+    "blocked-affinity": "ea9180914c466639",
+    extremes: "d5ad194dfb494dd4",
+    "neutral-shadow": "5323ca6a46cf2923",
+    adhesion: "46c70ae5bde64e30",
+    "adhesion-extremes": "f46d381e9f39ea47",
+    "adhesion-default-gain": "f0eeac65bbfad501",
+    "polymer-transport-off": "19a7e424a3e57b7b",
+    "polymer-drag": "d4214f795b70ece9",
+    "polymer-drag-extremes": "0326b44826cbccd1",
+    "mutation-boundary": "92eed0da25afc74a",
+    "ring-namespace": "46eb59a05b14971f",
+  },
 };
 
-describe(`rule version ${RULE_VERSION}`, () => {
-  for (const gc of goldenCases()) {
+for (const version of [1, RULE_VERSION]) describe(`rule version ${version}`, () => {
+  for (const gc of goldenCases(version)) {
     it(`${gc.name} matches its pinned hash`, () => {
       const sim = new RefSim(cloneState(gc.init(gc.cfg)));
       for (let s = 0; s < gc.steps; s += gc.every) {
         sim.run(gc.every);
         if (gc.lesion && s === 0) applyLesion(sim, ...gc.lesion);
       }
-      expect(stateHash(sim.state)).toBe(PINNED[RULE_VERSION]?.[gc.name]);
+      expect(stateHash(sim.state)).toBe(PINNED[version]?.[gc.name]);
     });
   }
 });
