@@ -106,8 +106,13 @@ export class Broker {
   }
   end(id: string): void {
     const t = this.#tasks.get(id); check(t, 'UNKNOWN_TASK'); t.alive = false;
-    for (const [id, l] of this.#leases) if (l.view.task.taskId === t.task.taskId) this.revoke(id, 'TASK_ENDED');
+    let failed = false; let failure: unknown;
+    for (const [leaseId, lease] of this.#leases) if (lease.view.task.taskId === t.task.taskId) {
+      try { this.revoke(leaseId, 'TASK_ENDED'); }
+      catch (error) { if (!failed) failure = error; failed = true; }
+    }
     this.audit.append({ ...this.evidence('task_ended'), agentId: t.task.agentId, taskId: t.task.taskId, workspaceId: t.task.workspaceId, sourceRevision: t.task.sourceRevision }, this.now());
+    if (failed) throw failure;
   }
   private eligible(reg: Registration, l: InternalLease): void {
     check(this.#healthy, 'AUDIT_UNAVAILABLE'); check(reg.alive, 'TASK_ENDED');

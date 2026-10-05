@@ -72,6 +72,21 @@ describe('single operation authorization', () => {
       if (kind === 'operation_succeeded') expect(s.broker.snapshot(s.lease.leaseId).status).toBe('uncertain');
     }
   });
+  it('continues revoking every task lease after a revocation audit failure', () => {
+    class FailsFirstRevocation extends MemoryAudit {
+      failed = false;
+      override append(...args: Parameters<MemoryAudit['append']>) {
+        if (args[0].kind === 'lease_revoked' && !this.failed) { this.failed = true; throw new Error('disk failure'); }
+        super.append(...args);
+      }
+    }
+    const audit = new FailsFirstRevocation(); const s = setup(audit);
+    const second = s.broker.issue('task_alpha', { ...req, head: 'another' }, cred, 'approval_two', 'request_two');
+    expect(() => s.broker.end('task_alpha')).toThrow('AUDIT_UNAVAILABLE');
+    expect(s.broker.snapshot(s.lease.leaseId).revokedAt).toBeDefined();
+    expect(s.broker.snapshot(second.leaseId).status).toBe('revoked');
+    expect(audit.events.at(-1)?.kind).toBe('task_ended');
+  });
   it('rejects TTL, credential scope, unknown fields and repeated pending leases', () => {
     const s = setup(); expect(() => s.broker.issue('task_alpha', req, cred, 'approval', 'second')).toThrow('ATTEMPT_BLOCKED');
     const other = { ...req, head: 'different' };

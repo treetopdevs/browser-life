@@ -38,6 +38,17 @@ it('bounded pending-frame queue cancels abusive channels', async () => {
   input.write(frame.repeat(9)); await tick(); expect(s.resolves()).toBe(0);
   expect(s.broker.snapshot(s.lease.leaseId).status).toBe('revoked');
 });
+it('applies the frame limit to each newline-delimited frame', async () => {
+  const s = setup(); const input = new PassThrough(); const output = new PassThrough(); let responses = '';
+  output.on('data', data => { responses += data; }); bindPipes(s.channel, input, output);
+  const frame = JSON.stringify({ leaseId: s.lease.leaseId, request: req });
+  const padded = frame + ' '.repeat(128 * 1024 - frame.length - 1) + '\n';
+  input.write(padded.slice(0, -1));
+  input.write('\n' + padded);
+  await tick(); await tick();
+  expect(input.destroyed).toBe(false);
+  expect(responses.trim().split('\n').map(line => JSON.parse(line).ok)).toEqual([true, false]);
+});
 it('closes a channel when its peer does not consume responses', async () => {
   const { Writable } = await import('node:stream');
   const input = new PassThrough(); const output = new Writable({ highWaterMark: 1, write(_chunk, _encoding, _callback) {} });

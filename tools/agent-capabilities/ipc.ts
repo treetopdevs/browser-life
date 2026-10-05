@@ -14,19 +14,24 @@ export function bindPipes(channel: Channel, input: Readable, output: Writable): 
   const deny = () => send('{"ok":false,"code":"INVALID_REQUEST"}\n');
   const close = () => {
     if (closed) return; closed = true;
-    input.removeListener('data', data); output.removeListener('error', close); output.removeListener('close', close); input.removeListener('close', close); input.removeListener('end', close); input.removeListener('error', close);
+    input.removeListener('data', data); input.removeListener('close', close); input.removeListener('end', close); input.removeListener('error', close);
     try { channel.close(); } catch { /* supervisor owns cleanup; no diagnostic payload */ }
+  };
+  const outputClosed = () => {
+    output.removeListener('error', close); output.removeListener('close', outputClosed);
+    close();
   };
   const data = (chunk: Buffer | string) => {
     if (closed) return;
     const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    if (buffer.length + bytes.length > MAX_FRAME) { deny(); close(); input.destroy(); return; }
-    buffer = Buffer.concat([buffer, bytes]);
-    let newline: number;
-    while ((newline = buffer.indexOf(10)) >= 0) {
+    let offset = 0; let newline: number;
+    while ((newline = bytes.indexOf(10, offset)) >= 0) {
+      const frameLength = buffer.length + newline - offset;
+      if (frameLength > MAX_FRAME) { deny(); close(); input.destroy(); return; }
       if (pending >= 8) { deny(); close(); input.destroy(); return; }
       pending++;
-      const line = buffer.subarray(0, newline).toString('utf8'); buffer = buffer.subarray(newline + 1);
+      const line = (buffer.length ? Buffer.concat([buffer, bytes.subarray(offset, newline)]) : bytes.subarray(offset, newline)).toString('utf8');
+      buffer = Buffer.alloc(0); offset = newline + 1;
       serial = serial.then(async () => {
         if (closed) return;
         try {
@@ -36,7 +41,10 @@ export function bindPipes(channel: Channel, input: Readable, output: Writable): 
         } catch { deny(); }
       }).finally(() => { pending--; });
     }
+    const remainder = bytes.subarray(offset);
+    if (buffer.length + remainder.length > MAX_FRAME) { deny(); close(); input.destroy(); return; }
+    if (remainder.length) buffer = buffer.length ? Buffer.concat([buffer, remainder]) : Buffer.from(remainder);
   };
-  input.on('data', data); input.on('end', close); input.on('error', close); input.on('close', close); output.on('error', close); output.on('close', close);
+  input.on('data', data); input.on('end', close); input.on('error', close); input.on('close', close); output.on('error', close); output.on('close', outputClosed);
   return close;
 }
