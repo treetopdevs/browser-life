@@ -2,7 +2,7 @@
 // only run and replay create simulator devices.
 import {
   FLUX_NAMES,
-  RULE_VERSION,
+  DEFAULT_RULE_VERSION,
   stateHash,
   type WorldConfig,
 } from "@bl/schema";
@@ -701,8 +701,8 @@ export async function buildPilotDesign(rootArg: string): Promise<PilotDesign> {
       subjects: [...entry.subjects] as string[],
     });
   }
-  if (RULE_VERSION !== capabilityDesign.ruleVersion) {
-    throw Error("RULE_VERSION differs from the capability design");
+  if (DEFAULT_RULE_VERSION !== capabilityDesign.ruleVersion) {
+    throw Error("DEFAULT_RULE_VERSION differs from the capability design");
   }
   const configs: Record<string, WorldConfig> = Object.fromEntries(
     PILOT_SEEDS.map((seed) => [String(seed), discoveryCompetitionConfig(seed)]),
@@ -760,7 +760,7 @@ export async function buildPilotDesign(rootArg: string): Promise<PilotDesign> {
   if (!configHash) throw Error("unreachable config hash");
   const payload = {
     format: PILOT_FORMAT,
-    ruleVersion: RULE_VERSION,
+    ruleVersion: DEFAULT_RULE_VERSION,
     sourceRoot,
     root,
     protocolPath,
@@ -784,7 +784,7 @@ export async function buildPilotDesign(rootArg: string): Promise<PilotDesign> {
 
 export function validatePilotDesign(raw: unknown): PilotDesign {
   const d = object(raw, "pilot design") as unknown as PilotDesign;
-  if (d.format !== PILOT_FORMAT || d.ruleVersion !== RULE_VERSION) {
+  if (d.format !== PILOT_FORMAT || d.ruleVersion !== DEFAULT_RULE_VERSION) {
     throw Error("pilot design format or rule version mismatch");
   }
   if (canonicalPayloadHash(d) !== d.designHash) {

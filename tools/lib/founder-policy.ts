@@ -1,6 +1,6 @@
 // Pure, outcome-independent founder-policy design and analysis primitives.
 import { createHash } from "node:crypto";
-import { CH, G, GENOME_CHANNELS, M3_FOUNDER_SET, PRESETS, RING_CELL_MASK, RULE_VERSION, cellCount, cloneState, decodeGenome, encodeGenome, geneticClusters, initWorld, lineageKey, packLineageLo, type Genome, type WorldConfig, type WorldState } from "@bl/schema";
+import { CH, G, GENOME_CHANNELS, DEFAULT_RULE_VERSION, M3_FOUNDER_SET, PRESETS, RING_CELL_MASK, cellCount, cloneState, decodeGenome, encodeGenome, geneticClusters, initWorld, lineageKey, packLineageLo, type Genome, type WorldConfig, type WorldState } from "@bl/schema";
 import { fromHex, normalizeGenome, toHex } from "./selection-funnel-audit.ts";
 
 export const COHORT_SEEDS = Array.from({ length: 8 }, (_, i) => 6200001 + i);
@@ -75,7 +75,13 @@ export function designFromInputs(inputManifestSha256: string, sourceHashes: Reco
   let nextSampleSeed = SAMPLE_SEED_FIRST;
   const sampleUnits = histories.flatMap((h) => [0, 100000, 1000000].flatMap((time) => Array.from({ length: 12 }, (_, root) => [0, 1].map((draw) => ({ history: h.id, time, root, draw, seed: nextSampleSeed++ }))).flat()));
   if (histories.length !== 72 || sampleUnits.length !== 5184 || nextSampleSeed !== 6245185) throw Error("design roster cardinality drift");
-  return { format: 1, ruleVersion: RULE_VERSION, founderSetId: M3_FOUNDER_SET, inputManifestSha256, sourceHashes, resolvedConfigs, thresholds: { pilotBothPositiveGenotypes: 7, pilotOverallMeanAbsoluteMax: 0.05, pilotPerGenotypeMeanAbsoluteMax: 0.15, pilotCompetentMinusDisabledMin: 0.20, pilotCompetentGenotypes: 7, meaningfulGain: 0.10, meaningfulPolicyDifference: 0.10, retentionNoninferiority: -0.05, bootstrapReplicates: 10000 }, caveats: [`legacy resume: ${JSON.stringify(archive.resumes ?? null)}`, "quality-zero evaluations are not recorded at genome level", "eligible archive is a biased, survival-filtered sample"], eligible, cohorts, pilotGenomeHex: [...[0, 2, 5, 9].map((i) => founderHex[i]), ...pilotArchiveGenomes(eligible)], seeds: { cohort: COHORT_SEEDS, evolution: EVOLUTION_SEEDS, pilotAssay: PILOT_ASSAY_SEEDS, mainAssay: MAIN_ASSAY_SEEDS, repairAssay: REPAIR_ASSAY_SEEDS, position: POSITION_SEEDS, sampleFirst: SAMPLE_SEED_FIRST, bootstrap: BOOTSTRAP_SEED }, times: [0, 100000, 1000000], assays: { seeds: MAIN_ASSAY_SEEDS, steps: 20000, repeats: 2, assignments: 4 }, histories, sampleUnits, requestedTechnicalAssays: 82944, stockDiscs: 12, budgetUSD: { global: 50, pilotRepair: 10, completeComparison: 35, closeout: 5 } };
+  // The design declares the physics its configs select, not the latest the code supports.
+  const r = resolvedConfigs;
+  const rules = new Set([...(r.evolution ?? []).flatMap((e) => [e.normal, e.off]), ...(r.pilotAssay ?? []).map((x) => x.cfg), ...(r.mainAssay ?? []).map((x) => x.cfg), ...(r.repairAssay ?? []).map((x) => x.cfg)].map((c) => c.ruleVersion ?? DEFAULT_RULE_VERSION));
+  if (rules.size > 1) throw Error(`resolved configs disagree on the rule version: ${[...rules].join(", ")}`);
+  // With no configs resolved (a synthetic roster) the design takes the default rule.
+  const ruleVersion = rules.size ? [...rules][0] : DEFAULT_RULE_VERSION;
+  return { format: 1, ruleVersion, founderSetId: M3_FOUNDER_SET, inputManifestSha256, sourceHashes, resolvedConfigs, thresholds: { pilotBothPositiveGenotypes: 7, pilotOverallMeanAbsoluteMax: 0.05, pilotPerGenotypeMeanAbsoluteMax: 0.15, pilotCompetentMinusDisabledMin: 0.20, pilotCompetentGenotypes: 7, meaningfulGain: 0.10, meaningfulPolicyDifference: 0.10, retentionNoninferiority: -0.05, bootstrapReplicates: 10000 }, caveats: [`legacy resume: ${JSON.stringify(archive.resumes ?? null)}`, "quality-zero evaluations are not recorded at genome level", "eligible archive is a biased, survival-filtered sample"], eligible, cohorts, pilotGenomeHex: [...[0, 2, 5, 9].map((i) => founderHex[i]), ...pilotArchiveGenomes(eligible)], seeds: { cohort: COHORT_SEEDS, evolution: EVOLUTION_SEEDS, pilotAssay: PILOT_ASSAY_SEEDS, mainAssay: MAIN_ASSAY_SEEDS, repairAssay: REPAIR_ASSAY_SEEDS, position: POSITION_SEEDS, sampleFirst: SAMPLE_SEED_FIRST, bootstrap: BOOTSTRAP_SEED }, times: [0, 100000, 1000000], assays: { seeds: MAIN_ASSAY_SEEDS, steps: 20000, repeats: 2, assignments: 4 }, histories, sampleUnits, requestedTechnicalAssays: 82944, stockDiscs: 12, budgetUSD: { global: 50, pilotRepair: 10, completeComparison: 35, closeout: 5 } };
 }
 
 export function positionSlots(seedIndex: number): number[] {

@@ -1,10 +1,10 @@
 import { initial, masses, continuation, type Design, type Unit } from '../discovery_capability.ts';
-import { CH, FLUX_NAMES, cellCount, defaultConfig, generalistGenome, stateHash, RULE_VERSION } from '@bl/schema';
+import { CH, FLUX_NAMES, cellCount, defaultConfig, generalistGenome, stateHash, DEFAULT_RULE_VERSION } from '@bl/schema';
 import { toHex } from '../lib/selection-funnel-audit.ts';
 function assert(ok:unknown,msg='assertion failed'):asserts ok {if(!ok)throw Error(msg)}
 const g=generalistGenome(60,20), plain={...g,weights:Array.from(g.weights)};
 const cfg=defaultConfig({tileW:64,tileH:64,tilesX:1,tilesY:1,mutRate:0});
-const design:Design={ruleVersion:RULE_VERSION,inputs:{},sources:{},units:[],background:plain,configs:{waste:cfg,background:cfg,gradient:{...cfg,tileW:256,tileH:256,lightMode:'gradient'}},times:[0,1000,3000,10000],criterion:'test'};
+const design:Design={ruleVersion:DEFAULT_RULE_VERSION,inputs:{},sources:{},units:[],background:plain,configs:{waste:cfg,background:cfg,gradient:{...cfg,tileW:256,tileH:256,lightMode:'gradient'}},times:[0,1000,3000,10000],criterion:'test'};
 const unit:Unit={id:'test',subject:'test',hex:toHex(plain),environment:'waste',seed:6300001};
 Deno.test('waste initialization changes initial resources without changing rule parameters',()=>{const a=initial(design,unit),b=initial(design,unit);assert(stateHash(a.state)===stateHash(b.state));assert(a.state.cfg.mutRate===0);const n=cellCount(a.state.cfg);assert(a.state.cells.slice(CH.C*n,(CH.C+1)*n).every(x=>x===24));assert(a.state.cells.slice(CH.A*n,(CH.A+1)*n).every(x=>x===8));assert(masses(a.state,a.candidateLo,a.backgroundLo).candidate>0)});
 Deno.test('supported candidate mass excludes producer and empty candidate remains absent',()=>{const u={...unit,environment:'background' as const};const a=initial(design,u),m=masses(a.state,a.candidateLo,a.backgroundLo);assert(m.candidate>0&&m.background>0&&m.unknown===0);const empty=initial(design,{...u,hex:null}),em=masses(empty.state,empty.candidateLo,empty.backgroundLo);assert(em.candidate===0&&em.background>0&&em.unknown===0)});

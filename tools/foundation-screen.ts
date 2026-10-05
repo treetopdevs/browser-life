@@ -5,7 +5,7 @@
 //   deno run -A tools/foundation-screen.ts --execute --plan runs/foundations/screen-plan.json \
 //     --out runs/foundations/screen-chunk.json --batch-start 0 --max-batches 1 --max-seconds 120
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
+import { METRICS_VERSION, DEFAULT_RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
 import { requestDevice } from "@bl/sim-gpu";
 import { evaluateBatch } from "@bl/search";
 import { mutationNeighborhood } from "../packages/search/src/mutation-neighborhood.ts";
@@ -51,7 +51,7 @@ const sha = async (bytes: Uint8Array) => hex(new Uint8Array(await crypto.subtle.
 const sourceHashes = async () => Object.fromEntries(await Promise.all(selectedFiles.map(async (path) =>
   [path, await sha(await Deno.readFile(new URL(`../${path}`, import.meta.url)))] as const)));
 const source = {
-  versions: { rule: RULE_VERSION, schema: SCHEMA_VERSION, metrics: METRICS_VERSION },
+  versions: { rule: DEFAULT_RULE_VERSION, schema: SCHEMA_VERSION, metrics: METRICS_VERSION },
   hashScope: "selected source files only; not a complete dependency closure",
   selectedSourceSha256: await sourceHashes(),
 };

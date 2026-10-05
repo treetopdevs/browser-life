@@ -2,7 +2,7 @@
 // Mutation-event depth is genetic lineage depth, not functional innovation.
 import {
   G, GENOME_CHANNELS, M3_FOUNDER_SET, M3_FOUNDERS, METRICS_VERSION, PRESETS, RING_CELL_BITS, RING_CELL_MASK,
-  RULE_VERSION, SCHEMA_VERSION, cellCount, decodeGenome, founderGenome,
+  SCHEMA_VERSION, isSupportedRuleVersion, cellCount, decodeGenome, founderGenome,
   initWorld, packLineageLo, presetIdentity, stateHash, type WorldConfig, type WorldState,
 } from "@bl/schema";
 import { runId, sameConfig, specConfig, type RunSpec } from "@bl/runner";
@@ -82,7 +82,8 @@ export function validateAndDeriveInitialOrigins(m: SourceManifest): {
   if (spec.steps < ANCESTRY_SAMPLE_STEPS.at(-1)! || spec.censusEvery <= 0 ||
       ANCESTRY_SAMPLE_STEPS.some((step) => step % spec.censusEvery !== 0))
     throw new Error("source does not cover the requested census steps");
-  if (m.schemaVersion !== SCHEMA_VERSION || m.ruleVersion !== RULE_VERSION || m.metricsVersion !== METRICS_VERSION)
+  // A source runs under its own config's rule (rule 1 for every historical preset), which this code must support.
+  if (m.schemaVersion !== SCHEMA_VERSION || !isSupportedRuleVersion(m.ruleVersion) || m.cfg?.ruleVersion !== m.ruleVersion || m.metricsVersion !== METRICS_VERSION)
     throw new Error("source schema/rule/metrics versions differ from current code");
   const preset = PRESETS.find((p) => p.id === spec.presetId);
   if (!preset || m.presetIdentity !== presetIdentity(preset) || JSON.stringify(m.init) !== JSON.stringify(preset.init))

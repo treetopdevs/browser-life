@@ -7,7 +7,7 @@
 //     [--samples 16] [--draw-seed 610000001] [--assay-seed 620000001]
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { requestDevice } from "@bl/sim-gpu";
-import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
+import { METRICS_VERSION, DEFAULT_RULE_VERSION, SCHEMA_VERSION } from "@bl/schema";
 import { DEFAULT_EVAL, evaluateBatch, quality, type EvalConfig, type Evaluation } from "@bl/search";
 import { compareBehaviorTraces, type BehaviorComparison, type BehaviorSample } from "../packages/search/src/foundation-behavior.ts";
 import {
@@ -95,7 +95,7 @@ interface PilotResult {
 const results: PilotResult[] = [];
 const manifest = {
   schema: "mutation-neighborhood/v1",
-  versions: { rule: RULE_VERSION, schema: SCHEMA_VERSION, metrics: METRICS_VERSION },
+  versions: { rule: DEFAULT_RULE_VERSION, schema: SCHEMA_VERSION, metrics: METRICS_VERSION },
   sourceIdentity: {
     implementationBaseRevision: "c362d92ae560e64edf21f39113c8b6e2fc4c3b7b",
     revisionNote: "historical implementation base, not the runtime revision; investigation worktree may contain uncommitted changes",

@@ -1,4 +1,4 @@
-import { buildWorld, cellCount, CH, G, defaultConfig, FLUX_NAMES, founderGenome, M3_FOUNDERS, packLineageLo, PRESETS, presetConfig, RULE_VERSION, stateHash, validateState, type Genome, type WorldConfig, type WorldState } from '@bl/schema';
+import { buildWorld, cellCount, CH, G, defaultConfig, FLUX_NAMES, founderGenome, M3_FOUNDERS, packLineageLo, PRESETS, presetConfig, DEFAULT_RULE_VERSION, stateHash, validateState, type Genome, type WorldConfig, type WorldState } from '@bl/schema';
 import { GpuSim, requestDevice } from '@bl/sim-gpu';
 import { fromHex, toHex } from './lib/selection-funnel-audit.ts';
 import { sha256 } from './lib/founder-policy.ts';
@@ -41,7 +41,7 @@ async function sourceFiles():Promise<Record<string,string>> {
   for(const p of ['deno.json','tools/discovery_capability.ts','tools/lib/founder-policy.ts','tools/lib/selection-funnel-audit.ts'])files[p]=sha256(await Deno.readFile(p));
   return Object.fromEntries(Object.entries(files).sort());
 }
-async function verify(design:Design){for(const [p,h] of Object.entries({...design.inputs,...design.sources}))if(sha256(await Deno.readFile(p))!==h)throw Error(`Frozen source/input drift: ${p}`);if(design.ruleVersion!==RULE_VERSION)throw Error('Rule version drift')}
+async function verify(design:Design){for(const [p,h] of Object.entries({...design.inputs,...design.sources}))if(sha256(await Deno.readFile(p))!==h)throw Error(`Frozen source/input drift: ${p}`);if(design.ruleVersion!==DEFAULT_RULE_VERSION)throw Error('Rule version drift')}
 async function plan(root:string){
   const input=`${root}/candidates.json`, inv=`${root}/initial-inventory/inventory.json`;
   const roster=JSON.parse(await Deno.readTextFile(input)), inventory=JSON.parse(await Deno.readTextFile(inv));
@@ -58,7 +58,7 @@ async function plan(root:string){
   subjects.push({subject:'no-candidate',hex:null,environments:['waste','background','gradient']});
   const units:Unit[]=[];
   for(const s of subjects)for(const environment of s.environments)for(const seed of [6300001,6300002,6300003,6300004])units.push({id:`${s.subject}-${environment}-${seed}`,subject:s.subject,hex:s.hex,environment,seed});
-  const design:Design={ruleVersion:RULE_VERSION,inputs:{[input]:sha256(await Deno.readFile(input)),[inv]:sha256(await Deno.readFile(inv)),[bgPath]:sha256(await Deno.readFile(bgPath))},sources:await sourceFiles(),units,background,configs:{waste:base,background:base,gradient},times:[0,1000,3000,10000],criterion:'Exploratory standalone continuation: associated B/P at 3000 and 10000 >= initial; positive whole-world grow flux between 3000 and 10000; at least 3/4 seeds. Background supported continuation is descriptive only; no attribution of whole-world flux to candidate. No adaptation or reproduction conclusion.'};
+  const design:Design={ruleVersion:DEFAULT_RULE_VERSION,inputs:{[input]:sha256(await Deno.readFile(input)),[inv]:sha256(await Deno.readFile(inv)),[bgPath]:sha256(await Deno.readFile(bgPath))},sources:await sourceFiles(),units,background,configs:{waste:base,background:base,gradient},times:[0,1000,3000,10000],criterion:'Exploratory standalone continuation: associated B/P at 3000 and 10000 >= initial; positive whole-world grow flux between 3000 and 10000; at least 3/4 seeds. Background supported continuation is descriptive only; no attribution of whole-world flux to candidate. No adaptation or reproduction conclusion.'};
   for(const unit of units)initial(design,unit);
   await Deno.writeTextFile(`${root}/capability-design.json`,JSON.stringify(design,null,2)+'\n',{createNew:true});console.log(JSON.stringify({units:units.length,seeds:[6300001,6300002,6300003,6300004],paidUSD:0}));
 }

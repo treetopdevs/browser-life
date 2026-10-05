@@ -1,9 +1,9 @@
 import { validateReceipt, type Receipt } from '../lib/discovery-receipt-validation.ts';
 import { initial, masses, continuation, type Design, type Unit } from '../discovery_capability.ts';
-import { defaultConfig, generalistGenome, stateHash, RULE_VERSION } from '@bl/schema';
+import { defaultConfig, generalistGenome, stateHash, DEFAULT_RULE_VERSION } from '@bl/schema';
 import { toHex } from '../lib/selection-funnel-audit.ts';
 const g=generalistGenome(60,20),plain={...g,weights:Array.from(g.weights)},cfg=defaultConfig({tileW:64,tileH:64,tilesX:1,tilesY:1,mutRate:0});
-const design:Design={ruleVersion:RULE_VERSION,inputs:{},sources:{},units:[],background:plain,configs:{waste:cfg,background:cfg,gradient:cfg},times:[0,1000,3000,10000],criterion:'test'};
+const design:Design={ruleVersion:DEFAULT_RULE_VERSION,inputs:{},sources:{},units:[],background:plain,configs:{waste:cfg,background:cfg,gradient:cfg},times:[0,1000,3000,10000],criterion:'test'};
 function fixture(supported=false,empty=false):[Receipt,Unit]{const unit:Unit={id:'test',subject:'test',hex:empty?null:toHex(plain),environment:supported?'background':'waste',seed:6300001};const a=initial(design,unit);const samples=design.times.map(step=>({step,mass:masses(a.state,a.candidateLo,a.backgroundLo),flux:a.state.flux.map(String),stateHash:stateHash(a.state)}));return [{designHash:'fixed',unit,samples,standaloneContinuation:continuation(samples,supported),elapsedSeconds:1},unit];}
 function rejected(r:Receipt,u:Unit){let caught=false;try{validateReceipt(r,design,'fixed',u)}catch{caught=true}if(!caught)throw Error('Invalid receipt accepted');}
 Deno.test('valid complete synthetic receipt is accepted',()=>{const [r,u]=fixture();validateReceipt(r,design,'fixed',u)});

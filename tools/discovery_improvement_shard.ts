@@ -1,7 +1,7 @@
 // Operational adapter for unchanged, frozen histories. Assays require a later allocation.
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { statfsSync } from "node:fs";
-import { encodeCheckpoint, RULE_VERSION, stateHash } from "@bl/schema";
+import { encodeCheckpoint, DEFAULT_RULE_VERSION, stateHash } from "@bl/schema";
 import { sha256 } from "./lib/founder-policy.ts";
 import {
   loadCheckpointChain,
@@ -118,7 +118,7 @@ async function verify(manifestPath: string, allocation: Allocation) {
   validateAllocation(allocation, m);
   if (
     sha256(bytes) !== allocation.manifestSha256 ||
-    m.ruleVersion !== RULE_VERSION
+    m.ruleVersion !== DEFAULT_RULE_VERSION
   ) throw Error("manifest bytes/rule drift");
   for (const [path, hash] of Object.entries(allocation.executionSources)) {
     if (sha256(await Deno.readFile(join(root, path))) !== hash) {

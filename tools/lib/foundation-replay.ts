@@ -1,6 +1,6 @@
 /** Authenticated, single-pass checkpoint extraction. Host I/O and GPU creation are injected. */
 import { createHash } from "node:crypto";
-import { METRICS_VERSION, PRESETS, RULE_VERSION, SCHEMA_VERSION, artifactDigest, encodeCheckpoint, initWorld, presetIdentity, stateHash, type WorldState } from "@bl/schema";
+import { METRICS_VERSION, PRESETS, SCHEMA_VERSION, isSupportedRuleVersion, artifactDigest, encodeCheckpoint, initWorld, presetIdentity, stateHash, type WorldState } from "@bl/schema";
 import { continuationError, decodeArtifact, runId, sameConfig, specConfig, type ObserverState, type RunResult, type RunSpec, type Sink } from "@bl/runner";
 
 export const OBSERVATION_FILES = ["series.jsonl", "lineages.tsv", "mutations.tsv", "heredity.tsv", "life.jsonl", "activity-final.json"] as const;
@@ -92,7 +92,8 @@ export function sourceIdentity(
 ): SourceIdentity {
   if (finalHashMode !== "artifact" && finalHashMode !== "physics") throw new Error("final hash mode must be explicit");
   if (!codeRevision.trim()) throw new Error("source code revision required");
-  if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION || m.metricsVersion !== METRICS_VERSION)
+  // A source runs under its own config's rule (rule 1 for every historical preset), which this code must support.
+  if (!isSupportedRuleVersion(m.ruleVersion) || m.cfg?.ruleVersion !== m.ruleVersion || m.schemaVersion !== SCHEMA_VERSION || m.metricsVersion !== METRICS_VERSION)
     throw new Error("source rule/schema/metrics version differs from replay code");
   if (m.startStep !== 0 || !m.summary?.conservationOk || m.summary.steps !== m.spec?.steps || !/^[a-f0-9]{16}$/.test(m.summary.finalHash))
     throw new Error("source is not a complete conserved history with a terminal hash");

@@ -1,6 +1,6 @@
 // Fixed-founder improvement study. `plan` and `analyze` are CPU-only.
 // `run` requires a separately reviewed, measured, local-only release file.
-import { RULE_VERSION, stateHash } from "@bl/schema";
+import { DEFAULT_RULE_VERSION, stateHash } from "@bl/schema";
 import { statfsSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { type MutationEdge, sha256 } from "./lib/founder-policy.ts";
@@ -235,7 +235,7 @@ async function plan(pilotArg: string, manifestArg: string): Promise<void> {
   const sources = await sourceHashes(sourceRoot);
   const manifest = buildManifest({
     format: "discovery-improvement-manifest/v1",
-    ruleVersion: RULE_VERSION,
+    ruleVersion: DEFAULT_RULE_VERSION,
     sourceRoot,
     pilotDesignSha256: pilot.designSha,
     pilotAnalysisSha256: pilot.analysisSha,
@@ -271,7 +271,7 @@ async function frozen(
   if (await Deno.realPath(Deno.cwd()) !== manifest.sourceRoot) {
     throw Error("frozen source root differs from current working directory");
   }
-  if (manifest.ruleVersion !== RULE_VERSION) throw Error("rule version drift");
+  if (manifest.ruleVersion !== DEFAULT_RULE_VERSION) throw Error("rule version drift");
   const sources = await sourceHashes(manifest.sourceRoot);
   if (
     !same(sources, manifest.sources) ||

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { METRICS_VERSION, PRESETS, RULE_VERSION, SCHEMA_VERSION, presetIdentity, stateHash, initWorld } from "@bl/schema";
+import { METRICS_VERSION, PRESETS, DEFAULT_RULE_VERSION, SCHEMA_VERSION, presetIdentity, stateHash, initWorld } from "@bl/schema";
 import { runId, specConfig, type RunSpec } from "@bl/runner";
 import {
   buildMutationOriginMap,
@@ -24,7 +24,7 @@ describe("mutation ancestry", () => {
     const cfg = specConfig(spec), initialState = initWorld(cfg, preset.init);
     const manifest: SourceManifest = { runId: runId(spec), spec, cfg, init: preset.init,
       initHash: stateHash(initialState), presetIdentity: presetIdentity(preset), schemaVersion: SCHEMA_VERSION,
-      ruleVersion: RULE_VERSION, metricsVersion: METRICS_VERSION, startStep: 0,
+      ruleVersion: DEFAULT_RULE_VERSION, metricsVersion: METRICS_VERSION, startStep: 0,
       summary: { steps: spec.steps, mutations: 0, conservationOk: true } };
     const result = validateAndDeriveInitialOrigins(manifest);
     expect(result.origins).toHaveLength(preset.init.founders);

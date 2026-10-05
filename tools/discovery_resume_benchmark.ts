@@ -1,6 +1,6 @@
 import { dirname } from "node:path";
 // CPU-only synthetic checkpoint fixture; no simulation, pilot acceptance or study evidence.
-import { RULE_VERSION } from "@bl/schema";
+import { DEFAULT_RULE_VERSION } from "@bl/schema";
 import { sha256 } from "./lib/founder-policy.ts";
 import { discoveryEvolutionWorld } from "./lib/discovery-evolution.ts";
 import {
@@ -49,7 +49,7 @@ const marker =
   "SYNTHETIC ENGINEERING FIXTURE: NO EVOLUTION OR PILOT ACCEPTANCE";
 const manifest = buildManifest({
   format: "discovery-improvement-manifest/v1",
-  ruleVersion: RULE_VERSION,
+  ruleVersion: DEFAULT_RULE_VERSION,
   sourceRoot: Deno.cwd(),
   pilotDesignSha256: sha256(inputBytes),
   pilotAnalysisSha256: sha256(marker),
