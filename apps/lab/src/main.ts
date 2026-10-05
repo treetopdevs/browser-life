@@ -201,11 +201,20 @@ speed.oninput = () => {
 function setPlaying(p: boolean) {
   playing = p;
   const b = $("btn-play");
-  b.textContent = p ? "Pause" : "Play";
   b.setAttribute("aria-pressed", String(p));
+  syncPlayLabel();
   if (worldReady) showRunStatus();
   if (p) askedToAdvance();
   send({ type: "play", playing: p });
+}
+/**
+ * While a cycle waits, Play does not advance the world: it becomes a switch for running on once the donors are in,
+ * with one label either way and its state in aria-pressed, so it never reads "Pause" over a world that is not moving.
+ */
+function syncPlayLabel() {
+  const b = $("btn-play");
+  b.textContent = awaiting ? "Run after breed" : playing ? "Pause" : "Play";
+  b.title = awaiting ? (playing ? "On: the world runs on once you breed" : "Off: the world stays paused once you breed") : "";
 }
 /** The header status: a waiting pond cycle is the news until it is resolved, whatever Play says. */
 function showRunStatus() {
@@ -264,7 +273,8 @@ function resize() {
   const r = wrap.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   send({ type: "resize", width: Math.round(r.width * dpr), height: Math.round(r.height * dpr) });
-  fit(false);
+  // While a cycle waits the whole world stays in view, whatever the new shape of the field.
+  fit(awaiting !== null);
 }
 function fit(reset = true) {
   if (!cfg) return;
@@ -361,7 +371,7 @@ canvas.addEventListener("keydown", (ev) => {
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
     if (tool === "inspect") send({ type: "probe", x, y });
     else if (brush()) applyBrush(x, y);
-    else if (tool === "pick") togglePick(pondAt(x, y));
+    else if (tool === "pick") pickAt(x, y);
     else { rect.x = x - rect.w / 2; rect.y = y - rect.h / 2; pushView(); }
   } else if ((ev.key === "+" || ev.key === "-") && cfg) {
     ev.preventDefault();
@@ -383,7 +393,7 @@ canvas.onpointerdown = (ev) => {
     lesionAt(ev);
   } else if (tool === "pick") {
     const [x, y] = toWorld(ev);
-    togglePick(pondAt(x, y));
+    pickAt(x, y);
   } else {
     const [x, y] = toWorld(ev);
     send({ type: "probe", x, y });
@@ -646,6 +656,7 @@ function onProbe(p: ProbeMsg) {
 function resetPondStatus() {
   const line = $("pond-status");
   line.hidden = !cfg || cfg.pondPeriod === undefined;
+  $("history-cycles").hidden = line.hidden;
   line.textContent = cfg?.pondPeriod === undefined ? "" : `${cfg.pondArm} · cycle every ${cfg.pondPeriod.toLocaleString()} steps`;
   line.title = "";
 }
@@ -659,8 +670,16 @@ function onPonds(m: PondsMsg) {
   spInd.mark(); spBio.mark(); spLin.mark();
   // The cycle that was waiting has been applied.
   if (awaiting && awaiting.step === m.step) {
+    // Breed and the bar it lived in are gone: the focus goes to Play, the next thing to do, rather than to the page.
+    const hadFocus = $("breed-bar").contains(document.activeElement);
+    const view = viewBeforePick;
     endAwait();
+    // Only onto the world it came from: with a new world loading (cfg is null) the view is left as the worker has it.
+    if (view && cfg) { rect = view; fit(false); }
+    if (hadFocus || document.activeElement === document.body) $("btn-play").focus();
     toast(`Cycle ${m.cycle} applied: ${m.donors.length} donor pond${m.donors.length === 1 ? "" : "s"} (${m.donors.join(", ")})`);
+    // The status keeps the news until the next action, rather than only a toast that fades.
+    if (!playing) setStatus(`Cycle ${m.cycle} applied. Paused`, "ready");
   }
   pickedBy = null;
 }
@@ -682,10 +701,17 @@ const scoreLabel = (score: string) => `This world's score: ${pondScoreTerms(scor
 let awaiting: PondAwaitMsg | null = null;
 /** The ranking on screen when Breed was pressed: shown with the cycle it applies to. Display only; the log holds the donors. */
 let pickedBy: string | null = null;
+/** Breed was pressed and the worker has not yet applied the cycle (or refused it): the step it was pressed for. */
+let breeding: number | null = null;
+let breedSlowTimer = 0;
 let picks: number[] = [];
 /** The ranking last chosen; until one is, the world's own score when it has one, else speed. */
 let rankKey: RankKey | null = null;
 let toolBeforePick: Tool = "inspect";
+/** The view before a cycle began waiting: picking fits the whole world, and the view returns once the cycle is applied. */
+let viewBeforePick: typeof rect | null = null;
+/** Breed has been pressed and the cycle is taking longer than it should: the bar says so until it resolves. */
+let breedSlow = false;
 const overlay = $<HTMLCanvasElement>("pond-overlay");
 const breederOn = $<HTMLInputElement>("breeder-on");
 const termSel = $<HTMLSelectElement>("breeder-term");
@@ -727,14 +753,18 @@ function onPondAwait(m: PondAwaitMsg) {
   $("breeder-hint").hidden = true;
   $("breed-bar").hidden = false;
   document.body.classList.add("breeding");
+  syncPlayLabel();
   overlay.hidden = false;
   const pickTool = tools.querySelector<HTMLButtonElement>('button[data-tool="pick"]')!;
   pickTool.hidden = false;
+  // Said, not shown: a toast would sit over the pond labels on a phone, and the Pick tool and the bar already show it.
   if (tool !== "pick") {
     toolBeforePick = tool;
-    toast("The Pick tool is selected: select ponds on the field to choose donors");
+    $("keyboard-position").textContent = `Cycle ${m.cycle} is waiting. The Pick tool is selected: select ponds on the field to choose donors.`;
   }
   setTool("pick");
+  // The whole world in view, once: each pond appears once to pick, and the repeats around it are dimmed.
+  if (!viewBeforePick) { viewBeforePick = { ...rect }; fit(true); }
   showRunStatus();
   syncWaitingControls();
   syncPicks();
@@ -748,7 +778,11 @@ function syncWaitingControls() {
   for (const id of ["btn-save", "btn-export", "btn-verify", "btn-step", "btn-step100"]) {
     const b = $<HTMLButtonElement>(id);
     b.disabled = !worldReady || waiting || (id === "btn-verify" && verifying);
-    if (id.startsWith("btn-step")) b.title = waiting ? "The world waits for this cycle's donors: breed first" : id === "btn-step" ? "One step (.)" : "100 steps";
+    if (id.startsWith("btn-step")) {
+      b.title = waiting ? "The world waits for this cycle's donors: breed first" : id === "btn-step" ? "One step (.)" : "100 steps";
+      if (waiting) b.setAttribute("aria-describedby", "breed-bar-wait");
+      else b.removeAttribute("aria-describedby");
+    }
   }
   $("ckpt-wait").hidden = !waiting;
   $("verify-wait").hidden = !waiting;
@@ -757,20 +791,30 @@ function endAwait() {
   const was = awaiting !== null;
   awaiting = null;
   picks = [];
+  viewBeforePick = null;
+  if (!$("guard-breed").hidden) closeQuestion?.();
   $("breeder-pick").hidden = true;
   $("breeder-hint").hidden = false;
   $("breed-bar").hidden = true;
   document.body.classList.remove("breeding");
+  endBreeding();
   overlay.hidden = true;
   tools.querySelector<HTMLButtonElement>('button[data-tool="pick"]')!.hidden = true;
   if (tool === "pick") setTool(toolBeforePick);
+  syncPlayLabel();
   if (was && worldReady) showRunStatus();
   if (was) syncWaitingControls();
 }
+/** A pick on the field: only on the world itself, not on the dimmed repeats around it. */
+function pickAt(x: number, y: number) {
+  if (!awaiting || !cfg || x < 0 || y < 0 || x >= worldW(cfg) || y >= worldH(cfg)) return;
+  togglePick(pondAt(x, y));
+}
 function togglePick(pond: number | null) {
   const a = awaiting;
-  if (!a || pond === null) return;
+  if (!a || pond === null || breeding !== null) return;
   if (a.terms.mass[pond] === 0) return toast(`Pond ${pond} is empty: it has nothing to seed a pond with`);
+  closeBreedQuestion();
   const at = picks.indexOf(pond);
   if (at >= 0) picks.splice(at, 1);
   else picks.push(pond);
@@ -786,10 +830,19 @@ function syncPicks() {
   const occupied = a.terms.mass.filter((m) => m > 0).length;
   const key = rankKey ?? "speed";
   $("breeder-call").textContent = `Cycle ${a.cycle} at t=${a.step.toLocaleString()} is waiting. ${occupied} of ${a.terms.mass.length} ponds are occupied.`;
-  $("breed-bar-call").textContent = `Cycle ${a.cycle} waits for its donors. ${picks.length === 0 ? "Select ponds on the field." : `${picks.length} picked: pond${picks.length === 1 ? "" : "s"} ${picks.join(", ")}.`}`;
+  // Say what Breed will do before it is pressed: it cannot be undone. While it is in flight, say that instead.
+  $("breed-bar-call").textContent = breeding !== null
+    ? breedSlow ? `Still applying cycle ${a.cycle}. The lab is waiting for the GPU; a failure will show on the field.` : `Applying cycle ${a.cycle}.`
+    : picks.length === 0
+      ? `Cycle ${a.cycle} waits for its donors. Select ponds on the field.`
+      : `Cycle ${a.cycle}: Breed clears all ${a.terms.mass.length} ponds and reseeds them from pond${picks.length === 1 ? "" : "s"} ${picks.join(", ")}, in that order.`;
   const go = $<HTMLButtonElement>("breeder-go");
-  go.disabled = picks.length === 0;
-  go.textContent = picks.length === 0 ? "Pick at least one pond" : `Breed from ${picks.length} pond${picks.length === 1 ? "" : "s"}`;
+  if (breeding === null) {
+    go.disabled = picks.length === 0;
+    go.textContent = picks.length === 0 ? "Pick at least one pond" : `Breed from ${picks.length} pond${picks.length === 1 ? "" : "s"}`;
+  }
+  // The pick controls are locked while Breed is in flight, and say so by being disabled rather than ignoring a press.
+  for (const id of ["breeder-top", "breeder-rule", "breeder-clear"]) $<HTMLButtonElement>(id).disabled = breeding !== null;
   $("breeder-top").textContent = `Top ${topCount(a)} by ${key === "score" ? "score" : RANK_LABELS[key].toLowerCase()}`;
   // Pond number first, as on the field and in the run strip; then its rank and value by the measure on screen.
   const rank = new Map(rankOrder(a, key).map((p, j) => [p, j + 1]));
@@ -804,27 +857,59 @@ function syncPicks() {
 }
 termSel.onchange = () => { rankKey = termSel.value as RankKey; syncPicks(); };
 $("breeder-top").onclick = () => {
-  if (!awaiting) return;
+  if (!awaiting || breeding !== null) return;
   picks = rankOrder(awaiting, rankKey ?? "speed").slice(0, topCount(awaiting));
   syncPicks();
 };
 /** A quarter of the ponds, at least one. */
 function topCount(a: PondAwaitMsg) { return Math.max(1, Math.floor(a.terms.mass.length / 4)); }
-$("breeder-rule").onclick = () => { if (awaiting) { picks = awaiting.suggested.slice(); syncPicks(); } };
-$("breeder-clear").onclick = () => { picks = []; syncPicks(); };
+/** Breed is no longer in flight: applied, refused, or the world failed. */
+function endBreeding() {
+  clearTimeout(breedSlowTimer);
+  breedSlow = false;
+  if (breeding === null) return;
+  breeding = null;
+  $("breed-bar").removeAttribute("aria-busy");
+  syncPicks();
+}
+$("breeder-rule").onclick = () => { if (awaiting && breeding === null) { picks = awaiting.suggested.slice(); syncPicks(); } };
+$("breeder-clear").onclick = () => { if (breeding === null) { picks = []; syncPicks(); } };
+/** Picks changed while Breed's question was open: the question no longer describes them. */
+const closeBreedQuestion = () => { if (!$("guard-breed").hidden) closeQuestion?.(); };
+for (const id of ["breeder-top", "breeder-rule", "breeder-clear"]) $(id).addEventListener("click", closeBreedQuestion);
+termSel.addEventListener("change", closeBreedQuestion);
+// Breed cannot be undone: it asks once, in place, naming the donors it will use.
 $("breeder-go").onclick = () => {
-  if (!awaiting || !picks.length) return;
-  send({ type: "pick", world: awaiting.world, step: awaiting.step, donors: picks.slice() });
-  pickedBy = (rankKey ?? "speed") === "score" ? "this world's score" : RANK_LABELS[rankKey ?? "speed"].toLowerCase();
-  // One message per cycle: the panel closes when the worker reports the cycle applied.
-  $<HTMLButtonElement>("breeder-go").disabled = true;
+  const a = awaiting;
+  if (!a || !picks.length || breeding !== null) return;
+  const donors = picks.slice();
+  ask($("guard-breed"), $("breeder-go"), `Replace all ${a.terms.mass.length} ponds with seed from pond${donors.length === 1 ? "" : "s"} ${donors.join(", ")}? This cannot be undone.`, [[`Breed from ${donors.length} pond${donors.length === 1 ? "" : "s"}`, () => breed(donors)]], "Keep picking");
 };
+function breed(donors: number[]) {
+  if (!awaiting || breeding !== null || donors.join() !== picks.join()) return;
+  send({ type: "pick", world: awaiting.world, step: awaiting.step, donors });
+  pickedBy = (rankKey ?? "speed") === "score" ? "this world's score" : RANK_LABELS[rankKey ?? "speed"].toLowerCase();
+  // One message per cycle: the panel closes when the worker reports the cycle applied, or comes back if it refuses.
+  breeding = awaiting.step;
+  const go = $<HTMLButtonElement>("breeder-go");
+  go.disabled = true;
+  go.textContent = "Breeding…";
+  $("breed-bar").setAttribute("aria-busy", "true");
+  syncPicks();
+  breedSlowTimer = window.setTimeout(() => {
+    if (breeding === null) return;
+    breedSlow = true;
+    syncPicks();
+    // The bar is busy, so it is not announced: the live region says it.
+    $("keyboard-position").textContent = $("breed-bar-call").textContent ?? "";
+  }, 5000);
+}
 breederOn.onchange = () => send({ type: "breeder", on: breederOn.checked });
 
 /**
  * The pond grid over the field while a cycle waits: each pond's number and its rank by the chosen measure, empty
- * ponds dimmed, picked ponds outlined with their place in the order. Drawn on every copy of the world in view, since
- * a click on any copy picks the same pond. Picks are marked by weight and shape in the field's own ink, never a hue:
+ * ponds dimmed, picked ponds outlined with their place in the order. The world
+ * itself takes the picks; the repeats of it around the view are dimmed and unlabelled. Picks are marked by weight and shape in the field's own ink, never a hue:
  * colour on the field belongs to the pools.
  */
 function drawPondOverlay() {
@@ -862,6 +947,14 @@ function drawPondOverlay() {
         const tx = p % cfg.tilesX, ty = (p - tx) / cfg.tilesX;
         const x = (ox + tx * cfg.tileW - rect.x) * sx, y = (oy + ty * cfg.tileH - rect.y) * sy, pw = cfg.tileW * sx, ph = cfg.tileH * sy;
         if (x + pw < 0 || y + ph < 0 || x > w || y > h) continue;
+        // A repeat of the world around the one in the middle: dimmed and unlabelled, since only the world itself takes picks.
+        if (ox !== 0 || oy !== 0) {
+          g.fillStyle = ground;
+          g.globalAlpha = 0.72;
+          g.fillRect(x, y, pw, ph);
+          g.globalAlpha = 1;
+          continue;
+        }
         const order = picks.indexOf(p);
         g.globalAlpha = 1;
         if (a.terms.mass[p] === 0) {
@@ -1055,6 +1148,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       // The world is fine; a lineage inspection or a jump that was refused must not be waited for any longer.
       toast(m.message);
       if (m.request === "save") { savesAsked.shift(); afterSave = null; }
+      if (m.request === "pick") endBreeding();
       if (m.request === "lineage" || m.request === "jump") lineagePanel.onError();
       if (m.request === "verify" && verifying) {
         // The check never ran: the button comes back and the panel says so (no earlier result survives, the click cleared it).
@@ -1094,6 +1188,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         $("verify-out").textContent = m.message;
         setStrip("run-replay", "could not verify", "bad");
       }
+      endBreeding();
       // Whatever was in flight may not have happened: nothing waits on it, and no later save is taken for an earlier one.
       savesAsked.length = 0;
       afterSave = null;

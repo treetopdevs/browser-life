@@ -69,10 +69,12 @@
           <p id="breed-bar-call"></p>
           <a class="text-link breed-bar-more" href="#breeder">Ranking and picks</a>
           <button id="breeder-go" class="primary" type="button">Breed</button>
+          <p class="hint" id="breed-bar-wait">Step, Save and Verify wait until you breed.</p>
+          <div class="guard" id="guard-breed" role="group" aria-label="Confirm breeding" hidden></div>
         </div>
         <div class="stage-caption"><span id="legend">Composite view</span><span class="stage-hint">Scroll to zoom · double-click to fit · focus field for keyboard tools</span></div>
         <section class="history" aria-labelledby="history-heading">
-          <div class="section-heading"><h2 id="history-heading">Population history</h2><span class="hint">Each chart runs from 0 to the value at its top left · census every 100 steps</span></div>
+          <div class="section-heading"><h2 id="history-heading">Population history</h2><span class="hint">Each chart runs from 0 to the value at its top left · census every 100 steps<span id="history-cycles" hidden> · dashed lines mark pond cycles</span></span></div>
           <div class="history-lines">
             <div class="spark"><span>Individuals</span><canvas id="sp-ind" aria-label="Individuals over time"></canvas></div>
             <div class="spark"><span>Bound mass (biomass + membrane)</span><canvas id="sp-bio" aria-label="Biomass and membrane over time"></canvas></div>
@@ -112,7 +114,7 @@
         <section class="rail-section" aria-labelledby="checkpoint-heading">
           <h2 id="checkpoint-heading">Checkpoints</h2><p class="hint">Save keeps a checkpoint in this browser. Export downloads one as a file. Both settle the world at its next census first.</p>
           <div class="row"><button id="btn-save" type="button" aria-describedby="ckpt-wait">Save</button><button id="btn-export" type="button" aria-describedby="ckpt-wait">Export</button><button id="btn-import" class="import-button" type="button">Import</button><input id="import" type="file" accept=".blck" hidden /></div>
-          <p class="hint wait-note" id="ckpt-wait" hidden>Save and Export are off while a pond cycle waits: the world stands before its cycle, and a checkpoint cannot hold that. They return once you breed.</p>
+          <p class="hint wait-note" id="ckpt-wait" hidden>Save and Export return once you breed: a checkpoint holds a world between pond cycles, not one paused inside a cycle.</p>
           <div class="guard" id="guard-ckpt" role="group" aria-label="Confirm checkpoint action" hidden></div>
           <p class="hint" id="checkpoint-empty">No local checkpoints yet.</p><ul class="list" id="ckpts" aria-label="Saved checkpoints"></ul>
           <button class="quiet ckpt-more" id="ckpt-more" type="button" aria-controls="ckpts" hidden></button>

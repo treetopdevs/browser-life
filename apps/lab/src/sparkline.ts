@@ -4,7 +4,7 @@
  */
 export class Series {
   private values: number[] = [];
-  /** Indices into `values` where a pond cycle was applied: drawn as faint rules, so the drop after one reads as the cycle. */
+  /** Indices into `values` where a pond cycle was applied: drawn as dashed rules, so the drop after one reads as the cycle. */
   private marks: number[] = [];
 
   constructor(
@@ -63,9 +63,26 @@ export class Series {
     for (const x of v) hi = Math.max(hi, x);
     const top = 13 * dpr;
     const xAt = (i: number) => (i / (v.length - 1)) * (w - 2) + 1;
-    ctx.globalAlpha = 0.3;
-    for (const m of this.marks) if (m > 0 && m < v.length) ctx.fillRect(Math.round(xAt(m - 0.5)), top, dpr, h - top);
-    ctx.globalAlpha = 1;
+    // Dashed and full height, with a notch at the top: plain enough to find, unlike the solid series line.
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = dpr;
+    ctx.setLineDash([3 * dpr, 3 * dpr]);
+    for (const m of this.marks) {
+      if (m <= 0 || m >= v.length) continue;
+      const x = Math.round(xAt(m - 0.5)) + 0.5 * dpr;
+      ctx.beginPath();
+      ctx.moveTo(x, top);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 3 * dpr, top - 1 * dpr);
+      ctx.lineTo(x + 3 * dpr, top - 1 * dpr);
+      ctx.lineTo(x, top + 3 * dpr);
+      ctx.fill();
+    }
+    ctx.restore();
     ctx.beginPath();
     v.forEach((x, i) => {
       const px = xAt(i);

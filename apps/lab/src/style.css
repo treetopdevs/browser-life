@@ -246,6 +246,11 @@ input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--accent);
 .breed-bar p { flex: 1 1 220px; margin: 0; font-size: var(--t-ui); font-weight: 600; line-height: 1.4; }
 .breed-bar #breeder-go { min-width: 150px; }
 .breed-bar-more { display: none; }
+.breed-bar #breed-bar-wait { flex-basis: 100%; margin: 0; }
+.breed-bar .guard { flex-basis: 100%; margin-top: 0; }
+/* While a cycle waits, Breed is the one primary action: Play steps back to a plain button. */
+body.breeding #btn-play.primary:not([aria-pressed="true"]) { background: var(--raised); border-color: var(--line); color: var(--text); }
+body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: var(--hover); border-color: var(--muted); }
 .seg button[hidden] { display: none; }
 .canvas-wrap.keyboard-focus { outline: 2px solid var(--accent); outline-offset: 2px; }
 .focus-cursor {
