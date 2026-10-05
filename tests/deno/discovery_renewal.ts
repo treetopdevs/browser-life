@@ -214,10 +214,11 @@ const sub = await cli(["submit", "--root", root, "--coordinator", "http://127.0.
 check("submit refuses a pinned campaign with the reason", !sub.ok && /serves cpu-ref-v1 campaigns only/.test(sub.err), sub.err.slice(-300));
 
 // Imported evidence (DESIGN 7): validates against the construction root; one changed byte is caught.
-const RENEWAL_ROOT = "/Users/nicholas/develop/browser-life-construction/runs/construction/renewal-v1";
-if (await Deno.stat(RENEWAL_ROOT).then(() => true, () => false)) {
+// BL_RENEWAL_ROOT points at a renewal-v1 run root; the checks are skipped when it is unset or missing.
+const RENEWAL_ROOT = Deno.env.get("BL_RENEWAL_ROOT") ?? "";
+if (RENEWAL_ROOT && await Deno.stat(RENEWAL_ROOT).then(() => true, () => false)) {
   const clone = join(scratch, "renewal-clone");
-  await new Deno.Command("cp", { args: ["-c", "-R", RENEWAL_ROOT, clone] }).output();
+  await new Deno.Command("cp", { args: ["-R", RENEWAL_ROOT, clone] }).output();
   const imp = join(scratch, "imported");
   const ir = await cli(["import-renewal", "--renewal-root", clone, "--out", imp]);
   const iv = await cli(["validate-import", "--root", imp, "--renewal-root", clone]);
@@ -232,7 +233,7 @@ if (await Deno.stat(RENEWAL_ROOT).then(() => true, () => false)) {
   const bad = await cli(["validate-import", "--root", imp, "--renewal-root", clone]);
   check("one changed byte in an imported census invalidates the import", !bad.ok && /INVALID/.test(bad.err), bad.err.slice(-300));
   const clone2 = join(scratch, "renewal-clone-2");
-  await new Deno.Command("cp", { args: ["-c", "-R", RENEWAL_ROOT, clone2] }).output();
+  await new Deno.Command("cp", { args: ["-R", RENEWAL_ROOT, clone2] }).output();
   const proto = join(clone2, "source", "experiments/construction/renewal-v1/protocol.json");
   const ptext = await Deno.readTextFile(proto);
   await Deno.remove(proto);
@@ -240,7 +241,7 @@ if (await Deno.stat(RENEWAL_ROOT).then(() => true, () => false)) {
   const badProto = await cli(["validate-import", "--root", imp, "--renewal-root", clone2]);
   check("an edited frozen protocol in the source root invalidates the import", !badProto.ok && /frozen source .* changed|frozen protocol/.test(badProto.err), badProto.err.slice(-300));
   check("the import binds the four designated CPU and GPU replay artifacts", rec.replayCoverage.artifacts.length === 4 && rec.replayCoverage.artifacts.every((a: { sha256: string }) => /^[0-9a-f]{64}$/.test(a.sha256)));
-} else console.log("SKIP imported-evidence checks: the construction renewal root is not on this host");
+} else console.log("SKIP imported-evidence checks: BL_RENEWAL_ROOT is not set to a renewal-v1 run root");
 
 void b64;
 await Deno.remove(scratch, { recursive: true });

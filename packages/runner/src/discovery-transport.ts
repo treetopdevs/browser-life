@@ -151,7 +151,7 @@ export interface LoopOptions {
 }
 
 /** Explanations that mean this worker can never get work from this coordinator; the loop stops on them. */
-const FATAL = [/source closure/, /needs backend/, /no qualification case/, /qualification failed/, /cap reached/];
+const FATAL = [/source closure/, /needs backend/, /no qualification case/, /qualification failed/, /wall-time cap reached/, /storage cap reached/];
 
 /** One worker slot: lease, execute, self-check, upload, complete, repeat. */
 export async function workLoop(client: DiscoveryClient, o: LoopOptions): Promise<{ completed: number; verdicts: Verdict[] }> {
@@ -238,6 +238,14 @@ export async function workLoop(client: DiscoveryClient, o: LoopOptions): Promise
     verdicts.push(v);
     if (t.role !== "qualify") completed++;
     o.log(`${t.role} ${t.caseId.slice(0, 12)} ${t.attemptId}: ${v.status}${v.errors.length ? ` (${v.errors.join("; ")})` : ""}; case ${v.decision}`);
+    } catch (e) {
+      // One bad case does not stop the worker; the lease expires and the case is retried. A refused upload that names a campaign cap does.
+      const msg = e instanceof Error ? e.message : "unknown worker error";
+      o.log(`${t.role} ${t.caseId.slice(0, 12)} errored: ${msg}; the lease will expire and the case is retried`);
+      if (FATAL.some((r) => r.test(msg))) {
+        o.onState?.("stopped");
+        break;
+      }
     } finally {
       clearInterval(beat);
     }

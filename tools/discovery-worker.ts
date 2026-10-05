@@ -41,8 +41,18 @@ if (!f.coordinator || !f.host) {
   console.error("usage: tools/discovery-worker.ts --coordinator URL --host <physical-host-id> [--label NAME] [--token T] [--concurrency N] [--max-minutes M] [--max-cases K]");
   Deno.exit(2);
 }
-const concurrency = Math.max(1, +(f.concurrency ?? 1));
-const maxMinutes = +(f["max-minutes"] ?? 60);
+function operand(name: string, dflt: number, whole: boolean): number {
+  const raw = f[name];
+  if (raw === undefined) return dflt;
+  const n = Number(raw);
+  if (raw === "true" || raw === "" || !Number.isFinite(n) || n <= 0) {
+    console.error(`--${name} needs a positive number, got ${raw === "true" ? "nothing" : JSON.stringify(raw)}`);
+    Deno.exit(2);
+  }
+  return whole ? Math.max(1, Math.floor(n)) : n;
+}
+const concurrency = operand("concurrency", 1, true);
+const maxMinutes = operand("max-minutes", 60, false);
 const fault = f.fault ?? "";
 const closure = closureDigest(REPO).digest;
 const client = new DiscoveryClient(f.coordinator.replace(/\/$/, ""), f.token ?? Deno.env.get("BL_DISCOVERY_JOIN_TOKEN") ?? null);

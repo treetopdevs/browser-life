@@ -36,6 +36,8 @@ export const RENEWAL_PIN = {
   name: "construction-renewal-v1",
   constructionRevision: "ca8a4dbd08000ae406e48acf242469d48d04b6c2",
   sourceDigest: "24cef9e2f79abaad6d9260e63585c30c1b0a3516d38e669321235ccd3d0e6362",
+  /** SHA-256 of the renewal-v1 root's manifest.json, as frozen (FROZEN.json manifestSha256). */
+  manifestSha256: "0df114ada3dfba34f601cd70afea764f1af6207565cf8ce1cca1cb882250f1e0",
   physicsVersions: { ruleVersion: 2, checkpointSchema: 3 },
 } as const;
 export const BACKEND_CONTRACTS = [CPU_BACKEND, RENEWAL_PIN.backend] as const;

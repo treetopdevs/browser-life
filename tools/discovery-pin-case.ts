@@ -8,9 +8,9 @@
 // and digest helpers of packages/schema/src/discovery.ts.
 //
 // Verbs (JSON request on stdin, JSON reply on stdout; binaries as base64):
-//   freeze-check  {initials: [b64]}                  -> {checks: [{ok, reason}]}
+//   freeze-check  {cases: [{spec, initial: b64}]}     -> {checks: [{ok, reason}]}
 //   run           {spec, initial, opts}               -> {result, files}
-//   validate      {spec, caseId, campaignDigest, sourceClosureDigest, initial, result, files} -> {errors, readout}
+//   validate      {spec, initial, result, files} -> {errors, readout}
 //   readout       {spec, records, initialA}           -> readout   (tests: the adapter's mapping on synthetic records)
 
 import {

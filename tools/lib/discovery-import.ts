@@ -36,6 +36,7 @@ async function boundAudit(root: string, readout: Any): Promise<{ path: string; s
 export async function importRenewal(renewalRoot: string): Promise<Any> {
   const frozen = await readJson(join(renewalRoot, "FROZEN.json"));
   const manifestSha256 = await fileSha(join(renewalRoot, "manifest.json"));
+  if (manifestSha256 !== RENEWAL_PIN.manifestSha256) throw new Error(`import: manifest.json is ${manifestSha256}, not this build's pinned ${RENEWAL_PIN.manifestSha256}`);
   if (frozen.manifestSha256 !== manifestSha256) throw new Error("import: manifest.json differs from FROZEN.json");
   if (frozen.sourceDigest !== RENEWAL_PIN.sourceDigest) throw new Error(`import: the renewal root ran source ${frozen.sourceDigest}, not this build's pin ${RENEWAL_PIN.sourceDigest}`);
   // The frozen source tree itself: sources.json bound by FROZEN, every copied file, the tree digest,

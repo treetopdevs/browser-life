@@ -43,6 +43,7 @@ import {
   validateProtocol,
   validateResultManifest,
   validateState,
+  worldH,
   worldW,
   type CampaignManifest,
   type CanonicalResult,
@@ -132,6 +133,9 @@ export interface FrozenCampaign {
  * Resolves every case of a protocol and executes zero simulation steps.
  * Throws on any structural problem or seed collision.
  */
+/** Assay ids the exact-ledger engineering readout (packages/metrics/src/capabilities.ts) scores. */
+const ENGINEERING_ASSAYS: ReadonlySet<string> = new Set(["passive-transport", "reacting-ledger", "extinction", "census-checkpoint"]);
+
 export async function freezeCampaign(
   protocol: DiscoveryProtocol,
   opts: { sourceClosureDigest: string; registry: SeedReservation[]; pin?: PinRecord },
@@ -151,12 +155,22 @@ export async function freezeCampaign(
   if (errs.length) throw new Error(`protocol invalid:\n  ${errs.join("\n  ")}`);
   const coll = seedCollisions(protocol.blocks, opts.registry, protocol.seedNamespace.name);
   if (coll.length) throw new Error(`seed collisions:\n  ${coll.join("\n  ")}`);
+  // The engineering backend runs only the assays its readout knows; a pinned campaign's readout is its own.
+  if (!pinned) {
+    const unknown = protocol.fixtures.filter((f) => !ENGINEERING_ASSAYS.has(f.assayId)).map((f) => `${f.id}: ${f.assayId}`);
+    if (unknown.length) throw new Error(`freeze: assays the engineering readout does not know (have ${[...ENGINEERING_ASSAYS].join(", ")}):\n  ${unknown.join("\n  ")}`);
+  }
   const initialArtifacts = new Map<string, Uint8Array>();
   const resolved: { f: FixtureSpec; b: { id: string; seed: number }; cfg: WorldConfig; digest: string }[] = [];
   for (const f of protocol.fixtures)
     for (const b of protocol.blocks) {
       const s = buildInitialState(f, b.seed);
       if (s.step !== 0) throw new Error("freeze: an initial state must start at step 0");
+      if (!pinned) {
+        const W = worldW(s.cfg), H = worldH(s.cfg);
+        const out = f.sites.find((x) => x.x >= W || x.y >= H);
+        if (out) throw new Error(`freeze: fixture ${f.id} site (${out.x}, ${out.y}) is outside the ${W}x${H} world`);
+      }
       const bytes = encodeCheckpoint(s, {});
       const digest = await sha256Hex(bytes);
       initialArtifacts.set(digest, bytes);

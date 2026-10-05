@@ -2,6 +2,8 @@
 
 Raw final message, unedited. Session `01a1085b-d6ad-7210-ad66-7a7bb09cf4de`, 2026-10-04, read-only, with the run roots added.
 
+Reviewed source: the worktree changes since `4fd47f2`, as given in the [prompt](REVIEW-SOL-CALIBRATION-PROMPT.md). This records the pre-repair state; the findings and their resolution are in the [follow-up review](REVIEW-SOL-CALIBRATION-FOLLOWUP.md).
+
 ---
 
 No P0 findings. Five findings:

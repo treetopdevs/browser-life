@@ -265,14 +265,22 @@ defmodule Coordinator.DiscoveryTest do
 
     {:ok, t4} = Discovery.next(a)
     assert t4.caseId == Enum.at(@ids, 1)
+  end
+
+  test "per-host leases are capped at concurrentCasesPerHost" do
+    stop_supervised!(Discovery)
+    dir = Path.join(System.tmp_dir!(), "bl-discovery-host-#{System.unique_integer([:positive])}")
+    on_exit(fn -> File.rm_rf!(dir) end)
+    start_supervised!({Discovery, data_dir: dir, queue_data_dir: dir <> "-q", lease_ms: 60_000})
+    register(%{"concurrentCasesPerHost" => 2})
 
     b = worker("busy", concurrency: 64)
-    # Fill the per-host cap (4) with qualification excluded: qualify first.
     {:ok, q} = Discovery.next(b)
     {:ok, _} = Discovery.finalize(q.leaseId, b, ok(canonical(q.caseId)))
-    leased = for _ <- 1..4, do: Discovery.next(b)
-    assert Enum.count(leased, fn {:ok, t} -> Map.has_key?(t, :leaseId) end) <= 4
-    assert Enum.any?(leased, fn {:ok, t} -> Map.get(t, :idle) end) or length(@ids) < 4
+
+    assert {:ok, %{leaseId: _}} = Discovery.next(b)
+    assert {:ok, %{leaseId: _}} = Discovery.next(b)
+    assert {:ok, %{idle: true, reason: "per-host concurrency cap reached"}} = Discovery.next(b)
   end
 
   test "refuses a data directory that overlaps the registered queue's" do

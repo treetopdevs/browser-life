@@ -407,6 +407,8 @@ export function engineeringReadout(spec: CaseSpec, records: ObservationRecord[])
   });
   switch (spec.assayId) {
     case "passive-transport": {
+      if (fin.initial.length === 0)
+        return { ...base, status: invariantsPassed ? "unsupported-measurement" : "invalid-or-incomplete", expectation: "one-step outflow of every deposit equals the closed form", met: false, invariantsPassed, extinct, details: { reason: "no sites were observed" } };
       const s = spec.resolvedWorldConfig.spread;
       const rows = fin.initial.map((i0, k) => {
         const f1 = fin.firstStep[k];
