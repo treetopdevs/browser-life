@@ -9,7 +9,8 @@
     "test": "vitest run",
     "test:gpu": "deno run --allow-read --allow-env tests/deno/gpu_golden.ts",
     "test:e2e": "playwright test",
-    "gen:prereg": "deno run -A tools/gen-prereg.ts"
+    "gen:prereg": "deno run -A tools/gen-prereg.ts",
+    "build:discovery": "vite build --config apps/lab/vite.discovery.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

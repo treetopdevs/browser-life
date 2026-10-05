@@ -1,0 +1,260 @@
+{
+ "schemaVersion": "discovery-v1",
+ "observerVersion": "renewal-observer-v1.pin-24cef9e2",
+ "readoutVersion": "renewal-readout-v1.pin-24cef9e2",
+ "verificationPolicy": {
+  "replay": "every-case-cross-host"
+ },
+ "campaign": "renewal-benchmark-v1",
+ "purpose": "engineering",
+ "question": "What does one complete pinned renewal case cost (seconds and bytes, primary and replay separately) with the renewal observer, its serialization and validation? Engineering only; outcomes are not interpreted.",
+ "seedNamespace": {
+  "name": "discovery-engineering",
+  "first": 8500001,
+  "last": 8500999
+ },
+ "blocks": [
+  {
+   "id": "b1",
+   "seed": 8500201
+  }
+ ],
+ "fixtures": [
+  {
+   "id": "builder-a16-s0",
+   "candidateId": "witness-rule1",
+   "habitatId": "builder-a16-s0",
+   "founderId": "builder",
+   "assayId": "renewal-positive",
+   "armId": "builder",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 0,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 500,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 255,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "cells",
+    "nutrient": 16,
+    "founders": [
+     {
+      "x": 16,
+      "y": 16,
+      "genomeHex": "0018009a0000000000000000000000000000000000000000000000000000000000007f00000000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008100000000000000000000000081000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007f107f00000010",
+      "biomass": 1024,
+      "energy": 2048
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  },
+  {
+   "id": "matched-a16-s1",
+   "candidateId": "witness-rule1",
+   "habitatId": "matched-a16-s1",
+   "founderId": "builder",
+   "assayId": "renewal-main",
+   "armId": "matched",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 1,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 500,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 255,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "cells",
+    "nutrient": 16,
+    "founders": [
+     {
+      "x": 16,
+      "y": 16,
+      "genomeHex": "0018009a0000000000000000000000000000000000000000000000000000000000007f00000000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008100000000000000000000000081000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007f107f00000000",
+      "biomass": 1024,
+      "energy": 2048
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  },
+  {
+   "id": "builder-a4-s2",
+   "candidateId": "witness-rule1",
+   "habitatId": "builder-a4-s2",
+   "founderId": "builder",
+   "assayId": "renewal-null",
+   "armId": "builder",
+   "config": {
+    "ruleVersion": 1,
+    "tileW": 32,
+    "tileH": 32,
+    "tilesX": 1,
+    "tilesY": 1,
+    "eA": 0,
+    "eB": 10,
+    "eC": 2,
+    "eP": 12,
+    "massUnit": 256,
+    "kernelRadius": 2,
+    "thetaMass": 512,
+    "dtQ": 0,
+    "spread": 2,
+    "defaultMu": 154,
+    "defaultSigma": 24,
+    "diffA": 200,
+    "diffC": 200,
+    "diffS": 150,
+    "gateK": 1,
+    "kCatHalf": 128,
+    "kPhoto": 160,
+    "kResp": 128,
+    "kDecomp": 96,
+    "kGrow": 128,
+    "kBuild": 64,
+    "kEmit": 64,
+    "kCost": 64,
+    "kMaint": 200,
+    "kPDecay": 16,
+    "kBDecay": 500,
+    "kELeak": 330,
+    "kSDecay": 1300,
+    "kAbio": 0,
+    "mutRate": 0,
+    "mutStep": 24,
+    "lightMode": "uniform",
+    "lightBase": 255,
+    "lightAmp": 0,
+    "seasonPeriod": 0,
+    "seasonAmp": 0,
+    "eventCap": 65536,
+    "neutral": false,
+    "motility": false
+   },
+   "initial": {
+    "kind": "cells",
+    "nutrient": 4,
+    "founders": [
+     {
+      "x": 16,
+      "y": 16,
+      "genomeHex": "0018009a0000000000000000000000000000000000000000000000000000000000007f00000000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008100000000000000000000000081000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007f107f00000010",
+      "biomass": 1024,
+      "energy": 2048
+     }
+    ]
+   },
+   "steps": 10000,
+   "censusEvery": 100,
+   "segmentAt": [],
+   "sites": [
+    {
+     "x": 16,
+     "y": 16
+    }
+   ]
+  }
+ ],
+ "resourceLimits": {
+  "concurrentCasesPerHost": 1,
+  "caseWallSeconds": 600,
+  "campaignWallSeconds": 3600,
+  "campaignBytes": 500000000,
+  "attemptsPerCasePerRole": 3
+ },
+ "stoppingRule": "Run each of the three cases once as a primary on one host and once as a replay on another; then stop. Prices only; no scientific reading."
+}
