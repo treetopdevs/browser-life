@@ -8,4 +8,6 @@ runs/
 apps/coordinator/_build/
 apps/coordinator/deps/
 apps/coordinator/data/
+apps/coordinator/data-discovery/
+apps/coordinator/priv/static/discovery/
 .playwright-mcp/

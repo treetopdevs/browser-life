@@ -1,0 +1,25 @@
+{
+  "note": "Known seed reservations checked by `tools/discovery.ts freeze` (PLAN Stage 0 item 3). Sources: docs/plan.md and the unlanded workspaces' protocols, surveyed 2026-10-04. The discovery workstream owns 8,500,001-8,599,999; engineering campaigns use 8,500,001-8,500,999. Add a range here before freezing anything that uses it.",
+  "reservations": [
+    { "first": 1, "last": 2000, "owner": "registered M4 ensembles, calibration pilots and extensions (seeds 1-20, 101-105, 1001-1020, 1101-1110)" },
+    { "first": 1000001, "last": 1000210, "owner": "M3 confirmation" },
+    { "first": 2000001, "last": 2000050, "owner": "M3 retest" },
+    { "first": 3000001, "last": 3000999, "owner": "M3 instrumented rerun" },
+    { "first": 4000001, "last": 4599999, "owner": "foundations review" },
+    { "first": 4600000, "last": 4799999, "owner": "ecology-first discovery and founder program" },
+    { "first": 4800001, "last": 4849999, "owner": "scaffold line" },
+    { "first": 4880001, "last": 4880004, "owner": "sandbox workspaces" },
+    { "first": 5000001, "last": 5000007, "owner": "M3 replication" },
+    { "first": 7310001, "last": 7310001, "owner": "construction renewal pilot and controls (RENEWAL-PLAN.md)" },
+    { "first": 7311001, "last": 7311005, "owner": "construction renewal confirmation (RENEWAL-PLAN.md)" },
+    { "first": 8500001, "last": 8500999, "owner": "discovery-engineering" },
+    { "first": 8501000, "last": 8501000, "owner": "discovery (reserved for calibration, discovery and confirmation namespaces)" },
+    { "first": 8501001, "last": 8501999, "owner": "discovery-calibration" },
+    { "first": 8502000, "last": 8599999, "owner": "discovery (reserved for calibration, discovery and confirmation namespaces)" },
+    { "first": 20261002, "last": 20261002, "owner": "sandbox workspaces" },
+    { "first": 29092028, "last": 29092028, "owner": "foundations workspace" },
+    { "first": 620050001, "last": 620050032, "owner": "sandbox workspaces" },
+    { "first": 630000001, "last": 640099999, "owner": "sandbox workspaces" },
+    { "first": 700000001, "last": 700999999, "owner": "sandbox workspaces" }
+  ]
+}

@@ -11,7 +11,8 @@
     "test:e2e": "playwright test",
     "gen:prereg": "deno run -A tools/gen-prereg.ts",
     "typecheck:capabilities": "tsc -p tools/agent-capabilities/tsconfig.json",
-    "test:capabilities": "vitest run tools/test/agent-capabilities"
+    "test:capabilities": "vitest run tools/test/agent-capabilities",
+    "build:discovery": "vite build --config apps/lab/vite.discovery.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

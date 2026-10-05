@@ -1,0 +1,766 @@
+{
+  "schemaVersion": "discovery-v1",
+  "campaign": "engineering-v1",
+  "purpose": "engineering",
+  "question": "Does the workbench core (frozen manifest, CPU case runner, acceptance validator, reducer) produce one validated, cross-host reproducible result per case on artificial fixtures? Plumbing only: these cases are not evidence about evolution.",
+  "seedNamespace": {
+    "name": "discovery-engineering",
+    "first": 8500001,
+    "last": 8500999
+  },
+  "blocks": [
+    {
+      "id": "eng-a",
+      "seed": 8500001
+    },
+    {
+      "id": "eng-b",
+      "seed": 8500002
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "passive-spread0",
+      "candidateId": "rule1-passive-spread0",
+      "habitatId": "deposits16-a32",
+      "founderId": "none",
+      "assayId": "passive-transport",
+      "armId": "fixture",
+      "config": {
+        "tileW": 32,
+        "tileH": 32,
+        "spread": 0,
+        "dtQ": 0,
+        "motility": false,
+        "kBDecay": 0,
+        "kPDecay": 0,
+        "kELeak": 0
+      },
+      "initial": {
+        "kind": "deposits",
+        "nutrient": 32,
+        "deposits": [
+          {
+            "x": 4,
+            "y": 4,
+            "B": 36,
+            "P": 69,
+            "E": 137
+          },
+          {
+            "x": 12,
+            "y": 4,
+            "B": 37,
+            "P": 137,
+            "E": 4355
+          },
+          {
+            "x": 20,
+            "y": 4,
+            "B": 68,
+            "P": 4356,
+            "E": 73
+          },
+          {
+            "x": 28,
+            "y": 4,
+            "B": 69,
+            "P": 37,
+            "E": 1155
+          },
+          {
+            "x": 4,
+            "y": 12,
+            "B": 72,
+            "P": 73,
+            "E": 0
+          },
+          {
+            "x": 12,
+            "y": 12,
+            "B": 73,
+            "P": 1156,
+            "E": 69
+          },
+          {
+            "x": 20,
+            "y": 12,
+            "B": 136,
+            "P": 0,
+            "E": 37
+          },
+          {
+            "x": 28,
+            "y": 12,
+            "B": 137,
+            "P": 68,
+            "E": 4356
+          },
+          {
+            "x": 4,
+            "y": 20,
+            "B": 1155,
+            "P": 136,
+            "E": 68
+          },
+          {
+            "x": 12,
+            "y": 20,
+            "B": 1156,
+            "P": 4355,
+            "E": 136
+          },
+          {
+            "x": 20,
+            "y": 20,
+            "B": 4355,
+            "P": 36,
+            "E": 1156
+          },
+          {
+            "x": 28,
+            "y": 20,
+            "B": 4356,
+            "P": 72,
+            "E": 36
+          },
+          {
+            "x": 4,
+            "y": 28,
+            "B": 0,
+            "P": 1155,
+            "E": 72
+          },
+          {
+            "x": 12,
+            "y": 28,
+            "B": 1,
+            "P": 9000,
+            "E": 50000
+          },
+          {
+            "x": 20,
+            "y": 28,
+            "B": 255,
+            "P": 5,
+            "E": 1
+          },
+          {
+            "x": 28,
+            "y": 28,
+            "B": 20000,
+            "P": 300,
+            "E": 600
+          }
+        ]
+      },
+      "steps": 200,
+      "censusEvery": 50,
+      "segmentAt": [],
+      "sites": [
+        {
+          "x": 4,
+          "y": 4
+        },
+        {
+          "x": 12,
+          "y": 4
+        },
+        {
+          "x": 20,
+          "y": 4
+        },
+        {
+          "x": 28,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 12
+        },
+        {
+          "x": 12,
+          "y": 12
+        },
+        {
+          "x": 20,
+          "y": 12
+        },
+        {
+          "x": 28,
+          "y": 12
+        },
+        {
+          "x": 4,
+          "y": 20
+        },
+        {
+          "x": 12,
+          "y": 20
+        },
+        {
+          "x": 20,
+          "y": 20
+        },
+        {
+          "x": 28,
+          "y": 20
+        },
+        {
+          "x": 4,
+          "y": 28
+        },
+        {
+          "x": 12,
+          "y": 28
+        },
+        {
+          "x": 20,
+          "y": 28
+        },
+        {
+          "x": 28,
+          "y": 28
+        }
+      ]
+    },
+    {
+      "id": "passive-spread1",
+      "candidateId": "rule1-passive-spread1",
+      "habitatId": "deposits16-a32",
+      "founderId": "none",
+      "assayId": "passive-transport",
+      "armId": "fixture",
+      "config": {
+        "tileW": 32,
+        "tileH": 32,
+        "spread": 1,
+        "dtQ": 0,
+        "motility": false,
+        "kBDecay": 0,
+        "kPDecay": 0,
+        "kELeak": 0
+      },
+      "initial": {
+        "kind": "deposits",
+        "nutrient": 32,
+        "deposits": [
+          {
+            "x": 4,
+            "y": 4,
+            "B": 36,
+            "P": 69,
+            "E": 137
+          },
+          {
+            "x": 12,
+            "y": 4,
+            "B": 37,
+            "P": 137,
+            "E": 4355
+          },
+          {
+            "x": 20,
+            "y": 4,
+            "B": 68,
+            "P": 4356,
+            "E": 73
+          },
+          {
+            "x": 28,
+            "y": 4,
+            "B": 69,
+            "P": 37,
+            "E": 1155
+          },
+          {
+            "x": 4,
+            "y": 12,
+            "B": 72,
+            "P": 73,
+            "E": 0
+          },
+          {
+            "x": 12,
+            "y": 12,
+            "B": 73,
+            "P": 1156,
+            "E": 69
+          },
+          {
+            "x": 20,
+            "y": 12,
+            "B": 136,
+            "P": 0,
+            "E": 37
+          },
+          {
+            "x": 28,
+            "y": 12,
+            "B": 137,
+            "P": 68,
+            "E": 4356
+          },
+          {
+            "x": 4,
+            "y": 20,
+            "B": 1155,
+            "P": 136,
+            "E": 68
+          },
+          {
+            "x": 12,
+            "y": 20,
+            "B": 1156,
+            "P": 4355,
+            "E": 136
+          },
+          {
+            "x": 20,
+            "y": 20,
+            "B": 4355,
+            "P": 36,
+            "E": 1156
+          },
+          {
+            "x": 28,
+            "y": 20,
+            "B": 4356,
+            "P": 72,
+            "E": 36
+          },
+          {
+            "x": 4,
+            "y": 28,
+            "B": 0,
+            "P": 1155,
+            "E": 72
+          },
+          {
+            "x": 12,
+            "y": 28,
+            "B": 1,
+            "P": 9000,
+            "E": 50000
+          },
+          {
+            "x": 20,
+            "y": 28,
+            "B": 255,
+            "P": 5,
+            "E": 1
+          },
+          {
+            "x": 28,
+            "y": 28,
+            "B": 20000,
+            "P": 300,
+            "E": 600
+          }
+        ]
+      },
+      "steps": 200,
+      "censusEvery": 50,
+      "segmentAt": [],
+      "sites": [
+        {
+          "x": 4,
+          "y": 4
+        },
+        {
+          "x": 12,
+          "y": 4
+        },
+        {
+          "x": 20,
+          "y": 4
+        },
+        {
+          "x": 28,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 12
+        },
+        {
+          "x": 12,
+          "y": 12
+        },
+        {
+          "x": 20,
+          "y": 12
+        },
+        {
+          "x": 28,
+          "y": 12
+        },
+        {
+          "x": 4,
+          "y": 20
+        },
+        {
+          "x": 12,
+          "y": 20
+        },
+        {
+          "x": 20,
+          "y": 20
+        },
+        {
+          "x": 28,
+          "y": 20
+        },
+        {
+          "x": 4,
+          "y": 28
+        },
+        {
+          "x": 12,
+          "y": 28
+        },
+        {
+          "x": 20,
+          "y": 28
+        },
+        {
+          "x": 28,
+          "y": 28
+        }
+      ]
+    },
+    {
+      "id": "passive-spread2",
+      "candidateId": "rule1-passive-spread2",
+      "habitatId": "deposits16-a32",
+      "founderId": "none",
+      "assayId": "passive-transport",
+      "armId": "fixture",
+      "config": {
+        "tileW": 32,
+        "tileH": 32,
+        "spread": 2,
+        "dtQ": 0,
+        "motility": false,
+        "kBDecay": 0,
+        "kPDecay": 0,
+        "kELeak": 0
+      },
+      "initial": {
+        "kind": "deposits",
+        "nutrient": 32,
+        "deposits": [
+          {
+            "x": 4,
+            "y": 4,
+            "B": 36,
+            "P": 69,
+            "E": 137
+          },
+          {
+            "x": 12,
+            "y": 4,
+            "B": 37,
+            "P": 137,
+            "E": 4355
+          },
+          {
+            "x": 20,
+            "y": 4,
+            "B": 68,
+            "P": 4356,
+            "E": 73
+          },
+          {
+            "x": 28,
+            "y": 4,
+            "B": 69,
+            "P": 37,
+            "E": 1155
+          },
+          {
+            "x": 4,
+            "y": 12,
+            "B": 72,
+            "P": 73,
+            "E": 0
+          },
+          {
+            "x": 12,
+            "y": 12,
+            "B": 73,
+            "P": 1156,
+            "E": 69
+          },
+          {
+            "x": 20,
+            "y": 12,
+            "B": 136,
+            "P": 0,
+            "E": 37
+          },
+          {
+            "x": 28,
+            "y": 12,
+            "B": 137,
+            "P": 68,
+            "E": 4356
+          },
+          {
+            "x": 4,
+            "y": 20,
+            "B": 1155,
+            "P": 136,
+            "E": 68
+          },
+          {
+            "x": 12,
+            "y": 20,
+            "B": 1156,
+            "P": 4355,
+            "E": 136
+          },
+          {
+            "x": 20,
+            "y": 20,
+            "B": 4355,
+            "P": 36,
+            "E": 1156
+          },
+          {
+            "x": 28,
+            "y": 20,
+            "B": 4356,
+            "P": 72,
+            "E": 36
+          },
+          {
+            "x": 4,
+            "y": 28,
+            "B": 0,
+            "P": 1155,
+            "E": 72
+          },
+          {
+            "x": 12,
+            "y": 28,
+            "B": 1,
+            "P": 9000,
+            "E": 50000
+          },
+          {
+            "x": 20,
+            "y": 28,
+            "B": 255,
+            "P": 5,
+            "E": 1
+          },
+          {
+            "x": 28,
+            "y": 28,
+            "B": 20000,
+            "P": 300,
+            "E": 600
+          }
+        ]
+      },
+      "steps": 200,
+      "censusEvery": 50,
+      "segmentAt": [],
+      "sites": [
+        {
+          "x": 4,
+          "y": 4
+        },
+        {
+          "x": 12,
+          "y": 4
+        },
+        {
+          "x": 20,
+          "y": 4
+        },
+        {
+          "x": 28,
+          "y": 4
+        },
+        {
+          "x": 4,
+          "y": 12
+        },
+        {
+          "x": 12,
+          "y": 12
+        },
+        {
+          "x": 20,
+          "y": 12
+        },
+        {
+          "x": 28,
+          "y": 12
+        },
+        {
+          "x": 4,
+          "y": 20
+        },
+        {
+          "x": 12,
+          "y": 20
+        },
+        {
+          "x": 20,
+          "y": 20
+        },
+        {
+          "x": 28,
+          "y": 20
+        },
+        {
+          "x": 4,
+          "y": 28
+        },
+        {
+          "x": 12,
+          "y": 28
+        },
+        {
+          "x": 20,
+          "y": 28
+        },
+        {
+          "x": 28,
+          "y": 28
+        }
+      ]
+    },
+    {
+      "id": "reacting-ledger",
+      "candidateId": "rule1-default-uniform",
+      "habitatId": "a64-disc6-a32",
+      "founderId": "generalist-60-20",
+      "assayId": "reacting-ledger",
+      "armId": "fixture",
+      "config": {
+        "tileW": 32,
+        "tileH": 32,
+        "lightMode": "uniform"
+      },
+      "initial": {
+        "kind": "founders",
+        "nutrient": 64,
+        "founders": [
+          {
+            "x": 16,
+            "y": 16,
+            "radius": 6,
+            "genomeHex": "0014003c0000000000000000000000000000000000000000000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007f008100000000000000006e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e82846000000000c",
+            "biomass": 128,
+            "energy": 256
+          }
+        ]
+      },
+      "steps": 1000,
+      "censusEvery": 100,
+      "segmentAt": [],
+      "sites": [
+        {
+          "x": 16,
+          "y": 16
+        }
+      ]
+    },
+    {
+      "id": "extinction",
+      "candidateId": "rule1-dark-fastdecay",
+      "habitatId": "a64-disc6-a32",
+      "founderId": "generalist-60-20",
+      "assayId": "extinction",
+      "armId": "fixture",
+      "config": {
+        "tileW": 32,
+        "tileH": 32,
+        "lightMode": "uniform",
+        "lightBase": 0,
+        "lightAmp": 0,
+        "kBDecay": 2000,
+        "kPDecay": 2000
+      },
+      "initial": {
+        "kind": "founders",
+        "nutrient": 64,
+        "founders": [
+          {
+            "x": 16,
+            "y": 16,
+            "radius": 6,
+            "genomeHex": "0014003c0000000000000000000000000000000000000000000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007f008100000000000000006e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e82846000000000c",
+            "biomass": 128,
+            "energy": 256
+          }
+        ]
+      },
+      "steps": 1000,
+      "censusEvery": 100,
+      "segmentAt": [],
+      "sites": [
+        {
+          "x": 16,
+          "y": 16
+        }
+      ]
+    },
+    {
+      "id": "census-checkpoint",
+      "candidateId": "rule1-default-uniform",
+      "habitatId": "a64-disc6-a32",
+      "founderId": "generalist-60-20",
+      "assayId": "census-checkpoint",
+      "armId": "fixture",
+      "config": {
+        "tileW": 32,
+        "tileH": 32,
+        "lightMode": "uniform"
+      },
+      "initial": {
+        "kind": "founders",
+        "nutrient": 64,
+        "founders": [
+          {
+            "x": 16,
+            "y": 16,
+            "radius": 6,
+            "genomeHex": "0014003c0000000000000000000000000000000000000000000000000000000000000000000000000000007f0000000000007f0000000000000000000000000000000000000000000000000000000000000000000000000000400000000000007f008100000000000000006e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e82846000000000c",
+            "biomass": 128,
+            "energy": 256
+          }
+        ]
+      },
+      "steps": 1000,
+      "censusEvery": 100,
+      "segmentAt": [
+        300,
+        700
+      ],
+      "sites": [
+        {
+          "x": 16,
+          "y": 16
+        }
+      ]
+    }
+  ],
+  "observerVersion": "exact-ledger-v1",
+  "readoutVersion": "engineering-readout-v1",
+  "resourceLimits": {
+    "concurrentCasesPerHost": 4,
+    "caseWallSeconds": 600,
+    "campaignWallSeconds": 7200,
+    "campaignBytes": 2000000000,
+    "attemptsPerCasePerRole": 3
+  },
+  "verificationPolicy": {
+    "replay": "every-case-cross-host"
+  },
+  "stoppingRule": "Run all 12 cases once as primaries (sharded across hosts) and replay every case on a different physical host. Stop at the caps; a cap reached yields an incomplete report, never a changed case set."
+}
