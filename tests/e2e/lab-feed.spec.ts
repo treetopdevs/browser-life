@@ -109,7 +109,7 @@ test("lab page: the Feed and Drain brushes change the world and the ledger says 
   await page.goto("/lab/");
   await expect(page.locator("#simulation-status")).toHaveText("Paused", { timeout: 60_000 });
   await expect(page.locator("#k-fed")).toHaveText("none", { timeout: 30_000 });
-  await expect(page.locator("#ledger-badge")).toHaveText("exact");
+  await expect(page.locator("#ledger-badge")).toHaveText("sealed");
   await expect(page.locator("#feed-hint")).toBeHidden();
   await expect(page.locator("#amount")).toBeDisabled();
 
@@ -120,7 +120,7 @@ test("lab page: the Feed and Drain brushes change the world and the ledger says 
   const box = (await page.locator("#world").boundingBox())!;
   await page.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.4);
   await expect(page.locator("#k-fed")).toHaveText(/^\+[\d,]+ in 1 feed$/, { timeout: 30_000 });
-  await expect(page.locator("#ledger-badge")).toHaveText("exact, fed");
+  await expect(page.locator("#ledger-badge")).toHaveText("fed by hand, all accounted");
   await expect(page.locator("#k-matter")).toHaveText("0");
   await expect(page.locator("#k-resid")).toHaveText("0");
   const fedText = await page.locator("#k-fed").textContent();
@@ -129,7 +129,7 @@ test("lab page: the Feed and Drain brushes change the world and the ledger says 
   await page.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.4);
   await expect(page.locator("#k-fed")).toHaveText(/ in 2 feeds$/, { timeout: 30_000 });
   expect(await page.locator("#k-fed").textContent()).not.toBe(fedText);
-  await expect(page.locator("#ledger-badge")).toHaveText("exact, fed");
+  await expect(page.locator("#ledger-badge")).toHaveText("fed by hand, all accounted");
 
   // Keyboard: Enter on the focused field applies the brush at the focus cursor.
   await page.getByRole("button", { name: "Feed", exact: true }).click();
@@ -144,9 +144,9 @@ test("lab page: the Feed and Drain brushes change the world and the ledger says 
   await expect(page.locator("#k-resid")).toHaveText("0");
   await page.screenshot({ path: "test-results/lab-feed.png", fullPage: false });
   const pressed = () => page.locator("#tools button:not([hidden])").evaluateAll((bs) => bs.map((b) => `${b.textContent}:${b.getAttribute("aria-pressed")}`).join(" "));
-  expect(await pressed()).toBe("Inspect:false Lesion:false Feed:true Drain:false Pan:false");
-  await page.getByRole("button", { name: "Inspect", exact: true }).click();
-  expect(await pressed()).toBe("Inspect:true Lesion:false Feed:false Drain:false Pan:false");
+  expect(await pressed()).toBe("Look:false Wound:false Feed:true Drain:false Move:false");
+  await page.getByRole("button", { name: "Look", exact: true }).click();
+  expect(await pressed()).toBe("Look:true Wound:false Feed:false Drain:false Move:false");
   await expect(page.locator("#feed-hint")).toBeHidden();
   await expect(page.locator("#amount")).toBeDisabled();
   await expect(page.locator("#radius")).toBeDisabled();

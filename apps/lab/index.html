@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0b1110" />
+    <meta name="theme-color" content="#f3f1ec" />
     <meta name="description"
-      content="An open playground for artificial life. Explore strange patterns, follow bolder experiments, and help imagine worlds that keep evolving." />
+      content="A garden of tiny sealed worlds that run in your browser. Plant one, feed it, wound it, breed it, and see what grows back." />
     <title>Grow something surprising · Browser Life</title>
     <link rel="canonical" href="https://cadence.garden/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -18,52 +18,67 @@
         <a class="site-brand" href="/"
           aria-label="Browser Life home"><span class="brand-mark" aria-hidden="true"></span><span>Browser<span class="brand-light"> Life</span></span></a>
         <nav class="site-nav"
-          aria-label="Primary"><a href="/" aria-current="page">Overview</a><a href="/lab/">Lab</a><a href="/how-it-works/">How it works</a><a href="/research/">Field notes</a><a href="/participate/">Participate</a><a href="/status/">Status</a></nav>
+          aria-label="Primary"><a href="/" aria-current="page">Home</a><a href="/lab/">Lab</a><a href="/how-it-works/">How it works</a><a href="/research/">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
       </div>
     </header>
     <main id="main">
       <section class="hero shell">
         <div class="hero-copy">
-          <p class="eyebrow"><span class="signal-dot"></span> AN OPEN PLAYGROUND FOR ARTIFICIAL LIFE</p>
+          <p class="eyebrow">A garden of tiny sealed worlds</p>
           <h1>Grow something <em>surprising.</em></h1>
-          <p class="lede">Strange bodies. Unexpected behaviors. Worlds worth coming back to. We’re exploring what life in a computer could become when we give it room to get weird.</p>
-          <div class="actions"><a class="button primary" href="/lab/">Open the lab <span aria-hidden="true">↗</span></a><a class="button quiet" href="#next">Explore the bigger bets <span aria-hidden="true">↓</span></a></div>
-          <p class="fine">Try the current simulation in a WebGPU browser. The field notes are open to everyone.</p>
+          <p class="lede">Browser Life keeps little worlds in sealed jars: light comes in, heat goes out, and nothing else crosses the glass unless you open it. Plant one, feed it, wound it, breed it, and see what grows back. <b>Nothing in there was told to be alive.</b></p>
+          <div class="actions"><a class="button primary" href="/lab/">Open the lab <span aria-hidden="true">→</span></a><a class="button quiet" href="/how-it-works/">How it works</a></div>
+          <p class="fine">Runs in a browser with WebGPU, which means recent Chrome or Edge on most computers. The journal is open to everyone.</p>
         </div>
-        <figure class="hero-art">
-          <img class="world-preview" src="/world-preview.jpg" width="686" height="336" alt="Green biomass clusters in a captured Browser Life random soup simulation" />
-          <figcaption class="art-caption"><span>FROM THE LAB / RANDOM SOUP</span><span>SIMULATION CAPTURE</span></figcaption>
-          <p class="specimen-note">A world starts with local rules.<br />The interesting part is what happens next.</p>
+        <figure class="jar">
+          <div class="jar-glass"><img class="world-preview" src="/world-preview.jpg" width="686" height="336" alt="Green clusters of biomass drifting in a dark Browser Life world, captured from the Random soup starting world" /></div>
+          <figcaption class="jar-label"><span class="art-caption">From the lab · Random soup</span><span class="jar-chip">Captured in the lab</span></figcaption>
         </figure>
       </section>
-      <section class="band" aria-labelledby="leads-title">
-        <div class="shell section-heading"><p class="eyebrow">FOLLOW THE ALMOST</p><h2 id="leads-title">Three things that made us look closer.</h2><p>Leads from earlier experiments and sandboxes. Some were measured; some simply looked alive enough to chase.</p></div>
-        <div class="shell three sightings">
-          <div><span class="index">01 / SUN-FOLLOWERS</span><h3>A reason to move</h3><p>Hand-built sensing patterns survived a wandering sun where blind drifters failed. A changing world can make sensing matter.</p><span class="observation">Small sandbox comparison</span></div>
-          <div><span class="index">02 / COMET BLOBS</span><h3>Motion after a reset</h3><p>Comet-like blobs appeared in ponds repeatedly cleared and restarted from small packets. Their movement caught our eye; it wasn’t measured.</p><span class="observation">Visual observation</span></div>
-          <div><span class="index">03 / WORMS &amp; LABYRINTHS</span><h3>Bodies with more to them</h3><p>Recurring wounds and inherited shape rules produced promising long and tangled bodies. A few seeds, and a reason to explore further.</p><span class="observation">Early exploratory runs</span></div>
+
+      <section class="ingredients shell" aria-labelledby="ingredients-title">
+        <div class="section-heading"><p class="eyebrow">What's in a jar</p><h2 id="ingredients-title">Five ingredients. No recipe for life.</h2><p>Every world is closed in matter and open to light. Inside, four kinds of matter turn into each other, and whatever lives has to make its living from that. The lab shows them in these same colours.</p></div>
+        <div class="mosaic">
+          <div class="tile tile-sun"><span class="index">The sun</span><p><strong>Light in, heat out.</strong>The only thing that crosses the glass. It can be steady, a gradient, a season, or a sun that wanders across the jar.</p></div>
+          <div class="tile tile-nutrient"><span class="index">Nutrient · blue</span><p><strong>Dissolved food.</strong>What light turns into biomass. When it runs out, something has to recycle.</p></div>
+          <div class="tile tile-biomass"><span class="index">Biomass · green</span><p><strong>The living stuff.</strong>It grows, divides, moves, and carries a genome that mutates when it is copied.</p></div>
+          <div class="tile tile-membrane"><span class="index">Membrane · white</span><p><strong>Walls that bodies build.</strong>They decay, so staying in one piece takes constant work.</p></div>
+          <div class="tile tile-waste"><span class="index">Waste · brown</span><p><strong>What's left after work.</strong>Someone has to turn it back into food, or the whole jar stalls.</p></div>
+          <div class="tile tile-jar"><span class="index">The seal</span><p><strong>Nothing lost, nothing made.</strong>The rules conserve matter exactly. The lab checks the accounting as the world runs, logs every time you open the jar, and can replay a run bit for bit on another supported GPU.</p></div>
         </div>
-        <div class="shell band-link"><a class="text-link" href="/research/">Follow the field notes →</a></div>
       </section>
+
+      <section class="band" aria-labelledby="leads-title">
+        <div class="shell section-heading"><p class="eyebrow">Things that made us look twice</p><h2 id="leads-title">Three almosts worth chasing.</h2><p>Leads from earlier sandboxes. Some were measured; some just looked alive enough to follow.</p></div>
+        <div class="shell three sightings">
+          <div><span class="index">01 · Sun-followers</span><h3>A reason to move</h3><p>Hand-built sensing patterns survived a wandering sun where blind drifters failed. A changing world can make sensing matter.</p><span class="observation">Small sandbox comparison</span></div>
+          <div><span class="index">02 · Comet blobs</span><h3>Motion after a reset</h3><p>Comet-like blobs appeared in ponds repeatedly cleared and restarted from small packets. Their movement caught our eye; it wasn't measured.</p><span class="observation">Seen, not measured</span></div>
+          <div><span class="index">03 · Worms &amp; labyrinths</span><h3>Bodies with more to them</h3><p>Recurring wounds and inherited shape rules produced long, tangled bodies. A few seeds, and a reason to explore further.</p><span class="observation">A few seeds so far</span></div>
+        </div>
+        <div class="shell band-link"><a class="text-link" href="/research/">Read the journal →</a></div>
+      </section>
+
       <section class="shell feature">
-        <div><p class="eyebrow">THE WORKING HUNCH</p><h2>Give life room to change.</h2></div>
-        <div><p>Many steady worlds fill up and settle down. Some of the liveliest results came when space and resources opened up again: a wound, a pond reset, a moving patch of light.</p><p>So we’re turning up the possibilities. Combine changing environments, useful signals, varied founders and selection among groups. Look for the combinations that produce something worth watching.</p><p class="fine">The ambition: amplify a compelling trait tenfold. That’s a search target, not a result. Too much disturbance can erase the very bodies we want to grow.</p></div>
+        <div><p class="eyebrow">The working hunch</p><h2>Give life room to change.</h2></div>
+        <div><p>Many steady worlds fill up and settle down. Some of the liveliest results came when space and resources opened up again: a wound, a pond reset, a moving patch of light.</p><p>So we're turning up the possibilities. Combine changing environments, useful signals, varied founders and selection among groups. Look for the combinations that produce something worth watching.</p><p class="fine">The ambition: amplify a compelling trait tenfold. That's a search target, not a result. Too much disturbance can erase the very bodies we want to grow.</p></div>
       </section>
+
       <section class="shell bets" id="next" aria-labelledby="bets-title">
-        <div class="section-heading"><p class="eyebrow">BIGGER BETS / THE DIRECTION</p><h2 id="bets-title">From a strange little world<br />to a place we share.</h2><p>Storm worlds and the breeder are in the lab as sandbox presets, exploratory and not registered. The naturalist and shared garden are ideas we want to grow toward.</p></div>
+        <div class="section-heading"><p class="eyebrow">Where this is going</p><h2 id="bets-title">From a strange little jar<br />to a garden we share.</h2><p>Storm worlds and the breeder are in the lab as sandbox worlds, exploratory and not registered. The naturalist and the shared garden are what we want to grow toward.</p></div>
         <ol class="bet-list" role="list">
-          <li><span class="bet-number" aria-hidden="true">01</span><div><span class="state measured">SANDBOX</span><h3>Storm world</h3><p>Moving light, seasons, wounds and inherited shapes in one world. Find a rhythm that keeps opening possibilities without wiping everything out.</p></div><span class="bet-motif" aria-hidden="true">↝</span></li>
-          <li><span class="bet-number" aria-hidden="true">02</span><div><span class="state measured">SANDBOX</span><h3>The breeder</h3><p>Choose which ponds seed the next generation by a trait we want to amplify. In the lab you can already pick the donor ponds by hand; the aim is a loop where people pick what fascinates them.</p></div><span class="bet-motif" aria-hidden="true">⑂</span></li>
-          <li><span class="bet-number" aria-hidden="true">03</span><div><span class="state pending">IDEA</span><h3>An AI naturalist</h3><p>A model that watches worlds, notices unfamiliar behavior and helps steer the next experiment. A companion for exploring artificial life in the age of AI.</p></div><span class="bet-motif" aria-hidden="true">◎</span></li>
-          <li><span class="bet-number" aria-hidden="true">04</span><div><span class="state pending">LONGER-TERM VISION</span><h3>The shared garden</h3><p>A persistent archipelago. Creatures moving between islands. Visitors feeding a world, shifting its sun or dropping a meteor. Games and collaborative spaces that keep evolving while we’re away.</p></div><span class="bet-motif" aria-hidden="true">✳</span></li>
-          <li><span class="bet-number" aria-hidden="true">05</span><div><span class="state pending">FURTHER EXPLORATION</span><h3>More ways to be alive</h3><p>Predation, richer body plans and new ways to interact. Change the rules where today’s worlds hit a ceiling, and see what becomes possible.</p></div><span class="bet-motif" aria-hidden="true">∞</span></li>
+          <li><span class="bet-number" aria-hidden="true">1</span><div><span class="state measured">In the lab</span><h3>Storm worlds</h3><p>Moving light, seasons, wounds and inherited shapes in one world. Find a rhythm that keeps opening possibilities without wiping everything out.</p></div></li>
+          <li><span class="bet-number" aria-hidden="true">2</span><div><span class="state measured">In the lab</span><h3>The breeder</h3><p>Choose which ponds seed the next generation by a trait we want to amplify. In the lab you can already pick the donor ponds by hand; the aim is a loop where people pick what fascinates them.</p></div></li>
+          <li><span class="bet-number" aria-hidden="true">3</span><div><span class="state pending">An idea</span><h3>An AI naturalist</h3><p>A model that watches worlds, notices unfamiliar behavior and helps steer the next experiment. A companion for exploring artificial life in the age of AI.</p></div></li>
+          <li><span class="bet-number" aria-hidden="true">4</span><div><span class="state pending">Someday</span><h3>The shared garden</h3><p>A persistent archipelago. Creatures moving between islands. Visitors feeding a world, shifting its sun or dropping a meteor. Games and collaborative spaces that keep evolving while we're away.</p></div></li>
+          <li><span class="bet-number" aria-hidden="true">5</span><div><span class="state pending">Someday</span><h3>More ways to be alive</h3><p>Predation, richer body plans and new ways to interact. Change the rules where today's worlds hit a ceiling, and see what becomes possible.</p></div></li>
         </ol>
       </section>
-      <section class="shell invitation"><div><p class="eyebrow">COME EXPLORE</p><h2>Start with a world. Follow what’s interesting.</h2><p>Run the lab, share a seed that surprised you, or lend compute to queued experiments. The shared garden is the horizon; there’s already a playground to explore.</p></div><a class="button light" href="/participate/">Find your way in →</a></section>
+
+      <section class="shell invitation"><div><p class="eyebrow">Come and dig in</p><h2>Start with a world. Follow what's interesting.</h2><p>Run the lab, share a seed that surprised you, or lend your GPU to queued experiments. The shared garden is the horizon; the greenhouse is already open.</p></div><a class="button light" href="/participate/">Join in →</a></section>
     </main>
     <footer class="site-footer">
       <div class="shell footer-inner">
-        <p><strong>Browser Life</strong><br />An open playground for artificial life.</p>
+        <p><strong>Browser Life</strong><br />A garden of tiny sealed worlds.</p>
         <nav
           aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
       </div>

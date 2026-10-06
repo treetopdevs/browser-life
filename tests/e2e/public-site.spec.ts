@@ -5,16 +5,16 @@ test("a visitor can enter the lab from the public root and return", async ({ pag
   await expect(page.getByRole("heading", { name: /Grow something surprising/ })).toBeVisible();
   await page.getByRole("link", { name: /Open the lab/ }).click();
   await expect(page).toHaveURL(/\/lab\/$/);
-  await expect(page.getByRole("heading", { name: "Simulation field" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.getByRole("link", { name: "Browser Life home" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/island.html");
   await expect(page.locator("#url")).toHaveValue(new URL(page.url()).origin);
 });
 
-test("checkpoint Import is focusable and shows focus", async ({ page }) => {
+test("the Open a file button is focusable and shows focus", async ({ page }) => {
   await page.goto("/lab/");
-  const button = page.getByRole("button", { name: "Import" });
+  const button = page.getByRole("button", { name: "Open a file" });
   await button.focus();
   await expect(button).toBeFocused();
   await expect(button).toHaveCSS("outline-style", "solid");
@@ -26,7 +26,7 @@ test("lab status and history remain reachable on small screens", async ({ page }
   const stage = page.locator(".stage");
   await expect(stage).toHaveCSS("overflow-y", "auto");
   await stage.evaluate((el) => { el.scrollTop = el.scrollHeight; });
-  await expect(page.getByRole("heading", { name: "Population history" })).toBeInViewport();
+  await expect(page.getByRole("heading", { name: "How it's going" })).toBeInViewport();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator("#simulation-status")).toBeVisible();

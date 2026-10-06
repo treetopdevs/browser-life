@@ -5,13 +5,15 @@ const root = document.documentElement;
 const stored = (() => {
   try { return localStorage.getItem(key); } catch { return null; }
 })();
-let current: Theme = stored === "light" || stored === "dark" ? stored : "dark";
+// Day is the default: warm paper around a dark jar. Night keeps the same roles in dusk colours.
+let current: Theme = stored === "light" || stored === "dark" ? stored : "light";
 
 function applyTheme() {
   root.dataset.theme = current;
   for (const button of document.querySelectorAll<HTMLButtonElement>(".theme-toggle")) {
-    button.textContent = current === "dark" ? "Light mode" : "Dark mode";
-    button.setAttribute("aria-label", `Switch to ${current === "dark" ? "light" : "dark"} mode`);
+    button.textContent = current === "dark" ? "Day" : "Night";
+    button.setAttribute("aria-label", `Switch to ${current === "dark" ? "day" : "night"} colours`);
+    button.title = `Switch to ${current === "dark" ? "day" : "night"} colours`;
   }
   window.dispatchEvent(new Event("browser-life-theme-change"));
 }

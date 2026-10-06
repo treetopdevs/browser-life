@@ -43,7 +43,15 @@ let cleanFile: string | null = null;
 let advanceAsked: number | null = null;
 /** Changes made by hand, counted; each save in flight remembers the count it was asked at (oldest first). */
 let changes = 0;
+/** The count the latest surviving save of this run holds: the strip shows what has happened by hand since. */
+let savedChanges = 0;
+/** The count each of this run's saved copies holds, by file, and the count the run was loaded with: deleting a copy moves the baseline back. */
+const handHeld = new Map<string, number>();
+let handAtLoad = 0;
 const savesAsked: number[] = [];
+/** The starting world and seed the world on screen grew from: Plant says whether it would change anything. */
+let loadedPresetId: string | null = null;
+let loadedSeed: number | null = null;
 /** Runs when the save it was queued with is acknowledged ("saved"); dropped if that save is refused or fails. */
 let afterSave: (() => void) | null = null;
 /** The last replay check: the segment it covered, and whether the world was changed at its end step afterwards. */
@@ -66,14 +74,15 @@ function setWorldControls(enabled: boolean) {
 }
 setWorldControls(false);
 
+/** What each view shows: its name on the button, and what the colours mean under the field. */
 const VIEW_LABELS: Record<GpuViewMode, [string, string]> = {
-  composite: ["Composite", "green biomass · white membrane · blue nutrient · brown waste"],
-  lineage: ["Lineage", "colour = genome lineage, brightness = bound mass"],
-  nutrient: ["Nutrient", "dissolved nutrient A"],
-  waste: ["Waste", "dissolved waste C"],
-  energy: ["Energy", "free-energy pool E carried with biomass"],
-  signal: ["Signal", "secreted signal S"],
-  affinity: ["Affinity", "Lenia growth field U: red attracts mass, blue repels"],
+  composite: ["Everything", "green biomass · white membrane · blue nutrient · brown waste"],
+  lineage: ["Lineages", "one colour per lineage, brighter where there is more bound mass"],
+  nutrient: ["Nutrient", "dissolved nutrient A, the food"],
+  waste: ["Waste", "dissolved waste C, what is left after work"],
+  energy: ["Energy", "free energy E, carried with biomass"],
+  signal: ["Signal", "secreted signal S, what cells can sense of each other"],
+  affinity: ["Pull", "where mass is pulled: red attracts, blue repels (the growth field U)"],
 };
 
 // ---------- view modes ----------
@@ -95,7 +104,9 @@ function setMode(m: GpuViewMode) {
     b.classList.toggle("on", selected);
     b.setAttribute("aria-pressed", String(selected));
   }
-  $("legend").textContent = VIEW_LABELS[m][1];
+  const name = document.createElement("b");
+  name.textContent = VIEW_LABELS[m][0];
+  $("legend").replaceChildren("Showing ", name, `: ${VIEW_LABELS[m][1]}`);
   pushView();
 }
 
@@ -119,13 +130,37 @@ const presetSel = $<HTMLSelectElement>("preset");
     g.append(new Option(p.name, p.id));
   }
 }
+const presetName = (id: string | null) => PRESETS.find((p) => p.id === id)?.name ?? (id ? "an opened world" : "");
 const showPresetDesc = () => ($("preset-desc").textContent = PRESETS.find((p) => p.id === presetSel.value)?.description ?? "");
-presetSel.onchange = showPresetDesc;
+/**
+ * Choosing a starting world or a seed changes nothing until Plant is pressed: the button says which it would do,
+ * lights up when the choice differs from the world on screen, and the note says what is on screen meanwhile.
+ */
+function syncPlant() {
+  const button = $<HTMLButtonElement>("btn-new"), note = $("plant-note");
+  const seedNow = Number($<HTMLInputElement>("seed").value) || 0;
+  const same = loadedPresetId === presetSel.value && loadedSeed === seedNow;
+  button.textContent = same ? "Plant it again" : "Plant this world";
+  button.classList.toggle("primary", !same && loadedPresetId !== null);
+  note.hidden = loadedPresetId === null;
+  note.classList.toggle("armed", !same);
+  note.textContent = same
+    ? "Planting again grows the same history from step 0, without anything you did by hand."
+    : `Not planted yet: the world on screen is still ${presetName(loadedPresetId)}, seed ${loadedSeed}.`;
+}
+presetSel.onchange = () => { showPresetDesc(); syncPlant(); };
+$<HTMLInputElement>("seed").oninput = syncPlant;
 showPresetDesc();
 /** Whether leaving this world now would lose steps or interventions that no checkpoint holds. */
 const unsaved = () => worldReady && (lastStep > cleanStep || touched || advanceAsked !== null);
 const unsavedText = () =>
-  `This world is at ${t(lastStep)}. ${cleanStep > 0 ? `Its last checkpoint is at ${t(cleanStep)}; ${touched && lastStep <= cleanStep ? "changes made by hand since then" : "everything after that"} would be lost.` : "Nothing from this run is saved yet."}`;
+  `This world is at ${t(lastStep)}. ${cleanStep > 0 ? `Its last saved copy is at ${t(cleanStep)}; ${touched && lastStep <= cleanStep ? "changes made by hand since then" : "everything after that"} would be lost.` : "Nothing from this run is saved yet."}`;
+/** What has happened by hand since the last save, in the strip beside the world's name. */
+function syncHand() {
+  const n = changes - savedChanges;
+  $("run-hand-item").hidden = n === 0;
+  $("run-hand").textContent = `${n} change${n === 1 ? "" : "s"}, unsaved`;
+}
 
 // ---------- inline questions ----------
 type Choice = [label: string, run: () => void];
@@ -178,14 +213,14 @@ function guardUnsaved(host: HTMLElement, opener: HTMLElement, verb: string, cons
   ask(host, opener, `${unsavedText()} ${consequence}`, [[`Save, then ${verb}`, () => saveThen(go)], [`${verb[0].toUpperCase()}${verb.slice(1)} without saving`, go]]);
 }
 
-$("btn-new").onclick = () => guardUnsaved($("guard-new"), $("btn-new"), "start", "A new world replaces it.", startWorld);
+$("btn-new").onclick = () => guardUnsaved($("guard-new"), $("btn-new"), "plant", "A new world replaces it.", startWorld);
 function startWorld() {
   setPlaying(false);
   setWorldControls(false);
   cfgBeforeLoad = cfg;
   cfg = null;
   loadingWorld = true;
-  setStatus("Loading world", "loading");
+  setStatus(`Planting ${presetName(presetSel.value)}…`, "loading");
   $<HTMLButtonElement>("btn-new").disabled = true;
   send({ type: "load", presetId: presetSel.value, seed: Number($<HTMLInputElement>("seed").value) || 0 });
 }
@@ -195,7 +230,7 @@ const SPEEDS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512];
 const speed = $<HTMLInputElement>("speed");
 speed.oninput = () => {
   const v = SPEEDS[Number(speed.value)];
-  $("speed-val").textContent = String(v);
+  $("speed-val").textContent = `×${v}`;
   send({ type: "speed", stepsPerFrame: v });
 };
 function setPlaying(p: boolean) {
@@ -219,7 +254,7 @@ function syncPlayLabel() {
 /** The header status: a waiting pond cycle is the news until it is resolved, whatever Play says. */
 function showRunStatus() {
   if (awaiting) setStatus(`Cycle ${awaiting.cycle}: choose the donors${playing ? ", then the world runs on" : ""}`, "ready");
-  else setStatus(playing ? "Running" : "Paused", playing ? "running" : "ready");
+  else setStatus(playing ? "Growing" : "Paused", playing ? "running" : "ready");
 }
 /** Steps wait with everything else while a pond cycle waits: the "." shortcut included. */
 const stepBy = (count: number) => { if (awaiting) return; askedToAdvance(); send({ type: "step", count }); };
@@ -229,6 +264,20 @@ $("btn-step100").onclick = () => stepBy(100);
 
 // ---------- tools ----------
 const tools = $("tools");
+/** The tool's name as on its button, and what it does, said under the hand that holds it. */
+const TOOL_NAMES: Record<Tool, string> = { inspect: "Look", lesion: "Wound", feed: "Feed", drain: "Drain", pan: "Move", pick: "Pick" };
+const TOOL_SAYS: Record<Tool, string> = {
+  inspect: "Click a spot on the world to see what is in that cell.",
+  lesion: "Click or drag to clear a patch. Bodies there turn to waste and their stored energy to heat; no matter leaves the jar.",
+  feed: "Click or drag to add nutrient where you point.",
+  drain: "Click or drag to take nutrient out where you point.",
+  pan: "Drag to move around. Scroll to zoom, double-click to fit the whole world.",
+  pick: "Click ponds on the field to choose the donors of the next round.",
+};
+/** The verb for the hover line on the field: what a click there would do with this tool. */
+const TOOL_VERB: Record<Tool, string> = {
+  inspect: "click to look", lesion: "click or drag to wound", feed: "click or drag to feed", drain: "click or drag to drain", pan: "drag to move", pick: "click to pick",
+};
 function setTool(t: Tool) {
   tool = t;
   for (const o of tools.querySelectorAll<HTMLButtonElement>("button")) {
@@ -237,6 +286,9 @@ function setTool(t: Tool) {
     o.setAttribute("aria-pressed", String(selected));
   }
   wrap.dataset.tool = tool;
+  const name = document.createElement("b");
+  name.textContent = `${TOOL_NAMES[t]}.`;
+  $("tool-says").replaceChildren(name, ` ${TOOL_SAYS[t]}`);
   syncBrush();
 }
 for (const b of tools.querySelectorAll<HTMLButtonElement>("button")) b.onclick = () => setTool(b.dataset.tool as Tool);
@@ -260,13 +312,25 @@ function applyBrush(x: number, y: number) {
   // The world changes without its step moving: no checkpoint holds this, and a replay check that ended here no longer describes it.
   touched = true;
   changes++;
+  strokeApplied++;
+  syncHand();
   if (verifying) touchedWhileVerifying = true;
   if (verified && !verified.touched) { verified.touched = true; showVerification(); }
   if (tool === "lesion") send({ type: "lesion", x, y, r: Number(radius.value) });
   else if (feeding()) send({ type: "feed", x, y, r: Number(radius.value), amount: (tool === "feed" ? 1 : -1) * Number(amount.value) });
 }
-radius.disabled = true;
-tools.querySelector(".on")?.setAttribute("aria-pressed", "true");
+/** Brush applications in the stroke under way (a press, or a press and drag): the toast at its end says what it did. */
+let strokeApplied = 0;
+/** A stroke ended: say what it did and what it adds up to, once per stroke, and only if the brush was applied at all. */
+function strokeToast() {
+  if (strokeApplied === 0) return;
+  const n = changes - savedChanges;
+  const did = tool === "lesion" ? "Wounded" : tool === "feed" ? "Fed" : "Drained";
+  const what = strokeApplied === 1 ? "a patch" : `a stroke of ${strokeApplied} patches`;
+  toast(`${did} ${what}, radius ${Number(radius.value)} · ${n} change${n === 1 ? "" : "s"} by hand, unsaved`);
+  strokeApplied = 0;
+}
+setTool(tool);
 
 // ---------- canvas geometry, zoom and pan ----------
 function resize() {
@@ -347,8 +411,9 @@ function placeFocusCursor() {
   if (cfg) {
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
     const pond = pondAt(x, y);
-    $("hover").textContent = `x ${Math.floor(x)}  y ${Math.floor(y)}${pond === null ? "" : ` · pond ${pond}`} · Enter to ${tool === "pan" ? "center" : tool}`;
-    $("keyboard-position").textContent = `Column ${Math.floor(x)}, row ${Math.floor(y)}.${pond === null ? "" : ` Pond ${pond}.`} Enter to ${tool === "pan" ? "center" : tool}.`;
+    const verb = tool === "pan" ? "center here" : TOOL_NAMES[tool].toLowerCase();
+    $("hover").textContent = `x ${Math.floor(x)}  y ${Math.floor(y)}${pond === null ? "" : ` · pond ${pond}`} · Enter to ${verb}`;
+    $("keyboard-position").textContent = `Column ${Math.floor(x)}, row ${Math.floor(y)}.${pond === null ? "" : ` Pond ${pond}.`} Enter to ${verb}.`;
   }
 }
 // The focus point belongs to the keyboard: a pointer click focuses the canvas without showing it.
@@ -370,7 +435,7 @@ canvas.addEventListener("keydown", (ev) => {
     ev.preventDefault();
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
     if (tool === "inspect") send({ type: "probe", x, y });
-    else if (brush()) applyBrush(x, y);
+    else if (brush()) { strokeApplied = 0; applyBrush(x, y); strokeToast(); }
     else if (tool === "pick") pickAt(x, y);
     else { rect.x = x - rect.w / 2; rect.y = y - rect.h / 2; pushView(); }
   } else if ((ev.key === "+" || ev.key === "-") && cfg) {
@@ -390,6 +455,7 @@ canvas.onpointerdown = (ev) => {
     drag = { x: ev.clientX, y: ev.clientY, rx: rect.x, ry: rect.y };
   } else if (brush()) {
     lesionDrag = true;
+    strokeApplied = 0;
     lesionAt(ev);
   } else if (tool === "pick") {
     const [x, y] = toWorld(ev);
@@ -404,7 +470,12 @@ canvas.onpointermove = (ev) => {
   if (cfg) {
     const W = worldW(cfg), H = worldH(cfg);
     const pond = pondAt(x, y);
-    $("hover").textContent = `x ${(((Math.floor(x) % W) + W) % W)}  y ${(((Math.floor(y) % H) + H) % H)}  · zoom ${(worldW(cfg) / rect.w).toFixed(2)}×${pond === null ? "" : ` · pond ${pond}${pondReadout(pond)}`}`;
+    // The hover line says where the pointer is and what a click there would do with the tool in hand.
+    const verb = document.createElement("b");
+    verb.textContent = TOOL_VERB[tool];
+    const where = `x ${(((Math.floor(x) % W) + W) % W)}  y ${(((Math.floor(y) % H) + H) % H)}  · zoom ${(worldW(cfg) / rect.w).toFixed(2)}×${pond === null ? "" : ` · pond ${pond}${pondReadout(pond)}`}`;
+    if (worldReady && !drag) $("hover").replaceChildren(`${where} · `, verb);
+    else $("hover").textContent = where;
   }
   if (drag) {
     const r = canvas.getBoundingClientRect();
@@ -413,8 +484,10 @@ canvas.onpointermove = (ev) => {
     pushView();
   } else if (lesionDrag) lesionAt(ev);
 };
-canvas.onpointerup = () => {
+canvas.onpointerup = canvas.onpointercancel = () => {
   drag = null;
+  // The stroke is over: one toast for the press and whatever the drag added, none if the throttle swallowed a lone press.
+  if (lesionDrag) strokeToast();
   lesionDrag = false;
 };
 canvas.onpointerleave = () => ($("hover").textContent = "");
@@ -456,7 +529,7 @@ function syncCkptMore() {
 $("ckpt-more").onclick = () => { ckptAll = !ckptAll; syncCkptMore(); };
 $("btn-save").onclick = requestSave;
 $("btn-export").onclick = () => send({ type: "export" });
-$("btn-import").onclick = () => guardUnsaved($("guard-ckpt"), $("btn-import"), "import", "An imported world replaces it.", () => $<HTMLInputElement>("import").click());
+$("btn-import").onclick = () => guardUnsaved($("guard-ckpt"), $("btn-import"), "open", "The world in the file replaces it.", () => $<HTMLInputElement>("import").click());
 $<HTMLInputElement>("import").onchange = async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
   if (!f) return;
@@ -472,7 +545,7 @@ $("btn-verify").onclick = () => {
   askedToAdvance();
   $("verification-status").textContent = "Checking";
   $("verification-status").className = "badge busy";
-  $("verify-out").textContent = `Running ${t(lastStep)} to ${t(lastStep + 200)} twice…`;
+  $("verify-out").textContent = `Replaying ${t(lastStep)} to ${t(lastStep + 200)} twice…`;
   setStrip("run-replay", "checking", "busy");
   send({ type: "verify", steps: 200 });
 };
@@ -496,8 +569,8 @@ function showVerification() {
   badge.className = `badge ${!v.ok ? "bad" : past ? "note" : "ok"}`;
   const scope = !past ? "" : v.touched && lastStep === v.to ? ` The world was changed by hand at ${t(v.to)} after this check.` : ` The world is now at ${t(lastStep)}; steps after ${t(v.to)} are not covered.`;
   $("verify-out").textContent = v.ok
-    ? `Steps ${range}: live ${v.live} = replay ${v.twin}.${scope}`
-    : `Steps ${range}: live ${v.live} ≠ replay ${v.twin}. Export this world to keep the diverging state, then run the self-test below on this device.${scope}`;
+    ? `Steps ${range}: live ${v.live} = replay ${v.twin}. The same bits, both times.${scope}`
+    : `Steps ${range}: live ${v.live} ≠ replay ${v.twin}. The two runs disagree. Download this world to keep the diverging state, then run the self-test below on this device.${scope}`;
   setStrip("run-replay", `${!v.ok ? "diverged" : past ? "earlier segment" : "identical"}, ${range}`, !v.ok ? "bad" : past ? "" : "ok");
 }
 
@@ -512,12 +585,12 @@ function resetEvidence() {
     $(id).textContent = "";
   $("ledger-badge").textContent = "waiting";
   $("ledger-badge").className = "badge";
-  $("verification-status").textContent = "Not run";
+  $("verification-status").textContent = "Not checked";
   $("verification-status").className = "badge";
   $("verify-out").textContent = "";
   verified = null;
   setStrip("run-ledger", "waiting");
-  setStrip("run-replay", "not run");
+  setStrip("run-replay", "not checked");
   probed = null;
   placeProbeMarker();
   $("probe-empty").hidden = false;
@@ -543,8 +616,10 @@ function onStats(s: StatsMsg) {
   $("k-fed").textContent = s.feeds === 0 ? "none" : `${Number(s.fed) > 0 ? "+" : ""}${Number(s.fed).toLocaleString()} in ${s.feeds} feed${s.feeds === 1 ? "" : "s"}`;
   const ok = s.residual === "0" && s.matterDelta === "0";
   const badge = $("ledger-badge");
-  badge.textContent = ok ? (s.feeds === 0 ? "exact" : "exact, fed") : "violation";
-  // Exact against a baseline that feeds have moved is true, but it is not the closed-world result: no success colour.
+  // Sealed: nothing in or out and no energy unaccounted for, to the last quantum. A fed jar was opened by hand, and
+  // everything that came through is accounted for; that is a different statement, so it gets different words.
+  badge.textContent = ok ? (s.feeds === 0 ? "sealed" : "fed by hand, all accounted") : "broken";
+  // Sealed against a baseline that feeds have moved is true, but it is not the closed-world result: no success colour.
   badge.className = `badge ${!ok ? "bad" : s.feeds === 0 ? "ok" : "note"}`;
   setStrip("run-ledger", badge.textContent, !ok ? "bad" : s.feeds === 0 ? "ok" : "");
   const pools: [string, number, string][] = [
@@ -597,12 +672,12 @@ function onCensus(c: CensusMsg) {
       return row;
     }),
   );
-  if (c.top.length === 0) $("top-lin").textContent = "No lineages detected at this census.";
+  if (c.top.length === 0) $("top-lin").textContent = "No lineages counted at this census.";
 }
 
 /** What each cell channel holds, beside its letter in the rules. */
 const CHANNEL_LABELS: Record<string, string> = {
-  A: "A · nutrient", B: "B · biomass", C: "C · waste", P: "P · membrane", E: "E · free energy", S: "S · signal", MOT: "MOT · motility x, y",
+  A: "Nutrient (A)", B: "Biomass (B)", C: "Waste (C)", P: "Membrane (P)", E: "Free energy (E)", S: "Signal (S)", MOT: "Motility x, y",
 };
 function onProbe(p: ProbeMsg) {
   $("probe-empty").hidden = true;
@@ -611,14 +686,14 @@ function onProbe(p: ProbeMsg) {
   placeProbeMarker();
   const pond = pondAt(p.x, p.y);
   const rows: [string, string][] = [
-    ["cell", `(${p.x}, ${p.y}) at ${t(p.step)}`],
-    ...(pond === null ? [] : [["pond", String(pond)] as [string, string]]),
+    ["Cell", `(${p.x}, ${p.y}) at ${t(p.step)}`],
+    ...(pond === null ? [] : [["Pond", String(pond)] as [string, string]]),
     ...Object.entries(p.cells).map(([k, v]) => [CHANNEL_LABELS[k] ?? k, k === "MOT" ? `${(v & 255) - 128}, ${((v >> 8) & 255) - 128}` : String(v)] as [string, string]),
-    ["lineage", p.lineage || "none"],
-    ["μ / σ", p.lineage ? `${(p.mu / 1024).toFixed(3)} / ${(p.sigma / 1024).toFixed(3)}` : "none"],
-    ["motility gain", p.lineage ? String(p.motGain) : "none"],
+    ["Lineage", p.lineage || "none"],
+    ["Growth μ / σ", p.lineage ? `${(p.mu / 1024).toFixed(3)} / ${(p.sigma / 1024).toFixed(3)}` : "none"],
+    ["Motility gain", p.lineage ? String(p.motGain) : "none"],
     // Heritable kernel shape: weights of the inner, outer and far ring (neutral 64 / 64 / 0), shown once a genome leaves neutral.
-    ...(p.lineage && p.rings ? [["ring weights", `${Math.max(64 + p.rings[0], 0)} / ${Math.max(64 + p.rings[1], 0)} / ${Math.max(p.rings[2], 0)}`] as [string, string]] : []),
+    ...(p.lineage && p.rings ? [["Ring weights", `${Math.max(64 + p.rings[0], 0)} / ${Math.max(64 + p.rings[1], 0)} / ${Math.max(p.rings[2], 0)}`] as [string, string]] : []),
   ];
   $("probe-kv").replaceChildren(
     ...rows.flatMap(([k, v]) => {
@@ -1008,17 +1083,17 @@ function toast(msg: string, bad = false) {
 /** A failure, kept on the field until dismissed or until a world loads. Without a world there is nothing to dismiss to. */
 function showAlert(message: string) {
   const noWorld = cfg === null && !loadingWorld;
-  $("stage-alert-title").textContent = !noWorld ? "This world has stopped" : gpuReady ? "The world could not be loaded" : "The lab could not start";
+  $("stage-alert-title").textContent = !noWorld ? "This world has stopped" : gpuReady ? "The world could not be planted" : "The lab could not start";
   $("stage-alert-text").textContent = message;
   $("stage-alert-help").textContent = !noWorld
-    ? "The world is paused. Your saved checkpoints are still listed under Checkpoints."
+    ? "The world is paused. Your saved copies are still listed under Keep a copy."
     : gpuReady
-      ? "Choose a preset under Start a world, or restore a checkpoint."
+      ? "Choose a starting world under Plant a world, or open a saved copy."
       : "The lab needs a browser with WebGPU. Check that hardware acceleration is on, then reload the page.";
   $("stage-alert-dismiss").hidden = noWorld;
   $("stage-alert").hidden = false;
   if (noWorld) {
-    $("world-heading").textContent = "No world loaded";
+    $("world-heading").textContent = "No world yet";
     $("run-id").textContent = "none";
     if (!gpuReady) $("chip-gpu").textContent = "No GPU adapter";
   }
@@ -1034,7 +1109,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       $("chip-gpu").title = m.adapter;
       loadingWorld = true;
       $<HTMLButtonElement>("btn-new").disabled = true;
-      setStatus("Loading world", "loading");
+      setStatus(`Planting ${presetName(presetSel.value)}…`, "loading");
       send({ type: "load", presetId: presetSel.value, seed: Number($<HTMLInputElement>("seed").value) || 0 });
       send({ type: "listCheckpoints" });
       break;
@@ -1052,7 +1127,13 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       savesAsked.length = 0;
       closeQuestion?.();
       $("stage-alert").hidden = true;
-      $("world-heading").textContent = PRESETS.find((p) => p.id === m.manifest.presetId)?.name ?? "Imported world";
+      $("world-heading").textContent = PRESETS.find((p) => p.id === m.manifest.presetId)?.name ?? "Opened world";
+      loadedPresetId = m.manifest.presetId;
+      loadedSeed = m.manifest.seed;
+      handHeld.clear();
+      handAtLoad = savedChanges = changes;
+      syncHand();
+      syncPlant();
       $("run-id").textContent = $("run-id").title = runId;
       $("run-seed").textContent = String(m.manifest.seed);
       $("run-rules").textContent = `v${m.manifest.ruleVersion}`;
@@ -1092,6 +1173,10 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       // The list is the authority on what is saved: a deleted checkpoint lowers the baseline again.
       cleanStep = Math.max(loadedStep, ...m.list.filter((c) => c.runId === runId).map((c) => c.step));
       if (cleanFile && !m.list.some((c) => c.file === cleanFile)) { cleanFile = null; touched = true; }
+      // A deleted copy no longer holds the changes it held: the strip's baseline falls back to the latest copy that survives.
+      for (const file of handHeld.keys()) if (!m.list.some((c) => c.file === file)) handHeld.delete(file);
+      savedChanges = Math.max(handAtLoad, ...handHeld.values());
+      syncHand();
       $("checkpoint-empty").hidden = m.list.length > 0;
       // Redrawing the rows must not drop the keyboard's place in them.
       const rowHadFocus = $("ckpts").contains(document.activeElement);
@@ -1109,12 +1194,12 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
             restore.type = "button";
             restore.textContent = "Restore";
             restore.setAttribute("aria-label", `Restore ${c.file}`);
-            restore.onclick = () => guardUnsaved($("guard-ckpt"), restore, "restore", `Restoring the checkpoint at ${t(c.step)} replaces it.`, () => send({ type: "restore", file: c.file }));
+            restore.onclick = () => guardUnsaved($("guard-ckpt"), restore, "restore", `Restoring the copy from ${t(c.step)} replaces it.`, () => send({ type: "restore", file: c.file }));
             const del = document.createElement("button");
             del.type = "button";
             del.textContent = "Delete";
             del.setAttribute("aria-label", `Delete ${c.file}`);
-            del.onclick = () => ask($("guard-ckpt"), del, `Delete the checkpoint at ${t(c.step)} (${c.file})? A deleted checkpoint cannot be restored.`, [["Delete checkpoint", () => send({ type: "deleteCheckpoint", file: c.file })]], "Keep it");
+            del.onclick = () => ask($("guard-ckpt"), del, `Delete the copy from ${t(c.step)} (${c.file})? A deleted copy cannot be brought back.`, [["Delete this copy", () => send({ type: "deleteCheckpoint", file: c.file })]], "Keep it");
             li.append(name, restore, del);
             return li;
           }),
@@ -1127,6 +1212,8 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       const asked = savesAsked.shift();
       // It holds every change made before it was asked for; one made while it was in flight is still unsaved.
       if (asked === changes) { touched = false; cleanFile = m.file; }
+      // The copy holds the changes made before it was asked for, whether or not more came while it was in flight.
+      if (asked !== undefined) { handHeld.set(m.file, asked); savedChanges = Math.max(savedChanges, asked); syncHand(); }
       const next = afterSave;
       afterSave = null;
       next?.();
@@ -1154,10 +1241,10 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         // The check never ran: the button comes back and the panel says so (no earlier result survives, the click cleared it).
         verifying = false;
         syncWaitingControls();
-        $("verification-status").textContent = "Not run";
+        $("verification-status").textContent = "Not checked";
         $("verification-status").className = "badge";
         $("verify-out").textContent = m.message;
-        setStrip("run-replay", "not run");
+        setStrip("run-replay", "not checked");
       }
       break;
     case "verify":
@@ -1183,10 +1270,10 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       if (verifying) {
         verifying = false;
         syncWaitingControls();
-        $("verification-status").textContent = "Could not verify";
+        $("verification-status").textContent = "Couldn't check";
         $("verification-status").className = "badge bad";
         $("verify-out").textContent = m.message;
-        setStrip("run-replay", "could not verify", "bad");
+        setStrip("run-replay", "couldn't check", "bad");
       }
       endBreeding();
       // Whatever was in flight may not have happened: nothing waits on it, and no later save is taken for an earlier one.
@@ -1194,7 +1281,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       afterSave = null;
       advanceAsked = null;
       $<HTMLButtonElement>("btn-new").disabled = false;
-      setStatus(cfg ? "World stopped" : gpuReady ? "No world loaded" : "Lab could not start", "error");
+      setStatus(cfg ? "World stopped" : gpuReady ? "No world yet" : "Lab could not start", "error");
       lineagePanel.onError();
       showAlert(m.message);
       console.error(m.message);

@@ -3,25 +3,27 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Lab | Browser Life</title>
+    <title>Lab · Browser Life</title>
     <link rel="canonical" href="https://cadence.garden/lab/" />
-    <meta name="description" content="Run and inspect an artificial-life world in the browser. Follow population change, exact conservation, and replay verification." />
+    <meta name="description" content="Plant a tiny sealed world in your browser. Feed it, wound it, breed it, and check that nothing was lost along the way." />
+    <meta name="theme-color" content="#f3f1ec" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body class="lab-page">
-    <a class="skip-link" href="#lab-main">Skip to simulation</a>
+    <a class="skip-link" href="#lab-main">Skip to the world</a>
     <header class="top">
       <div class="brand">
         <span class="mark" aria-hidden="true"></span>
-        <div><a class="brand-name" href="/" aria-label="Browser Life home">Browser Life</a><span class="brand-subtitle">Artificial-life lab</span></div>
+        <div><a class="brand-name" href="/" aria-label="Browser Life home">Browser Life</a><span class="brand-subtitle">Grow strange life in a browser</span></div>
       </div>
       <nav class="site-nav" aria-label="Main navigation">
         <a href="/lab/" aria-current="page">Lab</a>
-        <a href="/research/">Field notes</a>
+        <a href="/research/">Journal</a>
       </nav>
       <div class="header-status">
         <span class="status-dot" id="simulation-dot" aria-hidden="true"></span>
-        <span id="simulation-status" role="status" aria-live="polite">Starting lab</span>
+        <span id="simulation-status" role="status" aria-live="polite">Warming up the GPU</span>
         <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch color theme">Theme</button>
       </div>
     </header>
@@ -30,21 +32,22 @@
       <section class="stage" aria-labelledby="world-heading">
         <div class="stage-bar">
           <div class="stage-title">
-            <h1 id="world-heading">Simulation field</h1>
-            <dl class="run-strip mono" aria-label="Run identity and integrity">
+            <h1 id="world-heading">Planting a world…</h1>
+            <dl class="run-strip mono" aria-label="This run and its checks">
               <div><dt>Run</dt><dd id="run-id">waiting for WebGPU</dd></div>
               <div><dt>Seed</dt><dd id="run-seed"></dd></div>
               <div><dt>Rules</dt><dd id="run-rules"></dd></div>
-              <div><dt>Ledger</dt><dd id="run-ledger">waiting</dd></div>
-              <div><dt>Replay</dt><dd><a href="#verification" id="run-replay">not run</a></dd></div>
+              <div><dt>Jar</dt><dd id="run-ledger">waiting</dd></div>
+              <div><dt>Replay</dt><dd><a href="#verification" id="run-replay">not checked</a></dd></div>
+              <div id="run-hand-item" hidden><dt>By hand</dt><dd id="run-hand" data-state="hand"></dd></div>
             </dl>
             <span class="pond-status mono" id="pond-status" hidden></span>
           </div>
-          <button class="quiet" id="btn-fit" type="button" title="Reset zoom (double-click the canvas)">Fit view</button>
+          <button class="quiet" id="btn-fit" type="button" title="See the whole world (or double-click the field)">Fit view</button>
         </div>
-        <div class="view-bar"><span class="view-label">Field view</span><div class="seg" id="views" role="group" aria-label="Field view mode"></div></div>
+        <div class="view-bar"><span class="view-label" id="views-label">Show</span><div class="seg" id="views" role="group" aria-labelledby="views-label"></div></div>
         <div class="canvas-wrap" id="canvas-wrap">
-          <canvas id="world" tabindex="0" aria-label="Interactive simulation field. Arrow keys move the focus point, Enter uses the selected tool, plus and minus zoom. You can also use the pointer."></canvas>
+          <canvas id="world" tabindex="0" aria-label="The world. Arrow keys move the focus point, Enter uses the tool in your hand, plus and minus zoom. You can also use the pointer."></canvas>
           <canvas id="pond-overlay" aria-hidden="true" hidden></canvas>
           <span class="probe-marker" id="probe-marker" aria-hidden="true" hidden></span>
           <span class="sr-only" id="keyboard-position" role="status" aria-live="polite"></span>
@@ -61,7 +64,7 @@
           <button id="btn-play" class="primary" type="button" aria-pressed="false">Play</button>
           <button id="btn-step" type="button" title="One step (.)">Step</button>
           <button id="btn-step100" type="button" title="100 steps">+100</button>
-          <label class="transport-speed"><span>Steps per frame <b class="mono" id="speed-val">4</b></span><input id="speed" type="range" min="0" max="9" step="1" value="2" /></label>
+          <label class="transport-speed"><span>Speed <b class="mono" id="speed-val">×4</b></span><input id="speed" type="range" min="0" max="9" step="1" value="2" aria-label="Speed, steps per frame" /></label>
           <span class="mono transport-step" id="chip-step">t = 0</span>
           <span class="mono transport-rate" id="chip-rate">0 steps/s</span>
         </div>
@@ -69,15 +72,15 @@
           <p id="breed-bar-call"></p>
           <a class="text-link breed-bar-more" href="#breeder">Ranking and picks</a>
           <button id="breeder-go" class="primary" type="button">Breed</button>
-          <p class="hint" id="breed-bar-wait">Step, Save and Verify wait until you breed.</p>
+          <p class="hint" id="breed-bar-wait">Step, Save and the replay check wait until you breed.</p>
           <div class="guard" id="guard-breed" role="group" aria-label="Confirm breeding" hidden></div>
         </div>
-        <div class="stage-caption"><span id="legend">Composite view</span><span class="stage-hint">Scroll to zoom · double-click to fit · focus field for keyboard tools</span></div>
+        <div class="stage-caption"><span id="legend"></span><span class="stage-hint">Scroll to zoom · double-click to fit · Tab into the field for keyboard tools</span></div>
         <section class="history" aria-labelledby="history-heading">
-          <div class="section-heading"><h2 id="history-heading">Population history</h2><span class="hint">Each chart runs from 0 to the value at its top left · census every 100 steps<span id="history-cycles" hidden> · dashed lines mark pond cycles</span></span></div>
+          <div class="section-heading"><h2 id="history-heading">How it's going</h2><span class="hint">A census every 100 steps · each chart runs from 0 to the number at its top<span id="history-cycles" hidden> · dashed lines mark pond cycles</span></span></div>
           <div class="history-lines">
             <div class="spark"><span>Individuals</span><canvas id="sp-ind" aria-label="Individuals over time"></canvas></div>
-            <div class="spark"><span>Bound mass (biomass + membrane)</span><canvas id="sp-bio" aria-label="Biomass and membrane over time"></canvas></div>
+            <div class="spark"><span>Living mass (biomass + membrane)</span><canvas id="sp-bio" aria-label="Biomass and membrane over time"></canvas></div>
             <div class="spark"><span>Lineages</span><canvas id="sp-lin" aria-label="Lineages over time"></canvas></div>
           </div>
         </section>
@@ -85,73 +88,76 @@
 
       <aside class="controls" aria-label="World controls">
         <section class="rail-section" aria-labelledby="setup-heading">
-          <h2 id="setup-heading">Start a world</h2>
-          <label class="field"><span>Preset</span><select id="preset"></select></label>
+          <h2 id="setup-heading">Plant a world</h2>
+          <label class="field"><span>Starting world</span><select id="preset"></select></label>
           <p class="hint preset-desc" id="preset-desc"></p>
-          <label class="field"><span>Seed</span><input id="seed" type="number" min="0" step="1" value="1" /></label>
-          <button id="btn-new" class="full" type="button">New world</button>
+          <label class="field"><span>Seed number</span><input id="seed" type="number" min="0" step="1" value="1" /></label>
+          <p class="hint">Same starting world and seed number: the same history, every time. Anything you do by hand is extra, and logged.</p>
+          <button id="btn-new" class="full" type="button">Plant it again</button>
+          <p class="hint" id="plant-note" hidden></p>
           <div class="guard" id="guard-new" role="group" aria-label="Unsaved world" hidden></div>
         </section>
         <section class="rail-section breeder" id="breeder" aria-labelledby="breeder-heading" hidden>
-          <h2 id="breeder-heading">Breeder</h2>
-          <label class="check"><input id="breeder-on" type="checkbox" /><span>Stop at each pond cycle and let me choose the donors</span></label>
-          <p class="hint" id="breeder-hint">At each pond cycle every pond is cleared and reseeded from a few donor ponds. Left alone, the world's own rule chooses the donors.</p>
+          <h2 id="breeder-heading">Breed by hand</h2>
+          <label class="check"><input id="breeder-on" type="checkbox" /><span>Stop at each pond cycle and let me choose the donor ponds</span></label>
+          <p class="hint" id="breeder-hint">At each pond cycle every pond is cleared and reseeded from a few donor ponds. Left alone, the world's own rule chooses them.</p>
           <div id="breeder-pick" hidden>
             <p class="breeder-call" id="breeder-call" role="status" aria-live="polite"></p>
             <label class="field"><span>Rank the ponds by</span><select id="breeder-term"></select></label>
             <div class="row"><button id="breeder-top" type="button">Top quarter</button><button id="breeder-rule" type="button">The rule's choice</button><button id="breeder-clear" type="button">Clear</button></div>
-            <p class="hint">Select a pond on the field to add or remove it. Each pond shows its number and, after #, its rank by the measure above. Donors seed the ponds in turn, in the order picked.</p>
+            <p class="hint">Click a pond on the field to add or remove it. Each pond shows its number and, after #, its rank by the measure above. Donors seed the ponds in turn, in the order picked.</p>
             <ol class="breeder-list mono" id="breeder-list" aria-label="Picked ponds, in order"></ol>
           </div>
         </section>
         <section class="rail-section" aria-labelledby="tools-heading">
-          <h2 id="tools-heading">Field tools</h2>
-          <div class="seg tool-group" id="tools" role="group" aria-label="Field tool"><button data-tool="inspect" class="on" type="button">Inspect</button><button data-tool="lesion" type="button">Lesion</button><button data-tool="feed" type="button">Feed</button><button data-tool="drain" type="button">Drain</button><button data-tool="pan" type="button">Pan</button><button data-tool="pick" type="button" hidden>Pick</button></div>
-          <label class="field range-field" id="radius-field"><span>Brush radius <b class="mono" id="radius-val">10</b></span><input id="radius" type="range" min="2" max="40" step="1" value="10" /></label>
+          <h2 id="tools-heading">In your hand</h2>
+          <div class="seg tool-group" id="tools" role="group" aria-label="Tool"><button data-tool="inspect" class="on" type="button">Look</button><button data-tool="lesion" type="button">Wound</button><button data-tool="feed" type="button">Feed</button><button data-tool="drain" type="button">Drain</button><button data-tool="pan" type="button">Move</button><button data-tool="pick" type="button" hidden>Pick</button></div>
+          <p class="tool-says" id="tool-says"></p>
+          <label class="field range-field" id="radius-field"><span>Brush size <b class="mono" id="radius-val">10</b></span><input id="radius" type="range" min="2" max="40" step="1" value="10" /></label>
           <label class="field range-field" id="amount-field"><span>Nutrient per cell <b class="mono" id="amount-val">16</b></span><input id="amount" type="range" min="1" max="128" step="1" value="16" /></label>
-          <p class="hint" id="feed-hint" hidden>Feed and Drain change the world's total matter. Each use is logged as an intervention, and the ledger counts it.</p>
+          <p class="hint" id="feed-hint" hidden>Feeding and draining open the jar. Each use is logged, and the jar check counts what you added.</p>
         </section>
         <section class="rail-section" aria-labelledby="checkpoint-heading">
-          <h2 id="checkpoint-heading">Checkpoints</h2><p class="hint">Save keeps a checkpoint in this browser. Export downloads one as a file. Both settle the world at its next census first.</p>
-          <div class="row"><button id="btn-save" type="button" aria-describedby="ckpt-wait">Save</button><button id="btn-export" type="button" aria-describedby="ckpt-wait">Export</button><button id="btn-import" class="import-button" type="button">Import</button><input id="import" type="file" accept=".blck" hidden /></div>
-          <p class="hint wait-note" id="ckpt-wait" hidden>Save and Export return once you breed: a checkpoint holds a world between pond cycles, not one paused inside a cycle.</p>
+          <h2 id="checkpoint-heading">Keep a copy</h2><p class="hint">Save keeps a copy in this browser. Download gives you a file to keep or share. Both wait for the next census, so the copy is complete.</p>
+          <div class="row"><button id="btn-save" type="button" aria-describedby="ckpt-wait">Save</button><button id="btn-export" type="button" aria-describedby="ckpt-wait">Download</button><button id="btn-import" class="import-button" type="button">Open a file</button><input id="import" type="file" accept=".blck" hidden /></div>
+          <p class="hint wait-note" id="ckpt-wait" hidden>Save and Download come back once you breed: a copy holds a world between pond cycles, not one paused inside a cycle.</p>
           <div class="guard" id="guard-ckpt" role="group" aria-label="Confirm checkpoint action" hidden></div>
-          <p class="hint" id="checkpoint-empty">No local checkpoints yet.</p><ul class="list" id="ckpts" aria-label="Saved checkpoints"></ul>
+          <p class="hint" id="checkpoint-empty">Nothing kept yet. A saved copy lets you come back to this exact moment.</p><ul class="list" id="ckpts" aria-label="Saved copies"></ul>
           <button class="quiet ckpt-more" id="ckpt-more" type="button" aria-controls="ckpts" hidden></button>
         </section>
         <div class="rail-footer">
           <details class="keys">
             <summary>Keyboard shortcuts</summary>
-            <dl class="kv"><dt>Play or pause</dt><dd class="mono">Space</dd><dt>One step</dt><dd class="mono">.</dd><dt>Field view</dt><dd class="mono">1 to 7</dd><dt>Move the field focus</dt><dd class="mono">Arrows</dd><dt>One cell at a time</dt><dd class="mono">Shift + Arrows</dd><dt>Use the selected tool</dt><dd class="mono">Enter</dd><dt>Zoom</dt><dd class="mono">+ and -</dd></dl>
+            <dl class="kv"><dt>Play or pause</dt><dd class="mono">Space</dd><dt>One step</dt><dd class="mono">.</dd><dt>What to show</dt><dd class="mono">1 to 7</dd><dt>Move the field focus</dt><dd class="mono">Arrows</dd><dt>One cell at a time</dt><dd class="mono">Shift + Arrows</dd><dt>Use the tool in your hand</dt><dd class="mono">Enter</dd><dt>Zoom</dt><dd class="mono">+ and -</dd></dl>
             <p class="hint">Arrows, Enter and zoom apply while the field has focus.</p>
           </details>
-          <span id="chip-gpu" title="WebGPU adapter">Connecting to GPU</span>
+          <span id="chip-gpu" title="WebGPU adapter">Connecting to the GPU</span>
         </div>
       </aside>
 
-      <aside class="evidence" aria-label="Live evidence and verification">
+      <aside class="evidence" aria-label="What the lab can tell you">
         <section class="evidence-section" aria-labelledby="ledger-heading">
-          <div class="section-heading"><h2 id="ledger-heading">Conservation ledger</h2><span class="badge" id="ledger-badge">waiting</span></div>
-          <dl class="kv mono"><dt>Matter change</dt><dd id="k-matter"></dd><dt>Nutrient fed</dt><dd id="k-fed"></dd><dt>Energy residual</dt><dd id="k-resid"></dd><dt>Light absorbed</dt><dd id="k-light"></dd><dt>Heat exported</dt><dd id="k-heat"></dd></dl>
-          <div class="bars" id="pools" aria-label="Matter pool proportions"></div>
+          <div class="section-heading"><h2 id="ledger-heading">Is the jar still sealed?</h2><span class="badge" id="ledger-badge">waiting</span></div>
+          <dl class="kv mono"><dt>Matter in or out</dt><dd id="k-matter"></dd><dt>Fed by hand</dt><dd id="k-fed"></dd><dt>Energy unaccounted</dt><dd id="k-resid"></dd><dt>Light taken in</dt><dd id="k-light"></dd><dt>Heat let out</dt><dd id="k-heat"></dd></dl>
+          <div class="bars" id="pools" aria-label="What the matter is right now"></div>
           <div class="pool-legend"><span><i class="key key-a"></i>Nutrient</span><span><i class="key key-b"></i>Biomass</span><span><i class="key key-p"></i>Membrane</span><span><i class="key key-c"></i>Waste</span></div>
         </section>
         <section class="evidence-section verification" id="verification" aria-labelledby="verification-heading">
-          <div class="section-heading"><h2 id="verification-heading">Replay verification</h2><span class="badge" id="verification-status">Not run</span></div>
-          <p class="hint">Runs the next 200 steps here and in a second GPU instance, then compares the two state hashes bit for bit. The world advances by those 200 steps, and the result covers only them.</p>
-          <button id="btn-verify" type="button" aria-describedby="verify-wait">Verify next 200 steps</button>
-          <p class="hint wait-note" id="verify-wait" hidden>Verification waits for the pond cycle: breed first.</p>
+          <div class="section-heading"><h2 id="verification-heading">Does it replay the same?</h2><span class="badge" id="verification-status">Not checked</span></div>
+          <p class="hint">Runs the next 200 steps here and again on a second GPU copy, then compares the two results bit for bit. The world moves forward by those 200 steps.</p>
+          <button id="btn-verify" type="button" aria-describedby="verify-wait">Replay the next 200 steps twice</button>
+          <p class="hint wait-note" id="verify-wait" hidden>The replay check waits for the pond cycle: breed first.</p>
           <p class="mono small" id="verify-out" role="status" aria-live="polite"></p>
-          <a class="text-link" href="/selftest.html" target="_blank" rel="noopener">Open CPU ⇄ GPU self-test <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="/selftest.html" target="_blank" rel="noopener">Run the CPU ⇄ GPU self-test <span aria-hidden="true">↗</span></a>
         </section>
         <section class="evidence-section" id="probe-card" aria-labelledby="probe-heading">
-          <h2 id="probe-heading">Selected cell</h2><p class="hint" id="probe-empty">Choose Inspect, then select a point in the world.</p>
-          <div id="probe" hidden><dl class="kv mono" id="probe-kv"></dl><canvas id="probe-weights" title="Controller weights (red negative, blue positive)"></canvas><button id="btn-lineage" class="full lineage-open" type="button" hidden>Inspect lineage</button></div>
+          <h2 id="probe-heading">What's in this cell?</h2><p class="hint" id="probe-empty">Choose Look, then click a spot on the world.</p>
+          <div id="probe" hidden><dl class="kv mono" id="probe-kv"></dl><canvas id="probe-weights" title="Controller weights (red negative, blue positive)"></canvas><p class="hint weights-caption">Its controller's weights: red negative, blue positive.</p><button id="btn-lineage" class="full lineage-open" type="button" hidden>Open its lineage</button></div>
         </section>
         <section class="evidence-section" aria-labelledby="population-heading">
-          <div class="section-heading"><h2 id="population-heading">Population</h2><span class="hint">Inferred, not declared</span></div>
-          <dl class="kv mono"><dt>Individuals</dt><dd id="k-ind"></dd><dt>Mean mass</dt><dd id="k-mass"></dd><dt>Lineages</dt><dd id="k-lin"></dd><dt>Mutations</dt><dd id="k-mut"></dd><dt>Fissions / fusions</dt><dd id="k-fis"></dd><dt>Births / deaths</dt><dd id="k-bd"></dd><dt>Max generation</dt><dd id="k-gen"></dd></dl>
-          <h3 class="subheading">Largest lineages</h3><div class="lineages" id="top-lin"></div>
+          <div class="section-heading"><h2 id="population-heading">Who's living here?</h2><span class="hint">Counted, not declared</span></div>
+          <dl class="kv mono"><dt>Individuals</dt><dd id="k-ind"></dd><dt>Average mass</dt><dd id="k-mass"></dd><dt>Lineages</dt><dd id="k-lin"></dd><dt>Mutations so far</dt><dd id="k-mut"></dd><dt>Splits / merges</dt><dd id="k-fis"></dd><dt>Births / deaths</dt><dd id="k-bd"></dd><dt>Deepest generation</dt><dd id="k-gen"></dd></dl>
+          <h3 class="subheading">Biggest lineages</h3><div class="lineages" id="top-lin"></div>
         </section>
       </aside>
 

@@ -4,31 +4,25 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>Volunteer island · Browser Life</title>
+    <meta name="theme-color" content="#f3f1ec" />
+    <title>Island · Browser Life</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="description" content="Contribute this browser's GPU to an archipelago of independent evolutionary runs." />
-    <style>
-      :root { --bg:#0b0e12; --card:#161b22; --line:#242b35; --text:#e6edf3; --muted:#8b96a5; --accent:#3ddc97; --on-accent:#062016; color-scheme: dark; }
-      @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#eef1f4; --card:#fff; --line:#d8dee4; --text:#1f2328; --muted:#59636e; --accent:#1a7f55; --on-accent:#f4fbf7; color-scheme: light; } }
-      body { margin:0; padding:16px; background:var(--bg); color:var(--text); font:14px/1.5 system-ui, sans-serif; max-width:760px; }
-      h1 { font-size:18px; margin:0 0 4px; } p { color:var(--muted); }
-      .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:12px 0; }
-      input { flex:1; min-width:0; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:7px; padding:7px 9px; font:inherit; }
-      button { background:var(--accent); color:var(--on-accent); border:0; border-radius:7px; padding:8px 14px; font:inherit; font-weight:600; cursor:pointer; min-height:34px; }
-      button.stop { background:#ffb454; color:#2b1a00; }
-      pre { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; white-space:pre-wrap; font:12px/1.5 ui-monospace, Menlo, monospace; max-height:60vh; overflow:auto; }
-    </style>
+    <meta name="description" content="Lend this browser's GPU to an archipelago of independent evolutionary runs." />
+    <link rel="stylesheet" href="/src/site.css" />
   </head>
   <body>
-    <a href="/participate/">← Participation guide</a>
-    <h1>Archipelago island</h1>
-    <p>Press Join to run simulation segments on your GPU and upload the results. This can use significant power. Some work is replayed elsewhere for comparison. Press Stop or close the tab to stop new work. <a href="/privacy/">What data is sent?</a></p>
-    <p>Joining makes your GPU available. Work starts when a researcher queues an experiment; the island may wait between segments. <a href="/status/">View queue status</a>.</p>
-    <div class="row">
-      <input id="url" value="" aria-label="Coordinator URL" />
-      <button id="go">Join</button>
-    </div>
-    <pre id="log">Not joined yet</pre>
+    <main class="plain">
+      <a class="back" href="/participate/">← How joining works</a>
+      <h1>This browser as an island</h1>
+      <p>Press Join and this tab runs simulation segments on your GPU and sends the results back. It can use a lot of power. Some of the work is replayed elsewhere and compared bit for bit. Press Stop or close the tab to stop taking new work. <a href="/privacy/">What gets sent?</a></p>
+      <p>Joining makes your GPU available. Work starts when a researcher queues an experiment, so the island may wait between segments. <a href="/status/">See what's queued</a>.</p>
+      <div class="row">
+        <input id="url" value="" aria-label="Coordinator URL" />
+        <button id="go">Join</button>
+      </div>
+      <pre id="log">Not joined yet. Nothing runs until you press Join.</pre>
+    </main>
     <script type="module" src="/src/island.ts"></script>
+    <script type="module" src="/src/theme.ts"></script>
   </body>
 </html>

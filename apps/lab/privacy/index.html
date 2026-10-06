@@ -3,9 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0b1110" />
-    <meta name="description"
-      content="What Browser Life stores locally and sends when you choose to volunteer your GPU." />
+    <meta name="theme-color" content="#f3f1ec" />
+    <meta name="description" content="What Browser Life keeps on your device, what the island runner sends if you choose Join, and what it never collects." />
     <title>Privacy · Browser Life</title>
     <link rel="canonical" href="https://cadence.garden/privacy/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -18,41 +17,41 @@
         <a class="site-brand" href="/"
           aria-label="Browser Life home"><span class="brand-mark" aria-hidden="true"></span><span>Browser<span class="brand-light"> Life</span></span></a>
         <nav class="site-nav"
-          aria-label="Primary"><a href="/">Overview</a><a href="/lab/">Lab</a><a href="/how-it-works/">How it works</a><a href="/research/">Field notes</a><a href="/participate/">Participate</a><a href="/status/">Status</a></nav>
+          aria-label="Primary"><a href="/">Home</a><a href="/lab/">Lab</a><a href="/how-it-works/">How it works</a><a href="/research/">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
       </div>
     </header>
     <main id="main">
       <section class="page-intro shell">
-        <p class="eyebrow">PRIVACY / CURRENT BEHAVIOR</p>
-        <h1>Your world, your choice</h1>
+        <p class="eyebrow">Privacy · what the code does today</p>
+        <h1>Your world stays yours.</h1>
         <p
-          class="lede">Exploring the lab and volunteering compute are different actions. The island runner starts only when you choose Join.</p>
+          class="lede">Exploring the lab and lending compute are different choices. The island runner starts only when you press Join.</p>
       </section>
       <section class="shell prose-grid">
-        <div class="aside-label">IN THE LAB</div>
+        <div class="aside-label">In the lab</div>
         <div class="prose">
-          <h2>Local simulation data</h2>
-          <p>The lab computes the world in your browser. Checkpoints you save are written to that site's private browser storage. Export sends a file to your own device; Import reads a file you select. Clearing site data may remove saved checkpoints.</p>
-          <p>The public pages and lab add no analytics service, account, or email collection.</p>
+          <h2>Everything runs on your device</h2>
+          <p>The lab computes the world in your browser. Copies you save are written to this site's private browser storage. Download writes a file to your own device; Open a file reads one you choose. Clearing site data may remove saved copies.</p>
+          <p>The public pages and the lab add no analytics service, account, or email collection. The one typeface is served from this site, not from a font network.</p>
         </div>
       </section>
       <section class="shell prose-grid">
-        <div class="aside-label">IF YOU JOIN</div>
+        <div class="aside-label">If you join</div>
         <div class="prose">
-          <h2>Coordinator data</h2>
+          <h2>What the island sends</h2>
           <p>When you press Join on the island page, the browser connects to the coordinator, receives work, and uploads simulation results. It sends a browser user-agent string and GPU adapter description. The coordinator records an island ID, timestamps, run counts, verification counts, and uploaded run artifacts. A temporary bearer credential is kept in this tab's session storage to recover from a reload.</p>
           <p>Close the tab or press Stop to stop new work. Uploaded results remain on the coordinator; this project currently has no automatic retention or self-service deletion feature. The public status page shows only aggregate counts.</p>
         </div>
       </section>
       <section class="shell prose-grid">
-        <div class="aside-label">QUESTIONS</div>
+        <div class="aside-label">Questions</div>
         <div
           class="prose"><h2>Contact and changes</h2><p>This page describes the current code, not a promise that it will never change. Check the source history for updates or raise a privacy question in the project's issue tracker.</p><a class="text-link" href="https://github.com/treetopdevs/browser-life/issues">Open the issue tracker ↗</a></div>
       </section>
     </main>
     <footer class="site-footer">
       <div class="shell footer-inner">
-        <p><strong>Browser Life</strong><br />An open playground for artificial life.</p>
+        <p><strong>Browser Life</strong><br />A garden of tiny sealed worlds.</p>
         <nav
           aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
       </div>

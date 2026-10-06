@@ -14,7 +14,7 @@ Browser Life is a browser-hosted research lab for an open-ended artificial-life 
 
 ## Brand Personality
 
-An experimental creative studio with scientific credibility: curious, inventive, and precise. The interface should invite exploration while remaining clear about controls, measurements, and uncertainty.
+An experimental creative studio with scientific credibility: curious, inventive, and precise, and friendly about it. The frame is a garden (2026-10-06): every world is a sealed jar under a lamp, the lab is the bench it stands on, and the site is the garden around it. The voice is plain and warm, utilitarian in the manner of Ableton Live and classic Facebook: controls say what they do in ordinary words, panels are titled with the question they answer, and nothing hides behind jargon. The interface should invite exploration while remaining clear about controls, measurements, and uncertainty.
 
 ## Anti-references
 
@@ -23,7 +23,7 @@ Avoid toy-like styling that trivializes the research and museum-site styling tha
 ## Design Principles
 
 1. Keep the living world central to the task.
-2. Make experiment controls explicit and predictable.
+2. Make experiment controls explicit and predictable: say what a control will do before it is used, and what it did afterwards.
 3. Put measurements and integrity evidence close to the observations they explain.
 4. Reward exploration without overstating what a run demonstrates.
 5. Let the public-facing surface grow from the lab's real work and results.
