@@ -28,6 +28,9 @@ services:
       BL_DISCOVERY_DATA_DIR: /data-discovery
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in Dokploy}
       BL_ADMIN_TOKEN: ${BL_ADMIN_TOKEN:?Set BL_ADMIN_TOKEN in Dokploy}
+      # Discovery workers join with this token. Without it the plane admits
+      # loopback clients only, and behind Caddy no request is loopback.
+      BL_DISCOVERY_JOIN_TOKEN: ${BL_DISCOVERY_JOIN_TOKEN:?Set BL_DISCOVERY_JOIN_TOKEN in Dokploy}
     volumes:
       - coordinator_data:/data
       - discovery_data:/data-discovery

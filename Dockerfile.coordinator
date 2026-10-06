@@ -10,12 +10,27 @@ COPY apps/coordinator/lib ./lib
 COPY apps/coordinator/priv ./priv
 RUN mix compile && mix release
 
+# The discovery validator (`tools/discovery.ts check-attempt`) and the source it
+# imports, with its npm dependency cached against deploy/discovery-validator.lock
+# (the repo deno.lock is in campaigns' source closure and pins no npm packages,
+# which pnpm resolves locally), so uploaded results can be accepted.
+FROM denoland/deno:bin-2.9.7 AS deno
+
 FROM elixir:1.18.4-otp-27-slim
 WORKDIR /app
 RUN groupadd --system coordinator && useradd --system --gid coordinator coordinator \
     && mkdir /data /data-discovery && chown coordinator:coordinator /data /data-discovery
+COPY --from=deno /deno /usr/local/bin/deno
+ENV DENO_DIR=/opt/browser-life/.deno DENO_NO_UPDATE_CHECK=1
+COPY deno.json deploy/discovery-validator.lock /opt/browser-life/
+COPY packages /opt/browser-life/packages
+COPY vendor/construction-renewal-v1 /opt/browser-life/vendor/construction-renewal-v1
+COPY tools/discovery.ts tools/discovery-pin-case.ts /opt/browser-life/tools/
+COPY tools/lib /opt/browser-life/tools/lib
+RUN cd /opt/browser-life && deno cache --lock=discovery-validator.lock --frozen tools/discovery.ts && chmod -R a+rX /opt/browser-life
 COPY --from=build --chown=coordinator:coordinator /app/_build/prod/rel/coordinator /app
 USER coordinator
-ENV HOME=/app PHX_SERVER=true PORT=4000 BL_DATA_DIR=/data BL_DISCOVERY_DATA_DIR=/data-discovery
+ENV HOME=/app PHX_SERVER=true PORT=4000 BL_DATA_DIR=/data BL_DISCOVERY_DATA_DIR=/data-discovery \
+    BL_DISCOVERY_VALIDATOR="/usr/local/bin/deno run -A --cached-only --lock=/opt/browser-life/discovery-validator.lock --frozen --config /opt/browser-life/deno.json /opt/browser-life/tools/discovery.ts check-attempt"
 EXPOSE 4000
 CMD ["/app/bin/coordinator", "start"]
