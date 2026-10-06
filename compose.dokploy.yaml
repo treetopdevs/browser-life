@@ -22,10 +22,16 @@ services:
       PHX_HOST: cadence.garden
       PORT: "4000"
       BL_DATA_DIR: /data
+      # The discovery plane (Coordinator.Discovery) refuses a directory inside
+      # BL_DATA_DIR, and the release default `data-discovery` resolves to the
+      # read-only /app; it gets its own volume.
+      BL_DISCOVERY_DATA_DIR: /data-discovery
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in Dokploy}
       BL_ADMIN_TOKEN: ${BL_ADMIN_TOKEN:?Set BL_ADMIN_TOKEN in Dokploy}
     volumes:
       - coordinator_data:/data
+      - discovery_data:/data-discovery
 
 volumes:
   coordinator_data:
+  discovery_data:

@@ -13,9 +13,9 @@ RUN mix compile && mix release
 FROM elixir:1.18.4-otp-27-slim
 WORKDIR /app
 RUN groupadd --system coordinator && useradd --system --gid coordinator coordinator \
-    && mkdir /data && chown coordinator:coordinator /data
+    && mkdir /data /data-discovery && chown coordinator:coordinator /data /data-discovery
 COPY --from=build --chown=coordinator:coordinator /app/_build/prod/rel/coordinator /app
 USER coordinator
-ENV HOME=/app PHX_SERVER=true PORT=4000 BL_DATA_DIR=/data
+ENV HOME=/app PHX_SERVER=true PORT=4000 BL_DATA_DIR=/data BL_DISCOVERY_DATA_DIR=/data-discovery
 EXPOSE 4000
 CMD ["/app/bin/coordinator", "start"]
