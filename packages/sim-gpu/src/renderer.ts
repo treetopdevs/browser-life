@@ -4,7 +4,7 @@ import { worldH, worldW } from "@bl/schema";
 import { prelude } from "./shaders.ts";
 import type { GpuSim } from "./gpu-sim.ts";
 
-export const VIEW_MODES = ["composite", "lineage", "nutrient", "waste", "energy", "signal", "affinity"] as const;
+export const VIEW_MODES = ["composite", "lineage", "nutrient", "waste", "energy", "signal", "affinity", "light"] as const;
 export type GpuViewMode = (typeof VIEW_MODES)[number];
 
 export interface ViewRect {
@@ -17,7 +17,7 @@ export interface ViewRect {
 }
 
 const shader = (pre: string) => /* wgsl */ `${pre}
-struct View { origin: vec2f, size: vec2f, canvas: vec2f, mode: u32, unit: f32, tiles: u32, hl: u32, hlHi: u32, hlLo: u32 }
+struct View { origin: vec2f, size: vec2f, canvas: vec2f, mode: u32, unit: f32, tiles: u32, hl: u32, hlHi: u32, hlLo: u32, step: u32 }
 @group(0) @binding(0) var<storage, read> cells: array<u32>;
 @group(0) @binding(1) var<storage, read> genome: array<u32>;
 @group(0) @binding(2) var<storage, read> U: array<i32>;
@@ -74,6 +74,10 @@ fn fs(@builtin(position) pos: vec4f) -> @location(0) vec4f {
     case 3u: { col = vec3f(1.0, 0.6, 0.2) * sat(C, u * 0.5); }
     case 4u: { col = vec3f(1.0, 0.9, 0.3) * sat(cells[CH_E + i], u * 4.0); }
     case 5u: { col = vec3f(0.9, 0.4, 1.0) * sat(cells[CH_S + i], u * 0.25); }
+    case 7u: {
+      // The light the physics uses at this step (the sun's mode, day and season), not a decoration.
+      col = vec3f(1.0, 0.76, 0.24) * f32(light_at(x, y, view.step)) / 255.0;
+    }
     default: {
       let g = f32(U[i]) / 256.0;
       col = select(vec3f(0.15, 0.3, 1.0) * -g, vec3f(1.0, 0.35, 0.2) * g, g > 0.0);
@@ -121,7 +125,7 @@ export class Renderer {
       fragment: { module, entryPoint: "fs", targets: [{ format }] },
       primitive: { topology: "triangle-list" },
     });
-    this.uniform = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    this.uniform = device.createBuffer({ size: 56, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
   }
 
   private bind(): void {
@@ -143,7 +147,7 @@ export class Renderer {
   /** `highlight`: a lineage id [hi, lo] whose cells are drawn tinted while the rest are dimmed. */
   draw(mode: GpuViewMode, rect: ViewRect, canvasW: number, canvasH: number, unit = 256, highlight: readonly [number, number] | null = null): void {
     this.bind();
-    const u = new ArrayBuffer(48);
+    const u = new ArrayBuffer(56);
     const f = new Float32Array(u);
     const w = new Uint32Array(u);
     f[0] = rect.x;
@@ -158,6 +162,7 @@ export class Renderer {
     w[9] = highlight ? 1 : 0;
     w[10] = highlight ? highlight[0] >>> 0 : 0;
     w[11] = highlight ? highlight[1] >>> 0 : 0;
+    w[12] = this.sim.step;
     this.device.queue.writeBuffer(this.uniform, 0, u);
     const enc = this.device.createCommandEncoder();
     const pass = enc.beginRenderPass({

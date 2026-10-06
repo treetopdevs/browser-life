@@ -206,7 +206,7 @@ input[type="range"]:disabled { opacity: .45; }
 .breeder-list:empty { display: none; }
 .breeder-list li { counter-increment: pick; display: flex; gap: 8px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 5px; }
 .breeder-list li::before { content: counter(pick); min-width: 2ch; color: var(--soft); }
-/* A waiting cycle's one action sits under the field it is chosen on, where Play would be. */
+/* A waiting cycle's one action sits under the field it is chosen on, below the view picker. */
 .breed-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; padding: 11px 13px; border: 1px solid var(--sun-ink); border-radius: 10px; background: var(--sun-soft); }
 .breed-bar[hidden] { display: none; }
 .breed-bar p { flex: 1 1 220px; margin: 0; font-size: var(--t-ui); font-weight: 600; line-height: 1.4; }
@@ -254,7 +254,7 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .toast { right: 10px; top: 10px; opacity: 0; transition: opacity .2s; font-family: var(--sans); font-weight: 500; }
 .toast.show { opacity: 1; }
 .toast.bad { color: oklch(85% .12 28); }
-/* Transport sits under the jar it drives, with the step it has reached. */
+/* Transport sits above the jar it drives, with the step it has reached. */
 .transport { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .transport #btn-play { min-width: 96px; }
 /* Growing: Play lights green and reads Pause; the label changes, so the state never rests on a hue alone. */

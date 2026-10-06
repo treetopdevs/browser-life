@@ -83,6 +83,7 @@ const VIEW_LABELS: Record<GpuViewMode, [string, string]> = {
   energy: ["Energy", "free energy E, carried with biomass"],
   signal: ["Signal", "secreted signal S, what cells can sense of each other"],
   affinity: ["Pull", "where mass is pulled: red attracts, blue repels (the growth field U)"],
+  light: ["Light", "where the sun falls at this step, brighter where there is more of it"],
 };
 
 // ---------- view modes ----------
@@ -103,6 +104,8 @@ function setMode(m: GpuViewMode) {
     const selected = b.dataset.mode === m;
     b.classList.toggle("on", selected);
     b.setAttribute("aria-pressed", String(selected));
+    // On a phone the picker scrolls sideways: keep the lit view in sight, also when chosen by key.
+    if (selected) b.scrollIntoView({ block: "nearest", inline: "nearest" });
   }
   const name = document.createElement("b");
   name.textContent = VIEW_LABELS[m][0];
@@ -511,7 +514,7 @@ window.addEventListener("keydown", (e) => {
     e.preventDefault();
     setPlaying(!playing);
   } else if (e.key === "." && worldReady) stepBy(1);
-  else if (/^[1-7]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
+  else if (/^[1-8]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
 });
 
 // ---------- checkpoints ----------

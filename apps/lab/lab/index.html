@@ -45,7 +45,14 @@
           </div>
           <button class="quiet" id="btn-fit" type="button" title="See the whole world (or double-click the field)">Fit view</button>
         </div>
-        <div class="view-bar"><span class="view-label" id="views-label">Show</span><div class="seg" id="views" role="group" aria-labelledby="views-label"></div></div>
+        <div class="transport" role="group" aria-label="Playback">
+          <button id="btn-play" class="primary" type="button" aria-pressed="false">Play</button>
+          <button id="btn-step" type="button" title="One step (.)">Step</button>
+          <button id="btn-step100" type="button" title="100 steps">+100</button>
+          <label class="transport-speed"><span>Speed <b class="mono" id="speed-val">×4</b></span><input id="speed" type="range" min="0" max="9" step="1" value="2" aria-label="Speed, steps per frame" /></label>
+          <span class="mono transport-step" id="chip-step">t = 0</span>
+          <span class="mono transport-rate" id="chip-rate">0 steps/s</span>
+        </div>
         <div class="canvas-wrap" id="canvas-wrap">
           <canvas id="world" tabindex="0" aria-label="The world. Arrow keys move the focus point, Enter uses the tool in your hand, plus and minus zoom. You can also use the pointer."></canvas>
           <canvas id="pond-overlay" aria-hidden="true" hidden></canvas>
@@ -60,14 +67,8 @@
             <button id="stage-alert-dismiss" type="button">Dismiss</button>
           </div>
         </div>
-        <div class="transport" role="group" aria-label="Playback">
-          <button id="btn-play" class="primary" type="button" aria-pressed="false">Play</button>
-          <button id="btn-step" type="button" title="One step (.)">Step</button>
-          <button id="btn-step100" type="button" title="100 steps">+100</button>
-          <label class="transport-speed"><span>Speed <b class="mono" id="speed-val">×4</b></span><input id="speed" type="range" min="0" max="9" step="1" value="2" aria-label="Speed, steps per frame" /></label>
-          <span class="mono transport-step" id="chip-step">t = 0</span>
-          <span class="mono transport-rate" id="chip-rate">0 steps/s</span>
-        </div>
+        <div class="view-bar"><span class="view-label" id="views-label">Show</span><div class="seg" id="views" role="group" aria-labelledby="views-label"></div></div>
+        <div class="stage-caption"><span id="legend"></span><span class="stage-hint">Scroll to zoom · double-click to fit · Tab into the field for keyboard tools</span></div>
         <div class="breed-bar" id="breed-bar" role="group" aria-labelledby="breed-bar-call" hidden>
           <p id="breed-bar-call"></p>
           <a class="text-link breed-bar-more" href="#breeder">Ranking and picks</a>
@@ -75,7 +76,6 @@
           <p class="hint" id="breed-bar-wait">Step, Save and the replay check wait until you breed.</p>
           <div class="guard" id="guard-breed" role="group" aria-label="Confirm breeding" hidden></div>
         </div>
-        <div class="stage-caption"><span id="legend"></span><span class="stage-hint">Scroll to zoom · double-click to fit · Tab into the field for keyboard tools</span></div>
         <section class="history" aria-labelledby="history-heading">
           <div class="section-heading"><h2 id="history-heading">How it's going</h2><span class="hint">A census every 100 steps · each chart runs from 0 to the number at its top<span id="history-cycles" hidden> · dashed lines mark pond cycles</span></span></div>
           <div class="history-lines">
@@ -128,7 +128,7 @@
         <div class="rail-footer">
           <details class="keys">
             <summary>Keyboard shortcuts</summary>
-            <dl class="kv"><dt>Play or pause</dt><dd class="mono">Space</dd><dt>One step</dt><dd class="mono">.</dd><dt>What to show</dt><dd class="mono">1 to 7</dd><dt>Move the field focus</dt><dd class="mono">Arrows</dd><dt>One cell at a time</dt><dd class="mono">Shift + Arrows</dd><dt>Use the tool in your hand</dt><dd class="mono">Enter</dd><dt>Zoom</dt><dd class="mono">+ and -</dd></dl>
+            <dl class="kv"><dt>Play or pause</dt><dd class="mono">Space</dd><dt>One step</dt><dd class="mono">.</dd><dt>What to show</dt><dd class="mono">1 to 8</dd><dt>Move the field focus</dt><dd class="mono">Arrows</dd><dt>One cell at a time</dt><dd class="mono">Shift + Arrows</dd><dt>Use the tool in your hand</dt><dd class="mono">Enter</dd><dt>Zoom</dt><dd class="mono">+ and -</dd></dl>
             <p class="hint">Arrows, Enter and zoom apply while the field has focus.</p>
           </details>
           <span id="chip-gpu" title="WebGPU adapter">Connecting to the GPU</span>
