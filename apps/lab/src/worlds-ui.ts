@@ -81,6 +81,10 @@ export interface CardOptions {
   onScreen?: string | null;
   /** A Start-here reason, shown on the card when given. */
   pick?: string;
+  /** The address that names this world, when the card has one: its name links there. */
+  href?: string;
+  /** The card a visitor's link named: ringed like the lab's world on screen, and labelled. */
+  linked?: boolean;
 }
 
 /** One world: what it asks, what it is, how it differs from its base, what to look for, what has been seen, and the technical note. */
@@ -88,9 +92,12 @@ export function worldCard(p: Preset, opts: CardOptions): HTMLElement {
   const note = noteOf(p.id);
   const card = el("article", "world-card");
   card.dataset.id = p.id;
-  if (opts.onScreen === p.id) card.classList.add("current");
+  if (opts.onScreen === p.id || opts.linked) card.classList.add("current");
   const head = el("div", "world-card-head");
-  head.append(el(opts.level ?? "h4", undefined, p.name), statusChip(p.id));
+  const name = el(opts.level ?? "h4");
+  if (opts.href) name.append(Object.assign(el("a", "world-link", p.name), { href: opts.href }));
+  else name.textContent = p.name;
+  head.append(name, statusChip(p.id));
   const seen = seenChip(p.id);
   if (seen) head.append(seen);
   card.append(head);
@@ -112,6 +119,7 @@ export function worldCard(p: Preset, opts: CardOptions): HTMLElement {
   const foot = el("div", "world-card-foot");
   foot.append(opts.action(p));
   if (opts.onScreen === p.id) foot.append(el("span", "on-screen", "On screen now"));
+  if (opts.linked) foot.append(el("span", "on-screen", "The world your link names"));
   card.append(foot);
   return card;
 }

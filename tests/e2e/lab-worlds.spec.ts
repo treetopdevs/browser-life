@@ -125,3 +125,33 @@ test("the Worlds page lists every world with a link into the lab", async ({ page
   await page.locator('#wild .world-card[data-id="breeder"] a.button').click();
   await expect(page).toHaveURL(/\/lab\/\?world=breeder$/);
 });
+
+test("a Worlds page link names one world: the page opens on its card, ringed, and its copy button copies that link", async ({ page, context, browserName }) => {
+  // Reading the clipboard back needs Chromium's permissions; other engines check the feedback only.
+  const native = browserName === "chromium";
+  if (native) await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/worlds/?world=planet-followers");
+  const card = page.locator("#world-planet-followers");
+  await expect(card).toBeInViewport();
+  // On a phone the header wraps; the card's name still clears it.
+  const header = await page.locator(".site-header").boundingBox();
+  const name = await card.locator("h3").boundingBox();
+  expect(name!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+  await expect(card).toHaveClass(/current/);
+  await expect(card).toContainText("The world your link names");
+  // Only the family's copy is ringed; Start here and every other card stay plain.
+  await expect(page.locator(".world-card.current")).toHaveCount(1);
+  await expect(card.locator("h3 a.world-link")).toHaveAttribute("href", "/worlds/?world=planet-followers");
+  const copy = card.getByRole("button", { name: "Copy link to Sun-followers vs sleepers" });
+  await copy.click();
+  await expect(page.getByRole("status")).toHaveText(/^(Link to Sun-followers vs sleepers copied\.|Could not copy the link to Sun-followers vs sleepers\. The world's name is the link\.)$/);
+  await expect(copy).toHaveAccessibleName("Copy link to Sun-followers vs sleepers");
+  if (native) {
+    await expect(copy).toContainText("Link copied");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(new URL("/worlds/?world=planet-followers", page.url()).href);
+  }
+  // An unknown world is ignored.
+  await page.goto("/worlds/?world=nope");
+  await expect(page.locator(".world-card.current")).toHaveCount(0);
+});

@@ -3,7 +3,7 @@
 // Graph and Twitter card tags derived from those (apps/lab/src/social-meta.ts), and a social card and icons that exist.
 import { describe, expect, it } from "vitest";
 import { PRESETS } from "@bl/schema";
-import { SITE, pageMeta, withSocialMeta, worldMeta, worldPage, worldPagePath, type WorldCard } from "../src/social-meta.ts";
+import { SITE, WORLD_LINK_PAGES, pageMeta, withSocialMeta, worldMeta, worldPage, worldPagePath, type WorldCard } from "../src/social-meta.ts";
 import { cardDrift } from "../src/world-cards.ts";
 import cardManifest from "../public/og/worlds/manifest.json";
 import cardDataUrl from "../public/social-card.jpg?inline";
@@ -226,11 +226,24 @@ describe("world cards", () => {
     expect(page).toContain("<body>x</body>");
   });
 
-  it("Caddy serves a world's page for a lab link that names it, and only for a plain id", () => {
-    expect(caddyfile).toContain("@world_copy path_regexp world_copy ^/lab/world/([a-z0-9-]{1,64})/(?:index\\.html)?$");
-    expect(caddyfile).toContain("redir @world_copy /lab/?world={re.world_copy.1} 308");
-    expect(caddyfile).toMatch(/path \/lab\/\n\s+expression \{query\.world\}\.matches\("\^\[a-z0-9-\]\{1,64\}\$"\)\n\s+file \/lab\/world\/\{query\.world\}\/index\.html/);
-    expect(caddyfile).toContain("rewrite @world_link /lab/world/{query.world}/index.html");
+  it("a world's copy of the Worlds page previews as that world and keeps the page's canonical link", () => {
+    const worlds = withSocialMeta(read("worlds/index.html"));
+    const page = worldPage(worlds, cards.ponds, "worlds");
+    const meta = worldMeta(cards.ponds, "worlds");
+    expect(pageMeta(page)).toEqual({ title: meta.title, description: meta.description, canonical: `${SITE.origin}/worlds/` });
+    expect(meta.title).toBe("Pond cycle (64 ponds) · The worlds · Cadence Garden");
+    expect(content(page, "og:url")).toBe(`${SITE.origin}/worlds/?world=ponds`);
+    expect(content(page, "og:image")).toBe(`${SITE.origin}/og/worlds/ponds.jpg`);
+    expect(worldPagePath("ponds", "worlds")).toBe("worlds/world/ponds/index.html");
+  });
+
+  it("Caddy serves a world's copy for a link that names it on either page, and only for a plain id", () => {
+    expect(caddyfile).toContain("@world_copy path_regexp world_copy ^/(lab|worlds)/world/([a-z0-9-]{1,64})/(?:index\\.html)?$");
+    expect(caddyfile).toContain("redir @world_copy /{re.world_copy.1}/?world={re.world_copy.2} 308");
+    for (const page of WORLD_LINK_PAGES) {
+      expect(caddyfile).toMatch(new RegExp(`path /${page}/\\n\\s+expression \\{query\\.world\\}\\.matches\\("\\^\\[a-z0-9-\\]\\{1,64\\}\\$"\\)\\n\\s+file /${page}/world/\\{query\\.world\\}/index\\.html`));
+      expect(caddyfile).toContain(`rewrite @world_${page} /${page}/world/{query.world}/index.html`);
+    }
     for (const id of Object.keys(cards)) expect(id).toMatch(/^[a-z0-9-]{1,64}$/);
   });
 });

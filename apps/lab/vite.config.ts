@@ -2,7 +2,7 @@ import { defineConfig, runnerImport } from "vite";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { withSocialMeta, worldPage, worldPagePath, type WorldCard } from "./src/social-meta.ts";
+import { WORLD_LINK_PAGES, withSocialMeta, worldPage, worldPagePath, type WorldCard } from "./src/social-meta.ts";
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // Not PORT: hosts that launch Vite (preview tools, PaaS) set PORT to Vite's own
@@ -21,22 +21,24 @@ const alias = {
 
 export default defineConfig({
   // Open Graph, Twitter card and icon tags, derived from each page's own title, description and canonical link.
-  // A copy of the built lab page per world, with that world's card, for links that name it (deploy/Caddyfile).
+  // A copy of the built lab and Worlds pages per world, with that world's card, for links that name it (deploy/Caddyfile).
   plugins: [{
     name: "social-meta",
     transformIndexHtml: withSocialMeta,
     async writeBundle(options) {
       const out = options.dir ?? r("./dist");
-      const lab = readFileSync(join(out, "lab/index.html"), "utf8");
       const cards = JSON.parse(readFileSync(r("./public/og/worlds/manifest.json"), "utf8")) as Record<string, WorldCard>;
       // Stale cards would preview a world under its old name or question, or not at all: refuse to build from them.
       const { module } = await runnerImport<typeof import("./src/world-cards.ts")>(r("./src/world-cards.ts"), { configFile: false, root: r("."), resolve: { alias } });
       const drift = module.cardDrift(cards).concat(Object.values(cards).filter((c) => !existsSync(r(`./public${c.image}`))).map((c) => `${c.id}: no image at public${c.image}`));
       if (drift.length) throw new Error(`the world cards are stale; run pnpm gen:cards and look at them:\n  ${drift.join("\n  ")}`);
-      for (const card of Object.values(cards)) {
-        const file = join(out, worldPagePath(card.id));
-        mkdirSync(dirname(file), { recursive: true });
-        writeFileSync(file, worldPage(lab, card));
+      for (const page of WORLD_LINK_PAGES) {
+        const html = readFileSync(join(out, `${page}/index.html`), "utf8");
+        for (const card of Object.values(cards)) {
+          const file = join(out, worldPagePath(card.id, page));
+          mkdirSync(dirname(file), { recursive: true });
+          writeFileSync(file, worldPage(html, card, page));
+        }
       }
     },
   }],

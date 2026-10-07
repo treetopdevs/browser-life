@@ -107,16 +107,28 @@ export function withSocialMeta(html: string): string {
 /** One world's card, as scripts/social-cards.ts drew it and recorded it in public/og/worlds/manifest.json. */
 export interface WorldCard { id: string; name: string; family: string; asks: string; traits: string[]; seed: number; steps: number; image: string }
 
-/** Where the build puts the copy of the lab page that a link naming `id` is served (deploy/Caddyfile). */
-export const worldPagePath = (id: string) => `lab/world/${id}/index.html`;
+/** The pages a link can name a world on: the lab plants it, the Worlds page shows its card. */
+export const WORLD_LINK_PAGES = ["lab", "worlds"] as const;
+export type WorldLinkPage = (typeof WORLD_LINK_PAGES)[number];
 
-/** What a lab link naming this world should preview as. The canonical link stays the lab's own: it is one page. */
-export function worldMeta(w: WorldCard): PageMeta {
+/** Where the build puts the copy of `page` that a link naming world `id` is served (deploy/Caddyfile). */
+export const worldPagePath = (id: string, page: WorldLinkPage = "lab") => `${page}/world/${id}/index.html`;
+
+/** The address that names world `id` on `page`. */
+export const worldLink = (id: string, page: WorldLinkPage = "lab") => `${SITE.origin}/${page}/?world=${encodeURIComponent(id)}`;
+
+/**
+ * What a link naming this world should preview as, on the lab (which plants it) or the Worlds page (which shows
+ * its card). The canonical link stays the page's own: each is one page, whichever world a link names.
+ */
+export function worldMeta(w: WorldCard, page: WorldLinkPage = "lab"): PageMeta {
   return {
-    title: `${w.name} · Cadence Garden`,
-    description: `${w.asks} An artificial-life world you can grow in your browser.`,
-    canonical: `${SITE.origin}/lab/`,
-    url: `${SITE.origin}/lab/?world=${encodeURIComponent(w.id)}`,
+    title: page === "lab" ? `${w.name} · Cadence Garden` : `${w.name} · The worlds · Cadence Garden`,
+    description: page === "lab"
+      ? `${w.asks} An artificial-life world you can grow in your browser.`
+      : `${w.asks} What this artificial-life world is for, what to look for, and what has been seen in it.`,
+    canonical: `${SITE.origin}/${page}/`,
+    url: worldLink(w.id, page),
     image: {
       path: w.image, type: "image/jpeg", width: 1200, height: 630,
       alt: `${w.name}, a world in the ${w.family} family of Cadence Garden, grown on a GPU for ${w.steps.toLocaleString("en-US")} steps from seed ${w.seed}.`,
@@ -127,14 +139,14 @@ export function worldMeta(w: WorldCard): PageMeta {
 const escapeText = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 /**
- * The lab page (as built, with its social tags) retitled for one world: its own <title>, description and preview
- * tags; every other element of the head, and the whole body, exactly as built. Tags are matched by their parsed
- * attributes, in any order or quoting, and comments are left alone.
+ * A page (the lab or the Worlds page, as built, with its social tags) retitled for one world: its own <title>,
+ * description and preview tags; every other element of the head, and the whole body, exactly as built. Tags are
+ * matched by their parsed attributes, in any order or quoting, and comments are left alone.
  */
-export function worldPage(labHtml: string, w: WorldCard): string {
-  const meta = worldMeta(w);
-  const head = /<head\b[^>]*>[\s\S]*?<\/head>/i.exec(labHtml);
-  if (!head || !pageMeta(labHtml)) throw new Error("the lab page has no head or no canonical link");
+export function worldPage(html: string, w: WorldCard, page: WorldLinkPage = "lab"): string {
+  const meta = worldMeta(w, page);
+  const head = /<head\b[^>]*>[\s\S]*?<\/head>/i.exec(html);
+  if (!head || !pageMeta(html)) throw new Error(`the ${page} page has no head or no canonical link`);
   const parts = head[0].split(/(<!--[\s\S]*?-->)/);
   let titled = false, described = false;
   for (let i = 0; i < parts.length; i += 2) {
@@ -149,9 +161,9 @@ export function worldPage(labHtml: string, w: WorldCard): string {
         return `${indent}<meta name="description" content="${attr(meta.description)}" />${nl}`;
       });
   }
-  if (!titled || !described) throw new Error("the lab page has no <title> or no meta description to retitle");
+  if (!titled || !described) throw new Error(`the ${page} page has no <title> or no meta description to retitle`);
   const tags = socialTags(meta).filter((t) => t.key.startsWith("og:") || t.key.startsWith("twitter:"));
   const out = parts.join("").replace(/\n?([ \t]*)<\/head>/i, (_m, indent: string) =>
     tags.map((t) => `\n${indent}  ${t.html}`).join("") + `\n${indent}</head>`);
-  return labHtml.slice(0, head.index) + out + labHtml.slice(head.index + head[0].length);
+  return html.slice(0, head.index) + out + html.slice(head.index + head[0].length);
 }
