@@ -19,6 +19,18 @@
         "cd apps/coordinator && mix phx.server"
       ],
       "port": 4000
+    },
+    {
+      "name": "lab-5177",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "node_modules/vite/bin/vite.js",
+        "apps/lab",
+        "--port",
+        "5177",
+        "--strictPort"
+      ],
+      "port": 5177
     }
   ]
 }
