@@ -38,7 +38,7 @@ test("lab worker inspects a lineage, jumps back to a step, and keeps its genealo
       send({ type: "step", count: 1000 });
       await wait("stats", (m) => m.step === 1000);
       send({ type: "save" });
-      await wait("checkpoints", (m) => m.list.some((c) => c.step === 1000));
+      await wait("session", (m) => m.view.checkpoints.some((c) => c.step === 1000));
       send({ type: "step", count: 600 });
       await wait("stats", (m) => m.step === 1600);
       const census = await wait("census", (m) => m.step === 1600 && m.top.length > 0);
@@ -60,9 +60,9 @@ test("lab worker inspects a lineage, jumps back to a step, and keeps its genealo
       const replayed = await wait("exported");
 
       // Back to the saved present: same world, and the same genealogy read back from storage.
-      const list = await wait("checkpoints", (m) => m.list.some((c) => c.step === 1600 && !c.auto));
-      const present = list.list.find((c) => c.step === 1600 && !c.auto)!;
-      send({ type: "restore", file: present.file });
+      const list = await wait("session", (m) => m.view.checkpoints.some((c) => c.step === 1600 && !c.auto));
+      const present = list.view.checkpoints.find((c) => c.step === 1600 && !c.auto)!;
+      send({ type: "restore", file: present.file, keep: "discard" });
       await wait("loaded", (m) => m.step === 1600);
       send({ type: "export" });
       const restoredPresent = await wait("exported");

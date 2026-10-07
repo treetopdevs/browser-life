@@ -1,6 +1,6 @@
 import { PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondTerm, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
-import type { CensusMsg, FromWorker, PondAwaitMsg, PondsMsg, ProbeMsg, StatsMsg, ToWorker } from "./protocol.ts";
+import type { CensusMsg, FromWorker, Keep, PondAwaitMsg, PondsMsg, ProbeMsg, SessionView, StatsMsg, ToWorker } from "./protocol.ts";
 import { Series } from "./sparkline.ts";
 import { createLineagePanel } from "./lineage-panel.ts";
 import { FAMILIES, byId, familyOf } from "./worlds.ts";
@@ -31,35 +31,23 @@ let verifying = false;
 let loadingWorld = false;
 /** The worker has a GPU device: a failure after that is about a world, not about the browser. */
 let gpuReady = false;
-/**
- * What a checkpoint holds of the current run. `cleanStep` is the latest step one holds (the step the world was
- * loaded at, until then). `touched`: the world was changed by hand since, without its step moving; `cleanFile` is
- * the checkpoint that last answered that, and deleting it brings `touched` back. `advanceAsked`: steps were asked
- * for at that step and no stats have shown them yet, so the step counter cannot be trusted to say "nothing new".
- */
 let runId = "";
-let loadedStep = 0;
-let cleanStep = 0;
-let touched = false;
-let cleanFile: string | null = null;
-let advanceAsked: number | null = null;
-/** Changes made by hand, counted; each save in flight remembers the count it was asked at (oldest first). */
-let changes = 0;
-/** The count the latest surviving save of this run holds: the strip shows what has happened by hand since. */
-let savedChanges = 0;
-/** The count each of this run's saved copies holds, by file, and the count the run was loaded with: deleting a copy moves the baseline back. */
-const handHeld = new Map<string, number>();
-let handAtLoad = 0;
-const savesAsked: number[] = [];
+/** The Lab session's account. The page paints it and does not keep another. */
+let account: SessionView | null = null;
+/** A plant, restore, or open waiting to be sent again with `keep` if the account holds the Lab world. */
+let pendingReplace: { kind: "plant" } | { kind: "restore"; file: string } | { kind: "import"; bytes: ArrayBuffer; name: string } | null = null;
+/** A plant, restore, or open the worker held while a question was already open. Asked when that question closes. */
+let deferredHeld: NonNullable<SessionView["held"]> | null = null;
+/** Patches sent in the stroke under way, and the hand count when it started. */
+let strokeSent = 0;
+let strokeHand = 0;
+let strokeToastDue = false;
+/** Lesions and feeds sent and not yet counted, or refused. */
+let pendingHands = 0;
+let accountedHand = 0;
 /** The starting world and seed the world on screen grew from: Plant says whether it would change anything. */
 let loadedPresetId: string | null = null;
 let loadedSeed: number | null = null;
-/** Runs when the save it was queued with is acknowledged ("saved"); dropped if that save is refused or fails. */
-let afterSave: (() => void) | null = null;
-/** The last replay check: the segment it covered, and whether the world was changed at its end step afterwards. */
-let verified: { ok: boolean; from: number; to: number; live: string; twin: string; touched: boolean } | null = null;
-/** A brush was used while a check was running: it lands on the check's end step, after the hashes were taken. */
-let touchedWhileVerifying = false;
 /** The cell last inspected, in world coordinates. */
 let probed: { x: number; y: number } | null = null;
 const t = (step: number) => `t=${step.toLocaleString()}`;
@@ -184,16 +172,64 @@ const worldPicker = createWorldPicker($<HTMLDialogElement>("worlds"), (id) => {
   $("btn-new").focus();
 });
 $("btn-worlds").onclick = () => worldPicker.open({ chosen: presetSel.value, onScreen: loadedPresetId });
-/** Whether leaving this world now would lose steps or interventions that no checkpoint holds. */
-const unsaved = () => worldReady && (lastStep > cleanStep || touched || advanceAsked !== null);
-const unsavedText = () =>
-  `This world is at ${t(lastStep)}. ${cleanStep > 0 ? `Its last saved copy is at ${t(cleanStep)}; ${touched && lastStep <= cleanStep ? "changes made by hand since then" : "everything after that"} would be lost.` : "Nothing from this run is saved yet."}`;
-/** What has happened by hand since the last save, in the strip beside the world's name. */
-function syncHand() {
-  const n = changes - savedChanges;
-  $("run-hand-item").hidden = n === 0;
-  $("run-hand").textContent = `${n} change${n === 1 ? "" : "s"}, unsaved`;
+
+function plantSeed() {
+  return Number($<HTMLInputElement>("seed").value) || 0;
 }
+
+/** Asks from the painted account, then sends the replace with `keep`. A clean account sends the replace at once. */
+function confirmReplace(host: HTMLElement, opener: HTMLElement, verb: string, consequence: string, sendKeep: (keep?: Keep) => void) {
+  const loss = account?.loss;
+  if (!loss || !worldReady) return sendKeep();
+  const act = `${verb[0].toUpperCase()}${verb.slice(1)}`;
+  ask(host, opener, `${loss.text} ${consequence}`, [[`Save, then ${verb}`, () => sendKeep("save")], [`${act} without saving`, () => sendKeep("discard")]]);
+}
+
+function sendPlant(keep?: Keep) {
+  pendingReplace = { kind: "plant" };
+  setPlaying(false);
+  setWorldControls(false);
+  cfgBeforeLoad = cfg;
+  cfg = null;
+  loadingWorld = true;
+  setStatus(`Planting ${presetName(presetSel.value)}…`, "loading");
+  $<HTMLButtonElement>("btn-new").disabled = true;
+  send({ type: "load", presetId: presetSel.value, seed: plantSeed(), keep });
+}
+
+function sendRestore(file: string, keep?: Keep) {
+  pendingReplace = { kind: "restore", file };
+  send({ type: "restore", file, keep });
+}
+
+function sendImport(bytes: ArrayBuffer, name: string, keep?: Keep) {
+  pendingReplace = { kind: "import", bytes, name };
+  const copy = bytes.slice(0);
+  send({ type: "import", bytes: copy, name, keep }, [copy]);
+}
+
+/** The worker kept the Lab world. Put its controls back; the page had blanked them for a plant. */
+function unblankWorld() {
+  if (!loadingWorld) return;
+  loadingWorld = false;
+  cfg = cfgBeforeLoad;
+  setWorldControls(cfg !== null);
+  $<HTMLButtonElement>("btn-new").disabled = false;
+  if (cfg) showRunStatus();
+}
+
+/** The account held a replace the page had not asked about. Ask now, and send `keep`. */
+function offerHeld(held: NonNullable<SessionView["held"]>) {
+  const pending = pendingReplace;
+  if (!pending || pending.kind !== held || !account?.loss) return;
+  unblankWorld();
+  if (!worldReady) return;
+  if (held === "plant") confirmReplace($("guard-new"), $("btn-new"), "plant", "A new world replaces it.", (keep) => sendPlant(keep));
+  else if (held === "restore" && pending.kind === "restore") confirmReplace($("guard-ckpt"), $("btn-import"), "restore", "Restoring that copy replaces it.", (keep) => sendRestore(pending.file, keep));
+  else if (held === "import" && pending.kind === "import") confirmReplace($("guard-ckpt"), $("btn-import"), "open", "The world in the file replaces it.", (keep) => sendImport(pending.bytes, pending.name, keep));
+}
+
+$("btn-new").onclick = () => confirmReplace($("guard-new"), $("btn-new"), "plant", "A new world replaces it.", sendPlant);
 
 // ---------- inline questions ----------
 type Choice = [label: string, run: () => void];
@@ -206,9 +242,10 @@ function ask(host: HTMLElement, opener: HTMLElement, text: string, choices: Choi
     host.replaceChildren();
     host.onkeydown = null;
     closeQuestion = null;
-    // The answered button is gone: focus goes back to what raised the question, or to the nearest control still
-    // there when that was a checkpoint row redrawn in the meantime.
     if (refocus) [opener, ...host.parentElement!.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.isConnected && !(b as HTMLButtonElement).disabled && b.getClientRects().length > 0)?.focus();
+    const held = deferredHeld;
+    deferredHeld = null;
+    if (held) offerHeld(held);
   };
   closeQuestion = () => close(false);
   const p = document.createElement("p");
@@ -228,34 +265,13 @@ function ask(host: HTMLElement, opener: HTMLElement, text: string, choices: Choi
   row.querySelector("button")!.focus();
 }
 function requestSave() {
-  savesAsked.push(changes);
   send({ type: "save" });
 }
-/** Saves, then runs `next` once that save is acknowledged. A refused or failed save drops `next`. */
-function saveThen(next: () => void) {
-  afterSave = next;
-  requestSave();
-}
-/** Steps were asked for: until stats show the world past this step, it may hold more than the counter says. */
-function askedToAdvance() {
-  if (advanceAsked === null) advanceAsked = lastStep;
-}
-/** Runs `go` at once when nothing would be lost; otherwise asks first, offering to save. */
-function guardUnsaved(host: HTMLElement, opener: HTMLElement, verb: string, consequence: string, go: () => void) {
-  if (!unsaved()) return go();
-  ask(host, opener, `${unsavedText()} ${consequence}`, [[`Save, then ${verb}`, () => saveThen(go)], [`${verb[0].toUpperCase()}${verb.slice(1)} without saving`, go]]);
-}
-
-$("btn-new").onclick = () => guardUnsaved($("guard-new"), $("btn-new"), "plant", "A new world replaces it.", startWorld);
-function startWorld() {
-  setPlaying(false);
-  setWorldControls(false);
-  cfgBeforeLoad = cfg;
-  cfg = null;
-  loadingWorld = true;
-  setStatus(`Planting ${presetName(presetSel.value)}…`, "loading");
-  $<HTMLButtonElement>("btn-new").disabled = true;
-  send({ type: "load", presetId: presetSel.value, seed: Number($<HTMLInputElement>("seed").value) || 0 });
+/** What has happened by hand since the last manual Checkpoint, in the strip beside the world's name. */
+function syncHand() {
+  const n = account?.hand ?? 0;
+  $("run-hand-item").hidden = n === 0;
+  $("run-hand").textContent = `${n} change${n === 1 ? "" : "s"}, unsaved`;
 }
 
 // ---------- playback ----------
@@ -272,7 +288,6 @@ function setPlaying(p: boolean) {
   b.setAttribute("aria-pressed", String(p));
   syncPlayLabel();
   if (worldReady) showRunStatus();
-  if (p) askedToAdvance();
   send({ type: "play", playing: p });
 }
 /**
@@ -290,7 +305,7 @@ function showRunStatus() {
   else setStatus(playing ? "Growing" : "Paused", playing ? "running" : "ready");
 }
 /** Steps wait with everything else while a pond cycle waits: the "." shortcut included. */
-const stepBy = (count: number) => { if (awaiting) return; askedToAdvance(); send({ type: "step", count }); };
+const stepBy = (count: number) => { if (awaiting) return; send({ type: "step", count }); };
 $("btn-play").onclick = () => setPlaying(!playing);
 $("btn-step").onclick = () => stepBy(1);
 $("btn-step100").onclick = () => stepBy(100);
@@ -342,26 +357,33 @@ syncBrush();
 /** One application of the current brush at world position (x, y). */
 function applyBrush(x: number, y: number) {
   if (tool !== "lesion" && !feeding()) return;
-  // The world changes without its step moving: no checkpoint holds this, and a replay check that ended here no longer describes it.
-  touched = true;
-  changes++;
-  strokeApplied++;
-  syncHand();
-  if (verifying) touchedWhileVerifying = true;
-  if (verified && !verified.touched) { verified.touched = true; showVerification(); }
+  if (strokeSent === 0) strokeHand = account?.hand ?? 0;
+  strokeSent++;
+  pendingHands++;
   if (tool === "lesion") send({ type: "lesion", x, y, r: Number(radius.value) });
   else if (feeding()) send({ type: "feed", x, y, r: Number(radius.value), amount: (tool === "feed" ? 1 : -1) * Number(amount.value) });
 }
-/** Brush applications in the stroke under way (a press, or a press and drag): the toast at its end says what it did. */
-let strokeApplied = 0;
-/** A stroke ended: say what it did and what it adds up to, once per stroke, and only if the brush was applied at all. */
+/** A stroke ended. The toast waits until each patch is in the log or refused. */
 function strokeToast() {
-  if (strokeApplied === 0) return;
-  const n = changes - savedChanges;
-  const did = tool === "lesion" ? "Wounded" : tool === "feed" ? "Fed" : "Drained";
-  const what = strokeApplied === 1 ? "a patch" : `a stroke of ${strokeApplied} patches`;
-  toast(`${did} ${what}, radius ${Number(radius.value)} · ${n} change${n === 1 ? "" : "s"} by hand, unsaved`);
-  strokeApplied = 0;
+  if (strokeSent === 0) return;
+  strokeToastDue = true;
+  settleStroke();
+}
+function settleStroke() {
+  if (!strokeToastDue || pendingHands > 0) return;
+  const hand = account?.hand ?? 0;
+  if (hand !== strokeHand) {
+    const landed = hand - strokeHand;
+    const did = tool === "lesion" ? "Wounded" : tool === "feed" ? "Fed" : "Drained";
+    const what = landed === 1 ? "a patch" : `a stroke of ${landed} patches`;
+    toast(`${did} ${what}, radius ${Number(radius.value)} · ${hand} change${hand === 1 ? "" : "s"} by hand, unsaved`);
+  }
+  strokeSent = 0;
+  strokeToastDue = false;
+}
+function noteBrushRefused() {
+  pendingHands = Math.max(0, pendingHands - 1);
+  settleStroke();
 }
 setTool(tool);
 
@@ -468,7 +490,7 @@ canvas.addEventListener("keydown", (ev) => {
     ev.preventDefault();
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
     if (tool === "inspect") send({ type: "probe", x, y });
-    else if (brush()) { strokeApplied = 0; applyBrush(x, y); strokeToast(); }
+    else if (brush()) { strokeSent = 0; applyBrush(x, y); strokeToast(); }
     else if (tool === "pick") pickAt(x, y);
     else { rect.x = x - rect.w / 2; rect.y = y - rect.h / 2; pushView(); }
   } else if ((ev.key === "+" || ev.key === "-") && cfg) {
@@ -488,7 +510,7 @@ canvas.onpointerdown = (ev) => {
     drag = { x: ev.clientX, y: ev.clientY, rx: rect.x, ry: rect.y };
   } else if (brush()) {
     lesionDrag = true;
-    strokeApplied = 0;
+    strokeSent = 0;
     lesionAt(ev);
   } else if (tool === "pick") {
     const [x, y] = toWorld(ev);
@@ -563,20 +585,17 @@ function syncCkptMore() {
 $("ckpt-more").onclick = () => { ckptAll = !ckptAll; syncCkptMore(); };
 $("btn-save").onclick = requestSave;
 $("btn-export").onclick = () => send({ type: "export" });
-$("btn-import").onclick = () => guardUnsaved($("guard-ckpt"), $("btn-import"), "open", "The world in the file replaces it.", () => $<HTMLInputElement>("import").click());
+$("btn-import").onclick = () => $<HTMLInputElement>("import").click();
 $<HTMLInputElement>("import").onchange = async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
   if (!f) return;
   const bytes = await f.arrayBuffer();
-  send({ type: "import", bytes, name: f.name }, [bytes]);
   (e.target as HTMLInputElement).value = "";
+  confirmReplace($("guard-ckpt"), $("btn-import"), "open", "The world in the file replaces it.", (keep) => sendImport(bytes, f.name, keep));
 };
 $("btn-verify").onclick = () => {
   verifying = true;
   $<HTMLButtonElement>("btn-verify").disabled = true;
-  verified = null;
-  touchedWhileVerifying = false;
-  askedToAdvance();
   $("verification-status").textContent = "Checking";
   $("verification-status").className = "badge busy";
   $("verify-out").textContent = `Replaying ${t(lastStep)} to ${t(lastStep + 200)} twice…`;
@@ -591,17 +610,29 @@ function setStrip(id: string, text: string, state = "") {
 }
 /**
  * The replay verdict with its scope. It stays true of the segment it covered; once the world has moved past that
- * segment, or was changed by hand at its end, the badge stops reading as a statement about the present.
+ * segment, or a hand edit was logged at its end, the badge stops reading as a statement about the present.
  */
 function showVerification() {
-  const v = verified;
-  if (!v) return;
-  const range = `${t(v.from)} to ${v.to.toLocaleString()}`;
-  const past = lastStep !== v.to || v.touched;
+  const v = account?.replay ?? null;
   const badge = $("verification-status");
+  if (account?.checking || verifying && !v) {
+    badge.textContent = "Checking";
+    badge.className = "badge busy";
+    return;
+  }
+  if (!v) {
+    badge.textContent = "Not checked";
+    badge.className = "badge";
+    $("verify-out").textContent = "";
+    setStrip("run-replay", "not checked");
+    return;
+  }
+  const step = account?.world?.step ?? v.to;
+  const range = `${t(v.from)} to ${v.to.toLocaleString()}`;
+  const past = step !== v.to || v.handAtEnd;
   badge.textContent = !v.ok ? "Diverged" : past ? "Earlier segment" : "Identical";
   badge.className = `badge ${!v.ok ? "bad" : past ? "note" : "ok"}`;
-  const scope = !past ? "" : v.touched && lastStep === v.to ? ` The world was changed by hand at ${t(v.to)} after this check.` : ` The world is now at ${t(lastStep)}; steps after ${t(v.to)} are not covered.`;
+  const scope = !past ? "" : v.handAtEnd && step === v.to ? ` The world was changed by hand at ${t(v.to)} after this check.` : ` The world is now at ${t(step)}; steps after ${t(v.to)} are not covered.`;
   $("verify-out").textContent = v.ok
     ? `Steps ${range}: live ${v.live} = replay ${v.twin}. The same bits, both times.${scope}`
     : `Steps ${range}: live ${v.live} ≠ replay ${v.twin}. The two runs disagree. Download this world to keep the diverging state, then run the self-test below on this device.${scope}`;
@@ -622,7 +653,7 @@ function resetEvidence() {
   $("verification-status").textContent = "Not checked";
   $("verification-status").className = "badge";
   $("verify-out").textContent = "";
-  verified = null;
+  verifying = false;
   setStrip("run-ledger", "waiting");
   setStrip("run-replay", "not checked");
   probed = null;
@@ -636,10 +667,7 @@ function resetEvidence() {
 }
 
 function onStats(s: StatsMsg) {
-  const moved = s.step !== lastStep;
   lastStep = s.step;
-  if (advanceAsked !== null && s.step !== advanceAsked) advanceAsked = null;
-  if (moved) showVerification();
   $("chip-step").textContent = `t = ${s.step.toLocaleString()}`;
   $("chip-rate").textContent = `${fmt(s.stepsPerSec)} steps/s · ${Math.round(s.fps)} fps`;
   $("k-matter").textContent = s.matterDelta;
@@ -1134,6 +1162,66 @@ function showAlert(message: string) {
 }
 $("stage-alert-dismiss").onclick = () => { $("stage-alert").hidden = true; canvas.focus(); };
 
+/** Checkpoint rows. Redrawn only when the shelf changes, so a step publish does not steal focus. */
+let shelfKey = "";
+function renderCheckpoints(list: SessionView["checkpoints"]) {
+  $("checkpoint-empty").hidden = list.length > 0;
+  const rowHadFocus = $("ckpts").contains(document.activeElement);
+  $("ckpts").replaceChildren(
+    ...[...list]
+      .sort((a, b) => b.savedAt.localeCompare(a.savedAt))
+      .map((c, i) => {
+        const li = document.createElement("li");
+        if (i >= CKPT_SHOWN) li.className = "extra";
+        const name = document.createElement("span");
+        name.textContent = `${t(c.step)}${c.runId === runId ? "" : " · other run"}${c.auto ? " · auto" : ""} · ${(c.bytes / 1e6).toFixed(1)} MB`;
+        name.title = `${c.file} · ${(c.bytes / 1e6).toFixed(1)} MB · ${c.savedAt}`;
+        const restore = document.createElement("button");
+        restore.type = "button";
+        restore.textContent = "Restore";
+        restore.setAttribute("aria-label", `Restore ${c.file}`);
+        restore.onclick = () => confirmReplace($("guard-ckpt"), restore, "restore", `Restoring the copy from ${t(c.step)} replaces it.`, (keep) => sendRestore(c.file, keep));
+        const del = document.createElement("button");
+        del.type = "button";
+        del.textContent = "Delete";
+        del.setAttribute("aria-label", `Delete ${c.file}`);
+        del.onclick = () => ask($("guard-ckpt"), del, `Delete the copy from ${t(c.step)} (${c.file})? A deleted copy cannot be brought back.`, [["Delete this copy", () => send({ type: "deleteCheckpoint", file: c.file })]], "Keep it");
+        li.append(name, restore, del);
+        return li;
+      }),
+  );
+  syncCkptMore();
+  if (rowHadFocus) ($("ckpts").querySelector<HTMLButtonElement>("button") ?? $("btn-import")).focus();
+}
+
+function paintAccount(view: SessionView) {
+  if (view.epoch !== account?.epoch) {
+    pendingHands = 0;
+    strokeSent = 0;
+    strokeToastDue = false;
+    deferredHeld = null;
+  }
+  const landed = view.hand - accountedHand;
+  accountedHand = view.hand;
+  if (landed > 0) pendingHands = Math.max(0, pendingHands - landed);
+  account = view;
+  syncHand();
+  const key = view.checkpoints.map((c) => `${c.file}\t${c.runId === view.world?.runId ? "here" : "other"}\t${c.auto ? "a" : ""}`).join("\n");
+  if (key !== shelfKey) {
+    shelfKey = key;
+    renderCheckpoints(view.checkpoints);
+  }
+  if (view.checking || view.replay) {
+    verifying = view.checking;
+    showVerification();
+    syncWaitingControls();
+  }
+  settleStroke();
+  if (!view.held) return;
+  if ($("guard-new").hidden && $("guard-ckpt").hidden) offerHeld(view.held);
+  else deferredHeld = view.held;
+}
+
 worker.onmessage = (ev: MessageEvent<FromWorker>) => {
   const m = ev.data;
   switch (m.type) {
@@ -1153,21 +1241,13 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       setWorldControls(true);
       $<HTMLButtonElement>("btn-new").disabled = false;
       runId = m.manifest.runId;
-      loadedStep = cleanStep = lastStep = m.step;
-      touched = false;
-      cleanFile = null;
-      advanceAsked = null;
-      afterSave = null;
-      savesAsked.length = 0;
+      lastStep = m.step;
       closeQuestion?.();
       $("stage-alert").hidden = true;
       $("world-heading").textContent = PRESETS.find((p) => p.id === m.manifest.presetId)?.name ?? "Opened world";
       document.title = titleFor(m.manifest.presetId, $("world-heading").textContent);
       loadedPresetId = m.manifest.presetId;
       loadedSeed = m.manifest.seed;
-      handHeld.clear();
-      handAtLoad = savedChanges = changes;
-      syncHand();
       syncPlant();
       $("run-id").textContent = $("run-id").title = runId;
       $("run-seed").textContent = String(m.manifest.seed);
@@ -1204,56 +1284,9 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
     case "highlight":
       lineagePanel.onHighlight(m.key);
       break;
-    case "checkpoints":
-      // The list is the authority on what is saved: a deleted checkpoint lowers the baseline again.
-      cleanStep = Math.max(loadedStep, ...m.list.filter((c) => c.runId === runId).map((c) => c.step));
-      if (cleanFile && !m.list.some((c) => c.file === cleanFile)) { cleanFile = null; touched = true; }
-      // A deleted copy no longer holds the changes it held: the strip's baseline falls back to the latest copy that survives.
-      for (const file of handHeld.keys()) if (!m.list.some((c) => c.file === file)) handHeld.delete(file);
-      savedChanges = Math.max(handAtLoad, ...handHeld.values());
-      syncHand();
-      $("checkpoint-empty").hidden = m.list.length > 0;
-      // Redrawing the rows must not drop the keyboard's place in them.
-      const rowHadFocus = $("ckpts").contains(document.activeElement);
-      // A row reads by what it holds: the step, and whether it is this run's. The file name stays in the tooltip.
-      $("ckpts").replaceChildren(
-        ...m.list
-          .sort((a, b) => b.savedAt.localeCompare(a.savedAt))
-          .map((c, i) => {
-            const li = document.createElement("li");
-            if (i >= CKPT_SHOWN) li.className = "extra";
-            const name = document.createElement("span");
-            name.textContent = `${t(c.step)}${c.runId === runId ? "" : " · other run"}${c.auto ? " · auto" : ""} · ${(c.bytes / 1e6).toFixed(1)} MB`;
-            name.title = `${c.file} · ${(c.bytes / 1e6).toFixed(1)} MB · ${c.savedAt}`;
-            const restore = document.createElement("button");
-            restore.type = "button";
-            restore.textContent = "Restore";
-            restore.setAttribute("aria-label", `Restore ${c.file}`);
-            restore.onclick = () => guardUnsaved($("guard-ckpt"), restore, "restore", `Restoring the copy from ${t(c.step)} replaces it.`, () => send({ type: "restore", file: c.file }));
-            const del = document.createElement("button");
-            del.type = "button";
-            del.textContent = "Delete";
-            del.setAttribute("aria-label", `Delete ${c.file}`);
-            del.onclick = () => ask($("guard-ckpt"), del, `Delete the copy from ${t(c.step)} (${c.file})? A deleted copy cannot be brought back.`, [["Delete this copy", () => send({ type: "deleteCheckpoint", file: c.file })]], "Keep it");
-            li.append(name, restore, del);
-            return li;
-          }),
-      );
-      syncCkptMore();
-      if (rowHadFocus) ($("ckpts").querySelector<HTMLButtonElement>("button") ?? $("btn-import")).focus();
+    case "session":
+      paintAccount(m.view);
       break;
-    case "saved": {
-      // This page's own save, and only that: an automatic checkpoint never answers a save-first choice.
-      const asked = savesAsked.shift();
-      // It holds every change made before it was asked for; one made while it was in flight is still unsaved.
-      if (asked === changes) { touched = false; cleanFile = m.file; }
-      // The copy holds the changes made before it was asked for, whether or not more came while it was in flight.
-      if (asked !== undefined) { handHeld.set(m.file, asked); savedChanges = Math.max(savedChanges, asked); syncHand(); }
-      const next = afterSave;
-      afterSave = null;
-      next?.();
-      break;
-    }
     case "exported": {
       const url = URL.createObjectURL(new Blob([m.bytes], { type: "application/octet-stream" }));
       const a = document.createElement("a");
@@ -1269,11 +1302,11 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
     case "refused":
       // The world is fine; a lineage inspection or a jump that was refused must not be waited for any longer.
       toast(m.message);
-      if (m.request === "save") { savesAsked.shift(); afterSave = null; }
+      if (m.request === "load") unblankWorld();
+      if (m.request === "lesion" || m.request === "feed") noteBrushRefused();
       if (m.request === "pick") endBreeding();
       if (m.request === "lineage" || m.request === "jump") lineagePanel.onError();
       if (m.request === "verify" && verifying) {
-        // The check never ran: the button comes back and the panel says so (no earlier result survives, the click cleared it).
         verifying = false;
         syncWaitingControls();
         $("verification-status").textContent = "Not checked";
@@ -1285,9 +1318,6 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
     case "verify":
       verifying = false;
       syncWaitingControls();
-      verified = { ok: m.ok, from: m.from, to: m.from + m.steps, live: m.live, twin: m.twin, touched: touchedWhileVerifying };
-      // The check ran the world to the end of its segment; the stats that follow will say the same step.
-      lastStep = verified.to;
       showVerification();
       break;
     case "error":
@@ -1311,10 +1341,9 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         setStrip("run-replay", "couldn't check", "bad");
       }
       endBreeding();
-      // Whatever was in flight may not have happened: nothing waits on it, and no later save is taken for an earlier one.
-      savesAsked.length = 0;
-      afterSave = null;
-      advanceAsked = null;
+      pendingHands = 0;
+      strokeSent = 0;
+      strokeToastDue = false;
       $<HTMLButtonElement>("btn-new").disabled = false;
       setStatus(cfg ? "World stopped" : gpuReady ? "No world yet" : "Lab could not start", "error");
       lineagePanel.onError();
