@@ -137,13 +137,17 @@ const presetSel = $<HTMLSelectElement>("preset");
     presetSel.append(g);
   }
 }
+/** A fresh seed number for this visit, 1 to 9999: short enough to read out, so a history can be grown again. */
+const freshSeed = () => 1 + Math.floor(Math.random() * 9999);
+// Every visit opens on a fresh seed number, so two visitors grow different histories unless they mean not to.
 // A link can choose the world and the seed (/lab/?world=<id>&seed=<n>); anything it names that does not exist is ignored.
 {
   const params = new URLSearchParams(location.search);
   const world = params.get("world");
   if (world && byId(world)) presetSel.value = world;
   const seed = Number(params.get("seed"));
-  if (params.has("seed") && Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff) $<HTMLInputElement>("seed").value = String(seed);
+  const linked = params.has("seed") && Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff;
+  $<HTMLInputElement>("seed").value = String(linked ? seed : freshSeed());
 }
 const presetName = (id: string | null) => PRESETS.find((p) => p.id === id)?.name ?? (id ? "an opened world" : "");
 const showPresetDesc = () => describeWorld(byId(presetSel.value), $("preset-desc"));

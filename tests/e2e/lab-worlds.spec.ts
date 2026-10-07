@@ -84,15 +84,23 @@ test("a link can choose the world and the seed before the first planting", async
   await expect(page.locator("#btn-new")).toHaveText("Plant it again");
 });
 
-test("an unknown world or an impossible seed in the link is ignored", async ({ page }) => {
-  await page.goto("/lab/?world=no-such-world&seed=-3");
-  await expect(page.locator("#preset")).toHaveValue("spots");
-  await expect(page.locator("#seed")).toHaveValue("1");
-  // The largest seed the rules allow is taken; one past it is not.
+test("every visit opens on a fresh seed number unless the link names one", async ({ page }) => {
+  // The draw is 1 + floor(random * 9999); pin random so the test knows which number to expect.
+  await page.addInitScript(() => { Math.random = () => 0.25; });
+  // An unknown world or an impossible seed in the link leaves the draw alone.
+  for (const url of ["/lab/", "/lab/?world=no-such-world&seed=-3", "/lab/?world=spots&seed=4294967296"]) {
+    await page.goto(url);
+    await expect(page.locator("#preset")).toHaveValue("spots");
+    await expect(page.locator("#seed"), url).toHaveValue("2500");
+  }
+  // The largest seed the rules allow is taken.
   await page.goto("/lab/?world=spots&seed=4294967295");
   await expect(page.locator("#seed")).toHaveValue("4294967295");
-  await page.goto("/lab/?world=spots&seed=4294967296");
-  await expect(page.locator("#seed")).toHaveValue("1");
+  // The drawn seed is the one planted.
+  await page.goto("/lab/");
+  await planted(page);
+  await expect(page.locator("#run-seed")).toHaveText("2500");
+  await expect(page.locator("#btn-new")).toHaveText("Plant it again");
 });
 
 test("the Worlds page lists every world with a link into the lab", async ({ page }) => {
