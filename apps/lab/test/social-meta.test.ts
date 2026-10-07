@@ -2,7 +2,10 @@
 // search engines and link unfurlers show whole, a canonical link on cadence.garden that the sitemap lists, Open
 // Graph and Twitter card tags derived from those (apps/lab/src/social-meta.ts), and a social card and icons that exist.
 import { describe, expect, it } from "vitest";
-import { SITE, pageMeta, withSocialMeta } from "../src/social-meta.ts";
+import { PRESETS } from "@bl/schema";
+import { SITE, pageMeta, withSocialMeta, worldMeta, worldPage, worldPagePath, type WorldCard } from "../src/social-meta.ts";
+import { cardDrift } from "../src/world-cards.ts";
+import cardManifest from "../public/og/worlds/manifest.json";
 import cardDataUrl from "../public/social-card.jpg?inline";
 import caddyfile from "../../../deploy/Caddyfile?raw";
 
@@ -16,7 +19,10 @@ const read = (p: string) => {
 };
 const PUBLIC = ["index.html", "lab/index.html", "worlds/index.html", "how-it-works/index.html", "research/index.html",
   "about/index.html", "participate/index.html", "status/index.html", "privacy/index.html"];
-const UNSHARED = ["selftest.html", "island.html", "discovery/index.html"];
+const UNSHARED = ["selftest.html", "island.html", "social-card.html", "discovery/index.html"];
+const worldCards = import.meta.glob<string>("../public/og/worlds/*.jpg", { query: "?inline", import: "default", eager: true });
+const bytesOf = (dataUrl: string) => Uint8Array.from(atob(dataUrl.slice(dataUrl.indexOf(",") + 1)), (c) => c.charCodeAt(0));
+const cards = cardManifest as Record<string, WorldCard>;
 const sitemap = [...read("public/sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 const content = (html: string, key: string) =>
   new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`).exec(html.replace(/<!--[\s\S]*?-->/g, ""))?.[1];
@@ -138,7 +144,7 @@ describe("serving", () => {
 describe("social card and icons", () => {
   it("the card is a 1200 by 630 JPEG small enough for every unfurler", () => {
     expect(cardDataUrl.startsWith(`data:${SITE.card.type};base64,`)).toBe(true);
-    const bytes = Uint8Array.from(atob(cardDataUrl.slice(cardDataUrl.indexOf(",") + 1)), (c) => c.charCodeAt(0));
+    const bytes = bytesOf(cardDataUrl);
     expect(jpegSize(bytes)).toEqual({ width: SITE.card.width, height: SITE.card.height });
     // WhatsApp drops previews over roughly 300 KB.
     expect(bytes.length).toBeLessThan(300_000);
@@ -150,5 +156,81 @@ describe("social card and icons", () => {
     expect(publicFiles).toContain("/apple-touch-icon.png");
     expect(publicFiles).toContain(SITE.card.path);
     expect(read("public/robots.txt")).toMatch(/^Sitemap: https:\/\/cadence\.garden\/sitemap\.xml$/m);
+  });
+});
+
+describe("world cards", () => {
+  it("every world has a card that says what the catalogue says (if not, run pnpm gen:cards and look at them)", () => {
+    expect(Object.keys(cards)).toEqual(PRESETS.map((p) => p.id));
+    expect(cardDrift(cards)).toEqual([]);
+  });
+
+  it("the drift check notices a renamed world, a reworded question, a dropped or an extra card, and wrong traits", () => {
+    const { soup, ...rest } = cards;
+    expect(cardDrift(rest)).toEqual(["soup: no card"]);
+    expect(cardDrift({ ...cards, gone: { ...soup, id: "gone" } })).toEqual(["gone: a card for a world that no longer exists"]);
+    expect(cardDrift({ ...cards, soup: { ...soup, name: "Old name" } })[0]).toMatch(/^soup: the card's name is "Old name"/);
+    expect(cardDrift({ ...cards, soup: { ...soup, asks: "An old question?" } })[0]).toMatch(/^soup: the card's asks/);
+    expect(cardDrift({ ...cards, soup: { ...soup, traits: ["Not a trait"] } })[0]).toMatch(/^soup: the card's traits/);
+  });
+
+  it("every card is a 1200 by 630 JPEG under 300 KB, and no card is left over", () => {
+    const files = Object.keys(worldCards).map((k) => k.slice("../public".length)).sort();
+    expect(files).toEqual(Object.values(cards).map((c) => c.image).sort());
+    for (const [file, dataUrl] of Object.entries(worldCards)) {
+      const bytes = bytesOf(dataUrl);
+      expect(jpegSize(bytes), file).toEqual({ width: 1200, height: 630 });
+      expect(bytes.length, file).toBeLessThan(300_000);
+    }
+  });
+
+  it("a world's copy of the lab page previews as that world and changes nothing else", () => {
+    const lab = withSocialMeta(read("lab/index.html"));
+    const card = cards.ponds;
+    const page = worldPage(lab, card);
+    const meta = worldMeta(card);
+    expect(pageMeta(page)).toEqual({ title: meta.title, description: meta.description, canonical: `${SITE.origin}/lab/` });
+    expect(content(page, "og:url")).toBe(`${SITE.origin}/lab/?world=ponds`);
+    expect(content(page, "og:title")).toBe("Pond cycle (64 ponds) · Cadence Garden");
+    expect(content(page, "og:image")).toBe(`${SITE.origin}/og/worlds/ponds.jpg`);
+    expect(content(page, "twitter:image")).toBe(`${SITE.origin}/og/worlds/ponds.jpg`);
+    expect(content(page, "og:image:alt")).toMatch(/^Pond cycle \(64 ponds\), a world in the Islands and ponds family/);
+    for (const key of ["og:title", "og:image", "twitter:card", "og:url"]) expect(page.split(`"${key}"`).length - 1, key).toBe(1);
+    // Outside the title, the description and the preview tags, the page is the lab's byte for byte.
+    const rest = (html: string) => html.replace(/<title>[^<]*<\/title>/, "").split("\n")
+      .filter((line) => !/name="description"|property="og:|name="twitter:/.test(line)).join("\n");
+    expect(rest(page)).toBe(rest(lab));
+    expect(page).toContain('<link rel="manifest" href="/site.webmanifest" />');
+    expect(page).toContain('type="application/ld+json"');
+    expect(worldPagePath("ponds")).toBe("lab/world/ponds/index.html");
+  });
+
+  it("retitles a lab page whatever the attribute order or quoting, and takes catalogue text literally", () => {
+    const lab = [
+      "<html><head>",
+      `    <title>Lab · Cadence Garden</title>`,
+      `    <link href="https://cadence.garden/lab/" rel="canonical" />`,
+      `    <meta content='Old.' name='description'>`,
+      `    <!-- <meta property="og:title" content="kept comment"> -->`,
+      `    <meta content='Old' property='og:title'>`,
+      `    <meta name=twitter:card content=summary>`,
+      "  </head><body>x</body></html>",
+    ].join("\n");
+    const page = worldPage(lab, { ...cards.soup, name: "Costs $& and $1", asks: "Why $' here?" });
+    expect(pageMeta(page)!.title).toBe("Costs $&amp; and $1 · Cadence Garden");
+    expect(pageMeta(page)!.description).toBe("Why $' here? An artificial-life world you can grow in your browser.");
+    expect(page).toContain(`<!-- <meta property="og:title" content="kept comment"> -->`);
+    expect(page.match(/property=['"]og:title/g)).toHaveLength(2); // the comment and the new one
+    expect(page.match(/twitter:card/g)).toHaveLength(1);
+    expect(page.match(/<\/head>/g)).toHaveLength(1);
+    expect(page).toContain("<body>x</body>");
+  });
+
+  it("Caddy serves a world's page for a lab link that names it, and only for a plain id", () => {
+    expect(caddyfile).toContain("@world_copy path_regexp world_copy ^/lab/world/([a-z0-9-]{1,64})/(?:index\\.html)?$");
+    expect(caddyfile).toContain("redir @world_copy /lab/?world={re.world_copy.1} 308");
+    expect(caddyfile).toMatch(/path \/lab\/\n\s+expression \{query\.world\}\.matches\("\^\[a-z0-9-\]\{1,64\}\$"\)\n\s+file \/lab\/world\/\{query\.world\}\/index\.html/);
+    expect(caddyfile).toContain("rewrite @world_link /lab/world/{query.world}/index.html");
+    for (const id of Object.keys(cards)) expect(id).toMatch(/^[a-z0-9-]{1,64}$/);
   });
 });

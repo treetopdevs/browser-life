@@ -26,6 +26,18 @@
   redir /status /status/{?query} 308
   redir /privacy /privacy/{?query} 308
 
+  # A lab link that names a world (/lab/?world=<id>) previews as that world: the build writes a copy of the lab page
+  # per world, differing only in its title, description and card, at /lab/world/<id>/. Unknown worlds get the lab.
+  # The copies are for links, not addresses: one opened directly is sent to the link it stands for.
+  @world_copy path_regexp world_copy ^/lab/world/([a-z0-9-]{1,64})/(?:index\.html)?$
+  redir @world_copy /lab/?world={re.world_copy.1} 308
+  @world_link {
+    path /lab/
+    expression {query.world}.matches("^[a-z0-9-]{1,64}$")
+    file /lab/world/{query.world}/index.html
+  }
+  rewrite @world_link /lab/world/{query.world}/index.html
+
   # Vite fingerprints everything under /assets/, so it never changes; the fonts change only with a release.
   header /assets/* Cache-Control "public, max-age=31536000, immutable"
   header /fonts/* Cache-Control "public, max-age=2592000"

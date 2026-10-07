@@ -22,6 +22,7 @@ npx playwright test      # browser golden (tests/e2e), Chrome with WebGPU flags;
 cd apps/coordinator && mix test         # or `mix test test/coordinator/queue_test.exs`
 cd apps/coordinator && mix precommit    # warnings-as-errors, format, test
 pnpm gen:prereg          # regenerate experiments/preregistration.md generated sections
+pnpm gen:cards           # redraw the link-preview cards (site + one per world) with Chrome/WebGPU; then look at them
 ```
 
 `tests/deno/*.ts` are standalone scripts (not `Deno.test`); run each with `deno run -A tests/deno/<name>.ts`. Several need a real GPU; `coordinator_integration.ts` spawns `mix phx.server` against a scratch data dir.

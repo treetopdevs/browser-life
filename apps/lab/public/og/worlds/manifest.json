@@ -1,0 +1,603 @@
+{
+  "spots": {
+    "id": "spots",
+    "name": "Even light",
+    "family": "Steady jars",
+    "asks": "What does the chemistry do when left alone under even light?",
+    "traits": [
+      "Even light everywhere",
+      "256 × 256 cells",
+      "6 hand-built founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/spots.jpg"
+  },
+  "gradient": {
+    "id": "gradient",
+    "name": "Bright to dim",
+    "family": "Steady jars",
+    "asks": "Does a jar with a bright end and a dim end grow different lineages in different places?",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "8 hand-built founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/gradient.jpg"
+  },
+  "spots-m3": {
+    "id": "spots-m3",
+    "name": "Even light (searched founders)",
+    "family": "Steady jars",
+    "asks": "What do the searched founders do under even light over a long run?",
+    "traits": [
+      "Even light everywhere",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/spots-m3.jpg"
+  },
+  "gradient-m3": {
+    "id": "gradient-m3",
+    "name": "Bright to dim (searched founders)",
+    "family": "Steady jars",
+    "asks": "The searched founders with a bright end and a dim end; the base every sandbox below compares itself against.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 1500,
+    "image": "/og/worlds/gradient-m3.jpg"
+  },
+  "gradient-m3-waste": {
+    "id": "gradient-m3-waste",
+    "name": "Waste in the water (searched founders)",
+    "family": "Steady jars",
+    "asks": "Does starting with waste already dissolved in the water, and less food, open a niche for something that eats waste?",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 1500,
+    "image": "/og/worlds/gradient-m3-waste.jpg"
+  },
+  "soup": {
+    "id": "soup",
+    "name": "Random soup",
+    "family": "Steady jars",
+    "asks": "Can anything get going from random controllers, with no hand-built founder at all?",
+    "traits": [
+      "Even light everywhere",
+      "256 × 256 cells",
+      "24 random founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/soup.jpg"
+  },
+  "seasons": {
+    "id": "seasons",
+    "name": "Patchwork seasons",
+    "family": "Steady jars",
+    "asks": "Does light that comes and goes keep a world from settling down?",
+    "traits": [
+      "A checkerboard of light",
+      "A season every 4,000 steps",
+      "256 × 256 cells"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/seasons.jpg"
+  },
+  "large": {
+    "id": "large",
+    "name": "Big jar",
+    "family": "Steady jars",
+    "asks": "Does a bigger jar give evolution more room over a long run?",
+    "traits": [
+      "Brighter toward the bottom",
+      "512 × 512 cells",
+      "16 hand-built founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/large.jpg"
+  },
+  "archipelago": {
+    "id": "archipelago",
+    "name": "Four islands",
+    "family": "Islands and ponds",
+    "asks": "Do four small worlds that trade a few migrants evolve differently from one big one?",
+    "traits": [
+      "Brighter toward the bottom",
+      "4 islands of 64 × 64",
+      "16 hand-built founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/archipelago.jpg"
+  },
+  "ponds": {
+    "id": "ponds",
+    "name": "Pond cycle (64 ponds)",
+    "family": "Islands and ponds",
+    "asks": "If ponds are cleared every 10,000 steps and reseeded from the heaviest ones, do their descendants get better at founding ponds?",
+    "traits": [
+      "Even light everywhere",
+      "64 ponds of 64 × 64",
+      "One disc of the same searched founder in every pond"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/ponds.jpg"
+  },
+  "ponds-small": {
+    "id": "ponds-small",
+    "name": "Pond cycle (4 ponds)",
+    "family": "Islands and ponds",
+    "asks": "The pond cycle at a size that fits a laptop: four ponds, a cycle every 1,000 steps.",
+    "traits": [
+      "Even light everywhere",
+      "4 ponds of 64 × 64",
+      "One disc of the same searched founder in every pond"
+    ],
+    "seed": 42,
+    "steps": 2900,
+    "image": "/og/worlds/ponds-small.jpg"
+  },
+  "planet": {
+    "id": "planet",
+    "name": "Moving sun",
+    "family": "A moving sun",
+    "asks": "What happens to hand-built generalists when the sun moves?",
+    "traits": [
+      "A moving sun, one lap every 16,000 steps",
+      "256 × 256 cells",
+      "8 hand-built founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/planet.jpg"
+  },
+  "planet-m3": {
+    "id": "planet-m3",
+    "name": "Moving sun (searched founders)",
+    "family": "A moving sun",
+    "asks": "Do the searched founders survive a day and a night?",
+    "traits": [
+      "A moving sun, one lap every 16,000 steps",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 1200,
+    "image": "/og/worlds/planet-m3.jpg"
+  },
+  "planet-followers": {
+    "id": "planet-followers",
+    "name": "Sun-followers vs sleepers",
+    "family": "A moving sun",
+    "asks": "Does moving with the sun beat sleeping through the night?",
+    "traits": [
+      "A moving sun, one lap every 16,384 steps",
+      "256 × 256 cells",
+      "8 sleepers and 8 sun-followers"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/planet-followers.jpg"
+  },
+  "planet-motile": {
+    "id": "planet-motile",
+    "name": "Movers without a heading",
+    "family": "A moving sun",
+    "asks": "Can a heading evolve? These founders can move but have no direction.",
+    "traits": [
+      "A moving sun, one lap every 16,384 steps",
+      "256 × 256 cells",
+      "16 founders that can move but have no heading"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/planet-motile.jpg"
+  },
+  "planet-drifters": {
+    "id": "planet-drifters",
+    "name": "Random drifters",
+    "family": "A moving sun",
+    "asks": "Does a random fixed heading help or hurt when the sun moves?",
+    "traits": [
+      "A moving sun, one lap every 16,384 steps",
+      "256 × 256 cells",
+      "16 drifters with random headings"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/planet-drifters.jpg"
+  },
+  "planet-still": {
+    "id": "planet-still",
+    "name": "Standing still (control)",
+    "family": "A moving sun",
+    "asks": "The control for the two above: the same placements, no movement at all.",
+    "traits": [
+      "A moving sun, one lap every 16,384 steps",
+      "256 × 256 cells",
+      "16 hand-built founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/planet-still.jpg"
+  },
+  "planet-sensing": {
+    "id": "planet-sensing",
+    "name": "Sensing followers vs sleepers",
+    "family": "A moving sun",
+    "asks": "Can a cell that signals in the dark and runs from signal find the light when the sun outpaces any fixed drift?",
+    "traits": [
+      "A moving sun, one lap every 11,000 steps",
+      "256 × 256 cells",
+      "8 sleepers and 8 sensing followers"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/planet-sensing.jpg"
+  },
+  "planet-wander": {
+    "id": "planet-wander",
+    "name": "Wandering sun (three-way race)",
+    "family": "A moving sun",
+    "asks": "Sleepers, blind drifters and sensing followers under a sun that wanders east, then west: who survives?",
+    "traits": [
+      "A sun that wanders east, then west, turning back every 32,768 steps",
+      "256 × 256 cells"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/planet-wander.jpg"
+  },
+  "planet-large": {
+    "id": "planet-large",
+    "name": "Moving sun (big jar)",
+    "family": "A moving sun",
+    "asks": "The moving sun on the big world.",
+    "traits": [
+      "A moving sun, one lap every 32,000 steps",
+      "512 × 512 cells",
+      "16 hand-built founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/planet-large.jpg"
+  },
+  "own-lossy": {
+    "id": "own-lossy",
+    "name": "Lossy taking (kin by lineage)",
+    "family": "Who owns the matter",
+    "asks": "If taking a stranger's matter turns it to waste, do bodies stop being eroded?",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-lossy.jpg"
+  },
+  "own-match": {
+    "id": "own-match",
+    "name": "Lossy taking (kin by growth)",
+    "family": "Who owns the matter",
+    "asks": "The same lossy rule, but kin means similar growth settings, so most single mutants stay kin.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-match.jpg"
+  },
+  "own-seasons": {
+    "id": "own-seasons",
+    "name": "Seasons only (control)",
+    "family": "Who owns the matter",
+    "asks": "The comparison the ownership screen had to beat: no rule change, just a season every 4,000 steps.",
+    "traits": [
+      "Brighter toward the bottom",
+      "A season every 4,000 steps",
+      "256 × 256 cells"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-seasons.jpg"
+  },
+  "own-genome-1": {
+    "id": "own-genome-1",
+    "name": "Lossy taking (kin within 1 word)",
+    "family": "Who owns the matter",
+    "asks": "Lossy taking where kin means a genome within one word of the winner's.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-genome-1.jpg"
+  },
+  "own-genome-3": {
+    "id": "own-genome-3",
+    "name": "Lossy taking (kin within 3 words)",
+    "family": "Who owns the matter",
+    "asks": "Lossy taking where kin means a genome within three words of the winner's.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-genome-3.jpg"
+  },
+  "own-genome-8": {
+    "id": "own-genome-8",
+    "name": "Lossy taking (kin within 8 words)",
+    "family": "Who owns the matter",
+    "asks": "Lossy taking where kin means a genome within eight words of the winner's.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-genome-8.jpg"
+  },
+  "own-injury-light": {
+    "id": "own-injury-light",
+    "name": "Small wounds",
+    "family": "Who owns the matter",
+    "asks": "Do recurring small wounds select for bodies that regrow?",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-injury-light.jpg"
+  },
+  "own-injury-heavy": {
+    "id": "own-injury-heavy",
+    "name": "Small wounds (four times as often)",
+    "family": "Who owns the matter",
+    "asks": "The same wounds four times as often.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-injury-heavy.jpg"
+  },
+  "own-injury-coarse": {
+    "id": "own-injury-coarse",
+    "name": "Big wounds",
+    "family": "Who owns the matter",
+    "asks": "The same area wounded, in big discs that remove whole bodies.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-injury-coarse.jpg"
+  },
+  "own-shape": {
+    "id": "own-shape",
+    "name": "Inherited shape",
+    "family": "Shape and cells",
+    "asks": "If the shape of the growth kernel is heritable, does evolution change the shape of bodies?",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-shape.jpg"
+  },
+  "own-shape-far": {
+    "id": "own-shape-far",
+    "name": "Inherited shape (longer reach)",
+    "family": "Shape and cells",
+    "asks": "Heritable shape with a far ring, so a body can reach past the usual kernel.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-shape-far.jpg"
+  },
+  "own-cell": {
+    "id": "own-cell",
+    "name": "Declared cells",
+    "family": "Shape and cells",
+    "asks": "If a cell is declared (its own id, one mutation at birth), what evolves one level up?",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-cell.jpg"
+  },
+  "own-cell-wall": {
+    "id": "own-cell-wall",
+    "name": "Walled cells",
+    "family": "Shape and cells",
+    "asks": "Declared cells where taking another cell's matter is lossy, so a cell's matter is never simply absorbed.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-cell-wall.jpg"
+  },
+  "own-cell-injury": {
+    "id": "own-cell-injury",
+    "name": "Declared cells (wounded)",
+    "family": "Shape and cells",
+    "asks": "Declared cells under recurring wounds: a wound that cuts a body in two makes a daughter at the next pass.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-cell-injury.jpg"
+  },
+  "own-cell-wall-injury": {
+    "id": "own-cell-wall-injury",
+    "name": "Walled cells (wounded)",
+    "family": "Shape and cells",
+    "asks": "Declared cells with lossy taking and recurring wounds together.",
+    "traits": [
+      "Brighter toward the bottom",
+      "256 × 256 cells",
+      "The 12 searched founders"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/own-cell-wall-injury.jpg"
+  },
+  "wild-storm": {
+    "id": "wild-storm",
+    "name": "The storm",
+    "family": "Storms and the breeder",
+    "asks": "What happens when every lever is on at once?",
+    "traits": [
+      "A sun that wanders east, then west, turning back every 32,768 steps",
+      "A season every 4,000 steps",
+      "256 × 256 cells"
+    ],
+    "seed": 42,
+    "steps": 1200,
+    "image": "/og/worlds/wild-storm.jpg"
+  },
+  "wild-storm-w01": {
+    "id": "wild-storm-w01",
+    "name": "Storm (rare wounds)",
+    "family": "Storms and the breeder",
+    "asks": "The storm with a tenth of the wounds.",
+    "traits": [
+      "A sun that wanders east, then west, turning back every 32,768 steps",
+      "A season every 4,000 steps",
+      "256 × 256 cells"
+    ],
+    "seed": 42,
+    "steps": 1200,
+    "image": "/og/worlds/wild-storm-w01.jpg"
+  },
+  "wild-storm-w10": {
+    "id": "wild-storm-w10",
+    "name": "Storm (frequent wounds)",
+    "family": "Storms and the breeder",
+    "asks": "The storm with ten times the wounds.",
+    "traits": [
+      "A sun that wanders east, then west, turning back every 32,768 steps",
+      "A season every 4,000 steps",
+      "256 × 256 cells"
+    ],
+    "seed": 42,
+    "steps": 500,
+    "image": "/og/worlds/wild-storm-w10.jpg"
+  },
+  "wild-storm-meteor": {
+    "id": "wild-storm-meteor",
+    "name": "Storm (meteors)",
+    "family": "Storms and the breeder",
+    "asks": "The storm with meteors: rare big wounds that remove whole bodies.",
+    "traits": [
+      "A sun that wanders east, then west, turning back every 32,768 steps",
+      "A season every 4,000 steps",
+      "256 × 256 cells"
+    ],
+    "seed": 42,
+    "steps": 1200,
+    "image": "/og/worlds/wild-storm-meteor.jpg"
+  },
+  "wild-storm-m10": {
+    "id": "wild-storm-m10",
+    "name": "Storm (fast mutation)",
+    "family": "Storms and the breeder",
+    "asks": "The storm at ten times the mutation rate.",
+    "traits": [
+      "A sun that wanders east, then west, turning back every 32,768 steps",
+      "A season every 4,000 steps",
+      "256 × 256 cells"
+    ],
+    "seed": 42,
+    "steps": 1200,
+    "image": "/og/worlds/wild-storm-m10.jpg"
+  },
+  "wild-storm-3way": {
+    "id": "wild-storm-3way",
+    "name": "Storm (hand-built movers)",
+    "family": "Storms and the breeder",
+    "asks": "The storm founded by hand-built movers instead of the searched founders.",
+    "traits": [
+      "A sun that wanders east, then west, turning back every 32,768 steps",
+      "A season every 4,000 steps",
+      "256 × 256 cells"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/wild-storm-3way.jpg"
+  },
+  "wild-storm-large": {
+    "id": "wild-storm-large",
+    "name": "Storm (big jar)",
+    "family": "Storms and the breeder",
+    "asks": "The storm on the big world, with the sun at the same speed.",
+    "traits": [
+      "A sun that wanders east, then west, turning back every 65,536 steps",
+      "A season every 4,000 steps",
+      "512 × 512 cells"
+    ],
+    "seed": 42,
+    "steps": 1200,
+    "image": "/og/worlds/wild-storm-large.jpg"
+  },
+  "breeder": {
+    "id": "breeder",
+    "name": "The breeder",
+    "family": "Storms and the breeder",
+    "asks": "Can we breed ponds toward a trait we can see?",
+    "traits": [
+      "Even light everywhere",
+      "16 ponds of 64 × 64",
+      "One disc of the same searched founder in every pond"
+    ],
+    "seed": 42,
+    "steps": 3000,
+    "image": "/og/worlds/breeder.jpg"
+  }
+}

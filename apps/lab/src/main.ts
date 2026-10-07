@@ -149,6 +149,12 @@ const freshSeed = () => 1 + Math.floor(Math.random() * 9999);
   const linked = params.has("seed") && Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff;
   $<HTMLInputElement>("seed").value = String(linked ? seed : freshSeed());
 }
+// A link naming a world is served a copy of the lab titled for that world (deploy/Caddyfile); once another world is
+// planted, the tab names that one instead. The plain lab keeps its own title whatever is planted.
+const servedTitle = document.title;
+const servedWorld = byId(new URLSearchParams(location.search).get("world"))?.id ?? null;
+const titleFor = (presetId: string | null, name: string) =>
+  servedWorld === null || presetId === servedWorld ? servedTitle : `${name} · Cadence Garden`;
 const presetName = (id: string | null) => PRESETS.find((p) => p.id === id)?.name ?? (id ? "an opened world" : "");
 const showPresetDesc = () => describeWorld(byId(presetSel.value), $("preset-desc"));
 /**
@@ -1156,6 +1162,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       closeQuestion?.();
       $("stage-alert").hidden = true;
       $("world-heading").textContent = PRESETS.find((p) => p.id === m.manifest.presetId)?.name ?? "Opened world";
+      document.title = titleFor(m.manifest.presetId, $("world-heading").textContent);
       loadedPresetId = m.manifest.presetId;
       loadedSeed = m.manifest.seed;
       handHeld.clear();
