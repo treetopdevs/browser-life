@@ -35,7 +35,7 @@ test("lab status and history remain reachable on small screens", async ({ page }
 
 test("public information pages have readable content at narrow widths", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const path of ["/", "/how-it-works/", "/research/", "/about/", "/privacy/", "/participate/", "/status/"]) {
+  for (const path of ["/", "/worlds/", "/how-it-works/", "/research/", "/about/", "/privacy/", "/participate/", "/status/"]) {
     const response = await page.goto(path);
     expect(response?.status()).toBe(200);
     await expect(page.locator("main h1")).toBeVisible();

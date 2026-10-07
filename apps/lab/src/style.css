@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "./worlds.css";
 
 /*
  * The lab: a potting bench around one sealed jar. Controls on the left, the jar in the middle with its
@@ -115,7 +116,13 @@ select option { color: var(--text); font-weight: 400; }
 input[type="range"] { width: 100%; margin: 5px 0 0; accent-color: var(--sun-ink); }
 input[type="range"]:disabled { opacity: .45; }
 .range-field { margin-top: 12px; margin-bottom: 0; }
-.preset-desc { min-height: 0; }
+/* Under the Starting world select: the question the world asks, a few chips, and whether it is registered. */
+#btn-worlds { margin: -4px 0 12px; }
+.preset-about { display: grid; gap: 8px; margin: 0 0 12px; }
+.preset-about:empty { display: none; }
+.preset-about .world-asks { font-size: var(--t-small); }
+.preset-about .traits li { font-size: var(--t-micro); padding: 2px 7px; }
+.preset-about .preset-status { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
 /* The plant button says whether it would change anything. */
 #plant-note { margin: 8px 0 0; }
 #plant-note[hidden] { display: none; }
@@ -316,6 +323,24 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .lineage-open { margin-top: 12px; }
 .lineage-open[hidden] { display: none; }
 
+/* ---------- the world catalogue: a dialog over the bench ---------- */
+.worlds { width: min(1120px, 100vw - 32px); max-width: none; height: min(860px, 100dvh - 32px); max-height: none; margin: auto; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg); color: var(--text); flex-direction: column; overflow: hidden; }
+.worlds[open] { display: flex; }
+.worlds::backdrop { background: oklch(20% 0.02 80 / .45); }
+.worlds-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 22px 14px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.worlds-head h2 { margin: 0 0 4px; font-size: var(--t-title); line-height: 1.2; font-weight: 800; letter-spacing: -.02em; }
+.worlds-head h2:focus { outline: none; }
+.worlds-head .hint { max-width: 72ch; }
+.worlds-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 230px minmax(0, 1fr); }
+.worlds-nav { display: flex; flex-direction: column; gap: 2px; padding: 14px 12px; border-right: 1px solid var(--line); background: var(--surface); overflow-y: auto; scrollbar-color: var(--line) transparent; }
+.worlds-nav button { flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; white-space: normal; gap: 1px; padding: 8px 12px; background: transparent; border-color: transparent; color: var(--muted); font-weight: 600; }
+.worlds-nav button:hover { background: var(--hover); border-color: transparent; color: var(--text); }
+.worlds-nav button[aria-pressed="true"] { background: var(--sun); border-color: var(--sun); color: var(--accent-ink); font-weight: 700; }
+.worlds-nav button[aria-pressed="true"]:hover { background: color-mix(in oklch, var(--sun) 90%, var(--text)); }
+.worlds-nav button small { display: block; color: inherit; opacity: .78; font-size: var(--t-micro); font-weight: 500; line-height: 1.35; }
+.worlds-main { min-height: 0; overflow-y: auto; padding: 20px 22px 28px; scrollbar-color: var(--line) transparent; }
+.worlds .world-card button { min-height: 32px; padding: 5px 12px; font-size: var(--t-small); }
+
 /* ---------- lineage drawer: over the answers, the jar stays visible ---------- */
 .lineage-drawer {
   position: fixed; z-index: 20; top: 60px; right: 0; bottom: 0; width: min(660px, 100vw);
@@ -368,6 +393,13 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
   .stage { min-height: 680px; overflow: visible; align-self: start; position: sticky; top: 0; }
 }
 @media (max-width: 760px) {
+  .worlds { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
+  .worlds-head { padding: 14px 16px 12px; }
+  .worlds-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .worlds-nav { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 10px 12px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .worlds-nav button { flex: none; white-space: nowrap; }
+  .worlds-nav button small { display: none; }
+  .worlds-main { padding: 16px 16px 24px; }
   .lineage-drawer { top: 0; width: 100vw; border-left: 0; }
   body.lab-page { height: auto; min-height: 100dvh; overflow: visible; }
   .top { grid-template-columns: 1fr auto; gap: 0 12px; padding: 11px 14px 0; }

@@ -26,6 +26,7 @@ export default defineConfig({
     rollupOptions: { input: {
       home: r("./index.html"),
       lab: r("./lab/index.html"),
+      worlds: r("./worlds/index.html"),
       howItWorks: r("./how-it-works/index.html"),
       research: r("./research/index.html"),
       about: r("./about/index.html"),

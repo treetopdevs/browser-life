@@ -3,6 +3,8 @@ import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import type { CensusMsg, FromWorker, PondAwaitMsg, PondsMsg, ProbeMsg, StatsMsg, ToWorker } from "./protocol.ts";
 import { Series } from "./sparkline.ts";
 import { createLineagePanel } from "./lineage-panel.ts";
+import { FAMILIES, byId, familyOf } from "./worlds.ts";
+import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
 import "./theme.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -115,26 +117,36 @@ function setMode(m: GpuViewMode) {
 
 // ---------- presets ----------
 const presetSel = $<HTMLSelectElement>("preset");
-// Presets that share a family name ("Ownership: …", "Rotating planet (…)") are grouped under it; the rest lead the list.
+// The select groups worlds by the catalogue's families (worlds.ts), in its order; a world in no family lands last.
 {
-  const family = (name: string) => name.split(/:| \(/)[0].trim();
-  const size = new Map<string, number>();
-  for (const p of PRESETS) size.set(family(p.name), (size.get(family(p.name)) ?? 0) + 1);
-  const groups = new Map<string, HTMLOptGroupElement>();
-  for (const p of PRESETS) {
-    const f = (size.get(family(p.name)) ?? 0) >= 4 ? family(p.name) : "Starting worlds";
-    let g = groups.get(f);
-    if (!g) {
-      g = document.createElement("optgroup");
-      g.label = f;
-      groups.set(f, g);
-      presetSel.append(g);
+  const option = (p: { id: string; name: string }) => new Option(p.name, p.id);
+  for (const f of FAMILIES) {
+    const g = document.createElement("optgroup");
+    g.label = f.name;
+    for (const id of f.ids) {
+      const p = byId(id);
+      if (p) g.append(option(p));
     }
-    g.append(new Option(p.name, p.id));
+    presetSel.append(g);
+  }
+  const orphans = PRESETS.filter((p) => !familyOf(p.id));
+  if (orphans.length) {
+    const g = document.createElement("optgroup");
+    g.label = "Other worlds";
+    for (const p of orphans) g.append(option(p));
+    presetSel.append(g);
   }
 }
+// A link can choose the world and the seed (/lab/?world=<id>&seed=<n>); anything it names that does not exist is ignored.
+{
+  const params = new URLSearchParams(location.search);
+  const world = params.get("world");
+  if (world && byId(world)) presetSel.value = world;
+  const seed = Number(params.get("seed"));
+  if (params.has("seed") && Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff) $<HTMLInputElement>("seed").value = String(seed);
+}
 const presetName = (id: string | null) => PRESETS.find((p) => p.id === id)?.name ?? (id ? "an opened world" : "");
-const showPresetDesc = () => ($("preset-desc").textContent = PRESETS.find((p) => p.id === presetSel.value)?.description ?? "");
+const showPresetDesc = () => describeWorld(byId(presetSel.value), $("preset-desc"));
 /**
  * Choosing a starting world or a seed changes nothing until Plant is pressed: the button says which it would do,
  * lights up when the choice differs from the world on screen, and the note says what is on screen meanwhile.
@@ -154,6 +166,14 @@ function syncPlant() {
 presetSel.onchange = () => { showPresetDesc(); syncPlant(); };
 $<HTMLInputElement>("seed").oninput = syncPlant;
 showPresetDesc();
+// The catalogue: choosing there is choosing in the select, and Plant then says whether it would change anything.
+const worldPicker = createWorldPicker($<HTMLDialogElement>("worlds"), (id) => {
+  presetSel.value = id;
+  showPresetDesc();
+  syncPlant();
+  $("btn-new").focus();
+});
+$("btn-worlds").onclick = () => worldPicker.open({ chosen: presetSel.value, onScreen: loadedPresetId });
 /** Whether leaving this world now would lose steps or interventions that no checkpoint holds. */
 const unsaved = () => worldReady && (lastStep > cleanStep || touched || advanceAsked !== null);
 const unsavedText = () =>
@@ -507,8 +527,9 @@ function lesionAt(ev: PointerEvent) {
 
 // ---------- keyboard ----------
 window.addEventListener("keydown", (e) => {
-  // Leave focused controls and links to their native keyboard behavior.
+  // Leave focused controls and links to their native keyboard behavior, and the catalogue to its own keys while it is open.
   if (e.target !== document.body && e.target !== canvas) return;
+  if ($<HTMLDialogElement>("worlds").open) return;
   if (e.key === " ") {
     if (!worldReady) return;
     e.preventDefault();

@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "./worlds.css";
 
 /*
  * The garden: paper, one sun, and the world's own colours as the only other colour. Big friendly type, flat
@@ -146,6 +147,19 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -.03em; text-wrap: balance; }
 .invitation h2 { margin: 6px 0 8px; font-size: clamp(1.625rem, 2.6vw, 2.25rem); line-height: 1.1; }
 .invitation p { max-width: 56ch; margin: 0; }
 .invitation .button { flex-shrink: 0; }
+
+/* ---------- the worlds page: the catalogue, family by family ---------- */
+.worlds-jump { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 0; padding: 0; list-style: none; }
+.worlds-jump a { display: inline-flex; align-items: center; min-height: 36px; padding: 4px 14px; border: 1px solid var(--control-line); border-radius: 99px; text-decoration: none; color: var(--text); font-size: .875rem; font-weight: 600; }
+.worlds-jump a:hover { background: var(--raised); }
+.family { padding-block: 44px 52px; border-bottom: 1px solid var(--line); scroll-margin-top: 84px; }
+.family .family-head { max-width: 780px; margin-bottom: 26px; }
+.family .family-head h2 { font-size: clamp(1.625rem, 2.6vw, 2.25rem); line-height: 1.1; }
+.family .family-head p { font-size: 1rem; }
+.family .world-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.family .world-card { padding: 20px 20px 18px; }
+.family .world-card .button { min-height: 38px; padding: 6px 14px; font-size: .875rem; }
+.worlds-invitation { margin-top: 56px; }
 
 /* ---------- inner pages ---------- */
 .page-intro { padding-block: clamp(56px, 7vw, 84px) clamp(40px, 5vw, 60px); border-bottom: 1px solid var(--line); }

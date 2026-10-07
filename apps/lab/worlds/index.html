@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3f1ec" />
+    <meta name="description" content="Every starting world in the Browser Life lab: what each one asks, what makes it different, what to look for, and what has been seen so far." />
+    <title>The worlds · Browser Life</title>
+    <link rel="canonical" href="https://cadence.garden/worlds/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Browser Life home"><span class="brand-mark" aria-hidden="true"></span><span>Browser<span class="brand-light"> Life</span></span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/">Home</a><a href="/lab/">Lab</a><a href="/worlds/" aria-current="page">Worlds</a><a href="/how-it-works/">How it works</a><a href="/research/">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-intro shell">
+        <p class="eyebrow">The worlds · <span id="worlds-count">many</span> jars, <span id="worlds-questions">six</span> questions</p>
+        <h1>Every jar, and what it asks.</h1>
+        <p class="lede">Every world in the lab shares one chemistry. What changes between them is how the light falls, who is planted, how the jar is divided, and in the sandboxes a rule or two. Each change is a guess about what evolution needs to get going. This page says what each world is, what it is for, and what we have seen in it so far, kept apart from what we hope.</p>
+        <ul class="worlds-jump" id="worlds-jump" aria-label="Kinds of world"></ul>
+      </section>
+      <div id="worlds-root"></div>
+      <section class="shell invitation worlds-invitation"><div><p class="eyebrow">Choose one</p><h2>Then plant it, and change something.</h2><p>In the lab the same list sits under Plant a world, with a Browse button that opens this catalogue beside the jar. Same world, same seed number: the same history, every time.</p></div><a class="button light" href="/lab/">Open the lab →</a></section>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Browser Life</strong><br />A garden of tiny sealed worlds.</p>
+        <nav
+          aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/worlds-page.ts"></script>
+  </body>
+</html>

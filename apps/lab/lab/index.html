@@ -19,6 +19,7 @@
       </div>
       <nav class="site-nav" aria-label="Main navigation">
         <a href="/lab/" aria-current="page">Lab</a>
+        <a href="/worlds/">Worlds</a>
         <a href="/research/">Journal</a>
       </nav>
       <div class="header-status">
@@ -90,7 +91,8 @@
         <section class="rail-section" aria-labelledby="setup-heading">
           <h2 id="setup-heading">Plant a world</h2>
           <label class="field"><span>Starting world</span><select id="preset"></select></label>
-          <p class="hint preset-desc" id="preset-desc"></p>
+          <button id="btn-worlds" class="full" type="button" aria-haspopup="dialog" aria-controls="worlds">Browse all worlds</button>
+          <div class="preset-about" id="preset-desc"></div>
           <label class="field"><span>Seed number</span><input id="seed" type="number" min="0" step="1" value="1" /></label>
           <p class="hint">Same starting world and seed number: the same history, every time. Anything you do by hand is extra, and logged.</p>
           <button id="btn-new" class="full" type="button">Plant it again</button>
@@ -170,6 +172,16 @@
         <div class="drawer-body" id="lineage-body"></div>
       </aside>
     </main>
+    <dialog class="worlds" id="worlds" aria-labelledby="worlds-heading">
+      <div class="worlds-head">
+        <div><h2 id="worlds-heading" tabindex="-1">Choose a world</h2><p class="hint">Every jar shares one chemistry. What changes is how the light falls, who is planted, how the jar is divided, and in the sandboxes a rule or two. Choose one here, then press Plant.</p></div>
+        <button class="worlds-close quiet" type="button">Close</button>
+      </div>
+      <div class="worlds-body">
+        <nav class="worlds-nav" aria-label="Kinds of world"></nav>
+        <div class="worlds-main"></div>
+      </div>
+    </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
