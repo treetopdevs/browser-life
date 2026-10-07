@@ -122,6 +122,9 @@ let handCycle = -1;
 
 let lastStatsAt = 0;
 let lastCensusAt = 0;
+/** The frame loop's last session publish. Step-only updates wait for this; a change in what would be lost does not. */
+let lastSessionAt = 0;
+let sessionStepDue = false;
 let statsBusy = false;
 let censusBusy = false;
 let rateStep = 0;
@@ -367,7 +370,32 @@ async function drawFrame(w: World) {
     lastCensusAt = now;
     void sendCensus(w);
   }
-  if (current(w) && session.noteStep(w.sim.step)) publishSession();
+  if (current(w)) publishFrameStep(now);
+}
+
+/** What a replace would lose, apart from the step number written into the sentence. */
+function lossShape(view: ReturnType<typeof session.view>): string {
+  if (!view.loss || !view.world) return `none:${view.hand}`;
+  const which = view.world.step <= view.loss.coveredStep ? "hand" : "after";
+  return `${which}:${view.hand}:${view.loss.coveredStep}`;
+}
+
+/**
+ * The loss sentence names the step, and a playing world advances every frame. Publish at once when what would
+ * be lost changes, and otherwise on the same cadence as the stats, so the painted step catches up after a pause.
+ */
+function publishFrameStep(now: number) {
+  const step = world?.sim.step;
+  if (step === undefined) return;
+  const before = session.view();
+  const stepped = session.noteStep(step);
+  if (!stepped && !sessionStepDue) return;
+  const shapeChanged = lossShape(before) !== lossShape(session.view());
+  if (stepped) sessionStepDue = true;
+  if (!shapeChanged && now - lastSessionAt <= 400) return;
+  sessionStepDue = false;
+  lastSessionAt = now;
+  publishSession();
 }
 
 const current = (w: World) => world === w && w.gen === generation;
@@ -682,7 +710,8 @@ async function jump(step: number, key: string | null) {
   const history = [...w.manifest.interventions, ...w.execution.pendingReplay];
   const known = Math.max(present.step, w.execution.replayHorizon - 1);
   const plan = replayPlan(history, target.interventions, step, known);
-  await restore(target.file);
+  // The present Checkpoint is already written. A jump never asks, so a held restore must not leave the replay queued on the old world.
+  await restore(target.file, "discard");
   const now = world!;
   now.execution.queueReplay(plan.missed.filter((iv) => iv.step >= now.sim.step), plan.until);
   // Entries logged at the restored step itself are due at once: apply them before any probe, lineage
