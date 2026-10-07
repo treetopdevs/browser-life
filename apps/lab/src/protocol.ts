@@ -38,6 +38,48 @@ export interface CheckpointMeta {
   auto?: boolean;
 }
 
+/** Save the present first, or replace the Lab world and drop what a Checkpoint does not cover. */
+export type Keep = "save" | "discard";
+
+export type SessionCommand = "save" | "plant" | "restore" | "jump" | "deleteCheckpoint" | "export" | "import";
+
+/** The latest Replay twin check. `handAtEnd` means a hand edit was logged at `to`. */
+export interface ReplayReading {
+  ok: boolean;
+  from: number;
+  to: number;
+  live: string;
+  twin: string;
+  handAtEnd: boolean;
+}
+
+/**
+ * The Lab session: which Checkpoints cover the Lab world on screen, what replacing it would lose,
+ * and whether the latest Replay twin reading still describes it. The page paints this and does not keep another.
+ */
+export interface SessionView {
+  /** Increments when a Lab world is adopted. */
+  epoch: number;
+  world: null | { runId: string; presetId: string; seed: number; step: number; ruleVersion: number };
+  /** Null when a Checkpoint covers the settled step and every hand edit. */
+  loss: null | { text: string; hand: number; step: number; coveredStep: number };
+  /** Hand edits since this Lab world was adopted that no manual Checkpoint holds. */
+  hand: number;
+  checkpoints: CheckpointMeta[];
+  /** A waiting pond cycle refused this command. The Lab world is usable. */
+  refusal: null | { command: SessionCommand; message: string };
+  failure: null | string;
+  /** plant, restore, or import left this Lab world in place because `loss` was set and `keep` was omitted. */
+  held: null | "plant" | "restore" | "import";
+  /** A jump wrote this manual Checkpoint of the pre-jump Lab world. */
+  keptPresent: null | { file: string; step: number };
+  replay: ReplayReading | null;
+  /** A Replay twin check is in flight. The previous reading is cleared. */
+  checking: boolean;
+  /** A pond cycle is waiting. Told by Lab execution; the session does not decide it. */
+  waiting: null | { cycle: number; step: number };
+}
+
 export interface StatsMsg {
   type: "stats";
   step: number;
@@ -133,7 +175,7 @@ export interface LineageMsg {
 
 export type ToWorker =
   | { type: "init"; canvas: OffscreenCanvas; width: number; height: number }
-  | { type: "load"; presetId: string; seed: number; overrides?: Partial<WorldConfig> }
+  | { type: "load"; presetId: string; seed: number; overrides?: Partial<WorldConfig>; keep?: Keep }
   | { type: "play"; playing: boolean }
   | { type: "speed"; stepsPerFrame: number }
   | { type: "step"; count: number }
@@ -153,10 +195,10 @@ export type ToWorker =
   | { type: "pick"; world: number; step: number; donors: number[] | null }
   | { type: "save" }
   | { type: "listCheckpoints" }
-  | { type: "restore"; file: string }
+  | { type: "restore"; file: string; keep?: Keep }
   | { type: "deleteCheckpoint"; file: string }
   | { type: "export" }
-  | { type: "import"; bytes: ArrayBuffer; name: string }
+  | { type: "import"; bytes: ArrayBuffer; name: string; keep?: Keep }
   | { type: "verify"; steps: number }
   | { type: "lineage"; key: string }
   /** Draw this lineage's cells highlighted and dim the rest; null clears. */
@@ -175,9 +217,7 @@ export type FromWorker =
   | PondAwaitMsg
   | LineageMsg
   | { type: "highlight"; key: string | null }
-  | { type: "checkpoints"; list: CheckpointMeta[] }
-  /** A save the page asked for ("save") is written: its file and the step it holds. Automatic checkpoints do not send it. */
-  | { type: "saved"; file: string; step: number }
+  | { type: "session"; view: SessionView }
   | { type: "exported"; bytes: ArrayBuffer; name: string }
   | { type: "notice"; message: string }
   /**

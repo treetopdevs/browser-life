@@ -28,7 +28,8 @@ import { decodeArtifact, pondContinuationError, type ObserverSettings, type Obse
 import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
 import { LabExecution, PondWaitingError, huntArmError } from "./execution.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
-import type { CensusMsg, FromWorker, RunManifest, ToWorker } from "./protocol.ts";
+import { createLabSession } from "./session.ts";
+import type { CensusMsg, FromWorker, Keep, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
 import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
 
 /**
@@ -49,6 +50,20 @@ const AUTO_EVERY = 20_000;
 const AUTO_KEEP = 6;
 
 const post = (m: FromWorker, transfer: Transferable[] = []) => (self as DedicatedWorkerGlobalScope).postMessage(m, transfer);
+
+const session = createLabSession();
+
+function publishSession() {
+  const view = session.view();
+  session.consume();
+  post({ type: "session", view });
+}
+
+const sessionCommand = (request: ToWorker["type"]): SessionCommand | null => {
+  if (request === "load") return "plant";
+  if (request === "save" || request === "restore" || request === "jump" || request === "deleteCheckpoint" || request === "export" || request === "import") return request;
+  return null;
+};
 
 interface World {
   gen: number;
@@ -190,10 +205,18 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         }
       },
       // Every cycle, unthrottled: one per pondPeriod steps.
-      onPondCycle: (cycle, step) => post({ type: "ponds", step, cycle: cycle.b, arm: sim.cfg.pondArm!, donors: cycle.donors, hand: step === handCycle }),
+      onPondCycle: (cycle, step) => {
+        session.noteWaiting(null);
+        publishSession();
+        post({ type: "ponds", step, cycle: cycle.b, arm: sim.cfg.pondArm!, donors: cycle.donors, hand: step === handCycle });
+      },
       onPondAwait: (s) => {
         const w = world;
-        if (w && w.execution === execution) post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms });
+        if (w && w.execution === execution) {
+          session.noteWaiting({ cycle: s.cycle, step: s.step });
+          publishSession();
+          post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms });
+        }
       },
       onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
       // A jump's replay re-applied a logged intervention: it re-enters this run's log, and a feed moves
@@ -233,7 +256,10 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
   rect = Renderer.fullView(sim);
   rateStep = sim.step;
   rateAt = performance.now();
+  session.adopt({ runId: manifest.runId, presetId: manifest.presetId, seed: manifest.seed, step: sim.step, ruleVersion: manifest.ruleVersion });
   post({ type: "loaded", manifest, step: sim.step });
+  session.noteShelf(await listCheckpoints());
+  publishSession();
 }
 
 function newManifest(presetId: string, seed: number, state: WorldState, init: RunManifest["init"], settings: ObserverSettings): RunManifest {
@@ -253,7 +279,8 @@ function newManifest(presetId: string, seed: number, state: WorldState, init: Ru
   };
 }
 
-async function load(presetId: string, seed: number, overrides = {}) {
+async function load(presetId: string, seed: number, overrides = {}, keep?: Keep) {
+  if (!(await gateReplace("plant", keep))) return;
   const preset = PRESETS.find((p) => p.id === presetId);
   if (!preset) throw new Error(`unknown preset "${presetId}"`);
   const cfg = presetConfig(preset, seed, overrides);
@@ -317,7 +344,11 @@ async function drawFrame(w: World) {
   if (settled && !autoQueued && !w.execution.failure && !w.execution.awaiting && w.sim.step - w.lastCheckpoint >= AUTO_EVERY) {
     autoQueued = true;
     exclusive(() => autoSave(w))
-      .catch((e) => current(w) && post({ type: "error", message: `automatic checkpoint: ${e instanceof Error ? e.message : e}` }))
+      .catch((e) => {
+        if (!current(w)) return;
+        if (session.noteStep(w.sim.step)) publishSession();
+        post({ type: "error", message: `automatic checkpoint: ${e instanceof Error ? e.message : e}` });
+      })
       .finally(() => (autoQueued = false));
   }
   const now = performance.now();
@@ -336,6 +367,7 @@ async function drawFrame(w: World) {
     lastCensusAt = now;
     void sendCensus(w);
   }
+  if (current(w) && session.noteStep(w.sim.step)) publishSession();
 }
 
 const current = (w: World) => world === w && w.gen === generation;
@@ -466,7 +498,37 @@ async function saveCheckpoint(w: World, auto: boolean) {
 function waitingForDonors(w: World, request: ToWorker["type"], what: string): boolean {
   const waiting = w.execution.awaiting;
   if (!waiting) return false;
-  post({ type: "refused", request, message: `Pond cycle ${waiting.cycle} is waiting for its donors: choose them, then ${what}` });
+  const message = `Pond cycle ${waiting.cycle} is waiting for its donors: choose them, then ${what}`;
+  const command = sessionCommand(request);
+  if (command) session.noteRefusal(command, message);
+  publishSession();
+  post({ type: "refused", request, message });
+  return true;
+}
+
+/** Records a manual Checkpoint in the Lab session and publishes the account. */
+async function accountManual(w: World, file: string) {
+  session.noteManual(file);
+  session.noteStep(w.sim.step);
+  session.noteShelf(await listCheckpoints());
+  publishSession();
+}
+
+/**
+ * Plant, restore, or import. False leaves the Lab world in place: either uncovered work was not
+ * acknowledged, or the save that would have covered it was refused.
+ */
+async function gateReplace(command: "plant" | "restore" | "import", keep?: Keep): Promise<boolean> {
+  const gate = session.replace(command, keep);
+  if (gate === "held") {
+    publishSession();
+    return false;
+  }
+  if (gate !== "save-then") return true;
+  const w = world;
+  if (!w || waitingForDonors(w, command === "plant" ? "load" : command, command)) return false;
+  const saved = await saveCheckpoint(w, false);
+  await accountManual(w, saved.file);
   return true;
 }
 
@@ -474,11 +536,9 @@ async function save() {
   const w = world;
   if (!w || waitingForDonors(w, "save", "save")) return;
   const saved = await saveCheckpoint(w, false);
-  // One message: a second notice would replace the first before it could be read.
   const settled = saved.advanced ? `The world advanced ${saved.advanced} steps to its census at t=${saved.step} first. ` : "";
   post({ type: "notice", message: `${settled}Saved ${saved.file} (${(saved.bytes / 1e6).toFixed(1)} MB)` });
-  post({ type: "saved", file: saved.file, step: saved.step });
-  post({ type: "checkpoints", list: await listCheckpoints() });
+  await accountManual(w, saved.file);
 }
 
 /** An automatic checkpoint, then the run's oldest automatic ones beyond AUTO_KEEP are removed. */
@@ -492,7 +552,9 @@ async function autoSave(w: World) {
     m.checkpoints.splice(m.checkpoints.indexOf(c), 1);
   }
   await writeFile(`${m.runId}.run.json`, new TextEncoder().encode(JSON.stringify(m)));
-  post({ type: "checkpoints", list: await listCheckpoints() });
+  session.noteStep(w.sim.step);
+  session.noteShelf(await listCheckpoints());
+  publishSession();
 }
 
 /** A branch's id: derived from the original so it stays traceable, but never collides with it. */
@@ -500,7 +562,8 @@ function forkRunId(runId: string): string {
   return `${runId}-b${Date.now().toString(36)}`;
 }
 
-async function restore(file: string) {
+async function restore(file: string, keep?: Keep) {
+  if (!(await gateReplace("restore", keep))) return;
   const meta = (await listCheckpoints()).find((c) => c.file === file);
   if (!meta) throw new Error(`unknown checkpoint ${file}`);
   const { state, observer } = decodeArtifact(await readFile(file));
@@ -575,6 +638,7 @@ async function inspectLineage(key: string, ticket: number) {
   if (!w || ticket !== lineageTicket || waitingForDonors(w, "lineage", "inspect the lineage")) return;
   parseKey(key);
   const { state, advanced } = await w.execution.checkpoint();
+  if (session.noteStep(w.sim.step)) publishSession();
   if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
   const c = census({ cfg: state.cfg, step: state.step, cells: state.cells, genomeHead: state.genome });
   const ancestry = lineageAncestry({
@@ -608,6 +672,8 @@ async function jump(step: number, key: string | null) {
   const target = jumpTarget(w.manifest.checkpoints, await filesOnDisk(), step);
   if (!target) throw new Error(`no checkpoint of this run at or before step ${step}`);
   const present = await saveCheckpoint(w, false);
+  session.noteManual(present.file);
+  session.noteShelf(await listCheckpoints());
   // Everything this run logged that the target checkpoint has not seen and that happened before `step`, and a
   // pick at `step` itself: the pond cycle is part of arriving at its boundary, as it is in a world that chooses
   // its own donors, so the world reached there is the one that was bred. The history this log covers ends at
@@ -627,8 +693,9 @@ async function jump(step: number, key: string | null) {
   now.lineage.highlight = key ? parseKey(key) : null;
   post({ type: "highlight", key });
   const left = plan.dropped ? `; ${plan.dropped} later logged intervention${plan.dropped === 1 ? " stays" : "s stay"} with the saved present` : "";
+  session.noteKeptPresent(present.file, present.step);
+  publishSession();
   post({ type: "notice", message: `Saved the present (t=${present.step}); restored t=${target.step} and advancing to t=${step}${left}` });
-  post({ type: "checkpoints", list: await listCheckpoints() });
 }
 
 async function exportRun() {
@@ -636,6 +703,7 @@ async function exportRun() {
   if (!w || waitingForDonors(w, "export", "export")) return;
   const { state, observer, advanced } = await w.execution.checkpoint();
   if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
+  if (session.noteStep(w.sim.step)) publishSession();
   const bytes = encodeCheckpoint(state, observer);
   post({ type: "exported", bytes: bytes.buffer as ArrayBuffer, name: `${w.manifest.runId}-t${state.step}.blck` }, [bytes.buffer as ArrayBuffer]);
 }
@@ -644,7 +712,13 @@ async function exportRun() {
 async function verify(steps: number) {
   const w = world;
   if (!w || !device) return;
+  if (waitingForDonors(w, "verify", "verify")) return;
+  session.beginCheck();
+  publishSession();
   const { from, liveHash: a, twinHash: b } = await w.execution.verify(steps, (state) => GpuSim.create(device!, state));
+  session.noteReplay({ ok: a === b, from, to: from + steps, live: a, twin: b });
+  session.noteStep(w.sim.step);
+  publishSession();
   post({ type: "verify", ok: a === b, detail: `${steps} steps from t=${from}: ${a}${a === b ? " = " : " ≠ "}${b}`, from, steps, live: a, twin: b });
 }
 
@@ -663,6 +737,8 @@ async function lesion(x: number, y: number, r: number) {
   const step = w.sim.step;
   const eff = w.sim.lesion(cx, cy, r);
   w.manifest.interventions.push({ step, kind: "lesion", x: cx, y: cy, r: eff });
+  session.noteHand(step);
+  publishSession();
   forkReplay(w);
 }
 
@@ -699,6 +775,8 @@ async function feed(x: number, y: number, r: number, amount: number) {
   bookFeed(w, res.matter, res.energy);
   w.execution.recordFeed(res.matter);
   w.manifest.interventions.push({ step, kind: "feed", x: cx, y: cy, r: res.radius, amount: asked, matter: res.matter });
+  session.noteHand(step);
+  publishSession();
   // Only a feed that happened forks a replay in progress: a refused one changes nothing.
   forkReplay(w);
 }
@@ -743,7 +821,18 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
   const m = ev.data;
   const fail = (e: unknown) => {
     // A request refused because a pond cycle waits for donors (for instance a save that settled onto the boundary) is no failure.
-    if (e instanceof PondWaitingError && !world?.execution.failure) return post({ type: "refused", request: m.type, message: e.message });
+    if (world) session.noteStep(world.sim.step);
+    if (e instanceof PondWaitingError && !world?.execution.failure) {
+      const command = sessionCommand(m.type);
+      if (command) session.noteRefusal(command, e.message);
+      if (m.type === "verify") session.cancelCheck();
+      publishSession();
+      return post({ type: "refused", request: m.type, message: e.message });
+    }
+    if (m.type === "verify") session.cancelCheck();
+    const command = sessionCommand(m.type);
+    if (command) session.noteFailure(e instanceof Error ? e.message : String(e));
+    if (command || m.type === "verify") publishSession();
     if (world?.execution.failure) { playing = false; pendingSteps = 0; }
     post({ type: "error", message: world?.execution.failure ?? (e instanceof Error ? e.message : String(e)) });
   };
@@ -785,7 +874,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
   exclusive(async () => {
     switch (m.type) {
       case "load":
-        return load(m.presetId, m.seed, m.overrides);
+        return load(m.presetId, m.seed, m.overrides, m.keep);
       case "lesion":
         return lesion(m.x, m.y, m.r);
       case "feed":
@@ -799,15 +888,18 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       case "save":
         return save();
       case "listCheckpoints":
-        return post({ type: "checkpoints", list: await listCheckpoints() });
+        session.noteShelf(await listCheckpoints());
+        return publishSession();
       case "restore":
-        return restore(m.file);
+        return restore(m.file, m.keep);
       case "deleteCheckpoint":
         await forgetCheckpoint(m.file);
-        return post({ type: "checkpoints", list: await listCheckpoints() });
+        session.noteShelf(await listCheckpoints());
+        return publishSession();
       case "export":
         return exportRun();
       case "import": {
+        if (!(await gateReplace("import", m.keep))) return;
         const { state, observer } = decodeArtifact(new Uint8Array(m.bytes));
         await adopt(state, importedManifest(state, m.name.replace(/\.blck$/, ""), observer.settings), observer, freshLineage(state, "imported state"));
         return post({ type: "notice", message: `Imported ${m.name} at step ${state.step}` });

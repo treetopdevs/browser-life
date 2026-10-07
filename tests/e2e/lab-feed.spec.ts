@@ -53,14 +53,14 @@ test("lab worker feeds and drains exactly, logs it, keeps the ledger exact, and 
 
       // A checkpoint after two feeds; a third feed; then back to the checkpoint.
       send({ type: "save" });
-      const saved = await wait("checkpoints", (m) => m.list.length > 0);
+      const saved = await wait("session", (m) => m.view.checkpoints.length > 0);
       send({ type: "feed", x: 50, y: 20, r: 4, amount: 5 });
       const s3 = await stats(3);
       send({ type: "step", count: 200 });
       const later = await wait("stats", (m) => m.step === 300 && m.feeds === 3);
       send({ type: "verify", steps: 200 });
       const replay = await wait("verify");
-      send({ type: "restore", file: saved.list[0].file });
+      send({ type: "restore", file: saved.view.checkpoints[0].file, keep: "discard" });
       await wait("loaded");
       const restored = await stats(2);
 
@@ -72,7 +72,7 @@ test("lab worker feeds and drains exactly, logs it, keeps the ledger exact, and 
       errors = [];
       send({ type: "step", count: 100 });
       const afterRefusal = await wait("stats", (m) => m.step === 200);
-      return { before, afterFeed, afterDrain, s0, s1, s2, s3, later, replay, restored, refusal, afterRefusal, saved: saved.list.map((c) => c.step) };
+      return { before, afterFeed, afterDrain, s0, s1, s2, s3, later, replay, restored, refusal, afterRefusal, saved: saved.view.checkpoints.map((c) => c.step) };
     } finally {
       worker.terminate();
     }
@@ -189,7 +189,7 @@ test("a jump back re-applies the logged feeds and lesions, and an exported fed w
       await wait("stats", (m) => m.step === 100);
       // A checkpoint that has seen no intervention, then a feed at the same step, and two more mid-interval.
       send({ type: "save" });
-      await wait("checkpoints", (m) => m.list.some((c) => c.step === 100));
+      await wait("session", (m) => m.view.checkpoints.some((c) => c.step === 100));
       send({ type: "feed", x: 20, y: 12, r: 6, amount: 24 });
       await wait("stats", (m) => m.feeds === 1);
       send({ type: "step", count: 50 });
@@ -221,7 +221,7 @@ test("a jump back re-applies the logged feeds and lesions, and an exported fed w
 
       // The exported fed world, imported as a file with no manifest: it still carries what it was fed.
       const copy = liveBytes.slice(0);
-      send({ type: "import", bytes: copy, name: "fed.blck" }, [copy]);
+      send({ type: "import", bytes: copy, name: "fed.blck", keep: "discard" }, [copy]);
       await wait("loaded");
       const imported = await wait("stats", (m) => m.step === 300);
       return {

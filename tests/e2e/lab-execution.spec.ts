@@ -37,7 +37,7 @@ test("lab worker settles queued saves, replays migration, and clears steps on ad
       // Both arrive together: export must wait for save's settlement/migration.
       send({ type: "save" });
       send({ type: "export" });
-      const saved = await wait("checkpoints", (m) => m.list.length > 0);
+      const saved = await wait("session", (m) => m.view.checkpoints.length > 0);
       const first = await wait("exported");
       send({ type: "verify", steps: 400 });
       const replay = await wait("verify");
@@ -46,7 +46,7 @@ test("lab worker settles queued saves, replays migration, and clears steps on ad
 
       // Queued requests for the old world cannot advance the new world.
       send({ type: "step", count: 100_000 });
-      send({ type: "load", presetId: "spots", seed: 20, overrides });
+      send({ type: "load", presetId: "spots", seed: 20, overrides, keep: "discard" });
       const loaded = await wait("loaded");
       send({ type: "export" });
       const fresh = await wait("exported");
@@ -65,10 +65,10 @@ test("lab worker settles queued saves, replays migration, and clears steps on ad
       send({ type: "play", playing: false });
       send({ type: "save" });
       send({ type: "export" });
-      await wait("checkpoints", (m) => m.list.some((c) => c.step > 600));
+      await wait("session", (m) => m.view.checkpoints.some((c) => c.step > 600));
       const playback = await wait("exported");
       return {
-        adapter: ready.adapter, checkpointSteps: saved.list.map((c) => c.step),
+        adapter: ready.adapter, checkpointSteps: saved.view.checkpoints.map((c) => c.step),
         replay, restoredReplay, loadedStep: loaded.step, importedStep: imported.step,
         playback: Array.from(new Uint8Array(playback.bytes)),
         first: Array.from(new Uint8Array(first.bytes)), continued: Array.from(new Uint8Array(continued.bytes)),

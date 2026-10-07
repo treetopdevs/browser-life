@@ -96,7 +96,7 @@ test("lab worker runs the runner's pond cycle, replays, restores, plays and resu
       // A mid-period census: save and export there, then run on to cycle 4.
       send({ type: "save" });
       send({ type: "export" });
-      const saved = await wait("checkpoints", (m) => m.list.some((c) => c.step === 2500));
+      const saved = await wait("session", (m) => m.view.checkpoints.some((c) => c.step === 2500));
       const mid = await wait("exported");
       send({ type: "step", count: 1500 });
       await wait("stats", (m) => m.step === 4000);
@@ -106,14 +106,14 @@ test("lab worker runs the runner's pond cycle, replays, restores, plays and resu
 
       // Importing the pre-cycle artifact is refused, and the world at t=4000 stays loaded.
       const pre = Uint8Array.from(atob(await preCycle(toBase64(continuous.bytes))), (c) => c.charCodeAt(0)).buffer;
-      send({ type: "import", bytes: pre, name: "pre-cycle.blck" }, [pre]);
+      send({ type: "import", bytes: pre, name: "pre-cycle.blck", keep: "discard" }, [pre]);
       const guard = await refused();
       send({ type: "export" });
       const kept = await wait("exported");
 
       // The mid-period export, imported and run to t=4000.
       const midBytes = mid.bytes.slice(0);
-      send({ type: "import", bytes: midBytes, name: mid.name }, [midBytes]);
+      send({ type: "import", bytes: midBytes, name: mid.name, keep: "discard" }, [midBytes]);
       const imported = await wait("loaded");
       // Statistics queued before adoption belong to the replaced world (also at t=4000).
       take("stats");
@@ -125,8 +125,8 @@ test("lab worker runs the runner's pond cycle, replays, restores, plays and resu
 
       // The saved checkpoint at t=2500, restored from storage (not imported): the pond observer comes back with it, and
       // stepping on across cycles 3 and 4 gives the continuous run's artifact byte for byte.
-      const savedFile = saved.list.find((c) => c.step === 2500)!.file;
-      send({ type: "restore", file: savedFile });
+      const savedFile = saved.view.checkpoints.find((c) => c.step === 2500)!.file;
+      send({ type: "restore", file: savedFile, keep: "discard" });
       const restored = await wait("loaded");
       take("stats");
       send({ type: "step", count: 1500 });
@@ -138,7 +138,7 @@ test("lab worker runs the runner's pond cycle, replays, restores, plays and resu
       // The same restore, run with play instead of step: 500 steps a frame from t=2500, paused once past cycle 4. The
       // export advances to the next census, so its step is read from the artifact's name, and a step run from the same
       // restore to that step must give the same artifact.
-      send({ type: "restore", file: savedFile });
+      send({ type: "restore", file: savedFile, keep: "discard" });
       await wait("loaded");
       take("stats");
       take("ponds");
@@ -150,7 +150,7 @@ test("lab worker runs the runner's pond cycle, replays, restores, plays and resu
       const played = await wait("exported");
       const playedCycles = take("ponds");
       const playedStep = Number(/-t(\d+)\.blck$/.exec(played.name)![1]);
-      send({ type: "restore", file: savedFile });
+      send({ type: "restore", file: savedFile, keep: "discard" });
       await wait("loaded");
       take("stats");
       send({ type: "step", count: playedStep - 2500 });
@@ -159,13 +159,13 @@ test("lab worker runs the runner's pond cycle, replays, restores, plays and resu
       const stepped = await wait("exported");
 
       // An unknown preset is refused without falling back to another one.
-      send({ type: "load", presetId: "no-such-preset", seed: 1 });
+      send({ type: "load", presetId: "no-such-preset", seed: 1, keep: "discard" });
       const unknown = await refused();
       send({ type: "export" });
       const afterUnknown = await wait("exported");
       return {
         adapter: ready.adapter, loadedStep: loaded.step, importedStep: imported.step, replay,
-        checkpointSteps: saved.list.map((c) => c.step),
+        checkpointSteps: saved.view.checkpoints.map((c) => c.step),
         firstCycle, cycles, resumedCycles, guard, unknown,
         restoredStep: restored.step, restoredCycles, restoredSame: same(restoredExport.bytes, continuous.bytes),
         playedStep, playedCycles, playedSteppedSame: same(played.bytes, stepped.bytes), played: toBase64(played.bytes),
