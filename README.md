@@ -1,4 +1,4 @@
-# browser-life
+# Cadence Garden (browser-life)
 
 An open-ended artificial-life ecology that runs in the browser on WebGPU. It is closed in matter, open in energy, and uses exact integer physics. Individuals, reproduction, heredity and ecological roles are *inferred* from local rules, never declared. See [`docs/plan.md`](docs/plan.md) for the research goal and [`docs/rules.md`](docs/rules.md) for the rules and the arithmetic-bounds argument.
 

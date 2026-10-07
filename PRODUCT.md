@@ -10,7 +10,7 @@ Researchers running reproducible artificial-life experiments in the browser are 
 
 ## Product Purpose
 
-Browser Life is a browser-hosted research lab for an open-ended artificial-life ecology. It lets researchers interact with simulations governed by exact integer physics, inspect emerging behavior, and retain evidence through metrics, checkpoints, and replay checks. Success means a researcher can run an experiment, understand what happened, and distinguish observation from a verified result.
+Cadence Garden is a browser-hosted research lab for an open-ended artificial-life ecology. It lets researchers interact with simulations governed by exact integer physics, inspect emerging behavior, and retain evidence through metrics, checkpoints, and replay checks. Success means a researcher can run an experiment, understand what happened, and distinguish observation from a verified result.
 
 ## Brand Personality
 

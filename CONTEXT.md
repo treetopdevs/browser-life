@@ -1,4 +1,4 @@
-# Browser Life
+# Cadence Garden
 
 An artificial-life ecology whose individuals and histories are inferred from local rules.
 

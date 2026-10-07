@@ -60,15 +60,8 @@ button.full { width: 100%; }
   background: var(--surface); border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
-.mark {
-  position: relative; flex: none; width: 26px; height: 26px;
-  background: radial-gradient(circle at 26% 29%, var(--life) 0 2px, transparent 2.5px),
-              radial-gradient(circle at 68% 24%, var(--life) 0 3px, transparent 3.5px),
-              radial-gradient(circle at 50% 57%, var(--life) 0 2.5px, transparent 3px),
-              radial-gradient(circle at 20% 76%, var(--life) 0 1.5px, transparent 2px),
-              radial-gradient(circle at 77% 77%, var(--life) 0 2px, transparent 2.5px);
-}
 .brand-name { display: block; color: var(--text); text-decoration: none; font-size: var(--t-lead); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
+.brand-name .brand-light { font-weight: 500; color: var(--muted); }
 .brand-subtitle { display: block; color: var(--muted); font-size: var(--t-micro); }
 .site-nav { display: flex; gap: 2px; align-self: stretch; }
 .site-nav a {

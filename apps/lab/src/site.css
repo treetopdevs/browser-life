@@ -27,14 +27,6 @@ button { cursor: pointer; }
 .header-inner { display: flex; align-items: center; gap: 26px; min-height: 64px; }
 .site-brand { display: inline-flex; align-items: center; gap: 10px; flex: none; white-space: nowrap; text-decoration: none; font-size: 1.0625rem; font-weight: 800; letter-spacing: -.02em; }
 .brand-light { font-weight: 500; color: var(--muted); }
-.brand-mark {
-  width: 26px; height: 26px; flex: none;
-  background: radial-gradient(circle at 26% 29%, var(--life) 0 2px, transparent 2.5px),
-              radial-gradient(circle at 68% 24%, var(--life) 0 3px, transparent 3.5px),
-              radial-gradient(circle at 50% 57%, var(--life) 0 2.5px, transparent 3px),
-              radial-gradient(circle at 20% 76%, var(--life) 0 1.5px, transparent 2px),
-              radial-gradient(circle at 77% 77%, var(--life) 0 2px, transparent 2.5px);
-}
 .site-nav { display: flex; align-self: stretch; align-items: stretch; gap: 2px; flex-wrap: wrap; margin-left: auto; }
 .site-nav a { display: inline-flex; align-items: center; padding: 0 12px; border-bottom: 3px solid transparent; text-decoration: none; color: var(--muted); font-size: .875rem; font-weight: 600; }
 .site-nav a:focus-visible { outline-offset: -2px; color: var(--text); }

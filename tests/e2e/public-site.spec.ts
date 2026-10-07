@@ -6,7 +6,7 @@ test("a visitor can enter the lab from the public root and return", async ({ pag
   await page.getByRole("link", { name: /Open the lab/ }).click();
   await expect(page).toHaveURL(/\/lab\/$/);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await page.getByRole("link", { name: "Browser Life home" }).click();
+  await page.getByRole("link", { name: "Cadence Garden home" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/island.html");
   await expect(page.locator("#url")).toHaveValue(new URL(page.url()).origin);
