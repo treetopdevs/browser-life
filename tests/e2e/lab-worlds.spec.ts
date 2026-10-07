@@ -27,7 +27,7 @@ test("the Starting world field explains the chosen world in plain words and open
   const followers = dialog.locator('.world-card[data-id="planet-followers"]');
   await expect(followers).toBeVisible();
   await expect(followers.locator(".world-asks")).toContainText("Does moving with the sun beat sleeping");
-  await expect(followers.locator(".world-diff")).toHaveText("Like Rotating planet, except: a moving sun, one lap every 16,384 steps; 8 sleepers and 8 sun-followers.");
+  await expect(followers.locator(".world-diff")).toHaveText("Like Moving sun, except: a moving sun, one lap every 16,384 steps; 8 sleepers and 8 sun-followers.");
   await expect(followers.locator(".trait-table")).toContainText("A moving sun, one lap every 16,384 steps");
   await expect(followers.locator(".world-status")).toHaveText("Sandbox");
 
@@ -39,7 +39,7 @@ test("the Starting world field explains the chosen world in plain words and open
   await expect(plant).toHaveText("Plant this world");
   await expect(plant).toHaveClass(/primary/);
   await expect(plant).toBeFocused();
-  await expect(page.locator("#plant-note")).toContainText("still Spot ecology");
+  await expect(page.locator("#plant-note")).toContainText("still Even light");
   await expect(about.locator(".world-asks")).toContainText("Does moving with the sun");
 });
 
@@ -79,7 +79,7 @@ test("a link can choose the world and the seed before the first planting", async
   await expect(page.locator("#preset")).toHaveValue("seasons");
   await expect(page.locator("#seed")).toHaveValue("5");
   await planted(page);
-  await expect(page.locator("#world-heading")).toHaveText("Patches & seasons");
+  await expect(page.locator("#world-heading")).toHaveText("Patchwork seasons");
   await expect(page.locator("#run-seed")).toHaveText("5");
   await expect(page.locator("#btn-new")).toHaveText("Plant it again");
 });

@@ -28,6 +28,11 @@ describe("coverage", () => {
     for (const id of seen.keys()) expect(ids).toContain(id);
   });
 
+  it("gives every world its own name", () => {
+    const names = ids.map((id) => preset(id).name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
   it("Start here names existing worlds, each once, and every base is another existing world", () => {
     const picks = START_HERE.map((s) => s.id);
     expect(new Set(picks).size).toBe(picks.length);
@@ -60,7 +65,8 @@ describe("traits", () => {
     }
   });
 
-  it("names no config key, file path or code name in a trait, a note or a family", () => {
+  it("names no config key, file path or code name in a world's name, a trait, a note or a family", () => {
+    for (const id of ids) expect(preset(id).name, id).not.toMatch(jargon);
     for (const id of ids) for (const t of worldTraits(preset(id))) expect(`${t.label} ${t.detail ?? ""}`, `${id}: ${t.label}`).not.toMatch(jargon);
     for (const [id, note] of Object.entries(WORLD_NOTES)) expect(`${note.asks} ${note.look} ${note.seen.text}`, id).not.toMatch(jargon);
     for (const f of FAMILIES) expect(`${f.name} ${f.lever} ${f.why} ${f.seen}`, f.id).not.toMatch(jargon);

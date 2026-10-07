@@ -72,21 +72,21 @@ const M3_INIT: InitParams = { kind: "m3", founders: M3_FOUNDERS.length, nutrient
 export const PRESETS: Preset[] = [
   {
     id: "spots",
-    name: "Spot ecology",
+    name: "Even light",
     description: "Six generalist founders under uniform light. Biomass condenses into spots that grow and divide.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "uniform", lightBase: 40, lightAmp: 160 },
     init: { kind: "generalist", founders: 6, nutrient: 32, biomass: 64 },
   },
   {
     id: "gradient",
-    name: "Light gradient",
+    name: "Bright to dim",
     description: "Light rises from top to bottom, so lineages face a spatial niche axis.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
     init: { kind: "generalist", founders: 8, nutrient: 32, biomass: 64 },
   },
   {
     id: "spots-m3",
-    name: "Spot ecology (M3 founders)",
+    name: "Even light (searched founders)",
     description:
       "Spot ecology under uniform light, founded from the 12 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "uniform", lightBase: 40, lightAmp: 160 },
@@ -94,7 +94,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "gradient-m3",
-    name: "Light gradient (M3 founders)",
+    name: "Bright to dim (searched founders)",
     description:
       "Light gradient niche axis, founded from the 12 M3-confirmed genomes (packages/schema/src/founders.ts) instead of the hand-built generalist genome.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
@@ -102,7 +102,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "gradient-m3-waste",
-    name: "Light gradient (M3 founders, waste medium)",
+    name: "Waste in the water (searched founders)",
     description:
       "gradient-m3 with dissolved nutrient split into A=8 / C=24 waste — empty-niche set S4's conditioned substrate. Same founders and light; total dissolved matter matches gradient-m3.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220 },
@@ -117,21 +117,21 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "seasons",
-    name: "Patches & seasons",
+    name: "Patchwork seasons",
     description: "Checkerboard light patches with a 4,000-step seasonal cycle.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "patches", lightBase: 20, lightAmp: 160, seasonPeriod: 4000, seasonAmp: 60 },
     init: { kind: "generalist", founders: 8, nutrient: 32, biomass: 64 },
   },
   {
     id: "large",
-    name: "Large world (512²)",
+    name: "Big jar",
     description: "The spot ecology at 512 × 512 for longer evolutionary runs.",
     cfg: { ...SPOT_REGIME, tileW: 512, tileH: 512, lightMode: "gradient", lightBase: 30, lightAmp: 200 },
     init: { kind: "generalist", founders: 16, nutrient: 32, biomass: 64 },
   },
   {
     id: "archipelago",
-    name: "Archipelago (2×2 islands)",
+    name: "Four islands",
     description:
       "Four tile-islands (see WorldConfig's tileW/tileH/tilesX/tilesY: one tile is an independent torus) under a light gradient, exchanging migrant packets every migrationPeriod steps — the M6 gate's migration mechanism. The \"no-migration\" control disables the exchange.",
     cfg: { ...SPOT_REGIME, tileW: 64, tileH: 64, tilesX: 2, tilesY: 2, lightMode: "gradient", lightBase: 20, lightAmp: 220, migrationPeriod: 200, migrantCount: 4 },
@@ -139,7 +139,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "ponds",
-    name: "Ponds (8×8, pond cycle)",
+    name: "Pond cycle (64 ponds)",
     description:
       "The scaffold protocol's main regime (docs/scaffold-protocol-v1.md): 64 ponds of 64 × 64, each planted with one disc of M3 founder 2. Every 10,000 steps each pond is ground back to nutrient and reseeded by an 8 × 8 packet from one of the 16 ponds with the largest trait. The pond-rand and pond-cont conditions pick donors at random or only measure.",
     cfg: { ...POND_REGIME, tileW: 64, tileH: 64, tilesX: 8, tilesY: 8, pondPeriod: 10_000, pondK: 8, pondArm: "scaf" },
@@ -147,7 +147,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "ponds-small",
-    name: "Ponds (2×2, pond cycle)",
+    name: "Pond cycle (4 ponds)",
     description: "The ponds preset's physics and cycle at 2 × 2 ponds with a 1,000-step period, for tests and the lab.",
     cfg: { ...POND_REGIME, tileW: 64, tileH: 64, tilesX: 2, tilesY: 2, pondPeriod: 1000, pondK: 8, pondArm: "scaf" },
     init: { kind: "ponds", founders: 4, nutrient: 32, biomass: 64, start: "clone", founder: 2 },
@@ -156,7 +156,7 @@ export const PRESETS: Preset[] = [
   // registered. Kept after the pinned presets so their order is unchanged.
   {
     id: "planet",
-    name: "Rotating planet",
+    name: "Moving sun",
     description:
       "Sandbox, not registered. The gradient preset's light, but the sun moves: its meridian sweeps across the world along x every 16,000 steps, fading linearly to the antipode (lightMode \"sweep\"). Resources move, so staying put means a nightly starvation.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 16_000 },
@@ -164,14 +164,14 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "planet-m3",
-    name: "Rotating planet (M3 founders)",
+    name: "Moving sun (searched founders)",
     description: "Sandbox, not registered. The rotating planet founded from the 12 M3-confirmed genomes.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 16_000 },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
   },
   {
     id: "planet-followers",
-    name: "Rotating planet: followers vs sleepers",
+    name: "Sun-followers vs sleepers",
     description:
       "Sandbox, not registered. Eight still generalists (they go dormant at night) against eight hand-built sun-followers that drift east at exactly the sun's speed (a 16,384-step day). Lineage view shows who wins.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 16_384 },
@@ -179,7 +179,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "planet-motile",
-    name: "Rotating planet: motile founders",
+    name: "Movers without a heading",
     description:
       "Sandbox, not registered. Sixteen generalists with random motility gain (0–64) but no heading: moving anywhere needs a mutation. A 16,384-step day.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 16_384 },
@@ -187,7 +187,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "planet-drifters",
-    name: "Rotating planet: random drifters",
+    name: "Random drifters",
     description:
       "Sandbox, not registered. Sixteen generalists with random motility gain (0–64) and a random constant heading each. A 16,384-step day.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 16_384 },
@@ -195,14 +195,14 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "planet-still",
-    name: "Rotating planet: still founders (control)",
+    name: "Standing still (control)",
     description: "Sandbox, not registered. The control for the motile presets: the same 16 placements, all with motility gain 0. A 16,384-step day.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 16_384 },
     init: { kind: "generalist", founders: 16, nutrient: 32, biomass: 64 },
   },
   {
     id: "planet-sensing",
-    name: "Rotating planet: sensing followers vs sleepers",
+    name: "Sensing followers vs sleepers",
     description:
       "Sandbox, not registered. Eight sleepers against eight hand-built sensing followers that signal in the dark and move away from signal. The sun moves 1.5× faster than a constant drift can match (an 11,000-step day); signalGain 127 and a long-lived signal (kSDecay 13) make the gradient readable.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 11_000, signalGain: 127, kSDecay: 13 },
@@ -210,7 +210,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "planet-wander",
-    name: "Wandering sun: sleepers vs drifters vs sensors",
+    name: "Wandering sun (three-way race)",
     description:
       "Sandbox, not registered. The sun sweeps east for 32,768 steps, then west for 32,768, at 16 cells per 1,024 steps. Six each of sleepers, blind east-drifters and sensing followers (signal in the dark, move away from signal; signalGain 127, kSDecay 13).",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "sweep", lightBase: 20, lightAmp: 220, dayPeriod: 0, wanderPeriod: 65_536, wanderAmp: 512, signalGain: 127, kSDecay: 13 },
@@ -218,7 +218,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "planet-large",
-    name: "Rotating planet (512²)",
+    name: "Moving sun (big jar)",
     description: "Sandbox, not registered. The large world with a moving sun: same light range and sun speed as the 256² planet (a 32,000-step day).",
     cfg: { ...SPOT_REGIME, tileW: 512, tileH: 512, lightMode: "sweep", lightBase: 30, lightAmp: 200, dayPeriod: 32_000 },
     init: { kind: "generalist", founders: 16, nutrient: 32, biomass: 64 },
@@ -227,21 +227,21 @@ export const PRESETS: Preset[] = [
   // plus one difference each. Exploratory, not registered.
   {
     id: "own-lossy",
-    name: "Ownership: lossy takeover (lineage kin)",
+    name: "Lossy taking (kin by lineage)",
     description: "gradient-m3 where bound matter that loses the transport lottery to a different lineage becomes waste C and its potential energy feeds the winner's E.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, takeover: "lossy", takeoverKin: "lineage" },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
   },
   {
     id: "own-match",
-    name: "Ownership: lossy takeover (growth kin)",
+    name: "Lossy taking (kin by growth)",
     description: "own-lossy, but kin means Lenia mu within 8 and sigma within 2 of the winner, so most single mutants stay kin.",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, takeover: "lossy", takeoverKin: "growth", takeoverTol: 8 },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
   },
   {
     id: "own-seasons",
-    name: "Ownership: seasons control",
+    name: "Seasons only (control)",
     description: "gradient-m3 with no rule change but seasonal light forcing (4,000-step period).",
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 160, seasonPeriod: 4000, seasonAmp: 75 },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
@@ -251,7 +251,7 @@ export const PRESETS: Preset[] = [
   // parent; founders differ from each other in 41 or 42 words.
   ...[1, 3, 8].map((tol): Preset => ({
     id: `own-genome-${tol}`,
-    name: `Ownership: lossy takeover (genome kin, ${tol} word${tol > 1 ? "s" : ""})`,
+    name: `Lossy taking (kin within ${tol} word${tol > 1 ? "s" : ""})`,
     description: `own-lossy, but kin means at most ${tol} of the 42 heritable genome words differ from the lottery winner's.`,
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, takeover: "lossy", takeoverKin: "genome", takeoverTol: tol },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
@@ -260,9 +260,9 @@ export const PRESETS: Preset[] = [
   // bound structure as the assay's lesion does. `every` is the mean number of
   // steps between hits on any one cell; a radius-3 wound (29 cells) takes about
   // 30% of a 20-cell body, a radius-8 wound (197 cells) removes whole bodies.
-  ...([["light", 3, 13_000], ["heavy", 3, 3_250], ["coarse", 8, 13_000]] as const).map(([tag, radius, every]): Preset => ({
+  ...([["light", "Small wounds", 3, 13_000], ["heavy", "Small wounds (four times as often)", 3, 3_250], ["coarse", "Big wounds", 8, 13_000]] as const).map(([tag, name, radius, every]): Preset => ({
     id: `own-injury-${tag}`,
-    name: `Ownership: recurring injury (${tag})`,
+    name,
     description: `gradient-m3 with radius-${radius} wounds every ${WOUND_PERIOD} steps; each cell is hit about once per ${every.toLocaleString("en-US")} steps.`,
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, ...wounds(radius, every) },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
@@ -271,9 +271,9 @@ export const PRESETS: Preset[] = [
   // carry neutral ring weights, so their kernel density is gradient-m3's. The
   // histories still part from gradient-m3's at the first mutation, because
   // the ring slots change which slot a mutation draw selects.
-  ...([["own-shape", 9, "the two rings of the radius-9 kernel"], ["own-shape-far", 13, "those two rings plus a far ring out to radius 13"]] as const).map(([id, reach, what]): Preset => ({
+  ...([["own-shape", "Inherited shape", 9, "the two rings of the radius-9 kernel"], ["own-shape-far", "Inherited shape (longer reach)", 13, "those two rings plus a far ring out to radius 13"]] as const).map(([id, name, reach, what]): Preset => ({
     id,
-    name: `Cells: heritable kernel shape (reach ${reach})`,
+    name,
     description: `gradient-m3 where each genome weights ${what}; mutation gains one slot per ring.`,
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, shapeReach: reach },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
@@ -285,13 +285,13 @@ export const PRESETS: Preset[] = [
   // once per 13,000 steps) to each; a wound that cuts a body in two makes a
   // daughter at the next pass.
   ...([
-    ["own-cell", {}, "RULE_VERSION 1 takeover between cells"],
-    ["own-cell-wall", { takeover: "lossy", takeoverKin: "lineage" }, "lossy takeover between cells"],
-    ["own-cell-injury", wounds(3, 13_000), "RULE_VERSION 1 takeover between cells, recurring radius-3 wounds"],
-    ["own-cell-wall-injury", { takeover: "lossy", takeoverKin: "lineage", ...wounds(3, 13_000) }, "lossy takeover between cells, recurring radius-3 wounds"],
-  ] as const).map(([id, extra, what]): Preset => ({
+    ["own-cell", "Declared cells", {}, "RULE_VERSION 1 takeover between cells"],
+    ["own-cell-wall", "Walled cells", { takeover: "lossy", takeoverKin: "lineage" }, "lossy takeover between cells"],
+    ["own-cell-injury", "Declared cells (wounded)", wounds(3, 13_000), "RULE_VERSION 1 takeover between cells, recurring radius-3 wounds"],
+    ["own-cell-wall-injury", "Walled cells (wounded)", { takeover: "lossy", takeoverKin: "lineage", ...wounds(3, 13_000) }, "lossy takeover between cells, recurring radius-3 wounds"],
+  ] as const).map(([id, name, extra, what]): Preset => ({
     id,
-    name: `Cells: declared cells (${what})`,
+    name,
     description: `gradient-m3 with mutation at cell birth only: every 1,000 steps each body that shares its id with a heavier one becomes a daughter with a new id and one mutation; ${what}.`,
     cfg: { ...SPOT_REGIME, tileW: 256, tileH: 256, lightMode: "gradient", lightBase: 20, lightAmp: 220, mutRate: 0, cellPeriod: 1000, cellMutProb: 2 ** 32, ...extra },
     init: { kind: "m3", founders: M3_FOUNDERS.length, nutrient: 32, biomass: 64 },
@@ -300,16 +300,16 @@ export const PRESETS: Preset[] = [
   // stacked in one world, each at the dose its own sandbox used (STORM), then
   // one lever moved per arm. Exploratory, not registered.
   ...([
-    ["wild-storm", "", {}, M3_INIT, "every lever at its sandbox dose"],
-    ["wild-storm-w01", ", wounds ×0.1", wounds(3, 130_000), M3_INIT, "each cell wounded about once per 130,000 steps"],
-    ["wild-storm-w10", ", wounds ×10", wounds(3, 1_300), M3_INIT, "each cell wounded about once per 1,300 steps"],
-    ["wild-storm-meteor", ", meteors", wounds(8, 13_000), M3_INIT, "radius-8 wounds that remove whole bodies, at the same per-cell rate"],
-    ["wild-storm-m10", ", mutation ×10", { mutRate: 4_294_970 }, M3_INIT, "ten times the mutation rate"],
-    ["wild-storm-3way", ", hand-built movers", {}, { kind: "three-way", founders: 18, nutrient: 32, biomass: 64 }, "founded by six each of sleepers, blind drifters and sensing followers instead of the M3 founders"],
-    ["wild-storm-large", " (512²)", { tileW: 512, tileH: 512, wanderPeriod: 131_072, wanderAmp: 1024 }, { ...M3_INIT, founders: 2 * M3_FOUNDERS.length }, "a 512² world with the sun at the same speed"],
-  ] as const).map(([id, tag, extra, init, what]): Preset => ({
+    ["wild-storm", "The storm", {}, M3_INIT, "every lever at its sandbox dose"],
+    ["wild-storm-w01", "Storm (rare wounds)", wounds(3, 130_000), M3_INIT, "each cell wounded about once per 130,000 steps"],
+    ["wild-storm-w10", "Storm (frequent wounds)", wounds(3, 1_300), M3_INIT, "each cell wounded about once per 1,300 steps"],
+    ["wild-storm-meteor", "Storm (meteors)", wounds(8, 13_000), M3_INIT, "radius-8 wounds that remove whole bodies, at the same per-cell rate"],
+    ["wild-storm-m10", "Storm (fast mutation)", { mutRate: 4_294_970 }, M3_INIT, "ten times the mutation rate"],
+    ["wild-storm-3way", "Storm (hand-built movers)", {}, { kind: "three-way", founders: 18, nutrient: 32, biomass: 64 }, "founded by six each of sleepers, blind drifters and sensing followers instead of the M3 founders"],
+    ["wild-storm-large", "Storm (big jar)", { tileW: 512, tileH: 512, wanderPeriod: 131_072, wanderAmp: 1024 }, { ...M3_INIT, founders: 2 * M3_FOUNDERS.length }, "a 512² world with the sun at the same speed"],
+  ] as const).map(([id, name, extra, init, what]): Preset => ({
     id,
-    name: `Wild: storm world${tag}`,
+    name,
     description: `Sandbox, not registered. A sun that sweeps east then west at 1/64 cell per step, a 4,000-step season, a readable signal (signalGain 127, kSDecay 13), recurring wounds and heritable kernel rings out to radius 13; ${what}.`,
     cfg: { ...STORM, ...extra },
     init,
@@ -317,7 +317,7 @@ export const PRESETS: Preset[] = [
   // Wild sandbox: the breeder as a world of its own, sized for the lab (docs/sandbox-wild.md). Exploratory, not registered.
   {
     id: "breeder",
-    name: "Wild: breeder (4×4 ponds)",
+    name: "The breeder",
     description:
       "Sandbox, not registered. Sixteen ponds of 64 × 64, each planted with one disc of M3 founder 2, at ten times the usual mutation rate. Every 5,000 steps each pond is cleared and reseeded from the four ponds that rank best on movement, seed-packet mass and body size together. Turn on the Breeder panel to choose the donors yourself.",
     cfg: { ...POND_REGIME, tileW: 64, tileH: 64, tilesX: 4, tilesY: 4, pondPeriod: 5_000, pondK: 8, pondArm: "breed", pondScore: "drive+seed+body", mutRate: 4_294_970 },

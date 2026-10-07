@@ -313,7 +313,7 @@ deno run -A tools/run.ts --experiment breed2 --preset ponds --conditions 'pond-b
   --override mutRate=4294970 --out runs/wild
 ```
 
-In the lab: `pnpm dev`, preset "Wild: breeder (4×4 ponds)", tick the Breeder panel's box and press Play.
+In the lab: `pnpm dev`, the starting world "The breeder" (under Storms and the breeder), tick the Breeder panel's box and press Play.
 
 ## First run: breeding for movement (2026-10-04)
 
