@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://cadence.garden/</loc></url>
-  <url><loc>https://cadence.garden/about/</loc></url>
-  <url><loc>https://cadence.garden/how-it-works/</loc></url>
-  <url><loc>https://cadence.garden/research/</loc></url>
-  <url><loc>https://cadence.garden/privacy/</loc></url>
-  <url><loc>https://cadence.garden/participate/</loc></url>
-  <url><loc>https://cadence.garden/status/</loc></url>
-  <url><loc>https://cadence.garden/lab/</loc></url>
+  <url><loc>https://cadence.garden/</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://cadence.garden/lab/</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://cadence.garden/worlds/</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://cadence.garden/how-it-works/</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://cadence.garden/research/</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://cadence.garden/about/</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://cadence.garden/participate/</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://cadence.garden/status/</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://cadence.garden/privacy/</loc><lastmod>2026-10-07</lastmod></url>
 </urlset>

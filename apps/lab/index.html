@@ -5,11 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f3f1ec" />
     <meta name="description"
-      content="A garden of tiny sealed worlds that run in your browser. Plant one, feed it, wound it, breed it, and see what grows back." />
-    <title>Grow something surprising · Cadence Garden</title>
+      content="Artificial life in your browser: tiny sealed worlds that evolve on your GPU. Plant one, feed it, wound it, breed it, and see what grows back." />
+    <title>Cadence Garden · Artificial life you can grow in your browser</title>
     <link rel="canonical" href="https://cadence.garden/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/src/site.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://cadence.garden/#website",
+          "name": "Cadence Garden",
+          "alternateName": "cadence.garden",
+          "url": "https://cadence.garden/",
+          "description": "Artificial life in your browser: tiny sealed worlds that evolve on your GPU.",
+          "inLanguage": "en",
+          "about": [
+            {
+              "@type": "Thing",
+              "name": "Artificial life",
+              "sameAs": "https://en.wikipedia.org/wiki/Artificial_life"
+            },
+            {
+              "@type": "Thing",
+              "name": "Open-ended evolution",
+              "sameAs": "https://en.wikipedia.org/wiki/Open-ended_evolution"
+            },
+            {
+              "@type": "Thing",
+              "name": "Cellular automaton",
+              "sameAs": "https://en.wikipedia.org/wiki/Cellular_automaton"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://cadence.garden/lab/#app",
+          "name": "Cadence Garden lab",
+          "url": "https://cadence.garden/lab/",
+          "description": "An artificial-life simulation that runs in the browser on WebGPU: plant a sealed world, watch it evolve, feed it, wound it and breed it, with exact integer physics that replays bit for bit on supported GPUs.",
+          "applicationCategory": "EducationalApplication",
+          "applicationSubCategory": "Artificial life simulation",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires a browser with WebGPU, such as recent Chrome or Edge",
+          "isAccessibleForFree": true,
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "image": "https://cadence.garden/social-card.jpg",
+          "isPartOf": {
+            "@id": "https://cadence.garden/#website"
+          },
+          "about": [
+            {
+              "@type": "Thing",
+              "name": "Artificial life",
+              "sameAs": "https://en.wikipedia.org/wiki/Artificial_life"
+            },
+            {
+              "@type": "Thing",
+              "name": "Open-ended evolution",
+              "sameAs": "https://en.wikipedia.org/wiki/Open-ended_evolution"
+            },
+            {
+              "@type": "Thing",
+              "name": "Cellular automaton",
+              "sameAs": "https://en.wikipedia.org/wiki/Cellular_automaton"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -24,9 +95,9 @@
     <main id="main">
       <section class="hero shell">
         <div class="hero-copy">
-          <p class="eyebrow">A garden of tiny sealed worlds</p>
+          <p class="eyebrow">A garden of artificial life</p>
           <h1>Grow something <em>surprising.</em></h1>
-          <p class="lede">Cadence Garden keeps little worlds in sealed jars: light comes in, heat goes out, and nothing else crosses the glass unless you open it. Plant one, feed it, wound it, breed it, and see what grows back. <b>Nothing in there was told to be alive.</b></p>
+          <p class="lede">Cadence Garden grows artificial life in sealed jars: light comes in, heat goes out, and nothing else crosses the glass unless you open it. Plant one, feed it, wound it, breed it, and see what grows back. <b>Nothing in there was told to be alive.</b></p>
           <div class="actions"><a class="button primary" href="/lab/">Open the lab <span aria-hidden="true">→</span></a><a class="button quiet" href="/how-it-works/">How it works</a></div>
           <p class="fine">Runs in a browser with WebGPU, which means recent Chrome or Edge on most computers. The journal is open to everyone.</p>
         </div>

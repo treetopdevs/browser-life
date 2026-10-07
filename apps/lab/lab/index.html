@@ -3,12 +3,57 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Lab · Cadence Garden</title>
+    <title>The lab: grow an artificial-life world · Cadence Garden</title>
     <link rel="canonical" href="https://cadence.garden/lab/" />
-    <meta name="description" content="Plant a tiny sealed world in your browser. Feed it, wound it, breed it, and check that nothing was lost along the way." />
+    <meta name="description" content="Plant an artificial-life world in your browser and watch it evolve. Feed it, wound it, breed it, follow its lineages, and check that nothing was lost." />
     <meta name="theme-color" content="#f3f1ec" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/src/style.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://cadence.garden/lab/#app",
+          "name": "Cadence Garden lab",
+          "url": "https://cadence.garden/lab/",
+          "description": "An artificial-life simulation that runs in the browser on WebGPU: plant a sealed world, watch it evolve, feed it, wound it and breed it, with exact integer physics that replays bit for bit on supported GPUs.",
+          "applicationCategory": "EducationalApplication",
+          "applicationSubCategory": "Artificial life simulation",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires a browser with WebGPU, such as recent Chrome or Edge",
+          "isAccessibleForFree": true,
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "image": "https://cadence.garden/social-card.jpg",
+          "isPartOf": {
+            "@id": "https://cadence.garden/#website"
+          },
+          "about": [
+            {
+              "@type": "Thing",
+              "name": "Artificial life",
+              "sameAs": "https://en.wikipedia.org/wiki/Artificial_life"
+            },
+            {
+              "@type": "Thing",
+              "name": "Open-ended evolution",
+              "sameAs": "https://en.wikipedia.org/wiki/Open-ended_evolution"
+            },
+            {
+              "@type": "Thing",
+              "name": "Cellular automaton",
+              "sameAs": "https://en.wikipedia.org/wiki/Cellular_automaton"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body class="lab-page">
     <a class="skip-link" href="#lab-main">Skip to the world</a>

@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
+import { withSocialMeta } from "./src/social-meta.ts";
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 // Not PORT: hosts that launch Vite (preview tools, PaaS) set PORT to Vite's own
@@ -7,6 +8,8 @@ const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 const coordinatorUrl = `http://localhost:${process.env.COORDINATOR_PORT ?? "4000"}`;
 
 export default defineConfig({
+  // Open Graph, Twitter card and icon tags, derived from each page's own title, description and canonical link.
+  plugins: [{ name: "social-meta", transformIndexHtml: withSocialMeta }],
   resolve: {
     alias: {
       "@bl/schema": r("../../packages/schema/src/index.ts"),
