@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An AI naturalist: brainstorm</title>
+<meta name="description" content="Visual companion to docs/naturalist-brainstorm-2026-10-07.md: the roadmap line taken apart, the model picker's first look, why noticing is a baseline problem, seven shapes the naturalist could take, the recommended loop and the first test.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: oklch(94.5% 0.012 88);
+  --surface: oklch(98.5% 0.007 88);
+  --raised: oklch(91.5% 0.014 88);
+  --hover: oklch(87.5% 0.018 88);
+  --line: oklch(83% 0.016 88);
+  --line-soft: oklch(90% 0.012 88);
+  --text: oklch(23% 0.022 80);
+  --muted: oklch(45% 0.022 80);
+  --soft: oklch(51% 0.022 80);
+  --control-line: oklch(62% 0.022 82);
+  --sun: oklch(87% 0.165 93);
+  --sun-soft: oklch(94% 0.08 95);
+  --sun-ink: oklch(49% 0.125 72);
+  --life: oklch(52% 0.15 150);
+  --life-fill: oklch(86% 0.13 150);
+  --error: oklch(51% 0.18 28);
+  --field: oklch(12% 0.01 160);
+  /* Series for the picker chart: an emphasis form. The model is lit; rule and random are ink and a de-emphasis grey. */
+  --s-model: oklch(49% 0.125 72);
+  --s-rule: oklch(23% 0.022 80);
+  --s-random: oklch(62% 0.022 82);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: oklch(17% 0.012 80);
+    --surface: oklch(20.5% 0.013 80);
+    --raised: oklch(26% 0.016 80);
+    --hover: oklch(31% 0.018 80);
+    --line: oklch(35% 0.016 80);
+    --line-soft: oklch(28% 0.014 80);
+    --text: oklch(94% 0.012 85);
+    --muted: oklch(71% 0.016 85);
+    --soft: oklch(64% 0.016 85);
+    --control-line: oklch(52% 0.016 82);
+    --sun: oklch(85% 0.16 92);
+    --sun-soft: oklch(36% 0.06 85);
+    --sun-ink: oklch(82% 0.14 88);
+    --life: oklch(80% 0.14 150);
+    --life-fill: oklch(74% 0.15 150);
+    --error: oklch(76% 0.14 28);
+    --s-model: oklch(66% 0.14 88);
+    --s-rule: oklch(94% 0.012 85);
+    --s-random: oklch(52% 0.016 82);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(17% 0.012 80);
+  --surface: oklch(20.5% 0.013 80);
+  --raised: oklch(26% 0.016 80);
+  --hover: oklch(31% 0.018 80);
+  --line: oklch(35% 0.016 80);
+  --line-soft: oklch(28% 0.014 80);
+  --text: oklch(94% 0.012 85);
+  --muted: oklch(71% 0.016 85);
+  --soft: oklch(64% 0.016 85);
+  --control-line: oklch(52% 0.016 82);
+  --sun: oklch(85% 0.16 92);
+  --sun-soft: oklch(36% 0.06 85);
+  --sun-ink: oklch(82% 0.14 88);
+  --life: oklch(80% 0.14 150);
+  --life-fill: oklch(74% 0.15 150);
+  --error: oklch(76% 0.14 28);
+  --s-model: oklch(66% 0.14 88);
+  --s-rule: oklch(94% 0.012 85);
+  --s-random: oklch(52% 0.016 82);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; padding: 0 16px 64px; }
+a { color: inherit; text-decoration-color: var(--control-line); text-underline-offset: .15em; }
+a:hover { text-decoration-color: currentColor; }
+code { font-family: var(--mono); font-size: .9em; background: var(--raised); padding: .05em .3em; border-radius: 4px; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0 8px; flex-wrap: wrap; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sun-ink); margin: 0; }
+h1 { font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; letter-spacing: -.02em; font-weight: 800; margin: 6px 0 10px; }
+.lede { font-size: 17px; max-width: 64ch; color: var(--muted); margin: 0 0 6px; }
+.lede strong { color: var(--text); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; padding: 0; list-style: none; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--raised); color: var(--muted); }
+.chip.note { background: var(--sun-soft); color: var(--sun-ink); }
+button.theme { font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--raised); border: 0; border-radius: var(--radius); padding: 7px 12px; cursor: pointer; }
+button.theme:hover { background: var(--hover); }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+section { margin: 40px 0 0; }
+h2 { font-size: 22px; letter-spacing: -.01em; margin: 0 0 4px; }
+h2 .idx { font-family: var(--mono); font-weight: 500; color: var(--sun-ink); margin-right: 8px; font-size: 15px; }
+.sub { color: var(--muted); margin: 0 0 16px; max-width: 72ch; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 16px; overflow-x: auto; }
+figure + figure, figure + .cards, .cards + figure { margin-top: 14px; }
+figcaption { font-size: 13px; color: var(--soft); margin-top: 10px; max-width: 80ch; }
+/* A wide diagram keeps its text legible on a phone: the figure scrolls sideways, the page never does. */
+svg.diagram { width: 100%; height: auto; display: block; font-family: var(--sans); min-width: 640px; }
+svg.diagram.half { min-width: 400px; }
+svg text { fill: var(--text); }
+svg .muted { fill: var(--muted); }
+svg .soft { fill: var(--soft); }
+svg .mono { font-family: var(--mono); }
+svg .box { fill: var(--raised); stroke: var(--line); stroke-width: 1; }
+svg .box.lit { fill: var(--sun-soft); stroke: var(--sun-ink); }
+svg .box.plain { fill: var(--surface); }
+svg .arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+svg .arrow.lit { stroke: var(--sun-ink); }
+svg .later { stroke-dasharray: 4 4; }
+svg .grid { stroke: var(--line-soft); stroke-width: 1; }
+svg .axis { stroke: var(--line); stroke-width: 1; }
+svg .sun { fill: var(--sun); }
+svg .sun-ink { fill: var(--sun-ink); }
+svg .life { fill: var(--life-fill); }
+svg .ink { fill: var(--text); }
+svg .ring { stroke: var(--surface); stroke-width: 2; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 14px 16px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.card .n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--raised); color: var(--text); font: 700 12px/1 var(--mono); margin-right: 8px; vertical-align: -5px; }
+.card.lit { border-color: var(--sun-ink); }
+.card.lit .n { background: var(--sun); color: oklch(23% 0.022 80); }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin: 0 0 10px; padding: 0; list-style: none; }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.legend .sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.legend .sw.model { background: var(--s-model); }
+.legend .sw.rule { background: var(--s-rule); }
+.legend .sw.random { background: var(--s-random); }
+svg .bar.model, svg .cell.model, svg .dot.model { fill: var(--s-model); }
+svg .bar.rule, svg .cell.rule { fill: var(--s-rule); }
+svg .bar.random, svg .cell.random { fill: var(--s-random); }
+svg .cell.off { fill: var(--raised); }
+svg .hit { fill: transparent; cursor: default; }
+/* The hit target lies under the mark and its label; the pointer passes through them to it. */
+svg .bar, svg .bar + text, svg .hit + line { pointer-events: none; }
+svg .hit:hover + .bar, svg .hit:focus-visible + .bar { opacity: .82; }
+.tip { position: fixed; z-index: 10; pointer-events: none; background: var(--text); color: var(--bg); font-size: 13px; line-height: 1.35; padding: 6px 9px; border-radius: 6px; max-width: 280px; opacity: 0; transform: translateY(4px); transition: opacity 120ms ease-out, transform 120ms ease-out; }
+.tip.on { opacity: 1; transform: none; }
+.tip strong { font-weight: 700; }
+details { margin-top: 10px; font-size: 14px; }
+summary { cursor: pointer; color: var(--muted); }
+table { border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+th, td { text-align: left; padding: 4px 12px 4px 0; border-bottom: 1px solid var(--line-soft); }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+th { font-weight: 600; color: var(--muted); font-size: 13px; }
+.shape-list { margin: 14px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px 20px; font-size: 14px; color: var(--muted); }
+.shape-list b { color: var(--text); font-weight: 600; }
+.shape-list .n { font-family: var(--mono); color: var(--sun-ink); margin-right: 6px; }
+footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px solid var(--line-soft); padding-top: 14px; }
+@media (prefers-reduced-motion: reduce) { .tip { transition: none; } }
+@media (max-width: 640px) { body { font-size: 14px; } figure { padding: 12px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <p class="eyebrow">Brainstorm · 7 October 2026</p>
+    <h1>An AI naturalist</h1>
+    <p class="lede">Roadmap bet 3 taken apart: <strong>watching, noticing and steering</strong> are three products, and noticing is the hard one. Visual companion to <a href="naturalist-brainstorm-2026-10-07.md">naturalist-brainstorm-2026-10-07.md</a>, which holds the argument in full.</p>
+    <ul class="chips"><li class="chip note">Exploratory, not a plan</li><li class="chip">No physics, no pins, no registration</li><li class="chip">Picker numbers from docs/sandbox-wild.md and runs/wild-report</li></ul>
+  </div>
+  <button class="theme" type="button" id="theme" aria-pressed="false">Night</button>
+</header>
+
+<section id="three">
+  <h2><span class="idx">1</span>Three products in one sentence</h2>
+  <p class="sub">The roadmap line reads as one feature. It is three, each with its own hard part and its own riskiest assumption. The repo has material for the first and the third; the middle one has no baseline yet, and its one first look did not test it.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 300" role="img" aria-label="Three boxes in a row: Watch, Notice and Steer, with arrows between them. Notice is highlighted as the hard part. Under each box: what it needs, the riskiest assumption and what the repo already has.">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+      <marker id="ahl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--sun-ink)"/></marker></defs>
+      <g font-size="14">
+        <rect class="box" x="20" y="24" width="290" height="250" rx="12"/>
+        <text x="40" y="56" font-size="20" font-weight="700">Watch</text>
+        <text x="40" y="78" class="muted" font-size="13">the easy one</text>
+        <text x="40" y="112" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">NEEDS</text>
+        <text x="40" y="132">a stream of events, not frames</text>
+        <text x="40" y="164" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">RISKIEST ASSUMPTION</text>
+        <text x="40" y="184">reading is cheap enough to run always</text>
+        <text x="40" y="216" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">THE REPO HAS</text>
+        <text x="40" y="236">census, tracker, collectives,</text>
+        <text x="40" y="256">activity, lineage, the intervention log</text>
+
+        <rect class="box lit" x="355" y="24" width="290" height="250" rx="12"/>
+        <text x="375" y="56" font-size="20" font-weight="700">Notice</text>
+        <text x="375" y="78" class="sun-ink" font-size="13" font-weight="600">the hard one</text>
+        <text x="375" y="112" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">NEEDS</text>
+        <text x="375" y="132">a notion of normal to depart from</text>
+        <text x="375" y="164" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">RISKIEST ASSUMPTION</text>
+        <text x="375" y="184">a model can tell unfamiliar from drift</text>
+        <text x="375" y="216" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">THE REPO HAS</text>
+        <text x="375" y="236">control arms as conditions, ensemble runs,</text>
+        <text x="375" y="256">a first look that did not test it (section 2)</text>
+
+        <rect class="box" x="690" y="24" width="290" height="250" rx="12"/>
+        <text x="710" y="56" font-size="20" font-weight="700">Steer</text>
+        <text x="710" y="78" class="muted" font-size="13">the one with an unfair advantage</text>
+        <text x="710" y="112" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">NEEDS</text>
+        <text x="710" y="132">proposals that can be run and replayed</text>
+        <text x="710" y="164" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">RISKIEST ASSUMPTION</text>
+        <text x="710" y="184">its proposals beat a random fork</text>
+        <text x="710" y="216" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">THE REPO HAS</text>
+        <text x="710" y="236">bit-exact replay, forks from checkpoints,</text>
+        <text x="710" y="256">lesion, feed and pick as logged acts</text>
+
+        <path class="arrow" d="M312 150 L351 150" marker-end="url(#ah)"/>
+        <path class="arrow" d="M647 150 L686 150" marker-end="url(#ah)"/>
+      </g>
+    </svg>
+    <figcaption>Watching and steering can lean on what exists. Noticing needs a baseline the first attempt never had.</figcaption>
+  </figure>
+</section>
+
+<section id="firstlook">
+  <h2><span class="idx">2</span>The first look, 4 October 2026</h2>
+  <p class="sub">The naive version has one first look. A vision model was shown a contact sheet of the sixteen ponds, an album of its own past picks and its notebook, and asked for the four ponds that looked most unlike anything it had seen. One world, one seed, sixteen cycles, one draw, against the arm's own rule and a seeded random picker. It asked for novelty and measured movement, so it did not test noticing, and one seed cannot separate the picker from the divergence of one chaotic history.</p>
+  <div class="grid2">
+    <figure>
+      <ul class="legend" aria-label="Series"><li><span class="sw model"></span>model (the subject)</li><li><span class="sw rule"></span>rule</li><li><span class="sw random"></span>random</li></ul>
+      <svg class="diagram half" viewBox="0 0 480 250" role="img" aria-label="Two horizontal bar charts at cycle 16. Occupied ponds of 16: rule 13, random 14, model 9. Ponds scoring movement: rule 13, random 2, model 0.">
+        <g font-size="13">
+          <text x="0" y="16" font-weight="700">Occupied ponds at cycle 16</text>
+          <text x="480" y="16" text-anchor="end" class="soft" font-size="12">of 16</text>
+          <line class="axis" x1="70" y1="26" x2="70" y2="106"/>
+          <line class="grid" x1="270" y1="26" x2="270" y2="106"/>
+          <line class="grid" x1="470" y1="26" x2="470" y2="106"/>
+          <text x="70" y="120" class="soft" font-size="11" text-anchor="middle">0</text>
+          <text x="270" y="120" class="soft" font-size="11" text-anchor="middle">8</text>
+          <text x="470" y="120" class="soft" font-size="11" text-anchor="middle">16</text>
+          <text x="62" y="46" text-anchor="end" class="muted">rule</text>
+          <rect class="hit" x="70" y="30" width="400" height="22" tabindex="0" data-tip="rule: 13 of 16 ponds occupied at cycle 16"/>
+          <path class="bar rule" d="M70 34 H391 a4 4 0 0 1 4 4 v6 a4 4 0 0 1 -4 4 H70 z"/>
+          <text x="403" y="46" font-size="12">13</text>
+          <text x="62" y="70" text-anchor="end" class="muted">random</text>
+          <rect class="hit" x="70" y="54" width="400" height="22" tabindex="0" data-tip="random: 14 of 16 ponds occupied at cycle 16"/>
+          <path class="bar random" d="M70 58 H416 a4 4 0 0 1 4 4 v6 a4 4 0 0 1 -4 4 H70 z"/>
+          <text x="428" y="70" font-size="12">14</text>
+          <text x="62" y="94" text-anchor="end" class="muted">model</text>
+          <rect class="hit" x="70" y="78" width="400" height="22" tabindex="0" data-tip="model: 9 of 16 ponds occupied at cycle 16"/>
+          <path class="bar model" d="M70 82 H291 a4 4 0 0 1 4 4 v6 a4 4 0 0 1 -4 4 H70 z"/>
+          <text x="303" y="94" font-size="12" font-weight="700">9</text>
+
+          <text x="0" y="150" font-weight="700">Ponds scoring bred movement</text>
+          <text x="480" y="150" text-anchor="end" class="soft" font-size="12">of 16</text>
+          <line class="axis" x1="70" y1="160" x2="70" y2="240"/>
+          <line class="grid" x1="270" y1="160" x2="270" y2="240"/>
+          <line class="grid" x1="470" y1="160" x2="470" y2="240"/>
+          <text x="62" y="180" text-anchor="end" class="muted">rule</text>
+          <rect class="hit" x="70" y="164" width="400" height="22" tabindex="0" data-tip="rule: 13 ponds scoring movement at cycle 16"/>
+          <path class="bar rule" d="M70 168 H391 a4 4 0 0 1 4 4 v6 a4 4 0 0 1 -4 4 H70 z"/>
+          <text x="403" y="180" font-size="12">13</text>
+          <text x="62" y="204" text-anchor="end" class="muted">random</text>
+          <rect class="hit" x="70" y="188" width="400" height="22" tabindex="0" data-tip="random: 2 ponds scoring movement at cycle 16"/>
+          <path class="bar random" d="M70 192 H116 a4 4 0 0 1 4 4 v6 a4 4 0 0 1 -4 4 H70 z"/>
+          <text x="128" y="204" font-size="12">2</text>
+          <text x="62" y="228" text-anchor="end" class="muted">model</text>
+          <rect class="hit" x="70" y="212" width="400" height="22" tabindex="0" data-tip="model: 0 ponds scoring movement at cycle 16"/>
+          <line x1="70" y1="212" x2="70" y2="234" stroke="var(--s-model)" stroke-width="3"/>
+          <text x="80" y="228" font-size="12" font-weight="700">0</text>
+        </g>
+      </svg>
+      <details><summary>Table view</summary>
+        <table><thead><tr><th>Picker</th><th class="num">Occupied</th><th class="num">Scoring</th><th class="num">Drive median</th></tr></thead>
+        <tbody><tr><td>rule</td><td class="num">13</td><td class="num">13</td><td class="num">383,849</td></tr><tr><td>random</td><td class="num">14</td><td class="num">2</td><td class="num">0</td></tr><tr><td>model</td><td class="num">9</td><td class="num">0</td><td class="num">0</td></tr></tbody></table>
+      </details>
+      <figcaption>At cycle 16 the model's world had the fewest occupied ponds and none scoring (the combined score ranks drive, seed and body, and drive counts moving bodies, not thin moving cells). The arm bred movement because that is what its rule selects on; the model was briefed on novelty.</figcaption>
+    </figure>
+    <figure>
+      <ul class="legend" aria-label="Series"><li><span class="sw model"></span>model (the subject)</li><li><span class="sw rule"></span>rule</li><li><span class="sw random"></span>random</li></ul>
+      <svg class="diagram half" viewBox="0 0 480 250" role="img" aria-label="Two line charts over sixteen cycles. Ponds scoring movement: the rule rises from 3 to between 10 and 15 from cycle 3 on; the model rises to 12 at cycle 4, falls to 0 by cycle 8 and stays at 0 to 2; random stays between 0 and 3. Occupied ponds: the rule holds 12 to 16; the model starts at 16, wanders between 8 and 15 and ends at 9; random wanders between 10 and 16 and ends at 14.">
+        <g font-size="13" id="lines"></g>
+      </svg>
+      <details><summary>Table view, per cycle</summary><div id="lines-table"></div></details>
+      <figcaption>Per cycle, from the copied report under runs/wild-report. The model's picks held a positive drive median for five cycles and then its median fell to zero, with none to two ponds still scoring. It was picking shells and sparse ponds as "new": those are thinning ponds. Random's median is zero throughout while up to three of its ponds score at a time.</figcaption>
+    </figure>
+  </div>
+  <p class="sub" style="margin-top:16px">Three things it lacked. They are hypotheses about why, not an ablation: nothing has varied them one at a time. The ladder in section 6 would test the first two, and the detector's calibration the third.</p>
+  <div class="cards">
+    <div class="card"><h3><span class="n">a</span>It saw stills</h3><p>Movement, heredity and lineage turnover are invisible in a contact sheet, and a thinned pond looks new. The movement overlay was withheld as a leak. For a naturalist it is the point.</p></div>
+    <div class="card"><h3><span class="n">b</span>It had no notion of normal</h3><p>The only reference was its own album. Without a baseline, "unfamiliar" collapses into "different from what I picked before", and decay is always different.</p></div>
+    <div class="card"><h3><span class="n">c</span>It had no control</h3><p>The lineage inspector decided every story sits beside a neutral twin, after phenotype-bin novelty flagged 40 of 70 neutral runs and failed calibration. The picker had no control at all.</p></div>
+  </div>
+</section>
+
+<section id="baseline">
+  <h2><span class="idx">3</span>Noticing is a baseline problem</h2>
+  <p class="sub">"Unfamiliar" has to mean <em>departed from a stated normal</em>. The picker compared the world with its own album. The repo can compare it with a control twin: a neutral or no-mutation replica forked from the same checkpoint, re-applying the same interventions. The lab's present replica verifies replay under the same config; a control twin is that mechanism under a control's config, and is new work.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 330" role="img" aria-label="Two schematic panels. Left, 'difference from the album': a single trace falls as ponds thin, and the thinning is flagged as new because the album holds only earlier picks. Right, 'departure from the twin': a live trace and a twin trace run together inside an envelope, then part; the flag sits where they part.">
+      <g font-size="13">
+        <text x="20" y="22" font-weight="700">What the picker had: difference from its own album</text>
+        <text x="20" y="40" class="muted" font-size="12">schematic, not data</text>
+        <rect class="box plain" x="20" y="54" width="460" height="250" rx="12"/>
+        <line class="axis" x1="60" y1="270" x2="450" y2="270"/>
+        <line class="axis" x1="60" y1="80" x2="60" y2="270"/>
+        <text x="64" y="76" class="soft" font-size="11">bodies in the pond</text>
+        <path d="M60 120 C 120 118, 170 124, 220 150 S 320 230, 450 250" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round"/>
+        <g>
+          <rect x="80" y="200" width="22" height="22" rx="3" class="box"/><rect x="108" y="200" width="22" height="22" rx="3" class="box"/><rect x="136" y="200" width="22" height="22" rx="3" class="box"/>
+          <text x="80" y="240" class="soft" font-size="11">the album: what it picked before</text>
+        </g>
+        <circle cx="390" cy="235" r="6" class="sun ring"/>
+        <text x="300" y="112" font-size="12" font-weight="600">"new": unlike the album</text>
+        <path class="arrow" d="M375 118 Q 395 180 390 226" marker-end="url(#ah)"/>
+        <text x="300" y="130" class="muted" font-size="12">which is what thinning looks like</text>
+
+        <text x="520" y="22" font-weight="700">What the repo can give it: departure from the twin</text>
+        <text x="520" y="40" class="muted" font-size="12">schematic, not data</text>
+        <rect class="box plain" x="520" y="54" width="460" height="250" rx="12"/>
+        <line class="axis" x1="560" y1="270" x2="950" y2="270"/>
+        <line class="axis" x1="560" y1="80" x2="560" y2="270"/>
+        <text x="564" y="76" class="soft" font-size="11">any held-out measure</text>
+        <path d="M560 185 C 640 170, 720 190, 800 178 S 900 182, 950 176 L950 212 C 900 218, 860 206, 800 214 S 640 206, 560 221 z" fill="var(--text)" opacity=".08"/>
+        <text x="880" y="233" class="soft" font-size="11" text-anchor="end">the preset's envelope</text>
+        <path d="M560 200 C 640 190, 720 205, 790 196 S 900 200, 950 194" fill="none" stroke="var(--control-line)" stroke-width="2" stroke-linecap="round"/>
+        <text x="952" y="198" class="muted" font-size="11">twin</text>
+        <path d="M560 200 C 640 190, 720 205, 790 196 C 820 190, 850 150, 880 120 S 930 100, 950 96" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round"/>
+        <text x="952" y="100" font-size="11">live</text>
+        <line x1="812" y1="86" x2="812" y2="270" stroke="var(--sun-ink)" stroke-width="1.5"/>
+        <circle cx="812" cy="184" r="6" class="sun ring"/>
+        <text x="804" y="112" font-size="12" font-weight="600" text-anchor="end">the flag: where they part</text>
+        <text x="804" y="130" class="muted" font-size="12" text-anchor="end">a neutral run can be given a twin too,</text>
+        <text x="804" y="146" class="muted" font-size="12" text-anchor="end">so the bell is calibrated on drift first</text>
+      </g>
+    </svg>
+    <figcaption>Three normals, in order of strength: a control twin from the same checkpoint, the preset's ensemble envelope, the world's own past. The picker had only the last. A language model's work starts after the flag: what departed, in which measure, when, and what to try next.</figcaption>
+  </figure>
+</section>
+
+<section id="shapes">
+  <h2><span class="idx">4</span>Seven shapes it could take</h2>
+  <p class="sub">Two axes organise them. The <strong>eye</strong>: does it narrate numbers, detect against a baseline, or see across the ensemble? The <strong>hand</strong>: does it observe, propose, or steer? Lit dots are the recommended path. Hover or focus a dot for its one-liner.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 420" role="img" aria-label="A map with the hand on the horizontal axis (observes, proposes, steers) and the eye on the vertical axis (narrates numbers, detects against a baseline, sees across the ensemble). Seven numbered dots: 1 field notebook and 4 visitor docent at observes and narrates; 2 anomaly bell at observes and detects; 3 experiment proposer at proposes and detects; 5 breeder's eye at steers and detects; 6 many eyes and 7 humans notice at observes and ensemble; a dashed circle labelled 6 plus 3 at proposes and ensemble. Dots 1, 2 and 3 are lit.">
+      <g font-size="13" id="map">
+        <line class="grid" x1="360" y1="40" x2="360" y2="360"/>
+        <line class="grid" x1="620" y1="40" x2="620" y2="360"/>
+        <line class="grid" x1="880" y1="40" x2="880" y2="360"/>
+        <line class="grid" x1="240" y1="90" x2="980" y2="90"/>
+        <line class="grid" x1="240" y1="200" x2="980" y2="200"/>
+        <line class="grid" x1="240" y1="310" x2="980" y2="310"/>
+        <line class="axis" x1="240" y1="360" x2="980" y2="360"/>
+        <line class="axis" x1="240" y1="40" x2="240" y2="360"/>
+        <text x="360" y="392" text-anchor="middle" class="muted">observes</text>
+        <text x="620" y="392" text-anchor="middle" class="muted">proposes</text>
+        <text x="880" y="392" text-anchor="middle" class="muted">steers</text>
+        <text x="610" y="414" text-anchor="middle" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">THE HAND</text>
+        <text x="228" y="314" text-anchor="end" class="muted">narrates numbers</text>
+        <text x="228" y="204" text-anchor="end" class="muted">detects against a baseline</text>
+        <text x="228" y="94" text-anchor="end" class="muted">sees across the ensemble</text>
+        <text x="16" y="30" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">THE EYE</text>
+      </g>
+    </svg>
+    <ul class="shape-list" id="shape-list"></ul>
+    <figcaption>Recommendation: build 2, then 3, with 1 as the surface. Run 5 as the honest test of steering. The tenfold version is 6 feeding 3, with the coordinator queueing proposals to islands behind a human yes.</figcaption>
+  </figure>
+</section>
+
+<section id="loop">
+  <h2><span class="idx">5</span>The recommended loop</h2>
+  <p class="sub">Code notices. A model explains and proposes. A person says yes. The world replays. Every box but one already exists in some form.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 482" role="img" aria-label="A loop of boxes. Observers (census, tracker, collectives, activity, lineage, interventions) feed an event digest, which feeds the anomaly bell comparing the live world with its twin or the preset's envelope. A flag goes to a model that explains and proposes. The proposal is a run spec: fork, feed, drain, lesion, pick or next-world config. A human yes gate leads to fork and replay, which returns to the observers. A side branch from the model writes field notes with receipts. A dashed later branch sends proposals through the coordinator to islands and reads ensemble digests back.">
+      <g font-size="13">
+        <rect class="box" x="20" y="40" width="200" height="150" rx="12"/>
+        <text x="36" y="66" font-weight="700">Observers</text>
+        <text x="36" y="88" class="muted" font-size="12">exist today</text>
+        <text x="36" y="112">census · tracker · collectives</text>
+        <text x="36" y="132">activity · lineage · pond scores</text>
+        <text x="36" y="152">the intervention log</text>
+        <text x="36" y="172">checkpoints with digests</text>
+
+        <path class="arrow" d="M222 115 L268 115" marker-end="url(#ah)"/>
+        <rect class="box" x="272" y="80" width="160" height="70" rx="12"/>
+        <text x="288" y="106" font-weight="700">Event digest</text>
+        <text x="288" y="126" class="muted" font-size="12">one line per census</text>
+        <text x="288" y="142" class="muted" font-size="12">from the bundle's records</text>
+
+        <path class="arrow lit" d="M434 115 L480 115" marker-end="url(#ahl)"/>
+        <rect class="box lit" x="484" y="60" width="210" height="110" rx="12"/>
+        <text x="500" y="86" font-weight="700">Anomaly bell</text>
+        <text x="500" y="106" class="muted" font-size="12">shape 2 · code, no model</text>
+        <text x="500" y="128">live vs a control twin</text>
+        <text x="500" y="148">live vs the preset's envelope</text>
+        <circle cx="672" cy="80" r="7" class="sun ring"/>
+
+        <path class="arrow lit" d="M696 115 L742 115" marker-end="url(#ahl)"/>
+        <rect class="box lit" x="746" y="60" width="234" height="110" rx="12"/>
+        <text x="762" y="86" font-weight="700">A model explains, proposes</text>
+        <text x="762" y="106" class="muted" font-size="12">shape 3 · only after a flag</text>
+        <text x="762" y="128">what departed, in which measure,</text>
+        <text x="762" y="148">when, and the cheapest next try</text>
+
+        <path class="arrow" d="M863 172 L863 218" marker-end="url(#ah)"/>
+        <rect class="box" x="746" y="222" width="234" height="90" rx="12"/>
+        <text x="762" y="248" font-weight="700">A run spec</text>
+        <text x="762" y="270">fork at a checkpoint · feed · drain</text>
+        <text x="762" y="290">lesion · pick · next-world config</text>
+
+        <path class="arrow" d="M744 267 L698 267" marker-end="url(#ah)"/>
+        <rect class="box" x="560" y="237" width="134" height="60" rx="30"/>
+        <text x="627" y="262" text-anchor="middle" font-weight="700">A person</text>
+        <text x="627" y="282" text-anchor="middle" class="muted" font-size="12">says yes, or not</text>
+
+        <path class="arrow" d="M558 267 L512 267" marker-end="url(#ah)"/>
+        <rect class="box" x="352" y="222" width="156" height="90" rx="12"/>
+        <text x="368" y="248" font-weight="700">Fork and replay</text>
+        <text x="368" y="270">bit for bit, beside</text>
+        <text x="368" y="290">its own twin</text>
+
+        <path class="arrow" d="M350 267 L120 267 L120 194" marker-end="url(#ah)"/>
+
+        <path class="arrow" d="M980 115 L996 115 L996 400 L984 400" marker-end="url(#ah)"/>
+        <rect class="box plain" x="746" y="368" width="234" height="64" rx="12"/>
+        <text x="762" y="392" font-weight="700">Field notes</text>
+        <text x="762" y="412" class="muted" font-size="12">shape 1 · with receipts</text>
+
+        <path class="arrow later" d="M627 299 L627 364" marker-end="url(#ah)"/>
+        <text x="634" y="338" class="soft" font-size="11">approved only</text>
+        <rect class="box plain" x="520" y="368" width="196" height="64" rx="12"/>
+        <text x="536" y="392" font-weight="700">Coordinator and islands</text>
+        <text x="536" y="412" class="muted" font-size="12">shape 6 · later: ensemble back</text>
+        <path class="arrow later" d="M518 400 L40 400 L40 194" marker-end="url(#ah)"/>
+
+        <text x="20" y="452" class="soft" font-size="12">A neutral run can be given a twin too, so the bell is calibrated on drift before it ever speaks.</text>
+        <text x="20" y="470" class="soft" font-size="12">Every note and proposal is logged with what it read: run id, step range, digests, which twin.</text>
+      </g>
+    </svg>
+    <figcaption>Solid arrows are buildable now from existing pieces, except the control twin itself, which is new work in the lab (headless, the control arms already exist as conditions). Dashed arrows leave only from the approval gate and wait on two items the sandbox note lists as not built: the coordinator does not know the breed arm, and picked runs cannot be segmented.</figcaption>
+  </figure>
+</section>
+
+<section id="test">
+  <h2><span class="idx">6</span>The first test: the blinded twin test</h2>
+  <p class="sub">The riskiest assumption of the whole bet is that unfamiliar can be told from normal in these worlds. The cheapest honest test has two parts, scored separately, because a code detector and a model reading digests are two instruments. It uses the M4 replays already on disk. No lab work, no new simulation, no physics. The model's call budget, a few dollars, is paid compute and gets a yes first.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 372" role="img" aria-label="Left: material on disk, the M4 replay of gradient-m3 with 10 treatment, 20 neutral and 5 no-mutation seeds, plus test 6's 70-run neutral corpus, turned into per-census digests from what the bundles record. Middle, part a: the code detector scores matched pairs of digests, control against control for false alarms and treatment against control for hits, against test 6's rule. Middle, part b: blinded pairs go to a model, which answers which is which, where they parted, and three field notes with receipts. Right: the detector's and the model's results are reported side by side, never pooled. Thresholds are fixed before anything runs.">
+      <g font-size="13">
+        <rect class="box" x="20" y="30" width="236" height="312" rx="12"/>
+        <text x="36" y="56" font-weight="700">Material, on disk here</text>
+        <text x="36" y="84">M4 replay of gradient-m3</text>
+        <text x="36" y="104" class="muted" font-size="12">treatment 10 · no-mutation 5</text>
+        <text x="36" y="120" class="muted" font-size="12">neutral 20 (checkpoints on 5)</text>
+        <text x="36" y="140" class="muted" font-size="12">test 6's 70 neutral runs: on disk</text>
+        <text x="36" y="156" class="muted" font-size="12">(replay-calib and replay-m4)</text>
+        <text x="36" y="176" class="muted" font-size="12">breeder, picker runs: reports only</text>
+        <text x="36" y="192" class="muted" font-size="12">storm runs: not here</text>
+        <text x="36" y="214" class="soft" font-size="12" font-weight="700" letter-spacing=".06em">DIGEST, PER CENSUS</text>
+        <text x="36" y="234" class="muted" font-size="12">what series.jsonl and the tables record:</text>
+        <text x="36" y="250" class="muted" font-size="12">living cells · individuals · lineages</text>
+        <text x="36" y="266" class="muted" font-size="12">fissions · buddings · mutations · activity</text>
+        <text x="36" y="282" class="muted" font-size="12">pattern entropy · pond scores · interventions</text>
+        <text x="36" y="306" class="soft" font-size="11">not recorded, so later: size quantiles,</text>
+        <text x="36" y="320" class="soft" font-size="11">propagule similarity</text>
+
+        <path class="arrow" d="M258 100 L300 100" marker-end="url(#ah)"/>
+        <path class="arrow" d="M258 240 L300 240" marker-end="url(#ah)"/>
+
+        <rect class="box lit" x="304" y="30" width="376" height="128" rx="12"/>
+        <text x="320" y="56" font-weight="700">Part a · the code detector</text>
+        <text x="320" y="78" class="muted" font-size="12">shape 2's calibration · no model call</text>
+        <text x="320" y="104">control vs control pairs → false alarms</text>
+        <text x="320" y="124">treatment vs control pairs → hits</text>
+        <text x="320" y="146" class="muted" font-size="12">candidate measures over the digests, thresholds fixed first</text>
+
+        <rect class="box lit" x="304" y="182" width="376" height="128" rx="12"/>
+        <text x="320" y="208" font-weight="700">Part b · the model</text>
+        <rect class="box plain" x="320" y="220" width="110" height="30" rx="6"/><text x="375" y="240" text-anchor="middle" class="mono" font-size="12">digest A</text>
+        <rect class="box plain" x="440" y="220" width="110" height="30" rx="6"/><text x="495" y="240" text-anchor="middle" class="mono" font-size="12">digest B</text>
+        <text x="562" y="240" class="muted" font-size="12">shuffled, blinded</text>
+        <text x="320" y="276">which is which · where they parted</text>
+        <text x="320" y="296">three field notes, each with receipts</text>
+
+        <path class="arrow" d="M682 94 L724 94" marker-end="url(#ah)"/>
+        <path class="arrow" d="M682 246 L724 246" marker-end="url(#ah)"/>
+
+        <rect class="box" x="728" y="30" width="252" height="128" rx="12"/>
+        <text x="744" y="56" font-weight="700">Detector, against test 6's rule</text>
+        <text x="744" y="80">separates the arms, P(a &gt; b) ≥ 0.8</text>
+        <text x="744" y="98">flags at most 2 of the 70 neutral runs</text>
+        <text x="744" y="116" class="muted" font-size="12">on test 6's own corpus, not 20 seeds</text>
+        <text x="744" y="136" class="muted" font-size="12">phenotype-bin novelty flagged 40 and failed</text>
+
+        <rect class="box" x="728" y="182" width="252" height="128" rx="12"/>
+        <text x="744" y="208" font-weight="700">Model, reported beside it</text>
+        <text x="744" y="236">accuracy of the arm call</text>
+        <text x="744" y="256">named census vs first separating census</text>
+        <text x="744" y="276">its own false alarms on a control alone</text>
+        <text x="744" y="298" class="muted" font-size="12">never pooled with the detector's</text>
+
+        <text x="304" y="364" class="soft" font-size="12">Pass and fail for both parts are fixed in a dated section of the note before anything runs.</text>
+      </g>
+    </svg>
+    <figcaption>If part a finds no measure that clears the bar, the bell has no clapper yet and the bet waits behind measurement work. If part b cannot separate treatment from control from the digest, the model has no eye and the naturalist stays code-only until it does.</figcaption>
+  </figure>
+  <div class="cards" style="margin-top:14px">
+    <div class="card"><h3>Second test: the picker redone, one input at a time</h3><p>A ladder of model arms on the same world: the first look again; plus the movement overlay; plus per-pond numbers; plus a trait brief; and an inverse brief as a sanity check. Three seeds, two draws each, beside rule and random. Each rung isolates one of the first two hypotheses; the missing control is tested by part a instead. About 480 calls, which is paid compute and gets a yes first.</p></div>
+    <div class="card"><h3>Set aside for now</h3><p>The visitor docent, until a bench version has an eye. The live ensemble loop, until the coordinator knows the breed arm and picked runs can be segmented. Anything that selects what gets registered.</p></div>
+  </div>
+</section>
+
+<section id="decisions">
+  <h2><span class="idx">7</span>Decisions open</h2>
+  <p class="sub">Four choices change what gets built. They belong to the person running the project.</p>
+  <div class="cards">
+    <div class="card lit"><h3><span class="n">1</span>Who is it for first?</h3><p>The experimenter at the bench, or a visitor at cadence.garden. This note recommends the bench; the visitor version falls out of a working one.</p></div>
+    <div class="card"><h3><span class="n">2</span>May it act, or only propose?</h3><p>Proposals as run specs keep a person at the gate and fit the rule that paid compute needs a yes. Acting means a naturalist that forks and runs on its own.</p></div>
+    <div class="card"><h3><span class="n">3</span>What counts as a first win?</h3><p>A note the experimenter would have written, or one they would not have thought to write. Only the second deserves the name.</p></div>
+    <div class="card"><h3><span class="n">4</span>May its taste be human taste?</h3><p>A pretrained model's "interesting" is human interesting. Fine for a companion, a confound for a claim. Report it beside the measures, or start code-only.</p></div>
+  </div>
+</section>
+
+<footer>
+  Written 7 October 2026 from the home page roadmap, docs/sandbox-wild.md, tools/picker-claude.ts, docs/lineage-inspector.md, docs/life_like_systems_edited.md, the metrics, lineage, runner and schema packages, and the copied picker report runs/wild-report/pick1-trajectory.tsv (gitignored; the full picker bundles are not on disk here). One read-only Codex Sol 6.1 High pass, thirteen findings, all taken. The full argument: <a href="naturalist-brainstorm-2026-10-07.md">naturalist-brainstorm-2026-10-07.md</a>.
+</footer>
+
+</div>
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+<script>
+(() => {
+  const root = document.documentElement;
+  const btn = document.getElementById("theme");
+  const prefersDark = matchMedia("(prefers-color-scheme: dark)");
+  const apply = (mode) => {
+    if (mode) root.setAttribute("data-theme", mode); else root.removeAttribute("data-theme");
+    const dark = mode ? mode === "dark" : prefersDark.matches;
+    btn.textContent = dark ? "Day" : "Night";
+    btn.setAttribute("aria-pressed", String(dark));
+  };
+  let saved = null;
+  try { saved = localStorage.getItem("bl-theme"); } catch {}
+  apply(saved === "dark" || saved === "light" ? saved : null);
+  btn.addEventListener("click", () => {
+    const dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark" : prefersDark.matches;
+    const next = dark ? "light" : "dark";
+    apply(next);
+    try { localStorage.setItem("bl-theme", next); } catch {}
+  });
+  prefersDark.addEventListener("change", () => { if (!root.getAttribute("data-theme")) apply(null); });
+
+  // Tooltip: one element, text only, shown on hover and on keyboard focus.
+  const tip = document.getElementById("tip");
+  const show = (text, x, y) => {
+    tip.textContent = text;
+    tip.classList.add("on");
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    const left = Math.min(Math.max(8, x + 14), innerWidth - w - 8);
+    const top = y - h - 12 < 8 ? y + 18 : y - h - 12;
+    tip.style.left = `${left}px`; tip.style.top = `${top}px`;
+  };
+  const hide = () => tip.classList.remove("on");
+  const wire = (el, text) => {
+    el.addEventListener("pointermove", (e) => show(text, e.clientX, e.clientY));
+    el.addEventListener("pointerleave", hide);
+    el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); show(text, r.left + r.width / 2, r.top); });
+    el.addEventListener("blur", hide);
+  };
+  for (const el of document.querySelectorAll("[data-tip]")) wire(el, el.getAttribute("data-tip"));
+
+  // The per-cycle lines: occupied ponds, scoring ponds and drive median per picker, copied from
+  // runs/wild-report/pick1-trajectory.tsv (columns occupied, scoring, driveMedian; cycles 1 to 16).
+  const NS = "http://www.w3.org/2000/svg";
+  const svgEl = (name, attrs) => { const n = document.createElementNS(NS, name); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v)); return n; };
+  const series = {
+    rule: { occupied: [16, 16, 13, 13, 13, 13, 14, 13, 12, 14, 14, 12, 15, 16, 14, 13], scoring: [3, 4, 10, 13, 12, 13, 14, 13, 12, 14, 14, 12, 15, 14, 13, 13], drive: [0, 0, 33868, 160025, 190385, 193167, 217752, 309891, 282296.5, 308424, 285131.5, 301782, 329538, 320576, 381095.5, 383849] },
+    random: { occupied: [16, 13, 12, 11, 10, 11, 10, 12, 16, 15, 12, 12, 13, 11, 13, 14], scoring: [3, 2, 1, 1, 1, 2, 0, 0, 1, 1, 0, 3, 2, 3, 1, 2], drive: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+    model: { occupied: [16, 13, 12, 13, 10, 9, 12, 8, 12, 10, 14, 10, 10, 15, 14, 9], scoring: [3, 3, 6, 12, 7, 6, 6, 0, 2, 1, 0, 0, 0, 1, 0, 0], drive: [0, 0, 7300, 19706, 16896.5, 4496, 11940.5, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+  };
+  const order = ["rule", "random", "model"]; // the model is drawn last, on top
+  const lines = document.getElementById("lines");
+  const panels = [
+    { key: "scoring", title: "Ponds scoring movement", top: 30, bottom: 110, endLabels: ["rule", "model"] },
+    { key: "occupied", title: "Occupied ponds", top: 150, bottom: 230, endLabels: ["model"] },
+  ];
+  const px = (c) => 70 + ((c - 1) * 400) / 15;
+  for (const p of panels) {
+    const py = (v) => p.bottom - ((v / 16) * (p.bottom - p.top));
+    const t = svgEl("text", { x: 0, y: p.top - 14, "font-weight": 700 }); t.textContent = p.title; lines.appendChild(t);
+    const u = svgEl("text", { x: 480, y: p.top - 14, "text-anchor": "end", class: "soft", "font-size": 12 }); u.textContent = "of 16"; lines.appendChild(u);
+    for (const v of [0, 8, 16]) {
+      lines.appendChild(svgEl("line", { x1: 70, y1: py(v), x2: 470, y2: py(v), class: v === 0 ? "axis" : "grid" }));
+      const l = svgEl("text", { x: 62, y: py(v) + 4, "text-anchor": "end", class: "soft", "font-size": 11 }); l.textContent = String(v); lines.appendChild(l);
+    }
+    for (const k of order) {
+      const d = series[k][p.key].map((v, i) => `${i ? "L" : "M"}${px(i + 1).toFixed(1)} ${py(v).toFixed(1)}`).join(" ");
+      lines.appendChild(svgEl("path", { d, fill: "none", stroke: `var(--s-${k})`, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+      const last = series[k][p.key][15];
+      lines.appendChild(svgEl("circle", { cx: px(16), cy: py(last), r: 4, fill: `var(--s-${k})`, class: "ring" }));
+      if (p.endLabels.includes(k)) {
+        const e = svgEl("text", { x: 478, y: py(last) + 4, "font-size": 12, "font-weight": k === "model" ? 700 : 400 }); e.textContent = String(last); lines.appendChild(e);
+      }
+    }
+  }
+  const xa = svgEl("text", { x: 70, y: 246, class: "soft", "font-size": 11 }); xa.textContent = "cycle 1"; lines.appendChild(xa);
+  const xb = svgEl("text", { x: 470, y: 246, class: "soft", "font-size": 11, "text-anchor": "end" }); xb.textContent = "16"; lines.appendChild(xb);
+  // Crosshair: the pointer finds the cycle, the tooltip lists every series there; arrow keys do the same from the keyboard.
+  const hair = svgEl("line", { x1: 0, y1: 30, x2: 0, y2: 230, stroke: "var(--sun-ink)", "stroke-width": 1, opacity: 0 });
+  lines.appendChild(hair);
+  const overlay = svgEl("rect", { x: 60, y: 20, width: 420, height: 220, class: "hit", tabindex: 0, role: "img", "aria-label": "Per-cycle values; use the left and right arrow keys to step through the cycles, or read the table below." });
+  lines.appendChild(overlay);
+  const svgNode = lines.ownerSVGElement;
+  const fmt = (n) => n.toLocaleString("en-US");
+  const readout = (c) => `cycle ${c} · scoring: model ${series.model.scoring[c - 1]}, rule ${series.rule.scoring[c - 1]}, random ${series.random.scoring[c - 1]} · occupied: model ${series.model.occupied[c - 1]}, rule ${series.rule.occupied[c - 1]}, random ${series.random.occupied[c - 1]} · drive median: model ${fmt(series.model.drive[c - 1])}, rule ${fmt(series.rule.drive[c - 1])}, random 0`;
+  let cycle = 16;
+  const at = (c, clientX, clientY) => {
+    cycle = c;
+    hair.setAttribute("x1", px(c)); hair.setAttribute("x2", px(c)); hair.setAttribute("opacity", 1);
+    show(readout(c), clientX, clientY);
+  };
+  const off = () => { hair.setAttribute("opacity", 0); hide(); };
+  overlay.addEventListener("pointermove", (e) => {
+    const r = svgNode.getBoundingClientRect();
+    const sx = ((e.clientX - r.left) / r.width) * 480;
+    const c = Math.min(16, Math.max(1, Math.round(((sx - 70) * 15) / 400) + 1));
+    at(c, e.clientX, e.clientY);
+  });
+  overlay.addEventListener("pointerleave", off);
+  overlay.addEventListener("focus", () => { const r = svgNode.getBoundingClientRect(); at(cycle, r.left + (px(cycle) / 480) * r.width, r.top + 40); });
+  overlay.addEventListener("blur", off);
+  overlay.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const r = svgNode.getBoundingClientRect();
+    const c = Math.min(16, Math.max(1, cycle + (e.key === "ArrowRight" ? 1 : -1)));
+    at(c, r.left + (px(c) / 480) * r.width, r.top + 40);
+  });
+  // The table view: every value the chart shows, plus the drive medians.
+  const table = document.createElement("table");
+  const thead = document.createElement("thead"); const hr = document.createElement("tr");
+  for (const h of ["Cycle", "Rule occ.", "Rule scoring", "Rule drive median", "Random occ.", "Random scoring", "Model occ.", "Model scoring", "Model drive median"]) {
+    const th = document.createElement("th"); th.textContent = h; if (h !== "Cycle") th.className = "num"; hr.appendChild(th);
+  }
+  thead.appendChild(hr); table.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  for (let c = 1; c <= 16; c++) {
+    const tr = document.createElement("tr");
+    const cells = [c, series.rule.occupied[c - 1], series.rule.scoring[c - 1], fmt(series.rule.drive[c - 1]), series.random.occupied[c - 1], series.random.scoring[c - 1], series.model.occupied[c - 1], series.model.scoring[c - 1], fmt(series.model.drive[c - 1])];
+    cells.forEach((v, i) => { const td = document.createElement("td"); td.textContent = String(v); if (i) td.className = "num"; tr.appendChild(td); });
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  const note = document.createElement("p"); note.className = "sub"; note.style.fontSize = "13px"; note.textContent = "Random's drive median is 0 at every cycle. Source: runs/wild-report/pick1-trajectory.tsv.";
+  document.getElementById("lines-table").append(table, note);
+
+  // The map of seven shapes.
+  const map = document.getElementById("map");
+  const X = { observes: 360, proposes: 620, steers: 880 };
+  const Y = { narrates: 310, detects: 200, ensemble: 90 };
+  // Two shapes share a cell twice; the pair is spread along the row and labelled above and below, to the right of each dot.
+  const shapes = [
+    { n: 1, name: "The field notebook", hand: "observes", eye: "narrates", dx: -60, side: "above", lit: true, line: "reads the per-census digest, writes dated notes in the catalogue's voice; never steers" },
+    { n: 4, name: "The visitor docent", hand: "observes", eye: "narrates", dx: 60, side: "below", lit: false, line: "a sentence about any jar on cadence.garden; a chat skin until there is an eye behind it" },
+    { n: 2, name: "The anomaly bell", hand: "observes", eye: "detects", dx: 0, lit: true, line: "no model in the noticing step: a flag when the world and its control twin part, or it leaves the envelope" },
+    { n: 3, name: "The experiment proposer", hand: "proposes", eye: "detects", dx: 0, lit: true, line: "speaks only in run specs: fork, feed, drain, lesion, pick, next-world config; every proposal replays" },
+    { n: 5, name: "The breeder's eye, redone", hand: "steers", eye: "detects", dx: 0, lit: false, line: "the picker again with motion, numbers and a trait brief; several seeds and draws against rule and random" },
+    { n: 6, name: "Many eyes, one notebook", hand: "observes", eye: "ensemble", dx: -60, side: "above", lit: false, line: "watches bundles and hashes across islands, not one jar; the interesting findings here have been ensemble-level" },
+    { n: 7, name: "Humans notice, AI collates", hand: "observes", eye: "ensemble", dx: 60, side: "below", lit: false, line: "the issue-tracker sharing the participation page points to, with the receipts captured for you; a model clusters what people found worth sharing" },
+  ];
+  for (const s of shapes) {
+    const cx = X[s.hand] + s.dx, cy = Y[s.eye];
+    const g = svgEl("g", { tabindex: 0, role: "img", "aria-label": `${s.n}. ${s.name}: ${s.line}` });
+    g.appendChild(svgEl("circle", { cx, cy, r: 22, class: "hit" }));
+    g.appendChild(svgEl("circle", { cx, cy, r: 11, class: `ring ${s.lit ? "sun" : "box"}` }));
+    const num = svgEl("text", { x: cx, y: cy + 4.5, "text-anchor": "middle", "font-size": 12, "font-weight": 700, class: s.lit ? "" : "ink" });
+    if (s.lit) num.setAttribute("fill", "oklch(23% 0.022 80)");
+    num.textContent = String(s.n);
+    g.appendChild(num);
+    const label = s.side
+      ? svgEl("text", { x: cx - 11, y: s.side === "above" ? cy - 20 : cy + 32, "text-anchor": "start", "font-size": 12, class: "muted" })
+      : svgEl("text", { x: cx, y: cy + 30, "text-anchor": "middle", "font-size": 12, class: "muted" });
+    label.textContent = s.name;
+    g.appendChild(label);
+    map.appendChild(g);
+    wire(g, `${s.n}. ${s.name}: ${s.line}`);
+  }
+  // The tenfold version: 6 feeding 3.
+  const tx = X.proposes, ty = Y.ensemble;
+  const g10 = svgEl("g", { tabindex: 0, role: "img", "aria-label": "6 plus 3, the tenfold version: an ensemble watcher whose proposals the coordinator queues to islands behind a human yes" });
+  g10.appendChild(svgEl("circle", { cx: tx, cy: ty, r: 22, class: "hit" }));
+  g10.appendChild(svgEl("circle", { cx: tx, cy: ty, r: 11, fill: "none", stroke: "var(--sun-ink)", "stroke-width": 1.5, "stroke-dasharray": "3 3" }));
+  const t10 = svgEl("text", { x: tx, y: ty + 4, "text-anchor": "middle", "font-size": 10, "font-weight": 700, class: "sun-ink" }); t10.textContent = "6+3"; g10.appendChild(t10);
+  const l10 = svgEl("text", { x: tx + 17, y: ty + 4, "text-anchor": "start", "font-size": 12, class: "muted" }); l10.textContent = "the tenfold version, later"; g10.appendChild(l10);
+  map.appendChild(g10);
+  wire(g10, "6 + 3, the tenfold version: an ensemble watcher whose proposals the coordinator queues to islands, behind a human yes. Waits on the coordinator knowing the breed arm and on segmentable picked runs.");
+
+  const list = document.getElementById("shape-list");
+  for (const s of [...shapes].sort((a, b) => a.n - b.n)) {
+    const li = document.createElement("li");
+    const n = document.createElement("span"); n.className = "n"; n.textContent = String(s.n);
+    const b = document.createElement("b"); b.textContent = s.name + ". ";
+    li.appendChild(n); li.appendChild(b); li.appendChild(document.createTextNode(s.line + "."));
+    list.appendChild(li);
+  }
+})();
+</script>
+</body>
+</html>
