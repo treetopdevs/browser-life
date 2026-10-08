@@ -1,3 +1,6 @@
+// Every page loads this module, so it is also where the page-view counter starts.
+import "./analytics.ts";
+
 type Theme = "dark" | "light";
 
 const key = "browser-life-theme";

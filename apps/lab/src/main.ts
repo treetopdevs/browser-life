@@ -6,6 +6,7 @@ import { createLineagePanel } from "./lineage-panel.ts";
 import { FAMILIES, byId, familyOf } from "./worlds.ts";
 import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
 import "./theme.ts";
+import { track } from "./analytics.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const fmt = (v: number) =>
@@ -15,7 +16,9 @@ const canvas = $<HTMLCanvasElement>("world");
 const wrap = $("canvas-wrap");
 const worker = new Worker(new URL("./sim.worker.ts", import.meta.url), { type: "module" });
 const send = (m: ToWorker, t: Transferable[] = []) => worker.postMessage(m, t);
-const lineagePanel = createLineagePanel(send);
+// A jump replays a world and answers "loaded" like a replacement does, but nobody planted, restored or opened anything:
+// it clears whatever replacement intent a cancelled or refused question left behind.
+const lineagePanel = createLineagePanel((m) => { if (m.type === "jump") loadIntent = null; send(m); });
 
 let cfg: WorldConfig | null = null;
 /** The world's config when a load was requested: the worker keeps that world if the load fails. */
@@ -35,6 +38,8 @@ let runId = "";
 /** The Lab session's account. The page paints it and does not keep another. */
 let account: SessionView | null = null;
 /** A plant, restore, or open waiting to be sent again with `keep` if the account holds the Lab world. */
+/** The action behind a replacement that is on its way, counted once the world arrives. A jump replays a world without one. */
+let loadIntent: "World planted" | "World restored" | "World opened" | null = null;
 let pendingReplace: { kind: "plant" } | { kind: "restore"; file: string } | { kind: "import"; bytes: ArrayBuffer; name: string } | null = null;
 /** A plant, restore, or open the worker held while a question was already open. Asked when that question closes. */
 let deferredHeld: NonNullable<SessionView["held"]> | null = null;
@@ -187,6 +192,7 @@ function confirmReplace(host: HTMLElement, opener: HTMLElement, verb: string, co
 
 function sendPlant(keep?: Keep) {
   pendingReplace = { kind: "plant" };
+  loadIntent = "World planted";
   setPlaying(false);
   setWorldControls(false);
   cfgBeforeLoad = cfg;
@@ -199,11 +205,13 @@ function sendPlant(keep?: Keep) {
 
 function sendRestore(file: string, keep?: Keep) {
   pendingReplace = { kind: "restore", file };
+  loadIntent = "World restored";
   send({ type: "restore", file, keep });
 }
 
 function sendImport(bytes: ArrayBuffer, name: string, keep?: Keep) {
   pendingReplace = { kind: "import", bytes, name };
+  loadIntent = "World opened";
   const copy = bytes.slice(0);
   send({ type: "import", bytes: copy, name, keep }, [copy]);
 }
@@ -306,7 +314,12 @@ function showRunStatus() {
 }
 /** Steps wait with everything else while a pond cycle waits: the "." shortcut included. */
 const stepBy = (count: number) => { if (awaiting) return; send({ type: "step", count }); };
-$("btn-play").onclick = () => setPlaying(!playing);
+/** Play and Pause by hand (button or space bar). The page pausing itself after a load or an error is not counted. */
+function togglePlay() {
+  setPlaying(!playing);
+  track(playing ? "World played" : "World paused", loadedPresetId ?? undefined);
+}
+$("btn-play").onclick = togglePlay;
 $("btn-step").onclick = () => stepBy(1);
 $("btn-step100").onclick = () => stepBy(100);
 
@@ -565,7 +578,7 @@ window.addEventListener("keydown", (e) => {
   if (e.key === " ") {
     if (!worldReady) return;
     e.preventDefault();
-    setPlaying(!playing);
+    if (!e.repeat) togglePlay();
   } else if (e.key === "." && worldReady) stepBy(1);
   else if (/^[1-8]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
 });
@@ -583,8 +596,8 @@ function syncCkptMore() {
   more.setAttribute("aria-expanded", String(ckptAll));
 }
 $("ckpt-more").onclick = () => { ckptAll = !ckptAll; syncCkptMore(); };
-$("btn-save").onclick = requestSave;
-$("btn-export").onclick = () => send({ type: "export" });
+$("btn-save").onclick = () => { requestSave(); track("World saved", loadedPresetId ?? undefined); };
+$("btn-export").onclick = () => { send({ type: "export" }); track("World downloaded", loadedPresetId ?? undefined); };
 $("btn-import").onclick = () => $<HTMLInputElement>("import").click();
 $<HTMLInputElement>("import").onchange = async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
@@ -1248,6 +1261,9 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       document.title = titleFor(m.manifest.presetId, $("world-heading").textContent);
       loadedPresetId = m.manifest.presetId;
       loadedSeed = m.manifest.seed;
+      // The first world is planted by the page itself and a jump replays one: only a replacement asked for by hand counts, once it is on screen.
+      if (loadIntent) track(loadIntent, loadedPresetId);
+      loadIntent = null;
       syncPlant();
       $("run-id").textContent = $("run-id").title = runId;
       $("run-seed").textContent = String(m.manifest.seed);
@@ -1303,6 +1319,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       // The world is fine; a lineage inspection or a jump that was refused must not be waited for any longer.
       toast(m.message);
       if (m.request === "load") unblankWorld();
+      if (m.request === "load" || m.request === "restore" || m.request === "import") loadIntent = null;
       if (m.request === "lesion" || m.request === "feed") noteBrushRefused();
       if (m.request === "pick") endBreeding();
       if (m.request === "lineage" || m.request === "jump") lineagePanel.onError();
@@ -1321,6 +1338,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       showVerification();
       break;
     case "error":
+      loadIntent = null;
       // The worker pauses itself on stepping and census failures; stay in sync.
       if (playing) setPlaying(false);
       if (loadingWorld) {
