@@ -170,7 +170,8 @@
         </section>
         <section class="rail-section" aria-labelledby="checkpoint-heading">
           <h2 id="checkpoint-heading">Keep a copy</h2><p class="hint">Save keeps a copy in this browser. Download gives you a file to keep or share. Both wait for the next census, so the copy is complete.</p>
-          <div class="row"><button id="btn-save" type="button" aria-describedby="ckpt-wait">Save</button><button id="btn-export" type="button" aria-describedby="ckpt-wait">Download</button><button id="btn-import" class="import-button" type="button">Open a file</button><input id="import" type="file" accept=".blck" hidden /></div>
+          <div class="row"><button id="btn-save" type="button">Save</button><button id="btn-export" type="button">Download</button><button id="btn-import" class="import-button" type="button">Open a file</button><input id="import" type="file" accept=".blck" hidden /></div>
+          <p class="hint wait-note" id="ckpt-storage" hidden>This browser isn't letting the lab keep copies here (private browsing?). Download still gives you a file.</p>
           <p class="hint wait-note" id="ckpt-wait" hidden>Save and Download come back once you breed: a copy holds a world between pond cycles, not one paused inside a cycle.</p>
           <div class="guard" id="guard-ckpt" role="group" aria-label="Confirm checkpoint action" hidden></div>
           <p class="hint" id="checkpoint-empty">Nothing kept yet. A saved copy lets you come back to this exact moment.</p><ul class="list" id="ckpts" aria-label="Saved copies"></ul>

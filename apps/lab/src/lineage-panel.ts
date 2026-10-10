@@ -94,7 +94,8 @@ export interface LineagePanel {
   onError(): void;
 }
 
-export function createLineagePanel(send: (m: ToWorker) => void): LineagePanel {
+/** `storageOff`: this browser keeps no checkpoints, so no row offers a jump, and the panel says why. */
+export function createLineagePanel(send: (m: ToWorker) => void, storageOff: () => boolean = () => false): LineagePanel {
   const drawer = $("lineage-drawer");
   const body = $("lineage-body");
   const status = $("lineage-status");
@@ -216,7 +217,11 @@ export function createLineagePanel(send: (m: ToWorker) => void): LineagePanel {
     tw.append(table);
     ancestry.append(
       tw,
-      el("p", "Expression is measured on a fixed grid of sensor values, not the inputs the lineage met; outputs moved lists each output's largest change on that grid. Jump restores the latest checkpoint at or before a row's minting and replays forward; lesions made after that checkpoint are not re-applied.", "hint"),
+      el(
+        "p",
+        `Expression is measured on a fixed grid of sensor values, not the inputs the lineage met; outputs moved lists each output's largest change on that grid. Jump restores the latest checkpoint at or before a row's minting and replays forward, re-applying what this run logged by hand on the way; anything logged after the row's minting stays with the saved present.${storageOff() ? " This browser isn't letting the lab keep copies here, so there is no checkpoint to jump back to." : ""}`,
+        "hint",
+      ),
     );
 
     const gaps = el("section");

@@ -110,4 +110,58 @@ describe("Lab session", () => {
     expect(session.view().loss).toBeNull();
     expect(session.replace("restore")).toBe("proceed");
   });
+
+  it("after a shelf it could not list at adoption, counts only the copies this world saved", () => {
+    const session = createLabSession();
+    // A file opened again under a run id whose older copies are still on the shelf; the listing failed.
+    session.adopt({ ...world, step: 50 });
+    session.noteStep(100);
+    session.noteManual("now.blck");
+    session.noteShelf([file("older-life.blck", 150), file("now.blck", 100)]);
+    expect(session.view().loss).toBeNull();
+    // The older life's copy at t=150 does not cover steps this world has taken since its own save.
+    session.noteStep(120);
+    expect(session.view().loss?.text).toContain("Its last saved copy is at t=100");
+    // An automatic copy counts too, and a copy that may be gone stops counting at once.
+    session.noteSaved("auto.blck");
+    session.noteShelf([file("older-life.blck", 150), file("now.blck", 100), file("auto.blck", 120, true)]);
+    expect(session.view().loss).toBeNull();
+    session.noteRemoved("auto.blck");
+    expect(session.view().loss?.text).toContain("Its last saved copy is at t=100");
+  });
+
+  it("holds a manual copy's hand edits while it may be gone, and gives them back when a listing names it", () => {
+    const session = createLabSession();
+    session.adopt(world);
+    session.noteShelf([]);
+    session.noteHand(0);
+    session.noteManual("hand.blck");
+    session.noteShelf([file("hand.blck", 0)]);
+    expect(session.view().hand).toBe(0);
+    session.noteRemoved("hand.blck");
+    expect(session.view().hand).toBe(1);
+    session.noteShelf([file("hand.blck", 0)]);
+    expect(session.view().hand).toBe(0);
+    // Once a listing leaves it out, it is gone for good.
+    session.noteRemoved("hand.blck");
+    session.noteShelf([]);
+    session.noteShelf([file("hand.blck", 0)]);
+    expect(session.view().hand).toBe(1);
+  });
+
+  it("downloads the present before a replace when asked, which covers nothing on the shelf", () => {
+    const session = createLabSession();
+    session.adopt(world);
+    session.noteShelf([]);
+    session.noteStep(40);
+    session.noteHand(40);
+    expect(session.replace("import", "download")).toBe("download-then");
+    expect(session.view().held).toBeNull();
+    // A file handed to the page is no Checkpoint: until the replace lands, the account still counts the loss.
+    expect(session.view().loss?.text).toContain("Nothing from this run is saved yet");
+    expect(session.view().hand).toBe(1);
+    // Nothing to lose, nothing to download.
+    session.adopt(world);
+    expect(session.replace("plant", "download")).toBe("proceed");
+  });
 });

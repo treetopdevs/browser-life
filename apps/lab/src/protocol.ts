@@ -38,8 +38,11 @@ export interface CheckpointMeta {
   auto?: boolean;
 }
 
-/** Save the present first, or replace the Lab world and drop what a Checkpoint does not cover. */
-export type Keep = "save" | "discard";
+/**
+ * Save the present first, download it first (for a browser that keeps no Checkpoints), or replace the Lab world
+ * and drop what a Checkpoint does not cover.
+ */
+export type Keep = "save" | "download" | "discard";
 
 export type SessionCommand = "save" | "plant" | "restore" | "jump" | "deleteCheckpoint" | "export" | "import";
 
@@ -66,7 +69,7 @@ export interface SessionView {
   /** Hand edits since this Lab world was adopted that no manual Checkpoint holds. */
   hand: number;
   checkpoints: CheckpointMeta[];
-  /** A waiting pond cycle refused this command. The Lab world is usable. */
+  /** A waiting pond cycle, or the browser's storage, refused this command. The Lab world is usable. */
   refusal: null | { command: SessionCommand; message: string };
   failure: null | string;
   /** plant, restore, or import left this Lab world in place because `loss` was set and `keep` was omitted. */
@@ -209,7 +212,8 @@ export type ToWorker =
   | { type: "jump"; step: number; key: string | null };
 
 export type FromWorker =
-  | { type: "ready"; adapter: string }
+  /** `storage`: why this browser keeps no Checkpoints here (its own words), or null when it does. Known before any world. */
+  | { type: "ready"; adapter: string; storage: string | null }
   | { type: "error"; message: string }
   | { type: "loaded"; manifest: RunManifest; step: number }
   | StatsMsg
@@ -223,8 +227,9 @@ export type FromWorker =
   | { type: "exported"; bytes: ArrayBuffer; name: string }
   | { type: "notice"; message: string }
   /**
-   * Request `request` was refused because a pond cycle is waiting for its donors. Not a failure: the world is
-   * usable, and whoever made the request (the lineage panel's inspection or jump) must stop waiting for it.
+   * Request `request` was refused because a pond cycle is waiting for its donors, or because the browser would not
+   * keep or read a Checkpoint. Not a failure: the world is usable, and whoever made the request (the lineage
+   * panel's inspection or jump) must stop waiting for it.
    */
   | { type: "refused"; request: ToWorker["type"]; message: string }
   /** A replay check of `steps` steps from step `from`, which the live world has now run: its state hash and the twin's. */

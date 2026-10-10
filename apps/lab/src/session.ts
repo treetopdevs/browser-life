@@ -4,7 +4,7 @@
 
 import type { CheckpointMeta, Keep, ReplayReading, SessionCommand, SessionView } from "./protocol.ts";
 
-export type ReplaceGate = "proceed" | "save-then" | "held";
+export type ReplaceGate = "proceed" | "save-then" | "download-then" | "held";
 
 const stepText = (step: number) => `t=${step.toLocaleString()}`;
 
@@ -31,8 +31,12 @@ export interface LabSession {
   noteHand(step: number): void;
   /** A Checkpoint saved on purpose holds the hand edits logged so far. */
   noteManual(file: string): void;
+  /** An automatic Checkpoint of this Lab world was written. */
+  noteSaved(file: string): void;
   /** The shelf. A manual file no longer listed uncovers the hand edits it held. */
   noteShelf(list: readonly CheckpointMeta[]): void;
+  /** A Checkpoint that may be gone, with no listing to say: it covers nothing until the shelf lists it again. */
+  noteRemoved(file: string): void;
   noteWaiting(waiting: SessionView["waiting"]): void;
   /** Clears the previous Replay twin reading. The check is in flight. */
   beginCheck(): void;
@@ -41,7 +45,8 @@ export interface LabSession {
   cancelCheck(): void;
   /**
    * Plant, restore, or import. `held` leaves the Lab world in place: `loss` was set and `keep` was omitted.
-   * `save-then` writes a manual Checkpoint of the present before the replace.
+   * `save-then` writes a manual Checkpoint of the present before the replace; `download-then` hands the page
+   * the present as a file instead, which covers nothing on the shelf.
    */
   replace(command: NonNullable<SessionView["held"]>, keep?: Keep): ReplaceGate;
   noteRefusal(command: SessionCommand, message: string): void;
@@ -57,6 +62,8 @@ export function createLabSession(): LabSession {
   let totalHand = 0;
   /** Hand-edit count a manual Checkpoint holds, while that file is still on the shelf. */
   const manual = new Map<string, number>();
+  /** Counts of manual Checkpoints that may be gone (noteRemoved): restored if the next listing names the file. */
+  const suspended = new Map<string, number>();
   let shelf: CheckpointMeta[] = [];
   /**
    * Files already on the shelf when this Lab world was adopted. A later life of the same run id
@@ -64,6 +71,11 @@ export function createLabSession(): LabSession {
    * Null until the first shelf note after adoption.
    */
   let earlier: Set<string> | null = null;
+  /**
+   * Checkpoints written in this Lab world's life. When the shelf could not be listed at adoption, the first
+   * listing comes after a save: everything on it but these was there before.
+   */
+  const own = new Set<string>();
   let refusal: SessionView["refusal"] = null;
   let failure: string | null = null;
   let held: SessionView["held"] = null;
@@ -117,6 +129,8 @@ export function createLabSession(): LabSession {
       adoptedStep = next.step;
       totalHand = 0;
       manual.clear();
+      suspended.clear();
+      own.clear();
       replay = null;
       checking = false;
       waiting = null;
@@ -140,12 +154,25 @@ export function createLabSession(): LabSession {
     },
     noteManual(file) {
       manual.set(file, totalHand);
+      own.add(file);
+    },
+    noteSaved(file) {
+      own.add(file);
     },
     noteShelf(list) {
       shelf = list.map((c) => ({ ...c }));
       const files = new Set(shelf.map((c) => c.file));
+      for (const [file, hand] of suspended) if (files.has(file)) manual.set(file, hand);
+      suspended.clear();
       for (const file of manual.keys()) if (!files.has(file)) manual.delete(file);
-      if (earlier === null) earlier = new Set(files);
+      if (earlier === null) earlier = new Set([...files].filter((f) => !own.has(f)));
+    },
+    noteRemoved(file) {
+      shelf = shelf.filter((c) => c.file !== file);
+      const hand = manual.get(file);
+      if (hand === undefined) return;
+      suspended.set(file, hand);
+      manual.delete(file);
     },
     noteWaiting(next) {
       waiting = next ? { ...next } : null;
@@ -163,12 +190,13 @@ export function createLabSession(): LabSession {
       replay = null;
     },
     replace(command, keep) {
-      if (loss() && keep !== "save" && keep !== "discard") {
+      if (loss() && keep !== "save" && keep !== "download" && keep !== "discard") {
         held = command;
         return "held";
       }
       held = null;
-      return keep === "save" && loss() ? "save-then" : "proceed";
+      if (!loss() || keep === "discard") return "proceed";
+      return keep === "save" ? "save-then" : "download-then";
     },
     noteRefusal(command, message) {
       refusal = { command, message };
