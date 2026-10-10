@@ -30,7 +30,7 @@ import { LabExecution, PondWaitingError, huntArmError } from "./execution.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
 import { createLabSession } from "./session.ts";
 import type { CensusMsg, CheckpointMeta, FromWorker, Keep, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
-import { StorageError, forgetCheckpoint, listCheckpoints, missingFile, readFile, recordCheckpoint, storageProblem, writeFile } from "./opfs.ts";
+import { StorageError, forgetCheckpoint, listCheckpoints, missingFile, readFile, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "./opfs.ts";
 
 /**
  * The interactive lab's observation settings (fixed; there is no per-run
@@ -316,7 +316,6 @@ function startGenomes(m: RunManifest): GenomeSource | null {
 
 /** A checkpoint's own copy of the run's mutation edges up to it: a save writes only new files, so a failed one cannot damage another checkpoint's genealogy. */
 const edgesFile = (checkpoint: string) => `${checkpoint}.edges`;
-
 /** A world loaded from a file outside any run's history: its genealogy starts here. */
 function freshLineage(state: WorldState, source: string): AdoptLineage {
   return { edges: new MutationEdges(), dropped: 0, edgesFrom: state.step, known: [{ source, genomes: genomesOf(state, state.cfg) }] };
@@ -554,7 +553,7 @@ async function saveCheckpoint(w: World, auto: boolean) {
   await writeFile(file, bytes);
   await writeFile(edgesFile(file), new Uint8Array(w.execution.edges.words().buffer));
   m.checkpoints.push({ step: state.step, file, hash: stateHash(state), interventions: m.interventions.length, edges, dropped, edgesFrom: w.lineage.edgesFrom, ...(auto ? { auto } : {}) });
-  await writeFile(`${m.runId}.run.json`, new TextEncoder().encode(JSON.stringify(m)));
+  await writeManifest(m);
   await recordCheckpoint({ file, runId: m.runId, step: state.step, bytes: bytes.byteLength, savedAt: new Date().toISOString(), ...(auto ? { auto } : {}) });
   w.lastCheckpoint = state.step;
   return { file, step: state.step, bytes: bytes.byteLength, advanced };
@@ -629,7 +628,7 @@ async function autoSave(w: World) {
       await forgetCheckpoint(c.file);
       m.checkpoints.splice(m.checkpoints.indexOf(c), 1);
     }
-    if (prune.length) await writeFile(`${m.runId}.run.json`, new TextEncoder().encode(JSON.stringify(m)));
+    if (prune.length) await writeManifest(m);
   } catch (e) {
     // The new copy is kept; older ones the store would not let go wait for the next automatic copy.
     if (!(e instanceof StorageError)) throw e;
@@ -654,7 +653,8 @@ async function restore(file: string, keep?: Keep) {
   let m: RunManifest;
   let lineage: AdoptLineage;
   try {
-    const saved: RunManifest = JSON.parse(new TextDecoder().decode(await readFile(`${meta.runId}.run.json`)));
+    const saved = await readManifest(meta.runId);
+    if (!saved) throw new Error("no manifest");
     const ck = saved.checkpoints.find((c) => c.file === file);
     if (!ck) throw new Error("checkpoint missing from manifest");
     // Continuing exactly where the run left off keeps its id; restoring to

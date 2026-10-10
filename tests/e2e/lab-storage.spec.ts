@@ -115,7 +115,7 @@ test("a store that fails now and then refuses the one request and loses no saved
     const messages: FromWorker[] = [];
     worker.onmessage = (ev: MessageEvent<FromWorker>) => { messages.push(ev.data); };
     const send = (m: ToWorker) => worker.postMessage(m);
-    const fault = (pattern: string | null, times = 1) => worker.postMessage({ type: "test-fault", pattern, times });
+    const fault = (pattern: string | null, times = 1, ops?: ("open" | "remove" | "write" | "flush")[]) => worker.postMessage({ type: "test-fault", pattern, times, ops });
     async function wait<T extends FromWorker["type"]>(type: T, predicate: (m: Extract<FromWorker, { type: T }>) => boolean = () => true): Promise<Extract<FromWorker, { type: T }>> {
       const deadline = performance.now() + 90_000;
       while (performance.now() < deadline) {
@@ -173,7 +173,44 @@ test("a store that fails now and then refuses the one request and loses no saved
       send({ type: "deleteCheckpoint", file: first });
       const del = await wait("refused", (m) => m.request === "deleteCheckpoint");
       const afterDelete = await shelf();
-      return { storage: ready.storage, runId: loaded.manifest.runId, restore: restore.message, stillHere, restoredRun: restored.manifest.runId, restoredLog: restored.manifest.checkpoints.map((c) => c.step), save: save.message, afterSave, del: del.message, afterDelete };
+
+      // The index's write runs out of room halfway, leaving it torn: the save is refused, the shelf is the one
+      // before it, and the next save adds to that shelf instead of starting a new one.
+      fault("^index\\.json$", 1, ["write"]);
+      send({ type: "save" });
+      const tornIndex = await wait("refused", (m) => m.request === "save");
+      const afterTornIndex = await shelf();
+      for (let i = messages.length - 1; i >= 0; i--) if (messages[i].type === "notice") messages.splice(i, 1);
+      send({ type: "save" });
+      await wait("notice", (m) => /Saved /.test(m.message));
+      const afterResave = await listed();
+
+      // The branch's manifest loses its data at the flush, leaving it torn: the save is refused, and its latest copy
+      // still restores as the same branch, with the run's history up to it.
+      const latest = afterResave.filter((c) => c.runId === restored.manifest.runId);
+      fault("\\.run\\.json$", 1, ["flush"]);
+      send({ type: "save" });
+      const tornManifest = await wait("refused", (m) => m.request === "save");
+      send({ type: "restore", file: latest[0].file, keep: "discard" });
+      const resumed = await wait("loaded");
+      return {
+        storage: ready.storage,
+        runId: loaded.manifest.runId,
+        restore: restore.message,
+        stillHere,
+        restoredRun: restored.manifest.runId,
+        restoredLog: restored.manifest.checkpoints.map((c) => c.step),
+        save: save.message,
+        afterSave,
+        del: del.message,
+        afterDelete,
+        tornIndex: tornIndex.message,
+        afterTornIndex,
+        afterResave: afterResave.map((c) => c.step).sort((a, b) => a - b),
+        latest: latest.map((c) => c.file),
+        tornManifest: tornManifest.message,
+        resumed: { runId: resumed.manifest.runId, presetId: resumed.manifest.presetId, first: resumed.manifest.checkpoints[0]?.step, last: resumed.manifest.checkpoints.at(-1)?.file },
+      };
     } finally {
       worker.terminate();
     }
@@ -189,6 +226,77 @@ test("a store that fails now and then refuses the one request and loses no saved
   expect(result.afterSave).toEqual([100, 200]);
   expect(result.del).toContain(REFUSED);
   expect(result.afterDelete).toEqual([100, 200]);
+  expect(result.tornIndex).toContain("exceed its storage quota");
+  expect(result.afterTornIndex).toEqual([100, 200]);
+  expect(result.afterResave).toEqual([100, 200, 200]);
+  expect(result.latest).toHaveLength(1);
+  expect(result.tornManifest).toContain(REFUSED);
+  expect(result.resumed).toEqual({ runId: result.restoredRun, presetId: "spots", first: 100, last: result.latest[0] });
+});
+
+test("two lab tabs saving at once keep every copy on the one shelf", async ({ page, browserName }) => {
+  test.skip(browserName === "webkit", "Playwright's WebKit context keeps no files at all");
+  await page.route("**/lab-storage-test", (route) => route.fulfill({ contentType: "text/html", body: "<html><body></body></html>" }));
+  await page.goto("/lab-storage-test");
+  // Two lab workers on one origin share its storage and its locks, as two tabs do.
+  const result = await page.evaluate(async (workerPath) => {
+    const tab = () => {
+      const worker = new Worker(workerPath, { type: "module" });
+      const messages: FromWorker[] = [];
+      worker.onmessage = (ev: MessageEvent<FromWorker>) => { messages.push(ev.data); };
+      const send = (m: ToWorker, transfer: Transferable[] = []) => worker.postMessage(m, transfer);
+      async function wait(predicate: (m: FromWorker) => boolean): Promise<FromWorker> {
+        const deadline = performance.now() + 90_000;
+        while (performance.now() < deadline) {
+          const error = messages.find((m) => m.type === "error");
+          if (error?.type === "error") throw new Error(error.message);
+          const index = messages.findIndex(predicate);
+          if (index >= 0) return messages.splice(index, 1)[0];
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+        throw new Error("worker timed out");
+      }
+      return { worker, send, wait, last: (type: FromWorker["type"]) => messages.findLast((m) => m.type === type) };
+    };
+    const tabs = [tab(), tab()];
+    try {
+      const runs: string[] = [];
+      for (const [i, t] of tabs.entries()) {
+        const canvas = document.createElement("canvas").transferControlToOffscreen();
+        t.send({ type: "init", canvas, width: 64, height: 64 }, [canvas]);
+        await t.wait((m) => m.type === "ready");
+        t.send({ type: "load", presetId: "spots", seed: 30 + i, overrides: { tileW: 32, tileH: 32, tilesX: 2, tilesY: 1, kernelRadius: 2 } });
+        const loaded = await t.wait((m) => m.type === "loaded");
+        if (loaded.type === "loaded") runs.push(loaded.manifest.runId);
+      }
+      const outcomes = await Promise.all(
+        tabs.map(async (t) => {
+          const said: string[] = [];
+          for (let k = 1; k <= 4; k++) {
+            t.send({ type: "step", count: 100 });
+            await t.wait((m) => m.type === "stats" && m.step === 100 * k);
+            t.send({ type: "save" });
+            const answer = await t.wait((m) => (m.type === "notice" && /Saved /.test(m.message)) || (m.type === "refused" && m.request === "save"));
+            said.push(answer.type === "refused" ? answer.message : "saved");
+          }
+          return said;
+        }),
+      );
+      // The shelf as the second tab lists it now, not as an earlier account had it: the worker answers requests in
+      // order, so by the time the export after the listing arrives, the last account it sent holds that listing.
+      tabs[1].send({ type: "listCheckpoints" });
+      tabs[1].send({ type: "export" });
+      await tabs[1].wait((m) => m.type === "exported");
+      const listed = tabs[1].last("session");
+      const shelf = listed?.type === "session" ? listed.view.checkpoints : [];
+      return { outcomes, perRun: runs.map((r) => shelf.filter((c) => c.runId === r).map((c) => c.step).sort((a, b) => a - b)) };
+    } finally {
+      for (const t of tabs) t.worker.terminate();
+    }
+  }, flakyStorageWorker);
+
+  expect(result.outcomes).toEqual([Array(4).fill("saved"), Array(4).fill("saved")]);
+  expect(result.perRun).toEqual([[100, 200, 300, 400], [100, 200, 300, 400]]);
 });
 
 test("without storage the lab page keeps the world running, says why Save is off, and still downloads and opens", async ({ page }) => {
