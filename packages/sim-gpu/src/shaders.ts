@@ -30,6 +30,9 @@ import {
   encodeGenome,
   generalistGenome,
   SHAPE_BASE,
+  GENE_SHIFT,
+  geneCount,
+  geneMasks,
   buildKernel,
   buildShapeKernel,
   shapeRings,
@@ -157,6 +160,18 @@ export function prelude(c: WorldConfig): string {
   consts.K_S0 = u(sk ? sk.ringSum[0] : 0);
   consts.K_S1 = u(sk ? sk.ringSum[1] : 0);
   consts.K_S2 = u(sk ? sk.ringSum[2] : 0);
+  // Capability genes (WorldConfig.genes): constant-folded away when absent, so
+  // a config without the keys compiles to exactly the RULE_VERSION 1 kernel.
+  consts.GENES = c.genes !== undefined ? "true" : "false";
+  consts.K_GENE = u(c.kGene ?? 0);
+  consts.GENE_FLIP = u(c.geneFlip ?? 0);
+  consts.GENE_SHIFT = u(GENE_SHIFT);
+  consts.GENE_COUNT = u(Math.max(1, geneCount(c)));
+  // Masks in the PARAM1 word, 0 when absent so the gates fold to true (see geneMasks).
+  const gm = geneMasks(c);
+  consts.GENE_SET_MASK = u(gm.set);
+  consts.GENE_DECOMP_MASK = u(gm.decomp);
+  consts.GENE_BUILD_MASK = u(gm.build);
   consts.TOL_WORDS = u(c.takeoverTol ?? 0);
   consts.TOL_MU = i(c.takeoverTol ?? 0);
   consts.TOL_SIGMA = i((c.takeoverTol ?? 0) >>> 2);
@@ -704,6 +719,12 @@ fn mutate(i: u32, which: u32, deltaRnd: u32) {
   }
 }
 
+// Gene-bit mutation (WorldConfig.genes), as flipGene in sim-ref.
+fn flip_gene(i: u32, which: u32) {
+  let bit = GENE_SHIFT + (which % GENE_COUNT);
+  genome[G_PARAM1 + i] = genome[G_PARAM1 + i] ^ (1u << bit);
+}
+
 // Mirrors RefSim.injured: is a wound centre within INJURY_R of (x, y) at this step?
 fn injured(x: u32, y: u32, step: u32) -> bool {
   for (var dy = -INJURY_R; dy <= INJURY_R; dy++) {
@@ -789,29 +810,41 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
       B -= q; C += q; E += q * (E_B - E_C); F[FX_RESP] = q;
       if (E > POOL_MAX) { hadd(E - POOL_MAX); E = POOL_MAX; }
 
-      t = mul_shr(cat(B), r[OUT_DECOMP], 7u);
-      q = min(C, mul_frac(t, K_DECOMP, 12u, draw(base, RND_DECOMP)));
-      C -= q; A += q; E += q * (E_C - E_A); F[FX_DECOMP] = q;
-      if (E > POOL_MAX) { hadd(E - POOL_MAX); E = POOL_MAX; }
+      // Under WorldConfig.genes only a carrier of a reaction's gene has the reaction (see sim-ref).
+      let word = genome[G_PARAM1 + i];
+      let decomp = GENE_DECOMP_MASK == 0u || (word & GENE_DECOMP_MASK) != 0u;
+      let build = GENE_BUILD_MASK == 0u || (word & GENE_BUILD_MASK) != 0u;
+      if (decomp) {
+        t = mul_shr(cat(B), r[OUT_DECOMP], 7u);
+        q = min(C, mul_frac(t, K_DECOMP, 12u, draw(base, RND_DECOMP)));
+        C -= q; A += q; E += q * (E_C - E_A); F[FX_DECOMP] = q;
+        if (E > POOL_MAX) { hadd(E - POOL_MAX); E = POOL_MAX; }
+      }
 
       var g = E_B - E_A;
       t = mul_shr(cat(B), r[OUT_GROW], 7u);
       q = min(min(A, E / g), mul_frac(t, K_GROW, 12u, draw(base, RND_GROW)));
       A -= q; B += q; E -= q * g; newB += q; F[FX_GROW] = q;
 
-      g = E_P - E_B;
-      t = mul_shr(cat(B), r[OUT_BUILD], 7u);
-      q = min(min(B, E / g), mul_frac(t, K_BUILD, 12u, draw(base, RND_BUILD)));
-      B -= q; P += q; E -= q * g; F[FX_BUILD] = q;
+      if (build) {
+        g = E_P - E_B;
+        t = mul_shr(cat(B), r[OUT_BUILD], 7u);
+        q = min(min(B, E / g), mul_frac(t, K_BUILD, 12u, draw(base, RND_BUILD)));
+        B -= q; P += q; E -= q * g; F[FX_BUILD] = q;
+      }
 
       t = mul_shr(cat(B), r[OUT_EMIT], 7u);
       q = min(E, mul_frac(t, K_EMIT, 12u, draw(base, RND_EMIT)));
       E -= q; S += q; F[FX_EMIT] = q;
       if (S > POOL_MAX) { hadd(S - POOL_MAX); S = POOL_MAX; }
 
-      let sumr = r[0] + r[1] + r[2] + r[3] + r[4] + r[5];
+      let sumr = r[0] + r[1] + select(0u, r[2], decomp) + r[3] + select(0u, r[4], build) + r[5];
       t = mul_shr(cat(B), sumr, 7u);
-      let cost = mul_frac(t, K_COST, 16u, draw(base, RND_COST)) + mul_frac(B, K_MAINT, 16u, draw(base, RND_MAINT));
+      var cost = mul_frac(t, K_COST, 16u, draw(base, RND_COST)) + mul_frac(B, K_MAINT, 16u, draw(base, RND_MAINT));
+      if (GENES) {
+        let carried = countOneBits(word & GENE_SET_MASK);
+        if (carried > 0u) { cost += carried * mul_frac(B, K_GENE, 16u, draw(base, RND_GENE)); }
+      }
       if (E >= cost) {
         E -= cost;
         hadd(cost);
@@ -830,7 +863,12 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         if (draw(base, RND_MUT) < p) {
           let parentHi = genome[G_LIN_HI + i];
           let parentLo = genome[G_LIN_LO + i];
-          mutate(i, draw(base, RND_MUT_WHICH), draw(base, RND_MUT_DELTA));
+          // Under WorldConfig.genes a share of events flips a gene bit instead (see sim-ref).
+          if (GENES && draw(base, RND_GENE_FLIP) < GENE_FLIP) {
+            flip_gene(i, draw(base, RND_MUT_WHICH));
+          } else {
+            mutate(i, draw(base, RND_MUT_WHICH), draw(base, RND_MUT_DELTA));
+          }
           // See WorldConfig.ringNamespace / packLineageLo (@bl/schema).
           let childLo = select(i, (RING_NAMESPACE << RING_CELL_SHIFT) | (i & RING_CELL_MASK), HAS_RING_NAMESPACE);
           genome[G_LIN_HI + i] = step + 1u;

@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A game of evolution: brainstorm</title>
+<meta name="description" content="Visual companion to docs/evolution-game-brainstorm-2026-10-16.md: the fork the game makes from the lab, what the repo has measured, five shapes a game could take, the capability ladder, the staged ladder recommended, and five decisions.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: oklch(94.5% 0.012 88);
+  --surface: oklch(98.5% 0.007 88);
+  --raised: oklch(91.5% 0.014 88);
+  --hover: oklch(87.5% 0.018 88);
+  --line: oklch(83% 0.016 88);
+  --line-soft: oklch(90% 0.012 88);
+  --text: oklch(23% 0.022 80);
+  --muted: oklch(45% 0.022 80);
+  --soft: oklch(51% 0.022 80);
+  --control-line: oklch(62% 0.022 82);
+  --sun: oklch(87% 0.165 93);
+  --sun-soft: oklch(94% 0.08 95);
+  --sun-ink: oklch(49% 0.125 72);
+  --life: oklch(52% 0.15 150);
+  --life-fill: oklch(86% 0.13 150);
+  --error: oklch(51% 0.18 28);
+  --error-fill: oklch(92% 0.05 28);
+  --field: oklch(12% 0.01 160);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: oklch(17% 0.012 80);
+    --surface: oklch(20.5% 0.013 80);
+    --raised: oklch(26% 0.016 80);
+    --hover: oklch(31% 0.018 80);
+    --line: oklch(35% 0.016 80);
+    --line-soft: oklch(28% 0.014 80);
+    --text: oklch(94% 0.012 85);
+    --muted: oklch(71% 0.016 85);
+    --soft: oklch(64% 0.016 85);
+    --control-line: oklch(52% 0.016 82);
+    --sun: oklch(85% 0.16 92);
+    --sun-soft: oklch(36% 0.06 85);
+    --sun-ink: oklch(82% 0.14 88);
+    --life: oklch(80% 0.14 150);
+    --life-fill: oklch(74% 0.15 150);
+    --error: oklch(76% 0.14 28);
+    --error-fill: oklch(30% 0.07 28);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(17% 0.012 80);
+  --surface: oklch(20.5% 0.013 80);
+  --raised: oklch(26% 0.016 80);
+  --hover: oklch(31% 0.018 80);
+  --line: oklch(35% 0.016 80);
+  --line-soft: oklch(28% 0.014 80);
+  --text: oklch(94% 0.012 85);
+  --muted: oklch(71% 0.016 85);
+  --soft: oklch(64% 0.016 85);
+  --control-line: oklch(52% 0.016 82);
+  --sun: oklch(85% 0.16 92);
+  --sun-soft: oklch(36% 0.06 85);
+  --sun-ink: oklch(82% 0.14 88);
+  --life: oklch(80% 0.14 150);
+  --life-fill: oklch(74% 0.15 150);
+  --error: oklch(76% 0.14 28);
+  --error-fill: oklch(30% 0.07 28);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; padding: 0 16px 64px; }
+a { color: inherit; text-decoration-color: var(--control-line); text-underline-offset: .15em; }
+a:hover { text-decoration-color: currentColor; }
+code { font-family: var(--mono); font-size: .9em; background: var(--raised); padding: .05em .3em; border-radius: 4px; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0 8px; flex-wrap: wrap; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sun-ink); margin: 0; }
+h1 { font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; letter-spacing: -.02em; font-weight: 800; margin: 6px 0 10px; }
+.lede { font-size: 17px; max-width: 64ch; color: var(--muted); margin: 0 0 6px; }
+.lede strong { color: var(--text); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; padding: 0; list-style: none; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--raised); color: var(--muted); }
+.chip.note { background: var(--sun-soft); color: var(--sun-ink); }
+button.theme { font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--raised); border: 0; border-radius: var(--radius); padding: 7px 12px; cursor: pointer; }
+button.theme:hover { background: var(--hover); }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+section { margin: 40px 0 0; }
+h2 { font-size: 22px; letter-spacing: -.01em; margin: 0 0 4px; }
+h2 .idx { font-family: var(--mono); font-weight: 500; color: var(--sun-ink); margin-right: 8px; font-size: 15px; }
+h3.minor { font-size: 15px; margin: 22px 0 6px; }
+.sub { color: var(--muted); margin: 0 0 16px; max-width: 72ch; }
+.sub + .sub { margin-top: -6px; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 16px; overflow-x: auto; }
+figure + figure, figure + .cards, .cards + figure, figure + .grid2, .grid2 + figure { margin-top: 14px; }
+figcaption { font-size: 13px; color: var(--soft); margin-top: 10px; max-width: 80ch; }
+/* A wide diagram keeps its text legible on a phone: the figure scrolls sideways, the page never does. */
+svg.diagram { width: 100%; height: auto; display: block; font-family: var(--sans); min-width: 640px; }
+svg.diagram.half { min-width: 400px; }
+svg.diagram.wide { min-width: 760px; }
+svg text { fill: var(--text); }
+svg .muted { fill: var(--muted); }
+svg .soft { fill: var(--soft); }
+svg .mono { font-family: var(--mono); }
+svg .box { fill: var(--raised); stroke: var(--line); stroke-width: 1; }
+svg .box.lit { fill: var(--sun-soft); stroke: var(--sun-ink); }
+svg .box.plain { fill: var(--surface); }
+svg .box.new { fill: var(--surface); stroke: var(--muted); stroke-dasharray: 4 3; }
+svg .arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+svg .arrow.lit { stroke: var(--sun-ink); }
+svg .later { stroke-dasharray: 4 4; }
+svg .grid { stroke: var(--line-soft); stroke-width: 1; }
+svg .axis { stroke: var(--line); stroke-width: 1; }
+svg .sun { fill: var(--sun); }
+svg .sun-ink { fill: var(--sun-ink); }
+svg .life { fill: var(--life-fill); }
+svg .ink { fill: var(--text); }
+svg .ring { stroke: var(--surface); stroke-width: 2; }
+svg .hit { fill: transparent; cursor: default; }
+svg .label { font-size: 12px; font-weight: 700; letter-spacing: .06em; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.cards.wide { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 14px 16px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.card p + p { margin-top: 6px; }
+.card .n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--raised); color: var(--text); font: 700 12px/1 var(--mono); margin-right: 8px; vertical-align: -5px; }
+.card.lit { border-color: var(--sun-ink); }
+.card.lit .n { background: var(--sun); color: oklch(23% 0.022 80); }
+.card .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--sun-ink); margin-left: 6px; vertical-align: 1px; }
+/* Shape cards: one labelled line per field. */
+.shape dl { margin: 10px 0 0; display: grid; grid-template-columns: 5.5em 1fr; gap: 6px 10px; font-size: 14px; }
+.shape dt { color: var(--soft); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding-top: 2px; }
+.shape dd { margin: 0; color: var(--muted); }
+.shape dd b { color: var(--text); font-weight: 600; }
+.shape dd.risk { color: var(--text); }
+/* The catalogue's honesty chips: Confirmed is green, Measured is sun, Seen is grey, Negative is red. A qualifier (one seed, a lead) sits beside the state and never replaces it. */
+.st { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; line-height: 1.5; }
+.st.confirmed { background: var(--life-fill); color: oklch(23% 0.022 80); }
+.st.measured { background: var(--sun-soft); color: var(--sun-ink); }
+.st.seen { background: var(--raised); color: var(--muted); }
+.st.negative { background: var(--error-fill); color: var(--error); }
+.q { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--control-line); color: var(--muted); white-space: nowrap; line-height: 1.5; }
+.stack { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+table { border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+th { font-weight: 600; color: var(--muted); font-size: 13px; }
+table.evidence { min-width: 900px; margin-top: 0; }
+table.evidence td:first-child { width: 190px; font-weight: 600; }
+table.evidence td:nth-child(2) { width: 300px; color: var(--muted); font-size: 13px; }
+table.evidence td:nth-child(3) { width: 170px; color: var(--soft); font-size: 12px; font-family: var(--mono); }
+table.evidence td:nth-child(4) { color: var(--muted); font-size: 13px; }
+table.needs { min-width: 640px; margin-top: 0; }
+table.needs td:first-child { width: 34%; font-weight: 600; }
+table.needs td:nth-child(2) { color: var(--muted); font-size: 14px; }
+table.fail { min-width: 720px; margin-top: 0; }
+table.fail td:first-child { width: 26%; font-weight: 600; }
+table.fail td:nth-child(2) { width: 34%; color: var(--muted); font-size: 13px; }
+table.fail td:nth-child(3) { font-size: 14px; }
+.quote { font-size: clamp(19px, 2.6vw, 24px); line-height: 1.3; letter-spacing: -.01em; font-weight: 600; max-width: 34em; margin: 10px 0 0; padding-left: 18px; border-left: 4px solid var(--sun); }
+.quote em { font-style: normal; color: var(--sun-ink); }
+.devices { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: dev; }
+.devices li { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 12px 16px 12px 52px; position: relative; font-size: 14px; color: var(--muted); }
+.devices li::before { counter-increment: dev; content: counter(dev); position: absolute; left: 16px; top: 13px; width: 24px; height: 24px; border-radius: 999px; background: var(--raised); color: var(--text); font: 700 12px/24px var(--mono); text-align: center; }
+.devices li.lit::before { background: var(--sun); color: oklch(23% 0.022 80); }
+.devices li b { color: var(--text); font-weight: 600; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin: 0 0 10px; padding: 0; list-style: none; }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.legend .sw { width: 16px; height: 11px; border-radius: 3px; display: inline-block; border: 1px solid var(--line); background: var(--raised); }
+.legend .sw.lit { background: var(--sun-soft); border-color: var(--sun-ink); }
+.legend .sw.new { background: var(--surface); border: 1px dashed var(--muted); }
+.legend .sw.dot { width: 11px; height: 11px; border-radius: 999px; background: var(--sun); border-color: var(--sun-ink); }
+.legend .sw.dot.ink { background: var(--text); border-color: var(--text); }
+.tip { position: fixed; z-index: 10; pointer-events: none; background: var(--text); color: var(--bg); font-size: 13px; line-height: 1.35; padding: 6px 9px; border-radius: 6px; max-width: 300px; opacity: 0; transform: translateY(4px); transition: opacity 120ms ease-out, transform 120ms ease-out; }
+.tip.on { opacity: 1; transform: none; }
+details { margin-top: 10px; font-size: 14px; }
+summary { cursor: pointer; color: var(--muted); }
+footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px solid var(--line-soft); padding-top: 14px; }
+@media (prefers-reduced-motion: reduce) { .tip { transition: none; } }
+@media (max-width: 640px) { body { font-size: 14px; } figure { padding: 12px; } .shape dl { grid-template-columns: 1fr; gap: 2px; } .shape dd { margin-bottom: 6px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <p class="eyebrow">Brainstorm · 16 October 2026</p>
+    <h1>A game of evolution</h1>
+    <p class="lede">The ask is <strong>a fork, not a tuning</strong>: a sibling of the lab that shares the kernel, keeps the sealed jar and bit-for-bit replay, and declares what the lab would not. Visual companion to <a href="evolution-game-brainstorm-2026-10-16.md">evolution-game-brainstorm-2026-10-16.md</a>, which holds the argument in full.</p>
+    <ul class="chips"><li class="chip note">Exploratory, not a plan</li><li class="chip">No physics, no pins, no prototype</li><li class="chip">Numbers from docs/sandbox-*.md, the scaffold registration and docs/plan.md</li></ul>
+  </div>
+  <button class="theme" type="button" id="theme">Night</button>
+</header>
+
+<section id="fork">
+  <h2><span class="idx">1</span>The fork: what the game declares that the lab infers</h2>
+  <p class="sub">The lab's north star is to infer individuals, reproduction and transitions from local rules and never declare them. The repo's own record argues for a sibling that declares some of those on purpose: the registered test was not met, eight sandbox screens found no Promising arm, regeneration erodes under every founder, and the one confirmed result came from the one line that imposes its unit, the pond cycle. The lab stays the lab.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 446" role="img" aria-label="Three columns. Left, what the lab infers: individuals from the census, lineages by purity, life events from the tracker, roles from flux. Middle, what the game keeps from the lab as game features: exact conservation as a sealed jar, bit-for-bit replay as a shareable seed and verified history with its present limits, the archipelago, and the honesty labels. Right, a ladder of what the game may declare, from nothing new, through what a lineage can do, through cells, to bodies.">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker>
+      <marker id="ahl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--sun-ink)"/></marker></defs>
+      <g font-size="13">
+        <rect class="box plain" x="20" y="24" width="290" height="406" rx="12"/>
+        <text x="40" y="54" font-size="18" font-weight="700">The lab infers</text>
+        <text x="40" y="74" class="muted" font-size="12">never declared, and it stays so in the lab</text>
+        <text x="40" y="108" class="soft label">INDIVIDUALS</text>
+        <text x="40" y="128">connected cells with bound mass ≥ 48,</text>
+        <text x="40" y="146">total ≥ 256, counted by the census</text>
+        <text x="40" y="178" class="soft label">WHO A BODY IS</text>
+        <text x="40" y="198">its dominant lineage, with a stated purity</text>
+        <text x="40" y="230" class="soft label">LIFE EVENTS</text>
+        <text x="40" y="250">births, deaths, fissions and fusions,</text>
+        <text x="40" y="268">inferred by the tracker (135 of 200</text>
+        <text x="40" y="286">sampled parent links failed a copy test)</text>
+        <text x="40" y="318" class="soft label">ROLES</text>
+        <text x="40" y="338">phototroph, chemotroph, decomposer,</text>
+        <text x="40" y="356">mixed: the catalytic profile at one census</text>
+        <text x="40" y="396" class="muted" font-size="12">no goal, no score the person owns, no firsts</text>
+
+        <rect class="box lit" x="350" y="24" width="300" height="406" rx="12"/>
+        <text x="370" y="54" font-size="18" font-weight="700">Kept, as game features</text>
+        <text x="370" y="74" class="sun-ink" font-size="12" font-weight="600">better as a game for them</text>
+        <text x="370" y="108" class="soft label">THE JAR IS SEALED</text>
+        <text x="370" y="128">exact conservation, checked by the ledger</text>
+        <text x="370" y="146">panel; feeding is the one exception, logged</text>
+        <text x="370" y="178" class="soft label">SHAREABLE SEED, VERIFIED HISTORY</text>
+        <text x="370" y="198">bit-for-bit replay from a run manifest;</text>
+        <text x="370" y="216">two people with one manifest, one world</text>
+        <text x="370" y="236" class="muted" font-size="11">not yet true of sharing: an export omits the</text>
+        <text x="370" y="250" class="muted" font-size="11">intervention log; headless replay refuses lesions,</text>
+        <text x="370" y="264" class="muted" font-size="11">feeds and starts after step zero; observer settings</text>
+        <text x="370" y="278" class="muted" font-size="11">can change the hash; the one proof was hand-built</text>
+        <text x="370" y="310" class="soft label">THE ARCHIPELAGO</text>
+        <text x="370" y="330">islands already run segments of a world</text>
+        <text x="370" y="348">for a coordinator (bet 4)</text>
+        <text x="370" y="376" class="soft label">HONESTY</text>
+        <text x="370" y="394">a "first" is a detector's verdict, its rule</text>
+        <text x="370" y="410">stated: seen, measured, confirmed</text>
+
+        <text x="690" y="54" font-size="18" font-weight="700">The game may declare</text>
+        <text x="690" y="74" class="muted" font-size="12">four depths; decision 2 asks which</text>
+        <rect class="box" x="690" y="330" width="290" height="80" rx="10"/>
+        <text x="706" y="354" font-weight="700">Nothing new</text>
+        <text x="706" y="372" class="muted" font-size="12">Stage 0: the pond cycle is already imposed</text>
+        <text x="706" y="388" class="muted" font-size="12">and the breeder already exists in the lab</text>
+        <rect class="box" x="690" y="248" width="290" height="74" rx="10"/>
+        <text x="706" y="272" font-weight="700">What a lineage can do</text>
+        <text x="706" y="290" class="muted" font-size="12">capability genes (shape 2); cells and bodies</text>
+        <text x="706" y="306" class="muted" font-size="12">stay inferred, as in the lab</text>
+        <rect class="box" x="690" y="166" width="290" height="74" rx="10"/>
+        <text x="706" y="190" font-weight="700">Cells</text>
+        <text x="706" y="208" class="muted" font-size="12">declared cells, already built and in the</text>
+        <text x="706" y="224" class="muted" font-size="12">catalogue under Shape and cells</text>
+        <rect class="box" x="690" y="90" width="290" height="68" rx="10"/>
+        <text x="706" y="114" font-weight="700">Bodies</text>
+        <text x="706" y="132" class="muted" font-size="12">creatures (shape 4): an object, not an</text>
+        <text x="706" y="148" class="muted" font-size="12">inference; the field stays the medium</text>
+        <text x="990" y="236" class="soft" font-size="11" text-anchor="middle" transform="rotate(-90 990 236)">deeper declaration →</text>
+      </g>
+    </svg>
+    <figcaption>Each depth gives up "never declared" at a different level. Declared cells already moved the emergent claim one level up; capability genes would declare what a lineage can do; a creature layer would declare bodies. Nothing in the middle column changes, whichever depth is chosen.</figcaption>
+  </figure>
+  <h3 class="minor">What a game needs that the lab does not have</h3>
+  <figure>
+    <table class="needs">
+      <thead><tr><th>A game needs</th><th>The lab today</th></tr></thead>
+      <tbody>
+        <tr><td>Units you can tell apart and name</td><td>pools of colour; individuals inferred by the census (connected cells with bound mass ≥ 48, total ≥ 256) and labelled by the lineage inspector with a stated purity</td></tr>
+        <tr><td>Something to want, and a way to tell you are getting it</td><td>measures (census, tracker, activity, lineage, pond scores); no goal, no score the person owns</td></tr>
+        <tr><td>Dials whose consequences show within a minute</td><td>config fixed at planting; brushes for lesion, feed and drain; donor picks at pond boundaries</td></tr>
+        <tr><td>Events: moments with a name and a time</td><td>the tracker infers births, deaths, fissions and fusions (with the recorded doubt that 135 of 200 sampled parent links failed a copy test); the intervention log; no game-facing detector of firsts or speciations</td></tr>
+        <tr><td>Pace: a visible change every ten to sixty seconds</td><td>about 1,800 steps a second at 256² on the Mac; a 5,000-step pond cycle in about three seconds</td></tr>
+        <tr><td>Failure you can recover from</td><td>a dead jar stays dead; a jump back restores a checkpoint and replays the log</td></tr>
+        <tr><td>A reason to come back</td><td>"come back and see what changed" is already the site's promise; nothing yet marks what changed</td></tr>
+      </tbody>
+    </table>
+    <figcaption>Who it is for: the user first, someone who likes watching life grow and wants to see it change; visitors to cadence.garden second. The register is the thing Spore reportedly tried early and dropped as not engaging enough: evolution doing the designing while a person watches and nudges.</figcaption>
+  </figure>
+</section>
+
+<section id="evidence">
+  <h2><span class="idx">2</span>What the repo already knows</h2>
+  <p class="sub">Everything a shape leans on was measured here, in order of how much a game can build on it. The chips are the catalogue's: <span class="st confirmed">Confirmed</span> only where a registered test said so, <span class="st measured">Measured</span> for a number from a run, <span class="st seen">Seen</span> for what was noticed without a measured cause, <span class="st negative">Negative</span> for a test that failed. A qualifier like <span class="q">one seed</span> sits beside the state and never replaces it.</p>
+  <figure>
+    <table class="evidence">
+      <thead><tr><th>Result</th><th>What was measured</th><th>Where</th><th>What it says for a game</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>The breeder breeds.<div class="stack"><span class="st measured">Measured</span><span class="q">one seed each</span></div></td>
+          <td>Movement alone: commanded movement 0.6 at cycle 1, measured speed 74 by cycle 10 and 282 by cycle 60, in cells per 1,000 steps (64 ponds, 10,000-step cycles, one seed); occupied ponds fell to 23 of 64. Movement + seed mass: 135 at cycle 60 with 63 ponds alive. Movement + seed + body: 88 with 62 alive, heavier packets.</td>
+          <td>docs/sandbox-wild.md, breed1 and breed2</td>
+          <td>A named pressure moved one trait a hundredfold in 60 cycles of 10,000 steps, and scoring the seed packet's mass kept the world alive. Movement is the only trait shown to respond; packet mass was preserved by scoring it; the body-size differences are descriptive (25.4 cells against 26.0 in the mass control). The only visible, fast evolution in the project. One seed each, so not yet repeatable.</td>
+        </tr>
+        <tr>
+          <td>The pond cycle is a bottleneck with a size filter, and it confirmed heredity.<div class="stack"><span class="st confirmed">Confirmed</span><span class="st measured">Measured</span></div></td>
+          <td>A packet under 2,800 bound mass founds a lasting pond 6% of the time; over 3,200, 95%. The registered scaffold ensemble confirmed H1 and H2 (24 histories per arm; the evolved genome alone beats the ancestor in 24 of 24, by a small margin). Packets are 8 × 8 windows copied site by site with no lineage filter; in the scaffold's main run they measured nearly clonal (about 1.1 lineages, dominant share 0.99).</td>
+          <td>docs/sandbox-wild.md "Why bred ponds died"; docs/scaffold-registration-v1.md; docs/reassessment-2026-09-30.md §4a; packages/schema/src/ponds.ts</td>
+          <td>Most of the snowflake-yeast recipe is already here: nearly clonal packets, a bottleneck, selection on the group. The one line whose unit is defined by design.</td>
+        </tr>
+        <tr>
+          <td>The registered test was not met.<div class="stack"><span class="st negative">Negative</span></div></td>
+          <td>M4 failed endpoint 2: runs where mutation changes nothing also read as growing.</td>
+          <td>docs/plan.md, M4 pivot</td>
+          <td>Open-ended complexity growth did not come for free. Simple strategies win in steady worlds; evolution-like behaviour needs structure that punishes the cheap strategy.</td>
+        </tr>
+        <tr>
+          <td>Erosion is general.<div class="stack"><span class="st measured">Measured</span></div></td>
+          <td>Regeneration of the founders 0.98; of evolved lineages 0.22 on average over 60 single-founder worlds, under every founder. Eight sandbox screens (lossy takeover, kin tolerances, wounds, heritable shape, declared cells, with and without walls and wounds) met no Promising bar.</td>
+          <td>docs/sandbox-ownership.md, docs/sandbox-cells.md</td>
+          <td>"Evolution strips what the environment does not pay for" is recorded as an interpretation, and its test failed: recurring wounds did not keep regeneration. What stands is the loss itself. The design hypothesis taken from it: a game's pressures must pay for the capabilities it wants to see, and whether paying works is untested here.</td>
+        </tr>
+        <tr>
+          <td>Wounds restore turnover and change who wins.<div class="stack"><span class="st measured">Measured</span><span class="q">five seeds</span></div></td>
+          <td>With the wall held fixed, wounds raised median lineage depth 1.2 to 7 times, births 2.1 to 7.3 times, and changed the winning founder in 4 of 5 seeds.</td>
+          <td>docs/sandbox-cells.md, screens 7 and 8</td>
+          <td>Disturbance is a dial that keeps a world evolving. It did not keep regeneration; it kept change.</td>
+        </tr>
+        <tr>
+          <td>A sun's speed has a lethal end.<div class="stack"><span class="st measured">Measured</span><span class="q">one seed each</span></div><div class="stack"><span class="st seen">Seen</span><span class="q">a lead</span><span class="q">the wandering sun</span></div></td>
+          <td>A sun lapping the world in 16,384 steps kills the M3 founders; 32,768 leaves 6,170 living cells; 131,072 leaves 11,019. The hand-built sleepers, drifters and sensors together survive the fastest sun (5,494 living cells). Separately, in the wandering-sun world (one small comparison), the sensing followers survived where the blind drifters failed. One seed each.</td>
+          <td>docs/sandbox-wild.md, storm first look; apps/lab/src/worlds.ts, planet-wander</td>
+          <td>An epoch dial has a lethal end and a dull end. That the window between pays for sensing is a lead from hand-built movers, not an evolved result.</td>
+        </tr>
+        <tr>
+          <td>Worms, labyrinths and stripes have been seen, including at 10⁶ steps.<div class="stack"><span class="st seen">Seen</span><span class="q">measure chosen after the frames</span></div></td>
+          <td>A quarter to a third of body cells sat in long bodies in two control seeds at the final snapshot; the shape arms reached 0.52; declared-cell worlds under 5%. No treatment effect was established.</td>
+          <td>docs/sandbox-cells.md, screen 5</td>
+          <td>Body plans beyond a dot are within the chemistry's reach, with no measured cause and no measured persistence. A game could name them ("the first worm") and select for them; an elongation score is listed as not built.</td>
+        </tr>
+        <tr>
+          <td>Bodies are mostly one lineage.<div class="stack"><span class="st measured">Measured</span></div></td>
+          <td>Census individuals are one lineage in 88% to 99% of cases in the control and 73% to 99% in the genome arms, mean purity 0.93 to 1.00. Founders differ from each other in 41 or 42 of 42 heritable words; neighbours of one founder's clade differ in a median of 3 to 36, and up to all 42 at the 90th percentile.</td>
+          <td>docs/sandbox-ownership.md, purity and trace</td>
+          <td>A body can be named by its dominant lineage with a stated purity. One lineage can hold many bodies, and clades spread across most of the genome, so a species boundary (shape 5) is a design with a tolerance to validate, not a fact in the data.</td>
+        </tr>
+        <tr>
+          <td>Roles are inferred from flux.<div class="stack"><span class="st seen">Seen</span><span class="q">at one census, no persistence test</span></div></td>
+          <td>Phototroph, chemotroph, decomposer, mixed, per lineage, from the catalytic profile at a census; no persistence or ancestry test. In one assay most "decomposer candidates" read as phototrophs beside their founder under bright light.</td>
+          <td>packages/metrics/src/ecology.ts; docs/plan.md, foundations tests</td>
+          <td>The game can announce role-dominance events without any physics change. Calling one an evolutionary first needs persistence across censuses and inherited change, which the inference does not check.</td>
+        </tr>
+        <tr>
+          <td>A model picking for novelty bred no sustained movement.<div class="stack"><span class="st measured">Measured</span><span class="q">one seed, one draw</span></div></td>
+          <td>A brief that asked for novelty and not movement: the model's picks ended with no scoring pond; the rule's with 13 of 16. The note says this does not show bad picking, and one seed cannot separate the picker from one chaotic history.</td>
+          <td>docs/sandbox-wild.md, three pickers</td>
+          <td>Whether a person's eye breeds well is untested. The game should let the player set the pressure (a named score) and treat picking by eye as a thing to measure.</td>
+        </tr>
+        <tr>
+          <td>The full storm kills.<div class="stack"><span class="st negative">Negative</span><span class="q">one seed per lever</span></div></td>
+          <td>Every lever at once was extinct by step 29,000.</td>
+          <td>docs/sandbox-wild.md</td>
+          <td>Dose is the whole design problem of epochs. Levers must be turned up one at a time, and the game should say what each costs.</td>
+        </tr>
+      </tbody>
+    </table>
+    <figcaption><strong>Not in the record:</strong> any evolved predation, any evolved multicellularity, any arm that bred a new body plan on purpose. These are what "phase changes" would mean in play, and nothing here has produced one yet.</figcaption>
+  </figure>
+  <div class="grid2" style="margin-top:14px">
+    <figure>
+      <ul class="legend" aria-label="Series"><li><span class="sw dot"></span>movement alone</li><li><span class="sw dot ink"></span>combined scores, at cycle 60</li></ul>
+      <svg class="diagram half" viewBox="0 0 480 236" role="group" aria-label="A dot plot of measured speed in cells per 1,000 steps against breeder cycle, one seed. Movement alone: 74 at cycle 10 and 282 at cycle 60, with 23 of 64 ponds occupied at the end. At cycle 60 the combined scores sit lower: movement plus seed mass at 135 with 63 ponds alive, and movement plus seed plus body at 88 with 62 alive. Cycle 1 is marked with the commanded movement of 0.6, a different quantity, not plotted.">
+        <g font-size="12">
+          <text x="0" y="14" font-weight="700" font-size="13">Speed under the breeder, one seed</text>
+          <text x="480" y="14" text-anchor="end" class="soft" font-size="11">cells per 1,000 steps</text>
+          <line class="axis" x1="56" y1="30" x2="56" y2="190"/>
+          <line class="axis" x1="56" y1="190" x2="460" y2="190"/>
+          <line class="grid" x1="56" y1="110" x2="460" y2="110"/>
+          <line class="grid" x1="56" y1="30" x2="460" y2="30"/>
+          <text x="50" y="194" text-anchor="end" class="soft" font-size="11">0</text>
+          <text x="50" y="114" text-anchor="end" class="soft" font-size="11">150</text>
+          <text x="50" y="34" text-anchor="end" class="soft" font-size="11">300</text>
+          <text x="62" y="208" class="soft" font-size="11">cycle 1</text>
+          <text x="122" y="208" class="soft" font-size="11" text-anchor="middle">10</text>
+          <text x="454" y="208" class="soft" font-size="11" text-anchor="middle">60</text>
+          <text x="62" y="228" class="soft" font-size="11">64 ponds, 10,000-step cycles, one seed</text>
+          <!-- x = 62 + (cycle - 1) / 59 * 392; y = 190 - value / 300 * 160 -->
+          <line x1="62" y1="30" x2="62" y2="190" class="grid"/>
+          <text x="66" y="176" class="muted" font-size="11">commanded 0.6 at cycle 1</text>
+          <text x="66" y="188" class="soft" font-size="10">(a different quantity, not plotted)</text>
+          <circle cx="121.8" cy="150.5" r="6" class="sun ring" tabindex="0" role="img" aria-label="Movement alone: measured speed 74 by cycle 10 (100,000 steps)." data-tip="Movement alone: measured speed 74 by cycle 10 (100,000 steps)."/>
+          <text x="132" y="146" font-size="12">74 by cycle 10</text>
+          <circle cx="454" cy="39.6" r="6" class="sun ring" tabindex="0" role="img" aria-label="Movement alone: 282 by cycle 60; occupied ponds fell to 23 of 64." data-tip="Movement alone: 282 by cycle 60; occupied ponds fell to 23 of 64."/>
+          <text x="446" y="43" font-size="12" text-anchor="end" font-weight="700">282 · 23 of 64 ponds left</text>
+          <circle cx="454" cy="118" r="6" class="ink ring" tabindex="0" role="img" aria-label="Movement + seed mass: 135 at cycle 60, 63 ponds alive." data-tip="Movement + seed mass: 135 at cycle 60, 63 ponds alive."/>
+          <text x="446" y="122" font-size="12" text-anchor="end">135, movement + seed · 63 alive</text>
+          <circle cx="454" cy="143.1" r="6" class="ink ring" tabindex="0" role="img" aria-label="Movement + seed + body: 88 at cycle 60, 62 ponds alive, heavier packets." data-tip="Movement + seed + body: 88 at cycle 60, 62 ponds alive, heavier packets."/>
+          <text x="446" y="160" font-size="12" text-anchor="end">88, movement + seed + body · 62 alive</text>
+        </g>
+      </svg>
+      <figcaption>Points, not a curve: the note reports three cycles, so a line would invent the ones between. Scoring the packet's mass kept nearly every pond alive while it bred about half the speed. Body size under the three-term score is descriptive only (25.4 cells against 26.0 in the mass control).</figcaption>
+    </figure>
+    <figure>
+      <svg class="diagram half" viewBox="0 0 480 252" role="img" aria-label="Pace, in two lanes. Measured: 1,830 to 2,060 steps a second at 256 squared on the Mac, 730 a lane on an A10G; the lab's 16-pond breeder preset runs a 5,000-step cycle in about three seconds; breed1 on the 64-pond preset showed speed 74 by cycle 10, which is 100,000 steps. Expected and untested: at the 16-pond preset 100,000 steps is about a minute of play, and a ten-minute session is about a million steps, the length of every registered history.">
+        <g font-size="12">
+          <text x="0" y="14" font-weight="700" font-size="13">Pace: three measurements and one expectation</text>
+          <rect class="box" x="0" y="26" width="480" height="104" rx="10"/>
+          <text x="12" y="46" class="soft label">MEASURED</text>
+          <text x="12" y="66">1,830 to 2,060 steps a second at 256² on the Mac; 730 a lane on an A10G</text>
+          <text x="12" y="86">the 16-pond <tspan class="mono">breeder</tspan> preset (256² of sites): a 5,000-step cycle in about 3 s</text>
+          <text x="12" y="106">breed1, 64-pond preset (512², 10,000-step cycles): speed 74 by cycle 10,</text>
+          <text x="12" y="122">which is 100,000 steps</text>
+          <rect class="box new" x="0" y="140" width="480" height="104" rx="10"/>
+          <text x="12" y="160" class="soft label">EXPECTED, UNTESTED</text>
+          <text x="12" y="180">at the 16-pond preset, 100,000 steps is about a minute of play, so a</text>
+          <text x="12" y="196">ten-minute session is about 10⁶ steps, the length of every registered history</text>
+          <text x="12" y="218" class="muted" font-size="11">untested: whether 16 ponds respond like 64 (one look: four of</text>
+          <text x="12" y="232" class="muted" font-size="11">sixteen empty at cycle 9), and whether any of it holds across seeds</text>
+        </g>
+      </svg>
+      <figcaption>The minute of play is an extrapolation from the 64-pond measurement to the 16-pond preset's cycle time, not a measurement. The picker comparison ran the 16-pond preset for 16 cycles without measuring speed.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="substrate">
+  <h2><span class="idx">3</span>Substrate facts the shapes depend on</h2>
+  <p class="sub">Four facts about the chemistry decide what each shape costs.</p>
+  <div class="cards">
+    <div class="card"><h3>The genome has no free word</h3><p>44 words: two lineage words, PARAM0 (μ and σ of the growth function), PARAM1 (the motility gain in byte 0; bytes 1 to 3 are the heritable kernel-ring offsets in the <code>cells</code> sandbox, zero in every base world) and 40 words holding 160 int8 controller weights (10 → 8 → 8). Anything new a lineage inherits is a layout change.</p></div>
+    <div class="card"><h3>Every cell carries every reaction</h3><p>Photosynthesis, respiration, decomposition, growth, polymer building and signal emission run in a fixed order with world-wide rate constants (<code>kPhoto</code> 160, <code>kResp</code> 128, <code>kDecomp</code> 96, <code>kGrow</code> 128, <code>kBuild</code> 64 by default), each scaled by a controller output that can be zero. A lineage can run a reaction at nothing; it cannot lack the machinery, pay for carrying it, or gain it in one readable step. There is no "first decomposer" today. Waste also arises by passive decay and is recycled abiotically under light.</p></div>
+    <div class="card"><h3>Mutation is per synthesised quantum</h3><p>It mints a lineage id on every event, so lineages are cheap and deep: dozens to hundreds of mutations in 10⁶ steps. Declared cells (<code>cellPeriod</code>) move mutation to a cell's birth instead.</p></div>
+    <div class="card"><h3>Dials do not turn mid-run</h3><p>Levers exist as config: light mode with period and amplitude, seasons, tiles and migration, the pond cycle and its score, lossy takeover, kin tolerance, recurring wounds, heritable shape, declared cells, signal gain, mutation rate. Interventions exist: lesion, feed, drain, pick, each logged and replayed. The GPU pipelines are built from the config, and light and injury are shader constants, so a dial turned while the world runs is a new intervention kind with a pipeline rebuild, validated transitions, checkpoints that carry it and headless replay. Pond worlds refuse feeding, draining and migration.</p></div>
+  </div>
+</section>
+
+<section id="sentence">
+  <h2><span class="idx">4</span>The design problem in one sentence</h2>
+  <p class="quote">Evolution here is fast, cheap and good at stripping; the game must make the things we want to see <em>pay</em>, give them names and a time, and keep the dose of disturbance between dull and lethal.</p>
+</section>
+
+<section id="shapes">
+  <h2><span class="idx">5</span>Five shapes</h2>
+  <p class="sub">Each says what the player does, what evolves, what is declared, what it costs and its main risk. They combine; section 8 says how. The tags name the stage each shape belongs to.</p>
+  <div class="cards wide">
+    <div class="card shape">
+      <h3><span class="n">1</span>The breeder as a game<span class="tag">Stage 0b</span></h3>
+      <p>"Pond keeper."</p>
+      <dl>
+        <dt>Play</dt><dd>A jar of sixteen (or sixty-four) ponds. Every cycle, a few seconds, the best-scoring ponds reseed the rest. The player chooses the <b>pressure</b> for the next stretch (movement, reach, body size, seed mass, mass; later elongation, sensing and anything the metrics can score) or picks donors by eye for a cycle or two. A log of firsts announces thresholds; progress unlocks levers (a gentle sun, seasons, wounds, heritable shape), each at its known dose. A session ends with a card.</dd>
+        <dt>Evolves</dt><dd>Whatever the chemistry can do under group selection. Shown so far: speed, on one seed. Preserved by scoring it: packet mass. Descriptive only: body size. Not built: scores for shape and sensing.</dd>
+        <dt>Declared</dt><dd>Nothing new. The pond cycle is already imposed and the breeder already exists in the lab, with hand picking and the <code>breeder</code> preset.</dd>
+        <dt>Cost</dt><dd>Lab and observer work: a pressure selector per cycle (the score is fixed in the config today, so switching needs the pick-style intervention and its replay), a firsts detector with stated rules, lineage colour and a tree in the jar, a session card. No physics, no pins.</dd>
+        <dt>Risk</dt><dd class="risk">Only movement has been shown to respond, on one seed, on the larger preset. "Every body marching in step" may read as a lattice, not as life. Whether a player's eye breeds as well as the rule is untested. A pressure the chemistry cannot meet breeds nothing, and the game must say so. Reordering four donors changes a whole history, so two sessions looking different is not evidence that the pressure did it.</dd>
+      </dl>
+    </div>
+    <div class="card shape lit">
+      <h3><span class="n">2</span>Tracks in the genome<span class="tag">Stage 1</span></h3>
+      <p>"Capability genes." The physics bet.</p>
+      <dl>
+        <dt>Play</dt><dd>The world starts with one kind of life that can only photosynthesise, respire and grow. Every other capability is a gene a lineage can gain by mutation and must pay to keep: decomposition, polymer building, signal emission, motility, sensing, adhesion, a wall, and later eating. <b>The player does not flip genes</b>; the environment decides which ones pay, and the player sets the environment. The game announces each first, in the note's example line: "the first decomposers appeared at step 412,000 and now hold 14% of the living matter."</dd>
+        <dt>Evolves</dt><dd>Which genes a lineage carries, gained when they pay and shed when they do not, if the costs are set so. Gating does not make a rung reliable; it makes reaching one identifiable: a discrete, inherited, costly change the game can detect and date.</dd>
+        <dt>Declared</dt><dd>What a lineage can do. Cells and bodies stay inferred, so individuals and reproduction are still results of the physics.</dd>
+        <dt>Cost</dt><dd>A physics change: a genome word for the gene set (about ten consumers of <code>Genome</code> must carry it), a per-gene maintenance cost in <code>react</code>, reactions gated by their gene, a mutation operator for gene bits at a lower rate, the WGSL twin of all of it, new golden cases. It cannot leave the RULE_VERSION 1 pins untouched: a game kernel with its own version line, or RULE_VERSION 2. Weeks, and a Codex pass on the parity.</dd>
+        <dt>Risk</dt><dd class="risk">Calibration. A small cost flips everything on in the first minute; a large one leaves the world photosynthetic. Avida's answer is mild rewards for intermediates and a rich one at the top; here a reward is an energy bonus or a feedstock, never created matter. Eating is the hardest gene: nothing in the repo has shown predation, and the eating rule is a design in its own right. In this repo the evidence is nil so far: the role inference sees dominance at a census, not inherited acquisition, and the 209 "obligate" genomes of the ecology-first search were founding-density specialists (four times the seeding biomass rescued 11 of 12).</dd>
+      </dl>
+    </div>
+    <div class="card shape">
+      <h3><span class="n">3</span>Epochs<span class="tag">Stage 1</span></h3>
+      <p>Designed regime shifts.</p>
+      <dl>
+        <dt>Play</dt><dd>The world moves through named ages, on a schedule, by the player's hand, or both: Dawn (uniform dim light), the Long Day (a gradient), the Turning Sky (a sweeping sun, slow then faster), the Seasons, the Wounds, the Meteor (one large lesion with a feed in its crater), the Flood and the Drought (feed and drain everywhere), the Drift (tiles that begin to exchange migrants, or stop). Each age opens a door; the game names the moment the population walks through it, or fails to.</dd>
+        <dt>Evolves</dt><dd>Whatever each age pays for. The record: a sun's speed sets survival (one seed per speed); one wandering-sun comparison of hand-built movers suggests sensing may pay and says nothing about sensing evolving; wounds raise turnover; seasons alone changed little.</dd>
+        <dt>Declared</dt><dd>Nothing in the physics. The ages are config over time.</dd>
+        <dt>Cost</dt><dd>The regimes exist one at a time, as worlds; the ages do not. A schedule fixed at planting needs the step function to read its settings by step (seasons already do this for light; sun mode, injury and the rest are shader constants), so it is a rule change with golden cases before any player touches it. Player-triggered ages are the dial intervention. A detector per door. Doses need a sweep: the storm first look used one seed per lever. The Meteor's feed, the Flood, the Drought and the Drift are refused in pond worlds.</dd>
+        <dt>Risk</dt><dd class="risk">Extinction, which a player experiences as a dead jar. The Flow-Lenia authors' later result is reported to say dissipation and shared limited resources lowered evolutionary activity (a search summary, unverified against the paper); if so, an age that only tightens scarcity may dull a world. Scripted stages were what critics held against Spore and Thrive: ages must open doors, not decide what comes through.</dd>
+      </dl>
+    </div>
+    <div class="card shape">
+      <h3><span class="n">4</span>Two substrates<span class="tag">Stage 2</span></h3>
+      <p>A field and creatures. The fallback for predation.</p>
+      <dl>
+        <dt>Play</dt><dd>The chemistry field stays the medium and the producers: the mat, the plants, the waste, the recycling. Above it live declared creatures, small bodies of a few cells with a position, a genome and a controller, that eat the field, eat each other and die back into it. The Bibites and Biogenesis are the models.</dd>
+        <dt>Evolves</dt><dd>Creature controllers and bodies under predation, which the field alone has not produced.</dd>
+        <dt>Declared</dt><dd>Creatures, outright. Matter still moves from field to creature and back, so the jar stays sealed, but a creature is an object, not an inference.</dd>
+        <dt>Cost</dt><dd>A second kernel with its own determinism problem (agents ordered, collisions resolved with the counter PRNG, in integers), the coupling to the field in WGSL and in the reference, conservation across two layers, a renderer, every observer taught about the second population. The largest shape by far. Months.</dd>
+        <dt>Risk</dt><dd class="risk">It becomes a different game that happens to sit on the field, and the field's elegance (one rule set, two implementations, bit for bit) is diluted. The practitioner record warns that differentiation and multicellularity do not come free even with declared cells: Thrive's multicellular stage has only budding; EEvol's developer sees filaments and no differentiation. Practitioner evidence, not published.</dd>
+      </dl>
+    </div>
+    <div class="card shape">
+      <h3><span class="n">5</span>Named species<span class="tag">Stage 0b</span></h3>
+      <p>The board: how the player sees what the other shapes make happen.</p>
+      <dl>
+        <dt>Play</dt><dd>The jar's living things have names, portraits and a family tree. Species are clusters of lineages by genome distance at a stated tolerance; a species persists across censuses, is named once and passes its name to descendants, splits when a cluster divides and both halves last, and goes extinct when no living genome of it remains. A species whose last countable body dies but which lives on as film has "gone to film", a different event. A "keep" on a species makes the game stop at its last stand.</dd>
+        <dt>Evolves</dt><dd>Nothing new.</dd>
+        <dt>Declared</dt><dd>A species boundary: a tolerance on genome distance and a persistence rule, stated on screen as the catalogue states "seen, not measured."</dd>
+        <dt>Cost</dt><dd>Observer work, and more than it looks: the existing clustering's ids are not stable from one frame to the next, so species need longitudinal matching, split and merge rules, names that follow the match, and a tolerance validated on evolved populations (neighbours within one founder's clade differ by up to all 42 words at the 90th percentile). Bodies hold only 15% to 48% of occupied cells, so "extinct" must tell a last body dying from a lineage living on as film. No physics.</dd>
+        <dt>Risk</dt><dd class="risk">Over-claiming: an inferred cluster named like a species is a claim the catalogue's honesty rule would flag. State the rule and the purity. A taxonomy that misfires (a species that "dies" and "reappears") confused at least one Bibites player; persistence rules must be strict.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="ladder">
+  <h2><span class="idx">6</span>The capability ladder</h2>
+  <p class="sub">Shape 2's bet, drawn. The starting set is what one kind of life can do at step zero; every other rung is a gene a lineage gains by mutation and pays to keep. The order is what the chemistry tends toward, not a rule it enforces: waste also arises by passive decay and light recycles it abiotically, so respiration need not come before decomposition. The note names one hard prerequisite, a wall needs polymer; everything else is soft gating, a gene useless until another is on and so shed by its cost. Hover or focus a rung for its line.</p>
+  <figure>
+    <ul class="legend" aria-label="Key"><li><span class="sw lit"></span>the starting set</li><li><span class="sw"></span>a reaction every cell already carries today, at no cost</li><li><span class="sw new"></span>new physics</li><li><span class="sw dot"></span>a hard prerequisite</li></ul>
+    <svg class="diagram wide" viewBox="0 0 1100 540" role="group" aria-label="A staircase of capabilities rising from left to right. At the bottom left, the starting set: photosynthesis, respiration and growth. Then eight gainable rungs, each with a maintenance cost: decomposition, polymer building, signal emission and motility, which every cell already carries today; and sensing, adhesion, a wall and eating, which are new physics. Labels say what makes each pay: waste for decomposition, crowding for moving, a moving sun for sensing, dense bodies for eating, marked as a hypothesis. A sun-coloured arrow from polymer to wall marks the one hard prerequisite. Under the stairs, a loop shows passive decay making waste and light recycling it, so the order is a tendency, not a rule.">
+      <g font-size="12">
+        <text x="20" y="22" font-weight="700" font-size="14">From one kind of life to a ladder of gene sets</text>
+        <text x="1080" y="22" text-anchor="end" class="muted" font-size="12">each gained gene: a maintenance cost, paid in energy (matter is closed), uncalibrated</text>
+
+        <g tabindex="0" role="img" aria-label="Starting set: photosynthesis, respiration and growth. Photosynthesis makes biomass and not free energy; growth spends free energy; respiration or decomposition must fund it; a cell that cannot pay its maintenance starves into waste whatever its controller says." data-tip="Starting set. Photosynthesis makes biomass, not free energy; growth spends free energy; respiration or decomposition must fund it. A cell that cannot pay its maintenance starves into waste whatever its controller says.">
+          <rect class="box lit" x="20" y="300" width="200" height="200" rx="12"/>
+          <text x="36" y="324" font-weight="700" font-size="14">Starting set</text>
+          <text x="36" y="342" class="sun-ink" font-size="11" font-weight="600">one kind of life, step zero</text>
+          <text x="36" y="366" font-weight="600">Photosynthesis <tspan class="mono muted" font-size="11">k 160</tspan></text>
+          <text x="36" y="381" class="muted" font-size="11">makes biomass, not free energy</text>
+          <text x="36" y="402" font-weight="600">Respiration <tspan class="mono muted" font-size="11">k 128</tspan></text>
+          <text x="36" y="417" class="muted" font-size="11">makes waste; funds maintenance</text>
+          <text x="36" y="438" font-weight="600">Growth <tspan class="mono muted" font-size="11">k 128</tspan></text>
+          <text x="36" y="460" class="soft" font-size="11">a cell that cannot pay its</text>
+          <text x="36" y="473" class="soft" font-size="11">maintenance starves into waste,</text>
+          <text x="36" y="486" class="soft" font-size="11">whatever its controller says</text>
+        </g>
+
+        <g tabindex="0" role="img" aria-label="Rung 1, decomposition: carried today at k 96; pays more once there is waste to eat." data-tip="Decomposition. Carried by every cell today (kDecomp 96). Pays more once there is waste to eat.">
+          <rect class="box" x="250" y="330" width="98" height="92" rx="10"/>
+          <text x="262" y="352" font-weight="700">Decompose</text>
+          <text x="262" y="368" class="mono muted" font-size="11">exists · k 96</text>
+          <text x="262" y="392" class="soft" font-size="11">pays once there</text>
+          <text x="262" y="406" class="soft" font-size="11">is waste to eat</text>
+        </g>
+        <g tabindex="0" role="img" aria-label="Rung 2, polymer building: carried today at k 64; the one hard prerequisite, a wall needs polymer." data-tip="Polymer building. Carried by every cell today (kBuild 64). The one hard prerequisite in the note: a wall needs polymer.">
+          <rect class="box" x="354" y="300" width="98" height="92" rx="10"/>
+          <text x="366" y="322" font-weight="700">Polymer</text>
+          <text x="366" y="338" class="mono muted" font-size="11">exists · k 64</text>
+          <text x="366" y="362" class="soft" font-size="11">a wall needs it</text>
+        </g>
+        <g tabindex="0" role="img" aria-label="Rung 3, signal emission: carried today." data-tip="Signal emission. Carried by every cell today; the signal gain is a config lever.">
+          <rect class="box" x="458" y="270" width="98" height="92" rx="10"/>
+          <text x="470" y="292" font-weight="700">Signal</text>
+          <text x="470" y="308" class="mono muted" font-size="11">exists</text>
+        </g>
+        <g tabindex="0" role="img" aria-label="Rung 4, motility: exists today as the gain in PARAM1 byte 0; crowding makes moving pay." data-tip="Motility. Exists today as the motility gain in PARAM1 byte 0. Crowding makes moving pay. The one trait the breeder has been shown to move, on one seed.">
+          <rect class="box" x="562" y="240" width="98" height="92" rx="10"/>
+          <text x="574" y="262" font-weight="700">Motility</text>
+          <text x="574" y="278" class="mono muted" font-size="11">exists</text>
+          <text x="574" y="291" class="mono muted" font-size="11">PARAM1 byte 0</text>
+          <text x="574" y="310" class="soft" font-size="11">crowding makes</text>
+          <text x="574" y="324" class="soft" font-size="11">moving pay</text>
+        </g>
+        <g tabindex="0" role="img" aria-label="Rung 5, sensing: controller inputs, new physics; a moving sun makes sensing pay, a lead from hand-built movers." data-tip="Sensing (controller inputs). New physics. A moving sun makes sensing pay: a lead from hand-built movers in the wandering-sun world, not an evolved result.">
+          <rect class="box new" x="666" y="210" width="98" height="92" rx="10"/>
+          <text x="678" y="232" font-weight="700">Sensing</text>
+          <text x="678" y="248" class="muted" font-size="11">new · inputs</text>
+          <text x="678" y="268" class="soft" font-size="11">a moving sun</text>
+          <text x="678" y="281" class="soft" font-size="11">makes it pay</text>
+          <text x="678" y="294" class="soft" font-size="11">(a lead)</text>
+        </g>
+        <g tabindex="0" role="img" aria-label="Rung 6, adhesion: new physics." data-tip="Adhesion. New physics; the note lists it as a gainable gene and says no more.">
+          <rect class="box new" x="770" y="180" width="98" height="92" rx="10"/>
+          <text x="782" y="202" font-weight="700">Adhesion</text>
+          <text x="782" y="218" class="muted" font-size="11">new</text>
+        </g>
+        <g tabindex="0" role="img" aria-label="Rung 7, a wall: new physics; needs polymer, the hard prerequisite." data-tip="A wall. New physics. Needs polymer: the one hard prerequisite the note names.">
+          <rect class="box new" x="874" y="150" width="98" height="92" rx="10"/>
+          <text x="886" y="172" font-weight="700">Wall</text>
+          <text x="886" y="188" class="muted" font-size="11">new</text>
+          <text x="886" y="212" class="soft" font-size="11">needs polymer</text>
+        </g>
+        <g tabindex="0" role="img" aria-label="Rung 8, eating: taking a stranger's biomass as nutrient; new physics; that dense bodies would make it pay is a hypothesis; nothing in the repo has shown predation." data-tip="Eating: taking a stranger's biomass as nutrient. New physics, later. That neighbours' biomass would make it pay once bodies are dense is a hypothesis; nothing in the repo has shown predation, and the eating rule itself is a design in its own right.">
+          <rect class="box new" x="978" y="120" width="98" height="92" rx="10"/>
+          <text x="990" y="142" font-weight="700">Eating</text>
+          <text x="990" y="158" class="muted" font-size="11">new · later</text>
+          <text x="990" y="182" class="soft" font-size="11">dense bodies</text>
+          <text x="990" y="196" class="soft" font-size="11">pay? hypothesis</text>
+        </g>
+
+        <path class="arrow lit" d="M403 298 C 403 120, 923 100, 923 146" marker-end="url(#ahl)"/>
+        <circle cx="403" cy="298" r="5" class="sun ring"/>
+        <text x="640" y="108" text-anchor="middle" class="sun-ink" font-size="11" font-weight="600">the one hard prerequisite: a wall needs polymer</text>
+
+        <path class="arrow" d="M222 376 L246 376" marker-end="url(#ah)"/>
+        <text x="20" y="62" class="muted" font-size="12">Left to right is the tendency: photosynthesis makes biomass,</text>
+        <text x="20" y="80" class="muted" font-size="12">respiration makes waste, decomposition pays once there is waste;</text>
+        <text x="20" y="98" class="muted" font-size="12">crowding makes moving pay; a moving sun makes sensing pay.</text>
+        <text x="20" y="128" class="muted" font-size="12">Today every cell carries the six existing reactions from step 0</text>
+        <text x="20" y="146" class="muted" font-size="12">at no cost, so the succession is invisible. Eating is not among</text>
+        <text x="20" y="164" class="muted" font-size="12">them: it is new physics, and that it would pay is a hypothesis.</text>
+
+        <path class="arrow later" d="M120 502 L120 514 Q 120 522 128 522 L 305 522 Q 313 522 313 514 L 313 426" marker-end="url(#ah)"/>
+        <text x="330" y="466" class="soft" font-size="11">passive decay makes waste too, and light recycles waste abiotically,</text>
+        <text x="330" y="480" class="soft" font-size="11">so respiration before decomposition is a tendency, not a rule</text>
+      </g>
+    </svg>
+    <figcaption>The cheapest check comes before any genome work: the world-wide rate constants can already switch a reaction off for everyone, so hand-built capability sets (photosynthesis and growth alone; with respiration; with decomposition) can be run under the existing rules to measure survival, the free-energy balance and the reaction fluxes of each rung. If the bottom rung cannot live, the ladder has no first step. Then the smallest genome version: two capabilities, a cost, several seeds, and whether acquisitions happen, spread and persist.</figcaption>
+  </figure>
+</section>
+
+<section id="devices">
+  <h2><span class="idx">7</span>Devices that force evolution, and what other games got wrong</h2>
+  <p class="sub">From two read-only research passes over abstracts, project pages, store pages and devblogs; items marked unverified rest on search summaries. The devices are ranked by how much evidence they have and how cheaply they graft onto this chemistry. Lit numbers are the ones a stage below uses.</p>
+  <ol class="devices">
+    <li class="lit"><b>A size-dependent selective force, clonal offspring, a bottleneck.</b> Settling selection on yeast produced branched multicellular clusters in about two months, clonal and propagating through single-cell bottlenecks; Avida's Volvocales models evolved germ and soma when survival and reproduction traded off. The pond cycle already supplies nearly clonal packets (measured, not enforced) and a bottleneck. Missing: a force in the field that favours size or attachment within a cycle. A new optional rule, outside the frozen scaffold registration; it would test attached propagules under an imposed cycle, not the north star's endogenous transition.</li>
+    <li class="lit"><b>An energy-paid ladder of rewarded capabilities, with mild intermediate rewards.</b> Lenski, Ofria, Pennock and Adami: complex functions evolve when simpler ones are rewarded too, no single rung is mandatory, and some deleterious steps become stepping stones. Goldsby's task-switching cost evolved division of labour between genetically identical neighbours. No application to a chemistry CA was found; the chemistry-native form is shape 2's genes with a maintenance cost. Risk: organisms game the detector.</li>
+    <li><b>Staged environments kept barely passable, with transfer between them.</b> POET co-evolves environments and agents and moves stepping-stone solutions across; minimal criterion coevolution does it with no fitness function at all. The game analogue is the player as the environment and ponds or islands as the places solutions move between. Not tested on Lenia.</li>
+    <li class="lit"><b>Varying what pays, and selective rather than random extinctions.</b> Modularly varying goals evolved modular networks that adapt fast (one failed replication attempt on record). In Avida, extinctions that change the environment reshape recovery where random culls do not. Offer both a meteor and an ice age, and expect them to differ. Cheap: a schedule on existing config.</li>
+    <li><b>Offline search to choose the constrained region and the founders.</b> Leniabreeder, curiosity-driven Flow-Lenia and ASAL find more varied starts than random search; the M3 MAP-Elites search is this project's version. It finds interesting starts and does not drive evolution: a tool for designing the game's worlds, not a mechanic in them.</li>
+  </ol>
+  <p class="sub" style="margin-top:14px">Two warnings from the same pass. Evoloops show the default fate of evolving replicators in a CA: selection converges on the smallest, fastest form, which is what erosion and the shrinking bodies under movement breeding look like here. And the Flow-Lenia authors' later paper is reported to find less evolutionary activity under dissipation and food limits than in the plain system (unverified against the full text), which would argue that an age should change goals, not just scarcity.</p>
+  <p class="sub">The games survey found <strong>no independently verified case</strong> of a new body plan, multicellularity or predation emerging from a forced pressure in a game: the stages are scripted, or the emergence is a developer's claim. The passes were limited and nothing was tested first hand, so this is a gap in the record, not a proof of absence. Either way the passes turned up no verified recipe to copy.</p>
+  <h3 class="minor">Failure modes, each one a design rule here</h3>
+  <figure>
+    <table class="fail">
+      <thead><tr><th>Failure</th><th>Where it was seen</th><th>Rule for this game</th></tr></thead>
+      <tbody>
+        <tr><td>The editor replaces evolution</td><td>Spore ("intelligent designer," its designer's words); Equilinox's mutation button</td><td>No creature editor. The player sets pressures and ages; the world designs.</td></tr>
+        <tr><td>The stages are scripted</td><td>Spore, Cell to Singularity</td><td>Ages open doors; firsts are detected, never scheduled.</td></tr>
+        <tr><td>The same winner every time</td><td>Species: Artificial Life (player comment)</td><td>Seeds and founders vary; the catalogue's ensembles already measure spread.</td></tr>
+        <tr><td>Nothing visibly changes</td><td>The Bibites ("only the colour," one comment); EvoLife ("needs a guiding hand")</td><td>A pressure the chemistry cannot meet must say so, fast; the firsts log is the proof of change.</td></tr>
+        <tr><td>Everyone dies</td><td>Gene Pool's own notes; the storm here</td><td>Doses stated and bounded; a jump back is one click.</td></tr>
+        <tr><td>No stakes</td><td>Keiwan's Evolution (by design)</td><td>A session card, a keep on a species, firsts that are hard to reach.</td></tr>
+        <tr><td>A lesson, not a game</td><td>Niche (6/10 twice: "a better science lesson than game")</td><td>Watching has to be the pleasure, so the jar comes first and the panels second, as the lab already lays out.</td></tr>
+        <tr><td>Careful mutation is not engaging</td><td>Spore's early prototypes, per its designer</td><td>Pace: a visible change per minute, which the breeder's rate allows.</td></tr>
+      </tbody>
+    </table>
+    <figcaption>What made evolution legible and fun to a watcher, across the survey: species you can name that survive extinction scares, several views of one history, a prediction before you act (here the honest form is a replay twin of a different choice, side by side), rules built up one at a time, and visible traits.</figcaption>
+  </figure>
+</section>
+
+<section id="stages">
+  <h2><span class="idx">8</span>Recommendation: a staged ladder</h2>
+  <p class="sub">Each stage is a test the one before could not run. Stage 0a costs nothing and asks whether watching bred evolution is fun at all. Stage 1 is the physics bet. Stage 2 exists only if the field cannot carry predation. One follow-up runs in parallel and claims nothing for the frozen registration.</p>
+  <figure>
+    <svg class="diagram wide" viewBox="0 0 1000 704" role="img" aria-label="Four stages in a row with arrows between them. Stage 0a, the test before the build: three people in front of the lab's Breeder panel for ten minutes each, with the Lineages view on; pass if each can name a change they saw and wants to play again; cost an afternoon and some GPU time. Stage 0b, Pond keeper in the lab: a pressure per cycle, a firsts log with stated rules, a family tree with named clusters and purity, a session card with a versioned manifest; no physics, no pins; days to a couple of weeks. Stage 1, tracks under a game kernel, in three rungs: a rung check with hand-built capability sets and no genome work, then one gainable capability with a maintenance cost and a failure criterion written first, then the full gene set and ages; its own rule version line; weeks. Stage 2, creatures, only if the eating gene does not produce chasing in the field; months. Below, a parallel lane: the snowflake move in the pond cycle, outside the frozen registration, testing attached propagules under an imposed cycle, not the north star's endogenous transition.">
+      <g font-size="12">
+        <rect class="box lit" x="20" y="30" width="215" height="380" rx="12"/>
+        <text x="36" y="56" font-weight="700" font-size="15">Stage 0a</text>
+        <text x="36" y="74" class="sun-ink" font-size="12" font-weight="600">the test before the build</text>
+        <text x="36" y="100" class="soft label">NOTHING TO BUILD</text>
+        <text x="36" y="118">three people, ten minutes each,</text>
+        <text x="36" y="134">in front of the lab's Breeder panel</text>
+        <text x="36" y="150">on the <tspan class="mono">breeder</tspan> world, with the</text>
+        <text x="36" y="166">Lineages view on, and asked</text>
+        <text x="36" y="182">afterwards what happened</text>
+        <text x="36" y="208" class="soft label">PASS / FAIL</text>
+        <text x="36" y="226">pass: each names a change they</text>
+        <text x="36" y="242">saw and wants to play again</text>
+        <text x="36" y="258">fail: they describe a lattice,</text>
+        <text x="36" y="274">or nothing</text>
+        <text x="36" y="300" class="soft label">APART FROM IT</text>
+        <text x="36" y="318" class="muted" font-size="11">whether their choices caused</text>
+        <text x="36" y="332" class="muted" font-size="11">anything: matched rule and random</text>
+        <text x="36" y="346" class="muted" font-size="11">pickers across seeds, headless</text>
+        <text x="36" y="360" class="muted" font-size="11">with tools/run.ts --picker</text>
+        <text x="36" y="392" font-weight="600">an afternoon and some GPU time</text>
+
+        <path class="arrow" d="M237 220 L261 220" marker-end="url(#ah)"/>
+
+        <rect class="box" x="265" y="30" width="215" height="380" rx="12"/>
+        <text x="281" y="56" font-weight="700" font-size="15">Stage 0b</text>
+        <text x="281" y="74" class="muted" font-size="12">Pond keeper · shapes 1 and 5</text>
+        <text x="281" y="100" class="soft label">NO PHYSICS, NO PINS</text>
+        <text x="281" y="118">a pressure chosen each cycle,</text>
+        <text x="281" y="134">logged as a pick-style</text>
+        <text x="281" y="150">intervention, so replay holds</text>
+        <text x="281" y="166">a firsts log with stated rules</text>
+        <text x="281" y="182">a family tree: named clusters,</text>
+        <text x="281" y="198">their purity, matched across</text>
+        <text x="281" y="214">censuses</text>
+        <text x="281" y="230">a session card at ten minutes,</text>
+        <text x="281" y="246">with a versioned manifest the</text>
+        <text x="281" y="262">headless runner can replay</text>
+        <text x="281" y="288" class="soft label">WHAT FUN LOOKS LIKE</text>
+        <text x="281" y="306" class="muted" font-size="11">0a's test again, asking whether the</text>
+        <text x="281" y="320" class="muted" font-size="11">firsts log and the tree are what</text>
+        <text x="281" y="334" class="muted" font-size="11">people point at</text>
+        <text x="281" y="392" font-weight="600">days to a couple of weeks</text>
+
+        <path class="arrow" d="M482 220 L506 220" marker-end="url(#ah)"/>
+
+        <rect class="box" x="510" y="30" width="260" height="380" rx="12"/>
+        <text x="526" y="56" font-weight="700" font-size="15">Stage 1</text>
+        <text x="526" y="74" class="muted" font-size="12">tracks under a game kernel · shapes 2, 3</text>
+        <text x="526" y="100" class="soft label">THE PHYSICS BET, IN THREE RUNGS</text>
+        <rect class="box plain" x="526" y="110" width="228" height="48" rx="8"/>
+        <text x="536" y="128" font-weight="600">1 · the rung check, no genome work</text>
+        <text x="536" y="146" class="muted" font-size="11">hand-built capability sets, several seeds</text>
+        <rect class="box plain" x="526" y="166" width="228" height="48" rx="8"/>
+        <text x="536" y="184" font-weight="600">2 · one gainable capability, a cost</text>
+        <text x="536" y="202" class="muted" font-size="11">several seeds; failure criterion written first</text>
+        <rect class="box plain" x="526" y="222" width="228" height="48" rx="8"/>
+        <text x="536" y="240" font-weight="600">3 · the full gene set and ages</text>
+        <text x="536" y="258" class="muted" font-size="11">a schedule at planting; ages as dials</text>
+        <text x="526" y="288" class="muted" font-size="11">its own rule version line, new golden cases,</text>
+        <text x="526" y="302" class="muted" font-size="11">CPU and WGSL parity, a Codex pass; the lab's</text>
+        <text x="526" y="316" class="muted" font-size="11">RULE_VERSION 1 worlds untouched</text>
+        <text x="526" y="392" font-weight="600">weeks; eating is its own sub-project</text>
+
+        <path class="arrow later" d="M772 220 L796 220" marker-end="url(#ah)"/>
+
+        <rect class="box new" x="800" y="30" width="180" height="380" rx="12"/>
+        <text x="816" y="56" font-weight="700" font-size="15">Stage 2</text>
+        <text x="816" y="74" class="muted" font-size="12">creatures · shape 4</text>
+        <text x="816" y="100" class="soft label">ONLY IF NEEDED</text>
+        <text x="816" y="118">for predation and body</text>
+        <text x="816" y="134">plans, if the eating gene</text>
+        <text x="816" y="150">does not produce chasing</text>
+        <text x="816" y="166">and being chased in the</text>
+        <text x="816" y="182">field</text>
+        <text x="816" y="392" font-weight="600">months</text>
+
+        <rect class="box plain" x="20" y="424" width="470" height="124" rx="10"/>
+        <text x="36" y="446" class="soft label">THE RUNG CHECK, BEFORE ANY GENOME WORK</text>
+        <text x="36" y="466">the rate constants can switch a reaction off for everyone: run</text>
+        <text x="36" y="482">photosynthesis and growth alone, with respiration, with decomposition,</text>
+        <text x="36" y="498">under the existing rules; measure survival, the free-energy balance and</text>
+        <text x="36" y="514">the fluxes of each rung. If the bottom rung cannot live, the ladder</text>
+        <text x="36" y="530">has no first step.</text>
+
+        <rect class="box plain" x="510" y="424" width="470" height="124" rx="10"/>
+        <text x="526" y="446" class="soft label">STAGE 1, WHAT FUN LOOKS LIKE</text>
+        <text x="526" y="466">in ten minutes without the player, the world climbs at least two rungs</text>
+        <text x="526" y="482">(say decomposition, then polymer building) in most seeds and the log</text>
+        <text x="526" y="498">names each; with the player, the rungs and their order differ by the</text>
+        <text x="526" y="514">ages chosen; and at least one world shows a door the population</text>
+        <text x="526" y="530">fails to pass, which is a story too</text>
+
+        <rect class="box" x="20" y="564" width="960" height="120" rx="12" stroke-dasharray="4 4"/>
+        <text x="36" y="590" font-weight="700" font-size="14">In parallel, as a separate exploratory follow-up: the snowflake move</text>
+        <text x="36" y="610">a size-or-attachment force within a pond cycle, built as an optional rule key, run on new seeds, read by the scaffold line's own</text>
+        <text x="36" y="626">instruments plus a stated propagule test (the census's size distribution, the share of packets that are one body)</text>
+        <text x="36" y="652" class="sun-ink" font-size="12" font-weight="600">outside the frozen registration and claiming nothing for it · tests attached propagules under an imposed cycle, not the north star's</text>
+        <text x="36" y="668" class="sun-ink" font-size="12" font-weight="600">endogenous transition · "the first colony" in the game would mean exactly that</text>
+      </g>
+    </svg>
+    <figcaption>Not recommended as a first move: a creature editor, parameter sliders over the raw physics (μ, σ, rate constants: a player cannot read them, and the catalogue's rule is to explain levers in audience terms), or the full storm.</figcaption>
+  </figure>
+</section>
+
+<section id="decisions">
+  <h2><span class="idx">9</span>Decisions for the user</h2>
+  <p class="sub">Five choices change what gets built. Lit cards carry a recommendation the note states; the others have none.</p>
+  <div class="cards">
+    <div class="card lit"><h3><span class="n">1</span>Fork or next phase?</h3><p>A sibling of the lab with its own kernel line that may declare things, the lab's north star untouched; or the lab itself takes the turn and "never declared" is retired.</p><p><b>The note's line:</b> the lab stays the lab; the game is a sibling.</p></div>
+    <div class="card"><h3><span class="n">2</span>How much to declare?</h3><p>Nothing new (Stage 0 only), capabilities (Stage 1), cells (the declared-cell worlds, built and in the catalogue under "Shape and cells"), or creatures (Stage 2).</p></div>
+    <div class="card lit"><h3><span class="n">3</span>Which prototype first?</h3><p>Stage 0a, an afternoon, no code, testing whether watching bred evolution is fun before any physics is written; or straight to tracks, the bigger bet, on the argument that the breeder's lattice-of-dots will not hold anyone's attention.</p><p><b>The note's line:</b> Stage 0a first.</p></div>
+    <div class="card"><h3><span class="n">4</span>What may the player touch?</h3><p>Pressures and ages only ("slightly interactive"); plus the existing brushes (lesion, feed, drain); plus donor picks by eye. Anything more is a god game.</p><p>The note does not choose among the three; it only rules out, as a first move, a creature editor, parameter sliders over the raw physics and the full storm.</p></div>
+    <div class="card"><h3><span class="n">5</span>Solo jar or shared garden first?</h3><p>The breeder works in one browser today; ages do not exist yet in any form. The shared garden (bet 4) would make ages the commons' events and species the things people name together; it needs the coordinator to carry the <code>breed</code> arm and the dial interventions, which it does not.</p></div>
+  </div>
+</section>
+
+<footer>
+  Written 16 October 2026 from docs/plan.md, docs/reassessment-2026-09-30.md, docs/rules.md, the sandbox notes (ownership, cells, wild, feed), docs/naturalist-brainstorm-2026-10-07.md, the lab's worlds and home page, the schema and metrics packages, PRODUCT.md, DESIGN.md and CONTEXT.md, plus two read-only research passes on 2026-10-16 over evolution games and over techniques; the passes worked from abstracts, store pages and devblogs, and their unverified items are marked. No simulation was run and no code was changed. One read-only Codex Sol 6.1 High pass on the first draft, nineteen findings, all taken; a second pass on the corrected note found four of those regressed elsewhere and carried through, and eight new findings, all taken. The full argument: <a href="evolution-game-brainstorm-2026-10-16.md">evolution-game-brainstorm-2026-10-16.md</a>.
+</footer>
+
+</div>
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+<script>
+(() => {
+  const root = document.documentElement;
+  const btn = document.getElementById("theme");
+  const prefersDark = matchMedia("(prefers-color-scheme: dark)");
+  const apply = (mode) => {
+    if (mode) root.setAttribute("data-theme", mode); else root.removeAttribute("data-theme");
+    const dark = mode ? mode === "dark" : prefersDark.matches;
+    btn.textContent = dark ? "Day" : "Night";
+  };
+  let saved = null;
+  try { saved = localStorage.getItem("bl-theme"); } catch {}
+  apply(saved === "dark" || saved === "light" ? saved : null);
+  btn.addEventListener("click", () => {
+    const dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark" : prefersDark.matches;
+    const next = dark ? "light" : "dark";
+    apply(next);
+    try { localStorage.setItem("bl-theme", next); } catch {}
+  });
+  prefersDark.addEventListener("change", () => { if (!root.getAttribute("data-theme")) apply(null); });
+
+  // Tooltip: one element, text only, shown on hover and on keyboard focus.
+  const tip = document.getElementById("tip");
+  const show = (text, x, y) => {
+    tip.textContent = text;
+    tip.classList.add("on");
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    const left = Math.min(Math.max(8, x + 14), innerWidth - w - 8);
+    const top = y - h - 12 < 8 ? y + 18 : y - h - 12;
+    tip.style.left = `${left}px`; tip.style.top = `${top}px`;
+  };
+  const hide = () => tip.classList.remove("on");
+  const wire = (el, text) => {
+    el.addEventListener("pointermove", (e) => show(text, e.clientX, e.clientY));
+    el.addEventListener("pointerleave", hide);
+    el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); show(text, r.left + r.width / 2, r.top); });
+    el.addEventListener("blur", hide);
+  };
+  for (const el of document.querySelectorAll("[data-tip]")) wire(el, el.getAttribute("data-tip"));
+})();
+</script>
+</body>
+</html>

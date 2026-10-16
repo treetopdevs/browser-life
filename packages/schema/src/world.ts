@@ -1,5 +1,5 @@
-import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, RING_CELL_MASK, cellCount, maxPackableRaw, packLineageLo, validateConfig, worldW, type WorldConfig } from "./config.ts";
-import { CELL_CHANNELS, CH, FLUX_COUNT, G, GENOME_CHANNELS } from "./layout.ts";
+import { LEDGER_MAX, MATTER_MAX, MAX_STEP, POOL_MAX, RING_CELL_MASK, cellCount, geneMasks, maxPackableRaw, packLineageLo, validateConfig, worldW, type WorldConfig } from "./config.ts";
+import { CELL_CHANNELS, CH, FLUX_COUNT, G, GENE_SHIFT, GENOME_CHANNELS } from "./layout.ts";
 import { encodeGenome, generalistGenome, randomGenome, type Genome } from "./genome.ts";
 import { founderGenome, M3_FOUNDERS } from "./founders.ts";
 import { divi, draw, lowbias32 } from "./int.ts";
@@ -163,10 +163,18 @@ export function validateState(s: WorldState): string[] {
   if (!ok(s.lightIn) || !ok(s.heatOut) || s.flux.length !== FLUX_COUNT || !s.flux.every(ok)) errs.push(`ledger values must be in 0..2^63`);
   // Transport relies on genome words being identical for every cell of a lineage.
   const namespaced = s.cfg.ringNamespace !== undefined;
+  // Capability genes (WorldConfig.genes): a gene bit outside the configured set would be inert (no
+  // cost, no gate, never flipped) yet counted by genomeDistance, so a living genome may not carry one.
+  // Without genes byte 3 of PARAM1 is the far-ring offset and is not checked.
+  const foreignGenes = s.cfg.genes === undefined ? 0 : ((0xff << GENE_SHIFT) & ~geneMasks(s.cfg).set) >>> 0;
   const seen = new Map<string, number>();
   for (let i = 0; i < n && errs.length === 0; i++) {
     const hi = s.genome[G.LIN_HI * n + i], lo = s.genome[G.LIN_LO * n + i];
     if ((hi | lo) === 0) continue;
+    if ((s.genome[G.PARAM1 * n + i] & foreignGenes) !== 0) {
+      errs.push(`lineage ${hi}:${lo} at cell ${i} carries gene bits outside the gene set ${s.cfg.genes}`);
+      break;
+    }
     // Mutation ids are (birth step + 1, cell); an id from the future could be
     // minted again. `lo`'s cell-index portion is the low RING_CELL_BITS when
     // namespaced (see packLineageLo) -- masking is a no-op (lo itself) when

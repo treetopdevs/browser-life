@@ -83,7 +83,19 @@ export const RND = {
   MUT_WHICH: 35,
   MUT_DELTA: 36,
   INJURY: 37, // WorldConfig.injuryPeriod (ownership sandbox); unused without it
+  GENE: 38, // WorldConfig.genes (game kernel): a carried gene's maintenance; unused without it
+  GENE_FLIP: 39, // WorldConfig.genes: does this mutation event flip a gene bit; unused without it
 } as const;
+
+/**
+ * Capability genes (WorldConfig.genes, the game kernel line): byte 3 of PARAM1
+ * is the gene byte, one bit per gainable capability. Zero in every RULE_VERSION
+ * 1 genome, and exclusive with WorldConfig.shapeReach, whose far-ring offset
+ * also lives in byte 3 (validateConfig refuses the two together). A gene set's
+ * bits are contiguous from bit 0 (flipGene picks `which % geneCount`).
+ */
+export const GENE_SHIFT = 24;
+export const GENE_BIT = { DECOMP: 0, BUILD: 1 } as const;
 
 /**
  * Domain-separation salt for packages/schema/src/migration.ts's own

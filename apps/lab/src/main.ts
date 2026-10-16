@@ -1,4 +1,4 @@
-import { PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondTerm, type WorldConfig } from "@bl/schema";
+import { GENE_BIT, PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondTerm, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import type { CensusMsg, FromWorker, Keep, PondAwaitMsg, PondsMsg, ProbeMsg, SessionView, StatsMsg, ToWorker } from "./protocol.ts";
 import { Series } from "./sparkline.ts";
@@ -751,6 +751,14 @@ function onCensus(c: CensusMsg) {
 }
 
 /** What each cell channel holds, beside its letter in the rules. */
+/** Names the carried capability genes (GENE_BIT order), or "none". */
+function geneNames(bits: number): string {
+  const names = (Object.entries(GENE_BIT) as [keyof typeof GENE_BIT, number][])
+    .filter(([, bit]) => (bits >> bit) & 1)
+    .map(([name]) => ({ DECOMP: "decomposition", BUILD: "polymer building" })[name]);
+  return names.length ? names.join(", ") : "none";
+}
+
 const CHANNEL_LABELS: Record<string, string> = {
   A: "Nutrient (A)", B: "Biomass (B)", C: "Waste (C)", P: "Membrane (P)", E: "Free energy (E)", S: "Signal (S)", MOT: "Motility x, y",
 };
@@ -769,6 +777,8 @@ function onProbe(p: ProbeMsg) {
     ["Motility gain", p.lineage ? String(p.motGain) : "none"],
     // Heritable kernel shape: weights of the inner, outer and far ring (neutral 64 / 64 / 0), shown once a genome leaves neutral.
     ...(p.lineage && p.rings ? [["Ring weights", `${Math.max(64 + p.rings[0], 0)} / ${Math.max(64 + p.rings[1], 0)} / ${Math.max(p.rings[2], 0)}`] as [string, string]] : []),
+    // Capability genes (WorldConfig.genes): the bits this cell carries, by name.
+    ...(p.lineage && p.genes !== undefined ? [["Genes", geneNames(p.genes)] as [string, string]] : []),
   ];
   $("probe-kv").replaceChildren(
     ...rows.flatMap(([k, v]) => {

@@ -3,6 +3,7 @@
 // power of two named in the comment.
 import type { PondArm } from "./ponds.ts";
 import { SHAPE_MAX_REACH } from "./kernel.ts";
+import { GENE_BIT, GENE_SHIFT } from "./layout.ts";
 
 export const SCHEMA_VERSION = 3;
 export const RULE_VERSION = 1;
@@ -363,6 +364,49 @@ export interface WorldConfig {
   wanderPeriod?: number;
   /** Wander amplitude in cells (see `wanderPeriod`). */
   wanderAmp?: number;
+
+  /**
+   * Capability genes (the game kernel line, docs/evolution-game-brainstorm-2026-10-16.md "Gene
+   * v0"; absent = RULE_VERSION 1). The gene byte is byte 3 of a genome's PARAM1 (`GENE_SHIFT`,
+   * `GENE_BIT`), zero in every founder. Each gene gates one reaction: "decomp" has one gene,
+   * decomposition (bit 0); "ladder" has two, decomposition (bit 0) and polymer building (bit 1).
+   * A living cell without a gene skips its reaction and leaves that output out of the catalysis
+   * work sum (the machinery is not there to pay for); a cell with it runs the reaction as
+   * RULE_VERSION 1 does, and every carried gene pays `kGene` / 65,536 of the cell's B per step in
+   * E on top of kMaint (one RND.GENE draw, the term times the number carried). A mutation event
+   * first draws RND.GENE_FLIP: below `geneFlip` / 2^32 it flips one of the set's gene bits (gain
+   * or loss) instead of nudging a weight. The three keys are set
+   * together; exclusive with `shapeReach` (byte 3 is its far-ring offset) and with `neutral`
+   * (the reference genome has no genes, so none could ever be gained). Optional and absent from
+   * `defaultConfig()` for the same hashing reason as `adhesion`: every config without them steps
+   * and hashes exactly as before.
+   */
+  genes?: GeneSet;
+  /** Maintenance per carried gene, /65536 of B per step (0..65535), when `genes` is set. */
+  kGene?: number;
+  /** Share of mutation events that flip a gene bit, /2^32 (0..2^32-1), when `genes` is set. */
+  geneFlip?: number;
+}
+
+/**
+ * The named gene sets of WorldConfig.genes: "decomp" has one gene, decomposition (GENE_BIT.DECOMP);
+ * "ladder" has two, decomposition and polymer building (GENE_BIT.BUILD).
+ */
+export type GeneSet = "decomp" | "ladder";
+export const GENE_SETS: readonly GeneSet[] = ["decomp", "ladder"];
+/** Gainable genes in a gene set (the bits the flip mutation may touch, contiguous from bit 0). */
+export function geneCount(c: Pick<WorldConfig, "genes">): number {
+  return c.genes === "decomp" ? 1 : c.genes === "ladder" ? 2 : 0;
+}
+/**
+ * A gene set's masks in the PARAM1 word (already shifted by GENE_SHIFT): `set` is all of its bits,
+ * `decomp` and `build` the bit gating each reaction, 0 when the set lacks that gene. Without
+ * `genes` every mask is 0, so a gate `mask === 0 || (word & mask) !== 0` is always open.
+ */
+export function geneMasks(c: Pick<WorldConfig, "genes">): { set: number; decomp: number; build: number } {
+  const count = geneCount(c);
+  const bit = (b: number) => (count > b ? (1 << (GENE_SHIFT + b)) >>> 0 : 0);
+  return { set: (((1 << count) - 1) << GENE_SHIFT) >>> 0, decomp: bit(GENE_BIT.DECOMP), build: bit(GENE_BIT.BUILD) };
 }
 
 export type TakeoverKin = "lineage" | "growth" | "genome";
@@ -686,6 +730,24 @@ export function validateConfig(c: WorldConfig): string[] {
   errs.push(...validateInjury(c));
   errs.push(...validateShape(c));
   errs.push(...validateCells(c));
+  errs.push(...validateGenes(c));
+  return errs;
+}
+
+function validateGenes(c: WorldConfig): string[] {
+  const keys = [c.genes, c.kGene, c.geneFlip];
+  if (keys.every((k) => k === undefined)) return [];
+  if (keys.some((k) => k === undefined)) return ["genes, kGene and geneFlip are set together"];
+  const errs: string[] = [];
+  if (!GENE_SETS.includes(c.genes as GeneSet)) errs.push(`genes must be one of ${GENE_SETS.join(", ")}`);
+  const int = (v: unknown, lo: number, hi: number) => typeof v === "number" && Number.isInteger(v) && v >= lo && v <= hi;
+  // Bounded like kMaint: mulFrac(B, kGene, 16) is exact for kGene < 2^16 and B <= MATTER_MAX.
+  if (!int(c.kGene, 0, 65535)) errs.push("kGene must be an integer in 0..65535");
+  if (!int(c.geneFlip, 0, 2 ** 32 - 1)) errs.push("geneFlip must be an integer in 0..2^32-1");
+  if (c.shapeReach !== undefined) errs.push("genes and shapeReach are exclusive (both use PARAM1 byte 3)");
+  if (c.neutral) errs.push("genes are not defined with the neutral shadow (the reference genome has none)");
+  // Declared cells mutate at a cell's birth through mutateInPlace alone (mutRate 0), so no flip could ever happen.
+  if (c.cellPeriod !== undefined || c.cellMutProb !== undefined) errs.push("genes are not defined with declared cells (cellPeriod): their birth mutation never flips a gene");
   return errs;
 }
 
