@@ -198,7 +198,7 @@ footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px 
     <p class="lede">The ask is <strong>a fork, not a tuning</strong>: a sibling of the lab that shares the kernel, keeps the sealed jar and bit-for-bit replay, and declares what the lab would not. Visual companion to <a href="evolution-game-brainstorm-2026-10-16.md">evolution-game-brainstorm-2026-10-16.md</a>, which holds the argument in full.</p>
     <ul class="chips"><li class="chip note">Exploratory, not a plan</li><li class="chip">No physics, no pins, no prototype</li><li class="chip">Numbers from docs/sandbox-*.md, the scaffold registration and docs/plan.md</li></ul>
   </div>
-  <button class="theme" type="button" id="theme" aria-pressed="false">Night</button>
+  <button class="theme" type="button" id="theme">Night</button>
 </header>
 
 <section id="fork">
@@ -367,7 +367,7 @@ footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px 
   <div class="grid2" style="margin-top:14px">
     <figure>
       <ul class="legend" aria-label="Series"><li><span class="sw dot"></span>movement alone</li><li><span class="sw dot ink"></span>combined scores, at cycle 60</li></ul>
-      <svg class="diagram half" viewBox="0 0 480 236" role="img" aria-label="A dot plot of measured speed in cells per 1,000 steps against breeder cycle, one seed. Movement alone: 74 at cycle 10 and 282 at cycle 60, with 23 of 64 ponds occupied at the end. At cycle 60 the combined scores sit lower: movement plus seed mass at 135 with 63 ponds alive, and movement plus seed plus body at 88 with 62 alive. Cycle 1 is marked with the commanded movement of 0.6, a different quantity, not plotted.">
+      <svg class="diagram half" viewBox="0 0 480 236" role="group" aria-label="A dot plot of measured speed in cells per 1,000 steps against breeder cycle, one seed. Movement alone: 74 at cycle 10 and 282 at cycle 60, with 23 of 64 ponds occupied at the end. At cycle 60 the combined scores sit lower: movement plus seed mass at 135 with 63 ponds alive, and movement plus seed plus body at 88 with 62 alive. Cycle 1 is marked with the commanded movement of 0.6, a different quantity, not plotted.">
         <g font-size="12">
           <text x="0" y="14" font-weight="700" font-size="13">Speed under the breeder, one seed</text>
           <text x="480" y="14" text-anchor="end" class="soft" font-size="11">cells per 1,000 steps</text>
@@ -386,13 +386,13 @@ footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px 
           <line x1="62" y1="30" x2="62" y2="190" class="grid"/>
           <text x="66" y="176" class="muted" font-size="11">commanded 0.6 at cycle 1</text>
           <text x="66" y="188" class="soft" font-size="10">(a different quantity, not plotted)</text>
-          <circle cx="121.8" cy="150.5" r="6" class="sun ring" tabindex="0" data-tip="Movement alone: measured speed 74 by cycle 10 (100,000 steps)."/>
+          <circle cx="121.8" cy="150.5" r="6" class="sun ring" tabindex="0" role="img" aria-label="Movement alone: measured speed 74 by cycle 10 (100,000 steps)." data-tip="Movement alone: measured speed 74 by cycle 10 (100,000 steps)."/>
           <text x="132" y="146" font-size="12">74 by cycle 10</text>
-          <circle cx="454" cy="39.6" r="6" class="sun ring" tabindex="0" data-tip="Movement alone: 282 by cycle 60; occupied ponds fell to 23 of 64."/>
+          <circle cx="454" cy="39.6" r="6" class="sun ring" tabindex="0" role="img" aria-label="Movement alone: 282 by cycle 60; occupied ponds fell to 23 of 64." data-tip="Movement alone: 282 by cycle 60; occupied ponds fell to 23 of 64."/>
           <text x="446" y="43" font-size="12" text-anchor="end" font-weight="700">282 · 23 of 64 ponds left</text>
-          <circle cx="454" cy="118" r="6" class="ink ring" tabindex="0" data-tip="Movement + seed mass: 135 at cycle 60, 63 ponds alive."/>
+          <circle cx="454" cy="118" r="6" class="ink ring" tabindex="0" role="img" aria-label="Movement + seed mass: 135 at cycle 60, 63 ponds alive." data-tip="Movement + seed mass: 135 at cycle 60, 63 ponds alive."/>
           <text x="446" y="122" font-size="12" text-anchor="end">135, movement + seed · 63 alive</text>
-          <circle cx="454" cy="143.1" r="6" class="ink ring" tabindex="0" data-tip="Movement + seed + body: 88 at cycle 60, 62 ponds alive, heavier packets."/>
+          <circle cx="454" cy="143.1" r="6" class="ink ring" tabindex="0" role="img" aria-label="Movement + seed + body: 88 at cycle 60, 62 ponds alive, heavier packets." data-tip="Movement + seed + body: 88 at cycle 60, 62 ponds alive, heavier packets."/>
           <text x="446" y="160" font-size="12" text-anchor="end">88, movement + seed + body · 62 alive</text>
         </g>
       </svg>
@@ -504,7 +504,7 @@ footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px 
   <p class="sub">Shape 2's bet, drawn. The starting set is what one kind of life can do at step zero; every other rung is a gene a lineage gains by mutation and pays to keep. The order is what the chemistry tends toward, not a rule it enforces: waste also arises by passive decay and light recycles it abiotically, so respiration need not come before decomposition. The note names one hard prerequisite, a wall needs polymer; everything else is soft gating, a gene useless until another is on and so shed by its cost. Hover or focus a rung for its line.</p>
   <figure>
     <ul class="legend" aria-label="Key"><li><span class="sw lit"></span>the starting set</li><li><span class="sw"></span>a reaction every cell already carries today, at no cost</li><li><span class="sw new"></span>new physics</li><li><span class="sw dot"></span>a hard prerequisite</li></ul>
-    <svg class="diagram wide" viewBox="0 0 1100 540" role="img" aria-label="A staircase of capabilities rising from left to right. At the bottom left, the starting set: photosynthesis, respiration and growth. Then eight gainable rungs, each with a maintenance cost: decomposition, polymer building, signal emission and motility, which every cell already carries today; and sensing, adhesion, a wall and eating, which are new physics. Labels say what makes each pay: waste for decomposition, crowding for moving, a moving sun for sensing, dense bodies for eating, marked as a hypothesis. A sun-coloured arrow from polymer to wall marks the one hard prerequisite. Under the stairs, a loop shows passive decay making waste and light recycling it, so the order is a tendency, not a rule.">
+    <svg class="diagram wide" viewBox="0 0 1100 540" role="group" aria-label="A staircase of capabilities rising from left to right. At the bottom left, the starting set: photosynthesis, respiration and growth. Then eight gainable rungs, each with a maintenance cost: decomposition, polymer building, signal emission and motility, which every cell already carries today; and sensing, adhesion, a wall and eating, which are new physics. Labels say what makes each pay: waste for decomposition, crowding for moving, a moving sun for sensing, dense bodies for eating, marked as a hypothesis. A sun-coloured arrow from polymer to wall marks the one hard prerequisite. Under the stairs, a loop shows passive decay making waste and light recycling it, so the order is a tendency, not a rule.">
       <g font-size="12">
         <text x="20" y="22" font-weight="700" font-size="14">From one kind of life to a ladder of gene sets</text>
         <text x="1080" y="22" text-anchor="end" class="muted" font-size="12">each gained gene: a maintenance cost, paid in energy (matter is closed), uncalibrated</text>
@@ -765,7 +765,6 @@ footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px 
     if (mode) root.setAttribute("data-theme", mode); else root.removeAttribute("data-theme");
     const dark = mode ? mode === "dark" : prefersDark.matches;
     btn.textContent = dark ? "Day" : "Night";
-    btn.setAttribute("aria-pressed", String(dark));
   };
   let saved = null;
   try { saved = localStorage.getItem("bl-theme"); } catch {}

@@ -500,6 +500,7 @@ async function probe(x: number, y: number) {
     motGain: g.motGain,
     weights: Array.from(g.weights),
     ...(g.rings ? { rings: g.rings } : {}),
+    ...(w.sim.cfg.genes !== undefined ? { genes: g.genes ?? 0 } : {}),
   });
 }
 
