@@ -357,6 +357,38 @@ export function goldenCases(): GoldenCase[] {
       steps: 20,
       every: 5,
     },
+    {
+      // The "ladder" gene set (decomposition and polymer building): as
+      // "genes-decomp", with the founders carrying none, decomposition only,
+      // building only and both genes in turn, so both gates and the cost of
+      // one and of two carried genes run from step 0, and flips touch either bit.
+      name: "genes-ladder",
+      cfg: defaultConfig({ ...base, seed: 91, mutRate: 60_000_000, genes: "ladder", kGene: 100, geneFlip: 2 ** 31 }),
+      init: (c) => m3World(c, 12, 32, 64, M3_FOUNDERS.map((f, k) => ({ ...founderGenome(f), ...(k % 4 ? { genes: k % 4 } : {}) }))),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // As "genes-bounds" under the "ladder" set with the founder carrying
+      // both genes: the three cost terms at their maximum rate constants plus
+      // two carried genes on heavy biomass, and every mutation event a flip.
+      name: "genes-ladder-bounds",
+      cfg: defaultConfig({ tileW: 16, tileH: 16, kernelRadius: 3, seed: 101, eB: 30, eP: 31, eC: 1, kGene: 65535, kMaint: 65535, kCost: 65535, mutRate: 60_000_000, genes: "ladder", geneFlip: 2 ** 32 - 1 }),
+      init: (c) => {
+        const s = buildWorld(c, { nutrient: 0, founders: [{ x: 8, y: 8, radius: 5, genome: { ...founderGenome(M3_FOUNDERS[0]), genes: 3 }, biomass: 64, energy: 128 }] });
+        const n = 256;
+        const per = Math.floor(MATTER_MAX / 128);
+        for (let i = 0; i < n; i++)
+          if (s.cells[CH.B * n + i] > 0) {
+            s.cells[CH.B * n + i] = per;
+            s.cells[CH.C * n + i] = 4096;
+            s.cells[CH.E * n + i] = POOL_MAX;
+          }
+        return s;
+      },
+      steps: 20,
+      every: 5,
+    },
   ];
 }
 

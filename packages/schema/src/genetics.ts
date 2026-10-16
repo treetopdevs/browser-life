@@ -19,11 +19,19 @@ import type { Genome } from "./genome.ts";
  */
 export const CLUSTER_DISTANCE = 10;
 
-/** Number of genome slots (weights, mu, sigma, motGain) that differ; stops counting once past `limit`. */
+/** Set bits in a u32 (the capability genes a cell carries, or that differ between two genomes). */
+export function popcount(v: number): number {
+  let n = 0;
+  for (let x = v >>> 0; x !== 0; x >>>= 1) n += x & 1;
+  return n;
+}
+
+/** Number of genome slots (weights, mu, sigma, motGain, gene bits) that differ; stops counting once past `limit`. */
 export function genomeDistance(a: Genome, b: Genome, limit = Infinity): number {
   let d = Number(a.mu !== b.mu) + Number(a.sigma !== b.sigma) + Number(a.motGain !== b.motGain);
   if (a.rings || b.rings) for (let k = 0; k < 3; k++) d += Number((a.rings?.[k] ?? 0) !== (b.rings?.[k] ?? 0));
-  if (a.genes || b.genes) d += Number((a.genes ?? 0) !== (b.genes ?? 0));
+  // Gene bits count one each: a flip mutation moves one gene per event.
+  if (a.genes || b.genes) d += popcount((a.genes ?? 0) ^ (b.genes ?? 0));
   for (let i = 0; i < a.weights.length && d <= limit; i++) if (a.weights[i] !== b.weights[i]) d++;
   return d;
 }

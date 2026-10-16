@@ -159,6 +159,7 @@ input[type="range"]:disabled { opacity: .45; }
 #guard-ckpt { margin-bottom: 12px; }
 
 /* ---------- the jar ---------- */
+.stage-actions { display: flex; gap: 6px; flex: none; }
 .stage-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .stage-title { min-width: 0; }
 .stage-title h1 { margin: 0; font-size: var(--t-title); line-height: 1.2; font-weight: 800; letter-spacing: -.02em; overflow-wrap: anywhere; }
@@ -249,6 +250,20 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .stage-alert .mono { color: var(--muted); font-size: var(--t-small); }
 .stage-alert button { margin-top: 12px; min-height: 30px; padding: 4px 10px; }
 .stage-alert button[hidden] { display: none; }
+/* Full screen shows the cells and nothing else: no frame, no readout, one way out that fades while the pointer rests. */
+.canvas-wrap:fullscreen { border: 0; border-radius: 0; box-shadow: none; width: 100vw; height: 100vh; }
+.canvas-wrap:-webkit-full-screen { border: 0; border-radius: 0; box-shadow: none; width: 100vw; height: 100vh; }
+.canvas-wrap.fs-active .readout { display: none; }
+#btn-fullscreen[hidden] { display: none; }
+.fs-exit {
+  position: absolute; z-index: 2; left: 12px; top: 12px; min-height: 32px; padding: 4px 12px;
+  background: oklch(16% 0.008 164 / .75); color: var(--field-ink); border-color: transparent;
+  opacity: 0; transition: opacity .25s;
+}
+.fs-exit[hidden] { display: none; }
+.canvas-wrap.fs-active .fs-exit { opacity: 1; }
+.canvas-wrap.fs-idle .fs-exit:not(:focus-visible) { opacity: 0; pointer-events: none; }
+.canvas-wrap.fs-idle.fs-active canvas { cursor: none; }
 .readout { left: 10px; bottom: 10px; }
 .readout:empty { display: none; }
 .toast { right: 10px; top: 10px; opacity: 0; transition: opacity .2s; font-family: var(--sans); font-weight: 500; }

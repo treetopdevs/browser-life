@@ -133,6 +133,8 @@ export interface ProbeMsg {
   weights: number[];
   /** Kernel ring offsets (WorldConfig.shapeReach), present only when some offset is non-zero. */
   rings?: [number, number, number];
+  /** Capability gene bits (WorldConfig.genes), present only in a genes world. */
+  genes?: number;
 }
 
 /** Display only: the pond cycle just applied (or, for arm cont, recorded) at `step`. */

@@ -1086,3 +1086,300 @@ PERSISTS quantifier, the missing readout, the flip test and the bounds wording) 
 on the fixes, this readout and the reader (eight taken: the inspector's expression class, five
 attributions and figures above, and the reader's extinct-census and horizon handling; no P1 in
 either, the tables unchanged).
+
+## Gene v1: the ladder's second rung (2026-10-16)
+
+The run Gene v0's readout named as the natural next one: polymer building as a second gainable
+gene over the same starting set, with the same null design. Two parts again: the **design and
+the criterion** below were written before the first run (15:02); the **readout** at the end was
+written after the runs, against them. Posture as before: exploration, local GPU only, nothing
+landed; the kernel change sits uncommitted on a worktree branch.
+
+### Design
+
+**Kernel generalisation.** `WorldConfig.genes` gains a second named set, `"ladder"`: bit 0 of the
+gene byte is decomposition as in v0, bit 1 is polymer building (`GENE_BIT.BUILD`). Each gene gates
+one reaction: a living cell without the BUILD bit skips polymer building (B + E → P) and leaves
+its BUILD controller output out of the catalysis work sum, exactly as v0 treats decomposition. Each
+*carried* gene pays the same maintenance, so the extra cost term is `carried × mulFrac(B, kGene, 16)`
+with `carried` the population count of the gene byte masked to the set (one draw, one term,
+multiplied; `kGene × carried` inside `mulFrac` would break its exactness bound). The flip operator
+is unchanged: a set's bits are contiguous from bit 0 and `flipGene` picks `which mod geneCount`.
+The `"decomp"` set reduces to v0's arithmetic exactly (its two pins and the 23 RULE_VERSION 1 pins
+are the gate on that); `"ladder"` gets two golden cases and pins of its own, the lineage inspector's
+replay names the second locus, and `genomeDistance` counts differing gene bits rather than a
+differing byte, since a flip moves one gene. Bound, for the whole byte: at most eight carried genes
+at 2²⁶ each, so the gene term is under 2²⁹ and the cost sum under 2³¹.
+
+**The gene-off baseline shifts again.** A non-carrier of build pays no work on its BUILD output,
+so this version's gene-off world is not v0's treatment (which charged BUILD work at kBuild 0), just
+as v0's was not arm b. The decomposition result is therefore a *replication under a changed
+baseline and a split flip rate*, read descriptively, not re-tested.
+
+**What polymer buys, by the arithmetic.** Building costs eP − eB = 2 E per quantum, the same as
+decomposition pays. Polymer decays at kPDecay 66/65,536 per step (a half-life near 700 steps) back
+to waste, releasing eP − eC = 10 per quantum as heat, so a built quantum is a loan against a
+standing cost. What it does while it stands: it gates A and C diffusion across every edge it sits
+on by gateK/(gateK + P_s + P_t), gateK 64, so 64 P on each side cuts leakage to a third; and it
+counts in bound mass M for affinity and the mass term, so a built cell holds its place better. The
+private payoff is retention (nutrient kept from leaking, waste kept for a decomposer to eat) and
+cohesion; both accrue to the cell and its neighbours alike. At full output a cell of B = 50 can
+build cat(50) × 127/128 × 64/4,096 ≈ 0.22 quanta a step (0.43 E) against a gene bill of
+0.0015 × 50 = 0.076 E a step, so the *capacity* to pay is there; whether the controller spends on
+it is the question. The rung check's control (kBuild 64 for everyone, free) held polymer at 0.1% to
+2.6% of bound mass, so these founders barely build even when building is free. The honest prior is
+that the second rung is a door, and the run is to find out whether a cost turns a rarely used
+reaction into a shed gene, a kept one, or nothing readable.
+
+**Arms.** All on `gradient-m3` as v0 (256², light 20 + 220, the 12 M3 founders, mutation on at the
+preset's rate), kDecomp 96 (preset) in both arms, census every 5,000 with every census deep,
+`lineageObs` on, seeds 1, 2, 3, 200,000 steps. Every founder starts with neither gene.
+
+| arm | genes | kGene | geneFlip | kDecomp | kBuild | what it tests |
+|---|---|---|---|---|---|---|
+| treat | "ladder" | 100 | 2²⁷ | 96 | 64 (preset) | both genes gate reactions that make something |
+| null | "ladder" | 100 | 2²⁷ | 96 | **0** | the build gene, at the same cost and flip rate, gating a reaction that makes nothing; decomposition still pays in both arms |
+
+geneFlip is doubled from v0's 2²⁶ so that **each gene's** flip rate is v0's (one event in 64 per
+gene; one event in 32 flips something). The null is the control for the build bit only; the
+decomposition bit has the same meaning in both arms and the same reading as v0.
+
+**Instruments.** As v0, per bit: a lineage's gene byte from `genomes.tsv`, its cells and mass at
+every census from `profiles.tsv`; gene share per bit, the share carrying both, flip-on and flip-off
+births per bit from `mutations.tsv` (a flip changes exactly one bit, so each classified birth is
+one gene's gain or loss), and the build and decomposition fluxes from `series.jsonl`. New: the
+*order* of the rungs, the first census at which each gene's share reaches 25%, per seed.
+
+### Pre-stated criterion (written before the first run)
+
+Share means the build gene's share of living cells unless mass or the decomposition gene is named;
+"the last ten censuses" are steps 155,000 to 200,000. HAPPENS, SPREADS, PERSISTS and PAYS are v0's
+four tests applied to the build bit, with the null's build bit as the comparison.
+
+- **HAPPENS**: in every treatment seed, at least one classified build flip-on birth by step 200,000.
+- **SPREADS**: in at least 2 of 3 treatment seeds, the build share reaches ≥ 25% at some census.
+- **PERSISTS**: at least 2 of 3 treatment seeds satisfy SPREADS and hold ≥ 25% at every one of
+  the last ten censuses.
+- **PAYS**: in each seed pair the treatment's build share at 200,000 exceeds the null's, and the
+  null's is < 25% in at least 2 of 3 seeds.
+- **PASS** = all four: a second rung is climbed where it pays and not where it does not.
+- **CONFOUNDED** = the null's build share is ≥ 25% at 200,000 in at least 2 of 3 null seeds.
+- **DOOR** = not CONFOUNDED, HAPPENS holds, and the treatment's build share reaches 25% in at most
+  1 of 3 seeds: the rung exists but is not climbed at this cost in this world. This is an
+  informative outcome, the "door the population fails to pass" the staged ladder asked for; its
+  known next readings are a cheaper gene, a dearer polymer (eP), or a world where retention pays
+  (lower diffA or a wound regime).
+- **UNCLEAR** = anything else.
+- **Replication, descriptive**: the decomposition share in the treatment arm at 200,000 and its
+  first census ≥ 25%, against v0's 35,000 / 50,000 / 75,000; expected to sweep again in most seeds.
+  (The per-gene flip rate equals v0's, the doubled flips being split between two genes, so a
+  slower sweep, if seen, would need another explanation, such as the second gene's cost on a cell
+  that carries both. This sentence was corrected after the runs and before the readout was read; the
+  pre-run copy in rule.md beside the bundles wrongly blamed the split flips.)
+- **Order, descriptive**: in each seed, which gene first reaches 25% (if either), and whether the
+  build share among decomposition carriers differs from the share among non-carriers at 200,000
+  (the hard-prerequisite reading: polymer paying only once there is waste retained to eat).
+
+What three seeds cannot show is unchanged. What this version cannot show: whether a different
+cost or payoff would open the door, or anything about ages or a player.
+
+### Readout (written after the runs, 2026-10-16)
+
+Six runs, 15:46 to 15:58 on the Mac (M1 Max, 1,800 to 2,030 steps a second, about 100 s each),
+through `@bl/runner` from a script beside the bundles (`runs/evolution-game/gene-v1/gene.ts`,
+`read.ts`, `rule.md` and `tables.md`, gitignored, in the main checkout's `runs/`), the gene keys
+in `RunSpec.overrides` as v0 put them. Conservation read exact on every row of every run. The
+kernel the runs used is the generalised one described under Design, with every RULE_VERSION 1 pin
+and both v0 gene pins unchanged and the GPU golden check bit-exact on all 27 cases; one Sol 6.1
+High read-only pass on the kernel and the design text landed before the runs were read (no P1 or
+P2; the flip-rate sentence above was its one substantive catch), and nothing in it touched the
+physics, the thresholds or the arms.
+
+**Per arm and seed, at step 200,000.** Columns as v0's table, per bit (decomposition / build);
+"both" is the share carrying both genes; "min build share, last 10" is the smallest build share
+over steps 155,000 to 200,000; "first ≥ 25%" gives the first census at or above the spread bar
+for each bit.
+
+| arm | seed | individuals | living cells | lineages | B+P | P | E pool | decomp flux (last 10) | build flux (last 10) | decomp share, cells | build share, cells | build share, mass | both | carrier lineages (decomp / build) | first ≥ 25% (decomp / build) | min build share, last 10 | flip-on (decomp / build) | flip-off (decomp / build) | unknown | mutations | conservation | status |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| treat | 1 | 16 | 3,114 | 21 | 78,469 | 0 | 116,570 | 468.7 | 0.0 | 85.9% | 2.2% | 9.4% | 2.2% | 20 / 2 of 21 | 30,000 / 90,000 | 0.2% | 4 / 25 | 15 / 1 | 36,494 | 37,920 | exact | complete |
+| treat | 2 | 116 | 43,243 | 58 | 1,302,646 | 0 | 1,817,014 | 1,418.8 | 0.0 | 99.7% | 49.3% | 50.6% | 49.3% | 56 / 19 of 58 | 65,000 / 75,000 | 39.0% | 7 / 25 | 22 / 8 | 40,825 | 42,889 | exact | complete |
+| treat | 3 | 399 | 46,218 | 157 | 1,800,625 | 5,303 | 2,100,894 | 3,965.2 | 2.7 | 99.6% | 1.8% | 1.5% | 1.8% | 153 / 6 of 157 | 65,000 / never | 0.2% | 13 / 62 | 32 / 3 | 66,360 | 69,911 | exact | complete |
+| null | 1 | 228 | 47,908 | 74 | 1,537,771 | 0 | 2,367,601 | 1,952.3 | 0.0 | 100.0% | 0.6% | 0.4% | 0.6% | 74 / 2 of 74 | 25,000 / never | 0.0% | 3 / 25 | 29 / 1 | 44,464 | 46,194 | exact | complete |
+| null | 2 | 155 | 42,356 | 78 | 1,195,911 | 0 | 1,885,268 | 1,479.9 | 0.0 | 99.4% | 49.7% | 46.3% | 49.7% | 73 / 14 of 78 | 80,000 / 185,000 | 13.0% | 5 / 33 | 18 / 3 | 43,137 | 45,359 | exact | complete |
+| null | 3 | 377 | 46,746 | 119 | 1,755,157 | 0 | 2,186,883 | 3,722.5 | 0.0 | 99.8% | 52.1% | 50.8% | 52.1% | 114 / 70 of 119 | 35,000 / 120,000 | 52.1% | 16 / 25 | 19 / 16 | 72,469 | 75,305 | exact | complete |
+
+**Against the rule, as the reader printed it.**
+
+- HAPPENS: classified build flip-on births in 3 of 3 treatment seeds (25, 25 and 62; the first
+  at steps 9,932, 3,719 and 9,982).
+- SPREADS: 2 of 3, the build share first ≥ 25% at steps 90,000 (seed 1) and 75,000 (seed 2);
+  seed 3's peak was 17% at 120,000.
+- PERSISTS: 1 of 3 (the smallest share over the last ten censuses 0.2%, 39.0% and 0.2%).
+- PAYS: the treatment beats the null in 1 of 3 pairs (2.2% against 0.6%, 49.3% against 49.7%,
+  1.8% against 52.1%), and the null's build share is ≥ 25% at 200,000 in 2 of 3 seeds.
+- **CONFOUNDED.** The null build gene, gating a reaction that makes nothing, reached half the
+  living cells in two null seeds, so the treatment's one high share says nothing about polymer.
+  The rule's PASS, DOOR and UNCLEAR do not apply; DOOR was defined as "not CONFOUNDED" and is not
+  claimed, though the observation it was written for is in the fluxes below.
+- Replication, descriptive: the decomposition gene swept again in 6 of 6 runs (it has the same
+  meaning in both arms): first ≥ 25% at 30,000, 65,000 and 65,000 in the treatment and 25,000,
+  80,000 and 35,000 in the null, against v0's 35,000, 50,000 and 75,000, and 85.9% to 100% of
+  living cells at 200,000 (the 85.9% is treat seed 1 after the collapse described below). Not
+  slower; the same logistic rise, here over 25,000 to 150,000 steps.
+- Order, descriptive: decomposition first in every seed where either bit reached 25%, and build
+  never first; at 200,000 every build carrier also carries decomposition (the "both" column equals
+  the build column in all six runs), so the build share among decomposition carriers (2.6%, 49.4% and 1.8% in the
+  treatment; 0.6%, 49.9% and 52.2% in the null) is the population's build share divided by its
+  decomposition share, and among non-carriers it is 0% (undefined in null seed 1, which has no
+  non-carriers at 200,000). This is consistent with the hard-prerequisite reading
+  and equally with the build bit only ever lasting inside clades that already carried
+  decomposition (the first classified build flips, at steps 3,719 to 9,982, arrived while
+  decomposition was near 0%, and those early carriers did not last: treat seed 2's 18.8% at
+  5,000 was gone by 10,000); three seeds cannot tell the two apart.
+
+**Time course** (decomposition share / build share of living cells / B+P).
+
+| arm | seed | t=5,000 | t=10,000 | t=25,000 | t=50,000 | t=75,000 | t=100,000 | t=150,000 | t=200,000 |
+|---|---|---|---|---|---|---|---|---|---|
+| treat | 1 | 0.0% / 0.0% / 225,023 | 1.7% / 0.3% / 343,929 | 23.1% / 0.7% / 608,835 | 77.2% / 1.7% / 923,466 | 90.3% / 2.4% / 1,206,760 | 99.7% / 14.3% / 1,053,794 | 99.8% / 0.2% / 1,030,925 | 85.9% / 2.2% / 78,469 |
+| treat | 2 | 0.0% / 18.8% / 109,346 | 0.0% / 0.0% / 112,682 | 0.0% / 2.4% / 250,535 | 3.7% / 5.9% / 455,038 | 45.4% / 28.8% / 768,862 | 63.9% / 50.6% / 965,772 | 99.0% / 76.1% / 1,056,309 | 99.7% / 49.3% / 1,302,646 |
+| treat | 3 | 2.9% / 0.0% / 337,004 | 1.3% / 0.1% / 477,162 | 2.9% / 0.4% / 568,304 | 11.4% / 2.6% / 596,558 | 37.1% / 2.6% / 676,844 | 57.5% / 7.2% / 851,224 | 99.0% / 0.8% / 1,463,697 | 99.6% / 1.8% / 1,800,625 |
+| null | 1 | 0.0% / 0.0% / 225,023 | 1.7% / 0.3% / 343,929 | 43.0% / 0.6% / 633,087 | 88.1% / 1.9% / 515,227 | 99.3% / 0.0% / 896,111 | 98.9% / 0.0% / 796,651 | 99.7% / 0.0% / 1,259,332 | 100.0% / 0.6% / 1,537,771 |
+| null | 2 | 0.0% / 19.3% / 109,386 | 0.0% / 0.0% / 112,578 | 0.0% / 4.4% / 219,588 | 0.6% / 9.8% / 483,435 | 10.1% / 10.4% / 573,877 | 77.5% / 7.4% / 1,002,454 | 97.5% / 14.4% / 1,302,462 | 99.4% / 49.7% / 1,195,911 |
+| null | 3 | 2.9% / 0.0% / 337,004 | 1.4% / 0.0% / 475,440 | 9.9% / 0.5% / 562,938 | 39.4% / 2.0% / 755,217 | 47.5% / 2.7% / 864,661 | 99.6% / 1.1% / 1,597,542 | 99.7% / 97.9% / 1,568,097 | 99.8% / 52.1% / 1,755,157 |
+
+Decomposition share at every census, in percent, one run a line:
+
+- treat seed 1: 0 2 11 14 23 29 41 58 66 77 87 94 92 92 90 97 98 98 98 100 100 100 100 99 99 99 100 100 100 100 100 100 100 100 100 100 100 100 90 86
+- treat seed 2: 0 0 0 0 0 0 0 0 0 4 15 18 41 44 45 46 65 63 56 64 78 73 70 69 69 82 85 93 97 99 99 99 99 100 100 100 99 100 99 100
+- treat seed 3: 3 1 2 3 3 4 6 7 9 11 16 22 31 37 37 40 47 49 55 58 60 64 73 79 85 89 92 95 98 99 99 99 99 99 99 100 99 100 100 100
+- null seed 1: 0 2 15 17 43 63 79 92 94 88 96 97 98 100 99 100 100 100 100 99 99 99 99 99 99 100 99 99 100 100 100 100 100 100 100 100 100 100 99 100
+- null seed 2: 0 0 0 0 0 0 0 0 0 1 0 2 4 6 10 31 52 68 72 77 88 87 88 89 88 84 82 92 94 98 99 99 100 100 100 100 99 100 99 99
+- null seed 3: 3 1 1 6 10 18 30 36 38 39 38 39 41 44 48 55 73 88 96 100 100 100 100 99 100 99 99 100 99 100 100 100 100 100 99 100 100 100 100 100
+
+Build share at every census:
+
+- treat seed 1: 0 0 0 1 1 1 2 1 1 2 0 0 0 1 2 4 11 26 23 14 10 5 1 1 0 0 0 1 0 0 0 0 0 0 0 1 1 2 2 2
+- treat seed 2: 19 0 0 1 2 3 3 3 3 6 13 11 18 24 29 24 40 51 42 51 61 52 52 50 51 62 60 63 74 76 72 56 69 63 39 53 62 74 65 49
+- treat seed 3: 0 0 0 0 0 2 1 2 3 3 2 2 3 2 3 4 5 5 4 7 7 10 11 17 10 11 6 2 2 1 0 1 1 1 1 1 0 1 1 2
+- null seed 1: 0 0 1 1 1 0 1 0 1 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 1 0 0 1 2 2 2 2 1
+- null seed 2: 19 0 0 7 4 14 3 10 9 10 10 11 10 11 10 6 5 8 8 7 8 5 11 6 7 10 12 11 14 14 13 18 19 24 17 17 25 23 42 50
+- null seed 3: 0 0 1 1 1 1 0 1 1 2 2 2 3 3 3 3 6 2 1 1 0 5 13 35 53 75 85 89 94 98 99 99 97 99 97 97 89 76 62 52
+
+**Fluxes**, mean over the last ten censuses (quanta a step; E income = resp × 8 + decomp × 2, E
+spent = grow × 10 + build × 2 + emit).
+
+| arm | seed | photo | resp | decomp | grow | build | emit | starve | pdecay | abio | E income/step | E spent/step |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| treat | 1 | 893.5 | 521.0 | 468.7 | 0.0 | 0.0 | 780.2 | 245.0 | 0.0 | 447.9 | 5,105 | 780 |
+| treat | 2 | 2,120.5 | 1,488.3 | 1,418.8 | 0.0 | 0.0 | 2,038.0 | 315.6 | 0.0 | 699.6 | 14,744 | 2,038 |
+| treat | 3 | 3,124.0 | 4,424.6 | 3,965.2 | 1,939.2 | 2.7 | 54.3 | 113.1 | 2.6 | 1,094.8 | 43,328 | 19,452 |
+| null | 1 | 2,873.1 | 2,041.8 | 1,952.3 | 0.0 | 0.0 | 2,966.2 | 385.5 | 0.0 | 913.6 | 20,239 | 2,966 |
+| null | 2 | 2,808.1 | 2,298.7 | 1,479.9 | 0.0 | 0.0 | 2,801.5 | 136.6 | 0.0 | 1,332.5 | 21,350 | 2,802 |
+| null | 3 | 2,652.3 | 2,822.6 | 3,722.5 | 1,254.3 | 0.0 | 50.0 | 584.3 | 0.0 | 180.6 | 30,026 | 12,593 |
+
+**What the numbers say beyond the rule** (descriptive; three seeds).
+
+- *The gate opened and almost nobody walked through it.* Build flux in the treatment, where
+  carriers may build, peaks at 16 quanta a step (seed 3, 80,000 to 135,000, with 4 to 17% of
+  cells carrying the bit) and reads 0.0 over the last ten censuses in seeds 1 and 2, seed 2 with
+  49% of living cells carrying the bit and a P pool of exactly zero. Polymer never exceeded 2% of
+  bound mass in any run, the range the rung check's ungated control showed (0.1 to 2.6%). What the
+  fluxes establish is that polymer was not made in quantity even where it could be. The reading
+  (not a measurement: the reaction also depends on the carrier's biomass, its E and the catalysis
+  arithmetic, and only a controller probe on carriers or an ablation that forces the BUILD output
+  would settle it) is that the founders' controllers barely drive the BUILD output, so unlocking
+  it changes almost nothing a carrier does. If that holds, the treatment's build gene is in effect
+  as null as the null's, the two arms ran nearly the same experiment, and that is why they look
+  alike. The door prior was right in substance (polymer did not pay here); whether the mechanism
+  is upstream of the rung's economics, a gene that only opens a gate paying off only if the
+  organism already pushes on it, is the reading to test next.
+- *What a near-neutral gene does at this cost: it rides.* In every run where the build share
+  passed 25%, one clade carried it there. Null seed 3: lineage 109759 (both genes) held 42% of
+  living cells at 125,000 and both-gene lineages held all six top places at 150,000 and 175,000
+  (98% build share at 150,000); by 200,000 new decomposition-only lineages
+  were taking over (161218 at 17%) and the build share was falling, 52% and dropping. Null seed
+  2: lineage 137124 (both) at 47% at 200,000, the share still rising. Treat seed 2: a
+  both-gene lineage led at 27% at 150,000; at 200,000 a decomposition-only lineage led at 20%
+  with both-gene lineages second and fourth.
+  The reading is that the build bit rode: it was on in a clade that rose for some other
+  reason, or by drift and turnover, which the bundles cannot separate (carrier abundance and
+  ancestry do not identify a selected trait, or show there was one). v0's null never did this,
+  and the difference in the background is at least descriptive: v0's null world had 190 to 270 lineages and no
+  sweeps, a mutation–selection balance of a few percent; v1's null world is a decomposer film
+  (decomposition above 97% by 65,000 to 150,000 in every null seed) with 74 to 119 lineages and
+  clade turnover, and a bit that costs 6 to 12% of a cell's energy income (kGene 100 against mean B per
+  living cell and mean E income per living cell over the last ten censuses: 26 to 41 B a cell
+  and 0.32 to 1.05 E a step across the six runs) is not purged within 200,000 steps against that turnover. So the
+  null design is informative only when the background is quiet; on a background with clade
+  turnover a costly, unexpressed gene can reach a 25% bar, as it did twice here.
+- *Decomposition replicated, including the film.* Six of six runs became a decomposer world and four of
+  them the v0 film: seeds 1 and 2 of both arms have no growth flux and emission as the main E
+  sink. The two seed-3 runs are different: they grew, at 1,939 (treat) and 1,254 (null) quanta
+  a step over the last ten censuses, growth taking all but a fraction of a percent of the listed reaction spending (which
+  leaves out maintenance) and emission only 50 a step, the first growth seen in a decomposer world on this starting set. Starvation
+  runs at 100 to 580 a step across the six. Bound mass at
+  200,000 is 1.20 to 1.80 million where the film held, against v0's 0.82 to 1.24 million, the
+  null's three (1.20 to 1.76 million) overlapping the treatment's two standing films (1.30 and
+  1.80 million); nothing here separates the arms.
+- *One film collapsed.* Treat seed 1 held 36,000 to 39,000 living cells and 1.0 to 1.19 million
+  B from 100,000 through 150,000 (99.8% decomposition, 0.2% build, one lineage, 71603, at two thirds of the
+  cells), then lost nine tenths of both over the next 50,000 steps: 3,114 cells and 78,469 B at
+  200,000, the E pool from 0.98 million at 150,000 to 0.12 million, the A pool from 1.16 to
+  2.31 million as cells died, photosynthesis from 1,900 to 230 a step while starvation held above 250 a step through
+  180,000. The dominant lineage fell from 67% at 150,000 to 10% at 195,000 and twenty-one lineages,
+  most of them younger than 185,000, share what is left. The build bit was on in 0.2% of cells and this run's build flux had been zero since
+  60,000, so a direct role for it is unlikely but not excluded (null seed 1, on the same seed,
+  did not collapse); the collapse began 60,000 steps after decomposition fixed, in the aftermath v0 said it had watched for 100,000 steps at
+  most. Null seed 1, identical to this run through step 10,000 (same founders, same first
+  censuses), did not collapse. One seed, no cause assigned: the film can fail, which v0 did not
+  show, and whether it is an energy trap (a film that respires its pool down) or chance is for a
+  run with more seeds and a longer horizon.
+- *Not in the first minute, again.* Where the build bit reached a quarter it did so at 75,000
+  steps or later, in each case inside one rising clade (in treat seed 2 while decomposition was
+  itself still rising, at 45%); a rung climbed on its own merits was not seen.
+
+**What this does not say.** Three seeds show 2/3 and 1/3 and nothing finer. The verdict is the
+pre-stated CONFOUNDED and is a statement about this null design on this background, not about
+polymer: no run here tests a polymer gene that is expressed. It does not say what kGene would
+purge an unexpressed bit on a sweeping background (a kGene 0 null would show the drift floor;
+a dearer gene the purge rate), nor whether a controller that drives BUILD exists among the
+founders or is reachable by weight mutation in 200,000 steps (the 15 quanta a step in treat 3
+says some lineage pushed a little). The two arms differed in kBuild only, and the build fluxes
+say that difference was rarely exercised; whether the arms' other differences (treat 1's
+collapse against null 1's survival on the same seed, the growth in seed 3 of both arms) are
+seed-to-seed spread or a downstream effect of the little polymer that was made is left
+unresolved. The 6 to 12% cost figure is an
+average over living cells from the fluxes, not a measurement on carriers. Nothing here tests ages or a
+player.
+
+**What it means for Stage 1.** The detector still works (decomposition replicated 6/6 with the
+same rule) and the second rung as designed does not. The reading above, if it holds, names a
+condition the design did not test for: a capability gene that opens a gate on a controller
+output is only a capability if the controller already uses the output. The first rung's
+founders do drive DECOMP (the rung check's arm c made 2.5× the bound mass with it); whether they
+drive BUILD is the probe to run before the next version is built. On that reading the next
+version has two choices, and the choice is a design decision for the user: (a) genes that *do* rather than
+*permit* (a build gene sets the build rate directly, or scales the controller's output by a
+fixed factor, so a carrier builds whether or not its weights say so), which makes the rung a
+pure cost-against-payoff test; or (b) keep permissive genes and choose rungs whose outputs the
+founders already express, which keeps the controller in the loop but limits the ladder to what
+the starting set can already do. Either way the null needs a second control: a kGene 0 arm (the
+drift and hitchhiking floor) beside the no-payoff arm, since on a decomposer background the
+no-payoff arm alone reached 50%. The film collapse in treat seed 1 is the first failure of the
+first rung's world and deserves its own look before the ladder is built on top of it.
+Code: the gene-set generalisation (`"ladder"`, `geneMasks`, per-gene cost by popcount),
+every RULE_VERSION 1 pin and both v0 gene pins unchanged, two new pins, the GPU golden check
+bit-exact on all 27 cases, typecheck clean; the vitest suite was not run green today: two
+full runs under a machine load average above 300 from other work on the Mac timed out 11 and 8
+of the long conservation tests (per-test limits of 30 to 120 s; never an assertion, apart from
+the known timing flake in `tools/test/hunt1-ops.test.ts`), and a rerun of the nine timed-out
+files alone passed golden-hashes, feed and measures6 and timed out the other six again, so a
+quiet rerun of `pnpm test` is owed before this lands; two Sol 6.1 High read-only passes, the first on the kernel and the design text before
+this readout was read (no P1 or P2; two P3 nits, the flip-rate sentence and the then-missing
+readout, both taken) and the second on this readout and the reader (no P1; four P2s, all
+mechanisms stated as fact and now marked as readings: the controllers, hitchhiking, the order
+of fixation and the arms' other differences; four P3 figure corrections: the conditional
+shares, the cost window, the growth share and the collapse pools; all eight taken, the tables
+unchanged).

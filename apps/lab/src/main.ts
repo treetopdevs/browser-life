@@ -1,4 +1,4 @@
-import { PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondTerm, type WorldConfig } from "@bl/schema";
+import { GENE_BIT, PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondTerm, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import type { CensusMsg, FromWorker, Keep, PondAwaitMsg, PondsMsg, ProbeMsg, SessionView, StatsMsg, ToWorker } from "./protocol.ts";
 import { Series } from "./sparkline.ts";
@@ -401,12 +401,16 @@ function noteBrushRefused() {
 setTool(tool);
 
 // ---------- canvas geometry, zoom and pan ----------
+let wasFullscreen = false;
 function resize() {
   const r = wrap.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   send({ type: "resize", width: Math.round(r.width * dpr), height: Math.round(r.height * dpr) });
+  // Leaving full screen keeps the view a person zoomed or panned to, even while a cycle waits.
+  const left = wasFullscreen && fsElement() !== wrap;
+  wasFullscreen = fsElement() === wrap;
   // While a cycle waits the whole world stays in view, whatever the new shape of the field.
-  fit(awaiting !== null);
+  fit(awaiting !== null && !left);
 }
 function fit(reset = true) {
   if (!cfg) return;
@@ -452,6 +456,49 @@ function pondAt(x: number, y: number): number | null {
 }
 new ResizeObserver(resize).observe(wrap);
 $("btn-fit").onclick = () => fit(true);
+
+// ---------- full screen: just the cells ----------
+type FsDoc = Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => Promise<void> };
+type FsEl = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+const fsSupported = !!(wrap.requestFullscreen || (wrap as FsEl).webkitRequestFullscreen);
+const fsElement = () => document.fullscreenElement ?? (document as FsDoc).webkitFullscreenElement ?? null;
+let fsIdleTimer = 0;
+function fsWake() {
+  wrap.classList.remove("fs-idle");
+  clearTimeout(fsIdleTimer);
+  if (fsElement() === wrap) fsIdleTimer = window.setTimeout(() => wrap.classList.add("fs-idle"), 2500);
+}
+function toggleFullscreen() {
+  if (!fsSupported) return;
+  if (fsElement()) {
+    void (document.exitFullscreen?.() ?? (document as FsDoc).webkitExitFullscreen?.());
+    return;
+  }
+  void (wrap.requestFullscreen?.() ?? (wrap as FsEl).webkitRequestFullscreen?.())?.catch?.(() => toast("Your browser would not go full screen.", true));
+}
+function onFullscreenChange() {
+  const on = fsElement() === wrap;
+  wrap.classList.toggle("fs-active", on);
+  $("btn-fs-exit").hidden = !on;
+  $("btn-fullscreen").setAttribute("aria-pressed", String(on));
+  fsWake();
+  if (on) {
+    canvas.focus({ preventScroll: true });
+    toast("Space plays and pauses · Esc leaves");
+  }
+  // The whole world is in view on the way in; on the way out the view a person zoomed or panned to stays (the observer refits its shape).
+  if (on) fit(true);
+}
+document.addEventListener("fullscreenchange", onFullscreenChange);
+document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+wrap.addEventListener("pointermove", fsWake);
+// A keyboard user reaching the exit control must always see it, and any key press wakes it.
+wrap.addEventListener("focusin", fsWake);
+wrap.addEventListener("keydown", fsWake);
+if (fsSupported) {
+  $("btn-fullscreen").onclick = toggleFullscreen;
+  $("btn-fs-exit").onclick = toggleFullscreen;
+} else $("btn-fullscreen").hidden = true;
 canvas.ondblclick = () => fit(true);
 canvas.addEventListener(
   "wheel",
@@ -573,13 +620,17 @@ function lesionAt(ev: PointerEvent) {
 // ---------- keyboard ----------
 window.addEventListener("keydown", (e) => {
   // Leave focused controls and links to their native keyboard behavior, and the catalogue to its own keys while it is open.
-  if (e.target !== document.body && e.target !== canvas) return;
+  // The full-screen exit button is the one control that also answers f, so a keyboard user who tabbed to it can leave the same way.
+  const onExit = e.target === $("btn-fs-exit");
+  if (e.target !== document.body && e.target !== canvas && !onExit) return;
+  if (onExit && e.key !== "f" && e.key !== "F") return;
   if ($<HTMLDialogElement>("worlds").open) return;
   if (e.key === " ") {
     if (!worldReady) return;
     e.preventDefault();
     if (!e.repeat) togglePlay();
   } else if (e.key === "." && worldReady) stepBy(1);
+  else if ((e.key === "f" || e.key === "F") && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey) toggleFullscreen();
   else if (/^[1-8]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
 });
 
@@ -751,6 +802,14 @@ function onCensus(c: CensusMsg) {
 }
 
 /** What each cell channel holds, beside its letter in the rules. */
+/** Names the carried capability genes (GENE_BIT order), or "none". */
+function geneNames(bits: number): string {
+  const names = (Object.entries(GENE_BIT) as [keyof typeof GENE_BIT, number][])
+    .filter(([, bit]) => (bits >> bit) & 1)
+    .map(([name]) => ({ DECOMP: "decomposition", BUILD: "polymer building" })[name]);
+  return names.length ? names.join(", ") : "none";
+}
+
 const CHANNEL_LABELS: Record<string, string> = {
   A: "Nutrient (A)", B: "Biomass (B)", C: "Waste (C)", P: "Membrane (P)", E: "Free energy (E)", S: "Signal (S)", MOT: "Motility x, y",
 };
@@ -769,6 +828,8 @@ function onProbe(p: ProbeMsg) {
     ["Motility gain", p.lineage ? String(p.motGain) : "none"],
     // Heritable kernel shape: weights of the inner, outer and far ring (neutral 64 / 64 / 0), shown once a genome leaves neutral.
     ...(p.lineage && p.rings ? [["Ring weights", `${Math.max(64 + p.rings[0], 0)} / ${Math.max(64 + p.rings[1], 0)} / ${Math.max(p.rings[2], 0)}`] as [string, string]] : []),
+    // Capability genes (WorldConfig.genes): the bits this cell carries, by name.
+    ...(p.lineage && p.genes !== undefined ? [["Genes", geneNames(p.genes)] as [string, string]] : []),
   ];
   $("probe-kv").replaceChildren(
     ...rows.flatMap(([k, v]) => {
