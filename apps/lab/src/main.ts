@@ -452,6 +452,49 @@ function pondAt(x: number, y: number): number | null {
 }
 new ResizeObserver(resize).observe(wrap);
 $("btn-fit").onclick = () => fit(true);
+
+// ---------- full screen: just the cells ----------
+type FsDoc = Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => Promise<void> };
+type FsEl = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+const fsSupported = !!(wrap.requestFullscreen || (wrap as FsEl).webkitRequestFullscreen);
+const fsElement = () => document.fullscreenElement ?? (document as FsDoc).webkitFullscreenElement ?? null;
+let fsIdleTimer = 0;
+function fsWake() {
+  wrap.classList.remove("fs-idle");
+  clearTimeout(fsIdleTimer);
+  if (fsElement() === wrap) fsIdleTimer = window.setTimeout(() => wrap.classList.add("fs-idle"), 2500);
+}
+function toggleFullscreen() {
+  if (!fsSupported) return;
+  if (fsElement()) {
+    void (document.exitFullscreen?.() ?? (document as FsDoc).webkitExitFullscreen?.());
+    return;
+  }
+  void (wrap.requestFullscreen?.() ?? (wrap as FsEl).webkitRequestFullscreen?.())?.catch?.(() => toast("Your browser would not go full screen.", true));
+}
+function onFullscreenChange() {
+  const on = fsElement() === wrap;
+  wrap.classList.toggle("fs-active", on);
+  $("btn-fs-exit").hidden = !on;
+  $("btn-fullscreen").setAttribute("aria-pressed", String(on));
+  fsWake();
+  if (on) {
+    canvas.focus({ preventScroll: true });
+    toast("Space plays and pauses · Esc leaves");
+  }
+  // The field changed shape; the observer sees it, but the whole world should be in view on the way in.
+  fit(true);
+}
+document.addEventListener("fullscreenchange", onFullscreenChange);
+document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+wrap.addEventListener("pointermove", fsWake);
+// A keyboard user reaching the exit control must always see it, and any key press wakes it.
+wrap.addEventListener("focusin", fsWake);
+wrap.addEventListener("keydown", fsWake);
+if (fsSupported) {
+  $("btn-fullscreen").onclick = toggleFullscreen;
+  $("btn-fs-exit").onclick = toggleFullscreen;
+} else $("btn-fullscreen").hidden = true;
 canvas.ondblclick = () => fit(true);
 canvas.addEventListener(
   "wheel",
@@ -580,6 +623,7 @@ window.addEventListener("keydown", (e) => {
     e.preventDefault();
     if (!e.repeat) togglePlay();
   } else if (e.key === "." && worldReady) stepBy(1);
+  else if ((e.key === "f" || e.key === "F") && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey) toggleFullscreen();
   else if (/^[1-8]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
 });
 
