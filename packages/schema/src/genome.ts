@@ -14,7 +14,8 @@ export interface Genome {
   rings?: [number, number, number];
   /**
    * Capability gene bits (WorldConfig.genes, the game kernel line), byte 3 of PARAM1: bit
-   * GENE_BIT.DECOMP is decomposition. Absent when zero, which is every RULE_VERSION 1 genome and
+   * GENE_BIT.DECOMP is decomposition, bit GENE_BIT.BUILD polymer building (the "ladder" set); a
+   * set's bits are contiguous from bit 0. Absent when zero, which is every RULE_VERSION 1 genome and
    * every founder; `decodeGenome` fills it only when told the config has genes, since the same
    * byte is the far-ring offset under shapeReach (the two are exclusive in validateConfig).
    */

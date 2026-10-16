@@ -109,7 +109,7 @@ const byteOf = (w: Uint32Array, b: number) => signed((w[G.W0 + (b >> 2)] >>> ((b
 export type LocusKind = "w1" | "b1" | "w2" | "b2" | "mu" | "sigma" | "gain" | "ring" | "gene";
 /** First slot index of the capability genes (WorldConfig.genes): after the three ring slots a kernel can have at most. */
 export const GENE_SLOT0 = NN_BYTES + 3 + 3;
-const GENE_NAMES = ["decomposition"];
+const GENE_NAMES = ["decomposition", "polymer building"];
 
 /**
  * The genome slot `mutateInPlace` changes for slot index `slot` (0 .. NN_BYTES + 2, then one slot per

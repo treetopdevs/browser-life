@@ -35,10 +35,11 @@ export function unclusteredId(anchors: readonly unknown[]): number {
   return anchors.length;
 }
 
-function cellGenome(genome: Uint32Array, n: number, i: number): Genome {
+/** One cell's decoded genome, read under the frame's layout (in a WorldConfig.genes world byte 3 of PARAM1 is the gene byte, not a far ring). */
+function cellGenome(cfg: WorldConfig, genome: Uint32Array, n: number, i: number): Genome {
   const words = new Uint32Array(GENOME_CHANNELS);
   for (let g = 0; g < GENOME_CHANNELS; g++) words[g] = genome[g * n + i];
-  return decodeGenome(words);
+  return decodeGenome(words, { genes: cfg.genes !== undefined });
 }
 
 function livingCellsByTile(frame: SpeciesFrame): { tile: number; i: number }[][] {
@@ -59,11 +60,13 @@ function livingCellsByTile(frame: SpeciesFrame): { tile: number; i: number }[][]
 
 /**
  * Bit-exact identity key for a genome's clustering-relevant fields (mu/sigma/motGain/weights, plus the
- * kernel ring offsets when any is non-zero, which `genomeDistance` also counts).
+ * kernel ring offsets when any is non-zero and the capability gene bits when any is set, which
+ * `genomeDistance` also counts).
  */
 function genomeKey(g: Genome): string {
   const rings = g.rings && g.rings.some((v) => v !== 0) ? `,r${g.rings.join("/")}` : "";
-  return `${g.mu},${g.sigma},${g.motGain},${Array.from(g.weights).join(",")}${rings}`;
+  const genes = g.genes ? `,g${g.genes}` : "";
+  return `${g.mu},${g.sigma},${g.motGain},${Array.from(g.weights).join(",")}${rings}${genes}`;
 }
 
 /**
@@ -85,7 +88,7 @@ function distinctLivingGenomes(frame: SpeciesFrame): { tile: number; genomes: Ge
   return byTile.map((cells, tile) => {
     const seen = new Map<string, Genome>();
     for (const { i } of cells) {
-      const g = cellGenome(frame.genome, n, i);
+      const g = cellGenome(frame.cfg, frame.genome, n, i);
       const k = genomeKey(g);
       if (!seen.has(k)) seen.set(k, g);
     }
@@ -107,7 +110,7 @@ export function founderPersistenceSets(frame: SpeciesFrame, anchors: Genome[], m
   return byTile.map((cells) => {
     const set = new Set<number>();
     for (const { i } of cells) {
-      const g = cellGenome(frame.genome, n, i);
+      const g = cellGenome(frame.cfg, frame.genome, n, i);
       let best = -1, bestD = Infinity;
       anchors.forEach((a, k) => {
         const d = genomeDistance(g, a, maxDistance);

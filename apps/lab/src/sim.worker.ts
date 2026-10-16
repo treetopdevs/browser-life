@@ -485,7 +485,8 @@ async function probe(x: number, y: number) {
   const names = Object.keys(CH) as (keyof typeof CH)[];
   const cellsRec: Record<string, number> = {};
   for (const k of names) cellsRec[k] = p.cells[CH[k]];
-  const g = decodeGenome(p.genome);
+  // Under WorldConfig.genes byte 3 of PARAM1 is the gene byte, not a far-ring offset.
+  const g = decodeGenome(p.genome, { genes: w.sim.cfg.genes !== undefined });
   const hi = p.genome[G.LIN_HI], lo = p.genome[G.LIN_LO];
   post({
     type: "probe",

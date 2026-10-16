@@ -30,9 +30,9 @@ import {
   encodeGenome,
   generalistGenome,
   SHAPE_BASE,
-  GENE_BIT,
   GENE_SHIFT,
   geneCount,
+  geneMasks,
   buildKernel,
   buildShapeKernel,
   shapeRings,
@@ -167,7 +167,11 @@ export function prelude(c: WorldConfig): string {
   consts.GENE_FLIP = u(c.geneFlip ?? 0);
   consts.GENE_SHIFT = u(GENE_SHIFT);
   consts.GENE_COUNT = u(Math.max(1, geneCount(c)));
-  consts.GENE_DECOMP_MASK = u(1 << (GENE_SHIFT + GENE_BIT.DECOMP));
+  // Masks in the PARAM1 word, 0 when absent so the gates fold to true (see geneMasks).
+  const gm = geneMasks(c);
+  consts.GENE_SET_MASK = u(gm.set);
+  consts.GENE_DECOMP_MASK = u(gm.decomp);
+  consts.GENE_BUILD_MASK = u(gm.build);
   consts.TOL_WORDS = u(c.takeoverTol ?? 0);
   consts.TOL_MU = i(c.takeoverTol ?? 0);
   consts.TOL_SIGMA = i((c.takeoverTol ?? 0) >>> 2);
@@ -806,8 +810,10 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
       B -= q; C += q; E += q * (E_B - E_C); F[FX_RESP] = q;
       if (E > POOL_MAX) { hadd(E - POOL_MAX); E = POOL_MAX; }
 
-      // Under WorldConfig.genes only a carrier of the DECOMP gene has the reaction (see sim-ref).
-      let decomp = !GENES || (genome[G_PARAM1 + i] & GENE_DECOMP_MASK) != 0u;
+      // Under WorldConfig.genes only a carrier of a reaction's gene has the reaction (see sim-ref).
+      let word = genome[G_PARAM1 + i];
+      let decomp = GENE_DECOMP_MASK == 0u || (word & GENE_DECOMP_MASK) != 0u;
+      let build = GENE_BUILD_MASK == 0u || (word & GENE_BUILD_MASK) != 0u;
       if (decomp) {
         t = mul_shr(cat(B), r[OUT_DECOMP], 7u);
         q = min(C, mul_frac(t, K_DECOMP, 12u, draw(base, RND_DECOMP)));
@@ -820,20 +826,25 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
       q = min(min(A, E / g), mul_frac(t, K_GROW, 12u, draw(base, RND_GROW)));
       A -= q; B += q; E -= q * g; newB += q; F[FX_GROW] = q;
 
-      g = E_P - E_B;
-      t = mul_shr(cat(B), r[OUT_BUILD], 7u);
-      q = min(min(B, E / g), mul_frac(t, K_BUILD, 12u, draw(base, RND_BUILD)));
-      B -= q; P += q; E -= q * g; F[FX_BUILD] = q;
+      if (build) {
+        g = E_P - E_B;
+        t = mul_shr(cat(B), r[OUT_BUILD], 7u);
+        q = min(min(B, E / g), mul_frac(t, K_BUILD, 12u, draw(base, RND_BUILD)));
+        B -= q; P += q; E -= q * g; F[FX_BUILD] = q;
+      }
 
       t = mul_shr(cat(B), r[OUT_EMIT], 7u);
       q = min(E, mul_frac(t, K_EMIT, 12u, draw(base, RND_EMIT)));
       E -= q; S += q; F[FX_EMIT] = q;
       if (S > POOL_MAX) { hadd(S - POOL_MAX); S = POOL_MAX; }
 
-      let sumr = r[0] + r[1] + select(0u, r[2], decomp) + r[3] + r[4] + r[5];
+      let sumr = r[0] + r[1] + select(0u, r[2], decomp) + r[3] + select(0u, r[4], build) + r[5];
       t = mul_shr(cat(B), sumr, 7u);
       var cost = mul_frac(t, K_COST, 16u, draw(base, RND_COST)) + mul_frac(B, K_MAINT, 16u, draw(base, RND_MAINT));
-      if (GENES && decomp) { cost += mul_frac(B, K_GENE, 16u, draw(base, RND_GENE)); }
+      if (GENES) {
+        let carried = countOneBits(word & GENE_SET_MASK);
+        if (carried > 0u) { cost += carried * mul_frac(B, K_GENE, 16u, draw(base, RND_GENE)); }
+      }
       if (E >= cost) {
         E -= cost;
         hadd(cost);
