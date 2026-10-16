@@ -401,12 +401,16 @@ function noteBrushRefused() {
 setTool(tool);
 
 // ---------- canvas geometry, zoom and pan ----------
+let wasFullscreen = false;
 function resize() {
   const r = wrap.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   send({ type: "resize", width: Math.round(r.width * dpr), height: Math.round(r.height * dpr) });
+  // Leaving full screen keeps the view a person zoomed or panned to, even while a cycle waits.
+  const left = wasFullscreen && fsElement() !== wrap;
+  wasFullscreen = fsElement() === wrap;
   // While a cycle waits the whole world stays in view, whatever the new shape of the field.
-  fit(awaiting !== null);
+  fit(awaiting !== null && !left);
 }
 function fit(reset = true) {
   if (!cfg) return;
@@ -452,6 +456,49 @@ function pondAt(x: number, y: number): number | null {
 }
 new ResizeObserver(resize).observe(wrap);
 $("btn-fit").onclick = () => fit(true);
+
+// ---------- full screen: just the cells ----------
+type FsDoc = Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => Promise<void> };
+type FsEl = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+const fsSupported = !!(wrap.requestFullscreen || (wrap as FsEl).webkitRequestFullscreen);
+const fsElement = () => document.fullscreenElement ?? (document as FsDoc).webkitFullscreenElement ?? null;
+let fsIdleTimer = 0;
+function fsWake() {
+  wrap.classList.remove("fs-idle");
+  clearTimeout(fsIdleTimer);
+  if (fsElement() === wrap) fsIdleTimer = window.setTimeout(() => wrap.classList.add("fs-idle"), 2500);
+}
+function toggleFullscreen() {
+  if (!fsSupported) return;
+  if (fsElement()) {
+    void (document.exitFullscreen?.() ?? (document as FsDoc).webkitExitFullscreen?.());
+    return;
+  }
+  void (wrap.requestFullscreen?.() ?? (wrap as FsEl).webkitRequestFullscreen?.())?.catch?.(() => toast("Your browser would not go full screen.", true));
+}
+function onFullscreenChange() {
+  const on = fsElement() === wrap;
+  wrap.classList.toggle("fs-active", on);
+  $("btn-fs-exit").hidden = !on;
+  $("btn-fullscreen").setAttribute("aria-pressed", String(on));
+  fsWake();
+  if (on) {
+    canvas.focus({ preventScroll: true });
+    toast("Space plays and pauses · Esc leaves");
+  }
+  // The whole world is in view on the way in; on the way out the view a person zoomed or panned to stays (the observer refits its shape).
+  if (on) fit(true);
+}
+document.addEventListener("fullscreenchange", onFullscreenChange);
+document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+wrap.addEventListener("pointermove", fsWake);
+// A keyboard user reaching the exit control must always see it, and any key press wakes it.
+wrap.addEventListener("focusin", fsWake);
+wrap.addEventListener("keydown", fsWake);
+if (fsSupported) {
+  $("btn-fullscreen").onclick = toggleFullscreen;
+  $("btn-fs-exit").onclick = toggleFullscreen;
+} else $("btn-fullscreen").hidden = true;
 canvas.ondblclick = () => fit(true);
 canvas.addEventListener(
   "wheel",
@@ -573,13 +620,17 @@ function lesionAt(ev: PointerEvent) {
 // ---------- keyboard ----------
 window.addEventListener("keydown", (e) => {
   // Leave focused controls and links to their native keyboard behavior, and the catalogue to its own keys while it is open.
-  if (e.target !== document.body && e.target !== canvas) return;
+  // The full-screen exit button is the one control that also answers f, so a keyboard user who tabbed to it can leave the same way.
+  const onExit = e.target === $("btn-fs-exit");
+  if (e.target !== document.body && e.target !== canvas && !onExit) return;
+  if (onExit && e.key !== "f" && e.key !== "F") return;
   if ($<HTMLDialogElement>("worlds").open) return;
   if (e.key === " ") {
     if (!worldReady) return;
     e.preventDefault();
     if (!e.repeat) togglePlay();
   } else if (e.key === "." && worldReady) stepBy(1);
+  else if ((e.key === "f" || e.key === "F") && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey) toggleFullscreen();
   else if (/^[1-8]$/.test(e.key)) setMode(VIEW_MODES[Number(e.key) - 1]);
 });
 

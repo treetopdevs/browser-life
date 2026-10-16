@@ -89,7 +89,10 @@
             </dl>
             <span class="pond-status mono" id="pond-status" hidden></span>
           </div>
-          <button class="quiet" id="btn-fit" type="button" title="See the whole world (or double-click the field)">Fit view</button>
+          <div class="stage-actions">
+            <button class="quiet" id="btn-fit" type="button" title="See the whole world (or double-click the field)">Fit view</button>
+            <button class="quiet" id="btn-fullscreen" type="button" aria-pressed="false" title="Just the cells, full screen (f)">Full screen</button>
+          </div>
         </div>
         <div class="transport" role="group" aria-label="Playback">
           <button id="btn-play" class="primary" type="button" aria-pressed="false">Play</button>
@@ -106,6 +109,7 @@
           <span class="sr-only" id="keyboard-position" role="status" aria-live="polite"></span>
           <div class="readout mono" id="hover"></div>
           <div class="toast" id="toast" role="status" aria-live="polite"></div>
+          <button class="fs-exit" id="btn-fs-exit" type="button" hidden>Exit full screen</button>
           <div class="stage-alert" id="stage-alert" role="alert" hidden>
             <strong id="stage-alert-title"></strong>
             <p class="mono" id="stage-alert-text"></p>
