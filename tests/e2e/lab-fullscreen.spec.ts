@@ -22,4 +22,10 @@ test("Full screen shows just the field, f toggles it, and its exit button leaves
   await page.keyboard.press("f");
   await expect(button).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator("#btn-fs-exit")).toBeHidden();
+  // f also leaves while the exit control has keyboard focus.
+  await button.click();
+  await expect(button).toHaveAttribute("aria-pressed", "true");
+  await page.locator("#btn-fs-exit").focus();
+  await page.keyboard.press("f");
+  await expect(button).toHaveAttribute("aria-pressed", "false");
 });

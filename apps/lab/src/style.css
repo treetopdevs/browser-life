@@ -252,6 +252,7 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .stage-alert button[hidden] { display: none; }
 /* Full screen shows the cells and nothing else: no frame, no readout, one way out that fades while the pointer rests. */
 .canvas-wrap:fullscreen { border: 0; border-radius: 0; box-shadow: none; width: 100vw; height: 100vh; }
+.canvas-wrap:-webkit-full-screen { border: 0; border-radius: 0; box-shadow: none; width: 100vw; height: 100vh; }
 .canvas-wrap.fs-active .readout { display: none; }
 #btn-fullscreen[hidden] { display: none; }
 .fs-exit {

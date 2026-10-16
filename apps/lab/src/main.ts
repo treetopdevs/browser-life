@@ -482,8 +482,8 @@ function onFullscreenChange() {
     canvas.focus({ preventScroll: true });
     toast("Space plays and pauses · Esc leaves");
   }
-  // The field changed shape; the observer sees it, but the whole world should be in view on the way in.
-  fit(true);
+  // The whole world is in view on the way in; on the way out the view a person zoomed or panned to stays (the observer refits its shape).
+  if (on) fit(true);
 }
 document.addEventListener("fullscreenchange", onFullscreenChange);
 document.addEventListener("webkitfullscreenchange", onFullscreenChange);
@@ -616,7 +616,10 @@ function lesionAt(ev: PointerEvent) {
 // ---------- keyboard ----------
 window.addEventListener("keydown", (e) => {
   // Leave focused controls and links to their native keyboard behavior, and the catalogue to its own keys while it is open.
-  if (e.target !== document.body && e.target !== canvas) return;
+  // The full-screen exit button is the one control that also answers f, so a keyboard user who tabbed to it can leave the same way.
+  const onExit = e.target === $("btn-fs-exit");
+  if (e.target !== document.body && e.target !== canvas && !onExit) return;
+  if (onExit && e.key !== "f" && e.key !== "F") return;
   if ($<HTMLDialogElement>("worlds").open) return;
   if (e.key === " ") {
     if (!worldReady) return;
