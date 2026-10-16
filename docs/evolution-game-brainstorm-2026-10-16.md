@@ -810,3 +810,279 @@ criterion written first) can start from arm b, with decomposition as the natural
 this check it was worth two and a half times the bound mass. That is what a whole population
 gets when everyone has the reaction; whether one lineage that gains it among respirers is
 favoured is a different question, and the one the genome version is for.
+
+## Gene v0: the smallest genome version (2026-10-16)
+
+Stage 1's second step (§8), following the rung check above: one gainable capability gene,
+decomposition, over arm b's starting set (photosynthesis, respiration, growth; kBuild 0), on a
+game kernel line that leaves every RULE_VERSION 1 pin untouched. This section was written in two
+parts. The **design and the criterion** below were written before the first run (13:09); the
+**readout** at the end was written after the six runs finished, against them, with the review
+fixes to the design text noted there. Posture as before: exploration, local GPU only,
+nothing committed, nothing landed.
+
+### Design
+
+**Kernel line.** Not a new `ruleVersion` (validateConfig pins that to 1 for every checkpoint and
+the lab's whole catalogue) but a kernel flag in the style of every sandbox lever: three optional
+`WorldConfig` keys, absent from `defaultConfig()` and from every preset, so a config that never
+sets them serialises, hashes and steps exactly as before. `stateHash` and the checkpoint digest
+hash the config's own JSON, which is why the keys are optional rather than defaulted to "off".
+
+| key | meaning | bounds | gene-v0 value |
+|---|---|---|---|
+| `genes: "decomp"` | the gene set: bit 0 of the gene byte is decomposition; nothing else is gainable yet | the one named set | `"decomp"` |
+| `kGene` | maintenance per carried gene, kGene/65,536 of B per step, paid in E like kMaint (starvation when E runs short) | 0..65,535 | 100 |
+| `geneFlip` | share of mutation events that flip a gene bit instead of nudging a weight, geneFlip/2³² | 0..2³²−1 | 2²⁶ (1 in 64) |
+
+Set together. Exclusive with `shapeReach` (which owns PARAM1's bytes 1..3) and with `neutral`
+(every cell would express the reference genome, whose gene byte is 0, so the gene could never be
+gained).
+
+**Where the bit lives.** §3 is right that the genome has no free word; it has a free byte. PARAM1
+is the motility gain in byte 0, and bytes 1..3 are the heritable kernel-ring offsets of the
+`cells` sandbox, zero in every RULE_VERSION 1 genome (`ringsOf` treats absence and (0, 0, 0) as
+one genome). Byte 3 (bits 24..31) is the **gene byte**; bit 0 is decomposition; the other seven
+bits are inert until a later gene set names them. The kernel reads the packed word
+(`PARAM1 >>> 24 & 1`), so the ten `Genome` consumers the ring review counted are untouched by the
+physics. `Genome` gains an optional `genes` field, and `decodeGenome` reads it **only when told
+the config has genes** (a second argument); every existing caller decodes exactly as before, which
+means a caller not yet taught the layout (the lab's inspector today) would show a carrier's gene
+byte as a far-ring offset of +1. No lab world can plant genes yet, so none does; teaching the
+config-aware consumers is part of any lab-facing version. `encodeGenome` refuses a genome that
+sets both a far-ring offset and a gene byte, and the lineage inspector's mutation replay mirrors
+the flip dispatch so a gain or loss reconstructs as itself. Genes are refused with declared cells
+(`cellPeriod`), whose birth mutation never flips a gene. `canonicalGenome` and the state hash copy PARAM1
+whole, so the bit rides in checkpoints and digests with no format change. Founders: every genome
+in the M3 set has byte 3 = 0, so **every founder starts without the gene**, as the brief asks.
+
+**The gate, in `react`.** A living cell with the gene runs decomposition exactly as RULE_VERSION 1
+does (C → A + 2 E per quantum, capacity from the DECOMP controller output and kDecomp) and pays
+one extra maintenance term, `mulFrac(B, kGene, 16, draw(RND.GENE))`, added to the cost before the
+E ≥ cost test. A living cell **without** the gene skips the reaction and its DECOMP output is
+left out of the catalysis work sum (`sumr`): the machinery is not there to pay for. This is the
+one place the gene-off world differs from the rung check's arm b, which charged work on all six
+outputs with kDecomp 0; the gene-off baseline is therefore "arm b minus one catalysis charge",
+and arm b's 39% bound-mass figure is not this run's gene-off expectation. Arithmetic: the new term
+is bounded like kMaint's (B ≤ 2²⁶, kGene ≤ 65,535, so `mulFrac` with s = 16 is exact), and the
+cost sum stays under 2³² (the work term is under 2²⁹, the two maintenance terms under 2²⁶ each).
+No new state, no new channel, one new flux-free draw purpose (`RND.GENE` = 38; purposes are
+indexed, so nothing shifts).
+
+**Mutation.** A mutation event (rate per newly synthesised quantum, as before) first draws
+`RND.GENE_FLIP` (39): below `geneFlip` it flips bit 0 of the gene byte (gain or loss, symmetric)
+and changes no weight; otherwise it nudges a weight, μ, σ or the gain as RULE_VERSION 1 does.
+Either way it mints a new lineage id and a `mutations.tsv` row. With geneFlip = 2²⁶ one event in
+64 is a flip. Arm b's runs logged 36,000 to 47,000 mutation events in 200,000 steps, so about
+**560 to 730 flips a run** are expected, most of them gains early (everyone starts off) and both
+directions once carriers exist. That is plenty for "acquisitions happen" to be well powered; the
+question is spread and persistence.
+
+**The cost, and why 100.** Costed against decomposition's *private* payoff, not against arm c's
+whole-population gain. Per quantum decomposed a cell gets 2 E (eC − eA), against 8 for
+respiration, and the A it makes is only partly private: growth runs after decomposition in the
+same `react`, so fresh A can be grown on at once, but what is not is carried to neighbours by
+diffusion (diffA 200/1,024 per side per step), payers and non-payers alike. Capacity at full
+output is cat(B) × 127/128 × 96/4,096 ≈ 0.024 × cat(B) quanta a step; a cell of B = 50 (arm b
+holds about 50 B per living cell) has cat(50) = 15 (14 after the ×127/128 of a saturated output),
+so about 0.33 quanta and 0.67 E a step when
+waste is there to take, about 0.013 E per B per step; a cell of B = 200 about 0.029. Arm b's
+standing waste is 3 to 4 quanta per cell everywhere, replenished by diffusion, respiration and
+decay. The population-scale figure from arm c, where everyone decomposed and the waste was shared
+out, is 0.003 to 0.008 E per B per step (2 × decomp flux over world B). kMaint is 200/65,536 =
+0.0031. **kGene = 100 (0.0015 E per B per step, half the maintenance bill)** sits below the
+population-scale income and an order of magnitude below the private capacity, so a lone carrier
+in waste should pay for its gene several times over, and a world of carriers should still cover
+it, while a carrier in a waste-free spot (arm c's abiotic recycling fell tenfold once decomposers
+took the waste) pays for nothing. If this is too cheap the null arm below says so; if too dear,
+nothing spreads and the next version halves it.
+
+**Arms.** All on `gradient-m3` (256², light 20 + 220, the 12 M3 founders, mutation on at the
+preset's rate), kBuild 0 as in arm b, census every 5,000 with every census deep, `lineageObs` on
+(so `genomes.tsv` records every lineage's genome when first counted and `profiles.tsv` its cells
+and mass at every census), seeds 1, 2, 3, 200,000 steps.
+
+| arm | genes | kGene | geneFlip | kDecomp | kBuild | what it tests |
+|---|---|---|---|---|---|---|
+| treat | "decomp" | 100 | 2²⁶ | 96 (preset) | 0 | the gene gates a reaction that pays |
+| null | "decomp" | 100 | 2²⁶ | **0** | 0 | the same gene, cost and flips, gating a reaction that makes nothing: drift and hitchhiking alone |
+
+The null is the control that separates "spreads because it pays" from "spreads anyway". Three
+seeds a side is the brief's scale and shows 0/3 to 3/3 and nothing finer.
+
+**Instruments** (all from the bundle, no new observer). A lineage's genome is immutable (a
+mutation mints a new id), so `genomes.tsv` gives each lineage's gene bit once and `profiles.tsv`
+gives its cells and mass at every census. *Gene share* at a census = carriers' living cells over
+all living cells, and the same by bound mass; a world with no living cells has share 0.
+*Acquisitions* = flip-on births: children in `mutations.tsv` whose own genome (when first counted)
+has the gene and whose parent's does not (a founder's never does); flip-off births the other way;
+a child never counted at a census, or whose non-founder parent never was, is unknown and is
+reported as such, and only classified births count for HAPPENS. `series.jsonl` gives individuals, bound mass, E and the fluxes as in the rung check.
+
+### Pre-stated criterion (written before the first run)
+
+Share means gene share of living cells unless mass is named; "the last ten censuses" are steps
+155,000 to 200,000.
+
+- **HAPPENS**: in every treatment seed, at least one flip-on birth is counted at a census by step
+  200,000.
+- **SPREADS**: in at least 2 of 3 treatment seeds, the share reaches **≥ 25%** at some census.
+  (The step of first reaching it is reported; under 25,000 is "in the first minute".)
+- **PERSISTS**: at least 2 of 3 treatment seeds each satisfy SPREADS **and** hold the share
+  **≥ 25% at every one of the last ten censuses**.
+- **PAYS**: in each of the three seed pairs, the treatment's share at 200,000 exceeds the null's,
+  and the null's share at 200,000 is **< 25%** in at least 2 of 3 null seeds.
+- **PASS** = HAPPENS and SPREADS and PERSISTS and PAYS.
+- **CONFOUNDED** = the null's share is ≥ 25% at 200,000 in at least 2 of 3 null seeds: whatever
+  the treatment did, the gene spreads without paying; the cost is too low or the flip rate too
+  high to read selection.
+- **FAIL** = not CONFOUNDED and the treatment reaches 25% in at most 1 of 3 seeds: the gene is
+  not favoured as built. The known reading to test next is the public-good leak (fresh A diffuses
+  to non-payers), which a lower diffA or a local-A variant would discriminate; a too-dear cost is
+  the other.
+- **UNCLEAR** = anything else (for example SPREADS without PERSISTS, or PAYS failing in one pair).
+- Descriptive, not part of the verdict: share by mass beside share by cells; bound mass and E of
+  the treatment against the null (same seeds, so the same founder layout) and against arm b
+  (whose work charge differs, see the design); flip-off births; whether carriers hold the lit or
+  the dim end of the gradient (from `profiles.tsv` roles, if it is legible).
+
+What three seeds cannot show is unchanged from the rung check. What this version cannot show at
+all: whether a *second* gene would be gained on top of the first (the ladder), or anything about
+a player.
+
+### Readout (written after the runs, 2026-10-16)
+
+Six runs, 13:18 to 13:28 on the Mac (M1 Max, 1,900 to 2,500 steps a second, 83 to 103 s each),
+through `@bl/runner` from a script beside the bundles (`runs/evolution-game/gene-v0/gene.ts`,
+`read.ts`, `rule.md` and `tables.md`, gitignored, in the main checkout's `runs/`), with the gene
+keys in `RunSpec.overrides` as the rung check put the rate constants. Conservation read exact on
+every row of every run. One review pass on the design text landed between the pre-stated rule and
+this readout; it changed wording (the cat(50) figure, the decoder claim, the unknown-parent rule,
+the PERSISTS quantifier, extinct share = 0), refused genes with declared cells, and taught the
+lineage replay the flip. None of it touched the physics the runs used, the thresholds or the
+arms; the pre-run copy is `rule.md` beside the bundles.
+
+**Per arm and seed, at step 200,000.** Share is the gene share of living cells; "first ≥ 25%" is
+the first census at or above the spread bar; "min, last 10" is the smallest share over steps
+155,000 to 200,000; flip-on and flip-off births are the classified ones (a child and its parent
+both counted at a census, or a founder parent) and "unknown" the rest.
+
+| arm | seed | individuals | living cells | lineages | B+P | E pool | decomp flux (last 10) | share, cells | share, mass | carrier lineages | first ≥ 25% | min, last 10 | flip-on | flip-off | unknown | mutations |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| treat | 1 | 148 | 43,354 | 52 | 1,199,134 | 1,148,480 | 1,279.8 | 99.4% | 99.1% | 50 of 52 | 35,000 | 99.2% | 4 | 19 | 39,753 | 41,105 |
+| treat | 2 | 66 | 29,926 | 24 | 816,429 | 555,677 | 1,053.4 | 99.1% | 99.8% | 23 of 24 | 50,000 | 99.1% | 7 | 7 | 33,073 | 34,009 |
+| treat | 3 | 45 | 42,230 | 29 | 1,240,796 | 964,678 | 1,195.3 | 98.9% | 98.9% | 26 of 29 | 75,000 | 98.9% | 11 | 13 | 44,122 | 45,745 |
+| null | 1 | 257 | 17,877 | 190 | 1,008,675 | 2,448,746 | 0.0 | 2.2% | 2.2% | 8 of 190 | never | 2.2% | 21 | 1 | 41,092 | 42,806 |
+| null | 2 | 276 | 9,519 | 270 | 908,746 | 2,062,749 | 0.0 | 7.5% | 7.4% | 23 of 270 | never | 5.3% | 32 | 8 | 34,771 | 36,862 |
+| null | 3 | 264 | 14,977 | 247 | 811,195 | 2,838,885 | 0.0 | 7.4% | 8.0% | 21 of 247 | never | 7.4% | 26 | 5 | 45,758 | 47,637 |
+
+**Against the rule, as the reader printed it.**
+
+- HAPPENS: classified flip-on births in 3 of 3 treatment seeds (4, 7, 11; the first at steps
+  19,731, 38,403 and 18,176). Most flips are never classified: about 40,000 mutation events a run
+  mint lineages that no census counts, as in every run of this chemistry.
+- SPREADS: 3 of 3, the share first ≥ 25% at steps 35,000, 50,000 and 75,000. None under 25,000,
+  the frozen bar for "in the first minute"; by each run's measured speed those crossings came
+  18, 25 and 36 seconds of wall clock into the run.
+- PERSISTS: 3 of 3, the share never below 98.9% over the last ten censuses.
+- PAYS: the treatment beats the null in 3 of 3 pairs (99.4% against 2.2%, 99.1% against 7.5%,
+  98.9% against 7.4%), and the null is under 25% in 3 of 3.
+- **PASS.** Acquisitions happen, spread and persist, and they do so only where the gated reaction
+  makes something.
+
+**Time course** (gene share of living cells / B+P).
+
+| arm | seed | t=5,000 | t=10,000 | t=25,000 | t=50,000 | t=75,000 | t=100,000 | t=150,000 | t=200,000 |
+|---|---|---|---|---|---|---|---|---|---|
+| treat | 1 | 0.0% / 222,478 | 0.0% / 346,704 | 3.0% / 514,911 | 93.5% / 1,203,183 | 99.7% / 1,217,516 | 99.7% / 1,192,251 | 99.0% / 944,956 | 99.4% / 1,199,134 |
+| treat | 2 | 0.0% / 109,006 | 0.0% / 107,127 | 0.1% / 363,684 | 37.7% / 1,131,220 | 86.0% / 1,149,846 | 99.3% / 1,279,617 | 99.7% / 1,109,606 | 99.1% / 816,429 |
+| treat | 3 | 0.0% / 334,754 | 0.0% / 495,189 | 0.7% / 596,285 | 11.4% / 639,268 | 34.8% / 966,196 | 63.0% / 1,384,244 | 99.3% / 1,162,337 | 98.9% / 1,240,796 |
+| null | 1 | 0.0% / 222,478 | 3.3% / 346,054 | 1.4% / 509,834 | 1.3% / 551,240 | 1.9% / 579,454 | 2.8% / 612,084 | 4.5% / 881,236 | 2.2% / 1,008,675 |
+| null | 2 | 0.0% / 108,935 | 0.0% / 106,341 | 0.7% / 245,711 | 2.7% / 448,595 | 6.7% / 518,897 | 10.5% / 545,253 | 6.1% / 693,020 | 7.5% / 908,746 |
+| null | 3 | 0.4% / 337,099 | 0.5% / 488,421 | 1.8% / 583,080 | 5.7% / 610,769 | 8.2% / 611,462 | 9.1% / 616,261 | 10.8% / 649,031 | 7.4% / 811,195 |
+
+The share at every census, in percent, one run a line (the sweep is a logistic rise over 20,000
+to 100,000 steps; the null sits at a mutation–selection balance of a few percent):
+
+- treat 1: 0 0 0 1 3 15 51 73 86 94 98 100 99 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 99 100 100 100 100 100 99 100 100 100 99
+- treat 2: 0 0 0 0 0 0 0 1 11 38 58 70 74 86 86 92 93 93 96 99 99 99 99 100 99 100 99 100 100 100 100 99 99 100 100 100 100 99 99 99
+- treat 3: 0 0 0 1 1 1 5 7 8 11 13 17 19 24 35 33 50 53 66 63 80 84 88 95 95 95 100 100 100 99 100 100 100 100 100 100 100 100 100 99
+- null 1: 0 3 1 2 1 2 1 1 1 1 1 2 1 1 2 2 3 3 3 3 3 4 5 5 5 4 4 5 8 4 6 8 5 4 4 4 3 2 2 2
+- null 2: 0 0 0 0 1 1 2 2 2 3 4 4 6 6 7 6 8 8 8 11 9 8 9 7 10 9 8 7 8 6 5 7 7 8 7 6 8 7 7 8
+- null 3: 0 0 1 1 2 3 4 5 5 6 6 6 6 7 8 8 9 9 9 9 9 10 11 11 11 13 14 13 11 11 10 9 9 9 9 10 9 8 8 7
+
+**Fluxes**, mean over the last ten censuses (quanta a step; E income = resp × 8 + decomp × 2,
+E spent = grow × 10 + emit).
+
+| arm | seed | photo | resp | decomp | grow | emit | starve | abio | E income/step | E spent/step |
+|---|---|---|---|---|---|---|---|---|---|---|
+| treat | 1 | 2,110.5 | 1,343.2 | 1,279.8 | 0.0 | 2,072.4 | 401.4 | 825.7 | 13,306 | 2,072 |
+| treat | 2 | 1,619.2 | 966.5 | 1,053.4 | 0.0 | 1,444.5 | 343.4 | 572.4 | 9,839 | 1,444 |
+| treat | 3 | 1,846.3 | 1,156.2 | 1,195.3 | 0.0 | 1,658.6 | 327.6 | 649.6 | 11,640 | 1,659 |
+| null | 1 | 2,410.9 | 2,208.8 | 0.0 | 98.8 | 262.9 | 12.7 | 2,507.4 | 17,670 | 1,251 |
+| null | 2 | 2,452.3 | 2,178.3 | 0.0 | 1.3 | 3,850.6 | 22.6 | 2,447.6 | 17,426 | 3,864 |
+| null | 3 | 2,364.5 | 2,435.2 | 0.0 | 301.8 | 307.4 | 6.0 | 2,660.7 | 19,482 | 3,325 |
+
+**What the numbers say beyond the rule** (descriptive; three seeds).
+
+- *A sweep, and it looks like one.* The treatment ends with 24 to 52 lineages against the null's
+  190 to 270, and 23 to 50 of them carry the gene: a dominant carrier clade replaced most of the
+  founders' descendants (carriers first appear in a census at steps 20,000, 25,000 and 20,000;
+  walking each final carrier's ancestry in `mutations.tsv` up to the first gene-off parent finds
+  one acquisition root in seeds 1 and 3 and three in seed 2, holding 20, 2 and 1 of its 23
+  carrier lineages). That is the game's "carriers first exceeded a quarter of the living cells at step
+  35,000 and now hold 99% of them", dated by a detector with a stated rule rather than by eye.
+- *The gene paid for the lineage, not for the world.* Carriers' bound mass at 200,000 is 0.8 to
+  1.24 million against the null's 0.81 to 1.01 million on the same founder layouts, about a fifth
+  more on average and within the spread of three seeds; nowhere near arm c's 1.85 to 2.29 million,
+  where everyone decomposed from step 0 under the full work charge. The carriers' world is
+  poorer in other ways: two to three times the living cells but a sixth to a little over half of the census
+  individuals (film, not bodies), an E pool of 0.56 to 1.15 million against 2.0 to 2.8 million,
+  no growth flux at all over the last ten censuses, and starvation at 330 to 400 quanta a step
+  against 6 to 23. Decomposition took the waste that light used to recycle (abiotic flux fell
+  from about 2,500 to 570 to 830 a step) and photosynthesis fell with it. So the gene is favoured
+  the way the design hoped (a lone carrier in waste pays its gene several times over) and the
+  world that results is a decomposing film with less free energy. The design's lone-carrier
+  arithmetic (a carrier in waste paying its gene several times over) is a capacity prediction
+  these bundles do not measure; what they show is that the gene spread under it. Which of these
+  a game wants is a design question the next version has to face: the cost and the reward decide
+  what kind of life the ladder's first rung makes.
+- *The null's few percent.* With flips at one event in 64 and kGene at half the maintenance
+  bill, carriers in the null arm hover at 2 to 14% of living cells and never approach the bar;
+  flip-on births were classified 21 to 32 times a run there against 4 to 11 in the treatment,
+  where the sweep left fewer lineages for a census to count. That the cost is what holds them
+  down (rather than drift alone) is the design's reading, not a measurement: it needs a kGene 0
+  null to show. If it is the cost, it is mild enough that a cheaper gene might not be readable
+  against drift.
+- *Leakage did not prevent a PASS at diffA 200.* The fresh A a carrier makes still diffuses to
+  non-payers; the runs do not isolate how much that cost the carriers. Whether a higher diffusion
+  would stop the sweep, or a lower one speed it, is untested.
+- *Not in the first minute.* 35,000 to 75,000 steps to a quarter and 60,000, 100,000 and 135,000
+  to the first census at or above 99%, about half a minute to a minute of wall clock at these
+  runs' speed. The rate was not tuned; geneFlip and kGene are the two dials, and this version
+  turned neither.
+
+**What this does not say.** Three seeds show 3/3 and nothing finer; 200,000 steps is a fifth of
+a registered history and the sweep's aftermath (the film at 99%) was watched for 100,000 steps
+at most. The null separates the gene bit's own drift from selection but not what the sweeping
+clade's other mutations did: the clade that fixed carried weight changes too, and whether
+decomposition or some controller tuning it hitchhiked on was the favoured trait is not
+separable here (the 0/3 null sweeps argue for the gene; they do not prove it). The gene-off
+baseline is not arm b (it pays no work on the DECOMP output); the null is the comparison, and
+its bound mass (0.81 to 1.01 million) sits near arm b's (0.77 to 0.90 million) on the same
+seeds, 12% and 18% above and 3% below; those histories also differ in the flips and the
+carriers' maintenance, so the work charge's own effect would need a matched ablation. Nothing here tests a second gene, a schedule of ages
+or a player.
+
+**What it means for Stage 1.** The smallest genome version works as a detector of acquisition:
+a discrete, inherited, costly change that spreads where it pays and lingers at a few percent
+where it does not. The ladder's second rung (polymer building as a gene over this starting set,
+with the same null) is the natural next run, and the open design question is what the first
+rung should make: as built, decomposers win by turning the world into film. Code: the three
+optional config keys and the gene byte; every RULE_VERSION 1 pin unchanged; the GPU golden check
+bit-exact on all 25 cases; two Sol 6.1 High read-only passes, the first on the kernel and design (nine findings taken:
+the lineage replay, declared cells, the decoder claim, unknown parents, the catalyst figure, the
+PERSISTS quantifier, the missing readout, the flip test and the bounds wording) and the second
+on the fixes, this readout and the reader (eight taken: the inspector's expression class, five
+attributions and figures above, and the reader's extinct-census and horizon handling; no P1 in
+either, the tables unchanged).

@@ -1,4 +1,4 @@
-import { B1_OFF, B2_OFF, G, GENOME_CHANNELS, IN, NN_BYTES, NN_H, NN_O, OUT, W1_OFF, W2_OFF } from "./layout.ts";
+import { B1_OFF, B2_OFF, G, GENE_SHIFT, GENOME_CHANNELS, IN, NN_BYTES, NN_H, NN_O, OUT, W1_OFF, W2_OFF } from "./layout.ts";
 import { draw, lowbias32 } from "./int.ts";
 
 /** A decoded genome: Lenia growth parameters plus int8 controller weights. */
@@ -12,6 +12,13 @@ export interface Genome {
    * (WorldConfig.shapeReach). Absent when all three are zero, which is every RULE_VERSION 1 genome.
    */
   rings?: [number, number, number];
+  /**
+   * Capability gene bits (WorldConfig.genes, the game kernel line), byte 3 of PARAM1: bit
+   * GENE_BIT.DECOMP is decomposition. Absent when zero, which is every RULE_VERSION 1 genome and
+   * every founder; `decodeGenome` fills it only when told the config has genes, since the same
+   * byte is the far-ring offset under shapeReach (the two are exclusive in validateConfig).
+   */
+  genes?: number;
 }
 
 /** A genome's kernel ring offsets when any is non-zero, else undefined: absence and (0, 0, 0) are one genome. */
@@ -43,6 +50,11 @@ export function encodeGenome(g: Genome, linHi: number, linLo: number): Uint32Arr
       out[G.PARAM1] = (out[G.PARAM1] | ((v & 0xff) << (8 * (k + 1)))) >>> 0;
     }
   }
+  if (g.genes) {
+    if (!Number.isInteger(g.genes) || g.genes < 0 || g.genes > 0xff) throw new Error(`encodeGenome: genes is ${g.genes}; expected a byte`);
+    if (g.rings && g.rings[2] !== 0) throw new Error("encodeGenome: a genome cannot carry both a far-ring offset and gene bits (both live in PARAM1 byte 3)");
+    out[G.PARAM1] = (out[G.PARAM1] | (g.genes << GENE_SHIFT)) >>> 0;
+  }
   // Index access works for an Int8Array, a plain array, and the {"0": …} object JSON.stringify
   // makes of an Int8Array; anything missing or outside int8 is refused rather than encoded as 0.
   const w = g.weights as unknown as ArrayLike<number>;
@@ -54,7 +66,13 @@ export function encodeGenome(g: Genome, linHi: number, linLo: number): Uint32Arr
   return out;
 }
 
-export function decodeGenome(words: ArrayLike<number>): Genome {
+/**
+ * Decodes packed genome words. Without `layout`, or with `layout.genes` false, PARAM1's bytes 1..3
+ * are kernel ring offsets exactly as before (every RULE_VERSION 1 caller). With `layout.genes`
+ * true (a WorldConfig.genes world) byte 3 is the gene byte and only bytes 1..2 are ring offsets,
+ * so a gene is never read as a far ring nor a far ring as a gene.
+ */
+export function decodeGenome(words: ArrayLike<number>, layout?: { genes?: boolean }): Genome {
   const weights = new Int8Array(NN_BYTES);
   for (let b = 0; b < NN_BYTES; b++) {
     const byte = (words[G.W0 + (b >> 2)] >>> ((b & 3) * 8)) & 0xff;
@@ -66,8 +84,12 @@ export function decodeGenome(words: ArrayLike<number>): Genome {
     motGain: words[G.PARAM1] & 0xff,
     weights,
   };
-  if (words[G.PARAM1] >>> 8 !== 0) {
-    const s8 = (b: number) => ((b & 0xff) > 127 ? (b & 0xff) - 256 : b & 0xff);
+  const s8 = (b: number) => ((b & 0xff) > 127 ? (b & 0xff) - 256 : b & 0xff);
+  if (layout?.genes) {
+    const genes = words[G.PARAM1] >>> GENE_SHIFT;
+    if (genes !== 0) g.genes = genes;
+    if (((words[G.PARAM1] >>> 8) & 0xffff) !== 0) g.rings = [s8(words[G.PARAM1] >>> 8), s8(words[G.PARAM1] >>> 16), 0];
+  } else if (words[G.PARAM1] >>> 8 !== 0) {
     g.rings = [s8(words[G.PARAM1] >>> 8), s8(words[G.PARAM1] >>> 16), s8(words[G.PARAM1] >>> 24)];
   }
   return g;

@@ -42,6 +42,7 @@ The rules assume the following, enforced by `validateConfig` and `validateState`
 - per-cell heat is accumulated as a 64-bit (lo, hi) pair on the GPU and as an exact JavaScript number on the CPU. Workgroup sums of light, heat, fluxes and statistics use carry-aware (lo, hi) accumulators;
 - `step ≤ MAX_STEP = 0xFFFFFFF0`, so lineage ids `step + 1` never wrap;
 - the adhesion term's `kAdhesion · ∇P` is bounded by `kAdhesion ≤ 1024` and `|∇P| ≤ 4·16383 = 65532` (P capped the same way M already is for `∇M`), so the product stays under `2^26`, the same safety margin as the existing `α · ∇M` term.
+- the capability-gene maintenance term (`WorldConfig.genes`, the game kernel line; absent in every RULE_VERSION 1 world) is `mulFrac(B, kGene, 16)` with `kGene ≤ 65535`, bounded exactly as `kMaint`'s; the cost sum's three terms are under `2^29` (work) and `2^26` (each maintenance term), so it stays under `2^32`. The `genes-bounds` golden case runs the three cost terms at their maximum rate constants on heavy biomass (`MATTER_MAX / 128` per cell), not at the full `2^26` per-cell extreme.
 
 The `extremes` golden case runs a world at these limits (total matter at `MATTER_MAX`, E and S at `POOL_MAX`, maximal leak and decay) on every WebGPU backend.
 

@@ -53,6 +53,11 @@ const PINNED: Record<number, Record<string, string>> = {
     "sweep-wander": "dcfbb10ffe638f13",
     // Wild sandbox: every optional lever at once (see the case in golden.ts).
     "wild-stack": "ba3c41c46b14c035",
+    // Capability genes (WorldConfig.genes, the game kernel line; optional,
+    // absent elsewhere): new cases with their own pins; every pin above is
+    // untouched.
+    "genes-decomp": "207f6b0053a52d07",
+    "genes-bounds": "73e320eb8a5cacf7",
   },
 };
 

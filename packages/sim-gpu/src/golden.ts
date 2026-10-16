@@ -323,6 +323,40 @@ export function goldenCases(): GoldenCase[] {
       steps: 120,
       every: 30,
     },
+    {
+      // Capability genes (WorldConfig.genes, the game kernel line): the M3
+      // founders in contact, every other one carrying the decomposition gene
+      // so the gate and the gene's maintenance run from step 0, with heavy
+      // mutation and half of all events flipping the gene, so gains and losses
+      // both happen within 120 steps.
+      name: "genes-decomp",
+      cfg: defaultConfig({ ...base, seed: 89, mutRate: 60_000_000, genes: "decomp", kGene: 100, geneFlip: 2 ** 31 }),
+      init: (c) => m3World(c, 12, 32, 64, M3_FOUNDERS.map((f, k) => ({ ...founderGenome(f), ...(k % 2 ? { genes: 1 } : {}) }))),
+      steps: 120,
+      every: 30,
+    },
+    {
+      // Genes at the arithmetic bounds: one gene-carrying founder whose cells
+      // hold MATTER_MAX / 128 biomass each with E at POOL_MAX, kGene, kMaint
+      // and kCost at their maxima (the cost sum's three terms at once) and
+      // every mutation event a flip, so carriers lose the gene mid-run too.
+      name: "genes-bounds",
+      cfg: defaultConfig({ tileW: 16, tileH: 16, kernelRadius: 3, seed: 97, eB: 30, eP: 31, eC: 1, kGene: 65535, kMaint: 65535, kCost: 65535, mutRate: 60_000_000, genes: "decomp", geneFlip: 2 ** 32 - 1 }),
+      init: (c) => {
+        const s = buildWorld(c, { nutrient: 0, founders: [{ x: 8, y: 8, radius: 5, genome: { ...founderGenome(M3_FOUNDERS[0]), genes: 1 }, biomass: 64, energy: 128 }] });
+        const n = 256;
+        const per = Math.floor(MATTER_MAX / 128);
+        for (let i = 0; i < n; i++)
+          if (s.cells[CH.B * n + i] > 0) {
+            s.cells[CH.B * n + i] = per;
+            s.cells[CH.C * n + i] = 4096;
+            s.cells[CH.E * n + i] = POOL_MAX;
+          }
+        return s;
+      },
+      steps: 20,
+      every: 5,
+    },
   ];
 }
 

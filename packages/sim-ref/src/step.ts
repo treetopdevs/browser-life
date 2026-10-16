@@ -59,6 +59,9 @@ import {
   encodeGenome,
   generalistGenome,
   packLineageLo,
+  GENE_BIT,
+  GENE_SHIFT,
+  geneCount,
   type FluxName,
   type KernelTable,
   type ShapeKernel,
@@ -487,6 +490,12 @@ export class RefSim {
     const mutCap = c.mutRate === 0 ? 0 : divu(U32_MAX, c.mutRate);
     // Recurring injury (WorldConfig.injuryPeriod; absent = RULE_VERSION 1).
     const injuryStep = c.injuryPeriod !== undefined && (step + 1) % c.injuryPeriod === 0;
+    // Capability genes (WorldConfig.genes; absent = RULE_VERSION 1): decomposition is gated by
+    // the gene byte's DECOMP bit, carried at kGene, flipped by a share of mutation events.
+    const genes = c.genes !== undefined;
+    const kGene = c.kGene ?? 0;
+    const geneFlip = c.geneFlip ?? 0;
+    const decompMask = 1 << (GENE_SHIFT + GENE_BIT.DECOMP);
 
     for (let yy = 0; yy < this.H; yy++) {
       for (let xx = 0; xx < this.W; xx++) {
@@ -559,13 +568,18 @@ export class RefSim {
             heat += E - POOL_MAX;
             E = POOL_MAX;
           }
-          // Decomposition C -> A + energy.
-          t = mulShr(cat(B, K), r(OUT.DECOMP), 7);
-          q = Math.min(C, mulFrac(t, c.kDecomp, 12, draw(base, RND.DECOMP)));
-          C -= q; A += q; E += q * (c.eC - c.eA); F[FX.decomp] = q;
-          if (E > POOL_MAX) {
-            heat += E - POOL_MAX;
-            E = POOL_MAX;
+          // Decomposition C -> A + energy. Under WorldConfig.genes only a cell carrying the
+          // DECOMP gene has the reaction (and its output in the work sum below); neutral is
+          // excluded with genes, so the cell's own genome word is the one to read.
+          const decomp = !genes || (genome[G.PARAM1 * n + i] & decompMask) !== 0;
+          if (decomp) {
+            t = mulShr(cat(B, K), r(OUT.DECOMP), 7);
+            q = Math.min(C, mulFrac(t, c.kDecomp, 12, draw(base, RND.DECOMP)));
+            C -= q; A += q; E += q * (c.eC - c.eA); F[FX.decomp] = q;
+            if (E > POOL_MAX) {
+              heat += E - POOL_MAX;
+              E = POOL_MAX;
+            }
           }
           // Growth A + energy -> B.
           let g = c.eB - c.eA;
@@ -585,10 +599,12 @@ export class RefSim {
             heat += S - POOL_MAX;
             S = POOL_MAX;
           }
-          // Work of catalysis + maintenance.
-          const sumr = r(0) + r(1) + r(2) + r(3) + r(4) + r(5);
+          // Work of catalysis + maintenance (+ a carried gene's maintenance under WorldConfig.genes;
+          // bound: the work term is < 2^29 and each maintenance term <= B <= 2^26, so the sum fits u32).
+          const sumr = r(0) + r(1) + (decomp ? r(2) : 0) + r(3) + r(4) + r(5);
           t = mulShr(cat(B, K), sumr, 7);
-          const cost = mulFrac(t, c.kCost, 16, draw(base, RND.COST)) + mulFrac(B, c.kMaint, 16, draw(base, RND.MAINT));
+          let cost = mulFrac(t, c.kCost, 16, draw(base, RND.COST)) + mulFrac(B, c.kMaint, 16, draw(base, RND.MAINT));
+          if (genes && decomp) cost += mulFrac(B, kGene, 16, draw(base, RND.GENE));
           if (E >= cost) {
             E -= cost;
             heat += cost;
@@ -607,7 +623,9 @@ export class RefSim {
             if (draw(base, RND.MUT) < p) {
               const parentHi = genome[G.LIN_HI * n + i];
               const parentLo = genome[G.LIN_LO * n + i];
-              mutateInPlace(genome, n, i, c, draw(base, RND.MUT_WHICH), draw(base, RND.MUT_DELTA));
+              // Under WorldConfig.genes a share of events flips a gene bit instead of nudging a weight.
+              if (genes && draw(base, RND.GENE_FLIP) < geneFlip) flipGene(genome, n, i, c, draw(base, RND.MUT_WHICH));
+              else mutateInPlace(genome, n, i, c, draw(base, RND.MUT_WHICH), draw(base, RND.MUT_DELTA));
               const childLo = packLineageLo(c, i);
               genome[G.LIN_HI * n + i] = (step + 1) >>> 0;
               genome[G.LIN_LO * n + i] = childLo;
@@ -795,6 +813,16 @@ export function controllerForward(wb: Int8Array, x: Int32Array, h: Int32Array, o
     for (let j = 0; j < NN_H; j++) acc += wb[W2_OFF + j * NN_O + k] * h[j];
     o[k] = clampi(divi(acc, 128), -127, 127);
   }
+}
+
+/**
+ * Gene-bit mutation (WorldConfig.genes): flips one of the gene set's bits in PARAM1's gene byte,
+ * chosen by `which` modulo the set's size. Gain and loss are the same operation.
+ */
+export function flipGene(genome: Uint32Array, n: number, i: number, c: WorldConfig, which: number): void {
+  const bit = GENE_SHIFT + (which % geneCount(c));
+  const wi = G.PARAM1 * n + i;
+  genome[wi] = (genome[wi] ^ (1 << bit)) >>> 0;
 }
 
 export function mutateInPlace(genome: Uint32Array, n: number, i: number, c: WorldConfig, which: number, deltaRnd: number): void {
