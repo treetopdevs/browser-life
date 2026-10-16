@@ -17,6 +17,7 @@ interface Opts {
   metricsVersion?: number;
   omitMetricsVersion?: boolean;
   picked?: boolean;
+  scheduled?: boolean;
 }
 
 /** A minimal, internally consistent segment bundle stitchRun accepts on its own terms (no relation to a real run). */
@@ -28,7 +29,7 @@ function segment(index: number, startStep: number, steps: number, opts: Opts = {
     rows.push({ step: Math.min(s, end), individuals: 1, lineages: 1, mutations: 0, fissions: 0, fusions: 0, buddings: 0, maxGeneration: 0, conservationOk: true });
   const tail = rows[rows.length - 1];
   const digest = `digest-${index}`;
-  const spec = { ...baseSpec, steps, ...(opts.picked ? { picked: true } : {}) };
+  const spec = { ...baseSpec, steps, ...(opts.picked ? { picked: true } : {}), ...(opts.scheduled ? { interventions: [{ step: 3, kind: "lesion", x: 1, y: 1, r: 2 }] } : {}) };
 
   const manifest: Record<string, unknown> = {
     runId: runId(baseSpec),
@@ -120,6 +121,10 @@ describe("stitchRun refuses a picked run's segments", () => {
   it("throws for a segment whose spec is picked: its donors are in picks.jsonl, not in the segment files", () => {
     expect(() => stitchRun([segment(0, 0, 10, { picked: true })], 10)).toThrow(/picked runs cannot be stitched/);
     expect(() => stitchRun([segment(0, 0, 10), segment(1, 10, 10, { picked: true })], 20)).toThrow(/segment #1.*picked runs cannot be stitched/);
+  });
+  it("throws for a segment whose spec schedules interventions: its interventions.jsonl is in no segment file list", () => {
+    expect(() => stitchRun([segment(0, 0, 10, { scheduled: true })], 10)).toThrow(/scheduled interventions cannot be stitched/);
+    expect(() => stitchRun([segment(0, 0, 10), segment(1, 10, 10, { scheduled: true })], 20)).toThrow(/segment #1.*scheduled interventions cannot be stitched/);
   });
 });
 

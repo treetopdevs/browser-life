@@ -128,10 +128,22 @@ re-reviewed.
 
 - **An exported file carries the total, not the log.** Entry-by-entry replay needs the manifest,
   which stays in the browser's storage with the run.
-- **Headless runs cannot feed.** `tools/run.ts` has no interventions. A scheduled regime (inflow
-  and dilution every N steps, a chemostat) would be a rule with config keys and golden pins, a
-  different thing from a logged intervention, and the more useful one for experiments. The
-  runner does carry the `fed` total through if it continues a fed artifact.
+- **Headless runs feed and wound on a list, not on a rule.** `tools/run.ts --feed STEP:X,Y,R,AMOUNT`,
+  `--lesion STEP:X,Y,R` and `--interventions FILE` (a JSON array, or an `interventions.jsonl` an earlier run wrote) schedule the same lesions and feeds
+  the lab logs, which `runExperiment` applies at their steps in the lab's order (after the step's
+  census and boundary, before any checkpoint) and writes to `interventions.jsonl`; a feed moves the
+  conservation baselines and the observer's `fed` total. A lab run manifest replays whole with
+  `--picks-from <runId>.run.json`, lesions and feeds included (a feed that moves other matter than
+  the lab logged stops the run; a feed logged without its matter, a log out of step order and a start
+  world this checkout builds differently from the lab's are refused before the run), and the run's `stateHash`
+  is compared with the lab's checkpoint at `--steps` when the manifest holds one saved there after every
+  logged intervention. A match is strong evidence that the headless history is the observed one; with no
+  comparable checkpoint the run says so and checks nothing against the lab. The coordinator still
+  carries no interventions, and islands refuse a spec that has them, so a fed or wounded history runs
+  on one machine, not the archipelago. A scheduled regime (inflow and dilution every N steps, a
+  chemostat) would still be a rule with config keys and golden pins, a different thing from a
+  logged intervention, and the more useful one for experiments. The runner also carries the `fed`
+  total through if it continues a fed artifact.
 - **Light and starting conditions** are not part of this. The lab's loader already accepts light
   overrides; a starting-nutrient override needs a small addition.
 - **A dab costs a readback** of the nutrient channel. Fine for a brush; a compute pass would be

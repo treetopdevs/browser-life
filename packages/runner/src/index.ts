@@ -1,6 +1,7 @@
 export * from "./conditions.ts";
 export * from "./migrate.ts";
 export * from "./picks.ts";
+export * from "./interventions.ts";
 export * from "./runner.ts";
 export * from "./island.ts";
 export * from "./island-page.ts";

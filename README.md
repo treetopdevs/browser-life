@@ -59,6 +59,15 @@ The GPU golden test must pass on every device that contributes data. Pinned rule
 deno run -A tools/run.ts --experiment pilot --preset gradient --conditions treatment,neutral,no-mutation,replenished --seeds 1-4 --steps 100000
 ```
 
+A run can be wounded or fed on a schedule, as the lab does by hand (`--lesion STEP:X,Y,R`, `--feed STEP:X,Y,R,AMOUNT` with a negative amount to drain, both repeatable, and `--interventions FILE` for a JSON array of the same). The bundle then holds `interventions.jsonl`, a record of what was applied, and a feed is booked in the conservation baseline. A lab run manifest replays too, lesions and feeds included, and the run is compared with the lab's own checkpoint at the same step:
+
+```bash
+deno run -A tools/run.ts --experiment wounded --preset spots --steps 5000 --lesion 1000:120,120,12 --feed 3000:60,60,6,16
+deno run -A tools/run.ts --experiment replay --preset spots --seeds <the lab world's seed> --steps 5000 --picks-from <runId>.run.json
+```
+
+Scheduled runs are not distributed: islands refuse them, and the coordinator carries none.
+
 ```bash
 deno run -A tools/analyze.ts runs/pilot/gradient
 ```

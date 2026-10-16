@@ -28,10 +28,14 @@ export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2"];
  * bundle: branches are not distributed, the coordinator never builds one, and
  * a task that carries one is refused before anything is fetched. A picked run
  * (RunSpec.picked) takes its donors from a picker or a record that no segment
- * carries, so it is refused the same way. */
+ * carries, so it is refused the same way, and so is a run with scheduled
+ * interventions (RunSpec.interventions): the coordinator carries none, and
+ * interventions.jsonl is in no segment file list, so its segments could not be
+ * stitched into that history. */
 export function specRefusal(spec: RunSpec): string | null {
   if ((spec as { branch?: unknown }).branch !== undefined) return "the spec is a branch run (spec.branch); branches are not distributed, so an island does not run them";
   if ((spec as { picked?: unknown }).picked !== undefined) return "the spec is a picked run (spec.picked); picked runs are not distributed, so an island does not run them";
+  if ((spec as { interventions?: unknown }).interventions !== undefined) return "the spec schedules interventions (spec.interventions); scheduled interventions are not distributed yet: the coordinator carries none";
   return null;
 }
 
