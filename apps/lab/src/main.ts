@@ -401,12 +401,16 @@ function noteBrushRefused() {
 setTool(tool);
 
 // ---------- canvas geometry, zoom and pan ----------
+let wasFullscreen = false;
 function resize() {
   const r = wrap.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   send({ type: "resize", width: Math.round(r.width * dpr), height: Math.round(r.height * dpr) });
+  // Leaving full screen keeps the view a person zoomed or panned to, even while a cycle waits.
+  const left = wasFullscreen && fsElement() !== wrap;
+  wasFullscreen = fsElement() === wrap;
   // While a cycle waits the whole world stays in view, whatever the new shape of the field.
-  fit(awaiting !== null);
+  fit(awaiting !== null && !left);
 }
 function fit(reset = true) {
   if (!cfg) return;
