@@ -35,7 +35,7 @@ config :phoenix, :json_library, Jason
 config :coordinator,
   data_dir: "data",
   presets:
-    ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago ponds ponds-small),
+    ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago ponds ponds-small wild-storm-large),
   conditions:
     ~w(treatment no-mutation neutral uniform-light fixed-env replenished no-signal-motility no-migration pond-rand pond-cont),
   cors_origins: ["http://localhost:5173"],
@@ -61,8 +61,10 @@ config :coordinator,
     "uniform-light" => ~w(spots spots-m3 soup ponds ponds-small),
     "fixed-env" =>
       ~w(spots gradient spots-m3 gradient-m3 soup large archipelago ponds ponds-small),
-    "pond-rand" => ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago),
-    "pond-cont" => ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago)
+    "pond-rand" =>
+      ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago wild-storm-large),
+    "pond-cont" =>
+      ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago wild-storm-large)
   },
   # preset => its migrationPeriod (packages/schema/src/presets.ts's "archipelago"
   # preset; 0/absent for every preset without migration configured). Used only to
@@ -102,8 +104,34 @@ config :coordinator,
     "large" => {512, 512},
     "archipelago" => {128, 128},
     "ponds" => {512, 512},
-    "ponds-small" => {128, 128}
+    "ponds-small" => {128, 128},
+    "wild-storm-large" => {512, 512}
   }
+
+# The garden (Coordinator.Garden; README "The garden"): the presets a keeper
+# may found one on (a subset of :presets), the garden the unnamed public routes
+# read, whether the letter rate limiter's address is the right-most
+# X-Forwarded-For entry (only behind a reverse proxy that sets it), how many
+# letters one address may post per window, and how long a public view may be
+# served from the cache held outside the queue process (0 disables the cache).
+# Every consumer reads these with Application.get_env at call time, never into
+# a module attribute, so tests can override them.
+#
+# More: `garden_refusals_per_address` is how many letters the queue may refuse an
+# address per window before it is answered 429 without reaching the queue;
+# `garden_letter_table_max` caps the rows of the letter budget table;
+# `garden_island_token` (BL_GARDEN_ISLAND_TOKEN), when set, restricts a garden's
+# days to islands that joined showing it (nil: any island may tend a garden).
+config :coordinator,
+  garden_presets: ~w(wild-storm-large),
+  public_garden: "commons",
+  trust_forwarded_for: false,
+  garden_letters_per_address: 3,
+  garden_letter_window_ms: 3_600_000,
+  garden_cache_ms: 2_000,
+  garden_refusals_per_address: 20,
+  garden_letter_table_max: 200_000,
+  garden_island_token: nil
 
 # Discovery plane (Coordinator.Discovery; docs/evolvability-discovery-2026-10-04
 # PLAN Stage 3b): its own data directory, never inside :data_dir; the research

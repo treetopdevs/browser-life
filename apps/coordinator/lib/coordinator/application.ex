@@ -11,6 +11,9 @@ defmodule Coordinator.Application do
       CoordinatorWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:coordinator, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Coordinator.PubSub},
+      # The garden's letter budget and view cache (ETS, outside the queue
+      # process); unconditional, so it also runs where start_queue is false.
+      Coordinator.LetterLimiter,
       Application.get_env(:coordinator, :start_queue, true) &&
         {Coordinator.Queue, data_dir: Application.get_env(:coordinator, :data_dir, "data")},
       Application.get_env(:coordinator, :start_discovery, true) &&

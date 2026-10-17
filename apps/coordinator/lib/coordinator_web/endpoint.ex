@@ -37,6 +37,9 @@ defmodule CoordinatorWeb.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
+  # The public letter routes get a 1 KB body limit before the general parser.
+  plug CoordinatorWeb.LetterBodyLimit
+
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],

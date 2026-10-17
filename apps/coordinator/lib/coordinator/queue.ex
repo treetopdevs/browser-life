@@ -115,6 +115,43 @@ defmodule Coordinator.Queue do
   digest that disagrees with every capable island's, a divergence with no
   real disagreement in it.
 
+  Gardens (`Coordinator.Garden`, README "The garden"): a garden is an ordinary
+  one-run experiment (`treatment`, one seed, `segmentSteps` = one day,
+  `verifyFraction` 1, `"garden" => true` on its stored spec) plus a record in
+  `state.gardens` that this module keeps in step with it. `create_garden/1`
+  builds both through the same `validate/1` and `add_experiment/3` an
+  experiment uses, so the founding schedule gets the full interventions
+  validation. Three things differ from an experiment:
+
+    * Pace. Segments exist for every day from creation, but `pick_task/4`
+      offers a garden's segment only once its day is *released*
+      (`released?/2`), and `{:next, ...}` is where the release rule runs
+      (`release_gardens/2`, right after `Segment.reclaim_stale/3`): a day is
+      released when the day before is done or verified and a dawn has passed
+      since that day was released, at most one day per ask. Verify tasks are
+      never held back (a day can only be done once it was released).
+    * Letters. `post_letter/2` and `drop_letter/2` rewrite the experiment's
+      `spec["interventions"]` to `Garden.schedule/1` after every change. That is
+      the one place an experiment's spec is mutated after creation, and it is
+      sound only because of the frontier rule in `Coordinator.Garden`'s
+      moduledoc: a task carries the whole list read at assignment time, a
+      letter is only ever added to or removed from a day no island has ever
+      held, and so the slice of the list that any assigned (or ever-assigned)
+      day owns is the same for its run, its replay and a redo.
+    * Time. Release times and the view read `Coordinator.Clock`, the same clock
+      leases use, so a test that moves it moves both.
+
+  A garden is public, and islands join without credentials, so by default any
+  visitor can run, replay, fail or reject a day. Three things bound that. With
+  `:garden_island_token` set, `join/1` marks an island `garden: true` only when
+  its join body carries `"gardenToken"` equal to it (the token itself is never
+  stored), and `pick_task/4` then offers a garden's days, to run or to replay,
+  only to such islands, which also closes the "second island id replays a forged
+  day" path. A failed or diverged day is recoverable: `requeue_garden_day/2`
+  (keeper only) sends it and the days it blocked back to the queue. And the
+  reject handler refuses to reject a *verified* garden day, so a single
+  volunteer cannot roll back history two islands agreed on.
+
   Islands authenticate with a private token issued at join; every assignment
   carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
   heartbeats and completion. The end checkpoint of every accepted run attempt
@@ -126,10 +163,13 @@ defmodule Coordinator.Queue do
   """
   use GenServer
   require Logger
-  alias Coordinator.{Attempt, Segment, Store}
+  alias Coordinator.{Attempt, Garden, Segment, Store}
 
   # Leases expire after this long without a heartbeat (configurable for tests).
-  defp lease_ms, do: Application.get_env(:coordinator, :lease_ms, 10 * 60 * 1000)
+  # Public because the garden's view must know when a lease it finds is dead
+  # (the queue only reclaims when an island asks for work).
+  @doc "How long a lease lives without a heartbeat, in ms."
+  def lease_ms, do: Application.get_env(:coordinator, :lease_ms, 10 * 60 * 1000)
   @max_segments 100_000
   # An island that hasn't called `/api/next` or sent a valid heartbeat in
   # this long is flagged `stale` in `status/0` -- e.g. a browser tab whose
@@ -152,6 +192,15 @@ defmodule Coordinator.Queue do
   # whose modules name neither atom, refuses a state.bin holding a failed
   # attempt (`[:safe]` decoding, see `init/1`), so rolling the code back
   # after a failure was persisted means starting from a fresh data dir.
+  #
+  # Gardens extend it the same way: a top-level `:gardens` key
+  # (`Coordinator.Garden`'s records), put on load when a file from before has
+  # none (`init/1`) and left out of the file again while there are no gardens
+  # (`persist/1`), so a coordinator that never founded one writes byte-for-byte
+  # the file it always did. The other direction is not supported either: a
+  # pre-garden coordinator refuses a state.bin holding a garden (its modules
+  # name none of the garden's atoms, `[:safe]` decoding), so rolling the code
+  # back after one was founded means starting from a fresh data dir.
   @state_version 3
   # The longest failure reason stored and shown: 500 graphemes
   # (packages/runner/src/island.ts sends at most 500 characters, as it does
@@ -172,6 +221,45 @@ defmodule Coordinator.Queue do
   @doc "Public info for an already-authenticated island (never the token/token_hash); a read, not a claim -- see ApiController.me/2. Doesn't touch last_seen: authenticate/2 doesn't either, and this shouldn't add state a bare probe wouldn't otherwise have."
   def island_info(id), do: GenServer.call(__MODULE__, {:island_info, id})
   def create_experiment(spec), do: GenServer.call(__MODULE__, {:create, spec})
+
+  @doc """
+  Founds a garden (admin; `params` as `POST /api/gardens` takes them, string
+  keys): validates the garden's own parameters, builds the one-run experiment
+  underneath and runs it through `validate/1`, then creates both. `{:ok, days}`
+  or `{:error, why}`; a name that is already an experiment or a garden is an error.
+  """
+  def create_garden(params), do: GenServer.call(__MODULE__, {:create_garden, params})
+
+  @doc """
+  Posts a letter (`%{x:, y:, r:}`, a stone; the shape is `Garden.parse_letter/1`'s
+  and is re-checked here) to garden `name`, at the queue's own clock. `{:ok,
+  letter_view}`, `{:error, :not_found}`, `{:error, {:invalid, msg}}` (a centre
+  outside the world, 422) or `{:error, {:refused, msg}}` (the garden takes no
+  letters now, 409).
+  """
+  def post_letter(name, letter), do: GenServer.call(__MODULE__, {:post_letter, name, letter})
+
+  @doc "The keeper's veto: drops letter `id` of garden `name` if its day was never assigned. `{:ok, letter_view}`, `{:error, :not_found}` or `{:error, {:refused, msg}}`."
+  def drop_letter(name, id), do: GenServer.call(__MODULE__, {:drop_letter, name, id})
+
+  @doc "The garden's public view (`garden-v1`, see `Coordinator.Garden.view/5`) as an atom-key map, or `nil` for an unknown garden. Built inside this process in O(days + letters); callers serving the public hold their own short-lived cache (`Coordinator.LetterLimiter`)."
+  def garden_view(name), do: GenServer.call(__MODULE__, {:garden_view, name})
+
+  @doc "The path of the stored checkpoint with this digest, only if it is the accepted digest of a *verified* day of garden `name` (and a 16-hex digest, and on disk); else `nil`."
+  def garden_checkpoint(name, digest),
+    do: GenServer.call(__MODULE__, {:garden_checkpoint, name, digest})
+
+  @doc "Every servable checkpoint of garden `name` as `%{digest => path}` (the verified prefix's end checkpoints that are on disk), or `%{}` for an unknown garden. One call serves a whole cache period of requests (`Coordinator.LetterLimiter`)."
+  def garden_checkpoints(name), do: GenServer.call(__MODULE__, {:garden_checkpoints, name})
+
+  @doc """
+  The keeper's recovery: puts a *failed* or *diverged* day of garden `name` back
+  in the queue (`Segment.redo/2`: the days it blocked return to waiting). The
+  day's attempts are kept, so the slice of the schedule it owns stays frozen.
+  `{:ok, "pending"}`, `{:error, :not_found}` or `{:error, {:refused, msg}}`.
+  """
+  def requeue_garden_day(name, index),
+    do: GenServer.call(__MODULE__, {:requeue_garden_day, name, index})
 
   @doc "Claims the next task for `island`. `capabilities` is the list the island sent with this request (see the moduledoc); it gates pond work and is never stored."
   def next_task(island, capabilities \\ []) when is_list(capabilities),
@@ -267,13 +355,16 @@ defmodule Coordinator.Queue do
     # load a state.bin containing any in-flight attempt.
     Code.ensure_loaded!(Coordinator.Attempt)
     Code.ensure_loaded!(Coordinator.Segment)
+    # The garden's persisted atoms (`:steps_per_day`, `:letters`, `:dropped_at`,
+    # ...) live only in this module: same reason.
+    Code.ensure_loaded!(Coordinator.Garden)
 
     state =
       case File.read(Path.join(dir, "state.bin")) do
         {:ok, bin} ->
           case :erlang.binary_to_term(bin, [:safe]) do
             %{version: @state_version} = s ->
-              s
+              Map.put_new(s, :gardens, %{})
 
             _ ->
               raise """
@@ -284,8 +375,22 @@ defmodule Coordinator.Queue do
           end
 
         _ ->
-          %{version: @state_version, experiments: %{}, segments: %{}, islands: %{}, next_seg: 1}
+          %{
+            version: @state_version,
+            experiments: %{},
+            segments: %{},
+            islands: %{},
+            next_seg: 1,
+            gardens: %{}
+          }
       end
+
+    # Tell the web layer which gardens exist and how big their worlds are, so
+    # it can answer an unknown name or an out-of-world letter without a call
+    # into this process (`Coordinator.LetterLimiter`).
+    Coordinator.LetterLimiter.set_gardens(
+      Map.new(state.gardens, fn {name, g} -> {name, {g.width, g.height}} end)
+    )
 
     {:ok, state |> Map.put(:dir, dir) |> reindex()}
   end
@@ -309,6 +414,12 @@ defmodule Coordinator.Queue do
       runs: 0,
       verifies: 0
     }
+
+    # Whether this island may tend gardens (see the moduledoc): the key is put
+    # only on an island that showed the configured token (the token itself is
+    # not kept), so every other island record, and `/api/status`, keeps its
+    # shape from before gardens.
+    island = if garden_token_ok?(info), do: Map.put(island, :garden, true), else: island
 
     s = put_in(s, [:islands, id], island)
     {:reply, {:ok, %{id: id, token: token}}, persist(s)}
@@ -334,17 +445,121 @@ defmodule Coordinator.Queue do
 
   def handle_call({:create, spec}, _from, s) do
     with {:ok, spec} <- validate(spec),
-         :ok <-
-           if(Map.has_key?(s.experiments, spec["experiment"]),
-             do: {:error, "experiment exists"},
-             else: :ok
-           ) do
-      {segments, next} = build_segments(spec, s.next_seg)
-      s = reindex(%{s | segments: Map.merge(s.segments, segments), next_seg: next})
-      s = put_in(s, [:experiments, spec["experiment"]], %{spec: spec, created_at: now()})
-      {:reply, {:ok, map_size(segments)}, persist(s)}
+         {:ok, s, count} <- add_experiment(s, spec, now()) do
+      {:reply, {:ok, count}, persist(s)}
     else
       {:error, why} -> {:reply, {:error, why}, s}
+    end
+  end
+
+  def handle_call({:create_garden, params}, _from, s) do
+    now = now()
+
+    with {:ok, spec, gparams} <- garden_spec(params),
+         :ok <- garden_name_free(s, spec["experiment"]),
+         {:ok, s, count} <- add_experiment(s, spec, now) do
+      s = put_in(s, [:gardens, spec["experiment"]], Garden.new(gparams, now))
+      Coordinator.LetterLimiter.register_garden(spec["experiment"], gparams.width, gparams.height)
+      {:reply, {:ok, count}, persist(s)}
+    else
+      {:error, why} -> {:reply, {:error, why}, s}
+    end
+  end
+
+  def handle_call({:post_letter, name, letter}, _from, s) do
+    with %{} = g <- s.gardens[name],
+         {:ok, letter} <- garden_letter(letter),
+         segs = garden_segs(s, g),
+         {:ok, g, record} <- Garden.post_letter(g, letter, segs, now()) do
+      s = store_garden(s, g)
+      {:reply, {:ok, Garden.letter_view(g, record, segs)}, persist(s)}
+    else
+      nil -> {:reply, {:error, :not_found}, s}
+      {:error, _} = error -> {:reply, error, s}
+    end
+  end
+
+  def handle_call({:drop_letter, name, id}, _from, s) do
+    with %{} = g <- s.gardens[name],
+         segs = garden_segs(s, g),
+         {:ok, g, record} <- Garden.drop_letter(g, id, segs, now()) do
+      s = store_garden(s, g)
+      {:reply, {:ok, Garden.letter_view(g, record, segs)}, persist(s)}
+    else
+      nil -> {:reply, {:error, :not_found}, s}
+      {:error, _} = error -> {:reply, error, s}
+    end
+  end
+
+  def handle_call({:garden_view, name}, _from, s) do
+    view =
+      case s.gardens[name] do
+        nil ->
+          nil
+
+        g ->
+          env = %{
+            lease_ms: lease_ms(),
+            stale_ms: @stale_ms,
+            letters_per_address: Application.get_env(:coordinator, :garden_letters_per_address, 3)
+          }
+
+          Garden.view(g, garden_segs(s, g), s.islands, now(), env)
+      end
+
+    {:reply, view, s}
+  end
+
+  # Only the accepted digest of a day that was verified by a matching replay,
+  # and only a 16-hex digest (an island chooses the digest it publishes under,
+  # and it becomes a path component here).
+  def handle_call({:garden_checkpoint, name, digest}, _from, s) do
+    path =
+      with %{} = g <- s.gardens[name],
+           true <- is_binary(digest) and Regex.match?(~r/^[0-9a-f]{16}$/, digest),
+           true <- Garden.verified_digest?(g, garden_segs(s, g), digest),
+           true <- Store.exists?(s.dir, digest) do
+        Store.path(s.dir, digest)
+      else
+        _ -> nil
+      end
+
+    {:reply, path, s}
+  end
+
+  def handle_call({:garden_checkpoints, name}, _from, s) do
+    checkpoints =
+      case s.gardens[name] do
+        nil ->
+          %{}
+
+        g ->
+          for digest <- Garden.verified_digests(garden_segs(s, g)),
+              is_binary(digest),
+              Regex.match?(~r/^[0-9a-f]{16}$/, digest),
+              Store.exists?(s.dir, digest),
+              into: %{},
+              do: {digest, Store.path(s.dir, digest)}
+      end
+
+    {:reply, checkpoints, s}
+  end
+
+  def handle_call({:requeue_garden_day, name, index}, _from, s) do
+    with %{} = g <- s.gardens[name],
+         id when not is_nil(id) <- s.index[{Garden.run_id(g), index}],
+         %{status: status} when status in ["failed", "diverged"] <- s.segments[id] do
+      Logger.warning("garden #{name} day #{index} (#{status}) requeued by the keeper")
+      s = %{s | segments: Segment.redo(s.segments, id)}
+      {:reply, {:ok, "pending"}, persist(s)}
+    else
+      %{status: status} ->
+        {:reply,
+         {:error,
+          {:refused, "day #{index} is #{status}; only a failed or diverged day is requeued"}}, s}
+
+      _ ->
+        {:reply, {:error, :not_found}, s}
     end
   end
 
@@ -354,6 +569,7 @@ defmodule Coordinator.Queue do
     s =
       %{s | segments: Segment.reclaim_stale(s.segments, now, lease_ms())}
       |> put_in([:islands, island_id, :last_seen], now)
+      |> release_gardens(now)
 
     {task, s} = pick_task(s, island_id, capabilities, now)
     {:reply, {:ok, task}, persist(s)}
@@ -485,6 +701,8 @@ defmodule Coordinator.Queue do
               s
           end
 
+        s = record_garden_day(s, seg, kind)
+
         s =
           if kind == "verify" and seg.status == "diverged" do
             Logger.error(
@@ -523,7 +741,8 @@ defmodule Coordinator.Queue do
       end
 
     with true <- assigned?,
-         prev when not is_nil(prev) <- target do
+         prev when not is_nil(prev) <- target,
+         false <- garden_verified?(s, prev) do
       Logger.error(
         "segment #{prev.id} rejected by #{island_id} (#{predecessor}): #{clip(reason)}"
       )
@@ -541,6 +760,11 @@ defmodule Coordinator.Queue do
 
       {:reply, :ok, persist(s)}
     else
+      true ->
+        {:reply,
+         {:error,
+          "the predecessor is a verified day of a garden; a verified day is not rejected"}, s}
+
       _ ->
         {:reply, {:error, "segment not assigned to this island/lease, or no such predecessor"}, s}
     end
@@ -744,6 +968,277 @@ defmodule Coordinator.Queue do
 
   def handle_call({:segment, id}, _from, s), do: {:reply, s.segments[id], s}
   def handle_call(:data_dir, _from, s), do: {:reply, s.dir, s}
+
+  # ---- gardens (see the moduledoc) ----
+
+  # The keys `POST /api/gardens` takes. An unknown one is refused rather than
+  # ignored: a keeper's typo ("dawnPeriod") should not found a daily garden.
+  @garden_keys ~w(name presetId seed founding days stepsPerDay censusEvery deepEvery lettersPerDay queueMax dawnPeriodMs dawnOffsetMs)
+  @default_garden_preset "wild-storm-large"
+  @max_dawn_period_ms 7 * 86_400_000
+
+  # The garden's parameters (README "Keeper endpoints"), validated in the
+  # garden's own words, then the experiment underneath built and run through
+  # `validate/1` (so the founding schedule gets the runner's interventions
+  # rules, `steps <= 1e9` and the segment cap for free). `{:ok, spec, params}`:
+  # the spec to store (marked `"garden" => true`) and `Garden.new/2`'s params.
+  defp garden_spec(params) when is_map(params) do
+    presets = Application.get_env(:coordinator, :garden_presets, [])
+    world = Map.get(Application.get_env(:coordinator, :world_size, %{}), preset_of(params))
+    int_in? = fn v, lo, hi -> is_integer(v) and v >= lo and v <= hi end
+
+    name = params["name"]
+    preset = Map.get(params, "presetId", @default_garden_preset)
+    seed = params["seed"]
+    founding = params["founding"]
+    per_day = Map.get(params, "stepsPerDay", 131_072)
+    census = Map.get(params, "censusEvery", 1024)
+    days = Map.get(params, "days", 365)
+    deep = Map.get(params, "deepEvery", 10)
+    letters = Map.get(params, "lettersPerDay", 8)
+    queue_max = Map.get(params, "queueMax", 64)
+    period = Map.get(params, "dawnPeriodMs", 86_400_000)
+    offset = Map.get(params, "dawnOffsetMs", 0)
+
+    error =
+      cond do
+        (extra = Enum.reject(Map.keys(params), &(is_binary(&1) and &1 in @garden_keys))) != [] ->
+          "a garden has no key #{key_name(hd(extra))} (its keys are #{Enum.join(@garden_keys, ", ")})"
+
+        not (is_binary(name) and Regex.match?(~r/^[a-z0-9][a-z0-9_-]{0,63}$/, name)) ->
+          "name must match [a-z0-9][a-z0-9_-]{0,63}"
+
+        preset not in presets ->
+          "presetId must be one of #{Enum.join(presets, ", ")}"
+
+        world == nil ->
+          "no world size is configured for preset #{preset}"
+
+        not int_in?.(seed, 0, 4_294_967_295) ->
+          "seed must be a u32 integer"
+
+        not (is_list(founding) and founding != []) ->
+          "founding must be a non-empty array of step-0 lesions and feeds"
+
+        not int_in?.(per_day, 1, 10_000_000) ->
+          "stepsPerDay must be an integer in 1..1e7"
+
+        not (is_integer(census) and census >= 1 and census <= per_day and
+                 rem(per_day, census) == 0) ->
+          "censusEvery must be an integer in 1..stepsPerDay that divides stepsPerDay"
+
+        not int_in?.(days, 1, div(1_000_000_000, per_day)) ->
+          "days must be an integer in 1..#{div(1_000_000_000, per_day)} (days * stepsPerDay is at most 1e9)"
+
+        not int_in?.(deep, 1, 1000) ->
+          "deepEvery must be an integer in 1..1000"
+
+        not int_in?.(letters, 1, 64) ->
+          "lettersPerDay must be an integer in 1..64"
+
+        not int_in?.(queue_max, 1, 1000) ->
+          "queueMax must be an integer in 1..1000"
+
+        not int_in?.(period, 1000, @max_dawn_period_ms) ->
+          "dawnPeriodMs must be an integer in 1000..#{@max_dawn_period_ms}"
+
+        not int_in?.(offset, 0, if(is_integer(period), do: period - 1, else: 0)) ->
+          "dawnOffsetMs must be an integer in 0..dawnPeriodMs-1"
+
+        true ->
+          nil
+      end
+
+    with nil <- error,
+         {:ok, spec} <-
+           validate(%{
+             "experiment" => name,
+             "presetId" => preset,
+             "conditions" => ["treatment"],
+             "seeds" => [seed],
+             "steps" => days * per_day,
+             "segmentSteps" => per_day,
+             "censusEvery" => census,
+             "deepEvery" => deep,
+             "verifyFraction" => 1.0,
+             "interventions" => founding
+           })
+           |> founding_error(),
+         :ok <- founding_at_step_zero(spec["interventions"]) do
+      gparams = %{
+        name: name,
+        preset_id: preset,
+        seed: seed,
+        steps_per_day: per_day,
+        days_total: days,
+        letters_per_day: letters,
+        queue_max: queue_max,
+        dawn_period_ms: period,
+        dawn_offset_ms: offset,
+        founding: spec["interventions"],
+        width: elem(world, 0),
+        height: elem(world, 1)
+      }
+
+      {:ok, Map.put(spec, "garden", true), gparams}
+    else
+      why when is_binary(why) -> {:error, why}
+      {:error, why} -> {:error, why}
+    end
+  end
+
+  defp garden_spec(_), do: {:error, "a garden must be an object"}
+
+  defp preset_of(params) do
+    case Map.get(params, "presetId", @default_garden_preset) do
+      p when is_binary(p) -> p
+      _ -> nil
+    end
+  end
+
+  # `validate/1` words an interventions error for the experiment's own key; a
+  # garden's keeper wrote `founding`.
+  defp founding_error({:error, "interventions" <> rest}), do: {:error, "founding" <> rest}
+  defp founding_error(other), do: other
+
+  # A garden's founding schedule is the world's first act: day 0 owns step 0
+  # and nothing before the first dawn is the keeper's to place later. (Letters
+  # land on day ends, never at step 0.)
+  defp founding_at_step_zero(entries) do
+    case Enum.find_index(entries, &(&1["step"] != 0)) do
+      nil ->
+        :ok
+
+      i ->
+        {:error, "founding[#{i}]: step must be 0 (the founding schedule is applied at the start)"}
+    end
+  end
+
+  defp garden_name_free(s, name) do
+    cond do
+      Map.has_key?(s.gardens, name) -> {:error, "garden exists"}
+      Map.has_key?(s.experiments, name) -> {:error, "experiment exists"}
+      true -> :ok
+    end
+  end
+
+  # An experiment (validated spec) and its segments, into the state. Shared by
+  # `{:create, ...}` and `{:create_garden, ...}`; `{:ok, state, segment_count}`.
+  # Re-indexes: `s.index` finds a run's segments by `{run, index}`.
+  defp add_experiment(s, spec, now) do
+    if Map.has_key?(s.experiments, spec["experiment"]) do
+      {:error, "experiment exists"}
+    else
+      {segments, next} = build_segments(spec, s.next_seg)
+      s = reindex(%{s | segments: Map.merge(s.segments, segments), next_seg: next})
+      s = put_in(s, [:experiments, spec["experiment"]], %{spec: spec, created_at: now})
+      {:ok, s, map_size(segments)}
+    end
+  end
+
+  # `%{day_index => segment}` for the garden's days that exist (all of them
+  # once created), through the `{run, index}` index: O(days), not O(segments).
+  defp garden_segs(s, g) do
+    run = Garden.run_id(g)
+
+    for i <- 0..(g.days_total - 1)//1, id = s.index[{run, i}], into: %{} do
+      {i, s.segments[id]}
+    end
+  end
+
+  # A letter as the Queue accepts it from a caller: `%{x:, y:, r:}`, re-run
+  # through the pure shape check so a direct caller cannot crash this process
+  # with a float or an out-of-range radius.
+  defp garden_letter(%{x: x, y: y, r: r}) do
+    case Garden.parse_letter(%{"kind" => "stone", "x" => x, "y" => y, "r" => r}) do
+      {:ok, letter} -> {:ok, letter}
+      {:error, msg} -> {:error, {:invalid, msg}}
+    end
+  end
+
+  defp garden_letter(_), do: {:error, {:invalid, "a letter needs integer x, y and r"}}
+
+  # Keeps the experiment's spec in step with the garden's letters: the whole
+  # schedule rides in every task read from here (see the moduledoc).
+  defp store_garden(s, g) do
+    s
+    |> put_in([:gardens, g.name], g)
+    |> put_in([:experiments, g.name, :spec, "interventions"], Garden.schedule(g))
+  end
+
+  # The release rule for every garden (`Garden.maybe_release/3`), at most one
+  # day each: it needs only the newest released day's segment status.
+  defp release_gardens(%{gardens: gardens} = s, _now) when map_size(gardens) == 0, do: s
+
+  defp release_gardens(s, now) do
+    gardens =
+      Map.new(s.gardens, fn {name, g} ->
+        newest = Garden.newest_released(g)
+
+        status =
+          case s.index[{Garden.run_id(g), newest}] do
+            nil -> nil
+            id -> s.segments[id].status
+          end
+
+        case Garden.maybe_release(g, status, now) do
+          {:released, g} -> {name, g}
+          :none -> {name, g}
+        end
+      end)
+
+    %{s | gardens: gardens}
+  end
+
+  # With `:garden_island_token` configured, a garden's days (to run or to
+  # replay) go only to islands that joined showing it; anything else is open.
+  defp garden_island?(s, seg, island) do
+    case {s.gardens[seg.experiment], Application.get_env(:coordinator, :garden_island_token)} do
+      {nil, _} -> true
+      {_g, token} when not is_binary(token) or token == "" -> true
+      {_g, _token} -> get_in(s, [:islands, island, :garden]) == true
+    end
+  end
+
+  # Whether the join body carries the configured garden token (constant-time).
+  defp garden_token_ok?(info) do
+    configured = Application.get_env(:coordinator, :garden_island_token)
+    given = is_map(info) && info["gardenToken"]
+
+    is_binary(configured) and configured != "" and is_binary(given) and
+      Plug.Crypto.secure_compare(given, configured)
+  end
+
+  # A garden's verified day: the one predecessor a reject may not roll back.
+  defp garden_verified?(s, seg),
+    do: s.gardens[seg.experiment] != nil and seg.status == "verified"
+
+  # A segment of an ordinary experiment is always released; a garden's only
+  # once its day is.
+  defp released?(s, seg) do
+    case s.gardens[seg.experiment] do
+      nil -> true
+      g -> Garden.released?(g, seg.index)
+    end
+  end
+
+  # When a garden's day completes (a run) or is verified, stamp it.
+  defp record_garden_day(s, seg, kind) do
+    case s.gardens[seg.experiment] do
+      nil ->
+        s
+
+      g ->
+        g =
+          case {kind, seg.status} do
+            {"run", "done"} -> Garden.record_done(g, seg.index, now())
+            {"verify", "verified"} -> Garden.record_verified(g, seg.index, now())
+            _ -> g
+          end
+
+        put_in(s, [:gardens, seg.experiment], g)
+    end
+  end
 
   # ---- validation ----
 
@@ -1208,14 +1703,15 @@ defmodule Coordinator.Queue do
           not Segment.pending_or_assigned_verify?(seg) and
           Segment.accepted_island(seg) != island and
           metrics_version_compatible?(s, seg, island) and
-          not gated?(gated, capabilities, seg)
+          not gated?(gated, capabilities, seg) and garden_island?(s, seg, island)
       end)
 
     runnable =
       Enum.find(segs, fn seg ->
-        seg.status == "pending" and (seg.index == 0 or prev_done?(s, seg)) and
+        seg.status == "pending" and released?(s, seg) and
+          (seg.index == 0 or prev_done?(s, seg)) and
           metrics_version_compatible?(s, seg, island) and import_ready?(s, seg) and
-          not gated?(gated, capabilities, seg)
+          not gated?(gated, capabilities, seg) and garden_island?(s, seg, island)
       end)
 
     lease = rand(12)
@@ -1486,15 +1982,21 @@ defmodule Coordinator.Queue do
 
   defp host(_s, nil), do: "?"
   defp host(s, id), do: (s.islands[id] || %{adapter: "?"}).adapter
-  defp now, do: System.system_time(:millisecond)
+  defp now, do: Coordinator.Clock.now()
   defp rand(n), do: Base.url_encode64(:crypto.strong_rand_bytes(n), padding: false)
   defp clip(v) when is_binary(v), do: String.slice(v, 0, 200)
   defp clip(_), do: "?"
 
+  # Never `:dir` or `:index`; `:gardens` only while empty (see `@state_version`).
+  defp persist_drops(%{gardens: gardens}) when map_size(gardens) == 0,
+    do: [:dir, :index, :gardens]
+
+  defp persist_drops(_s), do: [:dir, :index]
+
   defp persist(s) do
     path = Path.join(s.dir, "state.bin")
     tmp = path <> ".tmp"
-    File.write!(tmp, :erlang.term_to_binary(Map.drop(s, [:dir, :index])))
+    File.write!(tmp, :erlang.term_to_binary(Map.drop(s, persist_drops(s))))
     File.rename!(tmp, path)
     s
   end

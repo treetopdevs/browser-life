@@ -151,8 +151,8 @@ integers, ms since the epoch; all steps are absolute.
 | `verification.diverged`, `verification.failed` | Days whose replay disagreed; days an island reported it could not run as given. |
 | `verification.share` | `daysVerified / daysDone`, rounded to 4 places; `null` before any day is done. |
 | `census` | The newest done day's end-of-day numbers, or `null`: `day`, `step`, `individuals`, `lineages`, `maxGeneration`, `mutations`, `extinct`, `conservationOk` (each a number or boolean, or `null` when the island did not report it), `verified` (that day is verified), `source` (`"producer"`: reported by the island that ran the day; the digest, not these numbers, is what the replay checks). |
-| `tip` | `{day, step, digest, verified}` of the newest done day, or `null`. `digest` is the 16-hex-digit artifact digest. |
-| `fork` | The newest verified day's end checkpoint, or `null`: `{day, step, digest, checkpoint}`, `checkpoint` being the path that serves it (below). |
+| `tip` | `{day, step, digest, verified}` of the newest done day, or `null`. `digest` is the 16-hex-digit artifact digest. `verified` is that day's own replay (`days[].status`, `census.verified` likewise); `clock.verifiedStep` and `fork` are the prefix. |
+| `fork` | The end checkpoint of the newest day of the verified prefix (`clock.verifiedStep`: every day from 0 verified), or `null`: `{day, step, digest, checkpoint}`, `checkpoint` being the path that serves it (below). A day verified while an earlier day is not is not offered: it was replayed from a checkpoint nobody has checked. |
 | `days` | The newest released days, newest first, at most 14: `day`, `startStep`, `endStep`, `status`, `releasedAt`, `doneAt`, `verifiedAt`, `digest`, `verification`, `letters`, `census`. |
 | `days[].status` | `"waiting"` (released, no island holds it), `"growing"`, `"done"`, `"verified"`, `"diverged"`, `"failed"`, `"blocked"` (after a diverged or failed day). |
 | `days[].doneAt`, `verifiedAt`, `digest` | `null` until done / verified. |
@@ -176,12 +176,18 @@ No authentication. The body is exactly `{"kind": "stone", "x": <int>, "y":
 public and carry nothing about who wrote them.
 
 * `201 {"letter": <letter>}` (status `"waiting"`, with its `day` and `landsAtStep`).
-* `422 {"error": ...}`: not a stone as above.
+* `422 {"error": ...}`: not a stone as above, or its centre is outside the world.
+* `413`: a body over 1 KB (a letter is about 40 bytes; the body is not parsed past that).
 * `429 {"error": ..., "retryAfterMs": <int>}` with a `Retry-After` header (seconds):
   more than `lettersPerAddressPerHour` letters from one network address in the
   current hour. The address is kept in memory only, salted and hashed, for at
-  most the hour; it is never written to disk. Behind a reverse proxy set
-  `:trust_forwarded_for` so the address is the right-most `X-Forwarded-For` entry.
+  most the hour; it is never written to disk. An IPv6 address counts as its /64
+  and an IPv4-mapped one as its IPv4 address. Behind a reverse proxy set
+  `:trust_forwarded_for` so the address is the right-most `X-Forwarded-For` entry
+  (and firewall the origin port to the proxy, or a client names its own address).
+  A letter the queue refuses (409) is given back, but the refusal counts against
+  the address (`garden_refusals_per_address` per hour, default 20), after which it
+  is answered 429 as well.
 * `409 {"error": ...}`: the garden takes no letters now (`letters.queued` at
   `queueMax`, the log at `logMax`, the garden stopped or finished, or no day left
   before the horizon).
@@ -214,8 +220,26 @@ Same admin authentication as `POST /api/experiments`.
   ```
 
 * `POST /api/gardens/:name/letters/:id/drop`: the keeper's veto. `200
-  {"letter": <letter>}` (status `"dropped"`); 409 once the letter's day has been
-  assigned; 404 for an unknown garden or letter.
+  {"letter": <letter>}` (status `"dropped"`; dropping a dropped letter is the
+  same 200); 409 once the letter's day has been assigned; 404 for an unknown
+  garden or letter.
+* `POST /api/gardens/:name/days/:index/requeue`: puts a **failed** or
+  **diverged** day (and the days it blocked) back in the queue, so one island's
+  bad report does not end the garden. `200 {"day": n, "status": "pending"}`; 409
+  for a day in any other state; 404 for an unknown garden or day. The day's
+  letters do not change.
+
+### Who tends it, and what is not covered
+
+Islands join without credentials, so by default anyone can run a day, replay it
+under a second island id, or fail it. "Verified" means two islands agreed, not
+that either is trusted, and `tending.*` counts island ids and adapter
+descriptions as islands report them. Setting `BL_GARDEN_ISLAND_TOKEN` (config
+`:garden_island_token`) offers a garden's days only to islands that joined with
+`"gardenToken": <the token>` in the join body; the token is not stored. An island
+cannot reject (roll back) a verified day of a garden. A garden's run bundle
+cannot yet be exported with `tools/stitch.ts`: each segment's manifest carries
+the letters as of its assignment, and `stitchRun` compares whole specs.
 
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 

@@ -1,0 +1,779 @@
+defmodule CoordinatorWeb.GardenApiTest do
+  @moduledoc """
+  The garden's HTTP surface: the public view and its cache, letters (422, 429,
+  409, 404 and the refund), the verified-day checkpoint, and the keeper's
+  routes. A real `Coordinator.Queue` on a hand-moved clock, on `spots` with a
+  20-step day.
+  """
+  use CoordinatorWeb.ConnCase, async: false
+  import CoordinatorWeb.GardenHelpers
+  alias Coordinator.{LetterLimiter, Queue, TestClock}
+
+  @d 20
+  @founding [%{"step" => 0, "kind" => "lesion", "x" => 10, "y" => 10, "r" => 3}]
+  @env [
+    :lease_ms,
+    :garden_letters_per_address,
+    :garden_refusals_per_address,
+    :garden_letter_window_ms,
+    :garden_cache_ms,
+    :trust_forwarded_for,
+    :public_garden,
+    :admin_token,
+    :allow_local_admin,
+    :cors_origins
+  ]
+
+  setup do
+    dir = Path.join(System.tmp_dir!(), "bl-garden-api-#{System.unique_integer([:positive])}")
+    saved = snapshot_env(@env)
+    # Advancing a dawn must not expire leases; and mid-window, so a Retry-After
+    # is not a whole window.
+    Application.put_env(:coordinator, :lease_ms, 1_000 * day_ms())
+    TestClock.install(100 * day_ms() + 3_600_000 + 1_234)
+    LetterLimiter.reset()
+
+    on_exit(fn ->
+      LetterLimiter.reset()
+      TestClock.uninstall()
+      restore_env(saved)
+      File.rm_rf!(dir)
+    end)
+
+    start_supervised!({Queue, data_dir: dir})
+    %{dir: dir}
+  end
+
+  # ---- helpers ----
+
+  defp params(over \\ %{}) do
+    Map.merge(
+      %{
+        "name" => "commons",
+        "presetId" => "spots",
+        "seed" => 1,
+        "founding" => @founding,
+        "stepsPerDay" => @d,
+        "censusEvery" => 10,
+        "days" => 5,
+        "lettersPerDay" => 8,
+        "queueMax" => 50
+      },
+      over
+    )
+  end
+
+  defp garden!(over \\ %{}), do: {:ok, _} = Queue.create_garden(params(over))
+
+  defp post_json(conn, path, body) do
+    conn
+    |> put_req_header("content-type", "application/json")
+    |> post(path, if(is_binary(body), do: body, else: Jason.encode!(body)))
+  end
+
+  defp stone(over \\ %{}),
+    do: Map.merge(%{"kind" => "stone", "x" => 30, "y" => 40, "r" => 5}, over)
+
+  defp from(conn, ip), do: %{conn | remote_ip: ip}
+  defp letters_path(name \\ "commons"), do: "/api/public/gardens/#{name}/letters"
+
+  # ---- the public view ----
+
+  describe "GET the view" do
+    test "no authentication, no-store, JSON; the unnamed route is the configured garden", %{
+      conn: conn
+    } do
+      Application.put_env(:coordinator, :allow_local_admin, false)
+      Application.put_env(:coordinator, :admin_token, "secret")
+      garden!()
+      garden!(%{"name" => "other", "seed" => 2})
+
+      for path <- ["/api/public/garden", "/api/public/gardens/commons"] do
+        c = get(conn, path)
+        assert %{"contract" => "garden-v1", "name" => "commons"} = json_response(c, 200)
+        assert get_resp_header(c, "cache-control") == ["no-store"]
+        assert [type] = get_resp_header(c, "content-type")
+        assert type =~ "application/json"
+      end
+
+      assert %{"name" => "other"} = conn |> get("/api/public/gardens/other") |> json_response(200)
+
+      Application.put_env(:coordinator, :public_garden, "other")
+      assert %{"name" => "other"} = conn |> get("/api/public/garden") |> json_response(200)
+    end
+
+    test "404 for no such garden, and for a name no garden could have", %{conn: conn} do
+      assert %{"error" => "not found"} = conn |> get("/api/public/garden") |> json_response(404)
+      garden!()
+
+      for name <- ["nope", "Commons", "..", "a b", String.duplicate("a", 65)] do
+        assert %{"error" => "not found"} =
+                 conn |> get("/api/public/gardens/#{URI.encode(name)}") |> json_response(404)
+      end
+    end
+
+    test "never carries an island id or an adapter string", %{conn: conn, dir: dir} do
+      garden!()
+      a = join("Secret-GPU-A")
+      b = join("Secret-GPU-B")
+      run_and_verify(dir, a, b)
+
+      body = conn |> get("/api/public/garden") |> response(200)
+      refute body =~ "Secret-GPU"
+      refute body =~ a
+      refute body =~ b
+    end
+
+    test "is served from a cache outside the queue until a letter invalidates it", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      garden!()
+
+      queued = fn c ->
+        c |> get("/api/public/garden") |> json_response(200) |> get_in(["letters", "queued"])
+      end
+
+      assert queued.(conn) == 0
+      # A write that bypasses the controller is invisible until the entry expires...
+      {:ok, _} = Queue.post_letter("commons", %{x: 5, y: 5, r: 2})
+      assert queued.(conn) == 0
+
+      # ...but a letter posted over HTTP invalidates the entry, so the poster sees it.
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+      assert queued.(conn) == 2
+
+      # A drop does too.
+      assert %{"letter" => %{"status" => "dropped"}} =
+               conn |> post("/api/gardens/commons/letters/ltr-1/drop") |> json_response(200)
+
+      assert queued.(conn) == 1
+    end
+
+    test "with the cache off every read is live", %{conn: conn} do
+      garden!()
+      {:ok, _} = Queue.post_letter("commons", %{x: 5, y: 5, r: 2})
+
+      assert %{"letters" => %{"queued" => 1}} =
+               conn |> get("/api/public/garden") |> json_response(200)
+
+      {:ok, _} = Queue.post_letter("commons", %{x: 6, y: 5, r: 2})
+
+      assert %{"letters" => %{"queued" => 2}} =
+               conn |> get("/api/public/garden") |> json_response(200)
+    end
+
+    test "CORS is the existing policy: an allowed origin is echoed, others get nothing", %{
+      conn: conn
+    } do
+      Application.put_env(:coordinator, :cors_origins, ["http://localhost:5173"])
+      garden!()
+
+      c = conn |> put_req_header("origin", "http://localhost:5173") |> get("/api/public/garden")
+      assert get_resp_header(c, "access-control-allow-origin") == ["http://localhost:5173"]
+
+      c = conn |> put_req_header("origin", "http://evil.example") |> get("/api/public/garden")
+      assert get_resp_header(c, "access-control-allow-origin") == []
+
+      c =
+        conn
+        |> put_req_header("origin", "http://localhost:5173")
+        |> options("/api/public/garden/letters")
+
+      assert c.status == 204
+    end
+  end
+
+  # ---- posting a letter ----
+
+  describe "POST a letter" do
+    test "201 with the waiting letter, its day and landing step; the view shows it", %{conn: conn} do
+      garden!()
+
+      c = post_json(conn, letters_path(), stone())
+      assert %{"letter" => letter} = json_response(c, 201)
+
+      assert %{
+               "id" => "ltr-1",
+               "kind" => "stone",
+               "x" => 30,
+               "y" => 40,
+               "r" => 5,
+               "status" => "waiting",
+               "day" => 0,
+               "landsAtStep" => @d,
+               "landedIn" => nil,
+               "droppedAt" => nil
+             } = letter
+
+      assert is_integer(letter["postedAt"])
+      # The unnamed route posts to the configured garden.
+      assert %{"letter" => %{"id" => "ltr-2"}} =
+               conn |> post_json("/api/public/garden/letters", stone()) |> json_response(201)
+
+      view = conn |> get("/api/public/garden") |> json_response(200)
+      assert Enum.map(view["letters"]["waiting"], & &1["id"]) == ["ltr-1", "ltr-2"]
+    end
+
+    test "422 for anything but exactly a stone", %{conn: conn} do
+      garden!()
+
+      bad = [
+        # floats, strings, booleans, nulls
+        stone(%{"x" => 1.5}),
+        stone(%{"x" => "30"}),
+        stone(%{"y" => true}),
+        stone(%{"r" => nil}),
+        stone(%{"r" => 5.0}),
+        # extra and missing keys
+        stone(%{"name" => "ada"}),
+        Map.delete(stone(), "kind"),
+        %{},
+        # not a stone
+        stone(%{"kind" => "feed"}),
+        stone(%{"kind" => 7}),
+        # radius out of range
+        stone(%{"r" => 0}),
+        stone(%{"r" => 33}),
+        stone(%{"r" => -1}),
+        # out of the world
+        stone(%{"x" => -1}),
+        stone(%{"x" => 256}),
+        stone(%{"y" => 256}),
+        stone(%{"y" => 10_000_000_000_000_000_000_000})
+      ]
+
+      for body <- bad do
+        assert %{"error" => why} = conn |> post_json(letters_path(), body) |> json_response(422)
+        assert is_binary(why)
+      end
+
+      # Not an object at all, or not JSON.
+      for raw <- ["[1,2]", "7", "\"stone\"", "null"] do
+        assert %{"error" => _} = conn |> post_json(letters_path(), raw) |> json_response(422)
+      end
+
+      # Query and path parameters never count as letter keys.
+      assert %{"error" => _} =
+               conn
+               |> post_json(letters_path() <> "?kind=stone&x=1&y=1&r=1", %{})
+               |> json_response(422)
+
+      assert %{"letter" => _} =
+               conn |> post_json(letters_path() <> "?foo=bar", stone()) |> json_response(201)
+
+      # Edges of the world and radius are fine.
+      assert conn
+             |> post_json(letters_path(), stone(%{"x" => 0, "y" => 255, "r" => 32}))
+             |> json_response(201)
+
+      assert conn
+             |> post_json(letters_path(), stone(%{"x" => 255, "y" => 0, "r" => 1}))
+             |> json_response(201)
+    end
+
+    test "invalid bodies cost nothing against the address's budget", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      garden!()
+
+      for _ <- 1..5,
+          do: assert(conn |> post_json(letters_path(), stone(%{"r" => 0})) |> json_response(422))
+
+      for _ <- 1..5,
+          do:
+            assert(conn |> post_json(letters_path(), stone(%{"x" => 999})) |> json_response(422))
+
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+    end
+
+    test "429 after the per-address budget, with a Retry-After that matches the body", %{
+      conn: conn
+    } do
+      garden!()
+
+      for _ <- 1..3, do: assert(conn |> post_json(letters_path(), stone()) |> json_response(201))
+      c = post_json(conn, letters_path(), stone())
+      assert %{"error" => _, "retryAfterMs" => ms} = json_response(c, 429)
+      # Mid-window: 1,234 ms into the hour.
+      assert ms == 3_600_000 - 1_234
+      assert get_resp_header(c, "retry-after") == [Integer.to_string(div(ms + 999, 1000))]
+      assert get_resp_header(c, "retry-after") == ["3599"]
+
+      # The refused attempt wrote nothing.
+      assert get(conn, "/api/public/garden")
+             |> json_response(200)
+             |> get_in(["letters", "queued"]) == 3
+
+      # Another address is untouched.
+      other = from(conn, {10, 0, 0, 2})
+      assert other |> post_json(letters_path(), stone()) |> json_response(201)
+
+      # The window ends: the first address may write again.
+      TestClock.advance(ms)
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+    end
+
+    test "the budget is per address, not per garden", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      garden!()
+      garden!(%{"name" => "other", "seed" => 2})
+
+      assert conn |> post_json(letters_path("commons"), stone()) |> json_response(201)
+      assert conn |> post_json(letters_path("other"), stone()) |> json_response(429)
+    end
+
+    test "409 when the garden takes no letters, and the refused letter is refunded", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_letters_per_address, 2)
+      garden!(%{"queueMax" => 1})
+
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+      # The queue is full: 409, every time, never 429 (each refusal gave its token back).
+      for _ <- 1..5 do
+        assert %{"error" => _} = conn |> post_json(letters_path(), stone()) |> json_response(409)
+      end
+
+      # And the budget really was kept: with the queue drained, one more letter is allowed.
+      assert conn |> post("/api/gardens/commons/letters/ltr-1/drop") |> json_response(200)
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+      assert conn |> post_json(letters_path(), stone()) |> json_response(429)
+    end
+
+    test "422 from the queue (a centre outside this garden's world) is refunded too", %{
+      conn: conn
+    } do
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      garden!()
+
+      for _ <- 1..3 do
+        assert conn |> post_json(letters_path(), stone(%{"x" => 300})) |> json_response(422)
+      end
+
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+    end
+
+    @tag :capture_log
+    test "409 for a stopped garden", %{conn: conn} do
+      garden!()
+      a = join("A")
+      task = next(a)
+      assert :ok = Queue.fail(task.segment.id, a, task.lease, "cannot run")
+
+      assert %{"error" => _} = conn |> post_json(letters_path(), stone()) |> json_response(409)
+
+      assert conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("state") ==
+               "stopped"
+    end
+
+    test "404 for no such garden or a bad name; nothing is charged", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      garden!()
+
+      for _ <- 1..3 do
+        assert %{"error" => "not found"} =
+                 conn |> post_json(letters_path("nope"), stone()) |> json_response(404)
+      end
+
+      assert conn |> post_json(letters_path("Bad_Name"), stone()) |> json_response(404)
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+    end
+
+    test "the address is the peer unless the proxy header is trusted", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      garden!()
+      xff = fn c, v -> put_req_header(c, "x-forwarded-for", v) end
+
+      # Untrusted: the header is just text, one peer one budget.
+      assert conn |> xff.("1.1.1.1") |> post_json(letters_path(), stone()) |> json_response(201)
+      assert conn |> xff.("2.2.2.2") |> post_json(letters_path(), stone()) |> json_response(429)
+
+      # Trusted: the right-most parseable entry is the address.
+      LetterLimiter.reset()
+      Application.put_env(:coordinator, :trust_forwarded_for, true)
+
+      assert conn
+             |> xff.("9.9.9.9, 1.1.1.1")
+             |> post_json(letters_path(), stone())
+             |> json_response(201)
+
+      assert conn
+             |> xff.("8.8.8.8, 1.1.1.1")
+             |> post_json(letters_path(), stone())
+             |> json_response(429)
+
+      assert conn |> xff.("1.1.1.2") |> post_json(letters_path(), stone()) |> json_response(201)
+      # An unparseable right-most entry is not an address: the peer is used,
+      # never an entry further left (the client wrote those)...
+      assert conn
+             |> xff.("1.1.1.1, not-an-ip")
+             |> post_json(letters_path(), stone())
+             |> json_response(201)
+
+      assert conn
+             |> xff.("1.1.1.9, ")
+             |> post_json(letters_path(), stone())
+             |> json_response(429)
+
+      # ...IPv6 parses...
+      assert conn |> xff.("::1") |> post_json(letters_path(), stone()) |> json_response(201)
+      assert conn |> xff.("::1") |> post_json(letters_path(), stone()) |> json_response(429)
+      # ...no entry at all falls back to the peer (spent above)...
+      assert conn |> xff.("garbage") |> post_json(letters_path(), stone()) |> json_response(429)
+      assert conn |> post_json(letters_path(), stone()) |> json_response(429)
+      # ...and several header lines are one list, the last line's last entry winning.
+      two = %{
+        conn
+        | req_headers: [{"x-forwarded-for", "3.3.3.3"}, {"x-forwarded-for", "4.4.4.4"}]
+      }
+
+      assert two |> post_json(letters_path(), stone()) |> json_response(201)
+      assert conn |> xff.("4.4.4.4") |> post_json(letters_path(), stone()) |> json_response(429)
+    end
+  end
+
+  # ---- the checkpoint ----
+
+  describe "GET a checkpoint" do
+    test "only a verified day's digest is served", %{conn: conn, dir: dir} do
+      garden!()
+      a = join("A")
+      b = join("B")
+      run_and_verify(dir, a, b)
+
+      # Day 1: run, not yet replayed.
+      TestClock.advance(day_ms())
+      t1 = next(a)
+      assert t1.segment.index == 1
+      finish(dir, a, t1)
+
+      path = fn name, digest -> "/api/public/gardens/#{name}/checkpoints/#{digest}" end
+
+      c = get(conn, path.("commons", dg(0)))
+      assert response(c, 200) == "x"
+      assert get_resp_header(c, "content-type") |> hd() =~ "application/octet-stream"
+
+      # Done but not verified; a day that does not exist; not hex; the wrong garden.
+      for p <- [
+            path.("commons", dg(1)),
+            path.("commons", dg(4)),
+            path.("commons", "0000000000000000"),
+            path.("commons", "..%2F..%2Fstate.bin"),
+            path.("commons", String.upcase(dg(0))),
+            path.("commons", String.slice(dg(0), 0, 15)),
+            path.("nope", dg(0))
+          ] do
+        assert %{"error" => "not found"} = conn |> get(p) |> json_response(404)
+      end
+
+      # Once the replay lands it is served.
+      v1 = next(b)
+      assert v1.kind == "verify" and v1.segment.index == 1
+      {:ok, "verified"} = verify(v1, b)
+      assert conn |> get(path.("commons", dg(1))) |> response(200) == "x"
+    end
+  end
+
+  # ---- the keeper ----
+
+  describe "keeper routes" do
+    test "founding a garden over HTTP, then reading it", %{conn: conn} do
+      body = params() |> Map.put("name", "made")
+
+      assert %{"garden" => "made", "days" => 5} =
+               conn |> post_json("/api/gardens", body) |> json_response(200)
+
+      assert %{"name" => "made", "contract" => "garden-v1"} =
+               conn |> get("/api/public/gardens/made") |> json_response(200)
+
+      assert %{"error" => "garden exists"} =
+               conn |> post_json("/api/gardens", body) |> json_response(422)
+
+      assert %{"error" => "presetId" <> _} =
+               conn
+               |> post_json("/api/gardens", %{body | "name" => "x2", "presetId" => "gradient"})
+               |> json_response(422)
+
+      assert %{"error" => _} = conn |> post_json("/api/gardens", "[1]") |> json_response(422)
+      assert %{"error" => _} = conn |> post_json("/api/gardens", %{}) |> json_response(422)
+    end
+
+    test "a cached 'not found' never hides a garden just founded", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      assert conn |> get("/api/public/gardens/made") |> json_response(404)
+      assert conn |> post_json("/api/gardens", params(%{"name" => "made"})) |> json_response(200)
+      assert conn |> get("/api/public/gardens/made") |> json_response(200)
+    end
+
+    test "admin routes need the admin; the public routes never do", %{conn: conn} do
+      Application.put_env(:coordinator, :allow_local_admin, false)
+      Application.put_env(:coordinator, :admin_token, "keeper")
+      authed = put_req_header(conn, "authorization", "Bearer keeper")
+
+      assert %{"error" => "admin authentication required"} =
+               conn |> post_json("/api/gardens", params()) |> json_response(401)
+
+      assert conn
+             |> put_req_header("authorization", "Bearer wrong")
+             |> post_json("/api/gardens", params())
+             |> json_response(401)
+
+      assert authed |> post_json("/api/gardens", params()) |> json_response(200)
+
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+      assert conn |> post("/api/gardens/commons/letters/ltr-1/drop") |> json_response(401)
+      assert authed |> post("/api/gardens/commons/letters/ltr-1/drop") |> json_response(200)
+      assert conn |> get("/api/public/garden") |> json_response(200)
+    end
+
+    test "local administration works without a token only where enabled", %{conn: conn} do
+      Application.put_env(:coordinator, :allow_local_admin, true)
+      assert conn |> post_json("/api/gardens", params()) |> json_response(200)
+
+      assert conn
+             |> from({10, 0, 0, 9})
+             |> post("/api/gardens/commons/letters/ltr-1/drop")
+             |> json_response(401)
+    end
+
+    test "drop: 200 (again too), 409 once the day is assigned, 404 for the unknown", %{
+      conn: conn
+    } do
+      garden!()
+      for x <- [1, 2], do: {:ok, _} = Queue.post_letter("commons", %{x: x, y: 1, r: 1})
+      drop = fn id -> post(conn, "/api/gardens/commons/letters/#{id}/drop") end
+
+      assert %{"letter" => %{"id" => "ltr-1", "status" => "dropped", "droppedAt" => at}} =
+               json_response(drop.("ltr-1"), 200)
+
+      assert is_integer(at)
+      # Dropping it again is the same answer (a keeper's retry), not a 409.
+      assert %{"letter" => %{"id" => "ltr-1", "status" => "dropped", "droppedAt" => ^at}} =
+               json_response(drop.("ltr-1"), 200)
+
+      # Day 0 is taken: ltr-2 is sealed.
+      a = join("A")
+      assert %{kind: "run"} = next(a)
+      assert %{"error" => _} = json_response(drop.("ltr-2"), 409)
+
+      for id <- ["ltr-99", "ltr-0", "x", "ltr-", "ltr-1234567890", "LTR-1"] do
+        assert json_response(drop.(id), 404)
+      end
+
+      assert conn |> post("/api/gardens/nope/letters/ltr-1/drop") |> json_response(404)
+      assert conn |> post("/api/gardens/Bad_Name/letters/ltr-1/drop") |> json_response(404)
+    end
+  end
+
+  # ---- what the public cannot make the queue do ----
+
+  describe "public traffic that never reaches the queue" do
+    # A suspended Queue answers nothing: a request that needed it would hang
+    # until the call timed out, so a prompt answer proves it was never asked.
+    defp without_queue(fun) do
+      :ok = :sys.suspend(Queue)
+
+      try do
+        fun.()
+      after
+        :sys.resume(Queue)
+      end
+    end
+
+    test "an unknown garden: view, letters and checkpoints are 404s with no queue call", %{
+      conn: conn
+    } do
+      garden!()
+
+      without_queue(fn ->
+        assert conn |> get("/api/public/gardens/nope") |> json_response(404)
+        assert conn |> get("/api/public/gardens/nope/checkpoints/#{dg(0)}") |> json_response(404)
+        assert conn |> post_json(letters_path("nope"), stone()) |> json_response(404)
+      end)
+    end
+
+    test "a centre outside the world is a 422 with no queue call, and costs nothing", %{
+      conn: conn
+    } do
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      garden!()
+
+      without_queue(fn ->
+        for _ <- 1..10 do
+          assert %{"error" => "x must be in 0..255"} =
+                   conn |> post_json(letters_path(), stone(%{"x" => 256})) |> json_response(422)
+
+          assert conn |> post_json(letters_path(), stone(%{"y" => -1})) |> json_response(422)
+        end
+      end)
+
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+    end
+
+    test "refused letters are given back but metered: past the refusal budget it is a 429 with no queue call",
+         %{conn: conn} do
+      Application.put_env(:coordinator, :garden_letters_per_address, 2)
+      Application.put_env(:coordinator, :garden_refusals_per_address, 3)
+      garden!(%{"queueMax" => 1})
+
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+
+      for _ <- 1..3,
+          do: assert(conn |> post_json(letters_path(), stone()) |> json_response(409))
+
+      without_queue(fn ->
+        for _ <- 1..20 do
+          assert %{"retryAfterMs" => ms} =
+                   conn |> post_json(letters_path(), stone()) |> json_response(429)
+
+          assert ms == 3_600_000 - 1_234
+        end
+      end)
+
+      # Another address still reaches the queue (and is refused by it, 409).
+      assert from(conn, {10, 0, 0, 2}) |> post_json(letters_path(), stone()) |> json_response(409)
+
+      # The window ends: both budgets start again.
+      TestClock.advance(3_600_000)
+      assert conn |> post_json(letters_path(), stone()) |> json_response(409)
+    end
+
+    test "an IPv6 address is budgeted as its /64; an IPv4-mapped one as its IPv4 address", %{
+      conn: conn
+    } do
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      garden!()
+
+      a = {0x2001, 0xDB8, 1, 2, 0, 0, 0, 1}
+      same_net = {0x2001, 0xDB8, 1, 2, 0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD}
+      other_net = {0x2001, 0xDB8, 1, 3, 0, 0, 0, 1}
+
+      assert from(conn, a) |> post_json(letters_path(), stone()) |> json_response(201)
+      assert from(conn, a) |> post_json(letters_path(), stone()) |> json_response(429)
+      assert from(conn, same_net) |> post_json(letters_path(), stone()) |> json_response(429)
+      assert from(conn, other_net) |> post_json(letters_path(), stone()) |> json_response(201)
+
+      mapped = {0, 0, 0, 0, 0, 0xFFFF, 0x0A00, 0x0003}
+      assert from(conn, {10, 0, 0, 3}) |> post_json(letters_path(), stone()) |> json_response(201)
+      assert from(conn, mapped) |> post_json(letters_path(), stone()) |> json_response(429)
+    end
+
+    test "the unnamed routes are the configured garden whatever ?name= or the body says", %{
+      conn: conn
+    } do
+      garden!()
+      garden!(%{"name" => "other", "seed" => 2})
+
+      assert %{"name" => "commons"} =
+               conn |> get("/api/public/garden?name=other") |> json_response(200)
+
+      assert conn
+             |> post_json("/api/public/garden/letters?name=other", stone(%{"name" => "other"}))
+             |> json_response(422)
+
+      assert conn
+             |> post_json("/api/public/garden/letters?name=other", stone())
+             |> json_response(201)
+
+      assert %{"letters" => %{"queued" => 1}} =
+               conn |> get("/api/public/gardens/commons") |> json_response(200)
+
+      assert %{"letters" => %{"queued" => 0}} =
+               conn |> get("/api/public/gardens/other") |> json_response(200)
+    end
+
+    test "a letter body over 1 KB is a 413 before it is parsed", %{conn: conn} do
+      garden!()
+      big = stone(%{"pad" => String.duplicate("a", 2_000)})
+
+      huge_x =
+        Jason.encode!(%{"kind" => "stone", "x" => 0, "y" => 0, "r" => 1})
+        |> String.replace("\"x\":0", "\"x\":" <> String.duplicate("9", 4_000))
+
+      assert_error_sent 413, fn -> post_json(conn, letters_path(), big) end
+      assert_error_sent 413, fn -> post_json(conn, "/api/public/garden/letters", huge_x) end
+
+      # A small bignum that fits is refused as out of range, not parsed into the garden.
+      small = ~s({"kind":"stone","x":#{String.duplicate("9", 60)},"y":0,"r":1})
+
+      assert %{"error" => "x is out of range"} =
+               conn |> post_json(letters_path(), small) |> json_response(422)
+
+      # The island routes keep their own, larger, limit.
+      assert conn
+             |> post_json("/api/islands", %{"adapter" => String.duplicate("a", 5_000)})
+             |> json_response(200)
+    end
+
+    test "a view read before a letter and stored after it is not served", %{conn: _conn} do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      garden!()
+
+      gen = LetterLimiter.generation("commons")
+      LetterLimiter.invalidate("commons")
+      LetterLimiter.put_view("commons", "stale", gen)
+      assert LetterLimiter.cached_view("commons") == :miss
+
+      LetterLimiter.put_view("commons", "fresh", LetterLimiter.generation("commons"))
+      assert LetterLimiter.cached_view("commons") == {:ok, "fresh"}
+      LetterLimiter.invalidate("commons")
+      assert LetterLimiter.cached_view("commons") == :miss
+    end
+
+    test "checkpoint lookups are cached outside the queue until the garden is invalidated", %{
+      conn: conn,
+      dir: dir
+    } do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      garden!()
+      a = join("A")
+      b = join("B")
+      run_and_verify(dir, a, b)
+
+      path = "/api/public/gardens/commons/checkpoints/#{dg(0)}"
+      assert conn |> get(path) |> response(200) == "x"
+
+      without_queue(fn ->
+        assert conn |> get(path) |> response(200) == "x"
+        # A digest nobody has is answered from the same cached set.
+        assert conn
+               |> get("/api/public/gardens/commons/checkpoints/#{dg(3)}")
+               |> json_response(404)
+      end)
+    end
+  end
+
+  # ---- the keeper's recovery ----
+
+  describe "requeue" do
+    @tag :capture_log
+    test "puts a failed day back (admin only); other days are refused", %{conn: conn} do
+      garden!()
+      path = fn name, i -> "/api/gardens/#{name}/days/#{i}/requeue" end
+
+      a = join("A")
+      task = next(a)
+      assert :ok = Queue.fail(task.segment.id, a, task.lease, "cannot run")
+
+      assert conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("state") ==
+               "stopped"
+
+      Application.put_env(:coordinator, :allow_local_admin, false)
+      Application.put_env(:coordinator, :admin_token, "secret")
+      assert conn |> post(path.("commons", 0)) |> json_response(401)
+      assert conn |> from({10, 0, 0, 9}) |> post(path.("commons", 0)) |> json_response(401)
+
+      keeper = put_req_header(conn, "authorization", "Bearer secret")
+
+      assert %{"day" => 0, "status" => "pending"} =
+               keeper |> post(path.("commons", 0)) |> json_response(200)
+
+      assert conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("state") ==
+               "waiting-for-island"
+
+      # Not failed any more: refused; unknown day, garden or a bad index: not found.
+      assert %{"error" => "day 0 is pending" <> _} =
+               keeper |> post(path.("commons", 0)) |> json_response(409)
+
+      assert keeper |> post(path.("commons", 99)) |> json_response(404)
+      assert keeper |> post(path.("nope", 0)) |> json_response(404)
+      assert keeper |> post(path.("commons", "x")) |> json_response(404)
+    end
+  end
+end
