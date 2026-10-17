@@ -8,6 +8,19 @@ if config_env() == :prod and System.get_env("BL_ADMIN_TOKEN") in [nil, ""],
 if origins = System.get_env("BL_CORS_ORIGINS"),
   do: config(:coordinator, cors_origins: String.split(origins, ",", trim: true))
 
+# Restricts the garden's days to islands that joined with this token in the join
+# body's "gardenToken" (unset: any island may tend a garden).
+if token = System.get_env("BL_GARDEN_ISLAND_TOKEN"),
+  do: config(:coordinator, garden_island_token: token)
+
+# Behind a reverse proxy that appends the peer to X-Forwarded-For, the garden's
+# per-address letter budget keys on that header's right-most entry. Only set it
+# when the origin port is reachable through that proxy alone (firewalled
+# otherwise): a client that can reach the port directly names its own address.
+# Without it every visitor behind a loopback proxy shares one budget.
+if System.get_env("BL_TRUST_FORWARDED_FOR") in ["1", "true"],
+  do: config(:coordinator, trust_forwarded_for: true)
+
 # Lets a test harness (see tests/deno/coordinator_integration.ts) point a real
 # server at a scratch directory instead of the default `data/`.
 if dir = System.get_env("BL_DATA_DIR"), do: config(:coordinator, data_dir: dir)

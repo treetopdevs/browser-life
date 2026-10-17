@@ -297,44 +297,16 @@ defmodule CoordinatorWeb.ApiController do
     end
   end
 
-  # A configured admin token is always required. Without one, experiment
-  # creation and export are refused unless tokenless local administration is
-  # explicitly enabled (dev and test only; behind a reverse proxy every peer is
-  # loopback).
-  defp require_admin(conn, _) do
-    if admin?(conn),
-      do: conn,
-      else: conn |> put_status(401) |> json(%{error: "admin authentication required"}) |> halt()
-  end
+  # The admin check lives in CoordinatorWeb.Auth (shared with the garden
+  # controller): a configured admin token is always required; without one,
+  # admin routes are refused unless tokenless local administration is enabled.
+  defp require_admin(conn, opts), do: CoordinatorWeb.Auth.require_admin(conn, opts)
 
   defp require_island_or_admin(conn, opts),
     do: if(admin?(conn), do: conn, else: require_island(conn, opts))
 
-  defp admin?(conn) do
-    admin = Application.get_env(:coordinator, :admin_token)
-
-    cond do
-      is_binary(admin) and admin != "" ->
-        is_binary(bearer(conn)) and Plug.Crypto.secure_compare(bearer(conn), admin)
-
-      Application.get_env(:coordinator, :allow_local_admin, false) ->
-        loopback?(conn.remote_ip)
-
-      true ->
-        false
-    end
-  end
-
-  defp bearer(conn) do
-    case get_req_header(conn, "authorization") do
-      ["Bearer " <> t] -> t
-      _ -> nil
-    end
-  end
-
-  defp loopback?({127, _, _, _}), do: true
-  defp loopback?({0, 0, 0, 0, 0, 0, 0, 1}), do: true
-  defp loopback?(_), do: false
+  defp admin?(conn), do: CoordinatorWeb.Auth.admin?(conn)
+  defp bearer(conn), do: CoordinatorWeb.Auth.bearer(conn)
 
   # ---- helpers ----
 
