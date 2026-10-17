@@ -3,7 +3,8 @@ import { expect, test } from "@playwright/test";
 // Real OPFS sync handles and Web Locks in independent workers, without requiring a GPU.
 test("same-run storage rejects a stale tab before replacing either recoverable history", async ({ page, browserName }) => {
   test.skip(browserName === "webkit", "Playwright WebKit has no OPFS");
-  await page.goto("/selftest.html");
+  await page.route("**/manifest-concurrency-test", (route) => route.fulfill({ contentType: "text/html", body: "<html><body></body></html>" }));
+  await page.goto("/manifest-concurrency-test");
   const result = await page.evaluate(async () => {
     const source = `
       import { readManifest, writeManifest, writeFile, readFile, recordCheckpoint } from ${JSON.stringify(new URL("/src/opfs.ts", location.href).href)};
@@ -11,7 +12,9 @@ test("same-run storage rejects a stale tab before replacing either recoverable h
       onmessage = async ({ data: { id, command, runId, tab } }) => {
         try {
           if (command === 'create') {
-            manifest = {runId, checkpoints: [], interventions: []};
+            const file = runId + '-initial.blck';
+            await writeFile(file, new Uint8Array([0]));
+            manifest = {runId, checkpoints: [{file, step: 0, hash: '0', interventions: 0}], interventions: []};
             await writeManifest(manifest);
           }
           if (command === 'resume') manifest = await readManifest(runId);
@@ -25,8 +28,9 @@ test("same-run storage rejects a stale tab before replacing either recoverable h
             await recordCheckpoint({file, runId: manifest.runId, step: 2, bytes: 1, savedAt: 'now'});
           }
           const saved = await readManifest(runId);
-          const bytes = saved.checkpoints.length ? [...await readFile(saved.checkpoints[0].file)] : [];
-          postMessage({ id, saved, local: manifest, bytes });
+          const bytes = saved.checkpoints.length ? [...await readFile(saved.checkpoints.at(-1).file)] : [];
+          const previous = command === 'inspect' ? JSON.parse(new TextDecoder().decode(await readFile(runId + '.run.json.prev'))) : null;
+          postMessage({ id, saved, local: manifest, bytes, previous });
         } catch (e) { postMessage({ id, error: e.message, local: manifest }); }
       };`;
     const url = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
@@ -53,7 +57,7 @@ test("same-run storage rejects a stale tab before replacing either recoverable h
       const winner = outcomes.find((o) => !o.error);
       const loser = outcomes.find((o) => o.error);
       const final = await call(workers[0], "inspect", runId);
-      return { outcomes, winner, loser, final };
+      return { outcomes, winner, loser, final, initial: created.saved };
     } finally {
       workers.forEach((worker) => worker.terminate());
       URL.revokeObjectURL(url);
@@ -62,7 +66,8 @@ test("same-run storage rejects a stale tab before replacing either recoverable h
   expect(result.outcomes.filter((o: any) => !o.error)).toHaveLength(1);
   expect(result.loser.error).toContain("Another tab changed");
   expect(result.final.saved).toEqual(result.winner.saved);
-  expect(result.final.saved.checkpoints).toHaveLength(1);
+  expect(result.final.saved.checkpoints).toHaveLength(2);
+  expect(result.final.previous).toEqual(result.initial);
   expect(result.final.saved.interventions).toHaveLength(1);
   expect(result.final.bytes).toEqual([result.winner.saved.interventions[0].x]);
   expect(result.loser.local.interventions[0].x).not.toBe(result.final.bytes[0]);
