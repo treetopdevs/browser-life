@@ -42,8 +42,8 @@ const copyLink = (p: Preset) => {
       label.textContent = "Link copied";
       said = `Link to ${p.name} copied.`;
     } catch {
-      label.textContent = "Could not copy: the world's name is the link";
-      said = `Could not copy the link to ${p.name}. The world's name is the link.`;
+      label.textContent = "Could not copy: the world’s name is the link";
+      said = `Could not copy the link to ${p.name}. The world’s name is the link.`;
     }
     announcer.textContent = said;
     clearTimeout(reset);

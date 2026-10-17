@@ -98,7 +98,7 @@ describe("traits", () => {
     expect(labelsOf("mutation", "wild-storm-m10")[0].label).toBe("Mutation ×10");
     expect(labelsOf("mutation", "spots")).toHaveLength(0);
     expect(labelsOf("cycle", "ponds")[0]).toMatchObject({ label: "Ponds cleared and reseeded every 10,000 steps", detail: expect.stringContaining("heaviest quarter") });
-    expect(labelsOf("cycle", "breeder")[0].detail).toContain("movement, the seed packet's mass and body size together");
+    expect(labelsOf("cycle", "breeder")[0].detail).toContain("movement, the seed packet’s mass and body size together");
     expect(labelsOf("size", "ponds")[0].label).toBe("64 ponds of 64 × 64");
     expect(labelsOf("migration", "archipelago")[0].label).toBe("Islands trade 4 cells every 200 steps");
     expect(labelsOf("size", "archipelago")[0].label).toBe("4 islands of 64 × 64");
@@ -108,14 +108,14 @@ describe("traits", () => {
   });
 
   it("reads the rule changes: lossy taking with its kin test, heritable shape, declared cells, a readable signal", () => {
-    expect(labelsOf("rules", "own-lossy")[0]).toMatchObject({ label: "Taking a stranger's matter is lossy unless kin by lineage", detail: expect.stringContaining("share a lineage") });
-    expect(labelsOf("rules", "own-match")[0]).toMatchObject({ label: "Taking a stranger's matter is lossy unless kin by growth settings", detail: expect.stringContaining("centre is within 8 and its width within 2") });
+    expect(labelsOf("rules", "own-lossy")[0]).toMatchObject({ label: "Taking a stranger’s matter is lossy unless kin by lineage", detail: expect.stringContaining("share a lineage") });
+    expect(labelsOf("rules", "own-match")[0]).toMatchObject({ label: "Taking a stranger’s matter is lossy unless kin by growth settings", detail: expect.stringContaining("centre is within 8 and its width within 2") });
     expect(labelsOf("rules", "own-genome-3")[0].label).toContain("within 3 words");
     expect(labelsOf("rules", "own-genome-1")[0].label).toContain("within 1 word");
     expect(labelsOf("rules", "own-shape-far")[0].label).toBe("Body shape is heritable out to radius 13");
     expect(labelsOf("rules", "own-shape")[0].label).toBe("Body shape is heritable within the usual kernel");
     expect(labelsOf("rules", "own-cell").map((t) => t.label)).toEqual(["Declared cells"]);
-    expect(labelsOf("rules", "own-cell-wall").map((t) => t.label)).toEqual(["Taking a stranger's matter is lossy unless kin by lineage", "Declared cells"]);
+    expect(labelsOf("rules", "own-cell-wall").map((t) => t.label)).toEqual(["Taking a stranger’s matter is lossy unless kin by lineage", "Declared cells"]);
     expect(labelsOf("signal", "planet-sensing")[0].detail).toContain("signal lasts far longer");
     expect(labelsOf("rules", "gradient-m3")).toHaveLength(0);
     expect(labelsOf("medium", "gradient-m3-waste")[0].label).toBe("Waste already in the water");
@@ -131,7 +131,7 @@ describe("differences", () => {
     const only = (world: string, base: string) => worldDiff(preset(world), preset(base));
     expect(only("gradient-m3", "gradient").added.map((t) => t.lever)).toEqual(["founders"]);
     expect(only("gradient-m3", "gradient").removed).toEqual([]);
-    expect(only("own-lossy", "gradient-m3").added.map((t) => t.label)).toEqual(["Taking a stranger's matter is lossy unless kin by lineage"]);
+    expect(only("own-lossy", "gradient-m3").added.map((t) => t.label)).toEqual(["Taking a stranger’s matter is lossy unless kin by lineage"]);
     expect(only("wild-storm-w01", "wild-storm").added.map((t) => t.lever)).toEqual(["wounds"]);
     expect(only("wild-storm-large", "wild-storm").added.map((t) => t.lever)).toEqual(["light", "size", "founders"]);
     expect(only("planet", "gradient").added.map((t) => t.lever)).toEqual(["light"]);
