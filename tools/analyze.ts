@@ -39,6 +39,14 @@
 // a pure `analyzeEnsemble` function with no filesystem access -- tools/nullcal.ts
 // builds `Run[]` in memory and calls `analyzeEnsemble` directly, exercising
 // exactly the same analysis code this CLI runs against real bundles.
+//
+// Memory: the CLI loads with `reduceRun`, which digests each run's
+// series.jsonl as it loads (`digestSeries`) and keeps only that digest, the
+// census steps and its heredity.tsv pairs packed into a typed array;
+// lineages.tsv is streamed per census by `activities`. Peak memory is about
+// one parsed run plus a few MB per run. A run handed over unreduced
+// (tools/nullcal.ts, `loadEnsemble`) is digested on first use, with the same
+// code.
 import { EXACT_MAX, growthVsSaturation, mannWhitney, mean, quantile, ROLES, scheduledTrend, sd } from "@bl/metrics";
 import { distributionIdentity, PRESETS, presetIdentity, type WorldConfig } from "@bl/schema";
 import { specConfig, type RunSpec } from "@bl/runner";
@@ -63,6 +71,7 @@ import {
   type EndpointResult,
   type HeldOutObservableResult,
   type RunView,
+  type SeriesPoint,
 } from "../experiments/endpoints.ts";
 
 export type { Run } from "./lib/bundle.ts";
@@ -135,11 +144,203 @@ function neutralSpecFor(id: string): RunSpec {
 }
 
 // ---------------------------------------------------------------------------
+// Per-run series digest: everything the analysis reads from a run's
+// series.jsonl, computed from that run alone. A parsed 1e6-step series is
+// tens of MB of heap (10^4 census records, most fields unused here), so the
+// CLI digests each run as it loads and drops the records (`reduceRun`);
+// holding every run's series at once would not fit an ensemble of ~100 runs.
+// ---------------------------------------------------------------------------
+type Series = Record<string, any>[];
+
+// Held-out observables' trend statistic and fit window (experiments/
+// endpoints.ts: HELD_OUT_SPECS): a thin wrapper over `scheduledTrend`
+// (packages/metrics/src/stats.ts -- the pure, unit-tested windowing/exclusion
+// helper), which supplies `steps`/`values` from a run's `series.jsonl`;
+// analyzeEnsemble tallies the returned status across the ensemble.
+//
+// MIN_TREND_POINTS is a short-run guard only, not a statistical
+// requirement: a straight-line fit needs >= 3 points to have any residual
+// degrees of freedom, so 4 gives a minimal safety margin against a single
+// noisy point dominating the fit. It essentially never binds at the
+// registered schedule -- 1e6 steps / censusEvery=100 / deepEvery=10 gives
+// ~500 points in a deep-only second-half window alone. Because the window
+// keeps `ceil(n/2)` scheduled positions (`n` = the number of scheduled
+// positions before halving), "short" means fewer than MIN_TREND_POINTS
+// positions survive that halving -- not a fixed count of total scheduled
+// censuses (round-2 review finding #5: an earlier version of this comment
+// said "8 scheduled censuses", which was off by the halving's rounding).
+const MIN_TREND_POINTS = 4;
+
+// Roles hold at least ROLE_CUT of living cells (roleSummary's minShare); the
+// pre-registered sensitivity re-applies the cut at x0.5 and x2 (see
+// analyzeEnsemble's "sensitivity" section).
+const ROLE_CUT = 0.05;
+const SENSITIVITY_CUTS = [ROLE_CUT / 2, ROLE_CUT * 2];
+
+const timeAvg = (series: Series, f: (x: Record<string, any>) => number | undefined) => {
+  const v = series.map(f).filter((x): x is number => typeof x === "number" && Number.isFinite(x));
+  const tail = v.slice(Math.floor(v.length / 2)); // second half: post-transient
+  return tail.length ? mean(tail) : NaN;
+};
+const trend = (series: Series, f: (x: Record<string, any>) => number | undefined, deepEvery: number, deepOnly: boolean) => {
+  const out = scheduledTrend(series.map((x) => x.step), series.map(f), deepEvery, deepOnly, MIN_TREND_POINTS);
+  // Scaled x1e5 (change per 1e5 steps), matching growthSlope's existing
+  // display convention -- Mann-Whitney/Wilcoxon are invariant under a
+  // positive rescaling, so this changes no test result, only makes the
+  // printed numbers readable (review finding #6: raw per-step slopes like
+  // 2e-6 printed as "0.0000" under the existing 4-decimal formatter).
+  return { slope: out.slope * 1e5, status: out.status };
+};
+const recut = (series: Series, cut: number) =>
+  series.map((x) => (x.roles && Array.isArray(x.rolesPresent) ? { ...x, rolesPresent: ROLES.filter((k) => (x.roles[k] ?? 0) >= cut) } : x));
+/** The points endpoint 4's coexistence durations read: deep censuses only (those carrying `rolesPresent`), which is all `coexistenceDurations` looks at. */
+const rolePoints = (series: Series): SeriesPoint[] => series.filter((x) => Array.isArray(x.rolesPresent)).map((x) => ({ step: x.step, rolesPresent: x.rolesPresent }));
+
+/** Time-series charts, one line per run, in report order. */
+const CHARTS: { title: string; file: string; f: (x: Record<string, any>) => number | undefined }[] = [
+  { title: "Individuals", file: "individuals.svg", f: (x) => x.individuals },
+  { title: "Lineages present", file: "lineages.svg", f: (x) => x.lineages },
+  { title: "Biotic share of recycling", file: "recycling.svg", f: (x) => x.bioticRecycling },
+  { title: "Temporal mutual information † (bits/block)", file: "temporal-mi.svg", f: (x) => x.temporalMI },
+  { title: "Lineage-map compression ratio †", file: "compression.svg", f: (x) => x.lineageCompression },
+  { title: "Bound mass (B+P)", file: "biomass.svg", f: (x) => x.pools.B + x.pools.P },
+];
+
+/**
+ * A digest part the analysis may never reach (sensitivity is withheld after a
+ * mismatch; a chart is drawn only once everything else succeeded): its error
+ * is kept and rethrown by `settle` where the analysis uses it, so a digest
+ * never fails earlier, or on more inputs, than the analysis did on raw records.
+ */
+type Deferred<T> = { value: T } | { error: unknown };
+function defer<T>(f: () => T): Deferred<T> {
+  try {
+    return { value: f() };
+  } catch (error) {
+    return { error };
+  }
+}
+function settle<T>(d: Deferred<T>): T {
+  if ("error" in d) throw d.error;
+  return d.value;
+}
+
+export interface SeriesDigest {
+  /** Second-half time averages, keyed by statistic name. */
+  avg: Record<"individuals" | "lineages" | "lineageShannon" | "bioticRecycling" | "rolesPresent" | "temporalMI" | "patternEntropy" | "lineageCompression" | "differentiation" | "compartmentalised", number>;
+  /** Held-out trend slopes (x1e5) and fit-window status, keyed by base statistic name. */
+  trends: Record<"temporalMI" | "patternEntropy" | "lineageCompression" | "differentiation" | "compartmentalised" | "rolesPresent", { slope: number; status: "ok" | "excluded" | "short" }>;
+  roles: SeriesPoint[];
+  /** Whether re-applying ROLE_CUT to the recorded role shares fails to reproduce some census's recorded rolesPresent. */
+  recutMismatch: Deferred<boolean>;
+  /** Per SENSITIVITY_CUTS entry: the role statistics and points with roles re-cut at that share. */
+  recut: Deferred<{ rolesPresent: number; rolesPresentTrend: number; roles: SeriesPoint[] }>[];
+  /** Census steps, and per CHARTS entry the plotted value per census (NaN where not finite). */
+  steps: Float64Array;
+  charts: Deferred<Float64Array>[];
+}
+
+/** Digests one run's census records (see SeriesDigest); pure. */
+export function digestSeries(series: Series, deepEvery: number): SeriesDigest {
+  return {
+    avg: {
+      individuals: timeAvg(series, (x) => x.individuals),
+      lineages: timeAvg(series, (x) => x.lineages),
+      lineageShannon: timeAvg(series, (x) => x.lineageShannon),
+      bioticRecycling: timeAvg(series, (x) => x.bioticRecycling),
+      rolesPresent: timeAvg(series, (x) => x.rolesPresent?.length),
+      temporalMI: timeAvg(series, (x) => x.temporalMI),
+      patternEntropy: timeAvg(series, (x) => x.patternEntropy),
+      lineageCompression: timeAvg(series, (x) => x.lineageCompression),
+      differentiation: timeAvg(series, (x) => x.morphology?.differentiation),
+      compartmentalised: timeAvg(series, (x) => x.morphology?.compartmentalised),
+    },
+    // temporalMI/patternEntropy are scheduled every census; the rest only on deep censuses.
+    trends: {
+      temporalMI: trend(series, (x) => x.temporalMI, deepEvery, false),
+      patternEntropy: trend(series, (x) => x.patternEntropy, deepEvery, false),
+      lineageCompression: trend(series, (x) => x.lineageCompression, deepEvery, true),
+      differentiation: trend(series, (x) => x.morphology?.differentiation, deepEvery, true),
+      compartmentalised: trend(series, (x) => x.morphology?.compartmentalised, deepEvery, true),
+      rolesPresent: trend(series, (x) => x.rolesPresent?.length, deepEvery, true),
+    },
+    roles: rolePoints(series),
+    recutMismatch: defer(() =>
+      series.some((x) => x.roles && Array.isArray(x.rolesPresent) && JSON.stringify(ROLES.filter((k) => (x.roles[k] ?? 0) >= ROLE_CUT)) !== JSON.stringify(x.rolesPresent))
+    ),
+    recut: SENSITIVITY_CUTS.map((cut) =>
+      defer(() => {
+        const alt = recut(series, cut);
+        return { rolesPresent: timeAvg(alt, (x) => x.rolesPresent?.length), rolesPresentTrend: trend(alt, (x) => x.rolesPresent?.length, deepEvery, true).slope, roles: rolePoints(alt) };
+      })
+    ),
+    steps: Float64Array.from(series, (x) => x.step),
+    charts: CHARTS.map(({ f }) =>
+      defer(() => {
+        const ys = new Float64Array(series.length);
+        series.forEach((x, i) => {
+          const v = f(x);
+          ys[i] = Number.isFinite(v) ? v! : NaN;
+        });
+        return ys;
+      })
+    ),
+  };
+}
+
+/** Sibling pairs at fission (`heredityPairs`), packed four values per pair (muA, muB, sigmaA, sigmaB): a 1e6-step run can record ~10^5 fissions, too many to keep as arrays for every run. */
+function packPairs(pairs: [number, number, number, number][]): Float64Array {
+  const out = new Float64Array(4 * pairs.length);
+  pairs.forEach((p, i) => out.set(p, 4 * i));
+  return out;
+}
+
+/** A run reduced as it loads (see `reduceRun`). */
+export type DigestedRun = Run & {
+  digest?: SeriesDigest;
+  /** Packed sibling pairs, null when the run has none, or the error reading them threw. */
+  packedPairs?: Float64Array | null | { error: unknown };
+};
+
+/** A run's packed sibling pairs, read now if `reduceRun` did not; a read error surfaces here, where the analysis first needs them. */
+async function packedPairsOf(r: DigestedRun): Promise<Float64Array | null> {
+  if (r.packedPairs === undefined) {
+    const pairs = await heredityPairs(r);
+    return pairs && packPairs(pairs);
+  }
+  if (r.packedPairs && !(r.packedPairs instanceof Float64Array)) throw r.packedPairs.error;
+  return r.packedPairs;
+}
+
+/**
+ * `loadRunsUnder` reducer: replaces a run's census records by their digest
+ * and the bare census steps (all `ensembleProblems` and `activities` read),
+ * and reads its heredity.tsv into packed pairs. A run whose records cannot be
+ * digested keeps them, and a heredity read error is kept for later, so
+ * analyzeEnsemble refuses or fails where it would have without the reduction.
+ */
+export async function reduceRun(r: Run): Promise<DigestedRun> {
+  let packedPairs: DigestedRun["packedPairs"];
+  try {
+    const pairs = await heredityPairs(r);
+    packedPairs = pairs && packPairs(pairs);
+  } catch (error) {
+    packedPairs = { error };
+  }
+  try {
+    const digest = digestSeries(r.series, r.manifest.spec.deepEvery);
+    return { ...r, series: r.series.map((x) => ({ step: x.step })), digest, packedPairs };
+  } catch {
+    return { ...r, packedPairs };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Analysis. Pure for in-memory runs (`Run.lineages` set, as tools/nullcal.ts
 // builds them); a real bundle's lineages.tsv is streamed from disk by
 // `activities`, hence async.
 // ---------------------------------------------------------------------------
-export async function analyzeEnsemble(loaded: Run[], label: string, options: AnalyzeOptions = {}): Promise<AnalyzeResult> {
+export async function analyzeEnsemble(loaded: DigestedRun[], label: string, options: AnalyzeOptions = {}): Promise<AnalyzeResult> {
   if (!loaded.length) throw new Error(`no completed runs under ${label}`);
   // ---- ensemble compatibility ----
   {
@@ -282,49 +483,26 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
   type Stats = Record<string, number>;
   const perRun = new Map<Run, Stats>();
   const trends = new Map<Run, string>();
-  const timeAvg = (r: Run, f: (x: Record<string, any>) => number | undefined) => {
-    const v = r.series.map(f).filter((x): x is number => typeof x === "number" && Number.isFinite(x));
-    const tail = v.slice(Math.floor(v.length / 2)); // second half: post-transient
-    return tail.length ? mean(tail) : NaN;
+  // A run loaded without `reduceRun` (tools/nullcal.ts, `loadEnsemble`) is digested here, once.
+  const digests = new Map<Run, SeriesDigest>();
+  const digestOf = (r: DigestedRun): SeriesDigest => {
+    if (r.digest) return r.digest;
+    let d = digests.get(r);
+    if (!d) digests.set(r, (d = digestSeries(r.series, r.manifest.spec.deepEvery)));
+    return d;
   };
-  // Held-out observables' trend statistic and fit window (experiments/
-  // endpoints.ts: HELD_OUT_SPECS): a thin, stateful wrapper over
-  // `scheduledTrend` (packages/metrics/src/stats.ts -- the pure, unit-tested
-  // windowing/exclusion helper), which supplies `steps`/`values` from a
-  // loaded run's `series.jsonl` and tallies the returned status across the
-  // ensemble.
-  //
-  // MIN_TREND_POINTS is a short-run guard only, not a statistical
-  // requirement: a straight-line fit needs >= 3 points to have any residual
-  // degrees of freedom, so 4 gives a minimal safety margin against a single
-  // noisy point dominating the fit. It essentially never binds at the
-  // registered schedule -- 1e6 steps / censusEvery=100 / deepEvery=10 gives
-  // ~500 points in a deep-only second-half window alone. Because the window
-  // keeps `ceil(n/2)` scheduled positions (`n` = the number of scheduled
-  // positions before halving), "short" means fewer than MIN_TREND_POINTS
-  // positions survive that halving -- not a fixed count of total scheduled
-  // censuses (round-2 review finding #5: an earlier version of this comment
-  // said "8 scheduled censuses", which was off by the halving's rounding).
-  const MIN_TREND_POINTS = 4;
-
   /** Runs (pooled across the whole ensemble) excluded or too short per held-out observable, for the rendered report. */
   const trendDiagnostics = new Map<string, { ok: number; excluded: number; short: number }>();
-  const trend = (r: Run, key: string, f: (x: Record<string, any>) => number | undefined, deepOnly: boolean) => {
-    const steps = r.series.map((x) => x.step);
-    const values = r.series.map(f);
-    const out = scheduledTrend(steps, values, r.manifest.spec.deepEvery, deepOnly, MIN_TREND_POINTS);
-    const d = trendDiagnostics.get(key) ?? { ok: 0, excluded: 0, short: 0 };
-    d[out.status]++;
-    trendDiagnostics.set(key, d);
-    // Scaled x1e5 (change per 1e5 steps), matching growthSlope's existing
-    // display convention below -- Mann-Whitney/Wilcoxon are invariant under a
-    // positive rescaling, so this changes no test result, only makes the
-    // printed numbers readable (review finding #6: raw per-step slopes like
-    // 2e-6 printed as "0.0000" under the existing 4-decimal formatter).
-    return out.slope * 1e5;
+  const tally = (key: keyof SeriesDigest["trends"], d: SeriesDigest) => {
+    const out = d.trends[key];
+    const diag = trendDiagnostics.get(key) ?? { ok: 0, excluded: 0, short: 0 };
+    diag[out.status]++;
+    trendDiagnostics.set(key, diag);
+    return out.slope;
   };
   for (const r of runs) {
     const { snaps } = await activities(r, threshold);
+    const d = digestOf(r);
     const last = snaps[snaps.length - 1];
     const t = snaps.map((s) => s.step);
     const cum = snaps.map((s) => s.cumulativeNew);
@@ -334,25 +512,15 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
       cumulativeNewActivity: calibrated ? (last?.cumulativeNew ?? 0) : NaN,
       newActivityRate: calibrated && last ? (last.cumulativeNew / Math.max(1, last.step)) * 1e5 : NaN,
       meanSignificant: calibrated ? mean(snaps.map((s) => s.significant)) : NaN,
-      individuals: timeAvg(r, (x) => x.individuals),
-      lineages: timeAvg(r, (x) => x.lineages),
-      lineageShannon: timeAvg(r, (x) => x.lineageShannon),
-      bioticRecycling: timeAvg(r, (x) => x.bioticRecycling),
-      rolesPresent: timeAvg(r, (x) => x.rolesPresent?.length),
-      temporalMI: timeAvg(r, (x) => x.temporalMI),
-      patternEntropy: timeAvg(r, (x) => x.patternEntropy),
-      lineageCompression: timeAvg(r, (x) => x.lineageCompression),
-      differentiation: timeAvg(r, (x) => x.morphology?.differentiation),
-      compartmentalised: timeAvg(r, (x) => x.morphology?.compartmentalised),
+      ...d.avg,
       // Held-out trend statistics (experiments/endpoints.ts: HELD_OUT_SPECS),
-      // scaled per 1e5 steps. temporalMI/patternEntropy are scheduled every
-      // census; the rest only on deep censuses.
-      temporalMITrend: trend(r, "temporalMI", (x) => x.temporalMI, false),
-      patternEntropyTrend: trend(r, "patternEntropy", (x) => x.patternEntropy, false),
-      lineageCompressionTrend: trend(r, "lineageCompression", (x) => x.lineageCompression, true),
-      differentiationTrend: trend(r, "differentiation", (x) => x.morphology?.differentiation, true),
-      compartmentalisedTrend: trend(r, "compartmentalised", (x) => x.morphology?.compartmentalised, true),
-      rolesPresentTrend: trend(r, "rolesPresent", (x) => x.rolesPresent?.length, true),
+      // scaled per 1e5 steps.
+      temporalMITrend: tally("temporalMI", d),
+      patternEntropyTrend: tally("patternEntropy", d),
+      lineageCompressionTrend: tally("lineageCompression", d),
+      differentiationTrend: tally("differentiation", d),
+      compartmentalisedTrend: tally("compartmentalised", d),
+      rolesPresentTrend: tally("rolesPresent", d),
       fissionsPer1e4: ((r.manifest.summary.fissions + 0) / Math.max(1, r.manifest.summary.steps)) * 1e4,
       buddingsPer1e4: ((r.manifest.summary.buddings ?? 0) / Math.max(1, r.manifest.summary.steps)) * 1e4,
       maxGeneration: r.manifest.summary.maxGeneration,
@@ -429,7 +597,7 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
     seed: r.seed,
     stats: perRun.get(r)!,
     trend: calibrated ? (trends.get(r) as RunView["trend"]) : undefined,
-    series: r.series.map((x) => ({ step: x.step, rolesPresent: x.rolesPresent })),
+    series: digestOf(r).roles,
   }));
   const results: EndpointResult[] = PRIMARY_ENDPOINTS.map((e) => evaluateEndpoint(e, views));
 
@@ -568,25 +736,19 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
   // re-applied after the fact and every result that depends on it (endpoint 4
   // and its M5 gate row, the held-out role count and the held-out summary) is
   // re-evaluated unchanged. Re-applying the registered 5% cut must reproduce
-  // the recorded rolesPresent exactly, or the sensitivity is withheld.
-  const ROLE_CUT = 0.05;
-  const recut = (series: Record<string, any>[], cut: number) =>
-    series.map((x) => (x.roles && Array.isArray(x.rolesPresent) ? { ...x, rolesPresent: ROLES.filter((k) => (x.roles[k] ?? 0) >= cut) } : x));
-  const recutMismatch = runs.find((r) =>
-    r.series.some((x) => x.roles && Array.isArray(x.rolesPresent) && JSON.stringify(ROLES.filter((k) => (x.roles[k] ?? 0) >= ROLE_CUT)) !== JSON.stringify(x.rolesPresent))
-  );
+  // the recorded rolesPresent exactly, or the sensitivity is withheld. The
+  // re-cut statistics themselves come from each run's digest (`digestSeries`).
+  const recutMismatch = runs.find((r) => settle(digestOf(r).recutMismatch));
   const coexistenceEndpoints = PRIMARY_ENDPOINTS.filter((e) => e.kind === "coexistence");
   const roleCutSensitivity = recutMismatch
     ? { unavailable: `recorded role shares of ${recutMismatch.condition} seed ${recutMismatch.seed} do not reproduce its rolesPresent at the ${ROLE_CUT} cut` }
-    : [ROLE_CUT / 2, ROLE_CUT * 2].map((cut) => {
+    : SENSITIVITY_CUTS.map((cut, j) => {
       const altViews: RunView[] = runs.map((r, i) => {
-        const series = recut(r.series, cut);
-        const alt = { ...r, series };
-        const trendOut = scheduledTrend(series.map((x) => x.step), series.map((x) => x.rolesPresent?.length), r.manifest.spec.deepEvery, true, MIN_TREND_POINTS);
+        const alt = settle(digestOf(r).recut[j]);
         return {
           ...views[i],
-          stats: { ...views[i].stats, rolesPresent: timeAvg(alt, (x) => x.rolesPresent?.length), rolesPresentTrend: trendOut.slope * 1e5 },
-          series: series.map((x) => ({ step: x.step, rolesPresent: x.rolesPresent })),
+          stats: { ...views[i].stats, rolesPresent: alt.rolesPresent, rolesPresentTrend: alt.rolesPresentTrend },
+          series: alt.roles,
         };
       });
       const alt = evaluateHeldOut(altViews, presetId);
@@ -625,34 +787,46 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
   // are unordered, so each pair enters both ways (double-entry, i.e.
   // intraclass) Pearson correlation. Pooled over a condition's fissions, and
   // the median of per-run correlations, which between-run differences cannot
-  // inflate.
-  const siblingCorrelation = (pairs: [number, number][]): number => {
-    if (pairs.length < 3) return NaN;
-    const all = pairs.flatMap(([a, b]) => [a, b]);
-    const m = mean(all);
+  // inflate. Pairs come packed (`packPairs`), runs concatenated in order;
+  // columns k and k+1 are the two pieces' values.
+  const siblingCorrelation = (chunks: Float64Array[], k: 0 | 2): number => {
+    const n = chunks.reduce((s, c) => s + c.length / 4, 0);
+    if (n < 3) return NaN;
+    // mean() of every piece's value in pair order (a0, b0, a1, b1, ...): the same left-to-right sum.
+    let sum = 0;
+    for (const c of chunks) {
+      for (let i = 0; i < c.length; i += 4) {
+        sum += c[i + k];
+        sum += c[i + k + 1];
+      }
+    }
+    const m = sum / (2 * n);
     let num = 0, den = 0;
-    for (const [a, b] of pairs) {
-      num += 2 * (a - m) * (b - m);
-      den += (a - m) ** 2 + (b - m) ** 2;
+    for (const c of chunks) {
+      for (let i = 0; i < c.length; i += 4) {
+        const a = c[i + k], b = c[i + k + 1];
+        num += 2 * (a - m) * (b - m);
+        den += (a - m) ** 2 + (b - m) ** 2;
+      }
     }
     return den > 0 ? num / den : NaN;
   };
-  const heredityByRun = new Map<Run, [number, number, number, number][]>();
+  const heredityByRun = new Map<Run, Float64Array>();
   for (const r of runs) {
-    const pairs = await heredityPairs(r);
+    const pairs = await packedPairsOf(r);
     if (pairs) heredityByRun.set(r, pairs);
   }
   const median = (xs: number[]) => (xs.length ? quantile(xs, 0.5) : NaN);
   const heredity = conditions.map((c) => {
     const rs = runs.filter((r) => r.condition === c && heredityByRun.has(r));
-    const pairs = rs.flatMap((r) => heredityByRun.get(r)!);
-    const perRun = (k: 0 | 2) => rs.map((r) => siblingCorrelation(heredityByRun.get(r)!.map((p) => [p[k], p[k + 1]]))).filter(Number.isFinite);
+    const chunks = rs.map((r) => heredityByRun.get(r)!);
+    const perRun = (k: 0 | 2) => chunks.map((p) => siblingCorrelation([p], k)).filter(Number.isFinite);
     return {
       condition: c,
       runs: rs.length,
-      fissions: pairs.length,
-      muPooled: siblingCorrelation(pairs.map((p) => [p[0], p[1]])),
-      sigmaPooled: siblingCorrelation(pairs.map((p) => [p[2], p[3]])),
+      fissions: chunks.reduce((s, p) => s + p.length / 4, 0),
+      muPooled: siblingCorrelation(chunks, 0),
+      sigmaPooled: siblingCorrelation(chunks, 2),
       muMedianRun: median(perRun(0)),
       sigmaMedianRun: median(perRun(2)),
     };
@@ -702,18 +876,21 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
 
   // ---- charts (SVG, one line per run) ----
   const charts: { file: string; svg: string }[] = [];
-  function chart(title: string, f: (x: Record<string, any>) => number | undefined, file: string) {
+  function chart(j: number) {
+    const { title, file } = CHARTS[j];
     const W = 720, H = 260, P = 40;
     const colors = ["#1a7f55", "#c2410c", "#2563eb", "#9333ea", "#ca8a04", "#0891b2", "#be123c"];
     let xmax = 1, ymin = Infinity, ymax = -Infinity;
     const lines = runs.map((r) => {
-      const pts = r.series.map((x) => [x.step, f(x)] as [number, number | undefined]).filter((p): p is [number, number] => Number.isFinite(p[1]));
-      for (const [x, y] of pts) {
-        xmax = Math.max(xmax, x);
+      const d = digestOf(r);
+      const ys = settle(d.charts[j]);
+      ys.forEach((y, i) => {
+        if (!Number.isFinite(y)) return;
+        xmax = Math.max(xmax, d.steps[i]);
         ymin = Math.min(ymin, y);
         ymax = Math.max(ymax, y);
-      }
-      return { r, pts };
+      });
+      return { r, steps: d.steps, ys };
     });
     if (!Number.isFinite(ymin)) return "";
     if (ymax === ymin) ymax = ymin + 1;
@@ -723,9 +900,13 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
     svg += `<text x="${P}" y="18" font-size="13" font-weight="600">${title}</text>`;
     svg += `<text x="${P}" y="${H - 10}" fill="#666">0</text><text x="${W - P}" y="${H - 10}" text-anchor="end" fill="#666">${xmax.toLocaleString()} steps</text>`;
     svg += `<text x="${P - 4}" y="${sy(ymax) + 4}" text-anchor="end" fill="#666">${fmt(ymax)}</text><text x="${P - 4}" y="${sy(ymin) + 4}" text-anchor="end" fill="#666">${fmt(ymin)}</text>`;
-    for (const { r, pts } of lines) {
+    for (const { r, steps, ys } of lines) {
       const col = colors[conditions.indexOf(r.condition) % colors.length];
-      svg += `<polyline fill="none" stroke="${col}" stroke-opacity="0.8" stroke-width="1.4" points="${pts.map(([x, y]) => `${sx(x).toFixed(1)},${sy(y).toFixed(1)}`).join(" ")}"/>`;
+      const pts: string[] = [];
+      ys.forEach((y, i) => {
+        if (Number.isFinite(y)) pts.push(`${sx(steps[i]).toFixed(1)},${sy(y).toFixed(1)}`);
+      });
+      svg += `<polyline fill="none" stroke="${col}" stroke-opacity="0.8" stroke-width="1.4" points="${pts.join(" ")}"/>`;
     }
     conditions.forEach((c, i) => {
       svg += `<rect x="${W - P - 150}" y="${28 + i * 14}" width="10" height="10" fill="${colors[i % colors.length]}"/><text x="${W - P - 135}" y="${37 + i * 14}">${c}</text>`;
@@ -735,12 +916,7 @@ export async function analyzeEnsemble(loaded: Run[], label: string, options: Ana
     return `![${title}](${file})\n\n`;
   }
   md += `\n## Time series\n\n`;
-  md += chart("Individuals", (x) => x.individuals, "individuals.svg");
-  md += chart("Lineages present", (x) => x.lineages, "lineages.svg");
-  md += chart("Biotic share of recycling", (x) => x.bioticRecycling, "recycling.svg");
-  md += chart("Temporal mutual information † (bits/block)", (x) => x.temporalMI, "temporal-mi.svg");
-  md += chart("Lineage-map compression ratio †", (x) => x.lineageCompression, "compression.svg");
-  md += chart("Bound mass (B+P)", (x) => x.pools.B + x.pools.P, "biomass.svg");
+  CHARTS.forEach((_, j) => (md += chart(j)));
 
   const json = {
     presetId,
@@ -787,7 +963,8 @@ if (import.meta.main) {
 
   if (a.registry !== undefined && a.registry !== "extension") throw new Error(`--registry must be "extension" (the registered 10^7 extension); got ${a.registry}`);
   const registry = a.registry === "extension" ? await import("../experiments/extension.ts").then((m) => ({ thresholds: m.EXTENSION_ACTIVITY_THRESHOLDS, note: m.EXTENSION_REPORT_NOTE })) : undefined;
-  const loaded = await loadRunsUnder(root);
+  // Each run is digested as it loads, so only one parsed series.jsonl is held at a time.
+  const loaded = await loadRunsUnder(root, reduceRun);
   if (!loaded.length) throw new Error(`no completed runs under ${root}`);
   const { markdown, json, charts } = await analyzeEnsemble(loaded, root, {
     q: Number(a.q ?? "0.95"),
