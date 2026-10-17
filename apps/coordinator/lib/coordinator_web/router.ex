@@ -27,6 +27,7 @@ defmodule CoordinatorWeb.Router do
     post "/segments/:id/heartbeat", ApiController, :heartbeat
     post "/segments/:id/complete", ApiController, :complete
     post "/segments/:id/reject", ApiController, :reject
+    post "/segments/:id/fail", ApiController, :fail
   end
 
   # The discovery plane (Coordinator.Discovery): its own routes, tokens and data directory.

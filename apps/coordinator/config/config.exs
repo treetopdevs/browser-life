@@ -85,7 +85,25 @@ config :coordinator,
   # censusEvery (packages/runner/src/runner.ts refuses it otherwise), and
   # segmentSteps a multiple of pondPeriod. Must be kept in sync with the TS
   # presets by hand.
-  pond_period: %{"ponds" => 10_000, "ponds-small" => 1_000}
+  pond_period: %{"ponds" => 10_000, "ponds-small" => 1_000},
+  # preset => {width, height} of its world in cells (packages/schema/src/presets.ts:
+  # tileW * tilesX by tileH * tilesY). Used only to refuse a scheduled lesion or
+  # feed centred outside the world at experiment creation (Queue.invalid_interventions/1),
+  # which the runner would otherwise throw on, on every island handed the
+  # segment. Kept in sync with the TS presets by
+  # packages/runner/test/coordinator-presets.test.ts, which reads this file.
+  world_size: %{
+    "spots" => {256, 256},
+    "gradient" => {256, 256},
+    "spots-m3" => {256, 256},
+    "gradient-m3" => {256, 256},
+    "soup" => {256, 256},
+    "seasons" => {256, 256},
+    "large" => {512, 512},
+    "archipelago" => {128, 128},
+    "ponds" => {512, 512},
+    "ponds-small" => {128, 128}
+  }
 
 # Discovery plane (Coordinator.Discovery; docs/evolvability-discovery-2026-10-04
 # PLAN Stage 3b): its own data directory, never inside :data_dir; the research

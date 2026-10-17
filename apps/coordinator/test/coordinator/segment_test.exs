@@ -414,6 +414,127 @@ defmodule Coordinator.SegmentTest do
              Segment.complete_verify(assigned, "a", "lease1", "digest1")
   end
 
+  describe "fail/5 (an island cannot run the task as given)" do
+    test "a run attempt under its current lease fails the segment, recording the reason and the island on that attempt" do
+      {:ok, s} = Segment.assign_run(seg(), "a", "lease1", 0)
+      assert {:ok, failed} = Segment.fail(s, "a", "lease1", "the feed at t=0 failed", 50)
+      assert failed.status == "failed"
+
+      assert [
+               %{
+                 kind: "run",
+                 island: "a",
+                 id: "lease1",
+                 outcome: "failed",
+                 reason: "the feed at t=0 failed",
+                 failed_at: 50
+               }
+             ] =
+               failed.attempts
+
+      assert Segment.failed_attempt(failed).island == "a"
+      assert Segment.failure_reason(failed) == "the feed at t=0 failed"
+      # Nothing was accepted: no digest, no files, no producer.
+      assert Segment.accepted_run_attempt(failed) == nil
+      assert Segment.accepted_digest(failed) == nil
+    end
+
+    test "only the attempt this island/lease owns right now may fail the segment (the reject rule)" do
+      assert {:error, "segment not assigned to this island/lease"} =
+               Segment.fail(seg(), "a", "lease1", "r", 0)
+
+      {:ok, s} = Segment.assign_run(seg(), "a", "lease1", 0)
+      assert {:error, "segment not assigned" <> _} = Segment.fail(s, "b", "lease1", "r", 0)
+      assert {:error, "segment not assigned" <> _} = Segment.fail(s, "a", "other", "r", 0)
+
+      # A completed run attempt is no longer the current lease.
+      done = done_run()
+      assert {:error, "segment not assigned" <> _} = Segment.fail(done, "a", "lease1", "r", 0)
+
+      # Nor is an abandoned one: the reclaimed segment belongs to the next assignee.
+      reclaimed = Segment.reclaim(s, 1_000_000, 10)
+      assert reclaimed.status == "pending"
+
+      assert {:error, "segment not assigned" <> _} =
+               Segment.fail(reclaimed, "a", "lease1", "r", 0)
+
+      {:ok, reassigned} = Segment.assign_run(reclaimed, "b", "lease2", 1_000_001)
+
+      assert {:error, "segment not assigned" <> _} =
+               Segment.fail(reassigned, "a", "lease1", "r", 0)
+
+      assert {:ok, %{status: "failed"}} = Segment.fail(reassigned, "b", "lease2", "r", 0)
+    end
+
+    test "a verify attempt under its current lease fails a done segment too, keeping the accepted run attempt's record" do
+      {:ok, s} = Segment.assign_verify(done_run(), "b", "vlease", 100)
+      assert {:error, "segment not assigned" <> _} = Segment.fail(s, "a", "lease1", "r", 0)
+      assert {:error, "segment not assigned" <> _} = Segment.fail(s, "b", "wrong", "r", 0)
+      assert {:ok, failed} = Segment.fail(s, "b", "vlease", "the feed at t=100 failed", 200)
+      assert failed.status == "failed"
+
+      assert [%{kind: "run", outcome: "done"}, %{kind: "verify", island: "b", outcome: "failed"}] =
+               failed.attempts
+
+      assert Segment.failed_attempt(failed).kind == "verify"
+      assert Segment.failure_reason(failed) == "the feed at t=100 failed"
+      # The producer's record stays readable, as after a divergence.
+      assert Segment.accepted_digest(failed) == "digest1"
+      assert Segment.accepted_island(failed) == "a"
+      # Its verify attempt is over: no stale completion can land on it.
+      refute Segment.pending_or_assigned_verify?(failed)
+
+      assert {:error, "segment not done"} =
+               Segment.complete_verify(failed, "b", "vlease", "digest1")
+    end
+
+    test "a failed segment is terminal: not assignable, not verifiable, not completable, not reclaimed back to pending" do
+      {:ok, s} = Segment.assign_run(seg(), "a", "lease1", 0)
+      {:ok, failed} = Segment.fail(s, "a", "lease1", "r", 0)
+
+      assert {:error, "segment not pending"} = Segment.assign_run(failed, "b", "lease2", 1)
+      assert {:error, "segment not done"} = Segment.assign_verify(failed, "b", "lease2", 1)
+      assert {:error, "lease lost"} = Segment.heartbeat(failed, "run", "a", "lease1", 1)
+      assert {:error, "lease lost"} = Segment.publish(failed, "a", "lease1", "d", "s")
+
+      assert {:error, "segment not assigned" <> _} =
+               Segment.complete_run(failed, "a", "lease1", "d", %{})
+
+      assert {:error, "segment not assigned" <> _} =
+               Segment.fail(failed, "a", "lease1", "again", 1)
+
+      # The failed attempt is not pending, so a lapsed lease leaves the segment failed,
+      # never pending again (the one thing that would offer it to the next island).
+      assert Segment.reclaim(failed, 1_000_000_000, 1) == failed
+      assert Segment.reclaim_stale(%{"seg-0" => failed}, 1_000_000_000, 1) == %{"seg-0" => failed}
+      # An ordinary segment carries neither key: the shape from before the status existed.
+      [attempt] = s.attempts
+      refute Map.has_key?(attempt, :reason)
+      refute Map.has_key?(attempt, :failed_at)
+      assert Segment.failed_attempt(s) == nil
+      assert Segment.failure_reason(s) == nil
+    end
+
+    test "block_descendants from a failed segment blocks what depends on it, and an upstream redo resets it like any other descendant" do
+      {:ok, s1} = Segment.assign_run(seg(1), "a", "lease1", 0)
+      {:ok, failed} = Segment.fail(s1, "a", "lease1", "r", 0)
+      segments = %{"seg-0" => done_run(), "seg-1" => failed, "seg-2" => seg(2)}
+
+      blocked = Segment.block_descendants(segments, "seg-1")
+      assert blocked["seg-0"].status == "done"
+      assert blocked["seg-1"] == failed
+      assert blocked["seg-2"].status == "blocked"
+
+      # seg-0 is rejected (by a verifier of its own, say): the world seg-1 failed
+      # against is recomputed, so seg-1's failure is dropped with its attempts.
+      redone = Segment.redo(blocked, "seg-0")
+      assert redone["seg-0"].status == "pending"
+      assert redone["seg-1"].status == "pending" and redone["seg-1"].attempts == []
+      assert redone["seg-2"].status == "pending"
+      assert Segment.failed_attempt(redone["seg-1"]) == nil
+    end
+  end
+
   test "block_descendants blocks every same-run segment after the given one, including done and verified ones, and nothing from another unconnected run" do
     origin = seg(0)
     pending = seg(1)

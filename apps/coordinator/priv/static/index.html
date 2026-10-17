@@ -30,6 +30,7 @@
 <div class="card"><h2 class="lbl">Runs</h2><table id="runs"></table></div>
 <div class="card" style="margin-top:10px"><h2 class="lbl">Islands</h2><table id="islands"></table></div>
 <div class="card" style="margin-top:10px"><h2 class="lbl">Divergences</h2><table id="div"></table></div>
+<div class="card" style="margin-top:10px"><h2 class="lbl">Failures</h2><p class="lbl">Segments an island could not run as given (a scheduled feed the world refused); the run stops there.</p><table id="fail"></table></div>
 <script>
 const el = (tag, text, cls) => { const e = document.createElement(tag); e.textContent = text; if (cls) e.className = cls; return e; };
 function table(id, head, rows) {
@@ -41,7 +42,7 @@ function table(id, head, rows) {
 let adminToken = "";
 let requestId = 0;
 function clearStatus() {
-  for (const id of ["counts", "runs", "islands", "div"]) document.getElementById(id).replaceChildren();
+  for (const id of ["counts", "runs", "islands", "div", "fail"]) document.getElementById(id).replaceChildren();
 }
 document.getElementById("connect").onclick = () => {
   adminToken = document.getElementById("admin-token").value;
@@ -70,11 +71,12 @@ async function tick() {
   document.getElementById("connection").textContent = "Connected.";
   const c = document.getElementById("counts"); c.replaceChildren();
   const staleIslands = s.islands.filter(i => i.stale).length;
-  const cards = [["pending", s.counts.pending || 0], ["running", s.counts.assigned || 0], ["done", s.counts.done || 0], ["verified", s.counts.verified || 0], ["diverged", s.counts.diverged || 0], ["obs mismatches", (s.observationMismatches || []).length], ["device types", s.devices.length], ["stale islands", staleIslands]];
-  for (const [k, v] of cards) { const d = el("div", "", "card"); d.append(el("div", v, "num" + ((k === "diverged" || k === "obs mismatches" || k === "stale islands") && v ? " bad" : "")), el("div", k, "lbl")); c.append(d); }
-  table("runs", ["run", "segments", "done", "verified", "diverged"], s.runs.map(r => [[r.run, "mono"], [r.segments], [r.done], [r.verified, r.verified ? "ok" : ""], [r.diverged, r.diverged ? "bad" : ""]]));
+  const cards = [["pending", s.counts.pending || 0], ["running", s.counts.assigned || 0], ["done", s.counts.done || 0], ["verified", s.counts.verified || 0], ["diverged", s.counts.diverged || 0], ["failed", s.counts.failed || 0], ["obs mismatches", (s.observationMismatches || []).length], ["device types", s.devices.length], ["stale islands", staleIslands]];
+  for (const [k, v] of cards) { const d = el("div", "", "card"); d.append(el("div", v, "num" + ((k === "diverged" || k === "failed" || k === "obs mismatches" || k === "stale islands") && v ? " bad" : "")), el("div", k, "lbl")); c.append(d); }
+  table("runs", ["run", "segments", "done", "verified", "diverged", "failed", "blocked"], s.runs.map(r => [[r.run, "mono"], [r.segments], [r.done], [r.verified, r.verified ? "ok" : ""], [r.diverged, r.diverged ? "bad" : ""], [r.failed || 0, r.failed ? "bad" : ""], [r.blocked || 0, r.blocked ? "bad" : ""]]));
   table("islands", ["island", "adapter", "runs", "verifies", "last seen", "status"], s.islands.map(i => [[i.id, "mono"], [i.adapter], [i.runs], [i.verifies], [new Date(i.last_seen).toLocaleTimeString()], [i.stale ? "stale" : "live", i.stale ? "bad" : "ok"]]));
   table("div", ["run", "segment", "host A", "host B", "hash A", "hash B"], s.divergences.map(d => [[d.run, "mono"], [d.index], [d.a], [d.b], [d.hash_a, "mono"], [d.hash_b, "mono"]]));
+  table("fail", ["run", "segment", "task", "island", "host", "reported", "reason"], (s.failures || []).map(f => [[f.run, "mono"], [f.index], [f.kind ?? "?"], [f.island ?? "?", "mono"], [f.by], [f.failedAt ? new Date(f.failedAt).toLocaleTimeString() : "?"], [f.reason ?? "", "bad"]]));
 }
 tick(); setInterval(tick, 3000);
 </script>

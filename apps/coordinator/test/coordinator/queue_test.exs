@@ -1286,4 +1286,573 @@ defmodule Coordinator.QueueTest do
       assert %{status: "done"} = Queue.segment("seg-3")
     end
   end
+
+  # Scheduled interventions (spec "interventions", the runner's RunSpec.interventions;
+  # packages/runner/src/interventions.ts): validated at creation by the runner's own
+  # shape rules plus what it refuses before the GPU, carried whole into every
+  # segment's task, and handed only to islands that advertise "interventions-v1"
+  # (see Coordinator.Queue's moduledoc).
+  describe "scheduled interventions" do
+    @lesion %{"step" => 700, "kind" => "lesion", "x" => 20, "y" => 20, "r" => 4}
+    @feed %{"step" => 1200, "kind" => "feed", "x" => 30, "y" => 30, "r" => 3, "amount" => 16}
+    @scheduled Map.put(
+                 %{@spec_ok | "experiment" => "wounded", "verifyFraction" => 0.0},
+                 "interventions",
+                 [
+                   %{"step" => 0, "kind" => "lesion", "x" => 1, "y" => 2, "r" => 6},
+                   @lesion,
+                   # Two at one step, in list order, and a drain.
+                   %{
+                     "step" => 700,
+                     "kind" => "feed",
+                     "x" => 5,
+                     "y" => 5,
+                     "r" => 2,
+                     "amount" => -8
+                   },
+                   @feed,
+                   %{
+                     "step" => 1500,
+                     "kind" => "feed",
+                     "x" => 255,
+                     "y" => 255,
+                     "r" => 99,
+                     "amount" => 4096
+                   }
+                 ]
+               )
+
+    defp bad_schedule(changes, list) do
+      Queue.create_experiment(
+        Map.merge(%{@scheduled | "experiment" => "bad"}, changes)
+        |> Map.put("interventions", list)
+      )
+    end
+
+    test "a valid schedule is accepted, stored unchanged, and carried whole into every segment's task spec" do
+      assert {:ok, 3} = Queue.create_experiment(@scheduled)
+      assert Queue.experiment("wounded").spec["interventions"] == @scheduled["interventions"]
+
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "A"})
+
+      for index <- 0..2 do
+        {:ok, t} = Queue.next_task(island, ["interventions-v1"])
+        assert t.kind == "run" and t.segment.index == index
+        # The whole list, not the segment's own entries: the runner keeps what it owns.
+        assert t.spec.interventions == @scheduled["interventions"]
+        # Lease abandoned on purpose: the next task is the same segment again
+        # only once its lease expires, so take the others by completing this one.
+        staged = Path.join(Queue.data_dir(), "cp-#{index}")
+        File.write!(staged, "x")
+
+        :ok =
+          Queue.publish_checkpoint(
+            t.segment.id,
+            island,
+            t.lease,
+            staged,
+            "h#{index}",
+            "0000000000000000"
+          )
+
+        {:ok, "done"} = Queue.complete(t.segment.id, island, t.lease, "run", "h#{index}", %{})
+      end
+    end
+
+    test "an ordinary experiment's task payload has no interventions key at all" do
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "A"})
+      {:ok, task} = Queue.next_task(island, ["interventions-v1"])
+      refute Map.has_key?(task.spec, :interventions)
+      refute Map.has_key?(Queue.experiment("t1").spec, "interventions")
+    end
+
+    test "nil is no schedule" do
+      assert {:ok, 3} = Queue.create_experiment(Map.put(@spec_ok, "interventions", nil))
+      refute Map.has_key?(Queue.experiment("t1").spec, "interventions")
+    end
+
+    test "the runner's shape rules: the list, each entry's kind and keys, the integers, the order" do
+      assert {:error, "interventions must be a non-empty array" <> _} = bad_schedule(%{}, [])
+      assert {:error, "interventions must be a non-empty array" <> _} = bad_schedule(%{}, "x")
+      assert {:error, "interventions must be a non-empty array" <> _} = bad_schedule(%{}, %{})
+      assert {:error, "interventions[0] must be an object"} = bad_schedule(%{}, [7])
+
+      assert {:error, "interventions[1]: kind must be \"lesion\" or \"feed\", got \"pick\""} =
+               bad_schedule(%{}, [@lesion, %{@lesion | "kind" => "pick"}])
+
+      assert {:error, "interventions[0]: kind must be \"lesion\" or \"feed\", got null"} =
+               bad_schedule(%{}, [Map.delete(@lesion, "kind")])
+
+      assert {:error, "interventions[0]: a lesion has no key \"amount\"" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, "amount", 4)])
+
+      assert {:error, "interventions[0]: a lesion has no key \"matter\"" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, "matter", 4)])
+
+      # A replay assertion the archipelago cannot honour (see the moduledoc), whatever its value.
+      for v <- [2048, 0, -12, 1.5, nil] do
+        assert {:error,
+                "interventions[0]: a feed's matter is not scheduled on the archipelago" <> _} =
+                 bad_schedule(%{}, [Map.put(@feed, "matter", v)])
+      end
+
+      # A direct caller's key that is not a string is an unknown key too, never "none",
+      # and one Jason cannot encode never takes the queue down.
+      assert {:error, "interventions[0]: a lesion has no key nil" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, nil, 7)])
+
+      assert {:error, "interventions[0]: a lesion has no key :x" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, :x, 7)])
+
+      assert {:error, "interventions[0]: a lesion has no key {:odd, :key}" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, {:odd, :key}, 7)])
+
+      assert Process.alive?(Process.whereis(Queue))
+
+      assert {:error, "interventions[0]: a feed has no key \"extra\"" <> _} =
+               bad_schedule(%{}, [Map.put(@feed, "extra", 4)])
+
+      assert {:error, "interventions[0]: a lesion needs the key \"r\""} =
+               bad_schedule(%{}, [Map.delete(@lesion, "r")])
+
+      assert {:error, "interventions[0]: a feed needs the key \"amount\""} =
+               bad_schedule(%{}, [Map.delete(@feed, "amount")])
+
+      for v <- [-1, 1.5, "7", nil, 9_007_199_254_740_992] do
+        assert {:error, "interventions[0]: step must be a non-negative integer"} =
+                 bad_schedule(%{}, [%{@lesion | "step" => v}])
+      end
+
+      for k <- ~w(x y r), v <- [-1, 2.0, "3", 9_007_199_254_740_992] do
+        assert {:error, "interventions[0]: " <> ^k <> " must be a non-negative integer"} =
+                 bad_schedule(%{}, [Map.put(@lesion, k, v)])
+      end
+
+      assert {:error, "interventions[1]: step 699 follows step 700 (steps must not decrease)"} =
+               bad_schedule(%{}, [@lesion, %{@lesion | "step" => 699}])
+
+      for v <- [0, 4097, -4097, 1.0, "16", nil] do
+        assert {:error,
+                "interventions[0]: amount must be a non-zero integer within ±4096 per cell"} =
+                 bad_schedule(%{}, [%{@feed | "amount" => v}])
+      end
+
+      # The same list, with 4096 per cell both ways, is fine.
+      assert {:ok, 3} =
+               bad_schedule(%{"experiment" => "ok-bounds"}, [
+                 %{@feed | "amount" => 4096},
+                 %{@feed | "amount" => -4096}
+               ])
+    end
+
+    test "what the runner refuses before the GPU: a centre outside the world, a feed in a pond world, an entry after the last step" do
+      assert {:error, "interventions[0]: x 256 is outside the world (256 wide)"} =
+               bad_schedule(%{}, [%{@lesion | "x" => 256}])
+
+      assert {:error, "interventions[0]: y 256 is outside the world (256 high)"} =
+               bad_schedule(%{}, [%{@lesion | "y" => 256}])
+
+      # Every preset in config.exs has a world size, each its own.
+      presets = Application.get_env(:coordinator, :presets)
+      sizes = Application.get_env(:coordinator, :world_size)
+      assert Enum.sort(Map.keys(sizes)) == Enum.sort(presets)
+
+      for {preset, {w, h}} <- sizes do
+        # A cadence every preset's periods divide (archipelago's migrationPeriod 200,
+        # the pond periods 1000 and 10000).
+        changes = %{
+          "experiment" => "ok-#{preset}",
+          "presetId" => preset,
+          "conditions" => ["treatment"],
+          "steps" => 20_000,
+          "segmentSteps" => 10_000,
+          "censusEvery" => 200
+        }
+
+        assert {:ok, _} = bad_schedule(changes, [%{@lesion | "x" => w - 1, "y" => h - 1}])
+        wide = "interventions[0]: x #{w} is outside the world (#{w} wide)"
+        high = "interventions[0]: y #{h} is outside the world (#{h} high)"
+        assert {:error, ^wide} = bad_schedule(changes, [%{@lesion | "x" => w}])
+        assert {:error, ^high} = bad_schedule(changes, [%{@lesion | "y" => h}])
+      end
+
+      pond = %{
+        "experiment" => "ok-pond",
+        "presetId" => "ponds-small",
+        "conditions" => ["treatment"],
+        "steps" => 2000,
+        "segmentSteps" => 1000,
+        "censusEvery" => 100
+      }
+
+      assert {:error, "interventions[1]: feeding is not defined for pond worlds" <> _} =
+               bad_schedule(pond, [@lesion, @feed])
+
+      # A lesion in a pond world is fine: it conserves matter.
+      assert {:ok, 2} = bad_schedule(pond, [@lesion])
+
+      assert {:error,
+              "interventions[1]: step 1501 is after the run's last step (steps 1500), so no segment would apply it"} =
+               bad_schedule(%{}, [@lesion, %{@feed | "step" => 1501}])
+
+      # At the last step is fine: the final segment applies it.
+      assert {:ok, 3} = bad_schedule(%{"experiment" => "ok-last"}, [%{@feed | "step" => 1500}])
+
+      assert {:error, "interventions must hold at most 10000 entries"} =
+               bad_schedule(%{}, List.duplicate(@lesion, 10_001))
+    end
+
+    test "an island without interventions-v1 never gets a scheduled segment or verify, while other work still flows to it",
+         %{dir: dir} do
+      # "a-wounded" sorts first, so its pending segment 0 is ahead of every
+      # "b-plain" segment in pick_task's order.
+      {:ok, 3} =
+        Queue.create_experiment(%{
+          @scheduled
+          | "experiment" => "a-wounded",
+            "verifyFraction" => 1.0
+        })
+
+      {:ok, 3} =
+        Queue.create_experiment(%{@spec_ok | "experiment" => "b-plain", "verifyFraction" => 0.0})
+
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "old"})
+      {:ok, %{id: new}} = Queue.join(%{"adapter" => "new"})
+      {:ok, %{id: other}} = Queue.join(%{"adapter" => "other"})
+
+      # No capabilities, an empty list, the pond capabilities alone: the
+      # scheduled segment is skipped, not waited for.
+      {:ok, t1} = Queue.next_task(old)
+      assert t1.kind == "run" and String.starts_with?(t1.segment.run, "b-plain/")
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old, [])
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(old, ["ponds-v1", "ponds-v2", "interventions-v0"])
+
+      # An island that advertises it gets the scheduled work, among other capabilities.
+      {:ok, w} = Queue.next_task(new, ["ponds-v1", "interventions-v1"])
+      assert w.kind == "run" and w.segment.run == "a-wounded/spots/treatment/seed-1"
+      assert w.spec.interventions == @scheduled["interventions"]
+      upload(dir, w, new, "w0")
+      {:ok, "done"} = done(w, new, "w0")
+
+      # Its verify (verifyFraction 1.0) waits for a capable island too: the
+      # one without the capability idles even with nothing else to do ...
+      upload(dir, t1, old, "p0")
+      {:ok, "done"} = done(t1, old, "p0")
+      {:ok, t2} = Queue.next_task(old, [])
+      assert t2.kind == "run" and t2.segment.run == t1.segment.run and t2.segment.index == 1
+      upload(dir, t2, old, "p1")
+      {:ok, "done"} = done(t2, old, "p1")
+      {:ok, t3} = Queue.next_task(old, [])
+      upload(dir, t3, old, "p2")
+      {:ok, "done"} = done(t3, old, "p2")
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old, ["ponds-v1"])
+
+      # ... while a capable island other than the producer verifies it.
+      {:ok, v} = Queue.next_task(other, ["interventions-v1"])
+      assert v.kind == "verify" and v.segment.id == w.segment.id
+      assert v.spec.interventions == @scheduled["interventions"]
+      assert {:ok, "verified"} = Queue.complete(v.segment.id, other, v.lease, "verify", "w0", %{})
+
+      # Never persisted: nothing about the request sticks to the island.
+      refute Map.has_key?(Queue.island_info(new), :capabilities)
+    end
+
+    test "the gate is per experiment: a pond experiment still needs ponds-v1 and a scheduled one interventions-v1, each on its own",
+         %{dir: dir} do
+      {:ok, 1} =
+        Queue.create_experiment(%{
+          @scheduled
+          | "experiment" => "a-wounded",
+            "steps" => 500,
+            "interventions" => [%{@lesion | "step" => 100}]
+        })
+
+      {:ok, 1} =
+        Queue.create_experiment(%{
+          "experiment" => "b-pond",
+          "presetId" => "ponds-small",
+          "conditions" => ["treatment"],
+          "seeds" => [1],
+          "steps" => 1000,
+          "segmentSteps" => 1000,
+          "censusEvery" => 100,
+          "verifyFraction" => 0.0
+        })
+
+      {:ok, %{id: ponds_only}} = Queue.join(%{"adapter" => "ponds"})
+      {:ok, %{id: wounds_only}} = Queue.join(%{"adapter" => "wounds"})
+
+      {:ok, p} = Queue.next_task(ponds_only, ["ponds-v1"])
+      assert p.kind == "run" and String.starts_with?(p.segment.run, "b-pond/")
+      upload(dir, p, ponds_only, "q0")
+      {:ok, "done"} = done(p, ponds_only, "q0")
+
+      {:ok, w} = Queue.next_task(wounds_only, ["interventions-v1"])
+      assert w.kind == "run" and String.starts_with?(w.segment.run, "a-wounded/")
+
+      # b-pond's final segment awaits a verify by a ponds-v1 island: not the wounds-only one.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(wounds_only, ["interventions-v1"])
+    end
+
+    test "a schedule survives a restart", %{dir: dir} do
+      {:ok, 3} = Queue.create_experiment(@scheduled)
+      :ok = stop_supervised!(Queue)
+      start_supervised!({Queue, data_dir: dir})
+      assert Queue.experiment("wounded").spec["interventions"] == @scheduled["interventions"]
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "A"})
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(island)
+      {:ok, t} = Queue.next_task(island, ["interventions-v1"])
+      assert t.spec.interventions == @scheduled["interventions"]
+    end
+  end
+
+  # A segment an island cannot run as given (a scheduled feed the world
+  # refuses at its step, which creation cannot see): reported under its
+  # lease, the segment is failed for good instead of cycling from island to
+  # island as its lease lapses.
+  describe "a failed segment" do
+    @caps ["interventions-v1"]
+    @reason "the feed at t=0 failed: feed refused: 128614400 quanta would take the world past MATTER_MAX (67108864); it holds 2621440"
+
+    test "fail/4 under the current run lease: the segment is failed with its reason and island, later segments are blocked, nothing is offered again, and status and listing show it" do
+      {:ok, 3} = Queue.create_experiment(@scheduled)
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+      {:ok, t} = Queue.next_task(a, @caps)
+      assert t.kind == "run" and t.segment.index == 0
+
+      # Nothing failed yet: the status carries the (empty) list and count.
+      assert Queue.status().failures == []
+      assert [%{failed: 0, blocked: 0}] = Queue.status().runs
+
+      # The reject's lease rule: a wrong lease, another island, an unknown
+      # segment, each refused with nothing changed.
+      assert {:error, "segment not assigned to this island/lease"} =
+               Queue.fail(t.segment.id, a, "wrong", @reason)
+
+      assert {:error, "segment not assigned to this island/lease"} =
+               Queue.fail(t.segment.id, b, t.lease, @reason)
+
+      assert {:error, "unknown segment"} = Queue.fail("seg-999", a, t.lease, @reason)
+      assert %{status: "assigned"} = Queue.segment(t.segment.id)
+
+      assert :ok = Queue.fail(t.segment.id, a, t.lease, @reason)
+      assert %{status: "failed"} = seg = Queue.segment(t.segment.id)
+      assert Coordinator.Segment.failure_reason(seg) == @reason
+      assert Coordinator.Segment.failed_attempt(seg).island == a
+
+      # The run's later segments are blocked, as after a divergence.
+      exp = Queue.experiment("wounded")
+      assert Enum.map(exp.segments, & &1.status) == ["failed", "blocked", "blocked"]
+      [first | rest] = exp.segments
+      assert %{kind: "run", island: ^a, by: "A", reason: @reason, failedAt: at} = first.failure
+      assert is_integer(at) and at > 0
+      assert map_size(first.failure) == 5
+      assert first.digest == nil and first.producedBy == nil
+      # Only the failed segment carries the key.
+      refute Enum.any?(rest, &Map.has_key?(&1, :failure))
+
+      # Never offered again, to anyone, however capable; its own lease is dead;
+      # a second report finds no lease to fail under.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(a, @caps)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(b, @caps)
+      assert {:error, _} = Queue.heartbeat(t.segment.id, a, t.lease)
+      assert {:error, _} = done(t, a, "h0")
+
+      assert {:error, "segment not assigned to this island/lease"} =
+               Queue.fail(t.segment.id, a, t.lease, "again")
+
+      st = Queue.status()
+      assert st.counts["failed"] == 1 and st.counts["blocked"] == 2
+      refute Map.has_key?(st.counts, "pending")
+
+      assert [
+               %{
+                 run: "wounded/spots/treatment/seed-1",
+                 segments: 3,
+                 done: 0,
+                 verified: 0,
+                 diverged: 0,
+                 failed: 1,
+                 blocked: 2
+               }
+             ] = st.runs
+
+      id = t.segment.id
+
+      assert [
+               %{
+                 segment: ^id,
+                 run: "wounded/spots/treatment/seed-1",
+                 index: 0,
+                 kind: "run",
+                 island: ^a,
+                 by: "A",
+                 reason: @reason
+               }
+             ] = st.failures
+
+      assert st.divergences == []
+      assert Queue.public_status().counts == st.counts
+    end
+
+    test "the stored reason is bounded in graphemes and in bytes, and anything but a string counts as none" do
+      {:ok, 3} = Queue.create_experiment(@scheduled)
+      {:ok, 3} = Queue.create_experiment(%{@spec_ok | "experiment" => "zz-plain"})
+
+      {:ok, 4} =
+        Queue.create_experiment(%{
+          @spec_ok
+          | "experiment" => "zz-two",
+            "seeds" => [1, 2],
+            "steps" => 1000
+        })
+
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      reason_of = fn t -> Coordinator.Segment.failure_reason(Queue.segment(t.segment.id)) end
+
+      {:ok, t} = Queue.next_task(a, @caps)
+      assert :ok = Queue.fail(t.segment.id, a, t.lease, String.duplicate("x", 10_000))
+      assert reason_of.(t) == String.duplicate("x", 500)
+
+      # An ordinary experiment's segment can be failed too (the coordinator
+      # trusts the lease holder's report, as it trusts a reject's).
+      {:ok, t2} = Queue.next_task(a, @caps)
+      assert String.starts_with?(t2.segment.run, "zz-plain/")
+      assert :ok = Queue.fail(t2.segment.id, a, t2.lease, %{"not" => "a string"})
+      assert reason_of.(t2) == ""
+
+      # One base character under a hundred thousand combining marks is one
+      # grapheme and 200,001 bytes: the byte bound cuts it between codepoints,
+      # so what is stored is still valid UTF-8 (every /api/status encodes it).
+      {:ok, t3} = Queue.next_task(a, @caps)
+      assert String.starts_with?(t3.segment.run, "zz-two/")
+      stacked = "x" <> String.duplicate("́", 100_000)
+      assert :ok = Queue.fail(t3.segment.id, a, t3.lease, stacked)
+      stored = reason_of.(t3)
+      assert String.valid?(stored) and byte_size(stored) <= 2000 and byte_size(stored) >= 1999
+      assert String.starts_with?(stored, "x́")
+      # Four-byte codepoints: 500 of them are exactly the byte bound.
+      {:ok, t4} = Queue.next_task(a, @caps)
+      assert String.starts_with?(t4.segment.run, "zz-two/") and t4.segment.id != t3.segment.id
+      wide = String.duplicate("\u{1F600}", 600)
+      assert :ok = Queue.fail(t4.segment.id, a, t4.lease, wide)
+      assert reason_of.(t4) == String.duplicate("\u{1F600}", 500)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(a, @caps)
+
+      # A direct caller's invalid UTF-8 counts as none rather than poisoning the status.
+      {:ok, 1} = Queue.create_experiment(%{@spec_ok | "experiment" => "zz-raw", "steps" => 500})
+      {:ok, t5} = Queue.next_task(a, @caps)
+      assert :ok = Queue.fail(t5.segment.id, a, t5.lease, <<255, 254, "x">>)
+      assert reason_of.(t5) == ""
+
+      # The work is bounded by the prefix, not by what was sent: ten megabytes
+      # of combining marks (one grapheme) cost this serialized process no more
+      # than the bound (Sol pass 2 measured seconds for the codepoint walk).
+      {:ok, 1} = Queue.create_experiment(%{@spec_ok | "experiment" => "zz-huge", "steps" => 500})
+      {:ok, t6} = Queue.next_task(a, @caps)
+      huge = "x" <> String.duplicate("́", 5_000_000)
+      {us, :ok} = :timer.tc(fn -> Queue.fail(t6.segment.id, a, t6.lease, huge) end)
+      assert us < 500_000, "bounding a 10 MB reason took #{us}us"
+      assert reason_of.(t6) == stored
+
+      reasons = Enum.map(Queue.status().failures, & &1.reason)
+      assert length(reasons) == 6 and Enum.all?(reasons, &String.valid?/1)
+      assert {:ok, _} = Jason.encode(Queue.status().failures)
+    end
+
+    test "a lapsed lease never returns a failed segment to pending" do
+      Application.put_env(:coordinator, :lease_ms, 0)
+      on_exit(fn -> Application.delete_env(:coordinator, :lease_ms) end)
+      {:ok, 3} = Queue.create_experiment(@scheduled)
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+      {:ok, t} = Queue.next_task(a, @caps)
+      assert :ok = Queue.fail(t.segment.id, a, t.lease, @reason)
+      Process.sleep(2)
+
+      # `next_task` reclaims stale leases first: the failed attempt is not pending, so nothing moves.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(b, @caps)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(a, @caps)
+      assert %{status: "failed"} = Queue.segment(t.segment.id)
+      assert Queue.status().counts == %{"failed" => 1, "blocked" => 2}
+    end
+
+    test "a verifier may fail a done segment under its verify lease: the segment is failed with the producer's record kept, and its done successors are blocked",
+         %{dir: dir} do
+      {:ok, 3} = Queue.create_experiment(%{@scheduled | "verifyFraction" => 1.0})
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+
+      {:ok, t0} = Queue.next_task(a, @caps)
+      upload(dir, t0, a, "w0")
+      {:ok, "done"} = done(t0, a, "w0")
+      {:ok, v} = Queue.next_task(b, @caps)
+      assert v.kind == "verify" and v.segment.id == t0.segment.id
+      {:ok, t1} = Queue.next_task(a, @caps)
+      assert t1.kind == "run" and t1.segment.index == 1
+      upload(dir, t1, a, "w1")
+      {:ok, "done"} = done(t1, a, "w1")
+
+      # The producer's run lease is spent; only the verifier's lease fails it now.
+      assert {:error, "segment not assigned" <> _} =
+               Queue.fail(t0.segment.id, a, t0.lease, @reason)
+
+      assert {:error, "segment not assigned" <> _} =
+               Queue.fail(t0.segment.id, b, "wrong", @reason)
+
+      assert :ok = Queue.fail(t0.segment.id, b, v.lease, @reason)
+
+      seg = Queue.segment(t0.segment.id)
+      assert seg.status == "failed"
+      assert Coordinator.Segment.failed_attempt(seg).kind == "verify"
+      assert Coordinator.Segment.accepted_digest(seg) == "w0"
+      # The verify can no longer complete.
+      assert {:error, _} = Queue.complete(v.segment.id, b, v.lease, "verify", "w0", %{})
+
+      exp = Queue.experiment("wounded")
+      assert Enum.map(exp.segments, & &1.status) == ["failed", "blocked", "blocked"]
+      [first, second, _] = exp.segments
+      assert %{kind: "verify", island: ^b, by: "B", reason: @reason, failedAt: at} = first.failure
+      assert is_integer(at)
+      assert first.digest == "w0" and first.producedBy == "A" and first.verifiedBy == nil
+      # The done successor lost its result with its attempts, as after a divergence.
+      assert second.digest == nil and second.files == nil
+      assert {:error, _} = Queue.heartbeat(t1.segment.id, a, t1.lease)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(a, @caps)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(b, @caps)
+
+      st = Queue.status()
+      assert [%{done: 0, verified: 0, diverged: 0, failed: 1, blocked: 2}] = st.runs
+      assert [%{kind: "verify", island: ^b, by: "B", index: 0}] = st.failures
+      assert st.divergences == []
+    end
+
+    test "a failure survives a restart", %{dir: dir} do
+      {:ok, 3} = Queue.create_experiment(@scheduled)
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      {:ok, t} = Queue.next_task(a, @caps)
+      assert :ok = Queue.fail(t.segment.id, a, t.lease, @reason)
+      :ok = stop_supervised!(Queue)
+      start_supervised!({Queue, data_dir: dir})
+
+      seg = Queue.segment(t.segment.id)
+      assert seg.status == "failed"
+      assert Coordinator.Segment.failure_reason(seg) == @reason
+      assert Coordinator.Segment.failed_attempt(seg).island == a
+
+      assert Enum.map(Queue.experiment("wounded").segments, & &1.status) == [
+               "failed",
+               "blocked",
+               "blocked"
+             ]
+
+      assert [%{index: 0, kind: "run", island: ^a, reason: @reason}] = Queue.status().failures
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(b, @caps)
+    end
+  end
 end

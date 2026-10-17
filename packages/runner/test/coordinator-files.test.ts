@@ -48,6 +48,7 @@ describe("coordinator verified files", () => {
 
   it("stitch.ts's VERIFIED_FILES carries every optional log, and never manifest.json", () => {
     expect(VERIFIED_FILES).toContain("ponds.tsv");
+    expect(VERIFIED_FILES).toContain("interventions.jsonl");
     expect(VERIFIED_FILES).not.toContain("manifest.json");
   });
 

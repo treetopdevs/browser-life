@@ -169,9 +169,13 @@ contact sheet and the donors the run applied (`b<NNN>-applied.json`) beside its 
   island.
 - Lab histories: `--picks-from` takes a lab run manifest (`<runId>.run.json` in the lab's storage; the Export
   button makes a `.blck`, not this). Its `pick` interventions replay, a boundary it has none for takes the
-  rule's donors as the lab's own replay does, and lesions, feeds or an observation that starts after step 0 are
-  refused. This reproduces the physics, not the lab's observer settings, so `finalHash` can differ from the
-  lab's. It was proven on a manifest built by hand from a log, not on a real lab export.
+  rule's donors as the lab's own replay does (or the picker's, with `--picker`, as in the continuation
+  above), and its lesions and feeds replay as the run's schedule
+  (`RunSpec.interventions`, each feed carrying the matter the lab logged; see `docs/sandbox-feed.md`). Only
+  an observation that starts after step 0 (`edgesFrom` > 0) is still refused. The run is compared with the
+  lab's own checkpoint when one was saved at `--steps` after every logged intervention. This reproduces the
+  physics, not the lab's observer settings, so `finalHash` can differ from the lab's. It was proven on
+  manifests built by hand from a log and by the lab's own traversal in a test, not on a real lab export.
 - Eligibility: a pond can found a pond when its expected packet mass (`pondSeeds`) is at least 3,000, from the
   survival table under "Why bred ponds died". That table was measured at 10,000-step cycles on 64 ponds; the
   breeder preset cycles every 5,000 steps, where the threshold is unmeasured. The runner does not enforce it
