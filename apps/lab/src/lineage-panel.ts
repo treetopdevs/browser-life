@@ -216,7 +216,7 @@ export function createLineagePanel(send: (m: ToWorker) => void): LineagePanel {
     tw.append(table);
     ancestry.append(
       tw,
-      el("p", "Expression is measured on a fixed grid of sensor values, not the inputs the lineage met; outputs moved lists each output's largest change on that grid. Jump restores the latest checkpoint at or before a row's minting and replays forward; lesions made after that checkpoint are not re-applied.", "hint"),
+      el("p", "Expression is measured on a fixed grid of sensor values, not the inputs the lineage met; outputs moved lists each output’s largest change on that grid. Jump restores the latest checkpoint at or before a row’s minting and replays forward, re-applying the wounds and feeds logged before that step and the donor picks up to and including it.", "hint"),
     );
 
     const gaps = el("section");

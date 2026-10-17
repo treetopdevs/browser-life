@@ -26,7 +26,7 @@ test("lab status and history remain reachable on small screens", async ({ page }
   const stage = page.locator(".stage");
   await expect(stage).toHaveCSS("overflow-y", "auto");
   await stage.evaluate((el) => { el.scrollTop = el.scrollHeight; });
-  await expect(page.getByRole("heading", { name: "How it's going" })).toBeInViewport();
+  await expect(page.getByRole("heading", { name: "How it’s going" })).toBeInViewport();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator("#simulation-status")).toBeVisible();

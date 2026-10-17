@@ -145,7 +145,7 @@ test("a Worlds page link names one world: the page opens on its card, ringed, an
   await expect(card.locator("h3 a.world-link")).toHaveAttribute("href", "/worlds/?world=planet-followers");
   const copy = card.getByRole("button", { name: "Copy link to Sun-followers vs sleepers" });
   await copy.click();
-  await expect(page.getByRole("status")).toHaveText(/^(Link to Sun-followers vs sleepers copied\.|Could not copy the link to Sun-followers vs sleepers\. The world's name is the link\.)$/);
+  await expect(page.getByRole("status")).toHaveText(/^(Link to Sun-followers vs sleepers copied\.|Could not copy the link to Sun-followers vs sleepers\. The world’s name is the link\.)$/);
   await expect(copy).toHaveAccessibleName("Copy link to Sun-followers vs sleepers");
   if (native) {
     await expect(copy).toContainText("Link copied");

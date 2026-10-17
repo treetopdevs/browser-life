@@ -41,7 +41,7 @@ const cellsInDisc = (r: number) => {
   for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (dx * dx + dy * dy <= r * r) disc++;
   return disc;
 };
-const POND_TERM_NAMES: Record<PondTerm, string> = { mass: "mass", drive: "movement", reach: "reach to the pond's edge", seed: "the seed packet's mass", body: "body size" };
+const POND_TERM_NAMES: Record<PondTerm, string> = { mass: "mass", drive: "movement", reach: "reach to the pond’s edge", seed: "the seed packet’s mass", body: "body size" };
 const list = (items: string[]) => (items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`);
 
 /** What `p` is, read off its config and its founding: the light, the size, who is planted, and every rule that differs from the base rules. */
@@ -86,7 +86,7 @@ export function worldTraits(p: Preset): Trait[] {
         : { lever: "founders", label: `${f} discs of the ${M3_FOUNDERS.length} searched founders`, detail: `the ${M3_FOUNDERS.length} searched genomes planted in turn, ${f / M3_FOUNDERS.length} discs each` });
       break;
     case "soup": traits.push({ lever: "founders", label: `${f} random founders`, detail: "random controllers; most die" }); break;
-    case "followers": traits.push({ lever: "founders", label: `${f / 2} sleepers and ${f / 2} sun-followers`, detail: "the followers are built to drift east at the sun's speed; the sleepers go dormant at night" }); break;
+    case "followers": traits.push({ lever: "founders", label: `${f / 2} sleepers and ${f / 2} sun-followers`, detail: "the followers are built to drift east at the sun’s speed; the sleepers go dormant at night" }); break;
     case "sensing": traits.push({ lever: "founders", label: `${f / 2} sleepers and ${f / 2} sensing followers`, detail: "the followers signal in the dark and move away from signal, so their own dark side pushes them toward the light" }); break;
     case "motile": traits.push({ lever: "founders", label: `${f} founders that can move but have no heading`, detail: "random motility, no direction: any heading has to be a mutation" }); break;
     case "motile-drift": traits.push({ lever: "founders", label: `${f} drifters with random headings`, detail: "random motility and a random constant direction each" }); break;
@@ -118,14 +118,14 @@ export function worldTraits(p: Preset): Trait[] {
       kin === "lineage" ? ["by lineage", "unless the two share a lineage"]
       : kin === "growth" ? ["by growth settings", `unless their growth centre is within ${tol} and its width within ${tol >> 2}`]
       : [`by genome, within ${tol} word${tol === 1 ? "" : "s"}`, `unless their genomes differ in at most ${tol} of 42 words`];
-    traits.push({ lever: "rules", label: `Taking a stranger's matter is lossy unless kin ${by}`, detail: `what the lottery winner takes turns to waste, ${unless}; the energy stays with the winner` });
+    traits.push({ lever: "rules", label: `Taking a stranger’s matter is lossy unless kin ${by}`, detail: `what the lottery winner takes turns to waste, ${unless}; the energy stays with the winner` });
   }
   if (cfg.shapeReach) {
     traits.push(cfg.shapeReach > cfg.kernelRadius
       ? { lever: "rules", label: `Body shape is heritable out to radius ${cfg.shapeReach}`, detail: `a genome weights the two rings of the usual radius-${cfg.kernelRadius} kernel and a far ring beyond it` }
       : { lever: "rules", label: "Body shape is heritable within the usual kernel", detail: `a genome weights the two rings of the radius-${cfg.shapeReach} kernel` });
   }
-  if (cfg.cellPeriod) traits.push({ lever: "rules", label: "Declared cells", detail: `every ${n(cfg.cellPeriod)} steps each body gets its own id, and a genome changes only at a cell's birth` });
+  if (cfg.cellPeriod) traits.push({ lever: "rules", label: "Declared cells", detail: `every ${n(cfg.cellPeriod)} steps each body gets its own id, and a genome changes only at a cell’s birth` });
   if (cfg.injuryPeriod && cfg.injuryRadius !== undefined && cfg.injuryProb) {
     // The preset stored a rounded probability, so the rate it was built from comes back to three figures ("about").
     const every = Number(((2 ** 32 * cfg.injuryPeriod) / (cellsInDisc(cfg.injuryRadius) * cfg.injuryProb)).toPrecision(3));
@@ -190,7 +190,7 @@ export const SEEN_LABELS: Record<SeenState, string> = {
   pending: "Not yet measured",
 };
 
-/** The journal's chip colours: green only for a confirmed or replicated result, sun for a measurement, red for a negative, grey otherwise (a thing merely seen included). */
+/** The journal's chip colours: green only for a confirmed result (a registered test or a milestone gate that passed; DESIGN.md), sun for a measurement, red for a negative, grey otherwise (a thing merely seen included). */
 export const SEEN_TONE: Record<SeenState, "observed" | "measured" | "negative" | "pending"> = {
   confirmed: "observed",
   measured: "measured",
@@ -237,7 +237,7 @@ export const FAMILIES: Family[] = [
     name: "Islands and ponds",
     lever: "many small worlds in one jar",
     why: "Split the jar into tiles. Islands trade a few cells now and then. Ponds are cleared on a schedule and reseeded from the ponds that did best: a life cycle for groups, borrowed from experiments on microbes. Selection then acts on whole ponds, not only on cells.",
-    seen: "The pond cycle gave the one confirmed result so far (3 Oct): worlds evolved under it founded new ponds more often than three controls. The cycle is imposed, not discovered; the evolved genome alone had a small measured effect, and how much of the worlds' advantage it carries was not measured.",
+    seen: "The pond cycle passed the only registered test confirmed so far (3 Oct): worlds evolved under it founded new ponds more often than three controls. The cycle is imposed, not discovered; the evolved genome alone had a small measured effect, and how much of the worlds’ advantage it carries was not measured.",
     ids: ["ponds", "ponds-small", "archipelago"],
   },
   {
@@ -252,7 +252,7 @@ export const FAMILIES: Family[] = [
     id: "owning",
     name: "Who owns the matter",
     lever: "the cost of taking",
-    why: "In the base rules, when matter from two lineages meets, a lottery picks a winner that takes it all for free. Evolution has used that to erode bodies rather than build them: evolved lineages regrow after a wound far less often than the founders did (0.17 against 0.98). These worlds make taking a stranger's matter lossy, or add recurring wounds, and ask whether a body starts to pay off.",
+    why: "In the base rules, when matter from two lineages meets, a lottery picks a winner that takes it all for free. Evolution has used that to erode bodies rather than build them: evolved lineages regrow after a wound far less often than the founders did (0.17 against 0.98). These worlds make taking a stranger’s matter lossy, or add recurring wounds, and ask whether a body starts to pay off.",
     seen: "Four screens of these arms (2 to 3 Oct), three seeds per arm, each read against a bar fixed in advance. No arm met it; each reads unclear or dead end.",
     ids: ["own-lossy", "own-match", "own-genome-1", "own-genome-3", "own-genome-8", "own-seasons", "own-injury-light", "own-injury-heavy", "own-injury-coarse"],
   },
@@ -260,7 +260,7 @@ export const FAMILIES: Family[] = [
     id: "cells",
     name: "Shape and cells",
     lever: "what is inherited, and what counts as a cell",
-    why: "Every base world shares one round growth kernel, and a genome can tune only two numbers of the growth function on top of it, so shape is barely heritable: evolution has mostly been changing metabolism. These worlds let the kernel's shape be inherited, or declare a cell outright (a body with its own id, mutating only at birth) and ask what evolves one level up.",
+    why: "Every base world shares one round growth kernel, and a genome can tune only two numbers of the growth function on top of it, so shape is barely heritable: evolution has mostly been changing metabolism. These worlds let the kernel’s shape be inherited, or declare a cell outright (a body with its own id, mutating only at birth) and ask what evolves one level up.",
     seen: "Four screens (3 to 4 Oct): three seeds per arm, then five fresh seeds for the wall arm with and without wounds. No arm met its pre-stated bar. Longer, more elaborate bodies (worms and labyrinths) appeared in a few runs, and in the control worlds too, so no difference in shape was established.",
     ids: ["own-shape", "own-shape-far", "own-cell", "own-cell-wall", "own-cell-injury", "own-cell-wall-injury"],
   },
@@ -269,7 +269,7 @@ export const FAMILIES: Family[] = [
     name: "Storms and the breeder",
     lever: "every lever at once, and selection by hand",
     why: "The storm stacks everything the sandboxes built: a wandering sun, seasons, a readable signal, recurring wounds and heritable shape. The breeder turns the pond cycle into a selection loop for a trait we name, or for whatever you choose at each cycle. Both chase interesting life, not a registered claim.",
-    seen: "The full storm was extinct by step 29,000 in its one seed; the sun's speed is what kills. On the 64-pond world (4 Oct, one seed each), breeding for movement alone bred real movement and emptied most ponds; adding the seed packet's mass to the score kept them occupied at about half the pace, and body size too at about a third.",
+    seen: "The full storm was extinct by step 29,000 in its one seed; the sun’s speed is what kills. The big jar dies early too (three seeds, 9 Oct) unless its starting food is doubled, and then nearly every cell is living, which reads as a carpet; raised by half, it holds a population on two seeds of three. On the 64-pond world (4 Oct, one seed each), breeding for movement alone bred real movement and emptied most ponds; adding the seed packet’s mass to the score kept them occupied at about half the pace, and body size too at about a third.",
     ids: ["breeder", "wild-storm", "wild-storm-w01", "wild-storm-w10", "wild-storm-meteor", "wild-storm-m10", "wild-storm-3way", "wild-storm-large"],
   },
 ];
@@ -286,7 +286,7 @@ export const START_HERE: { id: string; why: string }[] = [
 export const WORLD_NOTES: Record<string, WorldNote> = {
   spots: {
     asks: "What does the chemistry do when left alone under even light?",
-    look: "Biomass condenses into spots that grow, split and drift. The Lineages view shows which founders' descendants end up holding the field.",
+    look: "Biomass condenses into spots that grow, split and drift. The Lineages view shows which founders’ descendants end up holding the field.",
     seen: { state: "measured", text: "The base world of the registered ensemble, run there with the searched founders rather than these hand-built ones." },
   },
   gradient: {
@@ -322,7 +322,7 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   "gradient-m3": {
     asks: "The searched founders with a bright end and a dim end; the base every sandbox below compares itself against.",
     look: "Watch whether lineages sort by brightness. This is the control world for the ownership, cells and storm screens, so it is worth knowing by eye.",
-    seen: { state: "negative", text: "The main world of the registered 10⁶-step ensemble (28 Sep). New adaptive activity beat both controls here, but the second test failed: runs where mutations change nothing also read as growing. Evolved lineages also lost the founders' ability to regrow after a wound (0.17 against 0.98)." },
+    seen: { state: "negative", text: "The main world of the registered 10⁶-step ensemble (28 Sep). New adaptive activity beat both controls here, but the second test failed: runs where mutations change nothing also read as growing. Evolved lineages also lost the founders’ ability to regrow after a wound (0.17 against 0.98)." },
     base: "gradient",
   },
   "gradient-m3-waste": {
@@ -340,7 +340,7 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   ponds: {
     asks: "If ponds are cleared every 10,000 steps and reseeded from the heaviest ones, do their descendants get better at founding ponds?",
     look: "Sixty-four ponds. At each cycle the whole field resets, and dashed lines on the charts mark the cycles. Turn on Breed by hand to choose the donors yourself.",
-    seen: { state: "confirmed", text: "The registered pond test (3 Oct, 24 histories per arm) confirmed both primary hypotheses: worlds evolved under the cycle founded new ponds from fragments more often than random-donor worlds, uncycled worlds and the ancestor, and the evolved genome alone founded more ponds than the ancestor's in 24 of 24. That measured effect was small (a median of 19 more successes in 512), and the comparison does not measure how much of the worlds' advantage the genome carries. The life cycle is imposed rather than discovered, and by a decision made beforehand this counts toward no milestone." },
+    seen: { state: "confirmed", text: "The registered pond test (3 Oct, 24 histories per arm) confirmed both primary hypotheses: worlds evolved under the cycle founded new ponds from fragments more often than random-donor worlds, uncycled worlds and the ancestor, and the evolved genome alone founded more ponds than the ancestor’s in 24 of 24. That measured effect was small (a median of 19 more successes in 512), and the comparison does not measure how much of the worlds’ advantage the genome carries. The life cycle is imposed rather than discovered, and by a decision made beforehand this counts toward no milestone." },
   },
   "ponds-small": {
     asks: "The pond cycle at a size that fits a laptop: four ponds, a cycle every 1,000 steps.",
@@ -356,13 +356,13 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   },
   "planet-m3": {
     asks: "Do the searched founders survive a day and a night?",
-    look: "The same moving sun as the planet, with the twelve searched genomes. Compare the living mass chart against the planet's.",
+    look: "The same moving sun as the planet, with the twelve searched genomes. Compare the living mass chart against the planet’s.",
     seen: { state: "measured", text: "In the sun-speed ladder (4 Oct) this speed, one lap in about 16,000 steps, was lethal to these founders at seed 1. A lap in 32,768 steps left 6,170 living cells; slower suns left more." },
     base: "gradient-m3",
   },
   "planet-followers": {
     asks: "Does moving with the sun beat sleeping through the night?",
-    look: "Eight sleepers against eight followers built to drift east at exactly the sun's speed. Press 2 for the Lineages view and see who holds the field after a few days.",
+    look: "Eight sleepers against eight followers built to drift east at exactly the sun’s speed. Press 2 for the Lineages view and see who holds the field after a few days.",
     seen: { state: "observed", text: "A yardstick world: the followers are built by hand, so their winning shows the environment rewards moving, not that moving evolved. Hand-built movers survived the fastest sun in the ladder (4 Oct), one seed." },
     base: "planet",
   },
@@ -403,7 +403,7 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
     base: "large",
   },
   "own-lossy": {
-    asks: "If taking a stranger's matter turns it to waste, do bodies stop being eroded?",
+    asks: "If taking a stranger’s matter turns it to waste, do bodies stop being eroded?",
     look: "Press 4 for the Waste view: every takeover between lineages leaves brown behind. Watch whether lineages keep to themselves.",
     seen: { state: "negative", text: "Dead end (3 Oct). Regeneration stayed high, but only because evolution stalled: in two seeds of three one founder held every occupied cell and no mutant lineage got going." },
     base: "gradient-m3",
@@ -415,19 +415,19 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
     base: "own-lossy",
   },
   "own-genome-1": {
-    asks: "Lossy taking where kin means a genome within one word of the winner's.",
-    look: "The strictest genome kin: any genome within one word of the winner's counts, which keeps a single mutant kin to its parent.",
+    asks: "Lossy taking where kin means a genome within one word of the winner’s.",
+    look: "The strictest genome kin: any genome within one word of the winner’s counts, which keeps a single mutant kin to its parent.",
     seen: { state: "unclear", text: "Unclear (3 Oct): no seed reached the bar; nothing collapsed or stalled." },
     base: "own-lossy",
   },
   "own-genome-3": {
-    asks: "Lossy taking where kin means a genome within three words of the winner's.",
+    asks: "Lossy taking where kin means a genome within three words of the winner’s.",
     look: "Between the one-word and eight-word worlds.",
     seen: { state: "unclear", text: "Unclear (3 Oct): one seed read high at the end after reading low earlier, the pattern of a lineage that lost regrowth and regained it." },
     base: "own-lossy",
   },
   "own-genome-8": {
-    asks: "Lossy taking where kin means a genome within eight words of the winner's.",
+    asks: "Lossy taking where kin means a genome within eight words of the winner’s.",
     look: "The loosest genome kin: whole families of mutants count as kin.",
     seen: { state: "unclear", text: "Unclear (3 Oct): no seed reached the bar; nothing collapsed or stalled." },
     base: "own-lossy",
@@ -447,7 +447,7 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   "own-injury-heavy": {
     asks: "The same wounds four times as often.",
     look: "A body is touched about every 1,000 steps. Does anything keep a body together under that?",
-    seen: { state: "unclear", text: "Unclear (3 Oct): no seed reached the bar; living mass fell to about 0.9 of the control's." },
+    seen: { state: "unclear", text: "Unclear (3 Oct): no seed reached the bar; living mass fell to about 0.9 of the control’s." },
     base: "own-injury-light",
   },
   "own-injury-coarse": {
@@ -459,7 +459,7 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   "own-shape": {
     asks: "If the shape of the growth kernel is heritable, does evolution change the shape of bodies?",
     look: "A genome weights the inner and outer rings of the kernel. Look at a cell to see its ring weights once they leave neutral.",
-    seen: { state: "negative", text: "Dead end (3 Oct): the ring weights moved, but no seed's bodies differed from the control's." },
+    seen: { state: "negative", text: "Dead end (3 Oct): the ring weights moved, but no seed’s bodies differed from the control’s." },
     base: "gradient-m3",
   },
   "own-shape-far": {
@@ -475,7 +475,7 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
     base: "gradient-m3",
   },
   "own-cell-wall": {
-    asks: "Declared cells where taking another cell's matter is lossy, so a cell's matter is never simply absorbed.",
+    asks: "Declared cells where taking another cell’s matter is lossy, so a cell’s matter is never simply absorbed.",
     look: "Press 4 for the Waste view: the walls between cells show as brown. Do cells stay distinct?",
     seen: { state: "unclear", text: "Unclear (3 Oct): two seeds met the regeneration bar, though under a later, stricter reading evolution here would count as frozen. Unclear again on five fresh seeds (4 Oct)." },
     base: "own-cell",
@@ -495,7 +495,7 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   "wild-storm": {
     asks: "What happens when every lever is on at once?",
     look: "A wandering sun, a season, a readable signal, recurring wounds and heritable shape, all at the dose each sandbox used. Watch the living mass chart.",
-    seen: { state: "negative", text: "Extinct by step 29,000 at seed 1 (4 Oct). Moving one lever at a time on the calm world showed the sun's speed is what kills; the storm without its sun survives." },
+    seen: { state: "negative", text: "Extinct by step 29,000 at seed 1 (4 Oct). Moving one lever at a time on the calm world showed the sun’s speed is what kills; the storm without its sun survives." },
     base: "gradient-m3",
   },
   "wild-storm-w01": {
@@ -512,7 +512,7 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   },
   "wild-storm-meteor": {
     asks: "The storm with meteors: rare big wounds that remove whole bodies.",
-    look: "Radius-8 wounds at the same per-cell rate as the storm's small ones.",
+    look: "Radius-8 wounds at the same per-cell rate as the storm’s small ones.",
     seen: { state: "pending", text: "Not yet run: the storm needs a slower sun first." },
     base: "wild-storm",
   },
@@ -531,13 +531,13 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   "wild-storm-large": {
     asks: "The storm on the big world, with the sun at the same speed.",
     look: "Twice the founders, four times the cells. Slower on most GPUs.",
-    seen: { state: "pending", text: "Not yet run." },
+    seen: { state: "negative", text: "Extinct at steps 121,000, 28,000 and 66,000 at seeds 1 to 3 (9 Oct), before the sun’s first full wander. With the starting food doubled, all three seeds were alive at a million steps with nearly every cell living: a carpet, as far as the numbers and a frame can tell. Raised by half instead, two seeds of three held thousands of small bodies at a million steps, one with a corner of worm-like shapes in its last frame by eye, and the third died at 84,000. By eye in the lab, fed by hand at the start (9 Oct, one seed), it seemed to hold up and make worms when food got scarce; that middle ground is not yet found." },
     base: "wild-storm",
   },
   breeder: {
     asks: "Can we breed ponds toward a trait we can see?",
-    look: "Sixteen ponds at ten times the mutation rate, a cycle every 5,000 steps, donors ranked on movement, the seed packet's mass and body size together. Turn on Breed by hand and choose the donors yourself.",
-    seen: { state: "measured", text: "Measured on the 64-pond, 10,000-step world (4 Oct), one seed each: breeding for movement alone bred real movement and left 23 of 64 ponds occupied; adding the seed packet's mass kept 63 occupied at about half the pace, and body size too kept 62 occupied at about a third. This 16-pond, 5,000-step version is sized for the lab and has not been measured. A vision model picking the most unusual-looking ponds bred no movement in one try: novelty and movement are not the same thing." },
+    look: "Sixteen ponds at ten times the mutation rate, a cycle every 5,000 steps, donors ranked on movement, the seed packet’s mass and body size together. Turn on Breed by hand and choose the donors yourself.",
+    seen: { state: "measured", text: "Measured on the 64-pond, 10,000-step world (4 Oct), one seed each: breeding for movement alone bred real movement and left 23 of 64 ponds occupied; adding the seed packet’s mass kept 63 occupied at about half the pace, and body size too kept 62 occupied at about a third. This 16-pond, 5,000-step version is sized for the lab and has not been measured. A vision model picking the most unusual-looking ponds bred no movement in one try: novelty and movement are not the same thing." },
     base: "ponds",
   },
 };
