@@ -113,6 +113,63 @@ it does not change the reading above.
 - A model reading the rings (part b), which needs a yes for paid calls.
 - Component-size quantiles, collective-fission similarity and pond scores: not in these bundles.
 
-## Readout
+## Readout (2026-10-17, after the run)
 
-Not yet run.
+Run with `deno run -A tools/bell.ts run --base <main checkout>/runs --out <scratchpad> --record
+experiments/naturalist/bell-v0.json` over all 85 runs of the corpus (complete, nothing missing; 5.5 minutes
+of CPU, no GPU). The record is `experiments/naturalist/bell-v0.json`; the per-run detail (D by signal,
+side and W, every receipt) stayed in the session scratchpad.
+
+**Reading: it rings on drift.** Criterion 1 fails, so by the rule fixed above the bell has no clapper
+yet at v0's setting, whatever criterion 2 says.
+
+| | Result at Z = 4, W = 50 | Bar | |
+| --- | --- | --- | --- |
+| 1. False alarms, 70 neutral runs | **30 of 70** ring (upper 95% bound 0.53) | at most 2 (bound below 0.1) | fail |
+| 2. Treatment against gradient-m3 neutral | effect **1.00** (10 against 40) | ≥ 0.8 | pass |
+| No-mutation against neutral (reported) | effect 1.00; 5 of 5 ring | | |
+| Treatment rings (reported) | 10 of 10 | | |
+| Treatment against no-mutation (reported) | effect 1.00 | | |
+| Preliminary, 20 M4 neutral seeds | 16 of 20 ring; treatment 10 of 10, no-mutation 5 of 5, effect 1.00 | | |
+
+The full grid, false alarms of 70 (of 20 preliminary), with treatment ringing 10 of 10 and the effect
+1.00 in every cell:
+
+| | W = 10 | W = 50 | W = 200 |
+| --- | ---: | ---: | ---: |
+| Z = 3 | 65 (20) | 42 (19) | 9 (1) |
+| Z = 4 | 54 (20) | **30 (16)** | 3 (1) |
+| Z = 6 | 36 (18) | 6 (4) | 0 (0) |
+
+The calibrated bell, held out (secondary, W = 50): Z* is 7.04 for gradient-m3 and 11.47 for spots-m3,
+from the 20 `replay-calib` neutral runs each. Above Z*: 1 of the 30 held-out `replay-m4` neutral runs
+(about 1.4 expected), 10 of 10 treatment and 5 of 5 no-mutation runs.
+
+What the numbers say, beyond the reading. None of this changes the reading; it is what a v1 would have
+to be fixed from, before a fresh run.
+
+- **Where the false alarms come from.** Of the 30 neutral rings, the signal that rang was
+  `maxGeneration` high (20 runs), `dominantShare` high (16) and `fissions` high (1); a run can ring on
+  more than one. No other signal rang on a neutral run. These two signals have heavy upper tails under
+  drift: now and then one neutral lineage takes most of the jar, or one line gets many generations
+  deep. Their largest neutral D at W = 50 is 11.5 and 7.0. Among the other eleven signals the largest is
+  4.05 (`fissions`, spots-m3 seed 1004, the one `fissions` ring), and the next is 3.5. Leaving the two
+  out after the fact, that one run of 70 would ring at (4, 50), and every treatment and no-mutation
+  run still would. That is a post-hoc look at the same corpus, not a pass.
+- **The hits are not events.** Every treatment and no-mutation run rings in its first counted window
+  (steps 10,000 to 14,900, except treatment seed 4: `mutations` high, steps 21,200 to 26,100). The
+  first ring is mostly `livingCells` low: 13,000 to 25,000 living cells against a neutral median of
+  33,684. Treatment and no-mutation worlds are already smaller than neutral ones at step 10,000, the first
+  census the bell counts, so the
+  separation says the arms are different worlds, which M4 already knew. It does not show the bell
+  hearing a departure arise within a world. The envelope bell measures where a world stands against
+  the neutral ensemble; for "something happened here", the bell needs the twin (a control forked from
+  the world's own checkpoint), or an envelope of its own arm.
+- **Calibration works where the rule did not.** Thresholds read off one null corpus held up on
+  another (1 of 30 against about 1.4 expected), which is the calibrated route the brainstorm
+  described: calibrate on neutral runs before the bell speaks.
+
+Next, if this line goes on (each needs its own rules fixed before running): a v1 envelope bell with
+thresholds calibrated per signal on `replay-calib` and judged on `replay-m4`; a within-arm bell
+(treatment against the other treatment runs) to ask whether one world departs from its own arm; and
+the twin bell once the lab can fork a control twin.
