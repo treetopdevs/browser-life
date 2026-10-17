@@ -95,13 +95,13 @@ are the ones a naturalist would watch. These histories were scored in v0; what i
 
 **Arms.** Five per base, each run once, with one intervention at step **S = 200,000**:
 
-| Arm | Intervention | Centre |
-| --- | --- | --- |
-| nudge | lesion r = 1 (the 5 sites with dx² + dy² ≤ 1) | the cell with biomass B > 0 nearest (128, 128) |
-| nudge2 (held out) | lesion r = 1 | the cell with B > 0 nearest (64, 64) |
-| L64 | lesion r = 64 | (128, 128) |
-| L96 | lesion r = 96 | (128, 128) |
-| F | feed r = 32, 64 quanta per cell | (128, 128) |
+| Arm | Slug | Intervention | Centre |
+| --- | --- | --- | --- |
+| nudge | `nudge` | lesion r = 1 (the 5 sites with dx² + dy² ≤ 1) | the cell with biomass B > 0 nearest (128, 128) |
+| nudge2 (held out) | `nudge2` | lesion r = 1 | the cell with B > 0 nearest (64, 64) |
+| L64 | `l64` | lesion r = 64 | (128, 128) |
+| L96 | `l96` | lesion r = 96 | (128, 128) |
+| F | `f` | feed r = 32, 64 quanta per cell | (128, 128) |
 
 - **How a nudge centre is found.** From the base's checkpoint `checkpoints/t000200000.blck` (the state at S,
   before any intervention). Distance is squared Euclidean on the torus, the lesion's own neighbourhood. Ties go
@@ -114,11 +114,11 @@ are the ones a naturalist would watch. These histories were scored in v0; what i
 50 twins. The command per arm and seed:
 
 ```
-deno run -A tools/run.ts --experiment bell-v1-twins-<arm> --preset gradient-m3 --conditions treatment --seeds <k> \
+deno run -A tools/run.ts --experiment bell-v1-twins-<slug> --preset gradient-m3 --conditions treatment --seeds <k> \
   --steps 300000 --census 100 --deep 10 --lineage-obs <intervention> --out /Users/nicholas/develop/browser-life/runs
 ```
 
-`<intervention>` is `--lesion 200000:<x>,<y>,<r>` or `--feed 200000:128,128,32,64`. One experiment name per
+`<intervention>` is `--lesion 200000:<x>,<y>,<r>` or `--feed 200000:128,128,32,64`. Experiment names must match `[a-z0-9][a-z0-9_-]{0,63}` (`validateSpec`), hence the lowercase slugs. One name per
 arm keeps the 50 output directories distinct, because a run's directory does not include its interventions.
 The launcher checks that all 120 destinations of A and B are distinct and absent before it starts.
 
@@ -187,7 +187,8 @@ items is missing.
 - **Enumeration.** T1 first: seeds 1 to 10, each with arms nudge, L64, L96 and F. Then T2: the same 40
   twins, then nudge2 for seeds 1 to 10, then the 10 bases.
 - **Randomness.** One mulberry32 stream seeded at 6,100,001, consumed in item order: U first, then the
-  orientation coin in T1. T2 draws its own U, so a twin's T1 and T2 windows differ.
+  orientation coin in T1. T2 draws its own U, so a twin's T1 and T2 windows are independent draws and may coincide. U is drawn as
+  5,000 + 200 · floor(rng() · 51).
 - **The window.** 30,000 steps from S − U, with U from {5,000, 5,200, …, 15,000}. With line spacing 200,
   line t = U is the census at S, before the intervention, and t = U + 200 is the first line after it.
 
@@ -202,8 +203,15 @@ items is missing.
 **T1, paired: 40 items, a positive control.** Two digests labelled X and Y, a twin and its base, in the
 manifest's orientation. They are identical up to line t = U, so the timing is given away by an equality scan,
 and T1 does not score timing. It asks whether the divergence is an outside intervention or the drift a tiny
-nudge grows into, which twin, and what kind. Scored on: "yes" on L96 and F and "no" on nudge; the right twin
-and kind on hits. The code baseline is B's pair score on the same items.
+nudge grows into, which twin, and what kind.
+- **A hit on an L96 or F item:** `intervention` = "yes" and `world` = the twin. Kind is reported on hits, not
+  scored.
+- **A false alarm on a nudge item:** `intervention` = "yes".
+- **The code comparator: detection only.** B's D_pair > Z*_pair, from the item's twin and base. D is the same
+  whichever way the pair is labelled, so the code makes no world or kind call, and attribution is reported for
+  the model alone.
+- **The code's false alarms.** Z*_pair is set on these very nudges, so the code has 0 of 10 by construction.
+  That zero is labelled calibration. The code's comparative false-alarm figure is B3, on nudge2.
 
 **T2, single: 60 items, the primary model task.** One digest alone: the 40 T1 twins, then the 10 nudge2 twins
 and the 10 bases, each with its own U.
@@ -237,19 +245,34 @@ and the 10 bases, each with its own U.
 
 | Task | Bar |
 | --- | --- |
-| T1 | right on at least 16 of the 20 L96 and F items, and at most 2 "yes" of 10 nudges |
+| T1 | hits (yes and the right twin) on at least 16 of the 20 L96 and F items, and at most 2 "yes" of 10 nudges |
 | T2 | at least 16 of 20 hits, and at most 3 false alarms of the 30 negatives |
 
-The model's results sit beside the code's on the same items and windows: B's pair score for T1. For T2, the
-v1 envelope rule is applied to the digest's window against the 9-run band, as a code baseline. They are never
-pooled. The 20 primary items share ten base histories, so their binomial bounds are optimistic.
+The model's results sit beside the code's on the same items and windows, never pooled. For T1 the code is
+B's pair score, as above.
 
-**Calls.** 100 (40 + 60), one draw each. Every call's prompt hash, digest hash, output and model id go to a
+**For T2 the code baseline** works on the item's window only, at the native census cadence (100 steps), on
+absolute steps:
+- **z:** the v1 envelope z of the eleven signals of A, against the same 9-run reference the digest's band
+  comes from (at each census; spread as in A). Rates come from the run's own counters over 10 censuses,
+  including censuses before the window.
+- **Windows:** W = 10 censuses, no burn-in, counting windows whose first census lies in the item's window.
+  D_T2 is the largest windowed minimum of side·z over signals and sides.
+- **Threshold:** Z_T2 = the largest D_T2 among the 10 base items. The bases' false alarms are 0 by
+  construction and labelled calibration; the code's comparative false alarms are counted on the 20 nudge and
+  nudge2 items.
+- **Alarm:** an item rings if D_T2 > Z_T2. Its t is the first census of the earliest window whose minimum
+  exceeds Z_T2, converted to relative steps and rounded down to a multiple of 200.
+- **Scoring:** as the model's, with |t − U| ≤ 1,000 on L96 and F. Its kind is "removal" if `livingCells` z is
+  negative at that census and "addition" otherwise; it is reported, not scored. The 20 primary items share ten base histories, so their binomial bounds are optimistic.
+
+**Calls.** 100 initial calls (40 + 60), one draw each, plus at most 100 schema retries. Every call's prompt hash, digest hash, output and model id go to a
 log beside the record, as `picks.jsonl` is kept for the picker.
 
 **Cost estimate, to be confirmed against the price sheet before asking:** a T1 prompt is about 15,000 input
 tokens and a T2 prompt about 14,000. Scaling the picker's measured cost (about 4,000 input tokens, $0.018 to
-$0.030 a call) gives about $0.07 to $0.11 a call, so $7 to $11 for the 100.
+$0.030 a call) gives about $0.07 to $0.11 a call: $7 to $11 for the 100 initial calls, and at most $14 to
+$22 if every call were retried. The yes asked for covers the maximum.
 
 ## Work, in order
 
@@ -304,3 +327,15 @@ and what changed:
 11. **P2. The digests could be built two ways.** The manifest, the enumeration, the PRNG order, the number
     format and the rate formula are fixed now.
 12. **P2. The disk estimate used neutral sizes for treatment twins.** It is budgeted per corpus now.
+
+A second pass on the revision found that 10 of the 12 fixes closed their findings. It raised six more, all
+taken:
+- **P1.** The arm names `L64`, `L96` and `F` fail `validateSpec`; there are lowercase slugs now.
+- **P1.** T2's code baseline was underspecified; it now has a cadence, a clock, W, a threshold, an alarm
+  step and a kind.
+- **P2.** T1's success predicate was unclear, and the code's D makes no world call. A hit is now "yes" and
+  the right twin, and the code is compared on detection only.
+- **P2.** The code's T1 false alarms on nudges are 0 by construction. They are labelled calibration, and B3
+  on nudge2 is the comparison.
+- **P3.** The retries could double the call count; the budget covers that now.
+- **P3.** Separate draws can give the same U; that is allowed now, and the draw formula is written down.
