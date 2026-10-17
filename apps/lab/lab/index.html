@@ -211,6 +211,20 @@
           <dl class="kv mono"><dt>Individuals</dt><dd id="k-ind"></dd><dt>Average mass</dt><dd id="k-mass"></dd><dt>Lineages</dt><dd id="k-lin"></dd><dt>Mutations so far</dt><dd id="k-mut"></dd><dt>Splits / merges</dt><dd id="k-fis"></dd><dt>Births / deaths</dt><dd id="k-bd"></dd><dt>Deepest generation</dt><dd id="k-gen"></dd></dl>
           <h3 class="subheading">Biggest lineages</h3><div class="lineages" id="top-lin"></div>
         </section>
+        <section class="evidence-section firsts" id="firsts" aria-labelledby="firsts-heading">
+          <h2 id="firsts-heading">What happened first?</h2>
+          <p class="hint firsts-lede">Counted by a detector with rules written in advance. A first is its verdict on a census, not a prize.</p>
+          <p class="firsts-watch" id="firsts-watch" hidden><span class="badge note" id="firsts-watch-badge"></span><span class="hint">Nothing before that is in this log.</span></p>
+          <p class="firsts-watch" id="firsts-stopped" hidden><span class="badge note" id="firsts-stopped-badge"></span><span class="hint">Later firsts aren’t counted in this history.</span></p>
+          <p class="hint" id="firsts-empty">Nothing yet. Firsts show up here as the world grows.</p>
+          <ol class="firsts-list" id="firsts-list" aria-label="Firsts so far, newest first" hidden></ol>
+          <details class="firsts-rules">
+            <summary>What counts as a first</summary>
+            <div id="firsts-rules-body"></div>
+          </details>
+          <button id="btn-card" class="full" type="button" aria-haspopup="dialog" aria-controls="session-card" aria-describedby="card-hint">Session card</button>
+          <p class="hint" id="card-hint">Sums the session up: what was bred, how far it got, what died, and a file that replays it.</p>
+        </section>
       </aside>
 
       <aside class="lineage-drawer" id="lineage-drawer" aria-labelledby="lineage-heading" hidden>
@@ -230,6 +244,17 @@
       <div class="worlds-body">
         <nav class="worlds-nav" aria-label="Kinds of world"></nav>
         <div class="worlds-main"></div>
+      </div>
+    </dialog>
+    <dialog class="card" id="session-card" aria-labelledby="card-heading">
+      <div class="card-head">
+        <div><h2 id="card-heading" tabindex="-1">Session card</h2><p class="hint">What this session did, as counted. Nothing here is a score.</p></div>
+        <button class="card-close quiet" type="button">Close</button>
+      </div>
+      <div class="card-body" id="card-body"></div>
+      <div class="card-foot">
+        <button id="btn-session-file" class="primary" type="button" aria-describedby="card-file-note" disabled>Download session file</button>
+        <p class="hint" id="card-file-note" role="status" aria-live="polite">Saves this world’s history from step 0, its firsts and this card as one file, which tools/run.ts replays and checks against this world’s final state.</p>
       </div>
     </dialog>
     <script type="module" src="/src/main.ts"></script>

@@ -1,8 +1,10 @@
-import { GENE_BIT, PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondTerm, type WorldConfig } from "@bl/schema";
+import { GENE_BIT, PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import type { CensusMsg, FromWorker, Keep, PondAwaitMsg, PondsMsg, ProbeMsg, SessionView, StatsMsg, ToWorker } from "./protocol.ts";
 import { Series } from "./sparkline.ts";
 import { createLineagePanel } from "./lineage-panel.ts";
+import { createFirstsPanel } from "./firsts-panel.ts";
+import { RANK_LABELS, scoreLabel, type RankKey } from "./rank-labels.ts";
 import { FAMILIES, byId, familyOf } from "./worlds.ts";
 import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
 import "./theme.ts";
@@ -19,6 +21,7 @@ const send = (m: ToWorker, t: Transferable[] = []) => worker.postMessage(m, t);
 // A jump replays a world and answers "loaded" like a replacement does, but nobody planted, restored or opened anything:
 // it clears whatever replacement intent a cancelled or refused question left behind.
 const lineagePanel = createLineagePanel((m) => { if (m.type === "jump") loadIntent = null; send(m); }, () => storageOff);
+const firstsPanel = createFirstsPanel(send);
 
 let cfg: WorldConfig | null = null;
 /** The world's config when a load was requested: the worker keeps that world if the load fails. */
@@ -312,6 +315,7 @@ function syncPlayLabel() {
   const b = $("btn-play");
   b.textContent = awaiting ? "Run after breed" : playing ? "Pause" : "Play";
   b.title = awaiting ? (playing ? "On: the world runs on once you breed" : "Off: the world stays paused once you breed") : "";
+  firstsPanel.setGrowing(playing && !awaiting);
 }
 /** The header status: a waiting pond cycle is the news until it is resolved, whatever Play says. */
 function showRunStatus() {
@@ -630,7 +634,7 @@ window.addEventListener("keydown", (e) => {
   const onExit = e.target === $("btn-fs-exit");
   if (e.target !== document.body && e.target !== canvas && !onExit) return;
   if (onExit && e.key !== "f" && e.key !== "F") return;
-  if ($<HTMLDialogElement>("worlds").open) return;
+  if ($<HTMLDialogElement>("worlds").open || $<HTMLDialogElement>("session-card").open) return;
   if (e.key === " ") {
     if (!worldReady) return;
     e.preventDefault();
@@ -902,19 +906,6 @@ function onPonds(m: PondsMsg) {
 }
 
 // ---------- breeder: choosing the donors of a pond cycle by hand ----------
-/** What a pond is ranked by while picking: a term, or the world's own score ("score") when it has one. */
-type RankKey = PondTerm | "speed" | "score";
-const RANK_LABELS: Record<RankKey, string> = {
-  score: "This world’s score",
-  speed: "Speed",
-  drive: "Moving mass",
-  seed: "Seed packet",
-  body: "Body size",
-  mass: "Bound mass",
-  reach: "Reach to the edge",
-};
-/** The world's own score, in the measures' names: "drive+seed+body" reads as "Moving mass, seed packet, body size". */
-const scoreLabel = (score: string) => `This world’s score: ${pondScoreTerms(score).map((k, i) => (i ? RANK_LABELS[k].toLowerCase() : RANK_LABELS[k])).join(", ")}`;
 let awaiting: PondAwaitMsg | null = null;
 /** The ranking on screen when Breed was pressed: shown with the cycle it applies to. Display only; the log holds the donors. */
 let pickedBy: string | null = null;
@@ -992,6 +983,7 @@ function onPondAwait(m: PondAwaitMsg) {
  */
 function syncWaitingControls() {
   const waiting = awaiting !== null;
+  firstsPanel.setWaiting(waiting);
   for (const id of ["btn-save", "btn-export", "btn-verify", "btn-step", "btn-step100"]) {
     const b = $<HTMLButtonElement>(id);
     b.disabled = !worldReady || waiting || (id === "btn-verify" && verifying) || (id === "btn-save" && storageOff);
@@ -1356,6 +1348,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       resetBreeder();
       fit(true);
       lineagePanel.onLoaded();
+      firstsPanel.onLoaded(m.manifest);
       break;
     case "stats":
       onStats(m);
@@ -1390,6 +1383,12 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       break;
     }
+    case "firsts":
+      firstsPanel.onFirsts(m);
+      break;
+    case "sessionFile":
+      firstsPanel.onSessionFile(m);
+      break;
     case "notice":
       toast(m.message);
       break;
@@ -1400,6 +1399,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       if (m.request === "load" || m.request === "restore" || m.request === "import") loadIntent = null;
       if (m.request === "lesion" || m.request === "feed") noteBrushRefused();
       if (m.request === "pick") endBreeding();
+      if (m.request === "sessionExport") firstsPanel.onRefused(m.message, m.id);
       if (m.request === "lineage" || m.request === "jump") lineagePanel.onError();
       if (m.request === "verify" && verifying) {
         verifying = false;
