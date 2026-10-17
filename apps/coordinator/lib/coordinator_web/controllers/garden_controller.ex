@@ -16,8 +16,9 @@ defmodule CoordinatorWeb.GardenController do
   is validated purely (`Coordinator.Garden.parse_letter/1`) and its size is
   capped before it is parsed (`CoordinatorWeb.LetterBodyLimit`); and only then
   does a request pay the rate limiter and, last, the Queue. The public view and
-  the checkpoint lookup are served from the limiter's short-lived ETS cache, so
-  a crowd reading the page costs the Queue about one call per cache period.
+  the checkpoint lookup are served from the limiter's short-lived ETS cache,
+  with concurrent misses coalesced into one Queue call, so a crowd reading the
+  page costs the Queue about one call per cache period.
 
   The unnamed public routes serve the configured `:public_garden` and nothing
   else: a `name` in the query string or the body is not a garden name.
@@ -37,29 +38,14 @@ defmodule CoordinatorWeb.GardenController do
   # ---- public ----
 
   # `GET /api/public/garden` (the configured public garden) and
-  # `GET /api/public/gardens/:name`. The body is cached already encoded.
+  # `GET /api/public/gardens/:name`. The body is cached already encoded; a
+  # crowd missing the cache together makes one Queue call
+  # (`LetterLimiter.fetch_view/2`).
   def show(conn, _params) do
     with {:ok, name} <- garden_name(conn),
-         {_w, _h} <- LetterLimiter.garden_world(name) do
-      case LetterLimiter.cached_view(name) do
-        {:ok, body} ->
-          send_view(conn, body)
-
-        :miss ->
-          # The generation is read before the Queue is asked: a letter posted
-          # meanwhile bumps it and this (older) answer is then not stored.
-          gen = LetterLimiter.generation(name)
-
-          case Queue.garden_view(name) do
-            nil ->
-              not_found(conn)
-
-            view ->
-              body = view |> Jason.encode_to_iodata!() |> IO.iodata_to_binary()
-              LetterLimiter.put_view(name, body, gen)
-              send_view(conn, body)
-          end
-      end
+         {_w, _h} <- LetterLimiter.garden_world(name),
+         body when is_binary(body) <- LetterLimiter.fetch_view(name, fn -> view(name) end) do
+      send_view(conn, body)
     else
       _ -> not_found(conn)
     end
@@ -209,20 +195,19 @@ defmodule CoordinatorWeb.GardenController do
     end
   end
 
-  # `%{digest => path}` of the garden's servable checkpoints, from the cache or
-  # (one call per cache period) the Queue.
-  defp checkpoints(name) do
-    case LetterLimiter.cached_checkpoints(name) do
-      {:ok, checkpoints} ->
-        checkpoints
-
-      :miss ->
-        gen = LetterLimiter.generation(name)
-        checkpoints = Queue.garden_checkpoints(name)
-        LetterLimiter.put_checkpoints(name, checkpoints, gen)
-        checkpoints
+  # The encoded view, for `LetterLimiter.fetch_view/2`: an unknown garden is
+  # not cached.
+  defp view(name) do
+    case Queue.garden_view(name) do
+      nil -> {:skip, nil}
+      view -> {:cache, view |> Jason.encode_to_iodata!() |> IO.iodata_to_binary()}
     end
   end
+
+  # `%{digest => path}` of the garden's servable checkpoints, from the cache or
+  # (one coalesced call per cache period) the Queue.
+  defp checkpoints(name),
+    do: LetterLimiter.fetch_checkpoints(name, fn -> {:cache, Queue.garden_checkpoints(name)} end)
 
   # A letter body: exactly what the JSON parser decoded (not `params`, which also
   # holds the path's name and the query string).

@@ -3,7 +3,7 @@ defmodule Coordinator.LetterLimiter do
   Everything the public garden routes keep *outside* `Coordinator.Queue`, so a
   flood of visitors never queues behind (or in front of) the one serialized
   process that hands islands their work: the per-address letter budget, and a
-  short-lived cache of the encoded public view.
+  short-lived cache of the encoded public view, plus the registry of gardens.
 
   This process only owns two public named ETS tables and sweeps one of them;
   every read and write on the hot path goes straight to ETS from the caller
@@ -62,6 +62,12 @@ defmodule Coordinator.LetterLimiter do
   without a Queue call, and so a name an attacker chooses never becomes a key
   in any table: the cache below only ever holds gardens that exist.
 
+  The registry is one `:persistent_term` (the whole `%{name => {w, h}}` map),
+  not a table of this process: it is written only by the Queue, once at start
+  and once per founding, and it must survive a restart of this process (the
+  Queue would not republish it, and every garden would 404). A Queue restart
+  replaces it whole.
+
   ## The cache
 
   `cached_view/1`, `put_view/3` and `invalidate/1` hold the *encoded JSON* of a
@@ -72,8 +78,19 @@ defmodule Coordinator.LetterLimiter do
   garden has a generation number that `invalidate/1` bumps. A reader takes the
   generation *before* asking the Queue and an entry carries it, so an answer
   computed before a letter was posted can neither be stored over the
-  invalidation nor served after it. A stampede at the instant of expiry is
-  possible and accepted: it is a handful of Queue calls, not a flood.
+  invalidation nor served after it.
+
+  `fetch_view/2` and `fetch_checkpoints/2` are what the controller uses: they
+  coalesce misses so a crowd arriving at once costs the Queue one call, not one
+  each. The one request that wins `:ets.insert_new/2` on a refresh marker asks
+  the Queue; meanwhile, if an entry of the current generation exists but has
+  expired, everyone else is served it as it is; if there is none (a cold cache,
+  or just after an invalidation), everyone else polls for the winner's entry
+  for up to 2 s and asks the Queue only after that. A marker older than
+  5 s (its refresher crashed) is taken over. What remains stale: an
+  expired entry may be served for as long as the refresh takes (on top of
+  `garden_cache_ms`), but never across an invalidation, since `invalidate/1`
+  deletes the entry and the marker and bumps the generation every read checks.
 
   If the tables are missing (this process is restarting) the limiter fails
   open and the cache reports a miss: a supervisor hiccup must not turn into a
@@ -85,10 +102,15 @@ defmodule Coordinator.LetterLimiter do
 
   @counters :coordinator_letter_counters
   @views :coordinator_garden_views
-  @gardens :coordinator_gardens
+  @gardens {__MODULE__, :gardens}
   @salt_key :boot_salt
   # How often the sweep runs at most; a shorter window sweeps as often as that.
   @sweep_max_ms 60_000
+  # A refresh marker older than this belongs to a refresher that died.
+  @marker_ms 5_000
+  # How long a request on a cold key waits for another's refresh.
+  @wait_ms 2_000
+  @poll_ms 10
 
   # ---- client API: the budget ----
 
@@ -174,36 +196,23 @@ defmodule Coordinator.LetterLimiter do
   @doc "Replaces the registry with `gardens` (`%{name => {width, height}}`); the Queue calls it when it starts."
   @spec set_gardens(%{String.t() => {pos_integer, pos_integer}}) :: :ok
   def set_gardens(gardens) when is_map(gardens) do
-    for {name, {w, h}} <- gardens, do: :ets.insert(@gardens, {name, w, h})
-
-    for name <- :ets.select(@gardens, [{{:"$1", :_, :_}, [], [:"$1"]}]),
-        not Map.has_key?(gardens, name),
-        do: :ets.delete(@gardens, name)
-
+    :persistent_term.put(@gardens, gardens)
     :ok
-  rescue
-    ArgumentError -> :ok
   end
 
   @doc "Adds a garden to the registry (the Queue calls it when one is founded)."
   @spec register_garden(String.t(), pos_integer, pos_integer) :: :ok
   def register_garden(name, width, height) do
-    :ets.insert(@gardens, {name, width, height})
+    # Read-modify-write is safe: the Queue is the only writer.
+    :persistent_term.put(@gardens, Map.put(gardens(), name, {width, height}))
     :ok
-  rescue
-    ArgumentError -> :ok
   end
 
   @doc "`{width, height}` of garden `name`'s world, or `nil` if the Queue holds no such garden."
   @spec garden_world(String.t()) :: {pos_integer, pos_integer} | nil
-  def garden_world(name) do
-    case :ets.lookup(@gardens, name) do
-      [{^name, w, h}] -> {w, h}
-      _ -> nil
-    end
-  rescue
-    ArgumentError -> nil
-  end
+  def garden_world(name), do: Map.get(gardens(), name)
+
+  defp gardens, do: :persistent_term.get(@gardens, %{})
 
   # ---- client API: the cache ----
 
@@ -235,18 +244,35 @@ defmodule Coordinator.LetterLimiter do
   def put_checkpoints(name, checkpoints, gen) when is_map(checkpoints),
     do: put(name, {:cps, name}, checkpoints, gen)
 
+  @doc """
+  The encoded view of garden `name`, from the cache or (coalesced, see the
+  moduledoc) from `compute`, which returns `{:cache, body}` (stored) or
+  `{:skip, value}` (returned as it is, not stored). With the cache off every
+  call is `compute`.
+  """
+  @spec fetch_view(String.t(), (-> {:cache, binary} | {:skip, term})) :: term
+  def fetch_view(name, compute), do: fetch(name, name, compute)
+
+  @doc "The servable checkpoints of garden `name`, like `fetch_view/2`."
+  @spec fetch_checkpoints(String.t(), (-> {:cache, map} | {:skip, term})) :: term
+  def fetch_checkpoints(name, compute), do: fetch(name, {:cps, name}, compute)
+
   @doc "Forgets the cached view and checkpoints of `name` and bumps its generation (a letter was posted or dropped, or the garden founded)."
   @spec invalidate(String.t()) :: :ok
   def invalidate(name) do
     :ets.update_counter(@views, {:gen, name}, 1, {{:gen, name}, 0})
     :ets.delete(@views, name)
     :ets.delete(@views, {:cps, name})
+    # A refresh begun before this cannot store its answer (the generation
+    # moved), so nobody should wait for it.
+    :ets.delete(@views, {:refresh, name})
+    :ets.delete(@views, {:refresh, {:cps, name}})
     :ok
   rescue
     ArgumentError -> :ok
   end
 
-  @doc "Deletes every counter and cached view (tests); the boot salt and the registry stay."
+  @doc "Deletes every counter, cached view and refresh marker (tests); the boot salt stays, and so does the registry (it is not in these tables)."
   @spec reset() :: :ok
   def reset do
     :ets.select_delete(@counters, [{{{:_, :_}, :_}, [], [true]}])
@@ -272,7 +298,6 @@ defmodule Coordinator.LetterLimiter do
   def init(_opts) do
     :ets.new(@counters, [:named_table, :public, :set, write_concurrency: true])
     :ets.new(@views, [:named_table, :public, :set, read_concurrency: true])
-    :ets.new(@gardens, [:named_table, :public, :set, read_concurrency: true])
     :ets.insert(@counters, {@salt_key, :crypto.strong_rand_bytes(16)})
     schedule_sweep()
     {:ok, %{}}
@@ -316,6 +341,122 @@ defmodule Coordinator.LetterLimiter do
     :ok
   rescue
     ArgumentError -> :ok
+  end
+
+  defp fetch(name, key, compute) do
+    if ttl() > 0, do: coalesce(name, key, compute), else: compute.() |> elem(1)
+  end
+
+  defp coalesce(name, key, compute) do
+    case entry(name, key) do
+      {:fresh, value} ->
+        value
+
+      {:stale, value} ->
+        # Someone else is refreshing: the expired entry (same generation) will do.
+        case claim(key) do
+          {:won, marker} -> refresh(name, key, compute, marker)
+          :lost -> value
+        end
+
+      :none ->
+        wait(name, key, compute, mono() + @wait_ms)
+    end
+  end
+
+  # Cold key: refresh if we can claim it, else wait for whoever did. Stops
+  # waiting as soon as an entry appears or the marker is gone (its refresher
+  # finished without storing, e.g. an invalidation moved the generation), and
+  # after `@wait_ms` asks the Queue regardless.
+  defp wait(name, key, compute, deadline) do
+    case entry(name, key) do
+      {_, value} ->
+        value
+
+      :none ->
+        case claim(key) do
+          {:won, marker} ->
+            refresh(name, key, compute, marker)
+
+          :lost ->
+            if mono() < deadline do
+              Process.sleep(@poll_ms)
+              wait(name, key, compute, deadline)
+            else
+              compute.() |> elem(1)
+            end
+        end
+    end
+  end
+
+  defp refresh(name, key, compute, marker) do
+    # Read before the Queue is asked: an invalidation meanwhile refuses the put.
+    gen = generation(name)
+
+    try do
+      case compute.() do
+        {:cache, value} ->
+          put(name, key, value, gen)
+          value
+
+        {:skip, value} ->
+          value
+      end
+    after
+      # Exactly our marker: a newer one (after an invalidation) is not ours.
+      release(marker)
+    end
+  end
+
+  defp release(nil), do: :ok
+
+  defp release(marker) do
+    :ets.delete_object(@views, marker)
+    :ok
+  rescue
+    ArgumentError -> :ok
+  end
+
+  # `{:won, marker}` if this caller is now the one refreshing `key`; `:lost` if
+  # a live refresh holds it. A marker older than `@marker_ms` is taken over.
+  defp claim(key) do
+    marker = {{:refresh, key}, mono(), make_ref()}
+
+    if :ets.insert_new(@views, marker) do
+      {:won, marker}
+    else
+      case :ets.lookup(@views, {:refresh, key}) do
+        [{_, at, _} = old] when at + @marker_ms <= elem(marker, 1) ->
+          :ets.delete_object(@views, old)
+          if :ets.insert_new(@views, marker), do: {:won, marker}, else: :lost
+
+        [] ->
+          if :ets.insert_new(@views, marker), do: {:won, marker}, else: :lost
+
+        _ ->
+          :lost
+      end
+    end
+  rescue
+    # Tables gone (restarting): no cache to coalesce on, ask directly.
+    ArgumentError -> {:won, nil}
+  end
+
+  # The entry of `key` if it is of the current generation, fresh or expired.
+  defp entry(name, key) do
+    case :ets.lookup(@views, key) do
+      [{^key, value, expires, gen}] ->
+        cond do
+          gen != generation(name) -> :none
+          mono() < expires -> {:fresh, value}
+          true -> {:stale, value}
+        end
+
+      _ ->
+        :none
+    end
+  rescue
+    ArgumentError -> :none
   end
 
   defp count(key) do

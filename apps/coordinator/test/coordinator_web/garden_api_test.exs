@@ -35,6 +35,8 @@ defmodule CoordinatorWeb.GardenApiTest do
 
     on_exit(fn ->
       LetterLimiter.reset()
+      # The registry outlives the Queue (it is a persistent term): leave none behind.
+      LetterLimiter.set_gardens(%{})
       TestClock.uninstall()
       restore_env(saved)
       File.rm_rf!(dir)
@@ -701,6 +703,59 @@ defmodule CoordinatorWeb.GardenApiTest do
              |> json_response(200)
     end
 
+    test "the 1 KB limit holds however the letter route's path is spelled", %{conn: conn} do
+      garden!()
+      big = stone(%{"pad" => String.duplicate("a", 2_000)})
+
+      # Phoenix routes on decoded segments, so these all reach `post_letter`.
+      for path <- [
+            "/api/public/gard%65n/letters",
+            "/api/public/garden/%6cetters",
+            "/api/public/gardens/commons/%6cetters",
+            "/api/public/gardens/%63ommons/letters",
+            "/api/%70ublic/gardens/commons/letters"
+          ] do
+        assert_error_sent 413, fn -> post_json(conn, path, big) end
+      end
+
+      # ...and an ordinary letter on an encoded path is still a letter.
+      assert conn
+             |> post_json("/api/public/gardens/%63ommons/letters", stone())
+             |> json_response(201)
+    end
+
+    test "a letter route refuses forms and multipart (415) before reading them", %{conn: conn} do
+      garden!()
+      form = "kind=stone&x=1&y=2&r=3&pad=" <> String.duplicate("a", 2_000)
+
+      multipart =
+        "--b\r\ncontent-disposition: form-data; name=\"kind\"\r\n\r\nstone\r\n--b--\r\n"
+
+      for path <- [letters_path(), "/api/public/garden/letters", "/api/public/gard%65n/letters"] do
+        assert_error_sent 415, fn ->
+          conn
+          |> put_req_header("content-type", "application/x-www-form-urlencoded")
+          |> post(path, form)
+        end
+
+        assert_error_sent 415, fn ->
+          conn
+          |> put_req_header("content-type", "multipart/form-data; boundary=b")
+          |> post(path, multipart)
+        end
+
+        assert_error_sent 415, fn ->
+          conn |> put_req_header("content-type", "text/plain") |> post(path, "hi")
+        end
+      end
+
+      # JSON with a charset is JSON.
+      assert conn
+             |> put_req_header("content-type", "application/json; charset=utf-8")
+             |> post(letters_path(), Jason.encode!(stone()))
+             |> json_response(201)
+    end
+
     test "a view read before a letter and stored after it is not served", %{conn: _conn} do
       Application.put_env(:coordinator, :garden_cache_ms, 600_000)
       garden!()
@@ -736,6 +791,140 @@ defmodule CoordinatorWeb.GardenApiTest do
                |> get("/api/public/gardens/commons/checkpoints/#{dg(3)}")
                |> json_response(404)
       end)
+    end
+  end
+
+  # ---- a crowd at the cache, and the limiter restarting ----
+
+  describe "a crowd missing the cache together" do
+    defp crowd(n, path), do: for(_ <- 1..n, do: Task.async(fn -> get(build_conn(), path) end))
+
+    defp mailbox, do: Queue |> Process.whereis() |> Process.info(:message_queue_len) |> elem(1)
+
+    defp until(fun, deadline \\ System.monotonic_time(:millisecond) + 5_000) do
+      cond do
+        fun.() -> :ok
+        System.monotonic_time(:millisecond) > deadline -> flunk("timed out")
+        true -> until_after_sleep(fun, deadline)
+      end
+    end
+
+    defp until_after_sleep(fun, deadline) do
+      Process.sleep(5)
+      until(fun, deadline)
+    end
+
+    # Runs `fun` with the Queue suspended, so every call into it waits in its
+    # mailbox and can be counted there.
+    defp counting_queue_calls(fun) do
+      :ok = :sys.suspend(Queue)
+
+      try do
+        fun.()
+      after
+        :sys.resume(Queue)
+      end
+    end
+
+    test "on a cold key: one queue call, everyone else waits for its answer", %{conn: _conn} do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      garden!()
+      path = "/api/public/gardens/commons"
+
+      tasks =
+        counting_queue_calls(fn ->
+          tasks = crowd(100, path)
+          until(fn -> mailbox() >= 1 end)
+          Process.sleep(200)
+          assert mailbox() == 1
+          tasks
+        end)
+
+      bodies = tasks |> Task.await_many(10_000) |> Enum.map(&response(&1, 200))
+      assert [body] = Enum.uniq(bodies)
+      assert %{"name" => "commons"} = Jason.decode!(body)
+    end
+
+    test "on an expired entry: one queue call, everyone else gets the old entry at once", %{
+      conn: conn
+    } do
+      Application.put_env(:coordinator, :garden_cache_ms, 50)
+      garden!()
+      path = "/api/public/gardens/commons"
+      queued = &(&1 |> response(200) |> Jason.decode!() |> get_in(["letters", "queued"]))
+
+      assert conn |> get(path) |> queued.() == 0
+      # Not through the controller, so nothing invalidates the entry; it only expires.
+      {:ok, _} = Queue.post_letter("commons", %{x: 5, y: 5, r: 2})
+      Process.sleep(80)
+
+      {served, [refresher]} =
+        counting_queue_calls(fn ->
+          tasks = crowd(100, path)
+          until(fn -> mailbox() >= 1 end)
+          done = Task.yield_many(tasks, 2_000)
+          assert mailbox() == 1
+          {for({_, {:ok, c}} <- done, do: c), for({t, nil} <- done, do: t)}
+        end)
+
+      assert length(served) == 99
+      assert Enum.all?(served, &(queued.(&1) == 0))
+      assert refresher |> Task.await(10_000) |> queued.() == 1
+      assert conn |> get(path) |> queued.() == 1
+    end
+
+    test "checkpoint lookups are coalesced the same way", %{conn: _conn, dir: dir} do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      garden!()
+      run_and_verify(dir, join("A"), join("B"))
+      path = "/api/public/gardens/commons/checkpoints/#{dg(0)}"
+
+      tasks =
+        counting_queue_calls(fn ->
+          tasks = crowd(50, path)
+          until(fn -> mailbox() >= 1 end)
+          Process.sleep(200)
+          assert mailbox() == 1
+          tasks
+        end)
+
+      assert tasks |> Task.await_many(10_000) |> Enum.all?(&(response(&1, 200) == "x"))
+    end
+
+    test "a letter posted over HTTP is still seen by its poster", %{conn: conn} do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      garden!()
+      path = "/api/public/gardens/commons"
+
+      assert conn |> get(path) |> json_response(200) |> get_in(["letters", "queued"]) == 0
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+
+      for c <- 20 |> crowd(path) |> Task.await_many(10_000),
+          do: assert(c |> json_response(200) |> get_in(["letters", "queued"]) == 1)
+    end
+  end
+
+  describe "the limiter restarting" do
+    test "loses no garden: the view, a letter and a checkpoint still work", %{
+      conn: conn,
+      dir: dir
+    } do
+      garden!()
+      run_and_verify(dir, join("A"), join("B"))
+
+      :ok = Supervisor.terminate_child(Coordinator.Supervisor, LetterLimiter)
+      {:ok, _} = Supervisor.restart_child(Coordinator.Supervisor, LetterLimiter)
+
+      assert %{"name" => "commons"} =
+               conn |> get("/api/public/gardens/commons") |> json_response(200)
+
+      assert conn |> post_json(letters_path(), stone()) |> json_response(201)
+
+      assert conn
+             |> get("/api/public/gardens/commons/checkpoints/#{dg(0)}")
+             |> response(200) == "x"
+
+      assert conn |> get("/api/public/gardens/nope") |> json_response(404)
     end
   end
 

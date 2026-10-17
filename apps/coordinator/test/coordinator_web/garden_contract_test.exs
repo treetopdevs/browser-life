@@ -38,6 +38,8 @@ defmodule CoordinatorWeb.GardenContractTest do
 
     on_exit(fn ->
       LetterLimiter.reset()
+      # The registry outlives the Queue (it is a persistent term): leave none behind.
+      LetterLimiter.set_gardens(%{})
       TestClock.uninstall()
       restore_env(saved)
       File.rm_rf!(dir)

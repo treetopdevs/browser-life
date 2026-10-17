@@ -97,6 +97,8 @@ defmodule Coordinator.Garden do
 
   @window_ms 86_400_000
   @log_max 10_000
+  # Dropped letters kept (the newest, by `seq`); older ones are forgotten.
+  @dropped_max 256
   @radius_min 1
   @radius_max 32
   @days_shown 14
@@ -372,6 +374,11 @@ defmodule Coordinator.Garden do
   no-op that returns it (so a retry is safe). `{:error, :not_found}` for an
   unknown id; `{:error, {:refused, msg}}` (409) for a letter whose day has
   been assigned.
+
+  A dropped letter is a tombstone that counts against nothing (`logMax` counts
+  live letters), so only the newest #{@dropped_max} of them (by `seq`) are
+  kept: a drop forgets the oldest past that, and dropping a forgotten id is then
+  `{:error, :not_found}`. Ids stay unique (`next_letter` only grows).
   """
   @spec drop_letter(t, String.t(), segs, integer) ::
           {:ok, t, map} | {:error, :not_found | {:refused, String.t()}}
@@ -389,10 +396,23 @@ defmodule Coordinator.Garden do
         if letter.day >= frontier_day(g, segs) do
           dropped = %{letter | dropped_at: now}
           letters = Enum.map(g.letters, &if(&1.id == id, do: dropped, else: &1))
-          {:ok, %{g | letters: letters}, dropped}
+          {:ok, %{g | letters: prune_dropped(letters)}, dropped}
         else
           {:error, {:refused, "the letter's day has been assigned"}}
         end
+    end
+  end
+
+  # Keeps the newest `@dropped_max` dropped letters (by `seq`), so a post and
+  # drop repeated forever does not grow the record without bound.
+  defp prune_dropped(letters) do
+    seqs = for %{dropped_at: at, seq: seq} <- letters, is_integer(at), do: seq
+
+    if length(seqs) > @dropped_max do
+      cutoff = seqs |> Enum.sort(:desc) |> Enum.at(@dropped_max - 1)
+      Enum.reject(letters, &(is_integer(&1.dropped_at) and &1.seq < cutoff))
+    else
+      letters
     end
   end
 

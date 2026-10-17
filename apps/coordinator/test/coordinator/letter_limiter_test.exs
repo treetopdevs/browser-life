@@ -23,6 +23,7 @@ defmodule Coordinator.LetterLimiterTest do
 
     on_exit(fn ->
       LetterLimiter.reset()
+      LetterLimiter.set_gardens(%{})
       TestClock.uninstall()
 
       for {k, v} <- saved do

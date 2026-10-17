@@ -555,6 +555,35 @@ defmodule Coordinator.GardenTest do
       assert {:error, {:refused, _}} = Garden.drop_letter(g, "ltr-1", segs, 1)
       assert {:ok, _, _} = Garden.drop_letter(g, "ltr-2", segs, 1)
     end
+
+    test "only the newest 256 dropped letters are kept; a forgotten one is not found" do
+      g = garden(letters_per_day: 1, queue_max: 1)
+      segs = fresh(g)
+
+      # Post and drop, over and over: each letter lands on day 0, is dropped,
+      # and frees the slot for the next.
+      g =
+        Enum.reduce(1..300, g, fn n, g ->
+          {g, l} = post!(g, segs, 1, 1, 1, n)
+          assert l.id == "ltr-#{n}"
+          {:ok, g, _} = Garden.drop_letter(g, l.id, segs, n)
+          g
+        end)
+
+      {g, live} = post!(g, segs, 2, 2, 2)
+      assert live.id == "ltr-301"
+      assert length(g.letters) == 256 + 1
+      assert Enum.map(g.letters, & &1.seq) == Enum.to_list(45..301)
+
+      assert {:error, :not_found} = Garden.drop_letter(g, "ltr-44", segs, 1)
+      assert {:ok, ^g, %{id: "ltr-45"}} = Garden.drop_letter(g, "ltr-45", segs, 1)
+      assert {:ok, ^g, %{id: "ltr-300"}} = Garden.drop_letter(g, "ltr-300", segs, 1)
+
+      # Dropping the live one forgets the oldest kept tombstone.
+      assert {:ok, g, _} = Garden.drop_letter(g, "ltr-301", segs, 2)
+      assert length(g.letters) == 256
+      assert hd(g.letters).id == "ltr-46"
+    end
   end
 
   describe "schedule/1" do

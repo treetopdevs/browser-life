@@ -118,7 +118,9 @@ No authentication, `cache-control: no-store`, no island ids, tokens or adapter
 strings. `/api/public/garden` is the garden named by config `:public_garden`
 (default `"commons"`); `/api/public/gardens/:name` reads any garden. 404
 `{"error": "not found"}` when there is no such garden. A response may be up to
-two seconds old (it is cached outside the queue process). All times are
+two seconds old (it is cached outside the queue process), plus the time one
+refresh takes while a crowd is served the expired copy; a letter posted or
+dropped through these routes is never followed by an older view. All times are
 integers, ms since the epoch; all steps are absolute.
 
 | Key | Meaning |
@@ -178,6 +180,9 @@ public and carry nothing about who wrote them.
 * `201 {"letter": <letter>}` (status `"waiting"`, with its `day` and `landsAtStep`).
 * `422 {"error": ...}`: not a stone as above, or its centre is outside the world.
 * `413`: a body over 1 KB (a letter is about 40 bytes; the body is not parsed past that).
+* `415`: a body that is not JSON (a form, multipart, text); it is not read. The
+  route is recognised however its path is percent-encoded, so neither limit
+  can be stepped around.
 * `429 {"error": ..., "retryAfterMs": <int>}` with a `Retry-After` header (seconds):
   more than `lettersPerAddressPerHour` letters from one network address in the
   current hour. The address is kept in memory only, salted and hashed, for at
@@ -222,7 +227,9 @@ Same admin authentication as `POST /api/experiments`.
 * `POST /api/gardens/:name/letters/:id/drop`: the keeper's veto. `200
   {"letter": <letter>}` (status `"dropped"`; dropping a dropped letter is the
   same 200); 409 once the letter's day has been assigned; 404 for an unknown
-  garden or letter.
+  garden or letter. A garden keeps only its newest 256 dropped letters (by id
+  number): an older dropped letter is forgotten, and dropping it again is a 404.
+  Ids are never reused.
 * `POST /api/gardens/:name/days/:index/requeue`: puts a **failed** or
   **diverged** day (and the days it blocked) back in the queue, so one island's
   bad report does not end the garden. `200 {"day": n, "status": "pending"}`; 409

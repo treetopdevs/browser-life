@@ -32,6 +32,8 @@ defmodule Coordinator.GardenQueueTest do
     on_exit(fn ->
       TestClock.uninstall()
       Application.delete_env(:coordinator, :lease_ms)
+      # The registry outlives the Queue (it is a persistent term): leave none behind.
+      Coordinator.LetterLimiter.set_gardens(%{})
       File.rm_rf!(dir)
     end)
 
