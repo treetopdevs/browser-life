@@ -96,10 +96,15 @@ defmodule Coordinator.Queue do
   value the world does not reproduce would throw on every island, and the
   archipelago's own check is the second island's replay. What no creation can
   see is a feed that would take the world past MATTER_MAX, which depends on
-  the world's matter at that step; an island that meets one logs it and leaves
-  the task (packages/runner/src/island.ts), its lease lapses, and the segment
-  is offered again, so the experiment waits there, visible in the status, and
-  no island crashes. The whole list rides unchanged in every
+  the world's matter at that step; an island that meets one reports the
+  segment failed (`fail/4`, `POST /api/segments/:id/fail` with its lease and
+  the runner's reason -- packages/runner/src/island.ts) instead of crashing or
+  leaving the task to be offered again: `Coordinator.Segment.fail/5` makes
+  the segment `"failed"`, a terminal status that records the reason and the
+  reporting island, its later segments are blocked as after a divergence, no
+  island is offered it again, and `status/0` lists it under `failures`. The
+  experiment stops there, visibly, rather than cycling the same failure from
+  island to island. The whole list rides unchanged in every
   segment's task spec; the runner applies only the entries a segment owns (an
   entry at step s belongs to the segment that stepped to s, `ownedInterventions`)
   and logs them to interventions.jsonl, a verified file (see
@@ -138,7 +143,23 @@ defmodule Coordinator.Queue do
   @doc "Whether `last_seen` (ms since epoch) is stale as of `now` (defaults to the real clock). A pure function of both timestamps (rather than reading the clock internally) so tests can pin the exact threshold -- exclusive, `>` not `>=` -- without a wall-clock race."
   def stale?(last_seen, now \\ now()), do: now - last_seen > @stale_ms
   # Bumped whenever `state.bin`'s shape changes incompatibly (see `init/1`).
+  # A failed segment (`Coordinator.Segment.fail/5`) extends the v3 shape the
+  # way `import_from`, `observations` and `manifest_metrics_version` did: a
+  # new status value and two keys (`:reason`, `:failed_at`) put only on the
+  # failed attempt, so a file without one is byte-identical to before and a
+  # file from before loads unchanged. The other direction is not supported,
+  # as it was not for those keys: a coordinator from before this change,
+  # whose modules name neither atom, refuses a state.bin holding a failed
+  # attempt (`[:safe]` decoding, see `init/1`), so rolling the code back
+  # after a failure was persisted means starting from a fresh data dir.
   @state_version 3
+  # The longest failure reason stored and shown: 500 graphemes
+  # (packages/runner/src/island.ts sends at most 500 characters, as it does
+  # for a reject's reason) and, since a grapheme can be one base character
+  # under any number of combining marks, 2000 bytes (four per codepoint at
+  # most) -- the bound a persisted and listed string actually needs.
+  @max_failure_reason 500
+  @max_failure_reason_bytes 2000
 
   # ---- client API ----
 
@@ -176,6 +197,19 @@ defmodule Coordinator.Queue do
   @doc "`predecessor` is \"own\" (the same run's prior segment — the default) or \"import\" (this segment's cross-run `import_from` source, for a metapopulation) — which one this island found inconsistent."
   def reject(seg_id, island, lease, reason, predecessor \\ "own"),
     do: GenServer.call(__MODULE__, {:reject, seg_id, island, lease, reason, predecessor})
+
+  @doc """
+  The island holding `seg_id`'s current run or verify lease cannot run the
+  task as given (see the moduledoc on scheduled interventions): the segment
+  becomes `"failed"` with `reason` (a string; stored bounded to
+  #{@max_failure_reason} graphemes and #{@max_failure_reason_bytes} bytes,
+  anything else counting as none) and the reporting island recorded, and
+  every segment reachable from it is blocked, as after a divergence. Refused,
+  like a reject, unless `lease` is the segment's current attempt under
+  `island`.
+  """
+  def fail(seg_id, island, lease, reason),
+    do: GenServer.call(__MODULE__, {:fail, seg_id, island, lease, reason})
 
   @doc "Publishes a validated checkpoint into the content-addressed store, if `lease` is still the segment's current run attempt."
   def publish_checkpoint(seg_id, island, lease, staged, digest, state_hash),
@@ -512,6 +546,28 @@ defmodule Coordinator.Queue do
     end
   end
 
+  # The island assigned `seg_id` cannot run the task as given (see the
+  # moduledoc): the segment is failed under its current lease and everything
+  # reachable from it is blocked, as after a divergence. The reason is bounded
+  # here, once, before it is stored and shown; the lease rule is `Segment.fail/5`'s.
+  def handle_call({:fail, seg_id, island_id, lease, reason}, _from, s) do
+    reason = bound_reason(reason)
+
+    with seg when not is_nil(seg) <- s.segments[seg_id],
+         {:ok, seg} <- Segment.fail(seg, island_id, lease, reason, now()) do
+      Logger.error(
+        "segment #{seg.id} (#{seg.run}##{seg.index}) failed on #{island_id}: #{if reason == "", do: "(no reason given)", else: clip(reason)}"
+      )
+
+      s = put_in(s, [:segments, seg_id], seg)
+      s = %{s | segments: Segment.block_descendants(s.segments, seg.id)}
+      {:reply, :ok, persist(s)}
+    else
+      nil -> {:reply, {:error, "unknown segment"}, s}
+      {:error, why} -> {:reply, {:error, why}, s}
+    end
+  end
+
   def handle_call(:public_status, _from, s) do
     counts =
       Enum.reduce(s.segments, %{}, fn {_, seg}, acc ->
@@ -551,10 +607,18 @@ defmodule Coordinator.Queue do
           done: Enum.count(segs, &(&1.status in ["done", "verified"])),
           verified: Enum.count(segs, &(&1.status == "verified")),
           diverged: Enum.count(segs, &(&1.status == "diverged")),
+          failed: Enum.count(segs, &(&1.status == "failed")),
           blocked: Enum.count(segs, &(&1.status == "blocked"))
         }
       end)
       |> Enum.sort_by(& &1.run)
+
+    # A segment an island reported it could not run as given (`fail/4`): the
+    # attempt that failed it says which kind of task, who reported it and why.
+    failures =
+      for seg <- Map.values(s.segments), seg.status == "failed" do
+        Map.merge(%{segment: seg.id, run: seg.run, index: seg.index}, failure_of(s, seg))
+      end
 
     divergences =
       for seg <- Map.values(s.segments), seg.status == "diverged" do
@@ -607,6 +671,7 @@ defmodule Coordinator.Queue do
        runs: runs,
        islands: islands,
        divergences: divergences,
+       failures: failures,
        observationMismatches: observation_mismatches,
        devices:
          islands
@@ -668,6 +733,9 @@ defmodule Coordinator.Queue do
               verifiedBy: if(verified, do: host(s, verify.island)),
               observationsVerified: observationsVerified
             }
+            # Only a failed segment carries it (see `fail/4`): every other
+            # entry keeps its shape from before the status existed.
+            |> maybe_put(:failure, failure_of(s, seg))
           end
 
         {:reply, %{spec: exp.spec, segments: Enum.sort_by(segments, &{&1.run, &1.index})}, s}
@@ -1363,6 +1431,58 @@ defmodule Coordinator.Queue do
   # see `Coordinator.Attempt`'s moduledoc for where that comes from).
   defp current_run_attempt(seg, island_id, lease),
     do: Enum.find(seg.attempts, &(&1.kind == "run" and Attempt.active?(&1, island_id, lease)))
+
+  # A failure reason as stored and shown (see `@max_failure_reason`): a
+  # string, at most that many bytes, cut between codepoints, valid UTF-8 (a
+  # direct caller's invalid bytes would make every later `/api/status` fail
+  # to encode), and at most that many graphemes. Anything else counts as no
+  # reason. The byte prefix is taken first, by `binary_part/3`, so the work
+  # done inside this process is bounded by the prefix and never by what a
+  # caller sent (Sol pass 2: walking the codepoints of a many-megabyte string
+  # here would stall every island's calls for seconds).
+  defp bound_reason(reason) when is_binary(reason) do
+    prefix = binary_part(reason, 0, min(byte_size(reason), @max_failure_reason_bytes))
+
+    case whole_codepoints(prefix, 3) do
+      nil -> ""
+      valid -> String.slice(valid, 0, @max_failure_reason)
+    end
+  end
+
+  defp bound_reason(_), do: ""
+
+  # `prefix` as valid UTF-8, dropping up to `tries` trailing bytes of a
+  # codepoint the cut split (four bytes at most, so three to drop); nil when
+  # it is invalid anyway.
+  defp whole_codepoints(prefix, tries) do
+    cond do
+      String.valid?(prefix) ->
+        prefix
+
+      tries > 0 and byte_size(prefix) > 0 ->
+        whole_codepoints(binary_part(prefix, 0, byte_size(prefix) - 1), tries - 1)
+
+      true ->
+        nil
+    end
+  end
+
+  # The listing's `failure` of a `"failed"` segment (the reporting attempt's
+  # kind, island, host and reason, and when it was reported -- see `fail/4`),
+  # nil for every other segment.
+  defp failure_of(s, %{status: "failed"} = seg) do
+    a = Segment.failed_attempt(seg)
+
+    %{
+      kind: a && a.kind,
+      island: a && a.island,
+      by: host(s, a && a.island),
+      reason: Segment.failure_reason(seg),
+      failedAt: a && Map.get(a, :failed_at)
+    }
+  end
+
+  defp failure_of(_s, _seg), do: nil
 
   defp host(_s, nil), do: "?"
   defp host(s, id), do: (s.islands[id] || %{adapter: "?"}).adapter

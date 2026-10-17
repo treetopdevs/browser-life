@@ -25,6 +25,7 @@ defmodule CoordinatorWeb.ApiController do
               :complete,
               :heartbeat,
               :reject,
+              :fail,
               :put_checkpoint,
               :put_file,
               :get_checkpoint
@@ -131,6 +132,22 @@ defmodule CoordinatorWeb.ApiController do
   end
 
   def reject(conn, _), do: bad(conn, "expected lease")
+
+  # The island cannot run its task as given (`Coordinator.Queue.fail/4`; a
+  # scheduled feed the world refuses, see the Queue moduledoc): the segment
+  # becomes "failed" under the same lease rule as a reject (409 otherwise),
+  # and the run stops there. `reason` is the runner's own message; anything
+  # but a string counts as none, and the queue bounds what it stores.
+  def fail(conn, %{"id" => id, "lease" => lease} = p) when is_binary(lease) do
+    reason = if is_binary(p["reason"]), do: p["reason"], else: ""
+
+    case Queue.fail(id, conn.assigns.island, lease, reason) do
+      :ok -> json(conn, %{ok: true})
+      {:error, why} -> conn |> put_status(409) |> json(%{error: why})
+    end
+  end
+
+  def fail(conn, _), do: bad(conn, "expected lease")
 
   # End checkpoint (physics + observer, one artifact) of a run task. The body
   # is staged, validated (structure, versions, checksum, end step, seed) and

@@ -5,7 +5,10 @@
 // Protocol: a private token (from join) authenticates every call; each task
 // carries a lease that must accompany heartbeats, uploads and completion. A
 // start checkpoint whose digest differs from the predecessor's report is
-// rejected, which makes the coordinator recompute that predecessor.
+// rejected, which makes the coordinator recompute that predecessor. A task
+// this island cannot run as given (a scheduled feed the world refuses, see
+// the catch in `runIsland`) is reported failed under its lease, which stops
+// the run there instead of offering the segment to the next island.
 
 import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@bl/schema";
 import { continuationError, decodeArtifact, immigrantError, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
@@ -408,10 +411,22 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       // Nor is a scheduled feed the world refuses (past MATTER_MAX at that step, which no
       // creation-time check can see; see Coordinator.Queue's moduledoc): a property of the
       // spec against its world, the same on every island, so crashing here would only take
-      // this island down and the next one after it. Logged and left: the lease lapses, the
-      // coordinator offers the segment again, and the experiment waits there, visibly.
-      else if (e instanceof InterventionError) log(`  cannot apply the schedule as given, leaving the task: ${e.message}`);
-      else throw e;
+      // this island down and the next one after it, and leaving the task would only have the
+      // next island fail it again once the lease lapsed. Reported instead: the coordinator
+      // marks the segment failed with this reason under this lease, blocks the run's later
+      // segments and never offers it again, so the experiment stops there, visibly. Only a
+      // lost lease (409: reclaimed meanwhile, or the segment was blocked) is not fatal here
+      // either; a coordinator that cannot be reached still throws.
+      else if (e instanceof InterventionError) {
+        log(`  cannot apply the schedule as given, leaving the task: ${e.message}`);
+        try {
+          await postJson(`/api/segments/${seg.id}/fail?${q()}`, { lease, reason: e.message.slice(0, 500) });
+          log(`  reported ${seg.run} #${seg.index} as failed; the run stops there`);
+        } catch (f) {
+          if (f instanceof HttpError && f.status === 409) log(`  task abandoned: ${f.message}`);
+          else throw f;
+        }
+      } else throw e;
     } finally {
       clearInterval(beat);
     }

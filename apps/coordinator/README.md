@@ -28,8 +28,25 @@ experiment spec), `CoordinatorWeb.Router` (the routes) and `CoordinatorWeb.ApiCo
   refused with 422, as are the shape errors, each with the runner's own wording. The
   list is stored as given and rides whole in every segment's task spec. A feed that
   would take the world past MATTER_MAX at its step cannot be checked at creation: an
-  island that meets one logs it and leaves the task (the lease lapses, the segment is
-  offered again), so the experiment waits there rather than crashing islands.
+  island that meets one reports the segment failed (below), so the experiment stops
+  there rather than crashing islands or cycling the segment from island to island.
+* `POST /api/segments/:id/fail` takes `{"lease", "reason"}`: the island holding the
+  segment's current run or verify lease cannot run the task as given (today: a scheduled
+  feed the world refuses at its step). Same lease rule as `reject` (409 otherwise, 422
+  without a lease). The segment becomes `failed`, a terminal status: the reason (stored
+  bounded to 500 graphemes and 2000 bytes; anything but a string counts as none) and
+  the reporting island are recorded, the run's later segments are blocked as after a
+  divergence, and no island is offered it again. `GET /api/status` counts it
+  (`counts.failed`, a run's `failed`) and lists it under `failures`: `segment`, `run`,
+  `index`, `kind` (`run` or `verify`), `island` (its id), `by` (its adapter, as the
+  divergences' hosts are named), `failedAt` (ms since the epoch) and `reason`; the
+  experiment listing shows the segment's `status` and, only on a failed segment, a
+  `failure` object with the same `kind`, `island`, `by`, `failedAt` and `reason`. The
+  one way out is an upstream reject, which resets the failed segment with every other
+  descendant, since the world it failed against is recomputed. A `state.bin` holding a
+  failed attempt cannot be loaded by a coordinator from before this change (its
+  modules name neither new key), as with every key added since v3: do not roll the
+  code back over one, or start from a fresh data dir.
 * `POST /api/next` takes `{"capabilities": [...]}`, read per request and never stored:
   `ponds-v1` for a pond preset's experiments, `ponds-v2` as well for the hunt's arms
   (`pond-nat`, `pond-shuf`), `interventions-v1` for an experiment with `interventions`.

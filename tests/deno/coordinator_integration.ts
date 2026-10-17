@@ -17,7 +17,12 @@
 // "interventions-v1" gate over the wire, that a real island runs and another
 // verifies its segments (interventions.jsonl among the compared files), and
 // that tools/stitch.ts rebuilds the bundle a single tools/run.ts --lesion
-// --feed run writes, interventions.jsonl included.
+// --feed run writes, interventions.jsonl included. Last of all, a schedule
+// creation accepts but no island can apply (a step-0 feed past MATTER_MAX)
+// checks that a real island reports the segment failed (POST
+// /api/segments/:id/fail), that the run stops there in the status and the
+// listing, that no island is offered the segment again, and that the failure
+// survives a restart.
 //
 // Run from the repo root: deno run -A tests/deno/coordinator_integration.ts < /dev/null
 import { requestDevice } from "@bl/sim-gpu";
@@ -629,6 +634,76 @@ try {
     // Not vacuous: the wounded history is not the clean one (the "it-final-only" run above is the same spec without the schedule).
     const cleanMan = JSON.parse((await readOr(`${outDir}/it-final-only/spots/treatment/seed-1/manifest.json`)) ?? "{}") as { summary?: { finalHash?: string } };
     check("...and it is not the clean run of the same spec", stitchedMan.summary?.finalHash !== undefined && stitchedMan.summary.finalHash !== cleanMan.summary?.finalHash, `${stitchedMan.summary?.finalHash} vs clean ${cleanMan.summary?.finalHash}`);
+  }
+
+  // A schedule no creation check can refuse and no island can apply (Coordinator.Queue's
+  // moduledoc): a step-0 feed of 4096 per cell over r=100 (about 31,400 cells of spots) would
+  // move about 1.3e8 quanta, past MATTER_MAX (2^26), and is applied on the CPU before any GPU
+  // work. A real island reports the segment failed under its lease (POST /api/segments/:id/fail)
+  // instead of leaving it to be offered again: the run stops there, visibly, no island is
+  // offered the segment again, and the failure survives a restart. Created last, so no earlier
+  // runIsland call picks it up.
+  {
+    type FailRun = { run: string; segments: number; done: number; verified: number; diverged: number; failed: number; blocked: number };
+    type Failure = { segment: string; run: string; index: number; kind: string; island: string; by: string; reason: string };
+    type FailStatus = { counts: Record<string, number>; runs: FailRun[]; failures: Failure[] };
+    const failingSpec = { ...spec, experiment: "it-failing", verifyFraction: 0, interventions: [{ step: 0, kind: "feed", x: 128, y: 128, r: 100, amount: 4096 }] };
+    const createdFailing = await call<{ segments: number }>("/api/experiments", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(failingSpec),
+    });
+    check("creates the experiment whose step-0 feed no island can apply (4 segments)", createdFailing.segments === 4, JSON.stringify(createdFailing));
+
+    const logF: string[] = [];
+    const producedFailing = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200, log: (m) => logF.push(m) });
+    check(
+      "a real island meets the refused feed, completes nothing and reports the segment failed",
+      producedFailing === 0 && logF.some((m) => /cannot apply the schedule as given/.test(m) && /past MATTER_MAX/.test(m)) && logF.some((m) => /reported it-failing\/\S+ #0 as failed/.test(m)),
+      logF.join(" | "),
+    );
+
+    const failStatus = await call<FailStatus>("/api/status");
+    const failRun = failStatus.runs.find((r) => r.run.startsWith("it-failing/"));
+    const failure = failStatus.failures.find((f) => f.run.startsWith("it-failing/"));
+    check(
+      "/api/status shows the run with one failed segment and three blocked, and lists the failure with the runner's reason and the reporting island",
+      failRun?.failed === 1 && failRun?.blocked === 3 && failRun?.done === 0 && failStatus.counts.failed === 1 && failStatus.failures.length === 1 && failure?.index === 0 && failure?.kind === "run" && failure?.by === "test" && /past MATTER_MAX/.test(failure?.reason ?? ""),
+      JSON.stringify({ failRun, failures: failStatus.failures }),
+    );
+    const expFailing = await call<{ segments: { index: number; status: string; failure?: { kind: string; island: string; by: string; reason: string } }[] }>("/api/experiments/it-failing");
+    const [f0, ...fRest] = [...expFailing.segments].sort((a, b) => a.index - b.index);
+    check(
+      "the listing shows segment 0 failed with its failure, and the later segments blocked without one",
+      f0?.status === "failed" && f0.failure?.kind === "run" && f0.failure.island === failure?.island && /past MATTER_MAX/.test(f0.failure.reason) && fRest.length === 3 && fRest.every((s) => s.status === "blocked" && s.failure === undefined),
+      JSON.stringify(expFailing.segments),
+    );
+    // A capable island asks once and must be told idle: no task at all, not
+    // merely no completion (an island re-offered the segment would fail it
+    // again and still complete nothing).
+    const idleIsland = async () => {
+      const l: string[] = [];
+      const n = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200, log: (m) => l.push(m) });
+      return { ok: n === 0 && !l.some((m) => /^(run|verify) /.test(m)), log: l.join(" | ") };
+    };
+    const offeredAgain = await idleIsland();
+    check("no island is offered the failed segment again: a capable island is given no task", offeredAgain.ok, offeredAgain.log);
+
+    // The failed attempt's reason and timestamp are keys no earlier state.bin carried: a cold
+    // boot must load them (see the restart above for why a fresh OS process is the real check).
+    server.kill("SIGTERM");
+    await server.status;
+    server = spawnServer();
+    await waitReady(30_000);
+    const afterFailRestart = await call<FailStatus>("/api/status");
+    const restartedFailRun = afterFailRestart.runs.find((r) => r.run.startsWith("it-failing/"));
+    const restartedFailure = afterFailRestart.failures.find((f) => f.run.startsWith("it-failing/"));
+    const afterRestartIsland = await idleIsland();
+    check(
+      "the failure survives a restart in a fresh OS process, and the segment stays unoffered",
+      restartedFailRun?.failed === 1 && restartedFailRun?.blocked === 3 && restartedFailure?.reason === failure?.reason && restartedFailure?.island === failure?.island && afterRestartIsland.ok,
+      JSON.stringify({ restartedFailRun, restartedFailure, island: afterRestartIsland.log }),
+    );
   }
 } finally {
   try {

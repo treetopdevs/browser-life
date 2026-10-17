@@ -39,6 +39,12 @@ defmodule Coordinator.Attempt do
   version; `nil` (no manifest uploaded yet, or one predating this field) is
   read as version 1, same as everywhere else in this feature.
 
+  An attempt whose island reported that it cannot run the task as given
+  (`Coordinator.Segment.fail/5`) has outcome `\"failed\"` and carries
+  `reason` (the island's words, bounded by the controller) and `failed_at`,
+  both put on it only then: every other attempt lacks the two keys, so an
+  ordinary attempt's persisted shape is unchanged.
+
   Attempts persisted before any of these fields existed lack the keys
   entirely; read them with `Map.get/3`, never dot-access, which raises on a
   missing key.
@@ -64,7 +70,7 @@ defmodule Coordinator.Attempt do
           manifest_metrics_version: integer | nil
         }
 
-  @doc "A freshly assigned attempt; `outcome` is `\"pending\"` until it completes, is rejected, diverges or is abandoned."
+  @doc "A freshly assigned attempt; `outcome` is `\"pending\"` until it completes, is rejected, diverges, fails or is abandoned."
   @spec new(kind, String.t(), String.t(), integer) :: t
   def new(kind, lease, island, now) when kind in ["run", "verify"] do
     %{

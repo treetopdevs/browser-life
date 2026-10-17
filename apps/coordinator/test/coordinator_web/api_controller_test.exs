@@ -690,6 +690,142 @@ defmodule CoordinatorWeb.ApiControllerTest do
                build_conn() |> get("/api/experiments/a-wounded") |> json_response(200)
     end
 
+    test "POST /api/segments/:id/fail: the island token, a lease and the reject's lease rule; the failure reaches /api/status, the listing, and no further /api/next",
+         %{conn: conn} do
+      conn |> post("/api/experiments", @wounded) |> json_response(200)
+      {a, token_a} = join(conn)
+      {b, token_b} = join(build_conn())
+      caps = %{"capabilities" => ["interventions-v1"]}
+      t = next_with(a, token_a, caps)
+      assert t["kind"] == "run" and t["segment"]["index"] == 0
+      id = t["segment"]["id"]
+
+      reason =
+        "the feed at t=0 failed: feed refused: 128614400 quanta would take the world past MATTER_MAX (67108864); it holds 2621440"
+
+      fail = fn conn, island, body ->
+        post(conn, "/api/segments/#{id}/fail?island=#{island}", body)
+      end
+
+      assert build_conn()
+             |> fail.(a, %{"lease" => t["lease"], "reason" => reason})
+             |> json_response(401)
+
+      assert %{"error" => "expected lease"} =
+               build_conn()
+               |> authed(token_a)
+               |> fail.(a, %{"reason" => reason})
+               |> json_response(422)
+
+      assert %{"error" => "segment not assigned" <> _} =
+               build_conn()
+               |> authed(token_b)
+               |> fail.(b, %{"lease" => t["lease"], "reason" => reason})
+               |> json_response(409)
+
+      assert %{"error" => "segment not assigned" <> _} =
+               build_conn()
+               |> authed(token_a)
+               |> fail.(a, %{"lease" => "wrong", "reason" => reason})
+               |> json_response(409)
+
+      assert %{"error" => "unknown segment"} =
+               build_conn()
+               |> authed(token_a)
+               |> post("/api/segments/seg-999/fail?island=#{a}", %{"lease" => t["lease"]})
+               |> json_response(409)
+
+      assert %{"ok" => true} =
+               build_conn()
+               |> authed(token_a)
+               |> fail.(a, %{"lease" => t["lease"], "reason" => reason})
+               |> json_response(200)
+
+      # The lease is spent: a second report is refused.
+      assert %{"error" => "segment not assigned" <> _} =
+               build_conn()
+               |> authed(token_a)
+               |> fail.(a, %{"lease" => t["lease"], "reason" => reason})
+               |> json_response(409)
+
+      status = build_conn() |> get("/api/status") |> json_response(200)
+      assert status["counts"] == %{"failed" => 1, "blocked" => 1}
+      assert [%{"failed" => 1, "blocked" => 1, "verified" => 0, "diverged" => 0}] = status["runs"]
+
+      assert [
+               %{
+                 "segment" => ^id,
+                 "index" => 0,
+                 "kind" => "run",
+                 "island" => ^a,
+                 "by" => "test",
+                 "reason" => ^reason,
+                 "failedAt" => at
+               }
+             ] =
+               status["failures"]
+
+      assert is_integer(at) and at > 0
+
+      listing = build_conn() |> get("/api/experiments/a-wounded") |> json_response(200)
+      [first, second] = listing["segments"]
+      assert first["status"] == "failed"
+
+      assert first["failure"] == %{
+               "kind" => "run",
+               "island" => a,
+               "by" => "test",
+               "reason" => reason,
+               "failedAt" => at
+             }
+
+      assert second["status"] == "blocked"
+      refute Map.has_key?(second, "failure")
+
+      assert %{"kind" => "idle"} = next_with(a, token_a, caps)
+      assert %{"kind" => "idle"} = next_with(b, token_b, caps)
+    end
+
+    test "a /fail reason that is not a string counts as none, and one of stacked combining marks is stored bounded in bytes",
+         %{conn: conn} do
+      conn |> post("/api/experiments", @wounded) |> json_response(200)
+
+      conn
+      |> post("/api/experiments", %{@spec_ok | "experiment" => "b-plain"})
+      |> json_response(200)
+
+      {a, token_a} = join(conn)
+      caps = %{"capabilities" => ["interventions-v1"]}
+      t = next_with(a, token_a, caps)
+
+      assert %{"ok" => true} =
+               build_conn()
+               |> authed(token_a)
+               |> post("/api/segments/#{t["segment"]["id"]}/fail?island=#{a}", %{
+                 "lease" => t["lease"],
+                 "reason" => %{"deep" => [1]}
+               })
+               |> json_response(200)
+
+      t2 = next_with(a, token_a, caps)
+      assert String.starts_with?(t2["segment"]["run"], "b-plain/")
+
+      assert %{"ok" => true} =
+               build_conn()
+               |> authed(token_a)
+               |> post("/api/segments/#{t2["segment"]["id"]}/fail?island=#{a}", %{
+                 "lease" => t2["lease"],
+                 "reason" => "x" <> String.duplicate("́", 100_000)
+               })
+               |> json_response(200)
+
+      failures = (build_conn() |> get("/api/status") |> json_response(200))["failures"]
+      assert [none, stacked] = Enum.sort_by(failures, & &1["run"])
+      assert none["reason"] == ""
+      assert String.valid?(stacked["reason"]) and byte_size(stacked["reason"]) <= 2000
+      assert String.starts_with?(stacked["reason"], "x́")
+    end
+
     test "/api/next hands scheduled work only with \"interventions-v1\", with the whole schedule in the task spec",
          %{conn: conn} do
       # "a-wounded" sorts ahead of "b-plain" in pick_task's order.

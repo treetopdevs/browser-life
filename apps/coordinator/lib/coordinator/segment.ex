@@ -7,13 +7,15 @@ defmodule Coordinator.Segment do
   persist the result and reply.
 
   A segment's `status` (`"pending" | "assigned" | "done" | "verified" |
-  "diverged" | "blocked"`) and its `attempts` (a list of `Coordinator.Attempt`,
-  oldest first) are tracked together. Verification does **not** move a segment
-  out of `"done"`: a completed run stays `"done"` (successors may start)
-  while its verify attempt is assigned, heartbeats, is abandoned and
-  reassigned, or completes — verification is an attempt *on* a done segment,
-  not a segment-status transition. Only a verify attempt's own *completion*
-  changes the segment's status, to `"verified"` or `"diverged"`.
+  "diverged" | "failed" | "blocked"`) and its `attempts` (a list of
+  `Coordinator.Attempt`, oldest first) are tracked together. Verification
+  does **not** move a segment out of `"done"`: a completed run stays `"done"`
+  (successors may start) while its verify attempt is assigned, heartbeats, is
+  abandoned and reassigned, or completes — verification is an attempt *on* a
+  done segment, not a segment-status transition. Only a verify attempt's own
+  *completion* changes the segment's status, to `"verified"` or `"diverged"`,
+  and only an attempt's own *failure report* (`fail/5`) changes it to
+  `"failed"`.
 
   | Segment state | Event | Guard | Next state |
   |---|---|---|---|
@@ -22,12 +24,29 @@ defmodule Coordinator.Segment do
   | assigned | lease expired | - | pending (run attempt -> abandoned) |
   | assigned | complete_run | lease matches, uploaded == reported | done |
   | assigned | complete_run (reject path) | - | requeue predecessor, see below |
+  | assigned | fail | lease matches the run attempt | failed (+ block_descendants) |
   | done | assign_verify | no attempt already pending/assigned, different island | done (+verify attempt) |
   | done (verify) | heartbeat | lease matches | done |
   | done (verify) | lease expired | - | done (verify attempt -> abandoned) |
   | done (verify) | complete_verify, match | reported == accepted run digest | verified |
   | done (verify) | complete_verify, mismatch | - | diverged (+ block_descendants) |
+  | done (verify) | fail | lease matches the verify attempt | failed (+ block_descendants) |
   | blocked | admin unblock | (existing admin policy, unchanged) | pending |
+
+  `"failed"` is terminal, like `"diverged"`: the island holding a segment's
+  current run or verify lease reports that it cannot run the task as given
+  (today: a scheduled feed the world refuses at its step, which no creation
+  check can see -- see `Coordinator.Queue`'s moduledoc on interventions), and
+  since that is a property of the spec against its world, the same on every
+  island, offering the segment again would only fail it again. `fail/5`
+  records the reason and the reporting island on the attempt (its outcome
+  becomes `"failed"`, so a lapsed lease never returns the segment to
+  `"pending"` -- `reclaim/3` only ever abandons a *pending* attempt), and the
+  caller blocks everything reachable from it (`block_descendants/2`), the
+  same as a divergence. A failed segment is never offered again (`pick_task`
+  looks only at `"pending"` and `"done"` ones); the one way out is an
+  upstream reject (`redo/2`), which blocks and then resets it like any other
+  descendant, since the world it failed against is being recomputed.
 
   `block_descendants/2` blocks every segment *reachable* from a diverged or
   rejected one — pending, assigned, `done` *and* `verified` alike, cancelling
@@ -154,6 +173,18 @@ defmodule Coordinator.Segment do
 
   @doc "The most recent verify attempt (for status/divergence reporting), if any was ever assigned."
   def last_verify_attempt(seg), do: find_last(seg, &(&1.kind == "verify"))
+
+  @doc """
+  The attempt whose failure report (`fail/5`) put this segment in `\"failed\"`
+  (`outcome` `\"failed\"`, carrying `reason` and the reporting `island`), or
+  `nil`. The most recent one: after an upstream reject resets the segment,
+  `block/1` discards every attempt, so a failed attempt never outlives the
+  status it caused.
+  """
+  def failed_attempt(seg), do: find_last(seg, &(&1.outcome == "failed"))
+
+  @doc "What the reporting island said it could not do (`fail/5`'s `reason`, already bounded by the caller), or `nil` when the segment has not failed. Read with `Map.get/2`: only a failed attempt carries the key."
+  def failure_reason(seg), do: (a = failed_attempt(seg)) && Map.get(a, :reason)
 
   @doc """
   The last verify attempt's observation comparison (`\"match\" | \"mismatch\" |
@@ -396,6 +427,48 @@ defmodule Coordinator.Segment do
   def complete_verify(_seg, _island, _lease, _reported_digest, _reported_observations),
     do: {:error, "segment not done"}
 
+  @doc """
+  The island holding this segment's current run *or* verify lease reports that
+  it cannot run the task as given (see the moduledoc). That attempt's outcome
+  becomes `\"failed\"` -- no longer pending, so `reclaim/3` never abandons it
+  and the segment never returns to `\"pending\"` -- and it records `reason`
+  (the island's words, bounded by the caller) and `failed_at`; the segment
+  goes to `\"failed\"`. The same lease rule as a reject: only the attempt this
+  island/lease owns right now may fail the segment, so a reclaimed, completed
+  or abandoned lease is refused, as is any other island's. The caller must
+  then call `block_descendants/2`, as after a divergence.
+
+  A verify attempt's failure leaves the accepted run attempt's record in
+  place (`accepted_digest/1` and the uploaded files stay readable, as after a
+  divergence): the producer claimed it applied a schedule the verifier says
+  the world refuses, a disagreement about the history that is the verifier's
+  to report, not to erase.
+  """
+  def fail(seg, island, lease, reason, now) do
+    attempt =
+      case seg.status do
+        "assigned" -> find_attempt(seg, "run", island, lease)
+        "done" -> find_attempt(seg, "verify", island, lease)
+        _ -> nil
+      end
+
+    case attempt do
+      nil ->
+        {:error, "segment not assigned to this island/lease"}
+
+      a ->
+        failed =
+          a |> Map.put(:outcome, "failed") |> Map.put(:reason, reason) |> Map.put(:failed_at, now)
+
+        {:ok,
+         %{
+           seg
+           | status: "failed",
+             attempts: replace_attempt(seg.attempts, a.id, fn _ -> failed end)
+         }}
+    end
+  end
+
   # `nil` (rather than "mismatch") whenever either side is missing any of the
   # six names (or an optional one the other side has): an accepted run attempt uploaded before file digests were
   # recorded, or a verify attempt from an island that doesn't report them yet
@@ -559,7 +632,7 @@ defmodule Coordinator.Segment do
     for {id, s} <- segments, s.experiment == experiment, into: %{}, do: {id, s}
   end
 
-  @doc "A diverged or rejected segment invalidates everything reachable from it (`dependents_graph/1` + `reachable/2`; see the moduledoc) — same-run descendants and, transitively, any segment across any run whose cross-run import chain leads back to it. `seg_id` itself is left as-is; only what depends on it is blocked."
+  @doc "A diverged, failed or rejected segment invalidates everything reachable from it (`dependents_graph/1` + `reachable/2`; see the moduledoc) — same-run descendants and, transitively, any segment across any run whose cross-run import chain leads back to it. `seg_id` itself is left as-is; only what depends on it is blocked."
   def block_descendants(segments, seg_id) do
     scoped = scoped_to_experiment(segments, segments[seg_id].experiment)
     tainted = scoped |> dependents_graph() |> reachable(seg_id) |> MapSet.delete(seg_id)
