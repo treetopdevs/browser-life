@@ -4,6 +4,8 @@ import type { ObserverSettings } from "@bl/runner";
 import type { LineageView } from "@bl/lineage";
 
 export interface RunManifest {
+  /** Storage concurrency token; unrelated to physics or replay. Absent on a new run. */
+  storageRevision?: string;
   runId: string;
   presetId: string;
   seed: number;
