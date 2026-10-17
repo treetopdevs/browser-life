@@ -79,6 +79,37 @@ defmodule Coordinator.Queue do
   `"ponds-v2"` is asked for in addition to `"ponds-v1"`, never instead of it
   (`ISLAND_CAPABILITIES` lists both); a `ponds-v1` rule is otherwise unchanged.
 
+  Scheduled interventions (`spec["interventions"]`, the runner's
+  `RunSpec.interventions` -- packages/runner/src/interventions.ts): a list of
+  lesions and feeds at absolute steps, the wounds and feedings a lab history
+  logs, so that a wounded or fed history can be run and verified by the
+  archipelago. `validate/1` holds it to the runner's own shape rules
+  (`validateInterventions`: non-empty, exact keys per kind, non-decreasing
+  steps, non-negative integers, a feed's amount non-zero within ±4096), and to
+  what the runner refuses before the GPU (`interventionsError`): a centre
+  inside the preset's world (`:world_size` in config.exs, kept in sync with
+  packages/schema's presets by packages/runner/test/coordinator-presets.test.ts)
+  and no feed in a pond preset, where each pond's matter is fixed by its cycle.
+  An entry after the run's last step is refused too, as tools/run.ts refuses
+  it: no segment would apply it. A feed's `matter` (the lab's replay
+  assertion: the quanta a logged feed must move again) is refused as well: a
+  value the world does not reproduce would throw on every island, and the
+  archipelago's own check is the second island's replay. What no creation can
+  see is a feed that would take the world past MATTER_MAX, which depends on
+  the world's matter at that step; an island that meets one logs it and leaves
+  the task (packages/runner/src/island.ts), its lease lapses, and the segment
+  is offered again, so the experiment waits there, visible in the status, and
+  no island crashes. The whole list rides unchanged in every
+  segment's task spec; the runner applies only the entries a segment owns (an
+  entry at step s belongs to the segment that stepped to s, `ownedInterventions`)
+  and logs them to interventions.jsonl, a verified file (see
+  `Coordinator.Segment`'s `@optional_observation_files`) that tools/stitch.ts
+  joins in segment order. Such an experiment's work, run or verify, goes only
+  to an island whose request carries `"interventions-v1"`: an older island
+  would run the segment clean (its runner knows no such field) and report a
+  digest that disagrees with every capable island's, a divergence with no
+  real disagreement in it.
+
   Islands authenticate with a private token issued at join; every assignment
   carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
   heartbeats and completion. The end checkpoint of every accepted run attempt
@@ -717,6 +748,12 @@ defmodule Coordinator.Queue do
       (bad = invalid_metapopulation(spec)) != nil ->
         {:error, bad}
 
+      # Scheduled lesions and feeds (see the moduledoc): the runner's shape
+      # rules, a centre inside the world, no feed in a pond world, nothing
+      # after the last step. After `steps` and `presetId` are known good.
+      (bad = invalid_interventions(spec)) != nil ->
+        {:error, bad}
+
       not int_in?.(Map.get(spec, "deepEvery", 10), 1, 1000) ->
         {:error, "deepEvery must be an integer in 1..1000"}
 
@@ -729,7 +766,7 @@ defmodule Coordinator.Queue do
 
       true ->
         keep =
-          ~w(experiment presetId conditions seeds steps segmentSteps censusEvery deepEvery verifyFraction)
+          ~w(experiment presetId conditions seeds steps segmentSteps censusEvery deepEvery verifyFraction interventions)
 
         # "metricsVersion" is deliberately not in `keep`: it is the
         # coordinator's own required version at creation time (like
@@ -744,6 +781,11 @@ defmodule Coordinator.Queue do
             },
             Map.take(spec, keep)
           )
+
+        # An explicit `"interventions": null` is no schedule (invalid_interventions/1
+        # reads it so), and must leave no key behind: every segment's task
+        # spec, and the stored spec, keep their shape from before the field.
+        base = if base["interventions"] == nil, do: Map.delete(base, "interventions"), else: base
 
         {:ok, put_metapopulation(base, spec)}
     end
@@ -883,6 +925,134 @@ defmodule Coordinator.Queue do
   end
 
   defp put_metapopulation(base, _spec), do: base
+
+  # ---- scheduled interventions (see the moduledoc) ----
+
+  # Bounds the list that rides in every task payload and in state.bin, and
+  # the work `validate/1` does inside this serialized process.
+  @max_interventions 10_000
+  # packages/schema/src/feed.ts's FEED_MAX: the largest per-cell amount one feed may add or drain.
+  @feed_max 4096
+  # The largest integer JSON hands JavaScript exactly (Number.MAX_SAFE_INTEGER):
+  # a larger one would pass here as an Erlang integer and fail the runner's
+  # `validateInterventions` on every island.
+  @max_safe_int 9_007_199_254_740_991
+  @lesion_keys ~w(step kind x y r)
+  @feed_keys ~w(step kind x y r amount)
+
+  # Why `spec["interventions"]` cannot be scheduled, or nil (absent, or nil,
+  # is no schedule at all). The shape rules are packages/runner/src/interventions.ts's
+  # `validateInterventions` (minus a feed's `matter`, see the moduledoc), so a
+  # list accepted here passes `validateSpec` on every island; the world rules
+  # are `interventionsError`'s, checked here so that no island is handed a
+  # segment it can only throw on. Called after `validate/1` has established
+  # `presetId` and `steps`.
+  defp invalid_interventions(%{"interventions" => nil}), do: nil
+
+  defp invalid_interventions(%{"interventions" => list} = spec) when is_list(list) do
+    cond do
+      list == [] ->
+        "interventions must be a non-empty array of lesions and feeds"
+
+      length(list) > @max_interventions ->
+        "interventions must hold at most #{@max_interventions} entries"
+
+      true ->
+        world = Map.get(Application.get_env(:coordinator, :world_size, %{}), spec["presetId"])
+        pond? = pond_preset?(spec["presetId"])
+
+        list
+        |> Enum.with_index()
+        |> Enum.reduce_while({0, nil}, fn {e, i}, {last, nil} ->
+          case invalid_intervention(e, i, last, spec["steps"], world, pond?) do
+            {:ok, step} -> {:cont, {step, nil}}
+            {:error, why} -> {:halt, {last, why}}
+          end
+        end)
+        |> elem(1)
+    end
+  end
+
+  defp invalid_interventions(%{"interventions" => _}),
+    do: "interventions must be a non-empty array of lesions and feeds"
+
+  defp invalid_interventions(_spec), do: nil
+
+  # One entry: `{:ok, step}` (its step, for the next entry's ordering check)
+  # or `{:error, why}`, in the runner's own words (`validateInterventions`,
+  # then `interventionsError` and tools/run.ts for the world and the last
+  # step). `world` is the preset's `{width, height}` from config.exs, or nil
+  # for a preset without one (then no centre check, as the runner's would be
+  # the first to see it).
+  defp invalid_intervention(e, i, last, steps, world, pond?) do
+    where = "interventions[#{i}]"
+    kind = is_map(e) and e["kind"]
+
+    allowed = if kind == "feed", do: @feed_keys, else: @lesion_keys
+
+    # Erlang integers only: an integer-valued float (`2.0`, which JSON clients
+    # never send for a cell) is refused although the runner would take it, so
+    # the stored spec and every task payload carry integers.
+    nonneg? = fn k -> is_integer(e[k]) and e[k] >= 0 and e[k] <= @max_safe_int end
+
+    cond do
+      not is_map(e) ->
+        {:error, "#{where} must be an object"}
+
+      kind not in ["lesion", "feed"] ->
+        {:error, "#{where}: kind must be \"lesion\" or \"feed\", got #{Jason.encode!(kind)}"}
+
+      # See the moduledoc: a replay assertion the archipelago cannot honour.
+      kind == "feed" and Map.has_key?(e, "matter") ->
+        {:error,
+         "#{where}: a feed's matter is not scheduled on the archipelago (the second island's replay is its check; a matter the world does not reproduce would throw on every island)"}
+
+      # Not `Enum.find(...) != nil`: a direct caller's nil key would pass as "none".
+      (extra = Enum.reject(Map.keys(e), &(is_binary(&1) and &1 in allowed))) != [] ->
+        {:error,
+         "#{where}: a #{kind} has no key #{key_name(hd(extra))} (its keys are #{Enum.join(allowed, ", ")})"}
+
+      (missing = Enum.find(allowed, &(not Map.has_key?(e, &1)))) != nil ->
+        {:error, "#{where}: a #{kind} needs the key #{Jason.encode!(missing)}"}
+
+      not nonneg?.("step") ->
+        {:error, "#{where}: step must be a non-negative integer"}
+
+      e["step"] < last ->
+        {:error, "#{where}: step #{e["step"]} follows step #{last} (steps must not decrease)"}
+
+      e["step"] > steps ->
+        {:error,
+         "#{where}: step #{e["step"]} is after the run's last step (steps #{steps}), so no segment would apply it"}
+
+      (bad = Enum.find(~w(x y r), &(not nonneg?.(&1)))) != nil ->
+        {:error, "#{where}: #{bad} must be a non-negative integer"}
+
+      world != nil and e["x"] >= elem(world, 0) ->
+        {:error, "#{where}: x #{e["x"]} is outside the world (#{elem(world, 0)} wide)"}
+
+      world != nil and e["y"] >= elem(world, 1) ->
+        {:error, "#{where}: y #{e["y"]} is outside the world (#{elem(world, 1)} high)"}
+
+      kind == "feed" and
+          not (is_integer(e["amount"]) and e["amount"] != 0 and abs(e["amount"]) <= @feed_max) ->
+        {:error, "#{where}: amount must be a non-zero integer within ±#{@feed_max} per cell"}
+
+      # packages/schema/src/feed.ts's feedError, which the runner would raise on every island.
+      kind == "feed" and pond? ->
+        {:error,
+         "#{where}: feeding is not defined for pond worlds: the pond cycle fixes each pond's matter"}
+
+      true ->
+        {:ok, e["step"]}
+    end
+  end
+
+  # A key as the message quotes it: JSON for a string (what a request carries),
+  # `inspect` for anything a direct caller might pass (nil, an atom, a tuple),
+  # which Jason could not encode, and this process must not raise on.
+  defp key_name(key) when is_binary(key), do: Jason.encode!(key)
+  defp key_name(key), do: inspect(key)
 
   # ---- segments ----
 
@@ -1057,6 +1227,9 @@ defmodule Coordinator.Queue do
         checkpointEvery: 0
       }
       |> maybe_put(:metapopulation, task_metapopulation(spec, seg))
+      # The whole schedule, to every segment (see the moduledoc): the runner
+      # keeps the entries this segment owns. Absent from every other payload.
+      |> maybe_put(:interventions, spec["interventions"])
 
     %{
       kind: kind,
@@ -1123,16 +1296,26 @@ defmodule Coordinator.Queue do
   @current_capability "ponds-v2"
   @current_conditions ~w(pond-nat pond-shuf)
 
+  # Scheduled interventions (`spec["interventions"]`, see the moduledoc): an
+  # island that cannot apply them would run the segment clean.
+  @interventions_capability "interventions-v1"
+
   # The experiments whose work an island with `capabilities` must not be
-  # offered: every pond experiment, unless it advertises `@pond_capability`.
-  # Computed once per `pick_task/4` call rather than per segment, so a large
-  # queue costs one pass over the experiments, not one config lookup per segment.
+  # offered: every pond experiment, unless it advertises `@pond_capability`,
+  # and every experiment with scheduled interventions, unless it advertises
+  # `@interventions_capability`. Computed once per `pick_task/4` call rather
+  # than per segment, so a large queue costs one pass over the experiments,
+  # not one config lookup per segment.
   defp gated_experiments(s, capabilities) do
-    if @pond_capability in capabilities do
+    ponds? = @pond_capability in capabilities
+    scheduled? = @interventions_capability in capabilities
+
+    if ponds? and scheduled? do
       MapSet.new()
     else
       for {name, exp} <- s.experiments,
-          pond_preset?(exp.spec["presetId"]),
+          (not ponds? and pond_preset?(exp.spec["presetId"])) or
+            (not scheduled? and exp.spec["interventions"] != nil),
           into: MapSet.new(),
           do: name
     end

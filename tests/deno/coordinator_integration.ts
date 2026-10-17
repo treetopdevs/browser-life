@@ -12,12 +12,17 @@
 // implementation from a correct one). A last, ponds-small experiment checks
 // capability gating over the wire (pond work only for an island that
 // advertises "ponds-v1") and that its stitched bundles equal single
-// tools/run.ts runs, ponds.tsv included.
+// tools/run.ts runs, ponds.tsv included. Last, a scheduled experiment (spec
+// "interventions": lesions and feeds by absolute step) checks the
+// "interventions-v1" gate over the wire, that a real island runs and another
+// verifies its segments (interventions.jsonl among the compared files), and
+// that tools/stitch.ts rebuilds the bundle a single tools/run.ts --lesion
+// --feed run writes, interventions.jsonl included.
 //
 // Run from the repo root: deno run -A tests/deno/coordinator_integration.ts < /dev/null
 import { requestDevice } from "@bl/sim-gpu";
-import { METRICS_VERSION } from "@bl/schema";
-import { BUNDLE_FILES, OBSERVATION_FILES, observationDigests, PONDS_FILE, runExperiment, runIsland, VERIFIED_FILES, type RunSpec, type Sink, type Task } from "@bl/runner";
+import { METRICS_VERSION, PRESETS, cellCount, defaultConfig, lowbias32, worldW } from "@bl/schema";
+import { BUNDLE_FILES, INTERVENTIONS_FILE, OBSERVATION_FILES, observationDigests, parseInterventionLog, PONDS_FILE, runExperiment, runIsland, VERIFIED_FILES, type RunSpec, type ScheduledIntervention, type Sink, type Task } from "@bl/runner";
 
 const root = Deno.cwd();
 const coordinatorDir = `${root}/apps/coordinator`;
@@ -521,6 +526,109 @@ try {
       kept.success && stdout(kept).includes("0 written, 2 already present, 0 skipped") && asidesAfter === 1 && (await Deno.readTextFile(`${cachedDir}/${PONDS_FILE}`)) === good,
       stdout(kept).slice(-200),
     );
+  }
+
+  // Scheduled interventions (Coordinator.Queue's moduledoc; RunSpec.interventions):
+  // an experiment carries lesions and feeds by absolute step, every segment's
+  // task spec carries the whole schedule, the runner applies what each segment
+  // owns (an entry at step s belongs to the segment that stepped to s, step 0
+  // to segment #0), and a verifying island regenerates interventions.jsonl.
+  // Created last, so no earlier runIsland call picks up its work. The centres
+  // are the founders' (world.ts's generalist init: lowbias32(seed * 31 + i)),
+  // so the lesions hit biomass and the schedule is not vacuous.
+  {
+    const spotsCfg = { ...defaultConfig(), ...PRESETS.find((p) => p.id === "spots")!.cfg, seed: 1 };
+    const W = worldW(spotsCfg), H = cellCount(spotsCfg) / W;
+    const founder = (i: number) => {
+      const h = lowbias32(spotsCfg.seed * 31 + i);
+      return { x: h % W, y: (h >>> 12) % H };
+    };
+    const schedule: ScheduledIntervention[] = [
+      { step: 0, kind: "lesion", ...founder(0), r: 6 }, // segment #0, before the simulation exists
+      { step: 7, kind: "lesion", ...founder(1), r: 9 }, // segment #1 (5, 10], mid-chunk
+      { step: 10, kind: "feed", ...founder(2), r: 12, amount: 16 }, // segment #1, at its last step and a census
+      { step: 20, kind: "feed", ...founder(0), r: 20, amount: -4 }, // the last segment's last step
+    ];
+    const scheduledSpec = { ...spec, experiment: "it-scheduled", interventions: schedule };
+    const createdScheduled = await call<{ segments: number }>("/api/experiments", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(scheduledSpec),
+    });
+    check("creates the scheduled experiment (4 segments of 5 steps, a schedule of 4)", createdScheduled.segments === 4, JSON.stringify(createdScheduled));
+
+    // What the runner refuses, the coordinator refuses at creation (422): a feed in a pond world, a centre off the world.
+    const refused = async (what: string, body: unknown, re: RegExp) => {
+      const r = await fetch(`${base}/api/experiments`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const text = await r.text();
+      check(`a schedule with ${what} is refused at creation with 422 saying ${re}`, r.status === 422 && re.test(text), `${r.status} ${text.slice(0, 200)}`);
+    };
+    await refused("a feed in a pond world", { ...pondSpec, experiment: "it-pond-fed", conditions: ["treatment"], interventions: [{ step: 1000, kind: "feed", x: 10, y: 10, r: 5, amount: 8 }] }, /feeding is not defined for pond worlds/);
+    await refused("a centre outside the world", { ...scheduledSpec, experiment: "it-off", interventions: [{ step: 5, kind: "lesion", x: W, y: 0, r: 3 }] }, /x 256 is outside the world/);
+
+    // The gate over the wire: without "interventions-v1" the run tasks wait; a real runIsland (which advertises it) runs them,
+    // a second verifies them, with interventions.jsonl among the compared files.
+    const idleForRuns = await noCapNext({ capabilities: ["ponds-v1", "ponds-v2"] });
+    check("an island without the interventions-v1 capability is idle while scheduled run tasks are waiting", idleForRuns.kind === "idle", JSON.stringify(idleForRuns.segment ?? idleForRuns));
+    const logS: string[] = [];
+    const producedScheduled = await runIsland(device, { coordinator: base, host, maxTasks: 4, idleMs: 200, log: (m) => logS.push(m) });
+    check("a capable island (real runIsland) runs all 4 scheduled segments", producedScheduled === 4, `${producedScheduled}: ${logS.filter((m) => /^run /.test(m)).join(" | ")}`);
+    const idleForVerifies = await noCapNext({ capabilities: ["ponds-v1"] });
+    check("an island without the capability is idle while scheduled verify tasks are waiting", idleForVerifies.kind === "idle", JSON.stringify(idleForVerifies.segment ?? idleForVerifies));
+    const verifiedScheduled = await runIsland(device, { coordinator: base, host, maxTasks: 4, idleMs: 200 });
+    check("a second capable island verifies all 4 scheduled segments", verifiedScheduled === 4, String(verifiedScheduled));
+
+    const schedStatus = await call<{ runs: { run: string; segments: number; verified: number; diverged: number; blocked: number }[] }>("/api/status");
+    const schedRun = schedStatus.runs.find((r) => r.run.startsWith("it-scheduled/"));
+    check("the scheduled run is fully verified, with no divergence or blocking", schedRun?.segments === 4 && schedRun?.verified === 4 && schedRun?.diverged === 0 && schedRun?.blocked === 0, JSON.stringify(schedRun));
+    const expSched = await call<{ spec: { interventions?: unknown }; segments: { index: number; files: Record<string, string> | null; observationsVerified: boolean | null }[] }>("/api/experiments/it-scheduled");
+    // The coordinator stores the schedule as given and serialises each entry's keys in its own (sorted) order.
+    const canon = (v: unknown): string => JSON.stringify(v, (_k, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : 1))) : x));
+    check(
+      "the listing carries the schedule, every segment uploaded interventions.jsonl, and its verifier's digests (the log among them) matched",
+      canon(expSched.spec.interventions) === canon(schedule) && expSched.segments.length === 4 && expSched.segments.every((s) => typeof s.files?.[INTERVENTIONS_FILE] === "string" && s.observationsVerified === true),
+      `${canon(expSched.spec.interventions)}; ${JSON.stringify(expSched.segments.map((s) => ({ index: s.index, log: s.files?.[INTERVENTIONS_FILE] ?? null, observationsVerified: s.observationsVerified })))}`,
+    );
+
+    // Stitched, the bundle equals a single tools/run.ts run of the same spec with the schedule given as flags.
+    const schedStitch = await stitchCli("it-scheduled");
+    check("stitch.ts exports the scheduled run", schedStitch.success && stdout(schedStitch).includes("1 written"), `${stdout(schedStitch).slice(-200)} ${new TextDecoder().decode(schedStitch.stderr).slice(0, 300)}`);
+    const stitchedDir = `${outDir}/it-scheduled/spots/treatment/seed-1`;
+    const singleDir = `${singleOut}/it-scheduled/spots/treatment/seed-1`;
+    const flags = schedule.flatMap((e) => (e.kind === "lesion" ? ["--lesion", `${e.step}:${e.x},${e.y},${e.r}`] : ["--feed", `${e.step}:${e.x},${e.y},${e.r},${e.amount}`]));
+    const singleSched = await new Deno.Command(Deno.execPath(), {
+      args: [
+        "run", "-A", "tools/run.ts", "--experiment", "it-scheduled", "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
+        "--steps", String(spec.steps), "--census", String(spec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut, ...flags,
+      ],
+      stdin: "null",
+    }).output();
+    check("tools/run.ts runs the same schedule unsegmented", singleSched.success, new TextDecoder().decode(singleSched.stderr).slice(0, 300));
+    const differing: string[] = [];
+    const missing: string[] = [];
+    for (const f of VERIFIED_FILES) {
+      const text = await readOr(`${stitchedDir}/${f}`);
+      if (text !== (await readOr(`${singleDir}/${f}`))) differing.push(f);
+      if (text === undefined && (f === INTERVENTIONS_FILE || (OBSERVATION_FILES as readonly string[]).includes(f))) missing.push(f);
+    }
+    const stitchedLog = (await readOr(`${stitchedDir}/${INTERVENTIONS_FILE}`)) ?? "";
+    const stitchedMan = JSON.parse((await readOr(`${stitchedDir}/manifest.json`)) ?? "{}") as { summary?: { finalHash?: string }; interventions?: { file?: string; applied?: number } };
+    const singleMan = JSON.parse((await readOr(`${singleDir}/manifest.json`)) ?? "{}") as { summary?: { finalHash?: string } };
+    const logged = (() => {
+      try {
+        return parseInterventionLog(stitchedLog);
+      } catch {
+        return [];
+      }
+    })();
+    check(
+      "the stitched scheduled bundle equals the single tools/run.ts run's: finalHash and every verified file, interventions.jsonl included, its 4 lines at the scheduled steps and the manifest counting them",
+      differing.length === 0 && missing.length === 0 && logged.map((e) => e.step).join() === "0,7,10,20" && stitchedMan.interventions?.file === INTERVENTIONS_FILE && stitchedMan.interventions?.applied === 4 && stitchedMan.summary?.finalHash !== undefined && stitchedMan.summary.finalHash === singleMan.summary?.finalHash,
+      `differing [${differing.join(", ")}], missing [${missing.join(", ")}], log steps ${logged.map((e) => e.step).join()}, block ${JSON.stringify(stitchedMan.interventions)}, finalHash ${stitchedMan.summary?.finalHash} vs ${singleMan.summary?.finalHash}`,
+    );
+    // Not vacuous: the wounded history is not the clean one (the "it-final-only" run above is the same spec without the schedule).
+    const cleanMan = JSON.parse((await readOr(`${outDir}/it-final-only/spots/treatment/seed-1/manifest.json`)) ?? "{}") as { summary?: { finalHash?: string } };
+    check("...and it is not the clean run of the same spec", stitchedMan.summary?.finalHash !== undefined && stitchedMan.summary.finalHash !== cleanMan.summary?.finalHash, `${stitchedMan.summary?.finalHash} vs clean ${cleanMan.summary?.finalHash}`);
   }
 } finally {
   try {

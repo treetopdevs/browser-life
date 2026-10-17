@@ -8,8 +8,9 @@
 // concatenation of its segments' (tests/deno/stitch.ts checks this against a
 // continuous run byte for byte). The manifest is the last segment's, widened
 // to cover the whole history.
-import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, breedPondColumns, exchangePositions, type PondArm, type PondScore } from "@bl/schema";
+import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, breedPondColumns, clampLesionRadius, exchangePositions, type PondArm, type PondScore, type WorldConfig } from "@bl/schema";
 import { runId, sameConfig, type RunSummary } from "./runner.ts";
+import { INTERVENTIONS_FILE, formatInterventionLine, ownedInterventions, parseInterventionLog, type InterventionLogEntry, type ScheduledIntervention } from "./interventions.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
 export const BUNDLE_FILES = ["manifest.json", "series.jsonl", "lineages.tsv", "mutations.tsv", "heredity.tsv", "life.jsonl", "activity-final.json"] as const;
@@ -64,14 +65,16 @@ export const OBSERVATION_FILES = BUNDLE_FILES.filter((f): f is Exclude<(typeof B
 /**
  * Every file a verify attempt reports a digest for when it has it:
  * `OBSERVATION_FILES` plus the optional `MIGRATIONS_FILE`, `EXCHANGES_FILE`,
- * `SPECIES_FILE` and `PONDS_FILE` (present only for, respectively, a
- * migration-enabled run, a metapopulation run, a run with `speciesCensus` on
- * and a pond run). The coordinator's `@verified_files` must match. Without
- * these optional logs here, a migrating, metapopulation, census-enabled or
- * pond run could be marked `observationsVerified` while one of them was never
- * compared.
+ * `SPECIES_FILE`, `PONDS_FILE` and `INTERVENTIONS_FILE` (present only for,
+ * respectively, a migration-enabled run, a metapopulation run, a run with
+ * `speciesCensus` on, a pond run and a run with scheduled interventions,
+ * whose log a verifying island regenerates from the schedule in its task
+ * spec). The coordinator's `@verified_files` must match. Without these
+ * optional logs here, a migrating, metapopulation, census-enabled, pond or
+ * wounded run could be marked `observationsVerified` while one of them was
+ * never compared.
  */
-export const VERIFIED_FILES: readonly string[] = [...OBSERVATION_FILES, MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE, PONDS_FILE];
+export const VERIFIED_FILES: readonly string[] = [...OBSERVATION_FILES, MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE, PONDS_FILE, INTERVENTIONS_FILE];
 
 /**
  * SHA-256 (lowercase hex) of each `VERIFIED_FILES` entry present in
@@ -280,6 +283,39 @@ function checkHuntBoundary(id: string, b: number, recipients: number[], rows: Hu
 }
 
 /**
+ * The interventions.jsonl rules for one segment of a scheduled run, throwing with `id` as the prefix: the lines parse
+ * (`parseInterventionLog`: well-formed entries, feeds with their matter, non-decreasing steps) and the text is the
+ * runner's own, byte for byte (`formatInterventionLine` of each entry: one line each, fixed key order, a newline after
+ * the last, an empty file for a segment that owns nothing), so the logs concatenate into the continuous run's; there
+ * are exactly as many as the entries the segment owns (`ownedInterventions` over `schedule` for `startStep` and
+ * `steps`); each line is its entry (step, kind, centre and amount equal; the logged radius the effective one,
+ * `clampLesionRadius` of the scheduled under `cfg`; a feed's matter equal to any the schedule names); and `block`, the
+ * manifest's `interventions`, names the file and counts the lines. tools/stitch.ts relies on `stitchRun` for this; a
+ * log a producer truncated, padded or reformatted fails here, not in the stitched bundle.
+ */
+export function checkInterventionLog(id: string, text: string, schedule: readonly ScheduledIntervention[], cfg: WorldConfig, startStep: number, steps: number, block: unknown): void {
+  let logged: InterventionLogEntry[];
+  try {
+    logged = parseInterventionLog(text);
+  } catch (e) {
+    throw new Error(`${id}: ${(e as Error).message}`);
+  }
+  if (text !== logged.map(formatInterventionLine).join("")) throw new Error(`${id}: ${INTERVENTIONS_FILE} is not in the runner's own format, byte for byte (one line per entry, fixed key order, a newline after each)`);
+  const owned = ownedInterventions(schedule, startStep, steps);
+  const window = `(${startStep}, ${startStep + steps}]${startStep === 0 ? " and step 0" : ""}`;
+  if (logged.length !== owned.length) throw new Error(`${id}: ${INTERVENTIONS_FILE} holds ${logged.length} entries, the schedule has ${owned.length} at steps in ${window}`);
+  logged.forEach((e, j) => {
+    const o = owned[j];
+    const same =
+      e.step === o.step && e.kind === o.kind && e.x === o.x && e.y === o.y && e.r === clampLesionRadius(cfg, o.r) && (e.kind !== "feed" || o.kind !== "feed" || (e.amount === o.amount && (o.matter === undefined || e.matter === o.matter)));
+    if (!same) throw new Error(`${id}: ${INTERVENTIONS_FILE} line ${j + 1} (${e.kind} at t=${e.step}, r ${e.r}) is not the scheduled ${o.kind} at t=${o.step} (entry ${schedule.indexOf(o)} of the schedule, effective r ${clampLesionRadius(cfg, o.r)})`);
+  });
+  const b = block as { file?: unknown; applied?: unknown } | undefined;
+  if (b?.file !== INTERVENTIONS_FILE || b?.applied !== logged.length)
+    throw new Error(`${id}: manifest interventions block ${JSON.stringify(block)} does not count the ${logged.length} entries of ${INTERVENTIONS_FILE}`);
+}
+
+/**
  * Stitches one run's segments (in any order) into bundle files covering
  * `totalSteps`. Throws if the segments do not form one contiguous, internally
  * consistent history, or if a segment's manifest reports an end digest other
@@ -310,6 +346,8 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
   const refIdentity: string | undefined = manifests.find((m) => m.presetIdentity !== undefined)?.presetIdentity;
   // Every segment's config equals segment #0's (checked below), so this holds for the whole run.
   const pondRun = first.cfg?.pondPeriod !== undefined;
+  // Likewise every segment's spec (checked below): a scheduled run is one from its spec.
+  const scheduledRun = refSpec.interventions !== undefined;
 
   let at = 0;
   segs.forEach((s, k) => {
@@ -320,8 +358,6 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     if (!m.summary) throw new Error(`${id}: manifest has no summary (run did not finish)`);
     // A picked run's donors are in its picks.jsonl, not in any segment file (PICKS_FILE is deliberately in no file list), so its segments cannot be chained.
     if (m.spec.picked !== undefined) throw new Error(`${id}: picked runs cannot be stitched: their donors are not in the segment files`);
-    // A scheduled run's interventions.jsonl is in no segment file list either (islands refuse the spec; the coordinator carries none).
-    if (m.spec.interventions !== undefined) throw new Error(`${id}: runs with scheduled interventions cannot be stitched: their interventions.jsonl is not in the segment files`);
     // A branch run (RunSpec.branch) starts from a decoded source checkpoint that no segment chain carries: not distributed.
     if (m.branch !== undefined || m.spec.branch !== undefined) throw new Error(`${id}: manifest records a branch run (${JSON.stringify(m.branch ?? m.spec.branch)}); branches are not distributed, so they cannot be stitched`);
     if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION) throw new Error(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, expected ${RULE_VERSION}/${SCHEMA_VERSION}`);
@@ -483,6 +519,23 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     } else if (typeof s.files[EXCHANGES_FILE] === "string") {
       throw new Error(`${id}: ${EXCHANGES_FILE} present on a run without a metapopulation`);
     }
+    // interventions.jsonl: required on every segment of a scheduled run
+    // (RunSpec.interventions), from the spec and never from presence, like
+    // exchanges.tsv; refused on any other run, and so is a manifest
+    // `interventions` block. The log is what the segment applied: exactly the
+    // entries it owns (`ownedInterventions`: steps in (startStep, end], plus
+    // step 0 on segment #0), in list order, each at its scheduled step, kind,
+    // centre and amount, with the effective radius (the scheduled one clamped
+    // under the run's config) and a feed's matter equal to any the schedule
+    // names, in the runner's own bytes; and the manifest's block counts them.
+    // Every segment's spec and config are the same (checked above), so the
+    // schedule and config read here are the run's.
+    if (scheduledRun) {
+      if (typeof s.files[INTERVENTIONS_FILE] !== "string") throw new Error(`${id}: scheduled run but missing ${INTERVENTIONS_FILE}`);
+      checkInterventionLog(id, s.files[INTERVENTIONS_FILE], refSpec.interventions, first.cfg, s.startStep, s.steps, m.interventions);
+    } else if (typeof s.files[INTERVENTIONS_FILE] === "string" || m.interventions !== undefined) {
+      throw new Error(`${id}: ${typeof s.files[INTERVENTIONS_FILE] === "string" ? INTERVENTIONS_FILE : "a manifest interventions block"} present on a run without scheduled interventions`);
+    }
     // Continuity: `importedStartHash` (non-null only when this segment applied
     // an import — see runner.ts) legitimately makes this segment's physics
     // start differ from its own predecessor's end state (`startHash`, enforced
@@ -569,6 +622,10 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     for (const s of segs) if (lines(s.files[EXCHANGES_FILE])[0] !== header) throw new Error(`segment #${s.index}: ${EXCHANGES_FILE} header differs`);
     out[EXCHANGES_FILE] = header + "\n" + segs.map((s) => s.files[EXCHANGES_FILE].slice(s.files[EXCHANGES_FILE].indexOf("\n") + 1)).join("");
   }
+  // Required from the spec (the per-segment loop above checked every log
+  // against the segment's own entries): no header, so the logs concatenate as
+  // they are, in segment order, into the continuous run's log.
+  if (scheduledRun) out[INTERVENTIONS_FILE] = segs.map((s) => s.files[INTERVENTIONS_FILE]).join("");
 
   const wall = manifests.reduce((a, m) => a + m.summary.wallSeconds, 0);
   const summary: RunSummary = {
@@ -606,6 +663,9 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     {
       ...lastRest,
       ...provenance,
+      // The whole run's count, in the last segment's block's place (an
+      // ordinary run's manifest has no such key; `lastRest` carries none).
+      ...(scheduledRun ? { interventions: { file: INTERVENTIONS_FILE, applied: segs.reduce((n, s) => n + lines(s.files[INTERVENTIONS_FILE]).length, 0) } } : {}),
       spec: { ...last.spec, steps: totalSteps },
       host: { host: "archipelago", adapter: adapters.join(", ") },
       startStep: 0,

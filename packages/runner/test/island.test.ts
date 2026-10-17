@@ -49,6 +49,58 @@ async function attempt(startBytes: Uint8Array): Promise<string[]> {
   return rejects;
 }
 
+// A scheduled feed the world refuses (RunSpec.interventions; here a step-0 feed whose named
+// matter the starting world does not reproduce, applied on the CPU before any GPU work, so a
+// fake device suffices) is a property of the spec against its world, the same on every
+// island: the island logs it and leaves the task instead of crashing (see Coordinator.Queue's
+// moduledoc on what creation cannot check).
+describe("island leaves a task whose schedule cannot be applied", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("logs the InterventionError, completes nothing, and goes on to the next task", async () => {
+    const calls: string[] = [];
+    const logged: string[] = [];
+    let served = false;
+    const wounded: RunSpec = { ...spec, interventions: [{ step: 0, kind: "feed", x: 10, y: 10, r: 3, amount: 4, matter: 999 }] };
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
+      const path = new URL(url).pathname;
+      calls.push(`${init.method ?? "GET"} ${path}`);
+      const json = (v: unknown) => new Response(JSON.stringify(v), { headers: { "content-type": "application/json" } });
+      if (path === "/api/islands") return json({ id: "isl", token: "tok" });
+      if (path === "/api/next") {
+        if (served) return json({ kind: "idle" });
+        served = true;
+        return json({ kind: "run", lease: "L", segment: { id: "seg-0", run: "r", index: 0, startStep: 0, steps: 500 }, spec: wounded, startFrom: null, startHash: null });
+      }
+      if (path === "/api/segments/seg-0/heartbeat") return json({ ok: true });
+      throw new Error(`unexpected ${path}`);
+    });
+    const done = await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, maxTasks: 2, log: (m) => logged.push(m) });
+    expect(done).toBe(0);
+    expect(logged.find((m) => /cannot apply the schedule as given, leaving the task/.test(m))).toMatch(/not the observed history/);
+    // No checkpoint, file, completion or rejection went out: only the join and the two /next calls.
+    expect(calls.filter((c) => !/heartbeat/.test(c))).toEqual(["POST /api/islands", "POST /api/next", "POST /api/next"]);
+  });
+
+  it("still throws on a failure of the host (here a device with no createBuffer), which is not the schedule's", async () => {
+    let served = false;
+    vi.stubGlobal("fetch", async (url: string) => {
+      const path = new URL(url).pathname;
+      const json = (v: unknown) => new Response(JSON.stringify(v), { headers: { "content-type": "application/json" } });
+      if (path === "/api/islands") return json({ id: "isl", token: "tok" });
+      if (path === "/api/next") {
+        if (served) return json({ kind: "idle" });
+        served = true;
+        // A lesion at step 0 is applied on the CPU; the GPU is then created and fails.
+        return json({ kind: "run", lease: "L", segment: { id: "seg-0", run: "r", index: 0, startStep: 0, steps: 500 }, spec: { ...spec, interventions: [{ step: 0, kind: "lesion", x: 10, y: 10, r: 3 }] }, startFrom: null, startHash: null });
+      }
+      if (path === "/api/segments/seg-0/heartbeat") return json({ ok: true });
+      throw new Error(`unexpected ${path}`);
+    });
+    await expect(runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, maxTasks: 1 })).rejects.toThrow(/is not a function/);
+  });
+});
+
 describe("island rejects bad predecessor artifacts", () => {
   afterEach(() => vi.unstubAllGlobals());
   it("accepts a well-formed continuation", () => {
@@ -232,8 +284,8 @@ describe("island idle wait", () => {
       throw new Error(`unexpected ${path}`);
     });
     await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, idleMs: 1, signal: controller.signal });
-    expect(ISLAND_CAPABILITIES).toEqual(["ponds-v1", "ponds-v2"]);
-    expect(bodies).toEqual([{ capabilities: ["ponds-v1", "ponds-v2"] }, { capabilities: ["ponds-v1", "ponds-v2"] }]);
+    expect(ISLAND_CAPABILITIES).toEqual(["ponds-v1", "ponds-v2", "interventions-v1"]);
+    expect(bodies).toEqual([{ capabilities: ["ponds-v1", "ponds-v2", "interventions-v1"] }, { capabilities: ["ponds-v1", "ponds-v2", "interventions-v1"] }]);
   });
 
   // Review 5: Stop can abort while `/next` is in flight and it comes back

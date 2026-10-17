@@ -55,11 +55,14 @@ defmodule Coordinator.Segment do
   # stitch.ts's MIGRATIONS_FILE), only a metapopulation run writes
   # exchanges.tsv (see stitch.ts's EXCHANGES_FILE), only a run with
   # RunSpec.speciesCensus writes species.tsv (see stitch.ts's SPECIES_FILE),
-  # and only a pond run writes ponds.tsv (see stitch.ts's PONDS_FILE).
-  # Compared whenever either side has it. Together with @observation_files,
-  # must equal stitch.ts's VERIFIED_FILES
+  # only a pond run writes ponds.tsv (see stitch.ts's PONDS_FILE), and only a
+  # run with scheduled interventions writes interventions.jsonl (see
+  # interventions.ts's INTERVENTIONS_FILE: the lesions and feeds a segment
+  # applied, which a verifying island regenerates from the schedule its task
+  # carries). Compared whenever either side has it. Together with
+  # @observation_files, must equal stitch.ts's VERIFIED_FILES
   # (packages/runner/test/coordinator-files.test.ts checks it).
-  @optional_observation_files ~w(migrations.tsv exchanges.tsv species.tsv ponds.tsv)
+  @optional_observation_files ~w(migrations.tsv exchanges.tsv species.tsv ponds.tsv interventions.jsonl)
 
   @type status :: String.t()
   @type t :: %{

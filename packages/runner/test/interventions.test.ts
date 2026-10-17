@@ -10,6 +10,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CH,
   FEED_MAX,
+  FeedRefusedError,
+  MATTER_MAX,
   METRICS_VERSION,
   PRESETS,
   RULE_VERSION,
@@ -45,6 +47,7 @@ import {
   serializeObservers,
   specConfig,
   specRefusal,
+  ISLAND_CAPABILITIES,
   validateInterventions,
   validateSpec,
   type InterventionLogEntry,
@@ -418,10 +421,12 @@ describe("run identity and the island", () => {
     expect("interventions" in JSON.parse(JSON.stringify(spotsSmall))).toBe(false);
   });
 
-  it("specRefusal refuses a spec with interventions, like a picked or a branch run", () => {
+  it("an island runs a spec with interventions (it advertises interventions-v1), and still refuses a picked or a branch run", () => {
     expect(specRefusal(spotsSmall)).toBeNull();
-    expect(specRefusal(wounded)).toMatch(/scheduled interventions are not distributed yet: the coordinator carries none/);
+    expect(specRefusal(wounded)).toBeNull();
+    expect(ISLAND_CAPABILITIES).toContain("interventions-v1");
     expect(specRefusal({ ...spotsSmall, picked: true })).toMatch(/picked runs are not distributed/);
+    expect(specRefusal({ ...wounded, branch: { source: "x", sourceHash: "0000000000000000", boundary: 1 } })).toMatch(/branches are not distributed/);
   });
 });
 
@@ -512,7 +517,7 @@ describe("applyScheduled on the CPU reference", () => {
   });
 
   it("turns a feed the simulation refuses into an InterventionError naming the step, with the cause", async () => {
-    const refusing: InterventionSim = { lesion: () => 0, feed: async () => { throw new Error("feed refused: too much"); } };
+    const refusing: InterventionSim = { lesion: () => 0, feed: async () => { throw new FeedRefusedError("feed refused: too much"); } };
     const err = await applyScheduled(refusing, feed(9)).catch((e) => e);
     expect(err).toBeInstanceOf(InterventionError);
     expect(err.message).toBe("the feed at t=9 failed: feed refused: too much");
@@ -520,6 +525,26 @@ describe("applyScheduled on the CPU reference", () => {
     expect(err.step).toBe(9);
     // An error built with no step (not by applyScheduled) has none.
     expect(new InterventionError("x").step).toBeUndefined();
+  });
+
+  it("lets any other failure of the feed through as it is: a lost device is the host's, not the schedule's", async () => {
+    const lost = new Error("GpuSim destroyed");
+    const failing: InterventionSim = { lesion: () => 0, feed: async () => { throw lost; } };
+    const err = await applyScheduled(failing, feed(9)).catch((e) => e);
+    expect(err).toBe(lost);
+    expect(err).not.toBeInstanceOf(InterventionError);
+  });
+
+  it("the reference feed refuses with FeedRefusedError, as GpuSim.feed does, for feedError's reasons and past MATTER_MAX", async () => {
+    const world = fresh();
+    await expect(applyScheduled(cpu(world), { step: 1, kind: "feed", x: 1, y: 1, r: 2, amount: 0 })).rejects.toBeInstanceOf(InterventionError);
+    // Fill the world to the bound: the next feed is refused by the bound, not by the shape.
+    const n = cellCount(world.cfg);
+    world.cells[CH.A * n] = MATTER_MAX - Number(totalsOf(world.cfg, world.cells).matter) + world.cells[CH.A * n];
+    const err = await applyScheduled(cpu(world), feed(1, 1)).catch((e) => e);
+    expect(err).toBeInstanceOf(InterventionError);
+    expect((err.cause as Error).name).toBe("FeedRefusedError");
+    expect(err.message).toMatch(/past MATTER_MAX/);
   });
 });
 

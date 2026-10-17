@@ -214,8 +214,10 @@ export interface RunSpec {
    * moves the conservation baselines by what it moved and is booked in the observer's `fed`; a feed that carries the
    * `matter` a log says it moved must move exactly that (`InterventionError`). A feed in a pond config is refused
    * (`interventionsError`). Part of `manifest.spec`, so a wounded run and a clean one are never the same run
-   * (`sameCompletedRun`). Exclusive with nothing: a picked run or a branch may carry lesions. An island refuses it
-   * (`specRefusal`). Optional and absent from every default, so a run without it keeps its spec, manifest and every
+   * (`sameCompletedRun`). Exclusive with nothing: a picked run or a branch may carry lesions. Distributed: the
+   * coordinator carries the whole schedule in every segment's task spec and hands such segments only to islands that
+   * advertise `interventions-v1` (island.ts), each segment logs the entries it owns, and `stitchRun` joins the logs
+   * (stitch.ts). Optional and absent from every default, so a run without it keeps its spec, manifest and every
    * output byte-identical to before this field existed.
    */
   interventions?: ScheduledIntervention[];

@@ -18,13 +18,16 @@
 //     schedule is not vacuous (the clean run's final hash differs, every feed moved matter, every lesion destroyed structure);
 //  2. segments: the same spec cut at the feed's own step (200) and in the middle of a chunk (300) equals the continuous run (final
 //     state hash, artifact digest so observer.fed travels, observer.fed), each segment logs only what it applied and the two logs
-//     concatenate to the continuous run's;
+//     concatenate to the continuous run's; and stitchRun over the two segments, as tools/stitch.ts calls it on a coordinator
+//     experiment's segments, rebuilds the continuous run's bundle: every bundle file and interventions.jsonl byte for byte, the
+//     manifest's spec, its interventions block counting the whole run, and its summary apart from timing;
 //  3. order at a boundary: a migration world with a lesion at a migration boundary that is also a census step equals the same
 //     world driven by hand (GpuSim, applyBoundary, then sim.lesion): the boundary first, the lab's order. The opposite order
 //     gives another state, so the check discriminates;
 //  4. refusals before the GPU is touched: a feed in a pond preset (feedError's own reason), a centre outside the world; a feed
 //     whose named matter the run does not reproduce stops the run with an InterventionError ("this is not the observed
-//     history"); specRefusal turns a scheduled spec away from an island;
+//     history"); specRefusal lets a scheduled spec through to an island, which advertises interventions-v1 for it
+//     (tests/deno/coordinator_integration.ts runs one through a real coordinator);
 //  5. through tools/run.ts as a subprocess (needs the --lesion STEP:X,Y,R, --feed STEP:X,Y,R,AMOUNT and --interventions FILE flags
 //     and a lab manifest with lesions and feeds for --picks-from): (a) the flags give the API runner's artifact digest and
 //     interventions.jsonl on the full world, (a2, a3) so does --interventions FILE holding the run's own log or a JSON array, (b) a lab-style manifest
@@ -75,7 +78,11 @@ import {
   runExperiment,
   specConfig,
   specRefusal,
+  stitchRun,
   validateSpec,
+  BUNDLE_FILES,
+  ISLAND_CAPABILITIES,
+  type StitchSegment,
   type InterventionLogEntry,
   type RunSpec,
   type ScheduledIntervention,
@@ -276,6 +283,25 @@ await section("2. segments: a run cut at a feed's step and at a later census equ
     check(`${tag}: ...each segment's log holds only what it applied (steps <= ${cut}, then > ${cut}), and the two concatenate to the continuous log`, canon(logA) === canon(wantA) && canon(logB) === canon(wantB) && (a.log ?? "") + (b.log ?? "") === whole.log, `${logA.map((e) => e.step)} | ${logB.map((e) => e.step)}`);
     check(`${tag}: ...the manifests count their own entries (${wantA.length} + ${wantB.length})`, a.manifest.interventions?.applied === wantA.length && b.manifest.interventions?.applied === wantB.length, `${a.manifest.interventions?.applied} + ${b.manifest.interventions?.applied}`);
     check(`${tag}: ...conservation exact in both segments`, a.summary.conservationOk && b.summary.conservationOk);
+
+    // Stitched back, as tools/stitch.ts does with a coordinator experiment's segments: the continuous run's bundle.
+    const segs: StitchSegment[] = [
+      { index: 0, startStep: 0, steps: cut, digest: a.summary.finalHash, files: Object.fromEntries(a.mem.files) },
+      { index: 1, startStep: cut, steps: FINAL_STEP - cut, digest: b.summary.finalHash, files: Object.fromEntries(b.mem.files) },
+    ];
+    let stitched: Record<string, string> | undefined;
+    try {
+      stitched = stitchRun([segs[1], segs[0]], FINAL_STEP);
+    } catch (e) {
+      check(`${tag}: stitchRun accepts the two segments`, false, e instanceof Error ? e.message : String(e));
+    }
+    if (stitched) {
+      const differing = [...BUNDLE_FILES.filter((f) => f !== "manifest.json"), INTERVENTIONS_FILE].filter((f) => stitched![f] !== whole.mem.files.get(f));
+      check(`${tag}: ...the stitched bundle's files equal the continuous run's, ${INTERVENTIONS_FILE} included`, differing.length === 0, differing.join(", "));
+      const sm = JSON.parse(stitched["manifest.json"]) as { spec: unknown; interventions?: unknown; summary: Record<string, unknown> };
+      const untimed = (x: Record<string, unknown>) => JSON.stringify({ ...x, wallSeconds: 0, stepsPerSecond: 0 });
+      check(`${tag}: ...and its manifest carries the schedule, a block counting all 5, and the continuous run's summary`, canon(sm.spec) === canon(whole.manifest.spec) && canon(sm.interventions) === canon({ file: INTERVENTIONS_FILE, applied: 5 }) && untimed(sm.summary) === untimed(whole.summary as Record<string, unknown>), `${JSON.stringify(sm.interventions)}; ${untimed(sm.summary)} vs ${untimed(whole.summary as Record<string, unknown>)}`);
+    }
   }
   // Off the census grid (250, inside a chunk and between the feed at 200 and the drain at 337): the physics, the log and fed are
   // the continuous run's; the observations are not (the grid moved: 11 censuses against 10, and censusIdx is in the digest), so
@@ -444,7 +470,7 @@ await section("4. refusals: before the GPU, and the run that stops", async () =>
   check("4. ...the run stopped there: the lesion before it is logged, nothing after, two census rows, no summary", sink.files.get(INTERVENTIONS_FILE) === textOf([{ step: 50, kind: "lesion", x: 10, y: 10, r: 5 }]) && rows === 2 && manifest.summary === null, `${JSON.stringify(sink.files.get(INTERVENTIONS_FILE))} rows ${rows} summary ${JSON.stringify(manifest.summary)}`);
 
   const why2 = specRefusal(scheduled);
-  check("4. specRefusal turns a scheduled spec away from an island, and not a clean one", why2 !== null && /interventions/.test(why2) && specRefusal(small) === null, String(why2));
+  check("4. specRefusal lets a scheduled spec through to an island, which advertises interventions-v1 for it (and still turns a picked run away)", why2 === null && specRefusal(small) === null && ISLAND_CAPABILITIES.includes("interventions-v1") && /picked/.test(specRefusal({ ...small, picked: true }) ?? ""), String(why2));
 });
 
 // ---- The full world, for the CLI: GPU only.

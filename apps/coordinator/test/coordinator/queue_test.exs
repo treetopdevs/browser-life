@@ -1286,4 +1286,326 @@ defmodule Coordinator.QueueTest do
       assert %{status: "done"} = Queue.segment("seg-3")
     end
   end
+
+  # Scheduled interventions (spec "interventions", the runner's RunSpec.interventions;
+  # packages/runner/src/interventions.ts): validated at creation by the runner's own
+  # shape rules plus what it refuses before the GPU, carried whole into every
+  # segment's task, and handed only to islands that advertise "interventions-v1"
+  # (see Coordinator.Queue's moduledoc).
+  describe "scheduled interventions" do
+    @lesion %{"step" => 700, "kind" => "lesion", "x" => 20, "y" => 20, "r" => 4}
+    @feed %{"step" => 1200, "kind" => "feed", "x" => 30, "y" => 30, "r" => 3, "amount" => 16}
+    @scheduled Map.put(
+                 %{@spec_ok | "experiment" => "wounded", "verifyFraction" => 0.0},
+                 "interventions",
+                 [
+                   %{"step" => 0, "kind" => "lesion", "x" => 1, "y" => 2, "r" => 6},
+                   @lesion,
+                   # Two at one step, in list order, and a drain.
+                   %{
+                     "step" => 700,
+                     "kind" => "feed",
+                     "x" => 5,
+                     "y" => 5,
+                     "r" => 2,
+                     "amount" => -8
+                   },
+                   @feed,
+                   %{
+                     "step" => 1500,
+                     "kind" => "feed",
+                     "x" => 255,
+                     "y" => 255,
+                     "r" => 99,
+                     "amount" => 4096
+                   }
+                 ]
+               )
+
+    defp bad_schedule(changes, list) do
+      Queue.create_experiment(
+        Map.merge(%{@scheduled | "experiment" => "bad"}, changes)
+        |> Map.put("interventions", list)
+      )
+    end
+
+    test "a valid schedule is accepted, stored unchanged, and carried whole into every segment's task spec" do
+      assert {:ok, 3} = Queue.create_experiment(@scheduled)
+      assert Queue.experiment("wounded").spec["interventions"] == @scheduled["interventions"]
+
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "A"})
+
+      for index <- 0..2 do
+        {:ok, t} = Queue.next_task(island, ["interventions-v1"])
+        assert t.kind == "run" and t.segment.index == index
+        # The whole list, not the segment's own entries: the runner keeps what it owns.
+        assert t.spec.interventions == @scheduled["interventions"]
+        # Lease abandoned on purpose: the next task is the same segment again
+        # only once its lease expires, so take the others by completing this one.
+        staged = Path.join(Queue.data_dir(), "cp-#{index}")
+        File.write!(staged, "x")
+
+        :ok =
+          Queue.publish_checkpoint(
+            t.segment.id,
+            island,
+            t.lease,
+            staged,
+            "h#{index}",
+            "0000000000000000"
+          )
+
+        {:ok, "done"} = Queue.complete(t.segment.id, island, t.lease, "run", "h#{index}", %{})
+      end
+    end
+
+    test "an ordinary experiment's task payload has no interventions key at all" do
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "A"})
+      {:ok, task} = Queue.next_task(island, ["interventions-v1"])
+      refute Map.has_key?(task.spec, :interventions)
+      refute Map.has_key?(Queue.experiment("t1").spec, "interventions")
+    end
+
+    test "nil is no schedule" do
+      assert {:ok, 3} = Queue.create_experiment(Map.put(@spec_ok, "interventions", nil))
+      refute Map.has_key?(Queue.experiment("t1").spec, "interventions")
+    end
+
+    test "the runner's shape rules: the list, each entry's kind and keys, the integers, the order" do
+      assert {:error, "interventions must be a non-empty array" <> _} = bad_schedule(%{}, [])
+      assert {:error, "interventions must be a non-empty array" <> _} = bad_schedule(%{}, "x")
+      assert {:error, "interventions must be a non-empty array" <> _} = bad_schedule(%{}, %{})
+      assert {:error, "interventions[0] must be an object"} = bad_schedule(%{}, [7])
+
+      assert {:error, "interventions[1]: kind must be \"lesion\" or \"feed\", got \"pick\""} =
+               bad_schedule(%{}, [@lesion, %{@lesion | "kind" => "pick"}])
+
+      assert {:error, "interventions[0]: kind must be \"lesion\" or \"feed\", got null"} =
+               bad_schedule(%{}, [Map.delete(@lesion, "kind")])
+
+      assert {:error, "interventions[0]: a lesion has no key \"amount\"" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, "amount", 4)])
+
+      assert {:error, "interventions[0]: a lesion has no key \"matter\"" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, "matter", 4)])
+
+      # A replay assertion the archipelago cannot honour (see the moduledoc), whatever its value.
+      for v <- [2048, 0, -12, 1.5, nil] do
+        assert {:error,
+                "interventions[0]: a feed's matter is not scheduled on the archipelago" <> _} =
+                 bad_schedule(%{}, [Map.put(@feed, "matter", v)])
+      end
+
+      # A direct caller's key that is not a string is an unknown key too, never "none",
+      # and one Jason cannot encode never takes the queue down.
+      assert {:error, "interventions[0]: a lesion has no key nil" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, nil, 7)])
+
+      assert {:error, "interventions[0]: a lesion has no key :x" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, :x, 7)])
+
+      assert {:error, "interventions[0]: a lesion has no key {:odd, :key}" <> _} =
+               bad_schedule(%{}, [Map.put(@lesion, {:odd, :key}, 7)])
+
+      assert Process.alive?(Process.whereis(Queue))
+
+      assert {:error, "interventions[0]: a feed has no key \"extra\"" <> _} =
+               bad_schedule(%{}, [Map.put(@feed, "extra", 4)])
+
+      assert {:error, "interventions[0]: a lesion needs the key \"r\""} =
+               bad_schedule(%{}, [Map.delete(@lesion, "r")])
+
+      assert {:error, "interventions[0]: a feed needs the key \"amount\""} =
+               bad_schedule(%{}, [Map.delete(@feed, "amount")])
+
+      for v <- [-1, 1.5, "7", nil, 9_007_199_254_740_992] do
+        assert {:error, "interventions[0]: step must be a non-negative integer"} =
+                 bad_schedule(%{}, [%{@lesion | "step" => v}])
+      end
+
+      for k <- ~w(x y r), v <- [-1, 2.0, "3", 9_007_199_254_740_992] do
+        assert {:error, "interventions[0]: " <> ^k <> " must be a non-negative integer"} =
+                 bad_schedule(%{}, [Map.put(@lesion, k, v)])
+      end
+
+      assert {:error, "interventions[1]: step 699 follows step 700 (steps must not decrease)"} =
+               bad_schedule(%{}, [@lesion, %{@lesion | "step" => 699}])
+
+      for v <- [0, 4097, -4097, 1.0, "16", nil] do
+        assert {:error,
+                "interventions[0]: amount must be a non-zero integer within ±4096 per cell"} =
+                 bad_schedule(%{}, [%{@feed | "amount" => v}])
+      end
+
+      # The same list, with 4096 per cell both ways, is fine.
+      assert {:ok, 3} =
+               bad_schedule(%{"experiment" => "ok-bounds"}, [
+                 %{@feed | "amount" => 4096},
+                 %{@feed | "amount" => -4096}
+               ])
+    end
+
+    test "what the runner refuses before the GPU: a centre outside the world, a feed in a pond world, an entry after the last step" do
+      assert {:error, "interventions[0]: x 256 is outside the world (256 wide)"} =
+               bad_schedule(%{}, [%{@lesion | "x" => 256}])
+
+      assert {:error, "interventions[0]: y 256 is outside the world (256 high)"} =
+               bad_schedule(%{}, [%{@lesion | "y" => 256}])
+
+      # Every preset in config.exs has a world size, each its own.
+      presets = Application.get_env(:coordinator, :presets)
+      sizes = Application.get_env(:coordinator, :world_size)
+      assert Enum.sort(Map.keys(sizes)) == Enum.sort(presets)
+
+      for {preset, {w, h}} <- sizes do
+        # A cadence every preset's periods divide (archipelago's migrationPeriod 200,
+        # the pond periods 1000 and 10000).
+        changes = %{
+          "experiment" => "ok-#{preset}",
+          "presetId" => preset,
+          "conditions" => ["treatment"],
+          "steps" => 20_000,
+          "segmentSteps" => 10_000,
+          "censusEvery" => 200
+        }
+
+        assert {:ok, _} = bad_schedule(changes, [%{@lesion | "x" => w - 1, "y" => h - 1}])
+        wide = "interventions[0]: x #{w} is outside the world (#{w} wide)"
+        high = "interventions[0]: y #{h} is outside the world (#{h} high)"
+        assert {:error, ^wide} = bad_schedule(changes, [%{@lesion | "x" => w}])
+        assert {:error, ^high} = bad_schedule(changes, [%{@lesion | "y" => h}])
+      end
+
+      pond = %{
+        "experiment" => "ok-pond",
+        "presetId" => "ponds-small",
+        "conditions" => ["treatment"],
+        "steps" => 2000,
+        "segmentSteps" => 1000,
+        "censusEvery" => 100
+      }
+
+      assert {:error, "interventions[1]: feeding is not defined for pond worlds" <> _} =
+               bad_schedule(pond, [@lesion, @feed])
+
+      # A lesion in a pond world is fine: it conserves matter.
+      assert {:ok, 2} = bad_schedule(pond, [@lesion])
+
+      assert {:error,
+              "interventions[1]: step 1501 is after the run's last step (steps 1500), so no segment would apply it"} =
+               bad_schedule(%{}, [@lesion, %{@feed | "step" => 1501}])
+
+      # At the last step is fine: the final segment applies it.
+      assert {:ok, 3} = bad_schedule(%{"experiment" => "ok-last"}, [%{@feed | "step" => 1500}])
+
+      assert {:error, "interventions must hold at most 10000 entries"} =
+               bad_schedule(%{}, List.duplicate(@lesion, 10_001))
+    end
+
+    test "an island without interventions-v1 never gets a scheduled segment or verify, while other work still flows to it",
+         %{dir: dir} do
+      # "a-wounded" sorts first, so its pending segment 0 is ahead of every
+      # "b-plain" segment in pick_task's order.
+      {:ok, 3} =
+        Queue.create_experiment(%{
+          @scheduled
+          | "experiment" => "a-wounded",
+            "verifyFraction" => 1.0
+        })
+
+      {:ok, 3} =
+        Queue.create_experiment(%{@spec_ok | "experiment" => "b-plain", "verifyFraction" => 0.0})
+
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "old"})
+      {:ok, %{id: new}} = Queue.join(%{"adapter" => "new"})
+      {:ok, %{id: other}} = Queue.join(%{"adapter" => "other"})
+
+      # No capabilities, an empty list, the pond capabilities alone: the
+      # scheduled segment is skipped, not waited for.
+      {:ok, t1} = Queue.next_task(old)
+      assert t1.kind == "run" and String.starts_with?(t1.segment.run, "b-plain/")
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old, [])
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(old, ["ponds-v1", "ponds-v2", "interventions-v0"])
+
+      # An island that advertises it gets the scheduled work, among other capabilities.
+      {:ok, w} = Queue.next_task(new, ["ponds-v1", "interventions-v1"])
+      assert w.kind == "run" and w.segment.run == "a-wounded/spots/treatment/seed-1"
+      assert w.spec.interventions == @scheduled["interventions"]
+      upload(dir, w, new, "w0")
+      {:ok, "done"} = done(w, new, "w0")
+
+      # Its verify (verifyFraction 1.0) waits for a capable island too: the
+      # one without the capability idles even with nothing else to do ...
+      upload(dir, t1, old, "p0")
+      {:ok, "done"} = done(t1, old, "p0")
+      {:ok, t2} = Queue.next_task(old, [])
+      assert t2.kind == "run" and t2.segment.run == t1.segment.run and t2.segment.index == 1
+      upload(dir, t2, old, "p1")
+      {:ok, "done"} = done(t2, old, "p1")
+      {:ok, t3} = Queue.next_task(old, [])
+      upload(dir, t3, old, "p2")
+      {:ok, "done"} = done(t3, old, "p2")
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old, ["ponds-v1"])
+
+      # ... while a capable island other than the producer verifies it.
+      {:ok, v} = Queue.next_task(other, ["interventions-v1"])
+      assert v.kind == "verify" and v.segment.id == w.segment.id
+      assert v.spec.interventions == @scheduled["interventions"]
+      assert {:ok, "verified"} = Queue.complete(v.segment.id, other, v.lease, "verify", "w0", %{})
+
+      # Never persisted: nothing about the request sticks to the island.
+      refute Map.has_key?(Queue.island_info(new), :capabilities)
+    end
+
+    test "the gate is per experiment: a pond experiment still needs ponds-v1 and a scheduled one interventions-v1, each on its own",
+         %{dir: dir} do
+      {:ok, 1} =
+        Queue.create_experiment(%{
+          @scheduled
+          | "experiment" => "a-wounded",
+            "steps" => 500,
+            "interventions" => [%{@lesion | "step" => 100}]
+        })
+
+      {:ok, 1} =
+        Queue.create_experiment(%{
+          "experiment" => "b-pond",
+          "presetId" => "ponds-small",
+          "conditions" => ["treatment"],
+          "seeds" => [1],
+          "steps" => 1000,
+          "segmentSteps" => 1000,
+          "censusEvery" => 100,
+          "verifyFraction" => 0.0
+        })
+
+      {:ok, %{id: ponds_only}} = Queue.join(%{"adapter" => "ponds"})
+      {:ok, %{id: wounds_only}} = Queue.join(%{"adapter" => "wounds"})
+
+      {:ok, p} = Queue.next_task(ponds_only, ["ponds-v1"])
+      assert p.kind == "run" and String.starts_with?(p.segment.run, "b-pond/")
+      upload(dir, p, ponds_only, "q0")
+      {:ok, "done"} = done(p, ponds_only, "q0")
+
+      {:ok, w} = Queue.next_task(wounds_only, ["interventions-v1"])
+      assert w.kind == "run" and String.starts_with?(w.segment.run, "a-wounded/")
+
+      # b-pond's final segment awaits a verify by a ponds-v1 island: not the wounds-only one.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(wounds_only, ["interventions-v1"])
+    end
+
+    test "a schedule survives a restart", %{dir: dir} do
+      {:ok, 3} = Queue.create_experiment(@scheduled)
+      :ok = stop_supervised!(Queue)
+      start_supervised!({Queue, data_dir: dir})
+      assert Queue.experiment("wounded").spec["interventions"] == @scheduled["interventions"]
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "A"})
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(island)
+      {:ok, t} = Queue.next_task(island, ["interventions-v1"])
+      assert t.spec.interventions == @scheduled["interventions"]
+    end
+  end
 end

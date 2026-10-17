@@ -42,8 +42,10 @@
 // line per applied entry: step, kind, x, y, the effective radius, and for a feed its amount and the matter it moved) and the manifest has
 // spec.interventions and an interventions block {file, applied}; without a schedule neither exists and the bundle is as before. A feed
 // changes the world's matter (the conservation check moves its baseline by what the feed moved; the observer's `fed` total records it) and is
-// refused in a pond world, where each pond's matter is fixed by its cycle; a lesion works anywhere. A scheduled run is not distributed:
-// the runner can segment it, but islands refuse it and the coordinator carries none. Refused with exit 2, before any GPU work: a
+// refused in a pond world, where each pond's matter is fixed by its cycle; a lesion works anywhere. A scheduled run is distributed too:
+// the same JSON array as an experiment spec's "interventions" (POST /api/experiments) rides in every segment's task, segments go
+// only to islands that advertise interventions-v1, each applies the entries it owns, and tools/stitch.ts joins their logs into
+// this bundle. Refused with exit 2, before any GPU work: a
 // malformed entry or flag, a centre outside the world, a feed that feedError refuses, an entry after --steps, and any of the three flags
 // with --branch-from (a branch starts mid-history) or with --picks-from naming a lab run manifest (the manifest is the history);
 // --picks-from itself is refused with --branch-from for the same reason, and with the founder options (the start world is the preset's).
@@ -93,8 +95,8 @@
 // the bundle's logs, or two logs (--picks-from, picks.jsonl, picks.recovery.jsonl) that disagree at a step, refuses the recovery (exit 2)
 // before anything is copied, cleared or truncated. Replaying a log rewrites it with `by: "recorded"`: what replay reproduces is the
 // state, ponds.tsv and each boundary's step, cycle and donors, not the original `by` and `suggested` fields.
-// A picked run cannot resume from a checkpoint, be segmented or run on an island; a scheduled run can be segmented by the runner but is
-// not distributed. Exit codes: 2 invalid spec or flags (before any GPU work), 3 a pick failed, 4 a verification mismatch: the lab's
+// A picked run cannot resume from a checkpoint, be segmented or run on an island; a scheduled run can be segmented, run on islands and
+// stitched back. Exit codes: 2 invalid spec or flags (before any GPU work), 3 a pick failed, 4 a verification mismatch: the lab's
 // checkpoint or --verify-against differs, or a scheduled feed could not be applied as logged (it moved other matter than the lab's log says).
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { PRESETS, RULE_VERSION, initWorld, stateHash, validateConfig, type WorldConfig, type WorldState } from "@bl/schema";

@@ -29,14 +29,15 @@
 // anything new is written.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { METRICS_VERSION, PRESETS, defaultConfig } from "@bl/schema";
-import { BUNDLE_FILES, EXCHANGES_FILE, MIGRATIONS_FILE, PONDS_FILE, SPECIES_FILE, checkPondsFile, stitchRun, type StitchSegment } from "@bl/runner";
+import { BUNDLE_FILES, EXCHANGES_FILE, INTERVENTIONS_FILE, MIGRATIONS_FILE, PONDS_FILE, SPECIES_FILE, checkPondsFile, stitchRun, type StitchSegment } from "@bl/runner";
 
 // Optional files (not in BUNDLE_FILES): recorded only when the run has the
 // corresponding mechanism configured (tile migration / a metapopulation /
-// RunSpec.speciesCensus / the pond cycle), so a run without that mechanism
-// never carries them (see MIGRATIONS_FILE/EXCHANGES_FILE/SPECIES_FILE/
-// PONDS_FILE's own docs in packages/runner/src/stitch.ts).
-const OPTIONAL_FILES = [MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE, PONDS_FILE] as const;
+// RunSpec.speciesCensus / the pond cycle / scheduled interventions), so a run
+// without that mechanism never carries them (see MIGRATIONS_FILE/
+// EXCHANGES_FILE/SPECIES_FILE/PONDS_FILE's own docs in
+// packages/runner/src/stitch.ts and INTERVENTIONS_FILE's in interventions.ts).
+const OPTIONAL_FILES = [MIGRATIONS_FILE, EXCHANGES_FILE, SPECIES_FILE, PONDS_FILE, INTERVENTIONS_FILE] as const;
 
 const a = parseArgs(Deno.args, {
   string: ["experiment", "coordinator", "out", "token"],
@@ -72,7 +73,7 @@ interface Listed {
   /** true/false only when a verify attempt matching the current accepted digest also reported observation-file digests; null otherwise (see `Coordinator.Queue`'s `{:experiment, name}` handler). */
   observationsVerified: boolean | null;
 }
-const exp: { spec: { steps: number; presetId: string; metapopulation?: unknown }; segments: Listed[] } = await (
+const exp: { spec: { steps: number; presetId: string; metapopulation?: unknown; interventions?: unknown }; segments: Listed[] } = await (
   await get(`/api/experiments/${encodeURIComponent(a.experiment)}`)
 ).json();
 
@@ -100,9 +101,13 @@ const metapopConfigured = Boolean(exp.spec.metapopulation);
 // if none recorded one.
 const pondCfg = PRESETS.find((p) => p.id === exp.spec.presetId)?.cfg;
 const pondsConfigured = pondCfg?.pondPeriod !== undefined;
+// And for interventions.jsonl: the schedule is the experiment's spec
+// (Coordinator.Queue carries it whole into every segment), so a scheduled
+// experiment expects the log on every segment even if none recorded one.
+const scheduled = exp.spec.interventions !== undefined;
 // Whether optional file `f` is configured for a run whose segments are `segs`.
 const configuredFor = (f: (typeof OPTIONAL_FILES)[number], segs: Listed[]) =>
-  f === EXCHANGES_FILE ? metapopConfigured : (f === PONDS_FILE && pondsConfigured) || segs.some((s) => s.files?.[f]);
+  f === EXCHANGES_FILE ? metapopConfigured : f === INTERVENTIONS_FILE ? scheduled : (f === PONDS_FILE && pondsConfigured) || segs.some((s) => s.files?.[f]);
 // Why a run cannot be exported (yet), or null.
 function ineligible(segs: Listed[]): string | null {
   const unfinished = segs.filter((s) => s.status !== "done" && s.status !== "verified");
@@ -122,11 +127,12 @@ function ineligible(segs: Listed[]): string | null {
   // `download` ever runs -- `download` and `stitchRun` enforce the same thing
   // again, defensively.
   for (const f of OPTIONAL_FILES) {
-    // exchanges.tsv's "is this configured" comes from the experiment's own
-    // spec (see metapopConfigured's doc), not file presence, and ponds.tsv's
-    // from its preset (pondsConfigured); migrations.tsv and species.tsv have
-    // no equivalent experiment-wide flag exposed here, so they keep the
-    // file-presence inference.
+    // exchanges.tsv's and interventions.jsonl's "is this configured" come
+    // from the experiment's own spec (see metapopConfigured's and scheduled's
+    // docs), not file presence, and ponds.tsv's from its preset
+    // (pondsConfigured); migrations.tsv and species.tsv have no equivalent
+    // experiment-wide flag exposed here, so they keep the file-presence
+    // inference.
     const configured = configuredFor(f, segs);
     if (configured) {
       const missing = segs.filter((s) => !s.files?.[f]);

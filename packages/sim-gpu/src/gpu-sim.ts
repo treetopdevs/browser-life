@@ -10,6 +10,7 @@ import {
   MAX_STEP,
   clampLesionRadius,
   feedError,
+  FeedRefusedError,
   feedNutrient,
   type FeedResult,
   validateState,
@@ -305,7 +306,7 @@ export class GpuSim {
     const gone = () => { if (this.destroyed) throw new Error("GpuSim destroyed"); };
     gone();
     const err = feedError(this.cfg, amount, radius);
-    if (err) throw new Error(err);
+    if (err) throw new FeedRefusedError(err);
     const size = this.n * 4, offset = CH.A * this.n * 4;
     const stats = await this.readStats();
     // The sim can be destroyed while a readback is awaited: nothing may be read from or written to it then.

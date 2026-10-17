@@ -138,9 +138,15 @@ re-reviewed.
   world this checkout builds differently from the lab's are refused before the run), and the run's `stateHash`
   is compared with the lab's checkpoint at `--steps` when the manifest holds one saved there after every
   logged intervention. A match is strong evidence that the headless history is the observed one; with no
-  comparable checkpoint the run says so and checks nothing against the lab. The coordinator still
-  carries no interventions, and islands refuse a spec that has them, so a fed or wounded history runs
-  on one machine, not the archipelago. A scheduled regime (inflow and dilution every N steps, a
+  comparable checkpoint the run says so and checks nothing against the lab. The archipelago carries
+  the same schedule: an experiment spec's `interventions` array goes whole into every segment's task,
+  such segments are handed only to islands that advertise `interventions-v1` (an older island would
+  run them clean and diverge from every capable one), each segment applies the entries of its own
+  window and uploads its `interventions.jsonl`, the verifying island regenerates it (a verified
+  file, like `ponds.tsv`), and `tools/stitch.ts` joins the logs into the stitched bundle. The
+  coordinator refuses at creation what the runner refuses before the GPU: a feed in a pond preset, a
+  centre outside the preset's world, an entry after the last step, and a feed's logged `matter`
+  (the archipelago's check is the second island, not a replay assertion). A scheduled regime (inflow and dilution every N steps, a
   chemostat) would still be a rule with config keys and golden pins, a different thing from a
   logged intervention, and the more useful one for experiments. The runner also carries the `fed`
   total through if it continues a fed artifact.

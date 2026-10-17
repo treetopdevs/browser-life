@@ -17,10 +17,15 @@
 //     (feed.ts in @bl/schema); a lesion only converts matter in place and books its heat through the ledger.
 //
 // Nothing here touches a simulation except through `InterventionSim`, so the pieces test without a GPU.
-import { FEED_MAX, cellCount, feedError, worldW, type FeedResult, type WorldConfig } from "@bl/schema";
+import { FEED_MAX, FeedRefusedError, cellCount, feedError, worldW, type FeedResult, type WorldConfig } from "@bl/schema";
 import { picksFromManifest, type PickEntry } from "./picks.ts";
 
-/** The log of a run with `RunSpec.interventions`, beside manifest.json. Not a bundle or verified file (like picks.jsonl, it is no observation). */
+/**
+ * The log of a run with `RunSpec.interventions`, beside manifest.json: one line per applied entry, in order. Not in
+ * stitch.ts's `BUNDLE_FILES` (a run without a schedule never has it), but a segment file of a scheduled run, which
+ * `stitchRun` requires on every segment and joins, and a verified one (`VERIFIED_FILES`): a verifying island regenerates
+ * it from the schedule its task carries, unlike picks.jsonl, whose donors come from a picker no segment carries.
+ */
 export const INTERVENTIONS_FILE = "interventions.jsonl";
 
 /**
@@ -41,8 +46,10 @@ export type InterventionLogEntry =
   | { step: number; kind: "feed"; x: number; y: number; r: number; amount: number; matter: number };
 
 /**
- * A scheduled intervention that cannot be applied as scheduled; the run stops there. `step` is the entry's step, so a host can
- * tell a failure before the run began (step 0: applied on the CPU before any file is written) from one inside the loop.
+ * A scheduled intervention that cannot be applied as scheduled (a feed the world refuses, or one that does not move the
+ * matter its schedule names); the run stops there. Never a failure of the host (`applyScheduled` lets those through as
+ * they are). `step` is the entry's step, so a host can tell a failure before the run began (step 0: applied on the CPU
+ * before any file is written) from one inside the loop.
  */
 export class InterventionError extends Error {
   readonly step?: number;
@@ -166,8 +173,11 @@ export interface AppliedIntervention {
 /**
  * Applies `e` to `sim` as the lab's traversal does and returns what to log and book. A feed whose schedule names the
  * `matter` the log says it moved must move exactly that, else `InterventionError` ("this is not the observed history",
- * as the lab's reapply says); a feed `sim` refuses becomes an `InterventionError` naming the step. The caller has
- * awaited the simulation idle (`onSubmittedWorkDone`) and moves its baselines by the result.
+ * as the lab's reapply says); a feed `sim` refuses (`FeedRefusedError`: feedError's reasons, or past MATTER_MAX)
+ * becomes an `InterventionError` naming the step. Any other failure of the feed (a lost device, a ledger that does not
+ * close) is the host's, not the schedule's, and propagates as it is: an island leaves a task on an `InterventionError`
+ * and must not mistake those for one. The caller has awaited the simulation idle (`onSubmittedWorkDone`) and moves its
+ * baselines by the result.
  */
 export async function applyScheduled(sim: InterventionSim, e: ScheduledIntervention): Promise<AppliedIntervention> {
   if (e.kind === "lesion") {
@@ -178,7 +188,8 @@ export async function applyScheduled(sim: InterventionSim, e: ScheduledIntervent
   try {
     res = await sim.feed(e.x, e.y, e.r, e.amount);
   } catch (err) {
-    throw new InterventionError(`the feed at t=${e.step} failed: ${err instanceof Error ? err.message : String(err)}`, { cause: err, step: e.step });
+    if (!(err instanceof FeedRefusedError)) throw err;
+    throw new InterventionError(`the feed at t=${e.step} failed: ${err.message}`, { cause: err, step: e.step });
   }
   // The entry's own `matter` only, as `validateInterventions` reads it: an inherited one was neither checked nor serialised.
   if (Object.hasOwn(e, "matter") && e.matter !== undefined && res.matter !== e.matter) throw new InterventionError(`scheduled feed at t=${e.step} moved ${res.matter} quanta, the log says ${e.matter}: this is not the observed history`, { step: e.step });

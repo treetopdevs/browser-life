@@ -634,4 +634,152 @@ defmodule CoordinatorWeb.ApiControllerTest do
                complete(t) |> json_response(409)
     end
   end
+
+  # Scheduled interventions over the wire (see Coordinator.Queue's moduledoc and
+  # queue_test.exs's "scheduled interventions" for the rules themselves): the
+  # JSON an administrator posts, the 422 a bad schedule gets, the task spec an
+  # island receives, the gate on "interventions-v1", and a verify completion's
+  # interventions.jsonl digest compared like the other optional files.
+  describe "scheduled interventions" do
+    @schedule [
+      %{"step" => 0, "kind" => "lesion", "x" => 1, "y" => 2, "r" => 6},
+      %{"step" => 700, "kind" => "lesion", "x" => 20, "y" => 20, "r" => 4},
+      %{
+        "step" => 1000,
+        "kind" => "feed",
+        "x" => 30,
+        "y" => 30,
+        "r" => 3,
+        "amount" => 16
+      }
+    ]
+    @wounded Map.merge(%{@spec_ok | "experiment" => "a-wounded"}, %{
+               "verifyFraction" => 1.0,
+               "interventions" => @schedule
+             })
+
+    test "a schedule is accepted, a feed in a pond world is refused with the runner's reason, and the listing carries it",
+         %{conn: conn} do
+      assert %{"segments" => 2} = conn |> post("/api/experiments", @wounded) |> json_response(200)
+
+      assert %{"error" => "interventions[2]: feeding is not defined for pond worlds" <> _} =
+               conn
+               |> post("/api/experiments", %{
+                 @wounded
+                 | "experiment" => "pond-fed",
+                   "presetId" => "ponds-small",
+                   "segmentSteps" => 1000,
+                   "censusEvery" => 100,
+                   "steps" => 1000
+               })
+               |> json_response(422)
+
+      assert %{"error" => "interventions[1]: a lesion has no key \"amount\"" <> _} =
+               conn
+               |> post("/api/experiments", %{
+                 @wounded
+                 | "experiment" => "odd",
+                   "interventions" => [
+                     Enum.at(@schedule, 0),
+                     Map.put(Enum.at(@schedule, 1), "amount", 4)
+                   ]
+               })
+               |> json_response(422)
+
+      assert %{"spec" => %{"interventions" => @schedule}} =
+               build_conn() |> get("/api/experiments/a-wounded") |> json_response(200)
+    end
+
+    test "/api/next hands scheduled work only with \"interventions-v1\", with the whole schedule in the task spec",
+         %{conn: conn} do
+      # "a-wounded" sorts ahead of "b-plain" in pick_task's order.
+      conn |> post("/api/experiments", @wounded) |> json_response(200)
+
+      conn
+      |> post("/api/experiments", %{@spec_ok | "experiment" => "b-plain"})
+      |> json_response(200)
+
+      {old, old_token} = join(conn)
+      {new, new_token} = join(build_conn())
+
+      t = next_with(old, old_token, %{"capabilities" => ["ponds-v1", "ponds-v2"]})
+      assert t["kind"] == "run" and String.starts_with?(t["segment"]["run"], "b-plain/")
+      refute Map.has_key?(t["spec"], "interventions")
+      assert %{"kind" => "idle"} = next_with(old, old_token, %{"capabilities" => ["ponds-v1"]})
+
+      w = next_with(new, new_token, %{"capabilities" => ["interventions-v1"]})
+      assert w["kind"] == "run" and String.starts_with?(w["segment"]["run"], "a-wounded/spots/")
+      assert w["spec"]["interventions"] == @schedule
+      assert w["spec"]["steps"] == 500
+    end
+
+    test "a verify completion's interventions.jsonl digest is accepted and compared like the other optional files",
+         %{conn: conn} do
+      conn |> post("/api/experiments", @wounded) |> json_response(200)
+      {a, token_a} = join(conn)
+      {b, token_b} = join(build_conn())
+      caps = %{"capabilities" => ["interventions-v1"]}
+      names = @observation_files ++ ["interventions.jsonl"]
+      sha = fn s -> :crypto.hash(:sha256, s) |> Base.encode16(case: :lower) end
+
+      put = fn path, body ->
+        build_conn()
+        |> authed(token_a)
+        |> put_req_header("content-type", "application/octet-stream")
+        |> put(path, body)
+      end
+
+      run_and_verify = fn index, reported ->
+        t = next_with(a, token_a, caps)
+        assert t["kind"] == "run" and t["segment"]["index"] == index
+        q = "island=#{a}&lease=#{t["lease"]}"
+        bin = Coordinator.CheckpointTest.build(500 * (index + 1), seed: 1)
+
+        assert %{"digest" => digest} =
+                 put.("/api/segments/#{t["segment"]["id"]}/checkpoint?#{q}", bin)
+                 |> json_response(200)
+
+        for name <- names do
+          assert %{"ok" => true} =
+                   put.("/api/segments/#{t["segment"]["id"]}/files/#{name}?#{q}", name)
+                   |> json_response(200)
+        end
+
+        assert build_conn()
+               |> authed(token_a)
+               |> post("/api/segments/#{t["segment"]["id"]}/complete?island=#{a}", %{
+                 "kind" => "run",
+                 "endHash" => digest,
+                 "lease" => t["lease"]
+               })
+               |> json_response(200) == %{"status" => "done"}
+
+        v = next_with(b, token_b, caps)
+        assert v["kind"] == "verify" and v["segment"]["id"] == t["segment"]["id"]
+        assert v["spec"]["interventions"] == @schedule
+
+        assert build_conn()
+               |> authed(token_b)
+               |> post("/api/segments/#{v["segment"]["id"]}/complete?island=#{b}", %{
+                 "kind" => "verify",
+                 "endHash" => digest,
+                 "lease" => v["lease"],
+                 "observationDigests" => reported
+               })
+               |> json_response(200) == %{"status" => "verified"}
+      end
+
+      good = Map.new(names, &{&1, sha.(&1)})
+      run_and_verify.(0, good)
+      run_and_verify.(1, %{good | "interventions.jsonl" => sha.("another wound")})
+
+      assert %{"segments" => [s0, s1]} =
+               build_conn() |> get("/api/experiments/a-wounded") |> json_response(200)
+
+      assert s0["observationsVerified"] == true
+      assert s0["files"]["interventions.jsonl"] == sha.("interventions.jsonl")
+      # The six agree; only interventions.jsonl differs, and that is a mismatch.
+      assert s1["observationsVerified"] == false
+    end
+  end
 end

@@ -66,7 +66,7 @@ deno run -A tools/run.ts --experiment wounded --preset spots --steps 5000 --lesi
 deno run -A tools/run.ts --experiment replay --preset spots --seeds <the lab world's seed> --steps 5000 --picks-from <runId>.run.json
 ```
 
-Scheduled runs are not distributed: islands refuse them, and the coordinator carries none.
+A scheduled run is distributed too: give the experiment spec an `"interventions"` array of the same entries (`{"step":1000,"kind":"lesion","x":120,"y":120,"r":12}`, `{"step":3000,"kind":"feed","x":60,"y":60,"r":6,"amount":16}`, steps non-decreasing, a feed's amount non-zero within ±4096; a feed's `matter`, the lab's replay assertion, is refused there, since the second island's replay is the archipelago's check and a matter the world does not reproduce would throw on every island). The coordinator checks it as the runner would (a centre inside the preset's world, no feed in a pond preset, nothing after the last step), carries it whole in every segment's task, and hands those segments, run or verify, only to islands that advertise `interventions-v1`; each segment applies the entries of its own window and uploads its `interventions.jsonl`, which the verifying island regenerates and `tools/stitch.ts` joins into the bundle above. One thing no creation can check is a feed that would take the world past its matter bound at that step: an island that meets one logs it and leaves the task, and the segment waits, visibly, in the status.
 
 ```bash
 deno run -A tools/analyze.ts runs/pilot/gradient

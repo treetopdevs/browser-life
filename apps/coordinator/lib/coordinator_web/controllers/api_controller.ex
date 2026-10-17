@@ -13,10 +13,10 @@ defmodule CoordinatorWeb.ApiController do
   @max_manifest 1024 * 1024
   # Must match packages/runner/src/stitch.ts's VERIFIED_FILES (BUNDLE_FILES
   # minus manifest.json, plus the optional migrations.tsv, exchanges.tsv,
-  # species.tsv and ponds.tsv) and Coordinator.Segment's @observation_files ++
-  # @optional_observation_files (packages/runner/test/coordinator-files.test.ts
-  # checks both).
-  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json migrations.tsv exchanges.tsv species.tsv ponds.tsv)
+  # species.tsv, ponds.tsv and interventions.jsonl) and Coordinator.Segment's
+  # @observation_files ++ @optional_observation_files
+  # (packages/runner/test/coordinator-files.test.ts checks both).
+  @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json migrations.tsv exchanges.tsv species.tsv ponds.tsv interventions.jsonl)
 
   plug :require_island
        when action in [
