@@ -1,0 +1,307 @@
+{
+ "rule": "anomaly-bell-v1 nudge centres",
+ "note": "docs/naturalist-bell-v1-plan-2026-10-17.md",
+ "S": 200000,
+ "centres": [
+  {
+   "seed": 1,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 128,
+   "y": 128,
+   "d2": 0,
+   "B": 28,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "aaef85589c1d3f39",
+   "fileSha256": "ff3d17a798d2f132ddbd28e786884307febac6742869503302bb589a46d56b92"
+  },
+  {
+   "seed": 1,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 64,
+   "y": 65,
+   "d2": 1,
+   "B": 1,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "aaef85589c1d3f39",
+   "fileSha256": "ff3d17a798d2f132ddbd28e786884307febac6742869503302bb589a46d56b92"
+  },
+  {
+   "seed": 2,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 128,
+   "y": 128,
+   "d2": 0,
+   "B": 10,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "b638718f30e4fb4b",
+   "fileSha256": "77255f624a5e727b4379bb0a026711c0d0194b8199fe06161996759333875e70"
+  },
+  {
+   "seed": 2,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 64,
+   "y": 64,
+   "d2": 0,
+   "B": 5,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "b638718f30e4fb4b",
+   "fileSha256": "77255f624a5e727b4379bb0a026711c0d0194b8199fe06161996759333875e70"
+  },
+  {
+   "seed": 3,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 127,
+   "y": 128,
+   "d2": 1,
+   "B": 138,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "8354ad931e1a38a7",
+   "fileSha256": "7edfc58d0d9168bca41be96656108b58e6eb0d9f03180cb55354791745d8ac65"
+  },
+  {
+   "seed": 3,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 64,
+   "y": 64,
+   "d2": 0,
+   "B": 10,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "8354ad931e1a38a7",
+   "fileSha256": "7edfc58d0d9168bca41be96656108b58e6eb0d9f03180cb55354791745d8ac65"
+  },
+  {
+   "seed": 4,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 128,
+   "y": 128,
+   "d2": 0,
+   "B": 6,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "b0207d1f08648fff",
+   "fileSha256": "a50e368205ffdb1b182fc6e2dcf7a86546eff3cbd5a046d373861fa1afe34c8c"
+  },
+  {
+   "seed": 4,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 64,
+   "y": 64,
+   "d2": 0,
+   "B": 80,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "b0207d1f08648fff",
+   "fileSha256": "a50e368205ffdb1b182fc6e2dcf7a86546eff3cbd5a046d373861fa1afe34c8c"
+  },
+  {
+   "seed": 5,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 128,
+   "y": 128,
+   "d2": 0,
+   "B": 24,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "b9b0576cafcb2545",
+   "fileSha256": "ab64439a501e5952627ea678cb305218ad927ce9027f90e06e8fd7b070ebfcb4"
+  },
+  {
+   "seed": 5,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 64,
+   "y": 64,
+   "d2": 0,
+   "B": 2,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "b9b0576cafcb2545",
+   "fileSha256": "ab64439a501e5952627ea678cb305218ad927ce9027f90e06e8fd7b070ebfcb4"
+  },
+  {
+   "seed": 6,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 128,
+   "y": 128,
+   "d2": 0,
+   "B": 110,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "c06293edbaf0fb34",
+   "fileSha256": "626a46ecdfc4d9387e690a439b58971e1915d00255605b418d0c27cc994b4c98"
+  },
+  {
+   "seed": 6,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 66,
+   "y": 59,
+   "d2": 29,
+   "B": 2,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "c06293edbaf0fb34",
+   "fileSha256": "626a46ecdfc4d9387e690a439b58971e1915d00255605b418d0c27cc994b4c98"
+  },
+  {
+   "seed": 7,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 129,
+   "y": 129,
+   "d2": 2,
+   "B": 1,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "ffbfb918c5039504",
+   "fileSha256": "96045245894b057a12177ea34f9cd24e28eae1d973993534d34e792d7fb4cbfd"
+  },
+  {
+   "seed": 7,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 65,
+   "y": 67,
+   "d2": 10,
+   "B": 1,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "ffbfb918c5039504",
+   "fileSha256": "96045245894b057a12177ea34f9cd24e28eae1d973993534d34e792d7fb4cbfd"
+  },
+  {
+   "seed": 8,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 128,
+   "y": 127,
+   "d2": 1,
+   "B": 6,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "0256cc13de21c0f1",
+   "fileSha256": "7809f2e23ca092b273b36bd4e82441b679e23733a155359b013f089427219d8d"
+  },
+  {
+   "seed": 8,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 64,
+   "y": 64,
+   "d2": 0,
+   "B": 10,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "0256cc13de21c0f1",
+   "fileSha256": "7809f2e23ca092b273b36bd4e82441b679e23733a155359b013f089427219d8d"
+  },
+  {
+   "seed": 9,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 128,
+   "y": 128,
+   "d2": 0,
+   "B": 10,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "de0de1a5caf83f19",
+   "fileSha256": "e0e1f829ce3f467efe7a2f6013fcb7921e50373abf7fba0c8b3a633031e93678"
+  },
+  {
+   "seed": 9,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 60,
+   "y": 75,
+   "d2": 137,
+   "B": 50,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "de0de1a5caf83f19",
+   "fileSha256": "e0e1f829ce3f467efe7a2f6013fcb7921e50373abf7fba0c8b3a633031e93678"
+  },
+  {
+   "seed": 10,
+   "arm": "nudge",
+   "target": [
+    128,
+    128
+   ],
+   "x": 128,
+   "y": 128,
+   "d2": 0,
+   "B": 147,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "45d75074cf033966",
+   "fileSha256": "d0e1604cad4e4b4783606d747bcc1475c5390617eb48a1aa8de4e005af545632"
+  },
+  {
+   "seed": 10,
+   "arm": "nudge2",
+   "target": [
+    64,
+    64
+   ],
+   "x": 64,
+   "y": 64,
+   "d2": 0,
+   "B": 7,
+   "checkpoint": "checkpoints/t000200000.blck",
+   "manifestHash": "45d75074cf033966",
+   "fileSha256": "d0e1604cad4e4b4783606d747bcc1475c5390617eb48a1aa8de4e005af545632"
+  }
+ ]
+}
