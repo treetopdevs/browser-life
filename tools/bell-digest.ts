@@ -329,6 +329,8 @@ async function score() {
       const c = t1Comparator(items, rec);
       t1Code = { available: true, record: a["pair-record"], recordSha256: pairSha, zStarPair: rec.zStar, zStarCalled: rec.called, ...(freeze ? withholdComparator(c, freeze) : c) };
     } catch (e) {
+      // In production the twin record decides which items are void, so a record that fails the gate stops the scoring outright.
+      if (manifest.mode !== "pilot") throw new Error(`STOP: the twin record fails the production gate (${(e as Error).message}); nothing is scored`);
       t1Code = { available: false, called: false, reason: (e as Error).message };
     }
   }

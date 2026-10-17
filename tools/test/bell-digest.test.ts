@@ -537,8 +537,10 @@ describe("parseAnswer: the answer contract", () => {
     // A number from another column on the same line is not a receipt for this one (pooling the line accepted it).
     expect(checkReceipt({ t: 200, measure: "living_cells", values: "8", note: "" }, t1).valuesOk).toBe(false);
     expect(checkReceipt({ t: 200, measure: "individuals", values: "8", note: "" }, t1)).toMatchObject({ valuesOk: true, byDigest: { X: true, Y: false } });
-    // X and Y are not pooled: one number from each digest is not a single digest's reading.
-    expect(checkReceipt({ t: 200, measure: "living_cells", values: "120 vs 130", note: "" }, t1)).toMatchObject({ valuesOk: false, byDigest: { X: false, Y: false } });
+    // A paired note quotes the named column from each digest: it passes, though neither digest alone holds both numbers.
+    expect(checkReceipt({ t: 200, measure: "living_cells", values: "X: 120, Y: 130", note: "" }, t1)).toMatchObject({ valuesOk: true, byDigest: { X: false, Y: false } });
+    // A number from another column still fails, paired or not.
+    expect(checkReceipt({ t: 200, measure: "living_cells", values: "120 vs 9", note: "" }, t1).valuesOk).toBe(false);
     // Unknown measure: unchecked, and said so; no number: unchecked; no line at t: unchecked.
     expect(checkReceipt({ t: 200, measure: "foo", values: "120", note: "" }, t1)).toEqual({ tOk: true, measureOk: false, valuesOk: null, unchecked: "unknown measure", byDigest: {} });
     expect(checkReceipt({ t: 400, measure: "lineages", values: "no numbers here", note: "" }, t1)).toMatchObject({ tOk: false, measureOk: true, valuesOk: null, unchecked: "no number" });

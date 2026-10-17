@@ -623,8 +623,8 @@ export interface ReceiptCheck {
   /** measure names one of the digest's columns (its own header's names). */
   measureOk: boolean;
   /**
-   * Whether the quoted numbers are read from the named column at t: true when, in one digest, every number in `values` is that
-   * column's value there or (T2) one of the three numbers of its band. X and Y are checked apart and never pooled. Null: unchecked.
+   * Whether the quoted numbers are read from the named column at t: true when every number in `values` is that column's value
+   * there, in one of the digests, or (T2) one of the three numbers of its band. Other columns never count. Null: unchecked.
    */
   valuesOk: boolean | null;
   /** Why the values were not checked (null: they were). */
@@ -659,14 +659,18 @@ export function checkReceipt(note: Note, itemText: string): ReceiptCheck {
   const quoted = numbersIn(note.values);
   const unchecked = quoted.length === 0 ? "no number" : !measureOk ? "unknown measure" : !tOk ? "no line at t" : null;
   const byDigest: Record<string, boolean> = {};
+  const allowedBy: number[][] = [];
   if (unchecked === null) {
     for (const d of digests) {
       const m = CELL.exec(d.lines.get(note.t)?.[d.columns.indexOf(measure)] ?? "");
       const allowed = m ? m.slice(1).filter((x) => x !== undefined).map(Number) : [];
+      allowedBy.push(allowed);
       byDigest[d.label] = quoted.every((x) => allowed.includes(x));
     }
   }
-  return { tOk, measureOk, valuesOk: unchecked === null ? Object.values(byDigest).some((v) => v) : null, unchecked, byDigest };
+  // Every quoted number must be the named column's value (or band number) at t in some digest: a paired note ("X: 120, Y: 130")
+  // passes, a number from another column does not.
+  return { tOk, measureOk, valuesOk: unchecked === null ? quoted.every((x) => allowedBy.some((al) => al.includes(x))) : null, unchecked, byDigest };
 }
 
 // ---------------------------------------------------------------------------------------------
