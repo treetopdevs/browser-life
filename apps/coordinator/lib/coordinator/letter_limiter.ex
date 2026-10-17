@@ -82,7 +82,10 @@ defmodule Coordinator.LetterLimiter do
 
   A generation is `{incarnation, n}`: `incarnation` is drawn when this process
   creates its tables, so the counters a restart starts again from zero can
-  never make an answer read before the restart look current after it.
+  never make an answer read before the restart look current after it. While
+  it cannot be read (the tables are missing or being made) the generation is
+  `:unavailable`, which is never stored and never matches: nothing is cached
+  until this process is up.
 
   `fetch_view/2` and `fetch_checkpoints/2` are what the controller uses: they
   coalesce misses so a crowd arriving at once costs the Queue one call, not one
@@ -226,21 +229,23 @@ defmodule Coordinator.LetterLimiter do
 
   # ---- client API: the cache ----
 
-  @typedoc "A cache generation: this process's incarnation and a count of invalidations."
-  @type gen :: {term, non_neg_integer}
+  @typedoc "A cache generation: this process's incarnation and a count of invalidations, or `:unavailable` (uncacheable) while the tables are not ready."
+  @type gen :: {reference, non_neg_integer} | :unavailable
 
   @doc "The cache generation of garden `name`: read it *before* asking the Queue, and hand it back to `put_view/3` or `put_checkpoints/3`."
   @spec generation(String.t()) :: gen
   def generation(name) do
-    [{_, incarnation}] = :ets.lookup(@counters, @incarnation_key)
-
-    case :ets.lookup(@views, {:gen, name}) do
-      [{_, n}] -> {incarnation, n}
-      _ -> {incarnation, 0}
+    with [{_, incarnation}] <- :ets.lookup(@counters, @incarnation_key) do
+      case :ets.lookup(@views, {:gen, name}) do
+        [{_, n}] -> {incarnation, n}
+        _ -> {incarnation, 0}
+      end
+    else
+      _ -> :unavailable
     end
   rescue
-    # Tables gone (restarting): a generation no entry can carry.
-    _ in [ArgumentError, MatchError] -> {nil, 0}
+    # Tables gone (restarting).
+    ArgumentError -> :unavailable
   end
 
   @doc "The cached encoded view of garden `name`, if there is a fresh one."
@@ -277,13 +282,17 @@ defmodule Coordinator.LetterLimiter do
   @doc "Forgets the cached view and checkpoints of `name` and bumps its generation (a letter was posted or dropped, or the garden founded)."
   @spec invalidate(String.t()) :: :ok
   def invalidate(name) do
+    # The refreshes under way now began before the bump below and cannot store
+    # their answers, so nobody should wait for them: their markers, exactly as
+    # seen here, are deleted after it. A marker claimed after this look is a
+    # refresh that reads the new generation, and is left alone.
+    markers =
+      :ets.lookup(@views, {:refresh, name}) ++ :ets.lookup(@views, {:refresh, {:cps, name}})
+
     :ets.update_counter(@views, {:gen, name}, 1, {{:gen, name}, 0})
     :ets.delete(@views, name)
     :ets.delete(@views, {:cps, name})
-    # A refresh begun before this cannot store its answer (the generation
-    # moved), so nobody should wait for it.
-    :ets.delete(@views, {:refresh, name})
-    :ets.delete(@views, {:refresh, {:cps, name}})
+    for marker <- markers, do: :ets.delete_object(@views, marker)
     :ok
   rescue
     ArgumentError -> :ok
@@ -314,10 +323,21 @@ defmodule Coordinator.LetterLimiter do
 
   @impl true
   def init(_opts) do
-    :ets.new(@counters, [:named_table, :public, :set, write_concurrency: true])
+    # The counters table appears under its name with the salt and incarnation
+    # already in it (built under a private name, then renamed), and before the
+    # views table: no reader ever sees one without the other.
+    building =
+      :ets.new(:coordinator_letter_counters_building, [
+        :named_table,
+        :public,
+        :set,
+        write_concurrency: true
+      ])
+
+    :ets.insert(building, {@salt_key, :crypto.strong_rand_bytes(16)})
+    :ets.insert(building, {@incarnation_key, make_ref()})
+    :ets.rename(building, @counters)
     :ets.new(@views, [:named_table, :public, :set, read_concurrency: true])
-    :ets.insert(@counters, {@salt_key, :crypto.strong_rand_bytes(16)})
-    :ets.insert(@counters, {@incarnation_key, make_ref()})
     schedule_sweep()
     {:ok, %{}}
   end
@@ -339,7 +359,9 @@ defmodule Coordinator.LetterLimiter do
     if ttl() > 0 do
       case :ets.lookup(@views, key) do
         [{^key, value, expires, gen}] ->
-          if mono() < expires and gen == generation(name), do: {:ok, value}, else: :miss
+          if mono() < expires and cacheable?(gen) and gen == generation(name),
+            do: {:ok, value},
+            else: :miss
 
         _ ->
           :miss
@@ -354,13 +376,16 @@ defmodule Coordinator.LetterLimiter do
   defp put(name, key, value, gen) do
     ttl = ttl()
 
-    if ttl > 0 and gen == generation(name),
+    if ttl > 0 and cacheable?(gen) and gen == generation(name),
       do: :ets.insert(@views, {key, value, mono() + ttl, gen})
 
     :ok
   rescue
     ArgumentError -> :ok
   end
+
+  defp cacheable?({incarnation, n}), do: is_reference(incarnation) and is_integer(n)
+  defp cacheable?(_), do: false
 
   defp fetch(name, key, compute) do
     if ttl() > 0, do: coalesce(name, key, compute), else: compute.() |> elem(1)
@@ -474,7 +499,7 @@ defmodule Coordinator.LetterLimiter do
     case :ets.lookup(@views, key) do
       [{^key, value, expires, gen}] ->
         cond do
-          gen != generation(name) -> :none
+          not cacheable?(gen) or gen != generation(name) -> :none
           mono() < expires -> {:fresh, value}
           true -> {:stale, value}
         end
@@ -506,8 +531,14 @@ defmodule Coordinator.LetterLimiter do
   end
 
   defp address_hash(address) do
-    [{@salt_key, salt}] = :ets.lookup(@counters, @salt_key)
-    :crypto.hash(:sha256, [salt, :erlang.term_to_binary(network(address))])
+    case :ets.lookup(@counters, @salt_key) do
+      [{@salt_key, salt}] ->
+        :crypto.hash(:sha256, [salt, :erlang.term_to_binary(network(address))])
+
+      # No salt (the table is not ready): the same as no table, `take/1` fails open.
+      [] ->
+        raise ArgumentError, "the letter counters have no salt yet"
+    end
   end
 
   defp limit, do: Application.get_env(:coordinator, :garden_letters_per_address, 3)

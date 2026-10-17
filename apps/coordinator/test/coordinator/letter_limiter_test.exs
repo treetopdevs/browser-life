@@ -112,6 +112,21 @@ defmodule Coordinator.LetterLimiterTest do
       assert {:ok, _} = LetterLimiter.take({10, 0, 0, 4})
     end
 
+    test "no salt yet (half-made tables): take/1 fails open instead of raising" do
+      [salt] = :ets.lookup(@counters, :boot_salt)
+      :ets.delete(@counters, :boot_salt)
+
+      try do
+        assert LetterLimiter.take({10, 0, 0, 1}) == {:ok, nil}
+        assert LetterLimiter.refund(nil) == :ok
+        assert LetterLimiter.refuse(nil) == :ok
+      after
+        :ets.insert(@counters, salt)
+      end
+
+      assert {:ok, {:token, _, _}} = LetterLimiter.take({10, 0, 0, 1})
+    end
+
     test "2,000 distinct addresses of one /64 are one row" do
       Application.put_env(:coordinator, :garden_letters_per_address, 1_000_000)
       before = rows()
@@ -189,6 +204,44 @@ defmodule Coordinator.LetterLimiterTest do
       assert Task.await(paused) == "before the letter"
       assert LetterLimiter.cached_view("g") == {:ok, "after the letter"}
       assert LetterLimiter.fetch_view("g", fn -> flunk("asked") end) == "after the letter"
+    end
+
+    test "half-made tables: without an incarnation nothing is cached, and invalidation still holds" do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      LetterLimiter.invalidate("g")
+      before = LetterLimiter.generation("g")
+      # As if the limiter were between creating its tables and filling them.
+      :ets.delete(@counters, :incarnation)
+
+      assert LetterLimiter.generation("g") == :unavailable
+      LetterLimiter.put_view("g", "unversioned", LetterLimiter.generation("g"))
+      assert LetterLimiter.cached_view("g") == :miss
+      assert LetterLimiter.fetch_view("g", fn -> {:cache, "a"} end) == "a"
+      assert LetterLimiter.fetch_view("g", fn -> {:cache, "b"} end) == "b"
+      # A refresh that read `before` cannot store either.
+      LetterLimiter.put_view("g", "old", before)
+      assert LetterLimiter.cached_view("g") == :miss
+
+      # Back up (a new incarnation): `before` is still not current.
+      :ets.insert(@counters, {:incarnation, make_ref()})
+      LetterLimiter.put_view("g", "old", before)
+      assert LetterLimiter.cached_view("g") == :miss
+      LetterLimiter.put_view("g", "new", LetterLimiter.generation("g"))
+      assert LetterLimiter.cached_view("g") == {:ok, "new"}
+    end
+
+    test "a refresh marker seen by invalidate is deleted; nothing else is" do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      views = :coordinator_garden_views
+      old = {{:refresh, "g"}, System.monotonic_time(:millisecond), make_ref()}
+      other = {{:refresh, "h"}, System.monotonic_time(:millisecond), make_ref()}
+      :ets.insert(views, [old, other])
+
+      LetterLimiter.invalidate("g")
+      assert :ets.lookup(views, {:refresh, "g"}) == []
+      assert :ets.lookup(views, {:refresh, "h"}) == [other]
+      # With the marker gone the next reader refreshes at once.
+      assert LetterLimiter.fetch_view("g", fn -> {:cache, "v"} end) == "v"
     end
 
     test "with a ttl of zero nothing is cached" do
