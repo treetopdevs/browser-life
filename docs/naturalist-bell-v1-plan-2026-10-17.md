@@ -70,8 +70,10 @@ deno run -A tools/run.ts --experiment bell-v1-null --preset gradient-m3 --condit
 ```
 
 The launcher splits the seed range across three processes. A fresh run counts only if it exits 0 and its
-manifest has a summary. It must also have all 3,000 censuses and the lineage census cross-checks of v0
-(`mergeCensuses`).
+manifest has a summary. It must also have all 3,000 censuses. Every census record must have finite
+`livingCells` and `lineages` fields, and its lineage census must match them exactly: the rows' cells sum to
+`livingCells`, there are `lineages` rows, and a census has no rows only when both are 0. This is stricter
+than v0's `mergeCensuses`, which skips a check when a field is missing.
 
 **Criterion A1.** At most 2 of the 70 fresh runs ring (binomial upper 95% bound below 0.1, test 6's null rule).
 Not called if fewer than 70 count. Reading: A1 met → **quiet on fresh drift (exploratory)**; missed →
@@ -126,6 +128,7 @@ The launcher checks that all 120 destinations of A and B are distinct and absent
 - it exits 0, and its manifest has a summary and 3,000 censuses;
 - its `interventions.jsonl` holds exactly the one scheduled entry, applied;
 - its `series.jsonl` and `lineages.tsv` equal its base's at every census up to and including step S;
+- every census passes the same finite-field and lineage-match checks as a fresh null in A;
 - it differs from its base at some census after S.
 
 Void twins are reported.
@@ -340,6 +343,9 @@ taken:
   on nudge2 is the comparison.
 - **P3.** The retries could double the call count; the budget covers that now.
 - **P3.** Separate draws can give the same U; that is allowed now, and the draw formula is written down.
+
+**A later tightening.** A CodeRabbit comment on the PR led to the finite-field and lineage-match checks in A
+and B. They were added while the runs were in progress, before any v1 output had been read.
 
 A third, focused pass found the six closed except one boundary. T2's code windows could reach 900 steps past
 the item's window; every window now lies inside it.
