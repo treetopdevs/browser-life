@@ -18,7 +18,7 @@ const worker = new Worker(new URL("./sim.worker.ts", import.meta.url), { type: "
 const send = (m: ToWorker, t: Transferable[] = []) => worker.postMessage(m, t);
 // A jump replays a world and answers "loaded" like a replacement does, but nobody planted, restored or opened anything:
 // it clears whatever replacement intent a cancelled or refused question left behind.
-const lineagePanel = createLineagePanel((m) => { if (m.type === "jump") loadIntent = null; send(m); });
+const lineagePanel = createLineagePanel((m) => { if (m.type === "jump") loadIntent = null; send(m); }, () => storageOff);
 
 let cfg: WorldConfig | null = null;
 /** The world's config when a load was requested: the worker keeps that world if the load fails. */
@@ -34,6 +34,8 @@ let verifying = false;
 let loadingWorld = false;
 /** The worker has a GPU device: a failure after that is about a world, not about the browser. */
 let gpuReady = false;
+/** This browser keeps no copies here (the worker's storage check at start): Save stays visible, disabled, with the reason. */
+let storageOff = false;
 let runId = "";
 /** The Lab session's account. The page paints it and does not keep another. */
 let account: SessionView | null = null;
@@ -65,7 +67,7 @@ function setStatus(message: string, state: "ready" | "running" | "error" | "load
 function setWorldControls(enabled: boolean) {
   worldReady = enabled;
   for (const id of ["btn-play", "btn-step", "btn-step100", "btn-save", "btn-export", "btn-verify"])
-    $<HTMLButtonElement>(id).disabled = !enabled;
+    $<HTMLButtonElement>(id).disabled = !enabled || (id === "btn-save" && storageOff);
 }
 setWorldControls(false);
 
@@ -187,7 +189,9 @@ function confirmReplace(host: HTMLElement, opener: HTMLElement, verb: string, co
   const loss = account?.loss;
   if (!loss || !worldReady) return sendKeep();
   const act = `${verb[0].toUpperCase()}${verb.slice(1)}`;
-  ask(host, opener, `${loss.text} ${consequence}`, [[`Save, then ${verb}`, () => sendKeep("save")], [`${act} without saving`, () => sendKeep("discard")]]);
+  // A browser that keeps no copies can still hand the present over as a file before it is replaced.
+  const keep: Choice = storageOff ? [`Download, then ${verb}`, () => sendKeep("download")] : [`Save, then ${verb}`, () => sendKeep("save")];
+  ask(host, opener, `${loss.text} ${consequence}`, [keep, [`${act} without saving`, () => sendKeep("discard")]]);
 }
 
 function sendPlant(keep?: Keep) {
@@ -222,6 +226,8 @@ function unblankWorld() {
   loadingWorld = false;
   cfg = cfgBeforeLoad;
   setWorldControls(cfg !== null);
+  // A pond cycle may still be waiting for its donors: Save, Download, the check and stepping wait with it.
+  syncWaitingControls();
   $<HTMLButtonElement>("btn-new").disabled = false;
   if (cfg) showRunStatus();
 }
@@ -982,13 +988,18 @@ function onPondAwait(m: PondAwaitMsg) {
 }
 /**
  * A waiting cycle holds a pre-cycle world, which cannot be saved, exported or verified, and does not step: those
- * wait for the pick. Each says so beside it rather than going quiet.
+ * wait for the pick. Each says so beside it rather than going quiet. Save also says when this browser keeps no copies.
  */
 function syncWaitingControls() {
   const waiting = awaiting !== null;
   for (const id of ["btn-save", "btn-export", "btn-verify", "btn-step", "btn-step100"]) {
     const b = $<HTMLButtonElement>(id);
-    b.disabled = !worldReady || waiting || (id === "btn-verify" && verifying);
+    b.disabled = !worldReady || waiting || (id === "btn-verify" && verifying) || (id === "btn-save" && storageOff);
+    if (id === "btn-save" || id === "btn-export") {
+      const why = [waiting && "ckpt-wait", id === "btn-save" && storageOff && "ckpt-storage"].filter(Boolean).join(" ");
+      if (why) b.setAttribute("aria-describedby", why);
+      else b.removeAttribute("aria-describedby");
+    }
     if (id.startsWith("btn-step")) {
       b.title = waiting ? "The world waits for this cycle’s donors: breed first" : id === "btn-step" ? "One step (.)" : "100 steps";
       if (waiting) b.setAttribute("aria-describedby", "breed-bar-wait");
@@ -1222,7 +1233,7 @@ function showAlert(message: string) {
   $("stage-alert-title").textContent = !noWorld ? "This world has stopped" : gpuReady ? "The world could not be planted" : "The lab could not start";
   $("stage-alert-text").textContent = message;
   $("stage-alert-help").textContent = !noWorld
-    ? "The world is paused. Your saved copies are still listed under Keep a copy."
+    ? storageOff ? "The world is paused." : "The world is paused. Your saved copies are still listed under Keep a copy."
     : gpuReady
       ? "Choose a starting world under Plant a world, or open a saved copy."
       : "The lab needs a browser with WebGPU. Check that hardware acceleration is on, then reload the page.";
@@ -1239,7 +1250,8 @@ $("stage-alert-dismiss").onclick = () => { $("stage-alert").hidden = true; canva
 /** Checkpoint rows. Redrawn only when the shelf changes, so a step publish does not steal focus. */
 let shelfKey = "";
 function renderCheckpoints(list: SessionView["checkpoints"]) {
-  $("checkpoint-empty").hidden = list.length > 0;
+  // Without storage the reason beside Save says why nothing is kept.
+  $("checkpoint-empty").hidden = list.length > 0 || storageOff;
   const rowHadFocus = $("ckpts").contains(document.activeElement);
   $("ckpts").replaceChildren(
     ...[...list]
@@ -1301,6 +1313,11 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
   switch (m.type) {
     case "ready":
       gpuReady = true;
+      storageOff = m.storage !== null;
+      if (m.storage !== null) console.warn(`Saved copies are off in this browser: ${m.storage}`);
+      $("ckpt-storage").hidden = !storageOff;
+      $("checkpoint-empty").hidden = storageOff;
+      syncWaitingControls();
       $("chip-gpu").textContent = m.adapter;
       $("chip-gpu").title = m.adapter;
       loadingWorld = true;

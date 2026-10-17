@@ -1,10 +1,55 @@
 // Checkpoint storage in the Origin Private File System (worker-only sync handles).
+//
+// Some browsers keep none: WebKit's ephemeral sessions (Safari Private Browsing among them) reject getDirectory
+// with "UnknownError". Every failure here is a StorageError, which refuses the request that met it and leaves the
+// world running; `storageProblem` finds out once, up front, whether this browser keeps checkpoints at all.
 
-import type { CheckpointMeta } from "./protocol.ts";
+import type { CheckpointMeta, RunManifest } from "./protocol.ts";
+
+/** The checkpoint store would not open, read or write. The world is untouched: only the copy is missing. */
+export class StorageError extends Error {
+  /** `detail`: the browser's own words; `cause`: its error, when there was one. */
+  constructor(message: string, readonly detail: string, options?: ErrorOptions) {
+    super(message, options);
+  }
+}
+
+const said = (e: unknown) => (e instanceof Error ? e.message || e.name : String(e));
+
+async function stored<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e instanceof StorageError) throw e;
+    throw new StorageError(`This browser wouldn't let the lab keep or read its copies here (${said(e)}). The world itself is fine, and Download still gives you a file.`, said(e), { cause: e });
+  }
+}
+
+/** The file asked for is not there: an answer from the store, unlike a store that would not answer. */
+export const missingFile = (e: unknown): boolean => e instanceof StorageError && (e.cause as { name?: unknown } | undefined)?.name === "NotFoundError";
 
 async function dir(): Promise<FileSystemDirectoryHandle> {
   const root = await navigator.storage.getDirectory();
   return root.getDirectoryHandle("checkpoints", { create: true });
+}
+
+/**
+ * Why this browser keeps no checkpoints here, in the browser's own words, or null when it does. Opens the
+ * checkpoints directory, which every save opens anyway, and writes no file. The lab waits for this before its
+ * first world, so a store that has not answered within `waitMs` counts as none.
+ */
+export async function storageProblem(waitMs = 5000): Promise<string | null> {
+  const handle = (globalThis as { FileSystemFileHandle?: { prototype: object } }).FileSystemFileHandle;
+  if (!handle || !("createSyncAccessHandle" in handle.prototype)) return "no synchronous file access in workers";
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<string>((resolve) => (timer = setTimeout(() => resolve(`no answer from storage within ${waitMs / 1000} s`), waitMs)));
+  try {
+    return await Promise.race([dir().then(() => null), late]);
+  } catch (e) {
+    return said(e);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 type SyncHandle = {
@@ -22,61 +67,174 @@ async function syncHandle(name: string, create: boolean): Promise<SyncHandle> {
   return (fh as unknown as { createSyncAccessHandle(): Promise<SyncHandle> }).createSyncAccessHandle();
 }
 
+/**
+ * Writes a file in place. One that fails after the truncate leaves the file empty or cut short: fine for a
+ * checkpoint, which is new per save and listed only once written, but not for a record (`writeRecord`).
+ */
 export async function writeFile(name: string, bytes: Uint8Array): Promise<void> {
-  const h = await syncHandle(name, true);
-  try {
-    h.truncate(0);
-    h.write(bytes, { at: 0 });
-    h.flush();
-  } finally {
-    h.close();
-  }
+  return stored(async () => {
+    const h = await syncHandle(name, true);
+    try {
+      h.truncate(0);
+      const wrote = h.write(bytes, { at: 0 });
+      if (wrote !== bytes.byteLength) throw new Error(`wrote ${wrote} of ${bytes.byteLength} bytes`);
+      h.flush();
+    } finally {
+      h.close();
+    }
+  });
 }
 
 export async function readFile(name: string): Promise<Uint8Array> {
-  const h = await syncHandle(name, false);
+  return stored(async () => {
+    const h = await syncHandle(name, false);
+    try {
+      const out = new Uint8Array(h.getSize());
+      h.read(out, { at: 0 });
+      return out;
+    } finally {
+      h.close();
+    }
+  });
+}
+
+/**
+ * Records: small JSON files updated in place (the shelf's index, each run's manifest). An update copies the
+ * record's current version to `<name>.prev` before rewriting it, and a record that does not parse, or is not what
+ * `valid` expects, reads as that previous version. A write or flush that fails partway, or a page closed in the
+ * middle, so leaves a reader the version before the update instead of nothing: `.prev` is written only while the
+ * record is intact, and the record only once `.prev` holds its last intact version.
+ * Copy-then-rewrite rather than write-then-move: OPFS file handles have move() (Chrome 102, Firefox 111, Safari 15.2),
+ * but moving onto an existing name is shown to work only in Chromium (web-platform-tests runs no move test in
+ * Safari), and a remove-then-move would open a gap with no record at all.
+ */
+const previous = (name: string) => `${name}.prev`;
+
+/** The record and its bytes when the file is there and holds one, null when it is missing or torn. */
+async function intact<T>(name: string, valid: (v: unknown) => v is T): Promise<{ value: T; bytes: Uint8Array } | null> {
+  let bytes: Uint8Array;
   try {
-    const out = new Uint8Array(h.getSize());
-    h.read(out, { at: 0 });
-    return out;
-  } finally {
-    h.close();
+    bytes = await readFile(name);
+  } catch (e) {
+    // A missing file is an answer; a store that would not read it is none.
+    if (missingFile(e)) return null;
+    throw e;
   }
+  try {
+    const value: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    return valid(value) ? { value, bytes } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The record named, or its version before an update that did not finish; null when there is neither. */
+async function readRecord<T>(name: string, valid: (v: unknown) => v is T): Promise<T | null> {
+  return stored(async () => ((await intact(name, valid)) ?? (await intact(previous(name), valid)))?.value ?? null);
+}
+
+/**
+ * Replaces the record named. Its current version, when intact, goes to `<name>.prev` first; a torn one is not
+ * copied, since `.prev` then holds the last version that was. A failure throws, and the record reads as before.
+ */
+async function writeRecord<T>(name: string, value: T, valid: (v: unknown) => v is T): Promise<void> {
+  return stored(async () => {
+    const current = await intact(name, valid);
+    if (current) await writeFile(previous(name), current.bytes);
+    await writeFile(name, new TextEncoder().encode(JSON.stringify(value)));
+  });
 }
 
 export async function removeFile(name: string): Promise<void> {
-  const d = await dir();
-  await d.removeEntry(name);
+  return stored(async () => {
+    const d = await dir();
+    await d.removeEntry(name);
+  });
 }
 
-export async function listCheckpoints(): Promise<CheckpointMeta[]> {
-  const d = await dir();
-  let index: CheckpointMeta[] = [];
+/** How long a request waits for another lab tab to finish with the records before it is refused. */
+export const RECORDS_WAIT_MS = 10_000;
+
+/**
+ * Runs `fn` holding the origin's lock on the records, so an update in one lab tab never interleaves with another
+ * tab's: without it, a tab could write an index that misses the other tab's save, or copy a version it read earlier
+ * over the only intact one. Not reentrant, so nothing run under it takes it again. A browser without Web Locks
+ * runs `fn` at once, as before; a lock not granted within RECORDS_WAIT_MS refuses the request.
+ */
+async function locked<T>(fn: () => Promise<T>): Promise<T> {
+  const locks = (navigator as { locks?: LockManager }).locks;
+  if (!locks) return fn();
+  const late = new AbortController();
+  const timer = setTimeout(() => late.abort(new Error("another lab tab is still using the saved copies")), RECORDS_WAIT_MS);
   try {
-    index = JSON.parse(new TextDecoder().decode(await readFile("index.json")));
-  } catch {
-    index = [];
+    return await locks.request("lab-checkpoint-records", { signal: late.signal }, () => {
+      clearTimeout(timer);
+      return fn();
+    });
+  } finally {
+    clearTimeout(timer);
   }
+}
+
+const INDEX = "index.json";
+
+const isIndex = (v: unknown): v is CheckpointMeta[] =>
+  Array.isArray(v) && v.every((m: Partial<CheckpointMeta> | null) => typeof m?.file === "string" && typeof m.runId === "string" && typeof m.step === "number");
+
+/** The shelf, read under the lock its caller holds. */
+async function shelfNow(): Promise<CheckpointMeta[]> {
+  const d = await dir();
+  // No index yet is an empty shelf; one whose last update did not finish is the shelf before it. An index the
+  // store would not read is no answer: taking it for empty would let the next save write an index without the others.
+  const index = (await readRecord(INDEX, isIndex)) ?? [];
   const present = new Set<string>();
   for await (const [name] of (d as unknown as { entries(): AsyncIterable<[string, FileSystemHandle]> }).entries()) present.add(name);
   return index.filter((m) => present.has(m.file));
 }
 
+export async function listCheckpoints(): Promise<CheckpointMeta[]> {
+  return stored(() => locked(shelfNow));
+}
+
 export async function recordCheckpoint(meta: CheckpointMeta): Promise<void> {
-  const list = (await listCheckpoints()).filter((m) => m.file !== meta.file);
-  list.push(meta);
-  await writeFile("index.json", new TextEncoder().encode(JSON.stringify(list)));
+  return stored(() =>
+    locked(async () => {
+      const list = (await shelfNow()).filter((m) => m.file !== meta.file);
+      list.push(meta);
+      await writeRecord(INDEX, list, isIndex);
+    }),
+  );
+}
+
+const manifestFile = (runId: string) => `${runId}.run.json`;
+
+const isManifest = (v: unknown): v is RunManifest =>
+  typeof v === "object" && v !== null && typeof (v as RunManifest).runId === "string" && Array.isArray((v as RunManifest).checkpoints) && Array.isArray((v as RunManifest).interventions);
+
+/** A run's manifest (its checkpoints and intervention log), or its version before a save that did not finish; null when there is neither. */
+export async function readManifest(runId: string): Promise<RunManifest | null> {
+  return stored(() => locked(() => readRecord(manifestFile(runId), isManifest)));
+}
+
+/** Rewrites a run's manifest, as each save of it does. */
+export async function writeManifest(m: RunManifest): Promise<void> {
+  return stored(() => locked(() => writeRecord(manifestFile(m.runId), m, isManifest)));
 }
 
 export async function forgetCheckpoint(file: string): Promise<void> {
-  const list = (await listCheckpoints()).filter((m) => m.file !== file);
-  await writeFile("index.json", new TextEncoder().encode(JSON.stringify(list)));
-  // The checkpoint and its mutation-edges sidecar (the lineage inspector's), either possibly already gone.
-  for (const f of [file, `${file}.edges`]) {
-    try {
-      await removeFile(f);
-    } catch {
-      // already gone
-    }
-  }
+  return stored(() =>
+    locked(async () => {
+      // The checkpoint and its mutation-edges sidecar (the lineage inspector's), either possibly already gone. The
+      // files go first: a removal the store refuses leaves the shelf naming a checkpoint that is still there.
+      for (const f of [file, `${file}.edges`]) {
+        try {
+          await removeFile(f);
+        } catch (e) {
+          if (!missingFile(e)) throw e;
+        }
+      }
+      const list = (await shelfNow()).filter((m) => m.file !== file);
+      await writeRecord(INDEX, list, isIndex);
+    }),
+  );
 }

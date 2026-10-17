@@ -29,8 +29,8 @@ import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type
 import { LabExecution, PondWaitingError, huntArmError } from "./execution.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
 import { createLabSession } from "./session.ts";
-import type { CensusMsg, FromWorker, Keep, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
-import { forgetCheckpoint, listCheckpoints, readFile, recordCheckpoint, writeFile } from "./opfs.ts";
+import type { CensusMsg, CheckpointMeta, FromWorker, Keep, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
+import { StorageError, forgetCheckpoint, listCheckpoints, missingFile, readFile, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "./opfs.ts";
 
 /**
  * The interactive lab's observation settings (fixed; there is no per-run
@@ -119,6 +119,11 @@ let autoQueued = false;
 let breeder = false;
 /** The step of a pond cycle being applied with donors given in breeder mode, for its display message. */
 let handCycle = -1;
+/**
+ * Why this browser keeps no checkpoints here (private browsing, for one), or null when it does. Found once, before
+ * "ready": without storage the world still runs, downloads and opens files; saving, restoring and jumping refuse.
+ */
+let storageOff: string | null = null;
 
 let lastStatsAt = 0;
 let lastCensusAt = 0;
@@ -156,6 +161,8 @@ const raf: (cb: () => void) => void =
     : (cb) => setTimeout(cb, 16);
 
 async function init(c: OffscreenCanvas, w: number, h: number) {
+  // Asked alongside the GPU, so the page knows before the first world whether Save can keep anything.
+  const storage = storageProblem();
   if (!navigator.gpu) throw new Error("WebGPU is not available in this browser (or in workers).");
   const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
   if (!adapter) throw new Error("No WebGPU adapter found.");
@@ -170,7 +177,8 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
   ctx = canvas.getContext("webgpu") as GPUCanvasContext;
   format = navigator.gpu.getPreferredCanvasFormat();
   ctx.configure({ device, format, alphaMode: "opaque" });
-  post({ type: "ready", adapter: adapterDesc });
+  storageOff = await storage;
+  post({ type: "ready", adapter: adapterDesc, storage: storageOff });
   raf(frame);
 }
 
@@ -261,7 +269,8 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
   rateAt = performance.now();
   session.adopt({ runId: manifest.runId, presetId: manifest.presetId, seed: manifest.seed, step: sim.step, ruleVersion: manifest.ruleVersion });
   post({ type: "loaded", manifest, step: sim.step });
-  session.noteShelf(await listCheckpoints());
+  // The world is adopted whatever storage says: a shelf it would not list stays empty until a later listing.
+  await refreshShelf();
   publishSession();
 }
 
@@ -307,7 +316,6 @@ function startGenomes(m: RunManifest): GenomeSource | null {
 
 /** A checkpoint's own copy of the run's mutation edges up to it: a save writes only new files, so a failed one cannot damage another checkpoint's genealogy. */
 const edgesFile = (checkpoint: string) => `${checkpoint}.edges`;
-
 /** A world loaded from a file outside any run's history: its genealogy starts here. */
 function freshLineage(state: WorldState, source: string): AdoptLineage {
   return { edges: new MutationEdges(), dropped: 0, edgesFrom: state.step, known: [{ source, genomes: genomesOf(state, state.cfg) }] };
@@ -344,12 +352,17 @@ async function drawFrame(w: World) {
     post({ type: "error", message: w.execution.failure ?? (e instanceof Error ? e.message : String(e)) });
   }
   // A cycle waiting for donors holds a pre-cycle state, which no checkpoint may carry: the save follows the pick.
-  if (settled && !autoQueued && !w.execution.failure && !w.execution.awaiting && w.sim.step - w.lastCheckpoint >= AUTO_EVERY) {
+  if (settled && !storageOff && !autoQueued && !w.execution.failure && !w.execution.awaiting && w.sim.step - w.lastCheckpoint >= AUTO_EVERY) {
     autoQueued = true;
     exclusive(() => autoSave(w))
       .catch((e) => {
         if (!current(w)) return;
         if (session.noteStep(w.sim.step)) publishSession();
+        // Storage, not the world: it plays on, and the next try waits a full interval rather than a frame.
+        if (e instanceof StorageError && !w.execution.failure) {
+          w.lastCheckpoint = w.sim.step;
+          return post({ type: "notice", message: `No automatic copy this time. ${e.message}` });
+        }
         post({ type: "error", message: `automatic checkpoint: ${e instanceof Error ? e.message : e}` });
       })
       .finally(() => (autoQueued = false));
@@ -504,8 +517,34 @@ async function probe(x: number, y: number) {
   });
 }
 
+/** The checkpoints on the shelf; none when this browser keeps no checkpoints. */
+async function shelf(): Promise<CheckpointMeta[]> {
+  return storageOff ? [] : listCheckpoints();
+}
+
+/**
+ * Notes the shelf as storage lists it. A listing the store refuses leaves the shelf as it was and says so, since
+ * whatever was asked has already been done. True when the shelf was listed.
+ */
+async function refreshShelf(): Promise<boolean> {
+  try {
+    session.noteShelf(await shelf());
+    return true;
+  } catch (e) {
+    if (!(e instanceof StorageError)) throw e;
+    post({ type: "notice", message: `Couldn't read the list of saved copies just now (${e.detail}), so it may be out of date. The world itself is fine.` });
+    return false;
+  }
+}
+
+/** Refuses, before anything moves, a request that needs the checkpoint store when this browser keeps none. */
+function needStorage() {
+  if (storageOff) throw new StorageError("This browser isn't letting the lab keep copies here (private browsing?). Download still gives you a file.", storageOff);
+}
+
 /** Writes a checkpoint of the settled world, the run's mutation edges and its manifest. */
 async function saveCheckpoint(w: World, auto: boolean) {
+  needStorage();
   const { state, observer, advanced, edges, dropped } = await w.execution.checkpoint();
   const m = w.manifest;
   const bytes = encodeCheckpoint(state, observer);
@@ -514,7 +553,7 @@ async function saveCheckpoint(w: World, auto: boolean) {
   await writeFile(file, bytes);
   await writeFile(edgesFile(file), new Uint8Array(w.execution.edges.words().buffer));
   m.checkpoints.push({ step: state.step, file, hash: stateHash(state), interventions: m.interventions.length, edges, dropped, edgesFrom: w.lineage.edgesFrom, ...(auto ? { auto } : {}) });
-  await writeFile(`${m.runId}.run.json`, new TextEncoder().encode(JSON.stringify(m)));
+  await writeManifest(m);
   await recordCheckpoint({ file, runId: m.runId, step: state.step, bytes: bytes.byteLength, savedAt: new Date().toISOString(), ...(auto ? { auto } : {}) });
   w.lastCheckpoint = state.step;
   return { file, step: state.step, bytes: bytes.byteLength, advanced };
@@ -540,13 +579,13 @@ function waitingForDonors(w: World, request: ToWorker["type"], what: string): bo
 async function accountManual(w: World, file: string) {
   session.noteManual(file);
   session.noteStep(w.sim.step);
-  session.noteShelf(await listCheckpoints());
+  await refreshShelf();
   publishSession();
 }
 
 /**
  * Plant, restore, or import. False leaves the Lab world in place: either uncovered work was not
- * acknowledged, or the save that would have covered it was refused.
+ * acknowledged, or the save or download that would have kept it was refused.
  */
 async function gateReplace(command: "plant" | "restore" | "import", keep?: Keep): Promise<boolean> {
   const gate = session.replace(command, keep);
@@ -554,9 +593,14 @@ async function gateReplace(command: "plant" | "restore" | "import", keep?: Keep)
     publishSession();
     return false;
   }
-  if (gate !== "save-then") return true;
+  if (gate === "proceed") return true;
   const w = world;
   if (!w || waitingForDonors(w, command === "plant" ? "load" : command, command)) return false;
+  // The file is posted before the replace begins, so the page has it even if the replacement then fails.
+  if (gate === "download-then") {
+    await exportWorld(w);
+    return true;
+  }
   const saved = await saveCheckpoint(w, false);
   await accountManual(w, saved.file);
   return true;
@@ -574,16 +618,24 @@ async function save() {
 /** An automatic checkpoint, then the run's oldest automatic ones beyond AUTO_KEEP are removed. */
 async function autoSave(w: World) {
   if (!current(w) || w.execution.failure) return;
-  await saveCheckpoint(w, true);
+  const saved = await saveCheckpoint(w, true);
+  session.noteSaved(saved.file);
   const m = w.manifest;
   // Only this run's own: a fork's manifest also lists its parent's checkpoints, which the parent still uses.
-  for (const c of prunableAuto(m, AUTO_KEEP)) {
-    await forgetCheckpoint(c.file);
-    m.checkpoints.splice(m.checkpoints.indexOf(c), 1);
+  const prune = prunableAuto(m, AUTO_KEEP);
+  try {
+    for (const c of prune) {
+      await forgetCheckpoint(c.file);
+      m.checkpoints.splice(m.checkpoints.indexOf(c), 1);
+    }
+    if (prune.length) await writeManifest(m);
+  } catch (e) {
+    // The new copy is kept; older ones the store would not let go wait for the next automatic copy.
+    if (!(e instanceof StorageError)) throw e;
+    post({ type: "notice", message: `Kept an automatic copy at t=${saved.step.toLocaleString()}, but couldn't finish clearing away older automatic copies (${e.detail}).` });
   }
-  await writeFile(`${m.runId}.run.json`, new TextEncoder().encode(JSON.stringify(m)));
   session.noteStep(w.sim.step);
-  session.noteShelf(await listCheckpoints());
+  await refreshShelf();
   publishSession();
 }
 
@@ -593,14 +645,16 @@ function forkRunId(runId: string): string {
 }
 
 async function restore(file: string, keep?: Keep) {
+  needStorage();
   if (!(await gateReplace("restore", keep))) return;
-  const meta = (await listCheckpoints()).find((c) => c.file === file);
+  const meta = (await shelf()).find((c) => c.file === file);
   if (!meta) throw new Error(`unknown checkpoint ${file}`);
   const { state, observer } = decodeArtifact(await readFile(file));
   let m: RunManifest;
   let lineage: AdoptLineage;
   try {
-    const saved: RunManifest = JSON.parse(new TextDecoder().decode(await readFile(`${meta.runId}.run.json`)));
+    const saved = await readManifest(meta.runId);
+    if (!saved) throw new Error("no manifest");
     const ck = saved.checkpoints.find((c) => c.file === file);
     if (!ck) throw new Error("checkpoint missing from manifest");
     // Continuing exactly where the run left off keeps its id; restoring to
@@ -615,7 +669,10 @@ async function restore(file: string, keep?: Keep) {
       checkpoints: saved.checkpoints.slice(0, saved.checkpoints.indexOf(ck) + 1),
     };
     lineage = await restoredLineage(saved, ck, state);
-  } catch {
+  } catch (e) {
+    // A store that would not read the manifest or the genealogy says nothing about the run: refuse, and keep the
+    // world on screen, rather than fork away the run's history on a passing failure.
+    if (e instanceof StorageError && !missingFile(e)) throw e;
     // No confirmed, intact prior manifest to safely continue: always fork,
     // never reuse the old run's id (a missing/corrupt manifest is not "the
     // same run, resumed", it's a fresh branch from this checkpoint).
@@ -644,7 +701,8 @@ async function restoredLineage(saved: RunManifest, ck: RunManifest["checkpoints"
       const bytes = await readFile(edgesFile(ck.file));
       const edges = new MutationEdges(new Uint32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4));
       if (edges.length === ck.edges && edges.countBefore(state.step) === edges.length) return { edges, dropped: ck.dropped ?? 0, edgesFrom: ck.edgesFrom ?? saved.edgesFrom ?? 0, known };
-    } catch {
+    } catch (e) {
+      if (e instanceof StorageError && !missingFile(e)) throw e;
       // Fall through: the genealogy starts at this checkpoint.
     }
   }
@@ -653,7 +711,7 @@ async function restoredLineage(saved: RunManifest, ck: RunManifest["checkpoints"
 
 /** Files of the checkpoints that still exist (a parent run may have pruned one that a fork's manifest lists). */
 async function filesOnDisk(): Promise<Set<string>> {
-  return new Set((await listCheckpoints()).map((c) => c.file));
+  return new Set((await shelf()).map((c) => c.file));
 }
 
 let lineageTicket = 0;
@@ -680,7 +738,8 @@ async function inspectLineage(key: string, ticket: number) {
     edgesFrom: w.lineage.edgesFrom,
     dropped: w.execution.dropped,
   });
-  const onDisk = await filesOnDisk();
+  // A shelf storage would not list offers no jump: the reading itself does not need it.
+  const onDisk = await filesOnDisk().catch(() => new Set<string>());
   const checkpoints = w.manifest.checkpoints.filter((k) => onDisk.has(k.file)).map((k) => k.step);
   if (ticket !== lineageTicket) return;
   void probeLineage(ancestry, { cancelled: () => ticket !== lineageTicket || !current(w) })
@@ -698,12 +757,13 @@ async function inspectLineage(key: string, ticket: number) {
 async function jump(step: number, key: string | null) {
   const w = world;
   if (!w || waitingForDonors(w, "jump", "jump")) return;
+  needStorage();
   if (!Number.isSafeInteger(step) || step < 0) throw new Error(`cannot jump to step ${step}`);
   const target = jumpTarget(w.manifest.checkpoints, await filesOnDisk(), step);
   if (!target) throw new Error(`no checkpoint of this run at or before step ${step}`);
   const present = await saveCheckpoint(w, false);
   session.noteManual(present.file);
-  session.noteShelf(await listCheckpoints());
+  await refreshShelf();
   // Everything this run logged that the target checkpoint has not seen and that happened before `step`, and a
   // pick at `step` itself: the pond cycle is part of arriving at its boundary, as it is in a world that chooses
   // its own donors, so the world reached there is the one that was bred. The history this log covers ends at
@@ -732,6 +792,11 @@ async function jump(step: number, key: string | null) {
 async function exportRun() {
   const w = world;
   if (!w || waitingForDonors(w, "export", "export")) return;
+  await exportWorld(w);
+}
+
+/** Hands the page the world, settled at its census, as a checkpoint file. Needs no storage. */
+async function exportWorld(w: World) {
   const { state, observer, advanced } = await w.execution.checkpoint();
   if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
   if (session.noteStep(w.sim.step)) publishSession();
@@ -851,9 +916,10 @@ async function setBreeder(on: boolean) {
 self.onmessage = (ev: MessageEvent<ToWorker>) => {
   const m = ev.data;
   const fail = (e: unknown) => {
-    // A request refused because a pond cycle waits for donors (for instance a save that settled onto the boundary) is no failure.
+    // A request refused because a pond cycle waits for donors (for instance a save that settled onto the boundary),
+    // or because the browser would not keep or read a checkpoint, is no failure.
     if (world) session.noteStep(world.sim.step);
-    if (e instanceof PondWaitingError && !world?.execution.failure) {
+    if ((e instanceof PondWaitingError || e instanceof StorageError) && !world?.execution.failure) {
       const command = sessionCommand(m.type);
       if (command) session.noteRefusal(command, e.message);
       if (m.type === "verify") session.cancelCheck();
@@ -919,14 +985,20 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       case "save":
         return save();
       case "listCheckpoints":
-        session.noteShelf(await listCheckpoints());
+        await refreshShelf();
         return publishSession();
       case "restore":
         return restore(m.file, m.keep);
       case "deleteCheckpoint":
-        await forgetCheckpoint(m.file);
-        session.noteShelf(await listCheckpoints());
-        return publishSession();
+        needStorage();
+        try {
+          await forgetCheckpoint(m.file);
+        } finally {
+          // Whatever the store managed, the shelf is read again; unread, a copy that may be gone covers nothing.
+          if (!(await refreshShelf())) session.noteRemoved(m.file);
+          publishSession();
+        }
+        return;
       case "export":
         return exportRun();
       case "import": {
