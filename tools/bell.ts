@@ -59,6 +59,8 @@ const a = parseArgs(Deno.args, {
     return true;
   },
 });
+// A string flag with no operand (last, or followed by another flag) parses as "": stop before any I/O rather than resolve under "/".
+for (const k of ["base", "out", "record"] as const) if (a[k] === "") throw new Error(`--${k} needs a path`);
 const cmd = String(a._[0] ?? "run");
 if (cmd !== "run" || a._.length > 1) throw new Error(`unexpected argument${a._.length > 1 ? "s" : ""} ${a._.map(String).join(" ")} (only "run")`);
 const preliminaryOnly = !!a["preliminary-only"];
