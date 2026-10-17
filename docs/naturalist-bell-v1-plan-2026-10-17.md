@@ -256,7 +256,8 @@ absolute steps:
 - **z:** the v1 envelope z of the eleven signals of A, against the same 9-run reference the digest's band
   comes from (at each census; spread as in A). Rates come from the run's own counters over 10 censuses,
   including censuses before the window.
-- **Windows:** W = 10 censuses, no burn-in, counting windows whose first census lies in the item's window.
+- **Windows:** W = 10 censuses, no burn-in, counting only windows whose ten censuses all lie inside the item's
+  window (inclusive). The last start is the window's end − 900.
   D_T2 is the largest windowed minimum of side·z over signals and sides.
 - **Threshold:** Z_T2 = the largest D_T2 among the 10 base items. The bases' false alarms are 0 by
   construction and labelled calibration; the code's comparative false alarms are counted on the 20 nudge and
@@ -339,3 +340,6 @@ taken:
   on nudge2 is the comparison.
 - **P3.** The retries could double the call count; the budget covers that now.
 - **P3.** Separate draws can give the same U; that is allowed now, and the draw formula is written down.
+
+A third, focused pass found the six closed except one boundary. T2's code windows could reach 900 steps past
+the item's window; every window now lies inside it.
