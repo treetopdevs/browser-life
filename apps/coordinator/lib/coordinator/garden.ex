@@ -47,16 +47,19 @@ defmodule Coordinator.Garden do
   runner applies only the entries a segment *owns* (step *s* belongs to the
   segment that stepped to *s*: `(start, start + steps]`, plus step 0 for the
   first). So a run and its replay agree on what they apply iff the slice a
-  segment owns never changes after any island was assigned it. That is what the
-  *frontier* guarantees: `frontier_day/2` is one past the highest day that has
-  ever had an attempt, a letter is only ever placed on or dropped from a day at
-  or beyond it, and a letter on day *d* lands at step `(d + 1) * D`, owned by
-  day *d* itself. A day that has been attempted therefore never gains or loses
-  an entry. (An upstream reject resets the later days' attempts, so the
-  frontier can retreat; that is sound because nothing attempted is left on the
-  days it frees, and the letters there are `"waiting"` again, droppable and
-  re-fillable. The frontier is always computed fresh from `segs`, never
-  stored.)
+  segment owns never changes while the segment holds any attempt. That is what
+  the *frontier* guarantees: `frontier_day/2` is one past the highest day that
+  holds an attempt, a letter is only ever placed on or dropped from a day at or
+  beyond it, and a letter on day *d* lands at step `(d + 1) * D`, owned by day
+  *d* itself. A day's letters are therefore fixed for as long as it holds any
+  attempt. That is not forever: an upstream reject resets the later days
+  (their attempts cleared, their results discarded), so the frontier can
+  retreat and a reset day is open again, its letters `"waiting"`, droppable and
+  re-fillable. That is sound because nothing attempted is left on the days it
+  frees: every run and replay of a day, before or after a reset, carries the
+  letters the day held while that attempt existed, so a run and its replay
+  still always carry the same letters. The frontier is always computed fresh
+  from `segs`, never stored.
 
   ## Known limits
 
@@ -216,8 +219,10 @@ defmodule Coordinator.Garden do
   # ---- segment queries ----
 
   @doc """
-  One past the highest day with any attempt (run or verify, any outcome), 0 if
-  none: letters may only be placed on or dropped from days at or beyond it.
+  One past the highest day that holds any attempt (run or verify, any
+  outcome), 0 if none: letters may only be placed on or dropped from days at or
+  beyond it. It can retreat: an upstream reject clears the later days'
+  attempts, which reopens them.
   """
   @spec frontier_day(t, segs) :: non_neg_integer
   def frontier_day(_g, segs) do

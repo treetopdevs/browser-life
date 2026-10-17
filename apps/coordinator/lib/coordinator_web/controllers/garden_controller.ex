@@ -40,13 +40,14 @@ defmodule CoordinatorWeb.GardenController do
   # `GET /api/public/garden` (the configured public garden) and
   # `GET /api/public/gardens/:name`. The body is cached already encoded; a
   # crowd missing the cache together makes one Queue call
-  # (`LetterLimiter.fetch_view/2`).
+  # (`LetterLimiter.fetch_view/2`), and a 503 when that call outlasts the wait.
   def show(conn, _params) do
     with {:ok, name} <- garden_name(conn),
          {_w, _h} <- LetterLimiter.garden_world(name),
          body when is_binary(body) <- LetterLimiter.fetch_view(name, fn -> view(name) end) do
       send_view(conn, body)
     else
+      :busy -> busy(conn)
       _ -> not_found(conn)
     end
   end
@@ -102,9 +103,11 @@ defmodule CoordinatorWeb.GardenController do
     with true <- name?(name),
          true <- is_binary(digest) and Regex.match?(@digest_re, digest),
          {_w, _h} <- LetterLimiter.garden_world(name),
-         path when is_binary(path) <- Map.get(checkpoints(name), digest) do
+         checkpoints when is_map(checkpoints) <- checkpoints(name),
+         path when is_binary(path) <- Map.get(checkpoints, digest) do
       conn |> put_resp_content_type("application/octet-stream") |> send_file(200, path)
     else
+      :busy -> busy(conn)
       _ -> not_found(conn)
     end
   end
@@ -205,7 +208,7 @@ defmodule CoordinatorWeb.GardenController do
   end
 
   # `%{digest => path}` of the garden's servable checkpoints, from the cache or
-  # (one coalesced call per cache period) the Queue.
+  # (one coalesced call per cache period) the Queue; `:busy` past the wait.
   defp checkpoints(name),
     do: LetterLimiter.fetch_checkpoints(name, fn -> {:cache, Queue.garden_checkpoints(name)} end)
 
@@ -266,4 +269,12 @@ defmodule CoordinatorWeb.GardenController do
 
   defp error(conn, status, why), do: conn |> put_status(status) |> json(%{error: why})
   defp not_found(conn), do: error(conn, 404, "not found")
+
+  # Another request has been fetching this from the Queue for longer than the
+  # cache's wait; asking the Queue as well would make a crowd a stampede.
+  defp busy(conn),
+    do:
+      conn
+      |> put_resp_header("retry-after", "1")
+      |> error(503, "the garden is busy; retry shortly")
 end

@@ -150,13 +150,45 @@ defmodule Coordinator.LetterLimiterTest do
       LetterLimiter.invalidate("g")
       assert LetterLimiter.cached_view("g") == :miss
       assert LetterLimiter.cached_checkpoints("g") == :miss
-      assert LetterLimiter.generation("g") == gen + 1
+      {incarnation, n} = gen
+      assert LetterLimiter.generation("g") == {incarnation, n + 1}
 
       # The slow reader that took `gen` before the invalidation arrives late.
       LetterLimiter.put_view("g", "stale", gen)
       LetterLimiter.put_checkpoints("g", %{"x" => "/q"}, gen)
       assert LetterLimiter.cached_view("g") == :miss
       assert LetterLimiter.cached_checkpoints("g") == :miss
+    end
+
+    test "a refresh paused across a limiter restart cannot store its older answer" do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      parent = self()
+      # Generation n = 1 before the restart, as it will be again after it.
+      LetterLimiter.invalidate("g")
+
+      paused =
+        Task.async(fn ->
+          LetterLimiter.fetch_view("g", fn ->
+            send(parent, :asking)
+            receive do: (:go -> {:cache, "before the letter"})
+          end)
+        end)
+
+      assert_receive :asking
+      :ok = Supervisor.terminate_child(Coordinator.Supervisor, LetterLimiter)
+      {:ok, _} = Supervisor.restart_child(Coordinator.Supervisor, LetterLimiter)
+
+      # A letter is posted (n = 1 again, in a new incarnation) and its view cached.
+      LetterLimiter.invalidate("g")
+
+      assert LetterLimiter.fetch_view("g", fn -> {:cache, "after the letter"} end) ==
+               "after the letter"
+
+      # The paused refresh resumes: its caller gets its answer, the cache does not.
+      send(paused.pid, :go)
+      assert Task.await(paused) == "before the letter"
+      assert LetterLimiter.cached_view("g") == {:ok, "after the letter"}
+      assert LetterLimiter.fetch_view("g", fn -> flunk("asked") end) == "after the letter"
     end
 
     test "with a ttl of zero nothing is cached" do

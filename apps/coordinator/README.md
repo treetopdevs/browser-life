@@ -106,11 +106,14 @@ fails if a real response's keys and the fixture's differ.
   runner's ownership rule: an intervention at step *s* belongs to the segment
   that stepped *to* *s*). The day's end checkpoint, and every later day, carries
   it.
-* **The frontier.** A letter may only be carried by a day that no island has
-  ever been assigned (to run or verify). A posted letter goes to the first such
-  day whose budget (`letters.perDay`) is not yet full. Once any island is
-  assigned a day, its letters are fixed: a run and its replay always carry the
-  same letters.
+* **The frontier.** A letter may only be carried by a day that holds no
+  attempt (no island is running or verifying it, and none has). A posted letter
+  goes to the first such day whose budget (`letters.perDay`) is not yet full. A
+  day's letters are fixed for as long as it holds any attempt. An upstream
+  reject that resets a day (clears its attempts) discards its results and
+  reopens it: its letters are `"waiting"` again and may be dropped or joined by
+  new ones before it is run afresh. So a run and its replay still always carry
+  the same letters.
 
 ### `GET /api/public/garden` and `GET /api/public/gardens/:name`
 
@@ -122,6 +125,10 @@ two seconds old (it is cached outside the queue process), plus the time one
 refresh takes while a crowd is served the expired copy; a letter posted or
 dropped through these routes is never followed by an older view. All times are
 integers, ms since the epoch; all steps are absolute.
+
+`503 {"error": "the garden is busy; retry shortly"}` with `Retry-After: 1`: the
+view was not cached and another request has been fetching it for longer than
+the wait (two seconds); retry. The 200 body is unchanged.
 
 | Key | Meaning |
 | --- | --- |
@@ -180,6 +187,8 @@ public and carry nothing about who wrote them.
 * `201 {"letter": <letter>}` (status `"waiting"`, with its `day` and `landsAtStep`).
 * `422 {"error": ...}`: not a stone as above, or its centre is outside the world.
 * `413`: a body over 1 KB (a letter is about 40 bytes; the body is not parsed past that).
+  For a chunked request (no `Content-Length`) the limit is under 1 KB: a body of
+  exactly 1,024 bytes may also be refused.
 * `415`: a body that is not JSON (a form, multipart, text); it is not read. The
   route is recognised however its path is percent-encoded, so neither limit
   can be stepped around.
@@ -201,7 +210,8 @@ public and carry nothing about who wrote them.
 ### `GET /api/public/gardens/:name/checkpoints/:digest`
 
 The end checkpoint (`.blck` bytes, `application/octet-stream`) of a **verified**
-day of that garden, by its digest; 404 for anything else. This is the fork: any
+day of that garden, by its digest; 404 for anything else; 503 with
+`Retry-After: 1`, as for the view, while the lookup is busy. This is the fork: any
 lab or headless runner can continue the garden from it, with or without the
 letters that came after.
 

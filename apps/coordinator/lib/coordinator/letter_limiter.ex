@@ -80,17 +80,25 @@ defmodule Coordinator.LetterLimiter do
   computed before a letter was posted can neither be stored over the
   invalidation nor served after it.
 
+  A generation is `{incarnation, n}`: `incarnation` is drawn when this process
+  creates its tables, so the counters a restart starts again from zero can
+  never make an answer read before the restart look current after it.
+
   `fetch_view/2` and `fetch_checkpoints/2` are what the controller uses: they
   coalesce misses so a crowd arriving at once costs the Queue one call, not one
-  each. The one request that wins `:ets.insert_new/2` on a refresh marker asks
-  the Queue; meanwhile, if an entry of the current generation exists but has
-  expired, everyone else is served it as it is; if there is none (a cold cache,
-  or just after an invalidation), everyone else polls for the winner's entry
-  for up to 2 s and asks the Queue only after that. A marker older than
-  5 s (its refresher crashed) is taken over. What remains stale: an
-  expired entry may be served for as long as the refresh takes (on top of
-  `garden_cache_ms`), but never across an invalidation, since `invalidate/1`
-  deletes the entry and the marker and bumps the generation every read checks.
+  each. The one request that wins `:ets.insert_new/2` on a refresh marker
+  checks the cache again (it may have been filled since it looked) and only
+  then asks the Queue; meanwhile, if an entry of the current generation exists
+  but has expired, everyone else is served it as it is; if there is none (a
+  cold cache, or just after an invalidation), everyone else polls for the
+  winner's entry for up to `garden_cache_wait_ms` (2 s by default) and then
+  answers `:busy` (the controller's 503 with `Retry-After: 1`). Nobody but the
+  marker's holder asks the Queue while the marker is live; a marker older than
+  5 s (its refresher crashed or is stuck) may be taken over by one caller.
+  What remains stale: an expired entry may be served for as long as the
+  refresh takes (on top of `garden_cache_ms`), but never across an
+  invalidation, since `invalidate/1` deletes the entry and the marker and bumps
+  the generation every read checks.
 
   If the tables are missing (this process is restarting) the limiter fails
   open and the cache reports a miss: a supervisor hiccup must not turn into a
@@ -104,11 +112,13 @@ defmodule Coordinator.LetterLimiter do
   @views :coordinator_garden_views
   @gardens {__MODULE__, :gardens}
   @salt_key :boot_salt
+  # Kept beside the salt, so `reset/0` (which clears the views) keeps it.
+  @incarnation_key :incarnation
   # How often the sweep runs at most; a shorter window sweeps as often as that.
   @sweep_max_ms 60_000
   # A refresh marker older than this belongs to a refresher that died.
   @marker_ms 5_000
-  # How long a request on a cold key waits for another's refresh.
+  # How long a request on a cold key waits for another's refresh (default).
   @wait_ms 2_000
   @poll_ms 10
 
@@ -216,15 +226,21 @@ defmodule Coordinator.LetterLimiter do
 
   # ---- client API: the cache ----
 
+  @typedoc "A cache generation: this process's incarnation and a count of invalidations."
+  @type gen :: {term, non_neg_integer}
+
   @doc "The cache generation of garden `name`: read it *before* asking the Queue, and hand it back to `put_view/3` or `put_checkpoints/3`."
-  @spec generation(String.t()) :: non_neg_integer
+  @spec generation(String.t()) :: gen
   def generation(name) do
+    [{_, incarnation}] = :ets.lookup(@counters, @incarnation_key)
+
     case :ets.lookup(@views, {:gen, name}) do
-      [{_, n}] -> n
-      _ -> 0
+      [{_, n}] -> {incarnation, n}
+      _ -> {incarnation, 0}
     end
   rescue
-    ArgumentError -> 0
+    # Tables gone (restarting): a generation no entry can carry.
+    _ in [ArgumentError, MatchError] -> {nil, 0}
   end
 
   @doc "The cached encoded view of garden `name`, if there is a fresh one."
@@ -232,7 +248,7 @@ defmodule Coordinator.LetterLimiter do
   def cached_view(name), do: cached(name, name)
 
   @doc "Caches the encoded view `body` of an existing garden `name` for `garden_cache_ms`, unless `invalidate/1` ran since `gen` was read."
-  @spec put_view(String.t(), binary, non_neg_integer) :: :ok
+  @spec put_view(String.t(), binary, gen) :: :ok
   def put_view(name, body, gen) when is_binary(body), do: put(name, name, body, gen)
 
   @doc "The cached `%{digest => path}` of garden `name`'s servable checkpoints, if there is a fresh one."
@@ -240,21 +256,22 @@ defmodule Coordinator.LetterLimiter do
   def cached_checkpoints(name), do: cached(name, {:cps, name})
 
   @doc "Caches `checkpoints` (as `cached_checkpoints/1` returns them); like `put_view/3`."
-  @spec put_checkpoints(String.t(), map, non_neg_integer) :: :ok
+  @spec put_checkpoints(String.t(), map, gen) :: :ok
   def put_checkpoints(name, checkpoints, gen) when is_map(checkpoints),
     do: put(name, {:cps, name}, checkpoints, gen)
 
   @doc """
   The encoded view of garden `name`, from the cache or (coalesced, see the
   moduledoc) from `compute`, which returns `{:cache, body}` (stored) or
-  `{:skip, value}` (returned as it is, not stored). With the cache off every
-  call is `compute`.
+  `{:skip, value}` (returned as it is, not stored); `:busy` when another
+  request has held the refresh for longer than the wait. With the cache off
+  every call is `compute`.
   """
-  @spec fetch_view(String.t(), (-> {:cache, binary} | {:skip, term})) :: term
+  @spec fetch_view(String.t(), (-> {:cache, binary} | {:skip, term})) :: term | :busy
   def fetch_view(name, compute), do: fetch(name, name, compute)
 
   @doc "The servable checkpoints of garden `name`, like `fetch_view/2`."
-  @spec fetch_checkpoints(String.t(), (-> {:cache, map} | {:skip, term})) :: term
+  @spec fetch_checkpoints(String.t(), (-> {:cache, map} | {:skip, term})) :: term | :busy
   def fetch_checkpoints(name, compute), do: fetch(name, {:cps, name}, compute)
 
   @doc "Forgets the cached view and checkpoints of `name` and bumps its generation (a letter was posted or dropped, or the garden founded)."
@@ -272,11 +289,12 @@ defmodule Coordinator.LetterLimiter do
     ArgumentError -> :ok
   end
 
-  @doc "Deletes every counter, cached view and refresh marker (tests); the boot salt stays, and so does the registry (it is not in these tables)."
+  @doc "Deletes every counter, cached view and refresh marker, and starts a new incarnation of the generations (tests); the boot salt stays, and so does the registry (it is not in these tables)."
   @spec reset() :: :ok
   def reset do
     :ets.select_delete(@counters, [{{{:_, :_}, :_}, [], [true]}])
     :ets.delete_all_objects(@views)
+    :ets.insert(@counters, {@incarnation_key, make_ref()})
     :ok
   rescue
     ArgumentError -> :ok
@@ -299,6 +317,7 @@ defmodule Coordinator.LetterLimiter do
     :ets.new(@counters, [:named_table, :public, :set, write_concurrency: true])
     :ets.new(@views, [:named_table, :public, :set, read_concurrency: true])
     :ets.insert(@counters, {@salt_key, :crypto.strong_rand_bytes(16)})
+    :ets.insert(@counters, {@incarnation_key, make_ref()})
     schedule_sweep()
     {:ok, %{}}
   end
@@ -360,14 +379,15 @@ defmodule Coordinator.LetterLimiter do
         end
 
       :none ->
-        wait(name, key, compute, mono() + @wait_ms)
+        wait(name, key, compute, mono() + wait_ms())
     end
   end
 
   # Cold key: refresh if we can claim it, else wait for whoever did. Stops
   # waiting as soon as an entry appears or the marker is gone (its refresher
-  # finished without storing, e.g. an invalidation moved the generation), and
-  # after `@wait_ms` asks the Queue regardless.
+  # finished without storing, e.g. an invalidation moved the generation; then
+  # one waiter claims it). While a live marker stands nobody else asks the
+  # Queue: past the wait the answer is `:busy`.
   defp wait(name, key, compute, deadline) do
     case entry(name, key) do
       {_, value} ->
@@ -383,7 +403,7 @@ defmodule Coordinator.LetterLimiter do
               Process.sleep(@poll_ms)
               wait(name, key, compute, deadline)
             else
-              compute.() |> elem(1)
+              :busy
             end
         end
     end
@@ -394,13 +414,20 @@ defmodule Coordinator.LetterLimiter do
     gen = generation(name)
 
     try do
-      case compute.() do
-        {:cache, value} ->
-          put(name, key, value, gen)
+      # Someone may have filled the cache between our look and our claim.
+      case entry(name, key) do
+        {:fresh, value} ->
           value
 
-        {:skip, value} ->
-          value
+        _ ->
+          case compute.() do
+            {:cache, value} ->
+              put(name, key, value, gen)
+              value
+
+            {:skip, value} ->
+              value
+          end
       end
     after
       # Exactly our marker: a newer one (after an invalidation) is not ours.
@@ -491,5 +518,6 @@ defmodule Coordinator.LetterLimiter do
     do: max(Application.get_env(:coordinator, :garden_letter_window_ms, 3_600_000), 1)
 
   defp ttl, do: Application.get_env(:coordinator, :garden_cache_ms, 2_000)
+  defp wait_ms, do: Application.get_env(:coordinator, :garden_cache_wait_ms, @wait_ms)
   defp mono, do: System.monotonic_time(:millisecond)
 end

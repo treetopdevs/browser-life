@@ -17,6 +17,7 @@ defmodule CoordinatorWeb.GardenApiTest do
     :garden_refusals_per_address,
     :garden_letter_window_ms,
     :garden_cache_ms,
+    :garden_cache_wait_ms,
     :trust_forwarded_for,
     :public_garden,
     :admin_token,
@@ -889,6 +890,60 @@ defmodule CoordinatorWeb.GardenApiTest do
         end)
 
       assert tasks |> Task.await_many(10_000) |> Enum.all?(&(response(&1, 200) == "x"))
+    end
+
+    test "a refresh outlasting the wait: the others get a 503, and never ask the queue", %{
+      conn: _conn,
+      dir: dir
+    } do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      Application.put_env(:coordinator, :garden_cache_wait_ms, 300)
+      garden!()
+      run_and_verify(dir, join("A"), join("B"))
+
+      for path <- [
+            "/api/public/gardens/commons",
+            "/api/public/gardens/commons/checkpoints/#{dg(0)}"
+          ] do
+        {[winner], waiters} =
+          counting_queue_calls(fn ->
+            winner = crowd(1, path)
+            until(fn -> mailbox() >= 1 end)
+            waiters = 20 |> crowd(path) |> Task.await_many(10_000)
+            assert mailbox() == 1
+            {winner, waiters}
+          end)
+
+        for c <- waiters do
+          assert %{"error" => "the garden is busy; retry shortly"} = json_response(c, 503)
+          assert get_resp_header(c, "retry-after") == ["1"]
+        end
+
+        assert winner |> Task.await(10_000) |> response(200)
+      end
+    end
+
+    test "a refresh marker that outlives its refresher blocks only until it expires", %{
+      conn: conn
+    } do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      Application.put_env(:coordinator, :garden_cache_wait_ms, 100)
+      garden!()
+      views = :coordinator_garden_views
+      now = System.monotonic_time(:millisecond)
+
+      # A refresher that died holding the marker: nobody asks the queue.
+      :ets.insert(views, {{:refresh, "commons"}, now, make_ref()})
+
+      without_queue(fn ->
+        assert conn |> get("/api/public/gardens/commons") |> json_response(503)
+      end)
+
+      # Five seconds on, the marker is taken over and the view fetched.
+      :ets.insert(views, {{:refresh, "commons"}, now - 5_001, make_ref()})
+
+      assert %{"name" => "commons"} =
+               conn |> get("/api/public/gardens/commons") |> json_response(200)
     end
 
     test "a letter posted over HTTP is still seen by its poster", %{conn: conn} do
