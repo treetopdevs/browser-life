@@ -5,7 +5,7 @@ import {
   type FeedResult, type Intervention, type PondTerm, type WorldConfig, type WorldState,
 } from "@bl/schema";
 import type { GpuSim } from "@bl/sim-gpu";
-import type { Census } from "@bl/metrics";
+import { buildFirstsInput, firstsContext, type Census, type FirstsContext, type FirstsInput } from "@bl/metrics";
 import {
   applyBoundary,
   cellsAtBoundary,
@@ -33,7 +33,12 @@ interface ExecutionOptions {
   lineage?: { edges: MutationEdges; dropped: number };
   waitForIdle: () => Promise<unknown>;
   isCurrent: () => boolean;
-  onObservation?: (census: Census, dropped: number) => void;
+  /**
+   * Display and observers of the host, after a census is committed. `firsts` reads that census into the input of the
+   * log of firsts (`@bl/metrics`): a pure read, and call it synchronously inside this callback, since the tracker it
+   * reads mutates at the next census.
+   */
+  onObservation?: (census: Census, dropped: number, firsts?: () => FirstsInput) => void;
   /** Display only, after a pond boundary's cycle (or, for arm cont, its record) has been applied at `step`. */
   onPondCycle?: (cycle: PondCycle, step: number) => void;
   onDisplayError?: (message: string) => void;
@@ -107,6 +112,8 @@ export class LabExecution {
   /** Mutation edges drained at each census, in step order: the lineage inspector's genealogy. */
   readonly edges: MutationEdges;
   private droppedEvents: number;
+  /** What the log of firsts needs of this world's config, built once. */
+  private readonly firstsCtx: FirstsContext;
 
   constructor(private readonly sim: LabSimulation, private readonly settings: ObserverSettings, private readonly options: ExecutionOptions) {
     const huntError = huntArmError(sim.cfg);
@@ -138,6 +145,7 @@ export class LabExecution {
     this.cursor = { observed: sim.step };
     this.edges = options.lineage?.edges ?? new MutationEdges();
     this.droppedEvents = options.lineage?.dropped ?? 0;
+    this.firstsCtx = firstsContext(sim.cfg, settings.censusEvery);
     if (this.edges.countBefore(sim.step) !== this.edges.length) throw new Error("mutation edges run past the simulation's step");
   }
 
@@ -371,6 +379,7 @@ export class LabExecution {
         this.check();
         if (snap.step !== step) throw new Error(`observation at t=${snap.step}, expected the census boundary t=${step}`);
         const observed = observeCensus(this.obs, this.sim.cfg, snap, ledger.events.length + ledger.dropped);
+        const firsts = () => buildFirstsInput(observed.census, this.obs.tracker, snap.genomeHead, observed.events, this.firstsCtx);
         // Breeder mode: the census is taken, and the cycle waits for a person's donors (`resolvePond`).
         if (picks === undefined && this.pausesAt(step)) {
           const pre = await this.sim.readState();
@@ -380,13 +389,13 @@ export class LabExecution {
           // With no pond occupied there is nothing to choose: the history has ended and its cycle runs as ever.
           if (survey.suggested.length) {
             this.awaitingPond = survey;
-            this.display(() => this.options.onObservation?.(observed.census, ledger.dropped));
+            this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts));
             this.display(() => this.options.onPondAwait?.(survey));
             return true;
           }
         }
         const ponds = await this.settle(step, picks);
-        this.display(() => this.options.onObservation?.(observed.census, ledger.dropped));
+        this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts));
         if (ponds) this.display(() => this.options.onPondCycle?.(ponds, step));
         return false;
       }, this.replay, (iv, result) => {

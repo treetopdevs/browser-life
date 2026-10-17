@@ -2,6 +2,7 @@ import type { Intervention, WorldConfig, InitParams, PondArm, PondScore, PondTer
 import type { GpuViewMode, ViewRect } from "@bl/sim-gpu";
 import type { ObserverSettings } from "@bl/runner";
 import type { LineageView } from "@bl/lineage";
+import type { FirstsEntry, FirstsRule, FirstsSummary } from "@bl/metrics";
 
 export interface RunManifest {
   /** Storage concurrency token; unrelated to physics or replay. Absent on a new run. */
@@ -180,6 +181,47 @@ export interface LineageMsg {
   checkpoints: number[];
 }
 
+/** What the session card says about the log of interventions and the picks (computed in the worker; the page only paints). */
+export interface SessionFacts {
+  /**
+   * Pond cycles resolved by a pick in the log. The log does not say who chose, so the worker keeps a note beside it:
+   * `byHand` is a pick whose donors differ from the rule's order for that cycle (a person's picks equal to the rule's
+   * count as the rule's own), `byRule` one the rule chose, `unknown` a pick this page never saw chosen (a world
+   * restored from an earlier visit).
+   */
+  picks: { total: number; byHand: number; byRule: number; unknown: number };
+  wounds: number;
+  /** Feeds that added nutrient / drains that took it out. */
+  feeds: number;
+  drains: number;
+  /** The latest Replay twin check, as the session view holds it. */
+  replay: ReplayReading | null;
+  /** The world's step when these facts were taken: a replay check that ends before it covers an earlier stretch. */
+  step: number;
+  /** Pond boundaries whose cycle has run (or, for arm cont, been recorded) in the history this page holds, with or without a pick; 0 without ponds. */
+  cycles: number;
+  /** Pond cycles before that history (a world opened from a file mid-run): who chose their donors is not known here. */
+  cyclesBefore: number;
+}
+
+/**
+ * The log of firsts of the world on screen, in full. Posted when a world is adopted, whenever an entry fires, with
+ * each displayed census, and after a wound, feed, pick or replay check (the card's counts change then too).
+ */
+export interface FirstsMsg {
+  type: "firsts";
+  /** The worker's number for the world (PondAwaitMsg.world). */
+  world: number;
+  /** watchedFrom is the first census after a plant (== settings.censusEvery): the page says "watching since t=…" when this is false. */
+  fromStart: boolean;
+  entries: FirstsEntry[];
+  summary: FirstsSummary;
+  facts: SessionFacts;
+  rules: FirstsRule[];
+  /** The log stopped (a detector error); entries stay as they were and export is refused. */
+  stopped: string | null;
+}
+
 export type ToWorker =
   | { type: "init"; canvas: OffscreenCanvas; width: number; height: number }
   | { type: "load"; presetId: string; seed: number; overrides?: Partial<WorldConfig>; keep?: Keep }
@@ -205,6 +247,9 @@ export type ToWorker =
   | { type: "restore"; file: string; keep?: Keep }
   | { type: "deleteCheckpoint"; file: string }
   | { type: "export" }
+  /** The session file: the world settled at its census, its history and its firsts, as JSON (`FromWorker` "sessionFile"). A refusal arrives as `refused` with this request. */
+  /** `world`: the worker's number for the world the card shows (`FirstsMsg.world`); a request for a world since replaced is refused. */
+  | { type: "sessionExport"; world: number; id: number }
   | { type: "import"; bytes: ArrayBuffer; name: string; keep?: Keep }
   | { type: "verify"; steps: number }
   | { type: "lineage"; key: string }
@@ -227,12 +272,14 @@ export type FromWorker =
   | { type: "highlight"; key: string | null }
   | { type: "session"; view: SessionView }
   | { type: "exported"; bytes: ArrayBuffer; name: string }
+  | FirstsMsg
+  | { type: "sessionFile"; world: number; id: number; text: string; name: string }
   | { type: "notice"; message: string }
   /**
    * Request `request` was refused because a pond cycle is waiting for its donors, or because the browser would not
    * keep or read a Checkpoint. Not a failure: the world is usable, and whoever made the request (the lineage
    * panel's inspection or jump) must stop waiting for it.
    */
-  | { type: "refused"; request: ToWorker["type"]; message: string }
+  | { type: "refused"; request: ToWorker["type"]; message: string; /** The page's request id, when the request carried one ("sessionExport"). */ id?: number }
   /** A replay check of `steps` steps from step `from`, which the live world has now run: its state hash and the twin's. */
   | { type: "verify"; ok: boolean; detail: string; from: number; steps: number; live: string; twin: string };
