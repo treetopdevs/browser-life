@@ -5,10 +5,14 @@
 // Protocol: a private token (from join) authenticates every call; each task
 // carries a lease that must accompany heartbeats, uploads and completion. A
 // start checkpoint whose digest differs from the predecessor's report is
-// rejected, which makes the coordinator recompute that predecessor.
+// rejected, which makes the coordinator recompute that predecessor. A task
+// this island cannot run as given (a scheduled feed the world refuses, see
+// the catch in `runIsland`) is reported failed under its lease, which stops
+// the run there instead of offering the segment to the next island.
 
 import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@bl/schema";
 import { continuationError, decodeArtifact, immigrantError, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
+import { InterventionError } from "./interventions.ts";
 import { observationDigests } from "./stitch.ts";
 
 /** What this island's code can run, sent as the JSON body of every
@@ -20,15 +24,25 @@ import { observationDigests } from "./stitch.ts";
  * moduledoc). `"ponds-v2"` adds the transition hunt's arms nat and shuf
  * (conditions pond-nat and pond-shuf): older code throws on those arms in
  * the same way, so the coordinator hands a run of either only to an island
- * that lists both. */
-export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2"];
+ * that lists both. `"interventions-v1"` is scheduled interventions
+ * (RunSpec.interventions, interventions.ts): the coordinator carries an
+ * experiment's lesions and feeds whole in every segment's task spec, and
+ * hands such a segment, run or verify, only to an island that lists this.
+ * Older code knows no such field: it would run the segment clean and report
+ * a digest that disagrees with every capable island's, a divergence with no
+ * real disagreement in it. */
+export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1"];
 
 /** Why this island will not run `spec`, or null. A branch run (RunSpec.branch)
  * starts from a source checkpoint that only tools/run.ts reads, from a local
  * bundle: branches are not distributed, the coordinator never builds one, and
  * a task that carries one is refused before anything is fetched. A picked run
  * (RunSpec.picked) takes its donors from a picker or a record that no segment
- * carries, so it is refused the same way. */
+ * carries, so it is refused the same way. A run with scheduled interventions
+ * (RunSpec.interventions) is not refused: the coordinator carries the
+ * schedule (capability `"interventions-v1"` above), `runExperiment` applies
+ * only the entries this segment owns, and its interventions.jsonl is a
+ * verified segment file that stitchRun joins. */
 export function specRefusal(spec: RunSpec): string | null {
   if ((spec as { branch?: unknown }).branch !== undefined) return "the spec is a branch run (spec.branch); branches are not distributed, so an island does not run them";
   if ((spec as { picked?: unknown }).picked !== undefined) return "the spec is a picked run (spec.picked); picked runs are not distributed, so an island does not run them";
@@ -394,7 +408,25 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
     } catch (e) {
       // A lost lease (reassigned after a long stall, or the run was blocked) is not fatal.
       if (e instanceof HttpError && e.status === 409) log(`  task abandoned: ${e.message}`);
-      else throw e;
+      // Nor is a scheduled feed the world refuses (past MATTER_MAX at that step, which no
+      // creation-time check can see; see Coordinator.Queue's moduledoc): a property of the
+      // spec against its world, the same on every island, so crashing here would only take
+      // this island down and the next one after it, and leaving the task would only have the
+      // next island fail it again once the lease lapsed. Reported instead: the coordinator
+      // marks the segment failed with this reason under this lease, blocks the run's later
+      // segments and never offers it again, so the experiment stops there, visibly. Only a
+      // lost lease (409: reclaimed meanwhile, or the segment was blocked) is not fatal here
+      // either; a coordinator that cannot be reached still throws.
+      else if (e instanceof InterventionError) {
+        log(`  cannot apply the schedule as given, leaving the task: ${e.message}`);
+        try {
+          await postJson(`/api/segments/${seg.id}/fail?${q()}`, { lease, reason: e.message.slice(0, 500) });
+          log(`  reported ${seg.run} #${seg.index} as failed; the run stops there`);
+        } catch (f) {
+          if (f instanceof HttpError && f.status === 409) log(`  task abandoned: ${f.message}`);
+          else throw f;
+        }
+      } else throw e;
     } finally {
       clearInterval(beat);
     }

@@ -634,4 +634,288 @@ defmodule CoordinatorWeb.ApiControllerTest do
                complete(t) |> json_response(409)
     end
   end
+
+  # Scheduled interventions over the wire (see Coordinator.Queue's moduledoc and
+  # queue_test.exs's "scheduled interventions" for the rules themselves): the
+  # JSON an administrator posts, the 422 a bad schedule gets, the task spec an
+  # island receives, the gate on "interventions-v1", and a verify completion's
+  # interventions.jsonl digest compared like the other optional files.
+  describe "scheduled interventions" do
+    @schedule [
+      %{"step" => 0, "kind" => "lesion", "x" => 1, "y" => 2, "r" => 6},
+      %{"step" => 700, "kind" => "lesion", "x" => 20, "y" => 20, "r" => 4},
+      %{
+        "step" => 1000,
+        "kind" => "feed",
+        "x" => 30,
+        "y" => 30,
+        "r" => 3,
+        "amount" => 16
+      }
+    ]
+    @wounded Map.merge(%{@spec_ok | "experiment" => "a-wounded"}, %{
+               "verifyFraction" => 1.0,
+               "interventions" => @schedule
+             })
+
+    test "a schedule is accepted, a feed in a pond world is refused with the runner's reason, and the listing carries it",
+         %{conn: conn} do
+      assert %{"segments" => 2} = conn |> post("/api/experiments", @wounded) |> json_response(200)
+
+      assert %{"error" => "interventions[2]: feeding is not defined for pond worlds" <> _} =
+               conn
+               |> post("/api/experiments", %{
+                 @wounded
+                 | "experiment" => "pond-fed",
+                   "presetId" => "ponds-small",
+                   "segmentSteps" => 1000,
+                   "censusEvery" => 100,
+                   "steps" => 1000
+               })
+               |> json_response(422)
+
+      assert %{"error" => "interventions[1]: a lesion has no key \"amount\"" <> _} =
+               conn
+               |> post("/api/experiments", %{
+                 @wounded
+                 | "experiment" => "odd",
+                   "interventions" => [
+                     Enum.at(@schedule, 0),
+                     Map.put(Enum.at(@schedule, 1), "amount", 4)
+                   ]
+               })
+               |> json_response(422)
+
+      assert %{"spec" => %{"interventions" => @schedule}} =
+               build_conn() |> get("/api/experiments/a-wounded") |> json_response(200)
+    end
+
+    test "POST /api/segments/:id/fail: the island token, a lease and the reject's lease rule; the failure reaches /api/status, the listing, and no further /api/next",
+         %{conn: conn} do
+      conn |> post("/api/experiments", @wounded) |> json_response(200)
+      {a, token_a} = join(conn)
+      {b, token_b} = join(build_conn())
+      caps = %{"capabilities" => ["interventions-v1"]}
+      t = next_with(a, token_a, caps)
+      assert t["kind"] == "run" and t["segment"]["index"] == 0
+      id = t["segment"]["id"]
+
+      reason =
+        "the feed at t=0 failed: feed refused: 128614400 quanta would take the world past MATTER_MAX (67108864); it holds 2621440"
+
+      fail = fn conn, island, body ->
+        post(conn, "/api/segments/#{id}/fail?island=#{island}", body)
+      end
+
+      assert build_conn()
+             |> fail.(a, %{"lease" => t["lease"], "reason" => reason})
+             |> json_response(401)
+
+      assert %{"error" => "expected lease"} =
+               build_conn()
+               |> authed(token_a)
+               |> fail.(a, %{"reason" => reason})
+               |> json_response(422)
+
+      assert %{"error" => "segment not assigned" <> _} =
+               build_conn()
+               |> authed(token_b)
+               |> fail.(b, %{"lease" => t["lease"], "reason" => reason})
+               |> json_response(409)
+
+      assert %{"error" => "segment not assigned" <> _} =
+               build_conn()
+               |> authed(token_a)
+               |> fail.(a, %{"lease" => "wrong", "reason" => reason})
+               |> json_response(409)
+
+      assert %{"error" => "unknown segment"} =
+               build_conn()
+               |> authed(token_a)
+               |> post("/api/segments/seg-999/fail?island=#{a}", %{"lease" => t["lease"]})
+               |> json_response(409)
+
+      assert %{"ok" => true} =
+               build_conn()
+               |> authed(token_a)
+               |> fail.(a, %{"lease" => t["lease"], "reason" => reason})
+               |> json_response(200)
+
+      # The lease is spent: a second report is refused.
+      assert %{"error" => "segment not assigned" <> _} =
+               build_conn()
+               |> authed(token_a)
+               |> fail.(a, %{"lease" => t["lease"], "reason" => reason})
+               |> json_response(409)
+
+      status = build_conn() |> get("/api/status") |> json_response(200)
+      assert status["counts"] == %{"failed" => 1, "blocked" => 1}
+      assert [%{"failed" => 1, "blocked" => 1, "verified" => 0, "diverged" => 0}] = status["runs"]
+
+      assert [
+               %{
+                 "segment" => ^id,
+                 "index" => 0,
+                 "kind" => "run",
+                 "island" => ^a,
+                 "by" => "test",
+                 "reason" => ^reason,
+                 "failedAt" => at
+               }
+             ] =
+               status["failures"]
+
+      assert is_integer(at) and at > 0
+
+      listing = build_conn() |> get("/api/experiments/a-wounded") |> json_response(200)
+      [first, second] = listing["segments"]
+      assert first["status"] == "failed"
+
+      assert first["failure"] == %{
+               "kind" => "run",
+               "island" => a,
+               "by" => "test",
+               "reason" => reason,
+               "failedAt" => at
+             }
+
+      assert second["status"] == "blocked"
+      refute Map.has_key?(second, "failure")
+
+      assert %{"kind" => "idle"} = next_with(a, token_a, caps)
+      assert %{"kind" => "idle"} = next_with(b, token_b, caps)
+    end
+
+    test "a /fail reason that is not a string counts as none, and one of stacked combining marks is stored bounded in bytes",
+         %{conn: conn} do
+      conn |> post("/api/experiments", @wounded) |> json_response(200)
+
+      conn
+      |> post("/api/experiments", %{@spec_ok | "experiment" => "b-plain"})
+      |> json_response(200)
+
+      {a, token_a} = join(conn)
+      caps = %{"capabilities" => ["interventions-v1"]}
+      t = next_with(a, token_a, caps)
+
+      assert %{"ok" => true} =
+               build_conn()
+               |> authed(token_a)
+               |> post("/api/segments/#{t["segment"]["id"]}/fail?island=#{a}", %{
+                 "lease" => t["lease"],
+                 "reason" => %{"deep" => [1]}
+               })
+               |> json_response(200)
+
+      t2 = next_with(a, token_a, caps)
+      assert String.starts_with?(t2["segment"]["run"], "b-plain/")
+
+      assert %{"ok" => true} =
+               build_conn()
+               |> authed(token_a)
+               |> post("/api/segments/#{t2["segment"]["id"]}/fail?island=#{a}", %{
+                 "lease" => t2["lease"],
+                 "reason" => "x" <> String.duplicate("́", 100_000)
+               })
+               |> json_response(200)
+
+      failures = (build_conn() |> get("/api/status") |> json_response(200))["failures"]
+      assert [none, stacked] = Enum.sort_by(failures, & &1["run"])
+      assert none["reason"] == ""
+      assert String.valid?(stacked["reason"]) and byte_size(stacked["reason"]) <= 2000
+      assert String.starts_with?(stacked["reason"], "x́")
+    end
+
+    test "/api/next hands scheduled work only with \"interventions-v1\", with the whole schedule in the task spec",
+         %{conn: conn} do
+      # "a-wounded" sorts ahead of "b-plain" in pick_task's order.
+      conn |> post("/api/experiments", @wounded) |> json_response(200)
+
+      conn
+      |> post("/api/experiments", %{@spec_ok | "experiment" => "b-plain"})
+      |> json_response(200)
+
+      {old, old_token} = join(conn)
+      {new, new_token} = join(build_conn())
+
+      t = next_with(old, old_token, %{"capabilities" => ["ponds-v1", "ponds-v2"]})
+      assert t["kind"] == "run" and String.starts_with?(t["segment"]["run"], "b-plain/")
+      refute Map.has_key?(t["spec"], "interventions")
+      assert %{"kind" => "idle"} = next_with(old, old_token, %{"capabilities" => ["ponds-v1"]})
+
+      w = next_with(new, new_token, %{"capabilities" => ["interventions-v1"]})
+      assert w["kind"] == "run" and String.starts_with?(w["segment"]["run"], "a-wounded/spots/")
+      assert w["spec"]["interventions"] == @schedule
+      assert w["spec"]["steps"] == 500
+    end
+
+    test "a verify completion's interventions.jsonl digest is accepted and compared like the other optional files",
+         %{conn: conn} do
+      conn |> post("/api/experiments", @wounded) |> json_response(200)
+      {a, token_a} = join(conn)
+      {b, token_b} = join(build_conn())
+      caps = %{"capabilities" => ["interventions-v1"]}
+      names = @observation_files ++ ["interventions.jsonl"]
+      sha = fn s -> :crypto.hash(:sha256, s) |> Base.encode16(case: :lower) end
+
+      put = fn path, body ->
+        build_conn()
+        |> authed(token_a)
+        |> put_req_header("content-type", "application/octet-stream")
+        |> put(path, body)
+      end
+
+      run_and_verify = fn index, reported ->
+        t = next_with(a, token_a, caps)
+        assert t["kind"] == "run" and t["segment"]["index"] == index
+        q = "island=#{a}&lease=#{t["lease"]}"
+        bin = Coordinator.CheckpointTest.build(500 * (index + 1), seed: 1)
+
+        assert %{"digest" => digest} =
+                 put.("/api/segments/#{t["segment"]["id"]}/checkpoint?#{q}", bin)
+                 |> json_response(200)
+
+        for name <- names do
+          assert %{"ok" => true} =
+                   put.("/api/segments/#{t["segment"]["id"]}/files/#{name}?#{q}", name)
+                   |> json_response(200)
+        end
+
+        assert build_conn()
+               |> authed(token_a)
+               |> post("/api/segments/#{t["segment"]["id"]}/complete?island=#{a}", %{
+                 "kind" => "run",
+                 "endHash" => digest,
+                 "lease" => t["lease"]
+               })
+               |> json_response(200) == %{"status" => "done"}
+
+        v = next_with(b, token_b, caps)
+        assert v["kind"] == "verify" and v["segment"]["id"] == t["segment"]["id"]
+        assert v["spec"]["interventions"] == @schedule
+
+        assert build_conn()
+               |> authed(token_b)
+               |> post("/api/segments/#{v["segment"]["id"]}/complete?island=#{b}", %{
+                 "kind" => "verify",
+                 "endHash" => digest,
+                 "lease" => v["lease"],
+                 "observationDigests" => reported
+               })
+               |> json_response(200) == %{"status" => "verified"}
+      end
+
+      good = Map.new(names, &{&1, sha.(&1)})
+      run_and_verify.(0, good)
+      run_and_verify.(1, %{good | "interventions.jsonl" => sha.("another wound")})
+
+      assert %{"segments" => [s0, s1]} =
+               build_conn() |> get("/api/experiments/a-wounded") |> json_response(200)
+
+      assert s0["observationsVerified"] == true
+      assert s0["files"]["interventions.jsonl"] == sha.("interventions.jsonl")
+      # The six agree; only interventions.jsonl differs, and that is a mismatch.
+      assert s1["observationsVerified"] == false
+    end
+  end
 end

@@ -13,7 +13,10 @@
 import {
   PRESETS,
   applyExchange,
+  applyFeed,
   cellCount,
+  clampLesionRadius,
+  cloneState,
   exchangeMatterTotal,
   exchangePositions,
   RULE_VERSION,
@@ -38,6 +41,7 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim } from "@bl/sim-gpu";
+import { RefSim, applyLesion } from "@bl/sim-ref";
 import { applyBoundary, branchTransform, cellsAtBoundary, pondColumns, pondContext, pondTsvRows, pondsHeader } from "./migrate.ts";
 import {
   ActivityTracker,
@@ -77,6 +81,7 @@ function speciesTsvRows(step: number, rows: TileSpeciesRow[]): string {
 }
 import { conditionById } from "./conditions.ts";
 import { observeCensus, restoreObservers, serializeObservers } from "./observe.ts";
+import { INTERVENTIONS_FILE, applyScheduled, formatInterventionLine, interventionsError, ownedInterventions, validateInterventions, type InterventionLogEntry, type InterventionSim, type ScheduledIntervention } from "./interventions.ts";
 import { PICKS_FILE, PickError, thrownMessage, formatFailedLine, formatPickLine, makeDonorHook, picksDigest, picksPreflightError, type PickEntry, type PickNote, type Picker } from "./picks.ts";
 
 export interface RunSpec {
@@ -198,6 +203,24 @@ export interface RunSpec {
    * manifest and every output byte-identical to before this field existed.
    */
   picked?: true;
+  /**
+   * Scheduled interventions (interventions.ts): lesions and feeds applied at their absolute steps as the lab's
+   * traversal applies them, so a wounded or fed history, such as a lab manifest's (`labHistory`), runs and replays
+   * headless bit for bit. An entry at step s belongs to the segment that stepped to s (`ownedInterventions`: steps in
+   * (start, start + steps], plus step 0 of a fresh run); the others are not applied and not an error. Applied after the
+   * step's census, boundary transforms and declared-cell pass, before any checkpoint, so a checkpoint carries the
+   * post-intervention state; step 0 is applied on the CPU to the starting world, whose `initHash` stays the preset's.
+   * Every applied entry is a line of `interventions.jsonl` (the manifest's `interventions` block says how many). A feed
+   * moves the conservation baselines by what it moved and is booked in the observer's `fed`; a feed that carries the
+   * `matter` a log says it moved must move exactly that (`InterventionError`). A feed in a pond config is refused
+   * (`interventionsError`). Part of `manifest.spec`, so a wounded run and a clean one are never the same run
+   * (`sameCompletedRun`). Exclusive with nothing: a picked run or a branch may carry lesions. Distributed: the
+   * coordinator carries the whole schedule in every segment's task spec and hands such segments only to islands that
+   * advertise `interventions-v1` (island.ts), each segment logs the entries it owns, and `stitchRun` joins the logs
+   * (stitch.ts). Optional and absent from every default, so a run without it keeps its spec, manifest and every
+   * output byte-identical to before this field existed.
+   */
+  interventions?: ScheduledIntervention[];
 }
 
 /** `RunSpec.branch`: where a branch run's pre-cycle source came from, and which boundary's transform it applies first. */
@@ -380,6 +403,7 @@ export function validateSpec(spec: RunSpec): string[] {
     if (spec.branch !== undefined) errs.push("a picked run cannot be a branch run");
     if (spec.metapopulation !== undefined) errs.push("a picked run cannot belong to a metapopulation");
   }
+  if (spec.interventions !== undefined) errs.push(...validateInterventions(spec.interventions));
   // The pond-specific checks (a pond config, each boundary inside this run and on its census grid)
   // need the config and the start step: `preCycleError`, which runExperiment applies.
   if (spec.preCycleCheckpoints !== undefined) {
@@ -788,6 +812,18 @@ function profileRows(cfg: WorldConfig, c: Census, profiles: ReturnType<typeof li
     .join("");
 }
 
+/** A CPU world as an `InterventionSim`, written in place: the reference lesion (`applyLesion`) and feed (`applyFeed`) that GpuSim's equal bit for bit. */
+function cpuInterventions(state: WorldState): InterventionSim {
+  const ref = new RefSim(state);
+  return {
+    lesion: (x, y, r) => {
+      applyLesion(ref, x, y, r);
+      return clampLesionRadius(state.cfg, r);
+    },
+    feed: async (x, y, r, amount) => applyFeed(state, x, y, r, amount),
+  };
+}
+
 export function runId(spec: RunSpec): string {
   return spec.runId ?? `${spec.experiment}/${spec.presetId}/${spec.condition}/seed-${spec.seed}`;
 }
@@ -856,6 +892,11 @@ export async function runExperiment(
   // (which the two pond cadence guards also rule out) is named as such.
   const preCycleBad = preCycleError(spec, cfg, startStep);
   if (preCycleBad) throw new Error(preCycleBad);
+  // Scheduled interventions (RunSpec.interventions): a centre off the world, a feed in a pond config. Before any state is
+  // built or the GPU touched, like the pre-cycle guard. `owned` is what this call applies; the rest are other segments'.
+  const interventionsBad = interventionsError(spec, cfg, startStep);
+  if (interventionsBad) throw new Error(interventionsBad);
+  const owned = ownedInterventions(spec.interventions, startStep, spec.steps);
   // The step loop below re-chunks in `censusEvery`-sized steps *relative to
   // this call's own start* (unchanged from before migration existed, so a
   // migration-disabled continuation from any step -- aligned or not -- keeps
@@ -906,7 +947,25 @@ export async function runExperiment(
   // before any simulation exists. M_r, the matter total and the ledger baseline are the source's own, which the
   // transform preserves exactly (`branchTransform` asserts it).
   const branched = opts.branchFrom ? branchTransform(init, spec.branch!.boundary, pondContext(init)!) : null;
-  const actualInit = branched?.state ?? exchange?.state ?? init;
+  // Step-0 interventions (RunSpec.interventions) are part of the starting world: applied on the CPU, after the exchange
+  // or branch transform and before the simulation exists, to a copy, so `init` (the manifest's initHash, a caller's
+  // `opts.start`) is never written to. Their log lines and `fed` bookings wait for the files and observers below.
+  let actualInit = branched?.state ?? exchange?.state ?? init;
+  const atZero = owned.filter((e) => e.step === 0);
+  const zeroLog: InterventionLogEntry[] = [];
+  const zeroFed = { matter: 0, feeds: 0 };
+  if (atZero.length) {
+    actualInit = cloneState(actualInit);
+    const cpu = cpuInterventions(actualInit);
+    for (const e of atZero) {
+      const done = await applyScheduled(cpu, e);
+      zeroLog.push(done.entry);
+      if (e.kind === "feed") {
+        zeroFed.matter += done.matter;
+        zeroFed.feeds++;
+      }
+    }
+  }
   const t0tot = totalsOf(cfg, actualInit.cells);
   // Ledger baseline: content + exported heat - absorbed light is invariant.
   // Computed from `actualInit` (post-import when there is one), so this
@@ -915,13 +974,15 @@ export async function runExperiment(
   // exchange itself is accounted for explicitly, once, here, rather than
   // silently weakening the check by comparing against a pre-import baseline
   // an import was never going to match.
-  const baseline = t0tot.energy + actualInit.heatOut - actualInit.lightIn;
-  const startMatter = t0tot.matter;
+  // (`let`: a feed in the loop moves both, as the lab's bookFeed does. A step-0 feed is already in these totals.)
+  let baseline = t0tot.energy + actualInit.heatOut - actualInit.lightIn;
+  let startMatter = t0tot.matter;
   // Pond runs only: M_r and the conservation baseline of every cycle, from this
   // segment's own start (see migrate.ts's PondContext).
   const ponds = pondContext(branched ? init : actualInit);
   const sim = await GpuSim.create(device, actualInit);
   const obs = restoreObservers(opts.observer, settings, cfg);
+  if (zeroFed.feeds) obs.fed = { matter: (obs.fed?.matter ?? 0) + zeroFed.matter, feeds: (obs.fed?.feeds ?? 0) + zeroFed.feeds };
   // Observers start fresh on a branch's post-transform state, which has had its boundary's cycle.
   if (branched) obs.ponds = { lastCycle: branched.ponds.b };
   const { tracker, activity } = obs;
@@ -933,6 +994,10 @@ export async function runExperiment(
   const pickLog: PickEntry[] = [];
   const pickBy = { recorded: 0, live: 0 };
   const note: PickNote = { by: "none", suggested: [] };
+  // A scheduled run's log of what it applied (RunSpec.interventions); `applied` counts its lines. The step-0 entries were applied
+  // above, before this first manifest write, so they are counted in it; the loop's entries are counted as they are logged, and
+  // the manifest is written again at the end.
+  const intervInfo = { file: INTERVENTIONS_FILE, applied: zeroLog.length };
   const manifest = {
     runId: runId(spec),
     spec: normalizedSpec(spec),
@@ -977,6 +1042,8 @@ export async function runExperiment(
     ...(spec.preCycleCheckpoints !== undefined ? { preCycleCheckpoints: preCycleFiles } : {}),
     // Only for a picked run. Its checkpoints are analysis artifacts, not resume points (`picked` refuses `start`).
     ...(picked ? { picks: picksInfo } : {}),
+    // Only when RunSpec.interventions is set, so every other manifest keeps its shape.
+    ...(spec.interventions !== undefined ? { interventions: intervInfo } : {}),
     summary: null as RunSummary | null,
   };
   await sink.writeText("manifest.json", JSON.stringify(manifest, null, 2));
@@ -1004,6 +1071,16 @@ export async function runExperiment(
   if (ponds) await sink.writeText("ponds.tsv", pondsHeader(cfg.pondArm, cfg.pondScore));
   // Only a picked run has a pick log; the donor hook appends its `failed` lines to it.
   if (picked) await sink.writeText(PICKS_FILE, "");
+  // Only a run with a schedule has an intervention log, written empty here like the pick log, the step-0 entries (applied
+  // above, before the simulation existed, and already counted in `intervInfo`) first.
+  const logApplied = async (entry: InterventionLogEntry) => {
+    await sink.appendText(INTERVENTIONS_FILE, formatInterventionLine(entry));
+    intervInfo.applied++;
+  };
+  if (spec.interventions !== undefined) {
+    await sink.writeText(INTERVENTIONS_FILE, "");
+    for (const entry of zeroLog) await sink.appendText(INTERVENTIONS_FILE, formatInterventionLine(entry));
+  }
   const hook = picked
     ? makeDonorHook({ cfg, recorded: new Map((opts.picks ?? []).map((e) => [e.step, e])), picker: opts.picker, implicitRule: opts.implicitRule, sink, note })
     : undefined;
@@ -1046,11 +1123,48 @@ export async function runExperiment(
   // run would.
   let afterCycle = ponds !== null && startStep > 0 && startStep % pondPeriod === 0;
 
+  // Scheduled interventions after this call's start (step 0 was applied before the simulation existed), in list order.
+  // `applyDueAt(step)` applies every one at `step` with the simulation idle, as the lab's traversal does: a feed moves
+  // the conservation baselines by what it moved (the lab's bookFeed) and is booked in the observer's `fed`; each applied
+  // entry is logged. Returns how many it applied.
+  const due = owned.filter((e) => e.step > startStep);
+  let dueAt = 0;
+  const applyDueAt = async (step: number): Promise<number> => {
+    let applied = 0;
+    while (dueAt < due.length && due[dueAt].step === step) {
+      const done = await applyScheduled(sim, due[dueAt]);
+      dueAt++;
+      if (done.entry.kind === "feed") {
+        startMatter += BigInt(done.matter);
+        baseline += done.energy;
+        obs.fed = { matter: (obs.fed?.matter ?? 0) + done.matter, feeds: (obs.fed?.feeds ?? 0) + 1 };
+      }
+      await logApplied(done.entry);
+      applied++;
+    }
+    return applied;
+  };
+
   try {
     for (let s = 0; s < spec.steps; ) {
       const chunk = Math.min(spec.censusEvery, spec.steps - s);
       const deep = obs.censusIdx % spec.deepEvery === 0;
-      for (let k = 0; k < chunk; k += 64) sim.run(Math.min(64, chunk - k));
+      // The census chunk, in batches of at most 64 steps, split at every scheduled step strictly inside it: run to the
+      // step, wait for the device, apply the entries there, go on. An entry at the chunk's end is applied after that
+      // census's boundary transforms below. With no schedule this is the single run of the chunk, as it always was.
+      const chunkEnd = startStep + s + chunk;
+      let reached = startStep + s;
+      const runTo = (target: number) => {
+        for (let k = target - reached; k > 0; k -= 64) sim.run(Math.min(64, k));
+        reached = target;
+      };
+      while (dueAt < due.length && due[dueAt].step < chunkEnd) {
+        const at = due[dueAt].step;
+        runTo(at);
+        await device.queue.onSubmittedWorkDone();
+        await applyDueAt(at);
+      }
+      runTo(chunkEnd);
       s += chunk;
       await device.queue.onSubmittedWorkDone();
 
@@ -1211,13 +1325,17 @@ export async function runExperiment(
         await sink.appendText("cells.tsv", cellPass.births.map((e) => [e.step, e.childHi, e.childLo, e.parentHi, e.parentLo, e.anchor, e.cells, e.mass, e.mutated ? 1 : 0].join("\t")).join("\n") + "\n");
         obs.mutations += cellPass.births.length;
       }
+      // Scheduled interventions at this step: after the census and the boundary transforms above, before any checkpoint
+      // (the lab's order), so the checkpoint and the species census see the post-intervention world.
+      const intervened = (await applyDueAt(c.step)) > 0;
       // One readState() when either a checkpoint or a species census is due -- never two: both
       // need the full genome buffer (species census needs every GENOME_CHANNELS word per cell,
       // not the 4-word genomeHead readSnapshot already read above), so they share this readback.
-      // A pond boundary has already read the post-cycle state back, so it is reused here.
+      // A pond boundary has already read the post-cycle state back, so it is reused here -- unless an
+      // intervention has since changed the world, which makes that readback stale.
       const dueForCheckpoint = spec.checkpointEvery > 0 && (sim.step - startStep) % spec.checkpointEvery === 0;
       if (dueForCheckpoint || spec.speciesCensus) {
-        const st = cellPass.state ?? boundary.state ?? (await sim.readState());
+        const st = intervened ? await sim.readState() : (cellPass.state ?? boundary.state ?? (await sim.readState()));
         if (dueForCheckpoint) {
           const file = `checkpoints/t${String(st.step).padStart(9, "0")}.blck`;
           await sink.writeBytes(file, encodeCheckpoint(st, serializeObservers(obs, st.step, settings)));

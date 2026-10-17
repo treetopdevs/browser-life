@@ -219,7 +219,7 @@ export function createLineagePanel(send: (m: ToWorker) => void, storageOff: () =
       tw,
       el(
         "p",
-        `Expression is measured on a fixed grid of sensor values, not the inputs the lineage met; outputs moved lists each output's largest change on that grid. Jump restores the latest checkpoint at or before a row's minting and replays forward, re-applying what this run logged by hand on the way; anything logged after the row's minting stays with the saved present.${storageOff() ? " This browser isn't letting the lab keep copies here, so there is no checkpoint to jump back to." : ""}`,
+        `Expression is measured on a fixed grid of sensor values, not the inputs the lineage met; outputs moved lists each output’s largest change on that grid. Jump restores the latest checkpoint at or before a row’s minting and replays forward, re-applying the wounds and feeds logged before that step and the donor picks up to and including it.${storageOff() ? " This browser isn’t letting the lab keep copies here, so there is no checkpoint to jump back to." : ""}`,
         "hint",
       ),
     );

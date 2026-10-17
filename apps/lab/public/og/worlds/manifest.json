@@ -282,7 +282,7 @@
     "id": "own-lossy",
     "name": "Lossy taking (kin by lineage)",
     "family": "Who owns the matter",
-    "asks": "If taking a stranger's matter turns it to waste, do bodies stop being eroded?",
+    "asks": "If taking a stranger’s matter turns it to waste, do bodies stop being eroded?",
     "traits": [
       "Brighter toward the bottom",
       "256 × 256 cells",
@@ -324,7 +324,7 @@
     "id": "own-genome-1",
     "name": "Lossy taking (kin within 1 word)",
     "family": "Who owns the matter",
-    "asks": "Lossy taking where kin means a genome within one word of the winner's.",
+    "asks": "Lossy taking where kin means a genome within one word of the winner’s.",
     "traits": [
       "Brighter toward the bottom",
       "256 × 256 cells",
@@ -338,7 +338,7 @@
     "id": "own-genome-3",
     "name": "Lossy taking (kin within 3 words)",
     "family": "Who owns the matter",
-    "asks": "Lossy taking where kin means a genome within three words of the winner's.",
+    "asks": "Lossy taking where kin means a genome within three words of the winner’s.",
     "traits": [
       "Brighter toward the bottom",
       "256 × 256 cells",
@@ -352,7 +352,7 @@
     "id": "own-genome-8",
     "name": "Lossy taking (kin within 8 words)",
     "family": "Who owns the matter",
-    "asks": "Lossy taking where kin means a genome within eight words of the winner's.",
+    "asks": "Lossy taking where kin means a genome within eight words of the winner’s.",
     "traits": [
       "Brighter toward the bottom",
       "256 × 256 cells",
@@ -450,7 +450,7 @@
     "id": "own-cell-wall",
     "name": "Walled cells",
     "family": "Shape and cells",
-    "asks": "Declared cells where taking another cell's matter is lossy, so a cell's matter is never simply absorbed.",
+    "asks": "Declared cells where taking another cell’s matter is lossy, so a cell’s matter is never simply absorbed.",
     "traits": [
       "Brighter toward the bottom",
       "256 × 256 cells",

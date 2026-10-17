@@ -532,7 +532,7 @@ function placeFocusCursor() {
   if (cfg) {
     const x = rect.x + focusX * rect.w, y = rect.y + focusY * rect.h;
     const pond = pondAt(x, y);
-    const verb = tool === "pan" ? "center here" : TOOL_NAMES[tool].toLowerCase();
+    const verb = tool === "pan" ? "centre here" : TOOL_NAMES[tool].toLowerCase();
     $("hover").textContent = `x ${Math.floor(x)}  y ${Math.floor(y)}${pond === null ? "" : ` · pond ${pond}`} · Enter to ${verb}`;
     $("keyboard-position").textContent = `Column ${Math.floor(x)}, row ${Math.floor(y)}.${pond === null ? "" : ` Pond ${pond}.`} Enter to ${verb}.`;
   }
@@ -905,7 +905,7 @@ function onPonds(m: PondsMsg) {
 /** What a pond is ranked by while picking: a term, or the world's own score ("score") when it has one. */
 type RankKey = PondTerm | "speed" | "score";
 const RANK_LABELS: Record<RankKey, string> = {
-  score: "This world's score",
+  score: "This world’s score",
   speed: "Speed",
   drive: "Moving mass",
   seed: "Seed packet",
@@ -914,7 +914,7 @@ const RANK_LABELS: Record<RankKey, string> = {
   reach: "Reach to the edge",
 };
 /** The world's own score, in the measures' names: "drive+seed+body" reads as "Moving mass, seed packet, body size". */
-const scoreLabel = (score: string) => `This world's score: ${pondScoreTerms(score).map((k, i) => (i ? RANK_LABELS[k].toLowerCase() : RANK_LABELS[k])).join(", ")}`;
+const scoreLabel = (score: string) => `This world’s score: ${pondScoreTerms(score).map((k, i) => (i ? RANK_LABELS[k].toLowerCase() : RANK_LABELS[k])).join(", ")}`;
 let awaiting: PondAwaitMsg | null = null;
 /** The ranking on screen when Breed was pressed: shown with the cycle it applies to. Display only; the log holds the donors. */
 let pickedBy: string | null = null;
@@ -1001,7 +1001,7 @@ function syncWaitingControls() {
       else b.removeAttribute("aria-describedby");
     }
     if (id.startsWith("btn-step")) {
-      b.title = waiting ? "The world waits for this cycle's donors: breed first" : id === "btn-step" ? "One step (.)" : "100 steps";
+      b.title = waiting ? "The world waits for this cycle’s donors: breed first" : id === "btn-step" ? "One step (.)" : "100 steps";
       if (waiting) b.setAttribute("aria-describedby", "breed-bar-wait");
       else b.removeAttribute("aria-describedby");
     }
@@ -1110,7 +1110,7 @@ $("breeder-go").onclick = () => {
 function breed(donors: number[]) {
   if (!awaiting || breeding !== null || donors.join() !== picks.join()) return;
   send({ type: "pick", world: awaiting.world, step: awaiting.step, donors });
-  pickedBy = (rankKey ?? "speed") === "score" ? "this world's score" : RANK_LABELS[rankKey ?? "speed"].toLowerCase();
+  pickedBy = (rankKey ?? "speed") === "score" ? "this world’s score" : RANK_LABELS[rankKey ?? "speed"].toLowerCase();
   // One message per cycle: the panel closes when the worker reports the cycle applied, or comes back if it refuses.
   breeding = awaiting.step;
   const go = $<HTMLButtonElement>("breeder-go");
@@ -1431,10 +1431,10 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       if (verifying) {
         verifying = false;
         syncWaitingControls();
-        $("verification-status").textContent = "Couldn't check";
+        $("verification-status").textContent = "Couldn’t check";
         $("verification-status").className = "badge bad";
         $("verify-out").textContent = m.message;
-        setStrip("run-replay", "couldn't check", "bad");
+        setStrip("run-replay", "couldn’t check", "bad");
       }
       endBreeding();
       pendingHands = 0;

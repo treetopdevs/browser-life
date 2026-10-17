@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The shared garden: brainstorm</title>
+<meta name="description" content="Visual companion to docs/shared-garden-brainstorm-2026-10-09.md: the roadmap line's four promises against the repo, whose clock the garden keeps, the garden as a log and not a server, a day at the storm's own scale, letters and the honesty surface, the two tests, the build order and the decisions.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: oklch(94.5% 0.012 88);
+  --surface: oklch(98.5% 0.007 88);
+  --raised: oklch(91.5% 0.014 88);
+  --hover: oklch(87.5% 0.018 88);
+  --line: oklch(83% 0.016 88);
+  --line-soft: oklch(90% 0.012 88);
+  --text: oklch(23% 0.022 80);
+  --muted: oklch(45% 0.022 80);
+  --soft: oklch(51% 0.022 80);
+  --control-line: oklch(62% 0.022 82);
+  --sun: oklch(87% 0.165 93);
+  --sun-soft: oklch(94% 0.08 95);
+  --sun-ink: oklch(49% 0.125 72);
+  --life: oklch(52% 0.15 150);
+  --life-fill: oklch(86% 0.13 150);
+  --error: oklch(51% 0.18 28);
+  --field: oklch(12% 0.01 160);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: oklch(17% 0.012 80);
+    --surface: oklch(20.5% 0.013 80);
+    --raised: oklch(26% 0.016 80);
+    --hover: oklch(31% 0.018 80);
+    --line: oklch(35% 0.016 80);
+    --line-soft: oklch(28% 0.014 80);
+    --text: oklch(94% 0.012 85);
+    --muted: oklch(71% 0.016 85);
+    --soft: oklch(64% 0.016 85);
+    --control-line: oklch(52% 0.016 82);
+    --sun: oklch(85% 0.16 92);
+    --sun-soft: oklch(36% 0.06 85);
+    --sun-ink: oklch(82% 0.14 88);
+    --life: oklch(80% 0.14 150);
+    --life-fill: oklch(74% 0.15 150);
+    --error: oklch(76% 0.14 28);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(17% 0.012 80);
+  --surface: oklch(20.5% 0.013 80);
+  --raised: oklch(26% 0.016 80);
+  --hover: oklch(31% 0.018 80);
+  --line: oklch(35% 0.016 80);
+  --line-soft: oklch(28% 0.014 80);
+  --text: oklch(94% 0.012 85);
+  --muted: oklch(71% 0.016 85);
+  --soft: oklch(64% 0.016 85);
+  --control-line: oklch(52% 0.016 82);
+  --sun: oklch(85% 0.16 92);
+  --sun-soft: oklch(36% 0.06 85);
+  --sun-ink: oklch(82% 0.14 88);
+  --life: oklch(80% 0.14 150);
+  --life-fill: oklch(74% 0.15 150);
+  --error: oklch(76% 0.14 28);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; padding: 0 16px 64px; }
+a { color: inherit; text-decoration-color: var(--control-line); text-underline-offset: .15em; overflow-wrap: anywhere; }
+a:hover { text-decoration-color: currentColor; }
+code { font-family: var(--mono); font-size: .9em; background: var(--raised); padding: .05em .3em; border-radius: 4px; overflow-wrap: anywhere; }
+.wrap { max-width: 1040px; margin: 0 auto; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0 8px; flex-wrap: wrap; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sun-ink); margin: 0; }
+h1 { font-size: clamp(28px, 4.5vw, 40px); line-height: 1.1; letter-spacing: -.02em; font-weight: 800; margin: 6px 0 10px; }
+.lede { font-size: 17px; max-width: 64ch; color: var(--muted); margin: 0 0 6px; }
+.lede strong { color: var(--text); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; padding: 0; list-style: none; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--raised); color: var(--muted); }
+.chip.note { background: var(--sun-soft); color: var(--sun-ink); }
+button.theme { font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--raised); border: 0; border-radius: var(--radius); padding: 7px 12px; cursor: pointer; }
+button.theme:hover { background: var(--hover); }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+section { margin: 40px 0 0; }
+h2 { font-size: 22px; letter-spacing: -.01em; margin: 0 0 4px; }
+h2 .idx { font-family: var(--mono); font-weight: 500; color: var(--sun-ink); margin-right: 8px; font-size: 15px; }
+.sub { color: var(--muted); margin: 0 0 16px; max-width: 72ch; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 16px; overflow-x: auto; }
+figure + figure, figure + .cards, .cards + figure, .cards + .cards { margin-top: 14px; }
+figcaption { font-size: 13px; color: var(--soft); margin-top: 10px; max-width: 80ch; }
+/* A wide diagram keeps its text legible on a phone: the figure scrolls sideways, the page never does. */
+svg.diagram { width: 100%; height: auto; display: block; font-family: var(--sans); min-width: 640px; }
+svg text { fill: var(--text); }
+svg .muted { fill: var(--muted); }
+svg .soft { fill: var(--soft); }
+svg .mono { font-family: var(--mono); }
+svg .box { fill: var(--raised); stroke: var(--line); stroke-width: 1; }
+svg .box.lit { fill: var(--sun-soft); stroke: var(--sun-ink); }
+svg .box.plain { fill: var(--surface); }
+svg .arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+svg .arrow.lit { stroke: var(--sun-ink); }
+svg .later { stroke-dasharray: 4 4; }
+svg .grid { stroke: var(--line-soft); stroke-width: 1; }
+svg .axis { stroke: var(--line); stroke-width: 1; }
+svg .sun { fill: var(--sun); }
+svg .sun-ink { fill: var(--sun-ink); }
+svg .life { fill: var(--life-fill); }
+svg .ink { fill: var(--text); }
+svg .node { fill: var(--surface); stroke: var(--text); stroke-width: 1.5; }
+svg .node.lit { fill: var(--sun); stroke: var(--sun-ink); }
+svg .node.ghost { fill: none; stroke: var(--muted); stroke-dasharray: 3 3; }
+svg .seg { stroke: var(--text); stroke-width: 2; }
+svg .seg.ghost { stroke: var(--muted); stroke-dasharray: 4 4; }
+svg .letter { fill: var(--sun-soft); stroke: var(--sun-ink); stroke-width: 1; }
+svg .wound { fill: var(--muted); }
+svg .stone { fill: var(--sun-ink); }
+svg .far { fill: var(--raised); stroke: var(--line); }
+svg .near { fill: var(--sun-soft); stroke: var(--sun-ink); }
+svg .bar { fill: var(--raised); stroke: var(--line); }
+svg .bar.lit { fill: var(--sun-soft); stroke: var(--sun-ink); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+.cards > *, .grid2 > * { min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 14px 16px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.card p + p { margin-top: 6px; }
+.card .n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--raised); color: var(--text); font: 700 12px/1 var(--mono); margin-right: 8px; vertical-align: -5px; }
+.card.lit { border-color: var(--sun-ink); }
+.card.lit .n { background: var(--sun); color: oklch(23% 0.022 80); }
+.card .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--sun-ink); margin-bottom: 6px; }
+.card .tag.plain { color: var(--soft); }
+/* The honesty surface, as the garden page might show it. Numbers are invented and say so. */
+.garden { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px 20px; max-width: 520px; margin: 0; }
+.garden .name { font-size: 20px; font-weight: 800; letter-spacing: -.01em; margin: 0; }
+.garden .count { font: 700 32px/1.1 var(--mono); font-variant-numeric: tabular-nums; margin: 6px 0 2px; }
+.garden .count small { font: 600 13px var(--sans); color: var(--muted); margin-left: 8px; }
+.garden dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0 0; font-size: 14px; }
+.garden dt { color: var(--soft); }
+.garden dd { margin: 0; }
+.garden dd.lit { color: var(--sun-ink); font-weight: 600; }
+.garden .mock { font-size: 12px; color: var(--soft); margin: 12px 0 0; }
+table { border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+th, td { text-align: left; padding: 4px 12px 4px 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+th { font-weight: 600; color: var(--muted); font-size: 13px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 14px; }
+footer { margin-top: 48px; font-size: 13px; color: var(--soft); border-top: 1px solid var(--line-soft); padding-top: 14px; }
+@media (max-width: 640px) { body { font-size: 14px; } figure { padding: 12px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <p class="eyebrow">Brainstorm · 9 October 2026</p>
+    <h1>The shared garden</h1>
+    <p class="lede">Roadmap bet 4 taken apart: <strong>the garden is a log, not a server</strong>, it keeps archipelago time with Tamagotchi honesty, it is paced, and its first world is the big storm. Visual companion to <a href="shared-garden-brainstorm-2026-10-09.md">shared-garden-brainstorm-2026-10-09.md</a>.</p>
+    <ul class="chips"><li class="chip note">Exploratory, not a plan</li><li class="chip">No physics, no pins, no registration</li><li class="chip">Three decisions taken by the user</li><li class="chip">Storm numbers from the preset itself</li></ul>
+  </div>
+  <button class="theme" type="button" id="theme" aria-pressed="false">Night</button>
+</header>
+
+<section id="promises">
+  <h2><span class="idx">1</span>Four promises in one sentence</h2>
+  <p class="sub">The roadmap line reads as one feature. It is four promises, and the repo has substrate under three of them. The one with none is the thing itself: an open-ended, publicly tended run that advances at a pace people can follow.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 310" role="img" aria-label="Four boxes: a persistent archipelago (highlighted), creatures between islands, feeding, sun and meteor, and games while we are away. Under each: what the repo has and what it lacks.">
+      <g font-size="12">
+        <rect class="box lit" x="10" y="20" width="235" height="272" rx="12"/>
+        <text x="26" y="50" font-size="16" font-weight="700">A persistent archipelago</text>
+        <text x="26" y="70" class="sun-ink" font-size="12" font-weight="600">the thing itself</text>
+        <text x="26" y="100" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">THE REPO HAS</text>
+        <text x="26" y="120">runs cut into segments,</text>
+        <text x="26" y="138">checkpoints stored by content,</text>
+        <text x="26" y="156">a fraction replayed by a</text>
+        <text x="26" y="174">second island</text>
+        <text x="26" y="206" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">IT LACKS</text>
+        <text x="26" y="226">an open-ended run (every</text>
+        <text x="26" y="244">experiment has a fixed step count),</text>
+        <text x="26" y="262">a pace, any input after the start</text>
+
+        <rect class="box" x="258" y="20" width="235" height="272" rx="12"/>
+        <text x="274" y="50" font-size="16" font-weight="700">Creatures between islands</text>
+        <text x="274" y="70" class="muted" font-size="12">a ring, then cuttings</text>
+        <text x="274" y="100" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">THE REPO HAS</text>
+        <text x="274" y="120">ring exchange between runs of</text>
+        <text x="274" y="138">one metapopulation at segment</text>
+        <text x="274" y="156">boundaries, verified like any</text>
+        <text x="274" y="174">segment, matter conserved</text>
+        <text x="274" y="206" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">IT LACKS</text>
+        <text x="274" y="226">the transplant tool: a piece</text>
+        <text x="274" y="244">moved to another place, lineages</text>
+        <text x="274" y="262">relabelled (a listed to-do)</text>
+
+        <rect class="box" x="506" y="20" width="235" height="272" rx="12"/>
+        <text x="522" y="50" font-size="16" font-weight="700">Feeding, sun, meteor</text>
+        <text x="522" y="70" class="muted" font-size="12">letters</text>
+        <text x="522" y="100" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">THE REPO HAS</text>
+        <text x="522" y="120">lesion and feed as logged hand</text>
+        <text x="522" y="138">edits the lab replays on a jump;</text>
+        <text x="522" y="156">wounds and meteors as a world's</text>
+        <text x="522" y="174">own weather</text>
+        <text x="522" y="206" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">IT LACKS</text>
+        <text x="522" y="226">headless runs refuse lesions and</text>
+        <text x="522" y="244">feeds, the coordinator carries none,</text>
+        <text x="522" y="262">the sun is config, not an event</text>
+
+        <rect class="box" x="754" y="20" width="235" height="272" rx="12"/>
+        <text x="770" y="50" font-size="16" font-weight="700">Games while we're away</text>
+        <text x="770" y="70" class="muted" font-size="12">receipts are free</text>
+        <text x="770" y="100" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">THE REPO HAS</text>
+        <text x="770" y="120">everything logged and replayable,</text>
+        <text x="770" y="138">so a prediction, a name or a fork</text>
+        <text x="770" y="156">can always be checked</text>
+        <text x="770" y="206" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">IT LACKS</text>
+        <text x="770" y="226">a world that is tended in public;</text>
+        <text x="770" y="244">M4 did not show open-ended growth,</text>
+        <text x="770" y="262">so a plateau is the standing worry</text>
+      </g>
+    </svg>
+    <figcaption>Three promises can lean on what exists. The first is the product, and it is also the smallest build: a very long run with a pace and a letter queue.</figcaption>
+  </figure>
+</section>
+
+<section id="clock">
+  <h2><span class="idx">2</span>Whose clock, which world, how fast</h2>
+  <p class="sub">The one clarifying question was whose clock the garden keeps. The user answered it, then chose the world, then the pace.</p>
+  <div class="cards">
+    <div class="card"><span class="tag plain">Not chosen</span><h3>Server time</h3><p>A GPU always on. The count climbs while nobody watches. About $1 an hour for an A10G, about $700 a month, and it buys nothing a paced garden lacks.</p></div>
+    <div class="card"><span class="tag plain">Kept as the floor</span><h3>Tamagotchi time</h3><p>The garden sleeps when nobody tends it and says so. "The garden slept 14 hours." Honest, and cheap: one keeper is enough.</p></div>
+    <div class="card lit"><span class="tag">Chosen</span><h3>Archipelago time with Tamagotchi honesty</h3><p>Volunteer islands advance it, the step count is a public number, and it climbs only when someone tends it. Sleeping is shown, never hidden.</p></div>
+  </div>
+  <div class="cards">
+    <div class="card lit"><span class="tag">Chosen</span><h3>A commons on a planet world</h3><p>The big storm: a wandering sun, seasons, a readable signal, heritable shape and wounds, on a 512² jar. Not the breeder made social, which pond worlds would lock out of two of the three letters.</p></div>
+    <div class="card lit"><span class="tag">Chosen</span><h3>Paced</h3><p>The garden advances at a stated rate when tended, not flat out. One Mac is enough to advance it; a second island is what verification needs; more add the ring, not speed.</p></div>
+    <div class="card"><span class="tag plain">Provisional</span><h3>One sun wander a day</h3><p>131,072 steps, released at dawn and taken by whichever island shows up. Under five minutes of one Mac at the smoke run's rate. The stone horizon (section 6) can move it.</p></div>
+  </div>
+</section>
+
+<section id="log">
+  <h2><span class="idx">3</span>A log, not a server</h2>
+  <p class="sub">One canonical history: a chain of verified checkpoints and a sequenced log of letters. Anyone can advance it, verify it or fork it. Nothing in a log is lost, so a day can be re-cut without a bad letter; the public queue and the keeper's veto are for catching it first.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 380" role="img" aria-label="A chain of five checkpoints joined by segments, the last one highlighted as the tip. Letters wait above the chain and land at a boundary called dawn. Below one segment, a dashed copy shows a second island replaying it and asking whether the hash is the same. A dashed branch leaves a checkpoint for a fork, the garden without your stone.">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--text)"/></marker>
+      <marker id="ahm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+      <g font-size="13">
+        <!-- letters -->
+        <text x="500" y="34" class="soft" font-size="11" font-weight="700" letter-spacing=".06em" text-anchor="middle">LETTERS WAITING FOR DAWN</text>
+        <g>
+          <rect class="letter" x="455" y="46" width="30" height="20" rx="3"/><path d="M455 46 L470 58 L485 46" fill="none" stroke="var(--sun-ink)" stroke-width="1"/>
+          <rect class="letter" x="495" y="46" width="30" height="20" rx="3"/><path d="M495 46 L510 58 L525 46" fill="none" stroke="var(--sun-ink)" stroke-width="1"/>
+          <rect class="letter" x="535" y="46" width="30" height="20" rx="3"/><path d="M535 46 L550 58 L565 46" fill="none" stroke="var(--sun-ink)" stroke-width="1"/>
+        </g>
+        <text x="500" y="86" class="muted" font-size="12" text-anchor="middle">a stone here, a dim day, a stone there: public before they land</text>
+        <path class="arrow lit" d="M580 56 C 640 56, 680 100, 700 150" marker-end="url(#ahm)"/>
+        <text x="712" y="118" class="sun-ink" font-size="12" font-weight="600">land at the boundary</text>
+        <text x="712" y="134" class="sun-ink" font-size="12" font-weight="600">(dawn), never mid-segment</text>
+
+        <!-- chain -->
+        <line class="seg" x1="100" y1="180" x2="300" y2="180"/>
+        <line class="seg" x1="300" y1="180" x2="500" y2="180"/>
+        <line class="seg" x1="500" y1="180" x2="700" y2="180"/>
+        <line class="seg" x1="700" y1="180" x2="900" y2="180"/>
+        <circle class="node" cx="100" cy="180" r="12"/>
+        <circle class="node" cx="300" cy="180" r="12"/>
+        <circle class="node" cx="500" cy="180" r="12"/>
+        <circle class="node" cx="700" cy="180" r="12"/>
+        <circle class="node lit" cx="900" cy="180" r="14"/>
+        <text x="100" y="214" text-anchor="middle" class="mono" font-size="12">founding</text>
+        <text x="300" y="214" text-anchor="middle" class="mono" font-size="12">day 1</text>
+        <text x="500" y="214" text-anchor="middle" class="mono" font-size="12">day 2</text>
+        <text x="700" y="214" text-anchor="middle" class="mono" font-size="12">day 3</text>
+        <text x="900" y="214" text-anchor="middle" class="mono" font-size="12" font-weight="700">the tip</text>
+        <text x="900" y="230" text-anchor="middle" class="sun-ink" font-size="12" font-weight="600">= the garden</text>
+        <text x="200" y="168" text-anchor="middle" class="muted" font-size="12">one segment, one day's steps</text>
+        <text x="600" y="168" text-anchor="middle" class="muted" font-size="12">an island takes it, as today</text>
+
+        <!-- verify -->
+        <line class="seg ghost" x1="500" y1="260" x2="700" y2="260"/>
+        <circle class="node ghost" cx="500" cy="260" r="12"/>
+        <circle class="node ghost" cx="700" cy="260" r="12"/>
+        <path class="arrow later" d="M500 194 L500 246" marker-end="url(#ahm)"/>
+        <text x="600" y="282" text-anchor="middle" class="muted" font-size="12">a second island replays the same segment and the same letters</text>
+        <text x="600" y="298" text-anchor="middle" font-size="12" font-weight="600">same digest? then the day is verified</text>
+
+        <!-- fork -->
+        <path class="seg ghost" fill="none" d="M712 186 C 760 230, 800 330, 880 340"/>
+        <circle class="node ghost" cx="890" cy="340" r="12"/>
+        <text x="840" y="372" text-anchor="end" class="muted" font-size="12">a fork: the garden without your stone, on your own GPU</text>
+
+        <!-- honesty strip -->
+        <rect class="box plain" x="20" y="300" width="400" height="62" rx="10"/>
+        <text x="36" y="322" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">THE PAGE SAYS</text>
+        <text x="36" y="341" font-size="12">step count · when it last moved · islands tending today</text>
+        <text x="36" y="356" font-size="12">letters waiting · days verified · what changed since your last visit</text>
+      </g>
+    </svg>
+    <figcaption>Verification is already an island's job, done by a different island than the one that ran the segment. New for the garden: the task carries the day's letters, every day is replayed rather than a fraction, and a day shows as verified only once the second island agreed. With one keeper the page says advanced, not yet verified. A stranger's GPU replays your stone bit for bit before it counts.</figcaption>
+  </figure>
+</section>
+
+<section id="day">
+  <h2><span class="idx">4</span>A day at the storm's own scale</h2>
+  <p class="sub">The storm is already the weather. The strip below is one sun wander of the big storm, drawn from the preset's numbers: how many seasons pass and how often a cell is wounded. A visitor's stone is one mark among them, which is why the prediction in section 6 says small stones will not carry and the sun will.</p>
+  <figure>
+    <div id="strip"></div>
+    <figcaption id="strip-caption">Drawn from the preset: a season of 4,000 steps, a wander of 131,072 steps, each cell wounded about once per 13,000 steps. The flat-out bar uses the 2,000-step smoke run's rate on this Mac, about 500 steps a second.</figcaption>
+  </figure>
+</section>
+
+<section id="letters">
+  <h2><span class="idx">5</span>Letters, the budget, the honesty surface</h2>
+  <p class="sub">The bet says "visitors feeding a world". The user's sighting, one seed by eye, suggests the storm needed food to get going and made worms once food got scarce. The note's hypothesis from it: food makes the storm dull and hunger makes it build. So the budget is flipped, and what the page shows is the promise.</p>
+  <div class="cards">
+    <div class="card lit"><span class="tag">First letter</span><h3>A stone</h3><p>A lesion at a chosen place, landing at dawn. The world stays closed: bodies there turn to waste and their energy to heat. The storm wounds every cell about ten times a wander, so a small stone is one more; if test 6.2 bears that out, the letter that carries is a meteor, radius 32 or more.</p></div>
+    <div class="card lit"><span class="tag">Second letter</span><h3>The sun</h3><p>Dim, brighten or shift it for a span. Light is energy, so matter stays closed. This is the scarcity dial, and nothing in the repo changes light mid-run yet: it is a fourth intervention kind.</p></div>
+    <div class="card"><span class="tag plain">Founding only</span><h3>Food</h3><p>In the preset if a start-nutrient arm finds the middle ground (test 6.1: 32 starves, 64 carpets, 48 is populated on two seeds of three), so the garden is closed from step 0. Otherwise a founding feed, once, by the first visitors. After founding it is closed in matter either way. A feast by vote is a later garden's question.</p></div>
+    <div class="card"><span class="tag plain">The garden's, not yours</span><h3>Budget</h3><p>So many letters a day; the rest wait for the next dawn. One per device per dawn, kept on the device as a courtesy. No account, no cookie. The privacy page gains two lines: letters are public, and the courtesy budget lives on your device. Tending earns no letters: most visitors are on phones.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <section class="garden" aria-labelledby="mock-name" aria-describedby="mock-note">
+      <p class="name" id="mock-name">The commons</p>
+      <p class="count">4,120,000<small>steps</small></p>
+      <dl>
+        <dt>Last moved</dt><dd>14 hours ago, then it slept</dd>
+        <dt>Kept by</dt><dd>one computer most days, three in all</dd>
+        <dt>Waiting for dawn</dt><dd class="lit">3 letters</dd>
+        <dt>Days verified</dt><dd>27 of 31 by another computer; 4 waiting for one</dd>
+        <dt>Since your last visit</dt><dd>2 wanders, 1 lineage gone, 1 new</dd>
+      </dl>
+      <p class="mock" id="mock-note">A mock of the honesty surface. Every number here is invented; the real page derives each from the chain and the log, and "since your last visit" from a step kept on your device.</p>
+    </section>
+    <div class="card"><h3>Games, fast and unjudged</h3>
+      <p><b>Letters with a budget.</b> The garden as a place you write to.</p>
+      <p><b>Dawn predictions.</b> Which lineage holds the field tomorrow? Receipts are free because everything is logged.</p>
+      <p><b>Naming.</b> The first visitor to notice a lineage crossing a threshold names it.</p>
+      <p><b>The garden without your stone.</b> The counterfactual as a toy, on your own GPU.</p>
+      <p><b>The breeder made social.</b> Votes on donors, as the second garden in the ring.</p>
+    </div>
+  </div>
+</section>
+
+<section id="tests">
+  <h2><span class="idx">6</span>Two tests before any coordinator code</h2>
+  <p class="sub">Together they decide whether the big storm can be a garden at all and how fast it should go. Both run on a Mac for nothing and touch no physics. The first has run; its reading was written down first, and its result is below the diagram.</p>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1000 330" role="img" aria-label="Two panels. Left, test 6.1: the big storm at start nutrient 32 and 64, three seeds each, a million steps, read for extinction and worms. Right, test 6.2: a jar with a stone, a near ring around it and the far rest, and a schematic chart where the near-against-far difference falls to the far baseline at the horizon.">
+      <g font-size="13">
+        <rect class="box plain" x="10" y="10" width="470" height="310" rx="12"/>
+        <text x="26" y="36" font-size="16" font-weight="700">6.1 The storm without feeding</text>
+        <text x="26" y="56" class="muted" font-size="12">does the big jar hold up on its own, or die early as the small one did?</text>
+        <text x="26" y="92" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">ARMS</text>
+        <rect class="bar" x="26" y="102" width="200" height="26" rx="6"/><text x="36" y="120" font-size="12">start nutrient 32, as catalogued</text>
+        <rect class="bar lit" x="26" y="136" width="200" height="26" rx="6"/><text x="36" y="154" font-size="12">start nutrient 64, the variant</text>
+        <text x="240" y="120" class="muted" font-size="12">× seeds 1, 2, 3</text>
+        <text x="240" y="154" class="muted" font-size="12">× seeds 1, 2, 3</text>
+        <text x="26" y="192" class="soft" font-size="11" font-weight="700" letter-spacing=".06em">READ, PRE-STATED</text>
+        <text x="26" y="212" font-size="12">holds up: living mass above zero at a million steps, every seed</text>
+        <text x="26" y="230" font-size="12">dies early: extinct before the first full wander (131,072 steps)</text>
+        <text x="26" y="248" font-size="12">worms: share of body cells in long bodies at 250k, 500k, 1M</text>
+        <text x="26" y="266" class="muted" font-size="12">both arms keep the same sun, so the sun is not isolated here</text>
+        <text x="26" y="282" class="muted" font-size="12">a million steps, census every 1,000, checkpoint every 50,000,</text>
+        <text x="26" y="298" class="muted" font-size="12">about 30 minutes a run on this Mac; a catalogue line, not a claim</text>
+
+        <rect class="box plain" x="500" y="10" width="490" height="310" rx="12"/>
+        <text x="516" y="36" font-size="16" font-weight="700">6.2 The stone horizon, which sets the pace</text>
+        <text x="516" y="56" class="muted" font-size="12">how long is a stone still there? needs lesions in headless runs first</text>
+        <!-- jar -->
+        <rect class="far" x="516" y="76" width="150" height="150" rx="6"/>
+        <circle class="near" cx="591" cy="151" r="36"/>
+        <circle class="stone" cx="591" cy="151" r="18"/>
+        <text x="591" y="246" text-anchor="middle" class="muted" font-size="11">stone, near (twice its radius), far</text>
+        <!-- schematic chart -->
+        <line class="axis" x1="700" y1="226" x2="970" y2="226"/>
+        <line class="axis" x1="700" y1="70" x2="700" y2="226"/>
+        <path d="M700 96 C 760 110, 800 170, 860 200 L 970 204" fill="none" stroke="var(--sun-ink)" stroke-width="2"/>
+        <path d="M700 196 L 970 204" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <line x1="860" y1="70" x2="860" y2="226" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 3"/>
+        <text x="712" y="80" class="sun-ink" font-size="11" font-weight="600">near: the twins differ at the stone</text>
+        <text x="708" y="186" class="muted" font-size="11">far: the drift every fork has</text>
+        <text x="860" y="242" text-anchor="middle" font-size="11" font-weight="700">the horizon</text>
+        <text x="835" y="258" text-anchor="middle" class="muted" font-size="11">steps after the stone</text>
+        <text x="516" y="282" class="muted" font-size="12">three checkpoints × three seeds × radii 8, 32, 64; schematic, not data</text>
+        <text x="516" y="298" class="muted" font-size="12">the day = the horizon, floor one wander; one wander until measured</text>
+      </g>
+    </svg>
+    <figcaption>Prediction, written before 6.2 runs: a radius-3 or radius-8 stone is one wound among ten per cell per wander, so its horizon is under one wound period. If so, the stone is a mark with a receipt and the sun is the letter that carries.</figcaption>
+  </figure>
+  <figure>
+    <table aria-label="Test 6.1 results: each arm at seeds 1 to 3, a million steps">
+      <thead><tr><th>Arm</th><th>Seed 1</th><th>Seed 2</th><th>Seed 3</th></tr></thead>
+      <tbody>
+        <tr><td>start nutrient 32, as catalogued</td><td>extinct at 121,000</td><td>extinct at 28,000</td><td>extinct at 66,000</td></tr>
+        <tr><td>start nutrient 64</td><td>alive at 1,000,000; 262,004 of 262,144 cells living; 10 bodies, the largest 257,822 cells</td><td>alive at 1,000,000; 254,660 cells living; 427 bodies, the largest 58,208 cells</td><td>alive at 1,000,000; 262,018 cells living; one body of 261,075 cells</td></tr>
+        <tr><td>start nutrient 48, run after the two above</td><td>alive at 1,000,000; 197,606 cells living; 2,961 bodies, the largest 3,848 cells</td><td>extinct at 84,000</td><td>alive at 1,000,000; 229,946 cells living; 2,345 bodies, the largest 59,883 cells</td></tr>
+        <tr><td>share of body cells in long bodies at 250k / 500k / 1M, nutrient 64</td><td>0.002 / 0.001 / 0.001</td><td>0.001 / 0.005 / 0.902</td><td>0.018 / 0.000 / 0.000</td></tr>
+        <tr><td>the same, nutrient 48</td><td>0.073 / 0.018 / 0.009</td><td>extinct</td><td>0.142 / 0.441 / 0.051</td></tr>
+      </tbody>
+    </table>
+    <figcaption>Run 9 October 2026 on one Mac, by the pre-stated reading. The catalogued jar dies early on every seed, before its first full wander. The doubled jar holds up on every seed: at 1,000,000 steps 97 to 100 percent of the cells are living, and on seeds 1 and 3 the largest census body holds 98 to 99.6 percent of the jar. We read that as a carpet, the census's bodies being pieces of one mat; frames look the same way. Seed 2's 0.902 is not worms: one ring-weight triple holds 98 percent of occupied cells at the end where another held them at 500,000, which reads as a shape-weight sweep, and the carpet's pieces sprawl. The middle arm, 48, is the band between: two seeds of three are populated jars with thousands of small bodies, median about 20 cells, one of them with a corner of worm-like bodies by eye at a million steps, and the third starved at 84,000. The band's width is unmeasured, and one seed in three still starving argues for the founding feed as a letter.</figcaption>
+  </figure>
+</section>
+
+<section id="build">
+  <h2><span class="idx">7</span>What must be built, smallest first</h2>
+  <p class="sub">None of it touches physics or a pin. The first item is also what test 6.2 needs.</p>
+  <div class="cards">
+    <div class="card lit"><h3><span class="n">1</span>Lesions and feeds inside headless segments</h3><p>Replayed from a log slice, with a test that a segmented run with a lesion equals the continuous one byte for byte.</p></div>
+    <div class="card"><h3><span class="n">2</span>The garden in the coordinator</h3><p>A run with a release policy (the pace), a letter queue, segment specs that carry the letters inside them, a public endpoint with the honesty numbers, a fork from any verified checkpoint.</p></div>
+    <div class="card"><h3><span class="n">3</span>The garden page</h3><p>The numbers, the queue, the letter form with its dawn preview, and "since your last visit" from a step kept on the device.</p></div>
+    <div class="card"><h3><span class="n">4</span>The sun letter</h3><p>A fourth intervention kind, applied in the runner and the lab, light being energy. No pin moves because no existing config carries one.</p></div>
+    <div class="card"><h3><span class="n">5</span>The ring</h3><p>A second garden and the metapopulation exchange that exists. Later: feeds as a collective letter, cuttings through the transplant tool, the breeder made social.</p></div>
+  </div>
+</section>
+
+<section id="decisions">
+  <h2><span class="idx">8</span>Decisions</h2>
+  <p class="sub">Three by the user, the rest by the note on "make reasonable recommendations and go". Each of the note's is reversible. Landing anything on main, any coordinator or runner work, and any paid compute still need a yes.</p>
+  <div class="cards">
+    <div class="card lit"><span class="tag">The user's</span><h3>Clock, world, pace</h3><p>Archipelago time with Tamagotchi honesty. A commons on a planet world, the big storm. Paced.</p></div>
+    <div class="card"><span class="tag plain">The note's</span><h3>Letters and budget</h3><p>Stones daily and the sun as the scarcity dial; food only at founding; the budget belongs to the garden; tending earns no letters; the ring before cuttings.</p></div>
+    <div class="card"><span class="tag plain">The note's</span><h3>Provisional pace</h3><p>One sun wander a day, released at dawn, until the stone horizon says otherwise.</p></div>
+    <div class="card"><span class="tag plain">The note's</span><h3>Receipt and name</h3><p>A letter's receipt is the boundary frame before and after plus the near-against-far number over the following day. Working name: the commons. "Kept by one computer so far" while that is true.</p></div>
+    <div class="card"><span class="tag plain">Done today</span><h3>Catalogue and tests</h3><p>The big storm's card is now negative: the three early deaths, and nearly every cell living under doubled start nutrient (read as a carpet), beside the 9 October by-eye sighting. Test 6.1 has run with its reading pre-stated; the middle arm, 48, gave populated jars on two seeds of three. Test 6.2 waits on build item 1.</p></div>
+    <div class="card"><span class="tag plain">Still yours</span><h3>Needs a yes</h3><p>Landing the note, this page and the catalogue line on main. Starting build item 1. Whether a feast by vote ever exists.</p></div>
+  </div>
+</section>
+
+<footer>
+  Written from the roadmap on the home page, <code>docs/plan.md</code>, <code>docs/sandbox-feed.md</code>, <code>docs/sandbox-cells.md</code>, <code>docs/sandbox-wild.md</code>, the storm presets, the intervention schema, the island client and runner, the coordinator queue, the world catalogue and the privacy page, and the user's words in the session. The user's sighting is one seed by eye, not a measurement. The drawings in sections 3 and 6 are diagrams, not data; the table in section 6 is data from the runs of 9 October; section 4 is computed from the preset's numbers and one smoke run's rate.
+</footer>
+
+</div>
+<script>
+(() => {
+  const root = document.documentElement;
+  const btn = document.getElementById("theme");
+  const prefersDark = matchMedia("(prefers-color-scheme: dark)");
+  const apply = (mode) => {
+    if (mode) root.setAttribute("data-theme", mode); else root.removeAttribute("data-theme");
+    const dark = mode ? mode === "dark" : prefersDark.matches;
+    btn.textContent = dark ? "Day" : "Night";
+    btn.setAttribute("aria-pressed", String(dark));
+  };
+  let saved = null;
+  try { saved = localStorage.getItem("bl-theme"); } catch {}
+  apply(saved === "dark" || saved === "light" ? saved : null);
+  btn.addEventListener("click", () => {
+    const dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark" : prefersDark.matches;
+    const next = dark ? "light" : "dark";
+    apply(next);
+    try { localStorage.setItem("bl-theme", next); } catch {}
+  });
+  prefersDark.addEventListener("change", () => { if (!root.getAttribute("data-theme")) apply(null); });
+
+  // Section 4: one wander of the big storm, from the preset (packages/schema/src/presets.ts, STORM and
+  // wild-storm-large) and the smoke run's measured rate. Change the numbers here and the strip follows.
+  const SEASON = 4000;         // seasonPeriod
+  const WANDER = 131072;       // wanderPeriod on the big jar
+  const WOUND_EVERY = 13000;   // each cell wounded about once per this many steps
+  const RATE = 500;            // steps per second, the 2,000-step smoke run on this Mac
+  const HOURS = 8;             // one working day of one Mac tending flat out
+  const seasons = WANDER / SEASON;
+  const wounds = WANDER / WOUND_EVERY;
+  const flatOut = RATE * 3600 * HOURS;
+  const flatWanders = flatOut / WANDER;
+  const fmt = (n) => n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, text) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+    if (text !== undefined) e.textContent = text;
+    return e;
+  };
+  const W = 1000, L = 30, R = 970, H = 344;
+  const svg = el("svg", { class: "diagram", viewBox: `0 0 ${W} ${H}`, role: "img",
+    "aria-label": `One sun wander of the big storm as a strip: ${fmt(WANDER)} steps, about ${seasons.toFixed(0)} seasons, about ${wounds.toFixed(0)} wounds per cell, and one visitor's stone. Below it, one day paced is one wander, and one day flat out on one Mac is about ${fmt(flatWanders)} wanders.` });
+  const x = (step) => L + (R - L) * step / WANDER;
+
+  // the wander
+  svg.appendChild(el("text", { x: L, y: 26, class: "soft", "font-size": 11, "font-weight": 700, "letter-spacing": ".06em" }, "ONE SUN WANDER"));
+  svg.appendChild(el("text", { x: R, y: 26, class: "mono muted", "font-size": 12, "text-anchor": "end" }, `${fmt(WANDER)} steps`));
+  svg.appendChild(el("rect", { x: L, y: 36, width: R - L, height: 28, rx: 6, class: "sun", opacity: .55 }));
+  // the sun's wander offset: a triangle wave, as in the rule (0 up to wanderAmp and back over one wander).
+  // On the big jar the amplitude is 1,024 cells on a 512-cell width, so the sun wraps around twice each way.
+  const tri = `M${x(0).toFixed(1)} 60 L${x(WANDER / 2).toFixed(1)} 40 L${x(WANDER).toFixed(1)} 60`;
+  svg.appendChild(el("path", { d: tri, fill: "none", stroke: "var(--sun-ink)", "stroke-width": 1.5 }));
+  svg.appendChild(el("text", { x: L, y: 82, class: "muted", "font-size": 12 }, "the sun's offset rises to 1,024 cells and falls back (schematic); on the 512-cell jar it wraps around twice each way"));
+
+  // seasons
+  svg.appendChild(el("text", { x: L, y: 112, class: "soft", "font-size": 11, "font-weight": 700, "letter-spacing": ".06em" }, `SEASONS: ABOUT ${seasons.toFixed(0)} IN ONE WANDER`));
+  for (let s = 0; s < WANDER; s += SEASON) {
+    svg.appendChild(el("rect", { x: x(s), y: 120, width: Math.max(1, x(s + SEASON / 2) - x(s)), height: 14, class: "life", opacity: .9 }));
+  }
+  svg.appendChild(el("line", { x1: L, y1: 134.5, x2: R, y2: 134.5, class: "axis" }));
+  svg.appendChild(el("text", { x: L, y: 152, class: "muted", "font-size": 12 }, `a season every ${fmt(SEASON)} steps: the light swells and fades`));
+
+  // wounds per cell, spread evenly (schematic: the real ones are random)
+  svg.appendChild(el("text", { x: L, y: 182, class: "soft", "font-size": 11, "font-weight": 700, "letter-spacing": ".06em" }, `WOUNDS: EACH CELL HIT ABOUT ${wounds.toFixed(0)} TIMES IN ONE WANDER`));
+  const n = Math.round(wounds);
+  for (let i = 0; i < n; i++) {
+    const cx = x(WANDER * (i + 0.5) / n);
+    svg.appendChild(el("circle", { cx, cy: 200, r: 5, class: "wound" }));
+  }
+  const stoneX = x(WANDER * 0.37);
+  svg.appendChild(el("circle", { cx: stoneX, cy: 200, r: 7, class: "stone" }));
+  svg.appendChild(el("text", { x: stoneX, y: 222, "text-anchor": "middle", class: "sun-ink", "font-size": 11, "font-weight": 600 }, "your stone"));
+  svg.appendChild(el("text", { x: L, y: 240, class: "muted", "font-size": 12 }, `the storm's own wounds, radius 3, about one per ${fmt(WOUND_EVERY)} steps per cell (spread evenly here; the real ones fall at random)`));
+
+  // paced vs flat out
+  svg.appendChild(el("text", { x: L, y: 270, class: "soft", "font-size": 11, "font-weight": 700, "letter-spacing": ".06em" }, "ONE DAY"));
+  svg.appendChild(el("rect", { x: L + 70, y: 258, width: (R - L - 70) / flatWanders, height: 14, rx: 2, class: "bar lit" }));
+  svg.appendChild(el("text", { x: L + 70 + (R - L - 70) / flatWanders + 8, y: 270, "font-size": 12 }, "paced: one wander, under five minutes of one Mac"));
+  svg.appendChild(el("rect", { x: L + 70, y: 280, width: R - L - 70, height: 14, rx: 2, class: "bar" }));
+  svg.appendChild(el("text", { x: L + 70, y: 312, class: "muted", "font-size": 12 }, `flat out: one Mac for ${HOURS} hours at ${fmt(RATE)} steps a second is ${fmt(flatOut)} steps, about ${fmt(flatWanders)} wanders;`));
+  svg.appendChild(el("text", { x: L + 70, y: 328, class: "muted", "font-size": 12 }, "whether a morning's stone is still findable by dawn is what test 6.2 measures"));
+  document.getElementById("strip").appendChild(svg);
+})();
+</script>
+</body>
+</html>

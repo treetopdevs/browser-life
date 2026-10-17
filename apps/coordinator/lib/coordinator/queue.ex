@@ -79,6 +79,42 @@ defmodule Coordinator.Queue do
   `"ponds-v2"` is asked for in addition to `"ponds-v1"`, never instead of it
   (`ISLAND_CAPABILITIES` lists both); a `ponds-v1` rule is otherwise unchanged.
 
+  Scheduled interventions (`spec["interventions"]`, the runner's
+  `RunSpec.interventions` -- packages/runner/src/interventions.ts): a list of
+  lesions and feeds at absolute steps, the wounds and feedings a lab history
+  logs, so that a wounded or fed history can be run and verified by the
+  archipelago. `validate/1` holds it to the runner's own shape rules
+  (`validateInterventions`: non-empty, exact keys per kind, non-decreasing
+  steps, non-negative integers, a feed's amount non-zero within ±4096), and to
+  what the runner refuses before the GPU (`interventionsError`): a centre
+  inside the preset's world (`:world_size` in config.exs, kept in sync with
+  packages/schema's presets by packages/runner/test/coordinator-presets.test.ts)
+  and no feed in a pond preset, where each pond's matter is fixed by its cycle.
+  An entry after the run's last step is refused too, as tools/run.ts refuses
+  it: no segment would apply it. A feed's `matter` (the lab's replay
+  assertion: the quanta a logged feed must move again) is refused as well: a
+  value the world does not reproduce would throw on every island, and the
+  archipelago's own check is the second island's replay. What no creation can
+  see is a feed that would take the world past MATTER_MAX, which depends on
+  the world's matter at that step; an island that meets one reports the
+  segment failed (`fail/4`, `POST /api/segments/:id/fail` with its lease and
+  the runner's reason -- packages/runner/src/island.ts) instead of crashing or
+  leaving the task to be offered again: `Coordinator.Segment.fail/5` makes
+  the segment `"failed"`, a terminal status that records the reason and the
+  reporting island, its later segments are blocked as after a divergence, no
+  island is offered it again, and `status/0` lists it under `failures`. The
+  experiment stops there, visibly, rather than cycling the same failure from
+  island to island. The whole list rides unchanged in every
+  segment's task spec; the runner applies only the entries a segment owns (an
+  entry at step s belongs to the segment that stepped to s, `ownedInterventions`)
+  and logs them to interventions.jsonl, a verified file (see
+  `Coordinator.Segment`'s `@optional_observation_files`) that tools/stitch.ts
+  joins in segment order. Such an experiment's work, run or verify, goes only
+  to an island whose request carries `"interventions-v1"`: an older island
+  would run the segment clean (its runner knows no such field) and report a
+  digest that disagrees with every capable island's, a divergence with no
+  real disagreement in it.
+
   Islands authenticate with a private token issued at join; every assignment
   carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
   heartbeats and completion. The end checkpoint of every accepted run attempt
@@ -107,7 +143,23 @@ defmodule Coordinator.Queue do
   @doc "Whether `last_seen` (ms since epoch) is stale as of `now` (defaults to the real clock). A pure function of both timestamps (rather than reading the clock internally) so tests can pin the exact threshold -- exclusive, `>` not `>=` -- without a wall-clock race."
   def stale?(last_seen, now \\ now()), do: now - last_seen > @stale_ms
   # Bumped whenever `state.bin`'s shape changes incompatibly (see `init/1`).
+  # A failed segment (`Coordinator.Segment.fail/5`) extends the v3 shape the
+  # way `import_from`, `observations` and `manifest_metrics_version` did: a
+  # new status value and two keys (`:reason`, `:failed_at`) put only on the
+  # failed attempt, so a file without one is byte-identical to before and a
+  # file from before loads unchanged. The other direction is not supported,
+  # as it was not for those keys: a coordinator from before this change,
+  # whose modules name neither atom, refuses a state.bin holding a failed
+  # attempt (`[:safe]` decoding, see `init/1`), so rolling the code back
+  # after a failure was persisted means starting from a fresh data dir.
   @state_version 3
+  # The longest failure reason stored and shown: 500 graphemes
+  # (packages/runner/src/island.ts sends at most 500 characters, as it does
+  # for a reject's reason) and, since a grapheme can be one base character
+  # under any number of combining marks, 2000 bytes (four per codepoint at
+  # most) -- the bound a persisted and listed string actually needs.
+  @max_failure_reason 500
+  @max_failure_reason_bytes 2000
 
   # ---- client API ----
 
@@ -145,6 +197,19 @@ defmodule Coordinator.Queue do
   @doc "`predecessor` is \"own\" (the same run's prior segment — the default) or \"import\" (this segment's cross-run `import_from` source, for a metapopulation) — which one this island found inconsistent."
   def reject(seg_id, island, lease, reason, predecessor \\ "own"),
     do: GenServer.call(__MODULE__, {:reject, seg_id, island, lease, reason, predecessor})
+
+  @doc """
+  The island holding `seg_id`'s current run or verify lease cannot run the
+  task as given (see the moduledoc on scheduled interventions): the segment
+  becomes `"failed"` with `reason` (a string; stored bounded to
+  #{@max_failure_reason} graphemes and #{@max_failure_reason_bytes} bytes,
+  anything else counting as none) and the reporting island recorded, and
+  every segment reachable from it is blocked, as after a divergence. Refused,
+  like a reject, unless `lease` is the segment's current attempt under
+  `island`.
+  """
+  def fail(seg_id, island, lease, reason),
+    do: GenServer.call(__MODULE__, {:fail, seg_id, island, lease, reason})
 
   @doc "Publishes a validated checkpoint into the content-addressed store, if `lease` is still the segment's current run attempt."
   def publish_checkpoint(seg_id, island, lease, staged, digest, state_hash),
@@ -481,6 +546,28 @@ defmodule Coordinator.Queue do
     end
   end
 
+  # The island assigned `seg_id` cannot run the task as given (see the
+  # moduledoc): the segment is failed under its current lease and everything
+  # reachable from it is blocked, as after a divergence. The reason is bounded
+  # here, once, before it is stored and shown; the lease rule is `Segment.fail/5`'s.
+  def handle_call({:fail, seg_id, island_id, lease, reason}, _from, s) do
+    reason = bound_reason(reason)
+
+    with seg when not is_nil(seg) <- s.segments[seg_id],
+         {:ok, seg} <- Segment.fail(seg, island_id, lease, reason, now()) do
+      Logger.error(
+        "segment #{seg.id} (#{seg.run}##{seg.index}) failed on #{island_id}: #{if reason == "", do: "(no reason given)", else: clip(reason)}"
+      )
+
+      s = put_in(s, [:segments, seg_id], seg)
+      s = %{s | segments: Segment.block_descendants(s.segments, seg.id)}
+      {:reply, :ok, persist(s)}
+    else
+      nil -> {:reply, {:error, "unknown segment"}, s}
+      {:error, why} -> {:reply, {:error, why}, s}
+    end
+  end
+
   def handle_call(:public_status, _from, s) do
     counts =
       Enum.reduce(s.segments, %{}, fn {_, seg}, acc ->
@@ -520,10 +607,18 @@ defmodule Coordinator.Queue do
           done: Enum.count(segs, &(&1.status in ["done", "verified"])),
           verified: Enum.count(segs, &(&1.status == "verified")),
           diverged: Enum.count(segs, &(&1.status == "diverged")),
+          failed: Enum.count(segs, &(&1.status == "failed")),
           blocked: Enum.count(segs, &(&1.status == "blocked"))
         }
       end)
       |> Enum.sort_by(& &1.run)
+
+    # A segment an island reported it could not run as given (`fail/4`): the
+    # attempt that failed it says which kind of task, who reported it and why.
+    failures =
+      for seg <- Map.values(s.segments), seg.status == "failed" do
+        Map.merge(%{segment: seg.id, run: seg.run, index: seg.index}, failure_of(s, seg))
+      end
 
     divergences =
       for seg <- Map.values(s.segments), seg.status == "diverged" do
@@ -576,6 +671,7 @@ defmodule Coordinator.Queue do
        runs: runs,
        islands: islands,
        divergences: divergences,
+       failures: failures,
        observationMismatches: observation_mismatches,
        devices:
          islands
@@ -637,6 +733,9 @@ defmodule Coordinator.Queue do
               verifiedBy: if(verified, do: host(s, verify.island)),
               observationsVerified: observationsVerified
             }
+            # Only a failed segment carries it (see `fail/4`): every other
+            # entry keeps its shape from before the status existed.
+            |> maybe_put(:failure, failure_of(s, seg))
           end
 
         {:reply, %{spec: exp.spec, segments: Enum.sort_by(segments, &{&1.run, &1.index})}, s}
@@ -717,6 +816,12 @@ defmodule Coordinator.Queue do
       (bad = invalid_metapopulation(spec)) != nil ->
         {:error, bad}
 
+      # Scheduled lesions and feeds (see the moduledoc): the runner's shape
+      # rules, a centre inside the world, no feed in a pond world, nothing
+      # after the last step. After `steps` and `presetId` are known good.
+      (bad = invalid_interventions(spec)) != nil ->
+        {:error, bad}
+
       not int_in?.(Map.get(spec, "deepEvery", 10), 1, 1000) ->
         {:error, "deepEvery must be an integer in 1..1000"}
 
@@ -729,7 +834,7 @@ defmodule Coordinator.Queue do
 
       true ->
         keep =
-          ~w(experiment presetId conditions seeds steps segmentSteps censusEvery deepEvery verifyFraction)
+          ~w(experiment presetId conditions seeds steps segmentSteps censusEvery deepEvery verifyFraction interventions)
 
         # "metricsVersion" is deliberately not in `keep`: it is the
         # coordinator's own required version at creation time (like
@@ -744,6 +849,11 @@ defmodule Coordinator.Queue do
             },
             Map.take(spec, keep)
           )
+
+        # An explicit `"interventions": null` is no schedule (invalid_interventions/1
+        # reads it so), and must leave no key behind: every segment's task
+        # spec, and the stored spec, keep their shape from before the field.
+        base = if base["interventions"] == nil, do: Map.delete(base, "interventions"), else: base
 
         {:ok, put_metapopulation(base, spec)}
     end
@@ -883,6 +993,134 @@ defmodule Coordinator.Queue do
   end
 
   defp put_metapopulation(base, _spec), do: base
+
+  # ---- scheduled interventions (see the moduledoc) ----
+
+  # Bounds the list that rides in every task payload and in state.bin, and
+  # the work `validate/1` does inside this serialized process.
+  @max_interventions 10_000
+  # packages/schema/src/feed.ts's FEED_MAX: the largest per-cell amount one feed may add or drain.
+  @feed_max 4096
+  # The largest integer JSON hands JavaScript exactly (Number.MAX_SAFE_INTEGER):
+  # a larger one would pass here as an Erlang integer and fail the runner's
+  # `validateInterventions` on every island.
+  @max_safe_int 9_007_199_254_740_991
+  @lesion_keys ~w(step kind x y r)
+  @feed_keys ~w(step kind x y r amount)
+
+  # Why `spec["interventions"]` cannot be scheduled, or nil (absent, or nil,
+  # is no schedule at all). The shape rules are packages/runner/src/interventions.ts's
+  # `validateInterventions` (minus a feed's `matter`, see the moduledoc), so a
+  # list accepted here passes `validateSpec` on every island; the world rules
+  # are `interventionsError`'s, checked here so that no island is handed a
+  # segment it can only throw on. Called after `validate/1` has established
+  # `presetId` and `steps`.
+  defp invalid_interventions(%{"interventions" => nil}), do: nil
+
+  defp invalid_interventions(%{"interventions" => list} = spec) when is_list(list) do
+    cond do
+      list == [] ->
+        "interventions must be a non-empty array of lesions and feeds"
+
+      length(list) > @max_interventions ->
+        "interventions must hold at most #{@max_interventions} entries"
+
+      true ->
+        world = Map.get(Application.get_env(:coordinator, :world_size, %{}), spec["presetId"])
+        pond? = pond_preset?(spec["presetId"])
+
+        list
+        |> Enum.with_index()
+        |> Enum.reduce_while({0, nil}, fn {e, i}, {last, nil} ->
+          case invalid_intervention(e, i, last, spec["steps"], world, pond?) do
+            {:ok, step} -> {:cont, {step, nil}}
+            {:error, why} -> {:halt, {last, why}}
+          end
+        end)
+        |> elem(1)
+    end
+  end
+
+  defp invalid_interventions(%{"interventions" => _}),
+    do: "interventions must be a non-empty array of lesions and feeds"
+
+  defp invalid_interventions(_spec), do: nil
+
+  # One entry: `{:ok, step}` (its step, for the next entry's ordering check)
+  # or `{:error, why}`, in the runner's own words (`validateInterventions`,
+  # then `interventionsError` and tools/run.ts for the world and the last
+  # step). `world` is the preset's `{width, height}` from config.exs, or nil
+  # for a preset without one (then no centre check, as the runner's would be
+  # the first to see it).
+  defp invalid_intervention(e, i, last, steps, world, pond?) do
+    where = "interventions[#{i}]"
+    kind = is_map(e) and e["kind"]
+
+    allowed = if kind == "feed", do: @feed_keys, else: @lesion_keys
+
+    # Erlang integers only: an integer-valued float (`2.0`, which JSON clients
+    # never send for a cell) is refused although the runner would take it, so
+    # the stored spec and every task payload carry integers.
+    nonneg? = fn k -> is_integer(e[k]) and e[k] >= 0 and e[k] <= @max_safe_int end
+
+    cond do
+      not is_map(e) ->
+        {:error, "#{where} must be an object"}
+
+      kind not in ["lesion", "feed"] ->
+        {:error, "#{where}: kind must be \"lesion\" or \"feed\", got #{Jason.encode!(kind)}"}
+
+      # See the moduledoc: a replay assertion the archipelago cannot honour.
+      kind == "feed" and Map.has_key?(e, "matter") ->
+        {:error,
+         "#{where}: a feed's matter is not scheduled on the archipelago (the second island's replay is its check; a matter the world does not reproduce would throw on every island)"}
+
+      # Not `Enum.find(...) != nil`: a direct caller's nil key would pass as "none".
+      (extra = Enum.reject(Map.keys(e), &(is_binary(&1) and &1 in allowed))) != [] ->
+        {:error,
+         "#{where}: a #{kind} has no key #{key_name(hd(extra))} (its keys are #{Enum.join(allowed, ", ")})"}
+
+      (missing = Enum.find(allowed, &(not Map.has_key?(e, &1)))) != nil ->
+        {:error, "#{where}: a #{kind} needs the key #{Jason.encode!(missing)}"}
+
+      not nonneg?.("step") ->
+        {:error, "#{where}: step must be a non-negative integer"}
+
+      e["step"] < last ->
+        {:error, "#{where}: step #{e["step"]} follows step #{last} (steps must not decrease)"}
+
+      e["step"] > steps ->
+        {:error,
+         "#{where}: step #{e["step"]} is after the run's last step (steps #{steps}), so no segment would apply it"}
+
+      (bad = Enum.find(~w(x y r), &(not nonneg?.(&1)))) != nil ->
+        {:error, "#{where}: #{bad} must be a non-negative integer"}
+
+      world != nil and e["x"] >= elem(world, 0) ->
+        {:error, "#{where}: x #{e["x"]} is outside the world (#{elem(world, 0)} wide)"}
+
+      world != nil and e["y"] >= elem(world, 1) ->
+        {:error, "#{where}: y #{e["y"]} is outside the world (#{elem(world, 1)} high)"}
+
+      kind == "feed" and
+          not (is_integer(e["amount"]) and e["amount"] != 0 and abs(e["amount"]) <= @feed_max) ->
+        {:error, "#{where}: amount must be a non-zero integer within ±#{@feed_max} per cell"}
+
+      # packages/schema/src/feed.ts's feedError, which the runner would raise on every island.
+      kind == "feed" and pond? ->
+        {:error,
+         "#{where}: feeding is not defined for pond worlds: the pond cycle fixes each pond's matter"}
+
+      true ->
+        {:ok, e["step"]}
+    end
+  end
+
+  # A key as the message quotes it: JSON for a string (what a request carries),
+  # `inspect` for anything a direct caller might pass (nil, an atom, a tuple),
+  # which Jason could not encode, and this process must not raise on.
+  defp key_name(key) when is_binary(key), do: Jason.encode!(key)
+  defp key_name(key), do: inspect(key)
 
   # ---- segments ----
 
@@ -1057,6 +1295,9 @@ defmodule Coordinator.Queue do
         checkpointEvery: 0
       }
       |> maybe_put(:metapopulation, task_metapopulation(spec, seg))
+      # The whole schedule, to every segment (see the moduledoc): the runner
+      # keeps the entries this segment owns. Absent from every other payload.
+      |> maybe_put(:interventions, spec["interventions"])
 
     %{
       kind: kind,
@@ -1123,16 +1364,26 @@ defmodule Coordinator.Queue do
   @current_capability "ponds-v2"
   @current_conditions ~w(pond-nat pond-shuf)
 
+  # Scheduled interventions (`spec["interventions"]`, see the moduledoc): an
+  # island that cannot apply them would run the segment clean.
+  @interventions_capability "interventions-v1"
+
   # The experiments whose work an island with `capabilities` must not be
-  # offered: every pond experiment, unless it advertises `@pond_capability`.
-  # Computed once per `pick_task/4` call rather than per segment, so a large
-  # queue costs one pass over the experiments, not one config lookup per segment.
+  # offered: every pond experiment, unless it advertises `@pond_capability`,
+  # and every experiment with scheduled interventions, unless it advertises
+  # `@interventions_capability`. Computed once per `pick_task/4` call rather
+  # than per segment, so a large queue costs one pass over the experiments,
+  # not one config lookup per segment.
   defp gated_experiments(s, capabilities) do
-    if @pond_capability in capabilities do
+    ponds? = @pond_capability in capabilities
+    scheduled? = @interventions_capability in capabilities
+
+    if ponds? and scheduled? do
       MapSet.new()
     else
       for {name, exp} <- s.experiments,
-          pond_preset?(exp.spec["presetId"]),
+          (not ponds? and pond_preset?(exp.spec["presetId"])) or
+            (not scheduled? and exp.spec["interventions"] != nil),
           into: MapSet.new(),
           do: name
     end
@@ -1180,6 +1431,58 @@ defmodule Coordinator.Queue do
   # see `Coordinator.Attempt`'s moduledoc for where that comes from).
   defp current_run_attempt(seg, island_id, lease),
     do: Enum.find(seg.attempts, &(&1.kind == "run" and Attempt.active?(&1, island_id, lease)))
+
+  # A failure reason as stored and shown (see `@max_failure_reason`): a
+  # string, at most that many bytes, cut between codepoints, valid UTF-8 (a
+  # direct caller's invalid bytes would make every later `/api/status` fail
+  # to encode), and at most that many graphemes. Anything else counts as no
+  # reason. The byte prefix is taken first, by `binary_part/3`, so the work
+  # done inside this process is bounded by the prefix and never by what a
+  # caller sent (Sol pass 2: walking the codepoints of a many-megabyte string
+  # here would stall every island's calls for seconds).
+  defp bound_reason(reason) when is_binary(reason) do
+    prefix = binary_part(reason, 0, min(byte_size(reason), @max_failure_reason_bytes))
+
+    case whole_codepoints(prefix, 3) do
+      nil -> ""
+      valid -> String.slice(valid, 0, @max_failure_reason)
+    end
+  end
+
+  defp bound_reason(_), do: ""
+
+  # `prefix` as valid UTF-8, dropping up to `tries` trailing bytes of a
+  # codepoint the cut split (four bytes at most, so three to drop); nil when
+  # it is invalid anyway.
+  defp whole_codepoints(prefix, tries) do
+    cond do
+      String.valid?(prefix) ->
+        prefix
+
+      tries > 0 and byte_size(prefix) > 0 ->
+        whole_codepoints(binary_part(prefix, 0, byte_size(prefix) - 1), tries - 1)
+
+      true ->
+        nil
+    end
+  end
+
+  # The listing's `failure` of a `"failed"` segment (the reporting attempt's
+  # kind, island, host and reason, and when it was reported -- see `fail/4`),
+  # nil for every other segment.
+  defp failure_of(s, %{status: "failed"} = seg) do
+    a = Segment.failed_attempt(seg)
+
+    %{
+      kind: a && a.kind,
+      island: a && a.island,
+      by: host(s, a && a.island),
+      reason: Segment.failure_reason(seg),
+      failedAt: a && Map.get(a, :failed_at)
+    }
+  end
+
+  defp failure_of(_s, _seg), do: nil
 
   defp host(_s, nil), do: "?"
   defp host(s, id), do: (s.islands[id] || %{adapter: "?"}).adapter

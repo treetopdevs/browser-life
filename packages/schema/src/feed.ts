@@ -32,6 +32,18 @@ export interface FeedResult {
   energy: bigint;
 }
 
+/**
+ * A feed the world refuses, as scheduled or asked: `feedError`'s reasons, or a feed that would take the world past
+ * `MATTER_MAX`. A property of the feed against its world, not of the host: a runner tells it apart from a device or
+ * ledger failure (packages/runner/src/interventions.ts's `applyScheduled` wraps only this as an `InterventionError`).
+ */
+export class FeedRefusedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FeedRefusedError";
+  }
+}
+
 /** Why `amount` cannot be fed over `radius` to a world of this config, or null. */
 export function feedError(cfg: WorldConfig, amount: number, radius: number): string | null {
   // A non-finite radius would clamp to NaN, feed nothing, and be logged as null: a log that replays differently.
@@ -48,7 +60,7 @@ export function feedError(cfg: WorldConfig, amount: number, radius: number): str
  */
 export function feedNutrient(cfg: WorldConfig, A: Uint32Array, matterNow: bigint, cx: number, cy: number, radius: number, amount: number): FeedResult {
   const err = feedError(cfg, amount, radius);
-  if (err) throw new Error(err);
+  if (err) throw new FeedRefusedError(err);
   const W = worldW(cfg), n = cellCount(cfg), H = n / W;
   if (A.length !== n) throw new Error(`feed: nutrient channel has ${A.length} cells, expected ${n}`);
   if (!Number.isInteger(cx) || !Number.isInteger(cy) || cx < 0 || cx >= W || cy < 0 || cy >= H) throw new Error(`feed centre (${cx}, ${cy}) is outside the world`);
@@ -65,7 +77,7 @@ export function feedNutrient(cfg: WorldConfig, A: Uint32Array, matterNow: bigint
   let matter = 0;
   if (amount > 0) {
     matter = amount * disc.length;
-    if (matterNow + BigInt(matter) > BigInt(MATTER_MAX)) throw new Error(`feed refused: ${matter} quanta would take the world past MATTER_MAX (${MATTER_MAX}); it holds ${matterNow}`);
+    if (matterNow + BigInt(matter) > BigInt(MATTER_MAX)) throw new FeedRefusedError(`feed refused: ${matter} quanta would take the world past MATTER_MAX (${MATTER_MAX}); it holds ${matterNow}`);
     for (const j of disc) A[j] += amount;
   } else {
     for (const j of disc) {

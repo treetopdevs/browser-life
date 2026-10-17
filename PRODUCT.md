@@ -6,11 +6,11 @@ product
 
 ## Users
 
-Researchers running reproducible artificial-life experiments in the browser are the primary users. They need to set up worlds, observe change, inspect local state, and assess whether a run's measurements and replay evidence are trustworthy. The public site introduces the research and opens the lab; the lab remains the primary surface.
+Curious people who want to watch artificial life grow are the primary audience (since 2026-10-04, when the project chose bigger, exploratory bets over defensible endpoints). They plant worlds, poke them, come back to see what changed and bring back a good "what is that?"; most were not there when a world was built, so every choice is explained in their words. Researchers, the project's own runs included, are the second audience: they set up worlds, inspect local state, and judge whether a run's measurements and replay evidence are trustworthy, so that evidence stays close to the world. The public site introduces the garden and opens the lab; the lab remains the primary surface.
 
 ## Product Purpose
 
-Cadence Garden is a browser-hosted research lab for an open-ended artificial-life ecology. It lets researchers interact with simulations governed by exact integer physics, inspect emerging behavior, and retain evidence through metrics, checkpoints, and replay checks. Success means a researcher can run an experiment, understand what happened, and distinguish observation from a verified result.
+Cadence Garden is a browser-hosted research lab for an open-ended artificial-life ecology. It lets researchers interact with simulations governed by exact integer physics, inspect emerging behavior, and retain evidence through metrics, checkpoints, and replay checks. Success means a visitor or a researcher can grow a world, understand what happened, and tell an observation from a verified result.
 
 ## Brand Personality
 
