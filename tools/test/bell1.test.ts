@@ -10,6 +10,7 @@ import {
   ENVELOPE_ID,
   HORIZON,
   HORIZON_CENSUSES,
+  MATTER_CHANNELS,
   PER_ARM,
   PairScorer,
   W_PAIR,
@@ -28,6 +29,7 @@ import {
   isV1Signal,
   judgeTwin,
   launchCoverage,
+  matterOf,
   launchProblem,
   newNullScorer,
   nullCalled,
@@ -312,10 +314,10 @@ describe("summarizeNull: A1 and the reported items", () => {
   const e = (set: NullSet, i: number, D11: number, D13 = D11): NullEntry => ({
     id: `${set}-${i}`, set, preset: set === "v0-spots" ? "spots-m3" : "gradient-m3", seed: i, D11, D13, ring11: D11 >= 4, ring13: D13 >= 4, firstRing11: null, firstRing13: null,
   });
-  const corpus = (opts: { freshRings?: number; fresh?: number; freshD13Extra?: number[] } = {}): NullEntry[] => [
-    ...Array.from({ length: 40 }, (_, i) => e("v0-gradient", i, i === 0 ? 3.9 : 1, i === 0 ? 3.9 : i === 1 ? 7 : 1)),
-    ...Array.from({ length: 30 }, (_, i) => e("v0-spots", i, i < 2 ? 5 : 1)),
-    ...Array.from({ length: 10 }, (_, i) => e("treatment", i, 9)),
+  const corpus = (opts: { freshRings?: number; fresh?: number; freshD13Extra?: number[]; envelope?: number; spots?: number; treatment?: number } = {}): NullEntry[] => [
+    ...Array.from({ length: opts.envelope ?? 40 }, (_, i) => e("v0-gradient", i, i === 0 ? 3.9 : 1, i === 0 ? 3.9 : i === 1 ? 7 : 1)),
+    ...Array.from({ length: opts.spots ?? 30 }, (_, i) => e("v0-spots", i, i < 2 ? 5 : 1)),
+    ...Array.from({ length: opts.treatment ?? 10 }, (_, i) => e("treatment", i, 9)),
     ...Array.from({ length: opts.fresh ?? 70 }, (_, i) => e("fresh", i, i < (opts.freshRings ?? 0) ? 4 : 1, opts.freshD13Extra?.[i] ?? (i < (opts.freshRings ?? 0) ? 4 : 1))),
   ];
   it("A1 is met at 2 of 70 and missed at 3 (the bar and the binomial bound agree)", () => {
@@ -326,11 +328,35 @@ describe("summarizeNull: A1 and the reported items", () => {
     const s3 = summarizeNull(corpus({ freshRings: 3 }), { complete: true });
     expect(s3.A1).toMatchObject({ status: "missed", k: 3, reading: "still rings on drift" });
   });
-  it("is not called unless all 70 count, nothing failed and the corpus is complete", () => {
+  it("is not called unless all 70 fresh runs count, none failed and all 40 envelope runs are scored", () => {
     expect(summarizeNull(corpus({ fresh: 69 }), { complete: true }).A1.status).toBe("not-called");
     expect(summarizeNull(corpus({ fresh: 69 }), { complete: true, freshFailed: [{ id: "x", reason: "short" }] }).A1.reading).toBe("not called");
-    expect(summarizeNull(corpus(), { complete: false }).A1.status).toBe("not-called");
+    expect(summarizeNull(corpus(), { complete: true, freshFailed: [{ id: "x", reason: "short" }] }).A1.status).toBe("not-called");
+    expect(summarizeNull(corpus({ envelope: 39 }), { complete: false }).A1.status).toBe("not-called");
     expect(summarizeNull(corpus({ freshRings: 0 }), { complete: true }).A1.status).toBe("met");
+    const all = summarizeNull(corpus(), { complete: true }).reported;
+    expect([all.v1OnV0.called, all.v0RuleOnFresh.called, all.treatment.called, all.calibrated.called]).toEqual([true, true, true, true]);
+  });
+  it("a missing spots or treatment run withholds only the reported items that read it, never A1 (the finding)", () => {
+    // complete:false because a spots bundle and a treatment bundle are missing; A1's own corpus (70 fresh, 40 envelope) is whole.
+    const s = summarizeNull(corpus({ freshRings: 2, spots: 29, treatment: 9 }), { complete: false });
+    expect(s.complete).toBe(false);
+    expect(s.A1).toMatchObject({ status: "met", k: 2, n: 70, reading: "quiet on fresh drift (exploratory)" });
+    expect(s.A1.reason).toBeUndefined();
+    expect(nullCalled(s)).toBe(true);
+    expect(s.reported.v1OnV0.called).toBe(false);
+    expect(s.reported.v1OnV0.reason).toMatch(/29 of 30 spots runs/);
+    expect(s.reported.v1OnV0.spots).toEqual({ k: 2, of: 29 }); // still given over what was scored
+    expect(s.reported.treatment.called).toBe(false);
+    expect(s.reported.treatment.reason).toMatch(/9 of 10 treatment runs/);
+    expect(s.reported.calibrated.called).toBe(false); // its treatment count reads the missing run
+    expect(s.reported.v0RuleOnFresh.called).toBe(true); // reads only the fresh runs
+    // the other way round: a short fresh corpus withholds A1 and the items that read the fresh runs, not v1 on v0
+    const f = summarizeNull(corpus({ fresh: 69 }), { complete: false });
+    expect(f.A1.status).toBe("not-called");
+    expect(f.reported.v0RuleOnFresh).toMatchObject({ called: false, reason: expect.stringMatching(/69 of 70 fresh runs/) });
+    expect(f.reported.v1OnV0.called).toBe(true);
+    expect(f.reported.treatment.called).toBe(true);
   });
   it("reports v1 on v0's 70 (per preset), v0's rule on the fresh runs, treatment and the calibrated Z*", () => {
     // fresh: 2 ring on the 13-signal rule only (D13 high, D11 low); one fresh has D13 exactly Z* = 7 (not above)
@@ -568,7 +594,7 @@ describe("PairScorer: window edges, sides, strictness and the spread", () => {
     expect(r.firstSignalDiffStep).toBe(S0 + 100);
     expect(r.diffAtOrBeforeS).toBeNull();
     expect(r.windowMax[0]).toBeCloseTo(zOf(400), 9);
-    expect(r.dose).toEqual({ step: S0 + 100, twin: 1400, base: 1000, delta: 400 });
+    expect(r.dose).toEqual({ step: S0 + 100, livingCells: { twin: 1400, base: 1000, delta: 400 }, matter: { twin: null, base: null, delta: null } }); // these records have no pools
   });
   it("a shift below the base takes the low side", () => {
     const r = score(twinShift((step) => (step >= S0 + 100 ? -400 : undefined)));
@@ -612,7 +638,7 @@ describe("PairScorer: window edges, sides, strictness and the spread", () => {
     const twin: Census[] = bases[3].map((c) => ({ rec: { ...c.rec, livingCells: (c.rec.livingCells as number) + ((c.rec.step as number) >= S0 + 100 ? 400 : 0) }, rows: c.rows.map((x) => [...x] as [string, number]) }));
     const r = score(twin, 3);
     expect(r.D).toBeCloseTo(zOf(400), 9);
-    expect(r.dose).toMatchObject({ twin: 1460, base: 1060, delta: 400 });
+    expect(r.dose.livingCells).toEqual({ twin: 1460, base: 1060, delta: 400 });
   });
   it("uses the spread of the bases, never the twin: a twin far outside them does not change the unit", () => {
     const a = score(twinShift((step) => (step >= S0 + 100 ? 400 : undefined)));
@@ -687,8 +713,41 @@ describe("PairScorer: lockstep, failure isolation and validity", () => {
     expect(d.diffAtOrBeforeS).toBeNull();
     expect(d.firstDiffStep).toBeNull();
   });
+  it("the dose at S + 100: living cells and matter (A+B+C+P, not E or S) of twin and base, and twin - base (the finding)", () => {
+    expect([...MATTER_CHANNELS]).toEqual(["A", "B", "C", "P"]);
+    const pools = (A: number, B: number, C: number, P: number, E: number, Sg: number) => ({ A, B, C, P, E, S: Sg });
+    expect(matterOf({ pools: pools(1, 2, 3, 4, 1000, 2000) })).toBe(10);
+    expect(matterOf({})).toBeNull();
+    expect(matterOf({ pools: { A: 1, B: 2, C: 3 } })).toBeNull();
+    expect(matterOf({ pools: { ...pools(1, 2, 3, 4, 0, 0), P: Number.NaN } })).toBeNull();
+    const bases = mk(20).map((b) => b.map((c) => ({ ...c, rec: { ...c.rec, pools: pools(1000, 200, 30, 4, 500, 0) } })));
+    const S0 = 1000;
+    const ps = new PairScorer(S0, 3, [spec("lesion"), spec("nopools")]);
+    for (let k = 0; k < 20; k++) {
+      const step = (k + 1) * 100;
+      const t = copy(bases[0][k]);
+      // after S the lesion removed 50 biomass and 3 polymer and changed the energy pools, which must not count as matter
+      if (step > S0) {
+        t.rec.pools = pools(1000, 150, 30, 1, 40, 77);
+        t.rec.livingCells = (t.rec.livingCells as number) - 7;
+      }
+      const u = copy(bases[0][k]);
+      if (step === S0 + 100) delete u.rec.pools;
+      ps.push(bases.map((b) => b[k]), [t, u]);
+    }
+    const [l, u] = ps.results();
+    const baseCells = bases[0][S0 / 100].rec.livingCells as number;
+    expect(l.dose).toEqual({ step: S0 + 100, livingCells: { twin: baseCells - 7, base: baseCells, delta: -7 }, matter: { twin: 1181, base: 1234, delta: -53 } });
+    expect(u.dose.matter).toEqual({ twin: null, base: 1234, delta: null });
+    // the logged intervention matter is kept apart from the measured dose
+    const o = judgeTwin(l, S0, {}, 205_376);
+    expect(o.dose.matter.delta).toBe(-53);
+    expect(o.interventionMatter).toBe(205_376);
+    const r = summarizeTwins([o], { S: S0, complete: true }).twins[0];
+    expect(r.dose).toEqual({ ...l.dose, interventionMatter: 205_376 });
+  });
   it("voidReasons: a valid twin has none; each rule of the note voids it", () => {
-    const base: PairResult = { id: "t", arm: "l96", seed: 1, failed: null, censuses: 3000, diffAtOrBeforeS: null, firstDiffStep: 200_100, firstSignalDiffStep: 200_100, D: 3, signal: "livingCells", side: "low", dBySignal: [], windowMax: [], dose: { step: 200_100, twin: 1, base: 2, delta: -1 } };
+    const base: PairResult = { id: "t", arm: "l96", seed: 1, failed: null, censuses: 3000, diffAtOrBeforeS: null, firstDiffStep: 200_100, firstSignalDiffStep: 200_100, D: 3, signal: "livingCells", side: "low", dBySignal: [], windowMax: [], dose: { step: 200_100, livingCells: { twin: 1, base: 2, delta: -1 }, matter: { twin: 10, base: 12, delta: -2 } } };
     expect(voidReasons(base, S, {})).toEqual([]);
     expect(voidReasons({ ...base, diffAtOrBeforeS: 150_000 }, S, {})).toEqual([expect.stringMatching(/differs from its base at step 150000, at or before S/)]);
     expect(voidReasons({ ...base, firstDiffStep: null }, S, {})).toEqual([expect.stringMatching(/no difference from its base after S/)]);
@@ -703,7 +762,7 @@ describe("PairScorer: lockstep, failure isolation and validity", () => {
 describe("summarizeTwins: B2, B3, the reading table", () => {
   const out = (arm: Arm, seed: number, D: number, o: { valid?: boolean; windowMax?: number[]; firstDiff?: number } = {}): TwinOutcome => ({
     id: `twin-${arm}-${seed}`, arm, seed, failed: null, censuses: 3000, diffAtOrBeforeS: null, firstDiffStep: o.firstDiff ?? S + 100, firstSignalDiffStep: S + 100, D, signal: D > 0 ? "livingCells" : null, side: D > 0 ? "low" : null,
-    dBySignal: D > 0 ? [{ signal: "livingCells", side: "low", D }] : [], windowMax: o.windowMax ?? Array(50).fill(D), dose: { step: S + 100, twin: 90, base: 100, delta: -10 },
+    dBySignal: D > 0 ? [{ signal: "livingCells", side: "low", D }] : [], windowMax: o.windowMax ?? Array(50).fill(D), dose: { step: S + 100, livingCells: { twin: 90, base: 100, delta: -10 }, matter: { twin: 900, base: 1000, delta: -100 } },
     valid: o.valid ?? true, voidReasons: o.valid === false ? ["bundle missing"] : [], interventionMatter: null,
   });
   const seeds = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -718,7 +777,7 @@ describe("summarizeTwins: B2, B3, the reading table", () => {
 
   it("Z*_pair is the largest nudge D and a tie at Z* is not a hit (strict)", () => {
     const s = sum(base(8, 8, 0, []).map((o) => o));
-    expect(s.zStarPair).toEqual({ value: 1, n: 10, called: true });
+    expect(s.zStarPair).toEqual({ value: 1, provisional: null, n: 10, called: true });
     const tied = sum([...seeds.map((x) => out("nudge", x, nudgeD(x))), ...arm("nudge2", 0), ...arm("l64", 0), ...arm("l96", 5, { tie: 5 }), ...arm("f", 0)]);
     expect(tied.arms.l96.hits).toEqual({ k: 5, of: 10 }); // 5 above, 5 exactly at Z*
     expect(tied.twins.filter((t) => t.arm === "l96").map((t) => t.hit)).toEqual([true, true, true, true, true, false, false, false, false, false]);
@@ -766,12 +825,32 @@ describe("summarizeTwins: B2, B3, the reading table", () => {
     expect(no2.B3.called).toBe(false);
     expect(no2.reading).toBe("not called");
   });
+  it("with fewer than 10 valid nudges no hit, count or first window is taken from the subset maximum (the finding)", () => {
+    const wm = Array.from({ length: 50 }, (_, i) => (i >= 3 ? 3 : 0.2));
+    const os = base(9, 9, 3).map((o) => (o.id === "twin-nudge-10" ? { ...o, valid: false, voidReasons: ["bundle missing"] } : o.arm === "l96" ? { ...o, windowMax: wm } : o));
+    const s = sum(os);
+    // the 9 valid nudges have D 0.1..0.9: shown as provisional, never as Z*_pair
+    expect(s.zStarPair).toEqual({ value: null, provisional: 0.9, n: 9, called: false });
+    for (const t of s.twins) {
+      expect(t.hit).toBeNull();
+      expect(t.firstWindowAboveZ).toBeNull();
+    }
+    expect(s.twins.find((t) => t.id === "twin-l96-1")!.D).toBeCloseTo(2.1, 12); // far above the subset max, still not a hit
+    for (const a of ARMS) expect(s.arms[a].hits).toBeNull();
+    for (const c of [s.B2.l96, s.B2.f, s.B2_l64, s.B3]) expect(c).toMatchObject({ called: false, met: null, k: null, bound95: null });
+    expect(s.reading).toBe("not called");
+    // descriptive, threshold-free fields stay
+    expect(s.arms.l96.medianD).not.toBeNull();
+    expect(s.arms.l96.effectVsNudge.nNudge).toBe(9);
+    // with all 10 valid the threshold is called and provisional is empty
+    expect(sum(base(9, 9, 0)).zStarPair).toEqual({ value: 1, provisional: null, n: 10, called: true });
+  });
   it("`complete` is only a record flag: one twin void for a missing bundle withholds only the criteria that need it", () => {
     // the finding: the f twin of seed 3 never wrote a bundle. B2 for F is not called (9 of 10 valid); the nudge, nudge2 and L96 twins are all valid.
     const os = base(9, 9, 1).map((o) => (o.id === "twin-f-3" ? { ...o, valid: false, voidReasons: ["bundle missing"] } : o));
     const s = sum(os, false);
     expect(s.complete).toBe(false);
-    expect(s.zStarPair).toEqual({ value: 1, n: 10, called: true });
+    expect(s.zStarPair).toEqual({ value: 1, provisional: null, n: 10, called: true });
     expect(s.B2.l96).toMatchObject({ called: true, met: true });
     expect(s.B2.f).toMatchObject({ called: false, met: null });
     expect(s.B2.f.reason).toMatch(/9 of 10 f twins/);
@@ -800,7 +879,7 @@ describe("summarizeTwins: B2, B3, the reading table", () => {
     expect(hit4.firstWindowAboveZ).toBe(S + EARLY_FROM + 4 * CADENCE); // window index 4 starts at S + 500
     expect(s.twins.find((t) => t.id === "twin-l96-10")!.hit).toBe(false);
     expect(s.twins.find((t) => t.id === "twin-l96-10")!.firstWindowAboveZ).toBeNull();
-    expect(s.twins.find((t) => t.id === "twin-l96-1")!.dose).toMatchObject({ twin: 90, base: 100, delta: -10, interventionMatter: null });
+    expect(s.twins.find((t) => t.id === "twin-l96-1")!.dose).toMatchObject({ livingCells: { twin: 90, base: 100, delta: -10 }, matter: { twin: 900, base: 1000, delta: -100 }, interventionMatter: null });
   });
   it("sets the constants of the note", () => {
     expect([W_PAIR, EARLY_FROM, EARLY_TO, PER_ARM, CADENCE]).toEqual([10, 100, 5000, 10, 100]);

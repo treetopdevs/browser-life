@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   BARS,
+  CALL_SETTINGS_FILE,
   CENSUS_EVERY,
   DIGEST_FIELDS,
   HIT_TOLERANCE,
@@ -17,6 +18,7 @@ import {
   bandRows,
   buildPrompt,
   buildSchema,
+  callSettingsProblem,
   censusProblem,
   checkReceipt,
   codeBaselineT2,
@@ -26,6 +28,7 @@ import {
   firstDifference,
   formatNumber,
   itemRun,
+  lineageBlocksThrough,
   loadTable,
   makeManifest,
   normaliseReason,
@@ -41,6 +44,7 @@ import {
   renderT1,
   renderT2,
   scoreTask,
+  seriesThrough,
   sha256Hex,
   t1Comparator,
   t2Decide,
@@ -48,6 +52,8 @@ import {
   tablesAgreeThrough,
   twinRecordProblem,
   twinLabel,
+  withhold,
+  withholdComparator,
   type Answer,
   type ItemArm,
   type ManifestItem,
@@ -57,7 +63,8 @@ import {
   type RunTable,
   type Task,
 } from "../lib/bell-digest.ts";
-import { SIGNALS } from "../lib/bell.ts";
+import { SIGNALS, mergeCensuses, parseSeries, splitLines } from "../lib/bell.ts";
+import { BELL1_VERSION, NOTE1_PATH } from "../lib/bell1.ts";
 import { rng } from "../lib/measures6.ts";
 
 // ---------------------------------------------------------------------------------------------
@@ -73,6 +80,7 @@ function makeTable(lo: number, hi: number, f: (step: number, k: number) => numbe
 const asManifestItems = (items: PlannedItem[]): ManifestItem[] =>
   items.map((i) => ({ id: i.id, task: i.task, seed: i.seed, arm: i.arm, U: i.U, ...(i.orientation ? { orientation: i.orientation } : {}), file: null, digestSha256: null, firstDiffT: null, void: null }));
 const ok = (o: Partial<Answer> = {}): Outcome => ({ status: "ok", answer: { intervention: "no", world: null, t: null, kind: null, notes: [], ...o } });
+const DEFAULT_SEEDS_T = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const EXPECTED_KIND: Record<ItemArm, "removal" | "addition"> = { nudge: "removal", nudge2: "removal", l64: "removal", l96: "removal", f: "addition", base: "removal" };
 
 /** The answers of a perfect reader: yes with the right twin / the right t on l64, l96 and f, no on the rest. */
@@ -236,6 +244,44 @@ describe("number format and digests", () => {
     await expect(loadTable("twin", longer(), { lo: 0, hi: 1e9, steps: 400 })).rejects.toThrow(/5 censuses \(500 steps\), expected 4/);
     // A truncated base that stops short still fails.
     await expect(loadTable("base", merged(3), { lo: 0, hi: 1e9, steps: 400, truncate: true })).rejects.toThrow(/3 censuses/);
+  });
+  it("truncates a base through the real composed stream: garbage after the horizon in both files is never read", async () => {
+    // series.jsonl and lineages.tsv as text chunks, through splitLines, parseSeries, the horizon cuts and mergeCensuses, as loadRun does.
+    const H = 400;
+    const seriesText = [1, 2, 3, 4].map((n) => JSON.stringify({ step: n * 100, livingCells: 5, lineages: 1 })).join("\n") + "\nnot json at all\n" + JSON.stringify({ step: 700 }) + "\n";
+    // The first line after the horizon's block is malformed (a non-numeric step), then a block out of order: lineageCensuses would throw on either.
+    const lineText = "step\tkey\tcells\n" + [1, 2, 3, 4].map((n) => `${n * 100}\t0:1\t5`).join("\n") + "\nxyz\t0:1\t5\n100\t0:1\t9\n";
+    async function* chunks(text: string) {
+      for (let i = 0; i < text.length; i += 7) yield text.slice(i, i + 7);
+    }
+    let lineagesRead = 0;
+    async function* counted(lines: AsyncIterable<string>) {
+      for await (const l of lines) {
+        lineagesRead++;
+        yield l;
+      }
+    }
+    const merged = () => mergeCensuses("base", seriesThrough(parseSeries("base", splitLines(chunks(seriesText))), H), lineageBlocksThrough("base", counted(splitLines(chunks(lineText))), H));
+    const table = await loadTable("base", merged(), { lo: 0, hi: 1e9, steps: H, truncate: true });
+    expect([...table.keys()]).toEqual([100, 200, 300, 400]);
+    expect(lineagesRead).toBe(6); // the header, four rows, and the one line that ends the horizon's census (never parsed further)
+    // Uncut, the same series fails past the horizon (what the twin path, read whole, must still do).
+    await expect(loadTable("twin", mergeCensuses("twin", parseSeries("twin", splitLines(chunks(seriesText))), lineageBlocksThrough("twin", splitLines(chunks(lineText)), H)), { lo: 0, hi: 1e9, steps: H })).rejects.toThrow(/not JSON/);
+    // Within the horizon the lineage reader is as strict as lineageCensuses: a step out of order throws.
+    const bad = "h\n100\t0:1\t5\n300\t0:1\t5\n200\t0:1\t5\n";
+    await expect((async () => {
+      for await (const _ of lineageBlocksThrough("r", splitLines(chunks(bad)), 400));
+    })()).rejects.toThrow(/step 200 follows 300/);
+    // No rows at the horizon (an extinct census): the census before it is yielded, and the stream ends at the first line past it.
+    const blocks: number[] = [];
+    for await (const [st] of lineageBlocksThrough("r", splitLines(chunks("h\n100\t0:1\t5\n200\t0:1\t5\n500\t0:1\t5\nzzz\n")), 400)) blocks.push(st);
+    expect(blocks).toEqual([100, 200]);
+    // A series with no record past the horizon is passed through whole.
+    const st: number[] = [];
+    for await (const r of seriesThrough((async function* () {
+      for (const n of [1, 2]) yield { step: n * 100 };
+    })(), 400)) st.push(r.step);
+    expect(st).toEqual([100, 200]);
   });
   it("normaliseReason strips absolute paths and keeps relative run ids", () => {
     expect(normaliseReason("NotFound: No such file or directory (os error 2): open '/Users/x/runs/a/b.json'")).toBe("NotFound: No such file or directory (os error 2): open '<path>'");
@@ -480,13 +526,28 @@ describe("parseAnswer: the answer contract", () => {
     expect(parseAnswer(null, "T2").status).toBe("missing");
     expect(parseAnswer(undefined, "T2").status).toBe("missing");
   });
-  it("checks receipts against the digest text", () => {
-    const text = "DIGEST X\nt a b\n0 100 5.500\n200 120 6.000\n\nDIGEST Y\nt a b\n0 100 5.500\n200 130(1/2/3) 6\n";
-    expect(checkReceipt({ t: 200, measure: "living_cells", values: "120 and 6.0", note: "" }, text)).toEqual({ tOk: true, measureOk: true, valuesOk: true });
-    expect(checkReceipt({ t: 200, measure: "living_cells", values: "130, band 3", note: "" }, text).valuesOk).toBe(true);
-    expect(checkReceipt({ t: 200, measure: "foo", values: "999", note: "" }, text)).toEqual({ tOk: true, measureOk: false, valuesOk: false });
-    expect(checkReceipt({ t: 400, measure: "lineages", values: "no numbers here", note: "" }, text)).toEqual({ tOk: false, measureOk: true, valuesOk: null });
-    expect(checkReceipt({ t: 400, measure: "lineages", values: "5", note: "" }, text).valuesOk).toBe(false);
+  it("checks receipts against the named column, X and Y apart, and the band in T2", () => {
+    const row = (lc: number, ind: number) => Array.from({ length: NS }, (_, k) => (k === 0 ? lc : k === 1 ? ind : 0.5));
+    const X = [row(100, 7), row(120, 8)], Y = [row(100, 7), row(130, 9)];
+    const t1 = renderT1(X, Y);
+    // living_cells at t = 200 is 120 in X and 130 in Y; individuals 8 and 9.
+    expect(checkReceipt({ t: 200, measure: "living_cells", values: "120", note: "" }, t1)).toEqual({ tOk: true, measureOk: true, valuesOk: true, unchecked: null, byDigest: { X: true, Y: false } });
+    expect(checkReceipt({ t: 200, measure: "living_cells", values: "130", note: "" }, t1).byDigest).toEqual({ X: false, Y: true });
+    expect(checkReceipt({ t: 200, measure: "Living cells", values: "120.0", note: "" }, t1).valuesOk).toBe(true);
+    // A number from another column on the same line is not a receipt for this one (pooling the line accepted it).
+    expect(checkReceipt({ t: 200, measure: "living_cells", values: "8", note: "" }, t1).valuesOk).toBe(false);
+    expect(checkReceipt({ t: 200, measure: "individuals", values: "8", note: "" }, t1)).toMatchObject({ valuesOk: true, byDigest: { X: true, Y: false } });
+    // X and Y are not pooled: one number from each digest is not a single digest's reading.
+    expect(checkReceipt({ t: 200, measure: "living_cells", values: "120 vs 130", note: "" }, t1)).toMatchObject({ valuesOk: false, byDigest: { X: false, Y: false } });
+    // Unknown measure: unchecked, and said so; no number: unchecked; no line at t: unchecked.
+    expect(checkReceipt({ t: 200, measure: "foo", values: "120", note: "" }, t1)).toEqual({ tOk: true, measureOk: false, valuesOk: null, unchecked: "unknown measure", byDigest: {} });
+    expect(checkReceipt({ t: 400, measure: "lineages", values: "no numbers here", note: "" }, t1)).toMatchObject({ tOk: false, measureOk: true, valuesOk: null, unchecked: "no number" });
+    expect(checkReceipt({ t: 400, measure: "lineages", values: "5", note: "" }, t1)).toMatchObject({ tOk: false, valuesOk: null, unchecked: "no line at t" });
+    // T2: the value or one of its band's three numbers, of the named column only.
+    const band = [X[0], X[1]].map((r) => r.map((v, k) => (k === 0 ? { q25: 90, median: 95, q75: 99 } : { q25: v - 1, median: v, q75: v + 1 })));
+    const t2 = renderT2(X, band);
+    expect(checkReceipt({ t: 200, measure: "living_cells", values: "120, band 90 to 99", note: "" }, t2)).toEqual({ tOk: true, measureOk: true, valuesOk: true, unchecked: null, byDigest: { "": true } });
+    expect(checkReceipt({ t: 200, measure: "living_cells", values: "9", note: "" }, t2).valuesOk).toBe(false); // individuals' band, not this column's
   });
 });
 
@@ -704,40 +765,132 @@ describe("the T1 code comparator and the twin record", () => {
     // A record with no valid nudge has no Z*_pair, but still lists its voids.
     const noZ = { summary: { zStarPair: { value: null, called: false } }, twins: [{ arm: "nudge", seed: 1, valid: false, D: null }, { arm: "l96", seed: 2, valid: true, D: 4 }] };
     expect(readVoids(noZ)).toEqual(["nudge-1"]);
-    expect(() => readPairRecord(noZ)).toThrow(/Z\*_pair/);
+    // ... and is read with Z* null and not called (the comparator is withheld); `provisional` is never used.
+    expect(readPairRecord({ ...noZ, summary: { zStarPair: { value: null, provisional: 7, n: 9, called: false } } })).toMatchObject({ zStar: null, called: false });
+    expect(() => readPairRecord({ ...noZ, summary: { zStarPair: { value: null, called: true } } })).toThrow(/Z\*_pair/);
     expect(() => readVoids({ summary: {} })).toThrow(/twins array/);
     expect(() => readVoids([3])).toThrow();
   });
-  it("refuses a production build without a finished twin record, and exempts the pilot", () => {
+  /** A record as tools/bell1.ts twins writes it for the note's plan: 50 twins, each with an explicit validity decision. */
+  const fullRecord = (over: { twin?: (arm: string, seed: number) => Record<string, unknown>; called?: boolean } = {}) => ({
+    rule: "anomaly-bell-v1-twins",
+    version: BELL1_VERSION,
+    note: NOTE1_PATH,
+    complete: true,
+    called: true,
+    missing: [],
+    parameters: { signals: [], dropped: [], S: 200_000, steps: 300_000, censuses: 3000, W_pair: 10, earlyWindowFirstCensus: [200_100, 205_000] },
+    bases: [],
+    summary: { zStarPair: (over.called ?? true) ? { value: 3.5, provisional: null, n: 10, called: true } : { value: null, provisional: 3.5, n: 9, called: false } },
+    twins: ["nudge", "nudge2", "l64", "l96", "f"].flatMap((arm) => DEFAULT_SEEDS_T.map((seed) => ({ id: `${arm}-${seed}`, arm, seed, valid: true, D: arm === "nudge" ? seed / 4 : arm === "l64" ? 1 : 9, ...over.twin?.(arm, seed) }))),
+  });
+  it("refuses a production build without a finished twin record: identity, parameters, and one validity decision per twin", () => {
+    expect(twinRecordProblem("production", fullRecord())).toBeNull();
+    expect(twinRecordProblem("production", fullRecord({ twin: (arm, seed) => (arm === "l96" && seed === 3 ? { valid: false, D: null } : {}) }))).toBeNull();
     expect(twinRecordProblem("production", null)).toMatch(/required/);
-    expect(twinRecordProblem("production", { twins: [], complete: false })).toMatch(/incomplete/);
-    expect(twinRecordProblem("production", { complete: true })).toMatch(/no twins array/);
+    // The bypass that was accepted: an empty twin list gives no voids, so it must stop.
+    expect(twinRecordProblem("production", { twins: [], complete: true })).toMatch(/rule/);
+    expect(twinRecordProblem("production", { ...fullRecord(), twins: [] })).toMatch(/twin nudge-1 is not in the twin record \(0 of 50/);
+    expect(twinRecordProblem("production", { ...fullRecord(), complete: false })).toMatch(/incomplete/);
+    expect(twinRecordProblem("production", { ...fullRecord(), complete: undefined })).toMatch(/complete:true/);
+    expect(twinRecordProblem("production", { ...fullRecord(), version: BELL1_VERSION + 1 })).toMatch(/version/);
+    expect(twinRecordProblem("production", { ...fullRecord(), note: "elsewhere.md" })).toMatch(/note/);
+    expect(twinRecordProblem("production", { ...fullRecord(), testPlan: "plan.json" })).toMatch(/--plan/);
+    expect(twinRecordProblem("production", { ...fullRecord(), parameters: undefined })).toMatch(/no parameters/);
+    for (const [k, v] of [["S", 30_000], ["steps", 50_000], ["censuses", 500], ["W_pair", 5], ["earlyWindowFirstCensus", [200_100, 206_000]]] as const) {
+      const r = fullRecord();
+      expect(twinRecordProblem("production", { ...r, parameters: { ...r.parameters, [k]: v } })).toMatch(new RegExp(`parameters\\.${k}`));
+    }
+    const r = fullRecord();
+    expect(twinRecordProblem("production", { ...r, twins: r.twins.slice(1) })).toMatch(/nudge-1 is not in the twin record/);
+    expect(twinRecordProblem("production", { ...r, twins: [...r.twins, r.twins[7]] })).toMatch(/nudge-8 is listed twice/);
+    expect(twinRecordProblem("production", { ...r, twins: r.twins.map((t, i) => (i === 12 ? { ...t, valid: undefined } : t)) })).toMatch(/nudge2-3 has no explicit validity decision/);
+    expect(twinRecordProblem("production", { ...r, twins: r.twins.map((t, i) => (i === 12 ? { ...t, valid: "yes" } : t)) })).toMatch(/no explicit validity decision/);
+    expect(twinRecordProblem("production", { ...r, twins: r.twins.map((t, i) => (i === 12 ? { ...t, D: null } : t)) })).toMatch(/valid but has no finite D/);
+    expect(twinRecordProblem("production", { ...r, twins: r.twins.map((t, i) => (i === 12 ? { ...t, seed: 11 } : t)) })).toMatch(/seed 11/);
+    expect(twinRecordProblem("production", { ...r, twins: r.twins.map((t, i) => (i === 12 ? { ...t, arm: "r32" } : t)) })).toMatch(/arm "r32"/);
     expect(twinRecordProblem("production", ["l96-3"])).toMatch(/pilot only/);
-    expect(twinRecordProblem("production", [])).toMatch(/no twins array/);
-    expect(twinRecordProblem("production", { twins: [], complete: true })).toBeNull();
+    expect(twinRecordProblem("production", [])).toMatch(/pilot only/);
     expect(twinRecordProblem("pilot", null)).toBeNull();
+    expect(twinRecordProblem("pilot", { twins: [] })).toBeNull();
+    // The full record's voids are its valid:false twins.
+    expect(readVoids(fullRecord({ twin: (arm, seed) => (arm === "f" && seed === 2 ? { valid: false, D: null } : {}) }))).toEqual(["f-2"]);
   });
   it("detects strictly above Z*_pair, on detection only, and reports what is missing", () => {
     const c = t1Comparator(asManifestItems(planItems()), readPairRecord(record));
-    expect(c.positives).toEqual({ k: 2, n: 20 }); // l96-1 (9) and f-1 (4) detected; l96-2 sits on Z* and does not count
-    expect(c.nudgeCalibration).toEqual({ k: 0, n: 10 });
-    expect(c.l64).toEqual({ k: 1, n: 10 });
-    expect(c.byItem.find((b) => b.arm === "l96" && b.seed === 2)).toMatchObject({ D: 3.5, detected: false });
-    expect(c.byItem.find((b) => b.arm === "f" && b.seed === 2)).toMatchObject({ D: null, detected: null });
+    // This hand-made record lacks most twins: the scored items without D withhold the comparison.
+    expect(c.called).toBe(false);
+    expect(c.reason).toMatch(/void/); // f-2's void comes first; the twins with no D are listed as missing
     expect(c.missing.length).toBeGreaterThan(0);
-    expect(c.called).toBe(true);
+    expect(c.void.length).toBe(1); // f-2, void in the record
+    const full = fullRecord({ twin: (arm, seed) => (arm === "l96" && seed === 2 ? { D: 3.5 } : arm === "f" && seed > 5 ? { D: 2 } : {}) });
+    const d = t1Comparator(asManifestItems(planItems()), readPairRecord(full));
+    expect(d.called).toBe(true);
+    expect(d.positives).toEqual({ k: 14, n: 20 }); // l96-2 sits on Z* = 3.5 and does not count; f seeds 6..10 at D = 2 do not
+    expect(d.nudgeCalibration).toEqual({ k: 0, n: 10 });
+    expect(d.l64).toEqual({ k: 0, n: 10 });
+    expect(d.byItem.find((b) => b.arm === "l96" && b.seed === 2)).toMatchObject({ D: 3.5, detected: false, void: null });
+    expect(d.missing).toEqual([]);
+  });
+  it("propagates voids: a void item is out of every count, and a void scored item withholds the comparison (and the model's bar)", () => {
+    const items = planItems();
+    const rec = readPairRecord(fullRecord());
+    // A manifest void on an L96 item.
+    const a = asManifestItems(items);
+    const l96 = a.find((i) => i.task === "T1" && i.arm === "l96" && i.seed === 4)!;
+    l96.void = "exit 1";
+    const c = t1Comparator(a, rec);
+    expect(c.called).toBe(false);
+    expect(c.reason).toMatch(new RegExp(`void: ${l96.id}`));
+    expect(c.positives).toEqual({ k: 0, n: 19 });
+    expect(c.void).toEqual([l96.id]);
+    expect(c.byItem.find((b) => b.id === l96.id)).toMatchObject({ D: null, detected: null, void: "exit 1" });
+    expect(c.byItem.every((b) => b.detected === null)).toBe(true);
+    expect(scoreTask("T1", a, perfect(items))).toMatchObject({ called: false, bars: null });
+    // A twin the record marks void (B-void) is void here even if the manifest does not say so.
+    const bVoid = readPairRecord(fullRecord({ twin: (arm, seed) => (arm === "nudge" && seed === 3 ? { valid: false, D: null } : {}) }));
+    const c2 = t1Comparator(asManifestItems(items), bVoid);
+    expect(c2.called).toBe(false);
+    expect(c2.nudgeCalibration.n).toBe(9);
+    expect(c2.void.length).toBe(1);
+    // A void L64 item is left out of L64's count and withholds nothing.
+    const b = asManifestItems(items);
+    b.find((i) => i.task === "T1" && i.arm === "l64" && i.seed === 1)!.void = "x";
+    const c3 = t1Comparator(b, rec);
+    expect(c3.called).toBe(true);
+    expect(c3.l64.n).toBe(9);
+    expect(c3.positives).toEqual({ k: 20, n: 20 });
   });
   it("withholds the detections when the record does not call Z*_pair (fewer than 10 valid nudges)", () => {
-    const partial = { ...record, summary: { zStarPair: { value: 3.5, n: 9, called: false } } };
-    const rec = readPairRecord(partial);
-    expect(rec.called).toBe(false);
+    const rec = readPairRecord(fullRecord({ called: false }));
+    expect(rec).toMatchObject({ called: false, zStar: null });
+    expect(twinRecordProblem("production", fullRecord({ called: false }))).toBeNull();
+    const r = fullRecord();
+    expect(twinRecordProblem("production", { ...r, summary: { zStarPair: { value: null, provisional: 3, n: 9, called: true } } })).toMatch(/zStarPair.value/);
+    expect(twinRecordProblem("production", { ...r, summary: { zStarPair: { value: 3, provisional: null, n: 9, called: false } } })).toMatch(/zStarPair.value/);
+    expect(twinRecordProblem("production", { ...r, summary: {} })).toMatch(/explicit called/);
     const c = t1Comparator(asManifestItems(planItems()), rec);
     expect(c.called).toBe(false);
     expect(c.positives).toEqual({ k: 0, n: 20 });
     expect(c.byItem.every((b) => b.detected === null)).toBe(true);
     expect(c.byItem.find((b) => b.arm === "l96" && b.seed === 1)!.D).toBe(9); // D is still shown
-    // A record that does not say is treated as called (hand-made fixtures).
-    expect(t1Comparator(asManifestItems(planItems()), readPairRecord({ zStarPair: 2, twins: [] })).called).toBe(true);
+    // A record that does not say is treated as called (hand-made fixtures), when no scored item is missing.
+    const twins = fullRecord().twins.map(({ arm, seed, D }) => ({ arm, seed, D_pair: D }));
+    expect(t1Comparator(asManifestItems(planItems()), readPairRecord({ zStarPair: 2, twins })).called).toBe(true);
+  });
+  it("calls nothing in production without frozen call settings; the pilot is exempt", () => {
+    expect(CALL_SETTINGS_FILE).toBe("call-settings.json");
+    expect(callSettingsProblem("production", ["manifest.json", "prompts/T1.txt"])).toMatch(/not frozen.*nothing is called/);
+    expect(callSettingsProblem("production", ["manifest.json", "call-settings.json"])).toBeNull();
+    expect(callSettingsProblem("pilot", ["manifest.json"])).toBeNull();
+    const items = planItems();
+    const s = scoreTask("T2", asManifestItems(items), perfect(items));
+    expect(s.called).toBe(true);
+    const w = withhold(s, "no settings");
+    expect(w).toMatchObject({ called: false, reason: "no settings", bars: null, hits: s.hits });
+    const c = withholdComparator(t1Comparator(asManifestItems(items), readPairRecord(fullRecord())), "no settings");
+    expect(c).toMatchObject({ called: false, reason: "no settings", positives: { k: 0, n: 20 } });
+    expect(c.byItem.every((b) => b.detected === null && b.D !== null)).toBe(true);
   });
   it("reports the orientation split and the constant-X baseline on the same items", () => {
     const o = orientationReport(asManifestItems(planItems()));

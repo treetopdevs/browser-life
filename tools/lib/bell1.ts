@@ -73,6 +73,23 @@ export const PER_ARM = 10;
 /** B2: at least this many of the 10 twins of an arm. B3: at most this many of the 10 nudge2 twins. */
 export const B2_MIN_HITS = 8;
 export const B3_MAX_HITS = 2;
+/**
+ * The matter channels of a series record's `pools` (A nutrient, B biomass, C waste, P polymer): matter = A + B + C + P, as in
+ * packages/schema/src/accounting.ts `totalsOf`. E (free energy) and S (signal) are energy, not matter, and are left out.
+ */
+export const MATTER_CHANNELS = ["A", "B", "C", "P"] as const;
+/** A series record's matter total (MATTER_CHANNELS of its pools); null when `pools` or any of those channels is missing or not finite. */
+export function matterOf(rec: Record<string, unknown>): number | null {
+  const pools = rec.pools as Record<string, unknown> | null | undefined;
+  if (pools === null || typeof pools !== "object") return null;
+  let m = 0;
+  for (const ch of MATTER_CHANNELS) {
+    const v = pools[ch];
+    if (typeof v !== "number" || !Number.isFinite(v)) return null;
+    m += v;
+  }
+  return m;
+}
 
 // ---------------------------------------------------------------------------------------------
 // Corpus.
@@ -278,18 +295,26 @@ export function nullEntry(run: NullRun, result: ScoringResult): NullEntry {
 }
 
 export type NullReading = "quiet on fresh drift (exploratory)" | "still rings on drift" | "not called";
+/**
+ * Whether a reported (not deciding) item had its whole corpus: `called` false with the reason when a run it reads is missing or failed.
+ * The figures are still given over what was scored; they only decide nothing, and neither does their absence (A1 has its own corpus).
+ */
+export interface ReportedStatus {
+  called: boolean;
+  reason?: string;
+}
 export interface NullSummary {
   complete: boolean;
   A1: { status: "met" | "missed" | "not-called"; reason?: string; k: number; n: number; upper95: number | null; maxRings: number; reading: NullReading };
   reported: {
     /** The v1 rule (eleven signals) on v0's 70 at the horizon, each leave-one-out: gradient-m3 against its 40, spots-m3 against its 30. A post-hoc look at seen data. */
-    v1OnV0: { gradient: Count; spots: Count; total: Count & { upper95: number | null } };
+    v1OnV0: ReportedStatus & { gradient: Count; spots: Count; total: Count & { upper95: number | null } };
     /** v0's thirteen-signal rule on the fresh runs. */
-    v0RuleOnFresh: Count & { upper95: number | null };
+    v0RuleOnFresh: ReportedStatus & Count & { upper95: number | null };
     /** The treatment runs under the v1 rule against the 40: rings, the same under the 13-signal rule, and P(D11 treatment > D11 neutral) with ties half. */
-    treatment: { rings11: Count; rings13: Count; effect11: number | null };
+    treatment: ReportedStatus & { rings11: Count; rings13: Count; effect11: number | null };
     /** Z* = the largest 13-signal D among the 40 envelope runs (leave-one-out), applied to the fresh runs by D13 > Z* (strict). Descriptive. */
-    calibrated: { zStar: number | null; fresh: Count; treatment: Count };
+    calibrated: ReportedStatus & { zStar: number | null; fresh: Count; treatment: Count };
   };
   freshFailed: { id: string; reason: string }[];
 }
@@ -306,12 +331,16 @@ export function summarizeNull(entries: readonly NullEntry[], opts: { complete: b
   const freshFailed = opts.freshFailed ?? [];
 
   const k = fresh.filter((e) => e.ring11).length, n = fresh.length;
-  const callable = opts.complete && n === EXPECTED_FRESH && freshFailed.length === 0 && grad.length === EXPECTED_ENVELOPE && treat.length === EXPECTED_TREATMENT_A;
+  // A1 is gated on its own corpus only: the 70 fresh runs and the 40 envelope runs. The spots and treatment runs feed the reported
+  // items, which carry their own status; a missing one of them withholds that item, never A1 (`complete` is only a record flag).
+  const freshOk = n === EXPECTED_FRESH && freshFailed.length === 0, gradOk = grad.length === EXPECTED_ENVELOPE;
+  const spotsOk = spots.length === EXPECTED_SPOTS, treatOk = treat.length === EXPECTED_TREATMENT_A;
+  const callable = freshOk && gradOk;
   let status: NullSummary["A1"]["status"];
   let reason: string | undefined;
   if (!callable) {
     status = "not-called";
-    reason = `${n} fresh runs count (${freshFailed.length} failed), ${grad.length} envelope runs scored${opts.complete ? "" : " (incomplete corpus)"}; A1 needs ${EXPECTED_FRESH} fresh and ${EXPECTED_ENVELOPE} envelope runs`;
+    reason = `${n} fresh runs count (${freshFailed.length} failed), ${grad.length} envelope runs scored; A1 needs ${EXPECTED_FRESH} fresh and ${EXPECTED_ENVELOPE} envelope runs`;
   } else {
     status = k <= A1_MAX_RINGS ? "met" : "missed";
   }
@@ -322,15 +351,23 @@ export function summarizeNull(entries: readonly NullEntry[], opts: { complete: b
   const zStar = grad.length ? Math.max(...grad.map((e) => e.D13)) : null;
   const above = (es: readonly NullEntry[]): Count => ({ k: zStar === null ? 0 : es.filter((e) => e.D13 > zStar).length, of: es.length });
   const effect11 = treat.length && grad.length ? mannWhitney(treat.map((e) => e.D11), grad.map((e) => e.D11), "normal").effect : null;
+  /** The status of a reported item from the parts of its corpus it needs, each [ok, have, expected, name]. */
+  const st = (...parts: [boolean, number, number, string][]): ReportedStatus => {
+    const short = parts.filter(([ok]) => !ok);
+    return short.length ? { called: false, reason: short.map(([, have, want, name]) => `${have} of ${want} ${name}`).join(", ") + "; reported over what was scored, not called" } : { called: true };
+  };
+  const envPart: [boolean, number, number, string] = [gradOk, grad.length, EXPECTED_ENVELOPE, "envelope runs"];
+  const freshPart: [boolean, number, number, string] = [freshOk, n, EXPECTED_FRESH, `fresh runs (${freshFailed.length} failed)`];
+  const treatPart: [boolean, number, number, string] = [treatOk, treat.length, EXPECTED_TREATMENT_A, "treatment runs"];
 
   return {
     complete: opts.complete,
     A1: { status, ...(reason ? { reason } : {}), k, n, upper95: ub(k, n), maxRings: A1_MAX_RINGS, reading },
     reported: {
-      v1OnV0: { gradient: v1g, spots: v1s, total: { ...tot, upper95: ub(tot.k, tot.of) } },
-      v0RuleOnFresh: { ...count(fresh, (e) => e.ring13), upper95: ub(fresh.filter((e) => e.ring13).length, n) },
-      treatment: { rings11: count(treat, (e) => e.ring11), rings13: count(treat, (e) => e.ring13), effect11 },
-      calibrated: { zStar, fresh: above(fresh), treatment: above(treat) },
+      v1OnV0: { ...st(envPart, [spotsOk, spots.length, EXPECTED_SPOTS, "spots runs"]), gradient: v1g, spots: v1s, total: { ...tot, upper95: ub(tot.k, tot.of) } },
+      v0RuleOnFresh: { ...st(freshPart), ...count(fresh, (e) => e.ring13), upper95: ub(fresh.filter((e) => e.ring13).length, n) },
+      treatment: { ...st(treatPart, envPart), rings11: count(treat, (e) => e.ring11), rings13: count(treat, (e) => e.ring13), effect11 },
+      calibrated: { ...st(envPart, freshPart, treatPart), zStar, fresh: above(fresh), treatment: above(treat) },
     },
     freshFailed: [...freshFailed],
   };
@@ -558,9 +595,22 @@ export interface PairResult {
   dBySignal: { signal: string; side: "high" | "low"; D: number }[];
   /** Per counted window (first census S+100, S+200, ..., S+5000): the largest, over signals and sides, of the window's smallest side*z. Can be negative. */
   windowMax: number[];
-  /** Living cells at S + 100, twin and base. */
-  dose: { step: number; twin: number | null; base: number | null; delta: number | null };
+  /** The dose at S + 100: living cells and matter (A+B+C+P of the pools), twin and base, and twin - base. */
+  dose: Dose;
 }
+export interface DosePair {
+  twin: number | null;
+  base: number | null;
+  /** twin - base; null when either is. */
+  delta: number | null;
+}
+export interface Dose {
+  step: number;
+  livingCells: DosePair;
+  /** MATTER_CHANNELS summed over the series record's pools. */
+  matter: DosePair;
+}
+const dosePair = (twin: number | null, base: number | null): DosePair => ({ twin, base, delta: twin !== null && base !== null ? twin - base : null });
 
 const NS = SIGNALS.length;
 const SIDE = [1, -1] as const;
@@ -577,6 +627,8 @@ class TwinState {
   firstSigDiff: number | null = null;
   doseTwin: number | null = null;
   doseBase: number | null = null;
+  matterTwin: number | null = null;
+  matterBase: number | null = null;
   constructor(readonly spec: PairSpec, nWindows: number) {
     this.windowMin = new Float64Array(NS * 2 * nWindows).fill(-Infinity);
   }
@@ -661,6 +713,8 @@ export class PairScorer {
       if (step === this.S + this.cadence) {
         t.doseTwin = typeof inp.rec.livingCells === "number" ? inp.rec.livingCells : null;
         t.doseBase = typeof b.rec.livingCells === "number" ? b.rec.livingCells : null;
+        t.matterTwin = matterOf(inp.rec);
+        t.matterBase = matterOf(b.rec);
       }
       t.n++;
     }
@@ -701,7 +755,7 @@ export class PairScorer {
         side,
         dBySignal,
         windowMax: windowMax.map((m) => (m === -Infinity ? 0 : m)),
-        dose: { step: this.S + this.cadence, twin: t.doseTwin, base: t.doseBase, delta: t.doseTwin !== null && t.doseBase !== null ? t.doseTwin - t.doseBase : null },
+        dose: { step: this.S + this.cadence, livingCells: dosePair(t.doseTwin, t.doseBase), matter: dosePair(t.matterTwin, t.matterBase) },
       };
     });
   }
@@ -713,7 +767,7 @@ export class PairScorer {
 export interface TwinOutcome extends PairResult {
   valid: boolean;
   voidReasons: string[];
-  /** The `matter` field of the twin's interventions.jsonl entry (a feed's matter), null when absent. */
+  /** The `matter` field of the twin's interventions.jsonl entry (what the feed or lesion logged), null when absent. Kept apart from the dose's matter, which is measured at S + 100 against the base. */
   interventionMatter: number | null;
 }
 /**
@@ -755,13 +809,13 @@ export interface TwinReport {
   D: number | null;
   signal: string | null;
   side: "high" | "low" | null;
-  /** D > Z*_pair (strict); null when Z*_pair is not set or the twin is void. */
+  /** D > Z*_pair (strict); null when Z*_pair is not called (fewer than 10 valid nudges) or the twin is void. */
   hit: boolean | null;
-  /** First census step of the first counted window above Z*_pair (for a hit). */
+  /** First census step of the first counted window above Z*_pair (for a hit); null when Z*_pair is not called. */
   firstWindowAboveZ: number | null;
   firstDiffStep: number | null;
   firstSignalDiffStep: number | null;
-  dose: PairResult["dose"] & { interventionMatter: number | null };
+  dose: Dose & { interventionMatter: number | null };
   /** The signals and sides with D > 0, by size. */
   dBySignal: { signal: string; side: string; D: number }[];
 }
@@ -771,7 +825,8 @@ export interface ArmReport {
   valid: number;
   /** Seeds of the void ones. */
   voidSeeds: number[];
-  hits: Count;
+  /** Valid twins with D > Z*_pair; null when Z*_pair is not called (no count is made against a subset maximum). */
+  hits: Count | null;
   /** P(D_arm > D_nudge), ties half, over the valid twins of both; null when either has none. */
   effectVsNudge: { effect: number | null; nArm: number; nNudge: number };
   medianD: number | null;
@@ -780,7 +835,8 @@ export type TwinReading = "hears events (exploratory)" | "hears some events" | "
 export interface Criterion {
   called: boolean;
   met: boolean | null;
-  k: number;
+  /** Hits (B2) or exceedances (B3) among the valid twins; null when Z*_pair is not called. */
+  k: number | null;
   n: number;
   reason?: string;
   /** B2: one-sided 95% lower bound on the hit rate; B3: upper bound on the exceedance rate. */
@@ -788,7 +844,11 @@ export interface Criterion {
 }
 export interface TwinSummary {
   complete: boolean;
-  zStarPair: { value: number | null; /** Valid nudge twins it is the maximum over. */ n: number; called: boolean };
+  /**
+   * Z*_pair: the largest D among the 10 nudge twins, `value` only when all 10 are valid (`called`). With fewer, `provisional` is the
+   * maximum over the valid ones, for the record only: no hit, count or first window is ever taken from it.
+   */
+  zStarPair: { value: number | null; provisional: number | null; /** Valid nudge twins it is the maximum over. */ n: number; called: boolean };
   nudge: { medianD: number | null; firstDiffSteps: (number | null)[] };
   arms: Record<Arm, ArmReport>;
   B2: { l96: Criterion; f: Criterion };
@@ -809,7 +869,9 @@ export function summarizeTwins(outcomes: readonly TwinOutcome[], opts: { S: numb
   const valid = (arm: Arm) => outcomes.filter((o) => o.arm === arm && o.valid);
   const nudges = valid("nudge");
   const nudgeCalled = nudges.length === PER_ARM; // validity alone decides: a missing bundle is a void twin, and `complete` is only a record flag
-  const zStar = nudges.length ? Math.max(...nudges.map((o) => o.D)) : null;
+  const subsetMax = nudges.length ? Math.max(...nudges.map((o) => o.D)) : null;
+  // Every threshold-dependent field (hit, first window above, counts) needs Z*_pair called; a subset maximum is provisional only.
+  const zStar = nudgeCalled ? subsetMax : null;
 
   const reports: TwinReport[] = outcomes.map((o) => {
     const hit = o.valid && zStar !== null ? o.D > zStar : null;
@@ -839,12 +901,11 @@ export function summarizeTwins(outcomes: readonly TwinOutcome[], opts: { S: numb
   const armReport = (arm: Arm): ArmReport => {
     const v = valid(arm);
     const all = outcomes.filter((o) => o.arm === arm);
-    const hits = zStar === null ? 0 : v.filter((o) => o.D > zStar).length;
     return {
       arm,
       valid: v.length,
       voidSeeds: all.filter((o) => !o.valid).map((o) => o.seed).sort((a, b) => a - b),
-      hits: { k: hits, of: v.length },
+      hits: zStar === null ? null : { k: v.filter((o) => o.D > zStar).length, of: v.length },
       effectVsNudge: { effect: v.length && nudges.length ? mannWhitney(v.map((o) => o.D), nudges.map((o) => o.D), "normal").effect : null, nArm: v.length, nNudge: nudges.length },
       medianD: median(v.map((o) => o.D)),
     };
@@ -856,21 +917,21 @@ export function summarizeTwins(outcomes: readonly TwinOutcome[], opts: { S: numb
     const called = nudgeCalled && r.valid === PER_ARM;
     return {
       called,
-      met: called ? r.hits.k >= B2_MIN_HITS : null,
-      k: r.hits.k,
+      met: called ? r.hits!.k >= B2_MIN_HITS : null,
+      k: r.hits?.k ?? null,
       n: PER_ARM,
       ...(called ? {} : { reason: `${r.valid} of ${PER_ARM} ${arm} twins and ${nudges.length} of ${PER_ARM} nudge twins are valid; a call needs all of them` }),
-      bound95: called ? binomialLowerBound(r.hits.k, PER_ARM) : null,
+      bound95: called ? binomialLowerBound(r.hits!.k, PER_ARM) : null,
     };
   };
   const b3Called = nudgeCalled && arms.nudge2.valid === PER_ARM;
   const B3: Criterion = {
     called: b3Called,
-    met: b3Called ? arms.nudge2.hits.k <= B3_MAX_HITS : null,
-    k: arms.nudge2.hits.k,
+    met: b3Called ? arms.nudge2.hits!.k <= B3_MAX_HITS : null,
+    k: arms.nudge2.hits?.k ?? null,
     n: PER_ARM,
     ...(b3Called ? {} : { reason: `${arms.nudge2.valid} of ${PER_ARM} nudge2 twins and ${nudges.length} of ${PER_ARM} nudge twins are valid; B3 needs all of them` }),
-    bound95: b3Called ? binomialUpperBound(arms.nudge2.hits.k, PER_ARM) : null,
+    bound95: b3Called ? binomialUpperBound(arms.nudge2.hits!.k, PER_ARM) : null,
   };
   const B2 = { l96: b2("l96"), f: b2("f") };
 
@@ -885,7 +946,7 @@ export function summarizeTwins(outcomes: readonly TwinOutcome[], opts: { S: numb
 
   return {
     complete: opts.complete,
-    zStarPair: { value: zStar, n: nudges.length, called: nudgeCalled },
+    zStarPair: { value: zStar, provisional: nudgeCalled ? null : subsetMax, n: nudges.length, called: nudgeCalled },
     nudge: { medianD: arms.nudge.medianD, firstDiffSteps: outcomes.filter((o) => o.arm === "nudge").sort((a, b) => a.seed - b.seed).map((o) => o.firstDiffStep) },
     arms,
     B2,

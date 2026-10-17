@@ -28,7 +28,8 @@
 // (relative, floored to a multiple of 200), its kind is "removal" if livingCells z is negative at that census, else "addition".
 // T1: detection only, D_pair > Z*_pair, read from the twin record (readPairRecord).
 import { binomialLowerBound } from "@bl/metrics";
-import { S as S_PLAN, type Arm } from "./bell-v1-jobs.ts";
+import { ARMS, S as S_PLAN, STEPS as STEPS_PLAN, type Arm } from "./bell-v1-jobs.ts";
+import { BELL1_VERSION, EARLY_FROM, EARLY_TO, NOTE1_PATH, W_PAIR } from "./bell1.ts";
 import { SIGNALS, SignalExtractor, departure, finiteOrZero } from "./bell.ts";
 import { quantileSorted, rng } from "./measures6.ts";
 
@@ -42,7 +43,7 @@ export const MANIFEST_SEED = 6_100_001;
 /** Seeds the shuffle that gives items their public ids (apart from MANIFEST_SEED's stream, which it never touches). */
 export const ID_SEED = 6_100_002;
 export const S = S_PLAN;
-export const STEPS = 300_000;
+export const STEPS = STEPS_PLAN;
 export const CENSUS_EVERY = 100;
 export const LINE_EVERY = 200;
 export const WINDOW_STEPS = 30_000;
@@ -193,7 +194,9 @@ export function censusProblem(rec: Record<string, unknown>, rows: readonly (read
  * censuses from `lo` to `hi` inclusive. `merged` is mergeCensuses output. Throws naming the run on a gap, a repeated census, a
  * failed strict check, or a run shorter than `steps`. A twin is exactly `steps` long (a longer stream throws); a BASE may be
  * longer (the replay-m4 treatment bases are 1,000,000-step bundles cut at the horizon): with `truncate` the read stops after the
- * census at `steps`, nothing later is checked, and the stream is closed (mergeCensuses closes its lineage iterator on exit).
+ * census at `steps`, nothing later is checked, and the stream is closed (mergeCensuses closes its lineage iterator on exit). To
+ * keep mergeCensuses from reading past the horizon (it asks for the next lineage census before it yields one), a base's streams
+ * are cut at the horizon before they are merged: seriesThrough and lineageBlocksThrough.
  */
 export async function loadTable(
   runId: string,
@@ -215,6 +218,47 @@ export async function loadTable(
   }
   if (n * cadence !== o.steps) throw new Error(`${runId}: ${n} censuses (${n * cadence} steps), expected ${o.steps / cadence} (${o.steps} steps)`);
   return table;
+}
+
+/**
+ * Records of a series stream up to the horizon: it stops after the first record at a step of at least `horizon`, so no later line
+ * is read or parsed (a base longer than the horizon is cut there; what lies beyond is never looked at).
+ */
+export async function* seriesThrough<R extends { step: number }>(series: AsyncIterable<R>, horizon: number): AsyncGenerator<R> {
+  for await (const rec of series) {
+    yield rec;
+    if (rec.step >= horizon) return;
+  }
+}
+/**
+ * lineages.tsv lines to lineage censuses up to the horizon, parsed as lineageCensuses (tools/lib/bundle.ts) parses them: the
+ * header and blank lines skipped, `step<TAB>key<TAB>cells`, steps ascending, one census per step with rows. It ends without
+ * reading on: once rows at `horizon` are collected, the first line at another step ends the stream unparsed (lineageCensuses
+ * would check it, and mergeCensuses asks for the next census before it yields the horizon's); a line past the horizon before
+ * any rows at it (no living cells at the horizon) ends it too. Within the horizon a step out of order throws, naming `label`.
+ */
+export async function* lineageBlocksThrough(label: string, lines: AsyncIterable<string>, horizon: number): AsyncGenerator<[number, [string, number][]]> {
+  let header = true;
+  let step = -Infinity;
+  let rows: [string, number][] = [];
+  for await (const l of lines) {
+    if (header || !l) {
+      header = false;
+      continue;
+    }
+    const [s, k, c] = l.split("\t");
+    const n = Number(s);
+    if (step === horizon && n !== horizon) break; // the horizon's census is complete; this line is not read further
+    if (n > horizon) break; // no rows at the horizon; the census before it is yielded below
+    if (n !== step) {
+      if (!(n > step)) throw new Error(`${label}/lineages.tsv: step ${s} follows ${step}; rows must be in ascending census order`);
+      if (rows.length) yield [step, rows];
+      step = n;
+      rows = [];
+    }
+    rows.push([k, Number(c)]);
+  }
+  if (rows.length) yield [step, rows];
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -570,23 +614,59 @@ export function parseAnswer(text: string | null | undefined, task: Task, windowS
 
 const NUM = /-?\d+(?:\.\d+)?/g;
 const numbersIn = (s: string): number[] => (s.match(NUM) ?? []).map(Number);
+const CELL = /^(-?\d+(?:\.\d+)?)(?:\((-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)\))?$/;
+/** A note's measure as a digest column name: trimmed, lowercase, spaces and hyphens as underscores ("Living cells" is living_cells). */
+export const normaliseMeasure = (m: string): string => m.trim().toLowerCase().replace(/[\s-]+/g, "_");
 export interface ReceiptCheck {
   /** t is a line of the digest. */
   tOk: boolean;
-  /** measure names one of the digest's fields. */
+  /** measure names one of the digest's columns (its own header's names). */
   measureOk: boolean;
-  /** Every number in `values` is a number printed on the digest's line(s) at t (null: values holds no number). */
+  /**
+   * Whether the quoted numbers are read from the named column at t: true when, in one digest, every number in `values` is that
+   * column's value there or (T2) one of the three numbers of its band. X and Y are checked apart and never pooled. Null: unchecked.
+   */
   valuesOk: boolean | null;
+  /** Why the values were not checked (null: they were). */
+  unchecked: "no number" | "unknown measure" | "no line at t" | null;
+  /** Per digest (T1: "X" and "Y"; T2: the one digest, ""): every quoted number is in that digest's cell. Empty when unchecked. */
+  byDigest: Record<string, boolean>;
+}
+/** The digests of an item text: per "DIGEST [label]" section, its column names and its cells by line t. */
+function parseDigests(itemText: string): { label: string; columns: string[]; lines: Map<number, string[]> }[] {
+  const out: { label: string; columns: string[]; lines: Map<number, string[]> }[] = [];
+  let cur: (typeof out)[number] | null = null;
+  for (const l of itemText.split("\n")) {
+    if (l.startsWith("DIGEST")) {
+      cur = { label: l.slice("DIGEST".length).trim(), columns: [], lines: new Map() };
+      out.push(cur);
+    } else if (cur && l.startsWith("t ")) {
+      const toks = l.split(/\s+/);
+      const end = toks.findIndex((x) => x.startsWith("("));
+      cur.columns = toks.slice(1, end < 0 ? undefined : end).filter((x) => x);
+    } else if (cur && /^\d/.test(l)) {
+      const [t, ...cells] = l.split(" ");
+      cur.lines.set(Number(t), cells);
+    }
+  }
+  return out;
 }
 export function checkReceipt(note: Note, itemText: string): ReceiptCheck {
-  const atT = itemText.split("\n").filter((l) => l.split(" ", 1)[0] === String(note.t) && /^\d/.test(l));
-  const printed = new Set(atT.flatMap((l) => numbersIn(l.slice(l.indexOf(" ") + 1))));
+  const digests = parseDigests(itemText);
+  const measure = normaliseMeasure(note.measure);
+  const tOk = digests.some((d) => d.lines.has(note.t));
+  const measureOk = digests.length > 0 && digests.every((d) => d.columns.includes(measure));
   const quoted = numbersIn(note.values);
-  return {
-    tOk: atT.length > 0,
-    measureOk: (DIGEST_FIELDS as readonly string[]).includes(note.measure.trim().toLowerCase()),
-    valuesOk: quoted.length === 0 ? null : atT.length > 0 && quoted.every((x) => printed.has(x)),
-  };
+  const unchecked = quoted.length === 0 ? "no number" : !measureOk ? "unknown measure" : !tOk ? "no line at t" : null;
+  const byDigest: Record<string, boolean> = {};
+  if (unchecked === null) {
+    for (const d of digests) {
+      const m = CELL.exec(d.lines.get(note.t)?.[d.columns.indexOf(measure)] ?? "");
+      const allowed = m ? m.slice(1).filter((x) => x !== undefined).map(Number) : [];
+      byDigest[d.label] = quoted.every((x) => allowed.includes(x));
+    }
+  }
+  return { tOk, measureOk, valuesOk: unchecked === null ? Object.values(byDigest).some((v) => v) : null, unchecked, byDigest };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -685,6 +765,16 @@ export function scoreTask(task: Task, items: readonly ManifestItem[], outcomes: 
   };
 }
 
+/** The frozen file that holds the model id and its settings (the note freezes both, hashed, before the yes). */
+export const CALL_SETTINGS_FILE = "call-settings.json";
+/** Why a score may not call anything for want of frozen call settings (production only; a pilot is exempt), or null. */
+export function callSettingsProblem(mode: "production" | "pilot", frozenFiles: readonly string[]): string | null {
+  if (mode === "pilot" || frozenFiles.includes(CALL_SETTINGS_FILE)) return null;
+  return `the model id and its settings were not frozen with the manifest (no ${CALL_SETTINGS_FILE} in hashes.json); the note freezes them before the yes, so nothing is called`;
+}
+/** A task score with its call withheld (the counts stay, as reported figures; no bar is read). */
+export const withhold = (s: TaskScore, reason: string): TaskScore => ({ ...s, called: false, reason: s.reason ? `${reason}; ${s.reason}` : reason, bars: null });
+
 // ---------------------------------------------------------------------------------------------
 // The T2 code baseline.
 
@@ -773,7 +863,8 @@ export const decisionOutcome = (d: CodeDecision): Outcome => ({
 // The T1 code comparator: detection only, from the twin bell's record.
 
 export interface PairRecord {
-  zStar: number;
+  /** Null when the record does not call Z*_pair (then `called` is false and no detection is made). */
+  zStar: number | null;
   /** Whether the record itself calls Z*_pair (10 valid nudge twins, a complete corpus); null when it does not say. */
   called: boolean | null;
   /** D_pair by `${arm}-${seed}`, only for twins the record counts as valid. */
@@ -785,7 +876,8 @@ const ARM_NAMES = new Set(["nudge", "nudge2", "l64", "l96", "f"]);
 /**
  * Reads the twin bell's record (experiments/naturalist/bell-v1-twins.json, written by tools/bell1.ts twins): Z*_pair is
  * `summary.zStarPair.value` (with `.called`), the twins are the array `twins` of objects with `arm`, `seed`, `valid`, and `D`
- * (null for a twin that failed). Also read, for a hand-made fixture: a number at `zStarPair`, `zStar`, `Z_star_pair`, and an array
+ * (null for a twin that failed). With fewer than 10 valid nudges the record has `value: null, called: false`: accepted, Z* is null
+ * and the comparator is withheld; `provisional` (the subset maximum) is never read. Also read, for a hand-made fixture: a number at `zStarPair`, `zStar`, `Z_star_pair`, and an array
  * under `runs` or `pairs` with `D_pair` or `dPair`. A twin with `valid: false` or no D is not in `D`; void ones are in `voids`.
  */
 export function readPairRecord(json: unknown): PairRecord {
@@ -796,6 +888,8 @@ export function readPairRecord(json: unknown): PairRecord {
   if (zp && typeof zp.value === "number" && Number.isFinite(zp.value)) {
     zStar = zp.value;
     if (typeof zp.called === "boolean") called = zp.called;
+  } else if (zp && zp.value === null && zp.called === false) {
+    return { zStar: null, called: false, ...readTwinRows(json) };
   }
   for (const sc of [top, sum]) for (const k of ["zStarPair", "zStar", "Z_star_pair"]) if (zStar === null && typeof sc[k] === "number" && Number.isFinite(sc[k])) zStar = sc[k] as number;
   if (zStar === null) throw new Error("pair record: no Z*_pair (summary.zStarPair.value)");
@@ -820,17 +914,52 @@ function readTwinRows(json: unknown): { D: Map<string, number>; voids: string[] 
   }
   return { D, voids };
 }
+/** The twin record's identity a production build needs (what tools/bell1.ts twins writes for the note's plan). */
+export const TWIN_RECORD_RULE = "anomaly-bell-v1-twins";
 /**
  * Why a production build may not go ahead on this twin record, or null. The record (bell-v1-twins.json) is the authority on the
  * full-history validity checks (equality from the first census, a difference after S, the launch exit code), so a production build
- * refuses to run without a finished one; a pilot build is exempt.
+ * refuses to run without a finished one: the record's identity (rule, version, note; not a --plan smoke record), complete:true, the
+ * note's parameters (S, steps, censuses, W_pair, the early-window range), and exactly one explicit validity decision (`valid`
+ * true or false; a valid twin with a finite D) for each of the 50 twins (5 arms x seeds 1 to 10). A pilot build is exempt.
  */
 export function twinRecordProblem(mode: "production" | "pilot", json: unknown | null): string | null {
   if (mode === "pilot") return null;
   if (json === null) return "the twin bell's record (experiments/naturalist/bell-v1-twins.json, or --voids <file>) is required: it holds the full-history validity of every twin";
   if (Array.isArray(json)) return "a plain array of \"arm-seed\" strings is for a pilot only; a production build needs the twin record itself (it has no twins array here)";
-  if (!isObj(json) || !Array.isArray(json.twins)) return "the twin record has no twins array";
+  if (!isObj(json)) return "the twin record is not a JSON object";
+  if (json.rule !== TWIN_RECORD_RULE) return `the twin record's rule is ${JSON.stringify(json.rule ?? null)}, expected ${JSON.stringify(TWIN_RECORD_RULE)}`;
+  if (json.version !== BELL1_VERSION) return `the twin record's version is ${JSON.stringify(json.version ?? null)}, expected ${BELL1_VERSION}`;
+  if (json.note !== NOTE1_PATH) return `the twin record's note is ${JSON.stringify(json.note ?? null)}, expected ${JSON.stringify(NOTE1_PATH)}`;
+  if (json.testPlan !== undefined) return "the twin record was made on a --plan (a smoke test), not on the note's plan";
   if (json.complete === false) return "the twin record is incomplete (complete:false); a void twin could be missing from it";
+  if (json.complete !== true) return "the twin record does not say complete:true";
+  const p = json.parameters;
+  if (!isObj(p)) return "the twin record has no parameters";
+  const want: [string, unknown, unknown][] = [
+    ["S", p.S, S],
+    ["steps", p.steps, STEPS],
+    ["censuses", p.censuses, STEPS / CENSUS_EVERY],
+    ["W_pair", p.W_pair, W_PAIR],
+    ["earlyWindowFirstCensus", JSON.stringify(p.earlyWindowFirstCensus ?? null), JSON.stringify([S + EARLY_FROM, S + EARLY_TO])],
+  ];
+  for (const [k, got, exp] of want) if (got !== exp) return `the twin record's parameters.${k} is ${typeof got === "string" ? got : JSON.stringify(got ?? null)}, expected ${typeof exp === "string" ? exp : JSON.stringify(exp)}`;
+  const zp = isObj(json.summary) && isObj(json.summary.zStarPair) ? json.summary.zStarPair : null;
+  if (!zp || typeof zp.called !== "boolean") return "the twin record has no summary.zStarPair with an explicit called";
+  if (zp.called ? !(typeof zp.value === "number" && Number.isFinite(zp.value)) : zp.value !== null) return `the twin record's summary.zStarPair.value is ${JSON.stringify(zp.value ?? null)} with called:${zp.called}; a called Z*_pair is a finite number, an uncalled one is null`;
+  if (!Array.isArray(json.twins)) return "the twin record has no twins array";
+  const seen = new Set<string>();
+  for (const [i, r] of json.twins.entries()) {
+    if (!isObj(r)) return `twin row ${i} is not an object`;
+    if (typeof r.arm !== "string" || !(ARMS as readonly string[]).includes(r.arm)) return `twin row ${i} has arm ${JSON.stringify(r.arm ?? null)}, not one of ${ARMS.join(", ")}`;
+    if (typeof r.seed !== "number" || !DEFAULT_SEEDS.includes(r.seed)) return `twin row ${i} (${r.arm}) has seed ${JSON.stringify(r.seed ?? null)}, not 1 to 10`;
+    const key = `${r.arm}-${r.seed}`;
+    if (seen.has(key)) return `twin ${key} is listed twice`;
+    seen.add(key);
+    if (typeof r.valid !== "boolean") return `twin ${key} has no explicit validity decision (valid is ${JSON.stringify(r.valid ?? null)})`;
+    if (r.valid && !(typeof r.D === "number" && Number.isFinite(r.D))) return `twin ${key} is valid but has no finite D`;
+  }
+  for (const arm of ARMS) for (const seed of DEFAULT_SEEDS) if (!seen.has(`${arm}-${seed}`)) return `twin ${arm}-${seed} is not in the twin record (${seen.size} of ${ARMS.length * DEFAULT_SEEDS.length} listed)`;
   return null;
 }
 
@@ -850,31 +979,69 @@ export function readVoids(json: unknown): string[] {
 export const normaliseReason = (msg: string): string => msg.replace(/(^|[\s('"])\/[^\s'")]+/g, "$1<path>");
 
 export interface ComparatorScore {
-  /** False when the record does not call Z*_pair (fewer than 10 valid nudges): then no item is called detected or not (Z* is a partial maximum). */
+  /**
+   * False when the record does not call Z*_pair (fewer than 10 valid nudges; Z* is then a partial maximum), or when a scored item
+   * (L96, F, or a nudge) is void or has no D: then no task-level comparison is made and no item is called detected or not.
+   */
   called: boolean;
+  reason?: string;
+  /** Counts over the items that are not void. */
   positives: Count;
   l64: Count;
   /** Calibration by construction: Z*_pair is set on these very nudges (labelled so). */
   nudgeCalibration: Count;
+  /** Items that are not void but have no D in the record. */
   missing: string[];
-  byItem: { id: string; arm: ItemArm; seed: number; D: number | null; detected: boolean | null }[];
+  /** Items void in the manifest or in the twin record. */
+  void: string[];
+  byItem: { id: string; arm: ItemArm; seed: number; D: number | null; detected: boolean | null; void: string | null }[];
 }
 /**
- * The twin bell's detections on the T1 items (D_pair > Z*_pair, strict). It makes no world or kind call. When the record says
- * Z*_pair is not called (`called === false`) the detections are withheld (null, counts 0), since B itself calls none.
+ * The twin bell's detections on the T1 items (D_pair > Z*_pair, strict). It makes no world or kind call. An item void in the
+ * manifest (or a twin the record marks void) carries its reason, has no D or detection, and is left out of every count. The
+ * comparison is withheld (detections null, counts 0) when the record does not call Z*_pair, or when a scored item (L96, F or a
+ * nudge) is void or missing, as the note withholds the task: "a task is not called if any of its scored items is missing".
  */
 export function t1Comparator(items: readonly ManifestItem[], rec: PairRecord): ComparatorScore {
-  const called = rec.called !== false;
-  const byItem = items.filter((i) => i.task === "T1").map((i) => {
-    const D = rec.D.get(`${i.arm}-${i.seed}`) ?? null;
-    return { id: i.id, arm: i.arm, seed: i.seed, D, detected: D === null || !called ? null : D > rec.zStar };
+  const rows = items.filter((i) => i.task === "T1").map((i) => {
+    const key = `${i.arm}-${i.seed}`;
+    const v = i.void ?? (rec.voids.includes(key) ? `void in the twin bell's record (${key})` : null);
+    return { id: i.id, arm: i.arm, seed: i.seed, D: v ? null : rec.D.get(key) ?? null, void: v };
   });
+  const scored = rows.filter((r) => r.arm === "l96" || r.arm === "f" || r.arm === "nudge");
+  const voidScored = scored.filter((r) => r.void), missingScored = scored.filter((r) => !r.void && r.D === null);
+  let reason: string | undefined;
+  if (rec.called === false || rec.zStar === null) reason = "the twin record does not call Z*_pair";
+  else if (voidScored.length) reason = `${voidScored.length} scored item(s) are void: ${voidScored.map((r) => r.id).join(", ")}`;
+  else if (missingScored.length) reason = `${missingScored.length} scored item(s) have no D in the twin record: ${missingScored.map((r) => r.id).join(", ")}`;
+  const called = reason === undefined;
+  const byItem = rows.map((r) => ({ id: r.id, arm: r.arm, seed: r.seed, D: r.D, detected: r.D === null || !called ? null : r.D > rec.zStar!, void: r.void }));
   const count = (arm: ItemArm[]): Count => {
-    const xs = byItem.filter((b) => arm.includes(b.arm));
+    const xs = byItem.filter((b) => arm.includes(b.arm) && !b.void);
     return { k: xs.filter((b) => b.detected === true).length, n: xs.length };
   };
-  return { called, positives: count(["l96", "f"]), l64: count(["l64"]), nudgeCalibration: count(["nudge"]), missing: byItem.filter((b) => b.D === null).map((b) => b.id), byItem };
+  return {
+    called,
+    ...(reason ? { reason } : {}),
+    positives: count(["l96", "f"]),
+    l64: count(["l64"]),
+    nudgeCalibration: count(["nudge"]),
+    missing: byItem.filter((b) => !b.void && b.D === null).map((b) => b.id),
+    void: byItem.filter((b) => b.void).map((b) => b.id),
+    byItem,
+  };
 }
+
+/** The comparator with its task-level comparison withheld (detections null, counts 0, D kept), for a score that calls nothing. */
+export const withholdComparator = (c: ComparatorScore, reason: string): ComparatorScore => ({
+  ...c,
+  called: false,
+  reason: c.reason ? `${reason}; ${c.reason}` : reason,
+  positives: { ...c.positives, k: 0 },
+  l64: { ...c.l64, k: 0 },
+  nudgeCalibration: { ...c.nudgeCalibration, k: 0 },
+  byItem: c.byItem.map((b) => ({ ...b, detected: null })),
+});
 
 // ---------------------------------------------------------------------------------------------
 // The orientation draw, reported beside the T1 result.

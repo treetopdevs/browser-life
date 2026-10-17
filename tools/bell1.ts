@@ -17,7 +17,7 @@
 //                     bell-v1-twins.json, or the same with ".incomplete" before ".json" when an expected directory is missing and
 //                     nothing is called. A record is complete:true when no expected directory is missing and called:true when a
 //                     criterion is called (A1; or any of B2, B3); a void twin never makes a record "incomplete" by itself.
-//   --allow-incomplete  go on when an expected bundle directory is missing (the record says complete:false; part A calls nothing, part B calls only the criteria whose twins are all valid);
+//   --allow-incomplete  go on when an expected bundle directory is missing (the record says complete:false; part A calls A1 only when its own corpus, the 70 fresh and 40 envelope runs, is whole, and a reported item missing runs is marked not called; part B calls only the criteria whose twins are all valid);
 //                     default: stop. A bundle that is there but fails its checks never stops a run of the fresh nulls or the twins: a fresh
 //                     run that fails counts as not loaded and a void twin is reported (the note); a v0 run or a base that fails stops it.
 //   --force           replace a record that is complete:true and called. Without it a complete record that called a readout is never
@@ -49,6 +49,7 @@ import {
   EARLY_TO,
   HORIZON,
   HORIZON_CENSUSES,
+  MATTER_CHANNELS,
   NOTE1_PATH,
   PairScorer,
   W_PAIR,
@@ -191,7 +192,7 @@ async function runNull() {
     else missing.push(r.id);
   }
   if (missing.length && !allowIncomplete) {
-    throw new Error(`STOP: ${missing.length} of ${all.length} expected run directories are missing (first: ${missing[0]}); --allow-incomplete scores what exists and calls nothing`);
+    throw new Error(`STOP: ${missing.length} of ${all.length} expected run directories are missing (first: ${missing[0]}); --allow-incomplete scores what exists, calls A1 only when its 70 fresh and 40 envelope runs are whole, and marks reported items missing runs not called`);
   }
   const complete = missing.length === 0;
   const have = (rs: NullRun[]) => rs.filter((r) => present.has(r.id));
@@ -288,15 +289,16 @@ async function runNull() {
   await writeAtomic(recordPath, JSON.stringify(record, null, 1) + "\n");
 
   console.log("");
-  console.log(`anomaly bell v1, part A${complete ? "" : " (INCOMPLETE: nothing is called)"}; Z=${PRIMARY.Z}, W=${PRIMARY.W}, horizon ${HORIZON}`);
+  console.log(`anomaly bell v1, part A${complete ? "" : " (INCOMPLETE: A1 is called only on a whole fresh and envelope corpus; reported items missing runs are not called)"}; Z=${PRIMARY.Z}, W=${PRIMARY.W}, horizon ${HORIZON}`);
   const A1 = summary.A1;
   console.log(`  A1 (at most ${A1.maxRings} of ${70} fresh runs ring, 11 signals): ${A1.status}; ${A1.k} of ${A1.n} ring, upper95 ${f3(A1.upper95)}${A1.reason ? ` (${A1.reason})` : ""}`);
   console.log(`  reading: ${A1.reading}`);
   const r = summary.reported;
-  console.log(`  reported: v1 rule on v0's 70 (leave-one-out): gradient ${cnt(r.v1OnV0.gradient)}, spots ${cnt(r.v1OnV0.spots)}, total ${cnt(r.v1OnV0.total)} (upper95 ${f3(r.v1OnV0.total.upper95)})`);
-  console.log(`            v0's 13-signal rule on the fresh runs: ${cnt(r.v0RuleOnFresh)} (upper95 ${f3(r.v0RuleOnFresh.upper95)})`);
-  console.log(`            treatment against the 40: v1 rule rings ${cnt(r.treatment.rings11)}, 13-signal rule ${cnt(r.treatment.rings13)}, effect vs neutral ${f3(r.treatment.effect11)}`);
-  console.log(`            calibrated Z*=${f3(r.calibrated.zStar)} (largest 13-signal D among the 40): fresh above ${cnt(r.calibrated.fresh)}, treatment above ${cnt(r.calibrated.treatment)}`);
+  const rs = (x: { called: boolean; reason?: string }) => (x.called ? "" : ` [not called: ${x.reason}]`);
+  console.log(`  reported: v1 rule on v0's 70 (leave-one-out): gradient ${cnt(r.v1OnV0.gradient)}, spots ${cnt(r.v1OnV0.spots)}, total ${cnt(r.v1OnV0.total)} (upper95 ${f3(r.v1OnV0.total.upper95)})${rs(r.v1OnV0)}`);
+  console.log(`            v0's 13-signal rule on the fresh runs: ${cnt(r.v0RuleOnFresh)} (upper95 ${f3(r.v0RuleOnFresh.upper95)})${rs(r.v0RuleOnFresh)}`);
+  console.log(`            treatment against the 40: v1 rule rings ${cnt(r.treatment.rings11)}, 13-signal rule ${cnt(r.treatment.rings13)}, effect vs neutral ${f3(r.treatment.effect11)}${rs(r.treatment)}`);
+  console.log(`            calibrated Z*=${f3(r.calibrated.zStar)} (largest 13-signal D among the 40): fresh above ${cnt(r.calibrated.fresh)}, treatment above ${cnt(r.calibrated.treatment)}${rs(r.calibrated)}`);
   for (const e of entries.filter((x) => x.set === "fresh" && (x.ring11 || x.ring13))) {
     console.log(`  fresh ${e.id}: D11 ${f3(e.D11)}, D13 ${f3(e.D13)}${e.firstRing13 ? `, first ring ${e.firstRing13.signal} ${e.firstRing13.side} at ${e.firstRing13.startStep}-${e.firstRing13.endStep}` : ""}`);
   }
@@ -443,6 +445,7 @@ async function runTwins() {
       censuses: N,
       W_pair: W_PAIR,
       earlyWindowFirstCensus: [tp.S + EARLY_FROM, tp.S + EARLY_TO],
+      dose: `at S + ${CADENCE}: livingCells, and matter = ${MATTER_CHANNELS.join("+")} of the series pools (E and S are energy), twin and base and twin - base; interventionMatter is the intervention log's own matter field`,
       rule: "z = (twin - base) / spread over the bases at t; D_pair = max over signals and sides of the window minimum of side*z, floored at 0; hit iff D > Z*_pair (strict)",
     },
     bases: tp.bases.map((b, i) => ({ id: b.id, presetIdentity: baseIdentity[i] })),
@@ -453,19 +456,20 @@ async function runTwins() {
 
   console.log("");
   console.log(`anomaly bell v1, part B${complete ? "" : " (INCOMPLETE: missing twins are void, only the criteria that need them are not called)"}; S=${tp.S}, W_pair=${W_PAIR}, windows starting ${tp.S + EARLY_FROM}..${tp.S + EARLY_TO}`);
-  console.log(`  Z*_pair = ${f3(summary.zStarPair.value)} over ${summary.zStarPair.n} valid nudge twins (${summary.zStarPair.called ? "called" : "not called"}); nudge median D ${f3(summary.nudge.medianD)}; first differences ${summary.nudge.firstDiffSteps.join(", ")}`);
+  const zp = summary.zStarPair;
+  console.log(`  Z*_pair = ${zp.called ? f3(zp.value) : `not called (provisional max ${f3(zp.provisional)}; no hits are marked from it)`} over ${zp.n} valid nudge twins; nudge median D ${f3(summary.nudge.medianD)}; first differences ${summary.nudge.firstDiffSteps.join(", ")}`);
   for (const [arm, r] of Object.entries(summary.arms)) {
-    console.log(`  ${arm}: ${r.valid} valid (void seeds ${r.voidSeeds.join(",") || "none"}); above Z* ${cnt(r.hits)}; median D ${f3(r.medianD)}; P(D > nudge) ${f3(r.effectVsNudge.effect)}`);
+    console.log(`  ${arm}: ${r.valid} valid (void seeds ${r.voidSeeds.join(",") || "none"}); above Z* ${r.hits ? cnt(r.hits) : "n/a"}; median D ${f3(r.medianD)}; P(D > nudge) ${f3(r.effectVsNudge.effect)}`);
   }
-  const crit = (name: string, c: { called: boolean; met: boolean | null; k: number; n: number; bound95: number | null; reason?: string }) =>
-    console.log(`  ${name}: ${c.called ? (c.met ? "met" : "missed") : "not called"}; ${c.k} of ${c.n}; 95% bound ${f3(c.bound95)}${c.reason ? ` (${c.reason})` : ""}`);
+  const crit = (name: string, c: { called: boolean; met: boolean | null; k: number | null; n: number; bound95: number | null; reason?: string }) =>
+    console.log(`  ${name}: ${c.called ? (c.met ? "met" : "missed") : "not called"}; ${c.k ?? "n/a"} of ${c.n}; 95% bound ${f3(c.bound95)}${c.reason ? ` (${c.reason})` : ""}`);
   crit("B2 L96", summary.B2.l96);
   crit("B2 F", summary.B2.f);
   crit("B2 L64 (reported)", summary.B2_l64);
   crit("B3 nudge2", summary.B3);
   console.log(`  reading: ${summary.reading}${summary.armsMet.length === 1 ? `: ${summary.armsMet[0]}` : ""}`);
   for (const t of twinReports) {
-    console.log(`  ${t.id}: ${t.valid ? "valid" : `VOID (${t.voidReasons.join("; ")})`}; D ${f3(t.D)} ${t.signal ?? ""} ${t.side ?? ""}; hit ${t.hit}; first window above ${t.firstWindowAboveZ ?? "-"}; first diff ${t.firstDiffStep ?? "-"}; cells ${t.dose.base}->${t.dose.twin} (${t.dose.delta}); matter ${t.dose.interventionMatter ?? "-"}`);
+    console.log(`  ${t.id}: ${t.valid ? "valid" : `VOID (${t.voidReasons.join("; ")})`}; D ${f3(t.D)} ${t.signal ?? ""} ${t.side ?? ""}; hit ${t.hit}; first window above ${t.firstWindowAboveZ ?? "-"}; first diff ${t.firstDiffStep ?? "-"}; cells ${t.dose.livingCells.base}->${t.dose.livingCells.twin} (${t.dose.livingCells.delta}); matter ${t.dose.matter.base}->${t.dose.matter.twin} (${t.dose.matter.delta}); logged ${t.dose.interventionMatter ?? "-"}`);
   }
   console.log(`record: ${recordPath}`);
 }
