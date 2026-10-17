@@ -39,3 +39,19 @@ The lab keeps its three-column bench: Plant a world, In your hand and Keep a cop
 - Words: the lab's names win in copy, so a wound (not a lesion), a sandbox world (not a preset), a seed number. Registered means hypotheses and decision rules written down before the data. An island is a browser tab lending its GPU to queued experiments, and the shared garden's islands are that idea grown up; the Four islands world plays it out inside one jar. Milestones are spelled out the first time on a page (Milestone 3, then M3).
 - Mechanics: British spelling (colour, behaviour, centre, favour) and curly apostrophes and quotation marks, in the pages and in the strings the lab and the catalogue build in code.
 - One documented exception: the discovery worker page (`apps/lab/discovery`) is built on its own for the coordinator and keeps inline styles in the same paper and sun palette with system fonts, following the system colour scheme rather than the Day/Night toggle.
+
+
+### Same-run storage conflicts (2026-10-17)
+
+Continuing the latest checkpoint may reuse its run ID in more than one tab. A manifest now carries an opaque
+`storageRevision`: a save compares the revision it read with the recoverable on-disk manifest while holding the
+origin records Web Lock, then writes a fresh UUID revision using the existing `.prev` copy-then-rewrite path.
+Legacy manifests use their serialized content as an initial comparison token; a fresh branch clears the token.
+A stale save is refused before touching either manifest version. Its world and intervention log remain in memory,
+and Download can preserve its checkpoint; opening the latest saved copy resumes the winning history. Histories
+are never merged automatically: independent intervention sequences do not describe one deterministic replay.
+Checkpoint and edge filenames use UUIDs so writes preceding the comparison cannot replace another tab's files.
+Pruning checks the same revision and holds the records lock through deletions and manifest update; failed
+removals remain in the worker manifest for retry. Without Web Locks, manifest writes refuse safely; simulation,
+reading existing copies, Download and Open remain available. No OPFS behavior or simulation rules change.
+Already-open tabs running older code must reload to participate in revision checks.

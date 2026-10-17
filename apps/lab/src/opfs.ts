@@ -211,30 +211,78 @@ const manifestFile = (runId: string) => `${runId}.run.json`;
 const isManifest = (v: unknown): v is RunManifest =>
   typeof v === "object" && v !== null && typeof (v as RunManifest).runId === "string" && Array.isArray((v as RunManifest).checkpoints) && Array.isArray((v as RunManifest).interventions);
 
-/** A run's manifest (its checkpoints and intervention log), or its version before a save that did not finish; null when there is neither. */
+/** Legacy manifests get a content token until their first revisioned save. */
+const revisionOf = (m: RunManifest): string => m.storageRevision ?? JSON.stringify(m);
+
+/** Reads the recoverable version and remembers exactly which history a continued run may replace. */
 export async function readManifest(runId: string): Promise<RunManifest | null> {
-  return stored(() => locked(() => readRecord(manifestFile(runId), isManifest)));
+  return stored(() => locked(async () => {
+    const m = await readRecord(manifestFile(runId), isManifest);
+    return m ? { ...m, storageRevision: revisionOf(m) } : null;
+  }));
 }
 
-/** Rewrites a run's manifest, as each save of it does. */
+function needLocks(): void {
+  if (!(navigator as { locks?: LockManager }).locks) {
+    throw new StorageError("This browser cannot safely coordinate saved runs. Download still gives you a file.", "Web Locks unavailable");
+  }
+}
+
+/** Caller holds the records lock, including throughout any destructive pruning. */
+async function checkRevision(m: RunManifest): Promise<void> {
+  const current = await readRecord(manifestFile(m.runId), isManifest);
+  if ((current ? revisionOf(current) : undefined) !== m.storageRevision) {
+    throw new StorageError("Another tab changed this saved run. Your world is still running: Download it to keep your changes, or open the latest saved copy before continuing. No saved history was replaced.", "saved run changed in another tab");
+  }
+}
+
+async function commitManifest(m: RunManifest): Promise<void> {
+  const next = { ...m, storageRevision: crypto.randomUUID() };
+  await writeRecord(manifestFile(m.runId), next, isManifest);
+  // Failed writes retain the expected revision so a retry can use .prev recovery.
+  m.storageRevision = next.storageRevision;
+}
+
+/** Compare and replace under the same origin lock. Conflicts touch neither record nor recovery copy. */
 export async function writeManifest(m: RunManifest): Promise<void> {
-  return stored(() => locked(() => writeRecord(manifestFile(m.runId), m, isManifest)));
+  return stored(async () => {
+    // A comparison without serialization could let both writers pass.
+    needLocks();
+    await locked(async () => {
+      await checkRevision(m);
+      await commitManifest(m);
+    });
+  });
+}
+
+/** Pruning checks the writer before deleting, under the same lock as every manifest update. */
+export async function pruneCheckpoints(m: RunManifest, files: readonly string[]): Promise<void> {
+  return stored(async () => {
+    needLocks();
+    await locked(async () => {
+      await checkRevision(m);
+      for (const file of files) {
+        await forgetNow(file);
+        m.checkpoints = m.checkpoints.filter((c) => c.file !== file);
+      }
+      await commitManifest(m);
+    });
+  });
+}
+
+/** Called only while holding the records lock. Failed removals remain available for a later retry. */
+async function forgetNow(file: string): Promise<void> {
+  for (const f of [file, `${file}.edges`]) {
+    try {
+      await removeFile(f);
+    } catch (e) {
+      if (!missingFile(e)) throw e;
+    }
+  }
+  const list = (await shelfNow()).filter((m) => m.file !== file);
+  await writeRecord(INDEX, list, isIndex);
 }
 
 export async function forgetCheckpoint(file: string): Promise<void> {
-  return stored(() =>
-    locked(async () => {
-      // The checkpoint and its mutation-edges sidecar (the lineage inspector's), either possibly already gone. The
-      // files go first: a removal the store refuses leaves the shelf naming a checkpoint that is still there.
-      for (const f of [file, `${file}.edges`]) {
-        try {
-          await removeFile(f);
-        } catch (e) {
-          if (!missingFile(e)) throw e;
-        }
-      }
-      const list = (await shelfNow()).filter((m) => m.file !== file);
-      await writeRecord(INDEX, list, isIndex);
-    }),
-  );
+  return stored(() => locked(() => forgetNow(file)));
 }

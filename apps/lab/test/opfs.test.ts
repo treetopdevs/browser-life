@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { RECORDS_WAIT_MS, StorageError, forgetCheckpoint, listCheckpoints, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "../src/opfs.ts";
+import { RECORDS_WAIT_MS, StorageError, forgetCheckpoint, listCheckpoints, pruneCheckpoints, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "../src/opfs.ts";
 import type { CheckpointMeta, RunManifest } from "../src/protocol.ts";
 
 /** What WebKit's ephemeral sessions (Safari Private Browsing among them) answer to getDirectory. */
@@ -63,6 +63,7 @@ function store(faults: Faults) {
     },
   };
   browser(async () => ({ getDirectoryHandle: async () => dir }));
+  locks();
   return files;
 }
 
@@ -199,15 +200,15 @@ describe("lab checkpoint storage", () => {
         ({ runId: "spots-s1", presetId: "spots", seed: 1, interventions: Array.from({ length: interventions }, (_, i) => ({ step: i })), checkpoints: steps.map((step) => ({ step, file: `spots-s1-t${step}.blck`, hash: "h", interventions })) }) as unknown as RunManifest;
       expect(await readManifest("spots-s1")).toBeNull();
       await writeManifest(run([100], 1));
-      await writeManifest(run([100, 200], 2));
+      await writeManifest({ ...run([100, 200], 2), storageRevision: (await readManifest("spots-s1"))!.storageRevision });
       faults[fault] = "spots-s1.run.json";
-      await expect(writeManifest(run([100, 200, 300], 3))).rejects.toBeInstanceOf(StorageError);
+      await expect(writeManifest({ ...run([100, 200, 300], 3), storageRevision: (await readManifest("spots-s1"))!.storageRevision })).rejects.toBeInstanceOf(StorageError);
       expect(() => JSON.parse(new TextDecoder().decode(files.get("spots-s1.run.json")))).toThrow();
       // What a restore reads: the run as of its last save that finished, with the interventions it had.
       const saved = await readManifest("spots-s1");
       expect(saved?.checkpoints.map((c) => c.step)).toEqual([100, 200]);
       expect(saved?.interventions).toHaveLength(2);
-      await writeManifest(run([100, 200, 400], 4));
+      await writeManifest({ ...run([100, 200, 400], 4), storageRevision: saved!.storageRevision });
       expect((await readManifest("spots-s1"))?.checkpoints.map((c) => c.step)).toEqual([100, 200, 400]);
       // Neither version intact is no manifest at all, which a restore forks from as before.
       files.set("spots-s1.run.json", new Uint8Array());
@@ -215,6 +216,69 @@ describe("lab checkpoint storage", () => {
       expect(await readManifest("spots-s1")).toBeNull();
     });
   }
+
+  it("refuses stale histories without touching the winner or its recovery copy", async () => {
+    const files = store({});
+    const initial = { runId: "shared", interventions: [], checkpoints: [] } as unknown as RunManifest;
+    await writeManifest(initial);
+    const a = (await readManifest("shared"))!;
+    const b = (await readManifest("shared"))!;
+    a.checkpoints.push({ step: 10, file: "a.blck", hash: "a", interventions: 1 });
+    a.interventions.push({ kind: "feed", step: 5, x: 1, y: 1, r: 1, amount: 1, matter: 1 });
+    b.checkpoints.push({ step: 10, file: "b.blck", hash: "b", interventions: 1 });
+    b.interventions.push({ kind: "lesion", step: 5, x: 2, y: 2, r: 1 });
+    const outcomes = await Promise.allSettled([writeManifest(a), writeManifest(b)]);
+    expect(outcomes.map((o) => o.status)).toEqual(["fulfilled", "rejected"]);
+    const before = [...files].map(([name, bytes]) => [name, [...bytes]]);
+    await expect(writeManifest(b)).rejects.toThrow("Another tab changed");
+    expect([...files].map(([name, bytes]) => [name, [...bytes]])).toEqual(before);
+    expect(await readManifest("shared")).toEqual(a);
+    expect(b.checkpoints[0].file).toBe("b.blck");
+    expect(b.interventions[0].kind).toBe("lesion");
+    // Recovery of a torn primary also keeps the revision: a stale tab cannot overwrite .prev.
+    await writeManifest(a);
+    files.set("shared.run.json", new Uint8Array());
+    const recovered = (await readManifest("shared"))!;
+    expect(recovered.checkpoints).toEqual(a.checkpoints);
+    await expect(writeManifest(b)).rejects.toThrow("Another tab changed");
+    await writeManifest(recovered);
+    expect((await readManifest("shared"))!.checkpoints).toEqual(a.checkpoints);
+  });
+
+  it("checks revision before pruning and keeps failed removals eligible for retry", async () => {
+    const faults: Faults = {};
+    const files = store(faults);
+    const m = { runId: "pruned", interventions: [], checkpoints: ["a.blck", "b.blck"].map((file) => ({ file, step: 1, hash: "h", interventions: 0 })) } as unknown as RunManifest;
+    for (const file of ["a.blck", "b.blck"]) {
+      await writeFile(file, new Uint8Array([1]));
+      await recordCheckpoint({ ...meta(file), runId: m.runId });
+    }
+    await writeManifest(m);
+    const stale = (await readManifest(m.runId))!;
+    await writeManifest(m);
+    await expect(pruneCheckpoints(stale, ["a.blck"])).rejects.toThrow("Another tab changed");
+    expect(files.has("a.blck")).toBe(true);
+    faults.remove = "a.blck";
+    await expect(pruneCheckpoints(m, ["a.blck", "b.blck"])).rejects.toBeInstanceOf(StorageError);
+    expect(m.checkpoints.map((c) => c.file)).toEqual(["a.blck", "b.blck"]);
+    delete faults.remove;
+    await pruneCheckpoints(m, ["a.blck", "b.blck"]);
+    expect((await readManifest(m.runId))!.checkpoints).toEqual([]);
+    expect(await shelf()).toEqual([]);
+  });
+
+  it("compares legacy histories and refuses writes without cross-tab serialization", async () => {
+    const files = store({});
+    const legacy = { runId: "legacy", checkpoints: [], interventions: [] } as unknown as RunManifest;
+    files.set("legacy.run.json", new TextEncoder().encode(JSON.stringify(legacy)));
+    const a = (await readManifest("legacy"))!;
+    const b = (await readManifest("legacy"))!;
+    await writeManifest(a);
+    await expect(writeManifest(b)).rejects.toThrow("Another tab changed");
+    vi.stubGlobal("navigator", { storage: navigator.storage });
+    await expect(writeManifest(a)).rejects.toThrow("cannot safely coordinate");
+    expect(await readManifest("legacy")).toEqual(a);
+  });
 
   it("lets two lab tabs save at once without either dropping the other's copy", async () => {
     store({});

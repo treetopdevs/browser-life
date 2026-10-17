@@ -30,7 +30,7 @@ import { LabExecution, PondWaitingError, huntArmError } from "./execution.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
 import { createLabSession } from "./session.ts";
 import type { CensusMsg, CheckpointMeta, FromWorker, Keep, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
-import { StorageError, forgetCheckpoint, listCheckpoints, missingFile, readFile, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "./opfs.ts";
+import { StorageError, forgetCheckpoint, listCheckpoints, missingFile, pruneCheckpoints, readFile, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "./opfs.ts";
 
 /**
  * The interactive lab's observation settings (fixed; there is no per-run
@@ -549,7 +549,7 @@ async function saveCheckpoint(w: World, auto: boolean) {
   const m = w.manifest;
   const bytes = encodeCheckpoint(state, observer);
   // Unique even after a restore trims the manifest's checkpoint list.
-  const file = `${m.runId}-t${state.step}-${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}.blck`;
+  const file = `${m.runId}-t${state.step}-${crypto.randomUUID()}.blck`;
   await writeFile(file, bytes);
   await writeFile(edgesFile(file), new Uint8Array(w.execution.edges.words().buffer));
   m.checkpoints.push({ step: state.step, file, hash: stateHash(state), interventions: m.interventions.length, edges, dropped, edgesFrom: w.lineage.edgesFrom, ...(auto ? { auto } : {}) });
@@ -624,11 +624,7 @@ async function autoSave(w: World) {
   // Only this run's own: a fork's manifest also lists its parent's checkpoints, which the parent still uses.
   const prune = prunableAuto(m, AUTO_KEEP);
   try {
-    for (const c of prune) {
-      await forgetCheckpoint(c.file);
-      m.checkpoints.splice(m.checkpoints.indexOf(c), 1);
-    }
-    if (prune.length) await writeManifest(m);
+    if (prune.length) await pruneCheckpoints(m, prune.map((c) => c.file));
   } catch (e) {
     // The new copy is kept; older ones the store would not let go wait for the next automatic copy.
     if (!(e instanceof StorageError)) throw e;
@@ -664,6 +660,7 @@ async function restore(file: string, keep?: Keep) {
     m = {
       ...saved,
       runId: last ? saved.runId : forkRunId(saved.runId),
+      storageRevision: last ? saved.storageRevision : undefined,
       // Keep exactly the interventions the checkpoint already contains.
       interventions: saved.interventions.slice(0, ck.interventions),
       checkpoints: saved.checkpoints.slice(0, saved.checkpoints.indexOf(ck) + 1),

@@ -299,6 +299,102 @@ test("two lab tabs saving at once keep every copy on the one shelf", async ({ pa
   expect(result.perRun).toEqual([[100, 200, 300, 400], [100, 200, 300, 400]]);
 });
 
+test("two tabs continuing the same saved run refuse stale saves and preserve both worlds", async ({ page, browserName }) => {
+  test.skip(browserName === "webkit", "Playwright's WebKit context keeps no files at all");
+  await page.route("**/lab-storage-test", (route) => route.fulfill({ contentType: "text/html", body: "<html><body></body></html>" }));
+  await page.goto("/lab-storage-test");
+  // Two lab workers on one origin share its storage and its locks, as two tabs do.
+  const result = await page.evaluate(async (workerPath) => {
+    const tab = () => {
+      const worker = new Worker(workerPath, { type: "module" });
+      const messages: FromWorker[] = [];
+      worker.onmessage = (ev: MessageEvent<FromWorker>) => { messages.push(ev.data); };
+      const send = (m: ToWorker, transfer: Transferable[] = []) => worker.postMessage(m, transfer);
+      async function wait(predicate: (m: FromWorker) => boolean): Promise<FromWorker> {
+        const deadline = performance.now() + 90_000;
+        while (performance.now() < deadline) {
+          const error = messages.find((m) => m.type === "error");
+          if (error?.type === "error") throw new Error(error.message);
+          const index = messages.findIndex(predicate);
+          if (index >= 0) return messages.splice(index, 1)[0];
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+        throw new Error("worker timed out");
+      }
+      return { worker, send, wait, last: (type: FromWorker["type"]) => messages.findLast((m) => m.type === type) };
+    };
+    const tabs = [tab(), tab()];
+    try {
+      const runs: string[] = [];
+      for (const [i, t] of tabs.entries()) {
+        const canvas = document.createElement("canvas").transferControlToOffscreen();
+        t.send({ type: "init", canvas, width: 64, height: 64 }, [canvas]);
+        await t.wait((m) => m.type === "ready");
+        t.send({ type: "load", presetId: "spots", seed: 30 + i, overrides: { tileW: 32, tileH: 32, tilesX: 2, tilesY: 1, kernelRadius: 2 } });
+        const loaded = await t.wait((m) => m.type === "loaded");
+        if (loaded.type === "loaded") runs.push(loaded.manifest.runId);
+      }
+      const first = tabs[0], second = tabs[1];
+      first.send({ type: "save" });
+      await first.wait((m) => m.type === "notice" && /Saved /.test(m.message));
+      first.send({ type: "listCheckpoints" });
+      first.send({ type: "export" });
+      await first.wait((m) => m.type === "exported");
+      const account = first.last("session");
+      if (account?.type !== "session") throw new Error("no shelf");
+      const original = account.view.checkpoints.find((c) => c.runId === runs[0])!;
+      second.send({ type: "restore", file: original.file, keep: "discard" });
+      const continued = await second.wait((m) => m.type === "loaded");
+      await second.wait((m) => m.type === "session" && m.view.world?.runId === runs[0]);
+      const outcomes = await Promise.all(tabs.map(async (t, i) => {
+        t.send({ type: "feed", x: 10 + i * 20, y: 10, r: 2, amount: 4 + i });
+        t.send({ type: "step", count: 100 });
+        await t.wait((m) => m.type === "stats" && m.step === 100);
+        t.send({ type: "save" });
+        return t.wait((m) => (m.type === "notice" && /Saved /.test(m.message)) || (m.type === "refused" && m.request === "save"));
+      }));
+      const loser = outcomes.findIndex((m) => m.type === "refused");
+      if (loser < 0) throw new Error("both stale histories were accepted");
+      // The losing world still downloads, and retrying cannot replace either recovery record.
+      tabs[loser].send({ type: "export" });
+      const exported = await tabs[loser].wait((m) => m.type === "exported");
+      tabs[loser].send({ type: "save" });
+      const retried = await tabs[loser].wait((m) => m.type === "refused" && m.request === "save");
+      first.send({ type: "listCheckpoints" });
+      first.send({ type: "export" });
+      await first.wait((m) => m.type === "exported");
+      const listed = first.last("session");
+      const shelf = listed?.type === "session" ? listed.view.checkpoints.filter((c) => c.runId === runs[0]) : [];
+      const latest = shelf.find((c) => c.step === 100)!;
+      first.send({ type: "restore", file: latest.file, keep: "discard" });
+      const restored = await first.wait((m) => m.type === "loaded");
+      return {
+        sameRun: continued.type === "loaded" && continued.manifest.runId === runs[0],
+        outcomes: outcomes.map((m) => m.type),
+        refusal: outcomes[loser].type === "refused" ? outcomes[loser].message : "",
+        retried: retried.type,
+        exported: exported.type === "exported" && exported.bytes.byteLength > 0,
+        shelf: shelf.map((c) => c.step).sort((a, b) => a - b),
+        history: restored.type === "loaded" ? restored.manifest.checkpoints.map((c) => c.step) : [],
+        interventions: restored.type === "loaded" ? restored.manifest.interventions : [],
+        winnerX: 10 + (1 - loser) * 20,
+      };
+    } finally {
+      for (const t of tabs) t.worker.terminate();
+    }
+  }, flakyStorageWorker);
+
+  expect(result.sameRun).toBe(true);
+  expect(result.outcomes.sort()).toEqual(["notice", "refused"]);
+  expect(result.refusal).toContain("Another tab changed");
+  expect(result.retried).toBe("refused");
+  expect(result.exported).toBe(true);
+  expect(result.shelf).toEqual([0, 100]);
+  expect(result.history).toEqual([0, 100]);
+  expect(result.interventions).toHaveLength(1);
+  expect(result.interventions[0]).toMatchObject({ kind: "feed", x: result.winnerX });
+});
+
 test("without storage the lab page keeps the world running, says why Save is off, and still downloads and opens", async ({ page }) => {
   // The page's own worker, swapped for the same worker in a browser that keeps no files.
   await page.route(/\/src\/sim\.worker\.ts\?worker_file/, (route) => route.fulfill({ contentType: "text/javascript", body: `import ${JSON.stringify(noStorageWorker)};` }));
