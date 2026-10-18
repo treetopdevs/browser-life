@@ -1777,7 +1777,7 @@ describe("assay directory screening", () => {
 // ---- the CLI end to end (a real `deno run`, over fixture directories) ------------------------------
 
 const REPORT = fileURLToPath(new URL("../scaffold-report.ts", import.meta.url));
-const report = (...args: string[]): Record<string, any> => JSON.parse(execFileSync("deno", ["run", "-A", REPORT, ...args], { stdio: "pipe", encoding: "utf8" }));
+const report = (...args: string[]): Record<string, any> => JSON.parse(execFileSync("deno", ["run", "--no-lock", "-A", REPORT, ...args], { stdio: "pipe", encoding: "utf8" }));
 
 function writeAssayDir(root: string, name: string, d: ReturnType<typeof assayDirFixture>) {
   const dir = join(root, name);
@@ -4631,7 +4631,7 @@ describe("scaffold-report r3rep", () => {
     for (const doc of ["scaffold-protocol-v1.md", "scaffold-r3-replication-v1.md"]) appendFileSync(join(tree, "docs", doc), "\n## Results (2026-10-02)\n\nRecorded after the runs.\n");
     const root = scratch();
     writeWorld(root);
-    const out = JSON.parse(execFileSync("deno", ["run", "-A", join(tree, "tools/scaffold-report.ts"), "r3rep", "--assays", root], { cwd: tree, stdio: "pipe", encoding: "utf8" }));
+    const out = JSON.parse(execFileSync("deno", ["run", "--no-lock", "-A", join(tree, "tools/scaffold-report.ts"), "r3rep", "--assays", root], { cwd: tree, stdio: "pipe", encoding: "utf8" }));
     expect(out).toMatchObject({ outcome: "replicates", rejected: [], protocolSha256R3rep: R3REP_SHA256.r3rep, protocolSha256: R3REP_SHA256.protocol });
     expect(out.availability).toMatchObject({ available: 62, unavailable: 0 });
     expect(out.protocolNow.r3rep).toMatchObject({ pinnedTextIntact: true });
@@ -5654,7 +5654,7 @@ describe("reg1 decision procedure", () => {
 describe("scaffold-report reg1", () => {
   const scratch = () => mkdtempSync(join(tmpdir(), "scaffold-reg1-"));
   /** The readout runs to a few MB (every set, bundle and trajectory), past execFileSync's default buffer. */
-  const report = (...args: string[]): Record<string, any> => JSON.parse(execFileSync("deno", ["run", "-A", REPORT, ...args], { stdio: "pipe", encoding: "utf8", maxBuffer: 1 << 28 }));
+  const report = (...args: string[]): Record<string, any> => JSON.parse(execFileSync("deno", ["run", "--no-lock", "-A", REPORT, ...args], { stdio: "pipe", encoding: "utf8", maxBuffer: 1 << 28 }));
   /**
    * The registration's files under a scratch root: every assay set of `plan` (assays/<id>), the 96 bundles at their production paths
    * (runs/hist|anc/ponds/<condition>/seed-<n>, ponds.tsv with the columns the report reads), the four device checks, the two reruns on the
@@ -5800,7 +5800,7 @@ describe("scaffold-report reg1", () => {
     expect(smoke).toMatchObject({ validated: false, rejected: [], outcome: "H1 and H2 confirmed" });
     // strict mode refuses to run without the queue; a queue with a command pending is analysed by nothing
     const noQueue = args(root).slice(0, args(root).indexOf("--queue"));
-    expect(() => execFileSync("deno", ["run", "-A", REPORT, "reg1", ...noQueue], { stdio: "pipe", encoding: "utf8" })).toThrow(/reg1 needs --queue/);
+    expect(() => execFileSync("deno", ["run", "--no-lock", "-A", REPORT, "reg1", ...noQueue], { stdio: "pipe", encoding: "utf8" })).toThrow(/reg1 needs --queue/);
     const status = join(root, "status-2.json");
     const st = JSON.parse(readFileSync(status, "utf8"));
     delete st.commands["rand-i09-b"];

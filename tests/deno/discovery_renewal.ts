@@ -21,7 +21,7 @@ function check(name: string, ok: boolean, detail: unknown = "") {
 }
 const strip = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
 async function cli(args: string[]) {
-  const out = await new Deno.Command(Deno.execPath(), { args: ["run", "-A", "tools/discovery.ts", ...args], cwd: REPO, stdout: "piped", stderr: "piped" }).output();
+  const out = await new Deno.Command(Deno.execPath(), { args: ["run", "--no-lock", "-A", "tools/discovery.ts", ...args], cwd: REPO, stdout: "piped", stderr: "piped" }).output();
   return { ok: out.success, out: strip(new TextDecoder().decode(out.stdout)), err: strip(new TextDecoder().decode(out.stderr)) };
 }
 

@@ -20,7 +20,7 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
   const out = `${root}/cli-out`;
   const cmd = new Deno.Command(Deno.execPath(), {
     args: [
-      "run", "-A", "tools/nullcal.ts",
+      "run", "--no-lock", "-A", "tools/nullcal.ts",
       "--nulls", "longPeriodLoop",
       "--windows", "20000",
       "--replicates", "3",
@@ -62,7 +62,7 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
   // this compares the files as written, with no fields stripped first.
   const out2 = `${root}/cli-out-2`;
   const cmd2 = new Deno.Command(Deno.execPath(), {
-    args: ["run", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "20000", "--replicates", "3", "--seeds-per-condition", "6", "--census-every", "200", "--deep-every", "4", "--bounded", "false", "--out", out2],
+    args: ["run", "--no-lock", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "20000", "--replicates", "3", "--seeds-per-condition", "6", "--census-every", "200", "--deep-every", "4", "--bounded", "false", "--out", out2],
     stdout: "null",
     stderr: "piped",
   });
@@ -77,14 +77,14 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
 {
   const out = `${root}/fresh-out`;
   const cmd1 = new Deno.Command(Deno.execPath(), {
-    args: ["run", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "20000", "--replicates", "1", "--seeds-per-condition", "4", "--census-every", "200", "--deep-every", "4", "--bounded", "false", "--out", out],
+    args: ["run", "--no-lock", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "20000", "--replicates", "1", "--seeds-per-condition", "4", "--census-every", "200", "--deep-every", "4", "--bounded", "false", "--out", out],
     stdout: "null",
     stderr: "piped",
   });
   const r1 = await cmd1.output();
   check("--out refusal: first run into a fresh --out exits 0", r1.code === 0, new TextDecoder().decode(r1.stderr));
   const cmd2 = new Deno.Command(Deno.execPath(), {
-    args: ["run", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "20000", "--replicates", "1", "--seeds-per-condition", "4", "--census-every", "200", "--deep-every", "4", "--bounded", "false", "--out", out],
+    args: ["run", "--no-lock", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "20000", "--replicates", "1", "--seeds-per-condition", "4", "--census-every", "200", "--deep-every", "4", "--bounded", "false", "--out", out],
     stdout: "null",
     stderr: "piped",
   });
@@ -96,7 +96,7 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
 // --- duplicate --nulls / --windows entries are rejected, not silently doubled ---
 {
   const cmd = new Deno.Command(Deno.execPath(), {
-    args: ["run", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop,longPeriodLoop", "--windows", "20000", "--replicates", "1", "--out", `${root}/dup-nulls`],
+    args: ["run", "--no-lock", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop,longPeriodLoop", "--windows", "20000", "--replicates", "1", "--out", `${root}/dup-nulls`],
     stdout: "null",
     stderr: "piped",
   });
@@ -105,7 +105,7 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
 }
 {
   const cmd = new Deno.Command(Deno.execPath(), {
-    args: ["run", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "20000,20000", "--replicates", "1", "--out", `${root}/dup-windows`],
+    args: ["run", "--no-lock", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "20000,20000", "--replicates", "1", "--out", `${root}/dup-windows`],
     stdout: "null",
     stderr: "piped",
   });
@@ -116,7 +116,7 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
 // --- --replicates outside the numerically-verified-safe range is rejected ---
 {
   const cmd = new Deno.Command(Deno.execPath(), {
-    args: ["run", "-A", "tools/nullcal.ts", "--replicates", "501", "--out", `${root}/too-many-reps`],
+    args: ["run", "--no-lock", "-A", "tools/nullcal.ts", "--replicates", "501", "--out", `${root}/too-many-reps`],
     stdout: "null",
     stderr: "piped",
   });
@@ -132,7 +132,7 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
 {
   const out = `${root}/coexistence-boundary`;
   const cmd = new Deno.Command(Deno.execPath(), {
-    args: ["run", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "100100", "--replicates", "1", "--seeds-per-condition", "4", "--census-every", "100", "--deep-every", "10", "--bounded", "false", "--out", out],
+    args: ["run", "--no-lock", "-A", "tools/nullcal.ts", "--nulls", "longPeriodLoop", "--windows", "100100", "--replicates", "1", "--seeds-per-condition", "4", "--census-every", "100", "--deep-every", "10", "--bounded", "false", "--out", out],
     stdout: "null",
     stderr: "piped",
   });
@@ -179,7 +179,7 @@ const root = await Deno.makeTempDir({ prefix: "bl-nullcal-test-" });
   // carries none of that preset's calibration-pilot provenance, so the CLI
   // must be told to use the exploratory (in-sample) threshold path, exactly
   // as tools/nullcal.ts itself always does -- see its own comment.
-  const cliCmd = new Deno.Command(Deno.execPath(), { args: ["run", "-A", "tools/analyze.ts", ensembleRoot, "--out", cliOut, "--ignore-frozen-threshold"], stdout: "null", stderr: "piped" });
+  const cliCmd = new Deno.Command(Deno.execPath(), { args: ["run", "--no-lock", "-A", "tools/analyze.ts", ensembleRoot, "--out", cliOut, "--ignore-frozen-threshold"], stdout: "null", stderr: "piped" });
   const { code: cliCode, stderr: cliStderr } = await cliCmd.output();
   check("split check: the real analyze.ts CLI exits 0 on the fixture", cliCode === 0, new TextDecoder().decode(cliStderr));
   const cliReport = JSON.parse(await Deno.readTextFile(`${cliOut}/report.json`));

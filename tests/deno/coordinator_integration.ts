@@ -259,7 +259,7 @@ try {
   const outDir = `${dataDir}/stitched`;
   const stitchCli = (experiment: string) =>
     new Deno.Command(Deno.execPath(), {
-      args: ["run", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", experiment, "--out", outDir],
+      args: ["run", "--no-lock", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", experiment, "--out", outDir],
       stdin: "null",
     }).output();
   const stitch = await stitchCli("it-final-only");
@@ -483,7 +483,7 @@ try {
   const singleOut = `${dataDir}/single`;
   const single = await new Deno.Command(Deno.execPath(), {
     args: [
-      "run", "-A", "tools/run.ts", "--experiment", "it-ponds", "--preset", "ponds-small", "--conditions", pondSpec.conditions.join(","),
+      "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-ponds", "--preset", "ponds-small", "--conditions", pondSpec.conditions.join(","),
       "--seeds", "1", "--steps", String(pondSpec.steps), "--census", String(pondSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
     ],
     stdin: "null",
@@ -612,7 +612,7 @@ try {
     const flags = schedule.flatMap((e) => (e.kind === "lesion" ? ["--lesion", `${e.step}:${e.x},${e.y},${e.r}`] : ["--feed", `${e.step}:${e.x},${e.y},${e.r},${e.amount}`]));
     const singleSched = await new Deno.Command(Deno.execPath(), {
       args: [
-        "run", "-A", "tools/run.ts", "--experiment", "it-scheduled", "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
+        "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-scheduled", "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
         "--steps", String(spec.steps), "--census", String(spec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut, ...flags,
       ],
       stdin: "null",
@@ -814,7 +814,7 @@ try {
     check("stitch.ts exports both bred runs", breedStitch.success && stdout(breedStitch).includes("2 written"), `${stdout(breedStitch).slice(-200)} ${new TextDecoder().decode(breedStitch.stderr).slice(0, 300)}`);
     const singleBreed = await new Deno.Command(Deno.execPath(), {
       args: [
-        "run", "-A", "tools/run.ts", "--experiment", "it-breed", "--preset", "ponds-small", "--conditions", breedSpec.conditions.join(","),
+        "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-breed", "--preset", "ponds-small", "--conditions", breedSpec.conditions.join(","),
         "--seeds", "1", "--steps", String(breedSpec.steps), "--census", String(breedSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
       ],
       stdin: "null",
@@ -824,7 +824,7 @@ try {
     check("stitch.ts exports the breeder run", breederStitch.success && stdout(breederStitch).includes("1 written"), `${stdout(breederStitch).slice(-200)} ${new TextDecoder().decode(breederStitch.stderr).slice(0, 300)}`);
     const singleBreeder = await new Deno.Command(Deno.execPath(), {
       args: [
-        "run", "-A", "tools/run.ts", "--experiment", "it-breeder", "--preset", "breeder", "--conditions", "treatment",
+        "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-breeder", "--preset", "breeder", "--conditions", "treatment",
         "--seeds", "1", "--steps", String(breederSpec.steps), "--census", String(breederSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
       ],
       stdin: "null",

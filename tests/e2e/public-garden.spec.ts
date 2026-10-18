@@ -1,7 +1,7 @@
 // The shared garden's page (/garden/) against the garden-v1 fixture, served by route interception: the honesty
 // numbers, each state, each answer to a letter, the food ask and each answer to a hand (docs/garden-food-2026-10-18.md),
 // "since your last visit" with and without storage, and mock mode.
-import { expect, test, type Page, type Route } from "@playwright/test";
+import { expect, test, type Page, type Route, type TestInfo } from "@playwright/test";
 import contractFixture from "../../apps/coordinator/priv/static/garden-contract.example.json" with { type: "json" };
 
 // The tests' tsconfig carries no Node types: the one thing read from the environment is declared here.
@@ -10,7 +10,10 @@ const FIXTURE = contractFixture as Record<string, any>;
 const VIEW = "**/api/public/garden";
 const LETTERS = "**/api/public/garden/letters";
 const HANDS = "**/api/public/garden/food/hands";
-const KEY = "cadence-garden-visit:http://localhost:5174:commons";
+// The page under test is served at the configured baseURL (BL_E2E_PORT in playwright.config.ts): its origin names the
+// record the page keeps, so it is read from the test, never written down.
+const originOf = (info: TestInfo) => new URL(info.project.use.baseURL!).origin;
+const keyFor = (info: TestInfo) => `cadence-garden-visit:${originOf(info)}:commons`;
 /** The record a device keeps, in the shape the page writes (createdAt names the planting). */
 const record = (step: number, daysVerified: number, mine: string[] = [], createdAt: number = FIXTURE.createdAt) =>
   JSON.stringify({ createdAt, step, seenAt: 1792560000000, daysVerified, mine });
@@ -364,14 +367,14 @@ test("a closed ask shows its reason and a disabled button", async ({ page }) => 
   await expect(page.locator('#g-foods [data-food="food-2"]')).toContainText("in 1 hour, so the keeper can still set it aside.");
 });
 
-test("food ask: the tab's hand is dropped at its dawn or when the server forgot it; a shared address is said", async ({ browser }) => {
-  const context = await browser.newContext();
+test("food ask: the tab's hand is dropped at its dawn or when the server forgot it; a shared address is said", async ({ browser }, testInfo) => {
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const page = await context.newPage();
   await page.clock.install({ time: FIXTURE.now });
   let body = fixture();
   const counter = await serve(page, () => body);
   await page.route(HANDS, (route) => { body = fixture((v) => { v.food.hands = 3; }); return json(route, { counted: true, called: null, food: body.food }, 201); });
-  await page.goto("http://localhost:5174/garden/");
+  await page.goto("/garden/");
   await page.locator("#food-send").click();
   await expect(page.locator("#food-send")).toBeDisabled();
   await expect(page.locator("#food-why")).toHaveText("Your hand is in for today.");
@@ -425,11 +428,11 @@ test("a view without food shows no ask", async ({ page }) => {
   }
 });
 
-test("since your last visit, and without storage", async ({ page, browser }) => {
+test("since your last visit, and without storage", async ({ page, browser }, testInfo) => {
   await serve(page);
   await page.goto("/garden/");
   await expect(page.locator("#g-since")).toHaveText("First visit from this device. Next time, this says what changed since now.");
-  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [KEY, record(131072, 0)] as const);
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [keyFor(testInfo), record(131072, 0)] as const);
   await page.reload();
   await expect(page.locator("#g-since")).toContainText("2 days");
   await expect(page.locator("#g-since")).toContainText("262,144");
@@ -438,12 +441,12 @@ test("since your last visit, and without storage", async ({ page, browser }) => 
   await page.reload();
   await expect(page.locator("#g-since")).toHaveText(/^No change since your last visit \(.+\): still at step 393,216\.$/);
   // Planted again under the same name: no comparison, and the old "Yours" marks go.
-  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [KEY, record(393216, 2, ["ltr-4"], FIXTURE.createdAt - 86_400_000)] as const);
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [keyFor(testInfo), record(393216, 2, ["ltr-4"], FIXTURE.createdAt - 86_400_000)] as const);
   await page.reload();
   await expect(page.locator("#g-since")).toContainText("The garden was planted again since your last visit");
   await expect(page.locator("#g-waiting .garden-mine")).toHaveCount(0);
 
-  const context = await browser.newContext();
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const locked = await context.newPage();
   await locked.clock.setFixedTime(FIXTURE.now);
   await locked.addInitScript(() => {
@@ -452,34 +455,34 @@ test("since your last visit, and without storage", async ({ page, browser }) => 
   const errors: string[] = [];
   locked.on("pageerror", (e) => errors.push(e.message));
   await serve(locked);
-  await locked.goto("http://localhost:5174/garden/");
+  await locked.goto("/garden/");
   await expect(locked.locator("#g-step")).toHaveText("393,216");
   await expect(locked.locator("#g-since")).toHaveText("Nothing to compare: this device keeps no record of earlier visits.");
   expect(errors).toEqual([]);
   await context.close();
 
   // Storage that reads but will not write: the page does not promise a "next time".
-  const full = await browser.newContext();
+  const full = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const quota = await full.newPage();
   await quota.clock.setFixedTime(FIXTURE.now);
   await quota.addInitScript(() => {
     Storage.prototype.setItem = () => { throw new DOMException("The quota has been exceeded.", "QuotaExceededError"); };
   });
   await serve(quota);
-  await quota.goto("http://localhost:5174/garden/");
+  await quota.goto("/garden/");
   await expect(quota.locator("#g-since")).toHaveText("First visit from this device, and it cannot keep a record, so there will be nothing to compare next time.");
   await full.close();
 });
 
-test("polls, recomputes since-your-last-visit and counts times from the response", async ({ browser }) => {
+test("polls, recomputes since-your-last-visit and counts times from the response", async ({ browser }, testInfo) => {
   // A visitor clock five minutes after the response's `now`: relative times must still come from `now`.
-  const context = await browser.newContext();
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const page = await context.newPage();
   await page.clock.install({ time: FIXTURE.now + 5 * 60_000 });
-  await page.addInitScript(([key, value]) => { localStorage.setItem(key, value); }, [KEY, record(393216, 2)] as const);
+  await page.addInitScript(([key, value]) => { localStorage.setItem(key, value); }, [keyFor(testInfo), record(393216, 2)] as const);
   let body = fixture();
   const counter = await serve(page, () => body);
-  await page.goto("http://localhost:5174/garden/");
+  await page.goto("/garden/");
   await expect(page.locator("#g-clock")).toContainText("2 hours and 51 minutes");
   await expect(page.locator("#g-since")).toHaveText(/^No change since your last visit \(.+\): still at step 393,216\.$/);
 
@@ -507,8 +510,8 @@ test("polls, recomputes since-your-last-visit and counts times from the response
   await context.close();
 });
 
-test("a stone confirmed while an overlapping read failed is still this device's", async ({ browser }) => {
-  const context = await browser.newContext();
+test("a stone confirmed while an overlapping read failed is still this device's", async ({ browser }, testInfo) => {
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const page = await context.newPage();
   await page.clock.install({ time: FIXTURE.now });
   let release!: () => void;
@@ -527,7 +530,7 @@ test("a stone confirmed while an overlapping read failed is still this device's"
     return json(route, withLetter);
   });
   await page.route(LETTERS, async (route) => { await postGate; await json(route, { letter: { ...FIXTURE.letters.waiting[3], id: "ltr-8" } }, 201); });
-  await page.goto("http://localhost:5174/garden/");
+  await page.goto("/garden/");
   await expect(page.locator("#stone-send")).toBeEnabled();
   // A poll starts and hangs; the visitor sends meanwhile (a read never disables Send).
   await page.clock.runFor(60_000);
@@ -541,7 +544,7 @@ test("a stone confirmed while an overlapping read failed is still this device's"
   // Then the stone is confirmed: it is still recorded as this device's, and the next reading marks it.
   answerPost();
   await expect(page.locator('#g-waiting [data-letter="ltr-8"]')).toContainText("Yours");
-  const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null"), KEY);
+  const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null"), keyFor(testInfo));
   expect(stored?.mine).toContain("ltr-8");
   await context.close();
 });
@@ -559,12 +562,14 @@ test("mock mode in the dev server", async ({ page }) => {
   expect(requests).toEqual([]);
 });
 
-test("another coordinator and a bad link are named", async ({ page }) => {
-  await page.route("http://localhost:4199/api/public/garden", (route) => json(route, fixture(), 200, { "access-control-allow-origin": "http://localhost:5174" }));
-  await page.goto("/garden/?coordinator=http://localhost:4199&garden=..%2Fx");
-  await expect(page.locator("#garden-source")).toContainText("Reading a garden at http://localhost:4199, not this site’s own");
+test("another coordinator and a bad link are named", async ({ page }, testInfo) => {
+  // A routed (never listening) coordinator on a port that is not the page's own, so the read stays cross-origin.
+  const other = `http://localhost:${new URL(originOf(testInfo)).port === "4199" ? 4198 : 4199}`;
+  await page.route(`${other}/api/public/garden`, (route) => json(route, fixture(), 200, { "access-control-allow-origin": originOf(testInfo) }));
+  await page.goto(`/garden/?coordinator=${other}&garden=..%2Fx`);
+  await expect(page.locator("#garden-source")).toContainText(`Reading a garden at ${other}, not this site’s own`);
   await expect(page.locator("#garden-source")).toContainText("The garden name in the link is not one a garden can have");
-  await expect(page.locator("#g-fork-link")).toHaveAttribute("href", "http://localhost:4199/api/public/gardens/commons/checkpoints/4e0b7a19c3d2f856");
+  await expect(page.locator("#g-fork-link")).toHaveAttribute("href", `${other}/api/public/gardens/commons/checkpoints/4e0b7a19c3d2f856`);
 });
 
 test("a named garden is read from its own route", async ({ page }) => {
@@ -577,16 +582,16 @@ test("a named garden is read from its own route", async ({ page }) => {
 });
 
 const shots = process.env.BL_GARDEN_SHOTS;
-test("screenshots", async ({ browser }) => {
+test("screenshots", async ({ browser }, testInfo) => {
   test.skip(!shots, "set BL_GARDEN_SHOTS=<dir> to write the screenshots");
   for (const theme of ["light", "dark"] as const) {
     for (const [name, size] of [["desktop", { width: 1280, height: 900 }], ["mobile", { width: 375, height: 812 }]] as const) {
-      const context = await browser.newContext({ viewport: size, colorScheme: theme });
+      const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL, viewport: size, colorScheme: theme });
       const page = await context.newPage();
       await page.clock.setFixedTime(FIXTURE.now);
       await page.addInitScript((t) => { try { localStorage.setItem("browser-life-theme", t); } catch { /* none */ } }, theme);
       await serve(page);
-      await page.goto("http://localhost:5174/garden/");
+      await page.goto("/garden/");
       await expect(page.locator("#g-step")).toHaveText("393,216");
       await page.screenshot({ path: `${shots}/garden-${theme}-${name}.png`, fullPage: true });
       await context.close();

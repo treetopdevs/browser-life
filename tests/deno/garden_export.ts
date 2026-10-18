@@ -152,7 +152,7 @@ const coordinator = `http://127.0.0.1:${(server.addr as Deno.NetAddr).port}`;
 const out = await Deno.makeTempDir({ prefix: "bl-garden-export-" });
 const parent = `${out}/${NAME}/spots/treatment`, dir = `${out}/${RUN}`;
 const stitch = async (...extra: string[]) => {
-  const r = await new Deno.Command(Deno.execPath(), { args: ["run", "-A", "tools/stitch.ts", "--experiment", NAME, "--coordinator", coordinator, "--out", out, ...extra], stdout: "piped", stderr: "piped", stdin: "null" }).output();
+  const r = await new Deno.Command(Deno.execPath(), { args: ["run", "--no-lock", "-A", "tools/stitch.ts", "--experiment", NAME, "--coordinator", coordinator, "--out", out, ...extra], stdout: "piped", stderr: "piped", stdin: "null" }).output();
   const dec = new TextDecoder();
   return { code: r.code, text: dec.decode(r.stdout) + dec.decode(r.stderr) };
 };

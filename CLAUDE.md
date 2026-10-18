@@ -19,11 +19,14 @@ pnpm test                # vitest: apps/lab/test, packages/*/test, experiments/t
 pnpm vitest run packages/sim-ref/test/ref.test.ts -t "<name>"   # single test
 deno run -A tests/deno/gpu_golden.ts    # GPU vs CPU reference, bit for bit (native WebGPU)
 npx playwright test      # browser golden (tests/e2e), Chrome with WebGPU flags; BL_ALL_ENGINES=1 adds firefox/webkit
+BL_E2E_PORT=5241 npx playwright test   # a second worktree on its own port (default 5174; strictPort, never reuses a server)
 cd apps/coordinator && mix test         # or `mix test test/coordinator/queue_test.exs`
 cd apps/coordinator && mix precommit    # warnings-as-errors, format, test
 pnpm gen:prereg          # regenerate experiments/preregistration.md generated sections
 pnpm gen:cards           # redraw the link-preview cards (site + one per world) with Chrome/WebGPU; then look at them
 ```
+
+Run `pnpm install` before any `deno run` in a fresh checkout (deno 2.9 otherwise writes `workspaces` into package.json). Tests that start deno pass `--no-lock` (`tools/test/deno-no-lock.test.ts` checks; a launcher or coordinator a test starts that runs deno itself gets the PATH shim in `tests/deno/lib/no_lock_deno.ts`), but a top-level `deno run`, or a tool that starts deno, still writes a stale deno.lock: when package.json deps change, update it deliberately (`deno cache --frozen tools/stitch.ts` fails while it is stale).
 
 `tests/deno/*.ts` are standalone scripts (not `Deno.test`); run each with `deno run -A tests/deno/<name>.ts`. Several need a real GPU; `coordinator_integration.ts` spawns `mix phx.server` against a scratch data dir.
 

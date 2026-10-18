@@ -645,7 +645,7 @@ try {
   );
   // The export is the verified prefix: day 0 only, with L1 and without L2, which landed in the unverified day 1.
   const prefixOut = `${workDir}/prefix`;
-  const prefix = await runTool(["run", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", NAME, "--out", prefixOut]);
+  const prefix = await runTool(["run", "--no-lock", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", NAME, "--out", prefixOut]);
   const prefixMan = JSON.parse((await readOr(`${prefixOut}/${NAME}/spots/treatment/seed-1/manifest.json`)) ?? "{}");
   check(
     "4. tools/stitch.ts mid-run exports only the verified prefix: steps D, the founding plus L1 at D, 2 applied",
@@ -785,7 +785,7 @@ try {
 
   // ---- 7. export the verified prefix; compare with one unsegmented run ----
   const outDir = `${workDir}/stitched`;
-  const stitch = await runTool(["run", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", NAME, "--out", outDir]);
+  const stitch = await runTool(["run", "--no-lock", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", NAME, "--out", outDir]);
   const stitchOut = stitch.stdout;
   const stitchErr = stitch.stderr;
   check("7. tools/stitch.ts exports the garden's verified prefix (exit 0, 1 written)", stitch.success && stitchOut.includes("1 written"), `${stitchOut.slice(-400)} ${stitchErr.slice(0, 600)}`);
@@ -826,7 +826,7 @@ try {
   await Deno.writeTextFile(scheduleFile, JSON.stringify(stitchedMan.spec?.interventions ?? []));
   const singleOut = `${workDir}/single`;
   const single = await runTool([
-    "run", "-A", "tools/run.ts", "--experiment", NAME, "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
+    "run", "--no-lock", "-A", "tools/run.ts", "--experiment", NAME, "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
     "--steps", String(3 * D), "--census", String(CENSUS), "--deep", "10", "--checkpoint", "0", "--interventions", scheduleFile, "--out", singleOut,
   ]);
   check("7. tools/run.ts runs the stitched schedule unsegmented over 3D steps", single.success, single.stderr.slice(0, 600));

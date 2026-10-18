@@ -99,7 +99,7 @@ async function tamperManifest(dir: string, patch: (m: any) => void) {
 }
 
 async function runAnalyze(runRoot: string, outDir?: string, extra: string[] = []): Promise<{ code: number; stdout: string; stderr: string }> {
-  const args = ["run", "-A", "tools/analyze.ts", runRoot, ...extra];
+  const args = ["run", "--no-lock", "-A", "tools/analyze.ts", runRoot, ...extra];
   if (outDir) args.push("--out", outDir);
   const cmd = new Deno.Command(Deno.execPath(), { args, stdout: "piped", stderr: "piped" });
   const { code, stdout, stderr } = await cmd.output();
