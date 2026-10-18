@@ -58,6 +58,7 @@ export default defineConfig({
       privacy: r("./privacy/index.html"),
       participate: r("./participate/index.html"),
       status: r("./status/index.html"),
+      garden: r("./garden/index.html"),
       selftest: r("./selftest.html"),
       island: r("./island.html"),
     } },
