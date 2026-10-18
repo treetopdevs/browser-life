@@ -467,12 +467,28 @@ What one seed and 16 cycles cannot show, and this run does not claim:
 - anything past cycle 16: the rule's movement is still rising at 16 and the model's and random's histories are
   not at a steady state.
 
+## On the archipelago (2026-10-18)
+
+Rule-bred worlds run and verify on the archipelago like any other run: the 21 breeder conditions on any pond
+preset, and the `breeder` preset under any condition it accepts, go to islands that advertise `breed-v1` (with
+`ponds-v1`). Only the rule's own donors are distributed; picked and pressured runs stay with the lab and
+`tools/run.ts`. Standard islands never emit `picks.jsonl` for a distributed run (a picked spec is refused), and it
+is in no verified or stitched file list; the coordinator would store a file of that name if a producer sent one,
+but nothing reads it. The donors the rule chose are verified as physics (their cells are in the checkpoint the
+verifier reproduces); `ponds.tsv`, their record, is compared against the verifier's regenerated copy, and
+`tools/stitch.ts` refuses to export a bred run where the two differ. A coordinator spec takes no overrides, so
+selection shows only on a preset where ponds score: the `breeder` preset (mutation × 10) does, and that is proven
+through the coordinator, a second island and the stitcher; `pond-breed-*` on `ponds-small` or `ponds` at stock
+mutation may never score and is then physically its mass control. Mid-cycle segment boundaries replay bit for bit
+(proven for `tools/run.ts` continuations), but the coordinator itself only cuts at cycle steps. The rules, the
+proof criteria and the results are in `docs/archipelago-breed-2026-10-18.md`.
+
 ## Not built
 
 - Branch runs (`RunSpec.branch`, the hunt's way to start from a pre-cycle checkpoint under another arm)
   still take only `pond-nat` and `pond-shuf`. Branching a bred world to another score would need the branch
-  rules, `branchError` and `branchTransform` widened and their GPU tests repeated.
-- Islands and the coordinator do not know the `breed` arm (no capability, no allowed condition).
+  rules, `branchError` and `branchTransform` widened and their GPU tests repeated, and branches are not
+  distributed at all (`specRefusal`, `stitchRun`), so widening them would give the archipelago nothing.
 - `tools/run.ts --picks-from` replays a lab history, proven on a hand-built manifest only (no real lab export
   could be made headless); it reproduces the physics, not the lab's `finalHash`.
 - Not built around the pickers: resume from a checkpoint for a picked run (replay costs seconds), islands and

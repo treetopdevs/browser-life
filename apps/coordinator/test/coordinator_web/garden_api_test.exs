@@ -22,7 +22,8 @@ defmodule CoordinatorWeb.GardenApiTest do
     :public_garden,
     :admin_token,
     :allow_local_admin,
-    :cors_origins
+    :cors_origins,
+    :garden_island_token
   ]
 
   setup do
@@ -470,6 +471,184 @@ defmodule CoordinatorWeb.GardenApiTest do
       assert v1.kind == "verify" and v1.segment.index == 1
       {:ok, "verified"} = verify(v1, b)
       assert conn |> get(path.("commons", dg(1))) |> response(200) == "x"
+    end
+
+    # Slice 15 (docs/garden-hardening-2026-10-18.md, item 2): a day becoming
+    # verified invalidates the garden's cache from the Queue, so a view naming
+    # the new fork is never followed by a cached 404 for its checkpoint.
+    test "the fork the view names is served at once, even after a cached 404", %{
+      conn: conn,
+      dir: dir
+    } do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      garden!()
+      a = join("A")
+      b = join("B")
+
+      t0 = next(a)
+      assert t0.segment.index == 0
+      finish(dir, a, t0)
+
+      # Before the replay: no fork, and day 0's digest is not served. Both
+      # answers are now cached for ten minutes.
+      assert %{"fork" => nil} = conn |> get("/api/public/garden") |> json_response(200)
+
+      assert %{"error" => "not found"} =
+               conn
+               |> get("/api/public/gardens/commons/checkpoints/#{dg(0)}")
+               |> json_response(404)
+
+      assert {:ok, %{}} = LetterLimiter.cached_checkpoints("commons")
+
+      v0 = next(b)
+      assert v0.kind == "verify" and v0.segment.index == 0
+      {:ok, "verified"} = verify(v0, b)
+
+      # The verification itself (not a controller) dropped both entries.
+      assert LetterLimiter.cached_checkpoints("commons") == :miss
+      assert LetterLimiter.cached_view("commons") == :miss
+
+      fork = conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("fork")
+      assert %{"day" => 0, "digest" => digest, "checkpoint" => checkpoint} = fork
+      assert digest == dg(0)
+      assert conn |> get(checkpoint) |> response(200) == "x"
+    end
+
+    # The exact shape of the bug: only the checkpoint set was cached before the
+    # replay, so the first view after it is computed fresh and names the new
+    # fork. Without the invalidation the checkpoint route answered that fork
+    # from the cached set: a 404 for up to `garden_cache_ms`.
+    test "a fresh view's fork is served even when only the checkpoint set was cached", %{
+      conn: conn,
+      dir: dir
+    } do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      garden!()
+      a = join("A")
+      b = join("B")
+
+      t0 = next(a)
+      finish(dir, a, t0)
+      path = "/api/public/gardens/commons/checkpoints/#{dg(0)}"
+      assert conn |> get(path) |> json_response(404)
+      assert {:ok, %{}} = LetterLimiter.cached_checkpoints("commons")
+      assert LetterLimiter.cached_view("commons") == :miss
+
+      v0 = next(b)
+      {:ok, "verified"} = verify(v0, b)
+
+      assert %{"day" => 0, "checkpoint" => ^path} =
+               conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("fork")
+
+      assert conn |> get(path) |> response(200) == "x"
+    end
+  end
+
+  # ---- who may tend ----
+
+  # Slice 15 (docs/garden-hardening-2026-10-18.md, item 1): the island client
+  # sends `gardenToken` in its join body; over HTTP the coordinator honours it
+  # exactly as `Queue.join/1` does (garden_queue_test.exs pins the Queue side).
+  describe "joining with a garden island token" do
+    test "an island joined over HTTP with gardenToken is offered day 0; one without is idle", %{
+      conn: conn
+    } do
+      Application.put_env(:coordinator, :garden_island_token, "open-sesame")
+      garden!()
+
+      join_http = fn body ->
+        %{"id" => id, "token" => token} =
+          build_conn() |> post_json("/api/islands", body) |> json_response(200)
+
+        assert is_binary(token)
+        id
+      end
+
+      base = %{"adapter" => "A", "userAgent" => "t"}
+      tokened = join_http.(Map.put(base, "gardenToken", "open-sesame"))
+      untokened = join_http.(base)
+      wrong = join_http.(Map.put(base, "gardenToken", "nope"))
+
+      assert %{kind: "idle"} = next(untokened)
+      assert %{kind: "idle"} = next(wrong)
+      assert %{kind: "run", segment: %{index: 0, run: "commons" <> _}} = next(tokened)
+
+      # The token is never echoed back, nor shown in the island's own record.
+      refute conn |> get("/api/status") |> response(200) =~ "open-sesame"
+      refute inspect(Queue.island_info(tokened)) =~ "open-sesame"
+    end
+
+    # The token is checked before the Queue call (Queue.join/1), so the Queue's
+    # mailbox, and with it any crash report that prints its last message, never
+    # holds it; only whether it matched.
+    test "the token never reaches the Queue process", %{conn: _conn} do
+      Application.put_env(:coordinator, :garden_island_token, "open-sesame")
+      queue = Process.whereis(Queue)
+      :ok = :sys.suspend(queue)
+
+      task =
+        try do
+          task =
+            Task.async(fn ->
+              build_conn()
+              |> post_json("/api/islands", %{"adapter" => "A", "gardenToken" => "open-sesame"})
+              |> json_response(200)
+            end)
+
+          wait = fn wait, n ->
+            {:messages, msgs} = Process.info(queue, :messages)
+
+            cond do
+              Enum.any?(msgs, &match?({:"$gen_call", _, {:join, _, _}}, &1)) ->
+                msgs
+
+              n == 0 ->
+                flunk("the join never reached the Queue")
+
+              true ->
+                Process.sleep(10)
+                wait.(wait, n - 1)
+            end
+          end
+
+          msgs = wait.(wait, 500)
+          refute inspect(msgs, limit: :infinity, printable_limit: :infinity) =~ "open-sesame"
+          # Any other message (a timer, say) may sit beside the join.
+          assert {:"$gen_call", _, {:join, %{"adapter" => "A"} = info, true}} =
+                   Enum.find(msgs, &match?({:"$gen_call", _, {:join, _, _}}, &1))
+
+          refute Map.has_key?(info, "gardenToken")
+          task
+        after
+          :sys.resume(queue)
+        end
+
+      assert %{"id" => id} = Task.await(task)
+      assert Queue.island_info(id).garden == true
+    end
+
+    # A join's debug log line prints its parameters through Phoenix's filter.
+    test "a join's logged parameters hide the token", %{conn: _conn} do
+      Application.put_env(:coordinator, :garden_island_token, "open-sesame")
+      # The level is global (test.exs sets :warning; a process level does not
+      # reach the capture), so it is put back at once.
+      previous = Logger.level()
+      Logger.configure(level: :debug)
+
+      log =
+        try do
+          ExUnit.CaptureLog.capture_log([level: :debug], fn ->
+            build_conn()
+            |> post_json("/api/islands", %{"adapter" => "A", "gardenToken" => "open-sesame"})
+            |> json_response(200)
+          end)
+        after
+          Logger.configure(level: previous)
+        end
+
+      assert log =~ "Parameters:"
+      assert log =~ ~s("gardenToken" => "[FILTERED]")
+      refute log =~ "open-sesame"
     end
   end
 
