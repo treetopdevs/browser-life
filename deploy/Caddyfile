@@ -50,6 +50,38 @@
   header /fonts/* Cache-Control "public, max-age=2592000"
   header /site.webmanifest Content-Type application/manifest+json
 
+  # The not-found page is only ever an answer to a miss: asked for by name it answers 404 too.
+  error /404.html 404
   try_files {path} {path}/index.html
   file_server
+
+  # An unknown site path answers 404 with the site's own page. The paths Phoenix answers, /api/* and /healthz, keep
+  # its answers (a bare /api is not one of them: it is a site path and gets the page), and other errors (a 502 while
+  # the coordinator is down) keep Caddy's empty one. A miss is never stored: `no-store` replaces any Cache-Control set
+  # above (the immutable year on /assets/*), and 404.html's own ETag and Last-Modified are dropped, so no cache keeps
+  # the miss heuristically or revalidates it against 404.html. The conditional and range headers are dropped from the
+  # request, so an `If-None-Match` or a `Range` cannot turn the page into an empty 404 or a slice of it. The status is
+  # matched by expression, the long-standing form, rather than the newer `handle_errors 404`; production runs
+  # caddy:2.10 (Dockerfile.site).
+  handle_errors {
+    @page {
+      expression {err.status_code} == 404
+      not path /api/* /healthz
+    }
+    handle @page {
+      request_header -If-None-Match
+      request_header -If-Modified-Since
+      request_header -If-Match
+      request_header -If-Unmodified-Since
+      request_header -If-Range
+      request_header -Range
+      header {
+        Cache-Control "no-store"
+        -ETag
+        -Last-Modified
+      }
+      rewrite * /404.html
+      file_server
+    }
+  }
 }
