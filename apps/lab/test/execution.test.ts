@@ -1088,14 +1088,14 @@ describe("lab execution under a pressure", () => {
     expect(p.cycles.map((c) => c.donors)).toEqual(p.answers);
     // The log is a history the headless replay accepts.
     expect(labHistory({ interventions: p.log, cfg: p.start.cfg, edgesFrom: 0 })).toMatchObject({ picks: expect.any(Array), pressures: [{ step: 4, cycle: 1, score: "body" }, { step: 8, cycle: 3, score: "mass" }] });
-    // And a session file of it is a well-formed version 2 file.
+    // And a session file of it is a well-formed version 3 file.
     const file = buildSessionFile({
       manifest: { runId: "breeder-s1-test", presetId: "ponds-small", seed: 1, cfg: p.start.cfg, init: pondsSmall.init, ruleVersion: p.start.cfg.ruleVersion, createdAt: "2026-10-17T00:00:00.000Z", adapter: "test", userAgent: "test",
         interventions: p.log, checkpoints: [], settings: pondSettings, startHash: stateHash(p.start), edgesFrom: 0 },
-      stateHash: p.end.hash, step: 14, firsts: { watchedFrom: 2, entries: [] },
+      stateHash: p.end.hash, step: 14, firsts: { watchedFrom: 2, entries: [] }, families: { watchedFrom: null, families: [], events: [] },
       card: { summary: new FirstsDetector(firstsContext(p.start.cfg, 2)).summary(), facts: interventionFacts(p.log, new Map(), null) }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
     });
-    expect(file.version).toBe(2);
+    expect(file.version).toBe(3);
     expect(file.card.facts.pressures).toEqual({ changes: 2, latest: "mass" });
     expect(sessionFileError(file)).toBeNull();
   }, 600_000);

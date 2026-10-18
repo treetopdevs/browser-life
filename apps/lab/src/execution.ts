@@ -5,7 +5,7 @@ import {
   type FeedResult, type Intervention, type PondScore, type PondTerm, type WorldConfig, type WorldState,
 } from "@bl/schema";
 import type { GpuSim } from "@bl/sim-gpu";
-import { buildFirstsInput, firstsContext, type Census, type FirstsContext, type FirstsInput } from "@bl/metrics";
+import { buildFamilyInput, buildFirstsInput, firstsContext, readLineageCells, type Census, type FamilyInput, type FirstsContext, type FirstsExtras, type FirstsInput, type LineageCells } from "@bl/metrics";
 import {
   applyBoundary,
   cellsAtBoundary,
@@ -28,6 +28,15 @@ import { MutationEdges } from "@bl/lineage";
 import type { CellBirth } from "@bl/sim-ref";
 import { donorsWithKeep, isLineageKey, keptPondOf, type KeptPond } from "./pond-play.ts";
 
+/**
+ * What a census says to the family tree (`FamilyTree.observe`): its input, and the ledger's parent link for a key. Both read the
+ * same census as the log of firsts' input and share its per-cell lineage read; `parentOf` reads the run's edges as they stand.
+ */
+export interface CensusFamilies {
+  input(): FamilyInput;
+  parentOf(key: string): string | undefined;
+}
+
 /** Real GPU simulation in the worker; reference physics with injectable readbacks in tests. */
 export type LabSimulation = Pick<GpuSim, "cfg" | "step" | "run" | "drainLedger" | "readSnapshot" | "readState" | "upload" | "destroy" | "lesion" | "feed">;
 interface ExecutionOptions {
@@ -47,10 +56,14 @@ interface ExecutionOptions {
   isCurrent: () => boolean;
   /**
    * Display and observers of the host, after a census is committed. `firsts` reads that census into the input of the
-   * log of firsts (`@bl/metrics`): a pure read, and call it synchronously inside this callback, since the tracker it
-   * reads mutates at the next census.
+   * log of firsts (`@bl/metrics`), with the wounds since the previous census and the family tree's view when given
+   * (`extras`); `families` reads the same census into the family tree's input. Both are pure reads sharing one per-cell
+   * lineage read of the census's own captured genome words (never a later readback: births a boundary's transforms add
+   * count from the next census), and call them synchronously inside this callback, since the tracker they read mutates
+   * at the next census. The mutation edges are drained before each census, so `families.parentOf` knows every key minted
+   * before it. `dropped`: the ledger records lost in that drain.
    */
-  onObservation?: (census: Census, dropped: number, firsts?: () => FirstsInput) => void;
+  onObservation?: (census: Census, dropped: number, firsts?: (extras?: FirstsExtras) => FirstsInput, families?: CensusFamilies) => void;
   /** Display only, after a pond boundary's cycle (or, for arm cont, its record) has been applied at `step`. */
   onPondCycle?: (cycle: PondCycle, step: number) => void;
   onDisplayError?: (message: string) => void;
@@ -523,7 +536,11 @@ export class LabExecution {
         this.check();
         if (snap.step !== step) throw new Error(`observation at t=${snap.step}, expected the census boundary t=${step}`);
         const observed = observeCensus(this.obs, this.sim.cfg, snap, ledger.events.length + ledger.dropped);
-        const firsts = () => buildFirstsInput(observed.census, this.obs.tracker, snap.genomeHead, observed.events, this.firstsCtx);
+        // The census's own phase: its snapshot's genome words, read once and shared by the log of firsts and the family tree.
+        let cells: LineageCells | undefined;
+        const lineageCells = () => (cells ??= readLineageCells(observed.census, this.obs.tracker, snap.genomeHead, this.firstsCtx));
+        const firsts = (extras?: FirstsExtras) => buildFirstsInput(observed.census, this.obs.tracker, snap.genomeHead, observed.events, this.firstsCtx, { ...extras, lineageCells: lineageCells() });
+        const families: CensusFamilies = { input: () => buildFamilyInput(observed.census, lineageCells()), parentOf: (key) => this.edges.parentOf(key) };
         // Breeder mode: the census is taken, and the cycle waits for a person's donors (`resolvePond`).
         if (picks === undefined && this.pausesAt(step)) {
           const pre = await this.sim.readState();
@@ -533,13 +550,13 @@ export class LabExecution {
           // With no pond occupied there is nothing to choose: the history has ended and its cycle runs as ever.
           if (survey.suggested.length) {
             this.awaitingPond = survey;
-            this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts));
+            this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts, families));
             this.display(() => this.options.onPondAwait?.(survey));
             return true;
           }
         }
         const ponds = await this.settle(step, picks);
-        this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts));
+        this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts, families));
         if (ponds) this.display(() => this.options.onPondCycle?.(ponds, step));
         return false;
       }, this.replay, (iv, result) => {

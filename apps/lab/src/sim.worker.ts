@@ -24,7 +24,7 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
-import { FirstsDetector, census, firstsContext, firstsRules, individuals, lineageRGB, nextUp, type FirstsInput } from "@bl/metrics";
+import { census, firstsContext, firstsRules, individuals, lineageRGB, nextUp } from "@bl/metrics";
 import { decodeArtifact, pondContinuationError, type ObserverSettings, type ObserverState, type PressureEntry } from "@bl/runner";
 import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
 import { LabExecution, PondWaitingError, PressureRefusedError, huntArmError } from "./execution.ts";
@@ -32,8 +32,9 @@ import { isLineageKey } from "./pond-play.ts";
 import { dialWords } from "./rank-labels.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
 import { createLabSession } from "./session.ts";
-import type { CensusMsg, CheckpointMeta, FirstsMsg, FromWorker, Keep, PressureMsg, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
+import type { CensusMsg, CheckpointMeta, FamiliesMsg, FirstsMsg, FromWorker, Keep, PressureMsg, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
 import { RewindStore, buildSessionFile, exportRefusal, interventionFacts, sessionFileName, type RewindRecord } from "./session-file.ts";
+import { feedCensus, logRefusal, openFirstsLog, rewindRecord, type FirstsLog } from "./firsts-log.ts";
 import { StorageError, forgetCheckpoint, listCheckpoints, missingFile, pruneCheckpoints, readFile, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "./opfs.ts";
 
 /**
@@ -85,23 +86,6 @@ interface World {
   lastCheckpoint: number;
   /** The log of firsts of this world's history (a world adopted later has its own, never this one). */
   log: FirstsLog;
-}
-
-/**
- * The log of firsts and what the session card needs beside the intervention log. Made before the world's
- * execution and held by its observation callback, so a census of a replaced world feeds only its own log.
- */
-interface FirstsLog {
-  detector: FirstsDetector;
-  /** Why the log stopped (a detector error), or null. Entries stay as they were, and a session file is refused. */
-  stopped: string | null;
-  /**
-   * Pond step -> the pick there was the player's own. The intervention log does not say who chose, so this note is
-   * kept beside it: a person's donors equal to the rule's order count as the rule's (`resolvePick`).
-   */
-  notes: Map<number, boolean>;
-  /** The world's step when the log was last posted: a paused world whose step moved since posts again. */
-  postedStep: number;
 }
 
 /** What the lineage inspector knows about a world beyond its live state. */
@@ -235,7 +219,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
   const sim = await GpuSim.create(device, state);
   let renderer: Renderer;
   let execution: LabExecution;
-  const log = firstsLog(state, manifest, record, carryNotes);
+  const log = openFirstsLog(state, manifest.settings.censusEvery, { edgesFrom: lineage.edgesFrom, edges: lineage.edges.length, dropped: lineage.dropped }, record, carryNotes);
   try {
     execution = new LabExecution(sim, manifest.settings, {
       observer,
@@ -246,9 +230,10 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
       keep,
       waitForIdle: () => device!.queue.onSubmittedWorkDone(),
       isCurrent: () => world?.execution === execution,
-      onObservation: (c, dropped, firsts) => {
-        // Every observed census feeds the log, before the display throttle below: a first is the census's, not the screen's.
-        const fired = feedFirsts(log, firsts);
+      onObservation: (c, dropped, firsts, families) => {
+        // Every observed census feeds the log (the family tree, then the detector with the wounds since the last census and the
+        // tree's view), before the display throttle below: a first is the census's, not the screen's.
+        const fired = feedCensus(log, { census: c, dropped, firsts, families, cfg: sim.cfg, interventions: manifest.interventions }, (message) => post({ type: "notice", message }));
         const w = world;
         const mine = !!w && w.execution === execution;
         if (fired && mine) postFirsts(w);
@@ -331,43 +316,6 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
 }
 
 /**
- * The log for a world being adopted: restored from `record` when it describes exactly this state (its detector
- * has seen the census at the state's step), else fresh. A record or a snapshot that does not hold up falls back to
- * fresh and says nothing: the log then says "watching since".
- */
-function firstsLog(state: WorldState, manifest: RunManifest, record?: RewindRecord, carryNotes?: Iterable<[number, boolean]>): FirstsLog {
-  let detector: FirstsDetector | null = null;
-  if (record) {
-    try {
-      const restored = FirstsDetector.restore(record.firsts);
-      // The snapshot is of exactly this state: the census at its step, taken from the same physics.
-      if (restored.lastStep === state.step && record.hash === stateHash(state)) detector = restored;
-    } catch { /* not a snapshot this build reads: start afresh */ }
-  }
-  // The notes on who chose each pick are the checkpoint's whether or not its snapshot of the log holds up.
-  // A jump's target is an ancestor of the present, so every note the present holds is still true of its picks. The
-  // record holds notes only up to its own step, which the present shares, so it never overrides a later one.
-  const notes = new Map<number, boolean>(carryNotes ?? []);
-  for (const [step, hand] of record?.picks ?? []) if (step <= state.step) notes.set(step, hand);
-  return { detector: detector ?? new FirstsDetector(firstsContext(state.cfg, manifest.settings.censusEvery)), stopped: null, notes, postedStep: -1 };
-}
-
-/**
- * Feeds one observed census to the log. Never throws: a failure here must not become a census display error (which
- * pauses the page), so the log stops, says so once, and keeps what it had. True when an entry fired.
- */
-function feedFirsts(log: FirstsLog, firsts: (() => FirstsInput) | undefined): boolean {
-  if (!firsts || log.stopped) return false;
-  try {
-    return log.detector.observe(firsts()).length > 0;
-  } catch (e) {
-    log.stopped = e instanceof Error ? e.message : String(e);
-    post({ type: "notice", message: `The log of firsts stopped (${log.stopped}). The world itself is fine; a session file can’t be made from this history.` });
-    return false;
-  }
-}
-
-/**
  * The world's step and the pond cycles run in the history this page holds: every boundary after the step the log
  * begins at (0, or where a file was opened) up to the world's step, less one that waits for its donors; and the
  * cycles before that, whose picks are not in the log.
@@ -382,7 +330,7 @@ function factsAt(w: World): { step: number; cycles: number; cyclesBefore: number
 /** The log of firsts, the card's numbers and the rules, in full, for the world on screen. */
 function postFirsts(w: World | null) {
   if (!w || !current(w)) return;
-  const { detector, notes, stopped } = w.log;
+  const { detector, tree, notes, stopped, treeStopped } = w.log;
   // Display only, and called from the census callback: a failure here is reported, never thrown into the census path.
   try {
     const m: FirstsMsg = {
@@ -391,13 +339,26 @@ function postFirsts(w: World | null) {
       fromStart: detector.watchedFrom === w.manifest.settings.censusEvery,
       entries: detector.entries().map((e) => ({ ...e })),
       summary: detector.summary(),
-      facts: interventionFacts(w.manifest.interventions, notes, session.view().replay, factsAt(w)),
+      facts: interventionFacts(w.manifest.interventions, notes, session.view().replay, factsAt(w), tree.summary()),
       rules: firstsRules(firstsContext(w.sim.cfg, w.manifest.settings.censusEvery).geneBits),
       nextUp: nextUp(detector),
       stopped,
+      refusal: logRefusal(w.log),
+    };
+    // The tree is posted right after, for the same census: one message, one moment, so a page never shows one without the other.
+    const f: FamiliesMsg = {
+      type: "families",
+      world: w.gen,
+      step: tree.lastStep,
+      families: tree.families(),
+      events: tree.events().map((e) => ({ ...e })),
+      summary: tree.summary(),
+      fromStart: tree.watchedFrom === w.manifest.settings.censusEvery,
+      stopped: stopped ?? treeStopped,
     };
     w.log.postedStep = w.sim.step;
     post(m);
+    post(f);
   } catch (e) {
     post({ type: "notice", message: `The log of firsts could not be shown (${e instanceof Error ? e.message : e}).` });
   }
@@ -710,11 +671,11 @@ async function saveCheckpoint(w: World, auto: boolean) {
   await writeFile(edgesFile(file), new Uint8Array(w.execution.edges.words().buffer));
   m.checkpoints.push({ step: state.step, file, hash: stateHash(state), interventions: m.interventions.length, edges, dropped, edgesFrom: w.lineage.edgesFrom, ...(auto ? { auto } : {}) });
   await writeManifest(m);
-  // Taken right after `checkpoint()`, which fed the log the census at this step: a restore of this file brings it back as it stood.
-  // A stopped log may be half-updated, so it is not kept: a restore of this file then starts the log afresh.
-  // Only the notes of picks this checkpoint holds: a note on a later pick (kept from before a jump back) belongs to a
-  // history the checkpoint does not contain, and restoring it later could overwrite the note of a different choice.
-  if (!w.log.stopped) rewind.set(file, { firsts: w.log.detector.snapshot(), picks: [...w.log.notes].filter(([step]) => step <= state.step), hash: m.checkpoints[m.checkpoints.length - 1].hash });
+  // Taken right after `checkpoint()`, which fed the log the census at this step: a restore of this file brings it back as it stood,
+  // the family tree with the genealogy (edges' start, count and dropped records) it was read against. A stopped log may be
+  // half-updated, so it is not kept: a restore of this file then starts the log afresh. A stopped tree alone is left out of the record.
+  const record = rewindRecord(w.log, { edgesFrom: w.lineage.edgesFrom, edges, dropped }, m.checkpoints[m.checkpoints.length - 1].hash, state.step);
+  if (record) rewind.set(file, record);
   await recordCheckpoint({ file, runId: m.runId, step: state.step, bytes: bytes.byteLength, savedAt: new Date().toISOString(), ...(auto ? { auto } : {}) });
   w.lastCheckpoint = state.step;
   return { file, step: state.step, bytes: bytes.byteLength, advanced };
@@ -977,9 +938,7 @@ async function sessionExport(asked: number, id: number) {
   // Queued behind a plant, restore or jump, the request would otherwise describe the world that replaced the one asked for.
   if (!w || w.gen !== asked) return refuse("That world was replaced before its file was made; open the card again for the world on screen.");
   if (w.execution.awaiting) return refuse(`Pond cycle ${w.execution.awaiting.cycle} is waiting for its donors: choose them, then export the session`);
-  const why = w.log.stopped
-    ? `The log of firsts stopped (${w.log.stopped}), so the session file would leave it out. The world itself is fine.`
-    : exportRefusal(w.manifest);
+  const why = logRefusal(w.log) ?? exportRefusal(w.manifest);
   if (why) return refuse(why);
   // The checkpoint settles the world at its next census (feeding the log) or throws PondWaitingError if that boundary waits.
   let settled: Awaited<ReturnType<LabExecution["checkpoint"]>>;
@@ -996,8 +955,10 @@ async function sessionExport(asked: number, id: number) {
   if (advanced) post({ type: "notice", message: `Advanced ${advanced} steps to the census at t=${state.step}` });
   // A world that has not run a single census has no history to replay (tools/run.ts refuses --steps 0).
   if (state.step === 0) return refuse("The world hasn’t run yet: let it reach its first census, then make the file.");
-  if (w.log.stopped) return refuse(`The log of firsts stopped (${w.log.stopped}), so the session file would leave it out. The world itself is fine.`);
-  const { detector, notes } = w.log;
+  // The settling above fed the log its last census: a log or a tree that stopped there is refused too.
+  const stoppedWhy = logRefusal(w.log);
+  if (stoppedWhy) return refuse(stoppedWhy);
+  const { detector, tree, notes } = w.log;
   let text: string;
   try {
     text = JSON.stringify(buildSessionFile({
@@ -1005,7 +966,8 @@ async function sessionExport(asked: number, id: number) {
       stateHash: stateHash(state),
       step: state.step,
       firsts: { watchedFrom: detector.watchedFrom, entries: detector.entries() },
-      card: { summary: detector.summary(), facts: interventionFacts(w.manifest.interventions, notes, session.view().replay, factsAt(w)) },
+      families: { watchedFrom: tree.watchedFrom, families: tree.families(), events: tree.events() },
+      card: { summary: detector.summary(), facts: interventionFacts(w.manifest.interventions, notes, session.view().replay, factsAt(w), tree.summary()) },
       adapter: adapterDesc,
       createdAt: new Date().toISOString(),
     }), null, 2);

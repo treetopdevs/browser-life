@@ -5,18 +5,14 @@ import { sessionFileError, type SessionFile } from "../../apps/lab/src/session-f
 // lineage, breed a cycle by hand and two more on the page's own (1 cycle, then 5 cycles stopped after the first), turn
 // Breeder mode off and let one more cycle run on the rule alone under the dial, read Next up and the session card,
 // replay-check the history and download the session file. The file so holds a pressured boundary with no pick, which
-// the headless replay must rank by the dial's score itself. The version 2 file is the
-// fixture that tests/deno/pond_keeper_replay.ts replays on native WebGPU (the frozen version 1 fixture is written by
-// no spec any more); BL_WRITE_FIXTURE=1 rewrites it:
-//   BL_WRITE_FIXTURE=1 npx playwright test tests/e2e/lab-pond-keeper-v1.spec.ts --project=chrome
-
-// The tests' tsconfig carries no Node types: the one thing read from the environment is declared here.
-declare const process: { env: Record<string, string | undefined> };
+// the headless replay must rank by the dial's score itself. The version 2 fixture that tests/deno/pond_keeper_replay.ts
+// replays (tests/e2e/fixtures/pond-keeper-session-v2.json) was written by this spec once and is frozen: the lab now writes
+// version 3 files (firsts-v2 and a family tree), so this spec no longer writes it, and checks the file it downloads as
+// version 3. The version 3 fixture comes from tests/e2e/lab-pond-keeper-v2.spec.ts.
 
 const SCRATCH = "test-results";
-const FIXTURE = "tests/e2e/fixtures/pond-keeper-session-v2.json";
 
-test("lab page: the dial, auto-breed and a kept lineage steer the breeder, Next up shows progress and the v2 session file downloads", async ({ page }) => {
+test("lab page: the dial, auto-breed and a kept lineage steer the breeder, Next up shows progress and the session file downloads", async ({ page }) => {
   // The machine may be busy with other GPU work: every wait below is generous, and so is the whole test.
   test.setTimeout(1_800_000);
   const LONG = 360_000;
@@ -41,7 +37,7 @@ test("lab page: the dial, auto-breed and a kept lineage steer the breeder, Next 
   await expect(page.locator("#auto-1")).toBeDisabled();
   await expect(page.locator("#auto-status")).toContainText("Turn on");
   await expect(page.locator("#keep-none")).toBeVisible();
-  await expect(page.locator("#nextup-list li")).toHaveCount(3);
+  await expect(page.locator("#nextup-list li")).toHaveCount(3, { timeout: 60_000 });
 
   await page.locator("#breeder-on").check();
   await expect(page.locator("#auto-1")).toBeEnabled();
@@ -162,8 +158,7 @@ test("lab page: the dial, auto-breed and a kept lineage steer the breeder, Next 
 
   const [download] = await Promise.all([page.waitForEvent("download", { timeout: LONG }), page.locator("#btn-session-file").click()]);
   expect(download.suggestedFilename()).toMatch(/\.session\.json$/);
-  await download.saveAs(`${SCRATCH}/pond-keeper-session-v2.json`);
-  if (process.env.BL_WRITE_FIXTURE === "1") await download.saveAs(FIXTURE);
+  await download.saveAs(`${SCRATCH}/pond-keeper-session-v1-spec.json`);
   const decoder = new TextDecoder();
   let text = "";
   for await (const chunk of (await download.createReadStream()) as AsyncIterable<Uint8Array>) text += decoder.decode(chunk, { stream: true });
@@ -180,8 +175,9 @@ test("lab page: the dial, auto-breed and a kept lineage steer the breeder, Next 
 
   const file = JSON.parse(text) as SessionFile;
   expect(sessionFileError(file)).toBeNull();
-  expect(file.version).toBe(2);
-  expect(file.firsts.rules).toBe("firsts-v1");
+  expect(file.version).toBe(3);
+  expect(file.firsts.rules).toBe("firsts-v2");
+  expect(file.families?.rules).toBe("families-v1");
   expect(file.final.step).toBeGreaterThanOrEqual(20_000);
   expect(file.card.facts.replay?.ok).toBe(true);
   expect(file.replay).toContain("--picks-from");

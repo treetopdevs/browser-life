@@ -5,80 +5,501 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Archipelago Coordinator</title>
 <style>
-  :root { --bg:#0b0e12; --card:#161b22; --line:#242b35; --text:#e6edf3; --muted:#8b96a5; --ok:#3ddc97; --bad:#ff6b6b; color-scheme: dark; }
-  @media (prefers-color-scheme: light) { :root { --bg:#eef1f4; --card:#fff; --line:#d8dee4; --text:#1f2328; --muted:#59636e; --ok:#1a7f55; color-scheme: light; } }
-  body { margin:0; padding:16px; background:var(--bg); color:var(--text); font:14px/1.45 system-ui, sans-serif; }
-  h1 { font-size:18px; margin:0 0 4px; } p.sub { color:var(--muted); margin:0 0 16px; }
-  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:16px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; overflow-x:auto; }
+  :root { --bg:#0b0e12; --card:#161b22; --line:#242b35; --text:#e6edf3; --muted:#8b96a5; --ok:#3ddc97; --bad:#ff6b6b; --warn:#f2c14e; color-scheme: dark; }
+  @media (prefers-color-scheme: light) { :root { --bg:#eef1f4; --card:#fff; --line:#d8dee4; --text:#1f2328; --muted:#59636e; --ok:#1a7f55; --bad:#c62828; --warn:#8a5a00; color-scheme: light; } }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:16px; background:var(--bg); color:var(--text); font:14px/1.45 system-ui, sans-serif; max-width:1280px; }
+  h1 { font-size:18px; margin:0 0 4px; } p.sub { color:var(--muted); margin:0 0 16px; max-width:72ch; }
+  h2 { font-size:15px; margin:22px 0 8px; } h3 { font-size:14px; margin:0 0 6px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:10px; }
+  .grid > * { min-width:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; min-width:0; }
+  .scroll { overflow-x:auto; max-width:100%; }
+  .stack > * + * { margin-top:10px; }
   .num { font: 600 22px ui-monospace, Menlo, monospace; } .lbl { color:var(--muted); font-size:12px; }
-  table { border-collapse: collapse; width:100%; font-size:13px; } td, th { text-align:left; padding:4px 8px; border-bottom:1px solid var(--line); }
-  th { color:var(--muted); font-weight:500; } .ok { color:var(--ok); } .bad { color:var(--bad); }
+  .note { color:var(--muted); font-size:12px; margin:0 0 8px; max-width:80ch; }
+  table { border-collapse: collapse; width:100%; font-size:13px; } td, th { text-align:left; padding:4px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:500; white-space:nowrap; } td.n { font-variant-numeric: tabular-nums; }
+  .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
   .mono { font-family: ui-monospace, Menlo, monospace; }
-  input, button { font:inherit; color:var(--text); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 9px; min-height:36px; }
+  td.reason { white-space:pre-wrap; overflow-wrap:anywhere; min-width:16ch; max-width:60ch; }
+  td.wrap { overflow-wrap:anywhere; max-width:40ch; }
+  pre.cmd { white-space:pre-wrap; overflow-wrap:anywhere; margin:4px 0; padding:6px 8px; border:1px solid var(--line); border-radius:6px; font:12px/1.4 ui-monospace, Menlo, monospace; }
+  dl.kv { display:grid; grid-template-columns: max-content 1fr; gap:2px 12px; margin:0 0 8px; font-size:13px; }
+  dl.kv dt { color:var(--muted); } dl.kv dd { margin:0; overflow-wrap:anywhere; }
+  form.token { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  input, button { font:inherit; color:var(--text); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 9px; min-height:36px; max-width:100%; }
   button { cursor:pointer; } input:focus-visible, button:focus-visible { outline:2px solid var(--ok); outline-offset:2px; }
+  main.stale { opacity:.6; } #connection.warn { color:var(--warn); }
 </style>
 </head>
 <body>
 <h1>Archipelago coordinator</h1>
-<p class="sub">Runs are split into segments; a fraction is replayed on a different island and must match bit for bit. This detailed operations view requires an administrator token in production.</p>
-<label for="admin-token">Admin token</label>
-<input id="admin-token" type="password" autocomplete="off" aria-label="Administrator token" />
-<button id="connect" type="button">Connect</button>
+<p class="sub">Runs are split into segments; a fraction is replayed on a different island and must match bit for bit. This operations view needs the administrator token in production. It only reads: keeper actions are shown as commands to run yourself.</p>
+<form class="token" id="token-form">
+  <label for="admin-token">Admin token</label>
+  <input id="admin-token" type="password" autocomplete="off" aria-label="Administrator token" />
+  <button id="connect" type="submit">Connect</button>
+</form>
 <p id="connection" role="status" aria-live="polite"></p>
-<div class="grid" id="counts"></div>
-<div class="card"><h2 class="lbl">Runs</h2><table id="runs"></table></div>
-<div class="card" style="margin-top:10px"><h2 class="lbl">Islands</h2><table id="islands"></table></div>
-<div class="card" style="margin-top:10px"><h2 class="lbl">Divergences</h2><table id="div"></table></div>
-<div class="card" style="margin-top:10px"><h2 class="lbl">Failures</h2><p class="lbl">Segments an island could not run as given (a scheduled feed the world refused); the run stops there.</p><table id="fail"></table></div>
+<main id="data" hidden>
+  <section id="sec-totals" aria-labelledby="h-totals"><h2 id="h-totals">Totals</h2>
+    <p class="note">Segments by status. Pending includes every garden's future days, which wait for their dawn by design; "done, not verified" leaves out verified segments (the tables below count verified segments as done too). Device types that ran work counts adapters of islands that ran or replayed something.</p>
+    <div class="grid" id="totals"></div></section>
+  <section id="sec-experiments" aria-labelledby="h-experiments"><h2 id="h-experiments">Experiments</h2>
+    <p class="note">Open is segments minus done, diverged, failed and blocked: pending or running. A pending segment may be waiting for its predecessor, a metapopulation barrier, a garden's dawn, an island's pending cap or an island that can run it.</p>
+    <div class="card scroll"><table id="experiments"></table></div>
+    <details class="card" style="margin-top:10px"><summary class="lbl">Runs</summary><div class="scroll"><table id="runs"></table></div></details>
+  </section>
+  <section id="sec-capabilities" aria-labelledby="h-capabilities"><h2 id="h-capabilities">Open work by capability</h2>
+    <p class="note">Work of every experiment but the gardens, by the capabilities its run needs (replays need the same). A run produces its segments one after another, so a run with open segments has at most one an island could produce now: "runs with open segments" bounds that, and "open segments" counts the rest of each run too. Replays are separate and can go out several at once, even from one run: a fraction of done segments is replayed, and the status does not say which, so "done, not verified" is an upper bound on replay work, not a count of it. The coordinator reads an island's capabilities on each request and never stores them, so this is what the work needs, not how much of it waits for a capable island.</p>
+    <div class="card scroll"><table id="capabilities"></table></div>
+  </section>
+  <section id="sec-gardens" aria-labelledby="h-gardens"><h2 id="h-gardens">Gardens</h2>
+    <p class="note">Each garden's public view (its newest 14 days). Keeper actions are commands to run in a shell with BL_ADMIN_TOKEN set (apps/coordinator/README.md, "Keeper (admin) endpoints"); this page never sends them. A failed or diverged day older than the days shown is found from the failures and divergences below. A day replayed by an island that reported the same device type as its producer may have been replayed on the same computer: it is "replayed here, not yet verified elsewhere".</p>
+    <div class="stack" id="gardens"></div>
+  </section>
+  <section id="sec-failures" aria-labelledby="h-failures"><h2 id="h-failures">Failures</h2>
+    <p class="note">Segments an island could not run as given (a scheduled feed the world refused); the run stops there. The way out is an upstream reject for an experiment, or the keeper's requeue for a garden day.</p>
+    <div class="card scroll"><table id="failures"></table></div>
+  </section>
+  <section id="sec-divergences" aria-labelledby="h-divergences"><h2 id="h-divergences">Divergences</h2>
+    <div class="card scroll"><table id="divergences"></table></div>
+  </section>
+  <section id="sec-mismatches" aria-labelledby="h-mismatches"><h2 id="h-mismatches">Observation mismatches</h2>
+    <p class="note">The replay's observation files differ from the producer's; informational, the segment's status does not change.</p>
+    <div class="card scroll"><table id="mismatches"></table></div>
+  </section>
+  <section id="sec-islands" aria-labelledby="h-islands"><h2 id="h-islands">Islands</h2>
+    <p class="note">Device type is the adapter description an island reported at join: a lower bound on computers, never an identity. Runner comes from the user agent the island reported (one starting "deno " counts as headless); nothing checks it. Islands are not listed by capability: the coordinator never stores what an island can run.</p>
+    <div class="grid" id="island-totals"></div>
+    <div class="card scroll"><h3 class="lbl">By device type</h3><table id="islands-by-device"></table></div>
+    <div class="card scroll" style="margin-top:10px"><h3 class="lbl">By runner</h3><table id="islands-by-runner"></table></div>
+    <div class="card scroll" style="margin-top:10px"><h3 class="lbl">Islands, most recently seen first</h3><p class="note" id="islands-shown"></p><table id="islands"></table></div>
+  </section>
+  <section id="sec-limits" aria-labelledby="h-limits"><h2 id="h-limits">Limits</h2>
+    <p class="note">As configured (README "Island limits"). Islands are forgotten only when the table is full and an island joins. The coordinator does not count refusals (429s, the 503 at the island bound) or islands forgotten to make room, so none are shown.</p>
+    <div class="card scroll"><table id="limits"></table></div>
+  </section>
+  <section id="sec-discovery" aria-labelledby="h-discovery"><h2 id="h-discovery">Discovery</h2>
+    <p class="note" id="discovery-state"></p>
+    <div class="card scroll"><h3 class="lbl">Campaigns</h3><table id="discovery-campaigns"></table></div>
+    <div class="card scroll" style="margin-top:10px"><h3 class="lbl">Workers</h3><table id="discovery-workers"></table></div>
+  </section>
+</main>
 <script>
-const el = (tag, text, cls) => { const e = document.createElement(tag); e.textContent = text; if (cls) e.className = cls; return e; };
-function table(id, head, rows) {
-  const t = document.getElementById(id); t.replaceChildren();
-  const tr = document.createElement("tr"); head.forEach(h => tr.append(el("th", h))); t.append(tr);
-  rows.forEach(r => { const row = document.createElement("tr"); r.forEach(([v, cls]) => row.append(el("td", String(v), cls))); t.append(row); });
-  if (!rows.length) { const row = document.createElement("tr"); row.append(el("td", "none")); t.append(row); }
+"use strict";
+// Every server value reaches the page through textContent (el, table) or setAttribute; nothing parses markup.
+const $ = (id) => document.getElementById(id);
+const el = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = String(text); if (cls) e.className = cls; return e; };
+function cell(spec) { const [v, cls] = Array.isArray(spec) ? spec : [spec]; return el("td", v === undefined || v === null ? "" : v, cls); }
+function fillTable(t, head, rows, empty = "none") {
+  t.replaceChildren();
+  const tr = document.createElement("tr"); head.forEach((h) => tr.append(el("th", h))); t.append(tr);
+  rows.forEach((r) => { const row = document.createElement("tr"); r.forEach((c) => row.append(cell(c))); t.append(row); });
+  if (!rows.length) { const row = document.createElement("tr"); row.append(el("td", empty)); t.append(row); }
 }
+const table = (id, head, rows, empty) => fillTable($(id), head, rows, empty);
+function kv(pairs) { const dl = el("dl", undefined, "kv"); for (const [k, v, cls] of pairs) dl.append(el("dt", k), el("dd", v, cls)); return dl; }
+const cards = (id, items) => { const c = $(id); c.replaceChildren(); for (const [k, v, bad] of items) { const d = el("div", undefined, "card"); d.append(el("div", v, "num" + (bad ? " bad" : "")), el("div", k, "lbl")); c.append(d); } };
+
+const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+const str = (v) => (v === undefined || v === null ? "?" : String(v));
+const time = (ms) => (typeof ms === "number" ? new Date(ms).toLocaleString() : "—");
+function duration(ms) {
+  if (typeof ms !== "number") return "?";
+  if (ms % 3_600_000 === 0) return `${ms / 3_600_000} h`;
+  if (ms % 60_000 === 0) return `${ms / 60_000} min`;
+  if (ms % 1000 === 0) return `${ms / 1000} s`;
+  return `${ms} ms`;
+}
+// Values that may be pasted into a shell line, by the coordinator's own rules: the experiment-name rule, and the
+// keeper routes' `[0-9]{1,9}` day and `ltr-[0-9]{1,9}` letter id. The origin is checked too (a host may hold a quote).
+const safeName = (v) => typeof v === "string" && /^[a-z0-9][a-z0-9_-]{0,63}$/.test(v);
+const safeDay = (v) => Number.isSafeInteger(v) && v >= 0 && v <= 999_999_999;
+const safeLetter = (v) => typeof v === "string" && /^ltr-[0-9]{1,9}$/.test(v);
+const safeOrigin = () => /^https?:\/\/[A-Za-z0-9.-]+(:[0-9]{1,5})?$|^https?:\/\/\[[0-9A-Fa-f:.]+\](:[0-9]{1,5})?$/.test(location.origin);
+const keeperCmd = (path) => `curl -sS -X POST -H "authorization: Bearer $BL_ADMIN_TOKEN" '${location.origin}${path}'`;
+
+/** A run id is experiment/preset/condition/seed-n; experiment names and presets never hold a slash. */
+function parseRun(run) {
+  const parts = String(run).split("/");
+  return { experiment: parts[0] ?? "", preset: parts[1] ?? "", condition: parts.slice(2, -1).join("/"), seed: parts[parts.length - 1] ?? "" };
+}
+const openOf = (r) => Math.max(0, num(r.segments) - num(r.done) - num(r.diverged) - num(r.failed) - num(r.blocked));
+const capsLabel = (caps) => (Array.isArray(caps) && caps.length ? caps.join(" + ") : "none");
+
 let adminToken = "";
 let requestId = 0;
-function clearStatus() {
-  for (const id of ["counts", "runs", "islands", "div", "fail"]) document.getElementById(id).replaceChildren();
+let timer = 0;
+let polling = false;
+// Consecutive polls that failed (a timeout, a 5xx, a body that could not be drawn): each doubles the wait.
+let failedPolls = 0;
+// After a 401 the page stops asking until a token is entered.
+let waitingForToken = false;
+// When the view on the page was last drawn from a good answer (0: never, or cleared).
+let drawnAt = 0;
+// One poll at a time: the next is scheduled three seconds after the current one settles (longer after failures),
+// only while the tab is visible, and every request is bounded, so a slow garden view or discovery call delays a
+// refresh by at most REQUEST_MS and never starves it.
+const POLL_MS = 3000;
+const REQUEST_MS = 5000;
+const BACKOFF_MAX_MS = 30_000;
+const retryMs = () => Math.min(POLL_MS * 2 ** failedPolls, BACKOFF_MAX_MS);
+
+function setConnection(text, warn = false) { $("connection").textContent = text; $("connection").className = warn ? "warn" : ""; }
+function clearData() {
+  for (const id of ["totals", "experiments", "runs", "capabilities", "gardens", "failures", "divergences", "mismatches", "island-totals", "islands-by-device", "islands-by-runner", "islands-shown", "islands", "limits", "discovery-state", "discovery-campaigns", "discovery-workers"]) $(id).replaceChildren();
+  $("data").hidden = true;
+  $("data").classList.remove("stale");
+  drawnAt = 0;
 }
-document.getElementById("connect").onclick = () => {
-  adminToken = document.getElementById("admin-token").value;
-  document.getElementById("admin-token").value = "";
-  void tick();
-};
-async function tick() {
-  const currentRequest = ++requestId;
-  let response;
-  let s;
+/** A poll that failed: the last good view stays, dimmed, and the next poll waits longer. */
+function unavailable(why) {
+  failedPolls++;
+  const retry = `retrying in ${Math.round(retryMs() / 1000)} s`;
+  if (drawnAt) { $("data").classList.add("stale"); setConnection(`${why} Showing the view from ${new Date(drawnAt).toLocaleTimeString()}; ${retry}.`, true); }
+  else setConnection(`${why} ${retry[0].toUpperCase()}${retry.slice(1)}.`, true);
+}
+/** Text selected on the page (a curl line being copied): redrawing would drop the selection, so the view holds. */
+function selectionOnPage() {
+  const sel = document.getSelection();
+  return !!sel && !sel.isCollapsed && sel.rangeCount > 0 && $("data").contains(sel.getRangeAt(0).commonAncestorContainer);
+}
+
+async function fetchJson(url, token, signal) {
+  const abort = new AbortController();
+  const timeout = setTimeout(() => abort.abort(), REQUEST_MS);
+  const cancel = () => abort.abort();
+  signal?.addEventListener("abort", cancel, { once: true });
   try {
-    response = await fetch("/api/status", { headers: adminToken ? { authorization: `Bearer ${adminToken}` } : {} });
-    if (response.ok) s = await response.json();
+    const response = await fetch(url, { headers: token ? { authorization: `Bearer ${token}` } : {}, cache: "no-store", signal: abort.signal });
+    let body = null;
+    if (response.ok) { try { body = await response.json(); } catch { return { ok: false, status: response.status, body: null }; } }
+    return { ok: response.ok, status: response.status, body };
   } catch {
-    if (currentRequest !== requestId) return;
-    clearStatus();
-    document.getElementById("connection").textContent = "Coordinator unavailable.";
-    return;
+    return { ok: false, status: 0, body: null };
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener("abort", cancel);
   }
-  if (currentRequest !== requestId) return;
-  if (!response.ok) {
-    clearStatus();
-    document.getElementById("connection").textContent = response.status === 401 ? "Enter an administrator token to view operations." : `Status unavailable (${response.status}).`;
-    return;
-  }
-  document.getElementById("connection").textContent = "Connected.";
-  const c = document.getElementById("counts"); c.replaceChildren();
-  const staleIslands = s.islands.filter(i => i.stale).length;
-  const cards = [["pending", s.counts.pending || 0], ["running", s.counts.assigned || 0], ["done", s.counts.done || 0], ["verified", s.counts.verified || 0], ["diverged", s.counts.diverged || 0], ["failed", s.counts.failed || 0], ["obs mismatches", (s.observationMismatches || []).length], ["device types", s.devices.length], ["stale islands", staleIslands]];
-  for (const [k, v] of cards) { const d = el("div", "", "card"); d.append(el("div", v, "num" + ((k === "diverged" || k === "failed" || k === "obs mismatches" || k === "stale islands") && v ? " bad" : "")), el("div", k, "lbl")); c.append(d); }
-  table("runs", ["run", "segments", "done", "verified", "diverged", "failed", "blocked"], s.runs.map(r => [[r.run, "mono"], [r.segments], [r.done], [r.verified, r.verified ? "ok" : ""], [r.diverged, r.diverged ? "bad" : ""], [r.failed || 0, r.failed ? "bad" : ""], [r.blocked || 0, r.blocked ? "bad" : ""]]));
-  table("islands", ["island", "adapter", "runs", "verifies", "last seen", "status"], s.islands.map(i => [[i.id, "mono"], [i.adapter], [i.runs], [i.verifies], [new Date(i.last_seen).toLocaleTimeString()], [i.stale ? "stale" : "live", i.stale ? "bad" : "ok"]]));
-  table("div", ["run", "segment", "host A", "host B", "hash A", "hash B"], s.divergences.map(d => [[d.run, "mono"], [d.index], [d.a], [d.b], [d.hash_a, "mono"], [d.hash_b, "mono"]]));
-  table("fail", ["run", "segment", "task", "island", "host", "reported", "reason"], (s.failures || []).map(f => [[f.run, "mono"], [f.index], [f.kind ?? "?"], [f.island ?? "?", "mono"], [f.by], [f.failedAt ? new Date(f.failedAt).toLocaleTimeString() : "?"], [f.reason ?? "", "bad"]]));
 }
-tick(); setInterval(tick, 3000);
+
+$("token-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const entered = $("admin-token").value;
+  // An empty Connect (a double click, after the field was cleared) never replaces a token the page holds.
+  if (!entered && adminToken) return;
+  adminToken = entered;
+  $("admin-token").value = "";
+  waitingForToken = false;
+  failedPolls = 0;
+  void tick();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") { clearTimeout(timer); timer = 0; return; }
+  if (!polling && !timer && !waitingForToken) void tick();
+});
+
+function schedule() {
+  clearTimeout(timer);
+  timer = 0;
+  if (waitingForToken || document.visibilityState !== "visible") return;
+  timer = setTimeout(() => { timer = 0; if (document.visibilityState === "visible") void tick(); }, retryMs());
+}
+
+// The requests of the poll in flight: a newer poll (Connect) cancels them.
+let pollAbort = null;
+async function tick() {
+  clearTimeout(timer);
+  timer = 0;
+  const current = ++requestId;
+  pollAbort?.abort();
+  const abort = (pollAbort = new AbortController());
+  polling = true;
+  try { await poll(current, abort.signal); } finally { if (current === requestId) { polling = false; pollAbort = null; schedule(); } }
+}
+
+async function poll(current, signal) {
+  const token = adminToken;
+  const status = await fetchJson("/api/status", token, signal);
+  if (current !== requestId) return;
+  if (status.status === 401) {
+    adminToken = ""; waitingForToken = true; failedPolls = 0; clearData();
+    setConnection(token ? "The coordinator refused that token (401). Enter the administrator token." : "Enter an administrator token to view operations.", !!token);
+    return;
+  }
+  const s = status.body;
+  if (!status.ok || !s || typeof s !== "object" || Array.isArray(s)) {
+    unavailable(status.status === 0 ? "Coordinator unavailable." : status.ok ? "The status could not be read." : `Status unavailable (${status.status}).`);
+    return;
+  }
+  const experiments = s.experiments && typeof s.experiments === "object" ? s.experiments : {};
+  const gardens = Object.entries(experiments).filter(([, spec]) => spec && spec.garden === true).map(([name]) => name).sort();
+  // The garden views are public: they never carry the token.
+  const [views, discovery] = await Promise.all([
+    Promise.all(gardens.map((name) => fetchJson(`/api/public/gardens/${encodeURIComponent(name)}`, "", signal))),
+    fetchJson("/api/discovery/status", token, signal),
+  ]);
+  if (current !== requestId) return;
+  if (selectionOnPage()) { setConnection("Connected. Updates are held while text on the page is selected; clear the selection to resume."); return; }
+  try {
+    render(s, gardens.map((name, i) => [name, views[i]]), discovery);
+  } catch (error) {
+    $("data").hidden = false;
+    unavailable(`The status could not be drawn (${error instanceof Error ? error.message : String(error)}); parts of the view may be missing or out of date.`);
+    return;
+  }
+  failedPolls = 0;
+  drawnAt = Date.now();
+  $("data").classList.remove("stale");
+  $("data").hidden = false;
+  setConnection("Connected.");
+}
+
+function render(s, gardenViews, discovery) {
+  const islands = Array.isArray(s.islands) ? s.islands : [];
+  const runs = Array.isArray(s.runs) ? s.runs : [];
+  const experiments = s.experiments || {};
+  const needs = s.capabilityNeeds || {};
+  const limits = s.limits || {};
+  const counts = s.counts || {};
+  const failed = Array.isArray(s.failures) ? s.failures : [];
+  const divergences = Array.isArray(s.divergences) ? s.divergences : [];
+  const mismatches = Array.isArray(s.observationMismatches) ? s.observationMismatches : [];
+  const stale = islands.filter((i) => i.stale).length;
+
+  // 1. Totals
+  cards("totals", [
+    ["pending (with gardens' future days)", num(counts.pending)], ["running", num(counts.assigned)], ["done, not verified", num(counts.done)], ["verified", num(counts.verified)],
+    ["diverged", num(counts.diverged), num(counts.diverged) > 0], ["failed", num(counts.failed), num(counts.failed) > 0],
+    ["blocked", num(counts.blocked), num(counts.blocked) > 0], ["obs mismatches", mismatches.length, mismatches.length > 0],
+    ["device types that ran work", Array.isArray(s.devices) ? s.devices.length : 0], ["stale islands", stale, stale > 0],
+    ["islands / max", `${islands.length} / ${limits.maxIslands ?? "?"}`],
+  ]);
+
+  // 2. Experiments
+  const byExp = new Map();
+  for (const r of runs) {
+    const { experiment, condition } = parseRun(r.run);
+    const e = byExp.get(experiment) || { runs: 0, segments: 0, done: 0, verified: 0, diverged: 0, failed: 0, blocked: 0, open: 0, byCondition: new Map() };
+    e.runs++; for (const k of ["segments", "done", "verified", "diverged", "failed", "blocked"]) e[k] += num(r[k]);
+    const open = openOf(r); e.open += open;
+    const c = e.byCondition.get(condition) || { open: 0, runs: 0, unverified: 0 }; c.open += open; if (open > 0) c.runs++;
+    c.unverified += Math.max(0, num(r.done) - num(r.verified)); e.byCondition.set(condition, c);
+    byExp.set(experiment, e);
+  }
+  const kindOf = (name, spec) => {
+    const all = Object.values(needs[name] || {}).flat();
+    if (spec.garden === true) return "garden";
+    if (all.includes("breed-v1")) return "bred";
+    if (all.includes("ponds-v1")) return "pond";
+    if (spec.interventions != null) return "scheduled";
+    return "plain";
+  };
+  const needsLabel = (name) => {
+    const per = Object.entries(needs[name] || {});
+    const labels = [...new Set(per.map(([, caps]) => capsLabel(caps)))];
+    if (labels.length <= 1) return labels[0] ?? "?";
+    return per.map(([c, caps]) => `${c}: ${capsLabel(caps)}`).join("; ");
+  };
+  const names = Object.keys(experiments).sort();
+  table("experiments", ["experiment", "preset", "kind", "needs", "runs", "segments", "done (with verified)", "verified", "diverged", "failed", "blocked", "open"],
+    names.map((name) => {
+      const spec = experiments[name] || {}; const e = byExp.get(name) || { runs: 0, segments: 0, done: 0, verified: 0, diverged: 0, failed: 0, blocked: 0, open: 0 };
+      return [[name, "mono"], [spec.presetId], [kindOf(name, spec)], [needsLabel(name), "mono"], [e.runs, "n"], [e.segments, "n"], [e.done, "n"],
+        [e.verified, "n" + (e.verified ? " ok" : "")], [e.diverged, "n" + (e.diverged ? " bad" : "")], [e.failed, "n" + (e.failed ? " bad" : "")],
+        [e.blocked, "n" + (e.blocked ? " bad" : "")], [e.open, "n"]];
+    }));
+  table("runs", ["run", "segments", "done (with verified)", "verified", "diverged", "failed", "blocked", "open"],
+    runs.map((r) => [[r.run, "mono"], [num(r.segments), "n"], [num(r.done), "n"], [num(r.verified), "n" + (r.verified ? " ok" : "")], [num(r.diverged), "n" + (r.diverged ? " bad" : "")],
+      [num(r.failed), "n" + (r.failed ? " bad" : "")], [num(r.blocked), "n" + (r.blocked ? " bad" : "")], [openOf(r), "n"]]));
+
+  // 3. Open work by capability (gardens left out: their future days are pending by design)
+  const byCaps = new Map();
+  for (const name of names) {
+    if ((experiments[name] || {}).garden === true) continue;
+    const e = byExp.get(name); if (!e) continue;
+    for (const [condition, c] of e.byCondition) {
+      const label = capsLabel((needs[name] || {})[condition]);
+      const row = byCaps.get(label) || { open: 0, runs: 0, unverified: 0, experiments: new Set() };
+      row.open += c.open; row.runs += c.runs; row.unverified += c.unverified; if (c.open > 0) row.experiments.add(name);
+      byCaps.set(label, row);
+    }
+  }
+  table("capabilities", ["needs", "runs with open segments", "open segments", "done, not verified", "experiments with open segments"],
+    [...byCaps.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([label, row]) => [[label, "mono"], [row.runs, "n"], [row.open, "n"], [row.unverified, "n"], [[...row.experiments].sort().join(", ") || "—", "wrap"]]));
+
+  // 4–5. Gardens and their keeper lines. The public view shows only the newest days, so a failed or diverged day is
+  // also taken from the admin failure and divergence records (a garden's run is its experiment; segment index = day).
+  const records = (name) => [...failed.map((f) => [f, "failed"]), ...divergences.map((d) => [d, "diverged"])]
+    .filter(([r]) => r && parseRun(r.run).experiment === name).map(([r, status]) => ({ day: r.index, status }));
+  const gardens = $("gardens"); gardens.replaceChildren();
+  if (!gardenViews.length) gardens.append(el("p", "No gardens.", "note"));
+  for (const [name, view] of gardenViews) gardens.append(gardenCard(name, view, records(name)));
+
+  // 6. Failures
+  table("failures", ["experiment", "run", "segment", "task", "island", "host", "reported", "reason"],
+    failed.map((f) => [[parseRun(f.run).experiment, "mono"], [f.run, "mono"], [f.index, "n"], [f.kind ?? "?"], [f.island ?? "?", "mono"], [f.by, "wrap"],
+      [time(f.failedAt)], [f.reason ?? "", "reason bad"]]));
+
+  // 7. Divergences and observation mismatches
+  table("divergences", ["run", "segment", "host A", "host B", "hash A", "hash B"],
+    divergences.map((d) => [[d.run, "mono"], [d.index, "n"], [d.a, "wrap"], [d.b, "wrap"], [d.hash_a, "mono"], [d.hash_b, "mono"]]));
+  table("mismatches", ["run", "segment", "producer", "verifier"],
+    mismatches.map((m) => [[m.run, "mono"], [m.index, "n"], [m.producer, "wrap"], [m.verifier, "wrap"]]));
+
+  // 8. Islands
+  renderIslands(islands, limits);
+
+  // 9. Limits. A key missing from config (`unset`) is not "off": its consumer applies a built-in default.
+  // A malformed value (`invalid`, sent as null) is not "off" either.
+  const unset = new Set(Array.isArray(limits.unset) ? limits.unset : []);
+  const invalid = new Set(Array.isArray(limits.invalid) ? limits.invalid : []);
+  const DEFAULTED = "not configured: the coordinator applies its built-in default";
+  const INVALID = "set in config to something other than a whole number; check the coordinator's config";
+  const value = (key, v, shown) => (invalid.has(key) ? INVALID : unset.has(key) ? DEFAULTED : shown(v));
+  // A budget's window is reported whatever its limit says: an off or defaulted limit does not make a bad window fine.
+  const budget = (key, windowKey, b) => {
+    const window = invalid.has(windowKey) ? "a window that is set to something other than a whole number"
+      : unset.has(windowKey) ? "a window not configured (the coordinator applies its built-in default)" : null;
+    const limit = value(key, b, () => (!b || b.limit == null ? "off" : null));
+    if (limit === null) return typeof b.limit === "number" ? `${b.limit} per ${window ?? duration(b.windowMs)}` : "not a number in the status";
+    return window ? `${limit}; ${window}` : limit;
+  };
+  const budgets = limits.budgets || {};
+  table("limits", ["limit", "value"], [
+    ["joins per client address", budget("island_joins_per_address", "island_join_window_ms", budgets.join)],
+    ["task requests (next) per island", budget("island_next_per_island", "island_next_window_ms", budgets.next)],
+    ["segment requests per island", budget("island_segment_requests_per_island", "island_segment_window_ms", budgets.segment)],
+    ["island route requests per address", budget("island_requests_per_address", "island_requests_window_ms", budgets.requests)],
+    ["pending assignments per island", value("island_max_pending", limits.islandMaxPending, (v) => (v == null ? "no cap" : String(v)))],
+    ["islands in the table", `${str(limits.islands)} of ${value("max_islands", limits.maxIslands, str)}`],
+    ["when the table is full, a join forgets islands that never ran anything, last seen over", value("island_prune_after_ms", limits.islandPruneAfterMs, duration)],
+    ["if none is that old, the least recently seen such islands, never one seen within", value("island_prune_grace_ms", limits.islandPruneGraceMs, duration)],
+    ["garden island token", limits.gardenIslandToken === true ? "configured: gardens go only to islands that showed it" : "not configured: any island may tend a garden"],
+  ].map(([k, v]) => [[k], [v]]));
+
+  // 10. Discovery
+  renderDiscovery(discovery);
+}
+
+function gardenCard(name, view, records) {
+  const card = el("article", undefined, "card");
+  card.setAttribute("data-garden", name);
+  card.append(el("h3", name, "mono"));
+  if (!view.ok || !view.body || typeof view.body !== "object") {
+    const why = view.status === 404 ? "No garden view for this name (404)." : view.status === 503 ? "The garden view is busy (503); it is read again in a few seconds." : view.status === 0 ? "The garden view did not answer." : `The garden view is unavailable (status ${view.status}).`;
+    card.append(el("p", why, "bad garden-error"));
+  }
+  const g = view.ok && view.body && typeof view.body === "object" ? view.body : null;
+  const days = g && Array.isArray(g.days) ? g.days : [];
+  if (g) {
+    const clock = g.clock || {}; const pace = g.pace || {}; const v = g.verification || {}; const t = g.tending || {}; const l = g.letters || {};
+    const state = `${str(g.state)}${g.asleep ? " (asleep)" : ""}`;
+    const stateCls = g.state === "stopped" ? "bad" : g.state === "growing" ? "ok" : "";
+    const next = pace.nextReleaseAt != null ? `${time(pace.nextReleaseAt)}${pace.releaseDue ? " (due: the next island to ask gets it)" : ""}`
+      : g.state === "finished" ? "— (finished: every day of the horizon is done)"
+      : g.state === "stopped" ? "— (stopped at a diverged or failed day)"
+      : "— (the newest released day is not done yet)";
+    const landing = l.nextLanding ? `day ${str(l.nextLanding.day)}, step ${str(l.nextLanding.step)} (${str(l.nextLanding.open)} open)` : "takes no letters now";
+    card.append(kv([
+      ["state", state, stateCls],
+      ["days", `${str(clock.daysDone)} done of ${str(clock.daysTotal)}`],
+      ["steps", `tip ${str(clock.step)}, verified ${str(clock.verifiedStep)}, released ${str(clock.releasedStep)}`],
+      ["next release", next],
+      ["verification", `${str(v.daysVerified)} of ${str(v.daysDone)} replayed and matched: ${str(v.byDifferentDeviceType)} verified on a different device type, ${str(v.bySameDeviceType)} replayed here, not yet verified elsewhere; ${str(v.diverged)} diverged, ${str(v.failed)} failed`, num(v.diverged) + num(v.failed) > 0 ? "bad" : num(v.bySameDeviceType) > 0 ? "warn" : ""],
+      ["tending", `${str(t.islandsToday)} islands today, ${str(t.deviceTypesToday)} device types today (${str(t.deviceTypesEver)} ever), ${str(t.activeNow)} active now`],
+      ["letters", `${str(l.queued)} queued of ${str(l.queueMax)}; next landing ${landing}`],
+    ]));
+    const dayStatus = (d) => {
+      if (d.status === "verified" && d.verification === "same-device-type") return ["replayed here, not yet verified elsewhere", "warn"];
+      if (d.status === "verified") return ["verified", "ok"];
+      return [d.status, d.status === "failed" || d.status === "diverged" || d.status === "blocked" ? "bad" : ""];
+    };
+    const t1 = el("table");
+    fillTable(t1, ["day", "status", "verification", "letters", "done"], days.map((d) => [[d.day, "n"], dayStatus(d),
+      [d.verification ?? "—"], [Array.isArray(d.letters) ? d.letters.length : 0, "n"], [time(d.doneAt)]]));
+    const wrap = el("div", undefined, "scroll"); wrap.append(t1); card.append(wrap);
+  }
+
+  // Keeper lines: for each failed or diverged day (from the view's days and the admin records, once each), and each
+  // waiting letter; only for values that pass the format rules. The token itself is never on the page.
+  // The status and the view are separate snapshots, and the public view is cached for a few seconds (`garden_cache_ms`),
+  // so neither is known to be the newer: a day either lists as failed or diverged is offered, and a day the two disagree
+  // on says so (the coordinator answers a requeue of a day in any other state with 409, so the line is safe to try).
+  const dayKey = (day) => (typeof day === "number" ? `n${day}` : `s${String(day)}`);
+  const viewDays = new Map(days.map((d) => [dayKey(d.day), d]));
+  const requeue = new Map();
+  for (const d of days) if (d.status === "failed" || d.status === "diverged") requeue.set(dayKey(d.day), { day: d.day, status: d.status, note: "" });
+  for (const r of records) {
+    const key = dayKey(r.day);
+    if (requeue.has(key)) continue;
+    const v = viewDays.get(key);
+    const conflict = !!(g && v);
+    const note = conflict ? ` in the admin status; the garden view shows it ${str(v.status)}. Either can be a few seconds old; a day no longer failed or diverged is refused (409)`
+      : g ? "; older than the days shown" : "";
+    requeue.set(key, { day: r.day, status: r.status, note, conflict });
+  }
+  const requeues = [...requeue.values()].sort((a, b) => num(a.day) - num(b.day));
+  const waiting = g && g.letters && Array.isArray(g.letters.waiting) ? g.letters.waiting : [];
+  const keeper = el("div", undefined, "keeper");
+  keeper.append(el("h3", "Keeper actions", "lbl"));
+  if (!requeues.length && !waiting.length) keeper.append(el("p", g ? "Nothing to requeue or drop." : "No failed or diverged day in the admin records.", "note"));
+  else if (!safeName(name) || !safeOrigin()) keeper.append(el("p", `This garden's ${safeName(name) ? "address" : "name"} is not safe to paste into a shell, so no command is shown; see apps/coordinator/README.md, "Keeper (admin) endpoints".`, "note bad unsafe"));
+  else {
+    for (const d of requeues) {
+      if (!safeDay(d.day)) { keeper.append(el("p", "A day number here is not safe to paste; see the README.", "note bad unsafe")); continue; }
+      keeper.append(el("p", `Requeue day ${d.day} (${d.status}${d.note}):`, d.conflict ? "note warn conflict" : "note"), el("pre", keeperCmd(`/api/gardens/${name}/days/${d.day}/requeue`), "cmd"));
+    }
+    for (const letter of waiting) {
+      if (!letter || !safeLetter(letter.id)) { keeper.append(el("p", "A letter id here is not safe to paste; see the README.", "note bad unsafe")); continue; }
+      keeper.append(el("p", `Drop ${letter.id} (waiting, day ${str(letter.day)}; dropping cannot be undone):`, "note"), el("pre", keeperCmd(`/api/gardens/${name}/letters/${letter.id}/drop`), "cmd"));
+    }
+  }
+  card.append(keeper);
+  return card;
+}
+
+function renderIslands(islands, limits) {
+  const isDeno = (i) => typeof i.user_agent === "string" && i.user_agent.startsWith("deno ");
+  const group = (key) => {
+    const m = new Map();
+    for (const i of islands) {
+      const k = key(i); const g = m.get(k) || { islands: 0, live: 0, stale: 0, runs: 0, verifies: 0 };
+      g.islands++; if (i.stale) g.stale++; else g.live++; g.runs += num(i.runs); g.verifies += num(i.verifies); m.set(k, g);
+    }
+    return [...m.entries()].sort((a, b) => b[1].islands - a[1].islands || String(a[0]).localeCompare(String(b[0])));
+  };
+  const token = limits.gardenIslandToken === true;
+  const live = islands.filter((i) => !i.stale).length;
+  cards("island-totals", [["islands", islands.length], ["live", live], ["stale", islands.length - live, islands.length - live > 0],
+    ...(token ? [["garden islands", islands.filter((i) => i.garden === true).length]] : [])]);
+  const row = ([k, g]) => [[k, "wrap"], [g.islands, "n"], [g.live, "n"], [g.stale, "n" + (g.stale ? " bad" : "")], [g.runs, "n"], [g.verifies, "n"]];
+  table("islands-by-device", ["device type", "islands", "live", "stale", "runs", "verifies"], group((i) => str(i.adapter)).map(row));
+  table("islands-by-runner", ["runner (reported)", "islands", "live", "stale", "runs", "verifies"], group((i) => (isDeno(i) ? "headless (deno)" : "browser")).map(row));
+  const shown = [...islands].sort((a, b) => num(b.last_seen) - num(a.last_seen)).slice(0, 200);
+  $("islands-shown").textContent = islands.length > shown.length ? `showing ${shown.length} of ${islands.length}` : "";
+  table("islands", ["island", "runner", "device type", "user agent", "runs", "verifies", "last seen", "status", ...(token ? ["garden"] : [])],
+    shown.map((i) => [[i.id, "mono"], [isDeno(i) ? "headless" : "browser"], [i.adapter, "wrap"], [i.user_agent, "wrap"], [num(i.runs), "n"], [num(i.verifies), "n"],
+      [time(i.last_seen)], [i.stale ? "stale" : "live", i.stale ? "bad" : "ok"], ...(token ? [[i.garden === true ? "yes" : "no"]] : [])]));
+}
+
+function renderDiscovery(d) {
+  if (!d.ok || !d.body || typeof d.body !== "object") {
+    $("discovery-state").textContent = d.status === 0 ? "discovery is not answering (no response)" : `discovery is not answering (status ${d.status})`;
+    table("discovery-campaigns", ["campaign"], [], "—"); table("discovery-workers", ["worker"], [], "—");
+    return;
+  }
+  $("discovery-state").textContent = "";
+  const decisions = (m) => Object.entries(m || {}).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}: ${v}`).join(", ") || "—";
+  table("discovery-campaigns", ["campaign", "cases", "decisions", "active leases"],
+    (Array.isArray(d.body.campaigns) ? d.body.campaigns : []).map((c) => [[c.campaign, "wrap"], [c.cases, "n"], [decisions(c.decisions), "wrap"], [c.activeLeases, "n"]]));
+  table("discovery-workers", ["label", "host", "backend", "qualified campaigns", "last seen"],
+    (Array.isArray(d.body.workers) ? d.body.workers : []).map((w) => [[w.label, "mono"], [w.host, "mono"], [w.backend, "wrap"], [Array.isArray(w.qualified) ? w.qualified.length : 0, "n"], [time(w.lastSeen)]]));
+}
+
+void tick();
 </script>
 </body>
 </html>

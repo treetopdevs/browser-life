@@ -160,6 +160,15 @@ defmodule Coordinator.Queue do
       day owns is the same for its run, its replay and a redo.
     * Time. Release times and the view read `Coordinator.Clock`, the same clock
       leases use, so a test that moves it moves both.
+    * Food (only in a garden founded with `"food": true`,
+      docs/garden-food-2026-10-18.md). `ask_food/3` adds a visitor's hand
+      (`Garden.add_hand/5`); the K-th hand of a dawn period calls a food,
+      which is stored and scheduled exactly as a letter is. The hands
+      themselves (salted hashes, from `Coordinator.LetterLimiter.hand_key/1`)
+      live in `s.food_hands`, in memory only: `persist/1` never writes them and
+      the view shows only their count, so a restart forgets them (toward no
+      food) while a food already called survives in the garden's record. A hand
+      that only counts is not persisted at all; a call is.
 
   A garden is public, and islands join without credentials, so by default any
   visitor can run, replay, fail or reject a day. Three things bound that. With
@@ -284,7 +293,25 @@ defmodule Coordinator.Queue do
   """
   def post_letter(name, letter), do: GenServer.call(__MODULE__, {:post_letter, name, letter})
 
-  @doc "The keeper's veto: drops letter `id` of garden `name` if its day was never assigned. `{:ok, letter_view}`, `{:error, :not_found}` or `{:error, {:refused, msg}}`."
+  @doc """
+  A visitor's hand on garden `name`'s food ask, at the queue's own clock. `key`
+  is `Coordinator.LetterLimiter.hand_key/1`'s `{incarnation, hash}`.
+
+    * `{:ok, :counted, nil | food_view, food_block}`: counted (and, on the K-th
+      hand, the food it called);
+    * `{:ok, :repeat, food_block}`: this network's hand is already in;
+    * `{:error, {:closed, code, opens_at_day, words}}`: the ask is closed;
+    * `{:error, :stale}`: `key` is of a limiter incarnation that is gone (the
+      limiter restarted while the call waited); nothing was counted;
+    * `{:error, :not_found}`: no such garden.
+
+  The call exits after `timeout` ms like any `GenServer.call/3`; its exit
+  reason holds `key`, so the caller catches it (`CoordinatorWeb.GardenController`).
+  """
+  def ask_food(name, key, timeout \\ 5_000),
+    do: GenServer.call(__MODULE__, {:ask_food, name, key}, timeout)
+
+  @doc "The keeper's veto: drops letter or food `id` of garden `name` if its day was never assigned. `{:ok, view}` (a letter's or a food's), `{:error, :not_found}` or `{:error, {:refused, msg}}`."
   def drop_letter(name, id), do: GenServer.call(__MODULE__, {:drop_letter, name, id})
 
   @doc "The garden's public view (`garden-v1`, see `Coordinator.Garden.view/5`) as an atom-key map, or `nil` for an unknown garden. Built inside this process in O(days + letters); callers serving the public hold their own short-lived cache (`Coordinator.LetterLimiter`)."
@@ -437,8 +464,72 @@ defmodule Coordinator.Queue do
       Map.new(state.gardens, fn {name, g} -> {name, {g.width, g.height}} end)
     )
 
-    {:ok, state |> Map.put(:dir, dir) |> reindex()}
+    # The food hands are never persisted (`persist_drops/1`): a restart starts
+    # every garden's ask from zero. Hands of a past dawn period are forgotten
+    # by a sweep, not only when the next hand comes.
+    schedule_hands_sweep()
+    {:ok, state |> Map.put(:dir, dir) |> Map.put(:food_hands, %{}) |> reindex()}
   end
+
+  # The food hands are salted hashes kept in memory only (docs/garden-food-2026-10-18.md,
+  # section 5): no crash report, `:sys.get_status/1` or debug log shows them, only
+  # each garden's count. (`:sys.get_state/1` still returns the raw state.)
+  @impl true
+  def format_status(status) do
+    status
+    |> redact_status(:state, fn
+      %{food_hands: hands} = s ->
+        %{s | food_hands: Map.new(hands, fn {n, h} -> {n, hands_summary(h)} end)}
+
+      other ->
+        other
+    end)
+    |> redact_status(:message, fn
+      {:ask_food, name, _key} -> {:ask_food, name, :redacted}
+      other -> other
+    end)
+    |> redact_status(:log, fn _log -> [] end)
+  end
+
+  defp redact_status(status, key, fun) when is_map_key(status, key),
+    do: Map.update!(status, key, fun)
+
+  defp redact_status(status, _key, _fun), do: status
+
+  # Every garden's hands of a past dawn period, or of another limiter
+  # incarnation, are dropped (so the hashes are forgotten within a sweep of the
+  # dawn, whether or not anyone asks again).
+  @impl true
+  def handle_info(:expire_hands, s) do
+    schedule_hands_sweep()
+    now = now()
+    epoch = Coordinator.LetterLimiter.hand_epoch()
+
+    hands =
+      for {name, h} <- s.food_hands,
+          g = s.gardens[name],
+          g != nil and h.epoch == epoch and h.dawn == Garden.dawn_index(g, now),
+          into: %{},
+          do: {name, h}
+
+    {:noreply, %{s | food_hands: hands}}
+  end
+
+  # As GenServer's default does, an unexpected message is worth a warning (a
+  # late reply, a stray monitor). No hand key travels in a message to this
+  # process except inside `{:ask_food, ...}` calls, which never land here.
+  def handle_info(other, s) do
+    Logger.warning("queue: ignoring an unexpected message #{inspect(other, limit: 5)}")
+    {:noreply, s}
+  end
+
+  defp schedule_hands_sweep,
+    do:
+      Process.send_after(
+        self(),
+        :expire_hands,
+        Application.get_env(:coordinator, :garden_hands_sweep_ms, 60_000)
+      )
 
   @impl true
   def handle_call({:join, info, garden}, _from, s) do
@@ -507,12 +598,30 @@ defmodule Coordinator.Queue do
          segs = garden_segs(s, g),
          {:ok, g, record} <- Garden.drop_letter(g, id, segs, now()) do
       s = store_garden(s, g)
-      {:reply, {:ok, Garden.letter_view(g, record, segs)}, persist(s)}
+      {:reply, {:ok, Garden.record_view(g, record, segs)}, persist(s)}
     else
       nil -> {:reply, {:error, :not_found}, s}
       {:error, _} = error -> {:reply, error, s}
     end
   end
+
+  def handle_call({:ask_food, name, {epoch, hash} = key}, _from, s) when is_binary(hash) do
+    case s.gardens[name] do
+      nil ->
+        {:reply, {:error, :not_found}, s}
+
+      # A key made before a limiter restart (a call that waited in this
+      # process's mailbox meanwhile) is of a salt that is gone: counting it
+      # could add a network twice, so the caller is told to retry.
+      g ->
+        if epoch == Coordinator.LetterLimiter.hand_epoch(),
+          do: ask_food(s, g, name, key),
+          else: {:reply, {:error, :stale}, s}
+    end
+  end
+
+  # A direct caller's malformed key is no hand at all.
+  def handle_call({:ask_food, _name, _key}, _from, s), do: {:reply, {:error, :not_found}, s}
 
   def handle_call({:garden_view, name}, _from, s) do
     view =
@@ -524,7 +633,11 @@ defmodule Coordinator.Queue do
           env = %{
             lease_ms: lease_ms(),
             stale_ms: @stale_ms,
-            letters_per_address: Application.get_env(:coordinator, :garden_letters_per_address, 3)
+            letters_per_address:
+              Application.get_env(:coordinator, :garden_letters_per_address, 3),
+            food_hands: s.food_hands |> Map.get(name) |> hands_summary(),
+            food_epoch: Coordinator.LetterLimiter.hand_epoch(),
+            shared_address: shared_address?()
           }
 
           Garden.view(g, garden_segs(s, g), s.islands, now(), env)
@@ -1007,7 +1120,12 @@ defmodule Coordinator.Queue do
 
   # The keys `POST /api/gardens` takes. An unknown one is refused rather than
   # ignored: a keeper's typo ("dawnPeriod") should not found a daily garden.
-  @garden_keys ~w(name presetId seed founding days stepsPerDay censusEvery deepEvery lettersPerDay queueMax dawnPeriodMs dawnOffsetMs)
+  @garden_keys ~w(name presetId seed founding days stepsPerDay censusEvery deepEvery lettersPerDay queueMax dawnPeriodMs dawnOffsetMs food foodAsks foodEveryDays)
+  # packages/schema's MATTER_MAX (2^26 quanta of world matter), and the start
+  # matter allowed per cell for a garden preset (the real figure is about 35;
+  # apps/lab/test/garden.test.ts checks every garden preset against both).
+  @matter_max 67_108_864
+  @start_matter_per_cell 128
   @default_garden_preset "wild-storm-large"
   @max_dawn_period_ms 7 * 86_400_000
 
@@ -1033,6 +1151,20 @@ defmodule Coordinator.Queue do
     queue_max = Map.get(params, "queueMax", 64)
     period = Map.get(params, "dawnPeriodMs", 86_400_000)
     offset = Map.get(params, "dawnOffsetMs", 0)
+    food = Map.get(params, "food", false)
+
+    food_asks =
+      Map.get(params, "foodAsks", Application.get_env(:coordinator, :garden_food_asks, 5))
+
+    food_every =
+      Map.get(
+        params,
+        "foodEveryDays",
+        Application.get_env(:coordinator, :garden_food_every_days, 7)
+      )
+
+    food_amount = Application.get_env(:coordinator, :garden_food_amount, 16)
+    food_r = Application.get_env(:coordinator, :garden_food_radius, 32)
 
     error =
       cond do
@@ -1079,6 +1211,28 @@ defmodule Coordinator.Queue do
         not int_in?.(offset, 0, if(is_integer(period), do: period - 1, else: 0)) ->
           "dawnOffsetMs must be an integer in 0..dawnPeriodMs-1"
 
+        not is_boolean(food) ->
+          "food must be true or false"
+
+        food != true and
+            (Map.has_key?(params, "foodAsks") or Map.has_key?(params, "foodEveryDays")) ->
+          "foodAsks and foodEveryDays are for a garden founded with food: true"
+
+        food and not int_in?.(food_asks, 2, 1000) ->
+          "foodAsks must be an integer in 2..1000 (one person is not a collective)"
+
+        food and not int_in?.(food_every, 1, 365) ->
+          "foodEveryDays must be an integer in 1..365"
+
+        food and not int_in?.(food_amount, 1, 64) ->
+          "the coordinator's garden_food_amount must be an integer in 1..64"
+
+        food and not int_in?.(food_r, 1, 32) ->
+          "the coordinator's garden_food_radius must be an integer in 1..32"
+
+        food and pond_preset?(preset) ->
+          "food is not defined for pond worlds: the pond cycle fixes each pond's matter"
+
         true ->
           nil
       end
@@ -1098,7 +1252,17 @@ defmodule Coordinator.Queue do
              "interventions" => founding
            })
            |> founding_error(),
-         :ok <- founding_at_step_zero(spec["interventions"]) do
+         :ok <- founding_at_step_zero(spec["interventions"]),
+         :ok <-
+           food_matter_bound(
+             food,
+             world,
+             spec["interventions"],
+             days,
+             food_every,
+             food_amount,
+             food_r
+           ) do
       gparams = %{
         name: name,
         preset_id: preset,
@@ -1111,7 +1275,11 @@ defmodule Coordinator.Queue do
         dawn_offset_ms: offset,
         founding: spec["interventions"],
         width: elem(world, 0),
-        height: elem(world, 1)
+        height: elem(world, 1),
+        food:
+          if(food,
+            do: %{asks: food_asks, every_days: food_every, amount: food_amount, r: food_r}
+          )
       }
 
       {:ok, Map.put(spec, "garden", true), gparams}
@@ -1122,6 +1290,40 @@ defmodule Coordinator.Queue do
   end
 
   defp garden_spec(_), do: {:error, "a garden must be an object"}
+
+  # The runner refuses a feed that would take the world past MATTER_MAX, and a
+  # refused scheduled feed fails its day for good (the day's slice is frozen),
+  # so a garden with food is founded only if the worst case over its whole
+  # horizon fits (docs/garden-food-2026-10-18.md, section 3): the start
+  # allowance, every founding feed that adds matter, and the most foods the
+  # horizon can carry at spacing N, each disc bounded by its square (a disc
+  # never wraps onto itself: `maxLesionRadius`). Lesions conserve matter and
+  # drains only remove it.
+  defp food_matter_bound(false, _world, _founding, _days, _every, _amount, _r), do: :ok
+
+  defp food_matter_bound(true, {w, h}, founding, days, every, amount, r) do
+    cells = w * h
+    disc = fn r -> min((2 * r + 1) * (2 * r + 1), cells) end
+    start = cells * @start_matter_per_cell
+
+    fed =
+      for %{"kind" => "feed", "amount" => a, "r" => fr} <- founding, a > 0, reduce: 0 do
+        acc -> acc + a * disc.(fr)
+      end
+
+    foods = div(days + every - 1, every)
+    per_food = amount * disc.(r)
+    total = start + fed + foods * per_food
+
+    if total <= @matter_max do
+      :ok
+    else
+      {:error,
+       "food: the worst case is #{total} quanta of matter (start allowance #{start} + founding feeds #{fed} + " <>
+         "#{foods} foods of at most #{per_food}), past MATTER_MAX #{@matter_max}; space the foods further " <>
+         "apart (foodEveryDays), shorten the horizon (days) or feed less at founding"}
+    end
+  end
 
   defp preset_of(params) do
     case Map.get(params, "presetId", @default_garden_preset) do
@@ -1200,6 +1402,58 @@ defmodule Coordinator.Queue do
     |> put_in([:experiments, g.name, :spec, "interventions"], Garden.schedule(g))
   end
 
+  # A hand on garden `g` (the `{:ask_food, ...}` call's work).
+  defp ask_food(s, g, name, key) do
+    now = now()
+    segs = garden_segs(s, g)
+    block = fn g, hands -> Garden.food_view(g, segs, hands.count, now, shared_address?()) end
+
+    case Garden.add_hand(g, Map.get(s.food_hands, name), key, segs, now) do
+      {:error, {:refused, {code, opens}}} ->
+        {:reply, {:error, {:closed, code, opens, closed_words(code, opens, g)}}, s}
+
+      {:repeat, hands} ->
+        {:reply, {:ok, :repeat, block.(g, hands)}, put_hands(s, name, hands)}
+
+      {:counted, hands} ->
+        # Only a count changed, and counts are never persisted.
+        {:reply, {:ok, :counted, nil, block.(g, hands)}, put_hands(s, name, hands)}
+
+      {:called, g, hands, food} ->
+        Logger.info("garden #{name}: #{food.id} called onto day #{food.day}")
+        s = s |> store_garden(g) |> put_hands(name, hands)
+
+        {:reply, {:ok, :counted, Garden.food_record_view(g, food, segs), block.(g, hands)},
+         persist(s)}
+    end
+  end
+
+  # Every visitor reaches this coordinator as one address (production until the
+  # proxy passes client addresses, D-17): the food block says so.
+  defp shared_address?,
+    do: Application.get_env(:coordinator, :garden_shared_address, false) == true
+
+  # A garden's food hands, in memory only (never persisted, never in a view).
+  defp put_hands(s, name, hands), do: put_in(s, [:food_hands, name], hands)
+
+  # What the view needs of the hands: the count and whose period it is, not the hashes.
+  defp hands_summary(nil), do: nil
+  defp hands_summary(hands), do: Map.take(hands, [:dawn, :epoch, :count])
+
+  # A closed food ask in words (the 409's `error`).
+  defp closed_words("off", _opens, _g), do: "this garden takes no food"
+
+  defp closed_words("stopped", _opens, _g),
+    do: "the garden has stopped; nothing after the stopped day runs"
+
+  defp closed_words("finished", _opens, _g), do: "the garden has finished"
+  defp closed_words("horizon", _opens, _g), do: "no day is left before the horizon for a food"
+  defp closed_words("log-full", _opens, _g), do: "the garden's log is full"
+
+  defp closed_words("cooldown", opens, g),
+    do:
+      "a food lands at most once every #{g.food.every_days} days; the next can land on day #{opens} at the earliest"
+
   # The release rule for every garden (`Garden.maybe_release/3`), at most one
   # day each: it needs only the newest released day's segment status.
   defp release_gardens(%{gardens: gardens} = s, _now) when map_size(gardens) == 0, do: s
@@ -1254,6 +1508,15 @@ defmodule Coordinator.Queue do
     case s.gardens[seg.experiment] do
       nil -> true
       g -> Garden.released?(g, seg.index)
+    end
+  end
+
+  # A garden's day carrying a food called less than a dawn period ago is not
+  # run yet: the keeper's veto has that long (`Garden.food_hold?/3`).
+  defp food_hold?(s, seg, now) do
+    case s.gardens[seg.experiment] do
+      nil -> false
+      g -> Garden.food_hold?(g, seg.index, now)
     end
   end
 
@@ -1769,7 +2032,7 @@ defmodule Coordinator.Queue do
 
     runnable =
       Enum.find(segs, fn seg ->
-        seg.status == "pending" and released?(s, seg) and
+        seg.status == "pending" and released?(s, seg) and not food_hold?(s, seg, now) and
           (seg.index == 0 or prev_done?(s, seg)) and
           metrics_version_compatible?(s, seg, island) and import_ready?(s, seg) and
           not gated?(gated, capabilities, seg) and garden_island?(s, seg, island)
@@ -2178,11 +2441,12 @@ defmodule Coordinator.Queue do
   defp clip(v) when is_binary(v), do: String.slice(v, 0, 200)
   defp clip(_), do: "?"
 
-  # Never `:dir` or `:index`; `:gardens` only while empty (see `@state_version`).
+  # Never `:dir`, `:index` or `:food_hands` (the food hands live in memory
+  # only); `:gardens` only while empty (see `@state_version`).
   defp persist_drops(%{gardens: gardens}) when map_size(gardens) == 0,
-    do: [:dir, :index, :gardens]
+    do: [:dir, :index, :food_hands, :gardens]
 
-  defp persist_drops(_s), do: [:dir, :index]
+  defp persist_drops(_s), do: [:dir, :index, :food_hands]
 
   defp persist(s) do
     path = Path.join(s.dir, "state.bin")
