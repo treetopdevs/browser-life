@@ -5,7 +5,7 @@
 //   deno run -A tools/clade.ts pilot                              2 runs: timings, retained nodes and the cadence rule; no measure values
 //   deno run -A tools/clade.ts all --cadence 1|10 --cache FILE    every run -> experiments/foundations/clade-v1.json (resumes from FILE)
 //
-//   --base       directory standing in for "runs" (default /Users/nicholas/develop/browser-life/runs; worktrees have no runs/)
+//   --base       directory standing in for "runs" (default runs; from a worktree, pass the main checkout's runs/)
 //   --cache      per-run cache, required by `all`; must not be under --base (run bundles are read-only)
 //   --out        the record (default experiments/foundations/clade-v1.json)
 //   --cadence    1 = measures at every census, 10 = at every 10th; chosen by the pilot's rule, required by `all`
@@ -25,7 +25,7 @@ import { type CladeResult, type RunRecord, type RunSet, cladeMeasures, eligibili
 
 const a = parseArgs(Deno.args, {
   string: ["base", "cache", "out", "cadence", "cap-hours"],
-  default: { base: "/Users/nicholas/develop/browser-life/runs", out: "experiments/foundations/clade-v1.json", "cap-hours": "12" },
+  default: { base: "runs", out: "experiments/foundations/clade-v1.json", "cap-hours": "12" },
 });
 const cmd = String(a._[0] ?? "");
 const VERSION = 1;
