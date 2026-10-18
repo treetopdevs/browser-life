@@ -1,10 +1,10 @@
 // tools/notebook.ts end to end on tiny synthetic bundles: a 40-run gradient-m3 envelope of 200 censuses each under a scratch base,
-// a record copied from the committed one with the gradient-m3 corpus horizons set to the tiny bundles' and the gradient-m3 neutral
+// a record copied from the committed one with the gradient-m3 neutral corpus horizons set to the tiny bundles' and those runs'
 // entries rescored here with the bell (BellScorer, leave-one-out, in process) on the same values, its counts recounted so it still
 // holds together, and a bundle outside the corpus. Needs `deno` on PATH (skipped otherwise); no GPU, no network beyond
 // what deno has cached for jsr:@std/cli.
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -112,7 +112,8 @@ describe.skipIf(!HAS_DENO)("tools/notebook.ts end to end", () => {
     subject = join(root, "elsewhere", "probe");
     writeBundle(subject, "sandbox/gradient-m3/treatment/seed-3", 7, (i) => (i >= 120 ? 2000 : 0));
     const rec = JSON.parse(RECORD_TEXT) as Rec;
-    for (const c of rec.corpus) if (c.id.includes("/gradient-m3/")) c.steps = CENSUSES * CADENCE;
+    // Only the neutral runs' horizons: the arms keep the record's rings, which must lie within their own horizon (parseBellRecord).
+    for (const c of rec.corpus) if (c.id.includes("/gradient-m3/neutral/")) c.steps = CENSUSES * CADENCE;
     const Z = rec.parameters.primary.Z;
     scoreEnvelope(data, Z).forEach((sc, k) => {
       const e = rec.runs.find((x) => x.id === neutral[k].id && x.envelope === "all-neutral")!;
@@ -166,6 +167,31 @@ describe.skipIf(!HAS_DENO)("tools/notebook.ts end to end", () => {
     expect(existsSync(out)).toBe(false);
   }, 600_000);
 
+  it("refuses an --out inside the base named in another case (Codex pass 3)", () => {
+    // On a case-insensitive filesystem BASE/ is base/ (the real path may settle that) and RUNS/ is runs/; compared without case
+    // everywhere, conservatively.
+    const upper = join(root, "BASE", "reports");
+    const u = run([subject, "--out", upper, ...common()]);
+    expect(u.stderr).toMatch(/STOP: --out .* is inside --base/);
+    expect(existsSync(join(base, "reports"))).toBe(false);
+    // Where runs/ does not exist no real path settles the case, so RUNS/ is refused by name.
+    const repoUpper = join(REPO, "RUNS", "reports");
+    const v = run([subject, "--out", repoUpper, ...common()]);
+    expect(v.stderr).toMatch(/STOP: --out .* is inside the repository's runs\//);
+    expect(existsSync(repoUpper)).toBe(false);
+  }, 600_000);
+
+  it("refuses an --out inside the base reached through a symlink followed by .. in --base (Codex pass 3)", () => {
+    // alias -> x/child, so alias/../runs is x/runs (here a link to the base) for the OS, and runs/ beside alias only lexically.
+    mkdirSync(join(root, "x", "child"), { recursive: true });
+    symlinkSync(join(root, "x", "child"), join(root, "alias"));
+    symlinkSync(base, join(root, "x", "runs"));
+    const out = join(base, "reports-via-alias");
+    const r = run([subject, "--out", out, "--base", `${root}/alias/../runs`, "--record", recordPath, "--date", "2026-10-17"]);
+    expect(r.stderr).toMatch(/STOP: --out .* is inside --base/);
+    expect(existsSync(out)).toBe(false);
+  }, 600_000);
+
   it("stops when an envelope run's data on disk does not score the record's D, though its manifest matches", () => {
     const tampered = join(root, "tampered");
     cpSync(base, tampered, { recursive: true });
@@ -191,7 +217,7 @@ describe.skipIf(!HAS_DENO)("tools/notebook.ts end to end", () => {
 
   it("stops when the envelope on disk is not the record's, or not all there", () => {
     const short = JSON.parse(readFileSync(recordPath, "utf8"));
-    for (const c of short.corpus) if (c.id.includes("/gradient-m3/")) c.steps = 1_000_000;
+    for (const c of short.corpus) if (c.id.includes("/gradient-m3/neutral/")) c.steps = 1_000_000;
     const shortPath = join(root, "record-1e6.json");
     writeFileSync(shortPath, JSON.stringify(short));
     const r = run([subject, "--out", join(root, "o5"), "--base", base, "--record", shortPath]);

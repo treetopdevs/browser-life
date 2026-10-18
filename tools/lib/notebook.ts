@@ -13,6 +13,8 @@ import {
   BELL_VERSION,
   BURN_IN_STEP,
   EXPECTED_CALIB_PER_PRESET,
+  EXPECTED_HELD_OUT,
+  EXPECTED_NEUTRAL,
   NOTE_PATH,
   RATE_LAG,
   RollingMin,
@@ -131,18 +133,29 @@ export function parseBellRecord(text: string): BellRecord {
   if (p.primary.W !== NOTEBOOK_W) throw new Error(`bell record: primary W is ${p.primary.W}; the notebook holds the record's rings to the data only at W = ${NOTEBOOK_W}`);
   if (!Array.isArray(r.corpus)) throw new Error("bell record: no corpus list");
   const ident = new Map<string, string>();
+  const corpusIds = new Set<string>();
   for (const c of r.corpus as unknown[]) {
     if (!isObj(c) || typeof c.id !== "string" || typeof c.presetIdentity !== "string") throw new Error("bell record: a corpus entry has no id or presetIdentity");
     if (!isNum(c.steps) || !isNum(c.censusEvery)) throw new Error(`bell record: corpus entry ${c.id} has no numeric steps and censusEvery`);
+    if (!(c.censusEvery > 0) || !(c.steps > 0)) throw new Error(`bell record: corpus entry ${c.id} has steps ${c.steps} every ${c.censusEvery}`);
+    if (corpusIds.has(c.id)) throw new Error(`bell record: corpus entry ${c.id} is listed twice`);
+    corpusIds.add(c.id);
     const preset = c.id.split("/")[1];
     const seen = ident.get(preset);
     if (seen !== undefined && seen !== c.presetIdentity) throw new Error(`bell record: preset ${preset} has two presetIdentity values in the corpus (${seen}, ${c.presetIdentity})`);
     ident.set(preset, c.presetIdentity);
   }
+  // The corpus is the bell's, run for run: every count on the page is a count over it, so a run missing or extra changes a denominator.
+  const bellIds = corpusRuns().map((c) => c.id);
+  if (corpusIds.size !== bellIds.length || !bellIds.every((id) => corpusIds.has(id))) throw new Error(`bell record: its corpus lists ${corpusIds.size} runs, not the bell's ${bellIds.length} (first difference: ${bellIds.find((id) => !corpusIds.has(id)) ?? [...corpusIds].find((id) => !bellIds.includes(id))})`);
   if (!Array.isArray(r.runs)) throw new Error("bell record: no runs list");
+  const entries = new Set<string>();
   for (const x of r.runs as unknown[]) {
     if (!isObj(x) || typeof x.id !== "string" || !isObj(x.D) || !Array.isArray(x.rings)) throw new Error("bell record: a runs entry has no id, D or rings");
     if (!x.rings.every(isObj)) throw new Error(`bell record: ${x.id} has a ring that is not an object`);
+    const key = JSON.stringify([x.id, x.envelope]);
+    if (entries.has(key)) throw new Error(`bell record: ${x.id} is listed twice against the ${x.envelope} envelope`);
+    entries.add(key);
   }
   const rec = r as unknown as BellRecord;
   checkRecordCounts(rec);
@@ -164,9 +177,21 @@ function checkRecordCounts(rec: BellRecord): void {
     throw new Error(`bell record: ${what}; its counts do not follow from its own D values`);
   };
   const W = String(NOTEBOOK_W);
+  // One all-neutral entry per corpus run (entries are unique per id and envelope, parseBellRecord), labelled as the corpus labels
+  // it: every filter below counts by these labels.
+  const allNeutral = new Map(rec.runs.filter((x) => x.envelope === "all-neutral").map((x) => [x.id, x]));
+  for (const c of corpusRuns()) {
+    const x = allNeutral.get(c.id);
+    if (!x) fail(`${c.id} has no all-neutral entry`);
+    else if (x.experiment !== c.experiment || x.preset !== c.preset || x.condition !== c.condition || x.seed !== c.seed) fail(`${c.id} is labelled ${JSON.stringify([x.experiment, x.preset, x.condition, x.seed])}`);
+  }
+  if (allNeutral.size !== corpusRuns().length) fail(`${allNeutral.size} all-neutral entries, the bell's corpus has ${corpusRuns().length} runs`);
   const neutral = neutralEntries(rec);
+  if (neutral.length !== EXPECTED_NEUTRAL) fail(`${neutral.length} neutral runs, the bell needs ${EXPECTED_NEUTRAL}`);
   for (const x of neutral) if (!isNum(x.D[W])) fail(`${x.id} has no finite D at W = ${W}`);
   const sec = rec.summary.secondary;
+  const presets = Object.keys(sec.perPreset).sort(), bellPresets = Object.keys(EXPECTED_HELD_OUT).sort();
+  if (presets.join() !== bellPresets.join()) fail(`perPreset has ${presets.join(", ")}, the bell calibrates ${bellPresets.join(", ")}`);
   let hk = 0, hn = 0, he = 0;
   for (const [p, v] of Object.entries(sec.perPreset)) {
     const calib = neutral.filter((x) => x.preset === p && x.experiment === "replay-calib").map((x) => x.D[W]);
@@ -174,6 +199,7 @@ function checkRecordCounts(rec: BellRecord): void {
     const max = Math.max(...calib);
     if (!Object.is(max, v.zStar)) fail(`${p} zStar ${v.zStar} is not the largest of its ${calib.length} calibration D values (${max})`);
     const held = neutral.filter((x) => x.preset === p && x.experiment === "replay-m4");
+    if (held.length !== EXPECTED_HELD_OUT[p]) fail(`${p} has ${held.length} held-out replay-m4 neutral runs, the bell holds out ${EXPECTED_HELD_OUT[p] ?? "none"}`);
     const k = held.filter((x) => x.D[W] > v.zStar).length;
     if (!isObj(v.heldOutNeutral) || v.heldOutNeutral.k !== k || v.heldOutNeutral.of !== held.length) fail(`${p} held out ${JSON.stringify(v.heldOutNeutral)}, recounted ${k} of ${held.length}`);
     const expected = held.length / (calib.length + 1);
@@ -190,11 +216,13 @@ function checkRecordCounts(rec: BellRecord): void {
   const c1 = rec.summary.criterion1;
   if (c1.k !== k1 || c1.n !== neutral.length) fail(`criterion1 ${c1.k} of ${c1.n}, recounted ${k1} of ${neutral.length} at Z = ${Z}, W = ${Wp}`);
   // Run by run, not in aggregate: a run lists rings exactly when its D reaches Z, and each ring is a receipt the bell could have
-  // written for it (a known signal and side, at the primary Z and W, from the first counted census on, its window W censuses long,
-  // its smallest side·z between Z and the run's D). Which signal rang is not recomputable from the record (D is per W only);
-  // tools/notebook.ts checks it against the bell for every run it reads.
+  // written for it (a known signal and side, at the primary Z and W, from the first counted census on, its window W censuses long at
+  // the run's own cadence, on census steps and inside the run's horizon, its smallest side·z between Z and the run's D). Which signal
+  // rang is not recomputable from the record (D is per W only); tools/notebook.ts checks it against the bell for every run it reads.
   const sigs = new Set(SIGNALS.map((d) => d.name));
+  const corpusById = new Map(rec.corpus.map((c) => [c.id, c]));
   for (const x of rec.runs.filter((y) => y.envelope === "all-neutral")) {
+    const { steps, censusEvery } = corpusById.get(x.id)!; // every all-neutral entry is a corpus run (above)
     const D = x.D[String(Wp)];
     if (!isNum(D)) fail(`${x.id} has no finite D at W = ${Wp}`);
     if (x.D_primary !== undefined && !Object.is(x.D_primary, D)) fail(`${x.id} D_primary ${x.D_primary} is not its D at W = ${Wp} (${D})`);
@@ -208,6 +236,8 @@ function checkRecordCounts(rec: BellRecord): void {
       if (!sigs.has(g.signal) || (g.side !== "high" && g.side !== "low") || pairs.has(pair)) fail(`${x.id} lists a ring ${JSON.stringify(g)} the bell cannot write`);
       pairs.add(pair);
       if (!isNum(g.startStep) || g.startStep < BURN_IN_STEP || !isNum(g.endStep) || g.endStep <= g.startStep) fail(`${x.id}: ring ${pair} spans steps ${g.startStep} to ${g.endStep}`);
+      if (g.startStep % censusEvery !== 0 || g.endStep - g.startStep !== (Wp - 1) * censusEvery || g.endStep > steps)
+        fail(`${x.id}: ring ${pair} spans steps ${g.startStep} to ${g.endStep}, not a window of ${Wp} censuses every ${censusEvery} steps within ${steps}`);
       if (!isNum(g.minAbsZ) || g.minAbsZ < Z || g.minAbsZ > D) fail(`${x.id}: ring ${pair} has smallest side·z ${g.minAbsZ}, outside [${Z}, D ${D}]`);
       if (!isNum(g.value) || !isNum(g.median)) fail(`${x.id}: ring ${pair} has no finite value and median`);
     }
@@ -496,6 +526,29 @@ export class ZTrace {
   }
   sideZ(i: number, s: number, side: 0 | 1): number {
     return SIDES[side] * this.z[i * NS + s];
+  }
+}
+
+/**
+ * The finite-score refusal ZTrace applies to the subject, applied to every envelope run as the bell scores it (leave-one-out against
+ * the other envelope runs): a value far out of range against the rest (1e308 against zeros) overflows z to Infinity, which would
+ * otherwise reach D and the page unannounced. `vectors` is indexed as plan.runs; `ids[r]` names envelope run r.
+ */
+export function checkEnvelopeDepartures(step: number, vectors: readonly (readonly (number | null)[])[], envelope: readonly number[], ids: readonly string[]): void {
+  for (let s = 0; s < NS; s++) {
+    if (envelope.some((r) => vectors[r][s] === null)) continue; // undefined at this census (a rate before RATE_LAG): not scored
+    const vals = envelope.map((r) => {
+      const v = vectors[r][s];
+      if (typeof v !== "number" || !Number.isFinite(v)) throw new Error(`STOP: envelope run ${ids[r]} has ${SIGNALS[s].name} ${v} at step ${step}, not a finite number`);
+      return { r, v };
+    });
+    vals.sort((a, b) => a.v - b.v);
+    const sorted = vals.map((x) => x.v);
+    for (const [k, { r, v }] of vals.entries()) {
+      const d = departure(v, sorted, k, SIGNALS[s].floor);
+      if (!Number.isFinite(d.z) || !Number.isFinite(d.median) || !Number.isFinite(d.spread))
+        throw new Error(`STOP: envelope run ${ids[r]}: ${SIGNALS[s].name} at step ${step} gives z ${d.z}, median ${d.median}, spread ${d.spread} against the other envelope runs; the values are out of range for a finite score`);
+    }
   }
 }
 

@@ -8,6 +8,7 @@ import {
   armsFromBurnIn,
   checkAgainstRecordCorpus,
   checkCorpusScore,
+  checkEnvelopeDepartures,
   checkSignalCells,
   crossCheck,
   falseAlarmSignals,
@@ -368,6 +369,18 @@ describe("the record holds together", () => {
     expect(mutate((r) => delete r.summary.secondary.heldOutNeutralTotal)).toThrow(/heldOutNeutralTotal/);
     expect(mutate((r) => (r.summary.criterion1 = { status: "fail" }))).toThrow(/criterion1 has no k and n/);
   });
+  it("refuses duplicate entries and a corpus that is not the bell's (Codex pass 3)", () => {
+    const dup = (id: string) => mutate((r) => r.runs.push(structuredClone(neutralRun(r, id))));
+    // A duplicated arm read as 15 of 16 from burn-in; with the counts edited to match, a duplicated neutral run as 31 of 71.
+    expect(dup("replay-m4/gradient-m3/treatment/seed-1")).toThrow(/replay-m4\/gradient-m3\/treatment\/seed-1 is listed twice against the all-neutral envelope/);
+    expect(dup("replay-m4/gradient-m3/neutral/seed-15")).toThrow(/is listed twice/);
+    expect(mutate((r) => r.corpus.push({ ...r.corpus[0] }))).toThrow(/corpus entry .* is listed twice/);
+    expect(mutate((r) => delete r.summary.secondary.perPreset["spots-m3"])).toThrow(/perPreset has gradient-m3, the bell calibrates gradient-m3, spots-m3/);
+    expect(mutate((r) => r.corpus.pop())).toThrow(/its corpus lists 84 runs, not the bell's 85/);
+    expect(mutate((r) => (r.runs = r.runs.filter((x: any) => !(x.id === "replay-m4/gradient-m3/treatment/seed-1" && x.envelope === "all-neutral"))))).toThrow(/treatment\/seed-1 has no all-neutral entry/);
+    expect(mutate((r) => (neutralRun(r, "replay-m4/spots-m3/neutral/seed-3").condition = "treatment"))).toThrow(/spots-m3\/neutral\/seed-3 is labelled/);
+    expect(mutate((r) => r.runs.push({ ...structuredClone(neutralRun(r, "replay-m4/spots-m3/neutral/seed-3")), id: "replay-m4/spots-m3/neutral/seed-11", seed: 11 }))).toThrow(/86 all-neutral entries, the bell's corpus has 85 runs/);
+  });
   it("checks rings run by run, not only in aggregate", () => {
     // Codex pass 2: move seed-1002's one ring to seed-1001 (D 3.51) as livingCells; 30 runs still list rings.
     const moved = mutate((r) => {
@@ -382,6 +395,10 @@ describe("the record holds together", () => {
     expect(ring((g) => (g.minAbsZ = 6))).toThrow(/smallest side·z 6, outside \[4, D 5.65/);
     expect(ring((g) => (g.minAbsZ = 3.9))).toThrow(/smallest side·z 3.9, outside/);
     expect(ring((g) => (g.startStep = 9_900))).toThrow(/spans steps 9900 to/);
+    // Codex pass 3: a window of 2 steps cannot be 50 censuses every 100 steps (and here would turn into a ring from burn-in).
+    expect(ring((g) => Object.assign(g, { startStep: 10_000, endStep: 10_001 }))).toThrow(/spans steps 10000 to 10001, not a window of 50 censuses every 100 steps within 1000000/);
+    expect(ring((g) => Object.assign(g, { startStep: g.startStep + 50, endStep: g.endStep + 50 }))).toThrow(/not a window of 50 censuses/);
+    expect(ring((g) => Object.assign(g, { startStep: 995_100, endStep: 1_000_000 + 100 }))).toThrow(/within 1000000/);
     expect(ring((g) => (g.Z = 3))).toThrow(/lists rings at other than Z = 4, W = 50/);
     expect(mutate((r) => neutralRun(r, "replay-calib/gradient-m3/neutral/seed-1002").rings.push({ ...neutralRun(r, "replay-calib/gradient-m3/neutral/seed-1002").rings[0] }))).toThrow(/the bell cannot write/);
     expect(mutate((r) => (neutralRun(r, "replay-calib/gradient-m3/neutral/seed-1002").flagged = false))).toThrow(/flagged false with D 5.65/);
@@ -444,6 +461,18 @@ describe("only measured values", () => {
     t3.push(100, [vec(1), vec(1), vec(1)]);
     expect(() => t3.push(200, [vec(1), vec(1), vec(1)])).toThrow(/more than 1 censuses/);
     expect(() => new ZTrace(5, [3], 3)).toThrow(/no reference run left/);
+  });
+  it("refuses an envelope run whose own leave-one-out score overflows (Codex pass 3)", () => {
+    const vec = (v: number) => Array.from({ length: NS }, () => v);
+    const ids = ["e0", "e1", "e2", "e3"];
+    // e1 at 1e308 against zeros: median 0, spread the floor, z = Infinity. The subject (run 4, at 0) still scores finitely.
+    const vectors = [vec(0), vec(1e308), vec(0), vec(0), vec(0)];
+    const t = new ZTrace(1, [0, 1, 2, 3], 4);
+    t.push(100, vectors);
+    expect(() => checkEnvelopeDepartures(100, vectors, [0, 1, 2, 3], ids)).toThrow(/STOP: envelope run e1: lineageShannon at step 100 gives z Infinity, median 0, spread 0.01/);
+    expect(() => checkEnvelopeDepartures(100, [vec(0), vec(1), vec(2), vec(3)], [0, 1, 2, 3], ids)).not.toThrow();
+    // A signal undefined at the census (null) is skipped, as the bell skips it.
+    expect(() => checkEnvelopeDepartures(100, [vec(0), vec(1), vec(2), vec(3)].map((v) => v.map((x, s) => (s === NS - 1 ? null : x))), [0, 1, 2, 3], ids)).not.toThrow();
   });
 });
 

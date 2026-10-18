@@ -23,7 +23,7 @@
 // read, must reproduce the record's D at W = 50 and its rings at the primary Z, W exactly, or the run stops. A manifest's condition
 // must agree with its cfg.neutral flag, with no spec overrides.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, parse, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { lineageCensuses } from "./lib/bundle.ts";
 import {
@@ -45,6 +45,7 @@ import {
   buildNotebook,
   checkAgainstRecordCorpus,
   checkCorpusScore,
+  checkEnvelopeDepartures,
   checkSignalCells,
   crossCheck,
   parseBellRecord,
@@ -172,28 +173,32 @@ for (const dir of dirs) {
 }
 
 // Never write into the bundles' tree: --out may not lie inside --base, the repository's runs/, or any bundle given (each checked
-// as given and by canonical path, out's canonical path taken through its nearest existing ancestor), before anything is created.
-// Refuse to overwrite before any long read. The directory is created only when the pages are written.
+// as given and by canonical path), before anything is created. Canonical paths resolve component by component, so a ".." after a
+// symlink climbs from the link's target as the OS does; a part that does not exist is appended as written. Compared without
+// case, conservatively: on a case-insensitive filesystem RUNS/ is runs/. Refuse to overwrite before any long read. The directory is
+// created only when the pages are written.
 const outAbs = resolve(out);
 async function canonical(p: string): Promise<string> {
-  let head = resolve(p), tail: string[] = [];
-  let real: string | null;
-  while (!(real = await realOrNull(head))) {
-    const up = resolve(head, "..");
-    if (up === head) return resolve(p);
-    tail = [head.slice(up.length).replace(/^[/\\]+/, ""), ...tail];
-    head = up;
+  const abs = isAbsolute(p) ? p : `${Deno.cwd()}${sep}${p}`;
+  const root = parse(abs).root;
+  let cur = (await realOrNull(root)) ?? root;
+  for (const part of abs.slice(root.length).split(/[/\\]+/)) {
+    if (!part || part === ".") continue;
+    const next = part === ".." ? dirname(cur) : join(cur, part);
+    cur = (await realOrNull(next)) ?? next;
   }
-  return resolve(real, ...tail);
+  return cur;
 }
 {
-  const outCanon = await canonical(out);
+  const fold = (p: string) => p.toLowerCase();
+  // out as the OS would take it, and as written (pages go to resolve(out), its ".." taken lexically).
+  const outs = [outAbs, await canonical(out), await canonical(outAbs)];
   const repoRuns = resolve(fileURLToPath(new URL("..", import.meta.url)), "runs");
   const guarded: [string, string][] = [[a.base, "--base"], [repoRuns, "the repository's runs/"]];
   for (const subs of subjectsByPreset.values()) for (const s of subs) guarded.push([s.dir, `the bundle ${s.dir}`], [s.real, `the bundle ${s.dir}`]);
   for (const [p, what] of guarded) {
     const pAbs = resolve(p), pCanon = await canonical(p);
-    for (const o of [outAbs, outCanon]) for (const g of [pAbs, pCanon]) if (inside(o, g)) throw new Error(`STOP: --out ${out} is inside ${what}; the notebook never writes into the runs tree or a bundle`);
+    for (const o of outs) for (const g of [pAbs, pCanon]) if (inside(fold(o), fold(g))) throw new Error(`STOP: --out ${out} is inside ${what}; the notebook never writes into the runs tree or a bundle`);
   }
 }
 
@@ -269,6 +274,7 @@ for (const plan of plans) {
       });
       scorer.push(censuses);
       const vectors = censuses.map((c) => c.values);
+      checkEnvelopeDepartures(censuses[0].step, vectors, plan.envelope, plan.envelopeIds);
       for (const [k, t] of traces.entries()) t.push(censuses[plan.subjects[k].run].step, vectors);
       if (scorer.censuses % 1000 === 0) console.log(`  ${plan.preset}: ${scorer.censuses} censuses (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
     }
