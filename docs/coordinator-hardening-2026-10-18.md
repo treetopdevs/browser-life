@@ -187,3 +187,23 @@ Four reviews (three lenses and Codex Sol 6.1) of the first implementation change
   `limits.unset` can only come from a runtime change. That holds for `invalid` only: `unset` names
   a key that is absent, which the check lets through (its consumer applies a built-in default), so
   it can show on the first `/api/status` after boot.
+
+## Amendment (2026-10-18, after merging main with PR #41)
+
+PR #41 (garden collective food) landed on main with seven new `:coordinator` keys that this check
+did not know, so the scan tests failed on the merge. They are classified as follows.
+
+- **Positive whole numbers.** `garden_hands_sweep_ms` (the `Process.send_after` interval of the
+  Queue's hand sweep: `0` would sweep in a tight loop), `garden_call_timeout_ms` (the hands route's
+  `Queue` call timeout: `0` times out every ask), and the four food keys `garden_food_asks`,
+  `garden_food_every_days`, `garden_food_amount` and `garden_food_radius`. The food keys keep their
+  exact ranges (asks 2..1000, every 1..365 days, amount 1..64, radius 1..32) where #41 put them: in
+  `Queue`'s `garden_spec`, per garden at founding with food. The boot check adds the shape, so a
+  malformed value (`nil`, `1.5`, `"5"`) stops the boot by name instead of surfacing at founding,
+  where for `foodAsks` and `foodEveryDays` it read as a fault in the keeper's request.
+- **Not a limit.** `garden_shared_address` is a flag, listed with the other non-limits.
+- **A limit-shaped atom that is not config.** #41's `Coordinator.Garden` `@type env` names
+  `:letters_per_address`, a field of the garden view env that the Queue fills from
+  `garden_letters_per_address`. The shaped scan keeps its pattern and now allows exactly the atoms of
+  a reviewed list (`@shaped_not_config`, this one only), asserted to be named in `lib/` and never
+  among the checked keys.

@@ -26,11 +26,21 @@ defmodule Coordinator.ConfigCheck do
   "off", and `garden_letters_per_address: 0` (or `garden_refusals_per_address:
   0`) closes the letter box, as it did before this check, so `0` passes there.
   A window of `0`, which consumers used to clamp to 1 ms, is refused.
+
+  The garden food keys (`garden_food_asks`, `garden_food_every_days`,
+  `garden_food_amount`, `garden_food_radius`) and the garden's
+  `garden_hands_sweep_ms` and `garden_call_timeout_ms` must be positive whole
+  numbers here. Their exact ranges (food asks 2..1000, every 1..365 days, amount
+  1..64, radius 1..32) are checked per garden when one is founded with food
+  (`Coordinator.Queue`'s `garden_spec`), where a keeper's own `foodAsks` and
+  `foodEveryDays` replace the first two.
   """
 
   @positive ~w(island_join_window_ms island_next_window_ms island_segment_window_ms
                island_requests_window_ms island_limit_table_max max_islands lease_ms
-               discovery_lease_ms garden_letter_window_ms garden_letter_table_max)a
+               discovery_lease_ms garden_letter_window_ms garden_letter_table_max
+               garden_hands_sweep_ms garden_call_timeout_ms garden_food_asks
+               garden_food_every_days garden_food_amount garden_food_radius)a
   @budget ~w(island_joins_per_address island_next_per_island island_segment_requests_per_island
              island_requests_per_address island_max_pending)a
   @non_negative ~w(island_prune_after_ms island_prune_grace_ms public_status_wait_ms

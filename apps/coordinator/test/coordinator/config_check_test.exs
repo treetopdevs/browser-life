@@ -14,7 +14,9 @@ defmodule Coordinator.ConfigCheckTest do
   # key moved to another shape (or dropped) fails this test.
   @positive ~w(island_join_window_ms island_next_window_ms island_segment_window_ms
                island_requests_window_ms island_limit_table_max max_islands lease_ms
-               discovery_lease_ms garden_letter_window_ms garden_letter_table_max)a
+               discovery_lease_ms garden_letter_window_ms garden_letter_table_max
+               garden_hands_sweep_ms garden_call_timeout_ms garden_food_asks
+               garden_food_every_days garden_food_amount garden_food_radius)a
   @budget ~w(island_joins_per_address island_next_per_island island_segment_requests_per_island
              island_requests_per_address island_max_pending)a
   @non_negative ~w(island_prune_after_ms island_prune_grace_ms public_status_wait_ms
@@ -34,6 +36,15 @@ defmodule Coordinator.ConfigCheckTest do
     assert Enum.sort(ConfigCheck.keys()) == Enum.sort(all_keys())
   end
 
+  # Limit-shaped atoms in `lib/` that are not config keys, each reviewed. None
+  # may be read as `:coordinator` config (the literal-read test below would then
+  # need it classified, and it is not in @not_limits).
+  @shaped_not_config ~w(
+    letters_per_address
+  )a
+  # `letters_per_address`: a field of `Coordinator.Garden`'s view env (its
+  # `@type env`), filled by the Queue from config `garden_letters_per_address`.
+
   # A limit-shaped config key a module reads (a window, budget, cap, cache or
   # lease) that the check does not know would go unchecked: the source is
   # scanned for such atoms, so adding one without `ConfigCheck` fails here.
@@ -48,7 +59,12 @@ defmodule Coordinator.ConfigCheckTest do
           do: String.to_atom(key)
 
     assert named != []
-    assert Enum.sort(named -- ConfigCheck.keys()) == []
+    assert Enum.sort(named -- (ConfigCheck.keys() ++ @shaped_not_config)) == []
+
+    assert Enum.sort(@shaped_not_config -- named) == [],
+           "@shaped_not_config names atoms no code names"
+
+    assert ConfigCheck.keys() -- @shaped_not_config == ConfigCheck.keys()
   end
 
   # The scan above only sees names of a limit-like shape, so a new numeric key
@@ -70,6 +86,7 @@ defmodule Coordinator.ConfigCheckTest do
   @not_limits ~w(admin_token allow_local_admin breed_presets clock conditions cors_origins
                  data_dir discovery_cloud_envelope discovery_data_dir discovery_join_token
                  discovery_validator dns_cluster_query garden_island_token garden_presets
+                 garden_shared_address
                  incompatible metrics_version migration_period pond_period pond_presets
                  presets public_garden rule_version start_discovery start_queue
                  trust_forwarded_for world_size)a
