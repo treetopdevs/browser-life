@@ -2,9 +2,11 @@
 // packages/schema) keeps hand-written copies of a few preset facts in
 // config.exs: each preset's world size (`:world_size`, which refuses a
 // scheduled lesion or feed centred outside the world at experiment creation),
-// the pond presets and their periods (`:pond_presets`, `:pond_period`) and the
-// migration periods (`:migration_period`), each used to refuse at creation
-// what the runner would otherwise throw on, on every island. This fails as
+// the pond presets and their periods (`:pond_presets`, `:pond_period`), the
+// presets whose every run is a breed world (`:breed_presets`, gated to islands
+// with "breed-v1") and the migration periods (`:migration_period`), each used
+// to refuse at creation what the runner would otherwise throw on, or to hand
+// work only to islands that can run it. This fails as
 // soon as any copy disagrees with packages/schema's PRESETS.
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -68,6 +70,12 @@ describe("coordinator preset facts", () => {
     const periods = map("pond_period", int);
     expect(Object.keys(periods).sort()).toEqual(withPonds);
     for (const id of withPonds) expect([id, periods[id]]).toEqual([id, cfgOf(id).pondPeriod]);
+  });
+
+  it(":breed_presets is exactly the accepted presets whose config sets pondScore", () => {
+    const scored = presets.filter((id) => cfgOf(id).pondScore !== undefined).sort();
+    expect(scored).toContain("breeder");
+    expect([...words("breed_presets")].sort()).toEqual(scored);
   });
 
   it(":migration_period is exactly the accepted presets with tile migration, at their migrationPeriod", () => {

@@ -389,20 +389,23 @@ describe("a cached export is checked with the run's own arm (tools/stitch.ts)", 
   });
 
   // Runs tools/stitch.ts under Deno against a stub coordinator whose experiments each list one finished run, with an export of it
-  // already on disk: the run's ponds.tsv is rechecked before the export is kept, and one that fails is moved aside.
+  // already on disk: the run's ponds.tsv is rechecked before the export is kept, and one that fails is moved aside. Each export's
+  // manifest is the one its task builds (spec and config), since tools/stitch.ts binds a cached manifest to the coordinator's
+  // task before it reads the arm from it (taskSpecError; Codex pass 2, slice 11).
   const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
   const run = promisify(execFile);
-  const cases: Record<string, { arm: string | undefined; file: string }> = {
+  const cases: Record<string, { condition: string; noArm?: true; file: string }> = {
     // nat run, the hunt's file: kept (the preset's arm is not nat, so passing it would refuse the hunt's header)
-    "nat-ok": { arm: "nat", file: HUNT_HEADER + boundary(1, GOOD) },
+    "nat-ok": { condition: "pond-nat", file: HUNT_HEADER + boundary(1, GOOD) },
     // nat run whose file carries v1's header: refused with the manifest's arm
-    "nat-v1-header": { arm: "nat", file: V1_HEADER + [0, 1, 2, 3].map((p) => huntLine(1, p, survivor()).split("\t").slice(0, POND_COLUMNS.length).join("\t")).join("\n") + "\n" },
+    "nat-v1-header": { condition: "pond-nat", file: V1_HEADER + [0, 1, 2, 3].map((p) => huntLine(1, p, survivor()).split("\t").slice(0, POND_COLUMNS.length).join("\t")).join("\n") + "\n" },
     // nat run whose rows break the row table: refused
-    "nat-bad-rows": { arm: "nat", file: HUNT_HEADER + boundary(1, withKind(GOOD, 3, emptied(survivor()))) },
+    "nat-bad-rows": { condition: "pond-nat", file: HUNT_HEADER + boundary(1, withKind(GOOD, 3, emptied(survivor()))) },
     // a v1 run: kept as before
-    "scaf-v1": { arm: "scaf", file: V1_HEADER + [3, 1, 0, 2].map((p) => huntLine(1, p, survivor()).split("\t").slice(0, POND_COLUMNS.length).join("\t")).join("\n") + "\n" },
-    // a manifest that records no arm (an export older than the arm): the file's own header decides
-    "no-arm-hunt": { arm: undefined, file: HUNT_HEADER + boundary(1, GOOD) },
+    "scaf-v1": { condition: "treatment", file: V1_HEADER + [3, 1, 0, 2].map((p) => huntLine(1, p, survivor()).split("\t").slice(0, POND_COLUMNS.length).join("\t")).join("\n") + "\n" },
+    // a manifest whose config records no arm (an export older than the arm): no longer the config its task builds, so it is
+    // moved aside before its file is read (the header fallback stays checkPondsFile's, tested above)
+    "no-arm-hunt": { condition: "pond-nat", noArm: true, file: HUNT_HEADER + boundary(1, GOOD) },
   };
 
   it("keeps an export that follows the manifest's arm and moves one that does not aside", async () => {
@@ -415,13 +418,17 @@ describe("a cached export is checked with the run's own arm (tools/stitch.ts)", 
       mkdirSync(dir, { recursive: true });
       for (const f of BUNDLE_FILES) writeFileSync(join(dir, f), f === "manifest.json" ? "" : "x");
       writeFileSync(join(dir, PONDS_FILE), c.file);
-      writeFileSync(join(dir, "manifest.json"), JSON.stringify({ metricsVersion: METRICS_VERSION, ...(c.arm ? { cfg: { pondArm: c.arm } } : {}), segments: [listed] }));
+      const spec = { ...natSpec, experiment: name, condition: c.condition, seed: 1, steps: PERIOD };
+      const cfg: Record<string, unknown> = JSON.parse(JSON.stringify(specConfig(spec)));
+      if (c.noArm) delete cfg.pondArm;
+      writeFileSync(join(dir, "manifest.json"), JSON.stringify({ metricsVersion: METRICS_VERSION, spec, cfg, segments: [listed] }));
     }
     const server: Server = createServer((req, res) => {
       const name = decodeURIComponent((req.url ?? "").replace("/api/experiments/", ""));
       if (!(name in cases)) return void res.writeHead(404).end("no such experiment");
-      const segment = { id: "s0", run: `${name}/ponds-small/${name}/seed-1`, index: 0, last: true, startStep: 0, steps: PERIOD, status: "done", ...listed, producedBy: "isl" };
-      res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ spec: { steps: PERIOD, presetId: "ponds-small" }, segments: [segment] }));
+      const segment = { id: "s0", run: `${name}/ponds-small/${name}/seed-1`, condition: cases[name].condition, seed: 1, index: 0, last: true, startStep: 0, steps: PERIOD, status: "done", ...listed, producedBy: "isl" };
+      const spec = { experiment: name, steps: PERIOD, presetId: "ponds-small", censusEvery: natSpec.censusEvery, deepEvery: natSpec.deepEvery };
+      res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ spec, segments: [segment] }));
     });
     await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
     const port = (server.address() as { port: number }).port;
@@ -437,7 +444,7 @@ describe("a cached export is checked with the run's own arm (tools/stitch.ts)", 
     try {
       const got = Object.fromEntries(await Promise.all(Object.keys(cases).map(async (name) => [name, await stitch(name)])));
       const moved = (name: string) => readdirSync(join(out, name, "ponds-small", name)).filter((d) => d.startsWith("seed-1.stale-"));
-      for (const name of ["nat-ok", "scaf-v1", "no-arm-hunt"]) {
+      for (const name of ["nat-ok", "scaf-v1"]) {
         expect(got[name].code, got[name].stderr).toBe(0);
         expect(got[name].stdout).toContain("0 written, 1 already present, 0 skipped");
         expect(moved(name)).toEqual([]);
@@ -445,7 +452,8 @@ describe("a cached export is checked with the run's own arm (tools/stitch.ts)", 
       // The refused exports are moved aside before the (stubbed-out) download of a replacement fails.
       expect(got["nat-v1-header"].stderr).toMatch(/export fails the ponds.tsv check \(.*ponds.tsv header lacks the hunt's columns \(died, exportMass, weight\), but the arm is nat\)/);
       expect(got["nat-bad-rows"].stderr).toMatch(/export fails the ponds.tsv check \(.*pond 3 at the boundary t=1000 has recipientTrait 0 but did not die/);
-      for (const name of ["nat-v1-header", "nat-bad-rows"]) expect(moved(name)).toHaveLength(1);
+      expect(got["no-arm-hunt"].stderr).toMatch(/export's manifest does not describe the coordinator's task \(manifest config is not the one the coordinator's task builds\)/);
+      for (const name of ["nat-v1-header", "nat-bad-rows", "no-arm-hunt"]) expect(moved(name)).toHaveLength(1);
     } finally {
       await new Promise((done) => server.close(done));
       rmSync(out, { recursive: true, force: true });
@@ -502,8 +510,8 @@ describe("the v1 arms are stitched as before", () => {
 describe("the island: ponds-v2 and no branches", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("advertises ponds-v1 and ponds-v2 (and, since scheduled interventions were distributed, interventions-v1)", () => {
-    expect([...ISLAND_CAPABILITIES]).toEqual(["ponds-v1", "ponds-v2", "interventions-v1"]);
+  it("advertises ponds-v1 and ponds-v2 (and, since scheduled interventions and the breeder were distributed, interventions-v1 and breed-v1)", () => {
+    expect([...ISLAND_CAPABILITIES]).toEqual(["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"]);
   });
 
   it("specRefusal: null for an ordinary spec (hunt arms included), a message for a branch spec", () => {

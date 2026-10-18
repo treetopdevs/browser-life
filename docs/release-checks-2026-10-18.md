@@ -141,6 +141,168 @@ keyboard access and missing-GPU behaviour on real devices; canonical URLs and si
   build fails, which is how the release check runs it: `pnpm build && BL_REQUIRE_BUILD_CHECK=1 npx playwright test
   tests/e2e/public-routes.spec.ts --project=chrome`. When a build exists the test still checks every listed route.
 
+### 18 October 2026: criterion 5 added, stated before running
+
+The row "mobile and keyboard access and missing-GPU behaviour" was left wholly to the live host. Its local half is
+now a criterion of its own, written before any code changes (slice 13, branch `claude/slice13-public-a11y`). The
+real-device half stays with the live host.
+
+#### 5. Accessibility and resilience, on this machine
+
+- **Routes.** Every `<loc>` in `apps/lab/public/sitemap.xml` (nine) plus `/garden/` (hidden, not listed). `/status/`
+  is read against a mocked `/api/public/status` with aggregates, `/garden/` against
+  `apps/coordinator/priv/static/garden-contract.example.json`, so neither is checked only in its "unavailable"
+  state. `/worlds/` is checked after its cards are built, `/lab/` after its GPU chip has settled. Two in-page
+  not-found states are checked too: `/worlds/?world=no-such-world` and `/garden/` when the garden answers 404.
+- **Automated check.** axe through `@axe-core/playwright` 4.13.0 (the newest release at least two weeks old on
+  18 October; 4.14.0 is three days old), rule tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`;
+  `best-practice` is off. Each route at 1280×900 and 375×812, in day colours and then in night colours (switched
+  with the page's own Night button, pressed from the keyboard). A run fails on any violation of impact `serious` or
+  `critical` not on the spec's exclusion list. Each exclusion names its route, rule, element and reason, and fails
+  the run when it no longer matches anything. Minor and moderate violations and axe's `incomplete` results are
+  attached to the test report and counted under Results; a colour-contrast `incomplete` on text is checked by hand
+  against the tokens and the result written down.
+- **The lab route.** `apps/lab/lab/index.html`, `apps/lab/src/style.css` and `apps/lab/src/main.ts` are held by an
+  open pull request (#31, Pond keeper v2). A serious or critical finding in lab-only markup is excluded with that
+  reason and listed as a follow-up, not fixed here.
+- **Keyboard,** with real Tab presses in Chrome so `:focus-visible` applies, on every route at both widths:
+  - the first Tab focuses the skip link, wholly inside the viewport; Enter on it, then Tab, lands on an element at
+    or after the start of `<main>`, never in the header; after the jump the first heading in `<main>` is not under
+    the sticky header;
+  - Tab from the top until focus comes round again reaches every visible, enabled `a[href]`, `button`, `input`,
+    `select`, `textarea`, `summary` and `[tabindex]` of 0 or more, and nothing else; Shift+Tab does the same
+    backwards;
+  - every element so focused has a solid outline at least 2px wide, and the element itself is what is drawn at its
+    centre (not the sticky header or anything else over it), going forwards and backwards;
+  - the Day/Night button works with Enter and with Space, changes its own label and `data-theme`, and keeps focus;
+  - the lab's Browse all worlds dialog, opened from the keyboard, takes focus; twice as many Tab and Shift+Tab
+    presses as it has controls never focus anything outside it (amended after review: and reach every control in
+    it, each with a visible ring; amended after the third review: in every family, each shown from the keyboard);
+    its Close button, pressed from the keyboard, hands
+    focus back to Browse all worlds. (Escape and its focus return are already in `tests/e2e/lab-worlds.spec.ts`.)
+    The public pages have no other menus or dialogs (read on 18 October).
+- **Reduced motion.** With `prefers-reduced-motion: reduce`, on every route: `html` has `scroll-behavior: auto`, and
+  no element has an animation of non-zero duration or a transition longer than 0 s. Without the setting, `html` has
+  `scroll-behavior: smooth`, so the check is seen to bite. Scripted scrolling on the public pages does not ask for
+  smooth scrolling (read).
+- **Without WebGPU.** Chrome started with `--disable-gpu`. A probe on 18 October found that this is the switch that
+  leaves `requestAdapter()` answering `null` on this Mac; with no switch, `--disable-features=WebGPU` or
+  `--disable-blink-features=WebGPU` the adapter is still there. The run first checks that the adapter is `null`.
+  Then: the lab shows its alert (`role="alert"`), "The lab could not start", with help that names WebGPU, the chip
+  "No GPU adapter" and the heading "No world yet", and passes the axe check under the lab-route rule; every other
+  route shows its `<h1>` with no uncaught page error; and the home page's way into the lab and Join in's first step
+  say plainly what happens without WebGPU. Wording is added where it is missing, without changing what the existing
+  copy says. The case where `navigator.gpu` is missing altogether (the worker throws a different message into the
+  same alert) cannot be produced with a Chrome switch; it is read, not run.
+- **404.** The dev server answers an unknown path with the home page and 200 (Vite's fallback), so 404s are not
+  tested there. A one-off local Caddy file server over a fresh build records what the production rules
+  (`try_files`, then `file_server`) answer. A styled 404 page needs a build input and a `handle_errors` block in
+  `deploy/Caddyfile`, both outside this slice; the 404 row stays **Needs the live host**, with what was seen.
+- **Fixes** go only in the public pages (their HTML, page TypeScript and CSS), `apps/lab/src/site.css` and
+  `apps/lab/src/theme.ts`. `tokens.css` is shared with the lab and is not changed. Copy keeps its meaning and
+  British spelling.
+- **Not claimed:** real phones and tablets, screen readers, engines other than Chrome, 200% zoom and 320 px reflow.
+
+#### Amendments to criterion 5, after running (18 October 2026)
+
+- **The first Tab and the skip-link jump.** Criterion 5 said the first Tab focuses the skip link and that Enter on
+  it, then Tab, lands in `<main>`. On `/lab/` the first Tab from a fresh page lands on the view buttons
+  ("Lineages"): the lab moves the focus starting point while it plants. That is lab code held by PR #31, so it is an
+  explicit exclusion and a follow-up. To keep the rest of the lab checked, the walk starts from the skip link,
+  focused directly when the first Tab went elsewhere, and the jump is made from the skip link focused again after
+  both walks. On every other route the first Tab is the skip link, and the test still checks that.
+- **A ring on a close wrapper counts.** Criterion 5 said every focused element has a solid outline at least 2px
+  wide. The lab's world canvas draws its ring on its wrapper (`.canvas-wrap.keyboard-focus`), so on `/lab/` the
+  check accepts a ring on the element, its parent or its grandparent. On every other route a control must ring
+  itself, and the run checks that.
+- **Scrolling settles between presses.** Criterion 5 said the focused element is what is drawn at its centre. With
+  the site's smooth scrolling, a key pressed while the last focus's scroll is still moving can make Chrome drop the
+  next scroll and leave that element off screen (seen on the worlds page while probing). The check now waits for the
+  scroll to come to rest at each stop, as a person reading the page would, and only then looks at the centre. This
+  is noted under Results, not fixed: the fix would be to give up smooth scrolling. (Superseded below: keyboard
+  focus now jumps, and the walk no longer waits.)
+- **The garden's 404.** The garden view answering 404 shows "No garden is planted here yet." (the page's own words
+  for that answer), which is what the in-page not-found check reads.
+
+#### Amendments to criterion 5, after review (18 October 2026)
+
+Three review lenses and a Codex (Sol 6.1) pass read the first run. What they found that was real is fixed, and the
+checks were tightened so each finding would now fail the run:
+
+- **Focus rings contrast, in both colours.** In night colours the ring on the sun-coloured invitation panels (home,
+  worlds, Join in) was pale on yellow, about 1.3:1. The ring there is now ink (`--accent-ink`) in both colours. The
+  check now reads each ring's colour against what is drawn behind it (colours resolved by painting them on a
+  canvas) and requires 3:1, requires `:focus-visible` to match, and fails a control that wears a ring when it is
+  not focused. The day walk checks every stop; after it the page switches to night colours with its own button and
+  each control is focused again by script (`:focus-visible` still applies after a key press) and checked the same
+  way. The amendment above about wrappers is narrowed: only the lab's world canvas may wear its ring on its wrapper.
+- **Keyboard focus no longer scrolls smoothly.** The amendment above left fast Tab presses losing focus off screen.
+  A probe on `/worlds/` at 1280 (bursts of seven presses) left focus off screen after 8 of 49 bursts with smooth
+  scrolling and after none with `html:has(:focus-visible) { scroll-behavior: auto; }`, which `site.css` now sets:
+  keyboard focus jumps, links followed with a pointer still scroll smoothly. The walk no longer waits for scrolls to
+  settle, a new test presses Tab and Shift+Tab in bursts on `/worlds/` at both widths, and after five stops that are
+  not drawn the walk stops waiting for them, so a regression reports its controls rather than timing out.
+- **Header order.** At 1000px and below the Day/Night button was drawn beside the name but reached after the nav.
+  `theme.ts` now places it before the nav at those widths and after it above them (no visual change), keeping focus
+  if the layout changes under it. A test walks the header at 1280, 1000, 768 and 375 and fails when a control is
+  reached before one drawn ahead of it. Its border is now `--control-line` (made for 3:1 on controls) instead of
+  `--line` (about 1.6:1).
+- **Every native control counts.** A button, link or field with `tabindex="-1"` is now counted as a control (and
+  reported as missed), so taking one out of the tab order cannot pass.
+- **Undecided axe results fail.** A serious or critical `incomplete` now fails the run unless it is listed with its
+  reason, like a violation.
+- **More states and pages.** The two in-page not-found states run at both widths in both colours, and so do `/status/`
+  with the coordinator down and `/garden/` after a refused stone (the server's 422 answer, then a radius the page
+  refuses, with its why line and an invalid field). `/island.html`, where Join in sends people, gets the axe,
+  keyboard and reduced-motion checks (no skip link: its `<main>` is the first thing on the page). Every `<details>`
+  is opened before checking, so the worlds cards' "For researchers" text is scanned. Each page is checked to be the
+  page asked for (its canonical URL, or a title that is not the home page's), since the dev server answers a
+  mistyped path with the home page.
+- **The dialog.** The Browse all worlds check now requires the dialog to be modal, requires focus to stay inside it
+  after every press (or, after its last control, to be in the browser's own controls, which a modal dialog lets a
+  keyboard reach), scans it with axe while open, and checks that a backdrop click hands focus back too.
+- **Deep links at 375.** A test loads `/#next` and a worlds family link directly at 375 and checks the heading lands
+  near the top, clear of the header.
+- **Reduced motion** also fails on anything `document.getAnimations()` reports running, which catches script-made
+  motion.
+- **Without WebGPU.** The `--disable-gpu` test skips, saying why, when the switch does not give a null adapter or
+  Chrome cannot be started, rather than failing. It now also runs an island remembered from earlier in the tab: the
+  page asks the coordinator about it (`GET /api/islands/me`), and whether the coordinator knows it (200) or not
+  (401), the run stops at the GPU and the log says why. A new test runs the common case, no `navigator.gpu` at all,
+  in the normal Chrome project: the main thread loses it before any script, the lab's worker at the top of its
+  module. Join in's sentence was reworded, because "Without it" read as "without the self-test" and "stops at
+  once" was not true for a remembered island: "Without WebGPU nothing runs: Join stops before taking any work, and
+  the island page says why in its log." The home page's "every other page here works without it" now reads "the
+  other pages on this site still read without it", since the island page reads but cannot run.
+- **404** is a `test.fixme` in the spec, naming what it needs, so it shows in every run as not done.
+- **Engines.** The spec skips itself outside Chromium with its reason (`BL_ALL_ENGINES=1` adds Firefox and WebKit,
+  whose Tab and storage behave differently); lab tests skip when there is no WebGPU adapter.
+- **A second Codex (Sol 6.1) pass** found three ways the keyboard checks could still pass a barrier, all in the
+  spec; no product change was needed. (a) The island page has no Day/Night button, so it is reloaded into night
+  colours, which dropped the controls tagged by day and left the night pass checking none. The controls are now
+  counted again in night colours and must be as many as by day. (b) The night pass did not look for rings on
+  controls that are not focused. It now fails a control that wears a ring at rest in night colours, one that keeps
+  its ring when focus moves on, and any that wear one once focus has left them all. (c) The Browse all worlds check
+  counted only controls with a tabindex of 0 or more and did not say which it reached. It now counts the dialog's
+  native controls whatever their tabindex, requires Tab and Shift+Tab each to reach every one, and checks each
+  stop's ring and `:focus-visible` as the page walks do. Each was broken on purpose and seen to fail (see Results).
+- **A third Codex (Sol 6.1) pass** checked those fixes and found three more ways through, again all in the spec.
+  (a) A control given `tabindex="-1"` only in night colours would still be counted, and still take script focus, so
+  the night pass passed it. The night inventory must now match the day one control for control: the same element
+  (tag, id and classes), in the same order, with the same tabindex, and still shown and not inert. (A fourth pass
+  showed that this alone misses a script that swallows Tab in night colours; see the next amendment.) (b) The checks for a ring at rest, a ring kept after focus
+  moves on and a ring left once focus has gone looked only at the control, but the lab's canvas wears its ring on
+  its wrapper. They now count the wrapper's ring as the canvas's. (c) The dialog check covered only the family shown
+  when it opens, and choosing a family replaces the cards. Each other family is now shown from the keyboard (Enter
+  on its button, focus on its heading), its controls counted afresh, and Tab and Shift+Tab each go once round it
+  with the same reach and ring checks. The axe scan of the open dialog still runs on the family it opens on. Each
+  was broken on purpose from the spec, without touching product files, and seen to fail (see Results).
+- **A fourth Codex (Sol 6.1) pass** found the wrapper and dialog fixes sound, and one gap left in (a): a control
+  whose keydown handler swallows Tab only in night colours keeps the inventory identical and still takes script
+  focus, so the keyboard could be stuck on it at night with every check passing. Tab and Shift+Tab now each go round
+  the page again in night colours, from the skip link (the island page: its first control), and must reach every
+  control counted in night colours and nothing else. Broken on purpose from the spec and seen to fail (see Results).
+
 ## Results
 
 Run on 17 October 2026 in the slice worktree (branch `claude/slice7-release-checks`, from d683ad9). Nothing was
@@ -306,6 +468,130 @@ The e2e runs used a copy of `playwright.config.ts` on port 5194, because another
 - Not checked: the sitemap's `<lastmod>` values (all still `2026-10-07`, hand-maintained), and that every sitemap
   route has its trailing-slash redirect and per-world rewrites in `deploy/Caddyfile` (live host).
 
+### 5. Accessibility and resilience
+
+Run on 18 October 2026 in the slice worktree (branch `claude/slice13-public-a11y`, from c673b76), Chrome only, on
+the dev server through a copy of `playwright.config.ts` on port 5194 (other worktrees' runs use 5174), except
+`public-garden.spec.ts`, which names port 5174 in its own URLs and was run on the repository's config. Nothing was
+committed, deployed or pushed. The first run is kept below the final one for the record; the final runs come after
+the review fixes (see the amendments after review).
+
+| Gate | Result | `uptime` load (1/5/15 min) |
+| --- | --- | --- |
+| `pnpm typecheck`, after the third Codex pass's spec fixes | exit 0 | 49.9 / 50.4 / 67.6 |
+| `pnpm vitest run apps/lab/test/social-meta.test.ts apps/lab/test/worlds.test.ts` | 42 passed | 89.4 / 80.9 / 100.7 |
+| `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome`, after the review fixes | 71 passed, 1 skipped (the 404 `test.fixme`), 1.5 min, three workers | 89.4 / 80.9 / 100.7 before, 143.1 / 102.0 / 106.9 after |
+| the same spec's 28 keyboard tests (`-g "keyboard: "`), after the last edit (the night pass fails a control that will not take focus) | 28 passed, 36 s | 84.8 / 90.5 / 100.4 before, 108.3 / 96.0 / 102.0 after |
+| `BL_ALL_ENGINES=1 npx playwright test tests/e2e/public-a11y.spec.ts --project=webkit --project=firefox -g "Day/Night\|axe: /about/ at 375"` | 4 skipped (the file skips itself outside Chromium) | 106.3 / 96.0 / 101.9 |
+| `npx playwright test tests/e2e/public-site.spec.ts tests/e2e/public-routes.spec.ts tests/e2e/lab-worlds.spec.ts --project=chrome`, after the review fixes | 18 passed; the build test in `public-routes.spec.ts` skipped (no `apps/lab/dist`) | 143.1 / 102.0 / 106.9 before, 134.5 / 102.6 / 107.0 after |
+| `npx playwright test tests/e2e/public-garden.spec.ts --project=chrome` (port 5174), after the review fixes | 13 passed, 1 skipped (screenshots) | 134.5 / 102.6 / 107.0 before, 132.9 / 104.9 / 107.7 after |
+| The new checks against the code they guard, broken on purpose and then restored: no ink ring on the sun, smooth keyboard scrolling back, the Day/Night button after the nav at every width, `tabindex="-1"` on Send the stone | each fails: the night ring on Join in → is 1.34:1; the header order at 375 and in the header test; Send the stone "never reached"; focus off screen after 10 bursts on `/worlds/` at 1280 and 38 at 375 (of up to 60 each) | 95.8 / 81.6 / 101.3 |
+| `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome`, after the second Codex pass's fixes | 71 passed, 1 skipped (the 404 `test.fixme`), 1.1 min, three workers | 59.6 / 67.0 / 84.7 before, 157.9 / 96.8 / 94.7 after |
+| `npx playwright test tests/e2e/public-site.spec.ts --project=chrome`, after the second Codex pass's fixes | 8 passed | 65.1 / 82.2 / 89.4 |
+| The second Codex pass's checks broken on purpose and then restored: night-only `outline: none` on the island's Join, a night-only ring on every `.worlds-jump a`, `tabindex="-1"` on the dialog's family buttons | each fails: Join "has outline none 3px in night colours"; each jump link "wears a ring while not focused in night colours"; each family button "never reached by Tab" and by Shift+Tab | 106.4 / 90.9 / 92.7 before, 96.0 / 89.2 / 92.0 after |
+| `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome`, after the third Codex pass's fixes | 71 passed, 1 skipped (the 404 `test.fixme`), 1.1 min, three workers | 50.6 / 50.5 / 67.6 before, 155.7 / 82.8 / 78.4 after |
+| `npx playwright test tests/e2e/public-site.spec.ts --project=chrome`, after the third Codex pass's fixes | 8 passed | 223.7 / 112.9 / 89.8 before, 200.0 / 119.6 / 93.2 after |
+| The third Codex pass's checks broken on purpose from a copy of the spec, then the spec restored: a night-only `tabindex="-1"` on the first link in `/about/`'s main, the canvas wrapper keeping its ring when the canvas loses focus, the last family's buttons out of the tab order when it is shown | each fails: "control 10 is a tabindex 0 by day, a tabindex -1 in night colours"; the canvas "wears a ring while not focused", "keeps its ring after focus moves on" and "wears a ring after focus has left it" in night colours; Choose this world "never reached by Tab (family wild)" and by Shift+Tab | 150.9 / 84.2 / 79.0 before, 223.7 / 111.0 / 89.0 after |
+| `pnpm typecheck`, after the fourth Codex pass's fix (night Tab and Shift+Tab walks) | exit 0 | 101.1 / 101.2 / 92.8 |
+| `npx playwright test tests/e2e/public-a11y.spec.ts --project=chrome`, after the fourth Codex pass's fix | 71 passed, 1 skipped (the 404 `test.fixme`), 1.1 min, three workers | 101.1 / 101.2 / 92.8 before, 173.6 / 123.3 / 101.8 after |
+| `npx playwright test tests/e2e/public-site.spec.ts --project=chrome`, after the fourth Codex pass's fix | 8 passed | 130.1 / 117.2 / 100.2 before, 122.6 / 116.0 / 100.0 after |
+| The third Codex pass's three breakages again, against the spec after the fourth pass's fix | each still fails as above; the night-only `tabindex="-1"` link is now also "never reached by Tab" and by Shift+Tab "in night colours" | 59.7 / 97.4 / 94.3 before, 61.8 / 96.6 / 94.1 after |
+| The fourth Codex pass's check broken on purpose from a copy of the spec, then the spec restored: in night colours the first link in `/about/`'s main swallows Tab | fails: the controls after it "never reached by Tab in night colours", and the rest "never reached by Shift+Tab in night colours" | 165.7 / 122.5 / 101.6 before, 155.1 / 121.0 / 101.2 after |
+| First run, before review: the same spec (54 tests then) | 54 passed, 4.0 min | 99.5 / 171.9 / 266.5 before, 106.0 / 135.6 / 227.2 after |
+| First run, before review: the keyboard checks against the old `site.css` | `/about/` at 375 and `/worlds/` at 1280 fail: heading under the header after the jump, summary ring `auto 1px`, links under the header | 274.4 / 339.7 / 360.9 |
+
+No test timed out in the gate runs. Two failures were each seen once in the first round and not again: `axe: /lab/ at
+1280` stopped with "Execution context was destroyed" inside the wait after the Night button, a page load during the
+test that was not explained (the lab did not navigate when probed alone, and the test passed in every later run);
+and `keyboard: /status/ at 375` timed out its wait for the heading to clear the header after the skip-link jump.
+The keyboard walks are faster now that keyboard focus no longer scrolls smoothly (about 5 s for the worlds page at
+either width, against about 3 minutes before).
+
+- **Automated check:** **Done.** `tests/e2e/public-a11y.spec.ts` runs axe (`@axe-core/playwright` 4.13.0, pinned
+  exactly) over the ten routes and `/island.html` at 1280×900 and 375×812, in day colours and then in night colours
+  switched with the page's own button from the keyboard (the island page has none; it is reloaded as a return
+  visitor who chose night), with every `<details>` open: 44 scans. Four states at both widths in both colours add
+  16: `/worlds/?world=no-such-world` (no card ringed), `/garden/` with the view answering 404 ("No garden is planted
+  here yet."), `/status/` with the coordinator answering 503 ("Live status is unavailable right now."), and `/garden/`
+  after a refused stone. The lab without a GPU and the lab with Browse all worlds open add two: 62 in all. A
+  serious or critical violation, or a serious or critical result axe cannot decide, fails unless it is listed with
+  its reason. Public pages: no violations of any impact. One undecided result, reviewed by hand and listed: the
+  arrow inside Open the lab on the home page (`color-contrast`), `aria-hidden` decoration in the same ink on the same
+  sun fill as the button's label, which axe passes. Lab, listed with the reason "PR #31" and left to its follow-up:
+  `aria-prohibited-attr` on `#pools` (a violation with no GPU, undecided with a world); `aria-valid-attr-value` on
+  `#btn-worlds` and `#btn-card` (undecided); at 375 `color-contrast` on three view buttons (undecided); and one real
+  violation found by scanning the open dialog, the family list's small lines (`.worlds-nav button small`, muted at
+  78% opacity, 11px) at 4.14:1 by day, under 4.5:1. Inside the open dialog the page behind is inert, so the lab's
+  other findings do not appear there.
+- **Keyboard:** **Done**, with real Tab and Shift+Tab presses on every route and the island page at both widths.
+  The first Tab focuses the skip link, wholly on screen (not on the lab, and the island page has none). Tab and
+  Shift+Tab each reach every visible, enabled control and nothing else, native controls counted whatever their
+  tabindex. Every stop matches `:focus-visible`, has a solid ring of at least 2px on itself (the lab's canvas on its
+  wrapper) at 3:1 or more against what is behind it, and is itself drawn on screen; no control wears a ring when it
+  is not focused (the canvas's wrapper counted as the canvas). In night colours the controls are counted again and
+  must be the same as by day, in the same order, with the same tabindex; Tab and Shift+Tab each go round again and
+  reach every one and nothing else; every one is checked again for the ring and its contrast; and none wears a ring
+  when it is not focused or after focus has left it. Header controls are
+  reached in the order they are drawn (on every page at both widths, and on `/about/` at 1280, 1000, 768 and 375,
+  with the Day/Night button keeping focus across a resize). Bursts of seven Tab or Shift+Tab presses on `/worlds/`
+  at both widths always leave focus on screen. After Enter on the skip link the first heading in `<main>` is clear
+  of the sticky header and the next Tab lands in `<main>`; `/#next` and a worlds family link loaded directly at 375
+  put their heading near the top, clear of the header. The Day/Night button works with Enter and with Space and
+  keeps focus. The lab's Browse all worlds dialog is modal; opened from the keyboard it takes focus, and twice as
+  many Tab and Shift+Tab presses as it has controls never leave it for the page and reach each of its controls
+  (native ones counted whatever their tabindex), every stop with a visible ring at 3:1; so does one round each way
+  in every other family, each shown from the keyboard; its Close button and a backdrop
+  click each hand focus back to Browse all worlds. Found and fixed:
+  - the sticky header covered the target of the skip link and of anchors, and controls reached going up the page
+    (worst at 375, where the nav wraps and the header is about 150px tall). `site.css` now sets
+    `scroll-padding-top` from the header's measured height (`--site-header-height`, written by `theme.ts`, which
+    every public page loads, with a `ResizeObserver` as the nav wraps); the home page's and the worlds page's own
+    scroll margins are reduced to the air they add, and the worlds page's linked card no longer adds the header's
+    height itself;
+  - the worlds page's "For researchers" `<summary>` elements had the browser's thin ring (`auto 1px`): the site's
+    ring rule now covers `input`, `select`, `textarea`, `summary` and `[tabindex]` as well as links and buttons;
+  - in night colours the ring on the invitation panels' buttons (home, worlds, Join in) was 1.34:1 against the sun:
+    it is now ink in both colours;
+  - Tab pressed faster than a smooth scroll could leave focus off screen: keyboard focus now jumps
+    (`html:has(:focus-visible)`), and links followed with a pointer still scroll smoothly;
+  - at 1000px and below the Day/Night button was reached after the nav but drawn before it: `theme.ts` now places
+    it before the nav at those widths (no visual change). Its border is now `--control-line`.
+  Lab-only, exclusions and follow-ups for PR #31: the first Tab lands on "Lineages"; at 375 the lab header draws its
+  Day/Night button ahead of tabs it follows in the markup.
+- **Reduced motion:** **Done.** On every route and the island page, with `prefers-reduced-motion: reduce`, `html`
+  scrolls without animation, no element or pseudo-element has an animation or a transition longer than 0 s, and
+  `document.getAnimations()` reports nothing running; without the setting the public pages scroll smoothly and the
+  lab has transitions, so the check bites. The public pages have no animations (two pages update text on a timer,
+  which is not motion). Lab-only, an exclusion and a follow-up for PR #31: the full-screen exit button's fade
+  (`.fs-exit`) is not in the lab's reduced-motion block.
+- **Without WebGPU:** **Done**, two ways. Chrome started with `--disable-gpu` (the test first checks that
+  `requestAdapter()` answers `null`, and skips with its reason when the switch does something else): the lab shows
+  its alert (`role="alert"`) "The lab could not start" with help naming WebGPU, the chip "No GPU adapter" and the
+  heading "No world yet", and passes axe with the exclusions above; every other page shows its heading with no
+  uncaught error and no API mocked; the island page, Join pressed, logs "error: WebGPU: no adapter", stays Join and
+  makes no `/api` request; and with an island remembered from earlier in the tab it asks the coordinator about that
+  island once (`GET /api/islands/me`), then, whether the coordinator knows it (200) or not (401), logs the same
+  error and runs nothing. And in the normal Chrome project with `navigator.gpu` removed (main thread and the lab's
+  worker): the lab's alert says "WebGPU is not available", with the same chip, and the island page logs "error:
+  WebGPU is not available in this browser." with no `/api` request. Wording added, nothing else in the copy
+  changed: the home page's small print says "Without it the lab opens but cannot plant a world, and says why; the
+  other pages on this site still read without it.", and Join in's first step says "Without WebGPU nothing runs:
+  Join stops before taking any work, and the island page says why in its log." Not run: a remembered island when the
+  coordinator cannot be reached at all; the page then says it could not reach the coordinator (not WebGPU), and
+  still runs nothing.
+- **404:** **Gap: there is no 404 page.** The dev server answers an unknown path with the home page and 200 (Vite's
+  fallback), so the spec cannot pin it there; it carries a `test.fixme` naming what it needs. A fresh build served by
+  Caddy 2 with the production file rules (`try_files {path} {path}/index.html`, then `file_server`; scratch config,
+  port 8089) answers `/no-such-page/`, `/no-such-page`, `/lab/world/nope/` and `/assets/nope.js` with 404 and an
+  empty body: a visitor sees a blank page. A 404 page needs an `apps/lab/404.html` build input and a `handle_errors`
+  block in `deploy/Caddyfile`, both outside this slice: a follow-up. That the live host behaves the same still needs
+  the live host.
+- **Screenshots** of the pages that look different, at 1280 and 375: the home page and Join in in day and night
+  colours (new wording; the Day/Night button's border, on every public page), the home page's invitation button
+  focused in night colours (the ink ring), and `/about/` at 375 after the skip-link jump. They are in this session's
+  scratchpad (`slice13-shots/`), not in the repository; the pull request body lists them.
+- **Not claimed:** real phones and tablets, screen readers, engines other than Chrome, 200% zoom and 320 px reflow.
+
 ### Known gaps left open by this slice
 
 - The island runner (`packages/runner/src/island.ts`, outside this slice) stops on any 429 or 503 and does not honour
@@ -322,5 +608,7 @@ The e2e runs used a copy of `playwright.config.ts` on port 5194, because another
 
 HTTPS and the certificate; the `www` redirect; `/healthz`; that `https://cadence.garden/index.html` is the homepage;
 what peer and `X-Forwarded-For` the coordinator receives (then the Caddy change, `BL_TRUST_FORWARDED_FOR=1`, and the
-coarse ceiling); join limits through the real proxy; 404s; mobile and keyboard access and missing-GPU behaviour on
-real devices; canonical URLs and the sitemap at the live domain.
+coarse ceiling); join limits through the real proxy; 404s over HTTP (locally the production rules answer an empty
+404, see criterion 5); canonical URLs and the sitemap at the live domain. The local half of mobile and keyboard
+access and missing-GPU behaviour is done (criterion 5: 375 px emulated, Chrome's keyboard, Chrome with
+`--disable-gpu`); real phones and tablets, screen readers and other engines remain.

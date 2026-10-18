@@ -116,3 +116,5 @@ still validates and replays. `tools/run.ts --picks-from` replays both.
   ends in a logged pick (nothing can be saved or exported while it waits), so a log where such a pressure
   is not followed by a pick at its step is refused as not the observed history.
 - **The dial commits on Set, not on choosing**, so moving through the options logs nothing.
+
+See also (2026-10-18): the playtest kit for these features, `docs/playtest-kit-2026-10-18.md`.

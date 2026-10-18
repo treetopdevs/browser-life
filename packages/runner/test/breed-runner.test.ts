@@ -26,7 +26,27 @@ import {
   type WorldState,
 } from "@bl/schema";
 import { RefSim } from "@bl/sim-ref";
-import { PONDS_HEADER, applyBoundary, checkPondsFile, conditionById, pondCensus, pondColumns, pondContext, pondTsvRows, pondsHeader, specConfig, type RunSpec } from "@bl/runner";
+import {
+  BUNDLE_FILES,
+  ISLAND_CAPABILITIES,
+  OBSERVATION_FILES,
+  PICKS_FILE,
+  PONDS_HEADER,
+  VERIFIED_FILES,
+  applyBoundary,
+  checkPondsFile,
+  conditionById,
+  pondCensus,
+  pondColumns,
+  pondContext,
+  pondTsvRows,
+  pondsHeader,
+  specConfig,
+  specRefusal,
+  taskSpecError,
+  type DistributedTask,
+  type RunSpec,
+} from "@bl/runner";
 
 const pondsSmall = PRESETS.find((p) => p.id === "ponds-small")!;
 const preset = (id: string) => PRESETS.find((p) => p.id === id)!;
@@ -160,11 +180,23 @@ describe("ponds.tsv's columns with a score", () => {
     // Scores are nonnegative integers a reader can take exactly.
     const lines = text.trimEnd().split("\n");
     const withLast = (score: string, donorScore: string) => [lines[0], ...lines.slice(1, 4), [...lines[4].split("\t").slice(0, 22), score, donorScore].join("\t")].join("\n") + "\n";
-    expect(check(withLast("7", "9"), "breed", "drive")).not.toThrow();
+    // Rows agree with each other: pond 3's score is every donorScore of a row whose donor is 3 (`rescore` keeps that).
+    const rescore = (t: string, pond: number, score: string) => {
+      const [head, ...rest] = t.trimEnd().split("\n");
+      const at = head.split("\t");
+      const [rc, dc, sc, dsc] = ["recipient", "donor", "score", "donorScore"].map((c) => at.indexOf(c));
+      return [head, ...rest.map((r) => {
+        const f = r.split("\t");
+        if (f[rc] === String(pond)) f[sc] = score;
+        if (f[dc] === String(pond)) f[dsc] = score;
+        return f.join("\t");
+      })].join("\n") + "\n";
+    };
+    expect(check(rescore(text, 3, "7"), "breed", "drive")).not.toThrow();
     expect(check(withLast("", "9"), "breed", "drive")).toThrow(/with score "", not a nonnegative integer below 2\^53/);
     expect(check(withLast("7.5", "9"), "breed", "drive")).toThrow(/with score "7.5", not a nonnegative integer/);
     expect(check(withLast("7", "-1"), "breed", "drive")).toThrow(/with donorScore "-1", not a nonnegative integer/);
-    expect(check(withLast("9007199254740991", "9"), "breed", "drive")).not.toThrow();
+    expect(check(rescore(text, 3, "9007199254740991"), "breed", "drive")).not.toThrow();
     expect(check(withLast("9007199254740993", "9"), "breed", "drive")).toThrow(/with score "9007199254740993", not a nonnegative integer below 2\^53/);
     expect(check(withLast("7", "9".repeat(400)), "breed", "drive")).toThrow(/with donorScore "9+", not a nonnegative integer below 2\^53/);
     // A run known to have no score must not carry the columns; a v1 file stays accepted as it was.
@@ -189,12 +221,105 @@ describe("ponds.tsv's columns with a score", () => {
     expect(check(text, undefined, "scaf")).toThrow(/header carries the breeder's columns \(score, donorScore\), but the run has no pondScore/);
     // Term values are read as the scores are.
     const lines = text.trimEnd().split("\n");
-    const withLast = (...tail: string[]) => [lines[0], ...lines.slice(1, 4), [...lines[4].split("\t").slice(0, 22), ...tail].join("\t")].join("\n") + "\n";
-    expect(check(withLast("0", "0", "5", "6", "7"), score)).not.toThrow();
-    expect(check(withLast("0", "0", "5", "", "7"), score)).toThrow(/with seed "", not a nonnegative integer below 2\^53/);
-    expect(check(withLast("0", "0", "-5", "6", "7"), score)).toThrow(/with drive "-5", not a nonnegative integer/);
-    expect(check(withLast("0", "0", "5", "6", "7.5"), score)).toThrow(/with body "7.5", not a nonnegative integer/);
-    expect(check(withLast("0", "0", "5", "6"), score)).toThrow(/with body "", not a nonnegative integer/);
+    // The last row keeps its score and donorScore (they must agree with the other rows) and takes these term values.
+    const withLast = (...terms: string[]) => [lines[0], ...lines.slice(1, 4), [...lines[4].split("\t").slice(0, 24), ...terms].join("\t")].join("\n") + "\n";
+    expect(check(withLast("5", "6", "7"), score)).not.toThrow();
+    expect(check(withLast("5", "", "7"), score)).toThrow(/with seed "", not a nonnegative integer below 2\^53/);
+    expect(check(withLast("-5", "6", "7"), score)).toThrow(/with drive "-5", not a nonnegative integer/);
+    expect(check(withLast("5", "6", "7.5"), score)).toThrow(/with body "7.5", not a nonnegative integer/);
+    expect(check(withLast("5", "6"), score)).toThrow(/with body "", not a nonnegative integer/);
+  });
+});
+
+describe("a breeder's ponds.tsv rows agree with each other", () => {
+  // Pond 2 moves and scores under drive; the breed arm makes it every recipient's donor.
+  const pre = sourceAt(1000, { pondArm: "breed", pondScore: "drive" }, 2);
+  const { rows } = applyPondCycle(pre, 1, "breed", 8, pondMatter(pre), pondCensus, "drive");
+  const text = pondsHeader("breed", "drive") + pondTsvRows(rows, pondColumns("breed", "drive"));
+  const names = text.split("\n", 1)[0].split("\t");
+  const check = (t: string) => () => checkPondsFile("run", t, 1000, 4, 0, 1000, "breed", "drive");
+  // `text` with row `r`'s cells `cells` replaced.
+  const edit = (r: number, cells: Record<string, string>) => {
+    const ls = text.trimEnd().split("\n");
+    const f = ls[r + 1].split("\t");
+    for (const [c, v] of Object.entries(cells)) f[names.indexOf(c)] = v;
+    ls[r + 1] = f.join("\t");
+    return ls.join("\n") + "\n";
+  };
+
+  it("the cycle's own rows pass, and a scored pond donated", () => {
+    expect(rows.some((r) => r.donor >= 0 && r.donorScore! > 0)).toBe(true);
+    expect(check(text)).not.toThrow();
+  });
+
+  it("refuses a donorScore that is not the donor's own row's score, and a donor outside the ponds", () => {
+    const r = rows.findIndex((x) => x.donor >= 0);
+    const d = rows[r].donor;
+    // The tampered history from review (Codex, 2026-10-18): donor 3, score 999, donorScore 777.
+    expect(check(edit(r, { donor: "3", score: "999", donorScore: "777" }))).toThrow(/donor 3 and donorScore 777, but pond 3's own row has score/);
+    expect(check(edit(r, { donorScore: String(rows[d].score! + 1) }))).toThrow(new RegExp(`donor ${d} and donorScore ${rows[d].score! + 1}, but pond ${d}'s own row has score ${rows[d].score}`));
+    expect(check(edit(r, { donor: "-1" }))).toThrow(/a row without a donor has donorScore 0/);
+    expect(check(edit(r, { donor: "4" }))).toThrow(/with donor "4", not -1 or a pond index in \[0, 4\)/);
+    expect(check(edit(r, { donor: "-2" }))).toThrow(/with donor "-2"/);
+    // Moving a donor's score alone breaks its recipients' rows.
+    expect(check(edit(d, { score: String(rows[d].score! + 1) }))).toThrow(/own row has score/);
+  });
+});
+
+describe("taskSpecError: a coordinator segment's manifest describes the task it was handed", () => {
+  const task: DistributedTask = { experiment: "it-breed", presetId: "ponds-small", condition: "pond-breed-drive", seed: 1, steps: 1000, censusEvery: 100, deepEvery: 10 };
+  // The spec Coordinator.Queue's task/4 builds, and the manifest an island writes from it.
+  const handed: RunSpec = { experiment: "it-breed", presetId: "ponds-small", condition: "pond-breed-drive", seed: 1, steps: 1000, censusEvery: 100, deepEvery: 10, checkpointEvery: 0 };
+  const manifest = (spec: unknown, cfg: unknown = JSON.parse(JSON.stringify(specConfig(spec as RunSpec)))) => JSON.parse(JSON.stringify({ spec, cfg }));
+
+  it("accepts the island's own manifest", () => {
+    expect(taskSpecError(manifest(handed), task)).toBeNull();
+  });
+
+  it("binds a stitched export over the steps it covers, as tools/stitch.ts checks one already on disk (Codex pass 2)", () => {
+    // stitchRun's manifest is the last segment's spec with the whole run's steps; the cache check passes those steps.
+    const whole = { ...task, steps: 3000 };
+    expect(taskSpecError(manifest({ ...handed, steps: 3000 }), whole)).toBeNull();
+    const m = manifest({ ...handed, steps: 3000 });
+    m.spec.overrides = { pondScore: "body" };
+    m.cfg.pondScore = "body";
+    expect(taskSpecError(m, whole)).toMatch(/spec carries overrides/);
+    expect(taskSpecError(manifest({ ...handed, steps: 1000 }), whole)).toMatch(/spec.steps is 1000/);
+  });
+
+  it("refuses an injected score: overrides in the spec and the config to match (review, Codex 2026-10-18)", () => {
+    const m = manifest(handed);
+    m.spec.overrides = { pondScore: "body" };
+    m.cfg.pondScore = "body";
+    expect(taskSpecError(m, task)).toMatch(/spec carries overrides/);
+    // The config alone, the spec untouched.
+    const c = manifest(handed);
+    c.cfg.pondScore = "body";
+    expect(taskSpecError(c, task)).toMatch(/config is not the one the coordinator's task builds/);
+  });
+
+  it("refuses any key the task has not, and any value it does not", () => {
+    for (const extra of [{ picked: true }, { pressures: [] }, { branch: { arm: "nat" } }, { activityThreshold: 1 }, { runId: "x" }])
+      expect(taskSpecError(manifest({ ...handed, ...extra }), task)).toMatch(/spec carries /);
+    expect(taskSpecError(manifest({ ...handed, condition: "pond-mass-drive" }), task)).toMatch(/spec.condition is "pond-mass-drive"/);
+    expect(taskSpecError(manifest({ ...handed, seed: 2 }), task)).toMatch(/spec.seed is 2/);
+    expect(taskSpecError(manifest({ ...handed, checkpointEvery: 1000 }), task)).toMatch(/spec.checkpointEvery is 1000/);
+    const { deepEvery: _, ...short } = handed;
+    expect(taskSpecError(manifest(short), task)).toMatch(/spec lacks deepEvery/);
+    expect(taskSpecError({ cfg: {} }, task)).toMatch(/no spec/);
+  });
+
+  it("carries a schedule and a metapopulation as the task does, and a garden's schedule by presence", () => {
+    const interventions = [{ step: 500, kind: "lesion", x: 20, y: 20, r: 4 }];
+    const scheduled = { ...task, interventions };
+    expect(taskSpecError(manifest({ ...handed, interventions }), scheduled)).toBeNull();
+    expect(taskSpecError(manifest(handed), scheduled)).toMatch(/spec lacks interventions/);
+    expect(taskSpecError(manifest({ ...handed, interventions: [] }), scheduled)).toMatch(/spec.interventions is/);
+    expect(taskSpecError(manifest({ ...handed, interventions: [] }), scheduled, { garden: true })).toBeNull();
+    const ring = { ...task, presetId: "spots", condition: "treatment", seed: 7, seeds: [5, 7], metapopulation: { topology: "ring", migrantCount: 4, salt: 3 } };
+    const ringSpec = { ...handed, presetId: "spots", condition: "treatment", seed: 7, metapopulation: { salt: 3, topology: "ring", migrantCount: 4, ringNamespace: 2 } };
+    expect(taskSpecError(manifest(ringSpec), ring)).toBeNull();
+    expect(taskSpecError(manifest({ ...ringSpec, metapopulation: { ...ringSpec.metapopulation, ringNamespace: 1 } }), ring)).toMatch(/spec.metapopulation/);
   });
 });
 
@@ -233,5 +358,37 @@ describe("applyBoundary for the breeder", () => {
     expect(res.ponds!.donors).toEqual(plain.donors);
     expect(res.ponds!.rows.map((r) => r.score)).toEqual(pondDrives(pre));
     expect(res.ponds!.rows.map((r) => r.donor)).toEqual(plain.rows.map((r) => r.donor));
+  });
+});
+
+// The archipelago runs and verifies bred worlds (docs/archipelago-breed-2026-10-18.md): islands advertise breed-v1, a
+// rule-bred spec is not refused, picked and pressured specs still are, and picks.jsonl is in no file list.
+describe("the breeder on islands", () => {
+  const task = (presetId: string, condition: string): RunSpec => ({ experiment: "b", presetId, condition, seed: 1, steps: 1000, censusEvery: 100, deepEvery: 10, checkpointEvery: 0 });
+
+  it("ISLAND_CAPABILITIES lists breed-v1 beside ponds-v1, which the coordinator asks for with it", () => {
+    expect(ISLAND_CAPABILITIES).toContain("breed-v1");
+    expect(ISLAND_CAPABILITIES).toContain("ponds-v1");
+  });
+
+  it("specRefusal lets a bred spec through: a breeder condition on ponds-small, and the breeder preset's treatment", () => {
+    expect(specRefusal(task("ponds-small", "pond-breed-drive+seed+body"))).toBeNull();
+    expect(specRefusal(task("ponds-small", "pond-mass-drive"))).toBeNull();
+    expect(specRefusal(task("breeder", "treatment"))).toBeNull();
+    // And the spec is one the runner can configure: the breed arm with its score.
+    expect(specConfig(task("breeder", "treatment"))).toMatchObject({ pondArm: "breed", pondScore: "drive+seed+body" });
+  });
+
+  it("specRefusal still refuses the same specs picked or pressured", () => {
+    for (const s of [task("ponds-small", "pond-breed-drive+seed+body"), task("breeder", "treatment")]) {
+      expect(specRefusal({ ...s, picked: true })).toMatch(/picked run/);
+      expect(specRefusal({ ...s, pressures: [] } as RunSpec)).toMatch(/pressures/);
+    }
+  });
+
+  it("picks.jsonl is not a verified file, nor in any bundle file list", () => {
+    expect(VERIFIED_FILES).not.toContain(PICKS_FILE);
+    expect(BUNDLE_FILES as readonly string[]).not.toContain(PICKS_FILE);
+    expect(OBSERVATION_FILES as readonly string[]).not.toContain(PICKS_FILE);
   });
 });

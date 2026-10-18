@@ -36,7 +36,7 @@
         <div class="prose"><h2>Lend your GPU as an island</h2><p>An island is a browser tab that lends its GPU: it runs segments of queued experiments (a stretch of one world’s history at a time) and sends the results back for comparison. This is today’s compute network; the persistent garden with creatures migrating between visitors is a future direction. The lab’s Four islands world plays that idea out inside a single jar: four islands trading a few cells.</p></div>
       </section>
       <section class="shell steps">
-        <article><span class="step-no">1</span><h2>Check your browser</h2><p>You need WebGPU and a secure site. A self-test checks this browser against the CPU reference before its work counts.</p></article>
+        <article><span class="step-no">1</span><h2>Check your browser</h2><p>You need WebGPU and a secure site. A self-test checks this browser against the CPU reference before its work counts. Without WebGPU nothing runs: Join stops before taking any work, and the island page says why in its log.</p></article>
         <article><span class="step-no">2</span><h2>Press Join</h2><p>Opening the island page starts nothing. Pressing Join asks the coordinator for work. The tab may use a lot of GPU time and power while it runs, so expect a warm laptop and a busy fan.</p></article>
         <article><span class="step-no">3</span><h2>Stop whenever you like</h2><p>Press Stop or close the tab. Finished work and uploaded results stay with the coordinator. The privacy page lists exactly what is sent.</p></article>
       </section>
