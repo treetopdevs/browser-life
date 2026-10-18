@@ -516,8 +516,9 @@ type Stop = { body: true } | {
 
 /**
  * Installs the page-side helpers: `__describe` names an element, `__ring` reads the focus ring an element wears
- * and its contrast against what is drawn behind it. Colours are resolved by painting them on a canvas, so oklch
- * and color-mix values come back as sRGB.
+ * and its contrast against what is drawn behind it, `__textContrast` the same for its text. Colours are resolved by
+ * painting them on a canvas, so oklch and color-mix values come back as sRGB. Both contrasts composite every
+ * background and opacity from the root down (`pixel`); `filter: opacity()`, blend modes and transforms are not seen.
  */
 async function installHelpers(page: Page): Promise<void> {
   await page.evaluate(() => {
@@ -529,38 +530,9 @@ async function installHelpers(page: Page): Promise<void> {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 1;
     const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-    const alpha = (c: string) => {
-      ctx.clearRect(0, 0, 1, 1);
-      ctx.fillStyle = "#000";
-      ctx.fillStyle = c;
-      ctx.fillRect(0, 0, 1, 1);
-      return ctx.getImageData(0, 0, 1, 1).data[3];
-    };
-    const paint = (layers: string[]) => {
-      ctx.clearRect(0, 0, 1, 1);
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, 1, 1);
-      for (const c of layers) {
-        ctx.fillStyle = "#fff";
-        ctx.fillStyle = c;
-        ctx.fillRect(0, 0, 1, 1);
-      }
-      return [...ctx.getImageData(0, 0, 1, 1).data.slice(0, 3)];
-    };
     const luminance = (rgb: number[]) => {
       const [r, g, b] = rgb.map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
       return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    };
-    /** Background layers from `start` outwards until one is opaque, innermost last. */
-    const backdrop = (start: Element | null) => {
-      const layers: string[] = [];
-      for (let e = start; e; e = e.parentElement) {
-        const bg = getComputedStyle(e).backgroundColor;
-        const a = alpha(bg);
-        if (a > 0) layers.unshift(bg);
-        if (a === 255) break;
-      }
-      return layers;
     };
     const ringed = (e: Element) => {
       const cs = getComputedStyle(e);
@@ -574,12 +546,13 @@ async function installHelpers(page: Page): Promise<void> {
       return ringed(e) || (!!wrap && ringed(wrap));
     };
     /**
-     * What one pixel of `el` shows, with its text (`withText`) or without: the element and each ancestor are drawn as
-     * the browser draws them, every one into a layer of its own (its background, then what is inside it) that is laid
-     * on what is behind it at its own opacity. So opacity fades an element's backgrounds as well as its text, toward
-     * whatever is behind the faded element, not toward the faded background.
+     * What one pixel of `el` shows when `leaf` (colours, in paint order) is what `el` itself paints there: its
+     * background, then its text or its outline, or nothing of its own. Each ancestor is drawn as the browser draws it,
+     * into a layer of its own (its background, then what is inside it) laid on what is behind it at its own opacity,
+     * and `el`'s layer the same with `leaf` in place of its background. So opacity fades an element's backgrounds, text
+     * and outline alike, toward whatever is behind the faded element, not toward the faded background.
      */
-    const pixel = (el: Element, withText: boolean) => {
+    const pixel = (el: Element, leaf: string[]) => {
       const chain: Element[] = [];
       for (let e: Element | null = el; e; e = e.parentElement) chain.unshift(e);
       const layer = (i: number): HTMLCanvasElement => {
@@ -587,7 +560,7 @@ async function installHelpers(page: Page): Promise<void> {
         c.width = c.height = 1;
         const g = c.getContext("2d")!;
         const cs = getComputedStyle(chain[i]);
-        for (const fill of [cs.backgroundColor, ...(i === chain.length - 1 && withText ? [cs.color] : [])]) {
+        for (const fill of i === chain.length - 1 ? leaf : [cs.backgroundColor]) {
           g.fillStyle = "#0000";
           g.fillStyle = fill;
           g.fillRect(0, 0, 1, 1);
@@ -610,8 +583,9 @@ async function installHelpers(page: Page): Promise<void> {
     };
     /** Text colour against what is drawn under it, both through every background and opacity on the way, as a ratio. */
     w.__textContrast = (el: HTMLElement) => {
-      const behind = luminance(pixel(el, false));
-      const text = luminance(pixel(el, true));
+      const bg = getComputedStyle(el).backgroundColor;
+      const behind = luminance(pixel(el, [bg]));
+      const text = luminance(pixel(el, [bg, getComputedStyle(el).color]));
       const [hi, lo] = behind > text ? [behind, text] : [text, behind];
       return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
     };
@@ -627,10 +601,11 @@ async function installHelpers(page: Page): Promise<void> {
       const wrap = wrapOf(el);
       const holder = !ringed(el) && wrap && ringed(wrap) ? wrap : el;
       const cs = getComputedStyle(holder);
-      // An outline drawn outside the box sits on whatever is behind the box; one inset (negative offset) on the box.
-      const layers = backdrop(parseFloat(cs.outlineOffset) < 0 ? holder : holder.parentElement);
-      const behind = luminance(paint(layers));
-      const ring = luminance(paint([...layers, cs.outlineColor]));
+      // An outline drawn outside the box sits on whatever is behind the box; one inset (negative offset) on the box's
+      // background. Either way it is painted in the holder's layer, so the holder's opacity and its ancestors' fade it.
+      const own = parseFloat(cs.outlineOffset) < 0 ? [cs.backgroundColor] : [];
+      const behind = luminance(pixel(holder, own));
+      const ring = luminance(pixel(holder, [...own, cs.outlineColor]));
       const [hi, lo] = behind > ring ? [behind, ring] : [ring, behind];
       return { style: cs.outlineStyle, width: parseFloat(cs.outlineWidth) || 0, contrast: Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100, on: holder === el ? "self" : "wrapper" };
     };
@@ -971,6 +946,50 @@ for (const size of WIDTHS) {
     expect(lost, "focus left off screen or under the header after a burst of key presses").toEqual([]);
   });
 }
+
+// The ring check composites opacity as the text check does (since its pass 3): an element's own opacity and every
+// ancestor's fade its ring toward what is behind the faded subtree. Expected ratios come from an sRGB blend, then the
+// WCAG ratio: #767676 on white is 4.54:1; at opacity .4 it blends to rgb(200, 200, 200), 1.67:1. A white inset ring on
+// a black button is 21:1; at opacity .3 over white the button blends to rgb(179, 179, 179) against the white ring,
+// 2.11:1. Black text at opacity .4 on white blends to rgb(153, 153, 153), 2.85:1 (the text check, unchanged).
+test("keyboard: the ring check fades a ring by its own and its ancestors' opacity, as the text check does", async ({ page }) => {
+  const ring = "outline:3px solid #767676;outline-offset:2px";
+  const inset = "background:#000;color:#fff;border:0;outline:3px solid #fff;outline-offset:-4px";
+  await page.setContent(`<!doctype html><html><body style="margin:0;background:#fff">
+    <p><button id="out" style="${ring}">a</button></p>
+    <p><button id="faded" style="${ring};opacity:.4">b</button></p>
+    <div style="opacity:.4"><p><button id="parent" style="${ring}">c</button></p></div>
+    <p><button id="inset" style="${inset}">d</button></p>
+    <p><button id="insetFaded" style="${inset};opacity:.3">e</button></p>
+    <div class="canvas-wrap" style="${ring};opacity:.4"><canvas id="canvas" width="8" height="8"></canvas></div>
+    <p><span id="text" style="color:#000;opacity:.4">t</span></p>
+  </body></html>`);
+  await installHelpers(page);
+  const got = await page.evaluate(() => {
+    const w = window as any;
+    const ids = ["out", "faded", "parent", "inset", "insetFaded", "canvas"];
+    return { rings: Object.fromEntries(ids.map((id) => [id, w.__ring(document.getElementById(id))])) as Record<string, Ring>, text: w.__textContrast(document.getElementById("text")) as number };
+  });
+  const { rings } = got;
+  expect(rings.out).toMatchObject({ style: "solid", width: 3, on: "self" });
+  expect(rings.out.contrast).toBeGreaterThanOrEqual(4.4);
+  expect(rings.out.contrast).toBeLessThan(4.7);
+  expect(ringProblems(rings.out)).toEqual([]);
+  for (const id of ["faded", "parent"]) {
+    expect(rings[id].contrast, `${id}: a ring faded to opacity .4`).toBeGreaterThan(1.5);
+    expect(rings[id].contrast, `${id}: a ring faded to opacity .4`).toBeLessThan(1.85);
+    expect(ringProblems(rings[id]).map((p) => p.check)).toEqual(["contrast"]);
+  }
+  expect(rings.inset.contrast).toBeGreaterThanOrEqual(20);
+  expect(rings.insetFaded.contrast).toBeGreaterThan(1.9);
+  expect(rings.insetFaded.contrast).toBeLessThan(2.3);
+  expect(ringProblems(rings.insetFaded).map((p) => p.check)).toEqual(["contrast"]);
+  expect(rings.canvas).toMatchObject({ style: "solid", width: 3, on: "wrapper" });
+  expect(rings.canvas.contrast).toBeLessThan(1.85);
+  expect(ringProblems(rings.canvas).map((p) => p.check)).toEqual(["contrast"]);
+  expect(got.text).toBeGreaterThan(2.75);
+  expect(got.text).toBeLessThan(2.95);
+});
 
 test("keyboard: header controls are reached in the order they are drawn, at every width and across a resize", async ({ page }) => {
   for (const size of [{ width: 1280, height: 900 }, { width: 1000, height: 900 }, { width: 768, height: 1024 }, { width: 375, height: 812 }]) {

@@ -1,7 +1,7 @@
 // The pond route of genotype descent (tools/lib/pond-descent.ts; the rule is docs/lineage-inspector.md section 8).
 // Hand-built ponds.tsv tables on the ponds-small layout: 4 ponds (tiles 0..3), period 100.
 import { describe, expect, it } from "vitest";
-import { birthAcrossCycle, birthNode, checkPicks, loadRouteRows, pondIndex, pondRoute, readPickLog, readPondIndex, routeKeys, walkBack } from "../lib/pond-descent.ts";
+import { birthAcrossCycle, birthNode, checkPicks, loadRouteRows, pondIndex, pondRoute, readPickLog, readPondIndex, routeKeys, tallyPickers, walkBack } from "../lib/pond-descent.ts";
 import { parsePondRows } from "../lib/pond-lineage.ts";
 import { founder, handCfg, key, pondsLines, type HandArm, type HandCycle } from "./pond-bundle-fixture.ts";
 
@@ -184,6 +184,32 @@ describe("pick log", () => {
     expect(checkPicks(index(TWO), picks.slice(1))).toEqual({ checked: 1, partial: 0, unchecked: 0, unlogged: 1 });
     expect(checkPicks(index(TWO), [...picks, { step: 300, cycle: 3, donors: [0], by: "random", suggested: null }])).toMatchObject({ checked: 2, unchecked: 1 });
     expect(() => checkPicks(index([{ donors: [-1, -1, -1, -1] }], "cont"), picks)).toThrow(/arm cont, which takes no donors/);
+  });
+
+  it("a picker named like an Object property tallies like any other name", () => {
+    // Cycles 1 and 2 agree with TWO's rows; 3 to 6 have no rows (unchecked). Cycle 6 names no picker.
+    const names = ["constructor", "toString", "__proto__", "hasOwnProperty", "__proto__", null];
+    const donors = [[1, 3], [2], [0], [0], [0], [0]];
+    const lines = names.map((by, i) => JSON.stringify({ step: (i + 1) * 100, kind: "pick", cycle: i + 1, donors: donors[i], ...(by === null ? {} : { by }) }));
+    const { picks } = readPickLog(lines);
+    const want = [["__proto__", 2], ["constructor", 1], ["hasOwnProperty", 1], ["toString", 1], ["unnamed", 1]];
+    // Entries, not toEqual against a literal: `{ __proto__: 2 }` in a literal sets the prototype and has no own key.
+    const tally = tallyPickers(picks);
+    expect(Object.entries(tally).sort()).toEqual(want);
+    expect(Object.hasOwn(tally, "__proto__")).toBe(true);
+    expect(Object.getPrototypeOf(tally)).toBe(Object.prototype);
+    expect(Object.entries(tallyPickers([...picks, { ...picks[2], step: 700, cycle: 7 }])).sort()).toContainEqual(["__proto__", 3]);
+    expect(tallyPickers([])).toEqual({});
+    const r = route([founder(1), key(260, 0)], index(TWO), "scaf", { picks: { lines: picks, torn: false } });
+    expect(r.edges[0].crossings.map((c) => c.by)).toEqual(["constructor", "toString"]);
+    const by = r.picks!.by;
+    expect(Object.entries(by).sort()).toEqual(want);
+    expect(Object.hasOwn(by, "__proto__")).toBe(true);
+    expect(Object.values(by).reduce((a, b) => a + b, 0)).toBe(r.picks!.lines);
+    // The dossier goes through JSON: the tally survives it, `__proto__` included.
+    const back = JSON.parse(JSON.stringify(by));
+    expect(Object.entries(back).sort()).toEqual(want);
+    expect(Object.hasOwn(back, "__proto__")).toBe(true);
   });
 });
 

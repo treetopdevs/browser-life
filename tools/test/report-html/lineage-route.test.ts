@@ -123,6 +123,30 @@ describe("pond route on real runner bundles", () => {
     const last = routeEvents(g).events.at(-1)!;
     expect(last).toMatchObject({ kind: "anchor", at: { step: t.anchor.cycle * 1000, lane: t.anchor.pond } });
   }, 300_000);
+
+  it("picker names like Object properties survive from pondRoute to the page", async () => {
+    // The real scaf-picked log with its pickers renamed (the last line names none), read by the real builder: the
+    // tally comes from pondRoute, not set by hand, so plain-object counting would lose `__proto__` and garble the rest.
+    const names = ["constructor", "toString", "__proto__", "hasOwnProperty", "__proto__", null];
+    const src = real("scaf-picked");
+    const renamed = lines("scaf-picked", "picks.jsonl")!.filter((l) => l !== "").map((l, i) => {
+      const o = JSON.parse(l);
+      if (names[i] === null) delete o.by;
+      else o.by = names[i];
+      return JSON.stringify(o);
+    });
+    expect(renamed).toHaveLength(names.length);
+    const d = await dossier({ ...src, open: (f) => (f === "picks.jsonl" ? rows(renamed) : src.open(f)) }, { kind: "top" });
+    const by = d.pond!.picks!.by;
+    expect(Object.entries(by).sort()).toEqual([["__proto__", 2], ["constructor", 1], ["hasOwnProperty", 1], ["toString", 1], ["unnamed", 1]]);
+    expect(Object.hasOwn(by, "__proto__")).toBe(true);
+    expect(d.pond!.edges.flatMap((e) => e.crossings).map((c) => c.by)).toEqual(["constructor", "toString", "__proto__"]);
+    const html = renderChecked(d);
+    assertPageContract(html, { status: "SMOKE", figureCount: 5 });
+    for (const [name, n] of [["__proto__", 2], ["constructor", 1], ["hasOwnProperty", 1], ["toString", 1]] as const) expect(html).toContain(`&quot;${name}&quot; ${n}`);
+    for (const name of ["constructor", "toString", "__proto__"]) expect(count(routeSvg(html), new RegExp(`>by &quot;${name}&quot;</text>`, "g"))).toBe(1);
+    expect(html).not.toMatch(/undefined|native code|\[object Object\]/);
+  }, 300_000);
 });
 
 describe("pond route on hand-built bundles", () => {

@@ -149,6 +149,19 @@ describe("pond tool glue (tools/lib/pond-bundle.ts)", () => {
     expect(() => runnerPondHistory(parsePondRows(b.files["ponds.tsv"]), { ...b.manifest, cfg: { ...b.manifest.cfg, pondPeriod: undefined } }, { hasMutations: true, picks: null })).toThrow(/no pond cycle/);
   });
 
+  it("runnerPondHistory: a picker named like an Object property counts like any other (`constructor`, `__proto__`)", () => {
+    const b = bundle({ picked: true });
+    const named = (cycle: number, donors: number[], by: string) => JSON.stringify({ ...JSON.parse(pick(cycle, donors)), by });
+    const h = history(b, [named(1, [1, 3], "constructor"), named(2, [2], "__proto__")]);
+    const by = h.picks!.by;
+    // Entries, not a literal: `{ __proto__: 1 }` in a literal sets the prototype and has no own key.
+    expect(Object.entries(by).sort()).toEqual([["__proto__", 1], ["constructor", 1]]);
+    expect(Object.hasOwn(by, "__proto__")).toBe(true);
+    // The text dossier's note names both pickers with their counts.
+    const note = pondDossier(h, { kind: "explicit", pond: 0, cycle: 2 }).notes.find((n) => n.startsWith("a picked run"));
+    expect(note).toContain("(1 by constructor, 1 by __proto__)");
+  });
+
   it("runnerPondHistory: a first boundary short of the run's ponds is refused, not read as a smaller run (Codex pass 2)", () => {
     // Four ponds, one boundary: rows 0-2 whole, row 3 torn mid-line.
     const one = pondsLines([cycles[0]]);
