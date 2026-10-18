@@ -54,3 +54,7 @@ config :phoenix, :plug_init_mode, :runtime
 
 # Tokenless experiment creation from loopback clients (never in production).
 config :coordinator, allow_local_admin: true
+
+# Generous island limits, so local multi-island work and
+# tests/deno/coordinator_integration.ts are never throttled.
+config :coordinator, island_joins_per_address: 1000, island_next_per_island: 6000

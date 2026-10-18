@@ -59,6 +59,71 @@ experiment spec), `CoordinatorWeb.Router` (the routes) and `CoordinatorWeb.ApiCo
   (`:world_size`, `:pond_presets`, `:pond_period`, `:migration_period`) to
   `packages/schema`'s presets by `packages/runner/test/coordinator-presets.test.ts`.
 
+### Island limits
+
+Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in config.exs
+("Island abuse controls") and read at call time. Any budget may be `nil` (off).
+
+* `POST /api/islands`: at most `island_joins_per_address` (20) joins per client address
+  per hour. The address is the garden's: the peer, or the right-most `X-Forwarded-For`
+  entry with `trust_forwarded_for` (`BL_TRUST_FORWARDED_FOR=1`); an IPv6 address counts as
+  its /64. Addresses are kept only as salted hashes, in memory, and a restart forgets
+  them. **Off in production** (`config/prod.exs`) until the proxy passes on client
+  addresses, because until then every visitor is one address and the budget would be one
+  global cap (deploy/README.md). `BL_ISLAND_JOINS_PER_ADDRESS` sets it at runtime
+  (`20`, or `off`; blank leaves the config alone; anything else stops the boot).
+* `POST /api/next`: at most `island_next_per_island` (120) calls per authenticated island
+  per minute, counted after authentication (a 401 costs nothing). A runner asks every
+  5–10 s while idle, so it never comes near this.
+* Segment routes (heartbeat, complete, reject, fail, checkpoint and file uploads,
+  checkpoint downloads, and an island's file downloads; an administrator's exports are
+  never charged): at most `island_segment_requests_per_island` (600) per
+  authenticated island per minute, counted after authentication. Most of these rewrite
+  `state.bin`, so this bounds what one island can make the Queue write.
+* An island holds at most `island_max_pending` (4) pending assignments; past that
+  `next` answers idle, so one island cannot claim the queue's work and sit on it.
+* `island_requests_per_address`: a ceiling per address across the island routes (all but
+  file downloads, which administrators also use for exports), charged before authentication;
+  `nil` (off) by default. Switch it on only once the proxy passes on real client addresses
+  (deploy/README.md), or every visitor shares it.
+* Windows are fixed, not sliding (like the garden's letter budget), so a client can spend a
+  budget at the end of one window and again at the start of the next. The budget table is
+  capped (`island_limit_table_max`, 200,000 rows): past it a new key, an address or an
+  island id, is refused until its window ends, so a flood of distinct addresses (rotating
+  IPv6 /64s) can lock out new joiners for up to an hour, as with the letter budget. Island
+  ids count too, because an island forgotten at the island bound leaves its counters until
+  the sweep.
+* Over a budget the answer is 429 with `Retry-After` (whole seconds, rounded up) and
+  `{"error": ..., "retryAfterMs": n}`. The runner (`packages/runner/src/island.ts`) does not
+  retry: any non-OK join, `next` or upload stops the island, and a volunteer must start it
+  again (heartbeat failures are only logged). A 503 from the island bound is the same.
+* Join and next bodies are JSON only and at most 16 KB (413), parsed before the
+  endpoint's 8 MB parser (`CoordinatorWeb.IslandBodyLimit`). Any other content type is a
+  415 before its body is read, so `curl -d '{...}'` (form-encoded by default) needs
+  `-H 'content-type: application/json'`; the runner and the Deno island already send it.
+  A body with no content type is read up to the same 16 KB and dropped (413 past it); its
+  params are empty, as before.
+* The island table holds at most `max_islands` (20,000; `BL_MAX_ISLANDS`). At the bound a
+  join reclaims expired leases, then forgets every island that never ran or verified
+  anything, holds no pending attempt and was last seen more than a day ago
+  (`island_prune_after_ms`); if none is that old, the least recently seen such islands
+  not seen in the last ten minutes (`island_prune_grace_ms`), a twentieth of the bound (a
+  waiting island asks every few seconds, so islands that never ask go first). An island
+  that has just joined, or is waiting for work, is never forgotten to make room for
+  another: if no island qualifies the join is answered 503
+  `{"error": "the coordinator has no room for new islands"}`, so a join flood at the bound
+  costs new joiners a 503 rather than costing existing islands their credentials.
+* `GET /api/public/status` (and `/healthz`, which the site's Caddy rewrites to it) is
+  served from a `public_status_cache_ms` (2 s) cache, counted from when the numbers were
+  computed; concurrent misses are coalesced into one Queue call (a cold cache's other
+  callers wait up to `public_status_wait_ms` for it). Its `updatedAt` is when the numbers
+  were computed. It carries only `counts`, `activeIslands`, `deviceTypes` and `updatedAt`.
+  `/api/status`, `/api/experiments/:name` and `/api/discovery/status` need the admin
+  token.
+* CORS: production allows no cross-origin caller unless `BL_CORS_ORIGINS` names one, and
+  refuses to start unless each is a whole https origin as a browser sends it
+  (`https://host` or `https://host:port`, lowercase, no wildcard, path or slash).
+
 ## The garden (contract `garden-v1`)
 
 A garden is one shared, open-ended world tended by volunteer islands: bet 4 of

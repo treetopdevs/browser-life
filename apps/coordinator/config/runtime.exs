@@ -5,8 +5,68 @@ if token = System.get_env("BL_ADMIN_TOKEN"), do: config(:coordinator, admin_toke
 if config_env() == :prod and System.get_env("BL_ADMIN_TOKEN") in [nil, ""],
   do: raise("BL_ADMIN_TOKEN must be set in production")
 
-if origins = System.get_env("BL_CORS_ORIGINS"),
-  do: config(:coordinator, cors_origins: String.split(origins, ",", trim: true))
+# A whole browser origin as a browser sends it in `Origin`: https, a lowercase
+# host with no wildcard, an explicit port only when not 443, and nothing else
+# (no user, path, query or fragment; "https://a.example/" never matches).
+https_origin? = fn o ->
+  case URI.new(o) do
+    {:ok, %URI{scheme: "https", host: host, port: port, userinfo: nil, path: nil} = u}
+    when is_binary(host) and host != "" ->
+      u.query == nil and u.fragment == nil and not String.contains?(host, "*") and
+        o == URI.to_string(%URI{scheme: "https", host: String.downcase(host), port: port})
+
+    _ ->
+      false
+  end
+end
+
+if origins = System.get_env("BL_CORS_ORIGINS") do
+  origins = origins |> String.split(",", trim: true) |> Enum.map(&String.trim/1)
+
+  # In production an allowed origin may act as an island and read the
+  # coordinator's answers in a browser: only named https origins, never "*".
+  if config_env() == :prod do
+    for o <- origins, not https_origin?.(o) do
+      raise "BL_CORS_ORIGINS: #{inspect(o)} is not allowed in production " <>
+              "(name whole https:// origins only, like https://example.org, with no path or wildcard)"
+    end
+  end
+
+  config(:coordinator, cors_origins: origins)
+end
+
+# A count from the environment: unset or blank leaves the config as it is;
+# "off" (or "0", "none") is nil, a budget switched off, where `off?` allows
+# it; a positive whole number is that number; anything else stops the boot
+# with the variable's name rather than a bare ArgumentError.
+env_count = fn name, off? ->
+  raw = System.get_env(name)
+  v = raw && raw |> String.trim() |> String.downcase()
+
+  cond do
+    v in [nil, ""] ->
+      :unset
+
+    off? and v in ["off", "0", "none"] ->
+      {:ok, nil}
+
+    match?({n, ""} when n > 0, Integer.parse(v)) ->
+      {:ok, v |> Integer.parse() |> elem(0)}
+
+    true ->
+      raise "#{name}: #{inspect(raw)} is not a positive whole number" <>
+              if(off?, do: " or \"off\"", else: "")
+  end
+end
+
+# How many islands one client address may join per hour (config.exs, "Island
+# abuse controls"; off in production until the proxy passes on client
+# addresses, config/prod.exs). "off" switches it off.
+with {:ok, n} <- env_count.("BL_ISLAND_JOINS_PER_ADDRESS", true),
+     do: config(:coordinator, island_joins_per_address: n)
+
+# The bound on the island table (Coordinator.Queue; default 20,000).
+with {:ok, n} <- env_count.("BL_MAX_ISLANDS", false), do: config(:coordinator, max_islands: n)
 
 # Restricts the garden's days to islands that joined with this token in the join
 # body's "gardenToken" (unset: any island may tend a garden).
