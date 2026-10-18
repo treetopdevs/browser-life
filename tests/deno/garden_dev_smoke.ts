@@ -8,6 +8,7 @@
 // Run from the repo root: deno run -A tests/deno/garden_dev_smoke.ts < /dev/null
 import { ISLAND_CAPABILITIES } from "@bl/runner";
 import { METRICS_VERSION } from "@bl/schema";
+import { noLockDenoBin } from "./lib/no_lock_deno.ts";
 
 const T0 = performance.now();
 const text = (b: Uint8Array) => new TextDecoder().decode(b);
@@ -110,9 +111,10 @@ const launches: Launch[] = [];
 const baseEnv = Object.fromEntries(Object.entries(Deno.env.toObject()).filter(([k]) => !k.startsWith("BL_") && !k.startsWith("GARDEN_")));
 function launch(env: Record<string, string>): Launch {
   if (stopping) throw new Error("stopping: no new launcher");
+  if (!shimBin) throw new Error("no deno shim yet");
   const child = new Deno.Command(launcher, {
     cwd: root,
-    env: { ...baseEnv, GARDEN_LAB: "0", GARDEN_ISLANDS: "0", GARDEN_DAYS: "2", GARDEN_DAWN_MS: "1000", ...env },
+    env: { ...baseEnv, PATH: `${shimBin}:${baseEnv.PATH ?? ""}`, GARDEN_LAB: "0", GARDEN_ISLANDS: "0", GARDEN_DAYS: "2", GARDEN_DAWN_MS: "1000", ...env },
     clearEnv: true,
     stdin: "null",
     stdout: "piped",
@@ -196,6 +198,9 @@ async function stop(label: string, l: Launch, sig: Deno.Signal, code: number, po
 }
 
 const scratch = await Deno.makeTempDir({ prefix: "bl-garden-dev-smoke-" });
+// The launcher starts deno itself (`deno eval` on a re-tended garden): first on its PATH is a shim adding --no-lock, so
+// this smoke never rewrites deno.lock. Written inside the try below, so its cleanup covers it.
+let shimBin = "";
 /** Every launcher still running gets SIGTERM (its own cleanup stops its coordinator). One that has not exited a minute
  * later has its whole tree killed (a SIGKILL to the launcher alone would orphan its coordinator), and any process of a
  * launcher's tree (recorded once it was up) still running after it exited is killed too; either fails the smoke. The
@@ -246,6 +251,7 @@ for (const [sig, code] of [["SIGINT", 130], ["SIGTERM", 143], ["SIGHUP", 129]] a
   });
 }
 try {
+  shimBin = await noLockDenoBin(`${scratch}/bin`);
   // ---- 1. an automatic directory, with every BL_* trap set in the caller's environment ----
   const p1 = freePort();
   const escaped = `${scratch}/escaped-discovery`;

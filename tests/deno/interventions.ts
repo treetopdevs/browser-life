@@ -487,7 +487,7 @@ const fullSchedule: ScheduledIntervention[] = [
 ];
 const decode = (b: Uint8Array) => new TextDecoder().decode(b);
 async function cli(args: string[]): Promise<{ code: number; text: string }> {
-  const o = await new Deno.Command(Deno.execPath(), { args: ["run", "-A", "--config", DENO_JSON, RUN_TS, ...args], cwd: ROOT, stdin: "null", stdout: "piped", stderr: "piped" }).output();
+  const o = await new Deno.Command(Deno.execPath(), { args: ["run", "--no-lock", "-A", "--config", DENO_JSON, RUN_TS, ...args], cwd: ROOT, stdin: "null", stdout: "piped", stderr: "piped" }).output();
   return { code: o.code, text: decode(o.stdout) + decode(o.stderr) };
 }
 const readJson = async (p: string) => JSON.parse(await Deno.readTextFile(p)) as Record<string, unknown>;

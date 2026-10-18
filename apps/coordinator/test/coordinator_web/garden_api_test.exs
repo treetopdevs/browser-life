@@ -1565,4 +1565,407 @@ defmodule CoordinatorWeb.GardenApiTest do
       assert keeper |> post(path.("commons", "x")) |> json_response(404)
     end
   end
+
+  # ---- who held the field (docs/garden-predictions-2026-10-18.md) ----
+
+  describe "the leaders block" do
+    defp leaders_of(day),
+      do: Enum.find(Queue.garden_view("commons").days, &(&1.day == day)).leaders
+
+    # Day 0 run by `a` with the hand-built files and replayed by `b` with matching digests.
+    defp day0_ok(dir, a, b) do
+      t = next(a)
+      digests = finish_with_files(dir, a, t, leaders_files(0))
+      v = next(b)
+      assert {:ok, "verified"} = verify_with_digests(v, b, digests)
+      digests
+    end
+
+    test "a verified day with matching digests gets an ok block, counted from its files", %{
+      conn: conn,
+      dir: dir
+    } do
+      garden!()
+      a = join("A")
+      b = join("B")
+      day0_ok(dir, a, b)
+      # Counted off the Queue: the first read may still be pending.
+      assert leaders_of(0).status in ["pending", "ok"]
+
+      assert %{status: "ok", lines: nil, census: census} = await_leaders("commons", 0)
+
+      assert census == %{
+               step: @d,
+               livingCells: 105,
+               lineages: 4,
+               top: [
+                 %{key: "0:1", label: "founder 1", cells: 50, share: 0.4762},
+                 %{key: "0:2", label: "founder 2", cells: 30, share: 0.2857},
+                 %{key: "3:7", label: "born step 2 at 7,0", cells: 20, share: 0.1905}
+               ],
+               clearLeader: "0:1"
+             }
+
+      # Over HTTP: the rule, and the block with nothing internal in it.
+      got = conn |> get("/api/public/garden") |> json_response(200)
+      assert got["leadersRule"] == %{"name" => "lines-v1", "top" => 3, "clearLeaderPercent" => 10}
+      day0 = Enum.find(got["days"], &(&1["day"] == 0))
+      assert Enum.sort(Map.keys(day0["leaders"])) == ["census", "lines", "status"]
+      assert day0["leaders"]["census"]["clearLeader"] == "0:1"
+    end
+
+    test "a mismatching or missing digest is unchecked; unreadable files are unreadable", %{
+      dir: dir
+    } do
+      garden!()
+      a = join("A")
+      b = join("B")
+      t = next(a)
+      digests = finish_with_files(dir, a, t, leaders_files(0))
+      v = next(b)
+      altered = Map.put(digests, "lineages.tsv", String.duplicate("0", 64))
+      assert {:ok, "verified"} = verify_with_digests(v, b, altered)
+      assert leaders_of(0) == %{status: "unchecked", census: nil, lines: nil}
+
+      # A replay that reports no digests at all.
+      garden!(%{"name" => "plain"})
+      t = Stream.repeatedly(fn -> next(a) end) |> Enum.find(&(&1.spec.experiment == "plain"))
+      finish_with_files(dir, a, t, leaders_files(0))
+      v = Stream.repeatedly(fn -> next(b) end) |> Enum.find(&(&1.spec.experiment == "plain"))
+      assert {:ok, "verified"} = verify(v, b)
+      plain = Enum.find(Queue.garden_view("plain").days, &(&1.day == 0))
+      assert plain.leaders == %{status: "unchecked", census: nil, lines: nil}
+
+      # Files whose digests match but that do not parse.
+      garden!(%{"name" => "torn"})
+      t = Stream.repeatedly(fn -> next(a) end) |> Enum.find(&(&1.spec.experiment == "torn"))
+
+      digests =
+        finish_with_files(dir, a, t, %{"lineages.tsv" => "step\tlineage\tcells\n20\t0:1\tx\n"})
+
+      v = Stream.repeatedly(fn -> next(b) end) |> Enum.find(&(&1.spec.experiment == "torn"))
+      assert {:ok, "verified"} = verify_with_digests(v, b, digests)
+      assert %{status: "unreadable", census: nil, lines: nil} = await_leaders("torn", 0)
+    end
+
+    test "lines into day 1 appear when day 0 is verified first", %{dir: dir} do
+      garden!()
+      a = join("A")
+      b = join("B")
+      day0_ok(dir, a, b)
+      assert %{status: "ok"} = await_leaders("commons", 0)
+      TestClock.advance(day_ms())
+      t1 = next(a)
+      assert t1.segment.index == 1
+      digests = finish_with_files(dir, a, t1, leaders_files(1))
+      assert {:ok, "verified"} = verify_with_digests(next(b), b, digests)
+
+      assert %{status: "ok", census: census, lines: lines} =
+               await_leaders("commons", 1, lines: true)
+
+      assert Enum.map(census.top, &{&1.key, &1.cells}) == [
+               {"25:9", 40},
+               {"30:2", 30},
+               {"0:1", 10}
+             ]
+
+      assert census.clearLeader == "25:9" and census.livingCells == 85
+
+      assert lines == %{
+               fromDay: 0,
+               groups: [
+                 %{key: "0:1", label: "founder 1", cells: 10, share: 0.1176},
+                 %{key: "0:2", label: "founder 2", cells: 0, share: 0.0},
+                 %{key: "3:7", label: "born step 2 at 7,0", cells: 45, share: 0.5294}
+               ],
+               rest: %{cells: 30, share: 0.3529},
+               winner: "3:7"
+             }
+    end
+
+    test "lines into day 1 appear when day 1 is verified before day 0", %{dir: dir} do
+      garden!()
+      a = join("A")
+      b = join("B")
+      c = join("C")
+      t0 = next(a)
+      d0 = finish_with_files(dir, a, t0, leaders_files(0))
+      TestClock.advance(day_ms())
+      t1 = next(a)
+      assert t1.segment.index == 1
+      d1 = finish_with_files(dir, a, t1, leaders_files(1))
+      # b holds day 0's replay while c replays day 1.
+      v0 = next(b)
+      v1 = next(c)
+      assert {v0.segment.index, v1.segment.index} == {0, 1}
+      assert {:ok, "verified"} = verify_with_digests(v1, c, d1)
+      assert %{status: "ok", lines: nil} = await_leaders("commons", 1)
+
+      assert {:ok, "verified"} = verify_with_digests(v0, b, d0)
+
+      assert %{status: "ok", lines: %{fromDay: 0, winner: "3:7"}} =
+               await_leaders("commons", 1, lines: true)
+    end
+
+    test "a basis found unreadable on its recount takes back the next day's lines", %{dir: dir} do
+      garden!()
+      a = join("A")
+      b = join("B")
+      c = join("C")
+      # Day 1 keeps a key born on day 1 (33:3) that no mutation row explains:
+      # fine until day 0 is ready and the walk needs its parent.
+      day1 = %{
+        "lineages.tsv" => "step\tlineage\tcells\n40\t0:1\t10\n40\t33:3\t5\n",
+        "mutations.tsv" => "childHi\tchildLo\tparentHi\tparentLo\n"
+      }
+
+      day2 = %{
+        "lineages.tsv" => "step\tlineage\tcells\n60\t0:1\t9\n60\t0:2\t4\n",
+        "mutations.tsv" => "childHi\tchildLo\tparentHi\tparentLo\n"
+      }
+
+      digests =
+        for {day, files} <- [{0, leaders_files(0)}, {1, day1}, {2, day2}] do
+          if day > 0, do: TestClock.advance(day_ms())
+          t = next(a)
+          assert t.segment.index == day
+          finish_with_files(dir, a, t, files)
+        end
+
+      # b holds day 0's replay; c replays days 1 and 2 first.
+      v0 = next(b)
+      assert v0.segment.index == 0
+
+      for day <- 1..2 do
+        v = next(c)
+        assert v.segment.index == day
+        assert {:ok, "verified"} = verify_with_digests(v, c, Enum.at(digests, day))
+      end
+
+      assert %{status: "ok", lines: nil} = await_leaders("commons", 1)
+      assert %{status: "ok", lines: %{fromDay: 1}} = await_leaders("commons", 2, lines: true)
+
+      assert {:ok, "verified"} = verify_with_digests(v0, b, Enum.at(digests, 0))
+      assert %{status: "ok"} = await_leaders("commons", 0)
+
+      wait = fn ->
+        Enum.find_value(1..1500, fn _ ->
+          {l1, l2} = {leaders_of(1), leaders_of(2)}
+          rec2 = :sys.get_state(Queue).gardens["commons"].days[2].leaders
+
+          if l1.status == "unreadable" and rec2.status == "ok" and rec2.lines == nil and
+               rec2.ref == nil,
+             do: {l1, l2},
+             else: Process.sleep(20) && nil
+        end)
+      end
+
+      assert {%{status: "unreadable", census: nil, lines: nil}, %{status: "ok", lines: nil}} =
+               wait.()
+    end
+
+    test "a late answer with a stale token, or for another run attempt, is dropped", %{dir: dir} do
+      garden!()
+      day0_ok(dir, join("A"), join("B"))
+      assert %{status: "ok"} = await_leaders("commons", 0)
+      rec = :sys.get_state(Queue).gardens["commons"].days[0].leaders
+      assert rec.ref == nil
+
+      # As if a task were counting day 0 now, with token 777.
+      :sys.replace_state(Queue, fn s ->
+        put_in(s, [:gardens, "commons", :days, 0, :leaders], %{
+          rec
+          | status: "pending",
+            ref: 777,
+            census: nil,
+            lines: nil
+        })
+      end)
+
+      fake = {:ok, %{step: 0, livingCells: 1, lineages: 1, top: [], clearLeader: nil}, nil}
+      # The current token for another run attempt, a stale token, no token, another garden.
+      GenServer.cast(Queue, {:garden_leaders, "commons", 0, 777, "another", fake})
+      GenServer.cast(Queue, {:garden_leaders, "commons", 0, 12_345, rec.for, fake})
+      GenServer.cast(Queue, {:garden_leaders, "commons", 0, nil, rec.for, fake})
+      GenServer.cast(Queue, {:garden_leaders, "nope", 0, 777, rec.for, fake})
+      _ = :sys.get_state(Queue)
+      assert leaders_of(0) == %{status: "pending", census: nil, lines: nil}
+
+      # The current token for the accepted attempt is kept.
+      GenServer.cast(Queue, {:garden_leaders, "commons", 0, 777, rec.for, fake})
+      _ = :sys.get_state(Queue)
+      assert %{status: "ok", census: %{livingCells: 1}} = leaders_of(0)
+    end
+
+    test "a block about another run attempt reads pending and is counted again at start", %{
+      dir: dir
+    } do
+      garden!()
+      day0_ok(dir, join("A"), join("B"))
+      assert %{status: "ok"} = want = await_leaders("commons", 0)
+
+      :sys.replace_state(Queue, fn s ->
+        update_in(s, [:gardens, "commons", :days, 0, :leaders], &%{&1 | for: "an older attempt"})
+      end)
+
+      assert leaders_of(0) == %{status: "pending", census: nil, lines: nil}
+
+      # The same, persisted: counted again for the accepted attempt at start.
+      stop_supervised!(Queue)
+      path = Path.join(dir, "state.bin")
+      state = path |> File.read!() |> :erlang.binary_to_term()
+
+      state =
+        update_in(
+          state,
+          [:gardens, "commons", :days, 0, :leaders],
+          &%{&1 | for: "an older attempt"}
+        )
+
+      File.write!(path, :erlang.term_to_binary(state))
+      start_supervised!({Queue, data_dir: dir})
+      assert await_leaders("commons", 0) == want
+    end
+
+    test "at most two tasks count at once; a waiting day starts when a slot frees", %{dir: dir} do
+      garden!()
+      a = join("A")
+      b = join("B")
+      # Two slots taken by tasks that will never answer.
+      [m1, m2] = [make_ref(), make_ref()]
+
+      :sys.replace_state(Queue, fn s ->
+        %{s | leaders_tasks: %{m1 => {"commons", 9, 1, nil}, m2 => {"commons", 9, 2, nil}}}
+      end)
+
+      day0_ok(dir, a, b)
+      assert leaders_of(0) == %{status: "pending", census: nil, lines: nil}
+      st = :sys.get_state(Queue)
+      assert waiting(st) == [{"commons", 0}]
+      assert st.gardens["commons"].days[0].leaders.ref == nil
+
+      send(Queue, {:DOWN, m1, :process, self(), :normal})
+      assert %{status: "ok", census: %{livingCells: 105}} = await_leaders("commons", 0)
+      # The answer is in before the task's own `:DOWN` frees its slot: wait for that too.
+      assert await_state(fn st -> Map.keys(st.leaders_tasks) == [m2] end)
+      assert waiting(:sys.get_state(Queue)) == []
+    end
+
+    defp waiting(%{leaders_waiting: {q, set}}),
+      do: Enum.filter(:queue.to_list(q), &MapSet.member?(set, &1))
+
+    defp await_state(ok?, deadline \\ System.monotonic_time(:millisecond) + 30_000) do
+      cond do
+        ok?.(:sys.get_state(Queue)) ->
+          true
+
+        System.monotonic_time(:millisecond) > deadline ->
+          false
+
+        true ->
+          Process.sleep(20)
+          await_state(ok?, deadline)
+      end
+    end
+
+    @tag :capture_log
+    test "a task that dies without answering leaves its day unreadable, counted again at start",
+         %{dir: dir} do
+      garden!()
+      day0_ok(dir, join("A"), join("B"))
+      assert %{status: "ok"} = want = await_leaders("commons", 0)
+      rec = :sys.get_state(Queue).gardens["commons"].days[0].leaders
+      test = self()
+
+      # A real task, spawned and monitored by the Queue itself the way
+      # `start_leaders` does (`GardenLeaders.spawn_owned/2`), that never answers.
+      :sys.replace_state(Queue, fn s ->
+        {pid, m} =
+          Coordinator.GardenLeaders.spawn_owned(self(), fn ->
+            receive do
+              :never -> :ok
+            end
+          end)
+
+        send(test, {:task, pid})
+
+        s
+        |> put_in([:gardens, "commons", :days, 0, :leaders], %{
+          rec
+          | status: "pending",
+            ref: 55,
+            census: nil
+        })
+        |> Map.put(:leaders_tasks, %{m => {"commons", 0, 55, rec.for}})
+      end)
+
+      assert_receive {:task, pid}
+      Process.exit(pid, :kill)
+      assert await_state(fn st -> st.leaders_tasks == %{} end)
+      assert leaders_of(0) == %{status: "unreadable", census: nil, lines: nil}
+
+      stop_supervised!(Queue)
+      start_supervised!({Queue, data_dir: dir})
+      assert await_leaders("commons", 0) == want
+    end
+
+    test "the block survives a Queue restart; a pending or missing block is counted at start", %{
+      dir: dir
+    } do
+      garden!()
+      a = join("A")
+      b = join("B")
+      day0_ok(dir, a, b)
+      await_leaders("commons", 0)
+      TestClock.advance(day_ms())
+      t1 = next(a)
+      d1 = finish_with_files(dir, a, t1, leaders_files(1))
+      assert {:ok, "verified"} = verify_with_digests(next(b), b, d1)
+      want = {await_leaders("commons", 0), await_leaders("commons", 1, lines: true)}
+
+      stop_supervised!(Queue)
+      start_supervised!({Queue, data_dir: dir})
+      assert {leaders_of(0), leaders_of(1)} == want
+
+      # As if the Queue had stopped between a verification and its task's answer
+      # (day 1 pending) or had verified day 0 before this code (no block).
+      stop_supervised!(Queue)
+      path = Path.join(dir, "state.bin")
+      state = path |> File.read!() |> :erlang.binary_to_term()
+
+      state =
+        state
+        |> update_in([:gardens, "commons", :days, 0], &Map.delete(&1, :leaders))
+        |> update_in(
+          [:gardens, "commons", :days, 1, :leaders],
+          &%{&1 | status: "pending", ref: 7, census: nil, lines: nil}
+        )
+
+      File.write!(path, :erlang.term_to_binary(state))
+      start_supervised!({Queue, data_dir: dir})
+      assert {await_leaders("commons", 0), await_leaders("commons", 1, lines: true)} == want
+
+      # As if the Queue had stopped between day 0's and day 1's answers: day 1
+      # ok without lines although day 0 is ok.
+      _ = await_leaders("commons", 1, lines: true)
+      stop_supervised!(Queue)
+      state = path |> File.read!() |> :erlang.binary_to_term()
+
+      state =
+        update_in(state, [:gardens, "commons", :days, 1, :leaders], &%{&1 | ref: nil, lines: nil})
+
+      File.write!(path, :erlang.term_to_binary(state))
+      start_supervised!({Queue, data_dir: dir})
+      assert {await_leaders("commons", 0), await_leaders("commons", 1, lines: true)} == want
+    end
+
+    test "never shown for a day that is not verified", %{dir: dir} do
+      garden!()
+      a = join("A")
+      t = next(a)
+      finish_with_files(dir, a, t, leaders_files(0))
+      assert leaders_of(0) == nil
+      assert Queue.garden_view("commons").leadersRule.name == "lines-v1"
+    end
+  end
 end

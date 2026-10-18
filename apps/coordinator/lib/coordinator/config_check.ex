@@ -27,20 +27,29 @@ defmodule Coordinator.ConfigCheck do
   0`) closes the letter box, as it did before this check, so `0` passes there.
   A window of `0`, which consumers used to clamp to 1 ms, is refused.
 
-  The garden food keys (`garden_food_asks`, `garden_food_every_days`,
-  `garden_food_amount`, `garden_food_radius`) and the garden's
-  `garden_hands_sweep_ms` and `garden_call_timeout_ms` must be positive whole
-  numbers here. Their exact ranges (food asks 2..1000, every 1..365 days, amount
-  1..64, radius 1..32) are checked per garden when one is founded with food
-  (`Coordinator.Queue`'s `garden_spec`), where a keeper's own `foodAsks` and
-  `foodEveryDays` replace the first two.
+  The garden's `garden_hands_sweep_ms` and `garden_call_timeout_ms` must be
+  positive whole numbers here. The garden food keys must sit in their ranges
+  (`food_range/1`: `garden_food_asks` 2..1000, `garden_food_every_days`
+  1..365, `garden_food_amount` 1..64, `garden_food_radius` 1..32), so an
+  out-of-range value is refused at boot, by name, not first when a garden is
+  founded with food. `Coordinator.Queue`'s `garden_spec` reads the same
+  ranges from `food_range/1` for each garden founded with food, where a
+  keeper's own `foodAsks` and `foodEveryDays` replace the first two.
   """
+
+  # The one table of the garden food ranges (see `food_range/1`).
+  @food_ranges %{
+    garden_food_asks: 2..1000,
+    garden_food_every_days: 1..365,
+    garden_food_amount: 1..64,
+    garden_food_radius: 1..32
+  }
+  @ranged Map.keys(@food_ranges)
 
   @positive ~w(island_join_window_ms island_next_window_ms island_segment_window_ms
                island_requests_window_ms island_limit_table_max max_islands lease_ms
                discovery_lease_ms garden_letter_window_ms garden_letter_table_max
-               garden_hands_sweep_ms garden_call_timeout_ms garden_food_asks
-               garden_food_every_days garden_food_amount garden_food_radius)a
+               garden_hands_sweep_ms garden_call_timeout_ms)a
   @budget ~w(island_joins_per_address island_next_per_island island_segment_requests_per_island
              island_requests_per_address island_max_pending)a
   @non_negative ~w(island_prune_after_ms island_prune_grace_ms public_status_wait_ms
@@ -49,7 +58,16 @@ defmodule Coordinator.ConfigCheck do
 
   @doc "Every key this module checks."
   @spec keys() :: [atom]
-  def keys, do: @positive ++ @budget ++ @non_negative ++ @any_integer
+  def keys, do: @positive ++ @budget ++ @non_negative ++ @any_integer ++ @ranged
+
+  @doc """
+  The allowed range of a garden food key (`garden_food_asks`,
+  `garden_food_every_days`, `garden_food_amount`, `garden_food_radius`), as
+  checked at boot. `Coordinator.Queue`'s `garden_spec` checks a garden's
+  `foodAsks`, `foodEveryDays`, amount and radius against it too.
+  """
+  @spec food_range(atom) :: Range.t()
+  def food_range(key) when key in @ranged, do: Map.fetch!(@food_ranges, key)
 
   @doc """
   The errors in `env` (a keyword list or map of `:coordinator` config), one
@@ -86,15 +104,18 @@ defmodule Coordinator.ConfigCheck do
   defp shape(key) when key in @budget, do: :budget
   defp shape(key) when key in @non_negative, do: :non_negative
   defp shape(key) when key in @any_integer, do: :any_integer
+  defp shape(key) when key in @ranged, do: {:range, food_range(key)}
 
   # `is_integer/1` is false for booleans, floats, strings and everything else.
   defp allowed?(:positive, v), do: is_integer(v) and v > 0
   defp allowed?(:budget, v), do: is_nil(v) or (is_integer(v) and v > 0)
   defp allowed?(:non_negative, v), do: is_integer(v) and v >= 0
   defp allowed?(:any_integer, v), do: is_integer(v)
+  defp allowed?({:range, r}, v), do: is_integer(v) and v in r
 
   defp describe(:positive), do: "a positive whole number"
   defp describe(:budget), do: "nil (off) or a positive whole number"
   defp describe(:non_negative), do: "a whole number of 0 or more"
   defp describe(:any_integer), do: "a whole number (0 or less turns the cache off)"
+  defp describe({:range, r}), do: "a whole number in #{inspect(r)}"
 end

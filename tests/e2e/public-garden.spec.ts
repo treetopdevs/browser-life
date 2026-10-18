@@ -1,7 +1,7 @@
 // The shared garden's page (/garden/) against the garden-v1 fixture, served by route interception: the honesty
 // numbers, each state, each answer to a letter, the food ask and each answer to a hand (docs/garden-food-2026-10-18.md),
 // "since your last visit" with and without storage, and mock mode.
-import { expect, test, type Page, type Route } from "@playwright/test";
+import { expect, test, type Page, type Route, type TestInfo } from "@playwright/test";
 import contractFixture from "../../apps/coordinator/priv/static/garden-contract.example.json" with { type: "json" };
 
 // The tests' tsconfig carries no Node types: the one thing read from the environment is declared here.
@@ -10,7 +10,10 @@ const FIXTURE = contractFixture as Record<string, any>;
 const VIEW = "**/api/public/garden";
 const LETTERS = "**/api/public/garden/letters";
 const HANDS = "**/api/public/garden/food/hands";
-const KEY = "cadence-garden-visit:http://localhost:5174:commons";
+// The page under test is served at the configured baseURL (BL_E2E_PORT in playwright.config.ts): its origin names the
+// record the page keeps, so it is read from the test, never written down.
+const originOf = (info: TestInfo) => new URL(info.project.use.baseURL!).origin;
+const keyFor = (info: TestInfo) => `cadence-garden-visit:${originOf(info)}:commons`;
 /** The record a device keeps, in the shape the page writes (createdAt names the planting). */
 const record = (step: number, daysVerified: number, mine: string[] = [], createdAt: number = FIXTURE.createdAt) =>
   JSON.stringify({ createdAt, step, seenAt: 1792560000000, daysVerified, mine });
@@ -32,6 +35,27 @@ async function serve(page: Page, body: Json | (() => Json) = fixture()): Promise
     return json(route, typeof body === "function" ? body() : body);
   });
   return counter;
+}
+
+/** The view with no query, or one of the page's two fonts: fixed URLs, so no guess can ride in them. */
+function pinnedRequest(method: string, url: string, origin: string): boolean {
+  const u = new URL(url);
+  if (method !== "GET" || u.origin !== origin || u.search !== "" || u.hash !== "") return false;
+  return u.pathname === "/api/public/garden" || /^\/fonts\/rubik-latin(?:-italic)?\.woff2$/.test(u.pathname);
+}
+
+/**
+ * A request the garden page may make: a pinned one, or a same-origin GET of the page's own files with only Vite's own
+ * query marks (a version hash or a timestamp). A file name could still carry a guess (`/src/rest.ts`), so the test also
+ * requires every request after the first guess to be pinned or one already made before any guess existed.
+ */
+function ownRequest(method: string, url: string, origin: string): boolean {
+  if (pinnedRequest(method, url, origin)) return true;
+  const u = new URL(url);
+  if (method !== "GET" || u.origin !== origin || u.hash !== "" || u.pathname.startsWith("/api/")) return false;
+  const vite = /^(\?(?:v=[0-9a-f]{6,}|t=\d{10,}|import|direct|used)(?:&(?:v=[0-9a-f]{6,}|t=\d{10,}|import|direct|used))*)?$/;
+  const files = /^\/(?:garden\/(?:|index\.html|main\.ts|garden\.ts|garden\.css)|favicon\.svg|@vite\/(?:client|env)|(?:src|@fs|@id|node_modules)\/[\w@./+-]+\.(?:m?js|ts|css|svg))$/;
+  return files.test(u.pathname) && vite.test(u.search);
 }
 
 async function noOverflow(page: Page): Promise<void> {
@@ -364,14 +388,14 @@ test("a closed ask shows its reason and a disabled button", async ({ page }) => 
   await expect(page.locator('#g-foods [data-food="food-2"]')).toContainText("in 1 hour, so the keeper can still set it aside.");
 });
 
-test("food ask: the tab's hand is dropped at its dawn or when the server forgot it; a shared address is said", async ({ browser }) => {
-  const context = await browser.newContext();
+test("food ask: the tab's hand is dropped at its dawn or when the server forgot it; a shared address is said", async ({ browser }, testInfo) => {
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const page = await context.newPage();
   await page.clock.install({ time: FIXTURE.now });
   let body = fixture();
   const counter = await serve(page, () => body);
   await page.route(HANDS, (route) => { body = fixture((v) => { v.food.hands = 3; }); return json(route, { counted: true, called: null, food: body.food }, 201); });
-  await page.goto("http://localhost:5174/garden/");
+  await page.goto("/garden/");
   await page.locator("#food-send").click();
   await expect(page.locator("#food-send")).toBeDisabled();
   await expect(page.locator("#food-why")).toHaveText("Your hand is in for today.");
@@ -425,11 +449,222 @@ test("a view without food shows no ask", async ({ page }) => {
   }
 });
 
-test("since your last visit, and without storage", async ({ page, browser }) => {
+// ---------- who holds the field, and dawn predictions (docs/garden-predictions-2026-10-18.md) ----------
+
+const D = 131072;
+/** Day 2, the newest released day, verified with an ok block: guesses about day 3 are open. */
+const openMutate = (v: Json) => {
+  v.days[0].status = "verified"; v.days[0].verifiedAt = v.days[0].doneAt + 600_000; v.days[0].verification = "same-device-type";
+  v.days[0].leaders = {
+    status: "ok",
+    census: {
+      step: 3 * D, livingCells: 100, lineages: 7, clearLeader: "0:14",
+      top: [
+        { key: "0:14", label: "founder 14", cells: 50, share: 0.5 },
+        { key: "0:3", label: "founder 3", cells: 30, share: 0.3 },
+        { key: "48211:90377", label: "born step 48210 at 265,176", cells: 20, share: 0.2 },
+      ],
+    },
+    lines: null,
+  };
+};
+/** Then day 3 released after the guess and verified, with lines from day 2 that `winner` held. */
+const day3Mutate = (winner: string | null) => (v: Json) => {
+  openMutate(v);
+  v.clock.releasedStep = 4 * D;
+  v.days.unshift({
+    ...structuredClone(v.days[0]), day: 3, startStep: 3 * D, endStep: 4 * D, releasedAt: v.now + 3_600_000, doneAt: v.now + 4_000_000,
+    verifiedAt: v.now + 5_000_000, digest: "aa00bb11cc22dd33", letters: [], food: null,
+    leaders: {
+      status: "ok",
+      census: { step: 4 * D, livingCells: 200, lineages: 9, clearLeader: null, top: [{ key: "400001:5", label: "born step 400000 at 5,0", cells: 30, share: 0.15 }] },
+      lines: {
+        fromDay: 2,
+        groups: [
+          { key: "0:14", label: "founder 14", cells: 60, share: 0.3 },
+          { key: "0:3", label: "founder 3", cells: 20, share: 0.1 },
+          { key: "48211:90377", label: "born step 48210 at 265,176", cells: 10, share: 0.05 },
+        ],
+        rest: { cells: 110, share: 0.55 }, winner,
+      },
+    },
+  });
+};
+
+for (const width of [1280, 375]) test(`dawn predictions: a guess, its receipt after a reload, and its check at ${width}`, async ({ page }, testInfo) => {
+  await page.setViewportSize({ width, height: 900 });
+  let current = fixture(openMutate);
+  // Every request must be a same-origin GET of the page's own files (Vite's dev paths, with only Vite's own query
+  // marks) or of the view with no query: a guess could leave in a path or a query string as well as in a body.
+  // Once choosing starts, only pinned requests or ones made before any choice existed: a new file name is a leak too.
+  const sent: string[] = [];
+  const before = new Set<string>();
+  let guessed = false;
+  page.on("request", (r) => {
+    const o = originOf(testInfo);
+    if (!ownRequest(r.method(), r.url(), o)) sent.push(`${r.method()} ${r.url()}`);
+    else if (!guessed) before.add(r.url());
+    else if (!pinnedRequest(r.method(), r.url(), o) && !before.has(r.url())) sent.push(`new after the guess: ${r.method()} ${r.url()}`);
+  });
+  await serve(page, () => current);
+  await page.goto("/garden/");
+  await expect(page.locator("#g-field-row")).toBeVisible();
+  await expect(page.locator("#g-field-words")).toHaveText("At the end of day 2, founder 14 (0:14) holds 50% of 100 living cells: a clear leader (at least 10% and more than any other key).");
+  await expect(page.locator("#g-predict-words")).toHaveText("Guesses about day 3 are open until it is released to an island.");
+  await expect(page.locator("#predict-send")).toBeDisabled();
+  await expect(page.locator("#predict-choices label")).toHaveCount(4);
+  // The baseline closes before any choice is made: a request made while choosing could carry the choice too.
+  expect(before.size).toBeGreaterThan(0);
+  guessed = true;
+  await page.getByLabel("the rest (every other line)").check();
+  await expect(page.locator("#predict-send")).toBeEnabled();
+  await page.locator("#predict-send").click();
+  await expect(page.locator("#predict-answer")).toHaveText(/^Kept on this device: day 3, the rest, receipt [0-9a-f]{12}\. Nothing was sent anywhere\.$/);
+  const receipt = page.locator('#g-receipt-list li[data-receipt="3"]');
+  await expect(receipt).toHaveAttribute("data-outcome", "waiting");
+  await expect(receipt).toContainText("Waiting: day 3 is not verified yet.");
+  const hash = (await receipt.locator(".garden-digest").textContent()) ?? "";
+  expect(hash).toMatch(/^[0-9a-f]{12}$/);
+  await noOverflow(page);
+  await page.reload();
+  await expect(page.locator('#g-receipt-list li[data-receipt="3"] .garden-digest')).toHaveText(hash);
+
+  // Day 3 is verified and the rest held the field: the receipt held.
+  current = fixture(day3Mutate("rest"));
+  await page.reload();
+  await expect(receipt).toHaveAttribute("data-outcome", "held");
+  await expect(receipt).toContainText("Held: the rest held 55% of the field at day 3’s end.");
+  // The window has moved on: day 3 is the newest released day and verified, so guesses are about day 4.
+  await expect(page.locator("#g-predict-words")).toHaveText("Guesses about day 4 are open until it is released to an island.");
+  // Another history in which founder 14's line held it: the receipt did not hold.
+  current = fixture(day3Mutate("0:14"));
+  await page.reload();
+  await expect(receipt).toHaveAttribute("data-outcome", "missed");
+  await expect(receipt).toContainText("Did not hold: the line of founder 14 (0:14) held 30% of the field at day 3’s end.");
+  await noOverflow(page);
+  // A guess is never sent: the page made no request but its GETs.
+  expect(sent).toEqual([]);
+  // The allowlist itself refuses a guess carried anywhere but a body.
+  const o = originOf(testInfo);
+  for (const leak of [
+    "/garden/?choice=rest", "/garden/rest/0:14", "/garden/0:14", "/api/public/garden?receipt=ab", "/api/public/garden#rest",
+    "/api/public/gardens/commons/predictions", "/fonts/rest.woff2", "/garden/main.ts?t=rest", "/garden/main.ts?v=rest",
+    "/garden/main.ts?import&choice=rest", "/garden/main.ts#rest",
+  ]) expect(ownRequest("GET", o + leak, o), leak).toBe(false);
+  expect(ownRequest("POST", `${o}/api/public/garden`, o)).toBe(false);
+  expect(ownRequest("HEAD", `${o}/api/public/garden`, o)).toBe(false);
+  expect(ownRequest("GET", `${o}/garden/main.ts?t=1729000000000`, o)).toBe(true);
+  // A file name that passes the shape (`/@fs/rest.ts`) is caught by the after-the-guess rule: it is pinned by nothing.
+  expect(pinnedRequest("GET", `${o}/@fs/rest.ts`, o)).toBe(false);
+  expect(pinnedRequest("GET", `${o}/fonts/rubik-latin-italic.woff2`, o)).toBe(true);
+});
+
+test("dawn predictions: a guess is made against a fresh reading, so a window shut since the last poll makes no receipt", async ({ page }) => {
+  let current = fixture(openMutate);
+  await serve(page, () => current);
+  await page.goto("/garden/");
+  await page.getByLabel("the rest (every other line)").check();
+  // Day 3 was released since this page last read the garden: the guess is refused, not stamped with the old reading.
+  current = fixture((v) => {
+    openMutate(v);
+    v.clock.releasedStep = 4 * D;
+    v.days.unshift({ ...structuredClone(v.days[0]), day: 3, startStep: 3 * D, endStep: 4 * D, status: "waiting", releasedAt: v.now, doneAt: null, verifiedAt: null, digest: null, verification: null, letters: [], food: null, census: null, leaders: null });
+  });
+  await page.locator("#predict-send").click();
+  await expect(page.locator("#predict-answer")).toHaveText("Predictions open when the newest day is verified and the next is not yet released. Day 3 is not verified yet. No receipt was made for day 3.");
+  await expect(page.locator("#g-receipts")).toContainText("No receipt from this device for this planting yet.");
+  // Beside the shut button, the same reason.
+  await expect(page.locator("#predict-why")).toHaveText("Predictions open when the newest day is verified and the next is not yet released. Day 3 is not verified yet.");
+  // Day 3 released and already verified since the last poll: the window moved on to day 4. The choice made for day 3
+  // is not carried over to a guess about day 4.
+  current = fixture(openMutate);
+  await page.reload();
+  await page.getByLabel("the rest (every other line)").check();
+  current = fixture(day3Mutate("rest"));
+  await page.locator("#predict-send").click();
+  await expect(page.locator("#predict-answer")).toHaveText("The garden moved on while you chose: guesses are now about day 4, not day 3, so no receipt was made. Choose again.");
+  await expect(page.locator("#g-receipts")).toContainText("No receipt from this device for this planting yet.");
+  await expect(page.locator("#predict-send")).toBeDisabled();
+  await expect(page.locator("#predict-choices input:checked")).toHaveCount(0);
+  // A garden that cannot be read makes none either.
+  current = fixture(openMutate);
+  await page.reload();
+  await page.getByLabel("the rest (every other line)").check();
+  await page.unroute(VIEW);
+  await page.route(VIEW, (route) => json(route, { error: "busy" }, 500));
+  await page.locator("#predict-send").click();
+  await expect(page.locator("#predict-answer")).toHaveText("The garden could not be read just now, so no receipt was made; try again.");
+  await expect(page.locator("#g-receipts")).toContainText("No receipt from this device for this planting yet.");
+});
+
+test("dawn predictions: without storage the receipt lasts in this tab; a later stored guess replaces it", async ({ page, browser }, testInfo) => {
+  // Storage that refuses the first write of the receipts and takes the next ones.
+  await page.addInitScript(() => {
+    let refused = false;
+    const set = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key: string, value: string) {
+      if (key.startsWith("cadence-garden-predictions:") && !refused) { refused = true; throw new DOMException("quota", "QuotaExceededError"); }
+      return set.call(this, key, value);
+    };
+  });
+  await serve(page, () => fixture(openMutate));
+  await page.goto("/garden/");
+  await page.getByLabel("the rest (every other line)").check();
+  await page.locator("#predict-send").click();
+  await expect(page.locator("#predict-answer")).toHaveText(/^This device keeps no storage here, so the receipt lasts only while this tab is open: day 3, the rest, receipt [0-9a-f]{12}\. Nothing was sent anywhere\.$/);
+  const receipt = page.locator('#g-receipt-list li[data-receipt="3"]');
+  await expect(receipt).toContainText("You guessed the rest, from day 2");
+  // Storage works again; a changed mind is stored and replaces the tab's unstored receipt, not the other way round.
+  await page.getByLabel("the line of founder 14 (0:14)").check();
+  await page.locator("#predict-send").click();
+  await expect(page.locator("#predict-answer")).toHaveText(/^Kept on this device: day 3, the line of founder 14 \(0:14\)/);
+  await expect(page.locator("#g-receipt-list li")).toHaveCount(1);
+  await expect(receipt).toContainText("You guessed the line of founder 14 (0:14), from day 2");
+
+  // No crypto.subtle (an insecure origin): no receipt can be made, and the page says why beside the button.
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+  const bare = await context.newPage();
+  await bare.clock.setFixedTime(FIXTURE.now);
+  await bare.addInitScript(() => { Object.defineProperty(Crypto.prototype, "subtle", { configurable: true, get() { return undefined; } }); });
+  await serve(bare, () => fixture(openMutate));
+  await bare.goto("/garden/");
+  await expect(bare.locator("#g-predict-words")).toHaveText("Guesses about day 3 are open until it is released to an island.");
+  await bare.getByLabel("the rest (every other line)").check();
+  await expect(bare.locator("#predict-send")).toBeDisabled();
+  await expect(bare.locator("#predict-why")).toHaveText("This browser has no crypto.subtle here, so receipts can’t be made.");
+  await context.close();
+});
+
+test("dawn predictions: a shut window says why; a view without leaders shows no panel", async ({ page }) => {
+  let current = fixture();
+  await serve(page, () => current);
+  await page.goto("/garden/");
+  // The fixture's newest day is done, not verified.
+  await expect(page.locator("#g-predict-words")).toHaveText("Predictions open when the newest day is verified and the next is not yet released. Day 2 is not verified yet.");
+  await expect(page.locator("#predict-send")).toBeDisabled();
+  await expect(page.locator("#predict-choices")).toBeHidden();
+  await expect(page.locator("#g-field-words")).toContainText("At the end of day 1, no key clearly leads");
+  await expect(page.locator("#g-lines-words")).toHaveText("The line of founder 14 (0:14) held the field at the end of day 1: 52% of its living cells, counting day 0’s three biggest keys each with its mutants born on those two days.");
+  await expect(page.locator("#g-tally")).toContainText("the rest held the field on 0, one of the day before’s three biggest lines on 1");
+  await expect(page.locator("#predict-privacy")).toContainText("The garden has no route for guesses and this page sends none");
+
+  current = fixture((v) => { openMutate(v); v.days[0].leaders = { status: "pending", census: null, lines: null }; });
+  await page.reload();
+  await expect(page.locator("#g-predict-words")).toHaveText("Day 2 is verified; its files are still being counted.");
+
+  current = fixture((v) => { delete v.leadersRule; for (const d of v.days) delete d.leaders; });
+  await page.reload();
+  await expect(page.locator("#garden-message")).toHaveText("The garden answered.");
+  await expect(page.locator("#g-field-row")).toBeHidden();
+  await expect(page.locator("#g-predict-row")).toBeHidden();
+  await expect(page.locator("#g-step")).toHaveText("393,216");
+});
+
+test("since your last visit, and without storage", async ({ page, browser }, testInfo) => {
   await serve(page);
   await page.goto("/garden/");
   await expect(page.locator("#g-since")).toHaveText("First visit from this device. Next time, this says what changed since now.");
-  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [KEY, record(131072, 0)] as const);
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [keyFor(testInfo), record(131072, 0)] as const);
   await page.reload();
   await expect(page.locator("#g-since")).toContainText("2 days");
   await expect(page.locator("#g-since")).toContainText("262,144");
@@ -438,12 +673,12 @@ test("since your last visit, and without storage", async ({ page, browser }) => 
   await page.reload();
   await expect(page.locator("#g-since")).toHaveText(/^No change since your last visit \(.+\): still at step 393,216\.$/);
   // Planted again under the same name: no comparison, and the old "Yours" marks go.
-  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [KEY, record(393216, 2, ["ltr-4"], FIXTURE.createdAt - 86_400_000)] as const);
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [keyFor(testInfo), record(393216, 2, ["ltr-4"], FIXTURE.createdAt - 86_400_000)] as const);
   await page.reload();
   await expect(page.locator("#g-since")).toContainText("The garden was planted again since your last visit");
   await expect(page.locator("#g-waiting .garden-mine")).toHaveCount(0);
 
-  const context = await browser.newContext();
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const locked = await context.newPage();
   await locked.clock.setFixedTime(FIXTURE.now);
   await locked.addInitScript(() => {
@@ -452,34 +687,34 @@ test("since your last visit, and without storage", async ({ page, browser }) => 
   const errors: string[] = [];
   locked.on("pageerror", (e) => errors.push(e.message));
   await serve(locked);
-  await locked.goto("http://localhost:5174/garden/");
+  await locked.goto("/garden/");
   await expect(locked.locator("#g-step")).toHaveText("393,216");
   await expect(locked.locator("#g-since")).toHaveText("Nothing to compare: this device keeps no record of earlier visits.");
   expect(errors).toEqual([]);
   await context.close();
 
   // Storage that reads but will not write: the page does not promise a "next time".
-  const full = await browser.newContext();
+  const full = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const quota = await full.newPage();
   await quota.clock.setFixedTime(FIXTURE.now);
   await quota.addInitScript(() => {
     Storage.prototype.setItem = () => { throw new DOMException("The quota has been exceeded.", "QuotaExceededError"); };
   });
   await serve(quota);
-  await quota.goto("http://localhost:5174/garden/");
+  await quota.goto("/garden/");
   await expect(quota.locator("#g-since")).toHaveText("First visit from this device, and it cannot keep a record, so there will be nothing to compare next time.");
   await full.close();
 });
 
-test("polls, recomputes since-your-last-visit and counts times from the response", async ({ browser }) => {
+test("polls, recomputes since-your-last-visit and counts times from the response", async ({ browser }, testInfo) => {
   // A visitor clock five minutes after the response's `now`: relative times must still come from `now`.
-  const context = await browser.newContext();
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const page = await context.newPage();
   await page.clock.install({ time: FIXTURE.now + 5 * 60_000 });
-  await page.addInitScript(([key, value]) => { localStorage.setItem(key, value); }, [KEY, record(393216, 2)] as const);
+  await page.addInitScript(([key, value]) => { localStorage.setItem(key, value); }, [keyFor(testInfo), record(393216, 2)] as const);
   let body = fixture();
   const counter = await serve(page, () => body);
-  await page.goto("http://localhost:5174/garden/");
+  await page.goto("/garden/");
   await expect(page.locator("#g-clock")).toContainText("2 hours and 51 minutes");
   await expect(page.locator("#g-since")).toHaveText(/^No change since your last visit \(.+\): still at step 393,216\.$/);
 
@@ -507,8 +742,8 @@ test("polls, recomputes since-your-last-visit and counts times from the response
   await context.close();
 });
 
-test("a stone confirmed while an overlapping read failed is still this device's", async ({ browser }) => {
-  const context = await browser.newContext();
+test("a stone confirmed while an overlapping read failed is still this device's", async ({ browser }, testInfo) => {
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
   const page = await context.newPage();
   await page.clock.install({ time: FIXTURE.now });
   let release!: () => void;
@@ -527,7 +762,7 @@ test("a stone confirmed while an overlapping read failed is still this device's"
     return json(route, withLetter);
   });
   await page.route(LETTERS, async (route) => { await postGate; await json(route, { letter: { ...FIXTURE.letters.waiting[3], id: "ltr-8" } }, 201); });
-  await page.goto("http://localhost:5174/garden/");
+  await page.goto("/garden/");
   await expect(page.locator("#stone-send")).toBeEnabled();
   // A poll starts and hangs; the visitor sends meanwhile (a read never disables Send).
   await page.clock.runFor(60_000);
@@ -541,7 +776,7 @@ test("a stone confirmed while an overlapping read failed is still this device's"
   // Then the stone is confirmed: it is still recorded as this device's, and the next reading marks it.
   answerPost();
   await expect(page.locator('#g-waiting [data-letter="ltr-8"]')).toContainText("Yours");
-  const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null"), KEY);
+  const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null"), keyFor(testInfo));
   expect(stored?.mine).toContain("ltr-8");
   await context.close();
 });
@@ -559,12 +794,14 @@ test("mock mode in the dev server", async ({ page }) => {
   expect(requests).toEqual([]);
 });
 
-test("another coordinator and a bad link are named", async ({ page }) => {
-  await page.route("http://localhost:4199/api/public/garden", (route) => json(route, fixture(), 200, { "access-control-allow-origin": "http://localhost:5174" }));
-  await page.goto("/garden/?coordinator=http://localhost:4199&garden=..%2Fx");
-  await expect(page.locator("#garden-source")).toContainText("Reading a garden at http://localhost:4199, not this site’s own");
+test("another coordinator and a bad link are named", async ({ page }, testInfo) => {
+  // A routed (never listening) coordinator on a port that is not the page's own, so the read stays cross-origin.
+  const other = `http://localhost:${new URL(originOf(testInfo)).port === "4199" ? 4198 : 4199}`;
+  await page.route(`${other}/api/public/garden`, (route) => json(route, fixture(), 200, { "access-control-allow-origin": originOf(testInfo) }));
+  await page.goto(`/garden/?coordinator=${other}&garden=..%2Fx`);
+  await expect(page.locator("#garden-source")).toContainText(`Reading a garden at ${other}, not this site’s own`);
   await expect(page.locator("#garden-source")).toContainText("The garden name in the link is not one a garden can have");
-  await expect(page.locator("#g-fork-link")).toHaveAttribute("href", "http://localhost:4199/api/public/gardens/commons/checkpoints/4e0b7a19c3d2f856");
+  await expect(page.locator("#g-fork-link")).toHaveAttribute("href", `${other}/api/public/gardens/commons/checkpoints/4e0b7a19c3d2f856`);
 });
 
 test("a named garden is read from its own route", async ({ page }) => {
@@ -577,16 +814,16 @@ test("a named garden is read from its own route", async ({ page }) => {
 });
 
 const shots = process.env.BL_GARDEN_SHOTS;
-test("screenshots", async ({ browser }) => {
+test("screenshots", async ({ browser }, testInfo) => {
   test.skip(!shots, "set BL_GARDEN_SHOTS=<dir> to write the screenshots");
   for (const theme of ["light", "dark"] as const) {
     for (const [name, size] of [["desktop", { width: 1280, height: 900 }], ["mobile", { width: 375, height: 812 }]] as const) {
-      const context = await browser.newContext({ viewport: size, colorScheme: theme });
+      const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL, viewport: size, colorScheme: theme });
       const page = await context.newPage();
       await page.clock.setFixedTime(FIXTURE.now);
       await page.addInitScript((t) => { try { localStorage.setItem("browser-life-theme", t); } catch { /* none */ } }, theme);
       await serve(page);
-      await page.goto("http://localhost:5174/garden/");
+      await page.goto("/garden/");
       await expect(page.locator("#g-step")).toHaveText("393,216");
       await page.screenshot({ path: `${shots}/garden-${theme}-${name}.png`, fullPage: true });
       await context.close();

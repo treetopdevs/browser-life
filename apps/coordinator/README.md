@@ -86,9 +86,10 @@ Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in con
   `Coordinator.Application.start/2`): a value of the wrong shape stops the boot with a
   message naming the key. Windows, the table caps, `max_islands`, `lease_ms`,
   `discovery_lease_ms`, the garden's letter window and table cap, its hand sweep and
-  hands call timeout, and the four food keys must be positive
-  whole numbers (a window of `0`, once clamped to 1 ms, is refused; the food keys' exact
-  ranges are checked when a garden is founded with food); the budgets (`island_joins_per_address`,
+  hands call timeout must be positive
+  whole numbers (a window of `0`, once clamped to 1 ms, is refused); the four food keys must sit
+  in their ranges (asks 2..1000, every 1..365 days, amount 1..64, radius 1..32,
+  `ConfigCheck.food_range/1`), refused at boot by name; the budgets (`island_joins_per_address`,
   `island_next_per_island`, `island_segment_requests_per_island`,
   `island_requests_per_address`) and `island_max_pending` are `nil` (off) or positive
   (a config `0` is refused: switch a budget off with `nil`); `island_prune_after_ms`,
@@ -335,13 +336,14 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `census` | The newest done day's end-of-day numbers, or `null`: `day`, `step`, `individuals`, `lineages`, `maxGeneration`, `mutations`, `extinct`, `conservationOk` (each a number or boolean, or `null` when the island did not report it), `verified` (that day is verified), `source` (`"producer"`: reported by the island that ran the day; the digest, not these numbers, is what the replay checks). |
 | `tip` | `{day, step, digest, verified}` of the newest done day, or `null`. `digest` is the 16-hex-digit artifact digest. `verified` is that day's own replay (`days[].status`, `census.verified` likewise); `clock.verifiedStep` and `fork` are the prefix. |
 | `fork` | The end checkpoint of the newest day of the verified prefix (`clock.verifiedStep`: every day from 0 verified), or `null`: `{day, step, digest, checkpoint}`, `checkpoint` being the path that serves it (below). A day verified while an earlier day is not is not offered: it was replayed from a checkpoint nobody has checked. |
-| `days` | The newest released days, newest first, at most 14: `day`, `startStep`, `endStep`, `status`, `releasedAt`, `doneAt`, `verifiedAt`, `digest`, `verification`, `letters`, `food`, `census`. |
+| `days` | The newest released days, newest first, at most 14: `day`, `startStep`, `endStep`, `status`, `releasedAt`, `doneAt`, `verifiedAt`, `digest`, `verification`, `letters`, `food`, `census`, `leaders`. |
 | `days[].status` | `"waiting"` (released, no island holds it), `"growing"`, `"done"`, `"verified"`, `"diverged"`, `"failed"`, `"blocked"` (after a diverged or failed day). |
 | `days[].doneAt`, `verifiedAt`, `digest` | `null` until done / verified. |
 | `days[].verification` | `"different-device-type"`, `"same-device-type"`, or `null` when not verified. |
 | `days[].letters` | Ids of the live (not dropped) letters the day carries. |
 | `days[].food` | The id of the live food the day carries (`"food-<n>"`), or `null`. A day carries at most one. |
 | `days[].census` | As `census` without `day`, `step`, `verified`, `source`; `null` until done. |
+| `days[].leaders` | Who held the field at the day's end, counted from the day's verified files (below); `null` unless the day is verified. Added in the contract's additive way, so still `garden-v1`. |
 | `letters.perDay`, `letters.queueMax` | The garden's budget: letters one day carries; letters waiting at once. |
 | `letters.queued` | Letters waiting now. |
 | `letters.nextLanding` | Where a letter posted now would go: `{day, step, open}` (`open` = slots left on that day), or `null` when the garden takes no letters (queue full, log full, stopped or finished). |
@@ -361,7 +363,40 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `food.landing` | `{day, step}` where a food called now would land (the frontier day, at its end step, after that step's stones), or `null` when closed. |
 | `food.foods` | The newest 32 foods, newest first, live and dropped. |
 | food | `id` (`"food-<n>"`), `x`, `y`, `r`, `amount`, `calledAt` (when the K-th hand called it), `noticeUntil` (`calledAt` plus one dawn period: its day is not given to an island to run before this, so the keeper's veto always has that long; a reset that reopens the day does not restart it), `hands` (K), `landsAtStep`, `day`, `status` (the letter statuses, with the same meanings), `landedIn` (the carrying day's digest once done, else `null`), `droppedAt` (`null` unless the keeper dropped it). |
+| `leadersRule` | `{name: "lines-v1", top: 3, clearLeaderPercent: 10}`: the rule `days[].leaders` follows (always present). |
 | `limits` | `stoneRadius {min, max}`, `lettersPerAddressPerHour` (letters and hands together), `logMax` (founding plus live letters plus live foods, at most). |
+
+### Who held the field (`days[].leaders`)
+
+The rule is pre-stated in docs/garden-predictions-2026-10-18.md. A verified day's block is
+`{status, census, lines}`:
+
+- `status`: `"ok"` (counted), `"pending"` (being counted: the queue counts a day in a task of its
+  own once it is verified, at most two days at a time, so this lasts moments, or longer while many
+  verified days are counted after a start), `"unchecked"` (verified, but the replaying island did
+  not regenerate every observation file byte for byte for the accepted run, or reported no digests:
+  there are no numbers for this day) or `"unreadable"` (the files did not parse, or the count could
+  not finish; counted once more at each start of the coordinator).
+- `census` (`null` unless `ok`): `{step, livingCells, lineages, top, clearLeader}`, read from the
+  day's `lineages.tsv` rows at its end step. `top` is the three biggest lineage keys by cells (ties:
+  the smaller birth step `hi`, then the smaller cell `lo`), each `{key, label, cells, share}`; `share`
+  is cells over `livingCells`, rounded to 4 places; `label` is made from the key (`founder <lo>`,
+  `born step <s> at <x>,<y>` or `born step <s>, cell <lo>`). `clearLeader` is the biggest key when it
+  holds at least 10% of the living cells and strictly more than the second, else `null`.
+- `lines` (`null` for day 0, unless `ok`, and while the day before has no `ok` block):
+  `{fromDay, groups, rest, winner}`. Each of day `fromDay`'s three biggest keys, in its order, is
+  counted together with the keys descended from it through the mutations born on the two days
+  (both days' `mutations.tsv`, the nearest of the three when one descends from another); `groups`
+  are `{key, label, cells, share}` of this day's living cells and `rest` `{cells, share}` the cells
+  of every other key. `winner` is the group with strictly the most cells (a key, or `"rest"`), or
+  `null` on a tie or when nothing is living.
+
+The numbers come only from files of a day that is verified with the observation match (the
+replaying island's SHA-256s of the six observation files equal the producer's uploads): the bytes
+parsed are bytes a second island produced independently. Nothing else feeds them; the producer's `census` is not used.
+
+Predictions are never sent here; there is no route for them. A page may keep a visitor's guess on
+the visitor's own device and check it against these blocks once the next day is verified.
 
 ### `POST /api/public/garden/letters` and `POST /api/public/gardens/:name/letters`
 

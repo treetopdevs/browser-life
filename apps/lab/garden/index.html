@@ -70,6 +70,32 @@
               <div id="g-census"></div>
             </div>
           </section>
+          <section class="garden-row" id="g-field-row" aria-labelledby="h-field" hidden>
+            <div class="aside-label">The field</div>
+            <div class="garden-panel">
+              <h2 id="h-field">Who holds the field?</h2>
+              <div id="g-field"></div>
+            </div>
+          </section>
+          <section class="garden-row" id="g-predict-row" aria-labelledby="h-predict" hidden>
+            <div class="aside-label">Dawn predictions</div>
+            <div class="garden-panel">
+              <h2 id="h-predict">Who will hold it after the next day?</h2>
+              <p>Guess which of the newest verified day’s three biggest lines will hold the most of the field at the end of the next day, or whether the rest will. Guesses close when that day is released to an island.</p>
+              <div id="g-predict-window"></div>
+              <form id="predict-form" class="garden-form" novalidate>
+                <fieldset id="predict-choices" class="garden-choices"><legend class="fine">Your guess</legend></fieldset>
+                <div class="garden-send">
+                  <button id="predict-send" class="button primary" type="submit" aria-describedby="predict-why">Make a receipt</button>
+                  <span id="predict-why" class="fine"></span>
+                </div>
+                <p id="predict-answer" class="garden-answer" role="status" aria-live="polite"></p>
+              </form>
+              <h3>Your receipts</h3>
+              <div id="g-receipts"></div>
+              <p class="fine" id="predict-privacy">Your guess stays on this device. The garden has no route for guesses and this page sends none, so nothing is won, ranked or kept anywhere else; a receipt (the day, your choice and a fingerprint of what the page showed) convinces only you, since you could edit it. Once the next day is verified, this page checks it against the garden’s public numbers. The answer is not hidden either: each day’s end state is a public checkpoint and the physics is exact, so anyone can replay the next day before it is released. Guess for fun; a held receipt is not proof of foresight.</p>
+            </div>
+          </section>
           <section class="garden-row" aria-labelledby="h-days">
             <div class="aside-label">The days</div>
             <div class="garden-panel">

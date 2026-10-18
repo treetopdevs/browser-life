@@ -35,6 +35,7 @@
 //
 // Run from the repo root: deno run -A tests/deno/coordinator_integration.ts < /dev/null
 import { requestDevice } from "@bl/sim-gpu";
+import { noLockDenoBin } from "./lib/no_lock_deno.ts";
 import { METRICS_VERSION, PRESETS, breedPondColumns, cellCount, defaultConfig, lowbias32, worldW } from "@bl/schema";
 import { BUNDLE_FILES, INTERVENTIONS_FILE, OBSERVATION_FILES, observationDigests, parseInterventionLog, PICKS_FILE, PONDS_FILE, runExperiment, runIsland, specConfig, VERIFIED_FILES, type RunSpec, type ScheduledIntervention, type Sink, type Task } from "@bl/runner";
 
@@ -42,7 +43,13 @@ const root = Deno.cwd();
 const coordinatorDir = `${root}/apps/coordinator`;
 const port = 41099;
 const base = `http://127.0.0.1:${port}`;
-const dataDir = await Deno.makeTempDir({ prefix: "bl-coordinator-it-" });
+// One scratch directory holds the data dir and the deno shim, so the shim adds nothing a run could leave behind.
+const scratch = await Deno.makeTempDir({ prefix: "bl-coordinator-it-" });
+const dataDir = `${scratch}/data`;
+await Deno.mkdir(dataDir);
+// A deno the coordinator finds on PATH (its discovery validator, config/runtime.exs) runs with --no-lock, so this test
+// never rewrites deno.lock (tests/deno/lib/no_lock_deno.ts). Beside the data dir, not in it.
+const denoBin = await noLockDenoBin(`${scratch}/bin`);
 const host = { host: "test", adapter: "test" };
 
 let ok = true;
@@ -51,11 +58,16 @@ const check = (name: string, cond: boolean, detail = "") => {
   if (!cond) ok = false;
 };
 
+const withoutValidator = (env: Record<string, string>) => Object.fromEntries(Object.entries(env).filter(([k]) => k !== "BL_DISCOVERY_VALIDATOR"));
+
 function spawnServer() {
   return new Deno.Command("mix", {
     args: ["phx.server"],
     cwd: coordinatorDir,
-    env: { ...Deno.env.toObject(), MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir },
+    // BL_DISCOVERY_VALIDATOR is dropped (clearEnv, or the child inherits it anyway): a validator command from the
+    // caller's environment would bypass the shim.
+    env: { ...withoutValidator(Deno.env.toObject()), PATH: `${denoBin}:${Deno.env.get("PATH") ?? ""}`, MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir },
+    clearEnv: true,
     stdin: "null",
     stdout: "inherit",
     stderr: "inherit",
@@ -259,7 +271,7 @@ try {
   const outDir = `${dataDir}/stitched`;
   const stitchCli = (experiment: string) =>
     new Deno.Command(Deno.execPath(), {
-      args: ["run", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", experiment, "--out", outDir],
+      args: ["run", "--no-lock", "-A", "tools/stitch.ts", "--coordinator", base, "--experiment", experiment, "--out", outDir],
       stdin: "null",
     }).output();
   const stitch = await stitchCli("it-final-only");
@@ -483,7 +495,7 @@ try {
   const singleOut = `${dataDir}/single`;
   const single = await new Deno.Command(Deno.execPath(), {
     args: [
-      "run", "-A", "tools/run.ts", "--experiment", "it-ponds", "--preset", "ponds-small", "--conditions", pondSpec.conditions.join(","),
+      "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-ponds", "--preset", "ponds-small", "--conditions", pondSpec.conditions.join(","),
       "--seeds", "1", "--steps", String(pondSpec.steps), "--census", String(pondSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
     ],
     stdin: "null",
@@ -612,7 +624,7 @@ try {
     const flags = schedule.flatMap((e) => (e.kind === "lesion" ? ["--lesion", `${e.step}:${e.x},${e.y},${e.r}`] : ["--feed", `${e.step}:${e.x},${e.y},${e.r},${e.amount}`]));
     const singleSched = await new Deno.Command(Deno.execPath(), {
       args: [
-        "run", "-A", "tools/run.ts", "--experiment", "it-scheduled", "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
+        "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-scheduled", "--preset", "spots", "--conditions", "treatment", "--seeds", "1",
         "--steps", String(spec.steps), "--census", String(spec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut, ...flags,
       ],
       stdin: "null",
@@ -814,7 +826,7 @@ try {
     check("stitch.ts exports both bred runs", breedStitch.success && stdout(breedStitch).includes("2 written"), `${stdout(breedStitch).slice(-200)} ${new TextDecoder().decode(breedStitch.stderr).slice(0, 300)}`);
     const singleBreed = await new Deno.Command(Deno.execPath(), {
       args: [
-        "run", "-A", "tools/run.ts", "--experiment", "it-breed", "--preset", "ponds-small", "--conditions", breedSpec.conditions.join(","),
+        "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-breed", "--preset", "ponds-small", "--conditions", breedSpec.conditions.join(","),
         "--seeds", "1", "--steps", String(breedSpec.steps), "--census", String(breedSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
       ],
       stdin: "null",
@@ -824,7 +836,7 @@ try {
     check("stitch.ts exports the breeder run", breederStitch.success && stdout(breederStitch).includes("1 written"), `${stdout(breederStitch).slice(-200)} ${new TextDecoder().decode(breederStitch.stderr).slice(0, 300)}`);
     const singleBreeder = await new Deno.Command(Deno.execPath(), {
       args: [
-        "run", "-A", "tools/run.ts", "--experiment", "it-breeder", "--preset", "breeder", "--conditions", "treatment",
+        "run", "--no-lock", "-A", "tools/run.ts", "--experiment", "it-breeder", "--preset", "breeder", "--conditions", "treatment",
         "--seeds", "1", "--steps", String(breederSpec.steps), "--census", String(breederSpec.censusEvery), "--deep", "10", "--checkpoint", "0", "--out", singleOut,
       ],
       stdin: "null",
@@ -867,7 +879,7 @@ try {
     // already exited
   }
   await server.status;
-  await Deno.remove(dataDir, { recursive: true }).catch(() => {});
+  await Deno.remove(scratch, { recursive: true }).catch(() => {});
 }
 
 Deno.exit(ok ? 0 : 1);

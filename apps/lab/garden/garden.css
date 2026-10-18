@@ -49,6 +49,16 @@
 #g-food .garden-preview { margin: 4px 0 0 !important; }
 #g-food-list { margin-bottom: 14px; }
 
+/* Dawn predictions: one choice per line, each a full-width tap target. */
+.garden-choices { display: grid; gap: 8px; margin: 16px 0 0; padding: 0; border: 0; min-width: 0; }
+.garden-choices[hidden] { display: none; }
+.garden-choices legend { padding: 0; margin-bottom: 4px; }
+.garden-choice { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--surface); color: var(--text); font-weight: 500; overflow-wrap: anywhere; cursor: pointer; }
+.garden-choice input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--sun); }
+.garden-choice:has(input:focus-visible) { outline: 2px solid var(--text); outline-offset: 2px; }
+#g-field .garden-letter-id, #g-receipts .garden-letter-id { overflow-wrap: anywhere; }
+#g-predict-window .garden-preview { margin: 4px 0 0 !important; }
+
 .garden-map { margin: 0; }
 .garden-map svg { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--radius-lg); cursor: crosshair; }
 .garden-map figcaption { margin-top: 8px; }

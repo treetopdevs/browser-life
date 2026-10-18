@@ -16,8 +16,8 @@ const HAS_DENO = spawnSync("deno", ["--version"], { encoding: "utf8" }).status =
 const T = 600_000;
 
 let root = "", bundle = "", notes = "", out = "";
-const propose = (args: string[]) => spawnSync("deno", ["run", "-A", "tools/propose.ts", ...args], { cwd: REPO, encoding: "utf8", timeout: 240_000 });
-const runTs = (args: string[]) => spawnSync("deno", ["run", "-A", "tools/run.ts", ...args], { cwd: REPO, encoding: "utf8", timeout: 240_000 });
+const propose = (args: string[]) => spawnSync("deno", ["run", "--no-lock", "-A", "tools/propose.ts", ...args], { cwd: REPO, encoding: "utf8", timeout: 240_000 });
+const runTs = (args: string[]) => spawnSync("deno", ["run", "--no-lock", "-A", "tools/run.ts", ...args], { cwd: REPO, encoding: "utf8", timeout: 240_000 });
 const files = (dir: string) => readdirSync(dir).filter((f) => f.endsWith(".proposal.json")).sort();
 
 describe.skipIf(!HAS_DENO)("tools/propose.ts and tools/run.ts --start-from, spawned", () => {
@@ -113,7 +113,7 @@ describe.skipIf(!HAS_DENO)("tools/propose.ts and tools/run.ts --start-from, spaw
     expect(r.stdout).toContain(`--out ${join(forks, p.id)}`);
     expect(existsSync(forks)).toBe(false);
     // A relative --out is resolved against the caller's directory, not the repository root tools/run.ts runs from.
-    const rel = spawnSync("deno", ["run", "-A", join(REPO, "tools", "propose.ts"), "run", file, "--out", "rel-forks", "--print"], { cwd: root, encoding: "utf8", timeout: 240_000 });
+    const rel = spawnSync("deno", ["run", "--no-lock", "-A", join(REPO, "tools", "propose.ts"), "run", file, "--out", "rel-forks", "--print"], { cwd: root, encoding: "utf8", timeout: 240_000 });
     expect(rel.status, rel.stderr).toBe(0);
     expect(rel.stdout).toContain(`--out ${join(realpathSync(root), "rel-forks", p.id)}`); // deno reports the real cwd (/var is /private/var on macOS)
     // A hand-edited deep cadence, with its argv, id and approval recomputed, still does not fit the source (its manifest says 10).

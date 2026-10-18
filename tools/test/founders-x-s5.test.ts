@@ -17,6 +17,7 @@ describe("founders-x S5 plan identity", () => {
       "deno",
       [
         "eval",
+        "--no-lock",
         `
         import { interleaveGenomes } from "./tools/founders-x.ts";
         const a = ["A0","A1","A2","A3"];
@@ -49,7 +50,7 @@ describe("founders-x S5 plan identity", () => {
       cpSync(join(BASELINE, "fd-subjects.json"), join(out, "fd-subjects.json"));
       // B plan needs cloud sources; copy existing B plan inputs by pointing --out at a dir
       // that already has fd-subjects; planB tolerates missing cloud sources.
-      execFileSync("deno", ["run", "-A", "tools/founders-x.ts", "plan", "--out", out], {
+      execFileSync("deno", ["run", "--no-lock", "-A", "tools/founders-x.ts", "plan", "--out", out], {
         cwd: REPO,
         encoding: "utf8",
       });

@@ -434,7 +434,7 @@ describe("a cached export is checked with the run's own arm (tools/stitch.ts)", 
     const port = (server.address() as { port: number }).port;
     const stitch = async (name: string): Promise<{ code: number; stdout: string; stderr: string }> => {
       try {
-        const r = await run("deno", ["run", "-A", "tools/stitch.ts", "--experiment", name, "--coordinator", `http://127.0.0.1:${port}`, "--out", out, "--allow-unverified"], { cwd: ROOT });
+        const r = await run("deno", ["run", "--no-lock", "-A", "tools/stitch.ts", "--experiment", name, "--coordinator", `http://127.0.0.1:${port}`, "--out", out, "--allow-unverified"], { cwd: ROOT });
         return { code: 0, ...r };
       } catch (e) {
         const x = e as { code: number; stdout: string; stderr: string };

@@ -23,7 +23,7 @@ const check = (ok: boolean, what: string) => {
 };
 
 async function tool(args: string[]): Promise<{ code: number; out: string }> {
-  const p = new Deno.Command("deno", { args: ["run", "-A", `${REPO}/tools/discovery.ts`, ...args], stdout: "piped", stderr: "piped", cwd: REPO }).outputSync();
+  const p = new Deno.Command("deno", { args: ["run", "--no-lock", "-A", `${REPO}/tools/discovery.ts`, ...args], stdout: "piped", stderr: "piped", cwd: REPO }).outputSync();
   const out = new TextDecoder().decode(p.stdout) + new TextDecoder().decode(p.stderr);
   return { code: p.code, out };
 }
@@ -75,7 +75,7 @@ const ids = manifest.orderedCaseIds;
 const fixtureOf = async (id: string) => (await readJSON<{ fixtureId: string }>(`${R}/cases/${id}/case.json`)).fixtureId;
 
 // 2. Kill a run mid-case: an interrupted case leaves a retained partial attempt.
-const child = new Deno.Command("deno", { args: ["run", "-A", `${REPO}/tools/discovery.ts`, "run", "--root", R, "--host", "host-a", "--concurrency", "1"], stdout: "null", stderr: "null", cwd: REPO }).spawn();
+const child = new Deno.Command("deno", { args: ["run", "--no-lock", "-A", `${REPO}/tools/discovery.ts`, "run", "--root", R, "--host", "host-a", "--concurrency", "1"], stdout: "null", stderr: "null", cwd: REPO }).spawn();
 const slow = (await Promise.all(ids.map(async (id) => [id, await fixtureOf(id)] as const))).find(([, f]) => f === "reacting-ledger")![0];
 const t0 = Date.now();
 while (Date.now() - t0 < 120_000) {
@@ -171,7 +171,7 @@ const rep1 = await readJSON<{ reductionDigest: string }>(`${R}/report.json`);
 
 // 6c. Root lock: no second writing invocation beside a live one; a killed holder's lock vanishes with it.
 {
-  const holder = new Deno.Command("deno", { args: ["eval", `const f = await Deno.open(${JSON.stringify(`${R}/locks/root.lock`)}, { create: true, write: true }); console.log(await f.tryLock(true)); await new Promise((r) => setTimeout(r, 60000));`], stdout: "piped" }).spawn();
+  const holder = new Deno.Command("deno", { args: ["eval", "--no-lock", `const f = await Deno.open(${JSON.stringify(`${R}/locks/root.lock`)}, { create: true, write: true }); console.log(await f.tryLock(true)); await new Promise((r) => setTimeout(r, 60000));`], stdout: "piped" }).spawn();
   const reader = holder.stdout.getReader();
   await reader.read(); // the holder has the lock
   r = await tool(["run", "--root", R, "--host", "host-a"]);

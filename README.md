@@ -49,6 +49,8 @@ deno run -A tests/deno/gpu_golden.ts
 npx playwright test
 ```
 
+`BL_E2E_PORT` picks the e2e dev-server port (default 5174), so two checkouts can run the browser tests at once.
+
 ```bash
 cd apps/coordinator && mix test
 ```
