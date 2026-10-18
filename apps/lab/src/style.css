@@ -423,6 +423,18 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .naturalist-cannot-list, .naturalist-records { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 6px; color: var(--muted); font-size: var(--t-micro); line-height: 1.5; }
 .naturalist-rule p { margin: 10px 0 0; color: var(--muted); font-size: var(--t-micro); line-height: 1.5; overflow-wrap: anywhere; }
 .naturalist .sha { overflow-wrap: anywhere; word-break: break-all; }
+/* The proposer's suggestion beside a note: words, a Try button, and the offline commands, wrapped (never scrolled sideways). */
+.naturalist-suggestion { display: grid; gap: 6px; margin: 6px 0 0; padding: 8px 0 0 10px; border-left: 2px solid var(--line-soft); min-width: 0; }
+.naturalist-suggestion p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.naturalist-suggestion-head { color: var(--text); font-weight: 700; font-size: var(--t-small); }
+.naturalist-suggestion-facts { color: var(--text); }
+.naturalist-suggestion-line { color: var(--muted); font-size: var(--t-micro); }
+.naturalist-suggestion-line .badge { margin-right: 2px; vertical-align: 1px; }
+.naturalist-offer { display: grid; gap: 6px; justify-items: start; }
+.naturalist-try { max-width: 100%; white-space: normal; text-align: left; }
+.naturalist-commands { min-width: 0; }
+.naturalist-commands p { margin: 8px 0 0; color: var(--muted); font-size: var(--t-micro); }
+.naturalist-command { margin: 6px 0 0; padding: 8px; background: var(--raised); border: 1px solid var(--line-soft); border-radius: 6px; color: var(--text); font-size: var(--t-micro); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-all; max-width: 100%; overflow-x: hidden; }
 #card-hint { margin-top: 8px; }
 .card-command { display: block; margin-top: 4px; padding: 5px 8px; border-radius: 6px; background: var(--raised); color: var(--text); font: var(--t-micro) var(--mono); overflow-wrap: anywhere; user-select: all; }
 .card { width: min(640px, 100vw - 32px); max-width: none; height: min(820px, 100dvh - 32px); max-height: none; margin: auto; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg); color: var(--text); flex-direction: column; overflow: hidden; }

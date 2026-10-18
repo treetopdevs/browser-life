@@ -397,7 +397,7 @@ export function ruleFor(signal: string, side: Side): RuleRow {
   return row;
 }
 
-const HYPOTHESIS: Record<Action, string> = {
+export const HYPOTHESIS: Record<Action, string> = {
   feed: "the departure is held by the nutrient supply",
   drain: "the departure is held by the nutrient supply",
   lesion: "the departure is held by the standing bodies and does not re-form from the survivors and the dissolved pool",

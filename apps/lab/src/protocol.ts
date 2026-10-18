@@ -303,9 +303,14 @@ export type ToWorker =
   | { type: "step"; count: number }
   | { type: "view"; mode: GpuViewMode; rect: ViewRect }
   | { type: "resize"; width: number; height: number }
-  | { type: "lesion"; x: number; y: number; r: number }
-  /** Feed (`amount` > 0) or drain (< 0) nutrient in a disc: a logged intervention that changes total matter. */
-  | { type: "feed"; x: number; y: number; r: number; amount: number }
+  /**
+   * A wound in a disc. `world`, when set (Field notes' Try it here names the world its suggestion was made for), is the worker's
+   * number for the world (`loaded`'s world): a lesion or feed for a world since replaced is refused (`refused` with its request)
+   * and changes nothing. The brush omits it and edits whatever world is on screen when the message is handled.
+   */
+  | { type: "lesion"; x: number; y: number; r: number; world?: number }
+  /** Feed (`amount` > 0) or drain (< 0) nutrient in a disc: a logged intervention that changes total matter. `world` as for "lesion". */
+  | { type: "feed"; x: number; y: number; r: number; amount: number; world?: number }
   | { type: "probe"; x: number; y: number }
   /** Breeder mode on or off: stop at each pond boundary and wait for "pick". Turning it off lets the rule choose for a cycle that is waiting. */
   | { type: "breeder"; on: boolean }
