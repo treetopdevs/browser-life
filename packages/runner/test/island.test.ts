@@ -325,8 +325,9 @@ describe("island idle wait", () => {
       throw new Error(`unexpected ${path}`);
     });
     await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, idleMs: 1, signal: controller.signal });
-    expect(ISLAND_CAPABILITIES).toEqual(["ponds-v1", "ponds-v2", "interventions-v1"]);
-    expect(bodies).toEqual([{ capabilities: ["ponds-v1", "ponds-v2", "interventions-v1"] }, { capabilities: ["ponds-v1", "ponds-v2", "interventions-v1"] }]);
+    const caps = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"];
+    expect(ISLAND_CAPABILITIES).toEqual(caps);
+    expect(bodies).toEqual([{ capabilities: caps }, { capabilities: caps }]);
   });
 
   // Review 5: Stop can abort while `/next` is in flight and it comes back
