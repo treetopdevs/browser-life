@@ -16,6 +16,7 @@
     "build:discovery": "vite build --config apps/lab/vite.discovery.config.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.0.0",
     "@webgpu/types": "^0.1.74",
