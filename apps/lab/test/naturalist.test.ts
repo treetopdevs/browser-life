@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { PRESETS, RULE_VERSION, presetConfig, presetIdentity } from "@bl/schema";
 import { BellScorer, SIGNALS, SignalExtractor, type Receipt } from "../../../tools/lib/bell.ts";
 import { LiveBell, NATURALIST_BASELINES, baselineAt, censusProblem, decodeEnvelope, encodeEnvelope, envelopeAt, headerProblem, pick, type EnvelopeHeader } from "../src/naturalist-score.ts";
-import { HORIZON, NaturalistModel, headerMismatch, matchWorld, rootOf, viewStrings, type Asset, type NaturalistCensus, type WorldManifest } from "../src/naturalist.ts";
+import { HORIZON, NaturalistModel, headerMismatch, matchWorld, rootOf, viewStrings, type Asset, type NaturalistCensus, type NoteView, type WorldManifest } from "../src/naturalist.ts";
 import { NATURALIST_PRESETS, SERIES_FIELDS, firstIntervention, naturalistReads, type SeriesFields } from "../src/naturalist-series.ts";
 import { assetRoot, fetchBaseline } from "../src/naturalist-panel.ts";
 import { RECORDS, baselineSpecs, buildHeader, gradientNumbers, headerText, parseV0Spots, parseV1Null, spotsNumbers } from "../../../tools/lib/naturalist-envelope.ts";
@@ -316,6 +316,8 @@ function planted(opts: { asset?: boolean } = {}) {
   if (opts.asset !== false) model.setAsset("gradient-m3", ready("gradient-m3"));
   return { model, m, requests };
 }
+/** A note's content without its key: the key names the world (generation and run id), so the same note on a reloaded world has another. */
+const sans = (notes: NoteView[]) => notes.map(({ key: _key, ...n }) => n);
 const feed = (model: NaturalistModel, world: number, runId: string, recs: SeriesFields[], over: Partial<NaturalistCensus> = {}) => recs.forEach((c) => model.onCensus(msg(world, runId, c, over)));
 
 /** The gradient-m3 baseline with every spread huge, so every z is about 0 and nothing rings. */
@@ -375,7 +377,7 @@ describe("NaturalistModel", () => {
   it("a rewind to t keeps censuses up to t and recomputes, and the replay gives the same notes", () => {
     const { model, m } = planted();
     feed(model, 1, m.runId, fixtureRecs);
-    const before = model.view().notes;
+    const before = sans(model.view().notes);
     expect(before.length).toBeGreaterThan(0);
     // A restore of this run at t = 12,000.
     model.onLoaded(m, 12_000, 2);
@@ -383,19 +385,19 @@ describe("NaturalistModel", () => {
     expect(v.readTo).toBe(12_000);
     expect(v.notes).toEqual([]);
     feed(model, 2, m.runId, fixtureRecs.slice(120));
-    expect(model.view().notes).toEqual(before);
+    expect(sans(model.view().notes)).toEqual(before);
     // A jump forks the run id; its history up to the step it lands on is this run's.
     const fork = { ...m, runId: `${m.runId}-bk2x9` };
     model.onLoaded(fork, 13_000, 3);
     expect(model.view().readTo).toBe(13_000);
     feed(model, 3, fork.runId, fixtureRecs.slice(130));
-    expect(model.view().notes).toEqual(before);
+    expect(sans(model.view().notes)).toEqual(before);
     // A sibling fork (a second jump through a checkpoint the first one inherited) is the same planting, the same history.
     const sibling = { ...m, runId: `${m.runId}-bzz01` };
     model.onLoaded(sibling, 11_000, 4);
     expect(model.view().readTo).toBe(11_000);
     feed(model, 4, sibling.runId, fixtureRecs.slice(110));
-    expect(model.view().notes).toEqual(before);
+    expect(sans(model.view().notes)).toEqual(before);
     expect(rootOf(`${m.runId}-bk2x9-bzz01`)).toBe(m.runId);
     expect(rootOf("gradient-m3-s1-mgb2xq")).toBe("gradient-m3-s1-mgb2xq");
     // Another run at a later step is a late join.
@@ -560,13 +562,13 @@ describe("NaturalistModel", () => {
   it("a restore between censuses of the same history keeps its notes", () => {
     const { model, m } = planted();
     feed(model, 1, m.runId, fixtureRecs.slice(0, 150));
-    const before = model.view().notes;
+    const before = sans(model.view().notes);
     expect(before.length).toBeGreaterThan(0);
     model.onLoaded(m, 15_040, 2);
     const v = model.view();
     expect(v.state).toBe("rings");
     expect(v.readTo).toBe(15_000);
-    expect(v.notes).toEqual(before);
+    expect(sans(v.notes)).toEqual(before);
     feed(model, 2, m.runId, fixtureRecs.slice(150));
     expect(model.view().readTo).toBe(16_000);
     // A census off the baseline's grid stops the reading and says so.

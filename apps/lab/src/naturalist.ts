@@ -7,6 +7,8 @@ import { SIGNALS, SignalExtractor, corpusRuns, type Receipt } from "../../../too
 import { fmtValue, fmtZ, group, phrase, textOf } from "../../../tools/lib/notebook.ts";
 import { LiveBell, NATURALIST_BASELINES, baselineAt, censusProblem, headerProblem, pick, seriesCellProblem, type EnvelopeHeader, type LiveRing, type Side } from "./naturalist-score.ts";
 import { NATURALIST_CADENCE, NATURALIST_HORIZON, NATURALIST_PRESETS, firstIntervention, type SeriesFields } from "./naturalist-series.ts";
+// Types only: naturalist-suggest.ts (which brings the proposer and @bl/runner with it) is loaded by the panel when a note is filed.
+import type { SuggestWorld, Suggestion } from "./naturalist-suggest.ts";
 
 /** The cadence, window, burn-in and horizon the rules note fixes for both presets (a header must say the same). */
 export const CADENCE = NATURALIST_CADENCE;
@@ -115,7 +117,28 @@ export type Asset = { kind: "loading" } | { kind: "ready"; header: EnvelopeHeade
 export type Chip = "Measured" | "Unclear" | "Not yet measured";
 export type PanelState = "none" | "no-baseline" | "loading" | "unavailable" | "late" | "listening" | "quiet" | "rings" | "touched" | "stopped" | "ended";
 
+/** A note's identity: the world's generation and run id, its (signal, side), and its receipt's last census. */
+export const noteKey = (gen: number, runId: string, r: { signal: string; side: Side; receipt: { endStep: number } }): string => `${gen}:${runId}:${r.signal}:${r.side}:${r.receipt.endStep}`;
+
+/** One hand edit, as the lab's Wound or Feed/Drain sends it. */
+export type HandEntry = { kind: "lesion"; x: number; y: number; r: number } | { kind: "feed"; x: number; y: number; r: number; amount: number };
+export type Suggester = (ring: LiveRing, world: SuggestWorld, header: EnvelopeHeader) => Suggestion;
+
+/** Whether "Try it here" is offered for a suggestion, and the lines said beside it. */
+export interface Offer {
+  state: "offered" | "stale" | "sent" | "unknown" | "tried" | "tried-other" | "failed" | "touched" | "loading" | "refused-spec" | "control";
+  /** The button's words when offered, else null. */
+  button: string | null;
+  lines: string[];
+}
+export type SuggestionView =
+  | { kind: "pending"; text: string }
+  | { kind: "failed"; text: string }
+  | { kind: "ready"; s: Suggestion; offer: Offer; sameAs: string | null; bench: Standing; before: string };
+
 export interface NoteView {
+  /** noteKey: one note of one world. */
+  key: string;
   signal: string;
   label: string;
   side: Side;
@@ -127,6 +150,8 @@ export interface NoteView {
   receiptLine: string;
   /** Set when the world was changed by hand after this note was filed: the step of the change. */
   filedBefore: number | null;
+  /** The proposer's suggestion for it (null on a world the suggestions do not cover). */
+  suggestion: SuggestionView | null;
 }
 export interface Standing {
   text: string;
@@ -182,6 +207,27 @@ interface Store {
   touchedAt: number | null;
 }
 
+/** A Try sent for the world on screen: its note, and whether the lab has logged it (the step) or refused it (why). */
+interface Tried {
+  gen: number;
+  runId: string;
+  key: string;
+  state: "sent" | "landed" | "refused" | "unknown";
+  step: number | null;
+  reason: string | null;
+}
+export type TryResult = { ok: true; entries: HandEntry[] } | { ok: false; reason: string };
+
+export interface ModelDeps {
+  /**
+   * Applies a suggestion's entries as ordinary hand edits (main.ts's Wound and Feed/Drain messages) to world `world`, the generation
+   * the suggestion was made for: the worker refuses them for any other world. Called only by `tryHere`.
+   */
+  apply?: (entries: HandEntry[], world: number) => void;
+  /** A world is being planted, restored or opened. */
+  loading?: () => boolean;
+}
+
 export class NaturalistModel {
   private gen: number | null = null;
   private manifest: WorldManifest | null = null;
@@ -196,11 +242,31 @@ export class NaturalistModel {
   /** What stopped it: the world's own failure, or an error the lab's worker did not handle (which may leave the world running). */
   private failedBy: "world" | "worker" = "world";
 
+  private suggester: { kind: "none" } | { kind: "ready"; fn: Suggester } | { kind: "failed"; reason: string } = { kind: "none" };
+  /** Per note: its suggestion, or why the proposer's rules threw for it. */
+  private suggestions = new Map<string, Suggestion | { threw: string }>();
+  private tried: Tried | null = null;
+  /** The earliest change by hand the page has heard of on the world on screen (its log, `onTouched`, a census), even after reading stopped. */
+  private handAt: number | null = null;
+
   /** `request(preset)`: fetch that preset's baseline (called once per preset, on the first matching world). */
-  constructor(private readonly request: (preset: string) => void) {}
+  constructor(private readonly request: (preset: string) => void, private readonly deps: ModelDeps = {}) {}
+
+  /** The proposer's rules, once the panel has loaded them (naturalist-suggest.ts `suggestFor`), or why they did not load. */
+  setSuggester(s: Suggester | { failed: string }): void {
+    this.suggester = typeof s === "function" ? { kind: "ready", fn: s } : { kind: "failed", reason: s.failed };
+    this.suggestions.clear();
+  }
+  /** Whether a note is filed and the proposer's rules have not been asked for yet. */
+  wantsSuggester(): boolean {
+    return this.suggester.kind === "none" && this.rings().length > 0 && this.match?.kind === "match" && this.header !== null;
+  }
 
   onLoaded(manifest: WorldManifest, step: number, world: number): void {
     this.gen = world;
+    this.tried = null;
+    this.handAt = firstIntervention(manifest.interventions);
+    this.suggestions.clear();
     this.manifest = manifest;
     this.failed = false;
     this.failedBy = "world";
@@ -267,6 +333,16 @@ export class NaturalistModel {
 
   /** A change by hand logged while the world is paused (the worker says so at once): notes filed so far are marked before the next census stops the reading. */
   onTouched(world: number, runId: string, step: number): void {
+    // Only a Try still waiting (or one an unrelated error left unknown) can be what this logged edit was; after a refusal the Try
+    // was not applied, so a later edit is an ordinary change by hand. (The worker's messages carry no request id: a brush edit
+    // logged while a Try waits is still taken for the Try.)
+    const t = this.tried;
+    if (t && t.gen === world && t.runId === runId && (t.state === "sent" || t.state === "unknown")) {
+      t.state = "landed";
+      t.step = step;
+      t.reason = null;
+    }
+    if (world === this.gen && this.store?.runId === runId && (this.handAt === null || step < this.handAt)) this.handAt = step;
     const s = this.store;
     if (world !== this.gen || !s || s.runId !== runId || s.stop) return;
     if (s.touchedAt === null || step < s.touchedAt) s.touchedAt = step;
@@ -322,6 +398,7 @@ export class NaturalistModel {
   }
 
   onCensus(msg: NaturalistCensus): void {
+    if (msg.world === this.gen && msg.touched !== null && this.store?.runId === msg.runId && (this.handAt === null || msg.touched < this.handAt)) this.handAt = msg.touched;
     if (msg.world !== this.gen || this.failed) return;
     const s = this.store;
     if (!s || msg.runId !== s.runId || !s.fromStart || s.stop || s.ended) return;
@@ -363,6 +440,116 @@ export class NaturalistModel {
     if (this.bell) this.pushBell(s.vectors.length - 1);
   }
 
+  /**
+   * The lab refused the hand edit a Try sent (`certain`: the worker's `refused` for a lesion or feed), or reported an error while a
+   * Try was waiting (not certain: its messages name no request, so the edit may still be logged). A refusal is said, and Try is
+   * offered again only while the world is still untouched and has not failed; after an error nothing more is offered on this world.
+   */
+  onApplyRefused(reason: string, certain = true): void {
+    const t = this.tried;
+    if (!t || t.gen !== this.gen || t.state !== "sent") return;
+    t.state = certain ? "refused" : "unknown";
+    t.reason = reason;
+  }
+
+  /** The world a suggestion is made for: the one on screen. */
+  private suggestWorld(): SuggestWorld | null {
+    const m = this.manifest, s = this.store;
+    if (!m || !s || this.gen === null || this.match?.kind !== "match") return null;
+    return { gen: this.gen, runId: s.runId, presetId: m.presetId, seed: m.seed, cfg: m.cfg, neutral: this.match.neutral };
+  }
+
+  /**
+   * The suggestion for a filed ring, computed once per note (validating a feed builds the start world), or why the proposer's
+   * rules threw for it (an unknown signal or preset): that note then says so, and the rest of the panel still draws.
+   */
+  private suggestionOf(r: LiveRing): Suggestion | { threw: string } | null {
+    const w = this.suggestWorld();
+    if (this.suggester.kind !== "ready" || !w || !this.header) return null;
+    const key = noteKey(w.gen, w.runId, r);
+    let sug = this.suggestions.get(key);
+    if (!sug) {
+      try {
+        sug = this.suggester.fn(r, w, this.header);
+      } catch (e) {
+        sug = { threw: e instanceof Error ? e.message : String(e) };
+      }
+      this.suggestions.set(key, sug);
+    }
+    return sug;
+  }
+
+  /** Whether Try it here is offered for `sug` now, and why not. Checked when drawn and again on the click. */
+  private offerFor(sug: Suggestion): Offer {
+    const s = this.store;
+    const none = (state: Offer["state"], ...lines: string[]): Offer => ({ state, button: null, lines });
+    if (!s || sug.gen !== this.gen || sug.runId !== s.runId) return none("stale", "This suggestion was made for a world that is no longer on screen, so nothing is applied from it.");
+    const lines: string[] = [];
+    const t = this.tried?.gen === this.gen && this.tried.runId === s.runId ? this.tried : null;
+    if (t && t.key === sug.key && t.state === "sent") return none("sent", "Sent to the lab: waiting for it to log the change.");
+    if (t && t.key === sug.key && t.state === "unknown") return none("unknown", `The lab reported an error before it logged the change (${t.reason}). Whether it was applied is not known, so nothing more is offered on this world.`);
+    if (t && t.key === sug.key && t.state === "landed") {
+      const at = t.step ?? sug.S;
+      return none(
+        "tried",
+        `Tried here at step ${group(at)}${at !== sug.S ? `, not step ${group(sug.S)}` : ""}: one ${sug.action === "lesion" ? "wound" : sug.action} logged as a change by hand. The naturalist stopped reading, so it will not say whether the prediction held in this world; that is decided only offline, between the source and fork runs.`,
+      );
+    }
+    if (t && t.key !== sug.key && t.state !== "refused") return none("tried-other", "Another suggestion was tried on this world, so this one is not offered here.");
+    if (t && t.key === sug.key && t.state === "refused") lines.push(`The lab did not apply it: ${t.reason}.`);
+    if (this.failed) return none("failed", ...lines, "The world stopped, so nothing can be applied to it.");
+    const touched = s.stop?.kind === "touched" ? s.stop.step : (s.touchedAt ?? this.handAt);
+    if (touched !== null) return none("touched", ...lines, `The world was changed by hand at step ${group(touched)}, so this is not offered here any more: the naturalist reads no world after a change by hand.`);
+    if (this.deps.loading?.()) return none("loading", ...lines, "A world is being planted, restored or opened, so nothing is applied now.");
+    if (sug.refused) return none("refused-spec", ...lines, `The proposer's validators refuse this run (${sug.refused}), so there is nothing to try.`);
+    if (sug.action === "control" || !sug.tryLabel || !sug.entries.length) return none("control", ...lines, "A replay control has nothing to apply here: it is an offline check that a second run of this world replays the first, with the commands below.");
+    return { state: "offered", button: sug.tryLabel, lines };
+  }
+
+  /**
+   * A person clicked Try it here on note `key`. Everything is checked again; if it is still offered, the world is marked tried at
+   * once (a second click applies nothing) and `apply` is called exactly once with the suggestion's entries, never anything else.
+   */
+  tryHere(key: string): TryResult {
+    // A refusal changes nothing: the panel redraws, and the offer says why.
+    const refuse = (reason: string): TryResult => ({ ok: false, reason });
+    const ring = this.gen !== null && this.store ? this.rings().find((r) => noteKey(this.gen!, this.store!.runId, r) === key) : undefined;
+    if (!ring) return { ok: false, reason: "This suggestion was made for a world that is no longer on screen, so nothing is applied from it." };
+    const sug = this.suggestionOf(ring);
+    if (!sug) return refuse("The proposer's rules have not loaded, so there is nothing to try.");
+    if ("threw" in sug) return refuse(`The proposer's rules failed for this note (${sug.threw}), so there is nothing to try.`);
+    const offer = this.offerFor(sug);
+    if (offer.state !== "offered") return refuse(offer.lines[offer.lines.length - 1]);
+    this.tried = { gen: sug.gen, runId: sug.runId, key, state: "sent", step: null, reason: null };
+    const entries: HandEntry[] = sug.entries.map((e) => (e.kind === "lesion" ? { kind: "lesion", x: e.x, y: e.y, r: e.r } : { kind: "feed", x: e.x, y: e.y, r: e.r, amount: e.amount }));
+    this.deps.apply?.(entries, sug.gen);
+    return { ok: true, entries };
+  }
+
+  /** The suggestion view for each note, with "same run as" between notes whose fork specs are one. */
+  private suggestionViews(rings: LiveRing[]): (SuggestionView | null)[] {
+    if (this.suggester.kind === "failed") {
+      const text = `The proposer's rules did not load (${this.suggester.reason}), so no suggestion is shown and nothing can be tried.`;
+      return rings.map(() => ({ kind: "failed", text }));
+    }
+    if (this.suggester.kind === "none") return rings.map(() => ({ kind: "pending", text: "Working out the proposer's suggestion…" }));
+    const sugs = rings.map((r) => this.suggestionOf(r));
+    return sugs.map((s): SuggestionView | null => {
+      if (!s) return null;
+      if ("threw" in s) return { kind: "failed", text: `The proposer's rules failed for this note (${s.threw}), so no suggestion is shown for it and nothing can be tried.` };
+      const same = sugs.filter((o): o is Suggestion => o !== null && !("threw" in o) && o !== s && o.specHash === s.specHash).map((o) => `${o.label.toLowerCase()} (${o.side})`);
+      return {
+        kind: "ready",
+        s,
+        offer: this.offerFor(s),
+        sameAs: same.length ? `The same run as the suggestion for ${same.join(" and ")}: one fork answers both, each with its own prediction.` : null,
+        bench: { text: "Whether these rules make good experiments, or beat a random intervention: that is the bench's question (docs/naturalist-bench-v0-2026-10-18.md), and the bench has not run. This suggestion carries no score.", chip: "Not yet measured" },
+        before:
+          "Try it here is a change by hand like any wound or feed, made only when you click: it lands at the step the world is on then, not at the suggested step, on a world with no untouched twin, and it is logged and counted like a brush stroke (saved only when the world is saved). It is not the proposal's fork. The naturalist stops reading at the next census, so it will not say here whether the prediction held.",
+      };
+    });
+  }
+
   /** The rings so far, filed: by the receipt's first step, then by its smallest |z|, largest first, then the signal table. */
   rings(): LiveRing[] {
     if (!this.bell) return [];
@@ -387,7 +574,9 @@ export class NaturalistModel {
     const readTo = s.recs.length ? s.recs[s.recs.length - 1].step : null;
     const touched = s.stop?.kind === "touched" ? s.stop.step : s.touchedAt;
     const reading = !s.stop && s.touchedAt === null && !s.ended && !this.failed;
-    const notes = this.rings().map((r) => noteView(r, h, touched, reading));
+    const rings = this.rings();
+    const sv = this.suggestionViews(rings);
+    const notes = rings.map((r, i) => noteView(r, h, touched, reading, noteKey(this.gen!, s.runId, r), sv[i]));
     const filing = notes.length ? `Filed by the step where its first ${group(h.W)} censuses in a row beyond the threshold begin, counted from step ${group(h.burnIn)}. That step is not an onset, and notes filed together are not said to cause one another.` : null;
     const readLine = readTo === null ? "Nothing read yet." : `Read to t=${group(readTo)}, every census from the first.`;
     let state: PanelState, badge: string, status: string, detail: string | null = null;
@@ -451,7 +640,7 @@ export function noteSentence(r: LiveRing, h: EnvelopeHeader): string {
   return `${phrase(r.signal, r.side, h.cadence)}: ${fmtValue(r.signal, rc.value)} at step ${group(rc.startStep)}, against a neutral median there of ${fmtValue(r.signal, rc.median)}. ${thresholdWords(h, r.side)} for ${group(h.W)} censuses in a row, from step ${group(rc.startStep)} to step ${group(rc.endStep)}; the weakest of them was ${fmtZ(rc.minAbsZ)} spreads ${dir} the median.`;
 }
 
-function noteView(r: LiveRing, h: EnvelopeHeader, touched: number | null, reading: boolean): NoteView {
+function noteView(r: LiveRing, h: EnvelopeHeader, touched: number | null, reading: boolean, key: string, suggestion: SuggestionView | null): NoteView {
   const rc = r.receipt;
   const stretch = r.stretch.ongoing
     ? reading
@@ -459,6 +648,7 @@ function noteView(r: LiveRing, h: EnvelopeHeader, touched: number | null, readin
       : `Still beyond the threshold at its last census read, step ${group(r.stretch.endStep)}: ${group(r.stretch.censuses)} censuses in a row.`
     : `Beyond the threshold for ${group(r.stretch.censuses)} censuses in a row, to step ${group(r.stretch.endStep)}.`;
   return {
+    key,
     signal: r.signal,
     label: textOf(r.signal).label,
     side: r.side,
@@ -468,6 +658,7 @@ function noteView(r: LiveRing, h: EnvelopeHeader, touched: number | null, readin
     receipt: { ...rc, spread: r.spread },
     receiptLine: `${r.signal} ${r.side} · steps ${group(rc.startStep)} to ${group(rc.endStep)} · value ${fmtValue(r.signal, rc.value)} against median ${fmtValue(r.signal, rc.median)}, spread ${fmtValue(r.signal, r.spread)} · weakest ${fmtZ(rc.minAbsZ)} spreads`,
     filedBefore: touched,
+    suggestion,
   };
 }
 
@@ -512,6 +703,10 @@ function cannotFor(h: EnvelopeHeader): string[] {
       ? `A threshold calibrated on neutral runs can still be crossed by neutral dynamics alone: ${n.nullCheck.k} of ${n.nullCheck.of} fresh runs rang, upper bound ${pct(n.nullCheck.upper95 ?? 1)}.`
       : `A threshold calibrated on neutral runs can still be crossed by neutral dynamics alone, and this one is a single order statistic: Z* = ${h.threshold.Z} is the largest of ${n.calibRuns ?? 0} calibration scores, set by one run, and the next largest was ${n.calibSecond !== null ? fmtZ(n.calibSecond) : "not recorded"}. So it rings only on a world that departs far more than any other calibration run did, and its held-out check (${n.nullCheck.k} of ${n.nullCheck.of}, upper bound ${pct(n.nullCheck.upper95 ?? 1)}) is weak. Z* was set with each run scored against the other ${h.envelope.runs.length - 1}; this world is held against all ${h.envelope.runs.length}.`,
     "Nothing about cause, mechanism or importance.",
+    "Whether a suggestion beside a note is a good experiment, or whether the proposer's rules beat a random intervention: that is the bench's question (docs/naturalist-bench-v0-2026-10-18.md), and the bench has not run.",
+    "Whether a suggestion's prediction holds: Try it here lands later than the suggested step, on a world with no untouched twin, and the naturalist stops reading after any change by hand. A prediction is decided only offline, between a source run and its fork, and no command decides it yet.",
+    "Where a departure is concentrated: no census records it, so every suggestion aims at the jar disc, close to the whole jar.",
+    ...(h.rule === "bell-v1-A" ? [`For ${presetName(h.preset)}, whether the offline proposer would file a note at all: its notebook rings at bell v0's calibrated Z*, over all thirteen signals, not at this panel's rule.`] : []),
     `It sees only its ${NUMBER_WORDS[h.signals.length] ?? group(h.signals.length)} signals, nothing before step ${group(h.burnIn)}, nothing after step ${group(h.horizon)}, nothing after you wound or feed the world, and nothing of a world it did not watch from its first census.`,
   ];
 }
@@ -537,5 +732,13 @@ function ruleFor(h: EnvelopeHeader): RuleView {
 
 /** Every string a view can show, for the wording tests. */
 export function viewStrings(v: NaturalistView): string[] {
-  return [v.badge, v.status, v.detail ?? "", v.filing ?? "", v.readLine ?? "", ...v.notes.flatMap((n) => [n.label, n.sentence, n.stretch, n.receiptLine, ...n.chips]), ...v.standing.flatMap((s) => [s.text, s.chip ?? ""]), ...v.hedge.flatMap((s) => [s.text, s.chip ?? ""]), ...v.cannot, ...(v.rule ? [v.rule.name, v.rule.threshold] : [])];
+  return [v.badge, v.status, v.detail ?? "", v.filing ?? "", v.readLine ?? "", ...v.notes.flatMap((n) => [n.label, n.sentence, n.stretch, n.receiptLine, ...n.chips, ...suggestionStrings(n.suggestion)]), ...v.standing.flatMap((s) => [s.text, s.chip ?? ""]), ...v.hedge.flatMap((s) => [s.text, s.chip ?? ""]), ...v.cannot, ...(v.rule ? [v.rule.name, v.rule.threshold] : [])];
+}
+
+/** Every string a note's suggestion can show (commands included). */
+export function suggestionStrings(sv: SuggestionView | null): string[] {
+  if (!sv) return [];
+  if (sv.kind !== "ready") return [sv.text];
+  const s = sv.s;
+  return [s.facts, s.reason, s.prediction.statement, s.tryLabel ?? "", s.source.line, s.fork.line, s.proposerSource.line, ...s.proposerCommands, s.proposerCaveat, ...s.caveats, sv.offer.button ?? "", ...sv.offer.lines, sv.sameAs ?? "", sv.bench.text, sv.bench.chip ?? "", sv.before];
 }
