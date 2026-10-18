@@ -126,9 +126,61 @@ Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in con
   the numbers were computed. It carries only `counts`, `activeIslands`, `deviceTypes` and `updatedAt`.
   `/api/status`, `/api/experiments/:name` and `/api/discovery/status` need the admin
   token.
+* `GET /api/status` also carries two keys for the operator page, computed outside the
+  Queue process by `CoordinatorWeb.OpsStatus`: `limits` (`islands`, the island table's
+  size; `maxIslands`, `islandMaxPending`, `islandPruneAfterMs`, `islandPruneGraceMs`;
+  `budgets.join`, `.next`, `.segment` and `.requests`, each `{limit, windowMs}` with
+  `limit` `null` when off; `gardenIslandToken`, whether a garden island token is
+  configured, never the token; `unset`, present only when one of these keys is
+  missing from config, naming it: its value is then `null` here while its consumer
+  applies a built-in default (`island_requests_per_address`, whose default is off, is
+  never named); and `invalid`, present only when one is set to something other than an
+  integer or `nil` (or a budget window to `nil`: a window has no "off"), naming it, its
+  value then `null` so the response still encodes),
+  all read from config at call time; and
+  `capabilityNeeds` (experiment => condition => the sorted capabilities its run's
+  segments need, by the `/api/next` rules above, held to `Queue.next_task/2` by
+  `test/coordinator_web/ops_status_test.exs`). Nothing counts refusals (429s, the 503
+  at the island bound) or forgotten islands, and island capabilities are never stored,
+  so neither is reported.
 * CORS: production allows no cross-origin caller unless `BL_CORS_ORIGINS` names one, and
   refuses to start unless each is a whole https origin as a browser sends it
   (`https://host` or `https://host:port`, lowercase, no wildcard, path or slash).
+
+### Operator page
+
+`priv/static/index.html` (served at `/index.html`; `/` redirects to it) is a single static
+page with one inline script, no build step and nothing loaded from elsewhere. It asks for
+the admin token, keeps it in memory only, and sends it only to `/api/status` and
+`/api/discovery/status`; each garden's card reads the public `/api/public/gardens/:name`
+without it. It polls three seconds after the previous poll settled, only while the tab
+is visible, backing off to 30 seconds while polls fail; a failed poll (a timeout, a 5xx)
+keeps the last view, dimmed, and a 401 clears it and stops polling until a token is
+entered. Hiding the tab cancels the next poll; a new Connect cancels the poll in flight,
+and an empty Connect never replaces a token the page holds. While text on the page is
+selected it holds the view, so a line can be copied.
+It shows totals, experiments (kind, the capabilities their runs need, and open segments:
+pending or running), work by capability (gardens left out; runs with open segments, of
+which a run can have one produced at a time, open segments, and done segments not yet
+verified, an upper bound on replay work, which can go out several at once; this is what
+the work needs, not how much of it waits for a capable island), each garden's day state with its keeper actions, failures, divergences,
+observation mismatches, islands by device type and by runner (the 200 most recently
+seen listed), the configured limits and the discovery plane. It only reads: keeper
+actions (requeue a failed or diverged day, drop a waiting letter) are printed as `curl`
+lines with `$BL_ADMIN_TOKEN` written literally, and only for names, days and letter ids
+that pass the coordinator's format rules (the experiment-name rule, `[0-9]{1,9}`,
+`ltr-[0-9]{1,9}`). A day to requeue is taken from the garden view's newest days and from
+the admin failures and divergences, so one older than the days shown is still offered.
+Neither snapshot is known to be the newer (the public view is cached for
+`garden_cache_ms`), so a day the admin records list as failed or diverged is offered even
+when the view shows it otherwise, with the conflict said; a requeue of a day in any other
+state is refused with 409.
+A same-device-type replay is shown as "replayed here, not yet verified elsewhere".
+Server text is put on the page as text, never
+parsed as markup (`test/coordinator_web/status_page_test.exs`;
+`tests/e2e/coordinator-ops.spec.ts` checks it in a browser against
+`test/fixtures/ops-status.example.json`, which `ops_status_test.exs` holds to the keys of a
+real response). The rules it was built to are in `docs/ops-dashboard-2026-10-18.md`.
 
 ## The garden (contract `garden-v1`)
 
