@@ -1,16 +1,19 @@
-// The session file (`cadence-garden.session`, version 1; docs/pond-keeper-v0-2026-10-17.md): the lab run
+// The session file (`cadence-garden.session`, version 2; docs/pond-keeper-v0-2026-10-17.md and v1): the lab run
 // manifest's history fields plus the settled final state, the log of firsts and the session card's
 // numbers. It is a superset of the lab run manifest, so `tools/run.ts --picks-from <file>` replays it as it
-// replays one: picks, wounds and feeds as logged, checked against the one checkpoint entry the file holds.
+// replays one: picks, wounds, feeds and pressures as logged, checked against the one checkpoint entry the file holds.
+// Version 1 (rule set firsts-v0, no pressure) is still read; this lab writes version 2 (firsts-v1).
 // Pure functions and plain data, no DOM and no storage: the worker builds the file, the page only saves it,
 // and a Deno script can import this module to check a file it did not write.
 import { PRESETS, presetConfig, type InitParams, type Intervention, type WorldConfig } from "@bl/schema";
 import { labHistory, sameConfig, type ObserverSettings } from "@bl/runner";
-import { FIRSTS_RULESET, type FirstsEntry, type FirstsSnapshot, type FirstsSummary } from "@bl/metrics";
+import { FIRSTS_RULESET, FIRSTS_RULESET_V0, type FirstsEntry, type FirstsSnapshot, type FirstsSummary } from "@bl/metrics";
 import type { ReplayReading, RunManifest, SessionFacts } from "./protocol.ts";
 
 export const SESSION_FORMAT = "cadence-garden.session" as const;
-export const SESSION_VERSION = 1 as const;
+/** The version this lab writes, and every version it reads. */
+export const SESSION_VERSION = 2 as const;
+export const SESSION_VERSIONS = [1, 2] as const;
 
 export interface SessionCard {
   summary: FirstsSummary;
@@ -19,7 +22,7 @@ export interface SessionCard {
 
 export interface SessionFile {
   format: typeof SESSION_FORMAT;
-  version: typeof SESSION_VERSION;
+  version: (typeof SESSION_VERSIONS)[number];
   // The lab run manifest's history fields: tools/run.ts reads these.
   runId: string;
   presetId: string;
@@ -35,7 +38,7 @@ export interface SessionFile {
   checkpoints: [{ step: number; file: "session-final"; hash: string; interventions: number }];
   /** The step the world was settled at, the physics hash there (`stateHash`), and how many logged interventions it holds. */
   final: { step: number; stateHash: string; interventions: number };
-  firsts: { rules: typeof FIRSTS_RULESET; watchedFrom: number | null; entries: FirstsEntry[] };
+  firsts: { rules: typeof FIRSTS_RULESET | typeof FIRSTS_RULESET_V0; watchedFrom: number | null; entries: FirstsEntry[] };
   card: SessionCard;
   /** The exact tools/run.ts command; `--picks-from` names the file's own name. */
   replay: string;
@@ -144,7 +147,7 @@ export function sessionFileError(file: unknown): string | null {
   }
   if (!isObj(f)) return "not a session file: expected a JSON object";
   if (f.format !== SESSION_FORMAT) return `not a session file: its format is ${JSON.stringify(f.format)}, not “${SESSION_FORMAT}”`;
-  if (f.version !== SESSION_VERSION) return `session file version ${JSON.stringify(f.version)}: this lab reads version ${SESSION_VERSION}`;
+  if (f.version !== 1 && f.version !== 2) return `session file version ${JSON.stringify(f.version)}: this lab reads versions ${SESSION_VERSIONS.join(" and ")}`;
   for (const k of ["runId", "presetId", "startHash", "replay", "createdAt", "adapter"] as const) if (!isStr(f[k])) return `${k} is missing or not text`;
   if (!isStep(f.seed)) return "seed is not a whole number";
   if (!isStep(f.ruleVersion)) return "ruleVersion is not a whole number";
@@ -160,7 +163,8 @@ export function sessionFileError(file: unknown): string | null {
   let last = 0;
   for (let i = 0; i < f.interventions.length; i++) {
     const iv: unknown = f.interventions[i];
-    if (!isObj(iv) || !isStep(iv.step) || (iv.kind !== "lesion" && iv.kind !== "feed" && iv.kind !== "pick")) return `interventions[${i}] is not a pick, a lesion or a feed`;
+    if (!isObj(iv) || !isStep(iv.step) || (iv.kind !== "lesion" && iv.kind !== "feed" && iv.kind !== "pick" && iv.kind !== "pressure")) return `interventions[${i}] is not a pick, a lesion, a feed or a pressure`;
+    if (iv.kind === "pressure" && f.version === 1) return `interventions[${i}] is a pressure, which a version 1 file cannot hold: pressures came with version 2`;
     if (iv.step < last) return `interventions[${i}] (at t=${iv.step}) comes after one at t=${last}: the log must run in step order`;
     if (iv.step > fin.step) return `interventions[${i}] is at t=${iv.step}, after the file’s final step t=${fin.step}`;
     last = iv.step;
@@ -170,7 +174,9 @@ export function sessionFileError(file: unknown): string | null {
   if (!Array.isArray(ck) || ck.length !== 1 || !isObj(ck[0])) return "checkpoints must hold exactly one entry, the final state";
   if (ck[0].step !== fin.step || ck[0].hash !== fin.stateHash || ck[0].interventions !== fin.interventions) return "the file’s checkpoint entry and its final state disagree";
   const fr = f.firsts;
-  if (!isObj(fr) || fr.rules !== FIRSTS_RULESET) return `firsts must name the rule set “${FIRSTS_RULESET}”`;
+  // The rule set goes with the version: a version 1 file was written under firsts-v0, a version 2 file under firsts-v1.
+  const rules = f.version === 1 ? FIRSTS_RULESET_V0 : FIRSTS_RULESET;
+  if (!isObj(fr) || fr.rules !== rules) return `a version ${f.version} file’s firsts must name the rule set “${rules}”`;
   if (!(fr.watchedFrom === null || isStep(fr.watchedFrom)) || !Array.isArray(fr.entries)) return "firsts must give watchedFrom and a list of entries";
   for (const e of fr.entries) if (!isObj(e) || !isStr(e.id) || !isStr(e.name) || !isStep(e.step) || typeof e.already !== "boolean" || typeof e.detail !== "string") return "a firsts entry is malformed";
   const card = f.card;
@@ -192,9 +198,13 @@ export function sessionFileError(file: unknown): string | null {
  * did not stop at logs no pick.
  */
 export function interventionFacts(interventions: readonly Intervention[], pickNotes: ReadonlyMap<number, boolean>, replay: ReplayReading | null, at: { step: number; cycles: number; cyclesBefore: number } = { step: 0, cycles: 0, cyclesBefore: 0 }): SessionFacts {
-  const facts: SessionFacts = { picks: { total: 0, byHand: 0, byRule: 0, unknown: 0 }, wounds: 0, feeds: 0, drains: 0, replay, step: at.step, cycles: at.cycles, cyclesBefore: at.cyclesBefore };
+  const facts: SessionFacts = { picks: { total: 0, byHand: 0, byRule: 0, unknown: 0 }, wounds: 0, feeds: 0, drains: 0, replay, step: at.step, cycles: at.cycles, cyclesBefore: at.cyclesBefore, pressures: { changes: 0, latest: null } };
   for (const iv of interventions) {
-    if (iv.kind === "lesion") facts.wounds++;
+    // A pressure changes the rule's score, not a cycle's donors: it is counted apart, never as a pick.
+    if (iv.kind === "pressure") {
+      facts.pressures.changes++;
+      facts.pressures.latest = iv.score;
+    } else if (iv.kind === "lesion") facts.wounds++;
     else if (iv.kind === "feed") {
       if (iv.amount > 0) facts.feeds++;
       else if (iv.amount < 0) facts.drains++;

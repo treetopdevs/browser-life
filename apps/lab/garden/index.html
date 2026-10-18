@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3f1ec" />
+    <!-- A hidden route (docs/garden-page-v0-2026-10-17.md): no canonical link, so no social tags; noindex; not in the sitemap or the nav. -->
+    <meta name="robots" content="noindex" />
+    <meta name="description" content="The shared garden: one world that volunteer islands grow a day at a time, how far it has grown, how long it has slept, and the stones visitors drop in it." />
+    <title>The shared garden · Cadence Garden</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/site.css" />
+    <link rel="stylesheet" href="/garden/garden.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="site-brand" href="/"
+          aria-label="Cadence Garden home"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path class="bm-sun" d="M8 9a8 8 0 0 1 16 0z"/><rect class="bm-lid" x="9" y="10.5" width="14" height="2.6" rx="1.3"/><path class="bm-jar" d="M8 14.5h16a3 3 0 0 1 3 3V26a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-8.5a3 3 0 0 1 3-3z"/><circle class="bm-life" cx="10.5" cy="25.6" r="1.5"/><circle class="bm-life" cx="15.6" cy="23.2" r="2.1"/><circle class="bm-life" cx="21.3" cy="20.4" r="2.7"/></svg><span>Cadence<span class="brand-light"> Garden</span></span></a>
+        <nav class="site-nav"
+          aria-label="Primary"><a href="/">Home</a><a href="/lab/">Lab</a><a href="/worlds/">Worlds</a><a href="/how-it-works/">How it works</a><a href="/research/">Journal</a><a href="/participate/">Join in</a><a href="/status/">Status</a></nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-intro shell">
+        <p class="eyebrow">The shared garden · the commons</p>
+        <h1>One world, grown in turns.</h1>
+        <p
+          class="lede">The commons is one big storm world that volunteer islands grow a day at a time, at most one day each dawn. It grows only while someone tends it, and this page says so: how far it has grown, how long it has slept, and which days a second island has replayed. Anyone can drop a stone in it.</p>
+      </section>
+      <section class="shell garden-section">
+        <p class="status-message" id="garden-message" role="status" aria-live="polite">Reading the garden…</p>
+        <p class="garden-source" id="garden-source" hidden></p>
+        <div id="garden-body" hidden>
+          <section class="garden-row" aria-labelledby="h-state">
+            <div class="aside-label">The clock</div>
+            <div class="garden-panel">
+              <h2 id="h-state">Is it growing?</h2>
+              <div id="g-state"></div>
+              <div class="status-grid" id="g-clock"></div>
+              <p class="fine" id="g-clock-note"></p>
+            </div>
+          </section>
+          <section class="garden-row" aria-labelledby="h-since">
+            <div class="aside-label">This device</div>
+            <div class="garden-panel">
+              <h2 id="h-since">What changed since you last looked?</h2>
+              <div id="g-since"></div>
+            </div>
+          </section>
+          <section class="garden-row" aria-labelledby="h-tending">
+            <div class="aside-label">The islands</div>
+            <div class="garden-panel">
+              <h2 id="h-tending">Who tends it?</h2>
+              <div id="g-tending"></div>
+            </div>
+          </section>
+          <section class="garden-row" aria-labelledby="h-verify">
+            <div class="aside-label">The replays</div>
+            <div class="garden-panel">
+              <h2 id="h-verify">Does it replay the same?</h2>
+              <div id="g-verify"></div>
+            </div>
+          </section>
+          <section class="garden-row" aria-labelledby="h-census">
+            <div class="aside-label">The census</div>
+            <div class="garden-panel">
+              <h2 id="h-census">Who’s living there?</h2>
+              <div id="g-census"></div>
+            </div>
+          </section>
+          <section class="garden-row" aria-labelledby="h-days">
+            <div class="aside-label">The days</div>
+            <div class="garden-panel">
+              <h2 id="h-days">Which days are done?</h2>
+              <div id="g-days"></div>
+            </div>
+          </section>
+          <section class="garden-row" aria-labelledby="h-letters">
+            <div class="aside-label">The letters</div>
+            <div class="garden-panel">
+              <h2 id="h-letters">What has been dropped in?</h2>
+              <div id="g-letters"></div>
+            </div>
+          </section>
+          <section class="garden-row" aria-labelledby="h-write">
+            <div class="aside-label">Today’s letter</div>
+            <div class="garden-panel">
+              <h2 id="h-write">Drop a stone</h2>
+              <p>A stone is a wound at a place: where it lands, bodies turn to waste and their stored energy to heat. It lands at the end of a day and is public from the moment you send it. It carries a place and a size, and nothing about you.</p>
+              <div class="garden-write">
+                <form id="garden-form" class="garden-form" novalidate>
+                  <div class="garden-fields">
+                    <label>Across (x)<input id="stone-x" name="x" type="number" inputmode="numeric" step="1" min="0" required /></label>
+                    <label>Down (y)<input id="stone-y" name="y" type="number" inputmode="numeric" step="1" min="0" required /></label>
+                    <label>Radius (r)<input id="stone-r" name="r" type="number" inputmode="numeric" step="1" value="8" required /></label>
+                  </div>
+                  <p id="stone-preview" class="garden-preview" aria-live="polite"></p>
+                  <div class="garden-send">
+                    <button id="stone-send" class="button primary" type="submit" aria-describedby="stone-why">Send the stone</button>
+                    <span id="stone-why" class="fine"></span>
+                  </div>
+                  <p id="stone-answer" class="garden-answer" role="status" aria-live="polite"></p>
+                  <p id="g-courtesy" class="fine"></p>
+                </form>
+                <figure class="garden-map">
+                  <svg id="stone-map" viewBox="0 0 512 512" aria-hidden="true" focusable="false"></svg>
+                  <figcaption class="fine">Geometry only: the world’s outline, the stones waiting (grey), yours (ringed) and this one (sun). Click to choose the place. It is not a picture of the world.</figcaption>
+                </figure>
+              </div>
+            </div>
+          </section>
+          <section class="garden-row" aria-labelledby="h-fork">
+            <div class="aside-label">The fork</div>
+            <div class="garden-panel">
+              <h2 id="h-fork">Can I take a copy?</h2>
+              <div id="g-fork"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="shell prose-grid">
+        <div class="aside-label">Reading the numbers</div>
+        <div
+          class="prose"><h2>Honest about time</h2><p>The garden has no server of its own growing it. Islands, browser tabs lending their GPU, run one day of steps each; when nobody comes, it sleeps, and this page says for how long. Missed dawns do not pile up: an island that comes after a quiet week gets one day, not seven.</p><p>A day counts once a second island has replayed it and got the same state, bit for bit. When both ran on the same browser and GPU, it was replayed here, not yet verified elsewhere; a different browser or GPU may still be the same computer. Replayed means the same rules produced the same state; it does not make anything in the garden a result.</p><a class="text-link" href="/how-it-works/">How the replays work →</a></div>
+      </section>
+      <script type="module" src="/garden/main.ts"></script>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p><strong>Cadence Garden</strong><br />A garden of tiny sealed worlds.</p>
+        <nav
+          aria-label="Footer"><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="https://github.com/treetopdevs/browser-life">Source code</a></nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/theme.ts"></script>
+  </body>
+</html>

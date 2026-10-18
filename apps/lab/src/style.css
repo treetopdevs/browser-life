@@ -317,7 +317,7 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .pool-legend span { display: flex; align-items: center; gap: 5px; }
 .subheading { margin: 16px 0 6px; color: var(--muted); font-size: var(--t-small); font-weight: 600; }
 .lineages { display: grid; gap: 5px; }
-.lineages > div { display: grid; grid-template-columns: 8px 1fr 42px; align-items: center; gap: 7px; font-size: var(--t-micro); }
+.lineages > div { display: grid; grid-template-columns: 8px 1fr 42px auto; align-items: center; gap: 7px; font-size: var(--t-micro); }
 .lineages i { display: block; width: 8px; height: 8px; border-radius: 2px; }
 .lineages .bar { height: 6px; overflow: hidden; border-radius: 3px; background: var(--raised); }
 .lineages .bar b { display: block; height: 100%; }
@@ -330,6 +330,30 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .text-link:hover { text-decoration-color: var(--text); }
 .lineage-open { margin-top: 12px; }
 .lineage-open[hidden] { display: none; }
+
+/* ---------- pond keeper v1: the pressure dial, auto-breed, keep a lineage ---------- */
+/* What the rule breeds for: its own control, apart from the ranking used while picking. */
+.pressure { margin: 0 0 14px; }
+.pressure .field { margin-bottom: 6px; }
+.pressure-says { margin: 0 0 6px; }
+.pressure-state { margin-top: 7px; }
+.pressure-state .badge { margin-right: 4px; white-space: normal; }
+.play-verb { margin: 14px 0 0; }
+.play-verb .subheading { margin: 0 0 8px; }
+.play-verb .hint { margin: 8px 0 0; }
+.play-verb .row { margin: 0; }
+.keep-chip { display: flex; align-items: center; gap: 8px; font-size: var(--t-small); }
+.keep-chip[hidden], .keep-where[hidden], #keep-none[hidden] { display: none; }
+.keep-chip i { display: block; width: 10px; height: 10px; border-radius: 3px; border: 1px solid var(--control-line); }
+.keep-chip .mono { font-size: var(--t-micro); }
+.keep-where { margin: 6px 0 0; color: var(--text); font-size: var(--t-small); line-height: 1.5; }
+.keep-where .badge { white-space: normal; }
+.lineages .keep { min-height: 24px; padding: 1px 8px; font-size: var(--t-micro); }
+.lineages .keep[aria-pressed="true"] { color: var(--text); border-color: var(--control-line); background: var(--raised); font-weight: 700; }
+#btn-keep[hidden] { display: none; }
+#btn-keep[aria-pressed="true"] { background: var(--raised); font-weight: 700; }
+#lineage-keep[aria-pressed="true"] { background: var(--raised); font-weight: 700; }
+#lineage-keep[hidden] { display: none; }
 
 /* ---------- what happened first: the log of firsts and the session card ---------- */
 .firsts .firsts-lede { margin: -4px 0 12px; }
@@ -346,6 +370,18 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .firsts-rules-list { margin: 10px 0 0; display: grid; gap: 2px; font-size: var(--t-micro); line-height: 1.45; }
 .firsts-rules-list dt { margin-top: 8px; color: var(--text); font-weight: 600; }
 .firsts-rules-list dd { margin: 0; color: var(--muted); }
+/* Next up: the first three rungs not yet reached, each with its progress. A bar of progress is not a lit state, so it stays in ink. */
+.nextup { margin: 0 0 14px; }
+.nextup .subheading { margin: 0 0 8px; }
+.nextup-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.nextup-list:empty { display: none; }
+.rung { display: grid; gap: 4px; }
+.rung-name { color: var(--text); font-size: var(--t-small); font-weight: 600; }
+.rung-bar { appearance: none; -webkit-appearance: none; display: block; width: 100%; height: 6px; border: 0; border-radius: 3px; background: var(--raised); overflow: hidden; }
+.rung-bar::-webkit-progress-bar { background: var(--raised); }
+.rung-bar::-webkit-progress-value { background: var(--muted); border-radius: 3px; }
+.rung-bar::-moz-progress-bar { background: var(--muted); border-radius: 3px; }
+.rung-says { color: var(--muted); font-size: var(--t-micro); line-height: 1.45; overflow-wrap: anywhere; }
 #card-hint { margin-top: 8px; }
 .card-command { display: block; margin-top: 4px; padding: 5px 8px; border-radius: 6px; background: var(--raised); color: var(--text); font: var(--t-micro) var(--mono); overflow-wrap: anywhere; user-select: all; }
 .card { width: min(640px, 100vw - 32px); max-width: none; height: min(820px, 100dvh - 32px); max-height: none; margin: auto; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg); color: var(--text); flex-direction: column; overflow: hidden; }
