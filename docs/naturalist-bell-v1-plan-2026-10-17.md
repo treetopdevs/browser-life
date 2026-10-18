@@ -307,7 +307,7 @@ $22 if every call were retried. The yes asked for covers the maximum.
 ## Readout (2026-10-18, after the runs)
 
 **The runs.** All 120 jobs finished between 18:06 on 17 October and 00:47 on 18 October, three at a time on
-the local Mac, every one with exit 0: 70 nulls and 50 twins. They used 4.4 GB under `runs/bell-v1-*` in the
+the local Mac, every one with exit 0: 70 nulls and 50 twins. They used about 4.6 GB (4,613,669,015 bytes) under `runs/bell-v1-*` in the
 main checkout. The launcher and the scorers were reviewed by Codex Sol before any output was read; see
 `tools/bell-v1-launch.ts`, `tools/bell1.ts` and the PR. The commands:
 
@@ -358,18 +358,22 @@ All 50 twins were valid. Every one equals its base through step 200,000 and firs
 
 What the numbers show, which does not change the reading:
 
-1. **The same two signals again.** Z*_pair comes from `dominantShare`: a five-site nudge changed which lineage
-   dominates in seeds 5 and 9 (D 5.7 and 4.1), and nothing else moved. Scoring the pairs after the fact on A's
-   eleven signals gives Z* = 2.58 from the nudges. Against that, L96 would be above on 10 of 10, F on 8 of 10,
-   L64 on 5 of 10 and nudge2 on 1 of 10. That is a post-hoc look at seen data, not a pass. It is a hypothesis a
-   v2 could fix in advance and test on new twins.
-2. **The unit drowns the event.** A lesion that removes 15,000 to 26,000 living cells scores a `livingCells`
-   z of only 0.9 to 5.2. The spread is taken across the 10 treatment worlds, whose living cells differ by tens
-   of thousands. A between-world unit is wide for a within-world event. A v2 could take its unit from the
-   nudge pairs' own differences instead.
-3. **Chaos is slow here.** Every nudge differs from its base at the first census after S, but its D stays near
-   1 on most signals. In these worlds a nudge stays a nudge for at least 5,000 steps, so a well-chosen unit
-   has room to work.
+1. **The same two signals again.** Z*_pair is set by `dominantShare`. A five-site nudge moved the largest
+   lineage's share in seeds 5 and 9 (D 5.7 and 4.1). Other signals moved less: in seed 9, `fusions` 2.6,
+   `fissions` 1.4 and `lineageShannon` 1.0. Scoring the pairs after the fact on A's eleven signals gives Z* =
+   2.58 from the nudges. Against that, L96 would be above on 10 of 10, F on 8 of 10, L64 on 5 of 10 and nudge2
+   on 1 of 10. That is a post-hoc look at seen data, not a pass. It is a hypothesis a v2 could fix in advance
+   and test on new twins.
+2. **Healing within the window.** At S + 100 an L96 lesion's `livingCells` z is −4.0 to −6.9, against a
+   spread of 3,747 cells across the 10 treatment worlds. The windowed D on that signal is only 0.9 to 5.2,
+   because the score takes the smallest |z| over 10 censuses (1,000 steps) and the cells partly regrow inside
+   them. Two things work against an acute lesion: the between-world unit, and a persistence the healing
+   outruns. A v2 could take its unit from the nudge pairs' own differences, or score the first census after
+   S on its own.
+3. **Low scores are not slow chaos.** Nudges score a median D of 1.04, but D measures a sustained departure in
+   units of the between-world spread. It does not measure how fast a twin diverges. The seed-3 nudge and nudge2
+   twins already differ by 2,870 living cells at step 204,600. How fast a nudge grows in these worlds is left
+   open.
 
 ### What this means for part C
 
