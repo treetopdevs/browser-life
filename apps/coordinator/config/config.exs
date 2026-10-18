@@ -142,7 +142,30 @@ config :coordinator,
     "ponds-small" => {128, 128},
     "wild-storm-large" => {512, 512},
     "breeder" => {256, 256}
-  }
+  },
+  # Each preset's light, {lightBase, lightAmp, seasonAmp} (packages/schema's
+  # presets, held to them by packages/runner/test/coordinator-presets.test.ts):
+  # a scheduled sun (docs/garden-sun-2026-10-18.md) is refused at creation when
+  # its scaled light would leave 0..255, as the runner's `sunError` would refuse
+  # it on every island, and a garden letter offers only the percents it takes.
+  # A preset missing here takes no sun. `light_conditions` are the conditions
+  # that change a preset's light; an experiment with one of them takes no sun,
+  # since this map is the preset's own light.
+  world_light: %{
+    "spots" => {40, 160, 0},
+    "gradient" => {20, 220, 0},
+    "spots-m3" => {40, 160, 0},
+    "gradient-m3" => {20, 220, 0},
+    "soup" => {40, 160, 0},
+    "seasons" => {20, 160, 60},
+    "large" => {30, 200, 0},
+    "archipelago" => {20, 220, 0},
+    "ponds" => {40, 160, 0},
+    "ponds-small" => {40, 160, 0},
+    "wild-storm-large" => {20, 170, 60},
+    "breeder" => {40, 160, 0}
+  },
+  light_conditions: ~w(uniform-light fixed-env)
 
 # The garden (Coordinator.Garden; README "The garden"): the presets a keeper
 # may found one on (a subset of :presets), the garden the unnamed public routes

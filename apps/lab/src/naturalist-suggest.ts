@@ -157,7 +157,9 @@ export function suggestFor(ring: LiveRing, world: SuggestWorld, h: EnvelopeHeade
     `deno run -A tools/propose.ts run ${proposals}/<id>.proposal.json --out ${base}/forks`,
   ];
 
-  const e = entries[0];
+  // The proposer forks with a lesion or a feed (never a sun), so the first entry has a place.
+  const e0 = entries[0];
+  const e = e0 && e0.kind !== "sun" ? e0 : undefined;
   const share = jarShare(cfg);
   const tiles = cfg.tilesX * cfg.tilesY;
   const place = e ? `${tiles === 1 ? `centred at (${e.x}, ${e.y})` : `centred on each of the world's ${tiles} tiles`}, radius ${e.r}, about ${share}% of the world's cells` : "";

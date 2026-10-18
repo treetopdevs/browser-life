@@ -34,7 +34,12 @@ export type Intervention =
    * pressure. `cycle` is the first cycle not yet applied when it was set: the waiting cycle (then `step` is its boundary and
    * `cycle` = step / pondPeriod), else the next boundary after `step`. A cycle with a pick takes the pick's donors as ever.
    */
-  | { step: number; kind: "pressure"; cycle: number; score: PondScore };
+  | { step: number; kind: "pressure"; cycle: number; score: PondScore }
+  /**
+   * A sun (sun.ts): from `step` the world's light is `sunLight(cfg, percent)` for the `span` physics steps that start at
+   * step, step + 1, ..., step + span - 1; at step + span the world's own light returns. Logged once, when it starts.
+   */
+  | { step: number; kind: "sun"; percent: number; span: number };
 
 export interface Founder {
   x: number;

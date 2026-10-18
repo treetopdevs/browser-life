@@ -95,9 +95,9 @@ defmodule Coordinator.ConfigCheckTest do
                  data_dir discovery_cloud_envelope discovery_data_dir discovery_join_token
                  discovery_validator dns_cluster_query garden_island_token garden_presets
                  garden_shared_address
-                 incompatible metrics_version migration_period pond_period pond_presets
-                 presets public_garden rule_version start_discovery start_queue
-                 trust_forwarded_for world_size)a
+                 incompatible light_conditions metrics_version migration_period pond_period
+                 pond_presets presets public_garden rule_version start_discovery start_queue
+                 trust_forwarded_for world_light world_size)a
 
   # Files that read `:coordinator` config by a variable key, each reviewed, with
   # the number of such reads in it. A new variable-key read (a new helper, say)

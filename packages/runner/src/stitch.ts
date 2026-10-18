@@ -15,7 +15,7 @@
 // docs/garden-stitch-rule-2026-10-17.md for the rule).
 import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, breedPondColumns, clampLesionRadius, exchangePositions, type PondArm, type PondScore, type WorldConfig } from "@bl/schema";
 import { runId, sameConfig, specConfig, type RunSpec, type RunSummary } from "./runner.ts";
-import { INTERVENTIONS_FILE, formatInterventionLine, ownedInterventions, parseInterventionLog, sameIntervention, validateInterventions, type InterventionLogEntry, type ScheduledIntervention } from "./interventions.ts";
+import { INTERVENTIONS_FILE, formatInterventionLine, loggedIs, ownedInterventions, parseInterventionLog, sameIntervention, validateInterventions, type InterventionLogEntry, type ScheduledIntervention } from "./interventions.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
 export const BUNDLE_FILES = ["manifest.json", "series.jsonl", "lineages.tsv", "mutations.tsv", "heredity.tsv", "life.jsonl", "activity-final.json"] as const;
@@ -333,9 +333,11 @@ export function checkInterventionLog(id: string, text: string, schedule: readonl
   if (logged.length !== owned.length) throw new Error(`${id}: ${INTERVENTIONS_FILE} holds ${logged.length} entries, the schedule has ${owned.length} at steps in ${window}`);
   logged.forEach((e, j) => {
     const o = owned[j];
-    const same =
-      e.step === o.step && e.kind === o.kind && e.x === o.x && e.y === o.y && e.r === clampLesionRadius(cfg, o.r) && (e.kind !== "feed" || o.kind !== "feed" || (e.amount === o.amount && (o.matter === undefined || e.matter === o.matter)));
-    if (!same) throw new Error(`${id}: ${INTERVENTIONS_FILE} line ${j + 1} (${e.kind} at t=${e.step}, r ${e.r}) is not the scheduled ${o.kind} at t=${o.step} (entry ${schedule.indexOf(o)} of the schedule, effective r ${clampLesionRadius(cfg, o.r)})`);
+    if (loggedIs(e, o, cfg)) return;
+    const what = (x: InterventionLogEntry | ScheduledIntervention, r: string) => (x.kind === "sun" ? `${x.percent}% for ${x.span} steps` : r);
+    throw new Error(
+      `${id}: ${INTERVENTIONS_FILE} line ${j + 1} (${e.kind} at t=${e.step}, ${what(e, `r ${e.kind === "sun" ? "" : e.r}`)}) is not the scheduled ${o.kind} at t=${o.step} (entry ${schedule.indexOf(o)} of the schedule, ${what(o, `effective r ${o.kind === "sun" ? "" : clampLesionRadius(cfg, o.r)}`)})`,
+    );
   });
   const b = block as { file?: unknown; applied?: unknown } | undefined;
   if (b?.file !== INTERVENTIONS_FILE || b?.applied !== logged.length)

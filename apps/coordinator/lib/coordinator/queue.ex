@@ -136,6 +136,18 @@ defmodule Coordinator.Queue do
   digest that disagrees with every capable island's, a divergence with no
   real disagreement in it.
 
+  A sun (`"kind": "sun"`, `{step, kind, percent, span}`: packages/schema's
+  sun.ts, docs/garden-sun-2026-10-18.md) is a scheduled entry too: the light
+  is `percent` of the world's own (one of 50, 75, 125, 150) for `span` steps
+  (1..2^24), suns do not overlap, and a sun must end by the run's last step.
+  The world rule is `sunError`'s, from the preset's light (`:world_light` in
+  config.exs, held to packages/schema's presets by the same test as
+  `:world_size`): a percent whose scaled base, amplitude or season would
+  exceed 255, or whose sum would, is refused, and a preset missing from the
+  map takes no sun. An experiment whose schedule holds a sun goes only to an
+  island that also advertises `"sun-v1"`: an island without it would refuse
+  the kind, or (older still) run the segment under the world's own light.
+
   Gardens (`Coordinator.Garden`, README "The garden"): a garden is an ordinary
   one-run experiment (`treatment`, one seed, `segmentSteps` = one day,
   `verifyFraction` 1, `"garden" => true` on its stored spec) plus a record in
@@ -1335,6 +1347,7 @@ defmodule Coordinator.Queue do
            })
            |> founding_error(),
          :ok <- founding_at_step_zero(spec["interventions"]),
+         :ok <- founding_without_sun(spec["interventions"]),
          :ok <-
            food_matter_bound(
              food,
@@ -1432,6 +1445,19 @@ defmodule Coordinator.Queue do
     end
   end
 
+  # A garden's suns are its letters (Coordinator.Garden): one founded with one
+  # could overlap the first sun letter, which every island would then refuse.
+  defp founding_without_sun(entries) do
+    case Enum.find_index(entries, &(&1["kind"] == "sun")) do
+      nil ->
+        :ok
+
+      i ->
+        {:error,
+         "founding[#{i}]: a sun is not a founding entry (a garden's suns are its letters)"}
+    end
+  end
+
   defp garden_name_free(s, name) do
     cond do
       Map.has_key?(s.gardens, name) -> {:error, "garden exists"}
@@ -1469,6 +1495,13 @@ defmodule Coordinator.Queue do
   # with a float or an out-of-range radius.
   defp garden_letter(%{x: x, y: y, r: r}) do
     case Garden.parse_letter(%{"kind" => "stone", "x" => x, "y" => y, "r" => r}) do
+      {:ok, letter} -> {:ok, letter}
+      {:error, msg} -> {:error, {:invalid, msg}}
+    end
+  end
+
+  defp garden_letter(%{kind: "sun", percent: p}) do
+    case Garden.parse_letter(%{"kind" => "sun", "percent" => p}) do
       {:ok, letter} -> {:ok, letter}
       {:error, msg} -> {:error, {:invalid, msg}}
     end
@@ -2021,6 +2054,10 @@ defmodule Coordinator.Queue do
   @max_safe_int 9_007_199_254_740_991
   @lesion_keys ~w(step kind x y r)
   @feed_keys ~w(step kind x y r amount)
+  @sun_keys ~w(step kind percent span)
+  # packages/schema/src/sun.ts's SUN_PERCENTS and SUN_SPAN_MAX.
+  @sun_percents [50, 75, 125, 150]
+  @sun_span_max 16_777_216
 
   # Why `spec["interventions"]` cannot be scheduled, or nil (absent, or nil,
   # is no schedule at all). The shape rules are packages/runner/src/interventions.ts's
@@ -2034,21 +2071,36 @@ defmodule Coordinator.Queue do
   defp invalid_interventions(%{"interventions" => list} = spec) when is_list(list) do
     cond do
       list == [] ->
-        "interventions must be a non-empty array of lesions and feeds"
+        "interventions must be a non-empty array of lesions, feeds and suns"
 
       length(list) > @max_interventions ->
         "interventions must hold at most #{@max_interventions} entries"
 
       true ->
         world = Map.get(Application.get_env(:coordinator, :world_size, %{}), spec["presetId"])
+        # The preset's own light, which a condition in `:light_conditions` changes: then no sun.
+        light =
+          if Enum.any?(
+               spec["conditions"] || [],
+               &(&1 in Application.get_env(:coordinator, :light_conditions, []))
+             ),
+             do: :changed,
+             else: Map.get(Application.get_env(:coordinator, :world_light, %{}), spec["presetId"])
+
         pond? = pond_preset?(spec["presetId"])
 
         list
         |> Enum.with_index()
-        |> Enum.reduce_while({0, nil}, fn {e, i}, {last, nil} ->
+        |> Enum.reduce_while({{0, 0}, nil}, fn {e, i}, {{last, sun_end}, nil} ->
           case invalid_intervention(e, i, last, spec["steps"], world, pond?) do
-            {:ok, step} -> {:cont, {step, nil}}
-            {:error, why} -> {:halt, {last, why}}
+            {:ok, step} ->
+              case invalid_sun(e, i, sun_end, spec["steps"], light) do
+                {:ok, sun_end} -> {:cont, {{step, sun_end}, nil}}
+                {:error, why} -> {:halt, {{last, sun_end}, why}}
+              end
+
+            {:error, why} ->
+              {:halt, {{last, sun_end}, why}}
           end
         end)
         |> elem(1)
@@ -2056,7 +2108,7 @@ defmodule Coordinator.Queue do
   end
 
   defp invalid_interventions(%{"interventions" => _}),
-    do: "interventions must be a non-empty array of lesions and feeds"
+    do: "interventions must be a non-empty array of lesions, feeds and suns"
 
   defp invalid_interventions(_spec), do: nil
 
@@ -2070,7 +2122,12 @@ defmodule Coordinator.Queue do
     where = "interventions[#{i}]"
     kind = is_map(e) and e["kind"]
 
-    allowed = if kind == "feed", do: @feed_keys, else: @lesion_keys
+    allowed =
+      case kind do
+        "feed" -> @feed_keys
+        "sun" -> @sun_keys
+        _ -> @lesion_keys
+      end
 
     # Erlang integers only: an integer-valued float (`2.0`, which JSON clients
     # never send for a cell) is refused although the runner would take it, so
@@ -2081,8 +2138,9 @@ defmodule Coordinator.Queue do
       not is_map(e) ->
         {:error, "#{where} must be an object"}
 
-      kind not in ["lesion", "feed"] ->
-        {:error, "#{where}: kind must be \"lesion\" or \"feed\", got #{Jason.encode!(kind)}"}
+      kind not in ["lesion", "feed", "sun"] ->
+        {:error,
+         "#{where}: kind must be \"lesion\", \"feed\" or \"sun\", got #{Jason.encode!(kind)}"}
 
       # See the moduledoc: a replay assertion the archipelago cannot honour.
       kind == "feed" and Map.has_key?(e, "matter") ->
@@ -2107,6 +2165,10 @@ defmodule Coordinator.Queue do
         {:error,
          "#{where}: step #{e["step"]} is after the run's last step (steps #{steps}), so no segment would apply it"}
 
+      # A sun's own rules are `invalid_sun/5`'s.
+      kind == "sun" ->
+        {:ok, e["step"]}
+
       (bad = Enum.find(~w(x y r), &(not nonneg?.(&1)))) != nil ->
         {:error, "#{where}: #{bad} must be a non-negative integer"}
 
@@ -2127,6 +2189,71 @@ defmodule Coordinator.Queue do
 
       true ->
         {:ok, e["step"]}
+    end
+  end
+
+  # A sun's own rules, after `invalid_intervention/6` has checked its keys and
+  # step: `{:ok, sun_end}` (the end of the latest sun so far, for the overlap
+  # rule) or `{:error, why}`, in the runner's words (`validateInterventions`,
+  # `sunError`, tools/run.ts for the last step). `light` is the preset's
+  # `{lightBase, lightAmp, seasonAmp}` from config.exs, or nil: then no sun.
+  defp invalid_sun(%{"kind" => "sun"} = e, i, sun_end, steps, light) do
+    where = "interventions[#{i}]"
+    step = e["step"]
+    span = e["span"]
+
+    cond do
+      e["percent"] not in @sun_percents or not is_integer(e["percent"]) ->
+        {:error, "#{where}: a sun's percent must be one of #{Enum.join(@sun_percents, ", ")}"}
+
+      not (is_integer(span) and span >= 1 and span <= @sun_span_max) ->
+        {:error, "#{where}: a sun's span must be an integer in 1..#{@sun_span_max}"}
+
+      step < sun_end ->
+        {:error,
+         "#{where}: a sun at t=#{step} starts before the previous sun ends (t=#{sun_end}); suns do not overlap"}
+
+      step + span > steps ->
+        {:error,
+         "#{where}: a sun at t=#{step} for #{span} steps ends at t=#{step + span}, after the run's last step (steps #{steps}): a sun sets inside its run"}
+
+      light == nil ->
+        {:error, "#{where}: this preset's light is not known here, so it takes no sun"}
+
+      light == :changed ->
+        {:error,
+         "#{where}: a sun is checked against the preset's own light, and one of this experiment's conditions changes it"}
+
+      (why = sun_light_error(light, e["percent"])) != nil ->
+        {:error, "#{where}: #{why}"}
+
+      true ->
+        {:ok, step + span}
+    end
+  end
+
+  defp invalid_sun(_e, _i, sun_end, _steps, _light), do: {:ok, sun_end}
+
+  @doc """
+  Why a world of light `{lightBase, lightAmp, seasonAmp}` cannot take a sun of
+  `percent`, or nil: packages/schema's `sunError` (each value floored at
+  `percent`/100 must stay within 255, and so must their sum).
+  """
+  @spec sun_light_error({integer, integer, integer}, integer) :: String.t() | nil
+  def sun_light_error({base, amp, season}, percent) do
+    [b, a, s] = for v <- [base, amp, season], do: div(v * percent, 100)
+
+    if b > 255 or a > 255 or s > 255 or b + a + s > 255,
+      do: "this world's light cannot take a sun of #{percent}%: it would be #{b} + #{a} + #{s}",
+      else: nil
+  end
+
+  @doc "The percents a preset's light (`:world_light`) takes, or [] for a preset without one."
+  @spec sun_percents(String.t()) :: [integer]
+  def sun_percents(preset_id) do
+    case Map.get(Application.get_env(:coordinator, :world_light, %{}), preset_id) do
+      nil -> []
+      light -> Enum.filter(@sun_percents, &(sun_light_error(light, &1) == nil))
     end
   end
 
@@ -2383,6 +2510,10 @@ defmodule Coordinator.Queue do
   # island that cannot apply them would run the segment clean.
   @interventions_capability "interventions-v1"
 
+  # A schedule holding a sun (see the moduledoc): asked for besides
+  # `@interventions_capability`.
+  @sun_capability "sun-v1"
+
   # The breeder (WorldConfig.pondScore, see the moduledoc): its conditions, by
   # prefix (packages/runner/src/conditions.ts's pond-breed-<score>,
   # pond-mass-<score> and pond-drift-<score>, held to it by
@@ -2400,7 +2531,8 @@ defmodule Coordinator.Queue do
     @pond_capability,
     @current_capability,
     @interventions_capability,
-    @breed_capability
+    @breed_capability,
+    @sun_capability
   ]
   @stored_capability ~r/\A[a-z][a-z0-9]*(-[a-z0-9]+)*\z/
   @stored_capability_bytes 32
@@ -2469,25 +2601,33 @@ defmodule Coordinator.Queue do
   # offered: every pond experiment, unless it advertises `@pond_capability`;
   # every experiment on a breed preset, unless it advertises
   # `@breed_capability`; and every experiment with scheduled interventions,
-  # unless it advertises `@interventions_capability`. Computed once per
+  # unless it advertises `@interventions_capability`, and every one whose
+  # schedule holds a sun, unless it advertises `@sun_capability`. Computed once per
   # `pick_task/4` call rather than per segment, so a large queue costs one
   # pass over the experiments, not one config lookup per segment.
   defp gated_experiments(s, capabilities) do
     ponds? = @pond_capability in capabilities
     breed? = @breed_capability in capabilities
     scheduled? = @interventions_capability in capabilities
+    sun? = @sun_capability in capabilities
 
-    if ponds? and breed? and scheduled? do
+    if ponds? and breed? and scheduled? and sun? do
       MapSet.new()
     else
       for {name, exp} <- s.experiments,
           (not ponds? and pond_preset?(exp.spec["presetId"])) or
             (not breed? and breed_preset?(exp.spec["presetId"])) or
-            (not scheduled? and exp.spec["interventions"] != nil),
+            (not scheduled? and exp.spec["interventions"] != nil) or
+            (not sun? and sun_schedule?(exp.spec["interventions"])),
           into: MapSet.new(),
           do: name
     end
   end
+
+  defp sun_schedule?(list) when is_list(list),
+    do: Enum.any?(list, &(is_map(&1) and &1["kind"] == "sun"))
+
+  defp sun_schedule?(_), do: false
 
   # Whether `seg` is withheld from an island with `capabilities`: its experiment
   # is in `gated` (above), or its condition runs one of the hunt's arms and the

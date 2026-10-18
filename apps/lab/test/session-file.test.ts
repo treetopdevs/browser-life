@@ -463,6 +463,10 @@ describe("interventionFacts", () => {
     // The pick at t=12 was made before this page's notes began (a world restored from an earlier visit): unknown, not guessed.
     const facts = interventionFacts(log, new Map([[4, true], [8, false]]), null);
     expect(facts).toEqual({ picks: { total: 3, byHand: 1, byRule: 1, unknown: 1 }, wounds: 2, feeds: 1, drains: 1, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null }, families: none });
+    // A sun is no pick, wound or feed: counted apart, and only when there is one (no session file holds one, so a file's facts never carry the key).
+    const sunned = interventionFacts([...log, { step: 15, kind: "sun", percent: 50, span: 10 }, { step: 30, kind: "sun", percent: 75, span: 5 }], new Map([[4, true], [8, false]]), null);
+    expect(sunned).toEqual({ ...facts, suns: 2 });
+    expect(Object.hasOwn(facts, "suns")).toBe(false);
     const replayed = { ok: true, from: 0, to: 100, live: "a", twin: "a", handAtEnd: false };
     expect(interventionFacts([], new Map(), replayed).replay).toBe(replayed);
     expect(interventionFacts([], new Map(), null)).toEqual({ picks: { total: 0, byHand: 0, byRule: 0, unknown: 0 }, wounds: 0, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null }, families: none });
@@ -529,6 +533,14 @@ describe("exportRefusal", () => {
     ["a world opened from a file", { presetId: "imported" }, /opened from a file/],
   ])("refuses a world with %s, in words", (_name, change, message) => {
     expect(exportRefusal({ ...planted, ...change })).toMatch(message);
+  });
+
+  it("refuses a history that holds a sun, which no session file version holds, and buildSessionFile will not write one", () => {
+    const sun = { step: 40, kind: "sun" as const, percent: 50, span: 100 };
+    expect(exportRefusal({ ...planted, interventions: [{ step: 3, kind: "lesion", x: 1, y: 1, r: 2 }] })).toBeNull();
+    expect(exportRefusal({ ...planted, interventions: [{ step: 3, kind: "lesion", x: 1, y: 1, r: 2 }, sun] })).toMatch(/^This world ran under a sun from t=40, and a session file can’t hold a sun yet\. Its checkpoint download still works/);
+    expect(() => buildSessionFile({ manifest: { startHash: "0123456789abcdef", interventions: [sun] } as unknown as RunManifest, stateHash: "x", step: 300, firsts: { watchedFrom: null, entries: [] }, families: null as never, card: null as never, adapter: "test", createdAt: "" }))
+      .toThrow(/cannot hold a sun/);
   });
 });
 

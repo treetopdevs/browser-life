@@ -334,6 +334,12 @@ describe("branchError and runExperiment's branch guards fire before the GPU is t
   /** `src` stepped to `step` under the branch's own config, as a continuation's start. */
   const startAt = (step: number): WorldState => ({ ...cloneState(src), cfg, step });
 
+  it("refuses a branch whose schedule has a sun active at its start (a sun never carries silently into a branch)", async () => {
+    expect(await rejection({ ...spec, interventions: [{ step: 1000, kind: "sun", percent: 50, span: 2000 }] }, { branchFrom: src })).toBe("a branch cannot start under a sun: its schedule has a sun active at the branch's start");
+    // A sun that ends at the branch's start, or starts after it, is not one it starts under.
+    expect(await rejection({ ...spec, interventions: [{ step: 1000, kind: "sun", percent: 50, span: 1000 }] }, { branchFrom: src })).toMatch(PAST_GUARDS);
+  });
+
   it("accepts the legal branch, and lets it through to the GPU after its CPU transform", async () => {
     expect(branchError(spec, cfg, { branchFrom: src })).toBeNull();
     expect(branchError(natSpec, specConfig(natSpec), {})).toBeNull();

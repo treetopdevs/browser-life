@@ -186,7 +186,9 @@
         "day": 3,
         "status": "waiting",
         "landedIn": null,
-        "droppedAt": null
+        "droppedAt": null,
+        "percent": null,
+        "span": null
       },
       {
         "id": "ltr-5",
@@ -199,7 +201,9 @@
         "day": 3,
         "status": "waiting",
         "landedIn": null,
-        "droppedAt": null
+        "droppedAt": null,
+        "percent": null,
+        "span": null
       },
       {
         "id": "ltr-6",
@@ -212,7 +216,9 @@
         "day": 3,
         "status": "waiting",
         "landedIn": null,
-        "droppedAt": null
+        "droppedAt": null,
+        "percent": null,
+        "span": null
       },
       {
         "id": "ltr-7",
@@ -225,7 +231,9 @@
         "day": 4,
         "status": "waiting",
         "landedIn": null,
-        "droppedAt": null
+        "droppedAt": null,
+        "percent": null,
+        "span": null
       }
     ],
     "recent": [
@@ -240,7 +248,9 @@
         "day": 3,
         "status": "dropped",
         "landedIn": null,
-        "droppedAt": 1792681920000
+        "droppedAt": 1792681920000,
+        "percent": null,
+        "span": null
       },
       {
         "id": "ltr-2",
@@ -253,7 +263,9 @@
         "day": 2,
         "status": "landed",
         "landedIn": "9c41e07d2b5a8f13",
-        "droppedAt": null
+        "droppedAt": null,
+        "percent": null,
+        "span": null
       },
       {
         "id": "ltr-1",
@@ -266,7 +278,9 @@
         "day": 1,
         "status": "verified",
         "landedIn": "4e0b7a19c3d2f856",
-        "droppedAt": null
+        "droppedAt": null,
+        "percent": null,
+        "span": null
       }
     ]
   },
@@ -302,6 +316,7 @@
       }
     ]
   },
+  "sun": { "percents": [50, 75], "span": 131072, "nextLanding": { "day": 4, "step": 655360 } },
   "leadersRule": { "name": "lines-v1", "top": 3, "clearLeaderPercent": 10 },
   "limits": {
     "stoneRadius": { "min": 1, "max": 32 },
