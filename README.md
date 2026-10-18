@@ -33,6 +33,8 @@ The Vite development and preview servers forward `/api/*` to the local coordinat
 
 To run the lab and the coordinator together, use `bin/dev`. Ctrl-C stops both. `PORT` and `LAB_PORT` override the default ports, 4000 and 5173.
 
+To run a small shared garden on this machine, use `bin/garden-dev`. It starts a dev coordinator on a scratch directory, the lab, a garden on `spots` (one day a minute) and two headless islands, and prints the `/garden/` page's address. Ctrl-C stops everything and removes the scratch directory. `apps/coordinator/README.md`, "Run a garden locally", has the settings, letters, export and `tests/deno/garden_e2e.ts`, which runs a garden end to end, usually in under a minute (up to three minutes more near the top of an hour), and `tests/deno/garden_dev_smoke.ts`, which checks the launcher itself.
+
 ## Test
 
 ```bash
