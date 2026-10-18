@@ -25,8 +25,11 @@ const ROUTES = [
   ...[...readFileSync(SITEMAP, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname),
   "/garden/",
 ];
-/** The island page is where Join in sends people; it is unlisted (noindex) but public. */
-const PAGES = [...ROUTES, "/island.html"];
+/** What an unknown path answers: the not-found page, with 404 (criterion 6). */
+const NOT_FOUND = "/no-such-page/";
+/** The island page is where Join in sends people; it is unlisted (noindex) but public. So is the not-found page. */
+const PAGES = [...ROUTES, "/island.html", NOT_FOUND];
+const expectedStatus = (path: string) => (path === NOT_FOUND ? 404 : 200);
 const WIDTHS = [{ width: 1280, height: 900 }, { width: 375, height: 812 }];
 /** WCAG 2.0, 2.1 and 2.2 at A and AA. `best-practice` is off: it is advice, not a WCAG failure. */
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -103,7 +106,7 @@ async function prepare(page: Page, path: string): Promise<void> {
     await page.route("**/api/public/garden", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(FIXTURE) }));
   }
   const response = await page.goto(path);
-  expect(response?.status(), `${path} answers`).toBe(200);
+  expect(response?.status(), `${path} answers`).toBe(expectedStatus(path));
   await expect(page.locator("main h1").first()).toBeVisible();
   await expectIdentity(page, path);
   if (path === "/status/") await expect(page.locator("#count-islands")).toHaveText("2");
@@ -118,7 +121,7 @@ async function prepare(page: Page, path: string): Promise<void> {
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
 }
 
-/** The page served is the one asked for: Vite's dev server answers a mistyped path with the home page and 200. */
+/** The page served is the one asked for, not the home page (Vite's spa fallback answered a mistyped path with it). */
 async function expectIdentity(page: Page, path: string): Promise<void> {
   const { canonical, title } = await page.evaluate(() => ({
     canonical: document.querySelector('link[rel="canonical"]')?.getAttribute("href") ?? null,
@@ -264,11 +267,32 @@ for (const state of STATES) {
   }
 }
 
-test.fixme("404: an unknown path answers 404 with a page of its own", async () => {
-  // Not built yet. The production rules (`try_files`, then `file_server` in deploy/Caddyfile) answer an unknown path
-  // with 404 and an empty body, a blank page (criterion 5). A page needs an apps/lab/404.html build input and a
-  // `handle_errors` block, both outside slice 13. When they exist: serve a build under those rules, ask for
-  // /no-such-page/, expect 404, a `main h1`, a way home, and this file's axe pass in both colours at both widths.
+test("404: an unknown path answers 404 with a page of its own", async ({ page, request }) => {
+  // The dev server here (the not-found plugin in apps/lab/vite.config.ts); production's rules are checked against a
+  // local Caddy in public-not-found.spec.ts. The axe, keyboard, reduced-motion and no-GPU walks above and below cover
+  // NOT_FOUND as one of PAGES.
+  for (const path of [NOT_FOUND, "/no-such-page", "/lab/no-such-page/", "/a/b/c.html", "/404.html", "/404.html/", "/404%2ehtml"]) {
+    const res = await request.get(path, { headers: { Accept: "text/html" }, maxRedirects: 0 });
+    expect(res.status(), path).toBe(404);
+    expect(res.headers()["content-type"], path).toMatch(/^text\/html/);
+    const html = await res.text();
+    expect(html, path).toContain("<title>Page not found · Cadence Garden</title>");
+    expect(html, path).toMatch(/<meta name="robots" content="noindex"/);
+    expect(html, path).not.toContain('rel="canonical"');
+    expect(html, path).not.toContain("og:url");
+  }
+  const response = await page.goto(NOT_FOUND);
+  expect(response?.status()).toBe(404);
+  await expect(page.locator("main h1")).toHaveCount(1);
+  await expect(page.locator("main h1")).toBeVisible();
+  for (const [name, href] of [["Home", "/"], ["Worlds", "/worlds/"], ["Lab", "/lab/"], ["Journal", "/research/"]]) {
+    await expect(page.locator("main").getByRole("link", { name, exact: true }), name).toHaveAttribute("href", href);
+  }
+  // Beside it, a real page still answers 200, and a page asked for without its slash is sent to it, as Caddy does.
+  expect((await request.get("/about/")).status()).toBe(200);
+  const bare = await request.get("/lab?x=1", { maxRedirects: 0 });
+  expect(bare.status()).toBe(308);
+  expect(bare.headers().location).toBe("/lab/?x=1");
 });
 
 // ---------- keyboard ----------
@@ -914,7 +938,7 @@ test("without WebGPU: the lab says it cannot start and every public page still r
 
     for (const route of PAGES.filter((r) => r !== "/lab/")) {
       const response = await page.goto(route);
-      expect(response?.status(), route).toBe(200);
+      expect(response?.status(), route).toBe(expectedStatus(route));
       await expect(page.locator("main h1").first(), route).toBeVisible();
     }
     expect(errors, "uncaught errors without WebGPU").toEqual([]);
