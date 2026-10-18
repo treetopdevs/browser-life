@@ -14,7 +14,7 @@
 // depending on real timing in a browser.
 import { describe, expect, it } from "vitest";
 import { METRICS_VERSION } from "@bl/schema";
-import { createIslandPage, type IdentityStorage } from "../src/index.ts";
+import { createIslandPage, STOP_MESSAGE, type IdentityStorage } from "../src/index.ts";
 
 function deferred<T>() {
   let resolve!: (v: T) => void;
@@ -23,6 +23,34 @@ function deferred<T>() {
 }
 
 describe("createIslandPage", () => {
+  it("Stop aborts the attempt's signal and says the phase-neutral stop message", async () => {
+    const said: string[] = [];
+    const run = deferred<void>();
+    let signal!: AbortSignal;
+    const page = createIslandPage({
+      getUrl: () => "http://coord",
+      setUrl: () => {},
+      say: (m) => said.push(m),
+      setState: () => {},
+      storage: { load: () => null, save: () => {} },
+      probe: async () => 200,
+      runAttempt: async (opts) => {
+        signal = opts.signal;
+        opts.onRunning();
+        return run.promise;
+      },
+    });
+    page.clickJoin();
+    await Promise.resolve();
+    expect(page.state).toBe("running");
+    page.clickJoin(); // Stop
+    expect(signal.aborted).toBe(true);
+    expect(said).toContain(STOP_MESSAGE);
+    // Neither "after the current task" (Stop now ends it) nor a claim that a task is in hand.
+    expect(STOP_MESSAGE).not.toMatch(/after the current task|the current task is left/);
+    run.resolve();
+  });
+
   it("captures the coordinator URL once per operation, never re-reading it mid-operation", async () => {
     let currentUrl = "http://coord-a";
     const runCalls: string[] = [];

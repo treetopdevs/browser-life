@@ -44,7 +44,7 @@
 //      since cancelling an auto-resume is a decision not to come back to it
 //      automatically next time either.
 import { METRICS_VERSION } from "@bl/schema";
-import { resolveRejoin, type ResolveRejoinOptions } from "./island.ts";
+import { resolveRejoin, STOP_MESSAGE, type ResolveRejoinOptions } from "./island.ts";
 
 export interface Remembered {
   coordinator: string;
@@ -196,7 +196,7 @@ export function createIslandPage(deps: IslandPageDeps): IslandPage {
   function stop() {
     setState("stopping");
     ctrl?.abort();
-    deps.say("stopping after the current task");
+    deps.say(STOP_MESSAGE);
     deps.storage.save(null); // a stopped island must stay stopped after a reload
   }
 
