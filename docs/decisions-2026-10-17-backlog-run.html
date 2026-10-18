@@ -62,7 +62,7 @@ td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertic
 <li><code>sharedAddress</code> discloses the proxy problem (D-17).</li>
 </ul>
 The change to garden-v1 is additive. Sol pass 3 found no P0, P1 or P2. On the merged tree: 414 ExUnit tests, and the garden e2e passed 45 of 45. Turning food on for the commons is the user's call.</td></tr>
-<tr id="s19"><td>19</td><td>A real 404 page, served with status 404 by Caddy and by the dev server</td><td><code>claude/slice19-not-found</code></td><td>Running as workflow <code>wf_ba081d99-d3f</code></td></tr>
+<tr id="s19"><td>19</td><td>A real 404 page, served with status 404 by Caddy and by the dev server</td><td><code>claude/slice19-not-found</code> / <a href="https://github.com/treetopdevs/browser-life/pull/42">#42</a></td><td>Merged as <code>0af3216</code>. Adds <code>apps/lab/404.html</code> (noindex) and a Caddy <code>handle_errors</code> block that serves it with 404 for unknown site paths only. <code>/api</code> and <code>/healthz</code> are untouched, and a miss never gets the immutable cache header. Vite now uses <code>appType: mpa</code> plus a not-found plugin, so dev and preview answer 404 too. A Caddy spec runs the real Caddyfile locally. Three Sol xhigh passes, no P0 or P1. Before merging, the coordinator ran the lab specs and the garden spec on the merged tree. Not deployed.</td></tr>
 <tr id="s20"><td>20</td><td>Lineage report: draw the pond route (crossings named or not excluded, gaps) in the HTML panel</td><td><code>claude/slice20-lineage-route-panel</code></td><td>Running as workflow <code>wf_b5c65a4e-5f1</code></td></tr>
 <tr id="s21"><td>21</td><td>Islands stop cleanly: an AbortSignal through runIsland, its requests and its GPU work</td><td><code>claude/slice21-island-cancel</code></td><td>Running as workflow <code>wf_82885f10-014</code></td></tr>
 <tr id="s1b"><td>1b</td><td>Bell v1 (the slice 1 session, after D-25): plan and code, 120 local runs, readouts A and B</td><td><a href="https://github.com/treetopdevs/browser-life/pull/22">#22</a>, <a href="https://github.com/treetopdevs/browser-life/pull/23">#23</a></td><td>Merged by the slice 1 session as <code>0cbc0506</code> and <code>7df16912</code>. A (exploratory): quiet on fresh drift, 0 of 70 neutral runs ring on 11 signals, treatment 10 of 10. B: did not meet the exploratory bar (lesion and feed twins above Z*_pair on 4 of 10 seeds). Part C's paid model calls have <b>not</b> run and need the user's yes.</td></tr>
@@ -338,6 +338,16 @@ The change to garden-v1 is additive. Sol pass 3 found no P0, P1 or P2. On the me
 <dt>Context</dt><dd>#34's yes gate exists so that a person decides which experiments run. A bench approved by the coordinator would get around that.</dd>
 <dt>Decision</dt><dd>Slice 24 writes the bench's rules before any run, adds a dose-matched baseline to fix #34's caveat, and builds <code>tools/bench.ts</code> with plan, dry-run and run. Run needs one batch approval <code>--by &lt;person&gt;</code>, bound to the manifest hash. The coordinator does not approve or run it.</dd>
 <dt>Why</dt><dd>The bench runs on the local GPU, so it costs nothing to run, but whether to run it is the kind of decision the gate keeps for a person.</dd>
+</dl>
+</article>
+
+<article id="d27">
+<h2><span>D-27</span>A change to the dev server's routing must pass the lab specs before merge</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 08:45 UTC</dd>
+<dt>Context</dt><dd>#42 switched Vite to <code>appType: mpa</code>, which changes how every dev route falls back, but its gates covered only the public specs. On the first run, the garden spec failed 5 times, but only because the coordinator had run it on another port to avoid peer servers. The spec hardcodes origin <code>localhost:5174</code>.</dd>
+<dt>Decision</dt><dd>Before merging, run the lab specs (worlds, fullscreen, Pond keeper v2, execution, light, golden) on a private port, and the garden spec on 5174 once that port is free. 26 of 26 and 19 of 19 passed.</dd>
+<dt>Why</dt><dd>A routing change breaks pages its own tests never load. A spec that hardcodes its port is a trap when several worktrees run tests at once. Worth a small follow-up to derive the key from <code>baseURL</code>.</dd>
 </dl>
 </article>
 
