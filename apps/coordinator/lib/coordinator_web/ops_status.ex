@@ -1,6 +1,6 @@
 defmodule CoordinatorWeb.OpsStatus do
   @moduledoc """
-  The two keys `GET /api/status` (admin only) adds to `Coordinator.Queue.status/0`
+  The three keys `GET /api/status` (admin only) adds to `Coordinator.Queue.status/0`
   for the operator page (`priv/static/index.html`; docs/ops-dashboard-2026-10-18.md):
 
     * `limits`: the island table's size (`islands`) and the island limits as
@@ -17,14 +17,24 @@ defmodule CoordinatorWeb.OpsStatus do
       an integer nor `nil` is `nil` here and is named in `invalid` (present only
       when one is), so a malformed setting cannot break the response; so is a
       window set to `nil`, since a window has no "off" (IslandLimiter's
-      arithmetic on it raises).
+      arithmetic on it raises). `Coordinator.ConfigCheck` refuses a malformed
+      value at start, so `invalid` can only come from a later
+      `Application.put_env/3`.
     * `capabilityNeeds`: experiment name => condition => the sorted
       capabilities an island must advertise to be offered that run's segments.
+    * `islandCapabilities`: the islands by the capabilities each last
+      advertised (the Queue's recorded copy, `islands[].capabilities`,
+      docs/coordinator-hardening-2026-10-18.md): `byCapability`, name =>
+      `{islands, live, known}` (`live`: not `stale`; `known`: the Queue gates
+      on the name; every such name, and at most 50 others, those on the most
+      islands), `omittedNames`, how many other names were left out, and
+      `none`, `{islands, live}`, the islands with no recorded capabilities
+      (after an upgrade, an island counts here until its next `/api/next`). A recorded list is as of the island's last ask, never a
+      promise: work is gated on each request.
 
   Computed here, from the Queue's status and config, outside the Queue
   process. Nothing counts refusals (429s, the 503 at the island bound) or
-  forgotten islands, and island capabilities are never stored, so neither is
-  reported.
+  forgotten islands, so neither is reported.
 
   `needs/2` is a second copy of `Coordinator.Queue`'s private capability
   gating (`gated_experiments/2` and `gated?/3`, see its moduledoc);
@@ -39,12 +49,64 @@ defmodule CoordinatorWeb.OpsStatus do
   @breed_capability "breed-v1"
   @breed_condition_prefixes ~w(pond-breed- pond-mass- pond-drift-)
 
-  @doc "`status` (from `Coordinator.Queue.status/0`) with `limits` and `capabilityNeeds` added."
+  # The most names `islandCapabilities.byCapability` lists that the Queue does
+  # not gate on: each island may record four (`Coordinator.Queue`), so across
+  # the island table there could be tens of thousands.
+  @shown_unknown_max 50
+
+  @doc "`status` (from `Coordinator.Queue.status/0`) with `limits`, `capabilityNeeds` and `islandCapabilities` added."
   @spec extend(map) :: map
   def extend(%{} = status) do
+    islands = Map.get(status, :islands, [])
+
     status
-    |> Map.put(:limits, limits(length(Map.get(status, :islands, []))))
+    |> Map.put(:limits, limits(length(islands)))
     |> Map.put(:capabilityNeeds, capability_needs(Map.get(status, :experiments, %{})))
+    |> Map.put(:islandCapabilities, island_capabilities(islands))
+  end
+
+  @doc """
+  The islands (`Coordinator.Queue.status/0`'s, each with `:stale` and, when
+  recorded, `:capabilities`) counted by recorded capability, and those with none.
+  """
+  @spec island_capabilities([map]) :: map
+  def island_capabilities(islands) do
+    known = Coordinator.Queue.known_capabilities()
+
+    counted =
+      Enum.reduce(islands, %{byCapability: %{}, none: %{islands: 0, live: 0}}, fn island, acc ->
+        live = if island[:stale], do: 0, else: 1
+
+        case island[:capabilities] do
+          [_ | _] = names ->
+            by =
+              Enum.reduce(Enum.uniq(names), acc.byCapability, fn name, by ->
+                Map.update(
+                  by,
+                  name,
+                  %{islands: 1, live: live, known: name in known},
+                  &%{&1 | islands: &1.islands + 1, live: &1.live + live}
+                )
+              end)
+
+            %{acc | byCapability: by}
+
+          _ ->
+            %{acc | none: %{islands: acc.none.islands + 1, live: acc.none.live + live}}
+        end
+      end)
+
+    # Every gated name, and the `@shown_unknown_max` other names on the most
+    # islands (then by name); `omittedNames` counts the rest.
+    {gated, other} = Enum.split_with(counted.byCapability, fn {_, c} -> c.known end)
+
+    {shown, omitted} =
+      other
+      |> Enum.sort_by(fn {name, c} -> {-c.islands, name} end)
+      |> Enum.split(@shown_unknown_max)
+
+    %{counted | byCapability: Map.new(gated ++ shown)}
+    |> Map.put(:omittedNames, length(omitted))
   end
 
   # Every config key `limits/1` reads, besides the garden island token.

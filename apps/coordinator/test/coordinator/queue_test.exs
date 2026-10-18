@@ -893,7 +893,8 @@ defmodule Coordinator.QueueTest do
       assert p.kind == "run" and String.starts_with?(p.segment.run, "a-pond/ponds-small/")
       assert p.spec.presetId == "ponds-small"
 
-      # Never persisted: nothing about the request sticks to the island.
+      # The Queue records a cleaned copy for the operator (`status/0`), but the
+      # island's own view (`island_info/1`) never shows it.
       refute Map.has_key?(Queue.island_info(new), :capabilities)
     end
 
@@ -1812,7 +1813,8 @@ defmodule Coordinator.QueueTest do
       assert v.spec.interventions == @scheduled["interventions"]
       assert {:ok, "verified"} = Queue.complete(v.segment.id, other, v.lease, "verify", "w0", %{})
 
-      # Never persisted: nothing about the request sticks to the island.
+      # The Queue records a cleaned copy for the operator (`status/0`), but the
+      # island's own view (`island_info/1`) never shows it.
       refute Map.has_key?(Queue.island_info(new), :capabilities)
     end
 
@@ -2313,5 +2315,222 @@ defmodule Coordinator.QueueTest do
       assert {:ok, %{kind: "run"}} = Queue.next_task(i)
       assert {:ok, %{kind: "run"}} = Queue.next_task(i)
     end
+  end
+
+  # docs/coordinator-hardening-2026-10-18.md, item 3: each island's most recent
+  # capabilities are recorded for the operator page, bounded, and never gate.
+  describe "recorded capabilities" do
+    @known ~w(breed-v1 interventions-v1 ponds-v1 ponds-v2)
+    @pond_only %{
+      "experiment" => "pond-only",
+      "presetId" => "ponds-small",
+      "conditions" => ["treatment"],
+      "seeds" => [1],
+      "steps" => 1000,
+      "segmentSteps" => 1000,
+      "censusEvery" => 100
+    }
+
+    defp recorded(island), do: Enum.find(Queue.status().islands, &(&1.id == island))
+
+    test "next records the cleaned list on the island" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      refute Map.has_key?(recorded(i), :capabilities)
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(i, ["ponds-v1", "Bad!", "zz-v1", "ponds-v1", "-x", "a--b", "9a"])
+
+      assert recorded(i).capabilities == ["ponds-v1", "zz-v1"]
+    end
+
+    test "unknown names are capped at four, in sorted order; known names are always kept" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      unknown = ~w(u-f u-a u-c u-b u-e u-d)
+      {:ok, _} = Queue.next_task(i, unknown ++ Enum.reverse(@known))
+      assert recorded(i).capabilities == Enum.sort(@known ++ ~w(u-a u-b u-c u-d))
+      assert length(recorded(i).capabilities) == 8
+    end
+
+    test "names of 33 to 64 bytes are gated as today but never stored" do
+      {:ok, 1} = Queue.create_experiment(@pond_only)
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      long = "p" <> String.duplicate("a", 32)
+      assert byte_size(long) == 33
+      at_limit = String.duplicate("q", 32)
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i, [long])
+      refute Map.has_key?(recorded(i), :capabilities)
+
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i, [long, at_limit, "ponds-v1"])
+      assert recorded(i).capabilities == [at_limit, "ponds-v1"] |> Enum.sort()
+    end
+
+    test "an empty list removes the record" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      {:ok, _} = Queue.next_task(i, ["ponds-v1"])
+      assert recorded(i).capabilities == ["ponds-v1"]
+      {:ok, _} = Queue.next_task(i, [])
+      refute Map.has_key?(recorded(i), :capabilities)
+      {:ok, _} = Queue.next_task(i, ["NOPE"])
+      refute Map.has_key?(recorded(i), :capabilities)
+    end
+
+    test "the record is updated at the pending cap too" do
+      saved = Application.fetch_env(:coordinator, :island_max_pending)
+      on_exit(fn -> restore(:island_max_pending, saved) end)
+      Application.put_env(:coordinator, :island_max_pending, 1)
+      {:ok, 1} = Queue.create_experiment(@pond_only)
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i, ["ponds-v1"])
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i, ["ponds-v1", "zz-v2"])
+      assert recorded(i).capabilities == ["ponds-v1", "zz-v2"]
+    end
+
+    test "a stored capability never grants a task" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      # Recorded while there is no work at all.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i, ["ponds-v1"])
+      assert recorded(i).capabilities == ["ponds-v1"]
+
+      # Only pond work waits: asked without the capability, the island is idle.
+      {:ok, 1} = Queue.create_experiment(@pond_only)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i, [])
+      refute Map.has_key?(recorded(i), :capabilities)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(i)
+
+      # Asked with it, the same island gets the run.
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i, ["ponds-v1"])
+    end
+
+    test "the record survives a Queue restart on the same data dir", %{dir: dir} do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      {:ok, _} = Queue.next_task(i, ["ponds-v1", "zz-v1"])
+      :ok = stop_supervised(Queue)
+      start_supervised!({Queue, data_dir: dir})
+      assert recorded(i).capabilities == ["ponds-v1", "zz-v1"]
+    end
+
+    test "a state.bin from before loads, serves, and keeps its island records' shape", %{dir: dir} do
+      :ok = stop_supervised(Queue)
+      token = "legacy-token"
+
+      island = %{
+        id: "isl-legacy",
+        token_hash: :crypto.hash(:sha256, token),
+        adapter: "Old GPU",
+        user_agent: "old",
+        metrics_version: 1,
+        joined_at: 0,
+        last_seen: 0,
+        runs: 0,
+        verifies: 0
+      }
+
+      legacy = %{
+        version: 3,
+        experiments: %{},
+        segments: %{},
+        islands: %{"isl-legacy" => island},
+        next_seg: 1
+      }
+
+      state = Path.join(dir, "state.bin")
+      File.write!(state, :erlang.term_to_binary(legacy))
+      start_supervised!({Queue, data_dir: dir})
+
+      assert [listed] = Queue.status().islands
+      refute Map.has_key?(listed, :capabilities)
+      assert Queue.authenticate("isl-legacy", token)
+
+      # An ask that advertises nothing storable keeps the record's keys as they were.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task("isl-legacy", ["NOT-STORED"])
+      persisted = state |> File.read!() |> :erlang.binary_to_term()
+
+      assert Map.keys(persisted.islands["isl-legacy"]) |> Enum.sort() ==
+               Map.keys(island) |> Enum.sort()
+    end
+
+    test "a name is matched whole: no trailing newline, empty string or non-ASCII letter is stored" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+
+      {:ok, _} =
+        Queue.next_task(i, [
+          "zz-v1\n",
+          "",
+          "pond\u00e9-v1",
+          "zz-v1 ",
+          " zz-v1",
+          "ZZ-v1",
+          "zz_v1",
+          "zz-v2"
+        ])
+
+      assert recorded(i).capabilities == ["zz-v2"]
+    end
+
+    test "known_capabilities/0 is every capability constant the Queue gates on" do
+      gated =
+        for [_, name] <-
+              Regex.scan(
+                ~r/^\s*@\w+_capability "([^"]+)"/m,
+                File.read!("lib/coordinator/queue.ex")
+              ),
+            do: name
+
+      assert length(gated) >= 4
+      assert Enum.sort(Queue.known_capabilities()) == Enum.sort(gated)
+    end
+
+    test "a malformed recorded list in state.bin is cleaned on load, never breaking the status",
+         %{dir: dir} do
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+      {:ok, %{id: c}} = Queue.join(%{"adapter" => "C"})
+      {:ok, %{id: d}} = Queue.join(%{"adapter" => "D"})
+      {:ok, _} = Queue.next_task(a, ["ponds-v1"])
+      :ok = stop_supervised(Queue)
+
+      state = Path.join(dir, "state.bin")
+      s = state |> File.read!() |> :erlang.binary_to_term()
+      oversized = for n <- 1..1000, do: "zz-#{n}"
+
+      s =
+        s
+        |> put_in([:islands, a, :capabilities], [%{}, "ponds-v1", 7])
+        |> put_in([:islands, b, :capabilities], ["ponds-v1" | "bad"])
+        |> put_in([:islands, c, :capabilities], ["breed-v1" | oversized])
+        |> put_in([:islands, d, :capabilities], "ponds-v1")
+
+      File.write!(state, :erlang.term_to_binary(s))
+      start_supervised!({Queue, data_dir: dir})
+
+      assert recorded(a).capabilities == ["ponds-v1"]
+      refute Map.has_key?(recorded(b), :capabilities)
+      assert recorded(c).capabilities == ["breed-v1" | Enum.take(Enum.sort(oversized), 4)]
+      refute Map.has_key?(recorded(d), :capabilities)
+
+      # The admin status still encodes.
+      assert %{} =
+               Queue.status()
+               |> CoordinatorWeb.OpsStatus.extend()
+               |> Jason.encode!()
+               |> Jason.decode!()
+    end
+
+    test "the public status keys are unchanged" do
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "A"})
+      {:ok, _} = Queue.next_task(i, ["ponds-v1"])
+
+      assert Queue.public_status() |> Map.keys() |> Enum.sort() == [
+               :activeIslands,
+               :counts,
+               :deviceTypes
+             ]
+
+      refute inspect(Queue.public_status()) =~ "ponds-v1"
+    end
+
+    defp restore(key, {:ok, v}), do: Application.put_env(:coordinator, key, v)
+    defp restore(key, :error), do: Application.delete_env(:coordinator, key)
   end
 end

@@ -140,7 +140,7 @@
         <section class="rail-section" aria-labelledby="setup-heading">
           <h2 id="setup-heading">Plant a world</h2>
           <label class="field"><span>Starting world</span><select id="preset"></select></label>
-          <button id="btn-worlds" class="full" type="button" aria-haspopup="dialog" aria-controls="worlds">Browse all worlds</button>
+          <button id="btn-worlds" class="full" type="button" aria-haspopup="dialog">Browse all worlds</button>
           <div class="preset-about" id="preset-desc"></div>
           <label class="field"><span>Seed number</span><input id="seed" type="number" min="0" step="1" value="1" /></label>
           <p class="hint">A fresh seed number every visit, unless the link names one. Same starting world and seed number: the same history, every time. Anything you do by hand is extra, and logged.</p>
@@ -221,7 +221,7 @@
         <section class="evidence-section" aria-labelledby="ledger-heading">
           <div class="section-heading"><h2 id="ledger-heading">Is the jar still sealed?</h2><span class="badge" id="ledger-badge">waiting</span></div>
           <dl class="kv mono"><dt>Matter in or out</dt><dd id="k-matter"></dd><dt>Fed by hand</dt><dd id="k-fed"></dd><dt>Energy unaccounted</dt><dd id="k-resid"></dd><dt>Light taken in</dt><dd id="k-light"></dd><dt>Heat let out</dt><dd id="k-heat"></dd></dl>
-          <div class="bars" id="pools" aria-label="What the matter is right now"></div>
+          <div class="bars" id="pools" role="img" aria-label="What the matter is right now: not counted yet"></div>
           <div class="pool-legend"><span><i class="key key-a"></i>Nutrient</span><span><i class="key key-b"></i>Biomass</span><span><i class="key key-p"></i>Membrane</span><span><i class="key key-c"></i>Waste</span></div>
         </section>
         <section class="evidence-section verification" id="verification" aria-labelledby="verification-heading">
@@ -258,7 +258,7 @@
             <summary>What counts as a first</summary>
             <div id="firsts-rules-body"></div>
           </details>
-          <button id="btn-card" class="full" type="button" aria-haspopup="dialog" aria-controls="session-card" aria-describedby="card-hint">Session card</button>
+          <button id="btn-card" class="full" type="button" aria-haspopup="dialog" aria-describedby="card-hint">Session card</button>
           <p class="hint" id="card-hint">Sums the session up: what was bred, how far it got, what died, and a file that replays it.</p>
         </section>
         <section class="evidence-section families" id="families" aria-labelledby="families-heading">
@@ -301,6 +301,25 @@
             </div>
           </details>
         </section>
+        <section class="evidence-section naturalist" id="naturalist" aria-labelledby="naturalist-heading" data-state="none">
+          <div class="section-heading"><h2 id="naturalist-heading">Field notes</h2><span class="badge" id="naturalist-badge">waiting</span></div>
+          <p class="hint naturalist-lede">Code, not a model. Where it has a baseline, it compares a world, census by census, with neutral runs of its starting world, by rules written down before the code. No model reads this world.</p>
+          <p class="naturalist-status" id="naturalist-status" role="status" aria-live="polite">Waiting for a world.</p>
+          <p class="hint" id="naturalist-detail" hidden></p>
+          <p class="hint mono" id="naturalist-read" hidden></p>
+          <ul class="naturalist-standing" id="naturalist-standing" aria-label="What the record says about this rule" hidden></ul>
+          <ol class="firsts-list naturalist-notes" id="naturalist-notes" aria-label="Field notes so far, in filing order" hidden></ol>
+          <p class="hint" id="naturalist-filing" hidden></p>
+          <ul class="naturalist-standing" id="naturalist-hedge" aria-label="What no note so far does and does not say" hidden></ul>
+          <details class="firsts-rules naturalist-cannot">
+            <summary>What this cannot tell you</summary>
+            <ul class="naturalist-cannot-list" id="naturalist-cannot"></ul>
+          </details>
+          <details class="firsts-rules naturalist-rules">
+            <summary>How it decides</summary>
+            <div class="naturalist-rule" id="naturalist-rule"></div>
+          </details>
+        </section>
       </aside>
 
       <aside class="lineage-drawer" id="lineage-drawer" aria-labelledby="lineage-heading" hidden>
@@ -327,7 +346,7 @@
         <div><h2 id="card-heading" tabindex="-1">Session card</h2><p class="hint">What this session did, as counted. Nothing here is a score.</p></div>
         <button class="card-close quiet" type="button">Close</button>
       </div>
-      <div class="card-body" id="card-body"></div>
+      <div class="card-body" id="card-body" tabindex="0" role="region" aria-label="Session card contents"></div>
       <div class="card-foot">
         <button id="btn-session-file" class="primary" type="button" aria-describedby="card-file-note" disabled>Download session file</button>
         <p class="hint" id="card-file-note" role="status" aria-live="polite">Saves this world’s history from step 0, its firsts and this card as one file, which tools/run.ts replays and checks against this world’s final state.</p>

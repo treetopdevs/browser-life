@@ -111,8 +111,9 @@ if dir = System.get_env("BL_DISCOVERY_DATA_DIR"),
 if token = System.get_env("BL_DISCOVERY_JOIN_TOKEN"),
   do: config(:coordinator, discovery_join_token: token)
 
-if ms = System.get_env("BL_DISCOVERY_LEASE_MS"),
-  do: config(:coordinator, discovery_lease_ms: String.to_integer(ms))
+# The discovery lease (ms); a lease has no "off".
+with {:ok, ms} <- env_count.("BL_DISCOVERY_LEASE_MS", false),
+     do: config(:coordinator, discovery_lease_ms: ms)
 
 # The discovery validator: BL_DISCOVERY_VALIDATOR (a command line), else deno
 # with the checkout's tools/discovery.ts when both exist.

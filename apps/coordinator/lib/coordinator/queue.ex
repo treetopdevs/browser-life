@@ -61,9 +61,10 @@ defmodule Coordinator.Queue do
   run the pond cycle — packages/schema/src/presets.ts) are gated by island
   capability. An island lists what its code can run in the body of every
   `/api/next` (`capabilities`, e.g. `["ponds-v1"]`, see
-  packages/runner/src/island.ts's `ISLAND_CAPABILITIES`; read per request,
-  never persisted), and `pick_task/4` offers a pond experiment's segments, run
-  or verify, only to an island whose request carries `"ponds-v1"`. An island
+  packages/runner/src/island.ts's `ISLAND_CAPABILITIES`; gating reads the list
+  in each request, never a stored one), and `pick_task/4` offers a pond
+  experiment's segments, run or verify, only to an island whose request
+  carries `"ponds-v1"`. An island
   built before the pond cycle cannot run them, and on a continuation would
   report a valid predecessor as invalid (its runner throws on the unknown
   preset inside the predecessor check). Every other experiment's work still
@@ -182,6 +183,15 @@ defmodule Coordinator.Queue do
   reject handler refuses to reject a *verified* garden day, so a single
   volunteer cannot roll back history two islands agreed on.
 
+  Each `/api/next` also records, on the asking island's record, a cleaned
+  copy of that request's capabilities (`:capabilities`; names matching
+  `[a-z][a-z0-9]*(-[a-z0-9]+)*` within 32 bytes, deduplicated and sorted:
+  every name the Queue gates on and at most four others; the key is removed
+  when nothing is storable, docs/coordinator-hardening-2026-10-18.md). Only
+  `status/0` (admin `/api/status`, for the operator page) shows it;
+  `island_info/1` drops it. It never grants a task: an island that once
+  advertised `"ponds-v1"` and then asks without it is not offered pond work.
+
   Islands authenticate with a private token issued at join; every assignment
   carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
   heartbeats and completion. The end checkpoint of every accepted run attempt
@@ -209,7 +219,7 @@ defmodule Coordinator.Queue do
   """
   use GenServer
   require Logger
-  alias Coordinator.{Attempt, Garden, Segment, Store}
+  alias Coordinator.{Attempt, Garden, GardenLeaders, Segment, Store}
 
   # Leases expire after this long without a heartbeat (configurable for tests).
   # Public because the garden's view must know when a lease it finds is dead
@@ -247,6 +257,17 @@ defmodule Coordinator.Queue do
   # pre-garden coordinator refuses a state.bin holding a garden (its modules
   # name none of the garden's atoms, `[:safe]` decoding), so rolling the code
   # back after one was founded means starting from a fresh data dir.
+  #
+  # An island's recorded capabilities extend it the same way: an island key
+  # (`:capabilities`, a list of strings) put only while the island's last
+  # `/api/next` advertised something storable, so a coordinator whose islands
+  # never did writes the file it always did, and a file from before loads
+  # unchanged. The other direction is not supported either: a coordinator from
+  # before this change, decoding a file that holds one, either refuses it
+  # (`[:safe]` decoding, if no loaded module names `:capabilities` yet) or
+  # loads it and passes the stale list through its `/api/status` and
+  # `/api/islands/me`, so rolling the code back after an island advertised a
+  # capability means starting from a fresh data dir.
   @state_version 3
   # The longest failure reason stored and shown: 500 graphemes
   # (packages/runner/src/island.ts sends at most 500 characters, as it does
@@ -254,6 +275,8 @@ defmodule Coordinator.Queue do
   # under any number of combining marks, 2000 bytes (four per codepoint at
   # most) -- the bound a persisted and listed string actually needs.
   @max_failure_reason 500
+  # Leaders tasks running at once (`start_leaders/4`).
+  @leaders_max 2
   @max_failure_reason_bytes 2000
 
   # ---- client API ----
@@ -333,7 +356,7 @@ defmodule Coordinator.Queue do
   def requeue_garden_day(name, index),
     do: GenServer.call(__MODULE__, {:requeue_garden_day, name, index})
 
-  @doc "Claims the next task for `island`. `capabilities` is the list the island sent with this request (see the moduledoc); it gates pond work and is never stored."
+  @doc "Claims the next task for `island`. `capabilities` is the list the island sent with this request (see the moduledoc); it gates pond work for this request alone, and a cleaned copy is recorded on the island for `status/0`, never read by gating."
   def next_task(island, capabilities \\ []) when is_list(capabilities),
     do: GenServer.call(__MODULE__, {:next, island, capabilities})
 
@@ -430,13 +453,15 @@ defmodule Coordinator.Queue do
     # The garden's persisted atoms (`:steps_per_day`, `:letters`, `:dropped_at`,
     # ...) live only in this module: same reason.
     Code.ensure_loaded!(Coordinator.Garden)
+    # And the leaders blocks' (`:livingCells`, `:clearLeader`, ...): theirs.
+    Code.ensure_loaded!(Coordinator.GardenLeaders)
 
     state =
       case File.read(Path.join(dir, "state.bin")) do
         {:ok, bin} ->
           case :erlang.binary_to_term(bin, [:safe]) do
             %{version: @state_version} = s ->
-              Map.put_new(s, :gardens, %{})
+              s |> Map.put_new(:gardens, %{}) |> clean_recorded_capabilities()
 
             _ ->
               raise """
@@ -468,7 +493,16 @@ defmodule Coordinator.Queue do
     # every garden's ask from zero. Hands of a past dawn period are forgotten
     # by a sweep, not only when the next hand comes.
     schedule_hands_sweep()
-    {:ok, state |> Map.put(:dir, dir) |> Map.put(:food_hands, %{}) |> reindex()}
+    # A verified day whose leaders block was never counted, or whose task died
+    # with the last Queue, is counted now (docs/garden-predictions-2026-10-18.md).
+    {:ok,
+     state
+     |> Map.put(:dir, dir)
+     |> Map.put(:food_hands, %{})
+     |> Map.put(:leaders_tasks, %{})
+     |> Map.put(:leaders_waiting, wait_new())
+     |> reindex()
+     |> start_leaders_at_boot()}
   end
 
   # The food hands are salted hashes kept in memory only (docs/garden-food-2026-10-18.md,
@@ -496,6 +530,20 @@ defmodule Coordinator.Queue do
 
   defp redact_status(status, _key, _fun), do: status
 
+  # A leaders task's answer (`start_leaders/3`): kept only if its token is still
+  # the day's and the day's accepted run attempt is the one it read
+  # (`Garden.accept_leaders/6`); a late one is dropped. A day that arrives `ok`
+  # may let the next day's lines be counted (`Garden.leaders_followups/3`).
+  # The task's slot is freed by its `:DOWN`, never here, so a dropped answer
+  # cannot leak one.
+  @impl true
+  def handle_cast({:garden_leaders, name, day, token, attempt, result}, s) do
+    case take_leaders(s, name, day, token, attempt, result) do
+      {:ok, s} -> {:noreply, persist(s)}
+      :stale -> {:noreply, s}
+    end
+  end
+
   # Every garden's hands of a past dawn period, or of another limiter
   # incarnation, are dropped (so the hashes are forgotten within a sweep of the
   # dawn, whether or not anyone asks again).
@@ -513,6 +561,31 @@ defmodule Coordinator.Queue do
           do: {name, h}
 
     {:noreply, %{s | food_hands: hands}}
+  end
+
+  # A leaders task ended (`start_leaders/4`): its slot is free, and the next
+  # waiting day starts. A task always casts its answer before it exits, so an
+  # answer is never behind its own `:DOWN`; a task that died without answering
+  # (killed, say for memory) makes its day `unreadable` if the day still waits
+  # on it, and a later start counts it again (`Garden.leaders_to_start/2`).
+  def handle_info({:DOWN, mref, :process, _pid, reason}, s)
+      when is_map_key(s.leaders_tasks, mref) do
+    {{name, day, token, attempt}, tasks} = Map.pop(s.leaders_tasks, mref)
+    s = %{s | leaders_tasks: tasks}
+
+    s =
+      with true <- reason != :normal,
+           _ =
+             Logger.warning(
+               "queue: leaders task for #{name} day #{day} died: #{inspect(reason, limit: 5)}"
+             ),
+           {:ok, s} <- take_leaders(s, name, day, token, attempt, {:error, :task_died}) do
+        s
+      else
+        _ -> s
+      end
+
+    {:noreply, s |> drain_leaders() |> persist()}
   end
 
   # As GenServer's default does, an unexpected message is worth a warning (a
@@ -553,7 +626,8 @@ defmodule Coordinator.Queue do
   end
 
   def handle_call({:island_info, id}, _from, s) do
-    info = s.islands[id] && Map.drop(s.islands[id], [:token_hash])
+    # The recorded capabilities are the operator's (`status/0`) alone.
+    info = s.islands[id] && Map.drop(s.islands[id], [:token_hash, :capabilities])
     {:reply, info, s}
   end
 
@@ -712,6 +786,9 @@ defmodule Coordinator.Queue do
     s =
       %{s | segments: Segment.reclaim_stale(s.segments, now, lease_ms())}
       |> put_in([:islands, island_id, :last_seen], now)
+      # For the operator page only (`status/0`): gating below reads the
+      # request's own list, never this copy.
+      |> update_in([:islands, island_id], &record_capabilities(&1, capabilities))
       |> release_gardens(now)
 
     {task, s} =
@@ -1165,6 +1242,11 @@ defmodule Coordinator.Queue do
 
     food_amount = Application.get_env(:coordinator, :garden_food_amount, 16)
     food_r = Application.get_env(:coordinator, :garden_food_radius, 32)
+    # The food ranges are ConfigCheck's, the one table the boot check also uses.
+    asks_r = Coordinator.ConfigCheck.food_range(:garden_food_asks)
+    every_r = Coordinator.ConfigCheck.food_range(:garden_food_every_days)
+    amount_r = Coordinator.ConfigCheck.food_range(:garden_food_amount)
+    radius_r = Coordinator.ConfigCheck.food_range(:garden_food_radius)
 
     error =
       cond do
@@ -1218,17 +1300,17 @@ defmodule Coordinator.Queue do
             (Map.has_key?(params, "foodAsks") or Map.has_key?(params, "foodEveryDays")) ->
           "foodAsks and foodEveryDays are for a garden founded with food: true"
 
-        food and not int_in?.(food_asks, 2, 1000) ->
-          "foodAsks must be an integer in 2..1000 (one person is not a collective)"
+        food and not int_in?.(food_asks, asks_r.first, asks_r.last) ->
+          "foodAsks must be an integer in #{inspect(asks_r)} (one person is not a collective)"
 
-        food and not int_in?.(food_every, 1, 365) ->
-          "foodEveryDays must be an integer in 1..365"
+        food and not int_in?.(food_every, every_r.first, every_r.last) ->
+          "foodEveryDays must be an integer in #{inspect(every_r)}"
 
-        food and not int_in?.(food_amount, 1, 64) ->
-          "the coordinator's garden_food_amount must be an integer in 1..64"
+        food and not int_in?.(food_amount, amount_r.first, amount_r.last) ->
+          "the coordinator's garden_food_amount must be an integer in #{inspect(amount_r)}"
 
-        food and not int_in?.(food_r, 1, 32) ->
-          "the coordinator's garden_food_radius must be an integer in 1..32"
+        food and not int_in?.(food_r, radius_r.first, radius_r.last) ->
+          "the coordinator's garden_food_radius must be an integer in #{inspect(radius_r)}"
 
         food and pond_preset?(preset) ->
           "food is not defined for pond worlds: the pond cycle fixes each pond's matter"
@@ -1551,8 +1633,121 @@ defmodule Coordinator.Queue do
               g
           end
 
-        put_in(s, [:gardens, seg.experiment], g)
+        s = put_in(s, [:gardens, seg.experiment], g)
+
+        if {kind, seg.status} == {"verify", "verified"},
+          do: start_leaders(s, seg.experiment, seg.index),
+          else: s
     end
+  end
+
+  # Who held the field at a verified day's end (docs/garden-predictions-2026-10-18.md):
+  # counted from the day's own files, only behind `Garden.leaders_job/4`'s gate,
+  # in an unlinked, monitored process so parsing never holds up this one. The
+  # task reads only what it is handed here and answers with a cast to this pid
+  # (a Queue that is gone never hears it), carrying a token the day's block
+  # keeps. At most `@leaders_max` run at once (a first start onto a garden with
+  # many verified days, each holding a day's mutation map): a day beyond that
+  # shows `pending` with no token and waits in `leaders_waiting`, in order, and
+  # is started afresh when a slot frees. `segs` may be passed by a caller that
+  # starts many days of one garden.
+  defp start_leaders(s, name, day, segs \\ nil) do
+    case s.gardens[name] do
+      nil -> s
+      g -> start_leaders(s, name, g, day, segs || garden_segs(s, g))
+    end
+  end
+
+  defp start_leaders(s, name, g, day, segs) do
+    case Garden.leaders_job(g, segs, day, &Store.blob_path(s.dir, &1)) do
+      :skip ->
+        s
+
+      {:unchecked, attempt} ->
+        put_in(s, [:gardens, name], Garden.unchecked_leaders(g, day, attempt))
+
+      {:start, job} when map_size(s.leaders_tasks) >= @leaders_max ->
+        s
+        |> put_in([:gardens, name], Garden.pending_leaders(g, day, nil, job.for))
+        |> Map.update!(:leaders_waiting, &wait_push(&1, {name, day}))
+
+      {:start, job} ->
+        token = System.unique_integer([:positive, :monotonic])
+        queue = self()
+
+        {_pid, mref} =
+          GardenLeaders.spawn_owned(queue, fn ->
+            result = GardenLeaders.compute(job.paths, job.ctx)
+            GenServer.cast(queue, {:garden_leaders, name, day, token, job.for, result})
+          end)
+
+        s
+        |> put_in([:gardens, name], Garden.pending_leaders(g, day, token, job.for))
+        |> put_in([:leaders_tasks, mref], {name, day, token, job.for})
+        |> Map.update!(:leaders_waiting, &unwait(&1, {name, day}))
+    end
+  end
+
+  # The waiting days: a FIFO of `{name, day}` and the set of those still
+  # waiting, so queueing, starting and taking the next are each O(log n) (a
+  # first start onto a garden with many verified days queues them all). A day
+  # started out of turn leaves its entry in the FIFO; it is skipped when
+  # reached, being out of the set.
+  defp wait_new, do: {:queue.new(), MapSet.new()}
+
+  defp wait_push({q, set} = w, item),
+    do: if(MapSet.member?(set, item), do: w, else: {:queue.in(item, q), MapSet.put(set, item)})
+
+  defp unwait({q, set}, item), do: {q, MapSet.delete(set, item)}
+
+  defp wait_pop({q, set}) do
+    case :queue.out(q) do
+      {{:value, item}, q} ->
+        if MapSet.member?(set, item),
+          do: {item, {q, MapSet.delete(set, item)}},
+          else: wait_pop({q, set})
+
+      {:empty, q} ->
+        {nil, {q, set}}
+    end
+  end
+
+  # An answer for `day` (a task's, or a died task's `{:error, _}`), through
+  # `Garden.accept_leaders/6`; then the days it lets be counted.
+  defp take_leaders(s, name, day, token, attempt, result) do
+    with %{} = g <- s.gardens[name],
+         segs = garden_segs(s, g),
+         {:ok, g} <- Garden.accept_leaders(g, segs, day, token, attempt, result) do
+      s = put_in(s, [:gardens, name], g)
+      s = Enum.reduce(Garden.leaders_followups(g, segs, day), s, &start_leaders(&2, name, &1))
+      Coordinator.LetterLimiter.invalidate(name)
+      {:ok, s}
+    else
+      _ -> :stale
+    end
+  end
+
+  # Starts waiting days while a slot is free.
+  defp drain_leaders(s) when map_size(s.leaders_tasks) >= @leaders_max, do: s
+
+  defp drain_leaders(s) do
+    case wait_pop(s.leaders_waiting) do
+      {{name, day}, rest} ->
+        %{s | leaders_waiting: rest} |> start_leaders(name, day) |> drain_leaders()
+
+      {nil, rest} ->
+        %{s | leaders_waiting: rest}
+    end
+  end
+
+  defp start_leaders_at_boot(s) do
+    Enum.reduce(s.gardens, s, fn {name, g}, s ->
+      segs = garden_segs(s, g)
+
+      g
+      |> Garden.leaders_to_start(segs)
+      |> Enum.reduce(s, &start_leaders(&2, name, &1, segs))
+    end)
   end
 
   # ---- validation ----
@@ -2199,6 +2394,77 @@ defmodule Coordinator.Queue do
   defp breed_condition?(condition),
     do: is_binary(condition) and String.starts_with?(condition, @breed_condition_prefixes)
 
+  # ---- recorded capabilities (see the moduledoc; never read by gating) ----
+
+  @known_capabilities [
+    @pond_capability,
+    @current_capability,
+    @interventions_capability,
+    @breed_capability
+  ]
+  @stored_capability ~r/\A[a-z][a-z0-9]*(-[a-z0-9]+)*\z/
+  @stored_capability_bytes 32
+  @stored_unknown_max 4
+
+  # The copy of a request's capabilities kept on the island record: names that
+  # match `@stored_capability` within `@stored_capability_bytes`, deduplicated
+  # and sorted; every name the Queue gates on, and the first
+  # `@stored_unknown_max` other names in sorted order (not by recency: an
+  # island advertising four names that sort early has a fifth, later one left
+  # out of its own record; display only). At most 8 names.
+  defp stored_capabilities(capabilities) do
+    names =
+      capabilities
+      |> Enum.filter(
+        &(is_binary(&1) and byte_size(&1) <= @stored_capability_bytes and
+            Regex.match?(@stored_capability, &1))
+      )
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    {known, unknown} = Enum.split_with(names, &(&1 in @known_capabilities))
+    Enum.sort(known ++ Enum.take(unknown, @stored_unknown_max))
+  end
+
+  @doc "The capability names the Queue gates on (`gated_experiments/2`, `gated?/3`); every one is always kept in a recorded copy."
+  @spec known_capabilities() :: [String.t()]
+  def known_capabilities, do: @known_capabilities
+
+  # On load, every island's recorded `:capabilities` goes through the same
+  # cleaning as a request's (`record_capabilities/2`): a state.bin is trusted
+  # as written by this code, but a list it never could have written (not a
+  # proper list, non-strings, too many names, too long) is cleaned or dropped
+  # rather than breaking `/api/status` later.
+  defp clean_recorded_capabilities(%{islands: islands} = s) when is_map(islands) do
+    islands =
+      Map.new(islands, fn
+        {id, %{capabilities: caps} = island} ->
+          caps = if proper_list?(caps), do: caps, else: []
+          {id, record_capabilities(island, caps)}
+
+        other ->
+          other
+      end)
+
+    %{s | islands: islands}
+  end
+
+  defp clean_recorded_capabilities(s), do: s
+
+  defp proper_list?([]), do: true
+  defp proper_list?([_ | rest]), do: proper_list?(rest)
+  defp proper_list?(_), do: false
+
+  # Sets the island's `:capabilities` to the stored copy, or removes the key
+  # when nothing is storable, so a record that never advertised anything keeps
+  # its shape from before.
+  defp record_capabilities(island, capabilities) do
+    case stored_capabilities(capabilities) do
+      [] -> Map.delete(island, :capabilities)
+      names -> Map.put(island, :capabilities, names)
+    end
+  end
+
   # The experiments whose work an island with `capabilities` must not be
   # offered: every pond experiment, unless it advertises `@pond_capability`;
   # every experiment on a breed preset, unless it advertises
@@ -2444,9 +2710,9 @@ defmodule Coordinator.Queue do
   # Never `:dir`, `:index` or `:food_hands` (the food hands live in memory
   # only); `:gardens` only while empty (see `@state_version`).
   defp persist_drops(%{gardens: gardens}) when map_size(gardens) == 0,
-    do: [:dir, :index, :food_hands, :gardens]
+    do: [:dir, :index, :food_hands, :leaders_tasks, :leaders_waiting, :gardens]
 
-  defp persist_drops(_s), do: [:dir, :index, :food_hands]
+  defp persist_drops(_s), do: [:dir, :index, :food_hands, :leaders_tasks, :leaders_waiting]
 
   defp persist(s) do
     path = Path.join(s.dir, "state.bin")

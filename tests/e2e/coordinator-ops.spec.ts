@@ -134,12 +134,16 @@ for (const width of [1280, 375]) {
 
     // Open work by capability: gardens left out; runs with open segments, open segments, then done but not verified
     // (an upper bound on replay work, which can run in parallel even within one run).
-    for (const [needs, runs, open, unverified] of [["breed-v1 + ponds-v1", "3", "12", "1"], ["ponds-v1", "1", "2", "1"], ["none", "1", "1", "8"], ["interventions-v1", "0", "0", "1"]]) {
+    // The last column: live islands whose last ask advertised every need (island 2, stale, is never counted; island
+    // 3 advertised nothing, so it counts only where nothing is needed, where every live island is said to qualify).
+    for (const [needs, runs, open, unverified, advertising] of [["breed-v1 + ponds-v1", "3", "12", "1", "1"], ["ponds-v1", "1", "2", "1", "2"], ["none", "1", "1", "8", "all live (3)"], ["interventions-v1", "0", "0", "1", "2"]]) {
       const cells = page.locator("#capabilities tr").filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^${needs.replace(/[+]/g, "\\+")}$`) }) }).locator("td");
       await expect(cells.nth(1)).toHaveText(runs);
       await expect(cells.nth(2)).toHaveText(open);
       await expect(cells.nth(3)).toHaveText(unverified);
+      await expect(cells.nth(5)).toHaveText(advertising);
     }
+    await expect(page.locator("#capabilities th").nth(5)).toHaveText("live islands that last advertised all of these");
     await expect(page.locator("#capabilities tr")).toHaveCount(5);
 
     // The garden card: state, days, verification and keeper lines (as text, with the token variable, never the token).
@@ -178,6 +182,21 @@ for (const width of [1280, 375]) {
     await expect(page.locator("#islands tr")).toHaveCount(5);
     await expect(page.locator("#islands tr").nth(1).locator("td").first()).toHaveText("isl-Pp1oO2iI3uU4");
     await expect(page.locator("#island-totals .card").filter({ hasText: "garden islands" }).locator(".num")).toHaveText("2");
+    // Each island's last advertised list (the first listed advertised nothing).
+    await expect(page.locator("#islands th").nth(4)).toHaveText("last advertised");
+    await expect(page.locator("#islands tr").nth(1).locator("td").nth(4)).toHaveText("—");
+    await expect(row(page, "islands", "isl-Ab3dE9fGh1Jk").nth(4)).toHaveText("breed-v1, interventions-v1, ponds-v1, ponds-v2");
+
+    // Islands by capability, as last advertised: most islands first, then by name; the gating column; and a row
+    // for the islands with none recorded.
+    await expect(page.locator("#islands-capability-state")).toHaveText("");
+    const byCap = page.locator("#islands-by-capability tr");
+    await expect(byCap).toHaveCount(7);
+    const capRows = [
+      ["interventions-v1", "3", "2", "1", "yes"], ["ponds-v1", "3", "2", "1", "yes"], ["ponds-v2", "3", "2", "1", "yes"],
+      ["breed-v1", "2", "1", "1", "yes"], ["zz-preview", "1", "0", "1", "no"], ["(none recorded)", "1", "1", "0", "—"],
+    ];
+    for (const [i, cells] of capRows.entries()) await expect(byCap.nth(i + 1).locator("td")).toHaveText(cells);
 
     // Limits and discovery.
     await expect(row(page, "limits", "joins per client address").nth(1)).toHaveText("off");
@@ -203,6 +222,9 @@ test("escapes a hostile experiment name, failure reason, adapter and user agent"
       s.failures.push({ ...s.failures[0], run: `${HOSTILE_A}/wild-storm-large/treatment/seed-1`, index: 0, reason: HOSTILE_B });
       s.islands[0].adapter = HOSTILE_A;
       s.islands[0].user_agent = HOSTILE_B;
+      s.islands[0].capabilities = [HOSTILE_A, HOSTILE_B];
+      s.islandCapabilities.byCapability[HOSTILE_A] = { islands: 1, live: 1, known: false };
+      s.islandCapabilities.byCapability[HOSTILE_B] = { islands: 1, live: 1, known: false };
     })],
   });
   await connect(page);
@@ -210,7 +232,11 @@ test("escapes a hostile experiment name, failure reason, adapter and user agent"
   await expect(page.locator("#experiments td").filter({ hasText: HOSTILE_A }).first()).toHaveText(HOSTILE_A);
   await expect(page.locator("#failures td.reason").filter({ hasText: "window.__pwned" })).toHaveText(HOSTILE_B);
   await expect(page.locator("#islands-by-device td").filter({ hasText: "onerror" })).toHaveText(HOSTILE_A);
-  await expect(page.locator("#islands td").filter({ hasText: "</script>" })).toHaveText(HOSTILE_B);
+  await expect(page.locator("#islands td").filter({ hasText: "</script>" }).first()).toHaveText(HOSTILE_B);
+  // A recorded capability name, in the by-capability table and on the island's row.
+  await expect(page.locator("#islands-by-capability td").filter({ hasText: "onerror" })).toHaveText(HOSTILE_A);
+  await expect(page.locator("#islands-by-capability td").filter({ hasText: "</script>" })).toHaveText(HOSTILE_B);
+  await expect(page.locator("#islands td.mono").filter({ hasText: "onerror" })).toHaveText(`${HOSTILE_A}, ${HOSTILE_B}`);
 
   // The hostile garden: fetched under its percent-encoded name, rendered, and given no shell line.
   const card = page.locator("#gardens article").filter({ has: page.locator("h3", { hasText: "onerror" }) });
@@ -371,6 +397,43 @@ test("a malformed status row or body is reported, not thrown", async ({ page }) 
   mock.status = () => [200, null];
   await expect(page.locator("#connection")).toContainText("The status could not be read.", { timeout: 30_000 });
   expect(mock.errors).toEqual([]);
+});
+
+test("a status without islandCapabilities (an older coordinator) says so, not throws", async ({ page }) => {
+  const mock = await serve(page, { status: () => [200, status((s) => { delete s.islandCapabilities; for (const i of s.islands) delete i.capabilities; })] });
+  await connect(page);
+  await expect(page.locator("#islands-capability-state")).toContainText("carries no islandCapabilities");
+  await expect(page.locator("#islands-by-capability tr")).toHaveCount(0);
+  // No count is made up for the "advertised" column; the rest of the table stands.
+  const none = page.locator("#capabilities tr").filter({ has: page.locator("td:first-child", { hasText: /^none$/ }) }).locator("td");
+  await expect(none.nth(3)).toHaveText("8");
+  await expect(none.nth(5)).toHaveText("—");
+  await expect(row(page, "islands", "isl-Ab3dE9fGh1Jk").nth(4)).toHaveText("—");
+  await expect(page.locator("#connection")).toHaveText("Connected.");
+  expect(mock.errors).toEqual([]);
+});
+
+test("islands by capability: names the coordinator left out, and more rows than the page draws, become one row", async ({ page }) => {
+  await serve(page, { status: () => [200, status((s) => {
+    s.islandCapabilities.omittedNames = 5;
+    for (let n = 0; n < 120; n++) s.islandCapabilities.byCapability[`x-${String(n).padStart(3, "0")}`] = { islands: 5, live: 5, known: false };
+  })] });
+  await connect(page);
+  const byCap = page.locator("#islands-by-capability tr");
+  // Header, 100 drawn names, the "other names" row and "(none recorded)".
+  await expect(byCap).toHaveCount(103);
+  await expect(byCap.nth(101).locator("td")).toHaveText(["(30 other names not listed)", "—", "—", "—", "no"]);
+  await expect(byCap.nth(102).locator("td").first()).toHaveText("(none recorded)");
+  // The cut keeps every gated name, though 120 others are on more islands; it drops "zz-preview" and 24 of the others (30 with the 5 the coordinator left out).
+  for (const name of ["breed-v1", "interventions-v1", "ponds-v1", "ponds-v2"]) await expect(page.locator("#islands-by-capability td", { hasText: new RegExp(`^${name}$`) })).toHaveCount(1);
+  await expect(page.locator("#islands-by-capability td", { hasText: /^zz-preview$/ })).toHaveCount(0);
+});
+
+test("open work by capability: a need missing from capabilityNeeds gets no island count", async ({ page }) => {
+  await serve(page, { status: () => [200, status((s) => { for (const name of Object.keys(s.capabilityNeeds)) delete s.capabilityNeeds[name]; })] });
+  await connect(page);
+  const none = page.locator("#capabilities tr").filter({ has: page.locator("td:first-child", { hasText: /^none$/ }) }).locator("td");
+  await expect(none.nth(5)).toHaveText("—");
 });
 
 test("limits: a key missing from config, and no pending cap", async ({ page }) => {

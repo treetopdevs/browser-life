@@ -57,7 +57,7 @@ let text: string;
 let queue: Queue;
 beforeAll(() => {
   tmp = mkdtempSync(join(tmpdir(), "hunt1-queue-"));
-  execFileSync("deno", ["run", "-A", QUEUE_TS, "--device-ref", DEVICE_REF, "--out", join(tmp, "queue.json"), "--ops", join(tmp, "ops")], { cwd: REPO, stdio: "pipe" });
+  execFileSync("deno", ["run", "--no-lock", "-A", QUEUE_TS, "--device-ref", DEVICE_REF, "--out", join(tmp, "queue.json"), "--ops", join(tmp, "ops")], { cwd: REPO, stdio: "pipe" });
   text = readFileSync(join(tmp, "queue.json"), "utf8");
   queue = JSON.parse(text) as Queue;
 }, 180_000);
@@ -578,7 +578,7 @@ describe("the ops files", () => {
     try {
       mkdirSync(join(dir, "ops"));
       writeFileSync(join(dir, "ops", "aws.conf"), "VPC=x\nWORKSPACE=/some/other/workspace\n");
-      execFileSync("deno", ["run", "-A", QUEUE_TS, "--device-ref", DEVICE_REF, "--out", join(dir, "queue.json"), "--ops", join(dir, "ops")], { cwd: REPO, stdio: "pipe" });
+      execFileSync("deno", ["run", "--no-lock", "-A", QUEUE_TS, "--device-ref", DEVICE_REF, "--out", join(dir, "queue.json"), "--ops", join(dir, "ops")], { cwd: REPO, stdio: "pipe" });
       const plist = readFileSync(join(dir, "ops", "com.browser-life.scaf-hunt1.plist"), "utf8");
       expect(plist).toContain("<string>/some/other/workspace/runs/scaffold/ops-hunt1/supervise.sh</string>");
       expect(plist).not.toContain(REPO);
@@ -590,7 +590,7 @@ describe("the ops files", () => {
 
   it("reads WORKSPACE as bash does (quotes are shell syntax, as when make-src.sh sources aws.conf), and refuses a path the plist cannot carry", () => {
     const dir = mkdtempSync(join(tmpdir(), "hunt1-queue-quoted-"));
-    const gen = () => execFileSync("deno", ["run", "-A", QUEUE_TS, "--device-ref", DEVICE_REF, "--out", join(dir, "queue.json"), "--ops", join(dir, "ops")], { cwd: REPO, stdio: "pipe" });
+    const gen = () => execFileSync("deno", ["run", "--no-lock", "-A", QUEUE_TS, "--device-ref", DEVICE_REF, "--out", join(dir, "queue.json"), "--ops", join(dir, "ops")], { cwd: REPO, stdio: "pipe" });
     try {
       mkdirSync(join(dir, "ops"));
       writeFileSync(join(dir, "ops", "aws.conf"), 'VPC=x\nWORKSPACE="/some/quoted workspace"\n');

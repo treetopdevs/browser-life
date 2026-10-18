@@ -47,12 +47,25 @@ experiment spec), `CoordinatorWeb.Router` (the routes) and `CoordinatorWeb.ApiCo
   failed attempt cannot be loaded by a coordinator from before this change (its
   modules name neither new key), as with every key added since v3: do not roll the
   code back over one, or start from a fresh data dir.
-* `POST /api/next` takes `{"capabilities": [...]}`, read per request and never stored:
-  `ponds-v1` for a pond preset's experiments, `ponds-v2` as well for the hunt's arms
+* `POST /api/next` takes `{"capabilities": [...]}`, which gates the work offered to that
+  request alone: `ponds-v1` for a pond preset's experiments, `ponds-v2` as well for the hunt's arms
   (`pond-nat`, `pond-shuf`), `breed-v1` in addition to `ponds-v1` (never instead) for the breeder (a `pond-breed-*`,
   `pond-mass-*` or `pond-drift-*` condition, and every run of a `:breed_presets` preset,
   `breeder`), `interventions-v1` for an experiment with `interventions`.
-  Work an island's list cannot run is skipped, never waited for.
+  Work an island's list cannot run is skipped, never waited for. A list of more than 16
+  entries, or with an entry that is not a string of at most 64 bytes, counts as none.
+  The Queue also records the island's most recent list on its record, for the operator
+  page only (`GET /api/status`'s `islands[].capabilities`): the names that match
+  `[a-z][a-z0-9]*(-[a-z0-9]+)*` within 32 bytes, deduplicated and sorted, keeping every
+  name above and at most four others, the first in sorted order (so at most 8 names),
+  updated on every `next`
+  (task or idle) and removed when nothing is storable. That record never grants a task:
+  an island that once advertised `ponds-v1` and then asks without it is not offered pond
+  work. `/api/islands/me` does not show it. A `state.bin` holding a recorded list
+  cannot be read back safely by a coordinator from before this change (it refuses the
+  file, or passes the stale list through its `/api/status` and `/api/islands/me`), as
+  with every key added since v3: do not roll the code back over one, or start from a
+  fresh data dir (docs/coordinator-hardening-2026-10-18.md).
 * A verify completion's `observationDigests` may name `interventions.jsonl` beside the
   other optional files (`migrations.tsv`, `exchanges.tsv`, `species.tsv`, `ponds.tsv`);
   the lists in `Coordinator.Segment` and `CoordinatorWeb.ApiController` are pinned to
@@ -67,6 +80,30 @@ experiment spec), `CoordinatorWeb.Router` (the routes) and `CoordinatorWeb.ApiCo
 
 Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in config.exs
 ("Island abuse controls") and read at call time. Any budget may be `nil` (off).
+
+* Every limit, window, cap and cache setting is checked when the application starts, in
+  every environment (`Coordinator.ConfigCheck`, called first by
+  `Coordinator.Application.start/2`): a value of the wrong shape stops the boot with a
+  message naming the key. Windows, the table caps, `max_islands`, `lease_ms`,
+  `discovery_lease_ms`, the garden's letter window and table cap, its hand sweep and
+  hands call timeout must be positive
+  whole numbers (a window of `0`, once clamped to 1 ms, is refused); the four food keys must sit
+  in their ranges (asks 2..1000, every 1..365 days, amount 1..64, radius 1..32,
+  `ConfigCheck.food_range/1`), refused at boot by name; the budgets (`island_joins_per_address`,
+  `island_next_per_island`, `island_segment_requests_per_island`,
+  `island_requests_per_address`) and `island_max_pending` are `nil` (off) or positive
+  (a config `0` is refused: switch a budget off with `nil`); `island_prune_after_ms`,
+  `island_prune_grace_ms`, `public_status_wait_ms`, `garden_cache_wait_ms`,
+  `garden_letters_per_address` and `garden_refusals_per_address` are whole numbers of 0
+  or more (a garden letter count of `0` closes the letter box, as before); `public_status_cache_ms` and `garden_cache_ms` any whole number
+  (0 or less is off). A float, a string, a boolean or a list is never a whole number. A
+  key left out of config passes (its consumer applies a default). A value changed later
+  with `Application.put_env/3` is not checked again; `GET /api/status`'s
+  `limits.invalid` names such a change only for the island limit keys it shows, and
+  only when the value is not an integer (or is a `nil` window). The environment variables `BL_ISLAND_JOINS_PER_ADDRESS`,
+  `BL_MAX_ISLANDS` and `BL_DISCOVERY_LEASE_MS` stop the boot by name in
+  `config/runtime.exs` on anything but a positive whole number (or `off`, where a budget
+  allows it).
 
 * `POST /api/islands`: at most `island_joins_per_address` (20) joins per client address
   per hour. The address is the garden's: the peer, or the right-most `X-Forwarded-For`
@@ -126,7 +163,7 @@ Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in con
   the numbers were computed. It carries only `counts`, `activeIslands`, `deviceTypes` and `updatedAt`.
   `/api/status`, `/api/experiments/:name` and `/api/discovery/status` need the admin
   token.
-* `GET /api/status` also carries two keys for the operator page, computed outside the
+* `GET /api/status` also carries three keys for the operator page, computed outside the
   Queue process by `CoordinatorWeb.OpsStatus`: `limits` (`islands`, the island table's
   size; `maxIslands`, `islandMaxPending`, `islandPruneAfterMs`, `islandPruneGraceMs`;
   `budgets.join`, `.next`, `.segment` and `.requests`, each `{limit, windowMs}` with
@@ -140,9 +177,16 @@ Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in con
   all read from config at call time; and
   `capabilityNeeds` (experiment => condition => the sorted capabilities its run's
   segments need, by the `/api/next` rules above, held to `Queue.next_task/2` by
-  `test/coordinator_web/ops_status_test.exs`). Nothing counts refusals (429s, the 503
-  at the island bound) or forgotten islands, and island capabilities are never stored,
-  so neither is reported.
+  `test/coordinator_web/ops_status_test.exs`); and `islandCapabilities`, the islands by
+  their recorded capabilities (above): `byCapability`, name => `{islands, live, known}`
+  (`live`: not stale; `known`: the coordinator gates on the name; every gated name and
+  at most 50 others, those on the most islands), `omittedNames` (how many other names
+  were left out), and `none`, `{islands, live}`, the islands with no recorded list (they
+  advertised nothing storable, or have not asked since this change: after an upgrade an
+  island busy on a long task counts here until its next `next`). A `state.bin` list the
+  code could not have written is cleaned (or dropped) on load. A recorded list is as of the island's last ask,
+  not a promise. Nothing counts refusals (429s, the 503 at the island bound) or
+  forgotten islands, so neither is reported.
 * CORS: production allows no cross-origin caller unless `BL_CORS_ORIGINS` names one, and
   refuses to start unless each is a whole https origin as a browser sends it
   (`https://host` or `https://host:port`, lowercase, no wildcard, path or slash).
@@ -162,10 +206,13 @@ selected it holds the view, so a line can be copied.
 It shows totals, experiments (kind, the capabilities their runs need, and open segments:
 pending or running), work by capability (gardens left out; runs with open segments, of
 which a run can have one produced at a time, open segments, and done segments not yet
-verified, an upper bound on replay work, which can go out several at once; this is what
-the work needs, not how much of it waits for a capable island), each garden's day state with its keeper actions, failures, divergences,
-observation mismatches, islands by device type and by runner (the 200 most recently
-seen listed), the configured limits and the discovery plane. It only reads: keeper
+verified, an upper bound on replay work, which can go out several at once; and the live
+islands whose last ask advertised all of a row's needs, which is not a promise, since
+work is gated on each request), each garden's day state with its keeper actions, failures, divergences,
+observation mismatches, islands by device type, by runner and by capability as last
+advertised (with a row for islands with none recorded; a coordinator whose status has
+no `islandCapabilities` is said to record none) with the 200 most recently seen listed,
+the configured limits and the discovery plane. It only reads: keeper
 actions (requeue a failed or diverged day, drop a waiting letter) are printed as `curl`
 lines with `$BL_ADMIN_TOKEN` written literally, and only for names, days and letter ids
 that pass the coordinator's format rules (the experiment-name rule, `[0-9]{1,9}`,
@@ -289,13 +336,14 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `census` | The newest done day's end-of-day numbers, or `null`: `day`, `step`, `individuals`, `lineages`, `maxGeneration`, `mutations`, `extinct`, `conservationOk` (each a number or boolean, or `null` when the island did not report it), `verified` (that day is verified), `source` (`"producer"`: reported by the island that ran the day; the digest, not these numbers, is what the replay checks). |
 | `tip` | `{day, step, digest, verified}` of the newest done day, or `null`. `digest` is the 16-hex-digit artifact digest. `verified` is that day's own replay (`days[].status`, `census.verified` likewise); `clock.verifiedStep` and `fork` are the prefix. |
 | `fork` | The end checkpoint of the newest day of the verified prefix (`clock.verifiedStep`: every day from 0 verified), or `null`: `{day, step, digest, checkpoint}`, `checkpoint` being the path that serves it (below). A day verified while an earlier day is not is not offered: it was replayed from a checkpoint nobody has checked. |
-| `days` | The newest released days, newest first, at most 14: `day`, `startStep`, `endStep`, `status`, `releasedAt`, `doneAt`, `verifiedAt`, `digest`, `verification`, `letters`, `food`, `census`. |
+| `days` | The newest released days, newest first, at most 14: `day`, `startStep`, `endStep`, `status`, `releasedAt`, `doneAt`, `verifiedAt`, `digest`, `verification`, `letters`, `food`, `census`, `leaders`. |
 | `days[].status` | `"waiting"` (released, no island holds it), `"growing"`, `"done"`, `"verified"`, `"diverged"`, `"failed"`, `"blocked"` (after a diverged or failed day). |
 | `days[].doneAt`, `verifiedAt`, `digest` | `null` until done / verified. |
 | `days[].verification` | `"different-device-type"`, `"same-device-type"`, or `null` when not verified. |
 | `days[].letters` | Ids of the live (not dropped) letters the day carries. |
 | `days[].food` | The id of the live food the day carries (`"food-<n>"`), or `null`. A day carries at most one. |
 | `days[].census` | As `census` without `day`, `step`, `verified`, `source`; `null` until done. |
+| `days[].leaders` | Who held the field at the day's end, counted from the day's verified files (below); `null` unless the day is verified. Added in the contract's additive way, so still `garden-v1`. |
 | `letters.perDay`, `letters.queueMax` | The garden's budget: letters one day carries; letters waiting at once. |
 | `letters.queued` | Letters waiting now. |
 | `letters.nextLanding` | Where a letter posted now would go: `{day, step, open}` (`open` = slots left on that day), or `null` when the garden takes no letters (queue full, log full, stopped or finished). |
@@ -315,7 +363,40 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `food.landing` | `{day, step}` where a food called now would land (the frontier day, at its end step, after that step's stones), or `null` when closed. |
 | `food.foods` | The newest 32 foods, newest first, live and dropped. |
 | food | `id` (`"food-<n>"`), `x`, `y`, `r`, `amount`, `calledAt` (when the K-th hand called it), `noticeUntil` (`calledAt` plus one dawn period: its day is not given to an island to run before this, so the keeper's veto always has that long; a reset that reopens the day does not restart it), `hands` (K), `landsAtStep`, `day`, `status` (the letter statuses, with the same meanings), `landedIn` (the carrying day's digest once done, else `null`), `droppedAt` (`null` unless the keeper dropped it). |
+| `leadersRule` | `{name: "lines-v1", top: 3, clearLeaderPercent: 10}`: the rule `days[].leaders` follows (always present). |
 | `limits` | `stoneRadius {min, max}`, `lettersPerAddressPerHour` (letters and hands together), `logMax` (founding plus live letters plus live foods, at most). |
+
+### Who held the field (`days[].leaders`)
+
+The rule is pre-stated in docs/garden-predictions-2026-10-18.md. A verified day's block is
+`{status, census, lines}`:
+
+- `status`: `"ok"` (counted), `"pending"` (being counted: the queue counts a day in a task of its
+  own once it is verified, at most two days at a time, so this lasts moments, or longer while many
+  verified days are counted after a start), `"unchecked"` (verified, but the replaying island did
+  not regenerate every observation file byte for byte for the accepted run, or reported no digests:
+  there are no numbers for this day) or `"unreadable"` (the files did not parse, or the count could
+  not finish; counted once more at each start of the coordinator).
+- `census` (`null` unless `ok`): `{step, livingCells, lineages, top, clearLeader}`, read from the
+  day's `lineages.tsv` rows at its end step. `top` is the three biggest lineage keys by cells (ties:
+  the smaller birth step `hi`, then the smaller cell `lo`), each `{key, label, cells, share}`; `share`
+  is cells over `livingCells`, rounded to 4 places; `label` is made from the key (`founder <lo>`,
+  `born step <s> at <x>,<y>` or `born step <s>, cell <lo>`). `clearLeader` is the biggest key when it
+  holds at least 10% of the living cells and strictly more than the second, else `null`.
+- `lines` (`null` for day 0, unless `ok`, and while the day before has no `ok` block):
+  `{fromDay, groups, rest, winner}`. Each of day `fromDay`'s three biggest keys, in its order, is
+  counted together with the keys descended from it through the mutations born on the two days
+  (both days' `mutations.tsv`, the nearest of the three when one descends from another); `groups`
+  are `{key, label, cells, share}` of this day's living cells and `rest` `{cells, share}` the cells
+  of every other key. `winner` is the group with strictly the most cells (a key, or `"rest"`), or
+  `null` on a tie or when nothing is living.
+
+The numbers come only from files of a day that is verified with the observation match (the
+replaying island's SHA-256s of the six observation files equal the producer's uploads): the bytes
+parsed are bytes a second island produced independently. Nothing else feeds them; the producer's `census` is not used.
+
+Predictions are never sent here; there is no route for them. A page may keep a visitor's guess on
+the visitor's own device and check it against these blocks once the next day is verified.
 
 ### `POST /api/public/garden/letters` and `POST /api/public/gardens/:name/letters`
 
@@ -455,7 +536,15 @@ under a second island id, or fail it. "Verified" means two islands agreed, not
 that either is trusted, and `tending.*` counts island ids and adapter
 descriptions as islands report them. Setting `BL_GARDEN_ISLAND_TOKEN` (config
 `:garden_island_token`) offers a garden's days only to islands that joined with
-`"gardenToken": <the token>` in the join body; the token is not stored. An island
+`"gardenToken": <the token>` in the join body; the token is not stored. A join whose
+URL carries a `gardenToken` query parameter (any value, empty included, even with the
+token in the body too) is refused with 400 `{"error": "gardenToken belongs in the JSON
+body of POST /api/islands, never in the URL"}` and joins nothing; the value is never
+echoed. This stops the practice; it cannot undo a leak: the refused URL, token included,
+may already be in a proxy or access log, and that token still works in a JSON body, so
+rotate `BL_GARDEN_ISLAND_TOKEN` if one was sent that way. A form-encoded or multipart
+join body is answered 415 before it is read (`CoordinatorWeb.IslandBodyLimit`). A parameter under another spelling (`gardentoken`) is not the token and is
+ignored, but a client that sent it has still exposed it. An island
 that joined without it still gets every ordinary experiment's work. The island
 client sends it (`IslandOptions.gardenToken`, in the join body only, never in a
 URL, a header, `/api/next` or a log line; a join that carries it follows no

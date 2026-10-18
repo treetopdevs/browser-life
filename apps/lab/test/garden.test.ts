@@ -6,6 +6,10 @@ import {
   letterWords, mergeMine, newestMine, olderDaysSettled, parseGarden, postAnswer, postedSinceDawn, readVisit, recordFor, requestJson, resolveSource, retryAfterMs,
   sharePercent, sinceLastVisit, stateWords, tendingWords, verificationSummary, visitKey, writeVisit, type GardenView, type VisitRecord,
 } from "../garden/garden.ts";
+import {
+  RECEIPTS_MAX, addReceipt, addUnkept, canonicalJson, fieldTally, leadersOn, leadersWords, lineName, linesWords, makeReceipt, mergeReceipts, predictionKey, predictionWindow, windowId,
+  readReceipts, readStoredReceipts, receiptHash, receiptId, settle, tallyWords, windowWords, writeReceipts, type Receipt, type ReceiptBody,
+} from "../garden/garden.ts";
 import { pageMeta } from "../src/social-meta.ts";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -696,5 +700,272 @@ describe("the page is hidden", () => {
     expect(sitemap).not.toMatch(/\/garden\//);
     expect(gardenHtml).toMatch(/<script type="module" src="\/garden\/main\.ts"><\/script>/);
     expect(gardenHtml).not.toMatch(/aria-current/);
+    // The prediction panel says the answer can be worked out ahead (the note's third amendment, item 5).
+    expect(gardenHtml).toMatch(/anyone can replay the next day before it is released/);
+  });
+});
+
+describe("dawn predictions (docs/garden-predictions-2026-10-18.md)", () => {
+  const subtle = globalThis.crypto.subtle;
+  const D = 131072;
+  /** Day 2 (the newest released) verified with an ok block of 100 living cells: the window for day 3 is open. */
+  const day2Leaders = {
+    status: "ok",
+    census: {
+      step: 3 * D, livingCells: 100, lineages: 7, clearLeader: "0:14",
+      top: [
+        { key: "0:14", label: "founder 14", cells: 50, share: 0.5 },
+        { key: "0:3", label: "founder 3", cells: 30, share: 0.3 },
+        { key: "48211:90377", label: "born step 48210 at 265,176", cells: 20, share: 0.2 },
+      ],
+    },
+    lines: null,
+  };
+  const openMutate = (v: Record<string, any>) => {
+    v.days[0].status = "verified"; v.days[0].verifiedAt = v.days[0].doneAt + 600_000; v.days[0].verification = "same-device-type";
+    v.days[0].leaders = structuredClone(day2Leaders);
+  };
+  const openView = () => view(openMutate);
+  /** Day 3 released after the guess, verified, with lines from day 2 (`winner`). */
+  const day3 = (winner: string | null, over: Record<string, any> = {}) => (v: Record<string, any>) => {
+    openMutate(v);
+    v.clock.releasedStep = 4 * D;
+    v.days.unshift({
+      ...structuredClone(v.days[0]), day: 3, startStep: 3 * D, endStep: 4 * D, releasedAt: v.now + 3_600_000, doneAt: v.now + 4_000_000,
+      verifiedAt: v.now + 5_000_000, digest: "aa00bb11cc22dd33", letters: [], food: null,
+      leaders: {
+        status: "ok",
+        census: { step: 4 * D, livingCells: 200, lineages: 9, clearLeader: null, top: [{ key: "400001:5", label: "born step 400000 at 5,0", cells: 30, share: 0.15 }] },
+        lines: {
+          fromDay: 2,
+          groups: [
+            { key: "0:14", label: "founder 14", cells: 60, share: 0.3 },
+            { key: "0:3", label: "founder 3", cells: 20, share: 0.1 },
+            { key: "48211:90377", label: "born step 48210 at 265,176", cells: 10, share: 0.05 },
+          ],
+          rest: { cells: 110, share: 0.55 }, winner,
+        },
+      },
+      ...over,
+    });
+  };
+  const hasher = (body: ReceiptBody) => receiptHash(body, subtle);
+  const receiptFor = async (choice: string, v: GardenView = openView()) => {
+    const made = await makeReceipt(v, choice, subtle);
+    if (!made.ok) throw new Error(made.words);
+    return made.receipt;
+  };
+
+  it("the fixture parses with leaders; a view without them parses with the panel off; a malformed block is refused by path", () => {
+    const v = view();
+    expect(leadersOn(v)).toBe(true);
+    expect(v.leadersRule).toEqual({ name: "lines-v1", top: 3, clearLeaderPercent: 10 });
+    expect(v.days.map((d) => d.leaders?.status ?? null)).toEqual([null, "ok", "ok"]);
+    expect(v.days[1].leaders?.lines?.winner).toBe("0:14");
+    const old = view((x) => { delete x.leadersRule; for (const d of x.days) delete d.leaders; });
+    expect(leadersOn(old)).toBe(false);
+    expect(predictionWindow(old)).toMatchObject({ open: false, reason: "no-leaders" });
+    const reason = (mutate: (x: Record<string, any>) => void) => { const c = copy(); mutate(c); const p = parseGarden(c); return p.ok ? "ok" : p.reason; };
+    expect(reason((x) => { x.days[1].leaders.census.top[0].key = "x"; })).toBe("days[1].leaders.census.top[0].key: expected a lineage key");
+    expect(reason((x) => { x.days[1].leaders.lines.winner = "nobody"; })).toBe("days[1].leaders.lines.winner: expected a lineage key");
+    expect(reason((x) => { x.days[2].leaders.census = "x"; })).toBe("days[2].leaders.census: expected an object");
+    expect(reason((x) => { x.leadersRule.top = 0; })).toBe("leadersRule.top: expected a positive number");
+    expect(reason((x) => { x.days[1].leaders.lines.winner = "rest"; })).toBe("ok");
+  });
+
+  it("the window: open on a verified newest day, and each reason it is shut", () => {
+    expect(predictionWindow(openView())).toMatchObject({ open: true, basis: 2, target: 3, digest: "9c41e07d2b5a8f13" });
+    const shut = (mutate: (x: Record<string, any>) => void) => { const w = predictionWindow(view((x) => { openMutate(x); mutate(x); })); return w.open ? "open" : w.reason; };
+    expect(predictionWindow(view())).toMatchObject({ open: false, reason: "basis-unverified", basis: 2 });
+    expect(shut((x) => { x.state = "stopped"; })).toBe("stopped");
+    expect(shut((x) => { x.state = "finished"; })).toBe("finished");
+    expect(shut((x) => { x.clock.daysTotal = 3; })).toBe("horizon");
+    expect(shut((x) => { x.days[0].leaders = { status: "pending", census: null, lines: null }; })).toBe("basis-pending");
+    expect(shut((x) => { x.days[0].leaders = { status: "unchecked", census: null, lines: null }; })).toBe("basis-unchecked");
+    expect(shut((x) => { x.days[0].leaders = { status: "unreadable", census: null, lines: null }; })).toBe("basis-unreadable");
+    expect(shut((x) => { x.days[0].leaders.census = { step: 3 * D, livingCells: 0, lineages: 0, top: [], clearLeader: null }; })).toBe("nothing-living");
+    expect(shut((x) => { x.days[0].leaders = null; })).toBe("basis-unverified");
+    expect(windowWords(predictionWindow(view()))).toBe("Predictions open when the newest day is verified and the next is not yet released. Day 2 is not verified yet.");
+    expect(windowWords(predictionWindow(view((x) => { openMutate(x); x.days[0].leaders.status = "pending"; })))).toBe("Day 2 is verified; its files are still being counted.");
+    expect(windowWords(predictionWindow(openView()))).toBe("Guesses about day 3 are open until it is released to an island.");
+    expect(windowWords(predictionWindow(view((x) => { openMutate(x); x.days[0].leaders = { status: "unreadable", census: null, lines: null }; })))).toBe("Day 2 is verified, but its files could not be read, so there are no numbers to guess from.");
+    // A guess belongs to one window: another basis day, a recount that changed it, or a new planting is another.
+    const id = (mutate: (x: Record<string, any>) => void) => { const v = view((x) => { openMutate(x); mutate(x); }); return windowId(v, predictionWindow(v)); };
+    const base = id(() => {});
+    expect(base).not.toBeNull();
+    expect(id(() => {})).toBe(base);
+    expect(id((x) => { x.now += 60_000; })).toBe(base);
+    expect(id((x) => { x.days[0].digest = "0000000000000000"; })).not.toBe(base);
+    expect(id((x) => { x.days[0].leaders.census.top[0].cells -= 1; })).not.toBe(base);
+    expect(id((x) => { x.createdAt += 1; })).not.toBe(base);
+    expect(id((x) => { x.state = "stopped"; })).toBeNull();
+  });
+
+  it("the receipt's canonical text and hash: a fixed vector, whatever the key order", async () => {
+    const body: ReceiptBody = {
+      v: 1, garden: "commons", createdAt: 1792454700000, madeAt: 1792789740000,
+      basis: { day: 2, digest: "9c41e07d2b5a8f13", step: 393216, livingCells: 100, top: [["0:14", 50], ["0:3", 30], ["48211:90377", 20]] },
+      target: 3, releasedStep: 393216,
+    };
+    expect(canonicalJson(body)).toBe('{"basis":{"day":2,"digest":"9c41e07d2b5a8f13","livingCells":100,"step":393216,"top":[["0:14",50],["0:3",30],["48211:90377",20]]},"createdAt":1792454700000,"garden":"commons","madeAt":1792789740000,"releasedStep":393216,"target":3,"v":1}');
+    const vector = "f48b4db611e55c15e168b53e31070a42658a9739e448dfd761e40dbd4c5e6ccf";
+    expect(await receiptHash(body, subtle)).toBe(vector);
+    const shuffled = JSON.parse('{"target":3,"releasedStep":393216,"basis":{"top":[["0:14",50],["0:3",30],["48211:90377",20]],"step":393216,"livingCells":100,"digest":"9c41e07d2b5a8f13","day":2},"v":1,"madeAt":1792789740000,"garden":"commons","createdAt":1792454700000}') as ReceiptBody;
+    expect(await receiptHash(shuffled, subtle)).toBe(vector);
+    expect(await receiptHash(body, null)).toBeNull();
+    // The page's own receipt for that view is this body, with the choice beside it.
+    const r = await receiptFor("rest");
+    expect(r).toMatchObject({ choice: "rest", target: 3, madeAt: fixture.now, basis: { day: 2, livingCells: 100 } });
+    expect(r.hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(await makeReceipt(openView(), "9:9", subtle)).toEqual({ ok: false, words: "Choose one of the three lines, or the rest." });
+    expect(await makeReceipt(openView(), "rest", null)).toMatchObject({ ok: false, words: expect.stringMatching(/receipts can’t be made/) });
+    expect(await makeReceipt(view(), "rest", subtle)).toMatchObject({ ok: false, words: expect.stringMatching(/^Predictions open when/) });
+  });
+
+  it("checks a receipt row by row (the note's section 7)", async () => {
+    const r = await receiptFor("rest");
+    const top = await receiptFor("0:14");
+    const words = async (rec: Receipt, mutate: (x: Record<string, any>) => void) => {
+      const st = await settle(rec, view(mutate), hasher);
+      return st.kind === "replanted" ? "replanted" : `${st.kind}: ${st.words}`;
+    };
+    expect(await words(r, (x) => { day3("rest")(x); x.createdAt += 1; })).toBe("replanted");
+    expect(await words(r, (x) => { day3("rest")(x); x.days = x.days.filter((d: { day: number }) => d.day !== 2); })).toBe("old: Cannot be checked here: day 2 is older than the 3 days this garden lists.");
+    // The hash is checked against the listed day B, so an edited hash or madeAt does not match; the copy of the basis
+    // in the receipt is for reading only.
+    expect(await words({ ...r, hash: "0".repeat(64) }, day3("rest"))).toBe("mismatch: Does not match the garden’s record of day 2.");
+    expect(await words({ ...r, madeAt: r.madeAt - 1 }, day3("rest"))).toBe("mismatch: Does not match the garden’s record of day 2.");
+    expect(await words(r, (x) => { day3("rest")(x); x.days[1].leaders.census.top[0].cells = 49; })).toBe("mismatch: Does not match the garden’s record of day 2.");
+    expect(await words(r, day3("rest", { releasedAt: fixture.now }))).toBe("late: Made after day 3 was released; not counted.");
+    expect(await words(r, day3("rest", { status: "diverged", leaders: null }))).toBe("stalled: Day 3 did not replay the same (or could not run); nothing to check.");
+    expect(await words(r, openMutate)).toBe("waiting: Waiting: day 3 is not verified yet.");
+    expect(await words(r, day3("rest", { status: "done", leaders: null }))).toBe("waiting: Waiting: day 3 is not verified yet.");
+    expect(await words(r, day3("rest", { leaders: { status: "pending", census: null, lines: null } }))).toBe("waiting: Waiting: day 3 is not verified yet.");
+    expect(await words(r, day3("rest", { leaders: { status: "unchecked", census: null, lines: null } }))).toBe("unchecked: Cannot be checked: the replay did not check day 3’s files.");
+    expect(await words(r, day3("rest", { leaders: { status: "unreadable", census: null, lines: null } }))).toBe("unreadable: Cannot be checked: day 3’s files could not be read.");
+    // Day 3 counted before day 2's lines could be: a recount is on its way, not a fault.
+    expect(await words(r, (x) => { day3("rest")(x); x.days[0].leaders.lines = null; })).toBe("waiting: Waiting: day 3 is verified; the lines into it are still being counted.");
+    expect(await words(r, (x) => { day3("rest")(x); x.days[0].leaders.lines.fromDay = 1; })).toBe("mismatch: Does not match the garden’s record of day 2.");
+    // Day 2's count not there now (a recount, or the day run again) cannot be checked now; it is not a mismatch.
+    expect(await words(r, (x) => { day3("rest")(x); x.days[1].leaders = { status: "pending", census: null, lines: null }; })).toBe("unavailable: Cannot be checked now: day 2’s count is not there just now (it is being counted again, or the day is being run again).");
+    expect(await words(r, (x) => { day3("rest")(x); x.days[1].status = "done"; })).toMatch(/^unavailable: /);
+    expect(await words(r, (x) => { day3("rest")(x); x.days[1].leaders = { status: "unreadable", census: null, lines: null }; })).toBe("unavailable: Cannot be checked now: day 2’s files could not be read when they were counted again.");
+    expect(await words(r, day3("rest"))).toBe("held: Held: the rest held 55% of the field at day 3’s end. Day 3 was replayed here, not yet verified elsewhere.");
+    expect(await words(top, day3("rest"))).toBe("missed: Did not hold: the rest held 55% of the field at day 3’s end. Day 3 was replayed here, not yet verified elsewhere.");
+    expect(await words(top, day3("0:14"))).toBe("held: Held: the line of founder 14 (0:14) held 30% of the field at day 3’s end. Day 3 was replayed here, not yet verified elsewhere.");
+    expect(await words(r, day3(null))).toBe("missed: Did not hold: no line held the field. Day 3 was replayed here, not yet verified elsewhere.");
+    // The tone follows how day 3 was verified, as its chip does: a clean pass only on another device type.
+    const tone = async (rec: Receipt, verification: string | null) => { const st = await settle(rec, view(day3("rest", { verification })), hasher); return st.kind === "replanted" ? null : [st.tone, st.words]; };
+    expect(await tone(r, "different-device-type")).toEqual(["observed", "Held: the rest held 55% of the field at day 3’s end."]);
+    expect(await tone(top, "different-device-type")).toEqual(["negative", "Did not hold: the rest held 55% of the field at day 3’s end."]);
+    expect(await tone(r, "same-device-type")).toEqual(["note", "Held: the rest held 55% of the field at day 3’s end. Day 3 was replayed here, not yet verified elsewhere."]);
+    expect(await tone(r, null)).toEqual(["note", "Held: the rest held 55% of the field at day 3’s end. Day 3 was replayed by a second island."]);
+    // A receipt edited to another choice still matches its hash: the choice is beside it, and only its holder is fooled.
+    expect(await words({ ...top, choice: "rest" }, day3("rest"))).toMatch(/^held:/);
+    // A browser that cannot make the fingerprint (no crypto.subtle, or digest refused) cannot check: not a mismatch.
+    const blind = await settle(r, view(day3("rest")), async () => null);
+    expect(blind).toEqual({ kind: "unavailable", tone: "pending", words: "Cannot be checked in this browser: it cannot make the receipt’s fingerprint (it has no crypto.subtle here)." });
+    const refused = await settle(r, view(day3("rest")), (body) => receiptHash(body, { digest: () => Promise.reject(new Error("no")) }));
+    expect(refused.kind).toBe("unavailable");
+  });
+
+  it("an unstored receipt shows over a stored one for the same day only while storage holds what it replaced", async () => {
+    const r = await receiptFor("rest");
+    // Three guesses against one reading: the same hash and the same madeAt, told apart only by their ids.
+    const a = await receiptFor("0:14");
+    const b = await receiptFor("0:3");
+    const c = await receiptFor("0:14");
+    expect(new Set([a.hash, b.hash, c.hash, r.hash]).size).toBe(1);
+    expect(new Set([a.madeAt, b.madeAt, c.madeAt]).size).toBe(1);
+    expect(new Set([a.id, b.id, c.id]).size).toBe(3);
+    expect(a.id).toMatch(/^[0-9a-f]{32}$/);
+    expect(receiptId(a)).toBe(a.id);
+    // This tab replaced stored A with B but could not store B: B shows, and stays in the tab.
+    expect(mergeReceipts([a], [{ receipt: b, over: receiptId(a) }])).toEqual({ all: [b], unkept: [{ receipt: b, over: receiptId(a) }] });
+    // Another tab stored C since, with A's very choice, hash and time: C shows, and the tab forgets B.
+    expect(mergeReceipts([c], [{ receipt: b, over: receiptId(a) }])).toEqual({ all: [c], unkept: [] });
+    expect(mergeReceipts([{ ...c, madeAt: r.madeAt - 9 }], [{ receipt: b, over: receiptId(a) }]).unkept).toEqual([]);
+    // B replaced nothing: a stored receipt for that day was written since, so it wins.
+    expect(mergeReceipts([c], [{ receipt: b, over: null }]).all).toEqual([c]);
+    // Nothing stored for that day (storage off, or it never held one): B shows.
+    expect(mergeReceipts([], [{ receipt: b, over: null }]).all).toEqual([b]);
+    // Storage later holds B itself: shown once.
+    expect(mergeReceipts([b], [{ receipt: b, over: receiptId(a) }]).all).toEqual([b]);
+    // Receipts stored before ids existed are told apart by hash, choice and time.
+    const { id: _a, ...oldA } = a;
+    const { id: _c, ...oldC } = { ...c, choice: "0:3" };
+    expect(receiptId(oldA)).toBe(`${a.hash}:0:14:${a.madeAt}`);
+    expect(mergeReceipts([oldA], [{ receipt: b, over: receiptId(oldA) }]).all).toEqual([b]);
+    expect(mergeReceipts([oldC], [{ receipt: b, over: receiptId(oldA) }]).all).toEqual([oldC]);
+    // Storage unreadable when B was made (over undefined), then readable holding A: B keeps showing, now over A.
+    expect(mergeReceipts(null, [{ receipt: b, over: undefined }])).toEqual({ all: [b], unkept: [{ receipt: b, over: undefined }] });
+    const back = mergeReceipts([a], [{ receipt: b, over: undefined }]);
+    expect(back).toEqual({ all: [b], unkept: [{ receipt: b, over: receiptId(a) }] });
+    // ... and a later stored guess from another tab still wins over it.
+    expect(mergeReceipts([c], back.unkept)).toEqual({ all: [c], unkept: [] });
+    expect(mergeReceipts([], [{ receipt: b, over: undefined }]).unkept).toEqual([{ receipt: b, over: null }]);
+    // Newest first by madeAt across both lists, then the cap: an older unstored day sits behind newer stored days.
+    const older = { ...b, target: r.target - 1, madeAt: r.madeAt - 100 };
+    const newer = Array.from({ length: RECEIPTS_MAX }, (_, i) => ({ ...a, target: r.target + 1 + i, madeAt: r.madeAt + 1 + i })).reverse();
+    const merged = mergeReceipts(newer, [{ receipt: older, over: null }]);
+    expect(merged.all).toEqual(newer);
+    expect(merged.unkept).toEqual([{ receipt: older, over: null }]);
+    expect(mergeReceipts([a], [{ receipt: older, over: null }]).all).toEqual([a, older]);
+    expect(addUnkept(addUnkept([], { receipt: a, over: null }), { receipt: b, over: null })).toEqual([{ receipt: b, over: null }]);
+    expect(mergeReceipts([], [])).toEqual({ all: [], unkept: [] });
+    expect(mergeReceipts(null, [])).toEqual({ all: [], unkept: [] });
+  });
+
+  it("keeps receipts on the device: newest first, one per day, at most 32, and survives storage that throws", async () => {
+    const r = await receiptFor("rest");
+    const again = { ...r, choice: "0:14", madeAt: r.madeAt + 1 };
+    expect(addReceipt(addReceipt([], r), again)).toEqual([again]);
+    const many = Array.from({ length: 40 }, (_, i) => ({ ...r, target: i + 3 }));
+    const list = many.reduce<Receipt[]>((acc, x) => addReceipt(acc, x), []);
+    expect(list).toHaveLength(RECEIPTS_MAX);
+    expect(list[0].target).toBe(42);
+    const store = new Map<string, string>();
+    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); } };
+    const key = predictionKey("http://localhost:5173", "commons");
+    expect(key).toBe("cadence-garden-predictions:http://localhost:5173:commons");
+    expect(writeReceipts(storage, key, list)).toBe(true);
+    expect(readReceipts(storage, key)).toEqual(list);
+    store.set(key, JSON.stringify([r, { ...r, hash: "nope" }, { ...r, choice: "<b>" }, 7, null]));
+    expect(readReceipts(storage, key)).toEqual([r]);
+    store.set(key, "{");
+    expect(readReceipts(storage, key)).toEqual([]);
+    const throwing = { getItem: () => { throw new Error("denied"); }, setItem: () => { throw new Error("denied"); } };
+    expect(readReceipts(throwing, key)).toEqual([]);
+    // Storage that cannot be read is unknown, not empty; a list that does not parse is empty.
+    expect(readStoredReceipts(throwing, key)).toBeNull();
+    expect(readStoredReceipts(null, key)).toBeNull();
+    expect(readStoredReceipts(storage, "cadence-garden-predictions:none")).toEqual([]);
+    expect(readStoredReceipts(storage, key)).toEqual([]);
+    // An id is optional (receipts stored before ids), and must be hex when there.
+    const { id: _id, ...noId } = r;
+    store.set(key, JSON.stringify([noId, { ...r, target: r.target + 1, id: "<x>" }]));
+    expect(readReceipts(storage, key)).toEqual([noId]);
+    expect(writeReceipts(throwing, key, list)).toBe(false);
+    expect(writeReceipts(null, key, list)).toBe(false);
+  });
+
+  it("words for the field: a clear leader or none, the lines, and the garden's own tally", () => {
+    const v = view();
+    expect(leadersWords(v.days[2], v.leadersRule)).toBe("At the end of day 0, founder 14 (0:14) holds 16% of 61,240 living cells: a clear leader (at least 10% and more than any other key).");
+    expect(leadersWords(v.days[1], v.leadersRule)).toBe("At the end of day 1, no key clearly leads: the biggest holds 7% of 58,410 living cells (a clear leader needs at least 10% and more than any other key).");
+    expect(leadersWords({ day: 4, leaders: { status: "unchecked", census: null, lines: null } }, v.leadersRule)).toBe("Day 4 was verified without its files being checked, so it has no count.");
+    // Whole percents never seem to meet the rule that was missed: 10 of 101 rounds to 10% but is under it, and a tie
+    // for the most is named.
+    const e = (key: string, cells: number) => ({ key, label: `founder ${key.slice(2)}`, cells, share: 0 });
+    const block = (living: number, top: ReturnType<typeof e>[]) => ({ day: 5, leaders: { status: "ok", census: { step: 0, livingCells: living, lineages: top.length, top, clearLeader: null }, lines: null } });
+    expect(leadersWords(block(101, [e("0:1", 10), e("0:2", 7)]), v.leadersRule)).toBe("At the end of day 5, no key clearly leads: the biggest holds just under 10% of 101 living cells (a clear leader needs at least 10% and more than any other key).");
+    expect(leadersWords(block(100, [e("0:1", 30), e("0:2", 30)]), v.leadersRule)).toBe("At the end of day 5, no key clearly leads: the biggest holds 30% of 100 living cells and is tied with another key (a clear leader needs at least 10% and more than any other key).");
+    expect(leadersWords(block(1000, [e("0:1", 94), e("0:2", 94)]), v.leadersRule)).toBe("At the end of day 5, no key clearly leads: the biggest holds 9% of 1,000 living cells (a clear leader needs at least 10% and more than any other key).");
+    expect(linesWords(v.days[1].leaders!.lines!, 58410)).toBe("The line of founder 14 (0:14) held the field at the end of day 1: 52% of its living cells, counting day 0’s three biggest keys each with its mutants born on those two days.");
+    expect(lineName("rest")).toBe("the rest");
+    expect(lineName("9:9")).toBe("the line of 9:9");
+    expect(fieldTally(v)).toEqual({ days: 1, rest: 0, top: 1, none: 0 });
+    expect(tallyWords(v)).toBe("Of the 1 listed day with lines counted, the rest held the field on 0, one of the day before’s three biggest lines on 1.");
+    expect(tallyWords(view((x) => { for (const d of x.days) d.leaders = null; }))).toBe("No listed day has its lines counted yet, so there is no tally.");
   });
 });

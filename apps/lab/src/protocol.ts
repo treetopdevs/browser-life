@@ -4,6 +4,7 @@ import type { ObserverSettings } from "@bl/runner";
 import type { LineageView } from "@bl/lineage";
 import type { FamilyEvent, FamilySummary, FamilyView, FirstsEntry, FirstsRule, FirstsSummary, NextUpItem } from "@bl/metrics";
 import type { KeptPond } from "./pond-play.ts";
+import type { SeriesFields } from "./naturalist-series.ts";
 
 export interface RunManifest {
   /** Storage concurrency token; unrelated to physics or replay. Absent on a new run. */
@@ -347,12 +348,32 @@ export type ToWorker =
   /** Save the present, restore the latest checkpoint at or before `step` and advance to it; then highlight `key`. */
   | { type: "jump"; step: number; key: string | null };
 
+/**
+ * One census of a world the naturalist may hold a baseline for (naturalist-series.ts NATURALIST_PRESETS), every census, unthrottled:
+ * the series record the runner would write, the census's lineage rows, the earliest logged intervention's step (null when none),
+ * and the mutation records its ledger drain lost. `world` and `runId` say which world and history it is of.
+ */
+export interface NaturalistMsg {
+  type: "naturalist";
+  world: number;
+  runId: string;
+  step: number;
+  rec: SeriesFields;
+  rows: [string, number][];
+  touched: number | null;
+  dropped: number;
+}
+
 export type FromWorker =
   /** `storage`: why this browser keeps no Checkpoints here (its own words), or null when it does. Known before any world. */
   | { type: "ready"; adapter: string; storage: string | null }
   /** `failed`: the world itself has failed (its execution's failure, or the GPU device lost) and cannot go on; other errors leave it usable. */
   | { type: "error"; message: string; failed?: boolean }
-  | { type: "loaded"; manifest: RunManifest; step: number }
+  /** `world`: the worker's number for the adopted world (the one later messages carry), absent from older senders. */
+  | { type: "loaded"; manifest: RunManifest; step: number; world?: number }
+  | NaturalistMsg
+  /** A wound, feed or drain was just logged at `step` on that world (the naturalist marks its notes without waiting for a census). */
+  | { type: "naturalistTouched"; world: number; runId: string; step: number }
   | StatsMsg
   | CensusMsg
   | ProbeMsg

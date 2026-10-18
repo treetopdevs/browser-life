@@ -118,7 +118,7 @@ async function checkFile(source: string): Promise<void> {
     const replayOf = async (sessionFile: string, name: string) => {
       const o = await new Deno.Command(Deno.execPath(), {
         args: [
-          "run", "-A", runTool,
+          "run", "--no-lock", "-A", runTool,
           "--experiment", "pond-keeper", "--preset", file.presetId as string, "--conditions", "treatment", "--seeds", String(file.seed),
           "--steps", String(step), "--census", String(settings.censusEvery), "--deep", String(settings.deepEvery),
           "--picks-from", sessionFile, "--out", `${tmp}/${name}`,

@@ -6,6 +6,7 @@ import { Series } from "./sparkline.ts";
 import { createLineagePanel } from "./lineage-panel.ts";
 import { createFirstsPanel } from "./firsts-panel.ts";
 import { createFamilyPanel } from "./family-panel.ts";
+import { createNaturalistPanel } from "./naturalist-panel.ts";
 import { RANK_LABELS, pressureDescribes, pressureNow, pressureOptions, scoreLabel, scoreWords, type RankKey } from "./rank-labels.ts";
 import { FAMILIES, byId, familyOf } from "./worlds.ts";
 import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
@@ -15,6 +16,35 @@ import { track } from "./analytics.ts";
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const fmt = (v: number) =>
   Math.abs(v) >= 1e9 ? `${(v / 1e9).toFixed(2)}G` : Math.abs(v) >= 1e6 ? `${(v / 1e6).toFixed(2)}M` : Math.abs(v) >= 1e4 ? `${(v / 1e3).toFixed(1)}k` : `${Math.round(v)}`;
+
+/** The pool bars' name; each stats message adds the shares to it, and until one has come it says so. */
+const POOLS_LABEL = "What the matter is right now";
+const POOLS_UNCOUNTED = `${POOLS_LABEL}: not counted yet`;
+
+/** What the Biggest lineages rows show now (whether they offer Keep, and each lineage's key, share and colour). */
+let topLinShown = "";
+
+// ---------- header order ----------
+// Tab order follows what is drawn, as theme.ts does on the public pages. Wide, the status and the Day/Night button end
+// the row after the nav; at 760px and below the nav takes a row of its own under them (style.css), so the nav comes
+// after the status in the markup there. The grid places both explicitly at those widths: nothing moves on screen. The
+// nav is what moves, never the status: the status line is a live region, and a moved one may be read out again.
+{
+  const header = document.querySelector<HTMLElement>("header.top");
+  const nav = header?.querySelector<HTMLElement>(".site-nav");
+  const status = header?.querySelector<HTMLElement>(".header-status");
+  if (header && nav && status) {
+    const narrow = matchMedia("(max-width: 760px)");
+    const place = () => {
+      const focused = document.activeElement instanceof HTMLElement && nav.contains(document.activeElement) ? document.activeElement : null;
+      if (narrow.matches) { if (status.nextElementSibling !== nav) status.after(nav); }
+      else if (nav.nextElementSibling !== status) status.before(nav);
+      focused?.focus();
+    };
+    place();
+    narrow.addEventListener("change", place);
+  }
+}
 
 const canvas = $<HTMLCanvasElement>("world");
 const wrap = $("canvas-wrap");
@@ -26,6 +56,9 @@ const lineagePanel = createLineagePanel((m) => { if (m.type === "jump") loadInte
 const firstsPanel = createFirstsPanel(send);
 // A family's swatch is the lab's own colour for its founding lineage, when the census has drawn that lineage among its biggest (the map is filled in onCensus).
 const familyPanel = createFamilyPanel((key) => lineageColors.get(key));
+const naturalistPanel = createNaturalistPanel();
+// An error the worker did not catch (its own frame and message handlers post theirs): Field notes stops vouching for the censuses.
+worker.addEventListener("error", () => naturalistPanel.onFailed("worker"));
 
 let cfg: WorldConfig | null = null;
 /** The world's config when a load was requested: the worker keeps that world if the load fails. */
@@ -114,8 +147,15 @@ function setMode(m: GpuViewMode) {
     const selected = b.dataset.mode === m;
     b.classList.toggle("on", selected);
     b.setAttribute("aria-pressed", String(selected));
-    // On a phone the picker scrolls sideways: keep the lit view in sight, also when chosen by key.
-    if (selected) b.scrollIntoView({ block: "nearest", inline: "nearest" });
+    // On a phone the picker scrolls sideways: keep the lit view in sight, also when chosen by key. The picker's own
+    // scrollLeft moves, not the page: scrollIntoView at start-up would make this button Chrome's starting point for
+    // sequential focus, and the first Tab on a fresh lab would land after it instead of on the skip link.
+    if (selected) {
+      const box = views.getBoundingClientRect();
+      const r = b.getBoundingClientRect();
+      if (r.left < box.left) views.scrollLeft -= box.left - r.left;
+      else if (r.right > box.right) views.scrollLeft += Math.min(r.right - box.right, r.left - box.left);
+    }
   }
   const name = document.createElement("b");
   name.textContent = VIEW_LABELS[m][0];
@@ -747,7 +787,9 @@ function resetEvidence() {
   $("probe-empty").hidden = false;
   $("probe").hidden = true;
   $("top-lin").replaceChildren();
+  topLinShown = "";
   $("pools").replaceChildren();
+  $("pools").setAttribute("aria-label", POOLS_UNCOUNTED);
   spInd.clear(); spBio.clear(); spLin.clear();
   verifying = false;
 }
@@ -777,15 +819,18 @@ function onStats(s: StatsMsg) {
     ["C waste", s.C, "var(--waste)"],
   ];
   const bars = $("pools");
+  const share = (v: number) => ((100 * v) / Math.max(1, s.matter)).toFixed(1);
   bars.replaceChildren(
     ...pools.map(([name, v, c]) => {
       const e = document.createElement("span");
       e.style.width = `${(100 * v) / Math.max(1, s.matter)}%`;
       e.style.background = c;
-      e.title = `${name}: ${fmt(v)} (${((100 * v) / Math.max(1, s.matter)).toFixed(1)}%)`;
+      e.title = `${name}: ${fmt(v)} (${share(v)}%)`;
       return e;
     }),
   );
+  // The bars are one picture (role="img" in index.html); its name carries the same numbers as their tooltips.
+  bars.setAttribute("aria-label", `${POOLS_LABEL}: ${pools.map(([name, v]) => `${name.split(" ")[1]} ${share(v)}%`).join(", ")}`);
   spBio.push(s.B + s.P);
 }
 
@@ -799,7 +844,13 @@ function onCensus(c: CensusMsg) {
   $("k-gen").textContent = String(c.maxGen);
   spInd.push(c.individuals);
   spLin.push(c.lineageCount);
-  // The rows are rebuilt at every census: a keyboard user on a row's Keep button stays on that lineage's button.
+  // A paused world is counted again every 600 ms with the same answer: the rows stay as they are, so a keyboard or
+  // screen-reader user on a Keep button is not handed a new button (and told about it again) each time. Anything a
+  // row comes to show beyond these goes into the signature too, or the rows would keep showing its old value.
+  const shown = `${takesDonors(cfg)}|${c.top.map((l) => `${l.key} ${l.share} ${l.color.join(",")}`).join("|")}`;
+  if (shown === topLinShown) { syncKeep(); return; }
+  topLinShown = shown;
+  // Otherwise the rows are rebuilt: a keyboard user on a row's Keep button stays on that lineage's button.
   const heldKey = document.activeElement instanceof HTMLElement && $("top-lin").contains(document.activeElement) ? document.activeElement.dataset.key : undefined;
   $("top-lin").replaceChildren(
     ...c.top.map((l) => {
@@ -1687,6 +1738,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       lineagePanel.onLoaded();
       firstsPanel.onLoaded(m.manifest);
       familyPanel.onLoaded();
+      naturalistPanel.onLoaded(m.manifest, m.step, m.world);
       break;
     case "stats":
       onStats(m);
@@ -1737,6 +1789,12 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       break;
     case "families":
       familyPanel.onFamilies(m);
+      break;
+    case "naturalist":
+      naturalistPanel.onCensus(m);
+      break;
+    case "naturalistTouched":
+      naturalistPanel.onTouched(m.world, m.runId, m.step);
       break;
     case "sessionFile":
       firstsPanel.onSessionFile(m);
@@ -1797,7 +1855,10 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         setStrip("run-replay", "couldn’t check", "bad");
       }
       pressureAnswered();
-      if (m.failed) worldFailed = true;
+      if (m.failed) {
+        worldFailed = true;
+        naturalistPanel.onFailed();
+      }
       {
         // The page pauses on any error, so auto-breed ends; it says the world failed only when it did.
         const wasAuto = auto !== null;

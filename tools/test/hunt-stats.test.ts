@@ -2887,7 +2887,7 @@ describe("the -s sources: one source per index, distinct, from one origin; and t
 // =============================================================================================
 
 describe("the CLI end to end (a real deno run over fixture directories)", () => {
-  const report = (...args: string[]): Record<string, any> => JSON.parse(execFileSync("deno", ["run", "-A", REPORT, ...args], { stdio: "pipe", encoding: "utf8", maxBuffer: 256 * 1024 * 1024 }));
+  const report = (...args: string[]): Record<string, any> => JSON.parse(execFileSync("deno", ["run", "--no-lock", "-A", REPORT, ...args], { stdio: "pipe", encoding: "utf8", maxBuffer: 256 * 1024 * 1024 }));
   const write = (dir: string, files: Record<string, string>) => {
     mkdirSync(dir, { recursive: true });
     for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text);

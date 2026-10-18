@@ -135,7 +135,7 @@ describe("tools/run.ts refuses a bad branch source before it asks for a GPU", ()
   const run = promisify(execFile);
   const cli = async (...args: string[]): Promise<{ code: number; stdout: string; stderr: string }> => {
     try {
-      return { code: 0, ...(await run("deno", ["run", "-A", "tools/run.ts", "--experiment", "x", "--preset", "ponds-small", "--conditions", "pond-nat", "--seeds", "1", "--steps", "1000", "--out", join(tmpdir(), "branch-source-never"), ...args], { cwd: ROOT })) };
+      return { code: 0, ...(await run("deno", ["run", "--no-lock", "-A", "tools/run.ts", "--experiment", "x", "--preset", "ponds-small", "--conditions", "pond-nat", "--seeds", "1", "--steps", "1000", "--out", join(tmpdir(), "branch-source-never"), ...args], { cwd: ROOT })) };
     } catch (e) {
       const x = e as { code: number; stdout: string; stderr: string };
       return { code: x.code, stdout: x.stdout, stderr: x.stderr };

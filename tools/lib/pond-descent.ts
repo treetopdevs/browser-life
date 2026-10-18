@@ -274,6 +274,22 @@ export function checkPicks(index: PondIndex, picks: readonly PickLine[]): PickCh
   return { checked, partial, unchecked, unlogged };
 }
 
+/**
+ * Pick lines per picker (`by`; a line without one counts as "unnamed"). Counted in a Map and returned as own
+ * properties (`Object.fromEntries`), so a picker named like an Object property (`constructor`, `toString`,
+ * `__proto__`) counts like any other name: plain-object counting read the prototype's value and dropped
+ * `__proto__` into its setter. The result still inherits from Object.prototype: read it with Object.entries or
+ * Object.hasOwn, never `by[name] ?? 0`. The one tally for pondRoute and runnerPondHistory (pond-bundle.ts).
+ */
+export function tallyPickers(lines: readonly PickLine[]): Record<string, number> {
+  const n = new Map<string, number>();
+  for (const p of lines) {
+    const by = p.by ?? "unnamed";
+    n.set(by, (n.get(by) ?? 0) + 1);
+  }
+  return Object.fromEntries(n);
+}
+
 // ---- route --------------------------------------------------------------------------------------------
 
 export interface Crossing {
@@ -395,9 +411,7 @@ export function pondRoute(chain: readonly Key[], cfg: WorldConfig, index: PondIn
   const by = new Map((opts.picks?.lines ?? []).map((p) => [p.cycle, p.by]));
   let picks: PondRoute["picks"] = null;
   if (opts.picks) {
-    const tally: Record<string, number> = {};
-    for (const p of opts.picks.lines) tally[p.by ?? "unnamed"] = (tally[p.by ?? "unnamed"] ?? 0) + 1;
-    picks = { lines: opts.picks.lines.length, ...checkPicks(index, opts.picks.lines), torn: opts.picks.torn, by: tally };
+    picks = { lines: opts.picks.lines.length, ...checkPicks(index, opts.picks.lines), torn: opts.picks.torn, by: tallyPickers(opts.picks.lines) };
   }
   const { births, starts } = edgeStarts(chain, cfg, index, opts);
   const edge = (parent: BirthNode, start: { pond: number; cycle: number }, child: Key | null): RouteEdge => {
