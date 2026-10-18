@@ -2,7 +2,8 @@ defmodule CoordinatorWeb.GardenController do
   @moduledoc """
   The garden's HTTP surface (README "The garden", contract `garden-v1`).
 
-  Public, unauthenticated: the view (`show`), posting a letter (`post_letter`)
+  Public, unauthenticated: the view (`show`), posting a letter (`post_letter`),
+  adding a hand to the food ask (`add_hand`, docs/garden-food-2026-10-18.md)
   and a verified day's end checkpoint (`checkpoint`). Keeper (admin): founding
   a garden (`create`), the veto (`drop`) and requeueing a failed or diverged
   day (`requeue`).
@@ -25,13 +26,14 @@ defmodule CoordinatorWeb.GardenController do
   """
   use CoordinatorWeb, :controller
   alias Coordinator.{Garden, LetterLimiter, Queue}
+  require Logger
 
   import CoordinatorWeb.Auth, only: [require_admin: 2]
 
   plug :require_admin when action in [:create, :drop, :requeue]
 
   @name_re ~r/^[a-z0-9][a-z0-9_-]{0,63}$/
-  @letter_re ~r/^ltr-[0-9]{1,9}$/
+  @letter_re ~r/^(ltr|food)-[0-9]{1,9}$/
   @digest_re ~r/^[0-9a-f]{16}$/
   @day_re ~r/^[0-9]{1,9}$/
 
@@ -96,6 +98,74 @@ defmodule CoordinatorWeb.GardenController do
     end
   end
 
+  # `POST /api/public/garden/food/hands` and `POST /api/public/gardens/:name/food/hands`:
+  # a visitor's hand on the food ask. The body is exactly `{}`, sent as JSON:
+  # the JSON content type is what makes a cross-site page's hand need a CORS
+  # preflight (which the coordinator refuses), so a hand without it is a 415,
+  # not a free hand from every visitor of some other page. Order as for a
+  # letter: shape (415, 422), the garden (404), the address's budget (429; a
+  # hand costs one letter of the shared hourly budget), the hand's key (503 while
+  # the limiter has no salt), then the Queue. A repeat (200) or a closed ask
+  # (409) is given back and charged as a refusal, as a refused stone is.
+  def add_hand(conn, _params) do
+    with {:ok, name} <- garden_name(conn),
+         :ok <- json_request(conn),
+         :ok <- empty_body(conn),
+         {:ok, _world} <- world(name),
+         {:ok, token} <- take(conn),
+         {:ok, key} <- hand_key(conn, token) do
+      case ask_queue(name, key) do
+        {:ok, :counted, called, block} ->
+          LetterLimiter.invalidate(name)
+          conn |> put_status(201) |> json(%{counted: true, called: called, food: block})
+
+        {:ok, :repeat, block} ->
+          LetterLimiter.refuse(token)
+          json(conn, %{counted: false, called: nil, food: block})
+
+        {:error, {:closed, code, opens, why}} ->
+          LetterLimiter.refuse(token)
+          conn |> put_status(409) |> json(%{error: why, closed: code, opensAtDay: opens})
+
+        # The limiter restarted while the hand waited: nothing was counted.
+        {:error, :stale} ->
+          LetterLimiter.refund(token)
+          hand_busy(conn, false)
+
+        # The Queue did not answer in time (or crashed): the hand may still
+        # count when it catches up, so the letter is kept and the answer says
+        # it cannot tell (`counted: null`).
+        {:error, :no_answer} ->
+          hand_busy(conn, nil)
+
+        {:error, _} ->
+          LetterLimiter.refuse(token)
+          not_found(conn)
+      end
+    else
+      :error ->
+        not_found(conn)
+
+      {:error, :media, why} ->
+        error(conn, 415, why)
+
+      {:error, :invalid, why} ->
+        error(conn, 422, why)
+
+      {:error, :busy} ->
+        hand_busy(conn, false)
+
+      {:error, :limited, retry_after_ms} ->
+        conn
+        |> put_resp_header("retry-after", Integer.to_string(div(retry_after_ms + 999, 1000)))
+        |> put_status(429)
+        |> json(%{
+          error: "too many letters and hands from this address",
+          retryAfterMs: retry_after_ms
+        })
+    end
+  end
+
   # `GET /api/public/gardens/:name/checkpoints/:digest`: the end checkpoint of a
   # verified day, by its digest, and nothing else (the Queue says which digests
   # those are; the answer is cached like the view).
@@ -132,13 +202,15 @@ defmodule CoordinatorWeb.GardenController do
     end
   end
 
-  # `POST /api/gardens/:name/letters/:id/drop`.
+  # `POST /api/gardens/:name/letters/:id/drop`: a letter (`ltr-N`, answered
+  # `{"letter": ...}`) or a food (`food-N`, answered `{"food": ...}`).
   def drop(conn, %{"name" => name, "id" => id}) do
     with true <- name?(name),
          true <- is_binary(id) and Regex.match?(@letter_re, id),
          {:ok, view} <- drop_letter(name, id) do
       LetterLimiter.invalidate(name)
-      json(conn, %{letter: view})
+      key = if String.starts_with?(id, "food-"), do: :food, else: :letter
+      json(conn, %{key => view})
     else
       {:error, {:refused, why}} -> error(conn, 409, why)
       _ -> not_found(conn)
@@ -218,6 +290,69 @@ defmodule CoordinatorWeb.GardenController do
     case Garden.parse_letter(body_map(conn)) do
       {:ok, letter} -> {:ok, letter}
       {:error, why} -> {:error, :invalid, why}
+    end
+  end
+
+  # A hand is sent as JSON (see `add_hand/2`); `CoordinatorWeb.LetterBodyLimit`
+  # already refused any other content type, so this is the request with none.
+  defp json_request(conn) do
+    case get_req_header(conn, "content-type") do
+      [type | _] ->
+        if type |> String.downcase() |> String.starts_with?("application/json"),
+          do: :ok,
+          else: {:error, :media, "a hand is the JSON body {}"}
+
+      [] ->
+        {:error, :media, "a hand is the JSON body {}"}
+    end
+  end
+
+  # `Plug.Parsers` reads a zero-byte JSON body as `%{}`, so `content-length: 0`
+  # is refused here; a chunked empty body cannot be told from `{}` after the
+  # parser (it carries nothing either way).
+  defp empty_body(conn) do
+    if body_map(conn) == %{} and get_req_header(conn, "content-length") != ["0"],
+      do: :ok,
+      else: {:error, :invalid, "a hand is exactly {}: it carries nothing"}
+  end
+
+  # The Queue call, with its exit caught here: an uncaught exit would carry the
+  # whole call, hand key included, into the request's crash log and telemetry.
+  # Logged without the key.
+  defp ask_queue(name, key) do
+    Queue.ask_food(name, key, Application.get_env(:coordinator, :garden_call_timeout_ms, 5_000))
+  catch
+    :exit, reason ->
+      kind =
+        case reason do
+          {:timeout, _} -> "timed out"
+          {:noproc, _} -> "is not running"
+          _ -> "exited"
+        end
+
+      Logger.warning("garden #{name}: a food hand's queue call #{kind}")
+      {:error, :no_answer}
+  end
+
+  # A hand's 503: `counted` false (nothing was counted: the limiter is
+  # restarting) or nil (the Queue did not answer; it may still count it).
+  defp hand_busy(conn, counted) do
+    conn
+    |> put_resp_header("retry-after", "1")
+    |> put_status(503)
+    |> json(%{error: "the garden is busy; retry shortly", counted: counted})
+  end
+
+  # A hand's key from the limiter's salt; without one (the limiter is
+  # restarting) a hand cannot be counted, so the letter goes back.
+  defp hand_key(conn, token) do
+    case LetterLimiter.hand_key(address(conn)) do
+      {:ok, key} ->
+        {:ok, key}
+
+      :error ->
+        LetterLimiter.refund(token)
+        {:error, :busy}
     end
   end
 

@@ -193,6 +193,46 @@ defmodule Coordinator.LetterLimiter do
   def refuse(_token), do: :ok
 
   @doc """
+  A food hand's key for `address` (docs/garden-food-2026-10-18.md, section 5):
+  `{:ok, {incarnation, hash}}`, `hash` being sha256 of the boot salt, a domain
+  tag and the address's *hand network* (`hand_network/1`: coarser than the
+  letter budget's for IPv6, a /48), so one /48 is one hand and the hash is never
+  a budget key. The
+  incarnation tags it: a hand of another incarnation (a restart, a new salt)
+  is discarded by `Coordinator.Garden.add_hand/5`. `:error` while the tables
+  are not ready (the controller answers 503: a hand cannot be counted without
+  a salt). Nothing is stored here.
+  """
+  @spec hand_key(term) :: {:ok, {reference, binary}} | :error
+  def hand_key(address) do
+    # Both reads from one table instance: a restart between them (a new table,
+    # a new salt) makes the second read raise instead of pairing an old salt's
+    # hash with the new incarnation, which would let one network count twice.
+    with tid when tid != :undefined <- :ets.whereis(@counters),
+         [{@salt_key, salt}] <- :ets.lookup(tid, @salt_key),
+         [{@incarnation_key, incarnation}] <- :ets.lookup(tid, @incarnation_key) do
+      {:ok,
+       {incarnation,
+        :crypto.hash(:sha256, [salt, "food-hand", :erlang.term_to_binary(hand_network(address))])}}
+    else
+      _ -> :error
+    end
+  rescue
+    ArgumentError -> :error
+  end
+
+  @doc "The incarnation `hand_key/1` tags hands with now, or `:unavailable` while the tables are not ready."
+  @spec hand_epoch() :: reference | :unavailable
+  def hand_epoch do
+    case :ets.lookup(@counters, @incarnation_key) do
+      [{@incarnation_key, incarnation}] -> incarnation
+      _ -> :unavailable
+    end
+  rescue
+    ArgumentError -> :unavailable
+  end
+
+  @doc """
   The network an address is budgeted as: an IPv6 address is its /64 (the low
   four groups zeroed), an IPv4-mapped IPv6 address is the IPv4 address, anything
   else is itself.
@@ -203,6 +243,19 @@ defmodule Coordinator.LetterLimiter do
 
   def network({a, b, c, d, _, _, _, _}), do: {a, b, c, d, 0, 0, 0, 0}
   def network(other), do: other
+
+  @doc """
+  The network a food hand counts as: an IPv6 address is its /48 (the low five
+  groups zeroed), an IPv4-mapped IPv6 address is the IPv4 address, anything else
+  is itself. Coarser than `network/1` on purpose (docs/garden-food-2026-10-18.md,
+  amendment after the second review): one /48 holds 65,536 /64s, which would
+  make one tunnel K networks. It fails toward no food: households inside one
+  provider /48 are one hand.
+  """
+  @spec hand_network(term) :: term
+  def hand_network({0, 0, 0, 0, 0, 0xFFFF, _, _} = mapped), do: network(mapped)
+  def hand_network({a, b, c, _, _, _, _, _}), do: {a, b, c, 0, 0, 0, 0, 0}
+  def hand_network(other), do: other
 
   # ---- client API: the registry of gardens ----
 

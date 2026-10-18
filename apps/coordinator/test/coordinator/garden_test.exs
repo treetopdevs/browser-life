@@ -1418,6 +1418,459 @@ defmodule Coordinator.GardenTest do
 
   # ---- the frozen contract ----
 
+  # ---- food (docs/garden-food-2026-10-18.md) ----
+
+  describe "food" do
+    @food %{asks: 3, every_days: 2, amount: 16, r: 32}
+
+    defp fed(opts \\ []), do: garden(Keyword.merge([food: @food], opts))
+
+    # A hand's key: the limiter's incarnation and a network's salted hash.
+    defp hkey(epoch, i), do: {epoch, :crypto.hash(:sha256, "net-#{i}")}
+
+    # Adds hands from networks `ids` in turn; returns the garden, the hands
+    # record and every answer's tag.
+    defp hands!(g, hands, epoch, ids, segs, now \\ @t0) do
+      Enum.reduce(ids, {g, hands, []}, fn i, {g, hands, tags} ->
+        case Garden.add_hand(g, hands, hkey(epoch, i), segs, now) do
+          {:called, g, hands, _food} -> {g, hands, tags ++ [:called]}
+          {tag, hands} -> {g, hands, tags ++ [tag]}
+        end
+      end)
+    end
+
+    defp food_rec(day, seq, opts \\ []) do
+      %{
+        id: "food-#{seq}",
+        seq: seq,
+        x: 128,
+        y: 128,
+        r: 32,
+        amount: 16,
+        step: (day + 1) * @d,
+        day: day,
+        called_at: @t0,
+        notice_until: @t0 + @period,
+        hands: 3,
+        dropped_at: opts[:dropped_at]
+      }
+    end
+
+    defp with_foods(g, foods), do: %{g | foods: foods, next_food: length(foods) + 1}
+
+    test "K distinct hands call a food on the frontier day, at the centre, at its end step" do
+      g = fed()
+      e = make_ref()
+      segs = fresh(g) |> done(0, "a", @t0)
+      assert Garden.frontier_day(g, segs) == 1
+
+      {g, hands, tags} = hands!(g, nil, e, [1, 2], segs)
+      assert tags == [:counted, :counted] and hands.count == 2 and g.foods == []
+
+      assert {:called, g, hands, food} = Garden.add_hand(g, hands, hkey(e, 3), segs, @t0 + 5)
+
+      assert food == %{
+               id: "food-1",
+               seq: 1,
+               x: 128,
+               y: 128,
+               r: 32,
+               amount: 16,
+               step: 2 * @d,
+               day: 1,
+               called_at: @t0 + 5,
+               notice_until: @t0 + 5 + @period,
+               hands: 3,
+               dropped_at: nil
+             }
+
+      assert hands.count == 0 and MapSet.size(hands.seen) == 3
+      assert g.foods == [food] and g.next_food == 2
+      assert Garden.letter_status(g, food, segs) == "waiting"
+
+      assert %{status: "waiting", hands: 3, landsAtStep: 200, noticeUntil: notice} =
+               Garden.food_record_view(g, food, segs)
+
+      assert notice == @t0 + 5 + @period
+    end
+
+    test "a repeat is answered before the ask's state: after the K-th hand, the earlier networks are repeats" do
+      g = fed()
+      e = make_ref()
+      segs = fresh(g) |> done(0, "a", @t0)
+      {g, hands, [:counted, :counted, :called]} = hands!(g, nil, e, [1, 2, 3], segs)
+      assert {:error, {"cooldown", _}} = Garden.food_landing(g, segs)
+
+      # Networks 1..3 are in this period: repeats, not refusals; a new one is refused.
+      {_g, hands, tags} = hands!(g, hands, e, [1, 2, 3], segs)
+      assert tags == [:repeat, :repeat, :repeat] and hands.count == 0
+
+      assert {:error, {:refused, {"cooldown", _}}} =
+               Garden.add_hand(g, hands, hkey(e, 4), segs, @t0)
+
+      # On a garden whose ask is closed for good, a network that is in is still told so.
+      stopped = put_seg(segs, 2, &%{&1 | status: "failed"})
+      assert {:repeat, _} = Garden.add_hand(g, hands, hkey(e, 1), stopped, @t0)
+
+      assert {:error, {:refused, {"stopped", nil}}} =
+               Garden.add_hand(g, hands, hkey(e, 5), stopped, @t0)
+    end
+
+    test "a food's day is held from islands for one dawn period after the call (the keeper's veto window)" do
+      g = fed(food: %{@food | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+      {g, _hands, [:counted, :called]} = hands!(g, nil, e, [1, 2], segs, @t0 + 7)
+      assert [%{day: 0, called_at: called, notice_until: until}] = g.foods
+      assert until == called + @period
+
+      assert Garden.food_hold?(g, 0, called)
+      assert Garden.food_hold?(g, 0, until - 1)
+      refute Garden.food_hold?(g, 0, until)
+      # Only the food's own day, and never in a garden without food.
+      refute Garden.food_hold?(g, 1, called)
+      refute Garden.food_hold?(garden(), 0, called)
+
+      # A dropped food holds nothing.
+      {:ok, dropped, _} = Garden.drop_letter(g, "food-1", segs, called + 1)
+      refute Garden.food_hold?(dropped, 0, called + 1)
+
+      # A food record written before foods carried `notice_until` is held, and
+      # shown, for one dawn period from its call all the same.
+      old = %{g | foods: Enum.map(g.foods, &Map.delete(&1, :notice_until))}
+      assert Garden.food_hold?(old, 0, until - 1)
+      refute Garden.food_hold?(old, 0, until)
+
+      assert %{noticeUntil: ^until} =
+               Garden.food_record_view(old, hd(old.foods), segs)
+    end
+
+    test "hands expire at dawn on an offset dawn grid" do
+      offset = div(@period, 3)
+      g = fed(dawn_offset_ms: offset)
+      e = make_ref()
+      segs = fresh(g)
+      # Just before the first offset dawn after @t0, and just after it.
+      dawn = Garden.dawn_at(g, Garden.dawn_index(g, @t0) + 1)
+      assert rem(dawn - offset, @period) == 0
+      {g, hands, [:counted, :counted]} = hands!(g, nil, e, [1, 2], segs, dawn - 1)
+      assert Garden.hands_count(g, hands, e, dawn - 1) == 2
+      assert Garden.hands_count(g, hands, e, dawn) == 0
+      assert Garden.food_view(g, segs, 2, dawn - 1).expiresAt == dawn
+
+      # The third hand lands after the dawn: count 1, no food, network 1 new again.
+      assert {:counted, h} = Garden.add_hand(g, hands, hkey(e, 3), segs, dawn)
+      assert h.count == 1 and g.foods == []
+      assert {:counted, _} = Garden.add_hand(g, h, hkey(e, 1), segs, dawn + 1)
+    end
+
+    test "the view shows the newest 32 foods, newest first" do
+      foods = for i <- 1..40, do: food_rec(0, i, dropped_at: if(i < 40, do: @t0 + i))
+      g = with_foods(fed(), foods)
+      shown = Garden.food_view(g, fresh(g), 0, @t0).foods
+      assert length(shown) == 32
+      assert Enum.map(shown, & &1.id) == for(i <- 40..9//-1, do: "food-#{i}")
+    end
+
+    test "a repeat hand is not counted" do
+      g = fed()
+      e = make_ref()
+      segs = fresh(g)
+      {g, hands, [:counted]} = hands!(g, nil, e, [1], segs)
+      assert {:repeat, again} = Garden.add_hand(g, hands, hkey(e, 1), segs, @t0 + 1)
+      assert again.count == 1
+    end
+
+    test "hands expire at dawn" do
+      g = fed()
+      e = make_ref()
+      segs = fresh(g)
+      {g, hands, [:counted, :counted]} = hands!(g, nil, e, [1, 2], segs)
+      assert Garden.hands_count(g, hands, e, @t0) == 2
+
+      later = Garden.dawn_at(g, Garden.dawn_index(g, @t0) + 1)
+      assert Garden.hands_count(g, hands, e, later) == 0
+      assert Garden.hands_count(g, hands, e, later - 1) == 2
+
+      # One hand after the dawn: a count of 1, no food (and network 1 is new again).
+      assert {:counted, after_dawn} = Garden.add_hand(g, hands, hkey(e, 1), segs, later)
+      assert after_dawn.count == 1 and after_dawn.dawn == Garden.dawn_index(g, later)
+      assert g.foods == []
+    end
+
+    test "a hand of a new limiter incarnation resets the count" do
+      g = fed()
+      segs = fresh(g)
+      {e1, e2} = {make_ref(), make_ref()}
+      {g, hands, _} = hands!(g, nil, e1, [1, 2], segs)
+      assert {:counted, h} = Garden.add_hand(g, hands, hkey(e2, 3), segs, @t0)
+      assert h.count == 1 and h.epoch == e2
+      assert Garden.hands_count(g, hands, e2, @t0) == 0
+    end
+
+    test "a network that gave a hand before the call is still a repeat after the food is dropped" do
+      g = fed(food: %{@food | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+      {g, hands, [:counted, :called]} = hands!(g, nil, e, [1, 2], segs)
+      assert {:error, {"cooldown", 2}} = Garden.food_landing(g, segs)
+
+      {:ok, g, dropped} = Garden.drop_letter(g, "food-1", segs, @t0 + 9)
+      assert dropped.dropped_at == @t0 + 9
+      # A dropped food counts toward nothing: the ask is open again.
+      assert {:ok, 0} = Garden.food_landing(g, segs)
+      assert Garden.schedule(g) == g.founding
+
+      {g, _hands, tags} = hands!(g, hands, e, [1, 2, 3, 4], segs)
+      assert tags == [:repeat, :repeat, :counted, :called]
+      assert [%{id: "food-1", dropped_at: at}, %{id: "food-2", hands: 2, day: 0}] = g.foods
+      assert is_integer(at)
+    end
+
+    test "one food per N days: cooldown, opening at f + N, and never closer after a retreat" do
+      g = fed(food: %{@food | asks: 1 + 1, every_days: 2})
+      e = make_ref()
+      segs = fresh(g) |> done(0, "a", @t0)
+      {g, _hands, [:counted, :called]} = hands!(g, nil, e, [1, 2], segs)
+      assert [%{day: 1}] = g.foods
+
+      assert {:error, {"cooldown", 3}} = Garden.food_landing(g, segs)
+
+      v = Garden.food_view(g, segs, 0, @t0)
+      assert %{open: false, closed: "cooldown", opensAtDay: 3, landing: nil} = v
+
+      assert {:error, {:refused, {"cooldown", 3}}} =
+               Garden.add_hand(g, nil, hkey(e, 9), segs, @t0)
+
+      segs = segs |> assigned(1, "a", @t0)
+      assert {:error, {"cooldown", 3}} = Garden.food_landing(g, segs)
+      segs = segs |> done(1, "a", @t0) |> assigned(2, "a", @t0)
+      assert Garden.frontier_day(g, segs) == 3
+      assert {:ok, 3} = Garden.food_landing(g, segs)
+
+      assert %{open: true, closed: nil, landing: %{day: 3, step: 400}} =
+               Garden.food_view(g, segs, 0, @t0)
+
+      # Foods on days 1 and 3, the frontier back at 2 (a reset): nothing within N of
+      # either, so the first free day is 5.
+      g2 = with_foods(fed(days_total: 8), [food_rec(1, 1), food_rec(3, 2)])
+      retreat = fresh(g2) |> done(0, "a", @t0) |> done(1, "a", @t0)
+      assert Garden.frontier_day(g2, retreat) == 2
+      assert {:error, {"cooldown", 5}} = Garden.food_landing(g2, retreat)
+
+      # A food still waiting far ahead after a big retreat (N 7, its day 10, the
+      # frontier back at 1): spacing alone would allow day 1, but a second food
+      # never waits beside it; the ask opens when the frontier is N past it.
+      g4 = with_foods(fed(days_total: 30, food: %{@food | every_days: 7}), [food_rec(10, 1)])
+      back = fresh(g4) |> done(0, "a", @t0)
+      assert Garden.frontier_day(g4, back) == 1
+      assert {:error, {"cooldown", 17}} = Garden.food_landing(g4, back)
+
+      # A cooldown that opens past the horizon is the horizon.
+      g3 = with_foods(fed(days_total: 3), [food_rec(1, 1)])
+      assert {:error, {"horizon", nil}} = Garden.food_landing(g3, fresh(g3) |> done(0, "a", @t0))
+    end
+
+    test "closed reasons: off, stopped, finished, horizon, log-full" do
+      off = garden()
+      assert {:error, {"off", nil}} = Garden.food_landing(off, fresh(off))
+
+      g = fed(days_total: 2)
+      stopped = fresh(g) |> put_seg(1, &%{&1 | status: "failed"})
+      finished = fresh(g) |> done(0, "a", @t0) |> done(1, "a", @t0)
+      horizon = fresh(g) |> done(0, "a", @t0) |> assigned(1, "a", @t0)
+
+      founding =
+        for i <- 1..10_000,
+            do: %{"step" => 0, "kind" => "lesion", "x" => rem(i, 256), "y" => 1, "r" => 1}
+
+      full = fed(founding: founding)
+
+      for {code, g, segs} <- [
+            {"off", off, fresh(off)},
+            {"stopped", g, stopped},
+            {"finished", g, finished},
+            {"horizon", g, horizon},
+            {"log-full", full, fresh(full)}
+          ] do
+        assert {:error, {^code, nil}} = Garden.food_landing(g, segs)
+
+        assert %{open: false, closed: ^code, landing: nil, opensAtDay: nil} =
+                 Garden.food_view(g, segs, 0, @t0)
+
+        assert {:error, {:refused, {^code, nil}}} =
+                 Garden.add_hand(g, nil, hkey(make_ref(), 1), segs, @t0)
+      end
+    end
+
+    test "the schedule entry's shape, after that step's stones" do
+      g = fed(food: %{@food | asks: 2})
+      e = make_ref()
+      segs = fresh(g)
+      {g, _} = post!(g, segs, 5, 6, 7)
+      {g, _hands, [:counted, :called]} = hands!(g, nil, e, [1, 2], segs)
+      {g, _} = post!(g, segs, 8, 9, 3)
+      assert [%{day: 0}, %{day: 0}] = g.letters
+
+      assert Garden.schedule(g) ==
+               g.founding ++
+                 [
+                   %{"step" => @d, "kind" => "lesion", "x" => 5, "y" => 6, "r" => 7},
+                   %{"step" => @d, "kind" => "lesion", "x" => 8, "y" => 9, "r" => 3},
+                   %{
+                     "step" => @d,
+                     "kind" => "feed",
+                     "x" => 128,
+                     "y" => 128,
+                     "r" => 32,
+                     "amount" => 16
+                   }
+                 ]
+
+      # A stone on a later day comes after the food.
+      g = with_letters(g, g.letters ++ [letter(1, 3)])
+
+      assert [_, _, _, %{"kind" => "feed"}, %{"step" => 200, "kind" => "lesion"}] =
+               Garden.schedule(g)
+    end
+
+    test "dropping a food: while waiting, idempotent; once its day is assigned, refused" do
+      g = with_foods(fed(), [food_rec(1, 1)])
+      segs = fresh(g) |> done(0, "a", @t0)
+      assert {:error, {"cooldown", 3}} = Garden.food_landing(g, segs)
+
+      sealed = assigned(segs, 1, "b", @t0)
+
+      assert {:error, {:refused, "the food's day has been assigned"}} =
+               Garden.drop_letter(g, "food-1", sealed, @t0)
+
+      assert {:ok, g, %{dropped_at: at} = dropped} =
+               Garden.drop_letter(g, "food-1", segs, @t0 + 1)
+
+      assert at == @t0 + 1
+      assert {:ok, ^g, ^dropped} = Garden.drop_letter(g, "food-1", segs, @t0 + 2)
+      # It frees the spacing it held.
+      assert {:ok, 1} = Garden.food_landing(g, segs)
+      assert Garden.letter_status(g, dropped, segs) == "dropped"
+      assert {:error, :not_found} = Garden.drop_letter(g, "food-9", segs, @t0)
+      # A garden without food has none to drop.
+      assert {:error, :not_found} = Garden.drop_letter(garden(), "food-1", fresh(garden()), @t0)
+    end
+
+    test "a garden without food: no food keys, the old schedule, food off in the view" do
+      g = garden()
+      refute Map.has_key?(g, :food) or Map.has_key?(g, :foods) or Map.has_key?(g, :next_food)
+      refute Garden.food?(g)
+
+      assert Enum.sort(Map.keys(g)) ==
+               Enum.sort(
+                 ~w(name created_at preset_id seed steps_per_day days_total letters_per_day
+                 queue_max dawn_period_ms dawn_offset_ms width height founding letters next_letter days)a
+               )
+
+      segs = fresh(g)
+      {g, _} = post!(g, segs, 5, 6, 7)
+
+      assert Garden.schedule(g) ==
+               g.founding ++ [%{"step" => @d, "kind" => "lesion", "x" => 5, "y" => 6, "r" => 7}]
+
+      v = Garden.view(g, segs, %{}, @t0, @env)
+
+      assert v.food == %{
+               enabled: false,
+               asks: nil,
+               everyDays: nil,
+               amount: nil,
+               r: nil,
+               place: nil,
+               hands: 0,
+               expiresAt: v.pace.nextDawnAt,
+               sharedAddress: false,
+               open: false,
+               closed: "off",
+               opensAtDay: nil,
+               landing: nil,
+               foods: []
+             }
+
+      assert Enum.all?(v.days, &(&1.food == nil))
+    end
+
+    test "the food block in each state: open with hands, called and waiting, sealed, landed, verified" do
+      g = fed(days_total: 8)
+      e = make_ref()
+      segs = fresh(g)
+      {g, hands, [:counted]} = hands!(g, nil, e, [1], segs)
+      env = Map.merge(@env, %{food_hands: Map.delete(hands, :seen), food_epoch: e})
+      v = Garden.view(g, segs, %{}, @t0, env)
+
+      assert v.food == %{
+               enabled: true,
+               asks: 3,
+               everyDays: 2,
+               amount: 16,
+               r: 32,
+               place: %{x: 128, y: 128},
+               hands: 1,
+               expiresAt: v.pace.nextDawnAt,
+               sharedAddress: false,
+               open: true,
+               closed: nil,
+               opensAtDay: nil,
+               landing: %{day: 0, step: @d},
+               foods: []
+             }
+
+      assert Garden.view(g, segs, %{}, @t0, Map.put(env, :shared_address, true)).food.sharedAddress
+
+      # Another incarnation's count reads as zero.
+      assert Garden.view(g, segs, %{}, @t0, %{env | food_epoch: make_ref()}).food.hands == 0
+
+      {g, hands, [:counted, :called]} = hands!(g, hands, e, [2, 3], segs)
+      env = %{env | food_hands: Map.delete(hands, :seen)}
+      v = Garden.view(g, segs, %{}, @t0, env)
+      assert %{hands: 0, open: false, closed: "cooldown", opensAtDay: 2} = v.food
+
+      assert [%{id: "food-1", status: "waiting", day: 0, landedIn: nil, droppedAt: nil}] =
+               v.food.foods
+
+      assert [%{day: 0, food: "food-1"}] = v.days
+
+      sealed = assigned(segs, 0, "a", @t0)
+      assert [%{status: "sealed"}] = Garden.view(g, sealed, %{}, @t0, env).food.foods
+
+      landed = done(segs, 0, "a", @t0)
+
+      assert [%{status: "landed", landedIn: dg}] =
+               Garden.view(g, landed, %{}, @t0, env).food.foods
+
+      assert dg == digest(0)
+
+      verified_segs = verified(landed, 0, "b", @t0)
+      v = Garden.view(g, verified_segs, %{}, @t0, env)
+      assert [%{status: "verified", landedIn: ^dg}] = v.food.foods
+      # Food is never a letter.
+      assert v.letters.waiting == [] and v.letters.recent == []
+      assert [%{letters: [], food: "food-1"}] = v.days
+    end
+
+    test "foods count toward logMax" do
+      founding =
+        for i <- 1..9_998,
+            do: %{"step" => 0, "kind" => "lesion", "x" => rem(i, 256), "y" => 1, "r" => 1}
+
+      g = fed(founding: founding, letters_per_day: 64, queue_max: 1000)
+      g = with_foods(g, [food_rec(0, 1)])
+      segs = fresh(g)
+      {g, _} = post!(g, segs, 1, 1, 1)
+      # 9,998 founding + 1 letter + 1 food = 10,000.
+      assert {:error, {:refused, "the garden's log is full"}} =
+               Garden.post_letter(g, %{x: 2, y: 2, r: 2}, segs, @t0)
+
+      assert {:error, {"log-full", nil}} = Garden.food_landing(g, segs)
+    end
+  end
+
   describe "contract fixture" do
     # Objects: equal key sets, recursively. Arrays of objects: every element against the fixture's first.
     # Scalars: same JSON type unless either side is null (siblings differ: a landed letter has a landedIn, a

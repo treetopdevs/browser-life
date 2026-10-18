@@ -158,7 +158,28 @@ config :coordinator,
 # `garden_letter_table_max` caps the rows of the letter budget table;
 # `garden_island_token` (BL_GARDEN_ISLAND_TOKEN), when set, restricts a garden's
 # days to islands that joined showing it (nil: any island may tend a garden).
+#
+# Food (docs/garden-food-2026-10-18.md), for a garden founded with "food": true
+# only: `garden_food_asks` distinct networks (K) in one dawn period call a food,
+# at most one every `garden_food_every_days` garden days (N); a keeper may set
+# both per garden at founding (foodAsks 2..1000, foodEveryDays 1..365). Each
+# food is `garden_food_amount` quanta per cell (1..64) over a disc of
+# `garden_food_radius` (1..32) at the world's centre. All four are copied into
+# the garden's record when it is founded, so changing them never changes a live
+# garden's rule. `garden_hands_sweep_ms` is how often the queue forgets every
+# garden's hands of a past dawn period (the hands live in memory only).
+# `garden_shared_address` (true in prod.exs until the proxy passes client
+# addresses, D-17; runtime.exs clears it with BL_TRUST_FORWARDED_FOR=1) puts
+# `sharedAddress` on the food block, so the page says every visitor counts as
+# one network. `garden_call_timeout_ms` bounds the hands route's Queue call.
 config :coordinator,
+  garden_shared_address: false,
+  garden_call_timeout_ms: 5_000,
+  garden_food_asks: 5,
+  garden_food_every_days: 7,
+  garden_food_amount: 16,
+  garden_food_radius: 32,
+  garden_hands_sweep_ms: 60_000,
   garden_presets: ~w(wild-storm-large),
   public_garden: "commons",
   trust_forwarded_for: false,
