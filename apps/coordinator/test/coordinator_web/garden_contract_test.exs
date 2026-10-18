@@ -164,6 +164,11 @@ defmodule CoordinatorWeb.GardenContractTest do
     assert got["clock"]["verifiedStep"] == @d and got["clock"]["step"] == 2 * @d
 
     assert Enum.map(got["days"], &{&1["day"], &1["status"]}) == [{1, "done"}, {0, "verified"}]
+    # Day 0 was replayed by an island that reported no observation digests: no numbers.
+    assert Enum.map(got["days"], & &1["leaders"]) ==
+             [nil, %{"status" => "unchecked", "census" => nil, "lines" => nil}]
+
+    assert got["leadersRule"] == fixture["leadersRule"]
     assert Enum.map(got["days"], & &1["letters"]) == [["ltr-4"], ["ltr-1", "ltr-2"]]
 
     statuses = fn list -> Map.new(list, &{&1["id"], &1["status"]}) end
@@ -219,6 +224,64 @@ defmodule CoordinatorWeb.GardenContractTest do
 
     # Nothing about who tends the garden is in it.
     refute body =~ "Contract-GPU"
+  end
+
+  test "the leaders block has the fixture's shape", %{conn: conn, dir: dir} do
+    {:ok, _} =
+      Queue.create_garden(%{
+        "name" => "commons",
+        "presetId" => "spots",
+        "seed" => 1,
+        "founding" => [%{"step" => 0, "kind" => "lesion", "x" => 1, "y" => 1, "r" => 2}],
+        "stepsPerDay" => @d,
+        "censusEvery" => 10,
+        "days" => 5
+      })
+
+    a = join("Contract-GPU-A")
+    b = join("Contract-GPU-B")
+
+    for day <- 0..1 do
+      if day > 0, do: TestClock.advance(day_ms())
+      t = next(a)
+      assert t.segment.index == day
+      digests = finish_with_files(dir, a, t, leaders_files(day))
+      assert {:ok, "verified"} = verify_with_digests(next(b), b, digests)
+      assert %{status: "ok"} = await_leaders("commons", day, lines: day > 0)
+    end
+
+    fixture = @fixture |> File.read!() |> Jason.decode!()
+    # The fixture's own numbers add up the way the rule says.
+    for day <- fixture["days"], leaders = day["leaders"] do
+      check_leaders(day)
+      living = leaders["census"]["livingCells"]
+
+      shares =
+        for t <- leaders["census"]["top"], do: t["share"] == Float.round(t["cells"] / living, 4)
+
+      assert Enum.all?(shares), "fixture day #{day["day"]}: a share is not cells / livingCells"
+
+      if lines = leaders["lines"] do
+        assert Enum.sum(Enum.map(lines["groups"], & &1["cells"])) + lines["rest"]["cells"] ==
+                 living
+      end
+    end
+
+    got = conn |> get("/api/public/garden") |> json_response(200)
+    check_enums(got)
+    compare("$.leadersRule", got["leadersRule"], fixture["leadersRule"])
+    assert got["leadersRule"] == fixture["leadersRule"]
+    shape = fixture["days"] |> Enum.map(& &1["leaders"]) |> Enum.reduce(nil, &merge(&2, &1))
+
+    for {day, i} <- Enum.with_index(got["days"]) do
+      compare("$.days[#{i}].leaders", day["leaders"], shape)
+    end
+
+    by_day = Map.new(got["days"], &{&1["day"], &1["leaders"]})
+    assert by_day[0]["status"] == "ok" and by_day[0]["lines"] == nil
+    assert by_day[1]["lines"]["winner"] == "3:7" and by_day[1]["lines"]["fromDay"] == 0
+    # Every share is a JSON number with a fraction, as the fixture shows them.
+    assert is_float(hd(by_day[1]["census"]["top"])["share"])
   end
 
   test "the fixture's foods keep a timeline the scheduler can produce" do
@@ -281,6 +344,8 @@ defmodule CoordinatorWeb.GardenContractTest do
   @letter_statuses ~w(waiting sealed landed verified dropped stalled)
   @kinds ~w(different-device-type same-device-type)
   @closed ~w(off stopped finished horizon log-full cooldown)
+  @leader_statuses ~w(ok pending unchecked unreadable)
+  @lineage_key ~r/^\d+:\d+$/
 
   defp check_enums(got) do
     assert got["contract"] == "garden-v1"
@@ -289,6 +354,7 @@ defmodule CoordinatorWeb.GardenContractTest do
     for day <- got["days"] do
       assert day["status"] in @day_statuses, "days[].status #{inspect(day["status"])}"
       assert day["verification"] in [nil | @kinds]
+      check_leaders(day)
     end
 
     for letter <- got["letters"]["waiting"] ++ got["letters"]["recent"] do
@@ -312,6 +378,29 @@ defmodule CoordinatorWeb.GardenContractTest do
     for f <- food["foods"] do
       assert f["status"] in @letter_statuses, "food status #{inspect(f["status"])}"
       assert String.starts_with?(f["id"], "food-")
+    end
+
+    :ok
+  end
+
+  # docs/garden-predictions-2026-10-18.md section 8: a block only on a verified
+  # day; numbers only when `ok`; a winner is a key, "rest" or null.
+  defp check_leaders(%{"leaders" => nil}), do: :ok
+
+  defp check_leaders(%{"leaders" => leaders} = day) do
+    assert day["status"] == "verified", "day #{day["day"]}: a leaders block on a day not verified"
+    assert leaders["status"] in @leader_statuses, "leaders.status #{inspect(leaders["status"])}"
+    if leaders["status"] != "ok", do: assert(leaders["census"] == nil and leaders["lines"] == nil)
+
+    if census = leaders["census"] do
+      assert census["step"] == day["endStep"]
+      assert Enum.all?(census["top"], &Regex.match?(@lineage_key, &1["key"]))
+      assert census["clearLeader"] in [nil | Enum.map(census["top"], & &1["key"])]
+    end
+
+    if lines = leaders["lines"] do
+      assert lines["fromDay"] == day["day"] - 1
+      assert lines["winner"] in [nil, "rest" | Enum.map(lines["groups"], & &1["key"])]
     end
 
     :ok
@@ -346,7 +435,12 @@ defmodule CoordinatorWeb.GardenContractTest do
     "$.food.opensAtDay",
     "$.food.landing",
     "$.food.foods[].landedIn",
-    "$.food.foods[].droppedAt"
+    "$.food.foods[].droppedAt",
+    "$.days[].leaders",
+    "$.days[].leaders.census",
+    "$.days[].leaders.lines",
+    "$.days[].leaders.census.clearLeader",
+    "$.days[].leaders.lines.winner"
   ]
 
   defp generic(path), do: Regex.replace(~r/\[\d+\]/, path, "[]")

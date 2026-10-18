@@ -84,7 +84,8 @@
         "mutations": 48120,
         "extinct": false,
         "conservationOk": true
-      }
+      },
+      "leaders": null
     },
     {
       "day": 1,
@@ -105,6 +106,30 @@
         "mutations": 31877,
         "extinct": false,
         "conservationOk": true
+      },
+      "leaders": {
+        "status": "ok",
+        "census": {
+          "step": 262144,
+          "livingCells": 58410,
+          "lineages": 2204,
+          "top": [
+            { "key": "160340:201733", "label": "born step 160339 at 5,394", "cells": 4377, "share": 0.0749 },
+            { "key": "0:14", "label": "founder 14", "cells": 3990, "share": 0.0683 },
+            { "key": "131999:77012", "label": "born step 131998 at 212,150", "cells": 3311, "share": 0.0567 }
+          ],
+          "clearLeader": null
+        },
+        "lines": {
+          "fromDay": 0,
+          "groups": [
+            { "key": "0:14", "label": "founder 14", "cells": 30480, "share": 0.5218 },
+            { "key": "0:3", "label": "founder 3", "cells": 6022, "share": 0.1031 },
+            { "key": "48211:90377", "label": "born step 48210 at 265,176", "cells": 1450, "share": 0.0248 }
+          ],
+          "rest": { "cells": 20458, "share": 0.3502 },
+          "winner": "0:14"
+        }
       }
     },
     {
@@ -126,6 +151,21 @@
         "mutations": 15240,
         "extinct": false,
         "conservationOk": true
+      },
+      "leaders": {
+        "status": "ok",
+        "census": {
+          "step": 131072,
+          "livingCells": 61240,
+          "lineages": 2671,
+          "top": [
+            { "key": "0:14", "label": "founder 14", "cells": 9820, "share": 0.1604 },
+            { "key": "0:3", "label": "founder 3", "cells": 7311, "share": 0.1194 },
+            { "key": "48211:90377", "label": "born step 48210 at 265,176", "cells": 5102, "share": 0.0833 }
+          ],
+          "clearLeader": "0:14"
+        },
+        "lines": null
       }
     }
   ],
@@ -262,6 +302,7 @@
       }
     ]
   },
+  "leadersRule": { "name": "lines-v1", "top": 3, "clearLeaderPercent": 10 },
   "limits": {
     "stoneRadius": { "min": 1, "max": 32 },
     "lettersPerAddressPerHour": 3,

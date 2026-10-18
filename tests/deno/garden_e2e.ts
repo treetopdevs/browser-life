@@ -14,6 +14,9 @@
 // waits one dawn period (a second here) after the call before an island gets it (the keeper's veto window). The ask's
 // count after the restart is 0 trivially here (the call itself zeroed it); ExUnit holds the restart rule with a hand
 // left counted.
+// Who held the field (amended 2026-10-18, docs/garden-predictions-2026-10-18.md section 9): once day 0 is verified its
+// leaders block is ok and its census equals the script's own reading of day 0's lineages.tsv at step D; once days 1 and 2
+// are, day 1's lines equal the script's own walk over days 0 and 1's mutations.tsv; all three survive the restart.
 //
 // The dawn grid is the test clock: `dawnPeriodMs` 1,000, so a day waits at most a second for its dawn. Nothing in the
 // coordinator is moved from outside. GPU time is small: 3 days of 256 steps on a 256x256 world, each replayed once, then
@@ -383,6 +386,85 @@ const hand = (ip: string) => request(`/api/public/gardens/${NAME}/food/hands`, {
 // Stones on the founders' cells (world.ts's generalist init: lowbias32(seed * 31 + i)), so the letters hit biomass.
 const spotsCfg = { ...defaultConfig(), ...PRESETS.find((p) => p.id === "spots")!.cfg, seed: 1 };
 const W = worldW(spotsCfg), H = cellCount(spotsCfg) / W;
+
+// Who held the field (amended 2026-10-18, docs/garden-predictions-2026-10-18.md section 9): the script's own reading of
+// the files the coordinator stored, to compare with the view's `days[].leaders`. Shares are compared to within a unit
+// in the fourth place (the coordinator rounds in decimal, JavaScript in binary); everything else exactly.
+type Row = { hi: number; lo: number; cells: number };
+const keyOf = (r: { hi: number; lo: number }) => `${r.hi}:${r.lo}`;
+const leaderLabel = (hi: number, lo: number) =>
+  hi === 0 ? `founder ${lo}` : lo < W * H ? `born step ${hi - 1} at ${lo % W},${Math.floor(lo / W)}` : `born step ${hi - 1}, cell ${lo}`;
+const shareOf = (c: number, living: number) => (living === 0 ? 0 : Math.round((c / living) * 1e4) / 1e4);
+function endRows(tsv: string, endStep: number): Row[] {
+  return tsv.split("\n").slice(1).filter(Boolean).map((l) => l.split("\t")).filter((f) => Number(f[0]) === endStep)
+    .map(([, k, c]) => { const [hi, lo] = k.split(":").map(Number); return { hi, lo, cells: Number(c) }; });
+}
+function censusOf(rows: Row[], step: number) {
+  const living = rows.reduce((a, r) => a + r.cells, 0);
+  const top = [...rows].sort((a, b) => b.cells - a.cells || a.hi - b.hi || a.lo - b.lo).slice(0, 3);
+  const clear = top.length && top[0].cells * 100 >= 10 * living && !(top[1] && top[1].cells >= top[0].cells) ? keyOf(top[0]) : null;
+  return {
+    step, livingCells: living, lineages: rows.length, clearLeader: clear,
+    top: top.map((r) => ({ key: keyOf(r), label: leaderLabel(r.hi, r.lo), cells: r.cells, share: shareOf(r.cells, living) })),
+  };
+}
+function parentsOf(tsvs: string[]): Map<string, string> {
+  const m = new Map<string, string>();
+  for (const tsv of tsvs) for (const l of tsv.split("\n").slice(1).filter(Boolean)) { const [a, b, c, d] = l.split("\t"); m.set(`${a}:${b}`, `${c}:${d}`); }
+  return m;
+}
+/** The lines into day T from B = T - 1 (the note's section 4): each key walked up to the nearest of B's top keys, or to a key born before B began. */
+function linesOf(rows: Row[], parents: Map<string, string>, fromDay: number, startB: number, topB: string[]) {
+  const sums = new Map<string, number>();
+  let orphan = "";
+  for (const r of rows) {
+    let k = keyOf(r);
+    for (;;) {
+      if (topB.includes(k)) break;
+      if (Number(k.split(":")[0]) <= startB) { k = "rest"; break; }
+      const p = parents.get(k);
+      if (!p) { orphan ||= k; k = "rest"; break; }
+      k = p;
+    }
+    sums.set(k, (sums.get(k) ?? 0) + r.cells);
+  }
+  const living = rows.reduce((a, r) => a + r.cells, 0);
+  const groups = topB.map((k) => { const [hi, lo] = k.split(":").map(Number); const c = sums.get(k) ?? 0; return { key: k, label: leaderLabel(hi, lo), cells: c, share: shareOf(c, living) }; });
+  const rest = sums.get("rest") ?? 0;
+  const all = [{ key: "rest", cells: rest }, ...groups].sort((a, b) => b.cells - a.cells);
+  const winner = all[0].cells > 0 && !(all[1] && all[1].cells === all[0].cells) ? all[0].key : null;
+  return { orphan, lines: { fromDay, groups, rest: { cells: rest, share: shareOf(rest, living) }, winner } };
+}
+/** Equal, with every `share` within 1.1e-4 of the other's. */
+function sameNumbers(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((x, i) => sameNumbers(x, b[i]));
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    const ka = Object.keys(a).sort(), kb = Object.keys(b).sort();
+    return canon(ka) === canon(kb) && ka.every((k) => k === "share"
+      ? Math.abs((a as Record<string, number>)[k] - (b as Record<string, number>)[k]) <= 1.1e-4
+      : sameNumbers((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+  }
+  return a === b;
+}
+/** A segment's stored file as text (the coordinator serves what the producer uploaded). */
+async function segmentText(index: number, name: string): Promise<string> {
+  const listing = await request(`/api/experiments/${NAME}`);
+  const seg = (listing.body?.segments ?? []).find((x: { index: number }) => x.index === index);
+  if (!seg) return "";
+  const res = await fetch(`${base}/api/segments/${seg.id}/files/${name}`, { signal: AbortSignal.timeout(REQUEST_MS) });
+  const text = await res.text();
+  return res.status === 200 ? text : "";
+}
+/** Polls the view until `pred` holds (the block is counted off the queue), or gives the last view after `timeoutMs`. */
+async function leadersWhen(pred: (v: View) => boolean, timeoutMs = 60_000): Promise<View> {
+  const deadline = Date.now() + timeoutMs;
+  let v = await view();
+  while (!pred(v) && Date.now() < deadline) {
+    await sleep(250);
+    v = await view();
+  }
+  return v;
+}
 const founder = (i: number) => {
   const h = lowbias32(spotsCfg.seed * 31 + i);
   return { x: h % W, y: (h >>> 12) % H };
@@ -614,6 +696,23 @@ try {
   }
   check("3. the fork checkpoint is served (200) on the first read after the view names it, and decodes to the state at step D whose artifact digest is the fork's", forkOk, forkDetail);
 
+  // Who held the field (amended 2026-10-18): day 0 was replayed with every observation file matching, so its block is
+  // counted from its files, off the queue.
+  v = await leadersWhen((x) => dayOf(x, 0)?.leaders?.status === "ok");
+  const lineages0 = await segmentText(0, "lineages.tsv");
+  const rows0 = endRows(lineages0, D);
+  const census0 = censusOf(rows0, D);
+  check(
+    "3. day 0's leaders block is ok, its lines null (no day before it), and the leaders rule is lines-v1",
+    dayOf(v, 0)?.leaders?.status === "ok" && dayOf(v, 0)?.leaders?.lines === null && v.leadersRule?.name === "lines-v1",
+    JSON.stringify({ leaders: dayOf(v, 0)?.leaders, rule: v.leadersRule }),
+  );
+  check(
+    "3. day 0's lineages.tsv has rows at the day's end step D, and the block's census is the script's own top three and sum over them",
+    rows0.length > 0 && sameNumbers(dayOf(v, 0)?.leaders?.census, census0),
+    `${rows0.length} rows at D; view ${JSON.stringify(dayOf(v, 0)?.leaders?.census)} vs script ${JSON.stringify(census0)}`,
+  );
+
   // ---- 4. A runs day 1; the keeper drops L3 ----
   const a1 = await work(A, 1);
   check("4. island A runs day 1 (released at the next dawn)", canon(a1) === canon(["run #1"]), `${a1.join(", ")} | ${A.log.slice(-6).join(" | ")}`);
@@ -719,6 +818,21 @@ try {
   // Island C joined and asked too, but tending counts attempts, not joins: still two.
   check("5. tending: two islands today (C, which never took a day, is not counted), one device type ever", v.tending.islandsToday === 2 && v.tending.deviceTypesEver === 1, JSON.stringify(v.tending));
 
+  // The lines into day 1 (amended 2026-10-18): the script walks both days' mutations.tsv itself.
+  const vl = await leadersWhen((x) => [1, 2].every((d) => dayOf(x, d)?.leaders?.status === "ok" && dayOf(x, d)?.leaders?.lines));
+  const rows1 = endRows(await segmentText(1, "lineages.tsv"), 2 * D);
+  const walk = linesOf(rows1, parentsOf([await segmentText(0, "mutations.tsv"), await segmentText(1, "mutations.tsv")]), 0, 0, census0.top.map((t) => t.key));
+  check(
+    "5. days 1 and 2 have ok blocks with lines; day 1's census is the script's own over its end-step rows",
+    rows1.length > 0 && sameNumbers(dayOf(vl, 1)?.leaders?.census, censusOf(rows1, 2 * D)) && dayOf(vl, 2)?.leaders?.lines?.fromDay === 1,
+    JSON.stringify({ day1: dayOf(vl, 1)?.leaders?.census, script: censusOf(rows1, 2 * D), day2: dayOf(vl, 2)?.leaders }),
+  );
+  check(
+    "5. day 1's lines equal the script's own walk over days 0 and 1's mutations.tsv (no orphan key)",
+    walk.orphan === "" && sameNumbers(dayOf(vl, 1)?.leaders?.lines, walk.lines),
+    `orphan ${walk.orphan || "none"}; view ${JSON.stringify(dayOf(vl, 1)?.leaders?.lines)} vs script ${JSON.stringify(walk.lines)}`,
+  );
+
   // Pacing (amended 2026-10-17): a garden nobody asks releases nothing. No island asks from here on.
   await sleep(2 * PERIOD + 500);
   const rested = await viewWhen("a read two dawn periods later", (x) => x.now >= v.now + 2 * PERIOD, 10_000);
@@ -761,6 +875,12 @@ try {
   await waitReady(server, 180_000);
   const after = await view();
   check("6. after a restart in a fresh OS process: the clock, verification, fork, letters, foods and every day's release record are unchanged", durable(after) === durable(before), `${durable(before)}\n vs ${durable(after)}`);
+  const leadersOfView = (x: View) => canon({ rule: x.leadersRule, days: [0, 1, 2].map((d) => dayOf(x, d)?.leaders) });
+  check(
+    "6. ...and the leaders blocks of days 0 to 2 (decoded from state.bin by a fresh process) are unchanged",
+    leadersOfView(after) === leadersOfView(before) && [0, 1, 2].every((d) => dayOf(after, d)?.leaders?.status === "ok"),
+    `${leadersOfView(before)}\n vs ${leadersOfView(after)}`,
+  );
   check(
     "6. ...the food is still there, verified, and the ask's count is 0 (trivially here, the call zeroed it; ExUnit holds the restart rule)",
     after.food?.foods?.[0]?.id === foodId && after.food.foods[0].status === "verified" && after.food.hands === 0,
