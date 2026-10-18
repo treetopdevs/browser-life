@@ -217,8 +217,8 @@ export interface SessionFacts {
   /**
    * Pond cycles resolved by a pick in the log. The log does not say who chose, so the worker keeps a note beside it:
    * `byHand` is a pick whose donors differ from the rule's order for that cycle (a person's picks equal to the rule's
-   * count as the rule's own), `byRule` one the rule chose, `unknown` a pick this page never saw chosen (a world
-   * restored from an earlier visit).
+   * count as the rule's own), `byRule` one the rule chose, `unknown` a pick whose chooser no record says (a world opened
+   * from a file, or restored from a checkpoint saved before its log was kept beside it, or whose sidecar is torn).
    */
   picks: { total: number; byHand: number; byRule: number; unknown: number };
   wounds: number;

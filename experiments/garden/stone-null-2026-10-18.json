@@ -1,0 +1,3477 @@
+{
+ "amendment": "## Amendment, slice 34 (2026-10-18): the null stone and a finer cadence, rules written before the run",
+ "rules": "docs/garden-stone-horizon-2026-10-18.md",
+ "rulesDigestAtStart": "75458dae7ffbbf96b08149d735a4b7334f6b177da0b2d1af05310de7409dcc03",
+ "readoutHeading": "## Readout, slice 34 (2026-10-18)",
+ "commit": "a7d73ff58d38fe4ea1433af8a0df7e1333dd118c",
+ "dirty": true,
+ "recordedAt": {
+  "at": "2026-10-18T20:33:36.000Z",
+  "commit": "a7d73ff58d38fe4ea1433af8a0df7e1333dd118c",
+  "digests": {
+   "docs/garden-stone-horizon-2026-10-18.md": "7bac3e5859cbb2e9a7ab1678e497d26c3b2c3a743e98b63bad9191118f2e4547",
+   "tools/horizon.ts": "cdf9d3a1f5c92ab9dafbf4a20a383744f3c97fd16e6d9edbd729973c554025f4",
+   "tools/lib/horizon.ts": "ad1efdf56fe7eb4e858d7a19d060f9448424428dae67b63192b7a5ec30504eab"
+  }
+ },
+ "ruleVersion": 1,
+ "host": "deno 2.9.7 darwin-aarch64",
+ "adapter": "Apple M1 Max",
+ "record55": {
+  "path": "experiments/garden/stone-horizon-2026-10-18.json",
+  "sha256": "f4583f9b3e6f4c97ee95c44d0b8aa541356f34ec24ed7e1d0ec5ff730a086b13",
+  "kMax": 128
+ },
+ "pilot": {
+  "startedAt": "2026-10-18T17:58:34.000Z",
+  "pilotSeconds": 37.2,
+  "twinRate": 390.4,
+  "crossCheck": {
+   "runTsSeconds": 9.338761083999998,
+   "runTsRate": 492.0088255678271,
+   "ok": true,
+   "horizonHash": "92b973bc4ff08e9a",
+   "runTsHash": "92b973bc4ff08e9a"
+  },
+  "stopPath": {
+   "ok": true,
+   "stoppedAt": 1,
+   "stopStateHash": "a80ec6b68d5d932d",
+   "afterReached": 1,
+   "seconds": 5.506130750000004
+  },
+  "uptime": [
+   {
+    "stage": "pilot twins",
+    "uptime": "13:58  up 16 days, 15:21, 15 users, load averages: 19.93 26.76 40.45"
+   },
+   {
+    "stage": "pilot cross-check",
+    "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 22.54 26.68 39.94"
+   }
+  ]
+ },
+ "lesioncheck": {
+  "seed": 1,
+  "N": 131072,
+  "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.46 26.97 39.89",
+  "stateHash": "7a6846937bae3658",
+  "kick": {
+   "x": 490,
+   "y": 371,
+   "effectiveR": 0,
+   "gpu": "d3d04d725b6f9de7",
+   "cpu": "d3d04d725b6f9de7",
+   "ok": true
+  },
+  "null8": {
+   "x": 309,
+   "y": 99,
+   "effectiveR": 8,
+   "gpu": "7a6846937bae3658",
+   "cpu": "7a6846937bae3658",
+   "ok": true
+  },
+  "seconds": 0.6433499580000002,
+  "ok": true,
+  "host": {
+   "host": "deno 2.9.7 darwin-aarch64",
+   "adapter": "Apple M1 Max"
+  }
+ },
+ "cap": {
+  "hours": 4,
+  "deadline": "2026-10-18T21:58:34.000Z",
+  "factor": 0.75,
+  "rate": 292.8,
+  "fineWindow": 8192,
+  "kMax": 128,
+  "scaleDown": "none",
+  "groupWorst": [
+   {
+    "seed": 1,
+    "N": 131072,
+    "n0": 2,
+    "seconds": 1084
+   },
+   {
+    "seed": 3,
+    "N": 131072,
+    "n0": 2,
+    "seconds": 1084
+   },
+   {
+    "seed": 4,
+    "N": 131072,
+    "n0": 0,
+    "seconds": 972
+   },
+   {
+    "seed": 1,
+    "N": 262144,
+    "n0": 1,
+    "seconds": 1028
+   },
+   {
+    "seed": 3,
+    "N": 262144,
+    "n0": 1,
+    "seconds": 1028
+   },
+   {
+    "seed": 4,
+    "N": 262144,
+    "n0": 0,
+    "seconds": 972
+   },
+   {
+    "seed": 1,
+    "N": 393216,
+    "n0": 1,
+    "seconds": 1028
+   },
+   {
+    "seed": 3,
+    "N": 393216,
+    "n0": 0,
+    "seconds": 972
+   },
+   {
+    "seed": 4,
+    "N": 393216,
+    "n0": 0,
+    "seconds": 972
+   }
+  ],
+  "fineWorstSeconds": 1114
+ },
+ "stages": [
+  {
+   "stage": "pilot",
+   "at": "2026-10-18T17:58:34.000Z",
+   "uptime": [
+    {
+     "stage": "pilot twins",
+     "uptime": "13:58  up 16 days, 15:21, 15 users, load averages: 19.93 26.76 40.45"
+    },
+    {
+     "stage": "pilot cross-check",
+     "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 22.54 26.68 39.94"
+    }
+   ]
+  },
+  {
+   "stage": "lesioncheck",
+   "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.46 26.97 39.89"
+  },
+  {
+   "stage": "nullplan",
+   "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.46 26.97 39.89"
+  },
+  {
+   "stage": "group seed 1 N 131072",
+   "at": "2026-10-18T17:59:13.688Z",
+   "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.46 26.97 39.89",
+   "ps": "86223  89.5       00:00 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    19:52:03 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  },
+  {
+   "stage": "group seed 3 N 131072",
+   "at": "2026-10-18T18:02:44.279Z",
+   "uptime": "14:02  up 16 days, 15:25, 15 users, load averages: 55.84 34.06 39.51",
+   "ps": "86223  91.8       03:31 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n96007   0.0       00:10 timeout 900 deno run -A --no-lock tests/deno/garden_found_smoke.ts\n96008   0.0       00:10 deno run -A --no-lock tests/deno/garden_found_smoke.ts\n 6693   0.0    19:55:34 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  },
+  {
+   "stage": "group seed 4 N 131072",
+   "at": "2026-10-18T18:06:08.927Z",
+   "uptime": "14:06  up 16 days, 15:29, 15 users, load averages: 28.18 30.02 36.64",
+   "ps": "5189   0.0       00:36 /opt/homebrew/bin/zsh -lc PATH=/opt/homebrew/opt/node/bin:$PATH pnpm -C apps/tauri-desktop exec vitest run --no-file-parallelism > /tmp/\n86223  94.6       06:55 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    19:58:58 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  },
+  {
+   "stage": "group seed 1 N 262144",
+   "at": "2026-10-18T18:22:09.407Z",
+   "uptime": "14:22  up 16 days, 15:45, 15 users, load averages: 113.08 52.45 40.58",
+   "ps": "61429  87.1       00:01 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    20:14:59 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  },
+  {
+   "stage": "group seed 3 N 262144",
+   "at": "2026-10-18T18:30:37.819Z",
+   "uptime": "14:30  up 16 days, 15:53, 15 users, load averages: 92.96 121.38 94.06",
+   "ps": "61429  97.0       08:29 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    20:23:27 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  },
+  {
+   "stage": "group seed 4 N 262144",
+   "at": "2026-10-18T18:48:07.106Z",
+   "uptime": "14:48  up 16 days, 16:11, 15 users, load averages: 341.65 355.48 268.54",
+   "ps": "22652   0.0       02:31 node /Users/nicholas/develop/llm-firehose/.claude/worktrees/workflow-section-redesign-027da0/apps/tauri-desktop/node_modules/.bin/../vit\n61429  75.5       25:59 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    20:40:57 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  },
+  {
+   "stage": "group seed 1 N 393216",
+   "at": "2026-10-18T18:57:30.988Z",
+   "uptime": "14:57  up 16 days, 16:20, 15 users, load averages: 253.40 295.96 282.25",
+   "ps": "22652   0.0       11:54 node /Users/nicholas/develop/llm-firehose/.claude/worktrees/workflow-section-redesign-027da0/apps/tauri-desktop/node_modules/.bin/../vit\n60078  90.4       00:00 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    20:50:20 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  },
+  {
+   "stage": "group seed 3 N 393216",
+   "at": "2026-10-18T19:13:39.320Z",
+   "uptime": "15:13  up 16 days, 16:36, 15 users, load averages: 150.41 186.80 222.21",
+   "ps": "60078  90.9       16:09 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    21:06:29 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  },
+  {
+   "stage": "group seed 4 N 393216",
+   "at": "2026-10-18T19:15:36.404Z",
+   "uptime": "15:15  up 16 days, 16:38, 15 users, load averages: 125.65 165.22 209.19",
+   "ps": "60078  95.0       18:06 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    21:08:26 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  },
+  {
+   "stage": "fine pilot",
+   "at": "2026-10-18T18:08:45.134Z",
+   "uptime": "14:08  up 16 days, 15:31, 15 users, load averages: 46.74 40.89 40.28",
+   "ps": "17062   0.0       00:18 /opt/homebrew/bin/zsh -lc rm cmd/airspace-shared-preview/main.go\\012rmdir cmd/airspace-shared-preview\\012PATH=/opt/homebrew/opt/node/bin\n17080   0.0       00:18 pnpm -C apps/tauri-desktop exec vitest run --no-file-parallelism\n17082   2.0       00:18 node /Users/nicholas/.codex/worktrees/airspace-shared-files/llm-firehose/apps/tauri-desktop/node_modules/.bin/../.pnpm/vitest@4.1.11_@ty\n17814  64.7       00:01 /opt/homebrew/Cellar/node/26.11.1_1/bin/node --experimental-import-meta-resolve --require /Users/nicholas/.codex/worktrees/airspace-shar\n17823  20.2       00:01 deno run -A --no-lock tools/horizon.ts fine --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-backlo\n 6693   0.0    20:01:35 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+  }
+ ],
+ "runStatus": {
+  "file": "/private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-backlog-workflow-coordination-424553/877b3ef0-502b-4068-9a29-67e9ee9d531d/scratchpad/s34/run.status",
+  "started": "2026-10-18T17:58:34Z",
+  "noteSha256BeforePilot": "75458dae7ffbbf96b08149d735a4b7334f6b177da0b2d1af05310de7409dcc03",
+  "noteSha256AtEnd": "75458dae7ffbbf96b08149d735a4b7334f6b177da0b2d1af05310de7409dcc03",
+  "done": "2026-10-18T19:33:16Z",
+  "stages": [
+   {
+    "stage": "pilot",
+    "at": "2026-10-18T17:58:34Z",
+    "ps": [
+     " 6693   0.0    19:51:24 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+    ],
+    "uptime": "13:58  up 16 days, 15:21, 15 users, load averages: 19.93 26.76 40.45",
+    "exit": 0
+   },
+   {
+    "stage": "lesioncheck",
+    "at": "2026-10-18T17:59:11Z",
+    "ps": [
+     " 6693   0.0    19:52:01 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+    ],
+    "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.42 27.00 39.98",
+    "exit": 0
+   },
+   {
+    "stage": "nullplan",
+    "at": "2026-10-18T17:59:12Z",
+    "ps": [
+     " 6693   0.0    19:52:02 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+    ],
+    "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.46 26.97 39.89",
+    "exit": 0
+   },
+   {
+    "stage": "day1",
+    "at": "2026-10-18T17:59:12Z",
+    "ps": [
+     " 6693   0.0    19:52:03 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+    ],
+    "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.46 26.97 39.89",
+    "exit": 0
+   },
+   {
+    "stage": "fine",
+    "at": "2026-10-18T18:08:44Z",
+    "ps": [
+     "17062   0.0       00:17 /opt/homebrew/bin/zsh -lc rm cmd/airspace-shared-preview/main.go\\012rmdir cmd/airspace-shared-preview\\012PATH=/opt/homebrew/opt/node/bin",
+     "17080   0.0       00:17 pnpm -C apps/tauri-desktop exec vitest run --no-file-parallelism",
+     "17082   5.7       00:17 node /Users/nicholas/.codex/worktrees/airspace-shared-files/llm-firehose/apps/tauri-desktop/node_modules/.bin/../.pnpm/vitest@4.1.11_@ty",
+     "17814   9.1       00:00 /opt/homebrew/Cellar/node/26.11.1_1/bin/node --experimental-import-meta-resolve --require /Users/nicholas/.codex/worktrees/airspace-shar",
+     " 6693   0.0    20:01:34 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+    ],
+    "uptime": "14:08  up 16 days, 15:31, 15 users, load averages: 46.74 40.89 40.28",
+    "exit": 0
+   },
+   {
+    "stage": "day2",
+    "at": "2026-10-18T18:22:08Z",
+    "ps": [
+     " 6693   0.0    20:14:58 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+    ],
+    "uptime": "14:22  up 16 days, 15:45, 15 users, load averages: 113.08 52.45 40.58",
+    "exit": 0
+   },
+   {
+    "stage": "day3",
+    "at": "2026-10-18T18:57:30Z",
+    "ps": [
+     "22652   0.0       11:54 node /Users/nicholas/develop/llm-firehose/.claude/worktrees/workflow-section-redesign-027da0/apps/tauri-desktop/node_modules/.bin/../vit",
+     " 6693   0.0    20:50:20 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+    ],
+    "uptime": "14:57  up 16 days, 16:20, 15 users, load averages: 253.40 295.96 282.25",
+    "exit": 0
+   },
+   {
+    "stage": "nullrecord",
+    "at": "2026-10-18T19:33:16Z",
+    "ps": [
+     "39776   0.0       02:35 /opt/homebrew/bin/zsh -c source /Users/nicholas/.claude/shell-snapshots/snapshot-zsh-1792335822776-jook98.sh 2>/dev/null || true && expo",
+     "39786   0.0       02:35 /opt/homebrew/bin/zsh -c source /Users/nicholas/.claude/shell-snapshots/snapshot-zsh-1792335822776-jook98.sh 2>/dev/null || true && expo",
+     " 6693   0.0    21:26:06 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+    ],
+    "uptime": "15:33  up 16 days, 16:56, 15 users, load averages: 346.92 226.00 191.15",
+    "exit": 0
+   }
+  ]
+ },
+ "sources": [
+  {
+   "seed": 1,
+   "dir": "/private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-backlog-workflow-coordination-424553/877b3ef0-502b-4068-9a29-67e9ee9d531d/scratchpad/s26/src/horizon-src/wild-storm-large/treatment/seed-1",
+   "finalHash": "c36dadcd9fb6b211",
+   "living": {
+    "131072": 151425,
+    "262144": 170356,
+    "393216": 198758
+   },
+   "checkpointHashes": {
+    "131072": "7a6846937bae3658",
+    "262144": "fc71ecde7964cabd",
+    "393216": "8241361fd08b8c2e"
+   }
+  },
+  {
+   "seed": 3,
+   "dir": "/private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-backlog-workflow-coordination-424553/877b3ef0-502b-4068-9a29-67e9ee9d531d/scratchpad/s26/src/horizon-src/wild-storm-large/treatment/seed-3",
+   "finalHash": "3dc10d1726dc8d47",
+   "living": {
+    "131072": 125639,
+    "262144": 214118,
+    "393216": 195224
+   },
+   "checkpointHashes": {
+    "131072": "fb819ffcb4df6859",
+    "262144": "f475cbdafd62763f",
+    "393216": "c66907d7ffd7937f"
+   }
+  },
+  {
+   "seed": 4,
+   "dir": "/private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-backlog-workflow-coordination-424553/877b3ef0-502b-4068-9a29-67e9ee9d531d/scratchpad/s26/src/horizon-src/wild-storm-large/treatment/seed-4",
+   "finalHash": "f9d11a2de1bebece",
+   "living": {
+    "131072": 253831,
+    "262144": 255413,
+    "393216": 260123
+   },
+   "checkpointHashes": {
+    "131072": "4cc1d02f75f0b050",
+    "262144": "dd7a7e67c8bfa6da",
+    "393216": "2f015b87dd3581a9"
+   }
+  }
+ ],
+ "scratch": {
+  "prep": "/private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-backlog-workflow-coordination-424553/877b3ef0-502b-4068-9a29-67e9ee9d531d/scratchpad/s34/prep.json",
+  "seriesDir": "/private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-backlog-workflow-coordination-424553/877b3ef0-502b-4068-9a29-67e9ee9d531d/scratchpad/s34/series",
+  "fineDir": "/private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-backlog-workflow-coordination-424553/877b3ef0-502b-4068-9a29-67e9ee9d531d/scratchpad/s34/fine",
+  "note": "full counts (all three measures) are in the group files there; the directory is session-scoped and may vanish"
+ },
+ "radii": [8,32,64],
+ "kMax": 128,
+ "sPairs": [
+  {
+   "seed": 1,
+   "N": 131072,
+   "R": 8,
+   "outcome": {
+    "kind": "horizon",
+    "k": 3,
+    "steps": 3071,
+    "decidedAt": 6
+   }
+  },
+  {
+   "seed": 1,
+   "N": 131072,
+   "R": 32,
+   "outcome": {
+    "kind": "horizon",
+    "k": 22,
+    "steps": 22527,
+    "decidedAt": 25
+   }
+  },
+  {
+   "seed": 1,
+   "N": 131072,
+   "R": 64,
+   "outcome": {
+    "kind": "horizon",
+    "k": 49,
+    "steps": 50175,
+    "decidedAt": 52
+   }
+  },
+  {
+   "seed": 3,
+   "N": 131072,
+   "R": 8,
+   "outcome": {
+    "kind": "horizon",
+    "k": 18,
+    "steps": 18431,
+    "decidedAt": 21
+   }
+  },
+  {
+   "seed": 3,
+   "N": 131072,
+   "R": 32,
+   "outcome": {
+    "kind": "horizon",
+    "k": 112,
+    "steps": 114687,
+    "decidedAt": 115
+   }
+  },
+  {
+   "seed": 3,
+   "N": 131072,
+   "R": 64,
+   "outcome": {
+    "kind": "horizon",
+    "k": 62,
+    "steps": 63487,
+    "decidedAt": 65
+   }
+  },
+  {
+   "seed": 4,
+   "N": 131072,
+   "R": 8,
+   "outcome": {
+    "kind": "censored",
+    "window": 131071,
+    "decidedAt": 128
+   }
+  },
+  {
+   "seed": 4,
+   "N": 131072,
+   "R": 32,
+   "outcome": {
+    "kind": "horizon",
+    "k": 118,
+    "steps": 120831,
+    "decidedAt": 121
+   }
+  },
+  {
+   "seed": 4,
+   "N": 131072,
+   "R": 64,
+   "outcome": {
+    "kind": "horizon",
+    "k": 31,
+    "steps": 31743,
+    "decidedAt": 34
+   }
+  },
+  {
+   "seed": 1,
+   "N": 262144,
+   "R": 8,
+   "outcome": {
+    "kind": "censored",
+    "window": 131071,
+    "decidedAt": 128
+   }
+  },
+  {
+   "seed": 1,
+   "N": 262144,
+   "R": 32,
+   "outcome": {
+    "kind": "horizon",
+    "k": 26,
+    "steps": 26623,
+    "decidedAt": 29
+   }
+  },
+  {
+   "seed": 1,
+   "N": 262144,
+   "R": 64,
+   "outcome": {
+    "kind": "horizon",
+    "k": 35,
+    "steps": 35839,
+    "decidedAt": 38
+   }
+  },
+  {
+   "seed": 3,
+   "N": 262144,
+   "R": 8,
+   "outcome": {
+    "kind": "horizon",
+    "k": 8,
+    "steps": 8191,
+    "decidedAt": 11
+   }
+  },
+  {
+   "seed": 3,
+   "N": 262144,
+   "R": 32,
+   "outcome": {
+    "kind": "horizon",
+    "k": 14,
+    "steps": 14335,
+    "decidedAt": 17
+   }
+  },
+  {
+   "seed": 3,
+   "N": 262144,
+   "R": 64,
+   "outcome": {
+    "kind": "horizon",
+    "k": 18,
+    "steps": 18431,
+    "decidedAt": 21
+   }
+  },
+  {
+   "seed": 4,
+   "N": 262144,
+   "R": 8,
+   "outcome": {
+    "kind": "horizon",
+    "k": 5,
+    "steps": 5119,
+    "decidedAt": 8
+   }
+  },
+  {
+   "seed": 4,
+   "N": 262144,
+   "R": 32,
+   "outcome": {
+    "kind": "horizon",
+    "k": 3,
+    "steps": 3071,
+    "decidedAt": 6
+   }
+  },
+  {
+   "seed": 4,
+   "N": 262144,
+   "R": 64,
+   "outcome": {
+    "kind": "horizon",
+    "k": 2,
+    "steps": 2047,
+    "decidedAt": 5
+   }
+  },
+  {
+   "seed": 1,
+   "N": 393216,
+   "R": 8,
+   "outcome": {
+    "kind": "horizon",
+    "k": 95,
+    "steps": 97279,
+    "decidedAt": 98
+   }
+  },
+  {
+   "seed": 1,
+   "N": 393216,
+   "R": 32,
+   "outcome": {
+    "kind": "horizon",
+    "k": 5,
+    "steps": 5119,
+    "decidedAt": 8
+   }
+  },
+  {
+   "seed": 1,
+   "N": 393216,
+   "R": 64,
+   "outcome": {
+    "kind": "horizon",
+    "k": 11,
+    "steps": 11263,
+    "decidedAt": 14
+   }
+  },
+  {
+   "seed": 3,
+   "N": 393216,
+   "R": 8,
+   "outcome": {
+    "kind": "censored",
+    "window": 131071,
+    "decidedAt": 128
+   }
+  },
+  {
+   "seed": 3,
+   "N": 393216,
+   "R": 32,
+   "outcome": {
+    "kind": "horizon",
+    "k": 50,
+    "steps": 51199,
+    "decidedAt": 53
+   }
+  },
+  {
+   "seed": 3,
+   "N": 393216,
+   "R": 64,
+   "outcome": {
+    "kind": "horizon",
+    "k": 67,
+    "steps": 68607,
+    "decidedAt": 70
+   }
+  },
+  {
+   "seed": 4,
+   "N": 393216,
+   "R": 8,
+   "outcome": {
+    "kind": "censored",
+    "window": 131071,
+    "decidedAt": 128
+   }
+  },
+  {
+   "seed": 4,
+   "N": 393216,
+   "R": 32,
+   "outcome": {
+    "kind": "horizon",
+    "k": 66,
+    "steps": 67583,
+    "decidedAt": 69
+   }
+  },
+  {
+   "seed": 4,
+   "N": 393216,
+   "R": 64,
+   "outcome": {
+    "kind": "horizon",
+    "k": 66,
+    "steps": 67583,
+    "decidedAt": 69
+   }
+  }
+ ],
+ "groups": [
+  {
+   "seed": 1,
+   "N": 131072,
+   "status": "done",
+   "prep": {
+    "stoneCentre": {
+     "x": 159,
+     "y": 183
+    },
+    "r0": 33,
+    "stale": 15925,
+    "nulls": [
+     {
+      "R": 8,
+      "x": 309,
+      "y": 99,
+      "count": 8504
+     },
+     {
+      "R": 32,
+      "x": 359,
+      "y": 134,
+      "count": 11
+     },
+     {
+      "R": 64,
+      "none": true
+     }
+    ],
+    "kick": {
+     "x": 490,
+     "y": 371,
+     "index": 190442,
+     "P": 1,
+     "E": 0,
+     "MOT": 32896,
+     "motOff": false,
+     "linHi": 116491,
+     "linLo": 200166,
+     "ties": 6530,
+     "stale": 15925
+    }
+   },
+   "stoppedByCap": false,
+   "seconds": 210,
+   "control": {
+    "censuses": 16,
+    "diff": 0,
+    "bpDiff": 0,
+    "hashU0": "bddd804d60335683",
+    "hashU1": "bddd804d60335683",
+    "ok": true
+   },
+   "u0": {
+    "reached": 16,
+    "finalHash": "bddd804d60335683",
+    "chunk1Hash": "bddd804d60335683",
+    "hashAt1": "aa0d6e8524664633",
+    "reference": {
+     "livingChecked": 16,
+     "chunk1HashChecked": true,
+     "finalHashChecked": false
+    },
+    "living": [157088,152355,146662,153711,165450,160803,153024,166189,177164,171914,165120,175770,181065,173013,170741,180839]
+   },
+   "nulls": [
+    {
+     "name": "N0-8",
+     "R": 8,
+     "x": 309,
+     "y": 99,
+     "effectiveR": 8,
+     "censuses": 16,
+     "identical": true,
+     "finalStateHash": "1ec834aad2469be9",
+     "u0FinalStateHash": "1ec834aad2469be9"
+    },
+    {
+     "name": "N0-32",
+     "R": 32,
+     "x": 359,
+     "y": 134,
+     "effectiveR": 32,
+     "censuses": 16,
+     "identical": true,
+     "finalStateHash": "1ec834aad2469be9",
+     "u0FinalStateHash": "1ec834aad2469be9"
+    }
+   ],
+   "kick": {
+    "effectiveR": 0,
+    "reached": 4,
+    "finalHash": null,
+    "stopStateHash": "1175f488d9321173",
+    "hashAt1": "ca97173e567ccaab",
+    "sameAsU0At1": false,
+    "living": [156850,151769,147790,151995]
+   },
+   "pairs": [
+    {
+     "label": "K|8",
+     "R": 8,
+     "outcome": {
+      "kind": "horizon",
+      "k": 1,
+      "steps": 1023,
+      "decidedAt": 4
+     },
+     "nearDiff": [18,26,31,121],
+     "nearUnion": [283,277,317,366],
+     "farDiff": [52884,87706,110529,133638],
+     "farUnion": [160251,163036,165630,174825]
+    },
+    {
+     "label": "K|32",
+     "R": 32,
+     "outcome": {
+      "kind": "horizon",
+      "k": 1,
+      "steps": 1023,
+      "decidedAt": 4
+     },
+     "nearDiff": [1177,1944,2717,3643],
+     "nearUnion": [6196,6191,6208,6653],
+     "farDiff": [51725,85788,107843,130116],
+     "farUnion": [154338,157122,159739,168538]
+    },
+    {
+     "label": "K|64",
+     "R": 64,
+     "outcome": {
+      "kind": "horizon",
+      "k": 1,
+      "steps": 1023,
+      "decidedAt": 4
+     },
+     "nearDiff": [8158,14160,18425,22184],
+     "nearUnion": [31215,30602,31196,32669],
+     "farDiff": [44744,73572,92135,111575],
+     "farUnion": [129319,132711,134751,142522]
+    }
+   ]
+  },
+  {
+   "seed": 3,
+   "N": 131072,
+   "status": "done",
+   "prep": {
+    "stoneCentre": {
+     "x": 351,
+     "y": 7
+    },
+    "r0": 37,
+    "stale": 17812,
+    "nulls": [
+     {
+      "R": 8,
+      "x": 385,
+      "y": 85,
+      "count": 12988
+     },
+     {
+      "R": 32,
+      "x": 390,
+      "y": 76,
+      "count": 338
+     },
+     {
+      "R": 64,
+      "none": true
+     }
+    ],
+    "kick": {
+     "x": 268,
+     "y": 255,
+     "index": 130828,
+     "P": 1,
+     "E": 0,
+     "MOT": 32896,
+     "motOff": false,
+     "linHi": 106194,
+     "linLo": 130288,
+     "ties": 7820,
+     "stale": 17812
+    }
+   },
+   "stoppedByCap": false,
+   "seconds": 204,
+   "control": {
+    "censuses": 16,
+    "diff": 0,
+    "bpDiff": 0,
+    "hashU0": "49bb8788514d1e70",
+    "hashU1": "49bb8788514d1e70",
+    "ok": true
+   },
+   "u0": {
+    "reached": 16,
+    "finalHash": "49bb8788514d1e70",
+    "chunk1Hash": "49bb8788514d1e70",
+    "hashAt1": "c6b7c2e29e07aaac",
+    "reference": {
+     "livingChecked": 16,
+     "chunk1HashChecked": true,
+     "finalHashChecked": false
+    },
+    "living": [132035,131999,126835,132188,139787,142456,141116,157451,167979,162968,156913,169697,178298,167471,158543,170813]
+   },
+   "nulls": [
+    {
+     "name": "N0-8",
+     "R": 8,
+     "x": 385,
+     "y": 85,
+     "effectiveR": 8,
+     "censuses": 16,
+     "identical": true,
+     "finalStateHash": "cc08f2ad12ea8de4",
+     "u0FinalStateHash": "cc08f2ad12ea8de4"
+    },
+    {
+     "name": "N0-32",
+     "R": 32,
+     "x": 390,
+     "y": 76,
+     "effectiveR": 32,
+     "censuses": 16,
+     "identical": true,
+     "finalStateHash": "cc08f2ad12ea8de4",
+     "u0FinalStateHash": "cc08f2ad12ea8de4"
+    }
+   ],
+   "kick": {
+    "effectiveR": 0,
+    "reached": 1,
+    "finalHash": null,
+    "stopStateHash": "992f22740da4a824",
+    "hashAt1": "992f22740da4a824",
+    "sameAsU0At1": false,
+    "living": [132035]
+   },
+   "pairs": [
+    {
+     "label": "K|8",
+     "R": 8,
+     "outcome": {
+      "kind": "no-mark",
+      "decidedAt": 1
+     },
+     "nearDiff": [0],
+     "nearUnion": [0],
+     "farDiff": [0],
+     "farUnion": [132035]
+    },
+    {
+     "label": "K|32",
+     "R": 32,
+     "outcome": {
+      "kind": "no-mark",
+      "decidedAt": 1
+     },
+     "nearDiff": [0],
+     "nearUnion": [2345],
+     "farDiff": [0],
+     "farUnion": [129690]
+    },
+    {
+     "label": "K|64",
+     "R": 64,
+     "outcome": {
+      "kind": "no-mark",
+      "decidedAt": 1
+     },
+     "nearDiff": [0],
+     "nearUnion": [24009],
+     "farDiff": [0],
+     "farUnion": [108026]
+    }
+   ]
+  },
+  {
+   "seed": 4,
+   "N": 131072,
+   "status": "done",
+   "prep": {
+    "stoneCentre": {
+     "x": 402,
+     "y": 265
+    },
+    "r0": 4,
+    "stale": 2495,
+    "nulls": [
+     {
+      "R": 8,
+      "none": true
+     },
+     {
+      "R": 32,
+      "none": true
+     },
+     {
+      "R": 64,
+      "none": true
+     }
+    ],
+    "kick": {
+     "x": 273,
+     "y": 189,
+     "index": 97041,
+     "P": 1,
+     "E": 0,
+     "MOT": 32896,
+     "motOff": false,
+     "linHi": 125793,
+     "linLo": 102135,
+     "ties": 896,
+     "stale": 2495
+    }
+   },
+   "stoppedByCap": false,
+   "seconds": 156,
+   "control": {
+    "censuses": 16,
+    "diff": 0,
+    "bpDiff": 0,
+    "hashU0": "49b537beee19ed8d",
+    "hashU1": "49b537beee19ed8d",
+    "ok": true
+   },
+   "u0": {
+    "reached": 16,
+    "finalHash": "49b537beee19ed8d",
+    "chunk1Hash": "49b537beee19ed8d",
+    "hashAt1": "cced6dffe6c52021",
+    "reference": {
+     "livingChecked": 16,
+     "chunk1HashChecked": true,
+     "finalHashChecked": false
+    },
+    "living": [258117,257665,252869,253264,257397,258276,249316,256506,260821,259550,249154,258044,260662,257586,254723,255785]
+   },
+   "nulls": [],
+   "kick": {
+    "effectiveR": 0,
+    "reached": 12,
+    "finalHash": null,
+    "stopStateHash": "1f22f830cced8ff5",
+    "hashAt1": "fd99760d424d4b23",
+    "sameAsU0At1": false,
+    "living": [257827,257376,252693,253938,257675,258518,247756,255235,257406,256453,247138,257735]
+   },
+   "pairs": [
+    {
+     "label": "K|8",
+     "R": 8,
+     "outcome": {
+      "kind": "horizon",
+      "k": 1,
+      "steps": 1023,
+      "decidedAt": 4
+     },
+     "nearDiff": [307,417,519,460],
+     "nearUnion": [765,776,730,790],
+     "farDiff": [112331,187527,201252,210137],
+     "farUnion": [257617,258759,257538,257013]
+    },
+    {
+     "label": "K|32",
+     "R": 32,
+     "outcome": {
+      "kind": "horizon",
+      "k": 5,
+      "steps": 5119,
+      "decidedAt": 8
+     },
+     "nearDiff": [6380,8429,9546,9730,10128,10180,10177,11073],
+     "nearUnion": [11828,12552,12434,11802,12599,12813,12594,12853],
+     "farDiff": [106258,179515,192225,200867,209577,212582,214373,217328],
+     "farUnion": [246554,246983,245834,246001,247930,248741,245136,247681]
+    },
+    {
+     "label": "K|64",
+     "R": 64,
+     "outcome": {
+      "kind": "horizon",
+      "k": 9,
+      "steps": 9215,
+      "decidedAt": 12
+     },
+     "nearDiff": [28135,35596,39045,39937,42314,42452,42731,44191,44735,43313,44017,44607],
+     "nearUnion": [49971,50491,50290,48602,50546,51156,48934,50324,51384,51329,50667,51401],
+     "farDiff": [84503,152348,162726,170660,177391,180310,181819,184210,187395,186202,187059,190584],
+     "farUnion": [208411,209044,207978,209201,209983,210398,208796,210210,210456,210126,207511,210342]
+    }
+   ]
+  },
+  {
+   "seed": 1,
+   "N": 262144,
+   "status": "done",
+   "prep": {
+    "stoneCentre": {
+     "x": 275,
+     "y": 109
+    },
+    "r0": 11,
+    "stale": 11247,
+    "nulls": [
+     {
+      "R": 8,
+      "x": 53,
+      "y": 112,
+      "count": 215
+     },
+     {
+      "R": 32,
+      "none": true
+     },
+     {
+      "R": 64,
+      "none": true
+     }
+    ],
+    "kick": {
+     "x": 390,
+     "y": 7,
+     "index": 3974,
+     "P": 1,
+     "E": 0,
+     "MOT": 32896,
+     "motOff": false,
+     "linHi": 257264,
+     "linLo": 9091,
+     "ties": 5982,
+     "stale": 11247
+    }
+   },
+   "stoppedByCap": false,
+   "seconds": 508,
+   "control": {
+    "censuses": 16,
+    "diff": 0,
+    "bpDiff": 0,
+    "hashU0": "ef1ba3b4a3b81a64",
+    "hashU1": "ef1ba3b4a3b81a64",
+    "ok": true
+   },
+   "u0": {
+    "reached": 64,
+    "finalHash": "a5d653fb28efee1b",
+    "chunk1Hash": "ef1ba3b4a3b81a64",
+    "hashAt1": "a8c077876827f49e",
+    "reference": {
+     "livingChecked": 64,
+     "chunk1HashChecked": true,
+     "finalHashChecked": false
+    },
+    "living": [179552,183816,184163,173498,184849,190897,185691,177458,186297,187923,188652,188977,199689,199477,195907,193119,193954,193676,185363,173820,176541,170656,167740,170749,173010,170890,165381,171094,179618,173513,168369,182353,193863,186709,174986,189828,198919,187474,177322,189646,193251,188294,182526,190314,192493,190613,187895,193844,195732,185884,171704,178084,179828,172479,171620,183117,192147,187171,178219,185949,179362,170079,172277,185226]
+   },
+   "nulls": [
+    {
+     "name": "N0-8",
+     "R": 8,
+     "x": 53,
+     "y": 112,
+     "effectiveR": 8,
+     "censuses": 16,
+     "identical": true,
+     "finalStateHash": "3650c66770396a65",
+     "u0FinalStateHash": "3650c66770396a65"
+    }
+   ],
+   "kick": {
+    "effectiveR": 0,
+    "reached": 62,
+    "finalHash": null,
+    "stopStateHash": "d59e31e65778b182",
+    "hashAt1": "1e2e1f83cee36853",
+    "sameAsU0At1": false,
+    "living": [179402,182799,180887,173759,186696,187094,180357,180461,188382,190758,191895,192471,200756,203951,194874,188953,189056,181355,175528,176299,181931,180730,179773,181529,186563,179993,171107,174025,181051,178522,173167,182062,186529,184590,177296,188212,193511,188562,180467,192008,200604,199666,196704,203456,211584,209832,202923,201471,199606,189644,174957,178066,177081,167691,167475,174701,173348,169527,175705,177087,173564,173512]
+   },
+   "pairs": [
+    {
+     "label": "K|8",
+     "R": 8,
+     "outcome": {
+      "kind": "horizon",
+      "k": 1,
+      "steps": 1023,
+      "decidedAt": 4
+     },
+     "nearDiff": [81,123,298,377],
+     "nearUnion": [460,517,607,687],
+     "farDiff": [51420,104546,138179,156997],
+     "farUnion": [184339,194413,203170,203206]
+    },
+    {
+     "label": "K|32",
+     "R": 32,
+     "outcome": {
+      "kind": "horizon",
+      "k": 52,
+      "steps": 53247,
+      "decidedAt": 55
+     },
+     "nearDiff": [2599,4792,7448,8125,8956,9446,9877,10106,11147,11578,11669,11848,12259,12253,11524,12289,12373,12230,11225,10963,11176,10829,10753,11189,10596,10835,10540,10756,11278,11076,11198,11433,12120,11917,11510,12097,12507,12484,11921,12300,12448,12297,12001,12588,12750,12306,12254,12359,12591,11880,11552,11723,11361,10662,10684],
+     "nearUnion": [9351,9612,10444,10068,10651,10820,11034,10964,12087,12066,11994,12044,12321,12292,11548,12315,12402,12280,11234,10968,11176,10841,10757,11191,10596,10835,10540,10756,11278,11115,11201,11433,12143,11922,11510,12099,12508,12484,11921,12300,12448,12298,12001,12588,12750,12307,12254,12359,12591,11880,11552,11760,11384,10689,10694],
+     "farDiff": [48902,99877,131029,149249,168430,183920,190939,194087,202526,207701,212839,214542,221187,224522,223518,221512,221799,220483,217707,214597,215101,214308,216150,218148,220346,218138,212486,214399,217452,215311,212875,220098,222931,221362,217697,224222,226898,221939,219653,224541,226070,225330,226358,229001,231492,231138,228140,228634,229621,225635,216873,219510,219750,215770,216367],
+     "farUnion": [175448,185318,193333,193825,203899,210379,210473,210872,216185,218578,221441,221751,227335,229349,227174,224549,224634,223236,219618,216006,216796,215911,217211,219041,221060,218676,212967,215008,218035,215825,213415,220679,223470,221908,218238,224697,227388,222475,220165,224968,226621,225859,226912,229629,232207,231855,228882,229118,230214,225970,217068,219789,220089,215961,216550]
+    },
+    {
+     "label": "K|64",
+     "R": 64,
+     "outcome": {
+      "kind": "horizon",
+      "k": 59,
+      "steps": 60415,
+      "decidedAt": 62
+     },
+     "nearDiff": [12007,22072,30348,33888,36727,40534,41343,41842,43607,44729,45647,45741,47537,48132,48076,48434,48569,46825,43839,43773,43443,42278,41882,42704,42564,43076,41460,41331,41565,41071,41287,42965,45142,45033,43652,46592,47926,47444,45745,48514,49075,48687,47568,49153,50117,48925,48971,49538,50508,49091,47415,45838,44373,42062,42133,42226,42488,42042,41932,42031,41123,41766],
+     "nearUnion": [37384,38681,41342,41040,42570,45152,44699,44643,46241,46587,46861,46845,48087,48644,48535,48828,48837,46985,43890,43832,43463,42333,41935,42744,42603,43108,41494,41333,41566,41110,41290,42965,45171,45038,43654,46594,47927,47451,45745,48519,49081,48688,47581,49153,50117,48929,48971,49539,50516,49091,47415,45875,44397,42089,42143,42240,42507,42059,41995,42079,41163,41816],
+     "farDiff": [39494,82597,108129,123486,140659,152832,159473,162351,170066,174550,178861,180649,185909,188643,186966,185367,185603,185888,185093,181787,182834,182859,185021,186633,188378,185897,181566,183824,187165,185316,182786,188566,189909,188246,185555,189727,191479,186979,185829,188327,189443,188940,190791,192436,194125,194519,191423,191455,191704,188424,181010,185395,186738,184370,184918,190139,192917,190396,189193,190172,187270,185362],
+     "farUnion": [147415,156249,162435,162853,171980,176047,176808,177193,182031,184057,186574,186950,191569,192997,190187,188036,188199,188531,186962,183142,184509,184419,186033,187488,189053,186403,182013,184431,187747,185830,183326,189147,190442,188792,186094,190202,191969,187508,186341,188749,189988,189469,191332,193064,194840,195233,192165,191938,192289,188759,181205,185674,187076,184561,185101,190445,193137,190547,189247,190174,187289,185363]
+    }
+   ]
+  },
+  {
+   "seed": 3,
+   "N": 262144,
+   "status": "done",
+   "prep": {
+    "stoneCentre": {
+     "x": 300,
+     "y": 2
+    },
+    "r0": 12,
+    "stale": 13734,
+    "nulls": [
+     {
+      "R": 8,
+      "x": 83,
+      "y": 510,
+      "count": 99
+     },
+     {
+      "R": 32,
+      "none": true
+     },
+     {
+      "R": 64,
+      "none": true
+     }
+    ],
+    "kick": {
+     "x": 391,
+     "y": 234,
+     "index": 120199,
+     "P": 1,
+     "E": 0,
+     "MOT": 32896,
+     "motOff": false,
+     "linHi": 227502,
+     "linLo": 6243,
+     "ties": 6311,
+     "stale": 13734
+    }
+   },
+   "stoppedByCap": false,
+   "seconds": 1049,
+   "control": {
+    "censuses": 16,
+    "diff": 0,
+    "bpDiff": 0,
+    "hashU0": "008b4ab818344ccb",
+    "hashU1": "008b4ab818344ccb",
+    "ok": true
+   },
+   "u0": {
+    "reached": 128,
+    "finalHash": "3dc10d1726dc8d47",
+    "chunk1Hash": "008b4ab818344ccb",
+    "hashAt1": "8f7e6b43260a0674",
+    "reference": {
+     "livingChecked": 21,
+     "chunk1HashChecked": true,
+     "finalHashChecked": true
+    },
+    "living": [213129,221551,216822,206064,214217,221522,216971,205453,216214,222793,219153,203519,212198,212689,206647,201344,210699,214346,209529,207924,220303,224419,218169,211915,217551,220335,214792,210380,215130,213560,212347,215996,223523,228714,217321,213835,216696,209767,194547,196563,208304,213924,204726,208552,208560,194194,175343,185933,198045,199731,183267,183556,177255,170505,177849,201749,213303,211658,203192,196231,189171,180116,185948,194168,186724,174028,175464,180450,191641,193403,195450,198270,199362,192871,186971,178188,168053,162196,170299,173976,166499,165839,175455,175714,176237,177268,183907,182702,179324,178466,190986,191867,184107,173831,184035,184732,187272,190986,193239,191045,176172,165672,177138,178451,170378,169104,174424,164629,160816,167640,172476,166017,159632,167478,172545,169523,167749,174432,176764,170267,165741,178581,184278,182337,185385,197599,197087,195224]
+   },
+   "nulls": [
+    {
+     "name": "N0-8",
+     "R": 8,
+     "x": 83,
+     "y": 510,
+     "effectiveR": 8,
+     "censuses": 16,
+     "identical": true,
+     "finalStateHash": "e6f7218e7518e1a2",
+     "u0FinalStateHash": "e6f7218e7518e1a2"
+    }
+   ],
+   "kick": {
+    "effectiveR": 0,
+    "reached": 128,
+    "finalHash": null,
+    "stopStateHash": "fd621f01f46f7cbc",
+    "hashAt1": "8f3ec529b41c6797",
+    "sameAsU0At1": false,
+    "living": [213725,220842,221075,213478,217911,225645,218949,204801,213036,212386,206833,200579,213416,220050,212576,205022,208817,215128,207088,203029,206620,207759,206506,210443,218595,227271,219532,213764,214663,225372,221935,220071,230522,233468,222224,217518,230633,234282,227421,222214,224989,225152,213832,214531,216442,218733,213488,215195,217658,219740,207019,205211,209997,217929,211484,213969,216033,207016,198519,211397,214742,205811,204928,200966,196664,184504,174859,184369,191533,197640,211383,220191,215883,208416,199448,190278,177806,175703,188727,202130,204040,185624,177373,175847,176897,172656,178415,177333,178923,184085,202223,202685,195216,183826,180811,187189,187774,195588,201226,203913,202228,187954,184351,174809,170675,170369,179992,185970,183929,174610,165917,162182,165465,174803,178502,177211,185152,196686,208066,204263,193039,190309,187368,180139,178159,187361,184326,173875]
+   },
+   "pairs": [
+    {
+     "label": "K|8",
+     "R": 8,
+     "outcome": {
+      "kind": "censored",
+      "window": 131071,
+      "decidedAt": 128
+     },
+     "nearDiff": [546,777,710,719,751,751,771,791,789,797,797,796,792,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,768,787,797,792,797,797,797,797,797,789,797,797,797,771,797,797,797,797,797,797,797,797,797,797,797,797,796,797,797,797,785,797,797,796,663,632,637,739,797,735,797,797,797,797,797,726,649,602,729,797,786,797,794,735,792,797,756,797,797,776,790,797,796,789,776,747,772,789,790,741,736,677,650,648,631,728,676,625,644,627,621,617,647,575,597,631,584,558,740,766,774,649,783,779,678,652,714,735,741],
+     "nearUnion": [789,792,736,746,789,797,790,791,789,797,797,796,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,768,797,797,797,797,797,797,797,797,789,797,797,797,771,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,785,797,797,796,664,632,637,739,797,735,797,797,797,797,797,726,649,602,729,797,786,797,794,735,792,797,756,797,797,776,790,797,796,789,776,747,772,789,790,741,736,677,650,648,631,728,676,625,644,627,621,617,647,575,597,631,584,558,740,766,774,649,783,779,678,652,714,735,741],
+     "farDiff": [123138,180005,203365,210537,218109,225630,227828,228379,235501,237153,236803,233203,236176,238183,235107,232214,234256,237395,234643,234331,239338,242790,240336,237575,239868,245786,242956,239478,242124,245916,242876,242035,248032,250968,246272,246654,251482,252488,249582,247251,249306,249821,244766,246362,247252,244917,241358,244442,247705,247013,239780,238932,239080,241578,241633,245739,247637,245405,241491,243576,243126,239759,241457,243276,240546,234634,231111,236448,241340,242970,245813,248718,246703,243826,240506,235150,229047,226753,233405,238392,237290,229519,228234,227521,228991,229464,233128,230560,227665,228905,238143,240009,237797,232500,235060,237280,239062,242526,243330,240683,238612,232156,234823,231253,226789,225314,230356,229677,227987,226504,223750,219986,219638,224968,226964,226549,228790,234046,237695,237423,233508,234517,234050,232481,233580,238934,239444,235078],
+     "farUnion": [217000,231387,237996,236204,239698,244134,243379,239311,244845,245958,244499,238855,242272,243303,239757,236525,238364,241481,238624,237965,242027,244985,241861,238969,241570,247066,243928,240397,242726,246298,243824,243170,249017,252055,247217,247145,251837,252629,249680,247295,249316,249846,244785,246435,247287,244923,241360,244444,247721,247024,239793,238936,239083,241578,241688,245749,247639,245417,241492,243609,243138,239807,241519,243311,240605,234671,231175,236507,241423,242985,245901,248770,246741,243836,240562,235260,229123,226902,233528,238603,237339,229533,228286,227566,229046,229485,233186,230732,227887,229079,238257,240067,237940,232512,235077,237317,239065,242532,243359,240750,238614,232168,234934,231360,226993,225478,230491,229809,228161,226658,223872,220068,219823,225038,227022,226651,228853,234157,237714,237433,233552,234622,234123,232498,233583,238940,239466,235241]
+    },
+    {
+     "label": "K|32",
+     "R": 32,
+     "outcome": {
+      "kind": "horizon",
+      "k": 30,
+      "steps": 30719,
+      "decidedAt": 33
+     },
+     "nearDiff": [8781,10956,11579,11313,11931,12036,12062,12258,12171,12561,12474,12422,12799,12681,12543,12817,12720,12756,12787,12791,12820,12849,12822,12783,12717,12774,12770,12831,12842,12759,12530,12561,12484],
+     "nearUnion": [12582,12624,12470,12427,12498,12728,12638,12628,12835,12853,12799,12552,12831,12807,12694,12848,12821,12853,12848,12851,12853,12853,12853,12847,12853,12853,12853,12849,12844,12805,12853,12848,12853],
+     "farDiff": [114903,169826,192496,199943,206929,214345,216537,216912,224119,225389,225126,221577,224169,226299,223361,220194,222333,225436,222653,222337,227315,230738,228311,225589,227948,233809,230983,227444,230079,233925,231133,230271,236340],
+     "farUnion": [205207,219555,226262,224523,227989,232203,231531,227474,232799,233902,232497,227099,230238,231293,227860,224474,226340,229425,226573,225911,229971,232929,229805,226919,229514,235010,231872,228345,230679,234261,231768,231119,236961]
+    },
+    {
+     "label": "K|64",
+     "R": 64,
+     "outcome": {
+      "kind": "horizon",
+      "k": 23,
+      "steps": 23551,
+      "decidedAt": 26
+     },
+     "nearDiff": [31855,41260,44092,44990,45313,47682,48008,48022,48863,49407,48950,47311,49079,49931,49947,49994,50756,50344,49966,49920,50906,50906,50531,50574,50134,50481],
+     "nearUnion": [47578,49129,49521,48946,49210,50613,50352,49393,50516,51191,50912,48249,50180,51180,50725,50358,51274,51160,50885,50790,51302,51164,50917,51036,51062,51358],
+     "farDiff": [91829,139522,159983,166266,173547,178699,180591,181148,187427,188543,188650,186688,187889,189049,185957,183017,184297,187848,185474,185208,189229,192681,190602,187798,190531,196102],
+     "farUnion": [170211,183050,189211,188004,191277,194318,193817,190709,195118,195564,194384,191402,192889,192920,189829,186964,187887,191118,188536,187972,191522,194618,191741,188730,191305,196505]
+    }
+   ]
+  },
+  {
+   "seed": 4,
+   "N": 262144,
+   "status": "done",
+   "prep": {
+    "stoneCentre": {
+     "x": 447,
+     "y": 10
+    },
+    "r0": 3,
+    "stale": 789,
+    "nulls": [
+     {
+      "R": 8,
+      "none": true
+     },
+     {
+      "R": 32,
+      "none": true
+     },
+     {
+      "R": 64,
+      "none": true
+     }
+    ],
+    "kick": {
+     "x": 282,
+     "y": 495,
+     "index": 253722,
+     "P": 1,
+     "E": 0,
+     "MOT": 32896,
+     "motOff": false,
+     "linHi": 216096,
+     "linLo": 235175,
+     "ties": 464,
+     "stale": 789
+    }
+   },
+   "stoppedByCap": false,
+   "seconds": 563,
+   "control": {
+    "censuses": 16,
+    "diff": 0,
+    "bpDiff": 0,
+    "hashU0": "84eef8ee1b92557c",
+    "hashU1": "84eef8ee1b92557c",
+    "ok": true
+   },
+   "u0": {
+    "reached": 64,
+    "finalHash": "160a7d9c73cbfcf0",
+    "chunk1Hash": "84eef8ee1b92557c",
+    "hashAt1": "52200a37bb22cd78",
+    "reference": {
+     "livingChecked": 8,
+     "chunk1HashChecked": true,
+     "finalHashChecked": true
+    },
+    "living": [261291,262059,261989,254145,261500,262102,261859,254644,261180,262048,261635,256596,262071,262120,261569,254261,261840,262132,261303,251740,261824,262112,260133,256862,260877,262128,260868,259532,261883,261900,259603,261710,261982,261004,255252,260408,262093,261734,259297,260836,261984,260421,252479,253735,253967,257235,251984,256714,261904,261806,248242,249724,254341,256004,246123,260073,261508,259141,246789,258622,262108,260610,249695,258363]
+   },
+   "nulls": [],
+   "kick": {
+    "effectiveR": 0,
+    "reached": 61,
+    "finalHash": null,
+    "stopStateHash": "f8cb9113fb5d98e6",
+    "hashAt1": "08c53d2dd5bba80d",
+    "sameAsU0At1": false,
+    "living": [261289,262061,261990,254774,257821,262103,261657,257359,261068,262079,261796,254115,261696,262107,261616,255925,261801,262136,261603,255840,261831,262129,261397,258680,261967,262122,260749,260229,262032,261895,259945,257141,261900,261942,259338,260221,262093,261898,255924,259737,262099,261973,256330,260717,262114,261945,254868,260887,262099,262054,251771,260976,262102,262001,252047,261210,262131,261778,254234,261841,262128]
+   },
+   "pairs": [
+    {
+     "label": "K|8",
+     "R": 8,
+     "outcome": {
+      "kind": "horizon",
+      "k": 16,
+      "steps": 16383,
+      "decidedAt": 19
+     },
+     "nearDiff": [465,666,721,727,781,781,756,755,795,797,713,765,673,676,709,672,563,503,620],
+     "nearUnion": [719,797,797,797,797,797,796,797,797,797,797,797,796,797,797,797,797,797,797],
+     "farDiff": [15615,129526,187986,196462,204752,211412,216234,217976,216866,216937,218797,223094,222220,222260,224128,226026,225210,224656,227158],
+     "farUnion": [260602,261271,261223,257952,261060,261306,261209,259819,261294,261287,261195,259233,261333,261328,261163,259291,261119,261340,261176]
+    },
+    {
+     "label": "K|32",
+     "R": 32,
+     "outcome": {
+      "kind": "horizon",
+      "k": 58,
+      "steps": 59391,
+      "decidedAt": 61
+     },
+     "nearDiff": [4868,7777,9303,10466,11625,11806,11759,11885,11845,11493,11200,10832,10391,11305,11838,12064,11653,11236,11883,11754,11794,12164,12017,12104,12423,12212,12198,12045,12474,12772,12637,12769,12804,12765,12803,12769,12607,12727,12431,12359,12545,12244,12199,12033,12010,12254,12233,12529,12165,12150,11880,11661,11923,11863,11642,11792,11955,11720,11027,11128,10704],
+     "nearUnion": [12559,12851,12853,12494,12828,12848,12831,12846,12853,12853,12853,12841,12851,12853,12853,12844,12852,12853,12853,12843,12850,12852,12853,12853,12840,12851,12853,12850,12853,12853,12817,12853,12853,12852,12852,12853,12853,12852,12831,12853,12848,12852,12852,12853,12853,12853,12852,12853,12848,12844,12853,12853,12853,12853,12851,12853,12852,12853,12852,12840,12852],
+     "farDiff": [11212,122415,179404,186723,193908,200387,205231,206846,205816,206241,208310,213027,212502,211631,212999,214634,214120,213923,215895,216410,215620,215622,214725,213003,210848,212049,213017,215395,214495,215196,216926,215216,214273,213558,215744,216511,215128,214236,216428,215947,213649,213565,211816,209898,210096,207674,209034,214184,217157,215974,214380,219598,221165,221937,221891,224594,225293,228285,225831,227974,226290],
+     "farUnion": [248762,249217,249167,246255,249029,249255,249174,247770,249238,249231,249139,247189,249278,249272,249107,247244,249064,249284,249120,246467,249101,249285,249127,248711,249165,249277,248871,249139,249197,249049,248832,249177,249180,249141,248263,249239,249243,249059,247984,249166,249251,249172,247339,248753,249261,249200,246998,248987,249255,249239,245014,248887,249251,249187,245921,248896,249279,249149,246112,249101,249276]
+    },
+    {
+     "label": "K|64",
+     "R": 64,
+     "outcome": {
+      "kind": "horizon",
+      "k": 55,
+      "steps": 56319,
+      "decidedAt": 58
+     },
+     "nearDiff": [15410,35111,39208,40989,42693,44149,44275,43224,44319,44094,45025,44873,44736,46457,46197,46833,45955,45560,47649,47808,48061,47785,48540,48200,48644,48472,48186,48528,48804,49402,48583,47741,47731,47651,48780,47944,47402,47708,47768,47024,45817,45507,44380,43577,44789,45556,45174,47052,46078,46599,45991,45562,45640,46214,46073,45651,45979,46010],
+     "nearUnion": [51072,51416,51402,50144,51185,51427,51351,51118,51425,51428,51422,51213,51430,51433,51422,51411,51431,51431,51423,51414,51383,51432,51423,51423,51396,51429,51335,51408,51412,51401,51267,51389,51425,51404,51133,51427,51422,51402,51077,51423,51423,51430,51399,51430,51428,51423,51416,51431,51418,51415,51432,51431,51425,51428,51430,51328,51432,51426],
+     "farDiff": [670,95081,149499,156200,162840,168044,172715,175507,173342,173640,174485,178986,178157,176479,178640,179865,179818,179599,180129,180356,179353,180001,178202,176907,174627,175789,177029,178912,178165,178566,180980,180244,179346,178672,179767,181336,180333,179255,181091,181282,180377,180302,179635,178354,177317,174372,176093,179661,183244,181525,180269,185697,187448,187586,187460,190735,191269,193995],
+     "farUnion": [210249,210652,210618,208605,210672,210676,210654,209498,210666,210656,210570,208817,210699,210692,210538,208677,210485,210706,210550,207896,210568,210705,210557,210141,210609,210699,210389,210581,210638,210501,210382,210641,210608,210589,209982,210665,210674,210509,209738,210596,210676,210594,208792,210176,210686,210630,208434,210409,210685,210668,206435,210309,210679,210612,207342,210421,210699,210576]
+    }
+   ]
+  },
+  {
+   "seed": 1,
+   "N": 393216,
+   "status": "done",
+   "prep": {
+    "stoneCentre": {
+     "x": 9,
+     "y": 455
+    },
+    "r0": 17,
+    "stale": 8723,
+    "nulls": [
+     {
+      "R": 8,
+      "x": 95,
+      "y": 108,
+      "count": 1285
+     },
+     {
+      "R": 32,
+      "none": true
+     },
+     {
+      "R": 64,
+      "none": true
+     }
+    ],
+    "kick": {
+     "x": 218,
+     "y": 378,
+     "index": 193754,
+     "P": 1,
+     "E": 0,
+     "MOT": 32896,
+     "motOff": false,
+     "linHi": 381632,
+     "linLo": 196294,
+     "ties": 4727,
+     "stale": 8723
+    }
+   },
+   "stoppedByCap": false,
+   "seconds": 968,
+   "control": {
+    "censuses": 16,
+    "diff": 0,
+    "bpDiff": 0,
+    "hashU0": "8bfba135dfe0b2fe",
+    "hashU1": "8bfba135dfe0b2fe",
+    "ok": true
+   },
+   "u0": {
+    "reached": 128,
+    "finalHash": "4e1ff8286a00c546",
+    "chunk1Hash": "8bfba135dfe0b2fe",
+    "hashAt1": "ac8adb78cbe4141c",
+    "reference": {
+     "livingChecked": 98,
+     "chunk1HashChecked": true,
+     "finalHashChecked": true
+    },
+    "living": [192428,197561,199959,202566,195124,198191,203691,208073,205534,213920,219996,215110,205241,203478,205314,209427,211595,216065,207668,197678,191325,189403,183666,182068,188700,195556,195276,187959,184374,183548,179208,171765,174262,183300,188981,184212,184295,187814,188238,188871,198501,203935,204150,187956,186489,170975,163507,164327,168593,165912,172560,185408,193754,196916,193330,189006,190749,182653,176792,174174,176853,171225,170010,176157,185050,187543,185082,185272,189157,189193,183851,187774,189150,182442,171749,172869,168546,166169,166708,175803,178266,173967,164717,168200,166203,157920,161909,175005,171538,170614,167503,173233,172392,170015,172589,179898,176857,180730,186204,189441,184165,174202,168424,164832,157646,155729,164390,166627,162950,159665,167504,165317,170578,174510,179477,178581,171509,163068,171029,173295,170386,167027,176888,176589,167526,164756,175792,174047]
+   },
+   "nulls": [
+    {
+     "name": "N0-8",
+     "R": 8,
+     "x": 95,
+     "y": 108,
+     "effectiveR": 8,
+     "censuses": 16,
+     "identical": true,
+     "finalStateHash": "6650b6147afb6c10",
+     "u0FinalStateHash": "6650b6147afb6c10"
+    }
+   ],
+   "kick": {
+    "effectiveR": 0,
+    "reached": 128,
+    "finalHash": null,
+    "stopStateHash": "6592903d2a801dcb",
+    "hashAt1": "f98ae820b5f0f473",
+    "sameAsU0At1": false,
+    "living": [192756,198218,201400,202944,189178,194610,194364,198766,199435,215706,222486,220044,205044,203929,203005,205051,203185,200156,193578,188212,187227,197833,209390,209401,201600,198277,189018,182147,182295,184039,196271,201027,196466,193928,188008,185824,194391,199807,208062,200538,202953,203765,203451,195342,200445,206046,201114,194293,192284,192680,189843,180244,173846,164806,165122,171206,178673,178248,186659,192672,192007,181609,171158,173618,172230,168643,166109,173335,176909,173920,167627,173568,174533,172756,171913,187660,196329,202587,193240,187334,181516,179848,183832,186764,185813,187142,187662,184624,183948,184108,177640,180898,182413,183987,179314,185317,181663,177809,181063,194304,201825,196387,186990,182609,176511,173657,172446,169760,167710,168281,177970,183646,184373,186123,196071,204518,200089,198019,200118,197337,183172,167282,173093,172180,173761,175842,178462,175467]
+   },
+   "pairs": [
+    {
+     "label": "K|8",
+     "R": 8,
+     "outcome": {
+      "kind": "censored",
+      "window": 131071,
+      "decidedAt": 128
+     },
+     "nearDiff": [75,330,647,705,792,674,789,796,797,794,797,796,797,788,797,797,797,797,796,797,782,724,797,797,731,709,707,701,758,762,764,714,769,753,738,797,797,797,797,797,797,797,797,797,797,797,782,750,797,797,647,760,797,797,777,617,665,651,730,716,708,748,708,763,773,747,729,756,775,797,769,702,719,692,797,797,797,797,797,736,797,797,796,718,780,730,797,797,797,715,580,560,573,725,712,632,578,761,683,744,795,784,758,735,676,623,650,597,605,669,793,797,797,797,649,768,788,797,763,546,543,577,581,596,550,728,663,673],
+     "nearUnion": [437,582,797,797,797,681,797,797,797,797,797,796,797,788,797,797,797,797,797,797,782,724,797,797,731,709,707,701,758,762,764,714,769,753,738,797,797,797,797,797,797,797,797,797,797,797,782,750,797,797,647,760,797,797,777,617,665,651,730,716,708,748,708,763,773,747,729,756,775,797,769,702,719,692,797,797,797,797,797,736,797,797,796,718,780,730,797,797,797,715,580,560,573,725,712,632,578,761,683,744,795,784,758,735,676,623,650,597,605,670,793,797,797,797,649,768,788,797,763,546,544,577,581,596,550,728,663,673],
+     "farDiff": [94888,136219,167298,192980,204935,216430,224553,231601,232398,239837,243116,243756,241598,241645,241197,241648,241552,241791,237935,233835,233427,236940,238542,238733,237792,237012,235711,232435,231862,234052,238003,236277,235116,234056,235482,233019,237528,239450,241542,238775,242468,244493,245642,236844,238719,239774,238415,234965,233196,230673,228663,229281,231990,232573,231562,232489,233533,230907,233145,235285,236006,232386,227262,230039,233081,233566,231843,233058,234579,234589,231101,234068,233693,229869,225914,230577,232482,236797,233374,232163,232201,232158,230262,230928,230010,230261,230547,232909,231293,230942,227888,232192,233536,234440,232109,234449,232281,232486,235025,239284,239478,234488,231547,230135,225811,224487,226022,223708,222489,222105,228589,229246,230787,230391,237622,243667,241650,237978,239511,237047,229710,223131,227461,228070,227529,227444,230841,230108],
+     "farUnion": [197480,212084,221250,229234,228452,235442,238898,241766,240912,247153,249155,248496,245270,244200,243579,244601,243653,243670,239597,235239,234558,237875,239617,239591,238625,238121,236924,233678,233070,235064,238957,237268,236279,235390,236603,233870,237800,239737,241771,239023,242861,245207,246147,237167,238944,240084,238691,235226,233436,230978,228784,229496,232165,232722,231636,232544,233574,230937,233156,235374,236086,232455,227309,230074,233113,233627,231879,233104,234625,234591,231107,234138,233758,229957,226157,230773,232583,236819,233400,232183,232207,232166,230267,230931,230060,230357,230615,233038,231415,231077,228054,232347,233740,234606,232322,234557,232377,232609,235110,239509,239669,234660,231716,230323,226022,224720,226248,223955,222623,222214,228691,229384,230839,230505,237845,243766,241835,238113,239574,237152,229797,223181,227495,228071,227558,227466,230843,230144]
+    },
+    {
+     "label": "K|32",
+     "R": 32,
+     "outcome": {
+      "kind": "horizon",
+      "k": 98,
+      "steps": 100351,
+      "decidedAt": 101
+     },
+     "nearDiff": [2609,5698,8632,11014,11613,10750,11939,12372,12516,12169,12390,12419,12685,12605,12756,12736,12833,12835,12823,12841,12406,12337,12852,12763,11842,11543,11939,11212,11427,11749,12398,11442,12055,12063,11638,12503,12779,12848,12835,12840,12849,12829,12842,12852,12842,12658,12479,12342,12646,12277,11432,11733,12626,12642,11972,11041,11167,11096,11878,11227,11269,11185,11403,11798,12051,11828,11812,12156,12575,12650,12533,11480,11638,11726,12190,12652,12849,12851,12563,11439,12404,12330,11498,11661,11347,11450,12701,12850,12500,11519,10662,10124,10376,11420,10967,11214,11325,11390,11484,12153,12502],
+     "nearUnion": [8320,11081,12464,12845,12172,11210,12204,12853,12842,12839,12842,12829,12852,12670,12853,12853,12852,12853,12824,12841,12406,12337,12852,12763,11842,11543,11939,11212,11427,11749,12398,11444,12055,12063,11688,12527,12779,12848,12835,12840,12849,12829,12842,12852,12843,12658,12480,12342,12646,12277,11432,11733,12626,12642,11972,11041,11167,11096,11878,11227,11269,11185,11403,11798,12051,11828,11812,12159,12575,12650,12534,11480,11638,11726,12190,12653,12849,12851,12563,11439,12404,12330,11498,11661,11347,11450,12701,12850,12500,11519,10662,10125,10376,11420,10967,11214,11325,11409,11504,12197,12517],
+     "farDiff": [92354,130851,159313,182671,194114,206354,213403,220025,220679,228462,231523,232133,229710,229828,229238,229709,229516,229753,225908,221791,221803,225327,226487,226767,226681,226178,224479,221924,221193,223065,226369,225549,223830,222746,224582,221313,225546,227399,229504,226732,230416,232461,233597,224789,226674,227913,226718,223373,221347,219193,217878,218308,220161,220728,220367,222065,223031,220462,221997,224774,225445,221949,216567,219004,221803,222485,220760,221658,222779,222736,219337,223290,222774,218835,214521,218722,220430,224743,221608,221460,220594,220625,219560,219985,219443,219541,218643,220856,219590,220138,217806,222628,223733,223745,221854,223867,221534,221857,224224,227875,227771],
+     "farUnion": [189597,201585,209583,217186,217077,224913,227491,229710,228867,235111,237110,236463,233215,232318,231523,232545,231598,231614,227570,223195,222934,226262,227562,227625,227514,227287,225692,223167,222401,224077,227323,226538,224993,224080,225653,222140,225818,227686,229733,226980,230809,233175,234102,225112,226898,228223,226993,223634,221587,219498,217999,218523,220336,220877,220441,222120,223072,220492,222008,224863,225525,222018,216614,219039,221835,222546,220796,221701,222825,222738,219342,223360,222839,218923,214764,218917,220531,224765,221634,221480,220600,220633,219565,219988,219493,219637,218711,220985,219712,220273,217972,222782,223937,223911,222067,223975,221630,221961,224289,228056,227947]
+    },
+    {
+     "label": "K|64",
+     "R": 64,
+     "outcome": {
+      "kind": "horizon",
+      "k": 8,
+      "steps": 8191,
+      "decidedAt": 11
+     },
+     "nearDiff": [15879,25687,34655,41678,43898,44088,45787,48665,49198,49664,49910],
+     "nearUnion": [37259,43510,46980,49032,47867,47336,47987,50990,51045,51331,51263],
+     "farDiff": [79084,110862,133290,152007,161829,173016,179555,183732,183997,190967,194003],
+     "farUnion": [160658,169156,175067,180999,181382,188787,191708,191573,190664,196619,198689]
+    }
+   ]
+  },
+  {
+   "seed": 3,
+   "N": 393216,
+   "status": "done",
+   "prep": {
+    "stoneCentre": {
+     "x": 415,
+     "y": 292
+    },
+    "r0": 4,
+    "stale": 5040,
+    "nulls": [
+     {
+      "R": 8,
+      "none": true
+     },
+     {
+      "R": 32,
+      "none": true
+     },
+     {
+      "R": 64,
+      "none": true
+     }
+    ],
+    "kick": {
+     "x": 412,
+     "y": 424,
+     "index": 217500,
+     "P": 1,
+     "E": 0,
+     "MOT": 32896,
+     "motOff": false,
+     "linHi": 387866,
+     "linLo": 215958,
+     "ties": 2794,
+     "stale": 5040
+    }
+   },
+   "stoppedByCap": false,
+   "seconds": 117,
+   "control": {
+    "censuses": 16,
+    "diff": 0,
+    "bpDiff": 0,
+    "hashU0": "b63f42a774464306",
+    "hashU1": "b63f42a774464306",
+    "ok": true
+   },
+   "u0": {
+    "reached": 16,
+    "finalHash": "b63f42a774464306",
+    "chunk1Hash": "b63f42a774464306",
+    "hashAt1": "099496f3ad691cd1",
+    "reference": {
+     "livingChecked": 16,
+     "chunk1HashChecked": true,
+     "finalHashChecked": false
+    },
+    "living": [185823,190511,188096,187053,192915,192509,188386,183149,177058,184949,179548,176141,173424,173562,170048,167385]
+   },
+   "nulls": [],
+   "kick": {
+    "effectiveR": 0,
+    "reached": 4,
+    "finalHash": null,
+    "stopStateHash": "60f924a82f8d6692",
+    "hashAt1": "3a5f7a5a969643aa",
+    "sameAsU0At1": false,
+    "living": [185568,188476,183257,183830]
+   },
+   "pairs": [
+    {
+     "label": "K|8",
+     "R": 8,
+     "outcome": {
+      "kind": "horizon",
+      "k": 1,
+      "steps": 1023,
+      "decidedAt": 4
+     },
+     "nearDiff": [115,164,183,243],
+     "nearUnion": [501,497,461,423],
+     "farDiff": [66798,113295,143424,167833],
+     "farUnion": [191532,202188,206443,210797]
+    },
+    {
+     "label": "K|32",
+     "R": 32,
+     "outcome": {
+      "kind": "horizon",
+      "k": 1,
+      "steps": 1023,
+      "decidedAt": 4
+     },
+     "nearDiff": [2469,3915,4724,5616],
+     "nearUnion": [7773,8106,8082,8261],
+     "farDiff": [64444,109544,138883,162460],
+     "farUnion": [184260,194579,198822,202959]
+    },
+    {
+     "label": "K|64",
+     "R": 64,
+     "outcome": {
+      "kind": "horizon",
+      "k": 1,
+      "steps": 1023,
+      "decidedAt": 4
+     },
+     "nearDiff": [10869,20187,23734,27168],
+     "nearUnion": [34098,36614,36218,36706],
+     "farDiff": [56044,93272,119873,140908],
+     "farUnion": [157935,166071,170686,174514]
+    }
+   ]
+  },
+  {
+   "seed": 4,
+   "N": 393216,
+   "status": "done",
+   "prep": {
+    "stoneCentre": {
+     "x": 153,
+     "y": 170
+    },
+    "r0": 2,
+    "stale": 795,
+    "nulls": [
+     {
+      "R": 8,
+      "none": true
+     },
+     {
+      "R": 32,
+      "none": true
+     },
+     {
+      "R": 64,
+      "none": true
+     }
+    ],
+    "kick": {
+     "x": 198,
+     "y": 68,
+     "index": 35014,
+     "P": 1,
+     "E": 0,
+     "MOT": 32896,
+     "motOff": false,
+     "linHi": 388336,
+     "linLo": 34492,
+     "ties": 201,
+     "stale": 795
+    }
+   },
+   "stoppedByCap": false,
+   "seconds": 1059,
+   "control": {
+    "censuses": 16,
+    "diff": 0,
+    "bpDiff": 0,
+    "hashU0": "3bdae02b6ce28085",
+    "hashU1": "3bdae02b6ce28085",
+    "ok": true
+   },
+   "u0": {
+    "reached": 128,
+    "finalHash": "a10beb3845acef78",
+    "chunk1Hash": "3bdae02b6ce28085",
+    "hashAt1": "d7f74164ef3480c0",
+    "reference": {
+     "livingChecked": 128,
+     "chunk1HashChecked": true,
+     "finalHashChecked": true
+    },
+    "living": [245758,242152,256219,261469,248289,249629,261432,261973,247818,252807,259764,257678,242098,248674,261365,261837,251396,259576,261844,261576,249648,259702,261844,260898,244914,253766,260703,257303,234596,229535,227536,218292,211133,216331,239788,250004,254421,261982,262036,253850,244637,252393,260655,249393,238113,253018,262029,250112,258152,262134,261893,248308,247208,256766,261870,245525,251513,260958,261351,243590,253653,261500,260020,238339,237724,254358,260189,249252,262108,262077,260230,253392,260748,262043,255395,238861,246548,258994,252516,250136,260482,262061,252055,245242,256171,261170,249216,244653,255310,261359,246220,246100,256177,261787,244966,246259,261578,260844,245933,252158,261897,261242,244158,243838,253195,260511,249499,256923,261996,258532,241269,245819,257994,256992,247260,257162,261922,255927,252859,260440,262081,253074,247898,261579,261919,248114,248042,261457]
+   },
+   "nulls": [],
+   "kick": {
+    "effectiveR": 0,
+    "reached": 128,
+    "finalHash": null,
+    "stopStateHash": "f61eac0c10e92d4e",
+    "hashAt1": "8f95f4113a093b20",
+    "sameAsU0At1": false,
+    "living": [245664,242498,256269,261352,250202,252213,256928,254032,239529,248338,261368,260829,255288,259747,259335,259017,252532,258822,261434,261027,246149,254472,260856,258636,237433,234683,239911,248011,238375,247328,259883,253769,235208,241364,252637,254656,237385,247130,259192,252757,241658,250091,260141,250521,240821,238901,237091,236197,254498,261798,261931,248228,251256,261386,261985,246876,250264,259970,260544,245853,259353,262025,260814,240847,242605,256738,259742,246103,259709,262068,258773,246817,257465,261695,254935,242622,253840,261847,255854,250316,260677,262082,253352,242839,252173,260202,250052,251886,261951,262044,247176,240487,245900,256030,244122,247722,259089,261322,243824,244857,255657,260440,240808,245684,256730,259848,244065,253665,262021,258863,242116,247110,259649,256955,242683,251329,260033,255438,244672,255442,261618,252842,247032,256693,261350,250066,239549,234735]
+   },
+   "pairs": [
+    {
+     "label": "K|8",
+     "R": 8,
+     "outcome": {
+      "kind": "censored",
+      "window": 131071,
+      "decidedAt": 128
+     },
+     "nearDiff": [660,726,776,756,578,696,754,725,750,797,773,715,793,760,772,797,797,795,797,797,797,783,790,770,749,717,797,700,591,650,797,794,719,797,788,797,797,797,797,784,797,797,797,796,797,797,797,797,797,797,797,797,797,797,797,797,770,797,783,550,796,781,797,746,773,782,723,685,795,785,797,797,797,797,796,797,792,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,778,797,797,587,796,797,796,742,797,797,797,797,797,797,797,797,797,796,797,797,797,797,797,797,797,797,797,797,797,797,797,795,797],
+     "nearUnion": [797,794,797,797,777,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,749,717,797,700,591,650,797,794,719,797,788,797,797,797,797,784,797,797,797,796,797,797,797,797,797,797,797,797,797,797,797,797,770,797,794,552,797,797,797,754,774,787,797,726,797,797,797,797,797,797,797,797,792,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,778,797,797,587,796,797,796,742,797,797,797,797,797,797,797,797,797,796,797,797,797,797,797,797,797,797,797,797,797,797,797,795,797],
+     "farDiff": [115245,180125,199267,213603,216752,220787,225862,231046,227955,233794,233682,235254,236083,236521,237783,238863,239025,242103,243009,244804,240215,245201,247025,246075,240457,245958,249492,249222,243871,247179,252138,248748,242319,245102,250760,250627,248770,253747,252346,249861,247684,251286,253216,248422,245694,252083,253113,251383,253966,254348,254162,248309,250994,255412,255605,248200,252229,254841,255383,249450,256362,255767,256372,247279,251769,257269,258114,254630,258311,259077,258455,255579,257963,258567,256237,250866,256539,259302,256263,255414,259914,259803,256110,254660,259947,260812,255402,256767,260741,260630,254063,255482,258879,259600,252813,256056,259882,260036,254352,258177,260325,260124,252847,254954,258999,260565,255443,259232,261128,259638,252318,254808,260282,259162,254716,259359,261156,258599,257430,260931,261205,257208,257261,261113,261294,255709,256437,260964],
+     "farUnion": [246111,245247,257752,261253,255595,257374,261170,261303,255907,259944,261278,261156,259227,261038,261342,261226,258747,260952,261193,261082,255856,260363,261178,260568,253162,258593,260718,259857,253217,256549,260853,257621,250883,254125,259879,259789,257397,261318,261240,257847,254785,258944,261136,255920,252650,258585,261256,258145,261075,261341,261235,255232,257380,261101,261235,255055,259182,260851,260965,254363,260300,261235,260691,251517,254840,260406,260809,257164,261312,261280,260155,257514,260763,261255,258110,253104,258291,261148,258286,256828,261003,261285,257197,255158,260403,261225,255865,257067,261340,261282,254530,255887,259901,261200,254207,257537,261010,261096,255099,259047,261224,260855,253231,255434,259476,260628,255599,259276,261228,259702,252535,255242,260593,259191,254754,259365,261214,258687,257440,260940,261285,257281,257287,261175,261301,255750,256455,261026]
+    },
+    {
+     "label": "K|32",
+     "R": 32,
+     "outcome": {
+      "kind": "horizon",
+      "k": 73,
+      "steps": 74751,
+      "decidedAt": 76
+     },
+     "nearDiff": [7227,9388,10494,11419,11195,11384,11487,11712,11750,11670,11897,11836,12137,12191,11977,12118,12228,12256,12548,12525,12650,12357,12538,12481,11468,12281,12306,11671,9674,10504,12460,11631,11265,12223,12617,12715,12608,12711,12731,12744,12844,12834,12853,12851,12853,12852,12852,12835,12837,12798,12719,12645,12703,12840,12624,12442,12681,12724,12602,10304,12609,12412,12310,11370,11457,12269,12542,12087,12733,12825,12764,12747,12569,12464,12649,12444],
+     "nearUnion": [11097,11986,12846,12850,12747,12804,12853,12853,12847,12853,12851,12827,12853,12839,12853,12853,12853,12853,12853,12852,12848,12849,12852,12811,11863,12693,12837,11961,9773,10649,12802,11988,11544,12545,12835,12853,12753,12853,12844,12840,12853,12849,12853,12851,12853,12852,12853,12843,12840,12853,12853,12853,12840,12853,12853,12509,12755,12852,12759,10488,12767,12840,12713,11611,11580,12460,12781,12196,12853,12843,12807,12832,12853,12853,12839,12853],
+     "farDiff": [108678,171463,189549,202940,206135,210099,215129,220059,216955,222921,222558,224133,224739,225090,226578,227542,227594,230642,231258,233076,228362,233627,235277,234364,229738,234394,237983,238251,234788,237325,240475,237911,231773,233676,238931,238709,236959,241833,240412,237901,235637,239249,241160,236367,233638,240028,241058,239345,241926,242347,242240,236461,239088,243369,243778,236555,240318,242914,243564,239696,244549,244136,244859,236655,241085,245782,246295,243228,246373,247037,246488,243629,246191,246900,244384,239219],
+     "farUnion": [235811,234055,245703,249200,243625,245367,249114,249247,243857,247888,249224,249126,247171,248996,249286,249170,246691,248896,249137,249027,243805,248311,249123,248554,242048,246617,248678,248596,244035,246550,248848,246427,240058,242377,247832,247733,245441,249262,249193,245791,242729,246892,249080,243865,240594,246530,249200,246099,249032,249285,249179,243176,245337,249045,249179,243343,247197,248796,249000,244427,248330,249192,248775,240660,244034,248733,248825,245694,249256,249234,248145,245479,248707,249199,246068,241048]
+    },
+    {
+     "label": "K|64",
+     "R": 64,
+     "outcome": {
+      "kind": "horizon",
+      "k": 52,
+      "steps": 53247,
+      "decidedAt": 55
+     },
+     "nearDiff": [26760,33993,39444,43215,44852,44726,45392,47362,47135,47180,47410,47459,48207,47014,46764,46844,47498,48667,49213,49084,48952,49211,50260,49856,46825,49598,49877,49262,44791,46573,50352,48583,46077,49001,50604,49967,49769,51014,51007,50943,51110,50947,50799,51178,51029,50963,50960,50733,50661,50891,50485,49564,49326,49936,49910],
+     "nearUnion": [44074,45898,50334,51395,50995,51262,51412,51433,51423,51267,51379,51394,51381,51384,51431,51433,51418,51431,51401,51431,50815,51135,51412,51141,48235,50759,51124,50298,45159,46985,51159,49338,46610,49684,51414,50893,50313,51428,51407,51418,51427,51426,51424,51404,51403,51427,51427,51422,51331,51430,51433,51002,50916,51416,51381],
+     "farDiff": [89145,146858,160599,171144,172478,176757,181224,184409,181570,187411,187045,188510,188669,190267,191791,192816,192324,194231,194593,196517,192060,196773,197555,196989,194381,197077,200412,200660,199671,201256,202583,200959,196961,196898,200944,201457,199798,203530,202136,199702,197371,201136,203214,198040,195462,201917,202950,201447,204102,204254,204474,199542,202465,206273,206492],
+     "farUnion": [202834,200143,208215,210655,205377,206909,210555,210667,205281,209474,210696,210559,208643,210451,210708,210590,208126,210318,210589,210448,205838,210025,210563,210224,205676,208551,210391,210259,208649,210214,210491,209077,204992,205238,209253,209693,207881,210687,210630,207213,204155,208315,210509,205312,202044,207955,210626,207520,210541,210708,210599,205027,207261,210482,210651]
+    }
+   ]
+  }
+ ],
+ "fine": {
+  "status": "done",
+  "window": 8192,
+  "every": 64,
+  "Kf": 16,
+  "jMax": 113,
+  "anchors": [
+   {
+    "seed": 1,
+    "N": 131072,
+    "R": 8,
+    "steps": 6144,
+    "want": "3067b35b80d9177f",
+    "hash": "3067b35b80d9177f",
+    "ok": true,
+    "fromFineRun": true
+   },
+   {
+    "seed": 4,
+    "N": 262144,
+    "R": 64,
+    "steps": 5120,
+    "want": "dd6f3f27cbfc6e70",
+    "hash": "dd6f3f27cbfc6e70",
+    "ok": true,
+    "fromFineRun": false
+   }
+  ],
+  "failures": [],
+  "groups": [
+   {
+    "seed": 1,
+    "N": 131072,
+    "status": "done",
+    "bindingChecked": "fields (the file predates the fine binding: no checkpoint hash)",
+    "seconds": 249,
+    "uptime": "14:08  up 16 days, 15:31, 15 users, load averages: 46.74 40.89 40.28",
+    "u0": {
+     "living": [151586,151899,152174,152261,152375,152463,152876,153120,153736,154275,154642,155040,155435,155906,156480,157088,157328,157467,157368,157642,157366,157095,156910,156752,156421,156058,155341,154492,153744,153134,152908,152355,152153,151791,151756,151393,151055,150759,150599,150370,149796,149339,148942,148474,148235,147714,147116,146662,146153,145740,145631,145681,145900,146270,146629,147286,148010,148763,149733,150400,151233,152149,152958,153711,154680,155362,156247,157085,157930,158741,159434,160137,161073,161770,162617,163131,164052,164556,165097,165450,165642,165732,165995,166038,166070,165822,165461,165026,164499,163802,163310,162791,162423,161875,161325,160803,160232,159813,159516,158910,158257,157781,157168,156617,155829,155312,154803,154327,153833,153459,153299,153024,153237,153673,154218,154914,155685,156482,157468,158358,159419,160530,161532,162775,163616,164439,165292,166189],
+     "referenceChecked": 8
+    },
+    "twins": [
+     {
+      "name": "U0",
+      "finalStateHash": "8a4828709ee9a958",
+      "seconds": 25.158721417000002,
+      "runnerStateHash": "8a4828709ee9a958",
+      "gateOk": true
+     },
+     {
+      "name": "S8",
+      "lesion": {
+       "x": 159,
+       "y": 183,
+       "r": 8
+      },
+      "effectiveR": 8,
+      "finalStateHash": "b1f8fb0775d06443",
+      "runnerStateHash": "b1f8fb0775d06443",
+      "gateOk": true,
+      "seconds": 25.591278166000002,
+      "gateSeconds": 24.056865875000003,
+      "anchorHash": "3067b35b80d9177f"
+     },
+     {
+      "name": "S32",
+      "lesion": {
+       "x": 159,
+       "y": 183,
+       "r": 32
+      },
+      "effectiveR": 32,
+      "finalStateHash": "83b19ee15390f174",
+      "runnerStateHash": "83b19ee15390f174",
+      "gateOk": true,
+      "seconds": 25.212342250000003,
+      "gateSeconds": 23.760663375000004
+     },
+     {
+      "name": "S64",
+      "lesion": {
+       "x": 159,
+       "y": 183,
+       "r": 64
+      },
+      "effectiveR": 64,
+      "finalStateHash": "02bb68afedf4b03d",
+      "runnerStateHash": "02bb68afedf4b03d",
+      "gateOk": true,
+      "seconds": 24.945758625000003,
+      "gateSeconds": 23.876512832999985
+     },
+     {
+      "name": "K",
+      "lesion": {
+       "x": 490,
+       "y": 371,
+       "r": 0
+      },
+      "effectiveR": 0,
+      "finalStateHash": "db8e7d84cdad4dbd",
+      "runnerStateHash": "db8e7d84cdad4dbd",
+      "gateOk": true,
+      "seconds": 25.842562792000013,
+      "gateSeconds": 24.173454915999987
+     }
+    ],
+    "pairs": [
+     {
+      "label": "S8",
+      "R": 8,
+      "kind": "S",
+      "nearDiff": [98,104,126,186,225,260,293,299,313,320,336,341,343,331,331,333,327,313,305,299,299,298,305,326,322,318,325,342,374,387,389,398,395,400,400,391,392,393,411,419,406,391,380,376,373,360,359,367,360,358,350,352,340,315,323,311,320,338,351,359,356,350,361,338,325,354,351,353,362,366,372,371,383,394,397,398,404,434,453,462,460,439,440,439,468,469,488,479,468,453,456,450,452,450,457,453,461,471,507,553,601,616,646,651,669,676,676,676,676,675,682,675,676,674,668,653,650,621,639,620,634,653,668,680,701,721,731,729],
+      "nearUnion": [396,405,425,458,492,525,564,574,602,615,631,641,645,637,635,634,633,629,634,627,622,631,637,642,648,644,648,655,660,649,649,654,651,653,640,642,643,652,664,668,665,657,636,642,647,647,651,652,662,670,671,684,663,623,632,633,645,672,693,707,725,729,731,734,741,741,740,747,758,757,761,765,776,782,784,779,780,766,771,776,777,745,746,744,745,737,744,737,727,721,715,713,713,711,714,715,710,708,715,720,732,737,741,746,750,752,751,749,742,734,738,732,733,734,734,725,722,700,712,704,721,738,742,756,766,783,789,777],
+      "farDiff": [21,82,482,1625,2869,5340,9708,13489,18064,23312,28637,32893,36853,41107,45198,49254,53041,56133,59210,62085,64419,66690,69030,71239,73237,75339,77571,79452,80713,82618,84491,85962,87700,89756,91748,93349,94946,96773,98503,100504,101580,103200,104321,105397,106514,107497,108660,109890,111166,112258,113772,115341,116747,118077,119516,121152,122639,124254,125839,127298,128645,130106,131892,133576,135119,136430,137590,139016,140213,141710,143274,144643,146302,147730,149503,150892,152207,153877,155170,156261,157487,158394,159097,159934,161074,161977,162823,163886,164690,165171,165734,166550,166843,167430,167810,168203,168787,169420,169903,170247,170611,171076,171434,171480,171720,171975,172144,172410,172851,173463,174013,174475,175100,175964,176750,177659,178752,179834,180901,181743,182734,183629,184544,185635,186312,186865,187797,188516],
+      "farUnion": [151209,151532,151835,151995,152166,152411,153048,153553,154446,155215,155844,156590,157196,158097,158939,159925,160558,161150,161531,162295,162665,163009,163475,163810,164147,164276,164074,163835,163544,163505,163734,163642,164032,164212,164653,164743,164831,165043,165154,165231,165118,165144,165189,165113,165262,165178,165050,165110,165148,165344,165717,166227,166685,167205,167722,168453,169142,169749,170749,171450,172364,173040,174008,174806,175768,176565,177385,178270,179022,179875,180732,181683,182700,183705,184790,185601,186729,187536,188304,188785,189278,189691,190140,190566,191196,191445,191826,192124,192427,192471,192733,192901,193004,193101,193072,193187,193165,193341,193359,193062,192883,192780,192747,192580,192424,192412,192140,192063,192006,192123,192307,192305,192762,193359,193937,194638,195378,196344,197385,198301,199241,200081,200926,201926,202525,203058,203680,204209],
+      "readings": {
+       "far50": 30,
+       "far90": 109,
+       "cross": 41,
+       "gapArea": 460.6152685754814,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 41,
+        "steps": 2623
+       }
+      }
+     },
+     {
+      "label": "S32",
+      "R": 32,
+      "kind": "S",
+      "nearDiff": [1733,1863,1981,2126,2298,2461,2698,2885,3120,3299,3403,3584,3684,3766,3932,4144,4303,4461,4407,4449,4564,4766,4899,5062,5276,5369,5570,5796,5963,6125,6170,6308,6457,6651,6737,6899,6926,6941,7043,7144,7234,7292,7387,7409,7480,7582,7672,7742,7862,7960,8078,8259,8316,8421,8479,8540,8618,8742,8852,8881,9001,9073,9167,9299,9377,9471,9499,9557,9666,9813,9941,10041,10099,10129,10134,10154,10354,10464,10557,10666,10703,10726,10727,10706,10712,10774,10793,10872,10922,10964,10932,10993,10921,10937,10957,10949,10943,10949,10932,10864,10888,10954,10953,10924,10914,10901,10891,10872,10894,10871,10889,10859,10807,10865,10895,10846,10868,10808,10836,10873,10925,11013,11097,11166,11177,11280,11274,11315],
+      "nearUnion": [6973,7079,7177,7289,7408,7552,7764,7899,8033,8151,8269,8396,8511,8642,8717,8814,8883,8940,8971,9010,9066,9092,9090,9102,9201,9259,9323,9393,9386,9441,9478,9503,9531,9555,9508,9496,9511,9474,9498,9491,9507,9507,9536,9517,9516,9525,9537,9526,9582,9682,9805,9938,10047,10135,10190,10263,10302,10375,10489,10508,10609,10636,10732,10818,10861,10948,10994,11029,11095,11169,11209,11250,11290,11300,11275,11239,11339,11398,11491,11539,11564,11563,11537,11497,11534,11575,11551,11589,11601,11623,11588,11615,11557,11559,11598,11596,11560,11529,11495,11455,11459,11455,11463,11453,11401,11375,11364,11310,11314,11285,11260,11222,11161,11182,11202,11124,11126,11061,11074,11097,11135,11210,11297,11344,11350,11438,11429,11463],
+      "farDiff": [9,479,1523,3064,5530,8985,12470,16046,20785,26001,30679,34664,38362,42559,46978,51406,55004,57634,60160,62819,65517,67269,69714,71741,74021,76030,77966,79593,81197,82624,84198,85924,87872,89376,91126,92714,93990,95460,97110,98379,99395,100609,101879,102962,103852,104996,105951,106910,107821,108764,110019,111176,112384,113950,114961,116262,117679,119086,120678,122038,123261,124383,125597,126950,128390,129298,130695,131915,132922,134091,135492,137065,138407,139818,141294,142515,143906,145244,146427,147601,148629,149716,150541,151644,152589,153298,154006,154682,155422,156142,157040,157736,158406,159099,159458,159932,160223,160989,161557,161846,162343,162567,162806,162929,162964,162839,162703,162782,163038,163542,164212,164852,165395,165961,166671,167367,168171,169192,170054,170776,171768,172543,173394,174499,175238,175828,176730,177437],
+      "farUnion": [144722,145021,145282,145385,145562,145704,146218,146709,147558,148312,148839,149461,150051,150808,151642,152504,153112,153699,154022,154801,155037,155220,155636,155875,156031,156244,156131,155998,155822,155874,156183,156200,156710,156912,157336,157428,157464,157673,157924,158031,157978,158067,158033,157955,158129,158351,158292,158330,158401,158576,158893,159191,159666,160403,160943,161608,162287,162935,163919,164498,165071,165745,166360,167165,168236,168864,169579,170301,170913,171487,172325,173329,174449,175307,176193,177002,178115,178882,179611,180121,180528,180940,181332,181811,182266,182506,182715,182812,182856,182791,183126,183158,183364,183438,183484,183567,183475,183703,183805,183638,183508,183297,183115,182982,182698,182405,181932,181709,181685,181752,182012,182118,182380,182630,183086,183634,184183,184997,185834,186642,187540,188202,188828,189922,190635,191169,191801,192306],
+      "readings": {
+       "far50": 28,
+       "far90": 111,
+       "cross": null,
+       "gapArea": 913.7136186429985,
+       "fineHorizon": {
+        "kind": "censored",
+        "window": 7231
+       }
+      }
+     },
+     {
+      "label": "S64",
+      "R": 64,
+      "kind": "S",
+      "nearDiff": [7224,7812,8468,9006,9537,10123,10610,11058,11668,12172,12518,12944,13365,14015,14313,14718,15088,15489,15867,16237,16630,16948,17313,17641,17848,18390,18795,19069,19335,19642,19998,20227,20327,20481,20770,20952,21182,21258,21509,21676,21794,22013,22363,22527,22830,23037,23484,23716,23913,24127,24366,24711,25026,25236,25637,25938,26190,26498,26918,27183,27531,27982,28249,28537,28780,28960,29104,29221,29377,29539,29796,30022,30261,30546,30697,30853,30954,31177,31399,31521,31754,32033,32342,32503,32704,32875,32997,33109,33161,33355,33473,33465,33508,33470,33571,33578,33609,33661,33638,33733,33666,33705,33769,33755,33701,33699,33737,33729,33710,33752,33818,33925,34001,34136,34202,34199,34343,34485,34724,34918,35031,35289,35512,35783,35853,36011,36215,36391],
+      "nearUnion": [25692,25632,25683,25779,25825,26012,26238,26392,26530,26670,26772,26915,27057,27274,27388,27579,27755,27924,28053,28124,28156,28248,28374,28522,28654,28860,28933,28868,28904,28956,29106,29107,29078,29076,29118,29066,29062,29038,29051,29021,28948,29027,29122,29156,29275,29337,29494,29613,29681,29780,29930,30112,30288,30400,30637,30877,31055,31195,31580,31809,32029,32246,32419,32493,32666,32797,32910,33003,33108,33293,33523,33659,33825,33998,34109,34183,34281,34413,34591,34698,34876,35063,35268,35341,35427,35544,35623,35691,35731,35902,36011,35966,35907,35826,35932,35956,35928,35941,35878,35897,35788,35780,35830,35737,35646,35597,35599,35552,35527,35517,35565,35651,35775,35917,35959,35940,36034,36161,36361,36525,36667,36891,37101,37361,37476,37643,37808,38013],
+      "farDiff": [13,284,1060,2995,6652,10827,15063,20676,24995,28855,32295,35952,39387,42972,46321,49921,52935,55603,58153,60377,62488,64063,65894,67545,69047,70843,72643,74125,75282,76645,77831,78985,80434,81833,83069,84040,85071,86230,87239,88057,88422,89071,90076,90799,91754,92458,93190,94180,94861,95910,97093,97814,98946,100167,101228,102648,103925,104963,106331,107510,108746,109854,111092,112014,113467,114239,115352,116426,117469,118625,119555,120682,121843,123005,124028,125245,126491,127443,128221,129315,130625,131364,132205,132960,134004,134368,135156,135840,136365,136750,137228,138017,138372,138919,139159,139730,139833,140315,140741,141044,141497,141875,142003,142121,142400,142317,142272,142588,142863,143056,143285,143535,143881,144342,145016,145859,146757,147595,148463,149267,150253,150928,151632,152818,153670,154201,154878,155454],
+      "farUnion": [126092,126516,126896,127085,127464,127728,128358,128934,129804,130592,131255,131948,132624,133310,134105,134959,135460,136015,136308,136941,137156,137216,137492,137675,137799,137923,137837,137651,137559,137581,137751,137639,138133,138382,138682,138750,138792,138996,139116,139184,138958,139000,139095,138981,139111,139067,138961,138927,138940,139113,139196,139312,139642,140104,140484,141173,141823,142293,143033,143414,143932,144500,145165,145721,146429,147017,147677,148350,149070,149720,150284,150944,151674,152292,152913,153410,154241,154771,155290,155742,156225,156611,157028,157422,157993,158217,158499,158636,158722,158607,158739,158840,159052,159207,159163,159280,159042,159105,159101,158784,158686,158457,158286,158166,157987,157625,157189,157258,157289,157299,157281,157271,157477,157853,158306,159089,159686,160434,161171,161873,162678,163428,164118,165204,165900,166344,166951,167419],
+      "readings": {
+       "far50": 25,
+       "far90": 105,
+       "cross": null,
+       "gapArea": 872.8935327263006,
+       "fineHorizon": {
+        "kind": "censored",
+        "window": 7231
+       }
+      }
+     },
+     {
+      "label": "K|8",
+      "R": 8,
+      "kind": "K",
+      "nearDiff": [0,1,3,1,0,5,3,14,8,6,10,8,20,21,6,18,15,16,15,13,16,15,17,19,35,31,21,39,32,31,30,26,26,26,17,41,50,34,43,48,47,48,44,41,41,31,36,31,33,36,41,52,52,58,56,66,68,86,102,111,114,125,125,121,119,124,135,142,148,160,174,151,168,168,170,174,177,176,217,237,260,272,274,284,292,296,310,305,317,323,327,353,360,371,362,366,374,385,387,386,380,390,387,394,410,419,411,408,410,413,412,419,419,425,419,417,420,419,440,449,455,456,483,479,482,499,523,552],
+      "nearUnion": [316,308,310,301,297,295,290,300,300,296,301,298,294,291,288,283,279,278,277,274,273,272,273,274,276,277,277,281,286,285,284,277,288,292,290,299,308,312,312,316,322,319,322,320,321,318,318,317,318,318,324,338,340,345,343,346,345,345,343,356,356,371,368,366,366,371,383,393,396,400,392,390,400,386,386,390,380,384,403,403,409,418,416,425,432,435,445,439,444,449,451,467,464,467,459,463,468,475,476,477,469,473,467,479,489,496,487,484,491,492,490,497,498,504,490,491,496,496,521,531,538,543,569,561,566,581,606,633],
+      "farDiff": [2,98,373,1617,4457,8790,13494,18635,23810,28892,32860,36672,40708,45145,49136,52884,55656,58421,61148,63755,66237,68382,70658,72878,75321,77475,79450,81573,83243,84625,85956,87706,89411,90885,92455,94115,95739,97775,99381,100602,101541,102628,104141,105283,106454,107923,109249,110529,111873,113044,114274,115484,116941,118487,120079,121358,122976,124249,126040,127235,128767,130448,131873,133638,135064,136301,137606,139017,140119,141490,142635,144284,145986,147391,148950,150433,151950,153208,154597,155705,156924,158154,159280,160279,161296,161979,162885,164028,164803,165543,166501,166956,167709,168443,169250,169730,170277,170741,171427,171689,172290,172656,172958,173490,173431,173533,173551,173825,174114,174334,174965,175315,175917,176535,177666,178505,179605,181029,182046,182874,183994,184813,185585,186705,187484,188126,189018,189893],
+      "farUnion": [151270,151601,151887,152018,152224,152511,153123,153666,154442,155264,155978,156660,157431,158323,159212,160251,160839,161319,161690,162397,162563,162775,163083,163363,163529,163674,163485,163138,162941,162904,163153,163036,163373,163413,163764,163923,164113,164343,164444,164539,164577,164728,164890,164935,165224,165383,165487,165630,165775,165988,166268,166728,167333,167985,168615,169311,170020,170534,171373,171863,172627,173327,174071,174825,175834,176548,177282,178053,178836,179700,180523,181376,182514,183345,184299,185036,186119,186807,187649,188127,188649,189146,189693,190144,190773,191216,191490,191780,191997,192146,192595,192728,192961,193150,193438,193620,193730,193974,194181,194071,194022,193818,193714,193693,193292,193016,192772,192656,192693,192680,192904,192910,193304,193719,194349,194984,195825,196899,197810,198677,199598,200285,201062,202128,202679,203247,203886,204694],
+      "readings": {
+       "far50": 28,
+       "far90": 107,
+       "cross": 1,
+       "gapArea": 0.6286058130651475,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 4,
+        "steps": 255
+       }
+      }
+     },
+     {
+      "label": "K|32",
+      "R": 32,
+      "kind": "K",
+      "nearDiff": [2,80,161,285,338,429,522,578,668,691,771,873,965,1022,1067,1177,1245,1293,1337,1419,1489,1511,1580,1610,1624,1618,1686,1744,1828,1913,1928,1944,2024,2096,2044,2146,2226,2322,2323,2370,2380,2384,2416,2398,2444,2534,2642,2717,2741,2824,2886,2966,3048,3098,3156,3235,3319,3422,3487,3519,3606,3638,3638,3643,3608,3590,3651,3761,3845,3884,3910,3933,3973,3977,3985,3972,4044,4049,4108,4172,4260,4359,4363,4399,4487,4541,4593,4628,4701,4764,4846,4838,4909,4966,5051,5145,5199,5241,5274,5338,5430,5482,5594,5710,5772,5820,5879,5967,6001,6098,6196,6254,6363,6424,6511,6622,6772,6852,6991,7058,7205,7300,7430,7499,7653,7797,7978,8132],
+      "nearUnion": [7148,7082,6981,6937,6861,6756,6674,6606,6523,6429,6380,6306,6275,6247,6179,6196,6226,6221,6211,6226,6206,6198,6214,6192,6172,6166,6188,6210,6243,6243,6231,6191,6209,6164,6130,6168,6162,6157,6176,6163,6165,6147,6159,6144,6125,6164,6212,6208,6232,6295,6349,6388,6458,6514,6563,6664,6716,6745,6742,6734,6734,6730,6704,6653,6622,6587,6597,6597,6590,6590,6563,6601,6607,6603,6582,6561,6583,6608,6649,6676,6683,6708,6741,6804,6869,6929,6991,7021,7069,7104,7149,7117,7152,7186,7241,7309,7346,7426,7447,7476,7533,7576,7664,7770,7816,7872,7888,7964,8018,8072,8139,8161,8251,8314,8405,8539,8676,8768,8919,8992,9146,9268,9440,9539,9672,9792,9939,10059],
+      "farDiff": [0,19,215,1333,4119,8366,12975,18071,23150,28207,32099,35807,39763,44144,48075,51725,54426,57144,59826,62349,64764,66886,69095,71287,73732,75888,77785,79868,81447,82743,84058,85788,87413,88815,90428,92010,93563,95487,97101,98280,99208,100292,101769,102926,104051,105420,106643,107843,109165,110256,111429,112570,113945,115447,116979,118189,119725,120913,122655,123827,125275,126935,128360,130116,131575,132835,134090,135398,136422,137766,138899,140502,142181,143582,145135,146635,148083,149335,150706,151770,152924,154067,155191,156164,157101,157734,158602,159705,160419,161102,161982,162471,163160,163848,164561,164951,165452,165885,166540,166737,167240,167564,167751,168174,168069,168132,168083,168266,168523,168649,169181,169480,169973,170536,171574,172300,173253,174596,175495,176265,177244,177969,178638,179685,180313,180828,181563,182313],
+      "farUnion": [144438,144827,145216,145382,145660,146050,146739,147360,148219,149131,149899,150652,151450,152367,153321,154338,154892,155376,155756,156445,156630,156849,157142,157445,157633,157785,157574,157209,156984,156946,157206,157122,157452,157541,157924,158054,158259,158498,158580,158692,158734,158900,159053,159111,159420,159537,159593,159739,159861,160011,160243,160678,161215,161816,162395,162993,163649,164134,164974,165485,166249,166968,167735,168538,169578,170332,171068,171849,172642,173510,174352,175165,176307,177128,178103,178865,179916,180583,181403,181854,182375,182856,183368,183765,184336,184722,184944,185198,185372,185491,185897,186078,186273,186431,186656,186774,186852,187023,187210,187072,186958,186715,186517,186402,185965,185640,185371,185176,185166,185100,185255,185246,185551,185909,186434,186936,187645,188627,189412,190216,190990,191560,192191,193150,193573,194036,194553,195268],
+      "readings": {
+       "far50": 28,
+       "far90": 104,
+       "cross": 7,
+       "gapArea": 5.89728791625181,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 7,
+        "steps": 447
+       }
+      }
+     },
+     {
+      "label": "K|64",
+      "R": 64,
+      "kind": "K",
+      "nearDiff": [2,99,366,1280,2272,2908,3674,4241,4827,5353,5710,6302,6749,7218,7560,8158,8526,9005,9407,9693,10103,10529,11030,11377,11818,12186,12610,12971,13147,13520,13747,14160,14564,14843,15056,15411,15741,16086,16414,16750,16968,17182,17481,17569,17786,18011,18275,18425,18715,19003,19160,19448,19660,19922,20224,20479,20754,20977,21240,21442,21715,21908,21986,22184,22231,22306,22547,22747,22998,23148,23293,23507,23706,23970,24066,24244,24520,24608,24781,25036,25248,25475,25640,25803,25998,26199,26353,26514,26586,26777,27011,26933,27152,27238,27429,27598,27735,27721,27886,27938,28129,28200,28452,28664,28812,29032,29241,29361,29584,29833,30017,30225,30584,30804,31238,31672,32087,32537,32954,33271,33761,34058,34341,34596,34854,35069,35459,35837],
+      "nearUnion": [31696,31681,31685,31623,31620,31600,31581,31606,31518,31490,31404,31373,31320,31314,31174,31215,31199,31161,31121,31249,31162,31105,31048,30976,30939,30910,30832,30829,30711,30624,30616,30602,30648,30632,30668,30732,30763,30796,30823,30822,30818,30876,30956,30992,31094,31147,31211,31196,31291,31422,31459,31546,31646,31759,31911,32071,32127,32193,32328,32360,32516,32646,32671,32669,32723,32760,32825,32882,32992,33066,33173,33259,33327,33346,33295,33354,33510,33545,33590,33655,33636,33665,33737,33849,34025,34211,34329,34382,34422,34452,34554,34421,34528,34583,34665,34754,34794,34772,34850,34804,34856,34788,34848,34957,35054,35219,35369,35516,35682,35868,36008,36175,36415,36627,36950,37350,37683,38040,38451,38795,39254,39534,39850,40137,40347,40575,40860,41177],
+      "farDiff": [0,0,10,338,2185,5887,9823,14408,18991,23545,27160,30378,33979,37948,41582,44744,47145,49432,51756,54075,56150,57868,59645,61520,63538,65320,66861,68641,70128,71136,72239,73572,74873,76068,77416,78745,80048,81723,83010,83900,84620,85494,86704,87755,88709,89943,91010,92135,93191,94077,95155,96088,97333,98623,99911,100945,102290,103358,104902,105904,107166,108665,110012,111575,112952,114119,115194,116412,117269,118502,119516,120928,122448,123589,125054,126363,127607,128776,130033,130906,131936,132951,133914,134760,135590,136076,136842,137819,138534,139089,139817,140376,140917,141576,142183,142498,142916,143405,143928,144137,144541,144846,144893,145220,145029,144920,144721,144872,144940,144914,145360,145509,145752,146156,146847,147250,147938,148911,149532,150052,150688,151211,151727,152588,153112,153556,154082,154608],
+      "farUnion": [119890,120228,120512,120696,120901,121206,121832,122360,123224,124070,124875,125585,126405,127300,128326,129319,129919,130436,130846,131422,131674,131942,132308,132661,132866,133041,132930,132590,132516,132565,132821,132711,133013,133073,133386,133490,133658,133859,133933,134033,134081,134171,134256,134263,134451,134554,134594,134751,134802,134884,135133,135520,136027,136571,137047,137586,138238,138686,139388,139859,140467,141052,141768,142522,143477,144159,144840,145564,146240,147034,147742,148507,149587,150385,151390,152072,152989,153646,154462,154875,155422,155899,156372,156720,157180,157440,157606,157837,158019,158143,158492,158774,158897,159034,159232,159329,159404,159677,159807,159744,159635,159503,159333,159215,158727,158293,157890,157624,157502,157304,157386,157232,157387,157596,157889,158125,158638,159355,159880,160413,160882,161294,161781,162552,162898,163253,163632,164150],
+      "readings": {
+       "far50": 27,
+       "far90": 99,
+       "cross": 9,
+       "gapArea": 12.909391348105324,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 9,
+        "steps": 575
+       }
+      }
+     }
+    ]
+   },
+   {
+    "seed": 3,
+    "N": 131072,
+    "status": "done",
+    "bindingChecked": "fields (the file predates the fine binding: no checkpoint hash)",
+    "seconds": 242,
+    "uptime": "14:12  up 16 days, 15:35, 15 users, load averages: 20.22 29.08 35.09",
+    "u0": {
+     "living": [126182,126391,126596,127039,127367,127729,128354,128735,129128,129565,129859,130236,130764,131228,131519,132035,132712,133160,133447,133642,133778,133966,133984,133839,133801,133827,133527,133103,132798,132423,132241,131999,131625,131258,130855,130432,130053,129644,129299,129093,128931,128674,128363,127890,127479,127013,126868,126835,126899,127193,127217,127321,127658,127956,128419,128699,128970,129199,129747,130343,130715,131221,131777,132188,132529,132813,133118,133514,133984,134301,134575,135163,135707,136297,136879,137363,138069,138629,139256,139787,140253,140706,141290,141577,142089,142434,142856,143205,143378,143653,143562,143324,142757,142604,142431,142456,142516,142555,142373,142388,142407,142316,142199,142003,141706,141572,141691,141549,141097,140891,140886,141116,141545,142047,143152,144437,145710,147186,148523,149753,150971,152073,153101,154269,155027,155920,156661,157451],
+     "referenceChecked": 8
+    },
+    "twins": [
+     {
+      "name": "U0",
+      "finalStateHash": "fc1b2e00465962d4",
+      "seconds": 24.505674666999983,
+      "runnerStateHash": "fc1b2e00465962d4",
+      "gateOk": true
+     },
+     {
+      "name": "S8",
+      "lesion": {
+       "x": 351,
+       "y": 7,
+       "r": 8
+      },
+      "effectiveR": 8,
+      "finalStateHash": "3a079279973fa60c",
+      "runnerStateHash": "3a079279973fa60c",
+      "gateOk": true,
+      "seconds": 24.743099832999984,
+      "gateSeconds": 23.435594249999966
+     },
+     {
+      "name": "S32",
+      "lesion": {
+       "x": 351,
+       "y": 7,
+       "r": 32
+      },
+      "effectiveR": 32,
+      "finalStateHash": "ae663e5b7cf8f1eb",
+      "runnerStateHash": "ae663e5b7cf8f1eb",
+      "gateOk": true,
+      "seconds": 24.781758457999967,
+      "gateSeconds": 23.231830499999983
+     },
+     {
+      "name": "S64",
+      "lesion": {
+       "x": 351,
+       "y": 7,
+       "r": 64
+      },
+      "effectiveR": 64,
+      "finalStateHash": "bfdd6c942e6249b3",
+      "runnerStateHash": "bfdd6c942e6249b3",
+      "gateOk": true,
+      "seconds": 24.725817666999994,
+      "gateSeconds": 23.190861875000003
+     },
+     {
+      "name": "K",
+      "lesion": {
+       "x": 268,
+       "y": 255,
+       "r": 0
+      },
+      "effectiveR": 0,
+      "finalStateHash": "ae4b1ad1ea85efea",
+      "runnerStateHash": "ae4b1ad1ea85efea",
+      "gateOk": true,
+      "seconds": 25.057181041999954,
+      "gateSeconds": 23.435069874999986
+     }
+    ],
+    "pairs": [
+     {
+      "label": "S8",
+      "R": 8,
+      "kind": "S",
+      "nearDiff": [222,202,239,243,243,260,290,320,363,416,464,489,489,500,513,510,524,523,528,514,520,522,528,553,593,620,620,640,633,637,646,666,638,637,653,617,616,595,616,609,597,642,615,640,642,621,611,649,642,609,614,608,615,626,627,640,646,671,695,708,738,710,727,728,731,726,740,736,727,726,731,734,721,730,737,726,739,739,751,706,720,738,735,745,762,753,749,772,775,775,776,777,778,779,778,769,767,756,729,725,717,708,704,696,679,669,651,653,650,632,614,610,619,608,629,641,677,690,697,725,734,751,764,765,758,760,762,764],
+      "nearUnion": [797,797,797,796,794,792,791,786,775,773,766,764,763,761,759,757,757,753,751,749,751,750,752,753,752,753,753,763,769,779,783,789,790,791,792,793,795,796,797,797,797,797,791,797,797,797,797,797,797,797,797,770,770,774,773,765,747,751,761,769,790,791,791,790,789,788,786,785,770,774,782,786,783,783,787,775,785,787,789,792,794,797,797,797,796,793,793,795,797,797,797,796,796,794,791,782,780,770,744,739,732,724,720,711,694,685,666,668,664,648,632,628,631,630,635,650,677,691,709,732,741,760,771,773,768,770,772,771],
+      "farDiff": [498,1082,1690,2464,4029,6308,9558,13239,16647,19794,22284,24732,27594,30288,32747,34730,36931,39355,41188,43102,45812,47618,49519,50961,53139,54708,56089,57136,58780,59932,61284,62510,63943,65271,66514,67632,68557,69755,70823,71563,72397,73350,74532,75581,76527,77609,78565,80075,81755,82820,84409,85849,87446,88783,90103,91394,92918,94419,95981,97426,98531,99705,101117,102508,103585,104722,106084,107423,109221,110909,112576,114515,116190,117436,118737,119837,121556,122857,124017,125459,126728,127851,129077,130186,131243,132291,133540,135248,136596,137561,138386,139131,139493,140562,141550,142575,143446,144374,145208,145759,146759,147566,148258,149061,149685,150338,151071,151656,151923,152440,153084,153702,154355,155161,156265,157490,158607,160037,161422,162699,163778,165016,166377,167713,168824,169938,170647,171307],
+      "farUnion": [125387,125596,125809,126292,126673,127129,127972,128559,129254,130031,130540,131311,132271,133084,133742,134618,135638,136399,137030,137592,138070,138623,139012,139260,139557,139910,139903,139836,139967,140071,140250,140370,140374,140277,140177,139937,139637,139528,139319,139064,138955,138746,138620,138404,138235,138150,138087,138224,138550,138912,139446,139855,140594,141229,141950,142591,143385,144040,145011,145819,146387,147016,147835,148471,149131,149688,150270,150984,151793,152548,153369,154447,155308,156191,157045,157808,158683,159468,160163,160874,161701,162399,163379,164053,164993,165807,166607,167483,168132,168713,169069,169213,169064,169403,169710,170092,170353,170714,170754,170980,171450,171736,172106,172287,172588,172815,173179,173385,173272,173345,173578,173996,174450,175064,176042,177064,178123,179262,180393,181753,182901,183890,184888,186078,186858,187742,188353,188931],
+      "readings": {
+       "far50": 39,
+       "far90": 124,
+       "cross": null,
+       "gapArea": 1808.198125466966,
+       "fineHorizon": {
+        "kind": "censored",
+        "window": 7231
+       }
+      }
+     },
+     {
+      "label": "S32",
+      "R": 32,
+      "kind": "S",
+      "nearDiff": [2625,2899,3169,3347,3566,3708,3811,3988,4053,4274,4398,4596,4736,4903,5191,5395,5612,5717,5777,5822,5842,5862,5918,5996,6017,6131,6154,6221,6249,6373,6455,6514,6590,6627,6673,6782,6798,6875,6865,6964,6943,7079,7103,7194,7253,7319,7342,7428,7511,7611,7654,7646,7629,7622,7687,7768,7833,7871,7932,8126,8275,8313,8405,8443,8475,8502,8494,8492,8491,8467,8473,8451,8460,8482,8497,8525,8561,8582,8638,8708,8757,8806,8886,8942,9130,9288,9435,9605,9677,9745,9775,9761,9773,9796,9797,9800,9833,9734,9674,9673,9661,9621,9581,9560,9425,9336,9327,9301,9229,9160,9122,9095,9052,9039,9131,9259,9457,9719,9951,10141,10251,10322,10413,10507,10517,10627,10692,10806],
+      "nearUnion": [5421,5598,5714,5815,5904,6003,6068,6114,6192,6341,6455,6623,6737,6862,7041,7217,7366,7419,7500,7607,7677,7729,7767,7851,7877,7980,8047,8069,8090,8122,8106,8128,8126,8107,8104,8128,8108,8108,8127,8153,8157,8165,8161,8159,8161,8157,8150,8165,8207,8268,8276,8242,8226,8240,8234,8227,8269,8306,8388,8494,8590,8664,8744,8762,8776,8794,8761,8770,8777,8785,8791,8781,8789,8800,8806,8852,8907,8953,9000,9038,9090,9143,9244,9299,9438,9587,9740,9879,9905,9973,9993,9979,9980,9986,9982,9973,9983,9908,9861,9831,9807,9782,9754,9734,9620,9529,9508,9484,9405,9316,9246,9212,9177,9155,9228,9355,9535,9790,10017,10202,10314,10388,10475,10574,10579,10691,10756,10848],
+      "farDiff": [138,564,1529,2934,4829,8007,11096,14256,16943,19687,21869,24170,26572,28989,31324,33507,35824,37649,39288,40585,42636,44411,46151,47584,48867,50250,51334,52469,53845,55342,56458,57387,58604,59988,61454,62288,63386,64587,65820,67073,68177,69230,70717,71771,72792,73733,74696,76238,77599,78777,80187,81362,82963,83907,85231,86697,88012,89375,90993,92526,93724,94892,96344,97950,99079,100425,101510,102843,104267,105773,107217,108962,110299,111760,113004,114486,115867,117168,118406,119721,120816,122271,123625,124618,125826,126955,127929,128960,129802,131265,132207,132671,132884,133766,134445,135272,135777,136519,137302,138019,138871,139466,139897,140624,141140,141414,142050,142455,142623,143113,143494,143932,144566,145277,146367,147485,148674,149826,151129,152385,153586,154650,155804,157053,157988,158693,159373,160112],
+      "farUnion": [120764,120811,120928,121331,121660,122120,122911,123519,124124,124798,125332,125971,126824,127615,128187,128923,129804,130453,130997,131487,131885,132239,132499,132685,132822,132982,132961,132789,132844,132863,133033,133128,133090,133154,133108,132799,132601,132365,132157,132065,132017,131899,132073,131875,131463,131311,131343,131600,131786,132071,132305,132765,133462,133965,134687,135412,136067,136669,137614,138466,138939,139396,140105,140878,141557,142067,142770,143421,144204,144861,145431,146397,147071,147902,148645,149298,150154,150917,151816,152663,153522,154352,155272,155861,156683,157365,157923,158596,159109,159712,160060,160070,159892,160215,160509,160822,161127,161569,161716,161994,162309,162556,162684,162826,163006,163101,163489,163656,163549,163609,163805,164175,164599,165125,165921,166830,167677,168741,169842,171034,172187,172939,173696,174842,175485,176089,176638,177191],
+      "readings": {
+       "far50": 40,
+       "far90": 125,
+       "cross": null,
+       "gapArea": 2225.435117484223,
+       "fineHorizon": {
+        "kind": "censored",
+        "window": 7231
+       }
+      }
+     },
+     {
+      "label": "S64",
+      "R": 64,
+      "kind": "S",
+      "nearDiff": [5918,6543,7102,7635,8083,8514,8987,9170,9452,9758,10280,10649,10927,11293,11562,11982,12525,12914,13250,13841,14192,14572,14811,15081,15469,15719,15982,16191,16406,16734,17025,17197,17436,17730,17877,17902,17989,18113,18370,18611,18592,18692,18798,19010,19018,19029,19440,19843,20085,20064,20126,20125,20128,20296,20348,20418,20359,20351,20412,20565,20714,21014,21406,21589,21730,21769,21802,21896,21983,22095,22292,22438,22480,22546,22621,22799,23009,23080,23257,23530,23628,23754,23907,24078,24383,24658,24967,25301,25425,25669,25814,25880,25853,25885,25863,25887,25922,25788,25784,25782,25703,25721,25814,25865,25818,25797,25785,25714,25561,25418,25331,25293,25313,25338,25509,25733,25919,26282,26633,27004,27316,27596,27883,28159,28256,28464,28641,28947],
+      "nearUnion": [18949,19099,19226,19270,19332,19393,19526,19558,19641,19837,20029,20297,20488,20708,20983,21351,21661,21897,22152,22447,22646,22892,23165,23390,23612,23839,24055,24248,24359,24530,24595,24668,24702,24698,24679,24673,24573,24603,24605,24615,24558,24571,24518,24574,24456,24468,24497,24652,24678,24690,24670,24505,24422,24419,24429,24369,24317,24139,24136,24199,24314,24391,24508,24655,24741,24744,24754,24760,24876,24927,25003,25098,25175,25240,25354,25448,25621,25760,25890,26056,26167,26297,26438,26610,26817,27037,27270,27601,27772,27936,28054,28079,28037,28037,27990,28008,28024,27848,27752,27688,27623,27592,27616,27607,27475,27362,27255,27139,26970,26801,26690,26623,26577,26498,26531,26671,26869,27191,27579,27870,28143,28370,28609,28856,28971,29127,29341,29606],
+      "farDiff": [0,46,709,2106,3647,6544,9374,12108,14687,16860,19077,21174,23340,25541,27896,29883,32074,33430,34698,36264,38212,40074,41842,42995,44192,45433,46728,47635,48714,49939,51629,52580,53814,54832,55905,56864,57535,58490,59483,60508,61539,62363,63685,64516,65572,66693,67580,68893,70236,71195,72474,73668,74920,76311,77484,78848,80046,80899,82244,83333,84356,85545,86873,88192,89644,90917,92023,92938,94136,95388,96744,98438,99741,100827,102182,103523,104926,105967,107133,108561,109947,110996,112059,113034,113915,115151,115911,116847,117574,118493,119126,119748,120274,121166,121741,122471,123050,123700,124256,125093,125629,126201,126813,127167,127711,128170,128939,129360,129548,130089,130661,131138,131860,132871,134326,135116,135921,137090,138134,139076,139828,140376,141271,142295,142975,143719,144304,144702],
+      "farUnion": [107315,107397,107539,108013,108412,108898,109677,110282,110996,111556,111937,112478,113177,113782,114276,114784,115423,115943,116372,116606,116922,117303,117389,117422,117482,117637,117445,117233,117271,117240,117297,117299,117268,117157,117082,116961,116883,116630,116510,116442,116403,116427,116572,116544,116565,116504,116600,116759,117017,117359,117738,118241,118844,119401,120023,120577,121151,121701,122502,123272,123861,124442,125259,126070,126805,127495,128191,128829,129532,130302,131063,132059,132882,133684,134489,135220,136038,136584,137218,137865,138508,139066,139658,140105,140582,141143,141658,142157,142568,143056,143232,143447,143558,143880,144031,144285,144537,144927,145147,145487,145707,145975,146208,146346,146457,146613,147091,147300,147265,147505,147919,148320,148982,149838,150998,151963,152800,154007,154965,155997,156776,157377,158001,158885,159431,159942,160338,160703],
+      "readings": {
+       "far50": 38,
+       "far90": 128,
+       "cross": null,
+       "gapArea": 1454.5948839664777,
+       "fineHorizon": {
+        "kind": "censored",
+        "window": 7231
+       }
+      }
+     },
+     {
+      "label": "K|8",
+      "R": 8,
+      "kind": "K",
+      "nearDiff": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,7,19,31,40,40,39,42,41,39,40,43,45,44,47,47,49,54,63,66,73,87,110,162,218,273,317,353,371,410,440],
+      "nearUnion": [31,25,21,15,13,11,7,6,5,4,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,7,19,31,41,43,43,45,42,41,41,44,45,44,47,47,50,54,63,66,73,87,110,163,218,273,317,353,380,410,441],
+      "farDiff": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,99,525,1375,2346,3166,4523,5984,7978,9757,12170,14450,17355,20195,22435,24583,27070,29134,31275,33520,35728,37587,39475,41652,44041,46359,48202,50278,52612,54459,56093,58377,60538,62471,64715,66977,69055,70852,73040,75155,76744,78085,79702,81424,83222,85078,86540,88307,90075,91512,93501,95585,98016,100153,102288,104579,106411,107956,109528,111256,112947,114257,115846,117598,118757,120385,121666,122981,123920,125209,125943,126938,128143,129383,130345,131198,132095,132848,133236,134012,134788,135423,136335,136813,137248,137642,138042,138582,139533,140274,141762,143393,145081,146937,148747,150129,151519,152794,153919,155664,156697,157909,159172,160249],
+      "farUnion": [126151,126366,126575,127024,127354,127718,128347,128729,129123,129561,129857,130235,130764,131228,131519,132035,132712,133160,133447,133642,133778,133966,133984,133839,133801,133827,133533,133117,132843,132517,132423,132276,132055,131929,131775,131636,131506,131374,131352,131407,131515,131589,131571,131587,131398,131292,131350,131523,131919,132403,132803,133333,134046,134689,135354,135860,136415,137036,137952,138889,139558,140294,140983,141710,142229,142679,143316,143988,144716,145480,145959,146968,147914,148732,149594,150473,151727,152700,153755,154678,155640,156519,157437,158046,158749,159361,159969,160743,161225,161906,162308,162739,162908,163352,163637,163977,164351,164681,164809,165251,165524,165696,165707,165859,166088,166246,166635,166809,166709,166815,167100,167502,168012,168613,169686,170762,171839,173362,174752,176187,177417,178362,179234,180436,181068,181796,182589,183328],
+      "readings": {
+       "far50": 62,
+       "far90": null,
+       "cross": 1,
+       "gapArea": 305.98212811002173,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 1,
+        "steps": 63
+       }
+      }
+     },
+     {
+      "label": "K|32",
+      "R": 32,
+      "kind": "K",
+      "nearDiff": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,96,305,349,502,460,509,549,547,656,738,793,875,886,904,948,949,953,980,965,984,970,921,907,980,994,1011,1111,1228,1229,1293,1372,1394,1465,1505,1604,1634,1674,1770,1872,2011,2118,2200,2370,2550,2668,2750,2911,2990,3093,3243,3454,3623,3870,4089,4392,4557,4681,4892,5176,5432,5644,5809,5928,6061,6124,6183,6287,6431,6470,6558,6577,6648,6770,6994,7137,7162,7257,7253,7333,7406,7417,7409,7410,7413,7464,7484,7481,7583,7674,7782,7952,8071,8279,8550,8727,8933,9153,9270,9432,9607,9685,9845,9977],
+      "nearUnion": [1759,1737,1774,1814,1814,1842,1829,1847,1886,1866,1880,1902,2000,2088,2201,2345,2485,2639,2806,2950,3060,3156,3185,3217,3237,3292,3324,3372,3448,3506,3610,3682,3717,3755,3811,3832,3829,3759,3723,3679,3611,3550,3476,3434,3352,3290,3267,3244,3226,3224,3247,3300,3370,3409,3464,3509,3561,3607,3665,3727,3768,3805,3826,3824,3832,3852,3853,3927,4014,4106,4185,4301,4448,4584,4730,4904,5049,5228,5469,5674,5930,6169,6353,6541,6677,6784,6950,7083,7165,7285,7333,7412,7507,7619,7706,7757,7798,7817,7876,7935,7940,7995,7986,8054,8066,8084,8101,8083,8092,8088,8074,8067,8118,8167,8199,8294,8443,8684,8941,9146,9376,9552,9714,9858,9958,10075,10172,10280],
+      "farDiff": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,220,1026,1844,2706,4014,5435,7431,9101,11432,13657,16480,19309,21531,23635,26121,28181,30295,32555,34744,36617,38554,40745,43061,45365,47191,49167,51384,53230,54800,57005,59144,61006,63210,65373,67421,69178,71270,73283,74733,75967,77502,79054,80672,82410,83790,85396,87085,88419,90258,92131,94393,96283,98199,100187,101854,103275,104636,106080,107515,108613,110037,111670,112696,114261,115483,116694,117489,118739,119385,120361,121495,122614,123358,124080,124964,125631,126023,126718,127424,128047,128965,129443,129878,130223,130602,131148,131997,132649,134034,135504,137076,138731,140284,141512,142748,143859,144922,146549,147443,148595,149737,150712],
+      "farUnion": [124423,124654,124822,125225,125553,125887,126525,126888,127242,127699,127979,128334,128764,129140,129318,129690,130227,130521,130641,130692,130718,130810,130799,130622,130564,130535,130209,129745,129395,129011,128813,128594,128338,128174,127964,127804,127677,127615,127629,127728,127904,128039,128095,128153,128046,128002,128083,128279,128693,129179,129556,130033,130676,131280,131890,132351,132854,133429,134287,135162,135790,136489,137157,137886,138397,138827,139463,140061,140702,141374,141774,142667,143466,144148,144864,145569,146678,147472,148286,149004,149710,150350,151084,151505,152072,152577,153019,153660,154060,154621,154975,155327,155401,155733,155931,156220,156553,156865,156940,157335,157615,157742,157764,157848,158067,158204,158575,158767,158661,158772,159070,159482,159941,160496,161541,162531,163462,164751,165898,167151,168204,169028,169793,170895,171463,172101,172827,173489],
+      "readings": {
+       "far50": 62,
+       "far90": null,
+       "cross": 1,
+       "gapArea": 478.0525572233818,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 1,
+        "steps": 63
+       }
+      }
+     },
+     {
+      "label": "K|64",
+      "R": 64,
+      "kind": "K",
+      "nearDiff": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,99,525,1268,1878,2081,2334,2513,2793,3077,3550,4149,4907,5429,5934,6229,6654,7014,7384,7697,7858,7872,8043,8259,8579,8880,9140,9446,9927,10334,10579,11142,11620,12165,12755,13386,13974,14360,14913,15189,15457,15795,16375,16861,17488,18009,18494,19201,19667,20150,20856,21624,22335,23159,23727,24440,25049,25440,25930,26558,26949,27354,27869,28432,28854,29255,29566,29879,30174,30504,30636,30769,30870,31025,31329,31570,31652,31747,31758,31753,31765,31754,31783,31839,31785,31822,31881,32010,32265,32608,33166,33607,34045,34466,34856,35104,35309,35531,35742,36021,36181,36336,36559,36613],
+      "nearUnion": [20681,20840,21022,21209,21349,21558,21743,22008,22224,22374,22563,22794,23081,23406,23641,24009,24329,24589,24939,25174,25423,25628,25682,25727,25760,25823,25624,25471,25439,25263,25135,24935,24725,24513,24288,24170,23965,23754,23603,23441,23177,22882,22624,22415,22095,21823,21662,21496,21426,21394,21365,21485,21570,21733,21851,22017,22253,22507,22785,23154,23490,23717,23950,24140,24320,24479,24650,24922,25253,25603,25924,26327,26737,27124,27595,28120,28596,29090,29612,30084,30602,31008,31464,31829,32083,32387,32693,33083,33378,33664,33835,33950,34078,34309,34334,34388,34460,34477,34512,34582,34583,34541,34442,34413,34338,34325,34381,34419,34358,34378,34488,34690,34951,35276,35775,36173,36638,37062,37459,37765,38056,38195,38335,38543,38506,38597,38649,38628],
+      "farDiff": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,107,468,1085,2189,3471,5185,6680,8620,10301,12448,14766,16501,18354,20416,22120,23891,25823,27870,29715,31432,33393,35462,37479,39062,40832,42685,44125,45514,47235,48918,50306,51960,53591,55081,56492,58127,59966,61287,62290,63327,64563,65734,67069,68046,69106,70408,71362,72645,73961,75681,76994,78561,80139,81362,82516,83598,84698,85998,86903,87977,89166,89903,91130,92100,93102,93746,94705,95307,96169,97273,98359,99023,99647,100474,101141,101518,102298,103065,103710,104591,105014,105506,105865,106205,106619,107315,107715,108650,109849,111102,112544,113978,115135,116372,117481,118450,119960,120869,121944,123023,124076],
+      "farUnion": [105501,105551,105574,105830,106018,106171,106611,106727,106904,107191,107296,107442,107683,107822,107878,108026,108383,108571,108508,108468,108355,108338,108302,108112,108041,108004,107909,107646,107404,107254,107288,107341,107330,107416,107487,107466,107541,107620,107749,107966,108338,108707,108947,109172,109303,109469,109688,110027,110493,111009,111438,111848,112476,112956,113503,113843,114162,114529,115167,115735,116068,116577,117033,117570,117909,118200,118666,119066,119463,119877,120035,120641,121177,121608,121999,122353,123131,123610,124143,124594,125038,125511,125973,126217,126666,126974,127276,127660,127847,128242,128473,128789,128830,129043,129303,129589,129891,130205,130304,130688,130972,131196,131308,131489,131795,131963,132295,132431,132395,132482,132656,132859,133108,133387,133965,134652,135267,136373,137380,138532,139524,140385,141172,142210,142915,143579,144350,145141],
+      "readings": {
+       "far50": 64,
+       "far90": null,
+       "cross": 1,
+       "gapArea": 775.9205505520544,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 1,
+        "steps": 63
+       }
+      }
+     }
+    ]
+   },
+   {
+    "seed": 4,
+    "N": 131072,
+    "status": "done",
+    "bindingChecked": "fields (the file predates the fine binding: no checkpoint hash)",
+    "seconds": 291,
+    "uptime": "14:16  up 16 days, 15:39, 15 users, load averages: 28.34 27.88 33.00",
+    "u0": {
+     "living": [254849,255749,256316,256312,256250,255839,255853,255531,255394,255053,255083,255394,255848,256499,257328,258117,258725,259421,259754,260563,260941,260921,260896,260797,260836,260801,260470,260216,259811,259155,258346,257665,257387,256814,256547,256564,256648,256784,257337,257637,258027,258330,258145,257673,256586,255654,254367,252869,251497,250080,248318,246669,245526,244794,244632,245163,246341,247976,249929,251270,252429,252976,253140,253264,253134,252839,252806,252614,252506,252690,252455,253324,253919,254806,255598,256325,256873,257116,257158,257397,257669,257859,257948,257992,258476,258502,258509,258728,259031,258991,259037,259022,258687,258667,258420,258276,257974,257959,257618,257033,256511,255711,255252,254929,254284,253583,252855,252055,251349,250418,250035,249316,248491,247583,246541,245453,244525,244061,244011,244745,246168,248248,250043,251626,252856,253965,255360,256506],
+     "referenceChecked": 8
+    },
+    "twins": [
+     {
+      "name": "U0",
+      "finalStateHash": "18424f567d88c0fc",
+      "seconds": 29.311141459000005,
+      "runnerStateHash": "18424f567d88c0fc",
+      "gateOk": true
+     },
+     {
+      "name": "S8",
+      "lesion": {
+       "x": 402,
+       "y": 265,
+       "r": 8
+      },
+      "effectiveR": 8,
+      "finalStateHash": "2708115020762d13",
+      "runnerStateHash": "2708115020762d13",
+      "gateOk": true,
+      "seconds": 29.409635083,
+      "gateSeconds": 28.551255041999976
+     },
+     {
+      "name": "S32",
+      "lesion": {
+       "x": 402,
+       "y": 265,
+       "r": 32
+      },
+      "effectiveR": 32,
+      "finalStateHash": "ed2703da1922e338",
+      "runnerStateHash": "ed2703da1922e338",
+      "gateOk": true,
+      "seconds": 29.516270332999994,
+      "gateSeconds": 28.33404320800002
+     },
+     {
+      "name": "S64",
+      "lesion": {
+       "x": 402,
+       "y": 265,
+       "r": 64
+      },
+      "effectiveR": 64,
+      "finalStateHash": "245f386f72ca41c8",
+      "runnerStateHash": "245f386f72ca41c8",
+      "gateOk": true,
+      "seconds": 29.17434400000004,
+      "gateSeconds": 28.184712375000004
+     },
+     {
+      "name": "K",
+      "lesion": {
+       "x": 273,
+       "y": 189,
+       "r": 0
+      },
+      "effectiveR": 0,
+      "finalStateHash": "1cc54950f0fb5a48",
+      "runnerStateHash": "1cc54950f0fb5a48",
+      "gateOk": true,
+      "seconds": 30.232861916000022,
+      "gateSeconds": 28.55598845800001
+     }
+    ],
+    "pairs": [
+     {
+      "label": "S8",
+      "R": 8,
+      "kind": "S",
+      "nearDiff": [406,468,493,472,538,583,622,618,597,614,665,676,663,616,576,616,617,646,663,630,631,611,547,607,651,618,629,656,642,684,698,679,697,687,716,719,706,692,694,689,683,617,636,615,528,562,507,544,649,638,613,589,621,604,638,632,635,633,634,651,684,693,686,681,656,665,664,663,629,652,624,676,672,669,641,672,679,659,641,661,664,667,657,661,654,695,651,673,698,718,664,648,664,608,643,683,674,673,702,710,691,680,681,673,691,734,746,753,760,760,765,770,757,766,774,769,749,752,754,755,752,738,735,739,740,754,781,782],
+      "nearUnion": [795,797,797,797,797,797,797,797,797,793,797,792,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,792,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,796,797,797,797,797,797,797,797,797,797,797,796,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,790,791,793,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,797,781,781,784,791,789,788,796,797,797,791,782,773,776,774,772,766,761,750,747,768,791,797],
+      "farDiff": [384,1636,4737,8082,13073,19455,26748,37384,48770,59624,70270,82871,94387,106752,119008,131252,141579,151154,157788,164731,170575,174424,176321,178860,181992,185006,186931,187365,187913,188721,189587,189881,190567,192090,193322,194091,195348,196503,197714,198411,199002,200043,200928,201136,201995,201625,202753,203088,203518,203044,203072,202584,202460,203209,204665,205171,205129,205394,205722,204914,204086,204440,204995,205879,206800,206227,207498,207894,208696,209207,208668,210550,209851,210489,210895,210820,211672,212725,213481,214379,213643,214198,214110,214340,215555,215657,216431,216406,217038,218157,218500,218217,218801,218982,219132,219611,219393,219893,219607,220461,221645,222584,222724,224169,224268,224818,224538,224458,224952,224515,225050,224808,224372,225282,225700,226112,226161,225930,226696,227547,228035,228277,227324,227569,228202,228984,229159,229290],
+      "farUnion": [254054,254954,255519,255517,255467,255061,255073,254780,254687,254422,254488,254886,255385,255997,256745,257558,258167,258848,259184,260036,260363,260376,260406,260506,260623,260687,260459,260261,259980,259580,259167,258883,258941,258825,258881,258963,259157,259424,259816,259928,259920,260029,259963,259840,259350,259218,258841,258259,257660,256949,256039,255317,254935,254830,254951,255318,255722,255902,256206,256070,255946,255892,256052,256247,256321,256312,256204,256251,256242,256376,256169,256795,257055,257392,257581,257772,258050,258274,258521,258855,259163,259465,259675,259778,260254,260487,260615,260735,260926,261062,261179,261223,261048,261020,260907,260781,260528,260662,260488,260314,260225,259990,259975,260130,260010,259934,259843,259619,259386,258725,258879,258674,258443,258460,258307,258500,258486,258620,258816,259064,259027,259043,259103,259440,259573,259704,259924,260047],
+      "readings": {
+       "far50": 16,
+       "far90": null,
+       "cross": 44,
+       "gapArea": 929.5638150193355,
+       "fineHorizon": {
+        "kind": "censored",
+        "window": 7231
+       }
+      }
+     },
+     {
+      "label": "S32",
+      "R": 32,
+      "kind": "S",
+      "nearDiff": [4520,5773,7006,7618,7994,8280,8449,8588,8763,8767,8777,8759,8806,9032,9322,9359,9667,9675,9615,9820,9952,10108,10271,10388,10409,10521,10877,10603,10682,10763,10889,10958,10909,10907,11041,10991,10995,11180,11169,11101,11066,11105,11116,11251,11436,11360,11298,11273,11478,11493,11490,11495,11516,11513,11503,11499,11675,11608,11619,11744,11787,11697,11766,11914,11896,11959,11932,12019,12029,11997,12080,11978,11759,11742,11750,11760,11839,11960,11950,11941,11992,12125,12186,12373,12320,12273,12218,12200,12086,12158,12176,12211,12094,11941,12012,11997,12046,12079,12082,12133,12112,12038,12015,12017,11909,11840,11829,11856,11791,11774,11808,11704,11740,11765,11746,11661,11507,11406,11404,11428,11538,11680,11824,11897,11875,11929,11897,11807],
+      "nearUnion": [12782,12796,12846,12842,12853,12840,12853,12842,12833,12824,12851,12833,12844,12837,12853,12853,12838,12852,12804,12845,12852,12846,12852,12853,12853,12840,12853,12841,12849,12846,12849,12849,12850,12846,12852,12852,12829,12820,12840,12853,12852,12838,12834,12848,12849,12851,12840,12837,12832,12827,12814,12805,12804,12770,12768,12780,12833,12802,12821,12829,12839,12844,12848,12851,12851,12835,12842,12851,12853,12852,12823,12852,12838,12840,12833,12840,12848,12851,12833,12823,12823,12853,12851,12850,12853,12841,12853,12851,12852,12831,12833,12842,12805,12816,12808,12811,12827,12824,12817,12815,12807,12780,12748,12743,12717,12679,12611,12571,12538,12467,12433,12374,12341,12343,12327,12287,12187,12118,12147,12200,12344,12510,12661,12754,12789,12836,12851,12842],
+      "farDiff": [149,2028,5150,9573,15082,21659,30087,41424,53396,65933,78229,90890,102648,113977,123993,132726,141244,148732,154460,159992,164380,167004,169086,171875,174641,175852,176100,176652,177132,178630,179874,179724,179869,181290,182019,182283,183831,184418,185739,186122,186106,186924,188232,188857,189415,190672,191380,192171,192816,192764,193193,193883,193837,194851,195122,195508,195840,195648,195553,195752,195371,195195,195806,195812,196927,196679,198784,199983,200454,201324,201957,203531,204076,204683,204869,205676,207101,207460,208348,209325,209944,209841,210139,210813,211551,211421,212401,212138,213211,213241,213226,213619,213766,214125,214439,215835,215898,215762,216618,216163,216278,217311,216813,217348,218398,219321,219261,219284,219122,218445,219086,220081,220420,221031,221115,221228,220908,221242,221174,221071,221065,220788,220954,221204,221631,221757,223132,223484],
+      "farUnion": [242067,242953,243472,243480,243413,243018,243028,242741,242660,242390,242453,242863,243380,244010,244802,245579,246161,246811,247176,247965,248303,248346,248416,248441,248592,248672,248482,248354,248017,247600,247018,246597,246542,246345,246370,246489,246626,246809,247105,247166,247341,247609,247529,247309,246846,246790,246533,246174,245696,245296,244571,243901,243383,243070,242861,242917,242959,243291,243902,244206,244230,244271,244408,244574,244506,244402,244454,244817,244993,245221,245092,245713,245852,246068,246150,246369,246688,247125,247383,247618,247832,248101,248206,248215,248563,248689,248805,248902,249066,249014,248992,248986,248848,248899,248843,248878,248688,248855,248727,248541,248369,248051,247989,248083,248022,247897,247840,247601,247439,246915,247132,246921,246776,246747,246778,246887,246821,246912,247180,247386,247409,247425,247604,248048,248247,248265,248459,248548],
+      "readings": {
+       "far50": 15,
+       "far90": null,
+       "cross": null,
+       "gapArea": 1073.7587177911778,
+       "fineHorizon": {
+        "kind": "censored",
+        "window": 7231
+       }
+      }
+     },
+     {
+      "label": "S64",
+      "R": 64,
+      "kind": "S",
+      "nearDiff": [15535,19058,22592,25208,27626,30228,32567,33586,34414,34922,35285,36076,36213,36926,37103,38005,38560,39054,38862,38817,39013,39190,39116,39130,39221,39318,39388,39585,39877,40016,39699,39920,40316,40674,40857,40886,41096,41054,41291,41220,41520,41548,41463,41772,41844,42135,42244,42373,42680,42828,42921,43040,42965,43087,43221,43450,43282,42839,42723,43021,43389,43637,43638,43834,43768,43829,43787,43914,43955,44280,44312,44391,44429,44594,44558,44185,44508,44631,45050,45420,45056,45470,45236,45445,45479,45194,45079,45113,44952,44953,45045,45361,45195,45346,45720,45863,45921,45980,46103,45877,45812,45843,45656,45980,46047,46041,46205,46171,46049,45897,45817,45714,45607,45307,45133,44906,44808,44777,44676,44466,44463,44732,44717,44921,44934,45065,45077,45092],
+      "nearUnion": [51172,51185,51203,51162,51115,51187,51252,51217,51262,51242,51279,51236,51241,51283,51315,51329,51299,51322,51334,51357,51375,51371,51324,51340,51368,51375,51379,51378,51394,51375,51333,51232,51296,51252,51208,51093,51026,50986,51020,51105,51181,51234,51210,51223,51141,51118,51032,50897,50751,50691,50608,50468,50365,50347,50407,50439,50474,50411,50489,50569,50678,50779,50932,50903,50820,50750,50756,50763,50765,50831,50796,50866,50879,50976,51045,51115,51224,51239,51320,51339,51359,51377,51368,51292,51388,51375,51336,51327,51332,51296,51254,51259,51203,51262,51280,51258,51248,51326,51325,51209,51179,51129,51138,51134,51129,51115,51127,51002,50946,50785,50690,50610,50588,50454,50245,50140,49948,49699,49552,49357,49249,49288,49225,49438,49689,49900,50078,50159],
+      "farDiff": [0,309,1615,3727,7615,13450,22218,33922,45544,56784,68532,80387,90688,101512,109861,116632,122611,127832,130412,134065,137177,138790,141000,142465,143377,144501,146083,146076,147006,147605,147485,147774,148694,149648,150385,151239,151854,152937,153998,154332,155081,156449,157213,157356,157683,158007,158501,159229,159289,158971,159236,159780,160256,160624,161432,162396,163167,163625,164447,164251,164020,163497,163187,163401,164234,164294,165026,164634,165342,165895,166603,167144,168003,168933,169298,169990,170984,171385,170942,171137,171081,171730,172821,172668,173170,173288,174459,174458,174973,175035,175074,175734,175840,175983,175061,176269,177038,177472,177741,178094,178088,178275,177925,177720,177371,177474,177276,177861,177578,177401,178360,178710,178565,179322,179577,180330,180588,181206,181356,181247,181088,181611,181939,182715,183922,184267,184609,184616],
+      "farUnion": [203691,204597,205136,205167,205174,204700,204638,204382,204219,204004,204130,204570,205062,205699,206503,207192,207805,208486,208832,209604,209845,209838,209908,209956,210018,210068,209852,209765,209511,209144,208612,208317,208196,208080,208167,208426,208689,209026,209448,209462,209443,209451,209364,209143,208805,208735,208494,208079,207710,207386,206642,206147,205620,205308,205148,205418,205957,206583,206932,206928,206874,206802,206776,206823,206767,206673,206644,206650,206637,206879,206840,207452,207670,208022,208281,208562,208702,208804,208781,208868,209068,209233,209327,209397,209635,209729,209851,209940,209982,209941,209928,209944,209829,209856,209785,209762,209604,209698,209581,209424,209334,209138,209114,209068,208840,208610,208441,208279,208024,207510,207878,207754,207516,207290,207220,207110,207071,207288,207539,207911,208116,208449,208864,209460,209672,209802,209917,209928],
+      "readings": {
+       "far50": 15,
+       "far90": null,
+       "cross": null,
+       "gapArea": 819.6965646744767,
+       "fineHorizon": {
+        "kind": "censored",
+        "window": 7231
+       }
+      }
+     },
+     {
+      "label": "K|8",
+      "R": 8,
+      "kind": "K",
+      "nearDiff": [4,19,17,26,37,48,112,215,280,312,323,323,343,327,308,307,337,360,354,336,428,404,405,403,361,410,398,401,436,412,393,417,440,451,464,504,542,533,480,437,453,477,493,521,518,524,530,519,511,521,521,523,527,496,437,447,415,430,441,437,435,442,462,460,498,506,475,421,379,326,380,322,317,430,342,324,346,346,312,355,355,370,367,373,318,337,399,331,385,424,391,345,313,197,189,242,272,315,296,264,340,340,308,363,424,453,439,372,384,379,407,415,428,443,458,471,507,511,542,521,496,512,514,538,526,493,500,504],
+      "nearUnion": [580,578,554,581,627,701,762,776,787,793,797,796,796,796,793,765,766,759,750,778,797,797,788,792,792,792,792,792,793,792,775,776,770,756,745,746,749,752,743,742,733,740,742,748,744,739,737,730,730,732,728,741,756,761,760,768,770,784,786,783,779,786,791,790,781,783,774,780,790,797,797,797,797,797,797,797,783,785,785,770,772,774,786,797,797,797,797,797,797,797,797,797,797,785,796,796,796,797,797,797,797,797,797,797,797,797,797,797,797,797,795,794,790,781,775,771,787,797,797,797,797,797,789,797,797,797,797,797],
+      "farDiff": [5,107,1026,2964,5887,10345,16067,23583,34837,44985,55102,65538,75737,87970,100359,112331,124975,135739,145181,154293,162409,167268,171389,174811,178045,180327,182999,183868,184774,186135,187332,187527,188618,190314,190579,191384,193100,193878,195407,196062,198170,199569,199426,199578,199419,199884,200576,201252,201603,201131,201517,202431,203584,204838,205905,206940,207053,206622,208705,209408,209605,210158,210574,210137,211727,212141,212538,212798,212811,213118,213651,214433,214139,214411,214398,215120,216075,216701,218920,219350,219664,220567,220932,220466,221608,221948,222646,222584,222495,222061,221743,222012,222174,222625,221700,222520,223424,223743,224073,223525,223914,223949,224245,224398,224669,224729,224840,224339,224058,223446,224276,224135,223363,223008,223137,222979,222886,222948,222836,223782,223397,223538,223757,224245,225756,226809,226965,227897],
+      "farUnion": [254269,255172,255763,255738,255635,255152,255113,254799,254663,254378,254439,254806,255311,255964,256812,257617,258268,258959,259334,260094,260364,260324,260364,260372,260463,260543,260311,260195,259940,259555,259092,258759,258765,258668,258704,258828,259116,259354,259723,259793,259886,259930,259796,259493,258865,258688,258203,257538,256842,256299,255474,255049,254823,254802,254988,255466,255948,256551,256819,256586,256611,256707,256821,257013,257071,257199,257132,257114,256912,257058,256883,257575,257832,258230,258494,258818,259099,259387,259587,259759,259906,260187,260297,260259,260577,260639,260671,260747,260808,260793,260822,260908,260777,260840,260740,260758,260484,260584,260377,260041,259726,259311,259046,258929,258609,258348,258115,257799,257525,256895,257167,256936,256628,256450,256140,255950,255704,255831,256100,256471,256665,257150,257553,258310,258749,259033,259434,259737],
+      "readings": {
+       "far50": 18,
+       "far90": null,
+       "cross": 15,
+       "gapArea": 89.97301267570036,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 15,
+        "steps": 959
+       }
+      }
+     },
+     {
+      "label": "K|32",
+      "R": 32,
+      "kind": "K",
+      "nearDiff": [9,122,591,1211,1761,2223,2813,3266,3708,4183,4253,4763,5316,5740,6300,6380,6592,6862,7212,7287,7596,7697,7735,7582,7656,8083,8275,8372,8319,8304,8357,8429,8880,9080,9083,9143,9295,9265,9358,9481,9612,9564,9491,9575,9562,9540,9539,9546,9613,9743,9778,9836,9817,9826,9617,9640,9544,9515,9485,9468,9535,9549,9612,9730,9877,9929,9870,9649,9575,9542,9553,9457,9633,9829,10021,10095,10211,10153,10197,10128,10190,10230,10393,10356,10311,10455,10613,10539,10568,10342,10298,10167,10100,9910,9856,10180,10212,10328,10192,10181,10301,10223,10270,10244,10115,10021,9996,9875,9945,9932,10076,10177,10200,10366,10367,10479,10572,10497,10521,10523,10551,10612,10901,10766,10883,10935,10962,11073],
+      "nearUnion": [10467,10432,10382,10424,10476,10583,10722,10706,10748,10759,10893,11086,11271,11491,11697,11828,11939,12102,12212,12329,12410,12453,12505,12488,12525,12566,12587,12604,12615,12660,12625,12552,12564,12560,12510,12520,12547,12564,12622,12675,12712,12697,12669,12660,12638,12609,12545,12434,12359,12336,12328,12349,12380,12388,12437,12456,12390,12287,12098,11996,11931,11885,11856,11802,11805,11815,11764,11733,11781,11861,11898,11949,12066,12232,12361,12458,12527,12596,12595,12599,12627,12680,12714,12702,12774,12820,12822,12830,12832,12813,12797,12815,12822,12801,12813,12813,12811,12796,12750,12736,12738,12733,12736,12747,12718,12714,12694,12658,12646,12628,12601,12594,12554,12533,12490,12461,12455,12484,12518,12554,12661,12759,12751,12792,12818,12835,12851,12853],
+      "farDiff": [0,4,452,1779,4163,8170,13366,20532,31409,41114,51172,61098,70764,82557,94367,106258,118720,129237,138323,147342,155241,159975,164059,167632,170750,172654,175122,175897,176891,178243,179368,179515,180178,181685,181960,182745,184347,185146,186529,187018,189011,190482,190428,190524,190375,190868,191567,192225,192501,191909,192260,193118,194294,195508,196725,197747,197924,197537,199661,200377,200505,201051,201424,200867,202348,202718,203143,203570,203615,203902,204478,205298,204823,205012,204719,205349,206210,206894,209035,209577,209829,210707,210906,210483,211615,211830,212432,212376,212312,212143,211836,212190,212387,212912,212033,212582,213484,213730,214177,213608,213953,214066,214283,214517,214978,215161,215283,214836,214497,213893,214607,214373,213591,213085,213228,212971,212821,212962,212857,213780,213342,213438,213370,214017,215399,216367,216503,217328],
+      "farUnion": [244382,245318,245935,245895,245786,245270,245153,244869,244702,244412,244343,244516,244836,245269,245908,246554,247095,247616,247872,248543,248751,248668,248647,248676,248730,248769,248516,248383,248118,247687,247242,246983,246971,246864,246939,247054,247318,247542,247844,247860,247907,247973,247869,247581,246971,246818,246395,245834,245213,244695,243874,243441,243199,243175,243311,243778,244328,245048,245507,245373,245459,245608,245756,246001,246047,246167,246142,246161,245921,245994,245782,246423,246563,246795,246930,247157,247355,247576,247777,247930,248051,248281,248369,248354,248600,248616,248646,248714,248773,248777,248822,248890,248752,248824,248723,248741,248469,248585,248424,248102,247785,247375,247107,246979,246688,246431,246218,245938,245676,245064,245361,245136,244864,244698,244425,244260,244036,244144,244379,244714,244801,245188,245591,246315,246728,246995,247380,247681],
+      "readings": {
+       "far50": 18,
+       "far90": null,
+       "cross": 20,
+       "gapArea": 163.57885977879664,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 20,
+        "steps": 1279
+       }
+      }
+     },
+     {
+      "label": "K|64",
+      "R": 64,
+      "kind": "K",
+      "nearDiff": [9,126,1043,2990,5840,8995,11911,14622,17418,19179,20599,22121,24021,25953,27326,28135,29329,30218,30999,32062,32758,32901,32769,33132,33537,33976,34304,34755,34934,35124,35418,35596,36597,36849,37222,37577,38086,38176,38391,38368,38761,38577,38475,38615,38768,38769,38969,39045,39106,39167,39180,39382,39631,39474,39278,39420,39186,38564,38777,39159,39465,39449,39587,39937,40852,41097,41127,40729,40565,40616,40566,40644,40657,40907,40897,41373,41633,41997,42495,42314,42440,42623,42578,42390,42716,42980,43247,42928,42525,42626,42747,42498,42475,42389,42080,42452,42763,42803,42856,42409,42572,42592,42917,42932,42866,42760,42710,42609,42827,42778,42738,42731,42888,42828,42787,42602,42440,42341,42366,42557,42580,42834,43507,43897,44320,44292,44043,44191],
+      "nearUnion": [47951,47916,47936,47910,47868,47783,47753,47607,47703,47824,48049,48365,48760,49313,49696,49971,50147,50458,50554,50710,50791,50751,50804,50832,50960,51008,50920,50897,50821,50735,50550,50491,50593,50648,50678,50774,50840,50811,50801,50850,50944,51026,50979,50906,50676,50680,50575,50290,50001,49840,49560,49433,49491,49564,49576,49543,49384,49146,48914,48679,48561,48501,48512,48602,48732,48883,48827,48810,48798,48943,48948,49117,49231,49486,49665,49870,50074,50280,50446,50546,50694,50883,51028,51011,51157,51210,51240,51176,51157,51126,51129,51164,51115,51150,51159,51156,51042,51016,50903,50693,50536,50267,50136,50065,49989,49853,49686,49520,49429,49262,49113,48934,48791,48710,48520,48403,48283,48344,48422,48561,48750,49112,49367,49671,49910,50057,50209,50324],
+      "farDiff": [0,0,0,0,84,1398,4268,9176,17699,26118,34826,43740,52059,62344,73341,84503,95983,105881,114536,122567,130079,134771,139025,142082,144869,146761,149093,149514,150276,151423,152307,152348,152461,153916,153821,154311,155556,156235,157496,158131,159862,161469,161444,161484,161169,161639,162137,162726,163008,162485,162858,163572,164480,165860,167064,167967,168282,168488,170369,170686,170575,171151,171449,170660,171373,171550,171886,172490,172625,172828,173465,174111,173799,173934,173843,174071,174788,175050,176737,177391,177579,178314,178721,178449,179210,179305,179798,179987,180355,179859,179387,179859,180012,180433,179809,180310,180933,181255,181513,181380,181682,181697,181636,181829,182227,182422,182569,182102,181615,181047,181945,181819,180903,180623,180808,180848,180953,181118,181012,181746,181313,181216,180764,180886,181962,183010,183422,184210],
+      "farUnion": [206898,207834,208381,208409,208394,208070,208122,207968,207747,207347,207187,207237,207347,207447,207909,208411,208887,209260,209530,210162,210370,210370,210348,210332,210295,210327,210183,210090,209912,209612,209317,209044,208942,208776,208771,208800,209025,209295,209665,209685,209675,209644,209559,209335,208933,208747,208365,207978,207571,207191,206642,206357,206088,205999,206172,206691,207334,208189,208691,208690,208829,208992,209100,209201,209120,209099,209079,209084,208904,208912,208732,209255,209398,209541,209626,209745,209808,209892,209926,209983,209984,210078,210055,210045,210217,210226,210228,210368,210448,210464,210490,210541,210459,210475,210377,210398,210238,210365,210271,210145,209987,209841,209707,209661,209417,209292,209226,209076,208893,208430,208849,208796,208627,208521,208395,208318,208208,208284,208475,208707,208712,208835,208975,209436,209636,209773,210022,210210],
+      "readings": {
+       "far50": 18,
+       "far90": null,
+       "cross": 23,
+       "gapArea": 218.25053544072384,
+       "fineHorizon": {
+        "kind": "horizon",
+        "j": 80,
+        "steps": 5119
+       }
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "readout": {
+  "fault": null,
+  "kPairs": [
+   {
+    "seed": 1,
+    "N": 131072,
+    "R": 8,
+    "outcome": {
+     "kind": "horizon",
+     "k": 1,
+     "steps": 1023,
+     "decidedAt": 4
+    }
+   },
+   {
+    "seed": 1,
+    "N": 131072,
+    "R": 32,
+    "outcome": {
+     "kind": "horizon",
+     "k": 1,
+     "steps": 1023,
+     "decidedAt": 4
+    }
+   },
+   {
+    "seed": 1,
+    "N": 131072,
+    "R": 64,
+    "outcome": {
+     "kind": "horizon",
+     "k": 1,
+     "steps": 1023,
+     "decidedAt": 4
+    }
+   },
+   {
+    "seed": 3,
+    "N": 131072,
+    "R": 8,
+    "outcome": {
+     "kind": "no-mark",
+     "decidedAt": 1
+    }
+   },
+   {
+    "seed": 3,
+    "N": 131072,
+    "R": 32,
+    "outcome": {
+     "kind": "no-mark",
+     "decidedAt": 1
+    }
+   },
+   {
+    "seed": 3,
+    "N": 131072,
+    "R": 64,
+    "outcome": {
+     "kind": "no-mark",
+     "decidedAt": 1
+    }
+   },
+   {
+    "seed": 4,
+    "N": 131072,
+    "R": 8,
+    "outcome": {
+     "kind": "horizon",
+     "k": 1,
+     "steps": 1023,
+     "decidedAt": 4
+    }
+   },
+   {
+    "seed": 4,
+    "N": 131072,
+    "R": 32,
+    "outcome": {
+     "kind": "horizon",
+     "k": 5,
+     "steps": 5119,
+     "decidedAt": 8
+    }
+   },
+   {
+    "seed": 4,
+    "N": 131072,
+    "R": 64,
+    "outcome": {
+     "kind": "horizon",
+     "k": 9,
+     "steps": 9215,
+     "decidedAt": 12
+    }
+   },
+   {
+    "seed": 1,
+    "N": 262144,
+    "R": 8,
+    "outcome": {
+     "kind": "horizon",
+     "k": 1,
+     "steps": 1023,
+     "decidedAt": 4
+    }
+   },
+   {
+    "seed": 1,
+    "N": 262144,
+    "R": 32,
+    "outcome": {
+     "kind": "horizon",
+     "k": 52,
+     "steps": 53247,
+     "decidedAt": 55
+    }
+   },
+   {
+    "seed": 1,
+    "N": 262144,
+    "R": 64,
+    "outcome": {
+     "kind": "horizon",
+     "k": 59,
+     "steps": 60415,
+     "decidedAt": 62
+    }
+   },
+   {
+    "seed": 3,
+    "N": 262144,
+    "R": 8,
+    "outcome": {
+     "kind": "censored",
+     "window": 131071,
+     "decidedAt": 128
+    }
+   },
+   {
+    "seed": 3,
+    "N": 262144,
+    "R": 32,
+    "outcome": {
+     "kind": "horizon",
+     "k": 30,
+     "steps": 30719,
+     "decidedAt": 33
+    }
+   },
+   {
+    "seed": 3,
+    "N": 262144,
+    "R": 64,
+    "outcome": {
+     "kind": "horizon",
+     "k": 23,
+     "steps": 23551,
+     "decidedAt": 26
+    }
+   },
+   {
+    "seed": 4,
+    "N": 262144,
+    "R": 8,
+    "outcome": {
+     "kind": "horizon",
+     "k": 16,
+     "steps": 16383,
+     "decidedAt": 19
+    }
+   },
+   {
+    "seed": 4,
+    "N": 262144,
+    "R": 32,
+    "outcome": {
+     "kind": "horizon",
+     "k": 58,
+     "steps": 59391,
+     "decidedAt": 61
+    }
+   },
+   {
+    "seed": 4,
+    "N": 262144,
+    "R": 64,
+    "outcome": {
+     "kind": "horizon",
+     "k": 55,
+     "steps": 56319,
+     "decidedAt": 58
+    }
+   },
+   {
+    "seed": 1,
+    "N": 393216,
+    "R": 8,
+    "outcome": {
+     "kind": "censored",
+     "window": 131071,
+     "decidedAt": 128
+    }
+   },
+   {
+    "seed": 1,
+    "N": 393216,
+    "R": 32,
+    "outcome": {
+     "kind": "horizon",
+     "k": 98,
+     "steps": 100351,
+     "decidedAt": 101
+    }
+   },
+   {
+    "seed": 1,
+    "N": 393216,
+    "R": 64,
+    "outcome": {
+     "kind": "horizon",
+     "k": 8,
+     "steps": 8191,
+     "decidedAt": 11
+    }
+   },
+   {
+    "seed": 3,
+    "N": 393216,
+    "R": 8,
+    "outcome": {
+     "kind": "horizon",
+     "k": 1,
+     "steps": 1023,
+     "decidedAt": 4
+    }
+   },
+   {
+    "seed": 3,
+    "N": 393216,
+    "R": 32,
+    "outcome": {
+     "kind": "horizon",
+     "k": 1,
+     "steps": 1023,
+     "decidedAt": 4
+    }
+   },
+   {
+    "seed": 3,
+    "N": 393216,
+    "R": 64,
+    "outcome": {
+     "kind": "horizon",
+     "k": 1,
+     "steps": 1023,
+     "decidedAt": 4
+    }
+   },
+   {
+    "seed": 4,
+    "N": 393216,
+    "R": 8,
+    "outcome": {
+     "kind": "censored",
+     "window": 131071,
+     "decidedAt": 128
+    }
+   },
+   {
+    "seed": 4,
+    "N": 393216,
+    "R": 32,
+    "outcome": {
+     "kind": "horizon",
+     "k": 73,
+     "steps": 74751,
+     "decidedAt": 76
+    }
+   },
+   {
+    "seed": 4,
+    "N": 393216,
+    "R": 64,
+    "outcome": {
+     "kind": "horizon",
+     "k": 52,
+     "steps": 53247,
+     "decidedAt": 55
+    }
+   }
+  ],
+  "fine": [
+   {
+    "R": 8,
+    "verdict": "material",
+    "rows": [
+     {
+      "seed": 1,
+      "N": 131072,
+      "gS": 460.6152685754814,
+      "gK": 0.6286058130651475
+     },
+     {
+      "seed": 3,
+      "N": 131072,
+      "gS": 1808.198125466966,
+      "gK": 305.98212811002173
+     },
+     {
+      "seed": 4,
+      "N": 131072,
+      "gS": 929.5638150193355,
+      "gK": 89.97301267570036
+     }
+    ],
+    "sHorizons": [
+     {
+      "seed": 1,
+      "N": 131072,
+      "fineHorizon": {
+       "kind": "horizon",
+       "j": 41,
+       "steps": 2623
+      }
+     },
+     {
+      "seed": 3,
+      "N": 131072,
+      "fineHorizon": {
+       "kind": "censored",
+       "window": 7231
+      }
+     },
+     {
+      "seed": 4,
+      "N": 131072,
+      "fineHorizon": {
+       "kind": "censored",
+       "window": 7231
+      }
+     }
+    ]
+   },
+   {
+    "R": 32,
+    "verdict": "material",
+    "rows": [
+     {
+      "seed": 1,
+      "N": 131072,
+      "gS": 913.7136186429985,
+      "gK": 5.89728791625181
+     },
+     {
+      "seed": 3,
+      "N": 131072,
+      "gS": 2225.435117484223,
+      "gK": 478.0525572233818
+     },
+     {
+      "seed": 4,
+      "N": 131072,
+      "gS": 1073.7587177911778,
+      "gK": 163.57885977879664
+     }
+    ],
+    "sHorizons": [
+     {
+      "seed": 1,
+      "N": 131072,
+      "fineHorizon": {
+       "kind": "censored",
+       "window": 7231
+      }
+     },
+     {
+      "seed": 3,
+      "N": 131072,
+      "fineHorizon": {
+       "kind": "censored",
+       "window": 7231
+      }
+     },
+     {
+      "seed": 4,
+      "N": 131072,
+      "fineHorizon": {
+       "kind": "censored",
+       "window": 7231
+      }
+     }
+    ]
+   },
+   {
+    "R": 64,
+    "verdict": "mixed",
+    "rows": [
+     {
+      "seed": 1,
+      "N": 131072,
+      "gS": 872.8935327263006,
+      "gK": 12.909391348105324
+     },
+     {
+      "seed": 3,
+      "N": 131072,
+      "gS": 1454.5948839664777,
+      "gK": 775.9205505520544
+     },
+     {
+      "seed": 4,
+      "N": 131072,
+      "gS": 819.6965646744767,
+      "gK": 218.25053544072384
+     }
+    ],
+    "sHorizons": [
+     {
+      "seed": 1,
+      "N": 131072,
+      "fineHorizon": {
+       "kind": "censored",
+       "window": 7231
+      }
+     },
+     {
+      "seed": 3,
+      "N": 131072,
+      "fineHorizon": {
+       "kind": "censored",
+       "window": 7231
+      }
+     },
+     {
+      "seed": 4,
+      "N": 131072,
+      "fineHorizon": {
+       "kind": "censored",
+       "window": 7231
+      }
+     }
+    ]
+   }
+  ],
+  "radii": [
+   {
+    "R": 8,
+    "label": "K|8",
+    "k": {
+     "valid": [
+      {
+       "seed": 3,
+       "N": 131072,
+       "value": -1
+      },
+      {
+       "seed": 1,
+       "N": 131072,
+       "value": 1023
+      },
+      {
+       "seed": 4,
+       "N": 131072,
+       "value": 1023
+      },
+      {
+       "seed": 1,
+       "N": 262144,
+       "value": 1023
+      },
+      {
+       "seed": 3,
+       "N": 393216,
+       "value": 1023
+      },
+      {
+       "seed": 4,
+       "N": 262144,
+       "value": 16383
+      },
+      {
+       "seed": 3,
+       "N": 262144,
+       "value": null
+      },
+      {
+       "seed": 1,
+       "N": 393216,
+       "value": null
+      },
+      {
+       "seed": 4,
+       "N": 393216,
+       "value": null
+      }
+     ],
+     "excluded": [],
+     "noMark": 1,
+     "horizons": 5,
+     "censored": 3,
+     "median": 1023
+    },
+    "sMedian": 97279,
+    "verdict": "stone effect",
+    "paired": {
+     "atLeastHalf": 4,
+     "of": 9
+    },
+    "text": "K|8: 9 valid (no mark 1, horizons 5, censored 3); median 1,023 steps against the S-8 median 97,279 steps: stone effect at R = 8 (the K median is under half the stone's); paired: 4 of 9 groups with K|8 at least half S-8"
+   },
+   {
+    "R": 32,
+    "label": "K|32",
+    "k": {
+     "valid": [
+      {
+       "seed": 3,
+       "N": 131072,
+       "value": -1
+      },
+      {
+       "seed": 1,
+       "N": 131072,
+       "value": 1023
+      },
+      {
+       "seed": 3,
+       "N": 393216,
+       "value": 1023
+      },
+      {
+       "seed": 4,
+       "N": 131072,
+       "value": 5119
+      },
+      {
+       "seed": 3,
+       "N": 262144,
+       "value": 30719
+      },
+      {
+       "seed": 1,
+       "N": 262144,
+       "value": 53247
+      },
+      {
+       "seed": 4,
+       "N": 262144,
+       "value": 59391
+      },
+      {
+       "seed": 4,
+       "N": 393216,
+       "value": 74751
+      },
+      {
+       "seed": 1,
+       "N": 393216,
+       "value": 100351
+      }
+     ],
+     "excluded": [],
+     "noMark": 1,
+     "horizons": 8,
+     "censored": 0,
+     "median": 30719
+    },
+    "sMedian": 26623,
+    "verdict": "divergence clock",
+    "paired": {
+     "atLeastHalf": 5,
+     "of": 9
+    },
+    "text": "K|32: 9 valid (no mark 1, horizons 8, censored 0); median 30,719 steps against the S-32 median 26,623 steps: divergence clock at R = 32 (the K median is at least half the stone's); paired: 5 of 9 groups with K|32 at least half S-32"
+   },
+   {
+    "R": 64,
+    "label": "K|64",
+    "k": {
+     "valid": [
+      {
+       "seed": 3,
+       "N": 131072,
+       "value": -1
+      },
+      {
+       "seed": 1,
+       "N": 131072,
+       "value": 1023
+      },
+      {
+       "seed": 3,
+       "N": 393216,
+       "value": 1023
+      },
+      {
+       "seed": 1,
+       "N": 393216,
+       "value": 8191
+      },
+      {
+       "seed": 4,
+       "N": 131072,
+       "value": 9215
+      },
+      {
+       "seed": 3,
+       "N": 262144,
+       "value": 23551
+      },
+      {
+       "seed": 4,
+       "N": 393216,
+       "value": 53247
+      },
+      {
+       "seed": 4,
+       "N": 262144,
+       "value": 56319
+      },
+      {
+       "seed": 1,
+       "N": 262144,
+       "value": 60415
+      }
+     ],
+     "excluded": [],
+     "noMark": 1,
+     "horizons": 8,
+     "censored": 0,
+     "median": 9215
+    },
+    "sMedian": 35839,
+    "verdict": "stone effect",
+    "paired": {
+     "atLeastHalf": 5,
+     "of": 9
+    },
+    "text": "K|64: 9 valid (no mark 1, horizons 8, censored 0); median 9,215 steps against the S-64 median 35,839 steps: stone effect at R = 64 (the K median is under half the stone's); paired: 5 of 9 groups with K|64 at least half S-64"
+   }
+  ],
+  "pace": "Pace: a divergence clock at R = 32 (paired 5 of 9; R = 8 stone effect, R = 64 stone effect): #55's R = 32 horizons time divergence, and the pace reading rests on the first censuses: the fine verdict at R = 32 is material (on the fine pilot's groups only, N = 131,072): a stone is a mark legible for about its fine horizon (S-32: > 7,231, > 7,231, > 7,231 steps). The day stays one wander (the legibility seen here is at most the fine window, 8,192 steps), and no garden setting changes.",
+  "side": {
+   "byDay": [
+    {
+     "R": 8,
+     "days": [
+      {
+       "N": 131072,
+       "k": [
+        {
+         "seed": 3,
+         "value": -1,
+         "s": 18431
+        },
+        {
+         "seed": 1,
+         "value": 1023,
+         "s": 3071
+        },
+        {
+         "seed": 4,
+         "value": 1023,
+         "s": null
+        }
+       ],
+       "kMedian": 1023,
+       "sMedian": 18431,
+       "paired": {
+        "atLeastHalf": 0,
+        "of": 3
+       },
+       "verdict": "K under half S"
+      },
+      {
+       "N": 262144,
+       "k": [
+        {
+         "seed": 1,
+         "value": 1023,
+         "s": null
+        },
+        {
+         "seed": 4,
+         "value": 16383,
+         "s": 5119
+        },
+        {
+         "seed": 3,
+         "value": null,
+         "s": 8191
+        }
+       ],
+       "kMedian": 16383,
+       "sMedian": 8191,
+       "paired": {
+        "atLeastHalf": 2,
+        "of": 3
+       },
+       "verdict": "K at least half S"
+      },
+      {
+       "N": 393216,
+       "k": [
+        {
+         "seed": 3,
+         "value": 1023,
+         "s": null
+        },
+        {
+         "seed": 1,
+         "value": null,
+         "s": 97279
+        },
+        {
+         "seed": 4,
+         "value": null,
+         "s": null
+        }
+       ],
+       "kMedian": null,
+       "sMedian": null,
+       "paired": {
+        "atLeastHalf": 2,
+        "of": 3
+       },
+       "verdict": "K at least half S"
+      }
+     ]
+    },
+    {
+     "R": 32,
+     "days": [
+      {
+       "N": 131072,
+       "k": [
+        {
+         "seed": 3,
+         "value": -1,
+         "s": 114687
+        },
+        {
+         "seed": 1,
+         "value": 1023,
+         "s": 22527
+        },
+        {
+         "seed": 4,
+         "value": 5119,
+         "s": 120831
+        }
+       ],
+       "kMedian": 1023,
+       "sMedian": 114687,
+       "paired": {
+        "atLeastHalf": 0,
+        "of": 3
+       },
+       "verdict": "K under half S"
+      },
+      {
+       "N": 262144,
+       "k": [
+        {
+         "seed": 3,
+         "value": 30719,
+         "s": 14335
+        },
+        {
+         "seed": 1,
+         "value": 53247,
+         "s": 26623
+        },
+        {
+         "seed": 4,
+         "value": 59391,
+         "s": 3071
+        }
+       ],
+       "kMedian": 53247,
+       "sMedian": 14335,
+       "paired": {
+        "atLeastHalf": 3,
+        "of": 3
+       },
+       "verdict": "K at least half S"
+      },
+      {
+       "N": 393216,
+       "k": [
+        {
+         "seed": 3,
+         "value": 1023,
+         "s": 51199
+        },
+        {
+         "seed": 4,
+         "value": 74751,
+         "s": 67583
+        },
+        {
+         "seed": 1,
+         "value": 100351,
+         "s": 5119
+        }
+       ],
+       "kMedian": 74751,
+       "sMedian": 51199,
+       "paired": {
+        "atLeastHalf": 2,
+        "of": 3
+       },
+       "verdict": "K at least half S"
+      }
+     ]
+    },
+    {
+     "R": 64,
+     "days": [
+      {
+       "N": 131072,
+       "k": [
+        {
+         "seed": 3,
+         "value": -1,
+         "s": 63487
+        },
+        {
+         "seed": 1,
+         "value": 1023,
+         "s": 50175
+        },
+        {
+         "seed": 4,
+         "value": 9215,
+         "s": 31743
+        }
+       ],
+       "kMedian": 1023,
+       "sMedian": 50175,
+       "paired": {
+        "atLeastHalf": 0,
+        "of": 3
+       },
+       "verdict": "K under half S"
+      },
+      {
+       "N": 262144,
+       "k": [
+        {
+         "seed": 3,
+         "value": 23551,
+         "s": 18431
+        },
+        {
+         "seed": 4,
+         "value": 56319,
+         "s": 2047
+        },
+        {
+         "seed": 1,
+         "value": 60415,
+         "s": 35839
+        }
+       ],
+       "kMedian": 56319,
+       "sMedian": 18431,
+       "paired": {
+        "atLeastHalf": 3,
+        "of": 3
+       },
+       "verdict": "K at least half S"
+      },
+      {
+       "N": 393216,
+       "k": [
+        {
+         "seed": 3,
+         "value": 1023,
+         "s": 68607
+        },
+        {
+         "seed": 1,
+         "value": 8191,
+         "s": 11263
+        },
+        {
+         "seed": 4,
+         "value": 53247,
+         "s": 67583
+        }
+       ],
+       "kMedian": 8191,
+       "sMedian": 67583,
+       "paired": {
+        "atLeastHalf": 2,
+        "of": 3
+       },
+       "verdict": "K under half S"
+      }
+     ]
+    }
+   ],
+   "fineQuiet": [
+    {
+     "seed": 1,
+     "N": 131072,
+     "label": "S8",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 1,
+     "N": 131072,
+     "label": "S32",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 1,
+     "N": 131072,
+     "label": "S64",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 1,
+     "N": 131072,
+     "label": "K|8",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 1,
+     "N": 131072,
+     "label": "K|32",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 1,
+     "N": 131072,
+     "label": "K|64",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 3,
+     "N": 131072,
+     "label": "S8",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 3,
+     "N": 131072,
+     "label": "S32",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 3,
+     "N": 131072,
+     "label": "S64",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 3,
+     "N": 131072,
+     "label": "K|8",
+     "firstDiff": 26,
+     "emptyNear": 85,
+     "vacuous": true
+    },
+    {
+     "seed": 3,
+     "N": 131072,
+     "label": "K|32",
+     "firstDiff": 26,
+     "emptyNear": 0,
+     "vacuous": true
+    },
+    {
+     "seed": 3,
+     "N": 131072,
+     "label": "K|64",
+     "firstDiff": 26,
+     "emptyNear": 0,
+     "vacuous": true
+    },
+    {
+     "seed": 4,
+     "N": 131072,
+     "label": "S8",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 4,
+     "N": 131072,
+     "label": "S32",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 4,
+     "N": 131072,
+     "label": "S64",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 4,
+     "N": 131072,
+     "label": "K|8",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 4,
+     "N": 131072,
+     "label": "K|32",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    },
+    {
+     "seed": 4,
+     "N": 131072,
+     "label": "K|64",
+     "firstDiff": 1,
+     "emptyNear": 0,
+     "vacuous": false
+    }
+   ]
+  }
+ }
+}

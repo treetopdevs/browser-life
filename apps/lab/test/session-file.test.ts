@@ -687,6 +687,28 @@ describe("the family tree in the log of firsts", () => {
       const stale = openFirstsLog(mid.state, 100, g, { ...rec, families: { tree: later.tree.snapshot(), genealogy: g } });
       expect([stale.detector.lastStep, stale.tree.lastStep]).toEqual([200, null]);
     }, 120_000);
+
+    // A record kept in a `.rewind` sidecar can come from another state's file or an older build (docs/pond-keeper-v0-2026-10-17.md,
+    // amendment of 2026-10-18): only a record of this very state speaks for its picks, and only a detector read as this build reads
+    // this world comes back.
+    it("takes pick notes only from a record of this state, and a detector only with this build's context", async () => {
+      const { mid, record: rec } = await record();
+      const g = { edgesFrom: 0, edges: 7, dropped: 0 };
+      const withPick: RewindRecord = { ...rec, picks: [[100, true]] };
+      const own = openFirstsLog(mid.state, 100, g, withPick);
+      expect([own.detector.lastStep, [...own.notes]]).toEqual([200, [[100, true]]]);
+      // Another state's record: no log, no tree and no notes, so the pick reads as one this page never saw chosen.
+      const elsewhere = openFirstsLog(mid.state, 100, g, { ...withPick, hash: "0".repeat(16) });
+      expect([elsewhere.detector.lastStep, elsewhere.tree.lastStep, elsewhere.notes.size]).toEqual([null, null, 0]);
+      const facts = interventionFacts([{ step: 100, kind: "pick", cycle: 1, donors: [0] }], elsewhere.notes, null);
+      expect([facts.picks.byHand, facts.picks.unknown]).toEqual([0, 1]);
+      // This state, read under another context (as a later build might, with other gene bits or another cadence): the detector and
+      // the tree start afresh, the notes on this state's picks stay.
+      for (const ctx of [{ ...rec.firsts.ctx, censusEvery: 50 }, { ...rec.firsts.ctx, geneBits: [0] }, { ...rec.firsts.ctx, tiles: 1, tilesX: 1 }]) {
+        const reread = openFirstsLog(mid.state, 100, g, { ...withPick, firsts: { ...rec.firsts, ctx } });
+        expect([reread.detector.lastStep, reread.tree.lastStep, [...reread.notes]], JSON.stringify(ctx)).toEqual([null, null, [[100, true]]]);
+      }
+    }, 120_000);
   });
 });
 
