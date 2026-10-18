@@ -216,7 +216,7 @@ function gpuIo(src: RunSpec, start: Cont, deadline: number, timings?: Timing[]):
       // The census gate (tools/lib/horizon.ts): k in sequence, and every census conservation-checked before it can decide.
       const gate = censusGate({ name: twin.name, N, censusEvery: CENSUS, firstK });
       const text = (f: string, t: string) => {
-        if (f === INTERVENTIONS_FILE && t) for (const e of parseInterventionLog(t)) applied.push({ step: e.step, r: e.r });
+        if (f === INTERVENTIONS_FILE && t) for (const e of parseInterventionLog(t)) if (e.kind !== "sun") applied.push({ step: e.step, r: e.r });
         if (f === "series.jsonl" && t) gate.series(t);
       };
       const sink: Sink = {

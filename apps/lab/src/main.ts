@@ -1,4 +1,4 @@
-import { GENE_BIT, PRESETS, pondScoreTerms, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondScore, type WorldConfig } from "@bl/schema";
+import { GENE_BIT, PRESETS, SUN_PERCENTS, SUN_SPAN_MAX, pondScoreTerms, sunError, sunLight, worldH, worldW, worstRanks, NN_I, NN_H, NN_O, NN_BYTES, type PondScore, type WorldConfig } from "@bl/schema";
 import { VIEW_MODES, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
 import type { CensusMsg, FromWorker, Keep, PondAwaitMsg, PondsMsg, ProbeMsg, PressureMsg, SessionView, StatsMsg, ToWorker } from "./protocol.ts";
 import { donorsWithKeep, type KeptPond } from "./pond-play.ts";
@@ -70,7 +70,7 @@ let cfg: WorldConfig | null = null;
 let cfgBeforeLoad: WorldConfig | null = null;
 let rect: ViewRect = { x: 0, y: 0, w: 256, h: 256 };
 let mode: GpuViewMode = "composite";
-type Tool = "inspect" | "lesion" | "feed" | "drain" | "pan" | "pick";
+type Tool = "inspect" | "lesion" | "feed" | "drain" | "sun" | "pan" | "pick";
 let tool: Tool = "inspect";
 let playing = false;
 let lastStep = 0;
@@ -113,12 +113,16 @@ function setStatus(message: string, state: "ready" | "running" | "error" | "load
   $("simulation-dot").className = `status-dot ${state}`;
 }
 
+/** Whether the Sun panel has been painted once (setWorldControls first runs before its elements are looked up). */
+let sunPainted = false;
 function setWorldControls(enabled: boolean) {
   worldReady = enabled;
   for (const id of ["btn-play", "btn-step", "btn-step100", "btn-save", "btn-export", "btn-verify"])
     $<HTMLButtonElement>(id).disabled = !enabled || (id === "btn-save" && storageOff);
   // The dial, auto-breed and Keep wait with the rest while a world loads, and say why beside them.
   if (breederPainted) syncBreederControls();
+  // So does the Sun: its choices describe the world on screen, not the one loading.
+  if (sunPainted) paintSun();
 }
 setWorldControls(false);
 
@@ -390,21 +394,92 @@ $("btn-play").onclick = togglePlay;
 $("btn-step").onclick = () => stepBy(1);
 $("btn-step100").onclick = () => stepBy(100);
 
+// ---------- the sun (docs/garden-sun-2026-10-18.md) ----------
+/** The sun the world on screen runs under (the worker's "sun"), or null for its own light. */
+let sunNow: { step: number; percent: number; span: number } | null = null;
+/** A sun was sent and not yet answered (a "sun" message or a refusal). */
+let sunAsked = false;
+/** The world on screen (the worker's generation from "loaded"), which a sun request names so a replacement never takes it. */
+let sunWorld: number | undefined;
+const SUN_WORDS: Record<number, string> = { 50: "Half the light", 75: "Three quarters", 125: "A quarter more", 150: "Half again more" };
+const sunChoices = $("sun-choices");
+const sunSpan = $<HTMLInputElement>("sun-span");
+const sunButton = $<HTMLButtonElement>("btn-sun");
+/** The percent chosen, or null when none is (or the chosen one is refused). */
+function sunChosen(): number | null {
+  const on = sunChoices.querySelector<HTMLInputElement>("input:checked:not(:disabled)");
+  return on ? Number(on.value) : null;
+}
+/**
+ * The Sun tool's panel: one choice per percent, each saying what it makes of this world's light (from its config: base, the
+ * swing on top, and the season's), refused ones disabled with the reason; and what shines now.
+ */
+function paintSun() {
+  const keep = sunChosen();
+  const legend = sunChoices.querySelector("legend")!;
+  sunChoices.replaceChildren(legend);
+  if (cfg) {
+    const c = cfg;
+    const own = document.createElement("p");
+    own.className = "hint";
+    own.textContent = `This world's own light: base ${c.lightBase}, swing ${c.lightAmp}${c.seasonAmp ? `, season ${c.seasonAmp}` : ""}.`;
+    sunChoices.append(own);
+    for (const p of SUN_PERCENTS) {
+      const bad = sunError(c, p);
+      const l = sunLight(c, p);
+      const label = document.createElement("label");
+      label.className = "sun-choice";
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "sun-percent";
+      input.value = String(p);
+      input.disabled = bad !== null;
+      input.checked = !bad && (keep === p || (keep === null && p === 75));
+      const words = document.createElement("span");
+      words.textContent = `${SUN_WORDS[p] ?? `${p}%`} (${p}%): ${bad ? "too bright for this world" : `base ${l.lightBase}, swing ${l.lightAmp}${c.seasonAmp ? `, season ${l.seasonAmp}` : ""}`}`;
+      if (bad) label.title = bad;
+      label.append(input, words);
+      sunChoices.append(label);
+    }
+  }
+  const span = Number(sunSpan.value);
+  const spanOk = Number.isSafeInteger(span) && span >= 1 && span <= SUN_SPAN_MAX;
+  const status = $("sun-status");
+  if (!cfg) status.textContent = "Plant a world first.";
+  else if (sunNow) status.textContent = `A sun of ${sunNow.percent}% shines from step ${sunNow.step.toLocaleString()}; the world's own light returns at step ${(sunNow.step + sunNow.span).toLocaleString()}.`;
+  else if (!SUN_PERCENTS.some((p) => sunError(cfg!, p) === null)) status.textContent = "This world's light cannot be dialled: every choice would leave the range the physics allows.";
+  else if (!spanOk) status.textContent = `A sun lasts from 1 to ${SUN_SPAN_MAX.toLocaleString()} steps.`;
+  else status.textContent = "Each sun is logged, and replays with the history. One at a time.";
+  sunButton.disabled = !worldReady || !cfg || sunNow !== null || sunAsked || sunChosen() === null || !spanOk;
+  sunPainted = true;
+}
+sunChoices.onchange = () => paintSun();
+sunSpan.oninput = () => paintSun();
+sunButton.onclick = () => {
+  const p = sunChosen();
+  // The button is disabled while a world loads; a click that races the repaint is not sent either.
+  if (p === null || !worldReady || !cfg || sunNow !== null || sunAsked) return;
+  sunAsked = true;
+  send({ type: "sun", percent: p, span: Number(sunSpan.value), world: sunWorld });
+  paintSun();
+};
+
 // ---------- tools ----------
 const tools = $("tools");
 /** The tool's name as on its button, and what it does, said under the hand that holds it. */
-const TOOL_NAMES: Record<Tool, string> = { inspect: "Look", lesion: "Wound", feed: "Feed", drain: "Drain", pan: "Move", pick: "Pick" };
+const TOOL_NAMES: Record<Tool, string> = { inspect: "Look", lesion: "Wound", feed: "Feed", drain: "Drain", sun: "Sun", pan: "Move", pick: "Pick" };
 const TOOL_SAYS: Record<Tool, string> = {
   inspect: "Click a spot on the world to see what is in that cell.",
   lesion: "Click or drag to clear a patch. Bodies there turn to waste and their stored energy to heat; no matter leaves the jar.",
   feed: "Click or drag to add nutrient where you point.",
   drain: "Click or drag to take nutrient out where you point.",
+  sun: "Dim the whole sky for a while (on some worlds you can brighten it instead), then the world's own light returns. Light is energy, so no matter enters or leaves the jar.",
   pan: "Drag to move around. Scroll to zoom, double-click to fit the whole world.",
   pick: "Click ponds on the field to choose the donors of the next round.",
 };
 /** The verb for the hover line on the field: what a click there would do with this tool. */
 const TOOL_VERB: Record<Tool, string> = {
-  inspect: "click to look", lesion: "click or drag to wound", feed: "click or drag to feed", drain: "click or drag to drain", pan: "drag to move", pick: "click to pick",
+  inspect: "click to look", lesion: "click or drag to wound", feed: "click or drag to feed", drain: "click or drag to drain", sun: "set the sun in its panel", pan: "drag to move", pick: "click to pick",
 };
 function setTool(t: Tool) {
   tool = t;
@@ -432,6 +507,8 @@ function syncBrush() {
   radius.disabled = !brush();
   amount.disabled = !feeding();
   $("feed-hint").hidden = !feeding();
+  $("sun-panel").hidden = tool !== "sun";
+  paintSun();
 }
 syncBrush();
 /** One application of the current brush at world position (x, y). */
@@ -1752,6 +1829,11 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       firstsPanel.onLoaded(m.manifest);
       familyPanel.onLoaded();
       naturalistPanel.onLoaded(m.manifest, m.step, m.world);
+      // The new world's sun, if any, follows in its own message.
+      sunNow = null;
+      sunAsked = false;
+      sunWorld = m.world;
+      paintSun();
       break;
     case "stats":
       onStats(m);
@@ -1774,6 +1856,17 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       pressureAnswered();
       paintDial();
       break;
+    case "sun": {
+      // A replaced world's sun is not the one on screen.
+      if (sunWorld !== undefined && m.world !== sunWorld) break;
+      const was = sunNow;
+      sunNow = m.sun;
+      if (sunAsked && m.sun && (!was || was.step !== m.sun.step)) toast(`The sun is at ${m.sun.percent}% for ${m.sun.span.toLocaleString()} steps, from step ${m.sun.step.toLocaleString()} · logged, unsaved`);
+      else if (was && !m.sun) toast(`The sun of ${was.percent}% has set; the world's own light is back at step ${(was.step + was.span).toLocaleString()}`);
+      sunAsked = false;
+      paintSun();
+      break;
+    }
     case "keep":
       keptKey = m.key;
       keepWorld = m.world;
@@ -1825,6 +1918,10 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         naturalistPanel.onApplyRefused(m.message);
       }
       if (m.request === "pressure") pressureAnswered();
+      if (m.request === "sun") {
+        sunAsked = false;
+        paintSun();
+      }
       if (m.request === "pick") {
         endBreeding();
         // Auto-breed does not go on past a refusal; the cycle is still waiting, so its pick UI opens for the player.

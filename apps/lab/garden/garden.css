@@ -79,3 +79,9 @@
   .garden-fields { gap: 8px; }
   .garden-map { max-width: none; }
 }
+/* The sun letter (docs/garden-sun-2026-10-18.md). */
+.garden-sun { margin-top: 24px; }
+.garden-sun h3 { margin: 0 0 8px; }
+.garden-sun-choices { border: 0; margin: 0 0 8px; padding: 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.garden-sun-choices legend { font-size: .875rem; font-weight: 600; padding: 0; margin-bottom: 6px; width: 100%; }
+.garden-sun-choice { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: .9375rem; }

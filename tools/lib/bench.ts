@@ -126,6 +126,8 @@ export function drawDose(seed: number, specSha256: string, entries: readonly Sch
   const kinds = A === null ? (["lesion"] as const) : (["lesion", "feed", "drain"] as const);
   const drawn: ScheduledIntervention[] = [];
   for (const e of entries) {
+    // A proposal forks with lesions and feeds only (tools/lib/propose.ts refuses a sun), so its rules hold no sun.
+    if (e.kind === "sun") throw new Error(`a dose fork draws from lesion and feed entries, not a sun (t=${e.step})`);
     const kind = kinds[int(kinds.length)];
     const cell = int(cells);
     const x = cell % W, y = Math.floor(cell / W);

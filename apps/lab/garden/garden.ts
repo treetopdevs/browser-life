@@ -18,9 +18,14 @@ export interface Census {
 }
 export interface TipCensus extends Census { day: number; step: number; verified: boolean; source: string }
 export interface Letter {
-  id: string; kind: string; x: number; y: number; r: number; postedAt: number; landsAtStep: number; day: number;
+  /** A sun (docs/garden-sun-2026-10-18.md) has no place: its `x`, `y` and `r` are null. */
+  id: string; kind: string; x: number | null; y: number | null; r: number | null; postedAt: number; landsAtStep: number; day: number;
   status: string; landedIn: string | null; droppedAt: number | null;
+  /** A sun's brightness (percent of the world's own light) and how many steps it shines; null for a stone. Added with the sun. */
+  percent?: number | null; span?: number | null;
 }
+/** The sun letter's terms (README "The garden", `sun`): the percents this garden's light takes, the span, where the next lands. */
+export interface SunBlock { percents: number[]; span: number; nextLanding: { day: number; step: number } | null }
 export interface Day {
   day: number; startStep: number; endStep: number; status: string; releasedAt: number; doneAt: number | null;
   verifiedAt: number | null; digest: string | null; verification: string | null; letters: string[]; census: Census | null;
@@ -86,6 +91,8 @@ export interface GardenView {
   food?: FoodBlock;
   /** Added with dawn predictions (docs/garden-predictions-2026-10-18.md); absent from a coordinator from before. */
   leadersRule?: LeadersRule;
+  /** Added with the sun letter (docs/garden-sun-2026-10-18.md); absent from a coordinator from before. */
+  sun?: SunBlock;
 }
 
 // A check returns null when the value fits, or the first thing wrong with it, named by its path.
@@ -133,10 +140,14 @@ const censusKeys = {
   individuals: orNull(num), lineages: orNull(num), maxGeneration: orNull(num), mutations: orNull(num),
   extinct: orNull(bool), conservationOk: orNull(bool),
 };
-const letterShape = shape({
-  id: str, kind: str, x: num, y: num, r: num, postedAt: time, landsAtStep: num, day: num, status: str,
+const letterKeys = shape({
+  id: str, kind: str, x: orNull(num), y: orNull(num), r: orNull(num), postedAt: time, landsAtStep: num, day: num, status: str,
   landedIn: orNull(str), droppedAt: orNull(time),
-});
+}, { percent: orNull(num), span: orNull(num) });
+/** A letter: a stone has its place (x, y, r numbers); only a letter of another kind, a sun, may have them null. */
+const stonePlace = shape({ x: num, y: num, r: num });
+const letterShape: Check = (v, p) => letterKeys(v, p) ?? (isObject(v) && v.kind === "stone" ? stonePlace(v, p) : null);
+const sunBlockShape = shape({ percents: list(num), span: pos, nextLanding: orNull(shape({ day: num, step: num })) });
 const foodShape = shape({
   id: str, x: num, y: num, r: num, amount: num, calledAt: time, hands: num, landsAtStep: num, day: num,
   status: str, landedIn: orNull(str), droppedAt: orNull(time),
@@ -187,7 +198,7 @@ const viewShape = shape({
     waiting: list(letterShape), recent: list(letterShape),
   }),
   limits: shape({ stoneRadius: shape({ min: num, max: num }), lettersPerAddressPerHour: num, logMax: num }),
-}, { food: foodBlockShape, leadersRule: leadersRuleShape });
+}, { food: foodBlockShape, leadersRule: leadersRuleShape, sun: sunBlockShape });
 
 const clip = (text: string, n = 160) => (text.length > n ? `${text.slice(0, n - 1)}…` : text);
 
@@ -528,6 +539,46 @@ export function mergeMine(stored: VisitRecord | null, createdAt: number, mine: r
 // ---------- the letter form ----------
 
 export interface StoneBody { kind: "stone"; x: number; y: number; r: number }
+/** A sun letter's body: exactly its kind and percent (the span is one garden day, the coordinator's to set). */
+export interface SunBody { kind: "sun"; percent: number }
+export type LetterBody = StoneBody | SunBody;
+export type SunCheck = { ok: true; body: SunBody } | { ok: false; words: string };
+
+/** What a sun of `percent` would do, in words: "Half the light", and so on. */
+export const SUN_WORDS: Readonly<Record<number, string>> = { 50: "Half the light", 75: "Three quarters of the light", 125: "A quarter more light", 150: "Half again more light" };
+
+/** What the server checks of a sun, checked before sending: the garden takes suns, and this percent. */
+export function sunBody(view: GardenView, percent: number | null): SunCheck {
+  const sun = view.sun;
+  if (!sun || sun.percents.length === 0) return { ok: false, words: "This garden takes no sun letters." };
+  if (percent === null || !sun.percents.includes(percent)) return { ok: false, words: `Choose how bright: ${sun.percents.map((p) => `${p}%`).join(", ")}.` };
+  return { ok: true, body: { kind: "sun", percent } };
+}
+
+/** Where a sun posted now would land and shine, in words, or why none can. */
+export function sunLandingWords(view: GardenView): string {
+  const sun = view.sun;
+  if (!sun || sun.percents.length === 0) return "This garden takes no sun letters.";
+  if (!sun.nextLanding) {
+    // The garden's own reason first (stopped, finished, the queue or log full): the sun's rule is only why when letters are open.
+    const letters = landingPreview(view);
+    if (!letters.open) return letters.reason;
+    return "No day before the last has room for a sun just now: one sun a day, and never on the last day.";
+  }
+  const { day, step } = sun.nextLanding;
+  return `Your sun would land at step ${fmtSteps(step)}, the end of day ${day}, and shine on day ${day + 1}, all ${fmtSteps(sun.span)} steps of it; then the world’s own light returns.`;
+}
+
+/** A letter's body as the page lists it: a stone's place and size, a sun's brightness and the day it shines. */
+export function letterBodyWords(l: Pick<Letter, "kind" | "x" | "y" | "r" | "percent" | "span" | "landsAtStep" | "day">): string {
+  const lands = `landing at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day})`;
+  if (l.kind === "stone") return `A stone of radius ${l.r} at (${l.x}, ${l.y}), ${lands}. `;
+  if (l.kind === "sun" && typeof l.percent === "number") {
+    const span = typeof l.span === "number" ? `, ${fmtSteps(l.span)} steps` : "";
+    return `A sun of ${l.percent}% (${(SUN_WORDS[l.percent] ?? "a dial").toLowerCase()}), ${lands}; it shines on day ${l.day + 1}${span}. `;
+  }
+  return `A letter of a kind ${NEW_WORD} (“${clip(l.kind, 24)}”), ${lands}. `;
+}
 export type StoneCheck = { ok: true; body: StoneBody } | { ok: false; field: "x" | "y" | "r"; words: string };
 
 const whole = (v: unknown): number | null => {
@@ -1073,25 +1124,26 @@ export function retryAfterMs(header: string | null | undefined): number | null {
 }
 
 /** Said when a letter's fate is unknown: the server keeps a letter before it answers, so it may be in the queue. */
-const UNSURE = "so this page cannot tell whether your stone arrived. The queue below is read again: look for it there before sending another.";
+const unsure = (kind: "stone" | "sun") => `so this page cannot tell whether your ${kind} arrived. The queue below is read again: look for it there before sending another.`;
 
 /**
  * A POST to the letters route, in words (the note's answer table). Status 0 is no answer at all (no connection, or
- * none within the deadline); like an unexpected code, it leaves the stone's fate unknown, and the page says so.
+ * none within the deadline); like an unexpected code, it leaves the letter's fate unknown, and the page says so.
  */
-export function postAnswer(status: number, body: unknown, headers: { get(name: string): string | null } | null, view: GardenView | null): Answer {
+export function postAnswer(status: number, body: unknown, headers: { get(name: string): string | null } | null, view: GardenView | null, kind: "stone" | "sun" = "stone"): Answer {
   switch (status) {
     case 201: {
       const l = isObject(body) && isObject(body.letter) ? body.letter : null;
       if (l && typeof l.id === "string" && typeof l.landsAtStep === "number" && typeof l.day === "number") {
+        const shines = kind === "sun" ? `, shines on day ${l.day + 1}` : "";
         return {
           tone: "note", refresh: true, letter: { id: l.id, landsAtStep: l.landsAtStep, day: l.day },
-          words: `Posted as ${clip(l.id, 24)}. It is public now, lands at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day}), and counts once a second island replays that day.`,
+          words: `Posted as ${clip(l.id, 24)}. It is public now, lands at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day})${shines}, and counts once a second island replays that day.`,
         };
       }
       return { tone: "note", refresh: true, words: "Posted. It is public now; the queue below shows where it lands." };
     }
-    case 422: return { tone: "negative", refresh: false, words: `The garden refused the stone: ${serverWords(body) ?? "it is not a stone the garden takes."}` };
+    case 422: return { tone: "negative", refresh: false, words: `The garden refused the ${kind}: ${serverWords(body) ?? `it is not a ${kind} the garden takes.`}` };
     case 409: return { tone: "negative", refresh: true, words: `The garden takes no letters now: ${serverWords(body) ?? "try again after the next dawn."}` };
     case 429: {
       // The limiter also answers 429 after too many refused letters, or for a new network while its table is full,
@@ -1107,8 +1159,8 @@ export function postAnswer(status: number, body: unknown, headers: { get(name: s
     case 415: return { tone: "negative", refresh: false, words: "The page sent something the garden could not read. Reload the page and try again." };
     case 404: return { tone: "negative", refresh: false, words: "There is no garden by that name here." };
     case 503: return { tone: "negative", refresh: false, words: "The garden is busy; try again in a moment." };
-    case 0: return { tone: "negative", refresh: true, words: `No answer came back, ${UNSURE}` };
-    default: return { tone: "negative", refresh: true, words: `The garden answered ${status}, ${UNSURE}` };
+    case 0: return { tone: "negative", refresh: true, words: `No answer came back, ${unsure(kind)}` };
+    default: return { tone: "negative", refresh: true, words: `The garden answered ${status}, ${unsure(kind)}` };
   }
 }
 
@@ -1334,6 +1386,15 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   const map = $("stone-map") as unknown as SVGSVGElement;
   const foodRow = $("g-food-row");
   const handSend = $("food-send") as HTMLButtonElement;
+  // The sun letter (docs/garden-sun-2026-10-18.md): a choice of brightness, shown only when the garden takes suns.
+  const sunRow = $("g-sun");
+  const sunForm = $("sun-form") as HTMLFormElement;
+  const sunChoices = $("sun-choices");
+  const sunPreview = $("sun-preview");
+  const sunSend = $("sun-send") as HTMLButtonElement;
+  const sunWhy = $("sun-why");
+  const sunAnswer = $("sun-answer");
+  let sunOffered = "";
   const handWhy = $("food-why");
   const handSaid = $("food-answer");
   const handShared = $("food-shared");
@@ -1468,9 +1529,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
         h("span", { class: "garden-letter-id mono" }, l.id),
         h("span", { class: "garden-letter-body" },
           chip(w), w.mine ? h("span", { class: "state measured garden-mine" }, "Yours") : null, " ",
-          h("span", {}, l.kind === "stone"
-            ? `A stone of radius ${l.r} at (${l.x}, ${l.y}), landing at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day}). `
-            : `A letter of a kind ${NEW_WORD} (“${clip(l.kind, 24)}”), landing at step ${fmtSteps(l.landsAtStep)} (end of day ${l.day}). `),
+          h("span", {}, letterBodyWords(l)),
           h("span", { class: "fine" }, w.words)));
     };
     const waiting = h("ul", { class: "garden-letters", id: "g-waiting" }, ...v.letters.waiting.map(letterItem));
@@ -1728,7 +1787,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     map.style.aspectRatio = `${v.world.width} / ${v.world.height}`;
     const parts: Element[] = [svg("rect", { x: 0, y: 0, width: v.world.width, height: v.world.height, class: "map-world" })];
     for (const l of v.letters.waiting) {
-      if (l.kind !== "stone") continue;
+      if (l.kind !== "stone" || l.x === null || l.y === null || l.r === null) continue;
       parts.push(svg("circle", { cx: l.x + 0.5, cy: l.y + 0.5, r: Math.max(l.r, 2), class: mineSet.has(l.id) ? "map-mine" : "map-waiting" }));
     }
     if (stone) {
@@ -1749,6 +1808,39 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     send.disabled = !landing.open || !check.ok || sending;
     sendWhy.textContent = why;
     drawMap(view, check.ok ? check.body : null);
+    updateSun();
+  }
+
+  /** The chosen sun's percent, or null. */
+  function sunChosen(): number | null {
+    const on = sunChoices.querySelector<HTMLInputElement>("input:checked");
+    return on ? Number(on.value) : null;
+  }
+
+  function updateSun(): void {
+    if (!view) return;
+    const sun = view.sun;
+    sunRow.hidden = !sun || sun.percents.length === 0;
+    if (!sun) return;
+    // The choices are rebuilt only when the garden's percents change, so a choice (and its focus) survives a refresh.
+    const offered = sun.percents.join(",");
+    if (offered !== sunOffered) {
+      const keep = sunChosen();
+      const legend = sunChoices.querySelector("legend");
+      const choices = sun.percents.map((p) => {
+        const input = h("input", { type: "radio", name: "sun-percent", value: String(p) }) as HTMLInputElement;
+        input.checked = keep === p;
+        input.addEventListener("change", updateSun);
+        return h("label", { class: "garden-sun-choice" }, input, ` ${SUN_WORDS[p] ?? `${p}%`} (${p}%)`);
+      });
+      sunChoices.replaceChildren(...(legend ? [legend] : []), ...choices);
+      sunOffered = offered;
+    }
+    const check = sunBody(view, sunChosen());
+    sunPreview.textContent = sunLandingWords(view);
+    const open = sun.nextLanding !== null;
+    sunSend.disabled = !open || !check.ok || sending;
+    sunWhy.textContent = !open ? "" : !check.ok ? check.words : sending ? "Sending…" : "";
   }
 
   function say(el: HTMLElement, words: string, tone: Tone | null = null): void {
@@ -1837,9 +1929,9 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     keeps = writeVisit(store, key(target), { ...base, mine });
   }
 
-  async function post(stone: StoneBody, target: GardenView): Promise<void> {
+  async function post(stone: LetterBody, target: GardenView, out: HTMLElement = answer): Promise<void> {
     if (source.mock) {
-      say(answer, "This is the example garden from the contract, so nothing was sent.", "pending");
+      say(out, "This is the example garden from the contract, so nothing was sent.", "pending");
       return;
     }
     sending = true;
@@ -1853,9 +1945,9 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     } finally {
       sending = false;
     }
-    const a = postAnswer(got.status, got.json, got.headers, target);
+    const a = postAnswer(got.status, got.json, got.headers, target, stone.kind);
     if (a.letter) remember(a.letter.id, target);
-    say(answer, a.words, a.tone);
+    say(out, a.words, a.tone);
     updateForm();
     if (a.refresh) await refresh();
   }
@@ -1867,6 +1959,13 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     const check = checkStone({ x: xIn.value, y: yIn.value, r: rIn.value }, view);
     if (!check.ok) { updateForm(); return; }
     void post(check.body, view);
+  });
+  sunForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!view || sending) return;
+    const check = sunBody(view, sunChosen());
+    if (!check.ok || !view.sun?.nextLanding) { updateSun(); return; }
+    void post(check.body, view, sunAnswer);
   });
   handSend.addEventListener("click", () => {
     if (!view || handing) return;

@@ -23,7 +23,7 @@
 // then resolves with the tasks completed; an abort never makes it reject.
 
 import { encodeCheckpoint, METRICS_VERSION, stateHash, type WorldState } from "@bl/schema";
-import { continuationError, decodeArtifact, immigrantError, runExperiment, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
+import { continuationError, decodeArtifact, immigrantError, runExperiment, sunContinuationError, type HostInfo, type ObserverState, type RunSpec, type Sink } from "./runner.ts";
 import { InterventionError } from "./interventions.ts";
 import { observationDigests } from "./stitch.ts";
 
@@ -50,8 +50,10 @@ import { observationDigests } from "./stitch.ts";
  * ids nor the score columns, so it throws on them, and on a continuation would
  * report a valid predecessor as invalid; the controls are gated as well as the
  * arm for that reason. Only the rule's own donors are distributed: a picked or
- * pressured run is still refused below (docs/archipelago-breed-2026-10-18.md). */
-export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"];
+ * pressured run is still refused below (docs/archipelago-breed-2026-10-18.md).
+ * `"sun-v1"` is a schedule holding a sun (kind "sun", docs/garden-sun-2026-10-18.md), asked for in addition to
+ * `"interventions-v1"`: code without it refuses the kind, or (older still) would run the segment under the world's own light. */
+export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1", "sun-v1"];
 
 /** Why this island will not run `spec`, or null. A branch run (RunSpec.branch)
  * starts from a source checkpoint that only tools/run.ts reads, from a local
@@ -550,7 +552,9 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
             if (decoded.state.step !== seg.startStep || (task.startHash && digest !== task.startHash))
               bad = `start checkpoint t=${decoded.state.step} digest ${digest}, expected t=${seg.startStep} digest ${task.startHash}`;
             else {
-              bad = continuationError(task.spec, decoded.state, decoded.observer);
+              // The sun check too (`sunContinuationError`, which runExperiment would otherwise throw): a predecessor taken
+              // under another sun than the schedule's is rejected for recomputation, not a failure of this island.
+              bad = continuationError(task.spec, decoded.state, decoded.observer) ?? sunContinuationError(task.spec, decoded.state.cfg, decoded.state.step, decoded.observer);
               if (!bad) {
                 start = decoded.state;
                 observer = decoded.observer;

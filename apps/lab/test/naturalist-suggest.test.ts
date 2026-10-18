@@ -262,7 +262,7 @@ describe("the reason", () => {
             const rc = ring.receipt;
             const e = s.entries[0];
             // The receipt's fields as the panel formats them, S, the threshold, the fork step 0, and the dose (radius, share, quanta).
-            const shown = [fmtValue(sig.name, rc.value), fmtValue(sig.name, rc.median), group(rc.startStep), group(rc.endStep), fmtZ(rc.minAbsZ), group(s.S), String(header.threshold.Z), "0", ...(e ? [String(e.r), "77", String(Math.abs(feedAmount(preset)!))] : [])];
+            const shown = [fmtValue(sig.name, rc.value), fmtValue(sig.name, rc.median), group(rc.startStep), group(rc.endStep), fmtZ(rc.minAbsZ), group(s.S), String(header.threshold.Z), "0", ...(e && e.kind !== "sun" ? [String(e.r), "77", String(Math.abs(feedAmount(preset)!))] : [])];
             const nums = (t: string) => (t.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).map((x) => Number(x.replace(/,/g, "")));
             const allowed = new Set(shown.flatMap(nums));
             const numbers = nums(s.reason);

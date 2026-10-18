@@ -131,6 +131,12 @@ input[type="range"]:disabled { opacity: .45; }
 /* What the tool in your hand does, under the hand that holds it. */
 .tool-says { margin: 11px 0 0; color: var(--text); font-size: var(--t-small); line-height: 1.5; }
 .tool-says b { color: var(--sun-ink); }
+.sun-panel { margin-top: 12px; }
+.sun-choices { border: 0; margin: 0 0 8px; padding: 0; min-width: 0; }
+.sun-choices legend { font-size: var(--t-small); font-weight: 600; padding: 0; margin-bottom: 6px; }
+.sun-choice { display: flex; gap: 8px; align-items: baseline; font-size: var(--t-small); line-height: 1.5; padding: 2px 0; }
+.sun-choice input:disabled + span { color: var(--muted); }
+#sun-status { margin-top: 8px; }
 #feed-hint { margin-top: 8px; }
 #feed-hint[hidden] { display: none; }
 #import { display: none; }

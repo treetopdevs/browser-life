@@ -27,7 +27,7 @@ import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from
 import { census, firstsContext, firstsRules, individuals, lineageRGB, nextUp } from "@bl/metrics";
 import { decodeArtifact, pondContinuationError, type ObserverSettings, type ObserverState, type PressureEntry } from "@bl/runner";
 import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
-import { LabExecution, PondWaitingError, PressureRefusedError, huntArmError } from "./execution.ts";
+import { LabExecution, PondWaitingError, PressureRefusedError, SunRefusedError, huntArmError } from "./execution.ts";
 import { isLineageKey } from "./pond-play.ts";
 import { dialWords } from "./rank-labels.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
@@ -272,6 +272,13 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         if (naturalistReads(rec.step, touched)) post({ type: "naturalist", world: w.gen, runId: w.manifest.runId, step: rec.step, rec, rows, touched, dropped });
       },
       onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
+      // A sun began in a replay, or one ended: the Light view draws the light the physics uses, and the page shows the sun.
+      onLight: (light) => {
+        const w = world;
+        if (!w || w.sim !== sim) return;
+        w.renderer.setLight(light);
+        postSun(w);
+      },
       // A jump's replay re-applied a logged intervention: it re-enters this run's log, and a feed moves
       // the baselines exactly as it did when it was first made.
       onReplayed: (iv, result) => {
@@ -309,6 +316,10 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
   keepKey = keep;
   old?.renderer.destroy();
   old?.sim.destroy();
+  // A checkpoint saved during a sun: the simulation and the view run under it from the first step (the execution installs
+  // it only once it is the current world's; its traversal would install it before stepping anyway).
+  renderer.setLight(execution.light);
+  await execution.installSun();
   execution.setHandPicks(breeder);
   // Steps requested for the previous world do not carry over.
   pendingSteps = 0;
@@ -319,6 +330,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
   session.adopt({ runId: manifest.runId, presetId: manifest.presetId, seed: manifest.seed, step: sim.step, ruleVersion: manifest.ruleVersion });
   post({ type: "loaded", manifest, step: sim.step, world: world.gen });
   postPressure(world);
+  postSun(world);
   post({ type: "keep", world: world.gen, key: keepKey });
   postFirsts(world);
   // The world is adopted whatever storage says: a shelf it would not list stays empty until a later listing.
@@ -1020,9 +1032,9 @@ async function verify(steps: number) {
  * True, with a refusal of `request`, when a hand edit names a world (`ToWorker` lesion/feed `world`) that is no longer the one on
  * screen: Field notes' Try it here was made for that world, and a replacement queued before it must not take its edit.
  */
-function staleHand(request: "lesion" | "feed", gen: number | undefined): boolean {
+function staleHand(request: "lesion" | "feed" | "sun", gen: number | undefined): boolean {
   if (gen === undefined || world?.gen === gen) return false;
-  post({ type: "refused", request, message: "That suggestion was made for a world that has since been replaced, so nothing was applied" });
+  post({ type: "refused", request, message: request === "sun" ? "That sun was chosen for a world that has since been replaced, so nothing was applied" : "That suggestion was made for a world that has since been replaced, so nothing was applied" });
   return true;
 }
 
@@ -1044,6 +1056,39 @@ async function lesion(x: number, y: number, r: number, gen?: number) {
   w.manifest.interventions.push({ step, kind: "lesion", x: cx, y: cy, r: eff });
   postTouched(w, step);
   session.noteHand(step);
+  publishSession();
+  forkReplay(w);
+  postFirsts(w);
+}
+
+/** Tells the page which sun the world runs under (null: its own light). */
+function postSun(w: World) {
+  post({ type: "sun", world: w.gen, sun: w.execution.sun });
+}
+
+/**
+ * Sets a sun on the world from its step (`LabExecution.applySun`): logged like a lesion, at the world's step, and drawn by the
+ * Light view. A sun the world refuses (its light cannot take it, or one already shines) changes nothing and is answered as a
+ * refusal, with the reason.
+ */
+async function setSun(percent: number, span: number, gen?: number) {
+  if (staleHand("sun", gen)) return;
+  const w = world;
+  if (!w) return;
+  if (w.execution.failure) throw new Error(w.execution.failure);
+  if (waitingForDonors(w, "sun", "set a sun")) return;
+  let entry;
+  try {
+    // The values as sent: applySun refuses a fraction or a string rather than rounding it into another sun.
+    entry = await w.execution.applySun(percent, span);
+  } catch (e) {
+    if (e instanceof SunRefusedError) return post({ type: "refused", request: "sun", message: e.message });
+    throw e;
+  }
+  if (!current(w)) return;
+  w.manifest.interventions.push(entry);
+  postTouched(w, entry.step);
+  session.noteHand(entry.step);
   publishSession();
   forkReplay(w);
   postFirsts(w);
@@ -1244,6 +1289,8 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
         return lesion(m.x, m.y, m.r, m.world);
       case "feed":
         return feed(m.x, m.y, m.r, m.amount, m.world);
+      case "sun":
+        return setSun(m.percent, m.span, m.world);
       case "probe":
         return probe(m.x, m.y);
       case "breeder":
