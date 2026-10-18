@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PRESETS, encodeCheckpoint, initWorld, stateHash } from "@bl/schema";
 import { ActivityTracker, Tracker, b64 } from "@bl/metrics";
 import { METRICS_VERSION } from "@bl/schema";
-import { continuationError, decideRejoin, ISLAND_CAPABILITIES, probeIslandIdentity, resolveRejoin, runIsland, specConfig, STALE_REGISTRATION, timeoutSignal, type ObserverState, type RunSpec } from "../src/index.ts";
+import { continuationError, decideRejoin, gardenTokenFor, gardenTokenForCoordinator, gardenTokenFrom, gardenTokenFromHash, ISLAND_CAPABILITIES, probeIslandIdentity, resolveRejoin, runIsland, specConfig, STALE_REGISTRATION, timeoutSignal, type ObserverState, type RunSpec } from "../src/index.ts";
 
 const spec: RunSpec = { experiment: "t", presetId: "spots", condition: "treatment", seed: 3, steps: 500, censusEvery: 100, deepEvery: 5, checkpointEvery: 0, activityThreshold: 7 };
 const start = { ...initWorld(specConfig(spec), PRESETS.find((p) => p.id === "spots")!.init), step: 500 };
@@ -577,5 +577,214 @@ describe("probeIslandIdentity checks the registered metrics version", () => {
   });
   it("passes other statuses through unchanged", async () => {
     expect(await probeWith(401, { error: "x" })).toBe(401);
+  });
+});
+
+// Slice 15 (docs/garden-hardening-2026-10-18.md, item 1): a coordinator with a
+// garden island token offers a garden's days only to islands that showed it at
+// join. The token goes in the join body and nowhere else.
+
+describe("garden token", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** One idle `/next` against a fake coordinator; returns every request (URL, headers, body). */
+  async function requests(opts: { gardenToken?: string; identity?: { id: string; token: string }; polls?: number }) {
+    const seen: { url: string; headers: Headers; body: string | undefined }[] = [];
+    const controller = new AbortController();
+    let polls = 0;
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit = {}) => {
+      seen.push({ url, headers: new Headers(init.headers), body: init.body === undefined ? undefined : String(init.body) });
+      const path = new URL(url).pathname;
+      const json = (v: unknown) => new Response(JSON.stringify(v), { headers: { "content-type": "application/json" } });
+      if (path === "/api/islands") return json({ id: "isl-AAAAAAAAAAAA", token: "T".repeat(43) });
+      if (path === "/api/next") {
+        if (++polls >= (opts.polls ?? 1)) controller.abort();
+        return json({ kind: "idle" });
+      }
+      throw new Error(`unexpected ${path}`);
+    });
+    const logged: string[] = [];
+    await runIsland({} as GPUDevice, {
+      coordinator: "http://coord",
+      host: { host: "t", adapter: "a" },
+      idleMs: 1,
+      signal: controller.signal,
+      log: (m) => logged.push(m),
+      gardenToken: opts.gardenToken,
+      identity: opts.identity,
+    });
+    return { seen, logged };
+  }
+
+  it("join body carries gardenToken only when given", async () => {
+    const join = async (gardenToken?: string) => {
+      const { seen } = await requests({ gardenToken });
+      const j = seen.find((r) => new URL(r.url).pathname === "/api/islands");
+      return JSON.parse(j!.body!);
+    };
+    expect(await join("t")).toEqual({ adapter: "a", userAgent: "t", metricsVersion: METRICS_VERSION, gardenToken: "t" });
+    for (const none of [undefined, ""]) {
+      const body = await join(none);
+      expect(body).toEqual({ adapter: "a", userAgent: "t", metricsVersion: METRICS_VERSION });
+      expect("gardenToken" in body).toBe(false);
+    }
+  });
+
+  it("never in /next bodies, any URL, any header or the log", async () => {
+    const secret = "s3cret-garden";
+    const { seen, logged } = await requests({ gardenToken: secret, polls: 3 });
+    expect(seen.filter((r) => new URL(r.url).pathname === "/api/next")).toHaveLength(3);
+    for (const r of seen) {
+      expect(r.url).not.toContain(secret);
+      for (const [, v] of r.headers) expect(v).not.toContain(secret);
+      if (new URL(r.url).pathname !== "/api/islands") expect(r.body ?? "").not.toContain(secret);
+    }
+    expect(logged.join("\n")).not.toContain(secret);
+  });
+
+  it("a resumed identity makes no join and sends no token", async () => {
+    const secret = "s3cret-garden";
+    const { seen } = await requests({ gardenToken: secret, identity: { id: "isl-old", token: "tok-old" }, polls: 2 });
+    expect(seen.some((r) => new URL(r.url).pathname === "/api/islands")).toBe(false);
+    expect(JSON.stringify(seen.map((r) => [r.url, [...r.headers], r.body]))).not.toContain(secret);
+  });
+
+  it("gardenTokenFrom: flag over env, empty is none", () => {
+    expect(gardenTokenFrom("f", "e")).toBe("f");
+    expect(gardenTokenFrom(undefined, "e")).toBe("e");
+    expect(gardenTokenFrom(null, "e")).toBe("e");
+    expect(gardenTokenFrom(undefined, "")).toBeUndefined();
+    expect(gardenTokenFrom(undefined, undefined)).toBeUndefined();
+    // An explicit empty flag is "no token", even with the variable set.
+    expect(gardenTokenFrom("", "e")).toBeUndefined();
+  });
+
+  it("fragment parse keeps other keys; origin rule withholds the token from another coordinator", () => {
+    expect(gardenTokenFromHash("")).toEqual({ rest: "", found: false });
+    expect(gardenTokenFromHash("#")).toEqual({ rest: "", found: false });
+    expect(gardenTokenFromHash("#garden-token=abc")).toEqual({ token: "abc", rest: "", found: true });
+    expect(gardenTokenFromHash("garden-token=abc")).toEqual({ token: "abc", rest: "", found: true });
+    expect(gardenTokenFromHash("#a=1&garden-token=abc&b=2")).toEqual({ token: "abc", rest: "#a=1&b=2", found: true });
+    expect(gardenTokenFromHash("#garden-token=a%2Bb%3D")).toEqual({ token: "a+b=", rest: "", found: true });
+    expect(gardenTokenFromHash("#a=1")).toEqual({ token: undefined, rest: "#a=1", found: false });
+    // An empty token is none, but the key is still stripped.
+    expect(gardenTokenFromHash("#garden-token=&a=1")).toEqual({ token: undefined, rest: "#a=1", found: true });
+    expect(gardenTokenFromHash("#garden-token&a=1")).toEqual({ token: undefined, rest: "#a=1", found: true });
+    // A literal `+` is a plus (a token is not form data); `=` inside the value is kept.
+    expect(gardenTokenFromHash("#garden-token=ab+cd")).toEqual({ token: "ab+cd", rest: "", found: true });
+    expect(gardenTokenFromHash("#garden-token=a=b")).toEqual({ token: "a=b", rest: "", found: true });
+    // A key spelt with percent escapes is the same key, and is found (so stripped).
+    expect(gardenTokenFromHash("#%67arden-token=secret")).toEqual({ token: "secret", rest: "", found: true });
+    expect(gardenTokenFromHash("#garden%2Dtoken=secret&x")).toEqual({ token: "secret", rest: "#x", found: true });
+    // The rest of the fragment is kept byte for byte, keys without values included.
+    expect(gardenTokenFromHash("#a/b&garden-token=x")).toEqual({ token: "x", rest: "#a/b", found: true });
+    expect(gardenTokenFromHash("#foo&garden-token=x&c=%2F")).toEqual({ token: "x", rest: "#foo&c=%2F", found: true });
+    expect(gardenTokenFromHash("#a/b")).toEqual({ token: undefined, rest: "#a/b", found: false });
+    // A value that does not decode is taken as written.
+    expect(gardenTokenFromHash("#garden-token=50%")).toEqual({ token: "50%", rest: "", found: true });
+
+    expect(gardenTokenFor("https://cadence.garden", "https://cadence.garden", "t")).toBe("t");
+    expect(gardenTokenFor("https://cadence.garden/", "https://cadence.garden", "t")).toBe("t");
+    expect(gardenTokenFor("http://localhost:5173", "http://localhost:5173", "t")).toBe("t");
+    expect(gardenTokenFor("http://localhost:4000", "http://localhost:5173", "t")).toBeUndefined();
+    expect(gardenTokenFor("https://evil.example", "https://cadence.garden", "t")).toBeUndefined();
+    expect(gardenTokenFor("http://cadence.garden", "https://cadence.garden", "t")).toBeUndefined();
+    expect(gardenTokenFor("not a url", "https://cadence.garden", "t")).toBeUndefined();
+    expect(gardenTokenFor("https://cadence.garden", "https://cadence.garden", undefined)).toBeUndefined();
+    expect(gardenTokenFor("https://cadence.garden", "https://cadence.garden", "")).toBeUndefined();
+  });
+
+  it("gardenTokenForCoordinator: https or loopback only", () => {
+    for (const c of ["https://cadence.garden", "https://10.0.0.5:4000", "http://localhost:4000", "http://127.0.0.1:4000", "http://127.1.2.3", "http://[::1]:4000", "http://app.localhost:4000"]) {
+      expect(gardenTokenForCoordinator(c, "t"), c).toBe("t");
+    }
+    for (const c of ["http://cadence.garden", "http://10.0.0.5:4000", "http://localhost.evil.example", "http://127.0.0.1.evil.example", "ws://localhost:4000", "not a url"]) {
+      expect(gardenTokenForCoordinator(c, "t"), c).toBeUndefined();
+    }
+    expect(gardenTokenForCoordinator("https://cadence.garden", "")).toBeUndefined();
+    expect(gardenTokenForCoordinator("https://cadence.garden", undefined)).toBeUndefined();
+  });
+
+  /** A join answered by `respond`; returns the join's RequestInit and the error runIsland threw. */
+  async function failedJoin(gardenToken: string | undefined, respond: () => Response) {
+    let init: RequestInit | undefined;
+    vi.stubGlobal("fetch", async (_url: string, i: RequestInit = {}) => {
+      init = i;
+      return respond();
+    });
+    const err = await runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "a" }, gardenToken }).then(
+      () => undefined,
+      (e: Error) => e,
+    );
+    return { init, err };
+  }
+
+  it("a join with a token follows no redirect; one without keeps fetch's default", async () => {
+    const { init } = await failedJoin("t", () => new Response(null, { status: 307, headers: { location: "https://evil.example/api/islands" } }));
+    expect(init?.redirect).toBe("manual");
+    const plain = await failedJoin(undefined, () => new Response("no", { status: 500 }));
+    expect(plain.init?.redirect).toBeUndefined();
+  });
+
+  it("a redirect answering a tokened join is refused, and named", async () => {
+    const { err } = await failedJoin("t", () => new Response(null, { status: 308, headers: { location: "https://evil.example/" } }));
+    expect(err?.message).toMatch(/^join: the coordinator answered with a redirect \(308\)/);
+  });
+
+  it("a refused tokened join never repeats a body that reflects the token", async () => {
+    const secret = "s3cret-garden";
+    const html = await failedJoin(secret, () => new Response(`<pre>%{"gardenToken" => "${secret}"}</pre>`, { status: 500, headers: { "content-type": "text/html" } }));
+    expect(html.err?.message).toBe("join: 500 (response withheld: the join carried a garden token)");
+    const echoed = await failedJoin(secret, () => Response.json({ error: `bad ${secret}` }, { status: 400 }));
+    expect(echoed.err?.message).toBe("join: 400 (response withheld: the join carried a garden token)");
+    // An echo that escapes the token (a JSON-encoded `"` here) is withheld too: no error string is repeated at all.
+    const quoted = 'garden"secret';
+    const escaped = await failedJoin(quoted, () => Response.json({ error: JSON.stringify({ gardenToken: quoted }) }, { status: 400 }));
+    expect(escaped.err?.message).toBe("join: 400 (response withheld: the join carried a garden token)");
+    expect(escaped.err?.message).not.toContain("secret");
+    // The two refusals of normal running get a fixed description, so "no room" stays legible.
+    const full = await failedJoin(secret, () => Response.json({ error: `the coordinator has no room ${secret}` }, { status: 503 }));
+    expect(full.err?.message).toBe("join: 503 the coordinator has no room for new islands, or is unavailable");
+    const limited = await failedJoin(secret, () => Response.json({ error: "too many requests from this address" }, { status: 429 }));
+    expect(limited.err?.message).toBe("join: 429 too many joins or requests from this address; try later");
+    // Without a token the body is repeated as before.
+    const plain = await failedJoin(undefined, () => new Response("boom", { status: 500 }));
+    expect(plain.err?.message).toBe("join: 500 boom");
+  });
+
+  it("an accepted tokened join whose answer is not an id and token quotes none of it", async () => {
+    const secret = "garden-secret";
+    // JSON.parse's own error would quote the body ('"garden-secret" is not valid JSON').
+    const bare = await failedJoin(secret, () => new Response(secret, { status: 200 }));
+    expect(bare.err?.message).toBe("join: 200 answer is not an island id and token (response withheld: the join carried a garden token)");
+    const odd = await failedJoin(secret, () => Response.json({ echo: secret }, { status: 200 }));
+    expect(odd.err?.message).toBe("join: 200 answer is not an island id and token (response withheld: the join carried a garden token)");
+    // A reflected or malformed id or token is refused too: an id is logged, remembered and put in URLs.
+    const good = { id: "isl-AAAAAAAAAAAA", token: "T".repeat(43) };
+    for (const answer of [
+      { ...good, id: secret },
+      { ...good, id: "isl-short" },
+      { ...good, token: `x\n${secret}` },
+      { ...good, token: 42 },
+    ]) {
+      const r = await failedJoin(secret, () => Response.json(answer, { status: 200 }));
+      expect(r.err?.message, JSON.stringify(answer)).toBe("join: 200 answer is not an island id and token (response withheld: the join carried a garden token)");
+    }
+    const reflectedToken = "B".repeat(43);
+    const asToken = await failedJoin(reflectedToken, () => Response.json({ ...good, token: reflectedToken }, { status: 200 }));
+    expect(asToken.err?.message).toBe("join: 200 answer is not an island id and token (response withheld: the join carried a garden token)");
+    const asId = await failedJoin("CCCCCCCCCCCC", () => Response.json({ ...good, id: "isl-CCCCCCCCCCCC" }, { status: 200 }));
+    expect(asId.err?.message).toBe("join: 200 answer is not an island id and token (response withheld: the join carried a garden token)");
+    // A reflection padded to the right format is refused too.
+    for (const [garden, answer] of [
+      ["open-sesame", { ...good, id: "isl-open-sesameA" }],
+      ["garden-secret", { ...good, token: `garden-secret${"A".repeat(30)}` }],
+    ] as const) {
+      const r = await failedJoin(garden, () => Response.json(answer, { status: 200 }));
+      expect(r.err?.message, garden).toBe("join: 200 answer is not an island id and token (response withheld: the join carried a garden token)");
+    }
+    // Without a token the parser's error is unchanged.
+    const plain = await failedJoin(undefined, () => new Response("boom", { status: 200 }));
+    expect(plain.err?.message).toMatch(/JSON/);
   });
 });

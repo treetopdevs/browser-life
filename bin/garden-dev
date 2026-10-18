@@ -8,8 +8,8 @@
 #
 # Every BL_* variable of the calling shell is dropped first: BL_ADMIN_TOKEN would
 # turn the tokenless founding into a 401, BL_GARDEN_ISLAND_TOKEN would keep every
-# day from these islands (they cannot send a garden token yet), and the
-# discovery store gets its own directory inside the scratch one.
+# day from these islands (they are started without BL_ISLAND_GARDEN_TOKEN), and
+# the discovery store gets its own directory inside the scratch one.
 #
 # Environment (defaults in brackets):
 #   PORT [4000]                 coordinator port (it binds 127.0.0.1 in dev)

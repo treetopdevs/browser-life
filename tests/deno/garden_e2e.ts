@@ -1,7 +1,8 @@
 // The shared garden end to end on one machine (docs/garden-local-2026-10-17.md has the sizing and every pass criterion,
 // written before this file). A real `mix phx.server` (MIX_ENV dev, a scratch BL_DATA_DIR, its own port) hosts a small
 // garden on `spots`; two in-process islands on one GPU device tend it through packages/runner/src/island.ts's real wire
-// protocol, sequenced by this script: A runs every day, B replays every day. Visitors' letters go through the public
+// protocol, sequenced by this script: A runs every day, B replays every day. The coordinator has a garden island token
+// (amended 2026-10-18): A and B join showing it, and a third island C, without it, is told idle. Visitors' letters go through the public
 // route, the keeper drops one through the admin route, and the public view (`garden-v1`) is checked after each step:
 // days done, replayed and verified, the fork, letters waiting, landed, verified and dropped, tending and pacing. The
 // coordinator is then restarted in a fresh OS process against the same data directory, the verified prefix is
@@ -53,6 +54,10 @@ const DAYS = 4;
 const PERIOD = 1000; // dawnPeriodMs
 const CENSUS = 64;
 const FOUNDING: ScheduledIntervention[] = [{ step: 0, kind: "feed", x: 128, y: 128, r: 64, amount: 16 }];
+// The coordinator's garden island token (amended 2026-10-18, docs/garden-hardening-2026-10-18.md): set after the BL_*
+// scrub below, so this coordinator offers the garden's days only to islands that join showing it. A and B do; a third
+// island C does not, and is told idle while day 0 waits unassigned.
+const TOKEN = `e2e-garden-${crypto.randomUUID()}`;
 
 let ok = true;
 let checks = 0;
@@ -67,7 +72,7 @@ const canon = (v: unknown): string => JSON.stringify(v, (_k, x) => (x && typeof 
 
 const readOr = (p: string) => Deno.readTextFile(p).catch(() => undefined);
 // Every BL_* setting of the caller's shell is dropped: BL_ADMIN_TOKEN would make the tokenless founding a 401,
-// BL_GARDEN_ISLAND_TOKEN would keep every day from these islands (runIsland's join body has no gardenToken),
+// BL_GARDEN_ISLAND_TOKEN would be a token these islands do not know (the test sets its own, TOKEN, after the scrub),
 // BL_TRUST_FORWARDED_FOR would change how the letter limit keys addresses, and BL_DISCOVERY_DATA_DIR (or its default,
 // apps/coordinator/data-discovery) would put discovery's state outside the scratch directories. (Discovery refuses a
 // directory inside the queue's, so it goes in the other scratch directory.)
@@ -116,7 +121,7 @@ async function spawnServer(): Promise<Server> {
   const child = new Deno.Command("mix", {
     args: ["phx.server"],
     cwd: coordinatorDir,
-    env: { ...withoutBl(Deno.env.toObject()), MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir, BL_DISCOVERY_DATA_DIR: `${workDir}/discovery` },
+    env: { ...withoutBl(Deno.env.toObject()), MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir, BL_DISCOVERY_DATA_DIR: `${workDir}/discovery`, BL_GARDEN_ISLAND_TOKEN: TOKEN },
     clearEnv: true,
     stdin: "null",
     stdout: "piped",
@@ -300,10 +305,11 @@ let host: { host: string; adapter: string };
 interface Island {
   name: string;
   identity?: { id: string; token: string };
+  gardenToken?: string;
   log: string[];
 }
-const A: Island = { name: "A", log: [] };
-const B: Island = { name: "B", log: [] };
+const A: Island = { name: "A", gardenToken: TOKEN, log: [] };
+const B: Island = { name: "B", gardenToken: TOKEN, log: [] };
 
 /** Has `island` complete `n` tasks, asking again (after a short sleep) whenever it is told idle: an idle answer is
  * waiting for the next dawn, not a failure. Returns the tasks it took, as "run #d" / "verify #d". */
@@ -333,6 +339,7 @@ async function work(island: Island, n: number, timeoutMs = WORK_MS): Promise<str
           maxTasks: n - done,
           idleMs: 200,
           identity: island.identity,
+          gardenToken: island.gardenToken,
           signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
           onJoined: (identity) => (island.identity = identity),
           log: (m) => log.push(m),
@@ -455,6 +462,19 @@ try {
   v = await viewWhen("one letter queued", (x) => x.letters.queued === 1);
   check("1. one letter queued, and the next would land on day 1 (day 0 is full)", v.letters.queued === 1 && v.letters.nextLanding?.day === 1, JSON.stringify(v.letters));
 
+  // ---- 1b. an island without the garden token is never offered a garden day (amended 2026-10-18) ----
+  // Day 0 is released and nobody holds it, so a tokenless island asking now would get it on an open coordinator. One
+  // ask (maxTasks 1 returns on the first idle answer): no task, and day 0 still waits for A.
+  const cLog: string[] = [];
+  const cDone = await runIsland(device, { coordinator: base, host, maxTasks: 1, idleMs: 200, signal: AbortSignal.timeout(WORK_MS), log: (m) => cLog.push(m) });
+  const cTook = cLog.filter((m) => /^(run|verify) /.test(m));
+  const vC = await view();
+  check(
+    "1b. island C, joined without the garden token while day 0 is released and unassigned, is told idle: no task taken, day 0 still waiting",
+    cDone === 0 && cTook.length === 0 && cLog.some((m) => /^joined as /.test(m)) && dayOf(vC, 0)?.status === "waiting" && vC.clock.releasedStep === D,
+    `${cDone} done | ${cLog.join(" | ")} | day 0 ${JSON.stringify(dayOf(vC, 0))}`,
+  );
+
   // ---- 2. A runs day 0; letters L2 and L3; the per-address limit ----
   const a0 = await work(A, 1);
   check("2. island A runs day 0", canon(a0) === canon(["run #0"]), `${a0.join(", ")} | ${A.log.join(" | ")}`);
@@ -503,18 +523,14 @@ try {
       letterOf(v, "ltr-1")?.status === "verified",
     JSON.stringify({ verification: v.verification, clock: v.clock, fork: v.fork, l1: letterOf(v, "ltr-1") }),
   );
-  // The servable-checkpoint lookup is cached like the view (up to two seconds), and step 2's 404 just filled that cache,
-  // so this read polls too (amended 2026-10-17).
+  // The servable-checkpoint lookup is cached like the view (up to two seconds), and step 2's 404 just filled that cache.
+  // A day becoming verified now invalidates both (amended 2026-10-18, docs/garden-hardening-2026-10-18.md, item 2), so
+  // the first read after the view first names the fork is 200: no polling.
   const forkT0 = Date.now();
-  let forkRes = await fetch(`${base}${v.fork?.checkpoint}`, { signal: AbortSignal.timeout(REQUEST_MS) });
-  while (forkRes.status !== 200 && Date.now() - forkT0 < 10_000) {
-    await forkRes.body?.cancel();
-    await sleep(250);
-    forkRes = await fetch(`${base}${v.fork?.checkpoint}`, { signal: AbortSignal.timeout(REQUEST_MS) });
-  }
+  const forkRes = await fetch(`${base}${v.fork?.checkpoint}`, { signal: AbortSignal.timeout(REQUEST_MS) });
   const forkWaitMs = Date.now() - forkT0;
   const forkBytes = new Uint8Array(await forkRes.arrayBuffer());
-  let forkDetail = `${forkRes.status} after ${forkWaitMs} ms`;
+  let forkDetail = `${forkRes.status} on the first read (${forkWaitMs} ms)`;
   let forkOk = false;
   if (forkRes.status === 200) {
     try {
@@ -526,8 +542,7 @@ try {
       forkDetail = `undecodable: ${(e as Error).message}`;
     }
   }
-  check("3. the fork checkpoint is served (200) and decodes to the state at step D whose artifact digest is the fork's", forkOk, forkDetail);
-  console.log(`  (the fork checkpoint answered 200 ${forkWaitMs} ms after the view first showed the fork)`);
+  check("3. the fork checkpoint is served (200) on the first read after the view names it, and decodes to the state at step D whose artifact digest is the fork's", forkOk, forkDetail);
 
   // ---- 4. A runs day 1; the keeper drops L3 ----
   const a1 = await work(A, 1);
@@ -608,7 +623,8 @@ try {
       letterOf(v, "ltr-3")?.status === "dropped" && v.letters.queued === 0,
     JSON.stringify(v.letters),
   );
-  check("5. tending: two islands today, one device type ever", v.tending.islandsToday === 2 && v.tending.deviceTypesEver === 1, JSON.stringify(v.tending));
+  // Island C joined and asked too, but tending counts attempts, not joins: still two.
+  check("5. tending: two islands today (C, which never took a day, is not counted), one device type ever", v.tending.islandsToday === 2 && v.tending.deviceTypesEver === 1, JSON.stringify(v.tending));
 
   // Pacing (amended 2026-10-17): a garden nobody asks releases nothing. No island asks from here on.
   await sleep(2 * PERIOD + 500);
@@ -651,15 +667,10 @@ try {
   await waitReady(server, 180_000);
   const after = await view();
   check("6. after a restart in a fresh OS process: the clock, verification, fork, letters and every day's release record are unchanged", durable(after) === durable(before), `${durable(before)}\n vs ${durable(after)}`);
-  // The fork is still downloadable (the letter limiter re-registers the garden's world on boot; the route needs it).
-  const forkAgainT0 = Date.now();
-  let forkAgain = await fetch(`${base}${after.fork?.checkpoint}`, { signal: AbortSignal.timeout(REQUEST_MS) });
-  while (forkAgain.status !== 200 && Date.now() - forkAgainT0 < 10_000) {
-    await forkAgain.body?.cancel();
-    await sleep(250);
-    forkAgain = await fetch(`${base}${after.fork?.checkpoint}`, { signal: AbortSignal.timeout(REQUEST_MS) });
-  }
-  let forkAgainDetail = String(forkAgain.status);
+  // The fork is still downloadable (the letter limiter re-registers the garden's world on boot; the route needs it), on
+  // the first read (amended 2026-10-18: no polling).
+  const forkAgain = await fetch(`${base}${after.fork?.checkpoint}`, { signal: AbortSignal.timeout(REQUEST_MS) });
+  let forkAgainDetail = `${forkAgain.status} on the first read`;
   let forkAgainOk = false;
   if (forkAgain.status === 200) {
     try {
@@ -671,7 +682,7 @@ try {
       forkAgainDetail = `undecodable: ${(e as Error).message}`;
     }
   } else await forkAgain.body?.cancel();
-  check("6. ...and the fork checkpoint (day 2's, at step 3D) is still served and decodes to step 3D with the fork's digest", forkAgainOk, forkAgainDetail);
+  check("6. ...and the fork checkpoint (day 2's, at step 3D) is still served on the first read and decodes to step 3D with the fork's digest", forkAgainOk, forkAgainDetail);
 
   // ---- 7. export the verified prefix; compare with one unsegmented run ----
   const outDir = `${workDir}/stitched`;

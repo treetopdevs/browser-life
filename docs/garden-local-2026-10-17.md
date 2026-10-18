@@ -142,6 +142,8 @@ is rerun once alone before it counts as a failure.
 - The garden island token: `runIsland`'s join body has no `gardenToken` field, so a headless or
   browser island cannot tend a garden whose coordinator sets `BL_GARDEN_ISLAND_TOKEN`.
   `bin/garden-dev` leaves the token unset. Adding the field is a runner change outside this slice.
+  (Since slice 15 the client sends it, and this test runs with the token set: see the amendment
+  "2026-10-18: slice 15, the garden token and the fork's first read".)
 - The page against a live coordinator in Playwright: the public-garden spec stays hermetic (route
   interception). `bin/garden-dev` is how a person looks at the page on a live garden.
 
@@ -355,3 +357,21 @@ withdrawn, as below.
 - **Left as is:** the three-second second-signal check stays a heuristic, as the fourth amendment
   now says; the mutation it targets is caught by the three checks together.
 
+### 2026-10-18: slice 15, the garden token and the fork's first read
+
+Slice 15 (`docs/garden-hardening-2026-10-18.md`, its rules written before its code) changes three
+things this test checks; every criterion above still holds.
+
+- **The token is set.** The coordinator now gets `BL_GARDEN_ISLAND_TOKEN`, a fixed per-run test value
+  set after the `BL_*` scrub (the restart reuses it), and islands A and B join with it in their join
+  body (`IslandOptions.gardenToken`). `tending.islandsToday` at step 5 stays 2.
+- **Island C (new, step 1b).** Right after step 1, while day 0 is released and unassigned, a third
+  island joins without the token and asks once (`maxTasks` 1): it takes no task, and day 0 is still
+  waiting and `releasedStep` still D. That a tokenless island still gets ordinary work is pinned by
+  ExUnit (`garden_queue_test.exs`, "without one, any island may; an ordinary experiment is never
+  gated") and is not spent on the GPU here.
+- **The fork is served on the first read.** A day becoming verified now invalidates the garden's
+  cache from the queue (`Queue.record_garden_day/3`), so the polling added by the amendment "the
+  fork checkpoint read polls" is removed: at step 3 and at step 6 the first read of
+  `fork.checkpoint` must be 200 (and decode as before). The view reads still poll, since a day that
+  is only done may be up to two seconds behind in the view.
