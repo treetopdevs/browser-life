@@ -1,0 +1,4543 @@
+{
+ "notebookVersion": 0,
+ "bellVersion": 0,
+ "notePath": "docs/naturalist-bell-v0-2026-10-17.md",
+ "meta": {
+  "generated": "2026-10-17",
+  "recordPath": "experiments/naturalist/bell-v0.json",
+  "recordSha256": "5f90e11f986165bb14b4f1a7d28aed5f58a9575313d8200cb317c4d693fb220c",
+  "base": "~/develop/browser-life/runs",
+  "sources": [
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-15/manifest.json",
+    "bytes": 1991
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-15/series.jsonl",
+    "bytes": 7632025
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-15/lineages.tsv",
+    "bytes": 20861806
+   }
+  ],
+  "envelopeSources": [
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1001/manifest.json",
+    "bytes": 2007
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1001/series.jsonl",
+    "bytes": 7630999
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1001/lineages.tsv",
+    "bytes": 20889522
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1002/manifest.json",
+    "bytes": 2007
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1002/series.jsonl",
+    "bytes": 7631250
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1002/lineages.tsv",
+    "bytes": 20769888
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1003/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1003/series.jsonl",
+    "bytes": 7629456
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1003/lineages.tsv",
+    "bytes": 20712912
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1004/manifest.json",
+    "bytes": 2004
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1004/series.jsonl",
+    "bytes": 7631626
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1004/lineages.tsv",
+    "bytes": 20809410
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1005/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1005/series.jsonl",
+    "bytes": 7631646
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1005/lineages.tsv",
+    "bytes": 20930019
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1006/manifest.json",
+    "bytes": 2006
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1006/series.jsonl",
+    "bytes": 7632299
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1006/lineages.tsv",
+    "bytes": 20829693
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1007/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1007/series.jsonl",
+    "bytes": 7632425
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1007/lineages.tsv",
+    "bytes": 21118873
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1008/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1008/series.jsonl",
+    "bytes": 7632352
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1008/lineages.tsv",
+    "bytes": 20723837
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1009/manifest.json",
+    "bytes": 2007
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1009/series.jsonl",
+    "bytes": 7630414
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1009/lineages.tsv",
+    "bytes": 20885641
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1010/manifest.json",
+    "bytes": 2004
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1010/series.jsonl",
+    "bytes": 7631567
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1010/lineages.tsv",
+    "bytes": 21019230
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1011/manifest.json",
+    "bytes": 2007
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1011/series.jsonl",
+    "bytes": 7634043
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1011/lineages.tsv",
+    "bytes": 20678191
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1012/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1012/series.jsonl",
+    "bytes": 7631687
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1012/lineages.tsv",
+    "bytes": 20813102
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1013/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1013/series.jsonl",
+    "bytes": 7631947
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1013/lineages.tsv",
+    "bytes": 20714828
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1014/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1014/series.jsonl",
+    "bytes": 7632410
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1014/lineages.tsv",
+    "bytes": 21145229
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1015/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1015/series.jsonl",
+    "bytes": 7630127
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1015/lineages.tsv",
+    "bytes": 20508129
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1016/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1016/series.jsonl",
+    "bytes": 7631810
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1016/lineages.tsv",
+    "bytes": 21011405
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1017/manifest.json",
+    "bytes": 2007
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1017/series.jsonl",
+    "bytes": 7632192
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1017/lineages.tsv",
+    "bytes": 20883785
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1018/manifest.json",
+    "bytes": 2008
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1018/series.jsonl",
+    "bytes": 7630761
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1018/lineages.tsv",
+    "bytes": 20946009
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1019/manifest.json",
+    "bytes": 2001
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1019/series.jsonl",
+    "bytes": 7632219
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1019/lineages.tsv",
+    "bytes": 21365628
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1020/manifest.json",
+    "bytes": 2003
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1020/series.jsonl",
+    "bytes": 7631134
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-calib/gradient-m3/neutral/seed-1020/lineages.tsv",
+    "bytes": 20837865
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-1/manifest.json",
+    "bytes": 3129
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-1/series.jsonl",
+    "bytes": 7631951
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-1/lineages.tsv",
+    "bytes": 21038251
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-2/manifest.json",
+    "bytes": 3126
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-2/series.jsonl",
+    "bytes": 7633313
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-2/lineages.tsv",
+    "bytes": 20706335
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-3/manifest.json",
+    "bytes": 3131
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-3/series.jsonl",
+    "bytes": 7629589
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-3/lineages.tsv",
+    "bytes": 20976365
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-4/manifest.json",
+    "bytes": 3126
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-4/series.jsonl",
+    "bytes": 7628812
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-4/lineages.tsv",
+    "bytes": 20861615
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-5/manifest.json",
+    "bytes": 3130
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-5/series.jsonl",
+    "bytes": 7632237
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-5/lineages.tsv",
+    "bytes": 20577338
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-6/manifest.json",
+    "bytes": 1988
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-6/series.jsonl",
+    "bytes": 7632666
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-6/lineages.tsv",
+    "bytes": 20576397
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-7/manifest.json",
+    "bytes": 1988
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-7/series.jsonl",
+    "bytes": 7631844
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-7/lineages.tsv",
+    "bytes": 20640291
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-8/manifest.json",
+    "bytes": 1988
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-8/series.jsonl",
+    "bytes": 7632442
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-8/lineages.tsv",
+    "bytes": 21210036
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-9/manifest.json",
+    "bytes": 1993
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-9/series.jsonl",
+    "bytes": 7631549
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-9/lineages.tsv",
+    "bytes": 20667526
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-10/manifest.json",
+    "bytes": 1995
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-10/series.jsonl",
+    "bytes": 7631825
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-10/lineages.tsv",
+    "bytes": 20919877
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-11/manifest.json",
+    "bytes": 1991
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-11/series.jsonl",
+    "bytes": 7631536
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-11/lineages.tsv",
+    "bytes": 21078389
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-12/manifest.json",
+    "bytes": 1992
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-12/series.jsonl",
+    "bytes": 7632685
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-12/lineages.tsv",
+    "bytes": 21214417
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-13/manifest.json",
+    "bytes": 1995
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-13/series.jsonl",
+    "bytes": 7634103
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-13/lineages.tsv",
+    "bytes": 20805149
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-14/manifest.json",
+    "bytes": 1991
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-14/series.jsonl",
+    "bytes": 7632699
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-14/lineages.tsv",
+    "bytes": 21015001
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-15/manifest.json",
+    "bytes": 1991
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-15/series.jsonl",
+    "bytes": 7632025
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-15/lineages.tsv",
+    "bytes": 20861806
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-16/manifest.json",
+    "bytes": 1991
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-16/series.jsonl",
+    "bytes": 7631290
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-16/lineages.tsv",
+    "bytes": 21166001
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-17/manifest.json",
+    "bytes": 1991
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-17/series.jsonl",
+    "bytes": 7632149
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-17/lineages.tsv",
+    "bytes": 20812935
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-18/manifest.json",
+    "bytes": 1992
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-18/series.jsonl",
+    "bytes": 7633440
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-18/lineages.tsv",
+    "bytes": 20929655
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-19/manifest.json",
+    "bytes": 1992
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-19/series.jsonl",
+    "bytes": 7630047
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-19/lineages.tsv",
+    "bytes": 20893621
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-20/manifest.json",
+    "bytes": 1991
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-20/series.jsonl",
+    "bytes": 7630818
+   },
+   {
+    "path": "~/develop/browser-life/runs/replay-m4/gradient-m3/neutral/seed-20/lineages.tsv",
+    "bytes": 21166226
+   }
+  ]
+ },
+ "firstPage": {
+  "falseAlarms": {
+   "k": 30,
+   "n": 70,
+   "Z": 4,
+   "W": 50
+  },
+  "heldOut": {
+   "k": 1,
+   "of": 30,
+   "expected": 1.4285714285714284
+  },
+  "zStars": {
+   "gradient-m3": 7.0429124518134785,
+   "spots-m3": 11.4665
+  },
+  "calibRuns": 20,
+  "falseAlarmSignals": [
+   {
+    "signal": "maxGeneration",
+    "side": "high",
+    "runs": 20,
+    "label": "Deepest generation"
+   },
+   {
+    "signal": "dominantShare",
+    "side": "high",
+    "runs": 16,
+    "label": "Largest lineage’s share"
+   },
+   {
+    "signal": "fissions",
+    "side": "high",
+    "runs": 1,
+    "label": "Fissions"
+   }
+  ],
+  "armsFromBurnIn": {
+   "k": 14,
+   "of": 15
+  }
+ },
+ "run": {
+  "id": "replay-m4/gradient-m3/neutral/seed-15",
+  "experiment": "replay-m4",
+  "preset": "gradient-m3",
+  "condition": "neutral",
+  "seed": 15,
+  "steps": 1000000,
+  "censusEvery": 100,
+  "censuses": 10000,
+  "presetIdentity": "e1c93a9384b5d921",
+  "inCorpus": true,
+  "calibration": false,
+  "leftOut": true,
+  "falseAlarm": "held-out",
+  "envelopeSize": 39,
+  "envelopeIds": [
+   "replay-calib/gradient-m3/neutral/seed-1001",
+   "replay-calib/gradient-m3/neutral/seed-1002",
+   "replay-calib/gradient-m3/neutral/seed-1003",
+   "replay-calib/gradient-m3/neutral/seed-1004",
+   "replay-calib/gradient-m3/neutral/seed-1005",
+   "replay-calib/gradient-m3/neutral/seed-1006",
+   "replay-calib/gradient-m3/neutral/seed-1007",
+   "replay-calib/gradient-m3/neutral/seed-1008",
+   "replay-calib/gradient-m3/neutral/seed-1009",
+   "replay-calib/gradient-m3/neutral/seed-1010",
+   "replay-calib/gradient-m3/neutral/seed-1011",
+   "replay-calib/gradient-m3/neutral/seed-1012",
+   "replay-calib/gradient-m3/neutral/seed-1013",
+   "replay-calib/gradient-m3/neutral/seed-1014",
+   "replay-calib/gradient-m3/neutral/seed-1015",
+   "replay-calib/gradient-m3/neutral/seed-1016",
+   "replay-calib/gradient-m3/neutral/seed-1017",
+   "replay-calib/gradient-m3/neutral/seed-1018",
+   "replay-calib/gradient-m3/neutral/seed-1019",
+   "replay-calib/gradient-m3/neutral/seed-1020",
+   "replay-m4/gradient-m3/neutral/seed-1",
+   "replay-m4/gradient-m3/neutral/seed-2",
+   "replay-m4/gradient-m3/neutral/seed-3",
+   "replay-m4/gradient-m3/neutral/seed-4",
+   "replay-m4/gradient-m3/neutral/seed-5",
+   "replay-m4/gradient-m3/neutral/seed-6",
+   "replay-m4/gradient-m3/neutral/seed-7",
+   "replay-m4/gradient-m3/neutral/seed-8",
+   "replay-m4/gradient-m3/neutral/seed-9",
+   "replay-m4/gradient-m3/neutral/seed-10",
+   "replay-m4/gradient-m3/neutral/seed-11",
+   "replay-m4/gradient-m3/neutral/seed-12",
+   "replay-m4/gradient-m3/neutral/seed-13",
+   "replay-m4/gradient-m3/neutral/seed-14",
+   "replay-m4/gradient-m3/neutral/seed-15",
+   "replay-m4/gradient-m3/neutral/seed-16",
+   "replay-m4/gradient-m3/neutral/seed-17",
+   "replay-m4/gradient-m3/neutral/seed-18",
+   "replay-m4/gradient-m3/neutral/seed-19",
+   "replay-m4/gradient-m3/neutral/seed-20"
+  ],
+  "zStar": 7.0429124518134785,
+  "W": 50,
+  "burnInStep": 10000,
+  "D": 7.1946666666666665,
+  "recordD": 7.1946666666666665
+ },
+ "rings": 1,
+ "entries": [
+  {
+   "startStep": 72600,
+   "notes": [
+    {
+     "signal": "maxGeneration",
+     "label": "Deepest generation",
+     "side": "high",
+     "D": 7.1946666666666665,
+     "receipt": {
+      "signal": "maxGeneration",
+      "side": "high",
+      "Z": 7.042912451813479,
+      "W": 50,
+      "startStep": 72600,
+      "endStep": 77500,
+      "minAbsZ": 7.1946666666666665,
+      "value": 59,
+      "median": 19
+     },
+     "stretches": [
+      {
+       "side": "high",
+       "startStep": 72600,
+       "endStep": 77500,
+       "startIdx": 725,
+       "endIdx": 774,
+       "censuses": 50,
+       "minAbsZ": 7.1946666666666665,
+       "maxAbsZ": 16.188,
+       "ongoing": false
+      }
+     ],
+     "sentence": "Deeper generations alive: 59 at step 72,600, against a neutral median there of 19. Beyond Z* for 50 censuses in a row, from step 72,600 to step 77,500; the weakest of them was 7.19 spreads above the median.",
+     "spread": 5.559673832468495,
+     "picture": [
+      {
+       "from": 0,
+       "to": 24,
+       "lo": 0,
+       "hi": 12,
+       "median": 11,
+       "bandLo": 0.5583210499429523,
+       "bandHi": 21.441678950057046
+      },
+      {
+       "from": 25,
+       "to": 49,
+       "lo": 12,
+       "hi": 13,
+       "median": 15,
+       "bandLo": 1.947901312428689,
+       "bandHi": 28.05209868757131
+      },
+      {
+       "from": 50,
+       "to": 74,
+       "lo": 14,
+       "hi": 17,
+       "median": 19,
+       "bandLo": 3.3374815749144275,
+       "bandHi": 34.66251842508557
+      },
+      {
+       "from": 75,
+       "to": 99,
+       "lo": 16,
+       "hi": 19,
+       "median": 22,
+       "bandLo": 3.727061837400168,
+       "bandHi": 40.27293816259983
+      },
+      {
+       "from": 100,
+       "to": 124,
+       "lo": 17,
+       "hi": 22,
+       "median": 24,
+       "bandLo": 3.1166420998859046,
+       "bandHi": 44.88335790011409
+      },
+      {
+       "from": 125,
+       "to": 149,
+       "lo": 22,
+       "hi": 23,
+       "median": 25,
+       "bandLo": 1.5062223623716413,
+       "bandHi": 48.493777637628355
+      },
+      {
+       "from": 150,
+       "to": 174,
+       "lo": 24,
+       "hi": 26,
+       "median": 26,
+       "bandLo": -44.48133291288508,
+       "bandHi": 96.48133291288508
+      },
+      {
+       "from": 175,
+       "to": 199,
+       "lo": 27,
+       "hi": 37,
+       "median": 25,
+       "bandLo": -29.8188144877995,
+       "bandHi": 79.8188144877995
+      },
+      {
+       "from": 200,
+       "to": 224,
+       "lo": 37,
+       "hi": 42,
+       "median": 23,
+       "bandLo": -42.26049343785655,
+       "bandHi": 88.26049343785655
+      },
+      {
+       "from": 225,
+       "to": 249,
+       "lo": 39,
+       "hi": 43,
+       "median": 24,
+       "bandLo": -30.8188144877995,
+       "bandHi": 78.8188144877995
+      },
+      {
+       "from": 250,
+       "to": 274,
+       "lo": 44,
+       "hi": 48,
+       "median": 23,
+       "bandLo": -39.65007370034229,
+       "bandHi": 85.65007370034229
+      },
+      {
+       "from": 275,
+       "to": 299,
+       "lo": 48,
+       "hi": 53,
+       "median": 21,
+       "bandLo": -70.36469081299916,
+       "bandHi": 112.36469081299916
+      },
+      {
+       "from": 300,
+       "to": 324,
+       "lo": 54,
+       "hi": 59,
+       "median": 20,
+       "bandLo": -24.377135537742454,
+       "bandHi": 64.37713553774245
+      },
+      {
+       "from": 325,
+       "to": 349,
+       "lo": 14,
+       "hi": 55,
+       "median": 19,
+       "bandLo": -12.325036850171145,
+       "bandHi": 50.325036850171145
+      },
+      {
+       "from": 350,
+       "to": 374,
+       "lo": 14,
+       "hi": 20,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 375,
+       "to": 399,
+       "lo": 20,
+       "hi": 26,
+       "median": 22,
+       "bandLo": -17.156296062713928,
+       "bandHi": 61.15629606271393
+      },
+      {
+       "from": 400,
+       "to": 424,
+       "lo": 25,
+       "hi": 30,
+       "median": 19,
+       "bandLo": -35.8188144877995,
+       "bandHi": 73.8188144877995
+      },
+      {
+       "from": 425,
+       "to": 449,
+       "lo": 30,
+       "hi": 34,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 450,
+       "to": 474,
+       "lo": 10,
+       "hi": 39,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 475,
+       "to": 499,
+       "lo": 11,
+       "hi": 16,
+       "median": 20,
+       "bandLo": -32.208394750285244,
+       "bandHi": 72.20839475028524
+      },
+      {
+       "from": 500,
+       "to": 524,
+       "lo": 15,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -39.42923422531376,
+       "bandHi": 75.42923422531376
+      },
+      {
+       "from": 525,
+       "to": 549,
+       "lo": 20,
+       "hi": 29,
+       "median": 18,
+       "bandLo": -31.59797501277098,
+       "bandHi": 67.59797501277097
+      },
+      {
+       "from": 550,
+       "to": 574,
+       "lo": 29,
+       "hi": 35,
+       "median": 21,
+       "bandLo": -18.156296062713928,
+       "bandHi": 60.15629606271393
+      },
+      {
+       "from": 575,
+       "to": 599,
+       "lo": 33,
+       "hi": 36,
+       "median": 20,
+       "bandLo": -32.208394750285244,
+       "bandHi": 72.20839475028524
+      },
+      {
+       "from": 600,
+       "to": 624,
+       "lo": 36,
+       "hi": 43,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 625,
+       "to": 649,
+       "lo": 43,
+       "hi": 46,
+       "median": 17,
+       "bandLo": -16.9354565876854,
+       "bandHi": 50.9354565876854
+      },
+      {
+       "from": 650,
+       "to": 674,
+       "lo": 45,
+       "hi": 51,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 675,
+       "to": 699,
+       "lo": 52,
+       "hi": 55,
+       "median": 19,
+       "bandLo": -14.935456587685401,
+       "bandHi": 52.9354565876854
+      },
+      {
+       "from": 700,
+       "to": 724,
+       "lo": 56,
+       "hi": 59,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 725,
+       "to": 749,
+       "lo": 59,
+       "hi": 65,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 750,
+       "to": 774,
+       "lo": 65,
+       "hi": 66,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 775,
+       "to": 799,
+       "lo": 13,
+       "hi": 19,
+       "median": 21,
+       "bandLo": -18.156296062713928,
+       "bandHi": 60.15629606271393
+      },
+      {
+       "from": 800,
+       "to": 824,
+       "lo": 10,
+       "hi": 22,
+       "median": 19,
+       "bandLo": -38.42923422531376,
+       "bandHi": 76.42923422531376
+      },
+      {
+       "from": 825,
+       "to": 849,
+       "lo": 13,
+       "hi": 24,
+       "median": 18,
+       "bandLo": -44.65007370034229,
+       "bandHi": 80.65007370034229
+      },
+      {
+       "from": 850,
+       "to": 874,
+       "lo": 24,
+       "hi": 24,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 875,
+       "to": 899,
+       "lo": 17,
+       "hi": 25,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 900,
+       "to": 924,
+       "lo": 17,
+       "hi": 20,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 925,
+       "to": 949,
+       "lo": 18,
+       "hi": 22,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 950,
+       "to": 974,
+       "lo": 22,
+       "hi": 31,
+       "median": 19,
+       "bandLo": -14.935456587685401,
+       "bandHi": 52.9354565876854
+      },
+      {
+       "from": 975,
+       "to": 999,
+       "lo": 30,
+       "hi": 32,
+       "median": 17,
+       "bandLo": -16.9354565876854,
+       "bandHi": 50.9354565876854
+      },
+      {
+       "from": 1000,
+       "to": 1024,
+       "lo": 12,
+       "hi": 35,
+       "median": 19,
+       "bandLo": -14.935456587685401,
+       "bandHi": 52.9354565876854
+      },
+      {
+       "from": 1025,
+       "to": 1049,
+       "lo": 12,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 1050,
+       "to": 1074,
+       "lo": 18,
+       "hi": 21,
+       "median": 20,
+       "bandLo": -32.208394750285244,
+       "bandHi": 72.20839475028524
+      },
+      {
+       "from": 1075,
+       "to": 1099,
+       "lo": 21,
+       "hi": 26,
+       "median": 20,
+       "bandLo": -26.987555275256717,
+       "bandHi": 66.98755527525671
+      },
+      {
+       "from": 1100,
+       "to": 1124,
+       "lo": 26,
+       "hi": 29,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 1125,
+       "to": 1149,
+       "lo": 20,
+       "hi": 24,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 1150,
+       "to": 1174,
+       "lo": 15,
+       "hi": 26,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 1175,
+       "to": 1199,
+       "lo": 14,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -8.104197375142622,
+       "bandHi": 44.10419737514262
+      },
+      {
+       "from": 1200,
+       "to": 1224,
+       "lo": 16,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 1225,
+       "to": 1249,
+       "lo": 20,
+       "hi": 25,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 1250,
+       "to": 1274,
+       "lo": 21,
+       "hi": 29,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 1275,
+       "to": 1299,
+       "lo": 12,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 1300,
+       "to": 1324,
+       "lo": 14,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -49.8709131753708,
+       "bandHi": 85.8709131753708
+      },
+      {
+       "from": 1325,
+       "to": 1349,
+       "lo": 17,
+       "hi": 21,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 1350,
+       "to": 1374,
+       "lo": 21,
+       "hi": 28,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 1375,
+       "to": 1399,
+       "lo": 26,
+       "hi": 30,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 1400,
+       "to": 1424,
+       "lo": 30,
+       "hi": 32,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 1425,
+       "to": 1449,
+       "lo": 32,
+       "hi": 35,
+       "median": 17,
+       "bandLo": -37.8188144877995,
+       "bandHi": 71.8188144877995
+      },
+      {
+       "from": 1450,
+       "to": 1474,
+       "lo": 33,
+       "hi": 37,
+       "median": 17,
+       "bandLo": -37.8188144877995,
+       "bandHi": 71.8188144877995
+      },
+      {
+       "from": 1475,
+       "to": 1499,
+       "lo": 17,
+       "hi": 34,
+       "median": 19,
+       "bandLo": -33.208394750285244,
+       "bandHi": 71.20839475028524
+      },
+      {
+       "from": 1500,
+       "to": 1524,
+       "lo": 19,
+       "hi": 24,
+       "median": 17,
+       "bandLo": -11.714617112656882,
+       "bandHi": 45.71461711265688
+      },
+      {
+       "from": 1525,
+       "to": 1549,
+       "lo": 15,
+       "hi": 25,
+       "median": 19,
+       "bandLo": -9.714617112656882,
+       "bandHi": 47.71461711265688
+      },
+      {
+       "from": 1550,
+       "to": 1574,
+       "lo": 13,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 1575,
+       "to": 1599,
+       "lo": 13,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -35.8188144877995,
+       "bandHi": 73.8188144877995
+      },
+      {
+       "from": 1600,
+       "to": 1624,
+       "lo": 19,
+       "hi": 28,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 1625,
+       "to": 1649,
+       "lo": 23,
+       "hi": 31,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 1650,
+       "to": 1674,
+       "lo": 31,
+       "hi": 32,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 1675,
+       "to": 1699,
+       "lo": 16,
+       "hi": 35,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 1700,
+       "to": 1724,
+       "lo": 15,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 1725,
+       "to": 1749,
+       "lo": 17,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 1750,
+       "to": 1774,
+       "lo": 13,
+       "hi": 23,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 1775,
+       "to": 1799,
+       "lo": 15,
+       "hi": 20,
+       "median": 17,
+       "bandLo": -35.208394750285244,
+       "bandHi": 69.20839475028524
+      },
+      {
+       "from": 1800,
+       "to": 1824,
+       "lo": 20,
+       "hi": 26,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 1825,
+       "to": 1849,
+       "lo": 20,
+       "hi": 29,
+       "median": 21,
+       "bandLo": -12.935456587685401,
+       "bandHi": 54.9354565876854
+      },
+      {
+       "from": 1850,
+       "to": 1874,
+       "lo": 15,
+       "hi": 22,
+       "median": 20,
+       "bandLo": -34.8188144877995,
+       "bandHi": 74.8188144877995
+      },
+      {
+       "from": 1875,
+       "to": 1899,
+       "lo": 22,
+       "hi": 26,
+       "median": 19,
+       "bandLo": -33.208394750285244,
+       "bandHi": 71.20839475028524
+      },
+      {
+       "from": 1900,
+       "to": 1924,
+       "lo": 10,
+       "hi": 27,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 1925,
+       "to": 1949,
+       "lo": 17,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -12.325036850171145,
+       "bandHi": 50.325036850171145
+      },
+      {
+       "from": 1950,
+       "to": 1974,
+       "lo": 17,
+       "hi": 22,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 1975,
+       "to": 1999,
+       "lo": 7,
+       "hi": 22,
+       "median": 22,
+       "bandLo": -30.208394750285244,
+       "bandHi": 74.20839475028524
+      },
+      {
+       "from": 2000,
+       "to": 2024,
+       "lo": 7,
+       "hi": 14,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 2025,
+       "to": 2049,
+       "lo": 14,
+       "hi": 16,
+       "median": 19,
+       "bandLo": -33.208394750285244,
+       "bandHi": 71.20839475028524
+      },
+      {
+       "from": 2050,
+       "to": 2074,
+       "lo": 16,
+       "hi": 21,
+       "median": 20,
+       "bandLo": -40.03965396282802,
+       "bandHi": 80.03965396282803
+      },
+      {
+       "from": 2075,
+       "to": 2099,
+       "lo": 20,
+       "hi": 24,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 2100,
+       "to": 2124,
+       "lo": 22,
+       "hi": 27,
+       "median": 16,
+       "bandLo": -12.714617112656882,
+       "bandHi": 44.71461711265688
+      },
+      {
+       "from": 2125,
+       "to": 2149,
+       "lo": 13,
+       "hi": 27,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 2150,
+       "to": 2174,
+       "lo": 16,
+       "hi": 22,
+       "median": 17,
+       "bandLo": -22.156296062713928,
+       "bandHi": 56.15629606271393
+      },
+      {
+       "from": 2175,
+       "to": 2199,
+       "lo": 19,
+       "hi": 22,
+       "median": 19,
+       "bandLo": -14.935456587685401,
+       "bandHi": 52.9354565876854
+      },
+      {
+       "from": 2200,
+       "to": 2224,
+       "lo": 13,
+       "hi": 26,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 2225,
+       "to": 2249,
+       "lo": 10,
+       "hi": 15,
+       "median": 19,
+       "bandLo": -33.208394750285244,
+       "bandHi": 71.20839475028524
+      },
+      {
+       "from": 2250,
+       "to": 2274,
+       "lo": 10,
+       "hi": 11,
+       "median": 22,
+       "bandLo": -27.59797501277098,
+       "bandHi": 71.59797501277097
+      },
+      {
+       "from": 2275,
+       "to": 2299,
+       "lo": 11,
+       "hi": 15,
+       "median": 21,
+       "bandLo": -15.545876325199664,
+       "bandHi": 57.545876325199664
+      },
+      {
+       "from": 2300,
+       "to": 2324,
+       "lo": 10,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 2325,
+       "to": 2349,
+       "lo": 14,
+       "hi": 16,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 2350,
+       "to": 2374,
+       "lo": 16,
+       "hi": 22,
+       "median": 17,
+       "bandLo": -19.545876325199664,
+       "bandHi": 53.545876325199664
+      },
+      {
+       "from": 2375,
+       "to": 2399,
+       "lo": 16,
+       "hi": 22,
+       "median": 20,
+       "bandLo": -11.325036850171145,
+       "bandHi": 51.325036850171145
+      },
+      {
+       "from": 2400,
+       "to": 2424,
+       "lo": 16,
+       "hi": 20,
+       "median": 21,
+       "bandLo": -15.545876325199664,
+       "bandHi": 57.545876325199664
+      },
+      {
+       "from": 2425,
+       "to": 2449,
+       "lo": 20,
+       "hi": 24,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 2450,
+       "to": 2474,
+       "lo": 21,
+       "hi": 23,
+       "median": 16,
+       "bandLo": -28.377135537742454,
+       "bandHi": 60.377135537742454
+      },
+      {
+       "from": 2475,
+       "to": 2499,
+       "lo": 16,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 2500,
+       "to": 2524,
+       "lo": 17,
+       "hi": 19,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 2525,
+       "to": 2549,
+       "lo": 14,
+       "hi": 18,
+       "median": 20,
+       "bandLo": -26.987555275256717,
+       "bandHi": 66.98755527525671
+      },
+      {
+       "from": 2550,
+       "to": 2574,
+       "lo": 18,
+       "hi": 22,
+       "median": 17,
+       "bandLo": -35.208394750285244,
+       "bandHi": 69.20839475028524
+      },
+      {
+       "from": 2575,
+       "to": 2599,
+       "lo": 19,
+       "hi": 23,
+       "median": 17,
+       "bandLo": -35.208394750285244,
+       "bandHi": 69.20839475028524
+      },
+      {
+       "from": 2600,
+       "to": 2624,
+       "lo": 23,
+       "hi": 29,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 2625,
+       "to": 2649,
+       "lo": 15,
+       "hi": 30,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 2650,
+       "to": 2674,
+       "lo": 12,
+       "hi": 15,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 2675,
+       "to": 2699,
+       "lo": 14,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 2700,
+       "to": 2724,
+       "lo": 10,
+       "hi": 15,
+       "median": 19,
+       "bandLo": -35.8188144877995,
+       "bandHi": 73.8188144877995
+      },
+      {
+       "from": 2725,
+       "to": 2749,
+       "lo": 12,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 2750,
+       "to": 2774,
+       "lo": 15,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -31.59797501277098,
+       "bandHi": 67.59797501277097
+      },
+      {
+       "from": 2775,
+       "to": 2799,
+       "lo": 18,
+       "hi": 22,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 2800,
+       "to": 2824,
+       "lo": 14,
+       "hi": 21,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 2825,
+       "to": 2849,
+       "lo": 12,
+       "hi": 15,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 2850,
+       "to": 2874,
+       "lo": 13,
+       "hi": 19,
+       "median": 17,
+       "bandLo": -24.76671580022819,
+       "bandHi": 58.76671580022819
+      },
+      {
+       "from": 2875,
+       "to": 2899,
+       "lo": 14,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 2900,
+       "to": 2924,
+       "lo": 18,
+       "hi": 23,
+       "median": 20,
+       "bandLo": -29.59797501277098,
+       "bandHi": 69.59797501277097
+      },
+      {
+       "from": 2925,
+       "to": 2949,
+       "lo": 23,
+       "hi": 29,
+       "median": 20,
+       "bandLo": -32.208394750285244,
+       "bandHi": 72.20839475028524
+      },
+      {
+       "from": 2950,
+       "to": 2974,
+       "lo": 27,
+       "hi": 31,
+       "median": 20,
+       "bandLo": -21.76671580022819,
+       "bandHi": 61.76671580022819
+      },
+      {
+       "from": 2975,
+       "to": 2999,
+       "lo": 23,
+       "hi": 33,
+       "median": 21,
+       "bandLo": -33.8188144877995,
+       "bandHi": 75.8188144877995
+      },
+      {
+       "from": 3000,
+       "to": 3024,
+       "lo": 23,
+       "hi": 28,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 3025,
+       "to": 3049,
+       "lo": 24,
+       "hi": 29,
+       "median": 19,
+       "bandLo": -12.325036850171145,
+       "bandHi": 50.325036850171145
+      },
+      {
+       "from": 3050,
+       "to": 3074,
+       "lo": 29,
+       "hi": 30,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 3075,
+       "to": 3099,
+       "lo": 10,
+       "hi": 30,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 3100,
+       "to": 3124,
+       "lo": 8,
+       "hi": 10,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 3125,
+       "to": 3149,
+       "lo": 10,
+       "hi": 15,
+       "median": 20,
+       "bandLo": -19.156296062713928,
+       "bandHi": 59.15629606271393
+      },
+      {
+       "from": 3150,
+       "to": 3174,
+       "lo": 14,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 3175,
+       "to": 3199,
+       "lo": 16,
+       "hi": 23,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 3200,
+       "to": 3224,
+       "lo": 14,
+       "hi": 18,
+       "median": 17,
+       "bandLo": -22.156296062713928,
+       "bandHi": 56.15629606271393
+      },
+      {
+       "from": 3225,
+       "to": 3249,
+       "lo": 16,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 3250,
+       "to": 3274,
+       "lo": 18,
+       "hi": 20,
+       "median": 19,
+       "bandLo": -9.714617112656882,
+       "bandHi": 47.71461711265688
+      },
+      {
+       "from": 3275,
+       "to": 3299,
+       "lo": 14,
+       "hi": 21,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 3300,
+       "to": 3324,
+       "lo": 14,
+       "hi": 16,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 3325,
+       "to": 3349,
+       "lo": 14,
+       "hi": 16,
+       "median": 18,
+       "bandLo": -10.714617112656882,
+       "bandHi": 46.71461711265688
+      },
+      {
+       "from": 3350,
+       "to": 3374,
+       "lo": 12,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 3375,
+       "to": 3399,
+       "lo": 8,
+       "hi": 12,
+       "median": 17,
+       "bandLo": -27.377135537742454,
+       "bandHi": 61.377135537742454
+      },
+      {
+       "from": 3400,
+       "to": 3424,
+       "lo": 9,
+       "hi": 13,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 3425,
+       "to": 3449,
+       "lo": 13,
+       "hi": 14,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 3450,
+       "to": 3474,
+       "lo": 14,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 3475,
+       "to": 3499,
+       "lo": 14,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 3500,
+       "to": 3524,
+       "lo": 16,
+       "hi": 19,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 3525,
+       "to": 3549,
+       "lo": 18,
+       "hi": 20,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 3550,
+       "to": 3574,
+       "lo": 19,
+       "hi": 25,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 3575,
+       "to": 3599,
+       "lo": 23,
+       "hi": 25,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 3600,
+       "to": 3624,
+       "lo": 13,
+       "hi": 26,
+       "median": 17,
+       "bandLo": -9.104197375142622,
+       "bandHi": 43.10419737514262
+      },
+      {
+       "from": 3625,
+       "to": 3649,
+       "lo": 14,
+       "hi": 24,
+       "median": 20,
+       "bandLo": -16.545876325199664,
+       "bandHi": 56.545876325199664
+      },
+      {
+       "from": 3650,
+       "to": 3674,
+       "lo": 12,
+       "hi": 24,
+       "median": 21,
+       "bandLo": -20.76671580022819,
+       "bandHi": 62.76671580022819
+      },
+      {
+       "from": 3675,
+       "to": 3699,
+       "lo": 16,
+       "hi": 17,
+       "median": 21,
+       "bandLo": -25.987555275256717,
+       "bandHi": 67.98755527525671
+      },
+      {
+       "from": 3700,
+       "to": 3724,
+       "lo": 12,
+       "hi": 18,
+       "median": 22,
+       "bandLo": -38.03965396282802,
+       "bandHi": 82.03965396282803
+      },
+      {
+       "from": 3725,
+       "to": 3749,
+       "lo": 13,
+       "hi": 15,
+       "median": 21,
+       "bandLo": -20.76671580022819,
+       "bandHi": 62.76671580022819
+      },
+      {
+       "from": 3750,
+       "to": 3774,
+       "lo": 13,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 3775,
+       "to": 3799,
+       "lo": 18,
+       "hi": 21,
+       "median": 20,
+       "bandLo": -21.76671580022819,
+       "bandHi": 61.76671580022819
+      },
+      {
+       "from": 3800,
+       "to": 3824,
+       "lo": 20,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 3825,
+       "to": 3849,
+       "lo": 17,
+       "hi": 23,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 3850,
+       "to": 3874,
+       "lo": 18,
+       "hi": 23,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 3875,
+       "to": 3899,
+       "lo": 15,
+       "hi": 25,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 3900,
+       "to": 3924,
+       "lo": 16,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -8.104197375142622,
+       "bandHi": 44.10419737514262
+      },
+      {
+       "from": 3925,
+       "to": 3949,
+       "lo": 16,
+       "hi": 21,
+       "median": 21,
+       "bandLo": -18.156296062713928,
+       "bandHi": 60.15629606271393
+      },
+      {
+       "from": 3950,
+       "to": 3974,
+       "lo": 10,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -34.208394750285244,
+       "bandHi": 70.20839475028524
+      },
+      {
+       "from": 3975,
+       "to": 3999,
+       "lo": 15,
+       "hi": 19,
+       "median": 17,
+       "bandLo": -32.59797501277098,
+       "bandHi": 66.59797501277097
+      },
+      {
+       "from": 4000,
+       "to": 4024,
+       "lo": 18,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 4025,
+       "to": 4049,
+       "lo": 12,
+       "hi": 21,
+       "median": 18,
+       "bandLo": -10.714617112656882,
+       "bandHi": 46.71461711265688
+      },
+      {
+       "from": 4050,
+       "to": 4074,
+       "lo": 15,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 4075,
+       "to": 4099,
+       "lo": 13,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 4100,
+       "to": 4124,
+       "lo": 16,
+       "hi": 17,
+       "median": 20,
+       "bandLo": -29.59797501277098,
+       "bandHi": 69.59797501277097
+      },
+      {
+       "from": 4125,
+       "to": 4149,
+       "lo": 7,
+       "hi": 19,
+       "median": 20,
+       "bandLo": -13.935456587685401,
+       "bandHi": 53.9354565876854
+      },
+      {
+       "from": 4150,
+       "to": 4174,
+       "lo": 9,
+       "hi": 14,
+       "median": 20,
+       "bandLo": -26.987555275256717,
+       "bandHi": 66.98755527525671
+      },
+      {
+       "from": 4175,
+       "to": 4199,
+       "lo": 14,
+       "hi": 19,
+       "median": 20,
+       "bandLo": -26.987555275256717,
+       "bandHi": 66.98755527525671
+      },
+      {
+       "from": 4200,
+       "to": 4224,
+       "lo": 19,
+       "hi": 23,
+       "median": 21,
+       "bandLo": -31.208394750285244,
+       "bandHi": 73.20839475028524
+      },
+      {
+       "from": 4225,
+       "to": 4249,
+       "lo": 23,
+       "hi": 24,
+       "median": 21,
+       "bandLo": -28.59797501277098,
+       "bandHi": 70.59797501277097
+      },
+      {
+       "from": 4250,
+       "to": 4274,
+       "lo": 24,
+       "hi": 25,
+       "median": 18,
+       "bandLo": -36.8188144877995,
+       "bandHi": 72.8188144877995
+      },
+      {
+       "from": 4275,
+       "to": 4299,
+       "lo": 13,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 4300,
+       "to": 4324,
+       "lo": 13,
+       "hi": 14,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 4325,
+       "to": 4349,
+       "lo": 12,
+       "hi": 15,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 4350,
+       "to": 4374,
+       "lo": 14,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -42.03965396282802,
+       "bandHi": 78.03965396282803
+      },
+      {
+       "from": 4375,
+       "to": 4399,
+       "lo": 13,
+       "hi": 15,
+       "median": 19,
+       "bandLo": -14.935456587685401,
+       "bandHi": 52.9354565876854
+      },
+      {
+       "from": 4400,
+       "to": 4424,
+       "lo": 14,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 4425,
+       "to": 4449,
+       "lo": 11,
+       "hi": 16,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 4450,
+       "to": 4474,
+       "lo": 14,
+       "hi": 16,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 4475,
+       "to": 4499,
+       "lo": 12,
+       "hi": 16,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 4500,
+       "to": 4524,
+       "lo": 12,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -8.104197375142622,
+       "bandHi": 44.10419737514262
+      },
+      {
+       "from": 4525,
+       "to": 4549,
+       "lo": 17,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 4550,
+       "to": 4574,
+       "lo": 18,
+       "hi": 26,
+       "median": 16,
+       "bandLo": -25.76671580022819,
+       "bandHi": 57.76671580022819
+      },
+      {
+       "from": 4575,
+       "to": 4599,
+       "lo": 25,
+       "hi": 28,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 4600,
+       "to": 4624,
+       "lo": 26,
+       "hi": 29,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 4625,
+       "to": 4649,
+       "lo": 17,
+       "hi": 28,
+       "median": 18,
+       "bandLo": -10.714617112656882,
+       "bandHi": 46.71461711265688
+      },
+      {
+       "from": 4650,
+       "to": 4674,
+       "lo": 18,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -12.325036850171145,
+       "bandHi": 50.325036850171145
+      },
+      {
+       "from": 4675,
+       "to": 4699,
+       "lo": 18,
+       "hi": 28,
+       "median": 19,
+       "bandLo": -12.325036850171145,
+       "bandHi": 50.325036850171145
+      },
+      {
+       "from": 4700,
+       "to": 4724,
+       "lo": 13,
+       "hi": 30,
+       "median": 19,
+       "bandLo": -12.325036850171145,
+       "bandHi": 50.325036850171145
+      },
+      {
+       "from": 4725,
+       "to": 4749,
+       "lo": 16,
+       "hi": 23,
+       "median": 20,
+       "bandLo": -16.545876325199664,
+       "bandHi": 56.545876325199664
+      },
+      {
+       "from": 4750,
+       "to": 4774,
+       "lo": 15,
+       "hi": 24,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 4775,
+       "to": 4799,
+       "lo": 15,
+       "hi": 20,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 4800,
+       "to": 4824,
+       "lo": 16,
+       "hi": 20,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 4825,
+       "to": 4849,
+       "lo": 20,
+       "hi": 25,
+       "median": 22,
+       "bandLo": -4.104197375142622,
+       "bandHi": 48.10419737514262
+      },
+      {
+       "from": 4850,
+       "to": 4874,
+       "lo": 18,
+       "hi": 25,
+       "median": 20,
+       "bandLo": -16.545876325199664,
+       "bandHi": 56.545876325199664
+      },
+      {
+       "from": 4875,
+       "to": 4899,
+       "lo": 10,
+       "hi": 19,
+       "median": 17,
+       "bandLo": -24.76671580022819,
+       "bandHi": 58.76671580022819
+      },
+      {
+       "from": 4900,
+       "to": 4924,
+       "lo": 12,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -34.208394750285244,
+       "bandHi": 70.20839475028524
+      },
+      {
+       "from": 4925,
+       "to": 4949,
+       "lo": 12,
+       "hi": 15,
+       "median": 17,
+       "bandLo": -19.545876325199664,
+       "bandHi": 53.545876325199664
+      },
+      {
+       "from": 4950,
+       "to": 4974,
+       "lo": 8,
+       "hi": 12,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 4975,
+       "to": 4999,
+       "lo": 8,
+       "hi": 12,
+       "median": 20,
+       "bandLo": -19.156296062713928,
+       "bandHi": 59.15629606271393
+      },
+      {
+       "from": 5000,
+       "to": 5024,
+       "lo": 11,
+       "hi": 14,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 5025,
+       "to": 5049,
+       "lo": 11,
+       "hi": 18,
+       "median": 17,
+       "bandLo": -19.545876325199664,
+       "bandHi": 53.545876325199664
+      },
+      {
+       "from": 5050,
+       "to": 5074,
+       "lo": 14,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 5075,
+       "to": 5099,
+       "lo": 15,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -10.714617112656882,
+       "bandHi": 46.71461711265688
+      },
+      {
+       "from": 5100,
+       "to": 5124,
+       "lo": 21,
+       "hi": 27,
+       "median": 19,
+       "bandLo": -14.935456587685401,
+       "bandHi": 52.9354565876854
+      },
+      {
+       "from": 5125,
+       "to": 5149,
+       "lo": 24,
+       "hi": 32,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 5150,
+       "to": 5174,
+       "lo": 33,
+       "hi": 36,
+       "median": 17,
+       "bandLo": -35.208394750285244,
+       "bandHi": 69.20839475028524
+      },
+      {
+       "from": 5175,
+       "to": 5199,
+       "lo": 36,
+       "hi": 42,
+       "median": 18,
+       "bandLo": -31.59797501277098,
+       "bandHi": 67.59797501277097
+      },
+      {
+       "from": 5200,
+       "to": 5224,
+       "lo": 41,
+       "hi": 46,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 5225,
+       "to": 5249,
+       "lo": 46,
+       "hi": 47,
+       "median": 17,
+       "bandLo": -19.545876325199664,
+       "bandHi": 53.545876325199664
+      },
+      {
+       "from": 5250,
+       "to": 5274,
+       "lo": 14,
+       "hi": 47,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 5275,
+       "to": 5299,
+       "lo": 19,
+       "hi": 25,
+       "median": 17,
+       "bandLo": -32.59797501277098,
+       "bandHi": 66.59797501277097
+      },
+      {
+       "from": 5300,
+       "to": 5324,
+       "lo": 15,
+       "hi": 26,
+       "median": 17,
+       "bandLo": -22.156296062713928,
+       "bandHi": 56.15629606271393
+      },
+      {
+       "from": 5325,
+       "to": 5349,
+       "lo": 13,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 5350,
+       "to": 5374,
+       "lo": 17,
+       "hi": 19,
+       "median": 21,
+       "bandLo": -31.208394750285244,
+       "bandHi": 73.20839475028524
+      },
+      {
+       "from": 5375,
+       "to": 5399,
+       "lo": 17,
+       "hi": 23,
+       "median": 20,
+       "bandLo": -55.70217238791359,
+       "bandHi": 95.70217238791359
+      },
+      {
+       "from": 5400,
+       "to": 5424,
+       "lo": 13,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -39.42923422531376,
+       "bandHi": 75.42923422531376
+      },
+      {
+       "from": 5425,
+       "to": 5449,
+       "lo": 16,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 5450,
+       "to": 5474,
+       "lo": 21,
+       "hi": 27,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 5475,
+       "to": 5499,
+       "lo": 19,
+       "hi": 27,
+       "median": 19,
+       "bandLo": -14.935456587685401,
+       "bandHi": 52.9354565876854
+      },
+      {
+       "from": 5500,
+       "to": 5524,
+       "lo": 17,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 5525,
+       "to": 5549,
+       "lo": 18,
+       "hi": 24,
+       "median": 22,
+       "bandLo": -19.76671580022819,
+       "bandHi": 63.76671580022819
+      },
+      {
+       "from": 5550,
+       "to": 5574,
+       "lo": 24,
+       "hi": 25,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 5575,
+       "to": 5599,
+       "lo": 12,
+       "hi": 25,
+       "median": 17,
+       "bandLo": -22.156296062713928,
+       "bandHi": 56.15629606271393
+      },
+      {
+       "from": 5600,
+       "to": 5624,
+       "lo": 13,
+       "hi": 14,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 5625,
+       "to": 5649,
+       "lo": 9,
+       "hi": 14,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 5650,
+       "to": 5674,
+       "lo": 13,
+       "hi": 14,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 5675,
+       "to": 5699,
+       "lo": 15,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 5700,
+       "to": 5724,
+       "lo": 20,
+       "hi": 22,
+       "median": 20,
+       "bandLo": -6.104197375142622,
+       "bandHi": 46.10419737514262
+      },
+      {
+       "from": 5725,
+       "to": 5749,
+       "lo": 18,
+       "hi": 23,
+       "median": 20,
+       "bandLo": -32.208394750285244,
+       "bandHi": 72.20839475028524
+      },
+      {
+       "from": 5750,
+       "to": 5774,
+       "lo": 15,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 5775,
+       "to": 5799,
+       "lo": 16,
+       "hi": 22,
+       "median": 20,
+       "bandLo": -19.156296062713928,
+       "bandHi": 59.15629606271393
+      },
+      {
+       "from": 5800,
+       "to": 5824,
+       "lo": 16,
+       "hi": 23,
+       "median": 21,
+       "bandLo": -15.545876325199664,
+       "bandHi": 57.545876325199664
+      },
+      {
+       "from": 5825,
+       "to": 5849,
+       "lo": 9,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 5850,
+       "to": 5874,
+       "lo": 9,
+       "hi": 11,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 5875,
+       "to": 5899,
+       "lo": 12,
+       "hi": 15,
+       "median": 20,
+       "bandLo": -21.76671580022819,
+       "bandHi": 61.76671580022819
+      },
+      {
+       "from": 5900,
+       "to": 5924,
+       "lo": 14,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 5925,
+       "to": 5949,
+       "lo": 17,
+       "hi": 20,
+       "median": 16,
+       "bandLo": -28.377135537742454,
+       "bandHi": 60.377135537742454
+      },
+      {
+       "from": 5950,
+       "to": 5974,
+       "lo": 15,
+       "hi": 24,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 5975,
+       "to": 5999,
+       "lo": 15,
+       "hi": 16,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 6000,
+       "to": 6024,
+       "lo": 12,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 6025,
+       "to": 6049,
+       "lo": 8,
+       "hi": 13,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 6050,
+       "to": 6074,
+       "lo": 11,
+       "hi": 13,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 6075,
+       "to": 6099,
+       "lo": 11,
+       "hi": 13,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 6100,
+       "to": 6124,
+       "lo": 13,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 6125,
+       "to": 6149,
+       "lo": 15,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 6150,
+       "to": 6174,
+       "lo": 18,
+       "hi": 23,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 6175,
+       "to": 6199,
+       "lo": 23,
+       "hi": 26,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 6200,
+       "to": 6224,
+       "lo": 22,
+       "hi": 29,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 6225,
+       "to": 6249,
+       "lo": 18,
+       "hi": 23,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 6250,
+       "to": 6274,
+       "lo": 15,
+       "hi": 20,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 6275,
+       "to": 6299,
+       "lo": 16,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 6300,
+       "to": 6324,
+       "lo": 17,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -12.325036850171145,
+       "bandHi": 50.325036850171145
+      },
+      {
+       "from": 6325,
+       "to": 6349,
+       "lo": 12,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 6350,
+       "to": 6374,
+       "lo": 16,
+       "hi": 17,
+       "median": 16,
+       "bandLo": -33.59797501277098,
+       "bandHi": 65.59797501277097
+      },
+      {
+       "from": 6375,
+       "to": 6399,
+       "lo": 17,
+       "hi": 20,
+       "median": 16,
+       "bandLo": -20.545876325199664,
+       "bandHi": 52.545876325199664
+      },
+      {
+       "from": 6400,
+       "to": 6424,
+       "lo": 17,
+       "hi": 20,
+       "median": 17,
+       "bandLo": -6.493777637628359,
+       "bandHi": 40.493777637628355
+      },
+      {
+       "from": 6425,
+       "to": 6449,
+       "lo": 10,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 6450,
+       "to": 6474,
+       "lo": 12,
+       "hi": 22,
+       "median": 17,
+       "bandLo": -35.208394750285244,
+       "bandHi": 69.20839475028524
+      },
+      {
+       "from": 6475,
+       "to": 6499,
+       "lo": 18,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 6500,
+       "to": 6524,
+       "lo": 13,
+       "hi": 23,
+       "median": 17,
+       "bandLo": -22.156296062713928,
+       "bandHi": 56.15629606271393
+      },
+      {
+       "from": 6525,
+       "to": 6549,
+       "lo": 21,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 6550,
+       "to": 6574,
+       "lo": 20,
+       "hi": 22,
+       "median": 21,
+       "bandLo": -12.935456587685401,
+       "bandHi": 54.9354565876854
+      },
+      {
+       "from": 6575,
+       "to": 6599,
+       "lo": 22,
+       "hi": 30,
+       "median": 19,
+       "bandLo": -43.65007370034229,
+       "bandHi": 81.65007370034229
+      },
+      {
+       "from": 6600,
+       "to": 6624,
+       "lo": 24,
+       "hi": 34,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 6625,
+       "to": 6649,
+       "lo": 14,
+       "hi": 27,
+       "median": 17,
+       "bandLo": -32.59797501277098,
+       "bandHi": 66.59797501277097
+      },
+      {
+       "from": 6650,
+       "to": 6674,
+       "lo": 13,
+       "hi": 16,
+       "median": 19,
+       "bandLo": -41.03965396282802,
+       "bandHi": 79.03965396282803
+      },
+      {
+       "from": 6675,
+       "to": 6699,
+       "lo": 15,
+       "hi": 20,
+       "median": 16,
+       "bandLo": -28.377135537742454,
+       "bandHi": 60.377135537742454
+      },
+      {
+       "from": 6700,
+       "to": 6724,
+       "lo": 20,
+       "hi": 24,
+       "median": 17,
+       "bandLo": -11.714617112656882,
+       "bandHi": 45.71461711265688
+      },
+      {
+       "from": 6725,
+       "to": 6749,
+       "lo": 23,
+       "hi": 27,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 6750,
+       "to": 6774,
+       "lo": 14,
+       "hi": 32,
+       "median": 21,
+       "bandLo": -25.987555275256717,
+       "bandHi": 67.98755527525671
+      },
+      {
+       "from": 6775,
+       "to": 6799,
+       "lo": 13,
+       "hi": 19,
+       "median": 21,
+       "bandLo": -28.59797501277098,
+       "bandHi": 70.59797501277097
+      },
+      {
+       "from": 6800,
+       "to": 6824,
+       "lo": 19,
+       "hi": 20,
+       "median": 20,
+       "bandLo": -24.377135537742454,
+       "bandHi": 64.37713553774245
+      },
+      {
+       "from": 6825,
+       "to": 6849,
+       "lo": 11,
+       "hi": 20,
+       "median": 21,
+       "bandLo": -36.42923422531376,
+       "bandHi": 78.42923422531376
+      },
+      {
+       "from": 6850,
+       "to": 6874,
+       "lo": 12,
+       "hi": 17,
+       "median": 20,
+       "bandLo": -34.8188144877995,
+       "bandHi": 74.8188144877995
+      },
+      {
+       "from": 6875,
+       "to": 6899,
+       "lo": 12,
+       "hi": 19,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 6900,
+       "to": 6924,
+       "lo": 13,
+       "hi": 19,
+       "median": 17,
+       "bandLo": -19.545876325199664,
+       "bandHi": 53.545876325199664
+      },
+      {
+       "from": 6925,
+       "to": 6949,
+       "lo": 19,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -10.714617112656882,
+       "bandHi": 46.71461711265688
+      },
+      {
+       "from": 6950,
+       "to": 6974,
+       "lo": 14,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 6975,
+       "to": 6999,
+       "lo": 15,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -12.325036850171145,
+       "bandHi": 50.325036850171145
+      },
+      {
+       "from": 7000,
+       "to": 7024,
+       "lo": 17,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 7025,
+       "to": 7049,
+       "lo": 19,
+       "hi": 27,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 7050,
+       "to": 7074,
+       "lo": 26,
+       "hi": 35,
+       "median": 21,
+       "bandLo": -12.935456587685401,
+       "bandHi": 54.9354565876854
+      },
+      {
+       "from": 7075,
+       "to": 7099,
+       "lo": 19,
+       "hi": 32,
+       "median": 22,
+       "bandLo": -24.987555275256717,
+       "bandHi": 68.98755527525671
+      },
+      {
+       "from": 7100,
+       "to": 7124,
+       "lo": 11,
+       "hi": 22,
+       "median": 21,
+       "bandLo": -36.42923422531376,
+       "bandHi": 78.42923422531376
+      },
+      {
+       "from": 7125,
+       "to": 7149,
+       "lo": 13,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -38.42923422531376,
+       "bandHi": 76.42923422531376
+      },
+      {
+       "from": 7150,
+       "to": 7174,
+       "lo": 20,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 7175,
+       "to": 7199,
+       "lo": 10,
+       "hi": 22,
+       "median": 17,
+       "bandLo": -43.03965396282802,
+       "bandHi": 77.03965396282803
+      },
+      {
+       "from": 7200,
+       "to": 7224,
+       "lo": 7,
+       "hi": 13,
+       "median": 18,
+       "bandLo": -36.8188144877995,
+       "bandHi": 72.8188144877995
+      },
+      {
+       "from": 7225,
+       "to": 7249,
+       "lo": 11,
+       "hi": 13,
+       "median": 21,
+       "bandLo": -7.714617112656882,
+       "bandHi": 49.71461711265688
+      },
+      {
+       "from": 7250,
+       "to": 7274,
+       "lo": 12,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 7275,
+       "to": 7299,
+       "lo": 17,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -38.42923422531376,
+       "bandHi": 76.42923422531376
+      },
+      {
+       "from": 7300,
+       "to": 7324,
+       "lo": 20,
+       "hi": 25,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 7325,
+       "to": 7349,
+       "lo": 21,
+       "hi": 25,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 7350,
+       "to": 7374,
+       "lo": 14,
+       "hi": 21,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 7375,
+       "to": 7399,
+       "lo": 14,
+       "hi": 19,
+       "median": 20,
+       "bandLo": -32.208394750285244,
+       "bandHi": 72.20839475028524
+      },
+      {
+       "from": 7400,
+       "to": 7424,
+       "lo": 15,
+       "hi": 20,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 7425,
+       "to": 7449,
+       "lo": 14,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 7450,
+       "to": 7474,
+       "lo": 15,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 7475,
+       "to": 7499,
+       "lo": 12,
+       "hi": 19,
+       "median": 20,
+       "bandLo": -16.545876325199664,
+       "bandHi": 56.545876325199664
+      },
+      {
+       "from": 7500,
+       "to": 7524,
+       "lo": 19,
+       "hi": 20,
+       "median": 19,
+       "bandLo": -35.8188144877995,
+       "bandHi": 73.8188144877995
+      },
+      {
+       "from": 7525,
+       "to": 7549,
+       "lo": 11,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 7550,
+       "to": 7574,
+       "lo": 13,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 7575,
+       "to": 7599,
+       "lo": 17,
+       "hi": 22,
+       "median": 20,
+       "bandLo": -13.935456587685401,
+       "bandHi": 53.9354565876854
+      },
+      {
+       "from": 7600,
+       "to": 7624,
+       "lo": 17,
+       "hi": 23,
+       "median": 20,
+       "bandLo": -21.76671580022819,
+       "bandHi": 61.76671580022819
+      },
+      {
+       "from": 7625,
+       "to": 7649,
+       "lo": 16,
+       "hi": 20,
+       "median": 20,
+       "bandLo": -34.8188144877995,
+       "bandHi": 74.8188144877995
+      },
+      {
+       "from": 7650,
+       "to": 7674,
+       "lo": 17,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 7675,
+       "to": 7699,
+       "lo": 10,
+       "hi": 14,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 7700,
+       "to": 7724,
+       "lo": 10,
+       "hi": 15,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 7725,
+       "to": 7749,
+       "lo": 15,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -30.59797501277098,
+       "bandHi": 68.59797501277097
+      },
+      {
+       "from": 7750,
+       "to": 7774,
+       "lo": 12,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -31.59797501277098,
+       "bandHi": 67.59797501277097
+      },
+      {
+       "from": 7775,
+       "to": 7799,
+       "lo": 15,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 7800,
+       "to": 7824,
+       "lo": 16,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 7825,
+       "to": 7849,
+       "lo": 18,
+       "hi": 21,
+       "median": 16,
+       "bandLo": -12.714617112656882,
+       "bandHi": 44.71461711265688
+      },
+      {
+       "from": 7850,
+       "to": 7874,
+       "lo": 18,
+       "hi": 21,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 7875,
+       "to": 7899,
+       "lo": 21,
+       "hi": 29,
+       "median": 18,
+       "bandLo": -8.104197375142622,
+       "bandHi": 44.10419737514262
+      },
+      {
+       "from": 7900,
+       "to": 7924,
+       "lo": 17,
+       "hi": 32,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 7925,
+       "to": 7949,
+       "lo": 10,
+       "hi": 18,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 7950,
+       "to": 7974,
+       "lo": 15,
+       "hi": 16,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 7975,
+       "to": 7999,
+       "lo": 16,
+       "hi": 19,
+       "median": 17,
+       "bandLo": -35.208394750285244,
+       "bandHi": 69.20839475028524
+      },
+      {
+       "from": 8000,
+       "to": 8024,
+       "lo": 19,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 8025,
+       "to": 8049,
+       "lo": 12,
+       "hi": 21,
+       "median": 17,
+       "bandLo": -29.987555275256717,
+       "bandHi": 63.98755527525672
+      },
+      {
+       "from": 8050,
+       "to": 8074,
+       "lo": 13,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 8075,
+       "to": 8099,
+       "lo": 12,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 8100,
+       "to": 8124,
+       "lo": 11,
+       "hi": 16,
+       "median": 20,
+       "bandLo": -21.76671580022819,
+       "bandHi": 61.76671580022819
+      },
+      {
+       "from": 8125,
+       "to": 8149,
+       "lo": 15,
+       "hi": 18,
+       "median": 22,
+       "bandLo": -24.987555275256717,
+       "bandHi": 68.98755527525671
+      },
+      {
+       "from": 8150,
+       "to": 8174,
+       "lo": 18,
+       "hi": 22,
+       "median": 20,
+       "bandLo": -32.208394750285244,
+       "bandHi": 72.20839475028524
+      },
+      {
+       "from": 8175,
+       "to": 8199,
+       "lo": 21,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 8200,
+       "to": 8224,
+       "lo": 18,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -12.325036850171145,
+       "bandHi": 50.325036850171145
+      },
+      {
+       "from": 8225,
+       "to": 8249,
+       "lo": 20,
+       "hi": 24,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 8250,
+       "to": 8274,
+       "lo": 16,
+       "hi": 25,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 8275,
+       "to": 8299,
+       "lo": 15,
+       "hi": 20,
+       "median": 22,
+       "bandLo": -30.208394750285244,
+       "bandHi": 74.20839475028524
+      },
+      {
+       "from": 8300,
+       "to": 8324,
+       "lo": 17,
+       "hi": 21,
+       "median": 20,
+       "bandLo": -16.545876325199664,
+       "bandHi": 56.545876325199664
+      },
+      {
+       "from": 8325,
+       "to": 8349,
+       "lo": 18,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 8350,
+       "to": 8374,
+       "lo": 22,
+       "hi": 27,
+       "median": 17,
+       "bandLo": -35.208394750285244,
+       "bandHi": 69.20839475028524
+      },
+      {
+       "from": 8375,
+       "to": 8399,
+       "lo": 27,
+       "hi": 30,
+       "median": 17,
+       "bandLo": -29.987555275256717,
+       "bandHi": 63.98755527525672
+      },
+      {
+       "from": 8400,
+       "to": 8424,
+       "lo": 27,
+       "hi": 31,
+       "median": 17,
+       "bandLo": -19.545876325199664,
+       "bandHi": 53.545876325199664
+      },
+      {
+       "from": 8425,
+       "to": 8449,
+       "lo": 13,
+       "hi": 31,
+       "median": 18,
+       "bandLo": -10.714617112656882,
+       "bandHi": 46.71461711265688
+      },
+      {
+       "from": 8450,
+       "to": 8474,
+       "lo": 12,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 8475,
+       "to": 8499,
+       "lo": 17,
+       "hi": 19,
+       "median": 19,
+       "bandLo": -7.104197375142622,
+       "bandHi": 45.10419737514262
+      },
+      {
+       "from": 8500,
+       "to": 8524,
+       "lo": 12,
+       "hi": 20,
+       "median": 20,
+       "bandLo": -16.545876325199664,
+       "bandHi": 56.545876325199664
+      },
+      {
+       "from": 8525,
+       "to": 8549,
+       "lo": 11,
+       "hi": 17,
+       "median": 21,
+       "bandLo": -15.545876325199664,
+       "bandHi": 57.545876325199664
+      },
+      {
+       "from": 8550,
+       "to": 8574,
+       "lo": 12,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 8575,
+       "to": 8599,
+       "lo": 18,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -13.325036850171145,
+       "bandHi": 49.325036850171145
+      },
+      {
+       "from": 8600,
+       "to": 8624,
+       "lo": 21,
+       "hi": 25,
+       "median": 18,
+       "bandLo": -10.714617112656882,
+       "bandHi": 46.71461711265688
+      },
+      {
+       "from": 8625,
+       "to": 8649,
+       "lo": 19,
+       "hi": 27,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 8650,
+       "to": 8674,
+       "lo": 20,
+       "hi": 25,
+       "median": 18,
+       "bandLo": -34.208394750285244,
+       "bandHi": 70.20839475028524
+      },
+      {
+       "from": 8675,
+       "to": 8699,
+       "lo": 14,
+       "hi": 25,
+       "median": 18,
+       "bandLo": -23.76671580022819,
+       "bandHi": 59.76671580022819
+      },
+      {
+       "from": 8700,
+       "to": 8724,
+       "lo": 14,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 8725,
+       "to": 8749,
+       "lo": 21,
+       "hi": 25,
+       "median": 19,
+       "bandLo": -33.208394750285244,
+       "bandHi": 71.20839475028524
+      },
+      {
+       "from": 8750,
+       "to": 8774,
+       "lo": 20,
+       "hi": 25,
+       "median": 19,
+       "bandLo": -27.987555275256717,
+       "bandHi": 65.98755527525671
+      },
+      {
+       "from": 8775,
+       "to": 8799,
+       "lo": 17,
+       "hi": 27,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 8800,
+       "to": 8824,
+       "lo": 13,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 8825,
+       "to": 8849,
+       "lo": 12,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -34.208394750285244,
+       "bandHi": 70.20839475028524
+      },
+      {
+       "from": 8850,
+       "to": 8874,
+       "lo": 13,
+       "hi": 19,
+       "median": 18,
+       "bandLo": -10.714617112656882,
+       "bandHi": 46.71461711265688
+      },
+      {
+       "from": 8875,
+       "to": 8899,
+       "lo": 19,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 8900,
+       "to": 8924,
+       "lo": 13,
+       "hi": 19,
+       "median": 18,
+       "bandLo": -31.59797501277098,
+       "bandHi": 67.59797501277097
+      },
+      {
+       "from": 8925,
+       "to": 8949,
+       "lo": 9,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 8950,
+       "to": 8974,
+       "lo": 12,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -33.208394750285244,
+       "bandHi": 71.20839475028524
+      },
+      {
+       "from": 8975,
+       "to": 8999,
+       "lo": 13,
+       "hi": 19,
+       "median": 20,
+       "bandLo": -24.377135537742454,
+       "bandHi": 64.37713553774245
+      },
+      {
+       "from": 9000,
+       "to": 9024,
+       "lo": 12,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -36.8188144877995,
+       "bandHi": 72.8188144877995
+      },
+      {
+       "from": 9025,
+       "to": 9049,
+       "lo": 17,
+       "hi": 19,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 9050,
+       "to": 9074,
+       "lo": 9,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 9075,
+       "to": 9099,
+       "lo": 11,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -28.987555275256717,
+       "bandHi": 64.98755527525671
+      },
+      {
+       "from": 9100,
+       "to": 9124,
+       "lo": 16,
+       "hi": 23,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 9125,
+       "to": 9149,
+       "lo": 23,
+       "hi": 26,
+       "median": 20,
+       "bandLo": -26.987555275256717,
+       "bandHi": 66.98755527525671
+      },
+      {
+       "from": 9150,
+       "to": 9174,
+       "lo": 22,
+       "hi": 27,
+       "median": 19,
+       "bandLo": -17.545876325199664,
+       "bandHi": 55.545876325199664
+      },
+      {
+       "from": 9175,
+       "to": 9199,
+       "lo": 15,
+       "hi": 26,
+       "median": 18,
+       "bandLo": -36.8188144877995,
+       "bandHi": 72.8188144877995
+      },
+      {
+       "from": 9200,
+       "to": 9224,
+       "lo": 22,
+       "hi": 25,
+       "median": 17,
+       "bandLo": -27.377135537742454,
+       "bandHi": 61.377135537742454
+      },
+      {
+       "from": 9225,
+       "to": 9249,
+       "lo": 19,
+       "hi": 25,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 9250,
+       "to": 9274,
+       "lo": 16,
+       "hi": 20,
+       "median": 19,
+       "bandLo": -41.03965396282802,
+       "bandHi": 79.03965396282803
+      },
+      {
+       "from": 9275,
+       "to": 9299,
+       "lo": 16,
+       "hi": 20,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 9300,
+       "to": 9324,
+       "lo": 13,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 9325,
+       "to": 9349,
+       "lo": 14,
+       "hi": 17,
+       "median": 17,
+       "bandLo": -19.545876325199664,
+       "bandHi": 53.545876325199664
+      },
+      {
+       "from": 9350,
+       "to": 9374,
+       "lo": 15,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -10.714617112656882,
+       "bandHi": 46.71461711265688
+      },
+      {
+       "from": 9375,
+       "to": 9399,
+       "lo": 15,
+       "hi": 18,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 9400,
+       "to": 9424,
+       "lo": 17,
+       "hi": 21,
+       "median": 19,
+       "bandLo": -14.935456587685401,
+       "bandHi": 52.9354565876854
+      },
+      {
+       "from": 9425,
+       "to": 9449,
+       "lo": 19,
+       "hi": 24,
+       "median": 19,
+       "bandLo": -20.156296062713928,
+       "bandHi": 58.15629606271393
+      },
+      {
+       "from": 9450,
+       "to": 9474,
+       "lo": 20,
+       "hi": 24,
+       "median": 20,
+       "bandLo": -24.377135537742454,
+       "bandHi": 64.37713553774245
+      },
+      {
+       "from": 9475,
+       "to": 9499,
+       "lo": 18,
+       "hi": 24,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 9500,
+       "to": 9524,
+       "lo": 19,
+       "hi": 27,
+       "median": 19,
+       "bandLo": -41.03965396282802,
+       "bandHi": 79.03965396282803
+      },
+      {
+       "from": 9525,
+       "to": 9549,
+       "lo": 25,
+       "hi": 27,
+       "median": 18,
+       "bandLo": -15.935456587685401,
+       "bandHi": 51.9354565876854
+      },
+      {
+       "from": 9550,
+       "to": 9574,
+       "lo": 17,
+       "hi": 17,
+       "median": 17,
+       "bandLo": -24.76671580022819,
+       "bandHi": 58.76671580022819
+      },
+      {
+       "from": 9575,
+       "to": 9599,
+       "lo": 15,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -25.377135537742454,
+       "bandHi": 63.377135537742454
+      },
+      {
+       "from": 9600,
+       "to": 9624,
+       "lo": 16,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -26.377135537742454,
+       "bandHi": 62.377135537742454
+      },
+      {
+       "from": 9625,
+       "to": 9649,
+       "lo": 13,
+       "hi": 22,
+       "median": 18,
+       "bandLo": -21.156296062713928,
+       "bandHi": 57.15629606271393
+      },
+      {
+       "from": 9650,
+       "to": 9674,
+       "lo": 20,
+       "hi": 20,
+       "median": 20,
+       "bandLo": -21.76671580022819,
+       "bandHi": 61.76671580022819
+      },
+      {
+       "from": 9675,
+       "to": 9699,
+       "lo": 18,
+       "hi": 21,
+       "median": 20,
+       "bandLo": -29.59797501277098,
+       "bandHi": 69.59797501277097
+      },
+      {
+       "from": 9700,
+       "to": 9724,
+       "lo": 21,
+       "hi": 24,
+       "median": 20,
+       "bandLo": -32.208394750285244,
+       "bandHi": 72.20839475028524
+      },
+      {
+       "from": 9725,
+       "to": 9749,
+       "lo": 16,
+       "hi": 24,
+       "median": 19,
+       "bandLo": -38.42923422531376,
+       "bandHi": 76.42923422531376
+      },
+      {
+       "from": 9750,
+       "to": 9774,
+       "lo": 10,
+       "hi": 17,
+       "median": 18,
+       "bandLo": -49.8709131753708,
+       "bandHi": 85.8709131753708
+      },
+      {
+       "from": 9775,
+       "to": 9799,
+       "lo": 9,
+       "hi": 10,
+       "median": 19,
+       "bandLo": -46.26049343785655,
+       "bandHi": 84.26049343785655
+      },
+      {
+       "from": 9800,
+       "to": 9824,
+       "lo": 10,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -14.935456587685401,
+       "bandHi": 52.9354565876854
+      },
+      {
+       "from": 9825,
+       "to": 9849,
+       "lo": 13,
+       "hi": 17,
+       "median": 19,
+       "bandLo": -22.76671580022819,
+       "bandHi": 60.76671580022819
+      },
+      {
+       "from": 9850,
+       "to": 9874,
+       "lo": 12,
+       "hi": 18,
+       "median": 20,
+       "bandLo": -24.377135537742454,
+       "bandHi": 64.37713553774245
+      },
+      {
+       "from": 9875,
+       "to": 9899,
+       "lo": 14,
+       "hi": 17,
+       "median": 20,
+       "bandLo": -42.65007370034229,
+       "bandHi": 82.65007370034229
+      },
+      {
+       "from": 9900,
+       "to": 9924,
+       "lo": 16,
+       "hi": 20,
+       "median": 19,
+       "bandLo": -35.8188144877995,
+       "bandHi": 73.8188144877995
+      },
+      {
+       "from": 9925,
+       "to": 9949,
+       "lo": 15,
+       "hi": 20,
+       "median": 17,
+       "bandLo": -14.325036850171145,
+       "bandHi": 48.325036850171145
+      },
+      {
+       "from": 9950,
+       "to": 9974,
+       "lo": 13,
+       "hi": 15,
+       "median": 18,
+       "bandLo": -18.545876325199664,
+       "bandHi": 54.545876325199664
+      },
+      {
+       "from": 9975,
+       "to": 9999,
+       "lo": 14,
+       "hi": 19,
+       "median": 20,
+       "bandLo": -32.208394750285244,
+       "bandHi": 72.20839475028524
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "quiet": [
+  {
+   "signal": "livingCells",
+   "label": "Living cells",
+   "side": "high",
+   "D": 0.44628285215825314,
+   "gap": 6.596629599655225,
+   "rang": false
+  },
+  {
+   "signal": "livingCells",
+   "label": "Living cells",
+   "side": "low",
+   "D": 0.4654675655263084,
+   "gap": 6.57744488628717,
+   "rang": false
+  },
+  {
+   "signal": "individuals",
+   "label": "Individuals",
+   "side": "high",
+   "D": 0.31549193548387094,
+   "gap": 6.727420516329608,
+   "rang": false
+  },
+  {
+   "signal": "individuals",
+   "label": "Individuals",
+   "side": "low",
+   "D": 0.6548543689320389,
+   "gap": 6.3880580828814395,
+   "rang": false
+  },
+  {
+   "signal": "meanMass",
+   "label": "Mean body mass",
+   "side": "high",
+   "D": 0.22916115580430152,
+   "gap": 6.813751296009177,
+   "rang": false
+  },
+  {
+   "signal": "meanMass",
+   "label": "Mean body mass",
+   "side": "low",
+   "D": 0.4098383733439224,
+   "gap": 6.633074078469556,
+   "rang": false
+  },
+  {
+   "signal": "lineages",
+   "label": "Lineages",
+   "side": "high",
+   "D": 0.8094,
+   "gap": 6.233512451813478,
+   "rang": false
+  },
+  {
+   "signal": "lineages",
+   "label": "Lineages",
+   "side": "low",
+   "D": 1.4583783783783784,
+   "gap": 5.5845340734351,
+   "rang": false
+  },
+  {
+   "signal": "lineageShannon",
+   "label": "Lineage diversity",
+   "side": "high",
+   "D": 1.8152104671076954,
+   "gap": 5.227701984705783,
+   "rang": false
+  },
+  {
+   "signal": "lineageShannon",
+   "label": "Lineage diversity",
+   "side": "low",
+   "D": 3.4980743827625793,
+   "gap": 3.544838069050899,
+   "rang": false
+  },
+  {
+   "signal": "patternEntropy",
+   "label": "Pattern entropy",
+   "side": "high",
+   "D": 0.2816134019395977,
+   "gap": 6.76129904987388,
+   "rang": false
+  },
+  {
+   "signal": "patternEntropy",
+   "label": "Pattern entropy",
+   "side": "low",
+   "D": 0.5428317368516222,
+   "gap": 6.5000807149618565,
+   "rang": false
+  },
+  {
+   "signal": "bioticRecycling",
+   "label": "Biotic recycling",
+   "side": "high",
+   "D": 0,
+   "gap": 7.0429124518134785,
+   "rang": false
+  },
+  {
+   "signal": "bioticRecycling",
+   "label": "Biotic recycling",
+   "side": "low",
+   "D": 0.18798526250783265,
+   "gap": 6.854927189305646,
+   "rang": false
+  },
+  {
+   "signal": "maxGeneration",
+   "label": "Deepest generation",
+   "side": "high",
+   "D": 7.1946666666666665,
+   "gap": -0.15175421485318807,
+   "rang": true
+  },
+  {
+   "signal": "maxGeneration",
+   "label": "Deepest generation",
+   "side": "low",
+   "D": 1.136,
+   "gap": 5.906912451813478,
+   "rang": false
+  },
+  {
+   "signal": "dominantShare",
+   "label": "Largest lineage’s share",
+   "side": "high",
+   "D": 6.3110176794647925,
+   "gap": 0.7318947723486859,
+   "rang": false
+  },
+  {
+   "signal": "dominantShare",
+   "label": "Largest lineage’s share",
+   "side": "low",
+   "D": 1.362283278557379,
+   "gap": 5.680629173256099,
+   "rang": false
+  },
+  {
+   "signal": "fissions",
+   "label": "Fissions",
+   "side": "high",
+   "D": 0,
+   "gap": 7.0429124518134785,
+   "rang": false
+  },
+  {
+   "signal": "fissions",
+   "label": "Fissions",
+   "side": "low",
+   "D": 0,
+   "gap": 7.0429124518134785,
+   "rang": false
+  },
+  {
+   "signal": "fusions",
+   "label": "Fusions",
+   "side": "high",
+   "D": 0,
+   "gap": 7.0429124518134785,
+   "rang": false
+  },
+  {
+   "signal": "fusions",
+   "label": "Fusions",
+   "side": "low",
+   "D": 0.4496666666666666,
+   "gap": 6.593245785146812,
+   "rang": false
+  },
+  {
+   "signal": "buddings",
+   "label": "Buddings",
+   "side": "high",
+   "D": 0.5802150537634408,
+   "gap": 6.462697398050038,
+   "rang": false
+  },
+  {
+   "signal": "buddings",
+   "label": "Buddings",
+   "side": "low",
+   "D": 1.0913258426966292,
+   "gap": 5.951586609116849,
+   "rang": false
+  },
+  {
+   "signal": "mutations",
+   "label": "Mutations",
+   "side": "high",
+   "D": 0.47611764705882353,
+   "gap": 6.566794804754655,
+   "rang": false
+  },
+  {
+   "signal": "mutations",
+   "label": "Mutations",
+   "side": "low",
+   "D": 0.09145762711864407,
+   "gap": 6.951454824694834,
+   "rang": false
+  }
+ ],
+ "timeline": [
+  {
+   "signal": "livingCells",
+   "label": "Living cells",
+   "stretches": []
+  },
+  {
+   "signal": "individuals",
+   "label": "Individuals",
+   "stretches": []
+  },
+  {
+   "signal": "meanMass",
+   "label": "Mean body mass",
+   "stretches": []
+  },
+  {
+   "signal": "lineages",
+   "label": "Lineages",
+   "stretches": []
+  },
+  {
+   "signal": "lineageShannon",
+   "label": "Lineage diversity",
+   "stretches": []
+  },
+  {
+   "signal": "patternEntropy",
+   "label": "Pattern entropy",
+   "stretches": []
+  },
+  {
+   "signal": "bioticRecycling",
+   "label": "Biotic recycling",
+   "stretches": []
+  },
+  {
+   "signal": "maxGeneration",
+   "label": "Deepest generation",
+   "stretches": [
+    {
+     "side": "high",
+     "startStep": 72600,
+     "endStep": 77500,
+     "startIdx": 725,
+     "endIdx": 774,
+     "censuses": 50,
+     "minAbsZ": 7.1946666666666665,
+     "maxAbsZ": 16.188,
+     "ongoing": false
+    }
+   ]
+  },
+  {
+   "signal": "dominantShare",
+   "label": "Largest lineage’s share",
+   "stretches": []
+  },
+  {
+   "signal": "fissions",
+   "label": "Fissions",
+   "stretches": []
+  },
+  {
+   "signal": "fusions",
+   "label": "Fusions",
+   "stretches": []
+  },
+  {
+   "signal": "buddings",
+   "label": "Buddings",
+   "stretches": []
+  },
+  {
+   "signal": "mutations",
+   "label": "Mutations",
+   "stretches": []
+  }
+ ]
+}
