@@ -1242,6 +1242,11 @@ defmodule Coordinator.Queue do
 
     food_amount = Application.get_env(:coordinator, :garden_food_amount, 16)
     food_r = Application.get_env(:coordinator, :garden_food_radius, 32)
+    # The food ranges are ConfigCheck's, the one table the boot check also uses.
+    asks_r = Coordinator.ConfigCheck.food_range(:garden_food_asks)
+    every_r = Coordinator.ConfigCheck.food_range(:garden_food_every_days)
+    amount_r = Coordinator.ConfigCheck.food_range(:garden_food_amount)
+    radius_r = Coordinator.ConfigCheck.food_range(:garden_food_radius)
 
     error =
       cond do
@@ -1295,17 +1300,17 @@ defmodule Coordinator.Queue do
             (Map.has_key?(params, "foodAsks") or Map.has_key?(params, "foodEveryDays")) ->
           "foodAsks and foodEveryDays are for a garden founded with food: true"
 
-        food and not int_in?.(food_asks, 2, 1000) ->
-          "foodAsks must be an integer in 2..1000 (one person is not a collective)"
+        food and not int_in?.(food_asks, asks_r.first, asks_r.last) ->
+          "foodAsks must be an integer in #{inspect(asks_r)} (one person is not a collective)"
 
-        food and not int_in?.(food_every, 1, 365) ->
-          "foodEveryDays must be an integer in 1..365"
+        food and not int_in?.(food_every, every_r.first, every_r.last) ->
+          "foodEveryDays must be an integer in #{inspect(every_r)}"
 
-        food and not int_in?.(food_amount, 1, 64) ->
-          "the coordinator's garden_food_amount must be an integer in 1..64"
+        food and not int_in?.(food_amount, amount_r.first, amount_r.last) ->
+          "the coordinator's garden_food_amount must be an integer in #{inspect(amount_r)}"
 
-        food and not int_in?.(food_r, 1, 32) ->
-          "the coordinator's garden_food_radius must be an integer in 1..32"
+        food and not int_in?.(food_r, radius_r.first, radius_r.last) ->
+          "the coordinator's garden_food_radius must be an integer in #{inspect(radius_r)}"
 
         food and pond_preset?(preset) ->
           "food is not defined for pond worlds: the pond cycle fixes each pond's matter"

@@ -29,6 +29,7 @@
 // its own process before founding anything. Its scratch directories are removed when every check passed, and kept (the
 // paths are printed) when one failed; SIGINT, SIGTERM and SIGHUP stop the coordinator and any tool it runs first.
 import { requestDevice } from "@bl/sim-gpu";
+import { noLockDenoBin } from "./lib/no_lock_deno.ts";
 import { PRESETS, artifactDigest, cellCount, defaultConfig, lowbias32, worldW } from "@bl/schema";
 import { INTERVENTIONS_FILE, OBSERVATION_FILES, VERIFIED_FILES, decodeArtifact, parseInterventionLog, runIsland, type ScheduledIntervention } from "@bl/runner";
 
@@ -56,6 +57,8 @@ const base = `http://127.0.0.1:${port}`;
 let dataDir = "";
 let workDir = "";
 let serverLog = "";
+// A deno the coordinator finds on PATH (its discovery validator) runs with --no-lock (tests/deno/lib/no_lock_deno.ts).
+let denoBin = "";
 
 const NAME = "e2e";
 const D = 256; // stepsPerDay
@@ -128,6 +131,7 @@ async function answers(): Promise<boolean> {
 /** Starts `mix phx.server` on the scratch data directory, after checking nothing already answers on the port. */
 async function spawnServer(): Promise<Server> {
   if (signalled) throw new Error("stopping on a signal");
+  if (!denoBin) throw new Error("no deno shim yet");
   if (await answers()) throw new Error(`something already answers on ${base}; refusing to found a garden in a coordinator this test did not start`);
   // A signal during the probe found no server to stop, so none may start after it.
   if (signalled) throw new Error("stopping on a signal");
@@ -136,7 +140,7 @@ async function spawnServer(): Promise<Server> {
     cwd: coordinatorDir,
     // BL_TRUST_FORWARDED_FOR (amended 2026-10-18, food): the food hands below come from distinct X-Forwarded-For
     // networks. Requests without the header (the stones, the islands) are still keyed by the peer, 127.0.0.1.
-    env: { ...withoutBl(Deno.env.toObject()), MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir, BL_DISCOVERY_DATA_DIR: `${workDir}/discovery`, BL_GARDEN_ISLAND_TOKEN: TOKEN, BL_TRUST_FORWARDED_FOR: "1" },
+    env: { ...withoutBl(Deno.env.toObject()), PATH: `${denoBin}:${Deno.env.get("PATH") ?? ""}`, MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir, BL_DISCOVERY_DATA_DIR: `${workDir}/discovery`, BL_GARDEN_ISLAND_TOKEN: TOKEN, BL_TRUST_FORWARDED_FOR: "1" },
     clearEnv: true,
     stdin: "null",
     stdout: "piped",
@@ -514,6 +518,7 @@ try {
   dataDir = await Deno.makeTempDir({ prefix: "bl-garden-e2e-data-" });
   workDir = await Deno.makeTempDir({ prefix: "bl-garden-e2e-out-" });
   serverLog = `${workDir}/coordinator.log`;
+  denoBin = await noLockDenoBin(`${workDir}/bin`);
   const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
   const info = adapter?.info;
   const desc = [info?.vendor, info?.architecture, info?.description].filter(Boolean).join(" ") || "unknown";

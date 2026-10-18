@@ -86,9 +86,10 @@ Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in con
   `Coordinator.Application.start/2`): a value of the wrong shape stops the boot with a
   message naming the key. Windows, the table caps, `max_islands`, `lease_ms`,
   `discovery_lease_ms`, the garden's letter window and table cap, its hand sweep and
-  hands call timeout, and the four food keys must be positive
-  whole numbers (a window of `0`, once clamped to 1 ms, is refused; the food keys' exact
-  ranges are checked when a garden is founded with food); the budgets (`island_joins_per_address`,
+  hands call timeout must be positive
+  whole numbers (a window of `0`, once clamped to 1 ms, is refused); the four food keys must sit
+  in their ranges (asks 2..1000, every 1..365 days, amount 1..64, radius 1..32,
+  `ConfigCheck.food_range/1`), refused at boot by name; the budgets (`island_joins_per_address`,
   `island_next_per_island`, `island_segment_requests_per_island`,
   `island_requests_per_address`) and `island_max_pending` are `nil` (off) or positive
   (a config `0` is refused: switch a budget off with `nil`); `island_prune_after_ms`,
