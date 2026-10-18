@@ -10,10 +10,16 @@
   --on-pool: oklch(98.5% 0.007 88);
 }
 :root[data-theme="dark"] { --on-pool: oklch(18% 0.02 80); }
-html { scroll-behavior: smooth; }
+/* Anchors, the skip link and keyboard focus land clear of the sticky header (theme.ts measures it as it wraps). */
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--site-header-height, 64px) + 12px); }
+/* Keyboard focus jumps: a Tab pressed while a smooth scroll is still moving can leave the next control off screen
+   in Chrome. Smooth scrolling stays for links followed with a pointer. */
+html:has(:focus-visible) { scroll-behavior: auto; }
 body { font-size: 1.0625rem; line-height: 1.55; }
 a { color: inherit; }
-a:focus-visible, button:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+/* On the sun the ring is ink in both colours: --text by night is pale and would vanish against it. */
+.invitation :focus-visible { outline-color: var(--accent-ink); }
 button { cursor: pointer; }
 .skip {
   position: fixed; z-index: 10; top: -100px; left: 14px;
@@ -32,7 +38,7 @@ button { cursor: pointer; }
 .site-nav a:focus-visible { outline-offset: -2px; color: var(--text); }
 .site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--text); }
 .site-nav a[aria-current="page"] { border-bottom-color: var(--sun); }
-.theme-toggle { flex: none; border: 1px solid var(--line); border-radius: var(--radius); background: var(--raised); color: var(--text); min-height: 34px; padding: 5px 11px; font-size: .8125rem; font-weight: 600; }
+.theme-toggle { flex: none; border: 1px solid var(--control-line); border-radius: var(--radius); background: var(--raised); color: var(--text); min-height: 34px; padding: 5px 11px; font-size: .8125rem; font-weight: 600; }
 .theme-toggle:hover { background: var(--hover); }
 .site-footer { padding-block: 30px; background: var(--surface); border-top: 1px solid var(--line); }
 .footer-inner { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
@@ -125,7 +131,7 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -.03em; text-wrap: balance; }
 .feature h2 { margin: 12px 0 0; max-width: 14ch; font-size: clamp(2.25rem, 4vw, 3.5rem); line-height: 1.05; }
 .feature > div:last-child { max-width: 60ch; padding-top: 24px; }
 .feature p { margin: 0 0 18px; }
-.bets { padding-bottom: clamp(64px, 8vw, 100px); scroll-margin-top: 80px; }
+.bets { padding-bottom: clamp(64px, 8vw, 100px); scroll-margin-top: 4px; }
 .bets .section-heading { margin-bottom: 36px; }
 .bet-list { margin: 0; padding: 0; list-style: none; }
 .bet-list li { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 20px; padding: 28px 0; border-top: 1px solid var(--line); }
@@ -144,7 +150,7 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -.03em; text-wrap: balance; }
 .worlds-jump { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 0; padding: 0; list-style: none; }
 .worlds-jump a { display: inline-flex; align-items: center; min-height: 36px; padding: 4px 14px; border: 1px solid var(--control-line); border-radius: 99px; text-decoration: none; color: var(--text); font-size: .875rem; font-weight: 600; }
 .worlds-jump a:hover { background: var(--raised); }
-.family { padding-block: 44px 52px; border-bottom: 1px solid var(--line); scroll-margin-top: 84px; }
+.family { padding-block: 44px 52px; border-bottom: 1px solid var(--line); scroll-margin-top: 8px; }
 .family .family-head { max-width: 780px; margin-bottom: 26px; }
 .family .family-head h2 { font-size: clamp(1.625rem, 2.6vw, 2.25rem); line-height: 1.1; }
 .family .family-head p { font-size: 1rem; }
