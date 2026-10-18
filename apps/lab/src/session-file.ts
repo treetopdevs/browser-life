@@ -323,7 +323,8 @@ export function interventionFacts(interventions: readonly Intervention[], pickNo
 /**
  * What the world on screen held when a checkpoint file was saved: the log of firsts and the notes on who chose
  * each pick. The checkpoint itself carries neither (that would change its observer digest), so the worker keeps
- * them beside it for as long as this page lives; a file saved on an earlier visit has none.
+ * them beside it: in this page's memory and in the checkpoint's `.rewind` sidecar (opfs.ts `writeRewind`). A file saved
+ * before sidecars were kept, a downloaded or opened file, or one whose sidecar is torn has none.
  */
 export interface RewindRecord {
   firsts: FirstsSnapshot;
@@ -352,7 +353,8 @@ export interface FamilyRecord {
 
 /**
  * Rewind records by checkpoint file name, one for every checkpoint this page saved and still keeps: the worker
- * forgets a record when its file is deleted or pruned, so a kept checkpoint never loses its log.
+ * forgets a record when its file is deleted or pruned, so a kept checkpoint never loses its log. A cache of the
+ * `.rewind` sidecars this page wrote: a restore after a reload reads the sidecar instead.
  */
 export class RewindStore {
   private readonly records = new Map<string, RewindRecord>();

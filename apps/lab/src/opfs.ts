@@ -5,6 +5,7 @@
 // world running; `storageProblem` finds out once, up front, whether this browser keeps checkpoints at all.
 
 import type { CheckpointMeta, RunManifest } from "./protocol.ts";
+import type { RewindRecord } from "./session-file.ts";
 
 /** The checkpoint store would not open, read or write. The world is untouched: only the copy is missing. */
 export class StorageError extends Error {
@@ -270,9 +271,92 @@ export async function pruneCheckpoints(m: RunManifest, files: readonly string[])
   });
 }
 
+/**
+ * A checkpoint's log of firsts (its `RewindRecord`), kept in a sidecar beside it rather than in the checkpoint, whose bytes and
+ * observer digest it would change (docs/pond-keeper-v0-2026-10-17.md, amendment of 2026-10-18). Written once, before the
+ * manifest and the shelf list the checkpoint, and never updated; a record all the same, so a write cut short reads as none.
+ */
+export const rewindFile = (checkpoint: string) => `${checkpoint}.rewind`;
+
+interface RewindSidecar {
+  format: "cadence-garden.rewind";
+  version: 1;
+  /** The checkpoint file it was saved with: a sidecar under another name is not this checkpoint's. */
+  checkpoint: string;
+  record: RewindRecord;
+}
+
+const isInt = (v: unknown): v is number => Number.isInteger(v);
+
+/** The envelope only: whether the snapshots inside hold up, and for which state, `openFirstsLog` decides on restore. */
+const isRewind = (v: unknown): v is RewindSidecar => {
+  const s = v as Partial<RewindSidecar> | null;
+  if (typeof s !== "object" || s === null || s.format !== "cadence-garden.rewind" || s.version !== 1 || typeof s.checkpoint !== "string") return false;
+  const r = s.record as Partial<RewindRecord> | undefined;
+  if (typeof r !== "object" || r === null || typeof r.firsts !== "object" || r.firsts === null || typeof r.hash !== "string") return false;
+  if (!Array.isArray(r.picks) || !r.picks.every((p) => Array.isArray(p) && p.length === 2 && isInt(p[0]) && typeof p[1] === "boolean")) return false;
+  if (r.families === undefined) return true;
+  const f = r.families as Partial<NonNullable<RewindRecord["families"]>> | null;
+  const g = f?.genealogy;
+  return typeof f?.tree === "object" && f.tree !== null && typeof g === "object" && g !== null && isInt(g.edgesFrom) && isInt(g.edges) && isInt(g.dropped);
+};
+
+/** Called only while holding the records lock. A sidecar already gone is no failure. */
+async function dropRewindNow(checkpoint: string): Promise<void> {
+  try {
+    await removeFile(rewindFile(checkpoint));
+  } catch (e) {
+    if (!missingFile(e)) throw e;
+  }
+}
+
+/**
+ * Keeps `record` beside `checkpoint`. A failure throws a StorageError; what the write left (a torn sidecar, which would
+ * read as none) is removed at once, so it holds no room the checkpoint's records need, or, if the store will not remove
+ * it either, goes with its checkpoint. The save that asked keeps its checkpoint without a log (sim.worker.ts `saveCheckpoint`).
+ */
+export async function writeRewind(checkpoint: string, record: RewindRecord): Promise<void> {
+  const sidecar: RewindSidecar = { format: "cadence-garden.rewind", version: 1, checkpoint, record };
+  return stored(() =>
+    locked(async () => {
+      try {
+        await writeRecord(rewindFile(checkpoint), sidecar, isRewind);
+      } catch (e) {
+        await dropRewindNow(checkpoint).catch(() => {});
+        throw e;
+      }
+    }),
+  );
+}
+
+/**
+ * Removes the sidecar beside `checkpoint`: a save gives up the optional log when the store has no room left for the records
+ * that list the checkpoint (sim.worker.ts `saveCheckpoint`). Throws a StorageError when the store will not remove it.
+ */
+export async function dropRewind(checkpoint: string): Promise<void> {
+  return stored(() => locked(() => dropRewindNow(checkpoint)));
+}
+
+/** The store refused a write for want of room (its quota), as against one it would not open or one another tab changed. */
+export const storeFull = (e: unknown): boolean => e instanceof StorageError && (e.cause as { name?: unknown } | undefined)?.name === "QuotaExceededError";
+
+/**
+ * The record kept beside `checkpoint`, or null when there is none to use: a checkpoint saved before sidecars, one whose log had
+ * stopped, or a sidecar cut short. A store that will not read it throws, since that says nothing about whether there is one.
+ */
+export async function readRewind(checkpoint: string): Promise<RewindRecord | null> {
+  return stored(() =>
+    locked(async () => {
+      const s = await readRecord(rewindFile(checkpoint), isRewind);
+      return s && s.checkpoint === checkpoint ? s.record : null;
+    }),
+  );
+}
+
 /** Called only while holding the records lock. Failed removals remain available for a later retry. */
 async function forgetNow(file: string): Promise<void> {
-  for (const f of [file, `${file}.edges`]) {
+  // A sidecar is written once under a new name, so it never has a `.prev` to remove.
+  for (const f of [file, `${file}.edges`, rewindFile(file)]) {
     try {
       await removeFile(f);
     } catch (e) {
