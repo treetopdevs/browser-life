@@ -7,7 +7,7 @@
 // satisfied deliberately rather than incidentally.
 import { describe, expect, it } from "vitest";
 import { METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, clampLesionRadius, maxLesionRadius } from "@bl/schema";
-import { INTERVENTIONS_FILE, formatInterventionLine, observationDigests, ownedInterventions, runId, specConfig, stitchRun, type InterventionLogEntry, type RunSpec, type ScheduledIntervention, type StitchSegment } from "@bl/runner";
+import { INTERVENTIONS_FILE, formatInterventionLine, observationDigests, ownedInterventions, runId, sameIntervention, specConfig, stitchRun, stitchablePrefix, type InterventionLogEntry, type RunSpec, type ScheduledIntervention, type StitchSegment } from "@bl/runner";
 
 const baseSpec: RunSpec = { experiment: "fx", presetId: "spots", condition: "treatment", seed: 1, steps: 0, censusEvery: 10, deepEvery: 1000, checkpointEvery: 0 };
 const cfg = specConfig(baseSpec);
@@ -23,6 +23,8 @@ interface Opts {
   log?: string | null;
   /** The manifest's `interventions` block, in place of the one `scheduled` implies (`null`: no block). */
   block?: unknown;
+  /** Keys merged over the segment's spec (`steps` and `interventions` aside), to make one segment's spec differ. */
+  specExtra?: Partial<RunSpec>;
 }
 
 /** What a run logs for `e` when it applies it as scheduled: the effective radius (clamped under `cfg`), a feed with the matter it named or 0. */
@@ -37,7 +39,7 @@ function segment(index: number, startStep: number, steps: number, opts: Opts = {
     rows.push({ step: Math.min(s, end), individuals: 1, lineages: 1, mutations: 0, fissions: 0, fusions: 0, buddings: 0, maxGeneration: 0, conservationOk: true });
   const tail = rows[rows.length - 1];
   const digest = `digest-${index}`;
-  const spec = { ...baseSpec, steps, ...(opts.picked ? { picked: true } : {}), ...(opts.scheduled ? { interventions: opts.scheduled } : {}) };
+  const spec = { ...baseSpec, ...opts.specExtra, steps, ...(opts.picked ? { picked: true } : {}), ...(opts.scheduled ? { interventions: opts.scheduled } : {}) };
   const owned = opts.scheduled ? ownedInterventions(opts.scheduled, startStep, steps) : [];
 
   const manifest: Record<string, unknown> = {
@@ -245,5 +247,182 @@ describe("observationDigests covers the optional migration log", () => {
     const withMig = await observationDigests({ ...base, "migrations.tsv": "step\n" });
     expect(Object.keys(withMig).sort()).toEqual(["migrations.tsv", "series.jsonl"]);
     expect(withMig["migrations.tsv"]).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+// A garden (apps/coordinator README, "The garden"): the coordinator rewrites the experiment's `interventions` as letters
+// arrive and are dropped, and every task carries the list as it stood at assignment, so each segment's manifest holds a
+// different list. In garden mode (`{ garden: { interventions } }`) stitchRun checks each segment against its own list,
+// requires the past to agree, checks the union against the coordinator's list, and stitches the union of owned entries
+// (docs/garden-stitch-rule-2026-10-17.md). Days are 10 steps; F is the founding entry; a letter on day d lands at the
+// day's end, (d + 1) * 10. Q and P are feeds (Q names its matter, P does not), so feed fields are under test too.
+describe("stitchRun joins a garden's segments (each carries the schedule as of its assignment)", () => {
+  const F: ScheduledIntervention = { step: 0, kind: "lesion", x: 1, y: 2, r: 3 };
+  const A: ScheduledIntervention = { step: 10, kind: "lesion", x: 3, y: 3, r: 2 };
+  const Q: ScheduledIntervention = { step: 10, kind: "feed", x: 2, y: 6, r: 1, amount: -2, matter: -10 };
+  const B: ScheduledIntervention = { step: 20, kind: "lesion", x: 4, y: 4, r: 2 };
+  const P: ScheduledIntervention = { step: 20, kind: "feed", x: 5, y: 1, r: 2, amount: 3 };
+  const X: ScheduledIntervention = { step: 30, kind: "lesion", x: 5, y: 5, r: 2 }; // posted for day 2, dropped before day 2 was assigned
+  const C: ScheduledIntervention = { step: 30, kind: "lesion", x: 6, y: 6, r: 2 };
+  const D: ScheduledIntervention = { step: 40, kind: "lesion", x: 7, y: 7, r: 2 }; // a live letter for day 3, beyond the prefix
+  const L0 = [F, A, Q], L1 = [F, A, Q, B, P, X], L2 = [F, A, Q, B, P, C];
+  const FINAL = [F, A, Q, B, P, C, D]; // the coordinator's list now
+  const day = (d: number, list: ScheduledIntervention[], o: Opts = {}) => segment(d, d * 10, 10, { scheduled: list, ...o });
+  const garden = (l2: ScheduledIntervention[] = L2, o2: Opts = {}) => [day(0, L0), day(1, L1), day(2, l2, o2)];
+  const asGarden = (segs: StitchSegment[], total: number, list: ScheduledIntervention[] = FINAL) => stitchRun(segs, total, { garden: { interventions: list } });
+  const manifestOf = (out: Record<string, string>) => JSON.parse(out["manifest.json"]);
+  const as = (e: object) => e as ScheduledIntervention;
+  const { matter: _m, ...Qbare } = Q as { matter?: number };
+
+  it("letters added between days are joined in order and the union is the stitched schedule", () => {
+    const segs = garden();
+    const out = asGarden(segs, 30);
+    expect(out[INTERVENTIONS_FILE]).toBe(L2.map(logLine).join(""));
+    const m = manifestOf(out);
+    expect(m.spec.interventions).toEqual(L2);
+    expect(m.interventions).toEqual({ file: INTERVENTIONS_FILE, applied: 6 });
+    expect(segs.map((s) => JSON.parse(s.files["manifest.json"]).interventions.applied)).toEqual([3, 2, 1]);
+    // An ordinary stitch (one list everywhere) refuses these: the lists really differ.
+    expect(() => stitchRun(segs, 30)).toThrow(/segment #1: spec differs from segment #0's/);
+  });
+
+  it("a letter dropped before its day was assigned is not history", () => {
+    const m = manifestOf(asGarden(garden(), 30));
+    expect(m.spec.interventions.some((e: ScheduledIntervention) => sameIntervention(e, C))).toBe(true);
+    expect(m.spec.interventions.some((e: ScheduledIntervention) => sameIntervention(e, X))).toBe(false);
+    // A two-day prefix, with X still in day 1's list: X is after the stitched end, so the union is [F, A, Q, B, P].
+    const two = asGarden([day(0, L0), day(1, L1)], 20);
+    expect(manifestOf(two).spec.interventions).toEqual([F, A, Q, B, P]);
+    expect(two[INTERVENTIONS_FILE]).toBe([F, A, Q, B, P].map(logLine).join(""));
+  });
+
+  it("a later segment may not rewrite an earlier day, in any field", () => {
+    const d1 = /\(10, 20\]/, d0 = /\(0, 10\]/, s0 = /step 0/;
+    const cases: [string, ScheduledIntervention[], RegExp][] = [
+      ["day 1's letter moved in x", [F, A, Q, as({ ...B, x: 9 }), P, C], d1],
+      ["day 1's letter moved in y", [F, A, Q, as({ ...B, y: 9 }), P, C], d1],
+      ["day 1's letter as a feed at the same place", [F, A, Q, as({ ...B, kind: "feed", amount: 1 }), P, C], d1],
+      ["day 1's feed with another amount", [F, A, Q, B, as({ ...P, amount: 4 }), C], d1],
+      ["day 1's feed naming matter it did not", [F, A, Q, B, as({ ...P, matter: 0 }), C], d1],
+      ["day 1's feed as a lesion at the same place", [F, A, Q, B, as({ step: 20, kind: "lesion", x: 5, y: 1, r: 2 }), C], d1],
+      ["day 0's feed without its matter", [F, A, as(Qbare), B, P, C], d0],
+      ["day 0's feed with other matter", [F, A, as({ ...Q, matter: -11 }), B, P, C], d0],
+      ["an extra entry in day 1's window, before its letters", [F, A, Q, as({ ...B, step: 15 }), B, P, C], d1],
+      ["an extra entry in day 1's window, after its letters", [F, A, Q, B, P, as({ ...B, x: 8 }), C], d1],
+      ["day 1's letter missing", [F, A, Q, P, C], d1],
+      ["the founding entry missing", [A, Q, B, P, C], s0],
+      ["the founding entry with another r", [as({ ...F, r: 4 }), A, Q, B, P, C], s0],
+      ["a founding entry day 0 never had", [F, as({ ...F, x: 9 }), A, Q, B, P, C], s0],
+    ];
+    for (const [what, l2, where] of cases) {
+      expect(() => asGarden(garden(l2), 30), what).toThrow(/segment #2: its schedule rewrites history: entries at steps <= 20 are not the ones segments #0\.\.#1 applied/);
+      expect(() => asGarden(garden(l2), 30), what).toThrow(where);
+    }
+    // Two entries at one step are applied in list order, so swapping them is another history.
+    const A20 = as({ ...A, step: 20 });
+    const swapped = [day(0, [F]), day(1, [F, A20, B]), day(2, [F, B, A20, C])];
+    expect(() => asGarden(swapped, 30, [F, A20, B, C])).toThrow(/segment #2: its schedule rewrites history.*first difference at entry 1.*segment #1's window \(10, 20\]/);
+    expect(() => asGarden([day(0, [F]), day(1, [F, A20, B]), day(2, [F, A20, B, C])], 30, [F, A20, B, C])).not.toThrow();
+    // Day 1 rewriting day 0 is refused the same way.
+    expect(() => asGarden([day(0, L0), day(1, [F, as({ ...A, y: 9 }), Q, B, P])], 20)).toThrow(/segment #1: its schedule rewrites history.*segment #0's window \(0, 10\]/);
+  });
+
+  it("a segment logs only its own entries, from its own list", () => {
+    // Day 1 also logging X, an entry after its end (speculative in its list).
+    const padded = day(1, L1, { log: [B, P, X].map(logLine).join("") });
+    expect(() => asGarden([day(0, L0), padded, day(2, L2)], 30)).toThrow(/segment #1: interventions\.jsonl holds 3 entries, the schedule has 2/);
+    // Day 1 logging day 2's letter C at its own step, in place of its letter B.
+    const other = day(1, L1, { log: [as({ ...C, step: 20 }), P].map(logLine).join("") });
+    expect(() => asGarden([day(0, L0), other, day(2, L2)], 30)).toThrow(/segment #1: interventions\.jsonl line 1 .* is not the scheduled lesion at t=20/);
+    // Day 2 logging X, its own list's entry being C.
+    expect(() => asGarden(garden(L2, { log: logLine(X) }), 30)).toThrow(/segment #2: interventions\.jsonl line 1 .* is not the scheduled lesion at t=30/);
+  });
+
+  it("each segment's list is validated", () => {
+    expect(() => asGarden(garden([...L2, as({ ...C, step: 25 })]), 30)).toThrow(/segment #2: .*steps must not decrease/);
+    expect(() => asGarden(garden([F, A, Q, B, P, as({ ...C, colour: 1 })]), 30)).toThrow(/segment #2: .*has no key "colour"/);
+    expect(() => asGarden(garden([]), 30)).toThrow(/segment #2: .*non-empty array/);
+  });
+
+  it("the coordinator's list must match the union over the stitched range", () => {
+    expect(() => asGarden(garden(), 30, L2)).not.toThrow();
+    // A live letter after the prefix (and the list written with another key order, as JSON from elsewhere would be).
+    const reordered = L2.map((e) => Object.fromEntries(Object.entries(e).reverse()) as ScheduledIntervention);
+    expect(() => asGarden(garden(), 30, [...reordered, D])).not.toThrow();
+    expect(() => asGarden(garden(), 30, [F, A, Q, as({ ...B, x: 9 }), P, C])).toThrow(/the stitched schedule is not the coordinator's over \[0, 30\]: at entry 3/);
+    expect(() => asGarden(garden(), 30, [F, A, Q, B, as({ ...P, amount: 4 }), C])).toThrow(/the stitched schedule is not the coordinator's.*at entry 4/);
+    expect(() => asGarden(garden(), 30, [F, A, as(Qbare), B, P, C])).toThrow(/the stitched schedule is not the coordinator's.*at entry 2/);
+    expect(() => asGarden(garden(), 30, [F, A, Q, P, C])).toThrow(/the stitched schedule is not the coordinator's/);
+    expect(() => asGarden(garden(), 30, [F, A, Q, B, P, X])).toThrow(/the stitched schedule is not the coordinator's/);
+    expect(() => asGarden(garden(), 30, [...L2, as({ ...C, x: 1 })])).toThrow(/the stitched schedule is not the coordinator's.*at entry 6/);
+    expect(() => asGarden(garden(), 30, [as({ ...F, colour: 1 }), ...L2.slice(1)])).toThrow(/the coordinator's schedule: .*has no key "colour"/);
+    // Day 0 forging an entry in its own window, in its list and its log alike, and every later day repeating it: no
+    // segment contradicts another, so only the coordinator's list catches it.
+    const E = as({ ...A, step: 5 });
+    const forged = [day(0, [F, E, A, Q]), day(1, [F, E, A, Q, B, P]), day(2, [F, E, A, Q, B, P, C])];
+    expect(() => asGarden(forged, 30)).toThrow(/the stitched schedule is not the coordinator's over \[0, 30\]: at entry 1 the segments applied .*"step":5/);
+    expect(() => asGarden(forged, 30, [F, E, ...L2.slice(1)])).not.toThrow();
+  });
+
+  it("garden mode needs a schedule on every segment", () => {
+    expect(() => asGarden([segment(0, 0, 10)], 10, [F])).toThrow(/segment #0's spec has no interventions, but a garden always has a schedule/);
+    expect(() => asGarden([day(0, L0), segment(1, 10, 10)], 20)).toThrow(/segment #1: spec differs from segment #0's \(a garden's segment whose spec has no interventions\)/);
+  });
+
+  it("other spec differences are still refused", () => {
+    expect(() => asGarden([day(0, L0), day(1, L1, { specExtra: { deepEvery: 999 } })], 20)).toThrow(/segment #1: spec differs from segment #0's$/);
+  });
+});
+
+// Ordinary scheduled runs keep the rule from before the garden mode: one list on every segment, the stitched spec carries
+// it whole (entries after the last step too, as a continuous run's manifest does), and owning nothing is no error.
+describe("stitchRun on an ordinary scheduled run is as before the garden mode", () => {
+  const F: ScheduledIntervention = { step: 0, kind: "lesion", x: 1, y: 2, r: 3 };
+  const A: ScheduledIntervention = { step: 10, kind: "lesion", x: 3, y: 3, r: 2 };
+  const B: ScheduledIntervention = { step: 20, kind: "lesion", x: 4, y: 4, r: 2 };
+  const late: ScheduledIntervention = { ...B, step: 25 };
+  const two = (l0: ScheduledIntervention[], l1 = l0) => [segment(0, 0, 10, { scheduled: l0 }), segment(1, 10, 10, { scheduled: l1 })];
+  const manifestOf = (out: Record<string, string>) => JSON.parse(out["manifest.json"]);
+
+  it("one list everywhere: the stitched spec is the last segment's, widened", () => {
+    const schedule = [F, A, B];
+    const out = stitchRun(two(schedule), 20);
+    expect(JSON.stringify(manifestOf(out).spec)).toBe(JSON.stringify({ ...JSON.parse(two(schedule)[1].files["manifest.json"]).spec, steps: 20 }));
+    expect(manifestOf(out).interventions).toEqual({ file: INTERVENTIONS_FILE, applied: 3 });
+  });
+
+  it("lists that differ between segments are refused", () => {
+    expect(() => stitchRun(two([F], [F, B]), 20)).toThrow(/segment #1: spec differs from segment #0's/);
+    expect(() => stitchRun([segment(0, 0, 10, { scheduled: [F] }), segment(1, 10, 10)], 20)).toThrow(/segment #1: spec differs from segment #0's/);
+  });
+
+  it("an entry after the last step stays in the spec, unapplied; a run owning nothing stitches with an empty log", () => {
+    const m = manifestOf(stitchRun(two([F, A, B, late]), 20));
+    expect(m.spec.interventions).toEqual([F, A, B, late]);
+    expect(m.interventions).toEqual({ file: INTERVENTIONS_FILE, applied: 3 });
+    const none = stitchRun(two([late]), 20);
+    expect(none[INTERVENTIONS_FILE]).toBe("");
+    expect(manifestOf(none).spec.interventions).toEqual([late]);
+    expect(manifestOf(none).interventions).toEqual({ file: INTERVENTIONS_FILE, applied: 0 });
+  });
+});
+
+describe("stitchablePrefix: a garden's exportable days", () => {
+  const segs = (...statuses: string[]) => statuses.map((status, index) => ({ index, status }));
+  it("counts the days from 0 that are verified, or done too with allowUnverified", () => {
+    expect(stitchablePrefix(segs("verified", "verified", "done", "verified"), false)).toBe(2);
+    expect(stitchablePrefix(segs("verified", "verified", "done", "verified"), true)).toBe(4);
+    expect(stitchablePrefix(segs("verified", "verified", "done", "pending"), true)).toBe(3);
+    expect(stitchablePrefix(segs("done", "verified"), false)).toBe(0);
+    expect(stitchablePrefix(segs("done", "verified"), true)).toBe(2);
+    expect(stitchablePrefix(segs("verified", "diverged", "blocked"), false)).toBe(1);
+    for (const status of ["pending", "running", "failed", "diverged", "blocked"]) expect(stitchablePrefix(segs("verified", status, "verified"), true), status).toBe(1);
+    expect(stitchablePrefix([], false)).toBe(0);
+  });
+  it("reads the indices, not the order; a missing index ends the prefix; a repeated one is an error", () => {
+    expect(stitchablePrefix([{ index: 2, status: "verified" }, { index: 0, status: "verified" }, { index: 1, status: "verified" }], false)).toBe(3);
+    expect(stitchablePrefix([{ index: 1, status: "verified" }, { index: 2, status: "verified" }], false)).toBe(0);
+    expect(stitchablePrefix([{ index: 0, status: "verified" }, { index: 2, status: "verified" }], false)).toBe(1);
+    expect(() => stitchablePrefix([{ index: 0, status: "verified" }, { index: 0, status: "done" }], true)).toThrow(/segment #0 is listed twice/);
   });
 });

@@ -18,7 +18,7 @@
 //
 // Nothing here touches a simulation except through `InterventionSim`, so the pieces test without a GPU.
 import { FEED_MAX, FeedRefusedError, cellCount, feedError, worldW, type FeedResult, type WorldConfig } from "@bl/schema";
-import { picksFromManifest, type PickEntry } from "./picks.ts";
+import { picksFromManifest, pressureEntriesError, pressureLogError, type PickEntry, type PressureEntry } from "./picks.ts";
 
 /**
  * The log of a run with `RunSpec.interventions`, beside manifest.json: one line per applied entry, in order. Not in
@@ -64,6 +64,7 @@ const isPlain = (v: unknown): v is Record<string, unknown> => typeof v === "obje
 const nonNegInt = (v: unknown): boolean => Number.isSafeInteger(v) && (v as number) >= 0;
 
 const LESION_KEYS = ["step", "kind", "x", "y", "r"];
+const PRESSURE_KEYS = ["step", "kind", "cycle", "score"];
 const FEED_KEYS = [...LESION_KEYS, "amount"];
 
 /**
@@ -85,6 +86,10 @@ export function validateInterventions(list: unknown): string[] {
       continue;
     }
     const kind = e.kind;
+    if (kind === "pressure") {
+      errs.push(`${where}: a pressure is not a scheduled intervention: it is carried as RunSpec.pressures by a picked run, which is never segmented or sent to an island`);
+      continue;
+    }
     if (kind !== "lesion" && kind !== "feed") {
       errs.push(`${where}: kind must be "lesion" or "feed", got ${JSON.stringify(kind)}`);
       continue;
@@ -151,6 +156,19 @@ export function interventionsError(spec: { interventions?: readonly ScheduledInt
 export function ownedInterventions(list: readonly ScheduledIntervention[] | undefined, startStep: number, steps: number): ScheduledIntervention[] {
   if (!list) return [];
   return list.filter((e) => (e.step > startStep && e.step <= startStep + steps) || (startStep === 0 && e.step === 0));
+}
+
+/**
+ * Whether two schedule entries are the same entry: equal `step`, `kind`, `x`, `y` and `r`, and for feeds equal `amount`
+ * and `matter`, an absent `matter` equal only to an absent one. Key order never matters (a coordinator's JSON and a
+ * manifest's need not share it). Compares scheduled entries with each other, not a log line with its entry: a log
+ * carries the effective radius (`checkInterventionLog` in stitch.ts compares those).
+ */
+export function sameIntervention(a: ScheduledIntervention | InterventionLogEntry, b: ScheduledIntervention | InterventionLogEntry): boolean {
+  if (a.step !== b.step || a.kind !== b.kind || a.x !== b.x || a.y !== b.y || a.r !== b.r) return false;
+  if (a.kind !== "feed" || b.kind !== "feed") return true;
+  const am = Object.hasOwn(a, "matter") ? a.matter : undefined, bm = Object.hasOwn(b, "matter") ? b.matter : undefined;
+  return a.amount === b.amount && am === bm;
 }
 
 /** The part of a simulation a scheduled intervention acts on: `GpuSim`, or a CPU stand-in. */
@@ -227,21 +245,24 @@ export function parseInterventionLog(text: string): InterventionLogEntry[] {
 }
 
 /**
- * A lab run manifest (`<runId>.run.json`, apps/lab/src/protocol.ts `RunManifest`) split into the two things a headless
+ * A lab run manifest (`<runId>.run.json`, apps/lab/src/protocol.ts `RunManifest`) split into the things a headless
  * run replays: its `picks` (the pond boundaries' donors, as `picksFromManifest` reads them, which still refuses a
- * manifest holding a lesion or a feed) and its `scheduled` lesions and feeds, in log order, each feed carrying the
- * `matter` the lab logged as the value the replay must reproduce. Refuses a manifest that is not one, one observed
- * only from step `edgesFrom` > 0 (as `picksFromManifest` does), an intervention of any other kind, a feed without
- * the `matter` it moved (the lab logs it on every feed, and its own replay stops on a feed that does not reproduce it,
- * so a log without it would run without that check), a lesion or feed that `validateInterventions` rejects, and a
- * log that is not in one step order across all kinds or that has a lesion or feed ahead of a pick of its own step
- * (the lab logs a boundary's pick first, and the headless boundary comes before the interventions of its step, so
- * that history would be silently reordered). A pick's error names its place in the manifest's own list.
+ * manifest holding a lesion or a feed), its `scheduled` lesions and feeds, in log order, each feed carrying the
+ * `matter` the lab logged as the value the replay must reproduce, and its `pressures` (the pond keeper's dial, `[]`
+ * when none). Refuses a manifest that is not one, one observed only from step `edgesFrom` > 0 (as `picksFromManifest`
+ * does), an intervention of any other kind, a feed without the `matter` it moved (the lab logs it on every feed, and its
+ * own replay stops on a feed that does not reproduce it, so a log without it would run without that check), a lesion or
+ * feed that `validateInterventions` rejects, a log that is not in one step order across all kinds or that has a lesion,
+ * feed or later pressure ahead of a pick of its own step, or a pressure for a boundary's own cycle after that boundary's
+ * pick or with no pick of that boundary after it (`pressureLogError`; the lab logs a boundary's pick first, and the headless boundary comes before the
+ * interventions of its step, so that history would be silently reordered). Pressures need the manifest's `cfg` (a pond
+ * config of arm breed) and must be the observed history there (`pressureEntriesError`). A pick's error names its place
+ * in the manifest's own list.
  */
-export function labHistory(manifest: unknown): { picks: PickEntry[]; scheduled: ScheduledIntervention[] } {
-  const m = manifest as { interventions?: unknown; edgesFrom?: unknown } | null;
+export function labHistory(manifest: unknown): { picks: PickEntry[]; scheduled: ScheduledIntervention[]; pressures: PressureEntry[] } {
+  const m = manifest as { interventions?: unknown; edgesFrom?: unknown; cfg?: unknown } | null;
   if (!m || typeof m !== "object" || !Array.isArray(m.interventions)) throw new Error("not a lab run manifest: no interventions array");
-  const pickIvs: unknown[] = [], pickAt: number[] = [], scheduled: ScheduledIntervention[] = [];
+  const pickIvs: unknown[] = [], pickAt: number[] = [], scheduled: ScheduledIntervention[] = [], pressures: PressureEntry[] = [];
   m.interventions.forEach((iv: unknown, i: number) => {
     const o = iv as Record<string, unknown> | null;
     const kind = o?.kind;
@@ -253,7 +274,13 @@ export function labHistory(manifest: unknown): { picks: PickEntry[]; scheduled: 
       // The schema's Intervention requires it and the lab's reapply throws without it: never an unchecked feed.
       if (o!.matter === undefined) throw new Error(`interventions[${i}]: a logged feed needs the matter it moved`);
       scheduled.push({ step: o!.step, kind, x: o!.x, y: o!.y, r: o!.r, amount: o!.amount, matter: o!.matter } as ScheduledIntervention);
-    } else throw new Error(`interventions[${i}] is a ${JSON.stringify(kind)}: not a pick, a lesion or a feed`);
+    } else if (kind === "pressure") {
+      const extra = Object.keys(o!).find((k) => !PRESSURE_KEYS.includes(k));
+      if (extra !== undefined) throw new Error(`interventions[${i}]: a pressure has no key ${JSON.stringify(extra)} (its keys are ${PRESSURE_KEYS.join(", ")})`);
+      const missing = PRESSURE_KEYS.find((k) => !Object.hasOwn(o!, k));
+      if (missing !== undefined) throw new Error(`interventions[${i}]: a pressure needs the key ${JSON.stringify(missing)}`);
+      pressures.push({ step: o!.step, cycle: o!.cycle, score: o!.score } as PressureEntry);
+    } else throw new Error(`interventions[${i}] is a ${JSON.stringify(kind)}: not a pick, a lesion, a feed or a pressure`);
   });
   let picks: PickEntry[];
   try {
@@ -266,15 +293,23 @@ export function labHistory(manifest: unknown): { picks: PickEntry[]; scheduled: 
     const errs = validateInterventions(scheduled);
     if (errs.length) throw new Error(`the lab manifest's lesions and feeds (counted apart from its picks): ${errs[0]}`);
   }
+  let period = Infinity;
+  if (pressures.length) {
+    const cfg = m.cfg as { pondPeriod?: unknown; pondArm?: unknown } | null | undefined;
+    if (!isPlain(cfg)) throw new Error("the manifest holds pressures but no cfg to check them against: a pressure is a pond config's breeder dial");
+    const bad = pressureEntriesError(pressures, cfg as Pick<WorldConfig, "pondPeriod" | "pondArm">);
+    if (bad) throw new Error(`the lab manifest's pressures: ${bad}`);
+    period = cfg.pondPeriod as number;
+  }
   // Across the kinds, which the checks above (the picks' own, then the lesions' and feeds') do not see: the lab's queueReplay
   // wants one non-decreasing step order, and a pick is applied by the boundary, ahead of every intervention at its step.
-  let last = 0, hand = -1;
+  let last = 0;
   for (let i = 0; i < m.interventions.length; i++) {
     const { step, kind } = m.interventions[i] as { step: number; kind: string };
-    if (step < last) throw new Error(`interventions[${i}] (${kind} at t=${step}) follows an entry at t=${last}: a lab log is in one step order across its picks, lesions and feeds`);
+    if (step < last) throw new Error(`interventions[${i}] (${kind} at t=${step}) follows an entry at t=${last}: a lab log is in one step order across its picks, lesions, feeds and pressures`);
     last = step;
-    if (kind === "pick" && hand === step) throw new Error(`interventions[${i}] (pick at t=${step}) follows a lesion or feed at the same step: the lab logs a boundary's pick first, and a headless run applies the boundary before the interventions of its step`);
-    if (kind !== "pick") hand = step;
   }
-  return { picks, scheduled };
+  const order = pressureLogError(m.interventions as { step: number; kind: string; cycle?: number }[], period);
+  if (order) throw new Error(order);
+  return { picks, scheduled, pressures };
 }

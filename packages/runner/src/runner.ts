@@ -82,7 +82,7 @@ function speciesTsvRows(step: number, rows: TileSpeciesRow[]): string {
 import { conditionById } from "./conditions.ts";
 import { observeCensus, restoreObservers, serializeObservers } from "./observe.ts";
 import { INTERVENTIONS_FILE, applyScheduled, formatInterventionLine, interventionsError, ownedInterventions, validateInterventions, type InterventionLogEntry, type InterventionSim, type ScheduledIntervention } from "./interventions.ts";
-import { PICKS_FILE, PickError, thrownMessage, formatFailedLine, formatPickLine, makeDonorHook, picksDigest, picksPreflightError, type PickEntry, type PickNote, type Picker } from "./picks.ts";
+import { PICKS_FILE, PickError, thrownMessage, formatFailedLine, formatPickLine, makeDonorHook, picksDigest, picksPreflightError, pressureEntriesError, type PickEntry, type PickNote, type Picker, type PressureEntry } from "./picks.ts";
 
 export interface RunSpec {
   experiment: string;
@@ -221,6 +221,16 @@ export interface RunSpec {
    * output byte-identical to before this field existed.
    */
   interventions?: ScheduledIntervention[];
+  /**
+   * The lab's pressures (picks.ts `PressureEntry`; a lab manifest's `pressure` interventions, `labHistory`), replayed: at
+   * boundary b the rule's donors are those of the score the latest pressure with cycle <= b names (`activePondScore`), in
+   * place of `cfg.pondScore`, for every boundary no recorded pick or picker answers. Needs `picked: true` (a pressured run is
+   * a picked run) and a pond config of arm breed (`pressuresConfigError`). Part of `manifest.spec`, so a pressured run and an
+   * unpressured one are never the same run (`sameCompletedRun`). Never segmented or distributed: `interventions` refuses the
+   * kind, an island refuses the field and `stitchRun` throws. Optional and absent from every default, so a run without it
+   * keeps its spec, manifest and every output byte-identical to before this field existed.
+   */
+  pressures?: PressureEntry[];
 }
 
 /** `RunSpec.branch`: where a branch run's pre-cycle source came from, and which boundary's transform it applies first. */
@@ -347,6 +357,38 @@ export interface RunResult {
 
 const posInt = (v: unknown) => typeof v === "number" && Number.isInteger(v) && v > 0;
 
+const PRESSURE_SPEC_KEYS = "cycle,score,step";
+
+/** Shape checks on `RunSpec.pressures`, needing no config (`pressuresConfigError` is the world-dependent half). */
+function validatePressures(list: unknown, picked: boolean): string[] {
+  if (!picked) return ["a pressured run is a picked run: pressures need picked: true"];
+  if (!Array.isArray(list) || list.length === 0) return ["pressures must be a non-empty array of { step, cycle, score }"];
+  const errs: string[] = [];
+  let last = 0;
+  // An indexed loop, not every/some, which skip the holes of a sparse array.
+  for (let i = 0; i < list.length; i++) {
+    const e: unknown = list[i];
+    const where = `pressures[${i}]`;
+    if (typeof e !== "object" || e === null || Array.isArray(e)) {
+      errs.push(`${where} must be an object`);
+      continue;
+    }
+    if (Object.keys(e).sort().join() !== PRESSURE_SPEC_KEYS) {
+      errs.push(`${where} must have exactly the keys step, cycle and score`);
+      continue;
+    }
+    const { step, cycle, score } = e as Record<string, unknown>;
+    if (!Number.isSafeInteger(step) || (step as number) < 0) errs.push(`${where}: step must be a non-negative integer`);
+    else {
+      if ((step as number) < last) errs.push(`${where}: step ${step} follows step ${last} (steps must not decrease)`);
+      last = Math.max(last, step as number);
+    }
+    if (!Number.isSafeInteger(cycle) || (cycle as number) < 1) errs.push(`${where}: cycle must be a positive integer`);
+    if (typeof score !== "string") errs.push(`${where}: score must be a string`);
+  }
+  return errs;
+}
+
 /** Rejects run specs that would loop forever, skip checkpoints or read out of range. */
 export function validateSpec(spec: RunSpec): string[] {
   const errs: string[] = [];
@@ -404,6 +446,7 @@ export function validateSpec(spec: RunSpec): string[] {
     if (spec.metapopulation !== undefined) errs.push("a picked run cannot belong to a metapopulation");
   }
   if (spec.interventions !== undefined) errs.push(...validateInterventions(spec.interventions));
+  if (spec.pressures !== undefined) errs.push(...validatePressures(spec.pressures, spec.picked === true));
   // The pond-specific checks (a pond config, each boundary inside this run and on its census grid)
   // need the config and the start step: `preCycleError`, which runExperiment applies.
   if (spec.preCycleCheckpoints !== undefined) {
@@ -508,6 +551,20 @@ export function pickedConfigError(spec: RunSpec, cfg: WorldConfig): string | nul
   if (!spec.picked) return null;
   if (cfg.pondPeriod === undefined) return "a picked run needs a pond config (a pond preset)";
   if (cfg.pondArm !== "scaf" && cfg.pondArm !== "rand" && cfg.pondArm !== "breed") return `a picked run needs pond arm scaf, rand or breed, got ${JSON.stringify(cfg.pondArm)}: only those arms choose donors`;
+  return null;
+}
+
+/**
+ * Why `spec.pressures` cannot drive a run of `cfg`, or null (also null for a spec without them): the config must be a pond config
+ * of arm breed and the entries the observed history there (`pressureEntriesError`), and none may lie after the run's last step.
+ * Needs no GPU, so tools/run.ts checks it first.
+ */
+export function pressuresConfigError(spec: Pick<RunSpec, "pressures" | "steps">, cfg: WorldConfig): string | null {
+  if (spec.pressures === undefined) return null;
+  const bad = pressureEntriesError(spec.pressures, cfg);
+  if (bad) return bad;
+  const late = spec.pressures.findIndex((e) => e.step > spec.steps);
+  if (late >= 0) return `a pressure at t=${spec.pressures[late].step} is after the run's last step (${spec.steps}), so the run never reaches it`;
   return null;
 }
 
@@ -849,7 +906,7 @@ export async function runExperiment(
   if (picked) {
     if (opts.start || opts.observer) throw new Error("a picked run cannot continue from a checkpoint; replay its picks (--picks-from) from step 0");
     if (opts.immigrant) throw new Error("a picked run cannot import an immigrant state");
-    const pickedBad = pickedConfigError(spec, cfg) ?? picksPreflightError(opts.picks ?? [], cfg, 0, spec.steps, !!opts.picker || !!opts.implicitRule);
+    const pickedBad = pickedConfigError(spec, cfg) ?? pressuresConfigError(spec, cfg) ?? picksPreflightError(opts.picks ?? [], cfg, 0, spec.steps, !!opts.picker || !!opts.implicitRule);
     if (pickedBad) throw new Error(pickedBad);
   }
   // Migration fires on multiples of the *absolute* step (see migration.ts), checked once
@@ -1082,7 +1139,7 @@ export async function runExperiment(
     for (const entry of zeroLog) await sink.appendText(INTERVENTIONS_FILE, formatInterventionLine(entry));
   }
   const hook = picked
-    ? makeDonorHook({ cfg, recorded: new Map((opts.picks ?? []).map((e) => [e.step, e])), picker: opts.picker, implicitRule: opts.implicitRule, sink, note })
+    ? makeDonorHook({ cfg, recorded: new Map((opts.picks ?? []).map((e) => [e.step, e])), picker: opts.picker, implicitRule: opts.implicitRule, sink, note, pressures: spec.pressures })
     : undefined;
   // A branch's own transform, at its source's boundary: its rows come before the first census, as they would in a run that reached it.
   if (branched) {

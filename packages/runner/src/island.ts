@@ -30,15 +30,24 @@ import { observationDigests } from "./stitch.ts";
  * hands such a segment, run or verify, only to an island that lists this.
  * Older code knows no such field: it would run the segment clean and report
  * a digest that disagrees with every capable island's, a divergence with no
- * real disagreement in it. */
-export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1"];
+ * real disagreement in it. `"breed-v1"` is the breeder (WorldConfig.pondScore,
+ * docs/sandbox-wild.md): the conditions pond-breed-<score>, pond-mass-<score>
+ * and pond-drift-<score>, and every run of the `breeder` preset, whose
+ * `treatment` is the breed arm. The coordinator asks for it in addition to
+ * `"ponds-v1"`, never instead of it. Older code has none of those condition
+ * ids nor the score columns, so it throws on them, and on a continuation would
+ * report a valid predecessor as invalid; the controls are gated as well as the
+ * arm for that reason. Only the rule's own donors are distributed: a picked or
+ * pressured run is still refused below (docs/archipelago-breed-2026-10-18.md). */
+export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"];
 
 /** Why this island will not run `spec`, or null. A branch run (RunSpec.branch)
  * starts from a source checkpoint that only tools/run.ts reads, from a local
  * bundle: branches are not distributed, the coordinator never builds one, and
  * a task that carries one is refused before anything is fetched. A picked run
  * (RunSpec.picked) takes its donors from a picker or a record that no segment
- * carries, so it is refused the same way. A run with scheduled interventions
+ * carries, so it is refused the same way, and so is a pressured run
+ * (RunSpec.pressures, the lab's pond keeper: a picked run too). A run with scheduled interventions
  * (RunSpec.interventions) is not refused: the coordinator carries the
  * schedule (capability `"interventions-v1"` above), `runExperiment` applies
  * only the entries this segment owns, and its interventions.jsonl is a
@@ -46,6 +55,7 @@ export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "
 export function specRefusal(spec: RunSpec): string | null {
   if ((spec as { branch?: unknown }).branch !== undefined) return "the spec is a branch run (spec.branch); branches are not distributed, so an island does not run them";
   if ((spec as { picked?: unknown }).picked !== undefined) return "the spec is a picked run (spec.picked); picked runs are not distributed, so an island does not run them";
+  if ((spec as { pressures?: unknown }).pressures !== undefined) return "the spec carries pressures (spec.pressures); a pressured run is not distributed, so an island does not run it";
   return null;
 }
 
@@ -79,6 +89,98 @@ export interface IslandOptions {
    * or from `identity` above -- lets the caller remember them for a rejoin
    * after e.g. a page reload. */
   onJoined?: (identity: { id: string; token: string }) => void;
+  /** The coordinator's garden island token (its `BL_GARDEN_ISLAND_TOKEN`),
+   * when it has one: a coordinator with that token set offers a garden's days
+   * only to islands that showed it at join (Coordinator.Queue's moduledoc).
+   * Sent as `gardenToken` in the `POST /api/islands` body and nowhere else
+   * (never in a URL, a header, `/api/next` or a log line); an empty string is
+   * no token. A resumed `identity` makes no join and needs none: the
+   * coordinator remembers on the island's record that it showed the token.
+   * A fresh join (the coordinator forgot the island, or the metrics version
+   * changed) needs it again. A join that carries it follows no redirect, and
+   * its error never repeats the response body (`joinFailure`, `joinAnswer`).
+   * See `gardenTokenFrom`, `gardenTokenFromHash` and `gardenTokenFor` for how
+   * the CLI and the browser page obtain it (docs/garden-hardening-2026-10-18.md). */
+  gardenToken?: string;
+}
+
+/** The headless island's garden token: the `--garden-token` flag, else the
+ * `BL_ISLAND_GARDEN_TOKEN` environment variable; an empty value is no token.
+ * The variable is deliberately not the coordinator's `BL_GARDEN_ISLAND_TOKEN`,
+ * so a shell that runs a coordinator does not hand its token to whatever
+ * coordinator an island started there is pointed at. */
+export function gardenTokenFrom(flag?: string | null, env?: string | null): string | undefined {
+  if (typeof flag === "string" && flag !== "") return flag;
+  if (typeof flag !== "string" && typeof env === "string" && env !== "") return env;
+  return undefined;
+}
+
+/** Reads `garden-token=<t>` from a URL fragment (`location.hash`, with or
+ * without its `#`) and returns it with the fragment that remains once it is
+ * removed (every other `&`-separated part kept byte for byte, in order; `""`
+ * when nothing remains), and `found` when any part's key, percent-decoded, is
+ * `garden-token` (even an empty one, or one spelt `%67arden-token`): the page
+ * strips the fragment whenever `found`, not by looking for the literal name.
+ * A fragment never reaches a server or a `Referer`, so the token never lands
+ * in a request log. The value is percent-decoded and nothing else: a `+` stays
+ * a `+` (a token is not form data), and a value that does not decode is taken
+ * as written. The last non-empty `garden-token` wins; an empty one is no token. */
+export function gardenTokenFromHash(hash: string): { token?: string; rest: string; found: boolean } {
+  const raw = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (raw === "") return { rest: "", found: false };
+  const decode = (v: string) => {
+    try {
+      return decodeURIComponent(v);
+    } catch {
+      return v;
+    }
+  };
+  let token: string | undefined;
+  let found = false;
+  const kept: string[] = [];
+  for (const part of raw.split("&")) {
+    const eq = part.indexOf("=");
+    const key = decode(eq < 0 ? part : part.slice(0, eq));
+    if (key !== "garden-token") {
+      kept.push(part);
+      continue;
+    }
+    found = true;
+    const value = eq < 0 ? "" : decode(part.slice(eq + 1));
+    if (value !== "") token = value;
+  }
+  if (!found) return { rest: `#${raw}`, found };
+  const rest = kept.filter((p) => p !== "").join("&");
+  return { token, rest: rest ? `#${rest}` : "", found };
+}
+
+/** The headless island's garden token for `coordinator`: the token only over
+ * https or to a loopback host (`localhost`, `*.localhost`, `127.*`, `[::1]`),
+ * so it never crosses a network in clear text. */
+export function gardenTokenForCoordinator(coordinator: string, token?: string): string | undefined {
+  if (!token) return undefined;
+  try {
+    const u = new URL(coordinator);
+    if (u.protocol === "https:") return token;
+    const h = u.hostname;
+    const loopback = h === "localhost" || h.endsWith(".localhost") || /^127(\.\d{1,3}){3}$/.test(h) || h === "[::1]";
+    return u.protocol === "http:" && loopback ? token : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The garden token to send to `coordinator` from a page served at
+ * `pageOrigin`: the token only when the coordinator is the page's own origin
+ * (the deployed site and Vite's proxy both serve `/api` there), so a token
+ * given to this page is never sent to a coordinator typed in by hand. */
+export function gardenTokenFor(coordinator: string, pageOrigin: string, token?: string): string | undefined {
+  if (!token) return undefined;
+  try {
+    return new URL(coordinator).origin === new URL(pageOrigin).origin ? token : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Combines `signal` with a `timeoutMs` bound, using `AbortSignal.any`/
@@ -255,6 +357,57 @@ class HttpError extends Error {
   }
 }
 
+/** The error for a refused join. With a garden token in the body, nothing of
+ * the response body is repeated (a development coordinator's error page lists
+ * the request's parameters, the token among them, and an echo can carry it
+ * escaped or encoded, past any substring check): only the status, with a fixed
+ * description of the two refusals a join meets in normal running, and a
+ * redirect is named as one. */
+async function joinFailure(res: Response, gardenToken?: string): Promise<string> {
+  if (!gardenToken) return `join: ${res.status} ${await res.text()}`;
+  await res.body?.cancel().catch(() => {});
+  if (res.type === "opaqueredirect" || (res.status >= 300 && res.status < 400)) {
+    return `join: the coordinator answered with a redirect (${res.status}); a join that carries a garden token follows none`;
+  }
+  const known: Record<number, string> = {
+    429: "too many joins or requests from this address; try later",
+    503: "the coordinator has no room for new islands, or is unavailable",
+  };
+  return `join: ${res.status} ${known[res.status] ?? "(response withheld: the join carried a garden token)"}`;
+}
+
+/** Coordinator.Queue's island credentials: `"isl-"` and 9 random bytes, and
+ * 32 random bytes, both base64url without padding. */
+const ISLAND_ID = /^isl-[A-Za-z0-9_-]{12}$/;
+const ISLAND_TOKEN = /^[A-Za-z0-9_-]{43}$/;
+
+/** The id and token of an accepted join. With a garden token in the body, an
+ * answer that is not JSON naming both, in the coordinator's own formats and
+ * neither holding the garden token, is refused with a fixed message: the
+ * parser's own error quotes the start of the body, and a reflected id would
+ * be logged, remembered and put in every URL (and a token with a newline
+ * makes a header error that quotes it). */
+async function joinAnswer(res: Response, gardenToken?: string): Promise<{ id: string; token: string }> {
+  if (!gardenToken) return (await res.json()) as { id: string; token: string };
+  let answer: unknown;
+  try {
+    answer = JSON.parse(await res.text());
+  } catch {
+    answer = undefined;
+  }
+  const { id, token } = (answer ?? {}) as { id?: unknown; token?: unknown };
+  // Neither may hold the garden token. A random 12- or 43-character value
+  // holds a given 4-character string about once in 10^6 joins, so containment
+  // is checked from 4 characters up; a shorter token (no secret anyway) is
+  // checked for equality only, so a real join is not refused by chance.
+  const holds = (v: string) => (gardenToken.length >= 4 ? v.includes(gardenToken) : v === gardenToken || v.slice(4) === gardenToken);
+  const ok = typeof id === "string" && typeof token === "string" && ISLAND_ID.test(id) && ISLAND_TOKEN.test(token) && !holds(id) && !holds(token);
+  if (!ok) {
+    throw new Error(`join: ${res.status} answer is not an island id and token (response withheld: the join carried a garden token)`);
+  }
+  return { id: id as string, token: token as string };
+}
+
 export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<number> {
   const log = opt.log ?? (() => {});
   const base = opt.coordinator.replace(/\/$/, "");
@@ -269,10 +422,14 @@ export async function runIsland(device: GPUDevice, opt: IslandOptions): Promise<
       // metrics version matches the segment's experiment (and checks the
       // uploaded manifest's version again at completion -- see
       // Coordinator.Queue's moduledoc).
-      body: JSON.stringify({ adapter: opt.host.adapter, userAgent: opt.host.host, metricsVersion: METRICS_VERSION }),
+      // A garden token (see IslandOptions.gardenToken) is shown here only.
+      body: JSON.stringify({ adapter: opt.host.adapter, userAgent: opt.host.host, metricsVersion: METRICS_VERSION, ...(opt.gardenToken ? { gardenToken: opt.gardenToken } : {}) }),
+      // A redirect would carry that body (a 307/308 keeps it) to wherever it
+      // points, past every origin rule: a join with a token follows none.
+      ...(opt.gardenToken ? { redirect: "manual" as const } : {}),
     });
-    if (!joined.ok) throw new Error(`join: ${joined.status} ${await joined.text()}`);
-    ({ id, token } = (await joined.json()) as { id: string; token: string });
+    if (!joined.ok) throw new Error(await joinFailure(joined, opt.gardenToken));
+    ({ id, token } = await joinAnswer(joined, opt.gardenToken));
   }
   opt.onJoined?.({ id, token });
   const q = (extra = "") => `island=${encodeURIComponent(id)}${extra}`;

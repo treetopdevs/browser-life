@@ -317,7 +317,7 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .pool-legend span { display: flex; align-items: center; gap: 5px; }
 .subheading { margin: 16px 0 6px; color: var(--muted); font-size: var(--t-small); font-weight: 600; }
 .lineages { display: grid; gap: 5px; }
-.lineages > div { display: grid; grid-template-columns: 8px 1fr 42px; align-items: center; gap: 7px; font-size: var(--t-micro); }
+.lineages > div { display: grid; grid-template-columns: 8px 1fr 42px auto; align-items: center; gap: 7px; font-size: var(--t-micro); }
 .lineages i { display: block; width: 8px; height: 8px; border-radius: 2px; }
 .lineages .bar { height: 6px; overflow: hidden; border-radius: 3px; background: var(--raised); }
 .lineages .bar b { display: block; height: 100%; }
@@ -330,6 +330,82 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .text-link:hover { text-decoration-color: var(--text); }
 .lineage-open { margin-top: 12px; }
 .lineage-open[hidden] { display: none; }
+
+/* ---------- pond keeper v1: the pressure dial, auto-breed, keep a lineage ---------- */
+/* What the rule breeds for: its own control, apart from the ranking used while picking. */
+.pressure { margin: 0 0 14px; }
+.pressure .field { margin-bottom: 6px; }
+.pressure-says { margin: 0 0 6px; }
+.pressure-state { margin-top: 7px; }
+.pressure-state .badge { margin-right: 4px; white-space: normal; }
+.play-verb { margin: 14px 0 0; }
+.play-verb .subheading { margin: 0 0 8px; }
+.play-verb .hint { margin: 8px 0 0; }
+.play-verb .row { margin: 0; }
+.keep-chip { display: flex; align-items: center; gap: 8px; font-size: var(--t-small); }
+.keep-chip[hidden], .keep-where[hidden], #keep-none[hidden] { display: none; }
+.keep-chip i { display: block; width: 10px; height: 10px; border-radius: 3px; border: 1px solid var(--control-line); }
+.keep-chip .mono { font-size: var(--t-micro); }
+.keep-where { margin: 6px 0 0; color: var(--text); font-size: var(--t-small); line-height: 1.5; }
+.keep-where .badge { white-space: normal; }
+.lineages .keep { min-height: 24px; padding: 1px 8px; font-size: var(--t-micro); }
+.lineages .keep[aria-pressed="true"] { color: var(--text); border-color: var(--control-line); background: var(--raised); font-weight: 700; }
+#btn-keep[hidden] { display: none; }
+#btn-keep[aria-pressed="true"] { background: var(--raised); font-weight: 700; }
+#lineage-keep[aria-pressed="true"] { background: var(--raised); font-weight: 700; }
+#lineage-keep[hidden] { display: none; }
+
+/* ---------- what happened first: the log of firsts and the session card ---------- */
+.firsts .firsts-lede { margin: -4px 0 12px; }
+.firsts-watch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; }
+.firsts-watch[hidden], .firsts-list[hidden] { display: none; }
+.firsts-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 9px; }
+.first { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 1px 10px; align-items: baseline; font-size: var(--t-small); }
+.first-step { grid-row: span 2; color: var(--text); font-size: var(--t-micro); font-weight: 600; white-space: nowrap; }
+.first-name { color: var(--text); font-weight: 600; }
+.first-detail { color: var(--muted); font-size: var(--t-micro); line-height: 1.45; overflow-wrap: anywhere; }
+.first.already .first-step, .first.already .first-name { color: var(--muted); font-weight: 500; }
+.firsts-rules { margin: 0 0 14px; }
+.firsts-rules summary { color: var(--muted); font-size: var(--t-small); font-weight: 600; cursor: pointer; }
+.firsts-rules-list { margin: 10px 0 0; display: grid; gap: 2px; font-size: var(--t-micro); line-height: 1.45; }
+.firsts-rules-list dt { margin-top: 8px; color: var(--text); font-weight: 600; }
+.firsts-rules-list dd { margin: 0; color: var(--muted); }
+/* Next up: the first three rungs not yet reached, each with its progress. A bar of progress is not a lit state, so it stays in ink. */
+.nextup { margin: 0 0 14px; }
+.nextup .subheading { margin: 0 0 8px; }
+.nextup-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.nextup-list:empty { display: none; }
+.rung { display: grid; gap: 4px; }
+.rung-name { color: var(--text); font-size: var(--t-small); font-weight: 600; }
+.rung-bar { appearance: none; -webkit-appearance: none; display: block; width: 100%; height: 6px; border: 0; border-radius: 3px; background: var(--raised); overflow: hidden; }
+.rung-bar::-webkit-progress-bar { background: var(--raised); }
+.rung-bar::-webkit-progress-value { background: var(--muted); border-radius: 3px; }
+.rung-bar::-moz-progress-bar { background: var(--muted); border-radius: 3px; }
+.rung-says { color: var(--muted); font-size: var(--t-micro); line-height: 1.45; overflow-wrap: anywhere; }
+#card-hint { margin-top: 8px; }
+.card-command { display: block; margin-top: 4px; padding: 5px 8px; border-radius: 6px; background: var(--raised); color: var(--text); font: var(--t-micro) var(--mono); overflow-wrap: anywhere; user-select: all; }
+.card { width: min(640px, 100vw - 32px); max-width: none; height: min(820px, 100dvh - 32px); max-height: none; margin: auto; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg); color: var(--text); flex-direction: column; overflow: hidden; }
+.card[open] { display: flex; }
+.card::backdrop { background: oklch(20% 0.02 80 / .45); }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 22px 14px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.card-head h2 { margin: 0 0 4px; font-size: var(--t-title); line-height: 1.2; font-weight: 800; letter-spacing: -.02em; }
+.card-head h2:focus { outline: none; }
+.card-body { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 22px 18px; scrollbar-color: var(--line) transparent; }
+.card-section { padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+.card-section h3 { margin: 0 0 10px; font-size: var(--t-body); line-height: 1.3; font-weight: 700; letter-spacing: -.01em; }
+.card-section .kv + .hint, .card-section .card-table-wrap + .hint { margin-top: 10px; }
+.card .kv dd { white-space: normal; overflow-wrap: anywhere; }
+.card-table-wrap { overflow-x: auto; }
+.card-table { width: 100%; border-collapse: collapse; font-size: var(--t-small); font-variant-numeric: tabular-nums; }
+.card-table th, .card-table td { padding: 5px 6px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line-soft); }
+.card-table th { color: var(--muted); font-weight: 600; }
+.card-table thead th { border-bottom-color: var(--line); font-size: var(--t-micro); }
+.card-table tbody th { text-align: left; font-family: var(--sans); font-weight: 500; white-space: normal; }
+.card-table td { color: var(--text); }
+.card-honesty { margin-top: 14px; }
+.card-foot { display: grid; gap: 8px; padding: 14px 22px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--surface); }
+.card-foot .primary { justify-self: start; }
+.card-foot .hint { overflow-wrap: anywhere; }
 
 /* ---------- the world catalogue: a dialog over the bench ---------- */
 .worlds { width: min(1120px, 100vw - 32px); max-width: none; height: min(860px, 100dvh - 32px); max-height: none; margin: auto; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg); color: var(--text); flex-direction: column; overflow: hidden; }
@@ -397,10 +473,15 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
   .controls { overflow: visible; min-height: auto; }
   .evidence { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; overflow: visible; min-height: auto; border-left: 0; border-top: 1px solid var(--line); }
   .evidence-section:nth-of-type(even) { border-left: 1px solid var(--line-soft); }
+  .evidence-section.firsts { grid-column: 1 / -1; border-left: 0; }
   /* The jar keeps its own height and stays in view while a taller controls rail scrolls beside it. */
   .stage { min-height: 680px; overflow: visible; align-self: start; position: sticky; top: 0; }
 }
 @media (max-width: 760px) {
+  .card { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
+  .card-head { padding: 14px 16px 12px; }
+  .card-body { padding: 4px 16px 16px; }
+  .card-foot { padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
   .worlds { width: 100vw; height: 100dvh; border: 0; border-radius: 0; }
   .worlds-head { padding: 14px 16px 12px; }
   .worlds-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }

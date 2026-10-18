@@ -8,7 +8,7 @@
 // is not a valid pick, a missing entry with no picker) writes a `failed` line, throws `PickError` and applies
 // nothing, so the world is exactly pre-cycle there. No retry, no fallback to the rule. Pickers get a detached
 // snapshot of the pre-cycle state; the runner keeps its own.
-import { cloneState, pondDonors, pondPickError, pondTraits, randomKey, type WorldConfig, type WorldState } from "@bl/schema";
+import { cloneState, pondDonors, pondPickError, pondScoreTerms, pondTraits, randomKey, type PondScore, type WorldConfig, type WorldState } from "@bl/schema";
 import type { DonorHook } from "./migrate.ts";
 
 /** The pick log of a picked run, beside manifest.json. Not a bundle or verified file (like migrations.tsv, it is no observation). */
@@ -282,6 +282,124 @@ export function detachState(s: WorldState): WorldState {
   return { ...cloneState(s), cfg: { ...s.cfg } };
 }
 
+/** One pressure (the lab's pond keeper): `Intervention` kind "pressure" without its kind. */
+export interface PressureEntry {
+  step: number;
+  cycle: number;
+  score: PondScore;
+}
+
+/** The score of the LAST entry in list order whose `cycle` is <= `cycle`, or undefined when none governs it. */
+export function activePondScore(pressures: readonly PressureEntry[], cycle: number): PondScore | undefined {
+  for (let i = pressures.length - 1; i >= 0; i--) if (pressures[i].cycle <= cycle) return pressures[i].score;
+  return undefined;
+}
+
+/** The `cycle` a pressure set at world step `step` carries: a waiting cycle's own (`step / period`), else the next boundary (`floor(step / period) + 1`). */
+export function pressureCycleOf(step: number, period: number, waiting: boolean): number {
+  return waiting ? step / period : Math.floor(step / period) + 1;
+}
+
+/**
+ * Why `entries` cannot be the pressures of a history of config `cfg`, or null: the config must be a pond config of arm "breed";
+ * every entry has a safe-integer `step` >= 0, a safe-integer `cycle` >= 1 and a `score` that `pondScoreTerms` accepts; steps do not
+ * decrease; cycles do not decrease; and `cycle` is `ceil(step / pondPeriod)` or, when `step` is a multiple of pondPeriod,
+ * `step / pondPeriod + 1`. Anything else is "not the observed history".
+ */
+export function pressureEntriesError(entries: readonly PressureEntry[], cfg: Pick<WorldConfig, "pondPeriod" | "pondArm">): string | null {
+  const period = cfg.pondPeriod;
+  if (period === undefined) return "a pressure needs a pond config (pondPeriod)";
+  if (cfg.pondArm !== "breed") return `a pressure needs pond arm breed, got ${JSON.stringify(cfg.pondArm)}: only the breeder ranks donors by a score`;
+  let lastStep = 0, lastCycle = 0;
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i] as Partial<PressureEntry> | null;
+    const where = `pressure ${i}`;
+    if (!e || typeof e !== "object") return `${where} is not an object`;
+    if (!Number.isSafeInteger(e.step) || (e.step as number) < 0) return `${where}: step must be a non-negative integer`;
+    if (!Number.isSafeInteger(e.cycle) || (e.cycle as number) < 1) return `${where}: cycle must be a positive integer`;
+    try {
+      pondScoreTerms(e.score);
+    } catch (err) {
+      return `${where}: ${(err as Error).message}`;
+    }
+    const step = e.step as number, cycle = e.cycle as number;
+    if (step < lastStep) return `${where} (t=${step}) follows a pressure at t=${lastStep}: pressures are in step order`;
+    if (cycle < lastCycle) return `${where} (cycle ${cycle}) follows a pressure for cycle ${lastCycle}: pressures are in cycle order`;
+    const allowed = [Math.floor(step / period) + 1];
+    if (step > 0 && step % period === 0) allowed.unshift(step / period);
+    if (!allowed.includes(cycle)) return `${where} at t=${step} says cycle ${cycle}, but a pressure set then governs cycle ${allowed.join(" or ")}: not the observed history`;
+    lastStep = step;
+    lastCycle = cycle;
+  }
+  return null;
+}
+
+/**
+ * The step-order rule for a mixed lab log. At one step s the only order the lab produces is
+ *   [pressure with cycle = s/p]*, pick(s)?, [pressure with cycle = s/p + 1 | lesion | feed]*,
+ * where pick(s) is required when a pressure for cycle s/p is there.
+ * Returns the first violation (naming the entries) or null. Used by `labHistory`, and so by the session file validator.
+ * The lab logs a boundary's pick first, and a headless run applies the boundary before the interventions of its step; a
+ * pressure for the boundary's own cycle is part of that boundary, so it comes before the pick. The lab logs such a pressure
+ * only while that cycle waits for its donors, and a waiting cycle always ends in a logged pick (breeder mode off answers it
+ * with the rule's donors); a waiting world cannot be saved or exported, so no log the lab writes stops between the two.
+ */
+export function pressureLogError(log: readonly { step: number; kind: string; cycle?: number }[], period: number): string | null {
+  let at = -1;
+  // 0: before the boundary, 1: the pick is in, 2: after it (a lesion, a feed or a pressure for a later cycle); `after` says which
+  let phase = 0, after = "";
+  /** The entry of a pressure for the boundary's own cycle at `at` that no pick has followed yet, or -1. */
+  let unpicked = -1;
+  const orphan = () => `interventions[${unpicked}] (pressure at t=${at}) is for cycle ${at / period}, but no pick for that cycle follows it: the lab logs one only while that cycle waits, and the pick always follows`;
+  for (let i = 0; i < log.length; i++) {
+    const { step, kind, cycle } = log[i];
+    if (step !== at) {
+      if (unpicked >= 0) return orphan();
+      at = step;
+      phase = 0;
+      after = "";
+    }
+    const here = `interventions[${i}] (${kind} at t=${step})`;
+    if (kind === "pick") {
+      if (phase === 2)
+        return after === "pressure"
+          ? `${here} follows a pressure for the next cycle at the same step: a boundary's pick comes before anything set after it`
+          : `${here} follows a lesion or feed at the same step: the lab logs a boundary's pick first, and a headless run applies the boundary before the interventions of its step`;
+      phase = 1;
+      unpicked = -1;
+    } else if (kind === "pressure" && cycle !== undefined && cycle * period === step) {
+      if (phase === 1) return `${here} for cycle ${cycle} comes after the pick for cycle ${cycle}: a pressure for cycle ${cycle} must come before the pick for cycle ${cycle}`;
+      if (phase === 2) return `${here} for cycle ${cycle} follows a lesion, feed or later pressure at the same step: it must come before the boundary's pick`;
+      if (unpicked < 0) unpicked = i;
+    } else {
+      if (unpicked >= 0) return orphan();
+      phase = 2;
+      if (kind === "pressure") after = "pressure";
+      else if (after === "") after = "hand";
+    }
+  }
+  return unpicked >= 0 ? orphan() : null;
+}
+
+/** The rule's donors at boundary `b` under the pressures: `pondDonors(pre, b, cfg.pondArm, cfg.pondK, activePondScore(pressures, b) ?? cfg.pondScore)`. */
+export function ruleDonors(pre: WorldState, b: number, cfg: WorldConfig, pressures: readonly PressureEntry[]): number[] {
+  return pondDonors(pre, b, cfg.pondArm as "scaf" | "rand" | "breed", cfg.pondK!, activePondScore(pressures, b) ?? cfg.pondScore);
+}
+
+/**
+ * A `DonorHook` for a boundary with no recorded or hand pick: the rule's donors under the pressures read at call time, `undefined`
+ * (leaving the arm's own cycle, byte for byte) when no pressure governs b, when its score is the config's own, or when no pond is occupied.
+ * `getPressures` is a function so a host's list may grow between boundaries.
+ */
+export function pressureHook(cfg: WorldConfig, getPressures: () => readonly PressureEntry[]): DonorHook {
+  return async (pre, b) => {
+    const active = activePondScore(getPressures(), b);
+    if (cfg.pondArm !== "breed" || active === undefined || active === cfg.pondScore) return undefined;
+    if (!pondTraits(pre).some((t) => t > 0)) return undefined;
+    return ruleDonors(pre, b, cfg, getPressures());
+  };
+}
+
 /** What `makeDonorHook` tells the runner about the boundary it just answered. */
 export interface PickNote {
   /** Who chose: the picker's name, "recorded", "rule(implicit)", or "none" when no pond is occupied. */
@@ -302,6 +420,11 @@ export interface DonorHookArgs {
   sink: { appendText(path: string, text: string): Promise<void> };
   /** Filled in at every call, for the runner's pick line. */
   note: PickNote;
+  /**
+   * The lab's pressures (a pressured run, `RunSpec.pressures`): the arm's own donors, which a picker is shown as `suggested`
+   * and the implicit rule answers, are those of the score the latest pressure with cycle <= b names. Absent: `cfg.pondScore`.
+   */
+  pressures?: readonly PressureEntry[];
 }
 
 /**
@@ -312,7 +435,7 @@ export interface DonorHookArgs {
  * runner appends the pick line itself, from the donors the boundary reports.
  */
 export function makeDonorHook(args: DonorHookArgs): DonorHook {
-  const { cfg, recorded, picker, implicitRule, sink, note } = args;
+  const { cfg, recorded, picker, implicitRule, sink, note, pressures } = args;
   return async (pre, b) => {
     const step = pre.step;
     const fail = async (by: string, reason: string): Promise<never> => {
@@ -332,7 +455,7 @@ export function makeDonorHook(args: DonorHookArgs): DonorHook {
       if (entry && entry.donors.length) return fail("recorded", `the recorded pick names ${entry.donors.join(", ")}, but no pond is occupied`);
       return undefined;
     }
-    const suggested = pondDonors(pre, b, arm, cfg.pondK!, cfg.pondScore);
+    const suggested = ruleDonors(pre, b, cfg, pressures ?? []);
     note.suggested = suggested;
     const request: PickRequest | undefined = picker ? { step, cycle: b, pre: detachState(pre), k: cfg.pondK!, occupied, suggested: [...suggested], max: suggested.length } : undefined;
     note.request = request;

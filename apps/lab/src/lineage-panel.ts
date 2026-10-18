@@ -89,21 +89,28 @@ export interface LineagePanel {
   open(key: string): void;
   onLineage(m: LineageMsg): void;
   onHighlight(key: string | null): void;
+  /** The worker's kept lineage (`FromWorker` "keep"), or null: the drawer's Keep button says whether it is this one. */
+  onKeep(key: string | null): void;
   /** A world was adopted: keep the panel through a jump, close it otherwise. */
   onLoaded(): void;
   onError(): void;
 }
 
-/** `storageOff`: this browser keeps no checkpoints, so no row offers a jump, and the panel says why. */
-export function createLineagePanel(send: (m: ToWorker) => void, storageOff: () => boolean = () => false): LineagePanel {
+/**
+ * `storageOff`: this browser keeps no checkpoints, so no row offers a jump, and the panel says why. `canKeep`: the world on
+ * screen takes donors, so the drawer offers Keep; `keep` asks the worker to keep a lineage (or none) for that world.
+ */
+export function createLineagePanel(send: (m: ToWorker) => void, storageOff: () => boolean = () => false, canKeep: () => boolean = () => false, keep: (key: string | null) => void = () => {}): LineagePanel {
   const drawer = $("lineage-drawer");
   const body = $("lineage-body");
   const status = $("lineage-status");
   const title = $("lineage-heading");
   let key: string | null = null;
   let highlighted: string | null = null;
+  let kept: string | null = null;
   let jumping = false;
   let opener: HTMLElement | null = null;
+  const keepLineage = keep;
 
   const close = () => {
     drawer.hidden = true;
@@ -122,6 +129,15 @@ export function createLineagePanel(send: (m: ToWorker) => void, storageOff: () =
       b.textContent = on ? "Highlighted on field" : "Highlight on field";
     }
     $("lineage-highlight-state").textContent = highlighted ? `Field highlight: ${highlighted}` : "";
+  };
+  /** The drawer's Keep button: pressed when this lineage is the one kept, and pressing it again lets go. */
+  const syncKeep = () => {
+    const b = document.getElementById("lineage-keep");
+    if (!b) return;
+    const on = kept !== null && b.dataset.key === kept;
+    b.setAttribute("aria-pressed", String(on));
+    b.textContent = on ? "Kept for breeding" : "Keep for breeding";
+    b.hidden = !canKeep();
   };
   const setHighlight = (k: string | null) => {
     highlighted = k;
@@ -157,6 +173,13 @@ export function createLineagePanel(send: (m: ToWorker) => void, storageOff: () =
     hl.onclick = () => setHighlight(highlighted === v.subject ? null : v.subject);
     const actions = el("div", undefined, "row lineage-actions");
     actions.append(hl);
+    const keepButton = el("button", "Keep for breeding");
+    keepButton.type = "button";
+    keepButton.id = "lineage-keep";
+    keepButton.dataset.key = v.subject;
+    keepButton.title = "Seed each pond cycle from the pond holding most of this lineage, whatever the rule says. A hand pick is never changed.";
+    keepButton.onclick = () => keepLineage(kept === v.subject ? null : v.subject);
+    actions.append(keepButton);
     summary.append(dl, actions);
 
     const strategy = el("section");
@@ -237,6 +260,7 @@ export function createLineagePanel(send: (m: ToWorker) => void, storageOff: () =
 
     body.replaceChildren(summary, strategy, ancestry, gaps);
     syncHighlight();
+    syncKeep();
   }
 
   return {
@@ -259,10 +283,16 @@ export function createLineagePanel(send: (m: ToWorker) => void, storageOff: () =
       highlighted = k;
       syncHighlight();
     },
+    onKeep(k) {
+      kept = k;
+      syncKeep();
+    },
     onLoaded() {
       if (jumping) {
         jumping = false;
         status.textContent = "Restored a checkpoint; this panel still shows the lineage as inspected before the jump.";
+        // The drawer stays open on the world the jump brought in: Keep follows whether that world takes donors.
+        syncKeep();
         return;
       }
       highlighted = null;

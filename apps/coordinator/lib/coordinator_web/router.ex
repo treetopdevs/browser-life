@@ -28,6 +28,15 @@ defmodule CoordinatorWeb.Router do
     post "/segments/:id/complete", ApiController, :complete
     post "/segments/:id/reject", ApiController, :reject
     post "/segments/:id/fail", ApiController, :fail
+
+    # The garden (CoordinatorWeb.GardenController; README "The garden").
+    get "/public/garden", GardenController, :show
+    get "/public/gardens/:name", GardenController, :show
+    post "/public/garden/letters", GardenController, :post_letter
+    post "/public/gardens/:name/letters", GardenController, :post_letter
+    post "/gardens", GardenController, :create
+    post "/gardens/:name/letters/:id/drop", GardenController, :drop
+    post "/gardens/:name/days/:index/requeue", GardenController, :requeue
   end
 
   # The discovery plane (Coordinator.Discovery): its own routes, tokens and data directory.
@@ -55,5 +64,6 @@ defmodule CoordinatorWeb.Router do
     get "/segments/:id/start", ApiController, :get_checkpoint
     put "/segments/:id/files/:name", ApiController, :put_file
     get "/segments/:id/files/:name", ApiController, :get_file
+    get "/public/gardens/:name/checkpoints/:digest", GardenController, :checkpoint
   end
 end

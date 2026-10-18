@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   DOSSIER_VERSION,
@@ -98,12 +99,39 @@ describe("parsePondRows", () => {
 
   it("names the line of a malformed row", () => {
     const lines = pondsText(TREE).split("\n");
-    expect(() => parsePondRows([lines[0], lines[1], lines[2].split("\t").slice(1).join("\t")])).toThrow(/line 3: 21 fields, header has 22/);
+    // A short row followed by another is malformed; a short last row is a torn append (2026-10-17), dropped and reported.
+    const short = lines[2].split("\t").slice(1).join("\t");
+    expect(() => parsePondRows([lines[0], lines[1], short, lines[3]])).toThrow(/line 3: 21 fields, header has 22/);
+    expect(parsePondRows([lines[0], lines[1], short])).toMatchObject({ torn: 3, rows: [{ cycle: 1, recipient: 0 }] });
+    const cut = [...lines.slice(0, 5), lines[5].slice(0, 12)];
+    expect(buildPondHistory(parsePondRows(cut)).warnings.join("\n")).toMatch(/line 6 is a torn last append/);
     const bad = lines[1].split("\t");
     bad[COLUMNS.indexOf("recipientTrait")] = "12.5";
     expect(() => parsePondRows([lines[0], bad.join("\t")])).toThrow(/line 2: recipientTrait is not an integer/);
     const dup = [...COLUMNS.slice(0, 3), "cycle"];
     expect(() => parsePondRows([dup.join("\t")])).toThrow(/duplicate header column cycle/);
+  });
+
+  it("a torn last line that kept every field (cut after its last tab) is dropped; a line missing only its newline is whole (Codex pass 2)", () => {
+    // Byte cuts of a real runner table (tools/test/fixtures/pond-runner, header order: ... heat, light).
+    const text = readFileSync(new URL("./fixtures/pond-runner/scaf-picked/ponds.tsv", import.meta.url), "utf8");
+    const full = parsePondRows(text.split("\n"));
+    expect(full.torn).toBeNull();
+    const body = text.endsWith("\n") ? text.slice(0, -1) : text;
+    const lines = body.split("\n"), n = lines.length;
+    const afterTab = parsePondRows(body.slice(0, body.lastIndexOf("\t") + 1).split("\n"));
+    expect(afterTab.torn).toBe(n);
+    expect(afterTab.rows).toEqual(full.rows.slice(0, -1));
+    expect(parsePondRows(lines)).toEqual(full);
+    // A cut inside the last number leaves a value that still parses: it cannot be told from a whole row and is kept.
+    const mid = parsePondRows(body.slice(0, -2).split("\n"));
+    expect(mid.torn).toBeNull();
+    expect(mid.rows.at(-1)!.light).toBe(full.rows.at(-1)!.light!.slice(0, -2));
+    // The same empty last field on an interior line is malformed, and so is an empty field before the last one on the last line.
+    expect(() => parsePondRows([lines[0], lines[1].slice(0, lines[1].lastIndexOf("\t") + 1), ...lines.slice(2)])).toThrow(/ponds.tsv line 2: light is not an integer string: ""/);
+    const f = lines[n - 1].split("\t");
+    f[lines[0].split("\t").indexOf("donor")] = "";
+    expect(() => parsePondRows([...lines.slice(0, n - 1), f.join("\t")])).toThrow(new RegExp(`ponds.tsv line ${n}: donor is not an integer`));
   });
 
   it("reads an async line stream the same as an array", async () => {
@@ -464,5 +492,83 @@ describe("pondTwin", () => {
     expect(() => pondTwin(rand, scaf, { kind: "top" })).toThrow(/expected scaf/);
     const small = history([{ traits: [1, 2], donors: [-1, -1] }], "rand");
     expect(() => pondTwin(scaf, small, { kind: "top" })).toThrow(/4 and 2 ponds/);
+  });
+});
+
+describe("runner bundles", () => {
+  const dead = { traits: [0, 0, 0, 0], donors: [-1, -1, -1, -1] };
+
+  it("runner ended history: trailing donor -1 cycles read, endedAt is the first, later cycles noted", () => {
+    const h = buildPondHistory(parsePondRows(pondsText([...TREE, dead, dead, dead]).split("\n")), { arm: "scaf", period: 100, source: "runner" });
+    expect(h).toMatchObject({ lastCycle: 5, endedAt: 5, cycles: [1, 2, 3, 4, 5], source: "runner" });
+    expect(h.notes[0]).toMatch(/ended at cycle 5 .* 2 later no-donor cycle\(s\) 6..7 carry no descent/);
+    const d = pondDossier(h, { kind: "explicit", pond: 0, cycle: 4 });
+    expect(d.history.endedAt).toBe(5);
+    expect(d.notes.join("\n")).toMatch(/history ended there/);
+    // One ended cycle is read as before, and an all-dead cont history is not cut.
+    expect(buildPondHistory(parsePondRows(pondsText([...TREE, dead]).split("\n")), { arm: "scaf" }).notes).toEqual([]);
+    expect(buildPondHistory(parsePondRows(pondsText([dead, dead, dead]).split("\n")), { arm: "cont" }).lastCycle).toBe(3);
+    // A no-donor cycle with living ponds before transfers is still an error.
+    expect(() => buildPondHistory(parsePondRows(pondsText([TREE[0], { traits: [1, 0, 0, 0], donors: [-1, -1, -1, -1] }, TREE[2]]).split("\n")))).toThrow(/without transfers before its last cycle/);
+  });
+
+  it("checks the period against the config", () => {
+    const parsed = parsePondRows(pondsText(TREE).split("\n"));
+    expect(() => buildPondHistory(parsed, { period: 200 })).toThrow(/cycle 1 is at step 100, but the config's pondPeriod 200/);
+    expect(buildPondHistory(parsed, { period: 100 }).period).toBe(100);
+  });
+
+  it("breed columns parse by name and arm breed gets the selection note", () => {
+    const cols = [...COLUMNS, "score", "donorScore"];
+    const lines = pondsText(TREE, COLUMNS).split("\n").map((l, i) => (l === "" ? l : `${l}\t${i === 0 ? "score\tdonorScore" : "7\t9"}`));
+    const p = parsePondRows(lines);
+    expect(p.columns).toEqual(cols);
+    expect(p.absentColumns).toEqual([]);
+    const picks = { picker: "random", present: true, torn: false, lines: 5, by: { random: 4, recorded: 1 }, checked: 5, partial: 0, unchecked: 0, unlogged: 0 };
+    const d = pondDossier(buildPondHistory(p, { arm: "breed", source: "runner", picks }), { kind: "top" });
+    expect(d.arm).toBe("breed");
+    expect(d.notes.join("\n")).toMatch(/in arm breed the donors at a cycle are the best-scoring ponds/);
+    expect(d.notes.join("\n")).toMatch(/a picked run \(picker random\): picks.jsonl names who chose each logged boundary's donors \(4 by random, 1 by recorded\), and its ordered donors agree with ponds.tsv at 5 boundary\(ies\)/);
+    // A picked run that lost its log, or whose log ends torn, says so.
+    const lost = pondDossier(buildPondHistory(p, { arm: "breed", source: "runner", picks: { ...picks, present: false, lines: 0, by: {}, checked: 0 } }), { kind: "top" });
+    expect(lost.notes.join("\n")).toMatch(/picks.jsonl is missing, so who chose each boundary's donors is not recorded/);
+    expect(lost.gaps.join("\n")).toMatch(/picks.jsonl is absent from a picked run/);
+    const torn = pondDossier(buildPondHistory(p, { arm: "breed", source: "runner", picks: { ...picks, torn: true, unlogged: 1 } }), { kind: "top" });
+    expect(torn.gaps.join("\n")).toMatch(/picks.jsonl ends in a torn line/);
+    expect(torn.gaps.join("\n")).toMatch(/ponds.tsv has 1 boundary\(ies\) the pick log lacks/);
+  });
+
+  it("-2 rows are refused by name for pond dossiers", () => {
+    const lines = pondsText(TREE).split("\n").map((l, i) => (l === "" ? l : `${l}\t${i === 0 ? "died" : "1"}`));
+    const hunt = lines.map((l, i) => (i === 1 ? l.replace(/^1\t100\t0\t1\t/, "1\t100\t0\t-2\t") : l));
+    const p = parsePondRows(hunt);
+    expect(p.rows[0].donor).toBe(-2);
+    expect(() => buildPondHistory(p)).toThrow(/pond dossiers do not support arms nat\/shuf yet .* a standalone history has no mutations.tsv/);
+    expect(() => buildPondHistory(p, { source: "runner" })).toThrow(/open their lineages as genotype dossiers instead/);
+    expect(() => buildPondHistory(parsePondRows(lines))).toThrow(/nat\/shuf/);
+    expect(() => parsePondRows(pondsText(TREE).split("\n").map((l, i) => (i === 1 ? l.replace(/^1\t100\t0\t1\t/, "1\t100\t0\t-2\t") : l)))).toThrow(/donor >= -1 expected; -2 only in a table with a died column/);
+  });
+
+  it("a runner bundle starting mid-history says the ancestry continues in the earlier bundle", () => {
+    const later = pondsText(TREE).split("\n").map((l, i) => (i === 0 || l === "" ? l : l.replace(/^(\d+)\t(\d+)\t/, (_, c, s) => `${Number(c) + 3}\t${Number(s) + 300}\t`)));
+    const h = buildPondHistory(parsePondRows(later), { arm: "scaf", period: 100, source: "runner", hasMutations: true, firstStep: 300 });
+    expect(h.firstCycle).toBe(4);
+    const d = pondDossier(h, { kind: "top" });
+    expect(d.ancestry.chain[0].cycle).toBe(4);
+    expect(d.gaps.join("\n")).toMatch(/starts at step 300, after step 0: .* nodes at cycle 4 have no recorded parent here; their ancestry continues in the earlier bundle/);
+    expect(d.gaps.join("\n")).not.toMatch(/^mutations.tsv/m);
+    expect(d.notes.join("\n")).toMatch(/pond --genotype/);
+    const noMut = pondDossier(buildPondHistory(parsePondRows(later), { arm: "scaf", source: "runner" }), { kind: "top" });
+    expect(noMut.gaps[0]).toMatch(/mutations.tsv is absent from this runner bundle/);
+    expect(pondDossier(history(TREE, "scaf"), { kind: "top" }).gaps[0]).toMatch(/standalone scaffold histories have none/);
+  });
+
+  it("pondTwin seed note follows the given seeds", () => {
+    const scaf = history(TREE, "scaf");
+    const rand = history(TREE.map((c) => ({ ...c })), "rand");
+    expect(pondTwin(scaf, rand, { kind: "top" }, { seeds: [5, 5], sameStart: true }).notes[0]).toMatch(/both histories use seed 5, the same initial world .* identical up to the first boundary/);
+    expect(pondTwin(scaf, rand, { kind: "top" }, { seeds: [5, 5] }).notes[0]).toMatch(/both histories use seed 5, but their initial worlds, their configs beyond the arm, or what the runner applied before the first boundary .* differ or cannot be confirmed, so their states are not known to match/);
+    expect(pondTwin(scaf, rand, { kind: "top" }, { seeds: [5, 6] }).notes[0]).toMatch(/different seeds \(5 and 6\)/);
+    expect(pondTwin(scaf, rand, { kind: "top" }).notes[0]).toMatch(/4,810,001/);
   });
 });
