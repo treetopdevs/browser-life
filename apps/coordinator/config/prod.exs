@@ -29,5 +29,11 @@ config :coordinator, cors_origins: []
 # island-table bound hold regardless.
 config :coordinator, island_joins_per_address: nil
 
+# For the same reason every visitor is one address to the garden's food ask, so
+# it can hold one hand at most: the food block says so (`sharedAddress`) and the
+# page tells visitors. config/runtime.exs clears it when BL_TRUST_FORWARDED_FOR=1
+# is set, which deploy/README.md's fix sets together with the Caddy change.
+config :coordinator, garden_shared_address: true
+
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.

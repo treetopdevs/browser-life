@@ -2,11 +2,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import fixture from "../../coordinator/priv/static/garden-contract.example.json";
 import {
-  checkStone, checkpointHref, dawnAfter, dayChip, fmtDuration, foundingWords, fmtSteps, fmtTime, getAnswer, landingPreview, landingWords,
+  checkStone, checkpointHref, dawnAfter, dayChip, fmtDuration, foodClosedWords, foodNoticeWords, foodWords, latchHolds, periodWords, foundingWords, fmtSteps, fmtTime, getAnswer, handAnswer, landingPreview, landingWords,
   letterWords, mergeMine, newestMine, olderDaysSettled, parseGarden, postAnswer, postedSinceDawn, readVisit, recordFor, requestJson, resolveSource, retryAfterMs,
   sharePercent, sinceLastVisit, stateWords, tendingWords, verificationSummary, visitKey, writeVisit, type GardenView, type VisitRecord,
 } from "../garden/garden.ts";
 import { pageMeta } from "../src/social-meta.ts";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { MATTER_MAX, PRESETS, cellCount, defaultConfig, initWorld, maxLesionRadius, totalsOf } from "@bl/schema";
 import gardenHtml from "../garden/index.html?raw";
 import sitemap from "../public/sitemap.xml?raw";
 
@@ -488,6 +491,201 @@ describe("times and sources", () => {
     expect(checkpointHref(resolveSource("?coordinator=http://localhost:4100", "http://x", false), view())).toBe("http://localhost:4100/api/public/gardens/commons/checkpoints/4e0b7a19c3d2f856");
     expect(checkpointHref(src, view((v) => { v.fork.checkpoint = "javascript:alert(1)"; }))).toBeNull();
     expect(checkpointHref(src, view((v) => { v.fork.checkpoint = "//evil.example/x"; }))).toBeNull();
+  });
+});
+
+describe("food (docs/garden-food-2026-10-18.md)", () => {
+  it("the fixture parses with food; a view without food parses as food off; a malformed food is refused by path", () => {
+    const v = view();
+    expect(v.food?.enabled).toBe(true);
+    expect(v.food?.foods[0].id).toBe("food-1");
+    expect(v.days.map((d) => d.food)).toEqual([null, "food-1", null]);
+
+    const old = copy();
+    delete old.food;
+    for (const d of old.days) delete d.food;
+    const parsed = parseGarden(old);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(foodWords(parsed.view, fmt)).toBeNull();
+
+    const reason = (mutate: (v: Record<string, any>) => void) => { const x = copy(); mutate(x); const p = parseGarden(x); return p.ok ? "ok" : p.reason; };
+    expect(reason((x) => { x.food.hands = "two"; })).toMatch(/^food\.hands: expected a number/);
+    expect(reason((x) => { x.food.foods[0].calledAt = 1.5; })).toMatch(/^food\.foods\[0\]\.calledAt: expected a time/);
+    expect(reason((x) => { delete x.food.open; })).toMatch(/^food\.open: missing/);
+    expect(reason((x) => { x.days[1].food = 7; })).toMatch(/^days\[1\]\.food: expected a string/);
+    expect(reason((x) => { x.food = null; })).toMatch(/^food: expected an object/);
+    // Keys the food block gained later are read with the coordinator's fallbacks when absent.
+    const older = copy();
+    delete older.food.sharedAddress;
+    for (const f of older.food.foods) delete f.noticeUntil;
+    const read = parseGarden(older);
+    expect(read.ok).toBe(true);
+    if (read.ok) {
+      expect(read.view.food!.sharedAddress).toBe(false);
+      for (const f of read.view.food!.foods) expect(f.noticeUntil).toBe(f.calledAt + read.view.pace.dawnPeriodMs);
+    }
+    expect(reason((x) => { x.food.sharedAddress = "yes"; })).toMatch(/^food\.sharedAddress: expected/);
+    expect(reason((x) => { x.food.foods[0].noticeUntil = null; })).toMatch(/^food\.foods\[0\]\.noticeUntil: expected a time/);
+  });
+
+  it("the ask in words: open, cooldown, off, stopped and an unknown reason", () => {
+    const open = foodWords(view(), fmt)!;
+    expect(open.headline).toBe("2 of 5 networks have asked today.");
+    expect(open).toMatchObject({ hands: 2, asks: 5, open: true, closed: null });
+    expect(open.timeLeft).toBe("Today’s hands expire at the next dawn, in 2 hours and 51 minutes (24 Oct 2026, 00:00 UTC), unless 3 more networks ask before then.");
+    expect(open.landing).toBe("A food called now would land at step 524,288, the end of day 3, at the centre (256, 256): 16 quanta of nutrient per cell over a disc of radius 32.");
+    expect(open.why).toMatch(/^Food is the one thing that adds matter to this closed world, so it is kept rare on purpose\./);
+    expect(open.why).toMatch(/only when 5 networks ask within one dawn, at most once every 2 days, as one modest feed at the centre \(256, 256\), and a called food waits a whole dawn period before its day is run/);
+    expect(foodWords(view((v) => { v.food.hands = 1; }), fmt)!.headline).toBe("1 of 5 networks has asked today.");
+    expect(foodWords(view((v) => { v.food.hands = 4; }), fmt)!.timeLeft).toMatch(/unless 1 more network ask before then\.$/);
+    expect(foodWords(view((v) => { v.food.hands = 0; }), fmt)!.timeLeft).toMatch(/unless 5 networks ask before then\.$/);
+    expect(open.why).toMatch(/The keeper’s guess is that a garden fed at will grows fat and dull and that hunger is what makes it build; nobody has tested that yet\./);
+    expect(open.why).toMatch(/one person with several connections can be several/);
+    expect(open.why).not.toMatch(/hunger is what makes it build\. So/);
+    expect(open.shared).toBeNull();
+
+    // A garden whose dawn is not daily says "this dawn period", never "today".
+    const quick = view((v) => { v.pace.dawnPeriodMs = 1000; });
+    expect(periodWords(quick)).toBe("this dawn period");
+    expect(foodWords(quick, fmt)!.headline).toBe("2 of 5 networks have asked this dawn period.");
+    expect(foodWords(quick, fmt)!.timeLeft).toMatch(/^This dawn period’s hands expire at the next dawn/);
+    expect(foodWords(quick, fmt)!.why).not.toMatch(/today/);
+
+    // Every visitor one address (D-17): said in plain words.
+    expect(foodWords(view((v) => { v.food.sharedAddress = true; }), fmt)!.shared).toMatch(/^Right now every visitor reaches this garden through one shared address/);
+
+    const cooldown = foodWords(view((v) => { Object.assign(v.food, { open: false, closed: "cooldown", opensAtDay: 9, landing: null }); }), fmt)!;
+    expect(cooldown).toMatchObject({ open: false, closed: "A food lands at most once every 2 days: the next can land on day 9 at the earliest." });
+    expect(cooldown.landing).toBe(cooldown.closed);
+    // Closed: no count of zero and no expiry line; a waiting food is the headline.
+    expect(cooldown.headline).toBe("The food ask is closed just now.");
+    expect(cooldown.timeLeft).toBe("");
+    const waiting = foodWords(view((v) => {
+      Object.assign(v.food, { open: false, closed: "cooldown", opensAtDay: 5, landing: null, hands: 0 });
+      v.food.foods.unshift({ ...v.food.foods[0], id: "food-2", day: 3, landsAtStep: 524288, status: "waiting", landedIn: null });
+    }), fmt)!;
+    expect(waiting.headline).toBe("A food is waiting: food-2 lands at step 524,288, the end of day 3. Hands count again once the ask reopens.");
+
+    const off = view((v) => { v.food = { ...v.food, enabled: false, asks: null, everyDays: null, amount: null, r: null, place: null, hands: 0, open: false, closed: "off", landing: null, foods: [] }; });
+    expect(foodWords(off, fmt)).toBeNull();
+    expect(foodClosedWords(off.food!)).toBe("This garden takes no food.");
+
+    const stopped = foodWords(view((v) => { Object.assign(v.food, { open: false, closed: "stopped", landing: null }); }), fmt)!;
+    expect(stopped.closed).toBe("The garden has stopped, so it takes no food until the keeper looks.");
+    for (const [code, words] of [["finished", /horizon is done/], ["horizon", /No day is left/], ["log-full", /log is full/], ["<b>new</b>", /The garden says “<b>new<\/b>”, a reason new to this page\./]] as const) {
+      expect(foodWords(view((v) => { Object.assign(v.food, { open: false, closed: code, landing: null }); }), fmt)!.closed, code).toMatch(words);
+    }
+    // Open without a landing is not open.
+    expect(foodWords(view((v) => { v.food.landing = null; }), fmt)!.open).toBe(false);
+  });
+
+  it("a hand's answer in words, for every documented status", () => {
+    const v = view();
+    const headers = (h: Record<string, string>) => ({ get: (k: string) => h[k.toLowerCase()] ?? null });
+    const block = { ...v.food, hands: 3 };
+    expect(handAnswer(201, { counted: true, called: null, food: block }, null, v)).toEqual({ tone: "note", refresh: true, in: true, expiresAt: 1792800000000, words: "Your hand is in. 3 of 5 networks have asked today." });
+    // A hand that crossed a dawn on its way belongs to the answer's period, not the page's last reading.
+    expect(handAnswer(200, { counted: false, called: null, food: { ...block, expiresAt: 1792886400000 } }, null, v).expiresAt).toBe(1792886400000);
+    const called = handAnswer(201, { counted: true, called: { ...v.food!.foods[0], id: "food-2", day: 3, landsAtStep: 524288 }, food: { ...block, hands: 0 } }, null, v);
+    expect(called).toMatchObject({ refresh: true, in: true, food: { id: "food-2", day: 3, landsAtStep: 524288 } });
+    expect(called.words).toBe("Yours was the hand that called the food: food-2 is public now, lands at step 524,288 (end of day 3), and counts once a second island replays that day.");
+    expect(handAnswer(201, null, null, v).words).toBe("Your hand is in.");
+    expect(handAnswer(200, { counted: false, called: null, food: block }, null, v)).toMatchObject({ in: true, words: "A hand from your network was already in for today: one hand per network per dawn. 3 of 5 networks have asked today." });
+    // After a call the ask is closed: no count of zero, and with a shared address it may be someone else's hand.
+    expect(handAnswer(200, { counted: false, called: null, food: { ...block, hands: 0, open: false, closed: "cooldown", sharedAddress: true } }, null, v).words)
+      .toBe("A hand from your network was already in for today: one hand per network per dawn. Every visitor shares one address just now, so it may be someone else’s.");
+    expect(handAnswer(409, { error: "a food lands at most once every 2 days; the next can land on day 9 at the earliest", closed: "cooldown", opensAtDay: 9 }, null, v))
+      .toMatchObject({ in: false, refresh: true, words: "The food ask is closed: a food lands at most once every 2 days; the next can land on day 9 at the earliest." });
+    expect(handAnswer(422, { error: "a hand is exactly {}: it carries nothing" }, null, v).words).toBe("The garden refused the hand: a hand is exactly {}: it carries nothing.");
+    expect(handAnswer(429, { retryAfterMs: 1_500_000 }, headers({ "retry-after": "1500" }), v).words)
+      .toBe("The garden is not taking hands from this network just now: it takes at most 3 letters and hands an hour from one network, together, and fewer when many are refused. Try again in 25 minutes.");
+    expect(handAnswer(429, null, headers({ "retry-after": "120" }), v).words).toMatch(/Try again in 2 minutes\.$/);
+    expect(handAnswer(429, null, headers({}), v).words).toMatch(/Try again later\.$/);
+    for (const code of [413, 415]) expect(handAnswer(code, null, null, v).words).toMatch(/Reload the page and try again\./);
+    expect(handAnswer(404, null, null, v).words).toBe("There is no garden by that name here.");
+    expect(handAnswer(503, null, null, v)).toMatchObject({ in: false, words: "The garden is busy; try again in a moment. Your hand was not counted." });
+    expect(handAnswer(503, { error: "the garden is busy; retry shortly", counted: false }, null, v).words).toMatch(/Your hand was not counted\.$/);
+    // The Queue did not answer: the hand may still count.
+    expect(handAnswer(503, { error: "the garden is busy; retry shortly", counted: null }, null, v)).toMatchObject({ in: false, refresh: true, words: "The garden was too busy to answer, so this page cannot tell whether your hand was counted. The count below is read again: a second hand from this network is never counted twice." });
+    expect(handAnswer(0, null, null, v)).toMatchObject({ refresh: true, in: false, words: "No answer came back, so this page cannot tell whether your hand was counted. The count below is read again: a second hand from this network is never counted twice." });
+    expect(handAnswer(502, "<html>", null, v).words).toMatch(/^The garden answered 502, so this page cannot tell whether your hand was counted\./);
+  });
+
+  it("a day held for a food's notice is said as held, not asleep", () => {
+    const held = view((v) => {
+      // Day 3 is the ready day in the fixture ("Asleep: day 3 is ready").
+      v.food.foods.unshift({ ...v.food.foods[0], id: "food-2", day: 3, status: "waiting", landedIn: null, noticeUntil: v.now + 7_200_000 });
+    });
+    const w = stateWords(held, fmt);
+    expect(w.label).toBe("Holding for the food");
+    expect(w.sentence).toBe(`Holding: day 3 carries the food food-2, so no island is given it before ${fmtTime(held.now + 7_200_000, fmt.locale, fmt.timeZone)}, in 2 hours; until then the keeper can still set the food aside.`);
+    // Past the notice it is the ordinary story again.
+    const past = view((v) => {
+      v.food.foods.unshift({ ...v.food.foods[0], id: "food-2", day: 3, status: "waiting", landedIn: null, noticeUntil: v.now });
+    });
+    expect(stateWords(past, fmt).label).toBe(stateWords(view(), fmt).label);
+  });
+
+  it("a waiting food's veto window in words", () => {
+    const v = view();
+    const f = { status: "waiting", noticeUntil: v.now + 3_600_000 };
+    expect(foodNoticeWords(f, v.now, fmt)).toBe(`Its day is not run before ${fmtTime(v.now + 3_600_000, fmt.locale, fmt.timeZone)}, in 1 hour, so the keeper can still set it aside.`);
+    expect(foodNoticeWords({ ...f, noticeUntil: v.now }, v.now, fmt)).toBeNull();
+    expect(foodNoticeWords({ ...f, status: "sealed" }, v.now, fmt)).toBeNull();
+  });
+
+  it("the tab's hand latch: one garden, until its dawn, and dropped when the server forgot the hand", () => {
+    const v = view();
+    const latch = { name: v.name, since: v.now - 1000, until: v.now + 60_000 };
+    expect(latchHolds(latch, v)).toBe(true);
+    expect(latchHolds(null, v)).toBe(false);
+    expect(latchHolds(latch, null)).toBe(false);
+    // Another garden in the same tab.
+    expect(latchHolds({ ...latch, name: "elsewhere" }, v)).toBe(false);
+    // Its dawn has come.
+    expect(latchHolds({ ...latch, until: v.now }, v)).toBe(false);
+    // A count of zero: a food called since the hand explains it; nothing does after a restart.
+    const zero = view((x) => { x.food.hands = 0; });
+    expect(latchHolds(latch, zero)).toBe(false);
+    const called = view((x) => { x.food.hands = 0; x.food.foods[0].calledAt = x.now; });
+    expect(latchHolds(latch, called)).toBe(true);
+    expect(latchHolds(latch, view((x) => { delete x.food; }))).toBe(false);
+    // A view read before the hand was answered (the one it was sent from, or a poll on its way) cannot show it
+    // forgotten: its zero count may predate the hand. Its dawn and garden still count.
+    expect(latchHolds(latch, zero, false)).toBe(true);
+    expect(latchHolds({ ...latch, until: v.now }, zero, false)).toBe(false);
+    expect(latchHolds({ ...latch, name: "elsewhere" }, zero, false)).toBe(false);
+  });
+
+  it("the hands route sits beside the letters route", () => {
+    expect(resolveSource("", "http://x", false).handsUrl).toBe("/api/public/garden/food/hands");
+    expect(resolveSource("?garden=pond-2&coordinator=http://localhost:4100", "http://x", false).handsUrl).toBe("http://localhost:4100/api/public/gardens/pond-2/food/hands");
+    expect(gardenHtml).toMatch(/<button id="food-send" class="button primary" type="button"/);
+    expect(gardenHtml).toMatch(/<section class="garden-row" id="g-food-row" aria-labelledby="h-food" hidden>/);
+  });
+
+  // The coordinator founds a garden with food only if the worst case fits MATTER_MAX, with a start allowance of 128
+  // quanta per cell and a food radius the runner never clamps (apps/coordinator/lib/coordinator/queue.ex). Both are
+  // assumptions about the garden presets, checked here against packages/schema.
+  it("garden presets fit the coordinator's food bound", () => {
+    const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
+    const queue = read("../../coordinator/lib/coordinator/queue.ex");
+    const num = (src: string, re: RegExp) => { const m = src.match(re); if (!m) throw new Error(`no ${re}`); return Number(m[1].replace(/_/g, "")); };
+    expect(num(queue, /@matter_max ([\d_]+)/)).toBe(MATTER_MAX);
+    const perCell = num(queue, /@start_matter_per_cell ([\d_]+)/);
+    expect(perCell).toBe(128);
+    const config = read("../../coordinator/config/config.exs");
+    const radius = num(config, /garden_food_radius: ([\d_]+)/);
+    const presetsIn = (src: string) => { const m = src.match(/garden_presets: ~w\(([^)]*)\)/); if (!m) throw new Error("no garden_presets"); return m[1].split(/\s+/).filter(Boolean); };
+    const ids = new Set([...presetsIn(config), ...presetsIn(read("../../coordinator/config/dev.exs"))]);
+    expect([...ids].sort()).toEqual(["spots", "wild-storm-large"]);
+    for (const id of ids) {
+      const preset = PRESETS.find((p) => p.id === id)!;
+      const cfg = { ...defaultConfig(), ...preset.cfg, seed: 1 };
+      const matter = totalsOf(cfg, initWorld(cfg, preset.init).cells).matter;
+      expect(matter <= BigInt(cellCount(cfg) * perCell), `${id}: ${matter} quanta at the start`).toBe(true);
+      expect(maxLesionRadius(cfg), id).toBeGreaterThanOrEqual(Math.max(32, radius));
+    }
   });
 });
 

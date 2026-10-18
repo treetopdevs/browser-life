@@ -834,6 +834,370 @@ defmodule Coordinator.GardenQueueTest do
     end
   end
 
+  # ---- food (docs/garden-food-2026-10-18.md) ----
+
+  describe "food" do
+    defp fed(over \\ %{}),
+      do: params(Map.merge(%{"food" => true, "foodAsks" => 2, "foodEveryDays" => 1}, over))
+
+    defp hand(i, name \\ "g1") do
+      {:ok, key} = Coordinator.LetterLimiter.hand_key({10, 0, 0, i})
+      Queue.ask_food(name, key)
+    end
+
+    defp record(name \\ "g1"), do: :sys.get_state(Queue).gardens[name]
+
+    test "founding keys and their ranges; the defaults come from config" do
+      bad = fn over -> Queue.create_garden(params(over)) end
+
+      assert {:error, "foodAsks must be an integer in 2..1000" <> _} =
+               bad.(%{"food" => true, "foodAsks" => 1})
+
+      assert {:error, "foodAsks must be" <> _} = bad.(%{"food" => true, "foodAsks" => 1001})
+      assert {:error, "foodAsks must be" <> _} = bad.(%{"food" => true, "foodAsks" => 2.0})
+
+      assert {:error, "foodEveryDays must be" <> _} =
+               bad.(%{"food" => true, "foodEveryDays" => 0})
+
+      assert {:error, "foodEveryDays must be" <> _} =
+               bad.(%{"food" => true, "foodEveryDays" => 366})
+
+      assert {:error, "foodAsks and foodEveryDays are for" <> _} = bad.(%{"foodAsks" => 5})
+
+      assert {:error, "foodAsks and foodEveryDays are for" <> _} =
+               bad.(%{"food" => false, "foodEveryDays" => 5})
+
+      assert {:error, "food must be true or false"} = bad.(%{"food" => "yes"})
+      assert Queue.garden_view("g1") == nil
+
+      saved =
+        for k <- [:garden_food_asks, :garden_food_every_days],
+            do: {k, Application.get_env(:coordinator, k)}
+
+      Application.put_env(:coordinator, :garden_food_asks, 4)
+      Application.put_env(:coordinator, :garden_food_every_days, 3)
+
+      try do
+        assert {:ok, 5} = Queue.create_garden(params(%{"food" => true}))
+        assert record().food == %{asks: 4, every_days: 3, amount: 16, r: 32, x: 128, y: 128}
+        assert record().foods == [] and record().next_food == 1
+        assert %{enabled: true, asks: 4, everyDays: 3, place: %{x: 128, y: 128}} = view().food
+      after
+        for {k, v} <- saved, do: Application.put_env(:coordinator, k, v)
+      end
+
+      # Without food the record has no food keys at all.
+      assert {:ok, 5} = Queue.create_garden(params(%{"name" => "plain"}))
+      refute Map.has_key?(record("plain"), :food) or Map.has_key?(record("plain"), :foods)
+      assert Queue.garden_view("plain").food.closed == "off"
+    end
+
+    test "the matter bound: a founding that could pass MATTER_MAX is a 422 naming the numbers" do
+      # The storm with a big founding feed and a food a day for a year cannot fit.
+      greedy = [
+        %{"step" => 0, "kind" => "feed", "x" => 256, "y" => 256, "r" => 255, "amount" => 64}
+      ]
+
+      assert {:error, why} =
+               Queue.create_garden(%{
+                 "name" => "greedy",
+                 "seed" => 1,
+                 "founding" => greedy,
+                 "food" => true,
+                 "foodEveryDays" => 1
+               })
+
+      # 512^2 * 128 + 64 * 511^2 + 365 * 16 * 65^2.
+      assert why =~
+               "food: the worst case is #{33_554_432 + 64 * 261_121 + 365 * 16 * 4225} quanta"
+
+      assert why =~ "start allowance 33554432"
+      assert why =~ "founding feeds #{64 * 261_121}"
+      assert why =~ "365 foods of at most 67600"
+      assert why =~ "MATTER_MAX 67108864"
+      assert Queue.garden_view("greedy") == nil
+
+      # The commons' founding passes, at the default N and at N = 1.
+      commons = [
+        %{"step" => 0, "kind" => "feed", "x" => 256, "y" => 256, "r" => 255, "amount" => 16}
+      ]
+
+      for every <- [7, 1] do
+        assert {:ok, 365} =
+                 Queue.create_garden(%{
+                   "name" => "commons-#{every}",
+                   "seed" => 1,
+                   "founding" => commons,
+                   "food" => true,
+                   "foodEveryDays" => every
+                 })
+      end
+
+      # A garden without food is never held to it.
+      assert {:ok, 365} =
+               Queue.create_garden(%{"name" => "plain-greedy", "seed" => 1, "founding" => greedy})
+    end
+
+    test "K hands call a food: the schedule carries it, and state.bin never holds a hand", %{
+      dir: dir
+    } do
+      {:ok, 5} = Queue.create_garden(fed())
+      read = fn -> dir |> Path.join("state.bin") |> File.read!() |> :erlang.binary_to_term() end
+      bin = fn -> dir |> Path.join("state.bin") |> File.read!() end
+
+      assert {:ok, :counted, nil, %{hands: 1, open: true}} = hand(1)
+      assert view().food.hands == 1
+      assert {:ok, :repeat, %{hands: 1}} = hand(1)
+      {:ok, key1} = Coordinator.LetterLimiter.hand_key({10, 0, 0, 1})
+
+      # A count alone is not persisted (state.bin is not rewritten for it; the
+      # hashes are checked once it is, below).
+      refute Map.has_key?(read.(), :food_hands)
+
+      assert {:ok, :counted, %{id: "food-1", day: 0, landsAtStep: @d, status: "waiting"} = food,
+              %{hands: 0, open: false, closed: "cooldown", opensAtDay: 1}} = hand(2)
+
+      assert food.x == 128 and food.y == 128 and food.r == 32 and food.amount == 16
+
+      assert live_list() ==
+               @founding ++
+                 [
+                   %{
+                     "step" => @d,
+                     "kind" => "feed",
+                     "x" => 128,
+                     "y" => 128,
+                     "r" => 32,
+                     "amount" => 16
+                   }
+                 ]
+
+      state = read.()
+      refute Map.has_key?(state, :food_hands)
+      assert [%{id: "food-1"}] = state.gardens["g1"].foods
+      {:ok, key2} = Coordinator.LetterLimiter.hand_key({10, 0, 0, 2})
+      for k <- [key1, key2], do: assert(:binary.match(bin.(), elem(k, 1)) == :nomatch)
+
+      assert {:error, {:closed, "cooldown", 1, words}} = hand(3)
+      assert words =~ "day 1 at the earliest"
+      assert [%{day: 0, food: "food-1"}] = view().days
+    end
+
+    test "a Queue restart zeroes the count and keeps a called food", %{dir: dir} do
+      {:ok, 5} = Queue.create_garden(fed(%{"foodAsks" => 3, "days" => 5}))
+      {:ok, :counted, nil, _} = hand(1)
+      {:ok, :counted, nil, _} = hand(2)
+      {:ok, :counted, %{id: "food-1"}, _} = hand(3)
+      a = join("A")
+      # Day 0 carries the food: it waits one dawn period (the veto window).
+      TestClock.advance(@day)
+      t0 = next(a)
+      assert t0.segment.index == 0
+      # The frontier is now day 1, which a food at day 0 does not crowd at N = 1.
+      {:ok, :counted, nil, %{hands: 1}} = hand(4)
+      assert view().food.hands == 1
+
+      stop_supervised!(Queue)
+      start_supervised!({Queue, data_dir: dir})
+
+      assert %{hands: 0, open: true, foods: [%{id: "food-1", status: "sealed"}]} = view().food
+      assert live_list() |> Enum.count(&(&1["kind"] == "feed")) == 1
+      # Ids continue, and network 4's hand counts again (its hand was forgotten).
+      {:ok, :counted, nil, %{hands: 1}} = hand(4)
+    end
+
+    test "a hand of an unknown garden, or a malformed key, is not found" do
+      assert {:error, :not_found} = hand(1, "nope")
+      {:ok, 5} = Queue.create_garden(fed())
+      assert {:error, :not_found} = Queue.ask_food("g1", :nonsense)
+
+      assert {:error, {:closed, "off", nil, _}} =
+               (fn ->
+                  {:ok, 5} = Queue.create_garden(params(%{"name" => "plain"}))
+                  hand(1, "plain")
+                end).()
+    end
+
+    test "a key of a limiter incarnation that is gone is stale: nothing is counted" do
+      {:ok, 5} = Queue.create_garden(fed(%{"foodAsks" => 3}))
+      {:ok, old} = Coordinator.LetterLimiter.hand_key({10, 0, 0, 1})
+      Coordinator.LetterLimiter.reset()
+      assert {:error, :stale} = Queue.ask_food("g1", old)
+      assert view().food.hands == 0
+      assert {:ok, :counted, nil, %{hands: 1}} = hand(1)
+    end
+
+    test "hashes never show in a status report, and past periods' hands are swept" do
+      {:ok, 5} = Queue.create_garden(fed(%{"foodAsks" => 3}))
+      {:ok, :counted, nil, _} = hand(1)
+      {:ok, {_e, hash} = key} = Coordinator.LetterLimiter.hand_key({10, 0, 0, 1})
+
+      holds? = fn holds?, term ->
+        cond do
+          term == hash -> true
+          is_map(term) and not is_struct(term) -> Enum.any?(term, &holds?.(holds?, &1))
+          is_struct(term, MapSet) -> Enum.any?(term, &holds?.(holds?, &1))
+          is_list(term) -> Enum.any?(term, &holds?.(holds?, &1))
+          is_tuple(term) -> term |> Tuple.to_list() |> Enum.any?(&holds?.(holds?, &1))
+          true -> false
+        end
+      end
+
+      assert holds?.(holds?, :sys.get_state(Queue).food_hands)
+      refute holds?.(holds?, :sys.get_status(Queue))
+
+      redacted =
+        Queue.format_status(%{
+          state: :sys.get_state(Queue),
+          message: {:ask_food, "g1", key},
+          log: [{:in, {:ask_food, "g1", key}}]
+        })
+
+      refute holds?.(holds?, redacted)
+      assert redacted.message == {:ask_food, "g1", :redacted}
+      assert %{"g1" => %{count: 1}} = redacted.state.food_hands
+
+      # Within the period the sweep keeps them; past the dawn it forgets them.
+      send(Queue, :expire_hands)
+      assert map_size(:sys.get_state(Queue).food_hands) == 1
+      TestClock.advance(@day)
+      send(Queue, :expire_hands)
+      assert :sys.get_state(Queue).food_hands == %{}
+    end
+
+    test "founding refusals: a pond preset, and the coordinator's food amount and radius ranges" do
+      saved =
+        for k <- [:pond_presets, :garden_food_amount, :garden_food_radius],
+            do: {k, Application.get_env(:coordinator, k)}
+
+      put = fn k, v -> Application.put_env(:coordinator, k, v) end
+
+      try do
+        put.(:pond_presets, ["spots"])
+        assert {:error, "food is not defined for pond worlds" <> _} = Queue.create_garden(fed())
+        # Without food a pond garden is not refused for food.
+        refute match?(
+                 {:error, "food is" <> _},
+                 Queue.create_garden(params(%{"name" => "pondless"}))
+               )
+
+        put.(:pond_presets, [])
+
+        for amount <- [0, 65, 1.5] do
+          put.(:garden_food_amount, amount)
+
+          assert {:error, "the coordinator's garden_food_amount must be an integer in 1..64"} =
+                   Queue.create_garden(fed())
+        end
+
+        put.(:garden_food_amount, 16)
+
+        for r <- [0, 33] do
+          put.(:garden_food_radius, r)
+
+          assert {:error, "the coordinator's garden_food_radius must be an integer in 1..32"} =
+                   Queue.create_garden(fed())
+        end
+      after
+        for {k, v} <- saved,
+            do:
+              if(v == nil,
+                do: Application.delete_env(:coordinator, k),
+                else: Application.put_env(:coordinator, k, v)
+              )
+      end
+
+      assert Queue.garden_view("g1") == nil
+    end
+
+    test "a food's day is not run until one dawn period after the call; the keeper can drop it meanwhile" do
+      {:ok, 5} = Queue.create_garden(fed())
+      a = join("A")
+      {:ok, :counted, nil, _} = hand(1)
+      {:ok, :counted, %{id: "food-1", day: 0, noticeUntil: until, calledAt: called}, _} = hand(2)
+      assert until == called + @day
+
+      # Day 0 is released and idle, but it carries the food: no island gets it yet.
+      assert %{kind: "idle"} = next(a)
+      TestClock.advance(@day - 1)
+      assert %{kind: "idle"} = next(a)
+      # The veto still works the whole time.
+      assert [%{status: "waiting"}] = view().food.foods
+      TestClock.advance(1)
+      t0 = next(a)
+      assert t0.segment.index == 0
+      assert %{"kind" => "feed", "step" => @d} = List.last(t0.spec.interventions)
+
+      assert {:error, {:refused, "the food's day has been assigned"}} =
+               Queue.drop_letter("g1", "food-1")
+    end
+
+    test "a reject reopens a food's day: the food waits again, the ask stays closed, the schedule keeps it",
+         %{dir: dir} do
+      {:ok, 5} = Queue.create_garden(fed())
+      a = join("A")
+      b = join("B")
+
+      t0 = next(a)
+      finish(dir, a, t0)
+      {:ok, "verified"} = verify(next(b), b)
+      TestClock.advance(@day)
+      t1 = next(a)
+      assert t1.segment.index == 1
+
+      # The frontier is day 2: the food is called onto it.
+      {:ok, :counted, nil, _} = hand(1)
+      {:ok, :counted, %{id: "food-1", day: 2}, _} = hand(2)
+
+      feed = %{
+        "step" => 3 * @d,
+        "kind" => "feed",
+        "x" => 128,
+        "y" => 128,
+        "r" => 32,
+        "amount" => 16
+      }
+
+      finish(dir, a, t1)
+      TestClock.advance(@day)
+      t2 = next(a)
+      assert t2.segment.index == 2
+      assert List.last(t2.spec.interventions) == feed
+      assert [%{status: "sealed"}] = view().food.foods
+
+      # Day 2's island rejects day 1: day 2 is reopened, and so is its food.
+      assert :ok = Queue.reject(t2.segment.id, a, t2.lease, "does not match", "own")
+
+      assert %{
+               closed: "cooldown",
+               opensAtDay: 3,
+               foods: [%{id: "food-1", status: "waiting", day: 2}]
+             } =
+               view().food
+
+      assert List.last(live_list()) == feed
+      assert Enum.count(live_list(), &(&1["kind"] == "feed")) == 1
+      # A new network cannot call a second food beside it.
+      assert {:error, {:closed, "cooldown", 3, _}} = hand(3)
+      # And the keeper can veto it again, its day being unassigned.
+      assert {:ok, %{status: "dropped"}} = Queue.drop_letter("g1", "food-1")
+      refute Enum.any?(live_list(), &(&1["kind"] == "feed"))
+    end
+
+    test "the keeper's veto drops a waiting food" do
+      {:ok, 5} = Queue.create_garden(fed())
+      {:ok, :counted, nil, _} = hand(1)
+      {:ok, :counted, %{id: "food-1"}, _} = hand(2)
+
+      assert {:ok, %{id: "food-1", status: "dropped", droppedAt: at}} =
+               Queue.drop_letter("g1", "food-1")
+
+      assert is_integer(at)
+      assert live_list() == @founding
+      assert %{open: true, closed: nil} = view().food
+    end
+  end
+
   # ---- persistence ----
 
   describe "persistence" do
