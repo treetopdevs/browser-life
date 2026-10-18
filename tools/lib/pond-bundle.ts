@@ -3,7 +3,7 @@
 // `pond --genotype` opens, and whether two bundles start from the same world (the twin note).
 // Pure: no Deno API; bundle files arrive parsed.
 import { initialWorld } from "./lineage.ts";
-import { checkPicks, packetHeld, pondIndex, type PickLine } from "./pond-descent.ts";
+import { checkPicks, packetHeld, pondIndex, tallyPickers, type PickLine } from "./pond-descent.ts";
 import { buildPondHistory, type ParsedPonds, type PondDossier, type PondHistory, type PondPicks } from "./pond-lineage.ts";
 
 /**
@@ -21,8 +21,7 @@ export function runnerPondHistory(parsed: ParsedPonds, manifest: any, opts: { ha
   let picks: PondPicks | null = null;
   if (opts.picks || manifest.picks) {
     const lines = opts.picks?.picks ?? [];
-    const by: Record<string, number> = {};
-    for (const p of lines) by[p.by ?? "unnamed"] = (by[p.by ?? "unnamed"] ?? 0) + 1;
+    const by = tallyPickers(lines);
     const check = opts.picks ? checkPicks(index, lines) : { checked: 0, partial: 0, unchecked: 0, unlogged: 0 };
     picks = { picker: manifest.picks?.picker ?? null, present: opts.picks !== null, torn: opts.picks?.torn ?? false, lines: lines.length, by, ...check };
   }

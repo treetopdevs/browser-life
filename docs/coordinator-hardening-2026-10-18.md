@@ -207,3 +207,12 @@ did not know, so the scan tests failed on the merge. They are classified as foll
   `garden_letters_per_address`. The shaped scan keeps its pattern and now allows exactly the atoms of
   a reviewed list (`@shaped_not_config`, this one only), asserted to be named in `lib/` and never
   among the checked keys.
+
+## Amendment (2026-10-18, food ranges at boot)
+
+This amends the previous amendment's line on the four food keys. Their ranges (asks 2..1000, every
+1..365 days, amount 1..64, radius 1..32) now live in one table, `ConfigCheck.food_range/1`. The
+boot check refuses a value outside its range by name (`config :coordinator, garden_food_radius: 33
+is not a whole number in 1..32`), not only a value of the wrong shape. `Queue`'s `garden_spec` reads
+the same table for each garden founded with food, where a keeper's own `foodAsks` and
+`foodEveryDays` replace the first two, and its refusals keep their wording.

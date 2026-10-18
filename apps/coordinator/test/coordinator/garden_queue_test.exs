@@ -892,6 +892,79 @@ defmodule Coordinator.GardenQueueTest do
       assert Queue.garden_view("plain").food.closed == "off"
     end
 
+    test "the founding ranges are ConfigCheck.food_range/1's, at both ends, in garden_spec's words" do
+      range_error =
+        ~r/^(foodAsks|foodEveryDays|the coordinator's garden_food_(amount|radius)) must/
+
+      # A value in range passes the range checks (a later check, like the matter bound, may still refuse).
+      passes? = fn
+        {:error, m} when is_binary(m) -> not (m =~ range_error)
+        _ -> true
+      end
+
+      # The keeper's own foodAsks and foodEveryDays.
+      for {key, param, words} <- [
+            {:garden_food_asks, "foodAsks", "foodAsks must be an integer in"},
+            {:garden_food_every_days, "foodEveryDays", "foodEveryDays must be an integer in"}
+          ] do
+        r = Coordinator.ConfigCheck.food_range(key)
+
+        for v <- [r.first - 1, r.last + 1] do
+          assert {:error, msg} = Queue.create_garden(fed(%{param => v}))
+          assert String.starts_with?(msg, "#{words} #{inspect(r)}"), "#{param} #{v}: #{msg}"
+        end
+
+        for v <- [r.first, r.last],
+            do: assert(passes?.(Queue.create_garden(fed(%{"name" => "e#{v}", param => v}))))
+      end
+
+      # The coordinator's own amount and radius.
+      keys = [
+        :garden_food_asks,
+        :garden_food_every_days,
+        :garden_food_amount,
+        :garden_food_radius
+      ]
+
+      saved = for k <- keys, do: {k, Application.get_env(:coordinator, k)}
+
+      try do
+        for {key, words} <- [
+              {:garden_food_amount, "the coordinator's garden_food_amount must be an integer in"},
+              {:garden_food_radius, "the coordinator's garden_food_radius must be an integer in"}
+            ] do
+          r = Coordinator.ConfigCheck.food_range(key)
+
+          for v <- [r.first - 1, r.last + 1] do
+            Application.put_env(:coordinator, key, v)
+            assert {:error, "#{words} #{inspect(r)}"} == Queue.create_garden(fed())
+          end
+
+          for v <- [r.first, r.last] do
+            Application.put_env(:coordinator, key, v)
+            assert passes?.(Queue.create_garden(fed(%{"name" => "c#{key}#{v}"})))
+          end
+
+          case List.keyfind(saved, key, 0) do
+            {_, nil} -> Application.delete_env(:coordinator, key)
+            {_, old} -> Application.put_env(:coordinator, key, old)
+          end
+        end
+
+        # With the four keys unset, garden_spec's built-in defaults sit in range.
+        for k <- keys, do: Application.delete_env(:coordinator, k)
+
+        assert passes?.(Queue.create_garden(params(%{"name" => "defaults", "food" => true})))
+      after
+        for {k, v} <- saved,
+            do:
+              if(v == nil,
+                do: Application.delete_env(:coordinator, k),
+                else: Application.put_env(:coordinator, k, v)
+              )
+      end
+    end
+
     test "the matter bound: a founding that could pass MATTER_MAX is a 422 naming the numbers" do
       # The storm with a big founding feed and a food a day for a year cannot fit.
       greedy = [

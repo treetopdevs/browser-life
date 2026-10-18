@@ -15,13 +15,20 @@ defmodule Coordinator.ConfigCheckTest do
   @positive ~w(island_join_window_ms island_next_window_ms island_segment_window_ms
                island_requests_window_ms island_limit_table_max max_islands lease_ms
                discovery_lease_ms garden_letter_window_ms garden_letter_table_max
-               garden_hands_sweep_ms garden_call_timeout_ms garden_food_asks
-               garden_food_every_days garden_food_amount garden_food_radius)a
+               garden_hands_sweep_ms garden_call_timeout_ms)a
   @budget ~w(island_joins_per_address island_next_per_island island_segment_requests_per_island
              island_requests_per_address island_max_pending)a
   @non_negative ~w(island_prune_after_ms island_prune_grace_ms public_status_wait_ms
                    garden_cache_wait_ms garden_letters_per_address garden_refusals_per_address)a
   @any_integer ~w(public_status_cache_ms garden_cache_ms)a
+  # The garden food keys and their ranges, written out by hand: a moved bound
+  # fails here.
+  @ranged %{
+    garden_food_asks: {2, 1000},
+    garden_food_every_days: {1, 365},
+    garden_food_amount: {1, 64},
+    garden_food_radius: {1, 32}
+  }
 
   @values [nil, 0, -1, 1.5, "120", true, false, [limit: 120], %{}, 1]
 
@@ -29,8 +36,9 @@ defmodule Coordinator.ConfigCheckTest do
   defp allowed(key) when key in @budget, do: [nil, 1]
   defp allowed(key) when key in @non_negative, do: [0, 1]
   defp allowed(key) when key in @any_integer, do: [-1, 0, 1]
+  defp allowed(key) when is_map_key(@ranged, key), do: Tuple.to_list(@ranged[key])
 
-  defp all_keys, do: @positive ++ @budget ++ @non_negative ++ @any_integer
+  defp all_keys, do: @positive ++ @budget ++ @non_negative ++ @any_integer ++ Map.keys(@ranged)
 
   test "the module checks exactly the keys of the note's table" do
     assert Enum.sort(ConfigCheck.keys()) == Enum.sort(all_keys())
@@ -220,11 +228,40 @@ defmodule Coordinator.ConfigCheckTest do
     end
   end
 
-  test "every limit key accepts its allowed values, and larger ones" do
-    for key <- all_keys(), v <- allowed(key) ++ [3_600_000] do
+  test "every limit key accepts its allowed values, and larger ones (a ranged key only its own)" do
+    for key <- all_keys(),
+        v <- allowed(key) ++ if(is_map_key(@ranged, key), do: [], else: [3_600_000]) do
       assert ConfigCheck.errors([{key, v}]) == [], "#{key}: #{inspect(v)} should pass"
     end
   end
+
+  test "each garden food key refuses a value just outside its range, by name, at boot" do
+    for {key, {lo, hi}} <- @ranged do
+      assert ConfigCheck.food_range(key) == lo..hi
+
+      for v <- [lo, div(lo + hi, 2), hi],
+          do: assert(ConfigCheck.errors([{key, v}]) == [], "#{key}: #{v} should pass")
+
+      for v <- [lo - 1, hi + 1] do
+        assert ConfigCheck.errors([{key, v}]) == [
+                 "config :coordinator, #{key}: #{v} is not a whole number in #{lo}..#{hi}"
+               ]
+      end
+    end
+
+    assert ConfigCheck.errors(garden_food_radius: 33) == [
+             "config :coordinator, garden_food_radius: 33 is not a whole number in 1..32"
+           ]
+
+    assert ConfigCheck.errors(garden_food_asks: 1) == [
+             "config :coordinator, garden_food_asks: 1 is not a whole number in 2..1000"
+           ]
+
+    assert_raise FunctionClauseError, fn -> ConfigCheck.food_range(:garden_hands_sweep_ms) end
+  end
+
+  # garden_spec (lib/coordinator/queue.ex) reads these ranges from
+  # `food_range/1`; garden_queue_test.exs checks its refusals at both ends.
 
   test "absent keys pass, and keys outside the table are not looked at" do
     assert ConfigCheck.errors([]) == []
@@ -259,12 +296,16 @@ defmodule Coordinator.ConfigCheckTest do
 
   describe "at application start" do
     setup do
-      saved = Application.fetch_env(:coordinator, :island_next_window_ms)
+      saved =
+        for key <- [:island_next_window_ms, :garden_food_amount],
+            do: {key, Application.fetch_env(:coordinator, key)}
 
       on_exit(fn ->
-        case saved do
-          {:ok, v} -> Application.put_env(:coordinator, :island_next_window_ms, v)
-          :error -> Application.delete_env(:coordinator, :island_next_window_ms)
+        for {key, value} <- saved do
+          case value do
+            {:ok, v} -> Application.put_env(:coordinator, key, v)
+            :error -> Application.delete_env(:coordinator, key)
+          end
         end
       end)
 
@@ -288,6 +329,15 @@ defmodule Coordinator.ConfigCheckTest do
       end
 
       # Nothing was started or replaced: the running supervisor is the same one.
+      assert Process.whereis(Coordinator.Supervisor) == supervisor
+    end
+
+    test "a garden food amount out of its range stops Application.start by name" do
+      supervisor = Process.whereis(Coordinator.Supervisor)
+      Application.put_env(:coordinator, :garden_food_amount, 65)
+
+      error = assert_raise RuntimeError, fn -> Coordinator.Application.start(:normal, []) end
+      assert error.message =~ "garden_food_amount: 65 is not a whole number in 1..64"
       assert Process.whereis(Coordinator.Supervisor) == supervisor
     end
   end
