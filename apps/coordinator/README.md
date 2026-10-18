@@ -516,6 +516,9 @@ Same admin authentication as `POST /api/experiments`.
    "founding": [{"step": 0, "kind": "feed", "x": 256, "y": 256, "r": 255, "amount": 16}]}
   ```
 
+  To found the real commons, use `bin/garden-found` (a dry run unless given `--apply` and the URL twice; every key sent
+  explicitly) with the parameters and opening steps in `docs/garden-opening-2026-10-18.md`.
+
 * `POST /api/gardens/:name/letters/:id/drop`: the keeper's veto, for a letter
   (`ltr-<n>`) or a food (`food-<n>`). `200 {"letter": <letter>}` or `200
   {"food": <food>}` (status `"dropped"`; dropping a dropped one is the same
