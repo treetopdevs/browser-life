@@ -254,9 +254,38 @@ that either is trusted, and `tending.*` counts island ids and adapter
 descriptions as islands report them. Setting `BL_GARDEN_ISLAND_TOKEN` (config
 `:garden_island_token`) offers a garden's days only to islands that joined with
 `"gardenToken": <the token>` in the join body; the token is not stored. An island
-cannot reject (roll back) a verified day of a garden. A garden's run bundle
-cannot yet be exported with `tools/stitch.ts`: each segment's manifest carries
-the letters as of its assignment, and `stitchRun` compares whole specs.
+cannot reject (roll back) a verified day of a garden.
+
+### Exporting a garden
+
+`deno run -A tools/stitch.ts --experiment <garden>` exports the garden's
+verified prefix: the days from day 0 that are all verified (with
+`--allow-unverified`, done or verified), stitched over `(0, end of the last such
+day]`. "Verified" means what it means above: two islands agreed, not that either
+is trusted, and the observation files are only as trustworthy as the island that
+produced them. A garden with no verified day 0 is skipped. When the prefix
+grows, the export of the shorter prefix is replaced in place; an export whose
+history differs in any other way, or that runs past the prefix exportable now,
+is moved aside, as for any experiment. Two exporters of one garden take turns
+(a lock file beside the run's directory). Each day's manifest carries the
+letters as of its assignment, so `stitchRun` (`packages/runner/src/stitch.ts`,
+in its garden mode) checks a garden's days this way
+(`docs/garden-stitch-rule-2026-10-17.md` has the rule and its proof):
+
+1. Each day's own list is a valid schedule.
+2. Each day's `interventions.jsonl` is exactly the entries that day owns in its
+   own list (steps in `(start, end]`, plus step 0 on day 0).
+3. No day's list rewrites history: its entries at steps up to its start are, in
+   order, the entries the earlier days owned and applied.
+4. Entries after a day's end are not checked: a letter dropped before its day was
+   assigned is in an earlier day's list and in no later one.
+5. Everything else in the spec is the same on every day.
+
+The stitched `spec.interventions` is the union of the entries the days applied,
+and it must equal the garden's current list over the stitched range. That
+comparison is the only check of a day's own entries beyond its own manifest and
+log, so the export always makes it. Other experiments are stitched as before:
+one schedule on every segment.
 
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 

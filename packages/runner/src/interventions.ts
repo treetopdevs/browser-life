@@ -153,6 +153,19 @@ export function ownedInterventions(list: readonly ScheduledIntervention[] | unde
   return list.filter((e) => (e.step > startStep && e.step <= startStep + steps) || (startStep === 0 && e.step === 0));
 }
 
+/**
+ * Whether two schedule entries are the same entry: equal `step`, `kind`, `x`, `y` and `r`, and for feeds equal `amount`
+ * and `matter`, an absent `matter` equal only to an absent one. Key order never matters (a coordinator's JSON and a
+ * manifest's need not share it). Compares scheduled entries with each other, not a log line with its entry: a log
+ * carries the effective radius (`checkInterventionLog` in stitch.ts compares those).
+ */
+export function sameIntervention(a: ScheduledIntervention | InterventionLogEntry, b: ScheduledIntervention | InterventionLogEntry): boolean {
+  if (a.step !== b.step || a.kind !== b.kind || a.x !== b.x || a.y !== b.y || a.r !== b.r) return false;
+  if (a.kind !== "feed" || b.kind !== "feed") return true;
+  const am = Object.hasOwn(a, "matter") ? a.matter : undefined, bm = Object.hasOwn(b, "matter") ? b.matter : undefined;
+  return a.amount === b.amount && am === bm;
+}
+
 /** The part of a simulation a scheduled intervention acts on: `GpuSim`, or a CPU stand-in. */
 export interface InterventionSim {
   /** Destroys bound structure in a disc; returns the effective (clamped) radius. */

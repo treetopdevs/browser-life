@@ -67,13 +67,13 @@ defmodule Coordinator.Garden do
   assigned, so segments of one garden record different `interventions` in their
   manifests (a letter posted after day 0 was assigned is in day 1's manifest and
   not day 0's). The digest ignores the manifest and each day's owned slice is
-  frozen, so verification and forking are unaffected, but
-  `packages/runner/src/stitch.ts` compares whole specs and refuses such a run
-  ("spec differs from segment #0's"): the current `tools/stitch.ts` cannot
-  export a garden that took a letter after its first assignment. Making
-  `stitchRun` compare specs without `interventions`, and check each segment's
-  owned slice against the experiment's final schedule, is the fix, and it is
-  not in this application.
+  frozen, so verification and forking are unaffected. `tools/stitch.ts` exports
+  a garden's verified prefix with `stitchRun`'s garden mode
+  (`packages/runner/src/stitch.ts`): each day's log is checked against its own
+  list, no day's list may rewrite an earlier day's entries, and the union of
+  what the days applied must equal this experiment's current `interventions`
+  over the exported range (docs/garden-stitch-rule-2026-10-17.md). Nothing in
+  this application changed for it.
 
   *Who tends it.* Islands join without credentials, so, unless
   `:garden_island_token` is configured (then only islands that joined with it are
