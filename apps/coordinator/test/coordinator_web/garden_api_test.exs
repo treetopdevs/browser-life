@@ -23,7 +23,9 @@ defmodule CoordinatorWeb.GardenApiTest do
     :admin_token,
     :allow_local_admin,
     :cors_origins,
-    :garden_island_token
+    :garden_island_token,
+    :garden_call_timeout_ms,
+    :garden_shared_address
   ]
 
   setup do
@@ -430,6 +432,370 @@ defmodule CoordinatorWeb.GardenApiTest do
       assert two |> post_json(letters_path(), stone()) |> json_response(201)
       assert conn |> xff.("4.4.4.4") |> post_json(letters_path(), stone()) |> json_response(429)
     end
+  end
+
+  # ---- food hands (docs/garden-food-2026-10-18.md) ----
+
+  describe "POST a food hand" do
+    defp fed!(over \\ %{}),
+      do: garden!(Map.merge(%{"food" => true, "foodAsks" => 2, "foodEveryDays" => 1}, over))
+
+    defp hands_path(name \\ "commons"), do: "/api/public/gardens/#{name}/food/hands"
+    defp hand(conn, path \\ hands_path()), do: post_json(conn, path, %{})
+
+    test "201 counted, 201 calling on the K-th hand, 200 for a repeat; the view shows the count at once",
+         %{conn: conn} do
+      Application.put_env(:coordinator, :garden_cache_ms, 600_000)
+      fed!(%{"foodAsks" => 3})
+
+      food_of = fn ->
+        conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("food")
+      end
+
+      assert %{"hands" => 0, "open" => true, "asks" => 3} = food_of.()
+
+      assert %{"counted" => true, "called" => nil, "food" => %{"hands" => 1}} =
+               conn |> from({10, 0, 0, 1}) |> hand() |> json_response(201)
+
+      # The cached view was invalidated by the hand.
+      assert %{"hands" => 1} = food_of.()
+
+      assert %{"counted" => false, "called" => nil, "food" => %{"hands" => 1}} =
+               conn |> from({10, 0, 0, 1}) |> hand() |> json_response(200)
+
+      assert %{"counted" => true, "called" => nil} =
+               conn
+               |> from({10, 0, 0, 2})
+               |> hand("/api/public/garden/food/hands")
+               |> json_response(201)
+
+      assert %{"counted" => true, "called" => called, "food" => block} =
+               conn |> from({10, 0, 0, 3}) |> hand() |> json_response(201)
+
+      assert %{
+               "id" => "food-1",
+               "day" => 0,
+               "landsAtStep" => @d,
+               "status" => "waiting",
+               "hands" => 3,
+               "x" => 128,
+               "y" => 128,
+               "r" => 32,
+               "amount" => 16
+             } = called
+
+      assert %{"hands" => 0, "open" => false, "closed" => "cooldown", "opensAtDay" => 1} = block
+      assert %{"foods" => [%{"id" => "food-1"}], "closed" => "cooldown"} = food_of.()
+
+      assert [%{"day" => 0, "food" => "food-1"}] =
+               conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("days")
+
+      # Food is a feed in the schedule, never a letter.
+      assert %{"letters" => %{"queued" => 0, "waiting" => [], "recent" => []}} =
+               conn |> get("/api/public/garden") |> json_response(200)
+
+      assert List.last(Queue.experiment("commons").spec["interventions"]) ==
+               %{
+                 "step" => @d,
+                 "kind" => "feed",
+                 "x" => 128,
+                 "y" => 128,
+                 "r" => 32,
+                 "amount" => 16
+               }
+    end
+
+    @tag :capture_log
+    test "409 for each closed reason, with its code", %{conn: conn, dir: dir} do
+      closed = fn path ->
+        assert %{"error" => why, "closed" => code, "opensAtDay" => opens} =
+                 conn |> from({10, 9, 9, 9}) |> hand(path) |> json_response(409)
+
+        assert is_binary(why)
+        {code, opens}
+      end
+
+      garden!(%{"name" => "plain"})
+      assert closed.(hands_path("plain")) == {"off", nil}
+
+      fed!()
+      assert conn |> from({10, 0, 0, 1}) |> hand() |> json_response(201)
+      assert conn |> from({10, 0, 0, 2}) |> hand() |> json_response(201)
+      assert closed.(hands_path()) == {"cooldown", 1}
+
+      fed!(%{"name" => "short", "days" => 1, "seed" => 3})
+      a = join("A")
+      # The island is offered the gardens' day 0s in some order: take them until it holds short's.
+      short = Stream.repeatedly(fn -> next(a) end) |> Enum.find(&(&1.spec.experiment == "short"))
+      assert closed.(hands_path("short")) == {"horizon", nil}
+      finish(dir, a, short)
+      assert closed.(hands_path("short")) == {"finished", nil}
+
+      fed!(%{"name" => "broken", "seed" => 4})
+      b = join("B")
+
+      bt =
+        Stream.repeatedly(fn -> next(b) end)
+        |> Enum.find(&(&1.spec.experiment == "broken"))
+
+      assert :ok = Queue.fail(bt.segment.id, b, bt.lease, "cannot run")
+      assert closed.(hands_path("broken")) == {"stopped", nil}
+
+      founding =
+        for i <- 1..10_000,
+            do: %{"step" => 0, "kind" => "lesion", "x" => rem(i, 256), "y" => 1, "r" => 1}
+
+      fed!(%{"name" => "full", "seed" => 5, "founding" => founding})
+      assert closed.(hands_path("full")) == {"log-full", nil}
+    end
+
+    test "422 for any body but {}; 415 without JSON; 413 past 1 KB; 404 for no garden", %{
+      conn: conn
+    } do
+      fed!()
+
+      for body <- [%{"x" => 1}, %{"kind" => "food"}, "[]", "[{}]"] do
+        assert %{"error" => "a hand is exactly {}" <> _} =
+                 conn |> post_json(hands_path(), body) |> json_response(422)
+      end
+
+      assert %{"error" => "a hand is the JSON body {}"} =
+               conn |> post(hands_path()) |> json_response(415)
+
+      # A zero-byte JSON body is not {} either (the parser would read it as one).
+      assert %{"error" => "a hand is exactly {}" <> _} =
+               conn
+               |> put_req_header("content-type", "application/json")
+               |> put_req_header("content-length", "0")
+               |> post(hands_path(), "")
+               |> json_response(422)
+
+      for path <- [
+            hands_path(),
+            "/api/public/garden/food/hands",
+            "/api/public/gard%65n/food/%68ands",
+            "/api/public/gardens/%63ommons/food/hands"
+          ] do
+        assert_error_sent 415, fn ->
+          conn
+          |> put_req_header("content-type", "application/x-www-form-urlencoded")
+          |> post(path, "a=1")
+        end
+
+        assert_error_sent 415, fn ->
+          conn |> put_req_header("content-type", "text/plain") |> post(path, "{}")
+        end
+
+        assert_error_sent 413, fn ->
+          post_json(conn, path, %{"pad" => String.duplicate("a", 2_000)})
+        end
+      end
+
+      assert %{"error" => "not found"} = conn |> hand(hands_path("nope")) |> json_response(404)
+
+      assert %{"error" => "not found"} =
+               conn |> hand(hands_path("Bad_Name")) |> json_response(404)
+
+      # None of that cost a letter.
+      Application.put_env(:coordinator, :garden_letters_per_address, 1)
+      assert conn |> hand() |> json_response(201)
+    end
+
+    test "a hand spends the shared letter budget; a repeat or a closed ask is a refusal", %{
+      conn: conn
+    } do
+      Application.put_env(:coordinator, :garden_letters_per_address, 3)
+      Application.put_env(:coordinator, :garden_refusals_per_address, 2)
+      fed!(%{"foodAsks" => 5})
+
+      for _ <- 1..2, do: assert(conn |> post_json(letters_path(), stone()) |> json_response(201))
+      assert conn |> hand() |> json_response(201)
+
+      assert %{"retryAfterMs" => ms} = conn |> hand() |> json_response(429)
+      assert ms == 3_600_000 - 1_234
+      assert conn |> post_json(letters_path(), stone()) |> json_response(429)
+
+      # Another network: a repeat is given back but charged as a refusal.
+      other = from(conn, {10, 0, 0, 2})
+      assert other |> hand() |> json_response(201)
+      assert other |> hand() |> json_response(200)
+      assert other |> hand() |> json_response(200)
+      # Two refusals spent: the third is a 429 before the Queue, and so is a stone.
+      assert other |> hand() |> json_response(429)
+      assert other |> post_json(letters_path(), stone()) |> json_response(429)
+
+      # A closed ask is charged the same way.
+      garden!(%{"name" => "plain", "seed" => 2})
+      third = from(conn, {10, 0, 0, 3})
+      assert third |> hand(hands_path("plain")) |> json_response(409)
+      assert third |> hand(hands_path("plain")) |> json_response(409)
+      assert third |> hand(hands_path("plain")) |> json_response(429)
+    end
+
+    test "networks: by peer, an IPv6 /48 is one hand, and X-Forwarded-For only when trusted", %{
+      conn: conn
+    } do
+      fed!(%{"foodAsks" => 10})
+      count = fn c -> c |> hand() |> json_response_any() end
+
+      assert {201, 1} = count.(from(conn, {0x2001, 0xDB8, 1, 2, 0, 0, 0, 1}))
+      assert {200, 1} = count.(from(conn, {0x2001, 0xDB8, 1, 2, 0xAAAA, 0, 0, 7}))
+      # Another /64 of the same /48 is the same hand (the letter budget would count it apart).
+      assert {200, 1} = count.(from(conn, {0x2001, 0xDB8, 1, 3, 0, 0, 0, 1}))
+      assert {201, 2} = count.(from(conn, {0x2001, 0xDB8, 2, 3, 0, 0, 0, 1}))
+      assert {201, 3} = count.(from(conn, {10, 0, 0, 3}))
+      assert {200, 3} = count.(from(conn, {0, 0, 0, 0, 0, 0xFFFF, 0x0A00, 0x0003}))
+
+      xff = fn v -> conn |> from({127, 0, 0, 1}) |> put_req_header("x-forwarded-for", v) end
+      # Untrusted: the header is text, the peer is the network.
+      assert {201, 4} = count.(xff.("1.1.1.1"))
+      assert {200, 4} = count.(xff.("2.2.2.2"))
+
+      Application.put_env(:coordinator, :trust_forwarded_for, true)
+      assert {201, 5} = count.(xff.("1.1.1.1"))
+      assert {201, 6} = count.(xff.("9.9.9.9, 2.2.2.2"))
+      assert {200, 6} = count.(xff.("2.2.2.2"))
+    end
+
+    @tag :capture_log
+    test "a hand while the limiter restarts is a 503, never a hand counted without a salt", %{
+      conn: conn
+    } do
+      fed!()
+      :ok = Supervisor.terminate_child(Coordinator.Supervisor, LetterLimiter)
+
+      try do
+        assert %{"error" => _, "counted" => false} = conn |> hand() |> json_response(503)
+      after
+        {:ok, _} = Supervisor.restart_child(Coordinator.Supervisor, LetterLimiter)
+      end
+
+      assert %{"food" => %{"hands" => 0}} =
+               conn |> get("/api/public/garden") |> json_response(200)
+
+      assert conn |> hand() |> json_response(201)
+    end
+
+    # The JSON content type is what keeps another site from adding its visitors'
+    # hands: it forces a preflight, which only a listed origin passes.
+    test "CORS on the hands route: a listed origin's preflight passes, any other gets no allow-origin",
+         %{
+           conn: conn
+         } do
+      Application.put_env(:coordinator, :cors_origins, ["http://localhost:5173"])
+      fed!()
+
+      preflight = fn origin, path ->
+        conn
+        |> put_req_header("origin", origin)
+        |> put_req_header("access-control-request-method", "POST")
+        |> put_req_header("access-control-request-headers", "content-type")
+        |> options(path)
+      end
+
+      for path <- [hands_path(), "/api/public/garden/food/hands"] do
+        ok = preflight.("http://localhost:5173", path)
+        assert get_resp_header(ok, "access-control-allow-origin") == ["http://localhost:5173"]
+
+        evil = preflight.("http://evil.example", path)
+        assert get_resp_header(evil, "access-control-allow-origin") == []
+      end
+
+      # Nothing was counted by the preflights.
+      assert %{"hands" => 0} =
+               conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("food")
+    end
+
+    test "a Queue that does not answer is a 503 that cannot say whether the hand counted, logged without its key",
+         %{conn: conn} do
+      Application.put_env(:coordinator, :garden_call_timeout_ms, 50)
+      fed!(%{"foodAsks" => 3})
+      {:ok, {_e, hash}} = LetterLimiter.hand_key({10, 0, 0, 7})
+      :ok = :sys.suspend(Queue)
+
+      log =
+        try do
+          ExUnit.CaptureLog.capture_log(fn ->
+            assert %{"counted" => nil, "error" => _} =
+                     conn |> from({10, 0, 0, 7}) |> hand() |> json_response(503)
+          end)
+        after
+          :sys.resume(Queue)
+        end
+
+      assert log =~ "a food hand's queue call timed out"
+      refute log =~ "ask_food"
+      refute log =~ inspect(hash)
+      refute log =~ Base.encode16(hash, case: :lower)
+
+      # The hand waited in the Queue's mailbox and counted once it was read:
+      # that is why the answer could not say "not counted".
+      assert %{"hands" => 1} =
+               conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("food")
+    end
+
+    test "the food block says when every visitor is one shared address", %{conn: conn} do
+      fed!()
+
+      assert %{"sharedAddress" => false} =
+               conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("food")
+
+      Application.put_env(:coordinator, :garden_shared_address, true)
+      LetterLimiter.invalidate("commons")
+
+      assert %{"sharedAddress" => true} =
+               conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("food")
+
+      assert %{"food" => %{"sharedAddress" => true}} = conn |> hand() |> json_response(201)
+    end
+
+    test "the keeper drops food-N (admin only); 409 once its day is assigned", %{conn: conn} do
+      Application.put_env(:coordinator, :allow_local_admin, false)
+      Application.put_env(:coordinator, :admin_token, "keeper")
+      authed = put_req_header(conn, "authorization", "Bearer keeper")
+
+      {:ok, _} =
+        Queue.create_garden(params(%{"food" => true, "foodAsks" => 2, "foodEveryDays" => 1}))
+
+      assert from(conn, {10, 0, 0, 1}) |> hand() |> json_response(201)
+      assert from(conn, {10, 0, 0, 2}) |> hand() |> json_response(201)
+
+      assert conn |> post("/api/gardens/commons/letters/food-1/drop") |> json_response(401)
+
+      assert %{"food" => %{"id" => "food-1", "status" => "dropped", "droppedAt" => at}} =
+               authed |> post("/api/gardens/commons/letters/food-1/drop") |> json_response(200)
+
+      assert is_integer(at)
+
+      assert %{"food" => %{"status" => "dropped"}} =
+               authed |> post("/api/gardens/commons/letters/food-1/drop") |> json_response(200)
+
+      assert authed |> post("/api/gardens/commons/letters/food-9/drop") |> json_response(404)
+
+      # The ask is open again; a food on an assigned day cannot be dropped.
+      assert %{"open" => true} =
+               conn |> get("/api/public/garden") |> json_response(200) |> Map.fetch!("food")
+
+      assert from(conn, {10, 0, 0, 3}) |> hand() |> json_response(201)
+
+      assert %{"called" => %{"id" => "food-2"}} =
+               from(conn, {10, 0, 0, 4}) |> hand() |> json_response(201)
+
+      # Its day waits one dawn period before an island gets it (the veto window).
+      a = join("A")
+      assert %{kind: "idle"} = next(a)
+      TestClock.advance(day_ms())
+      assert %{kind: "run"} = next(a)
+
+      assert %{"error" => "the food's day has been assigned"} =
+               authed |> post("/api/gardens/commons/letters/food-2/drop") |> json_response(409)
+    end
+  end
+
+  # `{status, food.hands}` of a hand's answer (201 or 200).
+  defp json_response_any(conn) do
+    body = Jason.decode!(conn.resp_body)
+    {conn.status, body["food"]["hands"]}
   end
 
   # ---- the checkpoint ----

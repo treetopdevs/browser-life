@@ -126,9 +126,61 @@ Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in con
   the numbers were computed. It carries only `counts`, `activeIslands`, `deviceTypes` and `updatedAt`.
   `/api/status`, `/api/experiments/:name` and `/api/discovery/status` need the admin
   token.
+* `GET /api/status` also carries two keys for the operator page, computed outside the
+  Queue process by `CoordinatorWeb.OpsStatus`: `limits` (`islands`, the island table's
+  size; `maxIslands`, `islandMaxPending`, `islandPruneAfterMs`, `islandPruneGraceMs`;
+  `budgets.join`, `.next`, `.segment` and `.requests`, each `{limit, windowMs}` with
+  `limit` `null` when off; `gardenIslandToken`, whether a garden island token is
+  configured, never the token; `unset`, present only when one of these keys is
+  missing from config, naming it: its value is then `null` here while its consumer
+  applies a built-in default (`island_requests_per_address`, whose default is off, is
+  never named); and `invalid`, present only when one is set to something other than an
+  integer or `nil` (or a budget window to `nil`: a window has no "off"), naming it, its
+  value then `null` so the response still encodes),
+  all read from config at call time; and
+  `capabilityNeeds` (experiment => condition => the sorted capabilities its run's
+  segments need, by the `/api/next` rules above, held to `Queue.next_task/2` by
+  `test/coordinator_web/ops_status_test.exs`). Nothing counts refusals (429s, the 503
+  at the island bound) or forgotten islands, and island capabilities are never stored,
+  so neither is reported.
 * CORS: production allows no cross-origin caller unless `BL_CORS_ORIGINS` names one, and
   refuses to start unless each is a whole https origin as a browser sends it
   (`https://host` or `https://host:port`, lowercase, no wildcard, path or slash).
+
+### Operator page
+
+`priv/static/index.html` (served at `/index.html`; `/` redirects to it) is a single static
+page with one inline script, no build step and nothing loaded from elsewhere. It asks for
+the admin token, keeps it in memory only, and sends it only to `/api/status` and
+`/api/discovery/status`; each garden's card reads the public `/api/public/gardens/:name`
+without it. It polls three seconds after the previous poll settled, only while the tab
+is visible, backing off to 30 seconds while polls fail; a failed poll (a timeout, a 5xx)
+keeps the last view, dimmed, and a 401 clears it and stops polling until a token is
+entered. Hiding the tab cancels the next poll; a new Connect cancels the poll in flight,
+and an empty Connect never replaces a token the page holds. While text on the page is
+selected it holds the view, so a line can be copied.
+It shows totals, experiments (kind, the capabilities their runs need, and open segments:
+pending or running), work by capability (gardens left out; runs with open segments, of
+which a run can have one produced at a time, open segments, and done segments not yet
+verified, an upper bound on replay work, which can go out several at once; this is what
+the work needs, not how much of it waits for a capable island), each garden's day state with its keeper actions, failures, divergences,
+observation mismatches, islands by device type and by runner (the 200 most recently
+seen listed), the configured limits and the discovery plane. It only reads: keeper
+actions (requeue a failed or diverged day, drop a waiting letter) are printed as `curl`
+lines with `$BL_ADMIN_TOKEN` written literally, and only for names, days and letter ids
+that pass the coordinator's format rules (the experiment-name rule, `[0-9]{1,9}`,
+`ltr-[0-9]{1,9}`). A day to requeue is taken from the garden view's newest days and from
+the admin failures and divergences, so one older than the days shown is still offered.
+Neither snapshot is known to be the newer (the public view is cached for
+`garden_cache_ms`), so a day the admin records list as failed or diverged is offered even
+when the view shows it otherwise, with the conflict said; a requeue of a day in any other
+state is refused with 409.
+A same-device-type replay is shown as "replayed here, not yet verified elsewhere".
+Server text is put on the page as text, never
+parsed as markup (`test/coordinator_web/status_page_test.exs`;
+`tests/e2e/coordinator-ops.spec.ts` checks it in a browser against
+`test/fixtures/ops-status.example.json`, which `ops_status_test.exs` holds to the keys of a
+real response). The rules it was built to are in `docs/ops-dashboard-2026-10-18.md`.
 
 ## The garden (contract `garden-v1`)
 
@@ -141,8 +193,11 @@ of steps is released per dawn (131,072 steps, one sun wander on the big jar, the
 note's provisional pace), and missed dawns do not bank. Visitors write
 **letters** (today: stones, a lesion at a place) that land at a day's end step,
 are public before they land, and are replayed by a second island before they
-count. A garden is never a registered experiment or a source of registered
-evidence.
+count. A garden founded with food also takes **hands**: food is rare and
+collective (docs/garden-food-2026-10-18.md), a modest feed at the world's centre
+that lands only when enough networks ask within one dawn period, at most once
+every few days. A garden is never a registered experiment or a source of
+registered evidence.
 
 Underneath, a garden is an ordinary experiment (one run: condition `treatment`,
 one seed, `segmentSteps` = one day, `verifyFraction` 1, every day replayed by a
@@ -155,7 +210,7 @@ that view, served by a dev coordinator at `/garden-contract.example.json` so a
 front end can mock against it. It shows a garden that has slept 38 hours with
 its next day due, a day done and not yet verified, two verified days, letters
 waiting (one day's budget already full), a landed letter, a verified one and a
-dropped one. Every key in it is always present in a real response (a value may
+dropped one, a verified food on day 1 and two hands on the open food ask. Every key in it is always present in a real response (a value may
 be `null` where the fixture says so below); `test/coordinator_web/garden_contract_test.exs`
 fails if a real response's keys and the fixture's differ.
 
@@ -234,11 +289,12 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `census` | The newest done day's end-of-day numbers, or `null`: `day`, `step`, `individuals`, `lineages`, `maxGeneration`, `mutations`, `extinct`, `conservationOk` (each a number or boolean, or `null` when the island did not report it), `verified` (that day is verified), `source` (`"producer"`: reported by the island that ran the day; the digest, not these numbers, is what the replay checks). |
 | `tip` | `{day, step, digest, verified}` of the newest done day, or `null`. `digest` is the 16-hex-digit artifact digest. `verified` is that day's own replay (`days[].status`, `census.verified` likewise); `clock.verifiedStep` and `fork` are the prefix. |
 | `fork` | The end checkpoint of the newest day of the verified prefix (`clock.verifiedStep`: every day from 0 verified), or `null`: `{day, step, digest, checkpoint}`, `checkpoint` being the path that serves it (below). A day verified while an earlier day is not is not offered: it was replayed from a checkpoint nobody has checked. |
-| `days` | The newest released days, newest first, at most 14: `day`, `startStep`, `endStep`, `status`, `releasedAt`, `doneAt`, `verifiedAt`, `digest`, `verification`, `letters`, `census`. |
+| `days` | The newest released days, newest first, at most 14: `day`, `startStep`, `endStep`, `status`, `releasedAt`, `doneAt`, `verifiedAt`, `digest`, `verification`, `letters`, `food`, `census`. |
 | `days[].status` | `"waiting"` (released, no island holds it), `"growing"`, `"done"`, `"verified"`, `"diverged"`, `"failed"`, `"blocked"` (after a diverged or failed day). |
 | `days[].doneAt`, `verifiedAt`, `digest` | `null` until done / verified. |
 | `days[].verification` | `"different-device-type"`, `"same-device-type"`, or `null` when not verified. |
 | `days[].letters` | Ids of the live (not dropped) letters the day carries. |
+| `days[].food` | The id of the live food the day carries (`"food-<n>"`), or `null`. A day carries at most one. |
 | `days[].census` | As `census` without `day`, `step`, `verified`, `source`; `null` until done. |
 | `letters.perDay`, `letters.queueMax` | The garden's budget: letters one day carries; letters waiting at once. |
 | `letters.queued` | Letters waiting now. |
@@ -247,7 +303,19 @@ the wait (two seconds); retry. The 200 body is unchanged.
 | `letters.recent` | The newest 32 letters that are not waiting, newest first. |
 | letter | `id` (`"ltr-<n>"`), `kind` (`"stone"`), `x`, `y`, `r`, `postedAt`, `landsAtStep`, `day` (the day that carries it), `status`, `landedIn` (the carrying day's digest once done, else `null`), `droppedAt` (`null` unless dropped). |
 | letter `status` | `"waiting"` (its day has never been assigned; the keeper may drop it), `"sealed"` (its day is assigned: fixed), `"landed"` (its day is done), `"verified"` (its day is verified), `"dropped"` (the keeper's veto, before its day was assigned), `"stalled"` (its day diverged, failed or is blocked). |
-| `limits` | `stoneRadius {min, max}`, `lettersPerAddressPerHour`, `logMax` (founding plus live letters, at most). |
+| `food` | The food ask (always present; added in the contract's additive way, so still `garden-v1`). A food is a feed (`{step, kind: "feed", x, y, r, amount}` in the experiment's schedule), never a letter: it is in no `letters` list and in no `days[].letters`. |
+| `food.enabled` | The garden was founded with food. `false` for every garden founded without it (then `closed` is `"off"` and the rule's numbers are `null`). |
+| `food.asks`, `food.everyDays` | K, the distinct networks that must ask within one dawn period, and N: a food lands at most once every N garden days. `null` when off. |
+| `food.amount`, `food.r`, `food.place` | Each food: `amount` quanta of nutrient per cell over a disc of radius `r` at `place` `{x, y}`, the world's centre. Fixed when the garden was founded. `null` when off. |
+| `food.hands` | Hands this dawn period (0 when off). Only the count is kept public; the hands themselves are salted hashes held in memory only, and a coordinator restart forgets them. |
+| `food.expiresAt` | The next dawn, when this period's hands expire if they have not reached `asks`. |
+| `food.sharedAddress` | `true` when every visitor reaches the coordinator as one address (production until the proxy passes client addresses on, deploy/README.md: config `:garden_shared_address`, cleared by `BL_TRUST_FORWARDED_FOR=1`). The ask can then hold one hand at most, so `asks` (at least 2) is never reached, a 200 may be another visitor's hand, and the one counted hand spends a letter from the one budget stones share (a repeat or a 409 gives its letter back and is charged as a refusal instead); a page should say so. |
+| `food.open`, `food.closed` | Whether a hand can be added now; when not, why: `"off"`, `"stopped"`, `"finished"`, `"horizon"` (no day is left before it that the spacing allows), `"log-full"` or `"cooldown"` (a live food is fewer than N days from the next free day). `closed` is `null` exactly when `open`. |
+| `food.opensAtDay` | With `"cooldown"`, the first day a food could land on; else `null`. |
+| `food.landing` | `{day, step}` where a food called now would land (the frontier day, at its end step, after that step's stones), or `null` when closed. |
+| `food.foods` | The newest 32 foods, newest first, live and dropped. |
+| food | `id` (`"food-<n>"`), `x`, `y`, `r`, `amount`, `calledAt` (when the K-th hand called it), `noticeUntil` (`calledAt` plus one dawn period: its day is not given to an island to run before this, so the keeper's veto always has that long; a reset that reopens the day does not restart it), `hands` (K), `landsAtStep`, `day`, `status` (the letter statuses, with the same meanings), `landedIn` (the carrying day's digest once done, else `null`), `droppedAt` (`null` unless the keeper dropped it). |
+| `limits` | `stoneRadius {min, max}`, `lettersPerAddressPerHour` (letters and hands together), `logMax` (founding plus live letters plus live foods, at most). |
 
 ### `POST /api/public/garden/letters` and `POST /api/public/gardens/:name/letters`
 
@@ -279,6 +347,56 @@ public and carry nothing about who wrote them.
   before the horizon).
 * `404 {"error": "not found"}`: no such garden.
 
+### `POST /api/public/garden/food/hands` and `POST /api/public/gardens/:name/food/hands`
+
+No authentication. A visitor's hand on the food ask. The body is exactly `{}`,
+sent as `application/json` (the JSON content type is what makes a hand from
+another site's page need a CORS preflight, which the coordinator refuses, so no
+other page can add its visitors' hands). A hand carries nothing: no place, no
+name, no text. One hand per network per dawn period, the network an IPv4 address
+whole or an IPv6 address's /48 (coarser than the letter budget's /64: one /48
+holds 65,536 /64s; a network is still not a person, and one person with several
+connections can be several hands). Hands are only as distinct as the addresses
+the coordinator sees: behind a proxy that hides them (`food.sharedAddress`) every
+visitor is one network. A repeat is answered as a repeat (200) before the ask's
+state, so after the K-th hand closed the ask the other K-1 still get 200. The
+hand that brings the period's count to `food.asks` calls the food at once: it is
+written to the garden then, public as `"waiting"`, on `food.landing`'s day, and
+the count goes back to zero; the networks that gave a hand stay remembered until
+the dawn, so if the keeper drops the food the same period needs `asks` other
+networks to call another. Hands short of `asks` expire at the next dawn.
+
+* `201 {"counted": true, "called": null | <food>, "food": <the food block>}`:
+  the hand is counted; `called` is the food when this hand called it.
+* `200 {"counted": false, "called": null, "food": ...}`: this network's hand is
+  already in this period (not an error: a visitor who reloads learns their hand
+  is in).
+* `409 {"error": ..., "closed": <code>, "opensAtDay": <int> | null}`: the ask is
+  closed, `closed` as `food.closed` (with `"cooldown"`, `opensAtDay` is the first
+  day a food could land).
+* `422 {"error": ...}`: a body other than `{}`.
+* `413`, `415`: as for a letter (over 1 KB; not JSON, including no content type
+  at all).
+* `429 {"error": ..., "retryAfterMs": <int>}` with `Retry-After`: a hand costs
+  one letter of the network's hourly budget (`lettersPerAddressPerHour`; hands
+  and stones share it). A repeat (200) or a closed ask (409) is given back but
+  charged as a refusal, as a refused letter is.
+* `404`: no such garden. `503 {"error": ..., "counted": false}` with
+  `Retry-After: 1`: the rate limiter is restarting (or restarted while the hand
+  waited) and cannot key a hand; nothing was counted and the letter is given
+  back. `503 {"error": ..., "counted": null}`: the queue did not answer in time
+  (`:garden_call_timeout_ms`, 5 s); the hand may still count when it catches up,
+  so the letter is kept and a page should read the count again.
+* A zero-byte body (`content-length: 0`) is a 422, like any body but `{}`.
+
+While a food is waiting (its day not yet assigned) the ask stays closed
+(`"cooldown"`) until N days past it, even if a reset of later days moves the
+frontier back before it: at most one food is ever waiting. A coordinator restart
+forgets the period's hands (it fails toward no food); a food already called is in
+the garden's record and survives. A period's hands are forgotten within a minute
+of its dawn whether or not anyone asks again, and no status or crash report of
+the queue process shows them.
+
 ### `GET /api/public/gardens/:name/checkpoints/:digest`
 
 The end checkpoint (`.blck` bytes, `application/octet-stream`) of a **verified**
@@ -301,18 +419,27 @@ Same admin authentication as `POST /api/experiments`.
   (horizon, default 365), `stepsPerDay` (default 131,072), `censusEvery`
   (default 1,024; must divide `stepsPerDay`), `deepEvery` (10),
   `lettersPerDay` (8), `queueMax` (64), `dawnPeriodMs` (86,400,000; at least
-  1,000), `dawnOffsetMs` (0). `200 {"garden": name, "days": n}`, 422 with the
-  reason otherwise. The commons:
+  1,000), `dawnOffsetMs` (0), `food` (`false`; `true` founds the garden with a
+  food ask), and only with `food: true`, `foodAsks` (K, 2 to 1,000, default
+  config `:garden_food_asks`, 5) and `foodEveryDays` (N, 1 to 365, default
+  `:garden_food_every_days`, 7). Each food is `:garden_food_amount` (16) quanta
+  per cell over radius `:garden_food_radius` (32); all four are copied into the
+  garden when it is founded. A garden with food is founded only if its worst case
+  fits the runner's `MATTER_MAX` (2^26 quanta): `cells · 128 + Σ founding feeds
+  amount · (2r+1)² + ⌈days / N⌉ · amount · (2r+1)²` (each square capped at the
+  world's cells); otherwise 422 with the numbers. `200 {"garden": name, "days":
+  n}`, 422 with the reason otherwise. The commons:
 
   ```json
   {"name": "commons", "presetId": "wild-storm-large", "seed": 1,
    "founding": [{"step": 0, "kind": "feed", "x": 256, "y": 256, "r": 255, "amount": 16}]}
   ```
 
-* `POST /api/gardens/:name/letters/:id/drop`: the keeper's veto. `200
-  {"letter": <letter>}` (status `"dropped"`; dropping a dropped letter is the
-  same 200); 409 once the letter's day has been assigned; 404 for an unknown
-  garden or letter. A garden keeps only its newest 256 dropped letters (by id
+* `POST /api/gardens/:name/letters/:id/drop`: the keeper's veto, for a letter
+  (`ltr-<n>`) or a food (`food-<n>`). `200 {"letter": <letter>}` or `200
+  {"food": <food>}` (status `"dropped"`; dropping a dropped one is the same
+  200); 409 once its day has been assigned; 404 for an unknown garden, letter or
+  food. A dropped food counts toward nothing, so the ask can open again. A garden keeps only its newest 256 dropped letters (by id
   number): an older dropped letter is forgotten, and dropping it again is a 404.
   Ids are never reused.
 * `POST /api/gardens/:name/days/:index/requeue`: puts a **failed** or

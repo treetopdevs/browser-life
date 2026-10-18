@@ -16,8 +16,10 @@ defmodule CoordinatorWeb.GardenContractTest do
   `$.days[].verification` may). The state driven here is one where the values
   the front end leans on (census, tip, fork, the next release, the next
   landing) are all present, so those are required to be non-null. The
-  enumerated strings (`state`, day and letter `status`, the verification kinds)
-  are checked against the README's lists.
+  enumerated strings (`state`, day and letter `status`, the verification kinds,
+  the food ask's `closed` codes and a food's `status`) are checked against the
+  README's lists. The garden is founded with food (docs/garden-food-2026-10-18.md):
+  a food called by two hands lands on day 1, and one more hand is on the open ask.
   """
   use CoordinatorWeb.ConnCase, async: false
   import CoordinatorWeb.GardenHelpers
@@ -51,7 +53,8 @@ defmodule CoordinatorWeb.GardenContractTest do
 
   # Day 0 verified; day 1 done (not replayed); day 2 not yet released. Letters:
   # ltr-1/2 on day 0 (verified), ltr-3 dropped, ltr-4 on day 1 (landed),
-  # ltr-5/6 on day 2 (waiting, the day's budget full) and ltr-7 on day 3.
+  # ltr-5/6 on day 2 (waiting, the day's budget full) and ltr-7 on day 3. Food:
+  # food-1 on day 1 (landed), and one hand on the ask, which is open for day 2.
   defp drive(dir, conn) do
     founding = [
       %{"step" => 0, "kind" => "feed", "x" => 128, "y" => 128, "r" => 50, "amount" => 16}
@@ -67,8 +70,18 @@ defmodule CoordinatorWeb.GardenContractTest do
         "censusEvery" => 10,
         "days" => 5,
         "lettersPerDay" => 2,
-        "queueMax" => 10
+        "queueMax" => 10,
+        "food" => true,
+        "foodAsks" => 2,
+        "foodEveryDays" => 1
       })
+
+    hand = fn ip ->
+      %{conn | remote_ip: ip}
+      |> put_req_header("content-type", "application/json")
+      |> post("/api/public/garden/food/hands", "{}")
+      |> json_response(201)
+    end
 
     letter = fn x ->
       conn
@@ -89,12 +102,18 @@ defmodule CoordinatorWeb.GardenContractTest do
     b = join("Contract-GPU-B")
     run_and_verify(dir, a, b)
 
+    # Two networks call a food onto the frontier day, day 1, before it is assigned.
+    assert %{"called" => nil} = hand.({10, 0, 0, 1})
+    assert %{"called" => %{"id" => "food-1", "day" => 1}} = hand.({10, 0, 0, 2})
+
     TestClock.advance(day_ms())
     t1 = next(a)
     assert t1.segment.index == 1
     finish(dir, a, t1)
 
     for x <- 5..7, do: letter.(x)
+    # A new dawn period: one hand on the ask, open for day 2.
+    assert %{"called" => nil, "food" => %{"hands" => 1}} = hand.({10, 0, 0, 3})
     TestClock.advance(60_000)
     :ok
   end
@@ -125,7 +144,11 @@ defmodule CoordinatorWeb.GardenContractTest do
           {"pace.nextReleaseAt", got["pace"]["nextReleaseAt"]},
           {"letters.nextLanding", got["letters"]["nextLanding"]},
           {"clock.lastMovedAt", got["clock"]["lastMovedAt"]},
-          {"verification.share", got["verification"]["share"]}
+          {"verification.share", got["verification"]["share"]},
+          {"food", got["food"]},
+          {"food.landing", got["food"]["landing"]},
+          {"food.place", got["food"]["place"]},
+          {"food.foods[0].landedIn", hd(got["food"]["foods"])["landedIn"]}
         ] do
       refute is_nil(value), "#{label} should be present in the driven state"
     end
@@ -163,8 +186,54 @@ defmodule CoordinatorWeb.GardenContractTest do
     assert Map.new(got["letters"]["recent"], &{&1["id"], &1["landedIn"]})["ltr-4"] == dg(1)
     assert got["letters"]["nextLanding"] == %{"day" => 3, "step" => 4 * @d, "open" => 1}
 
+    # The food: landed on day 1, one hand on the open ask, never among the letters.
+    assert %{
+             "enabled" => true,
+             "asks" => 2,
+             "everyDays" => 1,
+             "amount" => 16,
+             "r" => 32,
+             "place" => %{"x" => 128, "y" => 128},
+             "hands" => 1,
+             "open" => true,
+             "closed" => nil,
+             "opensAtDay" => nil,
+             "landing" => landing,
+             "foods" => [food]
+           } = got["food"]
+
+    assert landing == %{"day" => 2, "step" => 3 * @d}
+
+    assert got["food"]["expiresAt"] == got["pace"]["nextDawnAt"]
+
+    assert %{"id" => "food-1", "day" => 1, "status" => "landed", "hands" => 2} = food
+    assert food["landsAtStep"] == 2 * @d
+    # Its day was not run before a whole dawn period after the call.
+    assert food["noticeUntil"] == food["calledAt"] + day_ms()
+    assert got["food"]["sharedAddress"] == false
+
+    assert food["landedIn"] == dg(1)
+    assert Enum.map(got["days"], & &1["food"]) == ["food-1", nil]
+    letters = got["letters"]["waiting"] ++ got["letters"]["recent"]
+    assert Enum.all?(letters, &String.starts_with?(&1["id"], "ltr-"))
+
     # Nothing about who tends the garden is in it.
     refute body =~ "Contract-GPU"
+  end
+
+  test "the fixture's foods keep a timeline the scheduler can produce" do
+    fixture = @fixture |> File.read!() |> Jason.decode!()
+    period = fixture["pace"]["dawnPeriodMs"]
+    days = Map.new(fixture["days"], &{&1["day"], &1})
+
+    for f <- fixture["food"]["foods"] do
+      assert f["noticeUntil"] == f["calledAt"] + period, f["id"]
+
+      # A day carrying a food is not given to an island before its notice ends.
+      with %{"doneAt" => done} when is_integer(done) <- days[f["day"]] do
+        assert f["noticeUntil"] <= done, "#{f["id"]}: day #{f["day"]} done inside its notice"
+      end
+    end
   end
 
   test "the same shape on a garden nothing has happened to", %{conn: conn} do
@@ -188,7 +257,7 @@ defmodule CoordinatorWeb.GardenContractTest do
     # Key sets of every object (the values that depend on state are null here).
     assert Enum.sort(Map.keys(got)) == Enum.sort(Map.keys(fixture))
 
-    for k <- ~w(pace clock tending verification limits letters) do
+    for k <- ~w(pace clock tending verification limits letters food) do
       assert Enum.sort(Map.keys(got[k])) == Enum.sort(Map.keys(fixture[k])), "$.#{k}"
     end
 
@@ -196,6 +265,10 @@ defmodule CoordinatorWeb.GardenContractTest do
     assert got["verification"]["share"] == nil
     assert got["clock"]["lastMovedAt"] == nil and got["clock"]["sleptMs"] == nil
     assert got["letters"]["queued"] == 0 and got["letters"]["waiting"] == []
+    # A garden founded without food: the block is there, off.
+    assert %{"enabled" => false, "closed" => "off", "open" => false, "hands" => 0, "foods" => []} =
+             got["food"]
+
     assert [%{"day" => 0, "status" => "waiting"}] = got["days"]
     assert Enum.sort(Map.keys(hd(got["days"]))) == Enum.sort(Map.keys(hd(fixture["days"])))
   end
@@ -207,6 +280,7 @@ defmodule CoordinatorWeb.GardenContractTest do
   @day_statuses ~w(waiting growing done verified diverged failed blocked)
   @letter_statuses ~w(waiting sealed landed verified dropped stalled)
   @kinds ~w(different-device-type same-device-type)
+  @closed ~w(off stopped finished horizon log-full cooldown)
 
   defp check_enums(got) do
     assert got["contract"] == "garden-v1"
@@ -225,6 +299,21 @@ defmodule CoordinatorWeb.GardenContractTest do
     assert Enum.all?(got["letters"]["waiting"], &(&1["status"] == "waiting"))
     assert Enum.all?(got["letters"]["recent"], &(&1["status"] != "waiting"))
     if got["census"], do: assert(got["census"]["source"] == "producer")
+
+    food = got["food"]
+
+    assert is_boolean(food["enabled"]) and is_boolean(food["open"]) and
+             is_boolean(food["sharedAddress"])
+
+    assert food["closed"] in [nil | @closed], "food.closed #{inspect(food["closed"])}"
+    assert food["open"] == (food["closed"] == nil)
+    assert food["closed"] == "cooldown" == is_integer(food["opensAtDay"])
+
+    for f <- food["foods"] do
+      assert f["status"] in @letter_statuses, "food status #{inspect(f["status"])}"
+      assert String.starts_with?(f["id"], "food-")
+    end
+
     :ok
   end
 
@@ -246,7 +335,18 @@ defmodule CoordinatorWeb.GardenContractTest do
     "$.letters.waiting[].droppedAt",
     "$.letters.waiting[].landedIn",
     "$.letters.recent[].droppedAt",
-    "$.letters.recent[].landedIn"
+    "$.letters.recent[].landedIn",
+    "$.days[].food",
+    "$.food.asks",
+    "$.food.everyDays",
+    "$.food.amount",
+    "$.food.r",
+    "$.food.place",
+    "$.food.closed",
+    "$.food.opensAtDay",
+    "$.food.landing",
+    "$.food.foods[].landedIn",
+    "$.food.foods[].droppedAt"
   ]
 
   defp generic(path), do: Regex.replace(~r/\[\d+\]/, path, "[]")
