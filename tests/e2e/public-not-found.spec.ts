@@ -220,7 +220,7 @@ test.describe("Caddy", () => {
     expect(routes.length).toBeGreaterThanOrEqual(9);
     const asset = /\/assets\/[^"]+\.js/.exec(readFileSync(join(DIST, "index.html"), "utf8"))?.[0];
     expect(asset, "an /assets/ script in dist/index.html").toBeTruthy();
-    for (const path of [...routes, "/garden/", "/island.html", "/selftest.html", "/robots.txt", "/sitemap.xml", "/site.webmanifest", "/favicon.svg", asset!]) {
+    for (const path of [...routes, "/island.html", "/selftest.html", "/robots.txt", "/sitemap.xml", "/site.webmanifest", "/favicon.svg", asset!]) {
       const res = await get(request, path);
       expect(res.status(), path).toBe(200);
       if (path.endsWith("/")) expect(await res.text(), path).not.toContain(TITLE);
@@ -237,9 +237,11 @@ test.describe("Caddy", () => {
     expect(plain.status()).toBe(200);
     expect(ogUrl(await plain.text()), "an unknown world gets the plain lab").toBe(`${ORIGIN}/lab/`);
 
-    const bare = await get(request, "/lab");
-    expect(bare.status()).toBe(308);
-    expect(bare.headers().location).toBe("/lab/");
+    for (const page of ["lab", "garden"]) {
+      const bare = await get(request, `/${page}`);
+      expect(bare.status(), `/${page}`).toBe(308);
+      expect(bare.headers().location, `/${page}`).toBe(`/${page}/`);
+    }
     const copy = await get(request, `/lab/world/${world}/`);
     expect(copy.status()).toBe(308);
     expect(copy.headers().location).toBe(`/lab/?world=${world}`);

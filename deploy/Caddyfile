@@ -25,6 +25,7 @@
   redir /participate /participate/{?query} 308
   redir /status /status/{?query} 308
   redir /privacy /privacy/{?query} 308
+  redir /garden /garden/{?query} 308
 
   # A link that names a world (/lab/?world=<id> plants it, /worlds/?world=<id> shows its card) previews as that
   # world: the build writes a copy of each page per world, differing only in its title, description and card, at
