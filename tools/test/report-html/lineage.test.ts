@@ -220,7 +220,8 @@ describe("pond-cycle genotype dossier", () => {
     expect(d.pond).toMatchObject({ exact: 2, notRecorded: 0 });
     expect(d.trackerBirths).toMatchObject({ fission: 0, budding: 1, excludedAcrossCycle: 1 });
     const html = renderChecked(d);
-    assertPageContract(html, { status: "SMOKE", figureCount: 4 });
+    // The pond route adds a figure after the ancestry (lineage-route.test.ts covers it).
+    assertPageContract(html, { status: "SMOKE", figureCount: 5 });
     for (const g of d.gaps) expect(html).toContain(`<li>${escapeHtml(g)}</li>`);
   }, 60_000);
 });
