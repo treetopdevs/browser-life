@@ -7,7 +7,7 @@ defmodule Coordinator.ReleaseConfigTest do
   """
   use ExUnit.Case, async: false
 
-  @vars ~w(SECRET_KEY_BASE BL_ADMIN_TOKEN BL_CORS_ORIGINS BL_ISLAND_JOINS_PER_ADDRESS BL_MAX_ISLANDS BL_TRUST_FORWARDED_FOR BL_GARDEN_ISLAND_TOKEN)
+  @vars ~w(SECRET_KEY_BASE BL_ADMIN_TOKEN BL_CORS_ORIGINS BL_ISLAND_JOINS_PER_ADDRESS BL_MAX_ISLANDS BL_TRUST_FORWARDED_FOR BL_GARDEN_ISLAND_TOKEN BL_DISCOVERY_LEASE_MS)
 
   setup do
     saved = for v <- @vars, do: {v, System.get_env(v)}
@@ -205,5 +205,43 @@ defmodule Coordinator.ReleaseConfigTest do
       System.put_env("BL_MAX_ISLANDS", bad)
       assert_raise RuntimeError, ~r/BL_MAX_ISLANDS/, fn -> prod_runtime() end
     end
+  end
+
+  # It was `String.to_integer/1`, a bare ArgumentError (docs/coordinator-hardening-2026-10-18.md).
+  test "BL_DISCOVERY_LEASE_MS sets the lease, and a bad value stops the boot by name" do
+    prod_env()
+
+    lease = fn v ->
+      System.put_env("BL_DISCOVERY_LEASE_MS", v)
+      Keyword.fetch(prod_runtime()[:coordinator], :discovery_lease_ms)
+    end
+
+    assert lease.("60000") == {:ok, 60_000}
+    assert lease.("") == :error
+
+    for bad <- ["abc", "1.5", "0", "-5", "off"] do
+      System.put_env("BL_DISCOVERY_LEASE_MS", bad)
+      assert_raise RuntimeError, ~r/BL_DISCOVERY_LEASE_MS/, fn -> prod_runtime() end
+    end
+  end
+
+  test "the production config, with its runtime and the limit variables set, passes Coordinator.ConfigCheck" do
+    prod_env()
+
+    for {var, v} <- [
+          {"BL_ISLAND_JOINS_PER_ADDRESS", "20"},
+          {"BL_MAX_ISLANDS", "50000"},
+          {"BL_DISCOVERY_LEASE_MS", "60000"}
+        ],
+        do: System.put_env(var, v)
+
+    merged = Config.Reader.merge(prod_config(), prod_runtime())
+    assert Coordinator.ConfigCheck.errors(merged[:coordinator]) == []
+
+    # "off" is a nil budget, which the check allows.
+    System.put_env("BL_ISLAND_JOINS_PER_ADDRESS", "off")
+    merged = Config.Reader.merge(prod_config(), prod_runtime())
+    assert merged[:coordinator][:island_joins_per_address] == nil
+    assert Coordinator.ConfigCheck.errors(merged[:coordinator]) == []
   end
 end

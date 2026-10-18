@@ -61,9 +61,10 @@ defmodule Coordinator.Queue do
   run the pond cycle — packages/schema/src/presets.ts) are gated by island
   capability. An island lists what its code can run in the body of every
   `/api/next` (`capabilities`, e.g. `["ponds-v1"]`, see
-  packages/runner/src/island.ts's `ISLAND_CAPABILITIES`; read per request,
-  never persisted), and `pick_task/4` offers a pond experiment's segments, run
-  or verify, only to an island whose request carries `"ponds-v1"`. An island
+  packages/runner/src/island.ts's `ISLAND_CAPABILITIES`; gating reads the list
+  in each request, never a stored one), and `pick_task/4` offers a pond
+  experiment's segments, run or verify, only to an island whose request
+  carries `"ponds-v1"`. An island
   built before the pond cycle cannot run them, and on a continuation would
   report a valid predecessor as invalid (its runner throws on the unknown
   preset inside the predecessor check). Every other experiment's work still
@@ -173,6 +174,15 @@ defmodule Coordinator.Queue do
   reject handler refuses to reject a *verified* garden day, so a single
   volunteer cannot roll back history two islands agreed on.
 
+  Each `/api/next` also records, on the asking island's record, a cleaned
+  copy of that request's capabilities (`:capabilities`; names matching
+  `[a-z][a-z0-9]*(-[a-z0-9]+)*` within 32 bytes, deduplicated and sorted:
+  every name the Queue gates on and at most four others; the key is removed
+  when nothing is storable, docs/coordinator-hardening-2026-10-18.md). Only
+  `status/0` (admin `/api/status`, for the operator page) shows it;
+  `island_info/1` drops it. It never grants a task: an island that once
+  advertised `"ponds-v1"` and then asks without it is not offered pond work.
+
   Islands authenticate with a private token issued at join; every assignment
   carries a lease (`Coordinator.Attempt.id`) that must accompany uploads,
   heartbeats and completion. The end checkpoint of every accepted run attempt
@@ -238,6 +248,17 @@ defmodule Coordinator.Queue do
   # pre-garden coordinator refuses a state.bin holding a garden (its modules
   # name none of the garden's atoms, `[:safe]` decoding), so rolling the code
   # back after one was founded means starting from a fresh data dir.
+  #
+  # An island's recorded capabilities extend it the same way: an island key
+  # (`:capabilities`, a list of strings) put only while the island's last
+  # `/api/next` advertised something storable, so a coordinator whose islands
+  # never did writes the file it always did, and a file from before loads
+  # unchanged. The other direction is not supported either: a coordinator from
+  # before this change, decoding a file that holds one, either refuses it
+  # (`[:safe]` decoding, if no loaded module names `:capabilities` yet) or
+  # loads it and passes the stale list through its `/api/status` and
+  # `/api/islands/me`, so rolling the code back after an island advertised a
+  # capability means starting from a fresh data dir.
   @state_version 3
   # The longest failure reason stored and shown: 500 graphemes
   # (packages/runner/src/island.ts sends at most 500 characters, as it does
@@ -306,7 +327,7 @@ defmodule Coordinator.Queue do
   def requeue_garden_day(name, index),
     do: GenServer.call(__MODULE__, {:requeue_garden_day, name, index})
 
-  @doc "Claims the next task for `island`. `capabilities` is the list the island sent with this request (see the moduledoc); it gates pond work and is never stored."
+  @doc "Claims the next task for `island`. `capabilities` is the list the island sent with this request (see the moduledoc); it gates pond work for this request alone, and a cleaned copy is recorded on the island for `status/0`, never read by gating."
   def next_task(island, capabilities \\ []) when is_list(capabilities),
     do: GenServer.call(__MODULE__, {:next, island, capabilities})
 
@@ -409,7 +430,7 @@ defmodule Coordinator.Queue do
         {:ok, bin} ->
           case :erlang.binary_to_term(bin, [:safe]) do
             %{version: @state_version} = s ->
-              Map.put_new(s, :gardens, %{})
+              s |> Map.put_new(:gardens, %{}) |> clean_recorded_capabilities()
 
             _ ->
               raise """
@@ -462,7 +483,8 @@ defmodule Coordinator.Queue do
   end
 
   def handle_call({:island_info, id}, _from, s) do
-    info = s.islands[id] && Map.drop(s.islands[id], [:token_hash])
+    # The recorded capabilities are the operator's (`status/0`) alone.
+    info = s.islands[id] && Map.drop(s.islands[id], [:token_hash, :capabilities])
     {:reply, info, s}
   end
 
@@ -599,6 +621,9 @@ defmodule Coordinator.Queue do
     s =
       %{s | segments: Segment.reclaim_stale(s.segments, now, lease_ms())}
       |> put_in([:islands, island_id, :last_seen], now)
+      # For the operator page only (`status/0`): gating below reads the
+      # request's own list, never this copy.
+      |> update_in([:islands, island_id], &record_capabilities(&1, capabilities))
       |> release_gardens(now)
 
     {task, s} =
@@ -1935,6 +1960,77 @@ defmodule Coordinator.Queue do
 
   defp breed_condition?(condition),
     do: is_binary(condition) and String.starts_with?(condition, @breed_condition_prefixes)
+
+  # ---- recorded capabilities (see the moduledoc; never read by gating) ----
+
+  @known_capabilities [
+    @pond_capability,
+    @current_capability,
+    @interventions_capability,
+    @breed_capability
+  ]
+  @stored_capability ~r/\A[a-z][a-z0-9]*(-[a-z0-9]+)*\z/
+  @stored_capability_bytes 32
+  @stored_unknown_max 4
+
+  # The copy of a request's capabilities kept on the island record: names that
+  # match `@stored_capability` within `@stored_capability_bytes`, deduplicated
+  # and sorted; every name the Queue gates on, and the first
+  # `@stored_unknown_max` other names in sorted order (not by recency: an
+  # island advertising four names that sort early has a fifth, later one left
+  # out of its own record; display only). At most 8 names.
+  defp stored_capabilities(capabilities) do
+    names =
+      capabilities
+      |> Enum.filter(
+        &(is_binary(&1) and byte_size(&1) <= @stored_capability_bytes and
+            Regex.match?(@stored_capability, &1))
+      )
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    {known, unknown} = Enum.split_with(names, &(&1 in @known_capabilities))
+    Enum.sort(known ++ Enum.take(unknown, @stored_unknown_max))
+  end
+
+  @doc "The capability names the Queue gates on (`gated_experiments/2`, `gated?/3`); every one is always kept in a recorded copy."
+  @spec known_capabilities() :: [String.t()]
+  def known_capabilities, do: @known_capabilities
+
+  # On load, every island's recorded `:capabilities` goes through the same
+  # cleaning as a request's (`record_capabilities/2`): a state.bin is trusted
+  # as written by this code, but a list it never could have written (not a
+  # proper list, non-strings, too many names, too long) is cleaned or dropped
+  # rather than breaking `/api/status` later.
+  defp clean_recorded_capabilities(%{islands: islands} = s) when is_map(islands) do
+    islands =
+      Map.new(islands, fn
+        {id, %{capabilities: caps} = island} ->
+          caps = if proper_list?(caps), do: caps, else: []
+          {id, record_capabilities(island, caps)}
+
+        other ->
+          other
+      end)
+
+    %{s | islands: islands}
+  end
+
+  defp clean_recorded_capabilities(s), do: s
+
+  defp proper_list?([]), do: true
+  defp proper_list?([_ | rest]), do: proper_list?(rest)
+  defp proper_list?(_), do: false
+
+  # Sets the island's `:capabilities` to the stored copy, or removes the key
+  # when nothing is storable, so a record that never advertised anything keeps
+  # its shape from before.
+  defp record_capabilities(island, capabilities) do
+    case stored_capabilities(capabilities) do
+      [] -> Map.delete(island, :capabilities)
+      names -> Map.put(island, :capabilities, names)
+    end
+  end
 
   # The experiments whose work an island with `capabilities` must not be
   # offered: every pond experiment, unless it advertises `@pond_capability`;
