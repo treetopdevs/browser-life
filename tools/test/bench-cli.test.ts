@@ -17,7 +17,7 @@ const T = 600_000;
 const SEL = BENCH_V0.selection;
 
 let root = "", base = "", notes = "", plan = "";
-const bench = (args: string[]) => spawnSync("deno", ["run", "-A", "tools/bench.ts", ...args], { cwd: REPO, encoding: "utf8", timeout: 300_000 });
+const bench = (args: string[]) => spawnSync("deno", ["run", "--no-lock", "-A", "tools/bench.ts", ...args], { cwd: REPO, encoding: "utf8", timeout: 300_000 });
 function writeSource(b: string, n: string, seed: number, rings: RingOpts[]) {
   const dir = join(b, SEL.experiment, SEL.presetId, SEL.condition, `seed-${seed}`);
   mkdirSync(dir, { recursive: true });
@@ -131,11 +131,11 @@ describe.skipIf(!HAS_DENO)("tools/bench.ts, spawned", () => {
   it("the run executor spawns a command, writes its output to a new log and returns its exit code; it never replaces a log", () => {
     const log = join(root, "exec.log");
     const code = `import { denoExec } from ${JSON.stringify(join(REPO, "tools/lib/bench-exec.ts"))};
-const a = await denoExec(["deno", "eval", "console.log('out'); console.error('err'); Deno.exit(3)"], Deno.cwd(), ${JSON.stringify(log)});
+const a = await denoExec(["deno", "eval", "--no-lock", "console.log('out'); console.error('err'); Deno.exit(3)"], Deno.cwd(), ${JSON.stringify(log)});
 let again = "none";
 try { await denoExec(["deno", "--version"], Deno.cwd(), ${JSON.stringify(log)}); } catch (e) { again = e.name; }
 console.log(JSON.stringify({ a, again }));`;
-    const r = spawnSync("deno", ["eval", code], { cwd: REPO, encoding: "utf8", timeout: 300_000 });
+    const r = spawnSync("deno", ["eval", "--no-lock", code], { cwd: REPO, encoding: "utf8", timeout: 300_000 });
     expect(r.status, r.stderr).toBe(0);
     expect(JSON.parse(r.stdout.trim().split("\n").at(-1)!)).toEqual({ a: 3, again: "AlreadyExists" });
     expect(readFileSync(log, "utf8").split("\n").filter(Boolean).sort()).toEqual(["err", "out"]);
@@ -169,7 +169,7 @@ out.approvals = both.map((r) => r.status === "fulfilled" ? "ok" : r.reason.const
 out.a = Deno.readTextFileSync(d + "/a.json");
 out.left = [...Deno.readDirSync(d)].map((x) => x.name).filter((x) => x.startsWith("a.json.") || x.startsWith("m.json.")).sort();
 console.log(JSON.stringify(out));`;
-    const r = spawnSync("deno", ["eval", code], { cwd: REPO, encoding: "utf8", timeout: 300_000 });
+    const r = spawnSync("deno", ["eval", "--no-lock", code], { cwd: REPO, encoding: "utf8", timeout: 300_000 });
     expect(r.status, r.stderr).toBe(0);
     const o = JSON.parse(r.stdout.trim().split("\n").at(-1)!);
     expect(o.sym).toMatch(/^BenchRefusal: .*without following a link/);
@@ -192,9 +192,9 @@ let n = 0;
 const exec = makeDenoExec(async () => ({ write: async (p) => { if (++n > 1) throw new Error("disk full"); return p.length; }, close() {} }));
 const t = Date.now();
 let err = "none";
-try { await exec(["deno", "eval", ${JSON.stringify(child)}], Deno.cwd(), "unused"); } catch (e) { err = e.message; }
+try { await exec(["deno", "eval", "--no-lock", ${JSON.stringify(child)}], Deno.cwd(), "unused"); } catch (e) { err = e.message; }
 console.log(JSON.stringify({ err, ms: Date.now() - t }));`;
-    const r = spawnSync("deno", ["eval", code], { cwd: REPO, encoding: "utf8", timeout: 300_000 });
+    const r = spawnSync("deno", ["eval", "--no-lock", code], { cwd: REPO, encoding: "utf8", timeout: 300_000 });
     expect(r.status, r.stderr).toBe(0);
     const res = JSON.parse(r.stdout.trim().split("\n").at(-1)!) as { err: string; ms: number };
     expect(res.err).toBe("disk full");
