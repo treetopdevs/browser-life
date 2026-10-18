@@ -85,7 +85,14 @@ Three Sol xhigh passes, no P0 or P1. After main was merged in, two scan tests ca
 <li>the Session card body is focusable.</li>
 </ul>
 Adds Pond keeper, Session card and header checks. Three Sol passes, no P0 or P1. After the merge conflict with #42 was resolved: 96 passed, 8 skipped (no build) in Chrome.</td></tr>
-<tr id="s24"><td>24</td><td>Proposer bench v0: rules fixed before running, a dose-matched baseline, a launcher and a dry run; no runs without a person's batch approval</td><td><code>claude/slice24-proposer-bench</code></td><td>Running as workflow <code>wf_8af6b264-e87</code></td></tr>
+<tr id="s24"><td>24</td><td>Proposer bench v0: rules fixed before running, a dose-matched baseline, a launcher and a dry run; no runs without a person's batch approval</td><td><code>claude/slice24-proposer-bench</code> / <a href="https://github.com/treetopdevs/browser-life/pull/49">#49</a></td><td>Merged as <code>5bed5f3</code>. <code>tools/bench.ts</code> has five commands: plan, dry-run, approve <code>--by</code>, run and score. Rules were fixed beforehand:
+<ul>
+<li>ten gradient-m3 treatment sources;</li>
+<li>one proposal each, against three count-matched and three dose-matched random forks;</li>
+<li>scored with bell v1&rsquo;s PairScorer;</li>
+<li>a paired sign test, where rules win at 9 of 10.</li>
+</ul>
+The committed plan dry-runs to 70 forks and 2.68M steps. Three Sol passes. The coordinator added <code>--no-lock</code> to the child denos (#47 guard). <b>Not approved and not run</b>; that is the user&rsquo;s call.</td></tr>
 <tr id="s25"><td>25</td><td>Test hygiene for parallel worktrees: a configurable e2e port, no hardcoded origins, no <code>deno.lock</code> churn from tests</td><td><code>claude/slice25-test-hygiene</code> / <a href="https://github.com/treetopdevs/browser-life/pull/47">#47</a></td><td>Merged as <code>572e7d5</code>. <code>BL_E2E_PORT</code> sets the e2e port; a bad value throws, and strictPort stays with no reuse. The garden spec derives its origin from <code>baseURL</code>. Every deno that a test spawns uses <code>--no-lock</code>, and a guard test enforces it. <code>deno.lock</code> was updated on purpose for the axe-core dependency. After main was merged in, one operator-page test failed, and it fails the same way on main (D-29).</td></tr>
 <tr id="s26"><td>26</td><td>Garden: the stone horizon test on the big storm (how long a stone lasts), rules fixed before running</td><td><code>claude/slice26-stone-horizon</code></td><td>Running as workflow <code>wf_a6020595-b87</code></td></tr>
 <tr id="s27"><td>27</td><td>Live naturalist in the lab: field notes beside a running world, at the calibrated thresholds only</td><td><code>claude/slice27-live-naturalist</code></td><td>Running as workflow <code>wf_76ba7c3e-5c2</code></td></tr>
