@@ -65,6 +65,91 @@ defmodule CoordinatorWeb.ApiControllerTest do
     assert public["counts"] == detail["counts"]
   end
 
+  test "operator views need the admin token, and the public status names no island, adapter or experiment",
+       %{conn: conn} do
+    saved =
+      for k <- [:admin_token, :allow_local_admin], do: {k, Application.fetch_env(:coordinator, k)}
+
+    on_exit(fn ->
+      for {k, v} <- saved do
+        case v do
+          {:ok, val} -> Application.put_env(:coordinator, k, val)
+          :error -> Application.delete_env(:coordinator, k)
+        end
+      end
+    end)
+
+    ddir = Path.join(System.tmp_dir!(), "bl-api-disc-#{System.unique_integer([:positive])}")
+
+    start_supervised!(
+      {Coordinator.Discovery, data_dir: ddir, queue_data_dir: ddir <> "-queue", lease_ms: 60_000}
+    )
+
+    on_exit(fn -> File.rm_rf!(ddir) end)
+
+    assert {:ok, 2} = Queue.create_experiment(@spec_ok)
+
+    {id, token} =
+      conn
+      |> post("/api/islands", %{"adapter" => "Secret GPU 9000", "userAgent" => "Agent/1"})
+      |> json_response(200)
+      |> then(&{&1["id"], &1["token"]})
+
+    # The island holds a task, so the experiment and island are live state.
+    assert %{"kind" => "run"} =
+             build_conn() |> authed(token) |> post("/api/next?island=#{id}") |> json_response(200)
+
+    operator = ["/api/status", "/api/experiments/api", "/api/discovery/status"]
+
+    # With a token configured: no header, a wrong one, and loopback without one are all 401.
+    Application.put_env(:coordinator, :admin_token, "test-admin")
+    Application.put_env(:coordinator, :allow_local_admin, true)
+
+    for path <- operator do
+      denied = build_conn() |> get(path)
+      assert json_response(denied, 401), path
+
+      # A refusal says nothing about the state behind it.
+      for secret <- [
+            id,
+            token,
+            "Secret GPU 9000",
+            "Agent/1",
+            "test-admin",
+            @spec_ok["experiment"]
+          ],
+          do: refute(denied.resp_body =~ secret, "#{path} 401 body names #{secret}")
+
+      assert build_conn() |> authed("wrong") |> get(path) |> json_response(401), path
+      assert build_conn() |> authed("test-admin ") |> get(path) |> json_response(401), path
+      assert build_conn() |> authed("test-admin") |> get(path) |> json_response(200), path
+    end
+
+    detail = build_conn() |> authed("test-admin") |> get("/api/status") |> json_response(200)
+    assert Map.has_key?(detail, "islands") and Map.has_key?(detail, "experiments")
+
+    # No token configured and local administration off (production's shape
+    # behind a proxy, where every peer is loopback): nobody is an operator.
+    Application.delete_env(:coordinator, :admin_token)
+    Application.put_env(:coordinator, :allow_local_admin, false)
+
+    for path <- operator,
+        do: assert(build_conn() |> get(path) |> json_response(401), path)
+
+    raw = build_conn() |> get("/api/public/status") |> response(200)
+    public = Jason.decode!(raw)
+
+    assert Map.keys(public) |> Enum.sort() == ~w(activeIslands counts deviceTypes updatedAt)
+    assert is_integer(public["deviceTypes"]) and public["activeIslands"] == 1
+
+    assert Enum.all?(public["counts"], fn {k, v} ->
+             k in ~w(pending assigned done verified diverged blocked failed) and is_integer(v)
+           end)
+
+    for secret <- ["isl-", id, token, "Secret GPU", "Agent/1", "api", "spots", "treatment"],
+        do: refute(raw =~ secret, secret)
+  end
+
   test "island routes require the private token", %{conn: conn} do
     {id, token} = join(conn)
     assert %{"error" => _} = build_conn() |> post("/api/next?island=#{id}") |> json_response(401)

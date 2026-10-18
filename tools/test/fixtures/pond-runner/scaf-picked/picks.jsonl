@@ -1,0 +1,6 @@
+{"step":1000,"kind":"pick","cycle":1,"donors":[3],"by":"random","suggested":[0]}
+{"step":2000,"kind":"pick","cycle":2,"donors":[3],"by":"random","suggested":[0]}
+{"step":3000,"kind":"pick","cycle":3,"donors":[0],"by":"random","suggested":[0]}
+{"step":4000,"kind":"pick","cycle":4,"donors":[0],"by":"random","suggested":[3]}
+{"step":5000,"kind":"pick","cycle":5,"donors":[0],"by":"random","suggested":[0]}
+{"step":6000,"kind":"pick","cycle":6,"donors":[2],"by":"random","suggested":[3]}

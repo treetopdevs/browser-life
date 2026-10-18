@@ -1,6 +1,15 @@
 defmodule CoordinatorWeb.ApiController do
   use CoordinatorWeb, :controller
-  alias Coordinator.{Checkpoint, Queue, Segment, Store}
+  alias Coordinator.{Checkpoint, IslandLimiter, Queue, Segment, Store}
+
+  import CoordinatorWeb.IslandLimit,
+    only: [
+      limit_join: 2,
+      limit_next: 2,
+      limit_segment: 2,
+      limit_island_download: 2,
+      limit_requests: 2
+    ]
 
   @max_checkpoint 256 * 1024 * 1024
   @max_file 64 * 1024 * 1024
@@ -18,6 +27,28 @@ defmodule CoordinatorWeb.ApiController do
   # (packages/runner/test/coordinator-files.test.ts checks both).
   @observation_files ~w(series.jsonl lineages.tsv mutations.tsv heredity.tsv life.jsonl activity-final.json migrations.tsv exchanges.tsv species.tsv ponds.tsv interventions.jsonl)
 
+  # Abuse controls (Coordinator.IslandLimiter; README "Island limits"). Plugs
+  # run in declaration order: the coarse address ceiling (off by default) and
+  # the join budget come before anything else, the next and segment budgets
+  # (per island id) only after the island authenticates, so a 401 charges
+  # nothing. An island's file download is charged to its segment budget too
+  # (after `require_island_or_admin`); the administrator's exports are not.
+  plug :limit_requests
+       when action in [
+              :join,
+              :me,
+              :next,
+              :complete,
+              :heartbeat,
+              :reject,
+              :fail,
+              :put_checkpoint,
+              :put_file,
+              :get_checkpoint
+            ]
+
+  plug :limit_join when action == :join
+
   plug :require_island
        when action in [
               :me,
@@ -31,21 +62,50 @@ defmodule CoordinatorWeb.ApiController do
               :get_checkpoint
             ]
 
+  plug :limit_next when action == :next
+
+  plug :limit_segment
+       when action in [
+              :complete,
+              :heartbeat,
+              :reject,
+              :fail,
+              :put_checkpoint,
+              :put_file,
+              :get_checkpoint
+            ]
+
   plug :require_admin when action in [:create_experiment, :experiment, :status]
   # Islands read files to continue runs; administrators to export them (tools/stitch.ts).
   plug :require_island_or_admin when action in [:get_file]
+  # An island's file download is a segment request; the administrator's is not.
+  plug :limit_island_download when action == :get_file
 
   def status(conn, _),
     do: conn |> put_resp_header("cache-control", "no-store") |> json(Queue.status())
 
   # Queue.public_status/0 returns only aggregate progress; detailed status
   # contains island IDs, adapter descriptions, and experiment definitions.
+  # Served from a short cache outside the Queue (`public_status_cache_ms`, also
+  # what /healthz reads through the proxy); `updatedAt` is when the numbers were
+  # computed, so it moves with the cache. With nothing to serve (a cold cache
+  # whose one Queue call is slow, or a Queue call that exited) it is a 503 with
+  # Retry-After, never a 500 and never a second Queue call.
   def public_status(conn, _) do
-    conn
-    |> put_resp_header("cache-control", "no-store")
-    |> json(
-      Map.put(Queue.public_status(), :updatedAt, DateTime.utc_now() |> DateTime.to_iso8601())
-    )
+    conn = put_resp_header(conn, "cache-control", "no-store")
+
+    case IslandLimiter.cached_public_status(fn ->
+           Map.put(Queue.public_status(), :updatedAt, DateTime.utc_now() |> DateTime.to_iso8601())
+         end) do
+      {:ok, body} ->
+        json(conn, body)
+
+      :unavailable ->
+        conn
+        |> put_resp_header("retry-after", "1")
+        |> put_status(503)
+        |> json(%{error: "status is not available yet; try again"})
+    end
   end
 
   def experiment(conn, %{"name" => name}) do
@@ -56,8 +116,16 @@ defmodule CoordinatorWeb.ApiController do
   end
 
   def join(conn, params) do
-    {:ok, cred} = Queue.join(params)
-    json(conn, cred)
+    case Queue.join(params) do
+      {:ok, cred} ->
+        json(conn, cred)
+
+      # The island table is at `max_islands` and nothing could be forgotten.
+      {:error, :full} ->
+        conn
+        |> put_status(503)
+        |> json(%{error: "the coordinator has no room for new islands"})
+    end
   end
 
   # Side-effect-free identity check for a rejoin after e.g. a page reload:
@@ -65,7 +133,13 @@ defmodule CoordinatorWeb.ApiController do
   # invalid token), but reads state instead of claiming a task, so probing it
   # never strands a task assignment the caller is about to drop. Never
   # includes the token/token_hash.
-  def me(conn, _), do: json(conn, Queue.island_info(conn.assigns.island))
+  # An island forgotten at the island bound since it authenticated is not there.
+  def me(conn, _) do
+    case Queue.island_info(conn.assigns.island) do
+      nil -> conn |> put_status(401) |> json(%{error: "island authentication required"})
+      info -> json(conn, info)
+    end
+  end
 
   def create_experiment(conn, params) do
     case Queue.create_experiment(params) do

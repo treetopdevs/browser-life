@@ -1,6 +1,7 @@
 // Lineage inspector, analysis side (docs/lineage-inspector.md): a JSON dossier for one genotype
 // lineage of a run bundle, with its exact ancestry rebuilt from mutations.tsv (no replay, no GPU),
-// or for one pond of a scaffold history, with its exact donor-packet descent from ponds.tsv.
+// or for one pond of a scaffold history or pond-cycle run bundle, with its exact donor-packet descent
+// from ponds.tsv.
 //
 //   deno run -A tools/lineage.ts --dir runs/<experiment>/<preset>/<condition>/seed-<n> \
 //     [--subject HI:LO | --rule top|random|longest] [--step N] [--seed S] [--min-share 0.01] \
@@ -8,7 +9,8 @@
 //
 //   deno run -A tools/lineage.ts pond --dir runs/scaffold/main/scaf/i0 \
 //     [--pond P --cycle C | --rule top|random [--cycle C] [--seed S] [--min-trait 1]] \
-//     [--twin runs/scaffold/main/rand/i0] [--out pond.json] [--quiet]
+//     [--twin runs/scaffold/main/rand/i0] [--out pond.json] [--quiet] \
+//     [--genotype [--genotype-cycle C] [--genotype-out genotype.json]]
 //
 // The subject is an explicit lineage key or a rule applied at census --step (default: the last
 // census): `top` = most cells, `longest` = earliest-minted lineage alive, `random` = seeded uniform
@@ -18,14 +20,25 @@
 // (--lineage-obs), and the tool refuses to report on a mismatch. Bundles stream: lineages.tsv is
 // read twice, never held whole; mutations.tsv is held as a child -> parent map.
 //
-// `pond` reads a scaffold history's ponds.tsv (by header name) and meta.json. A node is a pond's
-// pre-cycle state at a boundary; its parent is the donor whose packet reseeded it at the boundary
-// before (tools/lib/pond-lineage.ts). Rules: an explicit --pond/--cycle, `top` (highest trait) or
-// `random` (seeded, among ponds with trait >= --min-trait) at --cycle (default: the last cycle).
-// --twin pairs a scaf history with its rand twin of the same index under the same rule.
+// Pond-cycle run bundles (cfg.pondPeriod) open like any other: descent is mutations.tsv, and the
+// dossier adds each edge's route through ponds.tsv (and picks.jsonl when present), refusing when the
+// records contradict each other; tracker births at the first census after a boundary are left out
+// (docs/lineage-inspector.md section 8, tools/lib/pond-descent.ts).
+//
+// `pond` reads ponds.tsv (by header name) with a scaffold history's meta.json or a pond-cycle run
+// bundle's manifest.json (arm, period, start step, picker). A node is a pond's pre-cycle state at a
+// boundary; its parent is the donor whose packet reseeded it at the boundary before
+// (tools/lib/pond-lineage.ts). Rules: an explicit --pond/--cycle, `top` (highest trait) or `random`
+// (seeded, among ponds with trait >= --min-trait) at --cycle (default: the last cycle). --twin pairs a
+// scaf history with its rand twin under the same rule. --genotype (runner bundles with mutations.tsv)
+// also opens the dominant lineage of the subject's founding packet (or of the chain node at
+// --genotype-cycle) as a genotype dossier read at the census where the packet was measured and anchored
+// at the donor node; --genotype-out writes it. Arms nat and shuf are refused in pond mode.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { OUTPUTS, buildDossier, twinSummary, type BundleSource, type Dossier, type SubjectRule } from "./lib/lineage.ts";
 import { buildPondHistory, pondDossier, pondTwin, readPondRows, type PondArm, type PondDossier, type PondHistory, type PondSubjectRule } from "./lib/pond-lineage.ts";
+import { readPickLogStream } from "./lib/pond-descent.ts";
+import { packetGenotype, runnerPondHistory, sameStart } from "./lib/pond-bundle.ts";
 
 async function* fileLines(path: string): AsyncGenerator<string> {
   const file = await Deno.open(path);
@@ -55,9 +68,6 @@ function isFile(path: string): boolean {
 async function bundle(dir: string): Promise<BundleSource> {
   const manifest = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
   if (!manifest.summary) throw new Error(`${dir}: manifest has no summary (run unfinished?)`);
-  // Pond-cycle runs (docs/scaffold-integration-v1.md) are not supported yet: their tracker births
-  // link across each cycle's grind and reseeding, which the dossier would read as real births.
-  if (manifest.cfg?.pondPeriod !== undefined) throw new Error(`${dir}: a pond-cycle run bundle (cfg.pondPeriod); genotype dossiers do not support pond runs yet`);
   return { dir, manifest, open: (f) => (isFile(`${dir}/${f}`) ? fileLines(`${dir}/${f}`) : null) };
 }
 
@@ -103,22 +113,34 @@ async function genotypeMain(args: string[]) {
   if (!a.quiet) report(d, twin);
 }
 
-async function pondHistory(dir: string): Promise<PondHistory> {
-  if (!isFile(`${dir}/ponds.tsv`)) throw new Error(`${dir}: ponds.tsv is missing (not a scaffold history?)`);
-  // A runner bundle (manifest.json) of a pond run records its arm in cfg and keeps cycling after its
-  // history ends; pond dossiers read only tools/scaffold.ts histories (meta.json) for now.
-  if (!isFile(`${dir}/meta.json`) && isFile(`${dir}/manifest.json`)) throw new Error(`${dir}: a runner bundle, not a tools/scaffold.ts history; pond dossiers do not support runner bundles yet`);
-  const arm = isFile(`${dir}/meta.json`) ? (JSON.parse(await Deno.readTextFile(`${dir}/meta.json`)).arm as PondArm | undefined) : undefined;
-  return buildPondHistory(await readPondRows(fileLines(`${dir}/ponds.tsv`)), { arm });
+/** A scaffold history (meta.json) or a pond-cycle run bundle (manifest.json), read for pond dossiers. */
+async function pondHistory(dir: string): Promise<{ h: PondHistory; manifest: any | null }> {
+  if (!isFile(`${dir}/ponds.tsv`)) throw new Error(`${dir}: ponds.tsv is missing (not a scaffold history or pond-cycle run?)`);
+  if (isFile(`${dir}/meta.json`)) {
+    const arm = JSON.parse(await Deno.readTextFile(`${dir}/meta.json`)).arm as PondArm | undefined;
+    return { h: buildPondHistory(await readPondRows(fileLines(`${dir}/ponds.tsv`)), { arm }), manifest: null };
+  }
+  if (!isFile(`${dir}/manifest.json`)) throw new Error(`${dir}: neither meta.json (a scaffold history) nor manifest.json (a run bundle)`);
+  const manifest = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
+  if (manifest.cfg?.pondPeriod === undefined) throw new Error(`${dir}: the run has no pond cycle (cfg.pondPeriod)`);
+  const picks = isFile(`${dir}/picks.jsonl`) ? await readPickLogStream(fileLines(`${dir}/picks.jsonl`)) : null;
+  try {
+    const h = runnerPondHistory(await readPondRows(fileLines(`${dir}/ponds.tsv`)), manifest, { hasMutations: isFile(`${dir}/mutations.tsv`), picks });
+    return { h, manifest };
+  } catch (e) {
+    throw new Error(`${dir}: ${(e as Error).message}`);
+  }
 }
 
 async function pondMain(args: string[]) {
   const a = parseArgs(args, {
-    string: ["dir", "pond", "cycle", "rule", "seed", "min-trait", "twin", "out"],
-    boolean: ["quiet"],
+    string: ["dir", "pond", "cycle", "rule", "seed", "min-trait", "twin", "out", "genotype-cycle", "genotype-out"],
+    boolean: ["quiet", "genotype"],
   });
   if (!a.dir) {
-    console.error("usage: deno run -A tools/lineage.ts pond --dir <history> [--pond P --cycle C | --rule top|random [--cycle C] [--seed S]] [--twin <rand history>] [--out file.json]");
+    console.error(
+      "usage: deno run -A tools/lineage.ts pond --dir <history or pond-cycle bundle> [--pond P --cycle C | --rule top|random [--cycle C] [--seed S]] [--twin <rand history>] [--out file.json] [--genotype [--genotype-cycle C] [--genotype-out file.json]]",
+    );
     Deno.exit(2);
   }
   const cycle = num(a.cycle, "cycle");
@@ -135,9 +157,14 @@ async function pondMain(args: string[]) {
     rule = { kind: "random", seed, cycle, minTrait: num(a["min-trait"], "min-trait") };
   } else throw new Error(`unknown --rule ${ruleName}`);
 
-  const h = await pondHistory(a.dir);
+  if ((a["genotype-cycle"] !== undefined || a["genotype-out"] !== undefined) && !a.genotype) throw new Error("--genotype-cycle and --genotype-out need --genotype");
+  if (a.genotype && a.twin) throw new Error("--genotype and --twin are exclusive");
+  const { h, manifest } = await pondHistory(a.dir);
   if (a.twin) {
-    const t = pondTwin(h, await pondHistory(a.twin), rule);
+    const other = await pondHistory(a.twin);
+    const both = manifest && other.manifest;
+    const seeds: [number, number] | undefined = both ? [manifest.cfg.seed, other.manifest.cfg.seed] : undefined;
+    const t = pondTwin(h, other.h, rule, { seeds, sameStart: both ? sameStart(manifest, other.manifest) : false });
     if (a.out) await Deno.writeTextFile(a.out, JSON.stringify(t));
     if (!a.quiet) {
       pondReport(a.dir, t.scaf);
@@ -148,8 +175,23 @@ async function pondMain(args: string[]) {
     return;
   }
   const d = pondDossier(h, rule);
+  let g: Dossier | null = null;
+  if (a.genotype) {
+    // The dominant lineage of a chain node's founding packet, read at the census where the packet was measured and
+    // anchored at the donor node (tools/lib/pond-bundle.ts).
+    const t = packetGenotype(d, h, num(a["genotype-cycle"], "genotype-cycle"));
+    g = await buildDossier(await bundle(a.dir), { kind: "key", key: t.lineage }, { step: t.step, pondAnchor: t.anchor });
+    d.genotype = { ...t, out: a["genotype-out"] ?? null };
+    if (a["genotype-out"]) await Deno.writeTextFile(a["genotype-out"], JSON.stringify({ ...g, twin: null }));
+  }
   if (a.out) await Deno.writeTextFile(a.out, JSON.stringify(d));
-  if (!a.quiet) pondReport(a.dir, d);
+  if (!a.quiet) {
+    pondReport(a.dir, d);
+    if (g) {
+      console.log(`\ngenotype of the packet dominant ${d.genotype!.lineage} (pond ${d.genotype!.anchor.pond} at cycle ${d.genotype!.anchor.cycle}, census step ${d.genotype!.step}):`);
+      report(g, null);
+    }
+  }
 }
 
 function pondReport(dir: string, d: PondDossier) {
@@ -195,7 +237,21 @@ function report(d: Dossier, twin: ReturnType<typeof twinSummary> | null) {
   out.push("");
   const exact = d.log.complete === true ? "exact" : d.log.complete === false ? "mutations.tsv is incomplete, see gaps" : "log completeness unchecked";
   out.push(`offspring (${exact}): ${d.offspring.childCount} children, ${d.offspring.childrenCensused} reached a census, ${d.offspring.descendants} descendants`);
-  if (d.trackerBirths) out.push(`tracker births (inferred): ${d.trackerBirths.fission} fission, ${d.trackerBirths.budding} budding`);
+  if (d.trackerBirths) out.push(`tracker births (inferred): ${d.trackerBirths.fission} fission, ${d.trackerBirths.budding} budding${d.pond ? `; ${d.trackerBirths.excludedAcrossCycle} left out at the first census after a pond boundary` : ""}`);
+  if (d.pond) {
+    const p = d.pond;
+    const cx = p.crossings, k = p.picks;
+    const picks = k ? `; picks.jsonl: ${k.checked} boundary(ies) agree${k.partial ? `, ${k.partial} on the rows present` : ""}${k.unchecked ? `, ${k.unchecked} unchecked` : ""}${k.unlogged ? `, ${k.unlogged} not logged` : ""}` : "";
+    out.push(`pond route (arm ${p.arm}, period ${f(p.period)}, ${p.ponds} ponds): ${p.exact} of ${p.edges.length} walk(s) land on the parent's birth pond${p.notRecorded ? `, ${p.notRecorded} not recorded` : ""}; ${cx.named} crossing(s) name the parent${cx.notExcluded ? `, ${cx.notExcluded} only do not exclude it` : ""}${cx.notRecorded ? `, ${cx.notRecorded} without packet columns` : ""}${picks}`);
+    const shown = p.edges.filter((e) => e.crossings.length || e.status !== "exact");
+    if (shown.length > 12) out.push(`  (${shown.length - 12} earlier edge(s) with crossings in the dossier)`);
+    for (const e of shown.slice(-12)) {
+      const what = e.child === null ? `${e.parent} to its anchor (pond ${e.start.pond}, cycle ${e.start.cycle})` : `${e.parent} → ${e.child}`;
+      const carried = (c: (typeof e.crossings)[number]) => (c.carried === "not excluded" ? `not excluded (packet held ${c.packetLineages} lineages; dominant is another)` : c.carried);
+      const hops = e.crossings.map((c) => `b${c.boundary} ${c.from}→${c.to} ${carried(c)}${c.share !== null ? ` (${c.share.toFixed(2)})` : ""}${c.by ? ` by ${c.by}` : ""}`).join("; ");
+      out.push(`  ${what}: ${e.status === "exact" ? hops || "same pond" : `not recorded (${e.reason})${hops ? `; after it: ${hops}` : ""}`}`);
+    }
+  }
   if (twin) out.push(`twin ${twin.runId}: subject ${twin.subject}, depth ${twin.depth}, median ancestor peak ${f(twin.medianAncestorPeak)} (here ${f(medianPeak(d))}), ${twin.ancestorsNeverCensused} ancestors never censused${twin.expressed ? "" : ", genomes not expressed"}`);
   for (const g of d.gaps) out.push(`gap: ${g}`);
   console.log(out.join("\n"));
