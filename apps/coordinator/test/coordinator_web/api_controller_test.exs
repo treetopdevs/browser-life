@@ -161,6 +161,222 @@ defmodule CoordinatorWeb.ApiControllerTest do
     refute Enum.any?(Queue.status().islands, &Map.has_key?(&1, :token))
   end
 
+  # ---- the garden token is a body parameter (docs/coordinator-hardening-2026-10-18.md, item 2) ----
+
+  describe "a gardenToken in the join URL" do
+    setup do
+      saved = Application.fetch_env(:coordinator, :garden_island_token)
+      Application.put_env(:coordinator, :garden_island_token, "open-sesame")
+
+      on_exit(fn ->
+        case saved do
+          {:ok, v} -> Application.put_env(:coordinator, :garden_island_token, v)
+          :error -> Application.delete_env(:coordinator, :garden_island_token)
+        end
+      end)
+
+      :ok
+    end
+
+    @refusal %{
+      "error" => "gardenToken belongs in the JSON body of POST /api/islands, never in the URL"
+    }
+
+    # Through the body parser, as the runner sends a join (a map passed to
+    # `post/3` would skip `CoordinatorWeb.IslandBodyLimit`).
+    defp post_join(path, body) do
+      build_conn()
+      |> put_req_header("content-type", "application/json")
+      |> post(path, Jason.encode!(body))
+    end
+
+    defp island_count, do: length(Queue.status().islands)
+
+    test "is refused, never echoed, and joins nothing" do
+      before = island_count()
+      conn = post_join("/api/islands?gardenToken=open-sesame", %{"adapter" => "A"})
+      assert json_response(conn, 400) == @refusal
+      refute response(conn, 400) =~ "open-sesame"
+      assert island_count() == before
+    end
+
+    test "is refused when the body carries the token as well" do
+      conn =
+        post_join("/api/islands?gardenToken=open-sesame", %{
+          "adapter" => "A",
+          "gardenToken" => "open-sesame"
+        })
+
+      assert json_response(conn, 400) == @refusal
+      refute Enum.any?(Queue.status().islands, &(&1[:garden] == true))
+      assert island_count() == 0
+    end
+
+    test "is refused with an empty value, a wrong one, a percent-encoded key, or no body at all" do
+      for path <- [
+            "/api/islands?gardenToken=",
+            "/api/islands?gardenToken",
+            "/api/islands?gardenToken=nope&adapter=A",
+            "/api/islands?garden%54oken=open-sesame",
+            "/api/islands?gardenToken[x]=open-sesame"
+          ] do
+        assert json_response(post_join(path, %{"adapter" => "A"}), 400) == @refusal, path
+        # An older client's join: no content type, no body.
+        assert json_response(build_conn() |> post(path), 400) == @refusal, path
+      end
+
+      assert island_count() == 0
+    end
+
+    # The request's log lines (the path, and the debug `Parameters:` line,
+    # which merges the query) never print the refused value.
+    test "is never logged, under its plain or percent-encoded key" do
+      # The level is global (test.exs sets :warning), so it is put back at once.
+      previous = Logger.level()
+      Logger.configure(level: :debug)
+
+      log =
+        try do
+          ExUnit.CaptureLog.capture_log([level: :debug], fn ->
+            for path <- [
+                  "/api/islands?gardenToken=open-sesame-q1",
+                  "/api/islands?garden%54oken=open-sesame-q2"
+                ] do
+              assert json_response(post_join(path, %{"adapter" => "A"}), 400) == @refusal
+            end
+          end)
+        after
+          Logger.configure(level: previous)
+        end
+
+      assert log =~ "POST /api/islands"
+      assert log =~ "Parameters:"
+      refute log =~ "open-sesame"
+    end
+
+    test "a body-only token still makes a garden island, and a join with no token is unchanged" do
+      body = post_join("/api/islands", %{"adapter" => "A", "gardenToken" => "open-sesame"})
+      %{"id" => garden_island} = json_response(body, 200)
+      assert Queue.island_info(garden_island)[:garden] == true
+
+      %{"id" => plain} = json_response(post_join("/api/islands", %{"adapter" => "B"}), 200)
+      refute Map.has_key?(Queue.island_info(plain), :garden)
+
+      # A query parameter under another name (here a case variant) is not the
+      # token: it is not honoured, and the join goes ahead without it.
+      %{"id" => variant} =
+        json_response(post_join("/api/islands?gardentoken=open-sesame", %{"adapter" => "C"}), 200)
+
+      refute Map.has_key?(Queue.island_info(variant), :garden)
+    end
+
+    # Over HTTP a join body is JSON or nothing (`CoordinatorWeb.IslandBodyLimit`),
+    # so a token in a form or multipart body never reaches `join/2`. (A map
+    # passed to `post/3` would skip that plug, so the bodies are sent raw.)
+    test "in a form-encoded or multipart body is answered 415, never echoed, and joins nothing" do
+      for {type, body} <- [
+            {"application/x-www-form-urlencoded", "adapter=A&gardenToken=open-sesame"},
+            {"multipart/form-data; boundary=b",
+             "--b\r\ncontent-disposition: form-data; name=\"gardenToken\"\r\n\r\nopen-sesame\r\n--b--\r\n"}
+          ] do
+        conn =
+          assert_error_sent(415, fn ->
+            build_conn() |> put_req_header("content-type", type) |> post("/api/islands", body)
+          end)
+
+        {415, _headers, sent} = conn
+        refute sent =~ "open-sesame", type
+      end
+
+      assert island_count() == 0
+    end
+  end
+
+  test "GET /api/islands/me never shows the recorded capabilities", %{conn: conn} do
+    {id, token} = join(conn)
+
+    assert %{"kind" => "idle"} =
+             build_conn()
+             |> authed(token)
+             |> put_req_header("content-type", "application/json")
+             |> post("/api/next?island=#{id}", Jason.encode!(%{"capabilities" => ["ponds-v1"]}))
+             |> json_response(200)
+
+    assert [%{capabilities: ["ponds-v1"]}] = Queue.status().islands
+
+    me =
+      build_conn() |> authed(token) |> get("/api/islands/me?island=#{id}") |> json_response(200)
+
+    refute Map.has_key?(me, "capabilities")
+    refute Map.has_key?(Queue.island_info(id), :capabilities)
+
+    # Nor does the public status, and the full one needs an operator.
+    raw = build_conn() |> get("/api/public/status") |> response(200)
+    refute raw =~ "ponds-v1"
+    refute raw =~ "apabilit"
+
+    saved =
+      {Application.fetch_env(:coordinator, :admin_token),
+       Application.fetch_env(:coordinator, :allow_local_admin)}
+
+    on_exit(fn ->
+      for {key, value} <- Enum.zip([:admin_token, :allow_local_admin], Tuple.to_list(saved)) do
+        case value do
+          {:ok, v} -> Application.put_env(:coordinator, key, v)
+          :error -> Application.delete_env(:coordinator, key)
+        end
+      end
+    end)
+
+    Application.put_env(:coordinator, :admin_token, "test-admin")
+    Application.put_env(:coordinator, :allow_local_admin, false)
+    unauthed = build_conn() |> get("/api/status")
+    assert json_response(unauthed, 401)
+    refute response(unauthed, 401) =~ "ponds-v1"
+
+    detail = build_conn() |> authed("test-admin") |> get("/api/status") |> json_response(200)
+    assert [%{"capabilities" => ["ponds-v1"]}] = detail["islands"]
+    assert %{"ponds-v1" => %{"islands" => 1}} = detail["islandCapabilities"]["byCapability"]
+  end
+
+  test "a capabilities list the controller counts as none (17 entries, a non-list, no body) removes the record",
+       %{conn: conn} do
+    {id, token} = join(conn)
+
+    next = fn body ->
+      c = build_conn() |> authed(token)
+
+      c =
+        if body,
+          do:
+            c
+            |> put_req_header("content-type", "application/json")
+            |> post("/api/next?island=#{id}", Jason.encode!(body)),
+          else: post(c, "/api/next?island=#{id}")
+
+      json_response(c, 200)
+    end
+
+    recorded = fn -> hd(Queue.status().islands)[:capabilities] end
+
+    for body <- [
+          %{"capabilities" => ["ponds-v1" | for(n <- 1..16, do: "x-#{n}")]},
+          %{"capabilities" => "ponds-v1"},
+          %{"capabilities" => ["ponds-v1", 7]},
+          %{},
+          nil
+        ] do
+      next.(%{"capabilities" => ["ponds-v1"]})
+      assert recorded.() == ["ponds-v1"]
+      next.(body)
+      assert recorded.() == nil, inspect(body)
+    end
+
+    # 16 entries is within the controller's bound: recorded (known names, then four others).
+    next.(%{"capabilities" => ["ponds-v1" | for(n <- 1..15, do: "x-#{n}")]})
+    assert recorded.() == ["ponds-v1", "x-1", "x-10", "x-11", "x-12"]
+  end
+
   # `/api/islands/me` is the probe an auto-rejoining island uses to check a
   # remembered identity before reusing it -- it must be a plain read (same
   # 401-on-bad-auth behavior as every other island route), never leak the

@@ -56,8 +56,13 @@ defmodule Coordinator.IslandLimiter do
   at most two island-keyed rows per island per window.
 
   Config is read at call time with `Application.get_env/3`, never at compile
-  time. If the table is missing (this process is restarting) every budget
-  fails open and the cache reports a miss.
+  time. Its shape (a positive whole number for each window and the table cap,
+  `nil` or a positive whole number for each limit) is checked once, when the
+  application starts (`Coordinator.ConfigCheck`), so a decimal or `nil` window
+  stops the boot by name rather than crashing a request here; a value changed
+  later with `Application.put_env/3` is not checked again. If the table is
+  missing (this process is restarting) every budget fails open and the cache
+  reports a miss.
 
   ## The public status cache
 

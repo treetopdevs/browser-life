@@ -23,7 +23,7 @@
   .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
   .mono { font-family: ui-monospace, Menlo, monospace; }
   td.reason { white-space:pre-wrap; overflow-wrap:anywhere; min-width:16ch; max-width:60ch; }
-  td.wrap { overflow-wrap:anywhere; max-width:40ch; }
+  td.wrap { overflow-wrap:anywhere; max-width:40ch; } td.nowrap { white-space:nowrap; }
   pre.cmd { white-space:pre-wrap; overflow-wrap:anywhere; margin:4px 0; padding:6px 8px; border:1px solid var(--line); border-radius:6px; font:12px/1.4 ui-monospace, Menlo, monospace; }
   dl.kv { display:grid; grid-template-columns: max-content 1fr; gap:2px 12px; margin:0 0 8px; font-size:13px; }
   dl.kv dt { color:var(--muted); } dl.kv dd { margin:0; overflow-wrap:anywhere; }
@@ -52,7 +52,7 @@
     <details class="card" style="margin-top:10px"><summary class="lbl">Runs</summary><div class="scroll"><table id="runs"></table></div></details>
   </section>
   <section id="sec-capabilities" aria-labelledby="h-capabilities"><h2 id="h-capabilities">Open work by capability</h2>
-    <p class="note">Work of every experiment but the gardens, by the capabilities its run needs (replays need the same). A run produces its segments one after another, so a run with open segments has at most one an island could produce now: "runs with open segments" bounds that, and "open segments" counts the rest of each run too. Replays are separate and can go out several at once, even from one run: a fraction of done segments is replayed, and the status does not say which, so "done, not verified" is an upper bound on replay work, not a count of it. The coordinator reads an island's capabilities on each request and never stores them, so this is what the work needs, not how much of it waits for a capable island.</p>
+    <p class="note">Work of every experiment but the gardens, by the capabilities its run needs (replays need the same). A run produces its segments one after another, so a run with open segments has at most one an island could produce now: "runs with open segments" bounds that, and "open segments" counts the rest of each run too. Replays are separate and can go out several at once, even from one run: a fraction of done segments is replayed, and the status does not say which, so "done, not verified" is an upper bound on replay work, not a count of it. "Live islands that last advertised all of these" comes from each island's most recent ask for work and is not a promise: work is still gated on each request, by what that request advertises.</p>
     <div class="card scroll"><table id="capabilities"></table></div>
   </section>
   <section id="sec-gardens" aria-labelledby="h-gardens"><h2 id="h-gardens">Gardens</h2>
@@ -71,10 +71,11 @@
     <div class="card scroll"><table id="mismatches"></table></div>
   </section>
   <section id="sec-islands" aria-labelledby="h-islands"><h2 id="h-islands">Islands</h2>
-    <p class="note">Device type is the adapter description an island reported at join: a lower bound on computers, never an identity. Runner comes from the user agent the island reported (one starting "deno " counts as headless); nothing checks it. Islands are not listed by capability: the coordinator never stores what an island can run.</p>
+    <p class="note">Device type is the adapter description an island reported at join: a lower bound on computers, never an identity. Runner comes from the user agent the island reported (one starting "deno " counts as headless); nothing checks it. Capabilities are as each island last advertised them when it asked for work (the coordinator keeps the names it gates on and at most four others, the first in sorted order); work is still gated on each request, so a recorded capability never promises a task. After an upgrade, an island counts as "none recorded" until it next asks for work, even while it heartbeats on a long task.</p>
     <div class="grid" id="island-totals"></div>
     <div class="card scroll"><h3 class="lbl">By device type</h3><table id="islands-by-device"></table></div>
     <div class="card scroll" style="margin-top:10px"><h3 class="lbl">By runner</h3><table id="islands-by-runner"></table></div>
+    <div class="card scroll" style="margin-top:10px"><h3 class="lbl">By capability (as last advertised)</h3><p class="note" id="islands-capability-state"></p><table id="islands-by-capability"></table></div>
     <div class="card scroll" style="margin-top:10px"><h3 class="lbl">Islands, most recently seen first</h3><p class="note" id="islands-shown"></p><table id="islands"></table></div>
   </section>
   <section id="sec-limits" aria-labelledby="h-limits"><h2 id="h-limits">Limits</h2>
@@ -149,7 +150,7 @@ const retryMs = () => Math.min(POLL_MS * 2 ** failedPolls, BACKOFF_MAX_MS);
 
 function setConnection(text, warn = false) { $("connection").textContent = text; $("connection").className = warn ? "warn" : ""; }
 function clearData() {
-  for (const id of ["totals", "experiments", "runs", "capabilities", "gardens", "failures", "divergences", "mismatches", "island-totals", "islands-by-device", "islands-by-runner", "islands-shown", "islands", "limits", "discovery-state", "discovery-campaigns", "discovery-workers"]) $(id).replaceChildren();
+  for (const id of ["totals", "experiments", "runs", "capabilities", "gardens", "failures", "divergences", "mismatches", "island-totals", "islands-by-device", "islands-by-runner", "islands-capability-state", "islands-by-capability", "islands-shown", "islands", "limits", "discovery-state", "discovery-campaigns", "discovery-workers"]) $(id).replaceChildren();
   $("data").hidden = true;
   $("data").classList.remove("stale");
   drawnAt = 0;
@@ -321,14 +322,25 @@ function render(s, gardenViews, discovery) {
     if ((experiments[name] || {}).garden === true) continue;
     const e = byExp.get(name); if (!e) continue;
     for (const [condition, c] of e.byCondition) {
-      const label = capsLabel((needs[name] || {})[condition]);
-      const row = byCaps.get(label) || { open: 0, runs: 0, unverified: 0, experiments: new Set() };
+      const caps = (needs[name] || {})[condition];
+      const label = capsLabel(caps);
+      const row = byCaps.get(label) || { caps: Array.isArray(caps) ? caps : null, open: 0, runs: 0, unverified: 0, experiments: new Set() };
+      // A condition with no need listed shares the "none" label; its row then has no island count.
+      if (!Array.isArray(caps)) row.caps = null;
       row.open += c.open; row.runs += c.runs; row.unverified += c.unverified; if (c.open > 0) row.experiments.add(name);
       byCaps.set(label, row);
     }
   }
-  table("capabilities", ["needs", "runs with open segments", "open segments", "done, not verified", "experiments with open segments"],
-    [...byCaps.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([label, row]) => [[label, "mono"], [row.runs, "n"], [row.open, "n"], [row.unverified, "n"], [[...row.experiments].sort().join(", ") || "—", "wrap"]]));
+  // Live islands whose last ask advertised every capability a row needs. Nothing needed: every live island, said
+  // so. A coordinator that records no capabilities (no `islandCapabilities` in its status), or a row with a need
+  // missing from `capabilityNeeds`, gets "—", not a count.
+  const recorded = !!s.islandCapabilities && typeof s.islandCapabilities === "object";
+  const capsOf = (i) => (Array.isArray(i.capabilities) ? i.capabilities : []);
+  const live = (pred) => islands.filter((i) => !i.stale && pred(i)).length;
+  const advertising = (caps) => (!recorded || !Array.isArray(caps) ? "—"
+    : caps.length === 0 ? `all live (${live(() => true)})` : live((i) => caps.every((c) => capsOf(i).includes(c))));
+  table("capabilities", ["needs", "runs with open segments", "open segments", "done, not verified", "experiments with open segments", "live islands that last advertised all of these"],
+    [...byCaps.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([label, row]) => [[label, "mono"], [row.runs, "n"], [row.open, "n"], [row.unverified, "n"], [[...row.experiments].sort().join(", ") || "—", "wrap"], [advertising(row.caps), "n"]]));
 
   // 4–5. Gardens and their keeper lines. The public view shows only the newest days, so a failed or diverged day is
   // also taken from the admin failure and divergence records (a garden's run is its experiment; segment index = day).
@@ -350,7 +362,7 @@ function render(s, gardenViews, discovery) {
     mismatches.map((m) => [[m.run, "mono"], [m.index, "n"], [m.producer, "wrap"], [m.verifier, "wrap"]]));
 
   // 8. Islands
-  renderIslands(islands, limits);
+  renderIslands(islands, limits, s.islandCapabilities);
 
   // 9. Limits. A key missing from config (`unset`) is not "off": its consumer applies a built-in default.
   // A malformed value (`invalid`, sent as null) is not "off" either.
@@ -461,7 +473,7 @@ function gardenCard(name, view, records) {
   return card;
 }
 
-function renderIslands(islands, limits) {
+function renderIslands(islands, limits, byCap) {
   const isDeno = (i) => typeof i.user_agent === "string" && i.user_agent.startsWith("deno ");
   const group = (key) => {
     const m = new Map();
@@ -478,10 +490,35 @@ function renderIslands(islands, limits) {
   const row = ([k, g]) => [[k, "wrap"], [g.islands, "n"], [g.live, "n"], [g.stale, "n" + (g.stale ? " bad" : "")], [g.runs, "n"], [g.verifies, "n"]];
   table("islands-by-device", ["device type", "islands", "live", "stale", "runs", "verifies"], group((i) => str(i.adapter)).map(row));
   table("islands-by-runner", ["runner (reported)", "islands", "live", "stale", "runs", "verifies"], group((i) => (isDeno(i) ? "headless (deno)" : "browser")).map(row));
+  // By recorded capability (OpsStatus's `islandCapabilities`); "(none recorded)" cannot be a capability's name.
+  if (byCap && typeof byCap === "object") {
+    $("islands-capability-state").textContent = "";
+    const by = byCap.byCapability && typeof byCap.byCapability === "object" ? Object.entries(byCap.byCapability) : [];
+    const capRow = (name, c, gated) => [[name, "mono wrap"], [num(c.islands), "n"], [num(c.live), "n"], [num(c.islands) - num(c.live), "n" + (num(c.islands) - num(c.live) ? " bad" : "")], [gated]];
+    const none = byCap.none && typeof byCap.none === "object" ? byCap.none : {};
+    // The coordinator lists every gated name and at most 50 others (`omittedNames` counts the rest); the page also
+    // stops at CAP_ROWS_MAX rows, so a larger list from elsewhere cannot freeze it.
+    const CAP_ROWS_MAX = 100;
+    // Gated names sort first for the cut (so it never drops one), then show by island count like the rest.
+    const byCount = (a, b) => num(b[1].islands) - num(a[1].islands) || a[0].localeCompare(b[0]);
+    const valid = by.filter(([, c]) => c && typeof c === "object");
+    const kept = [...valid].sort((a, b) => (b[1].known === true) - (a[1].known === true) || byCount(a, b)).slice(0, CAP_ROWS_MAX);
+    const rows = [...kept].sort(byCount);
+    const omitted = num(byCap.omittedNames) + (valid.length - kept.length);
+    table("islands-by-capability", ["capability", "islands", "live", "stale", "this coordinator gates on it"], [
+      ...rows.map(([name, c]) => capRow(name, c, c.known === true ? "yes" : "no")),
+      ...(omitted > 0 ? [[[`(${omitted} other ${omitted === 1 ? "name" : "names"} not listed)`, "wrap"], ["—", "n"], ["—", "n"], ["—", "n"], ["no"]]] : []),
+      capRow("(none recorded)", none, "—"),
+    ]);
+  } else {
+    $("islands-capability-state").textContent = "This coordinator's status carries no islandCapabilities: it records no island's capabilities (an older version).";
+    $("islands-by-capability").replaceChildren();
+  }
   const shown = [...islands].sort((a, b) => num(b.last_seen) - num(a.last_seen)).slice(0, 200);
   $("islands-shown").textContent = islands.length > shown.length ? `showing ${shown.length} of ${islands.length}` : "";
-  table("islands", ["island", "runner", "device type", "user agent", "runs", "verifies", "last seen", "status", ...(token ? ["garden"] : [])],
-    shown.map((i) => [[i.id, "mono"], [isDeno(i) ? "headless" : "browser"], [i.adapter, "wrap"], [i.user_agent, "wrap"], [num(i.runs), "n"], [num(i.verifies), "n"],
+  table("islands", ["island", "runner", "device type", "user agent", "last advertised", "runs", "verifies", "last seen", "status", ...(token ? ["garden"] : [])],
+    shown.map((i) => [[i.id, "mono nowrap"], [isDeno(i) ? "headless" : "browser"], [i.adapter, "wrap"], [i.user_agent, "wrap"],
+      [Array.isArray(i.capabilities) && i.capabilities.length ? i.capabilities.map(String).join(", ") : "—", "mono wrap"], [num(i.runs), "n"], [num(i.verifies), "n"],
       [time(i.last_seen)], [i.stale ? "stale" : "live", i.stale ? "bad" : "ok"], ...(token ? [[i.garden === true ? "yes" : "no"]] : [])]));
 }
 
