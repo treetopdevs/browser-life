@@ -325,9 +325,11 @@ const B: Island = { name: "B", gardenToken: TOKEN, log: [] };
 
 /** Has `island` complete `n` tasks, asking again (after a short sleep) whenever it is told idle: an idle answer is
  * waiting for the next dawn, not a failure. Returns the tasks it took, as "run #d" / "verify #d". */
-// runIsland checks its signal between tasks and while idle, but its requests and GPU work do not take it
-// (packages/runner is outside this test), so a call still running ISLAND_GRACE_MS past the deadline fails the run: the
-// throw reaches the cleanup, which stops the coordinator and exits the process, and with it the stuck call.
+// The deadline is runIsland's signal, which since docs/island-cancel-2026-10-18.md also cancels its requests and stops a
+// task in hand at its next census chunk (nothing uploaded or completed, the lease left to lapse): a day past the
+// deadline is abandoned, not finished and counted, so the checks see it as not done. A complete, reject or fail already
+// sent is not aborted, so a call still running ISLAND_GRACE_MS past the deadline (a coordinator that never answers one)
+// fails the run: the throw reaches the cleanup, which stops the coordinator and exits the process, and with it the call.
 const ISLAND_GRACE_MS = 30_000;
 // A day takes about a second here; BL_E2E_WORK_MS raises the per-step budget (default 120 s) on a machine slow enough
 // to need it, so a healthy slow island is not failed as a stuck one.

@@ -347,6 +347,21 @@ export interface RunOptions {
   picks?: readonly PickEntry[];
   /** `picks` came from a lab manifest, which is sparse: a boundary with no entry and no picker takes the rule's donors. */
   implicitRule?: boolean;
+  /**
+   * Stops the run when it aborts (docs/island-cancel-2026-10-18.md): checked once before anything is built, before each
+   * census chunk's GPU work and after it (before that chunk's readbacks), and before the final readback. An aborted run
+   * rejects with the signal's reason (whatever it is; an `AbortError` only where engines lack `reason`) at the next of those points and destroys its
+   * simulation (the `finally` below); latency is at most one census chunk. Never consulted otherwise: a run without a
+   * signal, or whose signal never aborts, writes the same files, manifest and digests as before.
+   */
+  signal?: AbortSignal;
+}
+
+/** Throws the signal's reason (any value, `null` included; an `AbortError` only on an engine without
+ * `AbortSignal.reason`) once `signal` has aborted. By hand rather than `throwIfAborted`, which some engines with
+ * WebGPU lack (see `timeoutSignal` in island.ts on such gaps). */
+function stopIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw "reason" in signal ? signal.reason : new DOMException("the run was aborted", "AbortError");
 }
 
 export interface RunResult {
@@ -893,6 +908,7 @@ export async function runExperiment(
   onProgress: (msg: string) => void = () => {},
   opts: RunOptions = {},
 ): Promise<RunResult> {
+  stopIfAborted(opts.signal);
   const errs = validateSpec(spec);
   if (errs.length) throw new Error(`invalid run spec: ${errs.join("; ")}`);
   const preset = PRESETS.find((p) => p.id === spec.presetId)!;
@@ -1204,6 +1220,8 @@ export async function runExperiment(
 
   try {
     for (let s = 0; s < spec.steps; ) {
+      // RunOptions.signal: between chunks only, so the observers never see half a census.
+      stopIfAborted(opts.signal);
       const chunk = Math.min(spec.censusEvery, spec.steps - s);
       const deep = obs.censusIdx % spec.deepEvery === 0;
       // The census chunk, in batches of at most 64 steps, split at every scheduled step strictly inside it: run to the
@@ -1224,6 +1242,7 @@ export async function runExperiment(
       runTo(chunkEnd);
       s += chunk;
       await device.queue.onSubmittedWorkDone();
+      stopIfAborted(opts.signal);
 
       const ledger = await sim.drainLedger();
       if (ledger.dropped > 0) throw new Error(`event buffer overflow (${ledger.dropped} dropped); lower censusEvery`);
@@ -1405,6 +1424,7 @@ export async function runExperiment(
         onProgress(`t=${c.step} ind=${ind.length} lin=${c.lineages.length} fis=${tracker.fissions} bud=${obs.buddings} mut=${obs.mutations} act.sig=${act.significant} ${((sim.step - startStep) / el).toFixed(0)} st/s`);
       }
     }
+    stopIfAborted(opts.signal);
     const final = await sim.readState();
     const wall = (performance.now() - t0) / 1000;
     const observer = serializeObservers(obs, final.step, settings);

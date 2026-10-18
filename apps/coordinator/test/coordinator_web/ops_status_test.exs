@@ -312,15 +312,23 @@ defmodule CoordinatorWeb.OpsStatusTest do
 
   # Objects keyed by data (experiment names, conditions, statuses), not by schema:
   # their values are compared merged, as one collection.
-  @dictionaries ["$.experiments", "$.counts", "$.capabilityNeeds", "$.capabilityNeeds.*"]
+  @dictionaries [
+    "$.experiments",
+    "$.counts",
+    "$.capabilityNeeds",
+    "$.capabilityNeeds.*",
+    "$.islandCapabilities.byCapability"
+  ]
   # Keys a real response carries only in some states, each with the test a
   # value must pass wherever it appears (on either side, even when the other
   # side lacks the key): `garden` only on an island that showed a configured
   # garden token; `amount` only on a feed (a lesion has none; feeds are held to
   # it by `feeds_have_amounts/2`); `unset` and `invalid` only while a limit key
-  # is missing from config or malformed.
+  # is missing from config or malformed; `capabilities` only on an island whose
+  # last ask advertised something the Queue stores.
   @optional %{
     "$.islands[].garden" => &is_boolean/1,
+    "$.islands[].capabilities" => &__MODULE__.key_names?/1,
     "$.experiments.*.interventions[].amount" => &is_integer/1,
     "$.limits.unset" => &__MODULE__.key_names?/1,
     "$.limits.invalid" => &__MODULE__.key_names?/1
@@ -432,7 +440,10 @@ defmodule CoordinatorWeb.OpsStatusTest do
              |> json_response(200)
 
     # b runs seed-2's first segment to done (so it is a device type), then holds the second.
-    t = next(b, token_b, [])
+    # It advertises a known name and an unknown one, which unlock nothing here (there is
+    # no pond work), so its record carries both and `islandCapabilities` has both shapes.
+    caps_b = ["ponds-v1", "zz-v9"]
+    t = next(b, token_b, caps_b)
     assert t["segment"]["run"] == "plain/spots/treatment/seed-2"
     staged = Path.join(dir, "cp-ops")
     File.write!(staged, "x")
@@ -440,7 +451,7 @@ defmodule CoordinatorWeb.OpsStatusTest do
     {seg, lease} = {t["segment"]["id"], t["lease"]}
     :ok = Queue.publish_checkpoint(seg, b, lease, staged, digest, "0000000000000000")
     assert {:ok, "done"} = Queue.complete(seg, b, lease, "run", digest, %{})
-    assert %{"kind" => "run", "segment" => %{"index" => 1}} = next(b, token_b, [])
+    assert %{"kind" => "run", "segment" => %{"index" => 1}} = next(b, token_b, caps_b)
 
     got = build_conn() |> get("/api/status") |> json_response(200)
     assert got["counts"]["failed"] == 1 and got["counts"]["blocked"] == 1
@@ -449,6 +460,15 @@ defmodule CoordinatorWeb.OpsStatusTest do
     assert [%{"run" => "checked/spots/treatment/seed-1"}] = got["divergences"]
     assert [%{"run" => "checked/spots/treatment/seed-2"}] = got["observationMismatches"]
 
+    assert got["islandCapabilities"] == %{
+             "byCapability" => %{
+               "ponds-v1" => %{"islands" => 1, "live" => 1, "known" => true},
+               "zz-v9" => %{"islands" => 1, "live" => 1, "known" => false}
+             },
+             "omittedNames" => 0,
+             "none" => %{"islands" => 3, "live" => 3}
+           }
+
     fixture = @fixture |> File.read!() |> Jason.decode!()
     # Nulls first, on every element of both sides (merging below would hide one).
     no_nulls("$", got)
@@ -456,6 +476,85 @@ defmodule CoordinatorWeb.OpsStatusTest do
     feeds_have_amounts("$", got)
     feeds_have_amounts("fixture", fixture)
     compare("$", got, fixture)
+  end
+
+  test "islandCapabilities counts live and stale islands per recorded name, marks known names, and counts islands with none" do
+    Application.put_env(:coordinator, :allow_local_admin, true)
+    Application.delete_env(:coordinator, :admin_token)
+    Coordinator.TestClock.install(100 * 86_400_000)
+    on_exit(&Coordinator.TestClock.uninstall/0)
+
+    {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+    {:ok, %{id: _c}} = Queue.join(%{"adapter" => "C"})
+    {:ok, _} = Queue.next_task(a, ["zz-v1", "ponds-v1"])
+    # a and c go stale; b asks afterwards and d joins afterwards, both live.
+    Coordinator.TestClock.advance(Queue.stale_ms() + 1)
+    {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+    {:ok, _} = Queue.next_task(b, ["ponds-v1", "Not-Stored"])
+    {:ok, %{id: _d}} = Queue.join(%{"adapter" => "D"})
+
+    assert CoordinatorWeb.OpsStatus.extend(Queue.status()).islandCapabilities == %{
+             byCapability: %{
+               "ponds-v1" => %{islands: 2, live: 1, known: true},
+               "zz-v1" => %{islands: 1, live: 0, known: false}
+             },
+             omittedNames: 0,
+             none: %{islands: 2, live: 1}
+           }
+
+    got = build_conn() |> get("/api/status") |> json_response(200)
+    assert got["islandCapabilities"]["none"] == %{"islands" => 2, "live" => 1}
+    assert Enum.find(got["islands"], &(&1["id"] == b))["capabilities"] == ["ponds-v1"]
+
+    # With no island at all: an empty dictionary and a zero `none`.
+    assert CoordinatorWeb.OpsStatus.island_capabilities([]) ==
+             %{byCapability: %{}, omittedNames: 0, none: %{islands: 0, live: 0}}
+  end
+
+  test "the fixture's islandCapabilities is what OpsStatus computes from the fixture's islands" do
+    fixture = @fixture |> File.read!() |> Jason.decode!()
+
+    islands =
+      for i <- fixture["islands"] do
+        %{stale: i["stale"]}
+        |> then(
+          &if(i["capabilities"], do: Map.put(&1, :capabilities, i["capabilities"]), else: &1)
+        )
+      end
+
+    computed =
+      islands
+      |> CoordinatorWeb.OpsStatus.island_capabilities()
+      |> Jason.encode!()
+      |> Jason.decode!()
+
+    assert computed == fixture["islandCapabilities"]
+  end
+
+  # Each island may record four names the Queue does not gate on, so across the
+  # island table they are unbounded; the status lists every gated name and the
+  # 50 others on the most islands.
+  test "islandCapabilities lists every gated name and at most 50 others, counting the rest" do
+    gated = Coordinator.Queue.known_capabilities()
+    # 100 islands with four unique unknown names each (400 names on one island
+    # each), and five islands sharing "zz-shared": that one is listed first.
+    islands =
+      for(
+        n <- 1..100,
+        do: %{stale: false, capabilities: gated ++ for(k <- 1..4, do: "x-#{n}-#{k}")}
+      ) ++
+        for(_ <- 1..5, do: %{stale: true, capabilities: ["zz-shared"]})
+
+    got = CoordinatorWeb.OpsStatus.island_capabilities(islands)
+    by = got.byCapability
+
+    for name <- gated, do: assert(by[name] == %{islands: 100, live: 100, known: true})
+    assert by["zz-shared"] == %{islands: 5, live: 0, known: false}
+    assert map_size(by) == length(gated) + 50
+    assert got.omittedNames == 400 + 1 - 50
+    # Ties are broken by name, so the listed ones are the first 49 in sorted order.
+    unknown = for(n <- 1..100, k <- 1..4, do: "x-#{n}-#{k}") |> Enum.sort() |> Enum.take(49)
+    assert Enum.sort(Map.keys(by) -- gated) == Enum.sort(["zz-shared" | unknown])
   end
 
   @doc false
