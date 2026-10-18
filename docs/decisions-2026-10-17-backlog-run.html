@@ -132,6 +132,8 @@ Three Sol passes, ending with one P3. On the merged tree: 431 vitest and 103 Chr
 <tr id="s34"><td>34</td><td>Stone horizon follow-up: a null-stone control and a finer census (rules fixed before running)</td><td><code>claude/slice34-null-stone</code></td><td>Running as workflow <code>wf_a5fb3a27-fd4</code></td></tr>
 <tr id="s35"><td>35</td><td>Prototype status, 18 Oct: every app, what works, how to try it locally, what waits on the user</td><td><code>claude/slice35-prototype-status</code> / <a href="https://github.com/treetopdevs/browser-life/pull/58">#58</a></td><td>Merged. <code>docs/prototypes-2026-10-18.md</code> and an <code>.html</code> twin cover each app: what it is now, how to try it locally, what is not built, and what waits on the user. Each command is marked Ran, Read or Needs data, with its rules fixed before writing. Sourced from PR bodies and docs. Nothing is implied deployed. Docs only.</td></tr>
 <tr id="s36"><td>36</td><td>Lab fixes: a refused Feed on a pond world no longer reads as &ldquo;World stopped&rdquo; (#38&rsquo;s finding); the Pond keeper rewind log survives a reload as an OPFS sidecar (#20&rsquo;s follow-up)</td><td><code>claude/slice36-lab-fixes</code></td><td>Running as workflow <code>wf_dfa7bbd3-bf9</code></td></tr>
+<tr id="s37"><td>37</td><td>The sun letter: a logged, replayable change to the light for a span (headless, lab, garden), with no rule change; stops with a design note if it needs the peer-held kernel files</td><td><code>claude/slice37-sun-letter</code></td><td>Running as workflow <code>wf_a590b9ea-74d</code></td></tr>
+<tr id="s38"><td>38</td><td>Garden opening-day copy, staged as a <b>draft</b> PR to merge only on opening day</td><td><code>claude/slice38-garden-opening-copy</code></td><td>Running as workflow <code>wf_d944087b-94c</code></td></tr>
 <!-- SLICE-ROWS -->
 </tbody>
 </table>
@@ -450,6 +452,16 @@ Three Sol passes, ending with one P3. On the merged tree: 431 vitest and 103 Chr
 <dt>Context</dt><dd>#56 went outside its allowed area to add an optional <code>world</code> field to the worker's <code>lesion</code> and <code>feed</code> messages (<code>protocol.ts</code>, <code>sim.worker.ts</code>), so that a stale suggestion cannot edit a replacement world. It asked for the user&rsquo;s accept or veto, and the verifying worker merged it without one.</dd>
 <dt>Decision</dt><dd>The coordinator accepts it after the fact. The field is optional, so existing callers are unchanged. Codex judged it the narrowest fix, and it closes a real race: a suggestion clicked just as the world is replaced.</dd>
 <dt>Why</dt><dd>The alternative, guarding only on the page, leaves a window. To veto it, revert that hunk and accept the race.</dd>
+</dl>
+</article>
+
+<article id="d32">
+<h2><span>D-32</span>The sun letter is attempted without the kernel files; the opening copy waits as a draft</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 19:50 UTC</dd>
+<dt>Context</dt><dd>#55&rsquo;s pace reading names the sun as the garden&rsquo;s first letter. The inventory had noted that a sun letter might touch the kernel, and the stalled gene v2 session holds <code>config.ts</code>, <code>step.ts</code>, <code>shaders.ts</code> and <code>golden.ts</code>. The opening checklist (#57) lists the copy to change on the day <code>/garden/</code> is linked.</dd>
+<dt>Decision</dt><dd>Slice 37 builds the sun letter only if it can work through runtime light parameters, the runner, the schema and the uniform upload, leaving every golden pin unchanged. Otherwise it writes a design note listing the exact kernel edits and stops there. Slice 38 prepares the opening-day copy as a draft PR the coordinator will not merge, because linking the garden is part of opening it, and that is the user&rsquo;s call.</dd>
+<dt>Why</dt><dd>Both move the garden toward opening without making the user&rsquo;s decisions for them or touching another session&rsquo;s uncommitted work.</dd>
 </dl>
 </article>
 
