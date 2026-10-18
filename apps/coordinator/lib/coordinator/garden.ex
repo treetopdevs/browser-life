@@ -26,6 +26,15 @@ defmodule Coordinator.Garden do
                     posted_at, dropped_at: nil | ms}],
         next_letter: N, days: %{index => %{released_at, done_at, verified_at}}}
 
+  A garden founded with food (`"food": true`, docs/garden-food-2026-10-18.md)
+  also holds, and only then (a garden without food has exactly the keys above,
+  so its record and its schedule are what they were before food existed):
+
+      food: %{asks: K, every_days: N, amount, r, x, y},
+      foods: [%{id: "food-N", seq: N, x, y, r, amount, step, day, called_at,
+                notice_until, hands, dropped_at: nil | ms}],
+      next_food: N
+
   `days` holds only released days (day 0 at creation). `width` and `height` are
   the preset's world size at creation, copied so a letter can be bounds-checked
   without the config. Segments are not in the record: every function that needs
@@ -86,6 +95,22 @@ defmodule Coordinator.Garden do
   keeps a letter it did not carry) but visible to the public as letters
   going back to `"waiting"`.
 
+  ## Food
+
+  A food is the existing `feed` intervention, called by visitors together: one
+  hand per network per dawn period (`add_hand/5`; the Queue keeps the hands, in
+  memory only, and passes them in), and the K-th hand of a period calls a food
+  onto the frontier day, landing at its end step like a stone, at the world's
+  centre, with the garden's fixed radius and amount. A day may carry a food only
+  if every live food's day is at least N days away (`food_landing/2`), so at
+  most one food is ever waiting. Foods obey the frontier exactly as letters do
+  (`letter_status/3` and the drop rule read only `:day` and `:dropped_at`), and
+  in the schedule they follow that step's stones. A food's day is not handed to
+  an island to run until one dawn period after the call (`food_hold?/3`, read by
+  the Queue's task picker), so the keeper's veto always has that long. The rules, the matter bound
+  (checked by the Queue at founding) and the limits are pre-stated in
+  docs/garden-food-2026-10-18.md.
+
   ## The view
 
   `view/5` is the public JSON map, exactly the README's table, every key always
@@ -116,7 +141,23 @@ defmodule Coordinator.Garden do
 
   @type t :: map
   @type segs :: %{optional(non_neg_integer) => Segment.t()}
-  @type env :: %{lease_ms: integer, stale_ms: integer, letters_per_address: integer}
+  @type env :: %{
+          required(:lease_ms) => integer,
+          required(:stale_ms) => integer,
+          required(:letters_per_address) => integer,
+          optional(:food_hands) => hands_summary | nil,
+          optional(:food_epoch) => term,
+          optional(:shared_address) => boolean
+        }
+  @typedoc "A garden's hands this dawn period, as the Queue keeps them (in memory only)."
+  @type hands :: %{dawn: integer, epoch: term, seen: MapSet.t(), count: non_neg_integer}
+  @typedoc "`hands` without the hashes: what the view needs."
+  @type hands_summary :: %{dawn: integer, epoch: term, count: non_neg_integer}
+  @typedoc "Why the food ask is closed, and with `\"cooldown\"` the first day a food could land."
+  @type closed :: {String.t(), non_neg_integer | nil}
+
+  # Foods shown in the view (the newest, live and dropped).
+  @foods_shown 32
 
   # ---- construction and the dawn grid ----
 
@@ -124,7 +165,9 @@ defmodule Coordinator.Garden do
   A fresh garden at `now`, day 0 released. `params` carries `name`,
   `preset_id`, `seed`, `steps_per_day`, `days_total`, `letters_per_day`,
   `queue_max`, `dawn_period_ms`, `dawn_offset_ms`, `founding`, `width` and
-  `height` (atom keys; the Queue has validated them).
+  `height` (atom keys; the Queue has validated them), and optionally `food`:
+  `nil` (no food) or `%{asks, every_days, amount, r}`, which puts the food keys
+  on the record (the place is the world's centre).
   """
   @spec new(map, integer) :: t
   def new(params, now) do
@@ -146,6 +189,26 @@ defmodule Coordinator.Garden do
       next_letter: 1,
       days: %{0 => day_entry(now)}
     }
+    |> put_food(Map.get(params, :food))
+  end
+
+  # Food keys only when the keeper founded the garden with food, so a garden
+  # without it has the record (and the schedule) it always had.
+  defp put_food(g, nil), do: g
+
+  defp put_food(g, %{asks: asks, every_days: every, amount: amount, r: r}) do
+    Map.merge(g, %{
+      food: %{
+        asks: asks,
+        every_days: every,
+        amount: amount,
+        r: r,
+        x: div(g.width, 2),
+        y: div(g.height, 2)
+      },
+      foods: [],
+      next_food: 1
+    })
   end
 
   defp day_entry(released_at), do: %{released_at: released_at, done_at: nil, verified_at: nil}
@@ -387,23 +450,39 @@ defmodule Coordinator.Garden do
   """
   @spec drop_letter(t, String.t(), segs, integer) ::
           {:ok, t, map} | {:error, :not_found | {:refused, String.t()}}
+  def drop_letter(g, "food-" <> _ = id, segs, now) do
+    # A food is vetoed exactly as a letter is (docs/garden-food-2026-10-18.md,
+    # section 4); a garden without food has no food to find.
+    case drop_in(Map.get(g, :foods, []), id, segs, g, now, "food") do
+      {:ok, foods, record} -> {:ok, %{g | foods: foods}, record}
+      error -> error
+    end
+  end
+
   def drop_letter(g, id, segs, now) do
-    case Enum.find(g.letters, &(&1.id == id)) do
+    case drop_in(g.letters, id, segs, g, now, "letter") do
+      {:ok, letters, record} -> {:ok, %{g | letters: letters}, record}
+      error -> error
+    end
+  end
+
+  defp drop_in(records, id, segs, g, now, what) do
+    case Enum.find(records, &(&1.id == id)) do
       nil ->
         {:error, :not_found}
 
-      %{dropped_at: at} = letter when is_integer(at) ->
+      %{dropped_at: at} = record when is_integer(at) ->
         # Idempotent: a keeper whose retry follows a lost reply gets the
         # letter as dropped, not a 409 that reads like "too late".
-        {:ok, g, letter}
+        {:ok, records, record}
 
-      letter ->
-        if letter.day >= frontier_day(g, segs) do
-          dropped = %{letter | dropped_at: now}
-          letters = Enum.map(g.letters, &if(&1.id == id, do: dropped, else: &1))
-          {:ok, %{g | letters: prune_dropped(letters)}, dropped}
+      record ->
+        if record.day >= frontier_day(g, segs) do
+          dropped = %{record | dropped_at: now}
+          records = Enum.map(records, &if(&1.id == id, do: dropped, else: &1))
+          {:ok, prune_dropped(records), dropped}
         else
-          {:error, {:refused, "the letter's day has been assigned"}}
+          {:error, {:refused, "the #{what}'s day has been assigned"}}
         end
     end
   end
@@ -423,7 +502,10 @@ defmodule Coordinator.Garden do
 
   defp live(g), do: Enum.reject(g.letters, &is_integer(&1.dropped_at))
 
-  defp log_count(g), do: length(g.founding) + length(live(g))
+  defp live_foods(g), do: g |> Map.get(:foods, []) |> Enum.reject(&is_integer(&1.dropped_at))
+
+  # Founding, live letters and live foods: what the experiment's schedule holds.
+  defp log_count(g), do: length(g.founding) + length(live(g)) + length(live_foods(g))
 
   defp waiting_count(g, segs),
     do: Enum.count(live(g), &(letter_status(g, &1, segs) == "waiting"))
@@ -474,21 +556,34 @@ defmodule Coordinator.Garden do
 
   @doc """
   The experiment's whole `interventions` list: the founding schedule exactly as
-  the keeper gave it, then the live letters as lesions, by `{step, seq}`. The
-  Queue stores it as the spec's `interventions` after every add or drop.
+  the keeper gave it, then the live letters as lesions and the live foods as
+  feeds, by step (at one step, stones by `seq`, then foods by `seq`). The Queue
+  stores it as the spec's `interventions` after every add or drop.
   """
   @spec schedule(t) :: [map]
   def schedule(g) do
-    letters =
-      g
-      |> live()
-      |> Enum.sort_by(&{&1.step, &1.seq})
-      |> Enum.map(fn l ->
-        %{"step" => l.step, "kind" => "lesion", "x" => l.x, "y" => l.y, "r" => l.r}
-      end)
+    stones = for l <- live(g), do: {{l.step, 0, l.seq}, lesion_entry(l)}
+    foods = for f <- live_foods(g), do: {{f.step, 1, f.seq}, feed_entry(f)}
 
-    g.founding ++ letters
+    # At one step the stones come first (by seq), then the foods (by seq). A
+    # garden without food has no foods, so its schedule is what it always was.
+    entries = (stones ++ foods) |> Enum.sort_by(&elem(&1, 0)) |> Enum.map(&elem(&1, 1))
+    g.founding ++ entries
   end
+
+  defp lesion_entry(l),
+    do: %{"step" => l.step, "kind" => "lesion", "x" => l.x, "y" => l.y, "r" => l.r}
+
+  # No `matter`: the runner logs the matter it moved, and a replay must reproduce it.
+  defp feed_entry(f),
+    do: %{
+      "step" => f.step,
+      "kind" => "feed",
+      "x" => f.x,
+      "y" => f.y,
+      "r" => f.r,
+      "amount" => f.amount
+    }
 
   @doc """
   A letter's public status: `"dropped"`; `"stalled"` (its day diverged, failed
@@ -532,6 +627,272 @@ defmodule Coordinator.Garden do
     }
   end
 
+  # ---- food (docs/garden-food-2026-10-18.md) ----
+
+  @doc "Whether the garden was founded with food."
+  @spec food?(t) :: boolean
+  def food?(g), do: Map.has_key?(g, :food)
+
+  @doc """
+  The day a food called now would land on, or why none can: `{:ok, day}` (the
+  frontier day) or `{:error, {code, opens_at_day}}`, `code` one of `"off"` (the
+  garden has no food), `"stopped"`, `"finished"`, `"log-full"`, `"horizon"` (no
+  day is left before it, or the first day the spacing allows is past it) and
+  `"cooldown"` (a live food is fewer than N days from the frontier day;
+  `opens_at_day` is then the first day a food could land, else `nil`).
+
+  The spacing rule is `|d - f| >= N` for every live food's day `f`, whatever
+  that food's status, so a frontier retreat never lets a second food in closer
+  than N; and while a live food is waiting (its day at or beyond the frontier)
+  the ask stays closed until the frontier is N days past it, so a retreat never
+  lets a second food wait beside it either.
+  """
+  @spec food_landing(t, segs) :: {:ok, non_neg_integer} | {:error, closed}
+  def food_landing(g, segs) do
+    cond do
+      not food?(g) ->
+        {:error, {"off", nil}}
+
+      stopped?(segs) ->
+        {:error, {"stopped", nil}}
+
+      finished?(g, segs) ->
+        {:error, {"finished", nil}}
+
+      log_count(g) >= @log_max ->
+        {:error, {"log-full", nil}}
+
+      true ->
+        d = frontier_day(g, segs)
+        n = g.food.every_days
+        days = g |> live_foods() |> Enum.map(& &1.day)
+        # A food at or beyond the frontier is waiting: nothing is called until
+        # the frontier is N past it, even after a retreat left room before it,
+        # so at most one food is ever waiting.
+        start = Enum.max([d | for(f <- days, f >= d, do: f + n)])
+        free = first_free_day(start, days, n)
+
+        cond do
+          free >= g.days_total -> {:error, {"horizon", nil}}
+          free == d -> {:ok, d}
+          true -> {:error, {"cooldown", free}}
+        end
+    end
+  end
+
+  # The first day at or after `d` at least `n` days from every day in `days`.
+  # Each pass moves past at least one food's day, so it takes at most
+  # `length(days) + 1` passes.
+  defp first_free_day(d, days, n) do
+    case Enum.filter(days, &(abs(d - &1) < n)) do
+      [] -> d
+      near -> near |> Enum.map(&(&1 + n)) |> Enum.max() |> first_free_day(days, n)
+    end
+  end
+
+  @doc """
+  A visitor's hand on the food ask at `now`. `hands` is this garden's hands
+  record as the Queue keeps it (or `nil`), `key` the hand's `{epoch, hash}` (the
+  limiter's incarnation and the salted hash of the network). Hands of another
+  dawn period or another limiter incarnation are discarded first: hands expire
+  at the garden's next dawn, and a limiter restart (a new salt) cannot count
+  one network twice.
+
+    * `{:error, {:refused, closed}}`: the ask is closed (`food_landing/2`).
+    * `{:repeat, hands}`: this network already gave a hand this period (also
+      after a call: the networks seen stay remembered until the dawn).
+    * `{:counted, hands}`: one more hand, short of K.
+    * `{:called, g, hands, food}`: the K-th hand: the food is written onto the
+      frontier day, landing at its end step, and the period's count is back at
+      zero.
+  """
+  @spec add_hand(t, hands | nil, {term, binary}, segs, integer) ::
+          {:error, {:refused, closed}}
+          | {:repeat, hands}
+          | {:counted, hands}
+          | {:called, t, hands, map}
+  def add_hand(g, hands, {epoch, hash}, segs, now) do
+    hands = current_hands(g, hands, epoch, now)
+
+    # A repeat is answered before the ask's state: a network whose hand is in
+    # learns so even after the K-th hand closed the ask (amendment 2026-10-18,
+    # after the second review).
+    if MapSet.member?(hands.seen, hash) do
+      {:repeat, hands}
+    else
+      with {:ok, day} <- refused_food(food_landing(g, segs)) do
+        if hands.count + 1 >= g.food.asks do
+          {g, food} = call_food(g, day, hands.count + 1, now)
+          {:called, g, %{hands | seen: MapSet.put(hands.seen, hash), count: 0}, food}
+        else
+          {:counted, %{hands | seen: MapSet.put(hands.seen, hash), count: hands.count + 1}}
+        end
+      end
+    end
+  end
+
+  defp refused_food({:ok, _} = ok), do: ok
+  defp refused_food({:error, closed}), do: {:error, {:refused, closed}}
+
+  defp current_hands(g, %{dawn: dawn, epoch: epoch} = hands, epoch, now) do
+    if dawn == dawn_index(g, now), do: hands, else: fresh_hands(g, epoch, now)
+  end
+
+  defp current_hands(g, _hands, epoch, now), do: fresh_hands(g, epoch, now)
+
+  defp fresh_hands(g, epoch, now),
+    do: %{dawn: dawn_index(g, now), epoch: epoch, seen: MapSet.new(), count: 0}
+
+  @doc "This period's hand count from a hands record (or summary), 0 if it is of another period or limiter incarnation."
+  @spec hands_count(t, map | nil, term, integer) :: non_neg_integer
+  def hands_count(g, %{dawn: dawn, epoch: epoch, count: count}, epoch, now) do
+    if dawn == dawn_index(g, now), do: count, else: 0
+  end
+
+  def hands_count(_g, _hands, _epoch, _now), do: 0
+
+  defp call_food(g, day, hands, now) do
+    n = g.next_food
+    f = g.food
+
+    record = %{
+      id: "food-#{n}",
+      seq: n,
+      x: f.x,
+      y: f.y,
+      r: f.r,
+      amount: f.amount,
+      step: (day + 1) * g.steps_per_day,
+      day: day,
+      called_at: now,
+      # The keeper's veto window: the day is not run before this
+      # (`food_hold?/3`).
+      notice_until: now + g.dawn_period_ms,
+      hands: hands,
+      dropped_at: nil
+    }
+
+    {%{g | foods: g.foods ++ [record], next_food: n + 1}, record}
+  end
+
+  @doc """
+  Whether `day` may not be handed to an island to run at `now`: a live food on
+  it was called less than one dawn period ago (its `notice_until` is still
+  ahead), so the keeper's veto (`drop_letter/4`, which works only until the day
+  is assigned) has that whole period. A reject that reopens the day does not
+  restart the notice: the food was already public that long. A garden without
+  food holds nothing.
+  """
+  @spec food_hold?(t, non_neg_integer, integer) :: boolean
+  def food_hold?(g, day, now) do
+    g
+    |> live_foods()
+    |> Enum.any?(&(&1.day == day and notice_until(g, &1) > now))
+  end
+
+  # A food's veto deadline. A food record written before foods carried one has
+  # the same rule's value, one dawn period from its call, for the hold and the
+  # view alike.
+  defp notice_until(_g, %{notice_until: t}) when is_integer(t), do: t
+  defp notice_until(g, food), do: food.called_at + g.dawn_period_ms
+
+  @doc "A food as the public sees it."
+  @spec food_record_view(t, map, segs) :: map
+  def food_record_view(g, food, segs) do
+    status = letter_status(g, food, segs)
+
+    %{
+      id: food.id,
+      x: food.x,
+      y: food.y,
+      r: food.r,
+      amount: food.amount,
+      calledAt: food.called_at,
+      noticeUntil: notice_until(g, food),
+      hands: food.hands,
+      landsAtStep: food.step,
+      day: food.day,
+      status: status,
+      landedIn:
+        if(status in ["landed", "verified"], do: accepted_digest(Map.get(segs, food.day))),
+      droppedAt: food.dropped_at
+    }
+  end
+
+  @doc "A letter or a food (by its id) as the public sees it."
+  @spec record_view(t, map, segs) :: map
+  def record_view(g, %{id: "food-" <> _} = food, segs), do: food_record_view(g, food, segs)
+  def record_view(g, letter, segs), do: letter_view(g, letter, segs)
+
+  @doc """
+  The view's `food` block (always present): the ask's rule, this period's hand
+  count (`count`, from the Queue's in-memory hands), when those hands expire,
+  whether a hand can be added now and why not, where a food called now would
+  land, and the newest #{@foods_shown} foods, newest first. `shared_address`
+  (`sharedAddress`) says that every visitor reaches the coordinator as one
+  address (config `garden_shared_address`: production until the proxy passes
+  client addresses, D-17), so the ask can hold one hand at most.
+  """
+  @spec food_view(t, segs, non_neg_integer, integer, boolean) :: map
+  def food_view(g, segs, count, now, shared_address \\ false) do
+    expires_at = dawn_at(g, dawn_index(g, now) + 1)
+
+    if food?(g) do
+      f = g.food
+
+      {open, closed, opens, landing} =
+        case food_landing(g, segs) do
+          {:ok, day} -> {true, nil, nil, %{day: day, step: (day + 1) * g.steps_per_day}}
+          {:error, {code, opens}} -> {false, code, opens, nil}
+        end
+
+      %{
+        enabled: true,
+        asks: f.asks,
+        everyDays: f.every_days,
+        amount: f.amount,
+        r: f.r,
+        place: %{x: f.x, y: f.y},
+        hands: count,
+        expiresAt: expires_at,
+        sharedAddress: shared_address,
+        open: open,
+        closed: closed,
+        opensAtDay: opens,
+        landing: landing,
+        foods:
+          g.foods
+          |> Enum.sort_by(& &1.seq, :desc)
+          |> Enum.take(@foods_shown)
+          |> Enum.map(&food_record_view(g, &1, segs))
+      }
+    else
+      %{
+        enabled: false,
+        asks: nil,
+        everyDays: nil,
+        amount: nil,
+        r: nil,
+        place: nil,
+        hands: 0,
+        expiresAt: expires_at,
+        sharedAddress: shared_address,
+        open: false,
+        closed: "off",
+        opensAtDay: nil,
+        landing: nil,
+        foods: []
+      }
+    end
+  end
+
+  defp day_food(g, day) do
+    case Enum.find(live_foods(g), &(&1.day == day)) do
+      nil -> nil
+      f -> f.id
+    end
+  end
+
   # ---- the public view ----
 
   @doc """
@@ -543,7 +904,12 @@ defmodule Coordinator.Garden do
   `lease_ms` and `stale_ms` (a pending attempt silent for longer than
   `lease_ms` is a dead lease that the Queue has not reclaimed yet, because it
   only reclaims when an island asks for work, so the view does not count it as
-  held) and `letters_per_address` (the limits block).
+  held) and `letters_per_address` (the limits block). It may also carry
+  `food_hands` (this garden's hands record, or its summary without the hashes)
+  and `food_epoch` (the limiter's incarnation now): the `food` block's count is
+  that record's, unless it is of another dawn period or incarnation (then 0).
+  Without them the count is 0. `shared_address` (default false) is the food
+  block's `sharedAddress`.
   """
   @spec view(t, segs, map, integer, env) :: map
   def view(g, segs, islands, now, env) do
@@ -605,6 +971,14 @@ defmodule Coordinator.Garden do
       fork: fork_day && fork(g, fork_day, segs[fork_day]),
       days: days_view(g, segs, islands, newest, now, env),
       letters: letters_view(g, segs),
+      food:
+        food_view(
+          g,
+          segs,
+          hands_count(g, Map.get(env, :food_hands), Map.get(env, :food_epoch), now),
+          now,
+          Map.get(env, :shared_address, false)
+        ),
       limits: %{
         stoneRadius: %{min: @radius_min, max: @radius_max},
         lettersPerAddressPerHour: env.letters_per_address,
@@ -762,6 +1136,7 @@ defmodule Coordinator.Garden do
         digest: seg && accepted_digest(seg),
         verification: seg && verification_kind(seg, islands),
         letters: for(l <- live(g), l.day == day, do: l.id),
+        food: day_food(g, day),
         census: if(accepted, do: day_census(seg))
       }
     end

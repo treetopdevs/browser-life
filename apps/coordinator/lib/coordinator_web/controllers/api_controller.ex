@@ -81,8 +81,13 @@ defmodule CoordinatorWeb.ApiController do
   # An island's file download is a segment request; the administrator's is not.
   plug :limit_island_download when action == :get_file
 
+  # The Queue's status plus the operator page's `limits` and `capabilityNeeds`
+  # (CoordinatorWeb.OpsStatus), computed outside the Queue process.
   def status(conn, _),
-    do: conn |> put_resp_header("cache-control", "no-store") |> json(Queue.status())
+    do:
+      conn
+      |> put_resp_header("cache-control", "no-store")
+      |> json(CoordinatorWeb.OpsStatus.extend(Queue.status()))
 
   # Queue.public_status/0 returns only aggregate progress; detailed status
   # contains island IDs, adapter descriptions, and experiment definitions.

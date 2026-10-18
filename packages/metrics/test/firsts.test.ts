@@ -7,6 +7,7 @@ import {
   FIRSTS_RULES,
   FIRSTS_RULESET,
   FIRSTS_RULESET_V0,
+  FIRSTS_RULESET_V1,
   FIRSTS_THRESHOLDS,
   FirstsDetector,
   Tracker,
@@ -15,19 +16,21 @@ import {
   firstsContext,
   firstsRules,
   nextUp,
+  pondLeaders,
+  readLineageCells,
   type FirstsBody,
   type FirstsContext,
   type FirstsEntry,
   type FirstsInput,
 } from "@bl/metrics";
 
-const CTX: FirstsContext = { tileW: 64, tileH: 64, tiles: 1, censusEvery: 100, geneBits: [] };
+const CTX: FirstsContext = { tileW: 64, tileH: 64, tilesX: 1, tiles: 1, censusEvery: 100, pondReseeds: false, geneBits: [] };
 
-const body = (id: number, cells: number, o: Partial<FirstsBody> = {}): FirstsBody => ({ id, generation: 0, cells, cx: 10, cy: 10, tile: 0, lineage: "A", ...o });
+const body = (id: number, cells: number, o: Partial<FirstsBody> = {}): FirstsBody => ({ id, generation: 0, cells, cx: 10, cy: 10, tile: 0, lineage: "A", elongation: 1, ...o });
 const cen = (step: number, o: Partial<FirstsInput> = {}): FirstsInput => {
   const bodies = o.bodies ?? [];
   const lineages = o.lineages ?? [{ key: "A", cells: bodies.reduce((a, b) => a + b.cells, 0) }].filter((l) => l.cells > 0);
-  return { step, bodies, lineages, fissions: 0, deaths: 0, livingCells: lineages.reduce((a, l) => a + l.cells, 0), ...o };
+  return { step, bodies, lineages, fissions: 0, deaths: 0, livingCells: lineages.reduce((a, l) => a + l.cells, 0), pondLeaders: [], wounds: [], ...o };
 };
 /** Feed censuses and collect every entry fired, with the step it fired at. */
 function feed(d: FirstsDetector, inputs: FirstsInput[]): FirstsEntry[] {
@@ -40,22 +43,30 @@ const find = (d: FirstsDetector, id: string) => d.entries().find((e) => e.id ===
 
 /**
  * A scripted stream that makes every rule fire, on STREAM_CTX (step 100 * (k + 1)): body 1 grows, drifts diagonally (traveller at k = 19, far traveller
- * at k = 38) and reaches 250 cells at k = 230; body 2 descends a generation every ten censuses and carries gene 0 from k = 61; lineage B appears at
+ * at k = 38) and reaches 250 cells at k = 230, and is long (elongation 3.5) from k = 30; body 2 descends a generation every ten censuses and carries gene 0 from k = 61;
+ * bodies 3 and 4 swing 10 cells either way each census in pond 2 (a moving pond from k = 5); lineage B appears at
  * k = 3 and holds on (new lineage k = 53, 20,000 steps k = 203) and takes over at k = 71; lineage C appears at k = 90 above B and takes over second at k = 99.
+ * Pond 1 is led by A until k = 9 and by B from k = 10 (a change of hands at k = 14); a lesion at k = 40 (step 4,050) in pond 2, whose bodies lose cells
+ * at that census, is outlived at k = 42; the family tree splits at k = 100.
  */
-const STREAM_CTX: FirstsContext = { tileW: 64, tileH: 64, tiles: 2, censusEvery: 100, pondPeriod: 500, geneBits: [0] };
+const STREAM_CTX: FirstsContext = { tileW: 64, tileH: 64, tilesX: 2, tiles: 2, censusEvery: 100, pondPeriod: 500, pondReseeds: false, geneBits: [0] };
 const stream = (n: number): FirstsInput[] => {
   const out: FirstsInput[] = [];
   for (let k = 0; k < n; k++) {
-    const b1 = body(1, 20 + k, { cx: (5 + 0.7 * k) % 64, cy: (20 + 0.5 * k) % 64 });
+    const b1 = body(1, 20 + k, { cx: (5 + 0.7 * k) % 64, cy: (20 + 0.5 * k) % 64, elongation: k >= 30 ? 3.5 : 1.5 });
     const b2 = body(2, 10 + (k % 40), { generation: Math.floor(k / 10), cx: 30, cy: 40, tile: 1, geneCells: [k > 60 ? 10 + (k % 40) : 0] });
+    const b3 = body(3, 12, { cx: 20 + 10 * (k % 2), cy: 5, tile: 1 });
+    const b4 = body(4, 12, { cx: 40, cy: 20 + 10 * (k % 2), tile: 1 });
     out.push({
       step: 100 * (k + 1),
-      bodies: [b1, b2],
+      bodies: [b1, b2, b3, b4],
       lineages: [{ key: "A", cells: Math.max(50, 200 - k) }, ...(k >= 3 ? [{ key: "B", cells: 16 + 2 * k }] : []), ...(k >= 90 ? [{ key: "C", cells: 210 + k }] : [])],
       fissions: Math.floor(k / 10),
       deaths: k % 7 === 0 ? 1 : 0,
       livingCells: 100,
+      pondLeaders: [k < 10 ? ["A"] : ["B"], []],
+      wounds: k === 40 ? [{ step: 4050, tile: 1, r: 10 }] : [],
+      family: { splits: k === 100 ? [{ name: "Reed amber", parentName: "Reed", step: 10100, cells: 34, parentCells: 120 }] : [], candidateRun: (k % 55) * 100 },
     });
   }
   return out;
@@ -69,29 +80,33 @@ describe("rules table", () => {
       .filter((l) => l.startsWith("| `"))
       .map((l) => l.trim().slice(1, -1).split(" | ").map((c) => c.replace(/`/g, "").trim()));
 
-  it("equals the tables in the contract notes: v0's nine rows, then v1's five", () => {
+  it("equals the tables in the contract notes: v0's nine rows, then v1's five, then v2's five", () => {
     const v0 = noteRows("pond-keeper-v0-2026-10-17.md");
     const v1 = noteRows("pond-keeper-v1-2026-10-17.md");
+    const v2 = noteRows("pond-keeper-v2-2026-10-17.md");
     const fixed0 = v0.filter((r) => r[0] !== "gene-<b>").map((r) => ({ id: r[0], name: r[1], text: r[2] }));
     const fixed1 = v1.map((r) => ({ id: r[0], name: r[1], text: r[2] }));
+    const fixed2 = v2.map((r) => ({ id: r[0], name: r[1], text: r[2] }));
     expect(fixed0).toHaveLength(9);
     expect(fixed1.map((r) => r.id)).toEqual(["body-250", "gen-10", "far-traveller", "lineage-20k", "takeover-2"]);
-    expect(FIRSTS_RULES).toHaveLength(14);
-    expect(FIRSTS_RULES).toEqual([...fixed0, ...fixed1]);
+    expect(fixed2.map((r) => r.id)).toEqual(["moving-pond", "long-body", "pond-change", "outlive-wound", "new-family"]);
+    expect(FIRSTS_RULES).toHaveLength(19);
+    expect(FIRSTS_RULES).toEqual([...fixed0, ...fixed1, ...fixed2]);
     const gene = v0.find((r) => r[0] === "gene-<b>")!;
     expect(gene[1]).toBe("First carrier body of gene b");
   });
 
   it("the ladder is the contract's order, over every fixed rule, and the gene rules are not in it", () => {
     expect(FIRSTS_LADDER).toEqual([
-      "body", "body-40", "split", "grandchild", "traveller", "new-lineage", "body-100", "takeover",
-      "gen-5", "far-traveller", "body-250", "lineage-20k", "takeover-2", "gen-10",
+      "body", "body-40", "split", "grandchild", "traveller", "moving-pond", "new-lineage", "body-100", "long-body", "takeover", "outlive-wound",
+      "gen-5", "pond-change", "new-family", "far-traveller", "body-250", "lineage-20k", "takeover-2", "gen-10",
     ]);
     const all = FIRSTS_RULES.map((r) => r.id);
     expect(FIRSTS_LADDER.every((id) => all.includes(id))).toBe(true);
     expect(all.filter((id) => !FIRSTS_LADDER.includes(id))).toEqual([]);
     expect(firstsRules([0, 1]).map((r) => r.id).filter((id) => !FIRSTS_LADDER.includes(id))).toEqual(["gene-0", "gene-1"]);
-    expect(FIRSTS_RULESET).toBe("firsts-v1");
+    expect(FIRSTS_RULESET).toBe("firsts-v2");
+    expect(FIRSTS_RULESET_V1).toBe("firsts-v1");
     expect(FIRSTS_RULESET_V0).toBe("firsts-v0");
   });
 
@@ -110,16 +125,28 @@ describe("rules table", () => {
       lineageSteps: 5000,
       longLineageSteps: 20000,
       leadCensuses: 10,
+      moveCells: 8,
+      moveCensuses: 5,
+      movingBodies: 2,
+      longBody: 40,
+      longRatio: 3,
+      changeCensuses: 5,
+      woundSteps: 1000,
     });
   });
 
   it("firstsContext reads tile sizes, pond period and the gene bits of the config", () => {
     const plain = firstsContext(defaultConfig({ tileW: 32, tileH: 24 }), 100);
-    expect(plain).toEqual({ tileW: 32, tileH: 24, tiles: 1, censusEvery: 100, geneBits: [] });
+    expect(plain).toEqual({ tileW: 32, tileH: 24, tilesX: 1, tiles: 1, censusEvery: 100, pondReseeds: false, geneBits: [] });
     expect("pondPeriod" in plain).toBe(false);
-    const pond = firstsContext(defaultConfig({ tilesX: 3, tilesY: 2, pondPeriod: 1000, genes: "ladder" }), 50);
+    const pond = firstsContext(defaultConfig({ tilesX: 3, tilesY: 2, pondPeriod: 1000, pondK: 8, pondArm: "scaf", genes: "ladder" }), 50);
     expect(pond.tiles).toBe(6);
+    expect(pond.tilesX).toBe(3);
     expect(pond.pondPeriod).toBe(1000);
+    expect(pond.pondReseeds).toBe(true);
+    // only the arms that grind and reseed a pond end a cycle; `cont` only measures
+    const arm = (a: "scaf" | "rand" | "cont" | "nat" | "shuf" | "breed") => firstsContext(defaultConfig({ tilesX: 2, pondPeriod: 1000, pondK: 8, pondArm: a }), 100).pondReseeds;
+    expect(["scaf", "rand", "breed", "cont", "nat", "shuf"].map((a) => arm(a as "scaf"))).toEqual([true, true, true, false, false, false]);
     expect(pond.geneBits).toEqual([0, 1]);
     expect(firstsContext(defaultConfig({ genes: "decomp" }), 100).geneBits).toEqual([0]);
   });
@@ -392,7 +419,7 @@ describe("takeover", () => {
   });
 });
 
-describe("v0 rules keep their behaviour under firsts-v1", () => {
+describe("v0 rules keep their behaviour under firsts-v2", () => {
   // The v0 scripted stream, verbatim, and the entries the v0 detector gave it (captured before firsts-v1 was written).
   const legacy = (n: number): FirstsInput[] => {
     const out: FirstsInput[] = [];
@@ -406,13 +433,15 @@ describe("v0 rules keep their behaviour under firsts-v1", () => {
         fissions: Math.floor(k / 10),
         deaths: k % 7 === 0 ? 1 : 0,
         livingCells: 100,
+        pondLeaders: [],
+        wounds: [],
       });
     }
     return out;
   };
 
   it("the nine v0 entries keep their exact steps, flags and detail lines", () => {
-    const d = new FirstsDetector({ tileW: 64, tileH: 64, tiles: 2, censusEvery: 100, pondPeriod: 500, geneBits: [0] });
+    const d = new FirstsDetector({ tileW: 64, tileH: 64, tilesX: 2, tiles: 2, censusEvery: 100, pondPeriod: 500, pondReseeds: false, geneBits: [0] });
     feed(d, legacy(120));
     const v0 = new Set(FIRSTS_RULES.slice(0, 9).map((r) => r.id).concat("gene-0"));
     expect(d.entries().filter((e) => v0.has(e.id)).map((e) => [e.id, e.step, e.already, e.detail])).toEqual([
@@ -430,7 +459,7 @@ describe("v0 rules keep their behaviour under firsts-v1", () => {
     // the only v1 rung this stream reaches, and the summary is v0's but for the rule set id
     expect(d.entries().filter((e) => !v0.has(e.id)).map((e) => [e.id, e.step, e.detail])).toEqual([["gen-10", 10100, "generation 10, 30 cells, in pond 2"]]);
     expect(d.summary()).toEqual({
-      ruleSet: "firsts-v1",
+      ruleSet: "firsts-v2",
       watchedFrom: 100,
       step: 12000,
       baseline: { bodies: 2, largestBody: 20, maxGeneration: 0, lineages: 1 },
@@ -710,7 +739,7 @@ describe("next up", () => {
 
   it("gene rungs follow the ladder, showing the latest census's best share of a body's cells, needing more than half", () => {
     const d = new FirstsDetector({ ...CTX, geneBits: [0, 1] });
-    expect(d.nextUp(20).map((n) => n.id)).toEqual([...FIRSTS_LADDER, "gene-0", "gene-1"]);
+    expect(d.nextUp(30).map((n) => n.id)).toEqual([...FIRSTS_LADDER, "gene-0", "gene-1"]);
     d.observe(cen(100, { bodies: [body(1, 20, { geneCells: [8, 0] }), body(2, 30, { geneCells: [3, 10] })] }));
     const gene = (b: number) => d.nextUp(20).find((n) => n.id === `gene-${b}`)!;
     expect(gene(0)).toMatchObject({ value: 40, target: 50, unit: "% of a body’s cells", kind: "now", above: true });
@@ -745,7 +774,7 @@ describe("next up", () => {
 
   it("a replay shows the same numbers: a restored detector's list equals the original's", () => {
     const all = stream(120);
-    const a = new FirstsDetector({ tileW: 64, tileH: 64, tiles: 2, censusEvery: 100, pondPeriod: 500, geneBits: [0] });
+    const a = new FirstsDetector({ tileW: 64, tileH: 64, tilesX: 2, tiles: 2, censusEvery: 100, pondPeriod: 500, pondReseeds: false, geneBits: [0] });
     feed(a, all.slice(0, 60));
     const b = FirstsDetector.restore(JSON.parse(JSON.stringify(a.snapshot())));
     expect(b.nextUp(20)).toEqual(a.nextUp(20));
@@ -881,6 +910,14 @@ describe("snapshot and restore", () => {
     ]);
     expect(find(d, "takeover-2")!.detail).toBe("lineage C, ahead since t=9,100");
     expect(find(d, "lineage-20k")!.detail).toContain("lineage B");
+    // the v2 rungs: a moving pond once six censuses are watched, a long body, a change of hands, an outlived wound, the family split
+    expect(["moving-pond", "long-body", "pond-change", "outlive-wound", "new-family"].map((id) => [id, find(d, id)!.step, find(d, id)!.already, find(d, id)!.detail])).toEqual([
+      ["moving-pond", 600, false, "pond 2: 2 of 3 bodies, 24 of 39 cells, moving"],
+      ["long-body", 3100, false, "3.5 times as long as wide, 50 cells, in pond 1"],
+      ["pond-change", 1500, false, "lineage A led from t=100; lineage B ahead since t=1,100, in pond 1"],
+      ["outlive-wound", 4300, false, "wounded at t=4,050 (radius 10, 39 cells lost), 3 bodies now, in pond 2"],
+      ["new-family", 10100, false, "Reed amber from Reed, 34 and 120 cells"],
+    ]);
     expect(d.nextUp()).toEqual([]);
   });
 
@@ -888,7 +925,7 @@ describe("snapshot and restore", () => {
     const all = stream(240);
     const whole = new FirstsDetector(ctx);
     feed(whole, all);
-    for (const cut of [0, 1, 4, 19, 20, 23, 24, 25, 38, 39, 52, 53, 54, 70, 71, 72, 89, 90, 99, 100, 119, 203, 204, 230, 231, 239]) {
+    for (const cut of [0, 1, 4, 5, 6, 9, 10, 13, 14, 15, 19, 20, 23, 24, 25, 29, 30, 31, 38, 39, 40, 41, 42, 43, 52, 53, 54, 70, 71, 72, 89, 90, 99, 100, 101, 119, 203, 204, 230, 231, 239]) {
       const a = new FirstsDetector(ctx);
       feed(a, all.slice(0, cut));
       const snap = JSON.parse(JSON.stringify(a.snapshot()));
@@ -965,6 +1002,31 @@ describe("snapshot and restore", () => {
     bad((s) => (s.geneShare = [101]));
     bad((s) => (s.takeoverKey = "B")); // no takeover entry yet
     bad((s) => (s.takeoverKey = 7));
+    // v2 fields
+    bad((s) => (s.v = 2));
+    bad((s) => ((s.v = 2), (s.ruleSet = "firsts-v1")));
+    bad((s) => delete s.trail);
+    bad((s) => (s.trail = [[100, [[1, 2, 3]]]]));
+    bad((s) => (s.trail = [[100, []], [100, []]]));
+    bad((s) => (s.trail = [[100, [[1, 2, 3, 9]]]])); // a tile past the world's
+    bad((s) => (s.trail = Array.from({ length: 6 }, (_, i) => [100 * (i + 1), []])));
+    bad((s) => (s.pondLead = []));
+    bad((s) => (s.pondLead = [{ cur: ["A", 100, 0], est: null }, { cur: null, est: null }]));
+    bad((s) => (s.pondLead = [{ cur: null }, { cur: null, est: null }]));
+    bad((s) => (s.pondCells = [1]));
+    bad((s) => (s.pondCells = [1, -1]));
+    bad((s) => (s.wounds = [[100, 5, 10, 0, 3]]));
+    bad((s) => (s.wounds = [[100, 1, 10, 0, 0]]));
+    bad((s) => (s.movingShare = 101));
+    bad((s) => (s.bestLong = -1));
+    bad((s) => (s.candidateRun = 1.5));
+    bad((s) => delete (s.ctx as Record<string, unknown>).tilesX);
+    bad((s) => {
+      // reseeds with no period
+      delete (s.ctx as Record<string, unknown>).pondPeriod;
+      (s.ctx as Record<string, unknown>).pondReseeds = true;
+    });
+    bad((s) => ((s.ctx as Record<string, unknown>).pondReseeds = "yes"));
     expect(() => FirstsDetector.restore(null as never)).toThrow();
   });
 });
@@ -1032,5 +1094,607 @@ describe("buildFirstsInput on a real census", () => {
     expect(d.observe(in1).map((e) => [e.id, e.already])).toEqual([["body", true], ["body-40", true], ["body-100", true]]);
     expect(d.observe(in2).map((e) => [e.id, e.already])).toEqual([["split", false], ["gene-0", false]]);
     expect(find(d, "gene-0")!.detail).toBe("50 of 50 cells carry it");
+  });
+});
+
+
+// ---- firsts-v2 ---------------------------------------------------------------------------------------------------------------------------
+
+/** Two ponds side by side; a 600-step reseeding cycle when `reseeds` (boundaries at 600, 1,200, ...). */
+const PONDS: FirstsContext = { tileW: 64, tileH: 64, tilesX: 2, tiles: 2, censusEvery: 100, pondPeriod: 600, pondReseeds: true, geneBits: [] };
+const PONDS_CONT: FirstsContext = { ...PONDS, pondReseeds: false };
+/** The steps 100, 200, ..., 100 * n. */
+const upTo = (n: number) => Array.from({ length: n }, (_, k) => 100 * (k + 1));
+
+describe("moving pond", () => {
+  /** Two 20-cell bodies in pond 2 at x = 10 and 30, plus whatever `more` adds; `dx(step)` is how far the first two are from there. */
+  const mv = (step: number, dx: number, more: FirstsBody[] = []) =>
+    cen(step, { bodies: [body(1, 20, { cx: 10 + dx, tile: 1 }), body(2, 20, { cx: 30 + dx, tile: 1 }), ...more] });
+
+  it("fires at the sixth census, when two bodies matched throughout have each moved 8 cells, naming the pond", () => {
+    const d = new FirstsDetector(PONDS_CONT);
+    for (const step of upTo(5)) expect(ids(d.observe(mv(step, 0)).filter((e) => e.id === "moving-pond"))).toEqual([]);
+    // jumping at the sixth: censuses 100..500 are at home, the oldest of the six is 100
+    expect(d.observe(mv(600, 7.9)).filter((e) => e.id === "moving-pond")).toEqual([]);
+    const fired = new FirstsDetector(PONDS_CONT);
+    for (const step of upTo(5)) fired.observe(mv(step, 0));
+    const got = fired.observe(mv(600, 8)).filter((e) => e.id === "moving-pond");
+    expect(got.map((e) => [e.name, e.step, e.already, e.detail])).toEqual([["First moving pond", 600, false, "pond 2: 2 of 2 bodies, 40 of 40 cells, moving"]]);
+    expect(fired.observe(mv(700, 20)).filter((e) => e.id === "moving-pond")).toEqual([]);
+  });
+
+  it("needs two moving bodies, holding at least half of the pond's body cells", () => {
+    const run = (more: FirstsBody[], twoMove = true) => {
+      const d = new FirstsDetector(PONDS_CONT);
+      for (const step of upTo(5)) d.observe(cen(step, { bodies: [body(1, 20, { cx: 10, tile: 1 }), body(2, 20, { cx: 30, tile: 1 }), ...more] }));
+      d.observe(cen(600, { bodies: [body(1, 20, { cx: 20, tile: 1 }), body(2, 20, { cx: twoMove ? 40 : 30, tile: 1 }), ...more] }));
+      return find(d, "moving-pond");
+    };
+    expect(run([body(3, 40, { cx: 50, tile: 1 })])!.detail).toBe("pond 2: 2 of 3 bodies, 40 of 80 cells, moving"); // exactly half is enough
+    expect(run([body(3, 41, { cx: 50, tile: 1 })])).toBeUndefined();
+    expect(run([], false)).toBeUndefined(); // one moving body is not a moving pond
+    // a body in another pond counts for that pond only
+    expect(run([body(3, 500, { cx: 50, tile: 0 })])!.detail).toBe("pond 2: 2 of 2 bodies, 40 of 40 cells, moving");
+  });
+
+  it("a body must be matched at all six censuses, in the same pond", () => {
+    const d = new FirstsDetector(PONDS_CONT);
+    for (const step of upTo(5)) d.observe(step === 300 ? cen(step, { bodies: [body(1, 20, { cx: 10, tile: 1 })] }) : mv(step, 0));
+    d.observe(mv(600, 20));
+    expect(find(d, "moving-pond")).toBeUndefined(); // body 2 was missing at 300
+    const t = new FirstsDetector(PONDS_CONT);
+    for (const step of upTo(5)) t.observe(mv(step, 0));
+    t.observe(cen(600, { bodies: [body(1, 20, { cx: 30, tile: 0 }), body(2, 20, { cx: 50, tile: 0 })] })); // same ids, other pond
+    expect(find(t, "moving-pond")).toBeUndefined();
+  });
+
+  it("measures the move on the pond's torus", () => {
+    const d = new FirstsDetector(PONDS_CONT);
+    for (const step of upTo(5)) d.observe(cen(step, { bodies: [body(1, 20, { cx: 62, tile: 0 }), body(2, 20, { cx: 61, tile: 0 })] }));
+    // 62 -> 6 is 8 cells the short way round, 61 -> 4 is 7
+    d.observe(cen(600, { bodies: [body(1, 20, { cx: 6, tile: 0 }), body(2, 20, { cx: 4, tile: 0 })] }));
+    expect(find(d, "moving-pond")).toBeUndefined();
+    d.observe(cen(700, { bodies: [body(1, 20, { cx: 6, tile: 0 }), body(2, 20, { cx: 5, tile: 0 })] })); // 61 -> 5 is 8
+    expect(find(d, "moving-pond")!.detail).toBe("pond 1: 2 of 2 bodies, 40 of 40 cells, moving");
+  });
+
+  it("names the pond with the largest share of moving cells, then the smaller pond, and says no pond when there is one", () => {
+    const d = new FirstsDetector({ ...PONDS_CONT, tiles: 3 });
+    const at = (step: number, away: boolean) =>
+      cen(step, {
+        bodies: [
+          body(1, 10, { cx: away ? 30 : 10, tile: 0 }), body(2, 10, { cx: away ? 30 : 10, tile: 0 }), body(3, 10, { cx: 50, tile: 0 }), // 2 of 3 bodies, 20 of 30 cells
+          body(4, 10, { cx: away ? 30 : 10, tile: 2 }), body(5, 10, { cx: away ? 30 : 10, tile: 2 }), body(6, 6, { cx: 50, tile: 2 }), // 20 of 26 cells
+          body(7, 10, { cx: away ? 30 : 10, tile: 1 }), body(8, 10, { cx: away ? 30 : 10, tile: 1 }), body(9, 6, { cx: 50, tile: 1 }), // 20 of 26 cells
+        ],
+      });
+    for (const step of upTo(5)) d.observe(at(step, false));
+    d.observe(at(600, true));
+    expect(find(d, "moving-pond")!.detail).toBe("pond 2: 2 of 3 bodies, 20 of 26 cells, moving");
+    const one = new FirstsDetector(CTX);
+    for (const step of upTo(5)) one.observe(cen(step, { bodies: [body(1, 20, { cx: 10 }), body(2, 20, { cx: 30 })] }));
+    one.observe(cen(600, { bodies: [body(1, 20, { cx: 20 }), body(2, 20, { cx: 40 })] }));
+    expect(find(one, "moving-pond")!.detail).toBe("2 of 2 bodies, 40 of 40 cells, moving");
+  });
+
+  it("is never 'already there': it needs six watched censuses", () => {
+    const d = new FirstsDetector(PONDS_CONT);
+    expect(CTX.pondReseeds).toBe(false);
+    for (const step of upTo(5)) d.observe(mv(step, 0));
+    d.observe(mv(600, 30));
+    expect(find(d, "moving-pond")!.already).toBe(false);
+  });
+
+  it("within one cycle: a boundary inside the span stops it, the census at the boundary does not", () => {
+    // home until step 700, away from 800 on; boundaries at 600 and 1,200
+    const at = (step: number) => mv(step, step >= 800 ? 20 : 0);
+    const free = new FirstsDetector(PONDS_CONT);
+    const cyc = new FirstsDetector(PONDS);
+    for (const step of upTo(12)) {
+      free.observe(at(step));
+      cyc.observe(at(step));
+    }
+    // without cycles the six censuses 300..800 already show the move
+    expect(find(free, "moving-pond")!.step).toBe(800);
+    // with them: 400..900, ..., 600..1100 hold the boundary 600 (a span from 600 holds it too); 700..1200 does not (1200 is its end)
+    expect(find(cyc, "moving-pond")!.step).toBe(1200);
+    // a span that ENDS at a boundary is whole: the census at 600 belongs to the cycle that ends there
+    const edge = new FirstsDetector(PONDS);
+    for (const step of upTo(6)) edge.observe(mv(step, step >= 300 ? 20 : 0));
+    expect(find(edge, "moving-pond")!.step).toBe(600);
+    // a span that STARTS at a boundary is not: 600..1100 with the move at 700
+    const start = new FirstsDetector(PONDS);
+    for (const step of upTo(11)) start.observe(mv(step, step >= 700 ? 20 : 0));
+    expect(find(start, "moving-pond")).toBeUndefined();
+    start.observe(mv(1200, 20)); // 700..1200 shows no move: it all happened at 700
+    expect(find(start, "moving-pond")).toBeUndefined();
+  });
+
+  it("next up shows the largest share of moving cells now, floored, and falls back when they stop", () => {
+    const d = new FirstsDetector(CTX);
+    const item = () => d.nextUp(30).find((n) => n.id === "moving-pond")!;
+    expect(item()).toMatchObject({ value: 0, target: 50, kind: "now" });
+    for (const step of upTo(5)) d.observe(cen(step, { bodies: [body(1, 20, { cx: 10 }), body(2, 14, { cx: 30 })] }));
+    expect(item().value).toBe(0);
+    d.observe(cen(600, { bodies: [body(1, 20, { cx: 20 }), body(2, 14, { cx: 30 })] })); // one body moved: 20 of 34
+    expect(item().value).toBe(58);
+    expect(find(d, "moving-pond")).toBeUndefined(); // one moving body is not enough, but the share is shown
+    d.observe(cen(700, { bodies: [body(1, 20, { cx: 20 }), body(2, 14, { cx: 30 })] }));
+    expect(item().value).toBe(58);
+    d.observe(cen(800, { bodies: [body(1, 20, { cx: 20 }), body(2, 14, { cx: 30 })] }));
+    d.observe(cen(900, { bodies: [body(1, 20, { cx: 20 }), body(2, 14, { cx: 30 })] }));
+    d.observe(cen(1000, { bodies: [body(1, 20, { cx: 20 }), body(2, 14, { cx: 30 })] }));
+    d.observe(cen(1100, { bodies: [body(1, 20, { cx: 20 }), body(2, 14, { cx: 30 })] }));
+    expect(item().value).toBe(0);
+  });
+});
+
+describe("long body", () => {
+  it("needs 40 cells and a ratio of 3 or more, and names the longest", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100));
+    expect(d.observe(cen(200, { bodies: [body(1, 39, { elongation: 9 }), body(2, 60, { elongation: 2.99 })] })).filter((e) => e.id === "long-body")).toEqual([]);
+    const got = d.observe(cen(300, { bodies: [body(1, 40, { elongation: 3 }), body(2, 52, { elongation: 3.456 }), body(3, 70, { elongation: 3.456 })] })).filter((e) => e.id === "long-body");
+    expect(got.map((e) => [e.name, e.step, e.already, e.detail])).toEqual([["First long body", 300, false, "3.4 times as long as wide, 70 cells"]]);
+    expect(d.observe(cen(400, { bodies: [body(1, 60, { elongation: 8 })] }))).toEqual([]);
+  });
+
+  it("ties on the ratio go to the larger body, then the smaller id; the pond is named when there are several", () => {
+    const d = new FirstsDetector({ ...CTX, tiles: 2, tilesX: 2 });
+    d.observe(cen(100));
+    d.observe(cen(200, { bodies: [body(5, 60, { elongation: 4, tile: 0 }), body(4, 60, { elongation: 4, tile: 1 }), body(6, 50, { elongation: 4, tile: 0 })] }));
+    expect(find(d, "long-body")!.detail).toBe("4.0 times as long as wide, 60 cells, in pond 2");
+  });
+
+  it("can already be there at the first watched census", () => {
+    const d = new FirstsDetector(CTX);
+    expect(d.observe(cen(100, { bodies: [body(1, 40, { elongation: 3 })] })).filter((e) => e.id === "long-body").map((e) => e.already)).toEqual([true]);
+  });
+
+  it("next up shows the longest ratio of a body of 40 cells or more seen so far, floored to one decimal", () => {
+    const d = new FirstsDetector(CTX);
+    const item = () => d.nextUp(30).find((n) => n.id === "long-body")!;
+    expect(item()).toMatchObject({ value: 0, target: 3, kind: "best", decimals: 1, unit: "times as long as wide" });
+    d.observe(cen(100, { bodies: [body(1, 39, { elongation: 2.9 })] }));
+    expect(item().value).toBe(0); // under 40 cells does not count
+    d.observe(cen(200, { bodies: [body(1, 45, { elongation: 2.78 })] }));
+    expect(item().value).toBe(2.7);
+    d.observe(cen(300, { bodies: [body(1, 45, { elongation: 1.2 })] }));
+    expect(item().value).toBe(2.7); // seen so far
+    d.observe(cen(400, { bodies: [body(1, 45, { elongation: 2.99 })] }));
+    expect(item().value).toBe(2.9);
+    expect(nextUp(d, 30).filter((n) => n.decimals !== undefined).map((n) => n.id)).toEqual(["long-body"]);
+  });
+});
+
+describe("change of hands in a pond", () => {
+  const lead = (step: number, ...tiles: string[][]) => cen(step, { pondLeaders: tiles });
+  const feedLeads = (d: FirstsDetector, from: number, n: number, ...tiles: string[][]) => {
+    for (let i = 0; i < n; i++) d.observe(lead(from + 100 * i, ...tiles));
+  };
+
+  it("fires at the fifth census of a second lineage's strict lead, after a first lineage's five", () => {
+    const d = new FirstsDetector(CTX);
+    feedLeads(d, 100, 5, ["A"]); // A established at 500
+    feedLeads(d, 600, 4, ["B"]);
+    expect(find(d, "pond-change")).toBeUndefined();
+    expect(ids(d.observe(lead(1000, ["B"])))).toEqual(["pond-change"]);
+    expect(find(d, "pond-change")).toMatchObject({ name: "First change of hands in a pond", step: 1000, already: false, detail: "lineage A led from t=100; lineage B ahead since t=600" });
+    expect(d.observe(lead(1100, ["B"]))).toEqual([]);
+  });
+
+  it("a tie is no lead: it ends a run, and the incumbent cannot keep leading through the successor's run", () => {
+    const d = new FirstsDetector(CTX);
+    feedLeads(d, 100, 5, ["A"]);
+    feedLeads(d, 600, 3, ["A", "B"]); // tied: nobody leads
+    feedLeads(d, 900, 4, ["B"]);
+    d.observe(lead(1300, ["A", "B"]));
+    feedLeads(d, 1400, 4, ["B"]); // the run was broken by the tie
+    expect(find(d, "pond-change")).toBeUndefined();
+    expect(ids(d.observe(lead(1800, ["B"])))).toEqual(["pond-change"]);
+    expect(find(d, "pond-change")!.detail).toBe("lineage A led from t=100; lineage B ahead since t=1,400");
+    // an empty pond leads nobody either
+    const e = new FirstsDetector(CTX);
+    feedLeads(e, 100, 4, ["A"]);
+    e.observe(lead(500, []));
+    feedLeads(e, 600, 4, ["A"]);
+    feedLeads(e, 1000, 5, ["B"]);
+    expect(find(e, "pond-change")).toBeUndefined(); // A never had five in a row, so B is only the first to establish itself
+  });
+
+  it("the same lineage returning is no change; the first to complete five is the established leader", () => {
+    const d = new FirstsDetector(CTX);
+    feedLeads(d, 100, 5, ["A"]);
+    feedLeads(d, 600, 3, ["B"]);
+    feedLeads(d, 900, 9, ["A"]);
+    expect(find(d, "pond-change")).toBeUndefined();
+    feedLeads(d, 1800, 5, ["B"]);
+    expect(find(d, "pond-change")!.step).toBe(2200);
+    // B established first, then A's later run changes hands
+    const e = new FirstsDetector(CTX);
+    feedLeads(e, 100, 5, ["B"]);
+    feedLeads(e, 600, 5, ["A"]);
+    expect(find(e, "pond-change")!.detail).toBe("lineage B led from t=100; lineage A ahead since t=600");
+  });
+
+  it("names the pond, and of several at once the run that began first, then the smaller pond", () => {
+    const d = new FirstsDetector({ ...CTX, tiles: 4, tilesX: 2 });
+    // ponds 2 and 3 change hands together at 1,000 (the smaller is named); pond 4 only starts its run at 700
+    for (let i = 0; i < 5; i++) d.observe(lead(100 + 100 * i, ["A"], ["A"], ["A"], ["A"]));
+    d.observe(lead(600, ["A"], ["B"], ["B"], ["A"]));
+    for (let i = 0; i < 3; i++) d.observe(lead(700 + 100 * i, ["A"], ["B"], ["B"], ["B"]));
+    const fired = d.observe(lead(1000, ["A"], ["B"], ["B"], ["B"]));
+    expect(ids(fired)).toEqual(["pond-change"]);
+    expect(fired[0].detail).toBe("lineage A led from t=100; lineage B ahead since t=600, in pond 2");
+  });
+
+  it("a reseeding cycle starts every pond afresh", () => {
+    // A leads 200..600 (the census at the 600 boundary is in the old cycle), B 700..1100
+    const runs = (ctx: FirstsContext) => {
+      const d = new FirstsDetector(ctx);
+      d.observe(lead(100, []));
+      feedLeads(d, 200, 5, ["A"]);
+      feedLeads(d, 700, 5, ["B"]);
+      return find(d, "pond-change");
+    };
+    expect(runs(PONDS_CONT)!.step).toBe(1100);
+    expect(runs(PONDS)).toBeUndefined();
+    // A's five completed in the cycle that ends at 600, B's in the next: nothing changed hands. Inside one cycle (601..1200) it does:
+    const d = new FirstsDetector(PONDS);
+    feedLeads(d, 700, 5, ["A"]); // 700..1100
+    d.observe(lead(1200, ["B"])); // the census at the boundary is still in this cycle
+    feedLeads(d, 1300, 4, ["B"]); // 1300 starts the next cycle: B's run is cut at the boundary
+    expect(find(d, "pond-change")).toBeUndefined();
+  });
+
+  it("next up shows the longest run held by a lineage other than the established leader", () => {
+    const d = new FirstsDetector(CTX);
+    const item = () => d.nextUp(30).find((n) => n.id === "pond-change")!;
+    expect(item()).toMatchObject({ value: 0, target: 5, unit: "censuses", kind: "now" });
+    feedLeads(d, 100, 4, ["A"]);
+    expect(item().value).toBe(0); // no established leader yet
+    feedLeads(d, 500, 1, ["A"]);
+    expect(item().value).toBe(0); // the leader itself does not count
+    feedLeads(d, 600, 3, ["B"]);
+    expect(item().value).toBe(3);
+    d.observe(lead(900, ["A", "B"]));
+    expect(item().value).toBe(0);
+  });
+});
+
+describe("outlive a wound", () => {
+  const bodiesIn = (tile: number, cells: number) => (cells > 0 ? [body(tile + 1, cells, { tile, cx: 10 })] : []);
+  const at = (step: number, cells1: number, wounds: { step: number; tile: number; r: number }[] = [], cells0 = 100) =>
+    cen(step, { bodies: [...bodiesIn(0, cells0), ...bodiesIn(1, cells1)], wounds });
+  /** Period 1,000: cycles end at 1,000, 2,000, ...; H = 500. */
+  const P1000: FirstsContext = { ...PONDS, pondPeriod: 1000 };
+
+  it("fires at the first census at or after w + H, once the wound cost cells, saying radius and cells lost", () => {
+    const d = new FirstsDetector(P1000);
+    for (const step of [100, 200, 300, 400]) d.observe(at(step, 100));
+    d.observe(at(500, 60, [{ step: 450, tile: 1, r: 10 }]));
+    for (const step of [600, 700, 800, 900]) expect(d.observe(at(step, 70))).toEqual([]);
+    // 450 + 500 = 950: the first census at or after is 1,000, the census at the boundary, still in the cycle it ends
+    expect(ids(d.observe(at(1000, 70)))).toEqual(["outlive-wound"]);
+    expect(find(d, "outlive-wound")).toMatchObject({ name: "First pond to outlive a wound", step: 1000, already: false, detail: "wounded at t=450 (radius 10, 40 cells lost), 1 body now, in pond 2" });
+  });
+
+  it("a wound counts only if the pond's bodies lost cells over it", () => {
+    const d = new FirstsDetector(P1000);
+    d.observe(at(100, 100));
+    d.observe(at(200, 100, [{ step: 150, tile: 1, r: 8 }])); // an empty patch: no loss
+    for (let step = 300; step <= 900; step += 100) d.observe(at(step, 100));
+    expect(find(d, "outlive-wound")).toBeUndefined();
+    // growth over a wound is no loss either; the other pond's loss is not this pond's
+    const e = new FirstsDetector(P1000);
+    e.observe(at(100, 100, [], 100));
+    e.observe(at(200, 120, [{ step: 150, tile: 1, r: 8 }], 50));
+    for (let step = 300; step <= 1000; step += 100) e.observe(at(step, 120, [], 50));
+    expect(find(e, "outlive-wound")).toBeUndefined();
+    // the first watched census has no census before it
+    const f = new FirstsDetector(P1000);
+    f.observe(at(100, 10, [{ step: 50, tile: 1, r: 8 }]));
+    for (let step = 200; step <= 900; step += 100) f.observe(at(step, 10));
+    expect(find(f, "outlive-wound")).toBeUndefined();
+  });
+
+  it("fails at a census where the pond holds no body, and each wound has its own clock", () => {
+    const d = new FirstsDetector(P1000);
+    d.observe(at(100, 100));
+    d.observe(at(200, 50, [{ step: 150, tile: 1, r: 8 }])); // wound 1
+    d.observe(at(300, 0)); // pond 2 holds no body: wound 1 fails
+    d.observe(at(400, 40, [{ step: 350, tile: 1, r: 6 }])); // 0 -> 40 is no loss
+    d.observe(at(500, 80));
+    d.observe(at(600, 30, [{ step: 550, tile: 1, r: 12 }])); // wound 2: lost 50
+    for (let step = 700; step <= 1000; step += 100) expect(d.observe(at(step, 30))).toEqual([]);
+    expect(find(d, "outlive-wound")).toBeUndefined(); // 550 + 500 = 1,050 is in the next cycle
+  });
+
+  it("a pond wounded again still counts its earlier wound, which is named first when both are due", () => {
+    const d = new FirstsDetector(P1000);
+    d.observe(at(100, 100));
+    d.observe(at(200, 80, [{ step: 150, tile: 1, r: 5 }])); // wound at 150: due at 650 -> 700
+    d.observe(at(300, 60, [{ step: 250, tile: 1, r: 7 }])); // due at 750 -> 800
+    for (let step = 400; step <= 600; step += 100) d.observe(at(step, 60));
+    expect(ids(d.observe(at(700, 60)))).toEqual(["outlive-wound"]);
+    expect(find(d, "outlive-wound")!.detail).toBe("wounded at t=150 (radius 5, 20 cells lost), 1 body now, in pond 2");
+    // two due at once: the earlier wound, then the smaller pond
+    const e = new FirstsDetector(P1000);
+    e.observe(at(100, 100));
+    e.observe(at(200, 50, [{ step: 130, tile: 1, r: 9 }, { step: 120, tile: 0, r: 4 }], 60));
+    for (let step = 300; step <= 600; step += 100) e.observe(at(step, 50, [], 60));
+    expect(ids(e.observe(at(700, 50, [], 60)))).toEqual(["outlive-wound"]);
+    expect(find(e, "outlive-wound")!.detail).toBe("wounded at t=120 (radius 4, 40 cells lost), 1 body now, in pond 1");
+  });
+
+  it("a wound's clock ends unfired at a reseeding boundary; one just after a boundary earns nothing", () => {
+    const d = new FirstsDetector(P1000); // H = 500
+    for (let step = 100; step <= 500; step += 100) d.observe(at(step, 100));
+    d.observe(at(600, 40, [{ step: 550, tile: 1, r: 10 }])); // due at 1,050: the cycle ends at 1,000
+    for (let step = 700; step <= 1500; step += 100) d.observe(at(step, 40));
+    expect(find(d, "outlive-wound")).toBeUndefined();
+    // the census at 1,000 is pre-cycle; a lesion logged at 1,000 comes after its boundary: no wound that counts
+    const e = new FirstsDetector(P1000);
+    for (let step = 100; step <= 1000; step += 100) e.observe(at(step, 100));
+    e.observe(at(1100, 40, [{ step: 1000, tile: 1, r: 10 }]));
+    for (let step = 1200; step <= 1900; step += 100) e.observe(at(step, 40));
+    expect(find(e, "outlive-wound")).toBeUndefined();
+    // a lesion shortly after the boundary, with a census between the two, does count
+    const f = new FirstsDetector(P1000);
+    for (let step = 100; step <= 1100; step += 100) f.observe(at(step, 100));
+    f.observe(at(1200, 40, [{ step: 1150, tile: 1, r: 10 }]));
+    for (let step = 1300; step <= 1600; step += 100) f.observe(at(step, 40));
+    expect(ids(f.observe(at(1700, 40)))).toEqual(["outlive-wound"]);
+  });
+
+  it("H is 1,000 steps, or half the pond period if that is shorter; without a period it is 1,000", () => {
+    const run = (ctx: FirstsContext) => {
+      const d = new FirstsDetector(ctx);
+      d.observe(at(100, 100));
+      d.observe(at(200, 50, [{ step: 150, tile: 1, r: 8 }]));
+      for (let step = 300; step <= 3000; step += 100) {
+        d.observe(at(step, 50));
+        if (find(d, "outlive-wound")) return find(d, "outlive-wound")!.step;
+      }
+      return null;
+    };
+    expect(run({ ...PONDS_CONT, pondPeriod: 600 })).toBe(500); // 150 + 300 = 450 -> 500
+    expect(run({ ...PONDS_CONT, pondPeriod: 4000 })).toBe(1200); // 150 + 1,000 = 1,150 -> 1,200
+    const noPeriod = { ...PONDS_CONT };
+    delete noPeriod.pondPeriod;
+    expect(run(noPeriod)).toBe(1200);
+    // in a world that does not reseed the clocks never end
+    expect(run({ ...PONDS_CONT, pondPeriod: 200 })).toBe(300); // H = 100: 250 -> 300
+  });
+
+  it("next up shows how long the pond has held a body since a wound that counts and is still on its clock", () => {
+    const d = new FirstsDetector(P1000);
+    const item = () => d.nextUp(30).find((n) => n.id === "outlive-wound")!;
+    expect(item()).toMatchObject({ value: 0, target: 500, unit: "steps", kind: "now" });
+    d.observe(at(100, 100));
+    d.observe(at(200, 50, [{ step: 150, tile: 1, r: 8 }]));
+    expect(item().value).toBe(50);
+    d.observe(at(300, 50));
+    d.observe(at(400, 50));
+    expect(item().value).toBe(250);
+    d.observe(at(500, 0)); // the pond is empty: the wound failed
+    expect(item().value).toBe(0);
+  });
+
+  it("is never 'already there'", () => {
+    const d = new FirstsDetector(P1000);
+    d.observe(at(100, 100));
+    d.observe(at(200, 50, [{ step: 150, tile: 1, r: 8 }]));
+    for (let step = 300; step <= 700; step += 100) d.observe(at(step, 50));
+    expect(find(d, "outlive-wound")!.already).toBe(false);
+  });
+});
+
+describe("new family", () => {
+  const split = { name: "Reed amber", parentName: "Reed", step: 5100, cells: 34, parentCells: 120 };
+  it("fires when the family tree split a family at this census, naming both and their cells, and the first split wins", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100, { family: { splits: [], candidateRun: 0 } }));
+    expect(d.observe(cen(200))).toEqual([]);
+    const fired = d.observe(cen(300, { family: { splits: [split, { ...split, name: "Moss slow" }], candidateRun: 0 } }));
+    expect(fired.map((e) => [e.id, e.name, e.step, e.already, e.detail])).toEqual([["new-family", "First new family", 300, false, "Reed amber from Reed, 34 and 120 cells"]]);
+    expect(d.observe(cen(400, { family: { splits: [split], candidateRun: 0 } }))).toEqual([]);
+  });
+
+  it("next up shows the longest split-candidate run now, of 5,000 steps", () => {
+    const d = new FirstsDetector(CTX);
+    const item = () => d.nextUp(30).find((n) => n.id === "new-family")!;
+    expect(item()).toMatchObject({ value: 0, target: 5000, unit: "steps", kind: "now" });
+    d.observe(cen(100, { family: { splits: [], candidateRun: 1200 } }));
+    expect(item().value).toBe(1200);
+    d.observe(cen(200)); // no tree fed: no run
+    expect(item().value).toBe(0);
+  });
+});
+
+describe("the rungs together", () => {
+  it("the new rungs are offered in the ladder's order", () => {
+    const d = new FirstsDetector({ ...CTX, geneBits: [0] });
+    expect(d.nextUp(30).map((n) => n.id)).toEqual([...FIRSTS_LADDER, "gene-0"]);
+    expect(FIRSTS_LADDER.indexOf("moving-pond")).toBeGreaterThan(FIRSTS_LADDER.indexOf("traveller"));
+    expect(FIRSTS_LADDER.indexOf("moving-pond")).toBeLessThan(FIRSTS_LADDER.indexOf("new-lineage"));
+    expect(FIRSTS_LADDER.indexOf("long-body")).toBe(FIRSTS_LADDER.indexOf("body-100") + 1);
+    expect(FIRSTS_LADDER.indexOf("outlive-wound")).toBe(FIRSTS_LADDER.indexOf("takeover") + 1);
+    expect(FIRSTS_LADDER.indexOf("new-family")).toBe(FIRSTS_LADDER.indexOf("pond-change") + 1);
+  });
+
+  it("several fire at one census in rule-table order", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100, { pondLeaders: [["A"]] }));
+    const fired = d.observe(cen(200, { bodies: [body(1, 60, { elongation: 5 })], family: { splits: [{ name: "Reed amber", parentName: "Reed", step: 200, cells: 20, parentCells: 40 }], candidateRun: 0 } }));
+    expect(ids(fired)).toEqual(["body", "body-40", "long-body", "new-family"]);
+  });
+
+  it("snapshot and restore carry the trail, the leads, the pond cells and the wound clocks through a mid-history cut", () => {
+    const script = (n: number): FirstsInput[] =>
+      Array.from({ length: n }, (_, k) => {
+        const step = 100 * (k + 1);
+        const cells1 = k === 8 ? 40 : 100;
+        return cen(step, {
+          bodies: [body(1, 20, { cx: 10 + (k >= 7 ? 12 : 0), tile: 0 }), body(2, 20, { cx: 30 + (k >= 7 ? 12 : 0), tile: 0 }), body(3, cells1, { cx: 10, tile: 1 })],
+          pondLeaders: [k < 5 ? ["A"] : ["B"], []],
+          wounds: k === 8 ? [{ step: 850, tile: 1, r: 9 }] : [],
+        });
+      });
+    const ctx: FirstsContext = { ...PONDS_CONT, pondPeriod: 1000 };
+    const all = script(40);
+    const whole = new FirstsDetector(ctx);
+    feed(whole, all);
+    expect(["moving-pond", "pond-change", "outlive-wound"].map((id) => find(whole, id)?.step)).toEqual([800, 1000, 1400]);
+    for (let cut = 0; cut <= 40; cut++) {
+      const a = new FirstsDetector(ctx);
+      feed(a, all.slice(0, cut));
+      const b = FirstsDetector.restore(JSON.parse(JSON.stringify(a.snapshot())));
+      expect(b.snapshot()).toEqual(a.snapshot());
+      expect(feed(b, all.slice(cut))).toEqual(feed(a, all.slice(cut)));
+      expect(JSON.stringify(b.snapshot())).toBe(JSON.stringify(whole.snapshot()));
+      expect(b.nextUp(30)).toEqual(whole.nextUp(30));
+    }
+  });
+});
+
+// ---- the census-side reads ---------------------------------------------------------------------------------------------------------------
+
+describe("buildFirstsInput: shape, lineages by pond and by body", () => {
+  /** Two 32 x 32 ponds side by side. `blocks` fill cells of mass 64 with a lineage (hi, 1). */
+  const cfg = defaultConfig({ tileW: 32, tileH: 32, tilesX: 2, tilesY: 1 });
+  const n = 2 * 32 * 32;
+  const W = 64;
+  type Block = { cells: [number, number][]; hi: number; lo?: number };
+  const world = (step: number, blocks: Block[]) => {
+    const cells = new Uint32Array(7 * n);
+    const genomeHead = new Uint32Array(4 * n);
+    for (const b of blocks)
+      for (const [x, y] of b.cells) {
+        const i = y * W + x;
+        cells[CH.B * n + i] = 64;
+        genomeHead[G.LIN_HI * n + i] = b.hi;
+        genomeHead[G.LIN_LO * n + i] = b.lo ?? 1;
+      }
+    return { c: census({ cfg, step, cells, genomeHead }), genomeHead };
+  };
+  const rect = (x0: number, y0: number, w: number, h: number): [number, number][] => {
+    const out: [number, number][] = [];
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) out.push([x, y]);
+    return out;
+  };
+  const ctx = firstsContext(cfg, 100);
+  const build = (blocks: Block[], extras?: Parameters<typeof buildFirstsInput>[5]) => {
+    const { c, genomeHead } = world(100, blocks);
+    const tracker = new Tracker();
+    const events = tracker.update(c);
+    return { c, tracker, genomeHead, input: buildFirstsInput(c, tracker, genomeHead, events, ctx, extras) };
+  };
+
+  it("firstsContext of this config reads the tile layout", () => {
+    expect(ctx).toMatchObject({ tileW: 32, tileH: 32, tilesX: 2, tiles: 2, pondReseeds: false });
+  });
+
+  it("elongation: a line of n cells is n, a 3 by 9 block 3, a square 1", () => {
+    const { input } = build([
+      { cells: rect(2, 2, 20, 1), hi: 0 }, // a line of 20: mass 1280
+      { cells: rect(2, 10, 9, 3), hi: 0 }, // 3 by 9 block
+      { cells: rect(2, 20, 8, 8), hi: 0 }, // square
+      { cells: rect(40, 5, 1, 12), hi: 0 }, // a vertical line of 12 in pond 2
+    ]);
+    const by = (cells: number) => input.bodies.find((b) => b.cells === cells)!;
+    expect(by(20).elongation).toBeCloseTo(20, 10);
+    expect(by(27).elongation).toBe(3);
+    expect(by(64).elongation).toBeCloseTo(1, 10);
+    expect(by(12).elongation).toBeCloseTo(12, 10);
+    expect(by(12).tile).toBe(1);
+  });
+
+  it("elongation: a body across its pond's wrap is unwrapped, in both directions and in the second pond", () => {
+    const { input } = build([
+      { cells: [...rect(28, 4, 4, 1), ...rect(0, 4, 4, 1)], hi: 0 }, // x 28..31 and 0..3 in pond 1: a line of 8 across the wrap
+      { cells: [...rect(10, 28, 1, 4), ...rect(10, 0, 1, 4)], hi: 0 }, // y 28..31 and 0..3: a line of 8 across the wrap
+      { cells: [...rect(62, 20, 2, 1), ...rect(32, 20, 6, 1)], hi: 0 }, // pond 2 spans x = 32..63: 62, 63, 32..37 is a line of 8
+    ]);
+    expect(input.bodies).toHaveLength(3);
+    for (const b of input.bodies) {
+      expect(b.cells).toBe(8);
+      expect(b.elongation).toBeCloseTo(8, 10);
+    }
+    expect(input.bodies.map((b) => b.tile).sort()).toEqual([0, 0, 1]);
+  });
+
+  it("elongation: an L is shorter than its longer arm, and a body that wraps the whole pond still gets a finite ratio", () => {
+    const { input } = build([
+      { cells: [...rect(2, 2, 10, 1), ...rect(2, 3, 1, 5)], hi: 0 }, // an L: 10 across, 6 down
+      { cells: rect(0, 12, 32, 2), hi: 0 }, // two full rows: a band all the way round the pond
+    ]);
+    for (const b of input.bodies) {
+      expect(Number.isFinite(b.elongation)).toBe(true);
+      expect(b.elongation).toBeGreaterThanOrEqual(1);
+    }
+    const l = input.bodies.find((b) => b.cells === 15)!;
+    expect(l.elongation).toBeGreaterThan(1.2);
+    expect(l.elongation).toBeLessThan(10);
+  });
+
+  it("pond leaders: every key tied for the most cells in a pond, [] for an empty pond; bodies' compositions", () => {
+    const { input, c, tracker, genomeHead } = build([
+      { cells: rect(2, 2, 10, 5), hi: 0, lo: 1 }, // pond 1: 50 cells of 0:1 ...
+      { cells: rect(2, 10, 5, 10), hi: 7, lo: 3 }, // ... and 50 of 7:3, a tie
+      { cells: rect(14, 2, 4, 1), hi: 0, lo: 2 }, // 4 cells of another key: the smallest body there is
+    ]);
+    expect(input.pondLeaders).toEqual([["0:1", "7:3"], []]);
+    const lc = readLineageCells(c, tracker, genomeHead, ctx);
+    expect(lc.ponds[0].get("0:1")).toBe(50);
+    expect(lc.ponds[0].get("7:3")).toBe(50);
+    expect(lc.ponds[0].get("0:2")).toBe(4);
+    expect(lc.ponds[1].size).toBe(0);
+    expect(pondLeaders(lc)).toEqual(input.pondLeaders);
+    expect(lc.bodies).toHaveLength(3);
+    expect(lc.bodies.map((b) => [b.cells, b.keys] as const).sort((p, q) => p[0] - q[0])).toEqual([
+      [4, [["0:2", 4]]],
+      [50, [["0:1", 50]]],
+      [50, [["7:3", 50]]],
+    ]);
+  });
+
+  it("a body of two lineages carries both counts, in birth order, and a lone leader is a strict one", () => {
+    const { input, c, tracker, genomeHead } = build([
+      { cells: rect(2, 2, 6, 5), hi: 12, lo: 5 },
+      { cells: rect(8, 2, 4, 5), hi: 3, lo: 9 }, // touching: one body of 50 cells, 30 + 20
+      { cells: rect(40, 2, 2, 2), hi: 0, lo: 4 },
+    ]);
+    const lc = readLineageCells(c, tracker, genomeHead, ctx);
+    expect(lc.bodies.map((b) => b.keys)).toEqual([[["3:9", 20], ["12:5", 30]], [["0:4", 4]]]);
+    expect(lc.bodies[0].cells).toBe(50);
+    expect(input.pondLeaders).toEqual([["12:5"], ["0:4"]]);
+  });
+
+  it("uses the shared read it is given, takes the wounds and the family, and copies them", () => {
+    const { c, tracker, genomeHead } = build([{ cells: rect(2, 2, 10, 5), hi: 0 }]);
+    const lc = readLineageCells(c, tracker, genomeHead, ctx);
+    lc.ponds[1].set("9:9", 4);
+    const wounds = [{ step: 150, tile: 1, r: 8 }];
+    const family = { splits: [{ name: "Reed amber", parentName: "Reed", step: 100, cells: 20, parentCells: 40 }], candidateRun: 700 };
+    const input = buildFirstsInput(c, tracker, genomeHead, [], ctx, { lineageCells: lc, wounds, family });
+    expect(input.pondLeaders).toEqual([["0:1"], ["9:9"]]);
+    expect(input.wounds).toEqual(wounds);
+    expect(input.wounds).not.toBe(wounds);
+    expect(input.family).toEqual(family);
+    expect(input.family!.splits).not.toBe(family.splits);
+    // not given: no wounds, no family
+    const plain = buildFirstsInput(c, tracker, genomeHead, [], ctx);
+    expect(plain.wounds).toEqual([]);
+    expect(plain.family).toBeUndefined();
+    // without genome words there are no pond leaders but one empty list per pond
+    expect(buildFirstsInput(c, tracker, undefined, [], ctx).pondLeaders).toEqual([[], []]);
+  });
+
+  it("through the detector: a long body on a real census fires long-body as already there", () => {
+    const { input } = build([{ cells: rect(2, 2, 30, 2), hi: 0 }, { cells: rect(2, 8, 30, 1), hi: 0 }]); // 60 cells, 15 times as long as wide; and a line of 30: too small
+    const d = new FirstsDetector(ctx);
+    const fired = d.observe(input);
+    expect(fired.filter((e) => e.id === "long-body").map((e) => [e.already, e.detail])).toEqual([[true, "15.0 times as long as wide, 60 cells, in pond 1"]]);
   });
 });

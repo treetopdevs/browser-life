@@ -2,7 +2,7 @@ import type { Intervention, WorldConfig, InitParams, PondArm, PondScore, PondTer
 import type { GpuViewMode, ViewRect } from "@bl/sim-gpu";
 import type { ObserverSettings } from "@bl/runner";
 import type { LineageView } from "@bl/lineage";
-import type { FirstsEntry, FirstsRule, FirstsSummary, NextUpItem } from "@bl/metrics";
+import type { FamilyEvent, FamilySummary, FamilyView, FirstsEntry, FirstsRule, FirstsSummary, NextUpItem } from "@bl/metrics";
 import type { KeptPond } from "./pond-play.ts";
 
 export interface RunManifest {
@@ -234,6 +234,11 @@ export interface SessionFacts {
   pressures: { changes: number; latest: PondScore | null };
   /** Pond cycles before that history (a world opened from a file mid-run): who chose their donors is not known here. */
   cyclesBefore: number;
+  /**
+   * The family tree's counts (rule set `families-v1`): families named (starting and split, and any root first seen later),
+   * how many of each kind, and how many are living, gone to film and extinct. All 0 before the tree has watched a census.
+   */
+  families: Omit<FamilySummary, "rules" | "watchedFrom" | "step">;
 }
 
 /**
@@ -252,7 +257,40 @@ export interface FirstsMsg {
   rules: FirstsRule[];
   /** The first rungs of the ladder not yet reached, each with its progress (`nextUp` in `@bl/metrics`). */
   nextUp: NextUpItem[];
-  /** The log stopped (a detector error); entries stay as they were and export is refused. */
+  /**
+   * The log stopped (a detector or tree error); entries stay as they were and export is refused. A tree that stopped alone (a dropped
+   * ledger record) leaves this null: `refusal` says whether a session file can be made.
+   */
+  stopped: string | null;
+  /** Why a session file can't be made from this log (`logRefusal`: a stopped log or a stopped tree), or null. */
+  refusal: string | null;
+}
+
+/**
+ * The family tree of the world on screen (`FamilyTree` in `@bl/metrics`, docs/pond-keeper-v2-2026-10-17.md section 3), in full.
+ * Posted right after every `FirstsMsg` (same moments, same throttling: when a world is adopted, whenever an entry or a family
+ * event fires, with each displayed census, and while paused after a step), so a page that handles both always sees them
+ * for the same census. `world` is the same number as `FirstsMsg.world`.
+ */
+export interface FamiliesMsg {
+  type: "families";
+  world: number;
+  /** The latest census the tree has watched, or null before the first (`summary.step`). */
+  step: number | null;
+  /**
+   * Every family in tree order (parents before children, siblings by founding step): name, founding lineage, parent, status,
+   * cells, bodies, purity (a fraction, null with no body) and share of the jar's living cells. `depth` indents the tree.
+   */
+  families: FamilyView[];
+  /** The tree's log, oldest first (the page shows it newest first): splits, gone to film, back from film, extinct, and roots found later. */
+  events: FamilyEvent[];
+  summary: FamilySummary;
+  /** Whether the tree watched from the first census after a plant: when false the page says "watching since t=…" (`summary.watchedFrom`). */
+  fromStart: boolean;
+  /**
+   * Why the tree stopped (a ledger record was dropped while it watched, or a tree error), or null. The tree then keeps what it had, the
+   * log of firsts goes on without its family input unless `FirstsMsg.stopped` says it stopped too, and a session file is refused.
+   */
   stopped: string | null;
 }
 
@@ -328,6 +366,7 @@ export type FromWorker =
   | { type: "session"; view: SessionView }
   | { type: "exported"; bytes: ArrayBuffer; name: string }
   | FirstsMsg
+  | FamiliesMsg
   | { type: "sessionFile"; world: number; id: number; text: string; name: string }
   | { type: "notice"; message: string }
   /**

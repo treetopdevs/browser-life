@@ -4,7 +4,7 @@
 // world's manifest; nothing here counts, scores or interprets.
 import type { FirstsEntry, FirstsRule, NextUpItem } from "@bl/metrics";
 import type { WorldConfig } from "@bl/schema";
-import type { FirstsMsg, RunManifest, ToWorker } from "./protocol.ts";
+import type { FirstsMsg, RunManifest, SessionFacts, ToWorker } from "./protocol.ts";
 import { pressureWords, scoreWords } from "./rank-labels.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -41,9 +41,30 @@ function firstsList(entries: readonly FirstsEntry[], label: string): HTMLOListEl
 /** A rung's unit for one of it: the detector names units for many ("cells", "splits", "censuses", "cells moved"). */
 const oneOf = (unit: string) => (unit === "censuses" ? "census" : unit.replace(/^(\w+)s\b/, "$1"));
 
+/** The wound rung's hint while nothing has been tried: a rung that reads 0 does not say how to move it. */
+export const WOUND_HINT = "Not tried yet: pick the Wound tool and brush a pond that holds a body.";
+
+/** A number as the rung shows it: whole, or with the one decimal the rung asks for (`decimals`, already floored by the detector). */
+const rungNumber = (v: number, decimals?: 1) => (decimals === 1 ? (Math.round(v * 10) / 10).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : n(v));
+
 /**
- * One rung of Next up: its name, a bar of the detector's own progress counter, and the numbers in words. The counter is a best-so-far
- * ("seen so far") for most rungs and a reading at the latest census ("now") for the others, and the line says which. The bar is a
+ * A rung's progress in words, with "seen so far" or "now" after it. The counter is a best-so-far for most rungs and a reading at the
+ * latest census for the others, and the line says which. Pure, so the lab's tests can hold the wording.
+ */
+export function rungWords(item: NextUpItem): string {
+  // A share is a percentage of something ("% of a body’s cells"); the rung needs more than its target, not the target.
+  const pct = item.unit.startsWith("%");
+  const unit = pct ? item.unit.slice(1).trim() : item.unit, mark = pct ? "%" : "";
+  const value = rungNumber(item.value, item.decimals), target = Number.isInteger(item.target) ? n(item.target) : rungNumber(item.target, item.decimals);
+  const said = item.above
+    ? `${value}${mark} ${unit}, needs more than ${target}${mark}`
+    : pct ? `${value}% ${unit}, needs ${target}%`
+    : `${value} of ${item.decimals === 1 ? `${target} ${unit}` : plural(item.target, oneOf(unit), unit)}`;
+  return `${said} · ${item.kind === "best" ? "seen so far" : "now"}`;
+}
+
+/**
+ * One rung of Next up: its name, a bar of the detector's own progress counter, and the numbers in words. The bar is a
  * picture of the line beside it, hidden from assistive technology: the words carry the numbers.
  */
 function nextUpRow(item: NextUpItem): HTMLLIElement {
@@ -54,15 +75,8 @@ function nextUpRow(item: NextUpItem): HTMLLIElement {
   bar.max = item.above ? item.target + 1 : item.target;
   bar.value = Math.min(item.value, item.target);
   bar.setAttribute("aria-hidden", "true");
-  // A share is a percentage of something ("% of a body’s cells"); the rung needs more than its target, not the target.
-  const pct = item.unit.startsWith("%");
-  const unit = pct ? item.unit.slice(1).trim() : item.unit, mark = pct ? "%" : "";
-  const said = item.above
-    ? `${n(item.value)}${mark} ${unit}, needs more than ${n(item.target)}${mark}`
-    : pct ? `${n(item.value)} of ${n(item.target)}% ${unit}` : `${n(item.value)} of ${plural(item.target, oneOf(unit), unit)}`;
-  const when = item.kind === "best" ? "seen so far" : "now";
-  const words = `${said} · ${when}`;
-  li.append(name, bar, el("span", words, "rung-says mono"));
+  li.append(name, bar, el("span", rungWords(item), "rung-says mono"));
+  if (item.id === "outlive-wound" && item.value === 0) li.append(el("span", WOUND_HINT, "rung-hint"));
   return li;
 }
 
@@ -70,6 +84,23 @@ function rulesList(rules: readonly FirstsRule[]): HTMLElement {
   const dl = el("dl", undefined, "firsts-rules-list");
   for (const r of rules) dl.append(el("dt", r.name), el("dd", `Fires at the first census where ${r.text.replace(/'/g, "’")}.`));
   return dl;
+}
+
+/**
+ * The card's account of the family tree: how many families were named, how many are in a body, on film or gone. Counts only,
+ * from the card's facts; the tree itself, with names and purity, is in its own panel.
+ */
+export function familyCardRows(f: SessionFacts["families"]): [string, string][] {
+  if (f.named === 0) return [["Families named", "None yet"]];
+  const kinds = [f.starting > 0 ? `${n(f.starting)} starting` : "", f.split > 0 ? `${n(f.split)} split off` : ""].filter(Boolean);
+  const later = f.named - f.starting - f.split;
+  if (later > 0) kinds.push(`${n(later)} found later`);
+  return [
+    ["Families named", `${n(f.named)}${kinds.length ? ` (${kinds.join(", ")})` : ""}`],
+    ["Living", n(f.living)],
+    ["Gone to film", n(f.film)],
+    ["Extinct", n(f.extinct)],
+  ];
 }
 
 export interface FirstsPanel {
@@ -117,9 +148,9 @@ export function createFirstsPanel(send: (m: ToWorker) => void): FirstsPanel {
 
   /** What the Download button can do now, and if it cannot, why, beside it. */
   function syncFile() {
-    const stopped = last?.stopped ?? null;
+    const refusal = last?.refusal ?? null;
     const why = waiting ? "The file waits for the pond cycle: breed first."
-      : stopped ? `The log of firsts stopped (${stopped}), so there is no file to make.`
+      : refusal ? refusal
       : last !== null && last.summary.step === null ? "The world hasn’t reached its first census yet: let it run a little first."
       : null;
     fileButton.disabled = why !== null || exporting !== null || last === null;
@@ -183,6 +214,15 @@ export function createFirstsPanel(send: (m: ToWorker) => void): FirstsPanel {
     return dl;
   }
   const hint = (text: string) => el("p", text, "hint");
+
+  function familiesSection(f: SessionFacts["families"]): HTMLElement {
+    const fam = section("Families");
+    fam.append(kv(familyCardRows(f)));
+    fam.append(hint(f.named === 0
+      ? "The family tree starts naming families at the first census. Families are told apart by descent, seen, not measured."
+      : `Families are told apart by descent, seen, not measured. Gone to film means no cell in any body for five censuses in a row; extinct means no living cell left. The names and purity are in the Family tree panel.`));
+    return fam;
+  }
 
   function paintCard(m: FirstsMsg, world: WorldConfig | null) {
     const key = JSON.stringify([m.entries, m.summary, m.facts, m.stopped, m.fromStart]);
@@ -251,6 +291,9 @@ export function createFirstsPanel(send: (m: ToWorker) => void): FirstsPanel {
       if (!m.fromStart) far.append(hint(`The first column is the first census this page watched, ${at(s.watchedFrom)}, not the start of the world.`));
     }
     sections.push(far);
+
+    // The family tree's counts (families-v1), from the same census as the rest.
+    sections.push(familiesSection(f.families));
 
     // What died.
     const died = section("What died");

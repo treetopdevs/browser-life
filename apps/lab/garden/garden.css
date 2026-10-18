@@ -2,6 +2,8 @@
 .garden-section { padding-block: 40px 0; }
 .garden-source { margin: -8px 0 20px; padding: 10px 14px; max-width: 72ch; border-left: 3px solid var(--sun); background: var(--surface); color: var(--text); font-weight: 500; overflow-wrap: anywhere; }
 .garden-row { display: grid; grid-template-columns: minmax(145px, 220px) minmax(0, 1fr); gap: 48px; padding-block: 36px; border-top: 1px solid var(--line); }
+/* A row the page hides (the food ask in a garden without food): `display: grid` above would otherwise show it. */
+.garden-row[hidden] { display: none; }
 .garden-panel { min-width: 0; max-width: 900px; }
 .garden-panel h2 { margin: 0 0 14px; font-size: 1.625rem; line-height: 1.15; }
 .garden-panel h3 { margin: 22px 0 8px; font-size: 1.0625rem; letter-spacing: -.01em; }
@@ -42,6 +44,10 @@
 .garden-answer { min-height: 1.5em; margin: 14px 0 8px !important; font-weight: 500; }
 .garden-answer[data-tone="negative"] { color: var(--error) !important; }
 .garden-answer[data-tone="note"], .garden-answer[data-tone="pending"] { color: var(--text) !important; }
+
+/* The food ask: a stone's preview box for where it lands; the button row is the stones'. */
+#g-food .garden-preview { margin: 4px 0 0 !important; }
+#g-food-list { margin-bottom: 14px; }
 
 .garden-map { margin: 0; }
 .garden-map svg { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--radius-lg); cursor: crosshair; }

@@ -261,6 +261,46 @@
           <button id="btn-card" class="full" type="button" aria-haspopup="dialog" aria-controls="session-card" aria-describedby="card-hint">Session card</button>
           <p class="hint" id="card-hint">Sums the session up: what was bred, how far it got, what died, and a file that replays it.</p>
         </section>
+        <section class="evidence-section families" id="families" aria-labelledby="families-heading">
+          <h2 id="families-heading">Who’s kin to whom?</h2>
+          <p class="hint families-lede">The family tree: lineages grouped by who descends from whom, named by the game. Seen, not measured.</p>
+          <p class="firsts-watch" id="families-watch" hidden><span class="badge note" id="families-watch-badge"></span><span class="hint">Nothing before that is in this tree.</span></p>
+          <p class="firsts-watch" id="families-stopped" hidden><span class="badge note">The tree stopped</span><span class="hint" id="families-stopped-text"></span></p>
+          <p class="hint" id="families-empty">No families yet. The first census names the starting ones.</p>
+          <p class="families-summary mono" id="families-summary" hidden></p>
+          <div id="families-tree-block" hidden>
+            <h3 class="subheading" id="family-tree-heading">Family tree</h3>
+            <ol class="family-tree" id="family-tree" aria-labelledby="family-tree-heading"></ol>
+            <p class="hint" id="families-cut" hidden></p>
+            <button id="families-extinct-toggle" class="quiet" type="button" aria-controls="family-tree" aria-expanded="false" hidden>Show extinct</button>
+          </div>
+          <div id="family-log-block" hidden>
+            <h3 class="subheading" id="family-log-heading">What the tree has seen</h3>
+            <ol class="firsts-list family-log" id="family-log" aria-labelledby="family-log-heading"></ol>
+            <button id="family-log-more" class="quiet" type="button" aria-controls="family-log" aria-expanded="false" hidden>Show all</button>
+          </div>
+          <details class="firsts-rules family-rules">
+            <summary>How families are told apart</summary>
+            <div class="family-rules-body">
+              <p>A family is every lineage that descends from one founding lineage, less the ones that belong to a family founded further down. Families are told apart by <b>descent, not by genome distance</b>. Distance groups shift from one moment to the next and nobody has checked a tolerance on evolved populations, while descent is exact: every new lineage comes with a recorded parent. The price is that two families can be closer in their genes than two lineages inside one family.</p>
+              <p><b>Seen, not measured.</b> The rule was written down before the code (rule set families-v1) and the tree only reports what it sees at each census. It does not measure fitness, and a split does not say which family is better.</p>
+              <dl class="firsts-rules-list">
+                <dt>Where a family starts</dt>
+                <dd>A lineage with no known parent starts one: the planted lineages at the start, and any lineage whose parent the lab cannot know, because it was made before this page began watching. That one is marked “of unknown descent”.</dd>
+                <dt>When a family splits</dt>
+                <dd>At a lineage on the ancestry of a living member, when both sides, that lineage’s descendants and the rest of the family, hold 16 cells or more at every census for 5,000 steps in a row. That lineage then starts a new family whose parent is the old one. A family splits at most once per census, and families never merge.</dd>
+                <dt>A body’s family and purity</dt>
+                <dd>A body belongs to the family holding most of its cells. A family’s purity is the share of its bodies’ cells that are its own, shown as a dash when it has no body.</dd>
+                <dt>Living, gone to film, extinct</dt>
+                <dd>Living means a cell in a body. Gone to film means no cell in any body for five censuses in a row: the family still has cells, outside bodies. It is back from film after five censuses in a body again. Extinct means no living cell is left, and that is final.</dd>
+                <dt>Names</dt>
+                <dd>The game gives each starting family a word from a fixed list. A family that splits off carries its root’s word and an adjective, so its name says where it came from. The same history gives the same names every time.</dd>
+                <dt>If the record overflows</dt>
+                <dd>When the lab’s record of new lineages overflows while it watches, which records survive is not repeatable. The tree stops and says so, the log of firsts carries on, and no session file is offered.</dd>
+              </dl>
+            </div>
+          </details>
+        </section>
       </aside>
 
       <aside class="lineage-drawer" id="lineage-drawer" aria-labelledby="lineage-heading" hidden>

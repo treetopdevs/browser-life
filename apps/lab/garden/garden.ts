@@ -1,6 +1,7 @@
 // The shared garden's public page (/garden/): reads the frozen garden-v1 contract (apps/coordinator/README.md,
-// "The garden") and posts the one letter kind that exists, a stone. The words and rules are written down first in
-// docs/garden-page-v0-2026-10-17.md; this file implements them. Everything above `mount` is pure and safe to
+// "The garden") and posts the one letter kind that exists, a stone, and (in a garden founded with food) a hand on the
+// food ask. The words and rules are written down first in docs/garden-page-v0-2026-10-17.md and, for food,
+// docs/garden-food-2026-10-18.md; this file implements them. Everything above `mount` is pure and safe to
 // import without a DOM (apps/lab/test/garden.test.ts); `mount` touches the document only when it is called.
 
 export const CONTRACT = "garden-v1";
@@ -23,6 +24,24 @@ export interface Letter {
 export interface Day {
   day: number; startStep: number; endStep: number; status: string; releasedAt: number; doneAt: number | null;
   verifiedAt: number | null; digest: string | null; verification: string | null; letters: string[]; census: Census | null;
+  /** The live food the day carries (added to garden-v1 with food; absent from a coordinator from before). */
+  food?: string | null;
+}
+/** A food: a feed visitors called together. Its statuses are a letter's. */
+export interface Food {
+  id: string; x: number; y: number; r: number; amount: number; calledAt: number;
+  /** The food's day is not run before this (one dawn period after the call): the keeper's veto window. */
+  noticeUntil: number;
+  hands: number; landsAtStep: number; day: number; status: string; landedIn: string | null; droppedAt: number | null;
+}
+/** The food ask (README "The garden", `food`). A view without it is a garden with food off. */
+export interface FoodBlock {
+  enabled: boolean; asks: number | null; everyDays: number | null; amount: number | null; r: number | null;
+  place: { x: number; y: number } | null; hands: number; expiresAt: number;
+  /** Every visitor reaches the coordinator as one address (the proxy hides their own), so the ask holds one hand. */
+  sharedAddress: boolean;
+  open: boolean; closed: string | null;
+  opensAtDay: number | null; landing: { day: number; step: number } | null; foods: Food[];
 }
 export interface Founding { step: number; kind: string; x: number; y: number; r: number; amount?: number }
 export interface GardenView {
@@ -54,6 +73,8 @@ export interface GardenView {
     waiting: Letter[]; recent: Letter[];
   };
   limits: { stoneRadius: { min: number; max: number }; lettersPerAddressPerHour: number; logMax: number };
+  /** Added to garden-v1 with food (docs/garden-food-2026-10-18.md); absent from a coordinator from before. */
+  food?: FoodBlock;
 }
 
 // A check returns null when the value fits, or the first thing wrong with it, named by its path.
@@ -77,13 +98,21 @@ const list = (check: Check): Check => (v, p) => {
   }
   return null;
 };
-/** Every named key must be present and fit; keys the shape does not name are ignored (the contract may add keys). */
-const shape = (keys: Record<string, Check>): Check => (v, p) => {
+/**
+ * Every named key must be present and fit; keys the shape does not name are ignored (the contract may add keys).
+ * `optional` keys (added to the contract later, so absent from an older coordinator) are checked only when present.
+ */
+const shape = (keys: Record<string, Check>, optional: Record<string, Check> = {}): Check => (v, p) => {
   if (!isObject(v)) return `${p}: expected an object`;
   for (const [key, check] of Object.entries(keys)) {
     const at = p ? `${p}.${key}` : key;
     if (!(key in v)) return `${at}: missing`;
     const wrong = check(v[key], at);
+    if (wrong) return wrong;
+  }
+  for (const [key, check] of Object.entries(optional)) {
+    if (!(key in v)) continue;
+    const wrong = check(v[key], p ? `${p}.${key}` : key);
     if (wrong) return wrong;
   }
   return null;
@@ -97,6 +126,15 @@ const letterShape = shape({
   id: str, kind: str, x: num, y: num, r: num, postedAt: time, landsAtStep: num, day: num, status: str,
   landedIn: orNull(str), droppedAt: orNull(time),
 });
+const foodShape = shape({
+  id: str, x: num, y: num, r: num, amount: num, calledAt: time, hands: num, landsAtStep: num, day: num,
+  status: str, landedIn: orNull(str), droppedAt: orNull(time),
+}, { noticeUntil: time });
+const foodBlockShape = shape({
+  enabled: bool, asks: orNull(pos), everyDays: orNull(pos), amount: orNull(num), r: orNull(num),
+  place: orNull(shape({ x: num, y: num })), hands: num, expiresAt: time, open: bool, closed: orNull(str),
+  opensAtDay: orNull(num), landing: orNull(shape({ day: num, step: num })), foods: list(foodShape),
+}, { sharedAddress: bool });
 const viewShape = shape({
   name: str, presetId: str, seed: num,
   world: shape({ width: pos, height: pos }),
@@ -119,14 +157,14 @@ const viewShape = shape({
   days: list(shape({
     day: num, startStep: num, endStep: num, status: str, releasedAt: time, doneAt: orNull(time), verifiedAt: orNull(time),
     digest: orNull(str), verification: orNull(str), letters: list(str), census: orNull(shape(censusKeys)),
-  })),
+  }, { food: orNull(str) })),
   letters: shape({
     perDay: num, queueMax: num, queued: num,
     nextLanding: orNull(shape({ day: num, step: num, open: num })),
     waiting: list(letterShape), recent: list(letterShape),
   }),
   limits: shape({ stoneRadius: shape({ min: num, max: num }), lettersPerAddressPerHour: num, logMax: num }),
-});
+}, { food: foodBlockShape });
 
 const clip = (text: string, n = 160) => (text.length > n ? `${text.slice(0, n - 1)}…` : text);
 
@@ -138,7 +176,19 @@ export function parseGarden(json: unknown): { ok: true; view: GardenView } | { o
     return { ok: false, reason: `contract: expected “${CONTRACT}”, got ${got}` };
   }
   const wrong = viewShape(json, "");
-  return wrong ? { ok: false, reason: clip(wrong) } : { ok: true, view: json as unknown as GardenView };
+  if (wrong) return { ok: false, reason: clip(wrong) };
+  const view = json as unknown as GardenView;
+  // Keys the food block gained after it was first written (a food's `noticeUntil`, the block's `sharedAddress`) are
+  // read with the coordinator's own fallbacks when absent: a notice of one dawn period from the call, no shared address.
+  if (view.food) {
+    const food = view.food;
+    view.food = {
+      ...food,
+      sharedAddress: food.sharedAddress === true,
+      foods: food.foods.map((f) => ((f as Partial<Food>).noticeUntil === undefined ? { ...f, noticeUntil: f.calledAt + view.pace.dawnPeriodMs } : f)),
+    };
+  }
+  return { ok: true, view };
 }
 
 // ---------- numbers, times and words ----------
@@ -225,6 +275,12 @@ export function stateWords(view: GardenView, fmt: Fmt = {}): StateWords {
     case "waiting-for-island": {
       const d = oldest(["waiting"]) ?? (settled && view.pace.releaseDue ? R + 1 : undefined);
       const which = d === undefined ? "a day" : `day ${d}`;
+      // A day carrying a food called less than a dawn period ago is held from islands (the keeper's veto window):
+      // it is not asleep, it is waiting on purpose.
+      const held = d === undefined ? undefined : view.food?.foods.find((f) => f.day === d && f.status === "waiting" && f.droppedAt === null && f.noticeUntil > view.now);
+      if (held) {
+        return { tone: "pending", label: "Holding for the food", sentence: `Holding: day ${d} carries the food ${clip(held.id, 24)}, so no island is given it before ${fmtTime(held.noticeUntil, fmt.locale, fmt.timeZone)}, in ${fmtDuration(held.noticeUntil - view.now)}; until then the keeper can still set the food aside.`, known: true };
+      }
       return view.asleep
         ? { tone: "pending", label: "Asleep", sentence: `Asleep: ${which} is ready and no island has come for it. ${slept}`, known: true }
         : { tone: "pending", label: "Waiting for an island", sentence: `Waiting for an island to take ${which}.`, known: true };
@@ -271,7 +327,7 @@ export interface LetterWords extends Chip { words: string; mine: boolean }
  * A letter's status in words. A letter whose day was verified on a different kind of computer is the clean pass; the
  * words say which kind of replay it was, so colour is never the only signal.
  */
-export function letterWords(letter: Letter, mine: ReadonlySet<string> = new Set(), days: readonly Day[] = []): LetterWords {
+export function letterWords(letter: Pick<Letter, "id" | "status" | "landsAtStep" | "day">, mine: ReadonlySet<string> = new Set(), days: readonly Day[] = []): LetterWords {
   const s = fmtSteps(letter.landsAtStep);
   const base = { mine: mine.has(letter.id) };
   switch (letter.status) {
@@ -533,6 +589,114 @@ export function postedSinceDawn(view: GardenView, mine: ReadonlySet<string>): bo
   return [...view.letters.waiting, ...view.letters.recent].some((l) => mine.has(l.id) && l.postedAt >= lastDawn);
 }
 
+// ---------- food ----------
+
+export interface FoodWords {
+  /** "2 of 5 networks have asked today.", or, while the ask is closed, what it is waiting on. */
+  headline: string;
+  hands: number;
+  asks: number;
+  /** When this period's hands expire, in words, from the response's own clock ("" while the ask is closed). */
+  timeLeft: string;
+  /** Where and when a food called now would land, or why none can. */
+  landing: string;
+  /** The closed reason in words, or null when a hand can be added. */
+  closed: string | null;
+  open: boolean;
+  /** Said beside the button when every visitor is one address to the garden (README: `food.sharedAddress`), else null. */
+  shared: string | null;
+  /** Why food is rare, with this garden's numbers. */
+  why: string;
+}
+
+/** "today" for a daily garden, else "this dawn period" (a test garden's dawn may be a second). */
+export const periodWords = (view: Pick<GardenView, "pace">) => view.pace.dawnPeriodMs === 86_400_000 ? "today" : "this dawn period";
+
+/** A closed food ask in words (README: `food.closed`); an unknown code is said as given. */
+export function foodClosedWords(food: FoodBlock): string {
+  switch (food.closed) {
+    case "off": return "This garden takes no food.";
+    case "stopped": return "The garden has stopped, so it takes no food until the keeper looks.";
+    case "finished": return "Every day to the horizon is done, so there is no day left to feed.";
+    case "horizon": return "No day is left before the horizon that a food could land on.";
+    case "log-full": return "The garden’s log is full.";
+    case "cooldown": {
+      const every = food.everyDays === null ? "" : ` once every ${plural(food.everyDays, "day")}`;
+      return food.opensAtDay === null
+        ? `A food lands at most${every}, and one landed or is waiting too recently.`
+        : `A food lands at most${every}: the next can land on day ${food.opensAtDay} at the earliest.`;
+    }
+    case null: return "";
+    default: return `The garden says “${clip(food.closed, 40)}”, a reason ${NEW_WORD}.`;
+  }
+}
+
+const SHARED_WORDS = "Right now every visitor reaches this garden through one shared address (the site’s proxy does not pass on visitors’ own yet), so all of you count as one network: the ask can hold one hand, a food cannot be called, an “already in” answer may be someone else’s hand, and a counted hand spends a letter from the budget that stones share. This changes once the proxy passes on visitors’ own addresses.";
+
+/** The food ask in words, or null when the garden takes no food (no section is shown then). */
+export function foodWords(view: GardenView, fmt: Fmt = {}): FoodWords | null {
+  const food = view.food;
+  if (!food || !food.enabled || food.asks === null) return null;
+  const today = periodWords(view);
+  const left = food.expiresAt - view.now;
+  const at = fmtTime(food.expiresAt, fmt.locale, fmt.timeZone);
+  const place = food.place ? `at the centre (${food.place.x}, ${food.place.y})` : "at the centre";
+  const size = food.amount !== null && food.r !== null ? `: ${food.amount} quanta of nutrient per cell over a disc of radius ${food.r}` : "";
+  const open = food.open && food.landing !== null;
+  const landing = open
+    ? `A food called now would land at step ${fmtSteps(food.landing!.step)}, the end of day ${food.landing!.day}, ${place}${size}.`
+    : foodClosedWords(food);
+  const every = food.everyDays === null ? "" : `, at most once every ${plural(food.everyDays, "day")}`;
+  const more = Math.max(food.asks - food.hands, 1);
+  const need = food.hands === 0 ? plural(food.asks, "network") : `${plural(more, "more network", "more networks")}`;
+  const hands = today === "today" ? "Today’s hands" : "This dawn period’s hands";
+  // While the ask is closed the count is not the story: it restarts when the ask opens. A waiting food is.
+  const waiting = food.foods.find((f) => f.status === "waiting" && f.droppedAt === null);
+  const headline = open
+    ? `${fmtSteps(food.hands)} of ${plural(food.asks, "network")} ${food.hands === 1 ? "has" : "have"} asked ${today}.`
+    : waiting
+      ? `A food is waiting: ${clip(waiting.id, 24)} lands at step ${fmtSteps(waiting.landsAtStep)}, the end of day ${waiting.day}. Hands count again once the ask reopens.`
+      : "The food ask is closed just now.";
+  return {
+    headline,
+    hands: food.hands, asks: food.asks,
+    timeLeft: !open ? "" : left > 0 ? `${hands} expire at the next dawn, in ${fmtDuration(left)} (${at}), unless ${need} ask before then.` : `${hands} expire at the next dawn, now.`,
+    landing,
+    closed: open ? null : foodClosedWords(food),
+    open,
+    shared: food.sharedAddress === true ? SHARED_WORDS : null,
+    why: `Food is the one thing that adds matter to this closed world, so it is kept rare on purpose. The keeper’s guess is that a garden fed at will grows fat and dull and that hunger is what makes it build; nobody has tested that yet. So food comes only when ${plural(food.asks, "network")} ask within one dawn${every}, as one modest feed ${place}, and a called food waits a whole dawn period before its day is run, so the keeper can still set it aside. Hands are counted per network, not per person: people behind one connection are one hand, and one person with several connections can be several. A hand carries nothing about you, and a restart of the garden’s server forgets ${today}’s hands.`,
+  };
+}
+
+/** A waiting food's veto window in words, or null once its day may run (README: a food's `noticeUntil`). */
+export function foodNoticeWords(food: Pick<Food, "status" | "noticeUntil">, now: number, fmt: Fmt = {}): string | null {
+  if (food.status !== "waiting" || food.noticeUntil <= now) return null;
+  return `Its day is not run before ${fmtTime(food.noticeUntil, fmt.locale, fmt.timeZone)}, in ${fmtDuration(food.noticeUntil - now)}, so the keeper can still set it aside.`;
+}
+
+/**
+ * What this tab remembers of its own hand: the garden, when it was given (by the garden's clock) and its dawn. `afterRead`
+ * is the page's count of view reads started when the hand was answered: only a read started after that can show the
+ * hand forgotten (an earlier one may have been read before the hand counted).
+ */
+export interface HandLatch { name: string; since: number; until: number; afterRead?: number }
+
+/**
+ * Whether the tab's "my hand is in" still holds for `view`: the same garden, before the hand's dawn, and not forgotten.
+ * A counted hand keeps the count at 1 or more until its dawn unless a food was called since (which shows in `foods`,
+ * dropped or not); a count of 0 with no such food means the garden's server forgot the hand (a restart).
+ */
+export function latchHolds(latch: HandLatch | null, view: GardenView | null, fresh = true): boolean {
+  if (!latch || !view || view.name !== latch.name || view.now >= latch.until) return false;
+  const food = view.food;
+  if (!food || !food.enabled) return false;
+  // A view read before the hand was answered (the one the hand was sent from, or a poll already on its way) may show
+  // the count without it; only a later read can say the server forgot it.
+  if (!fresh) return true;
+  return food.hands > 0 || food.foods.some((f) => f.calledAt >= latch.since);
+}
+
 // ---------- answers ----------
 
 export interface Answer { tone: Tone; words: string; refresh: boolean; letter?: { id: string; landsAtStep: number; day: number } }
@@ -589,6 +753,58 @@ export function postAnswer(status: number, body: unknown, headers: { get(name: s
   }
 }
 
+/** A hand that may or may not have been counted. */
+const HAND_UNSURE = "so this page cannot tell whether your hand was counted. The count below is read again: a second hand from this network is never counted twice.";
+
+export interface HandAnswer {
+  tone: Tone; words: string; refresh: boolean; in: boolean; food?: { id: string; landsAtStep: number; day: number };
+  /** When the hand's own period ends (the answer's `food.expiresAt`): the hand may have crossed a dawn on its way. */
+  expiresAt?: number;
+}
+
+/** A POST to the food hands route, in words: the same table as a stone's, with a hand's own 201 and 200. */
+export function handAnswer(status: number, body: unknown, headers: { get(name: string): string | null } | null, view: GardenView | null): HandAnswer {
+  const block = isObject(body) && isObject(body.food) ? body.food : null;
+  const today = view ? periodWords(view) : "today";
+  const count = block && typeof block.hands === "number" && typeof block.asks === "number" && block.open === true ? `${fmtSteps(block.hands)} of ${plural(block.asks, "network")} ${block.hands === 1 ? "has" : "have"} asked ${today}.` : null;
+  const until = block && isTime(block.expiresAt) ? { expiresAt: block.expiresAt } : {};
+  switch (status) {
+    case 201: {
+      const c = isObject(body) && isObject(body.called) ? body.called : null;
+      if (c && typeof c.id === "string" && typeof c.landsAtStep === "number" && typeof c.day === "number") {
+        return {
+          ...until, tone: "note", refresh: true, in: true, food: { id: c.id, landsAtStep: c.landsAtStep, day: c.day },
+          words: `Yours was the hand that called the food: ${clip(c.id, 24)} is public now, lands at step ${fmtSteps(c.landsAtStep)} (end of day ${c.day}), and counts once a second island replays that day.`,
+        };
+      }
+      return { ...until, tone: "note", refresh: true, in: true, words: `Your hand is in.${count ? ` ${count}` : ""}` };
+    }
+    case 200: {
+      const shared = isObject(block) && block.sharedAddress === true ? " Every visitor shares one address just now, so it may be someone else’s." : "";
+      return { ...until, tone: "note", refresh: true, in: true, words: `A hand from your network was already in for ${today}: one hand per network per dawn.${shared}${count ? ` ${count}` : ""}` };
+    }
+    case 409: return { tone: "negative", refresh: true, in: false, words: `The food ask is closed: ${serverWords(body) ?? "try again after the next dawn."}` };
+    case 422: return { tone: "negative", refresh: false, in: false, words: `The garden refused the hand: ${serverWords(body) ?? "it is not a hand the garden takes."}` };
+    case 429: {
+      const fromBody = isObject(body) && typeof body.retryAfterMs === "number" && Number.isFinite(body.retryAfterMs) ? body.retryAfterMs : null;
+      const wait = fromBody ?? retryAfterMs(headers?.get("retry-after"));
+      const n = view?.limits.lettersPerAddressPerHour;
+      const limit = n === undefined ? "a few letters and hands an hour from one network" : `${plural(n, "letter")} and hands an hour from one network, together`;
+      const words = `The garden is not taking hands from this network just now: it takes at most ${limit}, and fewer when many are refused.`;
+      return { tone: "negative", refresh: false, in: false, words: wait === null ? `${words} Try again later.` : `${words} Try again in ${fmtDuration(wait)}.` };
+    }
+    case 413:
+    case 415: return { tone: "negative", refresh: false, in: false, words: "The page sent something the garden could not read. Reload the page and try again." };
+    case 404: return { tone: "negative", refresh: false, in: false, words: "There is no garden by that name here." };
+    // `counted: null`: the garden did not answer in time, and the hand may still count when it catches up.
+    case 503: return isObject(body) && body.counted === null
+      ? { tone: "negative", refresh: true, in: false, words: `The garden was too busy to answer, ${HAND_UNSURE}` }
+      : { tone: "negative", refresh: false, in: false, words: "The garden is busy; try again in a moment. Your hand was not counted." };
+    case 0: return { tone: "negative", refresh: true, in: false, words: `No answer came back, ${HAND_UNSURE}` };
+    default: return { tone: "negative", refresh: true, in: false, words: `The garden answered ${status}, ${HAND_UNSURE}` };
+  }
+}
+
 /** A GET of the view that did not give a garden, in words. */
 export function getAnswer(status: number): string {
   switch (status) {
@@ -613,6 +829,7 @@ export interface Source {
   notes: string[];
   viewUrl: string;
   lettersUrl: string;
+  handsUrl: string;
 }
 
 const GARDEN_NAME = /^[a-z0-9][a-z0-9_-]{0,63}$/;
@@ -642,7 +859,7 @@ export function resolveSource(search: string, origin: string, dev: boolean): Sou
   const path = garden === null ? "/api/public/garden" : `/api/public/gardens/${encodeURIComponent(garden)}`;
   return {
     base, coordinator: mock ? "mock" : base || origin, garden, mock, notes,
-    viewUrl: `${base}${path}`, lettersUrl: `${base}${path}/letters`,
+    viewUrl: `${base}${path}`, lettersUrl: `${base}${path}/letters`, handsUrl: `${base}${path}/food/hands`,
   };
 }
 
@@ -753,6 +970,11 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   const preview = $("stone-preview");
   const answer = $("stone-answer");
   const map = $("stone-map") as unknown as SVGSVGElement;
+  const foodRow = $("g-food-row");
+  const handSend = $("food-send") as HTMLButtonElement;
+  const handWhy = $("food-why");
+  const handSaid = $("food-answer");
+  const handShared = $("food-shared");
 
   const notes = [...source.notes];
   if (source.mock) notes.unshift("The example garden from the contract, not a live one.");
@@ -771,6 +993,12 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   let readAgain = false;
   let sending = false;
   let placed = false;
+  let handing = false;
+  /** This tab's hand (`latchHolds`): in memory only, never in the device's record. */
+  let latch: HandLatch | null = null;
+  /** View reads started so far, and which one `view` came from (`HandLatch.afterRead`). */
+  let reads = 0;
+  let viewRead = 0;
 
   const key = (v: GardenView) => visitKey(source.coordinator, v.name);
   const storage = () => { try { return deps.storage(); } catch { return null; } };
@@ -846,7 +1074,8 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
         h("span", { class: "garden-day-body" },
           chip(c2), " ",
           h("span", { class: "fine" }, `steps ${fmtSteps(d.startStep)} to ${fmtSteps(d.endStep)}; ${when}`),
-          d.letters.length ? h("span", { class: "fine" }, `; carries ${d.letters.join(", ")}`) : null)));
+          d.letters.length ? h("span", { class: "fine" }, `; carries ${d.letters.join(", ")}`) : null,
+          d.food ? h("span", { class: "fine" }, `; carries the food ${d.food}`) : null)));
     }
     fill("g-days", v.days.length ? dayList : h("p", {}, "No day is released yet."),
       h("p", { class: "fine" }, v.days.length === 1 ? "The newest day." : `The newest ${v.days.length} days, newest first.`));
@@ -870,6 +1099,9 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
       h("h3", {}, "Waiting"), v.letters.waiting.length ? waiting : h("p", { class: "fine" }, "No letter is waiting."),
       h("h3", {}, "Recently"), v.letters.recent.length ? recent : h("p", { class: "fine" }, "No letter has landed or been set aside yet."),
       h("p", { class: "fine" }, "Letters carry a place and a size and nothing else, so no author is named. “Yours” comes from this device’s own list."));
+
+    // Food, in a garden founded with it.
+    renderFood(v);
 
     // Fork and limits.
     const href = checkpointHref(source, v);
@@ -898,6 +1130,64 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
       ? "This device has sent a letter since the last dawn. The garden asks one letter per device per dawn: a courtesy, not a rule."
       : "The garden asks one letter per device per dawn: a courtesy, not a rule.");
     updateForm();
+  }
+
+  function renderFood(v: GardenView): void {
+    const fw = foodWords(v, fmt);
+    foodRow.hidden = fw === null;
+    if (!fw || !v.food) return;
+    const foods = h("ul", { class: "garden-letters", id: "g-foods" }, ...v.food.foods.map((f) => {
+      const w = letterWords(f, new Set(), v.days);
+      return h("li", { "data-food": f.id },
+        h("span", { class: "garden-letter-id mono" }, f.id),
+        h("span", { class: "garden-letter-body" }, chip(w), " ",
+          h("span", {}, `A feed of ${f.amount} per cell over radius ${f.r} at (${f.x}, ${f.y}), called by ${plural(f.hands, "network")}, landing at step ${fmtSteps(f.landsAtStep)} (end of day ${f.day}). `),
+          h("span", { class: "fine" }, w.words),
+          foodNoticeWords(f, v.now, fmt) ? h("span", { class: "fine" }, ` ${foodNoticeWords(f, v.now, fmt)}`) : null));
+    }));
+    fill("g-food",
+      h("p", { class: "garden-headline", id: "g-food-count" }, fw.headline),
+      h("p", { id: "g-food-time" }, fw.timeLeft),
+      h("p", { class: "garden-preview", id: "g-food-landing" }, fw.landing));
+    fill("g-food-list",
+      h("h3", {}, "Foods so far"),
+      v.food.foods.length ? foods : h("p", { class: "fine" }, "No food has been called yet."));
+    fill("g-food-why", fw.why);
+    updateHand();
+  }
+
+  function updateHand(): void {
+    const fw = view ? foodWords(view, fmt) : null;
+    // A latch for another garden, past its dawn or forgotten by the server is dropped.
+    if (latch && !latchHolds(latch, view, viewRead > (latch.afterRead ?? 0))) latch = null;
+    const mineIn = latch !== null;
+    handSend.disabled = !fw || !fw.open || handing || mineIn;
+    handWhy.textContent = !fw ? "" : !fw.open ? fw.closed ?? "" : handing ? "Sending…" : mineIn ? `Your hand is in for ${view ? periodWords(view) : "today"}.` : "";
+    handShared.textContent = fw?.shared ?? "";
+    handShared.hidden = !fw?.shared;
+  }
+
+  async function addHand(target: GardenView): Promise<void> {
+    if (source.mock) {
+      say(handSaid, "This is the example garden from the contract, so nothing was sent.", "pending");
+      return;
+    }
+    handing = true;
+    updateHand();
+    let got: Reply;
+    try {
+      got = await requestJson(deps.fetch, source.handsUrl, {
+        method: "POST", cache: "no-store", headers: { "content-type": "application/json", accept: "application/json" },
+        body: "{}",
+      }, deps.timeoutMs);
+    } finally {
+      handing = false;
+    }
+    const a = handAnswer(got.status, got.json, got.headers, target);
+    if (a.in) latch = { name: target.name, since: target.now, until: a.expiresAt ?? target.food?.expiresAt ?? target.pace.nextDawnAt, afterRead: reads };
+    say(handSaid, a.words, a.tone);
+    updateHand();
+    if (a.refresh) await refresh();
   }
 
   const SVG = "http://www.w3.org/2000/svg";
@@ -958,6 +1248,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   }
 
   async function read(): Promise<void> {
+    const seq = ++reads;
     let got = await getView();
     if (got.status === 503) {
       await new Promise((r) => setTimeout(r, Math.min(got.retryAfter ?? 1000, 5000)));
@@ -984,6 +1275,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     since = baseline.readable ? sinceLastVisit(baseline.prev, v) : null;
     persist(v);
     view = v;
+    viewRead = seq;
     try {
       render(v);
     } catch (error) {
@@ -1001,6 +1293,7 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     } finally {
       reading = false;
       updateForm();
+      updateHand();
     }
     if (readAgain) { readAgain = false; await refresh(); }
   }
@@ -1051,6 +1344,10 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
     if (!check.ok) { updateForm(); return; }
     void post(check.body, view);
   });
+  handSend.addEventListener("click", () => {
+    if (!view || handing) return;
+    void addHand(view);
+  });
   map.addEventListener("click", (event) => {
     if (!view) return;
     const box = map.getBoundingClientRect();
@@ -1063,6 +1360,6 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   });
 
   void refresh();
-  setInterval(() => { if (!doc.hidden && !reading && !sending) void refresh(); }, deps.pollMs);
+  setInterval(() => { if (!doc.hidden && !reading && !sending && !handing) void refresh(); }, deps.pollMs);
   return { refresh };
 }

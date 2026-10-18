@@ -76,6 +76,7 @@
       "digest": "9c41e07d2b5a8f13",
       "verification": null,
       "letters": ["ltr-2"],
+      "food": null,
       "census": {
         "individuals": 2412,
         "lineages": 1873,
@@ -96,6 +97,7 @@
       "digest": "4e0b7a19c3d2f856",
       "verification": "same-device-type",
       "letters": ["ltr-1"],
+      "food": "food-1",
       "census": {
         "individuals": 2950,
         "lineages": 2204,
@@ -116,6 +118,7 @@
       "digest": "d17f5c3a08be2e94",
       "verification": "same-device-type",
       "letters": [],
+      "food": null,
       "census": {
         "individuals": 3318,
         "lineages": 2671,
@@ -219,6 +222,38 @@
         "y": 256,
         "r": 8,
         "postedAt": 1792519320000,
+        "landsAtStep": 262144,
+        "day": 1,
+        "status": "verified",
+        "landedIn": "4e0b7a19c3d2f856",
+        "droppedAt": null
+      }
+    ]
+  },
+  "food": {
+    "enabled": true,
+    "asks": 5,
+    "everyDays": 2,
+    "amount": 16,
+    "r": 32,
+    "place": { "x": 256, "y": 256 },
+    "hands": 2,
+    "expiresAt": 1792800000000,
+    "sharedAddress": false,
+    "open": true,
+    "closed": null,
+    "opensAtDay": null,
+    "landing": { "day": 3, "step": 524288 },
+    "foods": [
+      {
+        "id": "food-1",
+        "x": 256,
+        "y": 256,
+        "r": 32,
+        "amount": 16,
+        "calledAt": 1792476000000,
+        "noticeUntil": 1792562400000,
+        "hands": 5,
         "landsAtStep": 262144,
         "day": 1,
         "status": "verified",
