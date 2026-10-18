@@ -17,7 +17,7 @@ A garden is never a registered experiment, and nothing it does is registered evi
 
 ## 1. State today
 
-**On main (origin/main 7cff518, after #55).**
+**On main (origin/main 34621dc, after #55, #56 and #53).**
 
 - The coordinator's garden, contract `garden-v1`: Done (#21 verified it).
 - Stitching of a garden's verified prefix: Done (#26 verified it). A three-day stitch equals the continuous run byte
@@ -123,7 +123,7 @@ the founding (section 4, steps 6 and 7):
   commit #55 ran on.
 - Check it in any checkout, with the deployed commit's sha:
   `git diff --stat ba2741e <sha> -- packages/schema/src packages/sim-ref/src packages/sim-gpu/src packages/runner/src`,
-  which must print nothing. It prints nothing at 7cff518.
+  which must print nothing. It prints nothing at 34621dc.
 - Why: otherwise the seed-1 evidence in section 3 does not carry over. Gene v2 is in flight and may change the
   physics.
 - Status: Not done. It needs only the sha, not the host.
@@ -207,6 +207,8 @@ and the privacy page's 'not open yet' section is reworded to match".
 - `apps/lab/status/index.html` line 28 and `apps/lab/participate/index.html` line 36: "a future direction".
 - `apps/lab/about/index.html` line 37: "The shared garden and the naturalist are still directions".
 - `apps/lab/index.html` lines 143 to 153: bet 4's "Someday" chip, and "The shared garden is the horizon".
+- `apps/lab/src/worlds.ts`, the `wild-storm-large` note (#53): "It is the world a shared garden is planned around"
+  and "The garden is not open."
 - `apps/lab/test/garden.test.ts`, "the page is hidden": it asserts the `noindex`, no canonical link and no sitemap
   entry, so it fails until it is turned round to assert the opposite.
 - `apps/lab/test/social-meta.test.ts` and the public-routes spec, for the new canonical page.
