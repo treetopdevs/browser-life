@@ -109,7 +109,8 @@ keyboard access and missing-GPU behaviour on real devices; canonical URLs and si
 - **17 October 2026 (review fixes), status cache.** Criterion 2 said a flood of status reads costs the Queue about one
   call per two seconds. A cold cache under concurrent requests called the Queue once per request (Codex's probe: 12
   of 12). Misses are now coalesced as the garden's views are, the TTL counts from when the computation finished, and
-  a cold cache's waiters compute themselves after 2 s rather than answer an error (`/healthz` reads this).
+  a cold cache's waiters compute themselves after 2 s rather than answer an error (`/healthz` reads this; amended by
+  Codex pass 3 below: they now answer 503 instead of calling the Queue).
 - **17 October 2026 (Codex pass 2).** Four gaps in the fixes above, now closed. (a) At the island bound, the
   fallback evicted the least recently seen zero-work island even if it had joined a second ago, so a join could cost
   an honest new volunteer (or a gardener waiting for work) its credentials; now only islands not seen for ten
@@ -121,12 +122,24 @@ keyboard access and missing-GPU behaviour on real devices; canonical URLs and si
   assumption that `max_islands` bounds them, but an island forgotten at the bound leaves its counters until the
   sweep; the cap now applies to every key. Also, a limiter restart between two table reads could raise an
   `ArithmeticError` (a 500) instead of failing open; that is handled.
+- **17 October 2026 (Codex pass 3).** Two P2s, no P0 or P1. (a) The status cache's cold-cache waiters still called
+  the Queue themselves after the 2 s wait, so a slow Queue just after a restart got one call per reader again, and a
+  Queue call that exited was a 500. Now only the reader holding the refresh marker computes; the others answer 503
+  with `Retry-After: 1` after the wait, and a computation that exits serves the expired entry if there is one, else
+  the same 503. The earlier promise that `/healthz` never answers an error is withdrawn: a cold cache behind a slow
+  Queue is a short 503, which nothing in the deploy probes automatically. (b) The CORS check took origins a browser
+  never sends: `https://[2001:db8:0:0:0:0:0:1]` (browsers send `[2001:db8::1]`), embedded IPv4 in IPv6, numeric
+  names such as `127.1`, non-ASCII names (browsers send punycode) and ports outside 1..65535. It now refuses all of
+  those by name at boot.
 - **17 October 2026 (review fixes), CORS.** Criterion 3 said production refuses `*` or a non-https origin. It also
   accepted `https://*`, `https://` and `https://cadence.garden/` (which never matches a browser's `Origin`). It now
   refuses anything but a whole origin exactly as a browser sends it.
 - **17 October 2026 (review fixes), build check.** Criterion 4's build check skipped when `apps/lab/dist` was missing
-  and passed against a stale build. It now fails without a build (opt out with `BL_SKIP_BUILD_CHECK=1`) and fails when
-  the built `robots.txt` or `sitemap.xml` differs from `apps/lab/public`.
+  and passed against a stale build. It now fails when the built `robots.txt` or `sitemap.xml` differs from
+  `apps/lab/public`. A missing build skips the test with a message saying to run `pnpm build` (amended after Codex
+  pass 3, so a plain `npx playwright test` in a clean checkout stays green); with `BL_REQUIRE_BUILD_CHECK=1` a missing
+  build fails, which is how the release check runs it: `pnpm build && BL_REQUIRE_BUILD_CHECK=1 npx playwright test
+  tests/e2e/public-routes.spec.ts --project=chrome`. When a build exists the test still checks every listed route.
 
 ## Results
 
@@ -153,7 +166,7 @@ Review-fix pass, 17 October 2026, same worktree (the first table's figures are f
 | `pnpm typecheck` | exit 0 | 413.7 / 339.9 / 248.4 |
 | `pnpm vitest run apps/lab/test/social-meta.test.ts packages/runner/test/coordinator-presets.test.ts` | 29 passed | 410.2 / 341.6 / 250.1 |
 | `pnpm build` | exit 0; `dist` has `robots.txt` and `sitemap.xml` | 410.2 / 341.6 / 250.1 |
-| `npx playwright test tests/e2e/public-routes.spec.ts --project=chrome` | 4 passed; with `dist` moved aside the build test fails, and skips with `BL_SKIP_BUILD_CHECK=1` | 405.9 / 341.9 / 250.7 |
+| `npx playwright test tests/e2e/public-routes.spec.ts --project=chrome` | 4 passed; with `dist` moved aside the build test fails, and skips with `BL_SKIP_BUILD_CHECK=1` (that flag was later replaced: see the build-check amendment) | 405.9 / 341.9 / 250.7 |
 | `npx playwright test tests/e2e/public-site.spec.ts --project=chrome -g "public status"` | 3 passed | 401.9 / 342.1 / 251.3 |
 
 Codex pass 2 fixes, 17 October 2026 (coordinator code, tests and docs only; no TypeScript, HTML or public file
@@ -163,6 +176,20 @@ changed, so typecheck, vitest, the build and the e2e specs above still stand):
 | --- | --- | --- |
 | Limiter, limits, queue, release config, checkpoint and controller tests | 145 tests, 0 failures (the untyped-body test fails with the fix removed) | 499.4 / 463.2 / 378.9 |
 | `mix precommit` (warnings as errors, format, full suite) | 345 tests, 0 failures | 490.3 / 472.3 / 392.3 before, 477.7 / 470.7 / 393.6 after |
+
+Codex pass 3 and CodeRabbit fixes, 17 October 2026, after merging origin/main (0a1179b):
+
+| Gate | Result | `uptime` load (1/5/15 min) |
+| --- | --- | --- |
+| Limiter, release config, limits, controller and checkpoint tests | 71 tests, 0 failures | 319.7 / 355.7 / 377.9 |
+| `mix precommit` (warnings as errors, format, full suite) | 348 tests, 0 failures | 330.2 / 351.2 / 374.3 before, 343.3 / 353.1 / 374.6 after |
+| `pnpm typecheck` | exit 0 | 318.0 / 353.5 / 376.7 |
+| `pnpm build` | exit 0 | 390.6 / 429.2 / 395.5 |
+| `BL_REQUIRE_BUILD_CHECK=1 npx playwright test tests/e2e/public-routes.spec.ts --project=chrome` | 5 passed (the build test ran) | 332.6 / 352.8 / 375.3 |
+| the same without the variable, with a build | 5 passed | 332.6 / 352.8 / 375.3 |
+| the same with `dist` moved aside | 4 passed, the build test skipped with its message; with `BL_REQUIRE_BUILD_CHECK=1` it fails | 330.1 / 351.6 / 374.6 |
+
+The e2e runs used a copy of `playwright.config.ts` on port 5194, because another worktree's run held 5174.
 
 ### 1. What an unauthenticated client can read
 
@@ -264,9 +291,12 @@ changed, so typecheck, vitest, the build and the e2e specs above still stand):
 ### 4. Canonical URLs and sitemap
 
 - Dev server: **Done.** `public-routes.spec.ts` checks every `<loc>` answers 200 with exactly one canonical link and
-  one `og:url` equal to it, and no `noindex`. `robots.txt` allows crawling and names the sitemap. `/selftest.html`
+  one `og:url` equal to it, and no `noindex`. `robots.txt` lets every crawler fetch `/` and every listed route
+  (its `User-agent: *` rules, longest match first as RFC 9309 reads them; the checker has its own test) and names
+  exactly one sitemap, `https://cadence.garden/sitemap.xml`, compared literally (CodeRabbit's review). `/selftest.html`
   and `/island.html` are `noindex`, have no canonical link and are not listed.
-- Production build: **Done** (amended). The same spec reads `apps/lab/dist`, fails if there is none, and fails if
+- Production build: **Done** (amended). The same spec reads `apps/lab/dist`; with no build it skips, or fails under
+  `BL_REQUIRE_BUILD_CHECK=1` (the release check sets it). It fails if
   its `robots.txt` or `sitemap.xml` differs from `apps/lab/public`. It checks `robots.txt` and `sitemap.xml` ship,
   that every `<loc>` has a built page with a matching canonical and `og:url`, and that every built page with a
   canonical names a sitemap URL. Pages without one are `noindex`. Each per-world copy keeps its page's canonical

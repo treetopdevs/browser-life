@@ -82,7 +82,18 @@ defmodule Coordinator.ReleaseConfigTest do
           "https://user@cadence.garden",
           "https://cadence.garden:443",
           "HTTPS://cadence.garden",
-          "https://Cadence.Garden"
+          "https://Cadence.Garden",
+          # Codex pass 3: spellings a browser serializes differently, and bad ports.
+          "https://[2001:db8:0:0:0:0:0:1]",
+          "https://[2001:DB8::1]",
+          "https://[::ffff:1.2.3.4]",
+          "https://127.1",
+          "https://0x7f.0.0.1",
+          "https://010.0.0.1",
+          "https://b\u00fccher.example",
+          "https://a_b.example",
+          "https://lab.example:65536",
+          "https://lab.example:0"
         ] do
       System.put_env("BL_CORS_ORIGINS", bad)
       assert_raise RuntimeError, ~r/BL_CORS_ORIGINS/, fn -> prod_runtime() end
@@ -90,6 +101,17 @@ defmodule Coordinator.ReleaseConfigTest do
 
     prod_env("https://a.example:8443")
     assert prod_runtime()[:coordinator][:cors_origins] == ["https://a.example:8443"]
+
+    for good <- [
+          "https://[2001:db8::1]",
+          "https://[2001:db8:0:1:1:1:1:1]",
+          "https://192.0.2.1:8443",
+          "https://xn--bcher-kva.example",
+          "https://a-1.example:65535"
+        ] do
+      prod_env(good)
+      assert prod_runtime()[:coordinator][:cors_origins] == [good]
+    end
 
     prod_env("https://a.example, https://b.example")
 

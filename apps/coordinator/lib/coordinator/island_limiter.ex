@@ -65,11 +65,16 @@ defmodule Coordinator.IslandLimiter do
   `public_status_cache_ms` (2 s by default; 0 or less turns it off), counted
   from when the computation *finished*. Misses are coalesced the way
   `Coordinator.LetterLimiter`'s garden views are: the one caller that wins
-  `:ets.insert_new/2` on a refresh marker computes; meanwhile everyone else is
-  served the expired entry if there is one, or (a cold cache) polls for the
-  winner's entry for up to `public_status_wait_ms` (2 s) and only then computes
-  itself, so `/healthz` never answers an error for a slow Queue. A marker older
-  than 5 s belongs to a refresher that died and may be taken over.
+  `:ets.insert_new/2` on a refresh marker computes, and only that caller ever
+  computes; meanwhile everyone else is served the expired entry if there is
+  one, or (a cold cache) polls for the winner's entry for up to
+  `public_status_wait_ms` (2 s) and then answers `:unavailable` (the
+  controller's 503 with `Retry-After`) rather than call the Queue too, so a
+  cold cache under a slow Queue still costs it one call, not one per reader.
+  If the computation exits (a Queue call timeout, the Queue restarting), the
+  refresher is served the expired entry if there is one, else `:unavailable`,
+  never a 500. A marker older than 5 s belongs to a refresher that died and
+  may be taken over (by a waiter, which then computes as the refresher).
   """
   use GenServer
 
@@ -130,30 +135,33 @@ defmodule Coordinator.IslandLimiter do
   end
 
   @doc """
-  The public status body: the cached one while it is fresh, else (coalesced,
-  see the moduledoc) `compute.()`, stored for `public_status_cache_ms` from
-  when it finished. With the cache off, every call is `compute.()`.
+  The public status body, `{:ok, body}`: the cached one while it is fresh,
+  else (coalesced, see the moduledoc) `compute.()`, stored for
+  `public_status_cache_ms` from when it finished. `:unavailable` when there
+  is nothing to serve: a cold cache whose refresher did not finish within
+  `public_status_wait_ms`, or a computation that exited with no expired entry
+  to fall back on. With the cache off, every call is `compute.()`.
   """
-  @spec cached_public_status((-> map)) :: map
+  @spec cached_public_status((-> map)) :: {:ok, map} | :unavailable
   def cached_public_status(compute) do
     ttl = Application.get_env(:coordinator, :public_status_cache_ms, 2_000)
 
     if ttl > 0 do
       case status_entry() do
         {:fresh, body} ->
-          body
+          {:ok, body}
 
         {:stale, body} ->
           case claim() do
-            {:won, marker} -> refresh(compute, ttl, marker)
-            :lost -> body
+            {:won, marker} -> refresh(compute, ttl, marker, {:ok, body})
+            :lost -> {:ok, body}
           end
 
         :none ->
           wait(compute, ttl, mono() + wait_ms())
       end
     else
-      compute.()
+      with :exited <- run(compute), do: :unavailable
     end
   end
 
@@ -216,41 +224,57 @@ defmodule Coordinator.IslandLimiter do
   end
 
   # Cold cache: refresh if we can claim it, else wait for whoever did; past the
-  # wait, compute anyway (an answer, never an error, for /healthz).
+  # wait, `:unavailable`. A waiter never computes unless it holds the marker,
+  # so a slow Queue is asked once however many readers arrive.
   defp wait(compute, ttl, deadline) do
     case status_entry() do
       {_, body} ->
-        body
+        {:ok, body}
 
       :none ->
         case claim() do
           {:won, marker} ->
-            refresh(compute, ttl, marker)
+            refresh(compute, ttl, marker, :unavailable)
 
           :lost ->
             if mono() < deadline do
               Process.sleep(@poll_ms)
               wait(compute, ttl, deadline)
             else
-              compute.()
+              :unavailable
             end
         end
     end
   end
 
-  defp refresh(compute, ttl, marker) do
+  # `fallback` is what to answer if the computation exits.
+  defp refresh(compute, ttl, marker, fallback) do
     # Someone may have filled the cache between our look and our claim.
     case status_entry() do
       {:fresh, body} ->
-        body
+        {:ok, body}
 
       _ ->
-        body = compute.()
-        store({@status_key, body, mono() + ttl})
-        body
+        case run(compute) do
+          {:ok, body} ->
+            store({@status_key, body, mono() + ttl})
+            {:ok, body}
+
+          # Nothing stored: the next reader tries again.
+          :exited ->
+            fallback
+        end
     end
   after
     release(marker)
+  end
+
+  # `{:ok, compute.()}`, or `:exited` if it exits (a Queue call timing out or
+  # finding no Queue).
+  defp run(compute) do
+    {:ok, compute.()}
+  catch
+    :exit, _ -> :exited
   end
 
   defp status_entry do

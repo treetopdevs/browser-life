@@ -88,16 +88,24 @@ defmodule CoordinatorWeb.ApiController do
   # contains island IDs, adapter descriptions, and experiment definitions.
   # Served from a short cache outside the Queue (`public_status_cache_ms`, also
   # what /healthz reads through the proxy); `updatedAt` is when the numbers were
-  # computed, so it moves with the cache.
+  # computed, so it moves with the cache. With nothing to serve (a cold cache
+  # whose one Queue call is slow, or a Queue call that exited) it is a 503 with
+  # Retry-After, never a 500 and never a second Queue call.
   def public_status(conn, _) do
-    body =
-      IslandLimiter.cached_public_status(fn ->
-        Map.put(Queue.public_status(), :updatedAt, DateTime.utc_now() |> DateTime.to_iso8601())
-      end)
+    conn = put_resp_header(conn, "cache-control", "no-store")
 
-    conn
-    |> put_resp_header("cache-control", "no-store")
-    |> json(body)
+    case IslandLimiter.cached_public_status(fn ->
+           Map.put(Queue.public_status(), :updatedAt, DateTime.utc_now() |> DateTime.to_iso8601())
+         end) do
+      {:ok, body} ->
+        json(conn, body)
+
+      :unavailable ->
+        conn
+        |> put_resp_header("retry-after", "1")
+        |> put_status(503)
+        |> json(%{error: "status is not available yet; try again"})
+    end
   end
 
   def experiment(conn, %{"name" => name}) do

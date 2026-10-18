@@ -115,9 +115,11 @@ Budgets kept outside the Queue process (`Coordinator.IslandLimiter`), all in con
   costs new joiners a 503 rather than costing existing islands their credentials.
 * `GET /api/public/status` (and `/healthz`, which the site's Caddy rewrites to it) is
   served from a `public_status_cache_ms` (2 s) cache, counted from when the numbers were
-  computed; concurrent misses are coalesced into one Queue call (a cold cache's other
-  callers wait up to `public_status_wait_ms` for it). Its `updatedAt` is when the numbers
-  were computed. It carries only `counts`, `activeIslands`, `deviceTypes` and `updatedAt`.
+  computed; concurrent misses are coalesced into one Queue call, and only that caller
+  ever asks the Queue (a cold cache's other callers wait up to `public_status_wait_ms`
+  for it, then answer 503 with `Retry-After: 1`; a Queue call that exits is served the
+  expired entry if there is one, else the same 503, never a 500). Its `updatedAt` is when
+  the numbers were computed. It carries only `counts`, `activeIslands`, `deviceTypes` and `updatedAt`.
   `/api/status`, `/api/experiments/:name` and `/api/discovery/status` need the admin
   token.
 * CORS: production allows no cross-origin caller unless `BL_CORS_ORIGINS` names one, and

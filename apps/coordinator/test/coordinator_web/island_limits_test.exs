@@ -17,6 +17,7 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     :island_segment_requests_per_island,
     :max_islands,
     :public_status_cache_ms,
+    :public_status_wait_ms,
     :trust_forwarded_for,
     :cors_origins,
     :admin_token
@@ -182,6 +183,11 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     assert_error_sent 413, fn -> build_conn() |> json.() |> post("/api/islands", big) end
     # The same path, percent-encoded, is the same route.
     assert_error_sent 413, fn -> build_conn() |> json.() |> post("/api/isl%61nds", big) end
+    # A malformed escape is not a crash: `URI.decode/1` (here, in the letter
+    # plug and in the router) leaves it as written, so the path is just unknown.
+    for path <- ["/api/%zz", "/api/isl%zznds", "/api/public/garden/%zz", "/elsewhere/%"] do
+      assert build_conn() |> json.() |> post(path, "{}") |> response(404)
+    end
 
     assert_error_sent 413, fn ->
       build_conn() |> json.() |> authed(token) |> post("/api/next?island=#{id}", big)
@@ -398,5 +404,37 @@ defmodule CoordinatorWeb.IslandLimitsTest do
     third = build_conn() |> get("/api/public/status") |> json_response(200)
     assert Map.keys(third) |> Enum.sort() == ~w(activeIslands counts deviceTypes updatedAt)
     assert third["activeIslands"] == first["activeIslands"] + 1
+  end
+
+  test "public status over HTTP: a cold cache behind a slow Queue answers 503 with Retry-After, not a second Queue call" do
+    set(:public_status_cache_ms, 60_000)
+    set(:public_status_wait_ms, 50)
+    IslandLimiter.reset()
+    :sys.suspend(Queue)
+
+    try do
+      # The first reader owns the refresh and waits on the (suspended) Queue.
+      owner = Task.async(fn -> build_conn() |> get("/api/public/status") end)
+      wait_until(fn -> :ets.member(:coordinator_island_limits, {:refresh, :public_status}) end)
+
+      c = build_conn() |> get("/api/public/status")
+      assert %{"error" => _} = json_response(c, 503)
+      assert get_resp_header(c, "retry-after") == ["1"]
+      assert get_resp_header(c, "cache-control") == ["no-store"]
+
+      :sys.resume(Queue)
+      assert %{"counts" => _} = owner |> Task.await(30_000) |> json_response(200)
+    after
+      # Harmless if already resumed.
+      :sys.resume(Queue)
+    end
+  end
+
+  defp wait_until(f, tries \\ 3_000) do
+    cond do
+      f.() -> :ok
+      tries == 0 -> flunk("timed out waiting")
+      true -> Process.sleep(10) && wait_until(f, tries - 1)
+    end
   end
 end

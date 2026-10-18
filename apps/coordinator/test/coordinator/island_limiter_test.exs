@@ -154,18 +154,18 @@ defmodule Coordinator.IslandLimiterTest do
     end
 
     put(:public_status_cache_ms, 60_000)
-    assert %{n: 1} = IslandLimiter.cached_public_status(compute)
-    assert %{n: 1} = IslandLimiter.cached_public_status(compute)
+    assert {:ok, %{n: 1}} = IslandLimiter.cached_public_status(compute)
+    assert {:ok, %{n: 1}} = IslandLimiter.cached_public_status(compute)
 
     put(:public_status_cache_ms, 1)
     IslandLimiter.reset()
-    assert %{n: 2} = IslandLimiter.cached_public_status(compute)
+    assert {:ok, %{n: 2}} = IslandLimiter.cached_public_status(compute)
     Process.sleep(5)
-    assert %{n: 3} = IslandLimiter.cached_public_status(compute)
+    assert {:ok, %{n: 3}} = IslandLimiter.cached_public_status(compute)
 
     put(:public_status_cache_ms, 0)
-    assert %{n: 4} = IslandLimiter.cached_public_status(compute)
-    assert %{n: 5} = IslandLimiter.cached_public_status(compute)
+    assert {:ok, %{n: 4}} = IslandLimiter.cached_public_status(compute)
+    assert {:ok, %{n: 5}} = IslandLimiter.cached_public_status(compute)
   end
 
   test "segment requests are budgeted per island id, apart from next" do
@@ -211,12 +211,12 @@ defmodule Coordinator.IslandLimiterTest do
       |> Enum.map(&Task.await(&1, 60_000))
 
     assert :counters.get(counter, 1) == 1
-    assert Enum.uniq(bodies) == [%{n: 1}]
+    assert Enum.uniq(bodies) == [{:ok, %{n: 1}}]
   end
 
   test "public status cache: while one caller refreshes an expired entry, the others are served it" do
     put(:public_status_cache_ms, 1)
-    assert %{n: 0} = IslandLimiter.cached_public_status(fn -> %{n: 0} end)
+    assert {:ok, %{n: 0}} = IslandLimiter.cached_public_status(fn -> %{n: 0} end)
     Process.sleep(5)
 
     parent = self()
@@ -234,9 +234,60 @@ defmodule Coordinator.IslandLimiterTest do
 
     assert_receive :refreshing, 30_000
     # The refresher holds the marker: everyone else gets the expired entry, now.
-    assert %{n: 0} = IslandLimiter.cached_public_status(fn -> flunk("computed twice") end)
+    assert {:ok, %{n: 0}} = IslandLimiter.cached_public_status(fn -> flunk("computed twice") end)
     send(slow.pid, :go)
-    assert %{n: 1} = Task.await(slow, 30_000)
+    assert {:ok, %{n: 1}} = Task.await(slow, 30_000)
+  end
+
+  test "public status cache: a cold cache's waiters never compute, even past the wait" do
+    put(:public_status_cache_ms, 60_000)
+    put(:public_status_wait_ms, 50)
+    counter = :counters.new(1, [])
+    parent = self()
+
+    compute = fn ->
+      :counters.add(counter, 1, 1)
+      send(parent, :refreshing)
+
+      receive do
+        :go -> %{n: 1}
+      end
+    end
+
+    owner = Task.async(fn -> IslandLimiter.cached_public_status(compute) end)
+    assert_receive :refreshing, 30_000
+
+    # The Queue is slow: twelve readers wait past public_status_wait_ms and
+    # answer :unavailable without asking it again.
+    waiters =
+      1..12
+      |> Enum.map(fn _ -> Task.async(fn -> IslandLimiter.cached_public_status(compute) end) end)
+      |> Enum.map(&Task.await(&1, 60_000))
+
+    assert Enum.uniq(waiters) == [:unavailable]
+    assert :counters.get(counter, 1) == 1
+    send(owner.pid, :go)
+    assert {:ok, %{n: 1}} = Task.await(owner, 30_000)
+    assert {:ok, %{n: 1}} = IslandLimiter.cached_public_status(compute)
+    assert :counters.get(counter, 1) == 1
+  end
+
+  test "public status cache: a computation that exits is :unavailable cold, the expired entry warm, and stores nothing" do
+    put(:public_status_cache_ms, 1)
+
+    exits = fn ->
+      exit({:timeout, {GenServer, :call, [Coordinator.Queue, :public_status, 5000]}})
+    end
+
+    assert :unavailable = IslandLimiter.cached_public_status(exits)
+    assert {:ok, %{n: 0}} = IslandLimiter.cached_public_status(fn -> %{n: 0} end)
+    Process.sleep(5)
+    assert {:ok, %{n: 0}} = IslandLimiter.cached_public_status(exits)
+    # The marker was released and nothing was stored: the next reader refreshes.
+    assert {:ok, %{n: 1}} = IslandLimiter.cached_public_status(fn -> %{n: 1} end)
+
+    put(:public_status_cache_ms, 0)
+    assert :unavailable = IslandLimiter.cached_public_status(exits)
   end
 
   test "public status cache: the ttl counts from when the computation finished" do
@@ -249,7 +300,7 @@ defmodule Coordinator.IslandLimiterTest do
       %{n: :counters.get(counter, 1)}
     end
 
-    assert %{n: 1} = IslandLimiter.cached_public_status(compute)
-    assert %{n: 1} = IslandLimiter.cached_public_status(compute)
+    assert {:ok, %{n: 1}} = IslandLimiter.cached_public_status(compute)
+    assert {:ok, %{n: 1}} = IslandLimiter.cached_public_status(compute)
   end
 end

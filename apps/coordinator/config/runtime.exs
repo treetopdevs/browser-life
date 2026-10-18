@@ -5,15 +5,33 @@ if token = System.get_env("BL_ADMIN_TOKEN"), do: config(:coordinator, admin_toke
 if config_env() == :prod and System.get_env("BL_ADMIN_TOKEN") in [nil, ""],
   do: raise("BL_ADMIN_TOKEN must be set in production")
 
-# A whole browser origin as a browser sends it in `Origin`: https, a lowercase
-# host with no wildcard, an explicit port only when not 443, and nothing else
-# (no user, path, query or fragment; "https://a.example/" never matches).
+# A host spelled exactly as a browser serializes it in `Origin`: an IP literal
+# in its canonical form (IPv6 compressed and lowercase, as `:inet.ntoa/1` and
+# RFC 5952 write it, with no embedded IPv4, which browsers rewrite to hex), or
+# an ASCII lowercase name (no IDN, which browsers send as punycode, no
+# wildcard) whose last label is not a number (browsers read such a name as an
+# IPv4 address and rewrite it, e.g. 127.1 or 0x7f.1).
+browser_host? = fn host ->
+  case :inet.parse_address(String.to_charlist(host)) do
+    {:ok, ip} ->
+      List.to_string(:inet.ntoa(ip)) == host and
+        not (tuple_size(ip) == 8 and String.contains?(host, "."))
+
+    _ ->
+      Regex.match?(~r/\A[a-z0-9-]+(\.[a-z0-9-]+)*\z/, host) and
+        not Regex.match?(~r/(\A|\.)(0x[0-9a-f]*|[0-9]+)\z/, host)
+  end
+end
+
+# A whole browser origin as a browser sends it in `Origin`: https, a host as
+# above, an explicit port only when not 443 and within 1..65535, and nothing
+# else (no user, path, query or fragment; "https://a.example/" never matches).
 https_origin? = fn o ->
   case URI.new(o) do
     {:ok, %URI{scheme: "https", host: host, port: port, userinfo: nil, path: nil} = u}
-    when is_binary(host) and host != "" ->
-      u.query == nil and u.fragment == nil and not String.contains?(host, "*") and
-        o == URI.to_string(%URI{scheme: "https", host: String.downcase(host), port: port})
+    when is_binary(host) and host != "" and port in 1..65_535 ->
+      u.query == nil and u.fragment == nil and browser_host?.(host) and
+        o == URI.to_string(%URI{scheme: "https", host: host, port: port})
 
     _ ->
       false
