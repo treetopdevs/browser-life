@@ -26,7 +26,16 @@ export interface Day {
   verifiedAt: number | null; digest: string | null; verification: string | null; letters: string[]; census: Census | null;
   /** The live food the day carries (added to garden-v1 with food; absent from a coordinator from before). */
   food?: string | null;
+  /** Who held the field at the day's end (added with dawn predictions); null unless the day is verified. */
+  leaders?: Leaders | null;
 }
+/** One lineage key in a day's top three, or one line into a day (docs/garden-predictions-2026-10-18.md). */
+export interface LeaderEntry { key: string; label: string; cells: number; share: number }
+export interface LeadersCensus { step: number; livingCells: number; lineages: number; top: LeaderEntry[]; clearLeader: string | null }
+export interface Lines { fromDay: number; groups: LeaderEntry[]; rest: { cells: number; share: number }; winner: string | null }
+/** A verified day's block: "ok", "pending", "unchecked" or "unreadable"; numbers only when "ok". */
+export interface Leaders { status: string; census: LeadersCensus | null; lines: Lines | null }
+export interface LeadersRule { name: string; top: number; clearLeaderPercent: number }
 /** A food: a feed visitors called together. Its statuses are a letter's. */
 export interface Food {
   id: string; x: number; y: number; r: number; amount: number; calledAt: number;
@@ -75,6 +84,8 @@ export interface GardenView {
   limits: { stoneRadius: { min: number; max: number }; lettersPerAddressPerHour: number; logMax: number };
   /** Added to garden-v1 with food (docs/garden-food-2026-10-18.md); absent from a coordinator from before. */
   food?: FoodBlock;
+  /** Added with dawn predictions (docs/garden-predictions-2026-10-18.md); absent from a coordinator from before. */
+  leadersRule?: LeadersRule;
 }
 
 // A check returns null when the value fits, or the first thing wrong with it, named by its path.
@@ -135,6 +146,18 @@ const foodBlockShape = shape({
   place: orNull(shape({ x: num, y: num })), hands: num, expiresAt: time, open: bool, closed: orNull(str),
   opensAtDay: orNull(num), landing: orNull(shape({ day: num, step: num })), foods: list(foodShape),
 }, { sharedAddress: bool });
+/** A lineage key as the census writes it: birth step plus one, then the birth cell. */
+export const LINEAGE_KEY = /^\d{1,10}:\d{1,10}$/;
+const lineageKey: Check = (v, p) => (typeof v === "string" && LINEAGE_KEY.test(v) ? null : `${p}: expected a lineage key`);
+const count0: Check = (v, p) => (typeof v === "number" && Number.isSafeInteger(v) && v >= 0 ? null : `${p}: expected a count`);
+const entryShape = shape({ key: lineageKey, label: str, cells: count0, share: num });
+const winnerCheck: Check = (v, p) => (v === null || v === "rest" ? null : lineageKey(v, p));
+const leadersShape = shape({
+  status: str,
+  census: orNull(shape({ step: num, livingCells: count0, lineages: count0, top: list(entryShape), clearLeader: orNull(lineageKey) })),
+  lines: orNull(shape({ fromDay: count0, groups: list(entryShape), rest: shape({ cells: count0, share: num }), winner: winnerCheck })),
+});
+const leadersRuleShape = shape({ name: str, top: pos, clearLeaderPercent: num });
 const viewShape = shape({
   name: str, presetId: str, seed: num,
   world: shape({ width: pos, height: pos }),
@@ -157,14 +180,14 @@ const viewShape = shape({
   days: list(shape({
     day: num, startStep: num, endStep: num, status: str, releasedAt: time, doneAt: orNull(time), verifiedAt: orNull(time),
     digest: orNull(str), verification: orNull(str), letters: list(str), census: orNull(shape(censusKeys)),
-  }, { food: orNull(str) })),
+  }, { food: orNull(str), leaders: orNull(leadersShape) })),
   letters: shape({
     perDay: num, queueMax: num, queued: num,
     nextLanding: orNull(shape({ day: num, step: num, open: num })),
     waiting: list(letterShape), recent: list(letterShape),
   }),
   limits: shape({ stoneRadius: shape({ min: num, max: num }), lettersPerAddressPerHour: num, logMax: num }),
-}, { food: foodBlockShape });
+}, { food: foodBlockShape, leadersRule: leadersRuleShape });
 
 const clip = (text: string, n = 160) => (text.length > n ? `${text.slice(0, n - 1)}…` : text);
 
@@ -697,6 +720,342 @@ export function latchHolds(latch: HandLatch | null, view: GardenView | null, fre
   return food.hands > 0 || food.foods.some((f) => f.calledAt >= latch.since);
 }
 
+// ---------- who holds the field, and dawn predictions (docs/garden-predictions-2026-10-18.md) ----------
+
+/** Whether the coordinator publishes the leaders blocks: without `leadersRule` the panel is off. */
+export const leadersOn = (view: GardenView) => view.leadersRule !== undefined;
+
+const dayOfView = (view: GardenView, d: number) => view.days.find((x) => x.day === d);
+
+/** The "someone else" choice: every line but the three named. */
+export const REST_CHOICE = "someone else: the rest (every other line)";
+
+/** Which open window a reading shows (planting, basis day and its digest), or null when shut: a guess belongs to one. */
+export function windowId(view: GardenView, w: PredictionWindow): string | null {
+  return w.open ? `${view.name}|${view.createdAt}|${w.basis}|${w.digest}|${w.census.step}|${w.census.top.map((e) => `${e.key}=${e.cells}`).join(",")}` : null;
+}
+
+/** Why a guess cannot be made now. */
+export type ClosedReason = "no-leaders" | "stopped" | "finished" | "horizon" | "basis-pending" | "basis-unverified" | "basis-unchecked" | "basis-unreadable" | "nothing-living";
+export type PredictionWindow =
+  | { open: true; basis: number; target: number; census: LeadersCensus; digest: string }
+  | { open: false; reason: ClosedReason; basis: number; target: number };
+
+/**
+ * The note's section 5: a guess is about T = B + 1, B the newest released day, and can be made only while B is verified
+ * with an `ok` block holding a living cell, T is before the horizon, and the garden is neither stopped nor finished. T
+ * is not released by definition (B is the newest released day), so the cut-off is T's release.
+ */
+export function predictionWindow(view: GardenView): PredictionWindow {
+  const basis = releasedDay(view);
+  const target = basis + 1;
+  const shut = (reason: ClosedReason): PredictionWindow => ({ open: false, reason, basis, target });
+  if (!leadersOn(view)) return shut("no-leaders");
+  if (view.state === "stopped") return shut("stopped");
+  if (view.state === "finished") return shut("finished");
+  if (target >= view.clock.daysTotal) return shut("horizon");
+  const b = dayOfView(view, basis);
+  if (!b || b.status !== "verified" || !b.leaders || b.digest === null) return shut("basis-unverified");
+  if (b.leaders.status === "pending") return shut("basis-pending");
+  if (b.leaders.status === "unchecked") return shut("basis-unchecked");
+  if (b.leaders.status !== "ok" || !b.leaders.census) return shut("basis-unreadable");
+  if (b.leaders.census.livingCells === 0 || b.leaders.census.top.length === 0) return shut("nothing-living");
+  return { open: true, basis, target, census: b.leaders.census, digest: b.digest };
+}
+
+/** A shut window in words (the note's section 5). */
+export function windowWords(w: PredictionWindow): string {
+  if (w.open) return `Guesses about day ${w.target} are open until it is released to an island.`;
+  switch (w.reason) {
+    case "no-leaders": return "This garden does not publish who held the field.";
+    case "stopped": return "The garden has stopped, so no next day is coming to guess about.";
+    case "finished": return "Every day to the horizon is done; there is no next day to guess about.";
+    case "horizon": return `Day ${w.basis} is the last before the horizon; there is no next day to guess about.`;
+    case "basis-pending": return `Day ${w.basis} is verified; its files are still being counted.`;
+    case "basis-unchecked": return `Day ${w.basis} was verified without its files being checked, so there are no numbers to guess from.`;
+    case "basis-unreadable": return `Day ${w.basis} is verified, but its files could not be read, so there are no numbers to guess from.`;
+    case "nothing-living": return `Nothing is living at the end of day ${w.basis}, so there is nothing to guess about.`;
+    case "basis-unverified": return `Predictions open when the newest day is verified and the next is not yet released. Day ${w.basis} is not verified yet.`;
+  }
+}
+
+/** A key's line in words, with its label when the day lists it. */
+export function lineName(key: string, entries: readonly LeaderEntry[] = []): string {
+  if (key === "rest") return "the rest";
+  const e = entries.find((x) => x.key === key);
+  return e ? `the line of ${e.label} (${key})` : `the line of ${key}`;
+}
+
+/** A day's census block in words: its top three and whether one key clearly leads (a word, not the game's outcome). */
+export function leadersWords(day: Pick<Day, "day"> & { leaders?: Leaders | null }, rule: LeadersRule | undefined): string {
+  const l = day.leaders;
+  if (!l) return `Day ${day.day} is not verified, so it has no count.`;
+  if (l.status === "pending") return `Day ${day.day} is verified; its files are still being counted.`;
+  if (l.status === "unchecked") return `Day ${day.day} was verified without its files being checked, so it has no count.`;
+  if (l.status !== "ok" || !l.census) return `Day ${day.day}’s files could not be read, so it has no count.`;
+  const c = l.census;
+  if (c.livingCells === 0) return `Nothing is living at the end of day ${day.day}.`;
+  const pct = rule?.clearLeaderPercent ?? 10;
+  const top = c.top[0];
+  if (c.clearLeader !== null && top)
+    return `At the end of day ${day.day}, ${top.label} (${top.key}) holds ${sharePercent(top.cells, c.livingCells)} of ${plural(c.livingCells, "living cell")}: a clear leader (at least ${pct}% and more than any other key).`;
+  // Whole percents round: a share just under the threshold is said so, never as the threshold itself, and a tie for
+  // the most is named, so the words never seem to meet the rule they say was missed.
+  const under = !!top && top.cells * 100 < pct * c.livingCells;
+  const shown = !top ? "none" : under && Math.round((top.cells * 100) / c.livingCells) >= pct ? `just under ${pct}%` : sharePercent(top.cells, c.livingCells);
+  const tied = !!top && !under && c.top.length > 1 && c.top[1].cells === top.cells ? " and is tied with another key" : "";
+  return `At the end of day ${day.day}, no key clearly leads: the biggest holds ${shown} of ${plural(c.livingCells, "living cell")}${tied} (a clear leader needs at least ${pct}% and more than any other key).`;
+}
+
+/** The lines into a day in words: who held the field at its end. */
+export function linesWords(lines: Lines, living: number): string {
+  if (lines.winner === null) return `No line held the field at the end of day ${lines.fromDay + 1}: ${living === 0 ? "nothing was living" : "a tie for the most cells"}.`;
+  const cells = lines.winner === "rest" ? lines.rest.cells : lines.groups.find((g) => g.key === lines.winner)?.cells ?? 0;
+  return `${capital(lineName(lines.winner, lines.groups))} held the field at the end of day ${lines.fromDay + 1}: ${sharePercent(cells, living)} of its living cells, counting day ${lines.fromDay}’s three biggest keys each with its mutants born on those two days.`;
+}
+
+const capital = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** The garden's own tally over its listed days: how often each kind of line held the field. */
+export function fieldTally(view: GardenView): { days: number; rest: number; top: number; none: number } {
+  const t = { days: 0, rest: 0, top: 0, none: 0 };
+  for (const d of view.days) {
+    const lines = d.status === "verified" && d.leaders?.status === "ok" ? d.leaders.lines : null;
+    if (!lines) continue;
+    t.days++;
+    if (lines.winner === "rest") t.rest++;
+    else if (lines.winner === null) t.none++;
+    else t.top++;
+  }
+  return t;
+}
+
+export function tallyWords(view: GardenView): string {
+  const t = fieldTally(view);
+  if (t.days === 0) return "No listed day has its lines counted yet, so there is no tally.";
+  return `Of the ${plural(t.days, "listed day")} with lines counted, the rest held the field on ${t.rest}, one of the day before’s three biggest lines on ${t.top}${t.none ? `, and no line on ${t.none}` : ""}.`;
+}
+
+/** What a guess was made against: the part of the view the receipt's hash covers (the choice sits beside it). */
+export interface ReceiptBody {
+  v: 1; garden: string; createdAt: number; madeAt: number;
+  basis: { day: number; digest: string; step: number; livingCells: number; top: [string, number][] };
+  target: number; releasedStep: number;
+}
+/**
+ * A receipt: the body, the choice beside it, the body's hash, and `id`, a random name this device gives each guess so
+ * two guesses against one reading (same hash) are still told apart; neither the choice nor the id is hashed, and the id
+ * never leaves the device. Receipts stored before ids existed have none.
+ */
+export interface Receipt extends ReceiptBody { choice: string; hash: string; id?: string }
+
+/** A fresh random id for a guess: 32 hex characters from `crypto.getRandomValues` (or Math.random without it). */
+export function newReceiptId(): string {
+  const bytes = new Uint8Array(16);
+  try {
+    globalThis.crypto.getRandomValues(bytes);
+  } catch {
+    for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** What tells one guess from another on this device: its id, or for a receipt without one its hash, choice and time. */
+export const receiptId = (r: Receipt): string => r.id ?? `${r.hash}:${r.choice}:${r.madeAt}`;
+
+/** JSON with every object's keys sorted and no spaces; arrays keep their order. */
+export function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (isObject(value)) return `{${Object.keys(value).sort().map((k) => `${JSON.stringify(k)}:${canonicalJson(value[k])}`).join(",")}}`;
+  return JSON.stringify(value);
+}
+
+export type Subtle = Pick<SubtleCrypto, "digest">;
+
+/** SHA-256 (hex) of the body's canonical JSON, or null without `crypto.subtle`. */
+export async function receiptHash(body: ReceiptBody, subtle: Subtle | null | undefined): Promise<string | null> {
+  if (!subtle) return null;
+  try {
+    const bytes = new Uint8Array(await subtle.digest("SHA-256", new TextEncoder().encode(canonicalJson(body))));
+    return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return null;
+  }
+}
+
+/** The body a guess made now would carry, from the open window. */
+export function receiptBody(view: GardenView, w: Extract<PredictionWindow, { open: true }>): ReceiptBody {
+  return {
+    v: 1, garden: view.name, createdAt: view.createdAt, madeAt: view.now,
+    basis: { day: w.basis, digest: w.digest, step: w.census.step, livingCells: w.census.livingCells, top: w.census.top.map((e) => [e.key, e.cells]) },
+    target: w.target, releasedStep: view.clock.releasedStep,
+  };
+}
+
+/** A receipt for `choice` (one of the basis's top keys, or "rest"), or why none can be made. */
+export async function makeReceipt(view: GardenView, choice: string, subtle: Subtle | null | undefined, id: string = newReceiptId()): Promise<{ ok: true; receipt: Receipt } | { ok: false; words: string }> {
+  const w = predictionWindow(view);
+  if (!w.open) return { ok: false, words: windowWords(w) };
+  if (choice !== "rest" && !w.census.top.some((e) => e.key === choice)) return { ok: false, words: "Choose one of the three lines, or the rest." };
+  const body = receiptBody(view, w);
+  const hash = await receiptHash(body, subtle);
+  if (hash === null) return { ok: false, words: "This browser cannot make the receipt’s fingerprint (it has no crypto.subtle here), so receipts can’t be made." };
+  return { ok: true, receipt: { ...body, choice, hash, id } };
+}
+
+export const RECEIPTS_MAX = 32;
+export const predictionKey = (coordinator: string, garden: string) => `cadence-garden-predictions:${coordinator}:${garden}`;
+
+const isReceipt = (v: unknown): v is Receipt => {
+  if (!isObject(v) || v.v !== 1 || typeof v.garden !== "string" || !isTime(v.createdAt) || !isTime(v.madeAt)) return false;
+  if (!count(v.target) || !count(v.releasedStep) || typeof v.choice !== "string" || typeof v.hash !== "string" || !/^[0-9a-f]{64}$/.test(v.hash)) return false;
+  if (v.choice !== "rest" && !LINEAGE_KEY.test(v.choice)) return false;
+  if (v.id !== undefined && (typeof v.id !== "string" || !/^[0-9a-f]{16,64}$/.test(v.id))) return false;
+  const b = v.basis;
+  return isObject(b) && count(b.day) && typeof b.digest === "string" && count(b.step) && count(b.livingCells) && Array.isArray(b.top)
+    && b.top.every((e) => Array.isArray(e) && e.length === 2 && typeof e[0] === "string" && LINEAGE_KEY.test(e[0]) && count(e[1]));
+};
+
+/**
+ * The device's receipts for one garden, newest first, or null when storage cannot be read (none, or it throws): then
+ * what it holds is unknown, which is not the same as holding nothing. A list or entry that does not parse counts as none.
+ */
+export function readStoredReceipts(storage: Pick<Storage, "getItem"> | null, key: string): Receipt[] | null {
+  let text: string | null;
+  try {
+    if (!storage) return null;
+    text = storage.getItem(key);
+  } catch {
+    return null;
+  }
+  if (!text) return [];
+  try {
+    const v = JSON.parse(text) as unknown;
+    return Array.isArray(v) ? v.filter(isReceipt).slice(0, RECEIPTS_MAX) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** As readStoredReceipts, with storage that cannot be read counting as none. */
+export function readReceipts(storage: Pick<Storage, "getItem"> | null, key: string): Receipt[] {
+  return readStoredReceipts(storage, key) ?? [];
+}
+
+export function writeReceipts(storage: Pick<Storage, "setItem"> | null, key: string, receipts: readonly Receipt[]): boolean {
+  try {
+    if (!storage) return false;
+    storage.setItem(key, JSON.stringify(receipts.slice(0, RECEIPTS_MAX)));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** A new receipt replaces the device's earlier one for the same planting and day; newest first, at most 32. */
+export function addReceipt(receipts: readonly Receipt[], r: Receipt): Receipt[] {
+  return [r, ...receipts.filter((x) => !(x.createdAt === r.createdAt && x.target === r.target))].slice(0, RECEIPTS_MAX);
+}
+
+/**
+ * A receipt this tab could not store, with the `receiptId` of the stored receipt for the same planting and day it
+ * replaced: null when storage held none, undefined when storage could not be read (the first reading that works then
+ * sets it). Which guess is later is told by what storage held, never by clocks or hashes: two guesses can carry the same
+ * `madeAt` and the same hash (one cached reading), and two tabs' clocks need not agree.
+ */
+export interface Unkept { receipt: Receipt; over: string | null | undefined }
+
+const sameDay = (a: Receipt, b: Receipt) => a.createdAt === b.createdAt && a.target === b.target;
+
+/** This tab's unstored receipts with a new one: one per planting and day, newest first, at most 32. */
+export function addUnkept(unkept: readonly Unkept[], u: Unkept): Unkept[] {
+  return [u, ...unkept.filter((x) => !sameDay(x.receipt, u.receipt))].slice(0, RECEIPTS_MAX);
+}
+
+/**
+ * The receipts to show: the stored ones, with this tab's unstored ones over them for the same planting and day while
+ * storage still holds, for that day, what the unstored one replaced (or nothing, or the same receipt), told by
+ * `receiptId`. A different stored receipt was written after the unstored one was made (in another tab), so it is the
+ * later guess and the tab forgets its own. `kept` null (storage unreadable now): the unstored ones show and all wait. An
+ * unstored one made while storage was unreadable takes what storage holds at the first reading that works as what it
+ * replaced (a write by another tab during the outage then loses to it: nothing records which came first). Newest first by
+ * `madeAt` (ties keep this tab's first), at most 32; also the unstored ones still worth keeping in the tab.
+ */
+export function mergeReceipts(kept: readonly Receipt[] | null, unkept: readonly Unkept[]): { all: Receipt[]; unkept: Unkept[] } {
+  const live: Unkept[] = [];
+  for (const u of unkept) {
+    if (kept === null) { live.push(u); continue; }
+    const k = kept.find((x) => sameDay(x, u.receipt));
+    if (u.over === undefined) live.push({ receipt: u.receipt, over: k ? receiptId(k) : null });
+    else if (!k || receiptId(k) === u.over || receiptId(k) === receiptId(u.receipt)) live.push(u);
+  }
+  const all = [...live.map((u) => u.receipt), ...(kept ?? []).filter((k) => !live.some((u) => sameDay(u.receipt, k)))]
+    .sort((a, b) => b.madeAt - a.madeAt)
+    .slice(0, RECEIPTS_MAX);
+  return { all, unkept: live };
+}
+
+export type Settled =
+  | { kind: "replanted" }
+  | { kind: "old" | "mismatch" | "unavailable" | "late" | "stalled" | "waiting" | "unchecked" | "unreadable" | "held" | "missed"; tone: Tone; words: string };
+
+/**
+ * A receipt against this reading (the note's section 7 and its second amendment), the first row that applies. `hash`
+ * hashes a body (receiptHash with the page's crypto); the basis it hashes is the listed day B's, so an edited receipt
+ * does not match. A day B whose count is not there now (being counted again, or run again) cannot be checked now; that
+ * is not a mismatch.
+ */
+export async function settle(r: Receipt, view: GardenView, hash: (body: ReceiptBody) => Promise<string | null>): Promise<Settled> {
+  if (r.createdAt !== view.createdAt || r.garden !== view.name) return { kind: "replanted" };
+  const B = r.basis.day, T = r.target;
+  const oldest = view.days.length ? Math.min(...view.days.map((d) => d.day)) : 0;
+  const listed = (d: number) => dayOfView(view, d);
+  const old = (d: number): Settled => ({ kind: "old", tone: "pending", words: `Cannot be checked here: day ${d} is older than the ${view.days.length} days this garden lists.` });
+  const mismatch: Settled = { kind: "mismatch", tone: "negative", words: `Does not match the garden’s record of day ${B}.` };
+  const b = listed(B);
+  if (!b) return old(B);
+  const c = b.leaders?.census;
+  if (!c || b.digest === null || b.status !== "verified" || b.leaders?.status !== "ok") {
+    const why = b.leaders?.status === "unreadable"
+      ? `day ${B}’s files could not be read when they were counted again`
+      : b.leaders?.status === "unchecked"
+        ? `day ${B} has no count now (its replay did not check its files)`
+        : `day ${B}’s count is not there just now (it is being counted again, or the day is being run again)`;
+    return { kind: "unavailable", tone: "pending", words: `Cannot be checked now: ${why}.` };
+  }
+  if (T !== B + 1) return mismatch;
+  const fromView: ReceiptBody = {
+    v: 1, garden: view.name, createdAt: view.createdAt, madeAt: r.madeAt,
+    basis: { day: B, digest: b.digest, step: c.step, livingCells: c.livingCells, top: c.top.map((e) => [e.key, e.cells]) },
+    target: T, releasedStep: (B + 1) * view.pace.stepsPerDay,
+  };
+  const again = await hash(fromView);
+  // A fingerprint this browser cannot make is no evidence either way.
+  if (again === null) return { kind: "unavailable", tone: "pending", words: "Cannot be checked in this browser: it cannot make the receipt’s fingerprint (it has no crypto.subtle here)." };
+  if (again !== r.hash) return mismatch;
+  const t = listed(T);
+  const waiting: Settled = { kind: "waiting", tone: "pending", words: `Waiting: day ${T} is not verified yet.` };
+  if (!t) return T > releasedDay(view) ? waiting : T < oldest ? old(T) : waiting;
+  if (t.releasedAt <= r.madeAt) return { kind: "late", tone: "pending", words: `Made after day ${T} was released; not counted.` };
+  if (t.status === "diverged" || t.status === "failed") return { kind: "stalled", tone: "negative", words: `Day ${T} did not replay the same (or could not run); nothing to check.` };
+  if (t.status !== "verified" || !t.leaders || t.leaders.status === "pending") return waiting;
+  if (t.leaders.status === "unchecked") return { kind: "unchecked", tone: "pending", words: `Cannot be checked: the replay did not check day ${T}’s files.` };
+  if (t.leaders.status !== "ok" || !t.leaders.census) return { kind: "unreadable", tone: "pending", words: `Cannot be checked: day ${T}’s files could not be read.` };
+  const lines = t.leaders.lines;
+  // Day B is `ok` here, so lines that are missing are being counted (the two days' answers came in either order).
+  if (!lines) return { kind: "waiting", tone: "pending", words: `Waiting: day ${T} is verified; the lines into it are still being counted.` };
+  if (lines.fromDay !== B) return mismatch;
+  const living = t.leaders.census.livingCells;
+  const who = lines.winner === null ? null : lineName(lines.winner, lines.groups);
+  const cells = lines.winner === "rest" ? lines.rest.cells : lines.groups.find((g) => g.key === lines.winner)?.cells ?? 0;
+  const held = who === null ? "no line held the field" : `${who} held ${sharePercent(cells, living)} of the field at day ${T}’s end`;
+  // As a day's chip: only a replay on another device type is a clean pass (dayChip).
+  const elsewhere = t.verification === "different-device-type";
+  const how = elsewhere ? "" : t.verification === "same-device-type" ? ` Day ${T} was replayed here, not yet verified elsewhere.` : ` Day ${T} was replayed by a second island.`;
+  if (lines.winner !== null && r.choice === lines.winner) return { kind: "held", tone: elsewhere ? "observed" : "note", words: `Held: ${held}.${how}` };
+  return { kind: "missed", tone: elsewhere ? "negative" : "note", words: `Did not hold: ${held}.${how}` };
+}
+
 // ---------- answers ----------
 
 export interface Answer { tone: Tone; words: string; refresh: boolean; letter?: { id: string; landsAtStep: number; day: number } }
@@ -918,6 +1277,8 @@ export interface Deps {
   pollMs: number;
   /** How long one request, body included, may take before it counts as no answer. */
   timeoutMs: number;
+  /** SHA-256 for prediction receipts (`crypto.subtle`); without it no receipt can be made. */
+  subtle?: Subtle | null;
 }
 
 export function browserDeps(): Deps {
@@ -933,6 +1294,7 @@ export function browserDeps(): Deps {
     origin: location.origin,
     pollMs: 60_000,
     timeoutMs: 20_000,
+    subtle: (() => { try { return globalThis.crypto?.subtle ?? null; } catch { return null; } })(),
   };
 }
 
@@ -975,6 +1337,12 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   const handWhy = $("food-why");
   const handSaid = $("food-answer");
   const handShared = $("food-shared");
+  const fieldRow = $("g-field-row");
+  const predictRow = $("g-predict-row");
+  const predictForm = $("predict-form") as HTMLFormElement;
+  const predictSend = $("predict-send") as HTMLButtonElement;
+  const predictWhy = $("predict-why");
+  const predictSaid = $("predict-answer");
 
   const notes = [...source.notes];
   if (source.mock) notes.unshift("The example garden from the contract, not a live one.");
@@ -999,6 +1367,16 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   /** View reads started so far, and which one `view` came from (`HandLatch.afterRead`). */
   let reads = 0;
   let viewRead = 0;
+  /** The line this tab has chosen to guess (a key or "rest"), kept across readings only while the same window is open. */
+  let choice: string | null = null;
+  /** The window the choice was made in (`windowId`): a new basis day, or a recount of it, clears the choice. */
+  let choiceFor: string | null = null;
+  /** The radios now drawn (`windowId` and the keys offered): a reading that offers the same keeps them, and focus. */
+  let radiosDrawn = "";
+  let making = false;
+  /** Receipts made while the device keeps none (storage off): shown in this tab only. */
+  let unkept: Unkept[] = [];
+  let receiptsDrawn = 0;
 
   const key = (v: GardenView) => visitKey(source.coordinator, v.name);
   const storage = () => { try { return deps.storage(); } catch { return null; } };
@@ -1063,6 +1441,9 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
           " ", c.conservationOk === null ? "The matter count: not reported." : c.conservationOk ? "The matter adds up." : "The matter did not add up."),
         h("p", { class: "fine" }, "Reported by the island that ran the day; the replay checks the state, not these numbers."));
     }
+
+    // Who holds the field, and the guess about tomorrow (docs/garden-predictions-2026-10-18.md).
+    renderField(v);
 
     // Days.
     const dayList = h("ol", { class: "garden-days", id: "g-day-list" });
@@ -1130,6 +1511,149 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
       ? "This device has sent a letter since the last dawn. The garden asks one letter per device per dawn: a courtesy, not a rule."
       : "The garden asks one letter per device per dawn: a courtesy, not a rule.");
     updateForm();
+  }
+
+  const pct = (part: number, whole: number) => sharePercent(part, whole);
+  const entryItem = (e: { key: string; label?: string; cells: number }, living: number, name?: string) =>
+    h("li", { "data-key": e.key },
+      h("span", { class: "garden-letter-id mono" }, e.key),
+      h("span", { class: "garden-letter-body" },
+        h("span", {}, `${name ?? e.label ?? e.key}: ${plural(e.cells, "cell")}, ${pct(e.cells, living)} of the living cells.`)));
+
+  function renderField(v: GardenView): void {
+    const on = leadersOn(v);
+    fieldRow.hidden = !on;
+    predictRow.hidden = !on;
+    if (!on) return;
+    // The newest listed verified day: its exact keys, and the lines into it.
+    const shown = v.days.find((d) => d.status === "verified" && d.leaders);
+    const l = shown?.leaders;
+    const c = l?.status === "ok" ? l.census : null;
+    fill("g-field",
+      shown ? h("p", { class: "garden-headline", id: "g-field-words" }, leadersWords(shown, v.leadersRule)) : h("p", { id: "g-field-words" }, "No day is verified yet, so nobody has counted the field."),
+      c && c.top.length ? h("ol", { class: "garden-letters", id: "g-top" }, ...c.top.map((e) => entryItem(e, c.livingCells))) : null,
+      c && l?.lines ? h("h3", {}, `The lines into day ${shown!.day}`) : null,
+      c && l?.lines ? h("p", { id: "g-lines-words" }, linesWords(l.lines, c.livingCells)) : null,
+      c && l?.lines ? h("ul", { class: "garden-letters", id: "g-lines" },
+        ...l.lines.groups.map((g) => entryItem(g, c.livingCells, `the line of ${g.label}`)),
+        entryItem({ key: "rest", cells: l.lines.rest.cells }, c.livingCells, "the rest (every other line)")) : null,
+      h("p", { id: "g-tally" }, tallyWords(v)),
+      h("p", { class: "fine" }, `Counted by the garden from a day’s own files once a second island regenerated them byte for byte, not from the island’s report${shown ? ` (day ${shown.day}: ${shown.verification === "different-device-type" ? "by an island of another device type" : shown.verification === "same-device-type" ? "replayed here, by an island of the same device type, not yet verified elsewhere" : "by a second island"})` : ""}. A key is one line without a mutation; a line here is a key together with the keys descended from it born on the two days, so those mutants count for it, and older ones count with the rest. Rule ${v.leadersRule?.name ?? ""}.`));
+
+    const w = predictionWindow(v);
+    fill("g-predict-window", h("p", { class: "garden-preview", id: "g-predict-words" }, windowWords(w)));
+    const offered = w.open ? [...w.census.top.map((e) => e.key), "rest"] : [];
+    const wid = windowId(v, w);
+    if (choice !== null && (choiceFor !== wid || !offered.includes(choice))) choice = null;
+    const drawn = `${wid ?? ""}|${offered.join(",")}`;
+    if (drawn !== radiosDrawn) {
+      radiosDrawn = drawn;
+      const radios = offered.map((key) => {
+        const input = h("input", { type: "radio", name: "line", value: key }) as HTMLInputElement;
+        input.checked = key === choice;
+        input.addEventListener("change", () => { choice = key; choiceFor = wid; updatePredict(); });
+        return h("label", { class: "garden-choice" }, input, " ", w.open ? (key === "rest" ? REST_CHOICE : lineName(key, w.census.top)) : key);
+      });
+      fill("predict-choices", h("legend", { class: "fine" }, "Your guess"), ...radios);
+      $("predict-choices").hidden = radios.length === 0;
+    }
+    updatePredict();
+    void renderReceipts(v);
+  }
+
+  function updatePredict(): void {
+    const w = view ? predictionWindow(view) : null;
+    const open = !!w && w.open;
+    predictSend.disabled = !open || choice === null || making || !deps.subtle;
+    predictWhy.textContent = !w ? "" : !open ? windowWords(w) : !deps.subtle ? "This browser has no crypto.subtle here, so receipts can’t be made." : making ? "Making…" : choice === null ? "Choose a line first." : "";
+  }
+
+  async function renderReceipts(v: GardenView): Promise<void> {
+    const seq = ++receiptsDrawn;
+    const kept = readStoredReceipts(storage(), predictionKey(source.coordinator, v.name));
+    // A receipt this tab could not store replaces the stored one for the same planting and day, as a stored one would,
+    // unless another tab has stored a different one since (mergeReceipts); storage that cannot be read shows only those.
+    const merged = mergeReceipts(kept, unkept);
+    unkept = merged.unkept;
+    const all = merged.all.filter((r) => r.createdAt === v.createdAt && r.garden === v.name);
+    const items: Node[] = [];
+    for (const r of all) {
+      const st = await settle(r, v, (body) => receiptHash(body, deps.subtle));
+      if (st.kind === "replanted") continue;
+      const basisTop = dayOfView(v, r.basis.day)?.leaders?.census?.top ?? [];
+      items.push(h("li", { "data-receipt": String(r.target), "data-outcome": st.kind },
+        h("span", { class: "garden-letter-id mono" }, `Day ${r.target}`),
+        h("span", { class: "garden-letter-body" },
+          chip({ tone: st.tone, label: st.kind === "held" ? "Held" : st.kind === "missed" ? "Did not hold" : st.kind === "waiting" ? "Waiting" : "Not checked" }), " ",
+          h("span", {}, `You guessed ${lineName(r.choice, basisTop)}, from day ${r.basis.day}, at ${time(r.madeAt)}. Receipt `, h("span", { class: "mono garden-digest" }, r.hash.slice(0, 12)), ". "),
+          h("span", { class: "fine" }, st.words))));
+    }
+    if (seq !== receiptsDrawn) return;
+    fill("g-receipts", items.length ? h("ul", { class: "garden-letters", id: "g-receipt-list" }, ...items) : h("p", { class: "fine" }, "No receipt from this device for this planting yet."));
+  }
+
+  async function makeGuess(): Promise<void> {
+    if (choice === null || !view) return;
+    // What the visitor chose, and in which window: a reading taken below that has moved on (the target released, a
+    // new basis day, a recount of it, a new planting) makes no receipt, whatever is selected by then.
+    const asked = { choice, wid: windowId(view, predictionWindow(view)), target: predictionWindow(view).target };
+    if (asked.wid === null || choiceFor !== asked.wid) return;
+    making = true;
+    updatePredict();
+    let made: Awaited<ReturnType<typeof makeReceipt>>;
+    let target: GardenView;
+    try {
+      // The guess is stamped with the garden's clock, so it is made against a reading taken now, never one kept from
+      // an earlier poll (the window may have shut since): a read that fails makes no receipt.
+      const before = reads;
+      await refresh();
+      // A poll already under way makes `refresh` return early and read again after it: wait for that read too.
+      while (reading) await new Promise((r) => setTimeout(r, 50));
+      if (!view || viewRead <= before) {
+        say(predictSaid, "The garden could not be read just now, so no receipt was made; try again.", "negative");
+        return;
+      }
+      target = view;
+      const now = predictionWindow(target);
+      if (windowId(target, now) !== asked.wid) {
+        choice = null;
+        say(predictSaid, now.open
+          ? `The garden moved on while you chose: guesses are now about day ${now.target}, not day ${asked.target}, so no receipt was made. Choose again.`
+          : `${windowWords(now)} No receipt was made for day ${asked.target}.`, "negative");
+        renderField(target);
+        return;
+      }
+      made = await makeReceipt(target, asked.choice, deps.subtle);
+    } finally {
+      making = false;
+      updatePredict();
+    }
+    if (!made.ok) {
+      say(predictSaid, made.words, "negative");
+      updatePredict();
+      return;
+    }
+    const r = made.receipt;
+    const key = predictionKey(source.coordinator, target.name);
+    // The example garden's receipts are never stored: there is no such garden to check them against later.
+    const store = source.mock ? null : storage();
+    // Storage that cannot be read is not written: a write over a list it could not read would drop the other receipts.
+    const stored = source.mock ? [] : readStoredReceipts(store, key);
+    const kept = !source.mock && stored !== null && writeReceipts(store, key, addReceipt(stored, r));
+    // A stored receipt replaces this tab's unstored one for the same day; an unstored one waits in this tab, with the
+    // stored receipt it replaced, or undefined when storage could not be read (mergeReceipts).
+    const replaced = stored?.find((x) => sameDay(x, r));
+    unkept = kept
+      ? unkept.filter((u) => !sameDay(u.receipt, r))
+      : addUnkept(unkept, { receipt: r, over: stored === null ? undefined : replaced ? receiptId(replaced) : null });
+    const what = `day ${r.target}, ${lineName(r.choice, target.days.find((d) => d.day === r.basis.day)?.leaders?.census?.top ?? [])}, receipt ${r.hash.slice(0, 12)}`;
+    say(predictSaid, kept
+      ? `Kept on this device: ${what}. Nothing was sent anywhere.`
+      : source.mock
+        ? `This is the example garden from the contract, so the receipt is kept only while this tab is open: ${what}. Nothing was sent anywhere.`
+        : `This device keeps no storage here, so the receipt lasts only while this tab is open: ${what}. Nothing was sent anywhere.`, "note");
+    updatePredict();
+    if (view) await renderReceipts(view);
   }
 
   function renderFood(v: GardenView): void {
@@ -1347,6 +1871,11 @@ export function mount(doc: Document, deps: Deps): { refresh: () => Promise<void>
   handSend.addEventListener("click", () => {
     if (!view || handing) return;
     void addHand(view);
+  });
+  predictForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!view || making) return;
+    void makeGuess();
   });
   map.addEventListener("click", (event) => {
     if (!view) return;

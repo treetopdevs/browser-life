@@ -35,6 +35,13 @@ defmodule Coordinator.Garden do
                 notice_until, hands, dropped_at: nil | ms}],
       next_food: N
 
+  A day's entry may also carry `leaders` (docs/garden-predictions-2026-10-18.md):
+  `%{status, ref, for, census, lines}`, the day's block of who held the field,
+  put once the day is verified (`pending_leaders/4`, `accept_leaders/6`,
+  `put_leaders/3`). `ref` is the Queue's token for the task now counting it and
+  `for` the accepted run attempt's id the block is about; neither is shown. An
+  entry from before has no such key, so it is read with `Map.get/2`.
+
   `days` holds only released days (day 0 at creation). `width` and `height` are
   the preset's world size at creation, copied so a letter can be bounds-checked
   without the config. Segments are not in the record: every function that needs
@@ -121,7 +128,7 @@ defmodule Coordinator.Garden do
   of distinct ids and of distinct adapter descriptions, nothing more.
   """
 
-  alias Coordinator.{Attempt, Segment}
+  alias Coordinator.{Attempt, GardenLeaders, Segment}
 
   @window_ms 86_400_000
   @log_max 10_000
@@ -893,6 +900,235 @@ defmodule Coordinator.Garden do
     end
   end
 
+  # ---- who held the field (docs/garden-predictions-2026-10-18.md) ----
+
+  @doc """
+  What to do about `day`'s leaders block now that it may be verified:
+
+    * `:skip`: the day is not verified (no block);
+    * `{:unchecked, for}`: it is verified, but its replay did not regenerate the
+      observation files byte for byte for the accepted run attempt (`for`), or
+      the producer uploaded no `lineages.tsv` or `mutations.tsv`: no numbers;
+    * `{:start, job}`: count it from the files. `job` holds `for`, the `paths`
+      and the `ctx` `Coordinator.GardenLeaders.compute/2` takes; the lines into
+      the day are asked for only when day *B = day - 1* has an `ok` block for
+      its own accepted run attempt (else `mutations_b` is `nil`).
+
+  `blob` maps a SHA-256 to its path in the store (`Coordinator.Store.blob_path/2`).
+  """
+  @spec leaders_job(t, segs, non_neg_integer, (String.t() -> String.t())) ::
+          :skip | {:unchecked, term} | {:start, map}
+  def leaders_job(g, segs, day, blob) do
+    seg = Map.get(segs, day)
+
+    cond do
+      seg == nil or seg.status != "verified" ->
+        :skip
+
+      not files_match?(seg) ->
+        {:unchecked, accepted_id(seg)}
+
+      true ->
+        files = Segment.accepted_files(seg)
+        b = ok_leaders(g, segs, day - 1)
+
+        {:start,
+         %{
+           for: accepted_id(seg),
+           paths: %{
+             lineages: blob.(files["lineages.tsv"]),
+             mutations: blob.(files["mutations.tsv"]),
+             mutations_b: b && blob.(Segment.accepted_files(segs[day - 1])["mutations.tsv"])
+           },
+           ctx: %{
+             day: day,
+             end_step: (day + 1) * g.steps_per_day,
+             width: g.width,
+             cells: g.width * g.height,
+             start_b: (day - 1) * g.steps_per_day,
+             top_b: if(b, do: Enum.map(b.census.top, & &1.key), else: [])
+           }
+         }}
+    end
+  end
+
+  # The gate (note section 2): verified by a matching replay, and that replay's
+  # regenerated observation files equal the producer's uploads for the accepted
+  # run attempt, both files the block reads among them.
+  defp files_match?(seg) do
+    files = Segment.accepted_files(seg) || %{}
+
+    verified?(seg) and Segment.current_observations(seg) == "match" and
+      is_binary(files["lineages.tsv"]) and is_binary(files["mutations.tsv"])
+  end
+
+  defp accepted_id(seg) do
+    case Segment.accepted_run_attempt(seg) do
+      %{id: id} -> id
+      _ -> nil
+    end
+  end
+
+  defp leaders_record(g, day) do
+    case g.days do
+      %{^day => entry} -> Map.get(entry, :leaders)
+      _ -> nil
+    end
+  end
+
+  # The day's block if it is `ok` with a census, for the day's accepted run
+  # attempt and a verified day; else nil.
+  defp ok_leaders(_g, _segs, day) when day < 0, do: nil
+
+  defp ok_leaders(g, segs, day) do
+    seg = Map.get(segs, day)
+
+    case leaders_record(g, day) do
+      %{status: "ok", census: %{}, for: attempt} = rec when seg != nil ->
+        if seg.status == "verified" and attempt == accepted_id(seg), do: rec
+
+      _ ->
+        nil
+    end
+  end
+
+  @doc "Puts `record` (`%{status, ref, for, census, lines}`) as `day`'s leaders block."
+  @spec put_leaders(t, non_neg_integer, map) :: t
+  def put_leaders(g, day, record), do: touch_day(g, day, %{leaders: record})
+
+  @doc """
+  Marks `day`'s block as being counted by the task `ref`, about run attempt
+  `for`. A block that is already `ok` for the same attempt keeps its census and
+  shows `ok` while its lines are counted again; any other becomes `pending`.
+  """
+  @spec pending_leaders(t, non_neg_integer, term, term) :: t
+  def pending_leaders(g, day, ref, attempt) do
+    record =
+      case leaders_record(g, day) do
+        %{status: "ok", for: ^attempt} = rec -> %{rec | ref: ref, lines: nil}
+        _ -> %{status: "pending", ref: ref, for: attempt, census: nil, lines: nil}
+      end
+
+    put_leaders(g, day, record)
+  end
+
+  @doc "Records that `day` is verified without the files' match: no numbers."
+  @spec unchecked_leaders(t, non_neg_integer, term) :: t
+  def unchecked_leaders(g, day, attempt),
+    do:
+      put_leaders(g, day, %{status: "unchecked", ref: nil, for: attempt, census: nil, lines: nil})
+
+  @doc """
+  A task's answer for `day`: kept only if `ref` is the day's current one and
+  `for` is still the day's accepted run attempt (a late reply is dropped:
+  `:stale`). `result` is `Coordinator.GardenLeaders.compute/2`'s.
+  """
+  @spec accept_leaders(t, segs, non_neg_integer, term, term, term) :: {:ok, t} | :stale
+  def accept_leaders(g, segs, day, ref, attempt, result) do
+    seg = Map.get(segs, day)
+
+    with %{ref: ^ref, for: ^attempt} when ref != nil <- leaders_record(g, day),
+         true <- seg != nil and seg.status == "verified" and accepted_id(seg) == attempt do
+      record =
+        case result do
+          {:ok, %{} = census, lines} when is_map(lines) or is_nil(lines) ->
+            %{status: "ok", ref: nil, for: attempt, census: census, lines: lines}
+
+          _ ->
+            %{status: "unreadable", ref: nil, for: attempt, census: nil, lines: nil}
+        end
+
+      {:ok, put_leaders(g, day, record)}
+    else
+      _ -> :stale
+    end
+  end
+
+  @doc """
+  After `day`'s block arrived: the days whose lines can now be counted, each
+  counted again in full. `day` itself, if it is `ok` without lines although
+  the day before is `ok` (that day's answer came while this one was still
+  being counted), and `day + 1`, if `day` is `ok` and `day + 1` is `ok` without
+  lines (it was counted before this one was ready), or, when `day` is not `ok`,
+  `day + 1` if it holds lines counted from it (they are taken back). Each
+  recount settles the next day's lines one way, so this ends.
+  """
+  @spec leaders_followups(t, segs, non_neg_integer) :: [non_neg_integer]
+  def leaders_followups(g, segs, day) do
+    own = day > 0 and lines_missing?(g, segs, day) and ok_leaders(g, segs, day - 1) != nil
+
+    # A day that is `ok` lets the next day's missing lines come; a day that is
+    # not (a recount found its files unreadable) takes back the lines the next
+    # day counted from it.
+    next =
+      if ok_leaders(g, segs, day) != nil,
+        do: lines_missing?(g, segs, day + 1),
+        else: has_lines?(g, segs, day + 1)
+
+    if(own, do: [day], else: []) ++ if(next, do: [day + 1], else: [])
+  end
+
+  defp has_lines?(g, segs, day) do
+    case ok_leaders(g, segs, day) do
+      %{lines: %{}} -> true
+      _ -> false
+    end
+  end
+
+  defp lines_missing?(g, segs, day) do
+    case ok_leaders(g, segs, day) do
+      %{lines: nil} -> true
+      _ -> false
+    end
+  end
+
+  @doc """
+  The released days whose block should be counted at start: verified days
+  with no block, a `pending` one (its task died with the Queue), an
+  `unreadable` one (once per start: a read error may have been passing), one
+  about another run attempt, or an `ok` one without lines although the day
+  before it is `ok` (the Queue stopped between the two answers).
+  """
+  @spec leaders_to_start(t, segs) :: [non_neg_integer]
+  def leaders_to_start(g, segs) do
+    g.days |> Map.keys() |> Enum.sort() |> Enum.filter(&start_at_boot?(g, segs, &1))
+  end
+
+  defp start_at_boot?(g, segs, day) do
+    seg = Map.get(segs, day)
+    rec = leaders_record(g, day)
+
+    cond do
+      seg == nil or seg.status != "verified" -> false
+      rec == nil or rec.status in ["pending", "unreadable"] or rec.for != accepted_id(seg) -> true
+      true -> day > 0 and lines_missing?(g, segs, day) and ok_leaders(g, segs, day - 1) != nil
+    end
+  end
+
+  # The view's `days[].leaders`: `null` unless the day is verified; a block for
+  # another run attempt (or none yet) reads `pending`. `ref` and `for` are
+  # never shown.
+  defp leaders_view(g, segs, day, seg, "verified") do
+    case leaders_record(g, day) do
+      %{status: status, for: attempt} = rec
+      when status in ["ok", "unchecked", "unreadable", "pending"] ->
+        # Lines are shown only while the day they come from is `ok` (note
+        # section 4); a basis taken back hides them at once.
+        if attempt == accepted_id(seg),
+          do: %{
+            status: status,
+            census: rec.census,
+            lines: rec.lines && ok_leaders(g, segs, day - 1) && rec.lines
+          },
+          else: %{status: "pending", census: nil, lines: nil}
+
+      _ ->
+        %{status: "pending", census: nil, lines: nil}
+    end
+  end
+
+  defp leaders_view(_g, _segs, _day, _seg, _status), do: nil
+
   # ---- the public view ----
 
   @doc """
@@ -979,6 +1215,7 @@ defmodule Coordinator.Garden do
           now,
           Map.get(env, :shared_address, false)
         ),
+      leadersRule: GardenLeaders.rule(),
       limits: %{
         stoneRadius: %{min: @radius_min, max: @radius_max},
         lettersPerAddressPerHour: env.letters_per_address,
@@ -1137,7 +1374,8 @@ defmodule Coordinator.Garden do
         verification: seg && verification_kind(seg, islands),
         letters: for(l <- live(g), l.day == day, do: l.id),
         food: day_food(g, day),
-        census: if(accepted, do: day_census(seg))
+        census: if(accepted, do: day_census(seg)),
+        leaders: leaders_view(g, segs, day, seg, status)
       }
     end
   end
