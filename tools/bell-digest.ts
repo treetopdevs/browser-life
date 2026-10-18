@@ -314,6 +314,8 @@ async function score() {
   let t1Code: unknown = { available: false, called: false, reason: "no twin record" };
   let items: ManifestItem[] = manifest.items;
   const pairText = await readOrNull(a["pair-record"]!);
+  // In production the twin record is required: without it nothing says which items are void, so nothing is scored.
+  if (pairText === null && manifest.mode !== "pilot") throw new Error(`STOP: the twin record ${a["pair-record"]} is missing; a production score needs it`);
   if (pairText !== null) {
     // The record that decided which items are void is the record the comparator reads: a different file is a stop.
     const pairSha = await sha256Hex(pairText);
