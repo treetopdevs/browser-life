@@ -33,6 +33,8 @@ The Vite development and preview servers forward `/api/*` to the local coordinat
 
 To run the lab and the coordinator together, use `bin/dev`. Ctrl-C stops both. `PORT` and `LAB_PORT` override the default ports, 4000 and 5173.
 
+To run a small shared garden on this machine, use `bin/garden-dev`. It starts a dev coordinator on a scratch directory, the lab, a garden on `spots` (one day a minute) and two headless islands, and prints the `/garden/` page's address. Ctrl-C stops everything and removes the scratch directory. `apps/coordinator/README.md`, "Run a garden locally", has the settings, letters, export and `tests/deno/garden_e2e.ts`, which runs a garden end to end, usually in under a minute (up to three minutes more near the top of an hour), and `tests/deno/garden_dev_smoke.ts`, which checks the launcher itself.
+
 ## Test
 
 ```bash
@@ -67,6 +69,8 @@ deno run -A tools/run.ts --experiment replay --preset spots --seeds <the lab wor
 ```
 
 A scheduled run is distributed too: give the experiment spec an `"interventions"` array of the same entries (`{"step":1000,"kind":"lesion","x":120,"y":120,"r":12}`, `{"step":3000,"kind":"feed","x":60,"y":60,"r":6,"amount":16}`, steps non-decreasing, a feed's amount non-zero within ±4096; a feed's `matter`, the lab's replay assertion, is refused there, since the second island's replay is the archipelago's check and a matter the world does not reproduce would throw on every island). The coordinator checks it as the runner would (a centre inside the preset's world, no feed in a pond preset, nothing after the last step), carries it whole in every segment's task, and hands those segments, run or verify, only to islands that advertise `interventions-v1`; each segment applies the entries of its own window and uploads its `interventions.jsonl`, which the verifying island regenerates and `tools/stitch.ts` joins into the bundle above. One thing no creation can check is a feed that would take the world past its matter bound at that step: an island that meets one reports the segment failed with the runner's reason (`POST /api/segments/:id/fail`), the run's later segments are blocked as after a divergence, no island is offered it again, and the failure shows in the status and the experiment listing, so the experiment stops there instead of cycling.
+
+A bred pond world is distributed too: an experiment may name the breeder's conditions (`pond-breed-<score>`, `pond-mass-<score>`, `pond-drift-<score>`; `docs/sandbox-wild.md`) on any pond preset, or use the `breeder` preset itself, and the coordinator hands those segments, run or verify, only to islands that advertise `breed-v1` in addition to `ponds-v1` (never instead of it). Only the rule's own donor picks travel: picked and pressured runs stay with the lab and `tools/run.ts`. The donors the rule chose are verified as physics (their cells are in the checkpoint a second island must reproduce), and the record of them, `ponds.tsv`'s `donor` and score columns, is compared against the verifier's; `tools/stitch.ts` will not export a bred run whose record the verifier regenerated differently. A coordinator spec takes no overrides, so selection shows only where the preset makes ponds score: on `breeder` (mutation × 10) it does, while `ponds-small` or `ponds` under `pond-breed-*` at stock mutation may never score, and is then its mass control (`docs/archipelago-breed-2026-10-18.md`).
 
 ```bash
 deno run -A tools/analyze.ts runs/pilot/gradient
@@ -106,7 +110,7 @@ curl -X POST localhost:4000/api/experiments -H 'content-type: application/json' 
 
 Then open `/island.html` in any WebGPU browser, or run `deno run -A tools/island.ts`. The detailed operations dashboard is http://localhost:4000/index.html. In production it needs an administrator token to load detailed status; the public aggregate status is `/api/public/status`.
 
-Once runs finish, stitch their segments into run bundles and analyze them as above. Only runs whose final segment has been verified are exported. Every downloaded file must match the SHA-256 the coordinator recorded for the accepted upload. Verification replays the physics and observer state, not the observation files, so their content is only as trustworthy as the island that produced them. Pass `--token` when the coordinator has an admin token.
+Once runs finish, stitch their segments into run bundles and analyze them as above. Only runs whose final segment has been verified are exported. Every downloaded file must match the SHA-256 the coordinator recorded for the accepted upload. Verification replays the physics and observer state, not the observation files, so their content is only as trustworthy as the island that produced them. Pass `--token` when the coordinator has an admin token. A garden (`apps/coordinator/README.md`, "The garden") exports its verified prefix, the days from day 0 that are all verified, and a longer prefix replaces a shorter one in place. Each day carries the letters as of its assignment, so each day's log is checked against its own list, a list that rewrites an earlier day is refused, and the stitched schedule is what the days applied, which must match the garden's current list (`docs/garden-stitch-rule-2026-10-17.md`; `tests/deno/garden_export.ts` checks the export without a GPU).
 
 ```bash
 deno run -A tools/stitch.ts --experiment a1

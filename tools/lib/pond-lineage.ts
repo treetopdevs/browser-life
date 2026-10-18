@@ -30,8 +30,14 @@
 // Lineage ids ("hi:lo", as in lineages.tsv) persist through transfers because a packet carries all 44
 // genome words, so the dominant packet lineage of a node is a genotype lineage the main lineage tool can open.
 // The same id can be present in several ponds after one donor seeds several recipients. Standalone scaffold
-// histories have no mutations.tsv, so genotype ancestry of those ids is only available once the runner
-// integration writes bundles.
+// histories have no mutations.tsv; a pond-cycle runner bundle has one, and `tools/lineage.ts pond --genotype`
+// opens a packet's dominant lineage as a genotype dossier (docs/lineage-inspector.md section 8).
+//
+// Runner bundles (2026-10-17). The runner writes the same table (by header name: breed runs add score columns,
+// the hunt's nat and shuf add died/exportMass/weight). It keeps stepping after a history ends, so an ended
+// history has a trailing run of no-donor, all-trait-0 cycles: the history ends at the first of them, and the
+// rest are dropped with a note. nat and shuf (survivors, donor -2) are refused by name here. A bundle that
+// starts after step 0 has rows only from its own boundaries, so its first nodes have no recorded parent.
 //
 // Arm cont has no transfer: nothing is ground down, so a pond's ancestry is the pond itself. Its dossier says
 // so (descent "none", chain = the pond's own trajectory, no offspring, no clade) and invents no descent.
@@ -46,7 +52,7 @@ import { lowbias32 } from "@bl/schema";
 /** Version of the dossier object this module writes. */
 export const DOSSIER_VERSION = 1;
 
-export type PondArm = "scaf" | "rand" | "cont";
+export type PondArm = "scaf" | "rand" | "cont" | "breed";
 
 /** One ponds.tsv row, parsed by header name. Optional columns that the header lacks are null. */
 export interface PondRecord {
@@ -79,6 +85,16 @@ export interface ParsedPonds {
   rows: PondRecord[];
   /** Optional columns the header lacks, so the dossier can list them as gaps. */
   absentColumns: string[];
+  /** The header's columns, in file order (absent on hand-built tables). */
+  columns?: string[];
+  /**
+   * The last line was dropped as a torn append (its line number), or null. A torn append keeps a prefix of its
+   * line: fewer fields than the header, or every field with the last one (in file order) empty or not a valid
+   * value. The same line anywhere but last throws. A torn last line whose cut-short last field still parses (a
+   * number lost its tail) cannot be told from a complete one and is kept; in the runner's table that field is
+   * light (or a score column), which no genealogy reads.
+   */
+  torn?: number | null;
 }
 
 /** Columns without which no genealogy can be built. */
@@ -90,35 +106,111 @@ const lineageKey = (hi: number, lo: number): string => `${hi}:${lo}`;
 
 /**
  * Parses a ponds.tsv (header first) by column name, so column order and extra columns do not matter. Throws,
- * naming the line, on a header that lacks a required column, a row with the wrong field count or a malformed number.
+ * naming the line, on a header that lacks a required column, a row with the wrong field count or a malformed number;
+ * a last line that is a torn append (see `ParsedPonds.torn`) is dropped and reported in `torn`. `onRow`, when given, receives each row instead
+ * of `rows` holding it (the returned `rows` is then empty), so a long table streams.
  */
-export function parsePondRows(lines: Iterable<string>): ParsedPonds {
-  const reader = rowReader();
+export function parsePondRows(lines: Iterable<string>, opts: { onRow?: (r: PondRecord) => void } = {}): ParsedPonds {
+  const reader = rowReader(opts.onRow);
   for (const l of lines) reader.push(l);
   return reader.finish();
 }
 
 /** `parsePondRows` over an async line stream (for example a file read line by line). */
-export async function readPondRows(lines: AsyncIterable<string>): Promise<ParsedPonds> {
-  const reader = rowReader();
+export async function readPondRows(lines: AsyncIterable<string>, opts: { onRow?: (r: PondRecord) => void } = {}): Promise<ParsedPonds> {
+  const reader = rowReader(opts.onRow);
   for await (const l of lines) reader.push(l);
   return reader.finish();
 }
 
-function rowReader(): { push(line: string): void; finish(): ParsedPonds } {
+function rowReader(onRow?: (r: PondRecord) => void): { push(line: string): void; finish(): ParsedPonds } {
   let col: Map<string, number> | null = null;
   let width = 0;
   let lineNo = 0;
+  /** The line a message names: the one being parsed, which for a held line is not the latest read. */
+  let at = 0;
+  let minDonor = -1;
+  /** The latest data line, held until the next line shows it was not the last (then it parses strictly). */
+  let held: { lineNo: number; f: string[] } | null = null;
   const rows: PondRecord[] = [];
+  const fail = (msg: string): never => {
+    throw new Error(`ponds.tsv line ${at}: ${msg}`);
+  };
   const int = (f: string[], name: string, required: boolean): number | null => {
-    const at = col!.get(name);
-    if (at === undefined) return required ? fail(`missing column ${name}`) : null;
-    const s = f[at];
+    const i = col!.get(name);
+    if (i === undefined) return required ? fail(`missing column ${name}`) : null;
+    const s = f[i];
     if (!/^-?\d+$/.test(s) || !Number.isSafeInteger(Number(s))) return fail(`${name} is not an integer: ${JSON.stringify(s)}`);
     return Number(s);
   };
-  const fail = (msg: string): never => {
-    throw new Error(`ponds.tsv line ${lineNo}: ${msg}`);
+  const parseRow = (f: string[]): PondRecord => {
+    if (f.length !== width) fail(`${f.length} fields, header has ${width}`);
+    const o = (name: (typeof OPTIONAL_INT)[number]) => int(f, name, false);
+    const ix = (name: string) => col!.get(name);
+    let domShare: number | null = null;
+    if (ix("domShare") !== undefined) {
+      const s = f[ix("domShare")!];
+      domShare = s.trim() === "" ? NaN : Number(s);
+      if (!Number.isFinite(domShare) || domShare < 0 || domShare > 1) fail(`domShare is not in [0, 1]: ${JSON.stringify(s)}`);
+    }
+    const big = (name: string): string | null => {
+      const i = ix(name);
+      if (i === undefined) return null;
+      if (!/^-?\d+$/.test(f[i])) fail(`${name} is not an integer string: ${JSON.stringify(f[i])}`);
+      return f[i];
+    };
+    const truncated = o("truncated");
+    const r: PondRecord = {
+      cycle: int(f, "cycle", true)!,
+      step: int(f, "step", true)!,
+      recipient: int(f, "recipient", true)!,
+      donor: int(f, "donor", true)!,
+      recipientTrait: int(f, "recipientTrait", true)!,
+      donorTrait: o("donorTrait"),
+      recipientIndividuals: o("recipientIndividuals"),
+      recipientLineages: o("recipientLineages"),
+      cx: o("cx"),
+      cy: o("cy"),
+      landed: o("landed"),
+      reqMass: o("reqMass"),
+      retMass: o("retMass"),
+      reqE: o("reqE"),
+      retE: o("retE"),
+      truncated: truncated === null ? null : truncated !== 0,
+      packetLineages: o("packetLineages"),
+      domHi: o("domHi"),
+      domLo: o("domLo"),
+      domShare,
+      heat: big("heat"),
+      light: big("light"),
+    };
+    if (r.cycle < 1 || r.recipient < 0 || r.donor < minDonor)
+      throw new Error(`ponds.tsv has a row with cycle ${r.cycle}, recipient ${r.recipient}, donor ${r.donor} (cycle >= 1, recipient >= 0, donor >= ${minDonor} expected${minDonor === -1 ? "; -2 only in a table with a died column" : ""})`);
+    return r;
+  };
+  /** Parses and hands on a data line. The last line (`last`) may be a torn append: its line number is returned and it is dropped. */
+  const emit = (h: { lineNo: number; f: string[] }, last: boolean): number | null => {
+    at = h.lineNo;
+    let r: PondRecord;
+    try {
+      r = parseRow(h.f);
+    } catch (e) {
+      if (!last || h.f.length > width) throw e;
+      // A torn append keeps a prefix of its line: fewer fields than the header, or every field with only the last one
+      // (in file order) cut short. Anything else wrong with the last line is malformed, as anywhere.
+      if (h.f.length < width) return h.lineNo;
+      const whole = [...h.f];
+      whole[width - 1] = "0";
+      try {
+        parseRow(whole);
+      } catch {
+        throw e;
+      }
+      return h.lineNo;
+    }
+    if (onRow) onRow(r);
+    else rows.push(r);
+    return null;
   };
   return {
     push(raw: string) {
@@ -127,6 +219,7 @@ function rowReader(): { push(line: string): void; finish(): ParsedPonds } {
       if (line === "") return;
       const f = line.split("\t");
       if (col === null) {
+        at = lineNo;
         col = new Map();
         f.forEach((name, i) => {
           if (col!.has(name)) fail(`duplicate header column ${name}`);
@@ -135,53 +228,18 @@ function rowReader(): { push(line: string): void; finish(): ParsedPonds } {
         width = f.length;
         const lacking = REQUIRED.filter((c) => !col!.has(c));
         if (lacking.length) throw new Error(`ponds.tsv header lacks required column(s) ${lacking.join(", ")} (header has: ${f.join(", ")})`);
+        // The hunt's nat and shuf (header column `died`) write donor -2 for a surviving pond; no other table does.
+        minDonor = col.has("died") ? -2 : -1;
         return;
       }
-      if (f.length !== width) fail(`${f.length} fields, header has ${width}`);
-      const o = (name: (typeof OPTIONAL_INT)[number]) => int(f, name, false);
-      const at = (name: string) => col!.get(name);
-      let domShare: number | null = null;
-      if (at("domShare") !== undefined) {
-        domShare = Number(f[at("domShare")!]);
-        if (!Number.isFinite(domShare) || domShare < 0 || domShare > 1) fail(`domShare is not in [0, 1]: ${JSON.stringify(f[at("domShare")!])}`);
-      }
-      const big = (name: string): string | null => {
-        const i = at(name);
-        if (i === undefined) return null;
-        if (!/^-?\d+$/.test(f[i])) fail(`${name} is not an integer string: ${JSON.stringify(f[i])}`);
-        return f[i];
-      };
-      const truncated = o("truncated");
-      rows.push({
-        cycle: int(f, "cycle", true)!,
-        step: int(f, "step", true)!,
-        recipient: int(f, "recipient", true)!,
-        donor: int(f, "donor", true)!,
-        recipientTrait: int(f, "recipientTrait", true)!,
-        donorTrait: o("donorTrait"),
-        recipientIndividuals: o("recipientIndividuals"),
-        recipientLineages: o("recipientLineages"),
-        cx: o("cx"),
-        cy: o("cy"),
-        landed: o("landed"),
-        reqMass: o("reqMass"),
-        retMass: o("retMass"),
-        reqE: o("reqE"),
-        retE: o("retE"),
-        truncated: truncated === null ? null : truncated !== 0,
-        packetLineages: o("packetLineages"),
-        domHi: o("domHi"),
-        domLo: o("domLo"),
-        domShare,
-        heat: big("heat"),
-        light: big("light"),
-      });
+      if (held) emit(held, false);
+      held = { lineNo, f };
     },
     finish() {
       if (col === null) throw new Error("ponds.tsv is empty: no header line");
-      const bad = rows.find((r) => r.cycle < 1 || r.recipient < 0 || r.donor < -1);
-      if (bad) throw new Error(`ponds.tsv has a row with cycle ${bad.cycle}, recipient ${bad.recipient}, donor ${bad.donor} (cycle >= 1, recipient >= 0, donor >= -1 expected)`);
-      return { rows, absentColumns: OPTIONAL.filter((c) => !col!.has(c)) };
+      const torn = held ? emit(held, true) : null;
+      held = null;
+      return { rows, absentColumns: OPTIONAL.filter((c) => !col!.has(c)), columns: [...col.keys()], torn };
     },
   };
 }
@@ -208,6 +266,45 @@ export interface PondHistory {
   absentColumns: string[];
   /** Non-fatal inconsistencies found while indexing (for example a donorTrait that differs from the donor's own trait). */
   warnings: string[];
+  /** Facts about how the table was read (for example ended cycles that were dropped), carried into the dossier's notes. */
+  notes: string[];
+  /** "scaffold": a tools/scaffold.ts history (meta.json); "runner": a pond-cycle run bundle (manifest.json). */
+  source: "scaffold" | "runner";
+  /** Whether the bundle has a mutations.tsv (runner bundles only; scaffold histories never do). */
+  hasMutations: boolean;
+  /** The step the bundle starts at (runner bundles; 0 for a scaffold history). */
+  firstStep: number;
+  /** A picked run's pick log as read and checked against the rows (tools/lib/pond-bundle.ts), or null when the run is not picked. */
+  picks: PondPicks | null;
+}
+
+/** A picked run's picks.jsonl, summarised for the pond dossier. */
+export interface PondPicks {
+  /** The manifest's `picks.picker` (who answers boundaries the record does not hold), or null. */
+  picker: string | null;
+  /** False when a picked run's picks.jsonl is missing. */
+  present: boolean;
+  torn: boolean;
+  /** Pick lines read, and how many of them each chooser (`by`: a picker's name, "recorded", ...) answered. */
+  lines: number;
+  by: Record<string, number>;
+  /** Agreement with ponds.tsv (`checkPicks`). */
+  checked: number;
+  partial: number;
+  unchecked: number;
+  unlogged: number;
+}
+
+export interface PondHistoryOptions {
+  arm?: PondArm;
+  /** cfg.pondPeriod when known: every row's step must then be cycle x period. */
+  period?: number;
+  source?: "scaffold" | "runner";
+  hasMutations?: boolean;
+  firstStep?: number;
+  picks?: PondPicks | null;
+  /** The run's pond count (cfg.tilesX x cfg.tilesY) when known: the first cycle must then hold every pond 0..ponds-1. */
+  ponds?: number;
 }
 
 /**
@@ -216,9 +313,21 @@ export interface PondHistory {
  * that continues past a cycle without transfers while another cycle has them. A last cycle that is missing
  * ponds (a torn append) is dropped and noted in `warnings`. `arm` "cont" with donors is an error.
  */
-export function buildPondHistory(parsed: ParsedPonds, opts: { arm?: PondArm } = {}): PondHistory {
+export function buildPondHistory(parsed: ParsedPonds, opts: PondHistoryOptions = {}): PondHistory {
   const arm = opts.arm ?? null;
   const warnings: string[] = [];
+  const notes: string[] = [];
+  // The hunt's nat and shuf carry survivors over (donor -2): a node's parent is then itself, which the
+  // genealogy below does not model. Refused by name before any structural check could misname it.
+  if ((arm as string) === "nat" || (arm as string) === "shuf" || parsed.columns?.includes("died") || parsed.rows.some((r) => r.donor === -2))
+    throw new Error(
+      `pond dossiers do not support arms nat/shuf yet (surviving ponds, donor -2)${opts.source === "runner" ? "; open their lineages as genotype dossiers instead (tools/lineage.ts --dir)" : "; a standalone history has no mutations.tsv, so its lineages cannot be opened as genotype dossiers either"}`,
+    );
+  if (parsed.torn) warnings.push(`ponds.tsv line ${parsed.torn} is a torn last append (cut short) and was dropped`);
+  if (opts.period !== undefined) {
+    const off = parsed.rows.find((r) => r.step !== r.cycle * opts.period!);
+    if (off) throw new Error(`ponds.tsv: cycle ${off.cycle} is at step ${off.step}, but the config's pondPeriod ${opts.period} puts it at ${off.cycle * opts.period}`);
+  }
   const byCycle = new Map<number, Map<number, PondRecord>>();
   for (const r of parsed.rows) {
     let m = byCycle.get(r.cycle);
@@ -232,6 +341,15 @@ export function buildPondHistory(parsed: ParsedPonds, opts: { arm?: PondArm } = 
     if (c !== cycles[0] + i) throw new Error(`ponds.tsv cycles are not contiguous: ${cycles[0]}..${cycles[cycles.length - 1]} lacks ${cycles[0] + i}`);
   });
   const ponds = [...byCycle.get(cycles[0])!.keys()].sort((a, b) => a - b);
+  // Without the run's pond count the first cycle defines the pond set. With it, a first cycle short of ponds is a torn
+  // append (a short row before the last line already threw), so the table holds a single incomplete cycle and no
+  // complete pond set: refused rather than read as a smaller run.
+  if (opts.ponds !== undefined && !(ponds.length === opts.ponds && ponds.every((p, i) => p === i))) {
+    const missing = Array.from({ length: opts.ponds }, (_, p) => p).filter((p) => !byCycle.get(cycles[0])!.has(p));
+    throw new Error(
+      `ponds.tsv cycle ${cycles[0]} holds ${ponds.length} of the run's ${opts.ponds} ponds (missing ${missing.join(", ") || "none"}${ponds.some((p) => p >= opts.ponds!) ? `; recipients beyond ${opts.ponds - 1}` : ""})${cycles.length === 1 ? ", and it is the table's only cycle (a torn append)" : ""}: no complete cycle establishes the pond set`,
+    );
+  }
   const pondSet = new Set(ponds);
   for (let i = 1; i < cycles.length; i++) {
     const m = byCycle.get(cycles[i])!;
@@ -247,6 +365,18 @@ export function buildPondHistory(parsed: ParsedPonds, opts: { arm?: PondArm } = 
   }
 
   const hasDonors = (c: number) => [...byCycle.get(c)!.values()].some((r) => r.donor >= 0);
+  // An ended runner history keeps stepping, and every later boundary takes the same no-donor path with every pond
+  // at trait 0. The history ends at the first such cycle; the later ones carry no descent and are not read.
+  if (arm !== "cont" && (arm !== null || cycles.some(hasDonors))) {
+    const dead = (c: number) => !hasDonors(c) && [...byCycle.get(c)!.values()].every((r) => r.recipientTrait === 0);
+    let first = cycles.length;
+    while (first > 0 && dead(cycles[first - 1])) first--;
+    if (cycles.length - first >= 2) {
+      const dropped = cycles.splice(first + 1);
+      for (const c of dropped) byCycle.delete(c);
+      notes.push(`the history ended at cycle ${cycles[first]} (no pond eligible); the run kept stepping, and its ${dropped.length} later no-donor cycle(s) ${dropped[0]}..${dropped[dropped.length - 1]} carry no descent and were not read`);
+    }
+  }
   const transferCycles = cycles.filter(hasDonors);
   for (const c of transferCycles) {
     for (const r of byCycle.get(c)!.values()) {
@@ -287,7 +417,25 @@ export function buildPondHistory(parsed: ParsedPonds, opts: { arm?: PondArm } = 
   if (mismatches) warnings.push(`${mismatches} donorTrait value(s) differ from the donor's own recipientTrait at the same cycle (first: ${example})`);
   if (ineligible) warnings.push(`${ineligible} recipient row(s) name a donor pond with trait 0`);
 
-  return { arm, ponds, cycles, firstCycle: cycles[0], lastCycle, period, transfer, endedAt, rows: byCycle, absentColumns: parsed.absentColumns, warnings };
+  if (opts.period !== undefined && period !== null && period !== opts.period) throw new Error(`ponds.tsv rows imply a period of ${period}, the config's pondPeriod is ${opts.period}`);
+  return {
+    arm,
+    ponds,
+    cycles,
+    firstCycle: cycles[0],
+    lastCycle,
+    period: opts.period ?? period,
+    transfer,
+    endedAt,
+    rows: byCycle,
+    absentColumns: parsed.absentColumns,
+    warnings,
+    notes,
+    source: opts.source ?? "scaffold",
+    hasMutations: opts.hasMutations ?? false,
+    firstStep: opts.firstStep ?? 0,
+    picks: opts.picks ?? null,
+  };
 }
 
 const rowAt = (h: PondHistory, cycle: number, pond: number): PondRecord => {
@@ -529,6 +677,11 @@ export interface PondDossier {
   notes: string[];
   gaps: string[];
   warnings: string[];
+  /**
+   * Set by `tools/lineage.ts pond --genotype`: the packet dominant lineage it opened as a genotype dossier, the census
+   * step that dossier reads (where the packet was measured) and its pond anchor (the donor node). Absent otherwise.
+   */
+  genotype?: { lineage: string; step: number; anchor: { pond: number; cycle: number }; out: string | null };
 }
 
 function packetOf(r: PondRecord): PondPacket {
@@ -655,10 +808,26 @@ export function pondDossier(h: PondHistory, rule: PondSubjectRule, opts: { defau
     const tie = s.tied !== null && s.tied > 1 ? `; ${s.tied} ponds tie for the top trait and the scaffold breaks donor ties by a random key, so this pick (the smallest pond index) need not be a donor` : "";
     notes.push(`in arm scaf the donors at a cycle are the highest-trait ponds by construction, so a top subject's child count reflects that selection, not its success; compare clade sizes at later cycles${tie}`);
   }
+  if (h.arm === "breed")
+    notes.push("in arm breed the donors at a cycle are the best-scoring ponds by construction (or a picker's), so a donor's child count reflects that selection, not its success; compare clade sizes at later cycles");
+  const pk = h.picks;
+  if (pk) {
+    const by = Object.entries(pk.by).map(([who, n]) => `${n} by ${who}`).join(", ");
+    notes.push(
+      `a picked run${pk.picker ? ` (picker ${pk.picker})` : ""}: ${pk.present ? `picks.jsonl names who chose each logged boundary's donors (${by || "no pick lines"}), and its ordered donors agree with ponds.tsv at ${pk.checked} boundary(ies)` : "picks.jsonl is missing, so who chose each boundary's donors is not recorded"}`,
+    );
+  }
   if (h.endedAt !== null) notes.push(`no pond was eligible at cycle ${h.endedAt}: the history ended there`);
+  notes.push(...h.notes);
+  if (h.source === "runner" && h.hasMutations)
+    notes.push("mutations.tsv is in this bundle: a chain node's packet dominant lineage opens as a genotype dossier (tools/lineage.ts pond --genotype [--genotype-cycle C])");
 
   const gaps = [
-    "mutations.tsv: standalone scaffold histories have none, so the genotype ancestry of the packet lineages is not reconstructable until the runner integration writes bundles",
+    ...(h.source === "runner"
+      ? h.hasMutations
+        ? []
+        : ["mutations.tsv is absent from this runner bundle, so the genotype ancestry of the packet lineages is not reconstructable"]
+      : ["mutations.tsv: standalone scaffold histories have none, so the genotype ancestry of the packet lineages is not reconstructable (a pond-cycle runner bundle has one)"]),
     "lineage composition of the subject's own pond: lineages.tsv holds it only at boundaries 1, floor(C/3), floor(2C/3) and C (every boundary when mutation is off), and it is not read here",
     "packet contents beyond the lineage count and the dominant lineage",
     "pond state between boundaries: ponds.tsv has one pre-cycle snapshot per boundary",
@@ -666,6 +835,12 @@ export function pondDossier(h: PondHistory, rule: PondSubjectRule, opts: { defau
   ];
   if (h.arm === null) gaps.push("arm: not supplied (meta.json), so cont and an ended scaf/rand history are told apart only by the rows");
   if (h.transfer && s.cycle === h.lastCycle) gaps.push("the subject's children are seeded at the last boundary but never measured");
+  if (pk && !pk.present) gaps.push("picks.jsonl is absent from a picked run: the donors in ponds.tsv are not cross-checked and who chose them is not recorded");
+  if (pk?.torn) gaps.push("picks.jsonl ends in a torn line, which was not read");
+  if (pk && (pk.partial || pk.unchecked)) gaps.push(`picks.jsonl: ${pk.partial} boundary(ies) checked only on the rows ponds.tsv holds, ${pk.unchecked} with no rows in this table`);
+  if (pk?.unlogged) gaps.push(`ponds.tsv has ${pk.unlogged} boundary(ies) the pick log lacks (a picked run logs every boundary): their donors are not cross-checked and their chooser is not recorded`);
+  if (h.firstStep > 0 && h.transfer)
+    gaps.push(`the bundle starts at step ${h.firstStep}, after step 0: ponds.tsv holds boundaries from cycle ${h.firstCycle} on, so the nodes at cycle ${h.firstCycle} have no recorded parent here; their ancestry continues in the earlier bundle (they did not grow from the initial disc)`);
 
   return {
     kind: "pond",
@@ -710,15 +885,22 @@ export interface PondTwin {
  * even when one ended early. The two histories must have the same number of ponds. The pick of a seeded
  * random rule is an index into each history's own candidate list, so the two histories can name different ponds.
  */
-export function pondTwin(scaf: PondHistory, rand: PondHistory, rule: PondSubjectRule): PondTwin {
+export function pondTwin(scaf: PondHistory, rand: PondHistory, rule: PondSubjectRule, opts: { seeds?: [number, number]; sameStart?: boolean } = {}): PondTwin {
   if (scaf.arm !== null && scaf.arm !== "scaf") throw new Error(`pondTwin: the first history is arm ${scaf.arm}, expected scaf`);
   if (rand.arm !== null && rand.arm !== "rand") throw new Error(`pondTwin: the second history is arm ${rand.arm}, expected rand`);
   if (scaf.ponds.length !== rand.ponds.length) throw new Error(`pondTwin: the histories have ${scaf.ponds.length} and ${rand.ponds.length} ponds`);
   const defaultCycle = Math.min(scaf.lastCycle, rand.lastCycle);
   const a = pondDossier(scaf, rule, { defaultCycle });
   const b = pondDossier(rand, rule, { defaultCycle });
+  const seeds = opts.seeds;
   const notes = [
-    "scaf and rand histories use different seeds (protocol: 4,810,001 + 100 x arm + i) and share no random stream: they are matched by replicate index and protocol, not by physics",
+    seeds === undefined
+      ? "scaf and rand histories use different seeds (protocol: 4,810,001 + 100 x arm + i) and share no random stream: they are matched by replicate index and protocol, not by physics"
+      : seeds[0] === seeds[1]
+        ? opts.sameStart
+          ? `both histories use seed ${seeds[0]}, the same initial world (initHash), the same config apart from the arm and the same interventions before the first boundary: their states are identical up to the first boundary, where each arm chooses its own donors`
+          : `both histories use seed ${seeds[0]}, but their initial worlds, their configs beyond the arm, or what the runner applied before the first boundary (interventions, an import, a branch) differ or cannot be confirmed, so their states are not known to match before the first boundary`
+        : `the histories use different seeds (${seeds[0]} and ${seeds[1]}) and share no random stream: they are matched by protocol, not by physics`,
   ];
   if (scaf.lastCycle !== rand.lastCycle) notes.push(`the histories reached cycles ${scaf.lastCycle} and ${rand.lastCycle}; a rule without a cycle uses ${defaultCycle}`);
   return { kind: "pond-twin", dossierVersion: DOSSIER_VERSION, rule: a.subject.rule, scaf: a, rand: b, notes };

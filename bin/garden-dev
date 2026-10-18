@@ -1,0 +1,406 @@
+#!/bin/sh
+
+# Runs a small shared garden on this machine: a dev coordinator on a scratch
+# directory, the lab (Vite, which serves /garden/), a garden founded through the
+# keeper endpoint, and headless islands that tend it. Ctrl-C stops everything
+# and removes the scratch directory. apps/coordinator/README.md, "Run a garden
+# locally", has the walk-through; docs/garden-local-2026-10-17.md the sizing.
+#
+# Every BL_* variable of the calling shell is dropped first: BL_ADMIN_TOKEN would
+# turn the tokenless founding into a 401, BL_GARDEN_ISLAND_TOKEN would keep every
+# day from these islands (they are started without BL_ISLAND_GARDEN_TOKEN), and
+# the discovery store gets its own directory inside the scratch one.
+#
+# Environment (defaults in brackets):
+#   PORT [4000]                 coordinator port (it binds 127.0.0.1 in dev)
+#   LAB_PORT [5173]             Vite port
+#   GARDEN_NAME [commons]       the page's default route shows "commons" with no query
+#   GARDEN_PRESET [spots]       spots (256x256, dev only) or wild-storm-large (512x512)
+#   GARDEN_SEED [1]
+#   GARDEN_STEPS_PER_DAY [2048]
+#   GARDEN_CENSUS [256]         must divide GARDEN_STEPS_PER_DAY
+#   GARDEN_DAYS [365]           the horizon
+#   GARDEN_DAWN_MS [60000]      a day a minute; at least 1000
+#   GARDEN_ISLANDS [2]          headless islands to start (0: none; two are needed to verify)
+#   GARDEN_LAB [1]              0 skips Vite
+#   GARDEN_DATA_DIR [mktemp -d] holds data/ (the coordinator's), logs/ and export/;
+#                               one you name is created if missing and never removed
+#   GARDEN_KEEP [0]             1 keeps an automatically created directory on exit
+#
+# A directory is held by one launcher at a time (a lock directory inside it,
+# never taken over: after a SIGKILL it is removed by hand), so two coordinators
+# never write one garden's state. Needs mix, deno, curl and lsof
+# (and pnpm for the lab).
+
+set -eu
+
+cd "$(dirname "$0")/.."
+
+for v in $(env | sed -n 's/^\(BL_[A-Za-z0-9_]*\)=.*/\1/p'); do
+  unset "$v"
+done
+
+coordinator_port=${PORT:-4000}
+lab_port=${LAB_PORT:-5173}
+name=${GARDEN_NAME:-commons}
+preset=${GARDEN_PRESET:-spots}
+seed=${GARDEN_SEED:-1}
+steps_per_day=${GARDEN_STEPS_PER_DAY:-2048}
+census=${GARDEN_CENSUS:-256}
+days=${GARDEN_DAYS:-365}
+dawn_ms=${GARDEN_DAWN_MS:-60000}
+islands=${GARDEN_ISLANDS:-2}
+with_lab=${GARDEN_LAB:-1}
+keep=${GARDEN_KEEP:-0}
+
+fail() {
+  echo "bin/garden-dev: $*" >&2
+  exit 1
+}
+
+for command in mix deno curl lsof; do
+  command -v "$command" >/dev/null 2>&1 || fail "required command not found: $command"
+done
+if [ "$with_lab" != 0 ]; then
+  command -v pnpm >/dev/null 2>&1 || fail "required command not found: pnpm (or set GARDEN_LAB=0)"
+fi
+
+if [ ! -d apps/coordinator/deps ]; then
+  fail "coordinator dependencies are missing; run '(cd apps/coordinator && mix deps.get)' first"
+fi
+if [ ! -d node_modules ]; then
+  fail "node dependencies are missing; run 'pnpm install' first"
+fi
+
+for pair in "PORT=$coordinator_port" "LAB_PORT=$lab_port" "GARDEN_SEED=$seed" "GARDEN_STEPS_PER_DAY=$steps_per_day" \
+  "GARDEN_CENSUS=$census" "GARDEN_DAYS=$days" "GARDEN_DAWN_MS=$dawn_ms" "GARDEN_ISLANDS=$islands"; do
+  case ${pair#*=} in
+    '' | *[!0-9]*) fail "${pair%%=*} must be a non-negative integer, not '${pair#*=}'" ;;
+    0?*) fail "${pair%%=*} must be written without leading zeros, not '${pair#*=}'" ;;
+  esac
+done
+case $name in
+  [a-z0-9]*) ;;
+  *) fail "GARDEN_NAME must match [a-z0-9][a-z0-9_-]*, not '$name'" ;;
+esac
+case $name in
+  *[!a-z0-9_-]*) fail "GARDEN_NAME must match [a-z0-9][a-z0-9_-]*, not '$name'" ;;
+esac
+
+# The world's size, for a founding feed at its centre (the commons' founding,
+# scaled to the jar; config.exs's :world_size has every preset).
+case $preset in
+  spots) width=256 height=256 founding_r=64 ;;
+  wild-storm-large) width=512 height=512 founding_r=255 ;;
+  *) fail "GARDEN_PRESET must be spots or wild-storm-large, not '$preset'" ;;
+esac
+
+api="http://127.0.0.1:$coordinator_port"
+
+# The pids listening on TCP port $1. lsof exits 1, silently, when there are
+# none (-t implies -w, so anything it prints besides pids is an error); any
+# other answer returns 1, so a failed look never reads as "nothing listens".
+listeners() {
+  out=$(lsof -nP -t -iTCP:"$1" -sTCP:LISTEN 2>&1) && status=0 || status=$?
+  if [ "$status" = 1 ] && [ -z "$out" ]; then
+    return 0
+  fi
+  if [ "$status" != 0 ]; then
+    echo "bin/garden-dev: lsof failed on port $1 (exit $status): $out" >&2
+    return 1
+  fi
+  for pid in $out; do
+    case $pid in
+      *[!0-9]*)
+        echo "bin/garden-dev: lsof printed something other than pids for port $1: $out" >&2
+        return 1
+        ;;
+    esac
+  done
+  echo "$out"
+}
+
+# $1 and every process below it.
+tree_pids() {
+  echo "$1"
+  for child in $(pgrep -P "$1" 2>/dev/null); do
+    tree_pids "$child"
+  done
+}
+
+# Whether $1 is still running (a zombie child awaiting `wait` is not).
+alive() {
+  state=$(ps -o stat= -p "$1" 2>/dev/null) || return 1
+  case $state in
+    Z*) return 1 ;;
+  esac
+  return 0
+}
+
+# Never found a garden in a coordinator this script did not start, and never
+# start a lab that Vite (strictPort) would refuse after the garden is founded.
+coordinator_listeners=$(listeners "$coordinator_port") || fail "could not check port $coordinator_port"
+if curl -fsS -o /dev/null --max-time 2 "$api/api/status" 2>/dev/null || [ -n "$coordinator_listeners" ]; then
+  fail "something already listens on port $coordinator_port; stop it or set PORT"
+fi
+if [ "$with_lab" != 0 ]; then
+  lab_listeners=$(listeners "$lab_port") || fail "could not check port $lab_port"
+  [ -z "$lab_listeners" ] || fail "something already listens on port $lab_port; stop it or set LAB_PORT"
+fi
+
+made_dir=0
+if [ -n "${GARDEN_DATA_DIR:-}" ]; then
+  dir=$GARDEN_DATA_DIR
+  mkdir -p "$dir"
+else
+  dir=$(mktemp -d "${TMPDIR:-/tmp}/bl-garden-dev.XXXXXX")
+  made_dir=1
+fi
+dir=$(cd "$dir" && pwd -P)
+
+coordinator_pid=""
+lab_pid=""
+island_pids=""
+lock="$dir/.garden-dev.lock"
+lock_held=0
+
+# Invoked indirectly by the exit trap. SIGTERM to every process of every child's
+# tree (pnpm/mix wrap a further vite/beam that a plain `kill` would miss), up to
+# 20 s for them to go, then SIGKILL to the rest.
+# shellcheck disable=SC2329
+cleanup() {
+  # A second Ctrl-C (or TERM, HUP) while this runs is ignored, not fatal: the
+  # SIGKILL below comes within 20 s anyway.
+  trap - 0
+  trap '' 1 2 15
+  echo "bin/garden-dev: stopping (about 20 s at most; another Ctrl-C is ignored)" >&2
+
+  pids=""
+  for pid in $island_pids $lab_pid $coordinator_pid; do
+    pids="$pids $(tree_pids "$pid")"
+  done
+  for pid in $pids; do
+    kill "$pid" 2>/dev/null || true
+  done
+  waited=0
+  left=$pids
+  while [ -n "$left" ] && [ "$waited" -lt 20 ]; do
+    still=""
+    for pid in $left; do
+      if alive "$pid"; then still="$still $pid"; fi
+    done
+    left=$still
+    [ -z "$left" ] || sleep 1
+    waited=$((waited + 1))
+  done
+  for pid in $left; do
+    kill -9 "$pid" 2>/dev/null || true
+  done
+  for pid in $island_pids $lab_pid $coordinator_pid; do
+    wait "$pid" 2>/dev/null || true
+  done
+
+  # An automatic directory is removed only under its lock: one this launcher
+  # never locked (another took it first) is someone else's now, and is kept.
+  if [ "$made_dir" = 1 ] && [ "$keep" != 1 ] && [ "$lock_held" = 1 ]; then
+    # Moved out while the lock is still held, so a launcher that names this path
+    # as its GARDEN_DATA_DIR now gets a fresh directory, never a half-removed
+    # one. The move goes into a directory mktemp has just created (so nothing
+    # else is there to be removed with it), beside this one on its filesystem.
+    if trash=$(mktemp -d "${dir%/*}/bl-garden-dev.removing.XXXXXX" 2>/dev/null); then
+      if mv "$dir" "$trash/dir" 2>/dev/null; then
+        rm -rf "$trash"
+      else
+        rmdir "$trash" 2>/dev/null || true
+        echo "bin/garden-dev: could not remove $dir" >&2
+      fi
+    else
+      echo "bin/garden-dev: could not remove $dir" >&2
+    fi
+  else
+    [ "$lock_held" = 0 ] || rm -rf "$lock"
+    echo "bin/garden-dev: kept $dir"
+  fi
+}
+
+# A signal that arrives while a process is started, or the lock taken, is held
+# until the pid (or lock) is recorded, so the cleanup always knows every
+# process and lock this launcher has; it takes effect right after.
+pending_exit=""
+hold_signals() {
+  trap 'pending_exit=129' 1
+  trap 'pending_exit=130' 2
+  trap 'pending_exit=143' 15
+}
+release_signals() {
+  trap 'exit 129' 1
+  trap 'exit 130' 2
+  trap 'exit 143' 15
+  [ -z "$pending_exit" ] || exit "$pending_exit"
+}
+
+trap cleanup 0
+release_signals
+
+# The lock records this script's pid and, once started, the coordinator's
+# (each record written whole: a temporary file renamed over the last). It is
+# never taken over: a lock this launcher did not create is refused, with the
+# pids it records and whether each is still running, and is removed by hand
+# when no launcher uses the directory (a launcher removes its own on every exit
+# but SIGKILL). Taking over a lock whose processes looked gone could not be made
+# safe in sh against two launchers deciding from the same old record.
+write_pids() {
+  printf '%s\n' "$@" >"$lock/pids.tmp"
+  mv -f "$lock/pids.tmp" "$lock/pids"
+}
+hold_signals
+if ! mkdir "$lock" 2>/dev/null; then
+  holders=""
+  for pid in $(cat "$lock/pids" 2>/dev/null || true); do
+    if alive "$pid"; then holders="$holders $pid (running)"; else holders="$holders $pid (gone)"; fi
+  done
+  fail "$dir is locked by another bin/garden-dev (pids:${holders:- none recorded}); stop it, or remove $lock if no bin/garden-dev uses $dir, or use another GARDEN_DATA_DIR"
+fi
+lock_held=1
+write_pids $$
+release_signals
+
+mkdir -p "$dir/data" "$dir/logs"
+
+log_tail() {
+  echo "--- $1 (last 30 lines) ---" >&2
+  tail -n 30 "$1" >&2 2>/dev/null || true
+}
+
+hold_signals
+(cd apps/coordinator && MIX_ENV=dev PORT=$coordinator_port BL_DATA_DIR="$dir/data" BL_DISCOVERY_DATA_DIR="$dir/discovery" \
+  exec mix phx.server) >"$dir/logs/coordinator.log" 2>&1 &
+coordinator_pid=$!
+write_pids $$ "$coordinator_pid"
+release_signals
+
+if [ "$with_lab" != 0 ]; then
+  hold_signals
+  COORDINATOR_PORT=$coordinator_port pnpm --filter @bl/lab dev --port "$lab_port" >"$dir/logs/lab.log" 2>&1 &
+  lab_pid=$!
+  release_signals
+fi
+
+echo "Starting the coordinator on $api (the first boot compiles; logs in $dir/logs) ..."
+waited=0
+until curl -fsS -o /dev/null --max-time 2 "$api/api/status" 2>/dev/null; do
+  if ! alive "$coordinator_pid"; then
+    log_tail "$dir/logs/coordinator.log"
+    fail "the coordinator exited before it answered"
+  fi
+  if [ -n "$lab_pid" ] && ! alive "$lab_pid"; then
+    log_tail "$dir/logs/lab.log"
+    fail "the lab exited (it needs a working Node for pnpm; see logs/lab.log)"
+  fi
+  if [ "$waited" -ge 180 ]; then
+    log_tail "$dir/logs/coordinator.log"
+    fail "the coordinator did not answer on $api within 180 s"
+  fi
+  sleep 1
+  waited=$((waited + 1))
+done
+
+# The listener must be the coordinator started here (a race past the check
+# above could leave another one answering while ours failed to bind). Something
+# just answered on the port, so an empty list means lsof could not look: that
+# fails too.
+owners=$(listeners "$coordinator_port") || fail "could not check who listens on port $coordinator_port"
+[ -n "$owners" ] || fail "lsof found no listener on port $coordinator_port, though something answers there; cannot tell whose it is"
+for pid in $owners; do
+  case " $(tree_pids "$coordinator_pid" | tr '\n' ' ') " in
+    *" $pid "*) ;;
+    *) fail "the process listening on port $coordinator_port (pid $pid) is not the coordinator started here" ;;
+  esac
+done
+
+founding="[{\"step\":0,\"kind\":\"feed\",\"x\":$((width / 2)),\"y\":$((height / 2)),\"r\":$founding_r,\"amount\":16}]"
+body="{\"name\":\"$name\",\"presetId\":\"$preset\",\"seed\":$seed,\"days\":$days,\"stepsPerDay\":$steps_per_day,\"censusEvery\":$census,\"dawnPeriodMs\":$dawn_ms,\"founding\":$founding}"
+code=$(curl -sS -o "$dir/logs/found.json" -w '%{http_code}' -X POST -H 'content-type: application/json' \
+  --data "$body" "$api/api/gardens") || code=000
+answer=$(cat "$dir/logs/found.json" 2>/dev/null || true)
+case $code in
+  200) echo "Founded garden '$name' on $preset: $answer" ;;
+  422)
+    case $answer in
+      *"garden exists"*)
+        # Tended as it is: the printed commands use its own world, not this run's settings.
+        # shellcheck disable=SC2016 # JavaScript, not shell
+        world=$(curl -fsS --max-time 10 "$api/api/public/gardens/$name" | deno eval \
+          'const v = JSON.parse(await new Response(Deno.stdin.readable).text()); console.log(`${v.world.width} ${v.world.height} ${v.presetId}`);') ||
+          fail "garden '$name' exists but its public view could not be read"
+        read -r width height existing_preset <<EOF
+$world
+EOF
+        echo "Garden '$name' already exists in $dir/data ($existing_preset, ${width}x$height); tending it as it is."
+        if [ "$existing_preset" != "$preset" ]; then
+          echo "bin/garden-dev: note: it was founded on $existing_preset, not GARDEN_PRESET=$preset; the founding settings of this run are ignored" >&2
+        fi
+        ;;
+      *) fail "the coordinator refused the garden (422): $answer" ;;
+    esac
+    ;;
+  *) fail "founding the garden failed (HTTP $code): $answer" ;;
+esac
+
+i=1
+while [ "$i" -le "$islands" ]; do
+  hold_signals
+  deno run -A tools/island.ts --coordinator "$api" --label "dev-$i" >"$dir/logs/island-$i.log" 2>&1 &
+  island_pids="$island_pids $!"
+  release_signals
+  i=$((i + 1))
+done
+
+query=""
+[ "$name" = commons ] || query="?garden=$name"
+
+echo
+if [ "$with_lab" != 0 ]; then
+  echo "Garden page:  http://localhost:$lab_port/garden/$query"
+  echo "Island page:  http://localhost:$lab_port/island.html (a browser island)"
+fi
+echo "Public view:  $api/api/public/gardens/$name"
+echo "Dashboard:    $api/index.html"
+echo "Islands:      $islands headless (logs/island-N.log)"
+echo "Post a stone: curl -sS -X POST -H 'content-type: application/json' -d '{\"kind\":\"stone\",\"x\":$((width / 2)),\"y\":$((height / 2)),\"r\":8}' $api/api/public/gardens/$name/letters"
+echo "Drop letter:  curl -sS -X POST $api/api/gardens/$name/letters/ltr-1/drop"
+echo "Export:       deno run -A tools/stitch.ts --coordinator $api --experiment $name --out \"$dir/export\""
+echo "Directory:    $dir$( [ "$made_dir" = 1 ] && [ "$keep" != 1 ] && echo ' (removed on exit; GARDEN_KEEP=1 keeps it)')"
+echo "Press Ctrl-C to stop everything."
+
+warned=""
+while :; do
+  if ! alive "$coordinator_pid"; then
+    status=0
+    wait "$coordinator_pid" || status=$?
+    log_tail "$dir/logs/coordinator.log"
+    echo "bin/garden-dev: the coordinator exited ($status)" >&2
+    exit "$status"
+  fi
+  if [ -n "$lab_pid" ] && ! alive "$lab_pid"; then
+    status=0
+    wait "$lab_pid" || status=$?
+    log_tail "$dir/logs/lab.log"
+    echo "bin/garden-dev: the lab exited ($status)" >&2
+    exit "$status"
+  fi
+  n=1
+  for pid in $island_pids; do
+    case " $warned " in
+      *" $pid "*) ;;
+      *)
+        if ! alive "$pid"; then
+          echo "bin/garden-dev: island $n exited; see $dir/logs/island-$n.log (the rest keep going)" >&2
+          warned="$warned $pid"
+        fi
+        ;;
+    esac
+    n=$((n + 1))
+  done
+  sleep 1
+done

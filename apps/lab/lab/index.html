@@ -150,8 +150,38 @@
         </section>
         <section class="rail-section breeder" id="breeder" aria-labelledby="breeder-heading" hidden>
           <h2 id="breeder-heading">Breed by hand</h2>
+          <div class="pressure" id="pressure">
+            <label class="field"><span>The rule breeds for</span><select id="pressure-dial" aria-describedby="pressure-says" disabled></select></label>
+            <p class="hint pressure-says" id="pressure-says"></p>
+            <div class="row"><button id="pressure-set" type="button" disabled>Set</button></div>
+            <p class="hint" id="pressure-hint">What the rule picks donors by when you don’t: it applies to cycles you let run and to “The rule’s choice”. It is not the ranking you see below.</p>
+            <p class="pressure-state hint" id="pressure-state" role="status" aria-live="polite"></p>
+          </div>
           <label class="check"><input id="breeder-on" type="checkbox" /><span>Stop at each pond cycle and let me choose the donor ponds</span></label>
           <p class="hint" id="breeder-hint">At each pond cycle every pond is cleared and reseeded from a few donor ponds. Left alone, the world’s own rule chooses them.</p>
+          <div class="play-verb" id="auto-breed" role="group" aria-labelledby="auto-heading">
+            <h3 class="subheading" id="auto-heading">Breed on its own</h3>
+            <div class="row" id="auto-row">
+              <button id="auto-1" type="button" data-cycles="1">1 cycle</button>
+              <button id="auto-5" type="button" data-cycles="5">5 cycles</button>
+              <button id="auto-20" type="button" data-cycles="20">20 cycles</button>
+              <button id="auto-inf" type="button" data-cycles="inf">Until I stop it</button>
+              <button id="auto-stop" type="button" disabled>Stop</button>
+            </div>
+            <p class="hint" id="auto-status" role="status" aria-live="polite"></p>
+          </div>
+          <div class="play-verb" id="keep" role="group" aria-labelledby="keep-heading">
+            <h3 class="subheading" id="keep-heading">Keep a lineage</h3>
+            <div class="keep-state" id="keep-state" role="status" aria-live="polite">
+              <p class="hint" id="keep-none">None kept. Choose Keep on a lineage in Biggest lineages, on a cell you looked at, or in a lineage’s drawer.</p>
+              <div class="keep-chip" id="keep-chip" hidden>
+                <i id="keep-swatch" aria-hidden="true"></i><span class="mono" id="keep-key"></span>
+                <button id="keep-clear" class="quiet" type="button">Clear</button>
+              </div>
+              <p class="keep-where" id="keep-where" hidden></p>
+            </div>
+            <p class="hint">When the rule or auto-breed answers a cycle, the pond holding most of this lineage seeds it too; a hand pick is never changed. A cycle adjusted this way counts as yours on the card.</p>
+          </div>
           <div id="breeder-pick" hidden>
             <p class="breeder-call" id="breeder-call" role="status" aria-live="polite"></p>
             <label class="field"><span>Rank the ponds by</span><select id="breeder-term"></select></label>
@@ -204,12 +234,32 @@
         </section>
         <section class="evidence-section" id="probe-card" aria-labelledby="probe-heading">
           <h2 id="probe-heading">What’s in this cell?</h2><p class="hint" id="probe-empty">Choose Look, then click a spot on the world.</p>
-          <div id="probe" hidden><dl class="kv mono" id="probe-kv"></dl><canvas id="probe-weights" title="Controller weights (red negative, blue positive)"></canvas><p class="hint weights-caption">Its controller’s weights: red negative, blue positive.</p><button id="btn-lineage" class="full lineage-open" type="button" hidden>Open its lineage</button></div>
+          <div id="probe" hidden><dl class="kv mono" id="probe-kv"></dl><canvas id="probe-weights" title="Controller weights (red negative, blue positive)"></canvas><p class="hint weights-caption">Its controller’s weights: red negative, blue positive.</p><button id="btn-lineage" class="full lineage-open" type="button" hidden>Open its lineage</button><button id="btn-keep" class="full lineage-open" type="button" aria-pressed="false" hidden>Keep this lineage</button></div>
         </section>
         <section class="evidence-section" aria-labelledby="population-heading">
           <div class="section-heading"><h2 id="population-heading">Who’s living here?</h2><span class="hint">Counted, not declared</span></div>
           <dl class="kv mono"><dt>Individuals</dt><dd id="k-ind"></dd><dt>Average mass</dt><dd id="k-mass"></dd><dt>Lineages</dt><dd id="k-lin"></dd><dt>Mutations so far</dt><dd id="k-mut"></dd><dt>Splits / merges</dt><dd id="k-fis"></dd><dt>Births / deaths</dt><dd id="k-bd"></dd><dt>Deepest generation</dt><dd id="k-gen"></dd></dl>
           <h3 class="subheading">Biggest lineages</h3><div class="lineages" id="top-lin"></div>
+        </section>
+        <section class="evidence-section firsts" id="firsts" aria-labelledby="firsts-heading">
+          <h2 id="firsts-heading">What happened first?</h2>
+          <p class="hint firsts-lede">Counted by a detector with rules written in advance. A first is its verdict on a census, not a prize.</p>
+          <p class="firsts-watch" id="firsts-watch" hidden><span class="badge note" id="firsts-watch-badge"></span><span class="hint">Nothing before that is in this log.</span></p>
+          <p class="firsts-watch" id="firsts-stopped" hidden><span class="badge note" id="firsts-stopped-badge"></span><span class="hint">Later firsts aren’t counted in this history.</span></p>
+          <p class="hint" id="firsts-empty">Nothing yet. Firsts show up here as the world grows.</p>
+          <div class="nextup" id="nextup">
+            <h3 class="subheading" id="nextup-heading" hidden>What’s next?</h3>
+            <ol class="nextup-list" id="nextup-list" aria-labelledby="nextup-heading"></ol>
+            <p class="hint" id="nextup-hint" hidden>“Seen so far” is the best yet and only goes up; “now” is the latest census and can fall back.</p>
+            <p class="hint" id="nextup-done" hidden>Every rung on the ladder has been reached in this log.</p>
+          </div>
+          <ol class="firsts-list" id="firsts-list" aria-label="Firsts so far, newest first" hidden></ol>
+          <details class="firsts-rules">
+            <summary>What counts as a first</summary>
+            <div id="firsts-rules-body"></div>
+          </details>
+          <button id="btn-card" class="full" type="button" aria-haspopup="dialog" aria-controls="session-card" aria-describedby="card-hint">Session card</button>
+          <p class="hint" id="card-hint">Sums the session up: what was bred, how far it got, what died, and a file that replays it.</p>
         </section>
       </aside>
 
@@ -230,6 +280,17 @@
       <div class="worlds-body">
         <nav class="worlds-nav" aria-label="Kinds of world"></nav>
         <div class="worlds-main"></div>
+      </div>
+    </dialog>
+    <dialog class="card" id="session-card" aria-labelledby="card-heading">
+      <div class="card-head">
+        <div><h2 id="card-heading" tabindex="-1">Session card</h2><p class="hint">What this session did, as counted. Nothing here is a score.</p></div>
+        <button class="card-close quiet" type="button">Close</button>
+      </div>
+      <div class="card-body" id="card-body"></div>
+      <div class="card-foot">
+        <button id="btn-session-file" class="primary" type="button" aria-describedby="card-file-note" disabled>Download session file</button>
+        <p class="hint" id="card-file-note" role="status" aria-live="polite">Saves this world’s history from step 0, its firsts and this card as one file, which tools/run.ts replays and checks against this world’s final state.</p>
       </div>
     </dialog>
     <script type="module" src="/src/main.ts"></script>

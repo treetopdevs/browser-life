@@ -102,11 +102,12 @@ for (const f of FAMILIES) {
 
 // After load, so the browser's own scroll placement for a fresh page does not undo it; a jump, not the smooth
 // scroll the site uses for its own anchors, since arriving should not mean watching the page go by.
-// The sticky header wraps onto more lines on narrow screens, so the card clears it as it stands, not a fixed guess.
+// The page's scroll padding already clears the sticky header as it stands (site.css, measured in theme.ts), so the
+// card adds only a little air of its own.
 const toLinked = () => requestAnimationFrame(() => {
   const card = document.getElementById(`world-${linked}`);
   if (!card) return;
-  card.style.scrollMarginTop = `${(document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0) + 16}px`;
+  card.style.scrollMarginTop = "4px";
   card.scrollIntoView({ block: "start", behavior: "instant" });
 });
 if (linked) {

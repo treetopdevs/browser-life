@@ -7,6 +7,7 @@
 //     [--picker rule|random|file|command] [--pick-seed N] [--pick-dir DIR] [--pick-cmd '["argv","..."]'] [--pick-timeout SEC]
 //     [--pick-label NAME] [--picks-from FILE] [--verify-against DIR]
 //     [--lesion STEP:X,Y,R]... [--feed STEP:X,Y,R,AMOUNT]... [--interventions FILE]
+//     [--start-from DIR --start-step N]
 //
 // --lineage-obs adds the foundations-review observer files (RunSpec.lineageObs); --solo-founder K
 // founds an m3 preset from M3 founder K alone (RunSpec.soloFounder), --solo-genome from a genome given
@@ -95,11 +96,35 @@
 // the bundle's logs, or two logs (--picks-from, picks.jsonl, picks.recovery.jsonl) that disagree at a step, refuses the recovery (exit 2)
 // before anything is copied, cleared or truncated. Replaying a log rewrites it with `by: "recorded"`: what replay reproduces is the
 // state, ponds.tsv and each boundary's step, cycle and donors, not the original `by` and `suggested` fields.
+// Pressures (the lab's pond keeper; RunSpec.pressures): a lab run manifest or a session file in --picks-from may hold `pressure`
+// interventions, the breeder's dial ({"step":5000,"kind":"pressure","cycle":1,"score":"drive"}). They replay with it: at each boundary no
+// recorded pick covers, the rule's donors are those of the latest pressure's score (cycle <= the boundary), not the world's own pondScore.
+// ponds.tsv keeps the world's header, and its score and donorScore columns stay the world's score values, as under a hand pick; picks.jsonl's
+// `suggested` is the pressured rule's donors. A pressured run is a picked run (the manifest's spec carries pressures) and, like one,
+// cannot be segmented or sent to an island. Exit 2, before any GPU work, for a pressure that is not the observed history (a cycle
+// that is not the one set at that step, a world whose arm is not breed) or that lies after --steps. A run with no pressure is unchanged.
 // A picked run cannot resume from a checkpoint, be segmented or run on an island; a scheduled run can be segmented, run on islands and
 // stitched back. Exit codes: 2 invalid spec or flags (before any GPU work), 3 a pick failed, 4 a verification mismatch: the lab's
 // checkpoint or --verify-against differs, or a scheduled feed could not be applied as logged (it moved other matter than the lab's log says).
+//
+// Forks from a checkpoint (the experiment proposer, tools/propose.ts; docs/naturalist-proposer-v0-2026-10-18.md):
+//   --start-from DIR --start-step N   continue the history in the bundle at DIR from its checkpoint at step N (the manifest's
+//                                     `checkpoints` entry; the file must decode and its stateHash match the entry), with the
+//                                     checkpoint's observer, as an island continues a segment (RunOptions.start and observer;
+//                                     the runner's continuationError: the same config and observer settings as this spec).
+//                                     --steps then counts from N, and every --lesion, --feed and --interventions entry must lie in
+//                                     (N, N + steps]. One condition and one seed. Refused with exit 2, before any GPU work: one flag
+//                                     without the other; with --branch-from, --picks-from, --picker, --solo-founder, --solo-genome,
+//                                     --founder-set, --lineage-obs, --pre-cycle or --verify-against; no checkpoint at N, a file that does not read,
+//                                     decode or hash to the entry; a spec the checkpoint cannot continue; an entry outside the
+//                                     window; and an existing manifest.json in the run's directory, or (just before the run) an
+//                                     existing run directory at all: a fork claims it with an atomic mkdir and is never skipped,
+//                                     reused or written over (the spec records no start, so a step-0 run of the same spec would
+//                                     look identical).
+//                                     Without these flags nothing here changes.
 import { parseArgs } from "jsr:@std/cli@1/parse-args";
 import { PRESETS, RULE_VERSION, initWorld, stateHash, validateConfig, type WorldConfig, type WorldState } from "@bl/schema";
+import { join as joinPath } from "node:path";
 import { requestDevice } from "@bl/sim-gpu";
 import {
   INTERVENTIONS_FILE,
@@ -107,6 +132,8 @@ import {
   PICKS_FILE,
   PickError,
   branchError,
+  continuationError,
+  decodeArtifact,
   interventionsError,
   labHistory,
   parseInterventionLog,
@@ -118,6 +145,7 @@ import {
   picksConsistencyError,
   picksPreflightError,
   preCycleError,
+  pressuresConfigError,
   runExperiment,
   runId,
   sameCompletedRun,
@@ -125,8 +153,10 @@ import {
   specConfig,
   validateSpec,
   type BranchSpec,
+  type ObserverState,
   type PickEntry,
   type Picker,
+  type PressureEntry,
   type RunSpec,
   type ScheduledIntervention,
   type Sink,
@@ -135,7 +165,7 @@ import { branchFlagsError, branchSource } from "./lib/branch-source.ts";
 import { claimPickDir, commandAnswerer, denoIo, denoRun, dirPicker, fileAnswerer, pickDirTaken, randomPicker, rulePicker } from "./lib/pickers.ts";
 
 const a = parseArgs(Deno.args, {
-  string: ["experiment", "preset", "conditions", "seeds", "out", "steps", "census", "deep", "checkpoint", "threshold", "solo-founder", "solo-genome", "founder-set", "pre-cycle", "override", "branch-from", "branch-boundary", "picker", "pick-seed", "pick-dir", "pick-cmd", "pick-timeout", "pick-label", "picks-from", "verify-against", "lesion", "feed", "interventions"],
+  string: ["experiment", "preset", "conditions", "seeds", "out", "steps", "census", "deep", "checkpoint", "threshold", "solo-founder", "solo-genome", "founder-set", "pre-cycle", "override", "branch-from", "branch-boundary", "picker", "pick-seed", "pick-dir", "pick-cmd", "pick-timeout", "pick-label", "picks-from", "verify-against", "lesion", "feed", "interventions", "start-from", "start-step"],
   collect: ["lesion", "feed"],
   boolean: ["lineage-obs"],
   default: { experiment: "pilot", preset: "spots", conditions: "treatment", seeds: "1", out: "runs", steps: "20000", census: "100", deep: "10", checkpoint: "0" },
@@ -299,7 +329,7 @@ let record: { entries: PickEntry[]; text?: string; implicit: boolean } | undefin
  * checkpoint counts). `pondPicks`: the manifest's config is a pond config whose arm chooses donors, or the manifest holds picks, so
  * the replay is a picked run; a plain (fed or wounded) world is not.
  */
-let lab: { scheduled: ScheduledIntervention[]; checkpoints: { step?: unknown; hash?: unknown; interventions?: unknown; file?: unknown }[]; logged: { step?: unknown }[]; pondPicks: boolean } | undefined;
+let lab: { scheduled: ScheduledIntervention[]; pressures: PressureEntry[]; checkpoints: { step?: unknown; hash?: unknown; interventions?: unknown; file?: unknown }[]; logged: { step?: unknown }[]; pondPicks: boolean } | undefined;
 if (a["picks-from"] !== undefined) {
   try {
     const text = await Deno.readTextFile(a["picks-from"]);
@@ -341,6 +371,7 @@ if (a["picks-from"] !== undefined) {
       const labCfg = specConfig(spec);
       lab = {
         scheduled: history.scheduled,
+        pressures: history.pressures,
         checkpoints: Array.isArray(manifest.checkpoints) ? manifest.checkpoints : [],
         logged: manifest.interventions as { step?: unknown }[],
         pondPicks: history.picks.length > 0 || (labCfg.pondPeriod !== undefined && (labCfg.pondArm === "scaf" || labCfg.pondArm === "rand" || labCfg.pondArm === "breed")),
@@ -361,13 +392,61 @@ if (picking) {
   // (fed, wounded or plain) replays as an ordinary run under the same -by-<label> directory, with no picks.jsonl. Keys in the order
   // an earlier picked spec had them (picked, runId), so an existing picked bundle still compares equal.
   const picked = a.picker !== undefined || (record !== undefined && (!record.implicit || lab!.pondPicks));
+  // Pressures are the breeder's dial: only a donor-choosing pond world can have them, so a manifest that holds some is a picked run.
+  if (lab && lab.pressures.length > 0 && !picked) die("the lab manifest holds pressures, but its world is not a pond world whose arm chooses donors, so there is no picked run to replay them in");
   specs[0] = {
     ...only,
     ...(lab && lab.scheduled.length > 0 ? { interventions: lab.scheduled } : {}),
+    ...(lab && lab.pressures.length > 0 ? { pressures: lab.pressures } : {}),
     ...(picked ? { picked: true as const } : {}),
     runId: `${only.experiment}/${only.presetId}/${only.condition}-by-${pickLabel}/seed-${only.seed}`,
   };
 }
+/** A fork from a checkpoint (--start-from DIR --start-step N): the decoded, hash-checked state and observer the run continues. */
+let startFrom: { step: number; state: WorldState; observer: ObserverState } | undefined;
+if ((a["start-from"] === undefined) !== (a["start-step"] === undefined)) die("--start-from and --start-step go together");
+if (a["start-from"] !== undefined) {
+  const dir = a["start-from"];
+  const clash = ["branch-from", "picks-from", "picker", "solo-founder", "solo-genome", "founder-set", "pre-cycle", "verify-against"].find((k) => a[k as keyof typeof a] !== undefined) ?? (a["lineage-obs"] ? "lineage-obs" : undefined);
+  if (clash) die(`--start-from cannot be combined with --${clash}: a fork continues the source's own history from its checkpoint`);
+  if (specs.length !== 1) die("--start-from takes one condition and one seed per invocation");
+  const N = Number(a["start-step"]);
+  if (!/^[1-9]\d*$/.test(a["start-step"]!) || !Number.isSafeInteger(N)) die("--start-step must be a positive integer (a checkpoint step of the source)");
+  let entry: { step?: unknown; file?: unknown; hash?: unknown } | undefined;
+  try {
+    const m = JSON.parse(await Deno.readTextFile(joinPath(dir, "manifest.json")));
+    entry = (Array.isArray(m?.checkpoints) ? m.checkpoints : []).find((c: { step?: unknown }) => c?.step === N);
+  } catch (e) {
+    die(`--start-from ${dir}: ${(e as Error).message}`);
+  }
+  if (!entry || typeof entry.file !== "string" || typeof entry.hash !== "string") die(`--start-from ${dir}: its manifest lists no checkpoint at step ${N}`);
+  const file = entry!.file as string;
+  if (file.startsWith("/") || file.split(/[/\\]/).includes("..")) die(`--start-from ${dir}: checkpoint ${file} is not a path inside the bundle`);
+  try {
+    const { state, observer } = decodeArtifact(await Deno.readFile(joinPath(dir, file)));
+    if (state.step !== N) die(`--start-from ${dir}: ${file} holds step ${state.step}, not ${N}`);
+    const h = stateHash(state);
+    if (h !== entry!.hash) die(`--start-from ${dir}: ${file} hashes to ${h}, its manifest entry says ${entry!.hash}`);
+    startFrom = { step: N, state, observer };
+  } catch (e) {
+    die(`--start-from ${dir}: ${file}: ${(e as Error).message}`);
+  }
+  const spec = specs[0];
+  const cannot = continuationError(spec, startFrom!.state, startFrom!.observer);
+  if (cannot) die(`--start-from ${dir} at step ${N}: ${cannot}`);
+  const outside = (spec.interventions ?? []).findIndex((e) => !(e.step > N && e.step <= N + spec.steps));
+  if (outside >= 0) {
+    const e = spec.interventions![outside];
+    die(`invalid spec for ${runId(spec)}: interventions[${outside}] (${e.kind} at t=${e.step}) is not in the fork's window (${N}, ${N + spec.steps}]: a fork from step ${N} applies only entries after its start, up to its last step`);
+  }
+  try {
+    await Deno.lstat(`${a.out}/${runId(spec)}/manifest.json`);
+    die(`${a.out}/${runId(spec)} already holds a run; a fork is never skipped or reused (its spec records no start), so choose a new --out or --experiment`);
+  } catch (e) {
+    if (!(e instanceof Deno.errors.NotFound)) throw e;
+  }
+}
+
 /** An incomplete picked bundle at the run's directory is re-run in place from everything recorded of it; a complete one never is. */
 async function recover(dir: string, spec: RunSpec): Promise<void> {
   let done: Record<string, unknown>;
@@ -472,7 +551,7 @@ for (const spec of specs) {
   }
   // A schedule's entries are checked by validateSpec above; here the run's own length and world. An entry after the last step is never
   // reached (a typo, or a lab history longer than --steps: picks past the run are refused the same way); step 0 is the start itself.
-  const late = (spec.interventions ?? []).findIndex((e) => e.step > spec.steps);
+  const late = (spec.interventions ?? []).findIndex((e) => e.step > (startFrom?.step ?? 0) + spec.steps); // a fork's --steps counts from its start
   if (late >= 0) {
     const e = spec.interventions![late];
     console.error(`invalid spec for ${runId(spec)}: interventions[${late}] (${e.kind} at t=${e.step}) is after the run's last step (--steps ${spec.steps}), so the run never reaches it; use --steps ${e.step} or more${lab ? "; a lab history replays whole, so --steps must reach its last intervention" : ""}`);
@@ -484,7 +563,7 @@ for (const spec of specs) {
     Deno.exit(2);
   }
   // The given record's entries are checked here; whether it covers the run is judged below, on the record recovery leaves.
-  const pickedBad = pickedConfigError(spec, cfg) ?? (spec.picked ? picksPreflightError(record?.entries ?? [], cfg, 0, spec.steps, true) : null);
+  const pickedBad = pickedConfigError(spec, cfg) ?? pressuresConfigError(spec, cfg) ?? (spec.picked ? picksPreflightError(record?.entries ?? [], cfg, 0, spec.steps, true) : null);
   if (pickedBad) {
     console.error(`invalid spec for ${runId(spec)}: ${pickedBad}`);
     Deno.exit(2);
@@ -510,8 +589,20 @@ if (specs[0].picked) {
 const device = await requestDevice(navigator.gpu, specConfig(specs[0]));
 for (const spec of specs) {
   const dir = `${a.out}/${runId(spec)}`;
+  // A fork claims its directory with a mkdir that fails when it exists (atomic), so a run that appeared there after its start checks, or a
+  // second fork writing to the same directory, is refused rather than reused or overwritten (its spec records no start). A fork that
+  // fails after this leaves the directory behind; a new --out or --experiment is then needed.
+  if (startFrom) {
+    await Deno.mkdir(dir.replace(/\/[^/]+$/, ""), { recursive: true });
+    try {
+      await Deno.mkdir(dir);
+    } catch (e) {
+      if (e instanceof Deno.errors.AlreadyExists) die(`${dir} now exists; a fork is never skipped or reused (its spec records no start), so choose a new --out or --experiment`);
+      throw e;
+    }
+  }
   // A picked directory was checked by `recover` above; it is never skipped, and an unpicked one behaves as it always has.
-  if (!spec.picked)
+  else if (!spec.picked)
     try {
       const done = JSON.parse(await Deno.readTextFile(`${dir}/manifest.json`));
       const same = sameCompletedRun(done, spec);
@@ -536,6 +627,7 @@ for (const spec of specs) {
   try {
     ({ summary, final } = await runExperiment(device, spec, fsSink(dir), { host: `deno ${Deno.version.deno} ${Deno.build.os}-${Deno.build.arch}`, adapter: adapterDesc }, (m) => console.log(`  ${m}`), {
       branchFrom: source?.state,
+      ...(startFrom ? { start: startFrom.state, observer: startFrom.observer } : {}),
       keepFinal: lab !== undefined, // the lab comparison below hashes the final state
       ...(spec.picked ? { picker: await makePicker(spec), picks: record?.entries ?? [], implicitRule: record?.implicit } : {}),
     }));

@@ -17,11 +17,14 @@ import {
   RULE_VERSION,
   SCHEMA_VERSION,
   applyFeed,
+  applyPondCycle,
   cellCount,
   clampLesionRadius,
   cloneState,
   feedError,
   initWorld,
+  pondDonors,
+  pondMatter,
   stateHash,
   totalsOf,
   worldW,
@@ -40,6 +43,8 @@ import {
   observerSettings,
   ownedInterventions,
   parseInterventionLog,
+  pondCensus,
+  pondsHeader,
   picksFromManifest,
   restoreObservers,
   runExperiment,
@@ -53,6 +58,7 @@ import {
   type InterventionLogEntry,
   type InterventionSim,
   type ObserverState,
+  type PressureEntry,
   type RunSpec,
   type ScheduledIntervention,
   type Sink,
@@ -193,6 +199,14 @@ describe("validateSpec: interventions' shape", () => {
     expect(validateSpec(spotsSmall)).toEqual([]);
     expect(validateSpec({ ...spotsSmall, interventions: good })).toEqual([]);
     expect(validateSpec({ ...spotsSmall, interventions: [lesion(5)] })).toEqual([]);
+  });
+
+  it("refuses a pressure with its own message: it is carried as RunSpec.pressures, never scheduled", () => {
+    const p = { step: 5000, kind: "pressure", cycle: 1, score: "body" };
+    expect(validateInterventions([p]).join()).toMatch(/interventions\[0\]: a pressure is not a scheduled intervention: it is carried as RunSpec.pressures by a picked run, which is never segmented or sent to an island/);
+    expect(validateSpec({ ...spotsSmall, interventions: [lesion(5), p as never] }).join()).toMatch(/a pressure is not a scheduled intervention/);
+    // any other unknown kind keeps the generic message
+    expect(validateInterventions([{ step: 1, kind: "wound" }]).join()).toMatch(/kind must be "lesion" or "feed", got "wound"/);
   });
 
   const bad: [string, unknown, RegExp][] = [
@@ -344,9 +358,9 @@ describe("labHistory: a lab run manifest as picks and scheduled entries", () => 
   });
 
   it("gives an empty schedule for a manifest of picks alone, and no picks for one without", () => {
-    expect(labHistory({ interventions: [{ step: 1000, kind: "pick", cycle: 1, donors: [0] }] })).toEqual({ picks: [{ step: 1000, cycle: 1, donors: [0] }], scheduled: [] });
-    expect(labHistory({ interventions: [] })).toEqual({ picks: [], scheduled: [] });
-    expect(labHistory({ interventions: [lesion(5)] })).toEqual({ picks: [], scheduled: [lesion(5)] });
+    expect(labHistory({ interventions: [{ step: 1000, kind: "pick", cycle: 1, donors: [0] }] })).toEqual({ picks: [{ step: 1000, cycle: 1, donors: [0] }], scheduled: [], pressures: [] });
+    expect(labHistory({ interventions: [] })).toEqual({ picks: [], scheduled: [], pressures: [] });
+    expect(labHistory({ interventions: [lesion(5)] })).toEqual({ picks: [], scheduled: [lesion(5)], pressures: [] });
   });
 
   it("refuses edges observed from later, what is not a manifest, another kind and a malformed lesion or feed", () => {
@@ -386,6 +400,58 @@ describe("labHistory: a lab run manifest as picks and scheduled entries", () => 
     expect(() => labHistory({ interventions: [{ step: 2000, kind: "pick", cycle: 2, donors: [1] }, lesion(2100), { step: 1000, kind: "pick", cycle: 1, donors: [0] }] })).toThrow(/in order/);
   });
 
+  describe("pressures", () => {
+    const cfg = { pondPeriod: 1000, pondArm: "breed" };
+    const pick = (step: number) => ({ step, kind: "pick", cycle: step / 1000, donors: [0] });
+    const pressure = (step: number, cycle: number, score = "body") => ({ step, kind: "pressure", cycle, score });
+    const hist = (interventions: unknown[], c: unknown = cfg) => labHistory({ cfg: c, interventions });
+
+    it("returns them in log order beside the picks and the schedule, and a manifest without any has none", () => {
+      const log = [pressure(0, 1, "drive"), lesion(300), pressure(500, 1, "seed"), pressure(1000, 1, "body"), pick(1000), lesion(1000), pressure(1000, 2, "mass"), pick(2000)];
+      const h = hist(log);
+      expect(h.pressures).toEqual([
+        { step: 0, cycle: 1, score: "drive" },
+        { step: 500, cycle: 1, score: "seed" },
+        { step: 1000, cycle: 1, score: "body" },
+        { step: 1000, cycle: 2, score: "mass" },
+      ]);
+      expect(h.picks.map((e) => e.step)).toEqual([1000, 2000]);
+      expect(h.scheduled).toEqual([lesion(300), lesion(1000)]);
+      expect(labHistory({ interventions: [pick(1000)] }).pressures).toEqual([]);
+      // no config is needed when there is nothing to check against it
+      expect(labHistory({ interventions: [lesion(5)] }).pressures).toEqual([]);
+    });
+
+    it("accepts the orders the lab logs at one step", () => {
+      expect(() => hist([pressure(1000, 1), pressure(1000, 1, "seed"), pick(1000), lesion(1000), pressure(1000, 2), pressure(1000, 2, "mass")])).not.toThrow();
+      expect(() => hist([pick(1000), pressure(1000, 2)])).not.toThrow();
+      expect(() => hist([pressure(1000, 2)])).not.toThrow(); // set at the boundary after a rule-run cycle
+    });
+
+    it("refuses the orders it does not: a pressure for a cycle after that cycle's pick, a pick after a lesion or a later pressure", () => {
+      expect(() => hist([pick(1000), pressure(1000, 1)])).toThrow(/interventions\[1\] \(pressure at t=1000\) for cycle 1 comes after the pick for cycle 1/);
+      expect(() => hist([lesion(1000), pressure(1000, 1)])).toThrow(/follows a lesion, feed or later pressure at the same step/);
+      expect(() => hist([pressure(1000, 2), pick(1000)])).toThrow(/interventions\[1\] \(pick at t=1000\) follows a pressure for the next cycle at the same step/);
+      expect(() => hist([lesion(1000), pick(1000)])).toThrow(/follows a lesion or feed at the same step/);
+      expect(() => hist([pressure(2000, 3), lesion(1500)])).toThrow(/follows an entry at t=2000/);
+    });
+
+    it("needs the manifest's config, and a breeder world", () => {
+      expect(() => labHistory({ interventions: [pressure(0, 1)] })).toThrow(/holds pressures but no cfg/);
+      expect(() => hist([pressure(0, 1)], null)).toThrow(/holds pressures but no cfg/);
+      expect(() => hist([pressure(0, 1)], { pondPeriod: 1000, pondArm: "scaf" })).toThrow(/pressures: a pressure needs pond arm breed/);
+      expect(() => hist([pressure(0, 1)], { pondArm: "breed" })).toThrow(/needs a pond config/);
+    });
+
+    it("refuses a pressure that is not the observed history, and a malformed one", () => {
+      expect(() => hist([pressure(1500, 1)])).toThrow(/pressure 0 at t=1500 says cycle 1.*not the observed history/);
+      expect(() => hist([pressure(1000, 3)])).toThrow(/cycle 1 or 2/);
+      expect(() => hist([pressure(1000, 1, "nope")])).toThrow(/pondScore must be/);
+      expect(() => hist([{ step: 1000, kind: "pressure", cycle: 1 }])).toThrow(/interventions\[0\]: a pressure needs the key "score"/);
+      expect(() => hist([{ ...pressure(1000, 1), by: "x" }])).toThrow(/a pressure has no key "by"/);
+    });
+  });
+
   it("leaves picksFromManifest as it was: it still refuses a lesion and a feed", () => {
     expect(() => picksFromManifest({ interventions: [lesion(5)] })).toThrow(/"lesion".*would not be that history/);
     expect(() => picksFromManifest({ interventions: [{ step: 500, kind: "feed", x: 1, y: 1, r: 3, amount: 4, matter: 8 }] })).toThrow(/"feed".*would not be that history/);
@@ -419,6 +485,14 @@ describe("run identity and the island", () => {
     expect(JSON.stringify(explicit)).toBe(JSON.stringify(spotsSmall));
     expect(sameCompletedRun(done(spotsSmall), explicit)).toBe(true);
     expect("interventions" in JSON.parse(JSON.stringify(spotsSmall))).toBe(false);
+  });
+
+  it("a spec's pressures are another run, and an island does not run them", () => {
+    const pressured: RunSpec = { ...pondSpec, picked: true, pressures: [{ step: 0, cycle: 1, score: "body" }] };
+    expect(sameCompletedRun(done({ ...pondSpec, picked: true }), pressured)).toBe(false);
+    expect(sameCompletedRun(done(pressured), pressured)).toBe(true);
+    expect(specRefusal(pressured)).toMatch(/picked runs are not distributed/);
+    expect(specRefusal({ ...pondSpec, pressures: pressured.pressures })).toMatch(/pressured run is not distributed/); // belt and braces over the picked refusal
   });
 
   it("an island runs a spec with interventions (it advertises interventions-v1), and still refuses a picked or a branch run", () => {
@@ -785,5 +859,80 @@ describe("runExperiment's loop", () => {
     expect(JSON.parse(out.files.get("manifest.json")!).interventions).toEqual({ file: INTERVENTIONS_FILE, applied: 0 });
     expect(res.summary.conservationOk).toBe(true);
     expect(totalsOf(cfg, lastSim().initial.cells).matter).toBe(totalsOf(cfg, start.cells).matter);
+  });
+});
+
+describe("a pressured run through runExperiment", () => {
+  // Seed 2 of four 64 x 64 ponds, two cycles of two steps: after two steps "mass" favours pond 3 and "body" pond 2, so a pressure is not vacuous.
+  const base: RunSpec = { ...pondTiny, seed: 2, condition: "pond-breed-mass", steps: 4, checkpointEvery: 0 };
+  const pressures: PressureEntry[] = [{ step: 0, cycle: 1, score: "body" }];
+  const preset = PRESETS.find((p) => p.id === "ponds-small")!;
+  const cfg = specConfig(base);
+
+  /** The same history on the reference alone: each boundary is `applyPondCycle` with the donors `scoreAt(b)` ranks, or the arm's own. */
+  function reference(scoreAt: (b: number) => PressureEntry["score"] | undefined) {
+    let ref = new RefSim(initWorld(cfg, preset.init));
+    const donors: number[][] = [];
+    for (let b = 1; b <= 2; b++) {
+      ref.run(2);
+      const pre = cloneState(ref.state);
+      const score = scoreAt(b);
+      const picks = score === undefined ? undefined : pondDonors(pre, b, "breed", cfg.pondK!, score);
+      const cycle = applyPondCycle(pre, b, "breed", cfg.pondK!, pondMatter(pre), pondCensus, cfg.pondScore, picks);
+      donors.push(cycle.donors);
+      ref = new RefSim(cloneState(cycle.state));
+    }
+    return { hash: stateHash(ref.state), donors };
+  }
+
+  it("takes each boundary's donors from the pressure's score: the state is the cycle with those donors, the files are the config's", async () => {
+    const want = reference(() => "body");
+    const plain = reference(() => undefined);
+    expect(want.donors[0]).not.toEqual(plain.donors[0]); // the pressure changes the first cycle
+    const out = memorySink();
+    const res = await runExperiment(device, { ...base, picked: true, pressures }, out.sink, host, () => {}, { keepFinal: true, picks: [], implicitRule: true });
+    expect(stateHash(res.final!)).toBe(want.hash);
+    const manifest = JSON.parse(out.files.get("manifest.json")!);
+    expect(manifest.spec.pressures).toEqual(pressures);
+    // ponds.tsv: the config's header (its score columns are the config's score), a row per recipient at each boundary, donors as applied
+    const rows = out.files.get("ponds.tsv")!.trim().split("\n");
+    expect(rows[0] + "\n").toBe(pondsHeader("breed", "mass"));
+    const cols = rows[0].split("\t"), at = (r: string, c: string) => r.split("\t")[cols.indexOf(c)];
+    for (const b of [1, 2]) expect([...new Set(rows.slice(1).filter((r) => at(r, "cycle") === String(b)).map((r) => Number(at(r, "donor"))))].sort()).toEqual([...want.donors[b - 1]].sort());
+    // picks.jsonl: the pressured rule's donors are what was applied and what the rule suggested
+    const picks = out.files.get("picks.jsonl")!.trim().split("\n").map((l) => JSON.parse(l));
+    expect(picks.map((l) => [l.step, l.cycle, l.donors, l.by, l.suggested])).toEqual([
+      [2, 1, want.donors[0], "rule(implicit)", want.donors[0]],
+      [4, 2, want.donors[1], "rule(implicit)", want.donors[1]],
+    ]);
+  }, 600_000);
+
+  it("a pressure that starts later leaves the earlier cycles to the config's score", async () => {
+    const want = reference((b) => (b >= 2 ? "body" : undefined));
+    const res = await runExperiment(device, { ...base, picked: true, pressures: [{ step: 2, cycle: 2, score: "body" }] }, memorySink().sink, host, () => {}, { keepFinal: true, picks: [], implicitRule: true });
+    expect(stateHash(res.final!)).toBe(want.hash);
+  }, 600_000);
+
+  it("a run without pressure is unchanged: the arm's own cycle, no picks file, no trace of the field", async () => {
+    const want = reference(() => undefined);
+    const out = memorySink();
+    const res = await runExperiment(device, base, out.sink, host, () => {}, { keepFinal: true });
+    expect(stateHash(res.final!)).toBe(want.hash);
+    expect(out.files.has("picks.jsonl")).toBe(false);
+    expect("pressures" in JSON.parse(out.files.get("manifest.json")!).spec).toBe(false);
+    // a picked run with the rule's own donors writes the same ponds.tsv bytes and state
+    const picked = memorySink();
+    const res2 = await runExperiment(device, { ...base, picked: true }, picked.sink, host, () => {}, { keepFinal: true, picks: [], implicitRule: true });
+    expect(stateHash(res2.final!)).toBe(want.hash);
+    expect(picked.files.get("ponds.tsv")).toBe(out.files.get("ponds.tsv"));
+  }, 600_000);
+
+  it("refuses, before the device is touched, what is not a pressured breeder run", async () => {
+    const opts = { picks: [], implicitRule: true };
+    expect(await rejection({ ...base, pressures }, opts)).toMatch(/a pressured run is a picked run/);
+    expect(await rejection({ ...base, picked: true, pressures: [{ step: 3, cycle: 3, score: "body" }] }, opts)).toMatch(/pressure 0 at t=3 says cycle 3.*not the observed history/);
+    expect(await rejection({ ...base, condition: "pond-rand", picked: true, pressures }, opts)).toMatch(/pressure needs pond arm breed, got "rand"/);
+    expect(await rejection({ ...base, picked: true, pressures: [{ step: 5, cycle: 3, score: "body" }] }, opts)).toMatch(/a pressure at t=5 is after the run's last step \(4\)/);
+    expect(await rejection({ ...base, picked: true, pressures: [{ step: 4, cycle: 3, score: "nope" as never }] }, opts)).toMatch(/pondScore must be/);
   });
 });

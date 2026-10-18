@@ -7,10 +7,15 @@
 // observer is restored from its predecessor's, so a run's files are the
 // concatenation of its segments' (tests/deno/stitch.ts checks this against a
 // continuous run byte for byte). The manifest is the last segment's, widened
-// to cover the whole history.
+// to cover the whole history. A garden (apps/coordinator README, "The
+// garden") is stitched in its own mode (`StitchOptions.garden`): each of its
+// segments' manifests carries the schedule its task carried, which grows and
+// loses letters between days, so its stitched `spec.interventions` is the
+// union of the entries each segment owned and applied (see `stitchRun`, and
+// docs/garden-stitch-rule-2026-10-17.md for the rule).
 import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, breedPondColumns, clampLesionRadius, exchangePositions, type PondArm, type PondScore, type WorldConfig } from "@bl/schema";
-import { runId, sameConfig, type RunSummary } from "./runner.ts";
-import { INTERVENTIONS_FILE, formatInterventionLine, ownedInterventions, parseInterventionLog, type InterventionLogEntry, type ScheduledIntervention } from "./interventions.ts";
+import { runId, sameConfig, specConfig, type RunSpec, type RunSummary } from "./runner.ts";
+import { INTERVENTIONS_FILE, formatInterventionLine, ownedInterventions, parseInterventionLog, sameIntervention, validateInterventions, type InterventionLogEntry, type ScheduledIntervention } from "./interventions.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
 export const BUNDLE_FILES = ["manifest.json", "series.jsonl", "lineages.tsv", "mutations.tsv", "heredity.tsv", "life.jsonl", "activity-final.json"] as const;
@@ -150,7 +155,11 @@ interface HuntRow {
  * A run with `pondScore` (`score`; the breeder and its controls) writes `breedPondColumns(score)` exactly
  * (`BREED_POND_COLUMNS`, plus one column per term under a combined score), and every row's `score`, `donorScore` and
  * term values must be nonnegative integers below 2^53. Where the caller knows the arm, a file carrying the score
- * columns without a score in the config is refused, as a hunt header on another arm is.
+ * columns without a score in the config is refused, as a hunt header on another arm is. Each boundary's rows must also
+ * agree with each other the way `applyPondCycle` writes them (every score is of the one pre-cycle snapshot): a row's
+ * `donor` is -1 (no donor, `donorScore` 0) or a pond index, and its `donorScore` is that pond's own row's `score`. This
+ * is a consistency rule, not verification: which donors the rule chose is bound by the physics digest (the donors'
+ * cells are in the next state), and the file's bytes by the verifier's observation digests.
  */
 export function checkPondsFile(id: string, text: string, period: number | undefined, ponds: number, startStep: number, end: number, arm?: PondArm, score?: PondScore): void {
   const [header, ...rows] = lines(text);
@@ -174,6 +183,8 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
   if (score === undefined && arm !== undefined && scoreHeader)
     throw new Error(`${id}: ${PONDS_FILE} header carries the breeder's columns (${SCORE_ONLY_COLUMNS.join(", ")}), but the run has no pondScore`);
   const scoreCols = breedColumns === null ? [] : breedColumns.slice(breedColumns.indexOf("score")).map((c) => [c, names.indexOf(c)] as const);
+  // A scored run's rows per boundary: each recipient's score, and each row's donor and donorScore (`breedBoundary` below).
+  const scored = new Map<number, { scores: Map<number, number>; donors: [number, number][] }>();
   if (period === undefined || !Number.isSafeInteger(period) || period <= 0) throw new Error(`${id}: pondPeriod ${period} is not a positive integer`);
   const perBoundary = new Map<number, number[]>();
   const huntRows = new Map<number, HuntRow[]>();
@@ -194,6 +205,15 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
     for (const [name, at] of scoreCols)
       if (!/^\d+$/.test(cells[at] ?? "") || !Number.isSafeInteger(Number(cells[at])))
         throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with ${name} "${cells[at] ?? ""}", not a nonnegative integer below 2^53`);
+    if (breedColumns !== null) {
+      const donorCell = cells[names.indexOf("donor")] ?? "";
+      const donor = /^-?\d+$/.test(donorCell) ? Number(donorCell) : NaN;
+      if (!Number.isSafeInteger(donor) || donor < -1 || donor >= ponds)
+        throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with donor "${donorCell}", not -1 or a pond index in [0, ${ponds})`);
+      const b = scored.get(step) ?? scored.set(step, { scores: new Map(), donors: [] }).get(step)!;
+      b.scores.set(recipient, Number(cells[names.indexOf("score")]));
+      b.donors.push([donor, Number(cells[names.indexOf("donorScore")])]);
+    }
     if (hunt) {
       if (step < lastStep) throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} after one at step ${lastStep}; boundaries come in ascending order`);
       lastStep = step;
@@ -207,6 +227,13 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
     if (new Set(recipients).size !== ponds)
       throw new Error(`${id}: ${PONDS_FILE} has recipients [${recipients.join(",")}] for the boundary at t=${b}, expected each pond 0..${ponds - 1} exactly once`);
     if (hunt) checkHuntBoundary(id, b, recipients, huntRows.get(b)!, arm);
+    const sb = scored.get(b);
+    if (sb)
+      for (const [donor, donorScore] of sb.donors) {
+        const want = donor === -1 ? 0 : sb.scores.get(donor);
+        if (donorScore !== want)
+          throw new Error(`${id}: ${PONDS_FILE} has a row at t=${b} with donor ${donor} and donorScore ${donorScore}, but ${donor === -1 ? "a row without a donor has donorScore 0" : `pond ${donor}'s own row has score ${want}`}`);
+      }
   }
 }
 
@@ -287,8 +314,8 @@ function checkHuntBoundary(id: string, b: number, recipients: number[], rows: Hu
  * (`parseInterventionLog`: well-formed entries, feeds with their matter, non-decreasing steps) and the text is the
  * runner's own, byte for byte (`formatInterventionLine` of each entry: one line each, fixed key order, a newline after
  * the last, an empty file for a segment that owns nothing), so the logs concatenate into the continuous run's; there
- * are exactly as many as the entries the segment owns (`ownedInterventions` over `schedule` for `startStep` and
- * `steps`); each line is its entry (step, kind, centre and amount equal; the logged radius the effective one,
+ * are exactly as many as the entries the segment owns (`ownedInterventions` over `schedule`, the segment's own
+ * manifest's list, for `startStep` and `steps`); each line is its entry (step, kind, centre and amount equal; the logged radius the effective one,
  * `clampLesionRadius` of the scheduled under `cfg`; a feed's matter equal to any the schedule names); and `block`, the
  * manifest's `interventions`, names the file and counts the lines. tools/stitch.ts relies on `stitchRun` for this; a
  * log a producer truncated, padded or reformatted fails here, not in the stitched bundle.
@@ -315,6 +342,120 @@ export function checkInterventionLog(id: string, text: string, schedule: readonl
     throw new Error(`${id}: manifest interventions block ${JSON.stringify(block)} does not count the ${logged.length} entries of ${INTERVENTIONS_FILE}`);
 }
 
+/** `stitchRun`'s options. */
+export interface StitchOptions {
+  /**
+   * Stitch the segments as a garden's (apps/coordinator README, "The garden"): each segment's schedule is its own
+   * manifest's, checked as `stitchRun` describes. Absent, the run is an ordinary one, whose segments must all carry one
+   * schedule. `interventions` is the garden's current schedule, the coordinator's: required, because it is the only
+   * check on a segment's own window beyond that segment's own manifest and log.
+   */
+  garden?: { interventions: readonly ScheduledIntervention[] };
+}
+
+/**
+ * What the coordinator lists for one segment and its experiment (`GET /api/experiments/:name`): the fields its task
+ * spec is built from (`Coordinator.Queue`'s `task/4`). `metapopulation` is the experiment's (topology, migrantCount,
+ * salt) and `seeds` its seed list, from which the task's per-run `ringNamespace` (1-based position of the seed) follows.
+ */
+export interface DistributedTask {
+  experiment: string;
+  presetId: string;
+  condition: string;
+  seed: number;
+  steps: number;
+  censusEvery: number;
+  deepEvery: number;
+  seeds?: readonly number[];
+  metapopulation?: Record<string, unknown>;
+  interventions?: unknown;
+}
+
+/**
+ * Why a coordinator segment's manifest does not describe the task the coordinator handed out, or null. `stitchRun`
+ * checks manifests only against each other; a producer's manifest is not part of what a verifier's digests cover, so
+ * an export from the coordinator binds each one to the task here first: its spec must be exactly the task's spec
+ * (`task/4`: these keys, `checkpointEvery` 0, `metapopulation` and `interventions` only when the experiment has them,
+ * and nothing else, so no `overrides`, `picked`, `pressures` or `branch`), and its config exactly the one that spec
+ * builds (`specConfig`). A garden's segments each carry the schedule current when they were handed out, which
+ * tools/stitch.ts checks against the coordinator's on its own, so with `garden` only its presence is required here.
+ */
+export function taskSpecError(manifest: { spec?: unknown; cfg?: unknown }, task: DistributedTask, opts: { garden?: boolean } = {}): string | null {
+  const spec = manifest.spec;
+  if (!isRecord(spec)) return "manifest has no spec";
+  const want: Record<string, unknown> = {
+    experiment: task.experiment,
+    presetId: task.presetId,
+    condition: task.condition,
+    seed: task.seed,
+    steps: task.steps,
+    censusEvery: task.censusEvery,
+    deepEvery: task.deepEvery,
+    checkpointEvery: 0,
+  };
+  if (task.metapopulation !== undefined) {
+    const at = task.seeds?.indexOf(task.seed) ?? -1;
+    if (at < 0) return `seed ${task.seed} is not one of the experiment's seeds`;
+    want.metapopulation = { ...task.metapopulation, ringNamespace: at + 1 };
+  }
+  if (task.interventions !== undefined) want.interventions = task.interventions;
+  for (const k of new Set([...Object.keys(spec), ...Object.keys(want)])) {
+    if (!(k in want)) return `spec carries ${k}, which the coordinator's task does not`;
+    if (!(k in spec)) return `spec lacks ${k}, which the coordinator's task carries`;
+    if (k === "interventions" && opts.garden) continue;
+    if (!sameJson(spec[k], want[k])) return `spec.${k} is ${JSON.stringify(spec[k])}, the coordinator's task has ${JSON.stringify(want[k])}`;
+  }
+  let cfg: WorldConfig;
+  try {
+    cfg = JSON.parse(JSON.stringify(specConfig(spec as unknown as RunSpec)));
+  } catch (e) {
+    return `the task's spec builds no config: ${e instanceof Error ? e.message : String(e)}`;
+  }
+  if (!isRecord(manifest.cfg) || !sameConfig(manifest.cfg as unknown as WorldConfig, cfg)) return "manifest config is not the one the coordinator's task builds";
+  return null;
+}
+
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** Structural equality of two JSON values, object keys in any order. */
+function sameJson(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => sameJson(x, b[i]));
+  if (isRecord(a) || isRecord(b)) {
+    if (!isRecord(a) || !isRecord(b)) return false;
+    const ka = Object.keys(a);
+    return ka.length === Object.keys(b).length && ka.every((k) => k in b && sameJson(a[k], b[k]));
+  }
+  return a === b;
+}
+
+/**
+ * How many of a run's segments, from index 0 and without a gap, can be stitched now: a garden's exportable prefix. A
+ * segment counts when it is `verified` (or, with `allowUnverified`, `done`); the first that does not ends the prefix.
+ * Throws on a repeated index; a missing index ends the prefix there.
+ */
+export function stitchablePrefix(segments: readonly { index: number; status: string }[], allowUnverified: boolean): number {
+  const byIndex = new Map<number, string>();
+  for (const s of segments) {
+    if (byIndex.has(s.index)) throw new Error(`segment #${s.index} is listed twice`);
+    byIndex.set(s.index, s.status);
+  }
+  let n = 0;
+  for (;;) {
+    const status = byIndex.get(n);
+    if (status !== "verified" && !(allowUnverified && status === "done")) return n;
+    n++;
+  }
+}
+
+/** Where step `step` belongs among `segs` (contiguous from 0): the window naming the earlier segment that owns it. */
+function ownerOf(segs: readonly StitchSegment[], step: number): string {
+  if (step === 0) return `segment #${segs[0].index}'s step 0`;
+  const s = segs.find((x) => step > x.startStep && step <= x.startStep + x.steps);
+  return s ? `segment #${s.index}'s window (${s.startStep}, ${s.startStep + s.steps}]` : `no segment's window`;
+}
+
+const entryText = (e: ScheduledIntervention | undefined): string => (e === undefined ? "nothing" : JSON.stringify(e));
+
 /**
  * Stitches one run's segments (in any order) into bundle files covering
  * `totalSteps`. Throws if the segments do not form one contiguous, internally
@@ -330,8 +471,28 @@ export function checkInterventionLog(id: string, text: string, schedule: readonl
  * upload's (`observationsVerified` above, carried into each segment's record
  * and summarised in the manifest's own `observationsVerified` below).
  * The checks here only catch files inconsistent with their own manifest.
+ *
+ * An ordinary scheduled run (`RunSpec.interventions`) carries one schedule in
+ * every segment's spec (the whole spec but `steps` must be the same), each log
+ * is checked against it, and the stitched spec keeps it whole.
+ *
+ * A garden (`opts.garden`) is checked against each segment's own list, `L_k`
+ * (its manifest's `spec.interventions`: the list its task carried, which grows
+ * as letters arrive and loses dropped ones), not segment #0's. For every
+ * segment k: `L_k` is a valid schedule; its log is exactly the entries it owns
+ * in `L_k` (`checkInterventionLog`); and the entries of `L_k` at steps up to
+ * its own start are, in order, the entries the earlier segments owned and
+ * applied (no rewriting history). Entries after a segment's end are not its
+ * business (a letter dropped before its day was assigned is in an earlier
+ * segment's list and in no later one). Entries in a segment's own window are
+ * checked only against its own log, which the same producer wrote, so the
+ * union of owned entries must also equal `opts.garden.interventions` (the
+ * coordinator's current list) over (0, totalSteps]: that is the only outside
+ * check on a segment's own window. Every other part of the spec must still be
+ * the same. The stitched `spec.interventions` is that union, in segment order.
+ * Rule and proof: docs/garden-stitch-rule-2026-10-17.md.
  */
-export function stitchRun(segments: StitchSegment[], totalSteps: number): Record<string, string> {
+export function stitchRun(segments: StitchSegment[], totalSteps: number, opts: StitchOptions = {}): Record<string, string> {
   if (!segments.length) throw new Error("no segments");
   const segs = [...segments].sort((a, b) => a.index - b.index);
   const manifests = segs.map((s) => {
@@ -341,6 +502,10 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
   const first = manifests[0];
   const last = manifests[manifests.length - 1];
   const { steps: _, ...refSpec } = first.spec;
+  // A garden's segments each carry their own list (checked on its own below), so what every one's spec must equal is all
+  // but `steps` and `interventions`; an ordinary run's must equal all but `steps`.
+  const garden = opts.garden;
+  const { interventions: _refList, ...refRest } = refSpec;
   const censusEvery: number = first.spec.censusEvery;
   // Every segment that records a preset identity must record the same one.
   const refIdentity: string | undefined = manifests.find((m) => m.presetIdentity !== undefined)?.presetIdentity;
@@ -348,6 +513,9 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
   const pondRun = first.cfg?.pondPeriod !== undefined;
   // Likewise every segment's spec (checked below): a scheduled run is one from its spec.
   const scheduledRun = refSpec.interventions !== undefined;
+  if (garden !== undefined && !scheduledRun) throw new Error("segment #0's spec has no interventions, but a garden always has a schedule");
+  // A garden's: the entries segments #0..#k-1 owned and applied, in order (the past segment #k's own list must repeat).
+  const past: ScheduledIntervention[] = [];
 
   let at = 0;
   segs.forEach((s, k) => {
@@ -358,6 +526,7 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     if (!m.summary) throw new Error(`${id}: manifest has no summary (run did not finish)`);
     // A picked run's donors are in its picks.jsonl, not in any segment file (PICKS_FILE is deliberately in no file list), so its segments cannot be chained.
     if (m.spec.picked !== undefined) throw new Error(`${id}: picked runs cannot be stitched: their donors are not in the segment files`);
+    if (m.spec.pressures !== undefined) throw new Error(`${id}: pressured runs cannot be stitched: they are picked runs, and their donors are not in the segment files`);
     // A branch run (RunSpec.branch) starts from a decoded source checkpoint that no segment chain carries: not distributed.
     if (m.branch !== undefined || m.spec.branch !== undefined) throw new Error(`${id}: manifest records a branch run (${JSON.stringify(m.branch ?? m.spec.branch)}); branches are not distributed, so they cannot be stitched`);
     if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION) throw new Error(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, expected ${RULE_VERSION}/${SCHEMA_VERSION}`);
@@ -370,7 +539,13 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     // the artifact the coordinator accepted.
     if (m.summary.finalHash !== s.digest) throw new Error(`${id}: manifest digest ${m.summary.finalHash} is not the accepted digest ${s.digest}`);
     const { steps: __, ...spec } = m.spec;
-    if (JSON.stringify(spec) !== JSON.stringify(refSpec) || runId(m.spec) !== runId(first.spec)) throw new Error(`${id}: spec differs from segment #0's`);
+    const { interventions: list, ...rest } = spec;
+    if (garden === undefined) {
+      if (JSON.stringify(spec) !== JSON.stringify(refSpec) || runId(m.spec) !== runId(first.spec)) throw new Error(`${id}: spec differs from segment #0's`);
+    } else {
+      if (JSON.stringify(rest) !== JSON.stringify(refRest) || runId(m.spec) !== runId(first.spec)) throw new Error(`${id}: spec differs from segment #0's`);
+      if (list === undefined) throw new Error(`${id}: spec differs from segment #0's (a garden's segment whose spec has no interventions)`);
+    }
     if (!sameConfig(m.cfg, first.cfg)) throw new Error(`${id}: config differs from segment #0's`);
     if (m.presetIdentity !== undefined && m.presetIdentity !== refIdentity)
       throw new Error(`${id}: preset identity ${m.presetIdentity} differs from the run's ${refIdentity}`);
@@ -528,11 +703,38 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     // centre and amount, with the effective radius (the scheduled one clamped
     // under the run's config) and a feed's matter equal to any the schedule
     // names, in the runner's own bytes; and the manifest's block counts them.
-    // Every segment's spec and config are the same (checked above), so the
-    // schedule and config read here are the run's.
-    if (scheduledRun) {
+    // Every segment's config is the same (checked above), so the config read
+    // here is the run's. An ordinary run's spec is the same on every segment
+    // too, so its schedule is segment #0's.
+    //
+    // A garden's schedule is the segment's own (`list`, what its task
+    // carried), which grows between days. It is producer-written, so it is
+    // validated, and it may not rewrite history: its entries at steps up to
+    // this segment's start must be, in order, the ones segments #0..#k-1 owned
+    // (`past`). Entries in its own window are checked against its own log here
+    // and against the coordinator's list after the loop; entries after its end
+    // are speculative (a letter not yet landed, or since dropped).
+    if (scheduledRun && garden === undefined) {
       if (typeof s.files[INTERVENTIONS_FILE] !== "string") throw new Error(`${id}: scheduled run but missing ${INTERVENTIONS_FILE}`);
       checkInterventionLog(id, s.files[INTERVENTIONS_FILE], refSpec.interventions, first.cfg, s.startStep, s.steps, m.interventions);
+    } else if (scheduledRun) {
+      const errs = validateInterventions(list);
+      if (errs.length) throw new Error(`${id}: its spec's ${errs[0]}`);
+      if (typeof s.files[INTERVENTIONS_FILE] !== "string") throw new Error(`${id}: scheduled run but missing ${INTERVENTIONS_FILE}`);
+      checkInterventionLog(id, s.files[INTERVENTIONS_FILE], list, first.cfg, s.startStep, s.steps, m.interventions);
+      const prior: ScheduledIntervention[] = k === 0 ? [] : (list as ScheduledIntervention[]).filter((e) => e.step <= s.startStep);
+      const j = prior.findIndex((e, i) => i >= past.length || !sameIntervention(e, past[i]));
+      const differ = j >= 0 ? j : prior.length !== past.length ? prior.length : -1;
+      if (differ >= 0) {
+        const mine = prior[differ], theirs = past[differ];
+        // The earliest window where the two disagree: an entry the list adds, or one it lacks, whichever comes first.
+        const step = Math.min(mine?.step ?? Infinity, theirs?.step ?? Infinity);
+        throw new Error(
+          `${id}: its schedule rewrites history: entries at steps <= ${s.startStep} are not the ones segments #0..#${k - 1} applied ` +
+            `(first difference at entry ${differ} of segment #${s.index}'s list: it has ${entryText(mine)}, ${ownerOf(segs, step)} applied ${entryText(theirs)})`,
+        );
+      }
+      past.push(...ownedInterventions(list, s.startStep, s.steps));
     } else if (typeof s.files[INTERVENTIONS_FILE] === "string" || m.interventions !== undefined) {
       throw new Error(`${id}: ${typeof s.files[INTERVENTIONS_FILE] === "string" ? INTERVENTIONS_FILE : "a manifest interventions block"} present on a run without scheduled interventions`);
     }
@@ -549,6 +751,19 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     at = end;
   });
   if (at !== totalSteps) throw new Error(`segments cover ${at} of ${totalSteps} steps`);
+  if (garden !== undefined) {
+    const errs = validateInterventions(garden.interventions);
+    if (errs.length) throw new Error(`the coordinator's schedule: ${errs[0]}`);
+    const want = ownedInterventions(garden.interventions, 0, totalSteps);
+    const j = want.findIndex((e, i) => i >= past.length || !sameIntervention(e, past[i]));
+    const differ = j >= 0 ? j : want.length !== past.length ? want.length : -1;
+    if (differ >= 0)
+      throw new Error(
+        `the stitched schedule is not the coordinator's over [0, ${totalSteps}]: at entry ${differ} the segments applied ${entryText(past[differ])}, the coordinator's list has ${entryText(want[differ])}`,
+      );
+  }
+  // An empty union would be an invalid spec (`validateInterventions`); a garden always owns its founding step-0 entries.
+  if (garden !== undefined && past.length === 0) throw new Error(`no segment owns any scheduled entry in [0, ${totalSteps}]: a garden's stitched schedule cannot be empty`);
 
   const out: Record<string, string> = {};
   // conservationOk is sticky within a run but each segment starts afresh: once
@@ -626,6 +841,9 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
   // against the segment's own entries): no header, so the logs concatenate as
   // they are, in segment order, into the continuous run's log.
   if (scheduledRun) out[INTERVENTIONS_FILE] = segs.map((s) => s.files[INTERVENTIONS_FILE]).join("");
+  const applied = scheduledRun ? segs.reduce((n, s) => n + lines(s.files[INTERVENTIONS_FILE]).length, 0) : 0;
+  // Each of a garden's logs was checked to hold exactly its segment's owned entries, so the union counts the joined log.
+  if (garden !== undefined && applied !== past.length) throw new Error(`the stitched ${INTERVENTIONS_FILE} holds ${applied} entries, the segments owned ${past.length}`);
 
   const wall = manifests.reduce((a, m) => a + m.summary.wallSeconds, 0);
   const summary: RunSummary = {
@@ -665,8 +883,12 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
       ...provenance,
       // The whole run's count, in the last segment's block's place (an
       // ordinary run's manifest has no such key; `lastRest` carries none).
-      ...(scheduledRun ? { interventions: { file: INTERVENTIONS_FILE, applied: segs.reduce((n, s) => n + lines(s.files[INTERVENTIONS_FILE]).length, 0) } } : {}),
-      spec: { ...last.spec, steps: totalSteps },
+      ...(scheduledRun ? { interventions: { file: INTERVENTIONS_FILE, applied } } : {}),
+      // A garden's schedule is what its segments applied (the union of owned
+      // entries), not the last segment's list, which may carry entries after
+      // its end that no segment applied; it keeps the list's key position.
+      // An ordinary run's is its one list, whole.
+      spec: { ...last.spec, steps: totalSteps, ...(garden !== undefined ? { interventions: past } : {}) },
       host: { host: "archipelago", adapter: adapters.join(", ") },
       startStep: 0,
       startedAt: first.startedAt,
