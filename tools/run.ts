@@ -95,6 +95,13 @@
 // the bundle's logs, or two logs (--picks-from, picks.jsonl, picks.recovery.jsonl) that disagree at a step, refuses the recovery (exit 2)
 // before anything is copied, cleared or truncated. Replaying a log rewrites it with `by: "recorded"`: what replay reproduces is the
 // state, ponds.tsv and each boundary's step, cycle and donors, not the original `by` and `suggested` fields.
+// Pressures (the lab's pond keeper; RunSpec.pressures): a lab run manifest or a session file in --picks-from may hold `pressure`
+// interventions, the breeder's dial ({"step":5000,"kind":"pressure","cycle":1,"score":"drive"}). They replay with it: at each boundary no
+// recorded pick covers, the rule's donors are those of the latest pressure's score (cycle <= the boundary), not the world's own pondScore.
+// ponds.tsv keeps the world's header, and its score and donorScore columns stay the world's score values, as under a hand pick; picks.jsonl's
+// `suggested` is the pressured rule's donors. A pressured run is a picked run (the manifest's spec carries pressures) and, like one,
+// cannot be segmented or sent to an island. Exit 2, before any GPU work, for a pressure that is not the observed history (a cycle
+// that is not the one set at that step, a world whose arm is not breed) or that lies after --steps. A run with no pressure is unchanged.
 // A picked run cannot resume from a checkpoint, be segmented or run on an island; a scheduled run can be segmented, run on islands and
 // stitched back. Exit codes: 2 invalid spec or flags (before any GPU work), 3 a pick failed, 4 a verification mismatch: the lab's
 // checkpoint or --verify-against differs, or a scheduled feed could not be applied as logged (it moved other matter than the lab's log says).
@@ -118,6 +125,7 @@ import {
   picksConsistencyError,
   picksPreflightError,
   preCycleError,
+  pressuresConfigError,
   runExperiment,
   runId,
   sameCompletedRun,
@@ -127,6 +135,7 @@ import {
   type BranchSpec,
   type PickEntry,
   type Picker,
+  type PressureEntry,
   type RunSpec,
   type ScheduledIntervention,
   type Sink,
@@ -299,7 +308,7 @@ let record: { entries: PickEntry[]; text?: string; implicit: boolean } | undefin
  * checkpoint counts). `pondPicks`: the manifest's config is a pond config whose arm chooses donors, or the manifest holds picks, so
  * the replay is a picked run; a plain (fed or wounded) world is not.
  */
-let lab: { scheduled: ScheduledIntervention[]; checkpoints: { step?: unknown; hash?: unknown; interventions?: unknown; file?: unknown }[]; logged: { step?: unknown }[]; pondPicks: boolean } | undefined;
+let lab: { scheduled: ScheduledIntervention[]; pressures: PressureEntry[]; checkpoints: { step?: unknown; hash?: unknown; interventions?: unknown; file?: unknown }[]; logged: { step?: unknown }[]; pondPicks: boolean } | undefined;
 if (a["picks-from"] !== undefined) {
   try {
     const text = await Deno.readTextFile(a["picks-from"]);
@@ -341,6 +350,7 @@ if (a["picks-from"] !== undefined) {
       const labCfg = specConfig(spec);
       lab = {
         scheduled: history.scheduled,
+        pressures: history.pressures,
         checkpoints: Array.isArray(manifest.checkpoints) ? manifest.checkpoints : [],
         logged: manifest.interventions as { step?: unknown }[],
         pondPicks: history.picks.length > 0 || (labCfg.pondPeriod !== undefined && (labCfg.pondArm === "scaf" || labCfg.pondArm === "rand" || labCfg.pondArm === "breed")),
@@ -361,9 +371,12 @@ if (picking) {
   // (fed, wounded or plain) replays as an ordinary run under the same -by-<label> directory, with no picks.jsonl. Keys in the order
   // an earlier picked spec had them (picked, runId), so an existing picked bundle still compares equal.
   const picked = a.picker !== undefined || (record !== undefined && (!record.implicit || lab!.pondPicks));
+  // Pressures are the breeder's dial: only a donor-choosing pond world can have them, so a manifest that holds some is a picked run.
+  if (lab && lab.pressures.length > 0 && !picked) die("the lab manifest holds pressures, but its world is not a pond world whose arm chooses donors, so there is no picked run to replay them in");
   specs[0] = {
     ...only,
     ...(lab && lab.scheduled.length > 0 ? { interventions: lab.scheduled } : {}),
+    ...(lab && lab.pressures.length > 0 ? { pressures: lab.pressures } : {}),
     ...(picked ? { picked: true as const } : {}),
     runId: `${only.experiment}/${only.presetId}/${only.condition}-by-${pickLabel}/seed-${only.seed}`,
   };
@@ -484,7 +497,7 @@ for (const spec of specs) {
     Deno.exit(2);
   }
   // The given record's entries are checked here; whether it covers the run is judged below, on the record recovery leaves.
-  const pickedBad = pickedConfigError(spec, cfg) ?? (spec.picked ? picksPreflightError(record?.entries ?? [], cfg, 0, spec.steps, true) : null);
+  const pickedBad = pickedConfigError(spec, cfg) ?? pressuresConfigError(spec, cfg) ?? (spec.picked ? picksPreflightError(record?.entries ?? [], cfg, 0, spec.steps, true) : null);
   if (pickedBad) {
     console.error(`invalid spec for ${runId(spec)}: ${pickedBad}`);
     Deno.exit(2);

@@ -2,7 +2,8 @@ import type { Intervention, WorldConfig, InitParams, PondArm, PondScore, PondTer
 import type { GpuViewMode, ViewRect } from "@bl/sim-gpu";
 import type { ObserverSettings } from "@bl/runner";
 import type { LineageView } from "@bl/lineage";
-import type { FirstsEntry, FirstsRule, FirstsSummary } from "@bl/metrics";
+import type { FirstsEntry, FirstsRule, FirstsSummary, NextUpItem } from "@bl/metrics";
+import type { KeptPond } from "./pond-play.ts";
 
 export interface RunManifest {
   /** Storage concurrency token; unrelated to physics or replay. Absent on a new run. */
@@ -171,6 +172,35 @@ export interface PondAwaitMsg {
   suggested: number[];
   /** Each term's value per pond; a pond whose "mass" is 0 is empty and cannot donate. */
   terms: Record<PondTerm, number[]>;
+  /**
+   * The score `suggested` was ranked by: the dial's latest setting for this cycle (`PressureMsg`), else `score`. A cycle that waits
+   * is posted again, with the same `step`, when the dial or Keep changes: the new survey replaces the old.
+   */
+  ruleScore: PondScore | null;
+  /** The kept lineage as this pre-cycle state sees it (`ToWorker` "keep"), or null when none is kept. */
+  kept: KeptPond | null;
+  /** Which survey of the cycle this is (each refresh takes a new one): explicit donors in a "pick" name it back. */
+  revision: number;
+}
+
+/**
+ * The pressure dial of the world on screen (docs/pond-keeper-v1-2026-10-17.md, section 1). Posted when a world is adopted,
+ * after the dial is set, and after a replay re-applies a pressure.
+ */
+export interface PressureMsg {
+  type: "pressure";
+  /** The worker's number for the world (PondAwaitMsg.world). */
+  world: number;
+  /** The config's own `pondScore`, or null. */
+  base: PondScore | null;
+  /** The score that governs the next cycle to be applied (the waiting cycle, else the next boundary); equals `base` before any pressure. */
+  current: PondScore | null;
+  /** The cycle of the latest pressure in force, or null when none. */
+  fromCycle: number | null;
+  /** How many pressures this history holds. */
+  changes: number;
+  /** Why the dial is unavailable (plain words), or null: the world's arm is not "breed". */
+  unavailable: string | null;
 }
 
 /** One lineage, settled at a census (the lineage inspector's lab panel). */
@@ -200,6 +230,8 @@ export interface SessionFacts {
   step: number;
   /** Pond boundaries whose cycle has run (or, for arm cont, been recorded) in the history this page holds, with or without a pick; 0 without ponds. */
   cycles: number;
+  /** Pressures in the log (the pond keeper's dial), and the score of the latest one. */
+  pressures: { changes: number; latest: PondScore | null };
   /** Pond cycles before that history (a world opened from a file mid-run): who chose their donors is not known here. */
   cyclesBefore: number;
 }
@@ -218,6 +250,8 @@ export interface FirstsMsg {
   summary: FirstsSummary;
   facts: SessionFacts;
   rules: FirstsRule[];
+  /** The first rungs of the ladder not yet reached, each with its progress (`nextUp` in `@bl/metrics`). */
+  nextUp: NextUpItem[];
   /** The log stopped (a detector error); entries stay as they were and export is refused. */
   stopped: string | null;
 }
@@ -238,10 +272,27 @@ export type ToWorker =
   | { type: "breeder"; on: boolean }
   /**
    * The donors of the pond cycle that world `world` (`PondAwaitMsg.world`) has waiting at `step`, in order (a logged
-   * intervention); null lets the world's own rule choose. Ignored unless that world is current and waits at that
-   * step: a repeated or late message never reaches another boundary or another world.
+   * intervention). Explicit donors name the survey they were chosen from (`PondAwaitMsg.revision`): a pick from a survey the
+   * dial or Keep has since replaced is refused (`refused` with request "pick"), and the cycle waits on. null lets the
+   * world's own rule choose; with `withKeep`, the rule's choice as Keep adjusts it, read from the survey that waits when the
+   * pick is applied (auto-breed's answer). Ignored unless that world is current and waits at that step: a repeated or late
+   * message never reaches another boundary or another world.
    */
-  | { type: "pick"; world: number; step: number; donors: number[] | null }
+  | { type: "pick"; world: number; step: number; donors: number[]; revision: number }
+  | { type: "pick"; world: number; step: number; donors: null; withKeep?: boolean }
+  /**
+   * Set the pressure dial of world `world` (`PressureMsg.world`): from the next cycle to be applied (the waiting one, if one
+   * waits) the rule ranks donors by `score`. A logged intervention. Dropped for a world since replaced; refused (`refused`
+   * with request "pressure") for a world whose arm is not breed, a failed world or a score that is not one. A score already
+   * governing the next cycle is a no-op, with a notice.
+   */
+  | { type: "pressure"; world: number; score: PondScore }
+  /**
+   * The lineage to keep (genome identity key, "hi:lo"), or null to clear, asked of world `world` (the `keep` or `pressure`
+   * message's world): dropped for a world since replaced. A lab setting like "breeder": a new plant or an import clears it, a
+   * restore or jump keeps it.
+   */
+  | { type: "keep"; world: number; key: string | null }
   | { type: "save" }
   | { type: "listCheckpoints" }
   | { type: "restore"; file: string; keep?: Keep }
@@ -261,13 +312,17 @@ export type ToWorker =
 export type FromWorker =
   /** `storage`: why this browser keeps no Checkpoints here (its own words), or null when it does. Known before any world. */
   | { type: "ready"; adapter: string; storage: string | null }
-  | { type: "error"; message: string }
+  /** `failed`: the world itself has failed (its execution's failure, or the GPU device lost) and cannot go on; other errors leave it usable. */
+  | { type: "error"; message: string; failed?: boolean }
   | { type: "loaded"; manifest: RunManifest; step: number }
   | StatsMsg
   | CensusMsg
   | ProbeMsg
   | PondsMsg
   | PondAwaitMsg
+  | PressureMsg
+  /** The kept lineage of the lab (`ToWorker` "keep"), posted when a world is adopted and when it changes; `world` is the one it is posted for. */
+  | { type: "keep"; world: number; key: string | null }
   | LineageMsg
   | { type: "highlight"; key: string | null }
   | { type: "session"; view: SessionView }

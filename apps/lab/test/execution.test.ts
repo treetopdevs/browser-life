@@ -1,17 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
-  applyMigration, cellCount, cloneState, defaultConfig, buildWorld, encodeCheckpoint, generalistGenome, initWorld, MAX_STEP, presetConfig, PRESETS, stateHash, CH,
+  applyMigration, cellCount, cloneState, defaultConfig, buildWorld, encodeCheckpoint, generalistGenome, initWorld, MAX_STEP, presetConfig, PRESETS, stateHash, worldW, CH, G,
   type WorldConfig, type WorldState,
 } from "@bl/schema";
 import { applyCellPass, applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
 import { M3_FOUNDERS, founderGenome } from "@bl/schema";
 import { applyFeed, applyPondCycle, clampLesionRadius, pondDonors, pondMatter, pondTermValues, pondTraits, POND_TERMS, type Intervention } from "@bl/schema";
 import {
-  applyBoundary, decodeArtifact, observeCensus, pondCensus, pondContext, pondContinuationError, restoreObservers, serializeObservers,
-  type ObserverState, type PondCycle,
+  applyBoundary, decodeArtifact, labHistory, makeDonorHook, observeCensus, pondCensus, pondContext, pondContinuationError, restoreObservers, serializeObservers,
+  type ObserverState, type PickNote, type PondCycle,
 } from "@bl/runner";
+import { FirstsDetector, firstsContext } from "@bl/metrics";
 import { MutationEdges } from "@bl/lineage";
-import { LabExecution, PondWaitingError, type LabSimulation, type PondSurvey } from "../src/execution.ts";
+import { LabExecution, PondWaitingError, PressureRefusedError, StaleSurveyError, type LabSimulation, type PondSurvey } from "../src/execution.ts";
+import { donorsWithKeep, keptPondOf } from "../src/pond-play.ts";
+import { buildSessionFile, interventionFacts, sessionFileError } from "../src/session-file.ts";
 
 const settings = { censusEvery: 100, deepEvery: 5, activityThreshold: null };
 function initial(step = 0, migration = 0) {
@@ -799,6 +802,367 @@ describe("lab execution in breeder mode", () => {
     expect(execution.failure).toMatch(/census at t=4 failed \(migration failed\)/);
     await expect(execution.advanceFrame(2)).rejects.toThrow(/census at t=4 failed/);
   });
+});
+
+describe("lab execution under a pressure", () => {
+  const sameScoreTwice = "mass";
+  /** ponds-small as a breeder world scored by mass, with pond 2's bound matter cut by a fifth: "mass" then ranks pond 1 first, "body" pond 3. */
+  function breedWorld(step = 0): WorldState {
+    const s = pondWorld(step, { pondArm: "breed", pondScore: sameScoreTwice });
+    const n = cellCount(s.cfg), W = worldW(s.cfg);
+    for (let i = 0; i < n; i++) {
+      const x = i % W, y = Math.floor(i / W);
+      if (x < s.cfg.tileW && y >= s.cfg.tileH) s.cells[CH.B * n + i] = Math.floor((s.cells[CH.B * n + i] * 4) / 5);
+    }
+    return s;
+  }
+  /** The first lineage living in pond `p` of `s`, as the census names it. */
+  function lineageOfPond(s: WorldState, p: number): string {
+    const n = cellCount(s.cfg), W = worldW(s.cfg);
+    for (let i = 0; i < n; i++) {
+      const x = i % W, y = Math.floor(i / W);
+      if (Math.floor(y / s.cfg.tileH) * s.cfg.tilesX + Math.floor(x / s.cfg.tileW) !== p) continue;
+      const hi = s.genome[G.LIN_HI * n + i], lo = s.genome[G.LIN_LO * n + i];
+      if ((hi | lo) !== 0) return `${hi}:${lo}`;
+    }
+    throw new Error(`no lineage in pond ${p}`);
+  }
+  function breeder(state: WorldState, overrides: Partial<ConstructorParameters<typeof LabExecution>[2]> = {}) {
+    const surveys: PondSurvey[] = [];
+    const s = pondSetup(state, { onPondAwait: (survey) => { surveys.push(survey); }, ...overrides });
+    s.execution.setHandPicks(true);
+    return { ...s, surveys };
+  }
+  const stepped = (start: WorldState, steps: number): WorldState => {
+    const ref = new RefSim(cloneState(start));
+    ref.run(steps);
+    return cloneState(ref.state);
+  };
+  const toWait = async (execution: LabExecution) => { while (!execution.awaiting) await execution.advanceFrame(2); return execution.awaiting!; };
+  const sink = { appendText: async () => {} };
+  /**
+   * runner.ts's sequence on the same reference physics, driven by a lab log through `labHistory` (the headless replay's own reader):
+   * the rule's donors under the log's pressures at a boundary no recorded pick covers, then the log's wounds after the boundary.
+   */
+  async function runnerPressured(start: WorldState, to: number, history: Intervention[]) {
+    const { picks, scheduled, pressures } = labHistory({ interventions: history, cfg: start.cfg, edgesFrom: 0 });
+    const sim = new CpuSimulation(start);
+    const obs = restoreObservers(undefined, pondSettings, start.cfg);
+    const ctx = pondContext(start);
+    const note: PickNote = { by: "none", suggested: [] };
+    const hook = makeDonorHook({ cfg: start.cfg, recorded: new Map(picks.map((e) => [e.step, e])), implicitRule: true, sink, note, pressures });
+    const donors = new Map<number, number[]>();
+    let next = 0;
+    while (sim.step < to) {
+      sim.run(pondSettings.censusEvery);
+      const ledger = await sim.drainLedger();
+      observeCensus(obs, sim.cfg, await sim.readSnapshot(), ledger.events.length);
+      const { ponds } = await applyBoundary(sim, sim.step, ctx, sim.step % start.cfg.pondPeriod! === 0 ? hook : undefined);
+      if (ponds) {
+        obs.ponds = { lastCycle: ponds.b };
+        donors.set(sim.step, ponds.donors);
+      }
+      for (; next < scheduled.length && scheduled[next].step === sim.step; next++) {
+        const w = scheduled[next];
+        if (w.kind === "lesion") sim.lesion(w.x, w.y, w.r);
+      }
+    }
+    return { hash: stateHash(await sim.readState()), observer: serializeObservers(obs, sim.step, pondSettings), donors };
+  }
+
+  it("re-ranks a waiting cycle under the new score, logs the entry ahead of the pick, and answers a no-op, the dial's own history and a bad readback", async () => {
+    const start = breedWorld();
+    const pre = stepped(start, 4);
+    const massDonors = pondDonors(pre, 1, "breed", 8, "mass"), bodyDonors = pondDonors(pre, 1, "breed", 8, "body");
+    // The world must separate the two scores, or nothing below says anything.
+    expect(massDonors).not.toEqual(bodyDonors);
+    const { sim, execution, surveys, cycles } = breeder(start);
+    expect(execution.pressure).toEqual({ base: "mass", current: "mass", fromCycle: null, changes: 0, nextCycle: 1 });
+    const waiting = await toWait(execution);
+    expect([waiting.step, waiting.cycle, waiting.ruleScore, waiting.kept]).toEqual([4, 1, "mass", null]);
+    expect(waiting.suggested).toEqual(massDonors);
+    expect(execution.pressure).toMatchObject({ current: "mass", nextCycle: 1 });
+
+    // Nothing logged for the score already governing; a score that is not one, or a world's refusal, never reaches the list.
+    expect(await execution.setPressure("mass")).toEqual({ entry: null, survey: null });
+    await expect(execution.setPressure("weight" as never)).rejects.toBeInstanceOf(PressureRefusedError);
+    expect(execution.pressure.changes).toBe(0);
+    // A readback that fails while re-ranking changes nothing: no entry, the same waiting survey, the world not failed.
+    sim.beforeState = async () => { throw new Error("readback failed"); };
+    await expect(execution.setPressure("body")).rejects.toThrow(/readback failed/);
+    sim.beforeState = undefined;
+    expect(execution.pressure.changes).toBe(0);
+    expect(execution.awaiting).toBe(waiting);
+    expect(execution.failure).toBeNull();
+    expect(surveys).toEqual([waiting]);
+
+    // The dial, while cycle 1 waits: the entry is for that cycle, at its boundary, and the survey is the cycle's again, re-ranked.
+    const { entry, survey } = await execution.setPressure("body");
+    expect(entry).toEqual({ step: 4, cycle: 1, score: "body" });
+    expect(survey).toBe(execution.awaiting);
+    expect([survey!.step, survey!.cycle, survey!.ruleScore]).toEqual([4, 1, "body"]);
+    expect(survey!.suggested).toEqual(bodyDonors);
+    expect(survey!.terms).toEqual(waiting.terms);
+    expect(surveys).toEqual([waiting, survey]);
+    expect(execution.pressure).toEqual({ base: "mass", current: "body", fromCycle: 1, changes: 1, nextCycle: 1 });
+    expect(await execution.setPressure("body")).toEqual({ entry: null, survey: null });
+
+    // Keep re-surveys too: unknown lineages are gone, a real one lives in its pond, nothing kept says null.
+    const key = lineageOfPond(start, 0);
+    expect((await execution.setKeep("9:9"))!.kept).toEqual({ key: "9:9", pond: null, cells: 0, living: 0 });
+    const kept = (await execution.setKeep(key))!.kept!;
+    expect(kept).toEqual(keptPondOf(pre, key));
+    expect(kept.pond).toBe(0);
+    expect((await execution.setKeep(null))!.kept).toBeNull();
+    await expect(execution.setKeep("not a key")).rejects.toThrow(/not a lineage key/);
+    expect(surveys.map((s) => s.kept?.living ?? null)).toEqual([null, null, 0, kept.living, null]);
+    expect(execution.keep).toBeNull();
+
+    // Applied as the world's own: the pick of the cycle, then the boundary's cycle carries it and the dial sits at the next cycle.
+    const done = await execution.resolvePond(null);
+    expect(done.donors).toEqual(bodyDonors);
+    expect(cycles.map((c) => c.donors)).toEqual([bodyDonors]);
+    expect(execution.awaiting).toBeNull();
+    expect(execution.pressure).toEqual({ base: "mass", current: "body", fromCycle: 1, changes: 1, nextCycle: 2 });
+    // Set after the boundary, it is for the next cycle and leaves the surveys already given alone.
+    const after = await execution.setPressure("seed");
+    expect(after).toEqual({ entry: { step: 4, cycle: 2, score: "seed" }, survey: null });
+    expect(surveys).toHaveLength(5);
+    expect(execution.pressure).toEqual({ base: "mass", current: "seed", fromCycle: 2, changes: 2, nextCycle: 2 });
+  }, 600_000);
+
+  it("refuses explicit donors chosen from a survey the dial or Keep has replaced, and works auto-breed's answer out from the survey that waits", async () => {
+    const start = breedWorld();
+    const key = lineageOfPond(start, 0);
+    const { execution, cycles } = breeder(start);
+    const first = await toWait(execution);
+    // The dial re-surveys the waiting cycle under a new revision: donors chosen from the first survey are refused, nothing changes.
+    const { survey } = await execution.setPressure("body");
+    expect(survey!.revision).toBeGreaterThan(first.revision);
+    const stale = await execution.resolvePond(first.suggested, { revision: first.revision }).then(() => null, (e) => e);
+    expect(stale).toBeInstanceOf(StaleSurveyError);
+    expect(stale).toBeInstanceOf(PondWaitingError);
+    expect(execution.awaiting).toBe(survey);
+    expect(execution.failure).toBeNull();
+    expect(cycles).toEqual([]);
+    // So does Keep.
+    const kept = (await execution.setKeep(key))!;
+    expect(kept.revision).toBeGreaterThan(survey!.revision);
+    await expect(execution.resolvePond(survey!.suggested, { revision: survey!.revision })).rejects.toBeInstanceOf(StaleSurveyError);
+    expect(execution.awaiting).toBe(kept);
+    // Auto-breed's answer names no donors: the rule's choice as Keep adjusts it, from the survey that waits now.
+    expect(kept.kept?.pond).toBe(0);
+    expect(kept.suggested).not.toContain(0);
+    const done = await execution.resolvePond(null, { withKeep: true });
+    expect(done.donors).toEqual(donorsWithKeep(kept.suggested, kept.kept));
+    expect(cycles.map((c) => c.donors)).toEqual([done.donors]);
+    expect(execution.awaiting).toBeNull();
+  }, 600_000);
+
+  it("refuses the dial in a world that does not breed for a score, for a score that is not one, and in a failed world, leaving each usable", async () => {
+    const scaf = pondSetup(pondWorld());
+    await expect(scaf.execution.setPressure("body")).rejects.toThrow(/doesn’t breed for a score \(its arm is scaf\)/);
+    await expect(scaf.execution.setPressure("body")).rejects.toBeInstanceOf(PressureRefusedError);
+    expect(await scaf.execution.advanceFrame(2)).toBe(2);
+    expect(scaf.execution.failure).toBeNull();
+    expect(scaf.execution.pressure).toMatchObject({ base: undefined, current: undefined, changes: 0 });
+    // A history holding pressures cannot belong to such a world.
+    expect(() => pondSetup(pondWorld(), { pressures: [{ step: 2, cycle: 1, score: "body" }] })).toThrow(/only a breeder world has a pressure dial/);
+
+    const breed = pondSetup(breedWorld());
+    await expect(breed.execution.setPressure("body+body" as never)).rejects.toThrow(/pondScore must be one of/);
+    expect(await breed.execution.advanceFrame(2)).toBe(2);
+
+    const failing = pondSetup(breedWorld());
+    failing.sim.fail = "drain";
+    await expect(failing.execution.advanceFrame(2)).rejects.toThrow(/drain failed/);
+    const refusal = await failing.execution.setPressure("body").then(() => null, (e) => e);
+    expect(refusal).toBeInstanceOf(PressureRefusedError);
+    expect(String(refusal)).toMatch(/census at t=2 failed/);
+  }, 600_000);
+
+  it("is the runner's boundary: a pressure set mid-cycle governs the next boundary exactly as makeDonorHook under the same pressures, and no pressure leaves the arm's own cycle", async () => {
+    const start = breedWorld();
+    const pre = stepped(start, 4);
+    const dial = { step: 2, kind: "pressure", cycle: 1, score: "body" } as const;
+    // Lab: not in breeder mode, so the boundary at t=4 takes no pick and the rule's donors under the pressure.
+    const lab = pondSetup(start);
+    await lab.execution.advanceFrame(2);
+    expect(await lab.execution.setPressure("body")).toEqual({ entry: { step: 2, cycle: 1, score: "body" }, survey: null });
+    await lab.execution.advanceFrame(2);
+    const labAt4 = await lab.execution.checkpoint();
+    const bodyDonors = pondDonors(pre, 1, "breed", 8, "body");
+    expect(bodyDonors).not.toEqual(pondDonors(pre, 1, "breed", 8, "mass"));
+    expect(lab.cycles.map((c) => c.donors)).toEqual([bodyDonors]);
+    const runner = await runnerPressured(start, 4, [dial]);
+    expect(stateHash(labAt4.state)).toBe(runner.hash);
+    expect(labAt4.observer).toEqual(runner.observer);
+    expect(runner.donors.get(4)).toEqual(bodyDonors);
+
+    // No pressure: byte for byte the arm's own cycle, as before this slice.
+    const plain = pondSetup(start);
+    await plain.execution.advanceFrame(2);
+    await plain.execution.advanceFrame(2);
+    const plainAt4 = await plain.execution.checkpoint();
+    const want = await runnerReference(start, 4);
+    expect(stateHash(plainAt4.state)).toBe(want.get(4)!.hash);
+    expect(plainAt4.observer).toEqual(want.get(4)!.observer);
+    expect(stateHash(plainAt4.state)).not.toBe(stateHash(labAt4.state));
+    expect(plain.cycles[0].donors).toEqual(want.get(4)!.cycle!.donors);
+    // A pressure back to the config's own score is the arm's cycle too.
+    const same = pondSetup(start, { pressures: [{ step: 0, cycle: 1, score: "mass" }] });
+    await same.execution.advanceFrame(2);
+    await same.execution.advanceFrame(2);
+    expect(stateHash((await same.execution.checkpoint()).state)).toBe(want.get(4)!.hash);
+  }, 600_000);
+
+  /**
+   * The history a player makes: Keep on a lineage of pond 0, a pressure for "body" set while cycle 1 waits, auto-breed answering each
+   * waiting cycle with the rule's choice adjusted by Keep, a wound and a pressure back to "mass" after the boundary at t=8.
+   */
+  interface Played {
+    start: WorldState;
+    key: string;
+    log: Intervention[];
+    surveys: PondSurvey[];
+    answers: number[][];
+    cycles: { step: number; b: number; donors: number[] }[];
+    at4: { state: WorldState; observer: ObserverState; logged: number };
+    at8: { state: WorldState; observer: ObserverState; logged: number };
+    end: { hash: string; observer: string };
+  }
+  let played: Promise<Played> | null = null;
+  const play = () => (played ??= (async () => {
+    const start = breedWorld();
+    const key = lineageOfPond(start, 0);
+    const live = breeder(start, { keep: key });
+    const { execution, sim, surveys } = live;
+    const log: Intervention[] = [];
+    const answers: number[][] = [];
+    const answer = async () => {
+      const s = execution.awaiting!;
+      const donors = donorsWithKeep(s.suggested, s.kept);
+      const done = await execution.resolvePond(donors);
+      answers.push(donors);
+      log.push({ step: done.step, kind: "pick", cycle: done.cycle, donors: done.donors });
+    };
+    const dial = async (score: Parameters<LabExecution["setPressure"]>[0]) => {
+      const { entry } = await execution.setPressure(score);
+      log.push({ step: entry!.step, kind: "pressure", cycle: entry!.cycle, score: entry!.score });
+    };
+    await toWait(execution);
+    await dial("body");
+    await answer();
+    const c4 = await execution.checkpoint();
+    const at4 = { state: c4.state, observer: c4.observer, logged: log.length };
+    await toWait(execution);
+    await answer();
+    log.push({ step: sim.step, kind: "lesion", x: 32, y: 32, r: sim.lesion(32, 32, 2) });
+    await dial("mass");
+    const c8 = await execution.checkpoint();
+    const at8 = { state: c8.state, observer: c8.observer, logged: log.length };
+    await toWait(execution);
+    await answer();
+    await execution.advanceFrame(2);
+    const end = await execution.checkpoint();
+    expect(end.state.step).toBe(14);
+    return { start, key, log, surveys, answers, cycles: live.cycles, at4, at8, end: { hash: stateHash(end.state), observer: JSON.stringify(end.observer) } };
+  })());
+
+  it("plays a kept, pressured, auto-bred history: each cycle answered by the rule's choice as Keep adjusts it, the log in the worker's order", async () => {
+    const p = await play();
+    expect(p.log.map((iv) => [iv.step, iv.kind])).toEqual([[4, "pressure"], [4, "pick"], [8, "pick"], [8, "lesion"], [8, "pressure"], [12, "pick"]]);
+    expect(p.log.filter((iv) => iv.kind === "pressure").map((iv) => (iv as { cycle: number; score: string }).cycle + (iv as { score: string }).score)).toEqual(["1body", "3mass"]);
+    // The surveys the page answered: the cycle that waits (t=4) twice, the second ranked by the dial; then t=8 under it; then t=12 back at the plant's score.
+    expect(p.surveys.map((s) => [s.step, s.ruleScore])).toEqual([[4, "mass"], [4, "body"], [8, "body"], [12, "mass"]]);
+    // Cycle 1: the kept pond was not the rule's choice, so it replaced it.
+    const first = p.surveys[1];
+    expect(first.suggested).toEqual(pondDonors(stepped(p.start, 4), 1, "breed", 8, "body"));
+    expect(first.kept).toMatchObject({ key: p.key, pond: 0 });
+    expect(first.suggested).not.toContain(0);
+    expect(p.answers[0]).toEqual([0]);
+    // Every answer is the rule's choice under the dial, adjusted by Keep and by nothing else.
+    const waits = [p.surveys[1], p.surveys[2], p.surveys[3]];
+    waits.forEach((s, i) => expect(p.answers[i]).toEqual(donorsWithKeep(s.suggested, s.kept)));
+    expect(p.log.filter((iv) => iv.kind === "pick").map((iv) => (iv as { donors: number[] }).donors)).toEqual(p.answers);
+    expect(p.cycles.map((c) => c.donors)).toEqual(p.answers);
+    // The log is a history the headless replay accepts.
+    expect(labHistory({ interventions: p.log, cfg: p.start.cfg, edgesFrom: 0 })).toMatchObject({ picks: expect.any(Array), pressures: [{ step: 4, cycle: 1, score: "body" }, { step: 8, cycle: 3, score: "mass" }] });
+    // And a session file of it is a well-formed version 2 file.
+    const file = buildSessionFile({
+      manifest: { runId: "breeder-s1-test", presetId: "ponds-small", seed: 1, cfg: p.start.cfg, init: pondsSmall.init, ruleVersion: p.start.cfg.ruleVersion, createdAt: "2026-10-17T00:00:00.000Z", adapter: "test", userAgent: "test",
+        interventions: p.log, checkpoints: [], settings: pondSettings, startHash: stateHash(p.start), edgesFrom: 0 },
+      stateHash: p.end.hash, step: 14, firsts: { watchedFrom: 2, entries: [] },
+      card: { summary: new FirstsDetector(firstsContext(p.start.cfg, 2)).summary(), facts: interventionFacts(p.log, new Map(), null) }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
+    });
+    expect(file.version).toBe(2);
+    expect(file.card.facts.pressures).toEqual({ changes: 2, latest: "mass" });
+    expect(sessionFileError(file)).toBeNull();
+  }, 600_000);
+
+  it("replays that history in a fresh execution to the same state and observer, re-booking every entry in log order, with no one at the controls", async () => {
+    const p = await play();
+    const booked: Intervention[] = [];
+    const again = breeder(p.start, { onReplayed: (iv) => { booked.push(iv); } });
+    again.execution.queueReplay(p.log, 15);
+    while (again.sim.step < 14) await again.execution.advanceFrame(14 - again.sim.step);
+    const replayed = await again.execution.checkpoint();
+    expect(again.surveys).toEqual([]);
+    expect(booked).toEqual(p.log);
+    expect(again.execution.pendingReplay).toEqual([]);
+    expect(stateHash(replayed.state)).toBe(p.end.hash);
+    expect(JSON.stringify(replayed.observer)).toBe(p.end.observer);
+    expect(again.cycles.map((c) => c.donors)).toEqual(p.answers);
+    // The execution's own list is the log's: both pressures, the latest in force.
+    expect(again.execution.pressure).toMatchObject({ current: "mass", fromCycle: 3, changes: 2 });
+  }, 600_000);
+
+  it("is the runner's replay of the same log: labHistory, the recorded picks and the pressures reach the same state hash and the same donors", async () => {
+    const p = await play();
+    const runner = await runnerPressured(p.start, 14, p.log);
+    expect(runner.hash).toBe(p.end.hash);
+    expect([...runner.donors.entries()]).toEqual(p.cycles.map((c) => [c.step, c.donors]));
+  }, 600_000);
+
+  it("continues a restored world and its twin under the pressures the history so far held", async () => {
+    const p = await play();
+    // A world restored from the checkpoint at t=4 (which holds the pressure and its pick): the rest of the log replays, the twin included.
+    const pressures = p.log.slice(0, p.at4.logged).filter((iv) => iv.kind === "pressure") as Extract<Intervention, { kind: "pressure" }>[];
+    expect(pressures).toHaveLength(1);
+    const restored = breeder(p.at4.state, { observer: p.at4.observer, pressures, keep: p.key });
+    expect(restored.execution.pressure).toMatchObject({ current: "body", fromCycle: 1, changes: 1, nextCycle: 2 });
+    restored.execution.queueReplay(p.log.slice(p.at4.logged), 15);
+    const v = await restored.execution.verify(10, async (state) => new CpuSimulation(state));
+    expect(v.twinHash).toBe(v.liveHash);
+    expect(v.liveHash).toBe(p.end.hash);
+    // The twin consumed its own copy of the queue's pressure: the live list holds it once.
+    expect(restored.execution.pressure).toMatchObject({ current: "mass", fromCycle: 3, changes: 2 });
+    expect(restored.surveys).toEqual([]);
+
+    // Not in breeder mode, the boundary at t=8 takes the rule's donors under the pressure from the restored list, live and in the twin.
+    // The pressure is whichever score ranks a different pond first there than the plant's own, so that it changes what the rule does.
+    const pre8 = stepped(p.at4.state, 4);
+    const rival = (["body", "seed", "drive", "reach"] as const).find((t) => pondDonors(pre8, 2, "breed", 8, t)[0] !== pondDonors(pre8, 2, "breed", 8, "mass")[0]);
+    expect(rival, "no score separates the ponds at t=8").toBeDefined();
+    const governed = pondSetup(p.at4.state, { observer: p.at4.observer, pressures: [{ step: 4, cycle: 2, score: rival! }] });
+    const ruled = await governed.execution.verify(4, async (state) => new CpuSimulation(state));
+    expect(ruled.twinHash).toBe(ruled.liveHash);
+    expect(governed.cycles.map((c) => c.donors)).toEqual([pondDonors(pre8, 2, "breed", 8, rival!)]);
+    const unpressured = pondSetup(p.at4.state, { observer: p.at4.observer });
+    const arm = await unpressured.execution.verify(4, async (state) => new CpuSimulation(state));
+    expect(arm.twinHash).toBe(arm.liveHash);
+    // The pressure changed what the rule did at t=8, so the twin agreeing with the live world says something.
+    expect(ruled.liveHash).not.toBe(arm.liveHash);
+  }, 600_000);
+
+  it("refuses a replay that meets a pressure away from where the lab put it", async () => {
+    const start = breedWorld();
+    const late = pondSetup(breedWorld(4), { observer: pondObserver(breedWorld(4)) });
+    // A pressure for the cycle of the boundary the world has already passed cannot be the observed history.
+    late.execution.queueReplay([{ step: 4, kind: "pressure", cycle: 1, score: "body" }]);
+    await expect(late.execution.advanceFrame(0)).rejects.toThrow(/pressure for cycle 1 at t=4 after that boundary had passed/);
+    expect(start.step).toBe(0);
+  }, 600_000);
 });
 
 describe("lab execution of declared-cell worlds", () => {

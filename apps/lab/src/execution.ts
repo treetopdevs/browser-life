@@ -1,8 +1,8 @@
 // Cadence and observer integrity for one lab world. Callers serialize operations;
 // the worker's generation predicate invalidates outstanding work on replacement.
 import {
-  cloneState, MAX_STEP, POND_TERMS, pondDonors, pondPickError, pondTermValues, stateHash,
-  type FeedResult, type Intervention, type PondTerm, type WorldConfig, type WorldState,
+  cloneState, MAX_STEP, POND_TERMS, pondDonors, pondPickError, pondScoreTerms, pondTermValues, stateHash,
+  type FeedResult, type Intervention, type PondScore, type PondTerm, type WorldConfig, type WorldState,
 } from "@bl/schema";
 import type { GpuSim } from "@bl/sim-gpu";
 import { buildFirstsInput, firstsContext, type Census, type FirstsContext, type FirstsInput } from "@bl/metrics";
@@ -19,9 +19,14 @@ import {
   type ObserverState,
   type PondContext,
   type PondCycle,
+  type PressureEntry,
+  activePondScore,
+  pressureCycleOf,
+  pressureHook,
 } from "@bl/runner";
 import { MutationEdges } from "@bl/lineage";
 import type { CellBirth } from "@bl/sim-ref";
+import { donorsWithKeep, isLineageKey, keptPondOf, type KeptPond } from "./pond-play.ts";
 
 /** Real GPU simulation in the worker; reference physics with injectable readbacks in tests. */
 export type LabSimulation = Pick<GpuSim, "cfg" | "step" | "run" | "drainLedger" | "readSnapshot" | "readState" | "upload" | "destroy" | "lesion" | "feed">;
@@ -31,6 +36,13 @@ interface ExecutionOptions {
   start?: WorldState;
   /** The run's mutation edges up to the simulation's step, and the events its ledger has dropped (lineage inspector). */
   lineage?: { edges: MutationEdges; dropped: number };
+  /**
+   * The pressures of the history this execution continues (the manifest's `pressure` entries up to the simulation's
+   * step), in log order: the dial's settings the rule has already been governed by. Only a breeder world has any.
+   */
+  pressures?: readonly PressureEntry[];
+  /** The lineage the person keeps (genome identity key, "hi:lo"), or null/absent: a lab setting, not part of the history. */
+  keep?: string | null;
   waitForIdle: () => Promise<unknown>;
   isCurrent: () => boolean;
   /**
@@ -63,6 +75,15 @@ export interface PondSurvey {
   suggested: number[];
   /** Each term's value per pond (`POND_TERMS`); a pond whose "mass" is 0 is empty and cannot donate. */
   terms: Record<PondTerm, number[]>;
+  /** The score `suggested` was ranked by: the active pressure's, else the config's `pondScore` (null for an arm without one). */
+  ruleScore: PondScore | null;
+  /** The kept lineage as this pre-cycle state sees it, or null when none is kept. */
+  kept: KeptPond | null;
+  /**
+   * Which survey this is: every survey, a re-survey of a waiting cycle included, takes the next number. Explicit donors name
+   * the revision they were chosen from (`resolvePond`), so donors chosen from a survey the dial or Keep has since replaced are refused.
+   */
+  revision: number;
 }
 
 /** The pond arms whose cycle chooses donors, so that a person can choose them instead. */
@@ -76,6 +97,16 @@ class StepLimitError extends Error {}
  * a failure: the world is usable and at most has advanced to that boundary, where it waits.
  */
 export class PondWaitingError extends Error {}
+/**
+ * Raised when explicit donors name a survey revision that is no longer the waiting cycle's (the dial or Keep re-surveyed it
+ * since they were chosen). A refusal, like `PondWaitingError`: the cycle still waits, under its newer survey.
+ */
+export class StaleSurveyError extends PondWaitingError {}
+/**
+ * Raised when the pressure dial cannot be set: a world whose arm does not breed for a score, a score that is not one, or a
+ * world that has failed. A refusal: nothing was logged, and the world is exactly as it was.
+ */
+export class PressureRefusedError extends Error {}
 
 /**
  * Why the lab will not take a world with `cfg`, or null. The transition hunt's pond arms (`pondArm` "nat" and "shuf",
@@ -107,6 +138,16 @@ export class LabExecution {
    */
   private hand = false;
   private awaitingPond: PondSurvey | null = null;
+  /** The revision the last survey took (`PondSurvey.revision`). */
+  private surveyRevision = 0;
+  /**
+   * The pressure dial's history, in log order: each replaces the config's `pondScore` for the donors the rule chooses from its
+   * `cycle` on. The log holds them too (a "pressure" intervention); this is what the boundaries read, so a replay, a
+   * restore and the verification twin all see the score the live world was governed by.
+   */
+  private readonly pressures: PressureEntry[];
+  /** The kept lineage, or null. Display and Keep's donor rule only: a hand pick is never changed. */
+  private keepKey: string | null;
   /** Boundaries before this step belong to a history being replayed: they take a logged pick or the arm's own donors and never wait. */
   private replayUntil = 0;
   /** Mutation edges drained at each census, in step order: the lineage inspector's genealogy. */
@@ -146,6 +187,9 @@ export class LabExecution {
     this.edges = options.lineage?.edges ?? new MutationEdges();
     this.droppedEvents = options.lineage?.dropped ?? 0;
     this.firstsCtx = firstsContext(sim.cfg, settings.censusEvery);
+    this.pressures = (options.pressures ?? []).map((e) => ({ step: e.step, cycle: e.cycle, score: e.score }));
+    if (this.pressures.length && sim.cfg.pondArm !== "breed") throw new Error(`the history holds pressures, but this world's pond arm is ${JSON.stringify(sim.cfg.pondArm)}: only a breeder world has a pressure dial`);
+    this.keepKey = options.keep ?? null;
     if (this.edges.countBefore(sim.step) !== this.edges.length) throw new Error("mutation edges run past the simulation's step");
   }
 
@@ -210,16 +254,110 @@ export class LabExecution {
   /** The pond cycle waiting for donors, or null. While one waits the world does not advance, save or verify. */
   get awaiting(): PondSurvey | null { return this.awaitingPond; }
 
+  /** The first pond cycle not yet applied: the waiting one, else the next boundary after the world's step. 0 without a pond cycle. */
+  private nextCycle(): number {
+    const period = this.sim.cfg.pondPeriod;
+    return period === undefined ? 0 : pressureCycleOf(this.sim.step, period, this.awaitingPond !== null);
+  }
+
+  /** The score the rule ranks donors by at cycle `cycle` under `list`: the latest pressure that governs it, else the config's. */
+  private activeScore(cycle: number, list: readonly PressureEntry[] = this.pressures): PondScore | undefined {
+    return activePondScore(list, cycle) ?? this.sim.cfg.pondScore;
+  }
+
   /**
-   * Applies the waiting pond cycle with `picks` as its donors, in that order, or with the arm's own (`null`).
-   * Returns the donors applied: the host logs them as a "pick" intervention either way, so a replay of this
-   * history never has to ask again. Bad picks (`pondPickError`) throw and leave the world waiting, unchanged.
+   * The pressure dial: `base` is the config's own score, `current` the one that governs the next cycle to be applied
+   * (`nextCycle`), `fromCycle` the cycle of the latest pressure (null when none), `changes` how many this history holds.
    */
-  async resolvePond(picks: readonly number[] | null): Promise<{ step: number; cycle: number; donors: number[] }> {
+  get pressure(): { base: PondScore | undefined; current: PondScore | undefined; fromCycle: number | null; changes: number; nextCycle: number } {
+    const nextCycle = this.nextCycle();
+    return {
+      base: this.sim.cfg.pondScore,
+      current: this.activeScore(nextCycle),
+      fromCycle: this.pressures.length ? this.pressures[this.pressures.length - 1].cycle : null,
+      changes: this.pressures.length,
+      nextCycle,
+    };
+  }
+
+  /** The kept lineage, or null. */
+  get keep(): string | null { return this.keepKey; }
+
+  /**
+   * Sets the pressure dial: from `nextCycle` on, the rule ranks donors by `score`. Throws `PressureRefusedError` for a world
+   * whose arm is not breed, a score that is not one, and a failed world, with nothing changed. Returns `entry: null`, logging
+   * nothing, when `score` is already the one governing `nextCycle`. Otherwise `entry` is what the host logs, in the same
+   * synchronous step as this returns (the lab logs a pressure at the world's step, ahead of the pick of the cycle it governs
+   * when that cycle waits). While a cycle waits it is re-surveyed under the new score first, so a failed readback changes
+   * nothing, and `survey` is the waiting cycle's new survey (also given to `onPondAwait`).
+   */
+  async setPressure(score: PondScore): Promise<{ entry: PressureEntry | null; survey: PondSurvey | null }> {
+    if (!this.options.isCurrent()) throw new Error("lab world was replaced");
+    if (this.lost) throw new PressureRefusedError(this.lost);
+    const cfg = this.sim.cfg, period = cfg.pondPeriod;
+    if (cfg.pondArm !== "breed" || period === undefined) {
+      throw new PressureRefusedError(`This world’s rule doesn’t breed for a score (its arm is ${cfg.pondArm ?? "none"}), so there is no pressure to set.`);
+    }
+    try {
+      pondScoreTerms(score);
+    } catch (e) {
+      throw new PressureRefusedError(message(e));
+    }
+    if (score === this.activeScore(this.nextCycle())) return { entry: null, survey: null };
+    const entry: PressureEntry = { step: this.sim.step, cycle: pressureCycleOf(this.sim.step, period, this.awaitingPond !== null), score };
+    const waiting = this.awaitingPond;
+    const survey = waiting ? await this.surveyAgain(waiting, [...this.pressures, entry]) : null;
+    this.pressures.push(entry);
+    if (survey) {
+      this.awaitingPond = survey;
+      this.display(() => this.options.onPondAwait?.(survey));
+    }
+    return { entry, survey };
+  }
+
+  /** Keeps lineage `key` (or, for null, none). While a cycle waits it is surveyed again, and that survey returned. */
+  async setKeep(key: string | null): Promise<PondSurvey | null> {
+    this.check();
+    if (key !== null && !isLineageKey(key)) throw new Error(`${JSON.stringify(key)} is not a lineage key (hi:lo)`);
+    this.keepKey = key;
+    return this.resurvey();
+  }
+
+  /** Rebuilds the waiting cycle's survey under the current pressures and keep, and shows it. Null when no cycle waits. */
+  async resurvey(): Promise<PondSurvey | null> {
+    this.check();
+    const waiting = this.awaitingPond;
+    if (!waiting) return null;
+    const survey = await this.surveyAgain(waiting, this.pressures);
+    // What waited may have been answered while the world was read: nothing waits for this survey then.
+    if (this.awaitingPond !== waiting) return null;
+    this.awaitingPond = survey;
+    this.display(() => this.options.onPondAwait?.(survey));
+    return survey;
+  }
+
+  /** The waiting cycle's survey, read again from its held pre-cycle world (terms are of that world, so unchanged). */
+  private async surveyAgain(waiting: PondSurvey, list: readonly PressureEntry[]): Promise<PondSurvey> {
+    const pre = await this.sim.readState();
+    this.check();
+    if (pre.step !== waiting.step) throw new Error(`pond cycle waits at t=${waiting.step}, but the simulation is at t=${pre.step}`);
+    return this.survey(pre, list, waiting.terms);
+  }
+
+  /**
+   * Applies the waiting pond cycle with `picks` as its donors, in that order, or with the arm's own (`null`; with
+   * `withKeep`, the arm's own as Keep adjusts them, `donorsWithKeep`, read from the survey that waits now).
+   * Returns the donors applied: the host logs them as a "pick" intervention either way, so a replay of this
+   * history never has to ask again. Bad picks (`pondPickError`) throw and leave the world waiting, unchanged; so do
+   * explicit picks whose `revision` is not the waiting survey's (`StaleSurveyError`).
+   */
+  async resolvePond(picks: readonly number[] | null, options: { revision?: number; withKeep?: boolean } = {}): Promise<{ step: number; cycle: number; donors: number[] }> {
     this.check();
     const waiting = this.awaitingPond;
     if (!waiting) throw new Error("no pond cycle is waiting for donors");
-    const donors = picks === null ? waiting.suggested.slice() : [...picks];
+    if (picks !== null && options.revision !== undefined && options.revision !== waiting.revision)
+      throw new StaleSurveyError(`The ponds of cycle ${waiting.cycle} were surveyed again (the dial or Keep changed) after these donors were chosen. Check the picks and breed again.`);
+    const donors = picks !== null ? [...picks] : options.withKeep ? donorsWithKeep(waiting.suggested, waiting.kept) : waiting.suggested.slice();
     const error = pondPickError(waiting.terms.mass, donors);
     if (error) throw new Error(error);
     try {
@@ -285,15 +423,17 @@ export class LabExecution {
     const twinCursor = { ...this.cursor };
     // The twin replays the same queued interventions as the live world, physics only.
     const twinReplay = this.replay.slice();
+    // And is governed by the same pressures: its own copy, since consuming the queue's pressures must not touch the live list.
+    const twinPressures = this.pressures.slice();
     const twin = await createTwin(cloneState(start));
     try {
       this.check();
       await this.advanceLive(start.step + steps);
       await this.walk(twin, twinCursor, start.step + steps, async (step, picks) => {
-        await this.boundaryAt(twin, step, picks);
+        await this.boundaryAt(twin, step, picks, twinPressures);
         this.check();
         return false;
-      }, twinReplay);
+      }, twinReplay, undefined, twinPressures);
       const [a, b] = await Promise.all([this.sim.readState(), twin.readState()]);
       this.check();
       return { from: start.step, steps, liveHash: stateHash(a), twinHash: stateHash(b) };
@@ -319,10 +459,14 @@ export class LabExecution {
   }
 
   /** What a person choosing donors is shown of the pre-cycle state `pre`. */
-  private survey(pre: WorldState): PondSurvey {
+  private survey(pre: WorldState, list: readonly PressureEntry[] = this.pressures, known?: Record<PondTerm, number[]>): PondSurvey {
     const cfg = pre.cfg, k = cfg.pondK!, cycle = pre.step / cfg.pondPeriod!;
-    const terms = Object.fromEntries(POND_TERMS.map((term) => [term, pondTermValues(pre, term, k)])) as Record<PondTerm, number[]>;
-    return { step: pre.step, cycle, suggested: pondDonors(pre, cycle, donorArm(cfg)!, k, cfg.pondScore), terms };
+    const terms = known ?? Object.fromEntries(POND_TERMS.map((term) => [term, pondTermValues(pre, term, k)])) as Record<PondTerm, number[]>;
+    const score = this.activeScore(cycle, list);
+    return {
+      step: pre.step, cycle, suggested: pondDonors(pre, cycle, donorArm(cfg)!, k, score), terms,
+      ruleScore: score ?? null, kept: this.keepKey === null ? null : keptPondOf(pre, this.keepKey), revision: ++this.surveyRevision,
+    };
   }
 
   /**
@@ -330,7 +474,7 @@ export class LabExecution {
    * when given, the declared-cell pass), booked into the observers: the second half of a census boundary.
    */
   private async settle(step: number, picks?: readonly number[]): Promise<PondCycle | null> {
-    const { ponds, births } = await this.boundaryAt(this.sim, step, picks);
+    const { ponds, births } = await this.boundaryAt(this.sim, step, picks, this.pressures);
     // As the runner records it: the last boundary whose cycle is applied (or recorded, for cont).
     if (ponds) this.obs.ponds = { lastCycle: ponds.b };
     // Declared cells: births are lineage edges and count as mutations, as in the runner.
@@ -421,7 +565,7 @@ export class LabExecution {
    * The runner's boundary helpers: migration, then the pond cycle with this history's context, then the
    * declared-cell pass (WorldConfig.cellPeriod), in the runner's order.
    */
-  private async boundaryAt(sim: LabSimulation, step: number, picks?: readonly number[]): Promise<BoundaryResult & { births: CellBirth[] }> {
+  private async boundaryAt(sim: LabSimulation, step: number, picks: readonly number[] | undefined, pressures: readonly PressureEntry[]): Promise<BoundaryResult & { births: CellBirth[] }> {
     const host = {
       cfg: sim.cfg,
       readState: async () => {
@@ -431,13 +575,17 @@ export class LabExecution {
       },
       upload: (state: WorldState) => sim.upload(state),
     };
-    const boundary = await applyBoundary(host, step, this.ponds, picks);
+    // No pick here and a pressure in the history: the rule's donors under the score that governs this cycle (`pressureHook`, which
+    // leaves the arm's own cycle, byte for byte, when that is the config's own score). A world with no pressure passes `picks` as ever.
+    const period = sim.cfg.pondPeriod;
+    const governed = picks === undefined && pressures.length > 0 && sim.cfg.pondArm === "breed" && period !== undefined && step !== 0 && step % period === 0;
+    const boundary = await applyBoundary(host, step, this.ponds, governed ? pressureHook(sim.cfg, () => pressures) : picks);
     const cells = await cellsAtBoundary(host, step, boundary.state);
     return { ...boundary, state: cells.state ?? boundary.state, births: cells.births };
   }
 
   /** One logged lesion or feed re-applied to `sim`; a feed must move exactly what the log says it moved. */
-  private async reapply(sim: LabSimulation, iv: Exclude<Intervention, { kind: "pick" }>): Promise<FeedResult | null> {
+  private async reapply(sim: LabSimulation, iv: Exclude<Intervention, { kind: "pick" | "pressure" }>): Promise<FeedResult | null> {
     if (iv.kind === "lesion") {
       sim.lesion(iv.x, iv.y, iv.r);
       return null;
@@ -455,15 +603,25 @@ export class LabExecution {
    * A logged pick is the exception: it is part of its step's boundary, so `observe` receives its donors
    * for the pond cycle there. `observe` returns true to stop the traversal at that boundary (a cycle
    * waiting for donors), with the census counted as observed.
+   * A logged pressure is consumed into `pressures` (the list `observe` reads for this traversal): one for the cycle
+   * of the boundary the world is at comes before that boundary's census, so the pick (or the rule) that follows is
+   * governed by it; one for a later cycle is consumed where it stands, with no physics, after the census of its step.
    */
   private async walk(
     sim: LabSimulation, cursor: { observed: number }, target: number, observe: (step: number, picks?: readonly number[]) => Promise<boolean>,
-    replay: Intervention[] = [], applied?: (iv: Intervention, result: FeedResult | null) => void,
+    replay: Intervention[] = [], applied?: (iv: Intervention, result: FeedResult | null) => void, pressures: PressureEntry[] = this.pressures,
   ) {
+    const period = sim.cfg.pondPeriod;
+    const take = (iv: Extract<Intervention, { kind: "pressure" }>) => {
+      pressures.push({ step: iv.step, cycle: iv.cycle, score: iv.score });
+      replay.shift();
+      applied?.(iv, null);
+    };
     for (;;) {
       this.check();
       const boundary = this.boundary(cursor);
       if (sim.step === boundary) {
+        for (let at = replay[0]; period !== undefined && at && at.kind === "pressure" && at.step === boundary && at.cycle * period === boundary; at = replay[0]) take(at);
         const first = replay[0];
         const pick = first && first.kind === "pick" && first.step === boundary ? first : undefined;
         const stop = await observe(boundary, pick?.donors);
@@ -480,6 +638,11 @@ export class LabExecution {
       if (due && due.step <= sim.step) {
         if (due.step < sim.step) throw new Error(`replay passed a logged ${due.kind} at t=${due.step}: this is not the observed history`);
         if (due.kind === "pick") throw new Error(`replay met a logged pick at t=${due.step} away from its pond boundary: this is not the observed history`);
+        if (due.kind === "pressure") {
+          if (period !== undefined && due.cycle * period === due.step) throw new Error(`replay met a logged pressure for cycle ${due.cycle} at t=${due.step} after that boundary had passed: this is not the observed history`);
+          take(due);
+          continue;
+        }
         const result = await this.reapply(sim, due);
         // Removed only once applied: a failure leaves it queued and the world marked as failed.
         replay.shift();

@@ -20,16 +20,19 @@ import {
   stateHash,
   totalsOf,
   worldW,
+  type PondScore,
   type WorldState,
 } from "@bl/schema";
 import { GpuSim, Renderer, requestDevice, type GpuViewMode, type ViewRect } from "@bl/sim-gpu";
-import { FirstsDetector, census, firstsContext, firstsRules, individuals, lineageRGB, type FirstsInput } from "@bl/metrics";
-import { decodeArtifact, pondContinuationError, type ObserverSettings, type ObserverState } from "@bl/runner";
+import { FirstsDetector, census, firstsContext, firstsRules, individuals, lineageRGB, nextUp, type FirstsInput } from "@bl/metrics";
+import { decodeArtifact, pondContinuationError, type ObserverSettings, type ObserverState, type PressureEntry } from "@bl/runner";
 import { MutationEdges, genomesOf, lineageAncestry, parseKey, probeLineage, type GenomeSource } from "@bl/lineage";
-import { LabExecution, PondWaitingError, huntArmError } from "./execution.ts";
+import { LabExecution, PondWaitingError, PressureRefusedError, huntArmError } from "./execution.ts";
+import { isLineageKey } from "./pond-play.ts";
+import { dialWords } from "./rank-labels.ts";
 import { jumpTarget, prunableAuto, replayPlan } from "./checkpoints.ts";
 import { createLabSession } from "./session.ts";
-import type { CensusMsg, CheckpointMeta, FirstsMsg, FromWorker, Keep, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
+import type { CensusMsg, CheckpointMeta, FirstsMsg, FromWorker, Keep, PressureMsg, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
 import { RewindStore, buildSessionFile, exportRefusal, interventionFacts, sessionFileName, type RewindRecord } from "./session-file.ts";
 import { StorageError, forgetCheckpoint, listCheckpoints, missingFile, pruneCheckpoints, readFile, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "./opfs.ts";
 
@@ -139,6 +142,11 @@ let busy = 0;
 let autoQueued = false;
 /** Breeder mode (ToWorker "breeder"): a setting of the lab, not of a world, so it carries over to every world adopted. */
 let breeder = false;
+/**
+ * The lineage kept (ToWorker "keep"): a setting of the lab like breeder mode, so a restore or a jump keeps it. A new plant or an
+ * imported file clears it: the lineage belonged to the world it was kept in.
+ */
+let keepKey: string | null = null;
 /** The step of a pond cycle being applied with donors given in breeder mode, for its display message. */
 let handCycle = -1;
 /**
@@ -191,7 +199,7 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
   const info = adapter.info;
   adapterDesc = [info?.vendor, info?.architecture, info?.description].filter(Boolean).join(" ") || "unknown GPU";
   device = await requestDevice(navigator.gpu);
-  device.lost.then((l) => post({ type: "error", message: `GPU device lost: ${l.message}. Reload to recover from the last checkpoint.` }));
+  device.lost.then((l) => post({ type: "error", message: `GPU device lost: ${l.message}. Reload to recover from the last checkpoint.`, failed: true }));
   device.addEventListener("uncapturederror", (e) => post({ type: "error", message: (e as GPUUncapturedErrorEvent).error.message }));
   canvas = c;
   canvas.width = w;
@@ -211,8 +219,10 @@ async function init(c: OffscreenCanvas, w: number, h: number) {
  * `record`: what this page's world held of the log of firsts when that checkpoint was saved; without one
  * (a plant, an import, a file saved on an earlier visit) the log starts afresh at the first census it sees.
  * `carryNotes`: a jump's notes on picks the replay will log again.
+ * `keep`: the lineage kept for the new world (a plant or an import keeps none; a restore or jump keeps the lab's),
+ * committed to the lab setting only once the world is adopted, so a replacement that fails leaves Keep as it was.
  */
-async function adopt(state: WorldState, manifest: RunManifest, observer: ObserverState | undefined, lineage: AdoptLineage, record?: RewindRecord, carryNotes?: Iterable<[number, boolean]>) {
+async function adopt(state: WorldState, manifest: RunManifest, observer: ObserverState | undefined, lineage: AdoptLineage, record?: RewindRecord, carryNotes?: Iterable<[number, boolean]>, keep: string | null = keepKey) {
   if (!device || !ctx) throw new Error("GPU not initialised");
   // Every world enters here (a new preset, an import, a restore or jump); the hunt's pond arms are refused before any GPU allocation.
   const huntError = huntArmError(state.cfg);
@@ -231,6 +241,9 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
       observer,
       start: state,
       lineage: { edges: lineage.edges, dropped: lineage.dropped },
+      // The pressures the history so far was governed by: the manifest is the sliced one on a restore.
+      pressures: pressuresOf(manifest),
+      keep,
       waitForIdle: () => device!.queue.onSubmittedWorkDone(),
       isCurrent: () => world?.execution === execution,
       onObservation: (c, dropped, firsts) => {
@@ -261,7 +274,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         if (w && w.execution === execution) {
           session.noteWaiting({ cycle: s.cycle, step: s.step });
           publishSession();
-          post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms });
+          post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms, ruleScore: s.ruleScore, kept: s.kept, revision: s.revision });
         }
       },
       onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
@@ -272,6 +285,8 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         if (!w || w.sim !== sim) return;
         if (result) bookFeed(w, result.matter, result.energy);
         w.manifest.interventions.push(iv);
+        // A replayed pressure moves the dial the page shows.
+        if (iv.kind === "pressure") postPressure(w);
         postFirsts(w);
       },
     });
@@ -295,6 +310,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
     lastCheckpoint: state.step,
     log,
   };
+  keepKey = keep;
   old?.renderer.destroy();
   old?.sim.destroy();
   execution.setHandPicks(breeder);
@@ -306,6 +322,8 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
   rateAt = performance.now();
   session.adopt({ runId: manifest.runId, presetId: manifest.presetId, seed: manifest.seed, step: sim.step, ruleVersion: manifest.ruleVersion });
   post({ type: "loaded", manifest, step: sim.step });
+  postPressure(world);
+  post({ type: "keep", world: world.gen, key: keepKey });
   postFirsts(world);
   // The world is adopted whatever storage says: a shelf it would not list stays empty until a later listing.
   await refreshShelf();
@@ -375,6 +393,7 @@ function postFirsts(w: World | null) {
       summary: detector.summary(),
       facts: interventionFacts(w.manifest.interventions, notes, session.view().replay, factsAt(w)),
       rules: firstsRules(firstsContext(w.sim.cfg, w.manifest.settings.censusEvery).geneBits),
+      nextUp: nextUp(detector),
       stopped,
     };
     w.log.postedStep = w.sim.step;
@@ -382,6 +401,29 @@ function postFirsts(w: World | null) {
   } catch (e) {
     post({ type: "notice", message: `The log of firsts could not be shown (${e instanceof Error ? e.message : e}).` });
   }
+}
+
+/** The pressures of a manifest's log, in log order. */
+function pressuresOf(m: RunManifest): PressureEntry[] {
+  const out: PressureEntry[] = [];
+  for (const iv of m.interventions) if (iv.kind === "pressure") out.push({ step: iv.step, cycle: iv.cycle, score: iv.score });
+  return out;
+}
+
+/** The pressure dial of the world on screen, as the execution holds it. Display only. */
+function postPressure(w: World | null) {
+  if (!w || !current(w)) return;
+  const cfg = w.sim.cfg, p = w.execution.pressure;
+  const msg: PressureMsg = {
+    type: "pressure",
+    world: w.gen,
+    base: cfg.pondScore ?? null,
+    current: p.current ?? null,
+    fromCycle: p.fromCycle,
+    changes: p.changes,
+    unavailable: cfg.pondArm === "breed" ? null : `This world’s rule doesn’t breed for a score (its arm is ${cfg.pondArm ?? "none"}), so there is no pressure to set.`,
+  };
+  post(msg);
 }
 
 function newManifest(presetId: string, seed: number, state: WorldState, init: RunManifest["init"], settings: ObserverSettings): RunManifest {
@@ -410,7 +452,8 @@ async function load(presetId: string, seed: number, overrides = {}, keep?: Keep)
   if (huntError) throw new Error(huntError);
   const state = initWorld(cfg, preset.init);
   const manifest = { ...newManifest(preset.id, seed, state, preset.init, DEFAULT_SETTINGS), startHash: stateHash(state), edgesFrom: 0 };
-  await adopt(state, manifest, undefined, { edges: new MutationEdges(), dropped: 0, edgesFrom: 0, known: [{ source: "start world", genomes: genomesOf(state, cfg) }] });
+  // The lineage kept belonged to the world being replaced, so the new one keeps none.
+  await adopt(state, manifest, undefined, { edges: new MutationEdges(), dropped: 0, edgesFrom: 0, known: [{ source: "start world", genomes: genomesOf(state, cfg) }] }, undefined, undefined, null);
 }
 
 /** The founders' genomes of a run built here, rebuilt from its preset and accepted only at its recorded start hash. */
@@ -462,7 +505,7 @@ async function drawFrame(w: World) {
     if (w.execution.failure) pendingSteps = 0;
     // A rejected request (e.g. past the step limit) is dropped rather than retried every frame.
     else if (!settled) pendingSteps = Math.max(0, pendingSteps - requestedPending);
-    post({ type: "error", message: w.execution.failure ?? (e instanceof Error ? e.message : String(e)) });
+    post({ type: "error", message: w.execution.failure ?? (e instanceof Error ? e.message : String(e)), failed: w.execution.failure !== null });
   }
   // A cycle waiting for donors holds a pre-cycle state, which no checkpoint may carry: the save follows the pick.
   if (settled && !storageOff && !autoQueued && !w.execution.failure && !w.execution.awaiting && w.sim.step - w.lastCheckpoint >= AUTO_EVERY) {
@@ -889,7 +932,7 @@ async function jump(step: number, key: string | null) {
   // there take their logged picks or the rule's donors and none waits, and beyond it a boundary is a new choice.
   const history = [...w.manifest.interventions, ...w.execution.pendingReplay];
   const known = Math.max(present.step, w.execution.replayHorizon - 1);
-  const plan = replayPlan(history, target.interventions, step, known);
+  const plan = replayPlan(history, target.interventions, step, known, w.sim.cfg.pondPeriod);
   // The present Checkpoint is already written. A jump never asks, so a held restore must not leave the replay queued on the old world.
   // The present's notes on who chose each pick stay with the picks the restored log holds and the replay logs again.
   await restore(target.file, "discard", w.log.notes);
@@ -1057,18 +1100,20 @@ async function feed(x: number, y: number, r: number, amount: number) {
  */
 const sameDonors = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((d, i) => d === b[i]);
 
-async function resolvePick(w: World, donors: number[] | null) {
+async function resolvePick(w: World, donors: number[] | null, options: { revision?: number; withKeep?: boolean } = {}) {
   if (w.execution.failure) throw new Error(w.execution.failure);
   const waiting = w.execution.awaiting;
   if (!waiting) throw new Error("no pond cycle is waiting for donors");
-  // The display says "by hand" only for a person's own picks, not for the rule's donors applied on request.
-  handCycle = donors === null ? -1 : waiting.step;
+  // The display says "by hand" only for donors given in breeder mode (a person's, or auto-breed's under Keep), not for the
+  // rule's donors applied on request.
+  handCycle = donors === null && !options.withKeep ? -1 : waiting.step;
   try {
-    const done = await w.execution.resolvePond(donors);
+    const done = await w.execution.resolvePond(donors, options);
     w.manifest.interventions.push({ step: done.step, kind: "pick", cycle: done.cycle, donors: done.donors });
     // The log keeps no record of who chose. A person's donors in the rule's own order are the rule's choice as far as
-    // the card can tell (reordering is the only way to differ), and the card says so.
-    w.log.notes.set(done.step, donors !== null && !sameDonors(donors, waiting.suggested));
+    // the card can tell (reordering is the only way to differ), and the card says so; so is auto-breed's answer unless
+    // Keep changed it.
+    w.log.notes.set(done.step, (donors !== null || !!options.withKeep) && !sameDonors(done.donors, waiting.suggested));
     forkReplay(w);
     postFirsts(w);
   } finally {
@@ -1076,12 +1121,58 @@ async function resolvePick(w: World, donors: number[] | null) {
   }
 }
 
-async function pick(gen: number, step: number, donors: number[] | null) {
+async function pick(gen: number, step: number, donors: number[] | null, options: { revision?: number; withKeep?: boolean }) {
   const w = world;
   // A repeated or late message is for a cycle already applied, or for a world since replaced (another world can
-  // wait at the same step): it is dropped, not an error.
+  // wait at the same step): it is dropped, not an error. Explicit donors from a survey since replaced are refused
+  // (`StaleSurveyError`, a `PondWaitingError`): the page answers again from the newer survey.
   if (!w || w.gen !== gen || w.execution.awaiting?.step !== step) return;
-  await resolvePick(w, donors);
+  await resolvePick(w, donors, options);
+}
+
+/**
+ * Sets the pressure dial of world `gen`. The entry is logged in the same synchronous step as `setPressure` returns, in manifest
+ * order: a pressure for the waiting cycle (set at its boundary's step) comes before that cycle's pick, which is logged after.
+ */
+async function setPressure(gen: number, score: PondScore) {
+  const w = world;
+  // A late message is for a world since replaced: dropped, not an error.
+  if (!w || w.gen !== gen) return;
+  let done: Awaited<ReturnType<LabExecution["setPressure"]>>;
+  try {
+    done = await w.execution.setPressure(score);
+  } catch (e) {
+    // A refusal: nothing was logged and the world is as it was; the page puts the dial back.
+    if (e instanceof PressureRefusedError) {
+      postPressure(w);
+      return post({ type: "refused", request: "pressure", message: e.message });
+    }
+    throw e;
+  }
+  const { entry } = done;
+  if (!entry) {
+    postPressure(w);
+    return post({ type: "notice", message: `The rule already breeds for ${dialWords(score).toLowerCase()} from the next cycle.` });
+  }
+  w.manifest.interventions.push({ step: entry.step, kind: "pressure", cycle: entry.cycle, score: entry.score });
+  // A pressure is a hand edit a replaced world would lose, as a lesion is.
+  session.noteHand(entry.step);
+  publishSession();
+  forkReplay(w);
+  postPressure(w);
+  postFirsts(w);
+}
+
+/** Keeps lineage `key` (or none), asked of world `gen`: the lab's setting, so the next world a restore or a jump brings in has it too. */
+async function setKeep(gen: number, key: string | null) {
+  const w = world;
+  // A late message is for a world since replaced: dropped, not an error, as for the dial.
+  if (!w || w.gen !== gen) return;
+  if (key !== null && !isLineageKey(key)) throw new Error(`${JSON.stringify(key)} is not a lineage key (hi:lo)`);
+  keepKey = key;
+  // A failed world is not read again, but the lab's setting is still the player's.
+  if (!w.execution.failure) await w.execution.setKeep(key);
+  post({ type: "keep", world: w.gen, key });
 }
 
 /** Breeder mode on or off, for this world and those adopted later. Leaving it lets the rule choose for a cycle that is waiting. */
@@ -1111,7 +1202,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
     if (command) session.noteFailure(e instanceof Error ? e.message : String(e));
     if (command || m.type === "verify") publishSession();
     if (world?.execution.failure) { playing = false; pendingSteps = 0; }
-    post({ type: "error", message: world?.execution.failure ?? (e instanceof Error ? e.message : String(e)) });
+    post({ type: "error", message: world?.execution.failure ?? (e instanceof Error ? e.message : String(e)), failed: !!world?.execution.failure });
   };
   switch (m.type) {
     // Immediate, non-exclusive controls.
@@ -1161,7 +1252,11 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       case "breeder":
         return setBreeder(m.on);
       case "pick":
-        return pick(m.world, m.step, m.donors);
+        return m.donors === null ? pick(m.world, m.step, null, { withKeep: m.withKeep }) : pick(m.world, m.step, m.donors, { revision: m.revision });
+      case "pressure":
+        return setPressure(m.world, m.score);
+      case "keep":
+        return setKeep(m.world, m.key);
       case "save":
         return save();
       case "listCheckpoints":
@@ -1187,7 +1282,7 @@ self.onmessage = (ev: MessageEvent<ToWorker>) => {
       case "import": {
         if (!(await gateReplace("import", m.keep))) return;
         const { state, observer } = decodeArtifact(new Uint8Array(m.bytes));
-        await adopt(state, importedManifest(state, m.name.replace(/\.blck$/, ""), observer.settings), observer, freshLineage(state, "imported state"));
+        await adopt(state, importedManifest(state, m.name.replace(/\.blck$/, ""), observer.settings), observer, freshLineage(state, "imported state"), undefined, undefined, null);
         return post({ type: "notice", message: `Imported ${m.name} at step ${state.step}` });
       }
       case "verify":

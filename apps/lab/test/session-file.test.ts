@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   applyFeed, buildWorld, cellCount, clampLesionRadius, cloneState, CH, defaultConfig, generalistGenome, initWorld, presetConfig, PRESETS, RULE_VERSION, stateHash, worldW,
-  type Intervention, type WorldConfig, type WorldState,
+  type Intervention, type PondScore, type WorldConfig, type WorldState,
 } from "@bl/schema";
 import { applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
-import { FirstsDetector, FIRSTS_RULESET, firstsContext, type FirstsInput } from "@bl/metrics";
+import { FirstsDetector, FIRSTS_RULESET, FIRSTS_RULESET_V0, firstsContext, type FirstsInput } from "@bl/metrics";
+import frozenV1 from "../../../tests/e2e/fixtures/pond-keeper-session.json";
 import { LabExecution, type LabSimulation } from "../src/execution.ts";
 import type { RunManifest } from "../src/protocol.ts";
 import {
-  buildSessionFile, exportRefusal, interventionFacts, replayCommand, replayExperiment, RewindStore, sessionFileError, sessionFileName, SESSION_FORMAT, SESSION_VERSION,
+  buildSessionFile, exportRefusal, interventionFacts, replayCommand, replayExperiment, RewindStore, sessionFileError, sessionFileName, SESSION_FORMAT, SESSION_VERSION, SESSION_VERSIONS,
   type RewindRecord, type SessionFile,
 } from "../src/session-file.ts";
 
@@ -108,9 +109,11 @@ describe("the session file of a lab run", () => {
     expect(file.checkpoints).toEqual([{ step: 300, file: "session-final", hash: stateHash(saved.state), interventions: 3 }]);
     expect(file.format).toBe(SESSION_FORMAT);
     expect(file.version).toBe(SESSION_VERSION);
+    expect(SESSION_VERSION).toBe(2);
     expect(file.firsts.rules).toBe(FIRSTS_RULESET);
+    expect(FIRSTS_RULESET).toBe("firsts-v1");
     expect(file.firsts.entries.some((e) => e.id === "body")).toBe(true);
-    expect(file.card.facts).toMatchObject({ picks: { total: 0 }, wounds: 1, feeds: 1, drains: 1 });
+    expect(file.card.facts).toMatchObject({ picks: { total: 0 }, wounds: 1, feeds: 1, drains: 1, pressures: { changes: 0, latest: null } });
     expect(file.replay).toBe(replayCommand(file, sessionFileName(file.runId, 300)));
     expect(replayExperiment(file)).toMatch(/^pond-keeper-[0-9a-f]{12}-[0-9a-f]{8}$/);
     // Same final state, another log (the same wound twice): another run directory.
@@ -208,7 +211,7 @@ describe("the session file of a bred pond world", () => {
     const manifest = manifestOf(start, "ponds-small", pondsSmall.init, s.settings, log);
     expect(exportRefusal(manifest)).toMatch(/settings changed from its preset/);
     const facts = interventionFacts(log, notes, null);
-    expect(facts).toEqual({ picks: { total: 2, byHand: 1, byRule: 1, unknown: 0 }, wounds: 1, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0 });
+    expect(facts).toEqual({ picks: { total: 2, byHand: 1, byRule: 1, unknown: 0 }, wounds: 1, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null } });
     const file = buildSessionFile({
       manifest, stateHash: stateHash(saved.state), step: saved.state.step,
       firsts: { watchedFrom: s.detector.watchedFrom, entries: s.detector.entries() }, card: { summary: s.detector.summary(), facts }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
@@ -233,6 +236,81 @@ describe("the session file of a bred pond world", () => {
   }, 600_000);
 });
 
+describe("interventionFacts counts a pressure apart from the picks", () => {
+  it("counts pressures and names the latest score, and never as a pick", () => {
+    const log: Intervention[] = [
+      { step: 4, kind: "pressure", cycle: 1, score: "body" },
+      { step: 4, kind: "pick", cycle: 1, donors: [3] },
+      { step: 8, kind: "pick", cycle: 2, donors: [0] },
+      { step: 8, kind: "pressure", cycle: 3, score: "drive+seed" },
+    ];
+    const facts = interventionFacts(log, new Map([[4, false], [8, false]]), null);
+    expect(facts.pressures).toEqual({ changes: 2, latest: "drive+seed" });
+    expect(facts.picks).toEqual({ total: 2, byHand: 0, byRule: 2, unknown: 0 });
+    expect([facts.wounds, facts.feeds, facts.drains]).toEqual([0, 0, 0]);
+  });
+});
+
+describe("the session file's versions", () => {
+  const pondsSmall = PRESETS.find((p) => p.id === "ponds-small")!;
+  const bredCfg = presetConfig(pondsSmall, 1, { pondArm: "breed", pondScore: "mass" });
+  const period = bredCfg.pondPeriod!;
+  /** A well-formed version 2 file of a breeder world, made from a history alone: sessionFileError checks consistency, a replay checks the hash. */
+  function pressured(log: Intervention[], step = period * 3): SessionFile {
+    const detector = new FirstsDetector(firstsContext(bredCfg, 100));
+    const manifest: RunManifest = {
+      runId: "breeder-s1-test", presetId: "breeder", seed: 1, cfg: bredCfg, init: pondsSmall.init, ruleVersion: RULE_VERSION, createdAt: "2026-10-17T00:00:00.000Z", adapter: "test",
+      userAgent: "test", interventions: log, checkpoints: [], settings, startHash: "0123456789abcdef", edgesFrom: 0,
+    };
+    return buildSessionFile({
+      manifest, stateHash: "89abcdef01234567", step, firsts: { watchedFrom: 100, entries: [] },
+      card: { summary: detector.summary(), facts: interventionFacts(log, new Map(), null) }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
+    });
+  }
+  const dial = (step: number, cycle: number, score: PondScore): Intervention => ({ step, kind: "pressure", cycle, score });
+  const pick = (cycle: number, donors: number[]): Intervention => ({ step: cycle * period, kind: "pick", cycle, donors });
+
+  it("writes version 2 with the firsts-v1 rule set, and accepts a pressured, picked history", () => {
+    expect(SESSION_VERSIONS).toEqual([1, 2]);
+    const file = pressured([dial(period, 1, "body"), pick(1, [2]), pick(2, [0]), dial(period * 2, 3, "mass"), pick(3, [1])]);
+    expect([file.version, file.firsts.rules]).toEqual([2, "firsts-v1"]);
+    expect(file.card.facts.pressures).toEqual({ changes: 2, latest: "mass" });
+    expect(sessionFileError(file)).toBeNull();
+    expect(sessionFileError(JSON.stringify(file))).toBeNull();
+  });
+
+  it("refuses a pressure out of order, not the observed history, or in a world that is not a breeder's", () => {
+    // After the pick of the cycle it governs.
+    expect(sessionFileError(pressured([pick(1, [2]), dial(period, 1, "body")]))).toMatch(/replayable history.*for cycle 1 comes after the pick for cycle 1/);
+    // A cycle that is neither the waiting one nor the next.
+    expect(sessionFileError(pressured([dial(period, 4, "body")]))).toMatch(/not the observed history/);
+    // A score that is not one.
+    expect(sessionFileError(pressured([dial(period, 1, "weight" as never)]))).toMatch(/replayable history/);
+    // A pick after something set after the boundary at its step.
+    expect(sessionFileError(pressured([dial(period, 2, "body"), pick(1, [2])]))).toMatch(/replayable history.*follows a pressure for the next cycle/);
+    // A world whose arm does not breed has no dial.
+    const scaf = pressured([dial(period, 1, "body")]);
+    scaf.cfg = { ...scaf.cfg, pondArm: "scaf" };
+    expect(sessionFileError(scaf)).toMatch(/replayable history.*pond arm breed/);
+  });
+
+  it("still reads the frozen version 1 fixture: firsts-v0, no pressure, its own replay command", () => {
+    const text = JSON.stringify(frozenV1);
+    const file = structuredClone(frozenV1) as unknown as SessionFile;
+    expect([file.version, file.firsts.rules]).toEqual([1, FIRSTS_RULESET_V0]);
+    expect(file.interventions.some((iv) => iv.kind === "pressure")).toBe(false);
+    expect(sessionFileError(text)).toBeNull();
+    expect(file.replay).toBe(replayCommand(file, sessionFileName(file.runId, file.final.step)));
+    // A version 1 file cannot hold a pressure, and a version 2 file cannot name the old rule set.
+    const withPressure = structuredClone(file) as unknown as Record<string, any>;
+    withPressure.interventions.push({ step: file.final.step, kind: "pressure", cycle: file.final.step / file.cfg.pondPeriod! + 1, score: "mass" });
+    withPressure.final.interventions++;
+    withPressure.checkpoints[0].interventions++;
+    expect(sessionFileError(withPressure)).toMatch(/a version 1 file cannot hold/);
+    expect(sessionFileError({ ...file, version: 2 })).toMatch(/version 2 file’s firsts must name the rule set “firsts-v1”/);
+  });
+});
+
 describe("interventionFacts", () => {
   it("counts picks by who chose them (the worker's notes), wounds, feeds and drains", () => {
     const log: Intervention[] = [
@@ -246,10 +324,10 @@ describe("interventionFacts", () => {
     ];
     // The pick at t=12 was made before this page's notes began (a world restored from an earlier visit): unknown, not guessed.
     const facts = interventionFacts(log, new Map([[4, true], [8, false]]), null);
-    expect(facts).toEqual({ picks: { total: 3, byHand: 1, byRule: 1, unknown: 1 }, wounds: 2, feeds: 1, drains: 1, replay: null, step: 0, cycles: 0, cyclesBefore: 0 });
+    expect(facts).toEqual({ picks: { total: 3, byHand: 1, byRule: 1, unknown: 1 }, wounds: 2, feeds: 1, drains: 1, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null } });
     const reading = { ok: true, from: 0, to: 100, live: "a", twin: "a", handAtEnd: false };
     expect(interventionFacts([], new Map(), reading).replay).toBe(reading);
-    expect(interventionFacts([], new Map(), null)).toEqual({ picks: { total: 0, byHand: 0, byRule: 0, unknown: 0 }, wounds: 0, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0 });
+    expect(interventionFacts([], new Map(), null)).toEqual({ picks: { total: 0, byHand: 0, byRule: 0, unknown: 0 }, wounds: 0, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null } });
     expect(interventionFacts([], new Map(), null, { step: 3000, cycles: 3, cyclesBefore: 2 })).toMatchObject({ step: 3000, cycles: 3, cyclesBefore: 2 });
   });
 });
@@ -274,14 +352,16 @@ describe("sessionFileError", () => {
     ["text that isn’t JSON", async () => sessionFileError("{nope"), /isn’t JSON/],
     ["something that isn’t an object", async () => sessionFileError([1]), /expected a JSON object/],
     ["another format", () => edit((f) => { f.format = "cadence-garden.run"; }), /format/],
-    ["version 2", () => edit((f) => { f.version = 2; }), /version 2/],
+    ["version 3", () => edit((f) => { f.version = 3; }), /reads versions 1 and 2/],
+    ["a version 1 file under the version 2 rule set", () => edit((f) => { f.version = 1; }), /version 1 file’s firsts must name the rule set “firsts-v0”/],
+    ["a version 2 file under the version 1 rule set", () => edit((f) => { f.firsts.rules = "firsts-v0"; }), /version 2 file’s firsts must name the rule set “firsts-v1”/],
     ["no startHash", () => edit((f) => { delete f.startHash; }), /startHash/],
     ["a checkpoint hash that is not the final hash", () => edit((f) => { f.checkpoints[0].hash = "0".repeat(16); }), /checkpoint entry and its final state disagree/],
     ["an intervention after the final step", () => edit((f) => { f.interventions.push({ step: f.final.step + 100, kind: "lesion", x: 1, y: 1, r: 1 }); }), /after the file’s final step/],
     ["a final state at step 0", () => edit((f) => { f.final.step = 0; f.checkpoints[0].step = 0; f.interventions = []; f.final.interventions = 0; f.checkpoints[0].interventions = 0; }), /final.step is 0/],
     ["a wrong count of interventions in final", () => edit((f) => { f.final.interventions = 2; f.checkpoints[0].interventions = 2; }), /final says 2/],
     ["interventions out of step order", () => edit((f) => { f.interventions.reverse(); }), /step order/],
-    ["another rule set", () => edit((f) => { f.firsts.rules = "firsts-v1"; }), /rule set/],
+    ["another rule set", () => edit((f) => { f.firsts.rules = "firsts-v9"; }), /rule set/],
     ["an edited replay command", () => edit((f) => { f.replay += " --steps 5"; }), /replay command/],
     ["a history that does not start at step 0", () => edit((f) => { f.edgesFrom = 3; }), /edgesFrom/],
     ["a feed without the matter it moved", () => edit((f) => { delete f.interventions[1].matter; }), /replayable history/],

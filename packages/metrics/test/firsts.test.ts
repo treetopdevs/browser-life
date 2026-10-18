@@ -3,8 +3,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { CH, G, GENE_SHIFT, defaultConfig } from "@bl/schema";
 import {
+  FIRSTS_LADDER,
   FIRSTS_RULES,
   FIRSTS_RULESET,
+  FIRSTS_RULESET_V0,
   FIRSTS_THRESHOLDS,
   FirstsDetector,
   Tracker,
@@ -12,6 +14,7 @@ import {
   census,
   firstsContext,
   firstsRules,
+  nextUp,
   type FirstsBody,
   type FirstsContext,
   type FirstsEntry,
@@ -35,18 +38,61 @@ function feed(d: FirstsDetector, inputs: FirstsInput[]): FirstsEntry[] {
 const ids = (es: readonly FirstsEntry[]) => es.map((e) => e.id);
 const find = (d: FirstsDetector, id: string) => d.entries().find((e) => e.id === id);
 
+/**
+ * A scripted stream that makes every rule fire, on STREAM_CTX (step 100 * (k + 1)): body 1 grows, drifts diagonally (traveller at k = 19, far traveller
+ * at k = 38) and reaches 250 cells at k = 230; body 2 descends a generation every ten censuses and carries gene 0 from k = 61; lineage B appears at
+ * k = 3 and holds on (new lineage k = 53, 20,000 steps k = 203) and takes over at k = 71; lineage C appears at k = 90 above B and takes over second at k = 99.
+ */
+const STREAM_CTX: FirstsContext = { tileW: 64, tileH: 64, tiles: 2, censusEvery: 100, pondPeriod: 500, geneBits: [0] };
+const stream = (n: number): FirstsInput[] => {
+  const out: FirstsInput[] = [];
+  for (let k = 0; k < n; k++) {
+    const b1 = body(1, 20 + k, { cx: (5 + 0.7 * k) % 64, cy: (20 + 0.5 * k) % 64 });
+    const b2 = body(2, 10 + (k % 40), { generation: Math.floor(k / 10), cx: 30, cy: 40, tile: 1, geneCells: [k > 60 ? 10 + (k % 40) : 0] });
+    out.push({
+      step: 100 * (k + 1),
+      bodies: [b1, b2],
+      lineages: [{ key: "A", cells: Math.max(50, 200 - k) }, ...(k >= 3 ? [{ key: "B", cells: 16 + 2 * k }] : []), ...(k >= 90 ? [{ key: "C", cells: 210 + k }] : [])],
+      fissions: Math.floor(k / 10),
+      deaths: k % 7 === 0 ? 1 : 0,
+      livingCells: 100,
+    });
+  }
+  return out;
+};
+
+
 describe("rules table", () => {
-  it("equals the table in the contract note", () => {
-    const note = readFileSync(fileURLToPath(new URL("../../../docs/pond-keeper-v0-2026-10-17.md", import.meta.url)), "utf8");
-    const rows = note
+  const noteRows = (file: string) =>
+    readFileSync(fileURLToPath(new URL(`../../../docs/${file}`, import.meta.url)), "utf8")
       .split("\n")
       .filter((l) => l.startsWith("| `"))
-      .map((l) => l.trim().slice(1, -1).split(" | ").map((c) => c.trim()));
-    const fixed = rows.filter((r) => r[0] !== "`gene-<b>`").map((r) => ({ id: r[0].replace(/`/g, ""), name: r[1], text: r[2] }));
-    expect(fixed).toHaveLength(9);
-    expect(FIRSTS_RULES).toEqual(fixed);
-    const gene = rows.find((r) => r[0] === "`gene-<b>`")!;
+      .map((l) => l.trim().slice(1, -1).split(" | ").map((c) => c.replace(/`/g, "").trim()));
+
+  it("equals the tables in the contract notes: v0's nine rows, then v1's five", () => {
+    const v0 = noteRows("pond-keeper-v0-2026-10-17.md");
+    const v1 = noteRows("pond-keeper-v1-2026-10-17.md");
+    const fixed0 = v0.filter((r) => r[0] !== "gene-<b>").map((r) => ({ id: r[0], name: r[1], text: r[2] }));
+    const fixed1 = v1.map((r) => ({ id: r[0], name: r[1], text: r[2] }));
+    expect(fixed0).toHaveLength(9);
+    expect(fixed1.map((r) => r.id)).toEqual(["body-250", "gen-10", "far-traveller", "lineage-20k", "takeover-2"]);
+    expect(FIRSTS_RULES).toHaveLength(14);
+    expect(FIRSTS_RULES).toEqual([...fixed0, ...fixed1]);
+    const gene = v0.find((r) => r[0] === "gene-<b>")!;
     expect(gene[1]).toBe("First carrier body of gene b");
+  });
+
+  it("the ladder is the contract's order, over every fixed rule, and the gene rules are not in it", () => {
+    expect(FIRSTS_LADDER).toEqual([
+      "body", "body-40", "split", "grandchild", "traveller", "new-lineage", "body-100", "takeover",
+      "gen-5", "far-traveller", "body-250", "lineage-20k", "takeover-2", "gen-10",
+    ]);
+    const all = FIRSTS_RULES.map((r) => r.id);
+    expect(FIRSTS_LADDER.every((id) => all.includes(id))).toBe(true);
+    expect(all.filter((id) => !FIRSTS_LADDER.includes(id))).toEqual([]);
+    expect(firstsRules([0, 1]).map((r) => r.id).filter((id) => !FIRSTS_LADDER.includes(id))).toEqual(["gene-0", "gene-1"]);
+    expect(FIRSTS_RULESET).toBe("firsts-v1");
+    expect(FIRSTS_RULESET_V0).toBe("firsts-v0");
   });
 
   it("adds one gene rule per gainable bit, and none without genes", () => {
@@ -54,7 +100,17 @@ describe("rules table", () => {
     const g = firstsRules([0, 1]);
     expect(g.map((r) => r.id)).toEqual([...FIRSTS_RULES.map((r) => r.id), "gene-0", "gene-1"]);
     expect(g[g.length - 1]).toEqual({ id: "gene-1", name: "First carrier body of gene 1", text: "some body has more than half of its cells carrying gene bit 1" });
-    expect(FIRSTS_THRESHOLDS).toEqual({ big: 40, large: 100, travel: 16, lineageCells: 16, lineageSteps: 5000, leadCensuses: 10 });
+    expect(FIRSTS_THRESHOLDS).toEqual({
+      big: 40,
+      large: 100,
+      huge: 250,
+      travel: 16,
+      farTravel: 32,
+      lineageCells: 16,
+      lineageSteps: 5000,
+      longLineageSteps: 20000,
+      leadCensuses: 10,
+    });
   });
 
   it("firstsContext reads tile sizes, pond period and the gene bits of the config", () => {
@@ -336,6 +392,369 @@ describe("takeover", () => {
   });
 });
 
+describe("v0 rules keep their behaviour under firsts-v1", () => {
+  // The v0 scripted stream, verbatim, and the entries the v0 detector gave it (captured before firsts-v1 was written).
+  const legacy = (n: number): FirstsInput[] => {
+    const out: FirstsInput[] = [];
+    for (let k = 0; k < n; k++) {
+      const b1 = body(1, 20 + k, { cx: (5 + 0.7 * k) % 64, cy: 20 });
+      const b2 = body(2, 10 + (k % 40), { generation: Math.floor(k / 10), cx: 30, cy: 40, tile: 1, geneCells: [k > 60 ? 10 + (k % 40) : 0] });
+      out.push({
+        step: 100 * (k + 1),
+        bodies: [b1, b2],
+        lineages: [{ key: "A", cells: 200 - k }, ...(k >= 3 ? [{ key: "B", cells: 16 + 2 * k }] : [])],
+        fissions: Math.floor(k / 10),
+        deaths: k % 7 === 0 ? 1 : 0,
+        livingCells: 100,
+      });
+    }
+    return out;
+  };
+
+  it("the nine v0 entries keep their exact steps, flags and detail lines", () => {
+    const d = new FirstsDetector({ tileW: 64, tileH: 64, tiles: 2, censusEvery: 100, pondPeriod: 500, geneBits: [0] });
+    feed(d, legacy(120));
+    const v0 = new Set(FIRSTS_RULES.slice(0, 9).map((r) => r.id).concat("gene-0"));
+    expect(d.entries().filter((e) => v0.has(e.id)).map((e) => [e.id, e.step, e.already, e.detail])).toEqual([
+      ["body", 100, true, "20 cells, in pond 1"],
+      ["split", 1100, false, "1 split counted since t=100"],
+      ["body-40", 2100, false, "40 cells, in pond 1"],
+      ["grandchild", 2100, false, "generation 2, 30 cells, in pond 2"],
+      ["traveller", 2400, false, "moved 16.1 cells, in pond 1"],
+      ["gen-5", 5100, false, "generation 5, 20 cells, in pond 2"],
+      ["new-lineage", 5400, false, "lineage B, 122 cells, holding 16 or more since t=400"],
+      ["gene-0", 6200, false, "31 of 31 cells carry it, in pond 2"],
+      ["takeover", 7200, false, "lineage B, ahead since t=6,300"],
+      ["body-100", 8100, false, "100 cells, in pond 1"],
+    ]);
+    // the only v1 rung this stream reaches, and the summary is v0's but for the rule set id
+    expect(d.entries().filter((e) => !v0.has(e.id)).map((e) => [e.id, e.step, e.detail])).toEqual([["gen-10", 10100, "generation 10, 30 cells, in pond 2"]]);
+    expect(d.summary()).toEqual({
+      ruleSet: "firsts-v1",
+      watchedFrom: 100,
+      step: 12000,
+      baseline: { bodies: 2, largestBody: 20, maxGeneration: 0, lineages: 1 },
+      latest: { bodies: 2, largestBody: 139, maxGeneration: 11, lineages: 2 },
+      startingLineages: 1,
+      startingLineagesPresent: 1,
+      lastBodyStep: 12000,
+      bodiesLost: 17,
+      bodiesLostAtCycle: 3,
+      emptiedAt: null,
+      censuses: 120,
+    });
+  });
+});
+
+describe("huge body and tenth generation", () => {
+  it("fire at 250 cells and generation 10, once, and can already be there", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100));
+    expect(ids(d.observe(cen(200, { bodies: [body(1, 249, { generation: 9 })] })))).toEqual(["body", "body-40", "body-100", "grandchild", "gen-5"]);
+    const fired = d.observe(cen(300, { bodies: [body(1, 250, { generation: 10 })] }));
+    expect(fired.map((e) => [e.id, e.name, e.already, e.detail])).toEqual([
+      ["body-250", "First huge body", false, "250 cells"],
+      ["gen-10", "Tenth generation", false, "generation 10, 250 cells"],
+    ]);
+    expect(d.observe(cen(400, { bodies: [body(1, 400, { generation: 12 })] }))).toEqual([]);
+    const start = new FirstsDetector(CTX);
+    expect(start.observe(cen(100, { bodies: [body(1, 300, { generation: 11 })] })).map((e) => [e.id, e.already])).toEqual([
+      ["body", true], ["body-40", true], ["body-100", true], ["grandchild", true], ["gen-5", true], ["body-250", true], ["gen-10", true],
+    ]);
+  });
+
+  it("read the largest body and the deepest living generation at the census; bodies do not add up", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100));
+    expect(ids(d.observe(cen(200, { bodies: [body(1, 249), body(2, 100, { generation: 9 })] })))).toEqual(["body", "body-40", "body-100", "grandchild", "gen-5"]);
+    expect(d.observe(cen(300, { bodies: [body(1, 200, { generation: 9 }), body(2, 200, { generation: 3 })] }))).toEqual([]);
+    expect(ids(d.observe(cen(400, { bodies: [body(1, 249), body(2, 5, { generation: 10 })] })))).toEqual(["gen-10"]);
+  });
+});
+
+describe("far traveller", () => {
+  const at = (step: number, x: number, y: number, id = 1) => cen(step, { bodies: [body(id, 50, { cx: x, cy: y })] });
+
+  it("fires at 32 cells from the same origin the traveller used, after the traveller", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(at(100, 0, 0));
+    expect(d.observe(at(200, 11, 11))).toEqual([]);
+    expect(ids(d.observe(at(300, 12, 12)))).toEqual(["traveller"]);
+    // the origin was kept: (22, 22) is 31.1 from (0, 0), and (23, 23) is 32.5
+    expect(d.observe(at(400, 22, 22))).toEqual([]);
+    expect(d.observe(at(500, 23, 23)).map((e) => [e.id, e.name, e.step, e.already, e.detail])).toEqual([["far-traveller", "First far traveller", 500, false, "moved 32.5 cells"]]);
+    expect(d.observe(at(600, 40, 40))).toEqual([]);
+  });
+
+  it("a jump straight past 32 fires both at one census, traveller first, and never as already there", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(at(100, 0, 0));
+    expect(d.observe(at(200, 24, 24)).map((e) => [e.id, e.already, e.detail])).toEqual([
+      ["traveller", false, "moved 33.9 cells"],
+      ["far-traveller", false, "moved 33.9 cells"],
+    ]);
+  });
+
+  it("a missing census loses the origin, even after the traveller fired", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(at(100, 0, 0));
+    d.observe(at(200, 12, 12));
+    expect(find(d, "traveller")).toBeDefined();
+    d.observe(cen(300));
+    d.observe(at(400, 30, 30)); // a new origin
+    expect(d.observe(at(500, 50, 50))).toEqual([]); // 28.3 from it
+    expect(ids(d.observe(at(600, 63, 63)))).toEqual(["far-traveller"]); // 43.8: the short way round on both axes
+  });
+
+  it("names the pond like the traveller", () => {
+    const d = new FirstsDetector({ ...CTX, tiles: 2 });
+    d.observe(cen(100, { bodies: [body(1, 50, { cx: 0, cy: 0, tile: 1 })] }));
+    d.observe(cen(200, { bodies: [body(1, 50, { cx: 24, cy: 24, tile: 1 })] }));
+    expect(find(d, "far-traveller")!.detail).toBe("moved 33.9 cells, in pond 2");
+  });
+});
+
+describe("lineage to last 20,000 steps", () => {
+  const A = (step: number, b: number): FirstsInput => cen(step, { lineages: [{ key: "A", cells: 100 }, ...(b >= 0 ? [{ key: "B", cells: b }] : [])] });
+
+  it("fires at the census that completes 20,000 steps, from the run new-lineage counted, never for a starting lineage", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(A(100, -1));
+    for (let step = 200; step < 20200; step += 100) d.observe(A(step, 16));
+    expect(ids(d.entries())).toEqual(["new-lineage"]);
+    expect(find(d, "new-lineage")!.step).toBe(5200);
+    expect(ids(d.observe(A(20200, 16)))).toEqual(["lineage-20k"]);
+    expect(find(d, "lineage-20k")).toMatchObject({ name: "First lineage to last 20,000 steps", step: 20200, already: false, detail: "lineage B, 16 cells, holding 16 or more since t=200" });
+    expect(d.observe(A(20300, 16))).toEqual([]);
+  });
+
+  it("19,900 steps is not enough, and a dip or a vanishing restarts the count", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(A(100, -1));
+    for (let step = 200; step <= 20100; step += 100) d.observe(A(step, step === 10000 ? 15 : 40)); // held since t=10,100
+    expect(find(d, "lineage-20k")).toBeUndefined();
+    for (let step = 20200; step < 30100; step += 100) expect(ids(d.observe(A(step, 40)))).not.toContain("lineage-20k");
+    expect(ids(d.observe(A(30100, 40)))).toEqual(["lineage-20k"]);
+    expect(find(d, "lineage-20k")!.detail).toContain("t=10,100");
+    const v = new FirstsDetector(CTX);
+    v.observe(A(100, -1));
+    for (let step = 200; step <= 12000; step += 100) v.observe(A(step, step === 12000 ? -1 : 40));
+    for (let step = 12100; step < 32100; step += 100) expect(ids(v.observe(A(step, 40)))).not.toContain("lineage-20k");
+    expect(ids(v.observe(A(32100, 40)))).toEqual(["lineage-20k"]);
+  });
+
+  it("names the longest run, then the smaller key, when two have completed 20,000 steps at one census", () => {
+    const run = (cFrom: number, bFrom: number) => {
+      const d = new FirstsDetector(CTX);
+      d.observe(cen(100, { lineages: [{ key: "A", cells: 100 }] }));
+      const ls = (step: number) => [{ key: "A", cells: 100 }, ...(step >= bFrom ? [{ key: "B", cells: 30 }] : []), ...(step >= cFrom ? [{ key: "C", cells: 30 }] : [])];
+      for (let step = 200; step <= 20100; step += 100) d.observe(cen(step, { lineages: ls(step) }));
+      expect(find(d, "lineage-20k")).toBeUndefined();
+      // the census after a gap: both runs have completed 20,000 steps
+      d.observe(cen(20400, { lineages: ls(20400) }));
+      return find(d, "lineage-20k")!.detail;
+    };
+    expect(run(200, 300)).toBe("lineage C, 30 cells, holding 16 or more since t=200");
+    expect(run(300, 200)).toBe("lineage B, 30 cells, holding 16 or more since t=200");
+    expect(run(200, 200)).toBe("lineage B, 30 cells, holding 16 or more since t=200");
+  });
+});
+
+describe("second takeover", () => {
+  const lead = (step: number, a: number, b: number, c = 0, e = 0): FirstsInput =>
+    cen(step, { lineages: [{ key: "A", cells: a }, { key: "B", cells: b }, ...(c ? [{ key: "C", cells: c }] : []), ...(e ? [{ key: "D", cells: e }] : [])] });
+  /** B takes over at t=1,100 (it has led since t=200). */
+  const first = () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100, { lineages: [{ key: "A", cells: 100 }] }));
+    for (let step = 200; step <= 1100; step += 100) d.observe(lead(step, 100, 120));
+    expect(find(d, "takeover")!.step).toBe(1100);
+    return d;
+  };
+
+  it("fires at the tenth census in a row led by another new lineage, counting from the census after the first", () => {
+    const d = first();
+    for (let step = 1200; step < 2100; step += 100) expect(d.observe(lead(step, 100, 120, 150))).toEqual([]); // 9 censuses: 1200..2000
+    expect(ids(d.observe(lead(2100, 100, 120, 150)))).toEqual(["takeover-2"]);
+    expect(find(d, "takeover-2")).toMatchObject({ name: "Second takeover", step: 2100, already: false, detail: "lineage C, ahead since t=1,200" });
+    expect(d.observe(lead(2200, 100, 120, 150))).toEqual([]);
+  });
+
+  it("never counts the lineage the first takeover named, nor a starting lineage, and the most cells is over every lineage", () => {
+    const d = first();
+    for (let step = 1200; step <= 6000; step += 100) d.observe(lead(step, 100, 120)); // B keeps leading
+    for (let step = 6100; step <= 9000; step += 100) d.observe(lead(step, 150, 140)); // A leads
+    for (let step = 9100; step <= 12000; step += 100) d.observe(lead(step, 100, 130, 120)); // C is second to B
+    expect(find(d, "takeover-2")).toBeUndefined();
+  });
+
+  it("a lineage that tied for the lead at the first takeover still needs ten more censuses after it", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100, { lineages: [{ key: "A", cells: 100 }] }));
+    for (let step = 200; step <= 1100; step += 100) d.observe(lead(step, 50, 90, 90)); // B and C tied for ten censuses: B (smaller key) is named
+    expect(find(d, "takeover")!.detail).toBe("lineage B, ahead since t=200");
+    expect(find(d, "takeover-2")).toBeUndefined();
+    for (let step = 1200; step < 2100; step += 100) expect(d.observe(lead(step, 50, 80, 90))).toEqual([]);
+    expect(ids(d.observe(lead(2100, 50, 80, 90)))).toEqual(["takeover-2"]);
+    expect(find(d, "takeover-2")!.detail).toBe("lineage C, ahead since t=1,200");
+  });
+
+  it("an interrupted streak restarts and a tie goes to the longer lead, then the smaller key", () => {
+    const d = first();
+    for (let step = 1200; step <= 1800; step += 100) d.observe(lead(step, 100, 120, 150)); // 7 censuses
+    expect(d.observe(lead(1900, 100, 160, 150))).toEqual([]); // B, excluded, ahead: ends C's streak
+    for (let step = 2000; step < 2900; step += 100) expect(d.observe(lead(step, 100, 120, 150, 150))).toEqual([]);
+    expect(ids(d.observe(lead(2900, 100, 120, 150, 150)))).toEqual(["takeover-2"]);
+    expect(find(d, "takeover-2")!.detail).toBe("lineage C, ahead since t=2,000");
+  });
+});
+
+describe("several new rungs at one census", () => {
+  it("fire in rule-table order", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100, { bodies: [body(1, 20, { cx: 0, cy: 0 })] }));
+    const fired = d.observe(cen(200, { bodies: [body(1, 300, { cx: 23, cy: 23, generation: 10 })], fissions: 1 }));
+    expect(ids(fired)).toEqual(["body-40", "body-100", "split", "grandchild", "gen-5", "traveller", "body-250", "gen-10", "far-traveller"]);
+  });
+});
+
+describe("next up", () => {
+  const A = (step: number, b: number): FirstsInput => cen(step, { lineages: [{ key: "A", cells: 100 }, ...(b >= 0 ? [{ key: "B", cells: b }] : [])] });
+  const lead = (step: number, a: number, b: number): FirstsInput => cen(step, { lineages: [{ key: "A", cells: a }, { key: "B", cells: b }] });
+  const row = (n: { id: string; value: number; target: number; unit: string; kind: string }) => [n.id, n.value, n.target, n.unit, n.kind];
+
+  it("a fresh detector offers the first three rungs of the ladder at value 0", () => {
+    const d = new FirstsDetector(CTX);
+    expect(d.nextUp().map(row)).toEqual([
+      ["body", 0, 1, "cells", "best"],
+      ["body-40", 0, 40, "cells", "best"],
+      ["split", 0, 1, "splits", "best"],
+    ]);
+    expect(d.nextUp()[1].name).toBe("First big body");
+    expect(nextUp(d)).toEqual(d.nextUp());
+    expect(nextUp(d, 2)).toEqual(d.nextUp(2));
+  });
+
+  it("body rungs show the largest body seen so far, which does not fall when the body shrinks", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100));
+    d.observe(cen(200, { bodies: [body(1, 30)] }));
+    expect(d.nextUp().map(row)).toEqual([
+      ["body-40", 30, 40, "cells", "best"],
+      ["split", 0, 1, "splits", "best"],
+      ["grandchild", 0, 2, "generations", "best"],
+    ]);
+    d.observe(cen(300, { bodies: [body(1, 10)] }));
+    expect(d.nextUp()[0].value).toBe(30);
+    expect(d.nextUp(20).filter((n) => n.unit === "cells").map((n) => [n.id, n.value, n.target])).toEqual([["body-40", 30, 40], ["body-100", 30, 100], ["body-250", 30, 250]]);
+  });
+
+  it("generation rungs show the deepest generation seen so far", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100, { bodies: [body(1, 50, { generation: 1 })] }));
+    expect(d.nextUp(4).map(row)).toContainEqual(["grandchild", 1, 2, "generations", "best"]);
+    d.observe(cen(200, { bodies: [body(1, 50, { generation: 4 })] }));
+    d.observe(cen(300, { bodies: [body(1, 50, { generation: 2 })] }));
+    const gens = d.nextUp(20).filter((n) => n.unit === "generations");
+    expect(gens.map(row)).toEqual([["gen-5", 4, 5, "generations", "best"], ["gen-10", 4, 10, "generations", "best"]]);
+  });
+
+  it("traveller rungs show the farthest a tracked body has moved from where it was first seen, in whole cells", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100, { bodies: [body(1, 50, { cx: 10 })] }));
+    d.observe(cen(200, { bodies: [body(1, 50, { cx: 20.9 })] }));
+    expect(d.nextUp(20).filter((n) => n.unit === "cells moved").map(row)).toEqual([["traveller", 10, 16, "cells moved", "best"], ["far-traveller", 10, 32, "cells moved", "best"]]);
+    d.observe(cen(300, { bodies: [body(1, 50, { cx: 12 })] })); // back again: the best stands
+    expect(d.nextUp(20).find((n) => n.id === "traveller")!.value).toBe(10);
+    d.observe(cen(400, { bodies: [body(1, 50, { cx: 26 })] })); // traveller fires
+    expect(d.nextUp(20).filter((n) => n.unit === "cells moved").map(row)).toEqual([["far-traveller", 16, 32, "cells moved", "best"]]);
+  });
+
+  it("lineage rungs show the longest unbroken run held now, and fall to 0 on a dip", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(A(100, -1));
+    expect(d.nextUp(20).find((n) => n.id === "new-lineage")).toMatchObject({ value: 0, target: 5000, unit: "steps", kind: "now" });
+    d.observe(A(200, 30));
+    d.observe(A(1200, 30));
+    expect(d.nextUp(20).find((n) => n.id === "new-lineage")!.value).toBe(1000);
+    expect(d.nextUp(20).find((n) => n.id === "lineage-20k")).toMatchObject({ value: 1000, target: 20000, kind: "now" });
+    d.observe(A(1300, 15));
+    expect(d.nextUp(20).find((n) => n.id === "new-lineage")!.value).toBe(0);
+    d.observe(A(1400, 30));
+    d.observe(A(1900, 30));
+    expect(d.nextUp(20).find((n) => n.id === "new-lineage")!.value).toBe(500);
+    // after new-lineage fired the 20,000-step rung keeps counting the same run
+    for (let step = 2000; step <= 6400; step += 100) d.observe(A(step, 30));
+    expect(find(d, "new-lineage")!.step).toBe(6400);
+    expect(d.nextUp(20).find((n) => n.id === "lineage-20k")).toMatchObject({ value: 5000, target: 20000 });
+  });
+
+  it("takeover rungs show the longest current lead, in censuses, and fall to 0 when it ends", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100, { lineages: [{ key: "A", cells: 100 }] }));
+    expect(d.nextUp(20).find((n) => n.id === "takeover")).toMatchObject({ value: 0, target: 10, unit: "censuses", kind: "now" });
+    for (let step = 200; step <= 500; step += 100) d.observe(lead(step, 100, 120));
+    expect(d.nextUp(20).find((n) => n.id === "takeover")!.value).toBe(4);
+    expect(d.nextUp(20).find((n) => n.id === "takeover-2")!.value).toBe(0);
+    d.observe(lead(600, 130, 120));
+    expect(d.nextUp(20).find((n) => n.id === "takeover")!.value).toBe(0);
+    for (let step = 700; step <= 1500; step += 100) d.observe(lead(step, 100, 120)); // 9 censuses
+    expect(d.nextUp(20).find((n) => n.id === "takeover")!.value).toBe(9);
+    d.observe(lead(1600, 100, 120)); // the tenth
+    expect(d.nextUp(20).find((n) => n.id === "takeover")).toBeUndefined();
+    expect(d.nextUp(20).find((n) => n.id === "takeover-2")!.value).toBe(0);
+    d.observe(cen(1700, { lineages: [{ key: "A", cells: 100 }, { key: "B", cells: 120 }, { key: "C", cells: 150 }] }));
+    d.observe(cen(1800, { lineages: [{ key: "A", cells: 100 }, { key: "B", cells: 120 }, { key: "C", cells: 150 }] }));
+    expect(d.nextUp(20).find((n) => n.id === "takeover-2")!.value).toBe(2);
+  });
+
+  it("gene rungs follow the ladder, showing the latest census's best share of a body's cells, needing more than half", () => {
+    const d = new FirstsDetector({ ...CTX, geneBits: [0, 1] });
+    expect(d.nextUp(20).map((n) => n.id)).toEqual([...FIRSTS_LADDER, "gene-0", "gene-1"]);
+    d.observe(cen(100, { bodies: [body(1, 20, { geneCells: [8, 0] }), body(2, 30, { geneCells: [3, 10] })] }));
+    const gene = (b: number) => d.nextUp(20).find((n) => n.id === `gene-${b}`)!;
+    expect(gene(0)).toMatchObject({ value: 40, target: 50, unit: "% of a body’s cells", kind: "now", above: true });
+    expect(gene(1).value).toBe(33);
+    d.observe(cen(200, { bodies: [body(1, 20, { geneCells: [4, 0] })] }));
+    expect(gene(0).value).toBe(20);
+    expect(gene(1).value).toBe(0);
+    expect(d.nextUp(20).filter((n) => !n.id.startsWith("gene-")).every((n) => n.above === undefined)).toBe(true);
+  });
+
+  it("skips rungs already reached, offers the gene rungs once every other rung is, and then the list is empty", () => {
+    const d = new FirstsDetector({ ...CTX, tiles: 2, pondPeriod: 500, geneBits: [0, 1] });
+    expect(d.nextUp(3).map((n) => n.id)).toEqual(["body", "body-40", "split"]);
+    feed(d, stream(240).map((i) => ({ ...i, bodies: i.bodies.map((b) => ({ ...b, geneCells: [b.geneCells?.[0] ?? 0, 0] })) })));
+    expect(d.entries().map((e) => e.id).sort()).toEqual(firstsRules([0, 1]).map((r) => r.id).filter((id) => id !== "gene-1").sort());
+    expect(d.nextUp().map(row)).toEqual([["gene-1", 0, 50, "% of a body’s cells", "now"]]);
+    const plain = new FirstsDetector({ ...CTX, tiles: 2, pondPeriod: 500, geneBits: [0] });
+    feed(plain, stream(240));
+    expect(plain.nextUp()).toEqual([]);
+  });
+
+  it("count clamps, and reading it changes nothing", () => {
+    const d = new FirstsDetector(CTX);
+    d.observe(cen(100, { bodies: [body(1, 30)] }));
+    const before = JSON.stringify(d.snapshot());
+    expect(d.nextUp(0)).toEqual([]);
+    expect(d.nextUp(-4)).toEqual([]);
+    expect(d.nextUp(100).map((n) => n.id)).toEqual(FIRSTS_LADDER.filter((id) => id !== "body"));
+    expect(d.nextUp(2)).toHaveLength(2);
+    expect(JSON.stringify(d.snapshot())).toBe(before);
+  });
+
+  it("a replay shows the same numbers: a restored detector's list equals the original's", () => {
+    const all = stream(120);
+    const a = new FirstsDetector({ tileW: 64, tileH: 64, tiles: 2, censusEvery: 100, pondPeriod: 500, geneBits: [0] });
+    feed(a, all.slice(0, 60));
+    const b = FirstsDetector.restore(JSON.parse(JSON.stringify(a.snapshot())));
+    expect(b.nextUp(20)).toEqual(a.nextUp(20));
+    feed(a, all.slice(60));
+    feed(b, all.slice(60));
+    expect(b.nextUp(20)).toEqual(a.nextUp(20));
+  });
+});
+
 describe("gene rules", () => {
   it("fire only for the context's gene bits, on a strict majority of a body's cells", () => {
     const d = new FirstsDetector({ ...CTX, geneBits: [0, 1] });
@@ -378,7 +797,7 @@ describe("step guard", () => {
     expect(JSON.stringify(d.snapshot())).toBe(before);
     expect(d.summary()).toEqual(sum);
     expect(d.lastStep).toBe(200);
-    expect(d.observe(cen(201, { bodies: [body(1, 300)] })).map((e) => e.id)).toEqual(["body-100"]);
+    expect(d.observe(cen(201, { bodies: [body(1, 300)] })).map((e) => e.id)).toEqual(["body-100", "body-250"]);
   });
 
   it("never throws on empty bodies and lineages", () => {
@@ -450,36 +869,26 @@ describe("summary", () => {
 });
 
 describe("snapshot and restore", () => {
-  /** A scripted stream that makes every rule fire: growth, descent, a traveller, a durable second lineage that overtakes, a gene. */
-  const stream = (n: number): FirstsInput[] => {
-    const out: FirstsInput[] = [];
-    for (let k = 0; k < n; k++) {
-      const b1 = body(1, 20 + k, { cx: (5 + 0.7 * k) % 64, cy: 20 });
-      const b2 = body(2, 10 + (k % 40), { generation: Math.floor(k / 10), cx: 30, cy: 40, tile: 1, geneCells: [k > 60 ? 10 + (k % 40) : 0] });
-      out.push({
-        step: 100 * (k + 1),
-        bodies: [b1, b2],
-        lineages: [{ key: "A", cells: 200 - k }, ...(k >= 3 ? [{ key: "B", cells: 16 + 2 * k }] : [])],
-        fissions: Math.floor(k / 10),
-        deaths: k % 7 === 0 ? 1 : 0,
-        livingCells: 100,
-      });
-    }
-    return out;
-  };
-  const ctx: FirstsContext = { tileW: 64, tileH: 64, tiles: 2, censusEvery: 100, pondPeriod: 500, geneBits: [0] };
+  const ctx = STREAM_CTX;
 
-  it("the scripted stream fires every rule", () => {
+  it("the scripted stream fires every rule, the new rungs at the steps its design gives", () => {
     const d = new FirstsDetector(ctx);
-    feed(d, stream(120));
+    feed(d, stream(240));
     expect(d.entries().map((e) => e.id).sort()).toEqual(firstsRules([0]).map((r) => r.id).sort());
+    const at = (id: string) => [find(d, id)!.step, find(d, id)!.already];
+    expect([at("traveller"), at("far-traveller"), at("new-lineage"), at("takeover"), at("takeover-2"), at("gen-10"), at("lineage-20k"), at("body-250")]).toEqual([
+      [2000, false], [3900, false], [5400, false], [7200, false], [10000, false], [10100, false], [20400, false], [23100, false],
+    ]);
+    expect(find(d, "takeover-2")!.detail).toBe("lineage C, ahead since t=9,100");
+    expect(find(d, "lineage-20k")!.detail).toContain("lineage B");
+    expect(d.nextUp()).toEqual([]);
   });
 
   it("restoring at any census then feeding the rest gives the same log as an uninterrupted detector", () => {
-    const all = stream(120);
+    const all = stream(240);
     const whole = new FirstsDetector(ctx);
     feed(whole, all);
-    for (const cut of [0, 1, 4, 23, 24, 25, 52, 53, 54, 70, 71, 72, 119]) {
+    for (const cut of [0, 1, 4, 19, 20, 23, 24, 25, 38, 39, 52, 53, 54, 70, 71, 72, 89, 90, 99, 100, 119, 203, 204, 230, 231, 239]) {
       const a = new FirstsDetector(ctx);
       feed(a, all.slice(0, cut));
       const snap = JSON.parse(JSON.stringify(a.snapshot()));
@@ -491,6 +900,7 @@ describe("snapshot and restore", () => {
       expect(fb).toEqual(fa);
       expect(b.entries()).toEqual(whole.entries());
       expect(b.summary()).toEqual(whole.summary());
+      expect(b.nextUp(20)).toEqual(whole.nextUp(20));
       expect(JSON.stringify(b.snapshot())).toBe(JSON.stringify(whole.snapshot()));
     }
   });
@@ -535,8 +945,9 @@ describe("snapshot and restore", () => {
       expect(() => FirstsDetector.restore(s)).toThrow();
     };
     expect(() => FirstsDetector.restore(snap())).not.toThrow();
-    bad((s) => (s.v = 2));
-    bad((s) => (s.ruleSet = "firsts-v1"));
+    bad((s) => (s.v = 1));
+    bad((s) => (s.ruleSet = "firsts-v0"));
+    bad((s) => ((s.v = 1), (s.ruleSet = "firsts-v0")));
     bad((s) => delete s.ctx);
     bad((s) => ((s.ctx as Record<string, unknown>).geneBits = [9]));
     bad((s) => delete s.entries);
@@ -546,6 +957,14 @@ describe("snapshot and restore", () => {
     bad((s) => (s.held = [[1, 2]]));
     bad((s) => (s.lastStep = null));
     bad((s) => (s.censuses = -1));
+    bad((s) => (s.bestBody = -1));
+    bad((s) => delete s.bestGen);
+    bad((s) => (s.farthest = null));
+    bad((s) => (s.lastFissions = 1.5));
+    bad((s) => (s.geneShare = []));
+    bad((s) => (s.geneShare = [101]));
+    bad((s) => (s.takeoverKey = "B")); // no takeover entry yet
+    bad((s) => (s.takeoverKey = 7));
     expect(() => FirstsDetector.restore(null as never)).toThrow();
   });
 });
