@@ -86,9 +86,10 @@ Three Sol xhigh passes, no P0 or P1. After main was merged in, two scan tests ca
 </ul>
 Adds Pond keeper, Session card and header checks. Three Sol passes, no P0 or P1. After the merge conflict with #42 was resolved: 96 passed, 8 skipped (no build) in Chrome.</td></tr>
 <tr id="s24"><td>24</td><td>Proposer bench v0: rules fixed before running, a dose-matched baseline, a launcher and a dry run; no runs without a person's batch approval</td><td><code>claude/slice24-proposer-bench</code></td><td>Running as workflow <code>wf_8af6b264-e87</code></td></tr>
-<tr id="s25"><td>25</td><td>Test hygiene for parallel worktrees: a configurable e2e port, no hardcoded origins, no <code>deno.lock</code> churn from tests</td><td><code>claude/slice25-test-hygiene</code></td><td>Running as workflow <code>wf_18be5ed6-fd1</code></td></tr>
+<tr id="s25"><td>25</td><td>Test hygiene for parallel worktrees: a configurable e2e port, no hardcoded origins, no <code>deno.lock</code> churn from tests</td><td><code>claude/slice25-test-hygiene</code> / <a href="https://github.com/treetopdevs/browser-life/pull/47">#47</a></td><td>Merged as <code>572e7d5</code>. <code>BL_E2E_PORT</code> sets the e2e port; a bad value throws, and strictPort stays with no reuse. The garden spec derives its origin from <code>baseURL</code>. Every deno that a test spawns uses <code>--no-lock</code>, and a guard test enforces it. <code>deno.lock</code> was updated on purpose for the axe-core dependency. After main was merged in, one operator-page test failed, and it fails the same way on main (D-29).</td></tr>
 <tr id="s26"><td>26</td><td>Garden: the stone horizon test on the big storm (how long a stone lasts), rules fixed before running</td><td><code>claude/slice26-stone-horizon</code></td><td>Running as workflow <code>wf_a6020595-b87</code></td></tr>
 <tr id="s27"><td>27</td><td>Live naturalist in the lab: field notes beside a running world, at the calibrated thresholds only</td><td><code>claude/slice27-live-naturalist</code></td><td>Running as workflow <code>wf_76ba7c3e-5c2</code></td></tr>
+<tr id="s25b"><td>25b</td><td>Fix: an operator-page e2e regression on main ("operations details clear after authentication and network failures")</td><td><code>claude/fix-ops-page-regression</code></td><td>A worker is finding the root cause (D-29)</td></tr>
 <!-- SLICE-ROWS -->
 </tbody>
 </table>
@@ -377,6 +378,16 @@ Adds Pond keeper, Session card and header checks. Three Sol passes, no P0 or P1.
 <dt>Context</dt><dd>The garden's pace (one day = one sun wander, provisionally) waits on the stone horizon test (brainstorm §6.2), which was blocked only on headless lesions, now built. Bell v1's GPU runs are done. The gene v2 peer session ("Workflow progress planning") has been idle since 2026-10-17 20:06 UTC, with uncommitted kernel edits in its worktree.</dd>
 <dt>Decision</dt><dd>Slice 26 runs §6.2 on the local GPU: rules first, a timing-only pilot, a grid that shrinks by a rule fixed beforehand if the time cap would be exceeded, and the readout recorded whatever it says. The gene v2 work is not this run's to finish or discard, so the kernel files stay off limits (D-03), and the sun letter and the snowflake rule keep waiting.</dd>
 <dt>Why</dt><dd>The garden's pace is the next open question for that app, and running the test locally is free. Touching another session's uncommitted kernel work could lose it.</dd>
+</dl>
+</article>
+
+<article id="d29">
+<h2><span>D-29</span>A regression on main is fixed on its own branch, and merges now run a wider e2e sweep</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 11:00 UTC</dd>
+<dt>Context</dt><dd>While checking #47, <code>public-site.spec.ts</code> "operations details clear after authentication and network failures" failed with 2 elements where 0 were expected, and it fails the same way on main <code>f34c460</code>. #39 and #45 changed the operator page, but neither PR ran <code>public-site.spec.ts</code>.</dd>
+<dt>Decision</dt><dd>Merge #47, since it is not the cause. A worker finds the root cause on <code>claude/fix-ops-page-regression</code>. If the page shows stale operator data after losing auth, that is a privacy fault and the page gets fixed. The assertion is never weakened. From here on, the coordinator runs <code>public-site</code>, <code>public-a11y</code> and <code>coordinator-ops</code> before merging any PR that touches a served page.</dd>
+<dt>Why</dt><dd>Each slice ran only the specs for its own files, so a page shared by two specs slipped through.</dd>
 </dl>
 </article>
 
