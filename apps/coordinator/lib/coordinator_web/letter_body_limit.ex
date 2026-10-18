@@ -1,6 +1,6 @@
 defmodule CoordinatorWeb.LetterBodyLimit do
   @moduledoc """
-  Parses the body of the public letter routes with a tiny length limit, ahead
+  Parses the body of the public letter routes (and the food hands route) with a tiny length limit, ahead
   of the endpoint's own `Plug.Parsers` (8 MB by default, right for the
   island routes that carry summaries and manifests).
 
@@ -49,5 +49,8 @@ defmodule CoordinatorWeb.LetterBodyLimit do
 
   defp letter_route?(["api", "public", "garden", "letters"]), do: true
   defp letter_route?(["api", "public", "gardens", _name, "letters"]), do: true
+  # A food hand (`{}`) is held to the same limits.
+  defp letter_route?(["api", "public", "garden", "food", "hands"]), do: true
+  defp letter_route?(["api", "public", "gardens", _name, "food", "hands"]), do: true
   defp letter_route?(_), do: false
 end

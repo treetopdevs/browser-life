@@ -48,6 +48,51 @@ defmodule Coordinator.LetterLimiterTest do
     end
   end
 
+  describe "hand_key/1 (garden food)" do
+    test "one key across a /48, another per network, and a new incarnation after a reset or a restart" do
+      {:ok, {e, a}} = LetterLimiter.hand_key({0x2001, 0xDB8, 1, 2, 0, 0, 0, 1})
+      assert {:ok, {^e, ^a}} = LetterLimiter.hand_key({0x2001, 0xDB8, 1, 2, 9, 9, 9, 9})
+      # Another /64 of the same /48: the same hand (the letter budget counts it apart).
+      assert {:ok, {^e, ^a}} = LetterLimiter.hand_key({0x2001, 0xDB8, 1, 0xFFFF, 0, 0, 0, 1})
+
+      assert LetterLimiter.network({0x2001, 0xDB8, 1, 0xFFFF, 0, 0, 0, 1}) !=
+               LetterLimiter.network({0x2001, 0xDB8, 1, 2, 0, 0, 0, 1})
+
+      assert {:ok, {^e, b}} = LetterLimiter.hand_key({0x2001, 0xDB8, 2, 2, 0, 0, 0, 1})
+      assert {:ok, {^e, c}} = LetterLimiter.hand_key({10, 0, 0, 3})
+      assert {:ok, {^e, ^c}} = LetterLimiter.hand_key({0, 0, 0, 0, 0, 0xFFFF, 0x0A00, 0x0003})
+      assert {:ok, {^e, d}} = LetterLimiter.hand_key({10, 0, 0, 4})
+      assert length(Enum.uniq([a, b, c, d])) == 4
+      assert byte_size(a) == 32
+      assert LetterLimiter.hand_epoch() == e
+      # A hand key is not a letter-budget key: taking a letter stores no hand hash.
+      {:ok, _} = LetterLimiter.take({10, 0, 0, 3})
+      refute Enum.any?(:ets.tab2list(@counters), fn row -> c in Tuple.to_list(row) end)
+
+      LetterLimiter.reset()
+      assert {:ok, {e2, ^c}} = LetterLimiter.hand_key({10, 0, 0, 3})
+      assert e2 != e and LetterLimiter.hand_epoch() == e2
+
+      :ok = Supervisor.terminate_child(Coordinator.Supervisor, LetterLimiter)
+      assert LetterLimiter.hand_key({10, 0, 0, 3}) == :error
+      assert LetterLimiter.hand_epoch() == :unavailable
+      {:ok, _} = Supervisor.restart_child(Coordinator.Supervisor, LetterLimiter)
+      # A new salt as well as a new incarnation.
+      assert {:ok, {e3, c3}} = LetterLimiter.hand_key({10, 0, 0, 3})
+      assert e3 not in [e, e2] and c3 != c
+    end
+  end
+
+  describe "hand_network/1" do
+    test "IPv6 by its /48, IPv4-mapped as IPv4, anything else as itself" do
+      assert LetterLimiter.hand_network({0x2001, 0xDB8, 0xAB, 1, 2, 3, 4, 5}) ==
+               {0x2001, 0xDB8, 0xAB, 0, 0, 0, 0, 0}
+
+      assert LetterLimiter.hand_network({0, 0, 0, 0, 0, 0xFFFF, 0x0A00, 0x0003}) == {10, 0, 0, 3}
+      assert LetterLimiter.hand_network({10, 0, 0, 3}) == {10, 0, 0, 3}
+    end
+  end
+
   describe "take/1, refund/1 and refuse/1" do
     test "a budget per network: the /128s of one /64 share it" do
       Application.put_env(:coordinator, :garden_letters_per_address, 3)

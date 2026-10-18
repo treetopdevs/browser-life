@@ -262,6 +262,12 @@ body {
   font-variant-numeric: tabular-nums;
   color: var(--ink);
   font-weight: 600;
+  /* A value can carry a name from the data (a picker's) with no break in it. */
+  overflow-wrap: anywhere;
+}
+
+.lineage-section > p {
+  overflow-wrap: anywhere;
 }
 
 /* --- figures --- */
@@ -494,9 +500,12 @@ export function statusChip(status: DataStatus, note: string): string {
  * `<figure>`. `caption` is plain text describing what is plotted, the n, and
  * how to read it -- escaped, not raw HTML, so a renderer never has to worry
  * about a data-derived label breaking the caption markup. */
-export function figure(n: number, svg: string, caption: string, tableHtml?: string): string {
+/** `scrollLabel`: the figure is wider than a phone on purpose, so its box is a named region keyboard users can
+ * focus and scroll; without it the markup is as before. */
+export function figure(n: number, svg: string, caption: string, tableHtml?: string, opts?: { scrollLabel?: string }): string {
+  const media = opts?.scrollLabel ? `<div class="fig-media" role="region" tabindex="0" aria-label="${escapeHtml(opts.scrollLabel)}">` : `<div class="fig-media">`;
   return `<figure class="fig">
-  <div class="fig-media">
+  ${media}
 ${svg}
   </div>
   <figcaption><strong>Figure ${n}.</strong> ${escapeHtml(caption)}</figcaption>

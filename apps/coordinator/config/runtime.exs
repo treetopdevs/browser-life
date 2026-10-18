@@ -96,8 +96,10 @@ if token = System.get_env("BL_GARDEN_ISLAND_TOKEN"),
 # when the origin port is reachable through that proxy alone (firewalled
 # otherwise): a client that can reach the port directly names its own address.
 # Without it every visitor behind a loopback proxy shares one budget.
+# Setting it also says visitors are no longer one shared address to the
+# garden's food ask (`garden_shared_address`, true in prod.exs until then).
 if System.get_env("BL_TRUST_FORWARDED_FOR") in ["1", "true"],
-  do: config(:coordinator, trust_forwarded_for: true)
+  do: config(:coordinator, trust_forwarded_for: true, garden_shared_address: false)
 
 # Lets a test harness (see tests/deno/coordinator_integration.ts) point a real
 # server at a scratch directory instead of the default `data/`.

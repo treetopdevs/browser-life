@@ -74,6 +74,35 @@ defmodule Coordinator.ReleaseConfigTest do
     refute File.read!("config/runtime.exs") =~ "garden_presets"
   end
 
+  # Slice 18 (docs/garden-food-2026-10-18.md, section 4): the food defaults a
+  # garden founded with food copies into its record, and nothing at runtime
+  # changes them.
+  test "prod food defaults: 5 networks, one food per 7 days, 16 quanta per cell over radius 32" do
+    coordinator = prod_config()[:coordinator]
+    assert coordinator[:garden_food_asks] == 5
+    assert coordinator[:garden_food_every_days] == 7
+    assert coordinator[:garden_food_amount] == 16
+    assert coordinator[:garden_food_radius] == 32
+    refute File.read!("config/runtime.exs") =~ "garden_food"
+  end
+
+  # D-17 and D-24: until the proxy passes client addresses every visitor is one
+  # address, and the food block says so; BL_TRUST_FORWARDED_FOR=1 (set with the
+  # Caddy fix) clears it.
+  test "prod says visitors share one address to the food ask until BL_TRUST_FORWARDED_FOR=1" do
+    assert prod_config()[:coordinator][:garden_shared_address] == true
+
+    assert Config.Reader.read!("config/config.exs", env: :dev)[:coordinator][
+             :garden_shared_address
+           ] == false
+
+    prod_env()
+    refute Keyword.has_key?(prod_runtime()[:coordinator], :garden_shared_address)
+    System.put_env("BL_TRUST_FORWARDED_FOR", "1")
+    assert prod_runtime()[:coordinator][:garden_shared_address] == false
+    assert prod_runtime()[:coordinator][:trust_forwarded_for] == true
+  end
+
   # A garden island token is a join-body parameter (`gardenToken`); Phoenix's
   # parameter filter matches case-sensitively, and its default is ["password"]
   # alone. garden_api_test.exs checks an actual join's log line.

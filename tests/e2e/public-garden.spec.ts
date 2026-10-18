@@ -1,5 +1,6 @@
 // The shared garden's page (/garden/) against the garden-v1 fixture, served by route interception: the honesty
-// numbers, each state, each answer to a letter, "since your last visit" with and without storage, and mock mode.
+// numbers, each state, each answer to a letter, the food ask and each answer to a hand (docs/garden-food-2026-10-18.md),
+// "since your last visit" with and without storage, and mock mode.
 import { expect, test, type Page, type Route } from "@playwright/test";
 import contractFixture from "../../apps/coordinator/priv/static/garden-contract.example.json" with { type: "json" };
 
@@ -8,6 +9,7 @@ declare const process: { env: Record<string, string | undefined> };
 const FIXTURE = contractFixture as Record<string, any>;
 const VIEW = "**/api/public/garden";
 const LETTERS = "**/api/public/garden/letters";
+const HANDS = "**/api/public/garden/food/hands";
 const KEY = "cadence-garden-visit:http://localhost:5174:commons";
 /** The record a device keeps, in the shape the page writes (createdAt names the planting). */
 const record = (step: number, daysVerified: number, mine: string[] = [], createdAt: number = FIXTURE.createdAt) =>
@@ -250,6 +252,179 @@ for (const width of [1280, 375]) test(`letter form: each answer in words at ${wi
   expect(bodies).toHaveLength(1 + cases.length);
 });
 
+for (const width of [1280, 375]) test(`food ask: count, threshold, time left and landing at ${width}`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  await serve(page);
+  await page.goto("/garden/");
+  await expect(page.locator("#g-food-row")).toBeVisible();
+  await expect(page.locator("#g-food-count")).toHaveText("2 of 5 networks have asked today.");
+  await expect(page.locator("#g-food-time")).toContainText("Today’s hands expire at the next dawn, in 2 hours and 51 minutes");
+  await expect(page.locator("#g-food-landing")).toHaveText("A food called now would land at step 524,288, the end of day 3, at the centre (256, 256): 16 quanta of nutrient per cell over a disc of radius 32.");
+  await expect(page.locator("#g-food-why")).toContainText("Food is the one thing that adds matter to this closed world, so it is kept rare on purpose.");
+  await expect(page.locator("#g-food-why")).toContainText("nobody has tested that yet");
+  await expect(page.locator("#g-food-time")).toContainText("unless 3 more networks ask before then.");
+  await expect(page.locator("#food-shared")).toBeHidden();
+  await expect(page.locator("#g-food-why")).toContainText("at most once every 2 days");
+  await expect(page.locator("#food-send")).toBeEnabled();
+  await expect(page.locator("#food-send")).toHaveText("Add my hand");
+  await expect(page.locator('#g-foods [data-food="food-1"]')).toContainText("Replayed here");
+  await expect(page.locator('#g-foods [data-food="food-1"]')).toContainText("called by 5 networks, landing at step 262,144 (end of day 1)");
+  await expect(page.locator("#g-day-list li").nth(1)).toContainText("carries the food food-1");
+  // A food is never listed as a letter.
+  await expect(page.locator('[data-letter="food-1"]')).toHaveCount(0);
+  await noOverflow(page);
+});
+
+test("food ask: each answer in words", async ({ page }) => {
+  let hands = 2;
+  const counter = await serve(page, () => fixture((v) => { v.food.hands = hands; }));
+  const bodies: { body: string | null; type: string | undefined }[] = [];
+  let answer: (route: Route) => Promise<void> = (route) => json(route, { error: "nope" }, 409);
+  await page.route(HANDS, async (route) => {
+    const request = route.request();
+    expect(request.method()).toBe("POST");
+    bodies.push({ body: request.postData(), type: request.headers()["content-type"] });
+    await answer(route);
+  });
+  await page.goto("/garden/");
+  await expect(page.locator("#food-send")).toBeEnabled();
+
+  const cases: [string, (route: Route) => Promise<void>, string][] = [
+    ["409", (route) => json(route, { error: "a food lands at most once every 2 days; the next can land on day 9 at the earliest", closed: "cooldown", opensAtDay: 9 }, 409), "The food ask is closed: a food lands at most once every 2 days; the next can land on day 9 at the earliest."],
+    ["422", (route) => json(route, { error: "a hand is exactly {}: it carries nothing" }, 422), "The garden refused the hand: a hand is exactly {}: it carries nothing."],
+    ["429", (route) => json(route, { error: "too many letters and hands from this address", retryAfterMs: 1_500_000 }, 429, { "retry-after": "1500" }), "The garden is not taking hands from this network just now: it takes at most 3 letters and hands an hour from one network, together, and fewer when many are refused. Try again in 25 minutes."],
+    ["413", (route) => route.fulfill({ status: 413, body: "" }), "The page sent something the garden could not read. Reload the page and try again."],
+    ["415", (route) => route.fulfill({ status: 415, contentType: "text/html", body: "<h1>Unsupported</h1>" }), "The page sent something the garden could not read. Reload the page and try again."],
+    ["404", (route) => json(route, { error: "not found" }, 404), "There is no garden by that name here."],
+    ["503", (route) => json(route, { error: "the garden is busy; retry shortly", counted: false }, 503, { "retry-after": "1" }), "The garden is busy; try again in a moment. Your hand was not counted."],
+    ["503 unsure", (route) => json(route, { error: "the garden is busy; retry shortly", counted: null }, 503, { "retry-after": "1" }), "The garden was too busy to answer, so this page cannot tell whether your hand was counted. The count below is read again: a second hand from this network is never counted twice."],
+    ["no answer", (route) => route.abort(), "No answer came back, so this page cannot tell whether your hand was counted. The count below is read again: a second hand from this network is never counted twice."],
+    ["500", (route) => route.fulfill({ status: 500, body: "" }), "The garden answered 500, so this page cannot tell whether your hand was counted. The count below is read again: a second hand from this network is never counted twice."],
+  ];
+  for (const [name, handler, words] of cases) {
+    answer = handler;
+    const gets = counter.gets;
+    await page.locator("#food-send").click();
+    await expect(page.locator("#food-answer"), name).toHaveText(words);
+    await expect(page.locator("#food-send"), name).toBeEnabled();
+    if (name === "no answer" || name === "500" || name === "409" || name === "503 unsure") await expect.poll(() => counter.gets, name).toBeGreaterThan(gets);
+    await noOverflow(page);
+  }
+
+  // Counted: the count is read again, and this tab's hand is in until the dawn (in memory only).
+  answer = (route) => { hands = 3; return json(route, { counted: true, called: null, food: { ...FIXTURE.food, hands: 3 } }, 201); };
+  await page.locator("#food-send").click();
+  await expect(page.locator("#food-answer")).toHaveText("Your hand is in. 3 of 5 networks have asked today.");
+  await expect(page.locator("#g-food-count")).toHaveText("3 of 5 networks have asked today.");
+  await expect(page.locator("#food-send")).toBeDisabled();
+  await expect(page.locator("#food-why")).toHaveText("Your hand is in for today.");
+  expect(bodies.every((b) => b.body === "{}" && b.type === "application/json")).toBe(true);
+  expect(bodies).toHaveLength(cases.length + 1);
+  // Nothing about the hand is kept on the device.
+  expect(await page.evaluate(() => Object.values(localStorage).some((v) => v.includes("hand")))).toBe(false);
+
+  // A new tab: a repeat is said kindly, and a calling hand names its food.
+  await page.reload();
+  await expect(page.locator("#food-send")).toBeEnabled();
+  answer = (route) => json(route, { counted: false, called: null, food: { ...FIXTURE.food, hands: 3 } }, 200);
+  await page.locator("#food-send").click();
+  await expect(page.locator("#food-answer")).toHaveText("A hand from your network was already in for today: one hand per network per dawn. 3 of 5 networks have asked today.");
+  await page.reload();
+  answer = (route) => json(route, { counted: true, called: { ...FIXTURE.food.foods[0], id: "food-2", day: 3, landsAtStep: 524288, status: "waiting", landedIn: null }, food: { ...FIXTURE.food, hands: 0 } }, 201);
+  await page.locator("#food-send").click();
+  await expect(page.locator("#food-answer")).toHaveText("Yours was the hand that called the food: food-2 is public now, lands at step 524,288 (end of day 3), and counts once a second island replays that day.");
+});
+
+test("a closed ask shows its reason and a disabled button", async ({ page }) => {
+  const variants: [string, (v: Json) => void, string][] = [
+    ["cooldown", (v) => Object.assign(v.food, { open: false, closed: "cooldown", opensAtDay: 9, landing: null }), "A food lands at most once every 2 days: the next can land on day 9 at the earliest."],
+    ["stopped", (v) => Object.assign(v.food, { open: false, closed: "stopped", landing: null }), "The garden has stopped, so it takes no food until the keeper looks."],
+    ["log-full", (v) => Object.assign(v.food, { open: false, closed: "log-full", landing: null }), "The garden’s log is full."],
+  ];
+  let current = fixture();
+  await serve(page, () => current);
+  for (const [name, mutate, words] of variants) {
+    current = fixture(mutate);
+    await page.goto("/garden/");
+    await expect(page.locator("#g-food-row"), name).toBeVisible();
+    await expect(page.locator("#food-send"), name).toBeDisabled();
+    await expect(page.locator("#food-why"), name).toHaveText(words);
+    await expect(page.locator("#g-food-landing"), name).toHaveText(words);
+    // A closed ask does not headline a count of zero.
+    await expect(page.locator("#g-food-count"), name).toHaveText("The food ask is closed just now.");
+  }
+  // A food waiting on its notice: named in the headline, its veto window in words.
+  current = fixture((v) => {
+    Object.assign(v.food, { open: false, closed: "cooldown", opensAtDay: 5, landing: null, hands: 0 });
+    v.food.foods.unshift({ ...v.food.foods[0], id: "food-2", day: 3, landsAtStep: 524288, status: "waiting", landedIn: null, calledAt: v.now - 3_600_000, noticeUntil: v.now + 3_600_000 });
+  });
+  await page.goto("/garden/");
+  await expect(page.locator("#g-food-count")).toHaveText("A food is waiting: food-2 lands at step 524,288, the end of day 3. Hands count again once the ask reopens.");
+  await expect(page.locator('#g-foods [data-food="food-2"]')).toContainText("Its day is not run before");
+  await expect(page.locator('#g-foods [data-food="food-2"]')).toContainText("in 1 hour, so the keeper can still set it aside.");
+});
+
+test("food ask: the tab's hand is dropped at its dawn or when the server forgot it; a shared address is said", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.clock.install({ time: FIXTURE.now });
+  let body = fixture();
+  const counter = await serve(page, () => body);
+  await page.route(HANDS, (route) => { body = fixture((v) => { v.food.hands = 3; }); return json(route, { counted: true, called: null, food: body.food }, 201); });
+  await page.goto("http://localhost:5174/garden/");
+  await page.locator("#food-send").click();
+  await expect(page.locator("#food-send")).toBeDisabled();
+  await expect(page.locator("#food-why")).toHaveText("Your hand is in for today.");
+
+  // The garden's server restarted and forgot the period's hands: the next poll lets this tab ask again.
+  body = fixture((v) => { v.food.hands = 0; v.now += 60_000; });
+  let before = counter.gets;
+  await page.clock.runFor(60_000);
+  await expect.poll(() => counter.gets).toBeGreaterThan(before);
+  await expect(page.locator("#food-send")).toBeEnabled();
+
+  // Hand in again, from a view that counts 0: the view the hand was sent from cannot show it forgotten, so the
+  // tab's hand holds through the answer and the read after it. Then a dawn passes in this tab (the view's now
+  // reaches the hand's expiry).
+  before = counter.gets;
+  await page.locator("#food-send").click();
+  await expect.poll(() => counter.gets).toBeGreaterThan(before);
+  await expect(page.locator("#food-why")).toHaveText("Your hand is in for today.");
+  await expect(page.locator("#food-send")).toBeDisabled();
+  body = fixture((v) => { v.now = v.food.expiresAt; v.food.expiresAt += 86_400_000; v.food.hands = 1; v.pace.nextDawnAt = v.food.expiresAt; });
+  before = counter.gets;
+  await page.clock.runFor(60_000);
+  await expect.poll(() => counter.gets).toBeGreaterThan(before);
+  await expect(page.locator("#food-send")).toBeEnabled();
+  await expect(page.locator("#food-why")).toHaveText("");
+
+  // Every visitor one address (production until the proxy is fixed): said beside the button.
+  body = fixture((v) => { v.food.sharedAddress = true; });
+  before = counter.gets;
+  await page.clock.runFor(60_000);
+  await expect.poll(() => counter.gets).toBeGreaterThan(before);
+  await expect(page.locator("#food-shared")).toBeVisible();
+  await expect(page.locator("#food-shared")).toContainText("Right now every visitor reaches this garden through one shared address");
+  await noOverflow(page);
+  await context.close();
+});
+
+test("a view without food shows no ask", async ({ page }) => {
+  const variants: [string, (v: Json) => void][] = [
+    ["a coordinator from before food", (v) => { delete v.food; for (const d of v.days) delete d.food; }],
+    ["a garden founded without food", (v) => { v.food = { ...v.food, enabled: false, asks: null, everyDays: null, amount: null, r: null, place: null, hands: 0, open: false, closed: "off", landing: null, foods: [] }; for (const d of v.days) d.food = null; }],
+  ];
+  let current = fixture();
+  await serve(page, () => current);
+  for (const [name, mutate] of variants) {
+    current = fixture(mutate);
+    await page.goto("/garden/");
+    await expect(page.locator("#garden-message"), name).toHaveText("The garden answered.");
+    await expect(page.locator("#g-food-row"), name).toBeHidden();
+    await expect(page.locator("#g-step"), name).toHaveText("393,216");
+  }
+});
+
 test("since your last visit, and without storage", async ({ page, browser }) => {
   await serve(page);
   await page.goto("/garden/");
@@ -379,6 +554,8 @@ test("mock mode in the dev server", async ({ page }) => {
   await expect(page.locator("#g-step")).toHaveText("393,216");
   await page.locator("#stone-send").click();
   await expect(page.locator("#stone-answer")).toHaveText("This is the example garden from the contract, so nothing was sent.");
+  await page.locator("#food-send").click();
+  await expect(page.locator("#food-answer")).toHaveText("This is the example garden from the contract, so nothing was sent.");
   expect(requests).toEqual([]);
 });
 

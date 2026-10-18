@@ -8,6 +8,12 @@
 // coordinator is then restarted in a fresh OS process against the same data directory, the verified prefix is
 // exported with tools/stitch.ts (garden mode) and compared with one unsegmented tools/run.ts run of the same schedule:
 // the stitched schedule must be the founding plus the verified letters, and the two bundles must agree byte for byte.
+// Food (amended 2026-10-18, docs/garden-food-2026-10-18.md section 8): the garden is founded with food (K 2, N 1), two
+// networks (X-Forwarded-For, which this coordinator trusts) call a food onto day 1 right after L2, and the food is a feed
+// in day 1's log (r 32, matter exactly 51,344), verified, kept across the restart and in the stitched schedule. Its day
+// waits one dawn period (a second here) after the call before an island gets it (the keeper's veto window). The ask's
+// count after the restart is 0 trivially here (the call itself zeroed it); ExUnit holds the restart rule with a hand
+// left counted.
 //
 // The dawn grid is the test clock: `dawnPeriodMs` 1,000, so a day waits at most a second for its dawn. Nothing in the
 // coordinator is moved from outside. GPU time is small: 3 days of 256 steps on a 256x256 world, each replayed once, then
@@ -54,6 +60,10 @@ const DAYS = 4;
 const PERIOD = 1000; // dawnPeriodMs
 const CENSUS = 64;
 const FOUNDING: ScheduledIntervention[] = [{ step: 0, kind: "feed", x: 128, y: 128, r: 64, amount: 16 }];
+// The food (docs/garden-food-2026-10-18.md): the world's centre, the coordinator's default radius and amount. The r 32
+// disc on spots is 3,209 cells, so it adds 51,344 quanta.
+const FOOD = { kind: "feed", x: 128, y: 128, r: 32, amount: 16 };
+const FOOD_MATTER = 51_344;
 // The coordinator's garden island token (amended 2026-10-18, docs/garden-hardening-2026-10-18.md): set after the BL_*
 // scrub below, so this coordinator offers the garden's days only to islands that join showing it. A and B do; a third
 // island C does not, and is told idle while day 0 waits unassigned.
@@ -121,7 +131,9 @@ async function spawnServer(): Promise<Server> {
   const child = new Deno.Command("mix", {
     args: ["phx.server"],
     cwd: coordinatorDir,
-    env: { ...withoutBl(Deno.env.toObject()), MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir, BL_DISCOVERY_DATA_DIR: `${workDir}/discovery`, BL_GARDEN_ISLAND_TOKEN: TOKEN },
+    // BL_TRUST_FORWARDED_FOR (amended 2026-10-18, food): the food hands below come from distinct X-Forwarded-For
+    // networks. Requests without the header (the stones, the islands) are still keyed by the peer, 127.0.0.1.
+    env: { ...withoutBl(Deno.env.toObject()), MIX_ENV: "dev", PORT: String(port), BL_DATA_DIR: dataDir, BL_DISCOVERY_DATA_DIR: `${workDir}/discovery`, BL_GARDEN_ISLAND_TOKEN: TOKEN, BL_TRUST_FORWARDED_FOR: "1" },
     clearEnv: true,
     stdin: "null",
     stdout: "piped",
@@ -313,9 +325,11 @@ const B: Island = { name: "B", gardenToken: TOKEN, log: [] };
 
 /** Has `island` complete `n` tasks, asking again (after a short sleep) whenever it is told idle: an idle answer is
  * waiting for the next dawn, not a failure. Returns the tasks it took, as "run #d" / "verify #d". */
-// runIsland checks its signal between tasks and while idle, but its requests and GPU work do not take it
-// (packages/runner is outside this test), so a call still running ISLAND_GRACE_MS past the deadline fails the run: the
-// throw reaches the cleanup, which stops the coordinator and exits the process, and with it the stuck call.
+// The deadline is runIsland's signal, which since docs/island-cancel-2026-10-18.md also cancels its requests and stops a
+// task in hand at its next census chunk (nothing uploaded or completed, the lease left to lapse): a day past the
+// deadline is abandoned, not finished and counted, so the checks see it as not done. A complete, reject or fail already
+// sent is not aborted, so a call still running ISLAND_GRACE_MS past the deadline (a coordinator that never answers one)
+// fails the run: the throw reaches the cleanup, which stops the coordinator and exits the process, and with it the call.
 const ISLAND_GRACE_MS = 30_000;
 // A day takes about a second here; BL_E2E_WORK_MS raises the per-step budget (default 120 s) on a machine slow enough
 // to need it, so a healthy slow island is not failed as a stuck one.
@@ -363,6 +377,8 @@ async function work(island: Island, n: number, timeoutMs = WORK_MS): Promise<str
 
 const letterBody = (x: number, y: number, r: number) => ({ kind: "stone", x, y, r });
 const postLetter = (l: { x: number; y: number; r: number }) => postJson(`/api/public/gardens/${NAME}/letters`, letterBody(l.x, l.y, l.r));
+/** A food hand from network `ip` (the coordinator trusts X-Forwarded-For here). */
+const hand = (ip: string) => request(`/api/public/gardens/${NAME}/food/hands`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": ip }, body: "{}" });
 
 // Stones on the founders' cells (world.ts's generalist init: lowbias32(seed * 31 + i)), so the letters hit biomass.
 const spotsCfg = { ...defaultConfig(), ...PRESETS.find((p) => p.id === "spots")!.cfg, seed: 1 };
@@ -437,6 +453,9 @@ try {
     censusEvery: CENSUS,
     lettersPerDay: 1,
     dawnPeriodMs: PERIOD,
+    food: true,
+    foodAsks: 2,
+    foodEveryDays: 1,
   });
   check("1. the keeper founds a 4-day spots garden in dev (spots is a dev garden preset)", founded.status === 200 && founded.body?.garden === NAME && founded.body?.days === DAYS, JSON.stringify(founded));
 
@@ -448,6 +467,13 @@ try {
         canon({ step: 0, verifiedStep: 0, releasedStep: D, horizonStep: 4 * D, daysDone: 0, daysTotal: 4 }) &&
       v.tip === null && v.fork === null && v.census === null && v.verification.share === null,
     JSON.stringify({ contract: v.contract, state: v.state, clock: v.clock, tip: v.tip, fork: v.fork, census: v.census, verification: v.verification }),
+  );
+
+  check(
+    "1. the food ask is open: enabled, K 2, N 1, no hands, a food would land on day 0 at D, at the centre with r 32 and amount 16",
+    v.food?.enabled === true && v.food.asks === 2 && v.food.everyDays === 1 && v.food.hands === 0 && v.food.open === true && v.food.closed === null &&
+      canon(v.food.landing) === canon({ day: 0, step: D }) && canon(v.food.place) === canon({ x: 128, y: 128 }) && v.food.r === 32 && v.food.amount === 16 && v.food.foods.length === 0,
+    JSON.stringify(v.food),
   );
 
   const toEdge = LETTER_WINDOW_MS - (Date.now() % LETTER_WINDOW_MS);
@@ -493,6 +519,50 @@ try {
     sameWindow && p4.status === 429 && p4.headers.get("retry-after") !== null && Number.isInteger(p4.body?.retryAfterMs),
     `${sameWindow ? "" : "the hourly letter window rolled over between L1 and this post (rerun); "}${p4.status} retry-after ${p4.headers.get("retry-after")} ${JSON.stringify(p4.body)}`,
   );
+  // ---- 2b. food: two networks call a food onto day 1 (the frontier: day 0 holds an attempt) ----
+  // The dawn period is one second here and hands expire at each dawn. First the repeat rule, with one network (K 2,
+  // so one network alone can never call): each try starts just past a dawn and sends the same network twice; a dawn
+  // between the two makes the second a fresh 201 instead, and the next try repeats it. Then fresh networks, one at a
+  // time, until one calls the food (the first unless a dawn falls between it and the repeat's network).
+  let food: any = null;
+  let repeatSeen = false;
+  const handLog: string[] = [];
+  const said = (r: { status: number; body: any }) => `${r.status} ${JSON.stringify({ counted: r.body?.counted, called: r.body?.called?.id ?? null, hands: r.body?.food?.hands })}`;
+  for (let attempt = 0; attempt < 5 && !repeatSeen; attempt++) {
+    await sleep(PERIOD - (Date.now() % PERIOD) + 30);
+    // A fresh network per try: a hand costs a letter of that network's hourly budget, and a repeat is a refusal.
+    const h1 = await hand(`10.0.${attempt}.1`);
+    const again = await hand(`10.0.${attempt}.1`);
+    handLog.push(`repeat try ${attempt}: ${said(h1)} | ${said(again)}`);
+    repeatSeen = h1.status === 201 && h1.body?.counted === true && h1.body?.called === null && again.status === 200 && again.body?.counted === false && again.body?.called === null;
+  }
+  check("2b. the same network's second hand in one dawn period is answered 200, not counted", repeatSeen, handLog.join(" || "));
+  for (let i = 0; i < 4 && !food; i++) {
+    const r = await hand(`10.0.8.${i + 1}`);
+    handLog.push(`call try ${i}: ${said(r)}`);
+    if (r.status === 201 && r.body?.called) food = r.body.called;
+  }
+  check(
+    "2b. two networks call a food: waiting on day 1 (L2's day), landing at 2D, at the centre, r 32, amount 16, called by 2 hands, its day held a dawn period",
+    food !== null && /^food-\d+$/.test(food.id) && food.day === 1 && food.landsAtStep === 2 * D && food.x === 128 && food.y === 128 && food.r === 32 && food.amount === 16 && food.hands === 2 && food.status === "waiting" &&
+      food.noticeUntil === food.calledAt + PERIOD,
+    `${JSON.stringify(food)} | ${handLog.join(" || ")}`,
+  );
+  const foodId = food?.id as string;
+  const fourth = await hand("10.0.9.3");
+  check(
+    "2b. a further hand is refused 409 cooldown: the next food can land on day 2 at the earliest (N 1)",
+    fourth.status === 409 && fourth.body?.closed === "cooldown" && fourth.body?.opensAtDay === 2,
+    `${fourth.status} ${JSON.stringify(fourth.body)}`,
+  );
+  v = await viewWhen("the food in the view", (x) => x.food?.foods?.length === 1);
+  check(
+    "2b. the view shows the food waiting, the ask closed for cooldown, and no food among the letters",
+    v.food.foods[0].id === foodId && v.food.foods[0].status === "waiting" && v.food.closed === "cooldown" && v.food.opensAtDay === 2 && v.food.landing === null &&
+      ![...v.letters.waiting, ...v.letters.recent].some((l: { id: string }) => l.id === foodId),
+    JSON.stringify({ food: v.food, letters: v.letters }),
+  );
+
   v = await viewWhen("day 0 done with two letters queued", (x) => x.clock.daysDone === 1 && x.letters.queued === 2);
   check(
     "2. one day done, not verified: tip at D unverified, no fork, verifiedStep 0, a census with conservation exact, last moved when day 0 was done",
@@ -623,6 +693,29 @@ try {
       letterOf(v, "ltr-3")?.status === "dropped" && v.letters.queued === 0,
     JSON.stringify(v.letters),
   );
+  const seg1Log = seg1 ? await request(`/api/segments/${seg1.id}/files/${INTERVENTIONS_FILE}`) : { status: 0, body: "", headers: new Headers() };
+  const day1Log = (() => {
+    try {
+      // request() parses a body that is one JSON value; a one-line log would be one.
+      return parseInterventionLog(typeof seg1Log.body === "string" ? seg1Log.body : `${JSON.stringify(seg1Log.body)}\n`);
+    } catch {
+      return [];
+    }
+  })();
+  const atEnd1 = day1Log.filter((e) => e.step === 2 * D);
+  check(
+    "5. day 1's interventions.jsonl holds L2 and then the food, a feed of r 32 that moved exactly 51,344 quanta, at 2D",
+    seg1Log.status === 200 && atEnd1.length === 2 && canon(atEnd1[0]) === canon({ step: 2 * D, kind: "lesion", ...L2 }) &&
+      canon(atEnd1[1]) === canon({ step: 2 * D, ...FOOD, matter: FOOD_MATTER }),
+    `${seg1Log.status} ${JSON.stringify(day1Log)}`,
+  );
+  check(
+    "5. the food is verified, landed in day 1's digest, day 1 carries it, and day 1's matter adds up",
+    v.food.foods[0]?.id === foodId && v.food.foods[0]?.status === "verified" && v.food.foods[0]?.landedIn === dayOf(v, 1)?.digest &&
+      dayOf(v, 1)?.food === foodId && dayOf(v, 0)?.food === null && dayOf(v, 2)?.food === null && dayOf(v, 1)?.census?.conservationOk === true,
+    JSON.stringify({ food: v.food, days: v.days }),
+  );
+
   // Island C joined and asked too, but tending counts attempts, not joins: still two.
   check("5. tending: two islands today (C, which never took a day, is not counted), one device type ever", v.tending.islandsToday === 2 && v.tending.deviceTypesEver === 1, JSON.stringify(v.tending));
 
@@ -659,6 +752,7 @@ try {
       verification: x.verification,
       fork: x.fork,
       letters: [...x.letters.waiting, ...x.letters.recent].map((l: { id: string; status: string; landedIn: string | null }) => [l.id, l.status, l.landedIn]).sort(),
+      foods: (x.food?.foods ?? []).map((f: { id: string; status: string; landedIn: string | null; day: number }) => [f.id, f.status, f.landedIn, f.day]),
       days: x.days.map((d: { day: number; status: string; releasedAt: number; doneAt: number | null; verifiedAt: number | null; digest: string | null }) => [d.day, d.status, d.releasedAt, d.doneAt, d.verifiedAt, d.digest]),
     });
   await stopServer(server);
@@ -666,7 +760,12 @@ try {
   server = await spawnServer();
   await waitReady(server, 180_000);
   const after = await view();
-  check("6. after a restart in a fresh OS process: the clock, verification, fork, letters and every day's release record are unchanged", durable(after) === durable(before), `${durable(before)}\n vs ${durable(after)}`);
+  check("6. after a restart in a fresh OS process: the clock, verification, fork, letters, foods and every day's release record are unchanged", durable(after) === durable(before), `${durable(before)}\n vs ${durable(after)}`);
+  check(
+    "6. ...the food is still there, verified, and the ask's count is 0 (trivially here, the call zeroed it; ExUnit holds the restart rule)",
+    after.food?.foods?.[0]?.id === foodId && after.food.foods[0].status === "verified" && after.food.hands === 0,
+    JSON.stringify(after.food),
+  );
   // The fork is still downloadable (the letter limiter re-registers the garden's world on boot; the route needs it), on
   // the first read (amended 2026-10-18: no polling).
   const forkAgain = await fetch(`${base}${after.fork?.checkpoint}`, { signal: AbortSignal.timeout(REQUEST_MS) });
@@ -701,20 +800,27 @@ try {
       return [];
     }
   })();
-  const expectedSchedule = [...FOUNDING, { step: D, kind: "lesion", ...L1 }, { step: 2 * D, kind: "lesion", ...L2 }];
+  const expectedSchedule = [...FOUNDING, { step: D, kind: "lesion", ...L1 }, { step: 2 * D, kind: "lesion", ...L2 }, { step: 2 * D, ...FOOD }];
   check(
-    "7. the stitched schedule is the founding plus L1 at D and L2 at 2D, without the dropped L3; its log holds 3 lines at 0, D, 2D, and the manifest counts 3 applied",
-    canon(stitchedMan.spec?.interventions) === canon(expectedSchedule) && logged.map((e) => e.step).join() === `0,${D},${2 * D}` && stitchedMan.interventions?.applied === 3 && stitchedMan.spec?.steps === 3 * D,
+    "7. the stitched schedule is the founding plus L1 at D, L2 at 2D and the food after it, without the dropped L3; its log holds 4 lines at 0, D, 2D, 2D (the food's with its matter), and the manifest counts 4 applied",
+    canon(stitchedMan.spec?.interventions) === canon(expectedSchedule) && logged.map((e) => e.step).join() === `0,${D},${2 * D},${2 * D}` &&
+      logged[3]?.kind === "feed" && (logged[3] as { matter?: number }).matter === FOOD_MATTER && stitchedMan.interventions?.applied === 4 && stitchedMan.spec?.steps === 3 * D,
     JSON.stringify({ spec: stitchedMan.spec?.interventions, steps: stitchedMan.spec?.steps, log: logged.map((e) => e.step), block: stitchedMan.interventions }),
   );
+  // At one step the stones come first, then the foods, each by number (README: food.landing).
+  type Entry = { at: [number, number, number]; e: Record<string, unknown> };
+  const seq = (id: string) => Number(id.slice(id.indexOf("-") + 1));
+  const stonesFromView: Entry[] = [...after.letters.waiting, ...after.letters.recent]
+    .filter((l: { status: string }) => l.status === "verified")
+    .map((l: { id: string; landsAtStep: number; x: number; y: number; r: number }) => ({ at: [l.landsAtStep, 0, seq(l.id)], e: { step: l.landsAtStep, kind: "lesion", x: l.x, y: l.y, r: l.r } }));
+  const foodsFromView: Entry[] = (after.food?.foods ?? [])
+    .filter((f: { status: string }) => f.status === "verified")
+    .map((f: { id: string; landsAtStep: number; x: number; y: number; r: number; amount: number }) => ({ at: [f.landsAtStep, 1, seq(f.id)], e: { step: f.landsAtStep, kind: "feed", x: f.x, y: f.y, r: f.r, amount: f.amount } }));
   const fromView = [
     ...after.founding,
-    ...[...after.letters.waiting, ...after.letters.recent]
-      .filter((l: { status: string }) => l.status === "verified")
-      .sort((a: { landsAtStep: number; id: string }, b: { landsAtStep: number; id: string }) => a.landsAtStep - b.landsAtStep || Number(a.id.slice(4)) - Number(b.id.slice(4)))
-      .map((l: { landsAtStep: number; x: number; y: number; r: number }) => ({ step: l.landsAtStep, kind: "lesion", x: l.x, y: l.y, r: l.r })),
+    ...[...stonesFromView, ...foodsFromView].sort((a, b) => a.at[0] - b.at[0] || a.at[1] - b.at[1] || a.at[2] - b.at[2]).map((x) => x.e),
   ];
-  check("7. ...and it equals the public view's founding plus its verified letters", canon(stitchedMan.spec?.interventions) === canon(fromView), `${canon(stitchedMan.spec?.interventions)} vs ${canon(fromView)}`);
+  check("7. ...and it equals the public view's founding plus its verified letters and foods", canon(stitchedMan.spec?.interventions) === canon(fromView), `${canon(stitchedMan.spec?.interventions)} vs ${canon(fromView)}`);
 
   const scheduleFile = `${workDir}/schedule.json`;
   await Deno.writeTextFile(scheduleFile, JSON.stringify(stitchedMan.spec?.interventions ?? []));
