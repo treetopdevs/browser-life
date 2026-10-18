@@ -316,13 +316,13 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   "spots-m3": {
     asks: "What do the searched founders do under even light over a long run?",
     look: "Twelve genomes, each found by search. In the Lineages view some colours spread and others shrink to nothing within the first ten thousand steps.",
-    seen: { state: "negative", text: "One of the two worlds of the registered 10⁶-step ensemble (28 Sep). New adaptive activity beat the no-mutation control here but missed the bar against the neutral one, and the second test failed: runs where mutations change nothing also read as growing. Not open-ended by the registered definition." },
+    seen: { state: "negative", text: "One of the two worlds of the registered 10⁶-step ensemble (28 Sep). New adaptive activity beat the no-mutation control here but missed the bar against the neutral one, and the second test failed: runs where mutations change nothing also read as growing. Not open-ended by the registered definition. In later exploratory checks, separate from the registered experiment, an anomaly bell, a program that flags a world as unusual, was tried on neutral runs here and in the bright-to-dim world together and rang on 30 of their 70 where its bar allowed 2 (17 Oct). Measures read off the tree of mutations (18 Oct) pointed the expected way here, but the neutral runs never narrowed to one common ancestor and no mutant family rose from rare to common in any of them, so the comparison says little." },
     base: "spots",
   },
   "gradient-m3": {
     asks: "The searched founders with a bright end and a dim end; the base every sandbox below compares itself against.",
     look: "Watch whether lineages sort by brightness. This is the control world for the ownership, cells and storm screens, so it is worth knowing by eye.",
-    seen: { state: "negative", text: "The main world of the registered 10⁶-step ensemble (28 Sep). New adaptive activity beat both controls here, but the second test failed: runs where mutations change nothing also read as growing. Evolved lineages also lost the founders’ ability to regrow after a wound (0.17 against 0.98)." },
+    seen: { state: "negative", text: "The main world of the registered 10⁶-step ensemble (28 Sep). New adaptive activity beat both controls here, but the second test failed: runs where mutations change nothing also read as growing. Evolved lineages also lost the founders’ ability to regrow after a wound (0.17 against 0.98). Those neutral runs stand in for chance alone in later exploratory checks, separate from the registered experiment. An anomaly bell, a program that flags a world as unusual, rang on 30 of 70 neutral runs (40 here, 30 in the even-light world) where its bar allowed 2 (17 Oct). After leaving out two signals that swing widely by chance and limiting the check to the first 300,000 steps, changes chosen after that first look, it rang on none of 70 fresh neutral runs here and on all 10 evolving runs (18 Oct). Asked to spot an intervention in twin runs forked at step 200,000, it heard a wound that removed over a third of the living cells on 4 of 10 seeds and a feed on 4 of 10, and a smaller wound on none, short of its bar (18 Oct). Measures read off the tree of mutations came out the wrong way round here: the neutral runs held far fewer lineages, and all 40 saw a mutant family rise from rare to common, against 16 of 20 evolving runs, so none passed its check fixed in advance (18 Oct)." },
     base: "gradient",
   },
   "gradient-m3-waste": {
@@ -345,7 +345,7 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   "ponds-small": {
     asks: "The pond cycle at a size that fits a laptop: four ponds, a cycle every 1,000 steps.",
     look: "A cycle comes round every few seconds at speed, so this is the quickest way to see clearing and reseeding happen. Breed by hand works here too.",
-    seen: { state: "pending", text: "Built for tests and the lab, not for an experiment." },
+    seen: { state: "pending", text: "Built for tests and the lab, not for an experiment. A check of the lineage tool across pond cycles ran on four short runs here (17 Oct): it made 465 checks of descent from parent to mutant, 81 of them across a pond cycle and checked against the record of which pond seeded which, and every one came out exact. That tests the tool, not the world." },
     base: "ponds",
   },
   planet: {
@@ -531,13 +531,13 @@ export const WORLD_NOTES: Record<string, WorldNote> = {
   "wild-storm-large": {
     asks: "The storm on the big world, with the sun at the same speed.",
     look: "Twice the founders, four times the cells. Slower on most GPUs.",
-    seen: { state: "negative", text: "Extinct at steps 121,000, 28,000 and 66,000 at seeds 1 to 3 (9 Oct), before the sun’s first full wander. With the starting food doubled, all three seeds were alive at a million steps with nearly every cell living: a carpet, as far as the numbers and a frame can tell. Raised by half instead, two seeds of three held thousands of small bodies at a million steps, one with a corner of worm-like shapes in its last frame by eye, and the third died at 84,000. By eye in the lab, fed by hand at the start (9 Oct, one seed), it seemed to hold up and make worms when food got scarce; that middle ground is not yet found." },
+    seen: { state: "negative", text: "Extinct at steps 121,000, 28,000 and 66,000 at seeds 1 to 3 (9 Oct), before the sun’s first full wander. With the starting food doubled, all three seeds were alive at a million steps with nearly every cell living: a carpet, as far as the numbers and a frame can tell. Raised by half instead, two seeds of three held thousands of small bodies at a million steps, one with a corner of worm-like shapes in its last frame by eye, and the third died at 84,000. By eye in the lab, fed by hand at the start (9 Oct, one seed), it seemed to hold up and make worms when food got scarce; that middle ground is not yet found. It is the world a shared garden is planned around. By 18 Oct the code for it was written, with stones (wounds of a chosen size that visitors drop in), a day set provisionally at one sun wander, and a way for visitors to ask for food together that stays off unless the garden is set up with it on. How long a stone stays findable has not been measured, and the garden is not open." },
     base: "wild-storm",
   },
   breeder: {
     asks: "Can we breed ponds toward a trait we can see?",
     look: "Sixteen ponds at ten times the mutation rate, a cycle every 5,000 steps, donors ranked on movement, the seed packet’s mass and body size together. Turn on Breed by hand and choose the donors yourself.",
-    seen: { state: "measured", text: "Measured on the 64-pond, 10,000-step world (4 Oct), one seed each: breeding for movement alone bred real movement and left 23 of 64 ponds occupied; adding the seed packet’s mass kept 63 occupied at about half the pace, and body size too kept 62 occupied at about a third. This 16-pond, 5,000-step version is sized for the lab and has not been measured. A vision model picking the most unusual-looking ponds bred no movement in one try: novelty and movement are not the same thing." },
+    seen: { state: "measured", text: "Measured on the 64-pond, 10,000-step world (4 Oct), one seed each: breeding for movement alone bred real movement and left 23 of 64 ponds occupied; adding the seed packet’s mass kept 63 occupied at about half the pace, and body size too kept 62 occupied at about a third. This 16-pond, 5,000-step version is sized for the lab and has not been measured. A vision model picking the most unusual-looking ponds bred no movement in one try: novelty and movement are not the same thing. Since 18 Oct the code can hand a run bred by the world’s own rule (not by hand or by a model) to islands in pieces, with a second island re-running pieces to check them. In short test runs every piece replayed exactly and the joined run matched one run straight through. It has run only in tests, and it shows the work can travel, not that breeding selects." },
     base: "ponds",
   },
 };
