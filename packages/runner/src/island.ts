@@ -30,8 +30,16 @@ import { observationDigests } from "./stitch.ts";
  * hands such a segment, run or verify, only to an island that lists this.
  * Older code knows no such field: it would run the segment clean and report
  * a digest that disagrees with every capable island's, a divergence with no
- * real disagreement in it. */
-export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1"];
+ * real disagreement in it. `"breed-v1"` is the breeder (WorldConfig.pondScore,
+ * docs/sandbox-wild.md): the conditions pond-breed-<score>, pond-mass-<score>
+ * and pond-drift-<score>, and every run of the `breeder` preset, whose
+ * `treatment` is the breed arm. The coordinator asks for it in addition to
+ * `"ponds-v1"`, never instead of it. Older code has none of those condition
+ * ids nor the score columns, so it throws on them, and on a continuation would
+ * report a valid predecessor as invalid; the controls are gated as well as the
+ * arm for that reason. Only the rule's own donors are distributed: a picked or
+ * pressured run is still refused below (docs/archipelago-breed-2026-10-18.md). */
+export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "interventions-v1", "breed-v1"];
 
 /** Why this island will not run `spec`, or null. A branch run (RunSpec.branch)
  * starts from a source checkpoint that only tools/run.ts reads, from a local

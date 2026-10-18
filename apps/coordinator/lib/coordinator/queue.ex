@@ -79,6 +79,26 @@ defmodule Coordinator.Queue do
   `"ponds-v2"` is asked for in addition to `"ponds-v1"`, never instead of it
   (`ISLAND_CAPABILITIES` lists both); a `ponds-v1` rule is otherwise unchanged.
 
+  The breeder (`WorldConfig.pondScore`, docs/sandbox-wild.md and
+  docs/archipelago-breed-2026-10-18.md) needs `"breed-v1"` as well, again in
+  addition to `"ponds-v1"`: a segment, run or verify, whose condition is one of
+  the breeder's (`pond-breed-<score>`, `pond-mass-<score>`, `pond-drift-<score>`,
+  `@breed_condition_prefixes`), on any pond preset, and every segment of an
+  experiment on a preset in config's `:breed_presets` (`breeder`, whose
+  `treatment` is the breed arm). Older code has neither the conditions nor the
+  score columns and throws on them, and on a continuation would report a valid
+  predecessor as invalid, so the controls are gated as well as the arm. Only
+  the rule's own donors are distributed: a spec never carries `picked`,
+  `pressures` or `branch` (`validate/1` keeps none of them), and an island
+  refuses a task that does. A breeder condition on a preset without the pond
+  cycle is refused at creation (`incompatible/3`). picks.jsonl is in no
+  verified file list and a standard island never writes it for a distributed
+  run. The donors the rule chose are in the checkpoint the verifier must
+  reproduce; their record, ponds.tsv's `donor` and score columns, is compared
+  like any observation file (informational here: a mismatch never changes a
+  segment's status), and tools/stitch.ts refuses to export a bred run whose
+  record mismatches.
+
   Scheduled interventions (`spec["interventions"]`, the runner's
   `RunSpec.interventions` -- packages/runner/src/interventions.ts): a list of
   lesions and feeds at absolute steps, the wounds and feedings a lab history
@@ -1370,6 +1390,10 @@ defmodule Coordinator.Queue do
   # compatibility depends on the *spec*, not just the preset. A pond preset has
   # neither (no migration, and `validate/1` refuses its metapopulation before
   # this), so "no-migration" is always refused there.
+  #
+  # The breeder's conditions are not in the static table either: each needs the
+  # pond cycle (packages/runner/src/conditions.ts throws without it), so one is
+  # refused on every preset outside `:pond_presets`, by its prefix.
   defp incompatible(preset, conditions, spec) do
     table = Application.get_env(:coordinator, :incompatible, %{})
     has_metapop = is_map(spec["metapopulation"])
@@ -1379,7 +1403,7 @@ defmodule Coordinator.Queue do
         effective_migration_period(preset, "treatment") == 0 and not has_metapop
 
       c ->
-        preset in Map.get(table, c, [])
+        preset in Map.get(table, c, []) or (breed_condition?(c) and not pond_preset?(preset))
     end)
   end
 
@@ -1401,6 +1425,11 @@ defmodule Coordinator.Queue do
     do: Map.get(Application.get_env(:coordinator, :pond_period, %{}), preset, 0)
 
   defp pond_preset?(preset), do: preset in Application.get_env(:coordinator, :pond_presets, [])
+
+  # A preset whose config sets pondScore (config's `:breed_presets`): every
+  # segment of its experiments needs `@breed_capability` (see the moduledoc).
+  defp breed_preset?(preset),
+    do: preset in Application.get_env(:coordinator, :breed_presets, [])
 
   # The first cadence error among `conditions`' own runs (each condition is a
   # separate run against `preset`, at the same censusEvery/segmentSteps -- see
@@ -1869,21 +1898,35 @@ defmodule Coordinator.Queue do
   # island that cannot apply them would run the segment clean.
   @interventions_capability "interventions-v1"
 
+  # The breeder (WorldConfig.pondScore, see the moduledoc): its conditions, by
+  # prefix (packages/runner/src/conditions.ts's pond-breed-<score>,
+  # pond-mass-<score> and pond-drift-<score>, held to it by
+  # packages/runner/test/coordinator-conditions.test.ts), and every experiment
+  # on a `:breed_presets` preset.
+  @breed_capability "breed-v1"
+  @breed_condition_prefixes ~w(pond-breed- pond-mass- pond-drift-)
+
+  defp breed_condition?(condition),
+    do: is_binary(condition) and String.starts_with?(condition, @breed_condition_prefixes)
+
   # The experiments whose work an island with `capabilities` must not be
-  # offered: every pond experiment, unless it advertises `@pond_capability`,
-  # and every experiment with scheduled interventions, unless it advertises
-  # `@interventions_capability`. Computed once per `pick_task/4` call rather
-  # than per segment, so a large queue costs one pass over the experiments,
-  # not one config lookup per segment.
+  # offered: every pond experiment, unless it advertises `@pond_capability`;
+  # every experiment on a breed preset, unless it advertises
+  # `@breed_capability`; and every experiment with scheduled interventions,
+  # unless it advertises `@interventions_capability`. Computed once per
+  # `pick_task/4` call rather than per segment, so a large queue costs one
+  # pass over the experiments, not one config lookup per segment.
   defp gated_experiments(s, capabilities) do
     ponds? = @pond_capability in capabilities
+    breed? = @breed_capability in capabilities
     scheduled? = @interventions_capability in capabilities
 
-    if ponds? and scheduled? do
+    if ponds? and breed? and scheduled? do
       MapSet.new()
     else
       for {name, exp} <- s.experiments,
           (not ponds? and pond_preset?(exp.spec["presetId"])) or
+            (not breed? and breed_preset?(exp.spec["presetId"])) or
             (not scheduled? and exp.spec["interventions"] != nil),
           into: MapSet.new(),
           do: name
@@ -1891,12 +1934,14 @@ defmodule Coordinator.Queue do
   end
 
   # Whether `seg` is withheld from an island with `capabilities`: its experiment
-  # is in `gated` (a pond experiment without `@pond_capability`), or its
-  # condition runs one of the hunt's arms and the island lacks `@current_capability`.
+  # is in `gated` (above), or its condition runs one of the hunt's arms and the
+  # island lacks `@current_capability`, or it is one of the breeder's and the
+  # island lacks `@breed_capability`.
   defp gated?(gated, capabilities, seg),
     do:
       MapSet.member?(gated, seg.experiment) or
-        (seg.condition in @current_conditions and @current_capability not in capabilities)
+        (seg.condition in @current_conditions and @current_capability not in capabilities) or
+        (breed_condition?(seg.condition) and @breed_capability not in capabilities)
 
   # ---- metrics-version gating (see moduledoc) ----
 

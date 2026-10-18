@@ -14,7 +14,7 @@
 // union of the entries each segment owned and applied (see `stitchRun`, and
 // docs/garden-stitch-rule-2026-10-17.md for the rule).
 import { HUNT_POND_COLUMNS, MATTER_MAX, METRICS_VERSION, RULE_VERSION, SCHEMA_VERSION, breedPondColumns, clampLesionRadius, exchangePositions, type PondArm, type PondScore, type WorldConfig } from "@bl/schema";
-import { runId, sameConfig, type RunSummary } from "./runner.ts";
+import { runId, sameConfig, specConfig, type RunSpec, type RunSummary } from "./runner.ts";
 import { INTERVENTIONS_FILE, formatInterventionLine, ownedInterventions, parseInterventionLog, sameIntervention, validateInterventions, type InterventionLogEntry, type ScheduledIntervention } from "./interventions.ts";
 
 /** Files one segment's runExperiment writes (checkpoints aside). */
@@ -155,7 +155,11 @@ interface HuntRow {
  * A run with `pondScore` (`score`; the breeder and its controls) writes `breedPondColumns(score)` exactly
  * (`BREED_POND_COLUMNS`, plus one column per term under a combined score), and every row's `score`, `donorScore` and
  * term values must be nonnegative integers below 2^53. Where the caller knows the arm, a file carrying the score
- * columns without a score in the config is refused, as a hunt header on another arm is.
+ * columns without a score in the config is refused, as a hunt header on another arm is. Each boundary's rows must also
+ * agree with each other the way `applyPondCycle` writes them (every score is of the one pre-cycle snapshot): a row's
+ * `donor` is -1 (no donor, `donorScore` 0) or a pond index, and its `donorScore` is that pond's own row's `score`. This
+ * is a consistency rule, not verification: which donors the rule chose is bound by the physics digest (the donors'
+ * cells are in the next state), and the file's bytes by the verifier's observation digests.
  */
 export function checkPondsFile(id: string, text: string, period: number | undefined, ponds: number, startStep: number, end: number, arm?: PondArm, score?: PondScore): void {
   const [header, ...rows] = lines(text);
@@ -179,6 +183,8 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
   if (score === undefined && arm !== undefined && scoreHeader)
     throw new Error(`${id}: ${PONDS_FILE} header carries the breeder's columns (${SCORE_ONLY_COLUMNS.join(", ")}), but the run has no pondScore`);
   const scoreCols = breedColumns === null ? [] : breedColumns.slice(breedColumns.indexOf("score")).map((c) => [c, names.indexOf(c)] as const);
+  // A scored run's rows per boundary: each recipient's score, and each row's donor and donorScore (`breedBoundary` below).
+  const scored = new Map<number, { scores: Map<number, number>; donors: [number, number][] }>();
   if (period === undefined || !Number.isSafeInteger(period) || period <= 0) throw new Error(`${id}: pondPeriod ${period} is not a positive integer`);
   const perBoundary = new Map<number, number[]>();
   const huntRows = new Map<number, HuntRow[]>();
@@ -199,6 +205,15 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
     for (const [name, at] of scoreCols)
       if (!/^\d+$/.test(cells[at] ?? "") || !Number.isSafeInteger(Number(cells[at])))
         throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with ${name} "${cells[at] ?? ""}", not a nonnegative integer below 2^53`);
+    if (breedColumns !== null) {
+      const donorCell = cells[names.indexOf("donor")] ?? "";
+      const donor = /^-?\d+$/.test(donorCell) ? Number(donorCell) : NaN;
+      if (!Number.isSafeInteger(donor) || donor < -1 || donor >= ponds)
+        throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} with donor "${donorCell}", not -1 or a pond index in [0, ${ponds})`);
+      const b = scored.get(step) ?? scored.set(step, { scores: new Map(), donors: [] }).get(step)!;
+      b.scores.set(recipient, Number(cells[names.indexOf("score")]));
+      b.donors.push([donor, Number(cells[names.indexOf("donorScore")])]);
+    }
     if (hunt) {
       if (step < lastStep) throw new Error(`${id}: ${PONDS_FILE} has a row at step ${step} after one at step ${lastStep}; boundaries come in ascending order`);
       lastStep = step;
@@ -212,6 +227,13 @@ export function checkPondsFile(id: string, text: string, period: number | undefi
     if (new Set(recipients).size !== ponds)
       throw new Error(`${id}: ${PONDS_FILE} has recipients [${recipients.join(",")}] for the boundary at t=${b}, expected each pond 0..${ponds - 1} exactly once`);
     if (hunt) checkHuntBoundary(id, b, recipients, huntRows.get(b)!, arm);
+    const sb = scored.get(b);
+    if (sb)
+      for (const [donor, donorScore] of sb.donors) {
+        const want = donor === -1 ? 0 : sb.scores.get(donor);
+        if (donorScore !== want)
+          throw new Error(`${id}: ${PONDS_FILE} has a row at t=${b} with donor ${donor} and donorScore ${donorScore}, but ${donor === -1 ? "a row without a donor has donorScore 0" : `pond ${donor}'s own row has score ${want}`}`);
+      }
   }
 }
 
@@ -329,6 +351,81 @@ export interface StitchOptions {
    * check on a segment's own window beyond that segment's own manifest and log.
    */
   garden?: { interventions: readonly ScheduledIntervention[] };
+}
+
+/**
+ * What the coordinator lists for one segment and its experiment (`GET /api/experiments/:name`): the fields its task
+ * spec is built from (`Coordinator.Queue`'s `task/4`). `metapopulation` is the experiment's (topology, migrantCount,
+ * salt) and `seeds` its seed list, from which the task's per-run `ringNamespace` (1-based position of the seed) follows.
+ */
+export interface DistributedTask {
+  experiment: string;
+  presetId: string;
+  condition: string;
+  seed: number;
+  steps: number;
+  censusEvery: number;
+  deepEvery: number;
+  seeds?: readonly number[];
+  metapopulation?: Record<string, unknown>;
+  interventions?: unknown;
+}
+
+/**
+ * Why a coordinator segment's manifest does not describe the task the coordinator handed out, or null. `stitchRun`
+ * checks manifests only against each other; a producer's manifest is not part of what a verifier's digests cover, so
+ * an export from the coordinator binds each one to the task here first: its spec must be exactly the task's spec
+ * (`task/4`: these keys, `checkpointEvery` 0, `metapopulation` and `interventions` only when the experiment has them,
+ * and nothing else, so no `overrides`, `picked`, `pressures` or `branch`), and its config exactly the one that spec
+ * builds (`specConfig`). A garden's segments each carry the schedule current when they were handed out, which
+ * tools/stitch.ts checks against the coordinator's on its own, so with `garden` only its presence is required here.
+ */
+export function taskSpecError(manifest: { spec?: unknown; cfg?: unknown }, task: DistributedTask, opts: { garden?: boolean } = {}): string | null {
+  const spec = manifest.spec;
+  if (!isRecord(spec)) return "manifest has no spec";
+  const want: Record<string, unknown> = {
+    experiment: task.experiment,
+    presetId: task.presetId,
+    condition: task.condition,
+    seed: task.seed,
+    steps: task.steps,
+    censusEvery: task.censusEvery,
+    deepEvery: task.deepEvery,
+    checkpointEvery: 0,
+  };
+  if (task.metapopulation !== undefined) {
+    const at = task.seeds?.indexOf(task.seed) ?? -1;
+    if (at < 0) return `seed ${task.seed} is not one of the experiment's seeds`;
+    want.metapopulation = { ...task.metapopulation, ringNamespace: at + 1 };
+  }
+  if (task.interventions !== undefined) want.interventions = task.interventions;
+  for (const k of new Set([...Object.keys(spec), ...Object.keys(want)])) {
+    if (!(k in want)) return `spec carries ${k}, which the coordinator's task does not`;
+    if (!(k in spec)) return `spec lacks ${k}, which the coordinator's task carries`;
+    if (k === "interventions" && opts.garden) continue;
+    if (!sameJson(spec[k], want[k])) return `spec.${k} is ${JSON.stringify(spec[k])}, the coordinator's task has ${JSON.stringify(want[k])}`;
+  }
+  let cfg: WorldConfig;
+  try {
+    cfg = JSON.parse(JSON.stringify(specConfig(spec as unknown as RunSpec)));
+  } catch (e) {
+    return `the task's spec builds no config: ${e instanceof Error ? e.message : String(e)}`;
+  }
+  if (!isRecord(manifest.cfg) || !sameConfig(manifest.cfg as unknown as WorldConfig, cfg)) return "manifest config is not the one the coordinator's task builds";
+  return null;
+}
+
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** Structural equality of two JSON values, object keys in any order. */
+function sameJson(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => sameJson(x, b[i]));
+  if (isRecord(a) || isRecord(b)) {
+    if (!isRecord(a) || !isRecord(b)) return false;
+    const ka = Object.keys(a);
+    return ka.length === Object.keys(b).length && ka.every((k) => k in b && sameJson(a[k], b[k]));
+  }
+  return a === b;
 }
 
 /**
