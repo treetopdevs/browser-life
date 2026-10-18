@@ -1,0 +1,181 @@
+{
+  "kind": "naturalist-envelope",
+  "version": 0,
+  "preset": "gradient-m3",
+  "rule": "bell-v1-A",
+  "presetIdentity": "e1c93a9384b5d921",
+  "ruleVersion": 1,
+  "cadence": 100,
+  "burnIn": 10000,
+  "horizon": 300000,
+  "censuses": 3000,
+  "rateLag": 10,
+  "W": 50,
+  "threshold": {
+    "Z": 4,
+    "strict": false
+  },
+  "signals": [
+    {
+      "name": "livingCells",
+      "kind": "level",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "individuals",
+      "kind": "level",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "meanMass",
+      "kind": "level",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "lineages",
+      "kind": "level",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "lineageShannon",
+      "kind": "level",
+      "floor": 0.01,
+      "source": "series"
+    },
+    {
+      "name": "patternEntropy",
+      "kind": "level",
+      "floor": 0.01,
+      "source": "series"
+    },
+    {
+      "name": "bioticRecycling",
+      "kind": "level",
+      "floor": 0.01,
+      "source": "series"
+    },
+    {
+      "name": "fissions",
+      "kind": "rate",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "fusions",
+      "kind": "rate",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "buddings",
+      "kind": "rate",
+      "floor": 1,
+      "source": "series"
+    },
+    {
+      "name": "mutations",
+      "kind": "rate",
+      "floor": 1,
+      "source": "series"
+    }
+  ],
+  "envelope": {
+    "id": "bell-v1 E (the 40 gradient-m3 neutral runs of the bell corpus)",
+    "runs": [
+      "replay-calib/gradient-m3/neutral/seed-1001",
+      "replay-calib/gradient-m3/neutral/seed-1002",
+      "replay-calib/gradient-m3/neutral/seed-1003",
+      "replay-calib/gradient-m3/neutral/seed-1004",
+      "replay-calib/gradient-m3/neutral/seed-1005",
+      "replay-calib/gradient-m3/neutral/seed-1006",
+      "replay-calib/gradient-m3/neutral/seed-1007",
+      "replay-calib/gradient-m3/neutral/seed-1008",
+      "replay-calib/gradient-m3/neutral/seed-1009",
+      "replay-calib/gradient-m3/neutral/seed-1010",
+      "replay-calib/gradient-m3/neutral/seed-1011",
+      "replay-calib/gradient-m3/neutral/seed-1012",
+      "replay-calib/gradient-m3/neutral/seed-1013",
+      "replay-calib/gradient-m3/neutral/seed-1014",
+      "replay-calib/gradient-m3/neutral/seed-1015",
+      "replay-calib/gradient-m3/neutral/seed-1016",
+      "replay-calib/gradient-m3/neutral/seed-1017",
+      "replay-calib/gradient-m3/neutral/seed-1018",
+      "replay-calib/gradient-m3/neutral/seed-1019",
+      "replay-calib/gradient-m3/neutral/seed-1020",
+      "replay-m4/gradient-m3/neutral/seed-1",
+      "replay-m4/gradient-m3/neutral/seed-2",
+      "replay-m4/gradient-m3/neutral/seed-3",
+      "replay-m4/gradient-m3/neutral/seed-4",
+      "replay-m4/gradient-m3/neutral/seed-5",
+      "replay-m4/gradient-m3/neutral/seed-6",
+      "replay-m4/gradient-m3/neutral/seed-7",
+      "replay-m4/gradient-m3/neutral/seed-8",
+      "replay-m4/gradient-m3/neutral/seed-9",
+      "replay-m4/gradient-m3/neutral/seed-10",
+      "replay-m4/gradient-m3/neutral/seed-11",
+      "replay-m4/gradient-m3/neutral/seed-12",
+      "replay-m4/gradient-m3/neutral/seed-13",
+      "replay-m4/gradient-m3/neutral/seed-14",
+      "replay-m4/gradient-m3/neutral/seed-15",
+      "replay-m4/gradient-m3/neutral/seed-16",
+      "replay-m4/gradient-m3/neutral/seed-17",
+      "replay-m4/gradient-m3/neutral/seed-18",
+      "replay-m4/gradient-m3/neutral/seed-19",
+      "replay-m4/gradient-m3/neutral/seed-20"
+    ]
+  },
+  "bin": {
+    "file": "envelope-gradient-m3-v1.bin",
+    "bytes": 528000,
+    "sha256": "6680621727b3c05581a404387b7fd7118fa7a06b5b37ea3ef853692c38d15894",
+    "layout": "float64 little-endian, [census][signal][median, spread], census i at step (i + 1) * cadence; undefined (a rate before rateLag censuses) is NaN 0x7ff8000000000000"
+  },
+  "records": [
+    {
+      "path": "experiments/naturalist/bell-v1-null.json",
+      "sha256": "d6072ecbfd5ef20cc0336cbc51a248cde5660f20ceb9c942d4c716343aa2c50b"
+    },
+    {
+      "path": "experiments/naturalist/bell-v1-twins.json",
+      "sha256": "af05db933144ab347f014d437d39deec4d451e7f67dcf4909d4bf3e829bc3ce2"
+    },
+    {
+      "path": "experiments/naturalist/bell-v0.json",
+      "sha256": "5f90e11f986165bb14b4f1a7d28aed5f58a9575313d8200cb317c4d693fb220c"
+    }
+  ],
+  "numbers": {
+    "nullCheck": {
+      "what": "fresh",
+      "k": 0,
+      "of": 70,
+      "upper95": 0.041893344066888605
+    },
+    "arms": {
+      "k": 10,
+      "of": 10,
+      "fromBurnIn": 9,
+      "signal": "livingCells",
+      "side": "low",
+      "endStep": 14900,
+      "lastEndStep": 26100
+    },
+    "twins": {
+      "preset": "gradient-m3",
+      "l96": {
+        "k": 4,
+        "of": 10
+      },
+      "f": {
+        "k": 4,
+        "of": 10
+      }
+    },
+    "calibRuns": null,
+    "calibSecond": null
+  }
+}

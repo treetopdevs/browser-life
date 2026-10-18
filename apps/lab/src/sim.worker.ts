@@ -35,6 +35,7 @@ import { createLabSession } from "./session.ts";
 import type { CensusMsg, CheckpointMeta, FamiliesMsg, FirstsMsg, FromWorker, Keep, PressureMsg, RunManifest, SessionCommand, ToWorker } from "./protocol.ts";
 import { RewindStore, buildSessionFile, exportRefusal, interventionFacts, sessionFileName, type RewindRecord } from "./session-file.ts";
 import { feedCensus, logRefusal, openFirstsLog, rewindRecord, type FirstsLog } from "./firsts-log.ts";
+import { NATURALIST_PRESETS, firstIntervention, naturalistReads } from "./naturalist-series.ts";
 import { StorageError, forgetCheckpoint, listCheckpoints, missingFile, pruneCheckpoints, readFile, readManifest, recordCheckpoint, storageProblem, writeFile, writeManifest } from "./opfs.ts";
 
 /**
@@ -262,6 +263,14 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
           post({ type: "pondAwait", world: w.gen, step: s.step, cycle: s.cycle, arm: sim.cfg.pondArm!, score: sim.cfg.pondScore ?? null, suggested: s.suggested, terms: s.terms, ruleScore: s.ruleScore, kept: s.kept, revision: s.revision });
         }
       },
+      // The naturalist's census, every one, for the worlds it may hold a baseline for (Field notes).
+      onSeries: (series, dropped) => {
+        const w = world;
+        if (!w || w.execution !== execution || !NATURALIST_PRESETS.has(w.manifest.presetId)) return;
+        const { rec, rows } = series();
+        const touched = firstIntervention(w.manifest.interventions);
+        if (naturalistReads(rec.step, touched)) post({ type: "naturalist", world: w.gen, runId: w.manifest.runId, step: rec.step, rec, rows, touched, dropped });
+      },
       onDisplayError: (message) => post({ type: "error", message: `census display: ${message}` }),
       // A jump's replay re-applied a logged intervention: it re-enters this run's log, and a feed moves
       // the baselines exactly as it did when it was first made.
@@ -270,6 +279,8 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
         if (!w || w.sim !== sim) return;
         if (result) bookFeed(w, result.matter, result.energy);
         w.manifest.interventions.push(iv);
+        // The naturalist marks its notes at once, as for a change made live: a replay can re-apply a wound after the last census and stop before the next.
+        postTouched(w, iv.step);
         // A replayed pressure moves the dial the page shows.
         if (iv.kind === "pressure") postPressure(w);
         postFirsts(w);
@@ -306,7 +317,7 @@ async function adopt(state: WorldState, manifest: RunManifest, observer: Observe
   rateStep = sim.step;
   rateAt = performance.now();
   session.adopt({ runId: manifest.runId, presetId: manifest.presetId, seed: manifest.seed, step: sim.step, ruleVersion: manifest.ruleVersion });
-  post({ type: "loaded", manifest, step: sim.step });
+  post({ type: "loaded", manifest, step: sim.step, world: world.gen });
   postPressure(world);
   post({ type: "keep", world: world.gen, key: keepKey });
   postFirsts(world);
@@ -362,6 +373,11 @@ function postFirsts(w: World | null) {
   } catch (e) {
     post({ type: "notice", message: `The log of firsts could not be shown (${e instanceof Error ? e.message : e}).` });
   }
+}
+
+/** A wound, feed or drain just logged on a world the naturalist may read: said at once, so a paused page marks its notes. */
+function postTouched(w: World, step: number) {
+  if (current(w) && NATURALIST_PRESETS.has(w.manifest.presetId)) post({ type: "naturalistTouched", world: w.gen, runId: w.manifest.runId, step });
 }
 
 /** The pressures of a manifest's log, in log order. */
@@ -480,7 +496,12 @@ async function drawFrame(w: World) {
           w.lastCheckpoint = w.sim.step;
           return post({ type: "notice", message: `No automatic copy this time. ${e.message}` });
         }
-        post({ type: "error", message: `automatic checkpoint: ${e instanceof Error ? e.message : e}` });
+        // A save that settles the world can fail it: then it is the world's failure, said as one.
+        if (w.execution.failure) {
+          playing = false;
+          pendingSteps = 0;
+        }
+        post({ type: "error", message: `automatic checkpoint: ${w.execution.failure ?? (e instanceof Error ? e.message : e)}`, failed: w.execution.failure !== null });
       })
       .finally(() => (autoQueued = false));
   }
@@ -1010,6 +1031,7 @@ async function lesion(x: number, y: number, r: number) {
   const step = w.sim.step;
   const eff = w.sim.lesion(cx, cy, r);
   w.manifest.interventions.push({ step, kind: "lesion", x: cx, y: cy, r: eff });
+  postTouched(w, step);
   session.noteHand(step);
   publishSession();
   forkReplay(w);
@@ -1049,6 +1071,7 @@ async function feed(x: number, y: number, r: number, amount: number) {
   bookFeed(w, res.matter, res.energy);
   w.execution.recordFeed(res.matter);
   w.manifest.interventions.push({ step, kind: "feed", x: cx, y: cy, r: res.radius, amount: asked, matter: res.matter });
+  postTouched(w, step);
   session.noteHand(step);
   publishSession();
   // Only a feed that happened forks a replay in progress: a refused one changes nothing.
