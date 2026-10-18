@@ -33,7 +33,7 @@ describe("CLI (real production code): a tiny run completes end to end", () => {
   it("writes results.json/manifest.json with the expected shape, from a known-viable seed", () => {
     const out = join(mkdtempSync(join(tmpdir(), "anticip-test-")), "run");
     try {
-      execFileSync("deno", ["run", "-A", SCRIPT, ...TINY_ARGS, "--out", out], { stdio: "pipe" });
+      execFileSync("deno", ["run", "--no-lock", "-A", SCRIPT, ...TINY_ARGS, "--out", out], { stdio: "pipe" });
       const results = JSON.parse(readFileSync(join(out, "results.json"), "utf8"));
       const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
 
@@ -84,7 +84,7 @@ describe("CLI (real production code): a tiny run completes end to end", () => {
   it("--control-level-shift: applies the documented delta and the level-shift branch's cost reflects it", () => {
     const out = join(mkdtempSync(join(tmpdir(), "anticip-test-")), "run");
     try {
-      execFileSync("deno", ["run", "-A", SCRIPT, ...TINY_ARGS, "--control-level-shift", "--out", out], { stdio: "pipe" });
+      execFileSync("deno", ["run", "--no-lock", "-A", SCRIPT, ...TINY_ARGS, "--control-level-shift", "--out", out], { stdio: "pipe" });
       const results = JSON.parse(readFileSync(join(out, "results.json"), "utf8"));
       const longer = results.seeds[0].branches.longer;
       const control = results.seeds[0].levelShiftControl;
@@ -141,7 +141,7 @@ describe("CLI (real production code): a tiny run completes end to end", () => {
       "--out", out,
     ];
     try {
-      execFileSync("deno", ["run", "-A", SCRIPT, ...args], { stdio: "pipe" });
+      execFileSync("deno", ["run", "--no-lock", "-A", SCRIPT, ...args], { stdio: "pipe" });
       const results = JSON.parse(readFileSync(join(out, "results.json"), "utf8"));
       const control = results.seeds[0].levelShiftControl;
       expect(control.unavailable).toBe(true);
@@ -162,8 +162,8 @@ describe("CLI (real production code): a tiny run completes end to end", () => {
   it("refuses to run into an --out directory that already exists", () => {
     const out = join(mkdtempSync(join(tmpdir(), "anticip-test-")), "run");
     try {
-      execFileSync("deno", ["run", "-A", SCRIPT, ...TINY_ARGS, "--out", out], { stdio: "pipe" });
-      expect(() => execFileSync("deno", ["run", "-A", SCRIPT, ...TINY_ARGS, "--out", out], { stdio: "pipe" })).toThrow();
+      execFileSync("deno", ["run", "--no-lock", "-A", SCRIPT, ...TINY_ARGS, "--out", out], { stdio: "pipe" });
+      expect(() => execFileSync("deno", ["run", "--no-lock", "-A", SCRIPT, ...TINY_ARGS, "--out", out], { stdio: "pipe" })).toThrow();
     } finally {
       rmSync(join(out, ".."), { recursive: true, force: true });
     }
@@ -172,7 +172,7 @@ describe("CLI (real production code): a tiny run completes end to end", () => {
 
 describe("anticip.ts's own phaseA/checkpoint composition (spawned under Deno; see fixtures/anticip-checks.ts)", () => {
   it("phaseA is deterministic and a Phase-A end state round-trips through encodeCheckpoint/decodeCheckpoint", () => {
-    const out = execFileSync("deno", ["run", "-A", CHECKS_FIXTURE], { stdio: "pipe" }).toString("utf8");
+    const out = execFileSync("deno", ["run", "--no-lock", "-A", CHECKS_FIXTURE], { stdio: "pipe" }).toString("utf8");
     const result = JSON.parse(out.trim().split("\n").pop()!);
     expect(result.determinism).toBe(true);
     expect(result.hash1).toBe(result.hash2);

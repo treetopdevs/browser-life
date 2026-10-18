@@ -104,7 +104,7 @@ const guard = setTimeout(() => {
  * drained alongside stdout, so a chatty child cannot fill its pipe and stall. */
 function spawnIsland(label: string, onLine: (line: string, proc: Deno.ChildProcess) => void) {
   const proc = new Deno.Command(Deno.execPath(), {
-    args: ["run", "-A", "--no-lock", "tools/island.ts", "--coordinator", coord, "--label", label],
+    args: ["run", "--no-lock", "-A", "tools/island.ts", "--coordinator", coord, "--label", label],
     cwd: new URL("../../", import.meta.url).pathname,
     stdout: "piped",
     stderr: "piped",

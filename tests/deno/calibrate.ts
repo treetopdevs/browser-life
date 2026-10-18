@@ -167,7 +167,7 @@ async function writeNeutralRun(pilotRoot: string, presetId: string, spec: RunSpe
 }
 
 async function runCalibrate(args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
-  const cmd = new Deno.Command(Deno.execPath(), { args: ["run", "-A", "tools/calibrate.ts", ...args], stdout: "piped", stderr: "piped" });
+  const cmd = new Deno.Command(Deno.execPath(), { args: ["run", "--no-lock", "-A", "tools/calibrate.ts", ...args], stdout: "piped", stderr: "piped" });
   const { code, stdout, stderr } = await cmd.output();
   return { code, stdout: new TextDecoder().decode(stdout), stderr: new TextDecoder().decode(stderr) };
 }
