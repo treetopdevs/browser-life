@@ -7,6 +7,7 @@ import { buildPondHistory, parsePondRows, pondDossier, pondTwin, type PondArm } 
 import { escapeHtml } from "../../lib/report-html/page.ts";
 import { OUTPUT_NAMES, effectText, render, validate, type GenotypeInput, type LineageInput } from "../../lib/report-html/lineage.ts";
 import { cpu } from "../lineage-fixture.ts";
+import { birthsLines, founder, handPondBundle, key, pondsLines } from "../pond-bundle-fixture.ts";
 import { assertPageContract } from "./contract.ts";
 
 const meta = { sources: [{ path: "dossier.json", sha256: "ab".repeat(32) }], status: "SMOKE" as const };
@@ -200,6 +201,28 @@ describe("genotype panel", () => {
     expect(html.split("so these probe results describe genomes that never controlled a cell.").length - 1).toBe(3);
     expect(renderChecked(genotype)).not.toContain("never controlled a cell");
   });
+});
+
+describe("pond-cycle genotype dossier", () => {
+  it("a pond-bundle genotype dossier (with pond and excluded births) still validates and renders", async () => {
+    const A = key(150, 2), B = key(250, 0);
+    const src = handPondBundle({
+      mutations: [[A, founder(1)], [B, A]],
+      ponds: pondsLines([
+        { donors: [1, 3, 1, 3], packets: [{ lineages: 2, dom: founder(1) }, undefined, { lineages: 1, dom: founder(1) }] },
+        { donors: [2, 2, 2, 2], packets: [{ lineages: 2, dom: A }] },
+      ]),
+      census: { 250: [[A, 5], [B, 3]] },
+      steps: 250,
+      births: birthsLines([[200, "budding", A, B], [250, "fission", B, "8:8"]]),
+    });
+    const d = clone({ ...(await buildDossier(src, { kind: "key", key: B })), twin: null });
+    expect(d.pond).toMatchObject({ exact: 2, notRecorded: 0 });
+    expect(d.trackerBirths).toMatchObject({ fission: 0, budding: 1, excludedAcrossCycle: 1 });
+    const html = renderChecked(d);
+    assertPageContract(html, { status: "SMOKE", figureCount: 4 });
+    for (const g of d.gaps) expect(html).toContain(`<li>${escapeHtml(g)}</li>`);
+  }, 60_000);
 });
 
 describe("effect template", () => {
