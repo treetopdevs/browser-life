@@ -160,6 +160,22 @@ defmodule Coordinator.Queue do
   storage themselves. State is persisted to `data_dir/state.bin` after every
   change; see `init/1` for the version tag that refuses to load
   incompatible (pre-v3) data.
+
+  The island table is bounded by `:max_islands` (20,000 by default). At the
+  bound a join first reclaims expired leases, then forgets every island that
+  never ran or verified anything, holds no pending attempt and was last seen
+  more than `:island_prune_after_ms` ago (a day); if there is none, the
+  least recently seen such islands last seen more than
+  `:island_prune_grace_ms` ago (ten minutes), a twentieth of the bound at once
+  (an island waiting for work asks every few seconds, so a flood of joins that
+  never ask forgets itself first, and an island that has just joined, or is
+  waiting for work, is never forgotten to make room for another). Only when no
+  island qualifies is the join refused (`{:error, :full}`, the controller's
+  503), and then nothing is persisted. An island holds at most `:island_max_pending`
+  pending attempts (4); past that `{:next, ...}` answers idle, so one island
+  cannot squat on the queue's work. How often an address may join, and how
+  often an island may ask for work or touch a segment, is limited before this
+  process is called (`Coordinator.IslandLimiter`).
   """
   use GenServer
   require Logger
@@ -397,32 +413,10 @@ defmodule Coordinator.Queue do
 
   @impl true
   def handle_call({:join, info}, _from, s) do
-    id = "isl-" <> rand(9)
-    token = rand(32)
-    now = now()
-
-    island = %{
-      id: id,
-      token_hash: :crypto.hash(:sha256, token),
-      adapter: clip(info["adapter"]),
-      user_agent: clip(info["userAgent"]),
-      # The metrics version this island's runner code computes (see the
-      # moduledoc); an island that doesn't declare one predates the concept.
-      metrics_version: metrics_version_of(info),
-      joined_at: now,
-      last_seen: now,
-      runs: 0,
-      verifies: 0
-    }
-
-    # Whether this island may tend gardens (see the moduledoc): the key is put
-    # only on an island that showed the configured token (the token itself is
-    # not kept), so every other island record, and `/api/status`, keeps its
-    # shape from before gardens.
-    island = if garden_token_ok?(info), do: Map.put(island, :garden, true), else: island
-
-    s = put_in(s, [:islands, id], island)
-    {:reply, {:ok, %{id: id, token: token}}, persist(s)}
+    case make_room(s) do
+      {:ok, s} -> join_island(info, s)
+      :full -> {:reply, {:error, :full}, s}
+    end
   end
 
   def handle_call({:auth, id, token}, _from, s) do
@@ -563,6 +557,13 @@ defmodule Coordinator.Queue do
     end
   end
 
+  # An island forgotten at the island bound (`make_room/1`) between the
+  # controller's authentication and this call: nothing to record it against,
+  # so it is idle (its next request fails authentication).
+  def handle_call({:next, island_id, _capabilities}, _from, %{islands: islands} = s)
+      when not is_map_key(islands, island_id),
+      do: {:reply, {:ok, %{kind: "idle"}}, s}
+
   def handle_call({:next, island_id, capabilities}, _from, s) do
     now = now()
 
@@ -571,7 +572,11 @@ defmodule Coordinator.Queue do
       |> put_in([:islands, island_id, :last_seen], now)
       |> release_gardens(now)
 
-    {task, s} = pick_task(s, island_id, capabilities, now)
+    {task, s} =
+      if at_pending_cap?(s, island_id),
+        do: {%{kind: "idle"}, s},
+        else: pick_task(s, island_id, capabilities, now)
+
     {:reply, {:ok, task}, persist(s)}
   end
 
@@ -1979,6 +1984,120 @@ defmodule Coordinator.Queue do
   end
 
   defp failure_of(_s, _seg), do: nil
+
+  # ---- joining, and the bound on the island table ----
+
+  defp join_island(info, s) do
+    id = "isl-" <> rand(9)
+    token = rand(32)
+    now = now()
+
+    island = %{
+      id: id,
+      token_hash: :crypto.hash(:sha256, token),
+      adapter: clip(info["adapter"]),
+      user_agent: clip(info["userAgent"]),
+      # The metrics version this island's runner code computes (see the
+      # moduledoc); an island that doesn't declare one predates the concept.
+      metrics_version: metrics_version_of(info),
+      joined_at: now,
+      last_seen: now,
+      runs: 0,
+      verifies: 0
+    }
+
+    # Whether this island may tend gardens (see the moduledoc): the key is put
+    # only on an island that showed the configured token (the token itself is
+    # not kept), so every other island record, and `/api/status`, keeps its
+    # shape from before gardens.
+    island = if garden_token_ok?(info), do: Map.put(island, :garden, true), else: island
+
+    s = put_in(s, [:islands, id], island)
+    {:reply, {:ok, %{id: id, token: token}}, persist(s)}
+  end
+
+  # The island table is bounded (`max_islands`): every join adds a record that
+  # is never otherwise removed, and every record is rewritten into state.bin
+  # on every persist. Below the bound nothing happens. At it, expired leases
+  # are reclaimed first (a vanished island's attempt otherwise protects it
+  # until some island asks for work), then the candidates are the islands that
+  # never ran or verified anything and hold no pending attempt. Every candidate
+  # last seen more than `island_prune_after_ms` ago is forgotten, all at once
+  # (so the next joins do not scan again); if none is that old, the least
+  # recently seen candidates not seen within `island_prune_grace_ms`, a
+  # twentieth of the bound: an island that just joined (and has not asked for
+  # work yet) or is polling for work is never evicted by somebody else's join,
+  # so a join flood at the bound costs new joiners a 503, not existing islands
+  # their credentials. `:full` if there is no such candidate. Forgetting such an island is safe for every reader:
+  # `host/2` and the garden's view already treat an island id they cannot find
+  # as unknown, and its token stops authenticating.
+  defp make_room(s) do
+    bound = Application.get_env(:coordinator, :max_islands, 20_000)
+
+    if map_size(s.islands) < bound do
+      {:ok, s}
+    else
+      now = now()
+      cutoff = now - Application.get_env(:coordinator, :island_prune_after_ms, 86_400_000)
+      grace = now - Application.get_env(:coordinator, :island_prune_grace_ms, 600_000)
+      reclaimed = %{s | segments: Segment.reclaim_stale(s.segments, now, lease_ms())}
+      holding = islands_holding_attempts(reclaimed)
+
+      candidates =
+        for {id, i} <- reclaimed.islands,
+            i.runs + i.verifies == 0,
+            not MapSet.member?(holding, id),
+            do: {id, i.last_seen}
+
+      forget =
+        case for({id, seen} <- candidates, seen < cutoff, do: id) do
+          [] ->
+            candidates
+            |> Enum.filter(fn {_, seen} -> seen < grace end)
+            |> Enum.sort_by(&elem(&1, 1))
+            |> Enum.take(max(div(bound, 20), 1))
+            |> Enum.map(&elem(&1, 0))
+
+          stale ->
+            stale
+        end
+
+      if forget == [] do
+        :full
+      else
+        Logger.info("coordinator: forgot #{length(forget)} idle islands at the island bound")
+        {:ok, %{reclaimed | islands: Map.drop(reclaimed.islands, forget)}}
+      end
+    end
+  end
+
+  # Whether `island` already holds `island_max_pending` pending attempts
+  # (nil: no cap).
+  defp at_pending_cap?(s, island) do
+    case Application.get_env(:coordinator, :island_max_pending, 4) do
+      nil ->
+        false
+
+      cap ->
+        held =
+          for {_, seg} <- s.segments,
+              a <- seg.attempts,
+              a.outcome == "pending" and a.island == island,
+              reduce: 0,
+              do: (n -> n + 1)
+
+        held >= cap
+    end
+  end
+
+  # Islands with a pending (assigned, not completed) attempt, in one pass.
+  defp islands_holding_attempts(s) do
+    for {_, seg} <- s.segments,
+        a <- seg.attempts,
+        a.outcome == "pending",
+        into: MapSet.new(),
+        do: a.island
+  end
 
   defp host(_s, nil), do: "?"
   defp host(s, id), do: (s.islands[id] || %{adapter: "?"}).adapter

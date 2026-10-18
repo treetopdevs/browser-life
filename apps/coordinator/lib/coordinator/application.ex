@@ -14,6 +14,9 @@ defmodule Coordinator.Application do
       # The garden's letter budget and view cache (ETS, outside the queue
       # process); unconditional, so it also runs where start_queue is false.
       Coordinator.LetterLimiter,
+      # The island routes' join/next budgets and the public status cache
+      # (ETS, outside the queue process); unconditional, like the above.
+      Coordinator.IslandLimiter,
       Application.get_env(:coordinator, :start_queue, true) &&
         {Coordinator.Queue, data_dir: Application.get_env(:coordinator, :data_dir, "data")},
       Application.get_env(:coordinator, :start_discovery, true) &&

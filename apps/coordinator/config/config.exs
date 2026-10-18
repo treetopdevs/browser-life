@@ -133,6 +133,42 @@ config :coordinator,
   garden_letter_table_max: 200_000,
   garden_island_token: nil
 
+# Island abuse controls (Coordinator.IslandLimiter, Coordinator.Queue; README
+# "Island limits"), read with Application.get_env at call time. Any budget may
+# be nil (off). Joins are budgeted per client address (the garden's rule: the
+# peer, or the right-most X-Forwarded-For entry with trust_forwarded_for);
+# production turns that off (config/prod.exs) until the deployed proxy passes
+# on the real client address (deploy/README.md), since until then every
+# visitor shares one address. Task requests (`next`) and segment requests
+# (heartbeat, complete, reject, fail, uploads, checkpoint downloads, and an
+# island's file downloads; never the administrator's) are
+# budgeted per authenticated island, and an island holds at most
+# `island_max_pending` assignments at once (`next` is idle past it). A coarse
+# ceiling per address across the island routes (all but file downloads) stays
+# off (nil) for the same proxy reason. `island_limit_table_max` caps the
+# budget table's rows, island ids included; `max_islands` bounds the island
+# table (see Coordinator.Queue's moduledoc for what is forgotten at the bound;
+# never an island seen within `island_prune_grace_ms`);
+# `public_status_cache_ms` is how long /api/public/status (and /healthz) is
+# served from a cache outside the queue process (0 disables it), and
+# `public_status_wait_ms` how long a request waits for another's refresh.
+config :coordinator,
+  island_joins_per_address: 20,
+  island_join_window_ms: 3_600_000,
+  island_next_per_island: 120,
+  island_next_window_ms: 60_000,
+  island_segment_requests_per_island: 600,
+  island_segment_window_ms: 60_000,
+  island_max_pending: 4,
+  island_requests_per_address: nil,
+  island_requests_window_ms: 60_000,
+  island_limit_table_max: 200_000,
+  max_islands: 20_000,
+  island_prune_after_ms: 86_400_000,
+  island_prune_grace_ms: 600_000,
+  public_status_cache_ms: 2_000,
+  public_status_wait_ms: 2_000
+
 # Discovery plane (Coordinator.Discovery; docs/evolvability-discovery-2026-10-04
 # PLAN Stage 3b): its own data directory, never inside :data_dir; the research
 # join token workers present (unset: loopback only); the lease length; and the
