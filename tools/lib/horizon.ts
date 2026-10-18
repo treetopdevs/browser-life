@@ -1775,9 +1775,85 @@ export function notePrefix(note: Uint8Array, heading: string): Uint8Array {
 
 // ---- The run's receipts and the cap inside the fine pilot (N7, N8)
 
+/** A kept name: one basename of letters, digits, `_`, `.`, `+` or `-` (no `/`, `=`, `:`, space or URL can pass). */
+const PS_NAME = /^[\w.+-]+$/;
+/** A script argument worth naming: a plain .ts/.js file (by basename), never a URL or a KEY=value. */
+const PS_SCRIPT = /\.(?:[cm]?[jt]sx?)$/;
+const psBase = (tok: string) => tok.slice(tok.lastIndexOf("/") + 1);
+
 /**
- * The run script's status file (N7, N8): per stage its start, `uptime`, the `ps` lines and exit code, and the note's SHA-256
- * taken before the pilot. Lines it does not know are kept under `other`.
+ * One `ps -Ao pid,pcpu,etime,command` line reduced to what N7's note needs: its pid, %cpu and elapsed columns as ps printed
+ * them, then the program alone: the basename of argv[0], and for deno and node the basename of the script they run (for
+ * example `deno horizon.ts`, `node vite.js`); a macOS GPU helper (an app path with spaces) is `gpu-helper`. Every other
+ * argument, path, KEY=value pair and URL is dropped, and a name that is not a plain basename becomes `unknown`. Null for a line
+ * that is not a ps row (the header, a blank line).
+ */
+export function reducePsLine(line: string): string | null {
+  const m = line.match(/^(\s*\d+\s+\d+(?:[.,]\d+)?\s+[\d:-]+\s+)(\S.*)$/);
+  if (!m) return null;
+  const cmd = m[2];
+  if (/[(]GPU[)]/.test(cmd)) return `${m[1]}gpu-helper`;
+  const toks = cmd.split(/\s+/);
+  const prog = psBase(toks[0]);
+  if (!PS_NAME.test(prog)) return `${m[1]}unknown`;
+  let script: string | undefined;
+  if (prog === "deno" || prog === "node") {
+    // The entrypoint is the first argument that is not a flag (after `run` for deno); only it is ever looked at, so nothing
+    // after it (the script's own arguments) can be kept. An entrypoint that is a URL or not a plain .ts/.js file names nothing.
+    // With an eval/print flag or a bare `-`/`--` before it there is no script file, and what follows is arguments.
+    const args = toks.slice(prog === "deno" && toks[1] === "run" ? 2 : 1);
+    const at = args.findIndex((t) => !t.startsWith("-") || t === "-" || t === "--");
+    const s = at < 0 ? undefined : args[at];
+    const evals = args.slice(0, Math.max(at, 0)).some((t) => /^(?:-[a-z]*[ep][a-z]*|--eval|--print)(?:=|$)/.test(t));
+    if (s && !evals && s !== "-" && s !== "--" && !s.includes("=") && !s.includes("://") && PS_SCRIPT.test(s) && /^\w/.test(psBase(s)) && PS_NAME.test(psBase(s))) script = psBase(s);
+  }
+  return `${m[1]}${prog}${script ? ` ${script}` : ""}`;
+}
+
+/** A `ps` text of one or more rows (as N7's note or a status file holds them), each reduced; a row that is not one is dropped. */
+export function reducePsText(text: string): string {
+  return text.split("\n").flatMap((l) => reducePsLine(l) ?? []).join("\n");
+}
+
+/**
+ * Every `ps` field of a slice-34 record reduced in place (the stages' `ps` strings and the run status's `ps` lists), so a
+ * record written or re-derived from files an older version wrote never carries full command lines. Idempotent.
+ */
+export function scrubRecordPs<T>(rec: T): T {
+  const r = rec as { stages?: { ps?: unknown }[]; runStatus?: { stages?: { ps?: unknown }[]; other?: unknown } };
+  for (const st of r.stages ?? []) if (typeof st.ps === "string") st.ps = reducePsText(st.ps);
+  for (const st of r.runStatus?.stages ?? []) if (Array.isArray(st.ps)) st.ps = st.ps.flatMap((l) => (typeof l === "string" ? (reducePsLine(l) ?? []) : []));
+  if (r.runStatus && Array.isArray(r.runStatus.other)) r.runStatus.other = r.runStatus.other.flatMap((l) => (typeof l === "string" ? redactOther(l) : []));
+  return rec;
+}
+
+/**
+ * A status-file line parseRunStatus does not know, as `other` keeps it: a process row reduced (or dropped when it is digit-led
+ * but not a row), and in any other line every token with a `/`, `\\`, `=`, `@` or `:` followed by `//` replaced by `[redacted]`.
+ */
+function redactOther(line: string): string[] {
+  if (/^\s*\d+\s/.test(line)) {
+    const r = reducePsLine(line);
+    return r === null ? [] : [r];
+  }
+  return [line.replace(/\S*(?:[/\\=@]|:\/\/)\S*/g, "[redacted]")];
+}
+
+/** N7's `ps` note from a whole `ps -Ao pid,pcpu,etime,command` listing: deno runs, vite and GPU processes, reduced, at most 20. */
+export function psNoteOf(listing: string): string {
+  const out: string[] = [];
+  for (const line of listing.split("\n")) {
+    if (!/deno run|vite|[(]GPU[)]/.test(line)) continue;
+    const r = reducePsLine(line);
+    if (r !== null) out.push(r);
+    if (out.length === 20) break;
+  }
+  return out.join("\n");
+}
+
+/**
+ * The run script's status file (N7, N8): per stage its start, `uptime`, the `ps` lines (reduced by reducePsLine) and exit code, and the note's SHA-256
+ * taken before the pilot. Lines it does not know are kept under `other`, with paths, KEY=value pairs and URLs redacted.
  */
 export function parseRunStatus(text: string) {
   const stages: { stage: string; at: string; uptime?: string; ps: string[]; exit?: number }[] = [];
@@ -1792,9 +1868,13 @@ export function parseRunStatus(text: string) {
     else if ((m = line.match(/^note-sha256-before-pilot ([0-9a-f]{64})$/))) out.noteSha256BeforePilot = m[1];
     else if ((m = line.match(/^note-sha256-at-end ([0-9a-f]{64})$/))) out.noteSha256AtEnd = m[1];
     else if ((m = line.match(/^DONE (\S+)$/))) out.done = m[1];
-    else if (cur && cur.exit === undefined && cur.uptime === undefined && /load averages?:/.test(line)) cur.uptime = line;
-    else if (cur && cur.exit === undefined && /^\s*\d+\s/.test(line)) cur.ps.push(line);
-    else if (line.trim() && !(cur && cur.exit !== undefined && /^( M|\?\?|A |D ) /.test(line))) other.push(line);
+    else if (/^\s*\d+\s/.test(line)) {
+      // A process row, checked before `uptime` (a row's arguments can say "load averages:"): reduced to pid, %cpu, elapsed and
+      // the program (reducePsLine), in its stage or under `other`; a digit-led line that is not a row is dropped, never kept whole.
+      const r = reducePsLine(line);
+      if (r !== null) (cur && cur.exit === undefined ? cur.ps : other).push(r);
+    } else if (cur && cur.exit === undefined && cur.uptime === undefined && /load averages?:/.test(line)) cur.uptime = line;
+    else if (line.trim() && !(cur && cur.exit !== undefined && /^( M|\?\?|A |D ) /.test(line))) other.push(...redactOther(line));
   }
   return { ...out, stages, ...(other.length ? { other } : {}) };
 }

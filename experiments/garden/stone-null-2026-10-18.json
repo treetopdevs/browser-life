@@ -172,61 +172,61 @@
    "stage": "group seed 1 N 131072",
    "at": "2026-10-18T17:59:13.688Z",
    "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.46 26.97 39.89",
-   "ps": "86223  89.5       00:00 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    19:52:03 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "86223  89.5       00:00 deno horizon.ts\n 6693   0.0    19:52:03 node vite.js"
   },
   {
    "stage": "group seed 3 N 131072",
    "at": "2026-10-18T18:02:44.279Z",
    "uptime": "14:02  up 16 days, 15:25, 15 users, load averages: 55.84 34.06 39.51",
-   "ps": "86223  91.8       03:31 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n96007   0.0       00:10 timeout 900 deno run -A --no-lock tests/deno/garden_found_smoke.ts\n96008   0.0       00:10 deno run -A --no-lock tests/deno/garden_found_smoke.ts\n 6693   0.0    19:55:34 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "86223  91.8       03:31 deno horizon.ts\n96007   0.0       00:10 timeout\n96008   0.0       00:10 deno garden_found_smoke.ts\n 6693   0.0    19:55:34 node vite.js"
   },
   {
    "stage": "group seed 4 N 131072",
    "at": "2026-10-18T18:06:08.927Z",
    "uptime": "14:06  up 16 days, 15:29, 15 users, load averages: 28.18 30.02 36.64",
-   "ps": "5189   0.0       00:36 /opt/homebrew/bin/zsh -lc PATH=/opt/homebrew/opt/node/bin:$PATH pnpm -C apps/tauri-desktop exec vitest run --no-file-parallelism > /tmp/\n86223  94.6       06:55 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    19:58:58 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "5189   0.0       00:36 zsh\n86223  94.6       06:55 deno horizon.ts\n 6693   0.0    19:58:58 node vite.js"
   },
   {
    "stage": "group seed 1 N 262144",
    "at": "2026-10-18T18:22:09.407Z",
    "uptime": "14:22  up 16 days, 15:45, 15 users, load averages: 113.08 52.45 40.58",
-   "ps": "61429  87.1       00:01 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    20:14:59 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "61429  87.1       00:01 deno horizon.ts\n 6693   0.0    20:14:59 node vite.js"
   },
   {
    "stage": "group seed 3 N 262144",
    "at": "2026-10-18T18:30:37.819Z",
    "uptime": "14:30  up 16 days, 15:53, 15 users, load averages: 92.96 121.38 94.06",
-   "ps": "61429  97.0       08:29 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    20:23:27 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "61429  97.0       08:29 deno horizon.ts\n 6693   0.0    20:23:27 node vite.js"
   },
   {
    "stage": "group seed 4 N 262144",
    "at": "2026-10-18T18:48:07.106Z",
    "uptime": "14:48  up 16 days, 16:11, 15 users, load averages: 341.65 355.48 268.54",
-   "ps": "22652   0.0       02:31 node /Users/nicholas/develop/llm-firehose/.claude/worktrees/workflow-section-redesign-027da0/apps/tauri-desktop/node_modules/.bin/../vit\n61429  75.5       25:59 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    20:40:57 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "22652   0.0       02:31 node\n61429  75.5       25:59 deno horizon.ts\n 6693   0.0    20:40:57 node vite.js"
   },
   {
    "stage": "group seed 1 N 393216",
    "at": "2026-10-18T18:57:30.988Z",
    "uptime": "14:57  up 16 days, 16:20, 15 users, load averages: 253.40 295.96 282.25",
-   "ps": "22652   0.0       11:54 node /Users/nicholas/develop/llm-firehose/.claude/worktrees/workflow-section-redesign-027da0/apps/tauri-desktop/node_modules/.bin/../vit\n60078  90.4       00:00 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    20:50:20 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "22652   0.0       11:54 node\n60078  90.4       00:00 deno horizon.ts\n 6693   0.0    20:50:20 node vite.js"
   },
   {
    "stage": "group seed 3 N 393216",
    "at": "2026-10-18T19:13:39.320Z",
    "uptime": "15:13  up 16 days, 16:36, 15 users, load averages: 150.41 186.80 222.21",
-   "ps": "60078  90.9       16:09 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    21:06:29 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "60078  90.9       16:09 deno horizon.ts\n 6693   0.0    21:06:29 node vite.js"
   },
   {
    "stage": "group seed 4 N 393216",
    "at": "2026-10-18T19:15:36.404Z",
    "uptime": "15:15  up 16 days, 16:38, 15 users, load averages: 125.65 165.22 209.19",
-   "ps": "60078  95.0       18:06 deno run -A --no-lock tools/horizon.ts nullrun --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-bac\n 6693   0.0    21:08:26 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "60078  95.0       18:06 deno horizon.ts\n 6693   0.0    21:08:26 node vite.js"
   },
   {
    "stage": "fine pilot",
    "at": "2026-10-18T18:08:45.134Z",
    "uptime": "14:08  up 16 days, 15:31, 15 users, load averages: 46.74 40.89 40.28",
-   "ps": "17062   0.0       00:18 /opt/homebrew/bin/zsh -lc rm cmd/airspace-shared-preview/main.go\\012rmdir cmd/airspace-shared-preview\\012PATH=/opt/homebrew/opt/node/bin\n17080   0.0       00:18 pnpm -C apps/tauri-desktop exec vitest run --no-file-parallelism\n17082   2.0       00:18 node /Users/nicholas/.codex/worktrees/airspace-shared-files/llm-firehose/apps/tauri-desktop/node_modules/.bin/../.pnpm/vitest@4.1.11_@ty\n17814  64.7       00:01 /opt/homebrew/Cellar/node/26.11.1_1/bin/node --experimental-import-meta-resolve --require /Users/nicholas/.codex/worktrees/airspace-shar\n17823  20.2       00:01 deno run -A --no-lock tools/horizon.ts fine --prep /private/tmp/claude-501/-Users-nicholas-develop-browser-life--claude-worktrees-backlo\n 6693   0.0    20:01:35 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+   "ps": "17062   0.0       00:18 zsh\n17080   0.0       00:18 pnpm\n17082   2.0       00:18 node\n17814  64.7       00:01 node\n17823  20.2       00:01 deno horizon.ts\n 6693   0.0    20:01:35 node vite.js"
   }
  ],
  "runStatus": {
@@ -240,7 +240,7 @@
     "stage": "pilot",
     "at": "2026-10-18T17:58:34Z",
     "ps": [
-     " 6693   0.0    19:51:24 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+     " 6693   0.0    19:51:24 node vite.js"
     ],
     "uptime": "13:58  up 16 days, 15:21, 15 users, load averages: 19.93 26.76 40.45",
     "exit": 0
@@ -249,7 +249,7 @@
     "stage": "lesioncheck",
     "at": "2026-10-18T17:59:11Z",
     "ps": [
-     " 6693   0.0    19:52:01 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+     " 6693   0.0    19:52:01 node vite.js"
     ],
     "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.42 27.00 39.98",
     "exit": 0
@@ -258,7 +258,7 @@
     "stage": "nullplan",
     "at": "2026-10-18T17:59:12Z",
     "ps": [
-     " 6693   0.0    19:52:02 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+     " 6693   0.0    19:52:02 node vite.js"
     ],
     "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.46 26.97 39.89",
     "exit": 0
@@ -267,7 +267,7 @@
     "stage": "day1",
     "at": "2026-10-18T17:59:12Z",
     "ps": [
-     " 6693   0.0    19:52:03 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+     " 6693   0.0    19:52:03 node vite.js"
     ],
     "uptime": "13:59  up 16 days, 15:22, 15 users, load averages: 24.46 26.97 39.89",
     "exit": 0
@@ -276,11 +276,11 @@
     "stage": "fine",
     "at": "2026-10-18T18:08:44Z",
     "ps": [
-     "17062   0.0       00:17 /opt/homebrew/bin/zsh -lc rm cmd/airspace-shared-preview/main.go\\012rmdir cmd/airspace-shared-preview\\012PATH=/opt/homebrew/opt/node/bin",
-     "17080   0.0       00:17 pnpm -C apps/tauri-desktop exec vitest run --no-file-parallelism",
-     "17082   5.7       00:17 node /Users/nicholas/.codex/worktrees/airspace-shared-files/llm-firehose/apps/tauri-desktop/node_modules/.bin/../.pnpm/vitest@4.1.11_@ty",
-     "17814   9.1       00:00 /opt/homebrew/Cellar/node/26.11.1_1/bin/node --experimental-import-meta-resolve --require /Users/nicholas/.codex/worktrees/airspace-shar",
-     " 6693   0.0    20:01:34 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+     "17062   0.0       00:17 zsh",
+     "17080   0.0       00:17 pnpm",
+     "17082   5.7       00:17 node",
+     "17814   9.1       00:00 node",
+     " 6693   0.0    20:01:34 node vite.js"
     ],
     "uptime": "14:08  up 16 days, 15:31, 15 users, load averages: 46.74 40.89 40.28",
     "exit": 0
@@ -289,7 +289,7 @@
     "stage": "day2",
     "at": "2026-10-18T18:22:08Z",
     "ps": [
-     " 6693   0.0    20:14:58 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+     " 6693   0.0    20:14:58 node vite.js"
     ],
     "uptime": "14:22  up 16 days, 15:45, 15 users, load averages: 113.08 52.45 40.58",
     "exit": 0
@@ -298,8 +298,8 @@
     "stage": "day3",
     "at": "2026-10-18T18:57:30Z",
     "ps": [
-     "22652   0.0       11:54 node /Users/nicholas/develop/llm-firehose/.claude/worktrees/workflow-section-redesign-027da0/apps/tauri-desktop/node_modules/.bin/../vit",
-     " 6693   0.0    20:50:20 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+     "22652   0.0       11:54 node",
+     " 6693   0.0    20:50:20 node vite.js"
     ],
     "uptime": "14:57  up 16 days, 16:20, 15 users, load averages: 253.40 295.96 282.25",
     "exit": 0
@@ -308,9 +308,9 @@
     "stage": "nullrecord",
     "at": "2026-10-18T19:33:16Z",
     "ps": [
-     "39776   0.0       02:35 /opt/homebrew/bin/zsh -c source /Users/nicholas/.claude/shell-snapshots/snapshot-zsh-1792335822776-jook98.sh 2>/dev/null || true && expo",
-     "39786   0.0       02:35 /opt/homebrew/bin/zsh -c source /Users/nicholas/.claude/shell-snapshots/snapshot-zsh-1792335822776-jook98.sh 2>/dev/null || true && expo",
-     " 6693   0.0    21:26:06 node /Users/nicholas/develop/browser-life-main/node_modules/.bin/../vite/bin/vite.js"
+     "39776   0.0       02:35 zsh",
+     "39786   0.0       02:35 zsh",
+     " 6693   0.0    21:26:06 node vite.js"
     ],
     "uptime": "15:33  up 16 days, 16:56, 15 users, load averages: 346.92 226.00 191.15",
     "exit": 0
