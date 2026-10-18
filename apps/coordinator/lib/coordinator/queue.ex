@@ -219,7 +219,7 @@ defmodule Coordinator.Queue do
   """
   use GenServer
   require Logger
-  alias Coordinator.{Attempt, Garden, Segment, Store}
+  alias Coordinator.{Attempt, Garden, GardenLeaders, Segment, Store}
 
   # Leases expire after this long without a heartbeat (configurable for tests).
   # Public because the garden's view must know when a lease it finds is dead
@@ -275,6 +275,8 @@ defmodule Coordinator.Queue do
   # under any number of combining marks, 2000 bytes (four per codepoint at
   # most) -- the bound a persisted and listed string actually needs.
   @max_failure_reason 500
+  # Leaders tasks running at once (`start_leaders/4`).
+  @leaders_max 2
   @max_failure_reason_bytes 2000
 
   # ---- client API ----
@@ -451,6 +453,8 @@ defmodule Coordinator.Queue do
     # The garden's persisted atoms (`:steps_per_day`, `:letters`, `:dropped_at`,
     # ...) live only in this module: same reason.
     Code.ensure_loaded!(Coordinator.Garden)
+    # And the leaders blocks' (`:livingCells`, `:clearLeader`, ...): theirs.
+    Code.ensure_loaded!(Coordinator.GardenLeaders)
 
     state =
       case File.read(Path.join(dir, "state.bin")) do
@@ -489,7 +493,16 @@ defmodule Coordinator.Queue do
     # every garden's ask from zero. Hands of a past dawn period are forgotten
     # by a sweep, not only when the next hand comes.
     schedule_hands_sweep()
-    {:ok, state |> Map.put(:dir, dir) |> Map.put(:food_hands, %{}) |> reindex()}
+    # A verified day whose leaders block was never counted, or whose task died
+    # with the last Queue, is counted now (docs/garden-predictions-2026-10-18.md).
+    {:ok,
+     state
+     |> Map.put(:dir, dir)
+     |> Map.put(:food_hands, %{})
+     |> Map.put(:leaders_tasks, %{})
+     |> Map.put(:leaders_waiting, wait_new())
+     |> reindex()
+     |> start_leaders_at_boot()}
   end
 
   # The food hands are salted hashes kept in memory only (docs/garden-food-2026-10-18.md,
@@ -517,6 +530,20 @@ defmodule Coordinator.Queue do
 
   defp redact_status(status, _key, _fun), do: status
 
+  # A leaders task's answer (`start_leaders/3`): kept only if its token is still
+  # the day's and the day's accepted run attempt is the one it read
+  # (`Garden.accept_leaders/6`); a late one is dropped. A day that arrives `ok`
+  # may let the next day's lines be counted (`Garden.leaders_followups/3`).
+  # The task's slot is freed by its `:DOWN`, never here, so a dropped answer
+  # cannot leak one.
+  @impl true
+  def handle_cast({:garden_leaders, name, day, token, attempt, result}, s) do
+    case take_leaders(s, name, day, token, attempt, result) do
+      {:ok, s} -> {:noreply, persist(s)}
+      :stale -> {:noreply, s}
+    end
+  end
+
   # Every garden's hands of a past dawn period, or of another limiter
   # incarnation, are dropped (so the hashes are forgotten within a sweep of the
   # dawn, whether or not anyone asks again).
@@ -534,6 +561,31 @@ defmodule Coordinator.Queue do
           do: {name, h}
 
     {:noreply, %{s | food_hands: hands}}
+  end
+
+  # A leaders task ended (`start_leaders/4`): its slot is free, and the next
+  # waiting day starts. A task always casts its answer before it exits, so an
+  # answer is never behind its own `:DOWN`; a task that died without answering
+  # (killed, say for memory) makes its day `unreadable` if the day still waits
+  # on it, and a later start counts it again (`Garden.leaders_to_start/2`).
+  def handle_info({:DOWN, mref, :process, _pid, reason}, s)
+      when is_map_key(s.leaders_tasks, mref) do
+    {{name, day, token, attempt}, tasks} = Map.pop(s.leaders_tasks, mref)
+    s = %{s | leaders_tasks: tasks}
+
+    s =
+      with true <- reason != :normal,
+           _ =
+             Logger.warning(
+               "queue: leaders task for #{name} day #{day} died: #{inspect(reason, limit: 5)}"
+             ),
+           {:ok, s} <- take_leaders(s, name, day, token, attempt, {:error, :task_died}) do
+        s
+      else
+        _ -> s
+      end
+
+    {:noreply, s |> drain_leaders() |> persist()}
   end
 
   # As GenServer's default does, an unexpected message is worth a warning (a
@@ -1581,8 +1633,121 @@ defmodule Coordinator.Queue do
               g
           end
 
-        put_in(s, [:gardens, seg.experiment], g)
+        s = put_in(s, [:gardens, seg.experiment], g)
+
+        if {kind, seg.status} == {"verify", "verified"},
+          do: start_leaders(s, seg.experiment, seg.index),
+          else: s
     end
+  end
+
+  # Who held the field at a verified day's end (docs/garden-predictions-2026-10-18.md):
+  # counted from the day's own files, only behind `Garden.leaders_job/4`'s gate,
+  # in an unlinked, monitored process so parsing never holds up this one. The
+  # task reads only what it is handed here and answers with a cast to this pid
+  # (a Queue that is gone never hears it), carrying a token the day's block
+  # keeps. At most `@leaders_max` run at once (a first start onto a garden with
+  # many verified days, each holding a day's mutation map): a day beyond that
+  # shows `pending` with no token and waits in `leaders_waiting`, in order, and
+  # is started afresh when a slot frees. `segs` may be passed by a caller that
+  # starts many days of one garden.
+  defp start_leaders(s, name, day, segs \\ nil) do
+    case s.gardens[name] do
+      nil -> s
+      g -> start_leaders(s, name, g, day, segs || garden_segs(s, g))
+    end
+  end
+
+  defp start_leaders(s, name, g, day, segs) do
+    case Garden.leaders_job(g, segs, day, &Store.blob_path(s.dir, &1)) do
+      :skip ->
+        s
+
+      {:unchecked, attempt} ->
+        put_in(s, [:gardens, name], Garden.unchecked_leaders(g, day, attempt))
+
+      {:start, job} when map_size(s.leaders_tasks) >= @leaders_max ->
+        s
+        |> put_in([:gardens, name], Garden.pending_leaders(g, day, nil, job.for))
+        |> Map.update!(:leaders_waiting, &wait_push(&1, {name, day}))
+
+      {:start, job} ->
+        token = System.unique_integer([:positive, :monotonic])
+        queue = self()
+
+        {_pid, mref} =
+          GardenLeaders.spawn_owned(queue, fn ->
+            result = GardenLeaders.compute(job.paths, job.ctx)
+            GenServer.cast(queue, {:garden_leaders, name, day, token, job.for, result})
+          end)
+
+        s
+        |> put_in([:gardens, name], Garden.pending_leaders(g, day, token, job.for))
+        |> put_in([:leaders_tasks, mref], {name, day, token, job.for})
+        |> Map.update!(:leaders_waiting, &unwait(&1, {name, day}))
+    end
+  end
+
+  # The waiting days: a FIFO of `{name, day}` and the set of those still
+  # waiting, so queueing, starting and taking the next are each O(log n) (a
+  # first start onto a garden with many verified days queues them all). A day
+  # started out of turn leaves its entry in the FIFO; it is skipped when
+  # reached, being out of the set.
+  defp wait_new, do: {:queue.new(), MapSet.new()}
+
+  defp wait_push({q, set} = w, item),
+    do: if(MapSet.member?(set, item), do: w, else: {:queue.in(item, q), MapSet.put(set, item)})
+
+  defp unwait({q, set}, item), do: {q, MapSet.delete(set, item)}
+
+  defp wait_pop({q, set}) do
+    case :queue.out(q) do
+      {{:value, item}, q} ->
+        if MapSet.member?(set, item),
+          do: {item, {q, MapSet.delete(set, item)}},
+          else: wait_pop({q, set})
+
+      {:empty, q} ->
+        {nil, {q, set}}
+    end
+  end
+
+  # An answer for `day` (a task's, or a died task's `{:error, _}`), through
+  # `Garden.accept_leaders/6`; then the days it lets be counted.
+  defp take_leaders(s, name, day, token, attempt, result) do
+    with %{} = g <- s.gardens[name],
+         segs = garden_segs(s, g),
+         {:ok, g} <- Garden.accept_leaders(g, segs, day, token, attempt, result) do
+      s = put_in(s, [:gardens, name], g)
+      s = Enum.reduce(Garden.leaders_followups(g, segs, day), s, &start_leaders(&2, name, &1))
+      Coordinator.LetterLimiter.invalidate(name)
+      {:ok, s}
+    else
+      _ -> :stale
+    end
+  end
+
+  # Starts waiting days while a slot is free.
+  defp drain_leaders(s) when map_size(s.leaders_tasks) >= @leaders_max, do: s
+
+  defp drain_leaders(s) do
+    case wait_pop(s.leaders_waiting) do
+      {{name, day}, rest} ->
+        %{s | leaders_waiting: rest} |> start_leaders(name, day) |> drain_leaders()
+
+      {nil, rest} ->
+        %{s | leaders_waiting: rest}
+    end
+  end
+
+  defp start_leaders_at_boot(s) do
+    Enum.reduce(s.gardens, s, fn {name, g}, s ->
+      segs = garden_segs(s, g)
+
+      g
+      |> Garden.leaders_to_start(segs)
+      |> Enum.reduce(s, &start_leaders(&2, name, &1, segs))
+    end)
   end
 
   # ---- validation ----
@@ -2545,9 +2710,9 @@ defmodule Coordinator.Queue do
   # Never `:dir`, `:index` or `:food_hands` (the food hands live in memory
   # only); `:gardens` only while empty (see `@state_version`).
   defp persist_drops(%{gardens: gardens}) when map_size(gardens) == 0,
-    do: [:dir, :index, :food_hands, :gardens]
+    do: [:dir, :index, :food_hands, :leaders_tasks, :leaders_waiting, :gardens]
 
-  defp persist_drops(_s), do: [:dir, :index, :food_hands]
+  defp persist_drops(_s), do: [:dir, :index, :food_hands, :leaders_tasks, :leaders_waiting]
 
   defp persist(s) do
     path = Path.join(s.dir, "state.bin")
