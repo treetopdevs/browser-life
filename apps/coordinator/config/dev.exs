@@ -55,6 +55,13 @@ config :phoenix, :plug_init_mode, :runtime
 # Tokenless experiment creation from loopback clients (never in production).
 config :coordinator, allow_local_admin: true
 
+# A dev garden may also be founded on `spots` (256x256, cheap), so bin/garden-dev
+# and tests/deno/garden_e2e.ts run a whole garden on one machine in seconds. The
+# production list (config.exs) is the big storm only, and prod.exs never reads
+# this file, so a production coordinator still refuses a `spots` garden (422).
+# A plain list replaces rather than merges, so both are named, as in test.exs.
+config :coordinator, garden_presets: ~w(wild-storm-large spots)
+
 # Generous island limits, so local multi-island work and
 # tests/deno/coordinator_integration.ts are never throttled.
 config :coordinator, island_joins_per_address: 1000, island_next_per_island: 6000

@@ -358,6 +358,109 @@ comparison is the only check of a day's own entries beyond its own manifest and
 log, so the export always makes it. Other experiments are stitched as before:
 one schedule on every segment.
 
+## Run a garden locally
+
+`bin/garden-dev` (from the repository root) runs a whole garden on one machine:
+
+1. a dev coordinator (`MIX_ENV=dev mix phx.server`) on `PORT` (4000) with `BL_DATA_DIR` in a scratch
+   directory,
+2. the lab (Vite) on `LAB_PORT` (5173), which serves the page and forwards `/api` to the coordinator,
+3. a garden founded through `POST /api/gardens` (dev allows tokenless admin from loopback),
+4. `GARDEN_ISLANDS` headless islands (`tools/island.ts`), two by default.
+
+It then prints the addresses and waits. Ctrl-C (or SIGTERM, SIGHUP) stops every process, with
+SIGKILL for any still running about 20 s later, and removes the scratch directory. It refuses to start
+when something already listens on `PORT` or `LAB_PORT`, and after boot it checks (with `lsof`)
+that the listener is the coordinator it started, so it never founds a garden in a coordinator it
+did not start (it needs `lsof`, which macOS has; on Linux install it). A data directory is held by
+one launcher at a time (a lock directory inside it), so two coordinators never write one garden's
+state. The lock is never taken over: a launcher removes its own on every exit but SIGKILL, and
+one that finds a lock refuses, naming the pids it records and whether each still runs; remove
+`.garden-dev.lock` by hand when no launcher uses the directory. A second Ctrl-C while it stops is
+ignored; the stop takes about 20 s at most. The coordinator's, lab's and islands' output goes
+to `logs/` in that directory, not to the terminal. The lab needs a working Node for `pnpm`; if it
+fails, `logs/lab.log` says why.
+
+It drops every `BL_*` variable of the calling shell before starting anything:
+`BL_ADMIN_TOKEN` would make the tokenless founding a 401, `BL_GARDEN_ISLAND_TOKEN` would keep
+every day from the islands (they cannot send a garden token yet), and discovery's store
+(`BL_DISCOVERY_DATA_DIR`) goes in the scratch directory too.
+
+| Variable | Default | |
+| --- | --- | --- |
+| `PORT`, `LAB_PORT` | 4000, 5173 | |
+| `GARDEN_NAME` | `commons` | The page's default route (`/api/public/garden`, config `:public_garden`) shows `commons` with no query. The directory is a scratch one, never the real commons. |
+| `GARDEN_PRESET` | `spots` | `spots` (256x256) or `wild-storm-large` (512x512, the real commons' jar). The founding is a feed at the centre, `r` 64 (255 on the big storm), amount 16. |
+| `GARDEN_SEED` | 1 | Integers are written without leading zeros. |
+| `GARDEN_STEPS_PER_DAY`, `GARDEN_CENSUS` | 2048, 256 | The census interval must divide the day. |
+| `GARDEN_DAYS` | 365 | The horizon. |
+| `GARDEN_DAWN_MS` | 60000 | A day a minute, so the page visibly rests and wakes. At least 1000. Dawns are a grid (every whole minute by default), not a delay after founding, so day 1 can come well under a minute after the garden is founded. |
+| `GARDEN_ISLANDS` | 2 | 0 starts none (use `/island.html`, or `deno run -A tools/island.ts --coordinator http://127.0.0.1:4000`). |
+| `GARDEN_LAB` | 1 | 0 skips Vite. |
+| `GARDEN_DATA_DIR` | a new `mktemp -d` | Holds `data/` (the coordinator's), `logs/` and `export/`. A directory you name is created if missing and never removed, and a garden already in it is tended as it is: the printed commands use its own world, and a different `GARDEN_PRESET` is ignored with a note. |
+| `GARDEN_KEEP` | 0 | 1 keeps an automatically created directory on exit. |
+
+**Why `spots` works in dev and not in production.** `config/dev.exs` sets `garden_presets` to
+`wild-storm-large` and `spots`, as `config/test.exs` does. `config/config.exs` keeps the
+production list, the big storm only, and `prod.exs` never reads `dev.exs`, so a production
+coordinator refuses a `spots` garden with 422. Nothing else about a garden differs in dev: the
+letter limit (3 per address per hour), the view cache (two seconds) and every rule are
+production's.
+
+**The page.** `http://localhost:5173/garden/` reads `/api/public/garden`; for another name add
+`?garden=<name>`. The coordinator's operations dashboard is `http://127.0.0.1:4000/index.html`.
+
+**Letters.** Post a stone as a visitor would:
+
+```bash
+curl -sS -X POST -H 'content-type: application/json' \
+  -d '{"kind":"stone","x":128,"y":128,"r":8}' http://127.0.0.1:4000/api/public/gardens/commons/letters
+```
+
+and drop one as the keeper, before its day is assigned:
+
+```bash
+curl -sS -X POST http://127.0.0.1:4000/api/gardens/commons/letters/ltr-1/drop
+```
+
+Every post from this machine comes from one address, so the fourth in one hourly window is
+refused with 429. The windows are fixed clock hours (`garden_letter_window_ms`), not a sliding
+hour, so a budget spent at 10:59 is whole again at 11:00. Restarting `bin/garden-dev` starts a
+fresh limit (it lives in the coordinator's memory).
+
+**Export.** `bin/garden-dev` prints the command, which writes into the scratch directory rather
+than `runs/`:
+
+```bash
+deno run -A tools/stitch.ts --coordinator http://127.0.0.1:4000 --experiment commons --out "<dir>/export"
+```
+
+It exports nothing until day 0 is verified, which takes two islands.
+
+**Same and different device types.** A day counts as `different-device-type` when the adapter
+descriptions its producer and its verifier reported at join differ, and as `same-device-type`
+when they are equal; the computer is not part of it. The headless islands here both report
+`wgpu <this GPU>`, so every day they verify is `same-device-type` and the page says it was
+replayed here, not yet verified elsewhere. A second computer with the same GPU stays
+`same-device-type`; a browser island (`/island.html`) on this machine reports
+`<browser engine> <this GPU>`, so a day it replays from a headless island counts as
+`different-device-type`, though the same GPU did both.
+
+**The end-to-end check.** `deno run -A tests/deno/garden_e2e.ts < /dev/null` (usually under a
+minute, plus up to three minutes' wait when it starts within three minutes of the top of an hour,
+for the letter window; on a free port or `BL_E2E_PORT`; `BL_E2E_WORK_MS`, default 120000, raises the per-step island budget on a very slow machine; it needs `lsof`) starts its own coordinator on a scratch directory, founds a 4-day
+`spots` garden with 256-step days and a one-second dawn, posts letters through the public route,
+has two in-process islands run and replay three days, drops a letter as the keeper, restarts the
+coordinator, exports the verified prefix with `tools/stitch.ts` (once mid-run, once at the end)
+and compares it with one unsegmented `tools/run.ts` run of the same schedule. Its pass criteria
+are fixed in `docs/garden-local-2026-10-17.md`. When a check fails it keeps its scratch
+directories and prints their paths.
+
+`deno run -A tests/deno/garden_dev_smoke.ts < /dev/null` checks `bin/garden-dev` itself without
+the GPU, the lab or islands: founding with `BL_ADMIN_TOKEN`, `BL_GARDEN_ISLAND_TOKEN` and
+`BL_DISCOVERY_DATA_DIR` set in the caller's shell, the lock and port refusals, re-tending a
+garden in a named directory, and shutdown on SIGINT, SIGTERM and SIGHUP.
+
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
 ## Learn more
