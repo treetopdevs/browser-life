@@ -22,7 +22,16 @@
 // own observation files were never confirmed against the accepted upload
 // (replaying the final segment alone doesn't touch them). Off by default,
 // since this is a secondary signal, not what run correctness rests on (that's
-// the physics+observer digest alone). The
+// the physics+observer digest alone). A bred run (one whose config has a
+// pondScore: the breeder preset, or a pond-breed-/pond-mass-/pond-drift-
+// condition) is the exception: its ponds.tsv is the record of which donors the
+// rule chose and why, so a segment whose observations mismatch is skipped
+// without the flag too (docs/archipelago-breed-2026-10-18.md). Every
+// downloaded manifest must also describe exactly the task the coordinator
+// handed out (taskSpecError in packages/runner/src/stitch.ts: no overrides or
+// any other key a producer added, and the config that spec builds), since a
+// manifest is the producer's alone and no verifier's digest covers it; an
+// export already on disk is held to the same binding before it is kept. The
 // coordinator is authoritative: an existing export whose run is no longer
 // exportable, or whose accepted history has changed (including its
 // verification metadata, or a metrics-version bump since it was written), is
@@ -67,6 +76,10 @@ import {
   stitchablePrefix,
   validateInterventions,
   type ScheduledIntervention,
+  specConfig,
+  taskSpecError,
+  type DistributedTask,
+  type RunSpec,
   type StitchSegment,
 } from "@bl/runner";
 
@@ -99,6 +112,8 @@ async function get(path: string): Promise<Response> {
 interface Listed {
   id: string;
   run: string;
+  condition: string;
+  seed: number;
   index: number;
   last: boolean;
   startStep: number;
@@ -112,7 +127,10 @@ interface Listed {
   /** true/false only when a verify attempt matching the current accepted digest also reported observation-file digests; null otherwise (see `Coordinator.Queue`'s `{:experiment, name}` handler). */
   observationsVerified: boolean | null;
 }
-type Experiment = { spec: { steps: number; presetId: string; metapopulation?: unknown; interventions?: unknown; garden?: unknown }; segments: Listed[] };
+type Experiment = {
+  spec: { experiment: string; steps: number; presetId: string; censusEvery: number; deepEvery: number; seeds?: number[]; metapopulation?: Record<string, unknown>; interventions?: unknown; garden?: unknown };
+  segments: Listed[];
+};
 const fetchExperiment = async (): Promise<Experiment> => await (await get(`/api/experiments/${encodeURIComponent(a.experiment!)}`)).json();
 const exp = await fetchExperiment();
 
@@ -163,9 +181,35 @@ function ineligible(segs: Listed[]): string | null {
   if (!a["allow-unverified"] && segs.find((s) => s.last)?.status !== "verified") return "final segment not yet verified (pass --allow-unverified to stitch anyway)";
   return filesIneligible(segs);
 }
+// The task the coordinator handed out for segment `s` (`Coordinator.Queue`'s task/4), for taskSpecError.
+const taskOf = (s: Listed): DistributedTask => ({
+  experiment: exp.spec.experiment,
+  presetId: exp.spec.presetId,
+  condition: s.condition,
+  seed: s.seed,
+  steps: s.steps,
+  censusEvery: exp.spec.censusEvery,
+  deepEvery: exp.spec.deepEvery,
+  seeds: exp.spec.seeds,
+  metapopulation: exp.spec.metapopulation,
+  interventions: exp.spec.interventions,
+});
+// Whether a run is bred: its task's config has a pondScore (one condition and seed per run, so its first segment's says).
+function bred(segs: Listed[]): boolean {
+  try {
+    return specConfig(taskOf(segs[0]) as unknown as RunSpec).pondScore !== undefined;
+  } catch {
+    return false;
+  }
+}
 function filesIneligible(segs: Listed[]): string | null {
   if (a["require-observations-verified"] && segs.some((s) => s.observationsVerified !== true))
     return "not every segment's observations were verified as matching (pass without --require-observations-verified to stitch anyway)";
+  // A bred run's donor record (ponds.tsv) is what the run is for: a verifier that regenerated it differently is never
+  // overridden here (null, no comparison made, stays the flag's to decide).
+  const mismatched = segs.filter((s) => s.observationsVerified === false);
+  if (mismatched.length && bred(segs))
+    return `${mismatched.length} segment(s) of this bred run have observation files (ponds.tsv among them) that the verifier regenerated differently`;
   const unbound = segs.filter((s) => BUNDLE_FILES.some((f) => !s.files?.[f]));
   if (unbound.length) return `${unbound.length} segment(s) lack a complete, digest-recorded bundle (uploaded before the coordinator recorded file digests?)`;
   // An optional file is recorded (like every other bundle file) whenever a
@@ -211,6 +255,7 @@ const shorterPrefix = (old: Recorded[], segs: Recorded[]) => {
 };
 
 // The fingerprint of an existing export, "incomplete" if files are missing,
+// "invalid-task: <why>" if its manifest does not describe the coordinator's task (taskSpecError),
 // "invalid-ponds: <why>" if a pond run's ponds.tsv fails the stitch rules,
 // "invalid-range: <why>" if a garden export's manifest does not cover the
 // steps its days end at on the coordinator (or runs past its exportable prefix),
@@ -284,6 +329,13 @@ async function existing(dir: string, segs: Listed[], total: number, list?: reado
       return `invalid-interventions: ${e instanceof Error ? e.message : String(e)}`;
     }
   }
+  // Its manifest is bound to the coordinator's task as each downloaded segment's is (taskSpecError), over the steps it
+  // covers: the fingerprint covers accepted digests, not the stitched spec and config, so an export written before that
+  // binding existed, or edited since (an injected overrides.pondScore, say), would otherwise be kept as "already present".
+  if (segs.length) {
+    const unbound = taskSpecError(manifest, { ...taskOf(segs[0]), steps: over }, { garden });
+    if (unbound) return `invalid-task: ${unbound}`;
+  }
   // A pond run's ponds.tsv is re-checked against the stitch rules, whole, because the fingerprint covers accepted
   // digests and not these rules: an export written by a stitcher that did not yet check each recipient, or edited
   // since, would otherwise be kept for as long as the coordinator's record is unchanged.
@@ -294,7 +346,8 @@ async function existing(dir: string, segs: Listed[], total: number, list?: reado
     const cfg = { ...defaultConfig(), ...pondCfg };
     try {
       // The arm is the run's own, from the manifest the stitcher wrote (the preset's is not: a nat or shuf run is a pond preset's
-      // with another arm); a manifest without one leaves the arm to the file's header, as for an export older than the arm.
+      // with another arm). A manifest whose config has no arm (an export older than the arm) no longer reaches here: it is not
+      // the config its task builds, so taskSpecError above has already refused it.
       checkPondsFile(dir, text, cfg.pondPeriod, cfg.tilesX * cfg.tilesY, 0, over, manifest.cfg?.pondArm, manifest.cfg?.pondScore);
     } catch (e) {
       return `invalid-ponds: ${e instanceof Error ? e.message : String(e)}`;
@@ -326,6 +379,9 @@ async function download(s: Listed): Promise<StitchSegment> {
     if (got !== s.files![f]) throw new Error(`${s.run} #${s.index}: ${f} has SHA-256 ${got}, the accepted attempt recorded ${s.files![f]}`);
     files[f] = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   }
+  // The manifest is the producer's own (no verifier's digest covers it): it must describe the task it was handed.
+  const unbound = taskSpecError(JSON.parse(files["manifest.json"]), taskOf(s), { garden });
+  if (unbound) throw new Error(`${s.run} #${s.index}: manifest.json does not describe the coordinator's task: ${unbound}`);
   // Optional, unlike the files above: only present when this run has the
   // corresponding mechanism configured (`ineligible` already required each on
   // every segment or none).
@@ -383,11 +439,13 @@ async function exportRun(run: string, listed: Listed[], list: readonly Scheduled
           ? "export predates the current metrics version"
           : have.startsWith("invalid-ponds: ")
             ? `export fails the ponds.tsv check (${have.slice("invalid-ponds: ".length)})`
-            : have.startsWith("invalid-range: ")
-              ? `export's range is not its days' (${have.slice("invalid-range: ".length)})`
-              : have.startsWith("invalid-interventions: ")
-                ? `export's schedule fails the check against the coordinator's (${have.slice("invalid-interventions: ".length)})`
-                : "history differs from the coordinator's accepted one",
+            : have.startsWith("invalid-task: ")
+              ? `export's manifest does not describe the coordinator's task (${have.slice("invalid-task: ".length)})`
+              : have.startsWith("invalid-range: ")
+                ? `export's range is not its days' (${have.slice("invalid-range: ".length)})`
+                : have.startsWith("invalid-interventions: ")
+                  ? `export's schedule fails the check against the coordinator's (${have.slice("invalid-interventions: ".length)})`
+                  : "history differs from the coordinator's accepted one",
     );
 
   // A garden is stitched in garden mode against the coordinator's current list; any other run as an ordinary one.

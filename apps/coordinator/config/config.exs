@@ -29,15 +29,38 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Phoenix's default parameter filter is ["password"] alone, and it matches
+# substrings case-sensitively, so an island's join-body "gardenToken" would be
+# printed in a debug `Parameters:` line. "token" and "Token" are added: every
+# key containing either (an island's "token" too) is now filtered, at any depth,
+# and so is a map entry's string value containing "token=" or "Token=" (Phoenix
+# appends "=" to the patterns it matches against values, and leaves a bare
+# string inside a list as it is; deps/phoenix/lib/phoenix/logger.ex).
+config :phoenix, :filter_parameters, ["password", "token", "Token"]
+
 # Archipelago: accepted presets and conditions (must match packages/schema and
 # packages/runner), browser origins allowed to act as islands, and the admin
 # token required to create experiments (unset: loopback clients only).
 config :coordinator,
   data_dir: "data",
   presets:
-    ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago ponds ponds-small wild-storm-large),
-  conditions:
-    ~w(treatment no-mutation neutral uniform-light fixed-env replenished no-signal-motility no-migration pond-rand pond-cont),
+    ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago ponds ponds-small wild-storm-large breeder),
+  # The last 21 are the breeder's (docs/archipelago-breed-2026-10-18.md):
+  # pond-breed-<score>, pond-mass-<score> and pond-drift-<score> for each of
+  # packages/schema's POND_SCORES, the score fixed by the id (a coordinator
+  # spec takes no overrides). Held to packages/runner/src/conditions.ts by
+  # packages/runner/test/coordinator-conditions.test.ts. pond-nat and
+  # pond-shuf stay out (the hunt protocol, §13).
+  conditions: ~w(
+    treatment no-mutation neutral uniform-light fixed-env replenished no-signal-motility no-migration pond-rand pond-cont
+    pond-breed-mass pond-mass-mass pond-drift-mass
+    pond-breed-drive pond-mass-drive pond-drift-drive
+    pond-breed-reach pond-mass-reach pond-drift-reach
+    pond-breed-seed pond-mass-seed pond-drift-seed
+    pond-breed-body pond-mass-body pond-drift-body
+    pond-breed-drive+seed pond-mass-drive+seed pond-drift-drive+seed
+    pond-breed-drive+seed+body pond-mass-drive+seed+body pond-drift-drive+seed+body
+  ),
   cors_origins: ["http://localhost:5173"],
   admin_token: nil,
   allow_local_admin: false,
@@ -56,15 +79,20 @@ config :coordinator,
   # below, or a per-experiment :metapopulation), so Queue.incompatible/3 checks
   # it dynamically against the spec instead of this static preset list. The
   # pond presets have uniform light and no seasons, and the pond conditions
-  # need a preset with the pond cycle.
+  # need a preset with the pond cycle. The breeder's 21 conditions are not
+  # listed either: Queue.incompatible/3 refuses them on every preset outside
+  # `:pond_presets`, by their prefix. pond-cont is refused on the breeder (an
+  # arm cont with a pondScore fails validateConfig). Held to the runner's own
+  # refusals, every accepted preset x condition, by
+  # packages/runner/test/coordinator-conditions.test.ts.
   incompatible: %{
-    "uniform-light" => ~w(spots spots-m3 soup ponds ponds-small),
+    "uniform-light" => ~w(spots spots-m3 soup ponds ponds-small breeder),
     "fixed-env" =>
-      ~w(spots gradient spots-m3 gradient-m3 soup large archipelago ponds ponds-small),
+      ~w(spots gradient spots-m3 gradient-m3 soup large archipelago ponds ponds-small breeder),
     "pond-rand" =>
       ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago wild-storm-large),
     "pond-cont" =>
-      ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago wild-storm-large)
+      ~w(spots gradient spots-m3 gradient-m3 soup seasons large archipelago wild-storm-large breeder)
   },
   # preset => its migrationPeriod (packages/schema/src/presets.ts's "archipelago"
   # preset; 0/absent for every preset without migration configured). Used only to
@@ -80,14 +108,21 @@ config :coordinator,
   # (Queue.pick_task/4), and they refuse a :metapopulation, whose cross-run
   # exchange would move matter into and out of their ponds. Kept in sync with
   # the TS presets by hand, like `:presets` above.
-  pond_presets: ~w(ponds ponds-small),
+  pond_presets: ~w(ponds ponds-small breeder),
+  # The pond presets whose config sets pondScore (packages/schema's "breeder",
+  # whose `treatment` is the breed arm). Every segment of such an experiment,
+  # run or verify, goes only to an island that advertises "breed-v1" as well
+  # as "ponds-v1" (Queue.pick_task/4; the breeder's conditions are gated on
+  # any pond preset by their prefix). Held to the TS presets by
+  # packages/runner/test/coordinator-presets.test.ts.
+  breed_presets: ~w(breeder),
   # preset => its pondPeriod (the same presets.ts presets; every condition
   # keeps it, pond-cont included). Used only to validate cadence at experiment
   # creation, like `:migration_period`: pondPeriod must be a multiple of
   # censusEvery (packages/runner/src/runner.ts refuses it otherwise), and
   # segmentSteps a multiple of pondPeriod. Must be kept in sync with the TS
   # presets by hand.
-  pond_period: %{"ponds" => 10_000, "ponds-small" => 1_000},
+  pond_period: %{"ponds" => 10_000, "ponds-small" => 1_000, "breeder" => 5_000},
   # preset => {width, height} of its world in cells (packages/schema/src/presets.ts:
   # tileW * tilesX by tileH * tilesY). Used only to refuse a scheduled lesion or
   # feed centred outside the world at experiment creation (Queue.invalid_interventions/1),
@@ -105,7 +140,8 @@ config :coordinator,
     "archipelago" => {128, 128},
     "ponds" => {512, 512},
     "ponds-small" => {128, 128},
-    "wild-storm-large" => {512, 512}
+    "wild-storm-large" => {512, 512},
+    "breeder" => {256, 256}
   }
 
 # The garden (Coordinator.Garden; README "The garden"): the presets a keeper

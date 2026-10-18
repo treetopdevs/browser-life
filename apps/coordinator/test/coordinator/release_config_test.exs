@@ -7,7 +7,7 @@ defmodule Coordinator.ReleaseConfigTest do
   """
   use ExUnit.Case, async: false
 
-  @vars ~w(SECRET_KEY_BASE BL_ADMIN_TOKEN BL_CORS_ORIGINS BL_ISLAND_JOINS_PER_ADDRESS BL_MAX_ISLANDS BL_TRUST_FORWARDED_FOR)
+  @vars ~w(SECRET_KEY_BASE BL_ADMIN_TOKEN BL_CORS_ORIGINS BL_ISLAND_JOINS_PER_ADDRESS BL_MAX_ISLANDS BL_TRUST_FORWARDED_FOR BL_GARDEN_ISLAND_TOKEN)
 
   setup do
     saved = for v <- @vars, do: {v, System.get_env(v)}
@@ -45,6 +45,59 @@ defmodule Coordinator.ReleaseConfigTest do
 
     prod_env()
     refute Keyword.has_key?(prod_runtime()[:coordinator], :cors_origins)
+  end
+
+  # Slice 15 (docs/garden-hardening-2026-10-18.md, item 3): production founds
+  # big-storm gardens only (a `spots` garden is a dev and test convenience), and
+  # nothing at runtime widens that. garden_prod_presets_test.exs founds one over
+  # HTTP under this same value.
+  test "prod garden presets are the big storm only, and no garden island token by default" do
+    coordinator = prod_config()[:coordinator]
+    assert coordinator[:garden_presets] == ["wild-storm-large"]
+    assert coordinator[:garden_island_token] == nil
+
+    # The reader does follow the environment (dev.exs widens the list), so the
+    # check above is not vacuous.
+    assert "spots" in Config.Reader.read!("config/config.exs", env: :dev)[:coordinator][
+             :garden_presets
+           ]
+
+    prod_env()
+    refute Keyword.has_key?(prod_runtime()[:coordinator], :garden_presets)
+    refute Keyword.has_key?(prod_runtime()[:coordinator], :garden_island_token)
+
+    System.put_env("BL_GARDEN_ISLAND_TOKEN", "t")
+    assert prod_runtime()[:coordinator][:garden_island_token] == "t"
+
+    # And no variable at all can widen it: runtime.exs never names the key
+    # (a check on the variables above would miss a new one).
+    refute File.read!("config/runtime.exs") =~ "garden_presets"
+  end
+
+  # A garden island token is a join-body parameter (`gardenToken`); Phoenix's
+  # parameter filter matches case-sensitively, and its default is ["password"]
+  # alone. garden_api_test.exs checks an actual join's log line.
+  test "the parameter filter hides a garden island token" do
+    filter = prod_config()[:phoenix][:filter_parameters]
+
+    assert Phoenix.Logger.filter_values(%{"gardenToken" => "x", "adapter" => "A"}, filter) ==
+             %{"gardenToken" => "[FILTERED]", "adapter" => "A"}
+
+    assert Phoenix.Logger.filter_values(%{"token" => "x", "password" => "y"}, filter) ==
+             %{"token" => "[FILTERED]", "password" => "[FILTERED]"}
+
+    # Values match a pattern followed by "=" only (Phoenix appends it), so
+    # config.exs's comment says "token=", not any value containing "Token".
+    assert Phoenix.Logger.filter_values(%{"a" => "Token=x", "b" => "Token x"}, filter) ==
+             %{"a" => "[FILTERED]", "b" => "Token x"}
+
+    # A bare string in a list is never value-matched; a map in a list is
+    # filtered by key as anywhere else.
+    assert Phoenix.Logger.filter_values(
+             %{"a" => ["Token=x"], "b" => [%{"gardenToken" => "x"}]},
+             filter
+           ) ==
+             %{"a" => ["Token=x"], "b" => [%{"gardenToken" => "[FILTERED]"}]}
   end
 
   test "prod runtime requires SECRET_KEY_BASE" do

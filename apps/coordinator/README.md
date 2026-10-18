@@ -49,15 +49,19 @@ experiment spec), `CoordinatorWeb.Router` (the routes) and `CoordinatorWeb.ApiCo
   code back over one, or start from a fresh data dir.
 * `POST /api/next` takes `{"capabilities": [...]}`, read per request and never stored:
   `ponds-v1` for a pond preset's experiments, `ponds-v2` as well for the hunt's arms
-  (`pond-nat`, `pond-shuf`), `interventions-v1` for an experiment with `interventions`.
+  (`pond-nat`, `pond-shuf`), `breed-v1` in addition to `ponds-v1` (never instead) for the breeder (a `pond-breed-*`,
+  `pond-mass-*` or `pond-drift-*` condition, and every run of a `:breed_presets` preset,
+  `breeder`), `interventions-v1` for an experiment with `interventions`.
   Work an island's list cannot run is skipped, never waited for.
 * A verify completion's `observationDigests` may name `interventions.jsonl` beside the
   other optional files (`migrations.tsv`, `exchanges.tsv`, `species.tsv`, `ponds.tsv`);
   the lists in `Coordinator.Segment` and `CoordinatorWeb.ApiController` are pinned to
   `packages/runner/src/stitch.ts`'s `VERIFIED_FILES` by
   `packages/runner/test/coordinator-files.test.ts`, and the preset facts in config.exs
-  (`:world_size`, `:pond_presets`, `:pond_period`, `:migration_period`) to
-  `packages/schema`'s presets by `packages/runner/test/coordinator-presets.test.ts`.
+  (`:world_size`, `:pond_presets`, `:pond_period`, `:breed_presets`, `:migration_period`) to
+  `packages/schema`'s presets by `packages/runner/test/coordinator-presets.test.ts`, and
+  `:conditions`, `:incompatible` and the queue's breeder prefixes to the runner's own
+  refusals by `packages/runner/test/coordinator-conditions.test.ts`.
 
 ### Island limits
 
@@ -190,7 +194,8 @@ strings. `/api/public/garden` is the garden named by config `:public_garden`
 `{"error": "not found"}` when there is no such garden. A response may be up to
 two seconds old (it is cached outside the queue process), plus the time one
 refresh takes while a crowd is served the expired copy; a letter posted or
-dropped through these routes is never followed by an older view. All times are
+dropped through these routes is never followed by an older view, and neither is
+a day becoming verified (the queue clears the cache as it records it). All times are
 integers, ms since the epoch; all steps are absolute.
 
 `503 {"error": "the garden is busy; retry shortly"}` with `Retry-After: 1`: the
@@ -278,7 +283,10 @@ public and carry nothing about who wrote them.
 
 The end checkpoint (`.blck` bytes, `application/octet-stream`) of a **verified**
 day of that garden, by its digest; 404 for anything else; 503 with
-`Retry-After: 1`, as for the view, while the lookup is busy. This is the fork: any
+`Retry-After: 1`, as for the view, while the lookup is busy. The lookup is cached
+like the view, and cleared with it when a day becomes verified, so it never
+trails a view that names a newer fork: the `fork.checkpoint` a view gives is
+served from the first read. This is the fork: any
 lab or headless runner can continue the garden from it, with or without the
 letters that came after.
 
@@ -321,7 +329,22 @@ that either is trusted, and `tending.*` counts island ids and adapter
 descriptions as islands report them. Setting `BL_GARDEN_ISLAND_TOKEN` (config
 `:garden_island_token`) offers a garden's days only to islands that joined with
 `"gardenToken": <the token>` in the join body; the token is not stored. An island
-cannot reject (roll back) a verified day of a garden.
+that joined without it still gets every ordinary experiment's work. The island
+client sends it (`IslandOptions.gardenToken`, in the join body only, never in a
+URL, a header, `/api/next` or a log line; a join that carries it follows no
+redirect, and its error never repeats the response body): `tools/island.ts` takes
+`BL_ISLAND_GARDEN_TOKEN` (deliberately not the coordinator's variable) or
+`--garden-token=<t>`, and sends it only over https or to a loopback host;
+`/island.html` takes a URL fragment, `#garden-token=<the token>` (percent-encoded;
+a `+` is a literal plus), which it removes from the address bar at once, keeps in
+memory only and sends only to its own origin (the browser may still keep the link
+in its history). The Queue checks the token in the caller of `Queue.join/1`, so it
+never enters the Queue's mailbox or crash reports, and the parameter filter hides
+it in request logs. A resumed island needs no token while the coordinator still
+knows it: it remembers that the island showed one. A fresh join (the island was
+forgotten, or the metrics version changed) needs the token again; the page says
+so when a tab that was a garden island joins afresh without it. An island cannot
+reject (roll back) a verified day of a garden.
 
 ### Exporting a garden
 
@@ -379,7 +402,7 @@ fails, `logs/lab.log` says why.
 
 It drops every `BL_*` variable of the calling shell before starting anything:
 `BL_ADMIN_TOKEN` would make the tokenless founding a 401, `BL_GARDEN_ISLAND_TOKEN` would keep
-every day from the islands (they cannot send a garden token yet), and discovery's store
+every day from the islands (the launcher starts them without a garden token), and discovery's store
 (`BL_DISCOVERY_DATA_DIR`) goes in the scratch directory too.
 
 | Variable | Default | |

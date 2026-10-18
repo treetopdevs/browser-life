@@ -79,6 +79,26 @@ defmodule Coordinator.Queue do
   `"ponds-v2"` is asked for in addition to `"ponds-v1"`, never instead of it
   (`ISLAND_CAPABILITIES` lists both); a `ponds-v1` rule is otherwise unchanged.
 
+  The breeder (`WorldConfig.pondScore`, docs/sandbox-wild.md and
+  docs/archipelago-breed-2026-10-18.md) needs `"breed-v1"` as well, again in
+  addition to `"ponds-v1"`: a segment, run or verify, whose condition is one of
+  the breeder's (`pond-breed-<score>`, `pond-mass-<score>`, `pond-drift-<score>`,
+  `@breed_condition_prefixes`), on any pond preset, and every segment of an
+  experiment on a preset in config's `:breed_presets` (`breeder`, whose
+  `treatment` is the breed arm). Older code has neither the conditions nor the
+  score columns and throws on them, and on a continuation would report a valid
+  predecessor as invalid, so the controls are gated as well as the arm. Only
+  the rule's own donors are distributed: a spec never carries `picked`,
+  `pressures` or `branch` (`validate/1` keeps none of them), and an island
+  refuses a task that does. A breeder condition on a preset without the pond
+  cycle is refused at creation (`incompatible/3`). picks.jsonl is in no
+  verified file list and a standard island never writes it for a distributed
+  run. The donors the rule chose are in the checkpoint the verifier must
+  reproduce; their record, ponds.tsv's `donor` and score columns, is compared
+  like any observation file (informational here: a mismatch never changes a
+  segment's status), and tools/stitch.ts refuses to export a bred run whose
+  record mismatches.
+
   Scheduled interventions (`spec["interventions"]`, the runner's
   `RunSpec.interventions` -- packages/runner/src/interventions.ts): a list of
   lesions and feeds at absolute steps, the wounds and feedings a lab history
@@ -145,7 +165,8 @@ defmodule Coordinator.Queue do
   visitor can run, replay, fail or reject a day. Three things bound that. With
   `:garden_island_token` set, `join/1` marks an island `garden: true` only when
   its join body carries `"gardenToken"` equal to it (the token itself is never
-  stored), and `pick_task/4` then offers a garden's days, to run or to replay,
+  stored, and `join/1` checks it in its caller, so it never reaches this
+  process's mailbox or crash reports), and `pick_task/4` then offers a garden's days, to run or to replay,
   only to such islands, which also closes the "second island id replays a forged
   day" path. A failed or diverged day is recoverable: `requeue_garden_day/2`
   (keeper only) sends it and the days it blocked back to the queue. And the
@@ -231,7 +252,15 @@ defmodule Coordinator.Queue do
   def start_link(opts),
     do: GenServer.start_link(__MODULE__, opts, name: Keyword.get(opts, :name, __MODULE__))
 
-  def join(info), do: GenServer.call(__MODULE__, {:join, info})
+  # The garden token is checked here, in the caller, and taken out of `info`
+  # before the call: the Queue's mailbox, its crash reports (which print the
+  # last message) and its state never see it, only whether it matched.
+  def join(info) do
+    garden = garden_token_ok?(info)
+    info = if is_map(info), do: Map.delete(info, "gardenToken"), else: info
+    GenServer.call(__MODULE__, {:join, info, garden})
+  end
+
   def authenticate(island, token), do: GenServer.call(__MODULE__, {:auth, island, token})
 
   @doc "Public info for an already-authenticated island (never the token/token_hash); a read, not a claim -- see ApiController.me/2. Doesn't touch last_seen: authenticate/2 doesn't either, and this shouldn't add state a bare probe wouldn't otherwise have."
@@ -412,9 +441,9 @@ defmodule Coordinator.Queue do
   end
 
   @impl true
-  def handle_call({:join, info}, _from, s) do
+  def handle_call({:join, info, garden}, _from, s) do
     case make_room(s) do
-      {:ok, s} -> join_island(info, s)
+      {:ok, s} -> join_island(info, garden, s)
       :full -> {:reply, {:error, :full}, s}
     end
   end
@@ -1205,7 +1234,8 @@ defmodule Coordinator.Queue do
     end
   end
 
-  # Whether the join body carries the configured garden token (constant-time).
+  # Whether the join body carries the configured garden token (constant-time);
+  # run in the caller of `join/1`, never in this process.
   defp garden_token_ok?(info) do
     configured = Application.get_env(:coordinator, :garden_island_token)
     given = is_map(info) && info["gardenToken"]
@@ -1228,6 +1258,17 @@ defmodule Coordinator.Queue do
   end
 
   # When a garden's day completes (a run) or is verified, stamp it.
+  #
+  # A day becoming verified may advance the verified prefix, and so the fork
+  # the public view names and the checkpoints the public route serves: the
+  # garden's cache (`Coordinator.LetterLimiter`) is invalidated here, before
+  # this call replies, so no view naming the new fork can be followed by a
+  # cached 404 for its checkpoint (docs/garden-hardening-2026-10-18.md, item
+  # 2). `invalidate/1` is ETS work only and never calls back into this
+  # process. The servable set only ever grows on this transition: a verified
+  # day cannot be rejected, divergence and failure stop the prefix without
+  # shrinking it, and a requeue, a letter and a drop invalidate from the
+  # controller.
   defp record_garden_day(s, seg, kind) do
     case s.gardens[seg.experiment] do
       nil ->
@@ -1236,9 +1277,15 @@ defmodule Coordinator.Queue do
       g ->
         g =
           case {kind, seg.status} do
-            {"run", "done"} -> Garden.record_done(g, seg.index, now())
-            {"verify", "verified"} -> Garden.record_verified(g, seg.index, now())
-            _ -> g
+            {"run", "done"} ->
+              Garden.record_done(g, seg.index, now())
+
+            {"verify", "verified"} ->
+              Coordinator.LetterLimiter.invalidate(seg.experiment)
+              Garden.record_verified(g, seg.index, now())
+
+            _ ->
+              g
           end
 
         put_in(s, [:gardens, seg.experiment], g)
@@ -1370,6 +1417,10 @@ defmodule Coordinator.Queue do
   # compatibility depends on the *spec*, not just the preset. A pond preset has
   # neither (no migration, and `validate/1` refuses its metapopulation before
   # this), so "no-migration" is always refused there.
+  #
+  # The breeder's conditions are not in the static table either: each needs the
+  # pond cycle (packages/runner/src/conditions.ts throws without it), so one is
+  # refused on every preset outside `:pond_presets`, by its prefix.
   defp incompatible(preset, conditions, spec) do
     table = Application.get_env(:coordinator, :incompatible, %{})
     has_metapop = is_map(spec["metapopulation"])
@@ -1379,7 +1430,7 @@ defmodule Coordinator.Queue do
         effective_migration_period(preset, "treatment") == 0 and not has_metapop
 
       c ->
-        preset in Map.get(table, c, [])
+        preset in Map.get(table, c, []) or (breed_condition?(c) and not pond_preset?(preset))
     end)
   end
 
@@ -1401,6 +1452,11 @@ defmodule Coordinator.Queue do
     do: Map.get(Application.get_env(:coordinator, :pond_period, %{}), preset, 0)
 
   defp pond_preset?(preset), do: preset in Application.get_env(:coordinator, :pond_presets, [])
+
+  # A preset whose config sets pondScore (config's `:breed_presets`): every
+  # segment of its experiments needs `@breed_capability` (see the moduledoc).
+  defp breed_preset?(preset),
+    do: preset in Application.get_env(:coordinator, :breed_presets, [])
 
   # The first cadence error among `conditions`' own runs (each condition is a
   # separate run against `preset`, at the same censusEvery/segmentSteps -- see
@@ -1869,21 +1925,35 @@ defmodule Coordinator.Queue do
   # island that cannot apply them would run the segment clean.
   @interventions_capability "interventions-v1"
 
+  # The breeder (WorldConfig.pondScore, see the moduledoc): its conditions, by
+  # prefix (packages/runner/src/conditions.ts's pond-breed-<score>,
+  # pond-mass-<score> and pond-drift-<score>, held to it by
+  # packages/runner/test/coordinator-conditions.test.ts), and every experiment
+  # on a `:breed_presets` preset.
+  @breed_capability "breed-v1"
+  @breed_condition_prefixes ~w(pond-breed- pond-mass- pond-drift-)
+
+  defp breed_condition?(condition),
+    do: is_binary(condition) and String.starts_with?(condition, @breed_condition_prefixes)
+
   # The experiments whose work an island with `capabilities` must not be
-  # offered: every pond experiment, unless it advertises `@pond_capability`,
-  # and every experiment with scheduled interventions, unless it advertises
-  # `@interventions_capability`. Computed once per `pick_task/4` call rather
-  # than per segment, so a large queue costs one pass over the experiments,
-  # not one config lookup per segment.
+  # offered: every pond experiment, unless it advertises `@pond_capability`;
+  # every experiment on a breed preset, unless it advertises
+  # `@breed_capability`; and every experiment with scheduled interventions,
+  # unless it advertises `@interventions_capability`. Computed once per
+  # `pick_task/4` call rather than per segment, so a large queue costs one
+  # pass over the experiments, not one config lookup per segment.
   defp gated_experiments(s, capabilities) do
     ponds? = @pond_capability in capabilities
+    breed? = @breed_capability in capabilities
     scheduled? = @interventions_capability in capabilities
 
-    if ponds? and scheduled? do
+    if ponds? and breed? and scheduled? do
       MapSet.new()
     else
       for {name, exp} <- s.experiments,
           (not ponds? and pond_preset?(exp.spec["presetId"])) or
+            (not breed? and breed_preset?(exp.spec["presetId"])) or
             (not scheduled? and exp.spec["interventions"] != nil),
           into: MapSet.new(),
           do: name
@@ -1891,12 +1961,14 @@ defmodule Coordinator.Queue do
   end
 
   # Whether `seg` is withheld from an island with `capabilities`: its experiment
-  # is in `gated` (a pond experiment without `@pond_capability`), or its
-  # condition runs one of the hunt's arms and the island lacks `@current_capability`.
+  # is in `gated` (above), or its condition runs one of the hunt's arms and the
+  # island lacks `@current_capability`, or it is one of the breeder's and the
+  # island lacks `@breed_capability`.
   defp gated?(gated, capabilities, seg),
     do:
       MapSet.member?(gated, seg.experiment) or
-        (seg.condition in @current_conditions and @current_capability not in capabilities)
+        (seg.condition in @current_conditions and @current_capability not in capabilities) or
+        (breed_condition?(seg.condition) and @breed_capability not in capabilities)
 
   # ---- metrics-version gating (see moduledoc) ----
 
@@ -1987,7 +2059,7 @@ defmodule Coordinator.Queue do
 
   # ---- joining, and the bound on the island table ----
 
-  defp join_island(info, s) do
+  defp join_island(info, garden, s) do
     id = "isl-" <> rand(9)
     token = rand(32)
     now = now()
@@ -2010,7 +2082,7 @@ defmodule Coordinator.Queue do
     # only on an island that showed the configured token (the token itself is
     # not kept), so every other island record, and `/api/status`, keeps its
     # shape from before gardens.
-    island = if garden_token_ok?(info), do: Map.put(island, :garden, true), else: island
+    island = if garden == true, do: Map.put(island, :garden, true), else: island
 
     s = put_in(s, [:islands, id], island)
     {:reply, {:ok, %{id: id, token: token}}, persist(s)}
