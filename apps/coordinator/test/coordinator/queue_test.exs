@@ -1048,6 +1048,262 @@ defmodule Coordinator.QueueTest do
     end
   end
 
+  # The breeder (WorldConfig.pondScore; docs/archipelago-breed-2026-10-18.md): its 21 conditions
+  # (pond-breed-<score>, pond-mass-<score>, pond-drift-<score>) apply on any pond preset, and the
+  # `breeder` preset (config's `:breed_presets`) is a breed world under every condition. Such work,
+  # run or verify, goes only to an island that advertises "breed-v1" as well as "ponds-v1".
+  describe "ponds, the breeder" do
+    @breed_spec %{
+      "experiment" => "b-breed",
+      "presetId" => "ponds-small",
+      "conditions" => ["pond-breed-drive+seed+body"],
+      "seeds" => [1],
+      "steps" => 1000,
+      "segmentSteps" => 1000,
+      "censusEvery" => 100,
+      "verifyFraction" => 1.0
+    }
+
+    @breeder_spec %{
+      "experiment" => "b-breeder",
+      "presetId" => "breeder",
+      "conditions" => ["treatment", "pond-rand"],
+      "seeds" => [1],
+      "steps" => 5000,
+      "segmentSteps" => 5000,
+      "censusEvery" => 100,
+      "verifyFraction" => 1.0
+    }
+
+    @breed_caps ["ponds-v1", "breed-v1"]
+
+    test "breeder conditions are accepted on a pond preset and refused on any other" do
+      assert {:ok, 3} =
+               Queue.create_experiment(%{
+                 @breed_spec
+                 | "conditions" => [
+                     "pond-breed-drive+seed+body",
+                     "pond-mass-drive",
+                     "pond-drift-seed"
+                   ]
+               })
+
+      # Every preset without the pond cycle, not only spots: the prefix rule in incompatible/3.
+      for preset <- ~w(spots gradient large),
+          c <- ~w(pond-breed-drive pond-mass-drive+seed pond-drift-body) do
+        assert {:error, "condition #{c} does not apply to preset #{preset}"} ==
+                 Queue.create_experiment(%{
+                   @spec_ok
+                   | "experiment" => "b-#{preset}",
+                     "presetId" => preset,
+                     "conditions" => [c]
+                 })
+      end
+    end
+
+    test "the hunt's pond-nat and pond-shuf stay out of the coordinator's conditions, on the breeder too" do
+      for c <- ~w(pond-nat pond-shuf), preset <- ~w(breeder ponds-small) do
+        assert {:error, "conditions must be" <> _} =
+                 Queue.create_experiment(%{
+                   @breeder_spec
+                   | "experiment" => "b-hunt",
+                     "presetId" => preset,
+                     "segmentSteps" => if(preset == "breeder", do: 5000, else: 1000),
+                     "conditions" => [c]
+                 })
+      end
+    end
+
+    test "the breeder preset takes its own and the v1 conditions, its cadence and no metapopulation" do
+      assert {:ok, 2} = Queue.create_experiment(@breeder_spec)
+
+      assert {:ok, 1} =
+               Queue.create_experiment(%{
+                 @breeder_spec
+                 | "experiment" => "b-breeder-2",
+                   "conditions" => ["pond-breed-drive"]
+               })
+
+      assert {:error, "condition pond-cont does not apply to preset breeder"} =
+               Queue.create_experiment(%{
+                 @breeder_spec
+                 | "experiment" => "b-cont",
+                   "conditions" => ["pond-cont"]
+               })
+
+      assert {:error, "segmentSteps must be a multiple of pondPeriod 5000 (condition treatment)"} =
+               Queue.create_experiment(%{
+                 @breeder_spec
+                 | "experiment" => "b-cadence",
+                   "segmentSteps" => 1000
+               })
+
+      assert {:error, "preset breeder cannot have a metapopulation" <> _} =
+               Queue.create_experiment(
+                 %{@breeder_spec | "experiment" => "b-metapop", "seeds" => [1, 2]}
+                 |> Map.put("metapopulation", %{"topology" => "ring", "migrantCount" => 4})
+               )
+    end
+
+    test "a breed run is idle for every list without both ponds-v1 and breed-v1" do
+      assert {:ok, 1} = Queue.create_experiment(@breed_spec)
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "old"})
+      {:ok, %{id: new}} = Queue.join(%{"adapter" => "new"})
+
+      for caps <- [[], ["ponds-v1"], ["ponds-v1", "ponds-v2", "interventions-v1"], ["breed-v1"]] do
+        assert {:ok, %{kind: "idle"}} = Queue.next_task(old, caps)
+      end
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old)
+
+      {:ok, t} = Queue.next_task(new, @breed_caps)
+      assert t.kind == "run" and t.spec.condition == "pond-breed-drive+seed+body"
+      assert t.segment.run == "b-breed/ponds-small/pond-breed-drive+seed+body/seed-1"
+      refute Map.has_key?(Queue.island_info(new), :capabilities)
+    end
+
+    test "the gate is per condition: an experiment's v1 runs still go to a ponds-v1 island" do
+      assert {:ok, 3} =
+               Queue.create_experiment(%{
+                 @breed_spec
+                 | "conditions" => ["treatment", "pond-breed-drive", "pond-rand"]
+               })
+
+      {:ok, %{id: v1}} = Queue.join(%{"adapter" => "v1"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "b"})
+
+      # The breed run is skipped, whatever order the runs are offered in.
+      taken =
+        for _ <- 1..2 do
+          {:ok, t} = Queue.next_task(v1, ["ponds-v1", "ponds-v2", "interventions-v1"])
+          assert t.kind == "run"
+          t.spec.condition
+        end
+
+      assert Enum.sort(taken) == ["pond-rand", "treatment"]
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(v1, ["ponds-v1", "ponds-v2", "interventions-v1"])
+
+      {:ok, breed} = Queue.next_task(b, @breed_caps)
+      assert breed.kind == "run" and breed.spec.condition == "pond-breed-drive"
+    end
+
+    test "every segment of a breeder experiment needs breed-v1, treatment included" do
+      assert {:ok, 2} = Queue.create_experiment(@breeder_spec)
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "old"})
+      {:ok, %{id: new}} = Queue.join(%{"adapter" => "new"})
+
+      # Every capability but breed-v1: the per-experiment gate, not the per-condition one.
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(old, ["ponds-v1", "ponds-v2", "interventions-v1"])
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old, ["breed-v1"])
+
+      {:ok, a} = Queue.next_task(new, @breed_caps)
+      {:ok, b} = Queue.next_task(new, @breed_caps)
+
+      assert Enum.sort([a.spec.condition, b.spec.condition]) == ["pond-rand", "treatment"]
+      assert a.spec.presetId == "breeder" and a.kind == "run" and b.kind == "run"
+    end
+
+    test "a breed run's verify goes only to a different island with breed-v1", %{dir: dir} do
+      {:ok, 1} = Queue.create_experiment(@breed_spec)
+
+      {:ok, %{id: producer}} = Queue.join(%{"adapter" => "producer"})
+      {:ok, %{id: v1}} = Queue.join(%{"adapter" => "v1"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "b"})
+
+      {:ok, t} = Queue.next_task(producer, @breed_caps)
+      upload(dir, t, producer, "p0")
+      {:ok, "done"} = done(t, producer, "p0")
+
+      # Not its producer, and not an island without breed-v1.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(producer, @breed_caps)
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(v1, ["ponds-v1", "ponds-v2", "interventions-v1"])
+
+      {:ok, v} = Queue.next_task(b, @breed_caps)
+      assert v.kind == "verify" and v.segment.id == t.segment.id
+      assert {:ok, "verified"} = Queue.complete(v.segment.id, b, v.lease, "verify", "p0", %{})
+    end
+
+    test "a breed segment whose verifier regenerates a different ponds.tsv is verified, and listed as an observation mismatch",
+         %{dir: dir} do
+      {:ok, 1} = Queue.create_experiment(@breed_spec)
+      {:ok, %{id: producer}} = Queue.join(%{"adapter" => "producer"})
+      {:ok, %{id: verifier}} = Queue.join(%{"adapter" => "verifier"})
+
+      {:ok, t} = Queue.next_task(producer, @breed_caps)
+      upload(dir, t, producer, "p0")
+
+      # The producer's donor record, tampered (donor 3, score 999, donorScore 777) after an honest run.
+      files =
+        @observation_files
+        |> Map.new(&{&1, publish_file(dir, t, producer, &1, &1)})
+        |> Map.put(
+          "ponds.tsv",
+          publish_file(dir, t, producer, "ponds.tsv", "donor 3, score 999, donorScore 777\n")
+        )
+
+      {:ok, "done"} = done(t, producer, "p0")
+
+      {:ok, v} = Queue.next_task(verifier, @breed_caps)
+      honest = Map.put(files, "ponds.tsv", String.duplicate("a", 64))
+
+      # The physics digest matches (the donors' cells are in the checkpoint); the donor record does not, and says so.
+      assert {:ok, "verified"} =
+               Queue.complete(v.segment.id, verifier, v.lease, "verify", "p0", %{}, honest)
+
+      [seg] = Queue.experiment("b-breed").segments
+      assert %{status: "verified", observationsVerified: false} = seg
+      assert Map.has_key?(seg.files, "ponds.tsv")
+
+      assert [%{segment: id, producer: "producer", verifier: "verifier"}] =
+               Queue.status().observationMismatches
+
+      assert id == seg.id
+    end
+
+    test "a scheduled breed run needs breed-v1 and interventions-v1 both" do
+      assert {:ok, 1} =
+               Queue.create_experiment(
+                 Map.put(@breed_spec, "interventions", [
+                   %{"step" => 500, "kind" => "lesion", "x" => 20, "y" => 20, "r" => 4}
+                 ])
+               )
+
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "i"})
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(island, @breed_caps)
+
+      assert {:ok, %{kind: "idle"}} =
+               Queue.next_task(island, ["ponds-v1", "ponds-v2", "interventions-v1"])
+
+      {:ok, t} = Queue.next_task(island, ["ponds-v1", "breed-v1", "interventions-v1"])
+      assert t.kind == "run" and t.spec.condition == "pond-breed-drive+seed+body"
+      assert [%{"kind" => "lesion"}] = t.spec.interventions
+    end
+
+    test "picked, pressures and branch sent at creation are neither stored nor tasked" do
+      spec =
+        @breed_spec
+        |> Map.put("picked", true)
+        |> Map.put("pressures", [%{"cycle" => 1, "pond" => 0}])
+        |> Map.put("branch", %{"from" => "x", "arm" => "nat"})
+
+      assert {:ok, 1} = Queue.create_experiment(spec)
+
+      stored = Queue.experiment("b-breed").spec
+      for k <- ~w(picked pressures branch), do: refute(Map.has_key?(stored, k))
+
+      {:ok, %{id: island}} = Queue.join(%{"adapter" => "i"})
+      {:ok, t} = Queue.next_task(island, @breed_caps)
+      for k <- [:picked, :pressures, :branch], do: refute(Map.has_key?(t.spec, k))
+    end
+  end
+
   test "large experiments stay responsive" do
     {:ok, 20_000} =
       Queue.create_experiment(%{

@@ -11,6 +11,7 @@
 //  3. day 2 verified: the 3-day prefix replaces the 2-day one in place (no .stale- or .superseded- directory left);
 //  4. the cached manifest's founding entry edited: moved aside (the schedule check) and written again;
 //  5. the cached interventions.jsonl edited: the same;
+//  5b. the cached manifest given a spec key its task never carried (overrides): the same (the aside it leaves is removed);
 //  6. a listing that is stale on a process's first read (day 2 "done") and fresh after: the 3-day export is kept, not
 //     moved aside (the listing is read again under the run's lock);
 //  7. --allow-unverified with day 3 done: 4 days; then without it: the 4-day export is moved aside (its range runs past
@@ -114,6 +115,9 @@ const listing = (status: string[]) => ({
     return {
       id: `seg-${d}`,
       run: RUN,
+      // As the coordinator lists them: tools/stitch.ts binds each day's manifest to the task built from these.
+      condition: baseSpec.condition,
+      seed: baseSpec.seed,
       index: d,
       last: d === DAYS - 1,
       startStep: s.startStep,
@@ -227,6 +231,18 @@ try {
   r = await stitch();
   e = await exportIs(3);
   check("5. an edited cached log is moved aside and the prefix written again", r.code === 0 && /export's schedule fails the check/.test(r.text) && /interventions\.jsonl line/.test(r.text) && e.ok && (await asideCount("stale")) === 2, `${r.text}\n${e.why}`);
+
+  // 5b. A cached manifest with a key its task never carried (Codex pass 2, slice 11): moved aside and written again. The
+  // aside it leaves is removed, so the counts below are unchanged.
+  const staleBefore = (await siblings()).filter((n) => n.includes(".stale-"));
+  const m5 = await manifest();
+  m5.spec.overrides = { pondPeriod: 7 };
+  await Deno.writeTextFile(`${dir}/manifest.json`, JSON.stringify(m5));
+  r = await stitch();
+  e = await exportIs(3);
+  const newAside = (await siblings()).filter((n) => n.includes(".stale-") && !staleBefore.includes(n));
+  check("5b. a cached manifest that does not describe the coordinator's task is moved aside and written again", r.code === 0 && /export's manifest does not describe the coordinator's task \(spec carries overrides/.test(r.text) && /1 written/.test(r.text) && e.ok && newAside.length === 1, `${r.text}\n${e.why}`);
+  for (const n of newAside) await Deno.remove(`${parent}/${n}`, { recursive: true });
 
   // 6. A process whose first listing is stale (day 2 still "done"): the listing read under the lock is the current one.
   state.stale = ["verified", "verified", "done", "pending"];

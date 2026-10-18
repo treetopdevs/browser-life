@@ -49,15 +49,19 @@ experiment spec), `CoordinatorWeb.Router` (the routes) and `CoordinatorWeb.ApiCo
   code back over one, or start from a fresh data dir.
 * `POST /api/next` takes `{"capabilities": [...]}`, read per request and never stored:
   `ponds-v1` for a pond preset's experiments, `ponds-v2` as well for the hunt's arms
-  (`pond-nat`, `pond-shuf`), `interventions-v1` for an experiment with `interventions`.
+  (`pond-nat`, `pond-shuf`), `breed-v1` in addition to `ponds-v1` (never instead) for the breeder (a `pond-breed-*`,
+  `pond-mass-*` or `pond-drift-*` condition, and every run of a `:breed_presets` preset,
+  `breeder`), `interventions-v1` for an experiment with `interventions`.
   Work an island's list cannot run is skipped, never waited for.
 * A verify completion's `observationDigests` may name `interventions.jsonl` beside the
   other optional files (`migrations.tsv`, `exchanges.tsv`, `species.tsv`, `ponds.tsv`);
   the lists in `Coordinator.Segment` and `CoordinatorWeb.ApiController` are pinned to
   `packages/runner/src/stitch.ts`'s `VERIFIED_FILES` by
   `packages/runner/test/coordinator-files.test.ts`, and the preset facts in config.exs
-  (`:world_size`, `:pond_presets`, `:pond_period`, `:migration_period`) to
-  `packages/schema`'s presets by `packages/runner/test/coordinator-presets.test.ts`.
+  (`:world_size`, `:pond_presets`, `:pond_period`, `:breed_presets`, `:migration_period`) to
+  `packages/schema`'s presets by `packages/runner/test/coordinator-presets.test.ts`, and
+  `:conditions`, `:incompatible` and the queue's breeder prefixes to the runner's own
+  refusals by `packages/runner/test/coordinator-conditions.test.ts`.
 
 ### Island limits
 
