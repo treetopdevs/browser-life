@@ -97,7 +97,14 @@ The committed plan dry-runs to 70 forks and 2.68M steps. Three Sol passes. The c
 <tr id="s26"><td>26</td><td>Garden: the stone horizon test on the big storm (how long a stone lasts), rules fixed before running</td><td><code>claude/slice26-stone-horizon</code></td><td>Running as workflow <code>wf_a6020595-b87</code></td></tr>
 <tr id="s27"><td>27</td><td>Live naturalist in the lab: field notes beside a running world, at the calibrated thresholds only</td><td><code>claude/slice27-live-naturalist</code></td><td>Running as workflow <code>wf_76ba7c3e-5c2</code></td></tr>
 <tr id="s25b"><td>25b</td><td>Fix: an operator-page e2e regression on main ("operations details clear after authentication and network failures")</td><td><code>claude/fix-ops-page-regression</code> / <a href="https://github.com/treetopdevs/browser-life/pull/48">#48</a></td><td>Merged. The root cause was a stale spec, not a page fault. #39 deliberately keeps the last view, dimmed, after a network failure, and a 401 still clears everything. The old spec also checked <code>#counts</code>, renamed to <code>#totals</code>, so it could never fail. The spec now checks the dimmed view, and on a 401 requires every data container in <code>#data</code> to be empty. Five deliberate breakages each made it fail. Sol xhigh found no P0 or P1 and no privacy fault.</td></tr>
-<tr id="s28"><td>28</td><td>Small follow-ups: picker names in pond routes, focus-ring opacity in the a11y check, child denos in tests/deno, food ranges checked at boot</td><td><code>claude/slice28-small-fixes</code></td><td>Running as workflow <code>wf_720a3d55-ebd</code></td></tr>
+<tr id="s28"><td>28</td><td>Small follow-ups: picker names in pond routes, focus-ring opacity in the a11y check, child denos in tests/deno, food ranges checked at boot</td><td><code>claude/slice28-small-fixes</code> / <a href="https://github.com/treetopdevs/browser-life/pull/50">#50</a></td><td>Merged. Four fixes:
+<ul>
+<li><code>tallyPickers</code> counts with a Map in both pond-route tallies.</li>
+<li>The ring check composites opacity, as the text check already did.</li>
+<li><code>mix phx.server</code> children get a no-lock deno shim, and the guard is extended to catch a missing one.</li>
+<li>The food ranges live in one table, <code>ConfigCheck.food_range/1</code>, used at boot and by <code>garden_spec</code>.</li>
+</ul>
+Three Sol passes, and P1 and P2 findings were fixed. On the merged tree: 457 ExUnit tests and 45 vitest tests pass.</td></tr>
 <tr id="s29"><td>29</td><td>Garden game: dawn predictions with free receipts (which lineage leads after the next day), from verified data only</td><td><code>claude/slice29-dawn-predictions</code></td><td>Running as workflow <code>wf_15b568e4-8b5</code></td></tr>
 <!-- SLICE-ROWS -->
 </tbody>
