@@ -137,24 +137,32 @@ const page = createIslandPage({
     const ua = navigator.userAgent;
     const engine = /Firefox\//.test(ua) ? "Firefox" : /Edg\//.test(ua) ? "Edge" : /Chrome\//.test(ua) ? "Chrome" : /Safari\//.test(ua) ? "Safari" : "browser";
     const device = await requestDevice(navigator.gpu);
-    const token = gardenTokenFor(coordinator, location.origin, gardenToken);
-    if (gardenToken && !identity && !token) say(`garden token not sent: ${coordinator} is not this page's own origin`);
-    if (!identity && !token && gardenFlag.get()) {
-      say("this tab's island was a garden island; a fresh join without the garden token is an ordinary one (open the island link with its #garden-token=… again to tend the garden)");
-      gardenFlag.set(false);
+    // The attempt's device goes with it, whatever ends the attempt (a return,
+    // a throw before or inside runIsland), so Join/Stop cycles do not pile up devices.
+    try {
+      const token = gardenTokenFor(coordinator, location.origin, gardenToken);
+      if (gardenToken && !identity && !token) say(`garden token not sent: ${coordinator} is not this page's own origin`);
+      if (!identity && !token && gardenFlag.get()) {
+        say("this tab's island was a garden island; a fresh join without the garden token is an ordinary one (open the island link with its #garden-token=… again to tend the garden)");
+        gardenFlag.set(false);
+      }
+      // An identity is remembered only from an attempt that started after the
+      // latest fragment token and was not a resume begun before it: a late
+      // ordinary join must not undo the forgetting in takeGardenToken.
+      const gen = tokenGen;
+      if (!identity) tokenUnused = false;
+      onRunning();
+      const joined = (idn: { id: string; token: string }) => {
+        if (gen !== tokenGen || tokenUnused) return;
+        if (!identity && token) gardenFlag.set(true);
+        onJoined(idn);
+      };
+      // Stop (`signal`) ends the current task at its next census chunk and leaves
+      // it to lapse with its lease (docs/island-cancel-2026-10-18.md).
+      await runIsland(device, { coordinator, host: { host: ua, adapter: `${engine} ${desc}` }, log: say, signal, idleMs: 8000, identity, onJoined: joined, gardenToken: token });
+    } finally {
+      device.destroy();
     }
-    // An identity is remembered only from an attempt that started after the
-    // latest fragment token and was not a resume begun before it: a late
-    // ordinary join must not undo the forgetting in takeGardenToken.
-    const gen = tokenGen;
-    if (!identity) tokenUnused = false;
-    onRunning();
-    const joined = (idn: { id: string; token: string }) => {
-      if (gen !== tokenGen || tokenUnused) return;
-      if (!identity && token) gardenFlag.set(true);
-      onJoined(idn);
-    };
-    await runIsland(device, { coordinator, host: { host: ua, adapter: `${engine} ${desc}` }, log: say, signal, idleMs: 8000, identity, onJoined: joined, gardenToken: token });
   },
 });
 
