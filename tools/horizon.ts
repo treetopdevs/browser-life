@@ -94,6 +94,8 @@ import {
   fineTopError,
   gridError,
   parseRunStatus,
+  psNoteOf,
+  scrubRecordPs,
   runStatusError,
   fineWorstSeconds,
   sPairsFrom55,
@@ -733,7 +735,7 @@ async function rebuild() {
     kMax,
   );
   if (JSON.stringify(rec.readout) !== JSON.stringify(old.readout)) die("the rebuilt readout differs from the recorded one");
-  await Deno.writeTextFile(outFile, compactJson(rec) + "\n");
+  await Deno.writeTextFile(outFile, compactJson(scrubRecordPs(rec)) + "\n");
   console.log(`rebuilt ${outFile}: ${groups.length} groups, outcomes and readout reproduced`);
 }
 
@@ -829,8 +831,12 @@ const PILOT_HASH = "92b973bc4ff08e9a";
 
 const hex = (b: ArrayBuffer) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 const sha256 = async (b: Uint8Array) => hex(await crypto.subtle.digest("SHA-256", b as Uint8Array<ArrayBuffer>));
-/** N7's `ps` note: other deno runs, vite servers and browser GPU processes (noted, never stopped). */
-const psNote = () => sh(["sh", "-c", "ps -Ao pid,pcpu,etime,command | grep -E 'deno run|vite|[(]GPU[)]' | grep -v grep | cut -c1-160 | head -20"]);
+/**
+ * N7's `ps` note: other deno runs, vite servers and browser GPU processes (noted, never stopped). Each line keeps only pid,
+ * %cpu, elapsed and the program name (psNoteOf): records are committed, and full command lines carry local paths and other
+ * processes' arguments.
+ */
+const psNote = async () => psNoteOf(await sh(["ps", "-Ao", "pid,pcpu,etime,command"]));
 const readJson = async (f: string) => JSON.parse(await Deno.readTextFile(f));
 const repoFile = (f: string) => new URL(`../${f}`, import.meta.url);
 
@@ -1430,7 +1436,8 @@ async function nullrecord() {
     fine,
   };
   const ro = readings34(base as unknown as NullRecordView, r55, grid);
-  const rec = { ...base, readout: ro };
+  // Group and fine files an older version wrote carry full command lines in `ps`: reduced here, at the record's boundary.
+  const rec = scrubRecordPs({ ...base, readout: ro });
   await Deno.writeTextFile(need("out"), compactJson(rec) + "\n");
   console.log(`wrote ${need("out")}: ${groups.length} groups, fine ${fine.status}`);
 }
