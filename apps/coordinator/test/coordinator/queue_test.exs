@@ -1855,4 +1855,207 @@ defmodule Coordinator.QueueTest do
       assert {:ok, %{kind: "idle"}} = Queue.next_task(b, @caps)
     end
   end
+
+  describe "max islands" do
+    @day 86_400_000
+
+    setup %{dir: dir} do
+      saved =
+        for k <- [
+              :max_islands,
+              :island_prune_after_ms,
+              :island_prune_grace_ms,
+              :lease_ms,
+              :island_max_pending
+            ],
+            do: {k, Application.fetch_env(:coordinator, k)}
+
+      Coordinator.TestClock.install(100 * @day)
+      Application.put_env(:coordinator, :island_prune_after_ms, @day)
+
+      on_exit(fn ->
+        Coordinator.TestClock.uninstall()
+
+        for {k, v} <- saved do
+          case v do
+            {:ok, val} -> Application.put_env(:coordinator, k, val)
+            :error -> Application.delete_env(:coordinator, k)
+          end
+        end
+      end)
+
+      %{state: Path.join(dir, "state.bin")}
+    end
+
+    defp ids, do: Queue.status().islands |> Enum.map(& &1.id) |> MapSet.new()
+
+    test "at the cap a stale zero-work island is forgotten" do
+      Application.put_env(:coordinator, :max_islands, 2)
+      {:ok, %{id: a, token: a_token}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+
+      Coordinator.TestClock.advance(@day + 1)
+      {:ok, %{id: c}} = Queue.join(%{"adapter" => "C"})
+
+      assert ids() == MapSet.new([c])
+      refute Queue.authenticate(a, a_token)
+      refute b in ids()
+    end
+
+    test "a stale island that did work is kept, and so is one holding a current lease", %{
+      dir: dir
+    } do
+      # A lease longer than the wait, so the holder's attempt is still current.
+      Application.put_env(:coordinator, :lease_ms, 3 * @day)
+      Application.put_env(:coordinator, :max_islands, 3)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+
+      {:ok, %{id: worker}} = Queue.join(%{"adapter" => "W"})
+      {:ok, t} = Queue.next_task(worker)
+      upload(dir, t, worker, "1111111111111111")
+      assert {:ok, _} = done(t, worker, "1111111111111111")
+
+      {:ok, %{id: holder}} = Queue.join(%{"adapter" => "H"})
+      assert {:ok, %{kind: kind}} = Queue.next_task(holder)
+      assert kind in ["run", "verify"]
+
+      {:ok, %{id: idle}} = Queue.join(%{"adapter" => "I"})
+
+      Coordinator.TestClock.advance(2 * @day)
+      {:ok, %{id: fresh}} = Queue.join(%{"adapter" => "F"})
+
+      assert ids() == MapSet.new([worker, holder, fresh])
+      refute idle in ids()
+    end
+
+    test "an island forgotten after it authenticated is idle, not a crash" do
+      Application.put_env(:coordinator, :max_islands, 1)
+      {:ok, %{id: old, token: token}} = Queue.join(%{"adapter" => "O"})
+      assert Queue.authenticate(old, token)
+      Coordinator.TestClock.advance(@day + 1)
+      {:ok, _} = Queue.join(%{"adapter" => "N"})
+
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(old)
+      refute Queue.authenticate(old, token)
+    end
+
+    test "a holder whose lease expired is reclaimed at the bound, so a replacement can join" do
+      Application.put_env(:coordinator, :max_islands, 1)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, %{id: holder}} = Queue.join(%{"adapter" => "H"})
+      assert {:ok, %{kind: "run", segment: %{id: seg}}} = Queue.next_task(holder)
+
+      # Gone for three days with its credentials lost: nobody asks for work, so
+      # only the join itself can reclaim the attempt.
+      Coordinator.TestClock.advance(3 * @day)
+      assert {:ok, %{id: fresh}} = Queue.join(%{"adapter" => "F"})
+      assert ids() == MapSet.new([fresh])
+      assert Queue.segment(seg).status == "pending"
+    end
+
+    test "a fresh zero-work island is kept while a staler one can go" do
+      Application.put_env(:coordinator, :max_islands, 2)
+      {:ok, %{id: old}} = Queue.join(%{"adapter" => "O"})
+      Coordinator.TestClock.advance(@day + 1)
+      {:ok, %{id: recent}} = Queue.join(%{"adapter" => "R"})
+
+      {:ok, %{id: newest}} = Queue.join(%{"adapter" => "N"})
+      assert ids() == MapSet.new([recent, newest])
+      refute old in ids()
+    end
+
+    test "with none older than a day, the least recently seen zero-work island past the grace is forgotten; an island asking for work stays" do
+      Application.put_env(:coordinator, :max_islands, 2)
+      Application.put_env(:coordinator, :island_prune_grace_ms, 1_500)
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      Coordinator.TestClock.advance(1_000)
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+      Coordinator.TestClock.advance(1_000)
+      # A waits for work (no experiment, so idle): it is now the most recently seen.
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(a)
+      Coordinator.TestClock.advance(1_000)
+
+      {:ok, %{id: c}} = Queue.join(%{"adapter" => "C"})
+      assert ids() == MapSet.new([a, c])
+      refute b in ids()
+    end
+
+    test "an island seen within the grace is never evicted by another join: the join is refused instead",
+         %{state: state} do
+      Application.put_env(:coordinator, :max_islands, 2)
+      Application.put_env(:coordinator, :island_prune_grace_ms, 600_000)
+      {:ok, %{id: a, token: a_token}} = Queue.join(%{"adapter" => "A"})
+      Coordinator.TestClock.advance(60_000)
+      {:ok, %{id: b, token: b_token}} = Queue.join(%{"adapter" => "B"})
+
+      # A joined a minute ago and has not asked for work yet; B just joined.
+      before = File.read!(state)
+      Coordinator.TestClock.advance(1_000)
+      assert {:error, :full} = Queue.join(%{"adapter" => "C"})
+      assert File.read!(state) == before
+      assert ids() == MapSet.new([a, b])
+      assert Queue.authenticate(a, a_token)
+      assert Queue.authenticate(b, b_token)
+
+      # Past the grace, the least recently seen may go.
+      Coordinator.TestClock.advance(600_000 - 60_000)
+      assert {:ok, %{id: c}} = Queue.join(%{"adapter" => "C"})
+      assert ids() == MapSet.new([b, c])
+    end
+
+    test "when every island did work or holds an attempt the join is refused and state.bin is unchanged",
+         %{state: state} do
+      Application.put_env(:coordinator, :max_islands, 2)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "t2"})
+      {:ok, %{id: a}} = Queue.join(%{"adapter" => "A"})
+      {:ok, %{id: b}} = Queue.join(%{"adapter" => "B"})
+      assert {:ok, %{kind: "run"}} = Queue.next_task(a)
+      assert {:ok, %{kind: "run"}} = Queue.next_task(b)
+
+      before = File.read!(state)
+      Coordinator.TestClock.advance(1_000)
+      assert {:error, :full} = Queue.join(%{"adapter" => "C"})
+      assert File.read!(state) == before
+      assert MapSet.size(ids()) == 2
+    end
+  end
+
+  describe "pending cap" do
+    setup do
+      saved = Application.fetch_env(:coordinator, :island_max_pending)
+
+      on_exit(fn ->
+        case saved do
+          {:ok, v} -> Application.put_env(:coordinator, :island_max_pending, v)
+          :error -> Application.delete_env(:coordinator, :island_max_pending)
+        end
+      end)
+    end
+
+    test "an island at the cap is idle until it gives work back; another island still gets work" do
+      Application.put_env(:coordinator, :island_max_pending, 1)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "t2"})
+      {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "t3"})
+      {:ok, %{id: squat}} = Queue.join(%{"adapter" => "S"})
+      {:ok, %{id: other}} = Queue.join(%{"adapter" => "O"})
+
+      assert {:ok, %{kind: "run"} = held} = Queue.next_task(squat)
+      assert {:ok, %{kind: "idle"}} = Queue.next_task(squat)
+      assert {:ok, %{kind: "run"}} = Queue.next_task(other)
+
+      assert :ok = Queue.fail(held.segment.id, squat, held.lease, "giving it back")
+      assert {:ok, %{kind: "run"}} = Queue.next_task(squat)
+    end
+
+    test "nil is no cap" do
+      Application.put_env(:coordinator, :island_max_pending, nil)
+      {:ok, 3} = Queue.create_experiment(@spec_ok)
+      {:ok, _} = Queue.create_experiment(%{@spec_ok | "experiment" => "t2"})
+      {:ok, %{id: i}} = Queue.join(%{"adapter" => "I"})
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i)
+      assert {:ok, %{kind: "run"}} = Queue.next_task(i)
+    end
+  end
 end

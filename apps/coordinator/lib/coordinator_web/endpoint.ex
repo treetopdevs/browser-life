@@ -39,6 +39,8 @@ defmodule CoordinatorWeb.Endpoint do
 
   # The public letter routes get a 1 KB body limit before the general parser.
   plug CoordinatorWeb.LetterBodyLimit
+  # Join and next get a 16 KB JSON-only limit before the general parser.
+  plug CoordinatorWeb.IslandBodyLimit
 
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],

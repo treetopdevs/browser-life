@@ -61,3 +61,7 @@ config :coordinator, allow_local_admin: true
 # this file, so a production coordinator still refuses a `spots` garden (422).
 # A plain list replaces rather than merges, so both are named, as in test.exs.
 config :coordinator, garden_presets: ~w(wild-storm-large spots)
+
+# Generous island limits, so local multi-island work and
+# tests/deno/coordinator_integration.ts are never throttled.
+config :coordinator, island_joins_per_address: 1000, island_next_per_island: 6000
