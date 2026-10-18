@@ -140,6 +140,9 @@ Three Sol passes, ending with one P3. On the merged tree: 431 vitest and 103 Chr
 <li>Copy written for opening day in privacy (including dawn-prediction receipts), status, participate, about, home and the storm note.</li>
 </ul>
 Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
+<tr id="s39"><td>39</td><td>Bell v2: bell v1&rsquo;s after-the-fact 11-signal twin reading tested on fresh seeds, rules fixed before running</td><td><code>claude/slice39-bell-v2</code></td><td>Running as workflow <code>wf_6029caaa-b4b</code></td></tr>
+<tr id="s40"><td>40</td><td>Garden meteor: a rare large stone that visitors call together (off by default)</td><td><code>claude/slice40-garden-meteor</code></td><td>Running as workflow <code>wf_6dda0d5b-de6</code></td></tr>
+<tr id="s40b"><td>40b</td><td>Security fix: the horizon tool recorded the full command lines of other processes in committed records</td><td><code>claude/fix-horizon-ps</code></td><td>A worker is fixing it and scrubbing the records (D-33)</td></tr>
 <!-- SLICE-ROWS -->
 </tbody>
 </table>
@@ -468,6 +471,16 @@ Merge it on opening day, after checklist rows 1 to 5 (#57) are done.</td></tr>
 <dt>Context</dt><dd>#55&rsquo;s pace reading names the sun as the garden&rsquo;s first letter. The inventory had noted that a sun letter might touch the kernel, and the stalled gene v2 session holds <code>config.ts</code>, <code>step.ts</code>, <code>shaders.ts</code> and <code>golden.ts</code>. The opening checklist (#57) lists the copy to change on the day <code>/garden/</code> is linked.</dd>
 <dt>Decision</dt><dd>Slice 37 builds the sun letter only if it can work through runtime light parameters, the runner, the schema and the uniform upload, leaving every golden pin unchanged. Otherwise it writes a design note listing the exact kernel edits and stops there. Slice 38 prepares the opening-day copy as a draft PR the coordinator will not merge, because linking the garden is part of opening it, and that is the user&rsquo;s call.</dd>
 <dt>Why</dt><dd>Both move the garden toward opening without making the user&rsquo;s decisions for them or touching another session&rsquo;s uncommitted work.</dd>
+</dl>
+</article>
+
+<article id="d33">
+<h2><span>D-33</span>Scrub process command lines from committed records</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 22:50 UTC</dd>
+<dt>Context</dt><dd>An automated security review flagged <code>tools/horizon.ts</code>, which writes full <code>ps</code> command lines into run records. <code>experiments/garden/stone-null-2026-10-18.json</code> on main holds local paths and other processes&rsquo; arguments, but no secrets. The repo is public.</dd>
+<dt>Decision</dt><dd>Keep only pid, CPU, elapsed time and the program name. Scrub the committed records without touching any other field. Add a test that a token or path in the input never survives. Fix any other tool with the same pattern.</dd>
+<dt>Why</dt><dd>Another process&rsquo;s argv can carry a token at any time, and the records gain nothing from it.</dd>
 </dl>
 </article>
 
