@@ -343,6 +343,7 @@ function postFirsts(w: World | null) {
       rules: firstsRules(firstsContext(w.sim.cfg, w.manifest.settings.censusEvery).geneBits),
       nextUp: nextUp(detector),
       stopped,
+      refusal: logRefusal(w.log),
     };
     // The tree is posted right after, for the same census: one message, one moment, so a page never shows one without the other.
     const f: FamiliesMsg = {

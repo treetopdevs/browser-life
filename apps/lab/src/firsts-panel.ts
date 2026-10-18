@@ -148,9 +148,9 @@ export function createFirstsPanel(send: (m: ToWorker) => void): FirstsPanel {
 
   /** What the Download button can do now, and if it cannot, why, beside it. */
   function syncFile() {
-    const stopped = last?.stopped ?? null;
+    const refusal = last?.refusal ?? null;
     const why = waiting ? "The file waits for the pond cycle: breed first."
-      : stopped ? `The log of firsts stopped (${stopped}), so there is no file to make.`
+      : refusal ? refusal
       : last !== null && last.summary.step === null ? "The world hasn’t reached its first census yet: let it run a little first."
       : null;
     fileButton.disabled = why !== null || exporting !== null || last === null;

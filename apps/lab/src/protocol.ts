@@ -258,10 +258,12 @@ export interface FirstsMsg {
   /** The first rungs of the ladder not yet reached, each with its progress (`nextUp` in `@bl/metrics`). */
   nextUp: NextUpItem[];
   /**
-   * The log stopped (a detector or tree error); entries stay as they were and export is refused. Null does not mean a session file
-   * can be made: a tree that stopped alone (a dropped ledger record) leaves this null and shows only in `FamiliesMsg.stopped`.
+   * The log stopped (a detector or tree error); entries stay as they were and export is refused. A tree that stopped alone (a dropped
+   * ledger record) leaves this null: `refusal` says whether a session file can be made.
    */
   stopped: string | null;
+  /** Why a session file can't be made from this log (`logRefusal`: a stopped log or a stopped tree), or null. */
+  refusal: string | null;
 }
 
 /**
