@@ -29,6 +29,15 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Phoenix's default parameter filter is ["password"] alone, and it matches
+# substrings case-sensitively, so an island's join-body "gardenToken" would be
+# printed in a debug `Parameters:` line. "token" and "Token" are added: every
+# key containing either (an island's "token" too) is now filtered, at any depth,
+# and so is a map entry's string value containing "token=" or "Token=" (Phoenix
+# appends "=" to the patterns it matches against values, and leaves a bare
+# string inside a list as it is; deps/phoenix/lib/phoenix/logger.ex).
+config :phoenix, :filter_parameters, ["password", "token", "Token"]
+
 # Archipelago: accepted presets and conditions (must match packages/schema and
 # packages/runner), browser origins allowed to act as islands, and the admin
 # token required to create experiments (unset: loopback clients only).
