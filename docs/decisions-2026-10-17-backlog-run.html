@@ -107,6 +107,7 @@ The committed plan dry-runs to 70 forks and 2.68M steps. Three Sol passes. The c
 Three Sol passes, and P1 and P2 findings were fixed. On the merged tree: 457 ExUnit tests and 45 vitest tests pass.</td></tr>
 <tr id="s29"><td>29</td><td>Garden game: dawn predictions with free receipts (which lineage leads after the next day), from verified data only</td><td><code>claude/slice29-dawn-predictions</code></td><td>Running as workflow <code>wf_15b568e4-8b5</code></td></tr>
 <tr id="s30"><td>30</td><td>Journal: 18 Oct, everything landed since #32, in DESIGN.md&rsquo;s vocabulary, nothing implied live</td><td><code>claude/slice30-journal-18oct</code></td><td>Running as workflow <code>wf_58b6ed87-09d</code></td></tr>
+<tr id="s31"><td>31</td><td>Refresh the Worlds catalogue notes with this run&rsquo;s results</td><td><code>slice31-world-notes</code> (session)</td><td>Running as a separate session</td></tr>
 <!-- SLICE-ROWS -->
 </tbody>
 </table>
@@ -405,6 +406,16 @@ Three Sol passes, and P1 and P2 findings were fixed. On the merged tree: 457 ExU
 <dt>Context</dt><dd>While checking #47, <code>public-site.spec.ts</code> "operations details clear after authentication and network failures" failed with 2 elements where 0 were expected, and it fails the same way on main <code>f34c460</code>. #39 and #45 changed the operator page, but neither PR ran <code>public-site.spec.ts</code>.</dd>
 <dt>Decision</dt><dd>Merge #47, since it is not the cause. A worker finds the root cause on <code>claude/fix-ops-page-regression</code>. If the page shows stale operator data after losing auth, that is a privacy fault and the page gets fixed. The assertion is never weakened. From here on, the coordinator runs <code>public-site</code>, <code>public-a11y</code> and <code>coordinator-ops</code> before merging any PR that touches a served page.</dd>
 <dt>Why</dt><dd>Each slice ran only the specs for its own files, so a page shared by two specs slipped through.</dd>
+</dl>
+</article>
+
+<article id="d30">
+<h2><span>D-30</span>After the session restart: resume the workflows, and start new slices as sessions again</h2>
+<dl>
+<dt>When</dt><dd>2026-10-18 15:05 UTC</dd>
+<dt>Context</dt><dd>The coordinator's process restarted and interrupted the workflows for slices 26, 27, 29 and 30. The user wrote "continue". Usage: the 5-hour window at 47% (resets 15:40 UTC), weekly at 59%.</dd>
+<dt>Decision</dt><dd>Resume each workflow with <code>resumeFromRunId</code> and the same args, so finished agents replay from cache. Now that the user has written, new slices start as their own sessions (D-11's fallback is no longer needed). Slice 31 is the first.</dd>
+<dt>Why</dt><dd>Resuming keeps hours of finished work. Separate sessions keep the coordinator's context (65% used) for coordinating.</dd>
 </dl>
 </article>
 
