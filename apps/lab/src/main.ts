@@ -5,6 +5,7 @@ import { donorsWithKeep, type KeptPond } from "./pond-play.ts";
 import { Series } from "./sparkline.ts";
 import { createLineagePanel } from "./lineage-panel.ts";
 import { createFirstsPanel } from "./firsts-panel.ts";
+import { createFamilyPanel } from "./family-panel.ts";
 import { RANK_LABELS, pressureDescribes, pressureNow, pressureOptions, scoreLabel, scoreWords, type RankKey } from "./rank-labels.ts";
 import { FAMILIES, byId, familyOf } from "./worlds.ts";
 import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
@@ -23,6 +24,8 @@ const send = (m: ToWorker, t: Transferable[] = []) => worker.postMessage(m, t);
 // it clears whatever replacement intent a cancelled or refused question left behind.
 const lineagePanel = createLineagePanel((m) => { if (m.type === "jump") loadIntent = null; send(m); }, () => storageOff, () => takesDonors(cfg), (key) => sendKeep(key));
 const firstsPanel = createFirstsPanel(send);
+// A family's swatch is the lab's own colour for its founding lineage, when the census has drawn that lineage among its biggest (the map is filled in onCensus).
+const familyPanel = createFamilyPanel((key) => lineageColors.get(key));
 
 let cfg: WorldConfig | null = null;
 /** The world's config when a load was requested: the worker keeps that world if the load fails. */
@@ -1683,6 +1686,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       fit(true);
       lineagePanel.onLoaded();
       firstsPanel.onLoaded(m.manifest);
+      familyPanel.onLoaded();
       break;
     case "stats":
       onStats(m);
@@ -1730,6 +1734,9 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
     }
     case "firsts":
       firstsPanel.onFirsts(m);
+      break;
+    case "families":
+      familyPanel.onFamilies(m);
       break;
     case "sessionFile":
       firstsPanel.onSessionFile(m);

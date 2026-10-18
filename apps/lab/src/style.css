@@ -382,6 +382,29 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .rung-bar::-webkit-progress-value { background: var(--muted); border-radius: 3px; }
 .rung-bar::-moz-progress-bar { background: var(--muted); border-radius: 3px; }
 .rung-says { color: var(--muted); font-size: var(--t-micro); line-height: 1.45; overflow-wrap: anywhere; }
+.rung-hint { color: var(--text); font-size: var(--t-micro); line-height: 1.45; }
+/* The family tree: one row per family, indented by depth; a dim row is a family with nothing left to show. */
+.families .families-lede { margin: -4px 0 12px; }
+.families-summary { margin: 0 0 12px; color: var(--text); font-size: var(--t-micro); line-height: 1.5; overflow-wrap: anywhere; }
+.families-summary[hidden], #families-tree-block[hidden], #family-log-block[hidden], #families-cut[hidden], .families button[hidden] { display: none; }
+.families .subheading { margin: 12px 0 8px; }
+.family-tree { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 10px; }
+.family { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 0 8px; margin-left: calc(var(--depth, 0) * 14px); padding-left: 0; }
+.family.nested { border-left: 1px solid var(--line); padding-left: 8px; }
+.family-swatch { display: block; width: 10px; height: 10px; margin-top: 4px; border-radius: 3px; border: 1px solid var(--control-line); }
+.family-swatch.none { background: transparent; border-style: dotted; }
+.family-body { display: grid; gap: 2px; min-width: 0; }
+.family-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.family-name { color: var(--text); font-size: var(--t-small); font-weight: 700; overflow-wrap: anywhere; }
+.family-stats { color: var(--text); font-size: var(--t-micro); line-height: 1.45; overflow-wrap: anywhere; }
+.family-origin { color: var(--muted); font-size: var(--t-micro); line-height: 1.45; overflow-wrap: anywhere; }
+.family.extinct .family-name, .family.extinct .family-stats { color: var(--muted); font-weight: 500; }
+.family.extinct .family-swatch { opacity: .45; }
+.family.extinct .family-origin { color: var(--soft); }
+.family.film .badge { border-style: dashed; }
+.families button.quiet { min-height: 28px; padding: 2px 8px; font-size: var(--t-small); }
+.family-rules-body p { margin: 10px 0 0; color: var(--muted); font-size: var(--t-micro); line-height: 1.5; }
+.family-rules-body p b { color: var(--text); font-weight: 600; }
 #card-hint { margin-top: 8px; }
 .card-command { display: block; margin-top: 4px; padding: 5px 8px; border-radius: 6px; background: var(--raised); color: var(--text); font: var(--t-micro) var(--mono); overflow-wrap: anywhere; user-select: all; }
 .card { width: min(640px, 100vw - 32px); max-width: none; height: min(820px, 100dvh - 32px); max-height: none; margin: auto; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg); color: var(--text); flex-direction: column; overflow: hidden; }
@@ -473,7 +496,7 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
   .controls { overflow: visible; min-height: auto; }
   .evidence { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; overflow: visible; min-height: auto; border-left: 0; border-top: 1px solid var(--line); }
   .evidence-section:nth-of-type(even) { border-left: 1px solid var(--line-soft); }
-  .evidence-section.firsts { grid-column: 1 / -1; border-left: 0; }
+  .evidence-section.firsts, .evidence-section.families { grid-column: 1 / -1; border-left: 0; }
   /* The jar keeps its own height and stays in view while a taller controls rail scrolls beside it. */
   .stage { min-height: 680px; overflow: visible; align-self: start; position: sticky; top: 0; }
 }

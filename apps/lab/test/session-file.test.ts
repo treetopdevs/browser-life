@@ -4,14 +4,16 @@ import {
   type Intervention, type PondScore, type WorldConfig, type WorldState,
 } from "@bl/schema";
 import { applyLesion, RefSim, type MutationEvent } from "@bl/sim-ref";
-import { FirstsDetector, FIRSTS_RULESET, FIRSTS_RULESET_V0, firstsContext, type FirstsInput } from "@bl/metrics";
+import { FamilyTree, FAMILIES_RULESET, type FamilyInput, type FamilySummary, FirstsDetector, FIRSTS_RULESET, FIRSTS_RULESET_V0, FIRSTS_RULESET_V1, firstsContext, type FirstsInput } from "@bl/metrics";
 import frozenV1 from "../../../tests/e2e/fixtures/pond-keeper-session.json";
+import frozenV2 from "../../../tests/e2e/fixtures/pond-keeper-session-v2.json";
 import { LabExecution, type LabSimulation } from "../src/execution.ts";
 import type { RunManifest } from "../src/protocol.ts";
 import {
   buildSessionFile, exportRefusal, interventionFacts, replayCommand, replayExperiment, RewindStore, sessionFileError, sessionFileName, SESSION_FORMAT, SESSION_VERSION, SESSION_VERSIONS,
-  type RewindRecord, type SessionFile,
+  familiesBlock, type FamiliesReading, type Genealogy, type RewindRecord, type SessionFile,
 } from "../src/session-file.ts";
+import { feedCensus, logRefusal, openFirstsLog, rewindRecord, woundsBetween, type FirstsLog } from "../src/firsts-log.ts";
 
 // The lab's execution on the reference physics (the harness of execution.test.ts, which does not export it): only
 // GPU readback is substituted. Sessions are run, exported as the worker does it (a settled checkpoint, the log of
@@ -26,13 +28,17 @@ const plainInit = { kind: "generalist", founders: 0, nutrient: 0, biomass: 0 } a
 class CpuSimulation implements LabSimulation {
   ref: RefSim;
   events: MutationEvent[] = [];
+  /** Ledger records the next drain reports as lost (an overflowed event buffer). */
+  dropNext = 0;
   constructor(state: WorldState) { this.ref = new RefSim(cloneState(state)); }
   get cfg() { return this.ref.state.cfg; }
   get step() { return this.ref.state.step; }
   run(n: number) { this.events.push(...this.ref.run(n)); }
   async drainLedger() {
     const events = this.events.splice(0);
-    return { events, dropped: 0, flux: this.ref.state.flux, step: this.step, lightIn: this.ref.state.lightIn, heatOut: this.ref.state.heatOut };
+    const dropped = this.dropNext;
+    this.dropNext = 0;
+    return { events, dropped, flux: this.ref.state.flux, step: this.step, lightIn: this.ref.state.lightIn, heatOut: this.ref.state.heatOut };
   }
   async readSnapshot() {
     const s = this.ref.state;
@@ -49,26 +55,68 @@ class CpuSimulation implements LabSimulation {
   async feed(cx: number, cy: number, r: number, amount: number) { return applyFeed(this.ref.state, cx, cy, r, amount); }
 }
 
-/** One world with its log of firsts fed as the worker feeds it: every observed census, through the thunk. */
-function session(state: WorldState, opts: { observer?: ConstructorParameters<typeof LabExecution>[2]["observer"]; detector?: FirstsDetector; every?: number; feedLog?: boolean } = {}) {
+/**
+ * One world with its log of firsts and family tree fed as the worker feeds them (`feedCensus`): every observed census, through the
+ * thunks, the wounds read from `interventions` (the manifest's log, which a replay's re-applied entries join, as `onReplayed` does in the worker).
+ */
+function session(state: WorldState, opts: { observer?: ConstructorParameters<typeof LabExecution>[2]["observer"]; log?: FirstsLog; every?: number; feedLog?: boolean; interventions?: Intervention[] } = {}) {
   const every = opts.every ?? 100;
   const cfgSettings = { ...settings, censusEvery: every };
   const sim = new CpuSimulation(state);
-  const detector = opts.detector ?? new FirstsDetector(firstsContext(state.cfg, every));
+  const interventions = opts.interventions ?? [];
+  const log = opts.log ?? openFirstsLog(state, every, { edgesFrom: 0, edges: 0, dropped: 0 });
   const seen: number[] = [];
   const inputs: FirstsInput[] = [];
+  const familyInputs: FamilyInput[] = [];
+  const notices: string[] = [];
   const execution = new LabExecution(sim, cfgSettings, {
     start: state, observer: opts.observer, waitForIdle: async () => {}, isCurrent: () => true,
-    onObservation: opts.feedLog === false ? undefined : (c, _d, firsts) => {
+    onObservation: opts.feedLog === false ? undefined : (c, dropped, firsts, families) => {
       seen.push(c.step);
-      const input = firsts!();
-      inputs.push(JSON.parse(JSON.stringify(input)));
-      detector.observe(input);
+      const record = (extras?: Parameters<NonNullable<typeof firsts>>[0]) => {
+        const input = firsts!(extras);
+        inputs.push(JSON.parse(JSON.stringify(input)));
+        return input;
+      };
+      const watched = families && {
+        parentOf: families.parentOf,
+        input: () => {
+          const input = families.input();
+          familyInputs.push(JSON.parse(JSON.stringify(input)));
+          return input;
+        },
+      };
+      feedCensus(log, { census: c, dropped, firsts: record, families: watched, cfg: sim.cfg, interventions }, (m) => notices.push(m));
     },
+    onReplayed: (iv) => { interventions.push(iv); },
   });
   const advanceTo = async (step: number) => { while (sim.step < step) await execution.advanceFrame(step - sim.step); };
-  return { sim, execution, detector, seen, inputs, advanceTo, settings: cfgSettings };
+  return { sim, execution, log, detector: log.detector, tree: log.tree, seen, inputs, familyInputs, notices, interventions, advanceTo, settings: cfgSettings };
 }
+
+/** The card's family counts: the tree's summary less its rule set and steps. */
+const countsOf = (tree: FamilyTree) => {
+  const { rules: _r, watchedFrom: _w, step: _s, ...counts } = tree.summary();
+  return counts;
+};
+
+/** What `buildSessionFile` takes of a session's tree. */
+const reading = (log: FirstsLog): FamiliesReading => ({ watchedFrom: log.tree.watchedFrom, families: log.tree.families(), events: log.tree.events() });
+
+/** The tree of a jar watched from t=100 that split once, at t=5,200: two living families, one of them founded by the split. */
+const split: { reading: FamiliesReading; summary: FamilySummary } = {
+  reading: {
+    watchedFrom: 100,
+    families: [
+      { founder: "0:5", name: "Reed", parent: null, parentName: null, founded: 100, unknownDescent: false, status: "living", bodyNow: true, cells: 90, bodies: 3, purity: 0.9, share: 0.6, depth: 0 },
+      { founder: "4800:12", name: "Reed amber", parent: "0:5", parentName: "Reed", founded: 5200, unknownDescent: false, status: "living", bodyNow: true, cells: 60, bodies: 2, purity: null, share: 0.4, depth: 1 },
+    ],
+    events: [{ step: 5200, kind: "split", family: "4800:12", name: "Reed amber", detail: "Reed amber split from Reed: 60 cells against 90" }],
+  },
+  summary: { rules: FAMILIES_RULESET, watchedFrom: 100, step: 5300, named: 2, starting: 1, split: 1, living: 2, film: 0, extinct: 0 },
+};
+/** The card's counts before any tree has watched. */
+const none = { named: 0, starting: 0, split: 0, living: 0, film: 0, extinct: 0 };
 
 function manifestOf(state: WorldState, presetId: string, init: RunManifest["init"], cfgSettings: RunManifest["settings"], interventions: Intervention[]): RunManifest {
   return {
@@ -80,8 +128,8 @@ function manifestOf(state: WorldState, presetId: string, init: RunManifest["init
 /** The run of a non-pond world: a wound at the census t=100, a feed and a drain at t=150, on to t=300, then exported. */
 async function plainSession() {
   const start = initial();
-  const s = session(start);
   const log: Intervention[] = [];
+  const s = session(start, { interventions: log });
   await s.advanceTo(100);
   log.push({ step: 100, kind: "lesion", x: 3, y: 3, r: s.sim.lesion(3, 3, 1) });
   await s.advanceTo(150);
@@ -92,10 +140,10 @@ async function plainSession() {
   }
   await s.advanceTo(300);
   const saved = await s.execution.checkpoint();
-  const facts = interventionFacts(log, new Map(), null);
   const file = buildSessionFile({
     manifest: manifestOf(start, "spots", plainInit, settings, log), stateHash: stateHash(saved.state), step: saved.state.step,
-    firsts: { watchedFrom: s.detector.watchedFrom, entries: s.detector.entries() }, card: { summary: s.detector.summary(), facts }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
+    firsts: { watchedFrom: s.detector.watchedFrom, entries: s.detector.entries() }, families: reading(s.log),
+    card: { summary: s.detector.summary(), facts: interventionFacts(log, new Map(), null, undefined, s.tree.summary()) }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
   });
   return { start, s, saved, log, file };
 }
@@ -109,9 +157,12 @@ describe("the session file of a lab run", () => {
     expect(file.checkpoints).toEqual([{ step: 300, file: "session-final", hash: stateHash(saved.state), interventions: 3 }]);
     expect(file.format).toBe(SESSION_FORMAT);
     expect(file.version).toBe(SESSION_VERSION);
-    expect(SESSION_VERSION).toBe(2);
+    expect(SESSION_VERSION).toBe(3);
     expect(file.firsts.rules).toBe(FIRSTS_RULESET);
-    expect(FIRSTS_RULESET).toBe("firsts-v1");
+    expect(FIRSTS_RULESET).toBe("firsts-v2");
+    expect(file.families).toMatchObject({ rules: FAMILIES_RULESET, watchedFrom: 100 });
+    expect(file.families!.families.length).toBeGreaterThan(0);
+    expect(file.card.facts.families).toMatchObject({ named: file.families!.families.length, split: 0 });
     expect(file.firsts.entries.some((e) => e.id === "body")).toBe(true);
     expect(file.card.facts).toMatchObject({ picks: { total: 0 }, wounds: 1, feeds: 1, drains: 1, pressures: { changes: 0, latest: null } });
     expect(file.replay).toBe(replayCommand(file, sessionFileName(file.runId, 300)));
@@ -130,6 +181,11 @@ describe("the session file of a lab run", () => {
     expect(JSON.stringify(replayed.observer)).toBe(JSON.stringify(saved.observer));
     expect(again.detector.entries()).toEqual(read.firsts.entries);
     expect(again.detector.summary()).toEqual(read.card.summary);
+    // The family tree replays as the log does: the same families and events, the file's block.
+    expect(reading(again.log)).toEqual(reading(s.log));
+    expect(read.families).toEqual(JSON.parse(JSON.stringify(familiesBlock(reading(again.log)))));
+    // The wounds the detector read are the replay's too: the log it was fed holds the wound at t=100, seen by the census at t=200.
+    expect(s.inputs.map((i) => [i.step, i.wounds.length])).toEqual([[100, 0], [200, 1], [300, 0]]);
     expect(again.seen).toEqual(s.seen);
     expect(again.inputs).toEqual(s.inputs);
     expect(again.execution.fed).toEqual(s.execution.fed);
@@ -159,14 +215,18 @@ describe("the session file of a lab run", () => {
     const first = session(initial());
     await first.advanceTo(200);
     const mid = await first.execution.checkpoint();
-    const record: RewindRecord = { firsts: JSON.parse(JSON.stringify(first.detector.snapshot())), picks: [], hash: stateHash(mid.state) };
+    const record: RewindRecord = JSON.parse(JSON.stringify(rewindRecord(first.log, { edgesFrom: 0, edges: 0, dropped: 0 }, stateHash(mid.state), mid.state.step)));
     expect(FirstsDetector.restore(record.firsts).lastStep).toBe(mid.state.step);
     // The checkpoint artifact round trip is the lab's own (execution.test.ts); here the observer state is carried as it is.
-    const rest = session(cloneState(mid.state), { observer: mid.observer, detector: FirstsDetector.restore(record.firsts) });
+    const rest = session(cloneState(mid.state), { observer: mid.observer, log: openFirstsLog(mid.state, 100, { edgesFrom: 0, edges: 0, dropped: 0 }, record) });
     await rest.advanceTo(500);
     await rest.execution.checkpoint();
     expect(rest.detector.entries()).toEqual(whole.detector.entries());
     expect(rest.detector.summary()).toEqual(whole.detector.summary());
+    // The family tree came back with it, against the same genealogy, and goes on as the continuous one does.
+    expect(rest.tree.watchedFrom).toBe(100);
+    expect(rest.tree.families()).toEqual(whole.tree.families());
+    expect(rest.tree.events()).toEqual(whole.tree.events());
     expect(rest.seen).toEqual([300, 400, 500]);
   }, 120_000);
 });
@@ -178,9 +238,9 @@ describe("the session file of a bred pond world", () => {
 
   it("exports picks (one by hand, one the rule's) and a wound, and the replay reaches the same hash, entries and summary", async () => {
     const start = pondWorld();
-    const s = session(start, { every: 2 });
-    s.execution.setHandPicks(true);
     const log: Intervention[] = [];
+    const s = session(start, { every: 2, interventions: log });
+    s.execution.setHandPicks(true);
     const notes = new Map<number, boolean>();
     const n = cellCount(start.cfg);
     let living = -1;
@@ -210,11 +270,11 @@ describe("the session file of a bred pond world", () => {
     // The preset is planted with an override here (pondPeriod 4), so a replay command would not rebuild it: the refusal says so.
     const manifest = manifestOf(start, "ponds-small", pondsSmall.init, s.settings, log);
     expect(exportRefusal(manifest)).toMatch(/settings changed from its preset/);
-    const facts = interventionFacts(log, notes, null);
-    expect(facts).toEqual({ picks: { total: 2, byHand: 1, byRule: 1, unknown: 0 }, wounds: 1, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null } });
+    const facts = interventionFacts(log, notes, null, undefined, s.tree.summary());
+    expect(facts).toEqual({ picks: { total: 2, byHand: 1, byRule: 1, unknown: 0 }, wounds: 1, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null }, families: countsOf(s.tree) });
     const file = buildSessionFile({
       manifest, stateHash: stateHash(saved.state), step: saved.state.step,
-      firsts: { watchedFrom: s.detector.watchedFrom, entries: s.detector.entries() }, card: { summary: s.detector.summary(), facts }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
+      firsts: { watchedFrom: s.detector.watchedFrom, entries: s.detector.entries() }, families: reading(s.log), card: { summary: s.detector.summary(), facts }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
     });
     expect(file.firsts.watchedFrom).toBe(2);
     expect(file.firsts.entries.some((e) => e.id === "body")).toBe(true);
@@ -233,6 +293,23 @@ describe("the session file of a bred pond world", () => {
     expect(again.detector.entries()).toEqual(read.firsts.entries);
     expect(again.detector.summary()).toEqual(read.card.summary);
     expect(again.inputs).toEqual(s.inputs);
+    expect(again.tree.families()).toEqual(s.tree.families());
+    expect(again.tree.events()).toEqual(s.tree.events());
+    expect(again.familyInputs).toEqual(s.familyInputs);
+    // Each census, boundary censuses (t=4, t=8) included, is read from its own genome words, before the boundary's pond cycle reseeds:
+    // what its bodies hold of a lineage never exceeds what the census says that lineage holds.
+    expect(s.familyInputs.map((i) => i.step)).toEqual([2, 4, 6, 8, 10]);
+    for (const input of s.familyInputs) {
+      const held = new Map(input.lineages.map((l) => [l.key, l.cells]));
+      const sums = new Map<string, number>();
+      for (const b of input.bodies) for (const [k, n] of b.keys) sums.set(k, (sums.get(k) ?? 0) + n);
+      for (const [k, n] of sums) expect(n, `t=${input.step} ${k}`).toBeLessThanOrEqual(held.get(k) ?? 0);
+    }
+    // The wound at t=4 reached the detector as the census after it saw it, in the pond its centre lies in, on both runs.
+    const wounded = s.inputs.filter((i) => i.wounds.length > 0);
+    expect(wounded.map((i) => i.step)).toEqual([6]);
+    expect(wounded[0].wounds[0]).toMatchObject({ step: 4, r: expect.any(Number) });
+    expect(wounded[0].wounds[0].tile).toBe(Math.floor(at.y / start.cfg.tileH) * start.cfg.tilesX + Math.floor(at.x / start.cfg.tileW));
   }, 600_000);
 });
 
@@ -255,28 +332,89 @@ describe("the session file's versions", () => {
   const pondsSmall = PRESETS.find((p) => p.id === "ponds-small")!;
   const bredCfg = presetConfig(pondsSmall, 1, { pondArm: "breed", pondScore: "mass" });
   const period = bredCfg.pondPeriod!;
-  /** A well-formed version 2 file of a breeder world, made from a history alone: sessionFileError checks consistency, a replay checks the hash. */
-  function pressured(log: Intervention[], step = period * 3): SessionFile {
+  /** A well-formed version 3 file of a breeder world, made from a history alone: sessionFileError checks consistency, a replay checks the hash. */
+  function pressured(log: Intervention[], step = period * 3, tree: { reading: FamiliesReading; summary: FamilySummary | undefined } = { reading: { watchedFrom: null, families: [], events: [] }, summary: undefined }): SessionFile {
     const detector = new FirstsDetector(firstsContext(bredCfg, 100));
     const manifest: RunManifest = {
       runId: "breeder-s1-test", presetId: "breeder", seed: 1, cfg: bredCfg, init: pondsSmall.init, ruleVersion: RULE_VERSION, createdAt: "2026-10-17T00:00:00.000Z", adapter: "test",
       userAgent: "test", interventions: log, checkpoints: [], settings, startHash: "0123456789abcdef", edgesFrom: 0,
     };
     return buildSessionFile({
-      manifest, stateHash: "89abcdef01234567", step, firsts: { watchedFrom: 100, entries: [] },
-      card: { summary: detector.summary(), facts: interventionFacts(log, new Map(), null) }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
+      manifest, stateHash: "89abcdef01234567", step, firsts: { watchedFrom: 100, entries: [] }, families: tree.reading,
+      card: { summary: detector.summary(), facts: interventionFacts(log, new Map(), null, undefined, tree.summary) }, adapter: "test", createdAt: "2026-10-17T00:00:00.000Z",
     });
   }
   const dial = (step: number, cycle: number, score: PondScore): Intervention => ({ step, kind: "pressure", cycle, score });
   const pick = (cycle: number, donors: number[]): Intervention => ({ step: cycle * period, kind: "pick", cycle, donors });
 
-  it("writes version 2 with the firsts-v1 rule set, and accepts a pressured, picked history", () => {
-    expect(SESSION_VERSIONS).toEqual([1, 2]);
+  it("writes version 3 with the firsts-v2 rule set and a families block, and accepts a pressured, picked history", () => {
+    expect(SESSION_VERSIONS).toEqual([1, 2, 3]);
     const file = pressured([dial(period, 1, "body"), pick(1, [2]), pick(2, [0]), dial(period * 2, 3, "mass"), pick(3, [1])]);
-    expect([file.version, file.firsts.rules]).toEqual([2, "firsts-v1"]);
+    expect([file.version, file.firsts.rules]).toEqual([3, "firsts-v2"]);
+    expect(file.families).toEqual({ rules: "families-v1", watchedFrom: null, families: [], events: [] });
     expect(file.card.facts.pressures).toEqual({ changes: 2, latest: "mass" });
+    expect(file.card.facts.families).toEqual({ named: 0, starting: 0, split: 0, living: 0, film: 0, extinct: 0 });
     expect(sessionFileError(file)).toBeNull();
     expect(sessionFileError(JSON.stringify(file))).toBeNull();
+  });
+
+  it("writes the family tree as the note lists it, and the card’s counts with it", () => {
+    const file = pressured([], period * 6, split);
+    expect(file.families).toEqual({
+      rules: "families-v1", watchedFrom: 100,
+      families: [
+        { name: "Reed", founder: "0:5", parent: null, founded: 100, unknownDescent: false, status: "living", cells: 90, bodies: 3, purity: 0.9 },
+        { name: "Reed amber", founder: "4800:12", parent: "0:5", founded: 5200, unknownDescent: false, status: "living", cells: 60, bodies: 2, purity: null },
+      ],
+      events: [{ step: 5200, kind: "split", family: "4800:12", detail: "Reed amber split from Reed: 60 cells against 90" }],
+    });
+    expect(file.card.facts.families).toEqual({ named: 2, starting: 1, split: 1, living: 2, film: 0, extinct: 0 });
+    expect(sessionFileError(JSON.stringify(file))).toBeNull();
+  });
+
+  it.each([
+    ["no families block", (f: Record<string, any>) => { delete f.families; }, /must hold a families block/],
+    ["another tree rule set", (f: Record<string, any>) => { f.families.rules = "families-v0"; }, /rule set “families-v1”/],
+    ["a family that is not well formed", (f: Record<string, any>) => { f.families.families[0].status = "dormant"; }, /families\[0\] is malformed/],
+    ["a purity above 1", (f: Record<string, any>) => { f.families.families[0].purity = 1.5; }, /families\[0\] is malformed/],
+    ["two families with one founding lineage", (f: Record<string, any>) => { f.families.families[1].founder = "0:5"; }, /repeats the founding lineage 0:5/],
+    ["two families with one name", (f: Record<string, any>) => { f.families.families[1].name = "Reed"; }, /repeats the name “Reed”/],
+    ["a parent that is not in the list", (f: Record<string, any>) => { f.families.families[1].parent = "9:9"; }, /parent family that is not in the list/],
+    ["a family its own parent", (f: Record<string, any>) => { f.families.families[1].parent = "4800:12"; }, /parent family that is not in the list/],
+    ["an extinct family with cells", (f: Record<string, any>) => { f.families.families[0].status = "extinct"; }, /extinct but holds 90 cells/],
+    ["a family founded before the tree watched", (f: Record<string, any>) => { f.families.families[0].founded = 99; }, /before the tree began watching/],
+    ["families but no watchedFrom", (f: Record<string, any>) => { f.families.watchedFrom = null; }, /before the tree began watching/],
+    ["an event about a family that is not listed", (f: Record<string, any>) => { f.families.events[0].family = "7:7"; }, /about a family that is not in the list/],
+    ["an event of another kind", (f: Record<string, any>) => { f.families.events[0].kind = "merge"; }, /events\[0\] is malformed/],
+    ["events out of step order", (f: Record<string, any>) => { f.families.events.push({ step: 5100, kind: "film", family: "0:5", detail: "x" }); }, /step order/],
+    ["two families each the other's parent", (f: Record<string, any>) => { f.families.families[0].parent = "4800:12"; }, /families\[0\] sits on a loop of parent families/],
+    ["a tree that began watching after the final state", (f: Record<string, any>) => { f.families.watchedFrom = 10_000_000; }, /began watching at t=10000000, after the final state/],
+    ["a family founded after the final state", (f: Record<string, any>) => { f.families.families[1].founded = 10_000_000; }, /families\[1\] was founded at t=10000000, after the final state/],
+    ["an event after the final state", (f: Record<string, any>) => { f.families.events[0].step = 10_000_000; }, /events\[0\] \(at t=10000000\) falls outside its family's history/],
+    ["an event before its family was founded", (f: Record<string, any>) => { f.families.events.unshift({ step: 150, kind: "film", family: "4800:12", detail: "x" }); }, /events\[0\] \(at t=150\) falls outside its family's history/],
+    ["no family counts on the card",(f: Record<string, any>) => { delete f.card.facts.families; }, /card.facts must give the family counts/],
+    ["a family count that is not a number", (f: Record<string, any>) => { f.card.facts.families.split = "one"; }, /card.facts.families.split is not a whole number/],
+    ["counts that disagree with the block", (f: Record<string, any>) => { f.card.facts.families.living = 1; }, /family counts disagree/],
+  ])("refuses a version 3 file with %s", (_name, change, message) => {
+    const f = structuredClone(pressured([], period * 6, split)) as unknown as Record<string, any>;
+    change(f);
+    expect(sessionFileError(JSON.stringify(f))).toMatch(message);
+  });
+
+  it("refuses a families block in an older version, and an older rule set in a newer one", () => {
+    const f = structuredClone(pressured([], period * 6, split)) as unknown as Record<string, any>;
+    expect(sessionFileError({ ...f, version: 2 })).toMatch(/version 2 file’s firsts must name the rule set “firsts-v1”/);
+    expect(sessionFileError({ ...f, version: 2, firsts: { ...f.firsts, rules: FIRSTS_RULESET_V1 } })).toMatch(/a version 2 file has no families block/);
+    expect(sessionFileError({ ...f, firsts: { ...f.firsts, rules: FIRSTS_RULESET_V1 } })).toMatch(/version 3 file’s firsts must name the rule set “firsts-v2”/);
+    expect(sessionFileError({ ...f, version: 4 })).toMatch(/reads versions 1, 2 and 3/);
+  });
+
+  it("still reads the frozen version 2 fixture: firsts-v1, a pressure, no families", () => {
+    const file = structuredClone(frozenV2) as unknown as SessionFile;
+    expect([file.version, file.firsts.rules]).toEqual([2, FIRSTS_RULESET_V1]);
+    expect(file.families).toBeUndefined();
+    expect(sessionFileError(JSON.stringify(frozenV2))).toBeNull();
+    expect(file.replay).toBe(replayCommand(file, sessionFileName(file.runId, file.final.step)));
   });
 
   it("refuses a pressure out of order, not the observed history, or in a world that is not a breeder's", () => {
@@ -324,10 +462,12 @@ describe("interventionFacts", () => {
     ];
     // The pick at t=12 was made before this page's notes began (a world restored from an earlier visit): unknown, not guessed.
     const facts = interventionFacts(log, new Map([[4, true], [8, false]]), null);
-    expect(facts).toEqual({ picks: { total: 3, byHand: 1, byRule: 1, unknown: 1 }, wounds: 2, feeds: 1, drains: 1, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null } });
-    const reading = { ok: true, from: 0, to: 100, live: "a", twin: "a", handAtEnd: false };
-    expect(interventionFacts([], new Map(), reading).replay).toBe(reading);
-    expect(interventionFacts([], new Map(), null)).toEqual({ picks: { total: 0, byHand: 0, byRule: 0, unknown: 0 }, wounds: 0, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null } });
+    expect(facts).toEqual({ picks: { total: 3, byHand: 1, byRule: 1, unknown: 1 }, wounds: 2, feeds: 1, drains: 1, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null }, families: none });
+    const replayed = { ok: true, from: 0, to: 100, live: "a", twin: "a", handAtEnd: false };
+    expect(interventionFacts([], new Map(), replayed).replay).toBe(replayed);
+    expect(interventionFacts([], new Map(), null)).toEqual({ picks: { total: 0, byHand: 0, byRule: 0, unknown: 0 }, wounds: 0, feeds: 0, drains: 0, replay: null, step: 0, cycles: 0, cyclesBefore: 0, pressures: { changes: 0, latest: null }, families: none });
+    // The tree's counts ride along: the summary less its rule set and steps.
+    expect(interventionFacts([], new Map(), null, undefined, split.summary).families).toEqual({ named: 2, starting: 1, split: 1, living: 2, film: 0, extinct: 0 });
     expect(interventionFacts([], new Map(), null, { step: 3000, cycles: 3, cyclesBefore: 2 })).toMatchObject({ step: 3000, cycles: 3, cyclesBefore: 2 });
   });
 });
@@ -352,9 +492,9 @@ describe("sessionFileError", () => {
     ["text that isn’t JSON", async () => sessionFileError("{nope"), /isn’t JSON/],
     ["something that isn’t an object", async () => sessionFileError([1]), /expected a JSON object/],
     ["another format", () => edit((f) => { f.format = "cadence-garden.run"; }), /format/],
-    ["version 3", () => edit((f) => { f.version = 3; }), /reads versions 1 and 2/],
-    ["a version 1 file under the version 2 rule set", () => edit((f) => { f.version = 1; }), /version 1 file’s firsts must name the rule set “firsts-v0”/],
-    ["a version 2 file under the version 1 rule set", () => edit((f) => { f.firsts.rules = "firsts-v0"; }), /version 2 file’s firsts must name the rule set “firsts-v1”/],
+    ["version 4", () => edit((f) => { f.version = 4; }), /reads versions 1, 2 and 3/],
+    ["a version 1 file under the version 3 rule set", () => edit((f) => { f.version = 1; }), /version 1 file’s firsts must name the rule set “firsts-v0”/],
+    ["a version 3 file under the version 0 rule set", () => edit((f) => { f.firsts.rules = "firsts-v0"; }), /version 3 file’s firsts must name the rule set “firsts-v2”/],
     ["no startHash", () => edit((f) => { delete f.startHash; }), /startHash/],
     ["a checkpoint hash that is not the final hash", () => edit((f) => { f.checkpoints[0].hash = "0".repeat(16); }), /checkpoint entry and its final state disagree/],
     ["an intervention after the final step", () => edit((f) => { f.interventions.push({ step: f.final.step + 100, kind: "lesion", x: 1, y: 1, r: 1 }); }), /after the file’s final step/],
@@ -408,6 +548,155 @@ describe("RewindStore", () => {
     expect([store.size, store.get("b")?.picks[0][0], store.get("f0")?.picks[0][0], store.get("f69")?.picks[0][0]]).toEqual([71, 2, 0, 69]);
     store.set("f6", record(99));
     expect(store.get("f6")?.picks[0][0]).toBe(99);
+  });
+});
+
+describe("the family tree in the log of firsts", () => {
+  const genealogy: Genealogy = { edgesFrom: 0, edges: 0, dropped: 0 };
+
+  it("is fed every census beside the detector, with the ledger's parent links, and gives the detector its view", async () => {
+    const s = session(initial());
+    await s.advanceTo(300);
+    expect(s.tree.watchedFrom).toBe(100);
+    expect([s.tree.lastStep, s.detector.lastStep]).toEqual([300, 300]);
+    expect(s.seen).toEqual([100, 200, 300]);
+    expect(s.familyInputs.map((i) => i.step)).toEqual([100, 200, 300]);
+    // The world is planted here with every edge from step 0: no family is of unknown descent, and each census's input carries the tree's view.
+    expect(s.tree.families().length).toBeGreaterThan(0);
+    expect(s.tree.families().every((f) => !f.unknownDescent)).toBe(true);
+    expect(s.inputs.every((i) => i.family !== undefined && i.family.splits.length === 0)).toBe(true);
+    // Both read one census: a body's keyed cells never exceed what the census says its lineage holds.
+    for (const [i, input] of s.familyInputs.entries()) {
+      const held = new Map(input.lineages.map((l) => [l.key, l.cells]));
+      const seen = new Map<string, number>();
+      for (const b of input.bodies) for (const [k, n] of b.keys) seen.set(k, (seen.get(k) ?? 0) + n);
+      for (const [k, n] of seen) expect(n, `census ${i} lineage ${k}`).toBeLessThanOrEqual(held.get(k) ?? 0);
+    }
+    expect(logRefusal(s.log)).toBeNull();
+  }, 120_000);
+
+  it("reads a lesion as a wound at the census after it, and not at all at the first census it watches", async () => {
+    const log: Intervention[] = [{ step: 0, kind: "lesion", x: 3, y: 3, r: 1 }];
+    const s = session(initial(), { interventions: log });
+    await s.advanceTo(100);
+    log.push({ step: 100, kind: "lesion", x: 11, y: 4, r: s.sim.lesion(11, 4, 1) });
+    await s.advanceTo(300);
+    // The lesion at t=0 is before the first census it watches (t=100); the one at t=100 is seen by t=200, in the second pond.
+    expect(s.inputs.map((i) => i.wounds)).toEqual([[], [{ step: 100, tile: 1, r: log[1].kind === "lesion" ? log[1].r : -1 }], []]);
+  }, 120_000);
+
+  it("stops the tree alone when a ledger record is dropped while it watches, and says so", async () => {
+    const s = session(initial());
+    await s.advanceTo(200);
+    expect(s.tree.lastStep).toBe(200);
+    s.sim.dropNext = 2;
+    await s.advanceTo(300);
+    expect(s.log.treeStopped).toMatch(/2 mutation events dropped \(event buffer full\) by the census at t=300/);
+    expect(s.log.stopped).toBeNull();
+    expect(s.notices).toHaveLength(1);
+    expect(s.notices[0]).toMatch(/^The family tree stopped \(.*\)\. The log of firsts carries on without it/);
+    // The detector carries on without a family input; the tree keeps what it had.
+    expect([s.detector.lastStep, s.tree.lastStep]).toEqual([300, 200]);
+    expect(s.inputs.map((i) => i.family !== undefined)).toEqual([true, true, false]);
+    await s.advanceTo(400);
+    expect([s.detector.lastStep, s.tree.lastStep, s.notices.length]).toEqual([400, 200, 1]);
+    // A session file is refused, as for a stopped log; a checkpoint keeps no record at all, since a restored detector
+    // beside a fresh tree would clear the refusal while its `new-family` entries stayed missing.
+    expect(logRefusal(s.log)).toMatch(/^The family tree stopped \(.*\), so the session file would leave it out/);
+    const saved = await s.execution.checkpoint();
+    expect(rewindRecord(s.log, genealogy, stateHash(saved.state), saved.state.step)).toBeNull();
+    // A restore from no record starts the detector and the tree afresh together, and nothing is refused.
+    const reopened = openFirstsLog(saved.state, 100, genealogy, undefined);
+    expect([reopened.detector.lastStep, reopened.tree.lastStep, reopened.treeStopped, logRefusal(reopened)]).toEqual([null, null, null, null]);
+  }, 120_000);
+
+  it("allows records dropped before it began to watch: unknown ancestry from before is a root, not an error", async () => {
+    const s = session(initial());
+    s.sim.dropNext = 3;
+    await s.advanceTo(200);
+    expect(s.log.treeStopped).toBeNull();
+    expect(s.tree.watchedFrom).toBe(100);
+    expect(s.notices).toEqual([]);
+  }, 120_000);
+
+  it("stops the whole log on a tree error, and feeds nothing after", () => {
+    const log = openFirstsLog(initial(), 100, genealogy);
+    const notices: string[] = [];
+    let detectorReads = 0;
+    const feed = (families: { input(): FamilyInput; parentOf(key: string): string | undefined }) => ({
+      census: { step: 100 }, dropped: 0, cfg: initial().cfg, interventions: [] as Intervention[], families,
+      firsts: () => { detectorReads++; return {} as FirstsInput; },
+    });
+    expect(feedCensus(log, feed({ input: () => { throw new Error("boom"); }, parentOf: () => undefined }), (m) => notices.push(m))).toBe(false);
+    expect(log.stopped).toBe("boom");
+    expect(notices).toEqual(["The log of firsts stopped (boom). The world itself is fine; a session file can’t be made from this history."]);
+    expect(feedCensus(log, feed({ input: () => { throw new Error("again"); }, parentOf: () => undefined }), (m) => notices.push(m))).toBe(false);
+    expect([detectorReads, notices.length]).toEqual([0, 1]);
+    expect(logRefusal(log)).toMatch(/^The log of firsts stopped \(boom\)/);
+    expect(rewindRecord(log, genealogy, "h", 100)).toBeNull();
+  });
+
+  describe("rewind", () => {
+    const record = async () => {
+      const first = session(initial());
+      await first.advanceTo(200);
+      const mid = await first.execution.checkpoint();
+      const made = rewindRecord(first.log, { edgesFrom: 0, edges: 7, dropped: 0 }, stateHash(mid.state), mid.state.step)!;
+      return { first, mid, record: JSON.parse(JSON.stringify(made)) as RewindRecord };
+    };
+
+    it("brings the tree back with the log only against the genealogy it was read against", async () => {
+      const { first, mid, record: rec } = await record();
+      expect(rec.families?.genealogy).toEqual({ edgesFrom: 0, edges: 7, dropped: 0 });
+      const same = openFirstsLog(mid.state, 100, { edgesFrom: 0, edges: 7, dropped: 0 }, rec);
+      expect([same.detector.lastStep, same.tree.lastStep]).toEqual([200, 200]);
+      expect(same.tree.families()).toEqual(first.tree.families());
+      expect(same.tree.events()).toEqual(first.tree.events());
+      // Another genealogy (its edges read back short, begun later, or with other records lost): the detector still comes back, the tree starts afresh.
+      for (const other of [{ edgesFrom: 0, edges: 6, dropped: 0 }, { edgesFrom: 200, edges: 7, dropped: 0 }, { edgesFrom: 0, edges: 7, dropped: 1 }]) {
+        const reopened = openFirstsLog(mid.state, 100, other, rec);
+        expect([reopened.detector.lastStep, reopened.tree.lastStep, reopened.tree.watchedFrom], JSON.stringify(other)).toEqual([200, null, null]);
+      }
+    }, 120_000);
+
+    it("restores no tree for a state other than the checkpoint's, or from a record without one, or from a snapshot it cannot read", async () => {
+      const { mid, record: rec } = await record();
+      const g = { edgesFrom: 0, edges: 7, dropped: 0 };
+      // Another hash: neither comes back.
+      const elsewhere = openFirstsLog(mid.state, 100, g, { ...rec, hash: "0".repeat(16) });
+      expect([elsewhere.detector.lastStep, elsewhere.tree.lastStep]).toEqual([null, null]);
+      const { families: _dropped, ...bare } = rec;
+      expect([openFirstsLog(mid.state, 100, g, bare).detector.lastStep, openFirstsLog(mid.state, 100, g, bare).tree.lastStep]).toEqual([200, null]);
+      const broken = openFirstsLog(mid.state, 100, g, { ...rec, families: { ...rec.families!, tree: { ...rec.families!.tree, v: 9 } as never } });
+      expect([broken.detector.lastStep, broken.tree.lastStep]).toEqual([200, null]);
+      // A tree snapshot of another census than the state's.
+      const later = session(initial());
+      await later.advanceTo(300);
+      const stale = openFirstsLog(mid.state, 100, g, { ...rec, families: { tree: later.tree.snapshot(), genealogy: g } });
+      expect([stale.detector.lastStep, stale.tree.lastStep]).toEqual([200, null]);
+    }, 120_000);
+  });
+});
+
+describe("woundsBetween", () => {
+  const cfg = { tileW: 8, tileH: 8, tilesX: 2, tilesY: 2 };
+  const lesion = (step: number, x: number, y: number): Intervention => ({ step, kind: "lesion", x, y, r: 2 });
+
+  it("takes the lesions with from <= step < to, in log order, as the pond their centre lies in", () => {
+    const log: Intervention[] = [lesion(99, 1, 1), lesion(100, 1, 1), lesion(150, 9, 1), lesion(150, 1, 9), lesion(199, 15, 15), lesion(200, 1, 1)];
+    expect(woundsBetween(log, cfg, 100, 200)).toEqual([
+      { step: 100, tile: 0, r: 2 }, { step: 150, tile: 1, r: 2 }, { step: 150, tile: 2, r: 2 }, { step: 199, tile: 3, r: 2 },
+    ]);
+    expect(woundsBetween(log, cfg, 0, 100)).toEqual([{ step: 99, tile: 0, r: 2 }]);
+    expect(woundsBetween(log, cfg, 200, 300)).toEqual([{ step: 200, tile: 0, r: 2 }]);
+  });
+
+  it("ignores picks, feeds and pressures, and wraps a centre outside the world as the lesion does", () => {
+    const log: Intervention[] = [
+      { step: 120, kind: "feed", x: 1, y: 1, r: 2, amount: 5, matter: 5 }, { step: 120, kind: "pick", cycle: 1, donors: [0] }, { step: 120, kind: "pressure", cycle: 2, score: "mass" },
+      lesion(130, -1, 0), lesion(140, 16, 17.9),
+    ];
+    expect(woundsBetween(log, cfg, 100, 200)).toEqual([{ step: 130, tile: 1, r: 2 }, { step: 140, tile: 0, r: 2 }]);
   });
 });
 
