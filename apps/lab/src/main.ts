@@ -6,6 +6,7 @@ import { Series } from "./sparkline.ts";
 import { createLineagePanel } from "./lineage-panel.ts";
 import { createFirstsPanel } from "./firsts-panel.ts";
 import { createFamilyPanel } from "./family-panel.ts";
+import { createNaturalistPanel } from "./naturalist-panel.ts";
 import { RANK_LABELS, pressureDescribes, pressureNow, pressureOptions, scoreLabel, scoreWords, type RankKey } from "./rank-labels.ts";
 import { FAMILIES, byId, familyOf } from "./worlds.ts";
 import { createWorldPicker, describeWorld } from "./worlds-ui.ts";
@@ -55,6 +56,9 @@ const lineagePanel = createLineagePanel((m) => { if (m.type === "jump") loadInte
 const firstsPanel = createFirstsPanel(send);
 // A family's swatch is the lab's own colour for its founding lineage, when the census has drawn that lineage among its biggest (the map is filled in onCensus).
 const familyPanel = createFamilyPanel((key) => lineageColors.get(key));
+const naturalistPanel = createNaturalistPanel();
+// An error the worker did not catch (its own frame and message handlers post theirs): Field notes stops vouching for the censuses.
+worker.addEventListener("error", () => naturalistPanel.onFailed("worker"));
 
 let cfg: WorldConfig | null = null;
 /** The world's config when a load was requested: the worker keeps that world if the load fails. */
@@ -1734,6 +1738,7 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       lineagePanel.onLoaded();
       firstsPanel.onLoaded(m.manifest);
       familyPanel.onLoaded();
+      naturalistPanel.onLoaded(m.manifest, m.step, m.world);
       break;
     case "stats":
       onStats(m);
@@ -1784,6 +1789,12 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
       break;
     case "families":
       familyPanel.onFamilies(m);
+      break;
+    case "naturalist":
+      naturalistPanel.onCensus(m);
+      break;
+    case "naturalistTouched":
+      naturalistPanel.onTouched(m.world, m.runId, m.step);
       break;
     case "sessionFile":
       firstsPanel.onSessionFile(m);
@@ -1844,7 +1855,10 @@ worker.onmessage = (ev: MessageEvent<FromWorker>) => {
         setStrip("run-replay", "couldn’t check", "bad");
       }
       pressureAnswered();
-      if (m.failed) worldFailed = true;
+      if (m.failed) {
+        worldFailed = true;
+        naturalistPanel.onFailed();
+      }
       {
         // The page pauses on any error, so auto-breed ends; it says the world failed only when it did.
         const wasAuto = auto !== null;

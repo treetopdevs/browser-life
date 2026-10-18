@@ -5,7 +5,7 @@ import {
   type FeedResult, type Intervention, type PondScore, type PondTerm, type WorldConfig, type WorldState,
 } from "@bl/schema";
 import type { GpuSim } from "@bl/sim-gpu";
-import { buildFamilyInput, buildFirstsInput, firstsContext, readLineageCells, type Census, type FamilyInput, type FirstsContext, type FirstsExtras, type FirstsInput, type LineageCells } from "@bl/metrics";
+import { buildFamilyInput, buildFirstsInput, firstsContext, fluxRates, readLineageCells, type Census, type FamilyInput, type FirstsContext, type FirstsExtras, type FirstsInput, type LineageCells } from "@bl/metrics";
 import {
   applyBoundary,
   cellsAtBoundary,
@@ -27,6 +27,7 @@ import {
 import { MutationEdges } from "@bl/lineage";
 import type { CellBirth } from "@bl/sim-ref";
 import { donorsWithKeep, isLineageKey, keptPondOf, type KeptPond } from "./pond-play.ts";
+import { lineageRows, seriesFields, type SeriesFields } from "./naturalist-series.ts";
 
 /**
  * What a census says to the family tree (`FamilyTree.observe`): its input, and the ledger's parent link for a key. Both read the
@@ -64,6 +65,12 @@ interface ExecutionOptions {
    * before it. `dropped`: the ledger records lost in that drain.
    */
   onObservation?: (census: Census, dropped: number, firsts?: (extras?: FirstsExtras) => FirstsInput, families?: CensusFamilies) => void;
+  /**
+   * Display only, right after `onObservation`: the census's series record as the runner writes it (naturalist-series.ts; its
+   * counters and flux rates are read right after the census is observed, before the boundary's transforms, as the runner does),
+   * its lineage rows, and the ledger records lost in its drain. Call `series` inside this callback, if at all.
+   */
+  onSeries?: (series: () => { rec: SeriesFields; rows: [string, number][] }, dropped: number) => void;
   /** Display only, after a pond boundary's cycle (or, for arm cont, its record) has been applied at `step`. */
   onPondCycle?: (cycle: PondCycle, step: number) => void;
   onDisplayError?: (message: string) => void;
@@ -168,6 +175,9 @@ export class LabExecution {
   private droppedEvents: number;
   /** What the log of firsts needs of this world's config, built once. */
   private readonly firstsCtx: FirstsContext;
+  /** The flux counters and step of the last census observed (the start state's before the first): the series record's rates. Null without a start state. */
+  private prevFlux: bigint[] | null;
+  private prevStep: number;
 
   constructor(private readonly sim: LabSimulation, private readonly settings: ObserverSettings, private readonly options: ExecutionOptions) {
     const huntError = huntArmError(sim.cfg);
@@ -200,6 +210,8 @@ export class LabExecution {
     this.edges = options.lineage?.edges ?? new MutationEdges();
     this.droppedEvents = options.lineage?.dropped ?? 0;
     this.firstsCtx = firstsContext(sim.cfg, settings.censusEvery);
+    this.prevFlux = options.start ? options.start.flux.slice() : null;
+    this.prevStep = sim.step;
     this.pressures = (options.pressures ?? []).map((e) => ({ step: e.step, cycle: e.cycle, score: e.score }));
     if (this.pressures.length && sim.cfg.pondArm !== "breed") throw new Error(`the history holds pressures, but this world's pond arm is ${JSON.stringify(sim.cfg.pondArm)}: only a breeder world has a pressure dial`);
     this.keepKey = options.keep ?? null;
@@ -536,6 +548,13 @@ export class LabExecution {
         this.check();
         if (snap.step !== step) throw new Error(`observation at t=${snap.step}, expected the census boundary t=${step}`);
         const observed = observeCensus(this.obs, this.sim.cfg, snap, ledger.events.length + ledger.dropped);
+        // The series record's counters and rates, as the runner reads them: after the census, before the boundary's transforms.
+        const t = this.obs.tracker;
+        const counters = { fissions: t.fissions, fusions: t.fusions, buddings: this.obs.buddings, maxGeneration: t.maxGeneration(), mutations: this.obs.mutations };
+        const rates = this.prevFlux ? fluxRates(this.prevFlux, snap.flux, step - this.prevStep) : null;
+        this.prevFlux = snap.flux.slice();
+        this.prevStep = step;
+        const series = () => ({ rec: seriesFields(observed.census, observed.sym, rates, counters), rows: lineageRows(observed.census) });
         // The census's own phase: its snapshot's genome words, read once and shared by the log of firsts and the family tree.
         let cells: LineageCells | undefined;
         const lineageCells = () => (cells ??= readLineageCells(observed.census, this.obs.tracker, snap.genomeHead, this.firstsCtx));
@@ -551,12 +570,14 @@ export class LabExecution {
           if (survey.suggested.length) {
             this.awaitingPond = survey;
             this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts, families));
+            this.display(() => this.options.onSeries?.(series, ledger.dropped));
             this.display(() => this.options.onPondAwait?.(survey));
             return true;
           }
         }
         const ponds = await this.settle(step, picks);
         this.display(() => this.options.onObservation?.(observed.census, ledger.dropped, firsts, families));
+        this.display(() => this.options.onSeries?.(series, ledger.dropped));
         if (ponds) this.display(() => this.options.onPondCycle?.(ponds, step));
         return false;
       }, this.replay, (iv, result) => {

@@ -405,6 +405,24 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
 .families button.quiet { min-height: 28px; padding: 2px 8px; font-size: var(--t-small); }
 .family-rules-body p { margin: 10px 0 0; color: var(--muted); font-size: var(--t-micro); line-height: 1.5; }
 .family-rules-body p b { color: var(--text); font-weight: 600; }
+/* Field notes: the naturalist. Measured wears the sun as on the journal's chips; Unclear and Not yet measured stay grey. */
+.naturalist .naturalist-lede { margin: -4px 0 12px; }
+.naturalist-status { margin: 0 0 6px; color: var(--text); font-size: var(--t-small); font-weight: 600; line-height: 1.45; }
+.naturalist #naturalist-detail, .naturalist #naturalist-read { margin: 0 0 10px; overflow-wrap: anywhere; }
+.naturalist #naturalist-read { font-size: var(--t-micro); }
+.naturalist [hidden] { display: none; }
+.badge.chip-measured { color: var(--sun-ink); border-color: var(--sun-soft); background: var(--sun-soft); }
+.naturalist-standing { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 7px; color: var(--muted); font-size: var(--t-micro); line-height: 1.5; }
+.naturalist-standing .badge { margin-right: 2px; vertical-align: 1px; }
+.naturalist-note { display: grid; gap: 4px; padding: 10px 0 0; border-top: 1px solid var(--line-soft); font-size: var(--t-small); }
+.naturalist-note-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.naturalist-note-label { color: var(--text); font-weight: 700; }
+.naturalist-sentence { margin: 0; color: var(--text); line-height: 1.5; }
+.naturalist-note .hint, .naturalist-receipt { overflow-wrap: anywhere; }
+.naturalist-receipt { margin: 0; color: var(--muted); font-size: var(--t-micro); }
+.naturalist-cannot-list, .naturalist-records { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 6px; color: var(--muted); font-size: var(--t-micro); line-height: 1.5; }
+.naturalist-rule p { margin: 10px 0 0; color: var(--muted); font-size: var(--t-micro); line-height: 1.5; overflow-wrap: anywhere; }
+.naturalist .sha { overflow-wrap: anywhere; word-break: break-all; }
 #card-hint { margin-top: 8px; }
 .card-command { display: block; margin-top: 4px; padding: 5px 8px; border-radius: 6px; background: var(--raised); color: var(--text); font: var(--t-micro) var(--mono); overflow-wrap: anywhere; user-select: all; }
 .card { width: min(640px, 100vw - 32px); max-width: none; height: min(820px, 100dvh - 32px); max-height: none; margin: auto; padding: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg); color: var(--text); flex-direction: column; overflow: hidden; }
@@ -500,7 +518,7 @@ body.breeding #btn-play.primary:not([aria-pressed="true"]):hover { background: v
   .controls { overflow: visible; min-height: auto; }
   .evidence { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; overflow: visible; min-height: auto; border-left: 0; border-top: 1px solid var(--line); }
   .evidence-section:nth-of-type(even) { border-left: 1px solid var(--line-soft); }
-  .evidence-section.firsts, .evidence-section.families { grid-column: 1 / -1; border-left: 0; }
+  .evidence-section.firsts, .evidence-section.families, .evidence-section.naturalist { grid-column: 1 / -1; border-left: 0; }
   /* The jar keeps its own height and stays in view while a taller controls rail scrolls beside it. */
   .stage { min-height: 680px; overflow: visible; align-self: start; position: sticky; top: 0; }
 }
