@@ -2,10 +2,10 @@
 // rail lists what a detector with rules written in advance has seen the world do for the first time; the card
 // sums the session up and hands out the session file. Every number comes from the worker's FirstsMsg and the
 // world's manifest; nothing here counts, scores or interprets.
-import type { FirstsEntry, FirstsRule } from "@bl/metrics";
+import type { FirstsEntry, FirstsRule, NextUpItem } from "@bl/metrics";
 import type { WorldConfig } from "@bl/schema";
 import type { FirstsMsg, RunManifest, ToWorker } from "./protocol.ts";
-import { pressureWords } from "./rank-labels.ts";
+import { pressureWords, scoreWords } from "./rank-labels.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -36,6 +36,34 @@ function firstsList(entries: readonly FirstsEntry[], label: string): HTMLOListEl
     ol.append(li);
   }
   return ol;
+}
+
+/** A rung's unit for one of it: the detector names units for many ("cells", "splits", "censuses", "cells moved"). */
+const oneOf = (unit: string) => (unit === "censuses" ? "census" : unit.replace(/^(\w+)s\b/, "$1"));
+
+/**
+ * One rung of Next up: its name, a bar of the detector's own progress counter, and the numbers in words. The counter is a best-so-far
+ * ("seen so far") for most rungs and a reading at the latest census ("now") for the others, and the line says which. The bar is a
+ * picture of the line beside it, hidden from assistive technology: the words carry the numbers.
+ */
+function nextUpRow(item: NextUpItem): HTMLLIElement {
+  const li = el("li", undefined, "rung");
+  const name = el("span", item.name, "rung-name");
+  const bar = el("progress", undefined, "rung-bar");
+  // A rung that needs more than its target is unreached at the target itself: its bar fills only past it.
+  bar.max = item.above ? item.target + 1 : item.target;
+  bar.value = Math.min(item.value, item.target);
+  bar.setAttribute("aria-hidden", "true");
+  // A share is a percentage of something ("% of a body’s cells"); the rung needs more than its target, not the target.
+  const pct = item.unit.startsWith("%");
+  const unit = pct ? item.unit.slice(1).trim() : item.unit, mark = pct ? "%" : "";
+  const said = item.above
+    ? `${n(item.value)}${mark} ${unit}, needs more than ${n(item.target)}${mark}`
+    : pct ? `${n(item.value)} of ${n(item.target)}% ${unit}` : `${n(item.value)} of ${plural(item.target, oneOf(unit), unit)}`;
+  const when = item.kind === "best" ? "seen so far" : "now";
+  const words = `${said} · ${when}`;
+  li.append(name, bar, el("span", words, "rung-says mono"));
+  return li;
 }
 
 function rulesList(rules: readonly FirstsRule[]): HTMLElement {
@@ -120,7 +148,7 @@ export function createFirstsPanel(send: (m: ToWorker) => void): FirstsPanel {
 
   function paintPanel(m: FirstsMsg) {
     const watchedFrom = m.summary.watchedFrom;
-    const key = JSON.stringify([m.entries, m.fromStart, watchedFrom, m.stopped, m.summary.step === null]);
+    const key = JSON.stringify([m.entries, m.fromStart, watchedFrom, m.stopped, m.summary.step === null, m.nextUp]);
     if (key === panelKey) return;
     panelKey = key;
     $("firsts-stopped").hidden = m.stopped === null;
@@ -128,6 +156,11 @@ export function createFirstsPanel(send: (m: ToWorker) => void): FirstsPanel {
     const late = watchedFrom !== null && !m.fromStart;
     $("firsts-watch").hidden = !late;
     if (late) $("firsts-watch-badge").textContent = `Watching since ${at(watchedFrom)}`;
+    $("nextup-list").replaceChildren(...m.nextUp.map(nextUpRow));
+    $("nextup-done").hidden = m.nextUp.length > 0;
+    // The heading names rows or the note that none are left; the hint explains the rows' last words.
+    $("nextup-heading").hidden = false;
+    $("nextup-hint").hidden = m.nextUp.length === 0;
     $("firsts-empty").hidden = m.entries.length > 0;
     const list = $("firsts-list");
     list.replaceChildren(...firstsList(m.entries, "Firsts so far, newest first").children);
@@ -177,7 +210,12 @@ export function createFirstsPanel(send: (m: ToWorker) => void): FirstsPanel {
         ? "None yet"
         : `${plural(ran, "cycle")}: ${n(picks.byHand)} with your donors, ${n(picks.byRule)} the rule’s own${picks.unknown > 0 ? `, ${n(picks.unknown)} not recorded here` : ""}${unasked > 0 ? `, ${n(unasked)} ran without stopping for you` : ""}`;
       const before = f.cyclesBefore > 0 ? `; ${plural(f.cyclesBefore, "earlier cycle")} before this copy was opened, not in its log` : "";
-      bred.append(kv([["The world’s pressure", pressure], ["Pond cycles", cycles + before]]));
+      const rows: [string, string][] = [["The world’s pressure", pressure]];
+      // A version 1 file's facts have no pressures; the page only shows the live world's, which always do.
+      const dial = f.pressures;
+      if (dial && dial.changes > 0) rows.push(["Dial", `Set ${plural(dial.changes, "time")}; latest: ${scoreWords(dial.latest ?? undefined)?.toLowerCase() ?? "none"}`]);
+      rows.push(["Pond cycles", cycles + before]);
+      bred.append(kv(rows));
       bred.append(hint("A cycle counts as yours when your donors differ from the order the rule would have chosen; picks that match it count as the rule’s own."));
     }
     sections.push(bred);
@@ -299,6 +337,10 @@ export function createFirstsPanel(send: (m: ToWorker) => void): FirstsPanel {
       resetFileNote();
       $("firsts-watch").hidden = true;
       $("firsts-empty").hidden = false;
+      $("nextup-list").replaceChildren();
+      $("nextup-done").hidden = true;
+      $("nextup-heading").hidden = true;
+      $("nextup-hint").hidden = true;
       $("firsts-list").replaceChildren();
       $("firsts-list").hidden = true;
       $("firsts-rules-body").replaceChildren();

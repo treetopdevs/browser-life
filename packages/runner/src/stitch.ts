@@ -358,6 +358,7 @@ export function stitchRun(segments: StitchSegment[], totalSteps: number): Record
     if (!m.summary) throw new Error(`${id}: manifest has no summary (run did not finish)`);
     // A picked run's donors are in its picks.jsonl, not in any segment file (PICKS_FILE is deliberately in no file list), so its segments cannot be chained.
     if (m.spec.picked !== undefined) throw new Error(`${id}: picked runs cannot be stitched: their donors are not in the segment files`);
+    if (m.spec.pressures !== undefined) throw new Error(`${id}: pressured runs cannot be stitched: they are picked runs, and their donors are not in the segment files`);
     // A branch run (RunSpec.branch) starts from a decoded source checkpoint that no segment chain carries: not distributed.
     if (m.branch !== undefined || m.spec.branch !== undefined) throw new Error(`${id}: manifest records a branch run (${JSON.stringify(m.branch ?? m.spec.branch)}); branches are not distributed, so they cannot be stitched`);
     if (m.ruleVersion !== RULE_VERSION || m.schemaVersion !== SCHEMA_VERSION) throw new Error(`${id}: rule/schema ${m.ruleVersion}/${m.schemaVersion}, expected ${RULE_VERSION}/${SCHEMA_VERSION}`);

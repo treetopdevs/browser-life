@@ -2,15 +2,11 @@ import { expect, test } from "@playwright/test";
 import { sessionFileError, type SessionFile } from "../../apps/lab/src/session-file.ts";
 
 // Pond keeper v0 (docs/pond-keeper-v0-2026-10-17.md), page level: breed a pond world by hand, watch the log of
-// firsts fill, read the session card and download the session file. The file is the fixture that
-// tests/deno/pond_keeper_replay.ts replays on native WebGPU; BL_WRITE_FIXTURE=1 rewrites it:
-//   BL_WRITE_FIXTURE=1 npx playwright test tests/e2e/lab-pond-keeper.spec.ts --project=chrome
-
-// The tests' tsconfig carries no Node types: the one thing read from the environment is declared here.
-declare const process: { env: Record<string, string | undefined> };
+// firsts fill, read the session card and download the session file. The version 1 fixture that
+// tests/deno/pond_keeper_replay.ts replays (tests/e2e/fixtures/pond-keeper-session.json) was written by this spec once
+// and is frozen: this spec no longer writes it. The version 2 fixture comes from tests/e2e/lab-pond-keeper-v1.spec.ts.
 
 const SCRATCH = "test-results";
-const FIXTURE = "tests/e2e/fixtures/pond-keeper-session.json";
 
 test("lab page: the log of firsts fills while breeding, the card opens and the session file downloads", async ({ page }) => {
   // The machine may be busy with other GPU work: every wait below is generous, and so is the whole test.
@@ -109,7 +105,6 @@ test("lab page: the log of firsts fills while breeding, the card opens and the s
   const [download] = await Promise.all([page.waitForEvent("download", { timeout: LONG }), page.locator("#btn-session-file").click()]);
   expect(download.suggestedFilename()).toMatch(/\.session\.json$/);
   await download.saveAs(`${SCRATCH}/pond-keeper-session.json`);
-  if (process.env.BL_WRITE_FIXTURE === "1") await download.saveAs(FIXTURE);
   const decoder = new TextDecoder();
   let text = "";
   for await (const chunk of (await download.createReadStream()) as AsyncIterable<Uint8Array>) text += decoder.decode(chunk, { stream: true });

@@ -38,7 +38,8 @@ export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "
  * bundle: branches are not distributed, the coordinator never builds one, and
  * a task that carries one is refused before anything is fetched. A picked run
  * (RunSpec.picked) takes its donors from a picker or a record that no segment
- * carries, so it is refused the same way. A run with scheduled interventions
+ * carries, so it is refused the same way, and so is a pressured run
+ * (RunSpec.pressures, the lab's pond keeper: a picked run too). A run with scheduled interventions
  * (RunSpec.interventions) is not refused: the coordinator carries the
  * schedule (capability `"interventions-v1"` above), `runExperiment` applies
  * only the entries this segment owns, and its interventions.jsonl is a
@@ -46,6 +47,7 @@ export const ISLAND_CAPABILITIES: readonly string[] = ["ponds-v1", "ponds-v2", "
 export function specRefusal(spec: RunSpec): string | null {
   if ((spec as { branch?: unknown }).branch !== undefined) return "the spec is a branch run (spec.branch); branches are not distributed, so an island does not run them";
   if ((spec as { picked?: unknown }).picked !== undefined) return "the spec is a picked run (spec.picked); picked runs are not distributed, so an island does not run them";
+  if ((spec as { pressures?: unknown }).pressures !== undefined) return "the spec carries pressures (spec.pressures); a pressured run is not distributed, so an island does not run it";
   return null;
 }
 

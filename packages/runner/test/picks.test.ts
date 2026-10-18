@@ -25,6 +25,7 @@ import { RefSim } from "@bl/sim-ref";
 import {
   PICKS_FILE,
   PickError,
+  activePondScore,
   applyBoundary,
   formatFailedLine,
   formatPickLine,
@@ -41,6 +42,12 @@ import {
   picksPreflightError,
   pondCensus,
   pondContext,
+  pressureCycleOf,
+  pressureEntriesError,
+  pressureHook,
+  pressureLogError,
+  pressuresConfigError,
+  ruleDonors,
   runIsland,
   sameCompletedRun,
   specConfig,
@@ -52,6 +59,7 @@ import {
   type PickNote,
   type PickRequest,
   type Picker,
+  type PressureEntry,
   type RunSpec,
 } from "@bl/runner";
 
@@ -529,5 +537,232 @@ describe("the island refuses a picked spec", () => {
     });
     await expect(runIsland({} as GPUDevice, { coordinator: "http://coord", host: { host: "t", adapter: "t" }, maxTasks: 1 })).rejects.toThrow(/refusing pk\/ponds-small\/treatment\/seed-1 #1: .*picked.*not distributed/);
     expect(paths).toEqual(["/api/islands", "/api/next"]);
+  });
+});
+
+describe("pressures: the score the rule ranks donors by", () => {
+  const breedCfg = { pondArm: "breed", pondScore: "mass" } as const;
+  // Pond 2 is the fullest and the biggest-bodied; without it "mass" and "body" pick different ponds (checked below).
+  const base = worldAt(1000, breedCfg);
+  const pre = emptied(base, [0, 1, 3]);
+  const cfg = pre.cfg;
+  const press = (step: number, cycle: number, score: PressureEntry["score"]): PressureEntry => ({ step, cycle, score });
+  const mem = () => {
+    const files = new Map<string, string>();
+    return { files, sink: { appendText: async (p: string, t: string) => void files.set(p, (files.get(p) ?? "") + t) } };
+  };
+
+  it("the world separates the scores (so the cases below are not vacuous)", () => {
+    expect(pondDonors(pre, 1, "breed", cfg.pondK!, "mass")).not.toEqual(pondDonors(pre, 1, "breed", cfg.pondK!, "body"));
+  });
+
+  it("activePondScore: none governs, the latest with cycle <= b wins, list order breaks ties", () => {
+    expect(activePondScore([], 3)).toBeUndefined();
+    const list = [press(5000, 2, "drive"), press(10000, 3, "body"), press(10000, 3, "seed")];
+    expect(activePondScore(list, 1)).toBeUndefined();
+    expect(activePondScore(list, 2)).toBe("drive");
+    expect(activePondScore(list, 3)).toBe("seed");
+    expect(activePondScore(list, 9)).toBe("seed");
+    expect(activePondScore([press(0, 1, "reach")], 1)).toBe("reach");
+  });
+
+  it("pressureCycleOf: a waiting cycle's own, else the next boundary", () => {
+    expect(pressureCycleOf(5000, 5000, true)).toBe(1);
+    expect(pressureCycleOf(5000, 5000, false)).toBe(2);
+    expect(pressureCycleOf(7000, 5000, false)).toBe(2);
+    expect(pressureCycleOf(0, 5000, false)).toBe(1);
+    expect(pressureCycleOf(4999, 5000, false)).toBe(1);
+  });
+
+  it("pressureEntriesError: the observed history of a breeder world, or why not", () => {
+    const c = { pondPeriod: 1000, pondArm: "breed" } as const;
+    expect(pressureEntriesError([], c)).toBeNull();
+    expect(pressureEntriesError([press(0, 1, "drive"), press(1000, 1, "body"), press(1000, 2, "seed"), press(1500, 2, "drive+seed")], c)).toBeNull();
+    expect(pressureEntriesError([press(1500, 2, "mass")], c)).toBeNull();
+    // not a breeder world, not a pond world
+    expect(pressureEntriesError([press(1, 1, "mass")], { pondPeriod: 1000, pondArm: "scaf" })).toMatch(/pond arm breed.*"scaf"/);
+    expect(pressureEntriesError([press(1, 1, "mass")], {})).toMatch(/needs a pond config/);
+    // the cycle rule, both ways at a boundary step and mid-cycle
+    expect(pressureEntriesError([press(2000, 2, "mass")], c)).toBeNull();
+    expect(pressureEntriesError([press(2000, 3, "mass")], c)).toBeNull();
+    expect(pressureEntriesError([press(2000, 1, "mass")], c)).toMatch(/pressure 0 at t=2000 says cycle 1.*cycle 2 or 3.*not the observed history/);
+    expect(pressureEntriesError([press(2000, 4, "mass")], c)).toMatch(/cycle 2 or 3/);
+    expect(pressureEntriesError([press(1500, 1, "mass")], c)).toMatch(/cycle 2: not the observed history/);
+    expect(pressureEntriesError([press(1500, 3, "mass")], c)).toMatch(/not the observed history/);
+    // step 0 governs cycle 1 only: there is no cycle 0 to be waiting
+    expect(pressureEntriesError([press(0, 1, "mass")], c)).toBeNull();
+    expect(pressureEntriesError([press(0, 0, "mass")], c)).toMatch(/cycle must be a positive integer/);
+    expect(pressureEntriesError([press(0, 2, "mass")], c)).toMatch(/cycle 1: not the observed history/);
+    // order
+    expect(pressureEntriesError([press(2500, 3, "mass"), press(2000, 3, "body")], c)).toMatch(/pressure 1 \(t=2000\) follows a pressure at t=2500/);
+    expect(pressureEntriesError([press(1000, 2, "mass"), press(1000, 1, "body")], c)).toMatch(/cycle order/);
+    // shapes and scores
+    expect(pressureEntriesError([press(1000, 1, "mass+mass" as PressureEntry["score"])], c)).toMatch(/pressure 0: pondScore must be/);
+    expect(pressureEntriesError([press(1000, 1, "nope" as PressureEntry["score"])], c)).toMatch(/pondScore must be/);
+    expect(pressureEntriesError([{ step: -1, cycle: 1, score: "mass" }], c)).toMatch(/step must be a non-negative integer/);
+    expect(pressureEntriesError([{ step: 1.5, cycle: 1, score: "mass" }], c)).toMatch(/step must be a non-negative integer/);
+    expect(pressureEntriesError([null as unknown as PressureEntry], c)).toMatch(/not an object/);
+  });
+
+  it("pressureLogError: [pressure for b]*, pick(b)?, [pressure for b+1 | lesion | feed]*, with pick(b) after any pressure for b", () => {
+    const P = 1000;
+    const pk = (step: number) => ({ step, kind: "pick" });
+    const pr = (step: number, cycle: number) => ({ step, kind: "pressure", cycle });
+    const ls = (step: number) => ({ step, kind: "lesion" });
+    expect(pressureLogError([], P)).toBeNull();
+    expect(pressureLogError([pr(1000, 1), pk(1000), ls(1000), pr(1000, 2)], P)).toBeNull();
+    expect(pressureLogError([pr(1000, 1), pr(1000, 1), pk(1000), pr(1000, 2), pr(1000, 2)], P)).toBeNull();
+    expect(pressureLogError([pk(1000), ls(1000), pk(2000), pr(2000, 3)], P)).toBeNull();
+    expect(pressureLogError([pr(400, 1), ls(400), pr(400, 1), pk(1000)], P)).toBeNull(); // mid-cycle steps: no boundary at 400
+    expect(pressureLogError([ls(900), pk(1000), pr(1000, 2)], P)).toBeNull();
+    // a pressure for cycle b after the pick of cycle b
+    expect(pressureLogError([pk(1000), pr(1000, 1)], P)).toMatch(/^interventions\[1\] \(pressure at t=1000\) for cycle 1 comes after the pick for cycle 1: a pressure for cycle 1 must come before the pick for cycle 1$/);
+    // ... or after a lesion or a later pressure of that step
+    expect(pressureLogError([ls(1000), pr(1000, 1)], P)).toMatch(/follows a lesion, feed or later pressure at the same step/);
+    expect(pressureLogError([pr(1000, 2), pr(1000, 1)], P)).toMatch(/follows a lesion, feed or later pressure at the same step/);
+    // a pick after a lesion, a feed, or a pressure for the next cycle
+    expect(pressureLogError([ls(1000), pk(1000)], P)).toMatch(/^interventions\[1\] \(pick at t=1000\) follows a lesion or feed at the same step/);
+    expect(pressureLogError([{ step: 1000, kind: "feed" }, pk(1000)], P)).toMatch(/follows a lesion or feed at the same step/);
+    expect(pressureLogError([pr(1000, 2), pk(1000)], P)).toMatch(/^interventions\[1\] \(pick at t=1000\) follows a pressure for the next cycle at the same step/);
+    // each step starts afresh
+    expect(pressureLogError([ls(1000), pk(2000)], P)).toBeNull();
+    // a pressure for cycle b is followed by the pick of cycle b: at the end of the log, at the next step, or before a lesion
+    expect(pressureLogError([pr(1000, 1)], P)).toMatch(/^interventions\[0\] \(pressure at t=1000\) is for cycle 1, but no pick for that cycle follows it/);
+    expect(pressureLogError([pr(1000, 1), pr(1000, 1)], P)).toMatch(/^interventions\[0\] \(pressure at t=1000\) is for cycle 1, but no pick/);
+    expect(pressureLogError([pr(1000, 1), ls(1000)], P)).toMatch(/^interventions\[0\] \(pressure at t=1000\) is for cycle 1, but no pick/);
+    expect(pressureLogError([pr(1000, 1), pk(2000)], P)).toMatch(/^interventions\[0\] \(pressure at t=1000\) is for cycle 1, but no pick/);
+    // a pressure for the next cycle needs no pick at its step
+    expect(pressureLogError([pr(1000, 2)], P)).toBeNull();
+  });
+
+  it("ruleDonors: the pressure's score, else the config's", () => {
+    const k = cfg.pondK!;
+    expect(ruleDonors(pre, 1, cfg, [])).toEqual(pondDonors(pre, 1, "breed", k, "mass"));
+    expect(ruleDonors(pre, 1, cfg, [press(0, 1, "body")])).toEqual(pondDonors(pre, 1, "breed", k, "body"));
+    expect(ruleDonors(pre, 1, cfg, [press(0, 2, "body")])).toEqual(pondDonors(pre, 1, "breed", k, "mass"));
+  });
+
+  it("pressureHook: undefined when none governs, the config's own score governs or no pond is occupied; reads the list at call time", async () => {
+    const list: PressureEntry[] = [];
+    const hook = pressureHook(cfg, () => list);
+    expect(await hook(pre, 1)).toBeUndefined();
+    list.push(press(0, 2, "body"));
+    expect(await hook(pre, 1)).toBeUndefined(); // governs cycle 2 on
+    list.push(press(0, 1, "mass"));
+    expect(await hook(pre, 1)).toBeUndefined(); // the config's own score: the arm's cycle as it is
+    list.push(press(0, 1, "body"));
+    expect(await hook(pre, 1)).toEqual(pondDonors(pre, 1, "breed", cfg.pondK!, "body"));
+    expect(await hook(emptied(pre, []), 1)).toBeUndefined(); // nothing occupied
+    // a world that is not a breeder: never
+    expect(await pressureHook({ ...cfg, pondArm: "scaf" }, () => list)(pre, 1)).toBeUndefined();
+  });
+
+  it("makeDonorHook with pressures: the pressured rule's donors are suggested and answered; a record still wins", async () => {
+    const m = mem(), n: PickNote = { by: "none", suggested: [] };
+    const pressures = [press(0, 1, "body")];
+    const want = pondDonors(pre, 1, "breed", cfg.pondK!, "body");
+    expect(want).not.toEqual(pondDonors(pre, 1, "breed", cfg.pondK!, "mass"));
+    const hook = makeDonorHook({ cfg, recorded: new Map(), implicitRule: true, sink: m.sink, note: n, pressures });
+    expect(await hook(pre, 1)).toEqual(want);
+    expect(n.by).toBe("rule(implicit)");
+    expect(n.suggested).toEqual(want);
+    // a picker sees the pressured rule's donors and count
+    let seen: PickRequest | undefined;
+    const picker: Picker = { name: "t", pick: async (req) => ((seen = req), [...req.suggested]) };
+    const n2: PickNote = { by: "none", suggested: [] };
+    expect(await makeDonorHook({ cfg, recorded: new Map(), picker, sink: m.sink, note: n2, pressures })(pre, 1)).toEqual(want);
+    expect(seen!.suggested).toEqual(want);
+    expect(seen!.max).toBe(want.length);
+    // the record wins where it has an entry, validated as ever
+    const n3: PickNote = { by: "none", suggested: [] };
+    const other = [1];
+    expect(await makeDonorHook({ cfg, recorded: new Map([[1000, { step: 1000, cycle: 1, donors: other }]]), implicitRule: true, sink: m.sink, note: n3, pressures })(pre, 1)).toEqual(other);
+    expect(n3.by).toBe("recorded");
+    expect(n3.suggested).toEqual(want);
+    // an empty world is the arm's own empty cycle, not a recorded-list failure
+    const n4: PickNote = { by: "x", suggested: [9] };
+    expect(await makeDonorHook({ cfg, recorded: new Map(), implicitRule: true, sink: m.sink, note: n4, pressures })(emptied(pre, []), 1)).toBeUndefined();
+    expect(n4).toMatchObject({ by: "none", suggested: [] });
+  });
+
+  it("with no pressures the hook is exactly what it was", async () => {
+    const m = mem(), n: PickNote = { by: "none", suggested: [] };
+    const want = pondDonors(pre, 1, "breed", cfg.pondK!, "mass");
+    for (const pressures of [undefined, []] as const) {
+      const hook = makeDonorHook({ cfg, recorded: new Map(), implicitRule: true, sink: m.sink, note: n, pressures });
+      expect(await hook(pre, 1)).toEqual(want);
+      expect(n).toMatchObject({ by: "rule(implicit)", suggested: want });
+    }
+  });
+
+  it("a pressured boundary is the pond cycle with the computed donors, bit for bit, and writes the config's columns", async () => {
+    const pressures = [press(0, 1, "body")];
+    const donors = pondDonors(pre, 1, "breed", cfg.pondK!, "body");
+    const m = mem();
+    const hook = makeDonorHook({ cfg, recorded: new Map(), implicitRule: true, sink: m.sink, note: { by: "none", suggested: [] }, pressures });
+    const sim = new CpuSim(pre);
+    const res = await applyBoundary(sim, 1000, pondContext(pre), hook);
+    const want = applyPondCycle(pre, 1, "breed", cfg.pondK!, pondMatter(pre), pondCensus, "mass", donors);
+    expect(res.ponds!.donors).toEqual(donors);
+    expect(res.ponds!.rows).toEqual(want.rows);
+    expect(stateHash(await sim.readState())).toBe(stateHash(want.state));
+    // the unpressured arm's cycle has the same columns (the score columns are the config's) and a different state
+    const plain = new CpuSim(pre);
+    const arm = await applyBoundary(plain, 1000, pondContext(pre));
+    expect(Object.keys(res.ponds!.rows[0])).toEqual(Object.keys(arm.ponds!.rows[0]));
+    expect(arm.ponds!.donors).not.toEqual(donors);
+    expect(stateHash(await plain.readState())).not.toBe(stateHash(want.state));
+    // pressureHook is the same boundary
+    const viaHook = new CpuSim(pre);
+    await applyBoundary(viaHook, 1000, pondContext(pre), pressureHook(cfg, () => pressures));
+    expect(stateHash(await viaHook.readState())).toBe(stateHash(want.state));
+  });
+
+  it("a boundary with no pressure is the arm's cycle with no hook at all", async () => {
+    const sim = new CpuSim(pre);
+    const hook = pressureHook(cfg, () => []);
+    await applyBoundary(sim, 1000, pondContext(pre), hook);
+    const want = applyPondCycle(pre, 1, "breed", cfg.pondK!, pondMatter(pre), pondCensus, "mass");
+    expect(stateHash(await sim.readState())).toBe(stateHash(want.state));
+  });
+
+  it("RunSpec.pressures: shape, picked, config and the last step", () => {
+    const ok: RunSpec = { ...spec, picked: true, pressures: [press(1000, 1, "body"), press(2000, 3, "mass")] };
+    expect(validateSpec(ok)).toEqual([]);
+    expect(validateSpec({ ...spec, pressures: ok.pressures }).join()).toMatch(/a pressured run is a picked run/);
+    expect(validateSpec({ ...ok, pressures: [] }).join()).toMatch(/non-empty array/);
+    expect(validateSpec({ ...ok, pressures: "x" as never }).join()).toMatch(/non-empty array/);
+    expect(validateSpec({ ...ok, pressures: [null as never] }).join()).toMatch(/pressures\[0\] must be an object/);
+    expect(validateSpec({ ...ok, pressures: [{ step: 1, cycle: 1 } as never] }).join()).toMatch(/exactly the keys step, cycle and score/);
+    expect(validateSpec({ ...ok, pressures: [{ step: 1, cycle: 1, score: "mass", kind: "pressure" } as never] }).join()).toMatch(/exactly the keys/);
+    expect(validateSpec({ ...ok, pressures: [{ step: -1, cycle: 1, score: "mass" }] }).join()).toMatch(/step must be a non-negative integer/);
+    expect(validateSpec({ ...ok, pressures: [{ step: 1, cycle: 0, score: "mass" }] }).join()).toMatch(/cycle must be a positive integer/);
+    expect(validateSpec({ ...ok, pressures: [{ step: 1, cycle: 1, score: 7 as never }] }).join()).toMatch(/score must be a string/);
+    expect(validateSpec({ ...ok, pressures: [press(2000, 3, "mass"), press(1000, 2, "body")] }).join()).toMatch(/step 1000 follows step 2000/);
+    // the world-dependent half
+    const cfgOf = (extra: Partial<WorldConfig>) => worldAt(0, extra).cfg;
+    expect(pressuresConfigError({ steps: 4000 }, cfgOf({}))).toBeNull();
+    expect(pressuresConfigError({ steps: 4000, pressures: ok.pressures }, cfgOf({ pondArm: "breed", pondScore: "mass" }))).toBeNull();
+    expect(pressuresConfigError({ steps: 4000, pressures: ok.pressures }, cfgOf({ pondArm: "scaf" }))).toMatch(/pond arm breed/);
+    expect(pressuresConfigError({ steps: 1500, pressures: ok.pressures }, cfgOf({ pondArm: "breed", pondScore: "mass" }))).toMatch(/a pressure at t=2000 is after the run's last step \(1500\)/);
+    expect(pressuresConfigError({ steps: 4000, pressures: [press(1000, 1, "body"), press(2000, 4, "mass")] }, cfgOf({ pondArm: "breed", pondScore: "mass" }))).toMatch(/not the observed history/);
+  });
+
+  it("run identity: a spec without pressures is the spec written before; with them it is another run", () => {
+    const done = (s: RunSpec) => ({ spec: JSON.parse(JSON.stringify(s)), ruleVersion: RULE_VERSION, schemaVersion: SCHEMA_VERSION, metricsVersion: METRICS_VERSION, cfg: specConfig(s) });
+    const before: RunSpec = { ...spec, picked: true };
+    const pressured: RunSpec = { ...before, pressures: [press(1000, 1, "body")] };
+    expect(JSON.stringify({ ...before, pressures: undefined })).toBe(JSON.stringify(before));
+    expect(sameCompletedRun(done(before), before)).toBe(true);
+    expect(sameCompletedRun(done(before), { ...before, pressures: undefined })).toBe(true);
+    expect(sameCompletedRun(done(before), pressured)).toBe(false);
+    expect(sameCompletedRun(done(pressured), before)).toBe(false);
+    expect(sameCompletedRun(done(pressured), pressured)).toBe(true);
+  });
+
+  it("the island refuses a pressured spec", () => {
+    expect(specRefusal({ ...spec, pressures: [press(1000, 1, "body")] })).toMatch(/pressures.*not distributed/);
+    expect(specRefusal({ ...spec, picked: true, pressures: [press(1000, 1, "body")] })).toMatch(/picked run/);
+    expect(specRefusal(spec)).toBeNull();
   });
 });
